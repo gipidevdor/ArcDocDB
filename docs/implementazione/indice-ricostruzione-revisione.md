@@ -143,3 +143,19 @@ per contenere i percorsi. Restano i limiti delle primitive preesistenti:
 FI deterministica su sequenza cambiata durante il campione, interruzioni
 interne della mutazione, fault durante la copia, x86-64 e qualifica del
 motore completo. Nessuna copertura MC/DC completa dichiarata.
+
+## Seconda lettura indipendente — Averroes
+
+HEAD esaminato: `6796eb3931af81d4f82479c416cd9deae4b2f261`, hash riletti
+stabili dal revisore. Nessun difetto funzionale bloccante rilevato; IR-C1-01
+chiuso staticamente. Sono stati controllati requisiti/ADR, limiti, ownership,
+preflight, fedeltà del digest/payload, crediti, integrazione e CAS.
+Il revisore non ha eseguito prove e non attesta gli esiti runtime del parent.
+
+Riscontro P2 su IR-D06: la fixture isolava soltanto location. Il parent ha
+aggiunto variazioni indipendenti di CSN, key-meta alto e record-length, oltre
+alla fine validità, mantenendo tutti gli altri campi identici. Offset arena
+locale diverso resta ammesso. La variazione di end-CSN è FI del predicato:
+nel percorso primario valido entrambi i valori sono zero, e la validazione
+del banco rifiuta una fine non zero. Non qualifica retention o snapshot;
+nessuna esclusione MC/DC o deroga normativa viene dichiarata approvata.

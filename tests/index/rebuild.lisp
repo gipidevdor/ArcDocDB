@@ -421,13 +421,16 @@ La revisione dell'indice puo avanzare per la copia nei candidati; salute verific
 
 ;;; REQ: REQ-IDX-005
 (deftest test-REQ-IDX-005-rebuild-copy-comparison
-  ;; Exact unit probe for ignore-location-equality; no product publication or lookup involved.
-  (let* ((original (primary-payload (primary-key 1 2) #xffffffffffffffff))
-         (copy (copy-seq original)))
-    (incf (aref copy 2) 17) ; Local arena offset may differ.
-    (is (p::copia-ricostruzione-uguale-p original copy))
-    (incf (aref copy 1) 16) ; A valid, different record location must fail comparison.
-    (is (not (p::copia-ricostruzione-uguale-p original copy)))))
+  ;; Independent conditions of IR-D06; END fixture is defensive, not a retained lookup.
+  (let ((original (primary-payload (primary-key 1 2) #xffffffffffffffff)))
+    (dotimes (field 5)
+      (let ((copy (copy-seq original)))
+        (setf (aref copy field)
+              (logxor (aref copy field) (if (= field 2) (ash 1 32) 1)))
+        (is (not (p::copia-ricostruzione-uguale-p original copy)))))
+    (let ((copy (copy-seq original)))
+      (incf (aref copy 2) 17) ; Only the local arena offset may differ.
+      (is (p::copia-ricostruzione-uguale-p original copy)))))
 
 ;;; REQ: REQ-IDX-005 REQ-AFF-004
 (declaim (ftype (function (primary-fixture p:frammento-indice p::digests-frammento

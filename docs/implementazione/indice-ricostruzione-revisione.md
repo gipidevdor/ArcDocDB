@@ -120,3 +120,26 @@ split con figlio vuoto, selezione figlio, assenza del secondo candidato.
 Inventario finale dei casi e nomi dei quattro bersagli runtime da completare
 insieme al file di test. Tutti i casi sono seriali, deterministici e bounded;
 nessun esito positivo è attribuito prima dell'esecuzione registrata dal parent.
+
+## Chiusura del parent dopo il freeze
+
+La sezione IR-C1-01 sopra conserva il riscontro iniziale del revisore. Il
+parent lo ha chiuso con guardie specifiche su INVARIANT-VIOLATION sia in
+`campiona-ricostruzione` sia in `sonda-ricostruzione`: indice FAULTED prima
+della propagazione della stessa condizione del banco. I test del banco
+corrotto nella scansione e del candidato corrotto incontrato dal probe
+prima del proprio turno di scansione sono nella suite finale.
+
+La lettura dell'indice di Noether ha segnalato un'ambiguità nel conteggio
+slot/cambi-root. Il contratto è precisato come otto crediti di campionamento
+e riavvio: una conferma finale fallita a credito zero termina senza un
+nuovo probe e senza output. Il test dedicato inietta il cambio root dopo
+l'ottavo campione e controlla esattamente un probe. Nessun cambiamento del
+protocollo o del limite di riavvio; la conferma resta obbligatoria anche sul miss.
+
+Il parent ha riletto tipi, budget, prefix routing, fedeltà della copia,
+cleanup e complessità dei nuovi helper, separando i crediti in una funzione
+per contenere i percorsi. Restano i limiti delle primitive preesistenti:
+FI deterministica su sequenza cambiata durante il campione, interruzioni
+interne della mutazione, fault durante la copia, x86-64 e qualifica del
+motore completo. Nessuna copertura MC/DC completa dichiarata.

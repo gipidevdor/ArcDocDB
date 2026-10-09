@@ -485,4 +485,22 @@
         (if (and present (= changes 1))
             (primary-check-payload (primary-fixture-output f) expected 0)
             (is (every (lambda (word) (= word +primary-sentinel+)) (primary-fixture-output f))))))
-  t)
+  t))
+
+;;; REQ: REQ-IDX-007 REQ-IDX-003
+(deftest test-REQ-IDX-007-primary-final-confirmation-exhausted-no-restart
+  "La conferma finale fallita a credito zero termina senza un nuovo probe o copia output."
+  (let* ((f (primary-fixture)) (source (primary-current f))
+         (candidate (primary-candidate f 0 0)) (calls 0))
+    (dotimes (i 8)
+      (primary-put f (primary-key i) (1+ i) 0 4)
+      (primary-put f (primary-key i) (1+ i) 0 4 :fragment candidate))
+    (let ((plan (primary-plan f source candidate)))
+      (primary-with-probe-fi
+       (lambda (result)
+         (is (>= result 0)) (incf calls)
+         (is (zerop (p::contesto-indice-remaining (primary-fixture-reader f))))
+         (is (null (p:pubblica-directory-indice plan))))
+       (lambda () (primary-no-output f (primary-key 7) 0 4 :retry-limit)))
+      (is (= calls 1))
+      (is (zerop (p::contesto-indice-remaining (primary-fixture-reader f)))))))

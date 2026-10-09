@@ -288,7 +288,7 @@ La revisione dell'indice puo avanzare per la copia nei candidati; salute verific
     (is (equal (list 0 (+ 665 8 657))
                (multiple-value-list (p::budget-ricostruzione index root source nil 1 2 10000))))
     (is (equal (list 1 (+ 665 16 657 657))
-               (multiple-value-list (p::budget-ricostruzione index root source t 1 1 10000)))))))
+               (multiple-value-list (p::budget-ricostruzione index root source t 1 1 10000))))))
 
 ;;; REQ: REQ-AFF-008 REQ-IDX-005
 (deftest test-REQ-AFF-008-rebuild-invalid-shape-and-budget
@@ -490,7 +490,7 @@ La revisione dell'indice puo avanzare per la copia nei candidati; salute verific
                                 (:sequence :index-slot-sequence-corrupt)
                                 (:odd :primary-rebuild-writer-state)))
         (unless (eq scenario :odd)
-          (is (eq :faulted (s::banco-slot-health (p::frammento-indice-bank source))))))))
+          (is (eq :faulted (s::banco-slot-health (p::frammento-indice-bank source)))))))))
 
 ;;; REQ: REQ-IDX-005 REQ-AFF-004
 (deftest test-REQ-IDX-005-rebuild-probe-bank-corruption-before-slot-scan

@@ -57,10 +57,11 @@ del frammento riconosce il banco faulted. Recovery del dominio da integrare.
 | Conferma | Identità/generazione root ricontrollate dopo barriera, anche sul miss. |
 | Uscita | `:live` copia cinque u64; `:absent`/`:retry-limit` non toccano l'output. |
 
-Massimo **otto campioni slot e cambi root complessivi**: ogni campione,
-anche una collisione stabile, consuma uno; una root cambiata dopo un
-risultato provvisorio consuma un altro. Una conferma riuscita non consuma
-credito. Niente retry annidati, attese o crescita nel lookup. Al limite,
+Massimo **otto crediti per campioni slot e riavvii dovuti al cambio root**: ogni campione,
+anche una collisione stabile, consuma uno; un riavvio dopo il cambio root
+consuma un altro. La conferma finale, riuscita o fallita, non e un nuovo
+probe: al credito zero una conferma fallita termina con `:retry-limit`,
+senza riavvio e senza output. Una conferma riuscita non consuma credito. Niente retry annidati, attese o crescita nel lookup. Al limite,
 scartare location/scratch e inoltrare la richiesta originale al writer.
 Il collegamento alla coda è esterno.
 

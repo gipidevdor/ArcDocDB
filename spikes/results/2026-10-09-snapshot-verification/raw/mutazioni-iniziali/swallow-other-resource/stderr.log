@@ -1,0 +1,2 @@
+SIMPLE-ERROR: Asserzione fallita: (EQ ARCDOCDB.MVCC.TESTS::EXPECTED
+                                      ARCDOCDB.MVCC.TESTS::OBSERVED)

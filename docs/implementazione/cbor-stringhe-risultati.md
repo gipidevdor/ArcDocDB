@@ -91,4 +91,21 @@ Le associazioni dei gap sono sintattiche e non dimostrano irraggiungibilità.
 con processi, tentativo fallito, sorgenti congelati, helper, stato/HTML,
 copie e log. La compressione gzip preserva e verifica i byte ricostruiti;
 non riscrive campagne precedenti o deduce qualifiche dai loro esiti.
-Il controllo completo dopo l'integrazione con main resta da registrare.
+L'audit chiuso verifica 2.026 file indicizzati e i due metadati dell'archivio,
+compresi i file nascosti: impronte e inventario completi, 15 processi.
+
+Integrazione su `ceac2dedfcfd6af05f2331282645bebf4b5be442`, conservando
+hash/key-hash, GET e suite EBR/read. `make check` passa in 172,707537 s,
+con sorgenti STABLE: 791 test nominali e due smoke, 793 nomi OK distinti,
+138 file prodotto senza violazioni, tracciabilità senza errori e dieci
+spike completati. I 643 elementi sorgente coincidono prima/dopo;
+compilazione senza avvisi, corpus e prodotto congelati invariati.
+Le due ondate del writer conservano i sink precedenti, con overlap
+49.011/47.867 tick a 1.000.000 tick/s. Il self-test dei selettori di coverage
+integrati passa separatamente. Blob ASD `4a4734596cada6eac70dda6709b4804a25acb9de`,
+coverage `3a4af4b1efe2a2c37599ec804f6ed06c80733491`.
+
+L'[archivio finale](../../spikes/results/2026-10-11-cbor-string-write-final/archive-index.lisp)
+conserva raccolta, audit chiuso originale, controllo integrato, self-test,
+risultati dei dieci spike e copie dei due file di integrazione.
+Il passaggio dei controlli non chiude i gap C1/MC/DC descritti sopra.

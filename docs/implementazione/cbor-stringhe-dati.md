@@ -277,7 +277,24 @@ sensori sono coerenti con il criterio locale di heap osservato zero;
 self-test dell'auditor dei benchmark esaminato con tentativo fallito
 conservato. Gli audit dei dati reali di benchmark/coverage/mutazioni sono
 coerenti; tutte le lacune della copertura e i limiti dei verificatori
-restano espliciti. MAKE CHECK completo resta da confermare nella fase
-di integrazione. La bozza non chiude gate C1/MC/DC o qualifiche del motore
+restano espliciti. Al congelamento di questa lettura MAKE CHECK completo
+restava da confermare nella fase di integrazione. La lettura non chiude gate C1/MC/DC o qualifiche del motore
 e delle dipendenze. Non sono necessari ulteriori cambiamenti al prodotto
 o ai test congelati sulla base dei record esaminati.
+
+## Registrazione successiva dell'integrazione
+
+Il coordinatore aggiunge i metadati della verifica finale, successiva alla
+lettura congelata: commit `ceac2dedfcfd6af05f2331282645bebf4b5be442`,
+`make check` PASS, EXIT-CODE0, STABLE, 172.707537d0. Il record
+`spikes/out/4000710709-command-45721-0/report.lisp` conserva 791 test
+nominali e due smoke, 793 nomi OK senza duplicati, lint su 138 file senza
+violazioni, tracciabilità senza errori e dieci spike completati.
+I 643 elementi SOURCE-BLOBS-BEFORE e AFTER coincidono; il prodotto e
+i tre file di prove conservano i blob indicati nella lettura originale.
+Il self-test del driver coverage integrato passa nel record
+`spikes/out/4000710709-command-45705-0/report.lisp`.
+Questi record e i risultati grezzi degli spike sono conservati
+nell'[archivio finale](../../spikes/results/2026-10-11-cbor-string-write-final/archive-index.lisp).
+Questa registrazione non estende la lettura indipendente alle nuove
+dipendenze di main e non promuove gate o qualifiche.

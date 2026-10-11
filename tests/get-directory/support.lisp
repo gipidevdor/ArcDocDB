@@ -316,7 +316,7 @@ IMAGE-MUTATOR(image, ordinal), chiamato prima dell'apertura readonly. Chiusura o
           (aref content 2) (logior (ash (length key) 32) (ash 1 48)) (aref content 3) size)
     (multiple-value-bind (high low) (p:digest-chiave-indice index key 0 (length key))
       (p:pubblica-chiave-indice index (p:frammento-corrente-indice index high) key 0 (length key)
-                               high low content (p:crea-contesto-indice))))
+                               high low content (p:crea-contesto-indice)))))
 (defmacro with-directory-fixture ((fixture &rest options) &body body)
   `(let ((,fixture (make-directory-fixture ,@options)))
      (unwind-protect (progn ,@body) (close-directory-fixture ,fixture))))

@@ -98,7 +98,7 @@
                                                    :separator '(#\Space #\Tab #\( #\))))))))
 (defun validate-targets (expected)
   (unless (and (= 5 (length *mutants*)) expected
-               (= (length expected) (length (remove-duplicates expected :test #'string=)))
+               (= (length expected) (length (remove-duplicates expected :test #'string=))))
     (reject :invalid-suite-or-mutant-count))
   (unless (every (lambda (name) (and (stringp name) (search "REQ-" name))) expected)
     (reject :test-without-req))

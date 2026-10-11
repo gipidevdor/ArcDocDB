@@ -7,10 +7,13 @@
 (declaim (ftype (function (indice-primario) (values u32 u32 &optional)) esigi-seme-hash))
 (defun esigi-seme-hash (index)
   "Pre: indice canonico. Post: due u32 immutabili della configurazione hash.
-Salute terminale verificata; INVALID-ARGUMENT :primary-hash-unconfigured se il seme e assente."
+Salute e coerenza della coppia verificate; assente => INVALID-ARGUMENT :primary-hash-unconfigured.
+Coppia incoerente interna => FAULTED con :primary-hash-seed-corrupt, senza digest normale."
   (esigi-indice-sano index)
   (when (null (indice-primario-seed-high index))
+    (unless (null (indice-primario-seed-low index)) (guasto-indice index :primary-hash-seed-corrupt))
     (error 'invalid-argument :reason :primary-hash-unconfigured))
+  (when (null (indice-primario-seed-low index)) (guasto-indice index :primary-hash-seed-corrupt))
   (values (indice-primario-seed-high index) (indice-primario-seed-low index)))
 
 ;;; REQ: REQ-IDX-001 REQ-LIM-003 REQ-AFF-004 REQ-AFF-008

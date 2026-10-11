@@ -13,3 +13,10 @@ Nessun test, modello, fault injection, benchmark o auto-verifica degli
 strumenti eseguito localmente. Le evidenze statiche non dimostrano
 linearizzabilità, assenza di allocazioni o prestazioni del DB.
 Contratto e decisioni in [cache-record](../../../docs/implementazione/cache-record.md).
+
+Le due letture locali distinguono protocollo/identità e memoria/CLOCK.
+Hanno corretto il divieto eccessivo di alias nell’input prepared e ristretto
+i tipi di posto/insieme. Le varianti precedenti di compilazione e analisi
+sono conservate. Sul disassemblato ARM64 finale sono presenti le barriere
+attese; i rami generici di overflow dei kernel cache selezionati sono
+stati eliminati. Rimangono aperte le misure e la verifica concorrente.

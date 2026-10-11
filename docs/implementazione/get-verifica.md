@@ -58,6 +58,15 @@ Il freeze integrato `222b9fd` passa 887 prove dei moduli e due smoke. I sette
 file GET e i tre file della suite sono identici nei due freeze; ASD e lo
 strumento di copertura conservano anche le route introdotte a monte.
 
+La successiva integrazione del resolver CLOSED di `d155db3` è registrata nel
+[metodo](../../spikes/results/2026-10-11-get-verification/resolver-integrazione-metodo.lisp)
+e nei [risultati](../../spikes/results/2026-10-11-get-verification/resolver-integrazione-risultati.lisp).
+Il freeze `5d6490a` compila senza avvisi e passa le stesse 887 prove dei moduli,
+due smoke, lint, tracciabilità e link; anche le 70 prove GET strumentate passano.
+I 667 sorgenti sono stabili prima/dopo. I file GET e della suite restano identici,
+con gli stessi conteggi di copertura. Questi run verificano caricamento e
+composizione della suite; la qualifica funzionale del resolver rimane distinta.
+
 I record dei due freeze attestano rispettivamente 633 e 659 file sorgente
 identici prima e dopo le esecuzioni. I self-test reader e snapshot conservano
 le classificazioni previste dei worker terminati; i dieci spike sono conclusi

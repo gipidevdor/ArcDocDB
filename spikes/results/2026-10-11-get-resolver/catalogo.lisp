@@ -65,4 +65,28 @@
   (:KIND :STATIC-CHECK :ARTIFACT
    #A((32) BASE-CHAR . "evidence-prima-integrazione.lisp") :PROCESS-ARTIFACT
    #A((46) BASE-CHAR . "evidence-prima-integrazione-conservazione.lisp")
-   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)))
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :COMPILE-ONLY :ARTIFACT
+   #A((30) BASE-CHAR . "compilazione-integrazione.lisp") :PROCESS-ARTIFACT
+   #A((44) BASE-CHAR . "compilazione-integrazione-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((22) BASE-CHAR . "lint-integrazione.lisp")
+   :PROCESS-ARTIFACT
+   #A((36) BASE-CHAR . "lint-integrazione-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((23) BASE-CHAR . "trace-integrazione.lisp")
+   :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "trace-integrazione-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((23) BASE-CHAR . "links-integrazione.lisp")
+   :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "links-integrazione-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-INSPECTION :ARTIFACT
+   #A((31) BASE-CHAR . "disassemblato-integrazione.lisp") :PROCESS-ARTIFACT
+   #A((45) BASE-CHAR . "disassemblato-integrazione-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT
+   #A((26) BASE-CHAR . "evidence-integrazione.lisp") :PROCESS-ARTIFACT
+   #A((40) BASE-CHAR . "evidence-integrazione-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)))

@@ -1,0 +1,109 @@
+# Tentativi falliti del reader della revisione dati
+
+Conservazione del 2026-10-11, prima del congelamento della raccolta.
+Questi sono due tentativi inline del revisore, tramite sbcl --script
+/dev/stdin. Non sono campagne del prodotto, record-command o verificatori
+registrati. Entrambi caricano soltanto ASDF e tools/evidence-storage.lisp;
+nessun prodotto o test è caricato/eseguito, nessun file tracciabile scritto.
+
+Seguono frammenti di input e diagnostiche copiati dalle risposte tool
+disponibili. Non si ricostruiscono log integrali o parti non conservate.
+I chunk identificano le risposte della sessione, senza attribuire loro
+una provenienza di record-command. Il taskroot conserva questo testo.
+
+## Tentativo 1 — reader plist usato sul raw state
+
+Risposta tool chunk `9ef4a4`: exit-code1, wall-time0.459883792 secondi.
+Il raw state SB-COVER è una lista, mentre read-evidence richiede una
+plist come risultato. La successiva lettura corretta usa
+call-with-evidence-bytes e READ con READ-EVAL NIL.
+
+Frammento originale dell'input:
+
+```lisp
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((state (arcdocdb.evidence:read-evidence "spikes/out/cbor-string-write-coverage-20261011/coverage-state.lisp"))
+       (entry (find-if (lambda (e) (search "src/codec/cbor-string-write.lisp" (car e))) state))
+       (expressions 0) (expr-covered 0) (branches 0) (branch-covered 0) (missing nil))
+  (format t "statefiles=~D entrysource=~S entrytypes=~S~%" (length state) (car entry)
+          (mapcar #'type-of (cdr entry)))
+```
+
+Estratto originale della diagnostica:
+
+```text
+Unhandled ARCDOCDB.EVIDENCE:INVALID-EVIDENCE in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
+                                                          {80086A0423}>:
+  Evidenza non valida spikes/out/cbor-string-write-coverage-20261011/coverage-state.lisp: È richiesta una plist non vuota, propria e aciclica con chiavi keyword.
+```
+
+Il tentativo si interrompe prima del conteggio del raw state. La
+diagnostica riguarda l'adattatore di lettura, senza rifiutare il descriptor
+gzip o la campagna coverage registrata.
+
+## Tentativo 2 — parentesi mancante nel reader dei log
+
+Risposta tool chunk `c4054b`: exit-code1, wall-time0.537894917 secondi.
+La parte iniziale aveva già decodificato il raw state, risolto OTHER nel
+sorgente letto come dati e letto il report mutazioni. Il frammento finale
+per i log non viene eseguito per errore di sintassi; viene poi ripetuto
+separatamente con esito exit0, chunk `62ba0e`.
+
+Frammento originale finale dell'input, con la parentesi mancante:
+
+```lisp
+(dolist (copy '("baseline" "0" "1" "2" "3" "4" "5" "6" "7"))
+  (let* ((path (concatenate 'string "spikes/out/cbor-string-write-mutations-20261011/" copy "/test.log"))
+         (text (arcdocdb.evidence:call-with-evidence-bytes path
+                (lambda (plain) (uiop:read-file-string plain :external-format :utf-8))))
+         (lines (uiop:split-string text :separator '(#\Newline)))
+         (smoke (search "ok    ARCDOCDB:*VERSION* è una stringa" text))
+         (completion (search "build e test: nessun avviso, tutti i controlli superati" text))
+         (rejection (search "Unhandled" text)))
+    (format t "log ~A chars=~D smoke=~S completed=~S rejection=~S aftersmoke=~S~%"
+            copy (length text) smoke completion rejection
+            (and smoke rejection (< smoke rejection)))
+    (when rejection
+      (loop for line in lines for index from 0
+            when (search "Unhandled" line)
+            do (dolist (summary (subseq lines index (min (+ index 10) (length lines))))
+                 (write-line summary)))
+    (loop for line in lines when (and (search "TEST-REQ-CBR-002-STRING-WRITE" line)
+                                      (not (search "ok    " line)))
+          do (write-line line))))
+```
+
+Estratti originali dell'output precedente all'errore:
+
+```text
+independent raw counts statefiles=204 expression 256/308 branch 39/52 missing=65 OTHERzero=T
+OTHER raw(8 2 11) forward(11 2 8) source-line99=(MAX-BYTES
+                                                 +CBOR-SCAN-MAX-BYTES+)
+mutant "major-two-three-swapped" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+mutant "text-scalar-count-instead-byte-length" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+mutant "last-payload-byte-not-copied" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+mutant "source-origin-zero" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+mutant "budget-excludes-header" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+mutant "physical-capacity" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+mutant "overlap-ignores-lead-byte" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+mutant "nonempty-text-utf8-check-skipped" result=:DETECTED exit=1 signal=NIL diagnostic=NIL
+```
+
+Estratto originale della diagnostica:
+
+```text
+Unhandled SB-C::INPUT-ERROR-IN-LOAD in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
+                                                 {80086A0423}>:
+  READ error during LOAD:
+
+    end of file on #<SB-SYS:FD-STREAM for "file /dev/stdin" {8008680043}>
+
+    (in form starting at line: 37, column: 63, file-position: 2410)
+```
+
+I due tentativi sono errori della lettura ad hoc, distinti dal self-test
+registrato dell'auditor benchmark che fallì per SETF FIRST-SAMPLE e dal
+suo retry PASS. La revisione finale si basa sui dati decodificati e sui
+log letti con il reader corretto; non trasforma questi errori in campagne
+runtime, rilevamenti di mutazioni o risultati del prodotto.

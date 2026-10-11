@@ -1,0 +1,81 @@
+(:SCHEMA-VERSION 1 :KIND :WORKER-SERIES-ORCHESTRATION-BUNDLE :SOURCES
+ ((:PATH
+   #A((131) BASE-CHAR
+      . "/var/folders/07/57bk4fl91n9_9gk_j124c_q80000gn/T/arcdocdb-worker-series-v3-e9o8ojto/ArcDocDB/spikes/out/worker-series-targeted.lisp")
+   :BYTES 894 :SHA256 "97ed661894ea5a5d0ae86f773c2b2aee3a57fb5fb510b97b0654093a94c9f281" :GIT-BLOB
+   "3aaa4c3d06042f067b845b4a33b30fa69b53aa50" :TEXT "(require :asdf)
+(setf asdf:*compile-file-warnings-behaviour* :error asdf:*compile-file-failure-behaviour* :error)
+(asdf:initialize-output-translations `(:output-translations (,(merge-pathnames \"**/*.*\" (truename \"./\")) ,(merge-pathnames \"spikes/out/targeted-fasl/**/*.*\" (truename \"./\"))) :ignore-inherited-configuration))
+(handler-bind ((warning (lambda (condition) (unless (typep condition 'sb-kernel:redefinition-warning) (error condition)))))
+  (asdf:load-asd (merge-pathnames \"arcdocdb.asd\" (truename \"./\")))
+  (asdf:load-system \"arcdocdb/tests\" :force t))
+(format t \"~&BRIDGE-TESTS-START~%\")
+(let ((count 0))
+  (dolist (test (reverse arcdocdb.series.tests::*tests*))
+    (when (search \"WORKER-SERIE\" (symbol-name test))
+      (funcall test) (incf count) (format t \"ok ~A~%\" test)))
+  (format t \"~&~D bridge tests passed~%\" count)
+  (unless (= count 26) (error \"Test inventory differs\")))
+")
+  (:PATH
+   #A((138) BASE-CHAR
+      . "/var/folders/07/57bk4fl91n9_9gk_j124c_q80000gn/T/arcdocdb-worker-series-v3-e9o8ojto/ArcDocDB/spikes/out/worker-series-coverage-reader.lisp")
+   :BYTES 3906 :SHA256 "070c4b301d1aacd75f04e9bb4379448523aa6c681620853884399530242d258d" :GIT-BLOB
+   "36a209994a825ebfb4af505b5e14391894f6a4ac" :TEXT
+   ";;;; C4: inventario nativo, nessuna esclusione entro lo scope Series.
+(eval-when (:compile-toplevel :load-toplevel :execute) (require :asdf))
+(declaim (optimize (safety 3) (debug 3)))
+(defun review-native-row (entry)
+  (let ((eh 0) (et 0) (bh 0) (bt 0) (missing nil))
+    (assert (= (length (cadr entry)) (length (cddr entry))))
+    (loop for path across (cadr entry) for bit across (cddr entry)
+          do (assert (member bit '(0 1)))
+             (if (member (car path) '(:then :else))
+                 (progn (incf bt) (incf bh bit))
+                 (progn (incf et) (incf eh bit)))
+             (when (= bit 0)
+               (push (list :kind (if (member (car path) '(:then :else)) :branch :expression)
+                           :path path) missing)))
+    (list :file (file-namestring (car entry)) :expressions-hit eh :expressions-total et
+          :branches-hit bh :branches-total bt :missing (nreverse missing))))
+(defun coverage-reader-self-test ()
+  (let ((row (review-native-row (list* \"fixture\" #((0) (1) (:then 2) (:else 2)) #*1010))))
+    (assert (= 1 (getf row :expressions-hit) (getf row :branches-hit)))
+    (assert (= 2 (getf row :expressions-total) (getf row :branches-total)))
+    (assert (equal (getf row :missing) '((:kind :expression :path (1)) (:kind :branch :path (:else 2))))))
+  (dolist (entry (list (list* \"bad-length\" #((0)) #*00)
+                      (list* \"bad-bit\" #((0) (1)) #(0 2))))
+    (assert (handler-case (progn (review-native-row entry) nil) (error () t))))
+  :passed)
+(defun coverage-reader-main ()
+  (coverage-reader-self-test)
+  (let* ((*read-eval* nil)
+         (native \"spikes/out/worker-series-coverage-01/coverage-state.lisp\")
+         (raw (with-open-file (input native :external-format :utf-8) (read input)))
+         (rows (sort (loop for entry in raw when (search \"/src/series/\" (car entry))
+                          collect (review-native-row entry)) #'string< :key (lambda (r) (getf r :file))))
+         (expected '((\"events.lisp\" 288 335 38 46) (\"io-events.lisp\" 185 220 23 32)
+                     (\"ownership.lisp\" 223 279 42 52) (\"package.lisp\" 0 1 0 0)
+                     (\"publication.lisp\" 156 203 16 22) (\"query.lisp\" 65 79 5 6)
+                     (\"retirement.lisp\" 166 182 14 18) (\"types.lisp\" 75 84 4 10)
+                     (\"worker-boundary.lisp\" 74 86 18 20) (\"worker-package.lisp\" 0 1 0 0)
+                     (\"worker-run.lisp\" 145 161 12 14) (\"worker-types.lisp\" 124 168 19 30)))
+         (counts (mapcar (lambda (r) (list (getf r :file) (getf r :expressions-hit)
+                                         (getf r :expressions-total) (getf r :branches-hit)
+                                         (getf r :branches-total))) rows))
+         (total (loop for col from 1 to 4 collect (loop for r in counts sum (nth col r))))
+         (bridge-total (loop for col from 1 to 4 collect
+                        (loop for r in counts when (uiop:string-prefix-p \"worker-\" (first r)) sum (nth col r)))))
+    (assert (equal counts expected))
+    (assert (equal total '(1501 1799 191 250)))
+    (assert (equal bridge-total '(343 416 49 64)))
+    (let ((report (list :schema-version 1 :kind :worker-series-coverage-audit :status :ok
+                        :native-path native :files rows :total total :bridge-total bridge-total
+                        :html-counts expected :html-counts-origin :manual-read-cover-index
+                        :self-test :passed :exclusions nil :mcdc-inferred nil)))
+      (with-open-file (output \"spikes/out/worker-series-coverage-audit.lisp\" :direction :output
+                              :if-exists :error :external-format :utf-8)
+        (let ((*print-readably* t)) (write report :stream output :pretty t) (terpri output)))
+      (format t \"~&Coverage audit PASS: 12 files, ~S; bridge ~S~%\" total bridge-total))))
+(unless (member :worker-serie-coverage-library *features*) (coverage-reader-main))
+")))

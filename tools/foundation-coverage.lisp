@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -31,6 +31,8 @@
                  '("/src/codec/cbor-scan.lisp" "/src/codec/cbor-scan-minimal.lisp"))
                 ((string= scope "cbor-write")
                  '("/src/codec/cbor-write.lisp"))
+                ((string= scope "cbor-string-write")
+                 '("/src/codec/cbor-string-write.lisp"))
                 ((string= scope "cbor-structure")
                  '("/src/codec/cbor-package.lisp" "/src/codec/cbor-space.lisp"
                    "/src/codec/cbor-scan-input.lisp" "/src/codec/cbor-scan-stack.lisp"
@@ -88,6 +90,12 @@
                         "/repo/tests/codec/cbor-write.lisp"
                         "/repo/src/codec/cbor-write.lisp.fake"
                         "/repo/src/codec/cbor-write.lisp/child"))
+               (scope-path-p "cbor-string-write" "/repo/src/codec/cbor-string-write.lisp")
+               (every (lambda (path) (not (scope-path-p "cbor-string-write" path)))
+                      '("/repo/src/codec/cbor-write.lisp" "/repo/src/codec/cbor-package.lisp"
+                        "/repo/src/codec/utf8.lisp" "/repo/tests/codec/cbor-string-write.lisp"
+                        "/repo/src/codec/cbor-string-write.lisp.fake"
+                        "/repo/src/codec/cbor-string-write.lisp/child"))
                (scope-path-p "codec" "/repo/src/codec/utf8.lisp")
                (every (lambda (name)
                         (scope-path-p "cbor-minimal" (format nil "/repo/src/codec/~A.lisp" name)))
@@ -141,6 +149,7 @@
                              ((string= scope "cbor-minimal") '#:arcdocdb.cbor.minimal.tests)
                              ((string= scope "cbor-minimal-scan") '#:arcdocdb.cbor.minimal.scan.tests)
                              ((string= scope "cbor-write") '#:arcdocdb.cbor.write.tests)
+                             ((string= scope "cbor-string-write") '#:arcdocdb.cbor.string.write.tests)
                              ((string= scope "cbor-structure") '#:arcdocdb.cbor.structure.tests)
                              ((string= scope "codec") '#:arcdocdb.utf8.tests)
                              ((string= scope "csn") '#:arcdocdb.csn.tests)
@@ -167,7 +176,8 @@
         (uiop:symbol-call '#:arcdocdb.cbor.minimal.tests '#:run)
         (uiop:symbol-call '#:arcdocdb.cbor.structure.tests '#:run)
         (uiop:symbol-call '#:arcdocdb.cbor.minimal.scan.tests '#:run)
-        (uiop:symbol-call '#:arcdocdb.cbor.write.tests '#:run)))
+        (uiop:symbol-call '#:arcdocdb.cbor.write.tests '#:run)
+        (uiop:symbol-call '#:arcdocdb.cbor.string.write.tests '#:run)))
     (sb-cover:save-coverage-in-file (merge-pathnames "coverage-state.lisp" directory))
     (let ((report (sb-cover:report directory :if-matches
                                   (lambda (path) (scope-path-p scope path)))))
@@ -179,8 +189,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get-performance" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
+                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get-performance" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

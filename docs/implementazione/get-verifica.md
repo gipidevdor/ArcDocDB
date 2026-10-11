@@ -77,21 +77,6 @@ Le suite `get` e `get-performance` e i rispettivi scope rimangono distinti.
 La CI completa sul commit pubblicato deve passare 906 prove dei moduli e due
 smoke; le precedenti esecuzioni complete restano associate ai propri freeze.
 
-### Preregistrazione dell’ultima integrazione ACTIVE
-
-L’aggiornamento `be9d2dd6816f8c999fcab383702c7a133c061902`, arrivato dopo il
-freeze locale, aggiunge sei file del resolver ACTIVE e ne collega il caricamento
-in ASD. Prima dell’integrazione si registra il seguente controllo: revisione
-indipendente della composizione e delle differenze, conservazione integrale
-dei run precedenti, quindi CI completa su Linux e macOS e controllo della
-documentazione sul commit finale pubblicato. Sono attese 906 prove dei moduli
-e due smoke, con 70 GET funzionali e 19 della suite prestazioni distinti.
-La CI deve attestare sorgenti identici prima/dopo e corrispondenti al commit
-esatto. I sette file GET, i tre file della suite e la dipendenza cache devono
-restare invariati rispetto al freeze locale; la copertura sopra resta riferita
-ai suoi run conservati. Questa integrazione verifica il caricamento del nuovo
-resolver, senza aggiungere qualifica funzionale ACTIVE o misure di prestazione.
-
 I record dei due freeze attestano rispettivamente 633 e 659 file sorgente
 identici prima e dopo le esecuzioni. I self-test reader e snapshot conservano
 le classificazioni previste dei worker terminati; i dieci spike sono conclusi
@@ -117,6 +102,21 @@ Due fixture che ripubblicavano lo stesso CSN sono state corrette durante la
 revisione, prima delle esecuzioni. Non è stata necessaria una modifica al
 codice di prodotto GET. Tracciabilità, link e conservazione vengono controllati
 dopo la pubblicazione locale; la CI viene verificata sul commit pubblicato.
+
+### Preregistrazione dell’ultima integrazione ACTIVE
+
+L’aggiornamento `be9d2dd6816f8c999fcab383702c7a133c061902`, arrivato dopo il
+freeze locale, aggiunge sei file del resolver ACTIVE e ne collega il caricamento
+in ASD. Prima dell’integrazione si registra il seguente controllo: revisione
+indipendente della composizione e delle differenze, conservazione integrale
+dei run precedenti, quindi CI completa su Linux e macOS e controllo della
+documentazione sul commit finale pubblicato. Sono attese 906 prove dei moduli
+e due smoke, con 70 GET funzionali e 19 della suite prestazioni distinti.
+La CI deve attestare sorgenti identici prima/dopo e corrispondenti al commit
+esatto. I sette file GET, i tre file della suite e la dipendenza cache devono
+restare invariati rispetto al freeze locale; la copertura riportata resta riferita
+ai suoi run conservati. Questa integrazione verifica il caricamento del nuovo
+resolver, senza aggiungere qualifica funzionale ACTIVE o misure di prestazione.
 
 ## Limiti
 

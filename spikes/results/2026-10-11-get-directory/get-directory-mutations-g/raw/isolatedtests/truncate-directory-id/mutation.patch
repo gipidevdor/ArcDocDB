@@ -1,0 +1,5 @@
+--- a/src/get-directory/read.lisp
++++ b/src/get-directory/read.lisp
+@@ -44,1 +44,1 @@
+-                  (map (cerca-mappa-directory-get context directory (ldb (byte 32 32) location))))
++                  (map (cerca-mappa-directory-get context directory (ldb (byte 31 32) location))))

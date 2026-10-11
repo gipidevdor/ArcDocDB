@@ -1,0 +1,39 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defun read-data (path) (arcdocdb.evidence:read-evidence path))
+(defun save-data (data path)
+  (with-open-file (stream path :direction :output :if-exists :error)
+    (let ((*print-readably* t)) (write data :stream stream :pretty t) (terpri stream))))
+(let ((directories nil) (commands nil) (raw nil) (command-records nil)
+      (base "spikes/results/2026-10-11-get-directory/"))
+  (dolist (directory (sort (uiop:subdirectories "spikes/out/") #'string< :key #'namestring))
+    (let ((name (car (last (pathname-directory directory))))
+          (path (merge-pathnames "report.lisp" directory)))
+      (when (and (digit-char-p (char name 0))
+                 (or (search "-command-" name) (search "-check-" name)) (probe-file path))
+        (let ((r (read-data path)))
+          (unless (and (eq :running (getf r :status))
+                       (member "spikes/results/2026-10-11-get-directory/assemble-manifest.lisp"
+                               (getf r :command) :test #'string=))
+          (unless (member (getf r :status) '(:ok :failed :source-changed))
+            (error "Campagna non terminale: ~A" path))
+          (push name directories)
+          (when (eq :command-verification (getf r :kind))
+            (push (namestring (truename path)) commands)
+            (push (cons name r) command-records)))))))
+  (dolist (name '("get-directory-coverage-self-a" "get-directory-coverage-b"
+                  "get-directory-coverage-c" "get-directory-coverage-d" "get-directory-coverage-g" "get-directory-coverage-self-g"
+                  "get-directory-mutations-b" "get-directory-mutations-c"
+                  "get-directory-mutations-d" "get-directory-mutations-g"))
+    (let* ((argument (format nil "spikes/out/~A/" name))
+           (producer (find-if (lambda (pair) (member argument (getf (cdr pair) :command) :test #'string=)) command-records)))
+      (unless (and producer (probe-file argument)) (error "Produttore raw assente: ~A" name))
+      (push (list :directory name :producer-directory (car producer)) raw)))
+  (save-data (list :schema-version 1 :kind :get-directory-command-manifest
+                   :commands (nreverse commands))
+             (merge-pathnames "command-manifest.lisp" base))
+  (save-data (list :schema-version 1 :kind :get-directory-publication-roots
+                   :directories (nreverse directories) :raw-roots (nreverse raw))
+             (merge-pathnames "publication-roots.lisp" base))
+  (format t "~S~%" (list :schema-version 1 :kind :manifest-assembly :status :ok
+                         :directories (length directories) :raw-roots (length raw))))

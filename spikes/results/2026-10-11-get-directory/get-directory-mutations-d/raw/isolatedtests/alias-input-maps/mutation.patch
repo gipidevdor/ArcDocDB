@@ -1,0 +1,5 @@
+--- a/src/get-directory/build.lisp
++++ b/src/get-directory/build.lisp
+@@ -52,1 +52,1 @@
+-          (owned (copy-seq maps)))
++          (owned maps))

@@ -1,0 +1,1266 @@
+(:SCHEMA-VERSION 1 :KIND :GET-DIRECTORY-MUTATION-CHILD :PHASE :TESTS :STATUS
+ :FAILED :ROOT
+ #A((125) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/")
+ :SOURCE-MANIFEST
+ ((:FILE "arcdocdb.asd" :ROLE :SYSTEM :SOURCE-MD5
+   #A((32) BASE-CHAR . "692a695f7129e0cc693cffb2983be35b"))
+  (:FILE "src/cache/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5d70197c8b64ad6f20c8be47a60c73ca"))
+  (:FILE "src/cache/clock.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3546cf7f5c5ed138068548c20064f499"))
+  (:FILE "src/cache/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "72f3a33ce27ddf94c49c495580520004"))
+  (:FILE "src/cache/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a1f6a8e7aa4faed88e984b39871d1e53"))
+  (:FILE "src/cache/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "82f937b7b08bd1696ad9c88da2e1c60c"))
+  (:FILE "src/cache/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a25648d870eaa4f0b6e1e3b2cf76e28e"))
+  (:FILE "src/cache/write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fc09021f74fb50aac57589614dae04d7"))
+  (:FILE "src/codec/cbor-float-minimal.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bc7a7b176e8cdd361b7c4306a1a4de4b"))
+  (:FILE "src/codec/cbor-header.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "6e8c6a49314c2f460aa6f8a1759200b6"))
+  (:FILE "src/codec/cbor-minimal.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ecd8fe950344059c629927b38fb6e4aa"))
+  (:FILE "src/codec/cbor-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "62285b01dc017898fc16588b6522bbbf"))
+  (:FILE "src/codec/cbor-scan-input.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f6488e987889432b375254021825dbe5"))
+  (:FILE "src/codec/cbor-scan-items.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "706c0baa4158bf272c4b0df17c1439d2"))
+  (:FILE "src/codec/cbor-scan-minimal.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "987e8ed576a21eb644ac1ef2e06edbda"))
+  (:FILE "src/codec/cbor-scan-stack.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cf1999ddb10f879aeefbeea853742d57"))
+  (:FILE "src/codec/cbor-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0c33aedcdb352e78a3c694cf796e6692"))
+  (:FILE "src/codec/cbor-space.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c33cdcc45f45218aa3e8bf26ce0ee575"))
+  (:FILE "src/codec/cbor-string-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b13e92b5f24a42fe283c17b649722b6a"))
+  (:FILE "src/codec/cbor-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "69e77bcd15b5413a815a65c5081229db"))
+  (:FILE "src/codec/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d885bd2a9860eb60aec1a775e5031d5e"))
+  (:FILE "src/codec/utf8.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0f67dd5c51bf6a63bc292ab4e2a280c2"))
+  (:FILE "src/csn/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1130012fc5613a5648d22ed8628be0e8"))
+  (:FILE "src/csn/registry.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a1cdb5661fc54beba5bf00e4765f3235"))
+  (:FILE "src/epochs/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "765d14c88cd288093a77a57930cd6999"))
+  (:FILE "src/epochs/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "875201dfab0a84efd40fe9828cc293c8"))
+  (:FILE "src/epochs/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "975b5f74e0c5a38ce978f4d9c7fcc6b8"))
+  (:FILE "src/epochs/reclaim.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "036dd02adf87d33c3ae2f40735c733fa"))
+  (:FILE "src/epochs/retire.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "653b974f310c09f6e2224a84acc43bbf"))
+  (:FILE "src/epochs/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "82253491f995f5bc153fb5ebf30d564c"))
+  (:FILE "src/execution/handoff.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "6b85eebe69366e78ed5fc5cc20735f00"))
+  (:FILE "src/execution/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cb5710d6c111cadb7121a50998a747fa"))
+  (:FILE "src/execution/queue.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8202843bddb817da4279ac959ae3f3c4"))
+  (:FILE "src/execution/ready-recycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "38d26f8c749dd946dfc4b9c57103a892"))
+  (:FILE "src/execution/ready-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a64d98c9ff429d6103d6e10ee1fd7980"))
+  (:FILE "src/execution/ready.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2c1892002f0599bb8273093031017520"))
+  (:FILE "src/execution/worker-boundary.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c24065d6c8d80d1be53994a0041743df"))
+  (:FILE "src/execution/worker-claim.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "babd0a78b4185af24ae1fef870c0fabb"))
+  (:FILE "src/execution/worker-run.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "aa34ca6bc07535e35fea723878d99f66"))
+  (:FILE "src/execution/worker-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0679ee07c46f69db330706303c70d8d2"))
+  (:FILE "src/execution/writer.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "73019644090e2971f2b54dc36e4491f5"))
+  (:FILE "src/foundation/batch.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ca642ea47e4bff76f78f5b6d7287d6bd"))
+  (:FILE "src/foundation/binary.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a06115175f450776762761dce25acdb8"))
+  (:FILE "src/foundation/conditions.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "942b596396c19815290a57830af2121b"))
+  (:FILE "src/foundation/crc32c.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "4db58e2f48bf77d751f1b83bb9f84b5c"))
+  (:FILE "src/foundation/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5ee593a112958d94163dab17c5aa4ba2"))
+  (:FILE "src/foundation/record.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c3ed0f09fa3fa6fe20c98e2ed6e69abe"))
+  (:FILE "src/get-directory/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cde24b2bf5c5637d5501b95bed47df31"))
+  (:FILE "src/get-directory/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "4233eef9d87bdec712d4f690bcb699a9"))
+  (:FILE "src/get-directory/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "74a694385f1aaf03ec87721545494119"))
+  (:FILE "src/get-directory/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "17c957d6934a31f4ed64313e756de2d2"))
+  (:FILE "src/get-resolver/active-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8d26428a4e17ad18990b8ee7d5f5b53a"))
+  (:FILE "src/get-resolver/active-directory.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "6d95f29b331d335175843f47ae44a6ea"))
+  (:FILE "src/get-resolver/active-preflight.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f13d422adb6aa9e8489352884137f25a"))
+  (:FILE "src/get-resolver/active-read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3da469a7aa1e682dd8f2e516ee451de1"))
+  (:FILE "src/get-resolver/active-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d6aaec49504a96f37c8ff1bc182c977b"))
+  (:FILE "src/get-resolver/active-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bd7182e9871fe82530d0c828e473ccde"))
+  (:FILE "src/get-resolver/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bbfb2082103e6712419e180ab972245c"))
+  (:FILE "src/get-resolver/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cbfb17bf1f65698fb7c7889953d02d1e"))
+  (:FILE "src/get-resolver/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1339edff0223dbf122f11ff0adbba61c"))
+  (:FILE "src/get-resolver/rows.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ca9002b81efd0aed9761cd1f78514762"))
+  (:FILE "src/get-resolver/scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "536e9dc4ed51072b8a6d1528d3ec18bf"))
+  (:FILE "src/get-resolver/sort.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2d869293ba47444c4721713d955c6254"))
+  (:FILE "src/get-resolver/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9df13bcc6908e9fa601d173a671e1ccf"))
+  (:FILE "src/get/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c5cc36884b238221cc13ca0c087ec7c2"))
+  (:FILE "src/get/lifecycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e70bfeddd694336bbd088e65f8761834"))
+  (:FILE "src/get/lookup.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "82258ec87aca513a508bc5dee8410dd6"))
+  (:FILE "src/get/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c72633d15c3488699072eb610ebde7c8"))
+  (:FILE "src/get/segment.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "811869eb6a197d3c4e26af4322e52652"))
+  (:FILE "src/get/target.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1b70dac05d6d2418909eb5105b808e81"))
+  (:FILE "src/get/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c394e5684de5e2d938991c7cb348b93c"))
+  (:FILE "src/hash/arithmetic.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b5c51802e607e3dd22de68204baf64e9"))
+  (:FILE "src/hash/blocks.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bef497b9a267c7306d4100000491c814"))
+  (:FILE "src/hash/hash64.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "886b7c08b9929283e8968831cbe5c039"))
+  (:FILE "src/hash/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2d9060e41bc5252067d35e59ac70ee06"))
+  (:FILE "src/index/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "65076c355c099b5dc73d185948d3bec4"))
+  (:FILE "src/index/hash-digests.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "43d2209225707352daec6186ef95a805"))
+  (:FILE "src/index/hash-seed.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "45ce41749bc6fa638539815d3f802b96"))
+  (:FILE "src/index/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "598a9b65e73151c924b2cdcaf6d96705"))
+  (:FILE "src/index/primary-arena.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a319691e3e28b7ea7b927de490cf69ba"))
+  (:FILE "src/index/primary-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ff2cfbb865290d7a1510fdf6877c7229"))
+  (:FILE "src/index/primary-core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fa52433eae199ceeb874bf2bc47afca7"))
+  (:FILE "src/index/primary-directory.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1dd67c527257e43f17e006644ecdbd00"))
+  (:FILE "src/index/primary-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d65cfce399b04f905bf969929962e59a"))
+  (:FILE "src/index/primary-probe.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "699ce3f1615296fc27fcde3e0d63a4bc"))
+  (:FILE "src/index/primary-read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3f317a0d3c5ee86a73651aad36135cc3"))
+  (:FILE "src/index/primary-relocate.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5155959766645d3172ae5e73c58cc071"))
+  (:FILE "src/index/primary-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a59eab6425a60fa2656f86bf87d5c9ac"))
+  (:FILE "src/index/primary-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e8e31e599356e592af29c0cc4604872b"))
+  (:FILE "src/index/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5b22b90cfe8534086f6aff96d156713e"))
+  (:FILE "src/index/rebuild-budget.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0417dd41cb3ec1d62dfd913c19f810ad"))
+  (:FILE "src/index/rebuild-copy.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8befbbd00ed5c31c1487a11887eba495"))
+  (:FILE "src/index/rebuild-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1188e7a64a7a5d9482c1233cb9acb452"))
+  (:FILE "src/index/rebuild.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a450cac8071513365267e7024cbe94b0"))
+  (:FILE "src/index/relocate.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "475dd7d5809a836f01544b447cc8df27"))
+  (:FILE "src/index/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5157fd03ee806ee998ad8f0002d56268"))
+  (:FILE "src/index/validation.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3384cadf737c7d80c004222022a281f6"))
+  (:FILE "src/index/write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f0c8c579cd7db466d243ed3ea9f8e8aa"))
+  (:FILE "src/io/flush.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "716866194d6b9f076e102e84187229c0"))
+  (:FILE "src/io/lifecycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "11c7103efbe733bbf0a13927f23c3d34"))
+  (:FILE "src/io/native.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9500cfb800603de002d6d2b24f1bf056"))
+  (:FILE "src/io/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c9380ad46a1d7acf41655aaed20db478"))
+  (:FILE "src/io/transfer.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a5e7108e80664eb3b562fbd7e680801f"))
+  (:FILE "src/io/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "db8497f9cff35b1ee261f1f410f46ca6"))
+  (:FILE "src/mvcc/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f188d1dbd5d0adb49f53acf09157aef9"))
+  (:FILE "src/mvcc/snapshots-core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8bb066aab61a18eff175b9edb11e42a2"))
+  (:FILE "src/mvcc/snapshots-csn.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0e9365e674d1584b111f915ce1f58634"))
+  (:FILE "src/mvcc/snapshots-lifecycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ff98aea5cb9a7ae2671f6a887a003725"))
+  (:FILE "src/mvcc/snapshots-read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ae3ad96269b5e711a9dbb455f3c0ce48"))
+  (:FILE "src/mvcc/snapshots-register.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2d5a795bcefd605c75da91c725ae83a2"))
+  (:FILE "src/mvcc/snapshots-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "475517bd7ba04a1c37a82efeb8ff73d9"))
+  (:FILE "src/mvcc/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a9bc70eab6720b5c6f8503178e2c966b"))
+  (:FILE "src/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "becf5c78049c85f2c05cd1ef54454032"))
+  (:FILE "src/read/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "4040905f4a64ba704a480d82e87ec748"))
+  (:FILE "src/read/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "7d74d9decc5a0bc9f9331d89bd503e21"))
+  (:FILE "src/read/task.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9e0baf22c53329d393e047c669679645"))
+  (:FILE "src/read/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9c37ff8237fcc9fe9ae4f44316e854e3"))
+  (:FILE "src/recovery/decisions-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1a51ef4a488bb9fde2ff7d47bae01379"))
+  (:FILE "src/recovery/decisions-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cbdc30f93109c474e1fc25066c9b9b13"))
+  (:FILE "src/recovery/decisions-query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f782d1137b8ce342b91c9999cfb7accc"))
+  (:FILE "src/recovery/decisions-radix.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "852149de4c289b8e067602780378d87a"))
+  (:FILE "src/recovery/decisions-sort.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b33e57a643f2fca810846f6226366253"))
+  (:FILE "src/recovery/decisions-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f4433fd19ebc7239dbc2628c39f3ecdb"))
+  (:FILE "src/recovery/inventory-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9bd6820c4feba3e552aab1a4edd87861"))
+  (:FILE "src/recovery/inventory-query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fcea263de1938767772e5b11411ecd5e"))
+  (:FILE "src/recovery/inventory-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "78c136d5838dcfe3019d9069643a8d8f"))
+  (:FILE "src/recovery/manifest-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bf65b1731eab6e0572461ef5cc60fc40"))
+  (:FILE "src/recovery/manifest-decode.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "67975249aaabd751757cdfb9222cc3c4"))
+  (:FILE "src/recovery/manifest-fold.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e0d2498db1011e857b7b0daa1934f187"))
+  (:FILE "src/recovery/manifest-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "37ace42844c11b52446ee1fc500b8e0b"))
+  (:FILE "src/recovery/manifest-query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ebd7a54adea2213294a887e6d4db0927"))
+  (:FILE "src/recovery/manifest-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "7b1d4054415faca7e5fca59ad83b4d4a"))
+  (:FILE "src/recovery/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1c1c8ad0cd15b1703a2fe19cbf3f13c2"))
+  (:FILE "src/recovery/scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fcacd15460db25ea9cc4036065f9f096"))
+  (:FILE "src/series/events.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "32b2156739a6f2ca996abb91df0a2603"))
+  (:FILE "src/series/io-events.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b6026a8b7bb64b45c37a65effda70d8e"))
+  (:FILE "src/series/ownership.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "de1aca16a35d34d16aba12ff541c0d2b"))
+  (:FILE "src/series/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "59e3c59c90d8d0fc5731b87496a785aa"))
+  (:FILE "src/series/publication.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "056d2c6a67c9d9f2bf9fe2d2c348d53c"))
+  (:FILE "src/series/query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cb0d91405325b508e6b2ab24d178de7a"))
+  (:FILE "src/series/retirement.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b8e04971b8ad75a1bd0c722997badfd2"))
+  (:FILE "src/series/routing-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d6924deff152b941bd49f0bb200b4197"))
+  (:FILE "src/series/routing-select.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e0f987d8767744050ec4d1b3ecb699ed"))
+  (:FILE "src/series/routing-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ce649df47dd38888d5103c98345f7e41"))
+  (:FILE "src/series/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ab19ec8d15af91511e817858c41cebc8"))
+  (:FILE "src/series/worker-boundary.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2340e0c9074f7b1bf80c74f774986bc5"))
+  (:FILE "src/series/worker-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a93ce2e84e8aee647b5083ad1d2b899b"))
+  (:FILE "src/series/worker-run.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f0fee18adf357bad98e8a3c3e8c70c0c"))
+  (:FILE "src/series/worker-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2b23d468be0165fa009c5ebd5d1bbe23"))
+  (:FILE "src/storage/compaction-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1cda77a357ab2147035993b72d135a37"))
+  (:FILE "src/storage/control-payload.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cb64f806b8d69eb42d865b4abfff0b27"))
+  (:FILE "src/storage/formats.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "061147be459d8d3b08c661bd3f91d152"))
+  (:FILE "src/storage/log-header.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b53d27dcc9f4badf18b50519c50bc614"))
+  (:FILE "src/storage/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f86bd104f20616a76b42c02227f72844"))
+  (:FILE "src/storage/payload-record.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8c03f9c01dcb30f2d3970a5694968ecf"))
+  (:FILE "src/storage/payload-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c4ece3c4fa8d9492d2a80df7c0a4f5a0"))
+  (:FILE "src/storage/segment-header.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d6812fa59bf8fd1252fbf85a9bfa3896"))
+  (:FILE "src/wal/builder.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a229f76f7036f3573a6e528dcd390a19"))
+  (:FILE "src/wal/csn.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "42b990e3b254e6fb488c0ab91b6a6502"))
+  (:FILE "src/wal/executor.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c0340924c9130e14d0e8efedeec078f1"))
+  (:FILE "src/wal/group.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "7a0e7c99ab70b4720cbb091156560f5e"))
+  (:FILE "src/wal/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "96c41b1d417135a24fc65659ea3abe11"))
+  (:FILE "src/wal/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f799f27a8ac1a4c736c04796c1e543f9"))
+  (:FILE "tests/foundation/support.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "758adad069aec2f9dbe0635797314ff6"))
+  (:FILE "tests/get-directory/support.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "3f868ebe4307ad4238b314c37eceed9a"))
+  (:FILE "tests/get-directory/construction.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "1137938073e71d6d8d62c751fbad05d5"))
+  (:FILE "tests/get-directory/read.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "e08a9af870079bc5f7a5826001ca20bd"))
+  (:FILE "tests/get-directory/threads.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "63dd01c852de1399c2c82274d481d257")))
+ :SUITE-FILES
+ ("tests/foundation/support.lisp" "tests/get-directory/support.lisp"
+  "tests/get-directory/construction.lisp" "tests/get-directory/read.lisp"
+  "tests/get-directory/threads.lisp")
+ :REGISTERED-TESTS
+ (#A((59) BASE-CHAR
+     . "TEST-REQ-STO-003-DIRECTORY-NATIVE-READ-NONZERO-BUFFER-START")
+  #A((47) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-EMPTY-AND-PAYLOAD12N")
+  #A((53) BASE-CHAR . "TEST-REQ-AFF-008-DIRECTORY-BUDGET-EXACT-AND-ONE-SHORT")
+  #A((57) BASE-CHAR
+     . "TEST-REQ-AFF-008-DIRECTORY-INVALID-CONFIGURATION-AND-MAPS")
+  #A((45) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-INPUT-ARRAY-COPIED")
+  #A((58) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-DUPLICATES-AND-DESCENDING-ORDER")
+  #A((60) BASE-CHAR
+     . "TEST-REQ-CMP-007-DIRECTORY-CANONICAL-OWNER-AND-FOREIGN-OWNER")
+  #A((61) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-SEGMENT-ZERO-HIGHBITS-AND-LIFETIME")
+  #A((52) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-65536-FIRST-LAST-SEARCH17")
+  #A((61) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-NATIVE-READ-V1-V2-VALUES-AND-MAXID")
+  #A((57) BASE-CHAR
+     . "TEST-REQ-CCH-002-DIRECTORY-CACHE-ENUMS-AND-PRIVATE-OUTPUT")
+  #A((62) BASE-CHAR
+     . "TEST-REQ-CCH-004-DIRECTORY-CACHE-VERIFY-FAILED-NATIVE-FALLBACK")
+  #A((60) BASE-CHAR
+     . "TEST-REQ-CCH-001-DIRECTORY-CACHE64-NO-EVICTION-AND-EVERY-HIT")
+  #A((55) BASE-CHAR
+     . "TEST-REQ-FOR-004-DIRECTORY-PREPARED-WRITER-OUTCOME-SEAL")
+  #A((63) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-MISSING-PUBLISHED-CANDIDATE-FAILSTOP")
+  #A((62) BASE-CHAR
+     . "TEST-REQ-CMP-007-DIRECTORY-WRONG-OWNER-CLEANUP-ALL-ENTRYPOINTS")
+  #A((53) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-CANDIDATE-CSN-LOW-AND-HIGH")
+  #A((54) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-CANDIDATE-SIZE-AND-HIGHBITS")
+  #A((66) BASE-CHAR
+     . "TEST-REQ-FOR-004-DIRECTORY-SOURCE-KEY-MISMATCH-NO-AUTHORIZED-VALUE")
+  #A((54) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-SHAPE-FI-BEFORE-SOURCE-READ")
+  #A((69) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-PRIVATE-NIL-ENTRY-SHAPE-FI-ALL-ENTRYPOINTS")
+  #A((54) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-CLOSED-FD-AFTER-PUBLICATION")
+  #A((62) BASE-CHAR
+     . "TEST-REQ-CON-004-DIRECTORY-STATE-BEFORE-CLEANUP-AND-REENTRANCY")
+  #A((62) BASE-CHAR
+     . "TEST-REQ-CON-004-DIRECTORY-THROW-DURING-NATIVE-READ-CLEANS-PIN")
+  #A((61) BASE-CHAR
+     . "TEST-REQ-MVC-004-DIRECTORY-FRESH-SNAPSHOT-FINAL-AUTHORIZATION")
+  #A((63) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-PRIMARY-ABSENCE-AND-SNAPSHOT-HISTORY")
+  #A((65) BASE-CHAR
+     . "TEST-REQ-CON-004-DIRECTORY-BUFFER-REQUIRED-RESTARTS-IN-NEW-WORKER")
+  #A((64) BASE-CHAR
+     . "TEST-REQ-CON-004-DIRECTORY-FOUR-READERS-PRIVATE-OUTPUT-PINS-ZERO")
+  #A((65) BASE-CHAR
+     . "TEST-REQ-CON-004-DIRECTORY-THREAD-TIMEOUTS-AND-CONDITION-TRANSFER"))
+ :SELECTED-TEST NIL :PRODUCT-COMPILED T :SUITE-COMPILED T :COMPILED-TARGET
+ (:FILE "src/get-directory/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+  #A((32) BASE-CHAR . "74a694385f1aaf03ec87721545494119") :FASL
+  #A((157) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-directory/read.fasl")
+  :FASL-MD5 #A((32) BASE-CHAR . "325e83a8c9ed0cfc78940daf13bf79d4"))
+ :COMPILED-PRODUCT
+ ((:FILE "src/cache/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5d70197c8b64ad6f20c8be47a60c73ca") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/cache/build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "157df1c83851ec0e57748d7bc8b9ce16"))
+  (:FILE "src/cache/clock.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3546cf7f5c5ed138068548c20064f499") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/cache/clock.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "eeabac8a51fee49e99a1c375dd0c34ce"))
+  (:FILE "src/cache/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "72f3a33ce27ddf94c49c495580520004") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/cache/core.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "83c4d4d1710b2779aab29401b3964baa"))
+  (:FILE "src/cache/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a1f6a8e7aa4faed88e984b39871d1e53") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/cache/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "fa663afbbd72344216bfe1a15bd1c502"))
+  (:FILE "src/cache/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "82f937b7b08bd1696ad9c88da2e1c60c") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/cache/read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c121d6319c8204b770973225629f2a82"))
+  (:FILE "src/cache/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a25648d870eaa4f0b6e1e3b2cf76e28e") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/cache/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "8c17a25f4892a00ce2253c3e569bf139"))
+  (:FILE "src/cache/write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fc09021f74fb50aac57589614dae04d7") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/cache/write.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "b3c8413e32a866ee63cabd4123b86a65"))
+  (:FILE "src/codec/cbor-float-minimal.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bc7a7b176e8cdd361b7c4306a1a4de4b") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-float-minimal.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "51f41de50a4e316245e932ebe6e8b4ff"))
+  (:FILE "src/codec/cbor-header.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "6e8c6a49314c2f460aa6f8a1759200b6") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-header.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "aed303163dd9c57d57859c76d5ef2b45"))
+  (:FILE "src/codec/cbor-minimal.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ecd8fe950344059c629927b38fb6e4aa") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-minimal.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "8002020363279c272f6b8b1b9487cc59"))
+  (:FILE "src/codec/cbor-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "62285b01dc017898fc16588b6522bbbf") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "3d9964868d84485859d54346a3e89b1c"))
+  (:FILE "src/codec/cbor-scan-input.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f6488e987889432b375254021825dbe5") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-scan-input.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "5c8f535599074c36cfa6762cdbd1be05"))
+  (:FILE "src/codec/cbor-scan-items.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "706c0baa4158bf272c4b0df17c1439d2") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-scan-items.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "e762237f50387821db6b3372fe0dd868"))
+  (:FILE "src/codec/cbor-scan-minimal.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "987e8ed576a21eb644ac1ef2e06edbda") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-scan-minimal.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "79e5c273f9c5688eda2440c75497322e"))
+  (:FILE "src/codec/cbor-scan-stack.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cf1999ddb10f879aeefbeea853742d57") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-scan-stack.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "784df52255c1e28a50b4016de3f7138b"))
+  (:FILE "src/codec/cbor-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0c33aedcdb352e78a3c694cf796e6692") :FASL
+   #A((154) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-scan.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "cb7d0e8123a307cc40802d88dce60ebc"))
+  (:FILE "src/codec/cbor-space.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c33cdcc45f45218aa3e8bf26ce0ee575") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-space.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "0af7a79b7afcd4b90324d05dcc4d2b66"))
+  (:FILE "src/codec/cbor-string-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b13e92b5f24a42fe283c17b649722b6a") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-string-write.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4d3442e08e8205c1268c4327cf0b4ba0"))
+  (:FILE "src/codec/cbor-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "69e77bcd15b5413a815a65c5081229db") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/cbor-write.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c2503b09386b283e1bb039c4cf0d0f0d"))
+  (:FILE "src/codec/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d885bd2a9860eb60aec1a775e5031d5e") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "bf47a9a9bbffe5185645539a9557dc1a"))
+  (:FILE "src/codec/utf8.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0f67dd5c51bf6a63bc292ab4e2a280c2") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/codec/utf8.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "b82783c41f5196459813ad5455ce8a94"))
+  (:FILE "src/csn/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1130012fc5613a5648d22ed8628be0e8") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/csn/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "a0b367aa64c426aeef0a8f760a233b53"))
+  (:FILE "src/csn/registry.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a1cdb5661fc54beba5bf00e4765f3235") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/csn/registry.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "5dbe27d242ea76eac4607f733a45a19d"))
+  (:FILE "src/epochs/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "765d14c88cd288093a77a57930cd6999") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/epochs/core.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1e8170c8d8623c87f0d7a735abe96fde"))
+  (:FILE "src/epochs/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "875201dfab0a84efd40fe9828cc293c8") :FASL
+   #A((153) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/epochs/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "60d53475ea0840b8d74bbd3895234c93"))
+  (:FILE "src/epochs/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "975b5f74e0c5a38ce978f4d9c7fcc6b8") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/epochs/read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "a1ab0e5e6099c47ae5ccf4c41144734d"))
+  (:FILE "src/epochs/reclaim.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "036dd02adf87d33c3ae2f40735c733fa") :FASL
+   #A((153) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/epochs/reclaim.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "15e0bb0f0b75a87a691906c19a45a790"))
+  (:FILE "src/epochs/retire.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "653b974f310c09f6e2224a84acc43bbf") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/epochs/retire.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "405cf62555f3d7f275715355e8171e10"))
+  (:FILE "src/epochs/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "82253491f995f5bc153fb5ebf30d564c") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/epochs/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "cacb4bc2498bbfa9b14361894fb16bbc"))
+  (:FILE "src/execution/handoff.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "6b85eebe69366e78ed5fc5cc20735f00") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/handoff.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "3e7adf5e5b835dc4d2b4ec2edb87d991"))
+  (:FILE "src/execution/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cb5710d6c111cadb7121a50998a747fa") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "2d3d1637a6afd1532aa60d1f5e66068c"))
+  (:FILE "src/execution/queue.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8202843bddb817da4279ac959ae3f3c4") :FASL
+   #A((154) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/queue.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "75d114d313470590d520881c3f431254"))
+  (:FILE "src/execution/ready-recycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "38d26f8c749dd946dfc4b9c57103a892") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/ready-recycle.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f2b9389db3cd5ea2de7e52d05deb35c0"))
+  (:FILE "src/execution/ready-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a64d98c9ff429d6103d6e10ee1fd7980") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/ready-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "885dd452acd46ebf918d915c4c3bd95c"))
+  (:FILE "src/execution/ready.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2c1892002f0599bb8273093031017520") :FASL
+   #A((154) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/ready.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "24eb72abed974e5518d68769860e6597"))
+  (:FILE "src/execution/worker-boundary.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c24065d6c8d80d1be53994a0041743df") :FASL
+   #A((164) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/worker-boundary.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1977228fffe78efa6a8c6ac254d84382"))
+  (:FILE "src/execution/worker-claim.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "babd0a78b4185af24ae1fef870c0fabb") :FASL
+   #A((161) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/worker-claim.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "79797820e762f64be0ce1dd3cd888d71"))
+  (:FILE "src/execution/worker-run.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "aa34ca6bc07535e35fea723878d99f66") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/worker-run.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "75d93bcbcb7cbac1c10e87b9465f636e"))
+  (:FILE "src/execution/worker-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0679ee07c46f69db330706303c70d8d2") :FASL
+   #A((161) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/worker-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "468c4ec7c1941f62f146baef31848998"))
+  (:FILE "src/execution/writer.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "73019644090e2971f2b54dc36e4491f5") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/execution/writer.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "d9dcf3f1eafc4998880acd9f338a5b0f"))
+  (:FILE "src/foundation/batch.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ca642ea47e4bff76f78f5b6d7287d6bd") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/foundation/batch.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c8dbc7c7762decaa5669b0068b9a7b0e"))
+  (:FILE "src/foundation/binary.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a06115175f450776762761dce25acdb8") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/foundation/binary.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f2f73a2528c8cc1a9a8d79d1587d9a8d"))
+  (:FILE "src/foundation/conditions.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "942b596396c19815290a57830af2121b") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/foundation/conditions.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "cad9cf1deb7327daa7be6c4ed0ffd502"))
+  (:FILE "src/foundation/crc32c.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "4db58e2f48bf77d751f1b83bb9f84b5c") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/foundation/crc32c.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "8b650740d0d5d921f26fce7dc41c352b"))
+  (:FILE "src/foundation/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5ee593a112958d94163dab17c5aa4ba2") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/foundation/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "9a40ac8577efcc918170ab23c4d3c345"))
+  (:FILE "src/foundation/record.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c3ed0f09fa3fa6fe20c98e2ed6e69abe") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/foundation/record.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "e3222548a53bc70171ac8d7e01290bd7"))
+  (:FILE "src/get-directory/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cde24b2bf5c5637d5501b95bed47df31") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-directory/build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "227b9877804b52eebb6c6f449da08c06"))
+  (:FILE "src/get-directory/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "4233eef9d87bdec712d4f690bcb699a9") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-directory/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "02e38e4cb776395840ada1b2a49040c4"))
+  (:FILE "src/get-directory/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "74a694385f1aaf03ec87721545494119") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-directory/read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "325e83a8c9ed0cfc78940daf13bf79d4"))
+  (:FILE "src/get-directory/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "17c957d6934a31f4ed64313e756de2d2") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-directory/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "406641cb6ad2edff8acaf7151f3f740c"))
+  (:FILE "src/get-resolver/active-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8d26428a4e17ad18990b8ee7d5f5b53a") :FASL
+   #A((164) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/active-build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "80f86ba57b58478b0c961bc97f8d7faa"))
+  (:FILE "src/get-resolver/active-directory.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "6d95f29b331d335175843f47ae44a6ea") :FASL
+   #A((168) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/active-directory.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "143690d23c41f2e65520649ba5f72682"))
+  (:FILE "src/get-resolver/active-preflight.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f13d422adb6aa9e8489352884137f25a") :FASL
+   #A((168) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/active-preflight.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f25ce5939b08763450ce9fb6b5a5baef"))
+  (:FILE "src/get-resolver/active-read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3da469a7aa1e682dd8f2e516ee451de1") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/active-read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "428133230dcf4f231a14ea9dca4525a7"))
+  (:FILE "src/get-resolver/active-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d6aaec49504a96f37c8ff1bc182c977b") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/active-scan.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "95ad6637e13f3849cdf421c41b949dab"))
+  (:FILE "src/get-resolver/active-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bd7182e9871fe82530d0c828e473ccde") :FASL
+   #A((164) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/active-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1afc390dcf1566fb718af81acaf3f6c3"))
+  (:FILE "src/get-resolver/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bbfb2082103e6712419e180ab972245c") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "bce58f394e5a4230fe5818e5f7041374"))
+  (:FILE "src/get-resolver/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cbfb17bf1f65698fb7c7889953d02d1e") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "2e734ff391ea9444875d976e05272f18"))
+  (:FILE "src/get-resolver/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1339edff0223dbf122f11ff0adbba61c") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "b5a371e189917e4ddd8db6a2257033ea"))
+  (:FILE "src/get-resolver/rows.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ca9002b81efd0aed9761cd1f78514762") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/rows.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "b42a31a6931dff3e9e5aaa3496256d3b"))
+  (:FILE "src/get-resolver/scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "536e9dc4ed51072b8a6d1528d3ec18bf") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/scan.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c53c1eb9efc4c7da25b96b8d34b5451a"))
+  (:FILE "src/get-resolver/sort.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2d869293ba47444c4721713d955c6254") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/sort.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "aae201e3ee8527ad6b497a66e30ce132"))
+  (:FILE "src/get-resolver/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9df13bcc6908e9fa601d173a671e1ccf") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get-resolver/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "28e5785b55ff1bfaa2cb5ac2957f80ba"))
+  (:FILE "src/get/build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c5cc36884b238221cc13ca0c087ec7c2") :FASL
+   #A((148) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get/build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "24eafec1ab7eaa78979926a40137fba7"))
+  (:FILE "src/get/lifecycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e70bfeddd694336bbd088e65f8761834") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get/lifecycle.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f3f5863d21de90d7bd7c93d3cc4dbe65"))
+  (:FILE "src/get/lookup.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "82258ec87aca513a508bc5dee8410dd6") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get/lookup.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1c7242b2c16a1dbad88837d73bdde7b9"))
+  (:FILE "src/get/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c72633d15c3488699072eb610ebde7c8") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "dca9ad36c92fd9b742c397e3cf3003b4"))
+  (:FILE "src/get/segment.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "811869eb6a197d3c4e26af4322e52652") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get/segment.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "de030dcc51863203cdec2a3d1f8fc679"))
+  (:FILE "src/get/target.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1b70dac05d6d2418909eb5105b808e81") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get/target.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "9ecd3fab6c52de11a6c195ed71b1bfe5"))
+  (:FILE "src/get/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c394e5684de5e2d938991c7cb348b93c") :FASL
+   #A((148) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/get/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "0989581c7abc64564b1f1a170e19d249"))
+  (:FILE "src/hash/arithmetic.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b5c51802e607e3dd22de68204baf64e9") :FASL
+   #A((154) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/hash/arithmetic.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "0cba5247bdbe53a43138f33fe85ad85b"))
+  (:FILE "src/hash/blocks.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bef497b9a267c7306d4100000491c814") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/hash/blocks.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "19a9b49eeb1f50e1bd0fa88c9604b3c8"))
+  (:FILE "src/hash/hash64.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "886b7c08b9929283e8968831cbe5c039") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/hash/hash64.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "82ef4617a5ff0bb12b5d2d8f0ff580c3"))
+  (:FILE "src/hash/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2d9060e41bc5252067d35e59ac70ee06") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/hash/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "eea49efbb3f18672dc8869348781db74"))
+  (:FILE "src/index/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "65076c355c099b5dc73d185948d3bec4") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/core.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "22c798f6e3af9eaebab21fe8479cae73"))
+  (:FILE "src/index/hash-digests.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "43d2209225707352daec6186ef95a805") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/hash-digests.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "ec009de362ce78de2a8207389da86736"))
+  (:FILE "src/index/hash-seed.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "45ce41749bc6fa638539815d3f802b96") :FASL
+   #A((154) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/hash-seed.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f57cd122c8f611f2c5ae8ac12fe1cd53"))
+  (:FILE "src/index/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "598a9b65e73151c924b2cdcaf6d96705") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "d90a9cbc9555fe287b084cbe688366ee"))
+  (:FILE "src/index/primary-arena.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a319691e3e28b7ea7b927de490cf69ba") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-arena.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "977a92442a81c283e917a6395bc7b955"))
+  (:FILE "src/index/primary-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ff2cfbb865290d7a1510fdf6877c7229") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4dd6b7855d18b148d1c1e549093df637"))
+  (:FILE "src/index/primary-core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fa52433eae199ceeb874bf2bc47afca7") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-core.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "75ee9fcedf296b676ff95381e0032475"))
+  (:FILE "src/index/primary-directory.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1dd67c527257e43f17e006644ecdbd00") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-directory.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4a8f62dc6570e3692117751d9c60bd57"))
+  (:FILE "src/index/primary-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d65cfce399b04f905bf969929962e59a") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f3643f51510c1ce6249e14d5799ff567"))
+  (:FILE "src/index/primary-probe.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "699ce3f1615296fc27fcde3e0d63a4bc") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-probe.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "7580e71c5a8b206509e8f0d8df0dbccc"))
+  (:FILE "src/index/primary-read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3f317a0d3c5ee86a73651aad36135cc3") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "3ff54b95e7974e81f433a5e8015c1311"))
+  (:FILE "src/index/primary-relocate.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5155959766645d3172ae5e73c58cc071") :FASL
+   #A((161) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-relocate.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1d7d7c95cc19a778a5761571a4acae5c"))
+  (:FILE "src/index/primary-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a59eab6425a60fa2656f86bf87d5c9ac") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c3ade030c26b260d875bb70919b5f21b"))
+  (:FILE "src/index/primary-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e8e31e599356e592af29c0cc4604872b") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/primary-write.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "099960ebf93bc65749778757cdd92b19"))
+  (:FILE "src/index/read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5b22b90cfe8534086f6aff96d156713e") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "08db470d89465119c66dfd61e972d553"))
+  (:FILE "src/index/rebuild-budget.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0417dd41cb3ec1d62dfd913c19f810ad") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/rebuild-budget.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "20ce80d4361fbbb17449c25a89d65c41"))
+  (:FILE "src/index/rebuild-copy.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8befbbd00ed5c31c1487a11887eba495") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/rebuild-copy.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "e277e5496070ce517bdbd7b9d0d9c762"))
+  (:FILE "src/index/rebuild-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1188e7a64a7a5d9482c1233cb9acb452") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/rebuild-scan.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "690adc5675ab93cfc7d7b2140b253052"))
+  (:FILE "src/index/rebuild.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a450cac8071513365267e7024cbe94b0") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/rebuild.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "7b7a05c27ee0675e1c05179dfaeae5cd"))
+  (:FILE "src/index/relocate.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "475dd7d5809a836f01544b447cc8df27") :FASL
+   #A((153) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/relocate.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1d6834596b987951eef3c3e1c1c72346"))
+  (:FILE "src/index/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "5157fd03ee806ee998ad8f0002d56268") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "a061e9d1811c62ed7e707ed48f18480d"))
+  (:FILE "src/index/validation.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "3384cadf737c7d80c004222022a281f6") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/validation.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "334c0ce65b64ee4539ee3d1bbda7a9c9"))
+  (:FILE "src/index/write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f0c8c579cd7db466d243ed3ea9f8e8aa") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/index/write.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "d287f482f0fe70f8b26ec5eeb607192a"))
+  (:FILE "src/io/flush.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "716866194d6b9f076e102e84187229c0") :FASL
+   #A((147) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/io/flush.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4365212447888fe4b6a3da5e4c3a84e0"))
+  (:FILE "src/io/lifecycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "11c7103efbe733bbf0a13927f23c3d34") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/io/lifecycle.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "29a015b53a071a5c72d035bd9567b5f0"))
+  (:FILE "src/io/native.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9500cfb800603de002d6d2b24f1bf056") :FASL
+   #A((148) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/io/native.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "290bfbe803230165c3b76f433eab09cc"))
+  (:FILE "src/io/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c9380ad46a1d7acf41655aaed20db478") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/io/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "2483facbbc8fa38d98030ff7434578ad"))
+  (:FILE "src/io/transfer.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a5e7108e80664eb3b562fbd7e680801f") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/io/transfer.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "40428afce139cddd8b7ea57738a553f7"))
+  (:FILE "src/io/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "db8497f9cff35b1ee261f1f410f46ca6") :FASL
+   #A((147) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/io/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "9cb3cbf01d002782c79774ea7fa5a842"))
+  (:FILE "src/mvcc/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f188d1dbd5d0adb49f53acf09157aef9") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "5e64fb3d7958d652d9ab49ef33332b72"))
+  (:FILE "src/mvcc/snapshots-core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8bb066aab61a18eff175b9edb11e42a2") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/snapshots-core.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "103b34530a37abc074410fcf74dea67f"))
+  (:FILE "src/mvcc/snapshots-csn.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "0e9365e674d1584b111f915ce1f58634") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/snapshots-csn.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "b923420e91b57b68d5372acc5ecc15c3"))
+  (:FILE "src/mvcc/snapshots-lifecycle.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ff98aea5cb9a7ae2671f6a887a003725") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/snapshots-lifecycle.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "b8a5964e7daebc877bb8934ee52eb68d"))
+  (:FILE "src/mvcc/snapshots-read.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ae3ad96269b5e711a9dbb455f3c0ce48") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/snapshots-read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "46b2fdee51ccf9f860af84d19c17fe0f"))
+  (:FILE "src/mvcc/snapshots-register.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2d5a795bcefd605c75da91c725ae83a2") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/snapshots-register.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "da294979b94fbeedb38dce8093a3c4a2"))
+  (:FILE "src/mvcc/snapshots-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "475517bd7ba04a1c37a82efeb8ff73d9") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/snapshots-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "67d2d955082b2b2f17e7de3c6d90178f"))
+  (:FILE "src/mvcc/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a9bc70eab6720b5c6f8503178e2c966b") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/mvcc/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "e34d5c31689c2e84de619be6651eadb1"))
+  (:FILE "src/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "becf5c78049c85f2c05cd1ef54454032") :FASL
+   #A((146) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "ecaaffbe764af1e232d8e61ce3d71708"))
+  (:FILE "src/read/core.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "4040905f4a64ba704a480d82e87ec748") :FASL
+   #A((148) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/read/core.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c3898881bed63659b4a6d23abe1d0115"))
+  (:FILE "src/read/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "7d74d9decc5a0bc9f9331d89bd503e21") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/read/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "ed8a0f31f7893eabbeae0df21414aeab"))
+  (:FILE "src/read/task.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9e0baf22c53329d393e047c669679645") :FASL
+   #A((148) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/read/task.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "cdada15638f8b04286893dc56d35dbb8"))
+  (:FILE "src/read/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9c37ff8237fcc9fe9ae4f44316e854e3") :FASL
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/read/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "7e0d7a0b25a7d0cb741579241c9f64df"))
+  (:FILE "src/recovery/decisions-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1a51ef4a488bb9fde2ff7d47bae01379") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/decisions-build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c583333c29e1dd18ae03cef54efd1128"))
+  (:FILE "src/recovery/decisions-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cbdc30f93109c474e1fc25066c9b9b13") :FASL
+   #A((165) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/decisions-package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "302643a9b6992c27a7cd87abbd8689a2"))
+  (:FILE "src/recovery/decisions-query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f782d1137b8ce342b91c9999cfb7accc") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/decisions-query.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "cc58b9af7491bbfa1a32a94af4644246"))
+  (:FILE "src/recovery/decisions-radix.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "852149de4c289b8e067602780378d87a") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/decisions-radix.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "054fa5740348f494586e6ec4017dcd3e"))
+  (:FILE "src/recovery/decisions-sort.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b33e57a643f2fca810846f6226366253") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/decisions-sort.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "d736461af4133591261073d0a976d373"))
+  (:FILE "src/recovery/decisions-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f4433fd19ebc7239dbc2628c39f3ecdb") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/decisions-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "2a3719a46eee57948e45b0b25d729626"))
+  (:FILE "src/recovery/inventory-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "9bd6820c4feba3e552aab1a4edd87861") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/inventory-build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "fc9bebddfce32a1e7c3d206cf0ecfed8"))
+  (:FILE "src/recovery/inventory-query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fcea263de1938767772e5b11411ecd5e") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/inventory-query.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4cae9638c33f97c505032396acc3b935"))
+  (:FILE "src/recovery/inventory-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "78c136d5838dcfe3019d9069643a8d8f") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/inventory-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "40858d39c48558f357a3720631ea007f"))
+  (:FILE "src/recovery/manifest-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "bf65b1731eab6e0572461ef5cc60fc40") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/manifest-build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "bc80e91c01ccb1e2332e3a9e76fb647d"))
+  (:FILE "src/recovery/manifest-decode.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "67975249aaabd751757cdfb9222cc3c4") :FASL
+   #A((163) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/manifest-decode.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "91b36486993d43d4abc8799facc2b104"))
+  (:FILE "src/recovery/manifest-fold.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e0d2498db1011e857b7b0daa1934f187") :FASL
+   #A((161) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/manifest-fold.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f301859a3f81c11c4e7816157ef5f6bb"))
+  (:FILE "src/recovery/manifest-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "37ace42844c11b52446ee1fc500b8e0b") :FASL
+   #A((164) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/manifest-package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "3c1919e0dd371d863227cb68193b027d"))
+  (:FILE "src/recovery/manifest-query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ebd7a54adea2213294a887e6d4db0927") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/manifest-query.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "ea8a1d0f0601ca8baec6f7b865f5b09d"))
+  (:FILE "src/recovery/manifest-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "7b1d4054415faca7e5fca59ad83b4d4a") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/manifest-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "43122aaf787dc4c284a6a93c548bff67"))
+  (:FILE "src/recovery/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1c1c8ad0cd15b1703a2fe19cbf3f13c2") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "eba0c691ff857285ff5fca03f00aa2df"))
+  (:FILE "src/recovery/scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "fcacd15460db25ea9cc4036065f9f096") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/recovery/scan.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "d3dc49bab472b4532f82235e59c15b29"))
+  (:FILE "src/series/events.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "32b2156739a6f2ca996abb91df0a2603") :FASL
+   #A((152) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/events.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "bc2aeca1734fea13ee741970a09e374a"))
+  (:FILE "src/series/io-events.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b6026a8b7bb64b45c37a65effda70d8e") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/io-events.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "c78be4bf388d425770c5097f66ba3a91"))
+  (:FILE "src/series/ownership.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "de1aca16a35d34d16aba12ff541c0d2b") :FASL
+   #A((155) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/ownership.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "d6e7701d7d0376633cefdae8d7542c2e"))
+  (:FILE "src/series/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "59e3c59c90d8d0fc5731b87496a785aa") :FASL
+   #A((153) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "95ba82a9a8e5049655563f969410e2ec"))
+  (:FILE "src/series/publication.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "056d2c6a67c9d9f2bf9fe2d2c348d53c") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/publication.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "caf299ff7623f1a4693f756280e211cf"))
+  (:FILE "src/series/query.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cb0d91405325b508e6b2ab24d178de7a") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/query.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4140848301ef3c3d8a6003abc89cf92d"))
+  (:FILE "src/series/retirement.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b8e04971b8ad75a1bd0c722997badfd2") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/retirement.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1c9d18cefe720b1964291627df1a110d"))
+  (:FILE "src/series/routing-build.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d6924deff152b941bd49f0bb200b4197") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/routing-build.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "bf4bf9bc54844ccea0817a828a79737d"))
+  (:FILE "src/series/routing-select.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "e0f987d8767744050ec4d1b3ecb699ed") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/routing-select.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "49caa1dd5c7091474d2966e772156c5b"))
+  (:FILE "src/series/routing-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ce649df47dd38888d5103c98345f7e41") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/routing-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4f4753bbbf8fec6afb4c6805ed36f923"))
+  (:FILE "src/series/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "ab19ec8d15af91511e817858c41cebc8") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "63ab289f60d9697ca53d0a6f6be8f10f"))
+  (:FILE "src/series/worker-boundary.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2340e0c9074f7b1bf80c74f774986bc5") :FASL
+   #A((161) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/worker-boundary.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "50285f115d6677a4b262a7d689182c0f"))
+  (:FILE "src/series/worker-package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a93ce2e84e8aee647b5083ad1d2b899b") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/worker-package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "8ab3c0cea55564132d6cf80bf0529440"))
+  (:FILE "src/series/worker-run.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f0fee18adf357bad98e8a3c3e8c70c0c") :FASL
+   #A((156) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/worker-run.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "efafa9c191b0db9434ff09eedb5d1f36"))
+  (:FILE "src/series/worker-types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "2b23d468be0165fa009c5ebd5d1bbe23") :FASL
+   #A((158) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/series/worker-types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "a33cd638703cdee7c5be303b61d9a23f"))
+  (:FILE "src/storage/compaction-scan.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "1cda77a357ab2147035993b72d135a37") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/compaction-scan.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "a80a70af7d6cadb0462d05e51ce126e9"))
+  (:FILE "src/storage/control-payload.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "cb64f806b8d69eb42d865b4abfff0b27") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/control-payload.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "872a6c636cd013baf9276d80f4cafd55"))
+  (:FILE "src/storage/formats.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "061147be459d8d3b08c661bd3f91d152") :FASL
+   #A((154) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/formats.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "1f962ccac530c013af23ee05fe50b31a"))
+  (:FILE "src/storage/log-header.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "b53d27dcc9f4badf18b50519c50bc614") :FASL
+   #A((157) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/log-header.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "6f922679843a375ac42a8cc93e768506"))
+  (:FILE "src/storage/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f86bd104f20616a76b42c02227f72844") :FASL
+   #A((154) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "263c44c1fcd66eb017655cdbffbac5e9"))
+  (:FILE "src/storage/payload-record.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "8c03f9c01dcb30f2d3970a5694968ecf") :FASL
+   #A((161) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/payload-record.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "4c35e8a5d5312792ead730680353b498"))
+  (:FILE "src/storage/payload-write.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c4ece3c4fa8d9492d2a80df7c0a4f5a0") :FASL
+   #A((160) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/payload-write.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "fcf48d9d54d1126317c1bb9ff1f7b161"))
+  (:FILE "src/storage/segment-header.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "d6812fa59bf8fd1252fbf85a9bfa3896") :FASL
+   #A((161) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/storage/segment-header.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "06612a86aab7f24cf7e30dba10d23d18"))
+  (:FILE "src/wal/builder.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "a229f76f7036f3573a6e528dcd390a19") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/wal/builder.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "891d1dfd0034512b453a55b4248b00ac"))
+  (:FILE "src/wal/csn.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "42b990e3b254e6fb488c0ab91b6a6502") :FASL
+   #A((146) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/wal/csn.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "15488d2d1abcd73bad97dd01f0ff8c20"))
+  (:FILE "src/wal/executor.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "c0340924c9130e14d0e8efedeec078f1") :FASL
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/wal/executor.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "f5502539a914bdbbe6e630a54b4bf64e"))
+  (:FILE "src/wal/group.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "7a0e7c99ab70b4720cbb091156560f5e") :FASL
+   #A((148) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/wal/group.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "709a250dfbf924f0639fd8d843fd0bcb"))
+  (:FILE "src/wal/package.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "96c41b1d417135a24fc65659ea3abe11") :FASL
+   #A((150) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/wal/package.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "544d75bab125e2eeb45a732167a9bbbc"))
+  (:FILE "src/wal/types.lisp" :ROLE :PRODUCT :SOURCE-MD5
+   #A((32) BASE-CHAR . "f799f27a8ac1a4c736c04796c1e543f9") :FASL
+   #A((148) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/src/wal/types.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "724a6b3029214253052985f3611635cd")))
+ :COMPILED-SUITE
+ ((:FILE "tests/foundation/support.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "758adad069aec2f9dbe0635797314ff6") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/tests/foundation/support.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "278d2574dee20a34fbfa7590b58ab15b"))
+  (:FILE "tests/get-directory/support.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "3f868ebe4307ad4238b314c37eceed9a") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/tests/get-directory/support.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "8bd2a9842db95a83be48108822843162"))
+  (:FILE "tests/get-directory/construction.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "1137938073e71d6d8d62c751fbad05d5") :FASL
+   #A((167) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/tests/get-directory/construction.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "fa13757e126066ac16cfeb1bdc4b3790"))
+  (:FILE "tests/get-directory/read.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "e08a9af870079bc5f7a5826001ca20bd") :FASL
+   #A((159) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/tests/get-directory/read.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "991e7dac7cafd4b281698edb34fd6864"))
+  (:FILE "tests/get-directory/threads.lisp" :ROLE :SUITE :SOURCE-MD5
+   #A((32) BASE-CHAR . "63dd01c852de1399c2c82274d481d257") :FASL
+   #A((162) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB/spikes/out/get-directory-mutations-c/raw/isolatedtests/baseline/fasl/tests/get-directory/threads.fasl")
+   :FASL-MD5 #A((32) BASE-CHAR . "9975be26091ab5e13cc308845654ab06")))
+ :FAILED-TEST
+ #A((62) BASE-CHAR
+    . "TEST-REQ-CCH-004-DIRECTORY-CACHE-VERIFY-FAILED-NATIVE-FALLBACK")
+ :PASSED-TESTS
+ (#A((59) BASE-CHAR
+     . "TEST-REQ-STO-003-DIRECTORY-NATIVE-READ-NONZERO-BUFFER-START")
+  #A((47) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-EMPTY-AND-PAYLOAD12N")
+  #A((53) BASE-CHAR . "TEST-REQ-AFF-008-DIRECTORY-BUDGET-EXACT-AND-ONE-SHORT")
+  #A((57) BASE-CHAR
+     . "TEST-REQ-AFF-008-DIRECTORY-INVALID-CONFIGURATION-AND-MAPS")
+  #A((45) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-INPUT-ARRAY-COPIED")
+  #A((58) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-DUPLICATES-AND-DESCENDING-ORDER")
+  #A((60) BASE-CHAR
+     . "TEST-REQ-CMP-007-DIRECTORY-CANONICAL-OWNER-AND-FOREIGN-OWNER")
+  #A((61) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-SEGMENT-ZERO-HIGHBITS-AND-LIFETIME")
+  #A((52) BASE-CHAR . "TEST-REQ-IDX-001-DIRECTORY-65536-FIRST-LAST-SEARCH17")
+  #A((61) BASE-CHAR
+     . "TEST-REQ-IDX-001-DIRECTORY-NATIVE-READ-V1-V2-VALUES-AND-MAXID")
+  #A((57) BASE-CHAR
+     . "TEST-REQ-CCH-002-DIRECTORY-CACHE-ENUMS-AND-PRIVATE-OUTPUT"))
+ :FAILURE-KIND :ASSERTION :CONDITION-TYPE #A((12) BASE-CHAR . "SIMPLE-ERROR")
+ :DIAGNOSTIC
+ #A((139) BASE-CHAR
+    . "Asserzione fallita: (ARCDOCDB.GET.DIRECTORY.TESTS::DIRECTORY-OUTPUT-UNTOUCHED-P
+                     ARCDOCDB.GET.DIRECTORY.TESTS::FIXTURE)"))

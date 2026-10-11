@@ -1,0 +1,16 @@
+SIMPLE-ERROR: Asserzione fallita: (HANDLER-CASE
+                                   (PROGN
+                                    (PROGN
+                                     (ARCDOCDB.GET.DIRECTORY.TESTS::DIRECTORY-CALL-OPERATION
+                                      ARCDOCDB.GET.DIRECTORY.TESTS::OPERATION
+                                      ARCDOCDB.GET.DIRECTORY.TESTS::CONTEXT
+                                      DIRECTORY)
+                                     (SETF ARCDOCDB.GET.DIRECTORY.TESTS::AUTHORIZED
+                                             T))
+                                    NIL)
+                                   (ARCDOCDB.CONDITIONS:INVARIANT-VIOLATION
+                                    (CONDITION)
+                                    (EQ
+                                     (ARCDOCDB.CONDITIONS:ERROR-REASON
+                                      CONDITION)
+                                     :DIRECTORY-LOCATION-ABSENT)))

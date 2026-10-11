@@ -1,0 +1,7 @@
+--- a/src/get-directory/read.lisp
++++ b/src/get-directory/read.lisp
+@@ -58,1 +58,3 @@
+-  (risolvi-candidato-get context (trova-mappa-directory-get context directory)))
++  (let ((map (trova-mappa-directory-get context directory)))
++    (values (mappa-segmento-get-segment map)
++            (arcdocdb.get.resolver::mappa-segmento-get-end map) 0 nil)))

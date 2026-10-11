@@ -1,0 +1,9 @@
+--- a/src/get-directory/read.lisp
++++ b/src/get-directory/read.lisp
+@@ -19,1 +19,5 @@
+-          do (when (= left right) (guasto-get context :directory-location-absent))
++          do (when (= left right)
++               (if (plusp (length maps))
++                   (return-from cerca-mappa-directory-get
++                     (the mappa-segmento-get (svref maps 0)))
++                   (guasto-get context :directory-location-absent)))

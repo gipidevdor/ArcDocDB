@@ -1,0 +1,58 @@
+(:SCHEMA-VERSION 1 :KIND :GET-DIRECTORY-PUBLICATION-ROOTS :DIRECTORIES
+ (#A((26) BASE-CHAR . "4000716905-command-97040-0")
+  #A((26) BASE-CHAR . "4000716905-command-97039-0")
+  #A((26) BASE-CHAR . "4000716838-command-96236-0")
+  #A((26) BASE-CHAR . "4000716838-command-96234-0")
+  #A((26) BASE-CHAR . "4000716821-command-95705-0")
+  #A((26) BASE-CHAR . "4000715783-command-78330-0")
+  #A((26) BASE-CHAR . "4000715783-command-78331-0")
+  #A((26) BASE-CHAR . "4000715783-command-78332-0")
+  #A((26) BASE-CHAR . "4000715783-command-78361-0")
+  #A((26) BASE-CHAR . "4000715845-command-79521-0")
+  #A((26) BASE-CHAR . "4000715845-command-79536-0")
+  #A((26) BASE-CHAR . "4000715868-command-80508-0")
+  #A((26) BASE-CHAR . "4000715868-command-80509-0")
+  #A((26) BASE-CHAR . "4000715910-command-81187-0")
+  #A((26) BASE-CHAR . "4000715910-command-81188-0")
+  #A((26) BASE-CHAR . "4000715910-command-81210-0")
+  #A((26) BASE-CHAR . "4000715999-command-83174-0")
+  #A((26) BASE-CHAR . "4000715999-command-83175-0")
+  #A((26) BASE-CHAR . "4000715999-command-83176-0")
+  #A((26) BASE-CHAR . "4000715999-command-83206-0")
+  #A((26) BASE-CHAR . "4000716071-command-86800-0")
+  #A((26) BASE-CHAR . "4000716071-command-86801-0")
+  #A((24) BASE-CHAR . "4000716161-check-87667-0")
+  #A((26) BASE-CHAR . "4000716214-command-88432-0")
+  #A((26) BASE-CHAR . "4000716214-command-88433-0")
+  #A((26) BASE-CHAR . "4000716264-command-88836-0")
+  #A((26) BASE-CHAR . "4000716264-command-88837-0")
+  #A((26) BASE-CHAR . "4000716309-command-89228-0")
+  #A((26) BASE-CHAR . "4000716385-command-90045-0")
+  #A((26) BASE-CHAR . "4000716385-command-90046-0")
+  #A((26) BASE-CHAR . "4000716385-command-90048-0")
+  #A((26) BASE-CHAR . "4000716385-command-90076-0")
+  #A((24) BASE-CHAR . "4000716560-check-93254-0")
+  #A((26) BASE-CHAR . "4000716611-command-93962-0")
+  #A((26) BASE-CHAR . "4000716715-command-94765-0")
+  #A((26) BASE-CHAR . "4000716784-command-95421-0"))
+ :RAW-ROOTS
+ ((:DIRECTORY "get-directory-coverage-self-a" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000715783-command-78331-0"))
+  (:DIRECTORY "get-directory-coverage-b" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000715868-command-80509-0"))
+  (:DIRECTORY "get-directory-coverage-c" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000715910-command-81188-0"))
+  (:DIRECTORY "get-directory-coverage-d" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000715999-command-83176-0"))
+  (:DIRECTORY "get-directory-coverage-g" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000716385-command-90045-0"))
+  (:DIRECTORY "get-directory-coverage-self-g" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000716385-command-90048-0"))
+  (:DIRECTORY "get-directory-mutations-b" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000715868-command-80508-0"))
+  (:DIRECTORY "get-directory-mutations-c" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000715910-command-81187-0"))
+  (:DIRECTORY "get-directory-mutations-d" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000715999-command-83175-0"))
+  (:DIRECTORY "get-directory-mutations-g" :PRODUCER-DIRECTORY
+   #A((26) BASE-CHAR . "4000716385-command-90046-0"))))

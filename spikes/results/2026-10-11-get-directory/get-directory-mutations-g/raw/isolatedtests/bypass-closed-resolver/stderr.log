@@ -1,0 +1,13 @@
+SIMPLE-ERROR: Asserzione fallita: (HANDLER-CASE
+                                   (PROGN
+                                    (ARCDOCDB.GET.DIRECTORY:RISOLVI-CANDIDATO-DIRECTORY-GET
+                                     ARCDOCDB.GET.DIRECTORY.TESTS::CONTEXT
+                                     (ARCDOCDB.GET.DIRECTORY.TESTS:DIRECTORY-FIXTURE-DIRECTORY
+                                      ARCDOCDB.GET.DIRECTORY.TESTS::FIXTURE))
+                                    NIL)
+                                   (ARCDOCDB.CONDITIONS:INVARIANT-VIOLATION
+                                    (CONDITION)
+                                    (EQ
+                                     (ARCDOCDB.CONDITIONS:ERROR-REASON
+                                      CONDITION)
+                                     :RESOLVER-CANDIDATE-SIZE)))

@@ -1,0 +1,13 @@
+SIMPLE-ERROR: Asserzione fallita: (HANDLER-CASE
+                                   (PROGN
+                                    (ARCDOCDB.GET.DIRECTORY:CREA-DIRECTORY-GET-SERIE
+                                     ARCDOCDB.GET.DIRECTORY.TESTS::COPY
+                                     (ARCDOCDB.GET.DIRECTORY.TESTS:DIRECTORY-FIXTURE-MAPS
+                                      ARCDOCDB.GET.DIRECTORY.TESTS::FIXTURE))
+                                    NIL)
+                                   (ARCDOCDB.CONDITIONS:INVALID-ARGUMENT
+                                    (CONDITION)
+                                    (EQ
+                                     (ARCDOCDB.CONDITIONS:ERROR-REASON
+                                      CONDITION)
+                                     :DIRECTORY-SOURCE-OWNER)))

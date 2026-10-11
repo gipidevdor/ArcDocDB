@@ -29,8 +29,10 @@ pubblicare salute terminale.
 La API riceve un **digest già calcolato**, in due u32: metà alta per la
 directory, metà bassa per gruppo e fingerprint. Il chiamante fidato usa
 la stessa funzione/seed della Serie per lookup, mutazioni e ricostruzioni;
-il digest non viene dal client. Hashing di chiavi arbitrarie e gestione
-seed restano da collegare. Il kernel v1 limitato a `_id` di 16 byte non
+il digest non viene dal client. Il [kernel XXH64](hash-chiavi.md) calcola ora
+il digest delle chiavi con seme immutabile configurato nell'indice; il
+controller deve ancora integrare generazione e ciclo di vita del seme.
+Il kernel v1 limitato a `_id` di 16 byte non
 qualifica v2. Un digest incoerente viola il contratto e può causare
 duplicati/miss. Il confronto finale è sempre byte per byte.
 

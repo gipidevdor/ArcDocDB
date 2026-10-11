@@ -23,7 +23,7 @@
 
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CMP-007 REQ-AFF-008
 (defstruct (mappa-segmento-get (:constructor %make-mappa-segmento-get (segment end rows)) (:copier nil))
-  "Pre: CLOSED attestato dal manifest, header e prefisso verificati sul medesimo FD.
+  "Pre: CLOSED attestato dal manifest oppure pagina di lotto ACTIVE verificato prima dell'adozione.
 Post: tabella posseduta di soli PUT, ordinata per offset, immutabile e senza buffer sorgente.
 Il controller pubblica prima delle location corrispondenti e protegge il FD con EBR."
   (segment nil :type segmento-get :read-only t)

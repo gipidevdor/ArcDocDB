@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Resolver GET ACTIVE per lotti ordinari: radice acquisita dalla pubblicazione
+  della Serie, pagine immutabili e directory persistente con quattro piccoli
+  vettori per append. Preflight prima del CSN, verifica del solo lotto nuovo e riuso cache/lettura GET;
+  budget, fail-stop e confini documentati. Prepared/OUTCOME ACTIVE, indice
+  concreto, rotazione/reclaim e qualifica C1 restano aperti.
+
 - Collegamento preallocato worker/Serie: doppia lease, token monotoni, debito
   batch e rilascio Serie prima del worker, con retry limitato alla fine e
   conservazione dei guasti originali. Include 26 prove, due letture C1,

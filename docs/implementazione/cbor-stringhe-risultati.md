@@ -1,0 +1,94 @@
+# Verifiche della scrittura delle stringhe CBOR
+
+Campagne del 2026-10-11 sul [metodo preregistrato](cbor-stringhe-metodo.md),
+blob `56342dae95caf8705e0b28b3c0ea7ac86fdd8fa0`. Prodotto congelato
+`a2c5c77dd51bff760bff4508e998d94370921eda`; le dipendenze header writer,
+UTF-8 e limiti non sono state modificate. L'incremento riguarda un item
+MT2/3 minimo, senza composizione documentale o pubblicazione durevole.
+
+Il titolo «Prove congelate prima del prodotto» del metodo descrive il piano
+preregistrato. La cronologia effettiva è quella delle due letture: prodotto
+e corpus sono stati sviluppati in parallelo; l'autore delle prove ha letto
+il prodotto soltanto dopo il congelamento del corpus, prima della seconda
+lettura e di ogni compilazione o campagna. Il metodo originale resta
+conservato, senza attribuire al corpus un congelamento precedente al prodotto.
+
+## Corpus e concorrenza
+
+21 nuovi test: 20 seriali e uno con worker reali riusati. Il preliminare
+`make test lint trace` passa in 13,692469 s: 681 test nominali e due smoke,
+senza warning o style-warning, lint su 125 file senza violazioni,
+116 requisiti/65 invarianti/13 scenari FI/52 ADR senza errori.
+Il corpus cieco conserva i tre blob `e45437a5…`, `ed0f6a67…`, `33c7e6a9…`;
+le [due](cbor-stringhe-revisione.md) [letture C1](cbor-stringhe-lettura.md)
+non hanno rilievi statici aperti.
+La [revisione dei dati](cbor-stringhe-dati.md) verifica i record completi,
+anche l'origine e l'ordine dei fallimenti nei log mutati.
+
+8.194 confronti freddi sulle lunghezze 0..4096 per entrambi i major,
+1.138 capacità insufficienti e 2.048 casi differenziali seed53574342:
+1.546 accettati e 502 UTF-8 rifiutati. Sono verificati soglie di larghezza,
+item massimo 16 MiB e massimo+1, byte arbitrari, multibyte, NUL/BOM e
+noncaratteri, offset assoluti e precedenze degli errori, alias disgiunti,
+overlap della testata, arità esatta e interi array invariati sui rifiuti.
+Lo scanner minimo è soltanto una verifica supplementare dopo gli attesi
+freddi dei byte.
+
+Due worker, due ondate, 8.192 item ciascuno per ondata: 32.768 scritture
+e 32 MiB di payload da sorgente immutabile condivisa verso destinazioni
+private. Sink 9.707.520/9.969.664 per ondata e array completi verificati.
+Overlap osservato 47.821/47.752 tick a 1.000.000 tick/s nel preliminare;
+semafori, join e cleanup limitati. Questo verifica concorrenza funzionale,
+senza attestare simultaneità sui core, scaling o throughput del pool.
+
+## Heap e mutazioni
+
+Nove fixture indipendenti, cinque repliche di 4.096 chiamate con warmup
+128: 45 campioni con heap osservato zero. Baseline nulla e sensore positivo
+16×1 MiB, 16.777.472 byte osservati. NEXT, tutti i byte e le sentinelle
+alimentano token e sink ricalcolati dall'audit indipendente. Misura seriale
+83,243866 s, inclusi controlli dell'output, senza soglia di velocità;
+il contatore locale non costituisce prova assoluta di non allocazione.
+
+Otto mutazioni congelate: 8 DETECTED, zero SURVIVED/INVALID/WORKER-ERROR.
+Baseline completa riuscita, copie e cache private; 210 file per ciascuna
+delle nove copie nell'inventario dichiarato. L'audit confronta la baseline,
+la sostituzione unica e i log runtime: 11.828 controlli riusciti.
+Compilazione fallita, segnale OS o guasto dopo completamento non contano
+come rilevamento; i self-test esercitano anche questi casi con processi
+reali. L'overlap mutato ignora precisamente il byte iniziale della testata.
+
+## Copertura e verificatori
+
+Coverage del solo nuovo file: **256/308 espressioni, 39/52 rami**.
+Restano 52 espressioni e 13 esiti di ramo nel denominatore: sette
+dichiarazioni, 44 forme di errore interno e il default MAX-BYTES nella
+lambda-list, riga 99, percorso grezzo `(8 2 11)`, senza deduzioni di
+irraggiungibilità. I 13 esiti mancanti sono associati sintatticamente a guardie interne.
+Stato grezzo e due HTML concordano, verificati con 74 controlli.
+L'[inventario](cbor-stringhe-decisioni.md) conserva cinque AND e sei
+relazioni concatenate, senza esclusioni o attestazioni MC/DC/100%.
+Il gate C1 di ADR-0035 rimane aperto; il motore non è qualificato da questi dati.
+
+Il primo autotest del verificatore indipendente del benchmark fallisce
+con exit 1: mancavano i setter degli accessori delle fixture sintetiche.
+Il sorgente originale `1e0fe5b8…`, il processo fallito e il diff sono
+conservati. Il fix `ae591bf0…` aggiunge soltanto due setter: retry riuscito
+con quattro fixture positive e 54 negative, 37.424 controlli. Prodotto,
+driver di misura e corpus restano invariati. Il reader preserva T/NIL,
+blocca READ-EVAL e richiede EOF; il clock ammette l'ordine effettivo di
+raccolta dei metadati. Anche l'helper di coverage/mutazioni passa i propri
+self-test, derivati dal verificatore precedente preservato.
+
+Questi audit controllano coerenza dei dati e stabilità dei byte, senza
+autenticare l'esecuzione. L'inventario delle copie riguarda le impronte
+dichiarate; non attesta automaticamente la chiusura degli alberi privati.
+Le associazioni dei gap sono sintattiche e non dimostrano irraggiungibilità.
+
+## Conservazione e integrazione
+
+[Archivio originale](../../spikes/results/2026-10-11-cbor-string-write/archive-index.lisp)
+con processi, tentativo fallito, sorgenti congelati, helper, stato/HTML,
+copie e log. La compressione gzip preserva e verifica i byte ricostruiti;
+non riscrive campagne precedenti o deduce qualifiche dai loro esiti.
+Il controllo completo dopo l'integrazione con main resta da registrare.

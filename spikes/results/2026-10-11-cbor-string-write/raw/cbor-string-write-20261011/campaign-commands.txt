@@ -1,0 +1,57 @@
+# Plan only. These commands have not been executed.
+# Run from /Users/gpicchiarelli/.codex/worktrees/cbor-string-write/ArcDocDB.
+# Keep tracked and non-ignored writers frozen throughout every record-command.
+# Run each command separately and inspect its exit/status before proceeding.
+# The benchmark must run serially while coverage/mutation processes are stopped.
+# Output names below are for the first attempt; use new names for any retry.
+# Shell noclobber protects the wrapper logs. Mutations require a new directory.
+set -o noclobber
+
+# Benchmark self-test: arity/output checks, zero baseline, 16 x 1 MiB positive sensor.
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/cbor-string-write-bench.lisp --self-test > spikes/out/cbor-string-write-20261011/bench-self.stdout.log 2> spikes/out/cbor-string-write-20261011/bench-self.stderr.log
+
+# Mutation self-test: pure dispatch/substitution/classifier checks, real child failures.
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/cbor-string-write-mutation.lisp --self-test > spikes/out/cbor-string-write-20261011/mutation-self.stdout.log 2> spikes/out/cbor-string-write-20261011/mutation-self.stderr.log
+
+# Coverage self-test: exact file selector, private cache, synthetic missing branch.
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/foundation-coverage.lisp --self-test spikes/out/cbor-string-write-20261011/coverage-self/ cbor-string-write > spikes/out/cbor-string-write-20261011/coverage-self.stdout.log 2> spikes/out/cbor-string-write-20261011/coverage-self.stderr.log
+
+# Benchmark: nine fixtures, five replicas x 4096 calls, warmup 128 per sample.
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/cbor-string-write-bench.lisp --bench > spikes/out/cbor-string-write-20261011/bench.stdout.log 2> spikes/out/cbor-string-write-20261011/bench.stderr.log
+
+# Coverage: save full raw state, but HTML scope contains only cbor-string-write.lisp.
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/foundation-coverage.lisp --report spikes/out/cbor-string-write-20261011/coverage/ cbor-string-write > spikes/out/cbor-string-write-20261011/coverage.stdout.log 2> spikes/out/cbor-string-write-20261011/coverage.stderr.log
+
+# Mutations: unchanged full baseline, then eight independent private copies/caches.
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/cbor-string-write-mutation.lisp --run spikes/out/cbor-string-write-20261011/mutations/ > spikes/out/cbor-string-write-20261011/mutations.stdout.log 2> spikes/out/cbor-string-write-20261011/mutations.stderr.log
+
+# Record locations and formats:
+# Every wrapper prints STATUS and "record: /absolute/spikes/out/<time>-command-<pid>-<attempt>/report.lisp".
+# The command record preserves the driver's raw stdout/stderr, exit and source snapshots.
+# report.lisp may be compacted beside report.lisp.gz; use evidence-storage decoding.
+# Benchmark: one final plist in raw stdout, schema 1, kind :CBOR-STRING-WRITE-BENCHMARK.
+# Mutations: one exact known self-test preamble then one final plist in raw stdout;
+# kind :CBOR-STRING-WRITE-MUTATIONS; private final report at mutations/report.lisp.
+# Preamble: "Scrittura CBOR: self-test worker superato; <absolute self-test report>".
+# Private runners: baseline/tools/cbor-string-write-isolated-build.lisp and 0..7/tools/...
+# Private runtime logs: baseline/test.log and 0..7/test.log; preserve even failed attempts.
+# Successful smoke marker, exact line: "ok    ARCDOCDB:*VERSION* è una stringa".
+# Build completion marker, exact line: "build e test: nessun avviso, tutti i controlli superati".
+# Compiler failure is INVALID. OS signal or nonzero exit after completion is WORKER-ERROR.
+# Coverage artifacts: coverage/coverage-state.lisp, cover-index.html and one source HTML.
+# Coverage self-test artifacts: coverage-self/coverage-fixture.lisp/.fasl and two HTML files.
+# Coverage stdout ends with "Rapporto: <index path>"; self-test success line:
+# "Copertura: self-test del ramo mancante superato.".
+
+# Recorded-data helper self-test. It never loads the product and runs no campaign.
+# audit-self-test/ must be new; the helper only writes below this ignored task directory.
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --disable-debugger --script spikes/out/cbor-string-write-20261011/data-audit.lisp --self-test spikes/out/cbor-string-write-20261011/audit-self-test/ > spikes/out/cbor-string-write-20261011/audit-self.stdout.log 2> spikes/out/cbor-string-write-20261011/audit-self.stderr.log
+
+# Subsequent data helper modes use the actual record pathname printed by the matching wrapper.
+# Syntax: --mutations RECORD spikes/out/cbor-string-write-20261011/mutations/
+# Syntax: --coverage RECORD spikes/out/cbor-string-write-20261011/coverage/
+# Saved reports: audit-mutations.lisp and audit-coverage.lisp, both refused if already present.
+# Raw benchmark-object/sensor validation is retained in helper self-test only;
+# the three requested modes do not audit the measured benchmark record.
+# Copy inventory is the declared fingerprint list, not a closed-tree attestation.
+# Gap association is syntactic; full denominators remain and no MC/DC/gate claim is made.

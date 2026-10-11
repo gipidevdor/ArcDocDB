@@ -1,0 +1,23 @@
+diff --git a/spikes/out/cbor-string-write-20261011/frozen/tools/cbor-string-write-audit.lisp b/tools/cbor-string-write-audit.lisp
+index 1e0fe5b..ae591bf 100644
+--- a/spikes/out/cbor-string-write-20261011/frozen/tools/cbor-string-write-audit.lisp
++++ b/tools/cbor-string-write-audit.lisp
+@@ -375,10 +375,18 @@
+   "Accesso ai dati sintetici, senza dipendenze dai builder del benchmark."
+   (first (getf report :campaigns)))
+ 
++(defun (setf first-cell) (value report)
++  "Sostituisce la testa della prima plist di :CAMPAIGNS nelle fixture sintetiche."
++  (setf (car (getf report :campaigns)) value))
++
+ (defun first-sample (report)
+   "Accesso al campione sintetico da alterare individualmente."
+   (first (getf (first-cell report) :samples)))
+ 
++(defun (setf first-sample) (value report)
++  "Sostituisce la testa della prima plist di :SAMPLES nelle fixture sintetiche."
++  (setf (car (getf (first-cell report) :samples)) value))
++
+ (defun self-test ()
+   "Fixture positive e alterazioni individuali; nessun prodotto o sottoprocesso benchmark."
+   (let* ((good (synthetic-report)) (wrapper (synthetic-wrapper good)) (fixtures nil))

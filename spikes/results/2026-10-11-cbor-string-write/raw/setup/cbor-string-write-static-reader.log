@@ -1,0 +1,6 @@
+STATIC-READER SELF-TEST PASS valid/malformed/read-eval-blocked.
+SYNTAX-READ PASS src/codec/cbor-string-write.lisp forms=12; zero EVAL/COMPILE/LOAD dei file letti.
+SYNTAX-READ PASS tests/codec/cbor-string-write-support.lisp forms=14; zero EVAL/COMPILE/LOAD dei file letti.
+SYNTAX-READ PASS tests/codec/cbor-string-write.lisp forms=21; zero EVAL/COMPILE/LOAD dei file letti.
+SYNTAX-READ PASS tests/codec/cbor-string-write-threads.lisp forms=2; zero EVAL/COMPILE/LOAD dei file letti.
+STATIC-ONLY: nessun prodotto caricato, test definito o chiamato, build o campagna runtime.

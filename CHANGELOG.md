@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Collegamento preallocato worker/Serie: doppia lease, token monotoni, debito
+  batch e rilascio Serie prima del worker, con retry limitato alla fine e
+  conservazione dei guasti originali. Include 26 prove, due letture C1,
+  copertura completa nel denominatore e cinque misure locali del percorso
+  seriale; pool e coordinatore Archivio restano da integrare.
+
 - Hash delle chiavi XXH64 tipizzato: ritorno in due u32, seme esplicito
   immutabile nell'indice, mappe verificate degli slot fisici per rebuild/split,
   propagazione dei guasti interni. Include 46 nuove regressioni, mutazioni,

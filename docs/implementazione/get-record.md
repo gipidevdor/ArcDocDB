@@ -158,6 +158,8 @@ Zero heap, latenza e throughput **non sono ancora misurati**.
 | GET-D09 | Range/alias output e conferma finale | Copia interrotta, scadenza dopo copia, errore su miss, no dati dopo unwind |
 
 Evidenze statiche nella [campagna GET](../../spikes/results/2026-10-11-get-record/README.md).
+La [prima verifica funzionale](get-verifica.md) registra una campagna distinta,
+con esiti e ambito propri; non sostituisce le evidenze statiche precedenti.
 Restano qualifica C1 condizione per condizione, stress concorrente, fault
 injection, misure di allocazione e prestazioni; integrazioni con resolver,
 retention, scheduler, metriche e protocollo. Le due letture locali registrate

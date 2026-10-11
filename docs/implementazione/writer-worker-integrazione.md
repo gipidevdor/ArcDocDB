@@ -45,3 +45,31 @@ Alla ripresa dell'11 ottobre la primaria contiene ulteriori modifiche dello
 scanner CBOR. La pubblicazione mantiene quindi esplicita la base qualificata
 `edb043b`: l'esito qui conservato non qualifica automaticamente quei nuovi
 sorgenti.
+
+## Verifica dell'insieme aggiornato
+
+Il merge `68890dea18f1b010b582be338fbbfaf0361a39fd` unisce la precedente
+consegna `e96f99b` alla primaria `f16e978ad026e9307fde67425c35b2a8dbd1e731`.
+Include scanner CBOR minimo, ricostruzione dell'indice e tutti i relativi
+runner. Il [confronto nativo Git registrato](../../spikes/results/2026-10-11-writer-worker-latest/identita-worker-processo.lisp)
+conferma l'identità dei file execution, test e tool worker rispetto alla
+consegna precedente. La lettura indipendente, conservata nel
+[bundle integrale](../../spikes/results/2026-10-11-writer-worker-latest/integrazione-adattatori.lisp),
+conferma anche l'identità dei sorgenti CBOR e indice rispetto a `f16e978`
+e la registrazione congiunta in ASDF. Non sono emersi conflitti di contratto.
+
+Il [controllo completo dell'11 ottobre](../../spikes/results/2026-10-11-writer-worker-latest/check-completo-processo.lisp)
+è OK/STABLE, exit 0, su una copia congelata del merge: 600 test in quindici
+suite più smoke, compilazione senza avvisi, lint su 116 file senza errori,
+tracciabilità senza errori e 2.230 link verificati. Il checker delle evidenze
+ha passato il controllo con il budget Makefile predefinito di 2.048 MiB.
+Il [master degli spike](../../spikes/results/2026-10-11-writer-worker-latest/spikes-completi.lisp)
+conserva i dieci esperimenti e il payload gzip originale; il
+[catalogo](../../spikes/results/2026-10-11-writer-worker-latest/catalogo.lisp)
+registra le copie integre e i processi conclusi.
+
+Questa verifica qualifica l'assemblaggio con CBOR e ricostruzione indice
+sulla base `f16e978`; supera il limite della precedente consegna relativo
+a quei sorgenti. Restano aperti il protocollo operativo worker–Serie e i
+gate complessivi del motore descritti sopra. Le campagne dedicate worker
+mantengono il proprio ambito originale e non sono state ripetute.

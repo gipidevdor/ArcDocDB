@@ -174,6 +174,9 @@ make check e il reale env/make check-core. Le correzioni riguardano il reader;
 non sono nuove prove del prodotto e non alterano i dati originari.
 La consegna è sul ramo `codex/writer-worker` con base qualificata `e07d772`;
 la primaria continua indipendentemente con le modifiche delle altre chat.
+La successiva [integrazione nella base comune](writer-worker-integrazione.md)
+conserva il controllo completo su `edb043b` e mantiene distinti gli ambiti
+delle campagne originali e dell'assemblaggio aggiornato.
 
 Il tentativo finale di conservazione `4000551045-command-31231-0` è
 preservato: un helper del driver non era stato caricato. La ripresa definisce

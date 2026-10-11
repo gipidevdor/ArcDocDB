@@ -170,6 +170,10 @@ stato failed/exit 1. Un report positivo può avere heap maggiore di zero.
 `self-test-metrics.lisp` conserva i 72 casi autonomi e le diagnostiche.
 `--negative-fixture` omette deliberatamente `:completed` in una metrica:
 il padre deve osservare report failed e exit-code 1, senza caricare il prodotto.
+`--negative-self-test` rimuove invece `:completed` dalla prima finestra reale
+del self-test: richiede exit 1 e `self-test-metrics.lisp` con stato failed,
+una finestra parziale e la diagnostica del campo mancante. Questa prova
+verifica la conservazione del fallimento del self-test prima della campagna.
 
 Budget preregistrati: 600 s per load/fixture/autoverifica/campagne, 30 s per
 finestra; ready/start/join condividono la deadline assoluta della finestra.
@@ -206,7 +210,9 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/get-performance-bench.lisp --bench spikes/out/get-performance-bench-frozen/
 ```
 
-Il comando negativo deve fallire: è una prova del rilevamento, da conservare
+Un quarto comando preregistrato usa `--negative-self-test` con directory nuova
+`spikes/out/get-performance-self-test-partial-frozen/`, tramite il medesimo
+registro esterno. Entrambi i comandi negativi devono fallire: è una prova del rilevamento, da conservare
 con stdout/stderr e codice reale. `--bench` include la stessa autoverifica
 prima delle campagne. Il processo esce con 0 solo dopo una matrice completa
 e un report persistito/riletto; nessuna affermazione quantitativa precede

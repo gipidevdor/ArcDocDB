@@ -1,5 +1,5 @@
 ;;;; C4 GET corrente; esecuzione solo dal padre, via record-command dopo source freeze.
-;;;; --self-test|--bench|--negative-fixture [directory-nuova/]
+;;;; --self-test|--bench|--negative-fixture|--negative-self-test [directory-nuova/]
 ;;; OWNER: main possiede fixture/report; worker i possiede contesto EBR i e output i.
 ;;; SHARED: un ambito, indice, cache e FD readonly per fixture; heap dell'intero processo.
 ;;; REQ: REQ-IDX-003 REQ-CCH-002 REQ-CMP-007 REQ-AFF-008 REQ-VAL-001
@@ -506,7 +506,7 @@
         (fail "COD-61" "confine driver senza diagnostica/exit nonzero.")))
     (list :status :ok :rejections checks :zero-ticks-no-rate t :alias-copy-guard t :nonzero-exit-guard t)))
 
-(defun product-self-test (fixtures directory sensor diagnostics)
+(defun product-self-test (fixtures directory sensor diagnostics &optional fault-first-p)
   "Esiti completi su fixture autonome; preserva metriche parziali anche su fallimento."
   (let ((result (list :schema-version 1 :kind :get-performance-self-test :status :running
                       :product-fixtures 6 :metrics nil :sensor sensor :diagnostics diagnostics)))
@@ -517,6 +517,7 @@
             (dolist (scenario '(:cache-hit :segment :absent))
               (dolist (configuration '((:serial 1) (:parallel 1) (:parallel 2) (:parallel 4)))
                 (let ((metric (run-window fixture scenario (first configuration) (second configuration) 0 8 8)))
+                  (when (and fault-first-p (null (getf result :metrics))) (remf metric :completed))
                   (setf (getf result :metrics) (nconc (getf result :metrics) (list (copy-tree metric))))
                   ;; Salva prima di validare: una finestra negativa non scompare.
                   (write-data result directory "self-test-metrics.lisp")
@@ -628,7 +629,8 @@
                  (dolist (csn '(7 #xffffffffffffffff)) (push (make-input-fixture size csn directory) fixtures)))
                (setf fixtures (nreverse fixtures))
                (let ((sensor (sensor-self-test directory)) (diagnostics (diagnostics-self-test)))
-                 (setf (getf report :self-test) (product-self-test fixtures directory sensor diagnostics)))
+                 (setf (getf report :self-test) (product-self-test fixtures directory sensor diagnostics
+                                                                  (string= mode "--negative-self-test"))))
                (when (string= mode "--bench") (run-bench fixtures report directory)))
           (dolist (fixture fixtures) (dispose-fixture fixture))))))
 
@@ -638,8 +640,8 @@
                  (lambda ()
                    (let ((args (uiop:command-line-arguments)))
                      (unless (and (<= 1 (length args) 2)
-                                  (member (first args) '("--self-test" "--bench" "--negative-fixture") :test #'string=))
-                       (fail "COD-61" "uso --self-test|--bench|--negative-fixture [directory-nuova/]; COUNT è fisso a 20000."))
+                                  (member (first args) '("--self-test" "--bench" "--negative-fixture" "--negative-self-test") :test #'string=))
+                       (fail "COD-61" "uso --self-test|--bench|--negative-fixture|--negative-self-test [directory-nuova/]; COUNT è fisso a 20000."))
                      (unless (>= most-positive-fixnum #xffffffff) (fail "COD-61" "richiesto SBCL 64 bit."))
                      (setf (getf report :mode) (first args) directory (create-directory (first args) (second args))
                            *run-directory* directory)

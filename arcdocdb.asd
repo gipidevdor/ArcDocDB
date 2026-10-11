@@ -18,6 +18,8 @@
                 :components ((:file "package") (:file "conditions")
                              (:file "binary") (:file "crc32c")
                              (:file "record") (:file "batch")))
+               (:module "hash" :serial t
+                :components ((:file "package") (:file "arithmetic") (:file "blocks") (:file "hash64")))
                (:module "codec" :serial t
                 :components ((:file "package") (:file "utf8")
                              (:file "cbor-package") (:file "cbor-header")
@@ -55,7 +57,7 @@
                              (:file "primary-write") (:file "primary-relocate")
                              (:file "primary-arena") (:file "primary-directory")
                              (:file "rebuild-scan") (:file "rebuild-budget")
-                             (:file "rebuild-copy") (:file "rebuild")))
+                             (:file "rebuild-copy") (:file "rebuild") (:file "hash-digests")))
                (:module "mvcc" :serial t
                 :components ((:file "package") (:file "types")
                              (:file "snapshots-types") (:file "snapshots-core") (:file "snapshots-csn")

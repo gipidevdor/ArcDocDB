@@ -15,4 +15,5 @@
            #:crea-indice-primario #:crea-frammento-indice #:crea-contesto-indice
            #:leggi-indice-primario #:frammento-corrente-indice #:pubblica-chiave-indice
            #:rimuovi-chiave-indice #:riloca-chiave-indice #:estendi-arena-indice #:prepara-directory-indice
-           #:pubblica-directory-indice #:invalida-indice-primario #:ricostruisci-frammento-indice))
+           #:pubblica-directory-indice #:invalida-indice-primario #:ricostruisci-frammento-indice
+           #:calcola-digests-frammento))

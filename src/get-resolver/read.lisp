@@ -62,7 +62,7 @@ Ogni discordanza rende GET FAULTED; il confine worker deve isolare la Serie."
 (declaim (ftype (function (contesto-get mappa-segmento-get)
                          (values segmento-get u32 u8 (or null u32) &optional)) risolvi-candidato-get))
 (defun risolvi-candidato-get (context map)
-  "Pre: CANDIDATE, mappa CLOSED acquisita dal controller DOPO AVVIA-GET sotto EBR.
+  "Pre: CANDIDATE, mappa CLOSED o pagina ACTIVE pubblicata acquisita DOPO AVVIA-GET sotto EBR.
 Post: capacità, valid-bytes, flag e offset OUTCOME/NIL, solo per posizione/CSN concordi.
 Non autorizza il valore: GET verifica ancora CRC/chiave/CSN e prova durevole dal file.
 Errori/uscite non locali liberano EBR; ordine errato rifiutato prima di assumere il cleanup."

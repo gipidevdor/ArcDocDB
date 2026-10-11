@@ -6,7 +6,8 @@ Il modulo [`arcdocdb.get.resolver`](../../src/get-resolver/) collega il
 offset della prova OUTCOME mediante una mappa immutabile verificata.
 
 È un componente del percorso di lettura, con **qualifica C1 aperta**.
-Il percorso ACTIVE, la directory delle capacità, le prove EDIT e il server
+Il [percorso ACTIVE ordinario](get-active.md) ha un ponte dedicato alla radice
+del controller. Le prove ACTIVE multiserie, la directory delle capacità, le prove EDIT e il server
 restano da integrare. Non modifica le decisioni architetturali o i formati.
 Riferimenti: [ADR-0037](../adr/0037-lotto-sigillato.md),
 [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md),

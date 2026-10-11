@@ -93,7 +93,10 @@
                              (:file "inventory-query")))
                (:module "get-resolver" :serial t
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
-                             (:file "rows") (:file "build") (:file "read"))))
+                             (:file "rows") (:file "build") (:file "read")
+                             (:file "active-types") (:file "active-directory")
+                             (:file "active-scan") (:file "active-build")
+                             (:file "active-preflight") (:file "active-read"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

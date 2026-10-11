@@ -20,13 +20,15 @@ Generazione crescente <2^60; nessun array o accessor della directory esposto dal
 
 ;;; REQ: REQ-IDX-001 REQ-IDX-007 REQ-AFF-008
 (defstruct (indice-primario (:constructor %make-indice-primario
-                             (capacity max-depth directory-budget fragment-budget)) (:copier nil))
+                               (capacity max-depth directory-budget fragment-budget seed-high seed-low)) (:copier nil))
   "Pre: controller, limiti controllati prima delle allocazioni. Post: dominio di una Serie.
 ROOT si pubblica indivisibile; REVISION solo writer, senza wrap; FAULTED terminale."
   (capacity 8192 :type (integer 16 65536) :read-only t)
   (max-depth 20 :type (integer 0 30) :read-only t)
   (directory-budget 8388608 :type (integer 8 #.most-positive-fixnum) :read-only t)
   (fragment-budget 8388608 :type (integer 1 #.most-positive-fixnum) :read-only t)
+  (seed-high nil :type (or null u32) :read-only t)
+  (seed-low nil :type (or null u32) :read-only t)
   (root nil :type (or null root-indice))
   (revision 0 :type (integer 0 #.most-positive-fixnum))
   (health :open :type (member :open :faulted)))

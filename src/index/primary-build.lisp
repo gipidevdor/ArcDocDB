@@ -25,17 +25,24 @@ Budget di 41*C + arena verificato prima di allocare; la capacità non cresce in-
 ;;; REQ: REQ-IDX-001 REQ-IDX-007 REQ-AFF-008
 (declaim (ftype (function (&key (:capacity integer) (:max-depth integer)
                                (:directory-budget-bytes integer) (:fragment-budget-bytes integer)
-                               (:arena-bytes integer)) indice-primario) crea-indice-primario))
+                               (:arena-bytes integer) (:hash-seed-high t) (:hash-seed-low t))
+                         indice-primario) crea-indice-primario))
 (defun crea-indice-primario (&key (capacity 8192) (max-depth 20)
                                 (directory-budget-bytes 8388608) (fragment-budget-bytes 8388608)
-                                (arena-bytes 65536))
+                                (arena-bytes 65536) (hash-seed-high nil) (hash-seed-low nil))
   "Pre: controller; limiti della configurazione locale, non della dimensione totale di una Serie.
-Post: root iniziale G=0, generazione 0, un frammento vuoto. Nessun thread o I/O."
+Post: root iniziale G=0, generazione 0, un frammento vuoto. Nessun thread o I/O.
+Hash opzionale configurato con entrambi gli u32 immutabili; NIL/NIL conserva la API a digest fidati.
+INVALID-ARGUMENT :primary-hash-seed-configuration per seme incompleto o fuori u32, prima degli array."
+  (unless (or (and (null hash-seed-high) (null hash-seed-low))
+              (and (typep hash-seed-high 'u32) (typep hash-seed-low 'u32)))
+    (error 'invalid-argument :reason :primary-hash-seed-configuration))
   (unless (and (<= 16 capacity 65536) (zerop (logand capacity (1- capacity)))
                (<= 0 max-depth 30) (<= 8 directory-budget-bytes most-positive-fixnum)
                (<= 1 fragment-budget-bytes most-positive-fixnum))
     (error 'invalid-argument :reason :primary-index-configuration))
-  (let* ((index (%make-indice-primario capacity max-depth directory-budget-bytes fragment-budget-bytes))
+  (let* ((index (%make-indice-primario capacity max-depth directory-budget-bytes fragment-budget-bytes
+                                     hash-seed-high hash-seed-low))
          (fragment (crea-frammento-indice index :arena-bytes arena-bytes)))
     (setf (frammento-indice-exposure fragment) :published
           (indice-primario-root index) (%make-root-indice 0 0 (vector fragment)))

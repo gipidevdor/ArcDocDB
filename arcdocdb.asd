@@ -57,7 +57,8 @@
                              (:file "primary-write") (:file "primary-relocate")
                              (:file "primary-arena") (:file "primary-directory")
                              (:file "rebuild-scan") (:file "rebuild-budget")
-                             (:file "rebuild-copy") (:file "rebuild") (:file "hash-digests")))
+                             (:file "rebuild-copy") (:file "rebuild")
+                             (:file "hash-seed") (:file "hash-digests")))
                (:module "mvcc" :serial t
                 :components ((:file "package") (:file "types")
                              (:file "snapshots-types") (:file "snapshots-core") (:file "snapshots-csn")

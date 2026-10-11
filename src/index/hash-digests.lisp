@@ -21,6 +21,7 @@ INVALID-ARGUMENT prima di ogni allocazione/scrittura: :primary-hash-arrays o :pr
 (defun calcola-digests-frammento (index source highs lows seed-high seed-low)
   "Pre: writer esclusivo, sorgente pubblicato corrente, mappe u32 private e seme della Serie.
 Post: digest XXH64 agli slot fisici vivi, altri elementi invariati; tre valori C, vivi, byte chiave.
+I due u32 del seme devono uguagliare la configurazione immutabile dell'indice, prima delle mappe.
 Root, banco, arena e revisione invariati. Alloca due scratch fissi di cinque u64: manutenzione.
 Rifiuti preflight senza scritture; seed incoerente => INVALID-ARGUMENT, corruzione => FAULTED.
 Su rifiuto durante la scansione scartare le mappe parziali private; nessun rollback dell'indice."
@@ -28,6 +29,9 @@ Su rifiuto durante la scansione scartare le mappe parziali private; nessun rollb
   (esigi-sorgente-directory index (indice-primario-root index) source)
   (let ((capacity (indice-primario-capacity index)))
     (esigi-mappe-hash capacity highs lows seed-high seed-low)
+    (multiple-value-bind (expected-high expected-low) (esigi-seme-hash index)
+      (unless (and (= expected-high seed-high) (= expected-low seed-low))
+        (error 'invalid-argument :reason :primary-hash-seed-mismatch)))
     (when (> (frammento-indice-used source) (length (frammento-indice-arena source)))
       (guasto-indice index :primary-rebuild-arena-used))
     (let ((words (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0))
@@ -40,7 +44,8 @@ Su rifiuto durante la scansione scartare le mappe parziali private; nessun rollb
             (multiple-value-bind (high low)
                 (arcdocdb.hash64:xxh64 arena offset (+ offset size) seed-high seed-low)
               (verifica-digest-ricostruzione source slot high low words work)
-              (setf (aref highs slot) high (aref lows slot) low))
+              (setf (aref (the digests-frammento highs) slot) high
+                    (aref (the digests-frammento lows) slot) low))
             (incf live) (incf bytes size))))
       (unless (= live (frammento-indice-live source)) (guasto-indice index :primary-rebuild-live-count))
       (values capacity live bytes))))

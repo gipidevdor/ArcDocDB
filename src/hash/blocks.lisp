@@ -9,6 +9,8 @@
 (defun hash-blocks (buffer start size seed)
   "Pre: span verificato, SIZE>=32, seme u64. Post: digest dei blocchi completi da 32 byte.
 Al massimo floor(65535/32) iterazioni; helper inline, input immutato, nessuna risorsa."
+  (unless (and (>= size 32) (<= (+ start size) (length buffer)))
+    (error 'invariant-violation :reason :hash-block-span))
   (let ((v1 (logand +mask64+ (+ seed +prime1+ +prime2+)))
         (v2 (logand +mask64+ (+ seed +prime2+))) (v3 seed)
         (v4 (logand +mask64+ (- seed +prime1+))) (position start))
@@ -19,6 +21,8 @@ Al massimo floor(65535/32) iterazioni; helper inline, input immutato, nessuna ri
             v3 (round64 v3 (read64 buffer (+ position 16)))
             v4 (round64 v4 (read64 buffer (+ position 24))))
       (incf position 32))
+    (unless (= position (+ start (* 32 (ash size -5))))
+      (error 'invariant-violation :reason :hash-block-progress))
     (let ((accumulator (logand +mask64+ (+ (rotate64 v1 1) (rotate64 v2 7)
                                           (rotate64 v3 12) (rotate64 v4 18)))))
       (declare (type u64 accumulator))
@@ -32,6 +36,8 @@ Al massimo floor(65535/32) iterazioni; helper inline, input immutato, nessuna ri
 (defun hash-tail (buffer start end accumulator)
   "Pre: span residuo verificato, da 0 a 31 byte; accumulatore include lunghezza totale.
 Post: coda XXH64, pura e inline. Al massimo tre lane da 8, una da 4 e tre byte."
+  (unless (and (<= start end (length buffer)) (<= (- end start) 31))
+    (error 'invariant-violation :reason :hash-tail-span))
   (let ((position start) (value accumulator))
     (declare (type index position) (type u64 value))
     (dotimes (i (ash (- end start) -3))
@@ -42,7 +48,10 @@ Post: coda XXH64, pura e inline. Al massimo tre lane da 8, una da 4 e tre byte."
       (setf value (logxor value (logand +mask64+ (* (read32 buffer position) +prime1+)))
             value (logand +mask64+ (+ (* (rotate64 value 23) +prime2+) +prime3+)))
       (incf position 4))
-    (loop for offset from position below end do
-      (setf value (logxor value (logand +mask64+ (* (aref buffer offset) +prime5+)))
-            value (logand +mask64+ (* (rotate64 value 11) +prime1+))))
+    (loop while (< position end) do
+      (setf value (logxor value (logand +mask64+ (* (aref buffer position) +prime5+)))
+            value (logand +mask64+ (* (rotate64 value 11) +prime1+)))
+      (incf position))
+    (unless (= position end)
+      (error 'invariant-violation :reason :hash-tail-progress))
     value))

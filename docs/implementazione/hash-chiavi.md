@@ -66,6 +66,9 @@ Il risultato alimenta il [costruttore verificato](indice-ricostruzione.md).
 Root, banco, arena, salute sana e revisione non vengono modificati.
 Un errore di dominio/corruzione segue il fail-stop esistente; mappe private
 parziali su errore durante la scansione si scartano, senza rollback dell'indice.
+Root assente: `:primary-index-missing-root`. Discordanza del digest
+ricalcolato internamente: `:primary-hash-source-digest`, sempre FAULTED.
+I digest esterni fidati del rebuild conservano il contratto dei rifiuti.
 
 Budget separato: mappe 8*C byte e due scratch fissi da cinque u64,
 80 byte di payload oltre header/runtime. Non sono parte del budget di
@@ -77,6 +80,7 @@ dal percorso caldo.
 ## Verifica
 
 [Campagna e metodo](../../spikes/results/2026-10-11-key-hash/README.md).
+[Revisioni e correzioni](hash-chiavi-revisione.md).
 Oracolo freddo indipendente, vettori upstream, ogni residuo e allineamento,
 semi oltre fixnum, immutabilita e worker reali. Prove della mappa con
 lookup/rebuild/split, predicati e mutanti nominati; misure seriali e

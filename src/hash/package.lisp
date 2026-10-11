@@ -5,5 +5,5 @@
   (:use #:cl)
   (:import-from #:arcdocdb.binary #:octets #:index #:u32 #:u64 #:check-range)
   (:import-from #:arcdocdb.record #:+max-key-bytes+)
-  (:import-from #:arcdocdb.conditions #:invalid-argument)
+  (:import-from #:arcdocdb.conditions #:invalid-argument #:invariant-violation)
   (:export #:xxh64))

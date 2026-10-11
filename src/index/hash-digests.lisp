@@ -26,7 +26,7 @@ Root, banco, arena e revisione invariati. Alloca due scratch fissi di cinque u64
 Rifiuti preflight senza scritture; seed incoerente => INVALID-ARGUMENT, corruzione => FAULTED.
 Su rifiuto durante la scansione scartare le mappe parziali private; nessun rollback dell'indice."
   (esigi-indice-sano index)
-  (esigi-sorgente-directory index (indice-primario-root index) source)
+  (esigi-sorgente-directory index (acquisisci-root index) source)
   (let ((capacity (indice-primario-capacity index)))
     (esigi-mappe-hash capacity highs lows seed-high seed-low)
     (multiple-value-bind (expected-high expected-low) (esigi-seme-hash index)
@@ -43,7 +43,9 @@ Su rifiuto durante la scansione scartare le mappe parziali private; nessun rollb
           (let ((offset (ldb (byte 32 0) (aref words 2))) (size (ldb (byte 16 32) (aref words 2))))
             (multiple-value-bind (high low)
                 (arcdocdb.hash64:xxh64 arena offset (+ offset size) seed-high seed-low)
-              (verifica-digest-ricostruzione source slot high low words work)
+              ;; Il seme e il digest sono interni: una discordanza non e input esterno.
+              (handler-case (verifica-digest-ricostruzione source slot high low words work)
+                (invalid-argument () (guasto-indice index :primary-hash-source-digest)))
               (setf (aref (the digests-frammento highs) slot) high
                     (aref (the digests-frammento lows) slot) low))
             (incf live) (incf bytes size))))

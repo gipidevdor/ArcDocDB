@@ -32,8 +32,8 @@
      :after "(+ accumulator 0)")
     (:name "byte-tail-prime" :file "src/hash/blocks.lisp"
      :test "TEST-REQ-IDX-001-HASH-TAIL"
-     :before "(* (aref buffer offset) +prime5+)"
-     :after "(* (aref buffer offset) +prime4+)")
+     :before "(* (aref buffer position) +prime5+)"
+     :after "(* (aref buffer position) +prime4+)")
     (:name "merge-last-lane" :file "src/hash/blocks.lisp"
      :test "TEST-REQ-IDX-001-HASH-BLOCKS"
      :before "(merge64 accumulator v4)"

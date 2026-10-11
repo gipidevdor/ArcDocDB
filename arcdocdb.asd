@@ -91,6 +91,8 @@
   :pathname "tests/"
   :serial t
   :components ((:file "smoke")
+               (:module "hash" :serial t
+                :components ((:file "support") (:file "hash64") (:file "guards") (:file "threads")))
                (:module "foundation"
                 :serial t
                 :components ((:file "support") (:file "binary")
@@ -131,9 +133,10 @@
                (:module "index" :serial t
                 :components ((:file "slot-support") (:file "slots") (:file "slot-threads")
                              (:file "primary-support") (:file "primary") (:file "primary-threads")
-                             (:file "rebuild"))))
+                             (:file "rebuild") (:file "hash-digests"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.hash64.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.foundation.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.utf8.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.tests '#:run)

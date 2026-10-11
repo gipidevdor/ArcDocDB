@@ -68,3 +68,9 @@ registratore ha rilevato un aggiornamento tardivo dei soli percorsi di
 output nel metodo: stato SOURCE-CHANGED, conservato e non accettato come
 freeze stabile. Anche il primo comando mutazioni e conservato con tale stato.
 Le successive esecuzioni ripetono i controlli sul candidato definitivo.
+
+Herschel ha riletto il delta `c9c7561`: nessun finding statico aperto,
+R01–R04 e COD-50 chiusi; file esaminati stabili anche dopo l'integrazione
+`344e8fb`. [Rapporto strutturato](../../spikes/results/2026-10-11-key-hash/revisione-herschel-finale.lisp).
+I [risultati](hash-chiavi-risultati.md) distinguono le prove osservate da
+copertura, heap parallelo, MC/DC e qualifiche ancora aperte.

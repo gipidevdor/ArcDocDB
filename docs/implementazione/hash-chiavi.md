@@ -81,6 +81,7 @@ dal percorso caldo.
 
 [Campagna e metodo](../../spikes/results/2026-10-11-key-hash/README.md).
 [Revisioni e correzioni](hash-chiavi-revisione.md).
+[Prove e misure conservate](hash-chiavi-risultati.md).
 Oracolo freddo indipendente, vettori upstream, ogni residuo e allineamento,
 semi oltre fixnum, immutabilita e worker reali. Prove della mappa con
 lookup/rebuild/split, predicati e mutanti nominati; misure seriali e

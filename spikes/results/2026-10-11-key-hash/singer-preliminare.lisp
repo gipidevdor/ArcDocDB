@@ -49,6 +49,33 @@
  :stdout-stderr-separation-not-preserved t
  :statement "I risultati tool gia noti e gli estratti sono trascritti sotto; i quattro log combinati gia esistenti sono gli unici stream completi disponibili. Gli output precedenti troncati o sovrascritti non sono recuperati ne rigenerati. L'assenza di un originale autonomo e dichiarata per ogni comando."
  :overwritten-logs-not-reassigned-to-earlier-commands t)
+ :available-merged-output-transcriptions ((:execution "cold-product-01"
+ :full-log-embedded nil
+ :combined-output-excerpt "; compilation finished in 0:00:00.002
+; 
+; compilation unit finished
+;   printed 145 notes
+COLD-SELF-TEST (:STATUS :OK :ORACLE :INDEPENDENT-COLD-XXH64 :ANCHORS 3
+                :FIXTURES 24 :EDGE-SPANS 24 :EMPTY-VECTORS 2 :NEGATIVE-CASES 26
+                :INTERLEAVED-RECHECK T)
+")
+ (:execution "compile-04"
+ :full-log-embedded nil
+ :combined-output-excerpt "; compilation unit finished
+;   printed 203 notes
+; wrote /tmp/arcdocdb-key-hash-bench-check.fasl
+; compilation finished in 0:00:00.556
+")
+ (:execution "cold-schema-02"
+ :full-log-embedded t
+ :combined-output "SCHEMA-COLD-OK: 24 campi, 12 valori negativi, rate zero/positive.
+")
+ (:execution "cold-cli-02"
+ :full-log-embedded t
+ :combined-output "CLI-AND-PLAN-COLD-OK
+"))
+ :large-complete-logs-not-embedded t
+ :large-log-retention-note "I log ampi restano nei quattro path preesistenti elencati; in questo preliminare sono conservati gli estratti gia letti, senza ulteriore recupero o esecuzione. Gli originali separati stdout/stderr non sono conservati. Gli hash storici di esecuzione non sono disponibili."
  :known-failures ("compile-01"
  "compile-03-with-note-search"
  "cold-schema-cli-01-failed")

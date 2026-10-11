@@ -1,7 +1,7 @@
 SBCL ?= sbcl
 EVIDENCE_DYNAMIC_SPACE_SIZE ?= 2048
 
-.PHONY: build test lint lint-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench
+.PHONY: build test lint lint-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest
 build test:  ## compila senza avvisi (COD-01) ed esegue gli smoke test
 	$(SBCL) --noinform --no-userinit --non-interactive --load tools/build.lisp
 
@@ -10,6 +10,9 @@ lint:  ## divieti dello standard di codifica sul codice di prodotto (src/)
 
 lint-selftest:  ## verifica il linter su codice di prova corretto e scorretto
 	$(SBCL) --script tools/lint.lisp --self-test
+
+snapshot-mutation-selftest:  ## verifica classificazione e diagnostiche del runner snapshot
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/snapshot-mutation.lisp --self-test
 
 links:  ## verifica link e ancore relativi nei file Markdown
 	$(SBCL) --script tools/check-links.lisp .
@@ -40,4 +43,4 @@ spikes-bench:  ## misure locali, in serie; dati grezzi e ambiente in spikes/out/
 check:  ## tutti i controlli, con record strutturato anche in caso di fallimento
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- $(MAKE) check-core
 
-check-core: test lint lint-selftest trace links evidence-selftest evidence spikes-check  ## controlli chiamati dal registro
+check-core: test lint lint-selftest snapshot-mutation-selftest trace links evidence-selftest evidence spikes-check  ## controlli chiamati dal registro

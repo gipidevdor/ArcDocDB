@@ -176,3 +176,7 @@ assenza di allocazioni misurata o completamento di MVCC. L'interfaccia in buffer
 evita il ritorno di un intero Lisp per il CSN sul percorso previsto del reader;
 scalabilità, costo delle barriere e allocazioni vanno ancora misurati.
 L'integrazione con il registro unico ha [evidenze separate](snapshot-csn.md#evidenze-e-qualifica).
+
+La [campagna di verifica snapshot e CSN](snapshot-verifica.md) preregistra
+prove funzionali, contesa controllata e mutazioni mirate. I suoi risultati
+verranno conservati separatamente da queste evidenze statiche.

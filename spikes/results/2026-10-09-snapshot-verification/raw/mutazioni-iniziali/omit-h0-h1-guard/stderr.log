@@ -1,0 +1,2 @@
+SIMPLE-ERROR: Asserzione fallita: (TYPEP ARCDOCDB.MVCC.TESTS::OBSERVED
+                                         ARCDOCDB.MVCC.TESTS::EXPECTED-TYPE)

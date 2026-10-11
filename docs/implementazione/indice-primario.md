@@ -205,3 +205,14 @@ o auto-verifica degli strumenti aggiunto/eseguito localmente. Restano
 qualifica C1, revisioni indipendenti, memoria ARM64/x86-64, allocazioni/P99,
 hashing, costruttore split/rebuild, retention, prenotazioni, recovery,
 cache e GET integrato. Codice v1 e suite preesistenti non qualificano v2.
+
+## Prove successive — indice v2
+
+La [campagna di ricostruzione](../../spikes/results/2026-10-09-index-rebuild/risultati.md)
+aggiunge 27 test di ricerca, writer e directory, 28 test di rebuild/split e
+64 test degli slot. Comprende concorrenza, fault injection mirata, quattro
+mutanti concreti, copertura SB-Cover e benchmark delle primitive in memoria.
+Il [costruttore verificato](indice-ricostruzione.md) prepara ora rebuild e
+split, con pubblicazione separata della root. La nota precedente descrive
+l'ambito della campagna iniziale; i limiti residui e le revisioni misurate
+sono dichiarati nel nuovo rapporto. Il GET e il motore completo restano aperti.

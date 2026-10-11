@@ -154,3 +154,14 @@ Restano qualifica C1, interleaving e disassemblato x86-64, allocazione/P99,
 sondaggio/arena/directory con budget condiviso, retention, recovery e
 writer integrati. Gate del motore completo aperto. Le due letture locali
 del codice non sono revisioni indipendenti.
+
+## Prove successive — slot v2
+
+La [campagna di ricostruzione](../../spikes/results/2026-10-09-index-rebuild/risultati.md)
+aggiunge 64 test degli slot v2, compresi payload oltre fixnum, rifiuti,
+aggiornamento, rilocazione, riuso e concorrenza tra writer e reader.
+Gli slot sono esercitati anche dalle 55 prove di indice primario e rebuild.
+La nota precedente descrive l'ambito della campagna iniziale. Il nuovo
+rapporto conserva risultati, copertura, revisioni e limiti: FI deterministica
+nel campione seqlock, interruzioni interne, fault durante la copia e x86-64
+restano da qualificare.

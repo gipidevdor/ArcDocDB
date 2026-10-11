@@ -1,0 +1,3 @@
+SIMPLE-ERROR: Asserzione fallita: (EQ :FAULTED
+                                      (ARCDOCDB.READ:STATO-CONTESTO-LETTURA
+                                       ARCDOCDB.READ.TESTS::CONTEXT))

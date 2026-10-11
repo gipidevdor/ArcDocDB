@@ -1,0 +1,4 @@
+SIMPLE-ERROR: Asserzione fallita: (NULL
+                                   (ARCDOCDB.EPOCHS:ACQUISISCI-RECLAIM
+                                    ARCDOCDB.EPOCHS.TESTS::TICKET
+                                    ARCDOCDB.EPOCHS.TESTS::GENERATION))

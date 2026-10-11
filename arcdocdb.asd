@@ -120,6 +120,10 @@
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "mvcc" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "capture")))
+               (:module "epochs" :serial t
+                :components ((:file "support") (:file "lifecycle") (:file "threads")))
+               (:module "read" :serial t
+                :components ((:file "support") (:file "lifecycle") (:file "threads")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
@@ -158,6 +162,8 @@
              (uiop:symbol-call '#:arcdocdb.cbor.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.read.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)

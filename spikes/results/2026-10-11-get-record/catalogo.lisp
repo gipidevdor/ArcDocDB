@@ -60,4 +60,20 @@
   (:KIND :LOCAL-STATIC-READING :ARTIFACT "lettura-prima.lisp" :VARIANT
    :AUTHOR-LOCAL)
   (:KIND :LOCAL-STATIC-READING :ARTIFACT "lettura-seconda.lisp" :VARIANT
-   :AUTHOR-LOCAL)))
+   :AUTHOR-LOCAL)
+  (:KIND :COMPILE-ONLY :ARTIFACT #A((22) BASE-CHAR . "compilation-final.lisp")
+   :PROCESS-ARTIFACT
+   #A((36) BASE-CHAR . "compilation-final-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((15) BASE-CHAR . "lint-final.lisp")
+   :PROCESS-ARTIFACT #A((29) BASE-CHAR . "lint-final-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((16) BASE-CHAR . "trace-final.lisp")
+   :PROCESS-ARTIFACT #A((30) BASE-CHAR . "trace-final-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((16) BASE-CHAR . "links-final.lisp")
+   :PROCESS-ARTIFACT #A((30) BASE-CHAR . "links-final-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((19) BASE-CHAR . "evidence-final.lisp")
+   :PROCESS-ARTIFACT #A((33) BASE-CHAR . "evidence-final-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)))

@@ -5,10 +5,12 @@ record e alla conferma finale. Metodo del 2026-10-11: compilazione del solo
 prodotto con avvisi come errori, controlli statici di codifica, tracciabilità,
 collegamenti e conservazione, lettura del disassemblato ARM64.
 
-Ogni comando registrato conserva argv, ambiente, sorgenti prima/dopo,
+Ogni comando registrato conserva argv, ambiente, hash dei sorgenti prima/dopo,
 output integrale ed esito. Anche il primo errore di compilazione, parentesi
 mancante nell'inserimento cache, è conservato. Non si scarta un tentativo
 fallito per presentare soltanto la variante corretta.
+I record identificano le varianti tramite hash, non copie integrali di ogni
+file non committed; i sorgenti del prodotto finale sono nei commit Git.
 
 Nessun test, modello, fault injection, benchmark o auto-verifica degli
 strumenti viene aggiunto o eseguito localmente in questa campagna. Le letture

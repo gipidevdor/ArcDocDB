@@ -1,0 +1,11 @@
+(:SCHEMA-VERSION 1 :KIND :GET-PERFORMANCE-MUTATION-CHILD :PHASE :TESTS :STATUS
+ :FAILED :PRODUCT-COMPILED T :SUITE-COMPILED T :COMPILED-TARGET
+ (:FILE "src/get/segment.lisp" :SOURCE-MD5
+  #A((32) BASE-CHAR . "9e64d5eaf647ad7963c98332097080ae") :FASL
+  #A((171) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/get-verificato/ArcDocDB/spikes/out/get-performance-mutations-frozen/raw/isolatedtests/truncate-csn-high-bit/fasl/src/get/segment.fasl")
+  :FASL-MD5 #A((32) BASE-CHAR . "d6194ec0d8f80bf7ec791b6fddf60ff8"))
+ :FAILED-TEST "TEST-REQ-AFF-002-PERFORMANCE-MAX-U64-VERIFICATION" :PASSED-TESTS
+ NIL :FAILURE-KIND :PRODUCT-CONDITION :CONDITION-TYPE
+ #A((19) BASE-CHAR . "CORRUPTION-DETECTED") :DIAGNOSTIC
+ #A((35) BASE-CHAR . "ArcDocDB: CSN-MISMATCH all'offset 0"))

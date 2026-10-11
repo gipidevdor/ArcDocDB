@@ -1,0 +1,7 @@
+--- a/src/cache/read.lisp
++++ b/src/cache/read.lisp
+@@ -90,2 +90,2 @@
+-                     (zerop (aref (classe-cache-rejected class) slot))
+-                     (tag-cache-p class slot segment-high segment-low offset size))
++                     (identity t)
++                     (tag-cache-p class slot segment-high segment-low offset size))

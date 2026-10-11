@@ -1,0 +1,9 @@
+SIMPLE-ERROR: Asserzione fallita: (EQUAL '(:CACHE :HIT :NOT-ATTEMPTED NIL NIL)
+                                         (MULTIPLE-VALUE-LIST
+                                          (ARCDOCDB.GET:LEGGI-RECORD-GET
+                                           ARCDOCDB.GET.PERFORMANCE.TESTS::CONTEXT
+                                           (ARCDOCDB.GET.PERFORMANCE.TESTS:GET-PERFORMANCE-FIXTURE-SEGMENT
+                                            ARCDOCDB.GET.PERFORMANCE.TESTS::FIXTURE)
+                                           (ARCDOCDB.GET.PERFORMANCE.TESTS:GET-PERFORMANCE-FIXTURE-VALID-BYTES
+                                            ARCDOCDB.GET.PERFORMANCE.TESTS::FIXTURE)
+                                           0)))

@@ -1,0 +1,23 @@
+SIMPLE-ERROR: Asserzione fallita: (HANDLER-CASE
+                                   (PROGN
+                                    (PROGN
+                                     (ARCDOCDB.GET:LEGGI-RECORD-GET
+                                      ARCDOCDB.GET.PERFORMANCE.TESTS::CONTEXT
+                                      (ARCDOCDB.GET.PERFORMANCE.TESTS:GET-PERFORMANCE-FIXTURE-SEGMENT
+                                       ARCDOCDB.GET.PERFORMANCE.TESTS::FIXTURE)
+                                      (ARCDOCDB.GET.PERFORMANCE.TESTS:GET-PERFORMANCE-FIXTURE-VALID-BYTES
+                                       ARCDOCDB.GET.PERFORMANCE.TESTS::FIXTURE)
+                                      0)
+                                     (SETF ARCDOCDB.GET.PERFORMANCE.TESTS::AUTHORIZED
+                                             T))
+                                    NIL)
+                                   (ARCDOCDB.CONDITIONS:CORRUPTION-DETECTED
+                                    (CONDITION)
+                                    (EQ
+                                     (ARCDOCDB.CONDITIONS:ERROR-REASON
+                                      CONDITION)
+                                     (IF (EQ
+                                          ARCDOCDB.GET.PERFORMANCE.TESTS::PART
+                                          :HEADER)
+                                         :HEADER-CRC
+                                         :BODY-CRC))))

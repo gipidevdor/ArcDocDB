@@ -1,0 +1,6 @@
+SIMPLE-ERROR: Asserzione fallita: (NOT
+                                   (ARCDOCDB.EPOCHS:EPOCA-ATTIVA-P
+                                    (ARCDOCDB.EPOCHS:CONTESTO-EPOCA
+                                     (ARCDOCDB.GET.PERFORMANCE.TESTS:GET-PERFORMANCE-FIXTURE-EPOCHS
+                                      ARCDOCDB.GET.PERFORMANCE.TESTS::FIXTURE)
+                                     ARCDOCDB.GET.PERFORMANCE.TESTS::WORKER)))

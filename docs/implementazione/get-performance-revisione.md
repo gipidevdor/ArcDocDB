@@ -446,3 +446,23 @@ La lettura del disassemblato e delle due letture dell'autore è materiale di
 supporto preesistente, non una nuova esecuzione o misura. Nessuna evidenza
 della campagna funzionale dell'altra sessione viene attribuita a questa
 revisione.
+
+## Addendum definitivo: rilettura statica R3/R4
+
+Questo addendum sostituisce gli stati aperti R3/R4 riportati sopra.
+**R3 corretto staticamente:** `tools/get-performance-bench.lisp:509–532,631–644`,
+blob `be5fc283b3c06bc60548ea32c240ebf8d9ecafc2`.
+Ogni metrica è copiata e persistita prima di validate-window; il gestore salva
+stato failed e diagnostica e rilancia la stessa condizione. --negative-self-test
+toglie completed alla prima finestra prima della persistenza; il percorso normale
+non attiva l'iniezione. La persistenza resta fuori dalle finestre misurate.
+**R4 corretto staticamente:** `src/cache/read.lisp:89–100`,
+blob `5f4f08a4609bd264fa058ec25ba8f6a516c162c8`.
+Il predicato salta disabled/rejected prima del tag; copia-posto-cache conserva
+entrambe le guardie, seqlock e verifica successiva. Restano otto way, una copia,
+fallback su verify-failed e schema/esiti invariati; nessuna allocazione aggiunta.
+**Mutante 7 coerente:** `tools/get-performance-mutation.lisp:86–94`,
+blob `231cb906b55b9c92905deefc112f7baebecbd4af`: rimuove il prefiltro rejected
+e ripristina l'oscuramento della copia riparata nel test nominato.
+R2 resta chiuso come scope chiarito: oracolo completo dentro tempo/heap.
+Esito finale statico favorevole alle patch; nessun run né risultato dinamico anticipato.

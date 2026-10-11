@@ -7,7 +7,7 @@
                 #:invariant-violation)
   (:export #:coda-writer #:crea-coda-writer #:accoda-messaggio
            #:acquisisci-writer #:preleva-messaggi #:rilascia-writer
-           #:writer-programmabile #:crea-writer-programmabile #:accoda-lavoro-writer
+           #:writer-programmabile #:crea-writer-programmabile #:indice-routing-writer #:accoda-lavoro-writer
            #:inizia-tratto-writer #:preleva-lavori-writer #:termina-tratto-writer
            #:lista-writer-pronti #:crea-lista-writer-pronti
            #:pubblica-writer-pronto #:preleva-writer-pronto #:ricircola-writer-pronto

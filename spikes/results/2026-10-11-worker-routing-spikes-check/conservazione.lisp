@@ -1,0 +1,40 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4000712725 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((134) BASE-CHAR
+    . \"/private/var/folders/07/57bk4fl91n9_9gk_j124c_q80000gn/T/arcdocdb-routing-final-0cdxq3wa/ArcDocDB/spikes/out/4000712691-check-90489-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 2 :WALL-SECONDS 1.809026d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 57107139 :STORED-BYTES 878566
+ :RESULTS
+ ((:PATH
+   #A((145) BASE-CHAR
+      . \"/private/var/folders/07/57bk4fl91n9_9gk_j124c_q80000gn/T/arcdocdb-routing-final-0cdxq3wa/ArcDocDB/spikes/out/4000712691-check-90489-0/SPK-07.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28144051 :STORED-BYTES 410958 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"SPK-07.lisp.gz\" :UNCOMPRESSED-BYTES 28144051 :UNCOMPRESSED-SHA256
+    \"e277ca736bbf7a69aa93184bc8dd51a06381f4322528969ae9748fb36347bc74\"
+    :COMPRESSED-BYTES 410640 :COMPRESSED-SHA256
+    \"48ad9faf8fe2add2fc65ceadd2d43557f330f0e4a74f3dff3a24cf18e0b9d3f4\"))
+  (:PATH
+   #A((145) BASE-CHAR
+      . \"/private/var/folders/07/57bk4fl91n9_9gk_j124c_q80000gn/T/arcdocdb-routing-final-0cdxq3wa/ArcDocDB/spikes/out/4000712691-check-90489-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28963088 :STORED-BYTES 467608 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 28963088 :UNCOMPRESSED-SHA256
+    \"62f9bbb7984aa441e9ebab833889efcd5d9cd6ceaa5869a4a04e515b0d90bf61\"
+    :COMPRESSED-BYTES 467290 :COMPRESSED-SHA256
+    \"658026a83408d241a310f2595303e930e34ecc273dce2c627a4922871cf710d9\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((125) BASE-CHAR
+     . "/private/var/folders/07/57bk4fl91n9_9gk_j124c_q80000gn/T/arcdocdb-routing-final-0cdxq3wa/ArcDocDB/tools/compact-evidence.lisp")
+  "--root"
+  #A((134) BASE-CHAR
+     . "/private/var/folders/07/57bk4fl91n9_9gk_j124c_q80000gn/T/arcdocdb-routing-final-0cdxq3wa/ArcDocDB/spikes/out/4000712691-check-90489-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "90489"))
+ :STARTED-AT-UNIVERSAL-TIME 4000712723)

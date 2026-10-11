@@ -55,7 +55,8 @@
                              (:file "events") (:file "io-events") (:file "publication")
                              (:file "query") (:file "retirement")
                              (:file "worker-package") (:file "worker-types")
-                             (:file "worker-boundary") (:file "worker-run")))
+                             (:file "worker-boundary") (:file "worker-run")
+                             (:file "routing-types") (:file "routing-build") (:file "routing-select")))
                (:module "index" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "validation") (:file "read") (:file "write") (:file "relocate")
@@ -164,7 +165,7 @@
                              (:file "native") (:file "csn") (:file "csn-threads")))
                (:module "series" :serial t
                 :components ((:file "support") (:file "controller") (:file "boundaries") (:file "threads")
-                             (:file "worker-bridge")))
+                             (:file "worker-bridge") (:file "worker-routing")))
                (:module "index" :serial t
                 :components ((:file "slot-support") (:file "slots") (:file "slot-threads")
                              (:file "primary-support") (:file "primary") (:file "primary-threads")

@@ -410,6 +410,71 @@
    #A((115) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706221-command-99190-0/conservazione.lisp")
    :SHA256 "7dbae280d0628dbb9b3453fc979139d5f2f30590f3b04d088178f5bd73cb6e4e")
+  (:ARTIFACT #A((36) BASE-CHAR . "4000706301-command-347-0-report.lisp") :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   #A((106) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706301-command-347-0/report.lisp")
+   :SHA256 "b71d3a1147e2ff28d6bdec8506f3abf9f5812a303c8890964e2ad341ffb23bec")
+  (:ARTIFACT #A((43) BASE-CHAR . "4000706301-command-347-0-conservazione.lisp")
+   :KIND :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   #A((113) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706301-command-347-0/conservazione.lisp")
+   :SHA256 "35c1b255b60df8d7f6134509bd1577d245e9868a49de03512ee998f9e3570e3b")
+  (:ARTIFACT #A((37) BASE-CHAR . "4000706443-command-3888-0-report.lisp") :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   #A((107) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706443-command-3888-0/report.lisp")
+   :SHA256 "0b786b64e874bab0fb9bcb21c82688b2a0471824662752b66eadeef6ae1d23b7")
+  (:ARTIFACT
+   #A((44) BASE-CHAR . "4000706443-command-3888-0-conservazione.lisp") :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   #A((114) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706443-command-3888-0/conservazione.lisp")
+   :SHA256 "69fc444f985a0fc475b124b431c68185321a24a9d95feacf284ba7a2db2c97de")
+  (:ARTIFACT #A((37) BASE-CHAR . "4000706570-command-5981-0-report.lisp") :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   #A((107) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706570-command-5981-0/report.lisp")
+   :SHA256 "7449dc67a3cb81e30d66d244b17cf97baac4b62fea3cd34dba4e375aac360ac2")
+  (:ARTIFACT
+   #A((44) BASE-CHAR . "4000706570-command-5981-0-conservazione.lisp") :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   #A((114) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706570-command-5981-0/conservazione.lisp")
+   :SHA256 "d46bf5abf2158861faab68318acb0bc6dc5be53542dc0cb01137f211cda0aec6")
+  (:ARTIFACT #A((37) BASE-CHAR . "4000706798-command-8888-0-report.lisp") :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   #A((107) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706798-command-8888-0/report.lisp")
+   :SHA256 "5caddec975b537c47e059ba8acb847985747a059f49c4b9de1540d90a5c1a17c")
+  (:ARTIFACT
+   #A((44) BASE-CHAR . "4000706798-command-8888-0-conservazione.lisp") :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   #A((114) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706798-command-8888-0/conservazione.lisp")
+   :SHA256 "aef06615356f0b320962e8e4d9001f8e9773c2593b679a0deb5e71b1cb449a81")
+  (:ARTIFACT #A((38) BASE-CHAR . "4000706891-command-12341-0-report.lisp")
+   :KIND :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   #A((108) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706891-command-12341-0/report.lisp")
+   :SHA256 "5a54c1a73c5cc65320d26c4e4b75361809b08ae8701f7540304c936737fa0d2f")
+  (:ARTIFACT
+   #A((45) BASE-CHAR . "4000706891-command-12341-0-conservazione.lisp") :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   #A((115) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706891-command-12341-0/conservazione.lisp")
+   :SHA256 "2d00bfb91babe2708b21aaa31f0c86c1e1f6fcb0c3262660e977bf3f564d9639")
+  (:ARTIFACT #A((38) BASE-CHAR . "4000706892-command-12502-0-report.lisp")
+   :KIND :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   #A((108) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706892-command-12502-0/report.lisp")
+   :SHA256 "d1466293095064e813e3e2962b48bac7500b2ad136001e7189b4d37fcfd6c103")
+  (:ARTIFACT
+   #A((45) BASE-CHAR . "4000706892-command-12502-0-conservazione.lisp") :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   #A((115) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000706892-command-12502-0/conservazione.lisp")
+   :SHA256 "08c9d8130fa8fcb30bee1e53ed52e07ac897f242fd5b40b6b70bee518e77df37")
   (:ARTIFACT #A((35) BASE-CHAR . "key-hash-bench-negative-report.lisp") :KIND
    :KEY-HASH-BENCHMARK :STATUS :FAILED :SOURCE
    #A((105) BASE-CHAR

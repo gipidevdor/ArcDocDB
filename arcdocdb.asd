@@ -75,6 +75,9 @@
                (:module "read" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "task")))
+               (:module "get" :serial t
+                :components ((:file "package") (:file "types") (:file "build")
+                             (:file "lifecycle") (:file "lookup") (:file "target") (:file "segment")))
                (:module "recovery"
                 :serial t
                 :components ((:file "package") (:file "scan")

@@ -151,3 +151,7 @@ record e confine dei pool. La qualifica richiede esercitare le decisioni,
 interruzioni e gare con scadenza/reclaim, verificare la migrazione su worker
 reali e misurare allocazioni/latency su ARM64 e x86-64. Compilazione e CI
 dei test già presenti non chiudono questi criteri.
+
+La [campagna funzionale del 2026-10-11](lettura-verifica.md) aggiunge
+suite EBR e compiti di lettura, mutanti mirati e copertura parziale.
+Il metodo distingue la preregistrazione dai risultati delle esecuzioni.

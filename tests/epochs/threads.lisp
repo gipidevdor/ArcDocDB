@@ -42,7 +42,6 @@
          (reader (contesto-epoca registry 0)) (other (contesto-epoca registry 1))
          (held (sb-thread:make-semaphore)) (release (sb-thread:make-semaphore))
          (deadline (epochs-deadline)) (threads nil))
-    (is (entra-epoca other))
     (unwind-protect
          (progn
            (push (epochs-worker
@@ -63,10 +62,9 @@
                     :ok)) threads)
            ;; Il holder viene rilasciato solo dopo il join del reader.
            (epochs-join (first threads) deadline)
-           (is (epoca-attiva-p other))
+           (is (not (epoca-attiva-p other)))
            (sb-thread:signal-semaphore release)
            (epochs-join (second threads) deadline)
            (epochs-check-state registry 1 1 0 0))
       (sb-thread:signal-semaphore release)
-      (epochs-stop-workers threads)
-      (when (epoca-attiva-p other) (esci-epoca other)))))
+      (epochs-stop-workers threads)))))

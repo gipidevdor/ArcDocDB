@@ -6,7 +6,8 @@ committed, anche quando tale versione è visibile a uno snapshot. La risposta
 rimane privata fino alla verifica snapshot finale e al rilascio EBR.
 
 Non è ancora un endpoint del server. Il [resolver CLOSED](get-resolver.md)
-collega manifest e prove sul file; resolver ACTIVE, directory della Serie,
+collega manifest e prove sul file; il [resolver ACTIVE ordinario](get-active.md)
+acquisisce le pagine dalla radice pubblicata della Serie. Prove ACTIVE multiserie, directory della Serie,
 ricerca delle versioni trattenute, lifecycle del seme, pool e protocollo restano da collegare.
 I requisiti restano **progettati**: compilazione e letture statiche non chiudono
 la qualifica C1. Il modulo non modifica formato, isolamento o decisioni ADR.

@@ -90,8 +90,8 @@ La pubblicazione conserva questi dati nei file canonici
 `full-check.lisp`, `fullcheck-summary.lisp` e `fullcheck-selftests.lisp`,
 con provenienza e verifica dei byte dichiarate nei risultati. La copertura
 rimane parziale, nessun MC/DC è inferito e la qualificazione generale del
-motore e il gate F0 restano aperti. Dopo il controllo generale cambiano
-soltanto documentazione e conservazione delle evidenze.
+motore e il gate F0 restano aperti. I sorgenti routing, le fixture e il C4
+qualificati in questo congelamento restano invariati.
 
 ## Integrazione con main avanzato
 
@@ -152,3 +152,19 @@ I raw835+2 precedenti rimangono storici; non sono reinterpretati come
 prova della nuova base. Le due letture C1, le misure e il denominatore
 dedicati mantengono fonte e scope originari. Il nuovo controllo generale
 non chiude Fase0 o la qualifica del motore.
+
+## Composizione finale con resolver ACTIVE
+
+Il delta6eeb501→be9d2dd non modifica execution/Series/routing o loro
+contratti. Sei unità ACTIVE sono caricate dopo il resolver CLOSED,
+senza cicli o riordino del routing. Le nuove API leggono la radice della
+Serie, non agganciano automaticamente il bridge o il lookup routing e
+non ridefiniscono le loro funzioni. L'allocazione dei metadati ACTIVE per
+lotto rimane fuori dallo scope delle misure seriali routing.
+
+Il build della tree combinata, record `4000714586-command-55084-0`,
+è OK/STABLE/exit0 con690 sorgenti/documenti e854 test più2smoke,
+senza avvisi. I test esistenti non esercitano le nuove API ACTIVE: questo
+PASS non ne attesta C1/C4. I congelamenti F0/copertura/misura precedenti
+mantengono fonte e scope. Preimage di ASDF, indice e changelog sono
+conservate; entrambe le aggiunte rimangono nella tree finale.

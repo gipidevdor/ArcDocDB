@@ -1,6 +1,8 @@
 (:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG :COMPONENT :WRITER-WORKER :BASE
- "6eeb501d2eace49fad8e2ec333ed0c6c1386dd6c" :HISTORICAL-BASES
- ("92decf4265554cd4959e32a1c881cf00758bb6a1" "d155db3f977677fa95280f59c23fbe46a5e116d2") :ENTRIES
+ "be9d2dd6816f8c999fcab383702c7a133c061902" :HISTORICAL-BASES
+ ("92decf4265554cd4959e32a1c881cf00758bb6a1" "d155db3f977677fa95280f59c23fbe46a5e116d2"
+  "6eeb501d2eace49fad8e2ec333ed0c6c1386dd6c")
+ :ENTRIES
  ((:ARTIFACT "benchmark-data.lisp" :PATH
    #A((121) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/benchmark-data.lisp")
@@ -90,11 +92,26 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/documentation-gate-final.lisp")
    :BYTES 142204 :SHA256 "9cdf54913d87f9e464ec22cbf3521dd56abd12dfa27da429fadacbc50a1f9d35"
    :GIT-BLOB "0176c00fa2e5e886a0c0ebd07a87b95b5910eec2")
+  (:ARTIFACT "documentation-gate-merged-conservazione.lisp" :PATH
+   #A((146) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/documentation-gate-merged-conservazione.lisp")
+   :BYTES 1142 :SHA256 "da6bd25e40d57b4d4a3f7d35d4359858704d8ebeb073176b99e26bd8e18a14ba" :GIT-BLOB
+   "b27cf5b4d8b1adb07f248f88b005ac86ef5ca2d3")
+  (:ARTIFACT "documentation-gate-merged.lisp" :PATH
+   #A((132) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/documentation-gate-merged.lisp")
+   :BYTES 146807 :SHA256 "7213b71bfb41f9843523d6649606ae7baaf194624ed1672156d8a118b607ab5c"
+   :GIT-BLOB "d57f5049246191e6a6cddc44c4cdec196b3b95a4")
   (:ARTIFACT "documentation-latest.lisp" :PATH
    #A((127) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/documentation-latest.lisp")
    :BYTES 63329 :SHA256 "49cc3b7879713cf0fe1cf22b82dfc39d44e985525b8cd8050ab04b11473f4205"
    :GIT-BLOB "7ab2436df328f21ecfec65cae13202cd6bad8441")
+  (:ARTIFACT "documentation-merged.lisp" :PATH
+   #A((127) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/documentation-merged.lisp")
+   :BYTES 65647 :SHA256 "30db0fbe04889cc4b39bcae997d0d286aa76d7761a5c07307a273160006b6b8c"
+   :GIT-BLOB "6ef9ecd2c83117955cb120797ea560b70c0d7845")
   (:ARTIFACT "documentation-publication.lisp" :PATH
    #A((132) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/documentation-publication.lisp")
@@ -205,6 +222,11 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/fullcheck-summary.lisp")
    :BYTES 4440 :SHA256 "b9830a9becadb38c4e360ebaaeb0b21ab8e6a82d57c3d1d8b46ac7eba383aa72" :GIT-BLOB
    "dfd2470582ec03052bfdd86e8fa7a9c2f2c871f9")
+  (:ARTIFACT "integration-active-preimages.lisp" :PATH
+   #A((135) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/integration-active-preimages.lisp")
+   :BYTES 149502 :SHA256 "a3577f85395bd824dac352d6fe0ef1cbc155d637f8e312aab3ca82d78a47f700"
+   :GIT-BLOB "d986dcb69a6a7b136a8ee8d0ac3d0bce8d7330e2")
   (:ARTIFACT "integration-latest-preimages.lisp" :PATH
    #A((135) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/integration-latest-preimages.lisp")
@@ -215,6 +237,21 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/integration-preimages.lisp")
    :BYTES 129229 :SHA256 "2a924f20e481962802ccf011d380ccd8b4f6d6cd91937b13e11147727652f12d"
    :GIT-BLOB "8147e5fa7401ff9654a239162e08664fb2e21866")
+  (:ARTIFACT "merged-build-conservazione.lisp" :PATH
+   #A((133) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/merged-build-conservazione.lisp")
+   :BYTES 1142 :SHA256 "65ceab2e49c873922fc3b28be2c0bcb28bc96a246e6a10f575c58b4f13d00e6e" :GIT-BLOB
+   "056d6a2ed00e5b62733b0604461c959a38e553bf")
+  (:ARTIFACT "merged-build-summary.lisp" :PATH
+   #A((127) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/merged-build-summary.lisp")
+   :BYTES 885 :SHA256 "d67a5ac4e2d7bf023b754799b1e17e0814da3130b16a042050845d5f68f20503" :GIT-BLOB
+   "68dfcaaf879a09d0560df3e92dca3a08d897dce4")
+  (:ARTIFACT "merged-build.lisp" :PATH
+   #A((119) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/merged-build.lisp")
+   :BYTES 714802 :SHA256 "dcf31e823d359bceae7aa3ce4129475837e25520c52de9331bec60e2956c6675"
+   :GIT-BLOB "f87d5f328035206991e8327ecd846e0a7699ede7")
   (:ARTIFACT "orchestration.lisp" :PATH
    #A((120) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/orchestration.lisp")
@@ -285,6 +322,26 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/publication-latest-integration.lisp")
    :BYTES 141985 :SHA256 "b841644f11f445bd01e655391cabdbcf2cddd2320c097aa91f779df4e7ff6e15"
    :GIT-BLOB "350ef46bff6e458075b90508a4f877fb70bcc8b6")
+  (:ARTIFACT "publication-merged-orchestration.lisp" :PATH
+   #A((139) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/publication-merged-orchestration.lisp")
+   :BYTES 25763 :SHA256 "49c701de1bbbb853ae9096f211e183ed7a9c9cb6fab9517cbd4600c5498e4181"
+   :GIT-BLOB "46d42980229fd8ca6243072ed4f0e6fd87e6e277")
+  (:ARTIFACT "publication-merged-process-conservazione.lisp" :PATH
+   #A((147) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/publication-merged-process-conservazione.lisp")
+   :BYTES 1142 :SHA256 "401aed65d2af84770e66c933c37e9b4735878a7e3e6637cc87889045b9c0ae91" :GIT-BLOB
+   "b3c495f564b53750d8e7f459116c6926cb5033e6")
+  (:ARTIFACT "publication-merged-process.lisp" :PATH
+   #A((133) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/publication-merged-process.lisp")
+   :BYTES 146562 :SHA256 "e52fcc4af3a220ee17100571a4aaa3b1179735e06e800549c029e50b10cf9e26"
+   :GIT-BLOB "0fb12022dbf9302ad8a912944158c8f59a682410")
+  (:ARTIFACT "publication-merged-proof.lisp" :PATH
+   #A((131) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/publication-merged-proof.lisp")
+   :BYTES 652 :SHA256 "7709498d5999153180726cf52d855d46edc64c6f32b595d646f97e0b0a23bc38" :GIT-BLOB
+   "2d4d5ba053595658f17c6e94200fa8e772594e11")
   (:ARTIFACT "publication-seal-process-conservazione.lisp" :PATH
    #A((145) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/publication-seal-process-conservazione.lisp")
@@ -305,6 +362,11 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/source-latest-integrated.lisp")
    :BYTES 153690 :SHA256 "54d855fc1d0f70f4f92e533da4815513887d823aa66b34b89da40425ea48f035"
    :GIT-BLOB "575138da5ffb63049dca4010c5f4e9337a64dfa5")
+  (:ARTIFACT "source-merged-build.lisp" :PATH
+   #A((126) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/source-merged-build.lisp")
+   :BYTES 136694 :SHA256 "3ec047fd75e376a6bebe557d449972f0f9a1c1a3cab92f630131a872e64af72f"
+   :GIT-BLOB "5eafa369eb54492371ec61caa3a03e7fd1c911d7")
   (:ARTIFACT "source-v1.lisp" :PATH
    #A((116) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-11-worker-routing/source-v1.lisp")

@@ -129,6 +129,22 @@ I self-test snapshot e reader sono PASSED, inclusi due rifiuti OS attesi
 per ciascuno. Proiezione, sorgenti dei lettori e byteproof rimangono distinti
 dalla campagna C4 e dal primo congelamento d155.
 
-Dopo il controllo completo cambiano solo documentazione ed evidenze;
-nessun sorgente, fixture o C4 di prodotto viene modificato. Requisiti
+## Composizione finale con GET ACTIVE
+
+L'ultimo avanzamento `be9d2dd6816f8c999fcab383702c7a133c061902`
+aggiunge sei unità ACTIVE nel resolver e relativa documentazione.
+Non cambia execution, Series, routing, fixture dedicate, strumenti o
+suite esistenti. ASDF carica le nuove unità dopo il resolver CLOSED;
+indice e changelog conservano entrambe le aggiunte, con preimage originali.
+
+La tree combinata è verificata dal processo
+`4000714586-command-55084-0`: `make build`, OK/STABLE/exit0,
+690 sorgenti/documenti,854 test nominati e2smoke, senza avvisi.
+Il controllo usa una cache FASL privata e dura circa20,36s. Queste prove
+esercitano la suite esistente; non qualificano le nuove API ACTIVE o
+le loro allocazioni. F0, copertura e misure mantengono i congelamenti
+precedenti: non vengono ripetuti o reinterpretati per questo delta.
+
+I sorgenti del routing, le fixture dedicate e il C4 qualificati restano
+invariati. La configurazione ASDF composta è verificata dal nuovo build. Requisiti
 globali restano `progettato`, Fase0 e qualifica del motore rimangono aperte.

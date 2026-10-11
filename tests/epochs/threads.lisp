@@ -67,4 +67,4 @@
            (epochs-join (second threads) deadline)
            (epochs-check-state registry 1 1 0 0))
       (sb-thread:signal-semaphore release)
-      (epochs-stop-workers threads)))))
+      (epochs-stop-workers threads))))

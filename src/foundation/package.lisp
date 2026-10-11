@@ -26,4 +26,4 @@
            #:+max-record-bytes+ #:+put+ #:+tombstone+ #:+seal+ #:+outcome+
            #:+edit+ #:+decision+ #:+prepared+
            #:scrivi-record #:scrivi-record-parole #:verifica-cornice #:u64-equal-p
-           #:verifica-record #:verifica-put #:verifica-lotto))
+           #:verifica-record #:verifica-put #:verifica-put-parole #:verifica-lotto))

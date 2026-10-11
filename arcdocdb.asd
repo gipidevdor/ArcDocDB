@@ -28,6 +28,9 @@
                              (:file "cbor-write")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
+               (:module "cache" :serial t
+                :components ((:file "package") (:file "types") (:file "build") (:file "core")
+                             (:file "read") (:file "clock") (:file "write")))
                (:module "execution" :serial t
                 :components ((:file "package") (:file "queue") (:file "writer")
                              (:file "handoff") (:file "ready-types") (:file "ready")

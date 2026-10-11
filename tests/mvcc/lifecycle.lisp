@@ -361,6 +361,7 @@
 (deftest test-REQ-MVC-005-snapshot-private-buffer-range-and-unbound-identity
   (multiple-value-bind (csns registry context) (mvcc-fixture :base #x8000000000000001)
     (declare (ignore csns))
+    (is (snapshot-del-registro-p context registry))
     (mvcc-buffer-refusal context 0 0 'snapshot-too-old :snapshot-stale-identity)
     (mvcc-buffer-refusal context 1 0 'snapshot-too-old :snapshot-stale-identity)
     (signals snapshot-too-old (termina-snapshot context 0) :snapshot-stale-identity)

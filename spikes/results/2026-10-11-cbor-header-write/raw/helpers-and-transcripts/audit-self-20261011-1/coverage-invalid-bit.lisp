@@ -1,0 +1,2 @@
+(:CASE "coverage-invalid-bit" :EXPECTED :REJECT :OBSERVED :AS-EXPECTED :FIXTURE
+ NIL)

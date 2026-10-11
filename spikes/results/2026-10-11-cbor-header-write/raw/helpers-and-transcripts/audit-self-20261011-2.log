@@ -1,0 +1,22 @@
+
+; file: /Users/gpicchiarelli/.codex/worktrees/cbor-header-write/ArcDocDB/spikes/out/header-write-audit.lisp
+; in: DEFUN COVERAGE-GAP-MAP
+;     (INCF
+;      (GETF
+;       (IF ARCDOCDB.HEADER-WRITE.AUDIT::BRANCH
+;           ARCDOCDB.HEADER-WRITE.AUDIT::BCOUNTS
+;           ARCDOCDB.HEADER-WRITE.AUDIT::ECOUNTS)
+;       ARCDOCDB.HEADER-WRITE.AUDIT::CATEGORY))
+; --> LET FUNCALL 
+; ==>
+;   1
+; 
+; caught WARNING:
+;   The function (SETF IF) is undefined, and its name is reserved by ANSI CL so
+;   that even if it were defined later, the code doing so would not be portable.
+; 
+; compilation unit finished
+;   Undefined function:
+;     (SETF IF)
+;   caught 1 WARNING condition
+Audit :OK, 1452 checks: spikes/out/header-write/audit-self-20261011-2/report.lisp

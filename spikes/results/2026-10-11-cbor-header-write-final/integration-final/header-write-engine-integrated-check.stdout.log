@@ -1,0 +1,2 @@
+sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- /Applications/Xcode.app/Contents/Developer/usr/bin/make check-core
+:OK: /Applications/Xcode.app/Contents/Developer/usr/bin/make check-core; record: /Users/gpicchiarelli/.codex/worktrees/cbor-header-write/ArcDocDB/spikes/out/4000705193-command-74588-0/report.lisp

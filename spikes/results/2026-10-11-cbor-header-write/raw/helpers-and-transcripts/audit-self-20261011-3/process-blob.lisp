@@ -1,0 +1,8 @@
+(:CASE #A((12) BASE-CHAR . "process-blob") :EXPECTED :REJECT :OBSERVED
+ :AS-EXPECTED :FIXTURE
+ (:SCHEMA-VERSION 1 :KIND :COMMAND-VERIFICATION :STATUS :OK :EXIT-CODE 0
+  :COMMAND ("sbcl" "fixture") :STDOUT "" :STDERR "" :SOURCE-CONSISTENCY :STABLE
+  :SOURCE-BLOBS-BEFORE ((:PATH "src/codec/cbor-write.lisp" :GIT-BLOB "other"))
+  :SOURCE-BLOBS-AFTER
+  ((:PATH "src/codec/cbor-write.lisp" :GIT-BLOB
+    "61f0d6e2783e4790ed7e19a45bba6407d6e5b3de"))))

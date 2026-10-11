@@ -317,6 +317,11 @@
   :txt "La lettura di un record prepared verifica una prova autorevole del segmento (OUTCOME o esito nel manifest): il TXID della prova coincide con lo stamp del record e il suo CSN coincide con quello della entry; una prova mancante, corrotta o riferita a un'altra versione produce errore di integrità."
   :inv ("INV-A2" "INV-S7") :adr ("ADR-0039" "ADR-0047") :ver (:test :corr :fuzz :diff) :fi ())
 
+ ;; ---- Codec documentale --------------------------------------------------
+ (:id "REQ-CBR-001" :src "ADR-0014" :cls "C1" :stato :implementato
+  :txt "La primitiva di scrittura delle testate CBOR ad argomento MT0..6 usa la larghezza minima e parole high/low u32 big-endian; verifica argomenti e capacità prima di modificare la destinazione esclusiva del chiamante, con lavoro limitato a nove byte."
+  :inv ("INV-F1" "INV-P6") :adr ("ADR-0014" "ADR-0033" "ADR-0035") :ver (:test :fuzz :rev :bench) :fi ())
+
  ;; ---- Affidabilità (software critico) --------------------------------------
  (:id "REQ-AFF-001" :src "ADR-0033" :cls "C1" :stato :progettato
   :txt "Un errore di scrittura, flush, rinomina o sincronizzazione di directory porta la Serie o l'Archivio in FAULTED senza retry e senza conferma del lotto."

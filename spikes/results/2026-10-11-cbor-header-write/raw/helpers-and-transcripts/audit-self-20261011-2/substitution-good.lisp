@@ -1,0 +1,2 @@
+(:CASE "substitution-good" :EXPECTED :ACCEPT :OBSERVED :AS-EXPECTED :FIXTURE
+ NIL)

@@ -1,0 +1,48 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defun save-new (path data)
+  (with-open-file (s path :direction :output :if-exists :error :external-format :utf-8)
+    (let ((*print-readably* t)) (write data :stream s :pretty t) (terpri s))))
+(defun original-record (label)
+  (let* ((text (uiop:read-file-string (format nil "spikes/out/header-write/~A.stdout.log" label)))
+         (pos (search "record: " text :from-end t)))
+    (unless pos (error "Registro non concluso per ~A." label))
+    (let ((path (string-trim '(#\Space #\Newline #\Return) (subseq text (+ pos 8)))))
+      (unless (probe-file path) (error "Record non presente: ~A." path))
+      (list label (enough-namestring path (truename "./"))))))
+(let ((files nil) (trees nil) (processes nil))
+  (dolist (label '("preliminary" "coverage-self" "mutator-self" "benchmark"
+                   "coverage" "mutations" "coverage-compaction" "full-check"
+                   "data-audit" "data-audit-retry"))
+    (push (original-record label) processes))
+  (dolist (path (append '("arcdocdb.asd" "src/codec/cbor-package.lisp"
+                          "src/codec/cbor-write.lisp" "docs/tracciabilita/requisiti.lisp"
+                          "docs/tracciabilita/matrice.md" "tools/cbor-write-bench.lisp"
+                          "tools/cbor-write-mutation.lisp" "tools/foundation-coverage.lisp")
+                        (mapcar #'enough-namestring (directory "tests/codec/cbor-write*.lisp"))
+                        (mapcar #'enough-namestring (directory "docs/implementazione/cbor-scrittura*.md"))))
+    (push (list (concatenate 'string "frozen/" path
+                             (if (string= (or (pathname-type path) "") "md") ".txt" ""))
+                (namestring (truename path))) files))
+  (dolist (path (directory "spikes/out/header-write-audit*.*"))
+    (when (probe-file path)
+      (push (list (file-namestring path) (namestring (truename path))) files)))
+  (push '("helpers-and-transcripts" "spikes/out/header-write/" :all) trees)
+  (push '("coverage" "spikes/out/cbor-write-coverage-20261011/" :all) trees)
+  (push '("coverage-self" "spikes/out/cbor-write-coverage-self-20261011/" :all) trees)
+  (dolist (dir (uiop:subdirectories "spikes/out/"))
+    (let ((name (car (last (pathname-directory dir)))))
+      (when (or (search "-cbor-write-worker-self-test-" name) (search "-check-" name))
+        (push (list name (namestring dir) :all) trees))))
+  (let ((base #p"spikes/out/cbor-write-mutations-20261011/"))
+    (push (list "mutations/report.lisp" (namestring (truename (merge-pathnames "report.lisp" base)))) files)
+    (dolist (child (cons "baseline" (loop for i below 8 collect (princ-to-string i))))
+      (dolist (path '("test.log" "tools/cbor-write-isolated-build.lisp" "src/codec/cbor-write.lisp"))
+        (let ((relative (concatenate 'string child "/" path)))
+          (push (list (concatenate 'string "mutations/" relative)
+                      (namestring (truename (merge-pathnames relative base)))) files)))))
+  (save-new "spikes/out/header-write-collection-manifest.lisp"
+            (list :schema-version 1 :processes (nreverse processes) :trees (nreverse trees)
+                  :files (nreverse files)
+                  :limits '(:full-mutant-copies-and-fasl-local :original-command-records
+                            :no-result-inference-by-collector :no-gate-promotion))))

@@ -1,0 +1,8 @@
+{
+  "operation": "reader-publish final append",
+  "exit_code": 1,
+  "status": "refused",
+  "cause": "GET summary audit still running; file had zero bytes at attempted read",
+  "native_test_statuses": "unchanged",
+  "correction": "waited for summary producer exit0 before retry"
+}

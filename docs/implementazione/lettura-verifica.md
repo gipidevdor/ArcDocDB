@@ -99,8 +99,10 @@ compressi sono dichiarati esplicitamente; i record nativi nei gruppi
 
 ## Limiti e CI
 
-La CI del commit pubblicato è **in attesa** alla raccolta di questi
-risultati locali. Il mapping delle decisioni rimane parziale e la
+La CI del primo commit pubblicato `00ce558` è passata su Ubuntu e macOS,
+oltre alla documentazione ([run 38135803760](https://github.com/gpicchiarelli/ArcDocDB/actions/runs/38135803760)).
+La CI della successiva integrazione è in attesa alla raccolta dei risultati locali.
+Il mapping delle decisioni rimane parziale e la
 copertura non misura MC/DC. La preregistrazione resta distinta dagli
 esiti effettivamente osservati.
 
@@ -118,4 +120,15 @@ conserva le prove precedenti e preregistra una nuova verifica completa
 della base comune. Una lettura indipendente conferma che i 26 file
 prodotto della campagna reader, i sei file di test e il mutator sono
 invariati; ASD e copertura mantengono le suite e gli scope di entrambi
-i rami. Gli esiti integrati sono in attesa nella preregistrazione.
+i rami. I [risultati integrati](../../spikes/results/2026-10-11-reader-verification/integrazione-risultati.lisp)
+confermano **770 test più due controlli smoke**, 34 casi EBR e 30 di lettura,
+con sorgenti stabili. Passano il self-test del driver di copertura, le
+fixture reali dei processi reader e snapshot e i dieci esperimenti SPK;
+record e diagnostiche originali sono conservati nel catalogo.
+
+Il ramo principale è poi avanzato a `96c0f4f` con i sette file del nucleo GET,
+integrati senza cambiare la campagna reader. Il
+[metodo aggiuntivo](../../spikes/results/2026-10-11-reader-verification/integrazione-get-metodo.lisp)
+registra compilazione, suite esistenti, controlli degli artefatti e nuova CI
+completa prima dell'unione. Questo aggiornamento non introduce test
+funzionali GET e non ne attesta la qualifica.

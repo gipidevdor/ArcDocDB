@@ -1,0 +1,4 @@
+SIMPLE-ERROR: Asserzione fallita: (EQUAL '(1 7 T)
+                                         (MULTIPLE-VALUE-LIST
+                                          (ARCDOCDB.MVCC:REGISTRA-SNAPSHOT
+                                           ARCDOCDB.MVCC.TESTS::CONTEXT 0)))

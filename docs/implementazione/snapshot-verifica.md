@@ -3,10 +3,15 @@
 ## Ambito preregistrato
 
 Questa campagna verifica le API già presenti in `arcdocdb.mvcc`, usando il
-registro canonico `arcdocdb.csn` dello stesso Archivio. La pianificazione è iniziata il 9 ottobre sul main `edb043b`. La ripresa
-dell’11 ottobre integra il main `5768e02`, senza cambiamenti a snapshot e CSN. Il [metodo](../../spikes/results/2026-10-09-snapshot-verification/metodo.lisp)
-viene congelato prima delle esecuzioni registrate; i risultati sono
-**ancora da osservare**. Non cambia API, formato o protocollo di prodotto.
+registro canonico `arcdocdb.csn` dello stesso Archivio. La pianificazione è
+iniziata il 9 ottobre sul main `edb043b`; la ripresa dell’11 ottobre integra
+il main `5768e02`, senza cambiamenti a snapshot e CSN. Il
+[metodo](../../spikes/results/2026-10-09-snapshot-verification/metodo.lisp)
+è stato congelato prima delle esecuzioni registrate e rimane immutato:
+`:planned` e `:not-collected` descrivono quel momento, precedente alle prove.
+Gli esiti osservati l’11 ottobre sono riportati sotto e nelle
+[evidenze della campagna](../../spikes/results/2026-10-09-snapshot-verification/README.md).
+Non cambia API, formato o protocollo di prodotto.
 
 Il perimetro comprende registrazione, cattura delle frontiere, attivazione,
 verifica, terminazione, scadenza limitata e soglia di retention. Dipende dai
@@ -44,7 +49,8 @@ Le fixture usano tempo esplicito e capacità piccole. Stati privati vengono
 preparati soltanto per confini non raggiungibili con una sequenza breve,
 come l'esaurimento della generazione u64, o per un guasto dichiarato.
 Il metodo congelato elenca i 28 casi lifecycle, i 15 casi di cattura e i 10
-mutanti mirati. Sono conteggi del piano; gli esiti devono ancora essere osservati.
+mutanti mirati. Le esecuzioni finali hanno passato tutti i 43 casi dedicati
+e rilevato i 10 mutanti a runtime.
 
 Le suite sono `tests/mvcc/support.lisp`, `lifecycle.lisp` e `capture.lisp`:
 package `arcdocdb.mvcc.tests`, registro `*mvcc-tests*`, funzione `run`.
@@ -87,40 +93,80 @@ Errore di compilazione, segnale OS, mancato completamento della baseline
 o exit non nullo dopo completamento sono errori del worker, non mutanti
 rilevati. Il runner conserva exit, segnale, log e sorgenti generati;
 fixture e controllo CLI negativo verificano COD-60 e COD-61.
-Il target `snapshot-mutation-selftest` è incluso in `make check-core`:
-i self-test del runner vengono quindi previsti anche nella CI Linux e
-macOS. La campagna di mutazione rimane un'esecuzione locale esplicita;
+Il target `snapshot-mutation-selftest` è incluso in `make check-core`,
+quindi anche nei job CI Linux e macOS. La campagna di mutazione rimane
+un'esecuzione locale esplicita;
 runner, log e report dei processi figli del self-test vengono conservati.
 
-La copertura facoltativa riusa `tools/foundation-coverage.lisp` con scope
+La copertura parziale riusa `tools/foundation-coverage.lisp` con scope
 `mvcc`. Il driver strumenta i sorgenti di prodotto ma esegue soltanto la
 suite `arcdocdb.mvcc.tests:run`; il report seleziona gli otto file di
-`src/mvcc/`. Prima si prevede `--self-test
-spikes/out/snapshot-coverage-selftest/`, poi `--report
-spikes/out/snapshot-coverage/ mvcc`. Stato SB-COVER, HTML, forme e rami
-grezzi conserveranno denominatori e lacune. È un'osservazione parziale:
+`src/mvcc/`. Sono stati eseguiti il self-test e il report finale; stato
+SB-COVER e HTML sono conservati con denominatori e lacune. È un'osservazione parziale:
 non misura MC/DC e non chiude un gate di rilascio.
 
-Prima delle esecuzioni si compiono due letture su sorgenti effettivi,
-con autore, ruolo del revisore, hash, rilievi e lista C1 espliciti. L'autore
-non è l'unico lettore. I registri dei comandi conservano argomenti,
+Prima delle esecuzioni sono state compiute le letture sui sorgenti effettivi,
+con autore, revisori indipendenti, hash, rilievi e lista C1 espliciti nel
+[record di revisione](../../spikes/results/2026-10-09-snapshot-verification/revisione.lisp).
+I registri dei comandi conservano argomenti,
 ambiente, output, exit e hash prima/dopo. Sorgenti, documenti e indice Git
 rimangono congelati durante ciascun comando registrato.
+
+## Esiti osservati l’11 ottobre 2026
+
+La verifica integrata locale sul commit `aa4f462` è riuscita:
+[core-finale.lisp](../../spikes/results/2026-10-09-snapshot-verification/core-finale.lisp)
+conserva `:status :ok`, exit 0 e sorgenti stabili. Sono passati 501 test
+dedicati dei moduli, inclusi i 43 nuovi casi MVCC e i 22 casi CBOR già
+integrati dal main, oltre allo smoke test. Compilazione senza warning,
+lint, self-test, tracciabilità, link, verifiche delle evidenze e i dieci
+spike sono riusciti.
+
+Il primo tentativo
+[core-iniziale.lisp](../../spikes/results/2026-10-09-snapshot-verification/core-iniziale.lisp)
+rimane `:failed`, exit 2: COD-01 ha rifiutato una variabile `REGISTRY`
+inutilizzata nella fixture lifecycle. La
+[correzione registrata](../../spikes/results/2026-10-09-snapshot-verification/correzione-fixture.lisp)
+aggiunge un’asserzione sull’identità pubblica del registro nel contesto.
+Il blob della fixture passa da `4e9a15f` a `2cc481d`; conteggio dei test e
+sorgenti di prodotto restano invariati. Questa differenza rispetto al
+freeze originale è esplicita; il metodo e gli esiti iniziali sono conservati.
+
+In [mutazioni-finale.lisp](../../spikes/results/2026-10-09-snapshot-verification/mutazioni-finale.lisp)
+la baseline completa esattamente i 43 test previsti, fase `:complete`,
+exit 0. Tutti i dieci mutanti nominati falliscono il test mirato a runtime
+con exit 1, senza segnali o timeout; gli errori dei worker sono zero.
+Le fixture del runner hanno invece prodotto realmente SIGKILL 9 e un
+exit 7 dopo `:complete`: entrambi sono classificati `:worker-error`,
+come previsto, con log e runner conservati. Il controllo CLI negativo
+rimane `:failed`, exit 1, con il rifiuto COD-61 atteso.
+
+Il [comando di copertura finale](../../spikes/results/2026-10-09-snapshot-verification/copertura-finale-comando.lisp)
+è riuscito. L’[indice HTML](../../spikes/results/2026-10-09-snapshot-verification/raw/copertura-finale/cover-index.html)
+riporta 784/1084 espressioni (72,3247%) e 88/132 rami (66,6667%): restano
+300 espressioni e 44 rami senza conteggio. Per `snapshots-read.lisp` sono
+31/209 espressioni (14,8%) e 0/28 rami. Le suite esercitano le API reader;
+le espansioni `INLINE` limitano l’attribuzione dei contatori al file,
+quindi questi valori non dimostrano che i relativi percorsi non siano
+stati eseguiti. Una lettura indipendente ha ricostruito tutti gli otto
+HTML e verificato l’identità dei sorgenti annotati.
 
 ## Criteri di chiusura e limiti
 
 La campagna si chiude quando il mapping concordato è esercitato dalla
 suite dedicata, il runner distingue i guasti nelle proprie fixture, i
 mutanti mirati sono rilevati o analizzati, le verifiche integrate passano
-e la CI riguarda l'esatto commit pubblicato. Il catalogo conserva record
+e la CI riguarda l'esatto commit pubblicato. Alla pubblicazione di questi
+risultati la CI di tale commit è **in attesa**; gli esiti locali non ne
+anticipano il risultato. Il [catalogo](../../spikes/results/2026-10-09-snapshot-verification/catalogo.lisp) conserva record
 schema 1 con nomi LEAF, byte originali e stati dei tentativi falliti.
 Gli eventuali casi non esercitati restano lacune esplicite.
 
-Nessun risultato è dichiarato in questa preregistrazione. Una misura di
-forme/rami, se raccolta, conserva il denominatore e non misura MC/DC.
+La preregistrazione rimane distinta da questi risultati. La misura di
+espressioni/rami conserva il denominatore e non misura MC/DC.
 Le sequenze coordinate non provano la memoria debole ARM64/x86-64 e non
 sono benchmark. Restano EBR/reclaim, primary index, versioni trattenute,
 GET, timer/scheduler del motore, durability e crash recovery. Non si
 dichiara zero heap, latency misurata, qualifica C1 completa o chiusura di
-una fase. Le [evidenze della campagna](../../spikes/results/2026-10-09-snapshot-verification/README.md)
-saranno separate dalle precedenti ispezioni statiche.
+una fase. Le evidenze runtime rimangono separate dalle precedenti
+ispezioni statiche.

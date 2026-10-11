@@ -1,0 +1,3 @@
+SIMPLE-ERROR: Asserzione fallita: (NOT
+                                   (ARCDOCDB.MVCC:DEVE-TRATTENERE-P
+                                    ARCDOCDB.MVCC.TESTS::REGISTRY 7))

@@ -50,3 +50,21 @@ Questo documento conserva letture automatizzate e argomenti delimitati.
 Non certifica C1, copertura completa, MC/DC, Linux x86-64 o il motore completo.
 Le esecuzioni preliminari auto-attestate degli agenti sono separate dai
 registri ripetibili della campagna del parent.
+
+## Supplemento dopo il freeze fdde3a9
+
+Pauli ha chiuso staticamente il delta dei cursori senza rilievi; tree hash
+`56810923096a086cc43429b0f3a5343e92e00b4a`.
+Herschel ha chiuso R01/R02 e le guardie locali di R03, individuando R04:
+le asserzioni del kernel propagavano senza invalidare l'indice chiamante.
+Il parent aggiunge `hash-con-seme-indice` a entrambe le API: cattura solo
+INVARIANT-VIOLATION, invalida il proprietario e rilancia la stessa condizione.
+La regressione inietta una condizione concreta e verifica identita,
+FAULTED e mappe invariate. I rifiuti degli argomenti esterni non sono trasformati.
+Docstring blocchi/coda aggiornate con classi e ragioni (COD-50).
+
+Il primo controllo completo aveva exit 0 (622 test piu due smoke), ma il
+registratore ha rilevato un aggiornamento tardivo dei soli percorsi di
+output nel metodo: stato SOURCE-CHANGED, conservato e non accettato come
+freeze stabile. Anche il primo comando mutazioni e conservato con tale stato.
+Le successive esecuzioni ripetono i controlli sul candidato definitivo.

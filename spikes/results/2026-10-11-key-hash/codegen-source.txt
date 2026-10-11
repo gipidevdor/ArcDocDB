@@ -1,0 +1,23 @@
+;;;; Raccoglitore operativo: disassemblato grezzo, nessuna classificazione automatica.
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(setf asdf:*compile-file-warnings-behaviour* :error
+      asdf:*compile-file-failure-behaviour* :error)
+(asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+(asdf:load-system "arcdocdb" :force t)
+(let* ((function (symbol-function (find-symbol "XXH64" "ARCDOCDB.HASH64")))
+       (assembly (with-output-to-string (stream)
+                   (let ((*standard-output* stream)) (disassemble function))))
+       (data (list :schema-version 1 :kind :key-hash-codegen :status :ok
+                   :implementation (lisp-implementation-version) :machine (machine-type)
+                   :commit (string-trim '(#\Newline)
+                                       (uiop:run-program '("git" "rev-parse" "HEAD") :output :string))
+                   :collector-sha256 (arcdocdb.evidence:file-sha256 *load-truename*)
+                   :hash-source-sha256
+                   (loop for path in '("src/hash/package.lisp" "src/hash/arithmetic.lisp"
+                                       "src/hash/blocks.lisp" "src/hash/hash64.lisp")
+                         collect (list :path path :sha256 (arcdocdb.evidence:file-sha256 path)))
+                   :disassembly assembly
+                   :limits '(:raw-observation :manual-review-required :not-x86-64-qualification
+                             :no-automatic-inline-or-heap-claim))))
+  (let ((*print-readably* t) (*print-pretty* t)) (write data) (terpri)))

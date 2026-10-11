@@ -569,3 +569,26 @@ Mappe private potenzialmente parziali dopo scansione: scartarle su qualsiasi fal
     (setf (aref controls slot) (logxor 1 (aref controls slot)))
     (multiple-value-bind (highs lows) (hash-map-arrays 32)
       (hash-map-fault f source highs lows :primary-hash-source-digest))))
+
+;;; REQ: REQ-IDX-001 REQ-IDX-005 REQ-AFF-004
+(deftest test-REQ-IDX-001-hash-kernel-fault-propagates-owner
+  (dolist (mode '(:key :map))
+    (let* ((f (hash-map-fixture 0 0)) (key (primary-key 27 28))
+           (entry (hash-map-put f key 1)) (source (primary-current f))
+           (index (primary-fixture-index f))
+           (failure (make-condition 'invariant-violation :reason :hash-tail-progress)))
+      (declare (ignore entry))
+      (multiple-value-bind (highs lows) (hash-map-arrays 32)
+        (let ((h (copy-seq highs)) (l (copy-seq lows)))
+          (hash-map-with-fi
+           'arcdocdb.hash64:xxh64
+           (lambda (original) (declare (ignore original))
+             (lambda (&rest arguments) (declare (ignore arguments)) (error failure)))
+           (lambda ()
+             (is (handler-case
+                     (progn (ecase mode
+                              (:key (p:digest-chiave-indice index key 0 (length key)))
+                              (:map (p:calcola-digests-frammento index source highs lows 0 0))) nil)
+                   (invariant-violation (condition) (eq condition failure))))))
+          (is (eq :faulted (p::indice-primario-health index)))
+          (is (equalp h highs)) (is (equalp l lows)))))))

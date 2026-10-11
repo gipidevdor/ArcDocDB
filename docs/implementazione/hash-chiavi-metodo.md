@@ -197,8 +197,8 @@ Comandi preregistrati, **da eseguire soltanto su istruzione del parent**,
 dalla radice del worktree, ciascuno con directory nuova:
 
 ```sh
-sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --self-test spikes/out/frozen-key-hash-self-test/
-sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --negative-fixture spikes/out/frozen-key-hash-negative/
-sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --bench spikes/out/frozen-key-hash-serial/ 20000
-sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --bench spikes/out/frozen-key-hash-parallel/ --parallel 20000
+sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --self-test spikes/out/key-hash-self-test/
+sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --negative-fixture spikes/out/key-hash-bench-negative/
+sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --bench spikes/out/key-hash-bench-serial/ 20000
+sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --bench spikes/out/key-hash-bench-parallel/ --parallel 20000
 ```

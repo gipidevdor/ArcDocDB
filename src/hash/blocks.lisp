@@ -8,7 +8,8 @@
 (declaim (ftype (function (octets index hash-length u64) u64) hash-blocks))
 (defun hash-blocks (buffer start size seed)
   "Pre: span verificato, SIZE>=32, seme u64. Post: digest dei blocchi completi da 32 byte.
-Al massimo floor(65535/32) iterazioni; helper inline, input immutato, nessuna risorsa."
+Al massimo floor(65535/32) iterazioni; helper inline, input immutato, nessuna risorsa.
+INVARIANT-VIOLATION :hash-block-span o :hash-block-progress su relazione interna violata."
   (unless (and (>= size 32) (<= (+ start size) (length buffer)))
     (error 'invariant-violation :reason :hash-block-span))
   (let ((v1 (logand +mask64+ (+ seed +prime1+ +prime2+)))
@@ -35,7 +36,8 @@ Al massimo floor(65535/32) iterazioni; helper inline, input immutato, nessuna ri
 (declaim (ftype (function (octets index index u64) u64) hash-tail))
 (defun hash-tail (buffer start end accumulator)
   "Pre: span residuo verificato, da 0 a 31 byte; accumulatore include lunghezza totale.
-Post: coda XXH64, pura e inline. Al massimo tre lane da 8, una da 4 e tre byte."
+Post: coda XXH64, pura e inline. Al massimo tre lane da 8, una da 4 e tre byte.
+INVARIANT-VIOLATION :hash-tail-span o :hash-tail-progress su relazione interna violata."
   (unless (and (<= start end (length buffer)) (<= (- end start) 31))
     (error 'invariant-violation :reason :hash-tail-span))
   (let ((position start) (value accumulator))

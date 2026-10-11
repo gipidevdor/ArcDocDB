@@ -16,12 +16,21 @@ Coppia incoerente interna => FAULTED con :primary-hash-seed-corrupt, senza diges
   (when (null (indice-primario-seed-low index)) (guasto-indice index :primary-hash-seed-corrupt))
   (values (indice-primario-seed-high index) (indice-primario-seed-low index)))
 
+;;; REQ: REQ-IDX-001 REQ-AFF-004 REQ-AFF-008
+(declaim (ftype (function (indice-primario t t t u32 u32) (values u32 u32 &optional)) hash-con-seme-indice))
+(defun hash-con-seme-indice (index key start end high low)
+  "Pre: indice proprietario sano e seme posseduto. Post: due u32; rifiuti esterni propagati.
+INVARIANT-VIOLATION del kernel rende terminale l'indice e rilancia la medesima condizione."
+  (handler-case (arcdocdb.hash64:xxh64 key start end high low)
+    (invariant-violation (condition) (invalida-indice-primario index) (error condition))))
+
 ;;; REQ: REQ-IDX-001 REQ-LIM-003 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (indice-primario t t t) (values u32 u32 &optional)) digest-chiave-indice))
 (defun digest-chiave-indice (index key start end)
   "Pre: span immutato del chiamante, seme configurato e indice sano all'ingresso.
 Post: due u32 XXH64 calcolati con il seme immutabile della Serie, nessuna scrittura.
 Hash di span vuoto ammesso; il writer valida separatamente la lunghezza minima delle chiavi.
-Rifiuti del kernel hash e :primary-hash-unconfigured; il digest non e un esito di lookup."
+Rifiuti del kernel hash e :primary-hash-unconfigured; il digest non e un esito di lookup.
+Asserzione interna del kernel: indice FAULTED, condizione originale propagata."
   (multiple-value-bind (high low) (esigi-seme-hash index)
-    (arcdocdb.hash64:xxh64 key start end high low)))
+    (hash-con-seme-indice index key start end high low)))

@@ -42,7 +42,7 @@ Su rifiuto durante la scansione scartare le mappe parziali private; nessun rollb
         (when (campiona-ricostruzione source slot words)
           (let ((offset (ldb (byte 32 0) (aref words 2))) (size (ldb (byte 16 32) (aref words 2))))
             (multiple-value-bind (high low)
-                (arcdocdb.hash64:xxh64 arena offset (+ offset size) seed-high seed-low)
+                (hash-con-seme-indice index arena offset (+ offset size) seed-high seed-low)
               ;; Il seme e il digest sono interni: una discordanza non e input esterno.
               (handler-case (verifica-digest-ricostruzione source slot high low words work)
                 (invalid-argument () (guasto-indice index :primary-hash-source-digest)))

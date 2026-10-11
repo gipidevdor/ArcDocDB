@@ -1,0 +1,40 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4000553066 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((104) BASE-CHAR
+    . \"/Users/gpicchiarelli/.codex/worktrees/indice-ricostruzione/ArcDocDB/spikes/out/4000553032-check-86013-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 2 :WALL-SECONDS 1.705861d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 57106161 :STORED-BYTES 878167
+ :RESULTS
+ ((:PATH
+   #A((115) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/indice-ricostruzione/ArcDocDB/spikes/out/4000553032-check-86013-0/SPK-07.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28144119 :STORED-BYTES 410944 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"SPK-07.lisp.gz\" :UNCOMPRESSED-BYTES 28144119 :UNCOMPRESSED-SHA256
+    \"546a7d647b4178d735ef8d78dc31244aa3956971cb894505322e2785385a93eb\"
+    :COMPRESSED-BYTES 410626 :COMPRESSED-SHA256
+    \"4d201c3a85945e1467fa65525e5473244d9a4778ce1c6f5da9752204b2a298f8\"))
+  (:PATH
+   #A((115) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/indice-ricostruzione/ArcDocDB/spikes/out/4000553032-check-86013-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28962042 :STORED-BYTES 467223 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 28962042 :UNCOMPRESSED-SHA256
+    \"8218434cd1655f90355b5167873357d31f5ea4f267a5df9f0f0b26718ab30bb3\"
+    :COMPRESSED-BYTES 466905 :COMPRESSED-SHA256
+    \"cfaa19a019e133aa4666b2c987737891f03fc0361889350f74785a936af4675b\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((95) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/indice-ricostruzione/ArcDocDB/tools/compact-evidence.lisp")
+  "--root"
+  #A((104) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/indice-ricostruzione/ArcDocDB/spikes/out/4000553032-check-86013-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "86013"))
+ :STARTED-AT-UNIVERSAL-TIME 4000553064)

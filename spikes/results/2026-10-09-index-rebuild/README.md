@@ -19,3 +19,9 @@ nessuna copia dei FASL o delle copie ricostruibili dei checkout.
 
 Contratto: [ricostruzione](../../../docs/implementazione/indice-ricostruzione.md).
 La campagna non qualifica il motore completo, il GET, NVMe o x86-64.
+
+I [risultati](risultati.md) distinguono la campagna del 9 ottobre dalla
+chiusura dell'integrazione dell'11 ottobre. Sono conservati il
+[catalogo](catalogo.lisp), il [riepilogo delle misure](riepilogo.lisp), la
+[revisione dell'integrazione](integrazione-revisione.lisp) e la
+[sorgente dell'audit di integrità](audit-source.txt).

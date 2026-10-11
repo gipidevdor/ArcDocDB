@@ -123,7 +123,7 @@
            (sb-posix:rename (namestring temporary) (namestring path)))
       (when (and owned-temporary (probe-file temporary)) (delete-file temporary)))
     (with-open-file (stream path :direction :input :external-format :utf-8)
-      (let* ((*read-eval* nil) (*package* (find-package :keyword))
+      (let* ((*read-eval* nil) (*package* (find-package :cl-user))
              (stored (read stream nil :eof)) (end (read stream nil :eof)))
         (unless (and (eq end :eof) (equal record stored)) (fail "rilettura diversa: ~A." name))
         (require-schema stored (getf record :kind)))))

@@ -90,7 +90,10 @@
                              (:file "manifest-decode") (:file "manifest-fold")
                              (:file "manifest-build") (:file "manifest-query")
                              (:file "inventory-types") (:file "inventory-build")
-                             (:file "inventory-query"))))
+                             (:file "inventory-query")))
+               (:module "get-resolver" :serial t
+                :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
+                             (:file "rows") (:file "build") (:file "read"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

@@ -13,6 +13,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   copertura completa nel denominatore e cinque misure locali del percorso
   seriale; pool e coordinatore Archivio restano da integrare.
 
+- Resolver GET dei segmenti CLOSED: frontiera dal manifest, prefisso writer
+  sigillato o compaction verificato, righe u32 immutabili e prove OUTCOME
+  risolte senza I/O nel lookup. Connessione a cache e lettura GET, budget
+  espliciti e controlli di posizione/CSN; ACTIVE, prove EDIT, directory e
+  qualifica C1 restano aperti.
+
 - Hash delle chiavi XXH64 tipizzato: ritorno in due u32, seme esplicito
   immutabile nell'indice, mappe verificate degli slot fisici per rebuild/split,
   propagazione dei guasti interni. Include 46 nuove regressioni, mutazioni,

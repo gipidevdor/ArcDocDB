@@ -18,5 +18,12 @@ conservano il testo dei helper di compilazione, disassemblato e raccolta.
 Gli snapshot sono hash dei sorgenti; le varianti non committate non sono
 copie complete dei relativi alberi Git. Il prodotto definitivo è in Git.
 
+La verifica preliminare delle evidenze conserva l'esito `:source-changed`:
+durante il processo i nuovi file sono stati aggiunti all'indice Git, cambiando
+l'ordine dei due snapshot. I 670 elementi sono gli stessi in entrambi i versi
+del confronto, ma l'esito originale resta non qualificante e non viene
+riscritto. Il processo sottostante ha restituito zero; il controllo registrato
+viene ripetuto sulla base integrata con sorgenti e stato Git stabili.
+
 Nessuna misura di heap, throughput, latenza o RSS viene dedotta da questi
 controlli. I confini e i casi C1 aperti sono nel [contratto](../../../docs/implementazione/get-active.md).

@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -14,7 +14,11 @@
 (defun scope-path-p (scope path)
   "Gli scope CBOR selezionano file esatti; gli altri il modulo intero."
   (let ((suffixes
-          (cond ((string= scope "key-hash")
+          (cond ((string= scope "get-performance")
+                 '("/src/get/types.lisp" "/src/get/build.lisp" "/src/get/lifecycle.lisp"
+                   "/src/get/lookup.lisp" "/src/get/target.lisp" "/src/get/segment.lisp"
+                   "/src/cache/read.lisp"))
+                ((string= scope "key-hash")
                  '("/src/hash/package.lisp" "/src/hash/arithmetic.lisp"
                    "/src/hash/blocks.lisp" "/src/hash/hash64.lisp"
                    "/src/index/hash-seed.lisp" "/src/index/hash-digests.lisp"
@@ -70,6 +74,8 @@
                (scope-path-p "epochs" "/repo/src/epochs/reclaim.lisp")
                (not (scope-path-p "epochs" "/repo/tests/epochs/lifecycle.lisp"))
                (scope-path-p "read" "/repo/src/read/task.lisp")
+               (scope-path-p "get-performance" "/repo/src/get/segment.lisp")
+               (not (scope-path-p "get-performance" "/repo/tests/get-performance/segment.lisp"))
                (not (scope-path-p "read" "/repo/tests/read/lifecycle.lisp"))
                (scope-path-p "cbor" "/repo/src/codec/cbor-header.lisp")
                (not (scope-path-p "cbor" "/repo/src/codec/utf8.lisp"))
@@ -140,6 +146,7 @@
                              ((string= scope "csn") '#:arcdocdb.csn.tests)
                              ((string= scope "mvcc") '#:arcdocdb.mvcc.tests)
                              ((string= scope "epochs") '#:arcdocdb.epochs.tests)
+                             ((string= scope "get-performance") '#:arcdocdb.get.performance.tests)
                              ((string= scope "read") '#:arcdocdb.read.tests)
                              ((string= scope "execution") '#:arcdocdb.execution.tests)
                              ((string= scope "storage") '#:arcdocdb.storage.tests)
@@ -172,8 +179,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
+                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get-performance" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

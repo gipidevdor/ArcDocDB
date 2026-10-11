@@ -1,5 +1,5 @@
 (:schema-version 1 :kind :get-publication-byte-audit :date "2026-10-11" :status :ok
- :files 596 :copied-byte-equality :checked :rows (
+ :files 600 :copied-byte-equality :checked :rows (
  (:original "spikes/out/4000711475-command-61292-0/conservazione.lisp" :published "raw/prima-core/conservazione.lisp" :stored-bytes 1153 :sha256 "a0a2bb92f1ad679ff527cc31ded2b94c6b1f1048c4b07ff70a14faccf3fac670")
  (:original "spikes/out/4000711475-command-61292-0/report.lisp" :published "raw/prima-core/report.lisp" :stored-bytes 661763 :sha256 "a01ae64a16ec1e9855d37f7e794a5d6a3641ac37af08d3408546e8a707ceb32f")
  (:original "spikes/out/4000711475-command-61291-0/conservazione.lisp" :published "raw/prima-coverage-process/conservazione.lisp" :stored-bytes 1153 :sha256 "0159cf598b82bc481bb970d9ac93494955070c768249b9ffbd8bb39d0d424461")
@@ -560,6 +560,8 @@
  (:original "spikes/out/get-coverage-integrated-selftest/cover-index.html" :published "raw/integrata-coverage-selftest/cover-index.html" :stored-bytes 1787 :sha256 "823fc5f181ca05ca31f3a90fcad4e4da08b65dafbc64c46704275c353651c406")
  (:original "spikes/out/get-coverage-integrated-selftest/coverage-fixture.fasl" :published "raw/integrata-coverage-selftest/coverage-fixture.fasl" :stored-bytes 1597 :sha256 "0b8e22e5c8969baae5ac7df643d4229c73ceb41953f886e02c25fceb22ee0b5e")
  (:original "spikes/out/get-coverage-integrated-selftest/coverage-fixture.lisp" :published "raw/integrata-coverage-selftest/coverage-fixture.lisp" :stored-bytes 147 :sha256 "3767518fde8bde1e1286dbf663e97eac01f02e038d7f3161df436d9fd3e92559")
+ (:original "spikes/out/4000712314-command-81498-0/conservazione.lisp" :published "raw/finale/conservazione.lisp" :stored-bytes 1153 :sha256 "5739dc90441a5bc33f66f8cf290f8342f35b087ac8194eb10574791f91e696cc")
+ (:original "spikes/out/4000712314-command-81498-0/report.lisp" :published "raw/finale/report.lisp" :stored-bytes 136498 :sha256 "f8e81372a6c32ca79d6a6dc809894ff9875aa7a6c44e2459084ee7567a630299")
  (:original "spikes/out/4000711475-command-61292-0/conservazione.lisp" :published "prima-core-conservazione.lisp" :stored-bytes 1153 :sha256 "a0a2bb92f1ad679ff527cc31ded2b94c6b1f1048c4b07ff70a14faccf3fac670")
  (:original "spikes/out/4000711475-command-61292-0/report.lisp" :published "prima-core-report.lisp" :stored-bytes 661763 :sha256 "a01ae64a16ec1e9855d37f7e794a5d6a3641ac37af08d3408546e8a707ceb32f")
  (:original "spikes/out/4000711475-command-61291-0/conservazione.lisp" :published "prima-coverage-process-conservazione.lisp" :stored-bytes 1153 :sha256 "0159cf598b82bc481bb970d9ac93494955070c768249b9ffbd8bb39d0d424461")
@@ -596,6 +598,8 @@
  (:original "spikes/out/4000711969-check-74323-0/SPK-09.lisp" :published "integrata-spikes-SPK-09.lisp" :stored-bytes 2472 :sha256 "61145e2e32db39ba766b863ae44e49db354f614302af1af74f2eb2c2b71407db")
  (:original "spikes/out/4000711969-check-74323-0/SPK-10.lisp" :published "integrata-spikes-SPK-10.lisp" :stored-bytes 22977 :sha256 "3f9513686ed587a2e2a1f280a3f1ebb8ff59e88d9825752677e5cea9c12e984e")
  (:original "spikes/out/4000711969-check-74323-0/conservazione.lisp" :published "integrata-spikes-conservazione.lisp" :stored-bytes 2301 :sha256 "d2b1f207856b5602e9e6703d382f9db50702a5a1437a59d126676ceee820ab81")
+ (:original "spikes/out/4000712314-command-81498-0/conservazione.lisp" :published "finale-conservazione.lisp" :stored-bytes 1153 :sha256 "5739dc90441a5bc33f66f8cf290f8342f35b087ac8194eb10574791f91e696cc")
+ (:original "spikes/out/4000712314-command-81498-0/report.lisp" :published "finale-report.lisp" :stored-bytes 136498 :sha256 "f8e81372a6c32ca79d6a6dc809894ff9875aa7a6c44e2459084ee7567a630299")
  ) :native-record-audits (
  (:artifact "prima-core-conservazione.lisp" :native-record "raw/prima-core/conservazione.lisp" :kind :evidence-finalization :status :ok :exit-code 0 :source-consistency nil :expanded-bytes 1153 :expanded-sha256 "a0a2bb92f1ad679ff527cc31ded2b94c6b1f1048c4b07ff70a14faccf3fac670" :copied-native-data-equality :checked)
  (:artifact "prima-core-report.lisp" :native-record "raw/prima-core/report.lisp" :kind :command-verification :status :ok :exit-code 0 :source-consistency :stable :expanded-bytes 661763 :expanded-sha256 "a01ae64a16ec1e9855d37f7e794a5d6a3641ac37af08d3408546e8a707ceb32f" :copied-native-data-equality :checked)
@@ -637,6 +641,8 @@
  (:artifact "integrata-spikes-SPK-10.lisp" :native-record "raw/integrata-spikes/SPK-10.lisp" :kind nil :status :ok :exit-code 0 :source-consistency :stable :expanded-bytes 22977 :expanded-sha256 "3f9513686ed587a2e2a1f280a3f1ebb8ff59e88d9825752677e5cea9c12e984e" :copied-native-data-equality :checked)
  (:artifact "integrata-spikes-conservazione.lisp" :native-record "raw/integrata-spikes/conservazione.lisp" :kind :evidence-finalization :status :ok :exit-code 0 :source-consistency nil :expanded-bytes 2301 :expanded-sha256 "d2b1f207856b5602e9e6703d382f9db50702a5a1437a59d126676ceee820ab81" :copied-native-data-equality :checked)
  (:artifact "integrata-spikes-report.lisp" :native-record "raw/integrata-spikes/report.lisp" :kind nil :status :complete :exit-code nil :source-consistency nil :expanded-bytes 28962007 :expanded-sha256 "a304f60bc287dabb2fb89d2d1ee1f6c186f67ad7bc8cfed74033aa25eff9bff3" :copied-native-data-equality :checked)
+ (:artifact "finale-conservazione.lisp" :native-record "raw/finale/conservazione.lisp" :kind :evidence-finalization :status :ok :exit-code 0 :source-consistency nil :expanded-bytes 1153 :expanded-sha256 "5739dc90441a5bc33f66f8cf290f8342f35b087ac8194eb10574791f91e696cc" :copied-native-data-equality :checked)
+ (:artifact "finale-report.lisp" :native-record "raw/finale/report.lisp" :kind :command-verification :status :ok :exit-code 0 :source-consistency :stable :expanded-bytes 136498 :expanded-sha256 "f8e81372a6c32ca79d6a6dc809894ff9875aa7a6c44e2459084ee7567a630299" :copied-native-data-equality :checked)
  ) :consultation-references (
  (:artifact "prima-spikes-SPK-07.lisp" :kind :native-evidence-reference :native-record "raw/prima-spikes/SPK-07.lisp" :generated-reference-only t)
  (:artifact "prima-spikes-report.lisp" :kind :native-evidence-reference :native-record "raw/prima-spikes/report.lisp" :generated-reference-only t)

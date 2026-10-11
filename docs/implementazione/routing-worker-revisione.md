@@ -168,3 +168,16 @@ senza avvisi. I test esistenti non esercitano le nuove API ACTIVE: questo
 PASS non ne attesta C1/C4. I congelamenti F0/copertura/misura precedenti
 mantengono fonte e scope. Preimage di ASDF, indice e changelog sono
 conservate; entrambe le aggiunte rimangono nella tree finale.
+
+## Integrazione della suite GET finale
+
+La PR9 porta main a `644e53f176d0dce2c5ac5870659e7d89c0c9df3e`:
+aggiunge70 test GET, caricamento della suite, scope GET di copertura e
+documentazione. Non modifica sorgenti di prodotto o i predicati di
+copertura Series/execution. L'integrazione conserva i precedenti delta.
+
+Il build combinato `4000715110-command-98694-0` è OK/STABLE/exit0,
+con694 sorgenti/documenti,924 test nominati e2smoke, senza avvisi;
+cache FASL privata, circa22,71s. Questo controllo ripete la suite con i
+nuovi test; F0, copertura e misure routing mantengono le basi originali.
+Non è una nuova qualifica delle API ACTIVE, del pool o del motore.

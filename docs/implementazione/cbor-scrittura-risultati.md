@@ -95,6 +95,19 @@ di integrazione riguardava elenco/uso degli scope nel driver C4, risolto
 conservando sia `cbor-write` sia `index`. Prodotto e tre test ciechi
 conservano gli stessi blob; le campagne locali non sono state riscritte.
 
+Il merge `b4ea74f` include poi gli snapshot di `f23b33c` e i worker di
+`d9aeae3`: controllo completo riuscito in 163,081183 secondi, con 660 test
+e 2 smoke, sorgenti stabili. L'elenco degli scope conserva anche `mvcc`.
+La successiva integrazione della cache `01dd641` su `997a85b` ripete tutti
+i controlli in 166,766875 secondi: stessi 662 esiti di build, nessun avviso,
+self-test del mutatore snapshot e dieci spike riusciti. Il driver di
+copertura unificato passa il suo self-test. Il codec e i test ciechi
+restano invariati; il nuovo modulo cache viene compilato, mentre le sue
+verifiche dedicate restano pendenti come dichiarato nel relativo
+[incremento](cache-record.md). Nel controllo finale i due worker CBOR
+conservano i sink previsti e si sovrappongono per 6175 tick; resta la stessa
+limitazione sulle conclusioni di scaling.
+
 I [registri originali](../../spikes/results/2026-10-11-cbor-header-write/archive-index.lisp)
 conservano stdout/stderr, sorgenti, test, driver, coverage, copie mutate
 del nuovo file e log, self-test e audit Common Lisp con reader-eval NIL
@@ -105,4 +118,6 @@ mutazioni e i FASL sono conservati anche nel backup locale
 `spikes/out/cbor-header-write-isolated-20261011/` del checkout principale.
 Le copie dei Markdown congelati sono dati originali `.md.txt`, senza
 riscrivere i collegamenti storici. I [registri conclusivi](../../spikes/results/2026-10-11-cbor-header-write-final/archive-index.lisp)
-raccolgono verifiche della raccolta e documentazione finale.
+raccolgono verifiche della raccolta, i controlli integrati e la
+documentazione finale. Ogni esecuzione conserva il proprio commit e i
+propri conteggi: gli incrementi successivi non cambiano le prove originali.

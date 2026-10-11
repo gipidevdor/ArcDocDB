@@ -1,5 +1,5 @@
 (:schema-version 1 :kind :reader-publication-byte-audit :date "2026-10-11" :status :ok
- :files 1621 :copied-byte-equality :checked :rows (
+ :files 1628 :copied-byte-equality :checked :rows (
  (:original "spikes/out/4000706207-command-98770-0/conservazione.lisp" :published "raw/mutazioni-iniziali-comando/conservazione.lisp" :stored-bytes 1162 :sha256 "7f1ac3d89912c20bbcd2baefead715bb738e65210fadd74fa41a75c64070fd6d")
  (:original "spikes/out/4000706207-command-98770-0/report.lisp" :published "raw/mutazioni-iniziali-comando/report.lisp" :stored-bytes 143762 :sha256 "d3d8a2c429733645829f9830afb3bc84cab0dd470c43e7dc08d1f83ac0f5e85f")
  (:original "spikes/out/4000706207-command-98771-0/conservazione.lisp" :published "raw/verifica-iniziale/conservazione.lisp" :stored-bytes 1162 :sha256 "dd31d942b6c407f872f3d6ff4cea7e7182354dee9b1e7bcf3d56dc69416aee5c")
@@ -1575,10 +1575,15 @@
  (:original "spikes/out/4000706439-check-3775-0/conservazione.lisp" :published "raw/esperimenti/conservazione.lisp" :stored-bytes 2310 :sha256 "3fcbe74c72278c45349b51dbf0cabc064b80f3991aac58e1616ecd7988d7ac8d")
  (:original "spikes/out/4000706439-check-3775-0/report.lisp" :published "raw/esperimenti/report.lisp" :stored-bytes 318 :sha256 "c6c8218cf668be8e01f4d4e83d0e4d8178265b0323c186c5566adf8bf943226f")
  (:original "spikes/out/4000706439-check-3775-0/report.lisp.gz" :published "raw/esperimenti/report.lisp.gz" :stored-bytes 466818 :sha256 "cdd305a2457b2a2a7f21e579c0d52968f67c15d836caf9b22417ea0ced2031f0")
+ (:original "spikes/out/reader-publisher/reader-final-check.log" :published "raw/pubblicazione/reader-final-check.log" :stored-bytes 156 :sha256 "d42b0ac781d20a1b674cc40c60087ed22ad143923d8d11983b54943a72c5bf4b")
+ (:original "spikes/out/reader-publisher/reader-publish-final.json" :published "raw/pubblicazione/reader-publish-final.json" :stored-bytes 23843 :sha256 "a9f7cbfda7a204a078ea148021c422500a37d2e5770307130bb85879ff03b4d0")
+ (:original "spikes/out/reader-publisher/reader-publish-map-final.json" :published "raw/pubblicazione/reader-publish-map-final.json" :stored-bytes 7273 :sha256 "1eda24d455ff8240d2771003b58895182a50364e9096d1cdc873e80e8cdb958d")
  (:original "spikes/out/reader-publisher/reader-publish-map.json" :published "raw/pubblicazione/reader-publish-map.json" :stored-bytes 6887 :sha256 "25fa9f029606e716374c6d8419fed86bff57fcda65fd66bf2241c93d24aab9c6")
  (:original "spikes/out/reader-publisher/reader-publish-preview.json" :published "raw/pubblicazione/reader-publish-preview.json" :stored-bytes 23850 :sha256 "41fa45e046c2df42b7a693e73b216d4e98da9fa494553ed53895c822042370f6")
  (:original "spikes/out/reader-publisher/reader-publish-result.json" :published "raw/pubblicazione/reader-publish-result.json" :stored-bytes 23843 :sha256 "040839053e20db71f03dc95c712cbe0c9f4a50ed737a84f642f87231e23b19d8")
  (:original "spikes/out/reader-publisher/reader-publish.py" :published "raw/pubblicazione/reader-publish.py" :stored-bytes 20585 :sha256 "e37b59d20d386414f6632f76f4a13ad97cdfa36f4fdacde65d17d4cf0a8535e3")
+ (:original "spikes/out/4000706809-command-9143-0/conservazione.lisp" :published "raw/verifica-pubblicazione/conservazione.lisp" :stored-bytes 1159 :sha256 "bfb8d166304744dbc8c957787ef1e7a7d420bf6057ae83ade85825a29e92382b")
+ (:original "spikes/out/4000706809-command-9143-0/report.lisp" :published "raw/verifica-pubblicazione/report.lisp" :stored-bytes 124979 :sha256 "c8ddf3617397e89dc9b9d87327a139b0eb1e102a1baccaf189d77ef994904d5f")
  (:original "spikes/out/4000706207-command-98770-0/report.lisp" :published "mutazioni-iniziali-comando.lisp" :stored-bytes 143762 :sha256 "d3d8a2c429733645829f9830afb3bc84cab0dd470c43e7dc08d1f83ac0f5e85f")
  (:original "spikes/out/4000706207-command-98770-0/conservazione.lisp" :published "mutazioni-iniziali-comando-conservazione.lisp" :stored-bytes 1162 :sha256 "7f1ac3d89912c20bbcd2baefead715bb738e65210fadd74fa41a75c64070fd6d")
  (:original "spikes/out/4000706207-command-98771-0/report.lisp" :published "verifica-iniziale.lisp" :stored-bytes 290393 :sha256 "0bc064854ded6e219bca0a93d5985912782fee46f6d2c30b930c4036c9d2d5a6")
@@ -1621,6 +1626,8 @@
  (:original "spikes/out/4000706439-check-3775-0/SPK-09.lisp" :published "esperimenti-SPK-09.lisp" :stored-bytes 2472 :sha256 "bb84a5591878181a6c7cae0e5e72804ab48d437fadeb0c715e0566bb3391d95c")
  (:original "spikes/out/4000706439-check-3775-0/SPK-08.lisp" :published "esperimenti-SPK-08.lisp" :stored-bytes 291712 :sha256 "b0e0032fe4e59dde3a3be62ef0c55f750056c8a164162e022f74e172010021ac")
  (:original "spikes/out/4000706439-check-3775-0/SPK-04.lisp" :published "esperimenti-SPK-04.lisp" :stored-bytes 6752 :sha256 "9593acdd5955bfa241488767366609d207c48c1a7120bb2068db1c2a2c659cf8")
+ (:original "spikes/out/4000706809-command-9143-0/report.lisp" :published "verifica-pubblicazione.lisp" :stored-bytes 124979 :sha256 "c8ddf3617397e89dc9b9d87327a139b0eb1e102a1baccaf189d77ef994904d5f")
+ (:original "spikes/out/4000706809-command-9143-0/conservazione.lisp" :published "verifica-pubblicazione-conservazione.lisp" :stored-bytes 1159 :sha256 "bfb8d166304744dbc8c957787ef1e7a7d420bf6057ae83ade85825a29e92382b")
  ) :native-record-audits (
  (:artifact "mutazioni-iniziali-comando.lisp" :native-record "raw/mutazioni-iniziali-comando/report.lisp" :kind :command-verification :status :failed :exit-code 1 :source-consistency :stable :expanded-bytes 143762 :expanded-sha256 "d3d8a2c429733645829f9830afb3bc84cab0dd470c43e7dc08d1f83ac0f5e85f" :copied-native-data-equality :checked)
  (:artifact "mutazioni-iniziali-comando-conservazione.lisp" :native-record "raw/mutazioni-iniziali-comando/conservazione.lisp" :kind :evidence-finalization :status :ok :exit-code 0 :source-consistency nil :expanded-bytes 1162 :expanded-sha256 "7f1ac3d89912c20bbcd2baefead715bb738e65210fadd74fa41a75c64070fd6d" :copied-native-data-equality :checked)
@@ -1666,6 +1673,8 @@
  (:artifact "esperimenti-SPK-09.lisp" :native-record "raw/esperimenti/SPK-09.lisp" :kind nil :status :ok :exit-code 0 :source-consistency :stable :expanded-bytes 2472 :expanded-sha256 "bb84a5591878181a6c7cae0e5e72804ab48d437fadeb0c715e0566bb3391d95c" :copied-native-data-equality :checked)
  (:artifact "esperimenti-SPK-08.lisp" :native-record "raw/esperimenti/SPK-08.lisp" :kind nil :status :ok :exit-code 0 :source-consistency :stable :expanded-bytes 291712 :expanded-sha256 "b0e0032fe4e59dde3a3be62ef0c55f750056c8a164162e022f74e172010021ac" :copied-native-data-equality :checked)
  (:artifact "esperimenti-SPK-04.lisp" :native-record "raw/esperimenti/SPK-04.lisp" :kind nil :status :ok :exit-code 0 :source-consistency :stable :expanded-bytes 6752 :expanded-sha256 "9593acdd5955bfa241488767366609d207c48c1a7120bb2068db1c2a2c659cf8" :copied-native-data-equality :checked)
+ (:artifact "verifica-pubblicazione.lisp" :native-record "raw/verifica-pubblicazione/report.lisp" :kind :command-verification :status :ok :exit-code 0 :source-consistency :stable :expanded-bytes 124979 :expanded-sha256 "c8ddf3617397e89dc9b9d87327a139b0eb1e102a1baccaf189d77ef994904d5f" :copied-native-data-equality :checked)
+ (:artifact "verifica-pubblicazione-conservazione.lisp" :native-record "raw/verifica-pubblicazione/conservazione.lisp" :kind :evidence-finalization :status :ok :exit-code 0 :source-consistency nil :expanded-bytes 1159 :expanded-sha256 "bfb8d166304744dbc8c957787ef1e7a7d420bf6057ae83ade85825a29e92382b" :copied-native-data-equality :checked)
  ) :consultation-references (
  (:artifact "esperimenti-SPK-07.lisp" :kind :native-evidence-reference :native-record "raw/esperimenti/SPK-07.lisp" :generated-reference-only t)
  (:artifact "esperimenti-report.lisp" :kind :native-evidence-reference :native-record "raw/esperimenti/report.lisp" :generated-reference-only t)

@@ -24,6 +24,9 @@
             :inline-attribution-limit :explicit :mcdc :not-measured)
  :publication (:catalog "catalogo.lisp" :audit "audit-copia.lisp"
                :native-bytes-and-payload-names :unchanged :generated-references :explicit)
+ :publication-check (:artifact "verifica-pubblicazione.lisp" :status :ok :native-exit 0
+                     :source-consistency :stable :checks (:trace :links :evidence)
+                     :commit "051e4dd35f5fb8b363242fb06cda694d03e89db8")
  :ci-at-local-publication :pending
  :limits (:partial-decision-witnesses :no-engine-or-phase-qualification :no-c1-qualification
           :no-mcdc :no-internal-inline-window-proof :no-weak-memory-proof

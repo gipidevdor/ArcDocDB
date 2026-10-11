@@ -33,7 +33,7 @@
      "#xf9")
     ("src/codec/cbor-simple-write.lisp" "physical-capacity"
      "(when (> size span)"
-     "(when (> size (- (length bytes) begin))")
+     "(when (> size (max span (- (length bytes) begin)))")
     ("src/codec/cbor-simple-write.lisp" "extended-value-zeroed"
      "(setf (aref bytes cursor) code)"
      "(setf (aref bytes cursor) 0)")

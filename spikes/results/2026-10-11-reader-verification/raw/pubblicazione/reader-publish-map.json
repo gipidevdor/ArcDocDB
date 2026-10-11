@@ -1,0 +1,225 @@
+{
+  "workspace": "/Users/gpicchiarelli/.codex/worktrees/reader-verification/ArcDocDB",
+  "groups": [
+    {
+      "name": "mutazioni-iniziali-comando",
+      "source": "spikes/out/4000706207-command-98770-0",
+      "records": {
+        "report.lisp": "mutazioni-iniziali-comando.lisp",
+        "conservazione.lisp": "mutazioni-iniziali-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "verifica-iniziale",
+      "source": "spikes/out/4000706207-command-98771-0",
+      "records": {
+        "report.lisp": "verifica-iniziale.lisp",
+        "conservazione.lisp": "verifica-iniziale-conservazione.lisp"
+      }
+    },
+    {
+      "name": "copertura-epoche-iniziale-comando",
+      "source": "spikes/out/4000706207-command-98772-0",
+      "records": {
+        "report.lisp": "copertura-epoche-iniziale-comando.lisp",
+        "conservazione.lisp": "copertura-epoche-iniziale-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "copertura-self-iniziale-comando",
+      "source": "spikes/out/4000706207-command-98773-0",
+      "records": {
+        "report.lisp": "copertura-self-iniziale-comando.lisp",
+        "conservazione.lisp": "copertura-self-iniziale-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "copertura-lettura-iniziale-comando",
+      "source": "spikes/out/4000706207-command-98774-0",
+      "records": {
+        "report.lisp": "copertura-lettura-iniziale-comando.lisp",
+        "conservazione.lisp": "copertura-lettura-iniziale-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "percorso-accettato-comando",
+      "source": "spikes/out/4000706207-command-98779-0",
+      "records": {
+        "report.lisp": "percorso-accettato-comando.lisp",
+        "conservazione.lisp": "percorso-accettato-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "copertura-epoche-comando",
+      "source": "spikes/out/4000706311-command-653-0",
+      "records": {
+        "report.lisp": "copertura-epoche-comando.lisp",
+        "conservazione.lisp": "copertura-epoche-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "verifica-completa",
+      "source": "spikes/out/4000706311-command-654-0",
+      "records": {
+        "report.lisp": "verifica-completa.lisp",
+        "conservazione.lisp": "verifica-completa-conservazione.lisp"
+      }
+    },
+    {
+      "name": "copertura-lettura-comando",
+      "source": "spikes/out/4000706311-command-656-0",
+      "records": {
+        "report.lisp": "copertura-lettura-comando.lisp",
+        "conservazione.lisp": "copertura-lettura-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "mutazioni-comando",
+      "source": "spikes/out/4000706311-command-657-0",
+      "records": {
+        "report.lisp": "mutazioni-comando.lisp",
+        "conservazione.lisp": "mutazioni-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "copertura-self-comando",
+      "source": "spikes/out/4000706311-command-661-0",
+      "records": {
+        "report.lisp": "copertura-self-comando.lisp",
+        "conservazione.lisp": "copertura-self-comando-conservazione.lisp"
+      }
+    },
+    {
+      "name": "cli-negativo",
+      "source": "spikes/out/4000706311-command-666-0",
+      "records": {
+        "report.lisp": "cli-negativo.lisp",
+        "conservazione.lisp": "cli-negativo-conservazione.lisp"
+      }
+    },
+    {
+      "name": "mutazioni-iniziali",
+      "source": "spikes/out/reader-mutazioni",
+      "records": {
+        "report.lisp": "mutazioni-iniziali.lisp"
+      }
+    },
+    {
+      "name": "percorso-accettato",
+      "source": "spikes/out/reader-forbidden-file.lisp",
+      "records": {
+        "report.lisp": "percorso-accettato.lisp"
+      }
+    },
+    {
+      "name": "mutazioni",
+      "source": "spikes/out/reader-mutazioni-finali",
+      "records": {
+        "report.lisp": "mutazioni.lisp"
+      }
+    },
+    {
+      "name": "4000706209-reader-self-test-98903-0",
+      "source": "spikes/out/4000706209-reader-self-test-98903-0",
+      "records": {
+        "report.lisp": "4000706209-reader-self-test-98903-0.lisp"
+      }
+    },
+    {
+      "name": "4000706209-reader-self-test-98905-0",
+      "source": "spikes/out/4000706209-reader-self-test-98905-0",
+      "records": {
+        "report.lisp": "4000706209-reader-self-test-98905-0.lisp"
+      }
+    },
+    {
+      "name": "4000706314-reader-self-test-820-0",
+      "source": "spikes/out/4000706314-reader-self-test-820-0",
+      "records": {
+        "report.lisp": "4000706314-reader-self-test-820-0.lisp"
+      }
+    },
+    {
+      "name": "4000706326-reader-self-test-1054-0",
+      "source": "spikes/out/4000706326-reader-self-test-1054-0",
+      "records": {
+        "report.lisp": "4000706326-reader-self-test-1054-0.lisp"
+      }
+    },
+    {
+      "name": "4000706326-snapshot-self-test-1048-0",
+      "source": "spikes/out/4000706326-snapshot-self-test-1048-0",
+      "records": {
+        "report.lisp": "4000706326-snapshot-self-test-1048-0.lisp"
+      }
+    },
+    {
+      "name": "reader-coverage-epochs",
+      "source": "spikes/out/reader-coverage-epochs",
+      "compress": [
+        "coverage-state.lisp"
+      ]
+    },
+    {
+      "name": "reader-coverage-read",
+      "source": "spikes/out/reader-coverage-read",
+      "compress": [
+        "coverage-state.lisp"
+      ]
+    },
+    {
+      "name": "reader-coverage-self",
+      "source": "spikes/out/reader-coverage-self",
+      "compress": [
+        "coverage-state.lisp"
+      ]
+    },
+    {
+      "name": "reader-coverage-epochs-finale",
+      "source": "spikes/out/reader-coverage-epochs-finale",
+      "compress": [
+        "coverage-state.lisp"
+      ]
+    },
+    {
+      "name": "reader-coverage-read-finale",
+      "source": "spikes/out/reader-coverage-read-finale",
+      "compress": [
+        "coverage-state.lisp"
+      ]
+    },
+    {
+      "name": "reader-coverage-self-finale",
+      "source": "spikes/out/reader-coverage-self-finale",
+      "compress": [
+        "coverage-state.lisp"
+      ]
+    },
+    {
+      "name": "esperimenti",
+      "source": "spikes/out/4000706439-check-3775-0",
+      "records": {
+        "SPK-07.lisp": "esperimenti-SPK-07.lisp",
+        "SPK-10.lisp": "esperimenti-SPK-10.lisp",
+        "SPK-06.lisp": "esperimenti-SPK-06.lisp",
+        "conservazione.lisp": "esperimenti-conservazione.lisp",
+        "SPK-01.lisp": "esperimenti-SPK-01.lisp",
+        "report.lisp": "esperimenti-report.lisp",
+        "SPK-03.lisp": "esperimenti-SPK-03.lisp",
+        "SPK-02.lisp": "esperimenti-SPK-02.lisp",
+        "SPK-05.lisp": "esperimenti-SPK-05.lisp",
+        "SPK-09.lisp": "esperimenti-SPK-09.lisp",
+        "SPK-08.lisp": "esperimenti-SPK-08.lisp",
+        "SPK-04.lisp": "esperimenti-SPK-04.lisp"
+      }
+    }
+  ],
+  "extra_entries": [
+    "metodo.lisp",
+    "revisione.lisp",
+    "rettifica.lisp",
+    "revisione-rettifica.lisp",
+    "risultati.lisp",
+    "copertura-revisione.lisp"
+  ]
+}

@@ -1,0 +1,2 @@
+SIMPLE-ERROR: Asserzione XXH64 fallita: (EQUAL ARCDOCDB.HASH64.TESTS::ACTUAL
+                                               ARCDOCDB.HASH64.TESTS::EXPECTED)

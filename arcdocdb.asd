@@ -18,6 +18,8 @@
                 :components ((:file "package") (:file "conditions")
                              (:file "binary") (:file "crc32c")
                              (:file "record") (:file "batch")))
+               (:module "hash" :serial t
+                :components ((:file "package") (:file "arithmetic") (:file "blocks") (:file "hash64")))
                (:module "codec" :serial t
                 :components ((:file "package") (:file "utf8")
                              (:file "cbor-package") (:file "cbor-header")
@@ -60,7 +62,8 @@
                              (:file "primary-write") (:file "primary-relocate")
                              (:file "primary-arena") (:file "primary-directory")
                              (:file "rebuild-scan") (:file "rebuild-budget")
-                             (:file "rebuild-copy") (:file "rebuild")))
+                             (:file "rebuild-copy") (:file "rebuild")
+                             (:file "hash-seed") (:file "hash-digests")))
                (:module "mvcc" :serial t
                 :components ((:file "package") (:file "types")
                              (:file "snapshots-types") (:file "snapshots-core") (:file "snapshots-csn")
@@ -72,6 +75,9 @@
                (:module "read" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "task")))
+               (:module "get" :serial t
+                :components ((:file "package") (:file "types") (:file "build")
+                             (:file "lifecycle") (:file "lookup") (:file "target") (:file "segment")))
                (:module "recovery"
                 :serial t
                 :components ((:file "package") (:file "scan")
@@ -93,6 +99,8 @@
   :pathname "tests/"
   :serial t
   :components ((:file "smoke")
+               (:module "hash" :serial t
+                :components ((:file "support") (:file "hash64") (:file "guards") (:file "threads")))
                (:module "foundation"
                 :serial t
                 :components ((:file "support") (:file "binary")
@@ -114,6 +122,10 @@
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "mvcc" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "capture")))
+               (:module "epochs" :serial t
+                :components ((:file "support") (:file "lifecycle") (:file "threads")))
+               (:module "read" :serial t
+                :components ((:file "support") (:file "lifecycle") (:file "threads")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
@@ -139,9 +151,10 @@
                (:module "index" :serial t
                 :components ((:file "slot-support") (:file "slots") (:file "slot-threads")
                              (:file "primary-support") (:file "primary") (:file "primary-threads")
-                             (:file "rebuild"))))
+                             (:file "rebuild") (:file "hash-digests"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.hash64.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.foundation.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.utf8.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.tests '#:run)
@@ -152,6 +165,8 @@
              (uiop:symbol-call '#:arcdocdb.cbor.string.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.read.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)

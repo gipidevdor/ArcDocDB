@@ -1,0 +1,50 @@
+;;;; Analisi operativa: mediane dei record, non esegue nuovamente il benchmark.
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defun median (values)
+  (let* ((sorted (sort (copy-list values) #'<)) (n (length sorted)))
+    (unless (plusp n) (error "Gruppo vuoto."))
+    (if (oddp n) (nth (floor n 2) sorted)
+        (/ (+ (nth (1- (floor n 2)) sorted) (nth (floor n 2) sorted)) 2))))
+(let ((reports (loop for path in '("spikes/out/key-hash-bench-serial/report.lisp"
+                                  "spikes/out/key-hash-bench-parallel/report.lisp")
+                     collect (arcdocdb.evidence:read-evidence path)))
+      (serial 0) (parallel 0) (heap 0) (calls 0) (summary nil))
+  (dolist (report reports)
+    (unless (and (eq :ok (getf report :status))
+                 (eq :key-hash-benchmark (getf report :kind))
+                 (eq t (getf report :source-freeze-verified)))
+      (error "Benchmark non accettabile."))
+    (dolist (metric (getf report :metrics))
+      (unless (eq :ok (getf metric :status)) (error "Metrica fallita."))
+      (ecase (getf metric :kind)
+        (:serial (incf serial) (incf calls (getf metric :completed))
+                 (unless (zerop (getf metric :heap-bytes)) (error "Heap seriale.")))
+        (:parallel (incf parallel) (incf heap (getf metric :heap-bytes))))))
+  (loop for report in reports for campaign in '(:serial :parallel) do
+    (dolist (kind '(:serial :parallel))
+      (dolist (workers '(1 2 4))
+        (dolist (length '(16 32 64 1024 65535))
+          (dolist (seed '(:zero :max))
+            (let ((metrics (remove-if-not
+                            (lambda (m) (and (eq kind (getf m :kind))
+                                             (= workers (getf m :workers))
+                                             (= length (getf m :length))
+                                             (eq seed (getf m :seed-case))))
+                            (getf report :metrics))))
+              (when metrics
+                (let ((ns (median (mapcar (lambda (m) (getf m :ns-per-call)) metrics))))
+                  (push (list :campaign campaign :kind kind :workers workers :length length
+                              :seed seed :replicas (length metrics) :median-ns-per-call ns
+                              :aggregate-calls-per-second (/ 1d9 ns)
+                              :aggregate-bytes-per-second (/ (* length 1d9) ns)
+                              :heap-min (reduce #'min metrics :key (lambda (m) (getf m :heap-bytes)))
+                              :heap-max (reduce #'max metrics :key (lambda (m) (getf m :heap-bytes)))) summary)))))))))
+  (write (list :schema-version 1 :kind :key-hash-benchmark-summary :status :ok
+               :serial-windows serial :serial-measured-calls calls
+               :parallel-groups parallel :parallel-global-heap-sum heap
+               :groups (nreverse summary)
+               :limits '(:primitive-with-validation-and-sink :not-db-throughput
+                         :parallel-clock-includes-release-and-join :no-worker-heap-sum))
+         :readably t :pretty t)
+  (terpri))

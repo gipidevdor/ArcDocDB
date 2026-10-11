@@ -1,0 +1,2 @@
+SIMPLE-ERROR: Asserzione fallita: (EQUALP ARCDOCDB.READ.TESTS::BEFORE
+                                          ARCDOCDB.READ.TESTS::BUFFER)

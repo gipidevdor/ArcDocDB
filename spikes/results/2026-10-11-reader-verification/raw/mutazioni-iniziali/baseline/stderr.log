@@ -1,0 +1,14 @@
+; 
+; caught ERROR:
+;   READ error during COMPILE-FILE:
+;   
+;     unmatched close parenthesis
+;   
+;       Line: 70, Column: 39, File-Position: 3653
+;   
+;       Stream: #<SB-INT:FORM-TRACKING-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/reader-verification/ArcDocDB/spikes/out/reader-mutazioni/baseline/tests/epochs/threads.lisp" {80058CDDE3}>
+; 
+; compilation unit aborted
+;   caught 1 fatal ERROR condition
+;   caught 1 ERROR condition
+SIMPLE-ERROR: Compilazione non valida: tests/epochs/threads.lisp

@@ -30,6 +30,11 @@ I bit alti non ancora discriminati dalla directory non si possono ricavare
 dal payload: coerenza del digest e gestione del seed restano al chiamante.
 Questo controllo non sostituisce una funzione hash del prodotto.
 
+`calcola-digests-frammento` produce ora le due mappe dagli slot fisici
+tramite [XXH64 e seme immutabile dell'indice](hash-chiavi.md), verificando
+la coppia completa del seme prima delle scritture e il lookup originale
+per ogni chiave. La gestione del seme al riavvio resta al controller.
+
 ## Tre fasi prima della pubblicazione
 
 1. Scansione di C slot: controllo Swiss, payload stabile, intervallo della

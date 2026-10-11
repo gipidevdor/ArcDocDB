@@ -1,0 +1,3 @@
+SIMPLE-ERROR: Asserzione fallita: (= 1
+                                     (COUNT :CLAIMED
+                                            ARCDOCDB.EPOCHS.TESTS::RESULTS))

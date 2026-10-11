@@ -204,3 +204,7 @@ prestazioni misurate e l'integrazione del reclaim durevole.
 I [record originali](../../spikes/results/2026-10-09-ebr/catalogo.lisp)
 conservano sorgenti, comandi e output, compreso il testo dello script che
 stampa il disassemblato senza eseguire le funzioni ispezionate.
+
+La [campagna funzionale del 2026-10-11](lettura-verifica.md) aggiunge
+suite EBR e compiti di lettura, mutanti mirati e copertura parziale.
+Il metodo distingue la preregistrazione dai risultati delle esecuzioni.

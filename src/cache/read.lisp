@@ -4,13 +4,16 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-CCH-002 REQ-CCH-004 REQ-AFF-002
-(declaim (ftype (function (classe-cache octets index octets (or null octets) index index u8 u32)
+(declaim (ftype (function (classe-cache octets index octets (or null octets) index index u8 u32
+                                      &optional boolean)
                          null) check-cache-buffers))
-(defun check-cache-buffers (class buffer start key proof proof-start proof-end flags size)
+(defun check-cache-buffers (class buffer start key proof proof-start proof-end flags size
+                          &optional (copy-p t))
   "Pre: classe selezionata, buffer/prova stabili e privati al worker.
 Post: copia entro destinazione, nessun alias distruttivo; prova prepared presente.
 INVALID-ARGUMENT prima della copia; non verifica ancora il contenuto del record."
-  (when (or (eq buffer (classe-cache-arena class)) (eq buffer key) (eq buffer proof))
+  (when (or (eq buffer (classe-cache-arena class))
+            (and copy-p (or (eq buffer key) (eq buffer proof))))
     (error 'invalid-argument :reason :cache-buffer-alias))
   (unless (and (<= start (length buffer)) (<= size (- (length buffer) start)))
     (error 'invalid-argument :reason :cache-buffer-range))
@@ -20,7 +23,7 @@ INVALID-ARGUMENT prima della copia; non verifica ancora il contenuto del record.
   nil)
 
 ;;; REQ: REQ-CCH-002 REQ-CCH-004 REQ-AFF-002
-(declaim (ftype (function (classe-cache index u32 u32 u32 u32 octets index) boolean)
+(declaim (ftype (function (classe-cache cache-slot u32 u32 u32 u32 octets index) boolean)
                 copia-posto-cache))
 (defun copia-posto-cache (class slot high low offset size destination start)
   "Pre: posto dell'insieme e range destination già validati; un unico tentativo.
@@ -44,7 +47,7 @@ Contatore dispari/esaurito, rifiuto o tag cambiato => miss, mai attesa o retry."
          (zerop (aref (classe-cache-rejected class) slot)))))
 
 ;;; REQ: REQ-CCH-004 REQ-AFF-002
-(declaim (ftype (function (classe-cache index octets index u32 octets u32 u32 u8
+(declaim (ftype (function (classe-cache cache-slot octets index u32 octets u32 u32 u8
                                       integer (or null octets) index index)
                          (values boolean index index &optional)) verifica-copia-cache))
 (defun verifica-copia-cache (class slot buffer start size key high low flags version proof ps pe)

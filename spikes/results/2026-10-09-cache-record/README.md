@@ -1,6 +1,6 @@
 # Cache dei record: implementazione e analisi statica
 
-Campagna 2026-10-09. Ambito: partizioni associative CLOCK e verificatore
+Campagna iniziata il 2026-10-09 e ripresa il 2026-10-11. Ambito: partizioni associative CLOCK e verificatore
 PUT comune con CSN in due parole, senza eseguire le nuove API.
 
 Metodo: compilazione del solo prodotto, avvisi come errori; controlli

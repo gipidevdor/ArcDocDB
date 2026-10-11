@@ -4,7 +4,7 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004 REQ-AFF-002 REQ-AFF-008
-(declaim (ftype (function (classe-cache index u32 u32 u32 u32 octets index boolean)
+(declaim (ftype (function (classe-cache cache-slot u32 u32 u32 u32 octets index boolean)
                          (values boolean boolean &optional)) scrivi-posto-cache))
 (defun scrivi-posto-cache (class slot high low offset size source start scan-p)
   "Pre: mutex locale, slot con credito, source privata verificata e range non alias dell'arena.
@@ -72,7 +72,7 @@ Nessuna attesa/retry/I/O; eventi di espulsione/scan restituiti, nessun contatore
   (check-cache-request segment-high segment-low offset size key csn-high csn-low flags version)
   (let ((class (scegli-classe-cache cache size)))
     (unless class (return-from inserisci-record-cache (values :bypassed nil nil)))
-    (check-cache-buffers class source start key proof-buffer proof-start proof-end flags size)
+    (check-cache-buffers class source start key proof-buffer proof-start proof-end flags size nil)
     (verifica-put-parole source start (+ start size) key csn-high csn-low flags
                          :version version :proof-buffer proof-buffer
                          :proof-start proof-start :proof-end proof-end)

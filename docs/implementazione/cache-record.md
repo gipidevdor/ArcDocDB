@@ -143,6 +143,9 @@ La corruzione del buffer **inserito dal segmento** propaga al caller del
 segmento, distinta da `:verify-failed`: non viene nascosta come difetto
 della cache. La copia inserita è una verifica supplementare; il suo costo
 CRC rispetto alla lettura già verificata va misurato.
+PUT e prova OUTCOME possono risiedere in intervalli dello stesso buffer
+input stabile: l’inserimento lo legge soltanto. Il divieto di alias con
+la prova riguarda la destinazione modificata dalla ricerca.
 
 CLOCK visita al massimo sedici posti, azzerando i riferimenti accesi.
 Le scansioni entrano con riferimento zero; le richieste puntuali con uno.
@@ -185,7 +188,7 @@ come P95/P99 e scan pollution; non vengono dichiarate pari a zero.
 |---|---|---|
 | CCH-D01 | Configurazione: dimensioni/conteggi, classi ordinate, potenze e budget | Ogni limite, classe omessa, budget zero e preflight senza allocazione |
 | CCH-D02 | Location/CSN non zero, chiave, record, range e flag | Campi zero, estremi u32/u64, v1/v2, limiti documento |
-| CCH-D03 | Alias, spazio buffer e prova prepared | Ogni alias, start finale, prova mancante e intervalli errati |
+| CCH-D03 | Alias distruttivo in lettura, input stabile in inserimento, spazio e prova prepared | Ogni alias, PUT/OUTCOME nello stesso input, start finale, prova mancante e intervalli errati |
 | CCH-D04 | Tag composto e seqlock pari/stabile con posto leggibile | Ogni campo discordante, scrittura concorrente e lettura mista |
 | CCH-D05 | CRC/tipo/flag/chiave/CSN o TXID+OUTCOME | Ogni discordanza, due parole alte, prova di altro lotto |
 | CCH-D06 | Credito, parity e stato terminale del posto | Ultimo credito, contatore dispari e interruzioni prima/dopo il pari |

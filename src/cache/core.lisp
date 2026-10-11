@@ -44,7 +44,7 @@ Non calcola digest delle chiavi documentali; nessuno stato, seed globale o garan
     (logxor d (ash d -16))))
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004
-(declaim (ftype (function (classe-cache u32 u32 u32) index) insieme-cache))
+(declaim (ftype (function (classe-cache u32 u32 u32) cache-set) insieme-cache))
 (defun insieme-cache (class high low offset)
   "Pre: classe e location verificate. Post: indice d'insieme entro la capacità.
 Il mescolamento include 64 bit di segmento e 32 bit di offset; nessun probe oltre l'insieme."
@@ -54,7 +54,7 @@ Il mescolamento include 64 bit di segmento e 32 bit di offset; nessun probe oltr
 
 ;;; REQ: REQ-CCH-002 REQ-CCH-004
 (declaim (inline tag-cache-p))
-(declaim (ftype (function (classe-cache index u32 u32 u32 u32) boolean) tag-cache-p))
+(declaim (ftype (function (classe-cache cache-slot u32 u32 u32 u32) boolean) tag-cache-p))
 (defun tag-cache-p (class slot high low offset size)
   "Pre: slot nell'insieme limitato. Post: confronto dei quattro u32 senza copia.
 Risultato provvisorio senza seqlock: può solo avviare una copia da riverificare o un miss."

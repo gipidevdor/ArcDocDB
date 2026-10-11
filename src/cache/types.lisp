@@ -12,6 +12,8 @@
 (defconstant +cache-max-slot-bytes+ (ash 1 25))
 (deftype cache-u32s () '(simple-array (unsigned-byte 32) (*)))
 (deftype cache-u64s () '(simple-array (unsigned-byte 64) (*)))
+(deftype cache-slot () '(integer 0 524287))
+(deftype cache-set () '(integer 0 65535))
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004 REQ-AFF-008
 (defstruct (classe-cache (:constructor %make-classe-cache)

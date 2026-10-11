@@ -4,7 +4,7 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004
-(declaim (ftype (function (classe-cache index u32 u32 u32 u32) boolean) gia-in-cache-p))
+(declaim (ftype (function (classe-cache cache-set u32 u32 u32 u32) boolean) gia-in-cache-p))
 (defun gia-in-cache-p (class set high low offset size)
   "Pre: mutex della striscia detenuto; input verificato separatamente.
 Post: presenza di un posto leggibile per la stessa location, al massimo otto tag.
@@ -20,7 +20,7 @@ Nessuna prova dell'integrità dei byte in cache: ogni lettura li verifica di nuo
           (return t))))))
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004 REQ-AFF-008
-(declaim (ftype (function (classe-cache index) boolean) credito-posto-cache-p))
+(declaim (ftype (function (classe-cache cache-slot) boolean) credito-posto-cache-p))
 (defun credito-posto-cache-p (class slot)
   "Pre: mutex della striscia detenuto. Post: T se una nuova pubblicazione pari è possibile.
 Sequenza dispari/esaurita o disable preesistente => posto disabilitato, senza wrap né errore del DB."
@@ -33,7 +33,7 @@ Sequenza dispari/esaurita o disable preesistente => posto disabilitato, senza wr
     t))
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004
-(declaim (ftype (function (classe-cache index) (or null index)) scegli-vittima-cache))
+(declaim (ftype (function (classe-cache cache-set) (or null cache-slot)) scegli-vittima-cache))
 (defun scegli-vittima-cache (class set)
   "Pre: mutex della striscia detenuto. Post: posto con credito, preferendo vuoto/rifiutato/freddo.
 Al massimo due giri di otto posti; i reader possono riaccendere tutti i bit => NIL, mai attesa."

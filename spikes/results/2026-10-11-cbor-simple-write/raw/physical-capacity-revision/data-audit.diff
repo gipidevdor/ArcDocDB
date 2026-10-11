@@ -1,0 +1,11 @@
+--- spikes/out/cbor-simple-write-20261011/data-audit.lisp.v0
++++ spikes/out/cbor-simple-write-20261011/data-audit.lisp
+@@ -29,7 +29,7 @@
+     ("wrong-extended-lead" "#xf8"
+      "#xf9")
+     ("physical-capacity" "(when (> size span)"
+-     "(when (> size (- (length bytes) begin))")
++     "(when (> size (max span (- (length bytes) begin)))")
+     ("extended-value-zeroed" "(setf (aref bytes cursor) code)"
+      "(setf (aref bytes cursor) 0)")
+     ("next-one-too-far" "(values next))))"

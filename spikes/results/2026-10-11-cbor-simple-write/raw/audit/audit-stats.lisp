@@ -1,0 +1,5 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(dolist (path (uiop:command-line-arguments))
+  (let* ((data (arcdocdb.evidence:read-evidence path)) (*read-eval* nil))
+    (format t "~A~%~A~%" path (getf data :stdout))))

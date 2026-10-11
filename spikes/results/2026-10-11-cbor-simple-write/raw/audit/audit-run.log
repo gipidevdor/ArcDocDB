@@ -1,0 +1,4 @@
+bench-audit exit 0: /Users/gpicchiarelli/.codex/worktrees/cbor-simple-write/ArcDocDB/spikes/out/4000714388-command-46985-0/report.lisp
+data-audit-self-test exit 0: /Users/gpicchiarelli/.codex/worktrees/cbor-simple-write/ArcDocDB/spikes/out/4000714391-command-47195-0/report.lisp
+mutation-audit exit 0: /Users/gpicchiarelli/.codex/worktrees/cbor-simple-write/ArcDocDB/spikes/out/4000714393-command-47353-0/report.lisp
+coverage-audit exit 0: /Users/gpicchiarelli/.codex/worktrees/cbor-simple-write/ArcDocDB/spikes/out/4000714401-command-47888-0/report.lisp

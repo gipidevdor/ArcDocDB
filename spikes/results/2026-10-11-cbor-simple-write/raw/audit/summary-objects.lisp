@@ -1,0 +1,7 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(dolist (path (uiop:command-line-arguments))
+  (let ((data (arcdocdb.evidence:read-evidence path)) (*print-length* 18) (*print-level* 6))
+    (format t "~A kind~S status~S checks~S~%" path (getf data :kind) (getf data :status) (getf data :checks))
+    (dolist (key '(:coverage :mutations :self-test))
+      (when (getf data key) (format t "~S ~S~%" key (getf data key))))))

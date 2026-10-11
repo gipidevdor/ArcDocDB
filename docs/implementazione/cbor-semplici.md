@@ -33,5 +33,5 @@ possono chiamarla su destinazioni private, senza coordinamento tra Serie,
 attese, I/O o AST. Budget complessivo, profilo applicativo, float e
 composizione di documenti rimangono al livello superiore.
 
-Le prove locali conserveranno copertura grezza e due letture statiche;
-la qualifica C1 del motore rimane aperta.
+Il [rapporto delle prove](cbor-semplici-risultati.md) conserva corpus,
+misure, mutazioni e copertura grezza; la qualifica C1 del motore rimane aperta.

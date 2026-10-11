@@ -6,4 +6,5 @@
   (:import-from #:arcdocdb.conditions #:invalid-argument #:corruption-detected
                 #:invariant-violation)
   (:export #:leggi-header-cbor #:leggi-header-cbor-minimo #:spazio-cbor #:crea-spazio-cbor
-           #:verifica-struttura-cbor #:verifica-struttura-cbor-minima))
+           #:verifica-struttura-cbor #:verifica-struttura-cbor-minima
+           #:scrivi-header-cbor-minimo))

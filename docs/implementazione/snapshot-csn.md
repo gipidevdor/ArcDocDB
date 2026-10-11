@@ -121,3 +121,7 @@ Le prove del [registro CSN](csn-risultati.md) coprono il suo ambito:
 non dimostrano questo collegamento. Restano la verifica di contesa/revoca,
 gli interleaving ARM64/x86-64 con retention e invalidazione, le misure di
 allocazione/latency e l'integrazione di writer, indice, timer e pool.
+
+La [campagna di verifica snapshot e CSN](snapshot-verifica.md) preregistra
+i casi funzionali, le contese e le iniezioni dell'adattatore; i risultati
+restano da osservare e non modificano questa fotografia statica.

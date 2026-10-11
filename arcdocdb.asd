@@ -26,13 +26,18 @@
                              (:file "cbor-float-minimal") (:file "cbor-minimal")
                              (:file "cbor-space") (:file "cbor-scan-input")
                              (:file "cbor-scan-stack") (:file "cbor-scan-items")
-                             (:file "cbor-scan") (:file "cbor-scan-minimal")))
+                             (:file "cbor-scan") (:file "cbor-scan-minimal")
+                             (:file "cbor-write")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
+               (:module "cache" :serial t
+                :components ((:file "package") (:file "types") (:file "build") (:file "core")
+                             (:file "read") (:file "clock") (:file "write")))
                (:module "execution" :serial t
                 :components ((:file "package") (:file "queue") (:file "writer")
                              (:file "handoff") (:file "ready-types") (:file "ready")
-                             (:file "ready-recycle")))
+                             (:file "ready-recycle")
+                             (:file "worker-types") (:file "worker-boundary") (:file "worker-claim") (:file "worker-run")))
                (:module "storage"
                 :serial t
                 :components ((:file "package") (:file "formats") (:file "segment-header")
@@ -105,12 +110,16 @@
                              (:file "cbor-structure-support") (:file "cbor-structure")
                              (:file "cbor-structure-threads")
                              (:file "cbor-minimal-scan-support") (:file "cbor-minimal-scan")
-                             (:file "cbor-minimal-scan-threads")))
+                             (:file "cbor-minimal-scan-threads")
+                             (:file "cbor-write-support") (:file "cbor-write")
+                             (:file "cbor-write-threads") (:file "cbor-write-roundtrip")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
+               (:module "mvcc" :serial t
+                :components ((:file "support") (:file "lifecycle") (:file "capture")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
-                             (:file "handoff") (:file "ready") (:file "ready-recycle")))
+                             (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")
@@ -143,7 +152,9 @@
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.structure.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.scan.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.cbor.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)

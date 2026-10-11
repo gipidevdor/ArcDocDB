@@ -1,0 +1,3 @@
+SIMPLE-ERROR: Asserzione fallita: (= 4
+                                     (ARCDOCDB.MVCC:SOGLIA-SNAPSHOT
+                                      ARCDOCDB.MVCC.TESTS::REGISTRY))

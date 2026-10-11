@@ -1,0 +1,2 @@
+(:CASE #A((9) BASE-CHAR . "reader-22") :EXPECTED :REJECT :OBSERVED :AS-EXPECTED
+ :FIXTURE "(:a 1 . 2)")

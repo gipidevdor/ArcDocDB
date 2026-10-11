@@ -1,0 +1,1 @@
+:OK: sbcl --noinform --no-userinit --no-sysinit --script tools/cbor-write-bench.lisp --bench; record: /Users/gpicchiarelli/.codex/worktrees/cbor-header-write/ArcDocDB/spikes/out/4000703189-command-45999-0/report.lisp

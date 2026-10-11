@@ -1,0 +1,1 @@
+:OK: sbcl --noinform --no-userinit --no-sysinit --script tools/foundation-coverage.lisp --self-test spikes/out/cbor-write-coverage-self-20261011/; record: /Users/gpicchiarelli/.codex/worktrees/cbor-header-write/ArcDocDB/spikes/out/4000703155-command-45577-0/report.lisp

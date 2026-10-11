@@ -2,7 +2,7 @@
 
 > **Generata** da [requisiti.lisp](requisiti.lisp) con `make trace-write`. Non modificare a mano: `make trace` fallisce se non coincide.
 
-**Sommario.** 114 requisiti. Per classe: C1 89, C2 6, C3 12, C4 7. Per stato: specificato 0, progettato 111, implementato 2, verificato 1. Invarianti coperti: 65/65. Scenari FI coperti: 13/13.
+**Sommario.** 115 requisiti. Per classe: C1 90, C2 6, C3 12, C4 7. Per stato: specificato 0, progettato 111, implementato 3, verificato 1. Invarianti coperti: 65/65. Scenari FI coperti: 13/13.
 
 ## Requisiti
 
@@ -100,6 +100,7 @@
 | REQ-FOR-002 | Ogni file persistente ha magic e versione di formato; un formato non cambia, si crea una nuova versione con migrazione. | ADR-0014 | C1 | progettato | INV-F1 | [0014](../adr/0014-formato-record-documento-id.md), [0052](../adr/0052-header-dei-log-di-controllo.md) | test, rev |  |
 | REQ-FOR-003 | Tutti i record di tutti i log hanno la stessa cornice di 24 byte con CRC dell'intestazione e CRC del corpo; l'intestazione è verificata prima di usare le lunghezze; il CRC del corpo è calcolato fuori dal writer. | ADR-0039 | C1 | progettato | INV-F1, INV-F2 | [0039](../adr/0039-cornice-unica-dei-record.md) | test, fuzz, corr, bench |  |
 | REQ-FOR-004 | La lettura di un record prepared verifica una prova autorevole del segmento (OUTCOME o esito nel manifest): il TXID della prova coincide con lo stamp del record e il suo CSN coincide con quello della entry; una prova mancante, corrotta o riferita a un'altra versione produce errore di integrità. | ADR-0047 | C1 | progettato | INV-A2, INV-S7 | [0039](../adr/0039-cornice-unica-dei-record.md), [0047](../adr/0047-verifica-csn-dei-record-prepared.md) | test, corr, fuzz, diff |  |
+| REQ-CBR-001 | La primitiva di scrittura delle testate CBOR ad argomento MT0..6 usa la larghezza minima e parole high/low u32 big-endian; verifica argomenti e capacità prima di modificare la destinazione esclusiva del chiamante, con lavoro limitato a nove byte. | ADR-0014 | C1 | implementato | INV-F1, INV-P6 | [0014](../adr/0014-formato-record-documento-id.md), [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md), [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) | test, fuzz, rev, bench |  |
 | REQ-AFF-001 | Un errore di scrittura, flush, rinomina o sincronizzazione di directory porta la Serie o l'Archivio in FAULTED senza retry e senza conferma del lotto. | ADR-0033 | C1 | progettato | INV-A1 | [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md) | test, fi | FI-02 |
 | REQ-AFF-002 | Ogni record letto da disco o da cache è verificato con i CRC32C di intestazione e corpo e con il confronto di chiave e CSN (la versione) prima di essere restituito; un dato non verificato non è mai restituito. | ADR-0033 | C1 | progettato | INV-A2 | [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md), [0039](../adr/0039-cornice-unica-dei-record.md) | test, corr, fuzz |  |
 | REQ-AFF-003 | Nessun codice di prodotto è compilato con safety inferiore a 2; la compilazione è priva di avvisi; i costrutti vietati sono rilevati dal linter. | ADR-0034 | C4 | implementato | INV-A3 | [0034](../adr/0034-policy-di-compilazione-e-standard-di-codifica.md) | analisi |  |
@@ -164,7 +165,7 @@
 | INV-X1 | REQ-SIM-001 |
 | INV-X2 | REQ-BEN-001, REQ-BEN-002, REQ-VAL-001 |
 | INV-X3 | REQ-SIM-002, REQ-VAL-001, REQ-AFF-016 |
-| INV-F1 | REQ-WAL-001, REQ-REC-001, REQ-FOR-001, REQ-FOR-002, REQ-FOR-003, REQ-AFF-009, REQ-AFF-010, REQ-AFF-014, REQ-LIM-001 |
+| INV-F1 | REQ-WAL-001, REQ-REC-001, REQ-FOR-001, REQ-FOR-002, REQ-FOR-003, REQ-CBR-001, REQ-AFF-009, REQ-AFF-010, REQ-AFF-014, REQ-LIM-001 |
 | INV-V1 | REQ-WAL-003, REQ-WAL-006 |
 | INV-V2 | REQ-TXM-004, REQ-MVC-002 |
 | INV-V3 | REQ-IDX-004 |
@@ -186,7 +187,7 @@
 | INV-S7 | REQ-CMP-009, REQ-TXM-007, REQ-FOR-004 |
 | INV-C11 | REQ-CMP-008, REQ-IDX-006 |
 | INV-I3 | REQ-IDX-005, REQ-IDX-007 |
-| INV-P6 | REQ-CON-005 |
+| INV-P6 | REQ-CON-005, REQ-CBR-001 |
 | INV-P5 | REQ-CON-004 |
 | INV-A9 | REQ-AFF-017 |
 | INV-A10 | REQ-AFF-018 |
@@ -228,7 +229,7 @@
 | [0011](../adr/0011-thread-pool-dinamico.md) | REQ-CMP-006, REQ-THR-001, REQ-OBS-001, REQ-OBS-002 |
 | [0012](../adr/0012-simd-guidato-dai-benchmark.md) | REQ-SIM-001 |
 | [0013](../adr/0013-log-structured-segmento-active-come-log.md) | REQ-WAL-001, REQ-REC-003, REQ-FOR-001 |
-| [0014](../adr/0014-formato-record-documento-id.md) | REQ-ARC-003, REQ-FOR-001, REQ-FOR-002 |
+| [0014](../adr/0014-formato-record-documento-id.md) | REQ-ARC-003, REQ-FOR-001, REQ-FOR-002, REQ-CBR-001 |
 | [0015](../adr/0015-primary-index-swiss-table-swmr.md) | REQ-VER-001, REQ-IDX-001, REQ-IDX-003, REQ-IDX-004 |
 | [0016](../adr/0016-epoch-based-reclamation.md) | REQ-CMP-005, REQ-CMP-007 |
 | [0017](../adr/0017-piattaforma-e-io.md) | REQ-THR-001 |
@@ -247,9 +248,9 @@
 | [0030](../adr/0030-scope-v1.md) | REQ-AFF-014 |
 | [0031](../adr/0031-software-critico-criteri-e-priorita.md) | REQ-MOD-001, REQ-AFF-012 |
 | [0032](../adr/0032-seqlock-a-64-bit.md) | REQ-IDX-003 |
-| [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md) | REQ-REC-001, REQ-AFF-001, REQ-AFF-002, REQ-AFF-004, REQ-AFF-006, REQ-AFF-007, REQ-AFF-008, REQ-AFF-009, REQ-AFF-010, REQ-AFF-011, REQ-AFF-015 |
+| [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md) | REQ-REC-001, REQ-CBR-001, REQ-AFF-001, REQ-AFF-002, REQ-AFF-004, REQ-AFF-006, REQ-AFF-007, REQ-AFF-008, REQ-AFF-009, REQ-AFF-010, REQ-AFF-011, REQ-AFF-015 |
 | [0034](../adr/0034-policy-di-compilazione-e-standard-di-codifica.md) | REQ-AFF-003, REQ-AFF-004, REQ-AFF-008 |
-| [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) | REQ-FLT-001, REQ-VAL-001, REQ-AFF-005, REQ-AFF-013 |
+| [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) | REQ-FLT-001, REQ-VAL-001, REQ-CBR-001, REQ-AFF-005, REQ-AFF-013 |
 | [0036](../adr/0036-leggi-di-progetto.md) | REQ-CON-005, REQ-AFF-007, REQ-AFF-017, REQ-AFF-018, REQ-AFF-019 |
 | [0037](../adr/0037-lotto-sigillato.md) | REQ-WAL-002, REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-AFF-009, REQ-AFF-017 |
 | [0038](../adr/0038-orizzonte-di-visibilita.md) | REQ-VER-001, REQ-TXM-004, REQ-MVC-002, REQ-MVC-005, REQ-MVC-006, REQ-MVC-007 |

@@ -6,13 +6,25 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
-(defstruct (writer-programmabile (:constructor %make-writer-programmabile (queue))
+(defconstant +max-writer-routing-index+ 65535)
+
+;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
+(defstruct (writer-programmabile (:constructor %make-writer-programmabile (queue routing-index))
                                 (:copier nil))
   "Pre: coda privata, mai esposta né usata tramite le API basse. Post: writer IDLE.
-Le API trasferiscono obblighi :SCHEDULE, non creano thread né inviano notifiche."
+Le API trasferiscono obblighi :SCHEDULE, non creano thread né inviano notifiche.
+Routing-index read-only non è una lease e non identifica da solo un Archivio."
   (queue (error 'invariant-violation :reason :writer-scheduling)
          :type coda-writer :read-only t)
-  (state :idle :type (member :idle :ready :running)))
+  (state :idle :type (member :idle :ready :running))
+  (routing-index nil :type (or null (integer 0 65535)) :read-only t))
+
+;;; REQ: REQ-CON-002 REQ-CON-005 REQ-AFF-008
+(declaim (ftype (function (writer-programmabile) (or null (integer 0 65535))) indice-routing-writer))
+(defun indice-routing-writer (writer)
+  "Pre: writer valido. Post: ordinal immutabile fissato all'avvio, o NIL legacy.
+Nessuna acquisizione o mutazione; l'indice non prova la membership in un registro."
+  (writer-programmabile-routing-index writer))
 
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (coda-writer) null) %check-writer-inattivo))
@@ -50,13 +62,17 @@ INVARIANT-VIOLATION per guard errata o stato che non rappresenta il lavoro."
   nil)
 
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
-(declaim (ftype (function (&key (:capacity t) (:quantum t)) writer-programmabile)
+(declaim (ftype (function (&key (:capacity t) (:quantum t) (:routing-index t)) writer-programmabile)
                 crea-writer-programmabile))
-(defun crea-writer-programmabile (&key (capacity 1024) (quantum 64))
+(defun crea-writer-programmabile (&key (capacity 1024) (quantum 64) routing-index)
   "Pre: capacity/quantum nei limiti di CREA-CODA-WRITER. Post: wrapper IDLE
-con ring esclusivo preallocato; INVALID-ARGUMENT per configurazione errata."
+con ring esclusivo preallocato; routing-index NIL oppure ordinal 0..65535.
+INVALID-ARGUMENT per configurazione errata, prima di allocare la coda."
+  (unless (or (null routing-index)
+              (typep routing-index `(integer 0 ,+max-writer-routing-index+)))
+    (error 'invalid-argument :reason :writer-configuration))
   (let* ((queue (crea-coda-writer :capacity capacity :quantum quantum))
-         (writer (%make-writer-programmabile queue)) (thread (%acquisisci-guard queue)))
+         (writer (%make-writer-programmabile queue routing-index)) (thread (%acquisisci-guard queue)))
     (unwind-protect (progn (%check-programmabile writer) writer)
       (%rilascia-guard queue thread))))
 

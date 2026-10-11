@@ -7,6 +7,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Routing preallocato dei writer pronti alla Serie: ordinali immutabili,
+  registro con associazioni verificate e tabella privata per worker.
+  Selezione diretta in tempo costante, anche dopo ricircolo a coda piena,
+  senza scritture condivise per messaggio. Include18 nuove regressioni,
+  due letture C1, audit completo della copertura e cinque misure locali;
+  pool e coordinatore restano aperti.
+
 - Collegamento preallocato worker/Serie: doppia lease, token monotoni, debito
   batch e rilascio Serie prima del worker, con retry limitato alla fine e
   conservazione dei guasti originali. Include 26 prove, due letture C1,

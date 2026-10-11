@@ -101,6 +101,7 @@
     (dolist (operation '(:probe :read))
       (with-directory-fixture (fixture :version version :observe-io-p t)
         (is (equal '(:segment :miss :inserted nil nil) (nth-value 2 (directory-checked-read fixture))))
+        (fill (aref (directory-fixture-outputs fixture) 0) +directory-sentinel+)
         (directory-clear-read-events fixture)
         (directory-corrupt-cached-value fixture)
         (let ((context (aref (directory-fixture-contexts fixture) 0)))

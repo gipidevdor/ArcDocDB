@@ -236,6 +236,15 @@
                        :selected-test (first suite)))
          (done (copy-list failed)) (text (write-to-string failed :readably t)) (checks 0) (observed nil))
     (unless (equal failed (parse-child-report text)) (reject :self-test-positive-parser))
+    ;; SBCL PRINT-READABLY T emette #A per stringhe BASE-CHAR dinamiche;
+    ;; il parser vieta quel dispatch. Il child usa stringhe quotate canoniche.
+    (let ((dynamic (copy-tree failed)))
+      (setf (getf dynamic :diagnostic)
+            (coerce "runtime-string" 'simple-base-string))
+      (unless (equal dynamic (parse-child-report
+                             (write-to-string dynamic :readably nil :escape t
+                                                      :length nil :level nil)))
+        (reject :self-test-dynamic-base-string)))
     (dolist (negative (list (concatenate 'string "0: " text) (concatenate 'string text " NIL")
                             (concatenate 'string "'" text) "#.(error \"never\")" "#1=(:x #1#)"
                             "(:schema-version 1 :kind :get-directory-mutation-child :phase :tests :phase :complete)"
@@ -414,7 +423,7 @@
             (setf failure condition failure-kind (if (eq phase :tests) (semantic-kind condition) :infrastructure)
                   code (if (and (eq phase :tests) (member failure-kind '(:assertion :product-condition))) 1 2))
             (format *error-output* "~&~A: ~A~%" (type-of condition) condition)))
-        (let ((*print-readably* t))
+        (let ((*print-readably* nil) (*print-escape* t) (*print-length* nil) (*print-level* nil))
           (write (list :schema-version 1 :kind :get-directory-mutation-child :phase phase
                        :status (if failure :failed :ok) :root (namestring (truename "./"))
                        :source-manifest sources :suite-files *suite-files* :registered-tests registered

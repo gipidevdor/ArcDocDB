@@ -9,7 +9,9 @@ byte e valori espliciti.
 
 ## Metodo e confini
 
-Il [supporto](../../tests/get/support.lisp) costruisce registri, indice con seme,
+Il [supporto](../../tests/get/support.lisp), con i casi di
+[lifecycle](../../tests/get/lifecycle.lisp) e
+[segmento/cache](../../tests/get/segment.lisp), costruisce registri, indice con seme,
 vista e contesto reali, e file readonly con header, PUT e OUTCOME scritti dalle
 API pubbliche. Il valore atteso è una sequenza nota, indipendente dal valore
 restituito da GET. I contatori del backend I/O distinguono la costruzione della
@@ -41,7 +43,46 @@ Le esecuzioni registrate seguono il freeze di sorgenti, documentazione e
 indice Git. Compilazione e suite complete, self-test dello strumento di
 copertura e scope `get` usano processi separati. La copertura conserva HTML,
 stato SB-COVER e FASL privati; misura espressioni e rami, non MC/DC.
-Esiti effettivi e CI sono in attesa nella preregistrazione.
+I [risultati](../../spikes/results/2026-10-11-get-verification/risultati.lisp), la
+[revisione indipendente](../../spikes/results/2026-10-11-get-verification/revisione.lisp)
+e il [catalogo](../../spikes/results/2026-10-11-get-verification/catalogo.lisp)
+conservano i riferimenti originali. Tutti i record sono letti come dati.
+
+## Risultati locali
+
+Le 70 prove GET passano sia nella suite ordinaria sia nella compilazione con
+copertura. Il primo freeze `f1bd3cd` passa 840 prove dei moduli e due smoke.
+Il [metodo d’integrazione](../../spikes/results/2026-10-11-get-verification/integrazione-metodo.lisp)
+registra gli aggiornamenti concorrenti CBOR e worker/Serie di `0d0ec4b`.
+Il freeze integrato `222b9fd` passa 887 prove dei moduli e due smoke. I sette
+file GET e i tre file della suite sono identici nei due freeze; ASD e lo
+strumento di copertura conservano anche le route introdotte a monte.
+
+I record dei due freeze attestano rispettivamente 633 e 659 file sorgente
+identici prima e dopo le esecuzioni. I self-test reader e snapshot conservano
+le classificazioni previste dei worker terminati; i dieci spike sono conclusi
+con exit zero, mantenendo `:PASS` per SPK-07 e `:OK` per gli altri.
+
+| File GET | Espressioni | Rami |
+|---|---:|---:|
+| build | 124/147 | 14/20 |
+| lifecycle | 181/195 | 18/20 |
+| lookup | 127/140 | 25/26 |
+| package | 0/1 | 0/0 |
+| segment | 293/312 | 19/24 |
+| target | 190/205 | 27/30 |
+| types | 11/55 | 0/14 |
+| **Totale** | **926/1055 (87,77%)** | **103/134 (76,87%)** |
+
+HTML e stato SB-COVER, letto come dati, coincidono per ciascun file e nei due
+freeze. I denominatori includono package e types: le definizioni generate e
+gli accessor INLINE senza hit locali non ricevono copertura per inferenza.
+Gli stati dei due run sono conservati separatamente con gzip senza perdita.
+
+Due fixture che ripubblicavano lo stesso CSN sono state corrette durante la
+revisione, prima delle esecuzioni. Non è stata necessaria una modifica al
+codice di prodotto GET. Tracciabilità, link e conservazione vengono controllati
+dopo la pubblicazione locale; la CI viene verificata sul commit pubblicato.
 
 ## Limiti
 
@@ -49,7 +90,9 @@ Questa è una prima suite funzionale e i test sono testimonianze parziali
 delle decisioni, non una qualifica C1 completa. Restano coppie di indipendenza
 MC/DC, mutazione degli operatori, stress concorrente, crash e fault injection
 del motore. La finestra interna INLINE di ammissione EBR non viene qualificata
-tramite interposizione di funzioni.
+tramite interposizione di funzioni. Restano senza witness il retry dell’indice,
+la conclusione di un retry, alcuni guard interni, le letture corte/EOF e gli
+esiti cache busy, bypass o unavailable.
 
 Non si attesta resolver storico, endpoint server, scheduler, integrazione
 delle frontiere committed, memoria debole, zero heap, prestazioni o chiusura

@@ -162,5 +162,5 @@ La [prima verifica funzionale](get-verifica.md) registra una campagna distinta,
 con esiti e ambito propri; non sostituisce le evidenze statiche precedenti.
 Restano qualifica C1 condizione per condizione, stress concorrente, fault
 injection, misure di allocazione e prestazioni; integrazioni con resolver,
-retention, scheduler, metriche e protocollo. Le due letture locali registrate
-sono dell'autore, non una revisione indipendente.
+retention, scheduler, metriche e protocollo. Le due letture della sola campagna statica
+sono dell'autore; la prima campagna funzionale registra anche una revisione indipendente.

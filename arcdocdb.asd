@@ -93,7 +93,10 @@
                              (:file "inventory-query")))
                (:module "get-resolver" :serial t
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
-                             (:file "rows") (:file "build") (:file "read")))
+                             (:file "rows") (:file "build") (:file "read")
+                             (:file "active-types") (:file "active-directory")
+                             (:file "active-scan") (:file "active-build")
+                             (:file "active-preflight") (:file "active-read")))
                (:module "get-directory" :serial t
                 :components ((:file "package") (:file "types") (:file "build") (:file "read"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
@@ -133,6 +136,8 @@
                 :components ((:file "support") (:file "lifecycle") (:file "threads")))
                (:module "read" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "threads")))
+               (:module "get" :serial t
+                :components ((:file "support") (:file "lifecycle") (:file "segment")))
                (:module "get-performance" :serial t
                 :components ((:file "support") (:file "paths") (:file "guards") (:file "threads")))
                (:module "get-directory" :serial t
@@ -179,6 +184,7 @@
              (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.read.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.get.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.performance.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.directory.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)

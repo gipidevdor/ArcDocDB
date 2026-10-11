@@ -10,11 +10,21 @@
 (deftype get-state () '(member :idle :starting :candidate :loading :verified :copied
                               :absent :history-required :retry :finishing :faulted))
 
-;;; REQ: REQ-IDX-001 REQ-CCH-002 REQ-FOR-001
-(defstruct (vista-get-serie (:constructor %make-vista-get-serie (primary cache identity)) (:copier nil))
+;;; REQ: REQ-CMP-007 REQ-MVC-005 REQ-CON-004 REQ-AFF-008
+(defstruct (ambito-get (:constructor crea-ambito-get (epochs snapshots)) (:copier nil))
+  "Pre: controller associa una sola volta EBR e registro snapshot dello stesso Archivio.
+Post: identità canonica immutabile condivisa dalle viste e dai worker dell'Archivio.
+TYPE-ERROR per tipi invalidi; la correttezza dell'associazione iniziale è del controller."
+  (epochs nil :type registro-epoche :read-only t)
+  (snapshots nil :type registro-snapshot :read-only t))
+(declaim (ftype (function (registro-epoche registro-snapshot) ambito-get) crea-ambito-get))
+
+;;; REQ: REQ-IDX-001 REQ-CCH-002 REQ-FOR-001 REQ-CMP-007
+(defstruct (vista-get-serie (:constructor %make-vista-get-serie (scope primary cache identity)) (:copier nil))
   "Pre: controller associa indice, cache e identità della stessa Serie.
 Post: legami immutabili, identità copiata; nessun accessor di array esportato.
 Non certifica la pubblicazione dei commit o la salute del controller."
+  (scope nil :type ambito-get :read-only t)
   (primary nil :type indice-primario :read-only t)
   (cache nil :type (or null cache-serie) :read-only t)
   (identity #() :type (simple-array (unsigned-byte 8) (#.+serie-id-bytes+)) :read-only t))
@@ -33,11 +43,12 @@ Non certifica il prefisso committed: la frontiera autorevole è richiesta a ogni
   (origin 1 :type (member 1 2) :read-only t))
 
 ;;; REQ: REQ-CON-004 REQ-CCH-002 REQ-MVC-004 REQ-AFF-008
-(defstruct (contesto-get (:constructor %make-contesto-get (reader probe content limit bytes proof))
+(defstruct (contesto-get (:constructor %make-contesto-get (scope reader probe content limit bytes proof))
                         (:copier nil))
   "Pre: registri dello stesso Archivio, scratch allocato prima dell'avvio del worker.
 Post: IDLE, senza richiesta o location. Solo il worker modifica i campi e i buffer.
 FAULTED terminale; buffer non esportati, nessuna continuazione o risorsa conservata in coda."
+  (scope nil :type ambito-get :read-only t)
   (reader nil :type contesto-lettura :read-only t)
   (probe nil :type contesto-indice :read-only t)
   (content #() :type get-content :read-only t)
@@ -54,7 +65,7 @@ FAULTED terminale; buffer non esportati, nessuna continuazione o risorsa conserv
 ;;; REQ: REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (contesto-get) index) payload-contesto-get))
 (defun payload-contesto-get (context)
-  "Pre: contesto costruito. Post: payload dei cinque buffer u64/octets propri e dei due contesti.
+  "Pre: contesto costruito. Post: payload dei buffer propri e di scratch indice/read.
 Esclude header/oggetti Lisp, EBR, registro snapshot, vista, cache, output e GC; non è RSS."
   (+ (length (contesto-get-bytes context)) +get-fixed-payload+))
 

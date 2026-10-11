@@ -36,4 +36,28 @@
   (:KIND :STATIC-INSPECTION :ARTIFACT
    #A((27) BASE-CHAR . "disassemblato-iniziale.lisp") :PROCESS-ARTIFACT
    #A((41) BASE-CHAR . "disassemblato-iniziale-conservazione.lisp") :VARIANT
-   :SOURCE-SNAPSHOT-IN-RECORD)))
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :COMPILE-ONLY :ARTIFACT
+   #A((29) BASE-CHAR . "compilation-hash-archive.lisp") :PROCESS-ARTIFACT
+   #A((43) BASE-CHAR . "compilation-hash-archive-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((22) BASE-CHAR . "lint-hash-archive.lisp")
+   :PROCESS-ARTIFACT
+   #A((36) BASE-CHAR . "lint-hash-archive-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((23) BASE-CHAR . "trace-hash-archive.lisp")
+   :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "trace-hash-archive-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-CHECK :ARTIFACT #A((23) BASE-CHAR . "links-hash-archive.lisp")
+   :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "links-hash-archive-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-INSPECTION :ARTIFACT
+   #A((31) BASE-CHAR . "disassemblato-hash-archive.lisp") :PROCESS-ARTIFACT
+   #A((45) BASE-CHAR . "disassemblato-hash-archive-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :LOCAL-STATIC-READING :ARTIFACT "lettura-prima.lisp" :VARIANT
+   :AUTHOR-LOCAL)
+  (:KIND :LOCAL-STATIC-READING :ARTIFACT "lettura-seconda.lisp" :VARIANT
+   :AUTHOR-LOCAL)))

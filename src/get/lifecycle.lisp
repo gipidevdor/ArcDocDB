@@ -62,9 +62,9 @@ Concludere con tempo fresco dopo la copia; su errore/uscita non locale scartare 
              (when (> size (- (length destination) start))
                (error 'invalid-argument :reason :get-output-range))
              (let ((end (the index (+ start size))))
-             (check-range destination start end)
-             (replace destination bytes :start1 start :end1 end :start2 vs :end2 ve)
-             (setf (contesto-get-state context) :copied completed t)
+               (check-range destination start end)
+               (replace destination bytes :start1 start :end1 end :start2 vs :end2 ve)
+               (setf (contesto-get-state context) :copied completed t)
                end)))
       (unless completed (abbandona-get context)))))
 

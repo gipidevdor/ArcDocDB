@@ -13,14 +13,14 @@
                 #:+serie-id-bytes+ #:+compaction-origin+ #:verifica-header-segmento)
   (:import-from #:arcdocdb.io #:file-io #:mode-file #:stato-file #:leggi-esatto)
   (:import-from #:arcdocdb.index.primary #:indice-primario #:contesto-indice
-                #:crea-contesto-indice #:leggi-indice-primario)
+                #:crea-contesto-indice #:leggi-indice-primario #:digest-chiave-indice)
   (:import-from #:arcdocdb.cache #:cache-serie #:cerca-record-cache #:inserisci-record-cache)
-  (:import-from #:arcdocdb.epochs #:lettore-epoca)
+  (:import-from #:arcdocdb.epochs #:registro-epoche #:contesto-epoca)
   (:import-from #:arcdocdb.mvcc #:registro-snapshot #:contesto-snapshot)
   (:import-from #:arcdocdb.read #:contesto-lettura #:crea-contesto-lettura
                 #:stato-contesto-lettura #:avvia-lettura #:copia-limite-lettura
                 #:concludi-lettura #:abbandona-lettura)
-  (:export #:vista-get-serie #:crea-vista-get-serie
+  (:export #:ambito-get #:crea-ambito-get #:vista-get-serie #:crea-vista-get-serie
            #:segmento-get #:crea-segmento-get
            #:contesto-get #:crea-contesto-get #:payload-contesto-get #:stato-contesto-get
            #:avvia-get #:copia-candidato-get #:sonda-cache-get #:leggi-record-get

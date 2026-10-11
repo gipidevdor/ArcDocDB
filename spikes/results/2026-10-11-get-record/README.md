@@ -19,3 +19,10 @@ Contratti e decisioni in [GET record](../../../docs/implementazione/get-record.m
 Il [catalogo](catalogo.lisp) distingue compilazione, controlli statici,
 disassemblato e letture locali. I sorgenti degli helper sono dati di supporto,
 non funzioni di prodotto o nuovi strumenti di verifica qualificati.
+
+La seconda lettura ha collegato l'hash posseduto dall'indice integrato da
+un'altra chat, aggiunto il controllo dell'Archivio canonico e precisato i
+range di output/OUTCOME. Nei dodici kernel ARM64 ispezionati alla fine non
+compare `ALLOC-TRAMP`: non è una misura delle allocazioni reali, né una
+verifica delle funzioni chiamate. Le varianti iniziale e integrata del
+disassemblato e dei controlli restano entrambe nel catalogo.

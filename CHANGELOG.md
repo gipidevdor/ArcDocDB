@@ -13,7 +13,7 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   misure seriali/parallele e registri strutturati; lifecycle del seme e GET
   integrato ancora aperti.
 
-- Nucleo GET con contesto preallocato per worker: indice primario sotto EBR,
+- Nucleo GET con contesto preallocato per worker: hash col seme dell'indice e lookup sotto EBR,
   capacità segmento con header verificato, cache e I/O readonly, prova
   OUTCOME letta dallo stesso file e risposta privata fino alla conferma
   snapshot. Ricerca storica richiesta esplicitamente sui casi non risolvibili

@@ -4,21 +4,21 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-IDX-001 REQ-CCH-002 REQ-FOR-001
-(declaim (ftype (function (indice-primario (or null cache-serie) octets) vista-get-serie)
+(declaim (ftype (function (ambito-get indice-primario (or null cache-serie) octets) vista-get-serie)
                 crea-vista-get-serie))
-(defun crea-vista-get-serie (primary cache identity)
+(defun crea-vista-get-serie (scope primary cache identity)
   "Pre: controller, indice/cache della stessa Serie, ID canonico stabile di sedici byte.
 Post: vista immutabile con copia posseduta dell'identità; NIL disattiva la cache.
 INVALID-ARGUMENT per ID di altra lunghezza; nessun oggetto per documento."
   (unless (= (length identity) +serie-id-bytes+) (error 'invalid-argument :reason :get-serie-identity))
-  (%make-vista-get-serie primary cache (copy-seq identity)))
+  (%make-vista-get-serie scope primary cache (copy-seq identity)))
 
 ;;; REQ: REQ-CON-004 REQ-AFF-008
-(declaim (ftype (function (lettore-epoca registro-snapshot
+(declaim (ftype (function (ambito-get integer
                          &key (:record-bytes integer) (:budget-payload integer)) contesto-get)
                 crea-contesto-get))
-(defun crea-contesto-get (reader snapshots &key (record-bytes 65536) (budget-payload 65688))
-  "Pre: controller associa READER esclusivo e SNAPSHOTS dello stesso Archivio.
+(defun crea-contesto-get (scope worker-id &key (record-bytes 65536) (budget-payload 65688))
+  "Pre: controller, ambito canonico dell'Archivio e ID worker esclusivo in tutti i pool.
 Post: scratch fisso allocato prima del pool; nessun pin. Payload controllato prima di allocare.
 INVALID-ARGUMENT per configurazione, RESOURCE-EXHAUSTED per budget; non cambia il limite documenti."
   (unless (and (<= 1 record-bytes +max-record-bytes+) (<= 0 budget-payload most-positive-fixnum))
@@ -26,7 +26,8 @@ INVALID-ARGUMENT per configurazione, RESOURCE-EXHAUSTED per budget; non cambia i
   (when (> (+ record-bytes +get-fixed-payload+) budget-payload)
     (error 'resource-exhausted :reason :get-worker-budget))
   (%make-contesto-get
-   (crea-contesto-lettura reader snapshots) (crea-contesto-indice)
+   scope (crea-contesto-lettura (contesto-epoca (ambito-get-epochs scope) worker-id)
+                               (ambito-get-snapshots scope)) (crea-contesto-indice)
    (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0)
    (make-array 1 :element-type '(unsigned-byte 64) :initial-element 0)
    (make-array record-bytes :element-type '(unsigned-byte 8) :initial-element 0)

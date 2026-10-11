@@ -6,7 +6,7 @@ committed, anche quando tale versione è visibile a uno snapshot. La risposta
 rimane privata fino alla verifica snapshot finale e al rilascio EBR.
 
 Non è ancora un endpoint del server. Resolver della Serie, ricerca delle
-versioni trattenute, hash della chiave, pool e protocollo restano da collegare.
+versioni trattenute, lifecycle del seme, pool e protocollo restano da collegare.
 I requisiti restano **progettati**: compilazione e letture statiche non chiudono
 la qualifica C1. Il modulo non modifica formato, isolamento o decisioni ADR.
 
@@ -19,9 +19,14 @@ Riferimenti: [ADR-0038](../adr/0038-orizzonte-di-visibilita.md),
 
 ## Proprietari e configurazione
 
+- Un `ambito-get` associa dominio EBR e registro snapshot dello stesso Archivio.
+  Il controller costruisce una sola identità canonica, prima dei pool. Viste
+  e worker la condividono: `avvia-get` rifiuta un'altra identità prima del pin.
 - Una `vista-get-serie` lega indice, cache opzionale e copia dell'identità
   canonica della Serie. Il controller deve associare i tre dati correttamente;
   il modulo non può dedurlo da un indice privo di identità storage.
+  `avvia-get` calcola il digest tramite il [seme posseduto dall'indice](hash-chiavi.md),
+  senza accettare digest forniti dalla richiesta. Un seme assente viene rifiutato.
 - Un `segmento-get` lega la vista a un file readonly. La costruzione legge
   l'header **dal medesimo file**, verifica CRC, identità Serie/segmento e
   formato, poi conserva campi immutabili. Si esegue nel pool I/O, fuori GET.
@@ -33,7 +38,7 @@ Il controller mantiene file e binding aperti fino al reclaim autorizzato
 dall'EBR. Un riferimento Lisp alla capacità non sostituisce questa garanzia.
 La costruzione non certifica il prefisso committed né la salute della Serie.
 
-`crea-contesto-get(reader, snapshots, :record-bytes B, :budget-payload P)`
+`crea-contesto-get(ambito, worker-id, :record-bytes B, :budget-payload P)`
 controlla `1 ≤ B ≤ 16.842.775` e `B + 152 ≤ P` prima delle allocazioni.
 Default: 65.536 byte record e 65.688 byte payload. I 152 byte comprendono
 scratch indice 40, candidato 40, snapshot 8, contesto read 32 e prova 32.
@@ -55,7 +60,7 @@ dentro la sezione EBR.
 
 | Operazione | Esito e responsabilità |
 |---|---|
-| `avvia-get(ctx, vista, chiave, hash-high, hash-low, snapshot, generazione, now)` | Un tentativo EBR e un lookup primario con il suo budget di otto. `:candidate`, `:absent`, `:history-required`, `:retry` sono provvisori. `:retry` con stato `:idle` indica mancata ammissione, senza pin. |
+| `avvia-get(ctx, vista, chiave, snapshot, generazione, now)` | Un tentativo EBR, hash con seme della Serie e lookup primario con budget di otto. `:candidate`, `:absent`, `:history-required`, `:retry` sono provvisori. `:retry` con stato `:idle` indica mancata ammissione, senza pin. |
 | `copia-candidato-get(ctx, cinque-u64)` | Copia le word del candidato dentro lo stesso compito EBR, per il resolver. Nessuna location attraversa una coda. |
 | `sonda-cache-get(ctx, segmento, valid-bytes, flags)` | Nessun I/O. `:hit` lascia `:verified`; `:miss`, `:verify-failed`, `:disabled`, `:proof-required`, `:buffer-required` lasciano `:candidate`. |
 | `leggi-record-get(ctx, segmento, valid-bytes, flags, :outcome-offset …)` | Solo pool I/O, dopo un nuovo lookup. Restituisce fonte, esito cache, esito inserimento, espulsione e scan. Fonte `:cache`/`:segment` lascia `:verified`; `:buffer-required` non legge e lascia `:candidate`. |
@@ -132,7 +137,7 @@ il contesto e accoda solo la richiesta originale. Il worker I/O riparte da
 `avvia-get`, riesegue il resolver e ricontrolla la cache. Nessun FD, location,
 prova o pin migra. La lettura bloccante esiste soltanto nel pool I/O.
 
-Lavoro limitato dai budget esistenti dell'indice, dagli otto posti cache, da
+Lavoro limitato dalla chiave di massimo 65.535 byte, dai budget esistenti dell'indice, dagli otto posti cache, da
 un PUT entro il limite formato e da una prova fissa. Nessuna nuova coda,
 retry infinito, mutex di Archivio sul GET, oggetto per entry o scrittura fra
 Serie. Le copie sono record → scratch → risposta, con verifiche CRC esplicite.
@@ -143,7 +148,7 @@ Zero heap, latenza e throughput **non sono ancora misurati**.
 | ID | Decisione composta | Copertura richiesta |
 |---|---|---|
 | GET-D01 | Configurazione, capienza payload e identità della vista | Ogni limite, budget insufficiente prima di allocare, copie identità |
-| GET-D02 | Stato iniziale, alias chiave e residui del worker | Rientro, contesti faulted, residui e cleanup interrotto |
+| GET-D02 | Stato iniziale, Archivio canonico, alias chiave e residui del worker | Rientro, altro Archivio, contesti faulted, residui e cleanup interrotto |
 | GET-D03 | Snapshot presente, CSN candidato rispetto a s e miss | Limiti CSN, cancellazione dopo snapshot, H e scadenza |
 | GET-D04 | Proprietario/ID/offset/frontiera/formato/flag del target | Ogni campo discordante, parola alta ID, v1/v2, limiti estremi |
 | GET-D05 | Buffer insufficiente o prova necessaria | Nessuna syscall nel calcolo; nessun I/O con scratch insufficiente |

@@ -86,6 +86,15 @@ link, conservazione delle evidenze e dieci spike. Il processo dura
 motore o la piattaforma di riferimento. I controlli finali di link ed
 evidenze verificano anche la documentazione e gli archivi aggiunti.
 
+Dopo l'integrazione di `f16e978` (ricostruzione dell'indice pubblicata
+separatamente), il controllo completo viene ripetuto su `7a8349c`:
+594 test e 2 smoke, 596 esiti di build riusciti, senza avvisi; anche gli
+altri controlli e dieci spike passano in 154,41837 secondi, sorgenti stabili.
+Il self-test del driver di copertura unificato passa. Il solo conflitto
+di integrazione riguardava elenco/uso degli scope nel driver C4, risolto
+conservando sia `cbor-write` sia `index`. Prodotto e tre test ciechi
+conservano gli stessi blob; le campagne locali non sono state riscritte.
+
 I [registri originali](../../spikes/results/2026-10-11-cbor-header-write/archive-index.lisp)
 conservano stdout/stderr, sorgenti, test, driver, coverage, copie mutate
 del nuovo file e log, self-test e audit Common Lisp con reader-eval NIL

@@ -67,6 +67,16 @@ I 667 sorgenti sono stabili prima/dopo. I file GET e della suite restano identic
 con gli stessi conteggi di copertura. Questi run verificano caricamento e
 composizione della suite; la qualifica funzionale del resolver rimane distinta.
 
+L’ultimo aggiornamento `6eeb501` corregge la ricerca delle copie cache già
+scartate e aggiunge 19 prove GET performance. Il [metodo d’integrazione](../../spikes/results/2026-10-11-get-verification/cache-integrazione-metodo.lisp)
+e i [risultati locali](../../spikes/results/2026-10-11-get-verification/cache-integrazione-risultati.lisp)
+registrano il freeze `b2a847e`: le 70 prove GET strumentate passano anche con
+questa dipendenza modificata, con gli stessi conteggi riportati sotto, e il
+self-test dello strumento passa. I 677 sorgenti sono stabili prima/dopo.
+Le suite `get` e `get-performance` e i rispettivi scope rimangono distinti.
+La CI completa sul commit pubblicato deve passare 906 prove dei moduli e due
+smoke; le precedenti esecuzioni complete restano associate ai propri freeze.
+
 I record dei due freeze attestano rispettivamente 633 e 659 file sorgente
 identici prima e dopo le esecuzioni. I self-test reader e snapshot conservano
 le classificazioni previste dei worker terminati; i dieci spike sono conclusi
@@ -83,10 +93,10 @@ con exit zero, mantenendo `:PASS` per SPK-07 e `:OK` per gli altri.
 | types | 11/55 | 0/14 |
 | **Totale** | **926/1055 (87,77%)** | **103/134 (76,87%)** |
 
-HTML e stato SB-COVER, letto come dati, coincidono per ciascun file e nei due
-freeze. I denominatori includono package e types: le definizioni generate e
+HTML e stato SB-COVER, letto come dati, coincidono per ciascun file nei freeze
+confrontati. I denominatori includono package e types: le definizioni generate e
 gli accessor INLINE senza hit locali non ricevono copertura per inferenza.
-Gli stati dei due run sono conservati separatamente con gzip senza perdita.
+Gli stati dei run sono conservati separatamente con gzip senza perdita.
 
 Due fixture che ripubblicavano lo stesso CSN sono state corrette durante la
 revisione, prima delle esecuzioni. Non è stata necessaria una modifica al

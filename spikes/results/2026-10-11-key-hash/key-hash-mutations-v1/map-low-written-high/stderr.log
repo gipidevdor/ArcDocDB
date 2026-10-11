@@ -1,0 +1,9 @@
+SIMPLE-ERROR: Asserzione fallita: (=
+                                   (AREF ARCDOCDB.INDEX.PRIMARY.TESTS::LOWS
+                                         ARCDOCDB.INDEX.PRIMARY.TESTS::SLOT)
+                                   (IF ARCDOCDB.INDEX.PRIMARY.TESTS::RECORD
+                                       (THIRD
+                                        (FOURTH
+                                         ARCDOCDB.INDEX.PRIMARY.TESTS::RECORD))
+                                       (AREF ARCDOCDB.INDEX.PRIMARY.TESTS::L
+                                             ARCDOCDB.INDEX.PRIMARY.TESTS::SLOT)))

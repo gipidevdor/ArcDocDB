@@ -1,0 +1,40 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4000705545 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((95) BASE-CHAR
+    . \"/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000705510-check-81401-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 2 :WALL-SECONDS 1.736722d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 57106266 :STORED-BYTES 878059
+ :RESULTS
+ ((:PATH
+   #A((106) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000705510-check-81401-0/SPK-07.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28144119 :STORED-BYTES 410955 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"SPK-07.lisp.gz\" :UNCOMPRESSED-BYTES 28144119 :UNCOMPRESSED-SHA256
+    \"0e210b4c75f2307d043d2974b33be0c16d1e31592056579433742ada33e2124a\"
+    :COMPRESSED-BYTES 410637 :COMPRESSED-SHA256
+    \"5f04e008837eed139dbf6a05637bbd041b39b920df50bd040729829a39f851ac\"))
+  (:PATH
+   #A((106) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000705510-check-81401-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28962147 :STORED-BYTES 467104 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 28962147 :UNCOMPRESSED-SHA256
+    \"50665e768ebd8f69f09ef1c4ed5a6d305439247d6f99e11f1c4f6dbec9dd1c1e\"
+    :COMPRESSED-BYTES 466786 :COMPRESSED-SHA256
+    \"4a445b497f305911e8bb2044e01f2fa652832f1ffae6c88232ec545ce0746704\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((86) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/tools/compact-evidence.lisp")
+  "--root"
+  #A((95) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/hash-chiavi/ArcDocDB/spikes/out/4000705510-check-81401-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "81401"))
+ :STARTED-AT-UNIVERSAL-TIME 4000705543)

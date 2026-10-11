@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Hash delle chiavi XXH64 tipizzato: ritorno in due u32, seme esplicito
+  immutabile nell'indice, mappe verificate degli slot fisici per rebuild/split,
+  propagazione dei guasti interni. Include 46 nuove regressioni, mutazioni,
+  misure seriali/parallele e registri strutturati; lifecycle del seme e GET
+  integrato ancora aperti.
+
 - Cache dei record per Serie: classi preallocate, insiemi di otto posti,
   CLOCK limitato, ricerca senza lock e inserimento opportunistico. Ogni hit
   verifica CRC, chiave, CSN e prova prepared; corruzione della cache distinta
@@ -16,7 +22,8 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 - Indice primario v2 in memoria: controlli Swiss a gruppi di 16, chiavi binarie
   in arena, lookup con budget comune e conferma root anche sul miss, upsert e
   cancellazione/rilocazione condizionale nel writer, crescita arena e piani monouso di pubblicazione
-  directory. Hashing, costruttore split/rebuild e GET integrato ancora aperti;
+  directory, con hash delle chiavi e costruttore verificato split/rebuild.
+  Lifecycle del seme e GET integrato ancora aperti;
   include contratti, tracciabilità ed evidenze statiche, qualifica C1 aperta.
 
 - Banco di slot v2 dell'indice: parole u64 contigue, lettura in buffer privato

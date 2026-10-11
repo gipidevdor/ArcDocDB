@@ -27,3 +27,10 @@ visibili nei kernel selezionati. Non è una misura delle allocazioni e non
 verifica i loro callees, altre piattaforme o il costo di costruzione.
 Il controllore delle evidenze verifica struttura, presenza, dimensioni e
 integrità delle conservazioni; non qualifica il significato dei risultati.
+
+Prima dell'archiviazione del worktree, l'audit confronta dimensioni e SHA256
+dei 42 file originali con le copie conservate. Il primo audit contiene già
+42 entry corrette; il messaggio finale riportava 1 dopo un `nreverse`
+distruttivo della lista. Il secondo conserva la lista invertita e riporta 42
+anche nel messaggio. Entrambe le varianti e i sorgenti degli helper rimangono
+nel catalogo. È una verifica di conservazione dei byte, non del prodotto.

@@ -298,3 +298,14 @@ Questi record e i risultati grezzi degli spike sono conservati
 nell'[archivio finale](../../spikes/results/2026-10-11-cbor-string-write-final/archive-index.lisp).
 Questa registrazione non estende la lettura indipendente alle nuove
 dipendenze di main e non promuove gate o qualifiche.
+
+Dopo l'arrivo del collegamento worker/Serie in main `92decf4`, il merge
+`997f5e6505cdcf4554d5f99ede7d5743ce4be7bd` passa nuovamente `make check`:
+record `spikes/out/4000711291-command-57732-0/report.lisp`, 177.072076d0,
+EXIT-CODE0, STABLE, 655 elementi sorgente. Risultano 817 test nominali
+e due smoke, 819 nomi OK senza duplicati, lint su 142 file senza violazioni,
+tracciabilità senza errori e dieci spike completati. Prodotto e corpus
+del writer rimangono congelati. Il
+[supplemento](../../spikes/results/2026-10-11-cbor-string-write-worker-integration/archive-index.lisp)
+conserva questi dati; resta applicabile il limite della registrazione
+successiva rispetto alla lettura indipendente originale.

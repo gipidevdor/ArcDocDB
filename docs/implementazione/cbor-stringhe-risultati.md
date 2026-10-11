@@ -109,3 +109,16 @@ L'[archivio finale](../../spikes/results/2026-10-11-cbor-string-write-final/arch
 conserva raccolta, audit chiuso originale, controllo integrato, self-test,
 risultati dei dieci spike e copie dei due file di integrazione.
 Il passaggio dei controlli non chiude i gap C1/MC/DC descritti sopra.
+
+L'ulteriore aggiornamento di main `92decf4` aggiunge il collegamento
+worker/Serie; è unito nel commit `997f5e6505cdcf4554d5f99ede7d5743ce4be7bd`.
+Un secondo `make check` passa in 177,072076 s: 817 test nominali e due
+smoke, 819 nomi OK distinti, compilazione senza avvisi, lint su 142 file
+senza violazioni, tracciabilità senza errori e dieci spike completati.
+I 655 elementi sorgente restano STABLE; prodotto e corpus del writer
+sono invariati. Overlap delle due ondate 47.829/47.750 tick, sink invariati.
+L'ASD integrato ha blob `3b163722ff7b49e6ada85e37e21a7665cc7ce28f`;
+il driver coverage conserva il blob `3a4af4b1…`.
+Il [supplemento worker/Serie](../../spikes/results/2026-10-11-cbor-string-write-worker-integration/archive-index.lisp)
+conserva il nuovo controllo completo, i suoi spike e i file integrati,
+senza riscrivere le campagne precedenti.

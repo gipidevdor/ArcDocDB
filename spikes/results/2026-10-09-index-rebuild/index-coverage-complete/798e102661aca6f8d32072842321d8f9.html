@@ -1,0 +1,92 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/indice-ricostruzione/ArcDocDB/src/index/core.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>21</td><td>69</td><td> 30.4</td></tr>
+<tr class='even'><td>branch</td><td>0</td><td>8</td><td>  0.0</td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;controlli&#160;locali&#160;del&#160;writer&#59;&#160;i&#160;reader&#160;pubblicano&#160;solo&#160;guasti&#160;terminali&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;nessun&#160;accesso&#160;a&#160;root&#44;&#160;arena&#44;&#160;risorsa&#160;esterna&#160;o&#160;coordinamento&#160;tra&#160;Serie&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;index&#46;slots&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;speed&#160;2&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;003&#160;REQ&#45;AFF&#45;004</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;banco&#45;slot&#41;&#160;null&#41;&#160;invalida&#45;banco&#45;slot&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;invalida&#45;banco&#45;slot&#160;&#40;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;confine&#160;fidato&#160;o&#160;difetto&#160;interno&#59;&#160;invalidazione&#160;ripetibile&#160;senza&#160;mutex&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;salute&#160;terminale&#160;FAULTED&#44;&#160;nessuna&#160;parola&#160;cancellata&#59;&#160;non&#160;isola&#160;da&#160;sola&#160;la&#160;Serie&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;sb&#45;thread&#58;barrier&#160;&#40;&#58;write&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;setf&#160;&#40;banco&#45;slot&#45;health&#160;bank&#41;&#160;&#58;faulted&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>13</code></div><code>&#160;<span class='state-1'>&#160;&#160;nil&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>14</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>15</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;003&#160;REQ&#45;AFF&#45;004</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>16</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;banco&#45;slot&#160;keyword&#41;&#160;nil&#41;&#160;guasto&#45;slot&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>17</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;guasto&#45;slot&#160;&#40;bank&#160;reason&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>18</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;invariante&#160;del&#160;banco&#160;violata&#46;&#160;Post&#58;&#160;FAULTED&#160;prima&#160;dell&#39;errore&#160;tipizzato&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>19</code></div><code>&#160;<span class='state-1'>INVARIANT&#45;VIOLATION&#160;propagata&#160;al&#160;confine&#160;della&#160;Serie&#59;&#160;nessun&#160;tentativo&#160;di&#160;riparazione&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>20</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;invalida&#45;banco&#45;slot&#160;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>21</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;error&#160;&#39;invariant&#45;violation&#160;&#58;reason&#160;reason&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>22</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>23</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;003&#160;REQ&#45;AFF&#45;004</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>24</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;inline&#160;esigi&#45;banco&#45;sano&#160;base&#45;slot&#160;esigi&#45;banco&#45;writer&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>25</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;banco&#45;slot&#41;&#160;null&#41;&#160;esigi&#45;banco&#45;sano&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>26</code></div><code>&#160;<span class='state-2'>&#40;defun&#160;esigi&#45;banco&#45;sano&#160;&#40;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>27</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#34;Pre&#58;&#160;banco&#160;canonico&#46;&#160;Post&#58;&#160;salute&#160;acquisita&#160;OPEN&#44;&#160;senza&#160;mutex&#160;o&#160;scrittura&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>28</code></div><code>&#160;<span class='state-2'>INVARIANT&#45;VIOLATION&#160;se&#160;terminale&#59;&#160;il&#160;chiamante&#160;scarta&#160;tutti&#160;i&#160;dati&#160;letti&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>29</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#40;let&#160;&#40;&#40;health&#160;&#40;banco&#45;slot&#45;health&#160;bank&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>30</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#40;sb&#45;thread&#58;barrier&#160;&#40;&#58;read&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>31</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#40;unless&#160;</span><span class='state-10'>&#40;eq&#160;</span><span class='state-2'>health</span><span class='state-10'>&#160;</span><span class='state-2'>&#58;open</span><span class='state-10'>&#41;</span><span class='state-2'>&#160;&#40;guasto&#45;slot&#160;bank&#160;&#58;index&#45;slot&#45;faulted&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>32</code></div><code>&#160;<span class='state-2'>&#160;&#160;nil&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>33</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>34</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;001&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>35</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;banco&#45;slot&#160;integer&#41;&#160;fixnum&#41;&#160;base&#45;slot&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>36</code></div><code>&#160;<span class='state-2'>&#40;defun&#160;base&#45;slot&#160;&#40;bank&#160;slot&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>37</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#34;Pre&#58;&#160;banco&#160;canonico&#59;&#160;slot&#160;fornito&#160;dal&#160;sondaggio&#46;&#160;Post&#58;&#160;base&#160;valida&#160;nell&#39;array&#160;contiguo&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>38</code></div><code>&#160;<span class='state-2'>INVALID&#45;ARGUMENT&#160;per&#160;slot&#160;fuori&#160;capacità&#44;&#160;prima&#160;di&#160;leggere&#160;o&#160;modificare&#160;i&#160;campi&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>39</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#40;unless&#160;</span><span class='state-10'>&#40;&#60;&#61;&#160;</span><span class='state-2'>0</span><span class='state-10'>&#160;</span><span class='state-2'>slot</span><span class='state-10'>&#160;</span><span class='state-2'>&#40;1&#45;&#160;&#40;banco&#45;slot&#45;capacity&#160;bank&#41;&#41;</span><span class='state-10'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>40</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#40;error&#160;&#39;invalid&#45;argument&#160;&#58;reason&#160;&#58;index&#45;slot&#45;range&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>41</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#40;&#42;&#160;slot&#160;&#40;if&#160;</span><span class='state-10'>&#40;banco&#45;slot&#45;retained&#160;bank&#41;</span><span class='state-2'>&#160;6&#160;5&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>42</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>43</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;003&#160;REQ&#45;IDX&#45;005&#160;REQ&#45;AFF&#45;004</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>44</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;banco&#45;slot&#41;&#160;null&#41;&#160;esigi&#45;banco&#45;writer&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>45</code></div><code>&#160;<span class='state-2'>&#40;defun&#160;esigi&#45;banco&#45;writer&#160;&#40;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>46</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#34;Pre&#58;&#160;gettone&#160;writer&#160;della&#160;Serie&#59;&#160;nessun&#160;altro&#160;writer&#160;modifica&#160;o&#160;congela&#160;il&#160;banco&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>47</code></div><code>&#160;<span class='state-2'>Post&#58;&#160;sano&#160;e&#160;scrivibile&#59;&#160;INVALID&#45;ARGUMENT&#160;se&#160;FROZEN&#44;&#160;INVARIANT&#45;VIOLATION&#160;se&#160;FAULTED&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>48</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#40;esigi&#45;banco&#45;sano&#160;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>49</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#40;unless&#160;</span><span class='state-10'>&#40;eq&#160;</span><span class='state-2'>&#40;banco&#45;slot&#45;state&#160;bank&#41;</span><span class='state-10'>&#160;</span><span class='state-2'>&#58;writable</span><span class='state-10'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>50</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#40;error&#160;&#39;invalid&#45;argument&#160;&#58;reason&#160;&#58;index&#45;slot&#45;frozen&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>51</code></div><code>&#160;<span class='state-2'>&#160;&#160;nil&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>52</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>53</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;003&#160;REQ&#45;IDX&#45;005&#160;REQ&#45;AFF&#45;004</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>54</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;banco&#45;slot&#41;&#160;null&#41;&#160;congela&#45;banco&#45;slot&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>55</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;congela&#45;banco&#45;slot&#160;&#40;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>56</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;writer&#160;esclusivo&#44;&#160;nessuna&#160;mutazione&#160;in&#160;corso&#59;&#160;usare&#160;prima&#160;della&#160;sostituzione&#160;della&#160;root&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>57</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;FROZEN&#160;permanente&#44;&#160;dati&#160;ancora&#160;leggibili&#46;&#160;Ripetibile&#59;&#160;FAULTED&#160;rifiutato&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>58</code></div><code>&#160;<span class='state-1'>Non&#160;pubblica&#160;una&#160;directory&#160;e&#160;non&#160;congela&#160;altri&#160;banchi&#160;del&#160;frammento&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>59</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;esigi&#45;banco&#45;sano&#160;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>60</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;sb&#45;thread&#58;barrier&#160;&#40;&#58;write&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>61</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;setf&#160;&#40;banco&#45;slot&#45;state&#160;bank&#41;&#160;&#58;frozen&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>62</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;esigi&#45;banco&#45;sano&#160;bank&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>63</code></div><code>&#160;<span class='state-1'>&#160;&#160;nil&#41;</code></div></body></html>

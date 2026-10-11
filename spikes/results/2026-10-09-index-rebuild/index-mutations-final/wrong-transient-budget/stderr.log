@@ -1,0 +1,5 @@
+SIMPLE-ERROR: Asserzione fallita: (ARCDOCDB.INDEX.PRIMARY.TESTS::PRIMARY-IMAGE-EQUAL
+                                   ARCDOCDB.INDEX.PRIMARY.TESTS::BEFORE
+                                   (ARCDOCDB.INDEX.PRIMARY.TESTS::PRIMARY-IMAGE
+                                    ARCDOCDB.INDEX.PRIMARY.TESTS::FIXTURE
+                                    ARCDOCDB.INDEX.PRIMARY.TESTS::FRAGMENT))

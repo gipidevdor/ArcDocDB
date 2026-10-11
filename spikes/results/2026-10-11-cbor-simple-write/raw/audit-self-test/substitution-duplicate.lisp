@@ -1,0 +1,2 @@
+(:CASE "substitution-duplicate" :EXPECTED :REJECT :OBSERVED :AS-EXPECTED
+ :FIXTURE NIL)

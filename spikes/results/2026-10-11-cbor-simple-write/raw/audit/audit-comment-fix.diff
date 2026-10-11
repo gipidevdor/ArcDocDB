@@ -1,0 +1,13 @@
+diff --git a/spikes/out/cbor-simple-write-20261011/audit-original-pre-comment.lisp b/tools/cbor-simple-write-audit.lisp
+index 357edfa..6acfcc6 100644
+--- a/spikes/out/cbor-simple-write-20261011/audit-original-pre-comment.lisp
++++ b/tools/cbor-simple-write-audit.lisp
+@@ -13,7 +13,7 @@
+ (defconstant +driver-blob+ "07e5b0b7773f95ddae9458267b285c0ccb24dba9")
+ (defconstant +driver-md5+ "998e7bc428ac3d81603546eaab290758")
+ (defconstant +method-blob+ "e8864f7c0124f86cebdcdbcb2449800e078e1cc8")
+-;;; Impronte attese esplicite: il prodotto sara scritto dopo questo auditor.
++;;; Impronte attese esplicite del prodotto congelato, fornite dalla CLI.
+ ;;; Non vengono dedotte dalle dichiarazioni del report da verificare.
+ (defparameter *product-blob* nil)
+ (defparameter *product-md5* nil)

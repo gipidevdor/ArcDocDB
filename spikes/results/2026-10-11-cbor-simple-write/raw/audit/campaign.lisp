@@ -1,0 +1,71 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defparameter *records* nil)
+(defun save-records ()
+  (with-open-file (stream "spikes/out/cbor-simple-write-20261011/processes.lisp"
+                          :direction :output :if-exists :supersede)
+    (let ((*print-readably* t)) (write (reverse *records*) :stream stream :pretty t) (terpri stream))))
+(defun parse-record-path (stdout)
+  (let* ((marker "; record: ") (at (search marker stdout)))
+    (unless (and at (not (search marker stdout :start2 (1+ at))))
+      (error "Marker del registro mancante/ambiguo."))
+    (let ((path (string-trim '(#\Space #\Newline #\Return) (subseq stdout (+ at (length marker))))))
+      (unless (and (uiop:absolute-pathname-p path) (equal "lisp" (pathname-type path)))
+        (error "Percorso registro invalido."))
+      path)))
+(defun run-recorded (label argv)
+  (let ()
+    (multiple-value-bind (stdout stderr exit)
+        (uiop:run-program
+         (append '("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+                   "tools/record-command.lisp" "--") argv)
+         :output :string :error-output :string :ignore-error-status t)
+      (let* ((path (parse-record-path stdout)) (data (arcdocdb.evidence:read-evidence path)))
+        (unless (equal argv (getf data :command)) (error "Comando del registro diverso ~A ~A" label stderr))
+        (push (list label (namestring (truename path))) *records*)
+        (save-records)
+        (format t "~A exit ~D: ~A~%" label exit path) (finish-output)
+        (unless (zerop exit) (error "Campagna ~A fallita, record conservato." label))
+        path))))
+(defun command (&rest args)
+  (append '("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script") args))
+(defun record-path (label)
+  (or (second (assoc label *records* :test #'equal)) (error "Record mancante ~A" label)))
+;; La lista è ripresa senza valutazione quando si prosegue una fase separata.
+(let ((path "spikes/out/cbor-simple-write-20261011/processes.lisp"))
+  (when (probe-file path)
+    (with-open-file (s path)
+      (let ((*read-eval* nil)) (setf *records* (reverse (read s)))))))
+(let ((phase (first (uiop:command-line-arguments))))
+  (cond ((equal phase "self-test")
+         (unless (equal "/tmp/a/report.lisp" (parse-record-path (format nil ":OK x; record: /tmp/a/report.lisp~%")))
+           (error "Autotest marker positivo fallito."))
+         (dolist (text '("nessun marker" "; record: relative.lisp" "; record: /a.txt"
+                         "; record: /a.lisp; record: /b.lisp"))
+           (let ((rejected nil))
+             (handler-case (parse-record-path text) (error () (setf rejected t)))
+             (unless rejected (error "Autotest marker negativo fallito ~S" text))))
+         (format t "Marker diretto: una fixture positiva e quattro negative PASS.~%"))
+        ((equal phase "preliminary")
+         (run-recorded "preliminary" '("make" "test" "lint" "trace"))
+         (run-recorded "coverage-self-test" (command "tools/foundation-coverage.lisp" "--self-test"
+                 "spikes/out/cbor-simple-write-20261011/coverage-self-test/"))
+         (run-recorded "bench-self-test" (command "tools/cbor-simple-write-bench.lisp" "--self-test"))
+         (run-recorded "bench" (command "tools/cbor-simple-write-bench.lisp" "--bench")))
+        ((equal phase "falsification")
+         (run-recorded "mutation-self-test" (command "tools/cbor-simple-write-mutation.lisp" "--self-test"))
+         (run-recorded "mutations" (command "tools/cbor-simple-write-mutation.lisp" "--run"
+                      "spikes/out/cbor-simple-write-20261011/mutations/"))
+         (run-recorded "coverage" (command "tools/foundation-coverage.lisp" "--report"
+                      "spikes/out/cbor-simple-write-20261011/coverage/" "cbor-simple-write")))
+        ((equal phase "audit")
+         (run-recorded "bench-audit" (command "tools/cbor-simple-write-audit.lisp" "--bench"
+                       (record-path "bench") "58c7a3a040ec814fae2dfe636f569b5623cba8f0"
+                       "200373402e6e082dd8c7afde305302bb"))
+         (run-recorded "data-audit-self-test" (command "spikes/out/cbor-simple-write-20261011/data-audit.lisp"
+                       "--self-test" "spikes/out/cbor-simple-write-20261011/audit-self-test/"))
+         (run-recorded "mutation-audit" (command "spikes/out/cbor-simple-write-20261011/data-audit.lisp"
+                       "--mutations" (record-path "mutations") "spikes/out/cbor-simple-write-20261011/mutations/"))
+         (run-recorded "coverage-audit" (command "spikes/out/cbor-simple-write-20261011/data-audit.lisp"
+                       "--coverage" (record-path "coverage") "spikes/out/cbor-simple-write-20261011/coverage/")))
+        (t (error "Fase non ammessa ~S" phase))))

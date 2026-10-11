@@ -1,0 +1,51 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defun save-new (path data)
+  (ensure-directories-exist path)
+  (with-open-file (stream path :direction :output :if-exists :error)
+    (let ((*print-readably* t))
+      (write data :stream stream :pretty t) (terpri stream))))
+(let* ((root (truename "spikes/out/cbor-simple-write-20261011/"))
+       (processes '(("campaign-collection" "spikes/out/4000715069-command-92847-0/report.lisp")
+                    ("campaign-closed-audit" "spikes/out/4000715612-command-66193-0/report.lisp")
+                    ("integrated-full-check" "spikes/out/4000715612-command-66216-0/report.lisp")
+                    ("integrated-coverage-self-test" "spikes/out/4000715612-command-66194-0/report.lisp")))
+       (trees '(("spikes" "spikes/out/4000715792-check-78683-0/" :all)
+                ("snapshot-self-test" "spikes/out/4000715638-snapshot-self-test-68191-0/" :all)
+                ("reader-self-test" "spikes/out/4000715639-reader-self-test-68231-0/" :all)
+                ("coverage-self-test" "spikes/out/cbor-simple-write-20261011/integrated-coverage-self-test/" :lisp-and-log)))
+       (files nil))
+  (dolist (entry processes)
+    (let ((record (arcdocdb.evidence:read-evidence (second entry))))
+      (unless (and (eq :ok (getf record :status))
+                   (eql 0 (getf record :exit-code))
+                   (eq :stable (getf record :source-consistency)))
+        (error "Processo non concluso OK/0/STABLE: ~A" (second entry)))))
+  (dolist (path '("arcdocdb.asd" "tools/foundation-coverage.lisp"
+                  "src/codec/cbor-simple-write.lisp" "src/codec/cbor-package.lisp"
+                  "tests/codec/cbor-simple-write-support.lisp"
+                  "tests/codec/cbor-simple-write.lisp" "tests/codec/cbor-simple-write-threads.lisp"
+                  "tests/codec/cbor-string-write-support.lisp" "tests/codec/cbor-string-write-threads.lisp"
+                  "docs/implementazione/cbor-semplici-dati.md"
+                  "docs/implementazione/cbor-semplici-verificatori.md"))
+    (let* ((label (concatenate 'string "integrated-sources/" path
+                               (if (equal (pathname-type path) "md") ".txt" "")))
+           (target (merge-pathnames label root)))
+      (when (probe-file target) (error "Snapshot presente: ~A" target))
+      (ensure-directories-exist target)
+      (uiop:copy-file path target)
+      (push (list label (namestring target)) files)))
+  (let* ((source (merge-pathnames "data-review-draft.md" root))
+         (target (merge-pathnames "data-review-draft.md.txt" root)))
+    (when (probe-file target) (error "Lettura snapshot presente: ~A" target))
+    (uiop:copy-file source target)
+    (push (list "readings/data-review-draft.md.txt" (namestring target)) files))
+  (dolist (file (directory (merge-pathnames "integrated-coverage-self-test/*.html" root)))
+    (push (list (concatenate 'string "coverage-self-test-html/" (file-namestring file))
+                (namestring file)) files))
+  (push (list "helpers/final-manifest-builder.lisp"
+              (namestring (merge-pathnames "final-manifest-builder.lisp" root))) files)
+  (save-new (merge-pathnames "final-manifest.lisp" root)
+            (list :schema-version 1 :processes processes :trees trees :files (nreverse files)))
+  (format t "Manifest finale: ~D processi, ~D alberi, ~D file espliciti.~%"
+          (length processes) (length trees) (length files)))

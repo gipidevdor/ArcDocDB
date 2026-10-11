@@ -1,0 +1,45 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defparameter *records* nil)
+(defun save-records ()
+  (with-open-file (stream "spikes/out/cbor-simple-write-20261011/processes.lisp"
+                          :direction :output :if-exists :supersede)
+    (let ((*print-readably* t)) (write (reverse *records*) :stream stream :pretty t) (terpri stream))))
+(defun run-recorded (label argv)
+  (let ((existing (directory "spikes/out/*-command-*/report.lisp")))
+    (multiple-value-bind (stdout stderr exit)
+        (uiop:run-program
+         (append '("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+                   "tools/record-command.lisp" "--") argv)
+         :output :string :error-output :string :ignore-error-status t)
+      (let ((new (set-difference (directory "spikes/out/*-command-*/report.lisp") existing
+                                 :test #'equal)))
+        (unless (= 1 (length new)) (error "Record ambiguo per ~A: ~S ~A ~A" label new stdout stderr))
+        (push (list label (namestring (truename (first new)))) *records*)
+        (save-records)
+        (format t "~A exit ~D: ~A~%" label exit (first new)) (finish-output)
+        (unless (zerop exit) (error "Campagna ~A fallita, record conservato." label))
+        (first new)))))
+(defun command (&rest args)
+  (append '("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script") args))
+(defun record-path (label)
+  (or (second (assoc label *records* :test #'equal)) (error "Record mancante ~A" label)))
+;; La lista è ripresa senza valutazione quando si prosegue una fase separata.
+(let ((path "spikes/out/cbor-simple-write-20261011/processes.lisp"))
+  (when (probe-file path)
+    (with-open-file (s path)
+      (let ((*read-eval* nil)) (setf *records* (reverse (read s)))))))
+(let ((phase (first (uiop:command-line-arguments))))
+  (cond ((equal phase "preliminary")
+         (run-recorded "preliminary" '("make" "test" "lint" "trace"))
+         (run-recorded "coverage-self-test" (command "tools/foundation-coverage.lisp" "--self-test"
+                 "spikes/out/cbor-simple-write-20261011/coverage-self-test/"))
+         (run-recorded "bench-self-test" (command "tools/cbor-simple-write-bench.lisp" "--self-test"))
+         (run-recorded "bench" (command "tools/cbor-simple-write-bench.lisp" "--bench")))
+        ((equal phase "falsification")
+         (run-recorded "mutation-self-test" (command "tools/cbor-simple-write-mutation.lisp" "--self-test"))
+         (run-recorded "mutations" (command "tools/cbor-simple-write-mutation.lisp" "--run"
+                      "spikes/out/cbor-simple-write-20261011/mutations/"))
+         (run-recorded "coverage" (command "tools/foundation-coverage.lisp" "--report"
+                      "spikes/out/cbor-simple-write-20261011/coverage/" "cbor-simple-write")))
+        (t (error "Fase non ammessa ~S" phase))))

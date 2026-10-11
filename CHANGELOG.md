@@ -15,6 +15,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   Corretto il confronto del ritorno di lettura nel resolver CLOSED: l'API
   restituisce END nel buffer, anche quando la regione comincia a 64.
 
+- Scrittura minima dei valori semplici CBOR MT7: codici wire 0..23 e
+  32..255, preflight di range/codice/capacità e destinazione esclusiva.
+  Include confronto su tutti i codici, fuzz e due worker riusati;
+  profilo applicativo, composizione e qualifica C1 restano aperti.
+
 - Routing preallocato dei writer pronti alla Serie: ordinali immutabili,
   registro con associazioni verificate e tabella privata per worker.
   Selezione diretta in tempo costante, anche dopo ricircolo a coda piena,
@@ -188,6 +193,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   A9…A12), 107 requisiti, 27 modi di guasto, rischio residuo RES-05.
 
 ### Cambiato
+
+- I test con worker riusati delle stringhe CBOR usano segnali distinti
+  per ondata, evitando che un worker consumi il permesso dell'altro
+  nell'ondata successiva.
 
 - Snapshot collegati all'unico registro `arcdocdb.csn` dell'Archivio; rimosso
   l'allocatore CSN duplicato del ramo. Coordinamento snapshot senza attese,

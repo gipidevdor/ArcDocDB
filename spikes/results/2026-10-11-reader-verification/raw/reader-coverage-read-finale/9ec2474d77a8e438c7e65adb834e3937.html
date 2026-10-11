@@ -1,0 +1,70 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/reader-verification/ArcDocDB/src/read/types.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>20</td><td>35</td><td> 57.1</td></tr>
+<tr class='even'><td>branch</td><td>2</td><td>4</td><td> 50.0</td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;il&#160;controller&#160;costruisce&#160;un&#160;contesto&#160;per&#160;slot&#160;EBR&#59;&#160;solo&#160;il&#160;worker&#160;lo&#160;modifica&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;legami&#160;immutabili&#160;ai&#160;registri&#160;dello&#160;stesso&#160;Archivio&#44;&#160;nessun&#160;contatore&#160;comune&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;read&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;speed&#160;2&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;CON&#45;004&#160;REQ&#45;MVC&#45;005&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;word&#45;generation&#43;&#160;0&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;word&#45;snapshot&#45;csn&#43;&#160;1&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;word&#45;start&#45;time&#43;&#160;2&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;word&#45;confirmed&#45;csn&#43;&#160;3&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-2'>&#40;deftype&#160;read&#45;words&#160;&#40;&#41;&#160;&#39;&#40;simple&#45;array&#160;&#40;unsigned&#45;byte&#160;64&#41;&#160;&#40;&#42;&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>13</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;CON&#45;004&#160;REQ&#45;CMP&#45;007&#160;REQ&#45;MVC&#45;004&#160;REQ&#45;AFF&#45;004&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>14</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;contesto&#45;lettura</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>15</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;&#58;constructor&#160;&#37;make&#45;contesto&#45;lettura&#160;&#40;reader&#160;snapshots&#160;words&#41;&#41;&#160;&#40;&#58;copier&#160;nil&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>16</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;reader&#160;esclusivo&#44;&#160;registri&#160;dello&#160;stesso&#160;Archivio&#44;&#160;quattro&#160;word&#160;private&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>17</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;inattivo&#44;&#160;nessuno&#160;snapshot&#160;o&#160;risultato&#160;conservato&#46;&#160;Non&#160;attraversa&#160;code&#160;o&#160;migrazioni&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>18</code></div><code>&#160;<span class='state-1'>FAULTED&#160;impedisce&#160;il&#160;riuso&#59;&#160;il&#160;cleanup&#160;resta&#160;consentito&#160;dopo&#160;la&#160;fine&#160;del&#160;compito&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>19</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;reader&#160;nil&#160;&#58;type&#160;lettore&#45;epoca&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>20</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;snapshots&#160;nil&#160;&#58;type&#160;registro&#45;snapshot&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>21</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;words&#160;&#35;&#40;&#41;&#160;&#58;type&#160;</span><span class='state-10'>&#40;simple&#45;array&#160;&#40;unsigned&#45;byte&#160;64&#41;&#160;&#40;4&#41;&#41;</span><span class='state-2'>&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>22</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;snapshot&#160;nil&#160;&#58;type&#160;&#40;or&#160;null&#160;contesto&#45;snapshot&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>23</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;state&#160;&#58;idle&#160;&#58;type&#160;&#40;member&#160;&#58;idle&#160;&#58;entering&#160;&#58;active&#160;&#58;faulted&#41;&#41;</span><span class='state-1'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>24</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>25</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;CON&#45;004&#160;REQ&#45;CMP&#45;007&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>26</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;lettore&#45;epoca&#160;registro&#45;snapshot&#41;&#160;contesto&#45;lettura&#41;&#160;crea&#45;contesto&#45;lettura&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>27</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;crea&#45;contesto&#45;lettura&#160;&#40;reader&#160;snapshots&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>28</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;controller&#160;assegna&#160;un&#160;solo&#160;contesto&#160;a&#160;READER&#160;e&#160;registri&#160;dello&#160;stesso&#160;Archivio&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>29</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;contesto&#160;e&#160;buffer&#160;preallocati&#160;prima&#160;dell&#39;avvio&#160;dei&#160;pool&#59;&#160;nessun&#160;pin&#160;o&#160;thread&#160;creato&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>30</code></div><code>&#160;<span class='state-1'>INVALID&#45;ARGUMENT&#160;se&#160;il&#160;reader&#160;è&#160;già&#160;attivo&#46;&#160;Capacità&#160;totale&#160;limitata&#160;dai&#160;worker&#160;del&#160;dominio&#160;EBR&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>31</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;when&#160;</span><span class='state-5'>&#40;epoca&#45;attiva&#45;p&#160;</span><span class='state-1'>reader</span><span class='state-5'>&#41;</span><span class='state-1'>&#160;&#40;error&#160;&#39;invalid&#45;argument&#160;&#58;reason&#160;&#58;read&#45;worker&#45;busy&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>32</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;&#37;make&#45;contesto&#45;lettura&#160;reader&#160;snapshots</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>33</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;make&#45;array&#160;4&#160;&#58;element&#45;type&#160;&#39;&#40;unsigned&#45;byte&#160;64&#41;&#160;&#58;initial&#45;element&#160;0&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>34</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>35</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;CON&#45;004&#160;REQ&#45;AFF&#45;004</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>36</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;contesto&#45;lettura&#41;&#160;&#40;member&#160;&#58;idle&#160;&#58;entering&#160;&#58;active&#160;&#58;faulted&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>37</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;stato&#45;contesto&#45;lettura&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>38</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;stato&#45;contesto&#45;lettura&#160;&#40;context&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>39</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;worker&#160;proprietario&#160;o&#160;controller&#160;dopo&#160;join&#46;&#160;Post&#58;&#160;stato&#160;locale&#44;&#160;senza&#160;pin&#160;o&#160;mutex&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>40</code></div><code>&#160;<span class='state-1'>Non&#160;è&#160;un&#160;controllo&#160;concorrente&#160;del&#160;worker&#59;&#160;nessuna&#160;risorsa&#160;esterna&#160;viene&#160;restituita&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>41</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;contesto&#45;lettura&#45;state&#160;context&#41;&#41;</code></div></body></html>

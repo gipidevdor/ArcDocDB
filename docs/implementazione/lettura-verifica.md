@@ -48,15 +48,61 @@ del worker. Due fixture reali provano SIGKILL 9 ed exit 7 dopo completamento;
 il controllo CLI negativo conserva il rifiuto COD-61 come esito fallito.
 
 Gli scope di copertura `epochs` e `read` hanno directory e FASL separati,
-eseguono la rispettiva suite e conservano stato SB-COVER e HTML. Numeratori,
-denominatori e percorsi non attribuiti saranno riportati dopo le esecuzioni.
+eseguono la rispettiva suite e conservano stato SB-COVER e HTML. Numeratori e denominatori sono riportati di seguito, con le lacune.
 L'espansione INLINE limita l'attribuzione dei contatori ai file originari.
 
-## Stato e limiti
+## Risultati locali e conservazione
 
-Le esecuzioni registrate e la CI del commit pubblicato sono **in attesa**.
-La chiusura richiede letture indipendenti, baseline, mutanti, controlli
-integrati e verifica della conservazione dei byte delle evidenze.
+La [verifica completa](../../spikes/results/2026-10-11-reader-verification/verifica-completa.lisp)
+sul freeze `9d07fff` passa **724 test più smoke**, inclusi 34 casi EBR e
+30 compiti di lettura, compilando senza avvisi. Tracciabilità, link,
+conservazione delle evidenze e gli esperimenti SPK esistenti passano.
+La [campagna di mutazioni](../../spikes/results/2026-10-11-reader-verification/mutazioni.lisp)
+passa il baseline esatto di 64 nomi in ordine e rileva tutti gli otto
+mutanti nel rispettivo test runtime: exit 1, nessun segnale, timeout
+o errore worker. Le quattro campagne delle fixture reali del runner
+conservano SIGKILL 9 con exit 137 osservato ed exit 7 dopo `:complete`,
+classificati come `:worker-error`. Il
+[CLI negativo](../../spikes/results/2026-10-11-reader-verification/cli-negativo.lisp)
+con `--invalid` rimane `:failed`, exit 1, rifiuto COD-61 atteso.
+
+La prima correzione statica della fixture aveva introdotto una parentesi
+in eccesso. Le esecuzioni iniziali rimangono fallite: core exit 2,
+baseline di mutazione exit 2 classificato errore di compilazione, parent
+mutazione e copertura exit 1. Il percorso con suffisso `.lisp` era
+accettato come directory e il suo fallimento di baseline non è una
+verifica CLI negativa. La [rettifica preregistrata](../../spikes/results/2026-10-11-reader-verification/rettifica.lisp)
+conserva il metodo originale e fissa il solo cambio sintattico prima
+delle ripetizioni, senza variare casi, mutanti o prodotto. Una seconda
+lettura ha verificato sintassi e proprietà dei worker sul blob corretto.
+
+| Scope SB-COVER | Espressioni | Rami | Senza conteggio |
+|---|---:|---:|---|
+| EBR, sei file | 651/838 (77,68%) | 85/110 (77,27%) | 187 espressioni, 25 rami |
+| Lettura, quattro file | 108/306 (35,29%) | 11/52 (21,15%) | 198 espressioni, 41 rami |
+
+Gli [HTML EBR](../../spikes/results/2026-10-11-reader-verification/raw/reader-coverage-epochs-finale/cover-index.html)
+e [lettura](../../spikes/results/2026-10-11-reader-verification/raw/reader-coverage-read-finale/cover-index.html)
+concordano con i dettagli e con i byte dei sorgenti annotati, secondo
+la [lettura indipendente](../../spikes/results/2026-10-11-reader-verification/copertura-revisione.lisp).
+`epochs/read.lisp` mostra 0/88 espressioni e 0/10 rami anche se i test
+eseguono ingressi e uscite riusciti: l'attribuzione INLINE impedisce di
+interpretare questi zeri come assenza di esecuzione delle API.
+
+Il [catalogo](../../spikes/results/2026-10-11-reader-verification/catalogo.lisp)
+usa nomi LEAF. L'[audit delle copie](../../spikes/results/2026-10-11-reader-verification/audit-copia.lisp)
+verifica byte e SHA-256 dei grezzi: runner, log, copie dei sorgenti,
+FASL privati, coppie descriptor/payload native e stati SB-COVER compressi
+senza perdita. I riferimenti di consultazione generati per record
+compressi sono dichiarati esplicitamente; i record nativi nei gruppi
+`raw` mantengono byte, nomi payload, esiti e provenienza originali.
+
+## Limiti e CI
+
+La CI del commit pubblicato è **in attesa** alla raccolta di questi
+risultati locali. Il mapping delle decisioni rimane parziale e la
+copertura non misura MC/DC. La preregistrazione resta distinta dagli
+esiti effettivamente osservati.
 
 Restano fuori dalle prove la finestra interna INLINE, l'ingresso che
 restituisce NIL dopo un cambio d'epoca e l'interruzione interna del cleanup.

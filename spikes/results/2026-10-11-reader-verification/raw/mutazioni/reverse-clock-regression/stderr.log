@@ -1,0 +1,14 @@
+SIMPLE-ERROR: Asserzione fallita: (HANDLER-CASE
+                                   (PROGN
+                                    (PROGN
+                                     (ARCDOCDB.READ:CONCLUDI-LETTURA
+                                      ARCDOCDB.READ.TESTS::CONTEXT
+                                      ARCDOCDB.READ.TESTS::FINISH)
+                                     (SETF ARCDOCDB.READ.TESTS::AUTHORIZED T))
+                                    NIL)
+                                   (ARCDOCDB.CONDITIONS:INVALID-ARGUMENT
+                                    (CONDITION)
+                                    (EQ
+                                     (ARCDOCDB.CONDITIONS:ERROR-REASON
+                                      CONDITION)
+                                     :READ-CLOCK-REGRESSION)))

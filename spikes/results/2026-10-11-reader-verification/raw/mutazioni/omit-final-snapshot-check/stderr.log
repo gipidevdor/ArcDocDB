@@ -1,0 +1,13 @@
+SIMPLE-ERROR: Asserzione fallita: (HANDLER-CASE
+                                   (PROGN
+                                    (PROGN
+                                     (ARCDOCDB.READ:CONCLUDI-LETTURA
+                                      ARCDOCDB.READ.TESTS::CONTEXT 30)
+                                     (SETF ARCDOCDB.READ.TESTS::AUTHORIZED T))
+                                    NIL)
+                                   (ARCDOCDB.CONDITIONS:SNAPSHOT-TOO-OLD
+                                    (CONDITION)
+                                    (EQ
+                                     (ARCDOCDB.CONDITIONS:ERROR-REASON
+                                      CONDITION)
+                                     :SNAPSHOT-AGE-EXPIRED)))

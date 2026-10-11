@@ -211,3 +211,29 @@ ammessi e la conservazione dei FD fino al reclaim sono precondizioni del
 controller, esplicite nel contratto CLOSED. Questa directory non aggiunge
 una cella di pubblicazione. Le integrazioni ACTIVE/controller sviluppate
 altrove non sono duplicate o modificate da questa revisione.
+
+## Chiusura dell'autore prima del congelamento
+
+Questa sezione è scritta dall'autore, non dal revisore indipendente.
+Il revisore è stato chiuso prima delle esecuzioni dopo le due letture C1 e
+la rilettura statica delle correzioni R01/R02 già conservate sopra.
+La richiesta successiva di ampliare la lettura C4 non ha prodotto un handoff
+conclusivo: benchmark e mutazioni non ricevono una revisione indipendente
+completa da questo rapporto. Il loro metodo è stato letto dall'autore;
+i controlli dinamici e i sensori restano da eseguire e registrare.
+
+L'integrazione include `main` fino a `7568456`, GET funzionale, resolver ACTIVE
+ordinario e routing dei worker. I conflitti ASDF e coverage preservano i due
+percorsi e i rispettivi scope. Il prodotto directory mantiene i quattro file
+elencati sopra, con la guardia R02. Le fixture benchmark sono sequenziali,
+con al massimo 64 FD readonly vivi; i conteggi rimangono fissati a 80/240
+finestre seriali/parallele. Il mutante di location conserva il guasto nel
+caso vuoto e altera soltanto la directory non vuota.
+
+La correzione in `get-resolver/build.lisp` confronta il ritorno di
+`leggi-esatto` con END, secondo il contratto di `io/transfer.lisp`, anziché
+con END−64. La nuova regressione su file reale verifica ritorno, regione,
+sentinelle e osservazione I/O. Non è stata eseguita prima del congelamento.
+I risultati successivi qualificano soltanto il contenuto effettivamente
+registrato nei rispettivi comandi; non si attribuisce una qualifica C1
+complessiva a questo incremento.

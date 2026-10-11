@@ -93,7 +93,7 @@ Il caller mantiene FD aperto fino al reclaim EBR; fallimento non pubblica una ma
          (segment (crea-segmento-get view file id buffer)))
     (when (> end +segment-header-bytes+)
       (unless (= (leggi-esatto file buffer +segment-header-bytes+ end +segment-header-bytes+)
-                 (- end +segment-header-bytes+))
+                 end)
         (error 'invariant-violation :reason :resolver-source-read)))
     (verifica-sorgente-resolver buffer end segment max-records max-batches max-batch-records max-batch-bytes)
     (costruisci-righe-resolver buffer end segment max-records budget-payload)))

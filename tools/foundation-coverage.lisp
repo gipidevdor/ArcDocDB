@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|get-directory|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -14,7 +14,9 @@
 (defun scope-path-p (scope path)
   "Gli scope CBOR selezionano file esatti; gli altri il modulo intero."
   (let ((suffixes
-          (cond ((string= scope "get-performance")
+          (cond ((string= scope "get-directory")
+                 '("/src/get-directory/types.lisp" "/src/get-directory/build.lisp" "/src/get-directory/read.lisp"))
+                ((string= scope "get-performance")
                  '("/src/get/types.lisp" "/src/get/build.lisp" "/src/get/lifecycle.lisp"
                    "/src/get/lookup.lisp" "/src/get/target.lisp" "/src/get/segment.lisp"
                    "/src/cache/read.lisp"))
@@ -76,6 +78,9 @@
                (scope-path-p "epochs" "/repo/src/epochs/reclaim.lisp")
                (not (scope-path-p "epochs" "/repo/tests/epochs/lifecycle.lisp"))
                (scope-path-p "read" "/repo/src/read/task.lisp")
+               (scope-path-p "get-directory" "/repo/src/get-directory/read.lisp")
+               (not (scope-path-p "get-directory" "/repo/tests/get-directory/read.lisp"))
+               (not (scope-path-p "get-directory" "/repo/src/get-directory/read.lisp.fake"))
                (scope-path-p "get-performance" "/repo/src/get/segment.lisp")
                (not (scope-path-p "get-performance" "/repo/tests/get-performance/segment.lisp"))
                (not (scope-path-p "read" "/repo/tests/read/lifecycle.lisp"))
@@ -155,6 +160,7 @@
                              ((string= scope "csn") '#:arcdocdb.csn.tests)
                              ((string= scope "mvcc") '#:arcdocdb.mvcc.tests)
                              ((string= scope "epochs") '#:arcdocdb.epochs.tests)
+                             ((string= scope "get-directory") '#:arcdocdb.get.directory.tests)
                              ((string= scope "get-performance") '#:arcdocdb.get.performance.tests)
                              ((string= scope "read") '#:arcdocdb.read.tests)
                              ((string= scope "execution") '#:arcdocdb.execution.tests)
@@ -189,8 +195,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get-performance" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
+                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get-performance" "get-directory" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get-performance|get-directory|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

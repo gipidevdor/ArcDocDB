@@ -7,6 +7,14 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Directory GET dei segmenti CLOSED: ID u32 compatti e riferimenti privati
+  immutabili, controllo di Serie/ordine/budget prima delle copie, ricerca
+  limitata a diciassette passi e collegamento al resolver/cache/I/O.
+  Una location pubblicata senza segmento è un guasto, mai un miss.
+  Pubblicazione, ACTIVE, rotazione e reclaim restano integrazioni distinte.
+  Corretto il confronto del ritorno di lettura nel resolver CLOSED: l'API
+  restituisce END nel buffer, anche quando la regione comincia a 64.
+
 - Collegamento preallocato worker/Serie: doppia lease, token monotoni, debito
   batch e rilascio Serie prima del worker, con retry limitato alla fine e
   conservazione dei guasti originali. Include 26 prove, due letture C1,

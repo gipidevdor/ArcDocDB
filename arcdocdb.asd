@@ -101,6 +101,8 @@
                              (:file "cbor-minimal-scan-threads")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
+               (:module "mvcc" :serial t
+                :components ((:file "support") (:file "lifecycle") (:file "capture")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle")))
@@ -132,6 +134,7 @@
              (uiop:symbol-call '#:arcdocdb.cbor.structure.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.scan.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)

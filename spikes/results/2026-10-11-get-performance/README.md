@@ -26,3 +26,12 @@ i dati grezzi vengono compressi senza perdita e verificati dopo espansione.
 Cache compilate e copie complete ricostruibili del checkout sono escluse.
 Queste prove riguardano il nucleo GET: resolver storico, scheduler, protocollo,
 durability del database e qualifica completa C1 rimangono integrazioni distinte.
+
+## Risultati e chiusura
+
+[Risultati](risultati.md): regressione riprodotta prima della correzione,
+19 test dedicati, sette mutanti e 14,4 milioni di GET misurati.
+I sorgenti del commit misurato `df8b98e` sono identici a quelli integrati con
+main, esclusi gli artefatti in `spikes/results/`; il confronto statico è registrato.
+Gli audit conclusivi del catalogo e delle dimensioni sono conservati anche
+come registri separati: osservano il catalogo già chiuso, senza autoriferirsi.

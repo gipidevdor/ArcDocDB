@@ -4,6 +4,8 @@ Baseline `a1b00e9`: la regressione della copia reinserita fallisce, con sorgenti
 
 Freeze integrato `df8b98e`: **836 test nominati + 2 smoke**, 19 test GET dedicati, 7/7 mutanti rilevati, 10 spike e controlli del repository passati. Gli agenti non hanno eseguito prove preliminari non registrate.
 
+L'integrazione successiva con main conserva gli stessi sorgenti, suite, strumenti e documentazione fuori da `spikes/results/`. Il confronto statico è conservato nel catalogo; le misure mantengono il loro commit originale.
+
 ## Misure osservate
 
 **14400000 GET** misurati, 90 finestre seriali e 270 gruppi paralleli. Cinque repliche per cella, COUNT 20.000 per worker e warmup 1.000, senza adattamento. Chiave 16 B, otto chiavi presenti/assenti, record v2 non prepared.

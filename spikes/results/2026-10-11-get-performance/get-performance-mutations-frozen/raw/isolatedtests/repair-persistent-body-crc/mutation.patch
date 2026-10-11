@@ -1,0 +1,20 @@
+--- a/src/get/segment.lisp
++++ b/src/get/segment.lisp
+@@ -57,5 +57,12 @@
+-        (verifica-put-parole bytes 0 size (contesto-get-key context)
+-                             (ldb (byte 32 32) (aref content 0)) (ldb (byte 32 0) (aref content 0))
+-                             flags :version (segmento-get-version segment)
+-                             :proof-buffer (if prepared (contesto-get-proof context) nil)
+-                             :proof-start 0 :proof-end (if prepared +get-proof-bytes+ 0))
++        (progn
++          (when (= (leggi-u32 bytes 0)
++                   (arcdocdb.binary:crc32c bytes 4 +header-bytes+))
++            (arcdocdb.binary:scrivi-u32 bytes 4
++                                      (arcdocdb.binary:crc32c bytes +header-bytes+ size))
++            (arcdocdb.binary:scrivi-u32 bytes 0
++                                      (arcdocdb.binary:crc32c bytes 4 +header-bytes+)))
++          (verifica-put-parole bytes 0 size (contesto-get-key context)
++                             (ldb (byte 32 32) (aref content 0)) (ldb (byte 32 0) (aref content 0))
++                             flags :version (segmento-get-version segment)
++                             :proof-buffer (if prepared (contesto-get-proof context) nil)
++                             :proof-start 0 :proof-end (if prepared +get-proof-bytes+ 0)))

@@ -57,10 +57,11 @@ del frammento riconosce il banco faulted. Recovery del dominio da integrare.
 | Conferma | Identità/generazione root ricontrollate dopo barriera, anche sul miss. |
 | Uscita | `:live` copia cinque u64; `:absent`/`:retry-limit` non toccano l'output. |
 
-Massimo **otto campioni slot e cambi root complessivi**: ogni campione,
-anche una collisione stabile, consuma uno; una root cambiata dopo un
-risultato provvisorio consuma un altro. Una conferma riuscita non consuma
-credito. Niente retry annidati, attese o crescita nel lookup. Al limite,
+Massimo **otto crediti per campioni slot e riavvii dovuti al cambio root**: ogni campione,
+anche una collisione stabile, consuma uno; un riavvio dopo il cambio root
+consuma un altro. La conferma finale, riuscita o fallita, non e un nuovo
+probe: al credito zero una conferma fallita termina con `:retry-limit`,
+senza riavvio e senza output. Una conferma riuscita non consuma credito. Niente retry annidati, attese o crescita nel lookup. Al limite,
 scartare location/scratch e inoltrare la richiesta originale al writer.
 Il collegamento alla coda è esterno.
 
@@ -204,3 +205,14 @@ o auto-verifica degli strumenti aggiunto/eseguito localmente. Restano
 qualifica C1, revisioni indipendenti, memoria ARM64/x86-64, allocazioni/P99,
 hashing, costruttore split/rebuild, retention, prenotazioni, recovery,
 cache e GET integrato. Codice v1 e suite preesistenti non qualificano v2.
+
+## Prove successive — indice v2
+
+La [campagna di ricostruzione](../../spikes/results/2026-10-09-index-rebuild/risultati.md)
+aggiunge 27 test di ricerca, writer e directory, 28 test di rebuild/split e
+64 test degli slot. Comprende concorrenza, fault injection mirata, quattro
+mutanti concreti, copertura SB-Cover e benchmark delle primitive in memoria.
+Il [costruttore verificato](indice-ricostruzione.md) prepara ora rebuild e
+split, con pubblicazione separata della root. La nota precedente descrive
+l'ambito della campagna iniziale; i limiti residui e le revisioni misurate
+sono dichiarati nel nuovo rapporto. Il GET e il motore completo restano aperti.

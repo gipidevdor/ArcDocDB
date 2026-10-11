@@ -28,7 +28,8 @@ Non rende la location un pin EBR e non verifica l'orizzonte di commit o uno snap
 (defun leggi-indice-primario (index key start end high low context destination)
   "Pre: chiave/digest fidati coerenti per Serie, contesto e DESTINATION privati distinti.
 Post: LIVE copia il payload dopo conferma della root; ABSENT/RETRY-LIMIT non toccano DESTINATION.
-Otto campioni slot/cambi root complessivi, nessun lock, attesa o ripiego interno.
+Otto crediti per campioni slot/riavvii dopo cambio root, nessun lock, attesa o ripiego interno.
+Conferma finale a credito zero: se fallisce termina senza riavvio o copia dell'output.
 Errori/uscite non locali invalidano il risultato; EBR, MVCC e inoltro al writer sono del chiamante."
   (esigi-indice-sano index)
   (esigi-chiave key start end)

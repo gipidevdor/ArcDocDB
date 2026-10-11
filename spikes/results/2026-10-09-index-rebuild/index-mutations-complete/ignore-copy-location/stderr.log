@@ -1,0 +1,4 @@
+SIMPLE-ERROR: Asserzione fallita: (NOT
+                                   (ARCDOCDB.INDEX.PRIMARY::COPIA-RICOSTRUZIONE-UGUALE-P
+                                    ARCDOCDB.INDEX.PRIMARY.TESTS::ORIGINAL
+                                    ARCDOCDB.INDEX.PRIMARY.TESTS::COPY))

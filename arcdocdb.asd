@@ -53,7 +53,9 @@
                              (:file "primary-package") (:file "primary-types") (:file "primary-core")
                              (:file "primary-build") (:file "primary-probe") (:file "primary-read")
                              (:file "primary-write") (:file "primary-relocate")
-                             (:file "primary-arena") (:file "primary-directory")))
+                             (:file "primary-arena") (:file "primary-directory")
+                             (:file "rebuild-scan") (:file "rebuild-budget")
+                             (:file "rebuild-copy") (:file "rebuild")))
                (:module "mvcc" :serial t
                 :components ((:file "package") (:file "types")
                              (:file "snapshots-types") (:file "snapshots-core") (:file "snapshots-csn")
@@ -124,7 +126,11 @@
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
                (:module "series" :serial t
-                :components ((:file "support") (:file "controller") (:file "boundaries") (:file "threads"))))
+                :components ((:file "support") (:file "controller") (:file "boundaries") (:file "threads")))
+               (:module "index" :serial t
+                :components ((:file "slot-support") (:file "slots") (:file "slot-threads")
+                             (:file "primary-support") (:file "primary") (:file "primary-threads")
+                             (:file "rebuild"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.foundation.tests '#:run)
@@ -140,4 +146,6 @@
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
-             (uiop:symbol-call '#:arcdocdb.series.tests '#:run)))
+             (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.index.primary.tests '#:run)))

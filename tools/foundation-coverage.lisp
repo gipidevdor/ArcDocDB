@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|codec|cbor|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|execution|storage|recovery|io|wal|series] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|codec|cbor|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -49,6 +49,8 @@
       (error "foundation-coverage.lisp COD-60: mapping ricorsivo della cache errato.")))
   (unless (and (scope-path-p "cbor" "/repo/src/codec/cbor-package.lisp")
                (scope-path-p "series" "/repo/src/series/publication.lisp")
+               (scope-path-p "index" "/repo/src/index/rebuild.lisp")
+               (not (scope-path-p "index" "/repo/tests/index/rebuild.lisp"))
                (not (scope-path-p "series" "/repo/tests/series/controller.lisp"))
                (scope-path-p "mvcc" "/repo/src/mvcc/snapshots-read.lisp")
                (not (scope-path-p "mvcc" "/repo/tests/mvcc/lifecycle.lisp"))
@@ -118,7 +120,10 @@
                              ((string= scope "io") '#:arcdocdb.io.tests)
                              ((string= scope "wal") '#:arcdocdb.wal.tests)
                              ((string= scope "series") '#:arcdocdb.series.tests)
+                             ((string= scope "index") '#:arcdocdb.index.primary.tests)
                              (t '#:arcdocdb.foundation.tests)) '#:run)
+      (when (string= scope "index")
+        (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run))
       (when (string= scope "cbor-minimal-scan")
         (uiop:symbol-call '#:arcdocdb.cbor.structure.tests '#:run))
       (when (string= scope "codec")
@@ -137,8 +142,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "codec" "cbor" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "execution" "storage" "recovery" "io" "wal" "series") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|codec|cbor|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|execution|storage|recovery|io|wal|series] o --self-test directory/."))
+                   (member (third args) '("foundation" "codec" "cbor" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|codec|cbor|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

@@ -275,7 +275,7 @@
                                        (aref (the octets (svref (profile-values profile) i)) (- k 3))
                                        +sentinel+))
                      (fail "byte/sentinella output errato a ~D." k))
-                   (when (and (eq scenario :cache-hit) (<= 3 k) (< k (+ 3 v))) (incf sum byte))))
+                   (when (and (eq scenario :cache-hit) (<= 3 k) (< k (+ 3 v))) (incf sum byte)))))
           (funcall abandon context))
         (unless (and (eq :idle (funcall state context)) (not (funcall active reader)))
           (fail "cleanup non IDLE/quiescente."))

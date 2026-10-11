@@ -260,6 +260,16 @@ Segnala INVALID-ARGUMENT per range errato; non modifica gli input."
   "Pre: prova proveniente dallo stesso segmento secondo il resolver proprietario.
 Post: OUTCOME integro, TXID e CSN coincidenti. Segnala CORRUPTION-DETECTED altrimenti.
 Non prova da solo la presenza in un lotto committed: compito del resolver."
+  (check-outcome-parole buffer start end version put-buffer put-start
+                        (ldb (byte 32 32) csn) (ldb (byte 32 0) csn)))
+
+;;; REQ: REQ-FOR-004 REQ-AFF-002
+(declaim (ftype (function (octets index index integer octets index u32 u32) null)
+                check-outcome-parole))
+(defun check-outcome-parole (buffer start end version put-buffer put-start csn-high csn-low)
+  "Pre: prova autorevole dello stesso segmento; PUT header già verificato.
+Post: OUTCOME integro con TXID e due parole CSN coincidenti, senza materializzare u64.
+CORRUPTION-DETECTED per discordanza; non attesta da sola il commit."
   (multiple-value-bind (next kind flags ks ke vs ve)
       (verifica-cornice buffer start end :version version)
     (declare (ignore flags ks ke ve)) ; cornice e lunghezza già provate da verifica-cornice
@@ -268,7 +278,8 @@ Non prova da solo la presenza in un lotto committed: compito del resolver."
                     (leggi-u32 put-buffer (+ put-start +stamp-offset+)))
                  (= (leggi-u32 buffer (+ start +stamp-offset+ 4))
                     (leggi-u32 put-buffer (+ put-start +stamp-offset+ 4)))
-                 (u64-equal-p buffer vs csn))
+                 (= (leggi-u32 buffer vs) csn-low)
+                 (= (leggi-u32 buffer (+ vs 4)) csn-high))
       (error 'corruption-detected :reason :outcome-mismatch :offset start)))
   nil)
 
@@ -283,6 +294,20 @@ Non prova da solo la presenza in un lotto committed: compito del resolver."
 Per prepared, resolver fornisce OUTCOME dello stesso segmento in lotto committed.
 Post: restituisce solo range del valore dopo CRC, chiave, tipo, stamp e prova.
 Segnala CORRUPTION-DETECTED se incoerente o prova assente. Non decide visibilità."
+  (verifica-put-parole buffer start end key (ldb (byte 32 32) csn) (ldb (byte 32 0) csn)
+                       flags :version version :proof-buffer proof-buffer
+                       :proof-start proof-start :proof-end proof-end))
+
+;;; REQ: REQ-AFF-002 REQ-FOR-004 REQ-CCH-002
+(declaim (ftype (function (octets index index octets u32 u32 u8
+                                &key (:version integer) (:proof-buffer (or null octets))
+                                (:proof-start index) (:proof-end index))
+                         (values index index &optional)) verifica-put-parole))
+(defun verifica-put-parole (buffer start end key csn-high csn-low flags
+                            &key (version 2) proof-buffer (proof-start 0) (proof-end 0))
+  "Pre: KEY, CSN in due u32 e FLAGS dall'indice committed; range e prova stabili.
+Post: solo range valore dopo CRC, cornice, chiave, tipo, stamp e prova prepared.
+Propaga condizioni tipizzate; nessun u64 restituito o costruito, nessuna decisione MVCC."
   (multiple-value-bind (next kind actual-flags ks ke vs ve)
       (verifica-cornice buffer start end :version version)
     (unless (and (= next end) (= kind +put+) (= actual-flags flags)
@@ -292,7 +317,9 @@ Segnala CORRUPTION-DETECTED se incoerente o prova assente. Non decide visibilit�
         (progn
           (unless proof-buffer
             (error 'corruption-detected :reason :outcome-required :offset start))
-          (check-outcome proof-buffer proof-start proof-end version buffer start csn))
-        (unless (u64-equal-p buffer (+ start +stamp-offset+) csn)
+          (check-outcome-parole proof-buffer proof-start proof-end version buffer start
+                                csn-high csn-low))
+        (unless (and (= (leggi-u32 buffer (+ start +stamp-offset+)) csn-low)
+                     (= (leggi-u32 buffer (+ start +stamp-offset+ 4)) csn-high))
           (error 'corruption-detected :reason :csn-mismatch :offset start)))
     (values vs ve)))

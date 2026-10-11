@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Cache dei record per Serie: classi preallocate, insiemi di otto posti,
+  CLOCK limitato, ricerca senza lock e inserimento opportunistico. Ogni hit
+  verifica CRC, chiave, CSN e prova prepared; corruzione della cache distinta
+  dall’input del segmento. Verificatore comune con CSN in due u32,
+  budget e contratti documentati; GET integrato e qualifica C1 aperti.
+
 - Indice primario v2 in memoria: controlli Swiss a gruppi di 16, chiavi binarie
   in arena, lookup con budget comune e conferma root anche sul miss, upsert e
   cancellazione/rilocazione condizionale nel writer, crescita arena e piani monouso di pubblicazione

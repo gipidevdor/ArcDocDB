@@ -107,7 +107,7 @@ Con EQ, il resto dell'array comune e lo span sorgente restano invariati."
   (handler-case
       (progn
         (dotimes (wave 2)
-          (sb-thread:signal-semaphore ready) (cbor-wait go)
+          (sb-thread:signal-semaphore (svref ready wave)) (cbor-wait (svref go wave))
           (setf (aref starts index wave) (get-internal-real-time))
           (let ((sink 0))
             (dotimes (iteration rounds)
@@ -120,6 +120,6 @@ Con EQ, il resto dell'array comune e lo span sorgente restano invariati."
                 (incf sink (+ (first actual) (aref buffer start) (aref buffer (1- next))))))
             (is (= sink (* rounds token))) (setf (aref sinks index wave) sink))
           (setf (aref ends index wave) (get-internal-real-time))
-          (sb-thread:signal-semaphore done))
+          (sb-thread:signal-semaphore (svref done wave)))
         :ok)
     (error (condition) condition)))

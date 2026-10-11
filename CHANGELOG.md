@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Scrittura minima dei valori semplici CBOR MT7: codici wire 0..23 e
+  32..255, preflight di range/codice/capacità e destinazione esclusiva.
+  Include confronto su tutti i codici, fuzz e due worker riusati;
+  profilo applicativo, composizione e qualifica C1 restano aperti.
+
 - Collegamento preallocato worker/Serie: doppia lease, token monotoni, debito
   batch e rilascio Serie prima del worker, con retry limitato alla fine e
   conservazione dei guasti originali. Include 26 prove, due letture C1,
@@ -167,6 +172,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   A9…A12), 107 requisiti, 27 modi di guasto, rischio residuo RES-05.
 
 ### Cambiato
+
+- I test con worker riusati delle stringhe CBOR usano segnali distinti
+  per ondata, evitando che un worker consumi il permesso dell'altro
+  nell'ondata successiva.
 
 - Snapshot collegati all'unico registro `arcdocdb.csn` dell'Archivio; rimosso
   l'allocatore CSN duplicato del ramo. Coordinamento snapshot senza attese,

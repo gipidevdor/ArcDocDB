@@ -318,6 +318,10 @@
   :inv ("INV-A2" "INV-S7") :adr ("ADR-0039" "ADR-0047") :ver (:test :corr :fuzz :diff) :fi ())
 
  ;; ---- Codec documentale --------------------------------------------------
+ (:id "REQ-CBR-003" :src "ADR-0014" :cls "C1" :stato :implementato
+  :txt "La scrittura dei valori semplici CBOR MT7 emette il codice wire 0..23 oppure 32..255 nella rappresentazione minima, in una destinazione esclusiva; verifica range, codici riservati e capacità prima della mutazione, con lavoro limitato a due byte e un solo NEXT."
+  :inv ("INV-F1" "INV-P6") :adr ("ADR-0014" "ADR-0033" "ADR-0035" "ADR-0048")
+  :ver (:test :diff :fuzz :bench :mut :rev) :fi ())
  (:id "REQ-CBR-002" :src "ADR-0014" :cls "C1" :stato :implementato
   :txt "La scrittura di stringhe CBOR MT2/3 emette testata minima e payload esatto in un buffer esclusivo; verifica range, budget completo, capacità, overlap e UTF-8 prima della mutazione, con sorgente stabile e lavoro limitato."
   :inv ("INV-F1" "INV-P6" "INV-A8") :adr ("ADR-0014" "ADR-0033" "ADR-0035" "ADR-0048")

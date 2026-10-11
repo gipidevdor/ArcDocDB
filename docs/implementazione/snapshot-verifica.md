@@ -151,6 +151,14 @@ quindi questi valori non dimostrano che i relativi percorsi non siano
 stati eseguiti. Una lettura indipendente ha ricostruito tutti gli otto
 HTML e verificato l’identità dei sorgenti annotati.
 
+Prima del push è stato integrato anche il main `f16e978`, che aggiunge
+la campagna degli indici senza modificare snapshot o CSN. La
+[verifica integrata](../../spikes/results/2026-10-09-snapshot-verification/integrazione.lisp)
+sul commit `ac52376` passa 620 test più smoke, inclusi 64 casi slot e 55
+casi indice primario. Il self-test del driver di copertura unito è
+riuscito; una revisione indipendente conferma entrambe le suite e gli
+scope `mvcc` e `index`. Le prove precedenti rimangono originali.
+
 ## Criteri di chiusura e limiti
 
 La campagna si chiude quando il mapping concordato è esercitato dalla

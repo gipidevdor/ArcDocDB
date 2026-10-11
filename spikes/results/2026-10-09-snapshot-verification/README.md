@@ -39,6 +39,11 @@ registra copie verificate byte per byte, inclusi sorgenti isolati,
 runner, log, report dei processi figli e stato SB-COVER; quest’ultimo è
 conservato come dato e non valutato.
 
+La [verifica dopo integrazione del main](integrazione.lisp) `f16e978`
+passa 620 test più smoke sul commit `ac52376`: comprende i 64 test slot e
+55 test indice primario upstream. Snapshot, CSN e suite dedicate sono
+identici a `aa4f462`; i risultati precedenti restano originali.
+
 Alla pubblicazione di questi risultati la CI dell’esatto commit
 pubblicato è **in attesa**. La campagna non qualifica il motore, MC/DC,
 C1 completa, memoria debole, assenza di allocazioni, latenza, durability

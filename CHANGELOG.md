@@ -12,6 +12,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   Include confronto su tutti i codici, fuzz e due worker riusati;
   profilo applicativo, composizione e qualifica C1 restano aperti.
 
+- Routing preallocato dei writer pronti alla Serie: ordinali immutabili,
+  registro con associazioni verificate e tabella privata per worker.
+  Selezione diretta in tempo costante, anche dopo ricircolo a coda piena,
+  senza scritture condivise per messaggio. Include18 nuove regressioni,
+  due letture C1, audit completo della copertura e cinque misure locali;
+  pool e coordinatore restano aperti.
+
 - Resolver GET ACTIVE per lotti ordinari: radice acquisita dalla pubblicazione
   della Serie, pagine immutabili e directory persistente con quattro piccoli
   vettori per append. Preflight prima del CSN, verifica del solo lotto nuovo e riuso cache/lettura GET;

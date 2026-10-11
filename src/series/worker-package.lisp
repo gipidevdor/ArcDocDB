@@ -11,6 +11,8 @@
   (:import-from #:arcdocdb.series #:controllore-serie #:acquisisci-controllore-serie
                 #:rilascia-controllore-serie)
   (:export #:collegamento-worker-serie #:crea-collegamento-worker-serie
+           #:registro-worker-serie #:crea-registro-worker-serie
+           #:tabella-worker-serie #:crea-tabella-worker-serie #:collega-writer-worker-serie
            #:inizia-worker-serie #:lease-worker-serie #:preleva-worker-serie
            #:conferma-worker-serie #:termina-worker-serie
            #:stato-worker-serie #:errore-worker-serie))

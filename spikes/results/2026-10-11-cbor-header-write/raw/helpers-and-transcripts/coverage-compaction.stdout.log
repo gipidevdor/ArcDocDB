@@ -1,0 +1,1 @@
+:OK: sbcl --noinform --no-userinit --no-sysinit --script tools/compact-evidence.lisp --root spikes/out/cbor-write-coverage-20261011/ --jobs 4; record: /Users/gpicchiarelli/.codex/worktrees/cbor-header-write/ArcDocDB/spikes/out/4000703302-command-47820-0/report.lisp

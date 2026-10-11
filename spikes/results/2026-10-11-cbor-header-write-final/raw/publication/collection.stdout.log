@@ -1,0 +1,1 @@
+:OK: sbcl --noinform --no-userinit --no-sysinit --script spikes/out/header-write/collect.lisp --collect spikes/out/header-write-collection-manifest.lisp spikes/results/2026-10-11-cbor-header-write/; record: /Users/gpicchiarelli/.codex/worktrees/cbor-header-write/ArcDocDB/spikes/out/4000703905-command-55149-0/report.lisp

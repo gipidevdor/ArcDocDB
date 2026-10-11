@@ -24,7 +24,8 @@
                              (:file "cbor-float-minimal") (:file "cbor-minimal")
                              (:file "cbor-space") (:file "cbor-scan-input")
                              (:file "cbor-scan-stack") (:file "cbor-scan-items")
-                             (:file "cbor-scan") (:file "cbor-scan-minimal")))
+                             (:file "cbor-scan") (:file "cbor-scan-minimal")
+                             (:file "cbor-write")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
                (:module "execution" :serial t
@@ -98,7 +99,9 @@
                              (:file "cbor-structure-support") (:file "cbor-structure")
                              (:file "cbor-structure-threads")
                              (:file "cbor-minimal-scan-support") (:file "cbor-minimal-scan")
-                             (:file "cbor-minimal-scan-threads")))
+                             (:file "cbor-minimal-scan-threads")
+                             (:file "cbor-write-support") (:file "cbor-write")
+                             (:file "cbor-write-threads") (:file "cbor-write-roundtrip")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "execution" :serial t
@@ -131,6 +134,7 @@
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.structure.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.scan.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.cbor.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)

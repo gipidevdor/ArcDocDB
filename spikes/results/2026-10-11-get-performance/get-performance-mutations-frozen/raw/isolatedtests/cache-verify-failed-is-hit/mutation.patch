@@ -1,0 +1,24 @@
+--- a/src/get/target.lisp
++++ b/src/get/target.lisp
+@@ -46,8 +46,13 @@
+-    (cerca-record-cache
+-     cache (segmento-get-high segment) (segmento-get-low segment)
+-     (ldb (byte 32 0) (aref content 1)) (ldb (byte 32 0) (aref content 3))
+-     (contesto-get-key context) (ldb (byte 32 32) (aref content 0))
+-     (ldb (byte 32 0) (aref content 0)) flags (contesto-get-bytes context) 0
+-     :version (segmento-get-version segment)
+-     :proof-buffer (if prepared (contesto-get-proof context) nil)
+-     :proof-start 0 :proof-end (if prepared +get-proof-bytes+ 0))))
++    (multiple-value-bind (status start end)
++        (cerca-record-cache
++     cache (segmento-get-high segment) (segmento-get-low segment)
++     (ldb (byte 32 0) (aref content 1)) (ldb (byte 32 0) (aref content 3))
++     (contesto-get-key context) (ldb (byte 32 32) (aref content 0))
++     (ldb (byte 32 0) (aref content 0)) flags (contesto-get-bytes context) 0
++     :version (segmento-get-version segment)
++     :proof-buffer (if prepared (contesto-get-proof context) nil)
++     :proof-start 0 :proof-end (if prepared +get-proof-bytes+ 0))
++      (if (eq status :verify-failed)
++          (values :hit (+ +header-bytes+ (length (contesto-get-key context)))
++                  (ldb (byte 32 0) (aref content 3)))
++          (values status start end)))))

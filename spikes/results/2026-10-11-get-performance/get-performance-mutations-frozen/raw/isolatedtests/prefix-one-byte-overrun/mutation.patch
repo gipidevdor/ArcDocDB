@@ -1,0 +1,5 @@
+--- a/src/get/target.lisp
++++ b/src/get/target.lisp
+@@ -24,1 +24,1 @@
+-                 (<= +segment-header-bytes+ offset (+ offset size) valid-bytes +segment-max-bytes+))
++                 (<= +segment-header-bytes+ offset (+ offset size) (1+ valid-bytes) +segment-max-bytes+))

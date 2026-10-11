@@ -1,0 +1,11 @@
+SIMPLE-ERROR: Asserzione fallita: (LOOP ARCDOCDB.GET.PERFORMANCE.TESTS::FOR ARCDOCDB.GET.PERFORMANCE.TESTS::I ARCDOCDB.GET.PERFORMANCE.TESTS::BELOW (LENGTH
+                                                                                                                                                     ARCDOCDB.GET.PERFORMANCE.TESTS::VALUE)
+                                        ARCDOCDB.GET.PERFORMANCE.TESTS::ALWAYS (=
+                                                                                (AREF
+                                                                                 ARCDOCDB.GET.PERFORMANCE.TESTS::VALUE
+                                                                                 ARCDOCDB.GET.PERFORMANCE.TESTS::I)
+                                                                                (AREF
+                                                                                 ARCDOCDB.GET.PERFORMANCE.TESTS::OUTPUT
+                                                                                 (+
+                                                                                  ARCDOCDB.GET.PERFORMANCE.TESTS::START
+                                                                                  ARCDOCDB.GET.PERFORMANCE.TESTS::I))))

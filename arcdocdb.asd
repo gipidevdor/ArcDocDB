@@ -133,6 +133,8 @@
                 :components ((:file "support") (:file "lifecycle") (:file "threads")))
                (:module "get" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "segment")))
+               (:module "get-performance" :serial t
+                :components ((:file "support") (:file "paths") (:file "guards") (:file "threads")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
@@ -176,6 +178,7 @@
              (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.read.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.get.performance.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)

@@ -1,0 +1,7 @@
+--- a/src/get/segment.lisp
++++ b/src/get/segment.lisp
+@@ -57,2 +57,2 @@
+-        (verifica-put-parole bytes 0 size (contesto-get-key context)
+-                             (ldb (byte 32 32) (aref content 0)) (ldb (byte 32 0) (aref content 0))
++        (verifica-put-parole bytes 0 size (contesto-get-key context)
++                             (ldb (byte 31 32) (aref content 0)) (ldb (byte 32 0) (aref content 0))

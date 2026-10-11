@@ -142,7 +142,9 @@ Lavoro limitato dalla chiave di massimo 65.535 byte, dai budget esistenti dell'i
 un PUT entro il limite formato e da una prova fissa. Nessuna nuova coda,
 retry infinito, mutex di Archivio sul GET, oggetto per entry o scrittura fra
 Serie. Le copie sono record → scratch → risposta, con verifiche CRC esplicite.
-Zero heap, latenza e throughput **non sono ancora misurati**.
+Le misure del nucleo corrente sono raccolte nella [campagna prestazioni GET](../../spikes/results/2026-10-11-get-performance/README.md),
+con [metodo preregistrato](get-performance-metodo.md). Il rapporto distingue heap
+globale, finestre seriali e gruppi paralleli; non misura la latenza del server.
 
 ## Decisioni C1 e qualifica aperta
 
@@ -164,4 +166,7 @@ con esiti e ambito propri; non sostituisce le evidenze statiche precedenti.
 Restano qualifica C1 condizione per condizione, stress concorrente, fault
 injection, misure di allocazione e prestazioni; integrazioni con resolver,
 retention, scheduler, metriche e protocollo. Le due letture della sola campagna statica
-sono dell'autore; la prima campagna funzionale registra anche una revisione indipendente.
+sono dell'autore; la prima campagna funzionale registra anche una revisione indipendente. La
+[revisione indipendente](get-performance-revisione.md) e le
+[prove di prestazione e stress](../../spikes/results/2026-10-11-get-performance/README.md)
+hanno ambiti espliciti e non chiudono la qualifica completa C1.

@@ -109,3 +109,13 @@ restituisce NIL dopo un cambio d'epoca e l'interruzione interna del cleanup.
 Non si attesta memoria debole, MC/DC, zero heap, latency, qualifica C1
 completa o chiusura di fase. GET, SegmentManager, durability e crash
 recovery richiedono integrazione e campagne ulteriori.
+
+## Integrazione con hash delle chiavi
+
+Prima dell'unione della PR #8, il ramo principale è avanzato a `8101eb8`.
+Il [metodo d'integrazione](../../spikes/results/2026-10-11-reader-verification/integrazione-metodo.lisp)
+conserva le prove precedenti e preregistra una nuova verifica completa
+della base comune. Una lettura indipendente conferma che i 26 file
+prodotto della campagna reader, i sei file di test e il mutator sono
+invariati; ASD e copertura mantengono le suite e gli scope di entrambi
+i rami. Gli esiti integrati sono in attesa nella preregistrazione.

@@ -228,8 +228,8 @@ IMAGE-MUTATOR(image, ordinal), chiamato prima dell'apertura readonly. Chiusura o
                 (capacity (loop for candidate = 16 then (* 2 candidate)
                                 repeat 13 when (>= candidate (* 2 count)) return candidate))
                 (index (p:crea-indice-primario
-                        :capacity capacity :arena-bytes (max 16 (* count 16)) :max-depth 1
-                        :directory-budget-bytes 4096 :fragment-budget-bytes (+ (* 41 capacity) (max 16 (* count 16)))
+                        :capacity capacity :arena-bytes (* (+ count 4) 16) :max-depth 1
+                        :directory-budget-bytes 4096 :fragment-budget-bytes (+ (* 41 capacity) (* (+ count 4) 16))
                         :hash-seed-high #x12345678 :hash-seed-low #x9abcdef0))
                 (cache-size (loop for candidate = 1024 then (* 2 candidate)
                                   repeat 16 when (>= candidate (+ 40 value-bytes)) return candidate))

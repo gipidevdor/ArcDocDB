@@ -30,6 +30,7 @@ La firma e gli accessor pubblici sono definiti in `support.lisp`. `view`, `direc
   inizializzati a `#xcc`; copia da offset 3, tre sentinelle per lato.
 - ID crescenti non contigui: `17+2*i`, con ultimo ID `#xffffffff`, anche per N=1.
 - Primary con seme fisso `#x12345678/#x9abcdef0`; digest e pubblicazione tramite API pubbliche.
+  Arena chiavi `16*(N+4)` byte: quattro richieste FI aggiuntive senza cambiare i profili.
 - Cache: una classe, minima 1024, prima potenza di due che contiene `40+value-bytes`,
   **256 set e otto posti per set**, una stripe. Payload autorizzato
   `256*8*(class-size+29)+256+16`: 2.156.816 byte per classe 1024.

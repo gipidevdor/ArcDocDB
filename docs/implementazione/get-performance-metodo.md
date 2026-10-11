@@ -39,7 +39,9 @@ di warmup, con carico per worker identico tra seriale e parallelo. Il report
 unico mantiene `:serial` e `:parallel` distinti e verifica la matrice esatta,
 compresi conteggi, configurazioni mancanti e duplicati. Le 72 finestre bounded
 del self-test usano 8 GET per worker e 8 di warmup: sono autoverifica del tool,
-non risultati prestazionali né un COUNT alternativo.
+non risultati prestazionali né un COUNT alternativo. Ogni finestra self-test
+viene persistita prima della validazione: anche un fallimento conserva le
+metriche parziali e una diagnostica con stato `:failed`.
 
 ## Percorsi inclusi
 

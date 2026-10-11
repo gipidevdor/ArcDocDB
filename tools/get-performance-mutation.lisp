@@ -1,4 +1,4 @@
-;;;; GET performance: baseline della sola suite e sei mutanti preregistrati isolati.
+;;;; GET performance: baseline della sola suite e sette mutanti preregistrati isolati.
 ;;;; Uso DOPO il freeze del padre: --self-test oppure --check [directory-nuova/].
 ;;;; --self-test controlla soltanto dati/classificatore: nessun child o compile-file.
 ;;;; C4: get-performance-mutations*/raw/isolatedtests conserva patch, source e log;
@@ -83,6 +83,16 @@
          :after "(replace destination bytes :start1 start :end1 end :start2 (1- vs) :end2 (1- ve))"
          :expected-failure :output-value-byte-mismatch)))
 
+(setf *mutants*
+      (append *mutants*
+              (list (list :name "hide-repaired-cache-copy" :file "src/cache/read.lisp"
+                          :test "TEST-REQ-CCH-004-PERFORMANCE-CACHE-REPAIR-HIT"
+                          :before "(zerop (aref (classe-cache-rejected class) slot))
+                     (tag-cache-p class slot segment-high segment-low offset size)"
+                          :after "(identity t)
+                     (tag-cache-p class slot segment-high segment-low offset size)"
+                          :expected-failure :repaired-copy-hidden-by-rejected-tag))))
+
 (define-condition invalid-target (error)
   ((reason :initarg :reason :reader target-reason))
   (:report (lambda (condition stream)
@@ -120,7 +130,7 @@
                                 (first (uiop:split-string (subseq line 9)
                                                         :separator '(#\Space #\Tab #\( #\))))))))
 (defun validate-targets (expected)
-  (unless (= 6 (length *mutants*)) (error "Richiesti sei mutanti GET performance."))
+  (unless (= 7 (length *mutants*)) (error "Richiesti sette mutanti GET performance."))
   (unless (and expected (= (length expected) (length (remove-duplicates expected :test #'string=))))
     (error "Suite performance assente o nomi DEFTEST duplicati."))
   (let ((names (mapcar (lambda (mutant) (getf mutant :name)) *mutants*)))
@@ -128,7 +138,8 @@
       (error "Nomi mutanti duplicati.")))
   (dolist (mutant *mutants*)
     (unless (and (member (getf mutant :file) *source-files* :test #'string=)
-                 (uiop:string-prefix-p "src/get/" (getf mutant :file))
+                 (or (uiop:string-prefix-p "src/get/" (getf mutant :file))
+                     (string= "src/cache/read.lisp" (getf mutant :file)))
                  (member (getf mutant :test) expected :test #'string=))
       (error "Mutante fuori scope o test performance nominato assente: ~S." mutant))
     (unique-position (read-text (getf mutant :file)) (getf mutant :before)))
@@ -470,7 +481,7 @@
                       :child-deadline-seconds +child-seconds+ :targets *mutants*
                       :expected-suite nil :self-test nil :baseline nil :mutants nil
                       :compilation-errors 0 :infrastructure-errors 0 :invalid-results 0 :survived 0
-                      :limits '(:six-preregistered-get-mutants :only-get-performance-suite-baseline
+                      :limits '(:seven-preregistered-get-and-cache-mutants :only-get-performance-suite-baseline
                                 :fresh-process-per-copy :private-fasl :verified-baseline-source
                                 :kill-requires-source-and-fasl-attestation :only-named-semantic-failures
                                 :compilation-and-infrastructure-errors-are-not-kills
@@ -504,7 +515,7 @@
                                  mutant baseline-directory expected)))
                     (setf (getf report :mutants) (append (getf report :mutants) (list result)))
                     (save-report report directory)))))
-            (unless (and (= 6 (length (getf report :mutants)))
+            (unless (and (= 7 (length (getf report :mutants)))
                          (every (lambda (entry) (eq :detected (getf entry :result))) (getf report :mutants)))
               (error "Mutante sopravvissuto, compilazione/infrastruttura fallita o esito invalido.")))
           (setf (getf report :status) :ok))

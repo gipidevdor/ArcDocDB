@@ -507,20 +507,28 @@
     (list :status :ok :rejections checks :zero-ticks-no-rate t :alias-copy-guard t :nonzero-exit-guard t)))
 
 (defun product-self-test (fixtures directory sensor diagnostics)
-  "Esiti completi su fixture autonome, seriale e thread 1/2/4; solo otto GET per worker qui."
-  (let ((metrics nil))
-    (dolist (fixture fixtures)
-      (dolist (scenario '(:cache-hit :segment :absent))
-        (dolist (configuration '((:serial 1) (:parallel 1) (:parallel 2) (:parallel 4)))
-          (let ((metric (run-window fixture scenario (first configuration) (second configuration) 0 8 8)))
-            (push (copy-tree metric) metrics)
-            (validate-window metric)))))
-    (let ((result (list :schema-version 1 :kind :get-performance-self-test :status :ok :product-fixtures 6
-                        :metrics (nreverse metrics) :sensor sensor :diagnostics diagnostics)))
-      (validate-publication-header result)
-      (unless (= (length (getf result :metrics)) 72) (fail "COD-61" "self-test incompleto."))
-      (write-data result directory "self-test-metrics.lisp")
-      (list :status :ok :product-fixtures 6 :windows 72 :sensor-positive t :diagnostics diagnostics))))
+  "Esiti completi su fixture autonome; preserva metriche parziali anche su fallimento."
+  (let ((result (list :schema-version 1 :kind :get-performance-self-test :status :running
+                      :product-fixtures 6 :metrics nil :sensor sensor :diagnostics diagnostics)))
+    (write-data result directory "self-test-metrics.lisp")
+    (handler-case
+        (progn
+          (dolist (fixture fixtures)
+            (dolist (scenario '(:cache-hit :segment :absent))
+              (dolist (configuration '((:serial 1) (:parallel 1) (:parallel 2) (:parallel 4)))
+                (let ((metric (run-window fixture scenario (first configuration) (second configuration) 0 8 8)))
+                  (setf (getf result :metrics) (nconc (getf result :metrics) (list (copy-tree metric))))
+                  ;; Salva prima di validare: una finestra negativa non scompare.
+                  (write-data result directory "self-test-metrics.lisp")
+                  (validate-window metric)))))
+          (unless (= (length (getf result :metrics)) 72) (fail "COD-61" "self-test incompleto."))
+          (setf (getf result :status) :ok)
+          (write-data result directory "self-test-metrics.lisp")
+          (list :status :ok :product-fixtures 6 :windows 72 :sensor-positive t :diagnostics diagnostics))
+      (error (condition)
+        (setf (getf result :status) :failed (getf result :diagnostic) (diagnostic condition))
+        (write-data result directory "self-test-metrics.lisp")
+        (error condition)))))
 
 (defun new-report (mode)
   (list :schema-version 1 :kind :get-performance-benchmark :mode mode :status :running :exit-code nil

@@ -194,6 +194,7 @@ come P95/P99 e scan pollution; non vengono dichiarate pari a zero.
 | CCH-D06 | Credito, parity e stato terminale del posto | Ultimo credito, contatore dispari e interruzioni prima/dopo il pari |
 | CCH-D07 | Vittima vuota/rifiutata/fredda o doppio giro esaurito | Ogni ramo, tutti caldi e contesa con calore concorrente |
 | CCH-D08 | Espulsione di uno scan senza rilettura osservata | Origine/rilettura e race conservative nelle metriche |
+| CCH-D10 | Disponibilità prima del tag: posto disabilitato/rifiutato o candidato leggibile | Vecchio tag rifiutato/disabilitato seguito da copia valida; secondo controllo nella copia e race conservative |
 | CCH-D09 | Corruzione della copia contro corruzione dell’input | Cache scartata senza quarantena; input propagato al caller storage |
 
 Metodo ed evidenze statiche nella
@@ -203,3 +204,12 @@ Restano prove differenziali cache attiva/budget zero, stress reale,
 fault injection, misure di allocazione, integrazione GET/EBR/snapshot,
 resolver OUTCOME, I/O, scheduler e metriche. I requisiti mantengono lo
 stato progettato fino alla qualifica richiesta dalla tracciabilità.
+
+## Riparazione opportunistica del percorso GET
+
+Il reader salta i posti già rifiutati o disabilitati prima del confronto del tag.
+Una copia valida reinserita in un altro way resta raggiungibile; le guardie
+della copia sotto seqlock vengono ricontrollate. Il primo errore CRC resta
+`:verify-failed` e impone il fallback al segmento. La scansione conserva il
+budget di otto way e non ritenta una copia concorrente non confermata.
+Regressione e misure: [campagna GET](../../spikes/results/2026-10-11-get-performance/README.md).

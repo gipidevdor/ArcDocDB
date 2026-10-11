@@ -22,9 +22,9 @@ attribuite alle rispettive attività, senza alterarle.
 Non sono emersi difetti P0/P1 dimostrabili staticamente nel percorso GET
 esaminato. Questo esito non certifica la qualifica C1 o l'assenza di difetti
 concorrenti. Il difetto P2 del selettore C4 (R1) è corretto staticamente.
-Sono aperti due rilievi P2 sul driver: oracolo completo dentro la finestra
-misurata contro lo scope richiesto (R2), e perdita delle metriche del
-self-test fallito (R3). È confermato staticamente il difetto P2 cache
+R2 è chiuso come scope chiarito dal padre: l'oracolo completo appartiene
+intenzionalmente alla finestra. Resta un rilievo P2 sul driver, la perdita
+delle metriche del self-test fallito (R3). È confermato staticamente il difetto P2 cache
 segnalato dal padre: un tag rifiutato/disabilitato nasconde una copia valida
 reinserita (R4). Il fallback preserva il valore GET, ma ripete miss e I/O.
 PEF-01–PEF-03 sono osservazioni sui costi, senza severità di bug.
@@ -32,9 +32,10 @@ PEF-01–PEF-03 sono osservazioni sui costi, senza severità di bug.
 La lettura del benchmark e del metodo è completata sulla variante
 `e3d41cac51ab5f060d2a8a9c4f3bb4cf3f17387d` /
 `78647ca7a9013d10456219e154a2fa4928ba5e1a`.
-La correzione delle due aperture V16 è presente. Non si approva questa
-variante come driver conforme all'oracolo fuori finestra finché R2 resta
-aperto. Questo rapporto conclude la revisione attuale per consentire al
+La correzione delle due aperture V16 è presente. Il perimetro della misura
+è conforme alla decisione esplicita del padre, compreso l'oracolo nel ciclo;
+la conservazione delle prove negative del self-test richiede il fix R3 prima
+della qualifica benchmark. Questo rapporto conclude la revisione attuale per consentire al
 padre di congelare e registrare la riproduzione della baseline; non chiude
 la successiva revisione del fix cache. Nessuna scrittura di questo rapporto
 durante le prove del padre; ripresa soltanto alla sua richiesta.
@@ -84,6 +85,105 @@ dei report comuni restano da confrontare con quel file quando presente.
 comandi comuni ammessi con attribuzione separata. Conservare gli eventuali
 tentativi già prodotti; cambiare il selettore prima di usare il catalogo per
 descrivere il perimetro concluso. Nessuna correzione applicata qui.
+
+## R2 — chiuso: scope dell'oracolo confermato dal padre
+
+**Sorgente:** `tools/get-performance-bench.lisp:192–250`, blob
+`e3d41cac51ab5f060d2a8a9c4f3bb4cf3f17387d`;
+`docs/implementazione/get-performance-metodo.md:99–113`, blob
+`78647ca7a9013d10456219e154a2fa4928ba5e1a`.
+
+`make-cycle` riempie la risposta di sentinelle e controlla tutti i byte,
+sommando il checksum, prima di tornare al loop misurato. `observe` avvolge
+quel loop: costo O(V), clock, stati, sentinelle e checksum sono inclusi sia
+nel tempo sia nello heap globale. La precedente richiesta di oracolo fuori
+finestra aveva prodotto un rilievo di conformità, comunicato prima del freeze.
+Il padre l'ha corretta esplicitamente: l'oracolo dentro la finestra è
+intenzionale e il metodo attuale è confermato. R2 non è quindi un bug aperto.
+Le misure descrivono il ciclo GET verificato, con il suo controllo completo;
+non isolano il costo delle primitive o il throughput del database.
+
+## R3 — P2 aperto: perdita delle metriche di un self-test fallito
+
+**Sorgente:** `tools/get-performance-bench.lisp:509–523,622–623`, blob
+`e3d41cac51ab5f060d2a8a9c4f3bb4cf3f17387d`;
+promessa di conservazione in `get-performance-metodo.md:152–168`.
+
+`product-self-test` accumula le metriche in una lista locale. Scrive
+`self-test-metrics.lisp` solo dopo tutti i casi e restituisce il riepilogo
+assegnato a `report :self-test` soltanto al ritorno normale. Se `run-loop`
+registra un errore GET, `run-window` può produrre una metrica `:failed` con
+conteggio parziale, checksum e diagnostica originale. La successiva
+`validate-window` solleva invece il generico «finestra incompleta o metriche
+incoerenti»: il controllo esce prima della scrittura e dell'assegnazione al
+report. La lista locale, compresa la finestra fallita, viene perduta.
+
+Il processo conserva un report failed/exit 1, ma perde i contatori e
+l'errore GET originali del self-test. Il ramo `run-bench:588–590` conserva
+invece la metrica nel report prima di validarla; il difetto riguarda
+l'autoverifica preliminare, eseguita anche da `--bench`.
+
+**Correzione richiesta:** rendere le metriche self-test già possedute dal
+report o persistibili sul percorso di unwind prima della validazione;
+conservare stato failed, coordinate, contatori e diagnostica della finestra.
+Non consumare raw/output di worker non quiescenti per riempire il rapporto.
+Il padre ha accettato R3 e indica il fix prima della qualifica benchmark.
+Fix ed evidenze saranno riletti alla ripresa; nessuna modifica qui.
+
+## R4 — P2 aperto: un tag cache scartato nasconde la copia riparata
+
+Difetto segnalato dal test agent attraverso il padre e verificato qui
+staticamente sulla baseline prodotto.
+
+**Sorgenti:** `src/cache/read.lisp:62–65,84–96`, blob
+`1b2e5eb00fe15187b74fe0fb87ebd43a3c8fb726`;
+`src/cache/clock.lisp:12–20,40–49`, blob
+`5aca4d48de7bf0d849eafe87ae89f6e7800282d8`;
+`src/cache/write.lisp:49–56`, blob
+`bcd7de80241f809dcfce472741f120a61ac787b4`.
+
+Controesempio senza concorrenza: la prima copia si trova nello slot 0 e la
+mano CLOCK è avanzata a 1. La verifica CRC fallisce e marca slot 0 rejected.
+Il fallback legge il PUT valido dal file. `gia-in-cache-p` ignora la copia
+rejected e l'inserimento può scegliere lo slot 1 vuoto, mantenendo il vecchio
+tag nello slot 0. Al GET successivo `cerca-record-cache` vede per primo quel
+tag: chiama `copia-posto-cache`, che rifiuta lo slot rejected, e ritorna
+immediatamente `:miss`. Non raggiunge la copia valida nello slot 1. Il
+reinserimento successivo può tornare `:present`, poiché il writer vede già
+la copia valida: il miss e la rilettura del file continuano. Un tag disabled
+precedente alla copia valida produce lo stesso oscuramento.
+
+È un difetto dell'acceleratore e della raggiungibilità della copia riparata,
+non un requisito trustcontroller. Non autorizza bytes corrotti: il reader
+ritorna range zero e GET usa il fallback verificato. Ha però costo concreto
+di I/O e CRC ripetuti e impedisce il successivo hit atteso.
+
+**Proposta del padre, ancora non applicata nei bytes esaminati:** filtrare
+disabled/rejected prima di `tag-cache-p`, mantenendo i controlli completi
+in `copia-posto-cache`. Staticamente la proposta conserva il limite di otto
+tag, una sola copia/verifica e nessuna attesa/retry. Il filtro preliminare
+non autorizza un hit: la copia deve ancora verificare sequenza pari,
+credito, bit di scarto, tag e sequenza stabile, poi CRC/chiave/CSN/prova.
+Una lettura conservativa dei bit può perdere un hit; non sostituisce il
+seqlock o la prova del record. Il primo `:verify-failed` continua a imporre
+fallback e allarme: il filtro riguarda slot già scartati.
+
+**Schema e decisioni:** nessun cambio necessario al layout tag, al record
+v1/v2 o alla forma degli esiti cache. In
+`docs/implementazione/cache-record.md:187–197` il caso ricade in CCH-D04
+(posto leggibile), CCH-D07 (vittima/reinserimento) e CCH-D09
+(scarto della copia senza quarantena del file). La correzione deve mantenere
+CCH-D05 e CCH-D06, inclusa la prova prepared e il controllo seqlock finale.
+La revisione della patch effettiva resta distinta da questa valutazione
+della proposta.
+
+**Riproduzione preparata dal padre:**
+`tests/get-performance/guards.lisp:137–157`, blob
+`9bbf7b2ceb817d6ecf2e7c67b0928373c2c07f70`, controlla v1/v2,
+fallback/reinserimento, poi hit senza pread, e un secondo caso disabled.
+Nessuna esecuzione o risultato attribuito qui; il padre registra prima il
+fallimento baseline e poi il fix. I sorgenti prodotto erano ancora immutati
+all'ultima lettura.
 
 ## Lettura del percorso GET
 
@@ -192,7 +292,69 @@ disassemblati non copre tutte le funzioni chiamate né
 `copia-candidato-get`/la copia generica `replace`. L'esito zero heap full u64
 rimane da misurare; la lettura statica non lo anticipa.
 
-## Attendibilità del benchmark: esame ancora aperto
+## Attendibilità del benchmark: esame statico completato
+
+Il tool autonomo e il metodo sono stati letti integralmente. Le identità
+finali di questa lettura sono rispettivamente
+`e3d41cac51ab5f060d2a8a9c4f3bb4cf3f17387d` e
+`78647ca7a9013d10456219e154a2fa4928ba5e1a`.
+Il driver non carica la suite complementare e non usa il suo observer I/O.
+
+| Confine esaminato | Sorgente del tool | Esito statico |
+|---|---|---|
+| Aperture V16 | `:123–125,160–166`; `src/io/transfer.lisp:12–15`; `src/get/build.lisp:46–47` | Correzione segnalata dal padre presente in entrambe: `max(64, record-size)`. Con V16 il PUT è 56 B ma l'header è 64 B; il precedente limite 56 avrebbe fermato il setup prima dei GET. |
+| Popolamento cache | `:154–158`; `src/cache/write.lisp:15–17,37,49–56` | `:inserted`, evicted NIL e scan NIL sono corretti per otto slot inizialmente vuoti. I due eventi restituiti sono booleani, non conteggi. |
+| Esiti nel ciclo | `:213–240` | Esige candidate/absent, hit/disabled, source segment, inserimento non tentato, lunghezza di copia e conclusione, IDLE/EBR libero e risposta completa. Errori non diventano retry o GET completati. |
+| Contatori | `:244–250,277–330` | Raw preallocati; completed/checksum aggiornati dopo ritorno normale e cleanup del ciclo. Totali e ogni worker devono uguagliare COUNT e checksum previsto; nessun arrotondamento bytes/op o sottrazione baseline. |
+| Heap e tempo | `:254–261,350–353,388–395` | Due letture heap globali del main, tick grezzi, metadati/rate fuori finestra. GC esplicito prima, GC automatico incluso. Ordine tick-start/heap-start/heap-end/tick-end dichiarato. |
+| Parallelo | `:354–387` | Closure/semafori/raw/nomi cold; creazione thread, gate, cicli e join dentro la stessa finestra globale. Warmup nel main, senza warmup runtime dei nuovi thread. Heap non attribuito per worker. |
+| Quiescenza e ownership | `:180–185,336–346,393–395`; `tests/get-performance/threads.lisp:78–82` | Controller consuma i raw dopo join e controllo dei thread vivi; FD non chiuso se resta un worker vivo. Anche la suite evita close quando stop/join fallisce. Nessuna osservazione del controller sui buffer durante il loop parallelo. |
+| Negative/zero tick | `:469–507,608–614` | Campi mancanti, negativi, worker corrotti, rate incoerente, schema mancante/diverso e confine failed/exit 1 sono esplicitamente verificati. Zero tick dà rate NIL e qualità below-resolution. `--negative-fixture` conserva la metrica senza completed e richiede fallimento. |
+| Matrice e conservazione | `:545–593` | COUNT 20.000 fisso, 5 repliche, seriale 90 e parallelo 270 finestre, coordinate esatte senza duplicati; campagne conservano la metrica prima della validazione. R3 delimita l'eccezione nel self-test preliminare. |
+| Sensore | `:441–467` | Controllo vuoto 20.000 cicli e positivo con quattro array u8 da 1 MiB trattenuti; delta almeno 4 MiB, nessuna sottrazione né gate heap-zero sui GET. Il positivo non certifica la sensibilità a piccole allocazioni o a ogni confine runtime. |
+| Persistenza/schema | `:398–419,578–580,640–647` | Schema 1, kind e status richiesti per ogni foglia; budget UTF-8 <1 MiB, rilettura come dati ed uguaglianza. Exit 0 richiede report positivo validato e persistito; R3 resta requisito prima della qualifica. |
+
+### Full u64 e limiti della conclusione
+
+Il massimo `#xffffffffffffffff` viene scritto nel record tramite due u32 e
+pubblicato nell'array u64 (`:97–98,138–147`). Nel ciclo il driver non estrae
+quel CSN in un valore Lisp generico: passa generazione zero e clock fresco;
+il verificatore GET riceve le due parole del candidato. Il profilo massimo
+attraversa quindi il percorso corrente. Non copre snapshot, TXID prepared,
+generazione/NOW oltre fixnum o ID storage oltre u32, che il metodo esclude.
+Non viene anticipato un risultato zero heap dalla tipizzazione dei raw o
+dall'assenza di boxing esplicito nel driver.
+
+La finestra comprende fill delle sentinelle, oracolo completo O(V), checksum,
+clock per GET, stati, cleanup e contatori, come confermato dal padre in R2.
+Nel parallelo include startup e join: il rate aggregato non misura un pool
+persistente. File piccoli e page cache riscaldata non qualificano NVMe,
+latenza/P99 o throughput DB. Il caso segmento ha cache disattivata, quindi
+esclude PEF-01; prepared e migrazione sono esclusi. Le cinque repliche e i
+delta globali non consentono attribuzione di allocazioni a una componente.
+Questi confini sono espliciti nel metodo e nei `:limits` del report.
+
+### Pubblicazione C4 e responsabilità del padre
+
+R1 è corretto nel collector con blob
+`f098cdb4cf5f0447365cf0bf255e1935d04bc53b`: le tre foglie benchmark/self-test
+sono selezionabili; i record comuni richiedono un nome esatto nel manifesto
+dati e ricevono scope `:explicit-command-or-repository-check` se il nome
+contiene `-command-`/`-check-`. Non sono prove isolate del prodotto GET.
+Il self-test contiene nomi positivo, prefix estraneo negativo e common
+unlisted negativo. Il manifesto è conservato nel catalogo con digest raw.
+
+All'ultima lettura non era presente `publication-roots.lisp`: non sono
+certificati nomi/argv di run futuri. Il padre ne possiede la generazione da
+run realmente posseduti e conclusi, con allowlist di tools get-performance,
+coverage scope get-performance e make check-core/controlli globali C4
+esplicitamente attribuiti. Il collector verifica schema e nomi del manifesto,
+non l'ownership o la semantica degli argv. Questa è una garanzia del
+controller della campagna, distinta dal difetto del selettore già corretto.
+SPK/repo-check restano evidenze del repository con scope esplicito.
+`record-command.lisp:80–99` conserva argv e confronto sorgenti prima/dopo:
+`source-consistency :stable` e blob effettivi sono da leggere nelle prove
+registrate dal padre, senza eseguire nulla da questa revisione.
 
 ### Fixture complementare disponibile durante la revisione
 
@@ -209,8 +371,8 @@ La fixture consente CSN fino a `#xffffffffffffffff`, mantiene generazione
 snapshot e NOW separati dal CSN e usa il clock controllato 10/11/12. Una
 misura che la riusa deve dichiarare quel clock artificiale, il singolo
 documento/segmento e l'assenza di prepared nella fixture attualmente letta.
-Nessun risultato heap viene inferito da questa lettura. Il driver del
-benchmark e il metodo non erano ancora presenti in questo aggiornamento.
+Nessun risultato heap viene inferito dalla sola fixture; il driver autonomo
+del benchmark è esaminato separatamente sopra.
 
 È stata inoltre letta la variante successiva del supporto
 `f7eac312809b34fa72dcd3b9a8b67d290cb08cd6`, che aggiunge il controllo dello
@@ -219,42 +381,9 @@ stato terminale e il percorso `:cache-record`, insieme a `paths.lisp`
 (`76157fb9424d4cf47847f2cec10c5bbcb977246b`). Le verifiche full u64 confrontano
 anche uno stamp differente nei bit 0/63 con CRC validi. Il controllo numerico
 snapshot è eseguito dopo il GET dal driver di correttezza, come dichiara il
-sorgente; non è una prova delle allocazioni del futuro kernel.
-
-Alla disponibilità del metodo/driver vanno localizzate nel sorgente le
-finestre che rispondono ai seguenti punti. Questi sono criteri dell'esame
-richiesto, non risultati, nuove suite o richieste di esecuzione qui.
-
-- **Full u64 realmente attraversati:** dati con CSN oltre fixnum e bit 63,
-  confronto snapshot su entrambi i lati della soglia, TXID prepared alto e
-  location con ID segmento alto. L'ID storage oltre u32 è un caso di rifiuto,
-  non una location GET ammissibile. Il CSN alto non implica automaticamente
-  una generazione snapshot alta o un NOW alto.
-- **Finestra heap:** fixture, record, prove, snapshot, risposta, raw counters,
-  closure/thread, warmup e registrazione del rapporto devono essere
-  attribuiti esplicitamente. Oracoli con `equalp`/`subseq`/liste e costruzione
-  di dati full u64 dentro il loop possono contaminare la misura. Le
-  allocazioni osservate del driver non devono essere nascoste per dichiarare
-  zero heap del percorso complessivo.
-- **Sensore:** registrare il delta grezzo, un controllo senza operazioni e
-  un controllo con allocazioni deliberate trattenute. Un delta nullo va
-  interpretato entro risoluzione e contabilizzazione del contatore SBCL,
-  incluso il flush/consumo dei suoi buffer di allocazione; non basta una
-  divisione che arrotondi bytes/op a zero. Un baseline positivo non deve
-  essere sottratto implicitamente dal requisito zero heap.
-- **Parallelo:** il conteggio heap di processo non fornisce heap per worker.
-  La finestra deve contenere tutti i worker e indicare se include semafori,
-  attesa del padre, avvio/join e GC. Un processo di controllo identico aiuta
-  ad attribuire il costo; non autorizza a rimuovere bytes non spiegati.
-- **Latenza e throughput:** distinguere tempo complessivo/operazioni da
-  quantili di latenza della singola richiesta. Conteggi completati, esiti,
-  bytes e checksum devono impedire che un miss/retry venga contato come GET
-  riuscito. Finestra troppo breve, clock quantizzato e cache/page cache calde
-  devono comparire nei limiti della conclusione.
-- **Provenienza:** fissare commit e blob effettivi prima/dopo le misure,
-  strumentazione e opzioni del compilatore, separare copertura e benchmark,
-  conservare tentativi falliti. Il README preregistra un commit prima dei run;
-  i risultati non erano ancora disponibili per confrontarlo.
+sorgente; non è una prova delle allocazioni del ciclo prestazionale.
+La variante del test di riparazione cache è localizzata in R4. La suite
+rimane complementare alla campagna funzionale dell'altra sessione.
 
 ## Identità dei sorgenti esaminati
 
@@ -278,6 +407,7 @@ che sia già committed o definitiva.
 | `src/read/task.lisp` | `b3601060197a27c6e8a2aaee22b5576c6b0c6e5a` |
 | `src/cache/core.lisp` | `9ab280c17b61b8f98f8299cbfae676942bb3ae47` |
 | `src/cache/read.lisp` | `1b2e5eb00fe15187b74fe0fb87ebd43a3c8fb726` |
+| `src/cache/clock.lisp` | `5aca4d48de7bf0d849eafe87ae89f6e7800282d8` |
 | `src/cache/write.lisp` | `bcd7de80241f809dcfce472741f120a61ac787b4` |
 | `src/index/read.lisp` | `abfdeb5397f8be1d390cbdf47f4f02cd2f36bf91` |
 | `src/index/validation.lisp` | `a8088783354d2e4e5048d6ac7a3bee7afff92719` |
@@ -298,11 +428,17 @@ che sia già committed o definitiva.
 | `tools/get-performance-evidence.lisp` (lavoro) | `6e298625a54a18fcc7337df8a4d8dc5dc3a2a86c` |
 | `tools/get-performance-evidence.lisp` (successiva variante, stesso selettore R1) | `dfaf5aabea2a58b95701da7d1f2431d791b77dc5` |
 | `tools/get-performance-evidence.lisp` (selettore R1 corretto) | `f098cdb4cf5f0447365cf0bf255e1935d04bc53b` |
+| `tools/get-performance-bench.lisp` (variante esaminata completa, max-transfer corretto) | `e3d41cac51ab5f060d2a8a9c4f3bb4cf3f17387d` |
+| `docs/implementazione/get-performance-metodo.md` (variante esaminata completa) | `78647ca7a9013d10456219e154a2fa4928ba5e1a` |
+| `tools/record-command.lisp` | `2e7364821e345b8b8714856a6a2f03c684140320` |
+| `docs/implementazione/cache-record.md` | `bd3a4f9fc7a2136b068957bba9307dd4737fb539` |
 | `tools/foundation-coverage.lisp` (lavoro) | `18d63b375401a58062752e7b4db43ad6be70a2ed` |
 | `tests/get-performance/support.lisp` (lavoro) | `a92bf7f3161f611db32272a03018cf63214d9954` |
 | `tests/get-performance/support.lisp` (variante successiva) | `f7eac312809b34fa72dcd3b9a8b67d290cb08cd6` |
 | `tests/get-performance/paths.lisp` (lavoro) | `160dae42a9723e9b0e93a085864affa96a4cd6be` |
 | `tests/get-performance/guards.lisp` (lavoro) | `76157fb9424d4cf47847f2cec10c5bbcb977246b` |
+| `tests/get-performance/guards.lisp` (riproduzione cache-repair-hit) | `9bbf7b2ceb817d6ecf2e7c67b0928373c2c07f70` |
+| `tests/get-performance/threads.lisp` (cleanup quiescenza) | `5780e3ef9c9e34a4098ddbd72e19cebfa6a34edd` |
 | `spikes/results/2026-10-11-get-performance/README.md` (lavoro) | `050abf32446e1ca18603f5a0ac1e91494428dd05` |
 | `spikes/results/2026-10-11-get-record/disassemblato-hash-archive.lisp` | `9910cd7902ab213f310e52225cfb29e579ca3f02` |
 

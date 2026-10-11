@@ -76,7 +76,9 @@ Solo CORRUPTION-DETECTED è convertita in miss; altri errori propagano, mai quar
   "Pre: versione visibile risolta dall'indice nel compito EBR; destination privata.
 Post: HIT e range valore solo dopo copia coerente e verifica completa; MISS/VERIFY-FAILED: range zero.
 Gli esiti negativi possono sporcare destination: non consumarla. VERIFY-FAILED richiede metrica/allarme
-e rilettura dal segmento; altre condizioni propagano. Nessun retry, I/O o lock in lettura."
+e rilettura dal segmento; altre condizioni propagano. Posti già rifiutati/disabilitati
+sono saltati entro gli otto way; ogni copia ricontrolla disponibilità e sequenza.
+Nessun retry, I/O o lock in lettura."
   (check-cache-request segment-high segment-low offset size key csn-high csn-low flags version)
   (let ((class (scegli-classe-cache cache size)))
     (unless class (return-from cerca-record-cache (values :miss 0 0)))
@@ -84,7 +86,9 @@ e rilettura dal segmento; altre condizioni propagano. Nessun retry, I/O o lock i
     (let ((base (* +cache-ways+ (insieme-cache class segment-high segment-low offset))))
       (dotimes (way +cache-ways+ (values :miss 0 0))
         (let ((slot (+ base way)))
-          (when (tag-cache-p class slot segment-high segment-low offset size)
+          (when (and (zerop (aref (classe-cache-disabled class) slot))
+                     (zerop (aref (classe-cache-rejected class) slot))
+                     (tag-cache-p class slot segment-high segment-low offset size))
             (unless (copia-posto-cache class slot segment-high segment-low offset size destination start)
               (return-from cerca-record-cache (values :miss 0 0)))
             (multiple-value-bind (verified vs ve)

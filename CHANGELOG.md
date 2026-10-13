@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Controllore locale del numero di worker di calcolo: EWMA intere,
+  crescita additiva, riduzione moltiplicativa e permanenza delle condizioni.
+  Campioni e tempo iniettati, target distinto dai worker effettivi,
+  aggiornamento limitato senza allocazioni dopo l’avvio. Avvio, risveglio
+  e ritiro dei thread restano il prossimo componente del pool.
+
 - Directory GET dei segmenti CLOSED: ID u32 compatti e riferimenti privati
   immutabili, controllo di Serie/ordine/budget prima delle copie, ricerca
   limitata a diciassette passi e collegamento al resolver/cache/I/O.

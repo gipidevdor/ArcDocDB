@@ -55,8 +55,8 @@
                              (:file "payload-write")))
                (:module "io" :serial t
                 :components ((:file "package") (:file "types") (:file "identity-types")
-                             (:file "native") (:file "lifecycle") (:file "identity")
-                             (:file "transfer") (:file "flush")))
+                             (:file "native") (:file "native-namespace") (:file "lifecycle") (:file "identity")
+                             (:file "namespace") (:file "transfer") (:file "flush")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
                              (:file "group") (:file "executor") (:file "csn")))
@@ -116,7 +116,8 @@
                              (:file "prepare") (:file "source")))
                (:module "control" :serial t
                 :components ((:file "package") (:file "types") (:file "dependency")
-                             (:file "build") (:file "preflight") (:file "transfer") (:file "prepare"))))
+                             (:file "build") (:file "preflight") (:file "transfer") (:file "prepare")
+                             (:file "publication") (:file "publication-read"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

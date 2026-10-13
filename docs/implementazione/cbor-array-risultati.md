@@ -172,6 +172,14 @@ precedono questa integrazione di test; i nuovi record sono conservati
 nel supplemento. Gli archivi già chiusi conservano le versioni esatte
 dei documenti e dei dati osservati durante le campagne precedenti.
 
+Viene poi integrata la pubblicazione CONTROL del main
+`e599703a6d840f3788e642042facf3ea71d8d32a`. La compilazione e l'intera
+suite combinata passano con gli stessi 1.182 nominali e due smoke;
+lint, tracciabilità e link restano validi. Prodotti, corpus e scope degli
+array mantengono le impronte congelate. Le prove globali e gli spike
+precedenti restano distinti da questo controllo dell'integrazione;
+le qualifiche aperte della pubblicazione CONTROL non sono promosse.
+
 ## Conservazione delle prove
 
 L'[archivio principale](../../spikes/results/2026-10-13-cbor-array-write/catalogo.lisp)

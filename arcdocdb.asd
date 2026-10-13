@@ -105,7 +105,11 @@
                              (:file "active-scan") (:file "active-build")
                              (:file "active-preflight") (:file "active-read")))
                (:module "get-directory" :serial t
-                :components ((:file "package") (:file "types") (:file "build") (:file "read"))))
+                :components ((:file "package") (:file "types") (:file "build") (:file "read")
+                             (:file "sources-types") (:file "sources-read")))
+               (:module "active" :serial t
+                :components ((:file "package") (:file "types") (:file "preflight")
+                             (:file "prepare") (:file "source"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -152,7 +156,8 @@
                (:module "get-performance" :serial t
                 :components ((:file "support") (:file "paths") (:file "guards") (:file "threads")))
                (:module "get-directory" :serial t
-                :components ((:file "support") (:file "construction") (:file "read") (:file "threads")))
+                :components ((:file "support") (:file "construction") (:file "read") (:file "threads")
+                             (:file "series-support") (:file "series-read")))
                (:module "get-resolver" :serial t
                 :components ((:file "support") (:file "sort") (:file "construction") (:file "read")))
                (:module "execution" :serial t

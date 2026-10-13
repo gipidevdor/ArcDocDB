@@ -33,4 +33,5 @@
            #:sorgente-get-attiva #:crea-sorgente-get-attiva #:radice-get-attiva
            #:verifica-capienza-get-attiva #:registra-lotto-get-attivo
            #:contenuto-radice-get-attiva #:payload-radice-get-attiva
+           #:risolvi-candidato-radice-attiva-get
            #:risolvi-candidato-attivo-get #:sonda-cache-attiva-get #:leggi-record-attivo-get))

@@ -96,3 +96,14 @@ SYSCALL-ERROR per guasto; nessun fallback meno durevole."
 (defun native-close (fd)
   "Pre: FD non ancora chiuso. Post: una close soltanto; SYSCALL-ERROR mai ritentato."
   (sb-posix:close fd))
+
+;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-FOR-001
+(declaim (ftype (function (fd) (values identity-component identity-component &optional))
+                native-identity))
+(defun native-identity (fd)
+  "Pre: capacità posseduta, nessuna close concorrente. Post: device/inode da una fstat.
+Non legge il percorso o la dimensione; IO-FAULT se non regolare, SYSCALL-ERROR senza retry."
+  (let ((stat (sb-posix:fstat fd)))
+    (unless (sb-posix:s-isreg (sb-posix:stat-mode stat))
+      (error 'io-fault :reason :io-file-kind :operation :identity))
+    (values (sb-posix:stat-dev stat) (sb-posix:stat-ino stat))))

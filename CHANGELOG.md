@@ -12,6 +12,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   stessa radice catturata e rifiuto di owner/ID duplicati prima dell'adozione.
   Mantiene il protocollo WAL e i cinque esiti del nucleo GET; rotazione e
   reclaim completo restano distinti.
+- Associazione fisica readonly/append: confronto esatto device/inode nel pool
+  I/O, prova immutabile legata alle capacità e verifica senza syscall nel
+  costruttore ACTIVE. Backend iniettabile esteso con identity opzionale;
+  rifiuti senza fallback, retry o mutazioni. Percorso GET invariato;
+  adozione nel server e qualifica C1 restano aperte.
+
 - Directory GET dei segmenti CLOSED: ID u32 compatti e riferimenti privati
   immutabili, controllo di Serie/ordine/budget prima delle copie, ricerca
   limitata a diciassette passi e collegamento al resolver/cache/I/O.

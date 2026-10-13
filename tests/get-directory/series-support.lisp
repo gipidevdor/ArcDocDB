@@ -19,7 +19,7 @@
   "Pre: setup esclusivo. Post: directory CLOSED riusata, ACTIVE nativo opzionale e un controller.
 La fixture mantiene due FD del medesimo file; cleanup solo dopo l'ultimo accesso GET."
   (directory nil :type (or null directory-fixture))
-  (file nil :type t) (readonly nil :type t) (path nil :type t)
+  (file nil :type t) (readonly nil :type t) (path nil :type t) (backend nil :type t)
   (registry nil :type t) (log nil :type t) (controller nil :type t) (lease nil :type t)
   (source nil :type t) (sources nil :type t) (root nil :type t) (planned nil :type t)
   (active-key nil :type t) (active-value nil :type t)
@@ -69,8 +69,15 @@ Backend nativo senza sostituzione; sola osservazione pread riusata dalla directo
   (let* ((directory (directory-series-fixture-directory fixture))
          (path (merge-pathnames "series-active.tmp" (directory-fixture-root directory)))
          (header (directory-octets 64))
-         (file (io:crea-temporaneo path)))
-    (setf (directory-series-fixture-path fixture) path (directory-series-fixture-file fixture) file)
+         (observed (directory-observed-backend (directory-fixture-observer directory)
+                                              (directory-series-fixture-active-id fixture)))
+         (backend (io:make-backend (io::backend-open observed) (io::backend-reader observed)
+                                  (io::backend-writer observed) (io::backend-flush observed)
+                                  (io::backend-directory-flush observed) (io::backend-close observed)
+                                  :identity #'io::native-identity))
+         (file (io:crea-temporaneo path :backend backend)))
+    (setf (directory-series-fixture-path fixture) path (directory-series-fixture-file fixture) file
+          (directory-series-fixture-backend fixture) backend)
     (arcdocdb.storage.format:scrivi-header-segmento
      header 0 (g::vista-get-serie-identity (directory-fixture-view directory))
      (directory-series-fixture-active-id fixture) 123456
@@ -90,15 +97,15 @@ Header letto realmente dal resolver; nessuna mappa o frontiera sintetica."
   (let* ((directory (directory-series-fixture-directory fixture))
          (file (io:apri-lettura
                 (directory-series-fixture-path fixture)
-                :backend (directory-observed-backend (directory-fixture-observer directory)
-                                                     (directory-series-fixture-active-id fixture)))))
+                :backend (directory-series-fixture-backend fixture))))
     (setf (directory-series-fixture-readonly fixture) file
           (directory-series-fixture-source fixture)
           (r:crea-sorgente-get-attiva
            (directory-series-fixture-controller fixture) (directory-series-fixture-lease fixture)
            (g:crea-segmento-get (directory-fixture-view directory) file
                                (directory-series-fixture-active-id fixture) (directory-octets 64))
-           :max-pages 4 :max-puts 4 :batch-records 1 :batch-bytes 256 :budget-payload 4096))))
+           :max-pages 4 :max-puts 4 :batch-records 1 :batch-bytes 256 :budget-payload 4096
+           :associazione-file (io:associa-file file (directory-series-fixture-file fixture))))))
 
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-008
 (defun make-directory-series-fixture (&key (count 2) (workers 4) (version 2) (cache-p nil)

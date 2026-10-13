@@ -302,6 +302,9 @@ for name in sys.argv[1:]:
              (fasls (mapcar (lambda (file) (asdf:apply-output-translations
                                             (make-pathname :type "fasl" :defaults (merge-pathnames file root)))) files))
              (hashes nil))
+        (unless (equal files (getf config :compiled-source-files))
+          (reject "loaded ASDF sources differ from parent selection."))
+        (setf (getf record :loaded-source-files) files)
         (dolist (fasl fasls)
           (unless (and (probe-file fasl) (uiop:subpathp (truename fasl) destination))
             (reject "nonprivate/missing loaded FASL.")))
@@ -385,6 +388,7 @@ for name in sys.argv[1:]:
          (config (list :schema-version 1 :kind :get-active-init-mutation-config :files files
                        :baseline-manifest frozen :manifest copied :changed-paths changed :mutation mutant
                        :expected-tests expected :test-suites *test-suites*
+                       :compiled-source-files (loaded-source-files root (list :files files))
                        :child-report (namestring (merge-pathnames "child-report.lisp" evidence)))))
     (unless (equal changed (when mutant (list (getf mutant :file)))) (reject "unexpected copy delta ~S." changed))
     (write-record config (merge-pathnames "config.lisp" evidence))
@@ -397,20 +401,23 @@ for name in sys.argv[1:]:
           do (when (>= (get-internal-real-time) deadline) (return)) (sleep 0.01))
     (not (uiop:process-alive-p process))))
 (defun verify-artifacts (child config copy evidence)
-  "Il parent verifica byte e FASL su disco; i soli booleani del child non attestano la build."
+  "Il parent confronta componenti ASDF congelati, fonti e FASL privati; SHA in lotto."
   (let* ((files (getf config :files)) (entries (getf child :compiled-files))
-         (expected (remove-if-not (lambda (file) (or (uiop:string-prefix-p "src/" file)
-                                                   (uiop:string-prefix-p "tests/" file))) files))
+         (expected (getf config :compiled-source-files))
          (changed (loop for old in (getf config :baseline-manifest) for new in (getf config :manifest)
                         unless (equal old new) collect (getf new :file)))
          (config-path (merge-pathnames "config.lisp" evidence)) (mutant (getf config :mutation)))
-    (and (equal (getf config :manifest) (manifest files copy))
+    (and expected (<= (length expected) 4096)
+         (= (length expected) (length (remove-duplicates expected :test #'string=)))
+         (every (lambda (file) (member file files :test #'string=)) expected)
+         (equal (getf config :manifest) (manifest files copy))
          (eql 1 (getf config :schema-version)) (eq :get-active-init-mutation-config (getf config :kind))
          (equal changed (getf config :changed-paths))
          (equal changed (when mutant (list (getf mutant :file))))
          (equal (getf config :manifest) (getf child :source-manifest-before))
          (equal (getf config :manifest) (getf child :source-manifest))
          (equal (getf config :expected-tests) (getf child :registered-tests))
+         (equal expected (getf child :loaded-source-files))
          (string= (sha256 config-path) (getf child :config-sha256))
          (string= (getf child :config-sha256) (getf child :config-sha256-after))
          (string= (sha256 (merge-pathnames "driver.lisp" evidence))
@@ -421,12 +428,20 @@ for name in sys.argv[1:]:
              (string= (sha256 (merge-pathnames "mutated-source.lisp" evidence))
                       (sha256 (merge-pathnames (getf mutant :file) copy))))
          (= (length entries) (length expected))
-         (equal (sort (mapcar (lambda (entry) (getf entry :file)) entries) #'string<) (sort (copy-list expected) #'string<))
+         (equal (sort (mapcar (lambda (e) (getf e :file)) entries) #'string<) expected)
          (every (lambda (entry)
                   (let ((fasl (getf entry :fasl)) (file (getf entry :file)))
-                    (and (stringp fasl) (uiop:subpathp (truename fasl) (merge-pathnames "fasl/" copy))
-                         (string= (getf entry :source-sha256) (sha256 (merge-pathnames file copy)))
-                         (string= (getf entry :fasl-sha256) (sha256 fasl))))) entries))))
+                    (and (stringp fasl) (probe-file fasl)
+                         (uiop:subpathp (truename fasl) (merge-pathnames "fasl/" copy))
+                         (equal (truename fasl)
+                                (truename (make-pathname :type "fasl" :defaults
+                                           (merge-pathnames file (merge-pathnames "fasl/" copy)))))
+                         (string= (getf entry :source-sha256)
+                                  (getf (find file (getf config :manifest) :key (lambda (e) (getf e :file))
+                                              :test #'string=) :sha256))))) entries)
+         (let ((hashes (manifest (mapcar (lambda (e) (enough-namestring (getf e :fasl) copy)) entries) copy)))
+           (loop for entry in entries for hash in hashes
+                 always (string= (getf entry :fasl-sha256) (getf hash :sha256)))))))
 (defun run-copy (root directory files frozen expected mutant checkpoint)
   (let* ((name (if mutant (getf mutant :name) "baseline"))
          (copy (exclusive-directory (merge-pathnames (format nil "raw/isolatedtests/~A/" name) directory)))
@@ -495,7 +510,7 @@ for name in sys.argv[1:]:
                                        :new-empty-bootstrap-tests-required :native-fixture-io :serial-function-fi
                                        :compiler-fixture-type-io-timeout-crash-not-kills :isolatedcopies-excluded-from-collector
                                        :evidence-directory-must-be-collected-with-terminal-producer
-                                       :sha256-helper-native-process-cost :all-asdf-test-definitions-loaded-only
+                                       :python3-batched-sha256 :individual-artifact-sha256-native-process :all-asdf-test-definitions-loaded-only
                                        :cooperative-parent-deadline :no-engine-qualification))))
     (handler-case
         (progn
@@ -505,6 +520,7 @@ for name in sys.argv[1:]:
           (setf (getf report :self-test) (self-test directory)) (save-report report directory)
           (when (string= "--check" (first args))
             (setf files (inventory) frozen (manifest files root) (getf report :frozen-manifest) frozen)
+            (asdf:load-asd (merge-pathnames "arcdocdb.asd" root))
             (let ((expected (expected-tests)))
               (setf (getf report :expected-tests) expected) (save-report report directory)
               (dolist (mutant *mutants*)

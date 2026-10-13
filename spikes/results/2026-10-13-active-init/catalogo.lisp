@@ -28,4 +28,6 @@
   (:KIND :STATIC-DISASSEMBLY :ARTIFACT
    #A((27) BASE-CHAR . "disassemblato-iniziale.lisp") :PROCESS-ARTIFACT
    #A((41) BASE-CHAR . "disassemblato-iniziale-conservazione.lisp") :VARIANT
-   :SOURCE-SNAPSHOT-IN-RECORD)))
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :SOURCE-SUPPORT :ARTIFACT "ricostruzione-iniziale.lisp" :VARIANT
+   :INITIAL-SOURCE-DIFF-BEFORE-REBASE)))

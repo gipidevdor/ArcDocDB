@@ -33,7 +33,8 @@
 (defun supplement ()
   (let* ((path (merge-pathnames "catalogo.lisp" *base*)) (catalog (read-data path)))
     (dolist (name '("benchmark-summary.lisp" "benchmark-summary-f.lisp" "benchmark-summary-g.lisp"
-                   "history.lisp" "history-g.lisp" "review-capture.lisp" "compaction.lisp"))
+                   "history.lisp" "history-g.lisp" "review-capture.lisp" "integration.lisp"
+                   "compaction.lisp" "compaction-first.lisp"))
       (let ((r (read-data (merge-pathnames name *base*))))
         (push (list :artifact name :kind (getf r :kind) :status (getf r :status)
                     :scope :derived-results-or-development-history
@@ -48,7 +49,9 @@
                     "assemble-manifest-initial.txt" "publication-tool-source-attempt-c.txt"
                     "capture-source-attempt-a.txt" "derive-results-attempt-a.txt"
                     "benchmark-summary-attempt-a.txt" "capture-source-attempt-b.txt"
-                    "publication-roots-g.txt" "command-manifest-g.txt"))
+                    "publication-roots-g.txt" "command-manifest-g.txt"
+                    "integrate-results.lisp" "integrate-results-source.txt" "report-prima-pubblicazione.txt"
+                    "compact-records-attempt-a.txt" "compact-records-first-source.txt"))
       (push (raw-entry name) (getf catalog :associated-raw-files)))
     (save-data catalog path)))
 (defun copy-record (source destination)
@@ -80,6 +83,8 @@
               (push (raw-entry target) entries))))))
     (labels ((walk (dir)
                (dolist (path (uiop:directory-files dir))
+                 (when (member (pathname-type path) '("fasl" "core") :test #'equal)
+                   (error "Cache ricostruibile pubblicata: ~A" path))
                  (let ((n (arcdocdb.evidence:file-bytes path)))
                    (when (> n 1048576) (error "File oltre 1 MiB: ~A" path))
                    (incf count) (incf bytes n) (setf maximum (max n maximum))))

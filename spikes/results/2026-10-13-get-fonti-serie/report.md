@@ -40,6 +40,17 @@ impossibile. Il caso 65.536 è geometria sintetica con un solo FD, non
 Le verifiche complete di G passano con **1.038 test nominati**, due smoke,
 dieci spike di correttezza e compilazione senza WARNING/STYLE-WARNING.
 Il controllo H ripete la suite dopo la correzione del registratore.
+L'integrazione successiva passa **1.061 test nominati** dopo l'aggiunta
+dei 23 test del controller pool. Il primo controllo dei link ha rifiutato
+cinque riferimenti del rapporto prima della pubblicazione degli artefatti:
+il comando fallito è conservato e il controllo è ripetuto senza modificare
+prodotto, test o strumenti del repository.
+La successiva [integrazione del controller pool](integration.lisp) conserva
+una verifica completa distinta: il confronto dei sorgenti dei due comandi
+conferma che soltanto i sei file nuovi di `src/scheduler/` cambiano
+nel prodotto e che fixture e strumenti GET restano identici. Le misure H
+rimangono associate al loro freeze, senza rivendicare un benchmark ripetuto
+del repository dopo questa integrazione.
 Build, linter e negativi, tracciabilità, link, conservazione compressa
 e cataloghi fanno parte del comando completo; nessun benchmark storico
 è rieseguito dal controllo dei cataloghi.
@@ -136,10 +147,14 @@ esclusi dal freeze generale hanno copie TXT e digest dell'invocazione.
 Non sono firme contro un host ostile o digest di tutte le dipendenze
 caricate transitivamente.
 
-La [compattazione locale](compaction.lisp) usa quattro worker e gzip
+La [prima compattazione](compaction-first.lisp) e la
+[compattazione estesa ai child/result](compaction.lisp) usano quattro worker e gzip
 senza perdita, con confronto dei byte riespansi e aggiornamento dei
 digest del [catalogo](catalogo.lisp). L'audit controlla catalogo, raw,
 HTML e compressione; il controllo globale verifica struttura e dimensioni.
+Il primo ampliamento del compattatore ai log è respinto per una forma
+Lisp non chiusa, prima di eseguire il corpo e modificare le copie:
+sorgente e comando fallito sono conservati e il comando corretto è ripetuto.
 La [chiusura](closure-inventory.lisp) è un inventario puntuale: gli audit
 successivi sono conservati, l'ultimo record è copiato separatamente
 per evitare una dipendenza circolare. Nessuna riscrittura della storia Git.

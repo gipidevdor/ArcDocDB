@@ -44,6 +44,26 @@ Rifiuti e guasti non chiudono o mutano le capacità; nessuna prova di CRC/commit
   (%make-associazione-file input append))
 
 ;;; REQ: REQ-AFF-001 REQ-FOR-001
+(declaim (ftype (function (file-io file-io) null) verifica-file-distinti))
+(defun verifica-file-distinti (left right)
+  "Pre: due capacità readonly aperte dello stesso backend, FD stabili nel pool I/O.
+Post: identità POSIX diverse, due fstat/callback; nessuna mutazione o retry.
+INVALID-ARGUMENT per backend/file alias; UNSUPPORTED-FORMAT senza callback identity.
+IO-FAULT/INVARIANT-VIOLATION propagano; non certifica namespace, CRC o durability."
+  (esigi-aperto left :input) (esigi-aperto right :input)
+  (unless (eq (file-backend left) (file-backend right))
+    (error 'invalid-argument :reason :io-identity-backend))
+  (let ((backend (file-backend left)))
+    (when (and backend (null (backend-identity backend)))
+      (error 'unsupported-format :reason :io-identity-unavailable)))
+  (multiple-value-bind (left-device left-inode) (leggi-identita-file left)
+    (multiple-value-bind (right-device right-inode) (leggi-identita-file right)
+      (when (and (= left-device right-device) (= left-inode right-inode))
+        (error 'invalid-argument :reason :io-file-alias))))
+  (esigi-aperto left :input) (esigi-aperto right :input)
+  nil)
+
+;;; REQ: REQ-AFF-001 REQ-FOR-001
 (declaim (ftype (function (associazione-file file-io file-io) null) verifica-associazione-file))
 (defun verifica-associazione-file (association input append)
   "Pre: associazione creata nel pool I/O; il proprietario impedisce close concorrenti.

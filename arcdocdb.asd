@@ -112,7 +112,10 @@
                              (:file "sources-types") (:file "sources-read")))
                (:module "active" :serial t
                 :components ((:file "package") (:file "types") (:file "preflight")
-                             (:file "prepare") (:file "source"))))
+                             (:file "prepare") (:file "source")))
+               (:module "control" :serial t
+                :components ((:file "package") (:file "types") (:file "dependency")
+                             (:file "build") (:file "preflight") (:file "transfer") (:file "prepare"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

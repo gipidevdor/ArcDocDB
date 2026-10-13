@@ -1,0 +1,17 @@
+(:SCHEMA-VERSION 1 :KIND :POOL-CONTROLLER-DEVELOPMENT-MANIFEST :INCLUDED
+ ((:PATH
+   #A((76) BASE-CHAR
+      . "/private/tmp/lifecycle-publication-fixture-ZxpZN6/large-native/raw-native.py")
+   :BYTES 1049103 :SHA256 "a49ccec5f13a14220e70be9aa79d73dccdf93d039d06c1987065d8b372e1ed5a"
+   :GIT-BLOB "d37941c9de5e131d616171cbd6c2fb83f359bc47")
+  (:PATH
+   #A((73) BASE-CHAR . "/private/tmp/lifecycle-publication-fixture-ZxpZN6/large-native/small.note")
+   :BYTES 11 :SHA256 "b77ddb118730bce3aa7f27d3f9675ac11a640196c066affd85cc72cd6fcfb942" :GIT-BLOB
+   "43d0698b084023a5cd950df954daa6ea82e939d7"))
+ :BUNDLES
+ (#A((25) BASE-CHAR . "development-evidence.lisp") #A((24) BASE-CHAR . "development-large-1.lisp"))
+ :EXCLUDED-INTERMEDIATES NIL :LARGE-STAGE
+ #A((53) BASE-CHAR . "spikes/out/pool-publication-staging/4000911348-22259/") :LIMITS
+ (:ORIGINAL-DEVELOPMENT-LOGS :NO-RUN-STATUS-REINTERPRETATION
+  :CURRENT-RUNNERS-NOT-HISTORICAL-SOURCE-RECONSTRUCTION :COMPILER-FASL-NOT-PUBLISHED
+  :UTF8-ROUNDTRIP-BYTE-VERIFIED))

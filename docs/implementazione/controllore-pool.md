@@ -9,6 +9,10 @@ segnali; [il metodo preregistrato](controllore-pool-metodo.md),
 [la lettura del codice](controllore-pool-revisione.md) e
 [i risultati](controllore-pool-risultati.md) delimitano le prove.
 
+Il [registro di attuazione logica](pool-worker-lifecycle.md) è il componente
+successivo: collega questa politica alle conferme dei worker preesistenti.
+Il controller da solo conserva il contratto e lo scope descritti qui.
+
 Il controllore appartiene al thread che lo crea. Il solo scheduler legge e
 aggiorna il suo stato; i getter rispettano lo stesso proprietario. Campioni,
 worker effettivi e tick provengono dal caller. Non si legge il clock del

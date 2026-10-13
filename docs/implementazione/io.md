@@ -21,6 +21,7 @@ Il pool e il motore delle transazioni restano moduli da integrare.
 | `stato-file` | open, faulted o closed |
 | `mode-file` | modo immutabile input, append o directory; nessun descrittore esposto |
 | `verifica-capienza-append` | verifica totale del gruppo e massimo chunk prima della prima write |
+| `verifica-capienza-lettura` | verifica modo/stato e numero di byte ammesso prima di effetti su altri file |
 | `associa-file`, `verifica-associazione-file` | [prova di identità fisica](associazione-file.md) readonly/append, creata nel pool I/O e verificata senza syscall |
 | `posizione-scritta`, `posizione-durevole` | frontiere del nuovo file, osservate dal proprietario |
 

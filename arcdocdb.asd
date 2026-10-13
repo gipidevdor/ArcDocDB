@@ -42,7 +42,10 @@
                              (:file "worker-types") (:file "worker-boundary") (:file "worker-claim") (:file "worker-run")))
                (:module "scheduler" :serial t
                 :components ((:file "package") (:file "types") (:file "build")
-                             (:file "read") (:file "policy") (:file "update")))
+                             (:file "read") (:file "policy") (:file "update")
+                             (:file "lifecycle-types") (:file "lifecycle-read")
+                             (:file "lifecycle-build") (:file "lifecycle-worker")
+                             (:file "lifecycle-update")))
                (:module "storage"
                 :serial t
                 :components ((:file "package") (:file "formats") (:file "segment-header")
@@ -106,7 +109,13 @@
                              (:file "active-preflight") (:file "active-read")))
                (:module "get-directory" :serial t
                 :components ((:file "package") (:file "types") (:file "build") (:file "read")
-                             (:file "sources-types") (:file "sources-read"))))
+                             (:file "sources-types") (:file "sources-read")))
+               (:module "active" :serial t
+                :components ((:file "package") (:file "types") (:file "preflight")
+                             (:file "prepare") (:file "source")))
+               (:module "control" :serial t
+                :components ((:file "package") (:file "types") (:file "dependency")
+                             (:file "build") (:file "preflight") (:file "transfer") (:file "prepare"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -163,7 +172,7 @@
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
                (:module "scheduler" :serial t
-                :components ((:file "support") (:file "controller")))
+                :components ((:file "support") (:file "controller") (:file "lifecycle")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")

@@ -1,0 +1,40 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4000910905 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((98) BASE-CHAR
+    . \"/private/tmp/arcdocdb-pool-lifecycle-qualification-1791921785/spikes/out/4000910872-check-16097-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 2 :WALL-SECONDS 1.959425d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 57106525 :STORED-BYTES 878303
+ :RESULTS
+ ((:PATH
+   #A((109) BASE-CHAR
+      . \"/private/tmp/arcdocdb-pool-lifecycle-qualification-1791921785/spikes/out/4000910872-check-16097-0/SPK-07.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28144051 :STORED-BYTES 410947 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"SPK-07.lisp.gz\" :UNCOMPRESSED-BYTES 28144051 :UNCOMPRESSED-SHA256
+    \"50c8637d659ffacb066a830da66d8c17720df14ec123c5627c893ddddbf3a4da\"
+    :COMPRESSED-BYTES 410629 :COMPRESSED-SHA256
+    \"6668b53bdda5a58da6ca7e56e67b08bb983c67fd48cee6e27ad0e1d45af14754\"))
+  (:PATH
+   #A((109) BASE-CHAR
+      . \"/private/tmp/arcdocdb-pool-lifecycle-qualification-1791921785/spikes/out/4000910872-check-16097-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28962474 :STORED-BYTES 467356 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 28962474 :UNCOMPRESSED-SHA256
+    \"7bad4b3df9a99d99bc7bf86800c7656f89080132c1d027212d36c7ee47032113\"
+    :COMPRESSED-BYTES 467038 :COMPRESSED-SHA256
+    \"0b7f9e27a15b134c42b34fa3a4ca70db6c3217ff56e7150cd002fdcc5ff45e93\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((89) BASE-CHAR
+     . "/private/tmp/arcdocdb-pool-lifecycle-qualification-1791921785/tools/compact-evidence.lisp")
+  "--root"
+  #A((98) BASE-CHAR
+     . "/private/tmp/arcdocdb-pool-lifecycle-qualification-1791921785/spikes/out/4000910872-check-16097-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "16097"))
+ :STARTED-AT-UNIVERSAL-TIME 4000910903)

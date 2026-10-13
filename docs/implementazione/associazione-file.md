@@ -13,6 +13,7 @@ quelle di [ADR-0017](../adr/0017-piattaforma-e-io.md) e del
 |---|---|---|
 | `associa-file input append` | controller esclusivo nel pool I/O; capacità aperte, dello stesso backend; nessuna close concorrente | associazione immutabile, restituita solo dopo confronto esatto device/inode |
 | `verifica-associazione-file prova input append` | stessa ownership e durata delle capacità | verifica O(1) dei riferimenti e degli stati, senza I/O |
+| `verifica-file-distinti left right` | due capacità readonly stabili del medesimo backend, nel pool I/O | due fstat/callback; rifiuta lo stesso device/inode, senza mutazioni o retry |
 | `make-backend … :identity callback` | callback fidato e stabile, dello stesso dominio degli altri callback | estensione opzionale; le sei posizioni precedenti restano compatibili |
 | `crea-sorgente-get-attiva … :associazione-file prova` | prova ottenuta nel pool I/O | verifica readonly della sorgente e append effettivo del log del controller prima di costruire la sorgente |
 
@@ -75,6 +76,10 @@ originaria del costruttore ACTIVE: il chiamante deve provare l'identità fisica.
 Il nuovo percorso esplicito la verifica nel prodotto. La registrazione concreta
 di apertura/rotazione del server deve ancora adottarlo; il costruttore non apre
 automaticamente file e non rende sicuro un percorso che ignori questa prova.
+
+Il [preparatore del nuovo segmento writer](inizializzazione-active.md) richiede
+la prova prima della prima write e nell'adozione della sorgente ACTIVE,
+insieme a flush, rilettura dell'header e fsync del parent.
 
 ## Decisioni e stato delle evidenze
 

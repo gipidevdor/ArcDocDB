@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Presa dei writer governata dallo stato del pool: conferma il comando solo
+  dopo la barriera IDLE, delega il claim C1 quando attivo e lascia ready e
+  cursore intatti quando inattivo. Compiti e ricircoli già acquisiti completano
+  i propri obblighi prima del ritiro; nessuna attesa o gestione fisica dei thread.
+
 - Attuazione logica del controllore pool su worker preesistenti: richieste
   persistenti e conteggio delle sole conferme, ritiro soltanto a contesto IDLE
   senza abbandonare lease o batch, riattivazione degli stessi contesti.

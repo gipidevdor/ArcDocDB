@@ -45,7 +45,7 @@
                              (:file "read") (:file "policy") (:file "update")
                              (:file "lifecycle-types") (:file "lifecycle-read")
                              (:file "lifecycle-build") (:file "lifecycle-worker")
-                             (:file "lifecycle-update")))
+                             (:file "lifecycle-update") (:file "pool-claim")))
                (:module "storage"
                 :serial t
                 :components ((:file "package") (:file "formats") (:file "segment-header")
@@ -167,7 +167,8 @@
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
                (:module "scheduler" :serial t
-                :components ((:file "support") (:file "controller") (:file "lifecycle")))
+                :components ((:file "support") (:file "controller") (:file "lifecycle")
+                             (:file "pool-claim")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")

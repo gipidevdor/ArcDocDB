@@ -20,13 +20,16 @@ tramite `leggi-radice-serie`, con la barriera acquire esistente, **dopo**
 attraverso le API ACTIVE del reader.
 
 1. Nel pool I/O costruire `segmento-get` con header letto dal FD readonly.
-   Il controller associa questo FD e quello append allo **stesso file
-   fisico** e li mantiene aperti fino al reclaim. Identità/versione/header
+   Nel pool I/O usare [associa-file](associazione-file.md) per provare che questo
+   FD e quello append appartengono allo **stesso file fisico**, e mantenerli
+   aperti fino al reclaim. Identità/versione/header
    non costituiscono, da soli, una prova di identità fisica dei due FD.
 2. Creare un controller locale per il nuovo ACTIVE, con root `nil` e
    `:next-offset 64`, e acquisirne la lease. Con questa lease,
    `crea-sorgente-get-attiva` verifica origine writer, ID positivo u32,
-   versione del log e configurazione. Non esegue I/O.
+   versione del log e configurazione. Passando `:associazione-file prova`,
+   verifica anche le due capacità effettive senza I/O. Omettere la prova conserva
+   l'obbligo originario del caller; il solo header non lo assolve.
 3. Sul lotto OPEN, chiamare `verifica-capienza-get-attiva` **prima** del
    ponte WAL–CSN. La preflight verifica ring, contiguità, forma supportata,
    spazio segmento e budget; restituisce il numero PUT, senza assegnare CSN

@@ -1,0 +1,25 @@
+(:schema-version 1 :kind :get-resolver-integration-collection
+ :freeze "15fc91c824b0c49ad91dfdfc9845d4e9e2148102"
+ :groups
+ (("check-R2-failed" "spikes/out/4000906080-command-37448-0/" t)
+  ("check-R3" "spikes/out/4000906298-command-38554-0/" t)
+  ("coverage-R2-command" "spikes/out/4000906081-command-37458-0/" t)
+  ("coverage-R2" "spikes/out/get-resolver-coverage-R2/" nil)
+  ("snapshot-fixtures-R2" "spikes/out/4000906106-snapshot-self-test-37553-0/" nil)
+  ("reader-fixtures-R2" "spikes/out/4000906106-reader-self-test-37562-0/" nil)
+  ("snapshot-fixtures-R3" "spikes/out/4000906323-snapshot-self-test-38812-0/" nil)
+  ("reader-fixtures-R3" "spikes/out/4000906324-reader-self-test-38816-0/" nil)
+  ("spikes-R3" "spikes/out/4000906465-check-40616-0/" nil)
+  ("SPK-01" "spikes/SPK-01-primary-index/out/" nil)
+  ("SPK-02" "spikes/SPK-02-gc/out/" nil)
+  ("SPK-03" "spikes/SPK-03-group-commit/out/" nil)
+  ("SPK-04" "spikes/SPK-04-writer-pool/out/" nil)
+  ("SPK-05" "spikes/SPK-05-segment-read/out/" nil)
+  ("SPK-06" "spikes/SPK-06-compaction-load/out/" nil)
+  ("SPK-07" "spikes/SPK-07-protocols/out/" nil)
+  ("SPK-08" "spikes/SPK-08-generated-code/out/" nil)
+  ("SPK-09" "spikes/SPK-09-integrity/out/" nil)
+  ("SPK-10" "spikes/SPK-10-v2-limits/out/" nil))
+ :files (("README.md" "spikes/out/resolver-publication/integration-README.txt"))
+ :limits (:complete-explicit-groups :native-descriptors-unchanged
+          :failures-preserved :raw-fasl-as-data :no-result-promotion))

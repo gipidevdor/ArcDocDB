@@ -32,7 +32,8 @@
     (save-data r path)))
 (defun supplement ()
   (let* ((path (merge-pathnames "catalogo.lisp" *base*)) (catalog (read-data path)))
-    (dolist (name '("benchmark-summary.lisp" "history.lisp" "compaction.lisp"))
+    (dolist (name '("benchmark-summary.lisp" "benchmark-summary-f.lisp" "benchmark-summary-g.lisp"
+                   "history.lisp" "history-g.lisp" "review-capture.lisp" "compaction.lisp"))
       (let ((r (read-data (merge-pathnames name *base*))))
         (push (list :artifact name :kind (getf r :kind) :status (getf r :status)
                     :scope :derived-results-or-development-history
@@ -46,7 +47,8 @@
                     "publication-tool-source-attempt-a.txt" "publication-tool-source-attempt-b.txt"
                     "assemble-manifest-initial.txt" "publication-tool-source-attempt-c.txt"
                     "capture-source-attempt-a.txt" "derive-results-attempt-a.txt"
-                    "benchmark-summary-attempt-a.txt"))
+                    "benchmark-summary-attempt-a.txt" "capture-source-attempt-b.txt"
+                    "publication-roots-g.txt" "command-manifest-g.txt"))
       (push (raw-entry name) (getf catalog :associated-raw-files)))
     (save-data catalog path)))
 (defun copy-record (source destination)

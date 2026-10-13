@@ -2,12 +2,24 @@
 ;;; REQ: REQ-VAL-001 REQ-AFF-012
 (require :asdf)
 (load "tools/evidence-storage.lisp")
+(defun helper-paths (argv)
+  "Opzioni SBCL fino a --script/file o --; gli argomenti dello script sono opachi."
+  (unless (and argv (string-equal "sbcl" (file-namestring (first argv))))
+    (return-from helper-paths nil))
+  (loop with arguments = (rest argv) with paths = nil
+        while arguments for option = (pop arguments)
+        do (cond ((string= "--" option) (return (nreverse paths)))
+                 ((string= "--script" option)
+                  (push (pop arguments) paths) (return (nreverse paths)))
+                 ((member option '("--load" "-load") :test #'string=) (push (pop arguments) paths))
+                 ((member option '("--eval" "--core" "--userinit" "--sysinit"
+                                   "--dynamic-space-size" "--control-stack-size" "--tls-limit")
+                          :test #'string=) (pop arguments)))
+        finally (return (nreverse paths))))
 (defun source-digests (argv)
-  "Solo sorgenti invocati da SBCL, mai dati .lisp ricevuti o prodotti dal helper."
+  "Digest dei soli helper SBCL esplicitamente invocati, nessun dato/output .lisp."
   (loop for argument in (remove-duplicates
-                        (loop for tail on argv
-                              when (member (first tail) '("--script" "--load" "-load") :test #'string=)
-                                collect (second tail)) :test #'string=)
+                        (helper-paths argv) :test #'string=)
         when (and (equal "lisp" (pathname-type argument)) (probe-file argument)) collect
           (list :file argument :sha256 (arcdocdb.evidence:file-sha256 argument))))
 (defun raw-digests (root)
@@ -35,7 +47,8 @@
     (ensure-directories-exist path)
     (with-open-file (s path :direction :output :if-exists :error) (write-string "(:a 1)" s))
     (let* ((data (merge-pathnames "data.lisp" root)) (output (merge-pathnames "output.lisp" root))
-           (argv (list "sbcl" "--script" (namestring path) (namestring data) (namestring output)))
+           (argv (list "sbcl" "--script" (namestring path) "--load" (namestring data)
+                       "--script" (namestring output)))
            (expected (source-digests argv)))
       (unless (= 1 (length expected)) (error "Helper invocato non riconosciuto.")) (incf checks)
       (check-source-digests expected argv) (incf checks)
@@ -48,6 +61,12 @@
       (unless (equal expected (source-digests (list "sbcl" "--load" (namestring path)
                                                    "--load" (namestring path))))
         (error "Helper --load ripetuto non riconosciuto.")) (incf checks)
+      (unless (equal expected (source-digests (list "sbcl" "--load" (namestring path)
+                                                   "--eval" "--script" "--script" (namestring path)
+                                                   "--load" (namestring output))))
+        (error "Confine opzioni SBCL/script errato.")) (incf checks)
+      (when (source-digests (list "program" "--load" (namestring path)))
+        (error "Argomenti di un programma diverso interpretati come SBCL.")) (incf checks)
       (with-open-file (s path :direction :output :if-exists :supersede) (write-string "(:a 2)" s))
       (let ((rejected nil))
         (handler-case (check-source-digests expected argv) (error () (setf rejected t)))

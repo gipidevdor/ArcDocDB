@@ -25,7 +25,7 @@
        (test-lines (remove-if-not (lambda (line) (uiop:string-prefix-p "ok    TEST-" line))
                                  (output-lines check)))
        (directory-tests (count-if (lambda (line) (search "SERIES-GET-" line)) test-lines))
-       (mutants (read-data "spikes/out/get-series-mutations-g/report.lisp"))
+       (mutants (read-data "spikes/out/get-series-mutations-h/report.lisp"))
        (summary (read-data (concatenate 'string base "benchmark-summary.lisp"))))
   (unless (and (= 3 (length args)) (string= freeze (getf (getf check :environment) :commit))
                (string= freeze (getf (getf bench :environment) :commit))
@@ -66,10 +66,14 @@
                   (:freeze "ffe191a" :observed :capture-confused-created-output-with-helper
                    :fix :invoked-sbcl-script-or-load-only)
                   (:freeze "ffe191a" :observed :derived-base-char-array-not-canonical
-                   :fix :canonical-escaped-string-writing))
+                   :fix :canonical-escaped-string-writing)
+                  (:base "baaa68c" :observed :integrated-42-independent-outcome-tests
+                   :freeze "92fa92b" :product-read-blobs-unchanged)
+                  (:freeze "92fa92b" :observed :independent-c4-script-option-boundary-finding
+                   :fix :stop-parsing-after-script-file))
                 :negative-checks '(:benchmark-missing-completed-expected-exit-1
                                    :derive-rejects-self-test-instead-of-full-campaign)
-                :patch-check '(:own-increment-from-3106a49-passed
+                :patch-check '(:own-increment-from-baaa68c-passed
                                :full-base-4344d9e-rejected-imported-eof-blank-line
                                :raw-compiler-whitespace-retained-verbatim)
                 :coverage '(:files 3 :expressions-covered 339 :expressions-total 363

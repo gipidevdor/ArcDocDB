@@ -19,7 +19,7 @@
   (dolist (directory (uiop:subdirectories "spikes/out/"))
     (let ((name (car (last (pathname-directory directory)))))
       (when (some (lambda (prefix) (uiop:string-prefix-p prefix name))
-                  '("get-series-coverage" "get-series-mutations"))
+                  '("get-series-coverage" "get-series-mutations" "get-series-bench" "get-series-self-test"))
         (let* ((argument (format nil "spikes/out/~A/" name))
                (producer (find-if (lambda (entry) (member argument (getf (cdr entry) :command) :test #'string=))
                                   commands)))

@@ -149,7 +149,7 @@
                    (simple-root-name-p (getf spec :producer-directory))
                    (member (getf spec :producer-directory) roots :test #'equal)
                    (some (lambda (prefix) (uiop:string-prefix-p prefix (getf spec :directory)))
-                         '("get-series-coverage" "get-series-mutations")))
+                         '("get-series-coverage" "get-series-mutations" "get-series-bench" "get-series-self-test")))
         (error "Radice raw GET invalida: ~S" spec)))
     specs))
 (defun read-capture (record)

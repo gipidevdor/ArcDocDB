@@ -571,3 +571,99 @@
          (is (directory-output-untouched-p directory))
          (is (null (directory-read-events directory)))))
      :active-p t :publish-active-p nil)))
+
+;;; REQ: REQ-WAL-006 REQ-CCH-002 REQ-CMP-007
+(deftest test-REQ-WAL-006-series-get-legacy-active-adapters-native
+  (dolist (version '(1 2))
+    (call-with-directory-series-fixture
+     (lambda (fixture)
+       (let ((context (directory-series-context fixture))
+             (directory (directory-series-fixture-directory fixture))
+             (source (directory-series-fixture-source fixture)))
+         (dolist (operation '(:resolve :probe :read))
+           (is (eq :candidate (directory-series-begin fixture (directory-series-fixture-active-key fixture))))
+           (directory-series-observe-acquire
+            fixture
+            (lambda ()
+              (ecase operation
+                (:resolve (is (equal (list (r::sorgente-get-attiva-segment source) 176 0 nil)
+                                     (multiple-value-list (r:risolvi-candidato-attivo-get context source)))))
+                (:probe (is (eq :disabled (r:sonda-cache-attiva-get context source))))
+                (:read (is (equal '(:segment :disabled :not-attempted nil nil)
+                                  (multiple-value-list (r:leggi-record-attivo-get context source))))))))
+           (if (eq operation :read)
+               (directory-series-copy-and-finish fixture (directory-series-fixture-active-value fixture))
+               (g:abbandona-get context))
+           (is (directory-check-clean directory))
+           (is (equal (if (eq operation :read) '((13 64 56)) nil) (directory-read-events directory)))
+           (directory-clear-read-events directory))))
+     :active-p t :version version)))
+
+;;; REQ: REQ-WAL-006 REQ-AFF-004 REQ-CMP-007
+(deftest test-REQ-WAL-006-series-get-legacy-active-invalid-root-faulted
+  (dolist (mode '(:nil :fonti :other-source))
+    (call-with-directory-series-fixture
+     (lambda (fixture)
+       (let* ((context (directory-series-context fixture))
+              (source (directory-series-fixture-source fixture))
+              (bad (ecase mode
+                     (:nil nil) (:fonti (directory-series-fixture-sources fixture))
+                     (:other-source (directory-series-fi-root-with-segment fixture
+                                     (r::sorgente-get-attiva-segment source))))))
+         (is (eq :candidate (directory-series-begin fixture (directory-series-fixture-active-key fixture))))
+         (directory-series-function-fi
+          'arcdocdb.series:leggi-radice-serie
+          (lambda (original) (declare (ignore original)) (lambda (controller) (declare (ignore controller)) bad))
+          (lambda () (signals invariant-violation (r:risolvi-candidato-attivo-get context source)
+                              :active-published-root)))
+         (is (directory-check-clean (directory-series-fixture-directory fixture) 0 :faulted))
+         (is (null (directory-read-events (directory-series-fixture-directory fixture))))))
+     :active-p t)))
+
+;;; REQ: REQ-CMP-007 REQ-AFF-004 REQ-WAL-006
+(deftest test-REQ-CMP-007-series-get-active-owner-before-faulted-controller
+  (call-with-directory-series-fixture
+   (lambda (source-fixture)
+     (arcdocdb.series:fault-controllore-serie (directory-series-fixture-controller source-fixture)
+                                            (directory-series-fixture-lease source-fixture))
+     (call-with-directory-series-fixture
+      (lambda (reader-fixture)
+        (dolist (explicit-p '(nil t))
+          (is (eq :candidate (directory-begin (directory-series-fixture-directory reader-fixture))))
+          (directory-series-observe-acquire
+           source-fixture
+           (lambda ()
+             (signals invalid-argument
+               (if explicit-p
+                   (r:risolvi-candidato-radice-attiva-get (directory-series-context reader-fixture)
+                                                        (directory-series-fixture-root source-fixture))
+                   (r:risolvi-candidato-attivo-get (directory-series-context reader-fixture)
+                                                  (directory-series-fixture-source source-fixture)))
+               :active-source-owner)) :expected 0)
+          (is (directory-check-clean (directory-series-fixture-directory reader-fixture)))))))
+   :active-p t))
+
+;;; REQ: REQ-WAL-006 REQ-FOR-004 REQ-AFF-004
+(deftest test-REQ-WAL-006-series-get-active-unexpected-proof-faulted
+  (call-with-directory-series-fixture
+   (lambda (fixture)
+     (let* ((context (directory-series-context fixture)) (root (directory-series-fixture-root fixture))
+            (source (directory-series-fixture-source fixture)))
+       (is (eq :candidate (directory-series-begin fixture (directory-series-fixture-active-key fixture))))
+       (let* ((page (r::pagina-attiva context root 0)) (rows (copy-seq (r::mappa-segmento-get-rows page))))
+         ;; FI tipizzata: mappa prepared in una radice che il writer sano costruisce solo ordinaria.
+         ;; Il guasto deve essere rilevato prima di leggere il falso OUTCOME o consegnare byte.
+         (setf (aref rows r::+row-flags+) 1 (aref rows r::+row-proof+) 120)
+         (multiple-value-bind (directory nodes)
+             (r::appendi-pagina-attiva nil 0 (r::%make-mappa-segmento-get (r::sorgente-get-attiva-segment source)
+                                                                      176 rows) r::+active-directory-shift+)
+           (let ((bad (r::%make-radice-get-attiva source directory 1 1 nodes 176
+                                                (directory-series-fixture-sources fixture))))
+             (directory-series-function-fi
+              'arcdocdb.series:leggi-radice-serie
+              (lambda (original) (declare (ignore original)) (lambda (controller) (declare (ignore controller)) bad))
+              (lambda () (signals invariant-violation (r:risolvi-candidato-attivo-get context source)
+                                  :active-unexpected-proof))))))
+       (is (directory-check-clean (directory-series-fixture-directory fixture) 0 :faulted))
+       (is (null (directory-read-events (directory-series-fixture-directory fixture))))))
+   :active-p t))

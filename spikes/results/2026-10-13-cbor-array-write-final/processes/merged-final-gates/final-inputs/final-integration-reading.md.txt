@@ -1,0 +1,9 @@
+# Lettura DATA dell'integrazione finale
+
+Record concluso `spikes/out/4000917832-command-71310-0/report.lisp`, commit **`6f5a6a4cd2c09b01c99d82382dbd40514b5222d5`**: **1031342 byte**, SHA256 **`97eaff176860971b66f106e3fa55a7fa7a7cceccfd22af1a9173eef52057e3e0`**, invariati prima/dopo la lettura. Wrapper schema 1 `COMMAND-VERIFICATION`: **OK/exit 0/STABLE**, working tree vuoto, **829 impronte** univoche identiche before/after. Verificati in entrambi gli inventari i cinque pin congelati: due prodotti array e tre file del corpus; valori completi nello stdout del reader.
+
+Comando esatto **`make build lint trace links`**, durata 39.050925d0 secondi. Prima del marker unico build/test: **1182 nominali + 2 smoke = 1184**. Lint **196/0**; trace **119 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, zero errori**; link **416 file, 2843 link, zero rotti**. Nessun warning/style-warning o compilazione interrotta nello stderr esterno.
+
+Reader dedicato `final-integration-reading.lisp`, blob **`6d64b7560079ceebded475a572b9bb231c44abf4`**; output `final-integration-reading.stdout.txt`, blob **`df8afa28cce4049b58b3166e7c21adee872c264b`**: **OK**, 6694 controlli strutturali, stderr vuoto. Caricato soltanto il trusted `tools/evidence-storage.lisp`, nessun prodotto/driver o nuova campagna.
+
+Questo profilo non esegue spike/evidence o selftest del full check. Full check4 e gate7528 restano osservazioni premerge separate. La lettura conferma coerenza dei dati e metadati, non autenticità dei processi, nuove coperture o qualificazioni MC/DC/C1; nessuno sweep delle sorgenti o modifica dei file precedenti.

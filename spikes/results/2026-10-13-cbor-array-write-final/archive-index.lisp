@@ -350,7 +350,19 @@
     #A((94) BASE-CHAR
        . "spikes/out/cbor-array-write-20261013/collection/collection-observation-4000917317-62924-0.lisp")
     #A((83) BASE-CHAR
-       . "spikes/out/cbor-array-write-20261013/collection/closed-check-4000917340-62924-0.log"))))
+       . "spikes/out/cbor-array-write-20261013/collection/closed-check-4000917340-62924-0.log")))
+  (:LABEL #A((32) BASE-CHAR . "documentation-and-evidence-gates") :RECORD-PATH
+   "processes/documentation-and-evidence-gates/report.lisp" :STATUS :OK
+   :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE :COMMAND
+   (#A((4) BASE-CHAR . "make") #A((4) BASE-CHAR . "lint")
+    #A((5) BASE-CHAR . "trace") #A((5) BASE-CHAR . "links")
+    #A((8) BASE-CHAR . "evidence")))
+  (:LABEL #A((18) BASE-CHAR . "merged-final-gates") :RECORD-PATH
+   "processes/merged-final-gates/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :COMMAND
+   (#A((4) BASE-CHAR . "make") #A((5) BASE-CHAR . "build")
+    #A((4) BASE-CHAR . "lint") #A((5) BASE-CHAR . "trace")
+    #A((5) BASE-CHAR . "links"))))
  :FILES
  ((:PATH "collection-manifest.lisp" :SOURCE
    #A((136) BASE-CHAR
@@ -1177,7 +1189,82 @@
    #A((113) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917379-command-63901-0/report.lisp")
    :BYTES 237115 :SHA256
-   "73e3863d470b5e8c660a247d802207af99900055638dfb5d82d7be626c186e2b"))
+   "73e3863d470b5e8c660a247d802207af99900055638dfb5d82d7be626c186e2b")
+  (:PATH "processes/documentation-and-evidence-gates/conservazione.lisp"
+   :SOURCE
+   #A((120) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917528-command-66374-0/conservazione.lisp")
+   :BYTES 1153 :SHA256
+   "5f02fc6c1a461f047c0ffbf02cbe5d34f4695a785b62946ac0c409b8012afdba")
+  (:PATH "processes/documentation-and-evidence-gates/report.lisp" :SOURCE
+   #A((113) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917528-command-66374-0/report.lisp")
+   :BYTES 171146 :SHA256
+   "9611ab78788789569bb4ce3b583aac4dd7dcb36f14be06b9894cb2660c3513dd")
+  (:PATH "processes/merged-final-gates/conservazione.lisp" :SOURCE
+   #A((120) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/conservazione.lisp")
+   :BYTES 1153 :SHA256
+   "ec7a24f7f121873921df2bdbaaef0d35aff9b97b72814884a436fd46d220b294")
+  (:PATH
+   "processes/merged-final-gates/final-inputs/cbor-array-risultati.md.txt"
+   :SOURCE
+   #A((142) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/cbor-array-risultati.md.txt")
+   :BYTES 11870 :SHA256
+   "3c2103577ef4876230415dd225e96846bb150f6caa0129dada1e2408c2434a9e")
+  (:PATH "processes/merged-final-gates/final-inputs/copy-final-inputs.lisp"
+   :SOURCE
+   #A((137) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/copy-final-inputs.lisp")
+   :BYTES 2584 :SHA256
+   "26274d1c320f2256b3fd8942ccde6ed1f014317448a53241ffeee197b8d09d16")
+  (:PATH "processes/merged-final-gates/final-inputs/copy-observation.lisp"
+   :SOURCE
+   #A((136) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/copy-observation.lisp")
+   :BYTES 2914 :SHA256
+   "0acbc35076cd072dd4b496bec7b407d4f97701fffb382355f94681f00f3265e6")
+  (:PATH
+   "processes/merged-final-gates/final-inputs/final-integration-reading.lisp"
+   :SOURCE
+   #A((145) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/final-integration-reading.lisp")
+   :BYTES 6094 :SHA256
+   "c9c8cc33f0dccdf55d4ebaeab4cd8b6ccdd34ed6d8e4ceeb90ada831e06b8788")
+  (:PATH
+   "processes/merged-final-gates/final-inputs/final-integration-reading.md.txt"
+   :SOURCE
+   #A((147) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/final-integration-reading.md.txt")
+   :BYTES 1605 :SHA256
+   "eed12c281cdc33672942a9d2ad115e91a74291e4d224830fd58ce6fd03b84c54")
+  (:PATH
+   "processes/merged-final-gates/final-inputs/final-integration-reading.stderr.txt"
+   :SOURCE
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/final-integration-reading.stderr.txt")
+   :BYTES 0 :SHA256
+   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+  (:PATH
+   "processes/merged-final-gates/final-inputs/final-integration-reading.stdout.txt"
+   :SOURCE
+   #A((151) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/final-integration-reading.stdout.txt")
+   :BYTES 1343 :SHA256
+   "c5a9cdb644bf27520f44b5206a7e0f04d5049320b27db1f12b68f3e5f71bd1a8")
+  (:PATH
+   "processes/merged-final-gates/final-inputs/integration-reading-5.md.txt"
+   :SOURCE
+   #A((143) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/final-inputs/integration-reading-5.md.txt")
+   :BYTES 2713 :SHA256
+   "9f11361d6292a738b1fe9be9391bf777d73d221d79fba19aa87940bb8f7d26c2")
+  (:PATH "processes/merged-final-gates/report.lisp" :SOURCE
+   #A((113) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/report.lisp")
+   :BYTES 1031342 :SHA256
+   "97eaff176860971b66f106e3fa55a7fa7a7cceccfd22af1a9173eef52057e3e0"))
  :LIMITS
  (:SHA256-BYTE-COPY-CHECK :RAW-ORIGINALS-PRESERVED
   :FASL-EXCLUDED-FROM-PUBLISHED-MUTATION-TREES

@@ -63,7 +63,10 @@
                      (type-of (warning-original condition)) (warning-original condition)))))
 (defun abort-warning (condition)
   ;; ERROR della WARNING stessa può rientrare nell'handler; usa una condizione ERROR distinta.
-  (error 'campaign-warning :original condition))
+  (if (typep condition 'sb-kernel:redefinition-warning)
+      ;; Stessa eccezione di tools/build.lisp: replay ASDF/compile-time delle definizioni.
+      (format *error-output* "~&ASDF-REDEFINITION ~S: ~A~%" (type-of condition) condition)
+      (error 'campaign-warning :original condition)))
 (defun reject (control &rest arguments)
   (error 'invalid-campaign :detail (apply #'format nil control arguments)))
 (defun remaining ()
@@ -91,18 +94,49 @@
   (append '("arcdocdb.asd") (sort (mapcar #'enough-namestring (directory "src/**/*.lisp")) #'string<)
           (sort (mapcar #'enough-namestring (directory "tests/**/*.lisp")) #'string<)
           '("tools/io-rename-mutation.lisp" "tools/evidence-storage.lisp")))
+(defun manifest-entry (file root)
+  (require-time)
+  (let ((path (merge-pathnames file root)))
+    (unless (uiop:subpathp (truename path) (truename root))
+      (reject "manifest outside root: ~A." file))
+    (list :file file :sha256 (sha256 path))))
 (defun manifest (files root)
-  "Un FILE-SHA256 canonico per file, stessa inventory source/FASL, massimo 4096/16 MiB.
-Controlli cooperativi ai confini delle chiamate; il lettore canonico usa il suo shasum."
+  "Quattro worker C4 al massimo, lettore SHA canonico per file; risultato in ordine argv.
+4096 file/16 MiB ciascuno; ogni worker possiede FD/processo digest, deadline cooperativa."
   (unless (and (<= (length files) +inventory-limit+)
                (= (length files) (length (remove-duplicates files :test #'string=))))
     (reject "manifest too large or duplicate paths."))
-  (loop for file in files
-        for path = (merge-pathnames file root)
-        do (require-time)
-           (unless (uiop:subpathp (truename path) (truename root))
-             (reject "manifest outside root: ~A." file))
-        collect (list :file file :sha256 (sha256 path))))
+  (when (null files) (return-from manifest nil))
+  (let* ((input (coerce files 'vector)) (output (make-array (length files) :initial-element nil))
+         (next 0) (failure nil) (mutex (sb-thread:make-mutex :name "canonical digest queue"))
+         (deadline *deadline*) (threads nil) (complete nil))
+    (labels ((worker ()
+               (let ((*deadline* deadline))
+                 (handler-case
+                     (loop repeat (length input)
+                           for index = (sb-thread:with-mutex (mutex)
+                                         (when (and (not failure) (< next (length input)))
+                                           (prog1 next (incf next))))
+                           while index do (setf (aref output index) (manifest-entry (aref input index) root)))
+                   (error (condition) (sb-thread:with-mutex (mutex) (unless failure (setf failure condition))))))))
+      (unwind-protect
+           (progn
+             (dotimes (i (min 4 (length input)))
+               (push (sb-thread:make-thread #'worker :name "canonical SHA256 worker") threads))
+             (dolist (thread threads)
+               (unless (eq :joined (sb-thread:join-thread thread :timeout (remaining) :default :timeout))
+                 ;; Il worker restituisce NIL: JOIN-THREAD restituisce i valori del worker.
+                 (when (sb-thread:thread-alive-p thread) (reject "canonical digest worker timeout."))))
+             (when failure (error failure))
+             (unless (every #'identity output) (reject "canonical digest inventory incomplete."))
+             (require-time) (setf complete t) (coerce output 'list))
+        (unless complete
+          (dolist (thread threads)
+            (when (sb-thread:thread-alive-p thread) (sb-thread:terminate-thread thread)))
+          (dolist (thread threads)
+            (sb-thread:join-thread thread :timeout +cleanup-seconds+ :default :timeout))
+          (when (some #'sb-thread:thread-alive-p threads)
+            (reject "canonical digest worker unreaped; process exit required.")))))))
 (defun unique-position (text anchor)
   (when (zerop (length anchor)) (reject "empty anchor."))
   (let ((position (search anchor text)))

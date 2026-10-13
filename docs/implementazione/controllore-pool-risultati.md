@@ -47,6 +47,10 @@ mancanti di build restano nel denominatore: indici nativi 78..81, percorsi
 facoltativi della factory. Il minimo C3 del 95% è superato senza
 esclusioni; non si deduce MC/DC da questi conteggi. Il reader compila
 senza avvisi e verifica fixture positive, negative e soglia esatta.
+I nove artefatti originali della qualificazione — stato nativo, audit,
+indice e sei pagine — sono conservati nel
+[bundle qualificato](../../spikes/results/2026-10-13-pool-controller/qualified-coverage/),
+con testo integrale, SHA256, byte e Git blob dei singoli file.
 
 ## Misura del percorso normale
 

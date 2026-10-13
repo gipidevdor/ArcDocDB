@@ -1,5 +1,5 @@
 (:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG :COMPONENT :WRITER-WORKER :BASE
- "1b9fe8062fcd944b560638ece288225d3d5843cd" :HISTORICAL-BASES NIL :ENTRIES
+ "45eb1537ee5dfbbaf9850c704aa359bfcf3b4588" :HISTORICAL-BASES NIL :ENTRIES
  ((:ARTIFACT "closing-orchestration.lisp" :PATH
    #A((129) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/closing-orchestration.lisp")
@@ -97,6 +97,11 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/development-manifest.lisp")
    :BYTES 572775 :SHA256 "1546853efc63d895dcf39b539ec06effaaa82812c4db530d5dd8045694c9c285"
    :GIT-BLOB "3e230d6cf6cfc808ba29b3d33681730d7ce5a1f6")
+  (:ARTIFACT "manifesto-coverage-nativo.lisp" :PATH
+   #A((133) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/manifesto-coverage-nativo.lisp")
+   :BYTES 36901 :SHA256 "a1d143758ed1d40ac882439335600f9ca06dca540e61489d984390a5e3d72186"
+   :GIT-BLOB "d0217018dd8dc21309c311ea8de3d64778d4f681")
   (:ARTIFACT "manifesto-file.lisp" :PATH
    #A((122) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/manifesto-file.lisp")
@@ -137,6 +142,16 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/publication-orchestration.lisp")
    :BYTES 54701 :SHA256 "eeaf6c3a320d404de6d5ce32871336fa6fe2c14794f69bd3763c64a31e3be730"
    :GIT-BLOB "70d47049ad4002ac6ea74214730c589f0ff70ca0")
+  (:ARTIFACT "qualified-native-closing-sources.lisp" :PATH
+   #A((140) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/qualified-native-closing-sources.lisp")
+   :BYTES 1687 :SHA256 "2fbc33542c099b617e8ff5af2b63badcd16a99b3fae4da3f38c3ed3e4850add9" :GIT-BLOB
+   "c6f0556f43a6a83dc7b663f1d59ed3798b304e69")
+  (:ARTIFACT "qualified-native-publication-sources.lisp" :PATH
+   #A((144) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/qualified-native-publication-sources.lisp")
+   :BYTES 10030 :SHA256 "60bd3fe7d0d848014ea8f54b37a95a7f5d8420203ccce522bb444ba2776fb08d"
+   :GIT-BLOB "761094a2c139283451bd2127e9866df19323a5b5")
   (:ARTIFACT "sources-final.lisp" :PATH
    #A((121) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/sources-final.lisp")

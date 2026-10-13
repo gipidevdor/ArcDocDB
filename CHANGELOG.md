@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Attuazione logica del controllore pool su worker preesistenti: richieste
+  persistenti e conteggio delle sole conferme, ritiro soltanto a contesto IDLE
+  senza abbandonare lease o batch, riattivazione degli stessi contesti.
+  Include 18 prove con worker reali, copertura C3 senza esclusioni e misure
+  senza allocazioni dopo l'avvio. Dispatcher, risveglio e avvio fisico restano aperti.
+
 - Preparazione del nuovo segmento writer: preflight senza effetti, identità
   readonly/append prima della write, header canonico durevole, rilettura esatta
   e fsync del parent. Adattatore ACTIVE con prova obbligatoria e verifica del
@@ -18,6 +24,7 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   stessa radice catturata e rifiuto di owner/ID duplicati prima dell'adozione.
   Mantiene il protocollo WAL e i cinque esiti del nucleo GET; rotazione e
   reclaim completo restano distinti.
+
 - Scrittura dei float CBOR da parole IEEE: riduzione esatta della larghezza,
   preservazione di segno e payload NaN, preflight prima della mutazione
   e destinazioni private per i worker. Qualifica C1 e profilo documentale

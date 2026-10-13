@@ -2,7 +2,7 @@
 (defpackage #:arcdocdb.scheduler.tests
   (:use #:cl)
   (:import-from #:arcdocdb.foundation.tests #:is #:signals)
-  (:import-from #:arcdocdb.conditions #:invalid-argument #:invariant-violation
+  (:import-from #:arcdocdb.conditions #:invalid-argument #:invariant-violation #:resource-exhausted
                 #:error-reason)
   (:import-from #:arcdocdb.scheduler #:crea-controllore-pool
                 #:aggiorna-controllore-pool #:leggi-controllore-pool)

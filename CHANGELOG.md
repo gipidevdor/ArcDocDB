@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Ponte fonti GET della Serie: directory CLOSED nel contenuto della radice
+  ACTIVE, acquisizione unica dal controller sotto EBR, risoluzione dalla
+  stessa radice catturata e rifiuto di owner/ID duplicati prima dell'adozione.
+  Mantiene il protocollo WAL e i cinque esiti del nucleo GET; rotazione e
+  reclaim completo restano distinti.
 - Directory GET dei segmenti CLOSED: ID u32 compatti e riferimenti privati
   immutabili, controllo di Serie/ordine/budget prima delle copie, ricerca
   limitata a diciassette passi e collegamento al resolver/cache/I/O.

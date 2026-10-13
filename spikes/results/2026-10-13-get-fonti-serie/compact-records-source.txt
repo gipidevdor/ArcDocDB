@@ -1,0 +1,117 @@
+;;;; Compattazione locale: COMPACT-ONE identica allo strumento del repository.
+(require :asdf)
+(require :sb-posix)
+(load "tools/evidence-storage.lisp")
+(defun compact-one (path)
+  "Pubblica il descriptor solo dopo la verifica dei byte originali e compatti."
+  (let* ((source (namestring path))
+         (payload (concatenate 'string source ".gz"))
+         (lock (concatenate 'string source ".compact-lock"))
+         (temporary (concatenate 'string source ".compact-descriptor"))
+         (owned-lock nil) (owned-payload nil) (owned-temporary nil) (published nil))
+    (unwind-protect
+         (progn
+           (with-open-file (stream lock :direction :output :if-exists :error
+                                       :if-does-not-exist :create)
+             (setf owned-lock t)
+             (write (list :pid (sb-posix:getpid)) :stream stream))
+           (let ((bytes (arcdocdb.evidence:file-bytes path))
+                 (hash (arcdocdb.evidence:file-sha256 path)))
+             ;; Creazione esclusiva: nessun payload o descriptor preesistente viene perso.
+             (with-open-file (stream payload :element-type '(unsigned-byte 8)
+                                            :direction :output :if-exists :error
+                                            :if-does-not-exist :create)
+               (setf owned-payload t)
+               (uiop:run-program (list "gzip" "-n" "-9" "-c" "--" source)
+                                 :output stream :error-output :string))
+             (let* ((descriptor
+                      (list :schema-version 1 :kind :compressed-evidence :codec :gzip
+                            :payload (file-namestring payload)
+                            :uncompressed-bytes bytes :uncompressed-sha256 hash
+                            :compressed-bytes (arcdocdb.evidence:file-bytes payload)
+                            :compressed-sha256 (arcdocdb.evidence:file-sha256 payload))))
+               (with-open-file (stream temporary :direction :output :if-exists :error
+                                                 :if-does-not-exist :create
+                                                 :external-format :utf-8)
+                 (setf owned-temporary t)
+                 (let ((*print-readably* t))
+                   (write descriptor :stream stream :pretty t) (terpri stream)))
+               (arcdocdb.evidence:call-with-evidence-bytes
+                temporary
+                (lambda (expanded)
+                  (unless (and (= bytes (arcdocdb.evidence:file-bytes expanded))
+                               (string= hash (arcdocdb.evidence:file-sha256 expanded)))
+                    (error "I byte ricostruiti non coincidono: ~A." source))))
+               (unless (and (= bytes (arcdocdb.evidence:file-bytes path))
+                            (string= hash (arcdocdb.evidence:file-sha256 path)))
+                 (error "Il registro è cambiato durante la compattazione: ~A." source))
+               ;; rename nella medesima directory: i lettori vedono originale o descriptor completo.
+               (sb-posix:rename temporary source)
+               (setf published t)
+               (list :path source :status :ok :original-bytes bytes
+                     :stored-bytes (+ (arcdocdb.evidence:file-bytes path)
+                                      (getf descriptor :compressed-bytes))
+                     :descriptor descriptor))))
+      (when (and owned-temporary (probe-file temporary)) (delete-file temporary))
+      (when (and owned-payload (not published) (probe-file payload)) (delete-file payload))
+      (when (and owned-lock (probe-file lock)) (delete-file lock)))))
+
+(defparameter *base* (truename "spikes/results/2026-10-13-get-fonti-serie/"))
+(defun read-data (path) (arcdocdb.evidence:read-evidence path))
+(defun save-data (data path)
+  (with-open-file (out path :direction :output :if-exists :supersede)
+    (let ((*print-readably* t)) (write data :stream out :pretty t) (terpri out))))
+(let* ((catalog-path (merge-pathnames "catalogo.lisp" *base*)) (catalog (read-data catalog-path))
+       (names (remove-duplicates
+               (append (mapcar (lambda (e) (getf e :artifact)) (getf catalog :entries))
+                       (loop for e in (getf catalog :associated-raw-files)
+                             for name = (getf e :file)
+                             when (and (equal "lisp" (pathname-type name))
+                                       (string= "report" (pathname-name name))) collect name)) :test #'string=))
+       (paths (coerce (loop for name in names for path = (merge-pathnames name *base*)
+                           when (> (arcdocdb.evidence:file-bytes path) 65536) collect path) 'vector))
+       (results (make-array (length paths) :initial-element nil)) (threads nil))
+  (unwind-protect
+       (progn
+         (dotimes (worker 4)
+           (let ((id worker))
+             (push (sb-thread:make-thread
+                    (lambda ()
+                      (loop for i from id below (length paths) by 4 do
+                        (setf (aref results i)
+                              (handler-case (compact-one (aref paths i))
+                                (error (c) (list :status :failed :diagnostic (princ-to-string c)))))))) threads)))
+         (dolist (thread threads)
+           (sb-thread:join-thread thread :timeout 120 :default :timeout)
+           (when (sb-thread:thread-alive-p thread) (error "Join compattazione scaduto.")))
+         (unless (every (lambda (r) (eq :ok (getf r :status))) results) (error "Compattazione incompleta."))
+         (dolist (e (getf catalog :entries))
+           (setf (getf e :sha256) (arcdocdb.evidence:file-sha256 (merge-pathnames (getf e :artifact) *base*))))
+         (let ((payloads nil))
+           (dolist (e (getf catalog :associated-raw-files))
+             (let ((path (merge-pathnames (getf e :file) *base*)))
+               (when (find path paths :test #'equal)
+                 (with-open-file (in path)
+                   (let* ((*read-eval* nil) (descriptor (read in))
+                          (payload (merge-pathnames (getf descriptor :payload) path)) (entry (copy-list e)))
+                     (setf (getf entry :file) (enough-namestring payload *base*)
+                           (getf entry :codec) :gzip
+                           (getf entry :bytes) (arcdocdb.evidence:file-bytes payload)
+                           (getf entry :sha256) (arcdocdb.evidence:file-sha256 payload)
+                           (getf entry :uncompressed-bytes) (getf descriptor :uncompressed-bytes)
+                           (getf entry :uncompressed-sha256) (getf descriptor :uncompressed-sha256))
+                     (push entry payloads)))
+                 (setf (getf e :bytes) (arcdocdb.evidence:file-bytes path)
+                       (getf e :sha256) (arcdocdb.evidence:file-sha256 path)))))
+           (setf (getf catalog :associated-raw-files) (append (getf catalog :associated-raw-files) payloads)))
+         (save-data catalog catalog-path)
+         (save-data (list :schema-version 1 :kind :get-series-local-compaction :status :ok
+                          :jobs 4 :minimum-bytes 65536 :results (coerce results 'list)
+                          :saved-bytes (loop for r across results sum (- (getf r :original-bytes) (getf r :stored-bytes)))
+                          :limits '(:lossless-byte-verification :local-evidence-only :no-git-history-rewrite))
+                    (merge-pathnames "compaction.lisp" *base*))
+         (format t "~S~%" (list :schema-version 1 :kind :get-series-local-compaction :status :ok
+                                :compacted (length paths))))
+    (dolist (thread threads)
+      (when (sb-thread:thread-alive-p thread) (sb-thread:terminate-thread thread))
+      (sb-thread:join-thread thread :timeout 2 :default :cleanup-timeout))))

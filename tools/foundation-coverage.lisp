@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -14,7 +14,10 @@
 (defun scope-path-p (scope path)
   "Gli scope con elenchi espliciti selezionano file esatti; gli altri il modulo intero."
   (let ((suffixes
-          (cond ((string= scope "get-directory")
+          (cond ((string= scope "get-series")
+                 '("/src/get-directory/sources-types.lisp" "/src/get-directory/sources-read.lisp"
+                   "/src/get-resolver/active-read.lisp"))
+                ((string= scope "get-directory")
                  '("/src/get-directory/types.lisp" "/src/get-directory/build.lisp" "/src/get-directory/read.lisp"))
                 ((string= scope "get")
                  '("/src/get/package.lisp" "/src/get/types.lisp" "/src/get/build.lisp"
@@ -84,6 +87,10 @@
                (scope-path-p "epochs" "/repo/src/epochs/reclaim.lisp")
                (not (scope-path-p "epochs" "/repo/tests/epochs/lifecycle.lisp"))
                (scope-path-p "read" "/repo/src/read/task.lisp")
+               (scope-path-p "get-series" "/repo/src/get-directory/sources-read.lisp")
+               (scope-path-p "get-series" "/repo/src/get-resolver/active-read.lisp")
+               (not (scope-path-p "get-series" "/repo/tests/get-directory/series-read.lisp"))
+               (not (scope-path-p "get-series" "/repo/src/get-directory/sources-read.lisp.fake"))
                (scope-path-p "get-directory" "/repo/src/get-directory/read.lisp")
                (not (scope-path-p "get-directory" "/repo/tests/get-directory/read.lisp"))
                (not (scope-path-p "get-directory" "/repo/src/get-directory/read.lisp.fake"))
@@ -179,6 +186,7 @@
                              ((string= scope "csn") '#:arcdocdb.csn.tests)
                              ((string= scope "mvcc") '#:arcdocdb.mvcc.tests)
                              ((string= scope "epochs") '#:arcdocdb.epochs.tests)
+                             ((string= scope "get-series") '#:arcdocdb.get.directory.tests)
                              ((string= scope "get-directory") '#:arcdocdb.get.directory.tests)
                              ((string= scope "get-performance") '#:arcdocdb.get.performance.tests)
                              ((string= scope "read") '#:arcdocdb.read.tests)
@@ -216,8 +224,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
+                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "get-series" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

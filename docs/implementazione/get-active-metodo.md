@@ -7,6 +7,8 @@ acquisizione della radice effettivamente pubblicata e lettura ordinaria.
 L'antenato di integrazione è `105ae0dd28a6ae3e7ee60ab1477815a49b1b350b`.
 Il metodo precede le esecuzioni; freeze ed esiti saranno registrati nelle
 prove native. Non si modifica il codice di prodotto.
+Prima del freeze si integra anche `c4bbb037b779d33ee9e8c01b4a33aac875ccf96f`,
+che comprende le prove del writer float aggiunte da un'altra campagna.
 
 ## Oracoli e casi fissati
 
@@ -69,6 +71,9 @@ rows, read e i sei file active-* del resolver: dieci sorgenti, undici HTML
 con l'indice. Lo stato grezzo viene salvato prima della validazione e i
 conteggi sono confrontati con quelli usati dall'HTML. Il profilo CLOSED
 preesistente conserva default, perimetro e comportamento.
+Un processo positivo separato verifica il default CLOSED; tre fixture
+negative verificano suite ignota, suite duplicata e report duplicato.
+Devono uscire con errore di uso prima della creazione della directory.
 
 Prima della pull request passano compilazione senza avvisi, regressione,
 controlli statici, tracciabilità, collegamenti e conservazione. La CI

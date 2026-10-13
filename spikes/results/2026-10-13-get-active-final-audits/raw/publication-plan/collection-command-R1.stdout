@@ -1,0 +1,1 @@
+:OK: sbcl --script spikes/out/active-final-publication/collect.lisp spikes/out/active-final-publication/manifest.lisp spikes/results/2026-10-13-get-active-final/; record: /Users/gpicchiarelli/.codex/worktrees/get-active-final/ArcDocDB/spikes/out/4000915508-command-29897-0/report.lisp

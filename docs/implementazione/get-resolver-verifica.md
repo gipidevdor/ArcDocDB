@@ -20,6 +20,18 @@ Entrambi i record riportano exit code 0, working tree iniziale pulito e
 gli stessi **731 path/blob** prima e dopo, verificati contro il freeze.
 I risultati appartengono a questo commit, precedente alla presente pagina.
 
+L'integrazione con `main` è verificata al freeze
+`15fc91c824b0c49ad91dfdfc9845d4e9e2148102`: `make check` R3 passa
+con 1.011 test di modulo e due smoke check, exit 0 e **735 path/blob**
+stabili, corrispondenti al commit. La copertura R2 ripete separatamente
+i 42 test e conserva gli stessi conteggi della tabella seguente.
+La [raccolta dell'integrazione](../../spikes/results/2026-10-13-get-resolver-integration/)
+conserva integralmente anche il precedente `make check` R2, exit 2:
+i test erano passati, ma sette collegamenti di un README temporaneo
+di raccolta impedivano il controllo documentale. Quel modello è stato
+rinominato `.txt`; R3 verifica il controllo completo dopo la correzione.
+R2 non è qualificato come esito complessivo positivo.
+
 Le fixture writer CLOSED usano file reali readonly, header/SEAL/manifest
 v1 e v2 e encoding CRC indipendente. Gli attesi comprendono offset e valori
 letterali, TXID/CSN u64, OUTCOME fisicamente riordinati, prima prova dei

@@ -28,7 +28,8 @@
                              (:file "cbor-scan-stack") (:file "cbor-scan-items")
                              (:file "cbor-scan") (:file "cbor-scan-minimal")
                              (:file "cbor-write") (:file "cbor-string-write")
-                             (:file "cbor-simple-write")))
+                             (:file "cbor-simple-write")
+                             (:file "cbor-float-narrow") (:file "cbor-float-write")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
                (:module "cache" :serial t
@@ -131,7 +132,9 @@
                              (:file "cbor-string-write-support") (:file "cbor-string-write")
                              (:file "cbor-string-write-threads")
                              (:file "cbor-simple-write-support") (:file "cbor-simple-write")
-                             (:file "cbor-simple-write-threads")))
+                             (:file "cbor-simple-write-threads")
+                             (:file "cbor-float-write-support") (:file "cbor-float-write")
+                             (:file "cbor-float-write-threads")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "mvcc" :serial t
@@ -185,6 +188,7 @@
              (uiop:symbol-call '#:arcdocdb.cbor.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.string.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.simple.write.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.cbor.float.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)

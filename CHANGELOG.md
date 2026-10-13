@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Scrittura dei float CBOR da parole IEEE: riduzione esatta della larghezza,
+  preservazione di segno e payload NaN, preflight prima della mutazione
+  e destinazioni private per i worker. Qualifica C1 e profilo documentale
+  restano aperti.
+
 - Directory GET dei segmenti CLOSED: ID u32 compatti e riferimenti privati
   immutabili, controllo di Serie/ordine/budget prima delle copie, ricerca
   limitata a diciassette passi e collegamento al resolver/cache/I/O.

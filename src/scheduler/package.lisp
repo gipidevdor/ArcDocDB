@@ -7,5 +7,6 @@
   (:export #:controllore-pool #:crea-controllore-pool
            #:aggiorna-controllore-pool #:leggi-controllore-pool
            #:porta-worker-pool #:crea-porta-worker-pool #:applica-stato-worker-pool
+           #:prendi-writer-pool
            #:registro-pool #:crea-registro-pool #:leggi-registro-pool
            #:aggiorna-registro-pool))

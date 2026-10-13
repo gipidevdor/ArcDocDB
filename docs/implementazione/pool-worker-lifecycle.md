@@ -121,8 +121,9 @@ una conferma fallita, e nessuno dei campi d'integrità C1 viene modificato.
 
 ## Integrazione ancora richiesta
 
-REQ-THR-001 resta progettato a livello del motore completo. Mancano dispatcher che
-rispetta active, sensori e coordinamento dell'Archivio, avvio graduale dei thread,
+La [presa governata dal pool](pool-worker-claim.md) rispetta active e collega il
+passo IDLE alla presa C1. REQ-THR-001 resta progettato a livello del motore completo.
+Mancano dispatcher del server, sensori e coordinamento dell'Archivio, avvio graduale dei thread,
 risveglio persistente dalla ready, gestione del guasto del pool e arresto fisico.
 Il componente non qualifica un'attesa idle nativa, il pump di risveglio, il numero
 di thread da avviare sull'hardware o la latenza end-to-end. QA-12/19 restano aperte.

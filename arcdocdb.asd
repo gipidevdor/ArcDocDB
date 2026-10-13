@@ -152,6 +152,8 @@
                 :components ((:file "support") (:file "construction") (:file "read") (:file "threads")))
                (:module "get-resolver" :serial t
                 :components ((:file "support") (:file "sort") (:file "construction") (:file "read")))
+               (:module "get-active" :serial t
+                :components ((:file "support") (:file "construction") (:file "directory") (:file "read")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
@@ -201,6 +203,7 @@
              (uiop:symbol-call '#:arcdocdb.get.performance.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.directory.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.resolver.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.get.active.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.scheduler.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)

@@ -12,6 +12,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   stessa radice catturata e rifiuto di owner/ID duplicati prima dell'adozione.
   Mantiene il protocollo WAL e i cinque esiti del nucleo GET; rotazione e
   reclaim completo restano distinti.
+- Controllore locale del numero di worker di calcolo: EWMA intere,
+  crescita additiva, riduzione moltiplicativa e permanenza delle condizioni.
+  Campioni e tempo iniettati, target distinto dai worker effettivi,
+  aggiornamento limitato senza allocazioni dopo l’avvio. Avvio, risveglio
+  e ritiro dei thread restano il prossimo componente del pool.
+
 - Associazione fisica readonly/append: confronto esatto device/inode nel pool
   I/O, prova immutabile legata alle capacità e verifica senza syscall nel
   costruttore ACTIVE. Backend iniettabile esteso con identity opzionale;

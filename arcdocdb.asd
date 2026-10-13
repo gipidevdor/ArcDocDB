@@ -39,6 +39,9 @@
                              (:file "handoff") (:file "ready-types") (:file "ready")
                              (:file "ready-recycle")
                              (:file "worker-types") (:file "worker-boundary") (:file "worker-claim") (:file "worker-run")))
+               (:module "scheduler" :serial t
+                :components ((:file "package") (:file "types") (:file "build")
+                             (:file "read") (:file "policy") (:file "update")))
                (:module "storage"
                 :serial t
                 :components ((:file "package") (:file "formats") (:file "segment-header")
@@ -154,6 +157,8 @@
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
+               (:module "scheduler" :serial t
+                :components ((:file "support") (:file "controller")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")
@@ -199,6 +204,7 @@
              (uiop:symbol-call '#:arcdocdb.get.directory.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.resolver.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.scheduler.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.tests '#:run)

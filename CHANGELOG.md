@@ -13,6 +13,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   registro CSN della vista; errori senza retry o risultati parziali. Decisione
   EDIT, apertura/rotazione del server e qualifica C1 restano da integrare.
 
+- Ponte fonti GET della Serie: directory CLOSED nel contenuto della radice
+  ACTIVE, acquisizione unica dal controller sotto EBR, risoluzione dalla
+  stessa radice catturata e rifiuto di owner/ID duplicati prima dell'adozione.
+  Mantiene il protocollo WAL e i cinque esiti del nucleo GET; rotazione e
+  reclaim completo restano distinti.
 - Scrittura dei float CBOR da parole IEEE: riduzione esatta della larghezza,
   preservazione di segno e payload NaN, preflight prima della mutazione
   e destinazioni private per i worker. Qualifica C1 e profilo documentale

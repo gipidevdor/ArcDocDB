@@ -1,0 +1,5 @@
+--- a/src/get-directory/sources-read.lisp
++++ b/src/get-directory/sources-read.lisp
+@@ -14,1 +14,1 @@
+-  (let* ((root (leggi-radice-serie controller))
++  (let* ((root (arcdocdb.series::controllore-serie-planned-root controller))

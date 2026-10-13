@@ -44,7 +44,12 @@
   (:LABEL #A((11) BASE-CHAR . "final-links") :RECORD-PATH
    "processes/final-links/report.lisp" :STATUS :OK :EXIT-CODE 0
    :SOURCE-CONSISTENCY :STABLE :COMMAND
-   (#A((4) BASE-CHAR . "make") #A((5) BASE-CHAR . "links"))))
+   (#A((4) BASE-CHAR . "make") #A((5) BASE-CHAR . "links")))
+  (:LABEL #A((19) BASE-CHAR . "published-documents") :RECORD-PATH
+   "processes/published-documents/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :COMMAND
+   (#A((4) BASE-CHAR . "make") #A((5) BASE-CHAR . "links")
+    #A((8) BASE-CHAR . "evidence"))))
  :FILES
  ((:PATH "collection-manifest.lisp" :SOURCE
    #A((120) BASE-CHAR
@@ -325,7 +330,17 @@
    #A((113) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000909003-command-90229-0/report.lisp")
    :BYTES 158745 :SHA256
-   "74bc15196a143a6e2657aded84bd4927d3982d8e948af07add2835795d461301"))
+   "74bc15196a143a6e2657aded84bd4927d3982d8e948af07add2835795d461301")
+  (:PATH "processes/published-documents/conservazione.lisp" :SOURCE
+   #A((120) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000909225-command-92804-0/conservazione.lisp")
+   :BYTES 1153 :SHA256
+   "162efb4ff62f196421b734cc93ee9270fd2f0147729be2886286eeb2d3b0c006")
+  (:PATH "processes/published-documents/report.lisp" :SOURCE
+   #A((113) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000909225-command-92804-0/report.lisp")
+   :BYTES 158961 :SHA256
+   "23b23f67e82481b775871711110be5cdfed6e1594ca9651ac290c1394d95999c"))
  :LIMITS
  (:SHA256-BYTE-COPY-CHECK :RAW-ORIGINALS-PRESERVED
   :FASL-EXCLUDED-FROM-PUBLISHED-MUTATION-TREES

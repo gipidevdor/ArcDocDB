@@ -30,6 +30,8 @@ attraverso le API ACTIVE del reader.
    versione del log e configurazione. Passando `:associazione-file prova`,
    verifica anche le due capacità effettive senza I/O. Omettere la prova conserva
    l'obbligo originario del caller; il solo header non lo assolve.
+   Il [preparatore del nuovo writer](inizializzazione-active.md) fornisce una
+   factory che richiede la prova, dopo header durevole e verifica della rilettura.
 3. Sul lotto OPEN, chiamare `verifica-capienza-get-attiva` **prima** del
    ponte WAL–CSN. La preflight verifica ring, contiguità, forma supportata,
    spazio segmento e budget; restituisce il numero PUT, senza assegnare CSN

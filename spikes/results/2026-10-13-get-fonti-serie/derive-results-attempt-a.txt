@@ -1,0 +1,43 @@
+;;;; Riepilogo riproducibile: solo campagna completa, nessuna selezione delle repliche.
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defun stats (numbers)
+  (unless (= 5 (length numbers)) (error "Servono cinque repliche."))
+  (let ((sorted (sort (copy-list numbers) #'<)))
+    (list :minimum (first sorted) :median (third sorted) :maximum (fifth sorted))))
+(let* ((args (uiop:command-line-arguments))
+       (record (arcdocdb.evidence:read-evidence (first args)))
+       (windows (getf record :windows)) (groups nil))
+  (unless (and (= 2 (length args)) (eq :ok (getf record :status)) (= 120 (length windows)))
+    (error "Campagna incompleta."))
+  (dolist (n '(1 8 64))
+    (dolist (scenario '(:resolve :cache-hit))
+      (dolist (configuration '((:serial 1) (:parallel 1) (:parallel 2) (:parallel 4)))
+        (let* ((execution (first configuration)) (readers (second configuration))
+               (cell (remove-if-not (lambda (w) (and (= n (getf w :n)) (eq scenario (getf w :scenario))
+                                                    (eq execution (getf w :execution)) (= readers (getf w :readers)))) windows)))
+          (unless (and (= 5 (length cell))
+                       (every (lambda (w) (and (eq :ok (getf w :status)) (getf w :quiescent)
+                                              (= (* 20000 readers) (getf w :completed) (getf w :requested))
+                                              (= (getf w :checksum) (getf w :expected-checksum))
+                                              (plusp (getf w :seconds)))) cell))
+            (error "Cella incompleta/discrepante: ~S" (list n scenario execution readers)))
+          (push (list :n n :scenario scenario :execution execution :readers readers
+                      :ops-per-second (stats (mapcar (lambda (w) (/ (getf w :completed) (getf w :seconds))) cell))
+                      :heap-bytes (stats (mapcar (lambda (w) (getf w :heap-bytes)) cell))) groups)))))
+  (let ((measured (reduce #'+ windows :key (lambda (w) (getf w :completed))))
+        (warm (reduce #'+ windows :key (lambda (w) (* (getf w :readers) (getf w :warmup-per-reader)))))
+        (serial (remove-if-not (lambda (w) (eq :serial (getf w :execution))) windows)))
+    (unless (and (= 4800000 measured) (= 240000 warm) (= 30 (length serial)))
+      (error "Conteggi della campagna errati."))
+    (let ((summary (list :schema-version 1 :kind :get-series-derived-results :status :ok
+                         :source (first args) :measured-cycles measured :warmup-cycles warm
+                         :serial-windows 30 :parallel-windows 90
+                         :zero-heap-serial-windows (count 0 serial :key (lambda (w) (getf w :heap-bytes)))
+                         :groups (nreverse groups)
+                         :limits '(:five-fixed-replicates :heap-process-allocation-not-rss
+                                   :whole-cycle-with-oracles :parallel-startup-gate-join-in-clock
+                                   :closed-only-controller-read :not-db-throughput :no-percentile-claim))))
+      (with-open-file (s (second args) :direction :output :if-exists :error)
+        (let ((*print-readably* t)) (write summary :stream s :pretty t) (terpri s)))
+      (write summary :pretty t) (terpri))))

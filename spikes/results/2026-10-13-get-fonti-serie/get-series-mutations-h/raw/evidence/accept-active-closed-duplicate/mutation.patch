@@ -1,0 +1,5 @@
+--- a/src/get-directory/sources-read.lisp
++++ b/src/get-directory/sources-read.lisp
+@@ -31,1 +31,1 @@
+-            (guasto-get context :sources-active-duplicate))))
++            (when (null active) (guasto-get context :sources-active-duplicate)))))

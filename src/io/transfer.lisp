@@ -15,6 +15,17 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED prima di qualsiasi syscall."
       (error 'resource-exhausted :reason :io-byte-budget :offset start))
     count))
 
+;;; REQ: REQ-AFF-008 REQ-AFF-002
+(declaim (ftype (function (file-io index) null) verifica-capienza-lettura))
+(defun verifica-capienza-lettura (file count)
+  "Pre: capacità readonly posseduta. Post: range di COUNT byte ammesso, senza syscall.
+IO-FAULT/INVALID-ARGUMENT per capacità; RESOURCE-EXHAUSTED per limite trasferimento.
+Non verifica buffer, offset, disponibilità fisica dei byte o integrità dei dati."
+  (esigi-aperto file :input)
+  (when (> count (file-max-transfer file))
+    (error 'resource-exhausted :reason :io-byte-budget))
+  nil)
+
 ;;; REQ: REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (file-io t index keyword index) index) progresso))
 (defun progresso (file result remaining operation transferred)

@@ -220,10 +220,11 @@
     (dolist (active-p '(nil t))
       (call-with-directory-series-fixture
        (lambda (fixture)
-         (let ((directory (directory-series-fixture-directory fixture)))
+         (let ((directory (directory-series-fixture-directory fixture)) (bad-key (directory-key 2001)))
            ;; ID 18 e' assente fra CLOSED 17 e #xffffffff; non coincide con ACTIVE 13.
-           (directory-publish-key directory (aref (directory-fixture-keys directory) 0) 1 18 64 56)
-           (is (eq :candidate (directory-begin directory)))
+           ;; FI su nuova chiave: non viola la monotonia CSN di una chiave gia' pubblicata.
+           (directory-publish-key directory bad-key 1 18 64 56)
+           (is (eq :candidate (directory-series-begin fixture bad-key)))
            (signals invariant-violation
              (directory-series-operation operation (directory-series-context fixture)
                                           (directory-series-fixture-controller fixture)) :directory-location-absent)

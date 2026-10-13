@@ -171,7 +171,10 @@ per condizione **non è stata eseguita** in questo incremento.
 Le [evidenze statiche](../../spikes/results/2026-10-11-get-active/README.md)
 conservano compilazione e controlli di prodotto/documentazione. Le due letture
 sono locali dell'autore, non revisione indipendente. Nessun nuovo test,
-benchmark, fault injection, modello o self-test è aggiunto/eseguito localmente.
+benchmark, fault injection, modello o self-test era stato aggiunto/eseguito
+localmente nell'incremento iniziale. La successiva [verifica funzionale
+dedicata](get-active-verifica.md), secondo il [metodo preregistrato](get-active-metodo.md),
+aggiunge 28 test ordinari, copertura diagnostica e audit indipendenti.
 Restano aperti stress con thread reali, interruzioni in ogni fase, condition
 coverage, misure di heap/performance, prove ACTIVE multiserie, directory della
 Serie/rotazione/reclaim, indice concreto e qualifica C1.

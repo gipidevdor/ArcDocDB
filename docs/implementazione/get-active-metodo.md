@@ -94,6 +94,23 @@ con sei argomenti raggiunge soltanto il guard di cardinalità; le sue prove
 restano attribuite al primo freeze. La seconda copia di lavoro mantiene
 immutati i gruppi originali mentre il loro audit finale procede in parallelo.
 
+### Ultima integrazione prima della pull request
+
+Si integra poi il main esatto
+`061e638200f0d97fc2443c7dec38d4362ef274e1`, che aggiunge il lifecycle del
+pool e la preparazione del checkpoint CONTROL. Le 18 nuove prove del
+pool portano il totale atteso a 1.125 test in 29 suite, più due smoke
+check; il conteggio finale viene ricavato dai sorgenti Git congelati.
+Il codice e i test della nostra suite ACTIVE restano invariati.
+
+Si committano integrazione e documenti e si esegue una verifica completa
+in una terza copia separata, con cache FASL privata. Non si riscrivono
+i gruppi di spike già congelati nelle prime due copie. Le coperture
+rimangono attribuite ai loro due freeze; non si ripetono perché i dieci
+file del loro perimetro sono invariati nell'ultima integrazione.
+L'audit finale locale ricava inventario, nomi, ordine e conteggi dal nuovo
+freeze, conservando tutti i gruppi e le fixture del controllo completo.
+
 Prima della pull request passano compilazione senza avvisi, regressione,
 controlli statici, tracciabilità, collegamenti e conservazione. La CI
 ripete i controlli su Linux/macOS e i documenti separatamente. Le prove

@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Suite funzionale dedicata al GET ACTIVE ordinario: 28 test con file reali,
+  formati v1/v2, oracoli wire indipendenti, confini di payload e directory,
+  cache, guasti e cleanup snapshot/EBR. Copertura isolata e compatibilità
+  CLOSED conservate con prove grezze e audit indipendenti; qualifica C1 e
+  MC/DC restano aperti.
+
 - Preparazione del checkpoint `control.log.tmp`: header della Serie, EDIT
   completo e SEAL costruiti senza I/O, manifest verificato contro il nuovo
   ACTIVE, file fisicamente distinto, trasferimenti a blocchi, rilettura esatta

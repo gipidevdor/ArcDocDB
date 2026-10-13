@@ -139,6 +139,10 @@ Questo modulo non riconcilia file o directory, non rinomina o elimina,
 non legge i segmenti, non risolve i prepared e non scrive un nuovo control
 log. La ricostruzione in memoria non chiude il gate del recovery completo.
 
+Il [preparatore del checkpoint](checkpoint-control.md) riusa questo decoder
+per verificare uno stato completo in memoria prima di scrivere il nuovo
+`control.log.tmp`. Rinomina, inventario autorevole e adozione restano al controller.
+
 Requisiti: REQ-WAL-001/005, REQ-REC-001/002/004, REQ-FOR-003,
 REQ-AFF-008/009/017/018/019, REQ-VAL-001.
 Invarianti: INV-S2/S4/S5/S7, INV-F1/F2/F3, INV-A7/A8/A9/A10/A11, INV-P6/X3.

@@ -13,6 +13,7 @@ quelle di [ADR-0017](../adr/0017-piattaforma-e-io.md) e del
 |---|---|---|
 | `associa-file input append` | controller esclusivo nel pool I/O; capacità aperte, dello stesso backend; nessuna close concorrente | associazione immutabile, restituita solo dopo confronto esatto device/inode |
 | `verifica-associazione-file prova input append` | stessa ownership e durata delle capacità | verifica O(1) dei riferimenti e degli stati, senza I/O |
+| `verifica-file-distinti left right` | due capacità readonly stabili del medesimo backend, nel pool I/O | due fstat/callback; rifiuta lo stesso device/inode, senza mutazioni o retry |
 | `make-backend … :identity callback` | callback fidato e stabile, dello stesso dominio degli altri callback | estensione opzionale; le sei posizioni precedenti restano compatibili |
 | `crea-sorgente-get-attiva … :associazione-file prova` | prova ottenuta nel pool I/O | verifica readonly della sorgente e append effettivo del log del controller prima di costruire la sorgente |
 

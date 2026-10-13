@@ -12,6 +12,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   cursore intatti quando inattivo. Compiti e ricircoli già acquisiti completano
   i propri obblighi prima del ritiro; nessuna attesa o gestione fisica dei thread.
 
+- Preparazione del checkpoint `control.log.tmp`: header della Serie, EDIT
+  completo e SEAL costruiti senza I/O, manifest verificato contro il nuovo
+  ACTIVE, file fisicamente distinto, trasferimenti a blocchi, rilettura esatta
+  e fsync del parent. Nessun CSN o rinomina implicita; integrazione del recovery
+  e qualifica C1 restano aperte.
+
 - Attuazione logica del controllore pool su worker preesistenti: richieste
   persistenti e conteggio delle sole conferme, ritiro soltanto a contesto IDLE
   senza abbandonare lease o batch, riattivazione degli stessi contesti.

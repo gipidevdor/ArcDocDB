@@ -5,7 +5,7 @@
   (:import-from #:arcdocdb.conditions #:io-fault #:invalid-argument #:resource-exhausted
                 #:invariant-violation #:unsupported-format)
   (:export #:backend #:make-backend #:file-io
-           #:associazione-file #:associa-file #:verifica-associazione-file
+           #:associazione-file #:associa-file #:verifica-associazione-file #:verifica-file-distinti
            #:apri-lettura #:crea-temporaneo #:apri-directory #:chiudi
            #:leggi-esatto #:append-esatto #:durable-flush #:mode-file #:verifica-capienza-append
            #:stato-file #:posizione-scritta #:posizione-durevole #:verifica-capienza-lettura))

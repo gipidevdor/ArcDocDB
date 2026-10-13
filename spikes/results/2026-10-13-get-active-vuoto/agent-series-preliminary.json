@@ -1,0 +1,139 @@
+{
+  "schema": "arcdocdb.agent-series-preliminary.v1",
+  "attestation_date": "2026-10-13",
+  "timezone": "Europe/Rome",
+  "kind": "factual-raw-preliminary-execution-attestation",
+  "context": {
+    "execution": "anticipata, prima del freeze",
+    "sources": "mutabili, nel workspace condiviso",
+    "accepted": false,
+    "acceptance_status": "NON ACCETTATA; l'utente richiede riesecuzione centralizzata dopo il freeze",
+    "scope": "Test caricati ed eseguiti esclusivamente da tests/series/controller.lisp e tests/series/threads.lisp; supporti foundation/io/series caricati come harness.",
+    "benchmark_executed": false,
+    "commit_created": false,
+    "last_execution_started_before_latest_user_correction": true,
+    "after_latest_user_correction": "Solo recupero dell'output della sessione già avviata e scrittura di questa attestazione; nessun nuovo run.",
+    "result_interpretation": "Gli exit 0 e i riepiloghi 51/53 descrivono gli output osservati. Non attestano accettazione, freeze, copertura centralizzata o immutabilità."
+  },
+  "working_directory": "/Users/gpicchiarelli/.codex/worktrees/active-empty/ArcDocDB",
+  "shell": "zsh",
+  "recorder": {
+    "path_used_during_execution": null,
+    "capture_method": "Output restituiti da exec_command e write_stdin nella conversazione; nessun recorder su file o redirezione stdout.",
+    "retrospective_attestation_path": "/Users/gpicchiarelli/.codex/worktrees/active-empty/ArcDocDB/spikes/results/2026-10-13-get-active-vuoto/agent-series-preliminary.json",
+    "raw_stdout_provenance": "Trascrizione degli output integrali dei tre run completati, già restituiti dai tool nella conversazione.",
+    "stream_limitation": "I tool restituiscono un campo output aggregato. Nei run completati contiene le righe di risultato riportate come stdout; stderr non è stato acquisito separatamente.",
+    "generated_at_execution_time": false
+  },
+  "exact_commands": {
+    "attempt_1": "sbcl --noinform --no-userinit --no-sysinit --script /dev/stdin <<'LISP'\n(require :asdf)\n(setf asdf:*compile-file-failure-behaviour* :error\n      asdf:*compile-file-warnings-behaviour* :error)\n(handler-bind ((warning (lambda (condition) (error \"Avviso non ammesso: ~A\" condition))))\n  (asdf:load-asd (truename \"arcdocdb.asd\"))\n  (asdf:load-system \"arcdocdb\")\n  (load \"tests/foundation/support.lisp\")\n  (load \"tests/io/support.lisp\")\n  (load \"tests/series/support.lisp\")\n  (dolist (source '(\"tests/series/controller.lisp\" \"tests/series/threads.lisp\"))\n    (let ((output (merge-pathnames\n                   (format nil \"series-bootstrap-~A-~D.fasl\" (pathname-name source) (sb-posix:getpid))\n                   (uiop:temporary-directory))))\n      (unwind-protect\n           (multiple-value-bind (compiled warnings failure) (compile-file source :output-file output)\n             (when (or warnings failure) (error \"Compilazione non pulita: ~A\" source))\n             (load compiled))\n        (when (probe-file output) (delete-file output)))))\n  (uiop:symbol-call :arcdocdb.series.tests :run))\nLISP",
+    "attempt_2": "sbcl --noinform --no-userinit --no-sysinit --script /dev/stdin <<'LISP'\n(require :asdf)\n(require :sb-posix)\n(setf asdf:*compile-file-failure-behaviour* :error\n      asdf:*compile-file-warnings-behaviour* :error)\n(handler-bind ((warning (lambda (condition) (error \"Avviso non ammesso: ~A\" condition))))\n  (asdf:load-asd (truename \"arcdocdb.asd\"))\n  (asdf:load-system \"arcdocdb\")\n  (load \"tests/foundation/support.lisp\")\n  (load \"tests/io/support.lisp\")\n  (load \"tests/series/support.lisp\")\n  (dolist (source '(\"tests/series/controller.lisp\" \"tests/series/threads.lisp\"))\n    (let ((output (merge-pathnames\n                   (format nil \"series-bootstrap-~A-~D.fasl\" (pathname-name source) (sb-posix:getpid))\n                   (uiop:temporary-directory))))\n      (unwind-protect\n           (multiple-value-bind (compiled warnings failure) (compile-file source :output-file output)\n             (when (or warnings failure) (error \"Compilazione non pulita: ~A\" source))\n             (load compiled))\n        (when (probe-file output) (delete-file output)))))\n  (uiop:symbol-call :arcdocdb.series.tests :run))\nLISP",
+    "successful_runs": "sbcl --noinform --no-userinit --no-sysinit --script /dev/stdin <<'LISP'\n(require :asdf)\n(require :sb-posix)\n(setf asdf:*compile-file-failure-behaviour* :error\n      asdf:*compile-file-warnings-behaviour* :error)\n(handler-bind ((warning (lambda (condition)\n                          (unless (typep condition 'sb-kernel:redefinition-warning)\n                            (error \"Avviso non ammesso: ~A\" condition)))))\n  (asdf:load-asd (truename \"arcdocdb.asd\"))\n  (asdf:load-system \"arcdocdb\")\n  (load \"tests/foundation/support.lisp\")\n  (load \"tests/io/support.lisp\")\n  (load \"tests/series/support.lisp\")\n  (dolist (source '(\"tests/series/controller.lisp\" \"tests/series/threads.lisp\"))\n    (let ((output (merge-pathnames\n                   (format nil \"series-bootstrap-~A-~D.fasl\" (pathname-name source) (sb-posix:getpid))\n                   (uiop:temporary-directory))))\n      (unwind-protect\n           (multiple-value-bind (compiled warnings failure) (compile-file source :output-file output)\n             (when (or warnings failure) (error \"Compilazione non pulita: ~A\" source))\n             (load compiled))\n        (when (probe-file output) (delete-file output)))))\n  (uiop:symbol-call :arcdocdb.series.tests :run))\nLISP"
+  },
+  "execution_environment": {
+    "lisp_invocation": "sbcl --noinform --no-userinit --no-sysinit --script /dev/stdin",
+    "implementation_loading": "asdf:load-system \"arcdocdb\", senza :force; ASDF può riusare la propria cache.",
+    "test_compilation": "compile-file dei soli due file autorizzati; warnings/failure causano errore.",
+    "warning_policy_in_successful_command": "WARNING causa errore, esclusi sb-kernel:redefinition-warning come nello script build esistente.",
+    "temporary_fasl_path_expression": "(merge-pathnames (format nil \"series-bootstrap-~A-~D.fasl\" (pathname-name source) (sb-posix:getpid)) (uiop:temporary-directory))",
+    "temporary_fasl_cleanup": "delete-file in unwind-protect, come riportato nel comando; nessun controllo aggiuntivo successivo.",
+    "exact_execution_start_and_end_times": null,
+    "runtime_version_recorded": false
+  },
+  "source_immutability": {
+    "verified": false,
+    "before": {
+      "frozen": false,
+      "source_hashes": null,
+      "pinned_revision": null,
+      "immutable_snapshot_path": null,
+      "note": "Nessun manifest/hash pre-run o snapshot immutabile acquisito."
+    },
+    "after": {
+      "source_hashes": null,
+      "pinned_revision": null,
+      "immutable_snapshot_path": null,
+      "note": "Nessun manifest/hash post-run acquisito; non si effettuano ora ulteriori verifiche."
+    },
+    "comparison": null,
+    "observed_context": "Durante il lavoro sono state osservate modifiche concorrenti nei sorgenti condivisi, incluse le revisioni del bootstrap e l'estrazione in %check-initial-root.",
+    "conclusion": "Immutabilità prima/dopo NON ATTESTABILE. I sorgenti letti/caricati non erano congelati.",
+    "assertions_inside_tests": "I confronti di stato controller/WAL/CSN nei test sono oracoli runtime delle fixture; non costituiscono una verifica di immutabilità dei sorgenti."
+  },
+  "prior_setup_attempts": [
+    {
+      "sequence": 1,
+      "exact_command_ref": "attempt_1",
+      "exit_code": 1,
+      "completed_test_run": false,
+      "tool_chunk_id": "1855f6",
+      "raw_diagnostic_excerpt": "Unhandled SB-C::INPUT-ERROR-IN-LOAD in thread #<SB-THREAD:THREAD tid=259 \"main thread\" RUNNING\n                                                 {80052B0003}>:\n  READ error during LOAD:\n\n    Package SB-POSIX does not exist.\n\n      Line: 12, Column: 100, File-Position: 612\n\n      Stream: #<SB-SYS:FD-STREAM for \"file /dev/stdin\" {80052505B3}>\n",
+      "diagnostic_is_excerpt": true,
+      "diagnostic_source": "Output del tool già presente in conversazione; il comando non raggiunge l'esecuzione dei test."
+    },
+    {
+      "sequence": 2,
+      "exact_command_ref": "attempt_2",
+      "exit_code": 1,
+      "completed_test_run": false,
+      "tool_chunk_id": "80b27f",
+      "raw_diagnostic_excerpt": "Unhandled SIMPLE-ERROR in thread #<SB-THREAD:THREAD tid=259 \"main thread\" RUNNING\n                                    {80052604E3}>:\n  Avviso non ammesso: redefining ARCDOCDB.CSN::%WITH-CSN-GUARD in DEFMACRO\n",
+      "diagnostic_is_excerpt": true,
+      "diagnostic_source": "Output del tool già presente in conversazione; caricamento del prodotto interrotto prima dei test."
+    }
+  ],
+  "completed_runs": [
+    {
+      "sequence": 3,
+      "stage": "Prima dell'aggiunta dei due test D08; prima di %check-initial-root.",
+      "exact_command_ref": "successful_runs",
+      "session_id": 4059,
+      "completion_chunk_id": "cc9b89",
+      "accepted": false,
+      "exit_code": 0,
+      "observed_test_count": 51,
+      "stdout": "ok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-CAPACITY-OFFSET-CSN-AND-EFFECT-BOUNDARIES\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-ACCEPTS-OPAQUE-NON-NIL-VALUES\nok    TEST-REQ-AFF-004-SERIES-BOOTSTRAP-NIL-STALE-AND-REPEATED-BEFORE-EFFECT\nok    TEST-REQ-AFF-004-SERIES-BOOTSTRAP-VIRGIN-GUARDS-AND-EXISTING-READER-ROOT\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-REFUSES-USED-EMPTY-RING-WITH-NIL-ROOT\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-FIRST-COMMIT-REQUIRES-INITIAL-ROOT-IDENTITY\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-HEALTH-AND-RING-PRECEDE-EFFECT\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-CAS-CORRUPTION-KEEPS-FIRST-CONDITION-AND-FAULTS-ARCHIVE\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-INCOMPLETE-END-PRESERVES-ERROR-AND-NONLOCAL-EXIT\nok    TEST-REQ-AFF-008-SERIES-DEFAULT-AND-CAPACITY-BOUNDARIES\nok    TEST-REQ-AFF-008-SERIES-INVALID-CONFIGURATION-PRESERVES-WAL\nok    TEST-REQ-CON-001-SERIES-LEASE-BUSY-STALE-AND-SINGLE-RELEASE\nok    TEST-REQ-WAL-005-SERIES-ADOPTS-SEALED-BEFORE-IO-AND-CAPTURES-TOKEN\nok    TEST-REQ-WAL-005-SERIES-REFUSES-OPEN-UNBOUND-AND-POST-DISPATCH-LOTS\nok    TEST-REQ-AFF-004-SERIES-REGISTRY-AND-LOG-BINDING-BEFORE-ADOPTION\nok    TEST-REQ-WAL-005-SERIES-OFFSET-GAP-AND-DUPLICATE-PRESERVE-OBLIGATION\nok    TEST-REQ-MVC-008-SERIES-CSN-STRICT-ORDER-EVEN-AT-CONTIGUOUS-OFFSETS\nok    TEST-REQ-WAL-006-SERIES-PLANNED-ROOT-EQ-AND-NIL-ARE-DISTINCT-PRECONDITIONS\nok    TEST-REQ-AFF-008-SERIES-FULL-KEEPS-SEALED-TOKEN-FOR-LATER-ADOPTION\nok    TEST-REQ-WAL-006-SERIES-PUBLICATION-FIFO-UNRESOLVED-AND-RETURNED-H\nok    TEST-REQ-WAL-006-SERIES-GROUP-STRONG-COVERAGE-BEFORE-ROOT-CAS\nok    TEST-REQ-WAL-006-SERIES-ASYNC-SEPARATE-PUBLICATION-AND-RETIREMENT-CURSORS\nok    TEST-REQ-AFF-004-SERIES-IO-BEGIN-ONCE-AND-WRITTEN-IS-NOT-COMPLETION\nok    TEST-REQ-WAL-005-SERIES-RETIREMENT-FIFO-RESOLVED-DURABLE-UNOWNED\nok    TEST-REQ-AFF-004-SERIES-FREE-AND-STALE-PREALLOCATED-EVENT-AFTER-WRAP\nok    TEST-REQ-AFF-004-SERIES-FOREIGN-EVENT-SAME-GENERATION-AND-CSN\nok    TEST-REQ-AFF-004-SERIES-FALSE-EVENT-AND-INVALID-GENERATION-BEFORE-MUTATION\nok    TEST-REQ-MVC-008-SERIES-BUSY-AFTER-CAS-KEEPS-ROOT-ONCE-AND-CAPTURED-TOKEN\nok    TEST-REQ-MVC-008-SERIES-HIGH-CSN-CARRY-AND-DELAYED-GLOBAL-HORIZON\nok    TEST-REQ-AFF-001-SERIES-KNOWN-WRITE-AND-FLUSH-FAULT-DRAIN-AND-ANNUL\nok    TEST-REQ-AFF-001-SERIES-TERMINAL-FAULT-AND-SCOPE-ONLY-UPGRADES\nok    TEST-REQ-AFF-001-SERIES-ANNUL-REQUIRES-LOCAL-FAULT-AND-GLOBAL-QUIESCENCE\nok    TEST-REQ-MVC-008-SERIES-ANNUL-FIFO-BUSY-PRESERVES-CAPTURED-OBLIGATION\nok    TEST-REQ-AFF-001-SERIES-ARCHIVE-FAULT-REFUSES-AUTOMATIC-ANNUL\nok    TEST-REQ-AFF-004-SERIES-CAPTURED-TOKEN-NEVER-RECONSTRUCTED-FROM-MUTATED-LOT\nok    TEST-REQ-AFF-004-SERIES-REGISTRY-INVARIANT-AFTER-ROOT-CAS-FAULTS-ARCHIVE\nok    TEST-REQ-AFF-001-SERIES-UNEXPECTED-ROOT-CAS-AND-NONLOCAL-EXIT-FAULT-ARCHIVE\nok    TEST-REQ-AFF-008-SERIES-LEASE-AND-EVENT-GENERATIONS-EXHAUST-WITHOUT-WRAP\nok    TEST-REQ-WAL-006-SERIES-INVALID-LEVEL-AND-PUBLICATION-REPLAY-PRESERVE-STATE\nok    TEST-REQ-WAL-006-SERIES-REJECTED-DISPATCH-WITHDRAWS-WITHOUT-IO-AND-H-CONVERGES\nok    TEST-REQ-AFF-004-SERIES-WITHDRAW-REFUSES-HEALTHY-OWNED-WRITTEN-STALE-AND-DOUBLE\nok    TEST-REQ-AFF-004-SERIES-WAL-PREFLIGHT-INVARIANTS-FAULT-BEFORE-ADOPTION-OR-RELEASE\nok    TEST-REQ-AFF-004-SERIES-UNCERTAIN-GETTER-FAULTS-ARCHIVE-BEFORE-AND-AFTER-CAS\nok    TEST-REQ-CON-002-SERIES-BOOTSTRAP-READERS-SEE-ONLY-NIL-OR-COMPLETE-ROOT\nok    TEST-REQ-CON-001-SERIES-BOOTSTRAP-FOREIGN-THREAD-CANNOT-USE-OWNER-LEASE\nok    TEST-REQ-CON-001-SERIES-FOREIGN-THREAD-LEASE-AND-RELEASE-REACQUIRE-TRANSFER\nok    TEST-REQ-CON-002-SERIES-CAS-EIGHT-CONTENDERS-ONE-OWNER\n  Serie: 4 controller x 64 lotti, K=3, 16 busy, 14 full, H convergente.\nok    TEST-REQ-CON-004-SERIES-FOUR-CONTROLLERS-SHARED-BOUNDED-CSN\nok    TEST-REQ-CON-002-SERIES-IMMUTABLE-ROOT-PARALLEL-READER-AFTER-HANDOFF\nok    TEST-REQ-WAL-006-SERIES-IO-FINISH-JOINED-BEFORE-DRAIN-AND-ANNUL\nok    TEST-REQ-CON-004-SERIES-HELD-CSN-GUARD-PUBLISH-NEVER-WAITS\n51 test del controller Serie superati.\n",
+      "stdout_complete_as_returned_by_tool": true,
+      "stderr_separately_captured": false,
+      "immutable_sources_verified": false
+    },
+    {
+      "sequence": 4,
+      "stage": "Dopo l'aggiunta dei due test D08 e dei cursori sentinella; prima dell'estrazione in %check-initial-root.",
+      "exact_command_ref": "successful_runs",
+      "session_id": 68321,
+      "completion_chunk_id": "ea5f8c",
+      "accepted": false,
+      "exit_code": 0,
+      "observed_test_count": 53,
+      "stdout": "ok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-CAPACITY-OFFSET-CSN-AND-EFFECT-BOUNDARIES\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-ACCEPTS-OPAQUE-NON-NIL-VALUES\nok    TEST-REQ-AFF-004-SERIES-BOOTSTRAP-NIL-STALE-AND-REPEATED-BEFORE-EFFECT\nok    TEST-REQ-AFF-004-SERIES-BOOTSTRAP-VIRGIN-GUARDS-AND-EXISTING-READER-ROOT\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-REFUSES-USED-EMPTY-RING-WITH-NIL-ROOT\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-FIRST-COMMIT-REQUIRES-INITIAL-ROOT-IDENTITY\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-HEALTH-AND-RING-PRECEDE-EFFECT\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-ACQUIRED-EFFECT-EXIT-PRESERVES-CAUSE-AND-ROOTS\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-PREEXISTING-EFFECT-KEEPS-OUTER-OWNERSHIP\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-CAS-CORRUPTION-KEEPS-FIRST-CONDITION-AND-FAULTS-ARCHIVE\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-INCOMPLETE-END-PRESERVES-ERROR-AND-NONLOCAL-EXIT\nok    TEST-REQ-AFF-008-SERIES-DEFAULT-AND-CAPACITY-BOUNDARIES\nok    TEST-REQ-AFF-008-SERIES-INVALID-CONFIGURATION-PRESERVES-WAL\nok    TEST-REQ-CON-001-SERIES-LEASE-BUSY-STALE-AND-SINGLE-RELEASE\nok    TEST-REQ-WAL-005-SERIES-ADOPTS-SEALED-BEFORE-IO-AND-CAPTURES-TOKEN\nok    TEST-REQ-WAL-005-SERIES-REFUSES-OPEN-UNBOUND-AND-POST-DISPATCH-LOTS\nok    TEST-REQ-AFF-004-SERIES-REGISTRY-AND-LOG-BINDING-BEFORE-ADOPTION\nok    TEST-REQ-WAL-005-SERIES-OFFSET-GAP-AND-DUPLICATE-PRESERVE-OBLIGATION\nok    TEST-REQ-MVC-008-SERIES-CSN-STRICT-ORDER-EVEN-AT-CONTIGUOUS-OFFSETS\nok    TEST-REQ-WAL-006-SERIES-PLANNED-ROOT-EQ-AND-NIL-ARE-DISTINCT-PRECONDITIONS\nok    TEST-REQ-AFF-008-SERIES-FULL-KEEPS-SEALED-TOKEN-FOR-LATER-ADOPTION\nok    TEST-REQ-WAL-006-SERIES-PUBLICATION-FIFO-UNRESOLVED-AND-RETURNED-H\nok    TEST-REQ-WAL-006-SERIES-GROUP-STRONG-COVERAGE-BEFORE-ROOT-CAS\nok    TEST-REQ-WAL-006-SERIES-ASYNC-SEPARATE-PUBLICATION-AND-RETIREMENT-CURSORS\nok    TEST-REQ-AFF-004-SERIES-IO-BEGIN-ONCE-AND-WRITTEN-IS-NOT-COMPLETION\nok    TEST-REQ-WAL-005-SERIES-RETIREMENT-FIFO-RESOLVED-DURABLE-UNOWNED\nok    TEST-REQ-AFF-004-SERIES-FREE-AND-STALE-PREALLOCATED-EVENT-AFTER-WRAP\nok    TEST-REQ-AFF-004-SERIES-FOREIGN-EVENT-SAME-GENERATION-AND-CSN\nok    TEST-REQ-AFF-004-SERIES-FALSE-EVENT-AND-INVALID-GENERATION-BEFORE-MUTATION\nok    TEST-REQ-MVC-008-SERIES-BUSY-AFTER-CAS-KEEPS-ROOT-ONCE-AND-CAPTURED-TOKEN\nok    TEST-REQ-MVC-008-SERIES-HIGH-CSN-CARRY-AND-DELAYED-GLOBAL-HORIZON\nok    TEST-REQ-AFF-001-SERIES-KNOWN-WRITE-AND-FLUSH-FAULT-DRAIN-AND-ANNUL\nok    TEST-REQ-AFF-001-SERIES-TERMINAL-FAULT-AND-SCOPE-ONLY-UPGRADES\nok    TEST-REQ-AFF-001-SERIES-ANNUL-REQUIRES-LOCAL-FAULT-AND-GLOBAL-QUIESCENCE\nok    TEST-REQ-MVC-008-SERIES-ANNUL-FIFO-BUSY-PRESERVES-CAPTURED-OBLIGATION\nok    TEST-REQ-AFF-001-SERIES-ARCHIVE-FAULT-REFUSES-AUTOMATIC-ANNUL\nok    TEST-REQ-AFF-004-SERIES-CAPTURED-TOKEN-NEVER-RECONSTRUCTED-FROM-MUTATED-LOT\nok    TEST-REQ-AFF-004-SERIES-REGISTRY-INVARIANT-AFTER-ROOT-CAS-FAULTS-ARCHIVE\nok    TEST-REQ-AFF-001-SERIES-UNEXPECTED-ROOT-CAS-AND-NONLOCAL-EXIT-FAULT-ARCHIVE\nok    TEST-REQ-AFF-008-SERIES-LEASE-AND-EVENT-GENERATIONS-EXHAUST-WITHOUT-WRAP\nok    TEST-REQ-WAL-006-SERIES-INVALID-LEVEL-AND-PUBLICATION-REPLAY-PRESERVE-STATE\nok    TEST-REQ-WAL-006-SERIES-REJECTED-DISPATCH-WITHDRAWS-WITHOUT-IO-AND-H-CONVERGES\nok    TEST-REQ-AFF-004-SERIES-WITHDRAW-REFUSES-HEALTHY-OWNED-WRITTEN-STALE-AND-DOUBLE\nok    TEST-REQ-AFF-004-SERIES-WAL-PREFLIGHT-INVARIANTS-FAULT-BEFORE-ADOPTION-OR-RELEASE\nok    TEST-REQ-AFF-004-SERIES-UNCERTAIN-GETTER-FAULTS-ARCHIVE-BEFORE-AND-AFTER-CAS\nok    TEST-REQ-CON-002-SERIES-BOOTSTRAP-READERS-SEE-ONLY-NIL-OR-COMPLETE-ROOT\nok    TEST-REQ-CON-001-SERIES-BOOTSTRAP-FOREIGN-THREAD-CANNOT-USE-OWNER-LEASE\nok    TEST-REQ-CON-001-SERIES-FOREIGN-THREAD-LEASE-AND-RELEASE-REACQUIRE-TRANSFER\nok    TEST-REQ-CON-002-SERIES-CAS-EIGHT-CONTENDERS-ONE-OWNER\n  Serie: 4 controller x 64 lotti, K=3, 2 busy, 17 full, H convergente.\nok    TEST-REQ-CON-004-SERIES-FOUR-CONTROLLERS-SHARED-BOUNDED-CSN\nok    TEST-REQ-CON-002-SERIES-IMMUTABLE-ROOT-PARALLEL-READER-AFTER-HANDOFF\nok    TEST-REQ-WAL-006-SERIES-IO-FINISH-JOINED-BEFORE-DRAIN-AND-ANNUL\nok    TEST-REQ-CON-004-SERIES-HELD-CSN-GUARD-PUBLISH-NEVER-WAITS\n53 test del controller Serie superati.\n",
+      "stdout_complete_as_returned_by_tool": true,
+      "stderr_separately_captured": false,
+      "immutable_sources_verified": false
+    },
+    {
+      "sequence": 5,
+      "stage": "Dopo aver letto il refactor %check-initial-root; chiamata già avviata quando è arrivata la correzione sul freeze.",
+      "exact_command_ref": "successful_runs",
+      "session_id": 94714,
+      "completion_chunk_id": "1a0909",
+      "accepted": false,
+      "exit_code": 0,
+      "observed_test_count": 53,
+      "stdout": "ok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-CAPACITY-OFFSET-CSN-AND-EFFECT-BOUNDARIES\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-ACCEPTS-OPAQUE-NON-NIL-VALUES\nok    TEST-REQ-AFF-004-SERIES-BOOTSTRAP-NIL-STALE-AND-REPEATED-BEFORE-EFFECT\nok    TEST-REQ-AFF-004-SERIES-BOOTSTRAP-VIRGIN-GUARDS-AND-EXISTING-READER-ROOT\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-REFUSES-USED-EMPTY-RING-WITH-NIL-ROOT\nok    TEST-REQ-WAL-006-SERIES-BOOTSTRAP-FIRST-COMMIT-REQUIRES-INITIAL-ROOT-IDENTITY\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-HEALTH-AND-RING-PRECEDE-EFFECT\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-ACQUIRED-EFFECT-EXIT-PRESERVES-CAUSE-AND-ROOTS\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-PREEXISTING-EFFECT-KEEPS-OUTER-OWNERSHIP\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-CAS-CORRUPTION-KEEPS-FIRST-CONDITION-AND-FAULTS-ARCHIVE\nok    TEST-REQ-AFF-001-SERIES-BOOTSTRAP-INCOMPLETE-END-PRESERVES-ERROR-AND-NONLOCAL-EXIT\nok    TEST-REQ-AFF-008-SERIES-DEFAULT-AND-CAPACITY-BOUNDARIES\nok    TEST-REQ-AFF-008-SERIES-INVALID-CONFIGURATION-PRESERVES-WAL\nok    TEST-REQ-CON-001-SERIES-LEASE-BUSY-STALE-AND-SINGLE-RELEASE\nok    TEST-REQ-WAL-005-SERIES-ADOPTS-SEALED-BEFORE-IO-AND-CAPTURES-TOKEN\nok    TEST-REQ-WAL-005-SERIES-REFUSES-OPEN-UNBOUND-AND-POST-DISPATCH-LOTS\nok    TEST-REQ-AFF-004-SERIES-REGISTRY-AND-LOG-BINDING-BEFORE-ADOPTION\nok    TEST-REQ-WAL-005-SERIES-OFFSET-GAP-AND-DUPLICATE-PRESERVE-OBLIGATION\nok    TEST-REQ-MVC-008-SERIES-CSN-STRICT-ORDER-EVEN-AT-CONTIGUOUS-OFFSETS\nok    TEST-REQ-WAL-006-SERIES-PLANNED-ROOT-EQ-AND-NIL-ARE-DISTINCT-PRECONDITIONS\nok    TEST-REQ-AFF-008-SERIES-FULL-KEEPS-SEALED-TOKEN-FOR-LATER-ADOPTION\nok    TEST-REQ-WAL-006-SERIES-PUBLICATION-FIFO-UNRESOLVED-AND-RETURNED-H\nok    TEST-REQ-WAL-006-SERIES-GROUP-STRONG-COVERAGE-BEFORE-ROOT-CAS\nok    TEST-REQ-WAL-006-SERIES-ASYNC-SEPARATE-PUBLICATION-AND-RETIREMENT-CURSORS\nok    TEST-REQ-AFF-004-SERIES-IO-BEGIN-ONCE-AND-WRITTEN-IS-NOT-COMPLETION\nok    TEST-REQ-WAL-005-SERIES-RETIREMENT-FIFO-RESOLVED-DURABLE-UNOWNED\nok    TEST-REQ-AFF-004-SERIES-FREE-AND-STALE-PREALLOCATED-EVENT-AFTER-WRAP\nok    TEST-REQ-AFF-004-SERIES-FOREIGN-EVENT-SAME-GENERATION-AND-CSN\nok    TEST-REQ-AFF-004-SERIES-FALSE-EVENT-AND-INVALID-GENERATION-BEFORE-MUTATION\nok    TEST-REQ-MVC-008-SERIES-BUSY-AFTER-CAS-KEEPS-ROOT-ONCE-AND-CAPTURED-TOKEN\nok    TEST-REQ-MVC-008-SERIES-HIGH-CSN-CARRY-AND-DELAYED-GLOBAL-HORIZON\nok    TEST-REQ-AFF-001-SERIES-KNOWN-WRITE-AND-FLUSH-FAULT-DRAIN-AND-ANNUL\nok    TEST-REQ-AFF-001-SERIES-TERMINAL-FAULT-AND-SCOPE-ONLY-UPGRADES\nok    TEST-REQ-AFF-001-SERIES-ANNUL-REQUIRES-LOCAL-FAULT-AND-GLOBAL-QUIESCENCE\nok    TEST-REQ-MVC-008-SERIES-ANNUL-FIFO-BUSY-PRESERVES-CAPTURED-OBLIGATION\nok    TEST-REQ-AFF-001-SERIES-ARCHIVE-FAULT-REFUSES-AUTOMATIC-ANNUL\nok    TEST-REQ-AFF-004-SERIES-CAPTURED-TOKEN-NEVER-RECONSTRUCTED-FROM-MUTATED-LOT\nok    TEST-REQ-AFF-004-SERIES-REGISTRY-INVARIANT-AFTER-ROOT-CAS-FAULTS-ARCHIVE\nok    TEST-REQ-AFF-001-SERIES-UNEXPECTED-ROOT-CAS-AND-NONLOCAL-EXIT-FAULT-ARCHIVE\nok    TEST-REQ-AFF-008-SERIES-LEASE-AND-EVENT-GENERATIONS-EXHAUST-WITHOUT-WRAP\nok    TEST-REQ-WAL-006-SERIES-INVALID-LEVEL-AND-PUBLICATION-REPLAY-PRESERVE-STATE\nok    TEST-REQ-WAL-006-SERIES-REJECTED-DISPATCH-WITHDRAWS-WITHOUT-IO-AND-H-CONVERGES\nok    TEST-REQ-AFF-004-SERIES-WITHDRAW-REFUSES-HEALTHY-OWNED-WRITTEN-STALE-AND-DOUBLE\nok    TEST-REQ-AFF-004-SERIES-WAL-PREFLIGHT-INVARIANTS-FAULT-BEFORE-ADOPTION-OR-RELEASE\nok    TEST-REQ-AFF-004-SERIES-UNCERTAIN-GETTER-FAULTS-ARCHIVE-BEFORE-AND-AFTER-CAS\nok    TEST-REQ-CON-002-SERIES-BOOTSTRAP-READERS-SEE-ONLY-NIL-OR-COMPLETE-ROOT\nok    TEST-REQ-CON-001-SERIES-BOOTSTRAP-FOREIGN-THREAD-CANNOT-USE-OWNER-LEASE\nok    TEST-REQ-CON-001-SERIES-FOREIGN-THREAD-LEASE-AND-RELEASE-REACQUIRE-TRANSFER\nok    TEST-REQ-CON-002-SERIES-CAS-EIGHT-CONTENDERS-ONE-OWNER\n  Serie: 4 controller x 64 lotti, K=3, 5 busy, 12 full, H convergente.\nok    TEST-REQ-CON-004-SERIES-FOUR-CONTROLLERS-SHARED-BOUNDED-CSN\nok    TEST-REQ-CON-002-SERIES-IMMUTABLE-ROOT-PARALLEL-READER-AFTER-HANDOFF\nok    TEST-REQ-WAL-006-SERIES-IO-FINISH-JOINED-BEFORE-DRAIN-AND-ANNUL\nok    TEST-REQ-CON-004-SERIES-HELD-CSN-GUARD-PUBLISH-NEVER-WAITS\n53 test del controller Serie superati.\n",
+      "stdout_complete_as_returned_by_tool": true,
+      "stderr_separately_captured": false,
+      "immutable_sources_verified": false,
+      "output_retrieval_after_user_correction": "functions.wait recupera l'handle della exec_command già avviata; write_stdin con chars vuoto recupera soltanto l'output di quella stessa sessione."
+    }
+  ],
+  "changes_for_this_attestation_request": {
+    "written_files": [
+      "/Users/gpicchiarelli/.codex/worktrees/active-empty/ArcDocDB/spikes/results/2026-10-13-get-active-vuoto/agent-series-preliminary.json"
+    ],
+    "other_files_modified": false,
+    "additional_test_runs_started": false,
+    "additional_shell_commands_started": false,
+    "further_validation_performed": false
+  }
+}

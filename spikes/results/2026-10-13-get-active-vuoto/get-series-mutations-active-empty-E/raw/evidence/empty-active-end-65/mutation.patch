@@ -1,0 +1,5 @@
+--- a/src/get-resolver/active-init.lisp
++++ b/src/get-resolver/active-init.lisp
+@@ -28,1 +28,1 @@
+-                            (%make-radice-get-attiva source nil 0 0 0 +segment-header-bytes+ content))))
++                            (%make-radice-get-attiva source nil 0 0 0 65 content))))

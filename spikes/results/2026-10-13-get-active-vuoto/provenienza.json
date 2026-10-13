@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "kind": "active-empty-integration-provenance",
+  "qualified_source_head": "6d4a74dbaa2f60d19493c4915d4c00e41c8487ee",
+  "integration_head": "fee62ba8453d7bc992c6f7e7563bdeb47b3eeb4a",
+  "scopes": [
+    "src/series",
+    "src/get-resolver",
+    "src/get-directory",
+    "tests/series",
+    "tests/get-directory",
+    "tools/get-active-init-bench.lisp",
+    "tools/get-active-init-mutation.lisp",
+    "tools/foundation-coverage.lisp"
+  ],
+  "changed_paths_in_scope": [],
+  "source_files": [
+    {
+      "file": "src/get-directory/build.lisp",
+      "sha256": "9bebb3cd9d66a8ec2fd0c72ad828e00ab2347093642653da45ef263bc855f947"
+    },
+    {
+      "file": "src/get-directory/package.lisp",
+      "sha256": "e779202c8df502749a81d0c6f9f0d505d000e09231f3679b1a91303fbcbf36f9"
+    },
+    {
+      "file": "src/get-directory/read.lisp",
+      "sha256": "a2287eb7e91bed84f3727baaf81376bbe5bf5df15cde1ea268c6d2fa66fe0a5d"
+    },
+    {
+      "file": "src/get-directory/sources-read.lisp",
+      "sha256": "ee4a3b81322fbd51ce928be0b73e9bc180af7ed39f936b68ec9a152dd2a180c2"
+    },
+    {
+      "file": "src/get-directory/sources-types.lisp",
+      "sha256": "862342b07d6a8aae834aaf3da4149682fcd1dcbdae971adad640597583547099"
+    },
+    {
+      "file": "src/get-directory/types.lisp",
+      "sha256": "0e2348291a4994f45bd1f6fe5efdc66041d2fdce18641d1af11b6c850ed69b2b"
+    },
+    {
+      "file": "src/get-resolver/active-build.lisp",
+      "sha256": "0eed95930d41c515965ae8ab0a14fbb94597a42ea38b86f205ea0938cf4631de"
+    },
+    {
+      "file": "src/get-resolver/active-directory.lisp",
+      "sha256": "c2b9a9ac3209270e9949720473908460548430a8098c9199fb55d2317a87682b"
+    },
+    {
+      "file": "src/get-resolver/active-init.lisp",
+      "sha256": "2f9380674cf4b590b071ab9d769a4b79292f544d920c0fc5ff33146dde7686f6"
+    },
+    {
+      "file": "src/get-resolver/active-preflight.lisp",
+      "sha256": "eb56f5704666cac3a88ec97f58f70c7d61db2e8feea6a094db4c468a1a2775a9"
+    },
+    {
+      "file": "src/get-resolver/active-read.lisp",
+      "sha256": "47630e5d42c785e39e15dd714177cd86159129a5391d82321385f92317bea659"
+    },
+    {
+      "file": "src/get-resolver/active-scan.lisp",
+      "sha256": "97dd4f59d4449334b113e9403a208007ed1a398a9b53f88bda3e3c0bbf3a1067"
+    },
+    {
+      "file": "src/get-resolver/active-types.lisp",
+      "sha256": "a3cb954a265b263e0e03d2f1a80824589670efbf89adcd69007987d26df2e29a"
+    },
+    {
+      "file": "src/get-resolver/build.lisp",
+      "sha256": "c649c80c2b510669fc1c0a7f15b3080b7fb46a3423a1e49db5bb9ff248176e0a"
+    },
+    {
+      "file": "src/get-resolver/package.lisp",
+      "sha256": "663a5a15a630ed2b9042a3a3365598358df97d3dd1cd3d7610b283526281f39a"
+    },
+    {
+      "file": "src/get-resolver/read.lisp",
+      "sha256": "dd100bb17e15589124916767f8a690ae683ac8c462102c778639f917a5f1924d"
+    },
+    {
+      "file": "src/get-resolver/rows.lisp",
+      "sha256": "d9db85d788006fc7ad1f9a7cdeef28b992605de7fac8c295dd7fdc51f5511854"
+    },
+    {
+      "file": "src/get-resolver/scan.lisp",
+      "sha256": "35a1780c6bf66364ef94c4151fa91f02eebe359f0ca0639985d2a907fd9d512d"
+    },
+    {
+      "file": "src/get-resolver/sort.lisp",
+      "sha256": "974bf44efeb1cd26c5e9db0601aea295c8f1a18234894ad9d41938a2880e2255"
+    },
+    {
+      "file": "src/get-resolver/types.lisp",
+      "sha256": "b847d6c388f4d052a2d707b7c410cc7c2ef60482fb5cd9ef384c016c31d1dc00"
+    },
+    {
+      "file": "src/series/events.lisp",
+      "sha256": "c4c551e27c6858fe521b7a8736a42539c639e2e78ab17599b39079511a8e77c7"
+    },
+    {
+      "file": "src/series/io-events.lisp",
+      "sha256": "5695cd60f16eec8b6c5da0b1c3c559dfd84a2e7e3a19b69643b00b2048385546"
+    },
+    {
+      "file": "src/series/ownership.lisp",
+      "sha256": "195e71c81a6993d5c021ba520918885f6c91629af7940688f723fe421fc388e4"
+    },
+    {
+      "file": "src/series/package.lisp",
+      "sha256": "9a402f5225860c483dec9064a84d6462d28f5377a27977a63f64a5fbdbdd3764"
+    },
+    {
+      "file": "src/series/publication.lisp",
+      "sha256": "5de121c83ea6bd1243e420d9d898102aebb054cd1fa7ac79fcde9bf0792a95d8"
+    },
+    {
+      "file": "src/series/query.lisp",
+      "sha256": "21363e48cf5c76b771501e54d16b1a6b8627da003a0852db0aadcfbd45d55eb9"
+    },
+    {
+      "file": "src/series/retirement.lisp",
+      "sha256": "23f3ab39b4176917e86064dff0a11e389df47e0286778a870f718fdc6f3fa059"
+    },
+    {
+      "file": "src/series/routing-build.lisp",
+      "sha256": "70135e73ecb1f6080683dd615c47a50530485061797382d74441743cd9a0f92d"
+    },
+    {
+      "file": "src/series/routing-select.lisp",
+      "sha256": "796e3ace762dd6c3d86119981a37c1904a637e664551ca0f5289544f0806714a"
+    },
+    {
+      "file": "src/series/routing-types.lisp",
+      "sha256": "31ae51c0fb11a802164a4d1e11ec63f835a2c67b52c751c5685bcc8947e5e0f1"
+    },
+    {
+      "file": "src/series/types.lisp",
+      "sha256": "5b35f8f0b017476e14078ba073840e40f182438af41750dd1b3262d0a80c1ca9"
+    },
+    {
+      "file": "src/series/worker-boundary.lisp",
+      "sha256": "793d401d1b9acc7b67923d815560f277f3d390ca050740f735f07d88dbacfe73"
+    },
+    {
+      "file": "src/series/worker-package.lisp",
+      "sha256": "dcab7a17e4fabcf256c2eddfb655d18145a1d789dd8d64a889945badc418e4b7"
+    },
+    {
+      "file": "src/series/worker-run.lisp",
+      "sha256": "f448442c5f9233f492bb8642206ec4913f7b2f5f3c9a1fdf05896a439f1d429f"
+    },
+    {
+      "file": "src/series/worker-types.lisp",
+      "sha256": "a366799fd9b938bfaa48b0ffda228ff8369ab9acb5b5ead7f081dfc66ab2c81a"
+    },
+    {
+      "file": "tests/get-directory/README.md",
+      "sha256": "2e20754cdfc0357d3729fb3ee5c192c10973baecba5c70e6fb8dc69f0805e2ba"
+    },
+    {
+      "file": "tests/get-directory/construction.lisp",
+      "sha256": "4ce9aa7064793e908008b9e1055c1e2527d5071006782ea956509c28e8c712d7"
+    },
+    {
+      "file": "tests/get-directory/read.lisp",
+      "sha256": "a222541b6413bb93ff86a269273f1fa15bfad0d1e4072fc058b023fec5143280"
+    },
+    {
+      "file": "tests/get-directory/series-read.lisp",
+      "sha256": "4b9856d69cd82c1462c87d16b9eb8e00fb642a46bb22f2f7b01865f7cc2a83a4"
+    },
+    {
+      "file": "tests/get-directory/series-support.lisp",
+      "sha256": "40f15fbdf42b80515cbfc57eb74bedcbd96d4a9e7e19dc25d8db59f326fe659a"
+    },
+    {
+      "file": "tests/get-directory/support.lisp",
+      "sha256": "be3a216a6ec597b63186b6bf3d3e35f3327f3001b1c00535d64b10bcb5d9fe85"
+    },
+    {
+      "file": "tests/get-directory/threads.lisp",
+      "sha256": "e6a93ec22bc6f5a31b37ae99d927d1ca3a53893adb2eae21cd89d132a82d1f64"
+    },
+    {
+      "file": "tests/series/boundaries.lisp",
+      "sha256": "12283035e836d60bba5dbe868947c641658091b1bbfde82742fe416f429968b8"
+    },
+    {
+      "file": "tests/series/controller.lisp",
+      "sha256": "8bc98ec62e58803cab5613210e1200e0ce296af9aff63b5dff61579c3931670a"
+    },
+    {
+      "file": "tests/series/support.lisp",
+      "sha256": "810dd8a69927c75e3399af47b8fff18e4ab88eb41049c50bafee5c041be263b3"
+    },
+    {
+      "file": "tests/series/threads.lisp",
+      "sha256": "b8fe9d7e1c0ca4e18909a0a6f7ac03c8df68dd186fa21e62600be685d6e4c7ae"
+    },
+    {
+      "file": "tests/series/worker-bridge.lisp",
+      "sha256": "c1ee49702e63978a83cb86c4e5bf437a5a40e48fa02b65d3eaf3dca0d2e39176"
+    },
+    {
+      "file": "tests/series/worker-routing.lisp",
+      "sha256": "f495d33f73e3249d1055ea61d65034033367de85edec3db2cac3a63ff449e3f9"
+    },
+    {
+      "file": "tools/foundation-coverage.lisp",
+      "sha256": "6d5dcbe9adf65c7a93a6d6712eb44433f6575aab87d1d4b6dae2dc36ee294749"
+    },
+    {
+      "file": "tools/get-active-init-bench.lisp",
+      "sha256": "49899b119867c26e944a876db6ec9b4562169fb0baeb722231da268be6b5394a"
+    },
+    {
+      "file": "tools/get-active-init-mutation.lisp",
+      "sha256": "1768a06137f021e83e0be65821b13af80ac96f0ddcdd86659660522f40fda716"
+    }
+  ],
+  "integration_command": "4000914874-command-11629-0",
+  "notes": [
+    "ASDF incorpora anche i sistemi e i test scheduler della presa governata dal pool; GET e relativi strumenti/fixture restano identici alla campagna E.",
+    "Lettura statica Git e sintesi dei record; nessuna nuova esecuzione del prodotto."
+  ]
+}

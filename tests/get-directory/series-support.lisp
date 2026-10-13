@@ -202,6 +202,8 @@ La location primary viene pubblicata soltanto DOPO le fonti; nessuna lettura del
                              (ldb (byte 32 0) (directory-series-commit-csn commit)))
                (multiple-value-list (arcdocdb.series:pubblica-commit-serie controller lease event generation))))
     (setf (directory-series-fixture-root fixture) (directory-series-commit-root commit))
+    ;; Rilascia l'ownership del gruppo prima del riuso del lotto/evento, come nel protocollo reale.
+    (is (null (arcdocdb.wal:riusa-gruppo group)))
     (is (null (arcdocdb.series:riusa-commit-serie controller lease event generation)))
     (when publish-key-p
       (directory-publish-key (directory-series-fixture-directory fixture) (directory-series-commit-key commit)

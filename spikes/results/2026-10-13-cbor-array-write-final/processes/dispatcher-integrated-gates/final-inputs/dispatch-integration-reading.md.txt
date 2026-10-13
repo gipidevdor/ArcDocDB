@@ -1,0 +1,16 @@
+# Lettura DATA dopo l'integrazione dispatcher
+
+Record concluso `spikes/out/4000918941-command-85849-0/report.lisp`, commit **`4a7b4c756b1b757a374608321a789e4fe1a33289`**. Wrapper schema 1 `COMMAND-VERIFICATION`: **OK/exit 0/STABLE**, working tree vuoto, **844 impronte** univoche identiche before/after. I cinque pin congelati dei due prodotti array e tre file del corpus coincidono con gli attesi in entrambi gli inventari; valori completi nello stdout.
+
+Comando esatto **`make build lint trace links`**, durata **38.687657d0 secondi**. Prima del marker unico build/test: **1196 nominali + 2 smoke = 1198**. Lint **204/0**; trace **119 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, zero errori**; link **425 file, 2887 link, zero rotti**. Nessun warning/style-warning o compilazione interrotta nello stderr esterno.
+
+Il record è compresso. Osservazioni fisiche, invarianti prima/dopo:
+
+- Descrittore: **317 byte**, SHA256 **`371c109d0d1b86b20fcdfb74313fbc539386fece6df6b770461c99c5399f42cf`**.
+- Payload `report.lisp.gz`: **132882 byte**, SHA256 **`ffa0608a89a5c3ebe3df9e025c1d4a4012dadcfb0a5f190103dcd958306b4f98`**.
+
+Il trusted reader verifica i **1050740 byte decodificati** contro SHA256 **`d9c4cad5d8971aeb4985c77ccafa7642e5d007fa447e425f0b5946a10ed26412`**. Le dimensioni fisiche e decodificate restano distinte.
+
+Reader nuovo congelato prima dell'esecuzione `dispatch-integration-reading.lisp`, blob **`90e9a36c3e89aee1fe2253cd0a0291400a6930ee`**; output `dispatch-integration-reading.stdout.txt`, blob **`5d68dd560093fb01159752240da3d436bfe2d833`**: **OK**, 6828 controlli strutturali, stderr vuoto. Caricato soltanto il trusted `tools/evidence-storage.lisp`, nessun prodotto/driver o nuova campagna; vecchi file invariati.
+
+La lettura verifica la combinazione integrata e la coerenza dei dati, non autentica i processi né produce nuove qualificazioni. Le precedenti osservazioni globali restano premerge: nessun nuovo claim di full check, spike/evidence, copertura o MC/DC/C1; nessuno sweep delle sorgenti.

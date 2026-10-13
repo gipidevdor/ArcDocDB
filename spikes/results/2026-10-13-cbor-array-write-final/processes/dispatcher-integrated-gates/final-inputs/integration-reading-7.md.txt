@@ -1,0 +1,27 @@
+# Lettura statica dell'integrazione 7
+
+Esito: PASS statico di ordine ASDF, RUN e compatibilità con i pin array. Delta remoto letto: `e599703a6d840f3788e642042facf3ea71d8d32a` → `6253f0389337a3712146a885b3c3abddf570199e`.
+
+Il delta aggiunge quattro sorgenti sotto `src/dispatch/`, un corpus `tests/scheduler/dispatch.lisp` e un tool di misura. Non modifica codec, corpus codec, IO, CONTROL o `tools/foundation-coverage.lisp`. ASDF aggiunge soltanto il modulo prodotto seriale dispatch e il file dispatch alla suite scheduler; il blocco test-op e le sue chiamate RUN non cambiano.
+
+Alla lettura HEAD locale era già il merge `4a7b4c756b1b757a374608321a789e4fe1a33289`, genitori `e56569d68d2ab0850e315da9b904eb9471fdc1e7` e `6253f0389337a3712146a885b3c3abddf570199e`. MERGE_HEAD risultava assente. Il blob ASDF remoto è `a50dc9b5bdd9e88ee187755226f3dff2767b3043`; quello del merge locale è `f27122f59f4f38239e49f1cb92e9cb65a364b85e`.
+
+Il modulo dispatch segue Series, inclusi worker e routing. Execution e scheduler precedono Series: al caricamento dei nuovi tipi sono quindi disponibili porta del pool, contesto worker, tabella e link Serie. Nel modulo dispatch l'ordine è package → types → build → claim. Nei test, supporto scheduler, lifecycle e pool-claim precedono il nuovo corpus; i relativi helper di fixture sono già definiti. Il corpus dichiara il package scheduler esistente e usa il suo DEFTEST, che registra i simboli nel RUN esistente. Non introduce un secondo dispatcher dei test.
+
+Il nuovo package `ARCDOCDB.SCHEDULER.DISPATCH` esporta il binding immutabile, la factory, la presa del collegamento e il collegamento di un obbligo già CLAIMED. La factory verifica owner/binding e IDLE completo prima della costruzione. La presa delega al gate pool e al routing preallocato; il percorso degli obblighi usa il routing senza una nuova presa dal pool. Questi sorgenti non referenziano CBOR e non cambiano l'API o i buffer degli array. È una lettura di integrazione, non una nuova qualificazione dei contratti concorrenti.
+
+Nel merge locale restano entrambi i componenti prodotto array, tutti e tre i componenti corpus e la chiamata `ARCDOCDB.CBOR.ARRAY.WRITE.TESTS:RUN`. Resta la chiamata RUN scheduler che include il nuovo corpus. Il tool foundation locale resta al blob `95cb20b3d48a8d63d9e4a327bb317b37dc90dcd4`; il delta remoto lascia invariato il proprio blob `40610d6151b208314b7df36cb0fcc90badb79d15`. Nessuno scope array o dispatch codec viene tolto.
+
+I cinque oggetti Git di HEAD coincidono con il freeze:
+
+| File | Blob Git |
+| --- | --- |
+| src/codec/cbor-array-input.lisp | d3b3d07fc18bd2a077c1a2d79020a76263b2779e |
+| src/codec/cbor-array-write.lisp | a410297c29c5d043ad60d3804bd3711e22c2833b |
+| tests/codec/cbor-array-write-support.lisp | eb1fccadb205e375b4a2324a6b6725a860bb546f |
+| tests/codec/cbor-array-write.lisp | b13f58264f3cd97e1947ee52936732a7fcebe672 |
+| tests/codec/cbor-array-write-threads.lisp | 5720110265b67019937f08cbd949b4469a04b867 |
+
+Le verifiche usano oggetti Git già memorizzati e testo del delta, senza nuovo sweep SHA, compilazione, LOAD/EVAL del prodotto, runtime o driver. Le prove globali precedenti rimangono legate ai loro input: root gestisce build, suite, lint, trace e links della combinazione finale. Questo PASS statico non dichiara tali controlli già superati.
+
+La sola nuova scrittura è questa nota ignored. Codice, index, HEAD, note precedenti, archivi e input congelati non sono stati modificati. L'output ampio del corpus nuovo è risultato troncato: l'esito su registrazione/RUN si fonda sulle diff ASDF e sui riscontri mirati del namespace e del supporto; non afferma una revisione completa del corpus.

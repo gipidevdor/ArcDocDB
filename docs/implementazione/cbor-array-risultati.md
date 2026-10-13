@@ -162,7 +162,7 @@ statica e il self-test del tool integrato passano. I controlli di
 conservazione mantengono 123/2/6 verifiche e le fixture dei processi
 distinguono segnali e guasti successivi al completamento.
 
-L'ultima integrazione remota, `06cc1354cd6843c40da0570e5314fef7cf68a667`,
+L'integrazione remota `06cc1354cd6843c40da0570e5314fef7cf68a667`
 aggiunge 28 test GET ACTIVE e il relativo tool di copertura, mantenendo
 identico l'albero dei sorgenti di prodotto. Il merge conserva modulo,
 RUN e scope degli array. Il controllo conclusivo ricompila il sistema
@@ -179,6 +179,16 @@ lint, tracciabilità e link restano validi. Prodotti, corpus e scope degli
 array mantengono le impronte congelate. Le prove globali e gli spike
 precedenti restano distinti da questo controllo dell'integrazione;
 le qualifiche aperte della pubblicazione CONTROL non sono promosse.
+
+Il dispatcher pool/Serie del main
+`6253f0389337a3712146a885b3c3abddf570199e` viene integrato conservando
+modulo, RUN e impronte degli array. Il sistema combinato viene ricompilato
+senza avvisi: passano 1.196 nominali e due smoke, con 204 file e zero
+violazioni lint, tracciabilità valida e 2.887 link senza errori.
+Il record finale di 1.050.740 byte viene compresso senza perdita dal tool
+di conservazione dopo il completamento, entro i limiti esistenti.
+Questa verifica riguarda compilazione, suite, lint, tracciabilità e link;
+non ripete le campagne globali precedenti o chiude le qualifiche aperte.
 
 ## Conservazione delle prove
 

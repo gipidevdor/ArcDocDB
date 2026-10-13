@@ -331,7 +331,8 @@ for name in sys.argv[1:]:
 (defun child-main (config-path)
   (let* ((config (read-record config-path)) (code 2)
          (record (list :schema-version 1 :kind :get-active-init-mutation-child :status :running :phase :setup
-                       :compiled nil :suite-compiled nil :compiled-files nil :expected-tests (getf config :expected-tests)
+                       :compiled nil :suite-compiled nil :compiled-files nil :loaded-source-files nil
+                       :expected-tests (getf config :expected-tests)
                        :registered-tests nil :passed-tests nil :failed-test nil :failure-kind nil :source-manifest nil
                        :config-sha256 (sha256 config-path) :source-manifest-before nil)))
     (handler-case

@@ -73,7 +73,8 @@ stato condiviso tra Serie o una scrittura sul percorso GET.
 |---|---|---|
 | AEV-D01 | Root non NIL | NIL e valore canonico |
 | AEV-D02 | root NIL, planned NIL, event-generation zero, count zero | Ogni condizione separata, ring vuoto dopo uso, avvio ripetuto |
-| AEV-D03 | Root pubblicata e pianificata EQ al risultato | CAS discordante e successo |
+| AEV-D03 | Il CAS restituisce NIL | Successo e CAS discordante tramite FI; precede la postcondizione EQ |
+| AEV-D03b | Root pubblicata e pianificata EQ al risultato | Entrambe vere nel protocollo; mutante che omette planned-root rileva la seconda foglia falsa |
 | AEV-D04 | Readonly e append aperti | Entrambi aperti; ciascuna capacità non aperta separatamente |
 | AEV-D05 | next-offset, scritto e durevole tutti a 64 | Ogni frontiera diversa separatamente |
 | AEV-D06 | Vista CLOSED EQ a owner ACTIVE | Altra vista, canonica |
@@ -83,3 +84,10 @@ stato condiviso tra Serie o una scrittura sul percorso GET.
 La revisione indipendente, le prove funzionali, le mutazioni e le misure
 locali sono registrate nella campagna dell'incremento. Non qualificano
 apertura completa, recovery, rotazione o reclaim del motore.
+
+AEV-D03b è una postcondizione difensiva. Con lease esclusiva, il CAS appena
+riuscito imposta root al risultato e il writer ha già impostato planned-root:
+le foglie false non sono raggiungibili da una transizione conforme. Un CAS
+discordante fallisce in D03 e non copre D03b. Il mutante planned-root
+dimostra sensibilità al difetto strutturale, senza attestare copertura MC/DC
+di quelle foglie nel prodotto conforme.

@@ -20,7 +20,7 @@
 (defparameter *mutants*
   (list
    (list :name "ignore-pristine-event-generation" :file "src/series/publication.lisp"
-         :test '("ARCDOCDB.SERIES.TESTS" "TEST-REQ-WAL-006-SERIES-BOOTSTRAP-REFUSES-USED-EMPTY-RING-WITH-NIL-ROOT")
+         :test '("ARCDOCDB.SERIES.TESTS" "TEST-REQ-AFF-004-SERIES-BOOTSTRAP-VIRGIN-GUARDS-AND-EXISTING-READER-ROOT")
          :before "(zerop (controllore-serie-event-generation controller))" :after "t"
          :expected-failure :used-controller-admitted)
    (list :name "empty-active-end-65" :file "src/get-resolver/active-init.lisp"
@@ -43,6 +43,7 @@
   ((detail :initarg :detail :reader campaign-detail))
   (:report (lambda (condition stream)
              (format stream "tools/get-active-init-mutation.lisp COD-61: ~A" (campaign-detail condition)))))
+(define-condition synthetic-fixture-timeout (error) ())
 (defun reject (control &rest arguments)
   (error 'invalid-campaign :detail (apply #'format nil control arguments)))
 (defun remaining ()
@@ -55,7 +56,38 @@
           (sort (mapcar #'enough-namestring (directory "tests/**/*.lisp")) #'string<)
           '("tools/get-active-init-mutation.lisp" "tools/evidence-storage.lisp")))
 (defun manifest (files root)
-  (loop for file in files collect (list :file file :sha256 (sha256 (merge-pathnames file root)))))
+  "Un processo per manifesto; leaf regolari NOFOLLOW e letture limitate a 16 MiB/file.
+Python hashlib produce SHA256 standard; ordine argv e cardinalità/digest validati."
+  (unless (<= (length files) 4096) (reject "manifest too large."))
+  (when files
+    (multiple-value-bind (stdout stderr code)
+        (uiop:run-program
+         (append
+          (list "python3" "-c"
+                "import os,sys,stat,hashlib
+for name in sys.argv[1:]:
+ fd=os.open(name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+ try:
+  before=os.fstat(fd)
+  if not stat.S_ISREG(before.st_mode) or not 0<=before.st_size<=16777216: raise ValueError('file shape/size')
+  digest=hashlib.sha256(); count=0
+  for i in range(1+before.st_size//65536):
+   chunk=os.read(fd,65536); digest.update(chunk); count+=len(chunk)
+  after=os.fstat(fd)
+  identity=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+  if count!=before.st_size or identity(before)!=identity(after): raise ValueError('source drift')
+  print(digest.hexdigest())
+ finally: os.close(fd)")
+          (mapcar (lambda (file) (namestring (merge-pathnames file root))) files))
+         :output :string :error-output :string :ignore-error-status t)
+      (unless (zerop code) (reject "batch SHA256 failed: ~A" stderr))
+      (let ((hashes (remove "" (uiop:split-string stdout :separator '(#\Newline)) :test #'string=)))
+        (unless (and (= (length hashes) (length files))
+                     (every (lambda (hash) (and (= 64 (length hash))
+                                                (string= hash (string-downcase hash))
+                                                (every (lambda (c) (digit-char-p c 16)) hash))) hashes))
+          (reject "batch SHA256 shape."))
+        (loop for file in files for hash in hashes collect (list :file file :sha256 hash))))))
 (defun unique-position (text anchor)
   (when (zerop (length anchor)) (reject "empty anchor."))
   (let ((position (search anchor text)))
@@ -97,10 +129,16 @@
         (let ((names (loop for line in (uiop:split-string (uiop:read-file-string file) :separator '(#\Newline))
                            when (uiop:string-prefix-p "(deftest " line)
                            collect (string-upcase (first (uiop:split-string (subseq line 9) :separator '(#\Space #\Tab #\( #\))))))))
-          (setf names (remove-if-not (lambda (name) (search marker name)) names))
+          (setf names (remove-if-not
+                       (lambda (name)
+                         (or (search marker name)
+                             (string= name "TEST-REQ-WAL-006-SERIES-GET-INITIAL-CONTROLLER-ROOT-AND-NIL-REFUSAL")))
+                       names))
           (unless names (reject "bootstrap suite absent: ~A." file))
           (setf tests (append tests (mapcar (lambda (name) (list package name)) names))))))
-    (unless (= (length tests) (length (remove-duplicates tests :test #'equal))) (reject "duplicate tests."))
+    (unless (and (= 25 (length tests))
+                 (= (length tests) (length (remove-duplicates tests :test #'equal))))
+      (reject "expected exactly 25 distinct bootstrap tests."))
     tests))
 (defun condition-is-p (condition package name)
   (let* ((pkg (find-package package)) (symbol (and pkg (find-symbol name pkg))))
@@ -108,6 +146,7 @@
 (defun semantic-kind (condition)
   (cond
     ((or (typep condition 'sb-ext:timeout)
+         (condition-is-p condition "ARCDOCDB.SERIES.TESTS" "SERIES-FIXTURE-TIMEOUT")
          (condition-is-p condition "ARCDOCDB.GET.DIRECTORY.TESTS" "DIRECTORY-FIXTURE-ERROR")
          (condition-is-p condition "ARCDOCDB.CONDITIONS" "IO-FAULT")
          (condition-is-p condition "SB-POSIX" "SYSCALL-ERROR")) :infrastructure)
@@ -116,7 +155,7 @@
           (uiop:string-prefix-p "Asserzione fallita:" (simple-condition-format-control condition))) :assertion)
     ((condition-is-p condition "ARCDOCDB.CONDITIONS" "ARCDOCDB-ERROR") :product-condition)
     (t :infrastructure)))
-(defun classify (child exit expected verified &key baseline timeout signal)
+(defun classify (child exit expected verified &key baseline timeout signal target-test)
   "Kill soltanto in un test preregistrato, dopo build/suite attestate e child reaped."
   (let* ((passed (getf child :passed-tests))
          (completed (and (listp passed) (list-length passed))))
@@ -138,7 +177,8 @@
           (integerp completed)
           (< completed (length expected))
           (equal passed (subseq expected 0 completed))
-          (equal (getf child :failed-test) (nth completed expected)))
+          (equal (getf child :failed-test) (nth completed expected))
+          (or (null target-test) (equal target-test (getf child :failed-test))))
      (if baseline :baseline-failed :detected))
     (t :invalid))))
 (defun self-test (directory)
@@ -178,6 +218,8 @@
       (unless (eq :invalid (classify copy 1 names t)) (reject "wrong prefix accepted."))
       (incf checks 2))
     (unless (eq :invalid (classify failed 1 tests nil)) (reject "unattested kill accepted."))
+    (unless (eq :invalid (classify failed 1 tests t :target-test '("OTHER" "TEST-REQ-VAL-001-OTHER")))
+      (reject "unrelated test accepted as target kill."))
     (unless (eq :infrastructure (semantic-kind (make-condition 'simple-error :format-control "other failure")))
       (reject "simple-error accepted as assertion."))
     (unless (eq :infrastructure (semantic-kind (make-condition 'type-error :datum nil :expected-type 'integer)))
@@ -195,12 +237,55 @@
         (write-record '(:schema-version 999 :kind :other :status :ok) path)
         (unless (and (not (string= before (sha256 path))) (eq :invalid (classify (read-record path) 0 tests t)))
           (reject "write/schema/SHA detection."))))
-    (list :status :ok :classifier-cases (+ checks 3) :anchor-negative-cases 3 :record-roundtrip t
+    (when (find-package "ARCDOCDB.SERIES.TESTS") (reject "self-test requires unloaded product."))
+    (let* ((package (make-package "ARCDOCDB.SERIES.TESTS" :use nil))
+           (symbol (intern "SERIES-FIXTURE-TIMEOUT" package)))
+      (unwind-protect
+           (progn
+             (setf (find-class symbol) (find-class 'synthetic-fixture-timeout))
+             (unless (eq :infrastructure (semantic-kind (make-condition 'synthetic-fixture-timeout)))
+               (reject "typed fixture timeout accepted as semantic kill.")))
+        (setf (find-class symbol) nil)
+        (delete-package package)))
+    (let* ((paths '("SHA empty.txt" "SHA abc.txt" "SHA binary.txt"))
+           (root (truename directory)))
+      (write-text "" (merge-pathnames (first paths) root))
+      (write-text "abc" (merge-pathnames (second paths) root))
+      (with-open-file (out (merge-pathnames (third paths) root) :direction :output :if-exists :error
+                                                          :element-type '(unsigned-byte 8))
+        (dotimes (i 256) (write-byte i out)))
+      (let ((batch (manifest paths root)))
+        (unless (equal batch (loop for file in paths
+                                  collect (list :file file :sha256 (sha256 (merge-pathnames file root)))))
+          (reject "batch digest differs from existing evidence oracle."))))
+    (list :status :ok :classifier-cases (+ checks 5) :anchor-negative-cases 3 :record-roundtrip t
+          :typed-fixture-timeout-detection t :batch-sha256-equivalence-files 3
           :write-schema-sha-detection t :no-compilation t :no-child t)))
-(defun compiled-entry (file fasl root)
+(defun loaded-source-files (root config)
+  "Solo componenti Lisp dei due sistemi effettivamente caricati; massimo 4096 nodi/12 livelli."
+  (let ((files nil) (nodes 0))
+    (labels ((walk (component depth)
+               (unless (and (<= depth 12) (<= (incf nodes) 4096)) (reject "ASDF graph budget."))
+               (cond
+                 ((typep component 'asdf:cl-source-file)
+                  (let* ((path (truename (asdf:component-pathname component)))
+                         (file (enough-namestring path root)))
+                    (unless (and (uiop:subpathp path root) (member file (getf config :files) :test #'string=))
+                      (reject "compiled source outside frozen inventory."))
+                    (pushnew file files :test #'string=)))
+                 ((typep component 'asdf:module)
+                  (dolist (child (asdf:component-children component)) (walk child (1+ depth))))
+                 (t (reject "unexpected ASDF component.")))))
+      (walk (asdf:find-system "arcdocdb") 0)
+      (walk (asdf:find-system "arcdocdb/tests") 0))
+    (sort files #'string<)))
+(defun compiled-entry (file fasl root hashes)
   (unless (and fasl (probe-file fasl) (uiop:subpathp (truename fasl) (merge-pathnames "fasl/" root)))
     (reject "nonprivate/missing FASL: ~A." file))
-  (list :file file :source-sha256 (sha256 file) :fasl (namestring (truename fasl)) :fasl-sha256 (sha256 fasl)))
+  (list :file file :source-sha256 (getf (find file hashes :key (lambda (e) (getf e :file)) :test #'string=) :sha256)
+        :fasl (namestring (truename fasl))
+        :fasl-sha256 (getf (find (enough-namestring fasl root) hashes :key (lambda (e) (getf e :file))
+                               :test #'string=) :sha256)))
 (defun compile-child (config record)
   "Fresh process/cache privata: src-only, poi definizioni ASDF tests; nessun TEST-OP o RUN."
   (let* ((root (truename "./")) (destination (merge-pathnames "fasl/" root)) (*standard-output* *error-output*))
@@ -213,10 +298,16 @@
       (asdf:load-system "arcdocdb" :force t)
       (setf (getf record :compiled) t)
       (asdf:load-system "arcdocdb/tests" :force t)
-      (dolist (file (getf config :files))
-        (when (or (uiop:string-prefix-p "src/" file) (uiop:string-prefix-p "tests/" file))
-          (push (compiled-entry file (asdf:apply-output-translations (make-pathname :type "fasl" :defaults (merge-pathnames file root))) root)
-                (getf record :compiled-files))))
+      (let* ((files (loaded-source-files root config))
+             (fasls (mapcar (lambda (file) (asdf:apply-output-translations
+                                            (make-pathname :type "fasl" :defaults (merge-pathnames file root)))) files))
+             (hashes nil))
+        (dolist (fasl fasls)
+          (unless (and (probe-file fasl) (uiop:subpathp (truename fasl) destination))
+            (reject "nonprivate/missing loaded FASL.")))
+        (setf hashes (manifest (append files (mapcar (lambda (f) (enough-namestring f root)) fasls)) root))
+        (loop for file in files for fasl in fasls
+              do (push (compiled-entry file fasl root hashes) (getf record :compiled-files))))
       (setf (getf record :suite-compiled) t))))
 (defun registered-tests (expected)
   (unless (equal expected (expected-tests)) (reject "frozen test selection drift."))
@@ -383,7 +474,8 @@
             (setf (getf result :artifacts-verified) (not (null verified)) (getf result :child-report) child
                   (getf result :result)
                   (classify child (getf result :exit-code) (getf config :expected-tests) verified :baseline (null mutant)
-                            :timeout (getf result :timed-out) :signal (getf result :signal)))))
+                            :timeout (getf result :timed-out) :signal (getf result :signal)
+                            :target-test (when mutant (getf mutant :test))))))
       (error (condition)
         (setf (getf result :result) :infrastructure-error
               (getf result :diagnostic) (format nil "tools/get-active-init-mutation.lisp COD-61: ~A" condition))))

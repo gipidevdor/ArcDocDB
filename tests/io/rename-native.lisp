@@ -134,7 +134,7 @@
       (lambda (fd) (incf (aref calls 2)) (arcdocdb.io::native-directory-flush fd))
       (lambda (fd) (incf (aref calls 3)) (arcdocdb.io::native-close fd))
       :rename (lambda (fd source destination)
-                (incf (aref calls 0)) (arcdocdb.io::native-rename fd source destination)))
+                (incf (aref calls 0)) (arcdocdb.io::native-replace fd source destination)))
      calls)))
 
 (defun rename-native-remove-leaf (path)
@@ -570,7 +570,7 @@
       :entry-identity #'arcdocdb.io::native-entry-identity
       :rename (lambda (fd source target)
                 (incf (aref calls 0))
-                (let ((result (arcdocdb.io::native-rename fd source target)))
+                (let ((result (arcdocdb.io::native-replace fd source target)))
                   (when (and (eql result 0) after-rename) (funcall after-rename))
                   result)))
      calls)))

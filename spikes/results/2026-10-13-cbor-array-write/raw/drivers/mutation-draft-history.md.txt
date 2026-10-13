@@ -1,0 +1,15 @@
+# Cronologia del mutatore array
+
+La bozza originale precedente alla seconda revisione C4 è conservata in `mutation-draft-2029d730.lisp`, Git blob `2029d7305cc4663da6aa953e2774be12c0c0da30`.
+
+La revisione successiva corregge due difetti dello strumento: l'origine del frame viene vincolata alla funzione effettiva e al primo argomento nominale del requisito; la lettura del report worker usa una sentinella EOF creata con GENSYM, readtable standard, package CL-USER e READ-EVAL NIL. Sono aggiunti casi negativi specifici per namespace citato, funzione estranea e forma letterale `:eof` aggiuntiva.
+
+Nessun prodotto, corpus, compilazione o campagna è stato eseguito durante queste modifiche. Fixture, benchmark e auditor restano invariati. Il nome definitivo della funzione del corpus verrà vincolato al corpus congelato prima di qualsiasi campagna.
+
+L'allineamento materiale successivo conserva anche `mutation-draft-f94ef506.lisp`, blob `f94ef5065ad6586b5f9d659413e2e324032115e9`. Dopo l'autorizzazione del coordinatore sono stati letti come testo i due sorgenti congelati `d3b3d07f...` e `a410297c...` e i tre file del corpus congelati `eb1fccad...`, `b13f5826...`, `57201102...`, senza caricarli o compilarli.
+
+Il corpus reale contiene 19 test seriali e un test parallelo, per 20 funzioni nominali esatte. Gli helper `CAW-ACCEPT` e `CAW-REJECT` non hanno un argomento nominale REQ; l'origine ammessa diventa quindi la whitelist dei soli simboli DEFTEST completi `TEST-REQ-CBR-005-ARRAY-...`, a zero argomenti. I nomi citati o contenuti in stringhe multilinea non avviano frame validi. Il frame freddo letterale usa indice 27 e la prima funzione nominale reale.
+
+Gli otto frammenti materiali sono conservati come dati in `catalogue-materialized.lisp`, blob `0f873e55deabf8581ba361614bccedf7a910a5ad`, insieme ai Git blob e MD5 grezzi di prodotto, corpus, fixture, benchmark e auditor. Ogni frammento originale compare una sola volta nel proprio sorgente. Le mutazioni di major e count condividono volutamente la stessa chiamata originale e producono difetti distinti in copie separate. L'arità cambia l'intera DECL/DEFUN pubblica e il suo FTYPE nella sola copia privata.
+
+Questa fase produce solo catalogo e strumenti: non costituisce risultato di compilazione, rilevamento di mutanti, benchmark o prova di autenticità dei dati. Il conteggio 21 comunicato in precedenza era errato; il conteggio congelato e la whitelist definitivi sono entrambi 20.

@@ -1,0 +1,95 @@
+# Verifiche della composizione array CBOR
+
+Campagne del 2026-10-13 sul [metodo preregistrato](cbor-array-metodo.md),
+blob `2f257c9e8a56a5182142934dada3f3b38b5bef65`. Il corpus è congelato
+prima del prodotto; entrambe le letture C1 precedono la prima compilazione.
+Le versioni provate sono input `d3b3d07fc18bd2a077c1a2d79020a76263b2779e`
+e writer `a410297c29c5d043ad60d3804bd3711e22c2833b`.
+
+## Corpus e parallelismo
+
+I venti test comprendono diciannove prove seriali e una con due worker
+riusati. Vettori letterali coprono array vuoto, scalari, cinque tipi,
+COUNT23/24/255/256, figli array/map/tag, testo UTF-8 e float grezzi.
+Si controllano arità esatta, destinazione fisica completa, sorgente,
+tabella, precedenza degli errori, alias dello scratch, overlap della
+testata, confini toccanti, offset assoluti e riuso dopo errore.
+Sono provati i budget esatti di 16MiB, la radice nel conteggio dei nodi,
+il residuo zero prima del figlio successivo e profondità figlio99/100.
+La coda ignorata della tabella non viene letta né limitata dal budget.
+
+Il fuzz usa 1.024 casi e seed `41525235`: 512 successi e 64 rifiuti
+per ciascuna delle otto classi capacità, byte, fini, nodi, profondità,
+parsing, range sorgente e COUNT. Il conteggio di 9.474 chiamate della
+suite deriva dai loop congelati, senza un contatore runtime separato.
+
+Due worker reali, con buffer e scratch privati, condividono sorgente e
+indice in lettura. Due ondate di 2.048 chiamate per worker danno 8.192
+operazioni, con READY/GO/DONE, timeout e cleanup limitati. I sink sono
+52.178.944/75.218.944 per worker in entrambe le ondate. Gli intervalli
+del primo build si sovrappongono per 3.939/3.151 tick, a 1.000.000 tick/s;
+questa osservazione non misura scaling o simultaneità sui core.
+
+## Misure e mutazioni
+
+Sei fixture congelate coprono vuoto, scalare, cinque tipi, 24 scalari,
+256 scalari e array/tag/testo. Cinque campioni da 1.024 chiamate per
+fixture, dopo warmup64, producono trenta campioni con heap osservato
+zero. Baseline nulla e sensore positivo di 16 × 1MiB osservano
+rispettivamente zero e 16.777.472 byte.
+
+NEXT, arità fredda, array completo, sorgente, tabella, token e sink
+sono verificati. Il loop caldo usa il valore primario; il corpus verifica
+l'arità di ogni successo. I campioni sommano 0,336716s, il wrapper dura
+1,716347s. L'auditor ricalcola le sei fixture aritmeticamente e controlla
+67.470 relazioni senza caricare prodotto o driver. Non vi è una soglia
+di velocità né una prova assoluta di assenza di allocazione.
+
+Otto mutazioni compilabili verificano capacità fisica contro END,
+major type, COUNT, omissione dello scanner, overlap senza testata,
+tabella non verificata, radice esclusa dai nodi e valore NIL aggiuntivo.
+Il catalogo semantico precede il prodotto; le sostituzioni concrete
+sono materializzate successivamente su copie private. La mutazione
+dell'arità aggiorna coerentemente FTYPE e dichiarazioni della sola copia.
+
+Il classificatore richiede smoke, Unhandled e un frame numerato con
+simbolo esatto di uno dei venti test nominali a zero argomenti. Rifiuta
+namespace citati, stringhe, funzioni estranee, warning, fallimenti di
+compilazione, segnali e guasti successivi al completamento. Due difetti
+preparatori del driver, matching permissivo dei frame e sentinel EOF
+costante, sono corretti prima della campagna; versioni e storia restano
+conservate. Il lettore finale usa READ-EVAL NIL, readtable standard e
+sentinel GENSYM; rifiuta anche una seconda forma letterale `:eof`.
+
+## Copertura e letture
+
+| Sorgente | Espressioni | Esiti di ramo |
+|---|---:|---:|
+| cbor-array-input.lisp | 248/281 | 42/48 |
+| cbor-array-write.lisp | 184/256 | 18/34 |
+| Totale | 432/537 | 60/82 |
+
+Mancano 105 espressioni: 14 forme top-level di package/dichiarazioni,
+88 sottoforme di 22 ERROR interni e tre default keyword. Mancano
+22 esiti di ramo, sulle stesse guardie interne. Tutti restano nel
+denominatore. Il raw globale contiene 302 file; lo scope selezionato
+comprende soltanto i due nuovi sorgenti. Raw, HTML e ricalcolo freddo
+concordano. Nessuna esclusione, attestazione di irraggiungibilità,
+MC/DC o qualifica C1.
+
+La [prima lettura C1](cbor-array-revisione.md), la
+[seconda lettura C1](cbor-array-lettura.md) e l'
+[inventario delle decisioni](cbor-array-decisioni.md) coprono dieci
+funzioni, 9–36 righe e 3–8 percorsi: 36 WHEN/UNLESS, due LOOP,
+cinque AND/OR con quattordici operandi e otto relazioni concatenate.
+Prima della compilazione viene corretta la guardia che limitava anche
+la coda ignorata della tabella; originale e nota del rilievo sono
+conservati. Le due letture finali non hanno rilievi statici aperti.
+
+Le letture runtime usano dati e reader C4 distinti senza chiamare
+prodotto o driver. L'autore del corpus dichiara la propria paternità
+nella lettura coverage; non rivendica una terza revisione C1 indipendente.
+Il primo estrattore coverage applicava un lettore plist al raw non-plist:
+la correzione e l'osservazione parziale sono dichiarate nella nota.
+Inventari e impronte documentano confronti locali, senza autenticare
+la provenienza dell'esecuzione o promuovere il profilo documentale.

@@ -1,0 +1,37 @@
+# Lettura statica dell'integrazione
+
+La lettura è stata autorizzata mentre il merge era in corso, ma al primo accesso il merge risultava già concluso. HEAD osservato all'inizio e alla fine: `857bfc77962eb4d74b382bf225c8493824baef77`, commit «Integra lifecycle dei worker con composizione array CBOR». I genitori sono `6cd17853eebce88e2ee6f5342041a2a2d8da32ab` (array) e `061e638200f0d97fc2443c7dec38d4362ef274e1` (CONTROL/scheduler). `git status --short` era vuoto in entrambe le osservazioni. La richiesta di MERGE_HEAD ha restituito exit 128 perché il riferimento era assente; non viene descritta come verifica di un merge ancora aperto.
+
+Esito della sola lettura: registrazioni array conservate, nessuna collisione di package/API osservata con CONTROL o scheduler, cinque file array congelati invariati. Nessun prodotto, test, compilatore, benchmark, mutatore o strumento di copertura è stato eseguito per questa nota. Nessuna modifica tracked, index, HEAD o evidenza grezza.
+
+## ASDF e dispatch
+
+`arcdocdb.asd`, blob `663fa6cb1f3dcd3e5c081dad919e33c752642bc0`, registra nel modulo seriale codec `cbor-array-input` seguito da `cbor-array-write`, dopo scanner, writer della testata e writer delle stringhe già necessari. Il package CBOR viene caricato prima degli utilizzatori. Nel sistema test i tre componenti array sono presenti una volta, nell'ordine support / seriali / thread, dopo le fixture foundation e scanner da cui importano gli helper. Il dispatch generale contiene una chiamata a `arcdocdb.cbor.array.write.tests:run`; la relativa funzione RUN percorre il registro dei 19 test seriali e un test parallelo, per 20 test nominali.
+
+Rispetto al genitore array, il diff ASDF aggiunge i cinque componenti scheduler lifecycle, il relativo test lifecycle e i sette componenti CONTROL; le registrazioni array non vengono modificate. Tutti questi componenti aggiunti risultano file tracked presenti. Scheduler lifecycle segue i componenti scheduler già esistenti, dopo il modulo execution. CONTROL segue active e gli altri moduli importati. Rispetto al genitore CONTROL, il diff ASDF conserva e aggiunge i due sorgenti array, i tre file test array e il relativo dispatch. Non è stata caricata ASDF: queste sono osservazioni della dichiarazione sorgente e dell'inventario.
+
+## Copertura generale del codec e specifica array
+
+`tools/foundation-coverage.lisp`, blob `00700ae049d451a0d8371fba26099c2513e47895`, è identico al genitore array. Lo scope `cbor-array-write` è ammesso dalla CLI, seleziona esattamente i due file prodotto e indirizza RUN al package test array. Il self-test sorgente include le due selezioni positive ed esclude altri writer/scanner, i test, suffissi `.fake` e discendenti dei nomi file. Lo scope generale `codec` seleziona il modulo codec completo e nel dispatch richiama anche RUN degli array dopo gli altri corpus CBOR.
+
+Questa lettura verifica la presenza e la coerenza dei collegamenti, non percentuali di copertura né esiti dei self-test. Lo scope default dello strumento rimane `foundation`; il termine generale qui indica il codec, non l'intero programma. Lo strumento non espone scope CLI `control` o `scheduler`, limite già presente nel genitore array e non introdotto dal merge. Gli esiti delle campagne rimangono evidenze separate.
+
+## Integrità dei file congelati
+
+I blob ricalcolati sui byte del checkout corrispondono alle impronte congelate; il diff dei cinque file rispetto al genitore array è vuoto.
+
+| File | Git blob osservato |
+| --- | --- |
+| `src/codec/cbor-array-input.lisp` | `d3b3d07fc18bd2a077c1a2d79020a76263b2779e` |
+| `src/codec/cbor-array-write.lisp` | `a410297c29c5d043ad60d3804bd3711e22c2833b` |
+| `tests/codec/cbor-array-write-support.lisp` | `eb1fccadb205e375b4a2324a6b6725a860bb546f` |
+| `tests/codec/cbor-array-write.lisp` | `b13f58264f3cd97e1947ee52936732a7fcebe672` |
+| `tests/codec/cbor-array-write-threads.lisp` | `5720110265b67019937f08cbd949b4469a04b867` |
+
+## Package e API
+
+`src/codec/cbor-package.lisp`, blob `aa15f62ba6e27f46922cbbb9f48d565168e40f49`, esporta `scrivi-array-cbor-minimo` nel package `arcdocdb.cbor`. È identico al genitore array. CONTROL (`src/control/package.lisp`, blob `ec893796868f2ea2a62e7739f5d42577484c7bc8`) e scheduler (`src/scheduler/package.lisp`, blob `cec9b27dc26bd5ea50553704d2d2864a0d0ab045`) definiscono package distinti, usano CL e importano esplicitamente altri moduli; non importano né usano il package CBOR. I nuovi sorgenti CONTROL/scheduler mantengono i rispettivi IN-PACKAGE. La ricerca del writer array e dei suoi helper nei due moduli non trova riferimenti; trova l'export soltanto nel package codec. Non emergono omonimie pubbliche fra gli export letti.
+
+La lettura iniziale ha tentato due nomi inesistenti di strumenti di coverage; sono stati sostituiti dall'inventario `rg --files tools`, che identifica il file effettivo `tools/foundation-coverage.lisp`. Nessun risultato tratto dalla ricerca iniziale troncata è usato come prova di integrazione.
+
+Nota prodotta dall'autore dei driver C4, non una revisione C1 indipendente del prodotto. Snapshot locali prima/dopo e hash di contenuto non costituiscono prova di atomicità o autenticità. Fixture, benchmark, auditor, mutatore e cataloghi congelati non sono stati modificati o riletti per questa nota.

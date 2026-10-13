@@ -1,0 +1,163 @@
+# Array CBOR — lettura indipendente dei primi dati runtime
+
+2026-10-13. Lettura come dati dei registri già conclusi su HEAD
+`6cd17853eebce88e2ee6f5342041a2a2d8da32ab`, senza compilare, caricare o
+chiamare prodotto, corpus, benchmark o auditor di campagna. Nessun input,
+file tracked, indice o HEAD modificato. Gli altri comandi del coordinatore
+non sono inclusi in questa lettura.
+
+Il readscript distinto `initial-runtime-reading.lisp`, Git blob
+`11a2fe84971008b0a8a8fe4318106f6332eb63eb`, carica i componenti SBCL/ASDF e il
+lettore trusted `tools/evidence-storage.lisp`, blob
+`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`. Il riferimento CLI del lettore
+è `tools/read-evidence.lisp`, blob
+`c41d27bfad39875f6c80858d451bacfcac862945`; il readscript chiama direttamente
+la stessa API `arcdocdb.evidence:read-evidence`, senza LOAD dei report.
+Le plist contenute in STDOUT vengono lette con READ-EVAL NIL, readtable
+standard, CL-USER e GENSYM EOF, richiedendo una sola forma. Le liste e i
+cons vengono controllati per cicli e le plist selezionate per chiavi
+univoche. Gli oggetti ammessi sono cons e valori piatti
+stringa/numero/keyword/T/NIL; non si attraversano vettori generali.
+
+Esecuzione del solo lettore dati:
+
+```text
+sbcl --noinform --no-userinit --no-sysinit --script spikes/out/cbor-array-write-20261013/review/initial-runtime-reading.lisp
+=> :STATUS :OK :CHECKS 161634
+```
+
+Il contatore include visite strutturali e confronti ripetuti: non indica
+161634 test funzionali distinti. Comprende controlli di metadati, CLI
+e sensori, senza nuove prove sul prodotto.
+
+## Byte osservati prima e dopo
+
+Ogni percorso sotto è relativo a `spikes/out/`. I quattro file erano
+plain Lisp; dimensione e SHA256 dei byte fisici sono identici prima/dopo
+l'intera lettura.
+
+| Registro | Byte | SHA256 prima = dopo |
+|---|---:|---|
+| `4000913629-command-81204-0/report.lisp` | 164211 | `bd083369e26287994bff4c8d51ee6c2699f3c642dfb455295a8ae7115ca2c88f` |
+| `4000913640-command-81482-0/report.lisp` | 899741 | `8ec415e5f6d0cf4f207d5e31d10e57784ccea96c0cf9ef01378038b12b87f539` |
+| `4000913813-command-85775-0/report.lisp` | 219937 | `285e3df14f73742cf6c53816721da1b78b0145e16f52564740182bf1ac3a9984` |
+| `4000913847-command-86018-0/report.lisp` | 166156 | `62b70601d48ffb8a456e07d27cf07845d4bfaa0e9f1ca8aa0a4a6d3163b9e81d` |
+
+Tutti i wrapper sono schema1/COMMAND-VERIFICATION, STATUS OK, exit0 e
+SOURCE-CONSISTENCY STABLE, con inventari before/after uguali di 792 file
+tracked. Ambiente registrato: SBCL2.6.9, Darwin27.0.0, ARM64, Apple M4,
+16GiB, dieci CPU logiche; carico esterno UNCONTROLLED e working tree vuoto.
+I pin dei due nuovi sorgenti sono
+`d3b3d07fc18bd2a077c1a2d79020a76263b2779e` e
+`a410297c29c5d043ad60d3804bd3711e22c2833b`; metodo e tre corpus coincidono
+con le impronte congelate della prima lettura C1.
+
+| Wrapper | Inizio/fine, universal-time | Wall secondi |
+|---|---|---:|
+| Freeze | 4000913630 / 4000913635 | 5.963326 |
+| Build/lint/trace/links | 4000913641 / 4000913677 | 36.254326 |
+| Benchmark | 4000913814 / 4000913816 | 1.716347 |
+| Audit benchmark | 4000913848 / 4000913849 | 1.127164 |
+
+Il registro freeze riporta «Snapshot: 21 sorgenti con tre confronti per
+copia». I 21 file selezionati del copier e i 792 file dell'inventario
+tracked del wrapper sono inventari differenti. Questa lettura verifica
+il registro e i pin, senza sostituirsi a una nuova verifica fisica di
+ogni copia del relativo snapshot.
+
+## Primo comando integrato e corpus
+
+Il comando registrato è esattamente `make build lint trace links`,
+con exit0 e marker finale della build rigorosa. L'output riporta venti
+test array univoci superati, incluso il worker, e 381 file / 2738 link
+controllati con zero rotti. È questo comando iniziale, non un eventuale
+`make check` finale successivo.
+
+Fuzz: seed `41525235`, 1024 casi, 512 successi e otto classi da 64 rifiuti:
+capacità, byte, entry, nodi, profondità, parse, source-range e COUNT.
+Il corpus congelato confronta array fisici interi, sentinelle, arità e
+offset; il preflight confronta anche lo scratch già sporco. Il risultato
+registrato è coerente con il suo controllo della preservazione sugli
+errori pubblici; non è una qualificazione di ogni stato interno possibile.
+
+Due worker riusati, due ondate da 4096 composizioni: 8192 chiamate totali.
+Sink per worker e per ondata: 52178944 / 75218944. Overlap temporale
+osservato: 3939 tick nella prima ondata e 3151 nella seconda, con timer
+da 1000000 tick/s. Queste sono sovrapposizioni di intervalli misurati;
+non dimostrano esecuzione simultanea sui core, throughput o scaling.
+
+## Benchmark seriale
+
+Le sei fixture, nell'ordine congelato, sono state ricostruite con testata
+aritmetica, payload letterali/ripetuti, fini relative e buffer fisici
+completi. START2, sorgente con due sentinelle iniziali e quattro finali;
+tabella con due entry ignorate `#xa5a5a5a5`; destinazione con due byte
+residui entro END e due byte fisici oltre END. Sono coerenti NEXT,
+payload, prefisso/testata/coda, buffer sorgente, tabella e token pesato.
+
+| Fixture | COUNT | Byte wire | NEXT | Token | Sink per campione | Somma tempi 5 campioni, s |
+|---|---:|---:|---:|---:|---:|---:|
+| Vuoto | 0 | 1 | 3 | 4512 | 5144064 | 0.001944 |
+| Scalare | 1 | 2 | 4 | 5176 | 5824000 | 0.003126 |
+| Cinque tipi | 5 | 10 | 12 | 17476 | 18419200 | 0.009549 |
+| 24 scalari | 24 | 26 | 28 | 21205 | 22237696 | 0.029989 |
+| 256 scalari | 256 | 259 | 261 | 175129 | 179855872 | 0.283916 |
+| Array/tag/testo | 3 | 9 | 11 | 16370 | 17286656 | 0.008192 |
+
+Cinque campioni per fixture, ciascuno con 1024 chiamate misurate e warmup64:
+30 campioni, 30720 chiamate misurate. Il sink è derivato da
+`1024*token + 1024*1023/2`, con maschera `4611686018427387903`.
+L'arità fredda è esattamente uno per tutte le fixture; il loop caldo del
+benchmark usa il valore primario. Le dichiarazioni di buffer/scratch
+preallocati e controllo per chiamata di destinazione/sorgente/tabella sono
+coerenti con il driver congelato letto staticamente.
+
+Heap osservato zero in tutti i trenta campioni. Baseline nulla: 1024
+chiamate, warmup64, heap0, sink523776. Controllo positivo: 16 allocazioni
+da 1MiB, senza warmup, heap16777472 byte (16MiB+256), sink16777336.
+I checker riportano i rifiuti specifici: due shape/NEXT, sei cambiamenti
+di byte, quattro arità/NEXT, sink errato, heap nonzero, modifica sorgente
+e modifica di un'entry ignorata. Questi campi sono stati confrontati
+singolarmente, non soltanto tramite STATUS OK.
+
+Timer1000000; RAW-TICKS/SECONDS e CALLS-PER-SECOND sono coerenti. Somma
+dei tempi dei trenta campioni `0.33671599999999996d0` secondi, controlli
+`4.5d-5` secondi, entro il wall del wrapper1.716347 secondi. Nessuna soglia
+di velocità è stata applicata. I tempi comprendono i controlli del driver;
+non sono latenza del motore, pool, I/O o misura sotto carico controllato.
+
+L'inventario interno del benchmark contiene185 impronte MD5 before/after
+uguali: ASD, driver bench, fixture e sorgenti Lisp. I pin prodotto e dei
+due driver ignored coincidono con quelli congelati. Il risultato del
+contatore riguarda queste sei fixture di successo; non viene esteso a
+errori, massimi byte/COUNT, tutte le forme CBOR o nonallocazione assoluta.
+
+## Confronto con l'audit registrato
+
+L'output dell'audit è schema1/CBOR-ARRAY-WRITE-BENCH-AUDIT, STATUS OK,
+67470 controlli dichiarati. CLI, blob del driver/metodo/prodotto,
+data interna, celle6, campioni30, arità1, maschera, heap0, baseline0,
+controllo positivo16777472, timer1M e inventario185 sono coerenti con
+la ricostruzione distinta. Le somme dei tempi coincidono entro la
+tolleranza numerica esplicita del readscript. L'audit riporta lo stesso
+record bench di219937 byte e SHA256 `285e3df...`, invariato before/after,
+e gli stessi istanti4000913814/4000913816.
+
+La lettura dei dati è distinta dal codice dell'auditor di campagna e dal
+prodotto; questo revisore ha anche scritto la prima revisione C1 e il
+presente readscript. L'indipendenza qui riguarda la derivazione e il
+confronto dei dati, non una certificazione di origine del registro.
+
+## Limiti ed esito
+
+PASS di coerenza dei quattro registri identificati. Nessuna incongruenza
+concreta rilevata. Nessuna nuova campagna o modifica degli input.
+
+Byte osservati, metadata, marker e impronte non costituiscono prova di
+autenticità, causalità o esecuzione non simulata. L'inventario dichiarato
+non chiude tutte le dipendenze esterne; MD5 interne e Git blob del wrapper
+sono dichiarazioni diverse, senza una derivazione crittografica reciproca
+nei dati dell'auditor. Gli SHA before/after sono osservazioni locali, non
+garanzia contro cambiamenti transitori tra le letture. La copertura, le
+mutazioni, il check finale, MC/DC e il gate C1 rimangono fuori da questo
+esito. Nessuna qualifica del motore, della durabilità o della release.

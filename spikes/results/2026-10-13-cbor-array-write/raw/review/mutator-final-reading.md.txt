@@ -1,0 +1,123 @@
+# Mutatore array CBOR — lettura statica C4 finale
+
+2026-10-13. Lettura del testo come dati, senza LOAD/compilazione del
+mutatore, del prodotto o del corpus; nessun self-test o campagna eseguito
+dal revisore. Questa nota è un nuovo output ignored, successivo al freeze
+del prodotto, e non modifica sorgenti, cataloghi, indice o HEAD.
+
+## Impronte osservate
+
+| File | Git blob letto |
+|---|---|
+| `drivers/mutation.lisp` | `d3857e15259bda0d7acb2e896e5904cab762d4b4` |
+| `drivers/catalogue-materialized.lisp` | `0f873e55deabf8581ba361614bccedf7a910a5ad` |
+| `src/codec/cbor-array-input.lisp` | `d3b3d07fc18bd2a077c1a2d79020a76263b2779e` |
+| `src/codec/cbor-array-write.lisp` | `a410297c29c5d043ad60d3804bd3711e22c2833b` |
+
+Il prefisso dei due percorsi `drivers/` è
+`spikes/out/cbor-array-write-20261013/`. Il catalogo riporta gli stessi
+due blob prodotto, i tre blob del corpus congelato e i blob dei driver
+bench/audit/fixture già letti. Le nove MD5 dichiarate dal mutatore sono
+state confrontate con i file fisici, senza eseguire codice del driver:
+
+| File | MD5 osservata, uguale al pin |
+|---|---|
+| array-input | `560fa1b10432d16edb830014e95ea4dc` |
+| array-write | `0429206ab6069f053c66da4c56439cfb` |
+| corpus support | `6b76f5728245279ac2549814c033bc91` |
+| corpus principale | `b9d14be96752dcf8318c82878549672c` |
+| corpus worker | `9de35b86b0a0ca59064d840e49fe57b1` |
+| bench | `c38a3e0e2f0b4af26e3d3822aeb1dbfd` |
+| audit | `10199e93fa1c392eb8f5d81430c1838f` |
+| fixture/catalogo semantico | `1bd3dde86b277aa6e7a05ae82d56662f` |
+| catalogo materializzato | `5f58787b6bafd2b1c40839990112f5b1` |
+
+## I due rilievi precedenti
+
+1. **Origine nominale del backtrace.** Le righe 126–148 congelano le
+   venti funzioni DEFTEST del corpus, distinte e a zero argomenti.
+   `corpus-frame-p`, righe 297–312, riconosce un prefisso numerico
+   `N: (` e confronta il primo token funzione con la whitelist esatta.
+   Dopo il nome ammette soltanto whitespace, chiusura e whitespace:
+   helper CAW, argomenti, prefissi parziali, quoting e wrapper non sono
+   origini valide. Il numero del frame può essere diverso da zero;
+   il frame freddo usa 27. `corpus-backtrace-p`, righe 322–334, conserva
+   lo stato di stringa tra righe: un frame apparente dentro una stringa
+   multilinea non diventa un'origine valida. Le fixture, righe 422–445,
+   includono il vecchio falso positivo `UNRELATED` con namespace citato,
+   simbolo nominale come argomento, quoting, helper, nome non registrato
+   e frame multilinea citato; richiedono esattamente
+   `(:invalid :unrelated-runtime)`. Il gap precedente è corretto nel testo.
+2. **Sentinella EOF.** `read-worker-report-stream`, righe 647–658, usa
+   GENSYM locale come EOF, READ-EVAL NIL, readtable standard, base 10,
+   READ-SUPPRESS NIL e CL-USER. Richiede una forma e un secondo READ
+   uguale per EQ alla sentinella. `:eof` letterale non può confondersi
+   con EOF; le fixture, righe 660–686, richiedono i motivi specifici
+   `:trailing`, `:reader` e `:empty`, oltre a verificare l'indipendenza
+   dalla readtable del chiamante. `verify-worker-fixture-report` usa
+   questo lettore, righe 688–702. Il gap precedente è corretto nel testo.
+
+## Catalogo, copie e classificazione
+
+Otto nomi semantici distinti, nell'ordine preregistrato: capacità fisica,
+major, COUNT, scansione omessa, overlap senza testata, entry non verificate,
+radice esclusa dai nodi e arità extra. I frammenti coincidono fra catalogo
+materializzato e mutatore. I siti di partenza sono unici nei sorgenti
+letti: input 124/125; write 24/50/67–105/83/96. Major e COUNT mutano
+separatamente lo stesso sito write:96, in copie differenti; non sono otto
+siti AST distinti. Per l'arità extra viene sostituita l'intera DECL+DEFUN
+pubblica, con FTYPE e ritorno coerenti soltanto nella copia privata.
+
+`validate-mutants`, righe 222–241, controlla ordine/numero, pin fisici,
+appartenenza dei percorsi, sostituzione non vuota e differente, e una sola
+occorrenza del vecchio frammento. `unique-position` rifiuta specificamente
+assenza e ambiguità. La compilabilità e il rilevamento dei mutanti restano
+da osservare: la sola presenza del bersaglio non li dimostra.
+
+Le directory vengono create con mkdir esclusivo, righe 486–493; non si
+riusano output esistenti. `copy-test-system` copia ASD, build e tutti i
+Lisp di src/tests in ogni directory nuova. La sostituzione scrive solo
+il file della copia, righe 553–573. Il runner, righe 502–529, ignora
+le traduzioni ASDF ereditate e usa una directory FASL locale distinta;
+avvia `tools/build.lisp` originale, che forza il caricamento/compilazione
+rigorosi e l'intera suite ASDF. La baseline completa precede tutti i
+mutanti e deve risultare OK, righe 803–810.
+
+I classificatori richiedono marker smoke e fine build come righe esatte,
+con ordine coerente. Segnali e guasti dopo il marker finale sono
+WORKER-ERROR; warning o errori di compilazione sono INVALID, mai rilevamenti.
+Un mutante è DETECTED soltanto con exit nonzero, smoke prima di Unhandled
+e almeno un frame nominale del corpus dopo il rifiuto. Una copia terminata
+con exit zero è SURVIVED soltanto se passa il classificatore completo
+della baseline. Le fixture sintetiche richiedono esiti e motivi esatti;
+quelle di trasporto conservano runner, log, exit/segnale e report dei child
+SIGKILL/exit7. Guasti baseline e mutanti vengono contati separatamente
+dai rilevamenti e conservati nei report anche in caso di fallimento.
+
+Le impronte prima/dopo includono l'inventario copiato e i cinque driver
+ignored nominati; una differenza impedisce l'esito OK. Ogni risultato
+tentato viene salvato prima di proseguire. Il driver richiede otto risultati
+tutti DETECTED per l'esito finale OK.
+
+## Esito e limiti
+
+PASS della lettura statica: i due gap precedenti sono corretti e non è
+stato rilevato un nuovo difetto concreto nei file identificati. Il PASS
+non è il risultato dei self-test, della baseline o delle campagne.
+
+Il riconoscitore dei frame è un protocollo testuale ristretto per queste
+diagnostiche SBCL e per la whitelist congelata, non un parser Lisp generale
+né una prova causale o di autenticità di un log. Il reader worker protegge
+valutazione/EOF/readtable del report prodotto dallo stesso self-test;
+non valida genericamente schema, chiavi duplicate, liste cicliche o
+ogni possibile oggetto Lisp. Il catalogo materializzato è pinned come
+byte ma non viene interpretato a runtime dal mutatore: la coerenza delle
+sue dichiarazioni con le costanti è stata letta staticamente.
+
+MD5 e blob dichiarati documentano consistenza e provenienza locale;
+non attestano autenticità, origine indipendente o assenza di modifiche
+transitorie tra osservazioni. L'inventario copiato comprende ASD/build
+e Lisp src/tests, non tutti i file del repository o ogni dipendenza esterna.
+I driver ignored non appartengono all'inventario tracked esterno del
+comando. Otto mutazioni mirate non qualificano il motore, la durabilità,
+il gate C1 o una release; nessuna inferenza di scaling o prestazioni.

@@ -162,6 +162,16 @@ statica e il self-test del tool integrato passano. I controlli di
 conservazione mantengono 123/2/6 verifiche e le fixture dei processi
 distinguono segnali e guasti successivi al completamento.
 
+L'ultima integrazione remota, `06cc1354cd6843c40da0570e5314fef7cf68a667`,
+aggiunge 28 test GET ACTIVE e il relativo tool di copertura, mantenendo
+identico l'albero dei sorgenti di prodotto. Il merge conserva modulo,
+RUN e scope degli array. Il controllo conclusivo ricompila il sistema
+ed esegue 1.182 nominali e due smoke, senza avvisi; lint, tracciabilità e
+collegamenti passano. La verifica globale delle evidenze e i dieci spike
+precedono questa integrazione di test; i nuovi record sono conservati
+nel supplemento. Gli archivi già chiusi conservano le versioni esatte
+dei documenti e dei dati osservati durante le campagne precedenti.
+
 ## Conservazione delle prove
 
 L'[archivio principale](../../spikes/results/2026-10-13-cbor-array-write/catalogo.lisp)

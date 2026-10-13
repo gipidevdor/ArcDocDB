@@ -46,8 +46,9 @@
                              (:file "control-payload") (:file "payload-record")
                              (:file "payload-write")))
                (:module "io" :serial t
-                :components ((:file "package") (:file "types") (:file "native")
-                             (:file "lifecycle") (:file "transfer") (:file "flush")))
+                :components ((:file "package") (:file "types") (:file "identity-types")
+                             (:file "native") (:file "lifecycle") (:file "identity")
+                             (:file "transfer") (:file "flush")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
                              (:file "group") (:file "executor") (:file "csn")))

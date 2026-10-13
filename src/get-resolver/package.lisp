@@ -13,6 +13,7 @@
                 #:+segment-max-bytes+ #:+writer-origin+ #:+compaction-origin+
                 #:verifica-segmento-compattato)
   (:import-from #:arcdocdb.io #:file-io #:leggi-esatto #:mode-file #:stato-file)
+  (:import-from #:arcdocdb.io #:associazione-file #:verifica-associazione-file)
   (:import-from #:arcdocdb.recovery.manifest #:manifest #:trova-segmento)
   ;; Ponte locale: soltanto l'adozione/pubblicazione esistente rende leggibile la radice ACTIVE.
   (:import-from #:arcdocdb.series #:controllore-serie #:commit-serie

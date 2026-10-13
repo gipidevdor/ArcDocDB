@@ -18,19 +18,24 @@ INVALID-ARGUMENT prima di creare capacità o array; non cambia limiti dei docume
 ;;; REQ: REQ-WAL-006 REQ-FOR-001 REQ-AFF-008
 (declaim (ftype (function (controllore-serie t segmento-get
                          &key (:max-pages integer) (:max-puts integer) (:batch-records integer)
-                              (:batch-bytes integer) (:budget-payload integer)) sorgente-get-attiva)
+                              (:batch-bytes integer) (:budget-payload integer)
+                              (:associazione-file (or null associazione-file))) sorgente-get-attiva)
                 crea-sorgente-get-attiva))
 (defun crea-sorgente-get-attiva (controller lease segment
                                 &key (max-pages 65536) (max-puts 1048576) (batch-records 65536)
-                                     (batch-bytes 67108864) (budget-payload 67108864))
+                                     (batch-bytes 67108864) (budget-payload 67108864) associazione-file)
   "Pre: lease, nuovo ACTIVE con header verificato nel pool I/O; append/readonly dello STESSO file.
 Post: sorgente locale pronta, nessun I/O/frontiera/pubblicazione. Header/id/versione confrontati.
 INVALID-ARGUMENT per associazione/root già avviata; salute/invarianti propagano dal controller.
-Il caller conserva FD e associazione fisica fino al reclaim, che non è attestato dal solo header."
+ASSOCIAZIONE-FILE verifica le capacità esatte senza I/O; nil mantiene la precondizione del caller.
+Il caller conserva i FD fino al reclaim; il solo header non attesta identità fisica."
   (verifica-budget-attivo max-pages max-puts batch-records batch-bytes budget-payload)
   (arcdocdb.series::%check-owner controller lease) (arcdocdb.series::%require-healthy controller)
   (let ((log (arcdocdb.series::controllore-serie-log controller)))
     (verifica-log-segmento log)
+    (when associazione-file
+      (verifica-associazione-file associazione-file (segmento-get-file segment)
+                                 (arcdocdb.wal::log-io-file log)))
     (unless (and (zerop (segmento-get-high segment)) (plusp (segmento-get-low segment))
                  (= (segmento-get-origin segment) +writer-origin+)
                  (= (segmento-get-low segment) (arcdocdb.wal::log-io-file-id log))

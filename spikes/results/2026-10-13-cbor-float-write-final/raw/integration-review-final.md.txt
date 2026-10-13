@@ -1,0 +1,129 @@
+# Lettura dei dati dell'integrazione GET e float CBOR
+
+Lettura conclusiva del gruppo eseguito sul commit
+`56e0a3acc26633bc8a9c5377f7b6a946466d9a45`, con working tree registrato
+vuoto. Questo gruppo precede la successiva integrazione del controllore
+pool, che avrà una lettura distinta. Il documento originale congelato
+`runtime-review-draft.md`, blob `1872e19955ddcec09a83d8e9e78d7c51f8838b12`,
+rimane invariato.
+
+Sono stati letti record e risultati come dati con
+`tools/evidence-storage.lisp`, l'unico strumento caricato. Nessun prodotto,
+report, driver, FASL o suite è stato caricato o invocato. Le forme estratte
+da stdout sono lette con READ-EVAL NIL, readtable standard e CL-USER.
+Nessuna campagna è stata rieseguita. Questo autore ha scritto il corpus
+float: la lettura dei suoi risultati non è indipendente dal corpus.
+
+## Registri e impronte
+
+| Registro in `spikes/out/` | Operazione | Stato | Secondi |
+|---|---|---|---:|
+| `4000908032-command-75888-0/report.lisp` | child make check-core | OK / exit 0 / STABLE | 225.684821 |
+| `4000908030-command-75831-0/report.lisp` | wrapper make check | OK / exit 0 / STABLE | 228.782840 |
+
+Le 751 entry before/after di ciascun registro sono identiche; lo snapshot
+è identico anche fra i due registri. Il wrapper ha stderr vuoto e stdout
+che identifica esattamente il registro child sopra riportato. La sua
+wall time include il child e non va sommata a quella del child.
+
+Nello snapshot child sono presenti ASDF
+`87388705af6343af7636d820043dab362098f796`, narrow
+`cd5749edc0a757ee3a5b470eda566a6685d32fd8`, writer
+`03c6aed61e2c243d8b1a6c4332ce1837c4e9a77c` e i tre file del corpus
+`6ba7c20701b60789d92ff232fc02b0f476334911`,
+`747cd8a72445a3ea638cd1910bc9faa63f4cdc33`,
+`f95bf450148fa2aab9bb28c178b986dee049de6e`. Prodotto e corpus float
+coincidono con le versioni congelate prima delle campagne originali.
+
+Ambiente registrato: SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4,
+17.179.869.184 byte, 10 CPU logiche. Carico esterno UNCONTROLLED,
+load average `{ 5.62 4.64 4.14 }`: non si inferiscono core attivi o scaling.
+
+## Suite, smoke e gate
+
+Il marker completo `build e test: nessun avviso, tutti i controlli superati`
+è alla riga 2.317 dello stdout child. Prima del marker vi sono 1.031 OK
+unici: 1.029 test nominali e due smoke esatti, `package ARCDOCDB presente`
+e `ARCDOCDB:*VERSION* è una stringa`. Dopo il marker vi sono soltanto
+quattro ulteriori OK, del self-test linter: bad, good, keyword-barrier e
+qualified-reader. Totale stdout: 1.035 righe OK, tutte uniche.
+
+La nuova suite GET resolver dichiara 42 nomi distinti, 8 sort, 13
+construction e 21 read, e tutti hanno esattamente una riga OK nel child.
+Il confronto è sui nomi dichiarati: una ricerca generica di `-RESOLVER-`
+include anche un test preesistente e non definisce questo conteggio.
+Il metodo nello snapshot è
+`31b568cfe4db29d5d4c6d6d4de82dd0f54747f23`. La lettura statica ASDF
+rispetto a `364ac3` mostra due componenti IO aggiunti e il modulo test
+resolver con RUN dopo get-directory.
+
+Lo stderr child non contiene WARNING:, STYLE-WARNING: o Unhandled.
+Le diagnostiche negative dei self-test sono dati stdout delle fixture,
+separate dalle diagnostiche del processo principale.
+
+| Gate | Risultato osservato |
+|---|---|
+| Lint prodotto | 167 file, 0 violazioni |
+| Self-test linter | Quattro OK distinti, con violazioni deliberate riconosciute |
+| Trace | 118 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, 0 errori |
+| Link | 356 file, 2.638 link controllati, 0 rotti |
+| Evidence storage | STATUS OK, 123 controlli, 40 casi |
+| Evidence publication | STATUS OK, 2 controlli, 2 casi |
+| Normalizer compression | STATUS OK, 6 controlli, 2 casi |
+| Evidence catalog | STATUS OK, 79 cataloghi, 2.585 riferimenti, 17.967 file, 489.773.209 byte |
+
+I record `4000908064-snapshot-self-test-76565-0/report.lisp` e
+`4000908064-reader-self-test-76579-0/report.lisp` sono PASSED e registrano
+ciascuno due WORKER-ERROR deliberati. Sono prove del classificatore dei
+processi, distinte dai test nominali e dagli esiti reali della suite.
+
+## Corpus float e due ondate
+
+Sono presenti tutti i 18 OK REQ-CBR-004. I marker confermano 65.536 half,
+131.072 espansioni, 196.608 successi e 196.608 capacità insufficienti,
+con otto offset e tre configurazioni ruotati. Il fuzz mantiene 2.048 casi,
+seed 464C5434: 768 successi, 256 capacità, 128 AI, 128 HIGH, 128 LOW,
+256 parole e 384 range/destinazioni rifiutati.
+
+Ogni ondata riusa due worker per 16.384 item aggregati; due ondate danno
+32.768 chiamate. Entrambe riportano sink 2.115.584/2.148.352.
+Gli overlap di questo gruppo sono 2.586/2.722 tick a 1.000.000 tick/s.
+Non sono misure di scaling o di simultaneità sui core.
+
+## Dieci spike: confronto dei record come dati
+
+L'aggregato `4000908223-check-81368-0/report.lisp` è COMPLETE, contiene
+dieci RUN e dieci RUN-ARTIFACTS. Ogni child indicato è stato letto mediante
+lo strumento fidato e confrontato con il RUN aggregato: identità di
+cons e valori scalari; per gli array, dimensioni, element-type e tutti i
+valori row-major. Si conserva così anche la struttura degli array typed.
+
+| ID | Stato / exit | Secondi | Entry impronte |
+|---|---|---:|---:|
+| SPK-01 | OK / 0 | 1.254565 | 5 |
+| SPK-02 | OK / 0 | 0.568564 | 3 |
+| SPK-03 | OK / 0 | 0.542640 | 3 |
+| SPK-04 | OK / 0 | 0.973126 | 5 |
+| SPK-05 | OK / 0 | 0.894438 | 5 |
+| SPK-06 | OK / 0 | 1.221173 | 7 |
+| SPK-07 | PASS / 0 | 8.675768 | 17 |
+| SPK-08 | OK / 0 | 1.986308 | 6 |
+| SPK-09 | OK / 0 | 0.694238 | 3 |
+| SPK-10 | OK / 0 | 2.469022 | 8 |
+
+Tutti i child sono STABLE, con impronte before/after identiche, e tutti
+coincidono strutturalmente con il rispettivo RUN. Le 62 entry child,
+relative a 50 percorsi distinti, coincidono con i blob dello snapshot
+child make check-core. I contatori e la corrispondenza dei record sono
+verificati nel transcript ad hoc `2a62c4`; i gate in `dd52ec` e `a6503d`.
+Non ci sono fallimenti di questi estrattori per questo gruppo.
+
+## Limiti
+
+Questa è una lettura di dati dichiarati e della loro coerenza, non una
+prova di autenticità, esecuzione autonoma o chiusura di tutti gli alberi.
+Non sono state rieseguite campagne o interpretati log/report come codice.
+Non si attestano C1, MC/DC, requisiti chiusi, scaling, nonallocazione
+assoluta o durabilità del motore. La verifica typed arrays riguarda la
+corrispondenza child/aggregato, senza nuova validazione semantica dei
+dieci spike. L'integrazione pool successiva resta un gruppo separato.

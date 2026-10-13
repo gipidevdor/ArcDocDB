@@ -1,5 +1,153 @@
-# Incremento fonti GET della Serie
+# Fonti GET dalla radice pubblicata della Serie
 
-Preparazione da `4344d9e`. Il piano e i limiti sono in [README](README.md).
-I risultati dinamici saranno riportati soltanto dopo la chiusura dei
-produttori e la verifica dell'integrità dei registri conservati.
+Incremento iniziato da `4344d9e`, con associazione fisica readonly/append
+e le 42 prove OUTCOME integrate da `main`. Il [piano](README.md) precede
+le esecuzioni. La campagna mirata H è congelata in
+`17be854ae21757659e329fd6fb57777adc1a95c9`; ogni record conserva sorgenti,
+ambiente, argv, stdout/stderr, exit e stabilità prima/dopo.
+
+## Modifica e contratto
+
+Il nuovo contenitore immutabile conserva directory CLOSED e contenuto
+del caller nella radice del controller, anche dentro la radice ACTIVE.
+Il reader acquisisce quella radice una volta, dopo lookup e ingresso EBR,
+e risolve ACTIVE dalla stessa radice catturata. Pubblicazione, punto
+durevole WAL e cinque esiti GET usano i protocolli già presenti.
+
+Owner e duplicati ACTIVE/CLOSED sono rifiutati prima dell'adozione.
+Geometria interna impossibile applica il fail-stop del caller: GET FAULTED
+per il reader, Archivio FAULTED per il writer. Il cleanup libera il pin
+preservando stato e causa; wrong-state non sottrae il pin già posseduto.
+La fixture nativa associa readonly e append allo stesso device/inode.
+
+Il writer deve pubblicare le fonti prima delle location e mantenerne un
+superset per i candidati già copiati dai reader ammessi. Una singola
+lettura acquire non dimostra da sola il lifetime. Nessun FD è chiuso
+e nessun file dati è eliminato da questo ponte.
+
+## Prove di correttezza e sensibilità
+
+La suite comprende **27 nuovi test**, con file nativi v1/v2, CLOSED
+ordinario/prepared, ACTIVE+CLOSED, cache e cinque esiti, output privato,
+buffer-required e riavvio, owner/controller estranei, radici impossibili,
+duplicati prima e dopo pubblicazione, pin/cleanup e frontiera catturata.
+L'interleaving deterministico pubblica B dopo l'acquisizione di A e
+verifica la risoluzione in A. Gli accessi ACTIVE esistenti sono verificati
+direttamente, compresa la precedenza owner/salute e una prova prepared
+impossibile. Il caso 65.536 è geometria sintetica con un solo FD, non
+65.536 file o letture native.
+
+Le verifiche complete di G passano con **1.038 test nominati**, due smoke,
+dieci spike di correttezza e compilazione senza WARNING/STYLE-WARNING.
+Il controllo H ripete la suite dopo la correzione del registratore.
+Build, linter e negativi, tracciabilità, link, conservazione compressa
+e cataloghi fanno parte del comando completo; nessun benchmark storico
+è rieseguito dal controllo dei cataloghi.
+
+Baseline isolata H passata; **4/4 mutanti rilevati**, nessun sopravvissuto:
+radice pianificata al posto della pubblicata, duplicato accettato,
+ACTIVE instradato ai CLOSED, frontiera ACTIVE oltre il limite di un byte.
+La classificazione non conta crash, timeout, compilazione, warning,
+errore di tipo/fixture o I/O come rilevazioni. Sono conservati sorgente
+modificato, patch, configurazione, driver, log e report child; il checkout
+ricostruibile e i FASL sono esclusi dalla pubblicazione di questa campagna.
+Self-test del classifier: 24 casi e tre negativi delle ancore.
+
+## Copertura H: denominatore completo dei tre file
+
+| File | Espressioni | Rami |
+|---|---:|---:|
+| `sources-read.lisp` | 131/137, 95,6% | 18/18, 100% |
+| `sources-types.lisp` | 99/111, 89,2% | 15/16, 93,8% |
+| `active-read.lisp` | 109/115, 94,8% | 8/8, 100% |
+| Totale | 339/363, 93,4% | 41/42, 97,6% |
+
+I [report HTML](get-series-coverage-h/cover-index.html) conservano anche
+le espressioni non eseguite, comprese dichiarazioni e guardie. Il ramo
+residuo è `:directory-search-bound`, irraggiungibile con geometria valida
+e il budget fisso di diciassette pivot. Non si rivendica condition coverage
+o MC/DC. Il controllo del selettore di scope e del ramo mancante è conservato.
+
+## Benchmark H
+
+Apple M4, SBCL 2.6.9. Matrice N=1/8/64, valori di 16 byte, resolve e
+cache-hit, cinque repliche per cella; seriale e uno/due/quattro reader
+paralleli. **120 finestre**, **4.800.000 cicli misurati** e **240.000 warmup**,
+tutti completati con checksum, candidato, output, esito e pin verificati.
+Gli oracoli restano nel clock; setup e caricamento del sistema dei test
+restano fuori. Non è una misura del solo resolver o di un caricamento
+di solo prodotto.
+
+N=64, mediana dei cicli completi al secondo, arrotondata:
+
+| Ciclo | Seriale | 1 reader parallelo | 2 reader | 4 reader |
+|---|---:|---:|---:|---:|
+| Resolve | 1.522.186 | 1.511.487 | 2.624.844 | 3.939.334 |
+| Cache-hit | 706.889 | 738.062 | 1.233.844 | 2.047.869 |
+
+Tutte le celle e minimi/mediane/massimi sono nel
+[riepilogo H](benchmark-summary.lisp). I riepiloghi
+[F](benchmark-summary-f.lisp) e [G](benchmark-summary-g.lisp) rimangono
+distinti: nessuna scelta delle repliche o della campagna migliore.
+Le 30 finestre seriali H osservano heap zero. Le finestre parallele
+includono creazione dei thread, gate, attesa e join: allocazione del
+processo 131.056/262.112/524.224 B per uno/due/quattro reader. È heap
+allocato osservato, non RSS né una prova generale di assenza di allocazioni.
+
+Il benchmark usa una radice CLOSED-only nel controller e non misura
+pubblicazione ACTIVE, rotazione, reclaim, I/O sostenuto o durability.
+Il ciclo cache risolve e poi sonda: due acquisizioni root per ciclo,
+una per API. Il gate non prova sovrapposizione di ogni ciclo. Carico
+esterno, scheduler e frequenza CPU sono incontrollati; nessun throughput
+del DB, soglia prestazionale o P99 è qualificato.
+Il self-test esegue 24 piccole finestre, undici oracoli negativi e un
+controllo di allocazione da 1 MiB. Il negativo `missing-completed` termina
+con exit 1 atteso; il derivatore respinge la campagna self-test incompleta.
+
+## Revisioni, errori conservati e integrità
+
+La [revisione C1](../../../docs/implementazione/get-fonti-serie-revisione.md)
+comprende due letture dello stesso revisore indipendente e una delta;
+i tre blob finali coincidono con quelli eseguiti. Arity della cache e
+guardie della ricerca duplicato sono corrette prima dei run accettati.
+La revisione C4 originaria di benchmark/mutazioni non conclude la rilettura.
+L'autore integra le correzioni e le verifiche registrate; una successiva
+[revisione indipendente mirata](review-capture.lisp) della cattura e del
+collector trova e chiude staticamente il P2 sulle opzioni dopo `--script`.
+Il self-test eseguito del registratore passa nove controlli. Il collector
+passa 31 controlli. Non è una qualifica C4 completa o C1 del motore intero.
+Tutti gli agenti sono chiusi prima della pubblicazione finale.
+
+La [storia strutturata](history.lisp) conserva i tentativi falliti:
+sentinelle non ripristinate, lotto ancora posseduto dal gruppo, CSN
+decrescente su una chiave esistente, marker capture ambiguo, output
+scambiato per helper e stringa base-char non canonica nel derivatore.
+Sono errori di fixture/strumenti corretti e rieseguiti, non run positivi.
+Le verifiche whitespace sul patch completo respingono output compiler
+grezzo e una riga finale vuota importata da `main`; i controlli della
+delta di questo incremento passano. I byte grezzi restano invariati.
+
+Il [manifesto](publication-roots.lisp) attribuisce ogni raw a un comando
+produttore concluso. Il marker nello stdout del record contiene digest
+SHA256 dei raw alla fine del comando e degli helper SBCL prima/dopo.
+Il collector verifica inventario, root, argv ed exit prima della copia;
+conserva gli stati falliti senza promuoverli. I helper di pubblicazione
+esclusi dal freeze generale hanno copie TXT e digest dell'invocazione.
+Non sono firme contro un host ostile o digest di tutte le dipendenze
+caricate transitivamente.
+
+La [compattazione locale](compaction.lisp) usa quattro worker e gzip
+senza perdita, con confronto dei byte riespansi e aggiornamento dei
+digest del [catalogo](catalogo.lisp). L'audit controlla catalogo, raw,
+HTML e compressione; il controllo globale verifica struttura e dimensioni.
+La [chiusura](closure-inventory.lisp) è un inventario puntuale: gli audit
+successivi sono conservati, l'ultimo record è copiato separatamente
+per evitare una dipendenza circolare. Nessuna riscrittura della storia Git.
+
+## Prossimo incremento
+
+Il builder ACTIVE esistente richiede una prima pagina e `planned-root`
+inizialmente NIL. Va progettato l'avvio con ACTIVE vuoto e CLOSED recuperati
+prima del primo lotto, senza commit fittizi. Rotazione, rilocazione del
+primary e reclaim completo richiedono il loro protocollo di lifetime.
+Il ponte e i suoi risultati non qualificano questi scenari ancora aperti.

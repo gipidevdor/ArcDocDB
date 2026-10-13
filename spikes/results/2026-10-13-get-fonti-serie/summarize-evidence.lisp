@@ -53,7 +53,7 @@
                 :mutants-detected 4 :baseline-passed t :commands (nreverse commands)
                 :review '(:c1-two-reads-one-independent-reviewer-and-delta-completed
                           :c4-independent-final-reread-incomplete :c4-integrator-fixes-and-recorded-checks)
-                :closed-agents '("Hilbert" "Raman" "Erdos" "Socrates")
+                :closed-agents '("Hilbert" "Raman" "Erdos" "Socrates" "Lagrange")
                 :static-fixes '(:cache-arity-before-first-run :bounded-duplicate-search-geometry
                                :preserve-owner-before-controller-health :raw-producer-capture
                                :proof-helper-before-after-digests :no-obsolete-mutation-directory-key)

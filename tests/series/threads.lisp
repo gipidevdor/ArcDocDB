@@ -1,6 +1,98 @@
 ;;;; Thread reali con handoff a semafori e scadenze: nessuna attesa senza limite.
 (in-package #:arcdocdb.series.tests)
 
+;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-MVC-005 REQ-AFF-008
+(deftest test-REQ-CON-002-series-bootstrap-readers-see-only-nil-or-complete-root
+  ;; Ogni reader osserva NIL prima del CAS e deve osservare ROOT per finire.
+  ;; Nessuna sostituzione di funzioni durante la vita dei thread.
+  (dotimes (round 8)
+    (with-series (f :root nil :capacity (if (evenp round) 1 4))
+      (let* ((c (series-fixture-controller f)) (workers 4) (depth 32)
+             (ready (sb-thread:make-semaphore)) (start (sb-thread:make-semaphore))
+             (sampling (sb-thread:make-semaphore)) (observed (sb-thread:make-semaphore))
+             (finish (sb-thread:make-semaphore))
+             (counts (make-array workers :initial-element 0))
+             (deadline (series-deadline 5)) (threads nil)
+             (root (loop for id from 1 to depth for parent = nil then node
+                         for node = (series-root id parent) finally (return node)))
+             (before (series-bootstrap-preserved-image f (list root))))
+        (labels ((check-root (actual)
+                   (is (eq root actual))
+                   ;; L'oracolo e la sequenza numerica, non un getter di prodotto.
+                   (let ((cursor actual))
+                     (loop for id downfrom depth to 1
+                           do (is (typep cursor 'series-root))
+                              (is (= id (series-root-id cursor)))
+                              (setf cursor (series-root-parent cursor)))
+                     (is (null cursor)))))
+          (unwind-protect
+               (progn
+                 (dotimes (worker workers)
+                   (let ((id worker))
+                     (push (series-worker
+                            (format nil "Serie bootstrap reader ~D/~D" round id)
+                            (lambda ()
+                              (is (null (leggi-radice-serie c)))
+                              (incf (svref counts id))
+                              (sb-thread:signal-semaphore ready)
+                              (series-wait start deadline)
+                              ;; Questo secondo NIL rende esplicito l'inizio del campionamento.
+                              (is (null (leggi-radice-serie c)))
+                              (incf (svref counts id))
+                              (sb-thread:signal-semaphore sampling)
+                              (let ((seen nil))
+                                (loop repeat 100000
+                                      do (series-seconds-left deadline)
+                                         (let ((actual (leggi-radice-serie c)))
+                                           (if actual
+                                               (progn (check-root actual) (setf seen t) (return))
+                                               (incf (svref counts id))))
+                                         (sb-thread:thread-yield))
+                                (is seen))
+                              (sb-thread:signal-semaphore observed)
+                              (series-wait finish deadline)
+                              (dotimes (sample 64) (check-root (leggi-radice-serie c)))
+                              :ok)) threads)))
+                 (dotimes (worker workers) (series-wait ready deadline))
+                 (sb-thread:signal-semaphore start workers)
+                 (dotimes (worker workers) (series-wait sampling deadline))
+                 (is (eq root (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root)))
+                 (dotimes (worker workers) (series-wait observed deadline))
+                 (sb-thread:signal-semaphore finish workers)
+                 (dolist (thread threads) (series-join thread deadline))
+                 (is (every (lambda (count) (>= count 2)) counts))
+                 (check-root (leggi-radice-serie c))
+                 (is (series-image-equal before (series-bootstrap-preserved-image f (list root))))
+                 (series-counts f 0 0 0)
+                 (series-frontiers (series-fixture-registry f) 0 nil)
+                 (is (equalp #(1 0 0 0) (series-fixture-calls f)))
+                 (series-healthy f))
+            (sb-thread:signal-semaphore start workers)
+            (sb-thread:signal-semaphore finish workers)
+            (series-stop-workers threads)))))))
+
+;;; REQ: REQ-CON-001 REQ-AFF-004 REQ-CON-002
+(deftest test-REQ-CON-001-series-bootstrap-foreign-thread-cannot-use-owner-lease
+  (with-series (f :root nil)
+    (let* ((c (series-fixture-controller f)) (root (series-root 71 nil))
+           (lease (series-fixture-lease f)) (deadline (series-deadline 5)) (threads nil))
+      (unwind-protect
+           (progn
+             (push (series-worker
+                    "Serie bootstrap foreign owner"
+                    (lambda ()
+                      (series-refusal
+                       f (lambda () (arcdocdb.series:inizializza-radice-serie c lease root))
+                       'invalid-argument :reason :serie-lease)
+                      :ok)) threads)
+             (series-join (first threads) deadline)
+             (is (null (leggi-radice-serie c)))
+             (is (eq root (arcdocdb.series:inizializza-radice-serie c lease root)))
+             (is (eq root (leggi-radice-serie c)))
+             (series-counts f 0 0 0)
+             (series-healthy f))
+        (series-stop-workers threads)))))
+
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-AFF-004
 (deftest test-REQ-CON-001-series-foreign-thread-lease-and-release-reacquire-transfer
   (with-series (f)

@@ -30,14 +30,14 @@ Creazione prima dei compiti; il FD vive fino al reclaim EBR dell'ultima radice."
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-008
 (defstruct (radice-get-attiva
              (:constructor %make-radice-get-attiva (source directory count puts nodes end content)) (:copier nil))
-  "Pre: delta verificato copiato e directory persistente privata; root non ancora pubblicata.
+  "Pre: delta verificato o avvio vuoto a offset 64; directory persistente privata.
 Post: niente riferimenti al lotto/evento riusabili o alla radice precedente.
-Solo il CAS del controller dopo copertura WAL autorizza il reader ad acquisire questa vista."
+Il CAS iniziale pubblica il solo header; i CAS successivi richiedono copertura WAL."
   (source nil :type sorgente-get-attiva :read-only t)
-  (directory #() :type simple-vector :read-only t)
-  (count 1 :type (integer 1 65536) :read-only t)
+  (directory nil :type (or null simple-vector) :read-only t)
+  (count 0 :type (integer 0 65536) :read-only t)
   (puts 0 :type u32 :read-only t)
-  (nodes 4 :type index :read-only t)
+  (nodes 0 :type index :read-only t)
   (end 64 :type u32 :read-only t)
   (content nil :type t :read-only t))
 

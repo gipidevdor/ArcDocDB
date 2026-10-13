@@ -13,6 +13,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   CLOSED conservate con prove grezze e audit indipendenti; qualifica C1 e
   MC/DC restano aperti.
 
+- Presa dei writer governata dallo stato del pool: conferma il comando solo
+  dopo la barriera IDLE, delega il claim C1 quando attivo e lascia ready e
+  cursore intatti quando inattivo. Compiti e ricircoli già acquisiti completano
+  i propri obblighi prima del ritiro; nessuna attesa o gestione fisica dei thread.
+
 - Preparazione del checkpoint `control.log.tmp`: header della Serie, EDIT
   completo e SEAL costruiti senza I/O, manifest verificato contro il nuovo
   ACTIVE, file fisicamente distinto, trasferimenti a blocchi, rilettura esatta

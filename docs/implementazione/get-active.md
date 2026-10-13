@@ -8,8 +8,8 @@ prepared/OUTCOME dell'ACTIVE restano da integrare: il wrapper le rifiuta
 esplicitamente, senza interpretarle come abort o come corruzione del formato.
 
 La directory introdotta qui contiene **pagine di uno stesso ACTIVE**. La
-directory della Serie che sceglie fra ACTIVE, CLOSED e versioni ritirate,
-l'indice concreto e il server sono ancora integrazioni distinte.
+[directory della Serie](get-fonti-serie.md) sceglie fra ACTIVE e CLOSED.
+L'indice concreto, la rotazione/reclaim e il server restano integrazioni distinte.
 
 ## Autorità e ordine di pubblicazione
 
@@ -32,11 +32,14 @@ attraverso le API ACTIVE del reader.
    l'obbligo originario del caller; il solo header non lo assolve.
    Il [preparatore del nuovo writer](inizializzazione-active.md) fornisce una
    factory che richiede la prova, dopo header durevole e verifica della rilettura.
+   Prima dell'ammissione, l'[avvio vuoto](get-active-vuoto.md) può pubblicare
+   le fonti recuperate con zero pagine e nessun evento o CSN.
 3. Sul lotto OPEN, chiamare `verifica-capienza-get-attiva` **prima** del
    ponte WAL–CSN. La preflight verifica ring, contiguità, forma supportata,
    spazio segmento e budget; restituisce il numero PUT, senza assegnare CSN
    o riservare risorse. Mantenere lease, contenuto e radice precedente
-   **pianificata**, inizialmente `nil`, stabili fino alla sigillatura/adozione.
+   **pianificata**, inizialmente `nil` oppure la radice vuota pubblicata,
+   stabili fino alla sigillatura/adozione.
    Poi sigillare e preparare il payload immutabile del caller. La preflight
    non certifica i CRC dei valori: la verifica completa segue la sigillatura.
 4. `registra-lotto-get-attivo` controlla lease, ring, token, log e ordine;

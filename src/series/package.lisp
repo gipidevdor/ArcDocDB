@@ -14,6 +14,7 @@
                 #:invariant-violation #:io-fault #:error-reason)
   (:export #:controllore-serie #:commit-serie #:crea-controllore-serie
            #:acquisisci-controllore-serie #:rilascia-controllore-serie
+           #:inizializza-radice-serie
            #:registra-commit-serie #:inizia-io-commit-serie #:completa-io-commit-serie
            #:ritira-io-commit-serie
            #:pubblica-commit-serie #:riusa-commit-serie

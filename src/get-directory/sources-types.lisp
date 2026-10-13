@@ -45,16 +45,12 @@ Geometria/convergenza impossibili INVARIANT-VIOLATION; il caller applica il prop
     (unless (= left right) (error 'invariant-violation :reason :directory-search-bound))
     nil))
 
-;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-CMP-007
-(declaim (ftype (function (sorgente-get-attiva t arcdocdb.wal:lotto (or null radice-get-attiva)
-                          fonti-get-serie (member :async :group :strong))
-                         (values arcdocdb.series:commit-serie index radice-get-attiva &optional))
-                registra-lotto-fonti-get-attivo))
-(defun registra-lotto-fonti-get-attivo (source lease batch previous sources level)
-  "Pre: lease e SEALED/CSN del normale protocollo ACTIVE; fonti e content immutabili.
-Post: root pianificata con fonti della stessa vista e ID ACTIVE assente da CLOSED.
-INVALID-ARGUMENT prima dell'adozione per owner/duplicato; resto delegato al protocollo WAL.
-Solo PUBBLICA-COMMIT-SERIE rende la root visibile; SEAL conserva il punto durevole."
+;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-CMP-007 REQ-AFF-001
+(declaim (ftype (function (sorgente-get-attiva t fonti-get-serie) null) verifica-fonti-get-attive))
+(defun verifica-fonti-get-attive (source lease sources)
+  "Pre: fonti immutabili e sorgente ACTIVE. Post: lease/salute, owner e ID non duplicato verificati.
+INVALID-ARGUMENT prima di qualsiasi adozione; geometria impossibile => Archivio FAULTED.
+Nessun I/O/pubblicazione; lifetime e copertura delle location restano al writer."
   (let* ((directory (fonti-get-serie-directory sources))
          (segment (sorgente-get-attiva-segment source))
          (controller (sorgente-get-attiva-controller source)))
@@ -68,4 +64,28 @@ Solo PUBBLICA-COMMIT-SERIE rende la root visibile; SEAL conserva il punto durevo
       (invariant-violation (condition)
         (arcdocdb.series::%mark-fault controller :archive)
         (error condition)))
-    (registra-lotto-get-attivo source lease batch previous sources level)))
+    nil))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-CMP-007 REQ-AFF-008
+(declaim (ftype (function (sorgente-get-attiva t fonti-get-serie) radice-get-attiva)
+                inizializza-fonti-get-attive))
+(defun inizializza-fonti-get-attive (source lease sources)
+  "Pre: nuovo ACTIVE con solo header durevole, EDIT deciso, fonti recuperate; ammissione chiusa.
+Post: root ACTIVE vuota con CLOSED consultabili dal CAS canonico, senza lotto/CSN/I/O.
+Owner/duplicato rifiutati prima dell'effetto; frontiera/avvio propagati dalla factory.
+Il caller conserva fonti e FD sotto EBR; il primo lotto usa la root restituita come PREVIOUS."
+  (verifica-fonti-get-attive source lease sources)
+  (inizializza-radice-get-attiva source lease :content sources))
+
+;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-CMP-007
+(declaim (ftype (function (sorgente-get-attiva t arcdocdb.wal:lotto (or null radice-get-attiva)
+                          fonti-get-serie (member :async :group :strong))
+                         (values arcdocdb.series:commit-serie index radice-get-attiva &optional))
+                registra-lotto-fonti-get-attivo))
+(defun registra-lotto-fonti-get-attivo (source lease batch previous sources level)
+  "Pre: lease e SEALED/CSN del normale protocollo ACTIVE; fonti e content immutabili.
+Post: root pianificata con fonti della stessa vista e ID ACTIVE assente da CLOSED.
+INVALID-ARGUMENT prima dell'adozione per owner/duplicato; resto delegato al protocollo WAL.
+Solo PUBBLICA-COMMIT-SERIE rende la root visibile; SEAL conserva il punto durevole."
+  (verifica-fonti-get-attive source lease sources)
+  (registra-lotto-get-attivo source lease batch previous sources level))

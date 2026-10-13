@@ -22,6 +22,11 @@ latenza o costo transitivo delle chiamate.
 - Undici record di processo conservati; [audit dei byte](audit-byte.lisp)
   su 22 copie di report e sidecar: lunghezze e SHA256 identici agli originali.
 
+Il controllo finale del catalogo e dei link, dopo questa conservazione, è
+riuscito. I due report aggiuntivi portano a tredici i record di processo:
+l'[audit finale](audit-finale-byte.lisp) verifica le 26 copie complessive,
+con gli stessi criteri di lunghezza e SHA256.
+
 I record identificano gli snapshot dei sorgenti prima e dopo ogni comando,
 risultati stabili in entrambe le campagne. La
 [ricostruzione iniziale](ricostruzione-iniziale.lisp) conserva il diff esatto

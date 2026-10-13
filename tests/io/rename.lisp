@@ -183,7 +183,8 @@ Nessun WITH-FILE: una chiusura automatica nasconderebbe close/rollback indebiti.
 (defun rename-test-post-call (context verify-after)
   "Chiama consapevolmente il core interno con fixture validata e nomi privati semplici."
   (let ((file (rename-test-file context))
-        (source (copy-seq "source.tmp")) (destination (copy-seq "destination.seg")))
+        (source (map 'simple-base-string #'identity "source.tmp"))
+        (destination (map 'simple-base-string #'identity "destination.seg")))
     (rename-test-check-file context :open)
     (is (typep source 'simple-base-string))
     (is (typep destination 'simple-base-string))

@@ -223,9 +223,9 @@
     (check-octets observed expected)
     (stat-identity stat)))
 (defun handle-snapshot (api handle directory-p)
-  "Cold: stato, modo, posizioni logiche e offset nativo; FD non entra nel report."
+  "Cold: stato, modo, posizioni logiche e offset nativo; FD confrontato nel medesimo oracolo cold."
   (let* ((fd (funcall (api-fd api) handle)) (stat (sb-posix:fstat fd)))
-    (list :state (funcall (api-state api) handle) :mode (funcall (api-mode api) handle)
+    (list :fd fd :state (funcall (api-state api) handle) :mode (funcall (api-mode api) handle)
           :written (funcall (api-written api) handle) :durable (funcall (api-durable api) handle)
           :offset (unless directory-p (sb-posix:lseek fd 0 sb-posix:seek-cur))
           :identity (stat-identity stat)
@@ -883,15 +883,15 @@
                       :file-shape))
   (check-distinct-identities '((7 11) (7 12) (8 11)))
   (expect-rejection (lambda () (check-distinct-identities '((7 11) (7 11)))) :independent-directory-alias)
-  (let ((baseline '(:state :open :written 4096 :durable 4096 :offset 4096)))
+  (let ((baseline '(:fd 41 :state :open :written 4096 :durable 4096 :offset 4096)))
     (check-frontiers baseline (copy-list baseline))
-    (dolist (field '(:written :durable :offset))
+    (dolist (field '(:fd :written :durable :offset))
       (let ((altered (copy-list baseline)))
         (setf (getf altered field) 4095)
         (expect-rejection (lambda () (check-frontiers altered baseline)) :position-or-frontier))))
   (list :case :byte-inode-position-frontier-oracles :status :ok
         :every-altered-byte-and-short-buffer-rejected t :nonregular-hardlink-size-rejected t
-        :same-inode-alias-rejected t :written-durable-native-offset-rejected t))
+        :same-inode-alias-rejected t :fd-written-durable-native-offset-rejected t))
 (defun self-test-worker-classifier ()
   (dolist (mode '(:rename-only :rename-and-directory-fsync))
     (expect-status :ok (classify-worker (synthetic-worker 0 mode) mode))
@@ -995,9 +995,20 @@
     (expect-rejection (lambda () (check-model-position table "source.tmp" "destination.tmp" payload)) :model-position))
   (list :case :memory-rename-roundtrip :status :ok :cycles 1 :rename-calls 2
         :noop-and-same-inode-alias-rejected t :product-used nil))
+(defun mark-late-report (run report)
+  "Controllo cooperativo dopo la persistenza/emissione; non rappresenta un hard-timeout."
+  (when (and (eq :ok (getf report :status)) (not (plusp (remaining (run-deadline run)))))
+    (setf (getf report :status) :incomplete (getf report :exit-code) 1
+          (getf report :diagnostic) "tools/io-rename-bench.lisp COD-61: campaign deadline dopo finalizzazione")
+    t))
 (defun self-test (report)
   "COD-60: solo errori, oracoli, classificatori e serializzazione; nessun prodotto/bench."
   (when (find-package "ARCDOCDB.IO") (reject :self-test-product-present "richiesto processo separato pulito"))
+  (let ((expired (make-run :deadline 0))
+        (sample (list :status :ok :exit-code 0 :diagnostic nil)))
+    (unless (and (mark-late-report expired sample) (eq :incomplete (getf sample :status))
+                 (= 1 (getf sample :exit-code)))
+      (reject :self-test "finalizzazione tardiva promossa a OK")))
   (setf (getf report :phase) :self-test
         (getf report :self-test)
         (list :status :ok :product-loaded nil :benchmark-executed nil :threads-started 0
@@ -1037,6 +1048,11 @@
             (error (condition)
               (setf (getf report :status) :failed (getf report :exit-code) 1
                     (getf report :persistence) :failed (getf report :diagnostic) (diagnostic condition))))))
+  (when (mark-late-report run report)
+    (when (and (run-directory run) (all-workers-terminated-p (run-active run)))
+      (handler-case (write-report report run)
+        (error (condition) (setf (getf report :status) :failed
+                                (getf report :diagnostic) (diagnostic condition))))))
   report)
 (defun main (root)
   (let* ((args (rest sb-ext:*posix-argv*)) (mode (or (first args) ""))
@@ -1067,6 +1083,11 @@
     ;; Sempre un solo record finale su stdout, anche se worker vivo impedisce il checkpoint.
     (write-string (checked-report-roundtrip report) *standard-output*)
     (finish-output *standard-output*)
+    (when (mark-late-report run report)
+      (when (and (run-directory run) (all-workers-terminated-p (run-active run)))
+        (handler-case (write-report report run)
+          (error (condition) (setf (getf report :status) :failed
+                                  (getf report :diagnostic) (diagnostic condition))))))
     (unless (zerop (getf report :exit-code))
       (format *error-output* "tools/io-rename-bench.lisp COD-61: status ~S; consultare windows/diagnostic/cleanup.~%~A~%"
               (getf report :status) (or (getf report :diagnostic) "finestra incompleta o verifica fallita")))

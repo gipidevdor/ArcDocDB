@@ -36,4 +36,19 @@
   (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-byte.lisp" :VARIANT
    :ORIGINAL-BYTE-COMPARISON)
   (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-sorgente.lisp" :VARIANT
+   :VERBATIM-SOURCE-TEXT)
+  (:KIND :COMPILE-ONLY :ARTIFACT
+   #A((24) BASE-CHAR . "compilazione-finale.lisp") :PROCESS-ARTIFACT
+   #A((38) BASE-CHAR . "compilazione-finale-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINKS :ARTIFACT
+   #A((24) BASE-CHAR . "collegamenti-finali.lisp") :PROCESS-ARTIFACT
+   #A((38) BASE-CHAR . "collegamenti-finali-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-EVIDENCE :ARTIFACT #A((20) BASE-CHAR . "evidenze-finali.lisp")
+   :PROCESS-ARTIFACT #A((34) BASE-CHAR . "evidenze-finali-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-finale-byte.lisp" :VARIANT
+   :ORIGINAL-BYTE-COMPARISON)
+  (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-finale-sorgente.lisp" :VARIANT
    :VERBATIM-SOURCE-TEXT)))

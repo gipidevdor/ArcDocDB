@@ -30,3 +30,12 @@ La versione integrata conserva il bootstrap ACTIVE vuoto delle altre chat.
 Il disassemblato mostra il CAS locale del publisher e il confine nativo
 `fstatat`; contiene anche percorsi di allocazione del runtime. Non ne deriva
 una misura di costo o una qualifica delle nuove syscall.
+
+## Chiusura dopo integrazione della suite GET ACTIVE
+
+La suite GET ACTIVE delle altre chat è integrata conservando le due voci del
+changelog. Non aggiunge esecuzioni locali dei nuovi casi del publisher.
+Compilazione finale, collegamenti (390 file, 2.828 link) e controllo delle
+evidenze sono riusciti, con snapshot sorgenti stabili. L'
+[audit finale](audit-finale-byte.lisp), datato 2026-10-14, verifica tutte le
+venti copie dei dieci record di processo: stessi byte e SHA256 degli originali.

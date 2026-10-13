@@ -17,7 +17,7 @@
   (:import-from #:arcdocdb.recovery.manifest #:manifest #:trova-segmento)
   ;; Ponte locale: soltanto l'adozione/pubblicazione esistente rende leggibile la radice ACTIVE.
   (:import-from #:arcdocdb.series #:controllore-serie #:commit-serie
-                #:registra-commit-serie #:leggi-radice-serie)
+                #:inizializza-radice-serie #:registra-commit-serie #:leggi-radice-serie)
   (:import-from #:arcdocdb.wal #:lotto #:inizio-lotto #:lunghezza-lotto
                 #:verifica-ritiro-lotto #:leggi-csn-lotto #:verifica-log-segmento)
   ;; Interfacce interne del nucleo GET: stesso contratto e dominio EBR, senza duplicarlo.
@@ -31,6 +31,7 @@
   (:export #:mappa-segmento-get #:crea-mappa-segmento-get #:payload-mappa-segmento-get
            #:risolvi-candidato-get #:sonda-cache-risolta-get #:leggi-record-risolto-get
            #:sorgente-get-attiva #:crea-sorgente-get-attiva #:radice-get-attiva
+           #:inizializza-radice-get-attiva
            #:verifica-capienza-get-attiva #:registra-lotto-get-attivo
            #:contenuto-radice-get-attiva #:payload-radice-get-attiva
            #:risolvi-candidato-radice-attiva-get

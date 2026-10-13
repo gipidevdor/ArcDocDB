@@ -102,7 +102,7 @@
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
                              (:file "rows") (:file "build") (:file "read")
                              (:file "active-types") (:file "active-directory")
-                             (:file "active-scan") (:file "active-build")
+                             (:file "active-scan") (:file "active-build") (:file "active-init")
                              (:file "active-preflight") (:file "active-read")))
                (:module "get-directory" :serial t
                 :components ((:file "package") (:file "types") (:file "build") (:file "read")

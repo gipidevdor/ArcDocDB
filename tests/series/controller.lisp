@@ -1,6 +1,415 @@
 ;;;; Prove sequenziali; nessun test parte durante la modifica dei sorgenti.
 (in-package #:arcdocdb.series.tests)
 
+(defun series-bootstrap-preserved-image (f roots &key fault)
+  "Oracolo: congela ring, eventi, owner, lease, offset, parole CSN, WAL e file.
+Esclude solo ROOT/PLANNED-ROOT; nelle FI esclude anche la transizione di salute."
+  (let* ((controller (series-fixture-controller f))
+         (image (series-image (list controller (series-fixture-registry f)
+                                    (series-fixture-log f) (series-fixture-file f)
+                                    (series-fixture-calls f))
+                              :opaque roots :health-opaque (when fault (list controller)))))
+    (setf (fourth (first image))
+          (remove-if (lambda (entry)
+                       (member (symbol-name (first entry)) '("ROOT" "PLANNED-ROOT")
+                               :test #'string=))
+                     (fourth (first image))))
+    image))
+
+(defun series-bootstrap-before-effect (thunk)
+  "FI seriale: ogni rifiuto atteso deve precedere anche la chiamata a BEGIN."
+  (let ((original (symbol-function 'arcdocdb.series::%begin-effect)) (calls 0))
+    (series-call-with-function-fi
+     'arcdocdb.series::%begin-effect
+     (lambda (controller) (incf calls) (funcall original controller)) thunk)
+    (is (zerop calls))))
+
+;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-008 REQ-MVC-008
+(deftest test-REQ-WAL-006-series-bootstrap-capacity-offset-csn-and-effect-boundaries
+  (dolist (capacity '(1 64 1024))
+    (dolist (offset (list 0 most-positive-fixnum))
+      (with-series (f :root nil :capacity capacity :next-offset offset
+                     :base #x80000000fffffffd)
+        (let* ((c (series-fixture-controller f)) (root (series-root 71 (series-root 29 nil)))
+               (begin (symbol-function 'arcdocdb.series::%begin-effect))
+               (end (symbol-function 'arcdocdb.series::%end-effect))
+               (begins 0) (ends 0))
+          ;; Parole sentinella: rileva anche un azzeramento accidentale.
+          (series-fi-set c "LAST-HIGH" #x80000000)
+          (series-fi-set c "LAST-LOW" #xfffffffd)
+          ;; Un ring vergine valido puo avere i tre cursori coincidenti non zero.
+          (dolist (cursor '("HEAD" "TAIL" "PUBLISH-HEAD"))
+            (series-fi-set c cursor (1- capacity)))
+          (let ((before (series-bootstrap-preserved-image f (list root)))
+                (root-before (series-image (list root))))
+            (series-call-with-function-fi
+             'arcdocdb.series::%begin-effect
+             (lambda (controller)
+               (incf begins)
+               (is (eq c controller))
+               (is (null (arcdocdb.series::controllore-serie-root c)))
+               (is (null (arcdocdb.series::controllore-serie-planned-root c)))
+               (is (not (arcdocdb.series::controllore-serie-effect-active c)))
+               (funcall begin controller))
+             (lambda ()
+               (series-call-with-function-fi
+                'arcdocdb.series::%end-effect
+                (lambda (controller complete)
+                  (incf ends)
+                  (is (eq c controller)) (is (eq t complete))
+                  (is (arcdocdb.series::controllore-serie-effect-active c))
+                  (is (eq root (arcdocdb.series::controllore-serie-root c)))
+                  (is (eq root (arcdocdb.series::controllore-serie-planned-root c)))
+                  (funcall end controller complete))
+                (lambda ()
+                  (is (equal (list root)
+                             (multiple-value-list
+                              (arcdocdb.series:inizializza-radice-serie
+                               c (series-fixture-lease f) root))))))))
+            (is (= 1 begins ends))
+            (is (eq root (leggi-radice-serie c)))
+            (is (series-image-equal root-before (series-image (list root))))
+            (is (series-image-equal before (series-bootstrap-preserved-image f (list root))))
+            (series-counts f 0 0 0)
+            (series-frontiers (series-fixture-registry f) #x80000000fffffffd nil)
+            (is (equalp #(1 0 0 0) (series-fixture-calls f)))
+            (series-healthy f)))))))
+
+;;; REQ: REQ-WAL-006 REQ-CON-002
+(deftest test-REQ-WAL-006-series-bootstrap-accepts-opaque-non-nil-values
+  ;; Nessuna forma interna della radice e richiesta dall'API.
+  (dolist (root (list :opaque 37 #\R (gensym "SERIES-OPAQUE") (series-root 0 nil)))
+    (with-series (f :root nil)
+      (let ((before (series-bootstrap-preserved-image f (list root))))
+        (is (eql root (arcdocdb.series:inizializza-radice-serie
+                       (series-fixture-controller f) (series-fixture-lease f) root)))
+        (is (eql root (leggi-radice-serie (series-fixture-controller f))))
+        (is (eql root (arcdocdb.series::controllore-serie-planned-root
+                       (series-fixture-controller f))))
+        (is (series-image-equal before (series-bootstrap-preserved-image f (list root))))))))
+
+;;; REQ: REQ-AFF-004 REQ-CON-001 REQ-WAL-006
+(deftest test-REQ-AFF-004-series-bootstrap-nil-stale-and-repeated-before-effect
+  (with-series (f :root nil)
+    (let* ((c (series-fixture-controller f)) (old (series-fixture-lease f))
+           (root (series-root 71 nil)))
+      (series-bootstrap-before-effect
+       (lambda ()
+         (series-refusal f (lambda () (arcdocdb.series:inizializza-radice-serie c old nil))
+                         'invalid-argument :reason :serie-initial-root)
+         (dolist (bad (list 0 -1 nil :bad (1+ old) (1+ most-positive-fixnum)))
+           (series-refusal f (lambda () (arcdocdb.series:inizializza-radice-serie c bad root))
+                           'invalid-argument :reason :serie-lease))))
+      (rilascia-controllore-serie c old)
+      (setf (series-fixture-lease f) nil)
+      (series-bootstrap-before-effect
+       (lambda ()
+         (series-refusal f (lambda () (arcdocdb.series:inizializza-radice-serie c old root))
+                         'invalid-argument :reason :serie-lease)))
+      (setf (series-fixture-lease f) (acquisisci-controllore-serie c))
+      (series-bootstrap-before-effect
+       (lambda ()
+         (series-refusal f (lambda () (arcdocdb.series:inizializza-radice-serie c old root))
+                         'invalid-argument :reason :serie-lease)))
+      (is (eq root (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root)))
+      (let ((copy (series-root 71 nil)))
+        (is (equalp root copy)) (is (not (eq root copy)))
+        (series-bootstrap-before-effect
+         (lambda ()
+           (dolist (candidate (list root copy (series-root 99 nil)))
+             (series-refusal
+              f (lambda () (arcdocdb.series:inizializza-radice-serie
+                            c (series-fixture-lease f) candidate))
+              'invalid-argument :reason :serie-started)))))
+      (is (eq root (leggi-radice-serie c)))
+      (series-healthy f))))
+
+;;; REQ: REQ-AFF-004 REQ-WAL-006 REQ-AFF-008
+(deftest test-REQ-AFF-004-series-bootstrap-virgin-guards-and-existing-reader-root
+  ;; Ogni guardia falsa separatamente, con ring valido.
+  (dolist (guard '("ROOT" "PLANNED-ROOT" "EVENT-GENERATION"))
+    (with-series (f :root nil)
+      (let ((c (series-fixture-controller f)) (root (series-root 71 nil)))
+        (series-fi-set c guard (if (string= guard "EVENT-GENERATION") 1 (series-root 29 nil)))
+        (series-bootstrap-before-effect
+         (lambda ()
+           (series-refusal
+            f (lambda () (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root))
+            'invalid-argument :reason :serie-started)))
+        (series-healthy f))))
+  (with-series (f :root nil)
+    (let ((c (series-fixture-controller f)) (lot (series-seal f)))
+      (series-adopt f lot :root nil)
+      ;; FI isola COUNT>0: la guardia EVENT-GENERATION non deve nasconderla.
+      (unwind-protect
+           (progn
+             (series-fi-set c "EVENT-GENERATION" 0)
+             (series-bootstrap-before-effect
+              (lambda ()
+                (series-refusal
+                 f (lambda () (arcdocdb.series:inizializza-radice-serie
+                               c (series-fixture-lease f) (series-root 71 nil)))
+                 'invalid-argument :reason :serie-started :lots (list lot))))
+             (series-counts f 1 1 0))
+        (series-fi-set c "EVENT-GENERATION" 1))))
+  (with-series (f)
+    (let* ((c (series-fixture-controller f)) (existing (leggi-radice-serie c)))
+      (is existing)
+      (series-bootstrap-before-effect
+       (lambda ()
+         (dolist (candidate (list existing (series-root 71 nil)))
+           (series-refusal
+            f (lambda () (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) candidate))
+            'invalid-argument :reason :serie-started))))
+      (is (eq existing (leggi-radice-serie c)))
+      (series-healthy f))))
+
+;;; REQ: REQ-WAL-006 REQ-MVC-008 REQ-AFF-004
+(deftest test-REQ-WAL-006-series-bootstrap-refuses-used-empty-ring-with-nil-root
+  (with-series (f :root nil :capacity 1)
+    (let ((lot (series-seal f)))
+      (multiple-value-bind (event generation root) (series-adopt f lot :root nil)
+        (is (null root))
+        (let ((group (series-group f lot)))
+          (series-begin f event generation) (arcdocdb.wal:esegui-gruppo group)
+          (series-complete f event generation) (series-publish f event generation 1)
+          (arcdocdb.wal:riusa-gruppo group) (series-retire f event generation)
+          (series-counts f 0 0 0)
+          (is (null (leggi-radice-serie (series-fixture-controller f))))
+          (is (null (arcdocdb.series::controllore-serie-planned-root (series-fixture-controller f))))
+          (is (= 1 (arcdocdb.series::controllore-serie-event-generation (series-fixture-controller f))))
+          (series-bootstrap-before-effect
+           (lambda ()
+             (series-refusal
+              f (lambda () (arcdocdb.series:inizializza-radice-serie
+                            (series-fixture-controller f) (series-fixture-lease f) (series-root 71 nil)))
+              'invalid-argument :reason :serie-started :lots (list lot) :groups (list group))))
+          (series-frontiers (series-fixture-registry f) 1 nil)
+          (series-healthy f))))))
+
+;;; REQ: REQ-WAL-006 REQ-MVC-008 REQ-AFF-004
+(deftest test-REQ-WAL-006-series-bootstrap-first-commit-requires-initial-root-identity
+  (dolist (level '(:async :group :strong))
+    (with-series (f :root nil :capacity 1)
+      (let* ((c (series-fixture-controller f)) (initial (series-root 71 nil))
+             (copy (series-root 71 nil)) (next (series-root 72 initial)))
+        (is (eq initial (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) initial)))
+        (setf (series-fixture-planned f) initial)
+        (let ((lot (series-seal f)))
+          (is (equalp initial copy)) (is (not (eq initial copy)))
+          (dolist (wrong (list nil copy))
+            (series-refusal
+             f (lambda () (registra-commit-serie c (series-fixture-lease f) lot wrong next level))
+             'invalid-argument :reason :serie-root-order :lots (list lot)))
+          (multiple-value-bind (event generation actual) (series-adopt f lot :root next :level level)
+            (is (= 1 generation)) (is (eq next actual))
+            (is (eq initial (arcdocdb.series::commit-serie-expected-root event)))
+            (is (eq initial (leggi-radice-serie c)))
+            (let ((group (series-group f lot)))
+              (series-begin f event generation) (arcdocdb.wal:esegui-gruppo group)
+              (series-complete f event generation) (series-publish f event generation 1)
+              (is (eq next (leggi-radice-serie c)))
+              (is (eq initial (series-root-parent next)))
+              (arcdocdb.wal:riusa-gruppo group) (series-retire f event generation)
+              (series-counts f 0 0 0)
+              (series-frontiers (series-fixture-registry f) 1 nil))))))))
+
+;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-WAL-006
+(deftest test-REQ-AFF-001-series-bootstrap-health-and-ring-precede-effect
+  (dolist (scope '(:serie :archive))
+    (with-series (f :root nil)
+      (fault-controllore-serie (series-fixture-controller f) (series-fixture-lease f) scope)
+      (series-bootstrap-before-effect
+       (lambda ()
+         (series-refusal
+          f (lambda () (arcdocdb.series:inizializza-radice-serie
+                        (series-fixture-controller f) (series-fixture-lease f) (series-root 71 nil)))
+          'io-fault :reason :serie-faulted)))
+      (series-faulted f scope)))
+  (with-series (f :root nil)
+    (arcdocdb.wal:marca-log-faulted (series-fixture-log f))
+    (let* ((c (series-fixture-controller f))
+           (before (series-image (list f) :health-opaque (list c))))
+      (series-bootstrap-before-effect
+       (lambda ()
+         (series-error (lambda () (arcdocdb.series:inizializza-radice-serie
+                                  c (series-fixture-lease f) (series-root 71 nil)))
+                       'io-fault :log-faulted)))
+      (series-faulted f :serie)
+      (is (series-image-equal before (series-image (list f) :health-opaque (list c))))))
+  (dolist (name '("HEAD" "TAIL" "PUBLISH-HEAD" "COUNT" "UNRESOLVED" "ACTIVE-IO"))
+    (with-series (f :root nil :capacity 1)
+      (let ((c (series-fixture-controller f)))
+        (unwind-protect
+             (progn
+               (series-fi-set c name (if (string= name "COUNT") 2 1))
+               (series-bootstrap-before-effect
+                (lambda ()
+                  (series-archive-refusal
+                   f (lambda () (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f)
+                                                                         (series-root 71 nil)))
+                   (if (member name '("HEAD" "TAIL" "PUBLISH-HEAD") :test #'string=)
+                       :serie-ring :serie-count))))
+               (is (null (arcdocdb.series::controllore-serie-root c)))
+               (is (null (arcdocdb.series::controllore-serie-planned-root c))))
+          (series-fi-set c name 0))))))
+
+;;; REQ: REQ-AFF-001 REQ-WAL-006 REQ-AFF-004
+(deftest test-REQ-AFF-001-series-bootstrap-acquired-effect-exit-preserves-cause-and-roots
+  ;; D08: il vero BEGIN ha gia acquisito l'effetto quando la FI esce.
+  (dolist (exit '(invalid-argument resource-exhausted io-fault simple-error :nonlocal))
+    (with-series (f :root nil)
+      (let* ((c (series-fixture-controller f)) (root (series-root 71 nil))
+             (before (series-image (list f root) :health-opaque (list c)))
+             (begin (symbol-function 'arcdocdb.series::%begin-effect))
+             (end (symbol-function 'arcdocdb.series::%end-effect))
+             (condition (unless (eq exit :nonlocal)
+                          (if (eq exit 'simple-error)
+                              (make-condition 'simple-error :format-control "FI bootstrap acquisito")
+                              (make-condition exit :reason :bootstrap-injected))))
+             (tag (gensym "SERIES-ACQUIRED-EXIT")) (marker (gensym "SERIES-ACQUIRED-MARKER"))
+             (begins 0) (ends 0))
+        (labels ((invoke ()
+                   (series-call-with-function-fi
+                    'arcdocdb.series::%begin-effect
+                    (lambda (controller)
+                      (incf begins)
+                      (funcall begin controller)
+                      (is (arcdocdb.series::controllore-serie-effect-active controller))
+                      (if (eq exit :nonlocal) (throw tag marker) (error condition)))
+                    (lambda ()
+                      (series-call-with-function-fi
+                       'arcdocdb.series::%end-effect
+                       (lambda (controller complete)
+                         (incf ends)
+                         (is (null complete))
+                         (is (arcdocdb.series::controllore-serie-effect-active controller))
+                         (funcall end controller complete))
+                       (lambda () (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root)))))))
+          (if (eq exit :nonlocal)
+              (is (eq marker (catch tag (invoke))))
+              (is (eq condition (handler-case (progn (invoke) nil) (error (actual) actual))))))
+        (is (= 1 begins ends))
+        (series-faulted f :archive)
+        (is (not (arcdocdb.series::controllore-serie-effect-active c)))
+        (is (null (arcdocdb.series::controllore-serie-root c)))
+        (is (null (arcdocdb.series::controllore-serie-planned-root c)))
+        (is (series-image-equal before (series-image (list f root) :health-opaque (list c))))
+        (series-counts f 0 0 0)
+        (series-frontiers (series-fixture-registry f) 0 nil)))))
+
+;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-CON-002
+(deftest test-REQ-AFF-001-series-bootstrap-preexisting-effect-keeps-outer-ownership
+  (with-series (f :root nil)
+    (let ((c (series-fixture-controller f)) (root (series-root 71 nil)))
+      (unwind-protect
+           (progn
+             (series-fi-set c "EFFECT-ACTIVE" t)
+             (series-bootstrap-before-effect
+              (lambda ()
+                (series-archive-refusal
+                 f (lambda () (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root))
+                 :serie-effect)))
+             (series-faulted f :archive)
+             (is (arcdocdb.series::controllore-serie-effect-active c))
+             (is (null (arcdocdb.series::controllore-serie-root c)))
+             (is (null (arcdocdb.series::controllore-serie-planned-root c))))
+        ;; Riparazione della sola FI per permettere il rilascio della fixture.
+        (series-fi-set c "EFFECT-ACTIVE" nil)))))
+
+;;; REQ: REQ-AFF-001 REQ-WAL-006 REQ-AFF-004
+(deftest test-REQ-AFF-001-series-bootstrap-cas-corruption-keeps-first-condition-and-faults-archive
+  (with-series (f :root nil)
+    (let* ((c (series-fixture-controller f)) (root (series-root 71 nil))
+           (intruder (series-root 99 nil)) (roots (list root intruder))
+           (before (series-bootstrap-preserved-image f roots :fault t))
+           (begin (symbol-function 'arcdocdb.series::%begin-effect))
+           (end (symbol-function 'arcdocdb.series::%end-effect))
+           (first-condition nil) (caught nil) (begins 0) (ends 0))
+      (series-call-with-function-fi
+       'arcdocdb.series::%begin-effect
+       (lambda (controller)
+         (incf begins)
+         (funcall begin controller)
+         (is (arcdocdb.series::controllore-serie-effect-active controller))
+         ;; BEGIN ritorna normalmente: l'uscita avviene nel corpo protetto, al CAS.
+         (series-fi-set controller "ROOT" intruder)
+         nil)
+       (lambda ()
+         (series-call-with-function-fi
+          'arcdocdb.series::%end-effect
+          (lambda (controller complete)
+            (incf ends)
+            (is (null complete))
+            (is (arcdocdb.series::controllore-serie-effect-active controller))
+            (is (eq intruder (arcdocdb.series::controllore-serie-root controller)))
+            ;; Prova anche PLANNED=ROOT prima del CAS che fallisce.
+            (is (eq root (arcdocdb.series::controllore-serie-planned-root controller)))
+            (funcall end controller complete))
+          (lambda ()
+            (setf caught
+                  (handler-case
+                      (handler-bind ((error (lambda (condition)
+                                              (unless first-condition (setf first-condition condition)))))
+                        (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root)
+                        nil)
+                    (invariant-violation (condition) condition)))))))
+      (is (typep caught 'invariant-violation))
+      (is (eq :serie-root-cas (error-reason caught)))
+      (is (eq first-condition caught)) (is (= 1 begins ends))
+      (series-faulted f :archive)
+      (is (not (arcdocdb.series::controllore-serie-effect-active c)))
+      (is (eq intruder (arcdocdb.series::controllore-serie-root c)))
+      (is (eq root (arcdocdb.series::controllore-serie-planned-root c)))
+      (is (series-image-equal before (series-bootstrap-preserved-image f roots :fault t)))
+      (series-counts f 0 0 0)
+      (series-frontiers (series-fixture-registry f) 0 nil)
+      (series-bootstrap-before-effect
+       (lambda ()
+         (series-refusal f (lambda () (leggi-radice-serie c)) 'io-fault :reason :serie-faulted)
+         (series-refusal
+          f (lambda () (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root))
+          'io-fault :reason :serie-faulted))))))
+
+;;; REQ: REQ-AFF-001 REQ-WAL-006 REQ-AFF-004
+(deftest test-REQ-AFF-001-series-bootstrap-incomplete-end-preserves-error-and-nonlocal-exit
+  (dolist (exit '(:error :nonlocal))
+    (with-series (f :root nil)
+      (let* ((c (series-fixture-controller f)) (root (series-root 71 nil))
+             (before (series-bootstrap-preserved-image f (list root) :fault t))
+             (end (symbol-function 'arcdocdb.series::%end-effect))
+             (condition (make-condition 'invalid-argument :reason :bootstrap-injected))
+             (tag (gensym "SERIES-BOOTSTRAP-EXIT")) (marker (gensym "SERIES-BOOTSTRAP-MARKER"))
+             (ends 0))
+        (labels ((invoke ()
+                   (series-call-with-function-fi
+                    'arcdocdb.series::%end-effect
+                    (lambda (controller complete)
+                      (incf ends)
+                      (is (eq c controller)) (is (eq t complete))
+                      (is (arcdocdb.series::controllore-serie-effect-active c))
+                      (is (eq root (arcdocdb.series::controllore-serie-root c)))
+                      (is (eq root (arcdocdb.series::controllore-serie-planned-root c)))
+                      ;; FI esplicita: il completamento viene ritirato nel cleanup.
+                      (funcall end controller nil)
+                      (ecase exit
+                        (:error (error condition))
+                        (:nonlocal (throw tag marker))))
+                    (lambda () (arcdocdb.series:inizializza-radice-serie c (series-fixture-lease f) root)))))
+          (ecase exit
+            (:error
+             (is (eq condition (handler-case (progn (invoke) nil)
+                                 (invalid-argument (actual) actual)))))
+            (:nonlocal (is (eq marker (catch tag (invoke)))))))
+        (is (= 1 ends))
+        (series-faulted f :archive)
+        (is (not (arcdocdb.series::controllore-serie-effect-active c)))
+        (is (eq root (arcdocdb.series::controllore-serie-root c)))
+        (is (eq root (arcdocdb.series::controllore-serie-planned-root c)))
+        (is (series-image-equal before (series-bootstrap-preserved-image f (list root) :fault t)))
+        (series-counts f 0 0 0)
+        (series-frontiers (series-fixture-registry f) 0 nil)))))
+
 ;;; REQ: REQ-AFF-008 REQ-WAL-005
 (deftest test-REQ-AFF-008-series-default-and-capacity-boundaries
   (is (equal (macroexpand-1 '(deftest sample-series-test :ok))

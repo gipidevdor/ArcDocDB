@@ -3,6 +3,47 @@
 (in-package #:arcdocdb.series)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
+;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-001 REQ-AFF-008
+(declaim (ftype (function (controllore-serie t) null) %check-initial-root))
+(defun %check-initial-root (controller root)
+  "Pre: lease/ring/salute verificati. Post: root non NIL e controller mai usato, senza effetto.
+INVALID-ARGUMENT per root NIL/avvio già eseguito; rientranza => Archivio FAULTED.
+Non rilascia l'effetto precedente e non modifica ring, frontiere o CSN."
+  (when (null root) (error 'invalid-argument :reason :serie-initial-root))
+  (unless (and (null (controllore-serie-root controller))
+               (null (controllore-serie-planned-root controller))
+               (zerop (controllore-serie-event-generation controller))
+               (zerop (controllore-serie-count controller)))
+    (error 'invalid-argument :reason :serie-started))
+  (when (controllore-serie-effect-active controller)
+    (%serie-invariant controller :serie-effect))
+  nil)
+
+;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-001 REQ-AFF-008
+(declaim (ftype (function (controllore-serie t t) t) inizializza-radice-serie))
+(defun inizializza-radice-serie (controller lease root)
+  "Pre: lease, controller mai usato e ROOT non NIL immutabile; ammissione ancora chiusa.
+Post: root iniziale pubblicata dal CAS canonico, anche pianificata; ring/CSN/offset invariati.
+INVALID-ARGUMENT prima dell'effetto per root NIL o avvio già eseguito.
+Uscita incompleta/invariante => Archivio FAULTED, senza rollback; nessun I/O.
+Il CAS pubblica memoria: la decisione durevole di apertura resta al catalogo."
+  (%check-owner controller lease) (%require-healthy controller)
+  (%check-initial-root controller root)
+  (let ((complete nil))
+    (unwind-protect
+         (progn
+           (%begin-effect controller)
+           (setf (controllore-serie-planned-root controller) root)
+           (unless (null (sb-ext:compare-and-swap (controllore-serie-root controller) nil root))
+             (%serie-invariant controller :serie-root-cas))
+           (unless (and (eq (controllore-serie-root controller) root)
+                        (eq (controllore-serie-planned-root controller) root))
+             (%serie-invariant controller :serie-root-invariant))
+           (%check-ring controller)
+           (setf complete t)
+           root)
+      (%end-effect controller complete))))
+
 ;;; REQ: REQ-WAL-006 REQ-MVC-008 REQ-AFF-001
 (declaim (ftype (function (controllore-serie commit-serie) null) %check-publication))
 (defun %check-publication (controller event)

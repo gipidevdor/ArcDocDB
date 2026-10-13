@@ -60,7 +60,7 @@
 (defun read-data (path) (arcdocdb.evidence:read-evidence path))
 (defun save-data (data path)
   (with-open-file (out path :direction :output :if-exists :supersede)
-    (let ((*print-readably* t)) (write data :stream out :pretty t) (terpri out))))
+    (let ((*print-readably* nil) (*print-escape* t)) (write data :stream out :pretty t) (terpri out))))
 (let* ((catalog-path (merge-pathnames "catalogo.lisp" *base*)) (catalog (read-data catalog-path))
        (names (remove-duplicates
                (append (mapcar (lambda (e) (getf e :artifact)) (getf catalog :entries))

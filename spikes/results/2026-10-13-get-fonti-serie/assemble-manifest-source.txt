@@ -3,7 +3,7 @@
 (load "tools/evidence-storage.lisp")
 (defun save-data (data path)
   (with-open-file (s path :direction :output :if-exists :error)
-    (let ((*print-readably* t)) (write data :stream s :pretty t) (terpri s))))
+    (let ((*print-readably* nil) (*print-escape* t)) (write data :stream s :pretty t) (terpri s))))
 (let ((roots nil) (commands nil) (raw nil)
       (base "spikes/results/2026-10-13-get-fonti-serie/"))
   (dolist (directory (sort (uiop:subdirectories "spikes/out/") #'string< :key #'namestring))

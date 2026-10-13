@@ -39,5 +39,5 @@
                                    :whole-cycle-with-oracles :parallel-startup-gate-join-in-clock
                                    :closed-only-controller-read :not-db-throughput :no-percentile-claim))))
       (with-open-file (s (second args) :direction :output :if-exists :error)
-        (let ((*print-readably* t)) (write summary :stream s :pretty t) (terpri s)))
+        (let ((*print-readably* nil) (*print-escape* t)) (write summary :stream s :pretty t) (terpri s)))
       (write summary :pretty t) (terpri))))

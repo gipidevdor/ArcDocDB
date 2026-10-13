@@ -4,7 +4,7 @@
 (defun read-data (path) (arcdocdb.evidence:read-evidence path))
 (defun save-data (data path)
   (with-open-file (out path :direction :output :if-exists :supersede)
-    (let ((*print-readably* t)) (write data :stream out :pretty t) (terpri out))))
+    (let ((*print-readably* nil) (*print-escape* t)) (write data :stream out :pretty t) (terpri out))))
 (defun exact-copy (source destination)
   (if (probe-file destination)
       (unless (equal (arcdocdb.evidence:file-sha256 source) (arcdocdb.evidence:file-sha256 destination))
@@ -41,7 +41,12 @@
     (dolist (name '("README.md" "report.md" "derive-results.lisp" "derive-results-source.txt"
                     "assemble-manifest.lisp" "assemble-manifest-source.txt" "command-manifest.lisp"
                     "finish-publication.lisp" "finish-publication-source.txt"
-                    "compact-records.lisp" "compact-records-source.txt"))
+                    "compact-records.lisp" "compact-records-source.txt"
+                    "summarize-evidence.lisp" "summarize-evidence-source.txt"
+                    "publication-tool-source-attempt-a.txt" "publication-tool-source-attempt-b.txt"
+                    "assemble-manifest-initial.txt" "publication-tool-source-attempt-c.txt"
+                    "capture-source-attempt-a.txt" "derive-results-attempt-a.txt"
+                    "benchmark-summary-attempt-a.txt"))
       (push (raw-entry name) (getf catalog :associated-raw-files)))
     (save-data catalog path)))
 (defun copy-record (source destination)

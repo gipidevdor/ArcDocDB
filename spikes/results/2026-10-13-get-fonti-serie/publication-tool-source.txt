@@ -5,7 +5,7 @@
 (load "tools/evidence-storage.lisp")
 (defun save-data (data path)
   (with-open-file (stream path :direction :output :if-exists :supersede)
-    (let ((*print-readably* t)) (write data :stream stream :pretty t) (terpri stream))))
+    (let ((*print-readably* nil) (*print-escape* t)) (write data :stream stream :pretty t) (terpri stream))))
 (defun copy-exact (source target)
   (ensure-directories-exist target)
   (if (probe-file target)

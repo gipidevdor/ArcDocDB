@@ -75,6 +75,25 @@ Un processo positivo separato verifica il default CLOSED; tre fixture
 negative verificano suite ignota, suite duplicata e report duplicato.
 Devono uscire con errore di uso prima della creazione della directory.
 
+### Ripetizione dopo l'integrazione delle fonti della Serie
+
+Il primo freeze è `42dcad77530c09784f9d77fabb92ff4477927983`.
+Prima della ripetizione si integra il main esatto
+`64a5ef06987af61c36ce9818eb24ca8f0a0eb7f4`: aggiunge 27 test delle fonti
+ACTIVE/CLOSED e modifica il wrapper ACTIVE perché deleghi al resolver
+della radice catturata. Il totale atteso diventa 1.107 test di modulo in
+29 suite, più due smoke check; il verificatore lo ricava comunque dai
+sorgenti Git congelati. I nostri 28 test mantengono il perimetro ordinario;
+non qualificano autonomamente la nuova API della radice catturata.
+
+Si ripetono `make check`, copertura ACTIVE e compatibilità CLOSED sul
+nuovo freeze, in processi e cache private separati. La fixture CLI
+`--suite active --suite active`, con quattro argomenti e nessun `--report`,
+deve raggiungere il guard specifico del duplicato. La precedente fixture
+con sei argomenti raggiunge soltanto il guard di cardinalità; le sue prove
+restano attribuite al primo freeze. La seconda copia di lavoro mantiene
+immutati i gruppi originali mentre il loro audit finale procede in parallelo.
+
 Prima della pull request passano compilazione senza avvisi, regressione,
 controlli statici, tracciabilità, collegamenti e conservazione. La CI
 ripete i controlli su Linux/macOS e i documenti separatamente. Le prove

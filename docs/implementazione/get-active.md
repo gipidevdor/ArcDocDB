@@ -116,7 +116,10 @@ misura di allocazione, latenza, RSS o throughput. Non si rivendica COD-30.
 | `sonda-cache-attiva-get(context, source)` | Esito della sonda GET ordinaria con frontiera pubblicata |
 | `leggi-record-attivo-get(context, source)` | Cinque esiti del nucleo GET nel pool I/O |
 
-Il reader non accetta una radice o una frontiera fornita dal chiamante.
+Le tre API legate alla sorgente non accettano una radice o una frontiera
+fornita dal chiamante. Il [ponte delle fonti della Serie](get-fonti-serie.md)
+usa invece il resolver della radice già catturata sotto EBR, con gli
+obblighi di pubblicazione e lifetime dichiarati in quel contratto.
 Controlla identità sorgente/root, geometria directory e candidato tramite il
 resolver comune. GET verifica ancora CRC/chiave/CSN del record/cache; la
 pagina non sostituisce il dato fisico. Risposta privata fino a copia e

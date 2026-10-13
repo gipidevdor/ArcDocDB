@@ -15,8 +15,10 @@
   (:import-from #:arcdocdb.io #:file-io #:associazione-file #:associa-file
                 #:verifica-associazione-file #:verifica-file-distinti #:verifica-capienza-lettura
                 #:verifica-capienza-append #:append-esatto #:leggi-esatto #:durable-flush
-                #:posizione-scritta #:posizione-durevole)
+                #:posizione-scritta #:posizione-durevole #:verifica-capacita-sostituzione #:sostituisci-temporaneo)
   (:import-from #:arcdocdb.recovery.manifest #:ricostruisci-manifest #:segmento-attivo)
   (:export #:checkpoint-control #:crea-checkpoint-control #:lunghezza-checkpoint-control
            #:manifest-checkpoint-control #:control-preparato #:prepara-checkpoint-control
-           #:log-control-preparato #:manifest-control-preparato))
+           #:log-control-preparato #:manifest-control-preparato
+           #:control-pubblicato #:pubblica-control-recuperato #:stato-pubblicazione-control
+           #:log-control-pubblicato #:manifest-control-pubblicato #:active-control-pubblicato))

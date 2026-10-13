@@ -1,0 +1,5 @@
+--- a/src/io/rename.lisp
++++ b/src/io/rename.lisp
+@@ -44,1 +44,1 @@
+-        (unless (eql result 0) (fallisci-rinomina directory :io-rename-result)))
++        (when (eql result 0) nil))

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "kind": "scoped-independent-reviews",
+  "product": {
+    "reviewer": "Bernoulli",
+    "reads": [
+      "standalone-first-WIP",
+      "665da296f11b0babd5475a5bd7d831f7b5cadfc5",
+      "71413450ff8ac9bfdf0c515bdbbf9bd41a258cd4"
+    ],
+    "final_static_status": "no-open-findings",
+    "findings": [
+      {
+        "id": "RIO-C1-01",
+        "status": "closed",
+        "issue": "STRING generale non compatibile con CSTRING nativo",
+        "resolution": "MAP in due simple-base-string prima degli effetti; fixture corrette"
+      },
+      {
+        "id": "RIO-C1-02",
+        "status": "closed",
+        "issue": "CLOSED resuscitata da fallisci",
+        "resolution": "Solo OPEN diventa FAULTED, anche guasto POSIX/nonzero dopo close"
+      },
+      {
+        "id": "RIO-C1-03",
+        "status": "closed-in-code",
+        "issue": "Cleanup interrompibile prima del fail-stop",
+        "resolution": "WITHOUT-INTERRUPTS breve, senza syscall/attesa; probe sincrone, non campagna asincrona"
+      },
+      {
+        "id": "RIO-C1-04",
+        "status": "closed",
+        "issue": "Callback fixture al wrapper eliminato nel merge",
+        "resolution": "Due riferimenti native-rename allineati a native-replace"
+      }
+    ],
+    "checklist": {
+      "1": "REQ/ADR coerenti",
+      "2": "Casi locali presenti; esiti runtime separati",
+      "3": "Tipi/gestione/regressioni lette; runtime separato",
+      "4": "Scansioni/copie bounded",
+      "5": "Nessuna attestazione zero heap; percorso metadati",
+      "6": "Nomi validati/normalizzati, identità nel percorso verificato",
+      "7": "Inventario decisioni presente, nessun MC/DC attestato",
+      "8": "Owner esclusivo, backend immutabile, stato locale",
+      "9": "Trace e make check nei record centralizzati",
+      "10": "Nessuna violazione statica concreta residua",
+      "11": "Nessun nuovo stato/lock tra Serie",
+      "12": "Atomicità distinta da fsync; limite hardlink POSIX esplicito"
+    }
+  },
+  "tools": {
+    "reviewer": "Franklin",
+    "first_head": "5cdea19aac9a388aa4dbdfbab4c23abba522903c",
+    "findings": [
+      {
+        "id": "RIO-C4-01",
+        "priority": "P2",
+        "status": "closed-static",
+        "issue": "Numero FD non confrontato dal benchmark",
+        "resolution": "FD nel cold snapshot + negativo selftest"
+      },
+      {
+        "id": "RIO-C4-02",
+        "priority": "P2",
+        "status": "closed-static",
+        "issue": "Accettazione OK oltre deadline benchmark dopo persistenza",
+        "resolution": "MARK-LATE-REPORT dopo persistenza/readback e stdout; exit processo parte necessaria accettazione"
+      },
+      {
+        "id": "RIO-C4-03",
+        "priority": "P2",
+        "status": "closed-static",
+        "issue": "Namespace creava antenati prima di rifiutare esterno/symlink",
+        "resolution": "CLI preflight puro e LSTAT/TRUENAME prima mkdir; negativo symlink"
+      },
+      {
+        "id": "RIO-C4-04",
+        "priority": "P1",
+        "status": "closed-static",
+        "issue": "Guard CLI applicata ai pathname delle directory interne",
+        "resolution": "EXCLUSIVE-OWNED-CHILD con root posseduta, prefissi letterali e leaf validata"
+      },
+      {
+        "id": "RIO-C4-05",
+        "priority": "P2",
+        "status": "closed-static",
+        "issue": "Supervisor poteva accettare child già finito oltre budget",
+        "resolution": "Confronto elapsed anche dopo wait; limiti healthy-host/kernel wait espliciti"
+      }
+    ],
+    "final_head": "78c2a107890eb13365410280e0ff3f25710c1502",
+    "final_static_status": "no-new-blocking-findings",
+    "delta_E": {
+      "parallel_sha": "Quattro worker, lettore canonico, ordine stabile e deadline catturata.",
+      "join": "Il marker :timeout è distinto dal valore restituito dal worker.",
+      "warning_policy": "Eccezione SB-KERNEL:REDEFINITION-WARNING già prevista da tools/build.lisp; tipo e testo registrati, altri warning fatali.",
+      "limits": [
+        "Attese kernel/process-wait: ipotesi di host sano.",
+        "Tre digest positivi nel self-test non coprono tutti i percorsi di cancellazione.",
+        "Il campo warning-policy :fatal del benchmark include l’eccezione documentata."
+      ]
+    }
+  },
+  "limits": [
+    "Due letture C1 dello stesso revisore distinto dall’autore; revisore C4 separato",
+    "Letture senza esecuzioni: source/data runtime nei produttori centrali",
+    "Nessuna qualifica globale DB o MC/DC/asincronia completa"
+  ]
+}

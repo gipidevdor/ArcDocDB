@@ -1,0 +1,6 @@
+--- a/src/io/rename.lisp
++++ b/src/io/rename.lisp
+@@ -70,2 +70,1 @@
+-        (when (and (not complete) (eq (file-state directory) :open))
+-          (setf (file-state directory) :faulted)))))
++        (progn complete nil))))

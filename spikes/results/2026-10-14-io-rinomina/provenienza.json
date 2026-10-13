@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "kind": "io-rename-static-integration-provenance",
+  "refs": {
+    "product": "71413450ff8ac9bfdf0c515bdbbf9bd41a258cd4",
+    "tools": "78c2a107890eb13365410280e0ff3f25710c1502",
+    "integration": "68f747d1eacddb868d75b8dbed3715e93a3a5930",
+    "incoming_main": "163a8ce27a53c2452c86a9d514af3c63226ddc5e"
+  },
+  "blobs": [
+    {
+      "path": "src/io/flush.lisp",
+      "tools_git_blob": "ba31b07379219fa8fd80fca169d43a053d28063b",
+      "integration_git_blob": "ba31b07379219fa8fd80fca169d43a053d28063b"
+    },
+    {
+      "path": "src/io/identity-types.lisp",
+      "tools_git_blob": "9c94bab051b318a872d78efa45ba3358bf74f8b6",
+      "integration_git_blob": "9c94bab051b318a872d78efa45ba3358bf74f8b6"
+    },
+    {
+      "path": "src/io/identity.lisp",
+      "tools_git_blob": "326635b36bfa8f47778e7ff6cd1c72354352b5d5",
+      "integration_git_blob": "326635b36bfa8f47778e7ff6cd1c72354352b5d5"
+    },
+    {
+      "path": "src/io/lifecycle.lisp",
+      "tools_git_blob": "77e43979548e6343066036c363a3aa2208ac1e10",
+      "integration_git_blob": "77e43979548e6343066036c363a3aa2208ac1e10"
+    },
+    {
+      "path": "src/io/namespace.lisp",
+      "tools_git_blob": "d33e105874769a569fdc38de337d0f595375474e",
+      "integration_git_blob": "d33e105874769a569fdc38de337d0f595375474e"
+    },
+    {
+      "path": "src/io/native-namespace.lisp",
+      "tools_git_blob": "72282e6cb1a9702359f7da9758304a5258c83f87",
+      "integration_git_blob": "72282e6cb1a9702359f7da9758304a5258c83f87"
+    },
+    {
+      "path": "src/io/native.lisp",
+      "tools_git_blob": "18b23eba1b6cabfacf4d2c423714408f0b592bd4",
+      "integration_git_blob": "18b23eba1b6cabfacf4d2c423714408f0b592bd4"
+    },
+    {
+      "path": "src/io/package.lisp",
+      "tools_git_blob": "fb0c01fd077b20da1d9f04465c519d7fc1e077d3",
+      "integration_git_blob": "fb0c01fd077b20da1d9f04465c519d7fc1e077d3"
+    },
+    {
+      "path": "src/io/rename.lisp",
+      "tools_git_blob": "4c9dc11fde2c2ed51d02cfb0201239dd5e14aaf5",
+      "integration_git_blob": "4c9dc11fde2c2ed51d02cfb0201239dd5e14aaf5"
+    },
+    {
+      "path": "src/io/transfer.lisp",
+      "tools_git_blob": "39ad572cc6cc7a90a70ae147f8cf64b93dbfa8b2",
+      "integration_git_blob": "39ad572cc6cc7a90a70ae147f8cf64b93dbfa8b2"
+    },
+    {
+      "path": "src/io/types.lisp",
+      "tools_git_blob": "921045bb0efe39bc4e89081e11c26d58d081df5e",
+      "integration_git_blob": "921045bb0efe39bc4e89081e11c26d58d081df5e"
+    },
+    {
+      "path": "tests/io/native.lisp",
+      "tools_git_blob": "bb3f9a460953d5575d7333b8b6eef6ecdb8e1e7d",
+      "integration_git_blob": "bb3f9a460953d5575d7333b8b6eef6ecdb8e1e7d"
+    },
+    {
+      "path": "tests/io/rename-native.lisp",
+      "tools_git_blob": "99f79041529d20d0ea774b01e3ed82fc5a274cdd",
+      "integration_git_blob": "99f79041529d20d0ea774b01e3ed82fc5a274cdd"
+    },
+    {
+      "path": "tests/io/rename.lisp",
+      "tools_git_blob": "e83443eec6187d53118795c4f6ee797112f27ea2",
+      "integration_git_blob": "e83443eec6187d53118795c4f6ee797112f27ea2"
+    },
+    {
+      "path": "tests/io/support.lisp",
+      "tools_git_blob": "0179a0c19bdde944f47fe83716ecc6241e37c686",
+      "integration_git_blob": "0179a0c19bdde944f47fe83716ecc6241e37c686"
+    },
+    {
+      "path": "tests/io/transfer.lisp",
+      "tools_git_blob": "40c8f4d5e2d493db090d5d09ab024c67ca6f4037",
+      "integration_git_blob": "40c8f4d5e2d493db090d5d09ab024c67ca6f4037"
+    },
+    {
+      "path": "tools/io-rename-bench.lisp",
+      "tools_git_blob": "988d259af126212adc2be8fb9ca9acd8755fdce0",
+      "integration_git_blob": "988d259af126212adc2be8fb9ca9acd8755fdce0"
+    },
+    {
+      "path": "tools/io-rename-mutation.lisp",
+      "tools_git_blob": "35d973fb591c87d3594b1888ea9a2da7008fc425",
+      "integration_git_blob": "35d973fb591c87d3594b1888ea9a2da7008fc425"
+    },
+    {
+      "path": "tools/lint.lisp",
+      "tools_git_blob": "54993f3506d4fd49c1373ccc0864cc556af6a0e2",
+      "integration_git_blob": "54993f3506d4fd49c1373ccc0864cc556af6a0e2"
+    }
+  ],
+  "incoming_product_paths": [],
+  "incoming_shared_files": [
+    "arcdocdb.asd",
+    "tools/foundation-coverage.lisp"
+  ],
+  "coverage_conflict_resolution": "preserve io-rename and cbor-array-write selectors",
+  "limits": [
+    "git blob identity is static provenance, not a new runtime qualification",
+    "mutation E and coverage C retain their original ASDF context; full check F exercises the integrated graph"
+  ]
+}

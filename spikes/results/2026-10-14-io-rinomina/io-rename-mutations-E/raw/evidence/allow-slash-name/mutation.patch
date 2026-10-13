@@ -1,0 +1,5 @@
+--- a/src/io/rename.lisp
++++ b/src/io/rename.lisp
+@@ -20,1 +20,1 @@
+-      (unless (and (<= 1 code 127) (char/= character #\/))
++      (unless (<= 1 code 127)

@@ -318,6 +318,10 @@
   :inv ("INV-A2" "INV-S7") :adr ("ADR-0039" "ADR-0047") :ver (:test :corr :fuzz :diff) :fi ())
 
  ;; ---- Codec documentale --------------------------------------------------
+ (:id "REQ-CBR-005" :src "ADR-0014" :cls "C1" :stato :implementato
+  :txt "La composizione di array CBOR verifica tutti gli item minimi già codificati prima di scrivere testata MT4 e payload esatto nella destinazione esclusiva; i budget di byte, nodi e profondità includono la radice, lo scratch è privato e sorgente e tabella restano stabili."
+  :inv ("INV-F1" "INV-P6" "INV-A8") :adr ("ADR-0014" "ADR-0033" "ADR-0035" "ADR-0048")
+  :ver (:test :diff :fuzz :bench :mut :rev) :fi ())
  (:id "REQ-CBR-004" :src "ADR-0014" :cls "C1" :stato :implementato
   :txt "La scrittura dei float CBOR sceglie la larghezza raw IEEE esatta minima, preservando segno, zero, infinito e significando NaN; verifica range, parole e capacità prima della mutazione della destinazione esclusiva, con lavoro limitato a nove byte e un solo NEXT."
   :inv ("INV-F1" "INV-P6") :adr ("ADR-0014" "ADR-0033" "ADR-0035" "ADR-0048")

@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Composizione di array CBOR da elementi già codificati: verifica completa
+  prima della scrittura, testata minima e budget comprensivi della radice.
+  Sorgente e indice condivisibili in lettura, destinazione e scratch privati
+  per worker. Profilo documentale e qualifica C1 restano aperti.
+
 - Preparazione del nuovo segmento writer: preflight senza effetti, identità
   readonly/append prima della write, header canonico durevole, rilettura esatta
   e fsync del parent. Adattatore ACTIVE con prova obbligatoria e verifica del

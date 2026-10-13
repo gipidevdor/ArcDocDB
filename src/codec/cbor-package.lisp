@@ -8,4 +8,5 @@
   (:export #:leggi-header-cbor #:leggi-header-cbor-minimo #:spazio-cbor #:crea-spazio-cbor
            #:verifica-struttura-cbor #:verifica-struttura-cbor-minima
            #:scrivi-header-cbor-minimo #:scrivi-stringa-cbor-minima
-           #:scrivi-semplice-cbor-minimo #:scrivi-float-cbor-minimo))
+           #:scrivi-semplice-cbor-minimo #:scrivi-float-cbor-minimo
+           #:scrivi-array-cbor-minimo))

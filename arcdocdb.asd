@@ -29,7 +29,8 @@
                              (:file "cbor-scan") (:file "cbor-scan-minimal")
                              (:file "cbor-write") (:file "cbor-string-write")
                              (:file "cbor-simple-write")
-                             (:file "cbor-float-narrow") (:file "cbor-float-write")))
+                             (:file "cbor-float-narrow") (:file "cbor-float-write")
+                             (:file "cbor-array-input") (:file "cbor-array-write")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
                (:module "cache" :serial t
@@ -142,7 +143,9 @@
                              (:file "cbor-simple-write-support") (:file "cbor-simple-write")
                              (:file "cbor-simple-write-threads")
                              (:file "cbor-float-write-support") (:file "cbor-float-write")
-                             (:file "cbor-float-write-threads")))
+                             (:file "cbor-float-write-threads")
+                             (:file "cbor-array-write-support") (:file "cbor-array-write")
+                             (:file "cbor-array-write-threads")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "mvcc" :serial t
@@ -202,6 +205,7 @@
              (uiop:symbol-call '#:arcdocdb.cbor.string.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.simple.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.float.write.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.cbor.array.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)

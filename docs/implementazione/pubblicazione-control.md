@@ -113,8 +113,9 @@ e 0x20 in `sys/fcntl.h` del SDK macOS. ABI e piattaforme restano quelle del
 
 Al massimo sei osservazioni d'identità: due fstat e due fstatat prima della
 rinomina, una fstat e una fstatat dopo. Seguono una renameat e un fsync del
-parent. Nessun nuovo FD è aperto. Ci sono un wrapper e due stringhe private
-nel percorso di apertura; nessun buffer dati o lotto nuovo. Sono costi statici,
+parent. Nessun nuovo FD è aperto. Sono creati un wrapper e due stringhe private;
+le osservazioni native usano inoltre istanze `stat` del runtime e possono
+richiedere boxing degli interi POSIX. Nessun buffer dati o lotto nuovo. Sono costi statici,
 non misure di latenza, heap, throughput o contesa.
 
 | ID | Decisione | Casi da qualificare |

@@ -14,3 +14,19 @@ con la documentazione della base ancora invariata. I record successivi
 distinguono la documentazione aggiornata e le eventuali integrazioni.
 
 [Contratti e decisioni](../../../docs/implementazione/pubblicazione-control.md).
+
+## Risultati della versione integrata
+
+- Compilazione SBCL riuscita; warning trattati come errori salvo ridefinizioni
+  previste dal caricamento forzato.
+- Stile: 198 file, zero violazioni.
+- Tracciabilità regolare; gli scenari FI sono riferimenti, non esecuzioni locali.
+- Documentazione: 382 file, 2.806 link, zero collegamenti rotti.
+- Evidenze: struttura, presenza, dimensioni e integrità compressa regolari.
+- Sette record di processo con sorgenti stabili. L'[audit](audit-byte.lisp)
+  confronta quattordici copie di report/sidecar: stessi byte e SHA256 degli originali.
+
+La versione integrata conserva il bootstrap ACTIVE vuoto delle altre chat.
+Il disassemblato mostra il CAS locale del publisher e il confine nativo
+`fstatat`; contiene anche percorsi di allocazione del runtime. Non ne deriva
+una misura di costo o una qualifica delle nuove syscall.

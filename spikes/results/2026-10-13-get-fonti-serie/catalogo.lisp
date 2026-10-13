@@ -1,5 +1,15 @@
 (:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG :SCOPE :GET-SERIES :ENTRIES
- ((:ARTIFACT "compaction-first.lisp" :KIND :GET-SERIES-LOCAL-COMPACTION :STATUS
+ ((:ARTIFACT "latest-integration.lisp" :KIND
+   :GET-SERIES-LATEST-MAIN-INTEGRATION :STATUS :OK :SCOPE
+   :LATEST-MAIN-INTEGRATION :SHA256
+   "a51917dc9fb89f0db7643ad0755865c00e62ee2cffbb2322f4c787a43de39448")
+  (:ARTIFACT "4000910030-command-3809-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SCOPE :LATEST-MAIN-INTEGRATION :SHA256
+   "17853aefe10fbfd0b5cbce57fffd35eea1b9ed4815b5e85bf5bb93aec1c63cc4")
+  (:ARTIFACT "4000910030-command-3826-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SCOPE :LATEST-MAIN-INTEGRATION :SHA256
+   "53692aeb875898756e89393f0799600619557c2ac69e5615e881a940f956bd69")
+  (:ARTIFACT "compaction-first.lisp" :KIND :GET-SERIES-LOCAL-COMPACTION :STATUS
    :OK :SCOPE :DERIVED-RESULTS-OR-DEVELOPMENT-HISTORY :SHA256
    "2d5f8cb54715c7463ed22fa0083faa03148b3640148c412694b0240929c62893")
   (:ARTIFACT "compaction.lisp" :KIND :GET-SERIES-LOCAL-COMPACTION :STATUS :OK
@@ -1052,7 +1062,16 @@
    :SCOPE :GET-SERIES :SHA256
    "4ca05bc1d981e2a2734995596706c7e732f4ea6cca457dfcb3a49e9dcccaa951"))
  :ASSOCIATED-RAW-FILES
- ((:FILE "compact-records-first-source.txt" :BYTES 11619 :SHA256
+ ((:FILE "final-stage-source.txt" :BYTES 6228 :SHA256
+   "c2d82048c48d6c3e2635d77c947321f3bdfd662eaccbc7e98a629315aa671c10" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/results/2026-10-13-get-fonti-serie/final-stage-source.txt")
+  (:FILE "final-stage.lisp" :BYTES 6228 :SHA256
+   "c2d82048c48d6c3e2635d77c947321f3bdfd662eaccbc7e98a629315aa671c10" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/results/2026-10-13-get-fonti-serie/final-stage.lisp")
+  (:FILE "report.md" :BYTES 9887 :SHA256
+   "b1c94e618fc5c0fb193438224be2355a29451e8f5b057aaa30c3280a7080e1c5" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/results/2026-10-13-get-fonti-serie/report.md")
+  (:FILE "compact-records-first-source.txt" :BYTES 11619 :SHA256
    "5685fed1cb90d658f497c293e02b5146f76b520ed90b4e0edbd307b17682d9bf" :SOURCE
    :PRESERVED-LOCAL-ARTIFACT)
   (:FILE "compact-records-attempt-a.txt" :BYTES 11618 :SHA256
@@ -1129,9 +1148,6 @@
    :PRESERVED-LOCAL-ARTIFACT)
   (:FILE "derive-results.lisp" :BYTES 3269 :SHA256
    "40a317ea1098891bafc919e3447598b430cf0191096c91419a8c1a0cead96ff9" :SOURCE
-   :PRESERVED-LOCAL-ARTIFACT)
-  (:FILE "report.md" :BYTES 9424 :SHA256
-   "1cc09c5af57bd6c86e8c80defabc3dd8db907705820c08b4da916a6e87155371" :SOURCE
    :PRESERVED-LOCAL-ARTIFACT)
   (:FILE "README.md" :BYTES 2817 :SHA256
    "2745ea2fb67cd4aa4abd8c1e13077d0e902a8175747d635aca9ea5e816c289d4" :SOURCE
@@ -3735,6 +3751,31 @@
    :PRODUCER-RECORD
    "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/out/4000908491-command-85704-0/report.lisp"
    :PRODUCER-ARTIFACT "4000908491-command-85704-0-report.lisp" :PRODUCER-STATUS
+   :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
+   :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
+  (:FILE "get-series-coverage-self-j/coverage-fixture.lisp" :BYTES 147 :SHA256
+   "3767518fde8bde1e1286dbf663e97eac01f02e038d7f3161df436d9fd3e92559" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/out/get-series-coverage-self-j/coverage-fixture.lisp"
+   :PRODUCER-RECORD
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/out/4000910030-command-3809-0/report.lisp"
+   :PRODUCER-ARTIFACT "4000910030-command-3809-0-report.lisp" :PRODUCER-STATUS
+   :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
+   :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
+  (:FILE "get-series-coverage-self-j/cover-index.html" :BYTES 1779 :SHA256
+   "297e1bb1bf15d337e6eaaf29e90216a3bf2d5aa5cc1b3ad6ae48623de2f60d5f" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/out/get-series-coverage-self-j/cover-index.html"
+   :PRODUCER-RECORD
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/out/4000910030-command-3809-0/report.lisp"
+   :PRODUCER-ARTIFACT "4000910030-command-3809-0-report.lisp" :PRODUCER-STATUS
+   :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
+   :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
+  (:FILE "get-series-coverage-self-j/3206cd0b8a169a02642586b59cf3b635.html"
+   :BYTES 2819 :SHA256
+   "c6fe6d2eca4c125ed76f9c01a836c69027547687f726a2dc0c01af23ca186b6e" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/out/get-series-coverage-self-j/3206cd0b8a169a02642586b59cf3b635.html"
+   :PRODUCER-RECORD
+   "/Users/gpicchiarelli/.codex/worktrees/get-controller/ArcDocDB/spikes/out/4000910030-command-3809-0/report.lisp"
+   :PRODUCER-ARTIFACT "4000910030-command-3809-0-report.lisp" :PRODUCER-STATUS
    :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
    :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION)))
  :LIMITS (:LOCAL-CHECKS :NO-ENGINE-QUALIFICATION :RAW-OUTPUT-EMBEDDED-ONCE))

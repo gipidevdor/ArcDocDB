@@ -166,3 +166,12 @@ inizialmente NIL. Va progettato l'avvio con ACTIVE vuoto e CLOSED recuperati
 prima del primo lotto, senza commit fittizi. Rotazione, rilocazione del
 primary e reclaim completo richiedono il loro protocollo di lifetime.
 Il ponte e i suoi risultati non qualificano questi scenari ancora aperti.
+
+## Ultima integrazione con main
+
+La [verifica finale](latest-integration.lisp) passa **1079 test nominati**
+al freeze `9ea3ba8bdc63c3f81aa281b13dfd036b14af3ffb`. Dopo l'integrazione pool cambiano
+soltanto tre sorgenti codec per il writer float CBOR; prodotto, fixture e
+strumenti GET sono identici. Il selettore coverage conserva entrambi gli
+scope GET Serie e writer float e passa il suo self-test. Le misure GET
+restano esplicitamente quelle della campagna H.

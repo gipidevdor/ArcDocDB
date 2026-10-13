@@ -68,4 +68,26 @@
   (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-finale-byte.lisp" :VARIANT
    :ORIGINAL-BYTE-COMPARISON)
   (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-finale-sorgente.lisp" :VARIANT
+   :VERBATIM-SOURCE-TEXT)
+  (:KIND :COMPILE-ONLY :ARTIFACT #A((23) BASE-CHAR . "compilazione-fonti.lisp")
+   :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "compilazione-fonti-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINT :ARTIFACT #A((16) BASE-CHAR . "stile-fonti.lisp")
+   :PROCESS-ARTIFACT #A((30) BASE-CHAR . "stile-fonti-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-TRACE :ARTIFACT
+   #A((24) BASE-CHAR . "tracciabilita-fonti.lisp") :PROCESS-ARTIFACT
+   #A((38) BASE-CHAR . "tracciabilita-fonti-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINKS :ARTIFACT #A((23) BASE-CHAR . "collegamenti-fonti.lisp")
+   :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "collegamenti-fonti-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-EVIDENCE :ARTIFACT #A((19) BASE-CHAR . "evidenze-fonti.lisp")
+   :PROCESS-ARTIFACT #A((33) BASE-CHAR . "evidenze-fonti-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-integrazione-byte.lisp"
+   :VARIANT :ORIGINAL-BYTE-COMPARISON)
+  (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-integrazione-sorgente.lisp" :VARIANT
    :VERBATIM-SOURCE-TEXT)))

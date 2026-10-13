@@ -27,6 +27,20 @@ riuscito. I due report aggiuntivi portano a tredici i record di processo:
 l'[audit finale](audit-finale-byte.lisp) verifica le 26 copie complessive,
 con gli stessi criteri di lunghezza e SHA256.
 
+## Integrazione con le fonti GET della Serie
+
+Il merge `3bb4021` conserva sia la preparazione ACTIVE sia il ponte delle
+fonti GET pubblicato dalle altre chat. L'ordine ASDF carica tutti i componenti
+di `get-directory` prima di `active`; il changelog mantiene entrambe le voci.
+Sulla versione combinata sono riusciti compilazione, stile (180 file),
+tracciabilità, link (366 file e 2.718 collegamenti) ed evidenze. Tutti gli
+snapshot dei sorgenti sono stabili e gli errori dei controlli statici sono zero.
+
+Il catalogo conserva diciotto record di processo. L'
+[audit dell'integrazione](audit-integrazione-byte.lisp) confronta le 36 copie
+di report e sidecar con gli originali. Questa integrazione non aggiunge
+esecuzioni locali di test, fault injection o benchmark.
+
 I record identificano gli snapshot dei sorgenti prima e dopo ogni comando,
 risultati stabili in entrambe le campagne. La
 [ricostruzione iniziale](ricostruzione-iniziale.lisp) conserva il diff esatto

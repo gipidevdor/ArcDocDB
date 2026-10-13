@@ -12,3 +12,15 @@ latenza o il costo transitivo di funzioni chiamate.
 
 I [contratti e le decisioni](../../../docs/implementazione/associazione-file.md)
 mantengono espliciti i casi da qualificare e l'adozione nel server ancora aperta.
+
+## Esiti locali
+
+Undici processi conclusi `:OK`, con snapshot dei sorgenti `:STABLE`. Alla revisione
+`2795934`: compilazione del prodotto senza warning/style-warning; 165 file di
+prodotto senza violazioni di lint; 117 requisiti, 65 invarianti, 13 scenari FI e
+52 ADR senza errori di tracciabilità; 341 file e 2583 collegamenti senza link rotti.
+Il controllo delle evidenze ha letto 75 cataloghi e 2567 riferimenti.
+
+[Audit dei byte](audit-byte.lisp): i 22 report/sidecar conservati hanno la stessa
+dimensione e SHA256 degli originali locali. Verifica la conservazione delle
+evidenze, senza eseguire API del prodotto o qualificare il nuovo componente.

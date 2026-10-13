@@ -27,6 +27,7 @@
                 (context (directory-series-context fixture))
                 (controller (directory-series-fixture-controller fixture)))
            (dotimes (ordinal 2)
+             (fill (aref (directory-fixture-outputs directory) 0) +directory-sentinel+)
              (is (eq :candidate (directory-begin directory :ordinal ordinal)))
              (directory-series-observe-acquire
               fixture

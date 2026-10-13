@@ -215,6 +215,7 @@ La location primary viene pubblicata soltanto DOPO le fonti; nessuna lettura del
 
 ;;; REQ: REQ-IDX-001 REQ-CMP-007
 (defun directory-series-begin (fixture key &optional (worker 0))
+  (fill (aref (directory-fixture-outputs (directory-series-fixture-directory fixture)) worker) +directory-sentinel+)
   (g:avvia-get (directory-series-context fixture worker)
                (directory-fixture-view (directory-series-fixture-directory fixture)) key nil 0 11))
 

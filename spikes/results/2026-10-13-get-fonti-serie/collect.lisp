@@ -155,7 +155,10 @@
 (defun read-capture (record)
   "Inventario dalla stdout del produttore chiuso, non da un file raw riscrivibile."
   (let* ((stdout (getf record :stdout)) (marker "GET-SERIES-CAPTURE ")
-         (position (and (stringp stdout) (search marker stdout :from-end t))))
+         (line-marker (format nil "~%~A" marker))
+         (line-position (and (stringp stdout) (search line-marker stdout :from-end t)))
+         (position (if line-position (1+ line-position)
+                       (when (and (stringp stdout) (uiop:string-prefix-p marker stdout)) 0))))
     (unless (and position (or (zerop position) (char= #\Newline (char stdout (1- position)))))
       (error "Inventario del produttore mancante."))
     (with-input-from-string (stream stdout :start (+ position (length marker)))

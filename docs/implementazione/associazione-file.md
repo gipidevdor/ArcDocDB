@@ -76,6 +76,10 @@ Il nuovo percorso esplicito la verifica nel prodotto. La registrazione concreta
 di apertura/rotazione del server deve ancora adottarlo; il costruttore non apre
 automaticamente file e non rende sicuro un percorso che ignori questa prova.
 
+Il [preparatore del nuovo segmento writer](inizializzazione-active.md) richiede
+la prova prima della prima write e nell'adozione della sorgente ACTIVE,
+insieme a flush, rilettura dell'header e fsync del parent.
+
 ## Decisioni e stato delle evidenze
 
 | ID | Decisione composta | Esiti da coprire separatamente |

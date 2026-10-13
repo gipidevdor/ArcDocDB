@@ -105,7 +105,10 @@
                              (:file "active-scan") (:file "active-build")
                              (:file "active-preflight") (:file "active-read")))
                (:module "get-directory" :serial t
-                :components ((:file "package") (:file "types") (:file "build") (:file "read"))))
+                :components ((:file "package") (:file "types") (:file "build") (:file "read")))
+               (:module "active" :serial t
+                :components ((:file "package") (:file "types") (:file "preflight")
+                             (:file "prepare") (:file "source"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Preparazione del nuovo segmento writer: preflight senza effetti, identità
+  readonly/append prima della write, header canonico durevole, rilettura esatta
+  e fsync del parent. Adattatore ACTIVE con prova obbligatoria e verifica del
+  registro CSN della vista; errori senza retry o risultati parziali. Decisione
+  EDIT, apertura/rotazione del server e qualifica C1 restano da integrare.
+
 - Scrittura dei float CBOR da parole IEEE: riduzione esatta della larghezza,
   preservazione di segno e payload NaN, preflight prima della mutazione
   e destinazioni private per i worker. Qualifica C1 e profilo documentale

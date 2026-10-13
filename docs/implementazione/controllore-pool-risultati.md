@@ -5,7 +5,7 @@ permanenza delle condizioni. [Contratto](controllore-pool.md),
 [metodo](controllore-pool-metodo.md), [decisioni](controllore-pool-decisioni.md),
 [prima lettura](controllore-pool-revisione.md) e
 [seconda lettura](controllore-pool-revisione-2.md) delimitano la verifica.
-La base integrata è `4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`.
+La base della campagna congelata è `4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`.
 
 ## Campagna congelata
 
@@ -83,6 +83,43 @@ Il primo controllo generale (`4000906285-command-38488-0`) è
 FAILED/STABLE/exit 2 prima della compilazione, per un percorso relativo
 nella configurazione della cache. Il record conserva la diagnosi originale;
 il secondo processo usa un percorso assoluto e non ne riscrive l'esito.
+
+## Integrazione e conservazione
+
+Il commit del componente `b984e3d` è integrato con `main` a
+`3106a498d10b7d876ce62f02afc3bd87f1bdeaa8`, nel merge `6aca985`.
+Entrambe le voci del changelog sono conservate; i sei sorgenti del
+controllore e le 23 fixture restano quelli qualificati.
+
+| Controllo della versione combinata | Record | Esito |
+|---|---|---|
+| Build con avvisi fatali e tutti i test | `4000907488-command-66476-0` | OK; 994 prove nominate e 2 smoke |
+| Lint | `4000907488-command-66477-0` | OK; 171 file, zero violazioni |
+| Tracciabilità | `4000907488-command-66478-0` | OK; 117 requisiti, 65 invarianti, 13 FI, 52 ADR |
+| Link | `4000907488-command-66479-0` | OK; 2614 link, zero rotti |
+| Cataloghi ed evidenze conservate | `4000907488-command-66482-0` | OK |
+
+Tutti questi processi sono STABLE/exit 0 su 743 sorgenti e documenti.
+Il build combinato dura 25,170712 s. Il totale delle prove nominate del
+controllo generale comprende anche i self-test degli strumenti esterni
+al build; i due conteggi non descrivono suite diverse del controllore.
+
+Il publisher `4000906724-command-45635-0` conserva byte originali e
+payload compressi senza cambiare gli esiti. Il self-test
+`4000907085-command-56510-0` passa otto controlli: copia positiva,
+rifiuto di una destinazione esistente con byte invariati, inventario dei
+raw, esclusione esplicita dei FASL, rifiuto di estensioni sconosciute e
+rifiuto di un piano invalido prima delle scritture. Il successivo
+`4000907539-command-68065-0` conserva questi record e i controlli statici.
+
+Una verifica indipendente confronta bytes, SHA256 e Git blob dei 50 entry
+del primo manifesto, oltre alla validità dei reader: zero problemi.
+La stampa originale dell'audit mostra erroneamente 1/50 per una lista
+distruttivamente invertita dopo averla salvata; il report originale
+contiene tutte le 50 prove. Script, output originale e proiezione corretta
+sono conservati insieme, senza riscrivere quel tentativo.
+I bundle distinguono sorgenti congelati, documenti finali e versione
+integrata; ogni nuovo sigillo aggiunge un manifesto esclusivo.
 
 ## Limiti
 

@@ -1,6 +1,11 @@
 (:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG :COMPONENT :WRITER-WORKER :BASE
- "4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3" :HISTORICAL-BASES NIL :ENTRIES
- ((:ARTIFACT "development-evidence-1.lisp" :PATH
+ "6aca98520142d578539f8303bb0e36a377c1f8cf" :HISTORICAL-BASES NIL :ENTRIES
+ ((:ARTIFACT "closing-orchestration.lisp" :PATH
+   #A((129) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/closing-orchestration.lisp")
+   :BYTES 1618 :SHA256 "84872fb074451f2bb07859f1ffbaa3a52b0a8deecb89b5fd4f50eb04c8e42b32" :GIT-BLOB
+   "1ff7c347c802582b664ac33a1d6e466fb593874e")
+  (:ARTIFACT "development-evidence-1.lisp" :PATH
    #A((130) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/development-evidence-1.lisp")
    :BYTES 1041910 :SHA256 "4f1b4273d8a29767da84057334271b89d5763635a934a9a866f386c33fe1da5a"
@@ -97,6 +102,26 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/manifesto-file.lisp")
    :BYTES 18892 :SHA256 "94bdb22b32518fd58069fb9fda1352505a0cf01967df51f81551480373ed62c2"
    :GIT-BLOB "572e57d3ee9b4be19feb08ee1ae46cd9ead67435")
+  (:ARTIFACT "manifesto-integrato.lisp" :PATH
+   #A((127) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/manifesto-integrato.lisp")
+   :BYTES 26642 :SHA256 "6918da8e83c345a8033bf5659a477d782d624e45917b6aaf8231c8193e64dbdc"
+   :GIT-BLOB "b8e1ddca230e9379f94c37111008f977037830fb")
+  (:ARTIFACT "manifesto-sigillo.lisp" :PATH
+   #A((125) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/manifesto-sigillo.lisp")
+   :BYTES 29007 :SHA256 "60d09a3a159e815793880261d7aa0f2265d5f9010fc179625dd00b16483e3f2a"
+   :GIT-BLOB "0a43ccbbdb9ec76249328dfa7d6ea58e7ef45ed6")
+  (:ARTIFACT "preservation-audit.lisp" :PATH
+   #A((126) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/preservation-audit.lisp")
+   :BYTES 74624 :SHA256 "5eb35f4c878b4d7d4c01479f83e2e4ed5820fa14da258daeeda716972959c06b"
+   :GIT-BLOB "b03bb20b8d1563001e38fdb50de1026374c86baa")
+  (:ARTIFACT "preservation-integration-sources.lisp" :PATH
+   #A((140) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/preservation-integration-sources.lisp")
+   :BYTES 4469 :SHA256 "6b5f060f5e5c32c0b2db6d4015f5499234d97201c5b225a8f48162f9fed4443e" :GIT-BLOB
+   "c461b3a0b0851bee0a6182afd83498b96591de4d")
   (:ARTIFACT "process-manifest.lisp" :PATH
    #A((124) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/process-manifest.lisp")
@@ -112,6 +137,11 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/sources-final.lisp")
    :BYTES 136291 :SHA256 "c1ff06a987efc08eec19af8e9bf9f964bad4aafb5c3a29cc159d034afff75fb0"
    :GIT-BLOB "593795b4094f7d29e391339cdeb1e3cc0ca68fe3")
+  (:ARTIFACT "sources-integrated.lisp" :PATH
+   #A((126) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/sources-integrated.lisp")
+   :BYTES 139855 :SHA256 "bdf92994a4b119c6687f8493c11bef9cb80c08237b4f7876844db0888ac65db2"
+   :GIT-BLOB "6cf8cf4c175274de65a939489acebaf3263cd40b")
   (:ARTIFACT "sources-qualified.lisp" :PATH
    #A((125) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/sources-qualified.lisp")

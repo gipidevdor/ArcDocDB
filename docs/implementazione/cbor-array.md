@@ -4,6 +4,8 @@
 già codificati, verificando tutte le parti prima di scrivere. Il
 [metodo preregistrato](cbor-array-metodo.md) definisce REQ-CBR-005 e la
 precedenza degli errori.
+Le [verifiche conservate](cbor-array-risultati.md) documentano corpus,
+misure, mutazioni, copertura e limiti delle osservazioni.
 
 ```lisp
 (scrivi-array-cbor-minimo
@@ -39,6 +41,9 @@ Lo stesso array sorgente/destinazione è ammesso con span disgiunti dal
 footprint completo `[START,NEXT)`, testata inclusa. Confini toccanti e
 sorgente vuota sono ammessi. Gli array dello scratch non possono essere
 usati come destinazione, sorgente o tabella.
+Quando BUFFER e SOURCE sono lo stesso array, il successo conserva lo
+span sorgente e cambia soltanto il footprint della destinazione; gli
+errori pubblici conservano l'intero array fisico.
 
 Range, tipi, limiti configurati, capacità, overlap e tabella vengono
 verificati prima del reset o parsing. Ogni errore pubblico conserva

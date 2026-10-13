@@ -1,0 +1,29 @@
+# Lettura statica dell'integrazione 6
+
+Esito: PASS statico delle registrazioni e della conservazione del delta remoto `06cc1354cd6843c40da0570e5314fef7cf68a667` → `e599703a6d840f3788e642042facf3ea71d8d32a`. Alla lettura main e origin/main puntavano al secondo commit; HEAD locale era `6f5a6a4cd2c09b01c99d82382dbd40514b5222d5`. Questa nota precede la verifica della combinazione risultante dal successivo merge.
+
+Il delta prodotto riguarda soltanto IO e CONTROL: aggiunge `native-namespace.lisp`, `namespace.lisp`, `publication.lisp` e `publication-read.lisp`, e aggiorna i rispettivi package, tipi e preparazione. Non modifica alcun test, tool, sorgente codec o corpus codec.
+
+ASDF aggiunge i due componenti IO nell'ordine seriale native → native-namespace → lifecycle → identity → namespace → transfer → flush, e i due componenti CONTROL dopo prepare. Il modulo IO viene caricato prima di CONTROL; tipi e preparazione CONTROL precedono la pubblicazione e le query. Il delta non cambia componenti test né il blocco test-op/RUN. Blob ASDF remoto: `744ab75ec73c59ef377d1bf5a96a0ebfcd69a6e6`.
+
+Le nuove funzioni native operano con fstatat e renameat sul medesimo directory FD, mantenendo i nomi foglia e la distinzione tra rename e fsync. La tabella backend aggiunge callback opzionali per identità dell'entry e rename, mantenendo i sei argomenti posizionali e identity. CONTROL importa le nuove capacità IO, conserva directory e frontiera nel risultato preparato e costruisce un wrapper pubblicato dopo rename verificata e flush del parent. Le nuove query restano nel package CONTROL. La lettura non rileva collegamenti o modifiche all'API CBOR nel delta.
+
+La diff per `src/codec/`, `tests/codec/`, tutti i test e `tools/foundation-coverage.lisp` è vuota. Lo stesso blob foundation `40610d6151b208314b7df36cb0fcc90badb79d15` compare sui due riferimenti remoti. Nel ramo locale letto il tool resta `95cb20b3d48a8d63d9e4a327bb317b37dc90dcd4`, che conserva lo scope array e get-active-init già verificati; il delta in arrivo non li modifica. Nessun RUN codec viene rimosso dall'ASDF.
+
+I cinque oggetti Git del ramo locale corrispondono al freeze:
+
+| File | Blob Git |
+| --- | --- |
+| src/codec/cbor-array-input.lisp | d3b3d07fc18bd2a077c1a2d79020a76263b2779e |
+| src/codec/cbor-array-write.lisp | a410297c29c5d043ad60d3804bd3711e22c2833b |
+| tests/codec/cbor-array-write-support.lisp | eb1fccadb205e375b4a2324a6b6725a860bb546f |
+| tests/codec/cbor-array-write.lisp | b13f58264f3cd97e1947ee52936732a7fcebe672 |
+| tests/codec/cbor-array-write-threads.lisp | 5720110265b67019937f08cbd949b4469a04b867 |
+
+Sono riferimenti Git già memorizzati, non un nuovo sweep SHA o un'autenticazione dei file raw. La conservazione delle registrazioni locali va controllata sul risultato del merge; l'ASDF remoto completo non sostituisce il file locale.
+
+La qualificazione CONTROL proveniente dall'altra chat è il contesto comunicato da root, non un nuovo esito indipendente di questa lettura C4. Le prove globali precedenti restano legate ai loro commit e input: non attestano da sole la nuova combinazione di sorgenti IO/CONTROL. Gli input e le misure array congelati rimangono riferimenti distinti e invariati.
+
+Root eseguirà la compilazione e suite combinate e i controlli build, lint, trace e links prima della chiusura effettiva e del push. Questa nota non dichiara tali controlli già superati, né esecuzione dei nuovi percorsi rename/fsync.
+
+Nessun runtime, caricamento, compilazione, driver o campagna da questo agente. La sola nuova scrittura è questa breve nota ignored; tracked, index, HEAD, note precedenti, archivi e input congelati non sono stati modificati.

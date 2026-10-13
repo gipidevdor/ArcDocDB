@@ -362,6 +362,12 @@
    :SOURCE-CONSISTENCY :STABLE :COMMAND
    (#A((4) BASE-CHAR . "make") #A((5) BASE-CHAR . "build")
     #A((4) BASE-CHAR . "lint") #A((5) BASE-CHAR . "trace")
+    #A((5) BASE-CHAR . "links")))
+  (:LABEL #A((24) BASE-CHAR . "control-integrated-gates") :RECORD-PATH
+   "processes/control-integrated-gates/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :COMMAND
+   (#A((4) BASE-CHAR . "make") #A((5) BASE-CHAR . "build")
+    #A((4) BASE-CHAR . "lint") #A((5) BASE-CHAR . "trace")
     #A((5) BASE-CHAR . "links"))))
  :FILES
  ((:PATH "collection-manifest.lisp" :SOURCE
@@ -1264,7 +1270,73 @@
    #A((113) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000917832-command-71310-0/report.lisp")
    :BYTES 1031342 :SHA256
-   "97eaff176860971b66f106e3fa55a7fa7a7cceccfd22af1a9173eef52057e3e0"))
+   "97eaff176860971b66f106e3fa55a7fa7a7cceccfd22af1a9173eef52057e3e0")
+  (:PATH "processes/control-integrated-gates/conservazione.lisp" :SOURCE
+   #A((120) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/conservazione.lisp")
+   :BYTES 1153 :SHA256
+   "c2a23e7b97f01d82c6086d47a5515f37ca6fda9a245acbf638e0352ec2622a50")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/cbor-array-risultati.md.txt"
+   :SOURCE
+   #A((142) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/cbor-array-risultati.md.txt")
+   :BYTES 12342 :SHA256
+   "bdac2046a97df18199e18d23a2cd63925c335cb07f93ce7cec89d6061e21df38")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/control-integration-reading.lisp"
+   :SOURCE
+   #A((147) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/control-integration-reading.lisp")
+   :BYTES 6149 :SHA256
+   "e9f5df06316fa777f02fbd6b84370297e4f7ab4ff3de5ed4c3c950a80374997c")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/control-integration-reading.md.txt"
+   :SOURCE
+   #A((149) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/control-integration-reading.md.txt")
+   :BYTES 1749 :SHA256
+   "f109fef7eeef07ee6a3169e92d6449e35662ec443dacddba32748bcb7f88a55e")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/control-integration-reading.stderr.txt"
+   :SOURCE
+   #A((153) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/control-integration-reading.stderr.txt")
+   :BYTES 0 :SHA256
+   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/control-integration-reading.stdout.txt"
+   :SOURCE
+   #A((153) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/control-integration-reading.stdout.txt")
+   :BYTES 1343 :SHA256
+   "73c39c5f75589db6787927075b67b1f8e86ecbe1476ecf3f7cad95feaeef62fa")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/copy-control-inputs.lisp"
+   :SOURCE
+   #A((139) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/copy-control-inputs.lisp")
+   :BYTES 2588 :SHA256
+   "ebddde9ef5801e9574121defe041448fc6a1a74fc296886ee76631e82328ea99")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/copy-observation.lisp"
+   :SOURCE
+   #A((136) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/copy-observation.lisp")
+   :BYTES 2934 :SHA256
+   "3f8827faed5def3ffe0ba604e397bf1a30dfb26cec40de0bc540a2615fbe761e")
+  (:PATH
+   "processes/control-integrated-gates/final-inputs/integration-reading-6.md.txt"
+   :SOURCE
+   #A((143) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/final-inputs/integration-reading-6.md.txt")
+   :BYTES 3674 :SHA256
+   "0843eaf087fdcc16f477967d6c092830c47f1ba89ff229afce74e61e7ea0fb99")
+  (:PATH "processes/control-integrated-gates/report.lisp" :SOURCE
+   #A((113) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000918234-command-80054-0/report.lisp")
+   :BYTES 1045326 :SHA256
+   "be5c22ce0e64046ef7f41d8d79140014ff1d6705c758170520175fd0cce87620"))
  :LIMITS
  (:SHA256-BYTE-COPY-CHECK :RAW-ORIGINALS-PRESERVED
   :FASL-EXCLUDED-FROM-PUBLISHED-MUTATION-TREES

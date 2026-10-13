@@ -452,7 +452,10 @@ for name in sys.argv[1:]:
                        :expected-failure (when mutant (getf mutant :expected-failure))
                        :suggested-detection-test (when mutant (getf mutant :test)) :expected-tests expected
                        :producer-record (namestring (merge-pathnames "report.lisp" directory))
-                       :producer-closed nil :child-launched nil :child-reaped nil :timed-out nil :cleanup :pending))
+                       :producer-closed nil :child-launched nil :child-reaped nil :timed-out nil :cleanup :pending
+                       :diagnostic nil :source-manifest-before nil :source-manifest-after nil
+                       :changed-paths nil :config-sha256 nil :config-sha256-after nil
+                       :artifacts-verified nil :child-report nil :exit-code nil :signal nil))
          (process nil) (config nil) (child nil))
     (funcall checkpoint result)
     (handler-case
@@ -535,9 +538,12 @@ for name in sys.argv[1:]:
               (dolist (mutant *mutants*)
                 (require-time)
                 (let ((entry nil))
-                  (run-copy (pathname (getf (getf report :baseline) :copy-directory)) directory files frozen expected mutant
+                  (run-copy root directory files frozen expected mutant
                             (lambda (result)
-                              (unless entry (setf entry result) (push result (getf report :mutants)))
+                              (setf entry result
+                                    (getf report :mutants)
+                                    (cons result (remove (getf result :name) (getf report :mutants)
+                                                         :key (lambda (e) (getf e :name)) :test #'string=)))
                               (save-report report directory)))
                   (when (eq :unreaped (getf entry :cleanup)) (reject "unreaped child."))))
               (unless (and (= 4 (length (getf report :mutants)))

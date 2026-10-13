@@ -1,0 +1,34 @@
+# Tentativo preparatorio della raccolta
+
+2026-10-13. Il primo collector è avviato con manifest.lisp verso
+spikes/results/2026-10-13-cbor-array-write/. Dopo l'avvio viene rilevato
+che coverage-state.lisp occupa 2.195.898 byte, oltre il limite plain
+di 1.048.576 imposto da tools/check-command-archive.lisp. Non si modifica
+quel limite e non si considera riuscito un archivio privo di chiusura.
+
+Il coordinatore invia TERM al solo processo collector PID20874, figlio
+del registratore PID20835, e attende la conclusione del registratore.
+SBCL gestisce TERM uscendo con codice zero. Di conseguenza il record
+spikes/out/4000915242-command-20835-0/report.lisp conserva STATUS OK e
+EXIT-CODE0; questi campi descrivono l'uscita del processo e non una
+raccolta completa. Non sono prodotti l'indice, il catalogo, una
+osservazione finale o il log strict di chiusura. Nessun SUCCESS della
+raccolta è dedotto dal codice d'uscita.
+
+Il parziale viene spostato senza sovrascritture in
+spikes/out/cbor-array-write-20261013/collection/attempt-1-unsealed/.
+Manifest originario, record, questa nota e tutti i byte copiati restano
+conservati; il parziale rientra nel backup completo degli ignorati.
+Non viene pubblicato come archivio valido né usato per qualifica.
+
+Dopo la conclusione del tentativo, compact-evidence trusted comprime
+il solo raw coverage già letto. Il record4000915378-command-26277-0
+verifica byte/SHA dei dati ricostruiti: 2.195.898 byte, SHA256
+1fe31c9fd8fa60689f910672a5c53cdcbabbd73da6d71f87209afdc3007a68ec.
+Descriptor e gzip conservano quei dati senza perdita; prodotto,
+corpus, campagne e letture precedenti rimangono invariati.
+
+La raccolta successiva userà un nuovo manifest e un preflight dei budget
+dei file e dell'indice, conservando separatamente il tentativo interrotto.
+Questa nota documenta azioni locali osservate; non autentica esecuzione,
+pubblicazione atomica, provenienza o qualifica C1.

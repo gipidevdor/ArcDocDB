@@ -1,0 +1,34 @@
+(:STATUS :OK :CHECKS 41992 :RESULTS
+ ((:RECORD
+   #A((48) BASE-CHAR . "spikes/out/4000914722-command-8381-0/report.lisp")
+   :COMMIT #A((40) BASE-CHAR . "bdf709edf713891410b4639f219e1c9c1ba1f31a")
+   :STATUS :FAILED :EXIT-CODE 2 :SOURCE-COUNT 818 :WALL-SECONDS 34.372138d0
+   :NOMINAL-TESTS 1129 :SMOKE 2 :LINTER-SELFTESTS 4 :LINT "195/0" :TRACE
+   "119/65/13/52/0" :MUTATION-SELFTESTS
+   ((:KIND :SNAPSHOT-MUTATIONS :TARGETS 10 :SOURCES 21 :PROCESS-FIXTURES 2)
+    (:KIND :READER-MUTATIONS :TARGETS 8 :SOURCES 34 :PROCESS-FIXTURES 2))
+   :BROKEN-LINKS
+   ("ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-metodo.md (file mancante)"
+    "ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-revisione.md (file mancante)"
+    "ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-lettura.md (file mancante)"
+    "ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-decisioni.md (file mancante)"
+    "396 file, 2811 link controllati, 4 rotti")
+   :STOPPED-AT :LINKS :LATER-EVIDENCE-AND-SPIKES :NOT-RUN))
+ :PHYSICAL-OBSERVATIONS
+ ((:PATH
+   #A((48) BASE-CHAR . "spikes/out/4000914722-command-8381-0/report.lisp")
+   :BYTES 946639 :SHA256
+   "4c9d24befecd779c86b518d0ee044b3a1b24edcbf3b3fedf79eb6df6528b2315")
+  (:PATH
+   #A((123) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914752-snapshot-self-test-9030-0/report.lisp")
+   :BYTES 1955 :SHA256
+   "5dd62340954f9dae6a785ff74a2d372030077b894cd3a305e78c9646d1ba809b")
+  (:PATH
+   #A((121) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914752-reader-self-test-9039-0/report.lisp")
+   :BYTES 1937 :SHA256
+   "a4b1c2d0009cf0dae33c6ac977a82ee4e1e8d47d0a6f08b5a18d4a73c6d0a0cc"))
+ :LIMITS
+ (:DATA-ONLY :METADATA-COHERENCE :NO-AUTHENTICATION :NO-NEW-CAMPAIGN
+  :NO-PRODUCT-LOAD :EXPECTED-FAILED-LINKS-RECORD :NO-POSITIVE-OVERALL-RESULT))

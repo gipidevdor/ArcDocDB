@@ -1,0 +1,35 @@
+# Lettura separata del controllo interrotto dai link della bozza
+
+Lettura C4 del secondo `make check`, concluso **FAILED**, mantenuto come tale. Commit `bdf709edf713891410b4639f219e1c9c1ba1f31a`; la successiva verifica finale sullo stesso commit è documentata separatamente. Nessun caricamento, compilazione o chiamata di prodotto/driver, nessuna nuova campagna: il reader carica soltanto il trusted `tools/evidence-storage.lisp` e legge dati già conclusi.
+
+## Wrapper e parte già completata
+
+Record `spikes/out/4000914722-command-8381-0/report.lisp`: **946639 byte**, SHA256 **`4c9d24befecd779c86b518d0ee044b3a1b24edcbf3b3fedf79eb6df6528b2315`**. Schema 1 `COMMAND-VERIFICATION`, stato **FAILED**, exit **2**, sorgenti **STABLE**; commit atteso e working tree vuoto. Le 818 impronte tracked univoche sono identiche before/after. I pin array rimangono `d3b3d07fc18bd2a077c1a2d79020a76263b2779e` e `a410297c29c5d043ad60d3804bd3711e22c2833b`. Durata registrata 34.372138d0 secondi; comando effettivo `make check-core`.
+
+Prima del marker unico di completamento build/test risultano **1129 nominali + 2 smoke = 1131**. Seguono quattro selftest linter, conteggiati separatamente. Lint: 195 file, zero violazioni. Trace: 119 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, zero errori. Nessun warning/style-warning o compilazione interrotta nello stderr esterno; sono presenti note del compilatore.
+
+I selftest snapshot e reader dichiarano rispettivamente 10 e 8 target, zero worker errors nei record principali, inventari MD5 stabili da 21 e 34 fonti, `READ-EVAL-DISABLED T` e detection nominativa. I report `4000914752-snapshot-self-test-9030-0/report.lisp` e `4000914752-reader-self-test-9039-0/report.lisp` sono `PASSED`, ciascuno con due fixture `WORKER-ERROR` attese: signal 9 e completion exit 7, senza timeout. Questo non è una nuova campagna mutation.
+
+## Guasto esatto e arresto
+
+Il reader verifica esattamente queste quattro righe, tutte riferite alla bozza ignored `spikes/out/cbor-array-write-20261013/results-draft.md`, senza accettare un errore generico:
+
+```
+ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-metodo.md (file mancante)
+ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-revisione.md (file mancante)
+ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-lettura.md (file mancante)
+ROTTO  spikes/out/cbor-array-write-20261013/results-draft.md -> cbor-array-decisioni.md (file mancante)
+396 file, 2811 link controllati, 4 rotti
+```
+
+Lo stdout termina dopo questo riepilogo, e lo stderr conserva `make[1]: *** [links] Error 1`; il wrapper esterno registra exit 2. Quindi **la suite prodotto è già passata, ma il controllo integrato complessivo è fallito alla verifica dei link**. In questo processo non sono eseguiti i successivi controlli evidence e i dieci spike; i loro successi appartengono al distinto record finale e non sono trasferiti a questo fallimento.
+
+Il root ha riferito la correzione come rinomina della bozza in `.md.txt`, con conservazione del fallimento e dei byte precedenti. Questa lettura osserva il blob dell'attuale `results-draft.md.txt`, **`898826dc54589e3368a4eac068182c5cd4529d2c`**, coerente con il pin comunicato dal root. Non è una modifica del prodotto; non rivendico una nuova autenticazione dell'operazione di rinomina.
+
+## Reader e congelamento
+
+Reader nuovo e separato `integrated-runtime-reading-failure.lisp`, blob **`ba021666e9bcb6789d1539e96a96e412d87ba0e7`**. CLI `RECORD COMMIT NOMINAL BYTES SHA256`, con percorso/commit sopra, `1129`, `946639`, SHA256 sopra. Output `integrated-runtime-reading-2.stdout.txt`: **OK**, 41992 visite/check del reader; stderr vuoto. Il successo del reader significa che i dati attestano il fallimento esatto atteso, non che il comando originario sia passato.
+
+I tre file fisici osservati, wrapper e due report delle fixture processo, conservano byte e SHA256 identici prima/dopo. Lo stdout ne elenca le impronte complete. Sono preservati i reader e gli output preparatori delle altre letture: i loro rifiuti riguardano assunzioni/tipi/budget del reader e rimangono separati sia dai quattro link rotti della bozza sia dai risultati del prodotto.
+
+La lettura controlla struttura e coerenza interna dei metadati senza autenticare i processi; usa `READ-EVAL NIL`, readtable standard, CL-USER, EOF GENSYM, cons aciclici e chiavi univoche nelle plist incontrate. Non rivaluta le sorgenti del commit storico e non dimostra copertura, MC/DC/C1, assenza assoluta di allocazioni o qualificazione del motore.

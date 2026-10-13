@@ -1,0 +1,35 @@
+OUTER schema1 kind:COMMAND-VERIFICATION status:OK exit0 stable:STABLE wall209.290256d0 source-blobs792 HEAD6cd17853eebce88e2ee6f5342041a2a2d8da32ab stderr0; embedded inner equal.
+POST-CAMPAIGN CURRENT DIFFERENCE arcdocdb.asd snapshotf926799fd4691418f242c2fd9294b652 currentf01f1c9cf811571141c6c50c10849463; not used as frozen copy origin.
+POST-CAMPAIGN CURRENT DIFFERENCE src/io/identity.lisp snapshot06ea105db71f021ea60b2c59645273b4 current4e03b14a0c5015dc6ec897221c9f0eb5; not used as frozen copy origin.
+POST-CAMPAIGN CURRENT DIFFERENCE src/io/package.lisp snapshot8ad95e22e31444161b81d2eb23e552ff current7aafde7081a3804862c3acf446e6e385; not used as frozen copy origin.
+POST-CAMPAIGN CURRENT DIFFERENCE src/scheduler/package.lisp snapshote0c66cf5a309b86e055337a8e6213c2d current0578c541b6ddfaf8827240e967ff76ea; not used as frozen copy origin.
+POST-CAMPAIGN CURRENT DIFFERENCE tests/scheduler/support.lisp snapshota0224d0f0bb49ba73a82b9a6e6a71fa1 current34e51e369859bc1c731d73e43053b6f4; not used as frozen copy origin.
+INNER before/after stable313; copied308 + ignored5; ignored current5 MD5 and frozen method/source2/corpus3/catalogue targets8 coherent; nominal DEFTEST20 exact.
+BASELINE independently OK: smoke-line2 completion-line1185 nominal20 unique; total-OK1101.
+DETECTED physical-capacity: exit1 smoke-line2 Unhandled-line272 nominal-frame-line284 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-EMPTY-SCALAR-AND-FIVE-LITERAL-CHILDREN
+  origin   Asserzione fallita: (NOT ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::RETURNED)
+DETECTED wrong-major: exit1 smoke-line2 Unhandled-line272 nominal-frame-line284 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-EMPTY-SCALAR-AND-FIVE-LITERAL-CHILDREN
+  origin   Asserzione fallita: (EQUALP ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::EXPECTED                               ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::BUFFER)
+DETECTED wrong-count: exit1 smoke-line2 Unhandled-line272 nominal-frame-line284 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-EMPTY-SCALAR-AND-FIVE-LITERAL-CHILDREN
+  origin   Asserzione fallita: (EQUALP ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::EXPECTED                               ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::BUFFER)
+DETECTED scan-omitted: exit1 smoke-line2 Unhandled-line272 nominal-frame-line284 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-EMPTY-SCALAR-AND-FIVE-LITERAL-CHILDREN
+  origin   Asserzione fallita: (= ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::SOURCE-END                          (ARCDOCDB.CBOR::SPAZIO-CBOR-CURSOR SPACE))
+DETECTED overlap-without-header: exit1 smoke-line2 Unhandled-line283 nominal-frame-line296 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-OVERLAP-ENTIRE-FOOTPRINT-TOUCHING-AND-EMPTY
+  origin   Asserzione fallita: (EQ ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::REASON                           (ARCDOCDB.CONDITIONS:ERROR-REASON                            ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::OBSERVED))
+DETECTED item-ends-unchecked: exit1 smoke-line2 Unhandled-line281 nominal-frame-line292 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-STRICT-ENTRY-ORDER-BOUNDS-LAST-AND-UNREAD-TAIL
+  origin   Asserzione fallita: (TYPEP ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::OBSERVED TYPE)
+DETECTED root-node-excluded: exit1 smoke-line2 Unhandled-line272 nominal-frame-line285 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-EMPTY-SCALAR-AND-FIVE-LITERAL-CHILDREN
+  origin   ArcDocDB: CBOR-ARRAY-CHILDREN-NODES
+DETECTED extra-return-value: exit1 smoke-line2 Unhandled-line272 nominal-frame-line283 ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::TEST-REQ-CBR-005-ARRAY-EMPTY-SCALAR-AND-FIVE-LITERAL-CHILDREN
+  origin   Asserzione fallita: (= 1 (LENGTH ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::ACTUAL))
+COPY 4 overlap-without-header exact unique replacement; target blobc122c51ce64cb6816d946626b1b8bceba2c7acb6 MD5885fd8b06735d04e47370990ff862835.
+COPY 5 item-ends-unchecked exact unique replacement; target blob0419d1f3fa31f588df42565e4e6429b67792ad65 MD5d668888a2838bd7e8f5dc0223b56cd4f.
+COPY 0 physical-capacity exact unique replacement; target blobda3468adad3e71b01bd4a533706cfa727d1aa228 MD5339aef910cf8447b29ade9dfb105fb14.
+COPY 1 wrong-major exact unique replacement; target blob67b1a8ed985b923d00b0c490955e73ec3fe877bf MD595e26a21fc76603c0324222e88a95c64.
+COPY 2 wrong-count exact unique replacement; target blob6d55e11934524269ec4429258eb545a02f4d9762 MD506063a6ea98d1a6533f7a224793f0797.
+COPY 3 scan-omitted exact unique replacement; target blob6f2a13ec9f9e2d7783199197c31dbe9048278afe MD546c34ed15d9e52cc9ebed31c29df598c.
+COPY 6 root-node-excluded exact unique replacement; target blob98c3a89c18a83482b05f7b1f734898713000c006 MD519962e6d0985b561a641f794f7bc2ed9.
+COPY 7 extra-return-value exact unique replacement; target blob50a78febe4539e7d380dfcc15a1582f3f00ec226 MD5f921b0ec923eeede2204dc8bc428d4bb.
+COPIES nine distinct roots/local-FASL; all308 original paths checked in each: baseline308 unchanged; mutants307 unchanged+one exact target; per-path ten physical inodes distinct; runners exact frozen build invocation.
+FINAL current313 stable during reading (post-campaign differences reported); raw outer/inner/materialization and all9 logs stable. Baseline308 matches frozen inner MD5 + outer Git blobs. DETECTED8/SURVIVED0/INVALID0/WORKER-ERROR0 verified on logs.
+DATA only: trusted evidence reader and SBCL MD5/POSIX modules; READ-EVAL NIL/standard readtable/EOF for Lisp data; no product or driver LOAD/EVAL/compile/call, no campaign rerun. Hashes establish byte coherence, not authenticity/causality/C1 or release qualification.

@@ -1,0 +1,168 @@
+# Lettura DATA della copertura array CBOR
+
+Lettura del 2026-10-13, dopo la campagna registrata. Sono l'autore del
+corpus cieco e della seconda lettura statica; il ricalcolo DATA e distinto
+dall'autore del prodotto e dal driver di copertura, ma non costituisce
+una terza lettura C1 indipendente dal corpus. Nessun prodotto e stato
+definito, compilato, caricato o chiamato durante questa lettura.
+
+## Fonti e metodo di lettura
+
+- Wrapper: `spikes/out/4000913934-command-88141-0/report.lisp`, blob
+  `7d93fd65063c27c7030df28d337f7a22ade0f84a`.
+- Raw: `coverage/coverage-state.lisp`, blob
+  `b528b2493e5999fa16015453b781d0c7c8545f43`.
+- HTML: `coverage/342bab3a36ebdd3c1bf5939e861a2f38.html` per input,
+  `coverage/2c4bedc7173c2f72578f296a0dbf45cb.html` per write;
+  `coverage/cover-index.html`. Qui coverage/ e relativo alla directory
+  `spikes/out/cbor-array-write-20261013/`.
+- Sorgenti selezionati: input `d3b3d07fc18bd2a077c1a2d79020a76263b2779e`,
+  write `a410297c29c5d043ad60d3804bd3711e22c2833b`; inventario
+  `docs/implementazione/cbor-array-decisioni.md` blob
+  `60d1ee21f9aa42336c246da92bbe1a69beee91cb`.
+- Script C4 `coverage-reading.lisp`, blob
+  `3f1828f9f240424ac87e3d9b220acdc93ff61c8b`; output completo
+  `coverage-reading-output.txt`, blob
+  `2dd49d60647b24de307ba00f55044869c24afd1b`.
+
+Lo script carica soltanto il tool trusted `tools/evidence-storage.lisp`
+(`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`), che legge il wrapper
+come plist con READ-EVAL NIL e verifica EOF. Il raw, una lista e non
+una plist, viene letto con READ-EVAL NIL/EOF attraverso il trasporto
+trusted; i due sorgenti vengono soltanto READ fino a EOF in package
+vuoti, senza valutare alcuna loro forma. Sono verificati stringa path,
+simple-vector dei source path, simple-bit-vector delle marcature,
+lunghezze coincidenti e coppie THEN/ELSE complete.
+
+Interpretazione versionata SBCL2.6.9: entry `(file paths . bits)`;
+bit1 indica marcatura, path che inizia THEN/ELSE indica un ramo,
+altrimenti un'espressione. Ogni sito di ramo ha due record. Riscontro
+nel codice SBCL locale `contrib/sb-cover/genhtml.lisp` SAVE-COVERAGE e
+`contrib/sb-cover/cover.lisp` GET-RECORDS. Il mapping freddo alle forme
+inverte il source path numerico e percorre i figli NTH; non usa RESTORE,
+strumentazione o esecuzione del prodotto. L'interpretazione del formato
+opaco e specifica di questa versione, non un'API portabile di SB-COVER.
+
+## Record registrato
+
+Schema1, COMMAND-VERIFICATION, STATUS OK, EXIT0, SOURCE-CONSISTENCY STABLE.
+792 impronte prima/dopo identiche; i due blob sorgente coincidono con
+quelli letti prima della campagna. HEAD registrato
+`6cd17853eebce88e2ee6f5342041a2a2d8da32ab`; working tree registrato vuoto.
+Wall15,726784s dell'intero comando, STDOUT2077 caratteri, STDERR0.
+Comando registrato: foundation-coverage --report coverage/ cbor-array-write.
+SBCL2.6.9, Darwin27, ARM64/Apple M4,16GiB,10 CPU logiche;
+carico esterno dichiarato UNCONTROLLED. Nessuna deduzione di prestazioni
+del motore dal tempo wall o dal numero di CPU.
+
+STDOUT contiene20 OK unici, finale20 test, fuzz1024 seed41525235 con512
+successi e64 per ciascuna delle otto classi. Due ondate da4096 chiamate,
+sink52178944/75218944 per worker/ondata; overlap4742 e4993 tick con
+1000000 tick/s. Questi dati coincidono con il piano freddo; i tempi
+includono i confronti del corpus e non misurano simultaneita sui core.
+Le9474 chiamate complessive sono il conteggio derivato dai loop congelati,
+non un contatore separato della funzione nel raw di SB-COVER.
+
+## Ricalcolo senza esclusioni
+
+| Scope | Espressioni coperte/totali | Percentuale | Rami coperti/totali | Percentuale |
+| --- | ---: | ---: | ---: | ---: |
+| cbor-array-input.lisp | 248/281 | 88,256228% | 42/48 | 87,500000% |
+| cbor-array-write.lisp | 184/256 | 71,875000% | 18/34 | 52,941176% |
+| Entrambi i nuovi file | 432/537 | 80,446927% | 60/82 | 73,170732% |
+
+329 record raw per input e290 per write: espressioni piu rami.
+I numeri coincidono con le tabelle dei due HTML e del cover-index,
+con arrotondamento HTML a una cifra decimale. Sono stati selezionati
+esattamente i due path assoluti, ciascuno presente una sola volta.
+
+Il raw contiene anche tutti gli altri file caricati:302 entry,
+4373/117516 espressioni e428/14722 rami. Questo totale globale include
+codice compilato ma non esercitato dallo scope; non sostituisce il
+denominatore dei due file nuovi e non rappresenta copertura del motore.
+
+## Inventario completo delle marcature mancanti
+
+105 espressioni e22 rami non marcati nei due nuovi sorgenti. Il file
+`coverage-reading-output.txt` elenca tutti i127 record con indice,
+tipo, source path esatto e forma mappata. Gli indici sono zero-based.
+Nessun record viene sottratto dai denominatori.
+
+Input:9 espressioni top-level non marcate, record0/1/2/45/75/121/172/230/251:
+IN-PACKAGE, DECLAIM OPTIMIZE e sette DECLAIM FTYPE. Write:5 espressioni
+top-level non marcate, record0/1/2/84/179: IN-PACKAGE, DECLAIM OPTIMIZE
+e tre DECLAIM FTYPE. Rimangono comprese nei totali.
+
+Le altre88 espressioni sono quattro sottoforme per ciascuno dei22 ERROR
+interni: chiamata ERROR, QUOTE INVARIANT-VIOLATION, keyword REASON e
+keyword del motivo. La tabella elenca ciascun gruppo con il suo ramo
+ELSE non marcato; la forma e l'indice di ogni sottoforma sono conservati
+nel mapping completo. Le righe si riferiscono ai due blob sopra.
+
+| File: guardia / ERROR | Motivo interno | Record ramo non marcato | Record espressioni non marcate |
+| --- | --- | ---: | --- |
+| input:63/64 | cbor-array-target-span | 130 | 131–134 |
+| input:65/66 | cbor-array-source-span | 142 | 143–146 |
+| input:80/81 | cbor-array-table-bound | 180 | 181–184 |
+| input:82/83 | cbor-array-table-budget | 191 | 192–195 |
+| input:127/128 | cbor-array-input-span | 297 | 298–301 |
+| input:129/130 | cbor-array-input-capacity | 309 | 310–313 |
+| write:15/16 | cbor-array-child-range | 11 | 12–15 |
+| write:21/22 | cbor-array-child-empty | 30 | 31–34 |
+| write:26/27 | cbor-array-child-progress | 41 | 42–45 |
+| write:28/29 | cbor-array-child-nodes | 52 | 53–56 |
+| write:30/31 | cbor-array-child-depth | 62 | 63–66 |
+| write:44/45 | cbor-array-children-range | 93 | 94–97 |
+| write:46/47 | cbor-array-children-bound | 104 | 105–108 |
+| write:48/49 | cbor-array-children-budget | 114 | 115–118 |
+| write:58/59 | cbor-array-children-progress | 145 | 146–149 |
+| write:60/61 | cbor-array-children-nodes | 156 | 157–160 |
+| write:62/63 | cbor-array-children-depth | 167 | 168–171 |
+| write:92/93 | cbor-array-result-nodes | 189 | 190–193 |
+| write:94/95 | cbor-array-result-depth | 199 | 200–203 |
+| write:98/99 | cbor-array-header-progress | 221 | 222–225 |
+| write:100/101 | cbor-array-payload-span | 233 | 234–237 |
+| write:103/104 | cbor-array-write-progress | 244 | 245–248 |
+
+Tre ulteriori espressioni write non marcate: record287/288/289,
+path `(10 2 7)`/`(11 2 7)`/`(12 2 7)`, forme di default keyword
+MAX-BYTES/MAX-NODES/MAX-DEPTH nella lambda list (write:71–72).
+La mancata marcatura di queste forme sintattiche non viene trasformata
+in una deduzione sull'uso funzionale dei default. Nessun altro tipo di
+espressione non marcata e presente nei due file selezionati.
+
+## Associazione al metodo e limiti
+
+Le22 guardie coincidevano con l'inventario statico e restano attive;
+qui si osserva soltanto che il loro lato ELSE non e marcato. Non vengono
+definite irraggiungibili. Cinque AND/OR,14 operandi, otto relazioni
+concatenate,36 guardie WHEN/UNLESS e due LOOP restano nell'inventario
+`60d1ee...`. I percorsi7/5/4/7/7/3/3 e7/8/6 sono conteggi sintattici,
+distinti dai siti osservati dal compilatore e dai rami60/82. Questo
+rapporto non attesta MC/DC o indipendenza decisiva dei14 operandi.
+
+Metodo `2f257c9e8a56a5182142934dada3f3b38b5bef65`, corpus support
+`eb1fccadb205e375b4a2324a6b6725a860bb546f`, seriale
+`b13f58264f3cd97e1947ee52936732a7fcebe672`, threads
+`5720110265b67019937f08cbd949b4469a04b867`; seconda lettura statica
+`a317dfc2fa86b653d2705a03513388ddd76e0a60`. Queste impronte coincidono
+con il freeze e con la campagna. I confronti dell'intero buffer, errori,
+budget e riuso sono nel corpus, non dedotti dalla percentuale grezza.
+
+Il coordinatore ha comunicato separatamente30 misure benchmark con heap
+osservato0 e audit PASS. Non sono state rilette qui: copertura strumentata,
+allocazioni del reader C4 e wall del wrapper non misurano heap del
+successo. Il presente rapporto non amplia quella evidenza separata.
+
+Un tentativo ad hoc preliminare, chunk984d18/exit1, ha letto correttamente
+il wrapper ma passato il raw non-plist a READ-EVIDENCE, ottenendo
+INVALID-EVIDENCE sul tipo di schema. Corretto il lettore C4 con READ/EOF
+generico per il raw; ricalcolo riuscito chunk5f249c/exit0. E un errore
+preliminare della lettura dati, non del prodotto o della campagna.
+L'osservazione e parziale: non si inventa un transcript completo.
+
+Scritture limitate a nuovi artefatti ignored review/. Nessun input/raw,
+sorgente tracked, indice o HEAD modificato; nessuna campagna ripetuta.
+La copertura locale resta incompleta, senza esclusioni approvate o
+qualifiche C1/globali. Mutazioni e regressione integrata sono evidenze
+separate da leggere nei loro record finali.

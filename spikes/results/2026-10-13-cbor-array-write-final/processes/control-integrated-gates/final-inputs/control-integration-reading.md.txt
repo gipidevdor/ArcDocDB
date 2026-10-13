@@ -1,0 +1,9 @@
+# Lettura DATA dopo l'integrazione CONTROL
+
+Record concluso `spikes/out/4000918234-command-80054-0/report.lisp`, commit **`80a3500962ef9c717c25ecbf27502e2d2629c8c7`**: **1045326 byte**, SHA256 **`be5c22ce0e64046ef7f41d8d79140014ff1d6705c758170520175fd0cce87620`**, invariati prima/dopo. Wrapper schema 1 `COMMAND-VERIFICATION`: **OK/exit 0/STABLE**, working tree vuoto, **834 impronte** univoche identiche before/after. I cinque pin congelati dei due prodotti array e tre file del corpus coincidono con gli attesi in entrambi gli inventari; valori completi nello stdout.
+
+Comando esatto **`make build lint trace links`**, durata **38.250311d0 secondi**. Prima del marker unico build/test: **1182 nominali + 2 smoke = 1184**. Lint **200/0**; trace **119 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, zero errori**; link **420 file, 2856 link, zero rotti**. Nessun warning/style-warning o compilazione interrotta nello stderr esterno.
+
+Reader nuovo `control-integration-reading.lisp`, blob **`97b1d9aed838126dc1742115eba3c9602113650e`**; output `control-integration-reading.stdout.txt`, blob **`9279bbd6623033db8e31f13a8df50e8bd5b0c9f2`**: **OK**, 6734 controlli strutturali, stderr vuoto. Caricato soltanto il trusted `tools/evidence-storage.lisp`, nessun prodotto/driver o nuova campagna. I quattro file della precedente lettura rimangono congelati.
+
+Questa lettura controlla la combinazione integrata e la coerenza dei suoi dati, senza autenticare i processi. Non produce nuove qualificazioni C1 delle funzioni CONTROL: le relative prove separate mantengono la propria attribuzione. Full check4/gate7528 e precedenti osservazioni globali rimangono premerge; nessun nuovo claim spike/evidence, copertura o MC/DC/C1, nessuno sweep delle sorgenti.

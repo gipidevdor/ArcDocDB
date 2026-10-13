@@ -1,0 +1,31 @@
+# Lettura dati del controllo integrato finale
+
+Lettura C4 indipendente dei record conclusi del terzo `make check`, commit `bdf709edf713891410b4639f219e1c9c1ba1f31a`, comprendente l'integrazione pool successiva al primo controllo. Nessun caricamento, compilazione o chiamata del prodotto o dei driver, nessuna nuova campagna. È caricato soltanto `tools/evidence-storage.lisp` per leggere i dati. Il primo controllo e il controllo fallito per i link della bozza rimangono separati.
+
+## Wrapper e suite
+
+`spikes/out/4000914822-command-10423-0/report.lisp`: 963835 byte, SHA256 `a32ae8baddf7b025e346d268ff892d4f9852ffbb14c3c604f8cc218d842d68da`. Schema 1 `COMMAND-VERIFICATION`, `OK`, exit 0, `STABLE`; commit atteso, working tree vuoto. Le 818 impronte tracked univoche sono identiche before/after; i due prodotti array mantengono i pin `d3b3d07fc18bd2a077c1a2d79020a76263b2779e` e `a410297c29c5d043ad60d3804bd3711e22c2833b`. Comando effettivo `make check-core`; durata 235.500538d0 secondi.
+
+**1129 test nominali + 2 smoke = 1131**, conteggiati soltanto prima del marker unico di completamento build/test. I nominali sono coerenti con il conteggio statico delle definizioni `DEftest` del checkout a questo commit. Sono verificati separatamente **quattro selftest del linter**, non inclusi nei 1129. Lint: 195 file, zero violazioni. Trace: 119 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, zero errori. Link: 395 file, 2807 link, zero rotti. Nel solo stderr esterno non ci sono warning/style-warning o compilazione interrotta; le note del compilatore non sono warning.
+
+## Selftest correlati e prove
+
+Snapshot: 10 target, 21 impronte MD5 stabili; reader: 8 target, 34 impronte MD5 stabili. Entrambi i record principali `OK`, worker errors zero, `READ-EVAL-DISABLED T`, detection nominativa. Si tratta dei selftest, non di campagne mutation. I report di fixture reali sono `4000914851-snapshot-self-test-10971-0/report.lisp` e `4000914852-reader-self-test-10981-0/report.lisp`, ciascuno `PASSED` con due classificazioni `WORKER-ERROR` attese: signal 9 e completion exit 7, nessun timeout.
+
+Storage: 123 controlli/40 casi tutti `OK`. Publication: 2 controlli/2 casi `OK`, con exit 1 atteso; i relativi backtrace sono dati delle fixture negative. Normalizer compression: 6 controlli/2 casi, exit 0 e `IMPORTED`. La verifica catalogo `OK` dichiara 86 cataloghi, 2927 riferimenti, 18945 file, 542727236 byte; conserva il limite struttura/presenza/dimensioni/integrità compressa senza reinterpretare i risultati.
+
+## Spike
+
+Aggregate `spikes/out/4000915025-check-15198-0/report.lisp`: schema 1, `COMPLETE`, `--check`, stesso commit e working tree pulito. Dieci run e dieci artifact ordinati SPK-01…SPK-10, tutti exit 0 e sorgenti `STABLE`. Esiti: nove `OK` e SPK-07 `PASS`. Ogni child coincide mediante `EQUALP` con la copia aggregate, e il suo stdout letto come una sola plist coincide con il risultato dichiarato.
+
+Le **54 impronte univoche** dell'aggregate coincidono con i pin del wrapper. Sono **62 occorrenze child** before/after, suddivise 5/3/3/5/5/7/17/6/3/8; tutte coincidono con l'aggregate. I due numeri hanno denominatori distinti.
+
+Descriptor aggregate: 318 byte, SHA256 `47f253588a13ec71fdab2bba693a1926fcf2a8cfd917ae675af841902be955c0`; gzip: 466804 byte, SHA256 `0cc5e67b8429b401a6743f823d2683a0cb95cb70ff3be8624411d133cae40950`. I byte decodificati verificati dal lettore trusted sono 28961985, SHA256 `568c27066e3e3159acaebc06f743b7def02ef75e7d091e22b272f23555d33e2e`. Byte e SHA256 dei 16 file fisici osservati, inclusi descriptor/payload, rimangono invariati prima/dopo; l'elenco completo è nello stdout della lettura.
+
+## Reader, esito e limiti
+
+Reader `integrated-runtime-reading.lisp`, blob **`b6cddf2592f8bf21186d02b3061fea0b6e09ea0c`**. CLI a gruppi `RECORD COMMIT NOMINAL BYTES SHA256`; qui i valori sono percorso e commit sopra, `1129`, `963835`, SHA256 sopra. Output `integrated-runtime-reading-3b.stdout.txt`, blob `e85891719b2c3ad57a3e83ecdf37cb45f822c78f`: **OK**, 19885040 visite/check del reader; stderr vuoto. Questo totale è principalmente strutturale e non va presentato come test del prodotto.
+
+Il primo tentativo `integrated-runtime-reading-3.*.txt` è conservato: la variante del primo integrato aveva fissato 194 file lint, mentre il nuovo commit ne ha 195. La correzione riguarda esclusivamente il reader, ora deriva il conteggio positivo dalla riga che deve dichiarare zero violazioni. La variante precedente rimane byte per byte in `integrated-runtime-reading.preparatory-1h-3.lisp`; nessuna sorgente o prova originaria è cambiata.
+
+La lettura usa `READ-EVAL NIL`, readtable standard, package CL-USER, EOF GENSYM e una sola plist, controlla cicli nei cons e chiavi univoche nelle plist incontrate dal protocollo, ammette soltanto array numerici piatti e atomi. Non interpreta ogni sotto-lista arbitraria come plist. `EQUALP` compara i valori degli array senza certificare identità della loro rappresentazione; gli SHA256 dei byte conservati sono osservazioni distinte. I metadati sono coerenti, non autenticati; questa lettura non riesegue test, non rivaluta le sorgenti del commit storico e non dimostra copertura, MC/DC/C1, assenza assoluta di allocazioni o qualificazione del motore. Nessuna osservazione dei record in corso è stata fatta.

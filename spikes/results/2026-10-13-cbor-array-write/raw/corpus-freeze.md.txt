@@ -1,0 +1,119 @@
+# Corpus cieco per la composizione degli array CBOR
+
+Freeze del 2026-10-13, prima della scrittura dei nuovi sorgenti.
+Contratto letto: `docs/implementazione/cbor-array-metodo.md`, blob
+`2f257c9e8a56a5182142934dada3f3b38b5bef65`.
+Worktree `cbor-float-write/ArcDocDB`, ramo `codex/cbor-array-write`, base
+comunicata `13983d3`. Autore del corpus distinto dall'autore del prodotto.
+Non sono stati letti nuovi sorgenti `cbor-array*`, ne sono stati definiti,
+caricati, compilati o chiamati nuovi prodotti. Nessuna campagna eseguita.
+
+## Impronte congelate
+
+| File relativo | Blob Git | SHA256 | Righe | Byte |
+| --- | --- | --- | ---: | ---: |
+| tests/codec/cbor-array-write-support.lisp | eb1fccadb205e375b4a2324a6b6725a860bb546f | 42a59239bec468dea130b87733a077874a5d9e83ff0f491b20312315bc27ee95 | 143 | 7983 |
+| tests/codec/cbor-array-write.lisp | b13f58264f3cd97e1947ee52936732a7fcebe672 | 9ed6a20ab5ae2db33ef419986c8ee963898894ce239059eae7866d503fe48098 | 293 | 19742 |
+| tests/codec/cbor-array-write-threads.lisp | 5720110265b67019937f08cbd949b4469a04b867 | 6be0614da2bafdafe2d853fa7845fb913dbf0cd2673771c2c4b0cca277986e35 | 62 | 4054 |
+
+Package `arcdocdb.cbor.array.write.tests`, export `RUN`.
+19 test seriali e 1 test parallelo, tutti con `REQ-CBR-005` nel nome.
+I tre file non verranno modificati dopo questo freeze.
+
+## Oracolo, preservazione e precedenza
+
+La testata e ricostruita con divisioni e potenze intere di 256, separata
+dal prodotto. I figli sono byte letterali; il risultato freddo e
+testata MT4 piu concatenazione esatta. La prima fixture a cinque figli
+usa 00/3818/6141/F5/F93E00, fini relative 1/3/5/6/9 e risultato di10byte.
+L'unica verifica scanner aggiuntiva riguarda tale risultato e non
+determina le aspettative dell'oracolo.
+
+Ogni successo verifica arita1, NEXT fixnum, intera destinazione fisica,
+intera tabella e span sorgente. Quando BUFFER non e SOURCE si verifica
+anche l'intera sorgente; se sono EQ, la sola zona destinazione cambia
+e il loro span sorgente disgiunto rimane intatto. Ogni errore pubblico
+verifica destinazione, sorgente e tabella fisiche complete, anche con
+tipi invalidi e alias. Preflight verifica inoltre entrambe le matrici
+dello scratch e tutti i suoi campi, gia sporcati entro i domini validi.
+COUNT0 conserva tutto lo scratch; successo non vuoto conserva lo stato
+finale dell'ultimo figlio. Riuso dopo errore di parsing e preflight.
+
+Fixture di header COUNT0/1/23/24/255/256/65535/65536; offset0/1/7/31
+con capacita esatta e meno1. Figli annidati, tag, mappe duplicate o non
+ordinate, testo UTF8 multibyte, byte opachi, float minimi con zeri e NaN.
+Tutti gli11 passi di precedenza del metodo, tipi/range/limiti, alias
+scratch anche vuoto, primo fine0, monotonia, fine fuori span e ultimo
+fine strettamente crescente ma diverso da SPAN, code tabella non lette.
+Overlap della testata e dell'intero footprint, confini toccanti, span
+vuoto e END che oltrepassa la sorgente senza overlap del footprint.
+16MiB esatti e incrementi1/2, residuo nodi prima del reset successivo,
+tag nei nodi, profondita99/100, errori scanner propagati con offset
+assoluti e ordine dei figli. Motivi pubblici e tipi esatti dal metodo.
+
+Dipendenze preesistenti lette: test framework foundation, supporti
+structure/simple/string/float/minimal-scan, fixture minimal/edges e
+scanner precedente. Snapshot, attesa/join/cleanup e scratch sporco
+riusano questi helper; nessuna dipendenza dal nuovo prodotto per
+costruire aspettative, seed, classi o token.
+
+## Piano e conteggi statici
+
+Chiamate previste alla sola API nuova nei18 test seriali non fuzz,
+in ordine: 17,48,48,3,15,15,15,6,19,15,14,9,3,6,11,9,3,2.
+Somma258: 82 successi e176 rifiuti. Sono conteggi derivati dalla
+struttura del corpus, non misure di una campagna o attestazioni PASS.
+
+Fuzz1024: LCG32 seed41525235, moltiplicatore1664525, incremento1013904223,
+mascheraFFFFFFFF. Classificazione per iterazione modulo16:
+512 successi e64 per ciascuna classe capacita, byte, entry, nodi,
+profondita, parsing, source-range, count. Stato finale8F433635.
+Totale seriale1282 chiamate:594 successi e688 rifiuti previsti.
+
+Due worker reali riusati per due ondate,2048 chiamate ciascuno/ondata:
+8192 composizioni. Destinazioni e scratch privati; sorgente e tabella
+comuni sola lettura. READY/GO/DONE sono semafori distinti per ondata.
+Timeout attesa15s, join20s, cleanup bounded tramite helper precedente.
+Ogni chiamata controlla arita, NEXT, interi array e statistiche
+dell'ultimo figlio; le ondate verificano durata positiva e overlap.
+Questo non misura scaling o simultaneita sui core.
+
+Offset3/7, NEXT13/17, lunghezze fisiche20/24. Pattern iniziale byte[i]
+=(A7+37*i)mod256; risultato85 00 38 18 61 41 F5 F9 3E 00.
+Token=NEXT+somma((i+1)*byte[i]) sull'intera destinazione fisica:
+25478/36728; sink2048 per worker/ondata52178944/75218944.
+Totale previsto seriale+parallelo9474 chiamate,8786 successi e688 rifiuti.
+
+## Sei fixture fredde per il benchmark successivo
+
+Piano aritmetico, non benchmark eseguito. Destinazione prefix3/suffix7,
+pattern e token come sopra, capacita esatta. Sorgente prefix7/suffix5,
+sentinelleFF, tabella COUNT+2 con le due codeFFFFFFFF.
+
+| Fixture | Figli | COUNT/SPAN | Header | NEXT/lunghezza fisica | Token |
+| --- | --- | --- | --- | --- | ---: |
+| vuoto | nessuno | 0/0 | 80 | 4/11 | 9554 |
+| scalare | 00 | 1/1 | 81 | 5/12 | 10008 |
+| cinque | 00,3818,6141,F5,F93E00 | 5/9 | 85 | 13/20 | 25478 |
+| 24 scalari | 24 volte00, fini1..24 | 24/24 | 9818 | 29/36 | 35108 |
+| 256 scalari | 256 volte00, fini1..256 | 256/256 | 990100 | 262/269 | 251717 |
+| array/tag/testo | 8100,C0F6,63E282AC; fini2/4/8 | 3/8 | 83 | 12/19 | 27520 |
+
+## Controlli preliminari e limiti
+
+Due tentativi di sola lettura hanno osservato un unmatched close
+parenthesis nel terzo test seriale (tool chunk1a78f0) e poi EOF dopo18
+forme del seriale (chunkac2c59). Corretti prima del freeze: chiusure
+del test dei figli annidati e del blocco scratch ultimo figlio.
+Queste sono osservazioni parziali di sintassi del corpus; non si
+ricostruiscono transcript completi e non sono fallimenti del prodotto.
+
+READ/EOF finale con READ-EVAL NIL e package vuoti:16/20/2 forme,
+20 nomi unici. I simboli pubblici del futuro prodotto sono stati
+soltanto internati/esportati, senza funzione. Valutati soltanto quattro
+helper aritmetici (header, destination, fixture, token), oltre alla
+semplice aritmetica del calendario fuzz e dei conteggi; tutte le
+fixture benchmark e i due sink freddi coincidono. Tool chunk7c4dc0.
+Nessun test, runner, ASDF, prodotto o campagna e stato eseguito.
+La futura seconda lettura C1 e le campagne devono ancora avvenire;
+questo freeze non chiude alcun gate C1 globale o qualifica il motore.

@@ -1,0 +1,10 @@
+# Lettura prima della compilazione
+
+La prima bozza write (blob b3135c8768199c23d58721ba528154461fdbda1e)
+conteneva il confronto concatenato COUNT <= LENGTH(ITEM-ENDS) <= 16MiB.
+Il contratto limita COUNT, senza limitare la coda ignorata della tabella:
+una tabella più lunga era quindi rifiutata impropriamente da una guardia.
+Il controllo è stato separato in COUNT <= LENGTH e COUNT <= 16MiB prima
+di compilazione, caricamento o campagne. Bozza originale conservata.
+La docstring usa ora O(SPAN+COUNT*102), senza affermare un numero esatto
+di operazioni. Il corpus congelato non è stato modificato.

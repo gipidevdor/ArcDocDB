@@ -1,0 +1,21 @@
+(:STATUS :OK :CHECKS 3330 :RECORD
+ #A((49) BASE-CHAR . "spikes/out/4000917001-command-59092-0/report.lisp") :HEAD
+ #A((40) BASE-CHAR . "842064ad196e8ad4a9b32affe08773a996276656")
+ :WRAPPER-STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE :SOURCE-COUNT 822
+ :FOUNDATION-COVERAGE-BLOB "95cb20b3d48a8d63d9e4a327bb317b37dc90dcd4" :COMMAND
+ (#A((4) BASE-CHAR . "sbcl") #A((10) BASE-CHAR . "--noinform")
+  #A((13) BASE-CHAR . "--no-userinit") #A((12) BASE-CHAR . "--no-sysinit")
+  #A((8) BASE-CHAR . "--script")
+  #A((30) BASE-CHAR . "tools/foundation-coverage.lisp")
+  #A((11) BASE-CHAR . "--self-test")
+  #A((68) BASE-CHAR
+     . "spikes/out/cbor-array-write-20261013/coverage-integration-self-test/"))
+ :WALL-SECONDS 0.883807d0 :STDOUT
+ "Copertura: self-test del ramo mancante superato.
+"
+ :STDERR "" :PHYSICAL-OBSERVATION
+ (:BYTES 170600 :SHA256
+  "4caa7b46361a5e88011bba1f0b6416c89d4430cdc56581a75fe3953b1f709b34")
+ :LIMITS
+ (:DATA-ONLY :METADATA-COHERENCE :NO-AUTHENTICATION :NO-PRODUCT-OR-DRIVER-LOAD
+  :NO-NEW-COVERAGE-CAMPAIGN :NO-COVERAGE-OR-MCDC-QUALIFICATION-CLAIM))

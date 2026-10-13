@@ -1,0 +1,72 @@
+# Lettura statica dell'integrazione 4
+
+Esito: PASS della lettura di registrazioni ASDF/RUN, scope di copertura e conservazione dei cinque file array congelati. Questo esito riguarda l'integrazione statica; non dichiara un nuovo risultato runtime.
+
+## Riferimenti osservati
+
+Delta richiesto e letto da Git: `bdf709edf713891410b4639f219e1c9c1ba1f31a` → `a3f8a36cc12a977ce8970f63e50a8941a3f205d8`. Il merge ha i genitori `bdf709edf713891410b4639f219e1c9c1ba1f31a` e `14fd7738c216e3a0bd3ce9612576b9b57d648f74`.
+
+Alla prima e all'ultima lettura HEAD era già `842064ad196e8ad4a9b32affe08773a996276656`. La diff tra il merge richiesto e questo HEAD è vuota per `arcdocdb.asd`, `tools/foundation-coverage.lisp`, `src/` e `tests/`; anche la diff del worktree corrente rispetto al merge è vuota per questi percorsi. La lettura resta ancorata al commit di merge immutabile.
+
+Blob nel merge:
+
+| File | Blob Git |
+| --- | --- |
+| arcdocdb.asd | a63ec994c564c48dc46860e1349be9fd5f5503d8 |
+| tools/foundation-coverage.lisp | 95cb20b3d48a8d63d9e4a327bb317b37dc90dcd4 |
+
+## ASDF e RUN
+
+La sola modifica ASDF del delta è l'aggiunta di `active-init` nel modulo seriale `get-resolver`, dopo `active-types`, `active-directory`, `active-scan` e `active-build`, prima di `active-preflight` e `active-read`. Il modulo `series`, inclusa `publication`, viene caricato prima del resolver; `get-directory` viene dopo il resolver. L'ordine rende disponibili la nuova factory Series e la factory della radice ACTIVE ai rispettivi utilizzatori.
+
+Restano i due componenti prodotto `cbor-array-input` e `cbor-array-write` nel modulo codec seriale, dopo scanner e writer esistenti. Restano i tre componenti del corpus, in ordine supporto, seriale e thread. Nel `:perform test-op` resta una chiamata a `ARCDOCDB.CBOR.ARRAY.WRITE.TESTS:RUN`; nessuna chiamata RUN è stata rimossa dal delta. Restano anche `ARCDOCDB.SERIES.TESTS:RUN` e `ARCDOCDB.GET.DIRECTORY.TESTS:RUN`, che registrano il corpus ampliato nei file già inclusi.
+
+Il supporto array conserva il macro `DEFTEST` con `PUSHNEW` dei simboli funzione e il RUN che percorre `REVERSE *TESTS*`. Non è stato introdotto un secondo dispatcher array. Le registrazioni scheduler, pool-claim e control già integrate non cambiano in questo delta.
+
+## Risoluzione della copertura
+
+Il conflitto di copertura risulta risolto conservando `cbor-array-write` in tutte le superfici: commento d'uso, elenco `MEMBER` della CLI, messaggio di errore, selezione dei sorgenti, self-check delle selezioni, dispatch della suite specifica e dispatch dello scope generale codec.
+
+Lo scope array seleziona soltanto `src/codec/cbor-array-input.lisp` e `src/codec/cbor-array-write.lisp`, tramite corrispondenza del suffisso fino alla fine del percorso. I casi negativi per test, suffissi falsi e child path rimangono presenti. Il relativo dispatch chiama `ARCDOCDB.CBOR.ARRAY.WRITE.TESTS:RUN`; lo scope codec conserva la stessa chiamata tra le suite codec.
+
+Il nuovo scope `get-active-init` è presente nel commento d'uso, nell'elenco della CLI e nel testo di errore. Seleziona esattamente cinque sorgenti:
+
+- `src/series/publication.lisp`
+- `src/get-resolver/active-types.lisp`
+- `src/get-resolver/active-init.lisp`
+- `src/get-resolver/active-build.lisp`
+- `src/get-directory/sources-types.lisp`
+
+I self-check aggiunti includono selezioni positive e rifiuto di `.lisp.fake` e di un percorso sotto tests. Il nuovo scope avvia prima la suite Series e poi la suite GET directory. Nessuno scope precedente viene rimosso: la diff aggiunge il nuovo valore alle tre rappresentazioni della CLI e conserva i rami preesistenti.
+
+Il valore di default rimane `foundation`; la presenza del nuovo scope non equivale a copertura dell'intero programma. La CLI non aggiunge scope control o scheduler, limite preesistente e distinto da questa risoluzione.
+
+## Delta ACTIVE vuoto e Series
+
+La nuova API `inizializza-radice-serie` è esportata dal package Series, importata dal resolver e impiegata dalla nuova `inizializza-radice-get-attiva`. GET directory importa quest'ultima ed esporta `inizializza-fonti-get-attive`. Il ponte rimane tra questi package; il package CBOR e i suoi export non cambiano.
+
+La lettura del delta mostra la pubblicazione iniziale della radice tramite CAS del controller, dopo verifiche di lease, salute e controller vergine. La radice iniziale viene anche assegnata alla planned-root; le invarianti e la chiusura dell'effetto restano esplicite. La factory ACTIVE verifica file aperti e frontiere scritta/durevole a 64, costruendo una radice con directory NIL e contatori zero. Il tipo della radice viene ampliato per ammettere questa forma vuota. Il writer di fonti riusa la verifica condivisa di lease/owner/duplicato e delega l'inizializzazione alla factory del resolver.
+
+I test aggiunti ai file già inclusi coprono inizializzazione nativa v1/v2, root NIL e controller usato, ACTIVE vuoto con CLOSED prima del primo lotto, primo lotto/pubblicazione/riuso, ripetizione, lease/owner/duplicato e frontiere/file non validi. Sono stati letti come sorgente, senza esecuzione; questa nota non sostituisce la revisione dei contratti della nuova feature.
+
+La diff del delta è vuota per `src/codec/`, `tests/codec/`, `src/control/`, `src/scheduler/`, `tests/scheduler/`, `tools/evidence-storage.lisp` e `tools/check-command-archive.lisp`.
+
+## Conservazione del freeze array
+
+I seguenti blob coincidono sia nell'oggetto Git del merge sia nei file correnti con il freeze originario. La diff dei cinque percorsi tra baseline e merge è vuota.
+
+| File | Blob Git congelato e osservato |
+| --- | --- |
+| src/codec/cbor-array-input.lisp | d3b3d07fc18bd2a077c1a2d79020a76263b2779e |
+| src/codec/cbor-array-write.lisp | a410297c29c5d043ad60d3804bd3711e22c2833b |
+| tests/codec/cbor-array-write-support.lisp | eb1fccadb205e375b4a2324a6b6725a860bb546f |
+| tests/codec/cbor-array-write.lisp | b13f58264f3cd97e1947ee52936732a7fcebe672 |
+| tests/codec/cbor-array-write-threads.lisp | 5720110265b67019937f08cbd949b4469a04b867 |
+
+## Limiti e conservazione
+
+Lettura C4 dello stesso autore dei driver, non una nuova revisione C1 indipendente. Sono state usate soltanto letture Git e di testo; nessun caricamento, compilazione, runtime, campagna, modifica tracked, staging o modifica di HEAD. La sola nuova scrittura è questa nota ignored.
+
+L'archivio principale dichiarato di 3003 file, gli strumenti e ogni input già congelato sono rimasti intatti. Non è stata ripetuta l'autenticazione dei file di quell'archivio; il suo conteggio è il contesto comunicato da root, non una nuova osservazione di questa lettura. Il full check 4 gestito da root resta separato da questo esito statico.
+
+La prima inventariazione generale del delta comprendeva anche molti dati pubblicati della feature ACTIVE e ha prodotto output troncato. Le conclusioni sopra si fondano sulle letture successive complete dei percorsi ASDF, coverage e src mirati, sulle diff mirate vuote e sui blob Git espliciti; non sul frammento troncato.

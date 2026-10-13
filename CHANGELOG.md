@@ -7,6 +7,16 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Composizione di array CBOR da elementi già codificati: verifica completa
+  prima della scrittura, testata minima e budget comprensivi della radice.
+  Sorgente e indice condivisibili in lettura, destinazione e scratch privati
+  per worker. Profilo documentale e qualifica C1 restano aperti.
+
+- Dispatcher logico dal pool al collegamento della Serie: binding preallocato
+  sul medesimo contesto, routing solo dopo una presa autorizzata e ingresso
+  distinto per completare gli obblighi già CLAIMED. Nessun begin, pop o retry
+  implicito; ritiro e diagnosi conservano i confini C1 esistenti.
+
 - Pubblicazione del checkpoint recuperato: rinomina ancorata alla directory
   preparata, verifica delle foglie contro i FD del nuovo e vecchio control log,
   controllo del nome installato e fsync del parent. Gettone locale unico con

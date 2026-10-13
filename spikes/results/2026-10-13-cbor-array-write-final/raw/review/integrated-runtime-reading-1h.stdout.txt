@@ -1,0 +1,116 @@
+(:STATUS :OK :CHECKS 19884731 :RESULTS
+ ((:RECORD
+   #A((49) BASE-CHAR . "spikes/out/4000914446-command-97916-0/report.lisp")
+   :COMMIT #A((40) BASE-CHAR . "857bfc77962eb4d74b382bf225c8493824baef77")
+   :SOURCE-COUNT 811 :WALL-SECONDS 247.452112d0 :NOMINAL-TESTS 1117 :SMOKE 2
+   :LINTER-SELFTESTS 4 :LINT "194/0" :TRACE "119/65/13/52/0" :LINKS
+   "390 file, 2779 link controllati, 0 rotti" :MUTATION-SELFTESTS
+   ((:KIND :SNAPSHOT-MUTATIONS :TARGETS 10 :SOURCES 21 :PROCESS-FIXTURES 2)
+    (:KIND :READER-MUTATIONS :TARGETS 8 :SOURCES 34 :PROCESS-FIXTURES 2))
+   :EVIDENCE-SELFTESTS
+   ((:KIND :EVIDENCE-STORAGE-TESTS :CHECKS 123 :CASES 40)
+    (:KIND :EVIDENCE-PUBLICATION-TESTS :CHECKS 2 :CASES 2)
+    (:KIND :NORMALIZER-COMPRESSION-TESTS :CHECKS 6 :CASES 2))
+   :EVIDENCE-CATALOG
+   (:STATUS :OK :CATALOGS 85 :ARTIFACT-REFERENCES 2913 :STORED-FILES 18896
+    :STORED-BYTES 537031400 :LIMITS
+    (:STRUCTURE-PRESENCE-SIZE-AND-COMPRESSED-INTEGRITY
+     :NO-RESULT-REINTERPRETATION))
+   :SPIKES
+   (:AGGREGATE
+    #P"/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/report.lisp"
+    :SOURCE-COUNT 54 :CHILD-SOURCE-OCCURRENCES 62 :RUNS
+    ((:ID #A((6) BASE-CHAR . "SPK-01") :STATUS :OK :SOURCES 5)
+     (:ID #A((6) BASE-CHAR . "SPK-02") :STATUS :OK :SOURCES 3)
+     (:ID #A((6) BASE-CHAR . "SPK-03") :STATUS :OK :SOURCES 3)
+     (:ID #A((6) BASE-CHAR . "SPK-04") :STATUS :OK :SOURCES 5)
+     (:ID #A((6) BASE-CHAR . "SPK-05") :STATUS :OK :SOURCES 5)
+     (:ID #A((6) BASE-CHAR . "SPK-06") :STATUS :OK :SOURCES 7)
+     (:ID #A((6) BASE-CHAR . "SPK-07") :STATUS :PASS :SOURCES 17)
+     (:ID #A((6) BASE-CHAR . "SPK-08") :STATUS :OK :SOURCES 6)
+     (:ID #A((6) BASE-CHAR . "SPK-09") :STATUS :OK :SOURCES 3)
+     (:ID #A((6) BASE-CHAR . "SPK-10") :STATUS :OK :SOURCES 8)))))
+ :PHYSICAL-OBSERVATIONS
+ ((:PATH
+   #A((49) BASE-CHAR . "spikes/out/4000914446-command-97916-0/report.lisp")
+   :BYTES 960554 :SHA256
+   "c85c841904114e6cd83d173f3633bc3b3e75b212c0c3ebaf62cefaa0545308c6")
+  (:PATH
+   #A((124) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914476-snapshot-self-test-99154-0/report.lisp")
+   :BYTES 1961 :SHA256
+   "a7145162f84f4c6482186ceb62620c69299cd13b4c8723c60ba027728f0adf11")
+  (:PATH
+   #A((122) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914476-reader-self-test-99163-0/report.lisp")
+   :BYTES 1943 :SHA256
+   "bed7e218372b3e932453d4bc0ec07e4dd75755e345092740c4c0f42dc916770f")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/report.lisp")
+   :BYTES 318 :SHA256
+   "fa2ffa855a663f957f1e98a10a7dae37eb2c4b96e52084fd4dc5e79c9fa05c7f")
+  (:PATH
+   #A((113) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/report.lisp.gz")
+   :BYTES 466775 :SHA256
+   "fc220c3b9138a4f26fc0c3fe965fb654ebc7c1b8d7f74f9de647ea7501e0bdda")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-01.lisp")
+   :BYTES 27228 :SHA256
+   "f20552ec3a33ce0aee8383b1cf323ffcf4d34e1a722bf4cc61939cd02c3a9b11")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-02.lisp")
+   :BYTES 1607 :SHA256
+   "713af81c41dda743c13a44db8b7def5c6a351092ca1a011d56cddb7fe4c3bfcd")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-03.lisp")
+   :BYTES 3644 :SHA256
+   "1071efc11f4c6018e15c4ec460700d7644006216a514ea726b44fd2b375289fc")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-04.lisp")
+   :BYTES 6752 :SHA256
+   "fdaf27adf67a6be1d8315400c75459a777429d49f10325c6ae26ae1429b7db16")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-05.lisp")
+   :BYTES 10140 :SHA256
+   "8cae8899320308eb187a63bb4c3c5d582a6fabaa2a1b4cc883b762aab2dde624")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-06.lisp")
+   :BYTES 24058 :SHA256
+   "8ae4c09bcf6b2d431c31d9adb79b1c980acfa5611db0b17db20338fbf2c2242a")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-07.lisp")
+   :BYTES 318 :SHA256
+   "e14220c7def08b68b0dca2ec2e2cd85bc5a53111d1a3a1ff20c8940b45b1041e")
+  (:PATH
+   #A((113) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-07.lisp.gz")
+   :BYTES 410622 :SHA256
+   "2232c5fad2f709ab403aa2cccb13265efd47d1a4da246a7facaac5a55dd2e588")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-08.lisp")
+   :BYTES 291712 :SHA256
+   "da3aac77ec618d1677a6e84fd5c288934684b08ec8d3e08680a724f97041176e")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-09.lisp")
+   :BYTES 2472 :SHA256
+   "e5a2ec7a414576e18076f685f19c2920f4378a91bdeaa0df9ae4264551185249")
+  (:PATH
+   #A((110) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914659-check-6225-0/SPK-10.lisp")
+   :BYTES 22975 :SHA256
+   "4e92234f1c09d3b263ddc409e44a082cec1d2f5fdb664ab646866d5f7e19d841"))
+ :LIMITS
+ (:DATA-ONLY :METADATA-COHERENCE :NO-AUTHENTICATION :NO-NEW-CAMPAIGN
+  :NO-PRODUCT-LOAD :FLAT-ATOMS-NUMERIC-ARRAYS-AND-ACYCLIC-CONS-GRAPHS
+  :EQUALP-ARRAY-COMPARISON :STRICT-SUCCESS-RECORDS :EXPLICIT-NOMINAL-COUNT))

@@ -29,7 +29,8 @@
                              (:file "cbor-scan") (:file "cbor-scan-minimal")
                              (:file "cbor-write") (:file "cbor-string-write")
                              (:file "cbor-simple-write")
-                             (:file "cbor-float-narrow") (:file "cbor-float-write")))
+                             (:file "cbor-float-narrow") (:file "cbor-float-write")
+                             (:file "cbor-array-input") (:file "cbor-array-write")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
                (:module "cache" :serial t
@@ -66,6 +67,8 @@
                              (:file "worker-package") (:file "worker-types")
                              (:file "worker-boundary") (:file "worker-run")
                              (:file "routing-types") (:file "routing-build") (:file "routing-select")))
+               (:module "dispatch" :serial t
+                :components ((:file "package") (:file "types") (:file "build") (:file "claim")))
                (:module "index" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "validation") (:file "read") (:file "write") (:file "relocate")
@@ -149,7 +152,9 @@
                              (:file "cbor-simple-write-support") (:file "cbor-simple-write")
                              (:file "cbor-simple-write-threads")
                              (:file "cbor-float-write-support") (:file "cbor-float-write")
-                             (:file "cbor-float-write-threads")))
+                             (:file "cbor-float-write-threads")
+                             (:file "cbor-array-write-support") (:file "cbor-array-write")
+                             (:file "cbor-array-write-threads")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "mvcc" :serial t
@@ -174,7 +179,7 @@
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
                (:module "scheduler" :serial t
                 :components ((:file "support") (:file "controller") (:file "lifecycle")
-                             (:file "pool-claim")))
+                             (:file "pool-claim") (:file "dispatch")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")
@@ -213,6 +218,7 @@
              (uiop:symbol-call '#:arcdocdb.cbor.string.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.simple.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.float.write.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.cbor.array.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)

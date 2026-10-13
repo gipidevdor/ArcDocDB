@@ -1,0 +1,15 @@
+# Lettura statica dell'integrazione 5
+
+Esito: PASS statico del delta remoto `main..origin/main`, osservato e fissato a `14fd7738c216e3a0bd3ce9612576b9b57d648f74` → `06cc1354cd6843c40da0570e5314fef7cf68a667` (PR 11, verifica GET ACTIVE). HEAD locale osservato: `0db8eead381ab65daa97323c6d59488b94cf59d4`. L'integrazione locale del nuovo remoto è ancora separata da questa lettura.
+
+Il tree Git `src` è identico nei due commit: `7983dc42a790ddf5940173e46ea686c4760c5d6a`. La diff dei sorgenti è vuota. Nessuna modifica di prodotto viene introdotta da questo delta.
+
+ASDF aggiunge tre righe e ne rimuove zero: il modulo seriale `get-active`, dopo `get-resolver`, con supporto, construction, directory e read, e una chiamata a `ARCDOCDB.GET.ACTIVE.TESTS:RUN` nel test-op. Nessun componente esistente o RUN viene tolto. I quattro nuovi file di test sono aggiunte; il supporto definisce il package dedicato ed esporta RUN, che percorre le funzioni registrate da DEFTEST. Il blob ASDF remoto è `f98fe74c2e8c71ee629e34d43d6795694de62eb2`.
+
+Il tool diagnostico `get-resolver-coverage.lisp` aggiunge la selezione `--suite closed|active`, conserva CLOSED come default e il suo elenco di sette sorgenti, e seleziona per ACTIVE dieci percorsi esatti e la suite `ARCDOCDB.GET.ACTIVE.TESTS:RUN`. Cache privata, reset delle hit e conservazione del raw prima dell'HTML rimangono nel percorso. Il nuovo profilo non include `active-init.lisp`: è uno scope diagnostico esplicito, distinto da `get-active-init` del tool foundation. Blob remoto del tool: `5ab21d923b68e35adbc177ecd352bb33340f0c07`.
+
+La diff è vuota per `tests/codec/` e `tools/foundation-coverage.lisp`. Quest'ultimo ha lo stesso blob `40610d6151b208314b7df36cb0fcc90badb79d15` sui due riferimenti main. Nessuna registrazione array o scope foundation viene rimossa dal delta. Questa conclusione riguarda le modifiche in arrivo: la conservazione delle aggiunte array presenti solo nel ramo locale va verificata nel merge risultante, senza sostituire l'ASDF locale con il file remoto completo.
+
+Lettura C4 di integrazione, non una revisione indipendente completa del nuovo corpus. Nessun runtime, caricamento, compilazione, campagna o nuovo sweep SHA dei sorgenti. Sono stati letti riferimenti e oggetti Git già memorizzati, oltre al testo del delta. Le conclusioni su ASDF/tool derivano dalle diff mirate complete; un successivo output ampio dei nuovi test è stato troncato e non viene usato per affermare la correttezza completa del corpus.
+
+La sola nuova scrittura è questa nota ignored. Nessuna modifica a tracked, index, HEAD, note precedenti, archivio principale o altri input congelati. Il final gate gestito da root resta separato dall'esito statico.

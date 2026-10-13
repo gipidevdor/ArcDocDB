@@ -1,0 +1,5 @@
+(REQUIRE :SB-POSIX)
+(FORMAT T "ok    ARCDOCDB:*VERSION* è una stringa~%")
+(FORMAT T "build e test: nessun avviso, tutti i controlli superati~%")
+(FINISH-OUTPUT)
+(SB-EXT:EXIT :CODE 7)

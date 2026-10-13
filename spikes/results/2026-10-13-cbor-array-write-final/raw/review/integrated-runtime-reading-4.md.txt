@@ -1,0 +1,48 @@
+# Lettura dati del quarto controllo integrato
+
+Lettura C4 dei record conclusi sul commit **`842064ad196e8ad4a9b32affe08773a996276656`**, dopo il nuovo merge. Nessun caricamento, compilazione o chiamata del prodotto o dei driver, nessuna nuova campagna; viene caricato soltanto `tools/evidence-storage.lisp` per leggere dati. Il reader generico e tutte le letture precedenti rimangono congelati.
+
+## Wrapper interno e suite
+
+È letto il solo **wrapper interno** `spikes/out/4000916725-command-55396-0/report.lisp`: **979122 byte**, SHA256 **`fae9781bcbf089f116dd620d9011d707dc6c15941fcc20ce4698259615c503d7`**. Schema 1 `COMMAND-VERIFICATION`, `OK`, exit 0, `STABLE`, commit atteso e working tree vuoto. Le **822 impronte tracked** sono univoche per percorso e identiche before/after; i due pin array rimangono `d3b3d07fc18bd2a077c1a2d79020a76263b2779e` e `a410297c29c5d043ad60d3804bd3711e22c2833b`. Comando effettivo `make check-core`, durata registrata **251.074354d0 secondi**.
+
+Il wrapper esterno `spikes/out/4000916724-command-55352-0/report.lisp` è conservato dal root separatamente. Questa lettura non lo ha aperto e non trasferisce al suo contenuto le verifiche del wrapper interno.
+
+Prima del marker unico di completamento build/test sono conteggiate **1154 righe nominali + 2 smoke = 1156**, coerenti con il numero nominale esplicito fornito dal root. I smoke verificano presenza del package e stringa versione. Sono poi verificati separatamente **quattro selftest del linter**, senza aggiungerli ai nominali. Lint: **196 file, zero violazioni**. Trace: **119 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, zero errori**. Link: **403 file, 2814 link, zero rotti**. Nessun warning/style-warning o compilazione interrotta nello stderr esterno; sono presenti note del compilatore.
+
+## Selftest e prove correlate
+
+I record principali dei selftest snapshot e reader sono `OK`, worker errors zero, inventari MD5 stabili da **21 e 34 fonti**, rispettivamente **10 e 8 target**, `READ-EVAL-DISABLED T` e detection nominativa. Si tratta dei selftest integrati, non di nuove campagne mutation.
+
+I percorsi effettivi delle fixture processo, derivati dallo stdout interno, sono:
+
+```
+spikes/out/4000916757-snapshot-self-test-55634-0/report.lisp
+spikes/out/4000916758-reader-self-test-55640-0/report.lisp
+```
+
+Entrambi sono `PASSED`, ciascuno con due classificazioni `WORKER-ERROR` attese: signal 9 e completion exit 7, senza timeout. Storage: **123 controlli/40 casi**, tutti `OK`. Publication: **2 controlli/2 casi**, `OK` con exit 1 atteso. Normalizer compression: **6 controlli/2 casi**, exit 0 e risultato `IMPORTED`. I backtrace delle fixture publication sono dati negativi conservati nello stdout, non errori del comando esterno.
+
+Verifica catalogo `OK`: **88 cataloghi, 2985 riferimenti, 22181 file, 594656852 byte**. Conserva il limite dichiarato struttura/presenza/dimensioni/integrità compressa, senza reinterpretazione dei risultati.
+
+## Dieci spike
+
+Aggregate effettivo `spikes/out/4000916943-check-58072-0/report.lisp`: schema 1, `COMPLETE`, modo `--check`, stesso commit e working tree pulito. Dieci run e dieci artifact ordinati SPK-01…SPK-10, tutti exit 0 e `STABLE`; nove `OK`, SPK-07 `PASS`. Ogni child coincide mediante `EQUALP` con la copia aggregate; il suo stdout, letto come una sola plist, coincide con il risultato dichiarato.
+
+Le **54 impronte univoche aggregate** coincidono con il wrapper. Le **62 occorrenze child** sono suddivise 5/3/3/5/5/7/17/6/3/8, tutte coerenti con l'aggregate before/after. I denominatori 54 e 62 rimangono distinti.
+
+Descriptor aggregate: **318 byte**, SHA256 `6844b5672f6d3951ed929a8fdb6ad134efcc47809463d6bd5bcd81e6d502d0ab`; gzip: **466697 byte**, SHA256 `ca10ccf7ace60f945de71f76ce336845f8c3cc1198b0134532c06711cf770cc5`. Il trusted reader verifica anche dimensione e SHA256 del contenuto decodificato. Lo stdout della lettura elenca **16 file fisici osservati**, inclusi descriptor/payload del child SPK-07, tutti con byte e SHA256 invariati prima/dopo.
+
+## Record separato del selftest di copertura dopo il merge
+
+`spikes/out/4000917001-command-59092-0/report.lisp`: **170600 byte**, SHA256 **`4caa7b46361a5e88011bba1f0b6416c89d4430cdc56581a75fe3953b1f709b34`**. Lettura DATA separata: schema 1 `COMMAND-VERIFICATION`, **OK/exit 0/STABLE**, stesso commit e working tree vuoto, **822 impronte** univoche identiche before/after, stderr vuoto. Comando registrato `tools/foundation-coverage.lisp --self-test spikes/out/cbor-array-write-20261013/coverage-integration-self-test/`; tool blob dichiarato **`95cb20b3d48a8d63d9e4a327bb317b37dc90dcd4`**, durata **0.883807d0 secondi**.
+
+Lo stdout coincide esattamente con `Copertura: self-test del ramo mancante superato.` e un newline. Byte e SHA256 del record rimangono invariati prima/dopo. Questa lettura conferma soltanto wrapper/metadati e testo del selftest; non carica il driver, non rilegge gli alberi di copertura e non certifica nuova copertura o MC/DC/C1.
+
+## Reader, output e limiti
+
+Reader generico frozen **`b6cddf2592f8bf21186d02b3061fea0b6e09ea0c`**, invariato. CLI `RECORD COMMIT NOMINAL BYTES SHA256`: percorso/commit del wrapper interno sopra, `1154`, `979122`, SHA256 sopra. Output nuovo `integrated-runtime-reading-4.stdout.txt`, blob **`f21272f6e805061f1956b00399c92b2124e5c15e`**: **OK**, **19885216 visite/check strutturali**, stderr vuoto. Nessun tentativo fallito o adattamento del reader è stato necessario per check4; il totale delle visite non va presentato come test del prodotto.
+
+Reader DATA separato `integrated-runtime-reading-4-coverage.lisp`, blob **`37a6ae51e9a4bfed884f6b8de58fd349239a97d5`**. CLI `RECORD HEAD BYTES SHA256` con percorso selftest sopra, stesso commit, `170600`, SHA256 sopra. Output `integrated-runtime-reading-4-coverage.stdout.txt`, blob **`9955294cba47a60f3e4d681f400cfbeee64e93cd`**: **OK**, **3330 controlli strutturali**, stderr vuoto. Nessun prodotto o driver è caricato.
+
+Le letture confrontano struttura e coerenza interna dei dati senza autenticare i processi originari o rivalutare fisicamente le sorgenti storiche. Il trusted reader usa `READ-EVAL NIL`, readtable standard, CL-USER ed EOF GENSYM. Il reader generico controlla cons aciclici, chiavi univoche nelle plist incontrate dal protocollo e ammette soltanto array numerici piatti e atomi, non tutti gli oggetti Lisp. `EQUALP` confronta valori degli array senza certificare identità della loro rappresentazione; gli SHA256 dei byte conservati sono osservazioni distinte. Nessun claim nuovo di copertura, MC/DC/C1, nonallocazione assoluta o qualificazione del motore; nessuna lettura di record parziali o modifica a sorgenti, indice o note precedenti.

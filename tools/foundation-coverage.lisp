@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -14,7 +14,9 @@
 (defun scope-path-p (scope path)
   "Gli scope con elenchi espliciti selezionano file esatti; gli altri il modulo intero."
   (let ((suffixes
-          (cond ((string= scope "get-active-init")
+          (cond ((string= scope "io-rename")
+                 '("/src/io/rename.lisp" "/src/io/types.lisp" "/src/io/lifecycle.lisp"))
+                ((string= scope "get-active-init")
                  '("/src/series/publication.lisp" "/src/get-resolver/active-types.lisp"
                    "/src/get-resolver/active-init.lisp" "/src/get-resolver/active-build.lisp"
                    "/src/get-directory/sources-types.lisp"))
@@ -77,7 +79,11 @@
   (let ((actual (isolate-output (truename "./") directory)))
     (unless (search "/fasl/src/foundation/record.fasl" (namestring actual))
       (error "foundation-coverage.lisp COD-60: mapping ricorsivo della cache errato.")))
-  (unless (and (scope-path-p "cbor" "/repo/src/codec/cbor-package.lisp")
+  (unless (and (scope-path-p "io-rename" "/repo/src/io/rename.lisp")
+               (scope-path-p "io-rename" "/repo/src/io/types.lisp")
+               (not (scope-path-p "io-rename" "/repo/src/io/rename.lisp.fake"))
+               (not (scope-path-p "io-rename" "/repo/tests/io/rename.lisp"))
+               (scope-path-p "cbor" "/repo/src/codec/cbor-package.lisp")
                (scope-path-p "hash" "/repo/src/hash/hash64.lisp")
                (not (scope-path-p "hash" "/repo/tests/hash/hash64.lisp"))
                (scope-path-p "key-hash" "/repo/src/index/hash-digests.lisp")
@@ -215,7 +221,7 @@
                              ((string= scope "execution") '#:arcdocdb.execution.tests)
                              ((string= scope "storage") '#:arcdocdb.storage.tests)
                              ((string= scope "recovery") '#:arcdocdb.recovery.tests)
-                             ((string= scope "io") '#:arcdocdb.io.tests)
+                             ((member scope '("io" "io-rename") :test #'string=) '#:arcdocdb.io.tests)
                              ((string= scope "wal") '#:arcdocdb.wal.tests)
                              ((string= scope "series") '#:arcdocdb.series.tests)
                              ((string= scope "index") '#:arcdocdb.index.primary.tests)
@@ -248,8 +254,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-float-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "get-series" "get-active-init" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
+                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-float-write" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "get-series" "get-active-init" "io-rename" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

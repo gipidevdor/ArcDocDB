@@ -48,7 +48,7 @@ Errori tipizzati all'apertura; directory/FIFO non sono segmenti validi."
   (apri path :input backend max-transfer +default-file-limit+))
 ;;; REQ: REQ-STO-003 REQ-AFF-008
 (defun apri-directory (path &key backend (max-transfer +max-transfer+))
-  "Pre: directory posseduta. Post: FD di directory, sola sincronizzazione/chiusura.
+  "Pre: directory posseduta. Post: FD per metadati relativi, sincronizzazione e chiusura.
 Errori di apertura tipizzati; nessuna creazione o rinomina."
   (apri path :directory backend max-transfer +default-file-limit+))
 

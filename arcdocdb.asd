@@ -55,7 +55,7 @@
                (:module "io" :serial t
                 :components ((:file "package") (:file "types") (:file "identity-types")
                              (:file "native") (:file "lifecycle") (:file "identity")
-                             (:file "transfer") (:file "flush")))
+                             (:file "transfer") (:file "flush") (:file "rename")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
                              (:file "group") (:file "executor") (:file "csn")))
@@ -178,7 +178,8 @@
                              (:file "compaction-scan")
                              (:file "control-payload")))
                (:module "io" :serial t
-                :components ((:file "support") (:file "transfer") (:file "native")))
+                :components ((:file "support") (:file "transfer") (:file "native")
+                             (:file "rename") (:file "rename-native")))
                (:module "recovery"
                 :serial t
                 :components ((:file "support") (:file "scan") (:file "corruption")

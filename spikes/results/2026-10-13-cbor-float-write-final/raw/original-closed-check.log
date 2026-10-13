@@ -1,0 +1,85 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/results/2026-10-13-cbor-float-write/"
+ :INDEXED-FILES 2795 :ACTUAL-FILES 2797 :INDEXED-BYTES 26641257 :PROCESSES
+ ((:LABEL "process-01" :RECORD-PATH "processes/process-01/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/cbor-float-write-mutation.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-02" :RECORD-PATH "processes/process-02/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/cbor-float-write-audit.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-03" :RECORD-PATH "processes/process-03/report.lisp" :COMMAND
+   ("make" "test" "lint" "trace") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY
+   :STABLE)
+  (:LABEL "process-04" :RECORD-PATH "processes/process-04/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--self-test"
+    "spikes/out/cbor-float-write-20261013/coverage-self-test/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-05" :RECORD-PATH "processes/process-05/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/cbor-float-write-bench.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-06" :RECORD-PATH "processes/process-06/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/cbor-float-write-bench.lisp" "--bench")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-07" :RECORD-PATH "processes/process-07/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/cbor-float-write-20261013/coverage/" "cbor-float-write")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-08" :RECORD-PATH "processes/process-08/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/cbor-float-write-audit.lisp" "--bench"
+    "spikes/out/4000905677-command-32530-0/report.lisp"
+    "cd5749edc0a757ee3a5b470eda566a6685d32fd8"
+    "03c6aed61e2c243d8b1a6c4332ce1837c4e9a77c")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-09" :RECORD-PATH "processes/process-09/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/cbor-float-write-mutation.lisp" "--run"
+    "spikes/out/cbor-float-write-20261013/mutations/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-10" :RECORD-PATH "processes/process-10/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/collect.lisp"
+    "--self-test"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/self-test-1/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-11" :RECORD-PATH "processes/process-11/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/collect.lisp"
+    "--self-test"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/self-test-2/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-12" :RECORD-PATH "processes/process-12/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/collect.lisp"
+    "--self-test"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/self-test-3/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-13" :RECORD-PATH "processes/process-13/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/collect.lisp"
+    "--self-test"
+    "spikes/out/cbor-float-write-20261013/parallel-collection/self-test-4/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-14" :RECORD-PATH "processes/process-14/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/compact-evidence.lisp" "--root" "spikes/out/" "--jobs" "4")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-15" :RECORD-PATH "processes/process-15/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "2fa311d64aa8470c1e07ef5c1fcbec2b8e759d078048378a7fd3ebc8d610cf81"
+ :CATALOGUE-SHA256
+ "be2f6f09d0a23a27e83229d0081b951d7eee6bebd319a6f085e89451610848f6"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

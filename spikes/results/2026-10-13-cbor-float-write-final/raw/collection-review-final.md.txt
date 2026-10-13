@@ -1,0 +1,74 @@
+# Raccolta float CBOR — lettura dei dati
+
+Lettura del 2026-10-13, in sola lettura degli input, mentre il controllo
+completo di integrazione successivo è ancora in corso. Nessuna verifica
+ulteriore dei 2.795 file mediante hashing e nessuna modifica agli originali.
+Questa lettura è svolta dall'autore del collector; non rappresenta una
+seconda validazione indipendente del suo codice.
+
+## Input e modalità
+
+- Registro originale: `spikes/out/4000906916-command-50498-0/report.lisp`.
+- Osservazione: `spikes/out/cbor-float-write-20261013/parallel-collection/collection-observation-4000906918-50528-0.lisp`.
+- Chiusura trusted: `spikes/out/cbor-float-write-20261013/parallel-collection/closed-check-4000907333-50528-0.log`.
+
+I tre dati sono stati letti con `arcdocdb.evidence:read-evidence`,
+READ-EVAL NIL ed EOF obbligatorio. Le asserzioni aritmetiche e strutturali
+Common Lisp della lettura terminano con exit zero, senza diagnostiche.
+Il log di chiusura è trattato come dati, senza eseguirne il contenuto.
+
+## Esiti osservati
+
+Il comando di raccolta è OK/0/STABLE, con stderr vuoto e durata registrata
+`628.033756d0` secondi. HEAD registrato
+`1f36b4073a0595f3bd215305ffce4715b171e4a6`, checkout dichiarato pulito.
+Le due liste di 741 impronte dei sorgenti sono uguali prima e dopo.
+
+L'osservazione è OK e in fase COMPLETE: quattro worker, tre SHA per copia,
+2.795 file pianificati e 2.795 risultati individuali OK. I percorsi dei
+risultati sono tutti distinti. Nessun errore worker è registrato.
+I conteggi dei quattro worker sono `(380 632 852 931)`:
+la somma è 2.795 e ogni worker ha eseguito almeno una copia.
+
+Il processo di chiusura indipendente termina con exit zero e signal NIL;
+il percorso del suo log coincide con l'input letto. Il rapporto trusted
+riporta 2.795 file indicizzati, 2.797 file effettivi e 26.641.257 byte
+indicizzati, inventario chiuso. I due file aggiuntivi sono i metadati
+derivati `archive-index.lisp` e `catalogo.lisp`, secondo lo schema del
+validator. La chiusura attesta READ-EVAL NIL ed EOF obbligatorio.
+
+I 15 registri conservati comprendono 13 OK/0 e due FAILED/1; tutti dichiarano
+SOURCE-CONSISTENCY STABLE. I fallimenti sono `process-10` e `process-11`,
+i primi due self-test del nuovo collector: parentesi mancante e firma
+errata di SIGNAL-SEMAPHORE. Non sono fallimenti del prodotto float CBOR.
+I successivi self-test del collector sono `process-12` e `process-13`, OK.
+La lettura non riscrive, elimina o riclassifica quei fallimenti.
+
+## Provenienza e limiti
+
+L'entry di `collection-source.lisp` dichiara 22.602 byte e SHA256
+`53d8c739a95a79aba4ddc363abd6e0bc1f8d3f64b1572150b730f69eedc15296`,
+coerente con il collector già congelato dopo la sola correzione della data,
+blob `68a9949dff6d270a6caf7d0e466bb391e946998a`.
+L'origine precedente conserva SHA256
+`f59f7a52934c7fe6103b5047aade87214f17494e857fe35c568968c681790d81`;
+originale, diff e precedenti tentativi rimangono nell'area ignored.
+
+La verifica delle tre impronte per copia è un'osservazione locale del
+collector: origine prima, origine dopo e destinazione. Il rapporto di
+chiusura dichiara ORIGINS-COMPARED NIL; il validator controlla inventario,
+impronte delle destinazioni, schema e metadata, senza confrontare di nuovo
+gli originali. Questa lettura controlla la coerenza dei dati già registrati,
+senza rinnovare quei controlli dei byte e senza attestare autenticità o
+stabilità atomica dell'intero insieme dei file.
+
+Il limite della coda e i join sono espliciti nel collector; l'enumerazione
+delle directory non è preventivamente limitata, come dichiara anche la
+chiusura trusted. Il numero di copie per worker dimostra lavoro distribuito,
+senza inferenza di simultaneità sui core, scaling o incremento di velocità.
+La durata include raccolta e chiusura del relativo comando; non è una
+misura del writer né un confronto con la raccolta seriale.
+
+Nessuna promozione di C1, MC/DC, gate di rilascio o semantica dei comandi
+conservati deriva da questa lettura. Il successivo controllo completo e il
+supplemento finale vanno conservati e valutati separatamente.

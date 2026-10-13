@@ -1,0 +1,48 @@
+# Lettura finale dei dati dell'integrazione pool
+
+Fonte: `spikes/out/4000908322-command-83574-0/report.lisp`, argv make
+check-core, commit `3ed6ebfba4dc692b524a4cf3416c8757de978e41`, working tree
+registrato vuoto. STATUS OK, exit 0, STABLE, wall 209,526331 s;
+766 impronte before/after identiche. SBCL 2.6.9, Darwin ARM64, Apple M4,
+10 CPU logiche; carico esterno UNCONTROLLED.
+
+Lettura DATA tramite il solo strumento caricato `tools/evidence-storage.lisp`;
+forme stdout con READ-EVAL NIL, readtable standard e CL-USER. Nessuna
+campagna rieseguita o prodotto/driver/report/FASL/suite caricato o invocato.
+Il precedente `integration-review-final.md`, blob
+`9c8f83e3805a8faed7617c084606cbe2d8fde92a`, resta congelato e invariato.
+
+Marker completo alla riga 2.374: 1.052 nominali + 2 smoke = 1.054 OK suite;
+4 ulteriori OK linter danno 1.058 OK totali, tutti unici. I 23 nomi dichiarati
+del controllore hanno ciascuno una riga OK; incremento nominale 1.029→1.052.
+Stderr principale senza WARNING:, STYLE-WARNING: o Unhandled.
+ASDF nello snapshot: `d619a8f562a4f61bb2cc6951dd650153ffc340e8`.
+
+Gate: lint 173 file/0 violazioni; trace 118 REQ/65 INV/13 FI/52 ADR/0 errori;
+link 363 file/2.668 controllati/0 rotti. Evidence storage OK, 123 controlli;
+publication OK, 2; normalizer OK, 6. Catalogo OK: 80 cataloghi, 2.610 riferimenti,
+18.053 file, 500.071.572 byte. Snapshot e reader process self-test PASSED,
+ciascuno con due WORKER-ERROR deliberati, distinti dai test nominali.
+
+Float: 18 OK REQ-CBR-004; 65.536 half, 131.072 espansioni, 196.608 successi
++196.608 capacità insufficienti; fuzz 2.048 seed 464C5434 invariato.
+Due ondate/32.768 chiamate, sink 2.115.584/2.148.352 entrambe;
+overlap 2.570/2.564 tick a 1.000.000 tick/s. Narrow/writer e tre file del
+corpus nello snapshot coincidono con i blob originali congelati.
+
+Aggregato `4000908497-check-85874-0/report.lisp`: COMPLETE, dieci RUN e
+dieci RUN-ARTIFACTS. Tutti i child SPK-01…10 letti: nove OK, SPK-07 PASS,
+exit 0/STABLE ciascuno; ogni child coincide col proprio RUN. Confronto
+strutturale di cons/scalari e dimensioni, element-type, valori row-major
+degli array typed. Impronte child before/after identiche; 62 entry su
+50 percorsi coincidono con lo snapshot principale. Riscontri: `07c840`
+(child/mapping/23 nomi), `038d6d` (conteggi/marker), `f8bd2d` (gate/impronte).
+
+La prima stampa tool `a0f5ca` è troncata perché include il lungo stdout;
+gli estrattori compatti leggono i dati completi in memoria. Osservazione
+parziale, senza nuovo archivio completo del transcript o evidenze modificate.
+Nessun errore di esecuzione degli estrattori in questo gruppo. Lettura di
+coerenza dei dati, senza autenticità, prova autonoma di esecuzione o chiusura
+degli alberi; nessuna nuova qualifica C1/C3, MC/DC, scaling o durabilità.
+Copertura/prestazioni pool e semantica dei dieci spike non ricalcolate.
+L'autore del corpus float non è un lettore indipendente del corpus.

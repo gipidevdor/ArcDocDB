@@ -118,6 +118,30 @@ artifact coincidono con i risultati aggregati anche per tipo, dimensioni
 ed elementi degli array; 62 impronte su 50 percorsi concordano con
 il wrapper. Questo non chiude i gate degli spike o del motore.
 
+La successiva integrazione delle 42 prove OUTCOME del resolver GET,
+su `56e0a3acc26633bc8a9c5377f7b6a946466d9a45`, passa con 1.029 test
+nominali, due smoke e quattro self-test linter: 1.035 OK unici.
+Le 751 impronte sono identiche prima/dopo; il controllo core dura
+225,684821 s e il wrapper 228,782840 s. Lint e tracciabilità restano
+senza errori; i link sono 2.638 su 356 file, tutti validi. Le evidenze
+comprendono 79 cataloghi, 2.585 riferimenti e 17.967 file. I sink float
+restano 2.115.584/2.148.352; gli overlap osservati sono 2.586/2.722 tick.
+
+L'integrazione finale su `3ed6ebfba4dc692b524a4cf3416c8757de978e41`
+include anche il controllore del pool pubblicato a `45eb153`: `make check`
+è OK/0/STABLE in 209,526331 s, con 766 impronte identiche prima/dopo
+e working tree pulito. La suite passa con 1.052 nominali e due smoke;
+i quattro self-test linter portano il totale a 1.058 OK unici.
+Lint: 173 file, zero violazioni; tracciabilità: 118/65/13/52, zero errori.
+Writer e corpus float conservano le impronte congelate iniziali.
+I link sono 2.668 su 363 file, tutti validi; il controllo delle evidenze
+passa su 80 cataloghi, 2.610 riferimenti e 18.053 file. Le dieci prove
+spike restano OK/PASS, exit 0/STABLE e identiche ai rispettivi aggregati,
+con 62 impronte su 50 percorsi corrispondenti. Le due ondate float
+mantengono i sink originali; gli overlap sono 2.570/2.564 tick.
+Il primo conteggio sintetico includeva quattro self-test linter fra i
+nominali: è corretto prima della conservazione del documento finale.
+
 ## Conservazione
 
 L'[archivio principale](../../spikes/results/2026-10-13-cbor-float-write/catalogo.lisp)
@@ -138,3 +162,10 @@ inclusa la verifica indipendente dell'inventario chiuso. Non è un
 benchmark del parallelismo. L'archivio principale resta immutato dopo
 la raccolta. Le osservazioni sono locali, senza confronto live delle
 origini, pubblicazione atomica o promozione C1.
+
+Il [supplemento finale](../../spikes/results/2026-10-13-cbor-float-write-final/catalogo.lisp)
+conserva i controlli delle integrazioni successive, la raccolta originale,
+la sua osservazione e il log di chiusura, le letture finali e le copie dei
+documenti pubblicati. Il suo inventario è verificato separatamente.
+La [lettura dell'integrazione finale](../../spikes/results/2026-10-13-cbor-float-write-final/raw/pool-integration-review-final.md.txt)
+conserva i confronti dei dati e i relativi limiti.

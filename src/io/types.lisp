@@ -12,17 +12,21 @@
 (defconstant +default-file-limit+ #xffffffff)
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-008
-(defstruct (backend (:constructor make-backend (open reader writer flush directory-flush close))
+(defstruct (backend (:constructor make-backend
+                         (open reader writer flush directory-flush close &key identity))
                     (:copier nil))
   "Pre: funzioni fidate e stabili. Post: tabella immutabile delle chiamate iniettabili.
 Open riceve nome/mode; read fd/octets/start/count/offset; write fd/octets/start/count.
-Flush/directory-flush/close ricevono fd. Segnalano syscall-error per errno."
+Flush/directory-flush/close ricevono fd. Segnalano syscall-error per errno.
+Identity opzionale riceve fd e restituisce device/inode interi di un file regolare.
+Nessun fallback nativo per un backend privo di identity."
   (open #'identity :type function :read-only t)
   (reader #'identity :type function :read-only t)
   (writer #'identity :type function :read-only t)
   (flush #'identity :type function :read-only t)
   (directory-flush #'identity :type function :read-only t)
-  (close #'identity :type function :read-only t))
+  (close #'identity :type function :read-only t)
+  (identity nil :type (or null function) :read-only t))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-STO-003
 (defstruct (file-io (:constructor %make-file (mode backend max-transfer max-file-bytes))

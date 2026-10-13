@@ -36,3 +36,6 @@ eseguite in parallelo.
 Il [metodo preregistrato](cbor-float-scrittura-metodo.md) fissa corpus,
 misure, difetti e conservazione. La qualifica C1 e il gate del motore
 restano aperti fino alle evidenze richieste da ADR-0035.
+
+I [risultati delle verifiche](cbor-float-scrittura-risultati.md) riportano
+prove parallele, mutazioni, misure e limiti della copertura osservata.

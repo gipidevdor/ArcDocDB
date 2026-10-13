@@ -1,0 +1,160 @@
+wrapper schema1 kind:COMMAND-VERIFICATION status:OK exit0 stable:STABLE wall15.726784d0 sources792 stderr-chars0 HEAD6cd17853eebce88e2ee6f5342041a2a2d8da32ab
+wrapper 20 unique OK; stdout
+ok    TEST-REQ-CBR-005-ARRAY-EMPTY-SCALAR-AND-FIVE-LITERAL-CHILDREN
+ok    TEST-REQ-CBR-005-ARRAY-COUNT-WIDTH-BOUNDARIES-AND-MINIMAL-HEADER
+ok    TEST-REQ-CBR-005-ARRAY-NESTED-TAG-MAP-TEXT-AND-RAW-FLOAT-PREFERENCE
+ok    TEST-REQ-CBR-005-ARRAY-CONCATENATION-NEXT-AND-REUSED-SPACE
+ok    TEST-REQ-CBR-005-ARRAY-DESTINATION-TYPE-AND-RANGE-PRECEDES-EVERYTHING
+ok    TEST-REQ-CBR-005-ARRAY-SOURCE-TYPE-RANGE-AND-BACKING-ARRAY-INTACT
+ok    TEST-REQ-CBR-005-ARRAY-TABLE-TYPE-AND-COUNT-DOMAINS
+ok    TEST-REQ-CBR-005-ARRAY-WORKSPACE-TYPE-AND-ALL-SCRATCH-ALIASES-EVEN-EMPTY
+ok    TEST-REQ-CBR-005-ARRAY-CONFIGURED-LIMITS-AND-EMPTY-ROOT-MINIMUM
+ok    TEST-REQ-CBR-005-ARRAY-STRICT-ENTRY-ORDER-BOUNDS-LAST-AND-UNREAD-TAIL
+ok    TEST-REQ-CBR-005-ARRAY-ALL-PREFLIGHT-PHASE-PRECEDENCES
+ok    TEST-REQ-CBR-005-ARRAY-OVERLAP-ENTIRE-FOOTPRINT-TOUCHING-AND-EMPTY
+ok    TEST-REQ-CBR-005-ARRAY-FULL-BYTE-BUDGET-EXACT-16MIB-AND-ONE-OVER
+ok    TEST-REQ-CBR-005-ARRAY-ROOT-TAG-NODE-ACCOUNTING-AND-EXHAUSTED-RESIDUE
+ok    TEST-REQ-CBR-005-ARRAY-ROOT-DEPTH-SCALARS-TAGS-AND-99-100-CHILD-CONTAINERS
+ok    TEST-REQ-CBR-005-ARRAY-CHILD-ERRORS-ABSOLUTE-OFFSETS-AND-LEFT-TO-RIGHT
+ok    TEST-REQ-CBR-005-ARRAY-REUSE-AFTER-PARSER-AND-PREFLIGHT-ERRORS
+ok    TEST-REQ-CBR-005-ARRAY-SCRATCH-LAST-CHILD-AND-ZERO-COUNT-NO-RESET
+  CBOR array fuzz: seed41525235, 1024 casi, 512 successi e 64 ciascuno capacita/byte/entry/nodi/profondita/parse/source-range/count.
+ok    TEST-REQ-CBR-005-ARRAY-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASS-COUNTS
+  CBOR array: onda0, 2 worker riusati, 4096 composizioni, sink 52178944/75218944, overlap 4742 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+  CBOR array: onda1, 2 worker riusati, 4096 composizioni, sink 52178944/75218944, overlap 4993 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+ok    TEST-REQ-CBR-005-ARRAY-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-INPUTS
+20 test della composizione degli array CBOR superati.
+Rapporto: /Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-array-write-20261013/coverage/cover-index.html
+
+GLOBAL RAW: 302 loaded file entries, expression 4373/117516, branch 428/14722; not selected scope.
+SELECTED src/codec/cbor-array-input.lisp expression 248/281 (88.256228 percent), branch 42/48 (87.500000 percent), raw-records329.
+UNCOVERED src/codec/cbor-array-input.lisp record0 :EXPRESSION path(0) form(IN-PACKAGE #:ARCDOCDB.CBOR)
+UNCOVERED src/codec/cbor-array-input.lisp record1 :EXPRESSION path(1) form(DECLAIM (OPTIMIZE (SAFETY 3) (SPEED 2) (DEBUG 2)))
+UNCOVERED src/codec/cbor-array-input.lisp record2 :EXPRESSION path(2) form(DECLAIM (FTYPE (FUNCTION (T T INDEX) (VALUES NULL &OPTIONAL)) CHECK-TABELLA-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-input.lisp record45 :EXPRESSION path(4) form(DECLAIM (FTYPE (FUNCTION (OCTETS OCTETS (SIMPLE-ARRAY (UNSIGNED-BYTE 32) (*)) T) (VALUES NULL &OPTIONAL)) CHECK-SPAZIO-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-input.lisp record75 :EXPRESSION path(6) form(DECLAIM (FTYPE (FUNCTION (INDEX INDEX INDEX INDEX INDEX) (VALUES (MEMBER 1 2 3 5) INDEX &OPTIONAL)) DIMENSIONI-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-input.lisp record121 :EXPRESSION path(8) form(DECLAIM (FTYPE (FUNCTION (OCTETS INDEX INDEX OCTETS INDEX INDEX) (VALUES NULL &OPTIONAL)) CHECK-OVERLAP-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-input.lisp record130 :BRANCH path(:ELSE 1 4 9) form(<= START NEXT (LENGTH BUFFER))
+UNCOVERED src/codec/cbor-array-input.lisp record131 :EXPRESSION path(2 4 9) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-TARGET-SPAN)
+UNCOVERED src/codec/cbor-array-input.lisp record132 :EXPRESSION path(1 2 4 9) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-input.lisp record133 :EXPRESSION path(2 2 4 9) form:REASON
+UNCOVERED src/codec/cbor-array-input.lisp record134 :EXPRESSION path(3 2 4 9) form:CBOR-ARRAY-TARGET-SPAN
+UNCOVERED src/codec/cbor-array-input.lisp record142 :BRANCH path(:ELSE 1 5 9) form(<= SOURCE-START SOURCE-END (LENGTH SOURCE))
+UNCOVERED src/codec/cbor-array-input.lisp record143 :EXPRESSION path(2 5 9) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-SOURCE-SPAN)
+UNCOVERED src/codec/cbor-array-input.lisp record144 :EXPRESSION path(1 2 5 9) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-input.lisp record145 :EXPRESSION path(2 2 5 9) form:REASON
+UNCOVERED src/codec/cbor-array-input.lisp record146 :EXPRESSION path(3 2 5 9) form:CBOR-ARRAY-SOURCE-SPAN
+UNCOVERED src/codec/cbor-array-input.lisp record172 :EXPRESSION path(10) form(DECLAIM (FTYPE (FUNCTION ((SIMPLE-ARRAY (UNSIGNED-BYTE 32) (*)) U32 INDEX) (VALUES NULL &OPTIONAL)) CHECK-FINI-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-input.lisp record180 :BRANCH path(:ELSE 1 4 11) form(<= COUNT (LENGTH ITEM-ENDS))
+UNCOVERED src/codec/cbor-array-input.lisp record181 :EXPRESSION path(2 4 11) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-TABLE-BOUND)
+UNCOVERED src/codec/cbor-array-input.lisp record182 :EXPRESSION path(1 2 4 11) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-input.lisp record183 :EXPRESSION path(2 2 4 11) form:REASON
+UNCOVERED src/codec/cbor-array-input.lisp record184 :EXPRESSION path(3 2 4 11) form:CBOR-ARRAY-TABLE-BOUND
+UNCOVERED src/codec/cbor-array-input.lisp record191 :BRANCH path(:ELSE 1 5 11) form(<= COUNT SPAN +CBOR-SCAN-MAX-BYTES+)
+UNCOVERED src/codec/cbor-array-input.lisp record192 :EXPRESSION path(2 5 11) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-TABLE-BUDGET)
+UNCOVERED src/codec/cbor-array-input.lisp record193 :EXPRESSION path(1 2 5 11) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-input.lisp record194 :EXPRESSION path(2 2 5 11) form:REASON
+UNCOVERED src/codec/cbor-array-input.lisp record195 :EXPRESSION path(3 2 5 11) form:CBOR-ARRAY-TABLE-BUDGET
+UNCOVERED src/codec/cbor-array-input.lisp record230 :EXPRESSION path(12) form(DECLAIM (FTYPE (FUNCTION (U32 INDEX INDEX) (VALUES NULL &OPTIONAL)) CHECK-RADICE-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-input.lisp record251 :EXPRESSION path(14) form(DECLAIM (FTYPE (FUNCTION (T T T T T T T T T T T T) (VALUES INDEX (MEMBER 1 2 3 5) INDEX &OPTIONAL)) CHECK-INPUT-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-input.lisp record297 :BRANCH path(:ELSE 1 6 6 5 15) form(= SPAN (- SOURCE-END SOURCE-START))
+UNCOVERED src/codec/cbor-array-input.lisp record298 :EXPRESSION path(2 6 6 5 15) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-INPUT-SPAN)
+UNCOVERED src/codec/cbor-array-input.lisp record299 :EXPRESSION path(1 2 6 6 5 15) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-input.lisp record300 :EXPRESSION path(2 2 6 6 5 15) form:REASON
+UNCOVERED src/codec/cbor-array-input.lisp record301 :EXPRESSION path(3 2 6 6 5 15) form:CBOR-ARRAY-INPUT-SPAN
+UNCOVERED src/codec/cbor-array-input.lisp record309 :BRANCH path(:ELSE 1 7 6 5 15) form(<= ITEM-SIZE (- END START))
+UNCOVERED src/codec/cbor-array-input.lisp record310 :EXPRESSION path(2 7 6 5 15) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-INPUT-CAPACITY)
+UNCOVERED src/codec/cbor-array-input.lisp record311 :EXPRESSION path(1 2 7 6 5 15) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-input.lisp record312 :EXPRESSION path(2 2 7 6 5 15) form:REASON
+UNCOVERED src/codec/cbor-array-input.lisp record313 :EXPRESSION path(3 2 7 6 5 15) form:CBOR-ARRAY-INPUT-CAPACITY
+SELECTED src/codec/cbor-array-write.lisp expression 184/256 (71.875000 percent), branch 18/34 (52.941176 percent), raw-records290.
+UNCOVERED src/codec/cbor-array-write.lisp record0 :EXPRESSION path(0) form(IN-PACKAGE #:ARCDOCDB.CBOR)
+UNCOVERED src/codec/cbor-array-write.lisp record1 :EXPRESSION path(1) form(DECLAIM (OPTIMIZE (SAFETY 3) (SPEED 2) (DEBUG 2)))
+UNCOVERED src/codec/cbor-array-write.lisp record2 :EXPRESSION path(2) form(DECLAIM (FTYPE (FUNCTION (OCTETS INDEX INDEX SPAZIO-CBOR INDEX INDEX) (VALUES INDEX INDEX &OPTIONAL)) VERIFICA-FIGLIO-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-write.lisp record11 :BRANCH path(:ELSE 1 4 3) form(<= START END (LENGTH SOURCE))
+UNCOVERED src/codec/cbor-array-write.lisp record12 :EXPRESSION path(2 4 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILD-RANGE)
+UNCOVERED src/codec/cbor-array-write.lisp record13 :EXPRESSION path(1 2 4 3) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record14 :EXPRESSION path(2 2 4 3) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record15 :EXPRESSION path(3 2 4 3) form:CBOR-ARRAY-CHILD-RANGE
+UNCOVERED src/codec/cbor-array-write.lisp record30 :BRANCH path(:ELSE 1 3 6 3) form(PLUSP SPAN)
+UNCOVERED src/codec/cbor-array-write.lisp record31 :EXPRESSION path(2 3 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILD-EMPTY)
+UNCOVERED src/codec/cbor-array-write.lisp record32 :EXPRESSION path(1 2 3 6 3) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record33 :EXPRESSION path(2 2 3 6 3) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record34 :EXPRESSION path(3 2 3 6 3) form:CBOR-ARRAY-CHILD-EMPTY
+UNCOVERED src/codec/cbor-array-write.lisp record41 :BRANCH path(:ELSE 1 3 4 6 3) form(= NEXT END)
+UNCOVERED src/codec/cbor-array-write.lisp record42 :EXPRESSION path(2 3 4 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILD-PROGRESS)
+UNCOVERED src/codec/cbor-array-write.lisp record43 :EXPRESSION path(1 2 3 4 6 3) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record44 :EXPRESSION path(2 2 3 4 6 3) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record45 :EXPRESSION path(3 2 3 4 6 3) form:CBOR-ARRAY-CHILD-PROGRESS
+UNCOVERED src/codec/cbor-array-write.lisp record52 :BRANCH path(:ELSE 1 4 4 6 3) form(<= 1 NODES REMAINING)
+UNCOVERED src/codec/cbor-array-write.lisp record53 :EXPRESSION path(2 4 4 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILD-NODES)
+UNCOVERED src/codec/cbor-array-write.lisp record54 :EXPRESSION path(1 2 4 4 6 3) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record55 :EXPRESSION path(2 2 4 4 6 3) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record56 :EXPRESSION path(3 2 4 4 6 3) form:CBOR-ARRAY-CHILD-NODES
+UNCOVERED src/codec/cbor-array-write.lisp record62 :BRANCH path(:ELSE 1 5 4 6 3) form(<= PEAK CHILD-DEPTH)
+UNCOVERED src/codec/cbor-array-write.lisp record63 :EXPRESSION path(2 5 4 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILD-DEPTH)
+UNCOVERED src/codec/cbor-array-write.lisp record64 :EXPRESSION path(1 2 5 4 6 3) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record65 :EXPRESSION path(2 2 5 4 6 3) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record66 :EXPRESSION path(3 2 5 4 6 3) form:CBOR-ARRAY-CHILD-DEPTH
+UNCOVERED src/codec/cbor-array-write.lisp record84 :EXPRESSION path(4) form(DECLAIM (FTYPE (FUNCTION (OCTETS INDEX INDEX (SIMPLE-ARRAY (UNSIGNED-BYTE 32) (*)) U32 SPAZIO-CBOR INDEX INDEX) (VALUES INDEX INDEX &OPTIONAL)) VERIFICA-FIGLI-ARRAY-CBOR))
+UNCOVERED src/codec/cbor-array-write.lisp record93 :BRANCH path(:ELSE 1 4 5) form(<= START END (LENGTH SOURCE))
+UNCOVERED src/codec/cbor-array-write.lisp record94 :EXPRESSION path(2 4 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILDREN-RANGE)
+UNCOVERED src/codec/cbor-array-write.lisp record95 :EXPRESSION path(1 2 4 5) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record96 :EXPRESSION path(2 2 4 5) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record97 :EXPRESSION path(3 2 4 5) form:CBOR-ARRAY-CHILDREN-RANGE
+UNCOVERED src/codec/cbor-array-write.lisp record104 :BRANCH path(:ELSE 1 5 5) form(<= COUNT (LENGTH ITEM-ENDS))
+UNCOVERED src/codec/cbor-array-write.lisp record105 :EXPRESSION path(2 5 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILDREN-BOUND)
+UNCOVERED src/codec/cbor-array-write.lisp record106 :EXPRESSION path(1 2 5 5) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record107 :EXPRESSION path(2 2 5 5) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record108 :EXPRESSION path(3 2 5 5) form:CBOR-ARRAY-CHILDREN-BOUND
+UNCOVERED src/codec/cbor-array-write.lisp record114 :BRANCH path(:ELSE 1 6 5) form(<= COUNT +CBOR-SCAN-MAX-BYTES+)
+UNCOVERED src/codec/cbor-array-write.lisp record115 :EXPRESSION path(2 6 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILDREN-BUDGET)
+UNCOVERED src/codec/cbor-array-write.lisp record116 :EXPRESSION path(1 2 6 5) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record117 :EXPRESSION path(2 2 6 5) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record118 :EXPRESSION path(3 2 6 5) form:CBOR-ARRAY-CHILDREN-BUDGET
+UNCOVERED src/codec/cbor-array-write.lisp record145 :BRANCH path(:ELSE 1 4 7 5) form(= CURSOR END)
+UNCOVERED src/codec/cbor-array-write.lisp record146 :EXPRESSION path(2 4 7 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILDREN-PROGRESS)
+UNCOVERED src/codec/cbor-array-write.lisp record147 :EXPRESSION path(1 2 4 7 5) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record148 :EXPRESSION path(2 2 4 7 5) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record149 :EXPRESSION path(3 2 4 7 5) form:CBOR-ARRAY-CHILDREN-PROGRESS
+UNCOVERED src/codec/cbor-array-write.lisp record156 :BRANCH path(:ELSE 1 5 7 5) form(<= (1+ COUNT) NODES MAX-NODES)
+UNCOVERED src/codec/cbor-array-write.lisp record157 :EXPRESSION path(2 5 7 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILDREN-NODES)
+UNCOVERED src/codec/cbor-array-write.lisp record158 :EXPRESSION path(1 2 5 7 5) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record159 :EXPRESSION path(2 2 5 7 5) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record160 :EXPRESSION path(3 2 5 7 5) form:CBOR-ARRAY-CHILDREN-NODES
+UNCOVERED src/codec/cbor-array-write.lisp record167 :BRANCH path(:ELSE 1 6 7 5) form(<= 1 PEAK MAX-DEPTH)
+UNCOVERED src/codec/cbor-array-write.lisp record168 :EXPRESSION path(2 6 7 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-CHILDREN-DEPTH)
+UNCOVERED src/codec/cbor-array-write.lisp record169 :EXPRESSION path(1 2 6 7 5) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record170 :EXPRESSION path(2 2 6 7 5) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record171 :EXPRESSION path(3 2 6 7 5) form:CBOR-ARRAY-CHILDREN-DEPTH
+UNCOVERED src/codec/cbor-array-write.lisp record179 :EXPRESSION path(6) form(DECLAIM (FTYPE (FUNCTION (T T T T T T T T T &KEY (:MAX-BYTES T) (:MAX-NODES T) (:MAX-DEPTH T)) (VALUES INDEX &OPTIONAL)) SCRIVI-ARRAY-CBOR-MINIMO))
+UNCOVERED src/codec/cbor-array-write.lisp record189 :BRANCH path(:ELSE 1 3 3 3 4 7) form(<= NODES MAX-NODES)
+UNCOVERED src/codec/cbor-array-write.lisp record190 :EXPRESSION path(2 3 3 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-RESULT-NODES)
+UNCOVERED src/codec/cbor-array-write.lisp record191 :EXPRESSION path(1 2 3 3 3 4 7) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record192 :EXPRESSION path(2 2 3 3 3 4 7) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record193 :EXPRESSION path(3 2 3 3 3 4 7) form:CBOR-ARRAY-RESULT-NODES
+UNCOVERED src/codec/cbor-array-write.lisp record199 :BRANCH path(:ELSE 1 4 3 3 4 7) form(<= PEAK MAX-DEPTH)
+UNCOVERED src/codec/cbor-array-write.lisp record200 :EXPRESSION path(2 4 3 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-RESULT-DEPTH)
+UNCOVERED src/codec/cbor-array-write.lisp record201 :EXPRESSION path(1 2 4 3 3 4 7) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record202 :EXPRESSION path(2 2 4 3 3 4 7) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record203 :EXPRESSION path(3 2 4 3 3 4 7) form:CBOR-ARRAY-RESULT-DEPTH
+UNCOVERED src/codec/cbor-array-write.lisp record221 :BRANCH path(:ELSE 1 3 4 3 4 7) form(= PAYLOAD-START (+ BEGIN HEADER-SIZE))
+UNCOVERED src/codec/cbor-array-write.lisp record222 :EXPRESSION path(2 3 4 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-HEADER-PROGRESS)
+UNCOVERED src/codec/cbor-array-write.lisp record223 :EXPRESSION path(1 2 3 4 3 4 7) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record224 :EXPRESSION path(2 2 3 4 3 4 7) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record225 :EXPRESSION path(3 2 3 4 3 4 7) form:CBOR-ARRAY-HEADER-PROGRESS
+UNCOVERED src/codec/cbor-array-write.lisp record233 :BRANCH path(:ELSE 1 4 4 3 4 7) form(= (- NEXT PAYLOAD-START) SPAN)
+UNCOVERED src/codec/cbor-array-write.lisp record234 :EXPRESSION path(2 4 4 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-PAYLOAD-SPAN)
+UNCOVERED src/codec/cbor-array-write.lisp record235 :EXPRESSION path(1 2 4 4 3 4 7) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record236 :EXPRESSION path(2 2 4 4 3 4 7) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record237 :EXPRESSION path(3 2 4 4 3 4 7) form:CBOR-ARRAY-PAYLOAD-SPAN
+UNCOVERED src/codec/cbor-array-write.lisp record244 :BRANCH path(:ELSE 1 2 5 4 3 4 7) form(= RESULT NEXT)
+UNCOVERED src/codec/cbor-array-write.lisp record245 :EXPRESSION path(2 2 5 4 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-ARRAY-WRITE-PROGRESS)
+UNCOVERED src/codec/cbor-array-write.lisp record246 :EXPRESSION path(1 2 2 5 4 3 4 7) form(QUOTE INVARIANT-VIOLATION)
+UNCOVERED src/codec/cbor-array-write.lisp record247 :EXPRESSION path(2 2 2 5 4 3 4 7) form:REASON
+UNCOVERED src/codec/cbor-array-write.lisp record248 :EXPRESSION path(3 2 2 5 4 3 4 7) form:CBOR-ARRAY-WRITE-PROGRESS
+UNCOVERED src/codec/cbor-array-write.lisp record287 :EXPRESSION path(10 2 7) form(MAX-BYTES +CBOR-SCAN-MAX-BYTES+)
+UNCOVERED src/codec/cbor-array-write.lisp record288 :EXPRESSION path(11 2 7) form(MAX-NODES +CBOR-SCAN-MAX-BYTES+)
+UNCOVERED src/codec/cbor-array-write.lisp record289 :EXPRESSION path(12 2 7) form(MAX-DEPTH +CBOR-SCAN-MAX-DEPTH+)
+SELECTED TOTAL expression 432/537 (80.446927 percent), branch 60/82 (73.170732 percent); no exclusions.
+No source or data form evaluated; no product LOAD/compile/call; no campaign rerun. Raw interpretation specific to SBCL2.6.9; no MC/DC/C1 qualification.

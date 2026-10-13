@@ -1,0 +1,33 @@
+OUTER OK/exit0/STABLE source-blobs818 wall586.455871d0 HEADbdf709edf713891410b4639f219e1c9c1ba1f31a stderr0; stdoutRaccolta: 3003 file originali verificati, quattro worker; /Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-array-write-20261013/collection/collection-observation-4000915863-37359-0.lisp
+INNER COMPLETE/OK workers4 sha-per-copy3 counts(379 827 845 952) errors(NIL NIL
+                                                                        NIL NIL); closure exit0/signalNIL, closed inventory.
+COUNTS indexed3003 actual3005 indexed-bytes30037030 index-bytes1008588 catalogue-bytes318 actual-total31045936; exact preflight match.
+SIZES plain3000 max960554 gzip3 max466775, all actual indexed sizes match metadata; no budget violation.
+PROCESS freeze-sources <- spikes/out/4000913629-command-81204-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS initial-build-lint-trace-links <- spikes/out/4000913640-command-81482-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS audit-self-test <- spikes/out/4000913738-command-84496-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS bench-self-test <- spikes/out/4000913756-command-84926-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS coverage-self-test <- spikes/out/4000913782-command-85437-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS bench <- spikes/out/4000913813-command-85775-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS bench-data-audit <- spikes/out/4000913847-command-86018-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS mutation-self-test <- spikes/out/4000913934-command-88140-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS coverage-array <- spikes/out/4000913934-command-88141-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS mutation-campaign <- spikes/out/4000913980-command-89061-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS collection-self-test <- spikes/out/4000914062-command-91101-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS integrated-check-1 <- spikes/out/4000914446-command-97916-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+PROCESS failed-check-2 <- spikes/out/4000914722-command-8381-0/report.lisp => :FAILED/exit2/STABLE decoded-original=archive, closure metadata equal.
+PROCESS coverage-compression <- spikes/out/4000915378-command-26277-0/report.lisp => :OK/exit0/STABLE decoded-original=archive, closure metadata equal.
+COVERAGE descriptor only: expanded2195898/known SHA, gzip311888/SHA matches indexed declaration; no expansion or coverage rereading.
+METADATA sizes outer/manifest/preflight/observation/closure/index/catalogue (170090
+                                                                             24127
+                                                                             1224
+                                                                             1086541
+                                                                             5088
+                                                                             1008588
+                                                                             318); local metadata SHA stable before/after.
+CLOSURE limits (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608
+                :PROCESS-EXPANDED-BYTES 134217728 :ENTRIES 100000
+                :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+                :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+                :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL)
+DATA only. Full archived SHA sweep was performed by recorded validator, not rerun here; original decoded14 compared, actual path/size inventory and all copied-result metadata independently checked. No result promotion, authenticity, atomic publication, MC/DC or scaling claim.

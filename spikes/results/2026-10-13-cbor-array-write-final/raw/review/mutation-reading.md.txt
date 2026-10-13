@@ -1,0 +1,71 @@
+# Lettura C4 dei dati congelati: mutazioni array CBOR
+
+Lettura indipendente dei dati eseguita il 2026-10-13 dall'autore del corpus blind,
+senza LOAD/EVAL/compilazione/chiamate del prodotto o del driver e senza ripetere campagne.
+L'indipendenza riguarda riclassificazione dei log, inventario nominale e confronto delle copie;
+non costituisce una seconda paternità del corpus, qualifica C1 globale o prova di causalità.
+
+Fonti: `spikes/out/4000913980-command-89061-0/report.lisp` (blob `273c1f9d64bff2249030e13da85ff9d743d28f05`),
+`spikes/out/cbor-array-write-20261013/mutations/report.lisp` (`d6b6f524df6a44b66ae2523640c1b8a6ad18764c`),
+`drivers/catalogue-materialized.lisp` (`0f873e55deabf8581ba361614bccedf7a910a5ad`),
+`drivers/fixtures-and-mutations.lisp` (`a4fa768d64d7088eb69455f27bb3e80c76d1f6df`),
+`drivers/mutation.lisp` (`d3857e15259bda0d7acb2e896e5904cab762d4b4`), tutti sotto la radice della campagna.
+I nove log completi sono `mutations/baseline/test.log` e `mutations/0/test.log` fino a `mutations/7/test.log`.
+Il reader carica soltanto il trusted `tools/evidence-storage.lisp` (`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`)
+e i moduli SBCL MD5/POSIX; dati Lisp letti con READ-EVAL NIL, readtable standard ed EOF richiesto.
+
+Il wrapper schema 1, COMMAND-VERIFICATION, è OK/exit 0/STABLE, stderr vuoto, wall 209.290256 s,
+HEAD `6cd17853eebce88e2ee6f5342041a2a2d8da32ab`: 792 blob prima e dopo uguali.
+Il report interno stampato in stdout, dopo il marker self-test worker, è DATA uguale al file interno.
+Il report interno schema 1, CBOR-ARRAY-WRITE-MUTATIONS, è OK/STABLE, worker-errors 0:
+313 fingerprint unici identici prima e dopo, comprendenti 308 file copiati e cinque file ignored del driver.
+Metodo `2f257c9e8a56a5182142934dada3f3b38b5bef65`, sorgenti `d3b3d07fc18bd2a077c1a2d79020a76263b2779e`
+e `a410297c29c5d043ad60d3804bd3711e22c2833b`, tre blob del corpus e otto bersagli concordano con il catalogo.
+
+La baseline ha exit 0, signal/diagnostic NIL, smoke esatto alla riga 2, completamento esatto alla riga 1185,
+nessun Unhandled né diagnostica vietata. Le 20 righe OK REQ-CBR-005 sono uniche e corrispondono esattamente
+alle 19 forme DEFTEST seriali e alla forma DEFTEST parallela lette dal corpus congelato; totale righe OK 1101.
+I whitelist dei due documenti coincidono con queste vere funzioni nominali, non helper o wrapper.
+
+Tutti gli otto mutanti hanno exit 1, signal/diagnostic NIL, nessun completamento e nessun token di compilazione
+o warning vietato. In ciascuno lo smoke esatto precede il primo Unhandled a inizio riga e un frame numerico
+reale contiene subito una funzione nominale esatta, a zero argomenti. Lo stato delle stringhe esclude frame citati.
+
+| Copia / bersaglio | Unhandled / frame (righe) | Origine osservata nel fallimento |
+|---|---|---|
+| 0 physical-capacity | 272 / 284 | NOT RETURNED, test empty-scalar-and-five-literal-children |
+| 1 wrong-major | 272 / 284 | EXPECTED/BUFFER diversi, stesso test |
+| 2 wrong-count | 272 / 284 | EXPECTED/BUFFER diversi, stesso test |
+| 3 scan-omitted | 272 / 284 | SOURCE-END/cursor diversi, stesso test |
+| 4 overlap-without-header | 283 / 296 | reason diverso, test overlap-entire-footprint-touching-and-empty |
+| 5 item-ends-unchecked | 281 / 292 | tipo della condizione diverso, test strict-entry-order-bounds-last-and-unread-tail |
+| 6 root-node-excluded | 272 / 285 | invariant CBOR-ARRAY-CHILDREN-NODES, test empty-scalar-and-five-literal-children |
+| 7 extra-return-value | 272 / 283 | LENGTH ACTUAL diverso da 1, stesso test |
+
+La riclassificazione stretta conferma DETECTED 8, SURVIVED 0, INVALID 0, WORKER-ERROR 0.
+Il testo finale «compilation unit aborted / caught 1 fatal ERROR condition» segue il fallimento runtime:
+non è il token «compilation aborted» e non viene usato come rilevamento. Il builder originale impone gli avvisi
+come errori e ricompila con :force T; conserva l'eccezione preesistente per SB-KERNEL:REDEFINITION-WARNING.
+
+Le nove radici e directory FASL sono distinte; 2772 confronti di file verificano i 308 file di ciascuna copia.
+La baseline coincide con ogni MD5 interno e blob Git esterno congelato. Ogni mutante preserva gli altri 307 file
+e applica una sola sostituzione testuale esatta, con BEFORE unico, al file dichiarato dal catalogo materializzato.
+La mutazione arità modifica coerentemente FTYPE e DEFUN soltanto nella copia 7. Gli otto blob risultanti sono
+registrati nell'output del reader. Per ciascuno dei 308 percorsi i dieci inode (checkout e nove copie) sono distinti.
+I runner coincidono byte per byte con l'invocazione prevista del builder congelato, FASL locale e configurazione ereditata ignorata.
+
+Cinque file attuali differiscono dal congelato dopo i merge successivi: `arcdocdb.asd`, `src/io/identity.lisp`,
+`src/io/package.lisp`, `src/scheduler/package.lisp`, `tests/scheduler/support.lisp`. Sono riportati nell'output;
+la baseline, verificata sui fingerprint della campagna, è l'origine dei confronti. I 313 file attuali sono rimasti
+stabili durante la lettura finale; report, catalogo materializzato e tutti i nove log hanno SHA256 stabile prima/dopo.
+
+Osservazioni preparatorie preservate: `review/mutation-reading-output-1.txt`, exit 1, contiene due warning del
+mio reader per STRING= erroneamente usato con tre stringhe, poi il confronto inappropriato con ASDF attuale.
+Non è un fallimento del prodotto o della campagna. `review/mutation-reading-preliminary.lisp` riproduce quel
+reader invertendo l'unica patch di correzione; non dispone di fingerprint acquisito prima della prima esecuzione.
+Il reader finale `review/mutation-reading.lisp` (blob `d5660a25cee0d0bcd14ae77b37ae71332343971e`)
+ha completato exit 0, senza warning, in `review/mutation-reading-output-2.txt`
+(blob `284561e6a61f00ca84fc26d4105e2f1b2120b12d`). Gli output sono letture C4 ad hoc, non campagne registrate.
+
+Freeze: reader, nota e due output preservati senza successivi edit. Coerenza degli hash e isolamento dei file
+non provano autenticità, copertura MC/DC, causalità esclusiva dei fallimenti, correttezza universale o qualifica di rilascio.

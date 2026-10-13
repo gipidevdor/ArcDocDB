@@ -1,0 +1,37 @@
+# Lettura dati del primo controllo integrato
+
+Lettura C4 dei record già conclusi, senza caricare, compilare o chiamare prodotto, corpus, driver o campagne. Il processo di lettura carica soltanto `tools/evidence-storage.lisp`, come lettore trusted per plist e descriptor gzip. Questo documento riguarda soltanto il primo `make check`, su commit `857bfc77962eb4d74b382bf225c8493824baef77`; le successive integrazioni del pool e il problema della bozza con link saranno descritti separatamente.
+
+## Record e risultati
+
+Record `spikes/out/4000914446-command-97916-0/report.lisp`: 960554 byte, SHA256 `c85c841904114e6cd83d173f3633bc3b3e75b212c0c3ebaf62cefaa0545308c6`. Wrapper `COMMAND-VERIFICATION`, schema 1, `OK`, exit 0, sorgenti `STABLE`, ambiente con commit atteso e working tree vuoto. Le 811 voci tracked, univoche per percorso, sono identiche prima e dopo; entrambi i pin array coincidono con `d3b3d07fc18bd2a077c1a2d79020a76263b2779e` e `a410297c29c5d043ad60d3804bd3711e22c2833b`. Durata registrata 247.452112d0 secondi. Il comando effettivo è `make check-core` registrato dal wrapper.
+
+Il conteggio riguarda esclusivamente le righe anteriori al marker unico `build e test: nessun avviso, tutti i controlli superati`: **1117 nominali + 2 smoke = 1119**. I due smoke sono presenza del package e stringa versione. Quattro successi del selftest linter successivo sono conteggiati separatamente, non aggiunti ai nominali. Lint: 194 file, zero violazioni; trace: 119 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, zero errori; link: 390 file, 2779 link, zero rotti. Nessuna occorrenza di warning/style-warning o compilazione interrotta nello stderr esterno; sono presenti note del compilatore.
+
+Snapshot e reader mutation in questo comando eseguono **selftest**, non campagne di uccisione: rispettivamente 10 e 8 target univoci, zero worker errors nel record principale, `READ-EVAL-DISABLED T`, detection nominativa, inventari MD5 stabili da 21 e 34 fonti. I due report processo correlati, entrambi `PASSED`, conservano ciascuno due casi `WORKER-ERROR`: segnale 9 e completamento con exit 7, senza timeout. È verificata la distinzione fra queste fixture negative attese e il successo del comando esterno.
+
+| Selftest prove | Controlli dichiarati | Casi letti | Esito |
+|---|---:|---:|---|
+| Storage | 123 | 40 | tutti OK |
+| Publication | 2 | 2 | OK, entrambi exit 1 atteso |
+| Normalizer compression | 6 | 2 | entrambi exit 0, risultato IMPORTED |
+
+I backtrace delle due fixture publication fanno parte del loro stderr conservato nei dati; non sono un errore del prodotto o del comando integrato. La verifica catalogo conclude `OK`: 85 cataloghi, 2913 riferimenti, 18896 file, 537031400 byte. Il suo limite dichiarato è struttura/presenza/dimensioni/integrità compressa, senza reinterpretare i risultati.
+
+## Dieci spike e impronte
+
+Aggregate `spikes/out/4000914659-check-6225-0/report.lisp`: schema 1, `COMPLETE`, modo `--check`, stesso commit e working tree pulito. Sono presenti dieci run e dieci percorsi child ordinati e univoci. Tutti hanno exit 0 e sorgenti stabili; ogni record child coincide mediante `EQUALP` con la sua copia nell'aggregate; lo stdout di ogni child, letto come una sola plist, coincide con il risultato conservato. Esiti: SPK-01/02/03/04/05/06/08/09/10 `OK`, SPK-07 `PASS`.
+
+Le **54 impronte univoche** dell'ambiente aggregate coincidono con il wrapper esterno. Le occorrenze before/after dei dieci child sono **62**, distribuite 5/3/3/5/5/7/17/6/3/8; ogni impronta child coincide con l'aggregate. 54 e 62 hanno denominatori differenti e non vanno confusi.
+
+Descriptor aggregate: 318 byte, SHA256 `fa2ffa855a663f957f1e98a10a7dae37eb2c4b96e52084fd4dc5e79c9fa05c7f`; gzip: 466775 byte, SHA256 `fc220c3b9138a4f26fc0c3fe965fb654ebc7c1b8d7f74f9de647ea7501e0bdda`. Il lettore trusted verifica i 28962021 byte decodificati contro SHA256 `98487c10f8aad878b6df0f8f038219bc1e37e20646d04139ff2b155050826f86`. Lo stdout della lettura elenca tutti i 16 file fisici osservati, inclusi descriptor e gzip del child SPK-07; byte e SHA256 prima/dopo risultano invariati per ciascuno.
+
+## Reader e tentativi preparatori
+
+La lettura completa `integrated-runtime-reading-1h.stdout.txt` conclude `OK`, 19884731 controlli del reader, stderr vuoto. Il totale include soprattutto la visita strutturale dei dati e **non** rappresenta test del prodotto. Variante effettiva PASS: blob `410fd60131940913d320af7bd7267ca28733ffdd`, conservata byte per byte come `integrated-runtime-reading.preparatory-1h-3.lisp`. CLI: `RECORD COMMIT NOMINAL BYTES SHA256`; valori di questo record: percorso sopra, commit sopra, `1117`, `960554`, SHA256 sopra. È possibile passare più gruppi espliciti.
+
+Sono conservati gli output distinti `1`, `1b`, `1c`, `1d`, `1e`, `1f`, `1g`, `1h` e le rispettive versioni preparatorie. I primi due sorgenti sono ricostruiti esattamente dagli edit espliciti; gli altri sono copie conservate prima dell'edit successivo. Le interruzioni preparatorie riguardano soltanto limiti/assunzioni del mio reader: vettore U64 non previsto, budget strutturale insufficiente, simbolo `TYPE-ERROR`, matrice numerica U8 4×4, aspettativa errata di 62 impronte univoche nell'aggregate. La variante finale ammette simboli come dati e array numerici piatti, rifiuta array contenenti oggetti/cons, controlla i cons aciclici e limita la visita a 20 milioni di passi per record. Non è stata eseguita alcuna campagna aggiuntiva.
+
+## Limiti
+
+La lettura è indipendente dalla costruzione del record e confronta struttura, conteggi e coerenza interna dei metadati. Non autentica i processi originari, non rivaluta fisicamente le sorgenti al commit storico, non dimostra copertura, MC/DC/C1, assenza assoluta di allocazioni o qualificazione del motore. `EQUALP` confronta i valori degli array senza pretendere identità della rappresentazione; le impronte SHA256 dei byte conservati sono osservazioni separate. La lettura controlla chiavi univoche nelle plist incontrate dal protocollo, non interpreta ogni sotto-lista arbitraria come plist. Gli array numerici contengono solo atomi e non ampliano il claim a tutti gli oggetti Lisp.

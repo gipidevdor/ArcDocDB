@@ -1,0 +1,75 @@
+# Lettura C4 della raccolta conclusa
+
+Lettura DATA del 2026-10-13, con il trusted `tools/evidence-storage.lisp`, READ-EVAL NIL,
+readtable standard ed EOF obbligatorio. Nessun prodotto, collector o validator eseguito;
+nessuna ripetizione di campagne, espansione della coverage o SHA sweep dell'archivio.
+Indipendenti: aritmetica, inventario effettivo dei path/dimensioni, metadata delle copie e mapping dei processi.
+
+Fonti sotto `spikes/out/cbor-array-write-20261013/collection/`: `manifest-2.lisp`
+(blob `96a97eac01f800d97b09135f56087235c4593692`), `preflight-2.lisp`
+(`f08316a7feb5e777a8e7a0d73b4cf91c87bee6ac`), `collection-observation-4000915863-37359-0.lisp`
+(`fb4dae65dc808c8e9405eb03912b755d3aaf9292`) e `closed-check-4000916242-37359-0.log`
+(`07da0787cd0960a5fe2b81d2709eb470042233aa`). Wrapper:
+`spikes/out/4000915862-command-37341-0/report.lisp` (`f58efc63d105a59eb5387ae57e64c1905bb0ade8`).
+Archivio: `spikes/results/2026-10-13-cbor-array-write/`, indice blob `6229075dd586cb85b80edd36c3df36c04b14066f`,
+catalogo `c5ed7a52c642c9f60ba7d13ab29b97cf74f8e8dc`. Collector congelato `68a9949dff6d270a6caf7d0e466bb391e946998a`.
+
+Wrapper schema 1 COMMAND-VERIFICATION: OK, exit 0, stderr vuoto, STABLE, 818 blob prima/dopo uguali,
+wall 586.455871 s, HEAD `bdf709edf713891410b4639f219e1c9c1ba1f31a`. Il comando usa manifest-2 e --jobs 4.
+Il successo interno non è dedotto dall'exit del wrapper: observation schema 1 è COMPLETE/OK,
+3003 risultati tutti OK, quattro errori NIL e conteggi worker `(379 827 845 952)` la cui somma è 3003.
+Il report dichiara tre SHA per copia. Staticamente il collector verifica origine prima/dopo e copia,
+confronta DATA dei processi, pubblica metadata, attende il validator in processo separato e soltanto dopo salva COMPLETE/OK.
+L'independent-closure punta proprio al log scelto e ha exit 0/signal NIL; il log è COMMAND-ARCHIVE-AUDIT/OK.
+
+Conteggi effettivi, identici al preflight: 3003 file indicizzati, 3005 totali, 30.037.030 byte indicizzati.
+Indice 1.008.588 byte e catalogo 318: totale archivio 31.045.936 byte. L'indice resta 39.988 byte sotto 1 MiB.
+I 3000 file plain indicizzati hanno massimo 960.554 byte; i tre gzip massimo 466.775 byte.
+Ogni dimensione effettiva coincide con l'indice; tutti i path sono unici, ordinati, regolari, dentro la root.
+L'inventario contiene esattamente i file indicizzati più indice e catalogo, senza FASL o file aggiuntivi.
+Tutte le 3003 entry dell'indice coincidono con i risultati di copia e hanno una sola origine nel manifest,
+comprese le selezioni dei nove alberi e la politica LISP/LOG/GZ per l'albero filtrato.
+
+Mapping dei 14 processi: manifest, indice e log di chiusura concordano; per ciascuno il record originale
+decodificato è DATA uguale alla copia archiviata. Command/status/exit/source-consistency concordano.
+
+| Processo | Record originario sotto spikes/out | Esito |
+|---|---|---|
+| freeze-sources | 4000913629-command-81204-0 | OK/0 |
+| initial-build-lint-trace-links | 4000913640-command-81482-0 | OK/0 |
+| audit-self-test | 4000913738-command-84496-0 | OK/0 |
+| bench-self-test | 4000913756-command-84926-0 | OK/0 |
+| coverage-self-test | 4000913782-command-85437-0 | OK/0 |
+| bench | 4000913813-command-85775-0 | OK/0 |
+| bench-data-audit | 4000913847-command-86018-0 | OK/0 |
+| mutation-self-test | 4000913934-command-88140-0 | OK/0 |
+| coverage-array | 4000913934-command-88141-0 | OK/0 |
+| mutation-campaign | 4000913980-command-89061-0 | OK/0 |
+| collection-self-test | 4000914062-command-91101-0 | OK/0 |
+| integrated-check-1 | 4000914446-command-97916-0 | OK/0 |
+| failed-check-2 | 4000914722-command-8381-0 | FAILED/2 |
+| coverage-compression | 4000915378-command-26277-0 | OK/0 |
+
+Tutti sono STABLE: 13 OK e una bozza FAILED preservata, il cui stdout riporta 396 file,
+2811 link controllati e quattro rotti. La raccolta conserva quel fallimento senza trasformarlo in gate superato.
+Il precedente tentativo interrotto, descritto da root, non è fonte di questo successo: manca di chiusura finale;
+questa lettura usa solo il nuovo observation, indice e validator conclusi, senza leggere il parziale come archivio valido.
+
+Coverage letta soltanto come descriptor: expanded 2.195.898 byte/SHA256
+`1fe31c9fd8fa60689f910672a5c53cdcbabbd73da6d71f87209afdc3007a68ec`; gzip effettivo 311.888 byte,
+SHA dichiarato coerente con l'indice. Nessuna espansione né nuova analisi della coverage in questa lettura.
+Observation effettivo 1.086.541 byte, 37.965 oltre 1 MiB: è esterno all'archivio chiuso; root può comprimerlo
+lossless per un supplemento solo dopo il freeze di questa lettura. Il reader non lo modifica.
+
+Il validator dichiara closed-inventory, origins-compared NIL, READ-EVAL NIL/EOF T; plain 1 MiB,
+gzip 8 MiB, process-expanded 128 MiB, 100000 voci e profondità 128. Enumrazione non prelimitata,
+osservazioni locali per file, publication non atomica, nessuna inferenza gate/risultati o MC/DC.
+Questa lettura verifica gli SHA dei soli sette metadati locali prima/dopo (e quelli indice/catalogo nel log);
+lo SHA sweep completo resta una verifica del validator registrato. Non si deducono autenticità, scaling o qualifica di rilascio.
+
+Preparazione preservata: `review/collection-reading.preliminary.lisp` e `.preliminary-2.lisp`,
+con `.output.txt` e `.output-2.txt`, contengono due EOF causati da parentesi mancanti del mio reader,
+entrambi prima della lettura dei dati. Non sono fallimenti del collector o del prodotto.
+Finale `review/collection-reading.lisp` blob `74af3fe8ff7f7b7027eaaa3e16c28c4440157569`,
+output `.output-3.txt` blob `acb5f0a99f1d97009913372b37748b4cf882e31b`: exit 0 e nessun warning.
+Questi sono controlli C4 ad hoc, non campagne registrate. Nota, reader, due preparazioni e tre output congelati.

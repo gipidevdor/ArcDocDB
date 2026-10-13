@@ -1,0 +1,116 @@
+(:STATUS :OK :CHECKS 19885040 :RESULTS
+ ((:RECORD
+   #A((49) BASE-CHAR . "spikes/out/4000914822-command-10423-0/report.lisp")
+   :COMMIT #A((40) BASE-CHAR . "bdf709edf713891410b4639f219e1c9c1ba1f31a")
+   :SOURCE-COUNT 818 :WALL-SECONDS 235.500538d0 :NOMINAL-TESTS 1129 :SMOKE 2
+   :LINTER-SELFTESTS 4 :LINT "195 file, 0 violazioni" :TRACE "119/65/13/52/0"
+   :LINKS "395 file, 2807 link controllati, 0 rotti" :MUTATION-SELFTESTS
+   ((:KIND :SNAPSHOT-MUTATIONS :TARGETS 10 :SOURCES 21 :PROCESS-FIXTURES 2)
+    (:KIND :READER-MUTATIONS :TARGETS 8 :SOURCES 34 :PROCESS-FIXTURES 2))
+   :EVIDENCE-SELFTESTS
+   ((:KIND :EVIDENCE-STORAGE-TESTS :CHECKS 123 :CASES 40)
+    (:KIND :EVIDENCE-PUBLICATION-TESTS :CHECKS 2 :CASES 2)
+    (:KIND :NORMALIZER-COMPRESSION-TESTS :CHECKS 6 :CASES 2))
+   :EVIDENCE-CATALOG
+   (:STATUS :OK :CATALOGS 86 :ARTIFACT-REFERENCES 2927 :STORED-FILES 18945
+    :STORED-BYTES 542727236 :LIMITS
+    (:STRUCTURE-PRESENCE-SIZE-AND-COMPRESSED-INTEGRITY
+     :NO-RESULT-REINTERPRETATION))
+   :SPIKES
+   (:AGGREGATE
+    #P"/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/report.lisp"
+    :SOURCE-COUNT 54 :CHILD-SOURCE-OCCURRENCES 62 :RUNS
+    ((:ID #A((6) BASE-CHAR . "SPK-01") :STATUS :OK :SOURCES 5)
+     (:ID #A((6) BASE-CHAR . "SPK-02") :STATUS :OK :SOURCES 3)
+     (:ID #A((6) BASE-CHAR . "SPK-03") :STATUS :OK :SOURCES 3)
+     (:ID #A((6) BASE-CHAR . "SPK-04") :STATUS :OK :SOURCES 5)
+     (:ID #A((6) BASE-CHAR . "SPK-05") :STATUS :OK :SOURCES 5)
+     (:ID #A((6) BASE-CHAR . "SPK-06") :STATUS :OK :SOURCES 7)
+     (:ID #A((6) BASE-CHAR . "SPK-07") :STATUS :PASS :SOURCES 17)
+     (:ID #A((6) BASE-CHAR . "SPK-08") :STATUS :OK :SOURCES 6)
+     (:ID #A((6) BASE-CHAR . "SPK-09") :STATUS :OK :SOURCES 3)
+     (:ID #A((6) BASE-CHAR . "SPK-10") :STATUS :OK :SOURCES 8)))))
+ :PHYSICAL-OBSERVATIONS
+ ((:PATH
+   #A((49) BASE-CHAR . "spikes/out/4000914822-command-10423-0/report.lisp")
+   :BYTES 963835 :SHA256
+   "a32ae8baddf7b025e346d268ff892d4f9852ffbb14c3c604f8cc218d842d68da")
+  (:PATH
+   #A((124) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914851-snapshot-self-test-10971-0/report.lisp")
+   :BYTES 1961 :SHA256
+   "3a2e73f2c248033c99a20774c153251e69a7bb3c7b7356c1285eaf0beee695f9")
+  (:PATH
+   #A((122) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000914852-reader-self-test-10981-0/report.lisp")
+   :BYTES 1943 :SHA256
+   "324b31ff1335cd843f91fb1f40bedc97963ca8063ddb53ca3900fdee56ee755b")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/report.lisp")
+   :BYTES 318 :SHA256
+   "47f253588a13ec71fdab2bba693a1926fcf2a8cfd917ae675af841902be955c0")
+  (:PATH
+   #A((114) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/report.lisp.gz")
+   :BYTES 466804 :SHA256
+   "0cc5e67b8429b401a6743f823d2683a0cb95cb70ff3be8624411d133cae40950")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-01.lisp")
+   :BYTES 27228 :SHA256
+   "5034abd606821624f0f31abda25267a8c558c1e2b3179f2b7109d749c9900a0f")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-02.lisp")
+   :BYTES 1607 :SHA256
+   "68481db59fde33e056ea121d5ec55e664f0f7ae0c247cac2f7604fb49f6850e7")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-03.lisp")
+   :BYTES 3643 :SHA256
+   "32765abefed911d4125b33158544f2328cbe0d9f83e0c980d24741ef29cc44b5")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-04.lisp")
+   :BYTES 6752 :SHA256
+   "edec35eaebf1b4058d262a9a918634c70a58f9c1681606ea855361a3a004efe7")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-05.lisp")
+   :BYTES 10133 :SHA256
+   "96fab3b035dc8bd02127a4f3d5258f0f2c31069755a43e5bd75b58fb27d1a288")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-06.lisp")
+   :BYTES 24090 :SHA256
+   "5cadc109bc3f5fc832da46b3e36cf152f5d2f2095c29ba64bbe54b3774dabd4e")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-07.lisp")
+   :BYTES 318 :SHA256
+   "9451abad762010eadb49161f51a81a79eee1b6390d47bfbd70bfc6ceea450fac")
+  (:PATH
+   #A((114) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-07.lisp.gz")
+   :BYTES 410640 :SHA256
+   "33968f6d28d42406751a749405ab06ca3bd2c1f95a37599832486805d78ea7b0")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-08.lisp")
+   :BYTES 291712 :SHA256
+   "2873754c1293882379aeb441dade3307ca6df0296f15bca1ad31a0d0fce91a16")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-09.lisp")
+   :BYTES 2472 :SHA256
+   "b12c2a52da5b5e7b5182eb73db0561c649b39b42c14e5fdeaf7ce53fc33c7cc8")
+  (:PATH
+   #A((111) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000915025-check-15198-0/SPK-10.lisp")
+   :BYTES 22975 :SHA256
+   "a68f6ef91a7450aa68c0bfd084811b900907d6fc6d96e732120289d0e370766d"))
+ :LIMITS
+ (:DATA-ONLY :METADATA-COHERENCE :NO-AUTHENTICATION :NO-NEW-CAMPAIGN
+  :NO-PRODUCT-LOAD :FLAT-ATOMS-NUMERIC-ARRAYS-AND-ACYCLIC-CONS-GRAPHS
+  :EQUALP-ARRAY-COMPARISON :STRICT-SUCCESS-RECORDS :EXPLICIT-NOMINAL-COUNT))

@@ -66,6 +66,8 @@
                              (:file "worker-package") (:file "worker-types")
                              (:file "worker-boundary") (:file "worker-run")
                              (:file "routing-types") (:file "routing-build") (:file "routing-select")))
+               (:module "dispatch" :serial t
+                :components ((:file "package") (:file "types") (:file "build") (:file "claim")))
                (:module "index" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "validation") (:file "read") (:file "write") (:file "relocate")
@@ -171,7 +173,7 @@
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
                (:module "scheduler" :serial t
                 :components ((:file "support") (:file "controller") (:file "lifecycle")
-                             (:file "pool-claim")))
+                             (:file "pool-claim") (:file "dispatch")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")

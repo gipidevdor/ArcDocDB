@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Dispatcher logico dal pool al collegamento della Serie: binding preallocato
+  sul medesimo contesto, routing solo dopo una presa autorizzata e ingresso
+  distinto per completare gli obblighi già CLAIMED. Nessun begin, pop o retry
+  implicito; ritiro e diagnosi conservano i confini C1 esistenti.
+
 - Presa dei writer governata dallo stato del pool: conferma il comando solo
   dopo la barriera IDLE, delega il claim C1 quando attivo e lascia ready e
   cursore intatti quando inattivo. Compiti e ricircoli già acquisiti completano

@@ -21,6 +21,7 @@ Il pool e il motore delle transazioni restano moduli da integrare.
 | `stato-file` | open, faulted o closed |
 | `mode-file` | modo immutabile input, append o directory; nessun descrittore esposto |
 | `verifica-capienza-append` | verifica totale del gruppo e massimo chunk prima della prima write |
+| `associa-file`, `verifica-associazione-file` | [prova di identità fisica](associazione-file.md) readonly/append, creata nel pool I/O e verificata senza syscall |
 | `posizione-scritta`, `posizione-durevole` | frontiere del nuovo file, osservate dal proprietario |
 
 `file-io` è una capacità con descrittore privato. Il chiamante possiede il
@@ -77,7 +78,8 @@ Directory/FIFO non possono diventare segmenti readonly; O_NONBLOCK evita di
 bloccarsi su un FIFO prima che fstat lo rifiuti.
 
 Il backend iniettabile è una tabella immutabile di sei funzioni: open, reader,
-writer, flush file, flush directory, close. Riceve vettori/intervalli, mai SAP.
+writer, flush file, flush directory, close, con callback opzionale `:identity`
+per associare due capacità allo stesso file. Riceve vettori/intervalli, mai SAP.
 I callback sono codice fidato, segnalano syscall-error per errno e rispettano
 durata e proprietà dei buffer. `nil` seleziona il percorso nativo, con le due
 chiamate alien inline; nessun C/C++/Rust o libreria del progetto fuori da Lisp.

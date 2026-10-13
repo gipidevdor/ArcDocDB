@@ -82,3 +82,43 @@ allocazioni.
 L'attuazione verificata è logica: nessun thread OS viene avviato,
 sospeso o distrutto dal prodotto. Park/wake, shutdown, worker morti,
 admission, I/O, sensori reali e un pool completo restano fuori scope.
+
+## Integrazione su main
+
+Dopo la campagna congelata, il commit `0714638e56a4a058b74839064a2b00dd583c5384`
+è stato integrato con `ba78d8272a475af25e89b7df8c5033ff50e30b3b`, contenente
+i nuovi componenti GET e inizializzazione ACTIVE. Il merge
+`a95dab36f40560157a6631557e4774a8b320fde5` conserva byte per byte package,
+cinque sorgenti lifecycle, test e sensore della qualifica. ASDF integra i moduli
+aggiuntivi; il changelog conserva entrambe le aggiunte concorrenti.
+
+Il [controllo integrato](../../spikes/results/2026-10-13-pool-worker-lifecycle/processes/integrated-build/report.lisp)
+`4000911049-command-19367-0` passa 1099 prove nominate e gli smoke test,
+compilazione strict, lint e tracciabilità: OK, STABLE, exit 0, 30,059868 secondi.
+La campagna completa e i dieci spike restano quelli della base congelata; non
+si attribuisce retroattivamente quel processo al merge. Le evidenze conservano
+separatamente sorgenti qualificati e sorgenti finali, inclusi i documenti aggiunti.
+
+## Conservazione C4
+
+Il [self-test della conservazione](../../spikes/results/2026-10-13-pool-worker-lifecycle/processes/publication-selftest/report.lisp)
+`4000911543-command-23689-0` passa 58 controlli: OK, STABLE, exit 0.
+Verifica copie esclusive, byte e identità originali, inventario UTF-8,
+payload gzip senza perdita e rifiuto di file speciali o fonti mutate.
+
+Il [primo tentativo](../../spikes/results/2026-10-13-pool-worker-lifecycle/processes/publication-selftest-attempt-1/report.lisp)
+resta FAILED, STABLE, exit 1: la fixture cercava il pathname `/tmp`
+nel record che conservava l'identità canonica `/private/tmp`. La correzione
+normalizza soltanto quel lookup; byte, SHA, Git blob e roundtrip restano
+verificati dalle medesime asserzioni. Fonti, diagnostica e payload originali
+del tentativo sono conservati con il loro esito distinto.
+
+La [pubblicazione delle copie](../../spikes/results/2026-10-13-pool-worker-lifecycle/processes/publication/report.lisp)
+`4000911736-command-27429-0` termina OK, STABLE, exit 0, dopo aver verificato
+gli originali e le copie. Il [controllo finale](../../spikes/results/2026-10-13-pool-worker-lifecycle/processes/final-verification/report.lisp)
+`4000911991-command-38401-0` passa link e conservazione: OK, STABLE, exit 0,
+154,602746 secondi, 370 file Markdown e 2748 link senza rotture;
+84 cataloghi, 18868 file conservati, 535386346 byte. Questi conteggi
+appartengono al processo prima dell'aggiunta delle sue copie di chiusura.
+Un nuovo manifesto conserva quei record e la versione conclusiva di questo
+documento senza sostituire i raw o i manifesti precedenti.

@@ -78,27 +78,27 @@ Un evento preparato e il valore restituito dalla registrazione non sono
 una prova di pubblicazione. Le location del primary diventano osservabili
 soltanto dopo che le fonti corrispondenti sono pubblicate.
 
-## Bootstrap e prossimo incremento di lifecycle
+## Bootstrap con ACTIVE vuoto
 
-Il ponte ACTIVE+CLOSED è disponibile dopo la prima pubblicazione di una
-radice ACTIVE. `crea-sorgente-get-attiva` richiede inizialmente
-`planned-root = NIL`, count eventi zero e offset dell'header; una
-`radice-get-attiva` completa ha almeno una pagina (`count ≥ 1`).
-`previous` in `registra-lotto-get-attivo` e nel nuovo wrapper ammette
-soltanto NIL o una radice ACTIVE.
+L'[inizializzazione della radice vuota](get-active-vuoto.md) rende i CLOSED
+recuperati consultabili prima del primo lotto. Dopo preparazione dell'header
+e decisione EDIT, il writer crea il controller con root NIL e offset 64,
+crea la sorgente ACTIVE e chiama
+`inizializza-fonti-get-attive(source, lease, sources)` prima dell'ammissione.
+La radice restituita ha zero pagine, PUT e nodi, directory NIL e fine 64.
+Il primo lotto la usa come `previous`; i successivi usano l'ultima radice
+pianificata. Nessun lotto fittizio, evento o CSN viene assegnato all'avvio.
 
-Una radice `fonti-get-serie` CLOSED-only iniziale è leggibile dal ponte,
-ma non transita direttamente al builder ACTIVE: il controller conserva
-quella stessa radice anche come pianificata, e non può passarla come
-`previous`. Con un controller ACTIVE iniziale NIL le fonti CLOSED nel
-contenuto diventano raggiungibili dal ponte solo dopo la prima
-pubblicazione ACTIVE.
+L'avvio usa il medesimo slot atomico della Serie; ogni lotto continua a
+pubblicare con il CAS e la copertura WAL ordinari. Il percorso legacy con
+controller iniziale NIL e primo lotto senza bootstrap rimane disponibile.
+Una radice CLOSED-only iniziale è leggibile ma non è una radice ACTIVE:
+non la si può passare al builder né trasformare in-place. Il caller sceglie
+la forma ACTIVE vuota durante la costruzione del controller.
 
-Il bootstrap di un ACTIVE vuoto con i CLOSED recuperati già consultabili
-prima del primo lotto resta il prossimo incremento di lifecycle. Questa
-campagna non introduce un commit fittizio di avvio né un nuovo CAS per
-superare il limite. Le API del ponte sono valide nelle forme pubblicate
-ammesse; l'avvio completo della Serie non è rivendicato.
+Restano aperti l'esecutore di apertura con EDIT, la rotazione e il reclaim
+completi. Le singole factory non provano unicità del controller, lifetime
+dei FD o completamento della decisione del catalogo.
 
 ## Copertura delle location e reader già ammessi
 

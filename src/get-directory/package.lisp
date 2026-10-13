@@ -14,12 +14,12 @@
                 #:risolvi-candidato-get #:sonda-cache-risolta-get #:leggi-record-risolto-get
                 #:sorgente-get-attiva #:radice-get-attiva #:radice-get-attiva-source
                 #:sorgente-get-attiva-controller #:sorgente-get-attiva-segment
-                #:contenuto-radice-get-attiva #:registra-lotto-get-attivo
+                #:contenuto-radice-get-attiva #:inizializza-radice-get-attiva #:registra-lotto-get-attivo
                 #:risolvi-candidato-radice-attiva-get)
   (:import-from #:arcdocdb.series #:controllore-serie #:leggi-radice-serie)
   (:export #:directory-get-serie #:crea-directory-get-serie #:payload-directory-get-serie
            #:conta-segmenti-directory-get #:trova-mappa-directory-get
            #:risolvi-candidato-directory-get #:sonda-cache-directory-get #:leggi-record-directory-get
            #:fonti-get-serie #:crea-fonti-get-serie #:contenuto-fonti-get-serie
-           #:registra-lotto-fonti-get-attivo #:risolvi-candidato-serie-get
+           #:inizializza-fonti-get-attive #:registra-lotto-fonti-get-attivo #:risolvi-candidato-serie-get
            #:sonda-cache-serie-get #:leggi-record-serie-get))

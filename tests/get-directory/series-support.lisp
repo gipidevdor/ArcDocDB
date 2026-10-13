@@ -11,6 +11,8 @@
 ;;; - Arity della sonda: :OUTCOME-OFFSET rimosso dal prodotto durante la stesura, correzione solo letta.
 ;;; - tests/get/active* assenti nel worktree: fixture ACTIVE locale, directory e osservatore riusati.
 ;;; - FI superset/primary anticipato/geometria non attestano rotation, reclaim o fonti native sintetiche.
+;;; - EMPTY-ACTIVE-P assume EDIT gia' durevole a cura del caller; non simula catalogo/recovery.
+;;; - IO-EVENTS osserva il backend ACTIVE nativo; CLOSED mantiene il proprio osservatore pread.
 (in-package #:arcdocdb.get.directory.tests)
 (declaim (optimize (safety 3) (speed 2) (debug 3)))
 
@@ -22,6 +24,7 @@ La fixture mantiene due FD del medesimo file; cleanup solo dopo l'ultimo accesso
   (file nil :type t) (readonly nil :type t) (path nil :type t) (backend nil :type t)
   (registry nil :type t) (log nil :type t) (controller nil :type t) (lease nil :type t)
   (source nil :type t) (sources nil :type t) (root nil :type t) (planned nil :type t)
+  (io-events nil :type list)
   (active-key nil :type t) (active-value nil :type t)
   (active-id 13 :type (unsigned-byte 32)) (next 64 :type fixnum))
 
@@ -63,18 +66,30 @@ Cleanup idempotente; risorse/file appartengono soltanto a questa fixture."
   nil)
 
 ;;; REQ: REQ-WAL-002 REQ-FOR-001
+(defun directory-series-observed-io (fixture operation function)
+  "Pre: backend della sola fixture seriale. Post: operazione contata prima della syscall nativa.
+Nessuna sostituzione prodotto; l'osservatore alloca e non e' un corpo da benchmark."
+  (lambda (&rest arguments)
+    (push operation (directory-series-fixture-io-events fixture))
+    (apply function arguments)))
+
+;;; REQ: REQ-WAL-002 REQ-FOR-001
 (defun directory-series-native-log (fixture)
   "Pre: directory nativa posseduta. Post: header writer sincronizzato e log append a offset 64.
-Backend nativo senza sostituzione; sola osservazione pread riusata dalla directory."
+Backend nativo senza sostituzione; contatore I/O ACTIVE e osservazione pread della directory."
   (let* ((directory (directory-series-fixture-directory fixture))
          (path (merge-pathnames "series-active.tmp" (directory-fixture-root directory)))
          (header (directory-octets 64))
          (observed (directory-observed-backend (directory-fixture-observer directory)
                                               (directory-series-fixture-active-id fixture)))
-         (backend (io:make-backend (io::backend-open observed) (io::backend-reader observed)
-                                  (io::backend-writer observed) (io::backend-flush observed)
-                                  (io::backend-directory-flush observed) (io::backend-close observed)
-                                  :identity #'io::native-identity))
+         (backend (io:make-backend
+                   (directory-series-observed-io fixture :open (io::backend-open observed))
+                   (directory-series-observed-io fixture :read (io::backend-reader observed))
+                   (directory-series-observed-io fixture :write (io::backend-writer observed))
+                   (directory-series-observed-io fixture :flush (io::backend-flush observed))
+                   (directory-series-observed-io fixture :directory-flush (io::backend-directory-flush observed))
+                   (directory-series-observed-io fixture :close (io::backend-close observed))
+                   :identity (directory-series-observed-io fixture :identity #'io::native-identity)))
          (file (io:crea-temporaneo path :backend backend)))
     (setf (directory-series-fixture-path fixture) path (directory-series-fixture-file fixture) file
           (directory-series-fixture-backend fixture) backend)
@@ -109,10 +124,13 @@ Header letto realmente dal resolver; nessuna mappa o frontiera sintetica."
 
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-AFF-008
 (defun make-directory-series-fixture (&key (count 2) (workers 4) (version 2) (cache-p nil)
-                                          (prepared-p nil) (active-p nil) (active-id 13)
-                                          (publish-active-p active-p) (record-bytes 56) content (root nil root-p))
+                                          (prepared-p nil) (active-p nil) (empty-active-p nil) (active-id 13)
+                                          (publish-active-p (and active-p (not empty-active-p)))
+                                          (record-bytes 56) content (root nil root-p))
   "Pre: setup seriale. Post: fixture CLOSED esistente, controller nativo e ACTIVE opzionale.
 Root CLOSED = fonti; root ACTIVE = delta WAL pubblicato con fonti come content.
+EMPTY-ACTIVE-P crea source e pubblica il solo header con fonti CLOSED; nessun lotto/CSN.
+EDIT durevole e lifetime EBR sono precondizioni del caller, fuori da questa fixture.
 ROOT esplicita e PUBLISH-ACTIVE-P NIL servono soltanto ai test di rifiuto/FI."
   (let ((fixture (%make-directory-series-fixture :active-id active-id)) (complete nil))
     (unwind-protect
@@ -127,7 +145,8 @@ ROOT esplicita e PUBLISH-ACTIVE-P NIL servono soltanto ai test di rifiuto/FI."
                  (d:crea-fonti-get-serie
                   (directory-fixture-directory (directory-series-fixture-directory fixture)) :content content))
            (directory-series-native-log fixture)
-           (let ((initial (if root-p root (unless active-p (directory-series-fixture-sources fixture)))))
+           (let ((initial (if root-p root
+                              (unless (or active-p empty-active-p) (directory-series-fixture-sources fixture)))))
              (setf (directory-series-fixture-root fixture) initial
                    (directory-series-fixture-planned fixture) initial
                    (directory-series-fixture-controller fixture)
@@ -136,13 +155,15 @@ ROOT esplicita e PUBLISH-ACTIVE-P NIL servono soltanto ai test di rifiuto/FI."
                     :capacity 4 :root initial :next-offset 64)
                    (directory-series-fixture-lease fixture)
                    (arcdocdb.series:acquisisci-controllore-serie (directory-series-fixture-controller fixture))))
-           (when active-p (directory-series-native-source fixture))
+           (when (or active-p empty-active-p) (directory-series-native-source fixture))
+           (when empty-active-p (directory-series-initialize-empty fixture))
            (when publish-active-p
              (directory-series-publish fixture
                                        (directory-series-stage fixture
                                                                (directory-series-fixture-active-key fixture)
                                                                (directory-series-fixture-active-value fixture))))
            (directory-clear-read-events (directory-series-fixture-directory fixture))
+           (setf (directory-series-fixture-io-events fixture) nil)
            (setf complete t)
            fixture)
       (unless complete (close-directory-series-fixture fixture)))))
@@ -152,6 +173,94 @@ ROOT esplicita e PUBLISH-ACTIVE-P NIL servono soltanto ai test di rifiuto/FI."
   "Pre: runner seriale. Post: chiusura della fixture anche quando il test segnala una condizione."
   (let ((fixture (apply #'make-directory-series-fixture options)))
     (unwind-protect (funcall thunk fixture) (close-directory-series-fixture fixture))))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-AFF-008
+(defun directory-series-clear-io-events (fixture)
+  "Pre: operazione seriale terminata. Post: setup/I/O precedente esclusi dall'oracolo seguente."
+  (setf (directory-series-fixture-io-events fixture) nil)
+  (directory-clear-read-events (directory-series-fixture-directory fixture)))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-AFF-008
+(defun directory-series-check-empty-root (fixture root &optional (content (directory-series-fixture-sources fixture)))
+  "Pre: root restituita dalla factory. Post: forma vuota confrontata con costanti e input fixture."
+  (is (typep root 'r:radice-get-attiva))
+  (is (eq (directory-series-fixture-source fixture) (r::radice-get-attiva-source root)))
+  (is (null (r::radice-get-attiva-directory root)))
+  (is (= 0 (r::radice-get-attiva-count root)))
+  (is (= 0 (r::radice-get-attiva-puts root)))
+  (is (= 0 (r::radice-get-attiva-nodes root)))
+  (is (= 64 (r::radice-get-attiva-end root)))
+  (is (= 0 (r:payload-radice-get-attiva root)))
+  (is (eq content (r:contenuto-radice-get-attiva root)))
+  t)
+
+;;; REQ: REQ-WAL-006 REQ-MVC-008 REQ-CON-002 REQ-AFF-001
+(defun directory-series-check-initial-state (fixture root &key (written 64) (durable 64)
+                                                            (next-offset 64) (readonly-state :open)
+                                                            (append-state :open))
+  "Pre: nessun lotto sigillato/adottato. Post: root attesa, ring vergine e CSN base=1 intatti.
+Frontiere attese esplicite per i rifiuti su file realmente avanzato; nessuna lettura da EOF."
+  (let ((controller (directory-series-fixture-controller fixture))
+        (registry (directory-series-fixture-registry fixture)))
+    (is (eq root (arcdocdb.series:leggi-radice-serie controller)))
+    (is (eq root (arcdocdb.series::controllore-serie-planned-root controller)))
+    (is (eq sb-thread:*current-thread* (arcdocdb.series::controllore-serie-owner controller)))
+    (is (= (directory-series-fixture-lease fixture) (arcdocdb.series::controllore-serie-lease-generation controller)))
+    (is (equal '(0 0 0) (multiple-value-list
+                         (arcdocdb.series:conta-commit-serie controller (directory-series-fixture-lease fixture)))))
+    (is (= 0 (arcdocdb.series::controllore-serie-event-generation controller)))
+    (is (= 0 (arcdocdb.series::controllore-serie-head controller)))
+    (is (= 0 (arcdocdb.series::controllore-serie-tail controller)))
+    (is (= 0 (arcdocdb.series::controllore-serie-publish-head controller)))
+    (is (= 0 (arcdocdb.series::controllore-serie-last-high controller)))
+    (is (= 0 (arcdocdb.series::controllore-serie-last-low controller)))
+    (is (null (arcdocdb.series::controllore-serie-effect-active controller)))
+    (map nil (lambda (event)
+               (is (eq :libero (arcdocdb.series::commit-serie-phase event)))
+               (is (eq :idle (arcdocdb.series::commit-serie-io-state event)))
+               (is (= 0 (arcdocdb.series::commit-serie-generation event)))
+               (is (= 0 (arcdocdb.series::commit-serie-slot event)))
+               (is (= 0 (arcdocdb.series::commit-serie-high event)))
+               (is (= 0 (arcdocdb.series::commit-serie-low event)))
+               (is (null (arcdocdb.series::commit-serie-lotto event)))
+               (is (null (arcdocdb.series::commit-serie-expected-root event)))
+               (is (null (arcdocdb.series::commit-serie-root event))))
+         (arcdocdb.series::controllore-serie-slots controller))
+    (is (= next-offset (arcdocdb.series::controllore-serie-next-offset controller)))
+    (is (= written (io:posizione-scritta (directory-series-fixture-file fixture))))
+    (is (= durable (io:posizione-durevole (directory-series-fixture-file fixture))))
+    (is (eq :append (io:mode-file (directory-series-fixture-file fixture))))
+    (is (eq append-state (io:stato-file (directory-series-fixture-file fixture))))
+    (when (directory-series-fixture-readonly fixture)
+      (is (eq :input (io:mode-file (directory-series-fixture-readonly fixture))))
+      (is (eq readonly-state (io:stato-file (directory-series-fixture-readonly fixture)))))
+    (is (eq :open (arcdocdb.wal:stato-log (directory-series-fixture-log fixture))))
+    (is (null (arcdocdb.wal::log-io-active (directory-series-fixture-log fixture))))
+    (is (eq :healthy (arcdocdb.series:stato-controllore-serie controller)))
+    (is (eq :none (arcdocdb.series:ambito-fault-serie controller)))
+    (is (equal '(0 1 0 1) (multiple-value-list (arcdocdb.csn:leggi-frontiere-csn registry))))
+    (is (= 0 (arcdocdb.csn::registro-csn-used registry)))
+    (is (= 0 (arcdocdb.csn::registro-csn-cursor registry)))
+    (is (every #'zerop (arcdocdb.csn::registro-csn-highs registry)))
+    (is (every #'zerop (arcdocdb.csn::registro-csn-lows registry)))
+    (is (null (directory-series-fixture-io-events fixture)))
+    (is (null (directory-read-events (directory-series-fixture-directory fixture))))
+    (is (directory-check-clean (directory-series-fixture-directory fixture))))
+  t)
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-CMP-007
+(defun directory-series-initialize-empty (fixture)
+  "Pre: source pronta, EDIT gia' durevole e controller vergine. Post: root vuota pubblicata.
+La fixture conserva proprio la root restituita come PREVIOUS del primo lotto."
+  (directory-series-clear-io-events fixture)
+  (directory-series-check-initial-state fixture nil)
+  (let ((root (d:inizializza-fonti-get-attive
+               (directory-series-fixture-source fixture) (directory-series-fixture-lease fixture)
+               (directory-series-fixture-sources fixture))))
+    (setf (directory-series-fixture-root fixture) root (directory-series-fixture-planned fixture) root)
+    (directory-series-check-empty-root fixture root)
+    (directory-series-check-initial-state fixture root)
+    root))
 
 ;;; REQ: REQ-WAL-005 REQ-IDX-001
 (defun directory-series-seal (fixture key value)

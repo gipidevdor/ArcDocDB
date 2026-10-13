@@ -30,4 +30,31 @@
    #A((41) BASE-CHAR . "disassemblato-iniziale-conservazione.lisp") :VARIANT
    :SOURCE-SNAPSHOT-IN-RECORD)
   (:KIND :SOURCE-SUPPORT :ARTIFACT "ricostruzione-iniziale.lisp" :VARIANT
-   :INITIAL-SOURCE-DIFF-BEFORE-REBASE)))
+   :INITIAL-SOURCE-DIFF-BEFORE-REBASE)
+  (:KIND :COMPILE-ONLY :ARTIFACT
+   #A((27) BASE-CHAR . "compilazione-integrata.lisp") :PROCESS-ARTIFACT
+   #A((41) BASE-CHAR . "compilazione-integrata-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINT :ARTIFACT #A((20) BASE-CHAR . "stile-integrato.lisp")
+   :PROCESS-ARTIFACT #A((34) BASE-CHAR . "stile-integrato-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-TRACE :ARTIFACT
+   #A((28) BASE-CHAR . "tracciabilita-integrata.lisp") :PROCESS-ARTIFACT
+   #A((42) BASE-CHAR . "tracciabilita-integrata-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINKS :ARTIFACT
+   #A((27) BASE-CHAR . "collegamenti-integrati.lisp") :PROCESS-ARTIFACT
+   #A((41) BASE-CHAR . "collegamenti-integrati-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-EVIDENCE :ARTIFACT
+   #A((23) BASE-CHAR . "evidenze-integrate.lisp") :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "evidenze-integrate-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-DISASSEMBLY :ARTIFACT
+   #A((28) BASE-CHAR . "disassemblato-integrato.lisp") :PROCESS-ARTIFACT
+   #A((42) BASE-CHAR . "disassemblato-integrato-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-byte.lisp" :VARIANT
+   :ORIGINAL-BYTE-COMPARISON)
+  (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-sorgente.lisp" :VARIANT
+   :VERBATIM-SOURCE-TEXT)))

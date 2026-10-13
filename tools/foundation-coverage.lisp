@@ -15,7 +15,8 @@
   "Gli scope con elenchi espliciti selezionano file esatti; gli altri il modulo intero."
   (let ((suffixes
           (cond ((string= scope "io-rename")
-                 '("/src/io/rename.lisp" "/src/io/types.lisp" "/src/io/lifecycle.lisp"))
+                 '("/src/io/rename.lisp" "/src/io/namespace.lisp" "/src/io/native-namespace.lisp"
+                   "/src/io/types.lisp" "/src/io/lifecycle.lisp"))
                 ((string= scope "get-active-init")
                  '("/src/series/publication.lisp" "/src/get-resolver/active-types.lisp"
                    "/src/get-resolver/active-init.lisp" "/src/get-resolver/active-build.lisp"

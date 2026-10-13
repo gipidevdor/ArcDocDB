@@ -101,6 +101,11 @@ aggiunge due callback opzionali:
 Un backend incompleto è rifiutato prima della presa: nessun fallback nativo.
 I callback sono fidati e non mutano nomi, FD o capacità fuori dal contratto.
 Le foglie vengono copiate in stringhe private prima delle osservazioni I/O.
+La rinomina e le sue postcondizioni delegano al
+[confine comune](io-rinomina.md), con copie simple-base-string e limite di
+255 byte per foglia. Il cleanup locale protetto conserva una capacità già
+chiusa e guasta una capacità aperta anche su uscita incompleta o guasto della
+verifica dopo la rinomina.
 
 Nel percorso nativo, `fstatat` usa lo `struct stat` grovelled di SB-POSIX,
 con lo stesso selettore `INODE64` delle sue funzioni stat: nessun offset di

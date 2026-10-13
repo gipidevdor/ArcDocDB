@@ -34,6 +34,12 @@ individuano lo stesso inode possono dare successo senza spostamento. I FD
 già aperti conservano la propria identità anche quando viene sostituito un
 nome. Non si deduce una decisione EDIT dal nome `.tmp`, né si offre unlink.
 
+La sostituzione verificata `sostituisci-temporaneo` mantiene i propri controlli
+di identità, `.tmp`/definitivo e assenza di alias. Normalizza le due foglie
+private e delega allo stesso effetto protetto, includendo la verifica del
+nome installato nella postcondizione. Esiste un solo wrapper nativo
+`native-replace`: non si duplicano syscall o politica di fail-stop.
+
 ## Guasti e backend
 
 Preflight di capacità, nomi e callback prima della prima operazione. Rifiuti
@@ -72,6 +78,7 @@ Serie/Archivio e riconcilia dal manifest prima di riaprire una capacità.
 | RIO-D06 | Risultato zero | Zero, NIL, -1, +1, errore POSIX |
 | RIO-D07 | Effetto incompleto e capacità ancora aperta | Successo, errore tipizzato, uscita non locale, capacità già guasta/chiusa |
 | RIO-D08 | FD valido dopo il callback | Valido; invalidazione iniettata fuori contratto per il cleanup |
+| RIO-D09 | Postcondizione facoltativa presente e ritorno NIL | Assente, presente con successo, errore e ritorno impossibile iniettati |
 
 Ciclo massimo di 255 caratteri per ciascun nome; una sola rinomina per
 chiamata e nessuna attesa aggiunta. È un percorso dei metadati, può allocare

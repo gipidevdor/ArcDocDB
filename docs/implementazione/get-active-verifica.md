@@ -36,7 +36,36 @@ ACTIVE e 42 CLOSED. I record hanno exit 0 e **781 path/blob** stabili,
 corrispondenti all'intero inventario Git del freeze, esclusi i risultati.
 L'audit indipendente ricava dal Git congelato nomi, ordine e totali dei
 test; verifica anche l'associazione fra comando esterno e record interno.
-Questi esiti appartengono ai due freeze locali, non alla CI.
+Questi esiti appartengono ai rispettivi freeze locali, non alla CI.
+
+Prima della pull request si integra anche il main esatto
+`061e638200f0d97fc2443c7dec38d4362ef274e1`. Le 18 nuove prove del pool
+di worker portano il totale a **1.125 test di modulo in 29 suite e due
+smoke check**. Una terza copia separata supera `make check` sul freeze
+`ae4022fb66914c53a8f9fba69298e88ce2a35d98`, con working tree pulito,
+exit 0 e **807 path/blob** stabili e corrispondenti al Git congelato.
+Non compaiono WARNING o STYLE-WARNING; le NOTE del compilatore nello
+stderr originale rimangono conservate. L'audit indipendente ricava
+conteggi e ordine dai sorgenti, associa i record esterno/interno, verifica
+i quattro errori attesi delle fixture e l'esatto inventario dei 314 FASL
+del sistema e dei test, letti soltanto come byte.
+
+La [raccolta finale](../../spikes/results/2026-10-13-get-active-final/)
+conserva i gruppi completi di questa verifica e i suoi due audit locali;
+gli [audit delle copie](../../spikes/results/2026-10-13-get-active-final-audits/)
+sono separati. R1 usa un controllo di associazione della cache basato
+sulla presenza della directory nell'argomento ASDF. R2 rafforza il solo
+helper: legge l'argomento come dati con `read-eval` disabilitato ed EOF e
+verifica esattamente i due pathname wildcard sorgente/destinazione e
+l'esclusione della configurazione ereditata. Entrambi i tentativi e le
+rispettive fonti sono conservati; la verifica del mapping esatto appartiene
+a R2. I dieci sorgenti di copertura sono invariati rispetto a `e8c88a4`:
+le misure rimangono attribuite a quel freeze, senza una nuova esecuzione.
+
+Nota editoriale sul README originale conservato nella raccolta finale:
+645.763 è il numero di **caratteri** della stringa `:stderr` del core,
+corrispondente a **645.773 byte UTF-8**. L'etichetta originale «byte» è
+imprecisa; gli output, le impronte e gli esiti rimangono invariati.
 
 Le fixture ACTIVE usano file reali, header v1/v2, cornici e CRC attesi
 indipendenti dagli encoder del prodotto. Le frontiere derivano da offset

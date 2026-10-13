@@ -7,6 +7,18 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Pubblicazione del checkpoint recuperato: rinomina ancorata alla directory
+  preparata, verifica delle foglie contro i FD del nuovo e vecchio control log,
+  controllo del nome installato e fsync del parent. Gettone locale unico con
+  cleanup prima del CAS; errori terminali senza retry, rollback o risultati
+  parziali. Recovery completo e qualifica delle nuove chiamate restano aperti.
+
+- Suite funzionale dedicata al GET ACTIVE ordinario: 28 test con file reali,
+  formati v1/v2, oracoli wire indipendenti, confini di payload e directory,
+  cache, guasti e cleanup snapshot/EBR. Copertura isolata e compatibilità
+  CLOSED conservate con prove grezze e audit indipendenti; qualifica C1 e
+  MC/DC restano aperti.
+
 - Presa dei writer governata dallo stato del pool: conferma il comando solo
   dopo la barriera IDLE, delega il claim C1 quando attivo e lascia ready e
   cursore intatti quando inattivo. Compiti e ricircoli già acquisiti completano

@@ -121,7 +121,10 @@ misura di allocazione, latenza, RSS o throughput. Non si rivendica COD-30.
 | `sonda-cache-attiva-get(context, source)` | Esito della sonda GET ordinaria con frontiera pubblicata |
 | `leggi-record-attivo-get(context, source)` | Cinque esiti del nucleo GET nel pool I/O |
 
-Il reader non accetta una radice o una frontiera fornita dal chiamante.
+Le tre API legate alla sorgente non accettano una radice o una frontiera
+fornita dal chiamante. Il [ponte delle fonti della Serie](get-fonti-serie.md)
+usa invece il resolver della radice già catturata sotto EBR, con gli
+obblighi di pubblicazione e lifetime dichiarati in quel contratto.
 Controlla identità sorgente/root, geometria directory e candidato tramite il
 resolver comune. GET verifica ancora CRC/chiave/CSN del record/cache; la
 pagina non sostituisce il dato fisico. Risposta privata fino a copia e
@@ -171,7 +174,10 @@ per condizione **non è stata eseguita** in questo incremento.
 Le [evidenze statiche](../../spikes/results/2026-10-11-get-active/README.md)
 conservano compilazione e controlli di prodotto/documentazione. Le due letture
 sono locali dell'autore, non revisione indipendente. Nessun nuovo test,
-benchmark, fault injection, modello o self-test è aggiunto/eseguito localmente.
+benchmark, fault injection, modello o self-test era stato aggiunto/eseguito
+localmente nell'incremento iniziale. La successiva [verifica funzionale
+dedicata](get-active-verifica.md), secondo il [metodo preregistrato](get-active-metodo.md),
+aggiunge 28 test ordinari, copertura diagnostica e audit indipendenti.
 Restano aperti stress con thread reali, interruzioni in ogni fase, condition
 coverage, misure di heap/performance, prove ACTIVE multiserie, directory della
 Serie/rotazione/reclaim, indice concreto e qualifica C1.

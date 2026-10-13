@@ -39,4 +39,5 @@ Punto di atomicità del recovery resta la futura rinomina del control log, secon
     (unless (zerop (durable-flush directory))
       (error 'invariant-violation :reason :control-checkpoint-directory))
     (verifica-control-completo plan input append directory association)
-    (%make-control-preparato log (checkpoint-control-manifest plan) (checkpoint-control-active plan) association)))
+    (%make-control-preparato log (checkpoint-control-manifest plan) (checkpoint-control-active plan)
+                            association directory size)))

@@ -1,5 +1,6 @@
-;;;; Copertura diagnostica del resolver CLOSED, processo e cache privati.
+;;;; Copertura diagnostica del resolver CLOSED/ACTIVE, processo e cache privati.
 ;;;; Uso: sbcl --script tools/get-resolver-coverage.lisp --report spikes/out/get-resolver-coverage-R1/
+;;;; ACTIVE: aggiungere --suite active; il default resta CLOSED.
 ;;; REQ: REQ-VAL-001 REQ-AFF-002 REQ-FOR-004 REQ-CMP-007
 (require :asdf)
 (require :sb-cover)
@@ -15,6 +16,12 @@
     "src/get-resolver/scan.lisp" "src/get-resolver/sort.lisp"
     "src/get-resolver/rows.lisp" "src/get-resolver/build.lisp"
     "src/get-resolver/read.lisp"))
+(defparameter *active-files*
+  '("src/get-resolver/package.lisp" "src/get-resolver/types.lisp"
+    "src/get-resolver/rows.lisp" "src/get-resolver/read.lisp"
+    "src/get-resolver/active-types.lisp" "src/get-resolver/active-directory.lisp"
+    "src/get-resolver/active-scan.lisp" "src/get-resolver/active-build.lisp"
+    "src/get-resolver/active-preflight.lisp" "src/get-resolver/active-read.lisp"))
 (defconstant +state-byte-limit+ 134217728)
 (defconstant +state-file-limit+ 10000)
 (defconstant +state-mark-limit+ 100000)
@@ -31,6 +38,25 @@
 (defun reject (reason control &rest arguments)
   "Segnala formato o associazione non validi senza interpretare dati come codice."
   (error 'invalid-coverage :reason reason :detail (apply #'format nil control arguments)))
+
+(declaim (ftype (function (keyword) list) scope-files))
+(defun scope-files (scope)
+  "Seleziona l'elenco esplicito dei sorgenti; nessun glob amplia lo scope."
+  (ecase scope (:closed *closed-files*) (:active *active-files*)))
+
+(declaim (ftype (function (keyword) symbol) suite-package))
+(defun suite-package (scope)
+  "Seleziona la sola suite da eseguire dopo il reset delle hit."
+  (ecase scope
+    (:closed '#:arcdocdb.get.resolver.tests)
+    (:active '#:arcdocdb.get.active.tests)))
+
+(declaim (ftype (function (keyword) string) suite-support))
+(defun suite-support (scope)
+  "Seleziona anche il supporto test per la verifica della cache privata."
+  (ecase scope
+    (:closed "tests/get-resolver/support.lisp")
+    (:active "tests/get-active/support.lisp")))
 
 (declaim (ftype (function (t (integer 0)) (integer 0)) bounded-list-size))
 (defun bounded-list-size (value limit)
@@ -68,15 +94,15 @@
     (sb-posix:mkdir candidate #o700)
     (truename candidate)))
 
-(declaim (ftype (function (pathname pathname) t) isolate-output))
-(defun isolate-output (root directory)
+(declaim (ftype (function (pathname pathname keyword) t) isolate-output))
+(defun isolate-output (root directory scope)
   "Mappa ricorsivamente product e tests nella sola cache FASL privata."
   (let ((destination (merge-pathnames "fasl/" directory)))
     (asdf:initialize-output-translations
      `(:output-translations
        (,(merge-pathnames "**/*.*" root) ,(merge-pathnames "**/*.*" destination))
        :ignore-inherited-configuration))
-    (dolist (relative (append *closed-files* '("tests/get-resolver/support.lisp")))
+    (dolist (relative (append (scope-files scope) (list (suite-support scope))))
       (let* ((source (merge-pathnames relative root))
              (fasl (make-pathname :type "fasl" :defaults source))
              (actual (asdf:apply-output-translations fasl)))
@@ -98,11 +124,11 @@
         (bounded-list-size data +state-file-limit+)
         data))))
 
-(declaim (ftype (function (list pathname) list) closed-state))
-(defun closed-state (state root)
-  "Scopre ogni sorgente CLOSED soltanto al pathname esatto del checkout."
+(declaim (ftype (function (list pathname keyword) list) selected-state))
+(defun selected-state (state root scope)
+  "Scopre ogni sorgente del profilo soltanto al pathname esatto del checkout."
   (let ((expected (make-hash-table :test #'equal)) (found (make-hash-table :test #'equal)))
-    (dolist (relative *closed-files*)
+    (dolist (relative (scope-files scope))
       (setf (gethash (namestring (truename (merge-pathnames relative root))) expected) relative))
     (dolist (entry state)
       (unless (and (consp entry) (stringp (first entry)))
@@ -111,10 +137,10 @@
         (when (gethash (first entry) found)
           (reject :duplicate-source "Sorgente duplicato: ~A." (first entry)))
         (setf (gethash (first entry) found) entry)))
-    (loop for relative in *closed-files*
+    (loop for relative in (scope-files scope)
           for path = (namestring (truename (merge-pathnames relative root)))
           for entry = (gethash path found)
-          do (unless entry (reject :missing-source "Sorgente CLOSED non scoperto: ~A." path))
+          do (unless entry (reject :missing-source "Sorgente ~A non scoperto: ~A." scope path))
           collect (cons relative entry))))
 
 (declaim (ftype (function (cons) list) coverage-marks))
@@ -176,39 +202,40 @@
       (reject :html-denominator "Contatori raw e HTML discordanti per ~A." path)))
   t)
 
-(declaim (ftype (function (pathname list) pathname) report-closed))
-(defun report-closed (directory selected)
-  "Produce HTML dei soli sette file CLOSED; verifica cardinalità e file generati."
+(declaim (ftype (function (pathname list) pathname) report-selected))
+(defun report-selected (directory selected)
+  "Produce HTML dei soli file selezionati; verifica cardinalità e file generati."
   (let ((paths (mapcar #'cadr selected)) (seen (make-hash-table :test #'equal)))
     (let ((report (sb-cover:report
                    directory :external-format :utf-8
                    :if-matches (lambda (path)
                                  (when (member path paths :test #'equal)
                                    (setf (gethash path seen) t))))))
-      (unless (and report (= (length *closed-files*) (hash-table-count seen))
-                   (= (1+ (length *closed-files*))
+      (unless (and report (= (length selected) (hash-table-count seen))
+                   (= (1+ (length selected))
                       (length (directory (merge-pathnames "*.html" directory))))
                    (probe-file report))
-        (reject :html-scope "HTML incompleto o scope diverso dai sette sorgenti CLOSED."))
+        (reject :html-scope "HTML incompleto o scope diverso dai ~D sorgenti selezionati."
+                (length selected)))
       report)))
 
-(declaim (ftype (function (pathname pathname) list) coverage))
-(defun coverage (root directory)
-  "Carica senza test-op, azzera le hit e chiama soltanto la suite resolver CLOSED."
+(declaim (ftype (function (pathname pathname keyword) list) coverage))
+(defun coverage (root directory scope)
+  "Carica senza test-op, azzera le hit e chiama soltanto la suite selezionata."
   (proclaim '(optimize (safety 3) (sb-cover:store-coverage-data 3)))
   (handler-bind ((warning (lambda (condition) (error condition))))
     (asdf:load-asd (merge-pathnames "arcdocdb.asd" root))
-    (isolate-output root directory)
+    (isolate-output root directory scope)
     (asdf:load-system "arcdocdb" :force t)
     (asdf:load-system "arcdocdb/tests" :force t)
     (sb-cover:reset-coverage)
     (let* ((raw (merge-pathnames "coverage-state.lisp" directory)))
       ;; Conserva anche le hit parziali se la suite fallisce; nessuna qualifica.
-      (unwind-protect (uiop:symbol-call '#:arcdocdb.get.resolver.tests '#:run)
+      (unwind-protect (uiop:symbol-call (suite-package scope) '#:run)
         (sb-cover:save-coverage-in-file raw))
       ;; Il raw precede qualsiasi verifica del formato o generazione HTML.
-      (let* ((selected (closed-state (read-state raw) root))
-             (report (report-closed directory selected))
+      (let* ((selected (selected-state (read-state raw) root scope))
+             (report (report-selected directory selected))
              (files (loop for (relative . entry) in selected
                           for counts = (mark-counts entry)
                           do (verify-native-counts (first entry) counts)
@@ -217,7 +244,7 @@
              (totals (loop for key in keys append
                            (list key (reduce #'+ files :key (lambda (file) (getf file key)) :initial-value 0))))
              (summary (list :schema-version 1 :kind :get-resolver-coverage :status :ok
-                            :scope :closed :suite "arcdocdb.get.resolver.tests:run"
+                            :scope scope :suite (format nil "~(~A~):run" (suite-package scope))
                             :lisp-version (lisp-implementation-version) :coverage-reset-before-suite t
                             :raw-state (namestring raw) :html-index (namestring report)
                             :files files :totals totals
@@ -226,10 +253,28 @@
                                       :private-sb-cover-count-interface-validated-against-raw))))
         (save-data (merge-pathnames "coverage-summary.lisp" directory) summary)))))
 
-(let ((arguments (uiop:command-line-arguments)))
-  (unless (and (= 2 (length arguments)) (equal "--report" (first arguments)))
-    (reject :usage "Usare --report spikes/out/get-resolver-coverage-R1/."))
-  (let* ((root (truename "./")) (directory (fresh-directory root (second arguments)))
-         (summary (coverage root directory)))
-    (format t "Copertura resolver CLOSED: ~S~%Rapporto: ~A~%"
-            (getf summary :totals) (getf summary :html-index))))
+(declaim (ftype (function (list) (values string keyword)) parse-arguments))
+(defun parse-arguments (arguments)
+  "Accetta --report e l'opzionale --suite closed|active, senza duplicati."
+  (unless (member (length arguments) '(2 4))
+    (reject :usage "Usare --report spikes/out/get-resolver-coverage-R1/ [--suite closed|active]."))
+  (let ((report nil) (scope :closed) (suite-seen nil))
+    (loop for (option value) on arguments by #'cddr
+          do (cond ((equal option "--report")
+                    (when report (reject :usage "--report duplicato."))
+                    (setf report value))
+                   ((equal option "--suite")
+                    (when suite-seen (reject :usage "--suite duplicato."))
+                    (setf suite-seen t
+                          scope (cond ((equal value "closed") :closed)
+                                      ((equal value "active") :active)
+                                      (t (reject :usage "Suite ammessa: closed oppure active.")))))
+                   (t (reject :usage "Opzione sconosciuta: ~S." option))))
+    (unless report (reject :usage "--report è richiesto."))
+    (values report scope)))
+
+(multiple-value-bind (report-argument scope) (parse-arguments (uiop:command-line-arguments))
+  (let* ((root (truename "./")) (directory (fresh-directory root report-argument))
+         (summary (coverage root directory scope)))
+    (format t "Copertura resolver ~A: ~S~%Rapporto: ~A~%"
+            scope (getf summary :totals) (getf summary :html-index))))

@@ -116,3 +116,8 @@ revisione indipendente e non promuovono i requisiti del motore.
 Resta da collegare il preparatore all'esecutore di apertura/rotazione e alla
 decisione EDIT del catalogo. I limiti prepared/OUTCOME del resolver ACTIVE
 ordinario e la pubblicazione dell'indice concreto restano quelli documentati.
+
+Il [checkpoint del control log](checkpoint-control.md) può ora usare questo
+risultato per preparare header, EDIT completo e SEAL, verificando lo stesso
+ACTIVE e mantenendo il control log fisicamente distinto. La decisione
+autorevole del recovery resta la rinomina prevista da ADR-0040.

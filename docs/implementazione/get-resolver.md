@@ -158,3 +158,10 @@ contiene compilazione, controlli statici e due letture locali dell'autore.
 Non aggiunge né esegue localmente test, modelli, fault injection o benchmark.
 Allocazioni reali del GET, latenza, costo di costruzione e concorrenza restano
 da misurare; revisione indipendente e qualifica C1 non sono dichiarate concluse.
+
+La [suite funzionale dedicata alle prove OUTCOME](get-resolver-verifica.md)
+aggiunge 42 test di costruzione, ordinamento/ricerca e lettura, con file
+readonly v1/v2 e oracoli wire indipendenti. Conserva il
+[metodo preregistrato](get-resolver-metodo.md) e risultati attribuiti al freeze
+locale. La lettura indipendente e la copertura diagnostica di questa suite
+non chiudono qualifica C1 o MC/DC dell'intero componente.

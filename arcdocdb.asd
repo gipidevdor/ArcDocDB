@@ -147,6 +147,8 @@
                 :components ((:file "support") (:file "paths") (:file "guards") (:file "threads")))
                (:module "get-directory" :serial t
                 :components ((:file "support") (:file "construction") (:file "read") (:file "threads")))
+               (:module "get-resolver" :serial t
+                :components ((:file "support") (:file "sort") (:file "construction") (:file "read")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
@@ -193,6 +195,7 @@
              (uiop:symbol-call '#:arcdocdb.get.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.performance.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.directory.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.get.resolver.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.execution.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)

@@ -449,7 +449,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
      `(:output-translations (,(merge-pathnames "**/*.*" root) ,(merge-pathnames "**/*.*" destination))
        :ignore-inherited-configuration))
     (handler-bind ((warning #'abort-warning))
-      (asdf:load-asd (merge-pathnames "arcdocdb.asd" root))
+      ;; La source-registry privata carica l’ASD una volta; non ridefinire PERFORM sotto warning fatali.
       (asdf:load-system "arcdocdb" :force t)
       (setf (getf record :compiled) t)
       (asdf:load-system "arcdocdb/tests" :force t)

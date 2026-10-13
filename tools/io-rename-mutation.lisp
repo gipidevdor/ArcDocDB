@@ -124,9 +124,8 @@
              (dotimes (i (min 4 (length input)))
                (push (sb-thread:make-thread #'worker :name "canonical SHA256 worker") threads))
              (dolist (thread threads)
-               (unless (eq :joined (sb-thread:join-thread thread :timeout (remaining) :default :timeout))
-                 ;; Il worker restituisce NIL: JOIN-THREAD restituisce i valori del worker.
-                 (when (sb-thread:thread-alive-p thread) (reject "canonical digest worker timeout."))))
+               (let ((joined (sb-thread:join-thread thread :timeout (remaining) :default :timeout)))
+                 (when (eq :timeout joined) (reject "canonical digest worker timeout."))))
              (when failure (error failure))
              (unless (every #'identity output) (reject "canonical digest inventory incomplete."))
              (require-time) (setf complete t) (coerce output 'list))

@@ -26,6 +26,8 @@ Restituisce quattro valori:
 Il chiamante usa questa API per ogni nuova presa dal pool. Le API execution
 dirette restano disponibili per i loro contratti; non consultano una porta.
 Il nuovo gate non può impedire a un caller che lo aggira di prendere lavoro.
+Il [dispatcher pool/Serie](pool-dispatch.md) lega questa porta alla tabella
+del medesimo contesto e restituisce il collegamento del writer appena preso.
 
 ## Ordine del passo
 

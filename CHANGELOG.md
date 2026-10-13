@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Pubblicazione del checkpoint recuperato: rinomina ancorata alla directory
+  preparata, verifica delle foglie contro i FD del nuovo e vecchio control log,
+  controllo del nome installato e fsync del parent. Gettone locale unico con
+  cleanup prima del CAS; errori terminali senza retry, rollback o risultati
+  parziali. Recovery completo e qualifica delle nuove chiamate restano aperti.
+
 - Presa dei writer governata dallo stato del pool: conferma il comando solo
   dopo la barriera IDLE, delega il claim C1 quando attivo e lascia ready e
   cursore intatti quando inattivo. Compiti e ricircoli già acquisiti completano

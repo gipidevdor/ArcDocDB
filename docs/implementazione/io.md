@@ -36,7 +36,9 @@ e la quarantena del segmento spettano al proprietario.
 Le letture restituiscono byte al codec, che deve verificarne CRC e identità prima
 di una risposta al client. Queste API non pubblicano indici e non confermano lotti.
 La prova su due lotti SEAL dimostra il collegamento tra I/O e codec, non il commit
-integrato del motore. Nessuna rinomina, cancellazione o troncamento è offerta qui.
+integrato del motore. La [sostituzione del temporaneo](pubblicazione-control.md)
+aggiunge una rinomina relativa al FD del parent, con legame dei nomi ai file
+attesi. Cancellazione e troncamento restano privi di API di prodotto.
 
 ## Guasti e frontiere
 
@@ -80,7 +82,9 @@ bloccarsi su un FIFO prima che fstat lo rifiuti.
 
 Il backend iniettabile è una tabella immutabile di sei funzioni: open, reader,
 writer, flush file, flush directory, close, con callback opzionale `:identity`
-per associare due capacità allo stesso file. Riceve vettori/intervalli, mai SAP.
+per associare due capacità allo stesso file. `:entry-identity` e `:rename`
+sono opzionali per la [pubblicazione del control log](pubblicazione-control.md),
+con rifiuto della sostituzione quando mancano. Riceve vettori/intervalli, mai SAP.
 I callback sono codice fidato, segnalano syscall-error per errno e rispettano
 durata e proprietà dei buffer. `nil` seleziona il percorso nativo, con le due
 chiamate alien inline; nessun C/C++/Rust o libreria del progetto fuori da Lisp.

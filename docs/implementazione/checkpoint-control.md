@@ -5,7 +5,9 @@ un header, un EDIT completo e un SEAL. Realizza la preparazione del file di
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio),
 con l'header di [ADR-0052](../adr/0052-header-dei-log-di-controllo.md).
 Il **punto di atomicità del recovery** resta la successiva rinomina sopra il
-control log autorevole. Questo modulo prepara il temporaneo, senza rinominarlo.
+control log autorevole. Il preparatore non rinomina; il
+[publisher del recovery](pubblicazione-control.md) esegue questo passaggio
+su un vecchio control log già verificato e autorevole.
 
 ## API e proprietà
 
@@ -72,7 +74,8 @@ la directory e verifica capacità, dipendenza ACTIVE e frontiere esatte.
 Restituisce il risultato soltanto a completamento di tutti i passi.
 
 Il risultato conserva log, manifest, dipendenza ACTIVE e associazione fisica;
-non conserva il piano serializzato o lo scratch. Il controller conserva tutte
+conserva anche directory canonica e frontiera preparata. Non conserva il piano
+serializzato o lo scratch. Il controller conserva tutte
 le capacità e completa la rinomina/adozione secondo ADR-0040. Il file completo
 e durevole non è ancora il control log autorevole e non conferma un documento.
 
@@ -130,6 +133,6 @@ di latenza, RSS, heap o throughput.
 
 Qualifica C1, casi funzionali, fault injection, stress concorrente e misure
 dinamiche sono aperti. Le letture statiche dell'autore non costituiscono
-revisione indipendente. La rinomina autorevole, l'esecutore recovery,
-la creazione della Serie nel catalogo e la rotazione in esercizio restano
-passaggi di integrazione distinti.
+revisione indipendente. La [rinomina autorevole](pubblicazione-control.md)
+è ora un passaggio distinto del modulo; l'esecutore recovery, la creazione
+della Serie nel catalogo e la rotazione in esercizio restano da integrare.

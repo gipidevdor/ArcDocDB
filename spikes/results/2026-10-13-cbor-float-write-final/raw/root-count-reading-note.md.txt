@@ -1,0 +1,21 @@
+# Correzione del conteggio sintetico finale
+
+Letture DATA del coordinatore sul registro
+`spikes/out/4000908322-command-83574-0/report.lisp`, eseguite con
+`arcdocdb.evidence:read-evidence` e Common Lisp. Nessun LOAD del registro.
+Le due letture sintetiche terminano con exit zero; non sono nuove campagne.
+
+La prima stampa OK/0/STABLE, 209,526331 s, 766 impronte identiche e commit
+`3ed6ebfba4dc692b524a4cf3416c8757de978e41`. La seconda conta 1.058 righe
+uniche con prefisso `ok    ` e le etichetta erroneamente nominal-ok.
+Quel prefisso comprende anche due smoke e quattro self-test linter.
+La deduzione iniziale di 1.056 nominali e 1.062 esiti complessivi è errata.
+
+La lettura completa successiva separa 1.052 nominali, due smoke e quattro
+self-test linter: 1.058 OK complessivi unici. Il controllore aggiunge 23
+test, secondo metodo e sorgenti, ai 1.029 nominali dell'integrazione GET.
+Il documento dei risultati è corretto prima dello snapshot finale;
+nessun esito delle campagne o dei registri originali viene modificato.
+
+Questa nota conserva le osservazioni disponibili e la correzione,
+senza presentarsi come transcript completo dei comandi ad hoc.

@@ -12,6 +12,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   stessa radice catturata e rifiuto di owner/ID duplicati prima dell'adozione.
   Mantiene il protocollo WAL e i cinque esiti del nucleo GET; rotazione e
   reclaim completo restano distinti.
+- Scrittura dei float CBOR da parole IEEE: riduzione esatta della larghezza,
+  preservazione di segno e payload NaN, preflight prima della mutazione
+  e destinazioni private per i worker. Qualifica C1 e profilo documentale
+  restano aperti.
+
 - Controllore locale del numero di worker di calcolo: EWMA intere,
   crescita additiva, riduzione moltiplicativa e permanenza delle condizioni.
   Campioni e tempo iniettati, target distinto dai worker effettivi,

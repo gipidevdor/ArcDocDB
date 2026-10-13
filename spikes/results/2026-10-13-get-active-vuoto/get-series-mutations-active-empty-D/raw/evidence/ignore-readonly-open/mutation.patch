@@ -1,0 +1,7 @@
+--- a/src/get-resolver/active-init.lisp
++++ b/src/get-resolver/active-init.lisp
+@@ -20,2 +20,2 @@
+-    (unless (and (eq (stato-file (segmento-get-file segment)) :open)
+-                 (eq (stato-file file) :open))
++    (unless (and (segmento-get-file segment)
++           (eq (stato-file file) :open))

@@ -1,0 +1,5 @@
+--- a/src/series/publication.lisp
++++ b/src/series/publication.lisp
+@@ -15,1 +15,1 @@
+-               (zerop (controllore-serie-event-generation controller))
++               t

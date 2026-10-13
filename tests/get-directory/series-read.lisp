@@ -4,6 +4,361 @@
 (in-package #:arcdocdb.get.directory.tests)
 (declaim (optimize (safety 3) (speed 2) (debug 3)))
 
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-MVC-008 REQ-AFF-008
+(deftest test-REQ-WAL-006-series-get-empty-active-initialization-native-v1-v2
+  (dolist (version '(1 2))
+    (dolist (factory '(:resolver :directory))
+      (call-with-directory-series-fixture
+       (lambda (fixture)
+         (let* ((source (directory-series-fixture-source fixture))
+                (lease (directory-series-fixture-lease fixture))
+                (sources (directory-series-fixture-sources fixture))
+                (payload (d:contenuto-fonti-get-serie sources)))
+           (directory-series-check-initial-state fixture nil)
+           (let ((root (ecase factory
+                         (:resolver (r:inizializza-radice-get-attiva source lease :content sources))
+                         (:directory (d:inizializza-fonti-get-attive source lease sources)))))
+             (directory-series-check-empty-root fixture root)
+             (is (eq payload (d:contenuto-fonti-get-serie (r:contenuto-radice-get-attiva root))))
+             (directory-series-check-initial-state fixture root))))
+       :version version :active-p t :publish-active-p nil :content (vector :caller version)))))
+
+;;; REQ: REQ-WAL-006 REQ-CON-002 REQ-MVC-008 REQ-AFF-001
+(deftest test-REQ-WAL-006-series-get-initial-controller-root-and-nil-refusal
+  (dolist (version '(1 2))
+    (call-with-directory-series-fixture
+     (lambda (fixture)
+       (let ((controller (directory-series-fixture-controller fixture))
+             (lease (directory-series-fixture-lease fixture))
+             (root (vector :caller version)))
+         (signals invalid-argument
+           (arcdocdb.series:inizializza-radice-serie controller lease nil) :serie-initial-root)
+         (directory-series-check-initial-state fixture nil)
+         (is (eq root (arcdocdb.series:inizializza-radice-serie controller lease root)))
+         (directory-series-check-initial-state fixture root)
+         (signals invalid-argument
+           (arcdocdb.series:inizializza-radice-serie controller lease (vector :replacement)) :serie-started)
+         (directory-series-check-initial-state fixture root)))
+     :version version :root nil)))
+
+;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-WAL-006 REQ-CMP-007
+(deftest test-REQ-IDX-001-series-get-empty-active-closed-before-first-batch-native-v1-v2
+  (dolist (version '(1 2))
+    (dolist (prepared-p '(nil t))
+      (call-with-directory-series-fixture
+       (lambda (fixture)
+         (let* ((directory (directory-series-fixture-directory fixture))
+                (controller (directory-series-fixture-controller fixture))
+                (context (directory-series-context fixture))
+                (empty (directory-series-fixture-root fixture)))
+           (directory-series-check-empty-root fixture empty)
+           (directory-series-check-initial-state fixture empty)
+           (dotimes (ordinal 2)
+             (let ((key (aref (directory-fixture-keys directory) ordinal))
+                   (value (aref (directory-fixture-values directory) ordinal))
+                   (id (aref (directory-fixture-ids directory) ordinal)))
+               (is (eq :candidate (directory-series-begin fixture key)))
+               (directory-series-observe-acquire
+                fixture (lambda ()
+                          (is (equal (list (r::mappa-segmento-get-segment
+                                            (aref (directory-fixture-maps directory) ordinal))
+                                           (aref (directory-fixture-ends directory) ordinal)
+                                           (if prepared-p 1 0) (when prepared-p 120))
+                                     (multiple-value-list (d:risolvi-candidato-serie-get context controller))))))
+               (directory-series-observe-acquire
+                fixture (lambda ()
+                          (is (eq (if prepared-p :proof-required :disabled)
+                                  (d:sonda-cache-serie-get context controller)))))
+               (is (null (directory-read-events directory)))
+               (is (directory-output-untouched-p directory))
+               (directory-series-observe-acquire
+                fixture (lambda ()
+                          (is (equal '(:segment :disabled :not-attempted nil nil)
+                                     (multiple-value-list (d:leggi-record-serie-get context controller))))))
+               (directory-series-copy-and-finish fixture value)
+               (is (equal (if prepared-p (list (list id 120 32) (list id 64 56))
+                              (list (list id 64 56))) (directory-read-events directory)))
+               ;; Il backend ACTIVE non deve essere consultato per un candidato CLOSED.
+               (is (null (directory-series-fixture-io-events fixture)))
+               (directory-series-clear-io-events fixture)))
+           (directory-series-check-initial-state fixture empty)))
+       :version version :prepared-p prepared-p :empty-active-p t))))
+
+;;; REQ: REQ-AFF-004 REQ-IDX-001 REQ-WAL-006 REQ-CMP-007
+(deftest test-REQ-AFF-004-series-get-empty-active-candidate-faulted-native-v1-v2
+  (dolist (version '(1 2))
+    (dolist (operation '(:resolve :probe :read :explicit))
+      (call-with-directory-series-fixture
+       (lambda (fixture)
+         (let* ((directory (directory-series-fixture-directory fixture))
+                (context (directory-series-context fixture))
+                (controller (directory-series-fixture-controller fixture))
+                (empty (directory-series-fixture-root fixture))
+                (key (directory-series-fixture-active-key fixture))
+                (value (directory-series-fixture-active-value fixture)))
+           ;; FI primary anticipata: nessun PUT/WAL corrisponde alla location ACTIVE.
+           (directory-publish-key directory key 1 (directory-series-fixture-active-id fixture)
+                                  64 (+ 24 (length key) (length value)))
+           (is (eq :candidate (directory-series-begin fixture key)))
+           (is (e:epoca-attiva-p (e:contesto-epoca (directory-fixture-epochs directory) 0)))
+           (directory-series-observe-acquire
+            fixture
+            (lambda ()
+              (signals invariant-violation
+                (if (eq operation :explicit)
+                    (r:risolvi-candidato-radice-attiva-get context empty)
+                    (directory-series-operation operation context controller)) :active-location-frontier))
+            :expected (if (eq operation :explicit) 0 1))
+           (is (directory-check-clean directory 0 :faulted))
+           (is (directory-output-untouched-p directory))
+           (is (null (directory-read-events directory)))
+           (is (null (directory-series-fixture-io-events fixture)))
+           (directory-series-check-empty-root fixture empty)
+           (is (eq empty (arcdocdb.series:leggi-radice-serie controller)))
+           (is (equal '(0 0 0) (multiple-value-list
+                                (arcdocdb.series:conta-commit-serie controller (directory-series-fixture-lease fixture)))))
+           (is (equal '(0 1 0 1) (multiple-value-list
+                                  (arcdocdb.csn:leggi-frontiere-csn (directory-series-fixture-registry fixture)))))
+           (signals invalid-argument (g:concludi-get context 12) :get-result-not-ready)
+           (signals invalid-argument (directory-series-begin fixture key) :get-worker-state)))
+       :version version :empty-active-p t))))
+
+;;; REQ: REQ-WAL-005 REQ-WAL-006 REQ-IDX-001 REQ-MVC-008 REQ-CMP-007
+(deftest test-REQ-WAL-006-series-get-empty-active-first-batch-publish-and-reuse-native-v1-v2
+  (dolist (version '(1 2))
+    (call-with-directory-series-fixture
+     (lambda (fixture)
+       (let* ((directory (directory-series-fixture-directory fixture))
+              (controller (directory-series-fixture-controller fixture))
+              (lease (directory-series-fixture-lease fixture))
+              (empty (directory-series-fixture-root fixture))
+              (key (directory-series-fixture-active-key fixture))
+              (value (directory-series-fixture-active-value fixture))
+              (size (+ 24 (length key) (length value)))
+              ;; SEAL indipendente: 24 byte di cornice e 32 byte di body.
+              (end (+ 64 size 56))
+              (commit (directory-series-stage fixture key value))
+              (batch (directory-series-commit-batch commit))
+              (event (directory-series-commit-event commit))
+              (root (directory-series-commit-root commit)))
+         (is (= 1 (directory-series-commit-generation commit)))
+         (is (= 2 (directory-series-commit-csn commit)))
+         (is (eq empty (arcdocdb.series::commit-serie-expected-root event)))
+         (is (eq empty (arcdocdb.series:leggi-radice-serie controller)))
+         (is (eq root (arcdocdb.series::controllore-serie-planned-root controller)))
+         (is (not (eq empty root)))
+         (is (= 1 (r::radice-get-attiva-count root)))
+         (is (= 1 (r::radice-get-attiva-puts root)))
+         (is (= 4 (r::radice-get-attiva-nodes root)))
+         (is (= end (r::radice-get-attiva-end root)))
+         (is (eq (directory-series-fixture-sources fixture) (r:contenuto-radice-get-attiva root)))
+         (is (= 64 (io:posizione-scritta (directory-series-fixture-file fixture))))
+         (is (= 64 (io:posizione-durevole (directory-series-fixture-file fixture))))
+         (is (null (directory-series-fixture-io-events fixture)))
+         (directory-series-check-empty-root fixture empty)
+         (directory-series-publish fixture commit)
+         (is (eq root (arcdocdb.series:leggi-radice-serie controller)))
+         (is (eq root (arcdocdb.series::controllore-serie-planned-root controller)))
+         (is (= end (io:posizione-scritta (directory-series-fixture-file fixture))))
+         (is (= end (io:posizione-durevole (directory-series-fixture-file fixture))))
+         (is (eq :open (arcdocdb.wal:stato-lotto batch)))
+         (is (null (arcdocdb.wal::lotto-owner batch)))
+         (is (eq :libero (arcdocdb.series::commit-serie-phase event)))
+         (is (null (arcdocdb.series::commit-serie-lotto event)))
+         (is (null (arcdocdb.series::commit-serie-expected-root event)))
+         (is (null (arcdocdb.series::commit-serie-root event)))
+         (is (equal '(0 0 0) (multiple-value-list (arcdocdb.series:conta-commit-serie controller lease))))
+         (is (equal '(0 2 0 2) (multiple-value-list
+                                (arcdocdb.csn:leggi-frontiere-csn (directory-series-fixture-registry fixture)))))
+         (directory-series-check-empty-root fixture empty)
+         ;; Mutazione del buffer ormai OPEN: la root deve possedere copie dei dati del lotto.
+         (arcdocdb.wal:aggiungi-record batch 1 (directory-key 1001) (directory-value 1001 16))
+         (directory-series-clear-io-events fixture)
+         (dotimes (ordinal 3)
+           (let* ((active-p (= ordinal 2))
+                  (read-key (if active-p key (aref (directory-fixture-keys directory) ordinal)))
+                  (read-value (if active-p value (aref (directory-fixture-values directory) ordinal)))
+                  (id (if active-p (directory-series-fixture-active-id fixture)
+                          (aref (directory-fixture-ids directory) ordinal))))
+             (is (eq :candidate (directory-series-begin fixture read-key)))
+             (directory-series-observe-acquire
+              fixture (lambda ()
+                        (is (equal '(:segment :disabled :not-attempted nil nil)
+                                   (multiple-value-list
+                                    (d:leggi-record-serie-get (directory-series-context fixture) controller))))))
+             (directory-series-copy-and-finish fixture read-value)
+             (is (equal (list (list id 64 (+ 24 (length read-key) (length read-value))))
+                        (directory-read-events directory)))
+             (directory-series-clear-io-events fixture)))
+         (directory-series-check-empty-root fixture empty)))
+     :version version :empty-active-p t)))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-AFF-004 REQ-CON-002
+(deftest test-REQ-WAL-006-series-get-empty-active-repeated-initialization-refused
+  (dolist (version '(1 2))
+    (call-with-directory-series-fixture
+     (lambda (fixture)
+       (let ((source (directory-series-fixture-source fixture))
+             (controller (directory-series-fixture-controller fixture))
+             (lease (directory-series-fixture-lease fixture))
+             (sources (directory-series-fixture-sources fixture))
+             (empty (directory-series-fixture-root fixture)))
+         (signals invalid-argument
+           (arcdocdb.series:inizializza-radice-serie controller lease (vector :replacement)) :serie-started)
+         (directory-series-check-initial-state fixture empty)
+         (signals invalid-argument
+           (r:inizializza-radice-get-attiva source lease :content sources) :serie-started)
+         (directory-series-check-initial-state fixture empty)
+         (signals invalid-argument
+           (d:inizializza-fonti-get-attive source lease sources) :serie-started)
+         (directory-series-check-initial-state fixture empty)
+         (directory-series-check-empty-root fixture empty)))
+     :version version :empty-active-p t)))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-AFF-004 REQ-CMP-007
+(deftest test-REQ-WAL-006-series-get-empty-active-foreign-owner-before-initialization
+  (dolist (version '(1 2))
+    (call-with-directory-series-fixture
+     (lambda (fixture)
+       (call-with-directory-series-fixture
+        (lambda (foreign)
+          (signals invalid-argument
+            (d:inizializza-fonti-get-attive
+             (directory-series-fixture-source fixture) (directory-series-fixture-lease fixture)
+             (directory-series-fixture-sources foreign)) :sources-owner)
+          (directory-series-check-initial-state fixture nil)
+          (directory-series-check-initial-state foreign nil)
+          ;; Il rifiuto consente il successivo avvio corretto sullo stesso controller.
+          (directory-series-initialize-empty fixture))
+        :version version :active-p t :publish-active-p nil))
+     :version version :active-p t :publish-active-p nil)))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-AFF-004 REQ-CMP-007
+(deftest test-REQ-WAL-006-series-get-empty-active-duplicate-before-initialization
+  (dolist (version '(1 2))
+    (dolist (id '(17 #xffffffff))
+      (call-with-directory-series-fixture
+       (lambda (fixture)
+         (signals invalid-argument
+           (d:inizializza-fonti-get-attive
+            (directory-series-fixture-source fixture) (directory-series-fixture-lease fixture)
+            (directory-series-fixture-sources fixture)) :sources-active-duplicate)
+         (directory-series-check-initial-state fixture nil))
+       :version version :active-p t :publish-active-p nil :active-id id))))
+
+;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-IDX-001 REQ-AFF-004
+(deftest test-REQ-CON-002-series-get-empty-active-lease-before-checks
+  (dolist (version '(1 2))
+    (call-with-directory-series-fixture
+     (lambda (fixture)
+       (call-with-directory-series-fixture
+        (lambda (foreign)
+          (let* ((controller (directory-series-fixture-controller fixture))
+                 (source (directory-series-fixture-source fixture))
+                 (stale (directory-series-fixture-lease fixture)))
+            (arcdocdb.series:rilascia-controllore-serie controller stale)
+            (setf (directory-series-fixture-lease fixture) nil)
+            (setf (directory-series-fixture-lease fixture) (arcdocdb.series:acquisisci-controllore-serie controller))
+            ;; CLOSED include anche l'ID ACTIVE; la vista foreign precede il controllo duplicato.
+            (io:chiudi (directory-series-fixture-readonly fixture))
+            (directory-series-clear-io-events fixture)
+            (dolist (lease (list nil 0 stale))
+              (signals invalid-argument
+                (arcdocdb.series:inizializza-radice-serie controller lease nil) :serie-lease)
+              (signals invalid-argument
+                (r:inizializza-radice-get-attiva source lease) :serie-lease)
+              (signals invalid-argument
+                (d:inizializza-fonti-get-attive source lease (directory-series-fixture-sources foreign)) :serie-lease)
+              (signals invalid-argument
+                (d:inizializza-fonti-get-attive source lease (directory-series-fixture-sources fixture)) :serie-lease)
+              (directory-series-check-initial-state fixture nil :readonly-state :closed))
+            (directory-series-check-initial-state foreign nil)))
+        :version version :active-p t :publish-active-p nil))
+     :version version :active-p t :publish-active-p nil :active-id 17)))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-AFF-004 REQ-AFF-001
+(deftest test-REQ-WAL-006-series-get-empty-active-file-frontier-refused
+  (dolist (version '(1 2))
+    (dolist (factory '(:resolver :directory))
+      (dolist (mode '(:written :durable :durable-short :offset))
+        (call-with-directory-series-fixture
+         (lambda (fixture)
+           (let ((controller (directory-series-fixture-controller fixture)))
+             (ecase mode
+               (:written (io:append-esatto (directory-series-fixture-file fixture) (directory-octets 1) 0 1))
+               (:durable
+                (io:append-esatto (directory-series-fixture-file fixture) (directory-octets 1) 0 1)
+                (io:durable-flush (directory-series-fixture-file fixture)))
+               ;; FI seriale: written=offset=64 isolano la sola foglia durable!=64.
+               (:durable-short (setf (io::file-durable (directory-series-fixture-file fixture)) 63))
+               ;; FI metadata locale: source gia' costruita, file nativo fermo al solo header.
+               (:offset (setf (arcdocdb.series::controllore-serie-next-offset controller) 65)))
+             (directory-series-clear-io-events fixture)
+             (signals invalid-argument
+               (ecase factory
+                 (:resolver (r:inizializza-radice-get-attiva
+                             (directory-series-fixture-source fixture) (directory-series-fixture-lease fixture)))
+                 (:directory (d:inizializza-fonti-get-attive
+                              (directory-series-fixture-source fixture) (directory-series-fixture-lease fixture)
+                              (directory-series-fixture-sources fixture)))) :active-root-initial-frontier)
+             (directory-series-check-initial-state
+              fixture nil :written (if (member mode '(:offset :durable-short)) 64 65)
+              :durable (case mode (:durable 65) (:durable-short 63) (otherwise 64))
+              :next-offset (if (eq mode :offset) 65 64))))
+         :version version :active-p t :publish-active-p nil)))))
+
+;;; REQ: REQ-CMP-007 REQ-WAL-006 REQ-IDX-001 REQ-AFF-001
+(deftest test-REQ-CMP-007-series-get-empty-active-fixture-cleanup-native-v1-v2
+  (dolist (version '(1 2))
+    (let* ((fixture (make-directory-series-fixture :version version :empty-active-p t))
+           (directory (directory-series-fixture-directory fixture))
+           (path (directory-series-fixture-path fixture))
+           (directory-path (directory-fixture-root directory))
+           (controller (directory-series-fixture-controller fixture)))
+      (unwind-protect
+           (progn
+             (is (eq :candidate (directory-series-begin fixture (aref (directory-fixture-keys directory) 0))))
+             (is (e:epoca-attiva-p (e:contesto-epoca (directory-fixture-epochs directory) 0)))
+             ;; Cleanup esterno di sicurezza: abbandona un GET ancora CANDIDATE prima dei FD.
+             (close-directory-series-fixture fixture)
+             (is (directory-check-clean directory))
+             (is (null (arcdocdb.series::controllore-serie-owner controller)))
+             (is (null (directory-series-fixture-lease fixture)))
+             (is (eq :closed (io:stato-file (directory-series-fixture-readonly fixture))))
+             (is (eq :closed (io:stato-file (directory-series-fixture-file fixture))))
+             (is (every (lambda (file) (eq :closed (io:stato-file file))) (directory-fixture-files directory)))
+             (is (null (probe-file path)))
+             (is (null (probe-file directory-path)))
+             ;; Ripetizione non chiude un FD riusato e non ripete syscall ACTIVE.
+             (directory-series-clear-io-events fixture)
+             (close-directory-series-fixture fixture)
+             (is (null (directory-series-fixture-io-events fixture))))
+        (close-directory-series-fixture fixture)))))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-001 REQ-AFF-001 REQ-CMP-007
+(deftest test-REQ-WAL-006-series-get-empty-active-closed-capabilities-refused
+  (dolist (version '(1 2))
+    (dolist (factory '(:resolver :directory))
+      ;; Tre falsificazioni di AND: readonly sola, append sola, entrambe.
+      (dolist (mode '(:readonly :append :both))
+        (call-with-directory-series-fixture
+         (lambda (fixture)
+           (when (member mode '(:readonly :both)) (io:chiudi (directory-series-fixture-readonly fixture)))
+           (when (member mode '(:append :both)) (io:chiudi (directory-series-fixture-file fixture)))
+           (directory-series-clear-io-events fixture)
+           (is (eq :open (arcdocdb.wal:stato-log (directory-series-fixture-log fixture))))
+           (signals invalid-argument
+             (ecase factory
+               (:resolver (r:inizializza-radice-get-attiva
+                           (directory-series-fixture-source fixture) (directory-series-fixture-lease fixture)))
+               (:directory (d:inizializza-fonti-get-attive
+                            (directory-series-fixture-source fixture) (directory-series-fixture-lease fixture)
+                            (directory-series-fixture-sources fixture)))) :active-source-file)
+           (directory-series-check-initial-state
+            fixture nil :readonly-state (if (eq mode :append) :open :closed)
+            :append-state (if (eq mode :readonly) :open :closed)))
+         :version version :active-p t :publish-active-p nil)))))
+
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-CMP-007
 (deftest test-REQ-IDX-001-series-get-content-roundtrip
   (call-with-directory-series-fixture

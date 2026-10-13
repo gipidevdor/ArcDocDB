@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "kind": "scoped-independent-reviews",
+  "status": "complete",
+  "product": {
+    "reviewer": "Bohr",
+    "reads": [
+      "WIP after ba78d82",
+      "c522bd4e94c920f8631ece65f9e48677d2d4f735"
+    ],
+    "delta": "7ce74c697e0c42b23a5abf3301133cdc2bf22b7d",
+    "findings": [
+      {
+        "id": "AE-C1-01",
+        "status": "closed",
+        "issue": "Append chiuso con frontiere ancora a64 consentiva bootstrap.",
+        "resolution": "Readonly e append devono essere aperti prima di costruzione/CAS; test separati per ogni capacità."
+      },
+      {
+        "id": "AE-C1-02",
+        "status": "closed-static",
+        "issue": "CAS discordante non copre la postcondizione EQ successiva.",
+        "resolution": "D03 e D03b distinti; false foglie irraggiungibili nel protocollo conforme; mutante planned-root dimostra sensibilità, non MC/DC."
+      },
+      {
+        "id": "AE-C4-01",
+        "status": "closed-static",
+        "issue": "Collector ammetteva prefissi fuori manifesto.",
+        "resolution": "Solo radici esplicite, negativi sui prefissi, TXT esatto."
+      }
+    ],
+    "checklist": {
+      "1": "REQ/ADR coerenti",
+      "2": "Invarianti e casi, riserva D03 chiusa",
+      "3": "Rifiuti/fail-stop/causa coerenti",
+      "4": "Cicli e attese bounded",
+      "5": "Misure centralizzate separate",
+      "6": "Precondizioni dichiarate rispettate",
+      "7": "D01-D08, D03b senza MC/DC",
+      "8": "Lease, prestito e lifetime espliciti",
+      "9": "Record centralizzati separati",
+      "10": "Nessun nuovo rilievo prodotto",
+      "11": "Nessuna nuova condivisione tra Serie",
+      "12": "EDIT durevole precondizione, CAS memoria, no rollback"
+    }
+  },
+  "tools": {
+    "reviewer": "Anscombe",
+    "first_freeze": "c522bd4e94c920f8631ece65f9e48677d2d4f735",
+    "final_freeze": "6d4a74dbaa2f60d19493c4915d4c00e41c8487ee",
+    "status": "no-new-blocking-findings",
+    "findings": [
+      {
+        "priority": "P1",
+        "status": "closed",
+        "issue": "Timeout fixture conteggiabile come kill.",
+        "resolution": "Timeout tipizzati, semantica infrastruttura; kill richiede target preregistrato."
+      },
+      {
+        "priority": "P1",
+        "status": "closed",
+        "issue": "Selezione24 invece25 test.",
+        "resolution": "25 distinti=13bootstrap+12GET, includes initial-controller-root-and-nil-refusal."
+      },
+      {
+        "priority": "P2",
+        "status": "closed",
+        "issue": "Prefissi automatici del collector.",
+        "resolution": "Manifesto esplicito."
+      },
+      {
+        "priority": "P2",
+        "status": "documented-limit",
+        "issue": "Finalizzazione senza controllo finale deadline: OK da solo non garantisce900s.",
+        "evidence": "Producer E chiuso in92.046s, exit0 esterno; deadline cooperativo, non hard timeout."
+      }
+    ],
+    "observed_E": {
+      "baseline": "passed",
+      "targets_detected": 4,
+      "targets_total": 4,
+      "invalid": 0,
+      "infrastructure_error": 0,
+      "compilation_error": 0,
+      "helper_capture": "stable",
+      "driver_hashes": "verified",
+      "child_processes": "closed"
+    },
+    "limits": [
+      "Sola revisione statica e lettura della provenienza E",
+      "Nessuna attestazione benchmark da questo revisore",
+      "Nessuna qualifica del motore o MC/DC"
+    ]
+  },
+  "preliminary_agent_runs": "Tre run senza freeze/registratore: attestazione raw separata, non accettati",
+  "limits": [
+    "Due letture dello stesso revisore C1, revisore C4 distinto",
+    "Esiti runtime nei record del registratore, non in questa sintesi",
+    "Nessuna autenticazione o qualifica complessiva del motore"
+  ]
+}

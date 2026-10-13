@@ -121,6 +121,17 @@ sono conservati insieme, senza riscrivere quel tentativo.
 I bundle distinguono sorgenti congelati, documenti finali e versione
 integrata; ogni nuovo sigillo aggiunge un manifesto esclusivo.
 
+La successiva integrazione della PR #10, `baaa68c636e0be84854af2e5d12a01dab0cf80cb`,
+aggiunge 42 fixture OUTCOME senza cambiare il codice di prodotto.
+Il merge `1b9fe8062fcd944b560638ece288225d3d5843cd` passa nuovamente il build
+con avvisi fatali: record `4000907892-command-73441-0`, 1036 prove nominate
+e due smoke, 24,306801 s. Il record `4000907893-command-73469-0` verifica
+lint, tracciabilità e 2642 link senza errori. Entrambi sono OK/STABLE/exit 0
+su 750 sorgenti e documenti. La copertura e le misure del controllore
+restano quelle della campagna congelata, con sorgenti invariati.
+Anche i cataloghi dopo questo merge passano: record
+`4000908000-command-75169-0`, OK/STABLE/exit 0 su 750 sorgenti e documenti.
+
 ## Limiti
 
 Le soglie iniziali non sono calibrate sul carico del database. La misura

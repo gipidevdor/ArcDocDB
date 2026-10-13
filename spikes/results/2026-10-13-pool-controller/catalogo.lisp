@@ -1,5 +1,5 @@
 (:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG :COMPONENT :WRITER-WORKER :BASE
- "6aca98520142d578539f8303bb0e36a377c1f8cf" :HISTORICAL-BASES NIL :ENTRIES
+ "1b9fe8062fcd944b560638ece288225d3d5843cd" :HISTORICAL-BASES NIL :ENTRIES
  ((:ARTIFACT "closing-orchestration.lisp" :PATH
    #A((129) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/closing-orchestration.lisp")
@@ -112,6 +112,11 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/manifesto-sigillo.lisp")
    :BYTES 29007 :SHA256 "60d09a3a159e815793880261d7aa0f2265d5f9010fc179625dd00b16483e3f2a"
    :GIT-BLOB "0a43ccbbdb9ec76249328dfa7d6ea58e7ef45ed6")
+  (:ARTIFACT "manifesto-ultima-integrazione.lisp" :PATH
+   #A((137) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/manifesto-ultima-integrazione.lisp")
+   :BYTES 32052 :SHA256 "2b32559baeeca412c15b659117746fd14e936e797d815672e2004559f94788a2"
+   :GIT-BLOB "22c62c62ec801aae3d3f4e82b88c8eeec2c094a9")
   (:ARTIFACT "preservation-audit.lisp" :PATH
    #A((126) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/preservation-audit.lisp")
@@ -142,6 +147,11 @@
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/sources-integrated.lisp")
    :BYTES 139855 :SHA256 "bdf92994a4b119c6687f8493c11bef9cb80c08237b4f7876844db0888ac65db2"
    :GIT-BLOB "6cf8cf4c175274de65a939489acebaf3263cd40b")
+  (:ARTIFACT "sources-latest.lisp" :PATH
+   #A((122) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/sources-latest.lisp")
+   :BYTES 140978 :SHA256 "b4cbb6c2b3f6369ba6a3f4b3f892d14cd29082a0d2c2649b6f389d3e2df13df9"
+   :GIT-BLOB "f660bfb50736cb39c43a00b69c2be81a6c0cb678")
   (:ARTIFACT "sources-qualified.lisp" :PATH
    #A((125) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-13-pool-controller/sources-qualified.lisp")

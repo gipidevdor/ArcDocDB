@@ -1,0 +1,5 @@
+--- a/src/get-directory/sources-read.lisp
++++ b/src/get-directory/sources-read.lisp
+@@ -51,1 +51,1 @@
+-                   (risolvi-candidato-radice-attiva-get context active)
++                   (risolvi-candidato-directory-get context (fonti-get-serie-directory sources))

@@ -70,10 +70,11 @@ aperti fino al reclaim autorizzato. La validità della mappa CLOSED deriva
 dal manifest e dai byte verificati dal suo costruttore; la directory non
 usa EOF, H, hint o la cache per inventare una frontiera.
 
-Questo modulo prepara e consulta una vista immutabile; **non introduce un
-protocollo di pubblicazione**, una cella CAS, rotazione o reclaim. Questi
-collegamenti, directory miste ACTIVE/CLOSED e ricerca storica restano aperti.
-Il codice ACTIVE è in sviluppo separato. Serie indipendenti hanno directory
+Il [ponte delle fonti](get-fonti-serie.md) associa la directory al contenuto
+della radice ACTIVE pubblicata dal controller esistente, oppure alla radice
+CLOSED iniziale. La selezione usa una sola lettura acquire dopo il lookup.
+Rotazione, rilocazione/reclaim completo e ricerca storica restano aperti.
+Serie indipendenti hanno directory
 indipendenti; la selezione non tocca stato condiviso fra Serie.
 
 ## Errori e decisioni C1

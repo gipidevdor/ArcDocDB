@@ -1,0 +1,5 @@
+--- a/src/get-resolver/active-read.lisp
++++ b/src/get-resolver/active-read.lisp
+@@ -25,1 +25,1 @@
+-               (values segment end flags nil))))
++               (values segment (1+ end) flags nil))))

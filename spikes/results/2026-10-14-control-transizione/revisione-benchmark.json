@@ -1,0 +1,35 @@
+{
+  "schema-version": 1,
+  "kind": "c4-independent-review",
+  "agent": "Darwin",
+  "agent-id": "01a13bfb-f682-7011-b217-19419b793bae",
+  "status": "findings-pending-repair",
+  "findings": [
+    {
+      "priority": 2,
+      "file": "tools/control-transition-bench.lisp",
+      "line": 452,
+      "reason": "Nonquiescent branch loses failure status and diagnostic observed by controller."
+    },
+    {
+      "priority": 2,
+      "file": "tools/control-transition-bench.lisp",
+      "line": 440,
+      "reason": "Initial helper hash follows its compile/load; immutable helper snapshot required."
+    }
+  ],
+  "passes": [
+    "strict parser and exclusive output",
+    "private cache",
+    "completed-guard counters and observable sink",
+    "warmup excluded",
+    "clock and process heap scope explicit",
+    "full matrix required and cooperative bounded joins",
+    "public decoding and high-u64 model checks"
+  ],
+  "limits": [
+    "static only",
+    "method absent at first review",
+    "no compilation or tests by reviewer"
+  ]
+}

@@ -196,13 +196,14 @@
                              (:file "rename") (:file "rename-native") (:file "flush-failure")
                              (:file "transfer-failure")))
                (:module "control" :serial t
-                :components ((:file "support") (:file "publication") (:file "native")))
+                :components ((:file "support") (:file "publication") (:file "native")
+                             (:file "recovery-read") (:file "recovery-publication")))
                (:module "recovery"
                 :serial t
                 :components ((:file "support") (:file "scan") (:file "corruption")
                              (:file "decisions-support") (:file "decisions")
                              (:file "decisions-audit") (:file "decisions-radix") (:file "manifest-support")
-                             (:file "manifest") (:file "manifest-audit")
+                             (:file "manifest") (:file "manifest-audit") (:file "manifest-transition")
                              (:file "inventory-support") (:file "inventory")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")

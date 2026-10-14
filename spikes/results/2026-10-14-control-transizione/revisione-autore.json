@@ -1,0 +1,68 @@
+{
+  "schema-version": 1,
+  "kind": "c1-author-reading",
+  "scope": [
+    "src/control/recovery-types.lisp",
+    "src/control/recovery-read.lisp",
+    "src/control/recovery-publication.lisp",
+    "src/recovery/manifest-transition.lisp"
+  ],
+  "status": "static-reading-complete-runtime-pending",
+  "checklist": [
+    {
+      "id": 1,
+      "result": "REQ e ADR-0040 coerenti; nessun nuovo formato o requisito."
+    },
+    {
+      "id": 2,
+      "result": "INV-A9/A11/A8/P6 e conservazione di CLOSED/REMOVED; controprove dedicate in preparazione."
+    },
+    {
+      "id": 3,
+      "result": "Gerarchia tipizzata; nessun catch nel bridge; originali delegati a scanner, codec e I/O."
+    },
+    {
+      "id": 4,
+      "result": "CEILING(size/chunk), short read <=count; visite limitate ai conteggi dei manifest; nessuna attesa nel confronto."
+    },
+    {
+      "id": 5,
+      "result": "Percorso di apertura con allocazioni dichiarate; microbenchmark separato, non requisito zero heap sul percorso caldo."
+    },
+    {
+      "id": 6,
+      "result": "Risultato soltanto dopo header, scansione completa EOF, replay, frontiere e input ancora aperto."
+    },
+    {
+      "id": 7,
+      "result": "CRV-D01..07 elencate; suite verifica falsi indipendenti; copertura forme/rami separata da MC/DC."
+    },
+    {
+      "id": 8,
+      "result": "Recovery esclusivo della Serie; scratch esclusivo, risultato e manifest posseduti immutabili; readonly non prova stabilità esterna."
+    },
+    {
+      "id": 9,
+      "result": "Matrice e controllo completo pendenti dopo freeze."
+    },
+    {
+      "id": 10,
+      "result": "ftype/docstring/safety3/limiti rispettati nei quattro file; nessuna deviazione nuova."
+    },
+    {
+      "id": 11,
+      "result": "Nessun lock, contatore o scrittura condivisa tra Serie nel nuovo ingresso."
+    },
+    {
+      "id": 12,
+      "result": "Un solo renameat nel publisher canonico; stessa capacità, CAS e fsync parent; nessuna distruzione o retry nel bridge."
+    }
+  ],
+  "limits": [
+    "static inspection only",
+    "physicalEOFandfrozennamespacedependoncatalog/controller",
+    "oldACTIVEbytesandinventorynotvalidatedbythisguard",
+    "faultinjectionisnotpowerloss",
+    "phase0notclosed"
+  ]
+}

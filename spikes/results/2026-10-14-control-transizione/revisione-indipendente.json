@@ -1,0 +1,69 @@
+{
+  "schema-version": 1,
+  "kind": "c1-independent-reading",
+  "agent": "Franklin",
+  "agent-id": "01a13bf2-622a-7403-b319-7f101b42ca61",
+  "status": "static-reading-complete",
+  "actionable-findings": [],
+  "scope": [
+    "src/control/recovery-types.lisp",
+    "src/control/recovery-read.lisp",
+    "src/control/recovery-publication.lisp",
+    "src/recovery/manifest-transition.lisp"
+  ],
+  "checklist": [
+    {
+      "id": 1,
+      "result": "Annotazioni REQ e ADR-0040 coerenti."
+    },
+    {
+      "id": 2,
+      "result": "Conservazione, durevolezza, ownership e parallelismo letti staticamente; test non esaminati."
+    },
+    {
+      "id": 3,
+      "result": "Rifiuti tipizzati e propagazione coerenti; test non esaminati."
+    },
+    {
+      "id": 4,
+      "result": "Limiti finiti per byte/conteggi; nessuna nuova attesa o ricorsione."
+    },
+    {
+      "id": 5,
+      "result": "Apertura/recovery ammettono allocazioni; nessuna misura esaminata."
+    },
+    {
+      "id": 6,
+      "result": "Risultato dopo header/scanner/semantica/frontiere, dipendente dalle precondizioni dichiarate."
+    },
+    {
+      "id": 7,
+      "result": "CRV-D01..07 copre le decisioni; copertura non esaminata."
+    },
+    {
+      "id": 8,
+      "result": "Recovery esclusivo e manifest immutabili coerenti."
+    },
+    {
+      "id": 9,
+      "result": "Tracciabilita e controlli non eseguiti nella lettura."
+    },
+    {
+      "id": 10,
+      "result": "Nessuna violazione statica identificata; build/lint non esaminati."
+    },
+    {
+      "id": 11,
+      "result": "Nessuna nuova scrittura condivisa, lock o attesa tra Serie."
+    },
+    {
+      "id": 12,
+      "result": "Rename atomico e conferma fsync conservati; guasti da riconciliare, nessuna eliminazione."
+    }
+  ],
+  "limits": [
+    "no edits or runtime executions",
+    "ongoing tests not read",
+    "full engine and C1 gate not qualified"
+  ]
+}

@@ -254,7 +254,227 @@
    :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
    "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000998686-command-43549-0/conservazione.lisp"
    :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
-   "0c70a8eaeb5aa1e382bd588d9cc20c32da8d36e52f004f0278d70a4dd31ce413"))
+   "0c70a8eaeb5aa1e382bd588d9cc20c32da8d36e52f004f0278d70a4dd31ce413")
+  (:ARTIFACT "4000998812-command-65823-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000998812-command-65823-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "4348665816db6443d43bfae7633756a68d516831b3d3e42c6362366ed6a065e7")
+  (:ARTIFACT "4000998812-command-65823-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000998812-command-65823-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "bc03ba46aaa0a67cf041f41fdc13d3873e8bc82d43033a16c2d847af69bc840d")
+  (:ARTIFACT "4000998978-command-74191-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000998978-command-74191-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "c56037810f19cd203f012c145feb05d1e1eb51b3f2bf199c2819903765f58780")
+  (:ARTIFACT "4000998978-command-74191-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000998978-command-74191-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "a7575c2cc7cf0b420bbfc91fa43e59ce4d70c65817abb4dd46ebbe4c112cbe81")
+  (:ARTIFACT "4000999014-command-74820-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999014-command-74820-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "c2aa903cbd54966178330eabd845bad5884b144fde2982e02746acc21dc6685a")
+  (:ARTIFACT "4000999014-command-74820-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999014-command-74820-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "9ad0bcd7fe8e76647e1a2eec0744be7269bb61ec8da71d96e8fe86659c3bab29")
+  (:ARTIFACT "4000999014-command-74836-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999014-command-74836-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "e848c410ec00c7da8e56fc0350fea2e96e3bc92494705e4194d6db40a2719506")
+  (:ARTIFACT "4000999014-command-74836-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999014-command-74836-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "02b1ac200dfbd12856f571078534ee804804d0e68c06bb51d3c709ab992263bc")
+  (:ARTIFACT "4000999055-snapshot-self-test-75414-0-report.lisp" :KIND
+   :SNAPSHOT-PROCESS-SELF-TEST :STATUS :PASSED :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999055-snapshot-self-test-75414-0/report.lisp"
+   :SCOPE :CONTROL-TRANSIZIONE :SHA256
+   "0540da877477735e0620336e9954902e7dc33c86f204842432c61d661ae474d7")
+  (:ARTIFACT "4000999056-reader-self-test-75418-0-report.lisp" :KIND
+   :READER-PROCESS-SELF-TEST :STATUS :PASSED :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999056-reader-self-test-75418-0/report.lisp"
+   :SCOPE :CONTROL-TRANSIZIONE :SHA256
+   "84bb124bdb540ef36b2c4299e2a8f9ac2c68fe596d8c825f11fd795d7623e8b6")
+  (:ARTIFACT "4000999098-command-75844-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999098-command-75844-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "c3685f18b9dd2051763f4ac9f20239ffa0fd24da7b332f3e41bf137e86fef806")
+  (:ARTIFACT "4000999098-command-75844-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999098-command-75844-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "fb4780f565ea22c45f8c556b7bbd15c21c94fea3b15f4a377e3665c6ae1eabdd")
+  (:ARTIFACT "4000999261-check-78611-0-report.lisp" :KIND NIL :STATUS :COMPLETE
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "fc556239b480f9800ae54bbd20e3ca35c2ed0c15b7c508ad17182522593fffa3")
+  (:ARTIFACT "4000999261-check-78611-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "106c57f27160728c62630257592bbee907eb7353650d3ce5647ffc624c36f60c")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-01.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-01.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "a828896b78673d2f4d5b717d4b4e691f17fd67e33afc12509d2cddf783da9207")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-02.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-02.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "e17ad3e91b0aacb8291cda4d569bc80765e2713c7488c6d7c86a5b8825edf3a4")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-03.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-03.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "4c1b9ba41da56f862f01b99cdf6a6d4b36752a05aa922cf31dbc3032a8b791d8")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-04.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-04.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "9b82f6802371859fab547e4f45e325338007d4d59cf2f44025b20e53b33a170f")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-05.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-05.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "552ee65485635f8202b33e9240397965a2389849672ea4cc2e87d553712913c7")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-06.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-06.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "4969ae9af111cf2330a91330f4b4df313c223eaae39076cb3b9fe58fe92bf946")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-07.lisp" :KIND NIL :STATUS :PASS
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-07.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "c2c46667415193057a82f69757d915a52e9135c12eb9bdccb9b458ca23cb80f5")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-08.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-08.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "7b210b78baf4f3f46addb57ca646818109de0d71d8d4cb5f221bf3022048b8c3")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-09.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-09.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "c522d505632be1780f2d8e09fee5d7f44fb5fc5959b82170b8ca316cfff13c50")
+  (:ARTIFACT "4000999261-check-78611-0-SPK-10.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999261-check-78611-0/SPK-10.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "d8b4c3b0d95ddad00c38c358b59e41885ff0a4aff6371f61265a66a01843dc89")
+  (:ARTIFACT "4000999455-command-80546-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999455-command-80546-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "152ea4d2ddf6cea8dda420dcbd218887644915e75cf77ea322278ae57b14aa15")
+  (:ARTIFACT "4000999455-command-80546-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999455-command-80546-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "ffd1b86a7890cd9b5a5b1f5ca65c8b39ba3fa4b21ae67adf58ec1fc798a71ee0")
+  (:ARTIFACT "4000999455-command-80563-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999455-command-80563-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "b7aef5012d3ee84c6a24e16a6d64b76604918c8efc69f813df80ef6900cb59f9")
+  (:ARTIFACT "4000999455-command-80563-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999455-command-80563-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "5701c4e6b952f453bcc22a94e684a9a46d68141ccfdb201102c8cae392de80e4")
+  (:ARTIFACT "4000999497-reader-self-test-80883-0-report.lisp" :KIND
+   :READER-PROCESS-SELF-TEST :STATUS :PASSED :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999497-reader-self-test-80883-0/report.lisp"
+   :SCOPE :CONTROL-TRANSIZIONE :SHA256
+   "be9d40939ed66233522279f4c3c460d0b897848c7caf98e6b893f795c4bfb63d")
+  (:ARTIFACT "4000999497-snapshot-self-test-80880-0-report.lisp" :KIND
+   :SNAPSHOT-PROCESS-SELF-TEST :STATUS :PASSED :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999497-snapshot-self-test-80880-0/report.lisp"
+   :SCOPE :CONTROL-TRANSIZIONE :SHA256
+   "5c383dfea6b8e35059d9dc2e88b081f11306221823d9cf7ccdafc9b1c3be51cf")
+  (:ARTIFACT "4000999655-command-82941-0-report.lisp" :KIND
+   :COMMAND-VERIFICATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999655-command-82941-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "f80552a09020cbb637b069bd64849b9a626cdc5b1cb833fd25569031ad689ea0")
+  (:ARTIFACT "4000999655-command-82941-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999655-command-82941-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "c64cd55e9d2a2d644eb1d5c73274e3edc8b63016e94a3b0510c3b6bf425f15ed")
+  (:ARTIFACT "4000999699-check-84936-0-report.lisp" :KIND NIL :STATUS :COMPLETE
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/report.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "a16f9fbc929bb322bea7a9ecd10f49c24be97fdf194a57d3e74413ebf4140d1b")
+  (:ARTIFACT "4000999699-check-84936-0-conservazione.lisp" :KIND
+   :EVIDENCE-FINALIZATION :STATUS :OK :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/conservazione.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "5ca4145001bd7c3d2a4a63238d9c9f467551f44a79b12f392391ec66ad7a8dbc")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-01.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-01.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "b374330a29fcfab5de815424e84a19c74f113a4a32620f1575f230be1b29150c")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-02.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-02.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "29212acfffa799b1a44a5244f529f7098929a6558f3d99986f24e588fb882f89")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-03.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-03.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "b7ea5b8da8ba9ff990c96087d43aa1e1b77def489cd655fbaac806727c9773df")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-04.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-04.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "7c170a545c3e7e00d2660ead2180bdbea8bfa124e99eaec60d4c87d4ebf6f83f")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-05.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-05.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "6db334385cc376f79fd49637ba2cf4f67df032b158f11c4317a26e95cbd1d645")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-06.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-06.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "99d5d2a35e53f097bb519ad3dd9e9e6a9d764a6101bcbd2677f4cbc230ae04b9")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-07.lisp" :KIND NIL :STATUS :PASS
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-07.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "99b8a660b8dc5c23e35b579c3e3f4fcacb727ae83338aa31689dbaea1d5ffeb2")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-08.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-08.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "e3436ec5bdb05bd02b7595025dcf39c6c8eace0364eb856c4ad1ec65bec758de")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-09.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-09.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "de3de26c1f77fce97e4fee7d8d401a114652e3e03f9bf80caecfdf488cdcf26e")
+  (:ARTIFACT "4000999699-check-84936-0-SPK-10.lisp" :KIND NIL :STATUS :OK
+   :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999699-check-84936-0/SPK-10.lisp"
+   :SCOPE :EXPLICIT-COMMAND-OR-REPOSITORY-CHECK :SHA256
+   "b1e3b0eb0d669327fc93235ead1587aa8eb8eb86e4b146a74c3864fb266b5016"))
  :ASSOCIATED-RAW-FILES
  ((:FILE "finish-source.txt" :BYTES 4009 :SHA256
    "feae6866dad40e34872f394e3ed14edb24a3b35c427d681a08323ff911583b67" :SOURCE
@@ -307,8 +527,8 @@
   (:FILE "revisione-autore.json" :BYTES 2226 :SHA256
    "0843b373e284907f6676dbcc22b2d011a9c861c03e2697594ea9a32bc03a5207" :SOURCE
    "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/results/2026-10-14-control-transizione/revisione-autore.json")
-  (:FILE "report.md" :BYTES 5249 :SHA256
-   "7759619a711e91f23892969288ade1514b610c5da69a89517e2d7d58115cc1a6" :SOURCE
+  (:FILE "report.md" :BYTES 5778 :SHA256
+   "86e69cb72d892e518ae149e5b892d5564a43dc5711e9ce06ebb5d30d33eef7c7" :SOURCE
    "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/results/2026-10-14-control-transizione/report.md")
   (:FILE "README.md" :BYTES 2573 :SHA256
    "dccd8defe3181a0c006d78d75bf172a9917d497680a55f945d9f6d482283ee8a" :SOURCE
@@ -346,6 +566,34 @@
    "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000997688-command-2083-0/report.lisp"
    :PRODUCER-ARTIFACT "4000997688-command-2083-0-report.lisp" :PRODUCER-STATUS
    :FAILED :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
+   :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
+  (:FILE
+   "control-transizione-self-test-coverage-C/5e4b0107e2e6f0ca20330c43ebcccebe.html"
+   :BYTES 2838 :SHA256
+   "ea2e75a5ffaae07657790239edc5dd4d422dba7297b523bd1f7140ed248c9193" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/control-transizione-self-test-coverage-C/5e4b0107e2e6f0ca20330c43ebcccebe.html"
+   :PRODUCER-RECORD
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999455-command-80546-0/report.lisp"
+   :PRODUCER-ARTIFACT "4000999455-command-80546-0-report.lisp" :PRODUCER-STATUS
+   :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
+   :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
+  (:FILE "control-transizione-self-test-coverage-C/cover-index.html" :BYTES
+   1798 :SHA256
+   "04c6a9a3a8e35cf4729f8db61a5f8bed8b5864920ae57d5ddb2dfa0f5365f64f" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/control-transizione-self-test-coverage-C/cover-index.html"
+   :PRODUCER-RECORD
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999455-command-80546-0/report.lisp"
+   :PRODUCER-ARTIFACT "4000999455-command-80546-0-report.lisp" :PRODUCER-STATUS
+   :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
+   :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
+  (:FILE "control-transizione-self-test-coverage-C/coverage-fixture.lisp"
+   :BYTES 147 :SHA256
+   "3767518fde8bde1e1286dbf663e97eac01f02e038d7f3161df436d9fd3e92559" :SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/control-transizione-self-test-coverage-C/coverage-fixture.lisp"
+   :PRODUCER-RECORD
+   "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/out/4000999455-command-80546-0/report.lisp"
+   :PRODUCER-ARTIFACT "4000999455-command-80546-0-report.lisp" :PRODUCER-STATUS
+   :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
    :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
   (:FILE "control-transizione-self-test-coverage-A/cover-index.html" :BYTES
    1798 :SHA256
@@ -430,8 +678,8 @@
    :PRODUCER-ARTIFACT "4000997139-command-84120-0-report.lisp" :PRODUCER-STATUS
    :OK :PRODUCER-SOURCE-CONSISTENCY :STABLE :COMPLETION :PRODUCER-TERMINAL
    :LIMITS (:FAILED-PRODUCER-MAY-HAVE-PARTIAL-RAW :NO-RESULT-PROMOTION))
-  (:FILE "publication-roots.lisp" :BYTES 1197 :SHA256
-   "7db665fb45ba3737b1e9de0efc59aefc6c386d25f17a5a8c73b5ac13b3bfc340" :SOURCE
+  (:FILE "publication-roots.lisp" :BYTES 1759 :SHA256
+   "ff6bba6d380716820dc2dc48c471f41f8c10c8b742a36c04d6065d0393487169" :SOURCE
    "/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB/spikes/results/2026-10-14-control-transizione/publication-roots.lisp")
   (:FILE "publication-tool-source.txt" :BYTES 27600 :SHA256
    "665b4af32144c3b10864601d46d4b47fccb15172f0950041dca72140b619d632" :SOURCE

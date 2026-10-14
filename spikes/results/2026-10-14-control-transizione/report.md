@@ -97,3 +97,13 @@ parallelo, inventario completo, adozione degli indici, admission gate,
 Recovery Manager multiserie, crash/power loss o chiusura della Fase 0.
 Carico esterno non controllato; deadline cooperative e supervisore
 presuppongono un host sano, senza garanzia di sblocco di attese kernel.
+
+## Chiusura del grafo combinato
+
+Controllo completo passato su `68cd5892`, con recovery ACTIVE, avvio
+pool/Serie e tag CBOR integrati. Anche il self-test dello strumento di
+copertura combinato è passato. Il confronto registrato con `cc678193`
+conferma identici i quattro file CONTROL/recovery, le tre nuove suite,
+l'intero modulo recovery precedente e il lettore canonico delle prove.
+I produttori originali di chiusura restano separati dalle misure anteriori
+all'integrazione, con il commit e i blob effettivamente osservati.

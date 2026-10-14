@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Composizione di mappe CBOR da chiavi e valori già codificati: verifica
+  completa prima della scrittura, testata MT5 basata sulle coppie e budget
+  comprensivi della radice. Sorgenti condivisibili in lettura con scratch
+  privati; ordinamento delle chiavi e qualifica C1 restano aperti.
+
 - Composizione di array CBOR da elementi già codificati: verifica completa
   prima della scrittura, testata minima e budget comprensivi della radice.
   Sorgente e indice condivisibili in lettura, destinazione e scratch privati

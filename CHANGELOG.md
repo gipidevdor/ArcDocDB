@@ -12,6 +12,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   chiusura dopo quiescenza. Include errore tipizzato e uscita non locale;
   decisione durabile del catalogo e rotazione completa restano da integrare.
 
+- Rendezvous dopo il primo elemento realmente codificato nei test concorrenti
+  CBOR float/tag, per imporre l'interleaving senza dipendere dall'avvio dello
+  scheduler. Intervalli e checkpoint stampati prima delle asserzioni; metriche
+  della fixture distinte dalla latenza del solo encoder.
+
 - Composizione di tag CBOR da contenuti già codificati: verifica completa
   prima della scrittura, testata MT6 minima e budget comprensivi del tag
   senza aggiungere profondità ai contenitori. Sorgenti condivisibili in

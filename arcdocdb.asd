@@ -69,7 +69,8 @@
                              (:file "worker-boundary") (:file "worker-run")
                              (:file "routing-types") (:file "routing-build") (:file "routing-select")))
                (:module "dispatch" :serial t
-                :components ((:file "package") (:file "types") (:file "build") (:file "claim")))
+                :components ((:file "package") (:file "types") (:file "build") (:file "claim")
+                             (:file "recycle")))
                (:module "index" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "validation") (:file "read") (:file "write") (:file "relocate")
@@ -102,7 +103,7 @@
                              (:file "decisions-query")
                              (:file "manifest-package") (:file "manifest-types")
                              (:file "manifest-decode") (:file "manifest-fold")
-                             (:file "manifest-build") (:file "manifest-query")
+                             (:file "manifest-build") (:file "manifest-query") (:file "manifest-transition")
                              (:file "inventory-types") (:file "inventory-build")
                              (:file "inventory-query")))
                (:module "get-resolver" :serial t
@@ -120,7 +121,8 @@
                (:module "control" :serial t
                 :components ((:file "package") (:file "types") (:file "dependency")
                              (:file "build") (:file "preflight") (:file "transfer") (:file "prepare")
-                             (:file "publication") (:file "publication-read"))))
+                             (:file "publication") (:file "publication-read")
+                             (:file "recovery-types") (:file "recovery-read") (:file "recovery-publication"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -182,7 +184,7 @@
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
                (:module "scheduler" :serial t
                 :components ((:file "support") (:file "controller") (:file "lifecycle")
-                             (:file "pool-claim") (:file "dispatch")))
+                             (:file "pool-claim") (:file "dispatch") (:file "pool-recycle")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")

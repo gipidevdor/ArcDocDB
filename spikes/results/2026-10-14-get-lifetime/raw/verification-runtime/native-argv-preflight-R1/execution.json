@@ -1,0 +1,19 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--eval",
+    "(require :asdf)",
+    "--eval",
+    "(load \"tools/evidence-storage.lisp\" :verbose nil :print nil)",
+    "--eval",
+    "(dolist (name '(\"4000996786-command-63808-0\" \"4000996786-command-63809-0\" \"4000996790-command-63888-0\" \"4000996924-command-75541-0\" \"4000996928-command-75705-0\"))\n(let* ((path (merge-pathnames (concatenate 'string \"spikes/out/\" name \"/report.lisp\") (truename \"./\"))) (r (uiop:symbol-call :arcdocdb.evidence :read-evidence path)))\n(write (list :record (namestring path) :status (getf r :status) :exit (getf r :exit-code) :argv (getf r :command)) :pretty t) (terpri)))",
+    "--quit"
+  ],
+  "started_at_unix": 1792008647.741308,
+  "exit_code": 0,
+  "finished_at_unix": 1792008648.526858
+}

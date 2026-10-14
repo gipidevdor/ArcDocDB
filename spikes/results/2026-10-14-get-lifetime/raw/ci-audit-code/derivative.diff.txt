@@ -1,0 +1,108 @@
+--- spikes/out/lifetime-ci-audit/original-audit.txt	2026-10-14 22:02:47
++++ spikes/out/lifetime-ci-audit/audit.lisp	2026-10-14 22:09:25
+@@ -1,6 +1,9 @@
+ ;;;; Read-only audit of downloaded CI artifacts against an explicit Git commit.
+ ;;;; Only the trusted evidence reader is LOADed; all reports/logs are data.
+ ;;;; Invoke SBCL with --dynamic-space-size 2048. No tracked files are changed.
++;;;; GET source lifetime derivative; original SHA256:
++;;;; 08ff4de3ac096819c0deed99594ffa2cecb34cc53ec86a24424a4d73e4c93bdf
++;;;; Only DIRECTORY named-order checks and report attribution extend the original audit.
+ (require :asdf)
+ (require :sb-posix)
+ (declaim (optimize (safety 3) (debug 3)))
+@@ -187,6 +190,25 @@
+          (or (search "-command-" parent) (search "-reader-self-test-" parent)
+              (search "-snapshot-self-test-" parent)))))
+ 
++(defun frozen-directory-suite (options)
++  "Derive DIRECTORY count/summary from the frozen suite row; identities follow its serial ASD files."
++  (let* ((row (find "ARCDOCDB.GET.DIRECTORY.TESTS" (getf options :suite-summaries)
++                    :key (lambda (entry) (getf entry :package)) :test #'equal))
++         (count (getf row :count)) (summary (getf row :native-line))
++         (names (frozen-test-names options '("tests/get-directory/construction.lisp"
++                                            "tests/get-directory/read.lisp"
++                                            "tests/get-directory/threads.lisp"
++                                            "tests/get-directory/series-read.lisp"
++                                            "tests/get-directory/lifetime.lisp"))))
++    (demand (and (typep count '(integer 1)) (stringp summary)
++                 (= count (length names))
++                 (= count (length (remove-duplicates names :test #'equal))))
++            "Frozen DIRECTORY names/count/summary are absent or inconsistent.")
++    (setf (getf options :directory-count) count
++          (getf options :directory-summary) summary
++          (getf options :directory-names) names))
++  options)
++
+ (defun module-result-lines (stdout)
+   (loop for raw in (uiop:split-string stdout :separator '(#\Newline))
+         for line = (string-trim '(#\Space #\Tab #\Return) raw)
+@@ -222,6 +244,7 @@
+          (expected-get (format nil "~D test GET superati." (getf options :get)))
+          (expected-resolver (format nil "~D test resolver GET superati." (getf options :resolver)))
+          (expected-active (format nil "~D test GET ACTIVE superati." (getf options :active)))
++         (expected-directory (getf options :directory-summary))
+          (smoke-lines '("ok    package ARCDOCDB presente" "ok    ARCDOCDB:*VERSION* è una stringa"))
+          (stdout-lines (loop for line in (uiop:split-string stdout :separator '(#\Newline))
+                              collect (string-trim '(#\Space #\Tab #\Return) line))))
+@@ -235,7 +258,7 @@
+     (demand (= (length smoke-lines) (getf options :smoke)) "Smoke expected count is inconsistent with the two canonical checks.")
+     (list :module-tests count :epochs-tests (getf options :epochs) :read-tests (getf options :read)
+           :get-tests (getf options :get) :resolver-tests (getf options :resolver)
+-          :active-tests (getf options :active)
++          :active-tests (getf options :active) :directory-tests (getf options :directory-count)
+           :smoke-checks (length smoke-lines) :all-frozen-suite-summaries-match t
+           :native-module-result-lines rows
+           :get-names (audit-named-suite stdout-lines expected-get
+@@ -243,7 +266,10 @@
+           :resolver-names (audit-named-suite stdout-lines expected-resolver
+                                             (getf options :resolver-names) (getf options :resolver))
+           :active-names (audit-named-suite stdout-lines expected-active
+-                                          (getf options :active-names) (getf options :active)))))
++                                          (getf options :active-names) (getf options :active))
++          :directory-names (audit-named-suite stdout-lines expected-directory
++                                              (getf options :directory-names)
++                                              (getf options :directory-count)))))
+ 
+ (defun audit-process-fixture (pair kind child-kind)
+   (let* ((path (car pair)) (record (cdr pair))
+@@ -409,6 +435,7 @@
+                        (= (getf options :active)
+                           (length (remove-duplicates (getf options :active-names) :test #'equal))))
+                   "Frozen ACTIVE test names/count differ from --active 42.")
++          (frozen-directory-suite options)
+           (load library)
+           (setf auditor-sha (native-sha256 *auditor-source*))
+           (dolist (pair (getf options :platforms))
+@@ -419,7 +446,7 @@
+                                 (line-output workspace "hash-object" "--" "tools/evidence-storage.lisp")))
+                   "Auditor source or trusted evidence reader changed during audit.")
+           (write-audit
+-           (list :schema-version 1 :kind :get-active-functional-ci-audit :status :ok :expected-commit commit
++           (list :schema-version 1 :kind :get-source-lifetime-ci-audit :status :ok :expected-commit commit
+                  :expected-git-tree (getf options :git-tree)
+                  :ci-run (getf options :run) :ci-run-identity :provided-by-caller
+                  :artifact-names '("prove-ubuntu-latest" "prove-macos-latest" "prove-documentazione")
+@@ -427,6 +454,9 @@
+                  :expected-read-tests (getf options :read) :expected-get-tests (getf options :get)
+                  :expected-resolver-tests (getf options :resolver) :expected-active-tests (getf options :active)
+                  :expected-active-names (getf options :active-names) :expected-smoke-checks (getf options :smoke)
++                 :expected-directory-tests (getf options :directory-count)
++                 :expected-directory-summary (getf options :directory-summary)
++                 :expected-directory-names (getf options :directory-names)
+                  :frozen-git-suite-summaries (getf options :suite-summaries)
+                  :auditor-source (namestring *auditor-source*) :auditor-source-sha256 auditor-sha
+                  :auditor-and-trusted-reader-source-stable t
+@@ -437,11 +467,12 @@
+                            :complete-checkout-git-tree-equality :clean-native-checkout
+                            :all-suite-summary-counts-from-frozen-git-source
+                            :get-resolver-and-active-named-tests-serial-order-verified
++                           :get-directory-named-tests-serial-order-verified
+                            :downloaded-raw-byte-inventory-two-pass-equality
+                            :raw-child-logs-compared-as-data :run-and-artifact-download-identity-provided-by-caller
+                            :provided-platforms-only :no-product-qualification :no-spike-results-reinterpretation)))))
+     (error (condition)
+-      (write-audit (list :schema-version 1 :kind :get-active-functional-ci-audit :status :failed
++      (write-audit (list :schema-version 1 :kind :get-source-lifetime-ci-audit :status :failed
+                          :expected-commit (getf options :commit) :ci-run (getf options :run)
+                          :diagnostic (princ-to-string condition)
+                          :limits '(:audit-failure-preserved :no-native-status-reclassification)))

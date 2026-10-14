@@ -110,16 +110,15 @@
   (+ next (loop for i below (length buffer) sum (* (1+ i) (aref buffer i)))))
 
 (defun ctw-worker (index buffer start end source ss se high low space expected next token
-                   source-before rounds ready go done starts finishes sinks)
-  "Due ondate sullo stesso worker; SOURCE read-only, scratch e destinazione privati."
+                   source-before rounds ready go done starts firsts finishes sinks)
+  "Due ondate: rendezvous dopo il primo item verificato, SOURCE read-only e scratch privato.
+Il WALL della fixture include rendezvous e controlli; non misura il tempo puro dell'encoder."
   (handler-case
       (progn
         (dotimes (wave 2)
-          (sb-thread:signal-semaphore (svref ready wave)) (cs-wait (svref go wave))
           (setf (aref starts index wave) (get-internal-real-time))
           (let ((sink 0))
             (dotimes (iteration rounds)
-              (declare (ignorable iteration))
               (let ((actual (multiple-value-list
                              (arcdocdb.cbor:scrivi-tag-cbor-minimo
                               buffer start end source ss se high low space))))
@@ -132,7 +131,12 @@
                 (is (zerop (arcdocdb.cbor::spazio-cbor-top space)))
                 (is (zerop (arcdocdb.cbor::spazio-cbor-depth space)))
                 (is (not (arcdocdb.cbor::spazio-cbor-pending-tag space)))
-                (incf sink (ctw-token buffer (first actual)))))
+                (incf sink (ctw-token buffer (first actual))))
+              ;; Nessun worker termina l'onda prima del primo item verificato dell'altro.
+              (when (zerop iteration)
+                (setf (aref firsts index wave) (get-internal-real-time))
+                (sb-thread:signal-semaphore (svref ready wave))
+                (cs-wait (svref go wave))))
             (is (= sink (* rounds token))) (setf (aref sinks index wave) sink))
           (setf (aref finishes index wave) (get-internal-real-time))
           (sb-thread:signal-semaphore (svref done wave)))

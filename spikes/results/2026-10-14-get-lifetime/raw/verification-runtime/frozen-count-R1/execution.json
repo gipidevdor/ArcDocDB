@@ -1,0 +1,27 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--script",
+    "tools/record-command.lisp",
+    "--",
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--script",
+    "/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-verification/count-tests.lisp",
+    "--workspace",
+    "/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/",
+    "--commit",
+    "a9e405113b0386afadf4a291a6f64fc82308ea1a"
+  ],
+  "source_sha256_before": "1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e",
+  "started_at_unix": 1792008246.5005062,
+  "exit_code": 0,
+  "source_sha256_after": "1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e",
+  "finished_at_unix": 1792008260.449535
+}

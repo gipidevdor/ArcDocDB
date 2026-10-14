@@ -22,6 +22,7 @@
            #:directory-fixture-version #:directory-fixture-csn #:directory-fixture-prepared-p
            #:directory-fixture-missing-key #:directory-fixture-timeout #:directory-fixture-error
            #:directory-begin #:directory-register-snapshot #:directory-read-events
+           #:directory-close-events
            #:directory-clear-read-events #:directory-checked-read #:directory-check-clean
            #:directory-check-output #:+directory-output-start+ #:+directory-sentinel+))
 (in-package #:arcdocdb.get.directory.tests)
@@ -135,7 +136,7 @@ L'ACTIVE richiesto dal formato del manifest resta fuori dalla directory CLOSED."
         manifest))))
 
 (defstruct (directory-observer (:constructor make-directory-observer ()))
-  (events nil) (hook nil)
+  (events nil) (close-events nil) (hook nil)
   (mutex (sb-thread:make-mutex :name "directory fixture pread")))
 (defun directory-observed-backend (observer id)
   (io:make-backend
@@ -147,7 +148,14 @@ L'ACTIVE richiesto dal formato del manifest resta fuori dalla directory CLOSED."
      (when (directory-observer-hook observer)
        (funcall (directory-observer-hook observer) id offset count))
      (io::native-read fd buffer start count offset))
-   #'io::native-write #'io::native-flush #'io::native-directory-flush #'io::native-close))
+   #'io::native-write #'io::native-flush #'io::native-directory-flush
+   (lambda (fd)
+     ;; Il conteggio segue una close nativa riuscita: non conta richieste o no-op CHIUDI.
+     (let ((result (io::native-close fd)))
+       (when (eql result 0)
+         (sb-thread:with-mutex ((directory-observer-mutex observer))
+           (push (list id fd :closed) (directory-observer-close-events observer))))
+       result))))
 
 (defstruct (directory-fixture (:constructor %make-directory-fixture))
   view directory index scope cache epochs snapshots snapshot (generation 0)
@@ -181,6 +189,15 @@ L'ACTIVE richiesto dal formato del manifest resta fuori dalla directory CLOSED."
       (sb-thread:with-mutex ((directory-observer-mutex observer))
         (setf (directory-observer-events observer) nil))))
   nil)
+
+;;; REQ: REQ-CMP-007 REQ-AFF-001
+(defun directory-close-events (fixture)
+  "Pre: osservatore locale. Post: copia delle close native riuscite (segment-id FD :CLOSED).
+Mutex solo per osservazione C4; non autorizza chiusura o reclaim e non azzera la storia."
+  (let ((observer (directory-fixture-observer fixture)))
+    (when observer
+      (sb-thread:with-mutex ((directory-observer-mutex observer))
+        (reverse (copy-tree (directory-observer-close-events observer)))))))
 
 (defun close-directory-fixture (fixture)
   "Solo controller DOPO tutti i join; idempotente, nessun join implicito."

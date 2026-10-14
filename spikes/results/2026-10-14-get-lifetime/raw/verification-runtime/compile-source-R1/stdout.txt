@@ -1,0 +1,5 @@
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-verification/audit.lisp" (written 14 OCT 2026 10:04:48 PM):
+
+; wrote /Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-verification-runtime/compile-source-R1/audit-source-only.fasl
+; compilation finished in 0:00:00.295
+COMPILE-SOURCE-ONLY #P"/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-verification-runtime/compile-source-R1/audit-source-only.fasl" warning=NIL failure=NIL

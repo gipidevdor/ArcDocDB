@@ -1,0 +1,6 @@
+READ 40 forms; no evaluation.
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/cbor-interleaving-publication/audit-F2.lisp" (written 14 OCT 2026 11:00:22 PM):
+
+; wrote /Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/cbor-interleaving-publication/audit-F2-static.fasl
+; compilation finished in 0:00:00.221
+COMPILE output=#P"/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/cbor-interleaving-publication/audit-F2-static.fasl" warnings=NIL failure=NIL

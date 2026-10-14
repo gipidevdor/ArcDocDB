@@ -171,16 +171,15 @@ Interi boxed e razionali sono ammessi solo nell'oracolo dei test."
 (defun cfw-copy-plan (plan)
   (mapcar (lambda (item) (append (subseq item 0 7) (list (copy-seq (eighth item))))) plan))
 
-(defun cfw-worker (index buffer before plan rounds ready go done starts ends sinks)
-  "Due ondate con semafori distinti, destinazione privata e piani controllati."
+(defun cfw-worker (index buffer before plan rounds ready go done starts firsts ends sinks)
+  "Due ondate: rendezvous dopo il primo item verificato, destinazione e piani privati.
+Il WALL della fixture include rendezvous e controlli; non misura il tempo puro dell'encoder."
   (handler-case
       (progn
         (dotimes (wave 2)
-          (sb-thread:signal-semaphore (svref ready wave)) (cbor-wait (svref go wave))
           (setf (aref starts index wave) (get-internal-real-time))
           (let ((sink 0) (cursor plan))
             (dotimes (iteration rounds)
-              (declare (ignorable iteration))
               (destructuring-bind (ai high low start end next token expected) (first cursor)
                 (declare (ignore token)) (replace buffer before)
                 (let ((actual (multiple-value-list
@@ -189,7 +188,12 @@ Interi boxed e razionali sono ammessi solo nell'oracolo dei test."
                   (is (= 1 (length actual))) (is (typep (first actual) 'fixnum))
                   (is (= next (first actual))) (is (equalp expected buffer))
                   (incf sink (+ (first actual) (aref buffer start) (aref buffer (1- next))))))
-              (setf cursor (or (rest cursor) plan)))
+              (setf cursor (or (rest cursor) plan))
+              ;; Nessun worker termina l'onda prima del primo item verificato dell'altro.
+              (when (zerop iteration)
+                (setf (aref firsts index wave) (get-internal-real-time))
+                (sb-thread:signal-semaphore (svref ready wave))
+                (cbor-wait (svref go wave))))
             (is (= sink (* (floor rounds (length plan)) (reduce #'+ plan :key #'seventh))))
             (setf (aref sinks index wave) sink))
           (setf (aref ends index wave) (get-internal-real-time))

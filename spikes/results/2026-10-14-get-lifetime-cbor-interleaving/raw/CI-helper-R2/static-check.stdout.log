@@ -1,0 +1,6 @@
+READ 27 forms; no evaluation.
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-ci-audit-R2/audit.lisp" (written 14 OCT 2026 10:51:38 PM):
+
+; wrote /Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-ci-audit-R2/audit-static.fasl
+; compilation finished in 0:00:00.146
+COMPILE output=#P"/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-ci-audit-R2/audit-static.fasl" warnings=NIL failure=NIL

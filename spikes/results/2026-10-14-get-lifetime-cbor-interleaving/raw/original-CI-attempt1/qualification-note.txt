@@ -1,0 +1,22 @@
+CI run 38634044870, attempt 1, pull_request event, published head 2001940952f6477b2db487f4662900139b0de20d.
+Native checkout 92dc4aa0312b6cc1df37e202f414b75742d6fc1c.
+Parents: 9d1f5d564605774cfed99494125bebb3c0b1d065; 2001940952f6477b2db487f4662900139b0de20d.
+Tree: dc880b20c54b717d6c10fa92eae4068d2546ec85, equal to the published head tree.
+Native raw commit text preserved. Exact Git object fetched, no HEAD/branch changes.
+Official completed result: Ubuntu success, documentazione success, macOS failure.
+macOS native command 4000999365-command-6595-0: FAILED, exit 2, source STABLE.
+macOS failure: SIMPLE-ERROR, PLUSP ARCDOCDB.CBOR.TAG.WRITE.TESTS::OVERLAP in TEST-REQ-CBR-007-TAG-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-SOURCE, before GET suites.
+Original official JSON before/after: repo, workflow, run, jobs attempt1, artifacts, PR13, synthetic commit. All seven files are byte-identical.
+Three original ZIPs preserved with native SHA256 and exact bytes matching the official digest/size.
+ZIPs: Ubuntu artifact11927497656, 560271 bytes, 83b91d3901d09463fbb7af453abf451bcfa8d54c25875af56a8dc149715e4fa6.
+ZIPs: macOS artifact11927812449, 139217 bytes, f1a2542622bca41ef91be998e327c87805d057dd2dd10fa2fdb4b7be30d2c78e.
+ZIPs: docs artifact11926254392, 60397 bytes, 4cdce78fc86c1ba3c4c4857b0673e4a3260ff02d6241598a92d3d2d17d457aa4.
+Central entry listings inspected before gh run download: only regular files and canonical relative paths. Entry counts Ubuntu31/macOS3/docs2.
+unzip -t exit0 for all three originals; complete outputs preserved. Original ZIP byte inventories equal in two passes.
+Frozen Git counter SHA1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e: actual A has 1444 module tests, 33 suites, 2 smoke; DIRECTORY72, GET70, resolver42, ACTIVE42.
+CI auditor original derivative SHA01d2b083499d9019c71ad312d692aa277189fb9647dea37405bd5c91fa415761 executed via record-command; native record 4000999676-command-83495-0, FAILED exit1, source STABLE, stderr0.
+Auditor R1 diagnostic: Missing/duplicate suite summary NIL. This is a helper defect, not a successful CI audit or reclassification of the macOS failure.
+Cause: frozen-directory-suite returns a new plist but caller ignores its return after adding DIRECTORY fields to a local OPTIONS variable. Required fix is in a new derivative, never overwriting frozen01d2.
+No all-platform native audit PASS is claimed. Its failed run is preserved verbatim.
+No CI rerun, merge, checkout, push or tracked file changes performed by this agent.
+All writers closed at handoff; further work requires a newly qualified auditor derivative and/or new CI run.

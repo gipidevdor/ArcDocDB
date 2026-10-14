@@ -1,0 +1,2 @@
+574934a4ff3dbd51d2200027db57ee84bd30c7debd742350cf8726d3e13b8a9a  audit-original.lisp.txt
+1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e  count-tests.lisp

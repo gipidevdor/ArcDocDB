@@ -124,6 +124,11 @@ una fonte rimossa dalla directory e non rende le fonti una vista snapshot
 del primary. Una futura rotazione/reclaim deve dimostrare entrambi gli
 obblighi prima di ridurre quel superset o chiudere una risorsa.
 
+Il [metodo della verifica integrata del lifetime](get-lifetime.md) esercita
+questi obblighi con FD reali, pubblicazioni ordinarie e ritiro EBR.
+La prova mantiene distinti il FD catturato dal reader e le fonti che un
+nuovo lookup può acquisire; il catalogo durabile resta una precondizione.
+
 ## Lettura nel compito GET
 
 Il caller installa il cleanup esterno prima di `avvia-get`. Se l'esito è

@@ -1,0 +1,100 @@
+--- spikes/out/cbor-interleaving-publication/original-841d.txt	2026-10-14 22:04:48
++++ spikes/out/cbor-interleaving-publication/audit-F2.lisp	2026-10-14 23:00:22
+@@ -1,4 +1,6 @@
+-;;;; Read-only GET source lifetime audit: scoped registered suite plus full make check.
++;;;; Read-only CBOR interleaving F2 audit: full make check; an optional scoped run stays separate.
++;;;; Derived from SHA256 841d8b6c24e6cd5352a019f82e574bcf93673e92b34c632435aa08b1f9579bba.
++;;;; No earlier scoped/native or failed-CI result is promoted to this frozen source.
+ ;;;; Trusted reader/batch programs only; counter is Git-only; all evidence/FASLs are DATA.
+ ;;;; Invoke SBCL with --dynamic-space-size 2048. No tracked files are changed.
+ (require :asdf)
+@@ -61,7 +63,7 @@
+     (sort files #'string< :key #'namestring)))
+ 
+ (defparameter *lifetime-batch-source*
+-  (merge-pathnames "../lifetime-publication/batch-sha.lisp" *auditor-source*))
++  (merge-pathnames "batch-sha.lisp" *auditor-source*))
+ (defparameter *lifetime-counter-source* (merge-pathnames "count-tests.lisp" *auditor-source*))
+ (defparameter *lifetime-runner-source* (merge-pathnames "scoped-runner.lisp" *auditor-source*))
+ (defun byte-inventory (directory)
+@@ -274,8 +276,11 @@
+           do (demand (and key arguments (not (getf options key))) "Unknown/duplicate/incomplete option ~A." option)
+              (setf (getf options key) (pop arguments)))
+     (demand (every (lambda (key) (getf options key))
+-                   '(:workspace :commit :scope :scope-fasl-dir :core :outer-core :fasl-dir :reader :snapshot))
+-            "Require workspace/commit/scope/scope-fasl-dir/core/outer-core/fasl-dir/reader/snapshot.")
++                   '(:workspace :commit :core :outer-core :fasl-dir :reader :snapshot))
++            "Require workspace/commit/core/outer-core/fasl-dir/reader/snapshot.")
++    (when (or (getf options :scope) (getf options :scope-fasl-dir))
++      (demand (and (getf options :scope) (getf options :scope-fasl-dir))
++              "An optional scope requires both its native report and private cache."))
+     (setf (getf options :workspace) (truename (uiop:ensure-directory-pathname (getf options :workspace))))
+     (when (some (lambda (key) (getf options key)) '(:failed-core :failed-outer-core :failed-fasl-dir))
+       (demand (every (lambda (key) (getf options key)) '(:failed-core :failed-outer-core :failed-fasl-dir))
+@@ -504,6 +509,8 @@
+           (let ((*default-pathname-defaults* workspace)) (load *lifetime-batch-source* :verbose nil :print nil))
+           (setf sources-before (mapcar (lambda (p) (cons p (native-sha256 p)))
+                                       (list *auditor-source* *lifetime-counter-source* *lifetime-runner-source* *lifetime-batch-source* reader)))
++          ;; Pre-existing key permits COUNTER-INVENTORY to publish into the caller's plist.
++          (setf (getf options :counter-proof) nil)
+           (let* ((data (counter-inventory options)) (rows (getf data :suites))
+                  (directory (inventory-suite data "ARCDOCDB.GET.DIRECTORY.TESTS")))
+             (setf (getf options :suite-summaries) rows (getf options :tests) (getf data :module-test-total)
+@@ -520,20 +527,25 @@
+             (when (getf options :expect-tests) (demand (= (getf options :expect-tests) (getf options :tests)) "Expected full count differs."))
+             (when (getf options :expect-scope) (demand (= (getf options :expect-scope) (getf directory :count)) "Expected scope count differs.")))
+           (setf roots (remove-duplicates
+-                       (append (list (getf options :scope-fasl-dir) (getf options :fasl-dir))
++                       (append (list (getf options :fasl-dir))
+                                (mapcar (lambda (key) (uiop:pathname-directory-pathname (getf options key)))
+-                                       '(:scope :core :outer-core :reader :snapshot))
++                                       '(:core :outer-core :reader :snapshot))
++                               (when (getf options :scope)
++                                 (list (getf options :scope-fasl-dir)
++                                       (uiop:pathname-directory-pathname (getf options :scope))))
+                                (when (getf options :failed-core)
+                                  (list (getf options :failed-fasl-dir)
+                                        (uiop:pathname-directory-pathname (getf options :failed-core))
+                                        (uiop:pathname-directory-pathname (getf options :failed-outer-core))))) :test #'equal)
+                 before (mapcar (lambda (root) (cons root (byte-inventory root))) roots))
+-          (setf results (list (audit-scope options tree) (audit-core (getf options :core) options tree)
+-                              (audit-outer-core (getf options :outer-core) options tree)))
++          (setf results (append (when (getf options :scope) (list (audit-scope options tree)))
++                                (list (audit-core (getf options :core) options tree)
++                                      (audit-outer-core (getf options :outer-core) options tree))))
+           (setf results (append results
+-                         (list (audit-private-cache options tree (cdr (assoc (getf options :scope-fasl-dir) before :test #'equal))
+-                                                    (getf options :scope) (getf options :scope-fasl-dir))
+-                               (audit-private-cache options tree (cdr (assoc (getf options :fasl-dir) before :test #'equal))
++                         (when (getf options :scope)
++                           (list (audit-private-cache options tree (cdr (assoc (getf options :scope-fasl-dir) before :test #'equal))
++                                                      (getf options :scope) (getf options :scope-fasl-dir))))
++                         (list (audit-private-cache options tree (cdr (assoc (getf options :fasl-dir) before :test #'equal))
+                                                     (getf options :outer-core) (getf options :fasl-dir)))
+                          (audit-final-fixtures options tree)
+                          (when (getf options :failed-core)
+@@ -549,11 +561,13 @@
+                        (every (lambda (pair) (equal (cdr pair) (native-sha256 (car pair)))) sources-before))
+                   "Final HEAD/status/reader or verification source guard differs.")
+           (write-final-audit
+-           (list :schema-version 1 :kind :get-source-lifetime-local-audit :status :ok :expected-commit commit
++           (list :schema-version 1 :kind :cbor-interleaving-functional-native-audit :status :ok :expected-commit commit
+                  :expected-git-tree (line-output workspace "rev-parse" (concatenate 'string commit "^{tree}"))
+                  :source-tree-file-count (length tree) :module-tests (getf options :tests)
+                  :suites (length (getf options :suite-summaries)) :smoke-checks 2
+-                 :scoped-directory-tests (length (getf options :directory-names)) :lifetime-names (getf options :lifetime-names)
++                 :registered-directory-tests (length (getf options :directory-names))
++                 :scoped-directory-tests (when (getf options :scope) (length (getf options :directory-names)))
++                 :lifetime-names (getf options :lifetime-names)
+                  :failed-native-attempt-preserved (not (null (getf options :failed-core)))
+                  :counter-proof (getf options :counter-proof) :verification-source-sha256 sources-before
+                  :two-pass-raw-byte-inventory-stable t :byte-inventory before :native-results results
+@@ -563,7 +577,7 @@
+                            :two-fresh-complete-cache-inventories :no-coverage-or-irrelevant-mutation-campaign
+                            :no-c1-or-mcdc-qualification)))))
+     (error (condition)
+-      (write-final-audit (list :schema-version 1 :kind :get-source-lifetime-local-audit :status :failed
++      (write-final-audit (list :schema-version 1 :kind :cbor-interleaving-functional-native-audit :status :failed
+                               :expected-commit (getf options :commit) :diagnostic (princ-to-string condition)
+                               :limits '(:failure-preserved :no-native-status-reclassification)))
+       (sb-ext:exit :code 1))))

@@ -1,0 +1,112 @@
+# Piano freddo del corpus tag CBOR
+
+Autore indipendente, 2026-10-14. Contratto letto prima dei nuovi sorgenti:
+`docs/implementazione/cbor-tag-metodo.md`, blob
+`3175390e496173398781bf8b39170cb33892125f`.
+Letti standard di codifica e vecchi supporti map/structure/minimal-scan.
+Nessun nuovo sorgente di prodotto letto, caricato, compilato o eseguito.
+Nessuna campagna di prodotto in questa fase. I nuovi file sono stati letti
+esclusivamente come DATA, READ-EVAL NIL e EOF su ciascuno. Il lettore crea
+solo package/simboli necessari alla sintassi; nessuna forma del corpus viene
+valutata. Le forme totali sono16/20/2, con20 nominali unici (19 seriali+1
+parallelo). `read-corpus.lisp` e i suoi stdout/stderr preservano il controllo.
+
+L'oracolo della testata MT6 calcola i byte dalle due parole separatamente,
+senza encoder, parser o ricostruzione u64. Gli esiti di successo controllano
+un singolo NEXT fixnum, l'intera destinazione fisica, le sentinelle oltre END,
+SOURCE e cursore/top/depth/pending-tag. Per BUFFER=SOURCE viene conservato
+lo span sorgente e confrontata l'intera destinazione con un'immagine fredda.
+I rifiuti controllano tipo, motivo, offset assoluto e interi array intatti.
+I rifiuti di preflight controllano anche tutti gli slot/array dello scratch
+precedentemente sporco. Gli errori di parser vengono seguiti da riuso dello
+stesso scratch. I contatori dello scratch descrivono il solo contenuto.
+
+## Conteggio freddo delle chiamate
+
+Conteggi derivati dai limiti dei cicli e dalle invocazioni visibili nel
+corpus, non da un contatore strumentato del prodotto. Ogni `ctw-probe`
+esegue4 chiamate accettate e4 rifiutate, piu4 scansioni aggiuntive.
+
+| Nominale seriale | Accettate | Rifiutate |
+|---|---:|---:|
+| parole/testate13 fixture |52|52|
+| scalari/UTF8/float/contenitori14 fixture |56|56|
+| concatenazione/arity |3|0|
+| tipo/range destinazione |0|15|
+| tipo/range/source vuoto |0|18|
+| HIGH/LOW |0|14|
+| workspace/alias |0|5|
+| limiti configurati/minimo nodi |1|17|
+| precedenze preflight |0|14|
+| capacità/byte budget |5|20|
+| overlap/testata/confini toccanti |3|5|
+| 16MiB/header1 e9/oltre |2|4|
+| residuo nodi/1024 tag sorgente |5|5|
+| profondità0/100/101 |9|11|
+| parser/malformed/trailing |0|16|
+| ogni troncamento/allineamenti sorgente |4|44|
+| riuso scratch dopo errori |1|2|
+| statistiche solo contenuto |3|0|
+| subtotale18 nominali senza fuzz |144|298|
+| fuzz1024 |512|512|
+| due worker/due ondate |8192|0|
+| totale20 nominali |8848|810|
+
+Totale9658 chiamate alla nuova API. Le116 scansioni aggiuntive sono controlli
+secondari, eseguiti con scratch distinti, e non oracoli dell'esito primario.
+
+Il generatore fuzz LCG32 usa stato iniziale `54414737`, moltiplicatore1664525,
+incremento1013904223, riduzione a32 bit. Dopo1024 passi lo stato atteso è
+`F8004B37`, ricomputato separatamente dal lettore freddo. Le classi sono512
+successi e64 ciascuna: capacità, byte, HIGH, nodi, profondità, parser,
+source-range, source vuoto. Lo stato finale è asserito nel corpus; il log
+del fuzz stampa seme e conteggi, senza promettere di stampare lo stato finale.
+
+## Oracolo parallelo
+
+SOURCE condiviso read-only: `C0 A1 61 61 82 F4 F5`, source-start7,
+source-end14, array fisico19 byte con sentinelle FF. HIGH0/LOW55799.
+Emissione fredda `D9 D9 F7 C0 A1 61 61 82 F4 F5`; contenuto6 nodi,
+picco contenitori2. Due thread reali con buffer/scratch e entrambi gli array
+scratch distinti vengono riusati per due ondate di2048 chiamate ciascuno.
+READY/GO/DONE, attese/join/cleanup limitati dai supporti preesistenti.
+
+| Worker | START | NEXT=END | byte fisici | token | sink per ondata |
+|---|---:|---:|---:|---:|---:|
+|0|3|13|20|32601|66766848|
+|1|7|17|24|47515|97310720|
+
+Token = NEXT + somma di `(indice+1)*byte` su tutti i byte fisici. I byte
+iniziali della destinazione sono `(A7+37*indice) mod256`. La fixture calcola
+e confronta i valori freddi prima di avviare i thread. Ogni chiamata controlla
+arity, NEXT, intero buffer, SOURCE e statistiche6/2/cursore; i sink attesi
+sono asseriti per ciascun worker/ondata. Si misura overlap positivo dei
+periodi osservati e lo si stampa con tick/s. Nessuna inferenza su scaling o
+simultaneità sui core. I timestamp individuali non sono stampati nel log.
+
+## Frontiere e rilevamento previsto
+
+Tag0/1/23/24/255/256/65535/65536/FFFFFFFF/100000000/
+FFFFFFFFFFFFFFFF,55799 e HIGH80000000/LOW7; testate1/2/3/5/9.
+I numeri wire, chiavi duplicate e ordine delle mappe restano strutturali,
+senza ammissione semantica di profilo documentale. Sono presenti tutti i
+major, float raw minimi, UTF8 e bytes opachi.
+
+Il limite16MiB include testata MT6 e testata del bytestring da5 byte:
+payload16777210 per MT6 da1 byte e16777202 per MT6 da9 byte, ciascuno
+esatto e con+1/+2. Il massimo oltre span viene rifiutato prima di sommare.
+La catena di1024 tag sorgente piu scalare vale1025 nodi, nessun frame di
+contenitore; il nuovo tag radice porta il budget completo a1026. Tag su
+scalare/catena è ammesso a profondità0; array annidati100 passano,101
+falliscono all'offset sorgente+100, senza addebito di un livello al tag.
+
+Gli otto mutanti preregistrati hanno testimoni nominali: capacità fisica
+(capacità attiva), MT5 (testate fredde), parole scambiate (frontiere HIGH/LOW),
+scansione omessa (parser/offset e statistiche scratch), overlap senza testata
+(overlap della sola testata), radice esclusa dai nodi (minimo2 e residui),
+tag addebitato alla profondità (scalar depth0 e array depth100), arità extra
+(ogni accettazione e worker). Qualunque esecuzione/rilevamento è futuro e
+non attestato da questo piano.
+
+La nota `corpus-preparation-note.md` distingue le correzioni preparatorie
+prima del freeze. Nessuna esclusione di copertura o attestazione MC/DC.

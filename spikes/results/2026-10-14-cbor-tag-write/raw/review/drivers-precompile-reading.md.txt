@@ -1,0 +1,81 @@
+# Driver dei tag CBOR prima del prodotto
+
+Autore distinto del corpus e del prodotto. Lettura del solo contratto
+`docs/implementazione/cbor-tag-metodo.md`, blob
+`3175390e496173398781bf8b39170cb33892125f`, e dei driver mappe precedenti.
+Non sono stati letti i nuovi sorgenti o i test dei tag. Nessun prodotto
+o corpus caricato/compilato; nessun self-test o campagna avviato.
+
+## Freeze provvisorio
+
+| File in `drivers/` | Git blob |
+| --- | --- |
+| `fixtures-and-mutations.lisp` | `3c410448af31a28e99fe39f93261ced04f15860d` |
+| `bench.lisp` | `4f4e2ac97f2f9d903dfebfdc6b15553b40e59a84` |
+| `audit.lisp` | `97f58bffaff8c7dbccec76d1e28082bca0695ec6` |
+| `mutation.lisp` | `28b2e3fd409ee6a214c5c9e65f16b4b1de7a00f5` |
+| `catalogue-before-product.lisp` | `ceeadbdff0afff99759537ea3a3f1780b535bb50` |
+
+Il benchmark ha MD5 `6a8a3180a812088c238f3493fa957cc0`, vincolato
+esplicitamente dall'auditor; il catalogo fixture ha MD5
+`5c0dbc229bfcc07c2d9c9e581affe2ae`. Il pin MD5 interno dimostra coerenza
+dei dati dichiarati, non autenticità né corrispondenza fra i byte interni
+di tutti i sorgenti e i Git blob esterni.
+
+I sei wire e i token sono letterali e precedono il prodotto. HIGH/LOW
+restano parole separate: l'oracolo dell'auditor sceglie il prefisso e
+calcola separatamente i byte big-endian delle due parole, senza writer
+o scanner. NEXT freddi `4/7/6/10/14/17`; token
+`5368/10359/9825/10464/16425/43144`. I casi comprendono tag1/scalare,
+tag24/testo UTF8, tag55799/mappa vuota, tag65536/array2,
+HIGH1/LOW0/bytes2 e HIGH=LOW=FFFFFFFF/catena di tag, array e testo.
+
+Cinque repliche da1024 chiamate, warmup64; destinazione e scratch
+privati preallocati. Ogni chiamata confronta NEXT, tutti i byte fisici
+del buffer e tutta la sorgente fisica, comprese sentinelle fuori span.
+Il controllo freddo raccoglie i valori multipli e ammette arità uno.
+Il sink combina NEXT, tutti i byte e l'indice di chiamata. Warmup e GC
+precedono clock e contatore. Baseline nulla e controllo deliberato
+16x1MiB; heap assente, NIL, negativo e non intero vengono rifiutati
+esplicitamente. Nessuna soglia di velocità o prova di non allocazione
+assoluta; costo dei confronti incluso. Il benchmark è seriale.
+
+L'auditor è DATA-only e indipendente dal benchmark: reader standard,
+READ-EVAL NIL, EOF univoco, liste proprie acicliche e chiavi uniche,
+campi richiesti inclusa presenza di `:heap-bytes`. Ricostruisce
+wire/buffer/source/NEXT/token e tutti i30 campioni; verifica le relazioni
+clock/rate/wall e baseline/controllo positivo, stato/exit/snapshot,
+argv, ambiente, metodo e pin espliciti del prodotto forniti dalla CLI.
+I self-test sintetici positivi/negativi sono predisposti e non eseguiti.
+
+Il mutatore conserva gli otto difetti semantici preregistrati. Target,
+pin dei due sorgenti e tre file del corpus, piano, numero delle funzioni
+nominali e whitelist sono NIL: il dispatcher rifiuta prima di leggere
+sorgenti, creare copie o eseguire child finché non avviene la
+materializzazione. Questa richiederà frammenti presenti una sola volta,
+due letture C1 già chiuse e whitelist dal corpus indipendente congelato.
+Le copie/cache sono private. Baseline completa; rilevamento soltanto
+con smoke esatto precedente a Unhandled, frame numerico con nome
+nominale esatto e zero argomenti, exit1 e segnale NIL. Exit2 ora ha
+un rifiuto specifico predisposto. Warning, compilazione fallita,
+guasti helper, segnali e fallimenti successivi al completamento sono
+invalidi o guasti del worker. Nessuna campagna già osservata.
+
+## Tentativi preparatori conservati
+
+`adapt-drivers.lisp` e `adapt-drivers-ready.lisp` conservano il passaggio
+meccanico dai driver mappe. Non sostituiscono la lettura C4 finale.
+L'auditor iniziale `audit-before-static-corrections.lisp` resta conservato;
+la versione corrente aggiunge fixture negative per heap assente/invalido
+e marker del sensore. `mutation-before-product.lisp` conserva il draft
+iniziale; `mutation-before-product-final.lisp` conserva il freeze corrente.
+
+`read-freeze.lisp` ha fallito prima di completare la lettura perché non
+aveva predisposto il namespace SB-MD5: stderr originale conservato.
+`read-freeze-2.lisp` aggiunge solo REQUIRE SB-MD5. Legge le forme come
+dati, predisponendo namespace vuoti per i soli simboli qualificati dei
+driver; non valuta alcuna forma dei driver. Risultato OK, EOF sulle
+cinque unità, rispettivamente `1/30/48/75/1` forme. Stdout/stderr
+distinti conservati; questo controllo non attesta compilabilità,
+successo dei self-test o correttezza runtime. Il root eseguirà i
+self-test e le campagne dopo la qualifica statica richiesta.

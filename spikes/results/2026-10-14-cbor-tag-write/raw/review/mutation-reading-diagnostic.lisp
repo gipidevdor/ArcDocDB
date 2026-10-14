@@ -1,0 +1,15 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((r (arcdocdb.evidence:read-evidence "spikes/out/cbor-tag-write-20261014/mutations/report.lisp"))
+       (actual (sort (loop for row in (getf r :source-fingerprints-before) for path = (getf row :file)
+                           when (or (uiop:string-prefix-p "src/" path) (uiop:string-prefix-p "tests/" path))
+                             collect path) #'string<))
+       (raw (uiop:split-string
+             (uiop:run-program (list "git" "ls-tree" "-r" "--name-only" "df37306ed0e97f1665fb9f59aca79842c49d96a5"
+                                     "--" "src" "tests") :output :string)
+             :separator '(#\Newline)))
+       (expected (sort (remove-if-not (lambda (line) (uiop:string-suffix-p ".lisp" line)) raw) #'string<)))
+  (format t "~S~%" (list :actual-count (length actual) :raw-count (length raw) :filtered-count (length expected)
+                         :only-actual (set-difference actual expected :test #'string=)
+                         :only-expected (set-difference expected actual :test #'string=)
+                         :suffix (uiop:string-suffix-p ".lisp" "src/package.lisp"))))

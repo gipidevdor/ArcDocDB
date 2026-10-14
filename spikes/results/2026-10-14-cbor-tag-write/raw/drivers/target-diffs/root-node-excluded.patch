@@ -1,0 +1,13 @@
+diff --git a/src/codec/cbor-tag-write.lisp b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/root-node-excluded.after.lisp.txt
+index 16b91fc2..524fc319 100644
+--- a/src/codec/cbor-tag-write.lisp
++++ b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/root-node-excluded.after.lisp.txt
+@@ -20,7 +20,7 @@ dati intatti, scratch riusabile. INVARIANT-VIOLATION per contratto interno."
+     (error 'invariant-violation :reason :cbor-tag-child-budget))
+   (multiple-value-bind (nodes peak next)
+       (verifica-struttura-cbor-minima source start end space
+-                                   :max-bytes span :max-nodes (1- max-nodes) :max-depth max-depth)
++                                   :max-bytes span :max-nodes max-nodes :max-depth max-depth)
+     (unless (= next end)
+       (error 'invariant-violation :reason :cbor-tag-child-progress))
+     (unless (<= 1 nodes (1- max-nodes))

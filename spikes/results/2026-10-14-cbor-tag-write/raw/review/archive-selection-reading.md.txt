@@ -1,0 +1,137 @@
+# Lettura C4 della selezione dell'archivio tag
+
+2026-10-14. Esito statico/DATA: nessun difetto bloccante individuato nella
+selezione dichiarata, con i prerequisiti e i limiti sotto. Helper letto,
+non eseguito: `collection/prepare-archive.lisp`, blob
+`1904121b82ab9e15923b2f5211f12ce0f0c57897`,5528 byte, SHA256
+`1649f30f630c01f3299c669652449b70e8340a9d3f4ea973be947082b4532180`.
+Builder separatamente revisionato, blob
+`ac326fab50ae25289c757f699e69d6e46da739b3`; nota mutazioni congelata
+`e69a5e9f32e730824a2c0a1e69344826f74e14ce`.
+Nessun prodotto, corpus, campagna o compilazione avviato; nessuna fonte
+o helper modificato. Le sole nuove scritture sono reader DATA/varianti,
+output/error e questa nota ignored.
+
+## Processi e alberi
+
+Il LET* contiene14 processi fissi più il quindicesimo passato dalla CLI
+`--integration-report REPORT`. Argomenti controllati prima di probe,
+espansione e lancio del builder. Non seleziona latest e non usa glob per
+trovare un report di integrazione. Dalla lettura dei14 registri effettivi:
+schema COMMAND-VERIFICATION, terminati,13 STATUS OK/EXIT0 e un FAILED/EXIT1;
+tutti SOURCE-CONSISTENCY STABLE. Byte/SHA256 dei14 sono identici prima/dopo
+e conservati nell'output DATA.
+
+| Processo fisso | Directory sotto `spikes/out/` |
+| --- | --- |
+| freeze-sources | `4000996626-command-59906-0` |
+| initial-build-lint-trace-links | `4000996656-command-60753-0` |
+| bench-self-test | `4000996819-command-64474-0` |
+| audit-self-test | `4000996819-command-64475-0` |
+| coverage-self-test | `4000996819-command-64481-0` |
+| collection-self-test | `4000996819-command-64491-0` |
+| bench | `4000996908-command-74250-0` |
+| bench-data-audit | `4000996957-command-77330-0` |
+| coverage-tag | `4000996908-command-74254-0` |
+| mutation-self-test-invalid-options, FAILED conservato | `4000996908-command-74262-0` |
+| mutation-self-test | `4000996994-command-78660-0` |
+| integrated-check | `4000996821-command-64571-0` |
+| mutation-campaign | `4000997059-command-81284-0` |
+| coverage-compression | `4000997503-command-96971-0` |
+
+Ogni --process fa conservare al builder l'intera directory del registro,
+descriptor/gzip compresi; il FAILED non è convertito in OK o omesso.
+Il report finale CLI è una dipendenza ancora distinta di questa lettura:
+il builder dovrà verificarne termine/schema/stato, e la lettura DATA
+dedicata dell'integrazione dovrà attestare il gate pertinente. La sola
+esistenza di un file o di una nota non dimostra un'integrazione riuscita.
+
+Cinque alberi ALL sotto la base tag: frozen/, drivers/, coverage/,
+coverage-self-test/ e collection/self-test/. Tre esterni:
+`4000997101-check-82864-0/` LISP/LOG/GZ, snapshot self-test
+`4000996874-snapshot-self-test-69641-0/` ALL e reader self-test
+`4000996874-reader-self-test-69697-0/` ALL. Tutti presenti.
+
+Applicando agli stdout reali la stessa regola letterale del builder,
+senza caricare il builder, risultano quattro directory richieste:
+
+- `spikes/out/4000996874-snapshot-self-test-69641-0/`;
+- `spikes/out/4000996874-reader-self-test-69697-0/`;
+- `drivers/selftests/4000996996-worker-78730/` sotto la base tag;
+- `drivers/selftests/4000997061-worker-81325/` sotto la base tag.
+
+Tutte esistono e sono sotto un albero richiesto: le due worker sotto
+drivers/ ALL, le altre due esplicite. Nessuna directory citata dai14
+processi è mancante o sostituita con una più recente. Il quindicesimo
+stdout CLI resta soggetto allo stesso controllo nel builder effettivo.
+
+## File espliciti e pubblicazione parziale
+
+Review/ e precompile/ sono espansi in file diretti ordinati, non passati
+come alberi live. La verifica di sei note di completamento comprende
+questa nota e final-integration-reading.md. È un controllo di esistenza,
+non una sincronizzazione dei writer: tutti gli autori devono aver chiuso
+e congelato le loro fonti prima dell'esecuzione del preparatore e collector.
+I nuovi reader/output di questa lettura ricadono nella selezione review.
+Il draft risultati è ora una fonte distinta da congelare; non può essere
+riscritto mentre viene conservato. Nessun file .fasl esplicito ammesso.
+
+La lista fissa comprende freeze, entrambi i cloner original/corrected,
+draft risultati, sei helper di raccolta più preserve-originals e le
+osservazioni esterne del self-test collector: un closed-check e quattro
+collection-observation. Non vengono persi perché fuori da self-test/.
+I report originali e i tentativi preparatori dei driver sono nell'albero
+drivers/ ALL. Markdown raw è rinominato `.md.txt` dal builder senza
+modificare SOURCE; valgono le esclusioni FASL già dichiarate nelle letture
+degli strumenti, con scope distinto per le directory --process.
+
+Il ciclo sulle nove copie baseline/0..7 seleziona esattamente nove file
+per copia: test.log, ASD, build, runner isolato, due sorgenti tag e tre
+file corpus tag. **81 file più mutations/report.lisp,82 in totale**,
+tutti presenti. Massimo fisico osservato dei81:101301 byte, entro1MiB;
+non è una verifica del budget complessivo dell'archivio o del suo indice.
+Le otto patch e le immagini testuali rimangono nell'albero drivers/.
+
+La pubblicazione è intenzionalmente parziale: non contiene tutti i361
+file originali di ciascuno dei nove mirror né tutte le cache FASL. La
+lettura DATA delle3249 copie sorgente resta riferita ai mirror locali,
+non automaticamente all'archivio pubblico futuro. L'archivio selezionato
+conserva sorgenti/test pertinenti, log, runner, catalogo, metadata e pin
+del contesto originale. Non si promette una ricostruzione dei FASL.
+
+Il commento dell'helper sul backup completo non costituisce una prova
+di backup. Questa lettura non copia né verifica il backup; la destinazione
+standard tag-isolated non era ancora presente all'osservazione iniziale.
+Prima di archiviare il worktree occorre conservare tutti i mirror/originali
+locali e verificare la copia completa separatamente, compresi i byte
+esclusi dalla selezione pubblica. Nessun backup riuscito viene attestato qui.
+
+## Riscontro DATA e tentativi conservati
+
+Reader originale `review/archive-selection-data.lisp`, blob
+`66228a6fdbbdd125044904837c3813568894f6bb`, fallisce con EOF durante la
+lettura del proprio LET*, prima di leggere i14 registri: mancava una
+parentesi nella lista finale di report. Output vuoto; error blob
+`20514fa32e17a9f2a259a982c4dcb50b782625a5`.
+Variante2 `c5ac015b370d535b48823f572a2afe29e288ff96` corregge il conteggio
+statico delle forme del preparatore da3 a2, ma mantiene quell'errore EOF;
+secondo output vuoto, error `7d28be12652842f05a776d8bf9da425e8ee2af16`.
+Entrambi restano intatti: errori preparatori del reader, non del prodotto,
+del preparatore di archivio o delle prove originali.
+
+Variante3 `review/archive-selection-data-3.lisp`, blob
+`2e43b36e026f09fc084dc0365d22f8da92775433`, aggiunge soltanto la parentesi
+mancante rispetto alla variante2; congelata prima dell'esecuzione.
+Exit0, output blob `205682036e79dcc08c584b73d4838e3e874c718b`, error vuoto.
+Legge helper e liste come DATA con READ-EVAL NIL/readtable standard/EOF,
+non valuta le forme del preparatore e non lancia il builder. Registra
+i14 wrapper, gli otto alberi, le quattro directory richieste, assenze NIL,
+81+1 file di mutazione e stabilità bytes/SHA del preparatore. Non crea
+manifest, copie o indice; sourcecomplete resta dipendente dalla CLI finale
+e dal congelamento di tutti i writer.
+
+Esito limitato alla selezione descritta. Duplicati finali, dimensione
+indice/plain/gzip, copie, tre SHA per copia e inventario chiuso saranno
+verificati da builder, preflight, collector e nuova chiusura trusted.
+Non si deducono autenticità, pubblicazione atomica, backup già eseguito,
+qualifica C1/MC/DC o promozione di requisiti da questa lettura.

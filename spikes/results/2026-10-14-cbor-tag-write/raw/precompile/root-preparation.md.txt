@@ -1,0 +1,23 @@
+# Preparazioni del coordinatore
+
+Il catalogo passa a implementato insieme al prodotto. Durante le due
+letture statiche la matrice era ancora progettata; viene rigenerata
+prima del freeze e della prima compilazione. Il freeze DF37306E e i
+comandi registrati conservano la matrice corretta e trace senza errori.
+Prodotto e corpus non cambiano per questa rigenerazione.
+
+Il cloner C4 con parentesi finale in eccesso crea le sei copie e poi
+fallisce leggendo il carattere extra. Originale, variante corretta non
+rieseguita e nota esplicita sono preservati; il messaggio originale
+rimane nella conversazione e non è dichiarato come file raw locale.
+
+La prima invocazione del self-test mutazioni aggiunge erroneamente una
+directory non ammessa. Il comando registrato4000996908-command-74262-0
+fallisce prima di creare output o di eseguire il self-test, con exit1
+e sorgenti esterne STABLE. La forma corretta --self-test, registrata
+come4000996994-command-78660-0, passa sullo stesso mutatore2275BD6E.
+Entrambi i registri originali sono conservati; non è un guasto prodotto.
+
+La lettura C4 pre-esecuzione trova due pin bench/audit residui dalle mappe:
+sono corretti nei soli metadata, con draft e diff preservati, prima dei
+self-test e della campagna. Tutte le otto sostituzioni rimangono uguali.

@@ -1,0 +1,23 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((report (arcdocdb.evidence:read-evidence "spikes/out/cbor-tag-write-20261014/mutations/report.lisp"))
+       (catalogue (arcdocdb.evidence:read-evidence "spikes/out/cbor-tag-write-20261014/drivers/catalogue-materialized.lisp"))
+       (baseline (getf report :baseline)) (text (uiop:read-file-string (getf baseline :log) :external-format :utf-8))
+       (lines (uiop:split-string text :separator '(#\Newline)))
+       (ok (remove-if-not (lambda (line) (uiop:string-prefix-p "ok    " line)) lines))
+       (tag (remove-if-not (lambda (line) (uiop:string-prefix-p "ok    TEST-REQ-CBR-007-TAG-" line)) ok))
+       (expected (mapcar (lambda (name) (concatenate 'string "ok    " (subseq name (+ 2 (search "::" name)))))
+                         (getf catalogue :frozen-def-test-functions))))
+  (assert (= 1414 (length ok) (length (remove-duplicates ok :test #'string=))))
+  (assert (= 20 (length tag) (length (remove-duplicates tag :test #'string=))))
+  (assert (null (set-exclusive-or tag expected :test #'string=)))
+  (dolist (entry '(("spikes/out/cbor-tag-write-20261014/drivers/mutation-before-product-final.lisp"
+                    "28b2e3fd409ee6a214c5c9e65f16b4b1de7a00f5")
+                   ("spikes/out/cbor-tag-write-20261014/drivers/mutation-before-driver-pin-correction-cb02266f.lisp"
+                    "cb02266fedad6f21097fb88504edebb6c6eb7169")
+                   ("spikes/out/cbor-tag-write-20261014/drivers/mutation.lisp"
+                    "2275bd6ebba11cfe24e57ac0c6d2c257631a71d8")))
+    (assert (string= (second entry)
+                     (string-trim '(#\Newline #\Return #\Space)
+                                  (uiop:run-program (list "git" "hash-object" (first entry)) :output :string)))))
+  (format t "BASELINE1414 unique OK=1412nominal+2smoke;20tagexactwhitelist. Driver draft28b2e3fd, before2literalfixcb02266f and final2275bd6e preserved. DATAonly.~%"))

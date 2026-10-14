@@ -1,0 +1,13 @@
+diff --git a/src/codec/cbor-tag-write.lisp b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/scan-omitted.after.lisp.txt
+index 16b91fc2..eab2b446 100644
+--- a/src/codec/cbor-tag-write.lisp
++++ b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/scan-omitted.after.lisp.txt
+@@ -55,7 +55,7 @@ Lavoro limitato a SPAN*102; nessun AST, thread, attesa, I/O o pubblicazione."
+           (source-limit (the index source-end)) (scratch (the spazio-cbor space))
+           (hi (the u32 high)) (lo (the u32 low)) (next (+ (the index start) item-size)))
+       (declare (type index next))
+-      (verifica-contenuto-tag-cbor src source-begin source-limit scratch span max-nodes max-depth)
++      (progn (identity src) (identity source-begin) (identity source-limit) (identity scratch) (identity span) (identity max-nodes) (identity max-depth) nil)
+       (let ((payload-start (scrivi-header-cbor-minimo bytes begin next 6 hi lo)))
+         (declare (type index payload-start))
+         (unless (= payload-start (+ begin header-size))

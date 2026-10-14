@@ -1,0 +1,92 @@
+# Lettura C4 dei dati della prima build tag
+
+2026-10-14. Letto soltanto come DATA il record
+`spikes/out/4000996656-command-60753-0/report.lisp` tramite il trusted
+`tools/evidence-storage.lisp`: READ-EVAL NIL, readtable standard ed EOF.
+Nessun prodotto, suite o driver caricato, valutato, compilato o chiamato
+dal lettore; nessuna campagna ripetuta. Il revisore è l'autore del corpus
+cieco, indipendente nell'analisi dei dati, non nella paternità dei test.
+
+Descriptor schema1/COMPRESSED-EVIDENCE/GZIP,317 byte, SHA256
+`983e3c3a1652450f5fb8ad5fd43c54e82aa3bdcaf2aa8e59894d04204e64aa17`.
+Payload149047 byte, SHA
+`43185e975389a26efc85c75d9d8a2a77db42642104c5e077a3d18d27aea26ede`;
+byte espansi1274223, SHA
+`07e10b78fa463a9c88284093d4a8d513d68ea7c13a33f9834e5a7e9a6615bcf5`.
+Il trusted reader verifica descriptor/payload/byte espansi prima di
+restituire un singolo plist chiuso da EOF.
+
+Record schema1/COMMAND-VERIFICATION, comando `make build lint trace links`,
+OK/exit0/STABLE, wall43.046935s, HEAD
+`df37306ed0e97f1665fb9f59aca79842c49d96a5`, working-tree vuoto nel record.
+892 impronte uniche prima e dopo identiche, perimetro distinto dai214
+file del linter. I cinque pin sono confrontati separatamente in entrambi
+gli snapshot e con i file attuali, tramite `git hash-object` read-only
+prima e dopo la lettura:
+
+| File | Blob Git |
+|---|---|
+| src/codec/cbor-tag-input.lisp |6dfad07035ac8040b2aec0a455c175ea15dfd9ad|
+| src/codec/cbor-tag-write.lisp |16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b|
+| tests/codec/cbor-tag-write-support.lisp |15978d05251705387205d6468031a701ad95ec85|
+| tests/codec/cbor-tag-write.lisp |df97950ec8d24157bb6566c7995262f7beea7742|
+| tests/codec/cbor-tag-write-threads.lisp |def870295400af2c84ca00e7a9b5cd5b747ec315|
+
+Non viene ricostruito o attestato un nuovo snapshot attuale di tutti i892
+file. Descriptor, payload, reader e cinque pin attuali risultano stabili
+prima/dopo la lettura C4. Gli hash non attestano autenticità.
+
+Stdout229898 caratteri, stderr858671 caratteri. La build conclude
+`nessun avviso, tutti i controlli superati`. Non risultano marker
+WARNING:, STYLE-WARNING:, Unhandled o COMPILE-FILE-ERROR in stdout/stderr.
+Lo stderr non è vuoto:2361 righe contengono `note:`, coerenti con note di
+ottimizzazione del compilatore. Non vengono trasformate in warning né
+confuse con un transcript silenzioso.
+
+1414 righe OK uniche:1412 nominali piu due smoke (`ARCDOCDB:*VERSION*`
+stringa e package presente). Le20 righe REQ-CBR-007-TAG coincidono
+esattamente con i19 nominali seriali e quello parallelo del corpus
+congelato; helper, macro e righe informative non sono conteggiati.
+Il record riporta inoltre214 file/0 violazioni lint;
+121 requisiti/65 invarianti/13 scenari FI/52 ADR,0 errori trace;
+471 file/2988 link controllati,0 rotti.
+
+Fuzz osservato: seed54414737,1024 casi,512 successi e64 per ciascuna
+classe capacità/byte/HIGH/nodi/profondità/parser/source-range/vuoto.
+Ricalcolo freddo del calendario LCG: finaleF8004B37 e classi identiche.
+Il finale non è stampato in stdout: è un'asserzione del test congelato
+il cui nominale è OK, distinta da un campo runtime separato.
+
+| Ondata | Worker riusati / composizioni | Sink | Overlap / frequenza |
+|---|---|---|---|
+|0|2 /4096|66766848/97310720|2333 tick /1000000 tick/s|
+|1|2 /4096|66766848/97310720|2329 tick /1000000 tick/s|
+
+Overlap positivi2.333/2.329ms e somma8192 composizioni dichiarate. Token
+freddi32601/47515 x2048 producono i due sink per ondata. Inizi/fini dei
+singoli intervalli non sono stampati: la lettura non li ricostruisce.
+Le verifiche di durata positiva, arità, byte fisici completi, SOURCE
+read-only e scratch privati appartengono al test congelato passato.
+Intervalli comprendono controlli del corpus e non dimostrano scaling o
+simultaneità sui core.
+
+9658 chiamate previste è aritmetica del corpus, non un contatore API
+strumentato:442 nonfuzz (144 accettate/298 rifiutate)+1024 fuzz+8192
+parallele;8848 successi previsti(144+512+8192),810 rifiuti(298+512).
+Le116 scansioni aggiuntive sono controlli secondari su scratch separati.
+Il report non contiene un log per ciascuna chiamata e non sostituisce
+questa distinzione con una misura.
+
+Nessun make check globale, spike/evidence check, heap, coverage,
+mutazione o qualifica C1/MC/DC è attestato da questa lettura mirata.
+Questi oggetti richiedono campagne e letture distinte.
+
+Reader `review/initial-runtime-reading.lisp`, blob
+`2ac891a4423b7fe83549ff5b89c86096d3f758c2`, SHA256
+`8f197073530bcfb9ddb45031cc7c8e890d9157be539524d744b9b73a0c77d940`,
+identico prima/dopo. Output `review/initial-runtime-reading.output.txt`,
+blob `87c1a3a9fc63e2bdcb0aaedb9c23c20da97dac52`, conservato; prima
+esecuzione C4 ad hoc exit0, file `initial-runtime-reading.error.txt`
+vuoto. Due interrogazioni DATA preparatorie hanno distinto metadati,
+nominali e note stderr senza cambiare il record; non erano campagne.
+Nota, reader, output ed error congelati senza successivi edit.

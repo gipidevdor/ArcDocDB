@@ -1,0 +1,1 @@
+Prepared DATA-only reader spikes/out/cbor-tag-write-20261014/review/coverage-reading.lisp, HEAD df37306ed0e97f1665fb9f59aca79842c49d96a5, stderr characters 0.

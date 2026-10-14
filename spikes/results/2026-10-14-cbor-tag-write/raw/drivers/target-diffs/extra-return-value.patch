@@ -1,0 +1,19 @@
+diff --git a/src/codec/cbor-tag-write.lisp b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/extra-return-value.after.lisp.txt
+index 16b91fc2..95fc8720 100644
+--- a/src/codec/cbor-tag-write.lisp
++++ b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/extra-return-value.after.lisp.txt
+@@ -32,7 +32,7 @@ dati intatti, scratch riusabile. INVARIANT-VIOLATION per contratto interno."
+ ;;; REQ: REQ-CBR-007 REQ-LIM-001 REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
+ (declaim (ftype (function (t t t t t t t t t
+                           &key (:max-bytes t) (:max-nodes t) (:max-depth t))
+-                         (values index &optional)) scrivi-tag-cbor-minimo))
++                         (values index null &optional)) scrivi-tag-cbor-minimo))
+ (defun scrivi-tag-cbor-minimo (buffer start end source source-start source-end high low space
+                               &key (max-bytes +cbor-scan-max-bytes+)
+                                 (max-nodes +cbor-scan-max-bytes+) (max-depth +cbor-scan-max-depth+))
+@@ -65,4 +65,4 @@ Lavoro limitato a SPAN*102; nessun AST, thread, attesa, I/O o pubblicazione."
+         (let ((result (copia-stringa-cbor-write bytes payload-start next src source-begin source-limit)))
+           (unless (= result next)
+             (error 'invariant-violation :reason :cbor-tag-write-progress))
+-          result)))))
++          (values result nil))))))

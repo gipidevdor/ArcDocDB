@@ -1,0 +1,157 @@
+# Lettura C4 del check completo dei tag CBOR
+
+Lettore distinto dall'autore del corpus e del prodotto; è l'autore dei
+driver benchmark/mutazione tag. Questa lettura riguarda il check integrato,
+non i dati della campagna del proprio mutatore. Solo DATA, mediante il
+trusted `tools/evidence-storage.lisp`; nessun prodotto, corpus, driver
+benchmark o mutatore è stato caricato, compilato o eseguito. Nessuna
+campagna o suite è stata ripetuta e nessun file tracked è stato modificato.
+READ-EVAL NIL, readtable standard, EOF univoco sui record e raw dei figli.
+
+## Record principale
+
+Fonte `spikes/out/4000996821-command-64571-0/report.lisp`, descriptor317 byte,
+SHA256 `3a985282de01545ab18241298d3c5bb62190520963df148e34c863a66030ce33`.
+Payload gzip155883 byte,
+SHA `ea6dfba8f9ff33deb170259ae1e49417c028f3101de60dc10edc04b731e03158`;
+byte espansi1317223,
+SHA `8e11cffc17e0cae1190528f784b39a273794f9b81c39973ca6cb16a3e903a61b`.
+Il trusted reader verifica la coerenza locale dei byte compressi/espansi,
+senza attribuire autenticità o atomicità alla conservazione.
+
+Schema1/COMMAND-VERIFICATION, OK/exit0/STABLE,
+HEAD `df37306ed0e97f1665fb9f59aca79842c49d96a5`, working-tree vuoto,
+wall314.315971s. Il comando è make/check-core.892 nomi sorgente unici,
+inventario prima/dopo uguale. I cinque pin dichiarati coincidono con
+quelli forniti indipendentemente dal root:
+
+| File | Git blob |
+| --- | --- |
+| `src/codec/cbor-tag-input.lisp` | `6dfad07035ac8040b2aec0a455c175ea15dfd9ad` |
+| `src/codec/cbor-tag-write.lisp` | `16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b` |
+| `tests/codec/cbor-tag-write-support.lisp` | `15978d05251705387205d6468031a701ad95ec85` |
+| `tests/codec/cbor-tag-write.lisp` | `df97950ec8d24157bb6566c7995262f7beea7742` |
+| `tests/codec/cbor-tag-write-threads.lisp` | `def870295400af2c84ca00e7a9b5cd5b747ec315` |
+
+1418 righe OK uniche:1412 nominali,2 smoke,4 self-test del linter
+bad/good/keyword-barrier/qualified-reader. Le20 REQ-CBR-007 corrispondono
+esattamente alla whitelist congelata del corpus, compresa la nominale
+dei worker reali. Lint214 file/0 violazioni; trace121 requisiti/65
+invarianti/13 scenari FI/52 ADR/0 errori; links472 file/2988 controlli/
+0 rotti. Il valore472 è quello nel record, distinto dall'indicazione
+preliminare471 ricevuta nella richiesta.
+
+Stdout271571 e stderr858821 caratteri. Lo stderr contiene2361 righe con
+`note:` e non è vuoto. Nessun WARNING/STYLE-WARNING/COMPILE-FILE-ERROR/
+Unhandled nella fase compilazione-build prima del marker esatto di
+completamento, né nello stderr principale. Le note di ottimizzazione
+sono lecite; nessun rifiuto globale del testo STDOUT dopo la build.
+
+Fuzz stampato: seed54414737,1024 casi,512 successi e otto classi da64
+rifiuti (capacità/byte/HIGH/nodi/profondità/parser/source-range/vuoto).
+LCG32 ricomputato freddo: finaleF8004B37 e classi512/8x64. Il finale è
+asserito nel test passato e ricomputato dal reader; non è un campo runtime
+stampato nel log. Il piano9658 chiamate è la somma442+1024+8192,
+con8848 successi e810 rifiuti previsti. Sono conteggi aritmetici del
+corpus, senza contatore API strumentato di questa esecuzione.
+
+Due ondate da4096 composizioni dei tag, due worker riusati;
+sink66766848/97310720 per ondata. Overlap positivo1687/2704 tick a
+1000000tick/s, rispettivamente1.687/2.704ms. Gli inizi/fini individuali
+non vengono stampati. Nessuna inferenza su scaling o simultaneità dei core.
+
+## Gate di conservazione e negativi attesi
+
+Il comando evidence registrato riporta OK,102 cataloghi,3237 riferimenti
+e28687 file conservati. Sono metriche del record, non un nuovo SHA sweep
+o una rilettura di tutti gli archivi da parte del presente reader.
+Limiti dichiarati: STRUCTURE-PRESENCE-SIZE-AND-COMPRESSED-INTEGRITY e
+NO-RESULT-REINTERPRETATION. Nessuna promozione a qualifica C1 o del motore.
+
+EVIDENCE-PUBLICATION-TESTS è schema1/OK,2 checks e2 casi. Entrambi i
+negativi sono STATUS OK con exit osservato1, stdout vuoto:
+`fuori-catalogo.lisp`1048577 byte e `fuori-catalogo.gz`8388609 byte.
+Lo stderr di ciascun child conserva Unhandled SIMPLE-ERROR per il
+rifiuto intenzionale. Sono stringhe di DATA serializzate nello stdout
+integrato; non sono fallimenti del check-core. Il reader verifica
+queste due righe mediante i campi strutturati della fixture.
+
+## Self-test snapshot e reader
+
+Riferimenti dallo stdout principale:
+`spikes/out/4000996874-snapshot-self-test-69641-0/report.lisp` e
+`spikes/out/4000996874-reader-self-test-69697-0/report.lisp`.
+Metadata embedded SNAPSHOT-MUTATIONS/READER-MUTATIONS schema1/OK,
+worker-errors0, fonti21/34 prima=dopo/STABLE, SELF-TEST OK e target
+unici10/8. BASELINE/MUTANTS NIL: sono self-test, non campagne di mutazioni.
+
+I report diretti SNAPSHOT/READER-PROCESS-SELF-TEST sono PASSED e hanno
+2 worker-errors attesi ciascuno. Tutti e4 i raw stdout sono singola
+forma/EOF e coincidono strutturalmente EQUALP con EXECUTION.REPORT;
+raw stderr vuoti. SIGNAL: exit137/signal9, child FAILED/TESTS/RUNTIME,
+failed-test fixture. COMPLETION-EXIT: exit7/signalNIL, child OK/COMPLETE,
+passed-tests fixture. Entrambi sono WORKER-ERROR, mai DETECTED. I cataloghi
+10/8 non vengono contati come mutanti realmente eseguiti.
+
+## Dieci processi spike
+
+Aggregato `spikes/out/4000997101-check-82864-0/report.lisp`: schema1,
+COMPLETE, mode --check,10 RUNS e10 RUN-ARTIFACTS.
+Ogni SPK-nn.lisp è DATA EQUALP alla corrispondente voce RUNS; il raw
+stdout è una singola forma/EOF EQUALP a RESULT, inclusi gli array
+tipizzati confrontati per contenuto, senza affermazioni d'identità.
+Tutti exit0, stderr vuoto, fonti before=after/STABLE e intervalli
+interni al record padre. SPK-07 ha PASS; gli altri9 hanno OK.
+
+| Figlio | Fonti dichiarate | Wall secondi |
+| --- | ---: | ---: |
+| SPK-01 |5|1.173763|
+| SPK-02 |3|0.513219|
+| SPK-03 |3|0.452107|
+| SPK-04 |5|0.917862|
+| SPK-05 |5|0.860370|
+| SPK-06 |7|1.316610|
+| SPK-07 |17|8.817615|
+| SPK-08 |6|1.946633|
+| SPK-09 |3|0.866363|
+| SPK-10 |8|2.962473|
+
+Questi sono risultati dei prototipi registrati. Non attestano motore,
+hardware memory model, durabilità globale, profilo C1 o prestazioni.
+Non sono stati rieseguiti sorgenti, model o runner degli spike.
+
+## Conservazione e preparazioni
+
+Reader finale `.lisp`, blob `b0d3e4cc655c22e21e19a7d8c03b4925385b7cb8`,
+19519 byte,
+SHA `5e47b9e2c24f7b09ab644357f53c9ad542f09ca3f1dc29a87873723d60bc6f86`,
+osservato prima dell'esecuzione e uguale alla fine.
+Output finale `.output`, blob `19c45523e6afe58ad4147dd08868bd43f6ed1f8b`,
+7430 byte,
+SHA `b2b2443c58ea2cb66e583c69a4da23a35c2f2d8a3c7cfed7eb3eba154d8ff116`.
+Exit0; `.error` vuoto. Descriptor, payload e reader stabili fra le
+osservazioni del reader.23 file metadata/raw/descriptor selezionati hanno
+impronte locali uguali fra acquisizione e controllo finale; alcune
+acquisizioni seguono la prima deserializzazione. Nessuna atomicità o
+integrità completa dei sorgenti/archivi viene dedotta da tali osservazioni.
+
+Le due preparazioni fallite sono conservate, insieme ai propri stdout
+e stderr, in `.preliminary.*` e `.preliminary-2.*`:
+
+- Il primo adattatore selezionava il prefisso `expected`, intercettando
+  il binding `expected-kind` di un helper prima del blocco principale.
+  Il reader `53331ee188528fb280a7b2a64a256ee310b1819d` si è fermato per
+  EOF di sintassi prima della verifica del record. Il secondo adattatore
+  usa il binding principale esatto e conserva il primo originale.
+- Il secondo reader `0b97ac1cb0e5862aa4ace03784bec555c1250c40` verificava
+  già test/trace/links/fuzz e il primo negativo, poi ha rifiutato il secondo
+  perché la sostituzione numerica generica del vecchio conteggio fonti
+  aveva alterato il proprio literal8388609 in8388929. Corretto solo quel
+  literal; la fixture reale era già corretta. Nessuna modifica degli input.
+
+Sono errori preparatori del lettore C4, distinti dal prodotto e dai
+comandi registrati. Gli adattatori/output/error e i due reader
+preliminari restano preservati. Reader finale, nota, output e preparazioni
+congelati; nessun source/index/HEAD edit. Questa lettura non modifica i
+risultati del benchmark, della copertura o delle mutazioni tag e non
+attesta autenticità, MC/DC o chiusura della qualifica C1 generale.

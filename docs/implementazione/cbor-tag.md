@@ -3,7 +3,8 @@
 `arcdocdb.cbor:scrivi-tag-cbor-minimo` compone una testata MT6 e un
 singolo contenuto già codificato, verificandolo prima della scrittura.
 Il [metodo preregistrato](cbor-tag-metodo.md) definisce REQ-CBR-007,
-precedenze e campagne.
+precedenze e campagne; le [verifiche](cbor-tag-risultati.md) conservano
+risultati e limiti della qualifica.
 
 ```lisp
 (scrivi-tag-cbor-minimo
@@ -28,7 +29,7 @@ senza aggiungere frame allo scanner.
 
 BUFFER e SPACE sono esclusivi durante la chiamata; SOURCE resta stabile
 e può essere condiviso in lettura tra worker con destinazioni e scratch
-distinti. Gli array interni KINDS dello scratch non possono essere
+distinti. L'array interno KINDS dello scratch non può essere
 sorgente o destinazione. BUFFER=SOURCE è ammesso soltanto con span
 sorgente disgiunto dal footprint completo [START,NEXT), testata inclusa;
 confini toccanti sono ammessi.

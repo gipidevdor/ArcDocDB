@@ -1,0 +1,169 @@
+# Lettura DATA indipendente della copertura MT6
+
+2026-10-14. Lettura dei dati completati, distinta dagli autori del prodotto,
+del corpus e del driver di copertura. Il revisore ha svolto la prima C1 e
+la lettura C4 dei driver; questa attività è un ricalcolo DATA, non una nuova
+lettura C1 o qualifica. Nessun prodotto/corpus/driver di campagna definito,
+caricato, compilato o chiamato; nessuna nuova campagna di copertura.
+
+## Record, input e reader congelati
+
+Wrapper `spikes/out/4000996908-command-74254-0/report.lisp`:187103 byte,
+blob `416c1f1c859af385fb54d8b57abb38f65a22f3ca`, SHA256
+`dfd78544eef2e9f84017583ac14aac85d1a97189227a086cde54b0416e5a9fc2`.
+Schema1/COMMAND-VERIFICATION, STATUS OK, EXIT0, SOURCE-CONSISTENCY STABLE;
+892 impronte uniche prima/dopo identiche. HEAD registrata
+`df37306ed0e97f1665fb9f59aca79842c49d96a5`, working tree registrato vuoto,
+SBCL2.6.9. Argv esatto foundation-coverage `--report` sulla directory tag
+con scope `cbor-tag-write`. Wall29,127401s della campagna completa, non
+misura di prestazioni del prodotto. STDERR è effettivamente una stringa
+vuota in questo record; il reader non assume vuoto e controlla separatamente
+assenza di warning/style-warning/Unhandled/errori di compilazione.
+
+I cinque pin sono identici nei due inventari del wrapper e nei file fisici
+prima/dopo entrambe le fasi DATA:
+
+| Fonte | Blob Git |
+| --- | --- |
+| `src/codec/cbor-tag-input.lisp` | `6dfad07035ac8040b2aec0a455c175ea15dfd9ad` |
+| `src/codec/cbor-tag-write.lisp` | `16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b` |
+| `tests/codec/cbor-tag-write-support.lisp` | `15978d05251705387205d6468031a701ad95ec85` |
+| `tests/codec/cbor-tag-write.lisp` | `df97950ec8d24157bb6566c7995262f7beea7742` |
+| `tests/codec/cbor-tag-write-threads.lisp` | `def870295400af2c84ca00e7a9b5cd5b747ec315` |
+
+Quattro input fisici in `coverage/`, tutti bytes/SHA256 invariati prima/dopo:
+
+| File | Byte | Blob Git | SHA256 |
+| --- | ---: | --- | --- |
+| `coverage-state.lisp` | 2775201 | `275bc22c89eaa5e8edd110c157663af3492e9683` | `3309ea12a2d6acc7d734101748ecbf73e8461284f4c3889d1159127384ee2625` |
+| `cover-index.html` | 1951 | `f3803d5398b3e444ab8385f8efafed020d772bac` | `12ad918f42ae6f8909f03a8d8594a89d5239f8c6d97fbae10bd32445e34a6f6b` |
+| `b83b0aaf801333ff25f7cd44ddf0dad7.html`, input | 28463 | `ea3b0c74d7563e8cd0696308ca4f615640a9f376` | `73c138835b70056205e9d0478583446317691a858710c7694a1d03fd9635f01a` |
+| `bc91342dc28410d2e55758fcb7cc59fa.html`, write | 25383 | `898ef5802022ed7a3a255974fbc6b9640cb7869d` | `ce25318ce174014214670cc363ca2f2bfb555b93c6e70cbc62c6ac5625a58453` |
+
+Il preparatore distinto `review/prepare-coverage-reading.lisp`, blob
+`9c7adcf2f7a28e4c3e8128f9001c604321cdad60`, deriva il reader dal corretto
+map `b737d1220b84f125cf54b7f199762b60322d4bcf`: adatta package/path/pin,
+HEAD fisica e policy STDERR, mantenendo parser e confronti. Non modifica
+l'originale map o gli input. Output/error del preparatore preservati.
+
+Reader `review/coverage-reading.lisp`, blob
+`97e97251406badc34bbbe692a061265e4c6c0bbc`, e sua estensione DATA distinta
+`review/coverage-classification.lisp`, blob
+`bdbf2c28cba92eb8c57313cbf9b03e0a33d3e867`, congelati prima del run.
+L'estensione carica solo il reader DATA, poi classifica gli AST letti:
+nessuna forma di prodotto è valutata. Un solo tentativo, exit0;
+184886 controlli nella fase base, poi inventario/classificazione completi.
+Output `review/coverage-reading.output.txt`, blob
+`5ead72a139a0896bff041a83eb4e1a6939555cb9`; error vuoto, blob
+`e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`. Non esistono tentativi falliti
+di questa lettura da riclassificare o nascondere.
+
+Caricata soltanto la dipendenza trusted evidence-storage, blob
+`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`. Raw lista letto con
+CALL-WITH-EVIDENCE-BYTES, limite134217728, READ-EVAL NIL, readtable standard,
+CL-USER, GENSYM EOF e una sola forma. Sorgenti soltanto READ fino a EOF in
+namespace vuoti necessari alla sintassi. Nessun RESTORE-COVERAGE o FASL
+caricato. Raw rimasto plain da2775201 byte durante tutte le osservazioni.
+
+Formato opaco specifico di SBCL2.6.9: `(file paths . bits)`, simple-vector
+dei path e simple-bit-vector con lunghezze uguali, THEN/ELSE esattamente in
+coppia, bit1 marcato. Verificato sul codice locale SAVE-COVERAGE
+`genhtml.lisp`, blob `b32629cc875ab51bc1a5ecd8084ec7e73336b5e0`, e
+GET-RECORDS `cover.lisp`, blob `fc789e7f6a7e6cc34c3b658035915775c6669e67`.
+Non è un formato portabile o un'API stabile. Il mapping inverte il path
+numerico e scende NTH nel sorgente con limiti verificati. HTML controllato
+nelle tabelle summary e nei due link esatti dell'index, non visivamente
+in ogni colore né con un parser HTML generale.
+
+## Denominatori completi
+
+| Scope selezionato | Espressioni | Percentuale | Rami | Percentuale |
+| --- | ---: | ---: | ---: | ---: |
+| `cbor-tag-input.lisp` | 176/206 | 85,436893% | 26/34 | 76,470588% |
+| `cbor-tag-write.lisp` | 115/158 | 72,784810% | 10/20 | 50,000000% |
+| Due nuovi sorgenti | 291/364 | 79,945055% | 36/54 | 66,666667% |
+
+Raw240 record input e178 write, espressioni più rami. I due path assoluti
+compaiono una sola volta; raw, summary delle due pagine e index coincidono,
+percentuali HTML arrotondate a una cifra. Nessuna esclusione dal denominatore.
+Il raw globale contiene355 entry uniche:4160/147422 espressioni e417/19102
+rami, comprendendo file compilati ma non esercitati da questo scope.
+Non è la copertura del motore e non sostituisce i due file selezionati.
+
+STDOUT contiene20 OK nominali unici e finale20 test; fuzz1024 seed54414737,
+512 successi e64 per ciascuna delle otto classi. Due ondate4096 con due
+worker riusati, sink66766848/97310720, overlap4871/4748 tick a1000000 tick/s.
+Sono dati del corpus del run registrato, senza scaling/core simultanei o
+heap zero dedotti. Le9658 chiamate restano derivate dal piano/corpus, non
+un contatore SB-COVER. Lo stato finale fuzz è asserito, non stampato.
+
+## Classificazione di tutti i punti mancanti
+
+**73 espressioni e18 rami mancanti:91 record, tutti mappati nell'output.**
+Classificazione:10 dichiarazioni,60 sottoforme ERROR IV,3 default keyword,
+18 esiti ELSE IV; altri0. Tutto resta nei denominatori.
+Le dichiarazioni sono6 input (record0/1/2/29/93/149: package, optimize,
+quattro FTYPE) e4 write (record0/1/2/88: package, optimize, due FTYPE).
+
+Ogni ERROR IV contribuisce quattro espressioni non marcate: ERROR,
+QUOTE INVARIANT-VIOLATION, keyword REASON e keyword del motivo. Sono15
+guardie interne. Gli18 rami comprendono i15 ELSE esterni e tre ulteriori
+ELSE dei primi confronti AND interni, mai sottratti come artefatti.
+
+| Guardia/ERROR nei blob congelati | Motivo IV | Record ELSE non marcati | Record espressioni non marcate |
+| --- | --- | --- | --- |
+| input:27/28 | dimension-range | 36 | 37–40 |
+| input:29/30 | dimension-empty | 44 | 45–48 |
+| input:49/50 | target-span | 105,107 | 108–111 |
+| input:51/52 | source-span | 122,124 | 125–128 |
+| input:79/80 | input-span | 207 | 208–211 |
+| input:81/82 | input-capacity | 219 | 220–223 |
+| write:15/16 | child-range | 14,16 | 17–20 |
+| write:17/18 | child-span | 28 | 29–32 |
+| write:19/20 | child-budget | 39 | 40–43 |
+| write:24/25 | child-progress | 50 | 51–54 |
+| write:26/27 | child-nodes | 61 | 62–65 |
+| write:28/29 | child-depth | 71 | 72–75 |
+| write:61/62 | header-progress | 108 | 109–112 |
+| write:63/64 | payload-span | 120 | 121–124 |
+| write:66/67 | write-progress | 131 | 132–135 |
+
+I motivi sono prefissati `:cbor-tag-` nell'output. I record105/122/14
+sono i cortocircuiti START<NEXT, SOURCE-START<SOURCE-END e START<END;
+107/124/16 sono gli esiti esterni delle rispettive guardie. Le tre
+espressioni rimanenti sono default MAX-BYTES/MAX-NODES/MAX-DEPTH della
+funzione pubblica, record175/176/177, path `(10 2 5)`/`(11 2 5)`/`(12 2 5)`.
+Non si interpreta una loro marcatura assente come prova di mancato uso
+dei default; non si elimina alcun record dalla misura.
+
+L'estensione attraversa l'AST e inventaria **tutte23 guardie**,14 input
+e9 write, con owner/predicato/path/motivo e branch diretti/annidati.
+Le15 sopra hanno ELSE0; tutte hanno il loro THEN1. Gli altri otto siti
+pubblici hanno entrambi gli esiti diretti1:
+
+| Guardia input | Motivo pubblico | Record THEN/ELSE, entrambi marcati |
+| --- | --- | --- |
+| 13 | workspace | 8/9 |
+| 15 | workspace-alias | 22/27 |
+| 31 | byte-budget su SPAN | 53/58 |
+| 36 | byte-budget completo | 64/69 |
+| 38 | capacity | 76/81 |
+| 53 | overlap | 142/147 |
+| 69 | source-empty | 159/164 |
+| 77 | node-budget minimo | 194/199 |
+
+Il cortocircuito AND dell'overlap ha anche i record134/138 entrambi1.
+Copertura dei rami non attesta indipendenza di ogni operando AND/OR o
+relazione numerica concatenata: MC/DC e qualificazione C1 restano aperti.
+
+## Freeze e limiti
+
+Coerenza dei dati e delle osservazioni locali, senza autenticità o garanzia
+contro cambiamenti transitori poi ripristinati. Nessuna esclusione, nessuna
+guardia dichiarata irraggiungibile, nessuna copertura completa o promozione
+di REQ-LIM-001/002. Misure heap, mutazioni e controllo globale sono separati.
+Wrapper/raw/tre HTML e cinque pin source/test risultano immutati prima/dopo.
+Solo preparatore, reader, estensione, output/error e questa nota ignored
+sono scritti. Reader/output/nota congelati: root può ora conservare e
+compattare lossless il raw mantenendo i byte decodificati e SHA256 sopra;
+il reader conserva i pin della forma fisica plain osservata in questa fase.

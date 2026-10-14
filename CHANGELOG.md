@@ -17,6 +17,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   scheduler. Intervalli e checkpoint stampati prima delle asserzioni; metriche
   della fixture distinte dalla latenza del solo encoder.
 
+- Prove dedicate della lettura CONTROL, transizione conservativa e
+  pubblicazione validata: 84 nuovi test v1/v2, matrice finita e file reali
+  con quattro Serie. Copertura, 216 finestre di confronto, sorgenti dei
+  tentativi falliti e output originali conservati nella campagna
+  `2026-10-14-control-transizione`; nessuna promozione del motore completo.
+
 - Composizione di tag CBOR da contenuti già codificati: verifica completa
   prima della scrittura, testata MT6 minima e budget comprensivi del tag
   senza aggiungere profondità ai contenitori. Sorgenti condivisibili in

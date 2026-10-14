@@ -1,0 +1,22 @@
+{
+  "schema-version": 1,
+  "kind": "terminal-producer-copy",
+  "status": "ok",
+  "source-directory": "spikes/out/4001000427-command-99322-0",
+  "files": [
+    {
+      "file": "report.lisp",
+      "bytes": 196381,
+      "byte-identical": true
+    },
+    {
+      "file": "conservazione.lisp",
+      "bytes": 1162,
+      "byte-identical": true
+    }
+  ],
+  "limits": [
+    "byte-copy-integrity",
+    "last-producer-stored-without-self-certification"
+  ]
+}

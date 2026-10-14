@@ -1,0 +1,21 @@
+{
+  "schema-version": 1,
+  "kind": "c4-repair-verification",
+  "status": "verified-by-self-tests-and-benchmark",
+  "finding-1": "Main-owned failure status and diagnostics preserved without live raw reads; pure classification cases passed.",
+  "finding-2": "Helper byte copy precedes load; source and copy SHA before/after equal in complete benchmark B.",
+  "additional-repairs": [
+    "Two missing parentheses fixed",
+    "TRY-SEMAPHORE replaces invalid zero timeout",
+    "Driver bootstrap makes definition warnings fatal before MAIN",
+    "Helper source loaded once to avoid macro redefinition"
+  ],
+  "self-tests": 472,
+  "complete-windows": 216,
+  "record": "4000997941-command-5238-0-report.lisp",
+  "limits": [
+    "initial independent review was static",
+    "no retroactive change to failed producers",
+    "source freeze and healthy host preconditions"
+  ]
+}

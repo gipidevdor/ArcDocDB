@@ -1,0 +1,136 @@
+# Verifiche della composizione delle mappe CBOR
+
+Campagna locale del 2026-10-14 sul metodo REQ-CBR-006 preregistrato
+prima del corpus e del prodotto. Le prove riguardano la composizione
+strutturale MT5 da chiavi e valori già codificati. Ordinamento,
+unicità delle chiavi e profilo documentale restano ai livelli superiori.
+
+## Prodotto, corpus e cronologia
+
+Metodo `636dd2706c2903542978606cf029e7198bf4dbb3`, preregistrazione
+`2968cdc8ef50e35f418b96d58e27b6a5ecf7fcb3`. Il corpus cieco viene
+congelato prima della scrittura dei due nuovi sorgenti.
+
+| File | Blob Git |
+|---|---|
+| src/codec/cbor-map-input.lisp | d7a593badeb6e6b71f28dc4e80c641b07189d0b8 |
+| src/codec/cbor-map-write.lisp | 22e814ea68e606c5bc58033c2a31e945303a9d65 |
+| tests/codec/cbor-map-write-support.lisp | a389e51f2416437d608c4f7745b9680eca27bc60 |
+| tests/codec/cbor-map-write.lisp | 6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8 |
+| tests/codec/cbor-map-write-threads.lisp | 6a65b58ce236b92b33772e1861dbd8c1257bee13 |
+
+Due letture C1 precedono la prima compilazione: checklist a dodici
+punti, dieci funzioni di9–38 righe e3–9 percorsi, cinque AND/OR con14
+operandi, nove confronti concatenati,40 guardie e due cicli. Tutti i
+siti e le forme d'errore restano nell'inventario, senza esclusioni.
+La prima lettura rileva un RUN omesso nello scope aggregato codec del
+tool di copertura; viene aggiunto prima delle campagne, senza cambiare
+prodotto o corpus. Il tool finale è `e273f103`.
+
+Un allineamento documentale del coordinatore usa erroneamente nomi
+transitori dei test: viene annullato prima della prima compilazione,
+ripristinando l'inventario originale `16c60314`. Entrambi i testi e la
+nota restano nelle prove preparatorie. Il freeze compilato è
+`15c458eff76896f3fc83ad7756ae922f64eb22d7`, con working tree pulito.
+
+## Corpus e parallelismo
+
+Passano20 test nominati,19 seriali e uno parallelo. Oracoli freddi
+verificano testata per il numero di coppie, payload e interi buffer.
+Il corpus include COUNT0/1/23/24/255/256, tutte le precedenze, tipi/range,
+COUNT contro metà tabella/span prima del raddoppio, code inattive pari
+e dispari, alias anche vuoti, overlap testata, capacità esatta/-1,
+budget completo16MiB e superamenti, nodi/tag/radice, profondità99/100
+dei figli e errori di parsing in chiavi e valori. Sessantacinque
+roundtrip con scratch separato sono controlli aggiuntivi dello scanner.
+
+Fuzz1024 con seed4D415035:512 successi e64 ciascuno per capacità,
+byte, entry, nodi, profondità, parsing, source-range e count.
+Lo stato finale0D123435 è asserito nel corpus e ricalcolato freddamente
+dal lettore, senza dichiararlo un valore stampato dalla campagna.
+
+Due worker reali riusati per due ondate di2048 chiamate ciascuno:
+8192 composizioni. Sorgente e tabella sono condivise in sola lettura,
+destinazioni e scratch privati. Sink54677504/77537280 per worker/ondata,
+NEXT12/16 e buffer19/23 concordano con le aspettative fredde.
+L'overlap osservato è3107/3104 tick a un milione di tick/s; gli intervalli
+individuali non sono stampati. Non si deducono scaling o simultaneità
+sui core. Il totale9499 chiamate alla nuova API è aritmetico dal piano:
+283 non fuzz,1024 fuzz e8192 parallele; non è un contatore strumentato.
+
+## Benchmark e rilevatori
+
+Sei fixture fredde, cinque repliche da1024 chiamate e warmup64:
+30 campioni. Il contatore heap osserva zero byte in tutti i campioni;
+baseline nulla zero, controllo positivo16x1MiB16777472 byte. NEXT e
+interi buffer, sorgente e tabella vengono verificati durante le misure;
+l'arità è controllata a freddo. I campioni sommano0,682974s, mentre il
+wrapper dura2,388207s. Il carico esterno non è controllato e il costo
+dei controlli è incluso; non si attestano assenza assoluta di allocazioni,
+throughput del motore o soglie di velocità. L'audit indipendente dello
+strumento compie79357 verifiche sui dati e passa.
+
+Otto mutanti compilabili risultano DETECTED: capacità fisica, MT4,
+numero item nella testata, scansione omessa, overlap senza testata,
+fini non verificati, nodo radice escluso e arità extra. I log mostrano
+smoke esatto, Unhandled e una funzione nominale del corpus congelato,
+con exit1, segnale NIL e nessun errore worker. Warning, compilazioni
+fallite, guasti helper, segnali e errori dopo il completamento non
+valgono come rilevamento. La baseline completa passa1284 nominali
+e due smoke. Il wrapper della campagna dura236,203910s.
+
+Nove copie/cache private:345 file per copia,350 impronte interne e860
+fonti esterne stabili. La lettura dei dati confronta binariamente tutti
+i file delle nove copie: nessuna differenza nella baseline, una sola
+sostituzione esatta del catalogo in ciascun mutante. Per arità extra
+FTYPE e corpo vengono cambiati coerentemente nella sola copia.
+Questo confronto non autentica l'esecuzione o dimostra causalità esclusiva.
+
+## Copertura grezza
+
+| Sorgente | Espressioni | Rami |
+|---|---:|---:|
+| cbor-map-input.lisp | 272/317 | 45/54 |
+| cbor-map-write.lisp | 190/266 | 19/36 |
+| Totale | 462/583 | 64/90 |
+
+Il denominatore integrale rimane583 espressioni e90 rami:79,245283% e
+71,111111%, sotto il requisito C1. I121 mancanti comprendono14
+dichiarazioni top-level,104 sottoforme ERROR di26 guardie interne e
+tre default keyword. Tutti i26 rami mancanti restano nel dato grezzo.
+Reader, summary e HTML concordano; nessun punto viene escluso o
+riclassificato per ottenere100%. SB-COVER non attesta MC/DC.
+
+Il primo reader DATA ha un errore di parentesi prima di leggere il
+record; versione, stdout e stderr sono conservati. La variante con
+la sola parentesi corretta passa senza nuova campagna del prodotto.
+Il raw di2573180 byte viene compattato senza perdita dopo la lettura,
+con SHA256 decodificato
+`22d23eb3d3f6929d92952713ca9f60287a2c1becf4c5c3b6c538b6ee59e4ef86`.
+Descrittore e payload363928 byte rispettano i limiti1MiB plain/8MiB gzip.
+
+## Verifica integrata
+
+Sul freeze15c458ef passano `make check-core`,1284 nominali e due smoke,
+quattro self-test del linter,207 file con zero violazioni,120 requisiti,
+65 invarianti,13 scenari FI e52 ADR senza errori,440 file e2914 link
+senza rotture. Passano i self-test di conservazione, i98 cataloghi con
+3136 riferimenti e25236 file conservati e tutti i dieci spike.
+Il comando registrato dura260,414101s;860 fonti restano identiche prima
+e dopo. Le note del compilatore restano grezze: non vengono confuse
+con warning o con stderr vuoto. Questa verifica precede la raccolta
+pubblicata delle mappe e le eventuali integrazioni successive.
+
+## Conservazione
+
+La raccolta usa quattro worker e confronti dell'origine prima/dopo e
+della copia, processi decodificati identici e inventario chiuso verificato.
+Conteggi e dimensioni finali vengono aggiunti solo dopo la chiusura.
+
+Le nove copie integrali dei mutanti restano nel backup locale verificato.
+L'archivio pubblicato conserva log, ASDF, runner, tutti i prodotti/corpus
+map delle copie e il report con le impronte complete. Gli altri sorgenti
+immutati sono ricostruibili dal commit15c458ef; non si dichiara che i nove
+mirror integrali siano tutti duplicati nell'archivio. La selezione mantiene
+l'indice entro il limite plain senza alzare i budget o alterare gli originali.
+Fallimenti preparatori e qualifiche C1/MC/DC aperte rimangono espliciti.

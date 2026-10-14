@@ -13,6 +13,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   Suite ACTIVE a 42 test e quattro mutanti preflight rilevati; conservati
   copertura, regressione bootstrap e audit indipendenti delle prove complete.
 
+- Composizione di mappe CBOR da chiavi e valori già codificati: verifica
+  completa prima della scrittura, testata MT5 basata sulle coppie e budget
+  comprensivi della radice. Sorgenti condivisibili in lettura con scratch
+  privati; ordinamento delle chiavi e qualifica C1 restano aperti.
+
 - Ricircolo esplicito dal dispatcher alla Serie: pubblica l'obbligo e termina
   IDLE se c'è spazio; a ring pieno restituisce il link del nuovo writer
   CLAIMED dopo un solo scambio FIFO. Nessun gate del pool, ritiro o nuova

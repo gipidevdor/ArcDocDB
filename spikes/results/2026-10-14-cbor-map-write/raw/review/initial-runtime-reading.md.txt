@@ -1,0 +1,85 @@
+# Lettura C4 dei dati della prima build mappe
+
+2026-10-14. Letto soltanto come DATA il record
+`spikes/out/4000985658-command-59509-0/report.lisp`, tramite il trusted
+`tools/evidence-storage.lisp`: READ-EVAL NIL, readtable standard ed EOF.
+Nessun prodotto, suite o driver caricato, valutato, compilato o chiamato
+dal lettore; nessuna campagna ripetuta. La lettura è dell'autore del
+corpus blind, indipendente nell'analisi dei dati, non nella paternità dei test.
+
+Descriptor schema1/COMPRESSED-EVIDENCE/GZIP,317 byte, SHA256
+`379c3632670eecc48ce4ac41be66ff1991f50a408453d92b76730f64694eb543`.
+Payload137522 byte, SHA `f947867acbb149f5f0aca9235b18e2b70a5b5b8a28adca9f1538711cd883be97`;
+byte ricostruiti1100720, SHA `afae89295c7d8d86c8e382bd620897e695d2e5b582df53d2b64d5da8299adb79`.
+Il trusted reader verifica descriptor/payload/byte espansi prima di restituire il dato.
+
+Record schema1/COMMAND-VERIFICATION, comando `make build lint trace links`,
+OK/exit0/STABLE, wall40.395196s, HEAD `15c458eff76896f3fc83ad7756ae922f64eb22d7`,
+working-tree vuoto nel record.860 impronte uniche prima e dopo identiche;
+non sono lo stesso perimetro dei207 file del linter.
+I cinque pin registrati coincidono con il prodotto e corpus congelati:
+
+| File | Blob Git |
+|---|---|
+| src/codec/cbor-map-input.lisp | d7a593badeb6e6b71f28dc4e80c641b07189d0b8 |
+| src/codec/cbor-map-write.lisp | 22e814ea68e606c5bc58033c2a31e945303a9d65 |
+| tests/codec/cbor-map-write-support.lisp | a389e51f2416437d608c4f7745b9680eca27bc60 |
+| tests/codec/cbor-map-write.lisp | 6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8 |
+| tests/codec/cbor-map-write-threads.lisp | 6a65b58ce236b92b33772e1861dbd8c1257bee13 |
+
+Stdout214423 caratteri, stderr707381 caratteri. Il risultato finale della
+build dichiara «nessun avviso, tutti i controlli superati». Il lettore
+non trova WARNING:, STYLE-WARNING:, Unhandled o COMPILE-FILE-ERROR.
+Lo stderr non è vuoto:1723 righe contengono `note:`, coerenti con note
+di ottimizzazione del compilatore; non vengono trasformate in warning
+o confuse con un transcript silenzioso.
+
+1286 righe OK uniche:1284 nominali più due smoke (`ARCDOCDB:*VERSION*`
+stringa e package presente). Le20 righe REQ-CBR-006 coincidono
+esattamente con i19 nomi seriali e quello parallelo del corpus congelato,
+senza contare helper, macro o righe informative come test nominali.
+Il record riporta inoltre207 file/0 violazioni lint;
+120 requisiti/65 invarianti/13 scenari FI/52 ADR,0 errori trace;
+440 file/2914 link controllati,0 rotti.
+
+Fuzz osservato: seed4D415035,1024 casi,512 successi e64 per ciascuna
+classe capacità/byte/entry/nodi/profondità/parsing/source-range/count.
+Ricalcolo freddo del calendario LCG: finale0D123435 e classi identiche.
+Il valore finale non è stampato in stdout: è un'asserzione del test
+fuzz congelato, il cui esito nominale è OK; non è un campo runtime separato.
+
+| Ondata | Worker riusati / composizioni | Sink | Overlap / frequenza |
+|---|---|---|---|
+| 0 | 2 / 4096 | 54677504/77537280 | 3107 tick / 1000000 tick/s |
+| 1 | 2 / 4096 | 54677504/77537280 | 3104 tick / 1000000 tick/s |
+
+Overlap positivi3.107/3.104ms; somma8192 composizioni dichiarate.
+Token freddi26698/37860×2048 producono i due sink di ogni ondata.
+Inizi/fini dei singoli intervalli non sono stampati; la lettura non li
+ricostruisce. Le verifiche di durata positiva, array completi, arità,
+input read-only e scratch privati appartengono al test congelato passato.
+Intervalli comprendono controlli del corpus, senza prova di scaling o
+simultaneità sui core.
+
+9499 chiamate previste è aritmetica del corpus, non contatore API
+strumentato:283 nonfuzz+1024 fuzz+8192 parallele;8788 successi previsti
+(84+512+8192),711 rifiuti (199+512). Il record non fornisce un log per
+ciascuna chiamata e non sostituisce questa distinzione con una misura.
+
+Il coordinatore ha dichiarato una nota documentale precompile, due
+versioni preservate e ripristino dell'inventario finale16c603 prima di
+compilare. Queste copie non sono state aperte nella lettura DATA:
+la dichiarazione resta distinta dalle860 impronte confrontate nel record.
+Non risultano qui un make check globale, spike/evidence check, heap,
+coverage, mutazioni o qualifica C1/MC/DC; saranno oggetto di campagne
+e letture separate. Hash e metadati non attestano autenticità.
+
+Reader `review/initial-runtime-reading.lisp` congelato prima della
+lettura, blob `4411324903f5115fbaf31100916b6ea402914c13`, SHA256
+`e5bbf4ce0b42e4b3bfcf84fb67ec1e580de973d416cc0dfbf7a7f4003acd18cb`,
+identico dopo. Output `review/initial-runtime-reading.output.txt`
+conservato: esecuzione C4 ad hoc exit0, nessun warning del reader.
+Descriptor/payload/reader SHA stabili prima/dopo la lettura. Una stampa
+preparatoria DATA (tool chunk1d7f80) ha distinto perimetri trace e note
+stderr; non è una campagna e non modifica né ricostruisce il report.
+Nota, reader e output congelati, senza successivi edit.

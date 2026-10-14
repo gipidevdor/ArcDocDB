@@ -1,0 +1,73 @@
+INPUT descriptor317 bytes SHA7456d4826398615c278eabcdee760ef508e33a5604b4cd72accd8356c9198240; gzip144099 SHA69c311e9cdf6527c4a029ca3c9ba152e537ffd16e0105e61cd123953dc00b660; trusted-expanded1143722 SHA361d94bedc8178ff9db91dd8b157ac8fbce8c76708704f1c863d687a61e2b993/EOF/READ-EVAL NIL.
+COMMAND ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+OUTER schema1/COMMAND-VERIFICATION OK/exit0/STABLE wall260.414101d0 HEAD15c458eff76896f3fc83ad7756ae922f64eb22d7 clean; sources860 unique before=after; frozen5pins matched.
+OUTPUT stdout256098 chars stderr707531 chars; warning/compile markers0 and no unquoted line-start Unhandled; stderr optimization-note lines1723.
+OK1290 unique = nominal1284 + smoke2 + linter-selftest4; map20 exact frozen functions.
+SMOKE ("ok    package ARCDOCDB presente"
+       "ok    ARCDOCDB:*VERSION* è una stringa")
+LINTER ("ok    bad.lisp: COD-02 COD-03 COD-12 COD-20 COD-22 COD-34 COD-43 COD-50"
+        "ok    good.lisp: nessuna violazione"
+        "ok    keyword-barrier.lisp: nessuna violazione"
+        "ok    qualified-reader.lisp: COD-34")
+ok    TEST-REQ-CBR-006-MAP-EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS
+ok    TEST-REQ-CBR-006-MAP-PAIR-COUNT-WIDTH-BOUNDARIES-AND-MINIMAL-HEADER
+ok    TEST-REQ-CBR-006-MAP-NESTED-UTF8-FLOATS-OPAQUE-BYTES-AND-PRESERVED-PAIR-ORDER
+ok    TEST-REQ-CBR-006-MAP-CONCATENATION-NEXT-AND-REUSED-SPACE
+ok    TEST-REQ-CBR-006-MAP-DESTINATION-TYPE-AND-RANGE-PRECEDES-EVERYTHING
+ok    TEST-REQ-CBR-006-MAP-SOURCE-TYPE-RANGE-AND-BACKING-ARRAY-INTACT
+ok    TEST-REQ-CBR-006-MAP-TABLE-TYPE-COUNT-DOMAINS-AND-HALF-LENGTH-BEFORE-MULTIPLICATION
+ok    TEST-REQ-CBR-006-MAP-WORKSPACE-TYPE-AND-ALL-SCRATCH-ALIASES-EVEN-EMPTY
+ok    TEST-REQ-CBR-006-MAP-CONFIGURED-LIMITS-AND-EMPTY-ROOT-MINIMUM
+ok    TEST-REQ-CBR-006-MAP-STRICT-ACTIVE-ENDS-LAST-AND-UNREAD-EVEN-OR-ODD-TAIL
+ok    TEST-REQ-CBR-006-MAP-ALL-PREFLIGHT-PHASE-PRECEDENCES
+ok    TEST-REQ-CBR-006-MAP-OVERLAP-ENTIRE-FOOTPRINT-TOUCHING-AND-EMPTY
+ok    TEST-REQ-CBR-006-MAP-FULL-BYTE-BUDGET-KEY-PLUS-VALUE-EXACT-16MIB-AND-OVER
+ok    TEST-REQ-CBR-006-MAP-ROOT-KEY-VALUE-TAG-NODES-AND-ZERO-RESIDUE-BEFORE-RESET
+ok    TEST-REQ-CBR-006-MAP-ROOT-DEPTH-SCALARS-TAGS-AND-99-100-CHILD-CONTAINERS
+ok    TEST-REQ-CBR-006-MAP-KEY-AND-VALUE-PARSER-ERRORS-ABSOLUTE-AND-LEFT-TO-RIGHT
+ok    TEST-REQ-CBR-006-MAP-REUSE-AFTER-VALUE-PARSER-AND-PREFLIGHT-ERRORS
+ok    TEST-REQ-CBR-006-MAP-SCRATCH-LAST-VALUE-AND-ZERO-PAIRS-NO-RESET
+ok    TEST-REQ-CBR-006-MAP-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASS-COUNTS
+ok    TEST-REQ-CBR-006-MAP-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-INPUTS
+207 file, 0 violazioni
+120 requisiti, 65 invarianti, 13 scenari FI, 52 ADR: 0 errori
+440 file, 2914 link controllati, 0 rotti
+  CBOR map fuzz: seed4D415035, 1024 casi, 512 successi e 64 ciascuno capacita/byte/entry/nodi/profondita/parse/source-range/count.
+COLD LCG final0D123435 counts#(512 64 64 64 64 64 64 64 64). Final state is asserted in frozen test, not printed in stdout.
+  CBOR map: onda0, 2 worker riusati, 4096 composizioni, sink 54677504/77537280, overlap 3160 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+WAVE0 observed overlap 0.003160 seconds; individual start/finish intervals not printed.
+  CBOR map: onda1, 2 worker riusati, 4096 composizioni, sink 54677504/77537280, overlap 3067 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+WAVE1 observed overlap 0.003067 seconds; individual start/finish intervals not printed.
+ARITHMETIC planned calls: serial283+fuzz1024+parallel8192=9499; success84+512+8192=8788, rejection199+512=711. Not instrumented API counters.
+EVIDENCE DATA statusOK catalogs98 references3136 stored-files25236; no archive rescan; limits(:STRUCTURE-PRESENCE-SIZE-AND-COMPRESSED-INTEGRITY
+                                                                                              :NO-RESULT-REINTERPRETATION).
+PUBLICATION negative fuori-catalogo.lisp bytes1048577: statusOK observed-exit1; expected Unhandled retained inside quoted DATA stderr.
+PUBLICATION negative fuori-catalogo.gz bytes8388609: statusOK observed-exit1; expected Unhandled retained inside quoted DATA stderr.
+SELF :SNAPSHOT-MUTATIONS negative:SIGNAL => WORKER-ERROR exit137 signal9; raw EOF matches metadata, stderr0.
+SELF :SNAPSHOT-MUTATIONS negative:COMPLETION-EXIT => WORKER-ERROR exit7 signalNIL; raw EOF matches metadata, stderr0.
+SELF :SNAPSHOT-MUTATIONS outerOK/worker-errors0 source21 STABLE; direct PASSED/expected-worker-errors2; catalogue10 not executed as mutation campaign.
+LIMITS (:TEN-TARGETED-MUTANTS :WHOLE-MVCC-SUITE-BASELINE
+        :NAMED-RUNTIME-TEST-KILL :MINIMAL-PRODUCT-COPY
+        :VERIFIED-BASELINE-SNAPSHOT :PRIVATE-FASL :RAW-LOGS-AND-RUNNER-RETAINED
+        :SIGNAL-TIMEOUT-COMPILATION-NOT-KILL
+        :NO-C1-MCDC-OR-ENGINE-QUALIFICATION)
+SELF :READER-MUTATIONS negative:SIGNAL => WORKER-ERROR exit137 signal9; raw EOF matches metadata, stderr0.
+SELF :READER-MUTATIONS negative:COMPLETION-EXIT => WORKER-ERROR exit7 signalNIL; raw EOF matches metadata, stderr0.
+SELF :READER-MUTATIONS outerOK/worker-errors0 source34 STABLE; direct PASSED/expected-worker-errors2; catalogue8 not executed as mutation campaign.
+LIMITS (:EIGHT-TARGETED-MUTANTS :WHOLE-EPOCHS-THEN-READ-SUITE-BASELINE
+        :NAMED-RUNTIME-TEST-KILL :SELECTED-TEST-MUTANT-RUN
+        :MINIMAL-PRODUCT-COPY :VERIFIED-BASELINE-READER :PRIVATE-FASL
+        :RAW-LOGS-AND-RUNNER-RETAINED :SIGNAL-TIMEOUT-COMPILATION-NOT-KILL
+        :NO-C1-MCDC-OR-ENGINE-QUALIFICATION)
+CHILD SPK-01 schema1 exit0/:OK source5 STABLE wall1.002303d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-02 schema1 exit0/:OK source3 STABLE wall0.482918d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-03 schema1 exit0/:OK source3 STABLE wall0.480485d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-04 schema1 exit0/:OK source5 STABLE wall0.865122d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-05 schema1 exit0/:OK source5 STABLE wall0.802022d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-06 schema1 exit0/:OK source7 STABLE wall1.130628d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-07 schema1 exit0/:PASS source17 STABLE wall8.49858d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-08 schema1 exit0/:OK source6 STABLE wall1.929124d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-09 schema1 exit0/:OK source3 STABLE wall0.659064d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+CHILD SPK-10 schema1 exit0/:OK source8 STABLE wall2.50925d0; aggregate=artifact, raw single-form EOF=RESULT (structural arrays), within parent, stderr0.
+REFERENCED metadata/raw/descriptor files23 SHA stable during DATA reading; not a source or archive SHA sweep.
+FINAL descriptor/payload/reader stable; reader SHAf1e5f3712bdbbce6fbbabfb83048dbf7c1dec1ddbaaf981ca86986628e574d4e. DATA only; no product/suite/driver LOAD/EVAL/compile/call or campaign rerun; recorded check/spike/evidence results, no authenticity/MC/DC/scaling/engine qualification.

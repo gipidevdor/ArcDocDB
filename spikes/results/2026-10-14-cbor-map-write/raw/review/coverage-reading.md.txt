@@ -1,0 +1,87 @@
+# Lettura DATA indipendente della copertura MT5
+
+Lettura dei dati completati il 2026-10-14, distinta dall'autore del prodotto, del corpus blind e del driver di copertura. Ho svolto la prima lettura statica C1, l'inventario delle decisioni e la lettura C4 del mutatore; questo ricalcolo non costituisce una nuova lettura C1 né una qualificazione MC/DC. Nessun prodotto, corpus o driver di campagna è stato definito, compilato, caricato o chiamato durante la lettura.
+
+## Record e impronte osservate
+
+Wrapper `spikes/out/4000986074-command-71952-0/report.lisp`: 180421 byte, blob `338a70c09f4ae7e402e11c9d9814d1ac5c3f79ff`, SHA256 `153aadf1c7b7f8d1c00021553f1f1336507b144300b600c7e36a40e16e16eb16`. Schema1, COMMAND-VERIFICATION, STATUS OK, EXIT0, SOURCE-CONSISTENCY STABLE; 860 impronte uniche prima/dopo identiche. HEAD registrato `15c458eff76896f3fc83ad7756ae922f64eb22d7`, working tree registrato vuoto, SBCL2.6.9. Il comando registrato è esattamente foundation-coverage `--report spikes/out/cbor-map-write-20261014/coverage/ cbor-map-write`, senza altri scope. Wall18,285005s dell'intero comando, STDERR vuoto; nessuna deduzione di prestazioni dal tempo wall.
+
+I cinque blob sono presenti identici negli inventari before/after del wrapper e coincidono con i file fisici prima/dopo il reader: input `d7a593badeb6e6b71f28dc4e80c641b07189d0b8`; write `22e814ea68e606c5bc58033c2a31e945303a9d65`; support `a389e51f2416437d608c4f7745b9680eca27bc60`; nominali seriali `6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8`; paralleli `6a65b58ce236b92b33772e1861dbd8c1257bee13`.
+
+Le quattro fonti sotto `spikes/out/cbor-map-write-20261014/coverage/` sono state osservate fisicamente prima/dopo il reader, senza alterare raw o HTML:
+
+| File | Byte correnti | Blob | SHA256 |
+| --- | ---: | --- | --- |
+| coverage-state.lisp | 2573180 | 42800e789959c5c0c413247d3cb3961eead3eb46 | 22d23eb3d3f6929d92952713ca9f60287a2c1becf4c5c3b6c538b6ee59e4ef86 |
+| cover-index.html | 1951 | 2c5d85cf2115abe11c51b018bac602b409ab1a25 | 2309dc1a249f6a166018153520fab6a0e87900c3d2b178294cf2400241afb2af |
+| 2fb515269f85c825099af6b098f75c7e.html, input | 46304 | feb1e0ec068984825cf50c51f633d69dbc1ffabe | 179e89f86acd77baffd8c93cc729fc9f6a3d565c9ba1a1c2d4b92c8e9f7cf5d4 |
+| c791897292bea4a710625f49c927786c.html, write | 39331 | bddbb748bebe243e6a390bc60b3cc0761d2cbd8d | 6e78f1f28955c59e4ad23cce9a8dc079a0e049516673f28071479d6b81c5e814 |
+
+STDOUT contiene20 OK nominali unici e il finale20 test. Fuzz1024 seed4D415035:512 successi e64 per ciascuna delle otto classi congelate. Due ondate da4096 composizioni, due worker riusati, sink54677504/77537280; overlap4735 e5233 tick a1000000 tick/s. Sono osservazioni del corpus di questo scope, con i confronti inclusi; non dimostrano uso simultaneo dei core, scaling o allocazione zero. Le9499 chiamate API restano derivate dal piano/loop congelati, non un contatore separato nel raw SB-COVER.
+
+## Reader e tentativo preparatorio conservato
+
+Reader originale `review/coverage-reading.lisp`, blob `45cea27ffe88b60334fb5d8ddd310db7fba1eb5a`, congelato prima del tentativo1: exit1, STDOUT vuoto, errore EOF per una parentesi mancante alla conclusione del LOOP. L'errore riguarda la preparazione di questo reader e precede la lettura dei record; non è un guasto del prodotto. Originale e output/error intatti: output blob vuoto `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`, stderr `887990206da4f6def4f411f9060225a07802aebb`.
+
+Nuova variante `review/coverage-reading-2.lisp`, una sola parentesi aggiunta, blob `b737d1220b84f125cf54b7f199762b60322d4bcf`, nuovamente congelata prima dell'esecuzione. Tentativo2 exit0, 171935 controlli meccanici; output completo `review/coverage-reading-2.output.txt`, blob `234a794123f6aaee8759939ceb1427c1cf455d4b`; stderr vuoto. Entrambi i reader e tutti gli output restano conservati separatamente; nessuna sovrascrittura.
+
+La variante deriva dal reader array congelato `3f1828f9f240424ac87e3d9b220acdc93ff61c8b`; carica soltanto il tool trusted `tools/evidence-storage.lisp`, blob `fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`. Wrapper letto come plist con chiavi uniche; raw lista letto attraverso CALL-WITH-EVIDENCE-BYTES con limite esplicito134217728 byte, READ-EVAL NIL, readtable standard, CL-USER, GENSYM EOF e una sola forma. I due sorgenti vengono soltanto READ fino a EOF in package vuoti; nessuna loro forma è valutata. Il raw originale da2573180 byte resta plain durante l'intera lettura.
+
+Formato versionato SBCL2.6.9: entry `(file paths . bits)`, simple-vector dei path e simple-bit-vector delle marcature, lunghezze uguali; ogni sito THEN/ELSE deve avere esattamente due record. Bit1 indica marcatura, path iniziante THEN/ELSE un ramo, gli altri un'espressione. Verificato nel codice locale SB-COVER SAVE-COVERAGE (`genhtml.lisp:14`, blob `b32629cc875ab51bc1a5ecd8084ec7e73336b5e0`) e GET-RECORDS (`cover.lisp:309`, blob `fc789e7f6a7e6cc34c3b658035915775c6669e67`). La rappresentazione SAVE-COVERAGE è dichiarata opaca: questo ricalcolo è specifico della versione, non un'API portabile; non usa RESTORE o strumentazione.
+
+Mapping freddo: inversione del path numerico, selezione della forma top-level e discesa NTH con controlli sui confini. Per ogni record non marcato l'output conserva indice zero-based, tipo, path completo, forma e funzione proprietaria. Il parser HTML verifica solo le tabelle summary generate da SB-COVER, delimitando le righe al prossimo TR anche se il TR precedente ha chiusura implicita; non è un parser HTML generale né una verifica visiva di ogni colore del rendering. I conteggi delle due pagine e dei due link dell'index sono confrontati automaticamente con il raw, percentuali HTML arrotondate a una cifra decimale.
+
+## Denominatori completi
+
+| Scope selezionato | Espressioni coperte/totali | Percentuale | Rami coperti/totali | Percentuale |
+| --- | ---: | ---: | ---: | ---: |
+| cbor-map-input.lisp | 272/317 | 85,804416% | 45/54 | 83,333333% |
+| cbor-map-write.lisp | 190/266 | 71,428571% | 19/36 | 52,777778% |
+| Entrambi i nuovi file | 462/583 | 79,245283% | 64/90 | 71,111111% |
+
+371 record per input e302 per write, espressioni più rami. Ogni path assoluto selezionato è presente una sola volta. Raw, due summary HTML e index coincidono. Nessuna esclusione dai denominatori.
+
+Il raw globale contiene339 entry uniche di file caricati:4541/136453 espressioni e444/17618 rami. Comprende gli altri file compilati ma non esercitati dallo scope mappe; non sostituisce il denominatore dei due nuovi file e non rappresenta la copertura globale del motore.
+
+## Tutte le marcature mancanti
+
+121 espressioni e26 rami mancanti,147 record totali, tutti conservati nel mapping completo. Classificazione senza esclusioni:14 dichiarazioni top-level,104 sottoforme degli ERROR interni,3 default keyword della funzione pubblica; altri gaps zero. Questa classificazione descrive siti AST e marcature, non prova che le guardie siano irraggiungibili né che il contratto sia qualificato.
+
+Input:9 dichiarazioni, record0/1/2/52/82/150/201/259/280: IN-PACKAGE, DECLAIM OPTIMIZE e7 FTYPE. Write:5 dichiarazioni, record0/1/2/84/190: IN-PACKAGE, DECLAIM OPTIMIZE e3 FTYPE. Restano comprese nel totale.
+
+I26 rami non marcati sono tutti ELSE delle guardie interne riportate sotto. Ogni ERROR ha quattro sottoforme non marcate: chiamata ERROR, QUOTE INVARIANT-VIOLATION, keyword REASON e keyword del motivo; in totale104 espressioni. Le righe sono dei due blob congelati sopra, non di una nuova sorgente.
+
+| File: guardia/ERROR | Motivo interno | Record ELSE | Record espressioni |
+| --- | --- | ---: | --- |
+| input:46/47 | cbor-map-dimension-range | 89 | 90–93 |
+| input:48/49 | cbor-map-dimension-pairs | 101 | 102–105 |
+| input:69/70 | cbor-map-target-span | 159 | 160–163 |
+| input:71/72 | cbor-map-source-span | 171 | 172–175 |
+| input:86/87 | cbor-map-table-bound | 209 | 210–213 |
+| input:88/89 | cbor-map-table-budget | 220 | 221–224 |
+| input:133/134 | cbor-map-input-span | 322 | 323–326 |
+| input:135/136 | cbor-map-input-capacity | 334 | 335–338 |
+| input:137/138 | cbor-map-input-pairs | 346 | 347–350 |
+| write:15/16 | cbor-map-child-range | 11 | 12–15 |
+| write:21/22 | cbor-map-child-empty | 30 | 31–34 |
+| write:26/27 | cbor-map-child-progress | 41 | 42–45 |
+| write:28/29 | cbor-map-child-nodes | 52 | 53–56 |
+| write:30/31 | cbor-map-child-depth | 62 | 63–66 |
+| write:44/45 | cbor-map-children-range | 93 | 94–97 |
+| write:46/47 | cbor-map-children-bound | 104 | 105–108 |
+| write:48/49 | cbor-map-children-budget | 114 | 115–118 |
+| write:50/51 | cbor-map-children-root-depth | 125 | 126–129 |
+| write:60/61 | cbor-map-children-progress | 156 | 157–160 |
+| write:62/63 | cbor-map-children-nodes | 167 | 168–171 |
+| write:64/65 | cbor-map-children-depth | 178 | 179–182 |
+| write:96/97 | cbor-map-result-nodes | 200 | 201–204 |
+| write:98/99 | cbor-map-result-depth | 210 | 211–214 |
+| write:102/103 | cbor-map-header-progress | 232 | 233–236 |
+| write:104/105 | cbor-map-payload-span | 244 | 245–248 |
+| write:107/108 | cbor-map-write-progress | 255 | 256–259 |
+
+Le altre tre espressioni non marcate sono i default &key nella lista argomenti di SCRIVI-MAPPA-CBOR-MINIMA, owner pubblico: record299 path `(10 2 7)` forma `(MAX-BYTES +CBOR-SCAN-MAX-BYTES+)`, riga73; record300 path `(11 2 7)` forma `(MAX-NODES +CBOR-SCAN-MAX-BYTES+)`, riga74; record301 path `(12 2 7)` forma `(MAX-DEPTH +CBOR-SCAN-MAX-DEPTH+)`, riga74. Nessun ramo aggiuntivo attribuito a questi tre record; nessuna sottrazione come artefatto.
+
+## Limiti e freeze
+
+Coerenza dei dati e degli inventari osservati; nessuna autenticazione della loro origine, nessun ricalcolo delle esecuzioni del prodotto e nessuna garanzia contro cambiamenti transitori poi ripristinati. Le guardie hanno siti e motivi verificati ma i loro rami di errore restano non marcati da questa campagna. Nessuna inferenza di MC/DC dalla copertura dei rami; obblighi C1, heap e qualificazione finale restano separati. Il tempo wall include la campagna completa, la compilazione strumentata e i controlli del corpus. Il raw, wrapper e tre HTML risultano byte/SHA immutati prima/dopo il tentativo2; i cinque sorgenti e il reader trusted risultano blob immutati. Solo questi nuovi reader/output/nota ignored sono stati scritti. Dopo il freeze non è necessaria altra lettura osservativa; root può conservare e compattare lossless il raw preservandone byte decodificati e SHA sopra.

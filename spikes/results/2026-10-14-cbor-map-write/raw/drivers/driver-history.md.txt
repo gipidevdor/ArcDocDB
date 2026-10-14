@@ -1,0 +1,35 @@
+# Driver C4 mappe: preparazione cieca
+
+Metodo letto e congelato: `636dd2706c2903542978606cf029e7198bf4dbb3`, commit `2968cdc8ef50e35f418b96d58e27b6a5ecf7fcb3`. Nessun nuovo sorgente prodotto o corpus map è stato letto durante questa preparazione.
+
+Il catalogo freddo `fixtures-and-mutations.lisp` è stato scritto e comunicato prima di adattare i driver e prima di leggere il prodotto map. Blob `89900f1bebaf66af3b3b8e19e17596d438cbf936`, MD5 `66759726c5b63708a7cbce0be546d475`. Sei fixture con COUNT coppie, 2*COUNT fini attive e header MT5 indipendenti; token: 4608, 5938, 18549, 37165, 344441, 15337. Le coppie duplicate delle fixture 24/256 attestano soltanto struttura e preservazione del payload.
+
+Bench deriva dal driver array frozen `84f3589f17132e47afcfe13647bec17c5390ab5b`: nuova API, namespace `ARCDOCDB.CMW.BENCH`, fixture MT5, due fini per coppia, sorgente/tabella/output fisici interi. Cinque repliche da 1024 con warmup64; arità fredda esattamente uno, sink NEXT+byte, baseline nulla e controllo positivo16MiB. Sono conservati i negativi con motivo specifico per output, arità, sink, heap, sorgente e tabella.
+
+Audit deriva dal driver array frozen `acf22658e86a70ab863f75182133cfece1afd1e5`, con namespace `ARCDOCDB.CMW.AUDIT`. Ricostruisce MT5 e token dai suoi dati freddi; non carica il benchmark o prodotto. Verifica relazione coppie/fini, report esterno, pin espliciti, trenta campioni, sorgente e tabella completi, arità/sink/heap e sensori. Il self-test resta sintetico e conserva negativi distinti, inclusa la forma trailing letterale :eof.
+
+Mutation deriva dal driver array frozen `d3857e15259bda0d7acb2e896e5904cab762d4b4`, con namespace `ARCDOCDB.CMW.MUTATION`. Restano copia ASDF/src/tests/build completa, cache privata, baseline completa, log e risultati dei guasti conservati. Il classifier richiede smoke esatto prima di Unhandled e la vera funzione nominale congelata subito dopo numero/colon/parentesi del frame, senza argomenti. Helper CMW, namespace citati, wrapper e stringhe multilinea non bastano. Segnali, compilazioni/avvisi e guasti dopo completamento non sono DETECTED; reader self-test richiede EOF GENSYM, READ-EVAL NIL e readtable standard.
+
+Il catalogo semantico di otto mutazioni è definitivo; la sua materializzazione resta pending. Source/corpus pin, otto frammenti unici, conteggio esatto e whitelist DEFTEST non vengono inventati. Il runner rifiuta sia --run sia --self-test prima di fingerprint, lettura di sorgenti o child finché quei dati mancano. Il placeholder `catalogue-materialized.lisp` è DATA :awaiting-frozen-product-and-corpus, non un catalogo già qualificato. Prima di aggiornare la mutation/materializzazione dopo l'annuncio di root, la bozza originale verrà preservata in un nuovo file ignored con hash e nota.
+
+CLI prevista, da usare soltanto dopo freeze e autorizzazione della prima esecuzione:
+
+- bench: `--self-test` oppure `--bench`
+- audit: `--self-test` oppure `--bench REPORT-WRAPPER INPUT-BLOB WRITE-BLOB`
+- mutation dopo allineamento: `--self-test` oppure `--run NUOVADIR`
+
+Nessuna esecuzione o compilazione è stata effettuata. I pin di bench/audit/fixture sono dati di preparazione, non risultati. Nessun src/test/ASDF/tool pubblico/doc pubblicata, Git index o HEAD è stato modificato. Tutti gli originali array rimangono intatti; le nuove scritture sono soltanto ignored in questo albero.
+
+## Materializzazione dopo annuncio del freeze
+
+Root ha annunciato i cinque pin prodotto/corpus e il piano prima della lettura dei nuovi sorgenti. Input `d7a593badeb6e6b71f28dc4e80c641b07189d0b8`, writer `22e814ea68e606c5bc58033c2a31e945303a9d65`; corpus `a389e51f2416437d608c4f7745b9680eca27bc60`, `6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8`, `6a65b58ce236b92b33772e1861dbd8c1257bee13`. Sono stati confermati per lettura dei byte. Il piano blind `def50d1650ada2447dffedf13895ac85a40ee84a` dichiara 9499 chiamate API; questo numero non è una nuova osservazione runtime del mutator.
+
+Prima di materializzare sono state preservate copie esatte: `mutation-before-product-cff90018.lisp` blob `cff900187ffd8a3de2b5b430a10b2e864d4323f2`, `catalogue-before-product-b07f7414.lisp` blob `b07f7414ba30313ff01a83d925d686550a6d94ab`, e questa storia iniziale in `driver-history-before-material-5a140430.md.txt`.
+
+Il nuovo `catalogue-materialized.lisp` è DATA blob `1a6dca65f9136e082eb9d621305da4fad324534e`, MD5 `be337f54bf22089601921d8782a3a27f`. Contiene otto before/after reali, ciascun before con una sola occorrenza, i pin raw e le venti funzioni nominali: 19 dichiarazioni DEFTEST nel file seriale e una nel file parallel. Nessun helper CMW o duplicato è stato incluso. Il frame freddo letterale ha numero27 e il primo nome nominale completo subito dopo la parentesi del frame.
+
+Mutator allineato: blob `3cf825435c4a5b0bd30b235a236b05d610a2302f`. Le semantiche preregistrate restano identiche. La capacità fisica modifica soltanto l'argomento END della funzione dimensioni nella copia, mantenendo END usato nei guard restanti. Wrong-count cambia il binding PAIRS da COUNT a ITEM-COUNT, quindi lo header usa due item per coppia senza lasciare PAIRS inutilizzato. Scan-omitted produce nodi/picco validi e legge i binding ITEMS/SCRATCH per evitare avvisi. Root-node-excluded usa zero nel tipo INDEX che lo ammette; i post-check possono rilevare il guasto a runtime. Extra-NIL sostituisce l'intero DECL+DEFUN pubblico, con `(values index null &optional)` e due valori finali nella sola copia.
+
+Bench, audit e fixture restano rispettivamente `eeaa1a0d34d6bd94d5cf7c1d62e9c4027b0f5027`, `f6f08f777e8115e626f39e90f3722a72658d9750` e `89900f1bebaf66af3b3b8e19e17596d438cbf936`. Il mutator vincola i cinque sorgenti/corpus, questi tre driver freddi e il catalogo materiale mediante MD5 raw, oltre alle dichiarazioni Git. Le impronte dichiarate e la lettura statica non sono una prova di autenticità o compilabilità eseguita.
+
+Nessun driver, prodotto, mutante o self-test è stato eseguito o compilato. Due letture C1 e la prima esecuzione registrata rimangono coordinate da root. Non sono stati modificati prodotto, corpus, fixture, metodo, ASDF, index o HEAD.

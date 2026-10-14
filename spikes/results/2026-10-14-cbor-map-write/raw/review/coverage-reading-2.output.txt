@@ -1,0 +1,182 @@
+WRAPPER status:OK exit0 stable:STABLE HEAD15c458eff76896f3fc83ad7756ae922f64eb22d7 sources860 wall18.285005d0 stderr0 scope cbor-map-write
+ok    TEST-REQ-CBR-006-MAP-EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS
+ok    TEST-REQ-CBR-006-MAP-PAIR-COUNT-WIDTH-BOUNDARIES-AND-MINIMAL-HEADER
+ok    TEST-REQ-CBR-006-MAP-NESTED-UTF8-FLOATS-OPAQUE-BYTES-AND-PRESERVED-PAIR-ORDER
+ok    TEST-REQ-CBR-006-MAP-CONCATENATION-NEXT-AND-REUSED-SPACE
+ok    TEST-REQ-CBR-006-MAP-DESTINATION-TYPE-AND-RANGE-PRECEDES-EVERYTHING
+ok    TEST-REQ-CBR-006-MAP-SOURCE-TYPE-RANGE-AND-BACKING-ARRAY-INTACT
+ok    TEST-REQ-CBR-006-MAP-TABLE-TYPE-COUNT-DOMAINS-AND-HALF-LENGTH-BEFORE-MULTIPLICATION
+ok    TEST-REQ-CBR-006-MAP-WORKSPACE-TYPE-AND-ALL-SCRATCH-ALIASES-EVEN-EMPTY
+ok    TEST-REQ-CBR-006-MAP-CONFIGURED-LIMITS-AND-EMPTY-ROOT-MINIMUM
+ok    TEST-REQ-CBR-006-MAP-STRICT-ACTIVE-ENDS-LAST-AND-UNREAD-EVEN-OR-ODD-TAIL
+ok    TEST-REQ-CBR-006-MAP-ALL-PREFLIGHT-PHASE-PRECEDENCES
+ok    TEST-REQ-CBR-006-MAP-OVERLAP-ENTIRE-FOOTPRINT-TOUCHING-AND-EMPTY
+ok    TEST-REQ-CBR-006-MAP-FULL-BYTE-BUDGET-KEY-PLUS-VALUE-EXACT-16MIB-AND-OVER
+ok    TEST-REQ-CBR-006-MAP-ROOT-KEY-VALUE-TAG-NODES-AND-ZERO-RESIDUE-BEFORE-RESET
+ok    TEST-REQ-CBR-006-MAP-ROOT-DEPTH-SCALARS-TAGS-AND-99-100-CHILD-CONTAINERS
+ok    TEST-REQ-CBR-006-MAP-KEY-AND-VALUE-PARSER-ERRORS-ABSOLUTE-AND-LEFT-TO-RIGHT
+ok    TEST-REQ-CBR-006-MAP-REUSE-AFTER-VALUE-PARSER-AND-PREFLIGHT-ERRORS
+ok    TEST-REQ-CBR-006-MAP-SCRATCH-LAST-VALUE-AND-ZERO-PAIRS-NO-RESET
+  CBOR map fuzz: seed4D415035, 1024 casi, 512 successi e 64 ciascuno capacita/byte/entry/nodi/profondita/parse/source-range/count.
+ok    TEST-REQ-CBR-006-MAP-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASS-COUNTS
+  CBOR map: onda0, 2 worker riusati, 4096 composizioni, sink 54677504/77537280, overlap 4735 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+  CBOR map: onda1, 2 worker riusati, 4096 composizioni, sink 54677504/77537280, overlap 5233 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+ok    TEST-REQ-CBR-006-MAP-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-INPUTS
+20 test della composizione delle mappe CBOR superati.
+Rapporto: /Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-map-write-20261014/coverage/cover-index.html
+
+GLOBAL RAW files339 expression4541/136453 branch444/17618; not selected scope.
+SELECTED src/codec/cbor-map-input.lisp expression272/317 (85.804416 percent) branch45/54 (83.333333 percent) raw-records371 HTML/index coherent.
+UNCOVERED src/codec/cbor-map-input.lisp record0 :EXPRESSION path(0) form(IN-PACKAGE #:ARCDOCDB.CBOR) ownerIN-PACKAGE
+UNCOVERED src/codec/cbor-map-input.lisp record1 :EXPRESSION path(1) form(DECLAIM (OPTIMIZE (SAFETY 3) (SPEED 2) (DEBUG 2))) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record2 :EXPRESSION path(2) form(DECLAIM (FTYPE (FUNCTION (T T INDEX) (VALUES INDEX &OPTIONAL)) CHECK-TABELLA-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record52 :EXPRESSION path(4) form(DECLAIM (FTYPE (FUNCTION (OCTETS OCTETS (SIMPLE-ARRAY (UNSIGNED-BYTE 32) (*)) T) (VALUES NULL &OPTIONAL)) CHECK-SPAZIO-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record82 :EXPRESSION path(6) form(DECLAIM (FTYPE (FUNCTION (INDEX INDEX INDEX INDEX INDEX) (VALUES (MEMBER 1 2 3 5) INDEX &OPTIONAL)) DIMENSIONI-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record89 :BRANCH path(:ELSE 1 4 7) form(<= START END) ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record90 :EXPRESSION path(2 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-DIMENSION-RANGE) ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record91 :EXPRESSION path(1 2 4 7) form(QUOTE INVARIANT-VIOLATION) ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record92 :EXPRESSION path(2 2 4 7) form:REASON ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record93 :EXPRESSION path(3 2 4 7) form:CBOR-MAP-DIMENSION-RANGE ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record101 :BRANCH path(:ELSE 1 5 7) form(<= COUNT (FLOOR SPAN 2)) ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record102 :EXPRESSION path(2 5 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-DIMENSION-PAIRS) ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record103 :EXPRESSION path(1 2 5 7) form(QUOTE INVARIANT-VIOLATION) ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record104 :EXPRESSION path(2 2 5 7) form:REASON ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record105 :EXPRESSION path(3 2 5 7) form:CBOR-MAP-DIMENSION-PAIRS ownerDIMENSIONI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record150 :EXPRESSION path(8) form(DECLAIM (FTYPE (FUNCTION (OCTETS INDEX INDEX OCTETS INDEX INDEX) (VALUES NULL &OPTIONAL)) CHECK-OVERLAP-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record159 :BRANCH path(:ELSE 1 4 9) form(<= START NEXT (LENGTH BUFFER)) ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record160 :EXPRESSION path(2 4 9) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-TARGET-SPAN) ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record161 :EXPRESSION path(1 2 4 9) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record162 :EXPRESSION path(2 2 4 9) form:REASON ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record163 :EXPRESSION path(3 2 4 9) form:CBOR-MAP-TARGET-SPAN ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record171 :BRANCH path(:ELSE 1 5 9) form(<= SOURCE-START SOURCE-END (LENGTH SOURCE)) ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record172 :EXPRESSION path(2 5 9) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-SOURCE-SPAN) ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record173 :EXPRESSION path(1 2 5 9) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record174 :EXPRESSION path(2 2 5 9) form:REASON ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record175 :EXPRESSION path(3 2 5 9) form:CBOR-MAP-SOURCE-SPAN ownerCHECK-OVERLAP-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record201 :EXPRESSION path(10) form(DECLAIM (FTYPE (FUNCTION ((SIMPLE-ARRAY (UNSIGNED-BYTE 32) (*)) U32 INDEX) (VALUES NULL &OPTIONAL)) CHECK-FINI-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record209 :BRANCH path(:ELSE 1 4 11) form(<= ITEMS (LENGTH ITEM-ENDS)) ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record210 :EXPRESSION path(2 4 11) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-TABLE-BOUND) ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record211 :EXPRESSION path(1 2 4 11) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record212 :EXPRESSION path(2 2 4 11) form:REASON ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record213 :EXPRESSION path(3 2 4 11) form:CBOR-MAP-TABLE-BOUND ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record220 :BRANCH path(:ELSE 1 5 11) form(<= ITEMS SPAN +CBOR-SCAN-MAX-BYTES+) ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record221 :EXPRESSION path(2 5 11) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-TABLE-BUDGET) ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record222 :EXPRESSION path(1 2 5 11) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record223 :EXPRESSION path(2 2 5 11) form:REASON ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record224 :EXPRESSION path(3 2 5 11) form:CBOR-MAP-TABLE-BUDGET ownerCHECK-FINI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record259 :EXPRESSION path(12) form(DECLAIM (FTYPE (FUNCTION (U32 INDEX INDEX) (VALUES NULL &OPTIONAL)) CHECK-RADICE-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record280 :EXPRESSION path(14) form(DECLAIM (FTYPE (FUNCTION (T T T T T T T T T T T T) (VALUES INDEX (MEMBER 1 2 3 5) INDEX U32 &OPTIONAL)) CHECK-INPUT-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-input.lisp record322 :BRANCH path(:ELSE 1 6 5 5 15) form(= SPAN (- SOURCE-END SOURCE-START)) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record323 :EXPRESSION path(2 6 5 5 15) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-INPUT-SPAN) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record324 :EXPRESSION path(1 2 6 5 5 15) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record325 :EXPRESSION path(2 2 6 5 5 15) form:REASON ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record326 :EXPRESSION path(3 2 6 5 5 15) form:CBOR-MAP-INPUT-SPAN ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record334 :BRANCH path(:ELSE 1 7 5 5 15) form(<= ITEM-SIZE (- END START)) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record335 :EXPRESSION path(2 7 5 5 15) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-INPUT-CAPACITY) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record336 :EXPRESSION path(1 2 7 5 5 15) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record337 :EXPRESSION path(2 2 7 5 5 15) form:REASON ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record338 :EXPRESSION path(3 2 7 5 5 15) form:CBOR-MAP-INPUT-CAPACITY ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record346 :BRANCH path(:ELSE 1 8 5 5 15) form(= ITEMS (* 2 COUNT)) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record347 :EXPRESSION path(2 8 5 5 15) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-INPUT-PAIRS) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record348 :EXPRESSION path(1 2 8 5 5 15) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record349 :EXPRESSION path(2 2 8 5 5 15) form:REASON ownerCHECK-INPUT-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-input.lisp record350 :EXPRESSION path(3 2 8 5 5 15) form:CBOR-MAP-INPUT-PAIRS ownerCHECK-INPUT-MAPPA-CBOR
+SELECTED src/codec/cbor-map-write.lisp expression190/266 (71.428571 percent) branch19/36 (52.777778 percent) raw-records302 HTML/index coherent.
+UNCOVERED src/codec/cbor-map-write.lisp record0 :EXPRESSION path(0) form(IN-PACKAGE #:ARCDOCDB.CBOR) ownerIN-PACKAGE
+UNCOVERED src/codec/cbor-map-write.lisp record1 :EXPRESSION path(1) form(DECLAIM (OPTIMIZE (SAFETY 3) (SPEED 2) (DEBUG 2))) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-write.lisp record2 :EXPRESSION path(2) form(DECLAIM (FTYPE (FUNCTION (OCTETS INDEX INDEX SPAZIO-CBOR INDEX INDEX) (VALUES INDEX INDEX &OPTIONAL)) VERIFICA-FIGLIO-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-write.lisp record11 :BRANCH path(:ELSE 1 4 3) form(<= START END (LENGTH SOURCE)) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record12 :EXPRESSION path(2 4 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILD-RANGE) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record13 :EXPRESSION path(1 2 4 3) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record14 :EXPRESSION path(2 2 4 3) form:REASON ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record15 :EXPRESSION path(3 2 4 3) form:CBOR-MAP-CHILD-RANGE ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record30 :BRANCH path(:ELSE 1 3 6 3) form(PLUSP SPAN) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record31 :EXPRESSION path(2 3 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILD-EMPTY) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record32 :EXPRESSION path(1 2 3 6 3) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record33 :EXPRESSION path(2 2 3 6 3) form:REASON ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record34 :EXPRESSION path(3 2 3 6 3) form:CBOR-MAP-CHILD-EMPTY ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record41 :BRANCH path(:ELSE 1 3 4 6 3) form(= NEXT END) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record42 :EXPRESSION path(2 3 4 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILD-PROGRESS) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record43 :EXPRESSION path(1 2 3 4 6 3) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record44 :EXPRESSION path(2 2 3 4 6 3) form:REASON ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record45 :EXPRESSION path(3 2 3 4 6 3) form:CBOR-MAP-CHILD-PROGRESS ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record52 :BRANCH path(:ELSE 1 4 4 6 3) form(<= 1 NODES REMAINING) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record53 :EXPRESSION path(2 4 4 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILD-NODES) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record54 :EXPRESSION path(1 2 4 4 6 3) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record55 :EXPRESSION path(2 2 4 4 6 3) form:REASON ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record56 :EXPRESSION path(3 2 4 4 6 3) form:CBOR-MAP-CHILD-NODES ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record62 :BRANCH path(:ELSE 1 5 4 6 3) form(<= PEAK CHILD-DEPTH) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record63 :EXPRESSION path(2 5 4 6 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILD-DEPTH) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record64 :EXPRESSION path(1 2 5 4 6 3) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record65 :EXPRESSION path(2 2 5 4 6 3) form:REASON ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record66 :EXPRESSION path(3 2 5 4 6 3) form:CBOR-MAP-CHILD-DEPTH ownerVERIFICA-FIGLIO-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record84 :EXPRESSION path(4) form(DECLAIM (FTYPE (FUNCTION (OCTETS INDEX INDEX (SIMPLE-ARRAY (UNSIGNED-BYTE 32) (*)) U32 SPAZIO-CBOR INDEX INDEX) (VALUES INDEX INDEX &OPTIONAL)) VERIFICA-FIGLI-MAPPA-CBOR)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-write.lisp record93 :BRANCH path(:ELSE 1 4 5) form(<= START END (LENGTH SOURCE)) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record94 :EXPRESSION path(2 4 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILDREN-RANGE) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record95 :EXPRESSION path(1 2 4 5) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record96 :EXPRESSION path(2 2 4 5) form:REASON ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record97 :EXPRESSION path(3 2 4 5) form:CBOR-MAP-CHILDREN-RANGE ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record104 :BRANCH path(:ELSE 1 5 5) form(<= ITEMS (LENGTH ITEM-ENDS)) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record105 :EXPRESSION path(2 5 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILDREN-BOUND) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record106 :EXPRESSION path(1 2 5 5) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record107 :EXPRESSION path(2 2 5 5) form:REASON ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record108 :EXPRESSION path(3 2 5 5) form:CBOR-MAP-CHILDREN-BOUND ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record114 :BRANCH path(:ELSE 1 6 5) form(<= ITEMS +CBOR-SCAN-MAX-BYTES+) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record115 :EXPRESSION path(2 6 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILDREN-BUDGET) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record116 :EXPRESSION path(1 2 6 5) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record117 :EXPRESSION path(2 2 6 5) form:REASON ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record118 :EXPRESSION path(3 2 6 5) form:CBOR-MAP-CHILDREN-BUDGET ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record125 :BRANCH path(:ELSE 1 7 5) form(<= 1 MAX-DEPTH +CBOR-SCAN-MAX-DEPTH+) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record126 :EXPRESSION path(2 7 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILDREN-ROOT-DEPTH) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record127 :EXPRESSION path(1 2 7 5) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record128 :EXPRESSION path(2 2 7 5) form:REASON ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record129 :EXPRESSION path(3 2 7 5) form:CBOR-MAP-CHILDREN-ROOT-DEPTH ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record156 :BRANCH path(:ELSE 1 4 8 5) form(= CURSOR END) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record157 :EXPRESSION path(2 4 8 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILDREN-PROGRESS) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record158 :EXPRESSION path(1 2 4 8 5) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record159 :EXPRESSION path(2 2 4 8 5) form:REASON ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record160 :EXPRESSION path(3 2 4 8 5) form:CBOR-MAP-CHILDREN-PROGRESS ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record167 :BRANCH path(:ELSE 1 5 8 5) form(<= (1+ ITEMS) NODES MAX-NODES) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record168 :EXPRESSION path(2 5 8 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILDREN-NODES) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record169 :EXPRESSION path(1 2 5 8 5) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record170 :EXPRESSION path(2 2 5 8 5) form:REASON ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record171 :EXPRESSION path(3 2 5 8 5) form:CBOR-MAP-CHILDREN-NODES ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record178 :BRANCH path(:ELSE 1 6 8 5) form(<= 1 PEAK MAX-DEPTH) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record179 :EXPRESSION path(2 6 8 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-CHILDREN-DEPTH) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record180 :EXPRESSION path(1 2 6 8 5) form(QUOTE INVARIANT-VIOLATION) ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record181 :EXPRESSION path(2 2 6 8 5) form:REASON ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record182 :EXPRESSION path(3 2 6 8 5) form:CBOR-MAP-CHILDREN-DEPTH ownerVERIFICA-FIGLI-MAPPA-CBOR
+UNCOVERED src/codec/cbor-map-write.lisp record190 :EXPRESSION path(6) form(DECLAIM (FTYPE (FUNCTION (T T T T T T T T T &KEY (:MAX-BYTES T) (:MAX-NODES T) (:MAX-DEPTH T)) (VALUES INDEX &OPTIONAL)) SCRIVI-MAPPA-CBOR-MINIMA)) ownerDECLAIM
+UNCOVERED src/codec/cbor-map-write.lisp record200 :BRANCH path(:ELSE 1 3 3 3 4 7) form(<= NODES MAX-NODES) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record201 :EXPRESSION path(2 3 3 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-RESULT-NODES) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record202 :EXPRESSION path(1 2 3 3 3 4 7) form(QUOTE INVARIANT-VIOLATION) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record203 :EXPRESSION path(2 2 3 3 3 4 7) form:REASON ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record204 :EXPRESSION path(3 2 3 3 3 4 7) form:CBOR-MAP-RESULT-NODES ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record210 :BRANCH path(:ELSE 1 4 3 3 4 7) form(<= PEAK MAX-DEPTH) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record211 :EXPRESSION path(2 4 3 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-RESULT-DEPTH) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record212 :EXPRESSION path(1 2 4 3 3 4 7) form(QUOTE INVARIANT-VIOLATION) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record213 :EXPRESSION path(2 2 4 3 3 4 7) form:REASON ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record214 :EXPRESSION path(3 2 4 3 3 4 7) form:CBOR-MAP-RESULT-DEPTH ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record232 :BRANCH path(:ELSE 1 3 4 3 4 7) form(= PAYLOAD-START (+ BEGIN HEADER-SIZE)) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record233 :EXPRESSION path(2 3 4 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-HEADER-PROGRESS) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record234 :EXPRESSION path(1 2 3 4 3 4 7) form(QUOTE INVARIANT-VIOLATION) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record235 :EXPRESSION path(2 2 3 4 3 4 7) form:REASON ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record236 :EXPRESSION path(3 2 3 4 3 4 7) form:CBOR-MAP-HEADER-PROGRESS ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record244 :BRANCH path(:ELSE 1 4 4 3 4 7) form(= (- NEXT PAYLOAD-START) SPAN) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record245 :EXPRESSION path(2 4 4 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-PAYLOAD-SPAN) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record246 :EXPRESSION path(1 2 4 4 3 4 7) form(QUOTE INVARIANT-VIOLATION) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record247 :EXPRESSION path(2 2 4 4 3 4 7) form:REASON ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record248 :EXPRESSION path(3 2 4 4 3 4 7) form:CBOR-MAP-PAYLOAD-SPAN ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record255 :BRANCH path(:ELSE 1 2 5 4 3 4 7) form(= RESULT NEXT) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record256 :EXPRESSION path(2 2 5 4 3 4 7) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-MAP-WRITE-PROGRESS) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record257 :EXPRESSION path(1 2 2 5 4 3 4 7) form(QUOTE INVARIANT-VIOLATION) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record258 :EXPRESSION path(2 2 2 5 4 3 4 7) form:REASON ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record259 :EXPRESSION path(3 2 2 5 4 3 4 7) form:CBOR-MAP-WRITE-PROGRESS ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record299 :EXPRESSION path(10 2 7) form(MAX-BYTES +CBOR-SCAN-MAX-BYTES+) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record300 :EXPRESSION path(11 2 7) form(MAX-NODES +CBOR-SCAN-MAX-BYTES+) ownerSCRIVI-MAPPA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-map-write.lisp record301 :EXPRESSION path(12 2 7) form(MAX-DEPTH +CBOR-SCAN-MAX-DEPTH+) ownerSCRIVI-MAPPA-CBOR-MINIMA
+SELECTED TOTAL expression462/583 (79.245283 percent) branch64/90 (71.111111 percent); all uncovered, no exclusions.
+OBSERVATIONS (("spikes/out/4000986074-command-71952-0/report.lisp" 180421 "153aadf1c7b7f8d1c00021553f1f1336507b144300b600c7e36a40e16e16eb16") ("spikes/out/cbor-map-write-20261014/coverage/coverage-state.lisp" 2573180 "22d23eb3d3f6929d92952713ca9f60287a2c1becf4c5c3b6c538b6ee59e4ef86") ("spikes/out/cbor-map-write-20261014/coverage/cover-index.html" 1951 "2309dc1a249f6a166018153520fab6a0e87900c3d2b178294cf2400241afb2af") ("spikes/out/cbor-map-write-20261014/coverage/2fb515269f85c825099af6b098f75c7e.html" 46304 "179e89f86acd77baffd8c93cc729fc9f6a3d565c9ba1a1c2d4b92c8e9f7cf5d4") ("spikes/out/cbor-map-write-20261014/coverage/c791897292bea4a710625f49c927786c.html" 39331 "6e78f1f28955c59e4ad23cce9a8dc079a0e049516673f28071479d6b81c5e814"))
+FIVE-SOURCE-PINS (("src/codec/cbor-map-input.lisp" "d7a593badeb6e6b71f28dc4e80c641b07189d0b8") ("src/codec/cbor-map-write.lisp" "22e814ea68e606c5bc58033c2a31e945303a9d65") ("tests/codec/cbor-map-write-support.lisp" "a389e51f2416437d608c4f7745b9680eca27bc60") ("tests/codec/cbor-map-write.lisp" "6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8") ("tests/codec/cbor-map-write-threads.lisp" "6a65b58ce236b92b33772e1861dbd8c1257bee13"))
+TRUSTED-READER fa2b5d36dca0837e2ed5e49b282887b2e110b2b7
+DATA READING PASS checks171935; physical before/after stable. No evaluated source/data, product/driver load, compile or call; no campaign rerun, MC/DC/C1 or authenticity claim.

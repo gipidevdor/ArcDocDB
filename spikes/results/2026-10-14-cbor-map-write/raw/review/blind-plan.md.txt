@@ -1,0 +1,102 @@
+# Corpus cieco per la composizione delle mappe CBOR
+
+Freeze del 2026-10-14 prima della scrittura dei nuovi sorgenti.
+Metodo letto: `docs/implementazione/cbor-map-metodo.md`, blob
+`636dd2706c2903542978606cf029e7198bf4dbb3`, base comunicata `2968cdc`,
+ramo `codex/cbor-map-write`, worktree `cbor-float-write/ArcDocDB`.
+Autore del corpus distinto dall'autore del prodotto. Nessun nuovo sorgente
+`src/codec/cbor-map*.lisp` letto; nessun prodotto o nuova suite caricati,
+compilati, chiamati o eseguiti. Nessuna campagna avviata.
+
+## Impronte congelate
+
+| File relativo | Blob Git | SHA256 | Righe | Byte |
+|---|---|---|---:|---:|
+| tests/codec/cbor-map-write-support.lisp | a389e51f2416437d608c4f7745b9680eca27bc60 | 865ca0ca9fbfcb7f0f0ab53b1038efb052664ad1f42f6370530de0539d353eb7 | 150 | 8425 |
+| tests/codec/cbor-map-write.lisp | 6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8 | e2cbe3b9fd09cf302f127f746c5b73859695c51691c3259227916a298cb2269b | 309 | 20935 |
+| tests/codec/cbor-map-write-threads.lisp | 6a65b58ce236b92b33772e1861dbd8c1257bee13 | 7c4fdb0a8927d248bdb0c37b7f00b22407e80f2ece18f315205eec4e8db31f44 | 62 | 4039 |
+
+Package `arcdocdb.cbor.map.write.tests`, export RUN.
+19 test seriali e uno parallelo: 20 nomi unici, tutti TEST-REQ-CBR-006.
+I tre file rimangono immutabili dopo questo freeze.
+
+## Oracolo e casi
+
+Testata fredda con aritmetica intera e potenze di 256: MT5, COUNT coppie.
+Payload ricostruito dai byte letterali degli item alternati chiave/valore.
+Tabella simple u32: prime 2COUNT fini relative, poi due sentinelle FFFFFFFF.
+Fixture principale: COUNT2, SOURCE `61 61 01 61 62 82 F4 F5`, fini 2/3/5/8,
+risultato `A2 61 61 01 61 62 82 F4 F5`, nove byte, sette nodi e profondità due.
+
+Ogni successo controlla arità uno, NEXT fixnum, tutta la destinazione e
+tabella fisiche, span sorgente e, quando SOURCE non è BUFFER, intera sorgente.
+Quando sono EQ, cambia soltanto il footprint destinazione e lo span sorgente
+disgiunto rimane identico. Ogni rifiuto verifica tutti gli array fisici;
+il preflight preserva anche gli slot e i due array dello scratch già sporco.
+COUNT0 non resetta lo scratch; non vuoto conserva lo stato dell'ultimo valore.
+
+COUNT0/1/23/24/255/256; prefix0/1/7/31, capacità esatta e meno uno, coda fisica
+oltre END. Chiavi e valori scalari, tag, array e map; UTF8 multibyte, byte
+opachi, float minimi inclusi NaN/segno/payload. Coppie non ordinate e chiavi
+duplicate restano identiche: nessuna attestazione del profilo applicativo.
+65 controlli aggiuntivi dello scanner preesistente sui risultati validi,
+con scratch separato; le aspettative di byte e NEXT rimangono fredde.
+
+Tutte le fasi di precedenza del metodo, tipi e range invalidi, COUNT contro
+metà tabella o SPAN, COUNT enorme prima della moltiplicazione, COUNT0/SPAN>0.
+Alias BUFFER/SOURCE con KINDS o tabella con REMAINING, sia vuoto sia non vuoto,
+prima dei limiti invalidi. Fini zero, duplicate, decrescenti, oltre SPAN,
+ultimo diverso da SPAN; code pari e dispari ignorate. Overlap del footprint
+inclusa testata, confini toccanti, sorgente vuota e END oltre SOURCE disgiunta.
+
+16MiB completi: chiave00 e byte string di payload16777209, poi +1/+2.
+Budget nodi include radice, chiave e valore: chiave8100 o C000 + valore00,
+MAX-NODES3 rifiuta al valore, offset SS+2, senza reset; MAX-NODES4 accetta.
+Budget scanner insufficiente dentro il valore array/tag, profondità99/100
+del figlio con radice e scalari/tag al solo livello radice. Dieci errori
+scanner verificati sia come chiave sia come valore, con offset assoluti:
+trailing, troncamento, larghezza non minima, UTF8, reserved, indefinite e
+float32/64 riducibili. Ordine di parsing fra chiavi e valori, riuso dopo errore.
+
+Snapshot, scratch sporco e timeout riusano helper preesistenti structure e
+minimal-scan; forma degli helper e semafori dal precedente corpus array.
+I tre vecchi file array restano ai blob eb1fccad/b13f5826/57201102.
+Nessuna modifica ASDF, runner, requirement o codice di prodotto da questo autore.
+
+## Piano aritmetico e parallelismo
+
+Chiamate alla sola nuova API nei 18 test seriali non fuzz, in ordine:
+17,32,64,3,15,15,18,12,19,16,14,9,3,8,11,22,3,2.
+Somma283: 84 successi e199 rifiuti previsti, non misure di una campagna.
+
+Fuzz1024: LCG32 seed4D415035, moltiplicatore1664525, incremento1013904223,
+mascheraFFFFFFFF. Stato finale0D123435 controllato nel corpus.
+Classe iterazione modulo16: 512 successi, poi64 ciascuno di capacità,
+byte, entry, nodi, profondità, parsing, source-range e count.
+Seriale previsto1307 chiamate:596 successi e711 rifiuti.
+
+Due worker riusati per due ondate, 2048 composizioni ciascuno/ondata:
+8192 chiamate. SOURCE e fini condivisi read-only; destinazione e scratch
+privati e distinti. READY/GO/DONE distinti per ondata; attesa15s, join20s,
+cleanup limitato tramite helper precedente. Ogni chiamata controlla arità,
+NEXT, array interi e statistiche finali dell'ultimo valore (3 nodi, peak1).
+Intervalli e overlap osservati senza inferire scaling o simultaneità sui core.
+
+Fixture principale condivisa, prefix3/7, NEXT12/16, lunghezza fisica19/23.
+Pattern iniziale byte[i]=(A7+37*i)mod256; token=NEXT+somma((i+1)*byte[i])
+sull'intera destinazione:26698/37860. Sink2048 per worker/ondata
+54677504/77537280. Totale previsto9499 chiamate,8788 successi e711 rifiuti.
+
+## Osservazioni preparatorie e limiti
+
+Sola READ/EOF finale, READ-EVAL NIL, readtable standard, package vuoti:
+16/20/2 forme e20 nomi unici (tool chunk159264). Simboli pubblici futuri
+soltanto internati/esportati, nessuna funzione di prodotto definita.
+Solo espressioni aritmetiche autonome hanno ricontrollato token, sink,
+calendario LCG e somme previste, senza valutare forme della suite.
+Una prima stampa del calendario aveva FORMAT `~8,0X` errato: TYPE-ERROR
+su padchar0 (chunka3f0a9), poi corretta a `~X` (chunkf7b99e).
+Osservazione parziale del tool freddo, non errore del corpus o del prodotto;
+non si ricostruisce un transcript completo. Nessuna campagna eseguita.
+Due letture C1 e le campagne restano da fare: questo freeze non chiude
+un gate C1 globale né qualifica il motore o una pubblicazione durevole.

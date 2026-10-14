@@ -1,0 +1,50 @@
+(:STATUS :OK :CHECKS 7068 :HEAD "e4b3b8262d146ee95c35030ed0a682fcef460fe7"
+ :RECORD "spikes/out/4000987886-command-16580-0/report.lisp" :WRAPPER-STATUS
+ :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE :SOURCES 872 :NOMINAL-TESTS 1297
+ :SMOKE 2 :MAP-TESTS 20 :NEW-RECYCLE-TESTS 13 :LINT
+ (:LINE "212 file, 0 violazioni" :COUNTS (212 0)) :TRACE
+ (:LINE "120 requisiti, 65 invarianti, 13 scenari FI, 52 ADR: 0 errori" :COUNTS
+  (120 65 13 52 0))
+ :LINKS (:LINE "452 file, 2952 link controllati, 0 rotti" :COUNTS (452 2952 0))
+ :WALL-SECONDS 41.161955d0 :STDERR-CHARS 709518 :COMPILER-NOTE-SUMMARIES
+ (";   printed 281 notes" ";   printed 1446 notes") :FIVE-MAP-PINS
+ (("src/codec/cbor-map-input.lisp" "d7a593badeb6e6b71f28dc4e80c641b07189d0b8")
+  ("src/codec/cbor-map-write.lisp" "22e814ea68e606c5bc58033c2a31e945303a9d65")
+  ("tests/codec/cbor-map-write-support.lisp"
+   "a389e51f2416437d608c4f7745b9680eca27bc60")
+  ("tests/codec/cbor-map-write.lisp"
+   "6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8")
+  ("tests/codec/cbor-map-write-threads.lisp"
+   "6a65b58ce236b92b33772e1861dbd8c1257bee13"))
+ :INTEGRATED-SOURCE-PINS
+ (("arcdocdb.asd" "a278cb52cdaa9e7d6dedc5756358d0b8f017ed57")
+  ("tools/build.lisp" "40879533738e1fc49e74941a9def5b089c551921")
+  ("src/control/recovery-types.lisp"
+   "07d3b1273fea4f1c8b2695c9fa563a0579bdb2e5")
+  ("src/control/recovery-read.lisp" "5ec9c664bbf137e7456a4058dd14a934839fe6b3")
+  ("src/control/recovery-publication.lisp"
+   "906ea6d3f42c19f20bfde45bc477ba6ee4bc1040")
+  ("src/recovery/manifest-transition.lisp"
+   "1f92455ec8c38c780b6e6455166be5c49ef3fefa")
+  ("src/dispatch/recycle.lisp" "adcd65ee5fd683d70a40b89b31a2edf7fc93994c")
+  ("tests/scheduler/pool-recycle.lisp"
+   "3c779589cd7df6ae1146c2ca50b70320093bbf4a"))
+ :DESCRIPTOR-OBSERVATION
+ ("spikes/out/4000987886-command-16580-0/report.lisp" 317
+  "bf74f5952898a69e4a964a1d61ad7d2d9d3e0e3be11f7883b8dbfbcb501f3ef6")
+ :PAYLOAD-OBSERVATION
+ (#P"spikes/out/4000987886-command-16580-0/report.lisp.gz" 138750
+  "1e383482c9124a160f8105faf2530fdfea346ed944612439c22312c4c5b0b496")
+ :DESCRIPTOR
+ (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+  "report.lisp.gz" :UNCOMPRESSED-BYTES 1108645 :UNCOMPRESSED-SHA256
+  "078cec8b82800583c4ad35908b3b0e3f42674dac0035dee38d8cafd24dd315b0"
+  :COMPRESSED-BYTES 138750 :COMPRESSED-SHA256
+  "1e383482c9124a160f8105faf2530fdfea346ed944612439c22312c4c5b0b496")
+ :LIMITS
+ (:DATA-ONLY :NO-PRODUCT-OR-DRIVER-LOAD-COMPILE-CALL
+  :BUILD-LINT-TRACE-LINKS-ONLY
+  :NEW-MODULE-LOADING-INFERRED-FROM-ASDF-BUILD-CONTRACT-AND-COMPLETED-BUILD
+  :NEW-RECYCLE-NOMINALS-OBSERVED
+  :NO-COVERAGE-SPIKES-EVIDENCE-OR-C1-QUALIFICATION :NO-AUTHENTICATION
+  :SOURCE-BEFORE-AFTER-AND-CURRENT-COHERENCE))

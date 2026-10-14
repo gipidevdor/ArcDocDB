@@ -2,7 +2,7 @@
 
 > **Generata** da [requisiti.lisp](requisiti.lisp) con `make trace-write`. Non modificare a mano: `make trace` fallisce se non coincide.
 
-**Sommario.** 119 requisiti. Per classe: C1 94, C2 6, C3 12, C4 7. Per stato: specificato 0, progettato 111, implementato 7, verificato 1. Invarianti coperti: 65/65. Scenari FI coperti: 13/13.
+**Sommario.** 120 requisiti. Per classe: C1 95, C2 6, C3 12, C4 7. Per stato: specificato 0, progettato 111, implementato 8, verificato 1. Invarianti coperti: 65/65. Scenari FI coperti: 13/13.
 
 ## Requisiti
 
@@ -100,6 +100,7 @@
 | REQ-FOR-002 | Ogni file persistente ha magic e versione di formato; un formato non cambia, si crea una nuova versione con migrazione. | ADR-0014 | C1 | progettato | INV-F1 | [0014](../adr/0014-formato-record-documento-id.md), [0052](../adr/0052-header-dei-log-di-controllo.md) | test, rev |  |
 | REQ-FOR-003 | Tutti i record di tutti i log hanno la stessa cornice di 24 byte con CRC dell'intestazione e CRC del corpo; l'intestazione è verificata prima di usare le lunghezze; il CRC del corpo è calcolato fuori dal writer. | ADR-0039 | C1 | progettato | INV-F1, INV-F2 | [0039](../adr/0039-cornice-unica-dei-record.md) | test, fuzz, corr, bench |  |
 | REQ-FOR-004 | La lettura di un record prepared verifica una prova autorevole del segmento (OUTCOME o esito nel manifest): il TXID della prova coincide con lo stamp del record e il suo CSN coincide con quello della entry; una prova mancante, corrotta o riferita a un'altra versione produce errore di integrità. | ADR-0047 | C1 | progettato | INV-A2, INV-S7 | [0039](../adr/0039-cornice-unica-dei-record.md), [0047](../adr/0047-verifica-csn-dei-record-prepared.md) | test, corr, fuzz, diff |  |
+| REQ-CBR-006 | La composizione di mappe CBOR verifica chiavi e valori strutturali minimi già codificati prima di scrivere testata MT5 per il numero di coppie e payload esatto; i budget includono la radice, sorgente e tabella sono stabili e lo scratch è privato. Ordinamento e unicità delle chiavi restano al profilo documentale. | ADR-0014 | C1 | implementato | INV-F1, INV-P6, INV-A8 | [0014](../adr/0014-formato-record-documento-id.md), [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md), [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md), [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | test, diff, fuzz, bench, mut, rev |  |
 | REQ-CBR-005 | La composizione di array CBOR verifica tutti gli item minimi già codificati prima di scrivere testata MT4 e payload esatto nella destinazione esclusiva; i budget di byte, nodi e profondità includono la radice, lo scratch è privato e sorgente e tabella restano stabili. | ADR-0014 | C1 | implementato | INV-F1, INV-P6, INV-A8 | [0014](../adr/0014-formato-record-documento-id.md), [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md), [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md), [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | test, diff, fuzz, bench, mut, rev |  |
 | REQ-CBR-004 | La scrittura dei float CBOR sceglie la larghezza raw IEEE esatta minima, preservando segno, zero, infinito e significando NaN; verifica range, parole e capacità prima della mutazione della destinazione esclusiva, con lavoro limitato a nove byte e un solo NEXT. | ADR-0014 | C1 | implementato | INV-F1, INV-P6 | [0014](../adr/0014-formato-record-documento-id.md), [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md), [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md), [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | test, diff, fuzz, bench, mut, rev |  |
 | REQ-CBR-003 | La scrittura dei valori semplici CBOR MT7 emette il codice wire 0..23 oppure 32..255 nella rappresentazione minima, in una destinazione esclusiva; verifica range, codici riservati e capacità prima della mutazione, con lavoro limitato a due byte e un solo NEXT. | ADR-0014 | C1 | implementato | INV-F1, INV-P6 | [0014](../adr/0014-formato-record-documento-id.md), [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md), [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md), [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | test, diff, fuzz, bench, mut, rev |  |
@@ -169,7 +170,7 @@
 | INV-X1 | REQ-SIM-001 |
 | INV-X2 | REQ-BEN-001, REQ-BEN-002, REQ-VAL-001 |
 | INV-X3 | REQ-SIM-002, REQ-VAL-001, REQ-AFF-016 |
-| INV-F1 | REQ-WAL-001, REQ-REC-001, REQ-FOR-001, REQ-FOR-002, REQ-FOR-003, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-009, REQ-AFF-010, REQ-AFF-014, REQ-LIM-001 |
+| INV-F1 | REQ-WAL-001, REQ-REC-001, REQ-FOR-001, REQ-FOR-002, REQ-FOR-003, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-009, REQ-AFF-010, REQ-AFF-014, REQ-LIM-001 |
 | INV-V1 | REQ-WAL-003, REQ-WAL-006 |
 | INV-V2 | REQ-TXM-004, REQ-MVC-002 |
 | INV-V3 | REQ-IDX-004 |
@@ -181,7 +182,7 @@
 | INV-A5 | REQ-AFF-005 |
 | INV-A6 | REQ-AFF-006 |
 | INV-A7 | REQ-REG-002, REQ-CMP-004, REQ-TXM-005, REQ-REC-002, REQ-AFF-007, REQ-AFF-017, REQ-AFF-019 |
-| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-IDX-007, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
+| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-IDX-007, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
 | INV-F2 | REQ-WAL-005, REQ-FOR-003 |
 | INV-F3 | REQ-AFF-009 |
 | INV-V5 | REQ-WAL-006, REQ-TXM-008 |
@@ -191,7 +192,7 @@
 | INV-S7 | REQ-CMP-009, REQ-TXM-007, REQ-FOR-004 |
 | INV-C11 | REQ-CMP-008, REQ-IDX-006 |
 | INV-I3 | REQ-IDX-005, REQ-IDX-007 |
-| INV-P6 | REQ-CON-005, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
+| INV-P6 | REQ-CON-005, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
 | INV-P5 | REQ-CON-004 |
 | INV-A9 | REQ-AFF-017 |
 | INV-A10 | REQ-AFF-018 |
@@ -233,7 +234,7 @@
 | [0011](../adr/0011-thread-pool-dinamico.md) | REQ-CMP-006, REQ-THR-001, REQ-OBS-001, REQ-OBS-002 |
 | [0012](../adr/0012-simd-guidato-dai-benchmark.md) | REQ-SIM-001 |
 | [0013](../adr/0013-log-structured-segmento-active-come-log.md) | REQ-WAL-001, REQ-REC-003, REQ-FOR-001 |
-| [0014](../adr/0014-formato-record-documento-id.md) | REQ-ARC-003, REQ-FOR-001, REQ-FOR-002, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
+| [0014](../adr/0014-formato-record-documento-id.md) | REQ-ARC-003, REQ-FOR-001, REQ-FOR-002, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
 | [0015](../adr/0015-primary-index-swiss-table-swmr.md) | REQ-VER-001, REQ-IDX-001, REQ-IDX-003, REQ-IDX-004 |
 | [0016](../adr/0016-epoch-based-reclamation.md) | REQ-CMP-005, REQ-CMP-007 |
 | [0017](../adr/0017-piattaforma-e-io.md) | REQ-THR-001 |
@@ -252,9 +253,9 @@
 | [0030](../adr/0030-scope-v1.md) | REQ-AFF-014 |
 | [0031](../adr/0031-software-critico-criteri-e-priorita.md) | REQ-MOD-001, REQ-AFF-012 |
 | [0032](../adr/0032-seqlock-a-64-bit.md) | REQ-IDX-003 |
-| [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md) | REQ-REC-001, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-001, REQ-AFF-002, REQ-AFF-004, REQ-AFF-006, REQ-AFF-007, REQ-AFF-008, REQ-AFF-009, REQ-AFF-010, REQ-AFF-011, REQ-AFF-015 |
+| [0033](../adr/0033-fail-stop-e-integrita-end-to-end.md) | REQ-REC-001, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-001, REQ-AFF-002, REQ-AFF-004, REQ-AFF-006, REQ-AFF-007, REQ-AFF-008, REQ-AFF-009, REQ-AFF-010, REQ-AFF-011, REQ-AFF-015 |
 | [0034](../adr/0034-policy-di-compilazione-e-standard-di-codifica.md) | REQ-AFF-003, REQ-AFF-004, REQ-AFF-008 |
-| [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) | REQ-FLT-001, REQ-VAL-001, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-005, REQ-AFF-013 |
+| [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) | REQ-FLT-001, REQ-VAL-001, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-005, REQ-AFF-013 |
 | [0036](../adr/0036-leggi-di-progetto.md) | REQ-CON-005, REQ-AFF-007, REQ-AFF-017, REQ-AFF-018, REQ-AFF-019 |
 | [0037](../adr/0037-lotto-sigillato.md) | REQ-WAL-002, REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-AFF-009, REQ-AFF-017 |
 | [0038](../adr/0038-orizzonte-di-visibilita.md) | REQ-VER-001, REQ-TXM-004, REQ-MVC-002, REQ-MVC-005, REQ-MVC-006, REQ-MVC-007 |
@@ -267,7 +268,7 @@
 | [0045](../adr/0045-modello-di-esecuzione.md) | REQ-CON-005, REQ-CON-004 |
 | [0046](../adr/0046-orizzonte-con-registro-limitato.md) | REQ-MVC-008 |
 | [0047](../adr/0047-verifica-csn-dei-record-prepared.md) | REQ-FOR-004 |
-| [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
+| [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
 | [0049](../adr/0049-capacita-oltre-la-ram.md) | —  (decisione senza requisito diretto) |
 | [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | REQ-IDX-007 |
 | [0051](../adr/0051-presentazione-della-documentazione.md) | —  (decisione senza requisito diretto) |

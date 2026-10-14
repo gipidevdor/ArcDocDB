@@ -1,0 +1,21 @@
+# Driver C4 mappe: preparazione cieca
+
+Metodo letto e congelato: `636dd2706c2903542978606cf029e7198bf4dbb3`, commit `2968cdc8ef50e35f418b96d58e27b6a5ecf7fcb3`. Nessun nuovo sorgente prodotto o corpus map è stato letto durante questa preparazione.
+
+Il catalogo freddo `fixtures-and-mutations.lisp` è stato scritto e comunicato prima di adattare i driver e prima di leggere il prodotto map. Blob `89900f1bebaf66af3b3b8e19e17596d438cbf936`, MD5 `66759726c5b63708a7cbce0be546d475`. Sei fixture con COUNT coppie, 2*COUNT fini attive e header MT5 indipendenti; token: 4608, 5938, 18549, 37165, 344441, 15337. Le coppie duplicate delle fixture 24/256 attestano soltanto struttura e preservazione del payload.
+
+Bench deriva dal driver array frozen `84f3589f17132e47afcfe13647bec17c5390ab5b`: nuova API, namespace `ARCDOCDB.CMW.BENCH`, fixture MT5, due fini per coppia, sorgente/tabella/output fisici interi. Cinque repliche da 1024 con warmup64; arità fredda esattamente uno, sink NEXT+byte, baseline nulla e controllo positivo16MiB. Sono conservati i negativi con motivo specifico per output, arità, sink, heap, sorgente e tabella.
+
+Audit deriva dal driver array frozen `acf22658e86a70ab863f75182133cfece1afd1e5`, con namespace `ARCDOCDB.CMW.AUDIT`. Ricostruisce MT5 e token dai suoi dati freddi; non carica il benchmark o prodotto. Verifica relazione coppie/fini, report esterno, pin espliciti, trenta campioni, sorgente e tabella completi, arità/sink/heap e sensori. Il self-test resta sintetico e conserva negativi distinti, inclusa la forma trailing letterale :eof.
+
+Mutation deriva dal driver array frozen `d3857e15259bda0d7acb2e896e5904cab762d4b4`, con namespace `ARCDOCDB.CMW.MUTATION`. Restano copia ASDF/src/tests/build completa, cache privata, baseline completa, log e risultati dei guasti conservati. Il classifier richiede smoke esatto prima di Unhandled e la vera funzione nominale congelata subito dopo numero/colon/parentesi del frame, senza argomenti. Helper CMW, namespace citati, wrapper e stringhe multilinea non bastano. Segnali, compilazioni/avvisi e guasti dopo completamento non sono DETECTED; reader self-test richiede EOF GENSYM, READ-EVAL NIL e readtable standard.
+
+Il catalogo semantico di otto mutazioni è definitivo; la sua materializzazione resta pending. Source/corpus pin, otto frammenti unici, conteggio esatto e whitelist DEFTEST non vengono inventati. Il runner rifiuta sia --run sia --self-test prima di fingerprint, lettura di sorgenti o child finché quei dati mancano. Il placeholder `catalogue-materialized.lisp` è DATA :awaiting-frozen-product-and-corpus, non un catalogo già qualificato. Prima di aggiornare la mutation/materializzazione dopo l'annuncio di root, la bozza originale verrà preservata in un nuovo file ignored con hash e nota.
+
+CLI prevista, da usare soltanto dopo freeze e autorizzazione della prima esecuzione:
+
+- bench: `--self-test` oppure `--bench`
+- audit: `--self-test` oppure `--bench REPORT-WRAPPER INPUT-BLOB WRITE-BLOB`
+- mutation dopo allineamento: `--self-test` oppure `--run NUOVADIR`
+
+Nessuna esecuzione o compilazione è stata effettuata. I pin di bench/audit/fixture sono dati di preparazione, non risultati. Nessun src/test/ASDF/tool pubblico/doc pubblicata, Git index o HEAD è stato modificato. Tutti gli originali array rimangono intatti; le nuove scritture sono soltanto ignored in questo albero.

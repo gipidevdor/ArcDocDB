@@ -1,0 +1,15 @@
+# Correzione documentale annullata prima della compilazione
+
+Il coordinatore ha confrontato due nomi dell'inventario con un elenco
+transitorio del corpus, letto prima del freeze, invece di usare l'elenco
+congelato. L'originale `16c6031456225537b6eb1fe961aa8e20d7f5e110` era
+già coerente con i test finali. La correzione `56dc2ed6` ha prodotto il
+documento `10e5873c2fe3e194da5bd1038d18ff2aebd2a6ff` e viene annullata
+prima di qualsiasi compilazione, load o campagna del nuovo prodotto.
+
+Entrambi i testi sono conservati in questa directory, senza riscrittura.
+Il documento pubblicato ritorna al blob originale della prima lettura.
+Prodotto e corpus non vengono modificati: input `d7a593ba`, writer
+`22e814ea`, supporto `a389e51f`, seriale `6ad0e9b5`, thread `6a65b58c`.
+Le due letture C1 riguardano questi stessi cinque pin e restano valide.
+Questa nota è una registrazione di errore preparatorio, non un esito runtime.

@@ -563,7 +563,7 @@
          (baseline (fixture-baseline fixture)) (current (snapshots api fixture)))
     (unless (equal current (expected-frontiers fixture)) (reject :frontier-or-offset))
     (unless (and (equal identity (getf (nth 3 baseline) :identity))
-                 (not (equal identity (getf (nth 6 baseline) :identity))) (reject :installed-inode))
+                 (not (equal identity (getf (nth 6 baseline) :identity)))) (reject :installed-inode))
     (unless (and (zerop (sb-posix:stat-nlink (sb-posix:fstat (call-api api :fd (svref (fixture-handles fixture) 6)))))
                  (zerop (sb-posix:stat-nlink (sb-posix:fstat (call-api api :fd (svref (fixture-handles fixture) 5))))))
       (reject :previous-inode-still-linked))

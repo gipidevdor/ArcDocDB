@@ -30,3 +30,15 @@ localmente. Le letture non sono revisione indipendente. Non si provano
 EOF fisico, tabella decisioni del giusto Archivio, esclusività del namespace,
 latenza, heap zero o affidabilità del motore completo. La CI automatica sulla
 revisione pubblicata resta un'evidenza distinta.
+
+## Esiti conservati
+
+Tredici record di processo riusciti, con sorgenti stabili durante ogni run:
+prima compilazione, freeze, controlli statici e integrazione del dispatcher
+arrivato nel frattempo su `main`. Dopo il merge sono stati ripetuti
+compilazione, tracciabilità, collegamenti ed evidenze; i file di
+`src/recovery-active/` sono rimasti uguali al commit sorgente `50ba9770`.
+
+L'[audit dell'integrazione](audit-integrazione-byte.lisp) confronta tutte le
+**26 copie** di report e sidecar con gli originali per dimensione e SHA-256.
+Questi esiti non promuovono i nuovi ingressi a funzionalità qualificata.

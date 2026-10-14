@@ -47,4 +47,24 @@
   (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-finale-byte.lisp" :VARIANT
    :ORIGINAL-BYTE-COMPARISON)
   (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-finale-sorgente.lisp" :VARIANT
+   :VERBATIM-SOURCE-TEXT)
+  (:KIND :COMPILE-ONLY :ARTIFACT
+   #A((27) BASE-CHAR . "compilazione-integrata.lisp") :PROCESS-ARTIFACT
+   #A((41) BASE-CHAR . "compilazione-integrata-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-TRACE :ARTIFACT
+   #A((28) BASE-CHAR . "tracciabilita-integrata.lisp") :PROCESS-ARTIFACT
+   #A((42) BASE-CHAR . "tracciabilita-integrata-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINKS :ARTIFACT
+   #A((27) BASE-CHAR . "collegamenti-integrati.lisp") :PROCESS-ARTIFACT
+   #A((41) BASE-CHAR . "collegamenti-integrati-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-EVIDENCE :ARTIFACT
+   #A((23) BASE-CHAR . "evidenze-integrate.lisp") :PROCESS-ARTIFACT
+   #A((37) BASE-CHAR . "evidenze-integrate-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-integrazione-byte.lisp"
+   :VARIANT :ORIGINAL-BYTE-COMPARISON)
+  (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-integrazione-sorgente.lisp" :VARIANT
    :VERBATIM-SOURCE-TEXT)))

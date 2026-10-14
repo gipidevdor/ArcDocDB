@@ -156,8 +156,10 @@ esterne degli antenati durante il run.
 
 Prima di compilare l'helper, il driver copia i byte di
 `tools/evidence-storage.lisp` in `evidence-storage-source.lisp` nella root
-privata, con EOF e dimensione verificati. Compila e carica esclusivamente
-questa copia, con FASL privato. Dopo il caricamento usa il medesimo
+privata, con EOF e dimensione verificati. Carica esclusivamente questa copia una sola volta sotto handler: SBCL
+compila le definizioni durante LOAD. Questo evita la doppia definizione delle
+macro causata da COMPILE-FILE seguito da LOAD nello stesso processo; i FASL
+del prodotto restano nella cache privata. Dopo il caricamento usa il medesimo
 `arcdocdb.evidence:file-sha256` canonico per attestare SHA della copia uguale
 allo SHA dell'originale nello snapshot prima del load ASDF. Dopo la campagna
 confronta ancora copia e originale nello snapshot finale, e SHA della copia

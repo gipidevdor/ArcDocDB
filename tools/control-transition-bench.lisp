@@ -410,11 +410,9 @@
          (funcall (function-in "ASDF" "INITIALIZE-OUTPUT-TRANSLATIONS")
                   (list :output-translations (list t (namestring cache)) :ignore-inherited-configuration))
          (require-time deadline)
-         (multiple-value-bind (fasl warnings failure)
-             (compile-file copy
-                           :output-file (merge-pathnames "evidence-storage.fasl" cache))
-           (when (or warnings failure (null fasl)) (reject :helper-compile))
-           (load fasl)))))
+         ;; LOAD compila le definizioni SBCL una volta sola dalla copia congelata.
+         ;; COMPILE-FILE seguito da LOAD ridefinirebbe le macro nello stesso processo.
+         (load copy))))
     ;; Helper gia' disponibile per lo snapshot che precede il load del sistema.
     copy))
 (defun load-system (root deadline)
@@ -533,7 +531,7 @@
                          :source-sha256-before before :source-sha256-after after
                          :source-inventory-limits (list :depth +inventory-depth+ :files +inventory-count+
                                                         :directories +inventory-count+)
-                         :helper-snapshot (list :copy-before-compile t
+                         :helper-snapshot (list :copy-before-load t :source-loaded-once t
                                                 :path (when helper-copy (enough-namestring helper-copy out))
                                                 :sha256-before helper-before :sha256-after helper-after
                                                 :scope :private-copy-equals-source-snapshot)

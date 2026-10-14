@@ -1,0 +1,25 @@
+:STDOUT Unhandled  pos241619 context"catalogo.lisp\" :BYTES 1048577 :STATUS :OK
+   :OBSERVED-EXIT-CODE 1 :STDOUT \"\" :STDERR
+   \"Unhandled SIMPLE-ERROR in thread #<SB-THREAD:THREAD tid=259 \\\"main thread\\\" RUNNING
+                                    {80086A0423}>:
+  Artefatto /Users/gpicchiarelli/.codex/workt"
+:STDOUT Unhandled  pos247549 context"(FLET \\\"WITHOUT-INTERRUPTS-BODY-3\\\" :IN SB-IMPL::START-LISP))
+26: (SB-IMPL::%START-LISP)
+
+unhandled condition in --disable-debugger mode, quitting
+\")
+  (:FIXTURE \"fuori-catalogo.gz\" :BYTES 8388609 :STATUS :OK :OBSERVED-EXIT-CODE
+   1 :STDOUT \"\" :STDERR
+   \"Unhandled SIM"
+:STDOUT Unhandled  pos247716 context"i-catalogo.gz\" :BYTES 8388609 :STATUS :OK :OBSERVED-EXIT-CODE
+   1 :STDOUT \"\" :STDERR
+   \"Unhandled SIMPLE-ERROR in thread #<SB-THREAD:THREAD tid=259 \\\"main thread\\\" RUNNING
+                                    {80086A0423}>:
+  Artefatto /Users/gpicchiarelli/.codex/workt"
+:STDOUT Unhandled  pos253642 context"(FLET \\\"WITHOUT-INTERRUPTS-BODY-3\\\" :IN SB-IMPL::START-LISP))
+26: (SB-IMPL::%START-LISP)
+
+unhandled condition in --disable-debugger mode, quitting
+\")))
+sbcl --noinform --no-userinit --no-sysinit --script tools/check-evidence-normalize.lisp
+(:SCHEMA-VERSION 1 :KIND :NORM"

@@ -1,0 +1,42 @@
+# Lettura statica C4 prima del prodotto mappe
+
+Esito: **nessun difetto bloccante individuato** nei tre input letti. Questa è una lettura statica: nessun LOAD/compile dei driver o del prodotto, nessuna esecuzione di selftest, benchmark o campagne. Il nuovo prodotto non è stato letto.
+
+Fonti:
+
+- `drivers/fixtures-and-mutations.lisp`: blob `89900f1bebaf66af3b3b8e19e17596d438cbf936`.
+- `drivers/bench.lisp`: blob `eeaa1a0d34d6bd94d5cf7c1d62e9c4027b0f5027`.
+- `drivers/audit.lisp`: blob `f6f08f777e8115e626f39e90f3722a72658d9750`.
+
+Tutti i percorsi sono sotto `spikes/out/cbor-map-write-20261014/`. Metodo referenziato: `636dd2706c2903542978606cf029e7198bf4dbb3`. MD5 osservati di bench e catalogo: `0dd9d0f178e39ff133da23bcf06f8b47` e `66759726c5b63708a7cbce0be546d475`, coincidenti con i pin dell'audit.
+
+## Oracoli e misure preregistrate
+
+COUNT indica coppie; le fini attive sono sempre 2*COUNT. Le testate letterali A0/A1/A2/B818/B90100 corrispondono alle cardinalità 0/1/2/24/256. La fixture finale ha due item: chiave array `82 00 01`, valore tag/testo `C0 62 C3 A9`. Le coppie ripetute delle fixture grandi sono ammesse dal contratto strutturale; non attestano unicità o ordine deterministico delle chiavi.
+
+Token ricontrollati aritmeticamente come NEXT più somma dei byte fisici pesati, incluse tutte le sentinelle:
+
+| Fixture | Coppie | Byte wire | NEXT | Token |
+|---|---:|---:|---:|---:|
+| empty | 0 | 1 | 3 | 4608 |
+| scalar-pair | 1 | 3 | 5 | 5938 |
+| two-mixed-pairs | 2 | 9 | 11 | 18549 |
+| twenty-four-pairs | 24 | 50 | 52 | 37165 |
+| two-hundred-fifty-six-pairs | 256 | 515 | 517 | 344441 |
+| array-tag-text-pair | 1 | 8 | 10 | 15337 |
+
+Sono predisposti sei casi × cinque repliche ×1024 chiamate: **30 campioni**, warmup64 per campione. Sorgente, tabella, destinazione e scratch sono preallocati prima della misura. La destinazione include prefisso2, residuo logico2 e coda fisica2; la tabella contiene due celle inattive. Ogni chiamata calda controlla l'intero output e l'immobilità fisica di sorgente/tabella; il sink incorpora token e indice. L'arità è verificata fredda mediante MULTIPLE-VALUE-LIST, incluso il rifiuto di un secondo NIL; nelle misure calde è consumato il valore primario.
+
+Baseline nulla e controllo positivo16×1MiB sono separati dalle fixture. L'oggetto positivo rimane vivo, il contatore deve rilevare almeno16MiB e il sink è verificato. GC/warmup sono fuori dalla regione heap/clock; il costo dei checker per chiamata è incluso. Zero tick richiede rate NIL.
+
+## Audit e negativi
+
+L'audit ricostruisce MT5, buffer/tabella interi, NEXT, token, sink, clock e tempi totali dal catalogo freddo proprio, senza chiamare writer, driver o oracolo dei test. I due blob prodotto attesi vengono dalla CLI, non dal report; metodo e driver/catalogo sono vincolati ai pin congelati. Le impronte before/after, arità fredda, sei fixture ordinate, cinque campioni ciascuna, baseline e positivo vengono controllati separatamente.
+
+READ-EVAL NIL, readtable standard, base10, CL-USER, EOF GENSYM e una sola forma; chiavi duplicate e liste improprie/cicliche sono rifiutate. Sono programmati quattro report positivi, **61 negativi** contabili staticamente, sei token letterali e otto header letterali. I negativi devono produrre il motivo esatto AUDIT-REJECTION/INVALID-OBSERVATION: errori estranei non sono rilevamenti. Sono inclusi trailing `:eof`, READ-EVAL, cicli anche in un campo inutilizzato, duplicate-key e alterazioni individuali di buffer, source, fini, token, arità, campioni, sensori, pin e metadati.
+
+## Limiti della lettura
+
+Il benchmark carica il prodotto prima della misura e anche prima del proprio --self-test: va quindi invocato soltanto dopo il freeze/revisione C1, non durante la preparazione del corpus blind. L'audit carica solo il trusted evidence-storage. Non attesto indipendenza degli autori dei driver, esecuzione dei selftest o risultati di allocazione/copertura: la revisione è distinta dal codice degli strumenti e ne valuta la struttura.
+
+L'audit controlla grafi di cons, non cicli nascosti in vettori generali; il limite è esplicito nel codice. Inventari e metadata sono dichiarati, non autenticati o necessariamente completi; i MD5 interni del prodotto non sono associati ai Git blob senza byte sorgente inclusi. In caso gzip il trusted reader verifica l'integrità al momento della lettura; l'osservazione before/after dell'auditor riguarda il file wrapper/descriptor, senza attestare atomicità o una distinta stabilità finale del payload. Le sei fixture seriali e il contatore heap locale non dimostrano nonallocazione assoluta, throughput del motore, scaling, MC/DC o chiusura C1.

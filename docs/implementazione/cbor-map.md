@@ -4,6 +4,8 @@
 valori già codificati, verificandoli prima della prima scrittura.
 Il [metodo preregistrato](cbor-map-metodo.md) definisce REQ-CBR-006,
 precedenza degli errori e campagne previste.
+Le [verifiche conservate](cbor-map-risultati.md) riportano corpus,
+parallelismo, mutazioni, copertura grezza e limiti della qualifica.
 
 ```lisp
 (scrivi-mappa-cbor-minima

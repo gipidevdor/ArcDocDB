@@ -1,0 +1,17 @@
+# Lettura C4 della selezione d'archivio mappe
+
+Esito statico: PASS con i limiti di selezione indicati sotto. Helper finale letto `collection/prepare-archive.lisp`, blob `a984478485f76ac6f0a86d7a1823262bf4bd0ce4`. Nessun helper o prodotto eseguito.
+
+Sono selezionati 14 processi espliciti, compreso `final-integration-build-lint-trace-links` da `4000987886-command-16580-0`; cinque alberi della campagna e tre alberi esterni per spike integrati e self-test snapshot/reader. Le directory dei processi conservano gli originali associati; il builder verifica fine del processo e directory self-test effettivamente referenziate. I cinque observation/closed-check esterni del collector self-test sono selezionati singolarmente, senza selezionare la directory collection live.
+
+Sono inclusi driver e bozze, corpus/prodotto frozen, copertura e self-test, freeze-sources, results-draft, helper e letture/preparazioni fallite. Review e precompile sono enumerati soltanto al primo livello al momento della preparazione: occorre il freeze di tutti i writer prima di generare il manifest. Nuovi file top-level anteriori a quel momento saranno inclusi; sottoalberi non sono selezionati da questa enumerazione. Il helper richiede esplicitamente anche `review/final-integration-reading.md`: la sua futura disponibilità non è stata osservata né viene dichiarata in questa nota. Root prepara solo dopo entrambi i freeze coordinati.
+
+Per le mutazioni sono pubblicati il report aggregato e nove file per ciascuna delle nove copie: log, ASDF, build, runner, due sorgenti map e tre corpus map. È una selezione di 81 file delle copie, non nove mirror completi. I mirror integrali rimangono nel backup ignored verificato secondo il contesto comunicato da root; non sono stati ri-autenticati qui. La bozza risultati dichiara questa distinzione e identifica il commit di baseline per gli altri sorgenti immutati.
+
+Il builder conserva le origini, rinomina soltanto le destinazioni Markdown in TXT, esclude directory fasl e file compilati raw e rifiuta duplicati. Le directory dei processi seguono la selezione originale: il filtro dei FASL isolati e la rinomina Markdown non sono universali per quel percorso. Nessuna modifica di byte è necessaria alla selezione pubblicata.
+
+Come controllo locale di dimensione, report/log delle mutazioni letti sono sotto 1MiB; lo stato coverage è descriptor325 byte più gzip363928 byte. L'inventario metadata degli otto alberi richiesti non ha segnalato file regolari oltre 1MiB, esclusi i percorsi fasl. Questi riscontri non sostituiscono il manifest finale: restano da verificare tutti i file effettivamente selezionati, sidecar compressi, dimensione del manifest e rendering dell'indice.
+
+Plain e indice restano limitati a1048576 byte, gzip a8388608. Dimensioni e conteggi reali dell'archivio spettano al preflight finale e al collector con tre SHA per copia e chiusura indipendente. La selezione più piccola riduce l'indice; questa lettura non ne inventa la dimensione né certifica l'autenticazione, completezza dei mirror pubblicati, atomicità o qualifica C1.
+
+La nota è congelata dopo coordinamento con root; preparazione, preflight, raccolta e relativi rapporti successivi restano operazioni separate. Nessuna modifica tracked/index/HEAD, helper, input congelato o prova precedente.

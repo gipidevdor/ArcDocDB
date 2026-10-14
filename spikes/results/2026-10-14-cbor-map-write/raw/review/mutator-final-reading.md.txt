@@ -1,0 +1,44 @@
+# Lettura C4 statica finale del mutatore MT5
+
+Lettura completa prima dell'esecuzione del mutatore; nessun caricamento, compilazione o esecuzione di prodotto, driver, mutanti o self-test. Esito statico: nessun difetto bloccante rilevato. La compilabilità effettiva e i rilevamenti restano da osservare nelle campagne autorizzate.
+
+Fonti lette: `drivers/mutation.lisp`, blob `3cf825435c4a5b0bd30b235a236b05d610a2302f`; `drivers/catalogue-materialized.lisp`, blob `1a6dca65f9136e082eb9d621305da4fad324534e`, sotto `spikes/out/cbor-map-write-20261014/`. Entrambi i blob verificati sui byte correnti. Metodo `636dd2706c2903542978606cf029e7198bf4dbb3`, catalogo semantico `89900f1bebaf66af3b3b8e19e17596d438cbf936`, piano blind `def50d1650ada2447dffedf13895ac85a40ee84a`: riferimenti dichiarati coerenti con la precedente lettura congelata.
+
+## Bersagli e tipi
+
+Gli otto nomi sono unici, nello stesso ordine del catalogo semantico. I frammenti BEFORE sono presenti una sola volta nei due sorgenti congelati: le sette sostituzioni brevi hanno siti distinti; l'ottava comprende l'unica dichiarazione FTYPE pubblica e la sua intera DEFUN. `unique-position` (233–238) rifiuta assenza e ambiguità, anche con occorrenze sovrapposte; `validate-mutants` (240–259) verifica elenco, pin fisici e appartenenza al prodotto prima delle copie.
+
+| Mutante | Sito originale | Valutazione statica della sostituzione |
+| --- | --- | --- |
+| physical-capacity | input:129 | Usa la lunghezza fisica in luogo di END; tipi INDEX compatibili. La successiva guardia di capacità interna può rilevare il difetto: l'attribuzione runtime va letta nel log. |
+| wrong-major | write:100 | MT5 diventa MT4, argomenti del writer header invariati. |
+| wrong-count | write:91 | PAIRS riceve ITEM-COUNT; U32 ammesso dal budget congelato, binding usato. |
+| scan-omitted | write:95 | Restituisce statistiche INDEX 1/1 e consuma ITEMS/SCRATCH; evita binding inutilizzati introdotti dalla sostituzione. Gli altri binding restano usati dalla copia. |
+| overlap-without-header | input:130 | Controlla il solo payload; il nuovo START resta nel footprint verificato. |
+| item-ends-unchecked | input:131 | Consuma gli argomenti e restituisce NIL, compatibile con la chiamata originale. |
+| root-node-excluded | write:52 | NODES iniziale zero resta nel dominio INDEX; la guardia finale del numero di nodi resta attiva. |
+| extra-return-value | write:69–109 | Allarga nella sola copia FTYPE a `(values index null &optional)` e restituisce `(values result nil)`; nessuna seconda dichiarazione pubblica incompatibile trovata. Il corpus freddo osserva l'arità completa. |
+
+La coerenza sintattica e dei domini non garantisce assenza di diagnostiche SBCL: ogni warning o rifiuto di compilazione deve restare INVALID, mai DETECTED.
+
+## Origini nominali e classificatore
+
+Confrontati tutti i nomi con le forme reali in `tests/codec/cbor-map-write.lisp` (19 DEFTEST nominali, righe 4–269) e `tests/codec/cbor-map-write-threads.lisp` (uno, riga 4). Il macro DEFTEST di `tests/codec/cbor-map-write-support.lisp:13–14` espande ogni nome in una DEFUN senza argomenti. I 20 nomi distinti coincidono integralmente con la whitelist qualificata `ARCDOCDB.CBOR.MAP.WRITE.TESTS::`; il frame freddo usa il primo test reale. Totale API 9499 resta una dichiarazione del piano, non un conteggio runtime prodotto da questa lettura.
+
+Il classificatore (261–387) richiede exit intero nonzero, riga smoke esatta precedente alla prima riga `Unhandled ` e un frame numerato `N: (` con la funzione nominale come primo elemento e zero argomenti. Non basta un nome di namespace, un helper, un prefisso o un simbolo passato a FUNCALL. Le righe dei frame dentro stringhe multilinea non aprono nuovi frame; il testo dopo la parentesi conclusiva deve contenere soltanto separatori. CRLF e frame senza argomenti su più righe sono ammessi. Il primo frame complessivo può essere estraneo purché un successivo frame reale appartenga alla whitelist.
+
+Segnale OS e nonzero dopo il marker di completamento hanno priorità WORKER-ERROR; warning/style-warning e diagnostiche di compilazione sono INVALID. Exit zero diventa SURVIVED solo se passa la baseline con marker smoke/completamento ordinati e senza Unhandled. `classification-fixtures` (401–487) asserisce esattamente coppie STATUS/REASON per casi validi, marker citati o fuori ordine, frame fittizi, namespace citato, frame con argomenti, segnali e guasti dopo completamento. Il successo futuro del self-test va comunque osservato.
+
+## Copie, cache, impronte e reader
+
+`source-files`/`fingerprints` (205–220) inventariano ASD, build, sorgenti/test e i cinque driver ignorati. Sono separati dai pin esterni: i driver ignorati non entrano automaticamente nell'inventario tracked del wrapper. Le nove MD5 raw dichiarate dal mutatore, incluso il catalogo materializzato, coincidono con i byte correnti letti; i cinque pin prodotto/corpus restano d7a593badeb6e6b71f28dc4e80c641b07189d0b8, 22e814ea68e606c5bc58033c2a31e945303a9d65, a389e51f2416437d608c4f7745b9680eca27bc60, 6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8, 6a65b58ce236b92b33772e1861dbd8c1257bee13.
+
+Il dispatcher (176–197) rifiuta opzioni estranee prima di creare directory. `new-directory` (504–511) usa MKDIR esclusivo; ogni baseline/mutante ha copia privata e cache `fasl/` locale con configurazione ereditata ignorata. Nessuna sostituzione opera sulla sorgente originale. La baseline usa l'intero sistema ASDF, non un sottoinsieme di test. Exit, segnale, log e guasti di setup vengono conservati separatamente; il report della directory nuova viene aggiornato dopo baseline e dopo ciascun tentativo. Qualunque esito degli otto diverso da DETECTED impedisce lo stato OK finale; impronte prima/dopo diverse impediscono il successo.
+
+Il reader del report child (665–676) usa READ-EVAL NIL, readtable standard, base 10, READ-SUPPRESS NIL, package CL-USER e GENSYM EOF; accetta una sola forma seguita da EOF. I negativi (678–704) asseriscono motivi precisi per `:eof` letterale, NIL o plist successivi, read-eval e input vuoto; il positivo con readtable ostile del chiamante verifica l'isolamento. Questo reader non è un validatore generale di plist ostili, chiavi duplicate o alberi Lisp ciclici: legge report locali costruiti dal self-test e i controlli successivi verificano i campi richiesti.
+
+I self-test worker (621–780) preparano child isolati per SIGKILL e exit7 dopo completamento, salvano osservazioni prima delle asserzioni, mantengono contatori WORKER-ERROR e nessun rilevamento; le iniezioni copy/transport ripristinano le funzioni con UNWIND-PROTECT. Il main avvia questi self-test anche prima di `--run`; questa nota non li ha eseguiti.
+
+## Limiti e congelamento
+
+Lettura indipendente del codice C4 scritto dall'altro agente; non è una seconda implementazione del driver né una prova di autenticità. MD5 prima/dopo e blob dichiarati attestano coerenza dei dati osservati, non provenienza, assenza di cambiamenti transitori, causalità generale del log o resistenza a un worker ostile. Non sono stati misurati heap, copertura, MC/DC, durata, rilevamenti o qualificazione di rilascio. I conteggi nominali derivano dal corpus statico congelato. Nessun file prodotto/corpus/driver o documento tracked modificato; questa nuova nota ignored è l'unica scrittura di questa lettura e viene congelata dopo il calcolo del blob.

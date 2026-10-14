@@ -70,7 +70,7 @@
                              (:file "routing-types") (:file "routing-build") (:file "routing-select")))
                (:module "dispatch" :serial t
                 :components ((:file "package") (:file "types") (:file "build") (:file "claim")
-                             (:file "recycle")))
+                             (:file "recycle") (:file "begin")))
                (:module "index" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "validation") (:file "read") (:file "write") (:file "relocate")
@@ -122,7 +122,11 @@
                 :components ((:file "package") (:file "types") (:file "dependency")
                              (:file "build") (:file "preflight") (:file "transfer") (:file "prepare")
                              (:file "publication") (:file "publication-read")
-                             (:file "recovery-types") (:file "recovery-read") (:file "recovery-publication"))))
+                             (:file "recovery-types") (:file "recovery-read") (:file "recovery-publication")))
+               (:module "recovery-active" :serial t
+                :components ((:file "package") (:file "types") (:file "read") (:file "frames")
+                             (:file "resolve") (:file "build") (:file "query")
+                             (:file "closure") (:file "publication"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -186,7 +190,8 @@
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))
                (:module "scheduler" :serial t
                 :components ((:file "support") (:file "controller") (:file "lifecycle")
-                             (:file "pool-claim") (:file "dispatch") (:file "pool-recycle")))
+                             (:file "pool-claim") (:file "dispatch") (:file "pool-recycle")
+                             (:file "pool-begin")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")

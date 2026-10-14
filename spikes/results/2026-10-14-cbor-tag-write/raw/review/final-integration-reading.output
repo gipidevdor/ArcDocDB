@@ -1,0 +1,38 @@
+INPUT descriptor317 bytes SHA4dd73de1fe445cad08737f2090081794963da9143e7173e91cb2d31d87e6f0b9; gzip153126 SHAb48199c6a94f1eb3713d1142e4c4ebce6b6e5b8f61f87830b1fafdf5f71d9e63; trusted-expanded1312918 SHAced71ec929d71fe5907e153fac31c17930870e615feaa6d078bc784b928efc4a/EOF/READ-EVAL NIL.
+COMMAND ("make" "build" "lint" "trace" "links")
+OUTER schema1/COMMAND-VERIFICATION OK/exit0/STABLE wall45.121117d0 HEAD7fbd327f9b0a042bd053cd8aed98e3f105a6688c clean; sources912 unique before=after; frozen5pins matched.
+OUTPUT stdout236342 chars stderr886718 chars; diagnostic forbidden markers0, stderr optimization-note lines2413.
+OK1442 unique = nominal1440 + smoke2; tag20 exact frozen functions.
+SMOKE ("ok    ARCDOCDB:*VERSION* è una stringa"
+       "ok    package ARCDOCDB presente")
+ok    TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS
+ok    TEST-REQ-CBR-007-TAG-OPAQUE-SCALARS-UTF8-FLOATS-CONTAINERS-AND-PAIR-ORDER
+ok    TEST-REQ-CBR-007-TAG-CONCATENATION-NEXT-AND-EXACT-RETURN-ARITY
+ok    TEST-REQ-CBR-007-TAG-DESTINATION-TYPE-AND-RANGE-PRECEDES-EVERYTHING
+ok    TEST-REQ-CBR-007-TAG-SOURCE-TYPE-RANGE-EMPTY-AND-BACKING-ARRAY-INTACT
+ok    TEST-REQ-CBR-007-TAG-HIGH-THEN-LOW-DOMAIN-PRECEDENCE-WITHOUT-U64
+ok    TEST-REQ-CBR-007-TAG-WORKSPACE-TYPE-AND-BOTH-KINDS-ALIASES
+ok    TEST-REQ-CBR-007-TAG-CONFIGURED-LIMITS-AND-ROOT-TWO-NODE-MINIMUM
+ok    TEST-REQ-CBR-007-TAG-ALL-PREFLIGHT-PHASE-PRECEDENCES
+ok    TEST-REQ-CBR-007-TAG-CAPACITY-ACTIVE-END-AND-COMPLETE-BYTE-BUDGET
+ok    TEST-REQ-CBR-007-TAG-OVERLAP-INCLUDING-ONLY-HEADER-AND-TOUCHING-BOUNDARIES
+ok    TEST-REQ-CBR-007-TAG-FULL-16MIB-WITH-ONE-AND-NINE-BYTE-HEADER-AND-OVER
+ok    TEST-REQ-CBR-007-TAG-ROOT-AND-CONTENT-NODE-RESIDUE-LONG-TAG-CHAINS-NO-FRAME
+ok    TEST-REQ-CBR-007-TAG-DEPTH-UNCHANGED-ZERO-SCALARS-AND-100-101-CONTAINERS
+ok    TEST-REQ-CBR-007-TAG-PARSER-FAILURES-ABSOLUTE-OFFSET-AND-COMPLETE-SINGLE-ITEM
+ok    TEST-REQ-CBR-007-TAG-EVERY-TRUNCATION-NONZERO-SOURCE-START-AND-EXACT-END
+ok    TEST-REQ-CBR-007-TAG-SCRATCH-REUSE-AFTER-PARSER-AND-PREFLIGHT-ERRORS
+ok    TEST-REQ-CBR-007-TAG-SCRATCH-CONTENT-ONLY-STATISTICS-AFTER-SUCCESS
+ok    TEST-REQ-CBR-007-TAG-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASS-COUNTS
+ok    TEST-REQ-CBR-007-TAG-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-SOURCE
+224 file, 0 violazioni
+121 requisiti, 65 invarianti, 13 scenari FI, 52 ADR: 0 errori
+490 file, 3041 link controllati, 0 rotti
+  CBOR tag fuzz: seed54414737, 1024 casi, 512 successi e 64 ciascuno capacita/byte/high/nodi/profondita/parse/source-range/empty.
+COLD LCG finalF8004B37 counts#(512 64 64 64 64 64 64 64 64). Final state is asserted in frozen test, not printed in stdout.
+  CBOR tag: onda0, 2 worker riusati, 4096 composizioni, sink 66766848/97310720, overlap 2336 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+WAVE0 observed overlap 0.002336 seconds; individual start/finish intervals not printed.
+  CBOR tag: onda1, 2 worker riusati, 4096 composizioni, sink 66766848/97310720, overlap 2284 tick (1000000 tick/s); nessuna inferenza su core/scaling.
+WAVE1 observed overlap 0.002284 seconds; individual start/finish intervals not printed.
+ARITHMETIC planned calls: serial442+fuzz1024+parallel8192=9658; success144+512+8192=8848, rejection298+512=810. Not instrumented API counters.
+FINAL descriptor/payload/reader stable; reader SHA0766f59a0d9b038d50983110827723b2543182f071e4e10c9b2b9722fb8c51ca. DATA only; no product or suite LOAD/EVAL/compile/call, no campaign rerun, no whole check/spike/evidence, authenticity/MC/DC/scaling qualification.

@@ -1,0 +1,24 @@
+# Correzione dei due pin del rapporto iniziale
+
+La lettura indipendente C4 di `cbor_next_contract` ha individuato due
+literal del precedente incremento mappe nel campo
+`INITIAL-REPORT :frozen-other-driver-blobs` del mutatore. Il catalogo
+materializzato, il benchmark e l'auditor riportavano già i pin tag
+corretti. La correzione precede ogni self-test e campagna del mutatore.
+
+Il draft `cb02266fedad6f21097fb88504edebb6c6eb7169` è conservato come
+`mutation-before-driver-pin-correction-cb02266f.lisp`.
+Il mutatore corrente è `2275bd6ebba11cfe24e57ac0c6d2c257631a71d8`.
+Il diff `mutation-driver-pin-correction.patch`, blob
+`d6b0777fc41135efb3a488233f5e862eb4c1cf1d`, modifica solo:
+
+- bench: `eeaa1a0d34d6bd94d5cf7c1d62e9c4027b0f5027` diventa
+  `4f4e2ac97f2f9d903dfebfdc6b15553b40e59a84`;
+- audit: `f6f08f777e8115e626f39e90f3722a72658d9750` diventa
+  `97f58bffaff8c7dbccec76d1e28082bca0695ec6`.
+
+Il catalogo `60b7970c18a1d17642d1efc39f5068b5e10f181d` rimane valido
+e immutato. Tutti i target, la whitelist, il classificatore e i pin
+raw dei sorgenti/corpus/fixture/bench/audit sono immutati. La rilettura
+C4 deve usare il nuovo pin del mutatore. Nessun prodotto o driver è
+stato caricato, compilato o eseguito durante questa correzione.

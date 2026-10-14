@@ -1,0 +1,13 @@
+diff --git a/src/codec/cbor-tag-input.lisp b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/overlap-without-header.after.lisp.txt
+index 6dfad070..8f51bcdc 100644
+--- a/src/codec/cbor-tag-input.lisp
++++ b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/overlap-without-header.after.lisp.txt
+@@ -73,7 +73,7 @@ INVARIANT-VIOLATION per risultati interni incoerenti; nessun parsing o reset."
+     (check-limiti-struttura-cbor max-bytes max-nodes max-depth)
+     (multiple-value-bind (header-size item-size)
+         (dimensioni-tag-cbor start end span high low max-bytes)
+-      (check-overlap-tag-cbor buffer start (+ start item-size) source source-start source-end)
++      (check-overlap-tag-cbor buffer (+ start header-size) (+ start item-size) source source-start source-end)
+       (when (< max-nodes 2)
+         (error 'arcdocdb.conditions:resource-exhausted :reason :cbor-tag-node-budget))
+       (unless (= span (- source-end source-start))

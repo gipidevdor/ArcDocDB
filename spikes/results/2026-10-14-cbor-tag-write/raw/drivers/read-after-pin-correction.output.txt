@@ -1,0 +1,15 @@
+(:SCHEMA-VERSION 1 :KIND :CBOR-TAG-DRIVER-READ-ONLY-FREEZE :STATUS :OK
+ :READ-EVAL NIL :STANDARD-READTABLE T :EOF-DISTINCT T :FORMS-EXECUTED 0
+ :PRODUCT-AND-CORPUS-LOADED NIL :SELF-TESTS-EXECUTED NIL :ENTRIES
+ ((:NAME "fixtures-and-mutations.lisp" :FORMS 1 :GIT-BLOB
+   "3c410448af31a28e99fe39f93261ced04f15860d")
+  (:NAME "bench.lisp" :FORMS 30 :GIT-BLOB
+   "4f4e2ac97f2f9d903dfebfdc6b15553b40e59a84")
+  (:NAME "audit.lisp" :FORMS 48 :GIT-BLOB
+   "97f58bffaff8c7dbccec76d1e28082bca0695ec6")
+  (:NAME "mutation.lisp" :FORMS 75 :GIT-BLOB
+   "2275bd6ebba11cfe24e57ac0c6d2c257631a71d8")
+  (:NAME "catalogue-materialized.lisp" :FORMS 1 :GIT-BLOB
+   "60b7970c18a1d17642d1efc39f5068b5e10f181d")
+  (:NAME "nominal-whitelist.lisp" :FORMS 1 :GIT-BLOB
+   "7be8f1cdd0c5a4dc84dfc444c8c98aa84396c43e")))

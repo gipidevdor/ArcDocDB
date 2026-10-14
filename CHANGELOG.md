@@ -13,6 +13,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   tentativi falliti e output originali conservati nella campagna
   `2026-10-14-control-transizione`; nessuna promozione del motore completo.
 
+- Composizione di tag CBOR da contenuti già codificati: verifica completa
+  prima della scrittura, testata MT6 minima e budget comprensivi del tag
+  senza aggiungere profondità ai contenitori. Sorgenti condivisibili in
+  lettura con scratch privati; semantica applicativa e qualifica C1 aperte.
+
 - Recovery readonly del vecchio ACTIVE nominato dal control log: header
   e prefisso verificati fino a EOF, prepared risolti da OUTCOME/DECISION,
   esiti derivati in array u64 ordinati e serializer della chiusura CLOSED.

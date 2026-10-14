@@ -1,0 +1,145 @@
+# Lettura statica C4 degli strumenti di conservazione tag
+
+2026-10-14. Esito statico: porting conforme alle modifiche dichiarate,
+con i limiti riportati sotto. Nessun LOAD/EVAL, compilazione, self-test,
+builder, collector, preflight, append, reader o prodotto eseguito da questa
+lettura. Le sole operazioni sono lettura del testo, diff e impronte Git;
+l'unica nuova scrittura è questa nota ignored. HEAD osservata
+`44017fe7d117f7107989c453687b8f68280b78bf`.
+
+## Provenienza e impronte
+
+Origine: `spikes/out/cbor-map-write-20261014/`.
+Nuove copie: `spikes/out/cbor-tag-write-20261014/`.
+Le impronte sotto sono blob Git, non digest SHA256 del collector.
+
+| File | Origine map | Copia tag |
+| --- | --- | --- |
+| `freeze-sources.lisp` | `88867db5110836bf9c58fe2bd9185a9d7c6b6a54` | `b3c429003b0978a0f23a4af18d21f08f46be7119` |
+| `collection/collect.lisp` | `372dccdbb5f57c3ebc89f75f7e72d7dd4db4458f` | `372dccdbb5f57c3ebc89f75f7e72d7dd4db4458f` |
+| `collection/append.lisp` | `da360edd68b575ba52ebd379720ca8875215bba7` | `da360edd68b575ba52ebd379720ca8875215bba7` |
+| `collection/preflight-archive.lisp` | `993e0c0c318618317d950368ec8e964f52b2da61` | `993e0c0c318618317d950368ec8e964f52b2da61` |
+| `collection/read-collection.lisp` | `ae2c37800a747a3db628348643f60acafa1d7199` | `ae2c37800a747a3db628348643f60acafa1d7199` |
+| `collection/build-manifest.lisp` | `b031de0908c0873a0bc68adf0cf2cb1b993b335d` | `ac326fab50ae25289c757f699e69d6e46da739b3` |
+
+Collector, append, preflight e reader sono identici all'origine map.
+Le diff complete di freeze e builder mostrano soltanto sostituzioni
+`cbor-map`/`CBOR-MAP` con `cbor-tag`/`CBOR-TAG` in nomi, package, percorsi,
+prefissi self-test e kind. Date, liste iniziali NIL, algoritmi, printer,
+controlli e budget restano identici. I nomi storici cbor-minimal/cbor-array
+e i commenti di provenienza nelle copie identiche non sono stati riscritti.
+
+Dipendenze trusted osservate: `tools/evidence-storage.lisp`
+`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`;
+`tools/check-command-archive.lisp`
+`4c56e6f317cc0e1a6785c4071126c6cca7dd68b7`.
+Sono lette come testo per questa revisione, non caricate.
+
+## Preparazione del clone
+
+Originale `clone-support.lisp`:
+`591b02036fbd7f77f83d424730b9daaf77b2f77e`.
+Variante distinta `clone-support-corrected.lisp`:
+`e57f0eb0298247e8254e4f930a3192c5e81e98e2`.
+Nota originale `review/clone-preparation-note.md`:
+`ba4775c9a60585edbf2ef475dc11dfd9d2b167ce`.
+
+La sola diff tra originale e variante elimina l'ultima parentesi della
+riga24: il FORMAT e i quattro involucri LET*, DOLIST, FLET e LET richiedono
+cinque chiusure, mentre l'originale ne contiene sei. La seconda forma
+completa contiene il DOLIST sui sei nomi e tutte le scritture delle copie;
+la parentesi eccedente viene incontrata dopo quella forma. Le sei copie
+presenti hanno i byte attesi, come mostrano le impronte e le due diff.
+Questo corrobora staticamente la sequenza descritta nella nota, senza
+rieseguire il cloner. La nota dichiara la lettura DATA/EOF della variante
+e che non è stata rieseguita: questa revisione non produce un secondo
+riscontro runtime di tali dichiarazioni. Il diagnostico originale è
+dichiarato conservato nella conversazione, non in un file raw locale;
+nessun raw locale o comando registrato viene dedotto da questa nota.
+
+## Freeze e manifest finale
+
+Freeze seleziona esplicitamente21 file: ASDF/export, due sorgenti tag,
+tre test tag, dipendenze codec, strumento di copertura, cinque documenti
+tag e tracciabilità. Copia con target esclusivo, bytes/SHA origine prima,
+destinazione e origine dopo; gli originali Markdown diventano `.md.txt`
+soltanto nella destinazione. Scrive l'indice alla fine con HEAD e i
+riscontri per ciascuna copia. Non carica i file congelati come codice.
+I sorgenti tag non esistevano ancora al momento della lettura: nessun
+freeze riuscito viene attestato qui. Il freeze non congela automaticamente
+tutte le future dipendenze transitive e non crea un'istantanea atomica.
+
+Il builder mantiene tre liste iniziali NIL e richiede la selezione CLI
+esplicita di processi, alberi e file; non sceglie latest e non raccoglie.
+Conserva i registri terminati OK o FAILED senza promuoverne l'esito.
+Rifiuta opzioni incompiute, etichette/target duplicati, file mancanti e
+alberi live della base, review o collection, salvo collection/self-test.
+Ricava dagli stdout selezionati le directory self-test effettivamente
+citate e richiede che siano coperte da un albero richiesto. Non scopre
+ogni artefatto realmente prodotto: completezza e scelta degli input
+dipendono dalla CLI finale e dal confronto DATA coi registri congelati.
+
+Tutti i writer degli input selezionati devono terminare e congelarli prima
+della preparazione e della raccolta, comprese letture in review, driver,
+rapporti, copie e osservazioni esterne degli auto-test. La CLI finale deve
+includere quelle osservazioni/log separati quando necessari: selezionare
+soltanto collection/self-test non include i file scritti nella directory
+collection superiore. Questa nota è un input congelabile distinto;
+non autorizza la selezione ricorsiva di un albero review ancora live.
+
+Gli alberi raw conservano modalità ALL o LISP/LOG/GZ, ordinamento e filtro
+delle directory fasl. Markdown raw viene rinominato in TXT senza cambiare
+SOURCE; file .fasl raw sono esclusi o rifiutati quando espliciti.
+Le directory dei processi restano originali in modalità ALL: rinomina MD
+e filtro dei .fasl isolati fuori da directory fasl non sono universali.
+Il builder registra l'inventario, non autentica tutti i byte e può emettere
+un manifest privo di processi che il collector successivo rifiuterebbe.
+
+## Copie, chiusura e budget
+
+Collector pianifica prima delle copie, rifiuta duplicati, crea una root
+nuova e le directory sequenzialmente. Usa quattro thread con READY/GO,
+primo task privato per worker quando presente e successivi claim sotto
+mutex. Coda massima100000; deadline1800 secondi per READY/GO/join, con
+cleanup dei thread in caso di fallimento. Non è una garanzia di durata
+totale: pianificazione, hashing e chiusura nel processo esterno hanno
+ambiti distinti; non è una misura di scaling o simultaneità sui core.
+
+Ogni copia confronta bytes/SHA256 dell'origine prima e dopo e della
+destinazione. Dopo i join richiede risultati per tutti i task, nessun
+worker-error e nessuna copia fallita; confronta EQUALP i registri
+decodificati originali/copie. Solo allora scrive indice e catalogo.
+Un nuovo processo trusted controlla i byte e l'inventario chiuso: solo
+dopo exit0 e signalNIL il report arriva a phase COMPLETE/status OK.
+Metadati già presenti non bastano: una chiusura fallita può lasciare una
+root pubblicata o parziale, da conservare come fallimento. I log/rapporti
+della chiusura sono fuori dall'archivio per evitare autoreferenza.
+
+Il preflight misura dimensioni reali e rendering ASCII con placeholder
+SHA lowercase64 della stessa forma; non pubblica un indice sintetico.
+Budget plain/indice1MiB, gzip8MiB, espansione128MiB e coda100000 restano
+invariati. Il validator trusted ricontrolla i byte reali, rifiuta symlink
+e file speciali, richiede esattamente tutti i file indicizzati più indice
+e catalogo, applica limiti di directory/inventario e verifica i metadata
+dei processi. Preflight favorevole non sostituisce la chiusura reale.
+
+Reader collection verifica soltanto report concluso, quattro worker,
+errori NIL, somma copie, exit/signal/log della chiusura e corrispondenza
+con closed-inventory/indexed-files. È una lettura DATA dei metadata
+precedenti all'append, senza nuovo sweep SHA o inferenza di risultati.
+
+Append deve essere usato serialmente tramite --append: audit prima,
+copie con tre impronte, confronto EQUALP del registro, aggiornamento
+dell'indice e audit dopo, senza riscrivere i registri originali. Il suo
+audit storico non verifica l'inventario chiuso o i budget come il checker
+trusted: dopo gli append occorre la nuova chiusura rigorosa. Non usare il
+ramo storico --collect della copia append per la nuova raccolta tag:
+conserva riferimenti header-write e data2026-10-11; la raccolta tag è
+quella del collector parallelo distinto. Nessuna append concorrente,
+pubblicazione atomica, durabilità o autenticità crittografica dedotta.
+
+Esito della sola lettura: nessun cambiamento algoritmico nel porting;
+proprietà statiche e limiti di provenienza preservati. Auto-test, CLI
+finale, copie effettive, stabilità dei writer e chiusura del futuro
+archivio richiedono i loro riscontri successivi. Nessuna qualifica C1,
+MC/DC, requisito documentale completo o gate di rilascio promosso.

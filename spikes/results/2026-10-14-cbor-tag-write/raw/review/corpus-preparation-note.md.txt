@@ -1,0 +1,13 @@
+# Preparazione del corpus freddo
+
+Prima del congelamento, senza leggere nuovi sorgenti di prodotto e senza
+eseguire il corpus, sono stati corretti due valori preparatori: la capacità
+della destinazione per 1024 tag sorgente piu scalare e testata MT6 di3 byte
+deve essere1028, e il seme finale non era ancora ricomputato. Il primo
+controllo aritmetico separato ha prodotto il valore F8004B37 con un suffisso
+di formato spurio (`SEED-FINAL F8004B37270X`); il controllo successivo usa
+il solo formato `~X`, senza cambiare il calcolo. Nessuna campagna prodotto
+è stata eseguita con quei valori.
+
+Su richiesta del coordinatore il package provvisorio `tag-write.tests`
+è stato uniformato a `arcdocdb.cbor.tag.write.tests` prima del freeze.

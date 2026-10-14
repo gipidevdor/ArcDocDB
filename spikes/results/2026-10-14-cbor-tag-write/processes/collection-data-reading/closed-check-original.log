@@ -1,0 +1,94 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/results/2026-10-14-cbor-tag-write/"
+ :INDEXED-FILES 397 :ACTUAL-FILES 399 :INDEXED-BYTES 7182312 :PROCESSES
+ ((:LABEL "freeze-sources" :RECORD-PATH "processes/freeze-sources/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/freeze-sources.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "initial-build-lint-trace-links" :RECORD-PATH
+   "processes/initial-build-lint-trace-links/report.lisp" :COMMAND
+   ("make" "build" "lint" "trace" "links") :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "bench-self-test" :RECORD-PATH
+   "processes/bench-self-test/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/drivers/bench.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "audit-self-test" :RECORD-PATH
+   "processes/audit-self-test/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/drivers/audit.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-self-test" :RECORD-PATH
+   "processes/coverage-self-test/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--self-test"
+    "spikes/out/cbor-tag-write-20261014/coverage-self-test/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "collection-self-test" :RECORD-PATH
+   "processes/collection-self-test/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/collection/collect.lisp" "--self-test"
+    "spikes/out/cbor-tag-write-20261014/collection/self-test/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "bench" :RECORD-PATH "processes/bench/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/drivers/bench.lisp" "--bench")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "bench-data-audit" :RECORD-PATH
+   "processes/bench-data-audit/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/drivers/audit.lisp" "--bench"
+    "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4000996908-command-74250-0/report.lisp"
+    "6dfad07035ac8040b2aec0a455c175ea15dfd9ad"
+    "16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-tag" :RECORD-PATH "processes/coverage-tag/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/cbor-tag-write-20261014/coverage/" "cbor-tag-write")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-self-test-invalid-options" :RECORD-PATH
+   "processes/mutation-self-test-invalid-options/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/drivers/mutation.lisp" "--self-test"
+    "spikes/out/cbor-tag-write-20261014/mutation-self-test/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-self-test" :RECORD-PATH
+   "processes/mutation-self-test/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/drivers/mutation.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "integrated-check" :RECORD-PATH
+   "processes/integrated-check/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-campaign" :RECORD-PATH
+   "processes/mutation-campaign/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-tag-write-20261014/drivers/mutation.lisp" "--run"
+    "spikes/out/cbor-tag-write-20261014/mutations/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-compression" :RECORD-PATH
+   "processes/coverage-compression/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/compact-evidence.lisp" "--root"
+    "spikes/out/cbor-tag-write-20261014/coverage/" "--jobs" "4"
+    "--minimum-age-seconds" "0")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "final-integration-build-lint-trace-links" :RECORD-PATH
+   "processes/final-integration-build-lint-trace-links/report.lisp" :COMMAND
+   ("make" "build" "lint" "trace" "links") :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "570bbd31193755348896d6bf10c782436970a07ab7a88c441757de72e4c04f3f"
+ :CATALOGUE-SHA256
+ "12bba56536a93546cf16bcda2308c0286849db6e05274a6dfd99930eecaf8e73"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

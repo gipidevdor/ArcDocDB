@@ -21,6 +21,7 @@ La porta può essere inattiva o avere un comando pendente.
 |---|---|
 | `prendi-collegamento-pool dispatcher` | Solo IDLE libero: nuova presa attraverso il gate, poi routing del CLAIMED. Restituisce link oppure NIL, status, cursore e azione lifecycle originali. |
 | `collega-obbligo-pool dispatcher` | Solo CLAIMED già assunto: routing del writer corrente, senza leggere request/ack/active e senza conferme del pool. Restituisce il link preallocato. |
+| `ricircola-collegamento-pool dispatcher` | Solo RESCHEDULE: un ricircolo, poi routing del nuovo CLAIMED se full; altrimenti pubblica e termina IDLE. Restituisce link/NIL, status e count della partizione. |
 
 Il primo ingresso restituisce un link solo con `:claimed`. Con `:empty`,
 `:busy` o `:inactive` restituisce NIL senza routing. Il link è ancora IDLE:
@@ -39,13 +40,16 @@ Un binding incoerente o un owner estraneo sono invece sempre rifiutati.
 
 Il ritiro pendente viene confermato al prossimo ingresso IDLE attraverso il
 gate. Non viene applicato durante CLAIMED, RUNNING, BATCH, FINISHING o
-RESCHEDULE. Dopo `:schedule` il caller ricircola o cede l'obbligo con le
-API execution; se il ricircolo assegna un nuovo CLAIMED, usa
-`collega-obbligo-pool`. Dopo una pubblicazione riuscita il contesto torna
+RESCHEDULE. Dopo `:schedule` il caller invoca esplicitamente
+`ricircola-collegamento-pool`, oppure ricircola o cede l'obbligo con le API
+execution. Se il ricircolo diretto assegna un nuovo CLAIMED, usa
+`collega-obbligo-pool`; l'adattatore di ricircolo restituisce già il suo link.
+Dopo una pubblicazione riuscita il contesto torna
 IDLE e può applicare il ritiro con la successiva nuova presa.
 
-Il dispatcher non include begin, pop, end, ricircolo, retry, cleanup o
-rollback. I rifiuti writer-busy e Serie-busy mantengono gli stati differenti
+Il [ricircolo esplicito](pool-recycle.md) risolve il singolo obbligo senza
+consultare il pool. Il dispatcher non include begin, pop, end, retry, cleanup
+o rollback. I rifiuti writer-busy e Serie-busy mantengono gli stati differenti
 del bridge: il primo conserva CLAIMED, il secondo produce CLOSING e un
 token da chiudere esplicitamente. Il caller conserva riferimenti e token
 fino alla conclusione; non ignora alcun obbligo su errore.

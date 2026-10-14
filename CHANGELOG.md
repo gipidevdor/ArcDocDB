@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Ricircolo esplicito dal dispatcher alla Serie: pubblica l'obbligo e termina
+  IDLE se c'è spazio; a ring pieno restituisce il link del nuovo writer
+  CLAIMED dopo un solo scambio FIFO. Nessun gate del pool, ritiro o nuova
+  presa impliciti; busy e guasti conservano i confini execution esistenti.
+
 - Lettura readonly del control log autorevole, con header verificato e replay
   fino all'EOF attestato. Risultato senza buffer, legato alla vista canonica;
   pubblicazione subordinata alla conservazione di CLOSED, esiti e REMOVED,

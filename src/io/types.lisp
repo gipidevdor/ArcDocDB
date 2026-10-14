@@ -71,9 +71,11 @@ Stato/posizioni cambiano soltanto nel compito proprietario."
 (declaim (ftype (function (file-io keyword keyword &optional (or null fixnum) index) nil)
                 fallisci))
 (defun fallisci (file operation reason &optional errno (transferred 0))
-  "Pre: operazione fallita. Post: write/flush faulted prima di segnalare IO-FAULT.
+  "Pre: operazione fallita. Post: write/flush guasta OPEN prima di IO-FAULT, non riapre CLOSED.
 Read non muta stato: il proprietario gestisce quarantena e durata dei reader."
-  (unless (eq operation :read) (setf (file-state file) :faulted))
+  (sb-sys:without-interrupts
+    (when (and (not (eq operation :read)) (eq (file-state file) :open))
+      (setf (file-state file) :faulted)))
   (error 'io-fault :reason reason :operation operation :errno errno :transferred transferred))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004

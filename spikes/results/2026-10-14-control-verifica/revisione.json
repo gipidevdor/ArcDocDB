@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "kind": "scoped-independent-reviews",
+  "base": "a5715a1aa0b2571d650d1b794e9bb7b7324e951e",
+  "product": {
+    "reviewer": "Linnaeus",
+    "first_read": "base + delta flush/fallisci",
+    "findings": [
+      {
+        "id": "CV-C1-01",
+        "priority": "P1",
+        "issue": "Append incompleta per errore originale/nonlocal lasciava OPEN e poteva consentire nuova preparazione",
+        "resolution": "Cleanup OPEN→FAULTED dopo preflight; frontiere/progresso conosciuto conservati, CLOSED terminale",
+        "status": "closed-static"
+      },
+      {
+        "id": "CV-C1-02",
+        "priority": "P2",
+        "issue": "Short I/O poteva proseguire dopo invalidazione della capacità nel callback",
+        "scope": "FI intenzionale fuori contratto di ownership; non è race dimostrata nel funzionamento conforme",
+        "resolution": "OPEN controllata prima/dopo ogni frammento di read e append",
+        "status": "closed-static"
+      },
+      {
+        "id": "CV-C1-03",
+        "priority": "P2",
+        "issue": "Condizione locale post-close perdeva done e operazione read/write",
+        "resolution": "verifica-capacita-trasferimento riporta progresso/operazione; callback conditions restano originali",
+        "status": "closed-static"
+      },
+      {
+        "id": "CV-C4-FIXTURE-01",
+        "priority": "P2",
+        "issue": "Cleanup factory flush tardivo, frontiera durevole zero nella sonda append CLOSED",
+        "resolution": "Cleanup interno fino ad handoff, setup reale di frontiera durevole2 nella sonda",
+        "status": "closed-static"
+      },
+      {
+        "id": "CV-C4-CAS-01",
+        "priority": "P2",
+        "issue": "Ripristino della funzione globale/hook dopo join scaduto con worker vivo",
+        "resolution": "Ripristino di funzione/hook solo se winner e loser NIL o terminati; letto su ec2efddf",
+        "status": "closed-static"
+      }
+    ],
+    "second_read": "128955e6a91d4537c2d0fd5abc26ec00ece41b99",
+    "runtime_evidence": "separate",
+    "reads": [
+      "a5715a1a + delta flush/fallisci",
+      "delta IO +21test",
+      "128955e6 final IO/control/active +95test",
+      "ec2efddf CAS cleanup delta"
+    ],
+    "static_product_status": "no-open-product-findings",
+    "checklist": {
+      "1": "REQ/ADR coerenti",
+      "2": "Frontiere e capacità in sonde dedicated, copertura A disponibile",
+      "3": "Originali EQ e progresso noto read/write",
+      "4": "Cicli/casi bounded",
+      "5": "Nessuna misurazione zeroheap qualificata",
+      "6": "Nessun successo dopo invalidazione",
+      "7": "Inventario ICO-D01..06",
+      "8": "Ownership locale, callback invalidation è FI fuori contratto",
+      "9": "check A e check B OK, mutation A baseline21+4/4; copertura A/B OK",
+      "10": "Finding statici chiusi, dinamica rami cleanup scaduto non attestata",
+      "11": "Nessun coordinamento traSerie nuovo",
+      "12": "Nessuna decisione durevole oeliminazione nuova"
+    }
+  },
+  "tools": {
+    "reviewer": "Meitner",
+    "reads": [
+      "engine draft",
+      "three tools+derive draft",
+      "128955e6 final"
+    ],
+    "final_static_status": "no-open-tool-P1-P2",
+    "findings": [
+      {
+        "id": "CV-C4-01",
+        "priority": "P2",
+        "issue": "Dimensione fisica directory instabile nel coldsnapshot dopo rinomina",
+        "resolution": "Dimensione esclusa soltanto per directory, inode/FD/frontiere/fileEOF conservati",
+        "status": "closed-static"
+      }
+    ],
+    "observations": [
+      "21markers uniti sullo stesso registro; passedprefix target1/9/12/6",
+      "engine/driver/helperraw con digesti e copie FASL private",
+      "30 finestre/560 checkpoint, 288FD massimi, cleanup soltanto quiescente",
+      "CLOCK: preparazione/rilettura/pub/dirfsyncincl; setup+finaloraclesout",
+      "deadline+last actual exit checks, host/kernel waits limitati dichiarati"
+    ],
+    "runtime_evidence": "separate"
+  },
+  "limits": [
+    "nessuna qualifica globale del motore, MC/DC o power loss",
+    "letture statiche separate da esecuzioni centrali strutturate"
+  ]
+}

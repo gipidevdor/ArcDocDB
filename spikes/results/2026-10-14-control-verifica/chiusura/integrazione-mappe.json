@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "kind": "control-final-map-integration",
+  "head": "972a963a6f33217ee921ad9f92606e89bb6b7909",
+  "incoming_main": "6b432e411e5c64f122e8d6a509c85783128c0ae2",
+  "shared_files": [
+    "arcdocdb.asd",
+    "tools/foundation-coverage.lisp",
+    "docs/implementazione/README.md"
+  ],
+  "io_scope_delta_after_B": [],
+  "coverage_resolution": "preserves control-publication and cbor-map-write",
+  "limits": [
+    "mutation A, coverage B and benchmark B retain their original graph/context",
+    "final integration check is recorded separately"
+  ]
+}

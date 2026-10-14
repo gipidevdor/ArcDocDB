@@ -1,0 +1,58 @@
+;;;; C4: supervisore esterno con fixture reali di exit e timeout, senza prodotto.
+(require :asdf)
+(require :sb-posix)
+(defun sv-classify (closed code expired)
+  (cond (expired :timeout) ((not closed) :unreaped) ((eql code 0) :ok) (t :failed)))
+(defun sv-run (argv seconds)
+  (let ((process nil) (expired nil) (closed nil) (code nil) (start (get-internal-real-time)))
+    (unwind-protect
+         (progn
+           (setf process (sb-ext:run-program (first argv) (rest argv) :search t :wait nil
+                                             :output *standard-output* :error *error-output*))
+           (unless process (error "supervise.lisp COD-61: child assente."))
+           (loop repeat (+ 2 (* seconds 10))
+                 while (member (sb-ext:process-status process) '(:running :stopped))
+                 do (when (>= (- (get-internal-real-time) start)
+                              (* seconds internal-time-units-per-second))
+                      (setf expired t) (return))
+                    (sleep 0.1))
+           (when (member (sb-ext:process-status process) '(:running :stopped))
+             (setf expired t) (sb-ext:process-kill process sb-posix:sigkill))
+           (sb-ext:process-wait process)
+           (setf closed (member (sb-ext:process-status process) '(:exited :signaled))
+                 code (sb-ext:process-exit-code process)))
+      (when process
+        (when (member (sb-ext:process-status process) '(:running :stopped))
+          (sb-ext:process-kill process sb-posix:sigkill) (sb-ext:process-wait process))
+        (sb-ext:process-close process)))
+    ;; Anche un child già terminato oltre il budget non può essere promosso a OK.
+    (when (>= (- (get-internal-real-time) start) (* seconds internal-time-units-per-second))
+      (setf expired t))
+    (list :schema-version 1 :kind :external-supervisor :status (sv-classify closed code expired)
+          :command argv :limit-seconds seconds :child-closed (not (null closed)) :exit-code code
+          :wall-seconds (/ (- (get-internal-real-time) start) (float internal-time-units-per-second 1d0))
+          :limits '(:process-supervision :kill-and-reap-on-timeout :healthy-host-assumption
+                    :kernel-wait-may-block :no-host-or-power-loss-authentication))))
+(let ((args (uiop:command-line-arguments)))
+  (if (equal args '("--self-test"))
+      (let* ((base (list (namestring sb-ext:*runtime-pathname*) "--noinform" "--no-userinit"
+                         "--no-sysinit" "--non-interactive" "--eval"))
+             (success (sv-run (append base (list "(format t \"SUPERVISOR-FIXTURE-OUTPUT~%\")")) 5))
+             (timeout (sv-run (append base (list "(sleep 3)")) 1)))
+        (unless (and (equal '(:ok :failed :timeout :unreaped :failed)
+                            (mapcar (lambda (x) (apply #'sv-classify x))
+                                    '((t 0 nil) (t 1 nil) (t 0 t) (nil nil nil) (t nil nil))))
+                     (eq :ok (getf success :status)) (getf success :child-closed)
+                     (eq :timeout (getf timeout :status)) (getf timeout :child-closed))
+          (error "supervise.lisp COD-60: classifier/process exit/timeout."))
+        (write (list :schema-version 1 :kind :external-supervisor-self-test :status :ok :checks 7
+                     :success-fixture success :timeout-fixture timeout) :pretty t) (terpri))
+      (let ((seconds (when (and (>= (length args) 4) (string= "--seconds" (first args))
+                                (string= "--" (third args)))
+                       (parse-integer (second args) :junk-allowed nil))))
+        (unless (typep seconds '(integer 1 1200))
+          (error "supervise.lisp COD-61: --seconds 1..1200 -- argv."))
+        (let* ((result (sv-run (nthcdr 3 args) seconds)) (status (getf result :status)))
+          (format t "~&EXTERNAL-SUPERVISOR ~S~%" result)
+          (unless (eq status :ok) (format *error-output* "supervise.lisp COD-61: child ~A.~%" status))
+          (sb-ext:exit :code (if (eq status :ok) 0 1))))))

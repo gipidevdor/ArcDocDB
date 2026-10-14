@@ -141,3 +141,5 @@ aperti. Le letture statiche dell'autore non sono revisione indipendente.
 Questo percorso sostituisce un vecchio control log già autorevole; creazione
 iniziale della Serie, pubblicazione senza target, rotazione online e recovery
 completo restano da integrare.
+
+Il [completamento I/O](io-completamento.md) impedisce il riuso delle capacità append/flush dopo uscite incomplete, mantenendo CLOSED terminale. Le sonde funzionali del percorso completo e il benchmark preregistrato sono descritti nel [metodo](control-verifica-metodo.md); gli esiti vengono conservati separatamente dal metodo.

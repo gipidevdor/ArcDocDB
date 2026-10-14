@@ -7,7 +7,6 @@
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008 REQ-VAL-001
 (require :asdf)
 (require :sb-posix)
-(load "tools/evidence-storage.lisp")
 (defpackage #:arcdocdb.io.rename.mutation (:use #:cl))
 (in-package #:arcdocdb.io.rename.mutation)
 (declaim (optimize (safety 3) (debug 2)))
@@ -17,6 +16,24 @@
 (defconstant +record-limit+ 2097152)
 (defconstant +file-limit+ 16777216)
 (defconstant +inventory-limit+ 4096)
+;;; OWNER: driver C4 nel proprio processo; profilo fissato prima di main/child-main.
+;;; Il wrapper carica questo engine con --library e ripristina poi gli argv effettivi.
+(defparameter *profile* :io-rename)
+(defparameter *campaign-kind* :io-rename-mutations)
+(defparameter *campaign-config-kind* :io-rename-mutation-campaign-config)
+(defparameter *config-kind* :io-rename-mutation-config)
+(defparameter *child-kind* :io-rename-mutation-child)
+(defparameter *mutant-files* '("src/io/rename.lisp"))
+(defparameter *backend-test-files* '("tests/io/rename.lisp"))
+(defparameter *expected-test-count* nil)
+(defparameter *driver-source* "tools/io-rename-mutation.lisp")
+(defparameter *engine-source* "tools/io-rename-mutation.lisp")
+(defparameter *evidence-source* "tools/evidence-storage.lisp")
+(load *evidence-source*)
+(defparameter *profile-self-test* nil)
+(defparameter *profile-static-risks*
+  '(:only-four-rename-mutants :shared-rename-core-also-used-by-namespace
+    :rename-tests-required :native-fixture-io))
 (defparameter *test-suites*
   '(("ARCDOCDB.IO.TESTS" "*TESTS*" "tests/io/rename.lisp" "IO-RENAME-")
     ("ARCDOCDB.IO.TESTS" "*TESTS*" "tests/io/rename-native.lisp" "IO-RENAME-")))
@@ -53,7 +70,7 @@
 (define-condition invalid-campaign (error)
   ((detail :initarg :detail :reader campaign-detail))
   (:report (lambda (condition stream)
-             (format stream "tools/io-rename-mutation.lisp COD-61: ~A" (campaign-detail condition)))))
+             (format stream "~A COD-61: ~A" *driver-source* (campaign-detail condition)))))
 (define-condition synthetic-fixture-timeout (simple-error) ())
 (define-condition synthetic-io-fault (simple-error) ())
 (define-condition campaign-warning (error)
@@ -90,10 +107,37 @@
       (reject "canonical SHA256 shape/source drift: ~A." path))
     (require-time)
     hash))
+(defun source-helpers ()
+  (remove-duplicates (list *driver-source* *engine-source* *evidence-source*) :test #'string=))
+(defun helper-specs ()
+  "Ruoli espliciti: anche quando driver ed engine coincidono, le due copie raw restano attestate."
+  (list (list :role :driver :file *driver-source* :raw "driver.lisp")
+        (list :role :engine :file *engine-source* :raw "engine.lisp")
+        (list :role :evidence :file *evidence-source* :raw "evidence-storage.lisp")))
+(defun capture-helpers (root evidence)
+  (loop for spec in (helper-specs)
+        for source = (merge-pathnames (getf spec :file) root)
+        for destination = (merge-pathnames (getf spec :raw) evidence)
+        for before = (sha256 source)
+        do (ensure-directories-exist destination)
+           (uiop:copy-file source destination)
+           (unless (and (string= before (sha256 source)) (string= before (sha256 destination)))
+             (reject "helper drift while capturing ~A." source))
+        collect (append spec (list :sha256 before))))
+(defun verify-helpers (entries root evidence)
+  "Confronta ruolo/path, SHA preregistrato, fonte nella copia e bytes raw; nessun LOAD dei dati."
+  (and (= (length entries) (length (helper-specs)))
+       (loop for entry in entries for spec in (helper-specs)
+             always (and (eq (getf entry :role) (getf spec :role))
+                         (equal (getf entry :file) (getf spec :file))
+                         (equal (getf entry :raw) (getf spec :raw))
+                         (stringp (getf entry :sha256))
+                         (string= (getf entry :sha256) (sha256 (merge-pathnames (getf spec :file) root)))
+                         (string= (getf entry :sha256) (sha256 (merge-pathnames (getf spec :raw) evidence)))))))
 (defun inventory ()
   (append '("arcdocdb.asd") (sort (mapcar #'enough-namestring (directory "src/**/*.lisp")) #'string<)
           (sort (mapcar #'enough-namestring (directory "tests/**/*.lisp")) #'string<)
-          '("tools/io-rename-mutation.lisp" "tools/evidence-storage.lisp")))
+          (source-helpers)))
 (defun manifest-entry (file root)
   (require-time)
   (let ((path (merge-pathnames file root)))
@@ -212,7 +256,7 @@
   "Reader evidence esistente, bounded e non valutante; nessun parser nuovo."
   (arcdocdb.evidence:read-evidence path :max-expanded-bytes +record-limit+))
 (defun expected-tests ()
-  "Nomi letterali dai soli due file rename; preregistrazione senza caricare il prodotto."
+  "Nomi letterali dai soli file del profilo; preregistrazione senza caricare il prodotto."
   (let ((tests nil) (backend-tests nil))
     (dolist (suite *test-suites*)
       (destructuring-bind (package registry file marker) suite
@@ -227,12 +271,14 @@
                        (lambda (name)
                          (search marker name))
                        names))
-          (unless names (reject "rename suite absent: ~A." file))
-          (when (string= file "tests/io/rename.lisp")
-            (setf backend-tests (mapcar (lambda (name) (list package name)) names)))
+          (unless names (reject "profile suite absent: ~A." file))
+          (when (member file *backend-test-files* :test #'string=)
+            (setf backend-tests (append backend-tests (mapcar (lambda (name) (list package name)) names))))
           (setf tests (append tests (mapcar (lambda (name) (list package name)) names))))))
     (unless (= (length tests) (length (remove-duplicates tests :test #'equal)))
-      (reject "duplicate rename test names."))
+      (reject "duplicate profile test names."))
+    (when (and *expected-test-count* (/= *expected-test-count* (length tests)))
+      (reject "profile test count differs from ~D." *expected-test-count*))
     (unless (and (= 4 (length *mutants*))
                  (= 4 (length (remove-duplicates (mapcar (lambda (m) (getf m :test)) *mutants*) :test #'equal)))
                  (every (lambda (m) (and (member (getf m :test) tests :test #'equal)
@@ -263,7 +309,7 @@
     ((and (eq :failed (getf child :status)) (eq :compile (getf child :phase)) (not (zerop exit))) :compilation-error)
     ((or (eq :infrastructure (getf child :failure-kind))
          (and (eq :complete (getf child :phase)) (not (zerop exit)))) :infrastructure-error)
-    ((not (and verified (eql 1 (getf child :schema-version)) (eq :io-rename-mutation-child (getf child :kind))
+    ((not (and verified (eql 1 (getf child :schema-version)) (eq *child-kind* (getf child :kind))
                (equal expected (getf child :expected-tests)) (eq t (getf child :compiled))
                (equal expected (getf child :registered-tests))
                (eq t (getf child :suite-compiled)))) :invalid)
@@ -301,7 +347,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
   (let* ((tests '(("ARCDOCDB.IO.TESTS" "TEST-REQ-VAL-001-IO-RENAME-FIRST")
                   ("ARCDOCDB.IO.TESTS" "TEST-REQ-VAL-001-IO-RENAME-SECOND")))
          (target (first tests))
-         (failed (list :schema-version 1 :kind :io-rename-mutation-child :status :failed :phase :tests
+         (failed (list :schema-version 1 :kind *child-kind* :status :failed :phase :tests
                        :compiled t :suite-compiled t :expected-tests tests :passed-tests nil
                        :registered-tests tests
                        :failed-test (first tests) :failure-kind :assertion))
@@ -446,9 +492,11 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
         (unless (equal hashes (loop for file in paths for hash in known
                                    collect (list :file file :sha256 hash)))
           (reject "canonical digest fixtures differ from known SHA256."))))
-    (list :status :ok :classifier-cases checks :anchor-negative-cases 3 :anchor-roundtrip t :record-roundtrip t
-          :typed-fixture-timeout-detection t :canonical-sha256-fixtures 3
-          :write-schema-sha-detection t :no-compilation t :no-product-child t)))
+    (append (list :status :ok :classifier-cases checks :anchor-negative-cases 3 :anchor-roundtrip t :record-roundtrip t
+                  :typed-fixture-timeout-detection t :canonical-sha256-fixtures 3
+                  :write-schema-sha-detection t :no-compilation t :no-product-child t)
+            (when *profile-self-test*
+              (list :profile *profile* :profile-checks (funcall *profile-self-test* directory))))))
 (defun loaded-source-files (root config)
   "Solo componenti Lisp dei due sistemi effettivamente caricati; massimo 4096 nodi/12 livelli."
   (let ((files nil) (nodes 0))
@@ -500,17 +548,24 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
         (loop for file in files for fasl in fasls
               do (push (compiled-entry file fasl root hashes) (getf record :compiled-files))))
       (setf (getf record :suite-compiled) t))))
+(defun package-suites (package-name)
+  (remove-if-not (lambda (suite) (string= package-name (first suite))) *test-suites*))
+(defun package-markers (package-name)
+  (remove-duplicates (mapcar #'fourth (package-suites package-name)) :test #'string=))
 (defun registered-tests (expected)
   (unless (equal expected (expected-tests)) (reject "frozen test selection drift."))
   (dolist (package-name (remove-duplicates (mapcar #'first expected) :test #'string=))
     (let* ((package (find-package package-name))
-           (suite (find package-name *test-suites* :key #'first :test #'string=))
-           (registry (and package (find-symbol (second suite) package)))
+           (suites (package-suites package-name))
+           (markers (package-markers package-name))
+           (registry (and package (find-symbol (second (first suites)) package)))
            (selected (remove-if-not (lambda (test) (string= package-name (first test))) expected)))
+      (unless (= 1 (length (remove-duplicates (mapcar #'second suites) :test #'string=)))
+        (reject "profile package must use one registry ~A." package-name))
       (unless (and registry (boundp registry)) (reject "suite registry absent ~A." package-name))
       (let ((registered (mapcar #'symbol-name (reverse (symbol-value registry)))))
         (unless (equal (mapcar #'second selected)
-                       (remove-if-not (lambda (name) (search "IO-RENAME-" name)) registered))
+                       (remove-if-not (lambda (name) (some (lambda (marker) (search marker name)) markers)) registered))
           (reject "frozen registry mismatch ~A." package-name)))
       (dolist (test selected)
         (let ((symbol (find-symbol (second test) package)))
@@ -519,7 +574,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
 (defun child-main (config-path)
   (let* ((config (read-record config-path)) (code 2)
          (*deadline* (+ (get-internal-real-time) (* +child-seconds+ internal-time-units-per-second)))
-         (record (list :schema-version 1 :kind :io-rename-mutation-child :status :running :phase :setup
+         (record (list :schema-version 1 :kind *child-kind* :profile *profile* :status :running :phase :setup
                        :compiled nil :suite-compiled nil :compiled-files nil :loaded-source-files nil
                        :expected-tests (getf config :expected-tests)
                        :registered-tests nil :passed-tests nil :failed-test nil :failure-kind nil :source-manifest nil
@@ -528,13 +583,20 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
     (handler-case
         (handler-bind ((warning #'abort-warning))
           (unless (and (eql 1 (getf config :schema-version))
-                       (eq :io-rename-mutation-config (getf config :kind))
-                       (equal *test-suites* (getf config :test-suites)))
+                       (eq *config-kind* (getf config :kind)) (eq *profile* (getf config :profile))
+                       (equal *test-suites* (getf config :test-suites))
+                       (equal *mutant-files* (getf config :mutant-files))
+                       (equal *backend-test-files* (getf config :backend-test-files))
+                       (eql *expected-test-count* (getf config :expected-test-count))
+                       (equal (source-helpers) (getf config :source-helpers)))
             (reject "child config schema/selection mismatch."))
           (setf (getf record :config-sha256) (sha256 config-path))
           (setf (getf record :source-manifest-before) (manifest (getf config :files) (truename "./")))
           (unless (equal (getf config :manifest) (getf record :source-manifest-before))
             (reject "copy drift before compile."))
+          (unless (verify-helpers (getf config :helper-manifest) (truename "./")
+                                  (uiop:pathname-directory-pathname config-path))
+            (reject "child helper source/raw SHA mismatch."))
           (setf (getf record :phase) :compile) (compile-child config record)
           (setf (getf record :phase) :validate-suite)
           (setf (getf record :registered-tests) (registered-tests (getf config :expected-tests))
@@ -595,15 +657,17 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
   (unless (equal frozen (manifest files root)) (reject "source drift after copy."))
   (let* ((copied (manifest files copy))
          (changed (loop for old in frozen for new in copied unless (equal old new) collect (getf new :file)))
-         (config (list :schema-version 1 :kind :io-rename-mutation-config :files files
+         (config (list :schema-version 1 :kind *config-kind* :profile *profile* :files files
                        :baseline-manifest frozen :manifest copied :changed-paths changed :mutation mutant
                        :expected-tests expected :test-suites *test-suites*
+                       :mutant-files *mutant-files* :backend-test-files *backend-test-files*
+                       :expected-test-count *expected-test-count* :source-helpers (source-helpers)
+                       :driver-source *driver-source* :engine-source *engine-source* :evidence-source *evidence-source*
+                       :helper-manifest (capture-helpers copy evidence)
                        :compiled-source-files (loaded-source-files root (list :files files))
                        :child-report (namestring (merge-pathnames "child-report.lisp" evidence)))))
     (unless (equal changed (when mutant (list (getf mutant :file)))) (reject "unexpected copy delta ~S." changed))
     (write-record config (merge-pathnames "config.lisp" evidence))
-    (uiop:copy-file (merge-pathnames "tools/io-rename-mutation.lisp" copy) (merge-pathnames "driver.lisp" evidence))
-    (uiop:copy-file (merge-pathnames "tools/evidence-storage.lisp" copy) (merge-pathnames "evidence-storage.lisp" evidence))
     config))
 (defun wait-death (process seconds)
   (let ((deadline (+ (get-internal-real-time) (* seconds internal-time-units-per-second))))
@@ -621,7 +685,14 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
          (= (length expected) (length (remove-duplicates expected :test #'string=)))
          (every (lambda (file) (member file files :test #'string=)) expected)
          (equal (getf config :manifest) (manifest files copy))
-         (eql 1 (getf config :schema-version)) (eq :io-rename-mutation-config (getf config :kind))
+         (eql 1 (getf config :schema-version)) (eq *config-kind* (getf config :kind))
+         (eq *profile* (getf config :profile)) (eq *profile* (getf child :profile))
+         (equal (source-helpers) (getf config :source-helpers))
+         (equal *driver-source* (getf config :driver-source))
+         (equal *engine-source* (getf config :engine-source))
+         (equal *evidence-source* (getf config :evidence-source))
+         (equal *mutant-files* (getf config :mutant-files))
+         (or (null mutant) (member (getf mutant :file) *mutant-files* :test #'string=))
          (equal changed (getf config :changed-paths))
          (equal changed (when mutant (list (getf mutant :file))))
          (equal (getf config :manifest) (getf child :source-manifest-before))
@@ -630,10 +701,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
          (equal expected (getf child :loaded-source-files))
          (string= (sha256 config-path) (getf child :config-sha256))
          (string= (getf child :config-sha256) (getf child :config-sha256-after))
-         (string= (sha256 (merge-pathnames "driver.lisp" evidence))
-                  (sha256 (merge-pathnames "tools/io-rename-mutation.lisp" copy)))
-         (string= (sha256 (merge-pathnames "evidence-storage.lisp" evidence))
-                  (sha256 (merge-pathnames "tools/evidence-storage.lisp" copy)))
+         (verify-helpers (getf config :helper-manifest) copy evidence)
          (or (null mutant)
              (string= (sha256 (merge-pathnames "mutated-source.lisp" evidence))
                       (sha256 (merge-pathnames (getf mutant :file) copy))))
@@ -656,7 +724,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
   (let* ((name (if mutant (getf mutant :name) "baseline"))
          (copy (exclusive-owned-child directory "raw/isolatedtests/" name))
          (evidence (exclusive-owned-child directory "raw/evidence/" name))
-         (result (list :name name :file (when mutant (getf mutant :file)) :result :pending :status :running
+         (result (list :name name :profile *profile* :file (when mutant (getf mutant :file)) :result :pending :status :running
                        :copy-directory (namestring copy) :evidence-directory (namestring evidence)
                        :expected-failure (when mutant (getf mutant :expected-failure))
                        :suggested-detection-test (when mutant (getf mutant :test))
@@ -679,7 +747,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
                              "--script" (namestring (merge-pathnames "driver.lisp" evidence))
                              "--child" (namestring (merge-pathnames "config.lisp" evidence)))))
             (unless (plusp seconds) (reject "campaign timeout."))
-            (write-record (list :argv argv :directory (namestring copy) :deadline-seconds seconds)
+            (write-record (list :argv argv :profile *profile* :directory (namestring copy) :deadline-seconds seconds)
                           (merge-pathnames "command.lisp" evidence))
             (setf (getf result :deadline-seconds) seconds
                   (getf result :changed-paths) (getf config :changed-paths)
@@ -716,46 +784,50 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
                             :reaped (getf result :child-reaped)))))
       (error (condition)
         (setf (getf result :result) :infrastructure-error
-              (getf result :diagnostic) (format nil "tools/io-rename-mutation.lisp COD-61: ~A" condition))))
+              (getf result :diagnostic) (format nil "~A COD-61: ~A" *driver-source* condition))))
     (setf (getf result :status) (if (member (getf result :result) '(:baseline-passed :detected)) :ok :failed))
     (write-record result (merge-pathnames "result.lisp" evidence)) (funcall checkpoint result)
     result))
 (defun main ()
   (let* ((args (uiop:command-line-arguments)) (root (truename "./")) (directory nil) (files nil) (frozen nil)
          (*deadline* (+ (get-internal-real-time) (* +campaign-seconds+ internal-time-units-per-second)))
-         (report (list :schema-version 1 :kind :io-rename-mutations :status :running :argv args
+         (report (list :schema-version 1 :kind *campaign-kind* :profile *profile* :status :running :argv args
                        :started-at-universal-time (get-universal-time) :self-test nil :baseline nil :mutants nil
                        :source-root (namestring root)
                        :targets (mapcar (lambda (m) (list :name (getf m :name) :file (getf m :file)
                                                          :test (getf m :test))) *mutants*)
                        :test-selection *test-suites* :expected-tests nil :source-consistency :not-observed
-                       :source-helpers '("tools/io-rename-mutation.lisp" "tools/evidence-storage.lisp")
+                       :mutant-files *mutant-files* :backend-test-files *backend-test-files*
+                       :expected-test-count *expected-test-count* :source-helpers (source-helpers)
+                       :driver-source *driver-source* :engine-source *engine-source* :evidence-source *evidence-source*
+                       :helper-manifest nil
                        :raw-root "raw/evidence/" :collector-exclusions '("raw/isolatedtests/")
                        :file-limit-bytes +file-limit+ :inventory-limit +inventory-limit+
                        :child-deadline-seconds +child-seconds+ :campaign-deadline-seconds +campaign-seconds+
                        :deadline-policy :cooperative :campaign-config "raw/evidence/campaign-config.lisp"
-                       :static-risks '(:parent-source-freeze-required :not-executed-by-author :only-four-rename-mutants
-                                       :shared-rename-core-also-used-by-namespace
-                                       :rename-tests-required :native-fixture-io :serial-children
-                                       :compiler-fixture-type-io-timeout-crash-not-kills :isolatedcopies-excluded-from-collector
-                                       :evidence-directory-must-be-collected-with-terminal-producer
-                                       :canonical-digest-helper-uses-shasum :all-asdf-test-definitions-loaded-only
-                                       :cooperative-parent-deadline :stat-timestamps-platform-resolution
-                                       :no-engine-qualification))))
+                       :static-risks (append '(:parent-source-freeze-required :not-executed-by-author :serial-children
+                                               :compiler-fixture-type-io-timeout-crash-not-kills :isolatedcopies-excluded-from-collector
+                                               :evidence-directory-must-be-collected-with-terminal-producer
+                                               :canonical-digest-helper-uses-shasum :all-asdf-test-definitions-loaded-only
+                                               :cooperative-parent-deadline :stat-timestamps-platform-resolution
+                                               :no-engine-qualification)
+                                             *profile-static-risks*))))
     (handler-case
         (progn
           (unless (and (= 2 (length args)) (member (first args) '("--self-test" "--check") :test #'string=))
             (reject "usage --self-test|--check spikes/out/<namespace-nuovo>/."))
           (setf directory (exclusive-directory (second args))) (save-report report directory)
-          (write-record (list :schema-version 1 :kind :io-rename-mutation-campaign-config :argv args
+          (setf (getf report :helper-manifest)
+                (capture-helpers root (merge-pathnames "raw/evidence/" directory)))
+          (write-record (list :schema-version 1 :kind *campaign-config-kind* :profile *profile* :argv args
                               :source-root (namestring root) :targets *mutants* :test-suites *test-suites*
+                              :mutant-files *mutant-files* :backend-test-files *backend-test-files*
+                              :expected-test-count *expected-test-count* :source-helpers (source-helpers)
+                              :driver-source *driver-source* :engine-source *engine-source* :evidence-source *evidence-source*
+                              :helper-manifest (getf report :helper-manifest)
                               :deadline-policy :cooperative :child-seconds +child-seconds+
                               :campaign-seconds +campaign-seconds+ :cleanup-seconds +cleanup-seconds+)
                         (merge-pathnames "raw/evidence/campaign-config.lisp" directory))
-          (uiop:copy-file (merge-pathnames "tools/io-rename-mutation.lisp" root)
-                          (merge-pathnames "raw/evidence/driver.lisp" directory))
-          (uiop:copy-file (merge-pathnames "tools/evidence-storage.lisp" root)
-                          (merge-pathnames "raw/evidence/evidence-storage.lisp" directory))
           (setf (getf report :self-test)
                 (self-test (exclusive-owned-child directory "raw/evidence/" "self-test")))
           (write-record (getf report :self-test) (merge-pathnames "raw/evidence/self-test/result.lisp" directory))
@@ -770,7 +842,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
               (setf (getf report :expected-tests) expected (getf report :test-count) (length expected))
               (save-report report directory)
               (dolist (mutant *mutants*)
-                (unless (string= (getf mutant :file) "src/io/rename.lisp") (reject "mutant scope invalid."))
+                (unless (member (getf mutant :file) *mutant-files* :test #'string=) (reject "mutant scope invalid."))
                 (unless (member (getf mutant :test) expected :test #'equal) (reject "mutant test absent."))
                 (unique-position (uiop:read-file-string (getf mutant :file)) (getf mutant :before)))
               (let ((baseline (run-copy root directory files frozen expected nil
@@ -793,7 +865,7 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
           (setf (getf report :status) :finalizing))
       (error (condition)
         (setf (getf report :status) :failed
-              (getf report :diagnostic) (format nil "tools/io-rename-mutation.lisp COD-61: ~A" condition))))
+              (getf report :diagnostic) (format nil "~A COD-61: ~A" *driver-source* condition))))
     (handler-case
         (progn
           (when frozen
@@ -819,6 +891,9 @@ Le fixture digest/record sono locali; FILE-SHA256 conserva il proprio helper can
           (save-report report directory)
           ;; Dopo hashes finali, result terminali, contatori e report provvisorio.
           ;; Non è un hard-timeout: le chiamate al lettore canonico restano cooperative.
+          (when (getf report :helper-manifest)
+            (unless (verify-helpers (getf report :helper-manifest) root (merge-pathnames "raw/evidence/" directory))
+              (reject "campaign helper source/raw SHA mismatch.")))
           (require-time)
           (when (eq :finalizing (getf report :status)) (setf (getf report :status) :ok)))
       (error (condition)

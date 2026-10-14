@@ -193,7 +193,10 @@
                              (:file "control-payload")))
                (:module "io" :serial t
                 :components ((:file "support") (:file "transfer") (:file "native")
-                             (:file "rename") (:file "rename-native")))
+                             (:file "rename") (:file "rename-native") (:file "flush-failure")
+                             (:file "transfer-failure")))
+               (:module "control" :serial t
+                :components ((:file "support") (:file "publication") (:file "native")))
                (:module "recovery"
                 :serial t
                 :components ((:file "support") (:file "scan") (:file "corruption")
@@ -239,6 +242,7 @@
              (uiop:symbol-call '#:arcdocdb.scheduler.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.storage.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.control.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)

@@ -1,0 +1,40 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4000984609 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((96) BASE-CHAR
+    . \"/private/tmp/arcdocdb-pool-recycle-qualification-1791995415/spikes/out/4000984576-check-42207-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 2 :WALL-SECONDS 1.729711d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 57106575 :STORED-BYTES 878357
+ :RESULTS
+ ((:PATH
+   #A((107) BASE-CHAR
+      . \"/private/tmp/arcdocdb-pool-recycle-qualification-1791995415/spikes/out/4000984576-check-42207-0/SPK-07.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28144187 :STORED-BYTES 410977 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"SPK-07.lisp.gz\" :UNCOMPRESSED-BYTES 28144187 :UNCOMPRESSED-SHA256
+    \"64f214d2cc80bd8642eeb9bbc743335ed0171dc876229d7fe01ea7beeba9512a\"
+    :COMPRESSED-BYTES 410659 :COMPRESSED-SHA256
+    \"77748dbcda61112c118360d93226d4c9fa5967fd8172c88b51639657a6dec8ce\"))
+  (:PATH
+   #A((107) BASE-CHAR
+      . \"/private/tmp/arcdocdb-pool-recycle-qualification-1791995415/spikes/out/4000984576-check-42207-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28962388 :STORED-BYTES 467380 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 28962388 :UNCOMPRESSED-SHA256
+    \"c1d8510c29beaf1ad1f4610e3a627875dacd43f8494b0baff82f54e38f3c06c8\"
+    :COMPRESSED-BYTES 467062 :COMPRESSED-SHA256
+    \"4cb513e1fda0ae6ca7f74a1f5d195c6ea6c39e5eebf876cd12ae842df87738b3\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((87) BASE-CHAR
+     . "/private/tmp/arcdocdb-pool-recycle-qualification-1791995415/tools/compact-evidence.lisp")
+  "--root"
+  #A((96) BASE-CHAR
+     . "/private/tmp/arcdocdb-pool-recycle-qualification-1791995415/spikes/out/4000984576-check-42207-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "42207"))
+ :STARTED-AT-UNIVERSAL-TIME 4000984606)

@@ -6,4 +6,4 @@
   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted
                 #:invariant-violation)
   (:export #:dispatcher-writer-pool #:crea-dispatcher-writer-pool
-           #:prendi-collegamento-pool #:collega-obbligo-pool))
+           #:prendi-collegamento-pool #:collega-obbligo-pool #:ricircola-collegamento-pool))

@@ -21,4 +21,6 @@
            #:manifest-checkpoint-control #:control-preparato #:prepara-checkpoint-control
            #:log-control-preparato #:manifest-control-preparato
            #:control-pubblicato #:pubblica-control-recuperato #:stato-pubblicazione-control
-           #:log-control-pubblicato #:manifest-control-pubblicato #:active-control-pubblicato))
+           #:log-control-pubblicato #:manifest-control-pubblicato #:active-control-pubblicato
+           #:control-recuperato #:leggi-control-recuperato #:frontiere-control-recuperato
+           #:manifest-control-recuperato #:pubblica-control-validato))

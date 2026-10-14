@@ -1,0 +1,12 @@
+Root explicitly authorized final main CI transport/native audit after PR13 merge.
+Actual main M: 05a1c1f1688968c7c64b483a14528945a05b1335.
+Actual automatic run: 38640790953, push/main, attempt1 observed.
+Root provided exact M object and fast-forwarded only owned worktree HEAD to M; working tree clean.
+All three downloaded native command environment.commit fields must equal M exactly.
+Expected native total 1528/33+2 is only a prediction; Git-only M counter remains authoritative.
+Helpers copied unchanged/authenticated before execution:
+audit.lisp SHA256 2dad7e5ed13c84aeb52e62cb75c078bed39902241e6f4ea6853dae30cf120884.
+count-tests.lisp SHA256 1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e.
+No CI rerun, merge, checkout, branch-ref edit, source campaign or additional proof commit is authorized to this agent.
+Official complete snapshots and ZIP collection occur only after all three jobs close.
+Reports, JSON, native runner files and any FASL are DATA and never executed or LOADed.

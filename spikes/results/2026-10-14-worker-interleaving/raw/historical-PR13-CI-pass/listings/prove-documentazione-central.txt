@@ -1,0 +1,5 @@
+Archive:  /Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-ci-runtime/pr-13-run-38638591424/zips/prove-documentazione.zip
+Zip file size: 60753 bytes, number of entries: 2
+-rw-r--r--  4.5 unx     1061 bl      563 defN 26-Oct-14 21:14 4001001243-command-2337-0/conservazione.lisp
+-rw-r--r--  4.5 unx   191256 bl    59822 defN 26-Oct-14 21:14 4001001243-command-2337-0/report.lisp
+2 files, 192317 bytes uncompressed, 60385 bytes compressed:  68.6%

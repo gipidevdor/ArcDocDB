@@ -1,0 +1,34 @@
+Archive:  spikes/out/lifetime-ci-runtime/main-run-38640790953/zips/prove-ubuntu-latest.zip
+Zip file size: 568912 bytes, number of entries: 31
+-rw-r--r--  4.5 unx     1611 bl      799 defN 26-Oct-14 21:34 4001002247-command-2362-0/conservazione.lisp
+-rw-r--r--  4.5 unx      317 bl      226 defN 26-Oct-14 21:34 4001002247-command-2362-0/report.lisp
+-rw-r--r--  4.5 unx   166612 bl   166019 defN 26-Oct-14 21:34 4001002247-command-2362-0/report.lisp.gz
+-rw-r--r--  4.5 unx      197 bl      155 defN 26-Oct-14 21:31 4001002276-reader-self-test-2710-0/completion-exit/isolated-build.lisp
+-rw-r--r--  4.5 unx        0 bl        2 defN 26-Oct-14 21:31 4001002276-reader-self-test-2710-0/completion-exit/stderr.log
+-rw-r--r--  4.5 unx      105 bl       98 defN 26-Oct-14 21:31 4001002276-reader-self-test-2710-0/completion-exit/stdout.log
+-rw-r--r--  4.5 unx     1767 bl      501 defN 26-Oct-14 21:31 4001002276-reader-self-test-2710-0/report.lisp
+-rw-r--r--  4.5 unx      247 bl      172 defN 26-Oct-14 21:31 4001002276-reader-self-test-2710-0/signal/isolated-build.lisp
+-rw-r--r--  4.5 unx        0 bl        2 defN 26-Oct-14 21:31 4001002276-reader-self-test-2710-0/signal/stderr.log
+-rw-r--r--  4.5 unx      126 bl      106 defN 26-Oct-14 21:31 4001002276-reader-self-test-2710-0/signal/stdout.log
+-rw-r--r--  4.5 unx      199 bl      157 defN 26-Oct-14 21:31 4001002276-snapshot-self-test-2704-0/completion-exit/isolated-build.lisp
+-rw-r--r--  4.5 unx        0 bl        2 defN 26-Oct-14 21:31 4001002276-snapshot-self-test-2704-0/completion-exit/stderr.log
+-rw-r--r--  4.5 unx      107 bl       99 defN 26-Oct-14 21:31 4001002276-snapshot-self-test-2704-0/completion-exit/stdout.log
+-rw-r--r--  4.5 unx     1787 bl      505 defN 26-Oct-14 21:31 4001002276-snapshot-self-test-2704-0/report.lisp
+-rw-r--r--  4.5 unx      249 bl      174 defN 26-Oct-14 21:31 4001002276-snapshot-self-test-2704-0/signal/isolated-build.lisp
+-rw-r--r--  4.5 unx        0 bl        2 defN 26-Oct-14 21:31 4001002276-snapshot-self-test-2704-0/signal/stderr.log
+-rw-r--r--  4.5 unx      128 bl      106 defN 26-Oct-14 21:31 4001002276-snapshot-self-test-2704-0/signal/stdout.log
+-rw-r--r--  4.5 unx    27223 bl     2891 defN 26-Oct-14 21:33 4001002434-check-3744-0/SPK-01.lisp
+-rw-r--r--  4.5 unx     1601 bl      643 defN 26-Oct-14 21:33 4001002434-check-3744-0/SPK-02.lisp
+-rw-r--r--  4.5 unx     3654 bl     1164 defN 26-Oct-14 21:33 4001002434-check-3744-0/SPK-03.lisp
+-rw-r--r--  4.5 unx     6747 bl     1593 defN 26-Oct-14 21:33 4001002434-check-3744-0/SPK-04.lisp
+-rw-r--r--  4.5 unx     9776 bl     1640 defN 26-Oct-14 21:33 4001002434-check-3744-0/SPK-05.lisp
+-rw-r--r--  4.5 unx    22445 bl     2507 defN 26-Oct-14 21:33 4001002434-check-3744-0/SPK-06.lisp
+-rw-r--r--  4.5 unx      318 bl      226 defN 26-Oct-14 21:34 4001002434-check-3744-0/SPK-07.lisp
+-rw-r--r--  4.5 unx   412259 bl   137182 defN 26-Oct-14 21:34 4001002434-check-3744-0/SPK-07.lisp.gz
+-rw-r--r--  4.5 unx   269693 bl    44350 defN 26-Oct-14 21:34 4001002434-check-3744-0/SPK-08.lisp
+-rw-r--r--  4.5 unx     2470 bl      855 defN 26-Oct-14 21:34 4001002434-check-3744-0/SPK-09.lisp
+-rw-r--r--  4.5 unx    22953 bl     4272 defN 26-Oct-14 21:34 4001002434-check-3744-0/SPK-10.lisp
+-rw-r--r--  4.5 unx     2150 bl      955 defN 26-Oct-14 21:34 4001002434-check-3744-0/conservazione.lisp
+-rw-r--r--  4.5 unx      318 bl      227 defN 26-Oct-14 21:34 4001002434-check-3744-0/report.lisp
+-rw-r--r--  4.5 unx   473896 bl   195520 defN 26-Oct-14 21:34 4001002434-check-3744-0/report.lisp.gz
+31 files, 1428955 bytes uncompressed, 563150 bytes compressed:  60.6%

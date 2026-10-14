@@ -1,0 +1,20 @@
+Original failed main CI, run38640790953 attempt1, event push/main, exact head05a1c1f1688968c7c64b483a14528945a05b1335.
+Ubuntu and documentazione concluded success; macOS concluded failure in make check-core after successful setup.
+Native macOS command4001002360-command-5473-0: FAILED exit2, source STABLE, environment.commit exactly main M.
+Exact failure SIMPLE-ERROR: PLUSP ARCDOCDB.CBOR.ARRAY.WRITE.TESTS::OVERLAP, test TEST-REQ-CBR-005-ARRAY-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-INPUTS.
+Float fixture completed both waves with positive overlaps2821/2732. Array wave0 printed positive overlap4747, then the assertion failed before wave1 timing log. No failed interval values or external-load cause are invented.
+All three native command environment.commit fields independently equal M exactly; failed macOS status is not reclassified.
+Git-only authenticated M counter derives1528 module tests/33 suites/2 smoke. CoreGET70, DIRECTORY72, ACTIVE42, resolver42, epochs34/read30.
+Seven original official JSON before/after snapshots (repo/workflow/run/jobs/artifacts/PR13/Gitcommit) are byte-identical, and all metadata commands completed exit0/stderr0.
+Three original binary ZIPs preserved. Actual bytes/native SHA256 match the official metadata:
+Ubuntu artifact11931230331:568912bytes SHAf13cdaea9816f53aaccec3d4f8ab7c02be0aba69e37f06f4c9b63e013d1a0a59.
+macOS artifact11930810460:146373bytes SHA7086fa261d2bef9fd68ff61613a6ce5b9d251f811fe284d384a3242838f5dabe.
+Documentazione artifact11930675141:60758bytes SHAf56f96338808c2bea65693e7cda50fb0f11cc1d2aeab8266666a934784b6095c.
+Central-directory/path listings preserved; only regular files and canonical relative paths were inspected before extraction. Counts31/3/2.
+Original ZIP integrity tests all exit0. Two fresh original ZIP byte inventories are identical. Extracted originals are retained whole as DATA.
+Main raw Git commit text and full NUL-separated tree preserved; exact M was already available locally from root, no agent fetch/ref/HEAD edit.
+Qualified unchanged R2 auditor SHA2dad7e5ed13c84aeb52e62cb75c078bed39902241e6f4ea6853dae30cf120884, counter SHA1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e.
+All-platform native auditor ran through record-command4001002676-command-21431-0 and correctly rejected native macOS FAILED; child exit1/source STABLE/stderr0.
+Ubuntu/documentazione checks completed before the terminal macOS rejection, inferred explicitly from the serial auditor control flow. There is no all-platform CI audit PASS.
+No CI rerun, new proof commit, source campaign, branch mutation, merge or cleanup performed by this agent.
+All writer processes are closed at handoff. Root must resolve the identified ARRAY fixture failure before final completion/archive.

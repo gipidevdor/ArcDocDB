@@ -1,0 +1,47 @@
+CI automatic run 38638591424, attempt 1, pull_request event, published P3 f0bd92d919736ab8896aef70d40cdc553ef9d925.
+All three official jobs completed successfully; no manual rerun or new run triggered.
+Actual native checkout from all three original reports: 61b4ecdd03e40d14f3b8249d2e83c08ac757b5b9.
+Native parents: 1d070d914c9d8f4a8365e8a9cee9748b3494f926; f0bd92d919736ab8896aef70d40cdc553ef9d925.
+Native tree: 2f6d72fa0ce8566e801d1bc039aab275a259ee8a.
+The exact Git object was fetched by SHA --no-tags, matched official git/commits metadata and preserved
+as native commit text/full NUL tree inventory; no branch ref, checkout, HEAD or main mutation.
+HEAD remained P3 and tracked working tree was clean at completion.
+
+Seven official before/after JSON files are byte-identical: repo, workflow, run, attempt1 jobs,
+artifacts, PR13 and git/commits/A. Original stdout/stderr snapshots are preserved.
+An additional initial commits/A response including file diffs is preserved as
+before/commit-with-files-R1.json (695635 bytes); its tool display exceeded the output budget,
+so the canonical git/commits/A endpoint was used for exact SHA/tree/parent authentication.
+No original response was overwritten or promoted to a parsed observation.
+
+Original ZIPs, size/digest matched official immutable artifact metadata:
+prove-macos-latest: artifact 11930045664, 584442 bytes, sha256:37b7acd7ace7660d3cff57f3af0564cc94fb5f69ca9f9f06da770f337e1f8c8c.
+prove-documentazione: artifact 11929132447, 60753 bytes, sha256:ccad3c44b733b96bc4bde2b2e4e2a12ecfb8138f500abf936bee7c41c69e908f.
+prove-ubuntu-latest: artifact 11928424747, 568980 bytes, sha256:1669ea822551faffe3fa00e4118344b9d68b53c017ddd209ab85c5967c042c3c.
+Central-directory listings inspected before native gh extraction: only unique canonical relative
+regular-file entries; macOS31, Ubuntu31, documentazione2. Expanded ZIP byte totals within 128MiB.
+All three unzip -t commands exited0; original native ZIP size/SHA inventory repeated fresh and equal.
+gh run download uses this exact run and artifact names; extracted data never LOADed.
+The qualified semantic auditor takes full fresh raw file/SHA inventories before and after each platform.
+
+Git-only counter SHA1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e derives
+1528 module tests in 33 suites plus2 smoke from exact native A.
+DIRECTORY72, core GET70, resolver42, ACTIVE42, epochs34, read30.
+All four named lifetime cases pass on Linux and Darwin; each registered case contains v1/v2 variants.
+Raw native CFW/TAG diagnostics are copied as data to audit/lifetime-cbor-diagnostics.txt:
+two waves per codec per platform; real start/first/end/sink/overlap values retained.
+The WALL interval includes fixture rendezvous/checks and is not pure encoder time, CPU parallelism or scaling.
+
+Qualified unchanged R2 auditor SHA2dad7e5ed13c84aeb52e62cb75c078bed39902241e6f4ea6853dae30cf120884
+was run through tools/record-command.lisp: native record4001001998-command-16221-0.
+Native wrapper OK, exit0, sourceSTABLE, exact922 source path/blobs unchanged;
+semantic audit OK on all three platforms against exact native A/full source tree.
+Raw inventories: Ubuntu31 files1429030 bytes; macOS31 files1446455 bytes; docs2 files192317 bytes.
+The two reader and two snapshot process outcomes per OS are correctly classified:
+SIGKILL signal9/exit137 and post-COMPLETE exit7, raw child stdout equal embedded reports.
+All native suite counts and DIRECTORY/GET/resolver/ACTIVE names/order authenticated from Git.
+Original reports, FASL if present and raw output remain data; no evidence/FASL LOAD.
+The official artifacts do not contain the complete CI core FASL cache; no such preservation is claimed.
+
+This agent did not merge, edit the PR, rerun CI, modify tracked source or change any branch.
+All metadata/download/count/audit/diagnostic writers are closed at handoff.

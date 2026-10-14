@@ -1,0 +1,6 @@
+Archive:  spikes/out/lifetime-ci-runtime/main-run-38640790953/zips/prove-macos-latest.zip
+Zip file size: 146373 bytes, number of entries: 3
+-rw-r--r--  4.5 unx      317 bl      224 defN 26-Oct-14 21:33 4001002360-command-5473-0/report.lisp
+-rw-r--r--  4.5 unx     1620 bl      811 defN 26-Oct-14 21:33 4001002360-command-5473-0/conservazione.lisp
+-rw-r--r--  4.5 unx   145074 bl   144798 defN 26-Oct-14 21:33 4001002360-command-5473-0/report.lisp.gz
+3 files, 147011 bytes uncompressed, 145833 bytes compressed:  0.8%

@@ -1,0 +1,479 @@
+;;;; Read-only audit of downloaded CI artifacts against an explicit Git commit.
+;;;; Only the trusted evidence reader is LOADed; all reports/logs are data.
+;;;; Invoke SBCL with --dynamic-space-size 2048. No tracked files are changed.
+;;;; GET source lifetime derivative; original SHA256:
+;;;; 08ff4de3ac096819c0deed99594ffa2cecb34cc53ec86a24424a4d73e4c93bdf
+;;;; Only DIRECTORY named-order checks and report attribution extend the original audit.
+(require :asdf)
+(require :sb-posix)
+(declaim (optimize (safety 3) (debug 3)))
+(defparameter *auditor-source* *load-truename*)
+
+(define-condition ci-audit-error (error)
+  ((message :initarg :message :reader audit-message))
+  (:report (lambda (condition stream) (write-string (audit-message condition) stream))))
+
+(defun demand (condition control &rest arguments)
+  (unless condition
+    (error 'ci-audit-error :message (apply #'format nil control arguments))))
+
+(defun read-native (path)
+  (uiop:symbol-call :arcdocdb.evidence :read-evidence path))
+
+(defun native-sha256 (path)
+  (uiop:symbol-call :arcdocdb.evidence :file-sha256 path))
+
+(defun parse-options (arguments)
+  (let ((workspace nil) (commit nil) (run nil) (tests nil)
+        (epochs 34) (read-tests 30) (get-tests nil) (resolver-tests nil) (active-tests nil)
+        (smoke 2) (platforms nil) (all nil))
+    (labels ((argument ()
+               (demand arguments "Missing option argument.") (pop arguments))
+             (number-argument ()
+               (let ((value (parse-integer (argument) :junk-allowed nil)))
+                 (demand (plusp value) "Counts/run must be positive integers.") value)))
+      (loop while arguments for option = (pop arguments) do
+        (cond ((string= option "--workspace")
+               (demand (null workspace) "Duplicate --workspace.") (setf workspace (argument)))
+              ((string= option "--commit")
+               (demand (null commit) "Duplicate --commit.") (setf commit (argument)))
+              ((string= option "--run")
+               (demand (null run) "Duplicate --run.") (setf run (number-argument)))
+              ((string= option "--tests")
+               (demand (null tests) "Duplicate --tests.") (setf tests (number-argument)))
+              ((string= option "--epochs") (setf epochs (number-argument)))
+              ((string= option "--read") (setf read-tests (number-argument)))
+              ((string= option "--get") (setf get-tests (number-argument)))
+              ((string= option "--resolver") (setf resolver-tests (number-argument)))
+              ((string= option "--active")
+               (demand (null active-tests) "Duplicate --active.")
+               (setf active-tests (number-argument)))
+              ((string= option "--smoke") (setf smoke (number-argument)))
+              ((string= option "--require-all-platforms") (setf all t))
+              ((string= option "--platform")
+               (let ((label (argument)) (directory (argument)))
+                 (push (list label directory) platforms)))
+              (t (demand nil "Unknown option ~S." option)))))
+    (demand (and workspace commit run tests get-tests resolver-tests active-tests platforms)
+            "Usage: --workspace DIR --commit SHA --run ID --tests N --get N --resolver N --active 42 [--epochs 34 --read 30 --smoke 2] [--require-all-platforms] --platform LABEL DIR [...]")
+    (demand (= 42 active-tests) "This campaign requires --active 42.")
+    (list :workspace (truename (uiop:ensure-directory-pathname workspace))
+          :commit commit :run run :tests tests :epochs epochs :read read-tests
+          :get get-tests :resolver resolver-tests :active active-tests :smoke smoke
+          :all-platforms all :platforms (nreverse platforms))))
+
+(defun git-output (workspace &rest arguments)
+  (uiop:run-program (append '("git") arguments) :directory workspace
+                    :output :string :error-output :string))
+
+(defun line-output (workspace &rest arguments)
+  (string-right-trim '(#\Newline #\Return) (apply #'git-output workspace arguments)))
+
+(defun expected-source-tree (workspace commit)
+  "Require every native source path and blob to equal the explicit Git tree."
+  (let ((entries nil))
+    (dolist (entry (uiop:split-string
+                   (git-output workspace "ls-tree" "-r" "-z" "--full-tree" commit)
+                   :separator '(#\Null)))
+      (when (plusp (length entry))
+        (let* ((tab (position #\Tab entry))
+               (metadata (and tab (uiop:split-string (subseq entry 0 tab) :separator '(#\Space))))
+               (path (and tab (subseq entry (1+ tab)))))
+          (demand (and (= 3 (length metadata)) (string= "blob" (second metadata)) path)
+                  "Unsupported Git tree entry ~S." entry)
+          (unless (uiop:string-prefix-p "spikes/results/" path)
+            (push (list :path path :git-blob (third metadata)) entries)))))
+    (demand entries "Explicit expected source tree is empty.")
+    (sort entries #'string< :key (lambda (entry) (getf entry :path)))))
+
+(defun canonical-platform (label)
+  (setf label (string-downcase label))
+  (cond ((member label '("ubuntu" "ubuntu-latest") :test #'string=) :ubuntu)
+        ((member label '("macos" "macos-latest") :test #'string=) :macos)
+        ((member label '("documentazione" "docs") :test #'string=) :documentazione)
+        (t (demand nil "Unknown platform label ~S." label))))
+
+(defun walk-files (directory)
+  "Inventory all regular files, including hidden files; reject symlinks/special files."
+  (let ((files nil) (count 0))
+    (labels ((walk (base depth)
+               (demand (<= depth 128) "Artifact directory depth exceeds limit.")
+               (dolist (path (directory (make-pathname :name :wild :type :wild :defaults base)
+                                        :resolve-symlinks nil))
+                 (demand (<= (incf count) 100000) "Artifact inventory exceeds entry limit.")
+                 (let ((mode (sb-posix:stat-mode (sb-posix:lstat (string-right-trim "/" (namestring path))))))
+                   (cond ((sb-posix:s-isdir mode) (walk (uiop:ensure-directory-pathname path) (1+ depth)))
+                         ((sb-posix:s-isreg mode) (push path files))
+                         (t (demand nil "Artifact contains a symlink or special file: ~A." path)))))))
+      (walk directory 0))
+    (sort files #'string< :key #'namestring)))
+
+(defun byte-inventory (directory)
+  "Capture raw downloaded bytes without decoding, executing, or modifying them."
+  (loop for path in (walk-files directory)
+        collect (list :path (enough-namestring path directory)
+                      :bytes (uiop:symbol-call :arcdocdb.evidence :file-bytes path)
+                      :sha256 (native-sha256 path))))
+
+(defun source-token (line prefix)
+  "Extract only the current frozen source's simple token spelling; no Lisp reader."
+  (demand (uiop:string-prefix-p prefix line) "Source prefix mismatch: ~S." line)
+  (let* ((start (length prefix))
+         (end (position-if (lambda (character) (find character " ()")) line :start start))
+         (token (subseq line start (or end (length line)))))
+    (demand (plusp (length token)) "Missing source token: ~S." line)
+    (string-upcase token)))
+
+(defun frozen-test-names (options files)
+  (loop for file in files append
+        (loop for line in (uiop:split-string
+                          (git-output (getf options :workspace) "show"
+                                      (format nil "~A:~A" (getf options :commit) file))
+                          :separator '(#\Newline))
+              when (uiop:string-prefix-p "(deftest " line)
+                collect (format nil "ok    ~A" (source-token line "(deftest ")))))
+
+(defun frozen-suite-summaries (options tree)
+  "Derive every suite count/template and ASD execution order from explicit Git source text."
+  (let ((counts (make-hash-table :test #'equal)) (templates (make-hash-table :test #'equal))
+        (names (make-hash-table :test #'equal)) (order nil) (rows nil))
+    (dolist (entry tree)
+      (let ((path (getf entry :path)))
+        (when (and (uiop:string-prefix-p "tests/" path) (uiop:string-suffix-p path ".lisp"))
+          (let ((package nil))
+            (dolist (raw (uiop:split-string
+                          (git-output (getf options :workspace) "show"
+                                      (format nil "~A:~A" (getf options :commit) path))
+                          :separator '(#\Newline)))
+              (let ((line (string-trim '(#\Space #\Tab #\Return) raw)))
+                (when (uiop:string-prefix-p "(in-package #:" line)
+                  (setf package (source-token line "(in-package #:")))
+                (when (uiop:string-prefix-p "(deftest " raw)
+                  (demand package "Test before in-package: ~A." path)
+                  (let ((identity (list package (source-token raw "(deftest "))))
+                    (unless (gethash identity names)
+                      (setf (gethash identity names) t)
+                      (incf (gethash package counts 0)))))
+                (when (uiop:string-prefix-p "(format t \"~D test " line)
+                  (let ((end (position #\" line :start 11)))
+                    (demand (and package end (not (gethash package templates)))
+                            "Missing/duplicate suite template: ~A." path)
+                    (setf (gethash package templates) (subseq line 11 end))))))))))
+    (dolist (line (uiop:split-string
+                  (git-output (getf options :workspace) "show"
+                              (format nil "~A:arcdocdb.asd" (getf options :commit)))
+                  :separator '(#\Newline)))
+      (let ((trimmed (string-trim '(#\Space #\Tab #\Return) line)))
+        (when (uiop:string-prefix-p "(uiop:symbol-call '#:" trimmed)
+          (push (source-token trimmed "(uiop:symbol-call '#:") order))))
+    (setf order (nreverse order))
+    (demand (and (equal "ARCDOCDB.TESTS" (first order))
+                 (= (length order) (1+ (hash-table-count counts)))
+                 (= (length order) (length (remove-duplicates order :test #'equal))))
+            "Frozen ASD suite order/count is inconsistent.")
+    (dolist (package (rest order))
+      (let ((count (gethash package counts)) (template (gethash package templates)))
+        (demand (and count template) "Missing frozen suite count/template for ~A." package)
+        (push (list :package package :count count
+                    :native-line (string-right-trim '(#\Newline #\Return) (format nil template count))) rows)))
+    (setf rows (nreverse rows))
+    (demand (= (getf options :tests) (reduce #'+ rows :key (lambda (row) (getf row :count))))
+            "Frozen source test count differs from --tests.")
+    rows))
+
+(defun native-record-path-p (path)
+  "Ignore large SPK aggregate reports; they are outside this audit's scope."
+  (let* ((base (uiop:pathname-directory-pathname path))
+         (parts (pathname-directory base)) (parent (car (last parts))))
+    (and (string= "report.lisp" (file-namestring path))
+         (stringp parent)
+         (or (search "-command-" parent) (search "-reader-self-test-" parent)
+             (search "-snapshot-self-test-" parent)))))
+
+(defun frozen-directory-suite (options)
+  "Derive DIRECTORY count/summary from the frozen suite row; identities follow its serial ASD files."
+  (let* ((row (find "ARCDOCDB.GET.DIRECTORY.TESTS" (getf options :suite-summaries)
+                    :key (lambda (entry) (getf entry :package)) :test #'equal))
+         (count (getf row :count)) (summary (getf row :native-line))
+         (names (frozen-test-names options '("tests/get-directory/construction.lisp"
+                                            "tests/get-directory/read.lisp"
+                                            "tests/get-directory/threads.lisp"
+                                            "tests/get-directory/series-read.lisp"
+                                            "tests/get-directory/lifetime.lisp"))))
+    (demand (and (typep count '(integer 1)) (stringp summary)
+                 (= count (length names))
+                 (= count (length (remove-duplicates names :test #'equal))))
+            "Frozen DIRECTORY names/count/summary are absent or inconsistent.")
+    (setf (getf options :directory-count) count
+          (getf options :directory-summary) summary
+          (getf options :directory-names) names))
+  options)
+
+(defun module-result-lines (stdout)
+  (loop for raw in (uiop:split-string stdout :separator '(#\Newline))
+        for line = (string-trim '(#\Space #\Tab #\Return) raw)
+        when (and (search " test " line) (uiop:string-suffix-p line "superati."))
+          collect line))
+
+(defun audit-named-suite (stdout-lines summary expected-names expected-count)
+  "Compare native printed test identities and their order against frozen serial sources."
+  (demand (= 1 (count summary stdout-lines :test #'equal)) "Missing/duplicate suite summary ~S." summary)
+  (let* ((end (position summary stdout-lines :test #'equal))
+         (prior (position-if (lambda (line) (and (search " test " line)
+                                               (uiop:string-suffix-p line "superati.")))
+                             stdout-lines :end end :from-end t)))
+    (demand prior "No previous suite summary delimiting ~S." summary)
+    (let ((actual (remove-if-not (lambda (line) (uiop:string-prefix-p "ok    " line))
+                                (subseq stdout-lines (1+ prior) end))))
+      (demand (and (= expected-count (length expected-names)) (= expected-count (length actual))
+                   (= expected-count (length (remove-duplicates expected-names :test #'equal)))
+                   (equal actual expected-names))
+              "Named suite identities/count/order differ from frozen source: ~S." summary)
+      (list :native-summary summary :named-tests expected-count
+            :frozen-names-and-order-match t :native-test-names actual))))
+
+(defun audit-test-output (stdout options)
+  (let* ((lines (module-result-lines stdout))
+         (rows (loop for line in lines collect
+                     (let ((count (parse-integer line :junk-allowed t)))
+                       (demand (and count (plusp count)) "Malformed test result ~S." line)
+                       (list :count count :native-line line))))
+         (count (reduce #'+ rows :key (lambda (row) (getf row :count)) :initial-value 0))
+         (expected-epochs (format nil "~D test epoche/reclaim superati." (getf options :epochs)))
+         (expected-read (format nil "~D test dei compiti di lettura superati." (getf options :read)))
+         (expected-get (format nil "~D test GET superati." (getf options :get)))
+         (expected-resolver (format nil "~D test resolver GET superati." (getf options :resolver)))
+         (expected-active (format nil "~D test GET ACTIVE superati." (getf options :active)))
+         (expected-directory (getf options :directory-summary))
+         (smoke-lines '("ok    package ARCDOCDB presente" "ok    ARCDOCDB:*VERSION* è una stringa"))
+         (stdout-lines (loop for line in (uiop:split-string stdout :separator '(#\Newline))
+                             collect (string-trim '(#\Space #\Tab #\Return) line))))
+    (demand (= count (getf options :tests)) "Native module count ~D differs from expected ~D." count (getf options :tests))
+    (demand (equal lines (mapcar (lambda (row) (getf row :native-line)) (getf options :suite-summaries)))
+            "Native suite summary counts/names/order differ from every frozen Git suite.")
+    (demand (= 1 (count expected-epochs lines :test #'string=)) "Missing/duplicate epochs result ~S." expected-epochs)
+    (demand (= 1 (count expected-read lines :test #'string=)) "Missing/duplicate read result ~S." expected-read)
+    (dolist (expected smoke-lines)
+      (demand (= 1 (count expected stdout-lines :test #'string=)) "Missing/duplicate smoke result ~S." expected))
+    (demand (= (length smoke-lines) (getf options :smoke)) "Smoke expected count is inconsistent with the two canonical checks.")
+    (list :module-tests count :epochs-tests (getf options :epochs) :read-tests (getf options :read)
+          :get-tests (getf options :get) :resolver-tests (getf options :resolver)
+          :active-tests (getf options :active) :directory-tests (getf options :directory-count)
+          :smoke-checks (length smoke-lines) :all-frozen-suite-summaries-match t
+          :native-module-result-lines rows
+          :get-names (audit-named-suite stdout-lines expected-get
+                                       (getf options :get-names) (getf options :get))
+          :resolver-names (audit-named-suite stdout-lines expected-resolver
+                                            (getf options :resolver-names) (getf options :resolver))
+          :active-names (audit-named-suite stdout-lines expected-active
+                                          (getf options :active-names) (getf options :active))
+          :directory-names (audit-named-suite stdout-lines expected-directory
+                                              (getf options :directory-names)
+                                              (getf options :directory-count)))))
+
+(defun audit-process-fixture (pair kind child-kind)
+  (let* ((path (car pair)) (record (cdr pair))
+         (directory (uiop:pathname-directory-pathname path))
+         (mutants (getf record :mutants)) (observations nil))
+    (demand (and (eql 1 (getf record :schema-version)) (eq kind (getf record :kind))
+                 (eq :passed (getf record :status)) (= 2 (getf record :worker-errors))
+                 (null (getf record :baseline)) (= 2 (length mutants)))
+            "Process fixture header/counters invalid: ~A." path)
+    (demand (and (= 1 (count :signal mutants :key (lambda (entry) (getf entry :name))))
+                 (= 1 (count :completion-exit mutants :key (lambda (entry) (getf entry :name)))))
+            "Process fixture names missing/duplicated: ~A." path)
+    (dolist (entry mutants)
+      (let* ((name (getf entry :name)) (execution (getf entry :execution))
+             (report (getf execution :report))
+             (child (merge-pathnames (format nil "~(~A~)/" name) directory))
+             (stdout (merge-pathnames "stdout.log" child))
+             (stderr (merge-pathnames "stderr.log" child))
+             (runner (merge-pathnames "isolated-build.lisp" child)))
+        (demand (and (eq :worker-error (getf entry :result)) (null (getf execution :timed-out))
+                     (eql 1 (getf report :schema-version)) (eq child-kind (getf report :kind)))
+                "Process classification/schema invalid: ~A ~S." path name)
+        (demand (equal (getf execution :argv)
+                       '("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--disable-debugger" "--script" "isolated-build.lisp"))
+                "Unexpected child argv: ~A ~S." path name)
+        (dolist (file (list stdout stderr runner))
+          (demand (probe-file file) "Missing native process diagnostic ~A." file))
+        (dolist (field '(:runner :stdout-log :stderr-log))
+          (let* ((native (getf execution field))
+                 (leaf (ecase field (:runner "isolated-build.lisp") (:stdout-log "stdout.log") (:stderr-log "stderr.log")))
+                 (suffix (format nil "/~(~A~)/~A" name leaf)))
+            (demand (and (stringp native) (uiop:string-suffix-p native suffix))
+                    "Native process path suffix invalid: ~A ~S." path field)))
+        (demand (equal report (read-native stdout))
+                "Raw child stdout differs from embedded native report: ~A." stdout)
+        (ecase name
+          (:signal
+           (demand (and (eql 9 (getf execution :signal)) (eql 137 (getf execution :exit-code))
+                        (eq :failed (getf report :status)) (eq :tests (getf report :phase))
+                        (eq :runtime (getf report :failure-kind)) (equal "fixture" (getf report :failed-test)))
+                   "SIGKILL fixture OS/runtime values invalid: ~A." path))
+          (:completion-exit
+           (demand (and (null (getf execution :signal)) (eql 7 (getf execution :exit-code))
+                        (eq :ok (getf report :status)) (eq :complete (getf report :phase))
+                        (equal '("fixture") (getf report :passed-tests)))
+                   "Post-COMPLETE nonzero exit values invalid: ~A." path)))
+        (push (list :name name :classification :worker-error :native-signal (getf execution :signal)
+                    :native-exit-code (getf execution :exit-code) :timed-out nil
+                    :raw-stdout-equals-native-report t :raw-stdout-sha256 (native-sha256 stdout)
+                    :raw-stderr-sha256 (native-sha256 stderr)
+                    :raw-runner-sha256 (native-sha256 runner)) observations)))
+    (list :native-process-report (namestring path) :kind kind :status :passed
+          :worker-errors 2 :processes (nreverse observations))))
+
+(defun audit-platform (directory label options expected-tree)
+  (let ((parents nil) (reader-fixtures nil) (snapshot-fixtures nil)
+        (before-inventory (byte-inventory directory))
+        (platform (canonical-platform label)))
+    (dolist (path (walk-files directory))
+      (when (native-record-path-p path)
+        (let ((record (read-native path)))
+          (case (getf record :kind)
+            (:command-verification (push (cons path record) parents))
+            (:reader-process-self-test (push (cons path record) reader-fixtures))
+            (:snapshot-process-self-test (push (cons path record) snapshot-fixtures))
+            (otherwise (demand nil "Unexpected native record kind at ~A." path))))))
+    (demand (= 1 (length parents)) "Platform ~A has ~D native command parents; exactly one required." label (length parents))
+    (let* ((pair (first parents)) (path (car pair)) (record (cdr pair))
+           (before (getf record :source-blobs-before)) (after (getf record :source-blobs-after))
+           (sorted (sort (copy-list before) #'string< :key (lambda (entry) (getf entry :path))))
+           (stdout (getf record :stdout)) (command (getf record :command))
+           (environment (getf record :environment)) (native-os (getf environment :os))
+           (native-commit (getf environment :commit))
+           (tests nil) (fixtures nil))
+      (demand (and (eql 1 (getf record :schema-version)) (eq :ok (getf record :status))
+                   (eql 0 (getf record :exit-code)) (eq :stable (getf record :source-consistency))
+                   (equal before after) (equal sorted expected-tree))
+              "Platform ~A native status/source/full tree comparison failed: ~A." label path)
+      (demand (and (stringp stdout) (stringp native-os)) "Native command output/OS absent: ~A." path)
+      (demand (and (stringp (getf record :stderr))
+                   (stringp (getf environment :working-tree))
+                   (zerop (length (string-trim '(#\Space #\Tab #\Newline #\Return)
+                                               (getf environment :working-tree))))
+                   (stringp (getf environment :cwd))
+                   (uiop:absolute-pathname-p (pathname (getf environment :cwd)))
+                   (typep (getf record :started-at-universal-time) '(integer 1))
+                   (typep (getf record :finished-at-universal-time) '(integer 1))
+                   (<= (getf record :started-at-universal-time) (getf record :finished-at-universal-time))
+                   (stringp native-commit) (= 40 (length native-commit))
+                   (every (lambda (character) (digit-char-p character 16)) native-commit))
+              "Native parent identity/clean state/terminal timestamps invalid: ~A." path)
+      (demand (string= (getf options :git-tree)
+                       (line-output (getf options :workspace) "rev-parse" "--verify"
+                                    (concatenate 'string native-commit "^{tree}")))
+              "Native complete Git checkout tree differs from published expected head: ~A." path)
+      (demand (if (eq platform :macos) (search "Darwin" native-os) (search "Linux" native-os))
+              "Platform label ~A contradicts native OS ~S." label native-os)
+      (demand (and command (member (file-namestring (first command)) '("make" "gmake") :test #'string=))
+              "Unexpected recorded command ~S." command)
+      (if (eq platform :documentazione)
+          (progn
+            (demand (equal '("trace" "links") (rest command)) "Documentation command is not make trace links.")
+            (demand (and (null reader-fixtures) (null snapshot-fixtures) (null (module-result-lines stdout)))
+                    "Unexpected test/process output in documentation artifact.")
+            (setf tests (list :module-tests 0 :smoke-checks 0)))
+          (progn
+            (demand (equal '("check-core") (rest command)) "Core command is not make check-core.")
+            (setf tests (audit-test-output stdout options))
+            (demand (and (= 1 (length reader-fixtures)) (= 1 (length snapshot-fixtures)))
+                    "Platform ~A requires exactly one reader and one snapshot process fixture." label)
+            (setf fixtures
+                  (list (audit-process-fixture (first reader-fixtures) :reader-process-self-test :reader-mutation-child)
+                        (audit-process-fixture (first snapshot-fixtures) :snapshot-process-self-test :snapshot-mutation-child)))))
+      (let ((after-inventory (byte-inventory directory)))
+        (demand (equal before-inventory after-inventory)
+                "Raw downloaded artifact byte inventory changed during audit: ~A." directory))
+      (append
+       (list :platform platform :native-parent (namestring path) :status :ok :native-exit 0
+             :native-parent-stored-sha256 (native-sha256 path)
+             :native-checkout-commit native-commit :native-os native-os
+             :native-working-tree-clean t :native-command-argv command
+             :complete-checkout-tree-equals-published-head t :native-checkout-tree (getf options :git-tree)
+             :source-blobs (length before) :full-source-path-set-and-blobs-match-explicit-commit t
+             :source-consistency :stable :process-fixtures fixtures
+             :downloaded-byte-inventory-passes 2 :downloaded-byte-inventory-stable t
+             :downloaded-byte-files (length before-inventory)
+             :downloaded-byte-total (reduce #'+ before-inventory :key (lambda (entry) (getf entry :bytes)) :initial-value 0)
+             :downloaded-byte-inventory before-inventory)
+       tests))))
+
+(defun write-audit (record)
+  (let ((*print-readably* t)) (write record :pretty t) (terpri)))
+
+(let ((options nil))
+  (handler-case
+      (progn
+        (setf options (parse-options (uiop:command-line-arguments)))
+        (let* ((workspace (getf options :workspace))
+               (commit (line-output workspace "rev-parse" "--verify" (concatenate 'string (getf options :commit) "^{commit}")))
+               (expected-tree (expected-source-tree workspace commit))
+               (library (merge-pathnames "tools/evidence-storage.lisp" workspace))
+               (library-entry (find "tools/evidence-storage.lisp" expected-tree :key (lambda (entry) (getf entry :path)) :test #'string=))
+               (platforms (mapcar (lambda (pair) (canonical-platform (first pair))) (getf options :platforms)))
+               (results nil) (auditor-sha nil))
+          (demand (and library-entry
+                       (string= (getf library-entry :git-blob) (line-output workspace "hash-object" "--" "tools/evidence-storage.lisp")))
+                  "Trusted reader library in workspace differs from explicit expected commit.")
+          (demand (= (length platforms) (length (remove-duplicates platforms))) "Duplicate platform labels.")
+          (when (getf options :all-platforms)
+            (demand (and (= 3 (length platforms)) (every (lambda (p) (member p platforms)) '(:ubuntu :macos :documentazione)))
+                    "--require-all-platforms requires ubuntu, macos, documentazione."))
+          (setf (getf options :commit) commit)
+          (setf (getf options :git-tree) (line-output workspace "rev-parse" (concatenate 'string commit "^{tree}"))
+                (getf options :suite-summaries) (frozen-suite-summaries options expected-tree)
+                (getf options :get-names) (frozen-test-names options '("tests/get/lifecycle.lisp" "tests/get/segment.lisp"))
+                (getf options :resolver-names)
+                (frozen-test-names options '("tests/get-resolver/sort.lisp"
+                                            "tests/get-resolver/construction.lisp" "tests/get-resolver/read.lisp"))
+                (getf options :active-names)
+                (frozen-test-names options '("tests/get-active/construction.lisp" "tests/get-active/preflight.lisp"
+                                            "tests/get-active/directory.lisp" "tests/get-active/read.lisp")))
+          (demand (and (= (getf options :active) (length (getf options :active-names)))
+                       (= (getf options :active)
+                          (length (remove-duplicates (getf options :active-names) :test #'equal))))
+                  "Frozen ACTIVE test names/count differ from --active 42.")
+          (setf options (frozen-directory-suite options))
+          (load library)
+          (setf auditor-sha (native-sha256 *auditor-source*))
+          (dolist (pair (getf options :platforms))
+            (let ((directory (truename (uiop:ensure-directory-pathname (second pair)))))
+              (push (audit-platform directory (first pair) options expected-tree) results)))
+          (demand (and (string= auditor-sha (native-sha256 *auditor-source*))
+                       (string= (getf library-entry :git-blob)
+                                (line-output workspace "hash-object" "--" "tools/evidence-storage.lisp")))
+                  "Auditor source or trusted evidence reader changed during audit.")
+          (write-audit
+           (list :schema-version 1 :kind :get-source-lifetime-ci-audit :status :ok :expected-commit commit
+                 :expected-git-tree (getf options :git-tree)
+                 :ci-run (getf options :run) :ci-run-identity :provided-by-caller
+                 :artifact-names '("prove-ubuntu-latest" "prove-macos-latest" "prove-documentazione")
+                 :expected-module-tests (getf options :tests) :expected-epochs-tests (getf options :epochs)
+                 :expected-read-tests (getf options :read) :expected-get-tests (getf options :get)
+                 :expected-resolver-tests (getf options :resolver) :expected-active-tests (getf options :active)
+                 :expected-active-names (getf options :active-names) :expected-smoke-checks (getf options :smoke)
+                 :expected-directory-tests (getf options :directory-count)
+                 :expected-directory-summary (getf options :directory-summary)
+                 :expected-directory-names (getf options :directory-names)
+                 :frozen-git-suite-summaries (getf options :suite-summaries)
+                 :auditor-source (namestring *auditor-source*) :auditor-source-sha256 auditor-sha
+                 :auditor-and-trusted-reader-source-stable t
+                 :all-platforms-required (getf options :all-platforms) :source-tree-file-count (length expected-tree)
+                 :native-results (nreverse results)
+                 :limits '(:read-eval-disabled :no-evidence-load :explicit-commit-source-tree-comparison
+                           :full-source-path-set-comparison :ci-checkout-commit-not-assumed-head
+                           :complete-checkout-git-tree-equality :clean-native-checkout
+                           :all-suite-summary-counts-from-frozen-git-source
+                           :get-resolver-and-active-named-tests-serial-order-verified
+                           :get-directory-named-tests-serial-order-verified
+                           :downloaded-raw-byte-inventory-two-pass-equality
+                           :raw-child-logs-compared-as-data :run-and-artifact-download-identity-provided-by-caller
+                           :provided-platforms-only :no-product-qualification :no-spike-results-reinterpretation)))))
+    (error (condition)
+      (write-audit (list :schema-version 1 :kind :get-source-lifetime-ci-audit :status :failed
+                         :expected-commit (getf options :commit) :ci-run (getf options :run)
+                         :diagnostic (princ-to-string condition)
+                         :limits '(:audit-failure-preserved :no-native-status-reclassification)))
+      (sb-ext:exit :code 1))))

@@ -1,0 +1,18 @@
+NATIVE Linux 61b4ecdd03e40d14f3b8249d2e83c08ac757b5b9
+  CBOR float write: onda 0, 2 worker riusati, 16384 item; WALL fixture con rendezvous/controlli: worker 0 start/first/end 14132281/14132281/14134281, sink 2115584; worker 1 start/first/end 14132281/14132281/14134281, sink 2148352; overlap 2000 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+  CBOR float write: onda 1, 2 worker riusati, 16384 item; WALL fixture con rendezvous/controlli: worker 0 start/first/end 14134281/14134281/14135281, sink 2115584; worker 1 start/first/end 14134281/14134281/14135281, sink 2148352; overlap 1000 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+  CBOR tag: onda 0, 2 worker riusati, 4096 composizioni; WALL fixture con rendezvous/controlli: worker 0 start/first/end 14606283/14606283/14607283, sink 66766848; worker 1 start/first/end 14606283/14606283/14607283, sink 97310720; overlap 1000 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+  CBOR tag: onda 1, 2 worker riusati, 4096 composizioni; WALL fixture con rendezvous/controlli: worker 0 start/first/end 14607283/14607283/14609283, sink 66766848; worker 1 start/first/end 14607283/14607283/14609283, sink 97310720; overlap 2000 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+ok    TEST-REQ-CMP-007-SERIES-GET-OLD-CANDIDATE-NEW-ACTIVE-SUPERSET-NATIVE-V1-V2
+ok    TEST-REQ-CMP-007-SERIES-GET-NATIVE-SOURCE-PINNED-THROUGH-COPY-AND-RECLAIM
+ok    TEST-REQ-CMP-007-SERIES-GET-NATIVE-HOOK-CONDITION-RELEASES-PIN-BEFORE-RECLAIM
+ok    TEST-REQ-CMP-007-SERIES-GET-NATIVE-HOOK-NONLOCAL-EXIT-RELEASES-PIN-BEFORE-RECLAIM
+NATIVE Darwin 61b4ecdd03e40d14f3b8249d2e83c08ac757b5b9
+  CBOR float write: onda 0, 2 worker riusati, 16384 item; WALL fixture con rendezvous/controlli: worker 0 start/first/end 29920748/29920754/29923360, sink 2115584; worker 1 start/first/end 29920773/29920774/29923366, sink 2148352; overlap 2587 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+  CBOR float write: onda 1, 2 worker riusati, 16384 item; WALL fixture con rendezvous/controlli: worker 0 start/first/end 29923365/29923365/29925951, sink 2115584; worker 1 start/first/end 29923367/29923368/29925987, sink 2148352; overlap 2584 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+  CBOR tag: onda 0, 2 worker riusati, 4096 composizioni; WALL fixture con rendezvous/controlli: worker 0 start/first/end 31419029/31419044/31420861, sink 66766848; worker 1 start/first/end 31419120/31419127/31421254, sink 97310720; overlap 1741 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+  CBOR tag: onda 1, 2 worker riusati, 4096 composizioni; WALL fixture con rendezvous/controlli: worker 0 start/first/end 31420867/31420874/31423960, sink 66766848; worker 1 start/first/end 31421262/31421272/31423968, sink 97310720; overlap 2698 tick (1000000 tick/s); nessuna inferenza su tempo puro encoder, CPU o scaling.
+ok    TEST-REQ-CMP-007-SERIES-GET-OLD-CANDIDATE-NEW-ACTIVE-SUPERSET-NATIVE-V1-V2
+ok    TEST-REQ-CMP-007-SERIES-GET-NATIVE-SOURCE-PINNED-THROUGH-COPY-AND-RECLAIM
+ok    TEST-REQ-CMP-007-SERIES-GET-NATIVE-HOOK-CONDITION-RELEASES-PIN-BEFORE-RECLAIM
+ok    TEST-REQ-CMP-007-SERIES-GET-NATIVE-HOOK-NONLOCAL-EXIT-RELEASES-PIN-BEFORE-RECLAIM

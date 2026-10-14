@@ -1,0 +1,4 @@
+Archive:  spikes/out/lifetime-ci-runtime/main-run-38640790953/zips/prove-documentazione.zip
+    testing: 4001002257-command-2365-0/conservazione.lisp   OK
+    testing: 4001002257-command-2365-0/report.lisp   OK
+No errors detected in compressed data of spikes/out/lifetime-ci-runtime/main-run-38640790953/zips/prove-documentazione.zip.

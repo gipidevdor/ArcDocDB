@@ -1,0 +1,11 @@
+Original SHA256: 01d2b083499d9019c71ad312d692aa277189fb9647dea37405bd5c91fa415761
+R2 derivative SHA256: 2dad7e5ed13c84aeb52e62cb75c078bed39902241e6f4ea6853dae30cf120884
+Copied counter SHA256: 1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e
+Only source change: capture returned options plist at the caller.
+Native Git/source, named order/count, process fixture and byte-inventory criteria unchanged.
+Static READ-EVAL NIL: 27 forms, no form evaluated.
+Static COMPILE-FILE: warnings NIL, failure NIL, process exit0, stderr0.
+Generated audit-static.fasl retained as data, not loaded.
+Actual reference authorized by root: old synthetic A92dc4aa0312b6cc1df37e202f414b75742d6fc1c, CI38634044870 attempt1, original raw Ubuntu/docs/macOS.
+Expected actual reference outcome: FAILED exit1 due original native macOS command FAILED, after DIRECTORY72/Ubuntu/docs checks.
+No CI rerun; no original01d2/R1 files altered.

@@ -1,0 +1,16 @@
+Frozen source F2: 0c7d08f8383892a6c7c07d9c9b2fbae9afe8f523.
+Original semantic auditor SHA256: 841d8b6c24e6cd5352a019f82e574bcf93673e92b34c632435aa08b1f9579bba.
+Full-only derivative SHA256: 8c857dc58646dbd85acb2d1231a66f20834db6eac837415a3cd6cf206f476df7.
+Collector exact qualified copy SHA256: e6b2cdecbe1bf1602109161b07c7ce51c6716323238dea10e8f9cb7a96a4facf.
+Archive auditor exact qualified copy SHA256: d17564b38f51cd54e7ae86241c82c0eaa81a41bc9a29ecc70a6f937d59d59173.
+Batch utility exact qualified copy SHA256: 130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da.
+Git-only counter exact qualified copy SHA256: 1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e.
+Historical optional runner source exact SHA256: c1f97d6967f3e1a4c79aae065549a6f5bf76b4c18b6b7a3a123fa9ebf82ebeb7.
+No historical scoped run is passed to this full-only campaign; runner source guard is provenance only.
+Changes from original: scope report/cache optional as a guarded pair, same full core/outer/cache/fixture criteria; local batch path; report attribution; caller counter-proof key initialized before counter subprocess.
+The older counter-proof NIL affects report attribution only: frozen Git counts/names were still returned as DATA and independently authenticated. No earlier report is changed or promoted.
+Static READ-EVAL NIL: 40 forms, EOF regular, no evaluation.
+Static COMPILE-FILE: warnings NIL, failure NIL, process exit0, stderr0. FASL retained as compiler output DATA, not loaded.
+Independent peer outcome_tools reviewed source/hash/diff: PASS, no concrete findings. Full roots/cache/fixtures/HEAD/tree/SHA guards preserved; two fresh complete byte inventories; no evidence/FASL LOAD.
+Native audit output and operation logs must be under separate f2-audit-runtime, not inside this helper input group.
+Collection is allowed only after all listed source-group writers have closed. Archive audit output must be under separate f2-copy-audit-runtime outside every group and the archive.

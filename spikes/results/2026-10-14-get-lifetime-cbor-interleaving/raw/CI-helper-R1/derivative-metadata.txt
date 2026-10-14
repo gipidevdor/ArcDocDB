@@ -1,0 +1,16 @@
+Original source: original-audit.txt
+Original SHA256: 08ff4de3ac096819c0deed99594ffa2cecb34cc53ec86a24424a4d73e4c93bdf
+Derivative source: audit.lisp
+Derivative SHA256: 01d2b083499d9019c71ad312d692aa277189fb9647dea37405bd5c91fa415761
+Derivative change: add named-order DIRECTORY audit for five frozen serial test files.
+DIRECTORY count and summary derive from ARCDOCDB.GET.DIRECTORY.TESTS in frozen-suite-summaries.
+Support and lifetime-support define no registered tests and are not included in names.
+No hardcoded DIRECTORY count and no new command-line count flag.
+GET lifecycle/segment --get remains separate and unchanged.
+Both success/failure report kinds: :get-source-lifetime-ci-audit.
+Native Git/source, fixture process, byte inventory and two-pass criteria remain unchanged.
+Static check: SBCL READ-EVAL NIL, 27 forms, no form evaluated.
+Static check: COMPILE-FILE audit.lisp -> audit-static.fasl, warnings NIL, failure NIL, exit 0.
+Static stderr: 0 bytes.
+No CI audit invocation or artifact evaluation executed during preparation.
+The generated FASL is compiler output retained as data, not loaded.

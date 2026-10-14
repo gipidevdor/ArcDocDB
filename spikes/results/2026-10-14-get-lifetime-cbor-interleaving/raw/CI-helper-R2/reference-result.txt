@@ -1,0 +1,10 @@
+Reference execution complete; no CI rerun was performed.
+Native command record: spikes/out/4000999945-command-89224-0/report.lisp.
+Expected and observed child outcome: FAILED, exit1, source STABLE, stderr0.
+The terminal diagnostic identifies the original native macOS command 4000999365-command-6595-0/report.lisp and its failed status/source/tree precondition.
+The earlier DIRECTORY summary NIL helper error is absent.
+The immutable serial flow audited Ubuntu and documentazione before reaching the macOS terminal rejection, including the derived DIRECTORY72 names/order in the Ubuntu check. This attribution is inferred from that control flow, not a global PASS report.
+Frozen R2 source still authenticates SHA256 2dad7e5ed13c84aeb52e62cb75c078bed39902241e6f4ea6853dae30cf120884 after execution.
+Frozen counter still authenticates SHA256 1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e.
+Original01d2 source, its failed native record 4000999676-command-83495-0, and all first-CI transport files remain unchanged.
+All writers closed at handoff. No tracked files, branches, commits or original proof archives were changed.

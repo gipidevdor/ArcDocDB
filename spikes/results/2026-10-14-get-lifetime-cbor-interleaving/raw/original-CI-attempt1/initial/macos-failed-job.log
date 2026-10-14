@@ -1,0 +1,951 @@
+Build e test (macos-latest)	Set up job	﻿2026-10-14T20:40:38.3127150Z Current runner version: '2.337.0'
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3156850Z ##[group]Runner Image Provisioner
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3157580Z Hosted Compute Agent
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3158030Z Version: 20260828.587
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3158480Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3158990Z Build Date: 2026-08-28T16:44:25Z
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3159580Z Worker ID: {44e616ad-20c8-47b3-a4bc-5cfd2c22dd28}
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3160070Z Azure Region: westus
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3160470Z ##[endgroup]
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3161930Z ##[group]Operating System
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3162620Z macOS
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3163140Z 26.6.2
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3163630Z 25G83
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3164050Z ##[endgroup]
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3164600Z ##[group]Runner Image
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3164990Z Image: macos-26-arm64
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3165440Z Version: 20260907.0351.1
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3167520Z Included Software: https://github.com/actions/runner-images/blob/macos-26-arm64/20260907.0351/images/macos/macos-26-arm64-Readme.md
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3169420Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-26-arm64%2F20260907.0351
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3170130Z ##[endgroup]
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3171000Z ##[group]GITHUB_TOKEN Permissions
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3173670Z Contents: read
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3175220Z Metadata: read
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3176340Z ##[endgroup]
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3181550Z Secret source: Actions
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3183830Z Cache mode: write
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.3185160Z Prepare workflow directory
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.4003270Z Prepare all required actions
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.4074660Z Getting action download info
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:38.9002720Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:39.4376430Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+Build e test (macos-latest)	Set up job	2026-10-14T20:40:39.9386730Z Complete job name: Build e test (macos-latest)
+Build e test (macos-latest)	Run actions/checkout@v4	﻿2026-10-14T20:40:40.0181230Z ##[group]Run actions/checkout@v4
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0182030Z with:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0182410Z   repository: gpicchiarelli/ArcDocDB
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0185610Z   token: ***
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0186000Z   ssh-strict: true
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0186340Z   ssh-user: git
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0186730Z   persist-credentials: true
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0187120Z   clean: true
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0187460Z   sparse-checkout-cone-mode: true
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0187850Z   fetch-depth: 1
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0188250Z   fetch-tags: false
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0188610Z   show-progress: true
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0189020Z   lfs: false
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0189320Z   submodules: false
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0189660Z   set-safe-directory: true
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0190030Z   allow-unsafe-pr-checkout: false
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.0190570Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.7427590Z Syncing repository: gpicchiarelli/ArcDocDB
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.7430640Z ##[group]Getting Git version info
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.7431470Z Working directory is '/Users/runner/work/ArcDocDB/ArcDocDB'
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.7460390Z [command]/opt/homebrew/bin/git version
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.8921380Z git version 2.55.0
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.8938300Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.8946310Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/55e25249-d000-4f1b-b07d-5cbd7928d4ba/.gitconfig'
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.8955990Z Temporarily overriding HOME='/Users/runner/work/_temp/55e25249-d000-4f1b-b07d-5cbd7928d4ba' before making global git config changes
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.8957820Z Adding repository directory to the temporary git global config as a safe directory
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.8959140Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/ArcDocDB/ArcDocDB
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9117570Z Deleting the contents of '/Users/runner/work/ArcDocDB/ArcDocDB'
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9130170Z ##[group]Initializing the repository
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9138090Z [command]/opt/homebrew/bin/git init /Users/runner/work/ArcDocDB/ArcDocDB
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9733960Z hint: Using 'master' as the name for the initial branch. This default branch name
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9744130Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9786740Z hint: to use in all of your new repositories, which will suppress this warning,
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9787920Z hint: call:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9788480Z hint:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9790080Z hint: 	git config --global init.defaultBranch <name>
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9791030Z hint:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9791710Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9792550Z hint: 'development'. The just-created branch can be renamed via this command:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9793280Z hint:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9793770Z hint: 	git branch -m <name>
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9794310Z hint:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9795250Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9796530Z Initialized empty Git repository in /Users/runner/work/ArcDocDB/ArcDocDB/.git/
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9798980Z [command]/opt/homebrew/bin/git remote add origin https://github.com/gpicchiarelli/ArcDocDB
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:40.9939940Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.0069300Z ##[group]Disabling automatic garbage collection
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.0142050Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.0153560Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.0154390Z ##[group]Setting up auth
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.0155360Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.0391860Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.6091780Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.6170060Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.7822590Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.8002100Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:41.9772370Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:42.0058830Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:42.0064950Z ##[group]Fetching the repository
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:42.0076010Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +92dc4aa0312b6cc1df37e202f414b75742d6fc1c:refs/remotes/pull/13/merge
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.8743520Z From https://github.com/gpicchiarelli/ArcDocDB
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.8749440Z  * [new ref]           92dc4aa0312b6cc1df37e202f414b75742d6fc1c -> pull/13/merge
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.8758010Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.8759080Z ##[group]Determining the checkout info
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.8763840Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.8805360Z [command]/opt/homebrew/bin/git sparse-checkout disable
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.9187060Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.9400480Z ##[group]Checking out the ref
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:48.9431380Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/13/merge
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:50.1780560Z Updating files:   6% (2651/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:50.4015670Z Updating files:   7% (2803/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:50.6037000Z Updating files:   8% (3203/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:50.8038200Z Updating files:   9% (3603/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:50.9005220Z Updating files:  10% (4004/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:50.9914810Z Updating files:  11% (4404/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.0428810Z Updating files:  12% (4804/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.1296920Z Updating files:  12% (4917/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.2812520Z Updating files:  13% (5205/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.4412900Z Updating files:  14% (5605/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.5645590Z Updating files:  15% (6005/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.6532930Z Updating files:  16% (6406/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.7176920Z Updating files:  17% (6806/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.8203180Z Updating files:  18% (7206/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:51.9244410Z Updating files:  19% (7607/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.0052640Z Updating files:  20% (8007/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.0311770Z Updating files:  21% (8407/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.1456550Z Updating files:  21% (8526/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.2480820Z Updating files:  22% (8808/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.4307910Z Updating files:  23% (9208/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.5429540Z Updating files:  24% (9608/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.6588840Z Updating files:  25% (10008/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.7569250Z Updating files:  26% (10409/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:52.9051260Z Updating files:  27% (10809/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.0294040Z Updating files:  28% (11209/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.0347790Z Updating files:  28% (11590/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.2174640Z Updating files:  29% (11610/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.3675820Z Updating files:  30% (12010/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.5158280Z Updating files:  31% (12410/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.6241100Z Updating files:  32% (12811/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.7195800Z Updating files:  33% (13211/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.8516520Z Updating files:  34% (13611/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:53.9778000Z Updating files:  35% (14012/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.0304890Z Updating files:  36% (14412/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.1547090Z Updating files:  36% (14603/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.3251250Z Updating files:  37% (14812/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.4131230Z Updating files:  38% (15213/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.5002140Z Updating files:  39% (15613/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.6019720Z Updating files:  40% (16013/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.7316850Z Updating files:  41% (16414/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:54.8696810Z Updating files:  42% (16814/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.0290130Z Updating files:  43% (17214/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.0435890Z Updating files:  43% (17557/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.2373590Z Updating files:  44% (17615/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.4132780Z Updating files:  45% (18015/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.5679250Z Updating files:  46% (18415/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.7005490Z Updating files:  47% (18816/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.8311120Z Updating files:  48% (19216/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:55.9833170Z Updating files:  49% (19616/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:56.0370450Z Updating files:  50% (20016/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:56.0828180Z Updating files:  50% (20274/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:56.2357490Z Updating files:  51% (20417/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:56.3739770Z Updating files:  52% (20817/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:56.6721460Z Updating files:  53% (21217/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:56.8405490Z Updating files:  54% (21618/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:57.0295020Z Updating files:  55% (22018/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:57.0324620Z Updating files:  55% (22410/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:57.2486670Z Updating files:  56% (22418/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:57.4068200Z Updating files:  57% (22819/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:57.5746470Z Updating files:  58% (23219/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:57.8037760Z Updating files:  59% (23619/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:57.9397760Z Updating files:  60% (24020/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:58.0290390Z Updating files:  61% (24420/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:58.1383110Z Updating files:  61% (24622/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:58.4368350Z Updating files:  62% (24820/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:58.7053600Z Updating files:  63% (25221/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:58.8737650Z Updating files:  64% (25621/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.0285710Z Updating files:  65% (26021/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.0526630Z Updating files:  65% (26419/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.1653850Z Updating files:  66% (26422/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.3177510Z Updating files:  67% (26822/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.3675200Z Updating files:  68% (27222/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.4695020Z Updating files:  69% (27623/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.5932240Z Updating files:  70% (28023/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.6762940Z Updating files:  71% (28423/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.7566190Z Updating files:  72% (28824/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:40:59.9665920Z Updating files:  73% (29224/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.0291650Z Updating files:  74% (29624/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.1785520Z Updating files:  74% (29710/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.3139080Z Updating files:  75% (30024/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.4006980Z Updating files:  76% (30425/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.5265770Z Updating files:  77% (30825/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.6812520Z Updating files:  78% (31225/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.7495900Z Updating files:  79% (31626/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.8602620Z Updating files:  80% (32026/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:00.9483730Z Updating files:  81% (32426/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.0290590Z Updating files:  82% (32827/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.0737220Z Updating files:  82% (33016/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.2172500Z Updating files:  83% (33227/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.3494910Z Updating files:  84% (33627/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.4759680Z Updating files:  85% (34028/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.5768440Z Updating files:  86% (34428/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.6533360Z Updating files:  87% (34828/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.7208290Z Updating files:  88% (35229/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.7946870Z Updating files:  89% (35629/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:01.9384180Z Updating files:  90% (36029/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.0290530Z Updating files:  91% (36430/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.0418560Z Updating files:  91% (36746/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.1717310Z Updating files:  92% (36830/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.2639890Z Updating files:  93% (37230/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.4133540Z Updating files:  94% (37631/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.5613810Z Updating files:  95% (38031/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.6647920Z Updating files:  96% (38431/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.8219250Z Updating files:  97% (38832/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:02.9956820Z Updating files:  98% (39232/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.0296980Z Updating files:  99% (39632/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.1869830Z Updating files:  99% (39704/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.1872720Z Updating files: 100% (40032/40032)
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.1873230Z Updating files: 100% (40032/40032), done.
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.2500600Z HEAD is now at 92dc4aa0 Merge 2001940952f6477b2db487f4662900139b0de20d into 9d1f5d564605774cfed99494125bebb3c0b1d065
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.2624410Z ##[endgroup]
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.2894760Z [command]/opt/homebrew/bin/git log -1 --format=%H
+Build e test (macos-latest)	Run actions/checkout@v4	2026-10-14T20:41:03.3036420Z 92dc4aa0312b6cc1df37e202f414b75742d6fc1c
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	﻿2026-10-14T20:41:03.3723590Z Prepare all required actions
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3882660Z ##[group]Run ./.github/actions/setup-sbcl
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3882960Z with:
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3883140Z   version: 2.6.9
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3883490Z   linux-sha256: 39fac28407405841003e4c2abfbe0d96abd93b7701e8b61cdd35e713943b46d6
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3883890Z ##[endgroup]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3963150Z ##[start-action display=Distribuzione ufficiale SBCL (Linux);id=__self.__run]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3977570Z ##[end-action id=__self.__run;outcome=skipped;conclusion=skipped;duration_ms=0]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.3979620Z ##[start-action display=SBCL (macOS);id=__self.__run_2]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.4020760Z ##[group]Run brew update
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.4021120Z ^[[36;1mbrew update^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.4021330Z ^[[36;1mbrew install sbcl^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.4112640Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:03.4112980Z ##[endgroup]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:06.3972480Z ^[[34m==>^[[0m ^[[1mUpdating Homebrew...^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:32.7770190Z To restore the stashed changes to /opt/homebrew/Library/Taps/homebrew/homebrew-core, run:
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:32.7783400Z   cd /opt/homebrew/Library/Taps/homebrew/homebrew-core && git stash pop
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:33.4717850Z ^[[34m==>^[[0m ^[[1mDownloading https://ghcr.io/v2/homebrew/core/portable-ruby/blobs/sha256:e0088dff5614b39387300136ec7a5f95bf1e07589547245c919524fc9e8b4197^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:33.7634780Z #=#=#                                                                          
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:33.8828890Z ##O#-#                                                                         
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:33.8829270Z 
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:33.9833500Z                                                                            0.0%
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:34.0844260Z                                                                            0.4%
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:34.1864090Z                                                                            0.8%
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:34.2873280Z #                                                                          1.5%
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:34.3874320Z #########                                                                 13.2%
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:34.4551970Z ############################################                              61.8%
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:34.4553030Z ######################################################################## 100.0%
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:34.5875600Z ^[[34m==>^[[0m ^[[1mPouring portable-ruby-4.0.7.arm64_big_sur.bottle.tar.gz^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7310580Z ^[[34m==>^[[0m ^[[1mHomebrew's analytics have entirely moved to our InfluxDB instance in the EU.^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7311630Z We gather less data than before and have destroyed all Google Analytics data:
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7312440Z   ^[[4mhttps://docs.brew.sh/Analytics^[[24m^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7312890Z Please reconsider re-enabling analytics to help our volunteer maintainers with:
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7313370Z   brew analytics on
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7313960Z ^[[34m==>^[[0m ^[[1mHomebrew is run entirely by unpaid volunteers. Please consider donating:^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7314990Z   ^[[4mhttps://github.com/Homebrew/brew#-donations^[[24m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:36.7315700Z 
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6154400Z Updated 3 taps (azure/bicep, homebrew/core and homebrew/cask).
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6171270Z ^[[34m==>^[[0m ^[[1mNew Formulae^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6178100Z agent-manager: Run Claude Code, Codex, OpenCode and other AI coding agents in tmux
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6179000Z all-smi: GPU monitoring tool for NVIDIA/Jetson/Apple Silicon/Tenstorrent
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6179860Z android-file-transfer-linux: Command-line MTP client for Android and other MTP devices
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6190720Z apkid: Android application identifier for compilers, packers, and obfuscators
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6191500Z arcane-cli: Command-line client for the Arcane Docker management platform
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6192120Z bashka: Static verification of installation bash scripts
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6192810Z baysor: Bayesian segmentation of imaging-based spatial transcriptomics data
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6196500Z bend: Language that blocks AI mistakes via proof
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6196990Z bitbucket-cli: CLI for Bitbucket Cloud and Data Center
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6197520Z cargo-mutants: Inject bugs and see if your tests catch them
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6198070Z ccmux: Run all your AI coding agents in tmux
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6198510Z chisel-ubuntu: Carve and cut Debian packages into slices
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6199170Z confluence-markdown-exporter: Export Atlassian Confluence pages as Markdown files
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6199910Z ctcache: Cache for clang-tidy static analysis results
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6202140Z cymbal: Language-agnostic code navigation CLI powered by tree-sitter
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6202800Z ddns-updater: Lightweight universal DDNS Updater program
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6203350Z deja: Predictive ghost-text autosuggestions for zsh
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6203870Z diffle: Keyboard-first diff viewer with LSP support and GitHub integration
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6224540Z doltlite: SQLite fork with Git-style version control via prolly trees
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6225600Z elasticmq: In-memory message queue with an Amazon SQS-compatible interface
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6226500Z fastplong: Ultra-fast preprocessing and quality control for long-read sequencing data
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6234780Z fdk-aac: Standalone library of the Fraunhofer FDK AAC code from Android
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6238570Z fdk-aac-encoder: Command-line encoder frontend for libfdk-aac
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6242300Z forgejo-runner: Official Actions runner for Forgejo instances
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6244680Z go-arch-lint: Architecture linter for Go projects
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6245310Z goleft: Tools for coverage and QC of BAM/CRAM files, including indexcov
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6246450Z hidapitester: Command-line tool to exercise USB HID devices via HIDAPI
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6247390Z hister: Self-hosted search engine for your browsing history
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6247930Z ketch: Web search and scraping for agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6248570Z kpt: Toolchain for composing, customizing, and deploying Kubernetes packages
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6249930Z kubectl-radar: Missing open-source Kubernetes UI with a built-in MCP server for AI agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6250500Z libklvanc: VANC Processing Framework
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6251490Z licensee: Detect under what license a project is distributed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6253050Z localsend-cli: Terminal client for sending files between nearby devices
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6253560Z mailtrap-local: Local email sandbox with SMTP server, web UI, and JSON API
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6254350Z maki: Efficient AI coding agent extendable by neovim-like Lua plugins
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6254880Z mariadb@12.3: Drop-in replacement for MySQL
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6255390Z mcpc: Universal command-line client for the Model Context Protocol (MCP)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6256000Z memex: Index and search local agent conversation history
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6256560Z modflow6: USGS modular hydrologic model
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6257000Z morphe: Desktop app and CLI for patching Android apps with Morphe
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6257550Z noodle: Terminal REST client with file-based collections
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6258000Z ntfs2btrfs: In-place conversion of NTFS filesystem to Btrfs
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6258420Z openfasttrace: Requirement tracing suite
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6258830Z openshell: Safe, private runtime for autonomous AI agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6259180Z openssl@3.6: Cryptography and SSL/TLS Toolkit
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6259890Z osctrl-mcp: Fast and efficient osquery management
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6260300Z packslip: Signed release manifest for vendor binaries
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6260860Z peekaboo: macOS screen capture, accessibility inspection and UI automation
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6261300Z percona-server@8.4: Drop-in MySQL replacement
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6261820Z pg_activity: Top-like interactive monitoring tool for PostgreSQL server activity
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6262630Z photocraft-cli: Headless PhotoCraft engine to convert, inspect and batch-edit images
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6263490Z plink1: Whole-genome association analysis toolset
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6263950Z pnpm@11: Fast, disk space efficient package manager
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6264390Z portop: Terminal UI showing which processes are using TCP and UDP ports
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6264970Z pypy3.12: Implementation of Python 3 in Python
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6265400Z python-gdbm@3.15: Python interface to gdbm
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6265760Z python-tk@3.15: Python interface to Tcl/Tk
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6266170Z python@3.15: Interpreted, interactive, object-oriented programming language
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6266820Z qdl: Flash firmware on Qualcomm-based devices via USB Emergency Download (EDL) mode
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6267750Z regenie: Whole genome regression modelling of large genome-wide association studies
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6268260Z rustqc: Fast genomics quality control tools for sequencing data
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6268740Z sac: Seismic Analysis Code, Community Edition
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6269240Z sdrmm: Modular, client-server software-defined radio
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6269670Z smbclient-ng: Fast and user friendly way to interact with SMB shares
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6270270Z sniffles: Structural variant caller for long-read sequencing data
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6270690Z snx-rs: Open-source client for Check Point VPN tunnels
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6271820Z sofka: Kubernetes TUI, reimagined in Rust
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6272280Z somalier: Relatedness, QC and ancestry checks from BAM/CRAM/VCF
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6272810Z taoup: Tao of Unix Programming with Ruby-powered ANSI-colored fortunes
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6273180Z tcltls: OpenSSL extension to Tcl
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6273590Z termaid: Render Mermaid diagrams in the terminal
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6274090Z tfswitch: Command-line tool to switch between Terraform versions
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6274660Z tinycbor: Concise Binary Object Representation (CBOR) Library
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6275210Z trealla-prolog: Compact and efficient ISO Prolog interpreter written in plain old C
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6275680Z tsuzuri: Block-based Markdown notebook for the terminal
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6276190Z tunnelite: Secure tunneling to local applications
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6276840Z typdiff: Diff tool that generates Typst documents highlighting differences between inputs
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6277450Z unixcw: Morse code tutor and command-line tools
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6277850Z vcfexpress: Filter and format VCF/BCF files with Lua expressions
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6278390Z vortix: Terminal UI for WireGuard and OpenVPN with live telemetry and leak guarding
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6279310Z wavemon: Ncurses-based monitoring application for wireless network devices on Linux
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6280360Z workmux: Git worktrees + tmux windows for zero-friction parallel dev
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6280880Z xgrammar: Structured generation and reasoning engine for LLMs
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6281280Z xwpe: Borland-style IDE clone with LSP/DAP support (terminal UI)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6281970Z zig@0.16: Programming language designed for robustness, optimality, and clarity
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6282660Z ^[[34m==>^[[0m ^[[1mNew Casks^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6282910Z activitywatch@experimental: Time tracker
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6283260Z agentiloop-agent: Autonomous agent
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6283570Z amp-app: Coding agent and development environment
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6284020Z argo-books: Accounting software for small businesses
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6284470Z artcraft: Video crafting engine
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6284800Z audacity@3: Multi-track audio editor and recorder
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6285360Z auto-tune-central: Software download manager for Antares products
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6285730Z azure-cli: Microsoft Azure CLI 2.0
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6286120Z betteraudio: Per-app volume, EQ and audio device control
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6286580Z bettermacwidgets: Live-animated widgets that sit on the desktop
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6287190Z bitmuse: Bit-perfect music player for local hi-res libraries
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6287650Z buholaunchpad: Launchpad alternative
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6288270Z buildin: Collaborative workspace for notes, documents and wikis
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6288890Z cadcraft: Computer-aided design and drafting tool
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6289270Z caldera-amp: Headless player for Plex music servers
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6289700Z calyx: Terminal for running and supervising coding agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6290090Z capsomnia: Utility that keeps your computer awake with the lid closed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6290620Z claudoscope: Menu bar dashboard for Claude Code sessions
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6291080Z cline-app: AI coding agent
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6291540Z colamd: Markdown editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6291830Z crest: Notch utility with widgets
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6292090Z crest-browser: Open-source web browser
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6292510Z cuadriver: Background desktop automation driver for AI agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6293330Z cyd: Archive and delete your data on social media platforms
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6293800Z deckcraft: Presentation editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6294140Z deepseek-harness: Plugin-based AI agent desktop application
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6294640Z designcraft: Page layout and publishing tool
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6295090Z deviceshelf: Scanner for devices, open ports and security risks on the local network
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6295930Z distill-web-monitor: Monitor webpages for changes
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6296500Z doubaoime: Chinese input method with voice input and intelligent suggestions
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6297040Z easymac-cleaner: Cleaning, privacy, and system optimisation utility
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6297550Z effectcraft: Motion graphics and visual effects compositor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6297890Z filmcraft: Video editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6298230Z fl-studio: Digital audio production application
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6299030Z flick: Radial command wheel triggered by holding a key and flicking the mouse
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6299650Z fluxer: Chat for friends, groups, and communities with text, voice, and video
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6300170Z font-aptos
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6300440Z font-google-sans
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6300730Z font-google-sans-flex
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6301040Z font-lexica-ultralegible
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6301370Z font-nebula-sans
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6301590Z font-pennstander
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6301850Z font-pyeojin-gothic
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6302080Z font-tiny5-duo
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6302350Z font-xmind
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6302610Z forel: Rule-based file automation
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6303100Z genoffice: Open-source AI office suite
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6303580Z ghostex: Workspace for running and reviewing multiple CLI coding agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6304190Z gitdifferent: Git client built around a three-way merge tool
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6304620Z gloomberb: Finance terminal
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6304860Z gridcraft: Spreadsheet editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6305320Z hagimimonitordirect: Menu bar monitor for system performance and hardware
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6305700Z highball: Tool to run Windows games
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6306170Z hol-guard: Local-first runtime firewall for AI coding agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6306640Z holst: Online whiteboard for team collaboration
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6307060Z homebrew-app: Homebrew's official GUI
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6307570Z hoptodesk: Remote desktop and remote support tool with end-to-end encryption
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6308150Z ideashell: AI partner for notes, voice, and to-dos
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6308690Z ideashell-cn: AI partner for notes, voice, and to-dos (China edition)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6309060Z incy: Proxy client
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6309430Z jlcone: Desktop client for JLCPCB quoting, ordering and order tracking
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6310160Z jpki: Digital signature and authentication client for the My Number Card (JPKI)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6311730Z kaku: Terminal optimised for AI coding
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6312110Z keyecho: Mechanical keyboard sounds for every keystroke
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6312840Z kkterm: Local-first administration workspace for terminals, SSH, and SFTP
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6313570Z langdock: Platform for AI Adoption
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6313970Z lightcraft: Photo library manager and raw image developer
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6314540Z littlebird: AI assistant that captures meetings and work context
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6315350Z local-studio: Local workstation for running and managing language models
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6315980Z lody: Share coding agent sessions across desktop and mobile
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6316390Z look: Keyboard-first local launcher
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6316830Z manus-cue: Personal AI agents with their own identities
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6317190Z markpad: Markdown viewer and editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6317580Z mcplinker: Manage and sync MCP server configurations across AI clients
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6317920Z mdhero: Markdown viewer and editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6318740Z mindroom: Self-hostable AI stack for multi-user, multi-agent workflows on Matrix
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6319260Z muse: AI assistant for managing tasks, projects, and long-term goals
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6319750Z napari: Multi-dimensional image viewer for Python
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6320140Z network-weather: Network diagnostics tool
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6320480Z nextdns-app: Encrypted DNS client with ad and tracker blocking
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6320910Z nextpad++: Unofficial native port of Notepad++
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6321570Z nodeterm: Node-based terminal manager for terminals and coding agents on a canvas
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6322150Z nuphyio: Keyboard configurator for NuPhy devices
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6322630Z nvidia-pair: Local inference router for a group of compatible computers
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6323080Z ollama-binary: Get up and running with large language models locally
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6323510Z open-science: AI research workbench with scientific agents and notebooks
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6324060Z openclip: Instant actions for selected text
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6324660Z opendisk: Disk space analyser
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6325130Z openplc-editor: IDE for creating programs for the OpenPLC Runtime
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6325620Z pdfcraft: PDF editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6325920Z photocraft: Image editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6326260Z phtv: Vietnamese input method
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6326650Z picmal: Converts and compresses images, video, audio and PDFs locally
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6327160Z picsart-ai-playground: Workspace for AI image, video and audio creation
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6327710Z plane: Project management tool for tasks, sprints and docs
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6328350Z privacynotes: End-to-end encrypted notes, tasks, files, journal, passwords and bookmark sync
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6328920Z psysonic: Desktop client for Navidrome and other Subsonic-compatible servers
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6403360Z purge: Clears caches and junk files by moving them to the Trash
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6403940Z recordly: Creator-focused screen recorder with auto-zoom, cursor effects, and more
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6406030Z relay: Menu bar app for building LLM prompts from files, clipboard and voice notes
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6406630Z reolink: Client for viewing and managing security cameras and NVRs
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6407100Z robbietilton-compositor: Photoshop alternative
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6407450Z ruffle: Flash Player emulator
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6407810Z ruswitcher: Keyboard layout switcher
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6408410Z sacnview: Tool for monitoring and sending the Streaming ACN lighting control protocol
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6408840Z saega: Dictation app for Swedish and Norwegian
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6409530Z sandisk: Managing SanDisk external drives
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6409900Z sdrmm-app: Modular, client-server software-defined radio
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6410320Z sidex: Code editor based on VS Code and Tauri
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6410730Z snapline: Screenshot, screen recording and GIF tool
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6411550Z solidtime: Open-source time tracker
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6411910Z sononym: AI-powered sample browser for exploring audio samples
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6412610Z soundcraft: Digital audio workstation
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6414920Z ssl-360: Plugin mixer and control software for SSL 360-enabled hardware
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6417380Z ssl-download-manager: Software manager for SSL plug-ins
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6419640Z stashcat: Secure messenger for organisations
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6420080Z stockbit: Indonesian stock trading and analysis platform
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6420360Z swiftcord: Native Discord client
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6420680Z tabularis@nightly: Lightweight database management tool
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6421250Z tapmap: Visualise network connections on an interactive world map
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6421650Z telari: Markdown reader built for typography
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6421950Z telegram@beta: Messaging app with a focus on speed and security
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6422330Z tencent-yingyongbao: Tencent application store
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6422590Z threat-dragon: Threat modeling tool
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6423130Z tnas-pc: Desktop client for TerraMaster TNAS network storage devices
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6423570Z tracexy: Inspect network sessions, protocols, processes, and packet evidence
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6424240Z tungsten-edge: Window-oriented taskbar that replaces the Dock
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6424560Z vectorcraft: Vector editor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6424830Z volumehud: Bring back the pre-Tahoe volume and brightness HUDs
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6425970Z wheelwizard: Mod manager for Mario Kart Wii and Retro Rewind
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6426360Z wordcraft: Word processor
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6426580Z workbuddy-ai: AI agent for everyday office work
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6427050Z workbuddy-cn: AI agent for everyday office work
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6431300Z wsl-manager: Manage native Linux VMs and remote WSL distros
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6431640Z yap-app: On-device voice dictation
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6432000Z zed-delta: Multiplayer environment for coding with agents
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:37.6432370Z zentty: Terminal for agent-driven development
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3038110Z ^[[34m==>^[[0m ^[[1mOutdated Formulae^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3038370Z aria2
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3038530Z aws-sam-cli
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3038710Z bicep
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3038870Z ca-certificates
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039010Z cairo
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039130Z certifi
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039240Z cffi
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039350Z cmake
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039460Z cryptography
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039600Z curl
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039720Z freetype
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3039870Z gh
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3040000Z git
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3040140Z glib
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3040260Z gnupg
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3040440Z gradle
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3040670Z gradle-completion
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3041000Z harfbuzz
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3041180Z hdrhistogram_c
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3041400Z kotlin
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3041570Z krb5
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3041740Z libgcrypt
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3041910Z libngtcp2
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3042070Z libpng
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3042240Z libpq
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3042740Z libssh2
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3042980Z libuv
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3043170Z maven
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3043350Z node@24
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3043510Z openjdk
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3043650Z openssl@3
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3043850Z pcre2
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3044020Z pipx
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3044220Z pkgconf
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3044360Z pycparser
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3044500Z pydantic
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3044690Z python@3.14
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3044920Z readline
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3045100Z rpds-py
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3045250Z ruby@3.4
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3045400Z rustup
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3045590Z selenium-server
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3046080Z simdjson
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3046250Z sqlite
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3046950Z swiftformat
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3047400Z wget
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3047600Z xcodes
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3047780Z xorgproto
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3047970Z xz
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3048140Z yq
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3048470Z ^[[34m==>^[[0m ^[[1mOutdated Casks^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3048800Z google-chrome
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3049020Z microsoft-edge
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3049200Z 
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3049490Z You have ^[[1m50^[[0m outdated formulae and ^[[1m2^[[0m outdated casks installed.
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3050530Z You can upgrade them with ^[[1mbrew upgrade^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3050860Z or list them with ^[[1mbrew outdated^[[0m.
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3051220Z ^[[34m==>^[[0m ^[[1mazure-cli has been moved to homebrew/cask.^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:38.3051620Z ^[[34m==>^[[0m ^[[1mbrew unlink azure-cli^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.0842510Z ##[warning]Treating azure-cli as a formula. For the cask, use homebrew/cask/azure-cli or specify the `--cask` flag. To silence this message, use the `--formula` flag.
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.1148970Z Unlinking /opt/homebrew/Cellar/azure-cli/2.90.0... 4 symlinks removed.
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.1303130Z ^[[34m==>^[[0m ^[[1mbrew cleanup^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9381580Z Removing: /Users/runner/Library/Caches/Homebrew/ant--1.10.18... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9412870Z Removing: /Users/runner/Library/Caches/Homebrew/ant_bottle_manifest--1.10.18... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9470240Z ##[warning]Skipping aria2: most recent version 1.37.0_3 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9566720Z Removing: /Users/runner/Library/Caches/Homebrew/aria2--1.37.0_2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9583340Z Removing: /Users/runner/Library/Caches/Homebrew/aria2_bottle_manifest--1.37.0_2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9585240Z ##[warning]Skipping aws-sam-cli: most recent version 1.168.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9590540Z Removing: /Users/runner/Library/Caches/Homebrew/aws-sam-cli--1.166.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9597260Z Removing: /Users/runner/Library/Caches/Homebrew/aws-sam-cli_bottle_manifest--1.166.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9598050Z Removing: /Users/runner/Library/Caches/Homebrew/azure-cli--2.90.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9598750Z Removing: /Users/runner/Library/Caches/Homebrew/azure-cli_bottle_manifest--2.90.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9599470Z Removing: /Users/runner/Library/Caches/Homebrew/bazelisk--1.29.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9600600Z Removing: /Users/runner/Library/Caches/Homebrew/bazelisk_bottle_manifest--1.29.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9612200Z ##[warning]Skipping azure/bicep/bicep: most recent version 0.48.1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9612900Z Removing: /Users/runner/Library/Caches/Homebrew/bicep--0.46.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9616970Z Removing: /Users/runner/Library/Caches/Homebrew/brotli--1.2.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9617550Z Removing: /Users/runner/Library/Caches/Homebrew/brotli_bottle_manifest--1.2.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9618100Z Removing: /Users/runner/Library/Caches/Homebrew/c-ares--1.34.8... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9618630Z Removing: /Users/runner/Library/Caches/Homebrew/c-ares_bottle_manifest--1.34.8... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9619710Z ##[warning]Skipping ca-certificates: most recent version 2026-09-25 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9620320Z Removing: /Users/runner/Library/Caches/Homebrew/ca-certificates--2026-08-13... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9624770Z Removing: /Users/runner/Library/Caches/Homebrew/ca-certificates_bottle_manifest--2026-08-13-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9627720Z ##[warning]Skipping cairo: most recent version 1.18.6 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9629150Z Removing: /Users/runner/Library/Caches/Homebrew/cairo--1.18.4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9634940Z Removing: /Users/runner/Library/Caches/Homebrew/cairo_bottle_manifest--1.18.4-2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9636430Z Removing: /Users/runner/Library/Caches/Homebrew/carthage--0.40.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9639410Z Removing: /Users/runner/Library/Caches/Homebrew/carthage_bottle_manifest--0.40.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9642550Z ##[warning]Skipping certifi: most recent version 2026.7.22_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9644570Z Removing: /Users/runner/Library/Caches/Homebrew/certifi--2026.7.22... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9646930Z Removing: /Users/runner/Library/Caches/Homebrew/certifi_bottle_manifest--2026.7.22... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9658700Z ##[warning]Skipping cffi: most recent version 2.1.1_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9664890Z Removing: /Users/runner/Library/Caches/Homebrew/cffi--2.1.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9666590Z Removing: /Users/runner/Library/Caches/Homebrew/cffi_bottle_manifest--2.1.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9701160Z ##[warning]Skipping cmake: most recent version 4.4.4 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9714850Z Removing: /Users/runner/Library/Caches/Homebrew/cmake--4.4.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9715430Z Removing: /Users/runner/Library/Caches/Homebrew/cmake_bottle_manifest--4.4.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9716560Z ##[warning]Skipping cryptography: most recent version 50.0.2_2 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9720300Z Removing: /Users/runner/Library/Caches/Homebrew/cryptography--50.0.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9725270Z Removing: /Users/runner/Library/Caches/Homebrew/cryptography_bottle_manifest--50.0.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9728360Z ##[warning]Skipping curl: most recent version 8.23.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9730720Z Removing: /Users/runner/Library/Caches/Homebrew/curl--8.22.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9731270Z Removing: /Users/runner/Library/Caches/Homebrew/curl_bottle_manifest--8.22.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9731890Z Removing: /Users/runner/Library/Caches/Homebrew/fontconfig--2.18.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9732440Z Removing: /Users/runner/Library/Caches/Homebrew/fontconfig_bottle_manifest--2.18.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9737410Z ##[warning]Skipping freetype: most recent version 2.15.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9738280Z Removing: /Users/runner/Library/Caches/Homebrew/freetype--2.14.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9738880Z Removing: /Users/runner/Library/Caches/Homebrew/freetype_bottle_manifest--2.14.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9739320Z Removing: /Users/runner/Library/Caches/Homebrew/gcc@13--13.4.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9739740Z Removing: /Users/runner/Library/Caches/Homebrew/gcc@13_bottle_manifest--13.4.0-4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9740170Z Removing: /Users/runner/Library/Caches/Homebrew/gcc@14--14.4.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9740570Z Removing: /Users/runner/Library/Caches/Homebrew/gcc@14_bottle_manifest--14.4.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9742240Z Removing: /Users/runner/Library/Caches/Homebrew/gcc@15--15.3.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9743510Z Removing: /Users/runner/Library/Caches/Homebrew/gcc@15_bottle_manifest--15.3.0-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9744620Z Removing: /Users/runner/Library/Caches/Homebrew/gdbm--1.26... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9745330Z Removing: /Users/runner/Library/Caches/Homebrew/gdbm_bottle_manifest--1.26... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9745830Z Removing: /Users/runner/Library/Caches/Homebrew/geckodriver--0.37.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9746410Z Removing: /Users/runner/Library/Caches/Homebrew/geckodriver_bottle_manifest--0.37.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9746990Z Removing: /Users/runner/Library/Caches/Homebrew/gettext--1.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9747460Z Removing: /Users/runner/Library/Caches/Homebrew/gettext_bottle_manifest--1.0-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9749070Z ##[warning]Skipping gh: most recent version 2.102.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9749480Z Removing: /Users/runner/Library/Caches/Homebrew/gh--2.100.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9749930Z Removing: /Users/runner/Library/Caches/Homebrew/gh_bottle_manifest--2.100.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9750470Z Removing: /Users/runner/Library/Caches/Homebrew/giflib--6.1.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9750920Z Removing: /Users/runner/Library/Caches/Homebrew/giflib_bottle_manifest--6.1.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9751770Z ##[warning]Skipping git: most recent version 2.56.0_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9752170Z Removing: /Users/runner/Library/Caches/Homebrew/git--2.55.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9752620Z Removing: /Users/runner/Library/Caches/Homebrew/git_bottle_manifest--2.55.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9753290Z Removing: /Users/runner/Library/Caches/Homebrew/git-lfs--3.8.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9753890Z Removing: /Users/runner/Library/Caches/Homebrew/git-lfs_bottle_manifest--3.8.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9760230Z ##[warning]Skipping glib: most recent version 2.90.1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9760820Z Removing: /Users/runner/Library/Caches/Homebrew/glib--2.88.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9767230Z Removing: /Users/runner/Library/Caches/Homebrew/glib_bottle_manifest--2.88.3-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9767790Z Removing: /Users/runner/Library/Caches/Homebrew/gmp--6.3.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9771560Z Removing: /Users/runner/Library/Caches/Homebrew/gmp_bottle_manifest--6.3.0-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9778470Z Removing: /Users/runner/Library/Caches/Homebrew/gnu-tar--1.35_1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9779640Z Removing: /Users/runner/Library/Caches/Homebrew/gnu-tar_bottle_manifest--1.35_1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9792050Z ##[warning]Skipping gnupg: most recent version 2.5.24_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9797390Z Removing: /Users/runner/Library/Caches/Homebrew/gnupg--2.5.22... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9798950Z Removing: /Users/runner/Library/Caches/Homebrew/gnupg_bottle_manifest--2.5.22... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9799580Z Removing: /Users/runner/Library/Caches/Homebrew/gnutls--3.8.13_2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9800100Z Removing: /Users/runner/Library/Caches/Homebrew/gnutls_bottle_manifest--3.8.13_2-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9853850Z ##[warning]Skipping gradle: most recent version 9.8.1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9864720Z Removing: /Users/runner/Library/Caches/Homebrew/gradle--9.7.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9865430Z Removing: /Users/runner/Library/Caches/Homebrew/gradle_bottle_manifest--9.7.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9867190Z ##[warning]Skipping gradle-completion: most recent version 9.8.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9881830Z Removing: /Users/runner/Library/Caches/Homebrew/gradle-completion--9.7.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9882390Z Removing: /Users/runner/Library/Caches/Homebrew/gradle-completion_bottle_manifest--9.7.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9882860Z Removing: /Users/runner/Library/Caches/Homebrew/graphite2--1.3.15... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9883310Z Removing: /Users/runner/Library/Caches/Homebrew/graphite2_bottle_manifest--1.3.15... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9886220Z ##[warning]Skipping harfbuzz: most recent version 14.6.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9887530Z Removing: /Users/runner/Library/Caches/Homebrew/harfbuzz--14.4.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9889400Z Removing: /Users/runner/Library/Caches/Homebrew/harfbuzz_bottle_manifest--14.4.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9900730Z ##[warning]Skipping hdrhistogram_c: most recent version 0.12.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9902510Z Removing: /Users/runner/Library/Caches/Homebrew/hdrhistogram_c--0.11.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9905850Z Removing: /Users/runner/Library/Caches/Homebrew/hdrhistogram_c_bottle_manifest--0.11.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9922380Z Removing: /Users/runner/Library/Caches/Homebrew/icu4c@78--78.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9937510Z Removing: /Users/runner/Library/Caches/Homebrew/icu4c@78_bottle_manifest--78.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9947580Z Removing: /Users/runner/Library/Caches/Homebrew/isl--0.28... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:39.9948460Z Removing: /Users/runner/Library/Caches/Homebrew/isl_bottle_manifest--0.28... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0028530Z Removing: /Users/runner/Library/Caches/Homebrew/jpeg-turbo--3.2.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0035420Z Removing: /Users/runner/Library/Caches/Homebrew/jpeg-turbo_bottle_manifest--3.2.0-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0038690Z Removing: /Users/runner/Library/Caches/Homebrew/jq--1.8.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0064230Z Removing: /Users/runner/Library/Caches/Homebrew/jq_bottle_manifest--1.8.2-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0065780Z Removing: /Users/runner/Library/Caches/Homebrew/json-c--0.19... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0066880Z Removing: /Users/runner/Library/Caches/Homebrew/json-c_bottle_manifest--0.19-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0069680Z ##[warning]Skipping kotlin: most recent version 2.4.21 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0070210Z Removing: /Users/runner/Library/Caches/Homebrew/kotlin--2.4.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0070740Z Removing: /Users/runner/Library/Caches/Homebrew/kotlin_bottle_manifest--2.4.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0186780Z ##[warning]Skipping krb5: most recent version 1.22.2_2 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0188060Z Removing: /Users/runner/Library/Caches/Homebrew/krb5--1.22.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0188770Z Removing: /Users/runner/Library/Caches/Homebrew/krb5_bottle_manifest--1.22.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0248560Z Removing: /Users/runner/Library/Caches/Homebrew/libassuan--3.0.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0282600Z Removing: /Users/runner/Library/Caches/Homebrew/libassuan_bottle_manifest--3.0.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0287140Z ##[warning]Skipping libgcrypt: most recent version 1.12.4 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0287720Z Removing: /Users/runner/Library/Caches/Homebrew/libgcrypt--1.12.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0295760Z Removing: /Users/runner/Library/Caches/Homebrew/libgcrypt_bottle_manifest--1.12.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0296350Z Removing: /Users/runner/Library/Caches/Homebrew/libgpg-error--1.61... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0296890Z Removing: /Users/runner/Library/Caches/Homebrew/libgpg-error_bottle_manifest--1.61... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0297500Z Removing: /Users/runner/Library/Caches/Homebrew/libidn2--2.3.8... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0298010Z Removing: /Users/runner/Library/Caches/Homebrew/libidn2_bottle_manifest--2.3.8... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0298470Z Removing: /Users/runner/Library/Caches/Homebrew/libksba--1.8.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0300970Z Removing: /Users/runner/Library/Caches/Homebrew/libksba_bottle_manifest--1.8.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0307720Z Removing: /Users/runner/Library/Caches/Homebrew/libmpc--1.4.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0312090Z Removing: /Users/runner/Library/Caches/Homebrew/libmpc_bottle_manifest--1.4.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0317370Z Removing: /Users/runner/Library/Caches/Homebrew/libnghttp2--1.70.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0318580Z Removing: /Users/runner/Library/Caches/Homebrew/libnghttp2_bottle_manifest--1.70.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0323280Z Removing: /Users/runner/Library/Caches/Homebrew/libnghttp3--1.18.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0324220Z Removing: /Users/runner/Library/Caches/Homebrew/libnghttp3_bottle_manifest--1.18.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0328260Z ##[warning]Skipping libngtcp2: most recent version 1.25.0_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0329010Z Removing: /Users/runner/Library/Caches/Homebrew/libngtcp2--1.25.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0332660Z Removing: /Users/runner/Library/Caches/Homebrew/libngtcp2_bottle_manifest--1.25.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0334610Z ##[warning]Skipping libpng: most recent version 1.6.59 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0335160Z Removing: /Users/runner/Library/Caches/Homebrew/libpng--1.6.58... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0336500Z Removing: /Users/runner/Library/Caches/Homebrew/libpng_bottle_manifest--1.6.58... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0341620Z ##[warning]Skipping libpq: most recent version 18.6_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0343520Z Removing: /Users/runner/Library/Caches/Homebrew/libpq--18.6... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0344050Z Removing: /Users/runner/Library/Caches/Homebrew/libpq_bottle_manifest--18.6... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0353240Z Removing: /Users/runner/Library/Caches/Homebrew/libpsl--0.23.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0358450Z Removing: /Users/runner/Library/Caches/Homebrew/libpsl_bottle_manifest--0.23.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0373980Z Removing: /Users/runner/Library/Caches/Homebrew/libsodium--1.0.22... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0376510Z Removing: /Users/runner/Library/Caches/Homebrew/libsodium_bottle_manifest--1.0.22... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0389780Z ##[warning]Skipping libssh2: most recent version 1.11.1_7 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0398280Z Removing: /Users/runner/Library/Caches/Homebrew/libssh2--1.11.1_4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0409800Z Removing: /Users/runner/Library/Caches/Homebrew/libssh2_bottle_manifest--1.11.1_4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0419960Z Removing: /Users/runner/Library/Caches/Homebrew/libtasn1--4.21.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0422080Z Removing: /Users/runner/Library/Caches/Homebrew/libtasn1_bottle_manifest--4.21.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0431240Z Removing: /Users/runner/Library/Caches/Homebrew/libtiff--4.7.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0439910Z Removing: /Users/runner/Library/Caches/Homebrew/libtiff_bottle_manifest--4.7.2-2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0446240Z Removing: /Users/runner/Library/Caches/Homebrew/libunistring--1.4.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0447390Z Removing: /Users/runner/Library/Caches/Homebrew/libunistring_bottle_manifest--1.4.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0452780Z Removing: /Users/runner/Library/Caches/Homebrew/libusb--1.0.30... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0462070Z Removing: /Users/runner/Library/Caches/Homebrew/libusb_bottle_manifest--1.0.30... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0466670Z ##[warning]Skipping libuv: most recent version 1.53.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0567260Z Removing: /Users/runner/Library/Caches/Homebrew/libuv--1.52.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0610150Z Removing: /Users/runner/Library/Caches/Homebrew/libuv_bottle_manifest--1.52.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0611160Z Removing: /Users/runner/Library/Caches/Homebrew/libx11--1.8.13... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0612450Z Removing: /Users/runner/Library/Caches/Homebrew/libx11_bottle_manifest--1.8.13... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0613000Z Removing: /Users/runner/Library/Caches/Homebrew/libxau--1.0.12... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0613510Z Removing: /Users/runner/Library/Caches/Homebrew/libxau_bottle_manifest--1.0.12... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0614660Z Removing: /Users/runner/Library/Caches/Homebrew/libxcb--1.17.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0615190Z Removing: /Users/runner/Library/Caches/Homebrew/libxcb_bottle_manifest--1.17.0-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0615720Z Removing: /Users/runner/Library/Caches/Homebrew/libxdmcp--1.1.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0616240Z Removing: /Users/runner/Library/Caches/Homebrew/libxdmcp_bottle_manifest--1.1.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0616800Z Removing: /Users/runner/Library/Caches/Homebrew/libxext--1.3.7... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0617850Z Removing: /Users/runner/Library/Caches/Homebrew/libxext_bottle_manifest--1.3.7... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0618380Z Removing: /Users/runner/Library/Caches/Homebrew/libxrender--0.9.12... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0618920Z Removing: /Users/runner/Library/Caches/Homebrew/libxrender_bottle_manifest--0.9.12... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0619450Z Removing: /Users/runner/Library/Caches/Homebrew/libyaml--0.2.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0619950Z Removing: /Users/runner/Library/Caches/Homebrew/libyaml_bottle_manifest--0.2.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0620480Z Removing: /Users/runner/Library/Caches/Homebrew/little-cms2--2.19.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0621040Z Removing: /Users/runner/Library/Caches/Homebrew/little-cms2_bottle_manifest--2.19.1-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0622150Z Removing: /Users/runner/Library/Caches/Homebrew/llvm@20--20.1.8... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0622710Z Removing: /Users/runner/Library/Caches/Homebrew/llvm@20_bottle_manifest--20.1.8-2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0623220Z Removing: /Users/runner/Library/Caches/Homebrew/lz4--1.10.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0623800Z Removing: /Users/runner/Library/Caches/Homebrew/lz4_bottle_manifest--1.10.0-2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0624300Z Removing: /Users/runner/Library/Caches/Homebrew/lzo--2.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0624820Z Removing: /Users/runner/Library/Caches/Homebrew/lzo_bottle_manifest--2.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0626140Z ##[warning]Skipping maven: most recent version 3.10.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0629280Z Removing: /Users/runner/Library/Caches/Homebrew/maven--3.9.16... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0630410Z Removing: /Users/runner/Library/Caches/Homebrew/maven_bottle_manifest--3.9.16... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0630970Z Removing: /Users/runner/Library/Caches/Homebrew/mpdecimal--4.0.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0631540Z Removing: /Users/runner/Library/Caches/Homebrew/mpdecimal_bottle_manifest--4.0.1-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0632080Z Removing: /Users/runner/Library/Caches/Homebrew/mpfr--4.2.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0632670Z Removing: /Users/runner/Library/Caches/Homebrew/mpfr_bottle_manifest--4.2.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0633290Z Removing: /Users/runner/Library/Caches/Homebrew/nettle--4.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0634310Z Removing: /Users/runner/Library/Caches/Homebrew/nettle_bottle_manifest--4.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0634850Z Removing: /Users/runner/Library/Caches/Homebrew/ninja--1.13.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0635540Z Removing: /Users/runner/Library/Caches/Homebrew/ninja_bottle_manifest--1.13.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0636890Z ##[warning]Skipping node@24: most recent version 24.21.0_2 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0639080Z Removing: /Users/runner/Library/Caches/Homebrew/node@24--24.20.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0641110Z Removing: /Users/runner/Library/Caches/Homebrew/node@24_bottle_manifest--24.20.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0653600Z Removing: /Users/runner/Library/Caches/Homebrew/npth--1.8... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0654190Z Removing: /Users/runner/Library/Caches/Homebrew/npth_bottle_manifest--1.8... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0654760Z Removing: /Users/runner/Library/Caches/Homebrew/oniguruma--6.9.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0655970Z Removing: /Users/runner/Library/Caches/Homebrew/oniguruma_bottle_manifest--6.9.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0663860Z ##[warning]Skipping openjdk: most recent version 27 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0734320Z Removing: /Users/runner/Library/Caches/Homebrew/openjdk--26.0.2.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0735150Z Removing: /Users/runner/Library/Caches/Homebrew/openjdk_bottle_manifest--26.0.2.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0736750Z ##[warning]Skipping openssl@3: most recent version 3.5.9 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0737260Z Removing: /Users/runner/Library/Caches/Homebrew/openssl@3--3.6.4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0737790Z Removing: /Users/runner/Library/Caches/Homebrew/openssl@3_bottle_manifest--3.6.4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0738320Z Removing: /Users/runner/Library/Caches/Homebrew/p11-kit--0.26.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0738850Z Removing: /Users/runner/Library/Caches/Homebrew/p11-kit_bottle_manifest--0.26.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0739380Z Removing: /Users/runner/Library/Caches/Homebrew/p7zip--17.06... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0739870Z Removing: /Users/runner/Library/Caches/Homebrew/p7zip_bottle_manifest--17.06... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0740290Z Removing: /Users/runner/Library/Caches/Homebrew/packer--1.16.0.zip... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0741000Z ##[warning]Skipping pcre2: most recent version 10.49 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0741370Z Removing: /Users/runner/Library/Caches/Homebrew/pcre2--10.48... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0745580Z Removing: /Users/runner/Library/Caches/Homebrew/pcre2_bottle_manifest--10.48... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0766350Z Removing: /Users/runner/Library/Caches/Homebrew/perl--5.44.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0767010Z Removing: /Users/runner/Library/Caches/Homebrew/perl_bottle_manifest--5.44.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0774740Z Removing: /Users/runner/Library/Caches/Homebrew/pinentry--1.3.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0778700Z Removing: /Users/runner/Library/Caches/Homebrew/pinentry_bottle_manifest--1.3.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0786730Z ##[warning]Skipping pipx: most recent version 1.17.14 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0787460Z Removing: /Users/runner/Library/Caches/Homebrew/pipx--1.17.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0792370Z Removing: /Users/runner/Library/Caches/Homebrew/pipx_bottle_manifest--1.17.2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0798110Z Removing: /Users/runner/Library/Caches/Homebrew/pixman--0.46.4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0799720Z Removing: /Users/runner/Library/Caches/Homebrew/pixman_bottle_manifest--0.46.4-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0807210Z ##[warning]Skipping pkgconf: most recent version 3.0.8 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0807910Z Removing: /Users/runner/Library/Caches/Homebrew/pkgconf--3.0.7... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0810760Z Removing: /Users/runner/Library/Caches/Homebrew/pkgconf_bottle_manifest--3.0.7... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0813910Z ##[warning]Skipping pycparser: most recent version 3.11 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0814370Z Removing: /Users/runner/Library/Caches/Homebrew/pycparser--3.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0821150Z Removing: /Users/runner/Library/Caches/Homebrew/pycparser_bottle_manifest--3.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0830550Z ##[warning]Skipping pydantic: most recent version 2.14.1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0834010Z Removing: /Users/runner/Library/Caches/Homebrew/pydantic--2.13.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0838470Z Removing: /Users/runner/Library/Caches/Homebrew/pydantic_bottle_manifest--2.13.5... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0848240Z ##[warning]Skipping python@3.14: most recent version 3.14.8_2 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0848870Z Removing: /Users/runner/Library/Caches/Homebrew/python@3.14--3.14.7... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0854980Z Removing: /Users/runner/Library/Caches/Homebrew/python@3.14_bottle_manifest--3.14.7... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0860750Z ##[warning]Skipping readline: most recent version 8.3.6 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0861310Z Removing: /Users/runner/Library/Caches/Homebrew/readline--8.3.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0861880Z Removing: /Users/runner/Library/Caches/Homebrew/readline_bottle_manifest--8.3.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0874440Z ##[warning]Skipping rpds-py: most recent version 2026.9.1_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0883080Z Removing: /Users/runner/Library/Caches/Homebrew/rpds-py--2026.6.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0883730Z Removing: /Users/runner/Library/Caches/Homebrew/rpds-py_bottle_manifest--2026.6.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0884980Z ##[warning]Skipping ruby@3.4: most recent version 3.4.11_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0885540Z Removing: /Users/runner/Library/Caches/Homebrew/ruby@3.4--3.4.10... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0886130Z Removing: /Users/runner/Library/Caches/Homebrew/ruby@3.4_bottle_manifest--3.4.10-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0893640Z ##[warning]Skipping rustup: most recent version 1.29.1_1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0895140Z Removing: /Users/runner/Library/Caches/Homebrew/rustup--1.29.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0895700Z Removing: /Users/runner/Library/Caches/Homebrew/rustup_bottle_manifest--1.29.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0904510Z ##[warning]Skipping selenium-server: most recent version 4.51.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0906130Z Removing: /Users/runner/Library/Caches/Homebrew/selenium-server--4.48.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0911840Z Removing: /Users/runner/Library/Caches/Homebrew/selenium-server_bottle_manifest--4.48.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0925570Z ##[warning]Skipping simdjson: most recent version 5.0.4 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0929960Z Removing: /Users/runner/Library/Caches/Homebrew/simdjson--4.6.11... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0931550Z Removing: /Users/runner/Library/Caches/Homebrew/simdjson_bottle_manifest--4.6.11... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0938360Z ##[warning]Skipping sqlite: most recent version 3.54.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0943150Z Removing: /Users/runner/Library/Caches/Homebrew/sqlite--3.53.4... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0947220Z Removing: /Users/runner/Library/Caches/Homebrew/sqlite_bottle_manifest--3.53.4-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0954220Z ##[warning]Skipping swiftformat: most recent version 0.63.1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0957620Z Removing: /Users/runner/Library/Caches/Homebrew/swiftformat--0.63.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0959000Z Removing: /Users/runner/Library/Caches/Homebrew/swiftformat_bottle_manifest--0.63.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0986800Z Removing: /Users/runner/Library/Caches/Homebrew/tcl-tk@8--8.6.18... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.0987550Z Removing: /Users/runner/Library/Caches/Homebrew/tcl-tk@8_bottle_manifest--8.6.18... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1008970Z Removing: /Users/runner/Library/Caches/Homebrew/unxip--3.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1010030Z Removing: /Users/runner/Library/Caches/Homebrew/unxip_bottle_manifest--3.3-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1025940Z Removing: /Users/runner/Library/Caches/Homebrew/uvwasi--0.0.23... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1027280Z Removing: /Users/runner/Library/Caches/Homebrew/uvwasi_bottle_manifest--0.0.23-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1049960Z Removing: /Users/runner/Library/Caches/Homebrew/webp--1.6.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1050820Z Removing: /Users/runner/Library/Caches/Homebrew/webp_bottle_manifest--1.6.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1067360Z ##[warning]Skipping wget: most recent version 1.25.0_2 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1067940Z Removing: /Users/runner/Library/Caches/Homebrew/wget--1.25.0... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1069100Z Removing: /Users/runner/Library/Caches/Homebrew/wget_bottle_manifest--1.25.0-2... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1088560Z Removing: /Users/runner/Library/Caches/Homebrew/xcbeautify--3.2.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1089190Z Removing: /Users/runner/Library/Caches/Homebrew/xcbeautify_bottle_manifest--3.2.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1097510Z ##[warning]Skipping xcodes: most recent version 2.1.0 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1099580Z Removing: /Users/runner/Library/Caches/Homebrew/xcodes--2.0.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1100280Z Removing: /Users/runner/Library/Caches/Homebrew/xcodes_bottle_manifest--2.0.3-1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1102400Z ##[warning]Skipping xorgproto: most recent version 2026.1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1103050Z Removing: /Users/runner/Library/Caches/Homebrew/xorgproto--2025.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1104080Z Removing: /Users/runner/Library/Caches/Homebrew/xorgproto_bottle_manifest--2025.1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1107850Z ##[warning]Skipping xz: most recent version 5.8.4 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1111790Z Removing: /Users/runner/Library/Caches/Homebrew/xz--5.8.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1117010Z Removing: /Users/runner/Library/Caches/Homebrew/xz_bottle_manifest--5.8.3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1121880Z ##[warning]Skipping yq: most recent version 4.54.1 not installed
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1122430Z Removing: /Users/runner/Library/Caches/Homebrew/yq--4.53.6... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1123510Z Removing: /Users/runner/Library/Caches/Homebrew/yq_bottle_manifest--4.53.6... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1143250Z Removing: /Users/runner/Library/Caches/Homebrew/zstd--1.5.7_1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.1147390Z Removing: /Users/runner/Library/Caches/Homebrew/zstd_bottle_manifest--1.5.7_1... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.2530890Z Removing: /Users/runner/Library/Caches/Homebrew/portable-ruby-4.0.7.arm64_big_sur.bottle.tar.gz... (12.7MB)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.2633760Z Removing: /Users/runner/Library/Caches/Homebrew/expect--5.45.4_3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.2735390Z Removing: /Users/runner/Library/Caches/Homebrew/expect_bottle_manifest--5.45.4_3... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.2836930Z Removing: /Users/runner/Library/Caches/Homebrew/Cask/firefox--155.0.1.dmg... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.2946880Z Removing: /Users/runner/Library/Caches/Homebrew/Cask/google-chrome--152.0.7977.83.dmg... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.3059580Z Removing: /Users/runner/Library/Caches/Homebrew/Cask/microsoft-edge--152.0.4191.66,f3ce034a-259c-4a0e-8187-7c6cfa8f88c9.dmg... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.3127970Z Removing: /Users/runner/Library/Caches/Homebrew/Cask/session-manager-plugin--1.2.835.0.pkg... (0B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.3609830Z Removing: /Users/runner/Library/Caches/Homebrew/bootsnap/594bde2688ae0e214ed8caf8e08e59e27961a21e8acf43669c33525caa3fbce2... (1,085 files, 10MB)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5023780Z Removing: /Users/runner/Library/Logs/Homebrew/llvm@20... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5029850Z Removing: /Users/runner/Library/Logs/Homebrew/python@3.14... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5034870Z Removing: /Users/runner/Library/Logs/Homebrew/glib... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5036460Z Removing: /Users/runner/Library/Logs/Homebrew/fontconfig... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5041810Z Removing: /Users/runner/Library/Logs/Homebrew/rustup... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5042220Z Removing: /Users/runner/Library/Logs/Homebrew/gcc@14... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5042680Z Removing: /Users/runner/Library/Logs/Homebrew/gcc@13... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5043060Z Removing: /Users/runner/Library/Logs/Homebrew/gcc@15... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5043450Z Removing: /Users/runner/Library/Logs/Homebrew/openssl@3... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5044380Z Removing: /Users/runner/Library/Logs/Homebrew/ca-certificates... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5045010Z Removing: /Users/runner/Library/Logs/Homebrew/bicep... (113B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5053500Z Removing: /Users/runner/Library/Logs/Homebrew/gnupg... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5053960Z Removing: /Users/runner/Library/Logs/Homebrew/gnutls... (64B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:40.5054430Z Removing: /Users/runner/Library/Logs/Homebrew/packer... (116B)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:47.5954260Z Pruned 3 symbolic links and 9 directories from /opt/homebrew
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:51.4606300Z Removing: /opt/homebrew/Library/Homebrew/vendor/portable-ruby/4.0.6... (1,707 files, 34.6MB)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:51.6501190Z ^[[34m==>^[[0m ^[[1mThis operation has freed approximately 57.3MB of disk space.^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:51.6775380Z ^[[34m==>^[[0m ^[[1mbrew install --cask homebrew/cask/azure-cli^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:53.0147580Z ^[[34m==>^[[0m ^[[1mWould install 1 cask:^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:53.0148210Z azure-cli
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:53.0149060Z ^[[34m==>^[[0m ^[[1mWould install 6 dependencies for azure-cli:^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:53.0150880Z python@3.14 ca-certificates openssl@4 readline sqlite xz
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:41:53.4451570Z ^[[32m==>^[[0m ^[[1mFetching downloads for: ^[[32mazure-cli^[[39m^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:05.1900000Z ✔︎ Cask azure-cli (2.91.0)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:05.6963340Z ^[[32m==>^[[0m ^[[1mDownloading bottle manifests^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:06.0227960Z ✔︎ Bottle Manifest openssl@4 (4.0.3)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:06.2230010Z ^[[32m==>^[[0m ^[[1mFetching dependency downloads^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:06.4873020Z ✔︎ Bottle Manifest ca-certificates (2026-09-25)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:08.4484220Z ✔︎ Bottle ca-certificates (2026-09-25)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:10.1903180Z ✔︎ Bottle openssl@4 (4.0.3)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:10.1974140Z ^[[34m==>^[[0m ^[[1mInstalling dependencies: openssl@4^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:10.2386960Z ^[[32m==>^[[0m ^[[1mUpgrading openssl@4 dependency: ^[[32mca-certificates^[[39m (2026-08-13 -> 2026-09-25)^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:10.2452010Z ^[[34m==>^[[0m ^[[1mPouring ca-certificates--2026-09-25.all.bottle.tar.gz^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:24.8851770Z 🍺  /opt/homebrew/Cellar/ca-certificates/2026-09-25: 5 files, 204.4KB
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:24.8861360Z ^[[32m==>^[[0m ^[[1mInstalling ^[[32mopenssl@4^[[39m^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:24.8865910Z ^[[34m==>^[[0m ^[[1mPouring openssl@4--4.0.3.arm64_tahoe.bottle.tar.gz^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:27.4886630Z Unlinking /opt/homebrew/Cellar/openssl@3/3.6.4... 6570 symlinks removed.
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0009820Z 🍺  /opt/homebrew/Cellar/openssl@4/4.0.3: 6,820 files, 23.8MB
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0011200Z ^[[32m==>^[[0m ^[[1mInstalling Cask ^[[32mazure-cli^[[39m^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0042820Z ^[[34m==>^[[0m ^[[1mLinking Binary 'az' to '/opt/homebrew/bin/az'^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0154340Z ^[[34m==>^[[0m ^[[1mLinking Bash Completion 'az' to '/opt/homebrew/etc/bash_completion.d/az'^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0242300Z ^[[34m==>^[[0m ^[[1mLinking Zsh Completion '_az' to '/opt/homebrew/share/zsh/site-functions/_az'^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0333910Z ^[[34m==>^[[0m ^[[1mLinking Fish Completion 'az.fish' to '/opt/homebrew/share/fish/vendor_completions.d/az.fish'^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0541890Z 🍺  azure-cli was successfully installed!
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0751300Z ^[[34m==>^[[0m ^[[1mazure-cli has been moved to homebrew/cask.^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0752680Z The existing keg has been unlinked.
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0753640Z Please uninstall the formula when convenient by running:
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:32.0754900Z   brew uninstall --formula --force azure-cli
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.3284530Z ^[[32m==>^[[0m ^[[1mDownloading bottle manifests^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.3345560Z ✔︎ Bottle Manifest sbcl (2.6.9)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.3997390Z ^[[34m==>^[[0m ^[[1mWould install 1 formula:^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.3997970Z sbcl 2.6.9
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.3999600Z ^[[34m==>^[[0m ^[[1mWould upgrade 1 dependency for sbcl:^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.3999940Z xz
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.4097260Z ^[[32m==>^[[0m ^[[1mFetching downloads for: ^[[32msbcl^[[39m^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:35.6497950Z ✔︎ Bottle Manifest xz (5.8.4)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:36.9524800Z ✔︎ Bottle xz (5.8.4)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:37.9278800Z ✔︎ Bottle sbcl (2.6.9)
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:37.9631860Z ^[[32m==>^[[0m ^[[1mUpgrading sbcl dependency: ^[[32mxz^[[39m (5.8.3 -> 5.8.4)^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:37.9659180Z ^[[34m==>^[[0m ^[[1mPouring xz--5.8.4.arm64_tahoe.bottle.tar.gz^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:39.4443830Z 🍺  /opt/homebrew/Cellar/xz/5.8.4: 96 files, 2.7MB
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:39.4447550Z ^[[32m==>^[[0m ^[[1mInstalling ^[[32msbcl^[[39m^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:39.4449160Z ^[[34m==>^[[0m ^[[1mPouring sbcl--2.6.9.arm64_tahoe.bottle.tar.gz^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.2389690Z 🍺  /opt/homebrew/Cellar/sbcl/2.6.9: 1,522 files, 74.1MB
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.2582970Z ##[end-action id=__self.__run_2;outcome=success;conclusion=success;duration_ms=97859]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.2606480Z ##[start-action display=Controllo versione;id=__self.__run_3]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.2677330Z ##[group]Run sbcl --version
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.2678060Z ^[[36;1msbcl --version^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.2678840Z ^[[36;1mtest "$(sbcl --version)" = "SBCL ${TASK_SBCL_VERSION}"^[[0m
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.3503100Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.3503490Z env:
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.3503680Z   TASK_SBCL_VERSION: 2.6.9
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.3503950Z ##[endgroup]
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.4374720Z SBCL 2.6.9
+Build e test (macos-latest)	Run ./.github/actions/setup-sbcl	2026-10-14T20:42:41.4527380Z ##[end-action id=__self.__run_3;outcome=success;conclusion=success;duration_ms=191]
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	﻿2026-10-14T20:42:41.4701010Z ##[group]Run make check
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	2026-10-14T20:42:41.4701420Z ^[[36;1mmake check^[[0m
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	2026-10-14T20:42:41.4744180Z shell: /bin/bash -e {0}
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	2026-10-14T20:42:41.4754550Z ##[endgroup]
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	2026-10-14T20:42:44.4114270Z sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- /Applications/Xcode_26.6.app/Contents/Developer/usr/bin/make check-core
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	2026-10-14T20:43:37.6361900Z :FAILED: /Applications/Xcode_26.6.app/Contents/Developer/usr/bin/make check-core; record: /Users/runner/work/ArcDocDB/ArcDocDB/spikes/out/4000999365-command-6595-0/report.lisp
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	2026-10-14T20:43:37.7030640Z make: *** [check] Error 1
+Build e test (macos-latest)	Verifica completa registrata (senza benchmark)	2026-10-14T20:43:37.7157590Z ##[error]Process completed with exit code 2.
+Build e test (macos-latest)	Conserva prove e diagnostiche	﻿2026-10-14T20:43:37.8599400Z ##[group]Run actions/upload-artifact@v4
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8599820Z with:
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8600600Z   name: prove-macos-latest
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8600860Z   path: spikes/out/
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8603150Z   if-no-files-found: error
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8603580Z   compression-level: 6
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8604260Z   overwrite: false
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8604660Z   include-hidden-files: false
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:37.8605110Z ##[endgroup]
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:38.8450200Z (node:7891) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:38.8451620Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:38.8544020Z With the provided path, there will be 3 files uploaded
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:38.8546840Z Artifact name is valid!
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:38.8548740Z Root directory input is valid!
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:39.3363540Z Beginning upload of artifact content to blob storage
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:39.3461470Z (node:7891) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:39.8301510Z Uploaded bytes 139217
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:39.9073760Z Finished uploading artifact content to blob storage!
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:39.9075170Z SHA256 digest of uploaded artifact zip is f1a2542622bca41ef91be998e327c87805d057dd2dd10fa2fdb4b7be30d2c78e
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:39.9076620Z Finalizing artifact upload
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:40.1899690Z Artifact prove-macos-latest.zip successfully finalized. Artifact ID 11927812449
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:40.1900590Z Artifact prove-macos-latest has been successfully uploaded! Final size is 139217 bytes. Artifact ID is 11927812449
+Build e test (macos-latest)	Conserva prove e diagnostiche	2026-10-14T20:43:40.1910400Z Artifact download URL: https://github.com/gpicchiarelli/ArcDocDB/actions/runs/38634044870/artifacts/11927812449
+Build e test (macos-latest)	Post Run actions/checkout@v4	﻿2026-10-14T20:43:40.2125270Z Post job cleanup.
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3306140Z [command]/opt/homebrew/bin/git version
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3413010Z git version 2.55.0
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3434190Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/299239d9-b46c-4cd9-93b2-845902425582/.gitconfig'
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3445220Z Temporarily overriding HOME='/Users/runner/work/_temp/299239d9-b46c-4cd9-93b2-845902425582' before making global git config changes
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3448980Z Adding repository directory to the temporary git global config as a safe directory
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3452770Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/ArcDocDB/ArcDocDB
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3561350Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.3656240Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.5137530Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.5199040Z http.https://github.com/.extraheader
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.5207720Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.5280860Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.6325880Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Build e test (macos-latest)	Post Run actions/checkout@v4	2026-10-14T20:43:40.6653620Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Build e test (macos-latest)	Complete job	﻿2026-10-14T20:43:40.8686910Z Cleaning up orphan processes
+Build e test (macos-latest)	Complete job	2026-10-14T20:43:43.6976590Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

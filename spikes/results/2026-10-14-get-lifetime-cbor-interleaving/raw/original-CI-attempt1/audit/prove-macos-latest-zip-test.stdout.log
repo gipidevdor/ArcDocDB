@@ -1,0 +1,5 @@
+Archive:  spikes/out/lifetime-ci-runtime/pr-13-run-38634044870/zips/prove-macos-latest.zip
+    testing: 4000999365-command-6595-0/conservazione.lisp   OK
+    testing: 4000999365-command-6595-0/report.lisp   OK
+    testing: 4000999365-command-6595-0/report.lisp.gz   OK
+No errors detected in compressed data of spikes/out/lifetime-ci-runtime/pr-13-run-38634044870/zips/prove-macos-latest.zip.

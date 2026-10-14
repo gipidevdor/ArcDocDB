@@ -1,0 +1,11 @@
+--- spikes/out/lifetime-ci-audit-R2/original-01d2.txt	2026-10-14 22:09:25
++++ spikes/out/lifetime-ci-audit-R2/audit.lisp	2026-10-14 22:51:38
+@@ -435,7 +435,7 @@
+                        (= (getf options :active)
+                           (length (remove-duplicates (getf options :active-names) :test #'equal))))
+                   "Frozen ACTIVE test names/count differ from --active 42.")
+-          (frozen-directory-suite options)
++          (setf options (frozen-directory-suite options))
+           (load library)
+           (setf auditor-sha (native-sha256 *auditor-source*))
+           (dolist (pair (getf options :platforms))

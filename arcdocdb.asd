@@ -122,7 +122,11 @@
                 :components ((:file "package") (:file "types") (:file "dependency")
                              (:file "build") (:file "preflight") (:file "transfer") (:file "prepare")
                              (:file "publication") (:file "publication-read")
-                             (:file "recovery-types") (:file "recovery-read") (:file "recovery-publication"))))
+                             (:file "recovery-types") (:file "recovery-read") (:file "recovery-publication")))
+               (:module "recovery-active" :serial t
+                :components ((:file "package") (:file "types") (:file "read") (:file "frames")
+                             (:file "resolve") (:file "build") (:file "query")
+                             (:file "closure") (:file "publication"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

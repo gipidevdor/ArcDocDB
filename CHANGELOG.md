@@ -7,6 +7,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Recovery readonly del vecchio ACTIVE nominato dal control log: header
+  e prefisso verificati fino a EOF, prepared risolti da OUTCOME/DECISION,
+  esiti derivati in array u64 ordinati e serializer della chiusura CLOSED.
+  La pubblicazione verifica P ed esiti prima del publisher unico; nessuna
+  troncatura, modifica del formato o nuovo CSN. Qualifica C1 e gate del
+  Recovery Manager restano aperti.
+
 - Casi dedicati ai rifiuti del preflight GET ACTIVE prima del CSN: identità,
   stato OPEN/SEALED, ordine, capacità e guasti degli header, con witness
   indipendenti di byte, token, radici, frontiere e assenza di I/O.

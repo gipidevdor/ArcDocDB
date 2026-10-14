@@ -1,0 +1,14 @@
+# Preparazione degli strumenti
+
+Il cloner C4 originale crea le sei copie previste, poi il LOAD legge una
+parentesi chiusa in eccesso alla riga24. Il fallimento riguarda il solo
+cloner; nessun prodotto tag è stato scritto, caricato o compilato.
+L'originale rimane intatto. La variante distinta rimuove soltanto
+l'ultima parentesi, supera una lettura DATA di due forme con EOF e non
+viene rieseguita: le copie esistono già. L'output diagnostico originale
+rimane nella conversazione; questa nota non ne dichiara un file raw locale.
+
+Collector, preflight, append e reader sono copie identiche alle versioni
+mappe. Freeze e manifest builder cambiano solo nomi cbor-map→cbor-tag;
+data e algoritmo restano identici. Le impronte e il successivo collector
+verificano i byte delle copie effettivamente conservate.

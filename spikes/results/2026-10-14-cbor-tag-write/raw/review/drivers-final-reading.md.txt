@@ -1,0 +1,105 @@
+# Lettura C4 finale dei driver tag, prima dell'esecuzione
+
+2026-10-14. Sola lettura statica di driver, cataloghi e diff; nessun LOAD,
+compilazione, self-test o campagna avviato. Il revisore è distinto dagli
+autori del prodotto, del corpus e dei driver; aveva già letto prodotto e
+corpus nella prima lettura C1. Non si attribuisce a questa lettura una
+nuova indipendenza blind. Metodo invariato `3175390e496173398781bf8b39170cb33892125f`.
+
+## Pin finali
+
+| File relativo a `drivers/` | Blob Git |
+| --- | --- |
+| `bench.lisp` | `4f4e2ac97f2f9d903dfebfdc6b15553b40e59a84` |
+| `audit.lisp` | `97f58bffaff8c7dbccec76d1e28082bca0695ec6` |
+| `mutation.lisp` | `2275bd6ebba11cfe24e57ac0c6d2c257631a71d8` |
+| `catalogue-materialized.lisp` | `60b7970c18a1d17642d1efc39f5068b5e10f181d` |
+| `fixtures-and-mutations.lisp` | `3c410448af31a28e99fe39f93261ced04f15860d` |
+| `nominal-whitelist.lisp` | `7be8f1cdd0c5a4dc84dfc444c8c98aa84396c43e` |
+| `target-diffs.output.lisp` | `23a88655109a3f23a17c0519fe863d3f2aa4a94c` |
+
+Esito statico: **nessun difetto bloccante residuo individuato**, dopo la
+correzione sotto. Le diff rispetto alla famiglia map14 preservano struttura
+di misura, trasporto privato, classificatore e reader. Cambiano API/nome/
+percorsi/pin, fixture e schema dei dati da tabella/coppie a HIGH/LOW/singolo
+contenuto. Sono aggiunti controlli espliciti per heap assente/invalido e
+un negativo exit2 del classificatore; non si tratta di semplici rinomine.
+
+Rilievo trovato prima di eseguire: INITIAL-REPORT del mutatore `cb02266f`
+riportava ancora i due blob bench/audit map in :frozen-other-driver-blobs.
+L'autore ha preservato l'originale in
+`mutation-before-driver-pin-correction-cb02266f.lisp`, blob
+`cb02266fedad6f21097fb88504edebb6c6eb7169`; la diff distinta
+`mutation-driver-pin-correction.patch`, blob
+`d6b0777fc41135efb3a488233f5e862eb4c1cf1d`, cambia soltanto quei due literal.
+La rilettura conferma i pin tag corretti, senza modificare catalogo,
+patch, prodotto, corpus, bench o audit. Nessun risultato prodotto con i
+metadata errati viene dedotto o riclassificato.
+
+## Misure e audit indipendente
+
+Sei fixture letterali coerenti fra bench/catalogo e oracolo aritmetico
+dell'auditor: NEXT4/7/6/10/14/17; token5368/10359/9825/10464/16425/43144.
+L'oracolo calcola MT6 e byte di HIGH/LOW separatamente, senza writer,
+scanner o u64. I token comprendono NEXT e ogni byte fisico della
+destinazione, incluse sentinelle. Ogni chiamata calda confronta tutta
+destinazione e sorgente; arità uno verificata nella chiamata fredda.
+Buffer/scratch sono preallocati; warmup64 e GC precedono misura; cinque
+repliche da1024 chiamate per fixture. Costi dei confronti inclusi.
+
+Il campo misurato è :heap-bytes. `check-zero-heap` usa default :absent,
+richiede intero non negativo e poi zero: assenza/NIL/non intero non vengono
+convertiti in zero. Self-test specifici coprono heap mancante, NIL, -1,
+0d0, heap1 e sink errato; baseline nulla e allocazione deliberata16x1MiB.
+Nessuna soglia di velocità, scaling o prova assoluta di non allocazione.
+
+L'auditor è DATA-only, con dipendenza evidence-storage trusted soltanto:
+READ-EVAL NIL, readtable standard, EOF univoco, liste proprie/acicliche,
+chiavi uniche e campi obbligatori. Richiede :heap-bytes presente e intero,
+sei fixture e cinque campioni ciascuna; verifica output/NEXT/token/sink,
+clock/rate/wall, controlli del sensore, processo/snapshot/argv/ambiente,
+metodo e pin prodotto attesi forniti separatamente dalla CLI.
+Sono predisposti quattro positivi e negativi con motivo specifico,
+compresi heap mancante/invalido, alterazione dei marker e reader ostile.
+I controlli dei metadata non autenticano l'esecuzione; i MD5 interni non
+sono associati ai Git blob senza confronto con i byte del sorgente.
+I grafi dentro vettori generali non sono attraversati dal controllo cons.
+
+## Mutazioni e rilevamento
+
+Whitelist esatta20 nomi DEFTEST:19 seriali e1 parallelo, confrontata con le
+righe nominali dei due file congelati; nessun helper ammesso. Pin corpus
+`15978d05`/`df97950e`/`def87029`, prodotto `6dfad070`/`16b91fc2` e piano
+`71f0cbd4` corrispondono alla prima lettura C1 e al catalogo materializzato.
+
+La lettura delle otto patch e le impronte dei16 file after/patch coincidono
+con l'inventario statico: otto sostituzioni uniche nei due sorgenti previsti.
+Difetti: capacità fisica, MT5, parole scambiate, scansione omessa, overlap
+senza testata, nodo radice escluso, livello addebitato al tag, arità extra.
+Nessuna variabile libera nuova o binding lasciato inutilizzato individuato;
+scan-omitted mantiene i sette riferimenti con IDENTITY e il mutante arità
+aggiorna insieme FTYPE `(values index null &optional)` e VALUES. È una
+valutazione statica di compilabilità plausibile, non compilazione senza avvisi.
+Guardie interne possono intercettare il difetto prima di emettere byte:
+non si confonde il rilevamento con corruzione osservata.
+
+Il detector richiede smoke su riga esatta, poi Unhandled a inizio riga,
+poi frame numerico con nome nominale esatto e zero argomenti, exit1 e
+signalNIL. Citazioni anche multilinea, wrapper/helper/prefissi, avvisi,
+errori di compilazione, exit2, segnali e fallimenti dopo il completamento
+non sono rilevamenti. Baseline richiede smoke/completamento ordinati,
+exit0 e assenza di rifiuti. Copie e cache sono private; ogni registro
+conserva exit, segnale e worker-error senza inventare valori mancanti.
+Self-test predisposti per classificatore, sostituzioni uniche, dispatcher,
+reader standard/EOF e child SIGKILL/exit7; i child-fixture non caricano
+prodotto. I self-test e la baseline completi restano da osservare.
+
+La materializzazione e i tentativi preparatori restano preservati come
+dati nelle varianti/stdout/stderr/patch già inventariate. Nessun originale
+è riscritto da questa lettura. Il rilievo matrice della prima C1 è storico:
+il coordinatore comunica la rigenerazione121REQ/65INV/13FI/52ADR/0; la
+prima C1 congelata non è modificata e il riscontro registrato resta distinto.
+
+Questa nota non promuove requisiti o qualifica C1/MC/DC. Le campagne
+richiedono le due letture C1, freeze stabile, self-test registrati,
+letture DATA dei risultati e successiva conservazione con inventario chiuso.

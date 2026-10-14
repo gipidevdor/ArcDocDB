@@ -1,0 +1,85 @@
+# Materializzazione statica del catalogo tag
+
+Il root ha autorizzato la lettura DATA dei soli due nuovi sorgenti
+congelati e delle20 righe `(deftest test-REQ-CBR-007-...)` dei file
+seriale/threads, oltre al piano e ai pin. Non sono stati letti i corpi
+del corpus. Il supporto del corpus è stato osservato solo mediante
+digest. Nessun sorgente è stato caricato o compilato; nessun self-test,
+benchmark o mutante è stato eseguito.
+
+Sorgenti prima/dopo la materializzazione:
+
+- `src/codec/cbor-tag-input.lisp`: `6dfad07035ac8040b2aec0a455c175ea15dfd9ad`.
+- `src/codec/cbor-tag-write.lisp`: `16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b`.
+
+Corpus fissato, tre digest soltanto:
+
+- supporto: `15978d05251705387205d6468031a701ad95ec85`.
+- seriale: `df97950ec8d24157bb6566c7995262f7beea7742`.
+- threads: `def870295400af2c84ca00e7a9b5cd5b747ec315`.
+
+Piano: `71f0cbd4f4b9e2c180c2fe4dde208fa8d88a6787`,9658 chiamate
+dichiarate,19 nominali seriali e1 parallelo. Selettore esatto e20 righe
+originali sono in `nominal-deftest-lines.txt`; la whitelist nominale
+`nominal-whitelist.lisp` ha blob `7be8f1cdd0c5a4dc84dfc444c8c98aa84396c43e`.
+Lo spazio dei nomi è `ARCDOCDB.CBOR.TAG.WRITE.TESTS::` e ogni nome
+contiene REQ-CBR-007. Nessun helper viene ammesso come frame nominale.
+
+Catalogo materializzato:
+`60b7970c18a1d17642d1efc39f5068b5e10f181d`.
+Mutatore finale: `cb02266fedad6f21097fb88504edebb6c6eb7169`.
+Il draft precedente `mutation-before-product-final.lisp` resta
+`28b2e3fd409ee6a214c5c9e65f16b4b1de7a00f5`; il passaggio completo
+è conservato in `mutation-materialization.patch`.
+
+Otto sostituzioni distinte, ciascun frammento unico nel file di
+applicazione. `target-diffs/` conserva l'immagine testuale dopo ogni
+sostituzione e il diff rispetto al sorgente originale. Si tratta di
+dati, senza sistema ASDF, cache, child o esecuzione. L'inventario
+`target-diffs.output.lisp` lega sorgente/immagine/diff mediante Git blob,
+non mediante autenticazione. I due sorgenti originali sono rimasti
+identici prima e dopo la produzione dei diff.
+
+1. `physical-capacity`: passa LENGTH BUFFER anziché END al solo calcolo
+   delle dimensioni. Il guard interno successivo può intercettare il
+   difetto e fallire una nominale con invariante prima della scrittura.
+2. `wrong-major`: MT5 anziché MT6 nella sola emissione.
+3. `swapped-words`: LOW/HIGH scambiati nella sola emissione; nessun
+   cambio artificiale delle dimensioni calcolate dal preflight.
+4. `scan-omitted`: sostituisce il controllo pubblico del contenuto con
+   PROGN/IDENTITY sui sette binding e NIL. Evita binding non usati;
+   conserva i guard di emissione, senza inventare statistiche scratch.
+5. `overlap-without-header`: inizia il footprint di confronto dopo
+   la testata; l'overlap della sola testata non è rifiutato dal preflight.
+6. `root-node-excluded`: lo scanner riceve MAX-NODES anziché
+   MAX-NODES-1. I guard interni del risultato restano: l'eventuale
+   intercettazione è un rilevamento runtime soltanto alle condizioni
+   del classificatore, non una prova di corruzione emessa.
+7. `tag-depth-charged`: lo scanner riceve MAX-DEPTH-1. Può produrre
+   un rifiuto del limite negativo su depth0 o un rifiuto anticipato
+   dei contenitori; non cambia lo stack né il contenuto.
+8. `extra-return-value`: unico frammento comprendente FTYPE e DEFUN
+   pubblici. FTYPE `(values index null &optional)` coerente col
+   ritorno `(values result nil)`, mantenendo tutti gli altri guard.
+
+Il rilevamento richiesto rimane smoke esatto, poi Unhandled, poi un
+frame numerico della whitelist esatta con zero argomenti, exit1 e
+segnale NIL. Warning, compilazione fallita, guasti helper, exit diverso
+da1, segnale o fallimento dopo completamento non qualificano il mutante.
+La compilabilità e il rilevamento effettivi restano da osservare dopo
+chiusura delle letture C1/C4 e self-test registrati del root.
+
+Il primo `materialize.lisp` aveva una parentesi in eccesso che chiudeva
+la lista LET* prima del binding DRAFT. Ha fallito nel generatore con
+UNDEFINED-FUNCTION DRAFT, prima di scrivere catalogo, whitelist, target
+o mutatore finale. Originale, stdout vuoto e stderr sono conservati.
+`materialize-2.lisp` corregge soltanto quella parentesi, osserva prima
+e dopo tutti i pin e termina con exit0. Non è una campagna del prodotto.
+
+`read-materialized.lisp` legge i sei file congelati come DATA con
+READ-EVAL NIL, readtable standard ed EOF univoco:1/30/48/75/1/1 forme.
+I namespace fittizi servono solo ai simboli qualificati, senza definire
+funzioni di prodotto. Stdout e stderr separati conservati; zero forme
+dei driver valutate, zero campagne o self-test eseguiti. Una variazione
+dei sorgenti, del corpus o dei driver impone un nuovo pin e una nuova
+lettura prima delle campagne; questi originali devono restare intatti.

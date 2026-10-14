@@ -1,0 +1,72 @@
+# Lettura C4 dopo l'integrazione finale
+
+Solo DATA del comando registrato
+`spikes/out/4000997959-command-5777-0/report.lisp` e dei suoi byte fisici.
+Trusted reader `tools/evidence-storage.lisp`, READ-EVAL NIL, readtable
+standard ed EOF del record. Nessun prodotto, corpus, benchmark o mutatore
+caricato, compilato o chiamato dal lettore; nessuna campagna ripetuta e
+nessun sorgente, indice, HEAD o originale modificato.
+
+Il record schema1/COMMAND-VERIFICATION è OK/exit0/STABLE,
+HEAD `7fbd327f9b0a042bd053cd8aed98e3f105a6688c`, working-tree vuoto,
+wall45.121117s. Argv esatto: make build lint trace links.
+912 percorsi sorgente unici; inventario prima/dopo strutturalmente uguale.
+I cinque pin dei tag coincidono con il freeze indipendente precedente:
+
+| File | Git blob |
+| --- | --- |
+| `src/codec/cbor-tag-input.lisp` | `6dfad07035ac8040b2aec0a455c175ea15dfd9ad` |
+| `src/codec/cbor-tag-write.lisp` | `16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b` |
+| `tests/codec/cbor-tag-write-support.lisp` | `15978d05251705387205d6468031a701ad95ec85` |
+| `tests/codec/cbor-tag-write.lisp` | `df97950ec8d24157bb6566c7995262f7beea7742` |
+| `tests/codec/cbor-tag-write-threads.lisp` | `def870295400af2c84ca00e7a9b5cd5b747ec315` |
+
+1442 righe OK uniche:1440 nominali e2 smoke esatti. Le20 nominali
+REQ-CBR-007 coincidono esattamente con i nomi del corpus congelato.
+Lint224 file/0 violazioni; trace121 requisiti/65 invarianti/13 scenari FI/
+52 ADR/0 errori; links490 file/3041 controlli/0 rotti. Marker di build
+completata presente. Stdout236342 e stderr886718 caratteri;2413 righe
+stderr con `note:`. Nessun WARNING/STYLE-WARNING/COMPILE-FILE-ERROR/
+Unhandled nei due flussi; lo stderr contiene note di ottimizzazione lecite.
+
+Fuzz stampato seed54414737,1024 casi,512 successi e8 classi da64
+rifiuti. LCG finaleF8004B37 ricomputato freddo e asserito dal test passato;
+il log non stampa tale stato come campo runtime separato. Il piano9658
+chiamate è aritmetico:442+1024+8192,8848 successi e810 rifiuti previsti;
+nessun contatore API strumentato viene dedotto dal record.
+
+Due ondate da4096 composizioni dei tag con2 worker reali riusati e
+scratch/destinazioni privati; sink66766848/97310720 per ondata.
+Overlap2336/2284 tick a1000000tick/s, cioè2.336/2.284ms.
+Timestamp individuali non stampati; nessuna inferenza su scaling o core.
+
+Questo record copre build, lint, trace e links dopo l'integrazione.
+Il check completo precedente resta quello su
+`df37306ed0e97f1665fb9f59aca79842c49d96a5`, con1412 nominali,
+2 smoke,4 self-test linter,10 spike e gate di conservazione, già letto
+separatamente in `integrated-runtime-reading.md`. I suoi risultati
+mantengono quel perimetro e quel freeze. Nessuno sweep ulteriore degli
+snapshot, degli archivi o dei processi storici è stato effettuato.
+
+## Byte e freeze del lettore
+
+Descriptor317 byte,
+SHA `4dd73de1fe445cad08737f2090081794963da9143e7173e91cb2d31d87e6f0b9`.
+Payload gzip153126 byte,
+SHA `b48199c6a94f1eb3713d1142e4c4ebce6b6e5b8f61f87830b1fafdf5f71d9e63`.
+Espansi1312918 byte,
+SHA `ced71ec929d71fe5907e153fac31c17930870e615feaa6d078bc784b928efc4a`.
+Trusted decode e checksum coerenti. Descriptor, payload e lettore uguali
+fra le osservazioni prima e dopo; ciò non attesta autenticità o atomicità.
+
+Reader `final-integration-reading.lisp`, blob
+`09b93c9bd9459779bcc9e1824775e64ad5ebcc90`,9752 byte,
+SHA `0766f59a0d9b038d50983110827723b2543182f071e4e10c9b2b9722fb8c51ca`.
+Output `.output`, blob `e7ecda3f1707032a7ca4fd0a5631ad34d14459f2`,
+3539 byte,
+SHA `fa021d62179c51e1bede2e83fc682bcf7c5d624ade8c7d7d2de0fca62504c160`.
+Exit0 e `.error` vuoto. L'adattatore e i suoi output/error sono preservati
+come `adapt-final-integration-reader.*`; nessuna variante fallita in
+questa lettura. Non vengono rivalutati i dati delle mutazioni del proprio
+driver. C1 generale, MC/DC, durabilità, motore e qualifica prestazionale
+restano aperti. Nota, lettore e risultati congelati prima della raccolta.

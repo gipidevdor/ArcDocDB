@@ -1,0 +1,183 @@
+# Lettura DATA indipendente delle mutazioni MT6
+
+Il 2026-10-14 ho letto record completati, nove log e nove copie conservate,
+senza caricare, compilare, chiamare o rieseguire prodotto, corpus o driver.
+Sono distinto dall'autore del prodotto e del driver, autore del corpus
+cieco e della seconda lettura C1. La lettura ricontrolla i dati; non è
+un nuovo esperimento di mutazione né una seconda implementazione
+indipendente della semantica del classificatore, derivato dal reader
+precedente delle mappe con gli adattamenti tag espliciti.
+
+Esito DATA: otto rilevamenti rigorosi, baseline completa, nove copie/cache
+separate, esattamente otto patch previste. Il reader finale variante3
+termina exit0, stderr vuoto,21565 controlli. Due tentativi C4 preparatori
+falliti sono preservati e distinti sotto; non sono guasti del prodotto.
+
+## Fonti e chiusura dei record
+
+- Wrapper `spikes/out/4000997059-command-81284-0/report.lisp`:281339 byte,
+  SHA256 `9650446564e6df96e30e9c66bae4b244611d42c59a2a9195584490f7b26dc8f9`.
+- Interno `spikes/out/cbor-tag-write-20261014/mutations/report.lisp`:92977
+  byte, SHA256 `05d7af6f9b351c29dc2f23886229ce7567a3ee5bdfda224b9323c5d3a2fd72a7`.
+- Catalogo materializzato blob `60b7970c18a1d17642d1efc39f5068b5e10f181d`,
+  letto solo come dati; driver blob `2275bd6ebba11cfe24e57ac0c6d2c257631a71d8`,
+  osservato fisicamente senza caricarlo.
+- Trusted reader `tools/evidence-storage.lisp`, blob
+  `fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`, unica libreria locale caricata.
+
+Wrapper/report/catalogo sono letti come singoli plist chiusi da EOF,
+READ-EVAL NIL, readtable standard. I plist verificati hanno chiavi keyword
+uniche. Il rapporto interno su disco coincide integralmente con la forma
+incorporata nello stdout del wrapper, riletta fino a EOF univoco.
+
+Wrapper schema1 COMMAND-VERIFICATION, OK/EXIT0/STABLE,892 impronte uniche
+prima/dopo identiche, stderr vuoto, HEAD
+`df37306ed0e97f1665fb9f59aca79842c49d96a5`, working-tree registrato vuoto.
+Comando esattamente driver mutation `--run` sulla directory tag. Wall
+286.719013s dell'intero comando, inclusi self-test, copie, compilazione e
+test, non misura di velocità del codec. Interno schema1
+CBOR-TAG-WRITE-MUTATIONS, OK/WORKER-ERRORS0/STABLE,366 impronte MD5
+prima/dopo identiche. I361 file copiabili derivano dall'inventario e dalle
+copie, non da un conteggio presunto; le cinque voci ulteriori sono driver
+ignored. I366 MD5 sono confrontati come metadati registrati senza ricalcolo
+di uno sweep MD5.
+
+Cinque pin coincidono negli snapshot outer prima/dopo e nei file correnti
+prima/dopo la lettura: input `6dfad07035ac8040b2aec0a455c175ea15dfd9ad`,
+write `16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b`, support
+`15978d05251705387205d6468031a701ad95ec85`, seriali
+`df97950ec8d24157bb6566c7995262f7beea7742`, thread
+`def870295400af2c84ca00e7a9b5cd5b747ec315`.
+
+## Baseline e origini rigorose
+
+Baseline OK/EXIT0/SIGNAL NIL/DIAGNOSTIC NIL. Log101301 byte, SHA256
+`3ae430f1a75b0c29436bf9d04799309b3547fab3b8a650c90356ff64524cb245`.
+1412 righe nominali piu due smoke,1414 OK unici. Il marker smoke esatto
+precede l'unico completamento `build e test: nessun avviso, tutti i controlli
+superati`; nessun Unhandled o diagnostica di compilazione. Le20 righe tag
+corrispondono esattamente alla whitelist, senza duplicati; il controllo
+DATA supplementare `mutation-baseline-data.lisp` verifica unicità e set.
+
+La whitelist è ricavata nuovamente dai19 DEFTEST seriali e dall'unico
+parallelo nei due file fisici congelati:20 nomi distinti, stesso insieme
+del catalogo e del rapporto. L'ordine catalogo inizia dal test thread,
+quello dei file seriali no: il confronto è di insiemi esatti, non di ordine.
+Il macro del corpus congelato definisce funzioni nominali senza argomenti;
+il reader non lo valuta e non ammette helper come origine nominale.
+
+Ogni mutante riporta DETECTED T/RESULT DETECTED/EXIT1/SIGNAL NIL/
+DIAGNOSTIC NIL. Per ogni log: assenza di WARNING:/STYLE-WARNING:,
+COMPILE-FILE-ERROR/WARNED e compilation-aborted; smoke esatto prima della
+prima riga Unhandled; nessun completamento finale; successivo frame
+numerato reale con funzione nominale esatta come primo elemento e zero
+argomenti. Nomi dentro stringhe multilinea o argomenti di altre funzioni
+non qualificano il rilevamento. Offset in caratteri conservati nell'output:
+
+| ID/mutante | Origine nominale abbreviata | Frame | Offset Unhandled |
+|---|---|---:|---:|
+|0 physical-capacity|U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS|7|22754|
+|1 wrong-major|U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS|6|22754|
+|2 swapped-words|U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS|8|22754|
+|3 scan-omitted|U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS|6|22754|
+|4 overlap-without-header|ALL-PREFLIGHT-PHASE-PRECEDENCES|6|23337|
+|5 root-node-excluded|ROOT-AND-CONTENT-NODE-RESIDUE-LONG-TAG-CHAINS-NO-FRAME|5|23625|
+|6 tag-depth-charged|CONFIGURED-LIMITS-AND-ROOT-TWO-NODE-MINIMUM|10|23265|
+|7 extra-return-value|U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS|6|22755|
+
+Prefisso integrale `ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-`.
+Sono errori runtime attribuibili ai nominali, anche quando intercettati
+da guardie interne o da un rifiuto pubblico inatteso; non compilazioni
+fallite conteggiate come rilevamenti.8/8 riguarda questi otto mutanti.
+
+## Copie, contesto Git e patch
+
+Per ciascuna delle nove copie si verifica l'inventario fisico di ASD,
+tools/build e tutti i Lisp src/tests:361 file,3249 confronti binari sulle
+copie. L'inventario coincide con quello ricavato da `git ls-tree` al commit
+registrato `df37306ed0e97f1665fb9f59aca79842c49d96a5`, selezionando gli stessi
+file Lisp piu ASD/build. I contenuti Git vengono letti dal commit e resi
+in byte UTF8, poi confrontati con gli originali correnti congelati; ogni
+copia è confrontata contro questi byte. La lettura dei dati non valuta
+alcuna forma dei file.
+
+Baseline zero differenze. Ogni copia0–7 ha un unico file diverso e i byte
+coincidono esattamente con la sostituzione dell'unica occorrenza BEFORE
+con AFTER della tupla a quattro campi UNIQUE-SOURCE-SUBSTITUTIONS del
+catalogo. Queste patch coincidono con TARGETS del report interno.
+
+| ID | Unico file modificato | Sostituzione |
+|---|---|---|
+|0|cbor-tag-input.lisp|END con LENGTH BUFFER nella chiamata dimensioni|
+|1|cbor-tag-write.lisp|MT6 con MT5 nella sola emissione|
+|2|cbor-tag-write.lisp|HIGH/LOW con LOW/HIGH nella sola emissione|
+|3|cbor-tag-write.lisp|scansione con PROGN/IDENTITY sui sette binding e NIL|
+|4|cbor-tag-input.lisp|footprint overlap iniziato dopo la testata|
+|5|cbor-tag-write.lisp|residuo MAX-NODES−1 con MAX-NODES|
+|6|cbor-tag-write.lisp|MAX-DEPTH invariato con MAX-DEPTH−1|
+|7|cbor-tag-write.lisp|intera FTYPE+DEFUN, INDEX/NULL e `(values result nil)`|
+
+Copia7 ha FTYPE e corpo coerenti senza conservare la vecchia dichiarazione
+a singolo valore; il confronto esatto copre tutto il frammento. Gli altri
+file, inclusi corpus e vecchi codec, non cambiano. Tutti361 originali sono
+riletti alla fine: byte identici allo snapshot iniziale e al contesto Git.
+Non viene eseguito un nuovo sweep SHA di tutti i file copiati.
+
+Nove cache locali sotto nove radici distinte; nove runner separati
+dichiarano la propria radice, cache e IGNORE-INHERITED-CONFIGURATION.
+Truenames dei file sorgenti rimangono sotto la copia. Il reader non carica,
+confronta o ricostruisce FASL e non prova isolamento contro hardlink o
+interventi ostili del filesystem: sono directory, fonti e configurazioni
+dei runner osservate e conservate.
+
+Le31 osservazioni fisiche selezionate nell'output riportano byte e SHA256
+prima/dopo identici: wrapper, interno, catalogo, driver, trusted-reader,
+nove log, nove runner e otto file patch. Gli altri file delle copie sono
+confrontati per byte, senza SHA massivo. Questa verifica delle nove copie
+locali non implica la pubblicazione successiva di tutti i mirror completi;
+la selezione dell'archivio pubblico richiede una dichiarazione separata.
+
+## Preparazione, limiti e freeze
+
+Originali dei driver preservati e pin ricontrollati dal supplemento DATA:
+draft `mutation-before-product-final.lisp`28b2e3fd409ee6a214c5c9e65f16b4b1de7a00f5,
+pre-correzione `mutation-before-driver-pin-correction-cb02266f.lisp`
+cb02266fedad6f21097fb88504edebb6c6eb7169, finale2275bd6ebba11cfe24e57ac0c6d2c257631a71d8.
+`driver-pin-correction-history.md` distingue i soli due literal bench/audit
+corretti prima di self-test/campagna; materialization-history conserva i
+precedenti tentativi. La nota vecchia di materializzazione riporta il pin
+cb02266f allora corrente; il pin finale della campagna è2275bd6e.
+
+Preparazioni del nuovo reader, tutte conservate senza sovrascrivere:
+
+1. `mutation-reading.lisp`, blob cfc4e1a02e9c01dde62264b45be7440a02b3e9fe,
+   exit1 al controllo dell'inventario Git prima dei confronti copie. Aveva
+   invertito gli argomenti di UIOP:STRING-SUFFIX-P, selezionando solo la riga
+   vuota. Output/error separati preservati. Una diagnostica ad hoc ha prima
+   fallito il reader di un'espressione --eval per parentesi finale superflua;
+   la diagnostica salvata `mutation-reading-diagnostic.lisp` esce0 e mostra
+   l'errore di selezione. Nessuna campagna o dato originale coinvolto.
+2. `mutation-reading-2.lisp`, blob1e155051874c214d420dd097debfe6827ec7bfd7,
+   corregge solo l'ordine degli argomenti; exit1 perché il vecchio modello
+   map si aspettava TARGETS nel catalogo. Il catalogo tag ha invece
+   UNIQUE-SOURCE-SUBSTITUTIONS a tuple di quattro stringhe. Secondi
+   output/error preservati, nessun prodotto caricato o mirror modificato.
+3. `mutation-reading-3.lisp`, blob417e73e0800d1c9b5da4db51330c11928833fcfd,
+   legge esplicitamente le tuple tag, ne verifica forma e campi, e completa
+   tutti i controlli con exit0. Output blob6312981ceb82eff8e79aaa50cd77bb5b911c88fe;
+   error vuoto. `mutation-baseline-data.lisp`798e90d2de449f8375d0051813fa8cd6e4e78582
+   verifica unicità baseline/whitelist e conservazione draft/literalfix,
+   exit0, output270090a4e10337347f4b19c1ea26cbab25986f4b, error vuoto.
+
+I self-test del driver sono metadati del report, non esperimenti ripetuti
+da questo reader. Il loro sottoalbero non è oggetto di questa lettura.
+I366 MD5 rimangono metadati del processo; confronto corrente/Git completo
+delle copie e31 SHA selezionati sono osservazioni separate.
+
+Coerenza dei dati e origine nominale reale, senza autenticazione della
+provenienza, prova di causalità esclusiva della patch, corrispondenza FASL
+o ricostruzione di cambiamenti transitori poi ripristinati. Nessuna
+inferenza MC/DC, copertura di guardie interne, heap zero, robustezza
+generale o qualifica del motore da8/8. Nessun prodotto, corpus, driver,
+record, log o copia originale modificato. Reader, varianti, output/error,
+diagnostica, supplemento e questa nota ignored sono congelati.

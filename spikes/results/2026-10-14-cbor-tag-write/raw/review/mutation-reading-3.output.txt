@@ -1,0 +1,207 @@
+WRAPPER OK exit0 STABLE sources892 HEADdf37306ed0e97f1665fb9f59aca79842c49d96a5 wall286.719013d0; inner OK worker0 before/after-files366; baseline1412+2 complete.
+DETECTED (:NAME "physical-capacity" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 22754 :EXACT-ORIGINS
+          ((:OFFSET 24530 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS"
+            :FRAME
+            "7: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS)")))
+DETECTED (:NAME "wrong-major" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32 :UNHANDLED
+          22754 :EXACT-ORIGINS
+          ((:OFFSET 23909 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS"
+            :FRAME
+            "6: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS)")))
+DETECTED (:NAME "swapped-words" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32 :UNHANDLED
+          22754 :EXACT-ORIGINS
+          ((:OFFSET 24280 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS"
+            :FRAME
+            "8: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS)")))
+DETECTED (:NAME "scan-omitted" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32 :UNHANDLED
+          22754 :EXACT-ORIGINS
+          ((:OFFSET 24022 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS"
+            :FRAME
+            "6: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS)")))
+DETECTED (:NAME "overlap-without-header" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 23337 :EXACT-ORIGINS
+          ((:OFFSET 24949 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-ALL-PREFLIGHT-PHASE-PRECEDENCES"
+            :FRAME
+            "6: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-ALL-PREFLIGHT-PHASE-PRECEDENCES)")))
+DETECTED (:NAME "root-node-excluded" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 23625 :EXACT-ORIGINS
+          ((:OFFSET 24665 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-ROOT-AND-CONTENT-NODE-RESIDUE-LONG-TAG-CHAINS-NO-FRAME"
+            :FRAME
+            "5: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-ROOT-AND-CONTENT-NODE-RESIDUE-LONG-TAG-CHAINS-NO-FRAME)")))
+DETECTED (:NAME "tag-depth-charged" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 23265 :EXACT-ORIGINS
+          ((:OFFSET 25926 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-CONFIGURED-LIMITS-AND-ROOT-TWO-NODE-MINIMUM"
+            :FRAME
+            "10: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-CONFIGURED-LIMITS-AND-ROOT-TWO-NODE-MINIMUM)")))
+DETECTED (:NAME "extra-return-value" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 22755 :EXACT-ORIGINS
+          ((:OFFSET 23812 :FUNCTION
+            "ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS"
+            :FRAME
+            "6: (ARCDOCDB.CBOR.TAG.WRITE.TESTS::TEST-REQ-CBR-007-TAG-U32-WORD-WIDTH-BOUNDARIES-AND-ALL-WIRE-SENTINELS)")))
+COPIES ((:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/baseline/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 0 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/baseline/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/baseline/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/0/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/0/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/0/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/1/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/1/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/1/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/2/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/2/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/2/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/3/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/3/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/3/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/4/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/4/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/4/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/5/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/5/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/5/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/6/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/6/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/6/tools/cbor-tag-write-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/7/"
+         :SOURCE-COUNT 361 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/7/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/7/tools/cbor-tag-write-isolated-build.lisp"))
+FIVE-PINS (("src/codec/cbor-tag-input.lisp"
+            "6dfad07035ac8040b2aec0a455c175ea15dfd9ad")
+           ("src/codec/cbor-tag-write.lisp"
+            "16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b")
+           ("tests/codec/cbor-tag-write-support.lisp"
+            "15978d05251705387205d6468031a701ad95ec85")
+           ("tests/codec/cbor-tag-write.lisp"
+            "df97950ec8d24157bb6566c7995262f7beea7742")
+           ("tests/codec/cbor-tag-write-threads.lisp"
+            "def870295400af2c84ca00e7a9b5cd5b747ec315"))
+PHYSICAL-OBSERVATIONS (("spikes/out/4000997059-command-81284-0/report.lisp"
+                        281339
+                        "9650446564e6df96e30e9c66bae4b244611d42c59a2a9195584490f7b26dc8f9")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/report.lisp"
+                        92977
+                        "05d7af6f9b351c29dc2f23886229ce7567a3ee5bdfda224b9323c5d3a2fd72a7")
+                       ("spikes/out/cbor-tag-write-20261014/drivers/catalogue-materialized.lisp"
+                        11438
+                        "33940ad8c4f44f8ec802d362f624fa47755575dd814a1481c8746717a063e1e0")
+                       ("spikes/out/cbor-tag-write-20261014/drivers/mutation.lisp"
+                        56672
+                        "f0a1f433d65476ec740fd2820b0792541926fa82a466f7052d3efeafb7a274e6")
+                       ("tools/evidence-storage.lisp" 21261
+                        "8f287772a41b1ebe0e7b3ecc3826a4148082efed428a9749655977e62a9c15a6")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/baseline/test.log"
+                        101301
+                        "3ae430f1a75b0c29436bf9d04799309b3547fab3b8a650c90356ff64524cb245")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/0/test.log"
+                        33764
+                        "557ab60c0f5fc678f4d9b3fbc63f34393113447df9d2904906c24a44a5e22932")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/1/test.log"
+                        33142
+                        "31106bcfc8a7402633738cacc5be55164d2c99e9e08f9cff47a4490f7c2e434a")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/2/test.log"
+                        33515
+                        "491154e8c118703bbca3c86177d667c3b1a04e634686bb993ce9d77d39797b5d")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/3/test.log"
+                        33255
+                        "9933f9a9460634426c80ddbf20b22ef04ec199521a71ea6a8194e55f04a1f69a")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/4/test.log"
+                        34165
+                        "99716f2bbc1b897ed08e37259b434930ff3499b9c3d2f968a1ab3004f423ff0d")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/5/test.log"
+                        33903
+                        "4482590cad8e79d99b4774a266e00ceef33f7900ad3bda77572f823b11a4ae18")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/6/test.log"
+                        35158
+                        "12b5cf0f29e23383040d5c4e058020d40309f84906ea3b0129008b7f0dbffea0")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-tag-write-20261014/mutations/7/test.log"
+                        33045
+                        "cc7fa63e8f3917682fba5cde686854fe7544140b9be0b093ad746d0071b5b991")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/0/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "9c3af1ccf1cb7c06fd8f33b7b50e014e7c04a835f2061afcdc7e607962d4e041")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/1/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "272734229645553d8b58bf4ee2d0c3412b12639f24923090cc83db98a3fb5a26")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/2/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "0a494500cbc93f6c9b72aac52aa5a665b4188b1c83d3a86702e3b8be30cecd2b")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/3/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "0931750932eab152527974180eb09d3427928919809b89feb2f1716fe7b6c4ae")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/4/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "fe2b3071df0cf2c24eac886ba3edbd3fa66c04371a70f8e3cacabec7daef53b1")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/5/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "0bb205156471b8e59daa68f5160046e8ce2c73d9398c8909142ebeb6332bcbf5")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/6/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "507320719ff0518c028472bda324afcdad0b39c3033bb68117aec4f2a52cddc6")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/7/tools/cbor-tag-write-isolated-build.lisp"
+                        470
+                        "22cdcbd13c19077725f7b76ca9b2c73775189c92e1a95766e4564c09f4df0708")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/baseline/tools/cbor-tag-write-isolated-build.lisp"
+                        484
+                        "612f543b1da4bf109f8541db0d158469c8ef3b5787f3a1687d6b22cd5ff846a4")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/0/src/codec/cbor-tag-input.lisp"
+                        4941
+                        "021a7fdc09f25587ee3377d9f8a3814cf0444757bf78580e549d48c065ecc6f9")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/1/src/codec/cbor-tag-write.lisp"
+                        4414
+                        "99a4052776c17131243e32809b4f193bf551243cfa82a9569a329c157f9f665d")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/2/src/codec/cbor-tag-write.lisp"
+                        4414
+                        "25876f71b662a89ae0034700c757eb76c5163accfb509620805d88f284529a09")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/3/src/codec/cbor-tag-write.lisp"
+                        4473
+                        "f649fec75204caca88ff9ae82c62497a439347cff9b785d7293bc3338eb525d0")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/4/src/codec/cbor-tag-input.lisp"
+                        4945
+                        "25ff57690cd7c1b867fefbc5de3c1ce28b738d731f09898739fb467b4a088128")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/5/src/codec/cbor-tag-write.lisp"
+                        4409
+                        "9fb13297c180fed824c517084895e269cd2038bcd6b135c156a3625d713951d4")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/6/src/codec/cbor-tag-write.lisp"
+                        4419
+                        "f512b7c51c8c1fdfaa478e723543501b94b4650d4baf29b2aa22faf2bc173fc7")
+                       ("spikes/out/cbor-tag-write-20261014/mutations/7/src/codec/cbor-tag-write.lisp"
+                        4432
+                        "316352e1f9ec977b9352d42fc983eb96d545cff739cf4e3dcc615327f0a47d52"))
+GIT-CONTEXT df37306ed0e97f1665fb9f59aca79842c49d96a5; entire copied inventory compared to stored Git bytes and current frozen sources.
+DATA READING PASS checks21565;8 strict detected,9 private copies, all361 copied files compared per copy, exact8patches. No SHA sweep of all copies; no product/driver run, LOAD or compile; no authenticity or exclusive-cause proof.

@@ -1,0 +1,94 @@
+(:SCHEMA-VERSION 1 :KIND :ARCHIVE-SELECTION-DATA-READING :STATUS :OK
+ :HELPER-OBSERVATION
+ (5528 "1649f30f630c01f3299c669652449b70e8340a9d3f4ea973be947082b4532180")
+ :HELPER-FORMS 2 :FIXED-PROCESS-COUNT 14 :FIXED-PROCESSES
+ ((:LABEL "freeze-sources" :PATH
+   "spikes/out/4000996626-command-59906-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 184923 :SHA256
+   "798f28a42fbdb10a8f251a0e3d023720872896bdcdee4c226da025f1d3e6a7b5"
+   :REFERENCES NIL)
+  (:LABEL "initial-build-lint-trace-links" :PATH
+   "spikes/out/4000996656-command-60753-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 317 :SHA256
+   "983e3c3a1652450f5fb8ad5fd43c54e82aa3bdcaf2aa8e59894d04204e64aa17"
+   :REFERENCES NIL)
+  (:LABEL "bench-self-test" :PATH
+   "spikes/out/4000996819-command-64474-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 233389 :SHA256
+   "b7de4810dbabddbdce548ddb632c58c5c0cfed503ba37f5c3c24814cfda3e2ed"
+   :REFERENCES NIL)
+  (:LABEL "audit-self-test" :PATH
+   "spikes/out/4000996819-command-64475-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 189240 :SHA256
+   "ebbfdd41ec3ab85673590eec792d04d767824fb63e1d7dd584b9ebce615d443a"
+   :REFERENCES NIL)
+  (:LABEL "coverage-self-test" :PATH
+   "spikes/out/4000996819-command-64481-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 185014 :SHA256
+   "3f13d15675fabb757373316edfa7d02c363612f791944255b35e685551349373"
+   :REFERENCES NIL)
+  (:LABEL "collection-self-test" :PATH
+   "spikes/out/4000996819-command-64491-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 185804 :SHA256
+   "c5f2df8934569f0c63e3aa81259a54f33ac6e09633dc5a3c97783f56a9585aab"
+   :REFERENCES NIL)
+  (:LABEL "bench" :PATH "spikes/out/4000996908-command-74250-0/report.lisp"
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE :BYTES 242887 :SHA256
+   "a79d9b541de087ac2e0571632ed1ee72c577b7c1b7d9a3677ecf66079342dba0"
+   :REFERENCES NIL)
+  (:LABEL "bench-data-audit" :PATH
+   "spikes/out/4000996957-command-77330-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 186921 :SHA256
+   "e141f3e4f28637b59049f6a13b045974c849fb53c5cd422cf11a576062839469"
+   :REFERENCES NIL)
+  (:LABEL "coverage-tag" :PATH
+   "spikes/out/4000996908-command-74254-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 187103 :SHA256
+   "dfd78544eef2e9f84017583ac14aac85d1a97189227a086cde54b0416e5a9fc2"
+   :REFERENCES NIL)
+  (:LABEL "mutation-self-test-invalid-options" :PATH
+   "spikes/out/4000996908-command-74262-0/report.lisp" :STATUS :FAILED
+   :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE :BYTES 197716 :SHA256
+   "f0021b00aa6a63d7efcd9583a2b18d22670f2d7ebcae8c9e3b0fb8816a686d96"
+   :REFERENCES NIL)
+  (:LABEL "mutation-self-test" :PATH
+   "spikes/out/4000996994-command-78660-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 278534 :SHA256
+   "5583d2e52ae6626be686a22d7b1d5b12a1b7462ade8dd09b801f4f08e0ddd67a"
+   :REFERENCES
+   ("spikes/out/cbor-tag-write-20261014/drivers/selftests/4000996996-worker-78730/"))
+  (:LABEL "integrated-check" :PATH
+   "spikes/out/4000996821-command-64571-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 317 :SHA256
+   "3a985282de01545ab18241298d3c5bb62190520963df148e34c863a66030ce33"
+   :REFERENCES
+   ("spikes/out/4000996874-reader-self-test-69697-0/"
+    "spikes/out/4000996874-snapshot-self-test-69641-0/"))
+  (:LABEL "mutation-campaign" :PATH
+   "spikes/out/4000997059-command-81284-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 281339 :SHA256
+   "9650446564e6df96e30e9c66bae4b244611d42c59a2a9195584490f7b26dc8f9"
+   :REFERENCES
+   ("spikes/out/cbor-tag-write-20261014/drivers/selftests/4000997061-worker-81325/"))
+  (:LABEL "coverage-compression" :PATH
+   "spikes/out/4000997503-command-96971-0/report.lisp" :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE :BYTES 186148 :SHA256
+   "524b1820566b58a871af5efc9846be5d86aa793f3abc44254fd3422a5adf54f4"
+   :REFERENCES NIL))
+ :FAILED-PRESERVED 1 :INTEGRATION-PROCESS-FROM-CLI :PENDING-FINAL-INPUT
+ :TREE-PATHS
+ ("spikes/out/cbor-tag-write-20261014/frozen/"
+  "spikes/out/cbor-tag-write-20261014/drivers/"
+  "spikes/out/cbor-tag-write-20261014/coverage/"
+  "spikes/out/cbor-tag-write-20261014/coverage-self-test/"
+  "spikes/out/cbor-tag-write-20261014/collection/self-test/"
+  "spikes/out/4000997101-check-82864-0/"
+  "spikes/out/4000996874-snapshot-self-test-69641-0/"
+  "spikes/out/4000996874-reader-self-test-69697-0/")
+ :SELFTEST-DIRECTORIES
+ ("spikes/out/4000996874-reader-self-test-69697-0/"
+  "spikes/out/4000996874-snapshot-self-test-69641-0/"
+  "spikes/out/cbor-tag-write-20261014/drivers/selftests/4000996996-worker-78730/"
+  "spikes/out/cbor-tag-write-20261014/drivers/selftests/4000997061-worker-81325/")
+ :MISSING-SELFTEST-DIRECTORIES NIL :SELECTED-MUTATION-FILES 81
+ :PLUS-MUTATION-REPORT 1 :MAX-SELECTED-MUTATION-PLAIN-BYTES 101301)

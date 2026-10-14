@@ -1,0 +1,13 @@
+diff --git a/src/codec/cbor-tag-write.lisp b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/wrong-major.after.lisp.txt
+index 16b91fc2..ec6ae78a 100644
+--- a/src/codec/cbor-tag-write.lisp
++++ b/spikes/out/cbor-tag-write-20261014/drivers/target-diffs/wrong-major.after.lisp.txt
+@@ -56,7 +56,7 @@ Lavoro limitato a SPAN*102; nessun AST, thread, attesa, I/O o pubblicazione."
+           (hi (the u32 high)) (lo (the u32 low)) (next (+ (the index start) item-size)))
+       (declare (type index next))
+       (verifica-contenuto-tag-cbor src source-begin source-limit scratch span max-nodes max-depth)
+-      (let ((payload-start (scrivi-header-cbor-minimo bytes begin next 6 hi lo)))
++      (let ((payload-start (scrivi-header-cbor-minimo bytes begin next 5 hi lo)))
+         (declare (type index payload-start))
+         (unless (= payload-start (+ begin header-size))
+           (error 'invariant-violation :reason :cbor-tag-header-progress))

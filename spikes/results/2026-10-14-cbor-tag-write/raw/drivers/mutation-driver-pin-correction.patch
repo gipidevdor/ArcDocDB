@@ -1,0 +1,15 @@
+diff --git a/spikes/out/cbor-tag-write-20261014/drivers/mutation-before-driver-pin-correction-cb02266f.lisp b/spikes/out/cbor-tag-write-20261014/drivers/mutation.lisp
+index cb02266f..2275bd6e 100644
+--- a/spikes/out/cbor-tag-write-20261014/drivers/mutation-before-driver-pin-correction-cb02266f.lisp
++++ b/spikes/out/cbor-tag-write-20261014/drivers/mutation.lisp
+@@ -808,8 +808,8 @@ Le funzioni nominali ammesse sono congelate nel corpus prima delle campagne."
+         :catalogue-raw-fingerprints *catalogue-raw-fingerprints*
+         :corpus-frame-functions *corpus-frame-functions* :cold-origin-frame *cold-origin-frame*
+         :frozen-other-driver-blobs
+-        '(("bench.lisp" "eeaa1a0d34d6bd94d5cf7c1d62e9c4027b0f5027")
+-          ("audit.lisp" "f6f08f777e8115e626f39e90f3722a72658d9750"))
++        '(("bench.lisp" "4f4e2ac97f2f9d903dfebfdc6b15553b40e59a84")
++          ("audit.lisp" "97f58bffaff8c7dbccec76d1e28082bca0695ec6"))
+         :semantic-catalogue-blob *semantic-catalogue-blob*
+         :method-blob *method-blob* :corpus-plan-blob *corpus-plan-blob*
+         :corpus-plan-declared-api-calls *corpus-plan-declared-api-calls*

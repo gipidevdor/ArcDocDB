@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Lettura readonly del control log autorevole, con header verificato e replay
+  fino all'EOF attestato. Risultato senza buffer, legato alla vista canonica;
+  pubblicazione subordinata alla conservazione di CLOSED, esiti e REMOVED,
+  chiusura del vecchio ACTIVE e apertura di un ID nuovo. Nessuna modifica
+  al formato o agli ADR; recovery completo e qualifica C1 restano aperti.
+
 - Composizione di array CBOR da elementi già codificati: verifica completa
   prima della scrittura, testata minima e budget comprensivi della radice.
   Sorgente e indice condivisibili in lettura, destinazione e scratch privati

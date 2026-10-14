@@ -31,3 +31,13 @@ aggiunti/eseguiti localmente in questa campagna. Non prova EOF fisico,
 esclusività del namespace, power loss, assenza di heap o throughput.
 Gli esiti della CI automatica sulla revisione pubblicata restano distinti
 dai controlli locali e non qualificano da soli le nuove funzioni.
+
+## Esiti conservati
+
+Nove record di processo riusciti, con sorgenti stabili: due compilazioni,
+rigenerazione della matrice, lint, tracciabilità, collegamenti,
+disassemblato e due controlli delle evidenze. L'
+[audit finale](audit-finale-byte.lisp) confronta tutte le **18 copie** dei
+report e dei sidecar con gli originali per dimensione e SHA-256.
+Questi esiti riguardano compilazione, letture e conservazione; non
+promuovono i nuovi ingressi a funzionalità qualificata.

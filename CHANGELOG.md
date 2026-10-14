@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Verifica integrata del lifetime delle fonti GET: lettori su FD CLOSED reali,
+  pubblicazione ACTIVE con superset e riduzione controllata, ritiro EBR e
+  chiusura dopo quiescenza. Include errore tipizzato e uscita non locale;
+  decisione durabile del catalogo e rotazione completa restano da integrare.
+
 - Casi dedicati ai rifiuti del preflight GET ACTIVE prima del CSN: identità,
   stato OPEN/SEALED, ordine, capacità e guasti degli header, con witness
   indipendenti di byte, token, radici, frontiere e assenza di I/O.

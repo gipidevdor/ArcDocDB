@@ -174,7 +174,8 @@
                 :components ((:file "support") (:file "paths") (:file "guards") (:file "threads")))
                (:module "get-directory" :serial t
                 :components ((:file "support") (:file "construction") (:file "read") (:file "threads")
-                             (:file "series-support") (:file "series-read")))
+                             (:file "series-support") (:file "series-read")
+                             (:file "lifetime-support") (:file "lifetime")))
                (:module "get-resolver" :serial t
                 :components ((:file "support") (:file "sort") (:file "construction") (:file "read")))
                (:module "get-active" :serial t

@@ -1,0 +1,64 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/control-verifica/ArcDocDB/src/control/publication-read.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>13</td><td>19</td><td> 68.4</td></tr>
+<tr class='even'><td>branch</td><td>0</td><td>0</td><td>nil  </td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;publisher&#160;osserva&#160;durante&#160;il&#160;compito&#59;&#160;controller&#160;legge&#160;soltanto&#160;dopo&#160;consegna&#47;join&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;osservazioni&#160;scalari&#44;&#160;nessun&#160;nuovo&#160;permesso&#160;concorrente&#160;o&#160;prova&#160;di&#160;salute&#160;corrente&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;control&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;speed&#160;2&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;AFF&#45;004</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;control&#45;preparato&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;values&#160;&#40;member&#160;&#58;prepared&#160;&#58;publishing&#160;&#58;published&#160;&#58;faulted&#41;&#160;boolean&#160;&#38;optional&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;stato&#45;pubblicazione&#45;control&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;stato&#45;pubblicazione&#45;control&#160;&#40;prepared&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;proprietario&#160;o&#160;controller&#160;dopo&#160;join&#46;&#160;Post&#58;&#160;stato&#160;e&#160;successo&#160;rename&#160;osservato&#160;al&#160;confine&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-1'>NIL&#160;non&#160;prova&#160;assenza&#160;di&#160;effetti&#58;&#160;FAULTED&#160;richiede&#160;sempre&#160;nuova&#160;riconciliazione&#160;autorevole&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>13</code></div><code>&#160;<span class='state-1'>Non&#160;è&#160;una&#160;fotografia&#160;concorrente&#160;dei&#160;due&#160;slot&#160;o&#160;autorizzazione&#160;a&#160;ritentare&#47;chiudere&#47;eliminare&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>14</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;values&#160;&#40;control&#45;preparato&#45;publication&#45;state&#160;prepared&#41;&#160;&#40;control&#45;preparato&#45;rename&#45;observed&#160;prepared&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>15</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>16</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;WAL&#45;002&#160;REQ&#45;REC&#45;001</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>17</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;control&#45;pubblicato&#41;&#160;log&#45;io&#41;&#160;log&#45;control&#45;pubblicato&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>18</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;log&#45;control&#45;pubblicato&#160;&#40;published&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>19</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;risultato&#160;di&#160;pubblicazione&#160;completato&#46;&#160;Post&#58;&#160;log&#160;canonico&#160;del&#160;nuovo&#160;control&#46;log&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>20</code></div><code>&#160;<span class='state-1'>Non&#160;attesta&#160;salute&#160;corrente&#160;o&#160;la&#160;quiescenza&#160;del&#160;vecchio&#160;log&#59;&#160;caller&#160;mantiene&#160;ownership&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>21</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;control&#45;preparato&#45;log&#160;&#40;control&#45;pubblicato&#45;prepared&#160;published&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>22</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>23</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>24</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;control&#45;pubblicato&#41;&#160;arcdocdb&#46;recovery&#46;manifest&#58;&#58;manifest&#41;&#160;manifest&#45;control&#45;pubblicato&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>25</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;manifest&#45;control&#45;pubblicato&#160;&#40;published&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>26</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;risultato&#160;completo&#46;&#160;Post&#58;&#160;manifest&#160;del&#160;checkpoint&#160;installato&#59;&#160;query&#160;in&#160;sola&#160;lettura&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>27</code></div><code>&#160;<span class='state-1'>Inventario&#44;&#160;indici&#160;e&#160;decisioni&#160;multiserie&#160;devono&#160;ancora&#160;essere&#160;riconciliati&#160;dal&#160;recovery&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>28</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;control&#45;preparato&#45;manifest&#160;&#40;control&#45;pubblicato&#45;prepared&#160;published&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>29</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>30</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;STO&#45;003</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>31</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;control&#45;pubblicato&#41;&#160;segmento&#45;attivo&#45;preparato&#41;&#160;active&#45;control&#45;pubblicato&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>32</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;active&#45;control&#45;pubblicato&#160;&#40;published&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>33</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;risultato&#160;completo&#46;&#160;Post&#58;&#160;dipendenza&#160;ACTIVE&#160;canonica&#160;nominata&#160;dal&#160;checkpoint&#160;installato&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>34</code></div><code>&#160;<span class='state-1'>Non&#160;crea&#160;controller&#160;o&#160;pubblica&#160;una&#160;root&#160;GET&#59;&#160;adozione&#160;e&#160;gate&#160;del&#160;recovery&#160;restano&#160;al&#160;caller&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>35</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;control&#45;preparato&#45;active&#160;&#40;control&#45;pubblicato&#45;prepared&#160;published&#41;&#41;&#41;</code></div></body></html>

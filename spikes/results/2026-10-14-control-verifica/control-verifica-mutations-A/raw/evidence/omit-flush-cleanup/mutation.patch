@@ -1,0 +1,6 @@
+--- a/src/io/flush.lisp
++++ b/src/io/flush.lisp
+@@ -36,2 +36,1 @@
+-        (when (and (not complete) (eq (file-state file) :open))
+-          (setf (file-state file) :faulted))))))
++        (progn complete nil)))))

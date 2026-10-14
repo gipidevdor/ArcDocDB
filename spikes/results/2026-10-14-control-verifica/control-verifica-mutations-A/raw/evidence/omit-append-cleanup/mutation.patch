@@ -1,0 +1,6 @@
+--- a/src/io/transfer.lisp
++++ b/src/io/transfer.lisp
+@@ -125,2 +125,1 @@
+-        (when (and (not complete) (eq (file-state file) :open))
+-          (setf (file-state file) :faulted))))))
++        (progn complete nil)))))

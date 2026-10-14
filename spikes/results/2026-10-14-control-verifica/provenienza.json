@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "kind": "static-scope-provenance",
+  "base": "a5715a1aa0b2571d650d1b794e9bb7b7324e951e",
+  "freeze": "128955e6a91d4537c2d0fd5abc26ec00ece41b99",
+  "incoming_main": "2278ad5b6ab5b796d7fba4be497f344ead476ebe",
+  "blobs": [
+    {
+      "path": "src/io/types.lisp",
+      "git_blob": "f20a12abd9ace5269347c1fa854ec2365eda805c"
+    },
+    {
+      "path": "src/io/flush.lisp",
+      "git_blob": "99fb51535f9bfbbaf8a2d7831dbd14b5f727b9d6"
+    },
+    {
+      "path": "src/io/transfer.lisp",
+      "git_blob": "5b24bd30aeb12b71b7b1a6a5aa537887a847bf10"
+    },
+    {
+      "path": "arcdocdb.asd",
+      "git_blob": "beafbfe98c46b6daa74462bf46ecb2b295083671"
+    },
+    {
+      "path": "tools/foundation-coverage.lisp",
+      "git_blob": "594e0e6221dbcb311d2a2b3b062736cfffb2e206"
+    },
+    {
+      "path": "tools/io-rename-mutation.lisp",
+      "git_blob": "dfc691c88e9ab940a065703a223a1c414454b0f2"
+    },
+    {
+      "path": "tools/io-completion-mutation.lisp",
+      "git_blob": "7fd59fd86e2d477a6b6ee0f7a2142f8ea6b073c6"
+    },
+    {
+      "path": "tools/control-checkpoint-bench.lisp",
+      "git_blob": "f631bbb7096359592fde0ae2b4462c2d2067d5a1"
+    },
+    {
+      "path": "tests/control/native.lisp",
+      "git_blob": "2107cb66de45ded987c7fb1392155ff6afebbed6"
+    },
+    {
+      "path": "tests/control/publication.lisp",
+      "git_blob": "579c764499e3476ce03c49bd0f0fc46d304494fc"
+    },
+    {
+      "path": "tests/control/support.lisp",
+      "git_blob": "053d81269526d2e7c78181fbe2f8e58ac3f878f3"
+    },
+    {
+      "path": "tests/io/flush-failure.lisp",
+      "git_blob": "76a80588d99b441e8c57a97f9a10d4d9d6c7b59b"
+    },
+    {
+      "path": "tests/io/transfer-failure.lisp",
+      "git_blob": "c87c80fb9c82062bf4d4179d67f710ff10b4f051"
+    }
+  ],
+  "test_definitions": {
+    "control_backend": 62,
+    "control_native": 12,
+    "io_completion": 21
+  },
+  "limits": [
+    "static blob/inventory identity; dynamic results in separate producers",
+    "incoming recovery adapter compiled as dependency, excluded from the 13-file coverage claim"
+  ],
+  "final_integration_freeze": "ec2efddfaca0ac787ee24b3235459dde7c72af5e",
+  "incoming_main_B": "55149bfd34151f35560491678b0408a3f8ca7850",
+  "io_scoped_delta_after_A": [],
+  "context_delta_after_A": [
+    "arcdocdb.asd",
+    "src/dispatch/package.lisp",
+    "src/dispatch/recycle.lisp",
+    "tests/control/publication.lisp",
+    "tests/scheduler/pool-recycle.lisp",
+    "tools/measure-pool-recycle.lisp"
+  ]
+}

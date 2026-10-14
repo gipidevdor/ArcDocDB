@@ -1,0 +1,7 @@
+--- a/src/io/types.lisp
++++ b/src/io/types.lisp
+@@ -77,2 +77,2 @@
+-    (when (and (not (eq operation :read)) (eq (file-state file) :open))
+-      (setf (file-state file) :faulted)))
++    (when (not (eq operation :read))
++      (setf (file-state file) :faulted)))

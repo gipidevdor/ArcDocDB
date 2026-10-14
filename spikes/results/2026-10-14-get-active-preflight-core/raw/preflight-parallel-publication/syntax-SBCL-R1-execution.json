@@ -1,0 +1,40 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--eval",
+    "(require :asdf)",
+    "--eval",
+    "(load \"tools/evidence-storage.lisp\" :verbose nil :print nil)",
+    "--eval",
+    "(labels ((thread-form (form)\n           (when (consp form)\n             (if (eq (car form) 'sb-thread:make-thread) form\n                 (loop for part in form thereis (thread-form part))))))\n  (dolist (path '(\"spikes/out/preflight-parallel-publication/collect-R2.lisp\"\n                  \"spikes/out/preflight-parallel-publication/audit-R3.lisp\"))\n    (with-standard-io-syntax\n      (let ((*read-eval* nil) (*package* (find-package :cl-user)) (eof (gensym)) (forms nil))\n        (with-open-file (stream path :direction :input)\n          (loop for form = (read stream nil eof) until (eq form eof) do (push form forms)))\n        (setf forms (nreverse forms))\n        (let* ((definition (find \"PARALLEL-MAP-FOUR\" forms :test #'equal\n                                :key (lambda (form) (and (consp form) (eq 'defun (first form))\n                                                         (symbol-name (second form))))))\n               (thread (and definition (thread-form definition))))\n          (assert (and thread (= 4 (length thread)) (eq :name (third thread))\n                       (eq 'lambda (first (second thread)))))\n          (assert (and (consp (car (last forms))) (eq 'let (first (car (last forms))))))\n        (format t \"READ-EVAL NIL / EOF PASS: ~A (~D top-level forms); MAKE-THREAD :name outside lambda.~%\"\n                path (length forms))))))",
+    "--quit"
+  ],
+  "sources_before": {
+    "collect-R2.lisp": "638945f457ad4c5aaec72a26ef2b708249ed84ae2964ac157af9daf243bbb9b0",
+    "audit-R3.lisp": "43f63749ce3dab57a6261d5819ae3edfe7f550b0883a24bfcfb1fb23a1a8f132"
+  },
+  "reader_git_blob": "fa2b5d36dca0837e2ed5e49b282887b2e110b2b7",
+  "reader_sha256": "8f287772a41b1ebe0e7b3ecc3826a4148082efed428a9749655977e62a9c15a6",
+  "started_at_unix": 1791998177.0851321,
+  "scope": "READ only source; trusted evidence reader sole LOAD; no mains/product/copy/evidence execution",
+  "status": "failed",
+  "exit_code": 1,
+  "finished_at_unix": 1791998177.43236,
+  "sources_after": {
+    "collect-R2.lisp": "638945f457ad4c5aaec72a26ef2b708249ed84ae2964ac157af9daf243bbb9b0",
+    "audit-R3.lisp": "43f63749ce3dab57a6261d5819ae3edfe7f550b0883a24bfcfb1fb23a1a8f132"
+  },
+  "sources_stable": true,
+  "syntax-SBCL-R1.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "syntax-SBCL-R1.stderr": {
+    "bytes": 2196,
+    "sha256": "4d3330e9363438e9e223b58121d57f68a30f233a8ac81d9fe9c9258f8f962ad6"
+  }
+}

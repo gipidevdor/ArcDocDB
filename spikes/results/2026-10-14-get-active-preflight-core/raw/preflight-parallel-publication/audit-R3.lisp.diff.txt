@@ -1,0 +1,11 @@
+--- audit-R2.lisp
++++ audit-R3.lisp
+@@ -182,7 +182,7 @@
+                                 (*archive* archive) (*audit-directory* audit-directory))
+                             (loop for index from start below size by workers do
+                               (handler-case (setf (aref results index) (funcall function (aref input index)))
+-                                (serious-condition (condition) (setf (aref failures index) condition)))))
++                                (serious-condition (condition) (setf (aref failures index) condition))))))
+                         :name (format nil "publication-worker-~D" start)) threads)))
+            (serious-condition (condition) (setf launch-failure condition)))
+       (sb-sys:without-interrupts

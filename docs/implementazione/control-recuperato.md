@@ -93,6 +93,11 @@ vecchio ACTIVE e la correttezza della lunghezza/esiti usati per chiuderlo.
 Il confronto dei due manifest non può provare i byte di un segmento che non
 ha letto. Non risolve transazioni multiserie o autorizza eliminazioni.
 
+Il [lettore del vecchio ACTIVE](active-recuperato.md) collega ora quella
+precondizione allo scanner readonly e alla tabella delle decisioni. Il suo
+ingresso di pubblicazione richiede P ed esiti derivati esattamente uguali
+nella chiusura, prima di delegare alla transizione conservativa qui descritta.
+
 ## Pubblicazione ed errori
 
 `pubblica-control-validato` rifiuta vista diversa, capacità chiusa e transizione

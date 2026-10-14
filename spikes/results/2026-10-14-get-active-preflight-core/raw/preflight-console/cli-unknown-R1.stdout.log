@@ -1,0 +1,1 @@
+:FAILED: sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script tools/get-active-init-mutation.lisp --check spikes/out/preflight-cli-unknown-R1/ --suite unknown; record: /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/4000985407-command-53868-0/report.lisp

@@ -1,0 +1,5 @@
+--- a/src/get-resolver/active-preflight.lisp
++++ b/src/get-resolver/active-preflight.lisp
+@@ -40,1 +40,1 @@
+-    (when (> (arcdocdb.wal::lotto-count batch) (sorgente-get-attiva-batch-records source))
++    (when (>= (arcdocdb.wal::lotto-count batch) (sorgente-get-attiva-batch-records source))

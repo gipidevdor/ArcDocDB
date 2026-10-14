@@ -1,0 +1,67 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/src/get-resolver/types.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>6</td><td>29</td><td> 20.7</td></tr>
+<tr class='even'><td>branch</td><td>0</td><td>0</td><td>nil  </td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;pool&#160;I&#47;O&#160;costruisce&#59;&#160;controller&#160;pubblica&#160;e&#160;conserva&#160;fino&#160;al&#160;reclaim&#160;EBR&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;array&#160;privati&#160;immutabili&#160;dopo&#160;il&#160;ritorno&#59;&#160;nessun&#160;accessor&#160;pubblico&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;get&#46;resolver&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;speed&#160;2&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;001&#160;REQ&#45;FOR&#45;004&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;row&#45;words&#43;&#160;6&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;row&#45;offset&#43;&#160;0&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;row&#45;size&#43;&#160;1&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;row&#45;flags&#43;&#160;2&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;row&#45;csn&#45;low&#43;&#160;3&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;row&#45;csn&#45;high&#43;&#160;4&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>13</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;row&#45;proof&#43;&#160;5&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>14</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;proof&#45;words&#43;&#160;5&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>15</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;proof&#45;txid&#45;low&#43;&#160;0&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>16</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;proof&#45;txid&#45;high&#43;&#160;1&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>17</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;proof&#45;csn&#45;low&#43;&#160;2&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>18</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;proof&#45;csn&#45;high&#43;&#160;3&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>19</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;proof&#45;offset&#43;&#160;4&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>20</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;radix&#45;buckets&#43;&#160;256&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>21</code></div><code>&#160;<span class='state-2'>&#40;defconstant&#160;&#43;binary&#45;attempts&#43;&#160;33&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>22</code></div><code>&#160;<span class='state-2'>&#40;deftype&#160;resolver&#45;words&#160;&#40;&#41;&#160;&#39;&#40;simple&#45;array&#160;&#40;unsigned&#45;byte&#160;32&#41;&#160;&#40;&#42;&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>23</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>24</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;001&#160;REQ&#45;FOR&#45;004&#160;REQ&#45;CMP&#45;007&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>25</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;mappa&#45;segmento&#45;get&#160;&#40;&#58;constructor&#160;&#37;make&#45;mappa&#45;segmento&#45;get&#160;&#40;segment&#160;end&#160;rows&#41;&#41;&#160;&#40;&#58;copier&#160;nil&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>26</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;CLOSED&#160;attestato&#160;dal&#160;manifest&#160;oppure&#160;pagina&#160;di&#160;lotto&#160;ACTIVE&#160;verificato&#160;prima&#160;dell&#39;adozione&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>27</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;tabella&#160;posseduta&#160;di&#160;soli&#160;PUT&#44;&#160;ordinata&#160;per&#160;offset&#44;&#160;immutabile&#160;e&#160;senza&#160;buffer&#160;sorgente&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>28</code></div><code>&#160;<span class='state-1'>Il&#160;controller&#160;pubblica&#160;prima&#160;delle&#160;location&#160;corrispondenti&#160;e&#160;protegge&#160;il&#160;FD&#160;con&#160;EBR&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>29</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;segment&#160;nil&#160;&#58;type&#160;segmento&#45;get&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>30</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;end&#160;0&#160;&#58;type&#160;u32&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>31</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;rows&#160;&#35;&#40;&#41;&#160;&#58;type&#160;resolver&#45;words&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-1'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>32</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>33</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;IDX&#45;001&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>34</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;mappa&#45;segmento&#45;get&#41;&#160;index&#41;&#160;payload&#45;mappa&#45;segmento&#45;get&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>35</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;payload&#45;mappa&#45;segmento&#45;get&#160;&#40;map&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>36</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;mappa&#160;completata&#46;&#160;Post&#58;&#160;payload&#160;degli&#160;array&#160;permanenti&#44;&#160;24&#160;byte&#160;per&#160;PUT&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>37</code></div><code>&#160;<span class='state-1'>Esclude&#160;oggetti&#47;header&#160;Lisp&#44;&#160;capacità&#47;FD&#160;e&#160;buffer&#160;del&#160;costruttore&#59;&#160;non&#160;misura&#160;RSS&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>38</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;&#42;&#160;4&#160;&#40;length&#160;&#40;mappa&#45;segmento&#45;get&#45;rows&#160;map&#41;&#41;&#41;&#41;</code></div></body></html>

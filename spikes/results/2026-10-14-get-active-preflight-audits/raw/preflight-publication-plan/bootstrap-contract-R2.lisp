@@ -1,0 +1,10 @@
+(:SCHEMA-VERSION 1 :KIND :ARCHIVE-AUDIT-CONTRACT :SOURCE-COMMIT
+ "8c0866711c50d047f87b9c484ce56d42a87ba19c" :EXPECTED-GROUPS
+ (#A((26) BASE-CHAR . "4000985429-command-54291-0")
+  #A((26) BASE-CHAR . "4000985463-command-55161-0")
+  #A((32) BASE-CHAR . "preflight-bootstrap-mutations-R1")
+  #A((31) BASE-CHAR . "preflight-bootstrap-selftest-R1"))
+ :EXPECTED-PROCESSES
+ ((#A((26) BASE-CHAR . "4000985429-command-54291-0") :OK 0 :STABLE)
+  (#A((26) BASE-CHAR . "4000985463-command-55161-0") :OK 0 :STABLE))
+ :REQUIRED-FASL-GROUPS ("preflight-bootstrap-mutations-R1") :NATIVE-REPORTS NIL)

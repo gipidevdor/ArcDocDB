@@ -178,6 +178,11 @@ benchmark, fault injection, modello o self-test era stato aggiunto/eseguito
 localmente nell'incremento iniziale. La successiva [verifica funzionale
 dedicata](get-active-verifica.md), secondo il [metodo preregistrato](get-active-metodo.md),
 aggiunge 28 test ordinari, copertura diagnostica e audit indipendenti.
+Il [metodo dei rifiuti OPEN](get-active-preflight-metodo.md) registra il
+successivo approfondimento prima del CSN, con casi di identità, stato e
+capacità e mutazioni selezionate, mantenendo separate le attribuzioni.
+La [verifica dei rifiuti OPEN](get-active-preflight-verifica.md) conserva
+42 test ACTIVE, quattro mutanti mirati e gli audit delle prove complete.
 Restano aperti stress con thread reali, interruzioni in ogni fase, condition
 coverage, misure di heap/performance, prove ACTIVE multiserie, directory della
 Serie/rotazione/reclaim, indice concreto e qualifica C1.

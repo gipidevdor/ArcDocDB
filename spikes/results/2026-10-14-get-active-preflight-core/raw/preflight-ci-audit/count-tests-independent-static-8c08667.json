@@ -1,0 +1,129 @@
+{
+  "kind": "independent-static-git-count",
+  "commit": "8c0866711c50d047f87b9c484ce56d42a87ba19c",
+  "module_tests": 1278,
+  "suites": 30,
+  "rows": [
+    {
+      "package": "ARCDOCDB.HASH64.TESTS",
+      "count": 28
+    },
+    {
+      "package": "ARCDOCDB.FOUNDATION.TESTS",
+      "count": 28
+    },
+    {
+      "package": "ARCDOCDB.UTF8.TESTS",
+      "count": 17
+    },
+    {
+      "package": "ARCDOCDB.CBOR.TESTS",
+      "count": 17
+    },
+    {
+      "package": "ARCDOCDB.CBOR.MINIMAL.TESTS",
+      "count": 15
+    },
+    {
+      "package": "ARCDOCDB.CBOR.STRUCTURE.TESTS",
+      "count": 24
+    },
+    {
+      "package": "ARCDOCDB.CBOR.MINIMAL.SCAN.TESTS",
+      "count": 22
+    },
+    {
+      "package": "ARCDOCDB.CBOR.WRITE.TESTS",
+      "count": 17
+    },
+    {
+      "package": "ARCDOCDB.CBOR.STRING.WRITE.TESTS",
+      "count": 21
+    },
+    {
+      "package": "ARCDOCDB.CBOR.SIMPLE.WRITE.TESTS",
+      "count": 16
+    },
+    {
+      "package": "ARCDOCDB.CBOR.FLOAT.WRITE.TESTS",
+      "count": 18
+    },
+    {
+      "package": "ARCDOCDB.CBOR.ARRAY.WRITE.TESTS",
+      "count": 20
+    },
+    {
+      "package": "ARCDOCDB.CSN.TESTS",
+      "count": 20
+    },
+    {
+      "package": "ARCDOCDB.MVCC.TESTS",
+      "count": 43
+    },
+    {
+      "package": "ARCDOCDB.EPOCHS.TESTS",
+      "count": 34
+    },
+    {
+      "package": "ARCDOCDB.READ.TESTS",
+      "count": 30
+    },
+    {
+      "package": "ARCDOCDB.GET.TESTS",
+      "count": 70
+    },
+    {
+      "package": "ARCDOCDB.GET.PERFORMANCE.TESTS",
+      "count": 19
+    },
+    {
+      "package": "ARCDOCDB.GET.DIRECTORY.TESTS",
+      "count": 68
+    },
+    {
+      "package": "ARCDOCDB.GET.RESOLVER.TESTS",
+      "count": 42
+    },
+    {
+      "package": "ARCDOCDB.GET.ACTIVE.TESTS",
+      "count": 42
+    },
+    {
+      "package": "ARCDOCDB.EXECUTION.TESTS",
+      "count": 89
+    },
+    {
+      "package": "ARCDOCDB.SCHEDULER.TESTS",
+      "count": 67
+    },
+    {
+      "package": "ARCDOCDB.STORAGE.TESTS",
+      "count": 44
+    },
+    {
+      "package": "ARCDOCDB.IO.TESTS",
+      "count": 86
+    },
+    {
+      "package": "ARCDOCDB.RECOVERY.TESTS",
+      "count": 95
+    },
+    {
+      "package": "ARCDOCDB.WAL.TESTS",
+      "count": 48
+    },
+    {
+      "package": "ARCDOCDB.SERIES.TESTS",
+      "count": 101
+    },
+    {
+      "package": "ARCDOCDB.INDEX.SLOTS.TESTS",
+      "count": 64
+    },
+    {
+      "package": "ARCDOCDB.INDEX.PRIMARY.TESTS",
+      "count": 73
+    }
+  ],
+  "no_test_execution": true
+}

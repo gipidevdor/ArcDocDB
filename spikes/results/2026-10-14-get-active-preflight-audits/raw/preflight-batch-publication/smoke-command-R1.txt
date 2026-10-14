@@ -1,0 +1,1 @@
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script spikes/out/preflight-batch-publication/collector-batch.lisp spikes/out/preflight-batch-publication/smoke-manifest.lisp spikes/out/preflight-batch-publication/smoke-archive-R1/

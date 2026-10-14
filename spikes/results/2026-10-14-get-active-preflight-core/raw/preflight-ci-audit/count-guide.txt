@@ -1,0 +1,13 @@
+Helper statico Git: count-tests.lisp
+SHA256 finale 1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e
+Fonte e digest conservati prima del run in count-tests-source-R3.sha256.
+
+CLI:
+sbcl --noinform --no-userinit --no-sysinit --disable-debugger --script spikes/out/preflight-ci-audit/count-tests.lisp --workspace DIR --commit NATIVE_SHA
+
+Output singolo record :frozen-git-test-inventory, :module-test-total da usare come --tests nell'auditor CI, :suites con nomi/conteggi/ordine e file, :suite-execution-order, :serial-test-source-files, :smoke-count/:smoke-check-names.
+Legge soltanto Git show/ls-tree/rev-parse e ASD come dati (*READ-EVAL* NIL); richiede ASDF runtime ma non carica sistemi del progetto, prodotti, prove o FASL. Supporta esplicitamente moduli seriali e le due forme registry gia' presenti; altri layout falliscono invece di presumere l'ordine. Dedup PUSHNEW conserva la prima definizione, ACONS+REMOVE l'ultima.
+
+Qualifica locale statica Git8c0866711c50d047f87b9c484ce56d42a87ba19c:
+R1 fonte ef06... fallita per parentesi nella nuova funzione; stdout vuoto, stderr WARNING/read-error, metadata e fonte count-tests-at-R1.lisp.txt integralmente conservati. Nessuna lettura progetto o test eseguito in R1.
+R2 fonte1cb93... PASSexit0/stderr0: 1278 test di modulo,30 suite,2 smoke,ACTIVE42. Output count-tests-8c08667-R2.lisp, metadata -R2-execution.json. Totale coincidente con crosscheck testuale indipendente count-tests-independent-static-8c08667.json. Nomi seriali ACTIVE construction/preflight/directory/read. Questo totale qualifica solo Git8c; ricalcolarlo sul vero commit sintetico PR o push main se diverso.

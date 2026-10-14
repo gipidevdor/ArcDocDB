@@ -1,0 +1,12 @@
+Correzione dopo i tre collector R1 FAILED registrati dal parent: mancava una parentesi di chiusura della lambda in parallel-map-four prima di :name. Difetto dell'autore; il controllo lessicale/review statico precedente non lo aveva rilevato. Tutte le fonti precedenti restano intatte.
+
+Nuove sole derivazioni:
+collect-R2.lisp SHA256638945f457ad4c5aaec72a26ef2b708249ed84ae2964ac157af9daf243bbb9b0
+  da collect.lisp b226..., unica aggiunta una parentesi; diff collect-R2.lisp.diff.txt.
+audit-R3.lisp SHA25643f63749ce3dab57a6261d5819ae3edfe7f550b0883a24bfcfb1fb23a1a8f132
+  da audit-R2.lisp3031..., stessa unica parentesi; diff audit-R3.lisp.diff.txt.
+Digest salvati in sources-syntax-R3.sha256 prima del parsing.
+
+Vero parsing SBCL READ con *READ-EVAL* NIL fino a EOF PASSexit0/stderr0 su entrambi:24forme collector,32forme auditor. Sola libreria caricata tools/evidence-storage.lisp, autenticata contro il blob Git frozen8c08667. Nessuna valutazione dei form delle due sorgenti, nessun main/copia/audit/prodotto/test eseguito. Comando, SHA prima/dopo, stdout/stderr e stato terminale sono conservati come syntax-SBCL-R2-*. Il tentativo syntax-SBCL-R1-* aveva un errore nella mia stringa --eval prima del parsing delle fonti; e' conservato senza overwrite insieme ad argv/log/stato fallito.
+
+I prossimi run del parent devono usare collect-R2.lisp e audit-R3.lisp. Tutte le garanzie/limiti della nota precedente restano; la variante auditor include anche verifica dei soli payload metadata autorizzati e delle loro impronte raw in due passaggi. Output delle raccolte e degli audit in altra cartella. Questo gruppo ora e' fermo.

@@ -1,0 +1,61 @@
+--- collect-original
++++ collect.lisp
+@@ -61,6 +61,37 @@
+               (when compressed (list :codec :gzip :uncompressed-bytes size
+                                      :uncompressed-sha256 (getf before :sha256)))))))
+ 
++(defun parallel-map-four (function items)
++  "Ordered results, at most four workers; join all and propagate every failure."
++  (let* ((input (coerce items 'vector)) (size (length input)) (workers (min 4 size))
++         (results (make-array size)) (failures (make-array size :initial-element nil))
++         (threads nil) (launch-failure nil) (join-failures nil)
++         (defaults *default-pathname-defaults*) (package *package*)
++         (stdout *standard-output*) (stderr *error-output*))
++    (unwind-protect
++         (handler-case
++             (dotimes (worker workers)
++               (let ((start worker))
++                 (push (sb-thread:make-thread
++                        (lambda ()
++                          (let ((*default-pathname-defaults* defaults) (*package* package)
++                                (*standard-output* stdout) (*error-output* stderr))
++                            (loop for index from start below size by workers do
++                              (handler-case (setf (aref results index) (funcall function (aref input index)))
++                                (serious-condition (condition) (setf (aref failures index) condition)))))
++                        :name (format nil "publication-worker-~D" start)) threads)))
++           (serious-condition (condition) (setf launch-failure condition)))
++      (sb-sys:without-interrupts
++        (dolist (thread threads)
++          (handler-case (sb-thread:join-thread thread)
++            (serious-condition (condition) (push condition join-failures))))))
++    (let ((errors (loop for condition across failures for index from 0 when condition
++                        collect (list index (princ-to-string condition)))))
++      (when (or launch-failure join-failures errors)
++        (error "Parallel publication failed after joining all workers: launch=~A joins=~S entries=~S."
++               launch-failure (mapcar #'princ-to-string join-failures) errors)))
++    (coerce results 'list)))
++
+ (defun collect (manifest-path destination)
+   (let* ((manifest (read-one manifest-path))
+          (root (merge-pathnames (uiop:ensure-directory-pathname destination) (truename "./")))
+@@ -77,8 +108,18 @@
+           (when (and process-p (> (arcdocdb.evidence:file-bytes (merge-pathnames "report.lisp" base))
+                                  +plain-limit+))
+             (error "Il produttore deve compattare il suo report prima della raccolta."))
+-          (dolist (file before)
+-            (push (copy-verified file (merge-pathnames (enough-namestring file base) target-base) root) files))
++          (let* ((targets (mapcar (lambda (file) (merge-pathnames (enough-namestring file base) target-base)) before))
++                 (owned (loop for file in before for target in targets append
++                          (if (and (> (arcdocdb.evidence:file-bytes file) +plain-limit+)
++                                   (not (equal "gz" (pathname-type file))))
++                              (list (concatenate 'string (namestring target) ".gz")
++                                    (concatenate 'string (namestring target) ".gz.decoded"))
++                              (list (namestring target))))))
++            (unless (= (length owned) (length (remove-duplicates owned :test #'equal)))
++              (error "Destinazioni/temp paralleli duplicati: ~A." label))
++            (dolist (name owned) (ensure-directories-exist name))
++            (setf files (nconc (parallel-map-four (lambda (pair) (copy-verified (car pair) (cdr pair) root))
++                                                (mapcar #'cons before targets)) files)))
+           (unless (equal before (files-in base)) (error "Insieme sorgente cambiato: ~A." base))
+           (when process-p
+             (let* ((source (merge-pathnames "report.lisp" base))

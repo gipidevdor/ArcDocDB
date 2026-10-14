@@ -1,0 +1,281 @@
+;;;; Preserve every ignored/untracked regular file before managed-worktree archival.
+;;;; Raw bytes only; only the verified trusted evidence-storage source is LOADed.
+;;;; --workspace DIR --commit FULL-SHA --destination FRESH-BACKUP-ROOT/
+;;;; Minimal parallel derivative of trusted SHA256 961a7c4f1858431b9be544cd5bba81624d41422b12840e22e78affe6535e6a9d.
+;;;; At most four SBCL workers; ordered results and errors reported only after all joins.
+(require :asdf)
+(require :sb-posix)
+(declaim (optimize (safety 3) (debug 3)))
+
+(define-condition preservation-error (error)
+  ((message :initarg :message :reader preservation-message))
+  (:report (lambda (condition stream) (write-string (preservation-message condition) stream))))
+
+(defun demand (condition control &rest arguments)
+  "Reject an incomplete observation without modifying the source checkout."
+  (unless condition (error 'preservation-error :message (apply #'format nil control arguments))))
+
+(defun parse-options (arguments)
+  "Require an explicit workspace, full commit, and fresh external backup root."
+  (let ((workspace nil) (commit nil) (destination nil))
+    (loop while arguments for option = (pop arguments) for value = (pop arguments)
+          do (demand value "Missing value for ~A." option)
+             (cond ((equal option "--workspace")
+                    (demand (null workspace) "Duplicate --workspace.") (setf workspace value))
+                   ((equal option "--commit")
+                    (demand (null commit) "Duplicate --commit.") (setf commit value))
+                   ((equal option "--destination")
+                    (demand (null destination) "Duplicate --destination.") (setf destination value))
+                   (t (demand nil "Unknown option ~A." option))))
+    (demand (and workspace destination (stringp commit) (= 40 (length commit))
+                 (every (lambda (character) (digit-char-p character 16)) commit))
+            "Usage: --workspace DIR --commit FULL-SHA --destination FRESH-BACKUP-ROOT/.")
+    (list :workspace (truename (uiop:ensure-directory-pathname workspace))
+          :commit commit :destination (uiop:ensure-directory-pathname destination))))
+
+(defun git-output (workspace &rest arguments)
+  "Use argv directly; filenames containing spaces never enter a shell."
+  (uiop:run-program (append '("git") arguments) :directory workspace
+                    :output :string :error-output :string))
+
+(defun git-line (workspace &rest arguments)
+  "Remove only the line terminator from scalar Git metadata."
+  (string-right-trim '(#\Newline #\Return) (apply #'git-output workspace arguments)))
+
+(defun relative-parts (relative)
+  "Validate a literal repository-relative path, excluding every .git component."
+  (demand (and (stringp relative) (plusp (length relative)) (not (find #\Null relative)))
+          "Invalid relative path ~S." relative)
+  (let ((parts (uiop:split-string relative :separator "/")))
+    (demand (and (<= (length parts) 128)
+                 (every (lambda (part)
+                          (and (plusp (length part))
+                               (not (member part '("." ".." ".git") :test #'string-equal)))) parts))
+            "Absolute/escaping/Git-administration path rejected: ~S." relative)
+    parts))
+
+(defun regular-source (workspace relative)
+  "LSTAT every component, rejecting symlinks and special files including parents."
+  (let ((parts (relative-parts relative)) (current workspace))
+    (loop for part in parts for remaining on parts
+          do (let* ((last (null (rest remaining)))
+                    (path (merge-pathnames (if last part (concatenate 'string part "/")) current))
+                    (mode (sb-posix:stat-mode (sb-posix:lstat (string-right-trim "/" (namestring path))))))
+               (demand (if last (sb-posix:s-isreg mode) (sb-posix:s-isdir mode))
+                       "Nonregular file or symlink rejected: ~A." path)
+               (setf current path)))
+    current))
+
+(defun selected-files (workspace)
+  "Exact NUL-separated union of Git's untracked and ignored file selections."
+  (let ((paths nil))
+    (dolist (arguments '(("ls-files" "--others" "--exclude-standard" "--full-name" "-z")
+                         ("ls-files" "--others" "--ignored" "--exclude-standard" "--full-name" "-z")))
+      (let ((output (apply #'git-output workspace arguments)))
+        (demand (or (zerop (length output)) (char= #\Null (char output (1- (length output)))))
+                "Git file inventory is not NUL terminated.")
+        (dolist (relative (uiop:split-string output :separator '(#\Null)))
+          (when (plusp (length relative))
+            (relative-parts relative)
+            (push relative paths)))))
+    (sort (remove-duplicates paths :test #'equal) #'string<)))
+
+(defun fingerprint (path)
+  "Observe raw regular-file size and SHA256 via the trusted reader library."
+  (list :bytes (uiop:symbol-call :arcdocdb.evidence :file-bytes path)
+        :sha256 (uiop:symbol-call :arcdocdb.evidence :file-sha256 path)))
+
+(defun ordered-file-map (function entries &optional result-buffer)
+  "Map independent files with at most four workers; join all before propagating errors."
+  (let* ((items (coerce entries 'vector)) (count (length items)) (workers (min 4 count))
+         (results (or result-buffer (make-array count :initial-element nil))) (failures (make-array count :initial-element nil))
+         (threads nil) (thread-errors nil) (defaults *default-pathname-defaults*)
+         (package *package*) (readtable *readtable*) (read-eval *read-eval*)
+         (output *standard-output*) (error-output *error-output*) (trace-output *trace-output*))
+    (demand (and (typep results 'simple-vector) (= count (length results))) "Invalid result buffer.")
+    (unwind-protect
+         (handler-case
+             (dotimes (number workers)
+               (let ((worker number))
+                 (push (sb-thread:make-thread
+                        (lambda ()
+                          (let ((*default-pathname-defaults* defaults) (*package* package)
+                                (*readtable* readtable) (*read-eval* read-eval)
+                                (*standard-output* output) (*error-output* error-output)
+                                (*trace-output* trace-output))
+                            (loop for index from worker below count by workers
+                                  do (handler-case
+                                         (setf (aref results index) (funcall function (aref items index)))
+                                       (serious-condition (condition) (setf (aref failures index) condition))))))
+                        :name (format nil "preserve-file-~D" worker)) threads)))
+           (serious-condition (condition) (push condition thread-errors)))
+      (sb-sys:without-interrupts
+        (dolist (thread threads)
+          (loop (handler-case (progn (sb-thread:join-thread thread) (return))
+                  (serious-condition (condition) (push condition thread-errors)
+                    (unless (sb-thread:thread-alive-p thread) (return))))))))
+    (when (or thread-errors (find-if #'identity failures))
+      (error 'preservation-error :message
+             (format nil "Parallel preservation errors after all joins: ~S; indexed files: ~S."
+                     (mapcar #'princ-to-string (reverse thread-errors))
+                     (loop for failure across failures for index from 0 when failure
+                           collect (list index (princ-to-string failure))))))
+    (coerce results 'list)))
+
+(defun source-snapshot (workspace paths)
+  "Fingerprint the complete explicit set without reading any artifact as Lisp code."
+  (ordered-file-map (lambda (relative)
+                      (let ((source (regular-source workspace relative)))
+                        (append (list :path relative :source (namestring source)) (fingerprint source)))) paths))
+
+(defun save-new (path datum)
+  "Save one readable data form exclusively, preserving failed-attempt files."
+  (with-open-file (stream path :direction :output :if-exists :error
+                               :if-does-not-exist :create :external-format :utf-8)
+    (with-standard-io-syntax
+      (let ((*print-pretty* t)) (write datum :stream stream) (terpri stream)))))
+
+(defun fresh-backup (workspace argument)
+  "Create a fresh root only after resolving its existing parent outside the workspace."
+  (let* ((candidate (merge-pathnames argument (truename "./")))
+         (parent (truename (uiop:pathname-parent-directory-pathname candidate)))
+         (leaf (car (last (pathname-directory candidate))))
+         (root (merge-pathnames (uiop:ensure-directory-pathname leaf) parent)))
+    (demand (and (stringp leaf) (plusp (length leaf))
+                 (not (member leaf '("." ".." ".git") :test #'string-equal))
+                 (not (uiop:subpathp root workspace)) (not (equal root workspace)))
+            "Backup must be a new directory outside the source workspace.")
+    (demand (not (probe-file root)) "Backup root already exists: ~A." root)
+    (sb-posix:mkdir root #o700)
+    (sb-posix:mkdir (merge-pathnames "files/" root) #o700)
+    (truename root)))
+
+(defun copy-raw (workspace files-root entry)
+  "Copy bounded byte blocks exclusively; preserve empty files and all file extensions."
+  (let* ((relative (getf entry :path)) (source (regular-source workspace relative))
+         (target (merge-pathnames relative files-root))
+         (expected (list :bytes (getf entry :bytes) :sha256 (getf entry :sha256)))
+         (buffer (make-array 65536 :element-type '(unsigned-byte 8))) (copied 0))
+    (demand (equal expected (fingerprint source)) "Source changed before copy: ~A." source)
+    (ensure-directories-exist target)
+    (with-open-file (input source :element-type '(unsigned-byte 8))
+      (with-open-file (output target :direction :output :element-type '(unsigned-byte 8)
+                                    :if-exists :error :if-does-not-exist :create)
+        (loop for bytes = (read-sequence buffer input) while (plusp bytes)
+              do (incf copied bytes)
+                 (demand (<= copied (getf entry :bytes)) "Source grew during copy: ~A." source)
+                 (write-sequence buffer output :end bytes))))
+    (demand (and (= copied (getf entry :bytes))
+                 (equal expected (fingerprint (regular-source workspace relative)))
+                 (equal expected (fingerprint target)))
+            "Source/copy bytes or SHA256 changed: ~A." source)
+    (append entry (list :copy-path (namestring target) :copy-bytes-and-sha256-match t))))
+
+(defun backup-files (files-root)
+  "Independently inventory all copied regular files, including hidden files."
+  (let ((paths nil) (count 0) (prefix (namestring files-root)))
+    (labels ((walk (base depth)
+               (demand (<= depth 128) "Backup directory depth exceeds limit.")
+               (dolist (path (directory (make-pathname :name :wild :type :wild :defaults base)
+                                        :resolve-symlinks nil))
+                 (demand (<= (incf count) 100000) "Backup inventory exceeds entry limit.")
+                 (let ((mode (sb-posix:stat-mode (sb-posix:lstat (string-right-trim "/" (namestring path))))))
+                   (cond ((sb-posix:s-isdir mode) (walk (uiop:ensure-directory-pathname path) (1+ depth)))
+                         ((sb-posix:s-isreg mode) (push (subseq (namestring path) (length prefix)) paths))
+                         (t (demand nil "Backup contains symlink or special file: ~A." path)))))))
+      (walk files-root 0))
+    (sort paths #'string<)))
+
+(defun verify-copies (files-root before)
+  "Check the exact physical destination set and every preserved raw SHA256 again."
+  (demand (equal (mapcar (lambda (entry) (getf entry :path)) before) (backup-files files-root))
+          "Physical backup file set differs from the complete Git selection.")
+  (ordered-file-map (lambda (entry)
+                      (demand (equal (list :bytes (getf entry :bytes) :sha256 (getf entry :sha256))
+                                     (fingerprint (merge-pathnames (getf entry :path) files-root)))
+                              "Preserved raw file differs in final audit: ~A." (getf entry :path))) before)
+  t)
+
+(defun prepare-reader (workspace commit)
+  "LOAD only the trusted library after matching its blob to the explicit current HEAD."
+  (demand (equal workspace (truename (uiop:ensure-directory-pathname
+                                     (git-line workspace "rev-parse" "--show-toplevel"))))
+          "Workspace is not the repository top-level.")
+  (demand (string= commit (git-line workspace "rev-parse" "HEAD")) "Workspace HEAD differs from --commit.")
+  (let ((blob (git-line workspace "rev-parse" (concatenate 'string commit ":tools/evidence-storage.lisp"))))
+    (demand (string= blob (git-line workspace "hash-object" "--" "tools/evidence-storage.lisp"))
+            "Trusted reader differs from explicit HEAD.")
+    (load (merge-pathnames "tools/evidence-storage.lisp" workspace))
+    blob))
+
+(defun preserve (options)
+  "Preserve the whole ignored/untracked file set; archive and tracked state remain external."
+  (let* ((workspace (getf options :workspace)) (commit (getf options :commit))
+         (reader-blob (prepare-reader workspace commit))
+         (working-tree (git-line workspace "status" "--porcelain"))
+         (paths (selected-files workspace)) (before (source-snapshot workspace paths))
+         (root (fresh-backup workspace (getf options :destination)))
+         (files-root (merge-pathnames "files/" root))
+         (copies (make-array (length before) :initial-element nil)) (after nil))
+    (save-new (merge-pathnames "snapshot-before.lisp" root)
+              (list :schema-version 1 :kind :worktree-preservation-source-snapshot
+                    :phase :before :workspace (namestring workspace) :commit commit :files before))
+    (handler-case
+        (progn
+          ;; Create shared parent directories serially; workers copy disjoint leaf files.
+          (dolist (entry before) (ensure-directories-exist (merge-pathnames (getf entry :path) files-root)))
+          (setf copies (ordered-file-map (lambda (entry) (copy-raw workspace files-root entry)) before copies))
+          (demand (equal paths (selected-files workspace)) "Ignored/untracked exact file set changed during copy.")
+          (setf after (source-snapshot workspace paths))
+          (demand (equal before after) "Source raw SHA256/bytes changed during preservation.")
+          (demand (and (string= commit (git-line workspace "rev-parse" "HEAD"))
+                       (string= reader-blob (git-line workspace "hash-object" "--" "tools/evidence-storage.lisp")))
+                  "HEAD or trusted reader changed during preservation.")
+          (demand (string= working-tree (git-line workspace "status" "--porcelain"))
+                  "Tracked/untracked working-tree status changed during preservation.")
+          (verify-copies files-root before)
+          (demand (equal paths (selected-files workspace))
+                  "Ignored/untracked file set changed during final copy audit.")
+          (demand (and (string= working-tree (git-line workspace "status" "--porcelain"))
+                       (string= commit (git-line workspace "rev-parse" "HEAD"))
+                       (string= reader-blob (git-line workspace "hash-object" "--" "tools/evidence-storage.lisp")))
+                  "Working-tree status, HEAD or trusted reader changed during final copy audit.")
+          (save-new (merge-pathnames "snapshot-after.lisp" root)
+                    (list :schema-version 1 :kind :worktree-preservation-source-snapshot
+                          :phase :after :workspace (namestring workspace) :commit commit :files after))
+          (let ((record (list :schema-version 1 :kind :worktree-ignored-preservation :status :ok
+                              :workspace (namestring workspace) :commit commit :destination (namestring root)
+                              :selection '(:git-untracked-exclude-standard :git-ignored-exclude-standard :nul-separated-union)
+                              :files (length before) :bytes (reduce #'+ before :key (lambda (entry) (getf entry :bytes)) :initial-value 0)
+                              :source-file-set-before-after-equal t :source-bytes-and-sha256-before-after-equal t
+                              :source-snapshot-before "snapshot-before.lisp" :source-snapshot-after "snapshot-after.lisp"
+                              :source-snapshot-before-sha256 (getf (fingerprint (merge-pathnames "snapshot-before.lisp" root)) :sha256)
+                              :source-snapshot-after-sha256 (getf (fingerprint (merge-pathnames "snapshot-after.lisp" root)) :sha256)
+                              :head-and-trusted-reader-stable t :working-tree-before-after-equal t :working-tree-status working-tree
+                              :maximum-workers 4 :raw-copies copies
+                              :limits '(:raw-byte-preservation :no-compression :no-artifact-load :no-git-administration
+                                        :tracked-state-preserved-by-managed-archive :per-file-observations :not-an-atomic-filesystem-snapshot))))
+            (save-new (merge-pathnames "preservazione.lisp" root) record)
+            (save-new (merge-pathnames "audit-preservazione.lisp" root)
+                      (list :schema-version 1 :kind :worktree-preservation-audit :status :ok
+                            :files (length before) :exact-source-and-copy-file-sets t
+                            :all-raw-copy-bytes-and-sha256-match t :source-stable-before-after t
+                            :manifest-sha256 (getf (fingerprint (merge-pathnames "preservazione.lisp" root)) :sha256)
+                            :limits '(:local-raw-preservation-only :no-archive-performed)))
+            record))
+      (error (condition)
+        (save-new (merge-pathnames "fallimento-preservazione.lisp" root)
+                  (list :schema-version 1 :kind :worktree-ignored-preservation :status :failed
+                        :diagnostic (princ-to-string condition) :verified-copy-count (count-if #'identity copies)
+                        :limits '(:partial-backup-preserved :source-not-modified :no-archive-performed)))
+        (error condition)))))
+
+(handler-case
+    (let ((record (preserve (parse-options (uiop:command-line-arguments)))))
+      (write (list :status :ok :files (getf record :files) :bytes (getf record :bytes)
+                   :destination (getf record :destination)) :pretty t)
+      (terpri))
+  (error (condition)
+    (write (list :status :failed :diagnostic (princ-to-string condition)) :pretty t)
+    (terpri)
+    (sb-ext:exit :code 1)))

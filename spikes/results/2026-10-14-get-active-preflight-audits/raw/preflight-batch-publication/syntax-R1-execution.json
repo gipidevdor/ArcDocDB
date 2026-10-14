@@ -1,0 +1,40 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--eval",
+    "(require :asdf)",
+    "--eval",
+    "(load \"tools/evidence-storage.lisp\" :verbose nil :print nil)",
+    "--eval",
+    "(load \"spikes/out/preflight-batch-publication/batch-sha.lisp\" :verbose nil :print nil)",
+    "--eval",
+    "(dolist (p (quote (\"spikes/out/preflight-batch-publication/batch-sha.lisp\" \"spikes/out/preflight-batch-publication/audit-batch.lisp\"))) (with-open-file (s p) (let ((*read-eval* nil) (eof (gensym)) (n 0)) (loop for f = (read s nil eof) until (eq f eof) do (incf n)) (format t \"READ-EVAL NIL / EOF PASS: ~A, ~D forms.~%\" p n))))",
+    "--quit"
+  ],
+  "source_sha256_before": {
+    "batch-sha.lisp": "130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da",
+    "audit-batch.lisp": "d17564b38f51cd54e7ae86241c82c0eaa81a41bc9a29ecc70a6f937d59d59173"
+  },
+  "started_at_unix": 1791999475.519895,
+  "status": "ok",
+  "scope": "READ only; sole programLOAD trustedreader+ownedbatchlibrary; no auditmain/copy/product/test/evidence LOAD",
+  "exit_code": 0,
+  "finished_at_unix": 1791999476.0675101,
+  "source_sha256_after": {
+    "batch-sha.lisp": "130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da",
+    "audit-batch.lisp": "d17564b38f51cd54e7ae86241c82c0eaa81a41bc9a29ecc70a6f937d59d59173"
+  },
+  "source_stable": true,
+  "syntax-R1.stdout": {
+    "bytes": 184,
+    "sha256": "e712c4259da31b05912cf981aafd3281472bbb5c7c3ab80292c837a2da8dec40"
+  },
+  "syntax-R1.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

@@ -1,0 +1,1 @@
+:OK: sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script tools/get-active-init-mutation.lisp --self-test spikes/out/preflight-mutation-selftest-R1/ --suite preflight; record: /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/4000985299-command-51849-0/report.lisp

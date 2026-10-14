@@ -1,0 +1,120 @@
+--- audit-R3.lisp
++++ audit-batch.lisp
+@@ -2,11 +2,17 @@
+ (require :asdf)
+ (require :sb-posix)
+ (load "tools/evidence-storage.lisp")
++(let ((library (merge-pathnames "batch-sha.lisp" *load-truename*)))
++  (unless (equal "130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da"
++                 (arcdocdb.evidence:file-sha256 library)) (error "Batch library SHA mismatch."))
++  (load library :verbose nil :print nil))
+ (defpackage #:active.archive.audit (:use #:cl))
+ (in-package #:active.archive.audit)
+ (declaim (optimize (safety 3) (debug 3)))
+ (defconstant +expanded-limit+ 134217728)
+ (defvar *archive*)
++(defvar *fingerprint-cache* nil)
++(defparameter *batch-library* (merge-pathnames "batch-sha.lisp" *load-truename*))
+ (defparameter *auditor-source* *load-truename*)
+ (defparameter *audit-directory* (make-pathname :name nil :type nil :defaults *load-truename*))
+ (defun require-check (predicate control &rest arguments)
+@@ -15,8 +21,9 @@
+ (defun read-data (path)
+   (arcdocdb.evidence:read-evidence path :max-expanded-bytes +expanded-limit+))
+ (defun fingerprint (path)
+-  (list :bytes (arcdocdb.evidence:file-bytes path)
+-        :sha256 (arcdocdb.evidence:file-sha256 path)))
++  (let ((cached (and *fingerprint-cache* (gethash (namestring (truename path)) *fingerprint-cache*))))
++    (if cached (list :bytes (getf cached :bytes) :sha256 (getf cached :sha256))
++        (list :bytes (arcdocdb.evidence:file-bytes path) :sha256 (arcdocdb.evidence:file-sha256 path)))))
+ (defun leaf-p (value)
+   (and (stringp value) (plusp (length value))
+        (not (member value '("." "..") :test #'equal))
+@@ -170,7 +177,7 @@
+          (results (make-array size)) (failures (make-array size :initial-element nil))
+          (threads nil) (launch-failure nil) (join-failures nil)
+          (defaults *default-pathname-defaults*) (package *package*)
+-         (stdout *standard-output*) (stderr *error-output*) (archive *archive*) (audit-directory *audit-directory*))
++         (stdout *standard-output*) (stderr *error-output*) (archive *archive*) (audit-directory *audit-directory*) (cache *fingerprint-cache*))
+     (unwind-protect
+          (handler-case
+              (dotimes (worker workers)
+@@ -179,7 +186,7 @@
+                         (lambda ()
+                           (let ((*default-pathname-defaults* defaults) (*package* package)
+                                 (*standard-output* stdout) (*error-output* stderr)
+-                                (*archive* archive) (*audit-directory* audit-directory))
++                                (*archive* archive) (*audit-directory* audit-directory) (*fingerprint-cache* cache))
+                             (loop for index from start below size by workers do
+                               (handler-case (setf (aref results index) (funcall function (aref input index)))
+                                 (serious-condition (condition) (setf (aref failures index) condition))))))
+@@ -222,6 +229,16 @@
+       (append (list :path leaf :raw-fingerprint stored)
+               (when compressed (list :descriptor raw :payload payload :payload-fingerprint payload-bytes))))))
+ 
++(defun entry-paths (entries)
++  (loop for entry in entries append
++    (progn
++      (require-check (and (relative-p (getf entry :path)) (stringp (getf entry :source))) "Invalid entry cache path.")
++      (cons (merge-pathnames (getf entry :path) *archive*)
++            (when (probe-file (getf entry :source)) (list (pathname (getf entry :source))))))))
++(defun entry-table (rows critical)
++  (let ((table (preflight.batch.sha:table rows)))
++    (dolist (path critical) (remhash (namestring (truename path)) table)) table))
++
+ (defun audit (manifest-path archive-path contract-path output)
+   (let* ((*archive* (truename (uiop:ensure-directory-pathname archive-path)))
+          (manifest (read-data manifest-path)) (contract (read-data contract-path))
+@@ -235,7 +252,10 @@
+          (entries (getf index :files)) (paths (mapcar (lambda (entry) (getf entry :path)) entries))
+          (initial-head (head)) (entry-results nil) (group-results nil) (process-results nil)
+          (native-results nil) (report-records nil) (initial-inventory (relative-files *archive*))
+-         (metadata-before (metadata-storage)))
++         (metadata-before (metadata-storage))
++         (critical (list manifest-path contract-path index-path catalog-path *auditor-source* *batch-library* "tools/evidence-storage.lisp"))
++         (batch-library-before (fingerprint *batch-library*))
++         (snapshot-before (preflight.batch.sha:snapshot (entry-paths entries))))
+     (require-check (and (eql 1 (getf manifest :schema-version))
+                         (eql 1 (getf contract :schema-version))
+                         (eq :archive-audit-contract (getf contract :kind))
+@@ -255,7 +275,8 @@
+                           (equal '("archive-index.lisp")
+                                  (mapcar (lambda (entry) (getf entry :artifact)) (getf catalog :entries))))
+                      "Catalogo invalido."))
+-    (setf entry-results (reverse (parallel-map-four #'validate-entry entries)))
++    (let ((*fingerprint-cache* (entry-table snapshot-before critical)))
++      (setf entry-results (reverse (parallel-map-four #'validate-entry entries))))
+     ;; Anche report figli/fixture non qualificati: vengono soltanto letti come
+     ;; dati e censiti. Status e kind non sono promossi a risultati di prodotto.
+     (dolist (entry entries)
+@@ -311,7 +332,10 @@
+                          "Contratto report nativo diverso: ~A." relative)
+           (push (list :path relative :kind kind :status (getf data :status)
+                       :diagnostic (getf data :diagnostic) :read-as-data t) native-results))))
+-    ;; Secondo pass byte/SHA: stessi path non bastano a escludere una mutazione.
++    ;; Fresh full entry inventory: no first-pass hash may stand in for this pass.
++    (let* ((snapshot-after (preflight.batch.sha:snapshot (entry-paths entries)))
++           (*fingerprint-cache* (entry-table snapshot-after critical)))
++      (require-check (equal snapshot-before snapshot-after) "Entry source/copy byte inventory changed.")
+     (parallel-map-four (lambda (entry)
+       (require-check (equal (expected-fingerprint entry)
+                             (fingerprint (merge-pathnames (getf entry :path) *archive*)))
+@@ -323,7 +347,8 @@
+                        "Disponibilità sorgente mutata: ~A." source)
+         (when (getf before :source-available)
+           (require-check (equal (expected-fingerprint entry (eq :gzip (getf entry :codec)))
+-                                (fingerprint source)) "Sorgente mutata durante audit: ~A." source)))) entries)
++                                (fingerprint source)) "Sorgente mutata durante audit: ~A." source)))) entries))
++    (require-check (equal batch-library-before (fingerprint *batch-library*)) "Batch library changed during audit.")
+     (require-check (equal metadata-before (metadata-storage)) "Metadata descriptor/payload mutated during audit.")
+     (require-check (and (equal initial-head (head)) (equal index-before (fingerprint index-path))
+                         (equal catalog-before (fingerprint catalog-path))
+@@ -338,6 +363,8 @@
+                         :archive-index-sha256 (getf index-before :sha256) :metadata-storage metadata-before
+                         :catalog-sha256 (getf catalog-before :sha256)
+                         :auditor-sha256 (getf auditor-before :sha256)
++                        :batch-library-sha256 (getf batch-library-before :sha256)
++                        :entry-byte-inventory snapshot-before :entry-inventory-passes 2 :entry-inventory-stable t
+                         :contract-sha256 (arcdocdb.evidence:file-sha256 contract-path)
+                         :file-count (length entries) :stored-bytes (reduce #'+ entries :key (lambda (entry) (getf entry :bytes)))
+                         :source-available-count (count-if (lambda (entry) (getf entry :source-available)) entry-results)

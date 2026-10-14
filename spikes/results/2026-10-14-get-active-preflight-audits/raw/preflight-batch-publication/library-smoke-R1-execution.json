@@ -1,0 +1,36 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--eval",
+    "(require :asdf)",
+    "--eval",
+    "(load \"tools/evidence-storage.lisp\" :verbose nil :print nil)",
+    "--eval",
+    "(with-open-file (s \"spikes/out/preflight-batch-publication/batch-sha.lisp\") (let ((*read-eval* nil) (eof (gensym)) (n 0)) (loop for f = (read s nil eof) until (eq f eof) do (incf n)) (format *error-output* \"READ-only PASS ~D forms~%\" n)))",
+    "--eval",
+    "(load \"spikes/out/preflight-batch-publication/batch-sha.lisp\" :verbose nil :print nil)",
+    "--eval",
+    "(let* ((paths '(\"spikes/out/preflight-mutation-selftest-R1/SHA empty.txt\" \"spikes/out/preflight-mutation-selftest-R1/SHA abc.txt\" \"spikes/out/preflight-mutation-selftest-R1/SHA binary.txt\"))\n        (before (preflight.batch.sha:snapshot paths)) (table (preflight.batch.sha:table before))\n        (after (preflight.batch.sha:snapshot paths)))\n  (assert (and (= 3 (length before)) (= 3 (hash-table-count table)) (equal before after)))\n  (write (list :schema-version 1 :kind :batch-sha-smoke :status :ok\n               :frozen-source-commit preflight.batch.sha::*anchor* :hash-code-git-blob preflight.batch.sha::*source-blob*\n               :batch-argv (append (list \"python3\" \"-c\" preflight.batch.sha::*sha-code*) (mapcar (lambda (r) (getf r :path)) before))\n               :before before :after after :native-oracle-samples-per-snapshot 3 :table-entries (hash-table-count table)\n               :no-product-tests t) :pretty t) (terpri))",
+    "--quit"
+  ],
+  "library_sha256_before": "130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da",
+  "started_at_unix": 1791999345.395061,
+  "status": "ok",
+  "scope": "only batch library and trusted reader; frozen3selftestfiles; no product/test/main/copy/evidence LOAD",
+  "exit_code": 0,
+  "finished_at_unix": 1791999346.6515179,
+  "library_sha256_after": "130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da",
+  "source_stable": true,
+  "library-smoke-R1.lisp": {
+    "bytes": 2714,
+    "sha256": "bb61b6f0ba771bdcd8fc0053182a75a4aae1fdc208231900c0a99da8c1bcb9ea"
+  },
+  "library-smoke-R1.stderr": {
+    "bytes": 24,
+    "sha256": "3bdd80bf7efde1264532e941df3a5e25d278896a74e3637e36bae150c4f16d4c"
+  }
+}

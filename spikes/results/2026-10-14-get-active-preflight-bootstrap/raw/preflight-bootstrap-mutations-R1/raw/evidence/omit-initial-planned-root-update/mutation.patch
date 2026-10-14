@@ -1,0 +1,5 @@
+--- a/src/series/publication.lisp
++++ b/src/series/publication.lisp
+@@ -36,1 +36,1 @@
+-           (setf (controllore-serie-planned-root controller) root)
++           (progn nil)

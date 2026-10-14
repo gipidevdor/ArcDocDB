@@ -1,0 +1,5 @@
+La preflight OPEN deve rifiutare un lotto incompatibile o un budget insufficiente prima di modificare byte, token e frontiere CSN. Aggiunge 14 test nominali (ACTIVE 42) con witness sullo stato completo e quattro mutanti mirati; il profilo bootstrap preesistente rimane verificato separatamente.
+
+Il codice del prodotto non cambia. Il driver supporta `--suite preflight`, conserva le copie isolate e distingue i rilevamenti previsti dagli errori di infrastruttura. Metodo preregistrato, risultati e prove complete includono tutti i FASL come dati e gli audit indipendenti delle copie.
+
+Verifica locale sul freeze `8c0866711c50d047f87b9c484ce56d42a87ba19c`: `make check` con 1.278 test in 30 suite e 2 smoke; ACTIVE 42 e CLOSED 42; quattro mutanti rilevati su quattro per entrambi i profili; copertura preflight 174/193 espressioni e 25/26 rami. Questi numeri restano attribuiti al freeze locale; la CI verifica il proprio commit di integrazione.

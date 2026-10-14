@@ -1,0 +1,2 @@
+preflight smoke
+UTF-8: caffè

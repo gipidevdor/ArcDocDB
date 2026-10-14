@@ -1,0 +1,54 @@
+Unhandled SB-INT:SIMPLE-READER-PACKAGE-ERROR in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
+                                                          {80052B0003}>:
+  Package SB-POSIX does not exist.
+
+    Line: 242, Column: 48, File-Position: 15542
+
+    Stream: #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}>
+
+Backtrace for: #<SB-THREAD:THREAD tid=259 "main thread" RUNNING {80052B0003}>
+0: (SB-DEBUG::DEBUGGER-DISABLED-HOOK #<SB-INT:SIMPLE-READER-PACKAGE-ERROR "Package ~A does not exist." {80072B6793}> #<unused argument> :QUIT T)
+1: (SB-DEBUG::RUN-HOOK *INVOKE-DEBUGGER-HOOK* #<SB-INT:SIMPLE-READER-PACKAGE-ERROR "Package ~A does not exist." {80072B6793}>)
+2: (INVOKE-DEBUGGER #<SB-INT:SIMPLE-READER-PACKAGE-ERROR "Package ~A does not exist." {80072B6793}>)
+3: (ERROR #<SB-INT:SIMPLE-READER-PACKAGE-ERROR "Package ~A does not exist." {80072B6793}>)
+4: (SB-KERNEL:WITH-SIMPLE-CONDITION-RESTARTS ERROR NIL SB-INT:SIMPLE-READER-PACKAGE-ERROR :PACKAGE "SB-POSIX" :STREAM #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> :FORMAT-CONTROL "Package ~A does not exist." :FORMAT-ARGUMENTS ("SB-POSIX"))
+5: (SB-IMPL::READER-FIND-PACKAGE "SB-POSIX" #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> T)
+6: (SB-IMPL::READ-TOKEN #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\s)
+7: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\s)
+8: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+9: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+10: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+11: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+12: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+13: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+14: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+15: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+16: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+17: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+18: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+19: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+20: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+21: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+22: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+23: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+24: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+25: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+26: (SB-IMPL::READ-LIST #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #<unused argument>)
+27: (SB-IMPL::READ-OBJECT? #<READTABLE {80031D47E3}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> #\()
+28: (SB-IMPL::%READ-PRESERVING-WHITESPACE #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> NIL (NIL) T)
+29: (SB-IMPL::%READ-PRESERVING-WHITESPACE #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> NIL (NIL) NIL)
+30: (READ #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/preflight-mutation-audit/audit.lisp" {80072B0FB3}> NIL :EOF NIL)
+31: ("top level form") [toplevel]
+32: ((FLET "G" :IN SB-C::%COMPILE-IN-LEXENV))
+33: (SB-C::%COMPILE-IN-LEXENV (LET ((S (OPEN "spikes/out/preflight-mutation-audit/audit.lisp" :AUTO-CLOSE . #1=(NIL))) (#2=#:G136 T)) (UNWIND-PROTECT (MULTIPLE-VALUE-PROG1 (PROGN (LET # #)) (SETQ #2# . #1#)) (WHEN S (CLOSE S :ABORT #2#)))) #<NULL-LEXENV> NIL NIL NIL NIL T T)
+34: (SB-C:EVAL-WITH-COMPILE-IN-LEXENV (LET ((S (OPEN "spikes/out/preflight-mutation-audit/audit.lisp" :AUTO-CLOSE . #1=(NIL))) (#2=#:G136 T)) (UNWIND-PROTECT (MULTIPLE-VALUE-PROG1 (PROGN (LET # #)) (SETQ #2# . #1#)) (WHEN S (CLOSE S :ABORT #2#)))) #<NULL-LEXENV> NIL NIL NIL)
+35: (SB-IMPL::%SIMPLE-EVAL (LET ((S (OPEN "spikes/out/preflight-mutation-audit/audit.lisp" :AUTO-CLOSE . #1=(NIL))) (#2=#:G136 T)) (UNWIND-PROTECT (MULTIPLE-VALUE-PROG1 (PROGN (LET # #)) (SETQ #2# . #1#)) (WHEN S (CLOSE S :ABORT #2#)))) #<NULL-LEXENV>)
+36: (SB-INT:SIMPLE-EVAL-IN-LEXENV (WITH-OPEN-FILE (S "spikes/out/preflight-mutation-audit/audit.lisp") (LET ((*READ-EVAL* NIL)) (LOOP FOR N FROM 1 FOR X = (READ S NIL :EOF) UNTIL (EQ X :EOF) FINALLY ...))) #<NULL-LEXENV>)
+37: (EVAL (WITH-OPEN-FILE (S "spikes/out/preflight-mutation-audit/audit.lisp") (LET ((*READ-EVAL* NIL)) (LOOP FOR N FROM 1 FOR X = (READ S NIL :EOF) UNTIL (EQ X :EOF) FINALLY ...))))
+38: (SB-IMPL::PROCESS-EVAL/LOAD-OPTIONS ((:EVAL . "(require :asdf)") (:EVAL . #<(SIMPLE-BASE-STRING 204) (with-open-file (s "spikes/out/preflight-mutation-audit/audit.lisp") (let ((*read-eval* nil)) (loop for n from 1 for x = (read s nil :eof) until (eq x :eof) finally (format t "~D forms read.~%" (1- n)... {80052A022F}>) (:QUIT)))
+39: (SB-IMPL::TOPLEVEL-INIT)
+40: ((FLET SB-UNIX::BODY :IN SB-IMPL::START-LISP))
+41: ((FLET "WITHOUT-INTERRUPTS-BODY-3" :IN SB-IMPL::START-LISP))
+42: (SB-IMPL::%START-LISP)
+
+unhandled condition in --disable-debugger mode, quitting

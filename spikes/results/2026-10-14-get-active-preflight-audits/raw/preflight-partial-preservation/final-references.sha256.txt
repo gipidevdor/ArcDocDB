@@ -1,0 +1,4 @@
+e6b2cdecbe1bf1602109161b07c7ce51c6716323238dea10e8f9cb7a96a4facf  spikes/out/preflight-batch-publication/collector-batch.lisp
+d17564b38f51cd54e7ae86241c82c0eaa81a41bc9a29ecc70a6f937d59d59173  spikes/out/preflight-batch-publication/audit-batch.lisp
+6358b9e37914b2e6da45d9889a5109f23344c880b58161350456941dc9472fe1  spikes/out/preflight-partial-preservation/preserve-partials.lisp
+4625ebaababfb7b7bd75f5abec7ee7970f317e63d83f0dc72f749930ee7a7040  spikes/out/preflight-partial-preservation/manifest-R2.lisp

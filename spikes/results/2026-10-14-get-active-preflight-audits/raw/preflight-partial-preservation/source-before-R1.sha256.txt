@@ -1,0 +1,2 @@
+b85e5a79f3dd8e16f0afe217312d8304be89040ab8cb3906a6acbd996ac5aa7e  spikes/out/preflight-partial-preservation/preserve-partials.lisp
+130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da  spikes/out/preflight-partial-preservation/batch-sha-source.lisp.txt

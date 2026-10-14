@@ -102,7 +102,7 @@
                              (:file "decisions-query")
                              (:file "manifest-package") (:file "manifest-types")
                              (:file "manifest-decode") (:file "manifest-fold")
-                             (:file "manifest-build") (:file "manifest-query")
+                             (:file "manifest-build") (:file "manifest-query") (:file "manifest-transition")
                              (:file "inventory-types") (:file "inventory-build")
                              (:file "inventory-query")))
                (:module "get-resolver" :serial t
@@ -120,7 +120,8 @@
                (:module "control" :serial t
                 :components ((:file "package") (:file "types") (:file "dependency")
                              (:file "build") (:file "preflight") (:file "transfer") (:file "prepare")
-                             (:file "publication") (:file "publication-read"))))
+                             (:file "publication") (:file "publication-read")
+                             (:file "recovery-types") (:file "recovery-read") (:file "recovery-publication"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

@@ -12,6 +12,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   CLAIMED dopo un solo scambio FIFO. Nessun gate del pool, ritiro o nuova
   presa impliciti; busy e guasti conservano i confini execution esistenti.
 
+- Lettura readonly del control log autorevole, con header verificato e replay
+  fino all'EOF attestato. Risultato senza buffer, legato alla vista canonica;
+  pubblicazione subordinata alla conservazione di CLOSED, esiti e REMOVED,
+  chiusura del vecchio ACTIVE e apertura di un ID nuovo. Nessuna modifica
+  al formato o agli ADR; recovery completo e qualifica C1 restano aperti.
+
 - Composizione di array CBOR da elementi già codificati: verifica completa
   prima della scrittura, testata minima e budget comprensivi della radice.
   Sorgente e indice condivisibili in lettura, destinazione e scratch privati

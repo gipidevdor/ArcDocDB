@@ -20,11 +20,11 @@ non sono presenti AND/OR. Le condizioni sono riportate nell'ordine del corto cir
 
 | File/riga e funzione | Operatore e condizioni | Testimoni previsti |
 |---|---|---|
-| input:16, `check-tabella-mappa-cbor` | AND: COUNT INDEX; COUNT<=FLOOR(LENGTH(ITEM-ENDS)/2); COUNT<=FLOOR(SPAN/2) | `table-type-count-domains-and-half-length-before-multiplication`: NIL/negativo/float/simbolo/bignum; tabella troppo corta; SPAN troppo corto con tabella sufficiente; valori validi |
+| input:16, `check-tabella-mappa-cbor` | AND: COUNT INDEX; COUNT<=FLOOR(LENGTH(ITEM-ENDS)/2); COUNT<=FLOOR(SPAN/2) | `table-type-and-count-domains`: NIL/negativo/float/simbolo/bignum; tabella troppo corta; SPAN troppo corto con tabella sufficiente; valori validi |
 | input:19, `check-tabella-mappa-cbor` | AND: COUNT zero; SPAN positivo | COUNT0/SPAN>0 rifiutato; vuoto valido; COUNT positivo valido |
 | input:32–34, `check-spazio-mappa-cbor` | OR: BUFFER EQ SPACE.KINDS; SOURCE EQ SPACE.KINDS; ITEM-ENDS EQ SPACE.REMAINING | `workspace-type-and-all-scratch-aliases-even-empty`: tre ruoli separati, vuoto/non vuoto e caso senza alias |
 | input:73–74, `check-overlap-mappa-cbor` | AND: BUFFER EQ SOURCE; SOURCE-START<SOURCE-END; START<SOURCE-END; SOURCE-START<NEXT | `overlap-entire-footprint-touching-and-empty`: array distinti, span vuoto, disgiunto/toccante a sinistra/destra, overlap di header/payload; END ampio con footprint disgiunto |
-| input:94, `check-fini-mappa-cbor` | AND: PREVIOUS<STOP; STOP<=SPAN | `strict-active-ends-last-and-unread-even-or-odd-tail`: zero/duplicate/discendenti, fine oltre SPAN, crescita valida e code inattive pari/dispari |
+| input:94, `check-fini-mappa-cbor` | AND: PREVIOUS<STOP; STOP<=SPAN | `strict-entry-order-bounds-last-and-unread-tail`: zero/duplicate/discendenti, fine oltre SPAN, crescita valida e code inattive pari/dispari |
 
 I nomi abbreviati indicano `test-REQ-CBR-006-map-*` in
 `tests/codec/cbor-map-write.lisp`, blob

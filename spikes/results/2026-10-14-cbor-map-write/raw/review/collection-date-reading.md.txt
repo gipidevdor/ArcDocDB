@@ -1,0 +1,11 @@
+# Lettura C4 della data di raccolta mappe
+
+Esito statico: PASS. Nessuna esecuzione.
+
+La diff completa tra il collector array congelato e la nuova copia map mostra un solo cambiamento: il literal `:date "2026-10-13"` del catalogo diventa `:date "2026-10-14"`. Il nuovo blob è `372dccdbb5f57c3ebc89f75f7e72d7dd4db4458f`.
+
+La diff completa del preflight mostra lo stesso unico cambiamento nel dato `catalogue-datum`. Il nuovo blob è `993e0c0c318618317d950368ec8e964f52b2da61`.
+
+Schema, metadata-policy, pianificazione, selezione, copie, verifiche, numero worker, budget plain/gzip/indice e printer rimangono invariati. Questa lettura non verifica nuovamente il comportamento dei helper né chiude una nuova raccolta. Append e reader-collection non sono stati modificati o eseguiti da questo agente.
+
+La modifica della data riguarda la nuova raccolta; date e prove originali già congelate restano intatte. I riferimenti di provenienza al collector originale nei commenti non sono stati riscritti. Le sole nuove scritture C4 sono ignored.

@@ -1,0 +1,44 @@
+# Osservazioni preparatorie della lettura DATA integrata
+
+Nuovo controllo C4 del 2026-10-14; nessun prodotto o driver eseguito.
+I tentativi di stampa esplorativa non sono campagne registrate.
+
+Nel tool chunk934286 il filtro delle righe non nominali usava end2=10
+per il prefisso di11 caratteri `ok    TEST-`: ha stampato anche i
+nominali, producendo output troncato. Non ha fallito la lettura del
+report; il reader finale distingue nominali, smoke e quattro linter.
+
+Nel tool chunkd26347 la costruzione del nome SPK usava FORMAT con una
+sequenza letterale `~2,\\u00270D`; l'escape attraversando shell e lettore
+Lisp ha prodotto `~2,u00270D`. Osservata la diagnostica:
+`error in FORMAT: Unknown directive (character: LATIN_CAPITAL_LETTER_U)`.
+L'esecuzione ad hoc è terminata exit1, prima di leggere i dati figli.
+La stampa successiva (chunk1d033c) usa prefisso0 esplicito; il reader
+salvato impiega una normale stringa FORMAT nel file Lisp.
+
+Queste sono osservazioni parziali dei tool, senza ricostruire transcript
+completi o attribuire il guasto al prodotto, al make check o agli spike.
+Nota preservata sotto un nuovo nome; tutte le precedenti letture restano immutate.
+
+Prima esecuzione del reader salvato: `integrated-runtime-reading.preliminary.lisp`
+blob338a5f66ac55c5a0d1dc46c834f14fb8ec474230, output completo
+`integrated-runtime-reading.output.txt`, exit1 (session24133).
+L'assertion ereditata dal controllo iniziale cercava Unhandled ovunque:
+ha respinto il testo citato dei due negativi EVIDENCE-PUBLICATION-TESTS,
+non un errore del comando registrato. Il script diagnostico e il suo
+output separato preservano contesti DATA, senza alterare l'input.
+Il reader finale distingue stderr reale/inizio riga dal testo delle
+due fixture, lette e verificate esplicitamente come dati.
+
+Una stampa ad hoc intermedia (chunk6e28c6) aveva una parentesi finale
+in più ed è terminata con unmatched close parenthesis prima della DATA
+lettura. Osservazione parziale, non transcript ricostruito. Il successivo
+`integrated-runtime-reading.diagnostics.lisp` ha completato exit0.
+
+Il secondo output salvato `.output-2.txt` e il reader `.preliminary-2.lisp`
+preservano un SETF con numero dispari di argomenti nel mio helper di
+pinning raw/stdout-stderr. Errore di compilazione del solo reader C4,
+manifestato al suo richiamo dopo i controlli principali; exit1.
+La stessa diagnostica era presente anche nella prima preparazione e
+mascherata dal precedente arresto sul token citato. Corretto nel
+reader finale, senza eseguire o cambiare sorgenti del prodotto.

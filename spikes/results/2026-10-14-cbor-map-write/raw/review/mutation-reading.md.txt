@@ -1,0 +1,66 @@
+# Lettura DATA indipendente delle mutazioni MT5
+
+Il 2026-10-14 ho letto i record completati, i nove log e le copie conservate, senza caricare, compilare, chiamare o rieseguire prodotto, corpus o driver. Sono distinto dall'autore del prodotto e del driver; ho svolto la precedente prima lettura C1, l'inventario delle decisioni e la lettura C4 statica del mutatore. Il nuovo reader ricontrolla i dati; non costituisce un nuovo esperimento di mutazione né una seconda implementazione indipendente della semantica del classificatore.
+
+Esito DATA: otto rilevamenti rigorosi confermati, baseline completa, nove copie/cache separate, esattamente otto modifiche previste. Nessun guasto preparatorio del reader: unico tentativo exit0, STDERR vuoto,20328 controlli meccanici.
+
+## Fonti congelate e record
+
+- Wrapper `spikes/out/4000986535-command-85304-0/report.lisp`:271126 byte, blob `148ea6c62ba57f5310a506667bd0015226c851a2`, SHA256 `e34228e309d3c9a84783463aa7dc52d434d6f14c275e683e4cc8efacd3ea6df7`.
+- Report interno `spikes/out/cbor-map-write-20261014/mutations/report.lisp`:89577 byte, blob `7326bbb635881237f40d151eea7e7a319dec7beb`, SHA256 `ef351ac47b9db191ad526695c30f7b46a716207290aeafd7093811b2852c588c`.
+- Catalogo materializzato letto soltanto come dati: blob `1a6dca65f9136e082eb9d621305da4fad324534e`; driver osservato fisicamente, senza caricarlo: `3cf825435c4a5b0bd30b235a236b05d610a2302f`.
+- Nuovo `review/mutation-reading.lisp`: blob `bc619e51080ef63f7b7f6c190cf1a3aa47e5ebe2`, congelato prima dell'esecuzione. Output `review/mutation-reading.output.txt`: `c011c70a5f59bf316748e5366de0f60d8e42ac54`; `review/mutation-reading.error.txt` vuoto, blob `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
+
+Qui review/ è sotto `spikes/out/cbor-map-write-20261014/`. Il reader carica solo il tool trusted `tools/evidence-storage.lisp`, blob `fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`; wrapper, report e catalogo vengono letti come plist, READ-EVAL NIL/readtable standard/EOF. I campi plist verificati hanno chiavi keyword uniche. Il report interno conservato coincide integralmente con quello incorporato nello STDOUT del wrapper, riletto come una sola forma con GENSYM EOF.
+
+Wrapper schema1 COMMAND-VERIFICATION, OK/EXIT0/STABLE,860 impronte uniche before/after identiche, STDERR0, HEAD `15c458eff76896f3fc83ad7756ae922f64eb22d7`, working tree registrato vuoto. Comando registrato esattamente mutation `--run spikes/out/cbor-map-write-20261014/mutations/`. Wall236,20391s dell'intero comando, inclusi self-test, copia, compilazione e test; nessuna inferenza di prestazioni del codec. Report interno schema1 CBOR-MAP-WRITE-MUTATIONS, OK, WORKER-ERRORS0, SOURCE-CONSISTENCY STABLE,350 impronte MD5 before/after identiche:345 file copiabili più cinque driver ignored. I350 MD5 vengono confrontati come metadati registrati, non ricalcolati in un nuovo sweep.
+
+I cinque blob sono verificati negli inventari outer before/after e nei file correnti prima/dopo il reader: input `d7a593badeb6e6b71f28dc4e80c641b07189d0b8`, write `22e814ea68e606c5bc58033c2a31e945303a9d65`, support `a389e51f2416437d608c4f7745b9680eca27bc60`, seriali `6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8`, paralleli `6a65b58ce236b92b33772e1861dbd8c1257bee13`.
+
+## Baseline e origine rigorosa dei rilevamenti
+
+La baseline riporta OK/EXIT0, SIGNAL NIL e DIAGNOSTIC NIL. Il log contiene1284 righe nominali `ok    TEST-` più due smoke, marker smoke prima del singolo marker finale `build e test: nessun avviso, tutti i controlli superati`. Nessun Unhandled o diagnostica di compilazione. Baseline log91589 byte, SHA256 `fb632ff2ed0ae0fa38c143bde1e5f59b29bc8516740cc5995d0c73dc83576c32`.
+
+Whitelist ricavata nuovamente dai nomi fisici dei19 DEFTEST seriali e dell'unico parallelo dei file frozen:20 nomi distinti, coincidenti integralmente con catalogo e report. La precedente lettura statica ha verificato il macro che li definisce come funzioni senza argomenti. Il reader non valuta il corpus.
+
+Ogni mutante ha DETECTED T, RESULT DETECTED, EXIT1, SIGNAL NIL e DIAGNOSTIC NIL. In ogni log sono verificati assenza di warning/style-warning, COMPILE-FILE-ERROR/WARNED o compilation-aborted, smoke esatto prima della prima riga Unhandled, nessun marker finale di build e almeno un successivo frame numerato reale con funzione nominale esatta come primo elemento e zero argomenti. I nomi dentro stringhe multilinea o argomenti di altre funzioni non valgono come origine. Gli offset completi e i frame esatti sono conservati nell'output.
+
+| ID / mutante | Origine nominale reale | Frame | Riga Unhandled nel log |
+| --- | --- | ---: | ---: |
+| 0 physical-capacity | EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS | 7 | 296 |
+| 1 wrong-major | EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS | 6 | 296 |
+| 2 wrong-count | EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS | 6 | 296 |
+| 3 scan-omitted | EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS | 6 | 296 |
+| 4 overlap-without-header | OVERLAP-ENTIRE-FOOTPRINT-TOUCHING-AND-EMPTY | 6 | 307 |
+| 5 item-ends-unchecked | STRICT-ACTIVE-ENDS-LAST-AND-UNREAD-EVEN-OR-ODD-TAIL | 6 | 305 |
+| 6 root-node-excluded | EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS | 8 | 296 |
+| 7 extra-return-value | EMPTY-SCALAR-PAIR-AND-TWO-LITERAL-PAIRS | 6 | 296 |
+
+Il prefisso integrale delle funzioni è `ARCDOCDB.CBOR.MAP.WRITE.TESTS::TEST-REQ-CBR-006-MAP-`. Il caso0 fallisce l'asserzione sul tipo del rifiuto osservato, il caso7 l'asserzione dell'arità `(= 1 (LENGTH ACTUAL))`; il caso6 ha Unhandled INVARIANT-VIOLATION. Questi sono dati dei log, non errori di compilazione conteggiati come rilevamenti. Il risultato8/8 riguarda soltanto gli otto mutanti preregistrati.
+
+## Copie e otto patch esatte
+
+Inventario fisico verificato per ciascuna delle nove copie: ASD, build e tutti i file Lisp sotto src/tests,345 file per copia. Tutti3105 file copiati confrontati binariamente con gli originali correnti congelati. Baseline zero differenze; ciascuna copia0–7 ha un unico file diverso, pari esattamente alla sostituzione dell'unica occorrenza BEFORE con AFTER del catalogo pinned. I345 originali sono stati riletti alla fine e risultano byte-identici allo snapshot iniziale del confronto; i cinque blob principali e le fonti selezionate del reader sono immutati. Nessun nuovo sweep SHA di tutti i file delle copie.
+
+| ID | Unico file modificato | Differenza esatta |
+| --- | --- | --- |
+| 0 | cbor-map-input.lisp | END sostituito con LENGTH BUFFER nella chiamata dimensioni |
+| 1 | cbor-map-write.lisp | major5 sostituito con major4 |
+| 2 | cbor-map-write.lisp | binding PAIRS da COUNT a ITEM-COUNT |
+| 3 | cbor-map-write.lisp | scansione sostituita con statistiche1/1, binding consumati |
+| 4 | cbor-map-input.lisp | controllo overlap spostato oltre la testata |
+| 5 | cbor-map-input.lisp | controllo entry sostituito con NIL, argomenti consumati |
+| 6 | cbor-map-write.lisp | NODES iniziale da1 a0 |
+| 7 | cbor-map-write.lisp | intera FTYPE+DEFUN: due valori INDEX,NULL e `(values result nil)` |
+
+La copia7 contiene dichiarazione e corpo coerenti, senza mantenere la vecchia FTYPE pubblica a un solo valore; il confronto esatto copre l'intero frammento. Le altre sorgenti delle copie, inclusi i tre file corpus e gli altri codec, non presentano modifiche. Questo confronto di testo/byte non compila né carica i mutanti.
+
+Ogni directory ha cache fasl locale sotto la propria radice e runner separato che dichiara quella radice, la relativa cache e IGNORE-INHERITED-CONFIGURATION. Verificati nove path cache distinti e truenames dei sorgenti entro la copia. Il reader non carica né confronta il contenuto dei FASL e non prova isolamento contro hardlink o interventi ostili sul filesystem; la separazione osservata riguarda directory, fonti e configurazione dei runner conservati.
+
+Le osservazioni fisiche complete nell'output riportano byte e SHA256 a due punti della lettura, identici, per wrapper, report, catalogo, driver, trusted-reader, nove log, nove runner e otto file mutati. Sono31 fonti selezionate; gli altri file copiati sono confrontati per byte, non sottoposti a SHA massivo. Il confronto integrale riguarda le nove copie locali osservate: non implica che un archivio pubblico successivo contenga tutti i mirror completi; la selezione pubblicata deve essere dichiarata separatamente.
+
+## Limiti e freeze
+
+Il report dichiara self-test del classificatore46 fixture mutanti e7 baseline, reader2 positivi/5 negativi e worker-report conservato sotto `drivers/selftests/4000986537-worker-85328/report.lisp`. Sono metadati letti in questa attività; nessuno di questi self-test è stato rieseguito e il relativo sottoalbero worker non è oggetto di questa lettura.
+
+Coerenza dei dati osservati e rilevamento attribuibile a un test nominale reale, senza autenticazione della loro provenienza e senza prova di causalità esclusiva della patch. Non sono ricostruiti il processo passato, la corrispondenza dei FASL compilati né cambiamenti transitori poi ripristinati. Le MD5 interne restano metadati di inventario; il confronto corrente completo delle copie è un'osservazione separata. Nessuna inferenza di MC/DC, copertura dei rami interni, allocazione zero, robustezza generale o qualificazione del motore dal risultato8/8. Nessun dato originario, driver, prodotto, corpus, nota precedente o documento tracked modificato. Nuovo reader/output/nota ignored congelati; non occorre altra lettura osservativa.

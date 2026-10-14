@@ -1,0 +1,76 @@
+# Lettura statica C4 del preparatore del manifest
+
+2026-10-14. Soltanto lettura del testo e confronto delle versioni:
+nessun LOAD/EVAL/run di builder, collector, preflight, prodotto o suite.
+File nuovo `spikes/out/cbor-map-write-20261014/collection/build-manifest.lisp`,
+201 righe/12551 byte, blob `b031de0908c0873a0bc68adf0cf2cb1b993b335d`.
+Origine array `spikes/out/cbor-array-write-20261013/collection/build-manifest.lisp`,
+blob `e523e7f5e79c5c864bdc4639ab5a20bc5bd493e6`.
+
+Il diff mostra soltanto package/base array→map, data20261013→14 nei
+prefissi, tre liste iniziali sostituite da NIL, prefisso selftest worker
+e kind del risultato di preparazione. Il restante algoritmo è identico.
+Collector map `372dccdbb5f57c3ebc89f75f7e72d7dd4db4458f`: diff unico,
+DATE2026-10-14 nel catalogo rispetto all'originale `68a9949dff6d270a6caf7d0e466bb391e946998a`.
+Il preflight è affidato a lettura distinta; non esaminato né eseguito qui.
+
+Le tre liste iniziali NIL (12–14) impongono al coordinatore di selezionare
+gli input esplicitamente: `--write NEWMANIFEST`, ripetuti `--process LABEL REPORT`,
+`--tree LABEL DIR all|lisp-and-log`, `--file RELATIVE SOURCE`.
+Il parser conserva ordine e tutti gli argomenti delle tre categorie (32–47),
+rifiuta opzioni sconosciute/incomplete e modalità non nominali (26–30).
+Non legge forme dalla CLI e non sceglie directory latest.
+
+Etichette relative controllate contro componenti vuote, dot/dotdot,
+caratteri di controllo, backslash/colon/glob e lunghezza1..4096 (16–24).
+Label di processo senza slash (79); processi duplicati (136), target
+duplicati anche fra alberi/file dopo rinomina (127–134) e output già
+esistente (125) rifiutati. Origini risolte con TRUENAME; file mancanti
+non vengono ignorati. Nessuna autenticazione dei byte avviene nel builder.
+
+`read-process` (76–88) usa il trusted reader con massimo64MiB espansi:
+schema1/COMMAND-VERIFICATION, stato OK o FAILED, fine/exit interi e stdout
+stringa. Mantiene anche FAILED e source-consistency, senza promuovere
+risultati o gate. Il builder non impone un processo minimo; il collector
+richiede almeno un processo nel manifest e rifiuta il piano vuoto.
+
+Gli stdout dei processi selezionati vengono esaminati per i percorsi
+realmente citati di snapshot/reader selftest e worker map (90–110).
+Il cursore avanza a ogni match; directory deduplicate e ordinate.
+Ogni directory citata deve stare in almeno un albero richiesto dal
+coordinatore, altrimenti preparazione rifiutata (170–174): non viene
+sostituita con una directory più recente. Le fixture negative presenti
+negli alberi selezionati sono conservate come file, senza valutarne forme.
+La completezza dei processi e negativi realmente eseguiti richiede ancora
+il confronto DATA del manifest finale con i report congelati.
+
+Alberi in modalità ALL oppure soltanto LISP/LOG/GZ, selezione ordinata
+identica al collector (49–60). Directory `fasl` escluse. Albero base live,
+review e collection rifiutati, salvo collection/self-test (153–158).
+Se un albero selezionato contiene Markdown o file compilati, viene
+espanso in file espliciti: `.md` riceve suffisso `.txt` nel label, salvo
+label già `.txt`; tipicamente `name.md` diventa `name.md.txt` (70–74).
+Il SOURCE resta intatto: nessuna copia preliminare o modifica dei byte.
+File `.fasl` selezionati sono elencati fra compiled-files-excluded e
+scartati; un `--file` esplicito `.fasl` è rifiutato (130–134,162–165).
+In modalità filtrata il suffisso `.fasl` non entra già nella selezione.
+
+Precisazione di scope ereditata: le directory dei `--process` vengono
+conservate come originali in `processes/`, selezione ALL (143–144).
+La rinomina Markdown e il filtro dei file `.fasl` fuori da directory
+`fasl/` riguardano file/alberi raw, non quel percorso dei processi.
+La nota non attesta un filtro universale di tutti i file compilati in
+qualsiasi directory; questa limitazione non è introdotta dal porting.
+
+Il manifest registra processi, alberi, file ordinati, inventario dei
+selftest citati e compiled-files-excluded (176–187). Scrive soltanto il
+nuovo manifest e il risultato di preparazione, non un indice d'archivio.
+Copie, tre SHA per copia e chiusura indipendente restano al collector.
+Inventario di directory non prelimitato qui, stabilità degli input
+responsabilità del coordinatore; limiti rigorosi e autenticazione dei
+byte devono essere osservati nelle fasi successive. Nessuna qualifica
+C1, autenticità, pubblicazione atomica o attestazione runtime dedotta.
+
+Esito statico: porting conforme alle modifiche dichiarate; controlli e
+conservazione degli input espliciti invariati, con lo scope precisato.
+Nota congelata, nessun prodotto/corpus/helper modificato.

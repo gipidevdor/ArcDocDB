@@ -1,0 +1,116 @@
+# Lettura C4 del check-core integrato
+
+2026-10-14. DATA soltanto, con il trusted `tools/evidence-storage.lisp`;
+READ-EVAL NIL, readtable standard ed EOF sui record e sui raw dei figli.
+Nessun prodotto, suite o driver caricato, valutato, compilato o chiamato
+dal reader; nessuna campagna ripetuta. L'autore è quello del corpus blind:
+indipendenza della lettura dei dati, non nuova paternità dei test.
+
+Fonte `spikes/out/4000986074-command-71976-0/report.lisp`, descriptor317 byte,
+SHA256 `7456d4826398615c278eabcdee760ef508e33a5604b4cd72accd8356c9198240`.
+Gzip144099 byte/SHA `69c311e9cdf6527c4a029ca3c9ba152e537ffd16e0105e61cd123953dc00b660`;
+espansi1143722/SHA `361d94bedc8178ff9db91dd8b157ac8fbce8c76708704f1c863d687a61e2b993`.
+Il trusted reader autentica la coerenza locale dei byte compressi/espansi.
+Il record schema1/COMMAND-VERIFICATION è OK/exit0/STABLE,
+HEAD `15c458eff76896f3fc83ad7756ae922f64eb22d7`, working-tree vuoto,
+wall260.414101s, comando make/check-core.860 impronte fonte uniche
+prima e dopo uguali; i cinque pin di prodotto/corpus coincidono con
+d7a593ba/22e814ea e a389e51f/6ad0e9b5/6a65b58c, già congelati.
+
+1290 righe OK uniche:1284 nominali, due smoke e quattro self-test del
+linter bad/good/keyword-barrier/qualified-reader. Le20 REQ-CBR-006
+coincidono esattamente con il corpus congelato, incluse le parallele.
+Lint207 file/0 violazioni; trace120 requisiti/65 invarianti/13 scenari FI/
+52 ADR/0 errori; links440 file/2914 controlli/0 rotti.
+Stdout256098 e stderr707531 caratteri:1723 righe stderr con `note:`.
+Nessun marker WARNING/STYLE-WARNING/COMPILE-FILE-ERROR; nessun Unhandled
+reale a inizio riga di stdout né in stderr. Le note di ottimizzazione
+non sono warning; lo stderr non è vuoto.
+
+Fuzz stampato: seed4D415035,1024 casi,512 validi e otto classi da64 rifiuti.
+LCG ricontrollato freddo, finale0D123435: asserito nel test passato,
+non stampato come campo runtime separato. Due ondate da4096 composizioni,
+due worker riusati, sink54677504/77537280 ciascuna; overlap3160/3067 tick
+a1000000 tick/s (3.160/3.067ms). Inizi/fini individuali non stampati.
+9499 chiamate è somma aritmetica283+1024+8192,8788 successi/711 rifiuti
+previsti, non contatore API strumentato. Nessuna deduzione di scaling.
+
+Il gate evidence registrato riporta OK,98 cataloghi,3136 riferimenti e
+25236 file conservati. Sono conteggi del comando, non nuovo SHA sweep
+o nuova validazione di ogni archivio da questo reader. Il limite
+dichiarato è struttura/presenza/dimensione e integrità compressa,
+con NO-RESULT-REINTERPRETATION. La lettura non promuove C1 né qualifica
+il motore. Non esiste ancora un
+archivio pubblicato delle mappe in questa lettura.
+
+EVIDENCE-PUBLICATION-TESTS contiene due negativi STATUS OK, exit osservato1:
+`fuori-catalogo.lisp`1048577 byte e `fuori-catalogo.gz`8388609 byte.
+Le stringhe stderr conservano Unhandled SIMPLE-ERROR per il rifiuto
+intenzionale. Il reader le interpreta come DATA della fixture;
+non attribuisce quelle stringhe a un fallimento del check-core.
+
+## Self-test snapshot e reader
+
+Riferimenti dal stdout principale:
+`spikes/out/4000986108-snapshot-self-test-72655-0/report.lisp` e
+`spikes/out/4000986108-reader-self-test-72670-0/report.lisp`.
+Metadata embedded SNAPSHOT-MUTATIONS/READER-MUTATIONS schema1, OK,
+worker-errors0, fonti21/34 prima= dopo/STABLE, SELF-TEST OK, target
+unici10/8; BASELINE/MUTANTS NIL. Sono self-test, non campagne mutazioni.
+
+I report diretti SNAPSHOT/READER-PROCESS-SELF-TEST sono PASSED con due
+worker-errors attesi ciascuno. Tutti e quattro i raw stdout coincidono
+con EXECUTION.REPORT, singola forma/EOF; raw stderr vuoti.
+SIGNAL: exit137/signal9, child FAILED/TESTS/RUNTIME, failed-test fixture.
+COMPLETION-EXIT: exit7/signalNIL, child OK/COMPLETE/passed-tests fixture.
+Entrambi classificati WORKER-ERROR, mai DETECTED. I cataloghi10/8 non
+vengono contati come mutanti eseguiti. Limiti dichiarati escludono
+segnali/timeout/compilazioni come kill e qualifica C1/MC/DC/motore.
+
+## Dieci processi spike
+
+Aggregato `spikes/out/4000986301-check-78781-0/report.lisp`: schema1,
+COMPLETE, mode --check, dieci RUNS e dieci RUN-ARTIFACTS.
+Ogni SPK-nn.lisp è DATA uguale alla corrispondente voce RUNS;
+stdout raw singola forma/EOF uguale a RESULT, inclusi array tipizzati
+confrontati strutturalmente con EQUALP, senza affermazioni d'identità.
+Tutti exit0, stderr vuoto, before=after/STABLE e intervalli interni
+al record padre. SPK-07 è PASS, gli altri nove OK.
+
+| Figlio | Fonti dichiarate | Wall secondi |
+|---|---:|---:|
+| SPK-01 | 5 | 1.002303 |
+| SPK-02 | 3 | 0.482918 |
+| SPK-03 | 3 | 0.480485 |
+| SPK-04 | 5 | 0.865122 |
+| SPK-05 | 5 | 0.802022 |
+| SPK-06 | 7 | 1.130628 |
+| SPK-07 | 17 | 8.498580 |
+| SPK-08 | 6 | 1.929124 |
+| SPK-09 | 3 | 0.659064 |
+| SPK-10 | 8 | 2.509250 |
+
+Questi sono esiti dei prototipi registrati; non qualificano motore,
+hardware memory model, durabilità globale, prestazioni o profilo C1.
+Non sono stati rieseguiti source/model/runner degli spike.
+
+## Conservazione e freeze
+
+Reader finale `.lisp` blob `6ffa568dceadced2f6cb980fabf79e5695215190`,
+SHA256 `f1e5f3712bdbbce6fbbabfb83048dbf7c1dec1ddbaaf981ca86986628e574d4e`,
+acquisito prima dell'esecuzione e uguale dopo. Output finale
+`.output-3.txt` blob `fcb48a5801ae24b0ff78a0383aa49834f65450d3`, exit0,
+nessun warning/error del reader. Main descriptor/payload/reader stabili;
+23 file metadata/raw/descriptor selezionati hanno SHA locale stabile,
+senza uno sweep dei sorgenti o degli archivi completi.
+
+Preparazioni preservate sotto `review/integrated-runtime-reading.*`:
+due reader `.preliminary.lisp`/`.preliminary-2.lisp`, due output precedenti,
+script/output `.diagnostics.*` e `.preparation-errors.md`. Quest'ultima
+distingue un filtro esplorativo errato, FORMAT/parentesi ad hoc, il
+controllo globale Unhandled troppo largo e SETF errato nel mio helper.
+Sono guasti/osservazioni del reader C4, non del prodotto o dei comandi
+registrati; transcript completi disponibili solo per gli output salvati.
+Reader, nota, output e preparazioni congelati, nessun source/index/HEAD edit.
+Le letture di coverage, benchmark e mutazioni delle mappe restano distinte;
+nessuna attestazione MC/DC, autenticità o gate C1 globale.

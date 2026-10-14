@@ -1,0 +1,17 @@
+Frozen source F3: 91c818f3616da7d0807285aaf5af44f519cb4247.
+Exact qualified full-only semantic auditor copy: 8c857dc58646dbd85acb2d1231a66f20834db6eac837415a3cd6cf206f476df7.
+Filename audit-F2.lisp is preserved for byte-identical provenance; --commit supplies F3 explicitly.
+No source derivative, criterion change, optional scoped run, or earlier result promotion.
+Git-only counter exact copy: 1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e.
+Batch utility exact copy: 130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da.
+Historical optional runner exact copy: c1f97d6967f3e1a4c79aae065549a6f5bf76b4c18b6b7a3a123fa9ebf82ebeb7.
+Runner guard is provenance only; no scoped report or cache is supplied.
+Collector exact copy: e6b2cdecbe1bf1602109161b07c7ce51c6716323238dea10e8f9cb7a96a4facf.
+Generic archive auditor exact copy: d17564b38f51cd54e7ae86241c82c0eaa81a41bc9a29ecc70a6f937d59d59173.
+Collection and generic audit execute the original qualified lifetime-publication copies outside all input groups.
+Report/FASL files are DATA, read with READ-EVAL NIL plus EOF, never LOADed.
+Expected count 1528/33+2 must be independently derived from exact Git F3 by the authenticated counter.
+Full-only audit runs only after root declares the fresh full execution and all native/cache/fixture writers closed.
+Semantic audit stdout/stderr are under separate worker-interleaving-audit-runtime.
+Generic audit output is under separate worker-interleaving-copy-audit-runtime outside the archive and input groups.
+Old PR13 run38638591424 PASS on native61b4ecdd03e40d14f3b8249d2e83c08ac757b5b9 and main38640790953 FAILED on05a1c1f1688968c7c64b483a14528945a05b1335 remain separate historical data.

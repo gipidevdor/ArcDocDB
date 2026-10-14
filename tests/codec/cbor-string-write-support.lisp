@@ -102,22 +102,26 @@ Con EQ, il resto dell'array comune e lo span sorgente restano invariati."
     (values source start end)))
 
 (defun cws-worker (index major buffer start end source source-start source-end expected next
-                   token rounds ready go done starts ends sinks)
-  "Due ondate sullo stesso worker, ogni chiamata controlla NEXT e tutti i byte osservati."
+                   token rounds ready go done starts firsts ends sinks)
+  "Due ondate: rendezvous dopo il primo item verificato, risorse private e input immutabili.
+Il WALL della fixture include rendezvous e controlli; non misura il tempo puro dell'encoder."
   (handler-case
       (progn
         (dotimes (wave 2)
-          (sb-thread:signal-semaphore (svref ready wave)) (cbor-wait (svref go wave))
           (setf (aref starts index wave) (get-internal-real-time))
           (let ((sink 0))
             (dotimes (iteration rounds)
-              (declare (ignorable iteration))
               (let ((actual (multiple-value-list
                              (arcdocdb.cbor:scrivi-stringa-cbor-minima
                               buffer start end major source source-start source-end))))
                 (is (= 1 (length actual))) (is (typep (first actual) 'fixnum))
                 (is (= next (first actual))) (is (equalp expected buffer))
-                (incf sink (+ (first actual) (aref buffer start) (aref buffer (1- next))))))
+                (incf sink (+ (first actual) (aref buffer start) (aref buffer (1- next)))))
+              ;; Rendezvous dopo il primo item e i suoi controlli, senza chiamate prodotto aggiuntive.
+              (when (zerop iteration)
+                (setf (aref firsts index wave) (get-internal-real-time))
+                (sb-thread:signal-semaphore (svref ready wave))
+                (cbor-wait (svref go wave))))
             (is (= sink (* rounds token))) (setf (aref sinks index wave) sink))
           (setf (aref ends index wave) (get-internal-real-time))
           (sb-thread:signal-semaphore (svref done wave)))

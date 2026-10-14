@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Rendezvous delle fixture concorrenti residue CBOR, UTF-8 e due Serie:
+  checkpoint dopo il primo lavoro effettivo, mantenendo conteggi, sink e
+  oracoli. Diagnostica prima delle asserzioni temporali; intervalli WALL
+  della fixture, comprensivi delle attese e dei controlli.
+
 - Verifica integrata del lifetime delle fonti GET: lettori su FD CLOSED reali,
   pubblicazione ACTIVE con superset e riduzione controllata, ritiro EBR e
   chiusura dopo quiescenza. Include errore tipizzato e uscita non locale;

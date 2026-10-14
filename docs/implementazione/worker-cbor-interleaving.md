@@ -1,4 +1,4 @@
-# Rendezvous dei worker nei test CBOR
+# Rendezvous dei worker nelle fixture concorrenti
 
 Metodo preregistrato prima della verifica della correzione. Il tentativo
 locale completo R1 della campagna [lifetime GET](get-lifetime.md) è fallito
@@ -9,7 +9,7 @@ originali e gli esiti falliti restano distinti e conservati.
 Il rilascio simultaneo di due crediti del semaforo non impone allo
 scheduler di avviare entrambi i corpi prima che uno termini. Un intervallo
 non sovrapposto può quindi fallire il test dopo risultati corretti.
-La correzione riguarda soltanto le fixture float/tag, senza cambiare
+La prima correzione riguarda soltanto le fixture float/tag, senza cambiare
 encoder, formati, conteggi di elementi, oracoli o API di prodotto.
 
 ## Ordine controllato
@@ -31,8 +31,9 @@ la diagnosi. Gli oracoli sui valori e sull'immutabilità restano invariati.
 
 La metrica è l'intervallo wall della **fixture** e comprende il rendezvous
 e i controlli. Dimostra l'interleaving imposto dei compiti; non misura
-latency del solo encoder, simultaneità CPU o scaling. I due helper hanno
-un solo chiamante ciascuno nei test e non sono usati dai benchmark.
+latency del solo encoder, simultaneità CPU o scaling. I due helper della
+prima correzione hanno un solo chiamante ciascuno nei test e non sono
+usati dai benchmark.
 
 ## Verifica
 
@@ -46,3 +47,48 @@ mai caricati come codice. Nessuna promozione di qualifica C1 o prestazionale.
 
 Requisiti: REQ-CBR-004, REQ-CBR-007, REQ-CON-005, REQ-AFF-004,
 REQ-AFF-008 e REQ-VAL-001.
+
+## Estensione preregistrata dopo il controllo su main
+
+La PR 13 è stata integrata nel commit
+`05a1c1f1688968c7c64b483a14528945a05b1335`, con la stessa tree del
+checkout CI riuscito. Il successivo run main `38640790953` è riuscito
+su Ubuntu e documentazione ma è fallito su macOS nell'overlap della
+seconda onda ARRAY write. La prima onda stampa un overlap positivo;
+il log della seconda precede ancora la correzione e non contiene gli
+intervalli falliti. I due intervalli FLOAT corretti risultano positivi.
+Il fallimento è conservato e non viene attribuito a un carico esterno.
+
+Due letture indipendenti individuano lo stesso gate naturale in undici
+fixture residue: ARRAY, MAP, SIMPLE e STRING write; header write/read;
+header minimo; scansione minima/strutturale; UTF-8; calcolo della fixture
+di due Serie. Questa estensione riguarda quei test, senza cambiare
+prodotto, requisiti, nomi registrati o le fixture FLOAT/TAG già corrette.
+
+Il checkpoint segue una prima operazione reale con i controlli e il sink
+previsti, oppure il primo giro completo del piano. Header write completa
+i sette header del piano e verifica immagine e cursore prima della gate.
+Il test due Serie conserva separatamente il progresso di B mentre A
+mantiene guardia e gettone: il rendezvous del calcolo segue il rilascio
+di entrambe le lease e la prima CRC confrontata con il risultato freddo.
+Nessuna gate trattiene una risorsa necessaria all'altro worker.
+
+I conteggi restano invariati: 8.192 composizioni ARRAY/MAP ciascuno;
+32.768 item SIMPLE/STRING ciascuno; 229.376 header write; 2.097.152 header
+read; 524.288 header minimi; 48 scansioni minime e 48 strutturali;
+128 chiamate UTF-8 per 83.886.080 byte; 64 CRC per ciascuna delle due
+Serie. Nessuna chiamata aggiuntiva dell'operazione misurata. Gli oracoli
+finali, gli input readonly, gli scratch privati e il cleanup limitato
+restano attivi. Le onde riusate conservano semafori distinti.
+
+Si mantengono overlap strettamente positivo, durata positiva, ordine dei
+checkpoint e diagnostica scaricata prima delle asserzioni temporali.
+Anche le etichette storiche CPU diventano WALL della fixture: includono
+attese e controlli, senza una misura del tempo puro dell'operazione.
+
+Tre autori lavorano su file esclusivi e si scambiano la revisione delle
+modifiche. Si congela un nuovo commit prima di una sola verifica completa
+con cache ASDF privata nuova. Conteggi e nomi sono derivati dal Git di
+quel commit e dei checkout CI reali; il totale attuale è 1.528 test in
+33 suite più due smoke. I tentativi originali, le configurazioni, i
+registri e le cache vengono conservati prima della pulizia.

@@ -73,16 +73,15 @@
   "Snapshot indipendente anche degli array attesi annidati nel piano."
   (mapcar (lambda (item) (append (subseq item 0 5) (list (copy-seq (sixth item))))) plan))
 
-(defun csw-worker (index buffer before plan rounds ready go done starts ends sinks)
-  "Due ondate, destinazione privata ripristinata prima di ogni item e piano immutabile."
+(defun csw-worker (index buffer before plan rounds ready go done starts firsts ends sinks)
+  "Due ondate: rendezvous dopo il primo item verificato, risorse private e input immutabili.
+Il WALL della fixture include rendezvous e controlli; non misura il tempo puro dell'encoder."
   (handler-case
       (progn
         (dotimes (wave 2)
-          (sb-thread:signal-semaphore (svref ready wave)) (cbor-wait (svref go wave))
           (setf (aref starts index wave) (get-internal-real-time))
           (let ((sink 0) (cursor plan))
             (dotimes (iteration rounds)
-              (declare (ignorable iteration))
               (destructuring-bind (value start end next token expected) (first cursor)
                 (declare (ignore token))
                 (replace buffer before)
@@ -92,7 +91,12 @@
                   (is (= 1 (length actual))) (is (typep (first actual) 'fixnum))
                   (is (= next (first actual))) (is (equalp expected buffer))
                   (incf sink (+ (first actual) (aref buffer start) (aref buffer (1- next))))))
-              (setf cursor (or (rest cursor) plan)))
+              (setf cursor (or (rest cursor) plan))
+              ;; Rendezvous dopo il primo item e i suoi controlli, senza chiamate prodotto aggiuntive.
+              (when (zerop iteration)
+                (setf (aref firsts index wave) (get-internal-real-time))
+                (sb-thread:signal-semaphore (svref ready wave))
+                (cbor-wait (svref go wave))))
             (is (= sink (* (floor rounds (length plan))
                            (reduce #'+ plan :key #'fifth))))
             (setf (aref sinks index wave) sink))

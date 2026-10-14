@@ -1,0 +1,11 @@
+Root explicitly authorized new-run transport and native audit after push P3.
+Actual automatic run 38638591424, attempt1, pull_request, workflow373799111.
+Published head P3 f0bd92d919736ab8896aef70d40cdc553ef9d925.
+No old-run rerun or additional old download; no new CI run manually triggered.
+The two trusted helper copies are unchanged, authenticated SHA256:
+audit.lisp 2dad7e5ed13c84aeb52e62cb75c078bed39902241e6f4ea6853dae30cf120884
+count-tests.lisp 1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e
+Git permission refinement: fetch only exact actual native A object if needed, using --no-tags.
+Such fetch may write object/FETCH_HEAD; never mutate branch refs, checkout, HEAD or main.
+No merge authorized to this agent. Native A must come from real artifact evidence before fetch.
+Official complete JSON/ZIP collection begins only after all three jobs have concluded.

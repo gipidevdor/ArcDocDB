@@ -15,7 +15,7 @@
                 #:+removed-id-bytes+ #:+count-bytes+ #:+metadata-max-bytes+
                 #:valida-valore-edit)
   (:import-from #:arcdocdb.recovery.scan #:scansiona-log)
-  (:export #:ricostruisci-manifest #:segmento-attivo #:prossimo-id-segmento
+  (:export #:ricostruisci-manifest #:verifica-transizione-recovery #:segmento-attivo #:prossimo-id-segmento
            #:numero-segmenti-chiusi #:numero-segmenti-rimossi
            #:trova-segmento #:trova-esito-chiusura
            #:file-segmento #:pianifica-riconciliazione #:stato-riconciliazione

@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Avvio esplicito dell'obbligo pool già acquisito: selezione del writer
+  corrente e un solo begin del bridge, con restituzione del link e dei tre
+  risultati originali. Writer-busy conserva CLAIMED; Serie-busy mantiene
+  token e chiusura esplicita. Nessun nuovo gate, retry o cleanup implicito.
+
 - Casi dedicati ai rifiuti del preflight GET ACTIVE prima del CSN: identità,
   stato OPEN/SEALED, ordine, capacità e guasti degli header, con witness
   indipendenti di byte, token, radici, frontiere e assenza di I/O.

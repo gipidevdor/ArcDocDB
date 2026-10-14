@@ -142,7 +142,8 @@ Le append seriali conservano preparazione, preflight, raccolta, lettura
 DATA e copie verificate dell'osservazione/closure originali. L'inventario
 finale contiene 20 processi registrati: 19 OK/exit 0 e un tentativo
 preparatorio FAILED/exit 1; tutti hanno fonti STABLE. I 411 file
-indicizzati, 413 con indice e catalogo, sommano 8444662 byte.
+indicizzati sommano 8444662 byte; i file complessivi sono 413 includendo
+indice e catalogo.
 L'indice misura 147480 byte; i limiti restano 1 MiB plain e 8 MiB gzip.
 La chiusura indipendente passa dopo ogni append. La raccolta parallela
 iniziale e le append successive conservano scope distinti.

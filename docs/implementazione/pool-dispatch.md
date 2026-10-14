@@ -22,6 +22,7 @@ La porta può essere inattiva o avere un comando pendente.
 | `prendi-collegamento-pool dispatcher` | Solo IDLE libero: nuova presa attraverso il gate, poi routing del CLAIMED. Restituisce link oppure NIL, status, cursore e azione lifecycle originali. |
 | `collega-obbligo-pool dispatcher` | Solo CLAIMED già assunto: routing del writer corrente, senza leggere request/ack/active e senza conferme del pool. Restituisce il link preallocato. |
 | `ricircola-collegamento-pool dispatcher` | Solo RESCHEDULE: un ricircolo, poi routing del nuovo CLAIMED se full; altrimenti pubblica e termina IDLE. Restituisce link/NIL, status e count della partizione. |
+| `inizia-obbligo-pool dispatcher` | Solo CLAIMED: routing corrente e un begin del bridge; restituisce link, token, fase e ragione originali. |
 
 Il primo ingresso restituisce un link solo con `:claimed`. Con `:empty`,
 `:busy` o `:inactive` restituisce NIL senza routing. Il link è ancora IDLE:
@@ -48,8 +49,9 @@ Dopo una pubblicazione riuscita il contesto torna
 IDLE e può applicare il ritiro con la successiva nuova presa.
 
 Il [ricircolo esplicito](pool-recycle.md) risolve il singolo obbligo senza
-consultare il pool. Il dispatcher non include begin, pop, end, retry, cleanup
-o rollback. I rifiuti writer-busy e Serie-busy mantengono gli stati differenti
+consultare il pool. L'[avvio esplicito](pool-begin.md) usa un ingresso distinto
+sui CLAIMED; gli ingressi di presa e ricircolo non includono begin. Pop, end,
+retry, cleanup e rollback restano al caller. I rifiuti writer-busy e Serie-busy mantengono gli stati differenti
 del bridge: il primo conserva CLAIMED, il secondo produce CLOSING e un
 token da chiudere esplicitamente. Il caller conserva riferimenti e token
 fino alla conclusione; non ignora alcun obbligo su errore.

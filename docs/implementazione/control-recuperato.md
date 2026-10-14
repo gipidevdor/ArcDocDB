@@ -133,9 +133,10 @@ del file o delle tabelle nel bridge di pubblicazione.
 Costi statici, non benchmark. Compilazione, lint, tracciabilità, collegamenti
 e conservazione delle prove vengono registrati nella
 [campagna](../../spikes/results/2026-10-14-control-recovery/README.md).
-La successiva [campagna di modulo](../../spikes/results/2026-10-14-control-transizione/README.md)
-aggiunge prove dedicate, revisione indipendente e copertura dei quattro file
-che realizzano questi ingressi. Il
+La successiva [campagna di modulo](../../spikes/results/2026-10-14-control-transizione/report.md)
+conserva 84 nuovi test passati, revisione indipendente, copertura dei quattro
+file e 216 finestre di misura. I limiti e le forme non raggiunte rimangono
+espliciti; questi esiti non chiudono il gate C1 o la Fase 0. Il
 [metodo delle misure](control-transizione-metodo.md) distingue il confronto
 puro dalla decodifica e dalla pubblicazione su disco. Esiti e limiti vengono
 conservati insieme ai produttori; la qualifica del Recovery Manager completo

@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Composizione di tag CBOR da contenuti già codificati: verifica completa
+  prima della scrittura, testata MT6 minima e budget comprensivi del tag
+  senza aggiungere profondità ai contenitori. Sorgenti condivisibili in
+  lettura con scratch privati; semantica applicativa e qualifica C1 aperte.
+
 - Composizione di mappe CBOR da chiavi e valori già codificati: verifica
   completa prima della scrittura, testata MT5 basata sulle coppie e budget
   comprensivi della radice. Sorgenti condivisibili in lettura con scratch

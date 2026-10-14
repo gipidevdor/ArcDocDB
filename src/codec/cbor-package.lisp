@@ -9,4 +9,4 @@
            #:verifica-struttura-cbor #:verifica-struttura-cbor-minima
            #:scrivi-header-cbor-minimo #:scrivi-stringa-cbor-minima
            #:scrivi-semplice-cbor-minimo #:scrivi-float-cbor-minimo
-           #:scrivi-array-cbor-minimo #:scrivi-mappa-cbor-minima))
+           #:scrivi-array-cbor-minimo #:scrivi-mappa-cbor-minima #:scrivi-tag-cbor-minimo))

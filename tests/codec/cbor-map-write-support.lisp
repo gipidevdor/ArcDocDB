@@ -123,16 +123,15 @@
   (+ next (loop for i below (length buffer) sum (* (1+ i) (aref buffer i)))))
 
 (defun cmw-worker (index buffer start end source ss se table count space expected next token
-                   source-before table-before rounds ready go done starts finishes sinks)
-  "Due ondate sullo stesso worker, scratch/destinazione privati, piani read-only."
+                   source-before table-before rounds ready go done starts firsts finishes sinks)
+  "Due ondate: rendezvous dopo il primo item verificato, risorse private e input immutabili.
+Il WALL della fixture include rendezvous e controlli; non misura il tempo puro dell'encoder."
   (handler-case
       (progn
         (dotimes (wave 2)
-          (sb-thread:signal-semaphore (svref ready wave)) (cs-wait (svref go wave))
           (setf (aref starts index wave) (get-internal-real-time))
           (let ((sink 0))
             (dotimes (iteration rounds)
-              (declare (ignorable iteration))
               (let ((actual (multiple-value-list
                              (arcdocdb.cbor:scrivi-mappa-cbor-minima
                               buffer start end source ss se table count space))))
@@ -142,7 +141,12 @@
                 (is (= se (arcdocdb.cbor::spazio-cbor-cursor space)))
                 (is (= 3 (arcdocdb.cbor::spazio-cbor-nodes space)))
                 (is (= 1 (arcdocdb.cbor::spazio-cbor-peak-depth space)))
-                (incf sink (cmw-token buffer (first actual)))))
+                (incf sink (cmw-token buffer (first actual))))
+              ;; Rendezvous dopo il primo item e i suoi controlli, senza chiamate prodotto aggiuntive.
+              (when (zerop iteration)
+                (setf (aref firsts index wave) (get-internal-real-time))
+                (sb-thread:signal-semaphore (svref ready wave))
+                (cs-wait (svref go wave))))
             (is (= sink (* rounds token))) (setf (aref sinks index wave) sink))
           (setf (aref finishes index wave) (get-internal-real-time))
           (sb-thread:signal-semaphore (svref done wave)))

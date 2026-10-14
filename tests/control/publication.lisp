@@ -1182,7 +1182,10 @@ Il wrapper coordina soltanto questa fixture; nessuno stato, gettone o risultato 
       (sb-thread:signal-semaphore finish)
       (unwind-protect
            (unwind-protect (control-stop-worker loser) (control-stop-worker winner))
-        (setf (fdefinition name) original (cf-hook fixture) nil)))))
+        ;; Nessun ripristino globale o cambio hook mentre un consumer può usarli.
+        (when (every (lambda (thread) (or (null thread) (not (sb-thread:thread-alive-p thread))))
+                     (list loser winner))
+          (setf (fdefinition name) original (cf-hook fixture) nil))))))
 
 ;;; REQ: REQ-REC-001 REQ-AFF-004
 (deftest test-REQ-REC-001-CONTROL-publication-cas-loser-does-not-fault-winner

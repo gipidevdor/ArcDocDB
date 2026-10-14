@@ -1,6 +1,7 @@
 ;;;; C4: bootstrap, baseline + quattro mutanti; solo il parent esegue dopo freeze.
 ;;;; Uso: --self-test|--check spikes/out/<namespace-nuovo>/; nessun TEST-OP ASDF.
-;;;; Copie raw/isolatedtests escluse dal collector; raw/evidence conserva driver/config/patch/log/report.
+;;;; Profilo aggiuntivo: --check DIR --suite preflight; default bootstrap invariato.
+;;;; Bootstrap: copie isolate escluse; preflight: raw completo, copie/FASL/operazioni inclusi.
 ;;; OWNER: parent C4 possiede copie, child e report; ogni child seriale possiede fixture e FI.
 ;;; REQ: REQ-IDX-001 REQ-WAL-006 REQ-CMP-007 REQ-AFF-008 REQ-VAL-001
 (require :asdf)
@@ -37,6 +38,37 @@
          :test '("ARCDOCDB.SERIES.TESTS" "TEST-REQ-WAL-006-SERIES-BOOTSTRAP-CAPACITY-OFFSET-CSN-AND-EFFECT-BOUNDARIES")
          :before "(setf (controllore-serie-planned-root controller) root)" :after "(progn nil)"
          :expected-failure :initial-planned-root-invariant)))
+(defparameter *preflight-mutants*
+  (loop for (name test before after reason) in
+    '(("ignore-batch-file-id" "TEST-REQ-WAL-005-ACTIVE-PREFLIGHT-BATCH-FILE-ID"
+       "(= (arcdocdb.wal::lotto-file-id batch) (segmento-get-low segment))" "t" :foreign-batch-admitted)
+      ("ignore-batch-version" "TEST-REQ-WAL-005-ACTIVE-PREFLIGHT-BATCH-VERSION"
+       "(= (arcdocdb.wal::lotto-version batch) (segmento-get-version segment))" "t" :foreign-version-admitted)
+      ("omit-seal-bytes" "TEST-REQ-AFF-008-ACTIVE-PREFLIGHT-SEAL-BYTE-BOUNDARY"
+       "(size (+ (lunghezza-lotto batch) arcdocdb.wal::+seal-total+))" "(size (lunghezza-lotto batch))" :seal-budget-omitted)
+      ("reject-exact-record-budget" "TEST-REQ-AFF-008-ACTIVE-PREFLIGHT-RECORD-BOUNDARY"
+       "(> (arcdocdb.wal::lotto-count batch) (sorgente-get-attiva-batch-records source))"
+       "(>= (arcdocdb.wal::lotto-count batch) (sorgente-get-attiva-batch-records source))" :exact-budget-refused))
+    collect (append (list :name name :file "src/get-resolver/active-preflight.lisp"
+                          :test (list "ARCDOCDB.GET.ACTIVE.TESTS" test) :before before :after after :expected-failure reason)
+                    (when (string= name "reject-exact-record-budget")
+                      '(:allowed-product-condition ("ARCDOCDB.CONDITIONS" "RESOURCE-EXHAUSTED" :active-batch-record-budget))))))
+(defvar *suite-profile* :bootstrap)
+(defvar *profile-directory* nil)
+(defvar *operation-number* 0)
+(declaim (ftype (function (t &rest t) nil) reject))
+(defun preflight-p () (eq *suite-profile* :preflight))
+(defun profile-kind (bootstrap preflight) (if (preflight-p) preflight bootstrap))
+(defun call-with-profile (profile thunk)
+  (unless (member profile '(:bootstrap :preflight)) (reject "unknown suite profile."))
+  (let ((*suite-profile* profile)
+        (*mutants* (if (eq profile :preflight) *preflight-mutants* *mutants*))
+        (*test-suites* (if (eq profile :preflight)
+                          (loop for file in '("construction" "preflight" "directory" "read")
+                                collect (list "ARCDOCDB.GET.ACTIVE.TESTS" "*GET-ACTIVE-TESTS*"
+                                              (format nil "tests/get-active/~A.lisp" file) nil :alist))
+                          *test-suites*)))
+    (funcall thunk)))
 ;;; OWNER: main, deadline immutabile per invocazione; nessun child condivide questo binding.
 (defvar *deadline* nil)
 (define-condition invalid-campaign (error)
@@ -50,7 +82,61 @@
   (if *deadline* (/ (max 0 (- *deadline* (get-internal-real-time)))
                     (float internal-time-units-per-second 1d0)) +campaign-seconds+))
 (defun require-time () (unless (plusp (remaining)) (reject "campaign timeout.")))
-(defun sha256 (path) (arcdocdb.evidence:file-sha256 path))
+(declaim (ftype (function (t real) boolean) wait-death))
+(declaim (ftype (function (t t) t) write-record))
+(defun profile-program (argv &key directory &allow-other-keys)
+  "Solo preflight: subprocess limitato, log conservati, terminate e reap prima del ritorno."
+  (require-time)
+  (let* ((base (merge-pathnames (format nil "raw/operations/~D/" (incf *operation-number*)) *profile-directory*))
+         (out (merge-pathnames "stdout.log" base)) (err (merge-pathnames "stderr.log" base))
+         (seconds (min +child-seconds+ (max 0 (- (remaining) +cleanup-seconds+)))) (process nil) (code nil)
+         (execution (list :argv argv :deadline-seconds seconds :status :running :timed-out nil :cleanup :pending)))
+    (unless (plusp seconds) (reject "subprocess deadline exhausted."))
+    (ensure-directories-exist out)
+    (write-record execution (merge-pathnames "execution.lisp" base))
+    (unwind-protect
+         (progn
+           (handler-case (setf process (uiop:launch-program argv :directory directory :output out :error-output err))
+             (error (condition)
+               (setf (getf execution :status) :failed (getf execution :cleanup) :not-launched
+                     (getf execution :diagnostic) (princ-to-string condition))
+               (write-record execution (merge-pathnames "execution.lisp" base)) (error condition)))
+           (unless (wait-death process seconds)
+             (setf (getf execution :timed-out) t) (reject "subprocess timeout: ~S." argv)))
+      (sb-sys:without-interrupts
+       (when process
+        (when (uiop:process-alive-p process) (uiop:terminate-process process :urgent t))
+        (unless (wait-death process +cleanup-seconds+)
+          (setf (getf execution :status) :failed (getf execution :cleanup) :unreaped)
+          (write-record execution (merge-pathnames "execution.lisp" base)) (reject "subprocess unreaped: ~S." argv))
+        (multiple-value-bind (exit signal) (uiop:wait-process process)
+          (setf (getf execution :exit-code) exit (getf execution :signal) signal (getf execution :cleanup) :reaped
+                (getf execution :status) (if (and (eql 0 exit) (null signal) (not (getf execution :timed-out))) :ok :failed))
+          (write-record execution (merge-pathnames "execution.lisp" base))
+          (unless (and (integerp exit) (null signal)) (reject "subprocess signal: ~S." argv))
+          (setf code exit)))))
+    (unless (and (<= (arcdocdb.evidence:file-bytes out) +record-limit+)
+                 (<= (arcdocdb.evidence:file-bytes err) +record-limit+)) (reject "subprocess log budget."))
+    (values (uiop:read-file-string out) (uiop:read-file-string err) code)))
+(defun call-with-profile-deadline (thunk)
+  (if (preflight-p) (sb-ext:with-timeout (remaining) (funcall thunk)) (funcall thunk)))
+(defun call-with-profile-cleanup (thunk)
+  (if (preflight-p) (sb-sys:without-interrupts (funcall thunk)) (funcall thunk)))
+(defun canonical-source (root)
+  (let ((values (loop for arguments in '(("rev-parse" "HEAD") ("rev-parse" "HEAD^{tree}")
+                                         ("status" "--porcelain=v1" "--untracked-files=no"))
+                      collect (multiple-value-bind (out err code) (profile-program (cons "git" arguments) :directory root)
+                                (unless (eql 0 code) (reject "Git identity: ~A" err))
+                                (string-right-trim '(#\Newline #\Return) out)))))
+    (unless (and (= 40 (length (first values))) (= 40 (length (second values))) (zerop (length (third values))))
+      (reject "canonical source requires clean tracked Git checkout."))
+    (list :commit (first values) :tree (second values) :working-tree (third values))))
+(declaim (ftype (function (list pathname) list) manifest))
+(declaim (ftype (function (list) (values keyword list &optional)) parse-profile))
+(defun sha256 (path)
+  (if (preflight-p)
+      (getf (first (manifest (list (namestring (truename path))) (truename "./"))) :sha256)
+      (arcdocdb.evidence:file-sha256 path)))
 (defun inventory ()
   (append '("arcdocdb.asd") (sort (mapcar #'enough-namestring (directory "src/**/*.lisp")) #'string<)
           (sort (mapcar #'enough-namestring (directory "tests/**/*.lisp")) #'string<)
@@ -61,7 +147,7 @@ Python hashlib produce SHA256 standard; ordine argv e cardinalità/digest valida
   (unless (<= (length files) 4096) (reject "manifest too large."))
   (when files
     (multiple-value-bind (stdout stderr code)
-        (uiop:run-program
+        (funcall (if (preflight-p) #'profile-program #'uiop:run-program)
          (append
           (list "python3" "-c"
                 "import os,sys,stat,hashlib
@@ -124,21 +210,21 @@ for name in sys.argv[1:]:
   "Solo nomi letterali empty-active/bootstrap; frozen identici per baseline e quattro child."
   (let ((tests nil))
     (dolist (suite *test-suites*)
-      (destructuring-bind (package registry file marker) suite
-        (declare (ignore registry))
+      (destructuring-bind (package registry file marker &optional shape) suite
+        (declare (ignore registry shape))
         (let ((names (loop for line in (uiop:split-string (uiop:read-file-string file) :separator '(#\Newline))
                            when (uiop:string-prefix-p "(deftest " line)
                            collect (string-upcase (first (uiop:split-string (subseq line 9) :separator '(#\Space #\Tab #\( #\))))))))
           (setf names (remove-if-not
                        (lambda (name)
-                         (or (search marker name)
+                         (or (null marker) (search marker name)
                              (string= name "TEST-REQ-WAL-006-SERIES-GET-INITIAL-CONTROLLER-ROOT-AND-NIL-REFUSAL")))
                        names))
           (unless names (reject "bootstrap suite absent: ~A." file))
           (setf tests (append tests (mapcar (lambda (name) (list package name)) names))))))
-    (unless (and (= 25 (length tests))
+    (unless (and (if (preflight-p) tests (= 25 (length tests)))
                  (= (length tests) (length (remove-duplicates tests :test #'equal))))
-      (reject "expected exactly 25 distinct bootstrap tests."))
+      (reject "missing or duplicate profile tests (bootstrap requires 25)."))
     tests))
 (defun condition-is-p (condition package name)
   (let* ((pkg (find-package package)) (symbol (and pkg (find-symbol name pkg))))
@@ -148,6 +234,7 @@ for name in sys.argv[1:]:
     ((or (typep condition 'sb-ext:timeout)
          (condition-is-p condition "ARCDOCDB.SERIES.TESTS" "SERIES-FIXTURE-TIMEOUT")
          (condition-is-p condition "ARCDOCDB.GET.DIRECTORY.TESTS" "DIRECTORY-FIXTURE-ERROR")
+         (and (preflight-p) (condition-is-p condition "ARCDOCDB.GET.ACTIVE.TESTS" "ACTIVE-FIXTURE-ERROR"))
          (condition-is-p condition "ARCDOCDB.CONDITIONS" "IO-FAULT")
          (condition-is-p condition "SB-POSIX" "SYSCALL-ERROR")) :infrastructure)
     ((and (typep condition 'simple-error)
@@ -155,7 +242,7 @@ for name in sys.argv[1:]:
           (uiop:string-prefix-p "Asserzione fallita:" (simple-condition-format-control condition))) :assertion)
     ((condition-is-p condition "ARCDOCDB.CONDITIONS" "ARCDOCDB-ERROR") :product-condition)
     (t :infrastructure)))
-(defun classify (child exit expected verified &key baseline timeout signal target-test)
+(defun classify (child exit expected verified &key baseline timeout signal target-test (suite-tests expected) allowed-product-condition)
   "Kill soltanto in un test preregistrato, dopo build/suite attestate e child reaped."
   (let* ((passed (getf child :passed-tests))
          (completed (and (listp passed) (list-length passed))))
@@ -165,15 +252,20 @@ for name in sys.argv[1:]:
     ((and (eq :failed (getf child :status)) (eq :compile (getf child :phase)) (not (zerop exit))) :compilation-error)
     ((or (eq :infrastructure (getf child :failure-kind))
          (and (eq :complete (getf child :phase)) (not (zerop exit)))) :infrastructure-error)
-    ((not (and verified (eql 1 (getf child :schema-version)) (eq :get-active-init-mutation-child (getf child :kind))
+    ((not (and verified (eql 1 (getf child :schema-version))
+               (eq (profile-kind :get-active-init-mutation-child :get-active-preflight-mutation-child) (getf child :kind))
                (equal expected (getf child :expected-tests)) (eq t (getf child :compiled))
-               (equal expected (getf child :registered-tests))
+               (equal suite-tests (getf child :registered-tests))
                (eq t (getf child :suite-compiled)))) :invalid)
     ((and (= 0 exit) (eq :ok (getf child :status)) (eq :complete (getf child :phase))
           (equal expected (getf child :passed-tests)) (null (getf child :failed-test))
           (null (getf child :failure-kind))) (if baseline :baseline-passed :survived))
     ((and (= 1 exit) (eq :failed (getf child :status)) (eq :tests (getf child :phase))
           (member (getf child :failure-kind) '(:assertion :product-condition))
+          (or (not (preflight-p)) (eq :assertion (getf child :failure-kind))
+              (and allowed-product-condition
+                   (equal allowed-product-condition (list (getf child :condition-package)
+                                                          (getf child :condition-name) (getf child :condition-reason)))))
           (integerp completed)
           (< completed (length expected))
           (equal passed (subseq expected 0 completed))
@@ -184,7 +276,7 @@ for name in sys.argv[1:]:
 (defun self-test (directory)
   "COD-60: solo dati sintetici, nessuna compilazione, prodotto, child o fixture."
   (let* ((tests '("TEST-REQ-VAL-001-SYNTHETIC"))
-         (failed (list :schema-version 1 :kind :get-active-init-mutation-child :status :failed :phase :tests
+         (failed (list :schema-version 1 :kind (profile-kind :get-active-init-mutation-child :get-active-preflight-mutation-child) :status :failed :phase :tests
                        :compiled t :suite-compiled t :expected-tests tests :passed-tests nil
                        :registered-tests tests
                        :failed-test (first tests) :failure-kind :assertion))
@@ -202,7 +294,8 @@ for name in sys.argv[1:]:
       (dolist (kind '(:assertion :product-condition :infrastructure))
         (let ((copy (copy-tree failed)))
           (setf (getf copy :failure-kind) kind)
-          (check copy 1 (if (eq kind :infrastructure) :infrastructure-error :detected))))
+          (check copy 1 (cond ((eq kind :infrastructure) :infrastructure-error)
+                              ((and (preflight-p) (eq kind :product-condition)) :invalid) (t :detected)))))
       (dolist (change '((:compiled nil) (:suite-compiled nil) (:schema-version 999) (:kind :other)
                        (:registered-tests nil) (:expected-tests ("OTHER")) (:failed-test "OTHER") (:passed-tests ("OTHER"))
                        (:passed-tests ("TEST-REQ-VAL-001-SYNTHETIC"))))
@@ -256,11 +349,45 @@ for name in sys.argv[1:]:
         (dotimes (i 256) (write-byte i out)))
       (let ((batch (manifest paths root)))
         (unless (equal batch (loop for file in paths
-                                  collect (list :file file :sha256 (sha256 (merge-pathnames file root)))))
-          (reject "batch digest differs from existing evidence oracle."))))
-    (list :status :ok :classifier-cases (+ checks 5) :anchor-negative-cases 3 :record-roundtrip t
-          :typed-fixture-timeout-detection t :batch-sha256-equivalence-files 3
-          :write-schema-sha-detection t :no-compilation t :no-child t)))
+                                  for known in '("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                                                 "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+                                                 "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880")
+                                  collect (list :file file :sha256 (if (preflight-p) known (sha256 (merge-pathnames file root))))))
+          (reject "batch digest differs from reference oracle."))))
+    (when (preflight-p)
+      (let ((packages nil))
+        (unwind-protect
+             (progn
+               (dolist (spec '(("ARCDOCDB.CONDITIONS" "ARCDOCDB-ERROR") ("ARCDOCDB.GET.ACTIVE.TESTS" "ACTIVE-FIXTURE-ERROR")))
+                 (when (find-package (first spec)) (reject "profile self-test requires unloaded product."))
+                 (let ((package (make-package (first spec) :use nil)))
+                   (push package packages)
+                   (setf (find-class (intern (second spec) package)) (find-class 'synthetic-fixture-timeout))))
+               (unless (eq :infrastructure (semantic-kind (make-condition 'synthetic-fixture-timeout)))
+                 (reject "ACTIVE fixture accepted as product kill.")) (incf checks))
+          (dolist (package packages)
+            (do-symbols (symbol package) (setf (find-class symbol) nil)) (delete-package package))))
+      (let* ((copy (copy-tree failed)) (selected '("SECOND")) (whole '("FIRST" "SECOND"))
+             (allowed '("ARCDOCDB.CONDITIONS" "RESOURCE-EXHAUSTED" :active-batch-record-budget)))
+        (setf (getf copy :expected-tests) selected (getf copy :registered-tests) whole
+              (getf copy :failed-test) "SECOND" (getf copy :failure-kind) :product-condition)
+        (dolist (identity (list allowed '("OTHER" "RESOURCE-EXHAUSTED" :active-batch-record-budget)
+                              '("ARCDOCDB.CONDITIONS" "RESOURCE-EXHAUSTED" :other)
+                              '("ARCDOCDB.CONDITIONS" "IO-FAULT" :active-batch-record-budget)))
+          (setf (getf copy :condition-package) (first identity) (getf copy :condition-name) (second identity)
+                (getf copy :condition-reason) (third identity))
+          (unless (eq (if (equal identity allowed) :detected :invalid)
+                      (classify copy 1 selected t :suite-tests whole :allowed-product-condition allowed :target-test "SECOND"))
+            (reject "profile exact condition/full-registry self-test.")) (incf checks)))
+      (dolist (args '(("--check" "unused" "--suite") ("--check" "unused" "--suite" "unknown")
+                      ("--check" "unused" "--suite" "preflight" "--suite" "preflight")))
+        (let ((caught nil))
+          (handler-case (parse-profile args) (invalid-campaign () (setf caught t)))
+          (unless caught (reject "profile CLI self-test.")) (incf checks))))
+    (append (list :status :ok :classifier-cases (+ checks 5) :anchor-negative-cases 3 :record-roundtrip t
+                  :typed-fixture-timeout-detection t :batch-sha256-equivalence-files 3
+                  :write-schema-sha-detection t :no-compilation t :no-child t)
+            (when (preflight-p) '(:no-child-scope :product :digest-subprocesses t :digest-reference :known-sha256-vectors)))))
 (defun loaded-source-files (root config)
   "Solo componenti Lisp dei due sistemi effettivamente caricati; massimo 4096 nodi/12 livelli."
   (let ((files nil) (nodes 0))
@@ -320,29 +447,45 @@ for name in sys.argv[1:]:
            (registry (and package (find-symbol (second suite) package)))
            (selected (remove-if-not (lambda (test) (string= package-name (first test))) expected)))
       (unless (and registry (boundp registry)) (reject "suite registry absent ~A." package-name))
-      (let ((registered (mapcar #'symbol-name (reverse (symbol-value registry)))))
+      (let ((registered
+              (mapcar (lambda (entry)
+                        (if (eq (fifth suite) :alist)
+                            (progn
+                              (unless (and (consp entry) (symbolp (car entry)) (functionp (cdr entry))
+                                           (fboundp (car entry)) (eq (fdefinition (car entry)) (cdr entry)))
+                                (reject "registry name/function identity mismatch."))
+                              (symbol-name (car entry)))
+                            (symbol-name entry))) (reverse (symbol-value registry)))))
         (unless (equal (mapcar #'second selected)
-                       (remove-if-not (lambda (name) (member name (mapcar #'second selected) :test #'string=)) registered))
+                       (if (preflight-p) registered
+                           (remove-if-not (lambda (name) (member name (mapcar #'second selected) :test #'string=)) registered)))
           (reject "frozen registry mismatch ~A." package-name)))
       (dolist (test selected)
         (let ((symbol (find-symbol (second test) package)))
-          (unless (and symbol (member symbol (symbol-value registry)) (fboundp symbol)) (reject "unregistered test ~S." test))))))
+          (unless (and symbol (if (eq (fifth suite) :alist) (assoc symbol (symbol-value registry))
+                                 (member symbol (symbol-value registry))) (fboundp symbol))
+            (reject "unregistered test ~S." test))))))
   expected)
 (defun child-main (config-path)
   (let* ((config (read-record config-path)) (code 2)
-         (record (list :schema-version 1 :kind :get-active-init-mutation-child :status :running :phase :setup
+         (record (list :schema-version 1 :kind (profile-kind :get-active-init-mutation-child :get-active-preflight-mutation-child) :status :running :phase :setup
                        :compiled nil :suite-compiled nil :compiled-files nil :loaded-source-files nil
                        :expected-tests (getf config :expected-tests)
                        :registered-tests nil :passed-tests nil :failed-test nil :failure-kind nil :source-manifest nil
                        :config-sha256 (sha256 config-path) :source-manifest-before nil)))
     (handler-case
         (progn
+          (unless (equal (getf config :test-suites) *test-suites*) (reject "config profile/catalog mismatch."))
+          (when (preflight-p)
+            (setf (getf record :suite-tests) (getf config :suite-tests)
+                  (getf record :executed-tests) (getf config :expected-tests)))
           (setf (getf record :source-manifest-before) (manifest (getf config :files) (truename "./")))
           (unless (equal (getf config :manifest) (getf record :source-manifest-before))
             (reject "copy drift before compile."))
           (setf (getf record :phase) :compile) (compile-child config record)
           (setf (getf record :phase) :validate-suite)
-          (setf (getf record :registered-tests) (registered-tests (getf config :expected-tests))
+          (setf (getf record :registered-tests) (registered-tests (if (preflight-p) (getf config :suite-tests)
+                                                                   (getf config :expected-tests)))
                 (getf record :phase) :tests)
           (dolist (test (getf config :expected-tests))
             (setf (getf record :failed-test) test)
@@ -350,6 +493,12 @@ for name in sys.argv[1:]:
             (setf (getf record :passed-tests) (append (getf record :passed-tests) (list test))))
           (setf (getf record :failed-test) nil (getf record :phase) :complete (getf record :status) :ok code 0))
       (error (condition)
+        (when (preflight-p)
+          (let ((name (class-name (class-of condition))))
+            (setf (getf record :condition-package) (and (symbolp name) (symbol-package name) (package-name (symbol-package name)))
+                  (getf record :condition-name) (and (symbolp name) (symbol-name name))
+                  (getf record :condition-reason) (when (condition-is-p condition "ARCDOCDB.CONDITIONS" "ARCDOCDB-ERROR")
+                                                   (uiop:symbol-call :arcdocdb.conditions :error-reason condition)))))
         (setf (getf record :status) :failed (getf record :diagnostic) (princ-to-string condition)
               (getf record :condition-type) (princ-to-string (type-of condition))
               (getf record :failure-kind) (if (eq :tests (getf record :phase)) (semantic-kind condition) :infrastructure))
@@ -386,11 +535,12 @@ for name in sys.argv[1:]:
   (unless (equal frozen (manifest files root)) (reject "source drift after copy."))
   (let* ((copied (manifest files copy))
          (changed (loop for old in frozen for new in copied unless (equal old new) collect (getf new :file)))
-         (config (list :schema-version 1 :kind :get-active-init-mutation-config :files files
+         (config (list :schema-version 1 :kind (profile-kind :get-active-init-mutation-config :get-active-preflight-mutation-config) :files files
                        :baseline-manifest frozen :manifest copied :changed-paths changed :mutation mutant
-                       :expected-tests expected :test-suites *test-suites*
+                       :expected-tests (if (and (preflight-p) mutant) (list (getf mutant :test)) expected) :test-suites *test-suites*
                        :compiled-source-files (loaded-source-files root (list :files files))
                        :child-report (namestring (merge-pathnames "child-report.lisp" evidence)))))
+    (when (preflight-p) (setf (getf config :profile) :preflight (getf config :suite-tests) expected))
     (unless (equal changed (when mutant (list (getf mutant :file)))) (reject "unexpected copy delta ~S." changed))
     (write-record config (merge-pathnames "config.lisp" evidence))
     (uiop:copy-file (merge-pathnames "tools/get-active-init-mutation.lisp" copy) (merge-pathnames "driver.lisp" evidence))
@@ -412,12 +562,13 @@ for name in sys.argv[1:]:
          (= (length expected) (length (remove-duplicates expected :test #'string=)))
          (every (lambda (file) (member file files :test #'string=)) expected)
          (equal (getf config :manifest) (manifest files copy))
-         (eql 1 (getf config :schema-version)) (eq :get-active-init-mutation-config (getf config :kind))
+         (eql 1 (getf config :schema-version))
+         (eq (profile-kind :get-active-init-mutation-config :get-active-preflight-mutation-config) (getf config :kind))
          (equal changed (getf config :changed-paths))
          (equal changed (when mutant (list (getf mutant :file))))
          (equal (getf config :manifest) (getf child :source-manifest-before))
          (equal (getf config :manifest) (getf child :source-manifest))
-         (equal (getf config :expected-tests) (getf child :registered-tests))
+         (equal (if (preflight-p) (getf config :suite-tests) (getf config :expected-tests)) (getf child :registered-tests))
          (equal expected (getf child :loaded-source-files))
          (string= (sha256 config-path) (getf child :config-sha256))
          (string= (getf child :config-sha256) (getf child :config-sha256-after))
@@ -461,6 +612,9 @@ for name in sys.argv[1:]:
     (handler-case
         (progn
           (setf config (copy-inputs root copy evidence files frozen expected mutant))
+          (when (preflight-p)
+            (setf (getf result :suite-tests) expected (getf result :expected-tests) (getf config :expected-tests)
+                  (getf result :executed-tests) (getf config :expected-tests)))
           (let* ((seconds (min +child-seconds+ (max 0 (- (remaining) +cleanup-seconds+))))
                  (argv (list "sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--disable-debugger"
                              "--script" (namestring (merge-pathnames "driver.lisp" evidence))
@@ -477,13 +631,13 @@ for name in sys.argv[1:]:
                                                       :error-output (merge-pathnames "stderr.log" evidence)))
                    (setf (getf result :child-launched) t)
                    (unless (wait-death process seconds) (setf (getf result :timed-out) t)))
-              (when process
+              (call-with-profile-cleanup (lambda () (when process
                 (when (uiop:process-alive-p process) (uiop:terminate-process process :urgent t))
                 (if (wait-death process +cleanup-seconds+)
                     (multiple-value-bind (exit signal) (uiop:wait-process process)
                       (setf (getf result :exit-code) exit (getf result :signal) signal
                             (getf result :cleanup) :reaped (getf result :child-reaped) t))
-                    (setf (getf result :cleanup) :unreaped (getf result :timed-out) t)))))
+                    (setf (getf result :cleanup) :unreaped (getf result :timed-out) t)))))))
           (when (probe-file (getf config :child-report)) (setf child (read-record (getf config :child-report))))
           (setf (getf result :source-manifest-after) (manifest files copy)
                 (getf result :config-sha256-after) (sha256 (merge-pathnames "config.lisp" evidence)))
@@ -493,6 +647,8 @@ for name in sys.argv[1:]:
             (setf (getf result :artifacts-verified) (not (null verified)) (getf result :child-report) child
                   (getf result :result)
                   (classify child (getf result :exit-code) (getf config :expected-tests) verified :baseline (null mutant)
+                            :suite-tests (if (preflight-p) (getf config :suite-tests) (getf config :expected-tests))
+                            :allowed-product-condition (getf mutant :allowed-product-condition)
                             :timeout (getf result :timed-out) :signal (getf result :signal)
                             :target-test (when mutant (getf mutant :test))))))
       (error (condition)
@@ -501,10 +657,12 @@ for name in sys.argv[1:]:
     (setf (getf result :status) (if (member (getf result :result) '(:baseline-passed :detected)) :ok :failed))
     (write-record result (merge-pathnames "result.lisp" evidence)) (funcall checkpoint result)
     result))
-(defun main ()
-  (let* ((args (uiop:command-line-arguments)) (root (truename "./")) (directory nil) (files nil) (frozen nil)
+(defun main (&optional (args (uiop:command-line-arguments)))
+  (let* ((root (truename "./")) (directory nil) (files nil) (frozen nil)
+         (*profile-directory* nil) (*operation-number* 0)
          (*deadline* (+ (get-internal-real-time) (* +campaign-seconds+ internal-time-units-per-second)))
-         (report (list :schema-version 1 :kind :get-active-init-mutations :status :running :argv args
+         (report (list :schema-version 1 :kind (profile-kind :get-active-init-mutations :get-active-preflight-mutations) :status :running
+                       :argv (if (preflight-p) (uiop:command-line-arguments) args)
                        :started-at-universal-time (get-universal-time) :self-test nil :baseline nil :mutants nil
                        :targets *mutants* :test-selection *test-suites* :expected-tests nil :source-consistency :not-observed
                        :source-helpers '("tools/get-active-init-mutation.lisp" "tools/evidence-storage.lisp")
@@ -516,19 +674,28 @@ for name in sys.argv[1:]:
                                        :evidence-directory-must-be-collected-with-terminal-producer
                                        :python3-batched-sha256 :individual-artifact-sha256-native-process :all-asdf-test-definitions-loaded-only
                                        :cooperative-parent-deadline :no-engine-qualification))))
+    (when (preflight-p)
+      (setf (getf report :profile) :preflight (getf report :raw-root) "raw/" (getf report :collector-exclusions) nil
+            (getf report :static-risks) '(:preflight-only-four-mutants :whole-active-baseline :preregistered-single-mutant-test
+                                         :complete-copies-and-fasl-retained :bounded-subprocess-kill-reap
+                                         :all-asdf-test-definitions-loaded-only :compiler-fixture-io-timeout-not-kills :no-engine-qualification)))
     (handler-case
-        (progn
+        (call-with-profile-deadline (lambda ()
           (unless (and (= 2 (length args)) (member (first args) '("--self-test" "--check") :test #'string=))
             (reject "usage --self-test|--check spikes/out/<namespace-nuovo>/."))
-          (setf directory (exclusive-directory (second args))) (save-report report directory)
+          (setf directory (exclusive-directory (second args)) *profile-directory* directory) (save-report report directory)
           (setf (getf report :self-test) (self-test directory)) (save-report report directory)
           (when (string= "--check" (first args))
+            (when (preflight-p) (setf (getf report :canonical-source-before) (canonical-source root)))
             (setf files (inventory) frozen (manifest files root) (getf report :frozen-manifest) frozen)
             (asdf:load-asd (merge-pathnames "arcdocdb.asd" root))
             (let ((expected (expected-tests)))
-              (setf (getf report :expected-tests) expected) (save-report report directory)
+              (setf (getf report :expected-tests) expected)
+              (when (preflight-p) (setf (getf report :suite-tests) expected (getf report :canonical-source-manifest) frozen))
+              (save-report report directory)
               (dolist (mutant *mutants*)
-                (unless (member (getf mutant :file) '("src/series/publication.lisp" "src/get-resolver/active-init.lisp")
+                (unless (member (getf mutant :file) (if (preflight-p) '("src/get-resolver/active-preflight.lisp")
+                                                       '("src/series/publication.lisp" "src/get-resolver/active-init.lisp"))
                                 :test #'string=) (reject "mutant scope invalid."))
                 (unless (member (getf mutant :test) expected :test #'equal) (reject "mutant test absent."))
                 (unique-position (uiop:read-file-string (getf mutant :file)) (getf mutant :before)))
@@ -537,6 +704,9 @@ for name in sys.argv[1:]:
                 (unless (eq :baseline-passed (getf baseline :result)) (reject "baseline not passed.")))
               (dolist (mutant *mutants*)
                 (require-time)
+                (when (and (preflight-p) (not (member (getf mutant :test)
+                                                    (getf (getf (getf report :baseline) :child-report) :passed-tests) :test #'equal)))
+                  (reject "target not passed by full baseline."))
                 (let ((entry nil))
                   (run-copy root directory files frozen expected mutant
                             (lambda (result)
@@ -549,7 +719,7 @@ for name in sys.argv[1:]:
               (unless (and (= 4 (length (getf report :mutants)))
                            (every (lambda (entry) (eq :detected (getf entry :result))) (getf report :mutants)))
                 (reject "mutant survived or campaign invalid."))))
-          (setf (getf report :status) :ok))
+          (setf (getf report :status) :ok)))
       (error (condition)
         (setf (getf report :status) :failed
               (getf report :diagnostic) (format nil "tools/get-active-init-mutation.lisp COD-61: ~A" condition))))
@@ -558,7 +728,11 @@ for name in sys.argv[1:]:
           (let ((after (manifest files root)))
             (setf (getf report :source-manifest-after) after
                   (getf report :source-consistency) (if (equal frozen after) :stable :changed))
-            (unless (equal frozen after) (setf (getf report :status) :failed)))
+            (unless (equal frozen after) (setf (getf report :status) :failed))
+            (when (preflight-p)
+              (setf (getf report :canonical-source-after) (canonical-source root))
+              (unless (equal (getf report :canonical-source-before) (getf report :canonical-source-after))
+                (reject "canonical Git identity drift."))))
         (error (condition) (setf (getf report :status) :failed (getf report :diagnostic) (princ-to-string condition)))))
     (setf (getf report :finished-at-universal-time) (get-universal-time))
     (dolist (entry (append (when (getf report :baseline) (list (getf report :baseline))) (getf report :mutants)))
@@ -571,6 +745,26 @@ for name in sys.argv[1:]:
     (save-report report directory)
     (let ((*print-readably* nil) (*print-escape* t) (*print-length* nil) (*print-level* nil)) (write report :pretty t) (terpri))
     (sb-ext:exit :code (if (eq :ok (getf report :status)) 0 1))))
+(defun parse-profile (args)
+  (let ((profile :bootstrap) (normalized args))
+    (when (member "--suite" args :test #'string=)
+      (unless (and (= 4 (length args)) (string= "--suite" (third args))
+                   (member (fourth args) '("bootstrap" "preflight") :test #'string=)) (reject "usage/unknown or duplicate suite."))
+      (setf profile (if (string= "preflight" (fourth args)) :preflight :bootstrap) normalized (subseq args 0 2)))
+    (unless (or (not (member "--suite" args :test #'string=))
+                (and (= 2 (length normalized)) (member (first normalized) '("--check" "--self-test") :test #'string=)))
+      (reject "usage --check|--self-test DIR [--suite preflight]."))
+    (values profile normalized)))
 (let ((args (uiop:command-line-arguments)))
   (unless (equal args '("--library"))
-    (if (and (= 2 (length args)) (string= "--child" (first args))) (child-main (second args)) (main))))
+    (handler-case
+        (if (and (= 2 (length args)) (string= "--child" (first args)))
+            (let* ((path (truename (second args))) (config (read-record path)) (profile (getf config :profile :bootstrap)))
+              (call-with-profile profile (lambda ()
+                (let ((*profile-directory* (uiop:pathname-directory-pathname path))
+                      (*deadline* (when (preflight-p) (+ (get-internal-real-time)
+                                                        (* (- +child-seconds+ (* 2 +cleanup-seconds+)) internal-time-units-per-second)))))
+                  (call-with-profile-deadline (lambda () (child-main path)))))))
+            (multiple-value-bind (profile normalized) (parse-profile args)
+              (call-with-profile profile (lambda () (main normalized)))))
+      (invalid-campaign (condition) (format *error-output* "~A~%" condition) (sb-ext:exit :code 2)))))

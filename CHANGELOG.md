@@ -7,6 +7,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Casi dedicati ai rifiuti del preflight GET ACTIVE prima del CSN: identità,
+  stato OPEN/SEALED, ordine, capacità e guasti degli header, con witness
+  indipendenti di byte, token, radici, frontiere e assenza di I/O.
+
 - Composizione di array CBOR da elementi già codificati: verifica completa
   prima della scrittura, testata minima e budget comprensivi della radice.
   Sorgente e indice condivisibili in lettura, destinazione e scratch privati

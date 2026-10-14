@@ -173,7 +173,8 @@
                (:module "get-resolver" :serial t
                 :components ((:file "support") (:file "sort") (:file "construction") (:file "read")))
                (:module "get-active" :serial t
-                :components ((:file "support") (:file "construction") (:file "directory") (:file "read")))
+                :components ((:file "support") (:file "construction") (:file "preflight")
+                             (:file "directory") (:file "read")))
                (:module "execution" :serial t
                 :components ((:file "support") (:file "queue") (:file "threads")
                              (:file "handoff") (:file "ready") (:file "ready-recycle") (:file "worker")))

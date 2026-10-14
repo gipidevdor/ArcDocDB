@@ -1,0 +1,10 @@
+(require :asdf)
+(let ((expected (string-trim '(#\Newline #\Return) (uiop:run-program '("git" "rev-parse" "HEAD:tools/evidence-storage.lisp") :output :string)))
+      (actual (string-trim '(#\Newline #\Return) (uiop:run-program '("git" "hash-object" "--" "tools/evidence-storage.lisp") :output :string))))
+  (assert (equal expected actual))
+  (load "tools/evidence-storage.lisp" :verbose nil :print nil))
+(with-open-file (stream "spikes/out/preflight-batch-publication/collector-batch.lisp" :external-format :utf-8)
+  (with-standard-io-syntax
+    (let ((*read-eval* nil) (*package* (find-package :cl-user)) (eof (gensym)) (count 0))
+      (loop for form = (read stream nil eof) until (eq form eof) do (incf count))
+      (format t "(:status :ok :kind :collector-complete-source-read :forms ~D :read-eval nil :eof t)~%" count))))

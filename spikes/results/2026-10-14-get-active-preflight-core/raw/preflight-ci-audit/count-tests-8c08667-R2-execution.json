@@ -1,0 +1,31 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--script",
+    "spikes/out/preflight-ci-audit/count-tests.lisp",
+    "--workspace",
+    "/Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/",
+    "--commit",
+    "8c0866711c50d047f87b9c484ce56d42a87ba19c"
+  ],
+  "helper_sha256": "1cb93fc4901faefaa66fdfe4207f012f51f683f8ab622ec5a25a92aa4512541e",
+  "source_sha256_saved_before_execution": true,
+  "started_at_unix": 1791997014.563606,
+  "status": "ok",
+  "scope": "static-Git-only; no product/tests/evidence execution",
+  "exit_code": 0,
+  "finished_at_unix": 1791997024.6816902,
+  "helper_source_stable": true,
+  "count-tests-8c08667-R2.lisp": {
+    "bytes": 99213,
+    "sha256": "6335208cb1cd11423dcfe951313a07eaa1b622a9674e5498e2e908d3783ef05b"
+  },
+  "count-tests-8c08667-R2.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

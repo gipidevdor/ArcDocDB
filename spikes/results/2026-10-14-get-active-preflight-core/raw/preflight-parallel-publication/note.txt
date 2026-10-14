@@ -1,0 +1,17 @@
+Preparazione statica; nessuna raccolta, pubblicazione o audit di dati eseguito dall'autore.
+
+Derivazioni minime, originali completi conservati come .txt e digest in sources.sha256:
+collect.lisp b226818e837dd4256ebdc98fdf0a37950a59d1f93b33df15ad21fb16437eb513
+  origine64724e5e99686930aeac8b39664274f6e665b4acb56ea87a7d4e62f1fa0ee79d; delta43righe aggiunte/2rimosse.
+audit.lisp b6f69b54a48059bab3b1204df8200ab6be31ea07bdc850466ac2948b5b2db855
+  origineb4c7af36c501647ecdca81b0a9ac314ed76d8c8bd6f8f5d50a5d1c6c411a46d9; delta35righe aggiunte/3rimosse.
+Diff esatti conservati nei due .diff.txt. Parent ha letto i diff e dato PASS statico.
+
+CLI invariata (SBCL, cwd workspace del progetto):
+--script spikes/out/preflight-parallel-publication/collect.lisp MANIFEST DESTINATION
+--script spikes/out/preflight-parallel-publication/audit.lisp MANIFEST ARCHIVE CONTRACT OUTPUT
+Output dei futuri comandi in una cartella diversa; questo gruppo va mantenuto immutabile.
+
+Parallelismo: al massimo4thread per invocazione/mappa, assegnazione a stride su vettore ordinato e un solo proprietario per ogni indice. La raccolta parallelizza le copie dentro ciascun gruppo, dopo verifica unicita' target/temp e creazione seriale delle directory. Append resta identico e seriale. L'auditor parallelizza solo validate-entry e il secondo passaggio SHA. Inventari globali/gruppi/contratto/record/byte/SHA/gzip restano invariati. I risultati sono riportati nell'ordine originario; ogni errore di entry, creazione o join viene propagato dopo aver atteso tutti i worker. Copie parziali rimangono disponibili in caso di errore; nessun rollback o eliminazione della raccolta.
+
+Ogni thread lega esplicitamente default pathname, package e stream; l'auditor lega anche archive e audit-directory. Le espansioni gzip dell'auditor usano mkstemp univoco. Le funzioni SHA/GZIP rimangono quelle gia' usate dagli originali, con il loro cleanup dei processi; il nuovo limite riguarda la concorrenza, non introduce un limite temporale globale. Richiesti input congelati e assenza di scritture concorrenti sulla destinazione. Quattro worker per processo non costituiscono un limite globale tra invocazioni diverse. Nessuna misura o promessa di accelerazione, nessuna nuova qualificazione di prodotto o MC/DC.

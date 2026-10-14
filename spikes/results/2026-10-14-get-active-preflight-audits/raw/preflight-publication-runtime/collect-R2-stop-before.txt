@@ -1,0 +1,3 @@
+  PID  PPID STAT ELAPSED ARGS
+90731 90677 R      12:40 /opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script spikes/out/preflight-parallel-publication/collect-R2.lisp spikes/out/preflight-publication-plan/bootstrap-manifest-R2.lisp spikes/results/2026-10-14-get-active-preflight-bootstrap/
+90733 90675 R      12:40 /opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script spikes/out/preflight-parallel-publication/collect-R2.lisp spikes/out/preflight-publication-plan/mutation-manifest-R2.lisp spikes/results/2026-10-14-get-active-preflight-mutation/

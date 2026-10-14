@@ -1,0 +1,5 @@
+--- a/src/get-resolver/active-preflight.lisp
++++ b/src/get-resolver/active-preflight.lisp
+@@ -35,1 +35,1 @@
+-         (size (+ (lunghezza-lotto batch) arcdocdb.wal::+seal-total+)))
++         (size (lunghezza-lotto batch)))

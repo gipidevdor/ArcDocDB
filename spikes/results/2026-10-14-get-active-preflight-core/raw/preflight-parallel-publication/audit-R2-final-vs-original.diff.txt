@@ -1,0 +1,124 @@
+--- audit-original.lisp.txt
++++ audit-R2.lisp
+@@ -164,6 +164,64 @@
+     (list :label label :status (getf data :status) :exit-code (getf data :exit-code)
+           :source-consistency (getf data :source-consistency) :read-as-data t)))
+ 
++(defun parallel-map-four (function items)
++  "Ordered results, at most four workers; join all and propagate every failure."
++  (let* ((input (coerce items 'vector)) (size (length input)) (workers (min 4 size))
++         (results (make-array size)) (failures (make-array size :initial-element nil))
++         (threads nil) (launch-failure nil) (join-failures nil)
++         (defaults *default-pathname-defaults*) (package *package*)
++         (stdout *standard-output*) (stderr *error-output*) (archive *archive*) (audit-directory *audit-directory*))
++    (unwind-protect
++         (handler-case
++             (dotimes (worker workers)
++               (let ((start worker))
++                 (push (sb-thread:make-thread
++                        (lambda ()
++                          (let ((*default-pathname-defaults* defaults) (*package* package)
++                                (*standard-output* stdout) (*error-output* stderr)
++                                (*archive* archive) (*audit-directory* audit-directory))
++                            (loop for index from start below size by workers do
++                              (handler-case (setf (aref results index) (funcall function (aref input index)))
++                                (serious-condition (condition) (setf (aref failures index) condition)))))
++                        :name (format nil "publication-worker-~D" start)) threads)))
++           (serious-condition (condition) (setf launch-failure condition)))
++      (sb-sys:without-interrupts
++        (dolist (thread threads)
++          (handler-case (sb-thread:join-thread thread)
++            (serious-condition (condition) (push condition join-failures))))))
++    (let ((errors (loop for condition across failures for index from 0 when condition
++                        collect (list index (princ-to-string condition)))))
++      (when (or launch-failure join-failures errors)
++        (error "Parallel publication failed after joining all workers: launch=~A joins=~S entries=~S."
++               launch-failure (mapcar #'princ-to-string join-failures) errors)))
++    (coerce results 'list)))
++
++(defun metadata-storage ()
++  "Only the two metadata leaves may authorize their own descriptor payload."
++  (loop for leaf in '("archive-index.lisp" "catalogo.lisp")
++        for path = (merge-pathnames leaf *archive*) collect
++    (let* ((stored (fingerprint path))
++           (raw (progn
++                  (require-check (<= (getf stored :bytes) +expanded-limit+) "Metadata raw budget.")
++                  (with-standard-io-syntax
++                    (let ((*read-eval* nil) (eof (gensym)))
++                      (with-open-file (stream path :direction :input)
++                        (let* ((data (read stream nil eof)) (size (and (consp data) (list-length data))))
++                          (require-check (and size (evenp size) (eq eof (read stream nil eof)))
++                                         "Metadata requires one form and EOF.") data))))))
++           (compressed (eq :compressed-evidence (getf raw :kind)))
++           (payload (when compressed (getf raw :payload))) (payload-bytes nil))
++      (when compressed
++        (require-check (and (<= (getf stored :bytes) 1048576) (leaf-p payload)
++                            (equal payload (concatenate 'string leaf ".gz"))) "Metadata descriptor payload leaf.")
++        (read-data path) ; trusted reader validates exact descriptor shape, bytes, SHA and expansion.
++        (setf payload-bytes (fingerprint (merge-pathnames payload *archive*)))
++        (require-check (equal payload-bytes (list :bytes (getf raw :compressed-bytes)
++                                                 :sha256 (string-downcase (getf raw :compressed-sha256))))
++                       "Metadata payload differs from descriptor."))
++      (append (list :path leaf :raw-fingerprint stored)
++              (when compressed (list :descriptor raw :payload payload :payload-fingerprint payload-bytes))))))
++
+ (defun audit (manifest-path archive-path contract-path output)
+   (let* ((*archive* (truename (uiop:ensure-directory-pathname archive-path)))
+          (manifest (read-data manifest-path)) (contract (read-data contract-path))
+@@ -176,7 +234,8 @@
+          (index-before (fingerprint index-path)) (index (read-data index-path))
+          (entries (getf index :files)) (paths (mapcar (lambda (entry) (getf entry :path)) entries))
+          (initial-head (head)) (entry-results nil) (group-results nil) (process-results nil)
+-         (native-results nil) (report-records nil) (initial-inventory (relative-files *archive*)))
++         (native-results nil) (report-records nil) (initial-inventory (relative-files *archive*))
++         (metadata-before (metadata-storage)))
+     (require-check (and (eql 1 (getf manifest :schema-version))
+                         (eql 1 (getf contract :schema-version))
+                         (eq :archive-audit-contract (getf contract :kind))
+@@ -187,7 +246,8 @@
+                    "Schema/freeze dell'archivio invalido.")
+     (require-check (= (length paths) (length (remove-duplicates paths :test #'equal))) "Entry duplicate.")
+     (require-check (equal (sort (copy-list initial-inventory) #'string<)
+-                          (sort (append (copy-list paths) (list "archive-index.lisp" "catalogo.lisp")) #'string<))
++                          (sort (append (copy-list paths) (list "archive-index.lisp" "catalogo.lisp")
++                                        (remove nil (mapcar (lambda (row) (getf row :payload)) metadata-before))) #'string<))
+                    "Inventario globale archivio diverso dall'indice.")
+     (let ((catalog (read-data catalog-path)))
+       (require-check (and (eql 1 (getf catalog :schema-version)) (eq :evidence-catalog (getf catalog :kind))
+@@ -195,7 +255,7 @@
+                           (equal '("archive-index.lisp")
+                                  (mapcar (lambda (entry) (getf entry :artifact)) (getf catalog :entries))))
+                      "Catalogo invalido."))
+-    (dolist (entry entries) (push (validate-entry entry) entry-results))
++    (setf entry-results (reverse (parallel-map-four #'validate-entry entries)))
+     ;; Anche report figli/fixture non qualificati: vengono soltanto letti come
+     ;; dati e censiti. Status e kind non sono promossi a risultati di prodotto.
+     (dolist (entry entries)
+@@ -252,7 +312,7 @@
+           (push (list :path relative :kind kind :status (getf data :status)
+                       :diagnostic (getf data :diagnostic) :read-as-data t) native-results))))
+     ;; Secondo pass byte/SHA: stessi path non bastano a escludere una mutazione.
+-    (dolist (entry entries)
++    (parallel-map-four (lambda (entry)
+       (require-check (equal (expected-fingerprint entry)
+                             (fingerprint (merge-pathnames (getf entry :path) *archive*)))
+                      "Copia mutata durante audit: ~A." (getf entry :path))
+@@ -263,7 +323,8 @@
+                        "Disponibilità sorgente mutata: ~A." source)
+         (when (getf before :source-available)
+           (require-check (equal (expected-fingerprint entry (eq :gzip (getf entry :codec)))
+-                                (fingerprint source)) "Sorgente mutata durante audit: ~A." source))))
++                                (fingerprint source)) "Sorgente mutata durante audit: ~A." source)))) entries)
++    (require-check (equal metadata-before (metadata-storage)) "Metadata descriptor/payload mutated during audit.")
+     (require-check (and (equal initial-head (head)) (equal index-before (fingerprint index-path))
+                         (equal catalog-before (fingerprint catalog-path))
+                         (equal manifest-before (fingerprint manifest-path))
+@@ -274,7 +335,7 @@
+     (let ((report (list :schema-version 1 :kind :independent-active-archive-audit :status :ok
+                         :source-commit initial-head :reader-sha256 (arcdocdb.evidence:file-sha256 "tools/evidence-storage.lisp")
+                         :manifest-sha256 (arcdocdb.evidence:file-sha256 manifest-path)
+-                        :archive-index-sha256 (getf index-before :sha256)
++                        :archive-index-sha256 (getf index-before :sha256) :metadata-storage metadata-before
+                         :catalog-sha256 (getf catalog-before :sha256)
+                         :auditor-sha256 (getf auditor-before :sha256)
+                         :contract-sha256 (arcdocdb.evidence:file-sha256 contract-path)

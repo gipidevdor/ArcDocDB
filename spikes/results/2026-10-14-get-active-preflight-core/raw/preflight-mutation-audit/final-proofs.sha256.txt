@@ -1,0 +1,3 @@
+c92b327b055e86804057e66123775a2c579812e8aeb7a535a6b98f40cd2501d3  spikes/out/preflight-mutation-audit/completion.lisp
+0748e2231d29bf9fb95d6275b319c48b4a7cf957b609b6f8f6c6e5516d9acad2  spikes/out/preflight-mutation-audit/audit.lisp
+3d73620a37c9fcee44da4623246a1ac87f64ebbc58dbc6ea34bbf72dbd970042  spikes/out/preflight-mutation-audit/full-audit-R3.lisp

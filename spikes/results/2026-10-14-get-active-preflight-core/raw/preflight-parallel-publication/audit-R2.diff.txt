@@ -1,0 +1,72 @@
+--- audit-R1
++++ audit-R2.lisp
+@@ -196,6 +196,32 @@
+                launch-failure (mapcar #'princ-to-string join-failures) errors)))
+     (coerce results 'list)))
+ 
++(defun metadata-storage ()
++  "Only the two metadata leaves may authorize their own descriptor payload."
++  (loop for leaf in '("archive-index.lisp" "catalogo.lisp")
++        for path = (merge-pathnames leaf *archive*) collect
++    (let* ((stored (fingerprint path))
++           (raw (progn
++                  (require-check (<= (getf stored :bytes) +expanded-limit+) "Metadata raw budget.")
++                  (with-standard-io-syntax
++                    (let ((*read-eval* nil) (eof (gensym)))
++                      (with-open-file (stream path :direction :input)
++                        (let ((data (read stream nil eof)))
++                          (require-check (and (not (eq data eof)) (eq eof (read stream nil eof)))
++                                         "Metadata requires one form and EOF.") data))))))
++           (compressed (eq :compressed-evidence (getf raw :kind)))
++           (payload (when compressed (getf raw :payload))) (payload-bytes nil))
++      (when compressed
++        (require-check (and (<= (getf stored :bytes) 1048576) (leaf-p payload)
++                            (equal payload (concatenate 'string leaf ".gz"))) "Metadata descriptor payload leaf.")
++        (read-data path) ; trusted reader validates exact descriptor shape, bytes, SHA and expansion.
++        (setf payload-bytes (fingerprint (merge-pathnames payload *archive*)))
++        (require-check (equal payload-bytes (list :bytes (getf raw :compressed-bytes)
++                                                 :sha256 (string-downcase (getf raw :compressed-sha256))))
++                       "Metadata payload differs from descriptor."))
++      (append (list :path leaf :raw-fingerprint stored)
++              (when compressed (list :descriptor raw :payload payload :payload-fingerprint payload-bytes))))))
++
+ (defun audit (manifest-path archive-path contract-path output)
+   (let* ((*archive* (truename (uiop:ensure-directory-pathname archive-path)))
+          (manifest (read-data manifest-path)) (contract (read-data contract-path))
+@@ -208,7 +234,8 @@
+          (index-before (fingerprint index-path)) (index (read-data index-path))
+          (entries (getf index :files)) (paths (mapcar (lambda (entry) (getf entry :path)) entries))
+          (initial-head (head)) (entry-results nil) (group-results nil) (process-results nil)
+-         (native-results nil) (report-records nil) (initial-inventory (relative-files *archive*)))
++         (native-results nil) (report-records nil) (initial-inventory (relative-files *archive*))
++         (metadata-before (metadata-storage)))
+     (require-check (and (eql 1 (getf manifest :schema-version))
+                         (eql 1 (getf contract :schema-version))
+                         (eq :archive-audit-contract (getf contract :kind))
+@@ -219,7 +246,8 @@
+                    "Schema/freeze dell'archivio invalido.")
+     (require-check (= (length paths) (length (remove-duplicates paths :test #'equal))) "Entry duplicate.")
+     (require-check (equal (sort (copy-list initial-inventory) #'string<)
+-                          (sort (append (copy-list paths) (list "archive-index.lisp" "catalogo.lisp")) #'string<))
++                          (sort (append (copy-list paths) (list "archive-index.lisp" "catalogo.lisp")
++                                        (remove nil (mapcar (lambda (row) (getf row :payload)) metadata-before))) #'string<))
+                    "Inventario globale archivio diverso dall'indice.")
+     (let ((catalog (read-data catalog-path)))
+       (require-check (and (eql 1 (getf catalog :schema-version)) (eq :evidence-catalog (getf catalog :kind))
+@@ -296,6 +324,7 @@
+         (when (getf before :source-available)
+           (require-check (equal (expected-fingerprint entry (eq :gzip (getf entry :codec)))
+                                 (fingerprint source)) "Sorgente mutata durante audit: ~A." source)))) entries)
++    (require-check (equal metadata-before (metadata-storage)) "Metadata descriptor/payload mutated during audit.")
+     (require-check (and (equal initial-head (head)) (equal index-before (fingerprint index-path))
+                         (equal catalog-before (fingerprint catalog-path))
+                         (equal manifest-before (fingerprint manifest-path))
+@@ -306,7 +335,7 @@
+     (let ((report (list :schema-version 1 :kind :independent-active-archive-audit :status :ok
+                         :source-commit initial-head :reader-sha256 (arcdocdb.evidence:file-sha256 "tools/evidence-storage.lisp")
+                         :manifest-sha256 (arcdocdb.evidence:file-sha256 manifest-path)
+-                        :archive-index-sha256 (getf index-before :sha256)
++                        :archive-index-sha256 (getf index-before :sha256) :metadata-storage metadata-before
+                         :catalog-sha256 (getf catalog-before :sha256)
+                         :auditor-sha256 (getf auditor-before :sha256)
+                         :contract-sha256 (arcdocdb.evidence:file-sha256 contract-path)

@@ -1,0 +1,1 @@
+:OK: sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script tools/get-resolver-coverage.lisp --report spikes/out/preflight-closed-coverage-R1/; record: /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/4000985360-command-53077-0/report.lisp

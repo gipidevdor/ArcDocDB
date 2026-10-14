@@ -1,0 +1,59 @@
+(:COUNTERS
+ (:BASELINE-PASSED 0 :BASELINE-FAILED 0 :DETECTED 0 :SURVIVED 0
+  :COMPILATION-ERROR 0 :INFRASTRUCTURE-ERROR 0 :INVALID 0)
+ :FINISHED-AT-UNIVERSAL-TIME 4000985302 :PROFILE :PREFLIGHT :SCHEMA-VERSION 1
+ :KIND :GET-ACTIVE-PREFLIGHT-MUTATIONS :STATUS :OK :ARGV
+ ("--self-test" "spikes/out/preflight-mutation-selftest-R1/" "--suite"
+  "preflight")
+ :STARTED-AT-UNIVERSAL-TIME 4000985302 :SELF-TEST
+ (:STATUS :OK :CLASSIFIER-CASES 38 :ANCHOR-NEGATIVE-CASES 3 :RECORD-ROUNDTRIP T
+  :TYPED-FIXTURE-TIMEOUT-DETECTION T :BATCH-SHA256-EQUIVALENCE-FILES 3
+  :WRITE-SCHEMA-SHA-DETECTION T :NO-COMPILATION T :NO-CHILD T :NO-CHILD-SCOPE
+  :PRODUCT :DIGEST-SUBPROCESSES T :DIGEST-REFERENCE :KNOWN-SHA256-VECTORS)
+ :BASELINE NIL :MUTANTS NIL :TARGETS
+ ((:NAME "ignore-batch-file-id" :FILE "src/get-resolver/active-preflight.lisp"
+   :TEST
+   ("ARCDOCDB.GET.ACTIVE.TESTS"
+    "TEST-REQ-WAL-005-ACTIVE-PREFLIGHT-BATCH-FILE-ID")
+   :BEFORE "(= (arcdocdb.wal::lotto-file-id batch) (segmento-get-low segment))"
+   :AFTER "t" :EXPECTED-FAILURE :FOREIGN-BATCH-ADMITTED)
+  (:NAME "ignore-batch-version" :FILE "src/get-resolver/active-preflight.lisp"
+   :TEST
+   ("ARCDOCDB.GET.ACTIVE.TESTS"
+    "TEST-REQ-WAL-005-ACTIVE-PREFLIGHT-BATCH-VERSION")
+   :BEFORE
+   "(= (arcdocdb.wal::lotto-version batch) (segmento-get-version segment))"
+   :AFTER "t" :EXPECTED-FAILURE :FOREIGN-VERSION-ADMITTED)
+  (:NAME "omit-seal-bytes" :FILE "src/get-resolver/active-preflight.lisp" :TEST
+   ("ARCDOCDB.GET.ACTIVE.TESTS"
+    "TEST-REQ-AFF-008-ACTIVE-PREFLIGHT-SEAL-BYTE-BOUNDARY")
+   :BEFORE "(size (+ (lunghezza-lotto batch) arcdocdb.wal::+seal-total+))"
+   :AFTER "(size (lunghezza-lotto batch))" :EXPECTED-FAILURE
+   :SEAL-BUDGET-OMITTED)
+  (:NAME "reject-exact-record-budget" :FILE
+   "src/get-resolver/active-preflight.lisp" :TEST
+   ("ARCDOCDB.GET.ACTIVE.TESTS"
+    "TEST-REQ-AFF-008-ACTIVE-PREFLIGHT-RECORD-BOUNDARY")
+   :BEFORE
+   "(> (arcdocdb.wal::lotto-count batch) (sorgente-get-attiva-batch-records source))"
+   :AFTER
+   "(>= (arcdocdb.wal::lotto-count batch) (sorgente-get-attiva-batch-records source))"
+   :EXPECTED-FAILURE :EXACT-BUDGET-REFUSED :ALLOWED-PRODUCT-CONDITION
+   ("ARCDOCDB.CONDITIONS" "RESOURCE-EXHAUSTED" :ACTIVE-BATCH-RECORD-BUDGET)))
+ :TEST-SELECTION
+ (("ARCDOCDB.GET.ACTIVE.TESTS" "*GET-ACTIVE-TESTS*"
+   "tests/get-active/construction.lisp" NIL :ALIST)
+  ("ARCDOCDB.GET.ACTIVE.TESTS" "*GET-ACTIVE-TESTS*"
+   "tests/get-active/preflight.lisp" NIL :ALIST)
+  ("ARCDOCDB.GET.ACTIVE.TESTS" "*GET-ACTIVE-TESTS*"
+   "tests/get-active/directory.lisp" NIL :ALIST)
+  ("ARCDOCDB.GET.ACTIVE.TESTS" "*GET-ACTIVE-TESTS*"
+   "tests/get-active/read.lisp" NIL :ALIST))
+ :EXPECTED-TESTS NIL :SOURCE-CONSISTENCY :NOT-OBSERVED :SOURCE-HELPERS
+ ("tools/get-active-init-mutation.lisp" "tools/evidence-storage.lisp")
+ :RAW-ROOT "raw/" :COLLECTOR-EXCLUSIONS NIL :CHILD-DEADLINE-SECONDS 120
+ :CAMPAIGN-DEADLINE-SECONDS 900 :STATIC-RISKS
+ (:PREFLIGHT-ONLY-FOUR-MUTANTS :WHOLE-ACTIVE-BASELINE
+  :PREREGISTERED-SINGLE-MUTANT-TEST :COMPLETE-COPIES-AND-FASL-RETAINED
+  :BOUNDED-SUBPROCESS-KILL-REAP :ALL-ASDF-TEST-DEFINITIONS-LOADED-ONLY
+  :COMPILER-FIXTURE-IO-TIMEOUT-NOT-KILLS :NO-ENGINE-QUALIFICATION))

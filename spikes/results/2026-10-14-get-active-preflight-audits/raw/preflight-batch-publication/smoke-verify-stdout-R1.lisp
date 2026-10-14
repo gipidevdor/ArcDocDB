@@ -1,0 +1,1 @@
+(:schema-version 1 :kind :three-file-batch-collector-smoke :status :ok :input-files 3 :archive-entries 6 :physical-files 8 :normal-empty-fasl-and-utf8 t :gzip-expanded-native-sha t :all-raw-copy-bytes-sha-and-exact-inventory t)

@@ -10,6 +10,8 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 - Casi dedicati ai rifiuti del preflight GET ACTIVE prima del CSN: identità,
   stato OPEN/SEALED, ordine, capacità e guasti degli header, con witness
   indipendenti di byte, token, radici, frontiere e assenza di I/O.
+  Suite ACTIVE a 42 test e quattro mutanti preflight rilevati; conservati
+  copertura, regressione bootstrap e audit indipendenti delle prove complete.
 
 - Composizione di array CBOR da elementi già codificati: verifica completa
   prima della scrittura, testata minima e budget comprensivi della radice.

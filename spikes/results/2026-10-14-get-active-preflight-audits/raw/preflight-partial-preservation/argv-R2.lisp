@@ -1,0 +1,10 @@
+(:source-sha256 "6358b9e37914b2e6da45d9889a5109f23344c880b58161350456941dc9472fe1"
+ :argv ("sbcl" "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+        "--script" "spikes/out/preflight-partial-preservation/preserve-partials.lisp"
+        "--workspace" "/Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB"
+        "--commit" "8c0866711c50d047f87b9c484ce56d42a87ba19c"
+        "--library" "spikes/out/preflight-batch-publication/batch-sha.lisp"
+        "--library-sha256" "130f428551e1aa17a946c2614db5dc14adf9ae35309ec2b21c3be5b2d59be1da"
+        "--destination" "spikes/out/preflight-partial-preservation/payloads-R2/"
+        "--staging" "spikes/out/preflight-partial-preservation-staging-R2/"
+        "--manifest" "spikes/out/preflight-partial-preservation/manifest-R2.lisp"))

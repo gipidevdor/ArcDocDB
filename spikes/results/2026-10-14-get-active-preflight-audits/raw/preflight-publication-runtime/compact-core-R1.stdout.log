@@ -1,0 +1,1 @@
+:OK: sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --script tools/compact-evidence.lisp --root spikes/results/2026-10-14-get-active-preflight-core/ --jobs 4; record: /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/4000988033-command-20065-0/report.lisp

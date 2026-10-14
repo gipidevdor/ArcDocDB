@@ -1,0 +1,5 @@
+--- a/src/get-resolver/active-preflight.lisp
++++ b/src/get-resolver/active-preflight.lisp
+@@ -37,1 +37,1 @@
+-                 (= (arcdocdb.wal::lotto-version batch) (segmento-get-version segment)))
++                 t)

@@ -1,0 +1,1 @@
+:OK: sbcl --noinform --no-userinit --no-sysinit --disable-debugger --script spikes/out/preflight-partial-preservation/move-failed-R2.lisp; record: /Users/gpicchiarelli/.codex/worktrees/get-active-decisions/ArcDocDB/spikes/out/4000988594-command-32457-0/report.lisp

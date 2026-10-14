@@ -145,3 +145,5 @@ Costanti native confrontate con gli header installati e con le fonti primarie:
 
 La [rinomina relativa al parent](io-rinomina.md) centralizza l’effetto POSIX e
 il fail-stop locale, usati anche dalla sostituzione verificata del temporaneo.
+
+Il [completamento I/O](io-completamento.md) definisce cleanup di append/flush, frontiera catturata e controllo delle capacità dopo ogni frammento. Questi controlli servono anche il percorso CONTROL; le prove non attestano da sole il recovery completo.

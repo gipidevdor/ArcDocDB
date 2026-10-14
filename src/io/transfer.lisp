@@ -39,6 +39,18 @@ IO-FAULT per zero/ritorno impossibile; mutazione dello stato soltanto per write.
   result)
 
 ;;; REQ: REQ-STO-003 REQ-AFF-002 REQ-AFF-008
+(declaim (ftype (function (file-io (member :input :append) (member :read :write) index) null)
+                verifica-capacita-trasferimento))
+(defun verifica-capacita-trasferimento (file mode operation transferred)
+  "Pre: trasferimento in corso, progresso relativo noto. Post: capacità aperta e FD ammesso.
+IO-FAULT locale conserva operazione/progresso anche dopo close nel callback.
+Non intercetta o modifica condizioni originate dal callback; nessuna syscall."
+  (unless (eq (file-state file) :open)
+    (error 'io-fault :reason :io-unavailable :operation operation :transferred transferred))
+  (esigi-aperto file mode)
+  nil)
+
+;;; REQ: REQ-STO-003 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (file-io octets index index file-offset) index) leggi-esatto))
 (defun leggi-esatto (file buffer start end offset)
   "Pre: file readonly mantenuto vivo, buffer esclusivo. Post: intero range riempito, fine.
@@ -50,13 +62,15 @@ Non verifica CRC: il caller passa i byte al codec prima di rispondere al client.
       (error 'invalid-argument :reason :io-offset :offset offset))
     (handler-case
         (loop repeat count until (= done count)
-              do (let* ((remaining (- count done))
+              do (verifica-capacita-trasferimento file :input :read done)
+                 (let* ((remaining (- count done))
                         (n (if backend
                                (funcall (backend-reader backend) (file-fd file) buffer
                                         (+ start done) remaining (+ offset done))
                                (native-read (file-fd file) buffer (+ start done)
                                             remaining (+ offset done)))))
-                   (incf done (progresso file n remaining :read done))))
+                   (incf done (progresso file n remaining :read done))
+                   (verifica-capacita-trasferimento file :input :read done)))
       (sb-posix:syscall-error (c)
         (fallisci file :read :io-syscall (sb-posix:syscall-errno c) done)))
     (unless (= done count) (error 'invariant-violation :reason :io-incomplete-read))
@@ -78,23 +92,35 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT prima di qualsiasi syscall, senza m
 (declaim (ftype (function (file-io octets index index) file-offset) append-esatto))
 (defun append-esatto (file buffer start end)
   "Pre: un compito possiede file e input stabile. Post: tutto il range scritto in append.
-Restituisce posizione scritta, non commit. Guasto => FAULTED, posizione durevole invariata.
+Restituisce posizione scritta, non commit. Uscita incompleta => OPEN diventa FAULTED.
+CLOSED resta chiusa; progresso confermato conservato, posizione durevole invariata.
 Budget/range rifiutati prima di scrivere; nessun error retry, inclusi EINTR/ENOSPC."
   (esigi-aperto file :append)
-  (let ((count (regione file buffer start end)) (done 0) (backend (file-backend file)))
+  (let ((count (regione file buffer start end)) (done 0) (backend (file-backend file))
+        (initial (file-written file)) (complete nil))
     (when (> count (- (file-max-file-bytes file) (file-written file)))
       (error 'resource-exhausted :reason :io-file-budget))
-    (handler-case
-        (loop repeat count until (= done count)
-              do (let* ((remaining (- count done))
-                        (n (if backend
-                               (funcall (backend-writer backend) (file-fd file) buffer
-                                        (+ start done) remaining)
-                               (native-write (file-fd file) buffer (+ start done) remaining)))
-                        (progress (progresso file n remaining :write done)))
-                   (incf done progress)
-                   (incf (file-written file) progress)))
-      (sb-posix:syscall-error (c)
-        (fallisci file :write :io-syscall (sb-posix:syscall-errno c) done)))
-    (unless (= done count) (error 'invariant-violation :reason :io-incomplete-write))
-    (file-written file)))
+    (unwind-protect
+         (progn
+           (handler-case
+               (loop repeat count until (= done count)
+                     do (verifica-capacita-trasferimento file :append :write done)
+                        (let* ((remaining (- count done))
+                               (n (if backend
+                                      (funcall (backend-writer backend) (file-fd file) buffer
+                                               (+ start done) remaining)
+                                      (native-write (file-fd file) buffer (+ start done) remaining)))
+                               (progress (progresso file n remaining :write done)))
+                          (unless (= (file-written file) (+ initial done))
+                            (error 'invariant-violation :reason :io-append-frontier))
+                          (incf done progress)
+                          (incf (file-written file) progress)
+                          (verifica-capacita-trasferimento file :append :write done)))
+             (sb-posix:syscall-error (c)
+               (fallisci file :write :io-syscall (sb-posix:syscall-errno c) done)))
+           (unless (= done count) (error 'invariant-violation :reason :io-incomplete-write))
+           (setf complete t)
+           (file-written file))
+      (sb-sys:without-interrupts
+        (when (and (not complete) (eq (file-state file) :open))
+          (setf (file-state file) :faulted))))))

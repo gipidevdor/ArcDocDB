@@ -171,7 +171,10 @@ Gli snapshot canonici comprendono tutti i `.lisp` di src e tests, ASDF,
 driver, metodo e helper. Il walk cold rifiuta profondità oltre 32, oltre
 4.096 file (inclusi i quattro espliciti e gli eventuali file non Lisp
 incontrati) o oltre 4.096 directory. Gli SHA non sorvegliano continuamente le letture.
-Warning e style-warning sono fatali; l'unica eccezione durante il load ASDF
+Il bootstrap rilegge il driver una sola volta sotto handler (massimo due
+LOAD totali), così anche gli avvisi delle definizioni compilate dal loader
+sono fatali prima di MAIN. Il polling dello stop usa TRY-SEMAPHORE, senza
+un timeout zero non ammesso dal contratto SBCL. Warning e style-warning sono fatali; l'unica eccezione durante il load ASDF
 è `SB-KERNEL:REDEFINITION-WARNING`, registrata con conteggio totale e prime
 16 diagnostiche nel report, tutte su stderr. L'helper non ha tale eccezione.
 Non si aggiungono dipendenze Lisp esterne; il lettore canonico esistente

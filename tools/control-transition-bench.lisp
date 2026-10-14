@@ -5,6 +5,16 @@
 ;;; OWNER: main possiede setup/report; ciascun worker possiede manifest e contatori.
 ;;; SHARED: solo funzioni immutabili e gate; trasferimento al main dopo quiescenza.
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-AFF-018 REQ-VAL-001
+;;; Il bootstrap rilegge il driver una sola volta sotto handler: anche gli avvisi
+;;; delle DEFUN compilate da LOAD sono fatali, prima dell'ingresso in MAIN.
+;;; OWNER: binding dinamico del feature nel singolo processo CLI; profondità massima due LOAD.
+(eval-when (:load-toplevel :execute)
+  (unless (member :arcdocdb-control-transition-driver *features*)
+    (let ((*features* (cons :arcdocdb-control-transition-driver *features*)))
+      (handler-bind ((warning (lambda (condition)
+                                (error "control-transition COD-01: ~A" condition))))
+        (load *load-truename*)))
+    (error "control-transition COD-61: il driver non ha terminato il processo.")))
 (eval-when (:compile-toplevel :load-toplevel :execute) (require :sb-posix))
 (defpackage #:arcdocdb.control-transition.c4 (:use #:cl))
 (in-package #:arcdocdb.control-transition.c4)
@@ -185,7 +195,7 @@
            (dotimes (i count)
              (when (zerop (logand i 31))
                (require-time deadline)
-               (when (sb-thread:wait-on-semaphore stop :timeout 0)
+               (when (sb-thread:try-semaphore stop)
                  (error 'bench-deadline :reason :cooperative-stop)))
              (incf (raw-attempted raw))
              (let ((answer (funcall guard (sample-previous sample) (sample-current sample))))
@@ -404,7 +414,7 @@
              (compile-file copy
                            :output-file (merge-pathnames "evidence-storage.fasl" cache))
            (when (or warnings failure (null fasl)) (reject :helper-compile))
-           (load fasl))))
+           (load fasl)))))
     ;; Helper gia' disponibile per lo snapshot che precede il load del sistema.
     copy))
 (defun load-system (root deadline)

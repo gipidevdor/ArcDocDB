@@ -191,7 +191,7 @@
              (let ((answer (funcall guard (sample-previous sample) (sample-current sample))))
                (incf (raw-completed raw))
                (incf (raw-sink raw) (raw-completed raw))
-               (if (null answer) (incf (raw-verify0 raw)) (incf (raw-nonempty raw))))
+               (if (null answer) (incf (raw-verify0 raw)) (incf (raw-nonempty raw)))))
            (require-time deadline))
       (setf (raw-cpu-ns raw) (- (clock-ns :cpu) cpu)
             (raw-wall-ns raw) (- (clock-ns :wall) wall)))))

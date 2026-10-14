@@ -1,0 +1,22 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--eval",
+    "(require :asdf)",
+    "--eval",
+    "(require :sb-posix)",
+    "--eval",
+    "(multiple-value-bind (path warning failure) (compile-file #P\"/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-verification/audit.lisp\" :output-file #P\"/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-verification-runtime/compile-source-R1/audit-source-only.fasl\") (format t \"COMPILE-SOURCE-ONLY ~S warning=~S failure=~S~%\" path warning failure) (when (or warning failure) (sb-ext:exit :code 1)))",
+    "--quit"
+  ],
+  "source_sha256_before": "841d8b6c24e6cd5352a019f82e574bcf93673e92b34c632435aa08b1f9579bba",
+  "started_at_unix": 1792008357.1847239,
+  "scope": "owned-auditor source compiled only; no LOAD/FASL execution or product/evidence systems",
+  "exit_code": 0,
+  "source_sha256_after": "841d8b6c24e6cd5352a019f82e574bcf93673e92b34c632435aa08b1f9579bba",
+  "finished_at_unix": 1792008357.77714
+}

@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--eval",
+    "(require :asdf)",
+    "--eval",
+    "(load \"tools/evidence-storage.lisp\" :verbose nil :print nil)",
+    "--eval",
+    "(let* ((r (uiop:symbol-call :arcdocdb.evidence :read-evidence #P\"/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/4000997046-command-80864-0/report.lisp\")) (text (getf r :stdout)) (data nil))\n(assert (and (eq :ok (getf r :status)) (eql 0 (getf r :exit-code)) (eq :stable (getf r :source-consistency)) (equal (getf r :source-blobs-before) (getf r :source-blobs-after))))\n(with-standard-io-syntax (let ((*read-eval* nil) (eof (gensym))) (with-input-from-string (s text) (setf data (read s nil eof)) (assert (eq eof (read s nil eof))))))\n(let ((row (find \"ARCDOCDB.GET.DIRECTORY.TESTS\" (getf data :suites) :test #'equal :key (lambda (x) (getf x :package)))))\n(assert (and (eq :ok (getf data :status)) (equal \"a9e405113b0386afadf4a291a6f64fc82308ea1a\" (getf data :commit))))\n(write (list :kind :frozen-count-summary :status :ok :commit (getf data :commit) :module-tests (getf data :module-test-total) :suites (getf data :named-suite-count) :smoke (getf data :smoke-count) :directory-tests (getf row :count) :directory-test-names (getf row :test-names) :native-source-paths (length (getf r :source-blobs-before))) :pretty t) (terpri)))",
+    "--quit"
+  ],
+  "trusted_reader_git_blob": "fa2b5d36dca0837e2ed5e49b282887b2e110b2b7",
+  "started_at_unix": 1792008389.3651059,
+  "exit_code": 0,
+  "finished_at_unix": 1792008389.728235
+}

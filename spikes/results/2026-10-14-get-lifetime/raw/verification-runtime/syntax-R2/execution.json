@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "sbcl",
+    "--noinform",
+    "--no-userinit",
+    "--no-sysinit",
+    "--disable-debugger",
+    "--eval",
+    "(require :asdf)",
+    "--eval",
+    "(require :sb-posix)",
+    "--eval",
+    "(let ((*read-eval* nil) (n 0)) (with-open-file (s #P\"/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB/spikes/out/lifetime-verification/audit.lisp\") (loop for f = (read s nil :eof) until (eq f :eof) do (incf n))) (format t \"READ-PASS ~D forms~%\" n))",
+    "--quit"
+  ],
+  "source_sha256_before": "841d8b6c24e6cd5352a019f82e574bcf93673e92b34c632435aa08b1f9579bba",
+  "started_at_unix": 1792008343.3081229,
+  "exit_code": 0,
+  "source_sha256_after": "841d8b6c24e6cd5352a019f82e574bcf93673e92b34c632435aa08b1f9579bba",
+  "finished_at_unix": 1792008344.833809
+}

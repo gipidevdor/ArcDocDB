@@ -1,0 +1,9 @@
+cwd=/Users/gpicchiarelli/.codex/worktrees/get-source-lifetime/ArcDocDB
+sbcl --dynamic-space-size 2048 --noinform --no-userinit --no-sysinit --non-interactive
+--eval (require :asdf)
+--eval (require :sb-posix)
+--eval (let ((*read-eval* nil) (count 0)) (with-open-file (stream "spikes/out/lifetime-ci-audit/audit.lisp") (loop for form = (read stream nil :eof) until (eq form :eof) do (incf count))) (format t "READ ~D forms; no evaluation.~%" count))
+--eval (multiple-value-bind (path warnings failure) (compile-file "spikes/out/lifetime-ci-audit/audit.lisp" :output-file "spikes/out/lifetime-ci-audit/audit-static.fasl") (format t "COMPILE output=~S warnings=~S failure=~S~%" path warnings failure) (when (or warnings failure) (sb-ext:exit :code 1)))
+stdout=spikes/out/lifetime-ci-audit/static-check.stdout.log
+stderr=spikes/out/lifetime-ci-audit/static-check.stderr.log
+exit-code=0

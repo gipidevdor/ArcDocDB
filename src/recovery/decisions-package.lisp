@@ -10,5 +10,5 @@
   (:import-from #:arcdocdb.storage.format
                 #:+participant-id-bytes+ #:valida-valore-decision)
   (:import-from #:arcdocdb.recovery.scan #:scansiona-log)
-  (:export #:ricostruisci-decisioni #:numero-decisioni #:trova-decisione
+  (:export #:ricostruisci-decisioni #:numero-decisioni #:trova-decisione #:massimo-csn-decisioni
            #:partecipante-decisione-p))

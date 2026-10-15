@@ -16,10 +16,14 @@ Errori originali propagati; risultato senza scratch o workspace, né effetti dur
     (let ((workspace (attraversa-active scratch prefix version actual-batches actual-records prepared outcomes)))
       (multiple-value-bind (count local closure aborted)
           (risolvi-prepared-closed workspace (manifest-control-recuperato control) id)
-        (arcdocdb.io::esigi-aperto input :input)
-        (arcdocdb.io::esigi-aperto (arcdocdb.control::control-recuperato-input control) :input)
-        (%make-closed-recuperato control input id prefix version +writer-origin+
-                                actual-batches actual-records count local closure aborted)))))
+        (multiple-value-bind (present maximum)
+            (massimo-csn-chiusura (manifest-control-recuperato control) id
+                                 (arcdocdb.recovery.active::workspace-active-csn-present workspace)
+                                 (arcdocdb.recovery.active::workspace-active-max-csn workspace))
+          (arcdocdb.io::esigi-aperto input :input)
+          (arcdocdb.io::esigi-aperto (arcdocdb.control::control-recuperato-input control) :input)
+          (%make-closed-recuperato control input id prefix version +writer-origin+
+                                  actual-batches actual-records count local closure aborted present maximum))))))
 
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-TXM-007 REQ-FOR-001 REQ-FOR-002 REQ-CMP-009 REQ-AFF-008
 (declaim (ftype (function (control-recuperato file-io u64 octets
@@ -46,7 +50,11 @@ Condizioni originali propagate senza retry o close; risultato consegnato solo co
                                  max-batch-records max-batch-bytes max-prepared max-outcomes))
         (#.+compaction-origin+
          (let ((count (verifica-compattato-closed control scratch prefix id version max-bytes max-records)))
-           (arcdocdb.io::esigi-aperto input :input)
-           (arcdocdb.io::esigi-aperto (arcdocdb.control::control-recuperato-input control) :input)
-           (%make-closed-recuperato control input id prefix version origin 0 count 0 0 0 0)))
+           (multiple-value-bind (present maximum) (massimo-csn-compattato scratch prefix version count)
+             (multiple-value-bind (found csn)
+                 (massimo-csn-chiusura (manifest-control-recuperato control) id present maximum)
+               (arcdocdb.io::esigi-aperto input :input)
+               (arcdocdb.io::esigi-aperto (arcdocdb.control::control-recuperato-input control) :input)
+               (%make-closed-recuperato control input id prefix version origin 0 count 0 0 0 0
+                                       found csn)))))
         (otherwise (error 'invariant-violation :reason :closed-recovery-origin))))))

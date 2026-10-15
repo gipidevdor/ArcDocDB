@@ -1,0 +1,52 @@
+;;; OWNER: compito I/O legge il CLOSED nominato dal CONTROL, poi costruisce soltanto un risultato completo.
+;;; SHARED: nessun buffer o workspace condiviso; tutte le fonti congelate dal controller della Serie.
+(in-package #:arcdocdb.recovery.closed)
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+
+;;; REQ: REQ-REC-001 REQ-STO-006 REQ-TXM-007 REQ-FOR-003 REQ-AFF-002 REQ-AFF-008
+(declaim (ftype (function (control-recuperato file-io u64 index (member 1 2) octets
+                          index index u32 index u32 u32) closed-recuperato) recupera-closed-writer))
+(defun recupera-closed-writer (control input id prefix version scratch batches records batch-records
+                              batch-bytes prepared outcomes)
+  "Pre: header writer e corpo fino a P già letti. Post: prefisso e prepared risolti senza multiserie.log.
+Parser semantico canonico riusato solo dopo CRC/SEAL integrali; nessuna classificazione EOF.
+Errori originali propagati; risultato senza scratch o workspace, né effetti durevoli."
+  (multiple-value-bind (actual-batches actual-records)
+      (verifica-lotti-closed scratch prefix id version batches records batch-records batch-bytes)
+    (let ((workspace (attraversa-active scratch prefix version actual-batches actual-records prepared outcomes)))
+      (multiple-value-bind (count local closure aborted)
+          (risolvi-prepared-closed workspace (manifest-control-recuperato control) id)
+        (arcdocdb.io::esigi-aperto input :input)
+        (arcdocdb.io::esigi-aperto (arcdocdb.control::control-recuperato-input control) :input)
+        (%make-closed-recuperato control input id prefix version +writer-origin+
+                                actual-batches actual-records count local closure aborted)))))
+
+;;; REQ: REQ-REC-001 REQ-STO-006 REQ-TXM-007 REQ-FOR-001 REQ-FOR-002 REQ-CMP-009 REQ-AFF-008
+(declaim (ftype (function (control-recuperato file-io u64 octets
+                          &key (:chunk-bytes index) (:max-bytes index) (:max-batches index)
+                               (:max-records index) (:max-batch-records u32) (:max-batch-bytes index)
+                               (:max-prepared u32) (:max-outcomes u32) (:max-esiti-chiusura u32))
+                         closed-recuperato) leggi-closed-recuperato))
+(defun leggi-closed-recuperato (control input id scratch
+                              &key (chunk-bytes 65536) (max-bytes 268435456) (max-batches 65536)
+                                   (max-records 1048576) (max-batch-records 65536) (max-batch-bytes 67108864)
+                                   (max-prepared 65536) (max-outcomes 65536) (max-esiti-chiusura 65536))
+  "Pre: recovery esclusivo, CONTROL e FD CLOSED autorevoli, file/namespace congelati e scratch privato.
+Post: stesso FD readonly, header e prefisso esatto dal manifest verificati; ID u64 senza restrizioni GET.
+Writer: lotti interi e prepared risolti da OUTCOME/EDIT; compaction: soli record ordinari verificati.
+Non legge oltre P, misura EOF, classifica TAIL, costruisce indici o modifica file/CSN/pubblicazione.
+Condizioni originali propagate senza retry o close; risultato consegnato solo con dipendenze aperte."
+  (let ((prefix (verifica-lettura-closed control input id scratch chunk-bytes max-bytes max-batches
+                                        max-batch-records max-batch-bytes max-esiti-chiusura)))
+    (multiple-value-bind (version origin) (leggi-header-closed control input id scratch)
+      (leggi-corpo-closed input prefix scratch chunk-bytes)
+      (case origin
+        (#.+writer-origin+
+         (recupera-closed-writer control input id prefix version scratch max-batches max-records
+                                 max-batch-records max-batch-bytes max-prepared max-outcomes))
+        (#.+compaction-origin+
+         (let ((count (verifica-compattato-closed control scratch prefix id version max-bytes max-records)))
+           (arcdocdb.io::esigi-aperto input :input)
+           (arcdocdb.io::esigi-aperto (arcdocdb.control::control-recuperato-input control) :input)
+           (%make-closed-recuperato control input id prefix version origin 0 count 0 0 0 0)))
+        (otherwise (error 'invariant-violation :reason :closed-recovery-origin))))))

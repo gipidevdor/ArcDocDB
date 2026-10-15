@@ -12,6 +12,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   stato, ragione e metadati originali; pubblicazione senza seconda presa,
   CLOSING e guasti restano espliciti al caller.
 
+- Recovery readonly dei CLOSED dal CONTROL autorevole: lettura solo fino a P,
+  verifica writer/compaction e prepared risolti da OUTCOME o chiusura EDIT,
+  senza decision log globale. Controllo dell'insieme completo prima del
+  publisher canonico, ID u64 senza troncamento; qualifica C1 dedicata aperta.
+
 - Verifica dedicata del decision log dell'Archivio: preflight, identità,
   query, ownership e collegamento al recovery ACTIVE, con catena nativa
   fino alla pubblicazione CONTROL nei formati v1/v2. Copertura separata

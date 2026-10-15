@@ -134,7 +134,10 @@
                              (:file "build") (:file "query") (:file "active")))
                (:module "recovery-checkpoint" :serial t
                 :components ((:file "package") (:file "preflight") (:file "order")
-                             (:file "sections") (:file "build"))))
+                             (:file "sections") (:file "build")))
+               (:module "recovery-closed" :serial t
+                :components ((:file "package") (:file "types") (:file "read") (:file "verify")
+                             (:file "resolve") (:file "build") (:file "publication"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

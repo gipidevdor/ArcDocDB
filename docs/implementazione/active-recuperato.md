@@ -144,6 +144,10 @@ CSN o scrittura condivisa tra Serie viene introdotto.
 
 ## Decisioni da qualificare
 
+Il [metodo delle prove funzionali](active-recovery-metodo.md) registra
+la verifica integrata readonly, degli esiti e del collegamento al publisher.
+Esiti e limiti delle esecuzioni restano distinti dalla matrice C1 completa.
+
 | ID | Decisione | Casi |
 |---|---|---|
 | ARV-D01 | chunk positivo e byte budget almeno header | ciascuna falsa, entrambe vere; size 63/64; soglie byte |

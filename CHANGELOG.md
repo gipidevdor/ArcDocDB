@@ -7,6 +7,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Suite dedicata al recupero del vecchio ACTIVE: file nativi v1/v2,
+  risoluzione OUTCOME/DECISION, prefisso e coda, budget, chiusura CLOSED
+  e collegamento al publisher del control log con oracoli indipendenti.
+
 - Rendezvous delle fixture concorrenti residue CBOR, UTF-8 e due Serie:
   checkpoint dopo il primo lavoro effettivo, mantenendo conteggi, sink e
   oracoli. Diagnostica prima delle asserzioni temporali; intervalli WALL

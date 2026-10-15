@@ -5,7 +5,7 @@
 (declaim (optimize (safety 3) (debug 2)))
 
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-AFF-008
-(declaim (ftype (function (simple-base-string simple-base-string) boolean)
+(declaim (ftype (function (simple-base-string simple-string) boolean)
                 inventory-name-suffix-p))
 (defun inventory-name-suffix-p (name suffix)
   "Pre: nomi stabili con byte rappresentati senza conversioni. Post: suffisso ASCII senza distinzione di case.

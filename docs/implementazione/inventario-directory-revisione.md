@@ -8,7 +8,7 @@ sul collegamento al planner. Il metodo e i casi sono in
 Le fonti finali della lettura sono `native-directory.lisp` SHA-256
 `77cb85183a5d036c0abde487112a39d67c6a46e02b04c36dcb7ec9b96fbce9d0`
 e `inventory-directory.lisp`
-`6bae703f2569fe5c8adff8f2adbf5b53aff0e555a7c0dc00507876b3fa0d030c`.
+`30fe064d636baefdb5366daabdc96e7dc9766a06808ee4b70045e312c20a6a60`.
 Gli altri file sono identificati dai blob del commit delle esecuzioni.
 
 | Controllo | Esito statico |
@@ -30,6 +30,10 @@ La rilettura ha reso espliciti i rami normali dei `cond` e ristretto i
 motivi del risultato nativo. Il binding della codifica è una variabile
 speciale SB-EXT ereditata da SB-ALIEN: verificato nel runtime e nelle
 fonti installate, senza introdurre un convertitore alternativo.
+La prima compilazione ha inoltre rilevato un tipo troppo stretto per il
+suffisso letterale: il suo argomento usa ora `simple-string`, mentre il
+nome posseduto dall'I/O resta `simple-base-string`. La patch minima è stata
+riletta separatamente; il tentativo fallito precede tutti i test ed è conservato.
 
 ## Limiti
 

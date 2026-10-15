@@ -45,6 +45,11 @@ collegamento e la completezza restano precondizioni esplicite. Una tabella
 parziale, di un altro Archivio o costruita solo per rappresentare «nessuna
 decisione» non autorizza presumed abort. Non esiste fallback da `nil`.
 
+Il nuovo ingresso [`leggi-active-con-decisioni`](decisioni-recuperate.md)
+riceve il risultato completo del lettore readonly del decision log e
+verifica lo stesso ambito canonico dell'Archivio prima dell'I/O ACTIVE.
+La precondizione sulla tabella nuda resta per l'API precedente.
+
 Il risultato trattiene control log recuperato, capacità del segmento e
 scalari; gli esiti derivati occupano due array u64 privati. Non trattiene
 scratch, workspace o tabella dell'Archivio. Il controller mantiene il FD
@@ -164,7 +169,8 @@ CSN o scrittura condivisa tra Serie viene introdotto.
 Le [prove locali](../../spikes/results/2026-10-14-active-recovery/README.md)
 riguardano compilazione e controlli statici. Qualifica C1, revisione
 indipendente, prove funzionali/FI e misure dei nuovi ingressi restano aperte.
-Restano inoltre da integrare il lettore del decision log legato all'Archivio,
+Il [lettore del decision log legato all'Archivio](decisioni-recuperate.md)
+è ora disponibile con qualifica dedicata ancora aperta. Restano da integrare
 la riconciliazione dei CLOSED, il builder completo del checkpoint, gli
 indici/orizzonte CSN e il gate di ammissione del Recovery Manager.
 Questo risultato non autorizza da solo a dimenticare decisioni globali o

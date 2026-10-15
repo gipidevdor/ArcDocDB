@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Preparazione bounded di un tratto pool/Serie: selezione e un solo begin
+  sul link corrente, senza secondo routing. Sette valori conservano token,
+  stato, ragione e metadati originali; pubblicazione senza seconda presa,
+  CLOSING e guasti restano espliciti al caller.
+
 - Verifica dedicata del decision log dell'Archivio: preflight, identità,
   query, ownership e collegamento al recovery ACTIVE, con catena nativa
   fino alla pubblicazione CONTROL nei formati v1/v2. Copertura separata

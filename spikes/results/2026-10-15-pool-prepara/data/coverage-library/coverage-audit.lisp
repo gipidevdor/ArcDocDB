@@ -1,0 +1,39 @@
+(:SCHEMA-VERSION 1 :KIND :POOL-LIFECYCLE-COVERAGE-AUDIT :STATUS :OK :SCOPE
+ :ENTIRE-NEW-LIFECYCLE-PLUS-PACKAGE :NATIVE-PATH
+ #A((122) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/pool-start/coverage-attempt-01/coverage-state.lisp")
+ :HTML-PATH
+ #A((119) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/pool-start/coverage-attempt-01/cover-index.html")
+ :FILES
+ ((:FILE #A((23) BASE-CHAR . "src/dispatch/begin.lisp") :EXPRESSIONS-HIT 21
+   :EXPRESSIONS-TOTAL 21 :BRANCHES-HIT 0 :BRANCHES-TOTAL 0 :MISSING NIL)
+  (:FILE #A((23) BASE-CHAR . "src/dispatch/build.lisp") :EXPRESSIONS-HIT 24
+   :EXPRESSIONS-TOTAL 24 :BRANCHES-HIT 2 :BRANCHES-TOTAL 2 :MISSING NIL)
+  (:FILE #A((23) BASE-CHAR . "src/dispatch/claim.lisp") :EXPRESSIONS-HIT 45
+   :EXPRESSIONS-TOTAL 49 :BRANCHES-HIT 0 :BRANCHES-TOTAL 0 :MISSING
+   ((:NATIVE-INDEX 31 :KIND :EXPRESSION :PATH (1 4 3 3 4 3))
+    (:NATIVE-INDEX 32 :KIND :EXPRESSION :PATH (1 1 4 3 3 4 3))
+    (:NATIVE-INDEX 33 :KIND :EXPRESSION :PATH (2 1 4 3 3 4 3))
+    (:NATIVE-INDEX 34 :KIND :EXPRESSION :PATH (3 1 4 3 3 4 3))))
+  (:FILE #A((25) BASE-CHAR . "src/dispatch/package.lisp") :EXPRESSIONS-HIT 1
+   :EXPRESSIONS-TOTAL 1 :BRANCHES-HIT 0 :BRANCHES-TOTAL 0 :MISSING NIL)
+  (:FILE #A((25) BASE-CHAR . "src/dispatch/recycle.lisp") :EXPRESSIONS-HIT 45
+   :EXPRESSIONS-TOTAL 49 :BRANCHES-HIT 0 :BRANCHES-TOTAL 0 :MISSING
+   ((:NATIVE-INDEX 39 :KIND :EXPRESSION :PATH (1 4 2 3 3 4 6))
+    (:NATIVE-INDEX 40 :KIND :EXPRESSION :PATH (1 1 4 2 3 3 4 6))
+    (:NATIVE-INDEX 41 :KIND :EXPRESSION :PATH (2 1 4 2 3 3 4 6))
+    (:NATIVE-INDEX 42 :KIND :EXPRESSION :PATH (3 1 4 2 3 3 4 6))))
+  (:FILE #A((23) BASE-CHAR . "src/dispatch/start.lisp") :EXPRESSIONS-HIT 54
+   :EXPRESSIONS-TOTAL 54 :BRANCHES-HIT 4 :BRANCHES-TOTAL 4 :MISSING NIL)
+  (:FILE #A((22) BASE-CHAR . "src/dispatch/step.lisp") :EXPRESSIONS-HIT 51
+   :EXPRESSIONS-TOTAL 51 :BRANCHES-HIT 0 :BRANCHES-TOTAL 0 :MISSING NIL)
+  (:FILE #A((23) BASE-CHAR . "src/dispatch/types.lisp") :EXPRESSIONS-HIT 40
+   :EXPRESSIONS-TOTAL 40 :BRANCHES-HIT 8 :BRANCHES-TOTAL 8 :MISSING NIL))
+ :LIFECYCLE-TOTAL (281 289 14 14) :MINIMUM-PERCENT 95 :HTML-COUNTS
+ (("src/dispatch/begin.lisp" 21 21 0 0) ("src/dispatch/build.lisp" 24 24 2 2)
+  ("src/dispatch/claim.lisp" 45 49 0 0) ("src/dispatch/package.lisp" 1 1 0 0)
+  ("src/dispatch/recycle.lisp" 45 49 0 0) ("src/dispatch/start.lisp" 54 54 4 4)
+  ("src/dispatch/step.lisp" 51 51 0 0) ("src/dispatch/types.lisp" 40 40 8 8))
+ :HTML-COUNTS-ORIGIN :PARSED-SB-COVER-INDEX :SELF-TEST :PASSED :EXCLUSIONS NIL
+ :MCDC-INFERRED NIL)

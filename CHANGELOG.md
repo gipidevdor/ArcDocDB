@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Prove dedicate del recovery ACTIVE: lettura readonly, risoluzione dei
+  prepared, chiusura deterministica e pubblicazione su file reali v1/v2.
+  Oracoli indipendenti, fault injection, copertura e misure separate
+  conservati nella campagna `2026-10-15-active-verifica`.
+
 - Rendezvous delle fixture concorrenti residue CBOR, UTF-8 e due Serie:
   checkpoint dopo il primo lavoro effettivo, mantenendo conteggi, sink e
   oracoli. Diagnostica prima delle asserzioni temporali; intervalli WALL

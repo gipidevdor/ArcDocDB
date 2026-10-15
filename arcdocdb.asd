@@ -206,7 +206,7 @@
                              (:file "transfer-failure")))
                (:module "control" :serial t
                 :components ((:file "support") (:file "publication") (:file "native")
-                             (:file "recovery-read") (:file "recovery-publication")))
+                             (:file "recovery-read") (:file "recovery-publication") (:file "recovery-guards")))
                (:module "recovery"
                 :serial t
                 :components ((:file "support") (:file "scan") (:file "corruption")
@@ -214,6 +214,8 @@
                              (:file "decisions-audit") (:file "decisions-radix") (:file "manifest-support")
                              (:file "manifest") (:file "manifest-audit") (:file "manifest-transition")
                              (:file "inventory-support") (:file "inventory")))
+               (:module "recovery-active" :serial t
+                :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
@@ -255,6 +257,7 @@
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.control.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.recovery.active.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)

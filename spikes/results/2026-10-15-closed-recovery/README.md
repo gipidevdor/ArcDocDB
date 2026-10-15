@@ -42,3 +42,9 @@ Conserva tutte le voci del changelog e i collegamenti delle campagne.
 Ripete compilazione del prodotto e controlli statici, registrati separatamente.
 Le suite importate non sono eseguite localmente in questa campagna e non
 qualificano il nuovo lettore CLOSED; la CI del commit pubblicato resta distinta.
+
+Un'integrazione successiva comprende `b2536f61`, qualifica del lettore
+Archivio e bridge ACTIVE. I controlli registrati prima restano attribuiti
+ai loro sorgenti congelati: il controllo del catalogo non copre queste
+aggiunte successive. Il record CI finale è distinto. Il lettore Archivio
+separa ora chiamate I/O e verifiche dei ritorni, senza cambiare le API.

@@ -225,6 +225,9 @@
                              (:file "inventory-support") (:file "inventory")))
                (:module "recovery-active" :serial t
                 :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
+               (:module "recovery-active-checkpoint" :serial t
+                :components ((:file "support") (:file "semantics") (:file "guards")
+                             (:file "publication")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
@@ -268,6 +271,7 @@
              (uiop:symbol-call '#:arcdocdb.control.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.active.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.recovery.active.checkpoint.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)

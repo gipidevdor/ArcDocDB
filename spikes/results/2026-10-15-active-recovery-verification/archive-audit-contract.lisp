@@ -1,0 +1,20 @@
+(:schema-version 1 :kind :archive-audit-contract
+ :source-commit "b92c1a25619279f1d4e1244fc970b3829c0ecca4"
+ :expected-groups ("core-R1-outer" "core-R1-inner" "core-R1-whole-cache" "core-R2-outer" "core-R2-inner" "core-R2-whole-cache" "core-R3-outer" "core-R3-inner" "core-R3-whole-cache" "reader-fixtures" "snapshot-fixtures" "spike-aggregate" "SPK-01-whole-cache" "SPK-02-whole-cache" "SPK-03-whole-cache" "SPK-04-whole-cache" "SPK-05-whole-cache" "SPK-06-whole-cache" "SPK-07-whole-cache" "SPK-08-whole-cache" "SPK-09-whole-cache" "SPK-10-whole-cache" "counter-947" "counter-b92" "syntax-947" "full-semantic-b92" "names-initial-reader-failure" "names-b92-qualified" "counter-source" "counter-runtime" "semantic-source" "semantic-runtime" "names-source" "publication-source")
+ :expected-processes (
+  ("core-R1-outer" :failed 2 :stable)
+  ("core-R1-inner" :failed 2 :stable)
+  ("core-R2-outer" :failed 2 :stable)
+  ("core-R2-inner" :failed 2 :stable)
+  ("core-R3-outer" :ok 0 :stable)
+  ("core-R3-inner" :ok 0 :stable)
+  ("counter-947" :ok 0 :stable)
+  ("counter-b92" :ok 0 :stable)
+  ("syntax-947" :ok 0 :stable)
+  ("full-semantic-b92" :ok 0 :stable)
+  ("names-initial-reader-failure" :failed 1 :stable)
+  ("names-b92-qualified" :ok 0 :stable)
+ )
+ :required-fasl-groups ("core-R1-whole-cache" "core-R2-whole-cache" "core-R3-whole-cache")
+ :native-reports (("raw/semantic-runtime/full-R3-audit.lisp" :cbor-interleaving-functional-native-audit :ok))
+ :limits (:historical-compilation-failures-not-reclassified :initial-names-parser-failure-retained :r3-only-qualified-functional-result :all-fasl-as-byte-data :full-inventories-and-two-fresh-hash-passes :no-ci-or-c1-or-performance-or-global-mcdc-claim))

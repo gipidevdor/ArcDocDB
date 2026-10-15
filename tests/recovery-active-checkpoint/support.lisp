@@ -2,7 +2,7 @@
 ;;;; OWNER: CT registra tutti i FD/leaf e conserva la causa originale nel cleanup.
 ;;;; PRE: identita Archivio e completezza del suo log sono fatti dichiarati della fixture.
 ;;;; Nessun inventario globale o wrapper/tabella di prodotto fabbricati; nessun override globale.
-(defpackage #:arcdocdb.recovery.active.tests
+(defpackage #:arcdocdb.recovery.active.checkpoint.tests
   (:use #:cl)
   (:local-nicknames (#:ra #:arcdocdb.recovery.active) (#:ct #:arcdocdb.control.tests)
                    (#:rt #:arcdocdb.recovery.tests) (#:io #:arcdocdb.io)
@@ -13,7 +13,7 @@
                 #:corruption-detected #:invariant-violation #:unsupported-format
                 #:io-fault #:error-reason #:error-offset)
   (:export #:run))
-(in-package #:arcdocdb.recovery.active.tests)
+(in-package #:arcdocdb.recovery.active.checkpoint.tests)
 (declaim (optimize (safety 3) (speed 2) (debug 3)))
 
 (defvar *tests* nil)

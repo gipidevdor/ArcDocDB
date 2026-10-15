@@ -3,7 +3,7 @@
 ;;; SHARED: solo lettura dei risultati; cleanup dopo l'intera chiamata.
 ;;; Oracoli: CLOSED2/128 storico, REMOVED3, nuovo ACTIVE13/next14,
 ;;; vecchio ACTIVE9 chiuso al prefisso noto con soli (101,0)/(102,4294967298).
-(in-package #:arcdocdb.recovery.active.tests)
+(in-package #:arcdocdb.recovery.active.checkpoint.tests)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 (defun ra-publication-case (version thunk &key tail)

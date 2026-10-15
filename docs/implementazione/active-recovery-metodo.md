@@ -5,6 +5,14 @@ Metodo registrato prima delle esecuzioni per il modulo
 [active-recuperato.md](active-recuperato.md). L'incremento aggiunge una suite
 dedicata; usa lettori, decoder e publisher esistenti.
 
+La suite corrente è in `tests/recovery-active-checkpoint/`, nel package
+`arcdocdb.recovery.active.checkpoint.tests`. Il primo congelamento
+`b92c1a25619279f1d4e1244fc970b3829c0ecca4` e le relative prove conservate
+usavano `tests/recovery-active/` e `arcdocdb.recovery.active.tests`.
+La successiva integrazione di una campagna distinta su `main` ha richiesto
+di isolare questa suite: restano invariati i 27 nomi e i corpi dei test.
+La CI del nuovo commit verifica insieme entrambe le suite.
+
 ## Autorità e risorse
 
 Ogni fixture possiede un namespace temporaneo esclusivo, file nativi,

@@ -1,7 +1,7 @@
 ;;;; Nominali readonly su FD reali: fatti attesi dichiarati prima del setup.
 ;;; OWNER: ogni ra-with-case possiede file, scratch e tabella completa della fixture.
 ;;; SHARED: nessun override, writer concorrente o pubblicazione fra Serie.
-(in-package #:arcdocdb.recovery.active.tests)
+(in-package #:arcdocdb.recovery.active.checkpoint.tests)
 
 (defun ra-sem-bytes (&rest values)
   "Ottetti dichiarativi di input, indipendenti dai codec del prodotto."

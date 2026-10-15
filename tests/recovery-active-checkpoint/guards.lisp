@@ -2,7 +2,7 @@
 ;;; OWNER: runner seriale; fixture, scratch e deadline esclusivi per chiamata.
 ;;; SHARED: nessuna sostituzione globale o tabella DECISION parziale/fittizia.
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-TXM-005 REQ-TXM-007 REQ-AFF-002 REQ-AFF-008 REQ-AFF-009
-(in-package #:arcdocdb.recovery.active.tests)
+(in-package #:arcdocdb.recovery.active.checkpoint.tests)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-REC-001 REQ-AFF-008

@@ -95,3 +95,32 @@ Non sono una misura di speedup, un'esplorazione esaustiva di interleaving,
 una prova universale su memoria debole o una misura di allocazione.
 Non vengono applicati payload del database né eseguiti commit/I/O durevoli.
 I timeout sono budget della fixture, non target di latenza del prodotto.
+
+## Chiusura e integrazione della suite recovery
+
+La [pubblicazione](../../spikes/results/2026-10-15-pool-catena/processes/publication/report.lisp)
+è OK/STABLE/exit 0, 85,510822 s, 964 sorgenti e stderr vuoto.
+Dopo la correzione della copia locale, il
+[secondo controllo finale](../../spikes/results/2026-10-15-pool-catena/processes/final-verification/report.lisp)
+è OK/STABLE/exit 0, 200,360344 s, 964 sorgenti e stderr vuoto:
+471 Markdown, 3.184 link senza rotture; 122 cataloghi, 3.561 riferimenti,
+41.484 file e 1.104.173.105 byte. Questi conteggi precedono le copie di
+chiusura, i nuovi collegamenti di questa sezione e l'integrazione seguente.
+
+La [PR 15](https://github.com/gpicchiarelli/ArcDocDB/pull/15), head
+`49e66e14f8cade401978b9b969a97989995bcb77`, aggiunge 27 test recovery
+in un package distinto, ASDF e documentazione; nessuna modifica a `src/`,
+agli strumenti o alla CI. Il merge locale
+`284b1248` conserva entrambe le voci del changelog e le due suite.
+Il [controllo successivo](../../spikes/results/2026-10-15-pool-catena/processes/post-pr-integration/report.lisp)
+è OK/STABLE/exit 0, 56,903611 s, 969 sorgenti: **1.651 test nominati e
+2 smoke**, 237 file lint/0 violazioni, 122 requisiti/65 invarianti/13 FI/
+52 ADR senza errori, 473 Markdown/3.191 link/0 rotti. Compilazione stretta
+senza avvisi; stderr di note conservato integralmente (1.248.665 byte UTF-8).
+I file nuovi della catena e il metodo rimangono identici al congelamento;
+ASDF e changelog finali sono conservati nel bundle di chiusura.
+
+Il [manifesto di chiusura](../../spikes/results/2026-10-15-pool-catena/chiusura-01.lisp)
+aggiunge i tre registri originali senza riscrivere quelli precedenti,
+conserva stati, descriptor/payload e sorgenti finali. Non trasforma la
+qualifica locale di questa catena in qualifica dell'intero motore.

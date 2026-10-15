@@ -1,6 +1,21 @@
 (:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG :COMPONENT :WRITER-WORKER :BASE
  "a34cede6fbc9215908d50aa85311d5d703660040" :HISTORICAL-BASES NIL :ENTRIES
- ((:ARTIFACT "manifesto-file.lisp" :PATH
+ ((:ARTIFACT "chiusura-01-file.lisp" :PATH
+   #A((120) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-catena/chiusura-01-file.lisp")
+   :BYTES 14375 :SHA256 "0e67b51778468ecde88e476e9e5890fb09067175ae47e3f7b874328b6ce7a4d8"
+   :GIT-BLOB "d7260b3e8e389c3aeb31d55a4b03446e4e7c79e7")
+  (:ARTIFACT "chiusura-01-sources.lisp" :PATH
+   #A((123) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-catena/chiusura-01-sources.lisp")
+   :BYTES 96508 :SHA256 "d760563697a4f9427b459dde63ed6364b0362d9d77c49167662ddefad9c5d022"
+   :GIT-BLOB "e056eac28187bda4f0ab84b1bed77f03da2e4e31")
+  (:ARTIFACT "chiusura-01.lisp" :PATH
+   #A((115) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-catena/chiusura-01.lisp")
+   :BYTES 5314 :SHA256 "0575a60cffcb863fc47ea4276f5de9330ae77755ada2b2504f5708a33b53fee6" :GIT-BLOB
+   "341b529e8cf45bb3251b96b85def46a885f19ec1")
+  (:ARTIFACT "manifesto-file.lisp" :PATH
    #A((118) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-catena/manifesto-file.lisp")
    :BYTES 9451 :SHA256 "9e88001b33a94a7b46245acf6e4d87e3890f99b7173cff1da160af0f4030c101" :GIT-BLOB

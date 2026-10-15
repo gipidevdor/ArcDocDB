@@ -1,0 +1,11 @@
+(:schema-version 1 :kind :command-archive-manifest :date "2026-10-15" :files (
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/4001083273-command-14356-0/report.lisp" :path "processes/documentation/report.lisp")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/4001083273-command-14356-0/conservazione.lisp" :path "processes/documentation/conservazione.lisp")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/README.md" :path "raw/integrated/README.md.txt")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/CHANGELOG.md" :path "raw/integrated/CHANGELOG.md.txt")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/docs/roadmap.md" :path "raw/integrated/docs/roadmap.md.txt")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/docs/implementazione/prova-verticale.md" :path "raw/integrated/docs/implementazione/prova-verticale.md.txt")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/docs/tracciabilita/requisiti.lisp" :path "raw/integrated/docs/tracciabilita/requisiti.lisp.txt")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/docs/tracciabilita/matrice.md" :path "raw/integrated/docs/tracciabilita/matrice.md.txt")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/docs/adr/0053-ricerca-full-text-indici-invertiti.md" :path "raw/integrated/docs/adr/0053-ricerca-full-text-indici-invertiti.md.txt")
+(:source "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/vertical-resume-integration-results.txt" :path "README.md")) :processes ((:label "documentation" :record-path "processes/documentation/report.lisp")))

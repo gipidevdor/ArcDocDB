@@ -54,6 +54,8 @@ Le [evidenze della ripresa](../../spikes/results/2026-10-15-vertical-resume/READ
 conservano anche i tentativi falliti della fixture.
 La [verifica completa finale](../../spikes/results/2026-10-15-vertical-resume-verifica/README.md)
 conserva `make check`, le sorgenti verificate e i risultati dei dieci spike.
+La successiva [integrazione documentale del full text](../../spikes/results/2026-10-15-vertical-resume-integrazione/README.md)
+verifica la tracciabilità aggiornata, mantenendo distinti i nuovi requisiti progettati.
 
 ## Confine rispetto al prodotto
 

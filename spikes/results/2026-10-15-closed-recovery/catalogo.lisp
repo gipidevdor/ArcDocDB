@@ -73,4 +73,27 @@
   (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-finale-sorgente.lisp" :VARIANT
    :VERBATIM-SOURCE-TEXT)
   (:KIND :LOCAL-STATIC-READING :ARTIFACT "lettura-io.lisp" :VARIANT
-   :IO-BEFORE-PURE-CHECK)))
+   :IO-BEFORE-PURE-CHECK)
+  (:KIND :COMPILE-ONLY :ARTIFACT
+   #A((26) BASE-CHAR . "compilazione-archivio.lisp") :PROCESS-ARTIFACT
+   #A((40) BASE-CHAR . "compilazione-archivio-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINT :ARTIFACT #A((19) BASE-CHAR . "stile-archivio.lisp")
+   :PROCESS-ARTIFACT #A((33) BASE-CHAR . "stile-archivio-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-TRACE :ARTIFACT
+   #A((27) BASE-CHAR . "tracciabilita-archivio.lisp") :PROCESS-ARTIFACT
+   #A((41) BASE-CHAR . "tracciabilita-archivio-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-LINKS :ARTIFACT
+   #A((26) BASE-CHAR . "collegamenti-archivio.lisp") :PROCESS-ARTIFACT
+   #A((40) BASE-CHAR . "collegamenti-archivio-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :STATIC-DISASSEMBLY :ARTIFACT
+   #A((25) BASE-CHAR . "disassemblato-finale.lisp") :PROCESS-ARTIFACT
+   #A((39) BASE-CHAR . "disassemblato-finale-conservazione.lisp") :VARIANT
+   :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-archivio-byte.lisp" :VARIANT
+   :ORIGINAL-BYTE-COMPARISON)
+  (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-archivio-sorgente.lisp" :VARIANT
+   :VERBATIM-SOURCE-TEXT)))

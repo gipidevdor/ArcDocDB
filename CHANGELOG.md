@@ -19,6 +19,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   dei segmenti originali e controllo negativo dell'oracolo. Coordinamento
   e replay dell'indice sono C4; nessuna promozione del motore completo.
 
+- Preparazione bounded di un tratto pool/Serie: selezione e un solo begin
+  sul link corrente, senza secondo routing. Sette valori conservano token,
+  stato, ragione e metadati originali; pubblicazione senza seconda presa,
+  CLOSING e guasti restano espliciti al caller.
+
 - Strumento riusabile di raccolta delle prove: manifest esplicito, copie con
   quattro worker, record conclusi anche falliti e controllo indipendente
   dell'inventario chiuso prima dell'esito positivo.

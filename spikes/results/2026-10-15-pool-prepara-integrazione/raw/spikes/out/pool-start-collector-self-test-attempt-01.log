@@ -1,0 +1,1 @@
+:OK: sbcl --noinform --no-userinit --no-sysinit --script tools/collect-command-archive.lisp --self-test; record: /Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/4001079828-command-90148-0/report.lisp

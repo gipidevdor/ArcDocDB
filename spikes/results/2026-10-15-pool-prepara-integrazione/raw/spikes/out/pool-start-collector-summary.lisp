@@ -1,0 +1,8 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((r (arcdocdb.evidence:read-evidence #p"spikes/out/4001079828-command-90148-0/report.lisp"))
+       (*read-eval* nil)
+       (data (read-from-string (getf r :stdout))))
+  (write (list :status (getf data :status) :case-count (getf data :case-count)
+               :checks (getf data :checks) :fixtures-preserved (getf data :fixtures-preserved)))
+  (terpri))

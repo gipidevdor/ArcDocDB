@@ -137,3 +137,19 @@ Il [manifesto conclusivo](../../spikes/results/2026-10-15-pool-prepara/chiusura-
 conserva i due registri originali e le loro capacità di lettura compressa,
 insieme alle sorgenti finali e agli script della chiusura. Non riscrive né
 promuove gli esiti delle campagne precedenti.
+
+## Integrazione finale degli strumenti C4
+
+È stato poi integrato il collector del parent
+`7c7255fad65336f7a7fff361ba569ad12fec1537`. Prodotto, test, ASDF e CI sono
+identici al controllo finale già riportato; gli strumenti precedenti non
+sono modificati. Makefile aggiunge il self-test del nuovo collector.
+Il [record aggiuntivo](../../spikes/results/2026-10-15-pool-prepara-integrazione/processes/collector-self-test/report.lisp)
+è OK/STABLE/exit 0, 159,863601 s, 996 sorgenti e stderr vuoto:
+59 casi, 2.807 controlli, fixture conservate. Nessuna campagna del prodotto
+viene promossa da questa verifica C4.
+Il [supplemento chiuso](../../spikes/results/2026-10-15-pool-prepara-integrazione/archive-index.lisp)
+conserva il record originale e le sorgenti finali selezionate tramite manifest
+esplicito; la raccolta usa quattro worker e un checker indipendente.
+Le copie dei documenti mantengono i byte originali con suffisso `.md.txt`,
+così i collegamenti relativi restano riferiti alla documentazione originale.

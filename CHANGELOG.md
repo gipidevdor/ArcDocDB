@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Verifica integrata pool/dispatcher/Serie con due worker reali: 32 quantum
+  su una Serie mentre l'altra mantiene lease o debito batch, più ritiro con
+  ring pieno/libero e trasferimento del lavoro residuo a un altro worker.
+  Sei scenari sincronizzati; nessuna misura di speedup o modifica ai protocolli.
+
 - Lettura del primo item CBOR minimo con frontiera assoluta: coda non
   letta, budget della finestra autorizzata e scratch privato per worker.
   Consente di ricavare le frontiere degli item concatenati; qualifica C1

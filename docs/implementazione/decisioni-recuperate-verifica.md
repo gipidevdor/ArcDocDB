@@ -72,3 +72,10 @@ certifica il catalogo né impedisce scritture esterne. La qualifica locale
 non conclude C1, riconciliazione CLOSED, indici, orizzonte CSN, ammissione
 del traffico o il Recovery Manager completo. La revisione indipendente
 resta distinta dagli esiti runtime.
+
+## Integrazione con le altre suite
+
+La [campagna di integrazione](../../spikes/results/2026-10-15-decisioni-integrazione/report.md)
+registra separatamente il grafo che comprende anche le suite indipendenti
+del checkpoint ACTIVE e della catena pool/Serie arrivate durante la chiusura.
+Le evidenze della prima campagna restano immutate e attribuite alle loro revisioni.

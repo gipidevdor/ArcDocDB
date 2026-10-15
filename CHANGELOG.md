@@ -12,6 +12,15 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   fino alla pubblicazione CONTROL nei formati v1/v2. Copertura separata
   del modulo e registrazione di ogni tentativo nella campagna dedicata.
 
+- Verifica integrata pool/dispatcher/Serie con due worker reali: 32 quantum
+  su una Serie mentre l'altra mantiene lease o debito batch, più ritiro con
+  ring pieno/libero e trasferimento del lavoro residuo a un altro worker.
+  Sei scenari sincronizzati; nessuna misura di speedup o modifica ai protocolli.
+
+- Suite nativa indipendente del checkpoint dal vecchio ACTIVE: file v1/v2,
+  risoluzione OUTCOME/DECISION, prefisso e coda, budget, chiusura CLOSED
+  e collegamento al publisher del control log con oracoli indipendenti.
+
 - Lettura del primo item CBOR minimo con frontiera assoluta: coda non
   letta, budget della finestra autorizzata e scratch privato per worker.
   Consente di ricavare le frontiere degli item concatenati; qualifica C1

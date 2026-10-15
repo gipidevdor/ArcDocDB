@@ -1,0 +1,130 @@
+# Primo item CBOR — lettura DATA indipendente delle mutazioni
+
+Lettura C4 del 2026-10-15 dopo la conferma della conclusione della
+campagna. L'autore è responsabile del corpus freddo e distinto
+dall'autore del prodotto e del mutatore. Nessun LOAD/COMPILE/chiamata
+del prodotto, corpus o driver; nessun rerun. Solo strumenti di lettura
+delle prove e letture dei byte di sorgenti/log/copie conclusi.
+
+Wrapper concluso:
+`spikes/out/4001074008-command-2420-0/report.lisp`;
+rapporto interno `mutations/report.lisp` nel supporto dell'incremento.
+Entrambi sono letti come una sola plist DATA, READ-EVAL NIL ed EOF.
+
+## Campagna, baseline e origine dei rifiuti
+
+Wrapper schema1/COMMAND-VERIFICATION, **OK/exit0/STABLE**, stderr vuoto,
+HEAD `46aee8b920d447aafae4a4e47a44d13631c47cb1`, working-tree vuoto;
+**931 sorgenti unici before/after identici**, WALL **405.513322s**.
+Il comando è esattamente il driver congelato con `--run` e la nuova
+directory `mutations/`. I quattro pin prodotto/corpus corrispondono
+agli inventari esterni e ai file correnti prima/dopo la lettura.
+
+Rapporto interno schema1/CBOR-ITEM-READ-MUTATIONS, **OK**, worker-errors0,
+STABLE, **387 fingerprint MD5 unici before/after identici**.
+Lo scope effettivo è **382 file copiati +5 driver/cataloghi**;
+tutti i387 MD5 sono ricomputati sui file correnti prima/dopo la lettura.
+Non si confonde il denominatore interno con i931 sorgenti del wrapper.
+
+Baseline completa: status/result OK, exit0, segnale NIL, diagnostic NIL;
+**1547 righe `ok` uniche =1545 nominali+2 smoke**, inclusi i17 item.
+Entrambi gli smoke e un solo completamento esatto sono presenti;
+nessun Unhandled o marker warning/compilation-failure.
+
+Gli otto rifiuti hanno tutti **result DETECTED, detected T, exit1,
+segnale NIL, diagnostic NIL**. Il lettore ricostruisce indipendentemente
+i blocchi numerati della traccia, tenendo conto di stringhe/escape:
+entrambi gli smoke precedono Unhandled; dopo Unhandled esiste
+**un solo frame esatto a zero argomenti** di una funzione DEFTEST
+congelata. Non basta trovare il nome in una stringa, helper o frame
+con argomenti. Nessun completamento della build e nessun marker
+WARNING:, STYLE-WARNING:, compilation aborted, COMPILE-FILE-ERROR
+o COMPILE-FILE-WARNED nei nove log.
+
+| Mutante | Nominale esatto osservato (prefisso TEST-REQ-CBR-008-ITEM-) | Frame |
+| --- | --- | ---: |
+| generic-scan | CONCATENATED-FRONTIERS-AND-EXACT-SCANNERS-STILL-TRAILING |5|
+| drain-on-physical-end | LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL |8|
+| next-equals-end | LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL |6|
+| node-budget-ignored | ROOT-AND-TAG-CHAIN-NODE-BUDGET-WITHOUT-TAIL-NODES |5|
+| depth-budget-ignored | DEPTH-ZERO-AND-100-101-WITHOUT-TAIL-DEPTH |5|
+| byte-budget-ignored | CONFIGURED-LIMITS-AND-ALL-PREFLIGHT-PRECEDENCES |6|
+| start-skipped | LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL |10|
+| extra-return-value | LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL |6|
+
+Tutti i frame appartengono a `ARCDOCDB.CBOR.ITEM.READ.TESTS::`.
+Il sorgente delle mutazioni viene confrontato con il catalogo reale:
+campo **:UNIQUE-SOURCE-SUBSTITUTIONS**, otto tuple di quattro stringhe
+SOURCE/NAME/BEFORE/AFTER, un solo sorgente di prodotto. Non è stato
+inventato un campo TARGETS del catalogo; TARGETS è soltanto il campo
+effettivo del rapporto runtime e viene confrontato con le tuple.
+
+## Nove copie complete e riferimenti congelati
+
+L'inventario copiato di382 file è confrontato con l'inventario di
+`git ls-tree` del commit46aee8b9: ASDF, `tools/build.lisp`, tutti
+i sorgenti Lisp di `src/` e `tests/`. Ogni byte originale del contesto
+Git è confrontato con il corrispondente file corrente, quindi usato
+come riferimento indipendente per tutte le nove copie:
+**382×9=3438 confronti completi dei file copiati**.
+
+Baseline **zero differenze**. Ogni copia0..7 presenta **esattamente
+una differenza**, in `src/codec/cbor-item-read.lisp`; i byte devono
+essere esattamente quelli ottenuti applicando l'unica sostituzione
+BEFORE/AFTER del catalogo al sorgente originale. L'occorrenza BEFORE
+è verificata unica. Tutti gli altri381 file per mutante sono identici
+al contesto Git e alle fonti correnti congelate. Il mutante di arità
+mantiene FTYPE coerente a quattro valori e ritorna l'ulteriore NIL.
+
+Ogni copia ha un runner `tools/cbor-item-read-isolated-build.lisp`
+che imposta traduzioni ASDF dentro la propria root/cache FASL ed
+esclude la configurazione ereditata, poi carica il build rigoroso.
+Le **nove cache** sono esistenti, interne alle rispettive copie e
+distinte; i path reali dei sorgenti restano nella root della copia.
+Non è eseguita una nuova build per verificare ciò.
+
+Pin correnti e dichiarati verificati:
+
+| Artefatto | Blob Git |
+| --- | --- |
+| kernel |b9099dc8a8c96281063811e686deb4dcb2b1d39b|
+| corpus supporto |0326100362a1c4b24d2c7e511e45357f09a56d33|
+| corpus seriale |b2cbdcb4255c51d9da4fe73b28939c1cb923fefe|
+| corpus threads |a0da65545ed80ede0a967cadbb337731f6fe1ce9|
+| mutatore |8489ea798f0d83477e30e33b2ba34146296f9f66|
+| catalogo materializzato |72fd332903fa222ceb2caaa7bbf9f546d44525aa|
+| whitelist |8cb9ddf8b7ceb454600e64093640679d854be039|
+
+Whitelist, catalogo, nomi estratti dalle sole righe DEFTEST e rapporto
+runtime concordano sulle17 funzioni uniche. Scope1prodotto/3corpus,
+9901chiamate dichiarate nel piano e pin bench/audit concordano con
+catalogo e rapporto. La lettura non trasforma9901 in un contatore
+runtime della campagna mutata: ogni mutante si interrompe al rifiuto.
+
+## Lettore e conservazione
+
+Lettore `review/mutation-reading.lisp`, blob
+**e372f2eef18bf7012da6008828c81950376f3957**. Output
+`review/mutation-reading.output.txt`, **16454byte**, blob
+**bf988503a8473c9482754d0a933d8266695b3608**; stderr omonimo0byte,
+exit0, **23481 controlli C4**. L'output conserva i frame esatti,
+i path/caches delle nove copie, i quattro pin, le osservazioni fisiche
+selezionate e le conclusioni. Wrapper, rapporto, cataloghi, mutatore,
+whitelist, strumento di lettura, nove log/runner e otto sorgenti
+mutati mantengono byte/SHA256 tra ingresso e uscita. Tutti gli originali
+correnti sono ricontrollati dopo il confronto delle copie.
+
+Prima della conclusione della campagna è stato letto soltanto il
+catalogo congelato e preparato il lettore:38 forme DATA/EOF con
+READ-EVAL NIL, senza eseguirle o leggere report/log/copie in corso.
+Il primo adattatore `prepare-mutation-reading.lisp` fallì per una
+sostituzione ridondante già compiuta dalla sostituzione precedente;
+script e stdout/stderr originali sono conservati. Variante2 produce
+il lettore correttamente; nessuna precedente evidenza è sovrascritta.
+La prima esecuzione del lettore finale sui dati conclusi passa.
+
+Non si esegue una passata SHA256 di tutti i3438 file delle copie:
+questi sono confrontati integralmente come byte. Il rapporto non
+attesta autenticità, causa esclusiva del guasto, copertura totale,
+MC/DC, durabilità o qualifica del motore. Sono soltanto gli otto
+mutanti mirati preregistrati; qualifica C1/MC/DC e LIM-001/002 aperti.

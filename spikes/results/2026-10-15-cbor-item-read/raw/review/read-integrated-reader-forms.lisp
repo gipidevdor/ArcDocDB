@@ -1,0 +1,7 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let ((*read-eval* nil) (*readtable* (copy-readtable nil)) (*package* (find-package :cl-user))
+      (eof (gensym "EOF")) (count 0))
+  (with-open-file (in "spikes/out/cbor-item-read-20261015/review/integrated-runtime-reading.lisp" :external-format :utf-8)
+    (loop for form = (read in nil eof) until (eq form eof) do (incf count)))
+  (format t "~D forms read to EOF; no report or reader execution.~%" count))

@@ -16,6 +16,22 @@ raggiungibile senza motivo è un difetto di test o codice morto: va coperta o ri
 
 Nessuna eccezione è approvata. Le misure locali seguenti conservano il denominatore grezzo.
 
+## Recovery CONTROL — approfondimento del 2026-10-15
+
+Le forme non marcate nella [campagna precedente](../../spikes/results/2026-10-14-control-transizione/report.md)
+comprendono `in-package`, `declaim`, inizializzatori keyword e specifiche di
+slot del costruttore BOA, oltre al rifiuto privato di chunk zero.
+`tests/control/recovery-guards.lisp` esercita quest'ultimo senza I/O e
+controlla dinamicamente ciascun argomento invalido del costruttore, insieme
+ai due formati e ai due stati validi. Le istanze private non vengono passate
+al publisher; le prove sono deliberatamente fuori dal contratto pubblico.
+
+L'[approfondimento](../../spikes/results/2026-10-15-active-verifica/report.md)
+conserva un nuovo report grezzo e la distinzione fra forme dichiarative e
+percorsi eseguiti. Non si ricaricano i sorgenti per marcare artificialmente
+le dichiarazioni e non si sottrae alcuna forma dal denominatore. Nessuna
+eccezione è approvata e la qualifica MC/DC resta aperta.
+
 
 ## Inventario locale delle decisioni multiserie
 

@@ -1,0 +1,32 @@
+(defun main ()
+  "Un rapporto sul rifiuto; nessun prodotto, benchmark o campagna caricato."
+  (let ((report (list :schema-version 1 :kind :cbor-item-read-bench-audit :status :running
+                      :recorded-at (get-universal-time) :client-date "2026-10-15"
+                      :sbcl (lisp-implementation-version) :driver-blob +driver-blob+
+                      :method-blob +method-blob+ :item-source *item-source* :item-blob nil
+                      :limits '(:data-consistency-only :no-product-or-driver-loaded
+                                :no-authenticity-or-execution-proof :declared-source-inventory-only
+                                :expected-product-git-blob-supplied-by-caller :ignored-driver-bound-by-frozen-inner-md5
+                                :inner-product-md5-not-bound-to-git-blob :raw-runtime-dates-preserved
+                                :no-speed-or-scaling-threshold :local-before-after-byte-observations))))
+    (handler-case
+        (let ((args (rest sb-ext:*posix-argv*)))
+          (setf (getf report :result)
+                (cond ((equal args '("--self-test")) (self-test))
+                      ((and (= 3 (length args)) (string= "--bench" (first args)))
+                       (let ((*item-blob* (string-downcase (third args))))
+                         (require-check (hex-string-p *item-blob* 40) :expected-product-hash)
+                         (setf (getf report :item-blob) *item-blob*)
+                         (audit-file (second args))))
+                      (t (error 'audit-rejection :reason :usage
+                                :detail "Usare --self-test oppure --bench <wrapper> <item-blob>."))))
+          (setf (getf report :status) :ok))
+      (error (condition)
+        (setf (getf report :status) :failed
+              (getf report :reason) (if (typep condition 'audit-rejection)
+                                        (rejection-reason condition) :unexpected-error)
+              (getf report :diagnostic) (princ-to-string condition))))
+    (setf (getf report :checks) *checks*)
+    (let ((*print-readably* t)) (write report :pretty t) (terpri))
+    (unless (eq :ok (getf report :status)) (sb-ext:exit :code 1))))
+

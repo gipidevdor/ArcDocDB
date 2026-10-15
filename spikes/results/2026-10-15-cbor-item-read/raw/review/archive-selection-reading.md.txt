@@ -1,0 +1,73 @@
+# Selezione dell'archivio item — lettura C4 prima dell'esecuzione
+
+Lettura statica/DATA del 2026-10-15 del helper
+`collection/prepare-archive.lisp`, blob
+`2f2a6d84c2fe795b0f3435e85a52a43b49441ad0`, due forme READ/EOF.
+Nessun helper, manifest builder, collector, prodotto o campagna eseguito
+o modificato dal revisore. Nessun rilievo bloccante residuo sulla selezione.
+
+I13 marker `collection/record-*.txt` sono nomi espliciti, senza latest;
+ognuno indica un record concluso schema1/COMMAND-VERIFICATION,
+OK/exit0/STABLE,931fonti prima=dopo, HEAD46aee8b9. Coprono freeze,
+prima build/lint/trace/links, cinque self-test, benchmark, audit benchmark,
+copertura, check completo, mutazioni e compressione copertura.
+Il14° processo è il solo argomento CLI `--integration-report`, ancora
+futuro durante questa lettura: non è contato tra i13 record verificati.
+Il builder richiederà un record concluso e conserva anche FAILED;
+questa nota non dichiara già riuscita l'integrazione futura.
+
+Confermati cinque alberi base frozen/drivers/coverage/coverage-self-test/
+collection-self-test e tre alberi esterni:
+
+- `spikes/out/4001074204-check-12420-0/`, modalità lisp-and-log;
+- `spikes/out/4001073853-snapshot-self-test-90652-0/`, all;
+- `spikes/out/4001073853-reader-self-test-90682-0/`, all.
+
+I percorsi esterni coincidono con quelli dei dati del check completo
+già riletti. Nessun albero live review o collection viene selezionato:
+i file top-level di review/precompile sono aggiunti singolarmente.
+Directory FASL escluse; il builder rinomina MD raw in TXT senza cambiare
+i byte e gestisce i file FASL isolati negli alberi raw. Non si estende
+quest'ultimo filtro alle directory --process, che usano ALL.
+
+I cinque sidecar del self-test collector sono selezionati esplicitamente
+fuori da collection/self-test: log closed-check4001073788-87417-0,
+observation4001073784-87417-0,4001073794-87417-0,
+4001073799-87417-0 e4001073799-87417-1. I primi due sono riferiti nello
+stdout; gli altri tre sono DATA con motivi COPIED-BYTES,
+EXISTING-DESTINATION e DUPLICATE-TARGET. Non si afferma che tutti siano
+nominati nello stdout o che l'ordine dei filename sia quello dei motivi.
+
+La selezione mutazioni è **73file**: report più8file per ciascuna delle
+nove copie baseline/0..7. Comprende log, ASD, build, runner isolato e i
+quattro sorgenti prodotto/corpus item. Le nove copie complete non sono
+incluse nell'archivio pubblico; il coordinatore deve conservarle nel
+backup locale verificato. La loro integrità non viene ricontrollata qui.
+
+Il controllo dimensioni sulle411origini fisiche attualmente enumerate
+non trova violazioni: massimo plain293428byte (wrapper mutazioni),
+massimo gzip466971byte (aggregato spike). Budget plain1MiB/gzip8MiB.
+È una lettura dello stato corrente, distinta da conteggio definitivo
+delle destinazioni e preflight dell'indice. Il report finale e la sua
+directory, la futura nota d'integrazione, questa nota e results-draft
+non sono dichiarati già misurati. Il preflight finale deve verificare
+tutta la selezione e l'indice effettivo entro1MiB prima delle copie.
+
+Il helper richiede la presenza di sette note, incluse questa e la futura
+final-integration-reading.md. Probe-file prova presenza, non freeze:
+tutti gli autori review/precompile e results-draft devono terminare e
+congelare i propri file prima dell'esecuzione. Nessun numero preliminare
+può sostituire il manifest effettivo, le tre impronte per copia e la
+chiusura rigorosa successiva. Append seriali e conservazione originali
+restano fasi ulteriori; questa lettura non le anticipa.
+
+Lettore finale `archive-selection-reading-v3.lisp`, blob
+`2cb59fdf93bc26e213158a5d68f2f79a6a93484f`; output
+`ba79c1ad3dd6f1cfbf52c0e228a59cba1c6905b7`, exit0, stderr vuoto.
+Lettura con READ-EVAL NIL/readtable standard/EOF e trusted evidence reader.
+Le prime due preparazioni sono preservate con output/error: la prima
+richiedeva erroneamente tutti e cinque i filename nello stdout; la
+seconda assumeva un ordine dei tre motivi non promesso dai metadata.
+La variante3 verifica i due riferimenti e l'insieme esatto dei tre motivi.
+Nessun input o helper corretto. Nota, lettori e preparazioni congelati;
+nessuna qualifica C1/MC/DC, autenticità o completezza futura dedotta.

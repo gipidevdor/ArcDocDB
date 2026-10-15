@@ -1,0 +1,17 @@
+(deftest test-REQ-CBR-008-item-two-reused-workers-private-scratch-and-readonly-buffer
+(deftest test-REQ-CBR-008-item-literal-all-majors-and-unread-poison-tail
+(deftest test-REQ-CBR-008-item-integer-tag-and-string-width-boundaries
+(deftest test-REQ-CBR-008-item-concatenated-frontiers-and-exact-scanners-still-trailing
+(deftest test-REQ-CBR-008-item-authorized-end-physical-sentinels-and-nonzero-start
+(deftest test-REQ-CBR-008-item-buffer-type-range-and-whole-backing-array-preservation
+(deftest test-REQ-CBR-008-item-workspace-type-alias-and-preflight-before-reset
+(deftest test-REQ-CBR-008-item-configured-limits-and-all-preflight-precedences
+(deftest test-REQ-CBR-008-item-byte-budget-includes-entire-window-and-unread-tail
+(deftest test-REQ-CBR-008-item-root-and-tag-chain-node-budget-without-tail-nodes
+(deftest test-REQ-CBR-008-item-depth-zero-and-100-101-without-tail-depth
+(deftest test-REQ-CBR-008-item-malformed-first-item-absolute-errors-and-minimality
+(deftest test-REQ-CBR-008-item-every-truncation-is-bounded-by-authorized-end
+(deftest test-REQ-CBR-008-item-header-preference-before-nodes-depth-and-payload
+(deftest test-REQ-CBR-008-item-scratch-reuse-and-content-statistics-without-tail
+(deftest test-REQ-CBR-008-item-full-16MiB-window-tail-and-complete-payload-boundary
+(deftest test-REQ-CBR-008-item-fixed-seed-1024-fuzz-and-frozen-class-counts

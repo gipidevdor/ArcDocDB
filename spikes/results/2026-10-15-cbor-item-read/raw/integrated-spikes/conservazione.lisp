@@ -1,0 +1,40 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4001074250 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((100) BASE-CHAR
+    . \"/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074204-check-12420-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 2 :WALL-SECONDS 2.751181d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 57106509 :STORED-BYTES 878283
+ :RESULTS
+ ((:PATH
+   #A((111) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074204-check-12420-0/SPK-07.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28144284 :STORED-BYTES 410994 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"SPK-07.lisp.gz\" :UNCOMPRESSED-BYTES 28144284 :UNCOMPRESSED-SHA256
+    \"9d6441366fa6a6f1abbcfcea03b2c1465251b723ea2f61467bba6273d77b27a4\"
+    :COMPRESSED-BYTES 410676 :COMPRESSED-SHA256
+    \"42d458623611581094f4cfb4257f3d3466df0694f3268fa9095e655b9d32d4c2\"))
+  (:PATH
+   #A((111) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074204-check-12420-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28962225 :STORED-BYTES 467289 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 28962225 :UNCOMPRESSED-SHA256
+    \"fb3fc0ab1c1453772dd6844f13582c504f01965e80cc693b450d7c0146b1dc20\"
+    :COMPRESSED-BYTES 466971 :COMPRESSED-SHA256
+    \"1f6b943572681f0d84869fd322dd3e9a442b8923a13f5cc1def411c60c812912\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((91) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/tools/compact-evidence.lisp")
+  "--root"
+  #A((100) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074204-check-12420-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "12420"))
+ :STARTED-AT-UNIVERSAL-TIME 4001074246)

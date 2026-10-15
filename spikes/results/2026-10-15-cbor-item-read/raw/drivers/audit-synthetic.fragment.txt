@@ -1,0 +1,55 @@
+(defun synthetic-report ()
+  "Dati sintetici indipendenti; nessuna esecuzione del prodotto o benchmark."
+  (let ((fingerprints (list (list :file "arcdocdb.asd" :md5 (make-string 32 :initial-element #\0))
+                            (list :file "spikes/out/cbor-item-read-20261015/drivers/bench.lisp" :md5 +driver-md5+)
+                            (list :file *item-source* :md5 (make-string 32 :initial-element #\2))
+                            (list :file "spikes/out/cbor-item-read-20261015/drivers/fixtures-and-mutations.lisp"
+                                  :md5 "8dfd03d8510d882e533d68b79bab1073"))))
+    (list :schema-version 1 :kind :cbor-item-read-benchmark :status :ok
+          :fixture-catalogue-blob "c6a22e6751cab0eff88dd1173ed81543d595a659"
+          :recorded-at 1000 :sbcl "synthetic-version" :machine "synthetic-machine"
+          :os "synthetic-os" :os-version "synthetic-os-version" :workers 1 :safety 3
+          :timer-units-per-second 1000000 :limits (copy-list *benchmark-limits*)
+          :source-fingerprints-before fingerprints :source-fingerprints-after (copy-tree fingerprints)
+          :source-consistency :stable
+          :self-test (list :status :ok :baseline (synthetic-sample 1024 64 0 0)
+                           :positive-control (synthetic-sample 16 0 1048576 16777472)
+                           :output-checker (list :status :ok :expected-token 201232 :altered-three-results-rejected 3
+                                                 :altered-buffer-shape-rejected 1
+                                                 :altered-prefix-item-tail-physical-tail-rejected 4 :reason-specific-rejection t)
+                           :arity-checker (list :status :ok :exact-three-accepted t :wrong-arity-rejected 5
+                                                :wrong-results-rejected 3 :fixed-arity-hot-consumer-rejected 2)
+                           :sensor-checker (list :status :ok :wrong-sink-rejected t :nonzero-heap-rejected t
+                                                 :missing-or-invalid-heap-rejected 4 :reason-specific-rejection t)
+                           :workspace-checker (list :status :ok :altered-scalar-fields-rejected 6 :reason-specific-rejection t))
+          :campaigns
+          (loop for spec in *catalog* for ref = (reference-cell spec)
+                collect (list :name (getf ref :name) :item-literal (copy-list (getf ref :item))
+                              :tail-literal (copy-list (getf ref :tail))
+                              :expected-nodes (getf ref :nodes) :expected-peak (getf ref :peak)
+                              :expected-next (getf ref :next) :expected-token (getf ref :token)
+                              :expected-full-buffer (copy-list (getf ref :full))
+                              :observed-full-buffer (copy-list (getf ref :full))
+                              :cold-values (list (getf ref :nodes) (getf ref :peak) (getf ref :next))
+                              :cold-value-count 3 :cold-workspace (copy-list (getf ref :workspace))
+                              :start 2 :end (getf ref :end) :preallocated-readonly-source t
+                              :private-preallocated-workspace t :complete-source-checked-per-call t
+                              :exact-three-values-checked-per-call t :complete-scalar-workspace-checked-per-call t
+                              :samples (loop repeat 5 collect (synthetic-sample 1024 64 (getf ref :token) 0)))))))
+
+(defun synthetic-wrapper (report)
+  "Wrapper sintetico; hash dichiarati senza pretesa di autenticazione."
+  (let ((blobs (list (list :path "spikes/out/cbor-item-read-20261015/drivers/bench.lisp" :git-blob +driver-blob+)
+                     (list :path *item-source* :git-blob *item-blob*)
+                     (list :path "docs/implementazione/cbor-item-metodo.md" :git-blob +method-blob+)
+                     (list :path "arcdocdb.asd" :git-blob (make-string 40 :initial-element #\0)))))
+    (list :schema-version 1 :kind :command-verification :status :ok :exit-code 0
+          :source-consistency :stable :source-blobs-before blobs :source-blobs-after (copy-tree blobs)
+          :stdout (serialized report) :stderr ""
+          :command '("sbcl" "--script" "spikes/out/cbor-item-read-20261015/drivers/bench.lisp" "--bench")
+          :environment (list :lisp "SBCL" :version "synthetic-version" :machine "synthetic-machine"
+                             :os "synthetic-os" :os-version "synthetic-os-version"
+                             :commit (make-string 40 :initial-element #\0) :cwd "/synthetic/"
+                             :date-universal-time 1000 :external-load-status :uncontrolled)
+          :started-at-universal-time 1000 :finished-at-universal-time 1001 :wall-seconds 1d0)))
+

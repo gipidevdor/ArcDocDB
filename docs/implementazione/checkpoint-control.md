@@ -53,6 +53,10 @@ Non crea file, legge orologi, prenota ID, prende CSN o pubblica indici.
 Lo scanner in memoria non attesta la presenza dei CLOSED: inventario, verifica
 dei relativi dati e correttezza dell'allocatore restano obblighi del controller.
 
+Il [builder del recovery](checkpoint-recovery.md) ricava il payload completo
+da CONTROL e ACTIVE recuperati, conservando CLOSED, REMOVED ed esiti e
+verificando la transizione prima di restituire questo stesso piano.
+
 ## Preparazione nel pool I/O
 
 Il controller crea il nuovo `control.log.tmp` con **O_EXCL**, apre readonly e

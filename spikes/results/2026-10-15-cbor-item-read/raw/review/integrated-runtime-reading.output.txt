@@ -1,0 +1,58 @@
+LINKS actual-record 511 file, 3076 link controllati, 0 rotti
+INPUT descriptor317 bytes SHA0db4abd2b76657a06d7c843f38c17465741459d4132b0afd98dd93545012b0ec; gzip172081 SHA82cda615ef92ad8a1cc5bd1b71d68184fa6ace31572f64dcacb0f248b972dc75; expanded-raw1526243 SHA0c813dc703c063f82fccbd5d3e95ac501a0441bcea35b4fc1292f405ec10560b verified by trusted reader/EOF/READ-EVAL NIL.
+COMMAND ("make" "check-core")
+OUTER schema1/COMMAND-VERIFICATION OK/exit0/STABLE wall469.05808d0 HEAD46aee8b920d447aafae4a4e47a44d13631c47cb1 clean; sources931 unique before=after; frozen4pins matched.
+OUTPUT stdout293909 chars stderr1037249 chars; warning/compile/Unhandled markers0 in compiler-build phase and main STDERR; stderr optimization-note lines2845.
+OK1551 unique = nominal1545 + smoke2 + linter-selftest4; item17 exact frozen functions.
+SMOKE ("ok    package ARCDOCDB presente"
+       "ok    ARCDOCDB:*VERSION* è una stringa")
+LINTER ("ok    bad.lisp: COD-02 COD-03 COD-12 COD-20 COD-22 COD-34 COD-43 COD-50"
+        "ok    good.lisp: nessuna violazione"
+        "ok    keyword-barrier.lisp: nessuna violazione"
+        "ok    qualified-reader.lisp: COD-34")
+ok    TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL
+ok    TEST-REQ-CBR-008-ITEM-INTEGER-TAG-AND-STRING-WIDTH-BOUNDARIES
+ok    TEST-REQ-CBR-008-ITEM-CONCATENATED-FRONTIERS-AND-EXACT-SCANNERS-STILL-TRAILING
+ok    TEST-REQ-CBR-008-ITEM-AUTHORIZED-END-PHYSICAL-SENTINELS-AND-NONZERO-START
+ok    TEST-REQ-CBR-008-ITEM-BUFFER-TYPE-RANGE-AND-WHOLE-BACKING-ARRAY-PRESERVATION
+ok    TEST-REQ-CBR-008-ITEM-WORKSPACE-TYPE-ALIAS-AND-PREFLIGHT-BEFORE-RESET
+ok    TEST-REQ-CBR-008-ITEM-CONFIGURED-LIMITS-AND-ALL-PREFLIGHT-PRECEDENCES
+ok    TEST-REQ-CBR-008-ITEM-BYTE-BUDGET-INCLUDES-ENTIRE-WINDOW-AND-UNREAD-TAIL
+ok    TEST-REQ-CBR-008-ITEM-ROOT-AND-TAG-CHAIN-NODE-BUDGET-WITHOUT-TAIL-NODES
+ok    TEST-REQ-CBR-008-ITEM-DEPTH-ZERO-AND-100-101-WITHOUT-TAIL-DEPTH
+ok    TEST-REQ-CBR-008-ITEM-MALFORMED-FIRST-ITEM-ABSOLUTE-ERRORS-AND-MINIMALITY
+ok    TEST-REQ-CBR-008-ITEM-EVERY-TRUNCATION-IS-BOUNDED-BY-AUTHORIZED-END
+ok    TEST-REQ-CBR-008-ITEM-HEADER-PREFERENCE-BEFORE-NODES-DEPTH-AND-PAYLOAD
+ok    TEST-REQ-CBR-008-ITEM-SCRATCH-REUSE-AND-CONTENT-STATISTICS-WITHOUT-TAIL
+ok    TEST-REQ-CBR-008-ITEM-FULL-16MIB-WINDOW-TAIL-AND-COMPLETE-PAYLOAD-BOUNDARY
+ok    TEST-REQ-CBR-008-ITEM-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASS-COUNTS
+ok    TEST-REQ-CBR-008-ITEM-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-BUFFER
+225 file, 0 violazioni
+122 requisiti, 65 invarianti, 13 scenari FI, 52 ADR: 0 errori
+  CBOR item fuzz: seed49544538, 1024 casi, 512 successi e 64 ciascuno byte/nodi/depth/nonminimal/range/workspace/byte-limit/truncated.
+COLD LCG final6CB25938 counts#(512 64 64 64 64 64 64 64 64); final state asserted by frozen test, not printed in raw.
+  CBOR item: onda 0, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 57214005/57214014/57217367, sink 74129408; worker 1 start/first/end 57214028/57214033/57217527, sink 74129408; overlap 3339 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+WAVE0 overlap0.003339s; raw timeline and sinks consistent, WALL includes rendezvous/checks.
+  CBOR item: onda 1, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 57217373/57217375/57220210, sink 74129408; worker 1 start/first/end 57217529/57217531/57221075, sink 74129408; overlap 2681 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+WAVE1 overlap0.002681s; raw timeline and sinks consistent, WALL includes rendezvous/checks.
+ARITHMETIC planned APIcalls685+1024+8192=9901; success9255/reject646; not instrumented APIcounters. Secondary scanners520+390+2 separate.
+EVIDENCE actual-record statusOK catalogs114 references3393 stored-files40699; no archive rescan; limits(:STRUCTURE-PRESENCE-SIZE-AND-COMPRESSED-INTEGRITY
+                                                                                                        :NO-RESULT-REINTERPRETATION).
+PUBLICATION negative fuori-catalogo.lisp bytes1048577: statusOK observed-exit1; expected Unhandled retained inside quoted DATA stderr.
+PUBLICATION negative fuori-catalogo.gz bytes8388609: statusOK observed-exit1; expected Unhandled retained inside quoted DATA stderr.
+SELF :SNAPSHOT-MUTATIONS negative:SIGNAL => WORKER-ERROR exit137 signal9; raw EOF matches metadata, stderr0.
+SELF :SNAPSHOT-MUTATIONS negative:COMPLETION-EXIT => WORKER-ERROR exit7 signalNIL; raw EOF matches metadata, stderr0.
+SELF :SNAPSHOT-MUTATIONS outerOK/worker-errors0 source21 STABLE; direct PASSED/expected-worker-errors2; catalogue10 not executed as mutation campaign.
+LIMITS (:TEN-TARGETED-MUTANTS :WHOLE-MVCC-SUITE-BASELINE
+        :NAMED-RUNTIME-TEST-KILL :MINIMAL-PRODUCT-COPY
+        :VERIFIED-BASELINE-SNAPSHOT :PRIVATE-FASL :RAW-LOGS-AND-RUNNER-RETAINED
+        :SIGNAL-TIMEOUT-COMPILATION-NOT-KILL
+        :NO-C1-MCDC-OR-ENGINE-QUALIFICATION)
+SELF :READER-MUTATIONS negative:SIGNAL => WORKER-ERROR exit137 signal9; raw EOF matches metadata, stderr0.
+SELF :READER-MUTATIONS negative:COMPLETION-EXIT => WORKER-ERROR exit7 signalNIL; raw EOF matches metadata, stderr0.
+SELF :READER-MUTATIONS outerOK/worker-errors0 source34 STABLE; direct PASSED/expected-worker-errors2; catalogue8 not executed as mutation campaign.
+LIMITS (:EIGHT-TARGETED-MUTANTS :WHOLE-EPOCHS-THEN-READ-SUITE-BASELINE
+        :NAMED-RUNTIME-TEST-KILL :SELECTED-TEST-MUTANT-RUN
+        :MINIMAL-PRODUCT-COPY :VERIFIED-BASELINE-READER :PRIVATE-FASL
+        :RAW-LOGS-AND-RUNNER-RETAINED :SIGNAL-TIMEOUT-COMPILATION-NOT-KILL
+        :NO-C1-MCDC-OR-ENGINE-QUALIFICATION)

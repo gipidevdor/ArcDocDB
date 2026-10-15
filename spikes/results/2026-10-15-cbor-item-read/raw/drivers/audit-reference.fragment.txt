@@ -1,0 +1,12 @@
+(defun reference-cell (spec)
+  "Ricostruzione aritmetica da item/nodi/picco freddi, senza scanner o writer."
+  (destructuring-bind (name item nodes peak cold-token) spec
+    (let* ((next (+ 2 (length item))) (end (+ next 4))
+           (full (append '(165 165) item '(255 28 24 0 165 165)))
+           (token (+ (* nodes 17) (* peak 257) (* next 65537)
+                     (loop for byte in full for weight from 1 sum (* byte weight)))))
+      (require-check (= cold-token token) :reference-token name)
+      (list :name name :item item :tail '(255 28 24 0) :nodes nodes :peak peak
+            :next next :end end :full full :token token
+            :workspace (list :cursor next :top 0 :nodes nodes :depth 0 :peak-depth peak :pending-tag nil)))))
+

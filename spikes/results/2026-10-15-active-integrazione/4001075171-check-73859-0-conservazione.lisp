@@ -1,0 +1,40 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4001075204 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((99) BASE-CHAR
+    . \"/Users/gpicchiarelli/.codex/worktrees/active-verifica/ArcDocDB/spikes/out/4001075171-check-73859-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 2 :WALL-SECONDS 1.726414d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 57105930 :STORED-BYTES 878331
+ :RESULTS
+ ((:PATH
+   #A((110) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/active-verifica/ArcDocDB/spikes/out/4001075171-check-73859-0/SPK-07.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28144051 :STORED-BYTES 410958 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"SPK-07.lisp.gz\" :UNCOMPRESSED-BYTES 28144051 :UNCOMPRESSED-SHA256
+    \"44cc63e6428898613ae98b65b4fd45d6a15ae0106bbe064439b6800afe29342f\"
+    :COMPRESSED-BYTES 410640 :COMPRESSED-SHA256
+    \"1fa7ab56837c1138f755f68d577199c7e80f7a27512821dff3159647701c557e\"))
+  (:PATH
+   #A((110) BASE-CHAR
+      . \"/Users/gpicchiarelli/.codex/worktrees/active-verifica/ArcDocDB/spikes/out/4001075171-check-73859-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 28961879 :STORED-BYTES 467373 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 28961879 :UNCOMPRESSED-SHA256
+    \"f54096e98d8b778f25c27355c0440fdfd2bada18b4e6f4713f40e99a168187b0\"
+    :COMPRESSED-BYTES 467055 :COMPRESSED-SHA256
+    \"b2824c8de1a9e5bf2d6836ea836ac56ca22aed99689c4d63128419ea757fe092\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((90) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/active-verifica/ArcDocDB/tools/compact-evidence.lisp")
+  "--root"
+  #A((99) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/active-verifica/ArcDocDB/spikes/out/4001075171-check-73859-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "73859"))
+ :STARTED-AT-UNIVERSAL-TIME 4001075202)

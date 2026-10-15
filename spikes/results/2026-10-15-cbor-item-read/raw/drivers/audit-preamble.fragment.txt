@@ -1,0 +1,17 @@
+;;; Il pin del solo nuovo kernel viene fornito dalla CLI, non dedotto dal report.
+(defparameter *item-blob* nil)
+(defparameter *item-source* "src/codec/cbor-item-read.lisp")
+(defparameter *checks* 0)
+(defparameter *catalog*
+  '((:scalar (0) 1 0 201232)
+    (:text (98 195 169) 1 0 335499)
+    (:array (130 0 245) 3 1 335486)
+    (:map (162 97 97 0 97 98 129 244) 6 2 671472)
+    (:tag-chain (192 193 129 97 122) 4 1 469665)
+    (:mixed-array (132 32 249 60 0 66 0 255 160) 5 2 738173)))
+(defparameter *benchmark-limits*
+  '(:success-path-only :serial :preallocated-private-buffers
+    :first-minimal-item :unvalidated-tail :whole-window-byte-budget :source-readonly :preallocated-private-workspace
+    :counter-not-absolute-nonallocation-proof :external-load-uncontrolled
+    :output-check-cost-included :no-pool-or-device-throughput :no-scaling-or-latency-threshold))
+

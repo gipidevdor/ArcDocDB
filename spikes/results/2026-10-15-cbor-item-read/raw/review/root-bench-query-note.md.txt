@@ -1,0 +1,8 @@
+# Preparazione della sintesi benchmark
+
+La prima query inline contiene una parentesi chiusa in eccesso e fallisce
+nel reader prima di leggere il record. La forma invocata è conservata in
+root-bench-query-before-fix.lisp; il diagnostico «unmatched close parenthesis»
+è presente nella conversazione, senza un log locale originale da attribuirgli.
+La variante leggibile root-bench-summary.lisp legge soltanto dati già conclusi.
+Nessuna esecuzione del prodotto o nuova misura deriva da questa preparazione.

@@ -152,6 +152,9 @@ CSN o scrittura condivisa tra Serie viene introdotto.
 Il [metodo delle prove funzionali](active-recovery-metodo.md) registra
 la verifica integrata readonly, degli esiti e del collegamento al publisher.
 Esiti e limiti delle esecuzioni restano distinti dalla matrice C1 completa.
+La [campagna parallela di verifica](active-recuperato-verifica.md) conserva
+altri 59 test e le proprie letture, fault injection e misure. Le due suite
+usano package e registri distinti e vengono eseguite entrambe da ASDF.
 
 | ID | Decisione | Casi |
 |---|---|---|
@@ -179,7 +182,11 @@ Il risultato locale appartiene al commit congelato dichiarato nella campagna;
 qualifica C1, matrice completa delle decisioni e misure restano aperte.
 Il [lettore del decision log legato all'Archivio](decisioni-recuperate.md)
 è ora disponibile con qualifica dedicata ancora aperta. Restano da integrare
-la riconciliazione dei CLOSED, il builder completo del checkpoint, gli
+la riconciliazione dei CLOSED, gli
 indici/orizzonte CSN e il gate di ammissione del Recovery Manager.
 Questo risultato non autorizza da solo a dimenticare decisioni globali o
 riaprire il traffico della Serie.
+
+Il [builder completo del checkpoint](checkpoint-recovery.md) deriva ora
+lo stato dal risultato ACTIVE e dal CONTROL trattenuto, con qualifica
+dedicata ancora aperta; conserva il publisher unico già descritto.

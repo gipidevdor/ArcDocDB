@@ -1,0 +1,37 @@
+(:SCHEMA-VERSION 1 :KIND :CBOR-ITEM-INTEGRATED-RUNTIME-INVENTORY :STATUS :OK
+ :OBSERVATIONS
+ ((:PATH
+   "spikes/out/cbor-item-read-20261015/review/integrated-runtime-reading-v2.lisp"
+   :BYTES 21026 :SHA256
+   "5f59f18703c6a0a96423c619e7edc017e2ad0106f0499f2880936eb15020eec1" :GIT-BLOB
+   "5da93f229c60376fdc899e3e71e5eb503b93f1d6")
+  (:PATH
+   "spikes/out/cbor-item-read-20261015/review/integrated-runtime-reading-v2.output.txt"
+   :BYTES 7598 :SHA256
+   "98cb391699d0412d7307587a11d91acd4de675977b87402f3b37e128ab232396" :GIT-BLOB
+   "b888427c9eda6e18db7b5bd27e3cf10dd7525cea")
+  (:PATH
+   "spikes/out/cbor-item-read-20261015/review/integrated-runtime-reading-v2.error.txt"
+   :BYTES 0 :SHA256
+   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" :GIT-BLOB
+   "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391")
+  (:PATH
+   "spikes/out/cbor-item-read-20261015/review/integrated-runtime-reading.lisp"
+   :BYTES 20890 :SHA256
+   "51cb8d7397d549de36d9010a9cd54088102c12c6f9c7e5b8eb8351548964fb37" :GIT-BLOB
+   "2a5462759b74ee382098a31a3c3be41df32a7f11")
+  (:PATH
+   "spikes/out/cbor-item-read-20261015/review/integrated-runtime-reading.output.txt"
+   :BYTES 5660 :SHA256
+   "907f6f19041001d786fec98943a83393e72d60381271eefd30f7cadc9546a5a9" :GIT-BLOB
+   "a40bb64ec8f7e769cfb12f95ae039ee5a93f6fb4")
+  (:PATH
+   "spikes/out/cbor-item-read-20261015/review/integrated-runtime-reading.error.txt"
+   :BYTES 26252 :SHA256
+   "b56061d664aa3817c436bb4e9481cbbe2a576b85c075a1699d62f6dcaac40258" :GIT-BLOB
+   "0c69d61f7285032b7ca191c8ff0460fc7f0f12b5"))
+ :DIRECT-REFERENCES
+ ("Snapshot: fixture processi conservate in /Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073853-snapshot-self-test-90652-0/report.lisp"
+  "Reader: fixture processi conservate in /Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073853-reader-self-test-90682-0/report.lisp"
+  "10 spike completati; risultati: /Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074204-check-12420-0/")
+ :PRODUCT-LOADED NIL)

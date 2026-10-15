@@ -9,7 +9,7 @@
   "Pre: configurazione tipizzata del lettore. Post: chunk/header e limiti dei lotti coerenti prima di I/O.
 INVALID-ARGUMENT per chunk/batch/count nulli o budget insufficienti; nessuna mutazione.
 Vale anche sul vuoto e per compaction, prima di leggere l'origine dall'header."
-  (unless (and (plusp chunk) (>= bytes +segment-header-bytes+) (plusp batches) (plusp batch-records)
+  (unless (and (plusp chunk) (<= +segment-header-bytes+ bytes +segment-max-bytes+) (plusp batches) (plusp batch-records)
                (>= batch-bytes (+ +header-bytes+ +seal-bytes+)))
     (error 'invalid-argument :reason :closed-recovery-arguments))
   nil)

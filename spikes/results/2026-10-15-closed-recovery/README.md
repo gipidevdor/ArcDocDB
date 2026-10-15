@@ -11,6 +11,13 @@ delle evidenze. Nessun test funzionale, fault injection, modello o benchmark
 locale in questa campagna. Solo Common Lisp/SBCL e strumenti di sistema;
 nessun uso o installazione di Node.js.
 
+La prima variante `fa2747f2` compila senza avvisi. La lettura statica rileva
+però che il budget byte sopra il massimo del formato sarebbe rifiutato dal
+decoder compaction dopo la lettura del file. Il preflight comune viene
+allineato al vincolo del decoder; la variante iniziale e il finding restano
+conservati separatamente dai controlli della correzione. Non è una prova
+funzionale o una verifica dinamica del caso.
+
 Due letture dell'autore sono ispezioni statiche, senza indipendenza o qualifica.
 CDR-D01…D07 e CDR-G01…G05 nel contratto elencano i casi da coprire. Le prove
 dei parser ACTIVE/compaction non qualificano automaticamente il lettore CLOSED,

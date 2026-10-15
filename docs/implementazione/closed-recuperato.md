@@ -110,7 +110,8 @@ Manager. Le API di pubblicazione precedenti mantengono i loro contratti.
 Sono budget del compito, non nuovi limiti del database. Esaurimento non
 significa assenza o abort. Zero record/prepared/outcome/esiti è ammesso
 quando il prefisso non li contiene; chunk, lotti e record per lotto sono
-positivi anche sul vuoto. L'OUTCOME budget conta duplicati fisici; gli esiti
+positivi anche sul vuoto. `max-bytes` è fra header e massimo del formato,
+controllato prima di leggere per entrambe le origini. L'OUTCOME budget conta duplicati fisici; gli esiti
 EDIT sono già canonici dal replay CONTROL.
 
 La capacità I/O ammette `max(64, min(P-64, chunk))` byte per trasferimento.
@@ -126,7 +127,7 @@ RSS, latenza o throughput. Nessun nuovo lock o scrittura condivisa tra Serie.
 
 | ID | Decisione composta / confine | Casi richiesti, aperti |
 |---|---|---|
-| CDR-D01 | cinque condizioni della configurazione | ciascuna falsa, tutte vere; header-only writer/compaction |
+| CDR-D01 | cinque condizioni della configurazione | ciascuna falsa, tutte vere; byte sotto header/sopra formato; header-only writer/compaction |
 | CDR-D02 | fine header e offset created nel range | ciascuna falsa, entrambe vere; versioni 1/2 |
 | CDR-D03 | chunk positivo e P almeno header nel lettore corpo | ciascuna falsa, entrambe vere; chunk corto/esatto |
 | CDR-D04 | progresso/fine/stamp/durable del lotto | ciascun risultato impossibile, tutti coerenti; budget al limite |

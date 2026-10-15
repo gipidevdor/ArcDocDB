@@ -29,3 +29,12 @@ Gli helper C4 sono salvati come testo dati, non codice di prodotto eseguito.
 Un audit confronta byte, lunghezza e SHA256 di report e sidecar con gli
 originali prima dell'archiviazione del worktree. Nessuna sintesi sostituisce
 fallimenti o varianti precedenti; nessuna misura di database completo.
+
+## Integrazione
+
+La variante successiva integra `a34cede6` senza riscrivere gli antenati:
+nuove prove ACTIVE/guardie CONTROL, nessuna modifica ai sorgenti di prodotto.
+Conserva entrambe le voci del changelog e i collegamenti delle due campagne.
+Compilazione del prodotto e controlli statici vengono ripetuti e registrati;
+le suite importate non sono eseguite localmente in questa campagna e non
+qualificano il nuovo builder. La CI del commit pubblicato resta distinta.

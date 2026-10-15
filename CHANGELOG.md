@@ -13,6 +13,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   verifica della transizione in memoria; preparatore e publisher canonici
   invariati, qualifica C1 dedicata aperta.
 
+- Prove dedicate del recovery ACTIVE: lettura readonly, risoluzione dei
+  prepared, chiusura deterministica e pubblicazione su file reali v1/v2.
+  Oracoli indipendenti, fault injection, copertura e misure separate
+  conservati nella campagna `2026-10-15-active-verifica`.
+
 - Passo bounded del dispatcher pool/Serie: sceglie una sola operazione fra
   nuova presa IDLE, collegamento del CLAIMED e ricircolo RESCHEDULE.
   Origine esplicita distingue cursore, count e assenza di trasferimento;

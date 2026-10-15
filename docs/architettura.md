@@ -255,8 +255,20 @@ layout sono in [limiti.md](limiti.md).
 
 Un file immutabile a formato fisso per segmento e per indice, con filtro di esistenza sui
 valori; delta in memoria (array in aggiunta) per l'`ACTIVE`; query per segmento in parallelo
-con filtro di visibilità sul primary index: una riga è un risultato se il suo CSN è quello che
-il lettore vede ([ADR-0026](adr/0026-indici-secondari-segmentati.md)).
+con filtro di visibilità tramite indice e versioni trattenute: una riga è un risultato
+se il suo CSN è quello che il lettore vede
+([ADR-0026](adr/0026-indici-secondari-segmentati.md)).
+
+**Ricerca full text, decisa per il progetto in
+[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md):** indici invertiti dedicati,
+con dizionario `(campo, termine)`, posting di righe e posizioni per le frasi. Analizzatore
+versionato nel contratto, identico per documento e query; delta dell'`ACTIVE` pubblicato
+con i documenti, file immutabili per i `CLOSED`. Testo e filtri strutturati si valutano
+sulla stessa versione visibile, comprese le versioni storiche. Una generazione è
+utilizzabile solo con copertura completa; un derivato assente o corrotto è dichiarato
+indisponibile e ricostruito. Analisi sui worker, pubblicazione sul writer della Serie,
+query per segmento: nessun coordinamento globale aggiuntivo. Implementazione e qualifica
+restano nella fase 8; dettagli in [08 Indici](08-indici.md#ricerca-full-text).
 
 ## Snapshot e MVCC
 

@@ -60,6 +60,24 @@ Limiti che il sistema applica **anche** come requisito di affidabilità (INV-A8)
 buffer, richiesta, connessione, snapshot, lista di parcheggio e tentativo ha un valore massimo
 configurato; il superamento produce un rifiuto esplicito.
 
+## Budget della ricerca full text
+
+> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Gli indici invertiti
+> dedicati richiedono budget aggiuntivi; valori di default e limiti binari si fissano e
+> si verificano prima dell'implementazione della fase 8, senza dedurli dal limite del documento.
+
+Il contratto limita byte analizzati, byte per termine, token e posizioni per documento.
+La Serie limita numero di indici e generazioni mantenute, memoria del delta e spazio
+transitorio di build/rebuild. La query limita nodi, profondità, posting visitati, memoria
+temporanea, risultati e durata. Il numero di indici non ha un limite imposto dal formato
+attuale, ma deve comunque avere un massimo operativo configurato (INV-A8).
+
+Un documento valido per il formato può superare il budget dell'indice: la scrittura
+viene rifiutata prima della decisione durevole, senza saltare termini in silenzio.
+Una query oltre budget restituisce un errore esplicito. Dizionario, posting e posizioni
+possono espandere il testo: i costi dipendono da vocabolario, frequenze e versioni trattenute
+e richiedono la [campagna dedicata](13-benchmark.md#ricerca-full-text).
+
 ## Capacità oltre la RAM
 
 [ADR-0049](adr/0049-capacita-oltre-la-ram.md) propone un indice persistente con cache limitata per Serie. Richiede un esperimento e una decisione sul formato prima dell’adozione; non è una funzione disponibile.

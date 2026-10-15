@@ -43,7 +43,7 @@ conservano anche quelle già risolte, con il riferimento alla decisione.
 | [05 Transazioni](05-transazioni.md) | Single-Series (OCC), multiserie (2PC), `multiserie.log` | Transazioni single-series, Transazioni multiserie |
 | [06 MVCC e snapshot](06-mvcc-e-snapshot.md) | Snapshot logici, visibilità, reclaim | Snapshot/MVCC, Index/Snapshot/Reclaim, Cache e snapshot |
 | [07 Compaction](07-compaction.md) | CLEAN, MERGE, regola 50 s + basso carico, workflow | Clean, Merge, Condizioni obbligatorie per Merge, Low-load merge policy, Politica generale, Compaction parallela, Workflow, Readers durante compaction, Compaction scheduler dinamico |
-| [08 Indici](08-indici.md) | Primary index, indici secondari, delta, index snapshot | Index, Secondary index, Secondary index delta, Index snapshot |
+| [08 Indici](08-indici.md) | Primary index, indici secondari, ricerca full text con indici invertiti, delta, index snapshot | Index, Secondary index, Secondary index delta, Index snapshot; estensione ADR-0053 |
 | [09 Cache](09-cache.md) | CLOCK, partizionamento, read path | Cache, Cache e snapshot |
 | [10 Concorrenza e scheduling](10-concorrenza-e-scheduling.md) | Writer logico, thread pool dinamico, priorità | Concorrenza, Thread pool dinamico, Parallelismo |
 | [11 Recovery](11-recovery.md) | Procedura di ripartenza, crash-safety | Recovery |

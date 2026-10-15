@@ -27,6 +27,7 @@ Nei confronti con altri sistemi l'hardware DEVE essere identico.
 | Letture puntuali | GET `_id`; GET `_id` con cache hit; GET `_id` con accesso NVMe |
 | Scritture | INSERT; UPDATE; DELETE/tombstone |
 | Query | indexed query; sequential scan |
+| Ricerca full text | termini, combinazioni booleane, frasi e filtri strutturati; indici invertiti dedicati ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) |
 | Manutenzione | CLEAN; MERGE |
 | Misti | mixed read/write; burst di sole letture; burst di scritture |
 | Transazioni | single-Series; multiserie |
@@ -42,6 +43,32 @@ Nei confronti con altri sistemi l'hardware DEVE essere identico.
 
 Throughput; P50, P95, P99; CPU; RAM; cache hit rate; WAL bandwidth; fsync latency; NVMe
 bandwidth; queue depth; compaction throughput; numero di worker; contention; GC di SBCL.
+
+## Ricerca full text
+
+> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Campagna futura
+> della fase 8; nessun risultato full text è disponibile con questa modifica progettuale.
+
+Prima delle misure, un oracolo indipendente a scansione deve dare gli stessi risultati
+per termini e frasi, `all/any`, `and/or/not`, campi assenti, testo vuoto, filtri e snapshot.
+Il corpus include accenti, forme Unicode canonicamente equivalenti, case folding,
+punteggiatura, token ripetuti e confini fra campi. Si verificano anche update/delete,
+abort multiserie, `ACTIVE` più `CLOSED`, compaction con snapshot, cambio generazione
+durante scritture, crash/recovery, restore e indici assenti o corrotti. Budget esauriti
+devono produrre gli esiti espliciti del contratto, senza risultati incompleti silenziosi.
+
+| Variazione | Misure e confronto |
+|---|---|
+| Termini rari, comuni e molto frequenti; frasi brevi/lunghe; filtri selettivi e poco selettivi | p50/p95/p99, throughput, posting visitati, candidati e risultati; confronto con scansione equivalente |
+| Lunghezza del testo, vocabolario, campi e posizioni; corpus NNTP e general-purpose | spazio di dizionario/posting/posizioni, RAM del delta e memoria temporanea per query |
+| Nuove pubblicazioni con letture concorrenti | costo di analisi, latenza del commit, accodamento, impatto su GET e sulle altre Serie |
+| Segmenti e Serie crescenti; cache calda e fredda | costo del fan-out, I/O, CPU, GC, scalabilità e isolamento |
+| Build, cambio profilo, CLEAN/MERGE e riavvio | tempo e spazio transitori, recupero della copertura e interferenza sul traffico |
+
+Registrare corpus e seme, profilo e versione Unicode, generazione, campi indicizzati,
+distribuzione dei termini, concorrenza, budget, durability e snapshot. I target di GET
+e query indicizzata semplice non sono target della ricerca full text; nuovi obiettivi
+numerici richiedono evidenze specifiche.
 
 ## Target preliminari
 

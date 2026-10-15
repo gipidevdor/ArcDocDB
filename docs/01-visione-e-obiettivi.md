@@ -15,7 +15,7 @@ specifico (non è un motore per blogging o CMS).
 
 Il [caso d'uso NNTP](valutazione/caso-duso-nntp.md) guida le valutazioni di
 letture per Message-ID, scansioni ordinate per gruppo, pubblicazioni su più
-gruppi, retention e recovery. Il motore mantiene la propria natura
+gruppi, ricerca full text, retention e recovery. Il motore mantiene la propria natura
 general-purpose; l'indirizzo attuale riguarda la progettazione e la
 documentazione, con sviluppo del demone e benchmark applicativi futuri.
 
@@ -30,6 +30,7 @@ documentazione, con sviluppo del demone e benchmark applicativi futuri.
 | WAL affidabile | WAL per Serie con group commit | [04](04-wal-e-durability.md) |
 | Transazioni locali e multiserie | OCC sul writer della Serie; protocollo 2PC-like con `multiserie.log` | [05](05-transazioni.md) |
 | MVCC/snapshot | Snapshot logici sopra lo storage append-only | [06](06-mvcc-e-snapshot.md) |
+| Ricerca full text (aggiunta dall'autore, [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) | Indici invertiti dedicati per parole e frasi, analizzatori versionati e filtri coerenti con gli snapshot; implementazione futura | [08](08-indici.md#ricerca-full-text), [13](13-benchmark.md#ricerca-full-text) |
 | Compaction concorrente | CLEAN e MERGE copy-on-write, parallelizzabili | [07](07-compaction.md) |
 | Tenuta sotto burst di letture | Isolamento per Serie, cache partizionabile, MERGE opportunistico | [09](09-cache.md), [07](07-compaction.md) |
 

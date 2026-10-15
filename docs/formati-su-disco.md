@@ -191,6 +191,26 @@ La sezione `bloom` di un file indice ha lo stesso formato di quella dell'hint e 
 **valori** indicizzati: dice solo «sicuramente assente / forse presente» (INV-I2) e permette a
 una query di uguaglianza di saltare il segmento.
 
+### Indice full text
+
+> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Un tipo full text
+> estende la famiglia `.idx`. Il contenuto logico è definito; layout binario, codec e
+> identificativo numerico del tipo richiedono una versione esplicita prima del primo codec.
+
+Un file per indice full text e segmento contiene identità di Serie/segmento, generazione
+e profilo di analisi; dizionario ordinato `(campo, termine)`; posting list ordinate di
+ordinali di riga con frequenze; posizioni dei token nel campo; conteggi e limiti delle
+sezioni, protetti da CRC32C. Le righe si risolvono esclusivamente con l'hint del segmento
+associato. Un Bloom opzionale sui termini indica solo assenza o possibile presenza.
+
+Prima dell'uso si verificano versione, identità, generazione/profilo, CRC, confini delle
+sezioni, conteggi, ordine e intervallo delle righe/posizioni. Il decoder rifiuta valori
+incoerenti anche con CRC corretto. La copertura rispetto ai segmenti e al delta pubblicato
+è verificata dalla gestione della generazione; il CRC da solo non la dimostra.
+Un file non utilizzabile viene segnalato e ricostruito dai documenti committed, senza
+interpretarlo come lista vuota. CLEAN/MERGE rigenerano i riferimenti alle nuove righe.
+I formati dei record documentali v1/v2 e i punti di atomicità durevole restano invariati.
+
 ## Control log
 
 File `wal/control.log`: il manifest della Serie. Intestazione di 64 byte (magic `ARCDCTL1`,

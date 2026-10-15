@@ -128,7 +128,7 @@ si definisce alla chiusura della Fase 0.
 | 5 | Archivio, Registri, catalogo, più Serie; writer logici su thread pool dinamico; scheduler; **backup e restore verificato** | M13, M14, M17 | FI-13, benchmark di isolamento tra Serie |
 | 6 | Transazioni multiserie e `multiserie.log` | M09, M10 | FI-03, FI-04, FI-05, FI-12 |
 | 7 | MERGE, low-load policy, Compaction Scheduler | M11, M13 | FI-08, benchmark di interferenza |
-| 8 | Indici secondari e Query Engine | M06, M15 | — |
+| 8 | Indici secondari, **ricerca full text con indici invertiti dedicati** e Query Engine ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) | M06, M15 | confronto con scansione, snapshot/update/delete, build/rebuild, corruzione e budget; [campagna full text](13-benchmark.md#ricerca-full-text) |
 | 9 | Protocollo di rete e server | M16 | — |
 | 10 | Campagna di benchmark; ottimizzazioni sugli hot path misurati | M18 | [13 Benchmark](13-benchmark.md) |
 

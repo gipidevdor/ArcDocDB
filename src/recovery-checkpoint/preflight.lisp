@@ -55,7 +55,7 @@ Errori tipizzati di configurazione/risorse; cicli limitati ai CLOSED già contat
            (payload (+ +edit-min-bytes+ closed-bytes removed-bytes))
            (arrays (+ payload closed-bytes removed-bytes (* 8 (+ closed removed outcomes)))))
       (when (or (> payload max-payload)
-                (> payload (- (nth-value 1 (arcdocdb.record:format-limits version)) arcdocdb.record:+header-bytes+)))
+                (> payload (- (nth-value 1 (arcdocdb.record::format-limits version)) arcdocdb.record:+header-bytes+)))
         (error 'resource-exhausted :reason :recovery-checkpoint-payload))
       (when (> arrays workspace) (error 'resource-exhausted :reason :recovery-checkpoint-workspace))
       (values closed-bytes removed-bytes payload))))

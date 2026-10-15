@@ -11,6 +11,11 @@ controllo strutturale delle evidenze. Nessun test funzionale, fault injection,
 modello o benchmark locale in questa campagna. La CI automatica verifica le
 suite presenti e resta distinta dalla qualifica del nuovo ingresso.
 
+Il primo compile del commit `4b0c510d` fallisce durante la lettura perché
+`format-limits` non è esportato da `arcdocdb.record`. Il riferimento interno
+viene corretto; il record fallito resta una variante distinta e non è
+reinterpretato come successo della compilazione successiva.
+
 Le due letture dell'autore sono ispezioni statiche, senza indipendenza o
 qualifica C1. CRB-D01…D06 e CRB-G01…G04 nel contratto descrivono i casi ancora
 da coprire. Restano aperte prove funzionali/FI, copertura, revisione

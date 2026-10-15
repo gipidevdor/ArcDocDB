@@ -108,3 +108,32 @@ generiche sono dichiarate e non ampliano lo scope della qualifica.
 Nessun nuovo test di concorrenza positiva, loop server, applicazione payload
 del database o I/O durevole è qualificato da questa campagna. CLOSING e
 guasti terminali restano responsabilità esplicite del caller e dell'Archivio.
+
+## Controllo finale e conservazione conclusiva
+
+La [pubblicazione](../../spikes/results/2026-10-15-pool-prepara/processes/publication/report.lisp)
+è OK/STABLE/exit 0, 295,396073 s, 984 sorgenti e stderr vuoto.
+Sono preservati tutti i 49 file UTF-8 dello sviluppo: un controllo aggiuntivo
+confronta i byte originali con il testo estratto dai bundle, inclusi i nove
+HTML e il nativo. I 18 file dei primi otto processi sono inoltre confrontati
+byte per byte con gli originali; nessun descriptor viene riscritto.
+
+Dopo questa pubblicazione è stato integrato il componente CLOSED, parent
+`31c3776ff8304d04aed314f60c2ad66435b8654a`, con merge
+`81c0e57dc9a9b79e27967832fbc524e9109c2027`. L'unico conflitto era nel
+changelog e sono conservate entrambe le voci. I 17 file frozen diversi da
+ASDF rimangono identici; nessuna nuova misura è attribuita al codice CLOSED.
+
+Il [controllo finale integrato](../../spikes/results/2026-10-15-pool-prepara/processes/final-verification/report.lisp)
+esegue test, lint, tracciabilità, link ed evidenze: OK/STABLE/exit 0,
+239,448811 s, 992 sorgenti. Superati 1.722 test nominati e 2 smoke;
+245 file lint/0 violazioni; 122 requisiti/65 invarianti/13 FI/52 ADR/0 errori;
+483 Markdown/3.256 link/0 rotti. Archivio: 127 cataloghi, 3.686 riferimenti,
+42.949 file e 1.154.887.206 byte. Compilazione stretta senza avvisi;
+le note in stderr sono conservate integralmente (1.401.121 byte UTF-8).
+Questi conteggi precedono le copie di chiusura e i tre collegamenti aggiunti qui.
+
+Il [manifesto conclusivo](../../spikes/results/2026-10-15-pool-prepara/chiusura-01.lisp)
+conserva i due registri originali e le loro capacità di lettura compressa,
+insieme alle sorgenti finali e agli script della chiusura. Non riscrive né
+promuove gli esiti delle campagne precedenti.

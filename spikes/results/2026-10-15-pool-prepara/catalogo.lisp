@@ -1,6 +1,21 @@
 (:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG :COMPONENT :WRITER-WORKER :BASE
  "7f1cc54477483039bd98bd8c3f6508416f5c0ced" :HISTORICAL-BASES NIL :ENTRIES
- ((:ARTIFACT "development-evidence.lisp" :PATH
+ ((:ARTIFACT "chiusura-01-file.lisp" :PATH
+   #A((121) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-prepara/chiusura-01-file.lisp")
+   :BYTES 19682 :SHA256 "26a11b54505f2db6dfe66b113535e799830ab42e3e7815cb8ef076554f45b6b4"
+   :GIT-BLOB "548eef86f35a7e49cdcb9bb6dbebe229521c8bc4")
+  (:ARTIFACT "chiusura-01-sources.lisp" :PATH
+   #A((124) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-prepara/chiusura-01-sources.lisp")
+   :BYTES 165866 :SHA256 "ec757f180c4ace0020d5d70c259eaee0446d5f985c89af5a8b05ff97fa7ee236"
+   :GIT-BLOB "1ed5584880517ef6a74b73b33b47aa71f7461c28")
+  (:ARTIFACT "chiusura-01.lisp" :PATH
+   #A((116) BASE-CHAR
+      . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-prepara/chiusura-01.lisp")
+   :BYTES 3871 :SHA256 "4ef7f4e1d9fe245af50f7b4f07128ec1da1450b337677f6b9cf12da83e89560a" :GIT-BLOB
+   "06d7a708c7c22fb1fb7602cef974ad1bc8a4181c")
+  (:ARTIFACT "development-evidence.lisp" :PATH
    #A((125) BASE-CHAR
       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-prepara/development-evidence.lisp")
    :BYTES 354782 :SHA256 "479c88cf05587b8ffe93ee8ad052bcff91f63e79fbd5a75b16e52a6ce240845d"
@@ -11,7 +26,8 @@
    :BYTES 330 :SHA256 "ccac710c715684d569c2e54cff49aadd7824b9528ca1be333ef78f2f3e89ee19" :GIT-BLOB
    "431bdfdb1b814241441186aeade5dd4d907645a8" :PAYLOAD
    (:ARTIFACT "development-large-1.lisp.gz" :PATH
-    #A((66) BASE-CHAR . "spikes/results/2026-10-15-pool-prepara/development-large-1.lisp.gz")
+    #A((127) BASE-CHAR
+       . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-pool-prepara/development-large-1.lisp.gz")
     :BYTES 460124 :SHA256 "0a267b4e66c952079f7e5bf7b842353d490c7496ca37f3827ff7768664e35a23"
     :GIT-BLOB "80d2768ab5058c13601e0f9ae43045baad2a4003"))
   (:ARTIFACT "development-large-conservazione.lisp" :PATH

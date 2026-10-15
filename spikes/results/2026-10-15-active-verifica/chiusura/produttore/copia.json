@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "closing_producer_copy",
+  "files": [
+    {
+      "file": "report.lisp",
+      "bytes": 202375,
+      "source": "spikes/out/4001074738-command-47423-0/report.lisp",
+      "byte_equal": true
+    },
+    {
+      "file": "conservazione.lisp",
+      "bytes": 1150,
+      "source": "spikes/out/4001074738-command-47423-0/conservazione.lisp",
+      "byte_equal": true
+    }
+  ],
+  "limits": [
+    "local_byte_comparison",
+    "no_self_certification",
+    "no_host_authentication"
+  ]
+}

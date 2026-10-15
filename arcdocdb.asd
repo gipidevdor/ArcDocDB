@@ -72,7 +72,7 @@
                              (:file "routing-types") (:file "routing-build") (:file "routing-select")))
                (:module "dispatch" :serial t
                 :components ((:file "package") (:file "types") (:file "build") (:file "claim")
-                             (:file "recycle") (:file "begin")))
+                             (:file "recycle") (:file "begin") (:file "step")))
                (:module "index" :serial t
                 :components ((:file "package") (:file "types") (:file "core")
                              (:file "validation") (:file "read") (:file "write") (:file "relocate")
@@ -131,7 +131,10 @@
                              (:file "closure") (:file "publication")))
                (:module "recovery-archive" :serial t
                 :components ((:file "package") (:file "types") (:file "read")
-                             (:file "build") (:file "query") (:file "active"))))
+                             (:file "build") (:file "query") (:file "active")))
+               (:module "recovery-checkpoint" :serial t
+                :components ((:file "package") (:file "preflight") (:file "order")
+                             (:file "sections") (:file "build"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -200,7 +203,7 @@
                (:module "scheduler" :serial t
                 :components ((:file "support") (:file "controller") (:file "lifecycle")
                              (:file "pool-claim") (:file "dispatch") (:file "pool-recycle")
-                             (:file "pool-begin")))
+                             (:file "pool-begin") (:file "pool-step")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")
@@ -212,7 +215,7 @@
                              (:file "transfer-failure")))
                (:module "control" :serial t
                 :components ((:file "support") (:file "publication") (:file "native")
-                             (:file "recovery-read") (:file "recovery-publication")))
+                             (:file "recovery-read") (:file "recovery-publication") (:file "recovery-guards")))
                (:module "recovery"
                 :serial t
                 :components ((:file "support") (:file "scan") (:file "corruption")
@@ -220,6 +223,8 @@
                              (:file "decisions-audit") (:file "decisions-radix") (:file "manifest-support")
                              (:file "manifest") (:file "manifest-audit") (:file "manifest-transition")
                              (:file "inventory-support") (:file "inventory")))
+               (:module "recovery-active" :serial t
+                :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
@@ -262,6 +267,7 @@
              (uiop:symbol-call '#:arcdocdb.io.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.control.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.recovery.active.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)

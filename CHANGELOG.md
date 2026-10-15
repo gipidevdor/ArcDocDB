@@ -11,6 +11,24 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   letta, budget della finestra autorizzata e scratch privato per worker.
   Consente di ricavare le frontiere degli item concatenati; qualifica C1
   e profilo documentale restano aperti.
+
+- Builder del checkpoint dal recovery ACTIVE: deriva lo stato completo
+  dal CONTROL autorevole, conserva CLOSED/REMOVED/esiti, chiude il vecchio
+  ACTIVE a P e collega il nuovo ID verificato. Budget prima degli array e
+  verifica della transizione in memoria; preparatore e publisher canonici
+  invariati, qualifica C1 dedicata aperta.
+
+- Prove dedicate del recovery ACTIVE: lettura readonly, risoluzione dei
+  prepared, chiusura deterministica e pubblicazione su file reali v1/v2.
+  Oracoli indipendenti, fault injection, copertura e misure separate
+  conservati nella campagna `2026-10-15-active-verifica`.
+
+- Passo bounded del dispatcher pool/Serie: sceglie una sola operazione fra
+  nuova presa IDLE, collegamento del CLAIMED e ricircolo RESCHEDULE.
+  Origine esplicita distingue cursore, count e assenza di trasferimento;
+  gli obblighi esistenti non consultano il pool. Nessun secondo claim,
+  begin o retry implicito; fasi attive e prima causa restano conservate.
+
 - Lettura readonly di `Registri/multiserie.log`: header UUID/CRC/formato
   verificato prima del corpo, replay completo fino all'EOF attestato e
   decisioni possedute. Nuovo ingresso ACTIVE vincolato allo stesso ambito

@@ -402,11 +402,21 @@
                 :closed-check "Metadata/inventario checker non concordanti")
         (list :exit-code exit :signal signal :log (namestring log) :result result)))))
 
+(defun api-pathname-string (value)
+  "Normalizza soltanto i tre argomenti esterni dell'API; i campi del manifesto restano stringhe."
+  (typecase value
+    (string value)
+    (pathname (namestring value))
+    (t (reject :arguments "Argomento API stringa o pathname richiesto"))))
+
 (defun collect-archive (manifest destination observations &key after-copy)
   "Copia in una root nuova, osservazioni esterne; l'hook interno riceve il solo target.
 Nessuna append, cancellazione, modifica di originali o inferenza dei risultati."
   (demand (or (null after-copy) (functionp after-copy)) :arguments "Hook non funzione")
-  (let* ((root (future-root destination)) (observation-root (future-root observations))
+  (let* ((manifest (api-pathname-string manifest))
+         (destination (api-pathname-string destination))
+         (observations (api-pathname-string observations))
+         (root (future-root destination)) (observation-root (future-root observations))
          (report-path (merge-pathnames "report.lisp" observation-root))
          (report (list :schema-version 1 :kind :command-archive-collection :status :running :phase :planning
                        :destination (namestring root) :observations (namestring observation-root)

@@ -61,6 +61,10 @@ all'archivio: includerle nella stessa raccolta cambierebbe l'insieme appena
 verificato. Per conservare l'esito della raccolta si può usare il record
 del comando concluso come ingresso di un archivio successivo.
 
+L'API Common Lisp `collect-archive` accetta stringhe o pathname per
+manifest, destinazione e osservazioni. I percorsi contenuti nel manifest
+restano stringhe, come prescritto dallo schema.
+
 Il preflight controlla manifest, percorsi, dimensioni e record prima di
 creare la destinazione. Le copie usano quattro worker, con una prima copia
 privata per worker quando ci sono almeno quattro file e una coda condivisa

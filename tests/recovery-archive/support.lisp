@@ -106,3 +106,8 @@
   (is (every (lambda (e) (member (first e) '(:read :identity))) (dar-events f))))
 (defun dar-expect (type reason thunk &optional (offset nil offset-p))
   (if offset-p (av::av-expect type reason thunk offset) (av::av-expect type reason thunk)))
+
+(declaim (notinline dar-invoke))
+(defun dar-invoke (name &rest arguments)
+  "Entrata dinamica per tipi intenzionalmente errati: conserva i controlli runtime del prodotto."
+  (apply (symbol-function name) arguments))

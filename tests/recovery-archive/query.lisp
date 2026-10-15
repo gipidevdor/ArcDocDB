@@ -25,10 +25,10 @@
           (lambda () (da:crea-archivio-recovery scope identity)))))
     (dolist (identity (list nil "0123456789abcdef" (make-array 16 :initial-element 0)))
       (dar-expect 'type-error nil
-        (lambda () (apply #'da:crea-archivio-recovery (list scope identity)))))
+        (lambda () (dar-invoke 'da:crea-archivio-recovery scope identity))))
     (dolist (invalid-scope (list nil view :not-an-archive-scope))
       (dar-expect 'type-error nil
-        (lambda () (apply #'da:crea-archivio-recovery (list invalid-scope (dar-identity))))))))
+        (lambda () (dar-invoke 'da:crea-archivio-recovery invalid-scope (dar-identity)))))))
 
 ;;; REQ: REQ-REC-001 REQ-TXM-005 REQ-FOR-001 REQ-AFF-017
 (deftest test-REQ-AFF-017-ARCHIVE-TYPES-owns-caller-uuid-with-separate-serie-scope
@@ -140,17 +140,17 @@
           (dolist (function (list #'da:frontiere-decisioni-recuperate #'da:numero-decisioni-recuperate))
             (dar-expect 'type-error nil (lambda () (funcall function invalid))))
           (dar-expect 'type-error nil
-            (lambda () (apply #'da:trova-decisione-recuperata (list invalid 17))))
+            (lambda () (dar-invoke 'da:trova-decisione-recuperata invalid 17)))
           (dar-expect 'type-error nil
-            (lambda () (apply #'da:partecipante-decisione-recuperata-p (list invalid 17 identity 0 16)))))
+            (lambda () (dar-invoke 'da:partecipante-decisione-recuperata-p invalid 17 identity 0 16))))
         (dolist (txid (list -1 #x10000000000000000 1/2 :not-a-txid))
           (dar-expect 'type-error nil
-            (lambda () (apply #'da:trova-decisione-recuperata (list result txid))))
+            (lambda () (dar-invoke 'da:trova-decisione-recuperata result txid)))
           (dar-expect 'type-error nil
-            (lambda () (apply #'da:partecipante-decisione-recuperata-p (list result txid identity 0 16)))))
+            (lambda () (dar-invoke 'da:partecipante-decisione-recuperata-p result txid identity 0 16))))
         (dolist (buffer (list nil "0123456789abcdef" (make-array 16 :initial-element 0)))
           (dar-expect 'type-error nil
-            (lambda () (apply #'da:partecipante-decisione-recuperata-p (list result 17 buffer 0 16)))))
+            (lambda () (dar-invoke 'da:partecipante-decisione-recuperata-p result 17 buffer 0 16))))
         (darr-events f nil) (dar-noeffects f)))))
 
 ;;; REQ: REQ-REC-001 REQ-TXM-005 REQ-AFF-017

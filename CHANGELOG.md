@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Builder del checkpoint dal recovery ACTIVE: deriva lo stato completo
+  dal CONTROL autorevole, conserva CLOSED/REMOVED/esiti, chiude il vecchio
+  ACTIVE a P e collega il nuovo ID verificato. Budget prima degli array e
+  verifica della transizione in memoria; preparatore e publisher canonici
+  invariati, qualifica C1 dedicata aperta.
+
 - Passo bounded del dispatcher pool/Serie: sceglie una sola operazione fra
   nuova presa IDLE, collegamento del CLAIMED e ricircolo RESCHEDULE.
   Origine esplicita distingue cursore, count e assenza di trasferimento;

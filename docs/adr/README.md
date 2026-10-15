@@ -131,3 +131,4 @@ risultato consolidato è in [architettura.md](../architettura.md) e
 | ADR | Decisione | Stato |
 |---|---|---|
 | [0053](0053-ricerca-full-text-indici-invertiti.md) | Ricerca full text: indici invertiti per segmento, termini e posizioni, analizzatori versionati, coerenza con commit e snapshot | Accettata per il progetto; implementazione e qualifica da produrre |
+| [0054](0054-contratto-e-formato-full-text.md) | Contratto operativo full text: profilo Unicode fissato, query, interfacce, generazioni, budget e formato `.idx` v2 | Accettata per il progetto; implementazione e qualifica da produrre |

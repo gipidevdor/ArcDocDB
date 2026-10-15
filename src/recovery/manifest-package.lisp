@@ -20,4 +20,5 @@
            #:trova-segmento #:trova-esito-chiusura
            #:file-segmento #:pianifica-riconciliazione #:pianifica-riconciliazione-directory
            #:stato-riconciliazione
-           #:numero-azioni-riconciliazione #:azione-riconciliazione))
+           #:numero-azioni-riconciliazione #:azione-riconciliazione
+           #:scegli-id-segmento-recovery))

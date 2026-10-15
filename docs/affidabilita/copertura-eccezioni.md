@@ -16,6 +16,20 @@ raggiungibile senza motivo è un difetto di test o codice morto: va coperta o ri
 
 Nessuna eccezione è approvata. Le misure locali seguenti conservano il denominatore grezzo.
 
+## Proposta ID dopo recovery — 2026-10-15
+
+Il nuovo [`inventory-id.lisp`](../../src/recovery/inventory-id.lisp) osserva
+71/77 forme e 10/10 alternative di ramo. Le sei forme non marcate sono
+`in-package`, tre `declaim` e i due inizializzatori keyword `max-files` e
+`max-segmenti`. Questi ultimi sono esercitati dalle chiamate pubbliche senza
+opzioni, ma restano non marcati dalla strumentazione; non sono dichiarati
+irraggiungibili. I percorsi nativi mancanti sono `(0)`, `(1)`, `(2)`, `(4)`,
+`(3 2 5)` e `(4 2 5)`. Nessuna forma viene esclusa o marcata con ricaricamenti.
+La [tabella delle decisioni](../implementazione/id-segmento-recovery.md)
+documenta le coppie di indipendenza e la fault injection sul piano vuoto.
+Questo risultato riguarda il solo nuovo file, non qualifica il planner
+preesistente o il Recovery Manager; la qualifica complessiva resta aperta.
+
 ## Recovery CONTROL — approfondimento del 2026-10-15
 
 Le forme non marcate nella [campagna precedente](../../spikes/results/2026-10-14-control-transizione/report.md)

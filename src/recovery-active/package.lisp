@@ -19,5 +19,6 @@
   (:import-from #:arcdocdb.storage.format #:+segment-header-bytes+)
   (:export #:active-recuperato #:leggi-active-recuperato #:frontiere-active-recuperato
            #:statistiche-active-recuperato #:segmento-active-recuperato
+           #:massimo-csn-active-recuperato
            #:lunghezza-chiusura-active #:scrivi-chiusura-active #:esito-chiusura-active
            #:pubblica-control-da-active))

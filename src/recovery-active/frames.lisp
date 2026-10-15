@@ -50,6 +50,7 @@ Un OUTCOME senza prepared nel segmento non produce da solo un esito di chiusura.
       (error 'corruption-detected :reason :active-recovery-outcome-conflict :offset pos))
     (setf (gethash txid (workspace-active-outcomes workspace)) csn))
   (incf (workspace-active-outcome-records workspace))
+  (registra-csn-active workspace csn)
   nil)
 
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-FOR-003 REQ-AFF-008
@@ -68,15 +69,18 @@ Errori tipizzati per prepared/esiti; INVARIANT-VIOLATION se consumo o conteggi d
                  (cornice-active-verificata buffer pos prefix version)
                (case kind
                  ((#.+put+ #.+tombstone+)
-                  (when (logtest flags +prepared+)
-                    (registra-prepared-active workspace (leggi-u64 buffer (+ pos arcdocdb.record::+stamp-offset+))
-                                             batch pos max-prepared))
+                  (let ((stamp (leggi-u64 buffer (+ pos arcdocdb.record::+stamp-offset+))))
+                    (if (logtest flags +prepared+)
+                        (registra-prepared-active workspace stamp batch pos max-prepared)
+                        (registra-csn-active workspace stamp)))
                   (incf count))
                  (#.+outcome+
                   (registra-outcome-active workspace (leggi-u64 buffer (+ pos arcdocdb.record::+stamp-offset+))
                                           (leggi-u64 buffer value-start) pos max-outcomes)
                   (incf count))
-                 (#.+seal+ (incf batch))
+                 (#.+seal+
+                  (registra-csn-active workspace (leggi-u64 buffer (+ pos arcdocdb.record::+stamp-offset+)))
+                  (incf batch))
                  (otherwise (error 'invariant-violation :reason :active-recovery-kind :offset pos)))
                (setf pos next)))
     (unless (and (= pos prefix) (= batch batches) (= count records))

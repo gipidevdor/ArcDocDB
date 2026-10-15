@@ -51,6 +51,8 @@ conservano anche quelle già risolte, con il riferimento alla decisione.
 | [06 MVCC e snapshot](06-mvcc-e-snapshot.md) | Snapshot logici, visibilità, reclaim | Snapshot/MVCC, Index/Snapshot/Reclaim, Cache e snapshot |
 | [07 Compaction](07-compaction.md) | CLEAN, MERGE, regola 50 s + basso carico, workflow | Clean, Merge, Condizioni obbligatorie per Merge, Low-load merge policy, Politica generale, Compaction parallela, Workflow, Readers durante compaction, Compaction scheduler dinamico |
 | [08 Indici](08-indici.md) | Primary index, indici secondari, ricerca full text con indici invertiti, delta, index snapshot | Index, Secondary index, Secondary index delta, Index snapshot; estensione ADR-0053 |
+| [Contratto full text](full-text.md) | Profilo Unicode, query, interfacce, generazioni, budget e accettazione | Completamento ADR-0054 |
+| [Formato indice full text](formato-indice-full-text.md) | `.idx` v2/type 5: header, sei sezioni, posting, posizioni e legame all'hint | Completamento ADR-0054 |
 | [09 Cache](09-cache.md) | CLOCK, partizionamento, read path | Cache, Cache e snapshot |
 | [10 Concorrenza e scheduling](10-concorrenza-e-scheduling.md) | Writer logico, thread pool dinamico, priorità | Concorrenza, Thread pool dinamico, Parallelismo |
 | [11 Recovery](11-recovery.md) | Procedura di ripartenza, crash-safety | Recovery |

@@ -17,7 +17,11 @@ Le query consultano il piano senza eseguire operazioni sul filesystem.
 | `numero-azioni-riconciliazione(plan)` | Numero di ID distinti del piano |
 | `azione-riconciliazione(plan, indice)` | ID, forma, azione e stato nel manifest, tutti scalari |
 
-Il chiamante interpreta `.seg` e `.seg.tmp`, esclude altre categorie
+La [scelta dell'ID dopo recovery](id-segmento-recovery.md) riusa questo piano
+per proporre un ID oltre tutti i nomi osservati e almeno pari al high-water
+del manifest. La proposta non riserva il nome, esegue azioni o ammette traffico.
+
+Nell'ingresso in memoria il chiamante interpreta `.seg` e `.seg.tmp`, esclude altre categorie
 e fornisce un inventario completo: un elenco parziale renderebbe
 falsamente mancanti i segmenti esclusi. Il modulo non verifica questa
 precondizione, la stabilità del filesystem, header, identità fisica,

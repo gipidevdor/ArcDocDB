@@ -1,0 +1,3 @@
+git diff --exit-code c8a1adab -- src tests tools arcdocdb.asd Makefile .github
+Exit 0, stdout e stderr vuoti.
+Testa documentale: 08b5b73c71c0277a0ab77550de6c062f845a8805

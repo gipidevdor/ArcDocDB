@@ -1,5 +1,5 @@
 ;;;; Mutazioni mirate in copie isolate; nessun sorgente del repository viene riscritto.
-;;;; Uso: --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|io|wal] [--jobs 1..4]
+;;;; Uso: --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|inventory-id|io|wal] [--jobs 1..4]
 ;;;; oppure --self-test; baseline seriale, copie e processi dei mutanti indipendenti.
 ;;;; REQ: REQ-FOR-003 REQ-FOR-004 REQ-AFF-002 REQ-LIM-001 REQ-LIM-003 REQ-VAL-001
 (require :asdf)
@@ -130,6 +130,31 @@
       "(unless (<= 0 position (1- (numero-azioni-riconciliazione plan)))"
       "(unless (< 0 position (1- (numero-azioni-riconciliazione plan)))")))
 
+;;; REQ: REQ-REC-001 REQ-REC-002 REQ-AFF-008 REQ-AFF-018 REQ-VAL-001
+(defparameter *inventory-id-mutants*
+  '(("id-ignore-high-water" "inventory-id.lisp"
+      "(max minimum (1+ maximum))" "(max 1 (1+ maximum))")
+    ("id-ignore-observed" "inventory-id.lisp"
+      "(max minimum (1+ maximum))" "(min minimum (1+ maximum))")
+    ("id-reuse-maximum" "inventory-id.lisp"
+      "(max minimum (1+ maximum))" "(max minimum maximum)")
+    ("id-zero-high-water" "inventory-id.lisp"
+      "(plusp minimum)" "(not (minusp minimum))")
+    ("id-high-water-boundary" "inventory-id.lisp"
+      "(>= candidate minimum)" "(> candidate minimum)")
+    ("id-fresh-boundary" "inventory-id.lisp"
+      "(> candidate maximum)" "(>= candidate maximum)")
+    ("id-frontier-and-or" "inventory-id.lisp"
+      "(and (plusp minimum)" "(or (plusp minimum)")
+    ("id-successor-check" "inventory-id.lisp"
+      "(unless (= next (1+ candidate))" "(unless (= next candidate)")
+    ("id-availability" "inventory-id.lisp"
+      "(unless available (error" "(when available (error")
+    ("id-empty-plan" "inventory-id.lisp"
+      "(unless (plusp count) (error" "(when (plusp count) (error")
+    ("id-checks-candidate-not-successor" "inventory-id.lisp"
+      "(unless (typep next 'u64)" "(unless (typep candidate 'u64)")))
+
 (defparameter *io-mutants*
   '(("input-mutates-health" "types.lisp" "(unless (eq operation :read)" "(when (eq operation :read)")
     ("write-does-not-fault" "types.lisp" "(setf (file-state file) :faulted)"
@@ -194,23 +219,9 @@
     (concatenate 'string (subseq text 0 pos) after (subseq text (+ pos (length before))))))
 
 (defun copy-test-system (directory)
-  (dolist (file (append '("arcdocdb.asd" "src/package.lisp" "tests/smoke.lisp" "tools/build.lisp")
-                       (mapcar #'enough-namestring (directory "src/foundation/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/foundation/*.lisp"))
-                       (mapcar #'enough-namestring (directory "src/codec/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/codec/*.lisp"))
-                       (mapcar #'enough-namestring (directory "src/csn/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/csn/*.lisp"))
-                       (mapcar #'enough-namestring (directory "src/execution/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/execution/*.lisp"))
-                       (mapcar #'enough-namestring (directory "src/storage/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/storage/*.lisp"))
-                       (mapcar #'enough-namestring (directory "src/recovery/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/recovery/*.lisp"))
-                       (mapcar #'enough-namestring (directory "src/io/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/io/*.lisp"))
-                       (mapcar #'enough-namestring (directory "src/wal/*.lisp"))
-                       (mapcar #'enough-namestring (directory "tests/wal/*.lisp"))))
+  "Copia i componenti dichiarati dai due sistemi, senza elenco di moduli divergente."
+  (dolist (file (append '("arcdocdb.asd" "tools/build.lisp" "tools/vertical-crash.lisp")
+                       (mapcar #'enough-namestring (system-source-files))))
     (let ((target (merge-pathnames file directory)))
       (ensure-directories-exist target)
       (uiop:copy-file file target))))
@@ -227,7 +238,7 @@
 
 (defun dedicated-scope-p (scope)
   "DECISION, manifest e inventory richiedono marker e compilazione rigorosa."
-  (member scope '("decisions" "manifest" "inventory") :test #'string=))
+  (member scope '("decisions" "manifest" "inventory" "inventory-id") :test #'string=))
 
 (defun scope-token (scope)
   "Token stabile dei marker dei test dedicati."
@@ -283,6 +294,7 @@
                          ((string= scope "manifest")
                           '("tests/recovery/manifest.lisp" "tests/recovery/manifest-audit.lisp"))
                          ((string= scope "inventory") '("tests/recovery/inventory.lisp"))
+                         ((string= scope "inventory-id") '("tests/recovery/inventory-id.lisp"))
                          (t (error "Ambito senza test dedicati: ~A" scope))))
        (let ((selected 0))
          (with-open-file (input file :external-format :utf-8)
@@ -372,10 +384,10 @@
           ((and (<= 2 (length positional) 3) (string= (first positional) "--run")
                 (or (= (length positional) 2)
                     (member (third positional)
-                            '("foundation" "storage" "recovery" "decisions" "manifest" "inventory" "io" "wal")
+                            '("foundation" "storage" "recovery" "decisions" "manifest" "inventory" "inventory-id" "io" "wal")
                             :test #'string=)))
            (values :run (second positional) (or (third positional) "foundation") jobs))
-          (t (error "foundation-mutation.lisp: COD-61, usare --self-test oppure --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|io|wal] [--jobs 1..4].")))))
+          (t (error "foundation-mutation.lisp: COD-61, usare --self-test oppure --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|inventory-id|io|wal] [--jobs 1..4].")))))
 
 (defun worker-failure (task condition &optional exit signal)
   "I guasti di preparazione, avvio e raccolta non interrompono gli altri worker."
@@ -479,7 +491,7 @@
 
 (defun classifier-self-test ()
   "Rifiuta marker nel backtrace, marker dell'altro ambito e guasti di compilazione."
-  (dolist (scope '("decisions" "manifest" "inventory"))
+  (dolist (scope '("decisions" "manifest" "inventory" "inventory-id"))
     (multiple-value-bind (start complete) (scope-markers scope)
       (let ((started (concatenate 'string start "TEST")))
         (unless (and (eq :detected (decision-result started 1 scope))
@@ -501,7 +513,7 @@
                      (eq :compilation-failure (decision-result
                                                  (format nil "~A~%compilation aborted" started) 1 scope)))
           (error "foundation-mutation.lisp: COD-60, classificazione ~A errata." scope))))
-    (dolist (other '("decisions" "manifest" "inventory"))
+    (dolist (other '("decisions" "manifest" "inventory" "inventory-id"))
       (unless (string= scope other)
         (multiple-value-bind (start complete) (scope-markers other)
           (unless (eq :before-tests
@@ -518,7 +530,9 @@
                (equal '(:run "out/" "decisions" 2)
                       (multiple-value-list (parse-options '("--jobs" "2" "--run" "out/" "decisions"))))
                (equal '(:run "out/" "inventory" 4)
-                      (multiple-value-list (parse-options '("--run" "out/" "inventory" "--jobs" "4")))))
+                      (multiple-value-list (parse-options '("--run" "out/" "inventory" "--jobs" "4"))))
+               (equal '(:run "out/" "inventory-id" 4)
+                      (multiple-value-list (parse-options '("--run" "out/" "inventory-id" "--jobs" "4")))))
     (error "foundation-mutation.lisp: COD-60, parsing CLI errato."))
   (dolist (args '(nil ("--run") ("--run" "out/" "unknown")
                   ("--run" "out/" "--jobs") ("--run" "out/" "--jobs" "0")
@@ -668,6 +682,7 @@
   (validate-decision-mutants)
   (validate-decision-mutants *manifest-mutants*)
   (validate-decision-mutants *inventory-mutants*)
+  (validate-decision-mutants *inventory-id-mutants*)
   (parallel-self-test)
   (format t "Mutazioni: self-test superato.~%"))
 
@@ -679,6 +694,7 @@
         ((string= scope "decisions") *decision-mutants*)
         ((string= scope "manifest") *manifest-mutants*)
         ((string= scope "inventory") *inventory-mutants*)
+        ((string= scope "inventory-id") *inventory-id-mutants*)
         ((string= scope "io") *io-mutants*)
         ((string= scope "wal") *wal-mutants*)
         (t (error "foundation-mutation.lisp: COD-61, ambito non supportato: ~A" scope))))

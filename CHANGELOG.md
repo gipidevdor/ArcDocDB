@@ -12,6 +12,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   Oracoli indipendenti, fault injection, copertura e misure separate
   conservati nella campagna `2026-10-15-active-verifica`.
 
+- Passo bounded del dispatcher pool/Serie: sceglie una sola operazione fra
+  nuova presa IDLE, collegamento del CLAIMED e ricircolo RESCHEDULE.
+  Origine esplicita distingue cursore, count e assenza di trasferimento;
+  gli obblighi esistenti non consultano il pool. Nessun secondo claim,
+  begin o retry implicito; fasi attive e prima causa restano conservate.
+
 - Lettura readonly di `Registri/multiserie.log`: header UUID/CRC/formato
   verificato prima del corpo, replay completo fino all'EOF attestato e
   decisioni possedute. Nuovo ingresso ACTIVE vincolato allo stesso ambito

@@ -26,3 +26,7 @@ sbcl --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sy
 
 Il secondo comando richiede una directory nuova; conserva HTML e stato
 SB-COVER. I suoi conteggi riguardano forme e rami e non dimostrano MC/DC.
+
+La [verifica finale dell'integrazione](../../spikes/results/2026-10-15-active-integrazione/report.md)
+conserva separatamente il controllo del grafo che include anche il passo
+pool/Serie arrivato su `main` dopo la campagna iniziale.

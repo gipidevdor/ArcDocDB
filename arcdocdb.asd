@@ -33,7 +33,7 @@
                              (:file "cbor-array-input") (:file "cbor-array-write")
                              (:file "cbor-map-input") (:file "cbor-map-write")
                              (:file "cbor-tag-input") (:file "cbor-tag-write")
-                             (:file "cbor-item-read")))
+                             (:file "cbor-item-read") (:file "cbor-string-read")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
                (:module "cache" :serial t
@@ -178,7 +178,9 @@
                              (:file "cbor-tag-write-support") (:file "cbor-tag-write")
                              (:file "cbor-tag-write-threads")
                              (:file "cbor-item-read-support") (:file "cbor-item-read")
-                             (:file "cbor-item-read-threads")))
+                             (:file "cbor-item-read-threads")
+                             (:file "cbor-string-read-support") (:file "cbor-string-read")
+                             (:file "cbor-string-read-threads")))
                (:module "csn" :serial t
                 :components ((:file "support") (:file "registry") (:file "threads")))
                (:module "mvcc" :serial t
@@ -265,6 +267,7 @@
              (uiop:symbol-call '#:arcdocdb.cbor.map.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.tag.write.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.item.read.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.cbor.string.read.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.mvcc.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.epochs.tests '#:run)

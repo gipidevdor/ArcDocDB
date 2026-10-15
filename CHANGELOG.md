@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
+  del payload senza copie, UTF-8 verificato per il testo, coda ignorata
+  e budget dell'intera finestra. Buffer condivisibile in sola lettura;
+  qualifica C1 dedicata ancora aperta.
+
 - Documentazione full text riallineata fra scope v1, contratto/catalogo,
   interfacce query, roadmap, glossario, valutazione, costi, rischi e piano
   di verifica. ADR-0053 resta la decisione di riferimento; implementazione,

@@ -39,4 +39,11 @@
   (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-integrazione-byte.lisp"
    :VARIANT :ORIGINAL-BYTE-COMPARISON)
   (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-integrazione-sorgente.lisp" :VARIANT
+   :VERBATIM-SOURCE-TEXT)
+  (:KIND :STATIC-EVIDENCE :ARTIFACT #A((13) BASE-CHAR . "evidenze.lisp")
+   :PROCESS-ARTIFACT #A((27) BASE-CHAR . "evidenze-conservazione.lisp")
+   :VARIANT :SOURCE-SNAPSHOT-IN-RECORD)
+  (:KIND :BYTE-RETENTION-AUDIT :ARTIFACT "audit-finale-byte.lisp" :VARIANT
+   :ORIGINAL-BYTE-COMPARISON)
+  (:KIND :SOURCE-SUPPORT :ARTIFACT "audit-finale-sorgente.lisp" :VARIANT
    :VERBATIM-SOURCE-TEXT)))

@@ -7,6 +7,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Strumento riusabile di raccolta delle prove: manifest esplicito, copie con
+  quattro worker, record conclusi anche falliti e controllo indipendente
+  dell'inventario chiuso prima dell'esito positivo.
+
 - Lettura del primo item CBOR minimo con frontiera assoluta: coda non
   letta, budget della finestra autorizzata e scratch privato per worker.
   Consente di ricavare le frontiere degli item concatenati; qualifica C1

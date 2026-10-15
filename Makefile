@@ -29,10 +29,11 @@ trace-write:  ## rigenera docs/tracciabilita/matrice.md da requisiti.lisp
 evidence:  ## verifica struttura e presenza degli artefatti conservati nel catalogo
 	$(SBCL) --dynamic-space-size $(EVIDENCE_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/check-evidence.lisp
 
-evidence-selftest:  ## controlli negativi e positivi della conservazione compressa
+evidence-selftest:  ## controlli negativi e positivi della conservazione e della raccolta
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/check-evidence-storage.lisp
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/check-evidence-publication.lisp
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/check-evidence-normalize.lisp
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/collect-command-archive.lisp --self-test
 
 compact-evidence:  ## comprime senza perdita i registri pubblicati grandi, con quattro worker
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- $(SBCL) --noinform --no-userinit --no-sysinit --script tools/compact-evidence.lisp --root spikes/results/ --jobs 4

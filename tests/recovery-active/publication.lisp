@@ -37,7 +37,7 @@
     (ct::native-read-bytes (ct::native-checkpoint-input next) expected deadline)
     next))
 
-(defun ra-publish (case next recovered deadline)
+(defun ra-publish (next recovered deadline)
   (ct::native-bounded deadline :active-recovery-publication
     (lambda () (ra:pubblica-control-da-active (ct::native-checkpoint-prepared next) recovered))))
 
@@ -86,7 +86,7 @@
                  (next (ra-next-checkpoint case deadline (ra-case-prefix case) '((101 0) (102 4294967298))))
                  (before (ct::rp-observations (ra-case-native case))))
             (ra-reset-calls case)
-            (let ((published (ra-publish case next recovered deadline)))
+            (let ((published (ra-publish next recovered deadline)))
               (is (typep published 'c:control-pubblicato))
               (is (equalp #(0 0 0 0 1 0 3 3 1) (ra-calls case)))
               (is (equal before (ct::rp-observations (ra-case-native case))))
@@ -98,7 +98,7 @@
   (let ((before (ct::rp-observations (ra-case-native case))) (delivered nil))
     (ra-reset-calls case)
     (let ((condition (ct::native-capture-product-error
-                     (lambda () (setf delivered (ra-publish case next recovered deadline))))))
+                     (lambda () (setf delivered (ra-publish next recovered deadline))))))
       (is (typep condition type)) (is (eq reason (arcdocdb.conditions:error-reason condition)))
       (is (null delivered)))
     (is (every #'zerop (ra-calls case)))
@@ -158,7 +158,7 @@
           (setf (ct::native-observer-directory-failure observer) original)
           (ra-reset-calls case)
           (let ((condition (ct::native-capture-product-error
-                           (lambda () (setf delivered (ra-publish case next recovered deadline))))))
+                           (lambda () (setf delivered (ra-publish next recovered deadline))))))
             (is (eq original condition)) (is (null delivered)))
           (is (equalp #(0 0 0 0 1 0 3 3 1) (ra-calls case)))
           (ra-publication-state next :faulted t)

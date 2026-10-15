@@ -69,7 +69,9 @@ verificato in revisione e dai test di mutazione sugli operatori logici.
 ## Ricerca full text
 
 [ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) aggiunge
-REQ-SEC-003…REQ-SEC-006 e INV-I4. Sono requisiti **progettati**: le prove
+REQ-SEC-003…REQ-SEC-006 e INV-I4; il completamento in
+[ADR-0054](../adr/0054-contratto-e-formato-full-text.md) aggiunge
+REQ-SEC-007…REQ-SEC-010 e INV-I5/INV-I6. Sono requisiti **progettati**: le prove
 esistenti del primary index, del codec e del recovery non li qualificano.
 La fase 8 deve produrre queste evidenze, prima dei benchmark:
 
@@ -79,6 +81,10 @@ La fase 8 deve produrre queste evidenze, prima dei benchmark:
 | REQ-SEC-004 — commit e snapshot | Stessa versione per testo e filtri; update/delete, abort, ACTIVE/CLOSED, snapshot storici e compaction; esplorazione dei punti di pubblicazione e fault injection prima/dopo SEAL e DECISION |
 | REQ-SEC-005 — generazioni e derivati | Build concorrente, cambio analizzatore, riavvio/restore, file mancanti, CRC/identità errati e copertura incompleta; generazione unica per query ed errore esplicito fino a readiness completa |
 | REQ-SEC-006 — limiti e isolamento | Saturazione di ogni budget, rifiuto della scrittura prima della decisione durevole, cancellazione e timeout; errore di query distinto dal limit richiesto, senza risultati parziali silenziosi; carico sulle altre Serie |
+| REQ-SEC-007 — profilo e query | Corpus Unicode 18.0.0 e attesi manuali; mapping C/F, frasi ripetute, ordinamento stabile e riconoscimento dello stato terminale |
+| REQ-SEC-008 — codec e identità | Fixture binarie indipendenti del `.idx` v2/type 5, corruzione anche con CRC valido, hint scambiati, ordini/offset e riservati |
+| REQ-SEC-009 — protocollo generazioni | Cattura concorrente con confine iniziale, inventario cambiato prima dello swap, file distinti, ritiro autorizzato e reader già ammessi |
+| REQ-SEC-010 — riserve e completamento | Delta/staging e limite superiore del file prenotati prima della decisione; rotazione, saturazione, errore dopo batch, cleanup e singola continuazione terminale |
 
 Si applicano le classi già assegnate: C2 alla semantica di interrogazione
 e C1 ai percorsi di pubblicazione, visibilità e recovery dei derivati.
@@ -87,6 +93,9 @@ della classe. Corpus, profili, generazioni e attesi devono essere
 riproducibili; un controllo negativo deve dimostrare la sensibilità
 dell'oracolo. La [campagna prestazionale](../13-benchmark.md#ricerca-full-text)
 misura separatamente analisi, ricerca, commit, build/rebuild e interferenza.
+La [matrice di accettazione dettagliata](../full-text.md#criteri-di-accettazione)
+lega questi requisiti a ingressi, oracoli e condizioni di riuscita. I default dei budget
+sono politiche di progetto da qualificare; non sono prestazioni misurate.
 
 ## Revisione e configurazione
 

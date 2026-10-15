@@ -270,6 +270,12 @@ indisponibile e ricostruito. Analisi sui worker, pubblicazione sul writer della 
 query per segmento: nessun coordinamento globale aggiuntivo. Implementazione e qualifica
 restano nella fase 8; dettagli in [08 Indici](08-indici.md#ricerca-full-text).
 
+[ADR-0054](adr/0054-contratto-e-formato-full-text.md) completa il
+[contratto operativo](full-text.md): profilo Unicode fissato, generazioni con file
+distinti e readiness verificata, riserve prima di SEAL/PREPARE e rotazione guidata
+anche dal budget degli indici. Il [formato `.idx` v2](formato-indice-full-text.md)
+lega ogni posting all'hint esatto; non modifica i record documentali.
+
 ## Snapshot e MVCC
 
 - **CSN** per Archivio, preso alla chiusura del lotto o della decisione; per ogni documento

@@ -7,6 +7,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Completamento progettuale full text (ADR-0054): profilo Unicode 18.0.0,
+  foglie query, contratti dei moduli, generazioni e ritiro, riserve prima del
+  commit e default di ammissione. Definito il formato `.idx` v2/type 5 con
+  sei sezioni e legame all'hint; quattro nuovi requisiti e due invarianti.
+  Corpus e criteri di accettazione restano da realizzare nella fase 8;
+  nessun codice full text introdotto.
+
 - Documentazione full text riallineata fra scope v1, contratto/catalogo,
   interfacce query, roadmap, glossario, valutazione, costi, rischi e piano
   di verifica. ADR-0053 resta la decisione di riferimento; implementazione,

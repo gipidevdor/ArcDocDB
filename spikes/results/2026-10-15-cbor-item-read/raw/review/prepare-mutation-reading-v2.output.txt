@@ -1,0 +1,1 @@
+Preparato spikes/out/cbor-item-read-20261015/review/mutation-reading.lisp; nessuna campagna corrente letta o eseguita.

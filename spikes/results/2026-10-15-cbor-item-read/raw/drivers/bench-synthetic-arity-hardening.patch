@@ -1,0 +1,31 @@
+diff --git a/spikes/out/cbor-item-read-20261015/drivers/bench-before-synthetic-arity-hardening-702c8172.lisp b/spikes/out/cbor-item-read-20261015/drivers/bench.lisp
+index 702c8172..118c779c 100644
+--- a/spikes/out/cbor-item-read-20261015/drivers/bench-before-synthetic-arity-hardening-702c8172.lisp
++++ b/spikes/out/cbor-item-read-20261015/drivers/bench.lisp
+@@ -125,6 +125,11 @@
+         (arcdocdb.cbor::spazio-cbor-peak-depth space) peak
+         (arcdocdb.cbor::spazio-cbor-pending-tag space) nil))
+ 
++(declaim (notinline synthetic-values))
++(defun synthetic-values (arguments)
++  "Valori sintetici da lista runtime; evita un warning statico per arità volutamente errata."
++  (values-list arguments))
++
+ (defun arity-self-test ()
+   "Tre accettati; zero/uno/due/quattro e tre risultati errati rifiutati."
+   (check-cold-values '(1 0 3) 1 0 3)
+@@ -133,12 +138,11 @@
+   (dolist (values '((2 0 3) (1 1 3) (1 0 4)))
+     (expect-check-rejection (lambda () (check-cold-values values 1 0 3)) :cold-result))
+   (let ((consumer (lambda (nodes peak next) (+ nodes peak next))))
+-    (unless (= 4 (multiple-value-call consumer (values 1 0 3))) (error "Consumer3 errato."))
++    (unless (= 4 (multiple-value-call consumer (synthetic-values '(1 0 3)))) (error "Consumer3 errato."))
+     (dolist (count '(2 4))
+       (let ((rejected nil))
+         (handler-case
+-            (if (= count 2) (multiple-value-call consumer (values 1 0))
+-                (multiple-value-call consumer (values 1 0 3 nil)))
++            (multiple-value-call consumer (synthetic-values (if (= count 2) '(1 0) '(1 0 3 nil))))
+           (program-error () (setf rejected t)))
+         (unless rejected (error "Consumer a tre argomenti non rifiuta arita errata.")))))
+   (list :status :ok :exact-three-accepted t :wrong-arity-rejected 5

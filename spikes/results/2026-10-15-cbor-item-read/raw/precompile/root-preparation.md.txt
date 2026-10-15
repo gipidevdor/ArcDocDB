@@ -1,0 +1,34 @@
+# Preparazioni e confini delle prove
+
+Il metodo a67a79bf e il requisito progettato sono committati in03dbc4e2
+prima del corpus e del nuovo kernel. ASDF/export, scope di copertura
+e documentazione API sono predisposti come integrazione dichiarativa.
+Il nuovo sorgente src/codec/cbor-item-read.lisp viene scritto soltanto
+dopo la comunicazione del freeze del corpus03261003/b2cbdcb4/a0da6554
+e piano63a749b0. Le due letture C1 precedono ogni compilazione del kernel.
+
+Collector e preflight copiati dai tag conservavano inizialmente la data
+2026-10-14. I draft sono preservati e il solo literal viene corretto
+in2026-10-15 prima di qualsiasi raccolta; la lettura C4 ne verifica la diff.
+Il ramo legacy --collect dell'appender conserva la data storica: per questo
+incremento viene usato soltanto --append. Il collector effettivo è quello
+parallelo con quattro worker e successivo validator indipendente.
+
+Lo snapshot helper aveva inizialmente un escape di carattere duplicato.
+La bozza409807e1 resta in freeze-sources-before-character-fix.lisp;
+il canonico34bcf10 usa (list (code-char 10) (code-char 13)).
+La correzione precede lettura DATA ed esecuzione: non viene attribuito
+un fallimento runtime che non è avvenuto.
+
+I riepiloghi pubblicati di mappe e tag estendevano impropriamente la
+chiusura indipendente alle append successive. L'appender esegue un audit
+di impronte e metadata prima/dopo; il validator dell'inventario chiuso
+è un controllo distinto. I due documenti ora delimitano la chiusura
+storica alle rispettive raccolte iniziali311 e397file, senza cambiare
+gli originali. Non si deduce una chiusura finale da quel solo audit.
+
+Per il nuovo incremento si conserva il controllo rigoroso dopo l'ultima
+append in un supplemento separato, evitando di alterare ricorsivamente
+l'inventario che tale comando ha appena verificato. Gli scope iniziale,
+delle append e finale devono rimanere espliciti nel riepilogo pubblicato.
+

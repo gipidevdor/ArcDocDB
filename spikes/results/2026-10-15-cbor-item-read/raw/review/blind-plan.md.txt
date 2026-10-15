@@ -1,0 +1,111 @@
+# Corpus freddo della lettura del primo item CBOR minimo
+
+Congelamento del 2026-10-15, prima del sorgente `src/codec/cbor-item-read.lisp`,
+che non esiste al termine della lettura DATA. Metodo preregistrato:
+`docs/implementazione/cbor-item-metodo.md`, blob
+`a67a79bf` (prefisso comunicato all'autore). Nessuna compilazione,
+caricamento o esecuzione dei tre file del corpus o del nuovo prodotto.
+
+## Pin dei file e lettura DATA
+
+| File | Blob Git | Forme | Nominali |
+| --- | --- | ---: | ---: |
+| tests/codec/cbor-item-read-support.lisp | 0326100362a1c4b24d2c7e511e45357f09a56d33 | 15 | 0 |
+| tests/codec/cbor-item-read.lisp | b2cbdcb4255c51d9da4fe73b28939c1cb923fefe | 17 | 16 |
+| tests/codec/cbor-item-read-threads.lisp | a0da65545ed80ede0a967cadbb337731f6fe1ce9 | 2 | 1 |
+
+Tutte le 34 forme sono state lette con `*READ-EVAL* NIL` fino a EOF;
+17 nomi DEFTEST unici. Il lettore crea soltanto package stub per risolvere
+i simboli durante READ: non valuta le forme lette. Lettore
+`precompile/read-blind-corpus.lisp`, blob
+`95eda6f85833be3b5bef3d6fe12c6515420d820a`; stdout
+`4ca798a92210d49b0e1f77d6495d42985c2cd5be`, stderr vuoto, exit0.
+Il conteggio delle chiamate sotto è un denominatore aritmetico statico,
+non una misura runtime già eseguita.
+
+## Oracoli e denominatori
+
+Vettori letterali e costruzione aritmetica fredda delle testate MT0/1/6
+ai confini 0,1,23,24,255,256,65535,65536,2^32-1,2^32,2^64-1;
+stringhe MT2/3 alle larghezze 0,23,24,255,256,65536. Nessun writer
+di prodotto determina i valori attesi. Tutti gli otto major, float raw
+minimi, UTF8, tag, mappe non ordinate e chiavi duplicate sono inclusi.
+
+`cir-probe` ripete l'item a START0/7 e con quattro code:
+vuota, FF,1C,1800. NODES/PEAK/NEXT sono letterali; l'intero array fisico
+rimane invariato. La verifica strutturale minima esatta sul prefisso e
+il rifiuto `:cbor-trailing` della finestra completa sono soltanto
+controlli secondari e non entrano nel numero di chiamate della nuova API.
+Sono previsti 520 scanner esatti sul prefisso e 390 rifiuti trailing da
+`cir-probe`, più due scanner esatti sul concatenato.
+
+| Nominale seriale (ordine nel file) | Successi | Rifiuti nuova API |
+| --- | ---: | ---: |
+| literal-all-majors-and-unread-poison-tail | 144 | 0 |
+| integer-tag-and-string-width-boundaries | 360 | 0 |
+| concatenated-frontiers-and-exact-scanners-still-trailing | 6 | 1 |
+| authorized-end-physical-sentinels-and-nonzero-start | 8 | 8 |
+| buffer-type-range-and-whole-backing-array-preservation | 0 | 16 |
+| workspace-type-alias-and-preflight-before-reset | 0 | 5 |
+| configured-limits-and-all-preflight-precedences | 0 | 22 |
+| byte-budget-includes-entire-window-and-unread-tail | 2 | 4 |
+| root-and-tag-chain-node-budget-without-tail-nodes | 5 | 4 |
+| depth-zero-and-100-101-without-tail-depth | 17 | 3 |
+| malformed-first-item-absolute-errors-and-minimality | 0 | 18 |
+| every-truncation-is-bounded-by-authorized-end | 4 | 44 |
+| header-preference-before-nodes-depth-and-payload | 0 | 5 |
+| scratch-reuse-and-content-statistics-without-tail | 3 | 2 |
+| full-16MiB-window-tail-and-complete-payload-boundary | 2 | 2 |
+| fixed-seed-1024-fuzz-and-frozen-class-counts | 512 | 512 |
+| due worker, due ondate | 8192 | 0 |
+| **Totale nuova API** | **9255** | **646** |
+
+**9901 chiamate**: 685 non-fuzz (551/134), 1024 fuzz (512/512),
+8192 parallele (8192/0). Nessun denominatore dinamico o esclusione.
+L'arità tre, fixnum e ogni slot di fine spazio sono verificati su ogni
+successo; tutti i rifiuti controllano classe/motivo/offset assoluto,
+nessun ritorno normale e intero input immutabile. Il preflight controlla
+anche tutti gli slot/array dello scratch già sporco e immutato.
+
+Precedenze range/workspace/alias/limiti/byte-budget, intera finestra
+anche con coda non letta, limite16MiB esatto/+1, payload completo16MiB,
+depth0/100/101, radice/nodi/tag1024, header e minimalità prima dei budget,
+ogni troncamento di un item composito e riuso dopo errore sono nominali.
+
+Fuzz: LCG32 `state=(1664525*state+1013904223) mod 2^32`, seme
+`49544538`, finale `6CB25938` dopo1024 passi. `iteration mod16`
+assegna otto classi successo e otto rifiuto: 512 successi e 64 ciascuno
+byte-budget/nodi/depth/nonminimal/range/workspace/byte-limit/truncated.
+La selezione dei vettori successo usa `(state>>8) mod8`, START=`state mod16`.
+Conteggi e stato finale sono asseriti. Il valore finale provvisorio
+`38C79938` è stato corretto dopo aritmetica fredda, prima del prodotto:
+il file originario è conservato in `precompile/cbor-item-read-before-completion.lisp`.
+
+## Calcolo parallelo e limiti dell'osservazione
+
+Un buffer condiviso read-only: prefisso posizionale7, contenuto letterale
+`C0 A1 61 61 82 F4 F5`, coda `FF 1C 18 00`, END18, array fisico23.
+Attesi **6 nodi, picco2, NEXT14**. Due worker reali e distinti riusati
+per due ondate da2048 chiamate ciascuno. Scratch privati e array
+KINDS/REMAINING distinti; input e snapshot condivisi soltanto in lettura.
+
+Ogni worker registra START prima del lavoro; dopo il primo item letto e
+verificato registra FIRST e segnala READY, quindi attende GO. Il supervisore
+attende entrambi i READY e rilascia due GO; attende entrambi i DONE.
+Per ogni chiamata controlla tre valori, input intero e stato finale scratch.
+Token freddo `17*NODES+31*PEAK+NEXT+sum((i+1)*buffer[i])` = **36196**;
+sink per worker/ondata **74129408**, verificato e stampato.
+
+START/FIRST/END e sink di entrambi, overlap e tick/s sono stampati prima
+delle asserzioni. Attese15s, join20s, cleanup con cessazione verificata.
+L'intervallo osservato comprende rendezvous e controlli; nessuna inferenza
+su tempo puro decoder, esecuzione simultanea sui core o scaling.
+
+Il supporto originario e il seriale originario sono conservati prima del
+completamento; il file threads era assente. L'aritmetica preliminare fu
+eseguita anche con un formato di stampa errato (`6CB25938270X`), senza
+caricare sorgenti: il lettore finale conserva il valore e formato corretti.
+Non si afferma di conservare su file quel primo stdout estemporaneo.
+
+Corpus congelato: nessuna esecuzione del prodotto finché le due letture
+C1 del nuovo sorgente non sono concluse. Qualifica C1/MC/DC aperta.

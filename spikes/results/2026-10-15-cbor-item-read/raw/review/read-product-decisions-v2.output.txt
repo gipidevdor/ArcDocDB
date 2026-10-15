@@ -1,0 +1,3 @@
+DATA-EOF READ-EVAL NIL: 4 forme, 1 DEFUN, 5 UNLESS/1 WHEN, 1 LOOP, 5 ERROR, 0 AND/OR (0 operandi), 4 confronti numerici (0 catene).
+Percorsi sintattici: base1+5UNLESS+1WHEN+1LOOP=8; DEFUN righe10-43=34 (conteggio manuale).
+Nessun LOAD/EVAL/COMPILE del prodotto; nessuna misura runtime o attestazione MC/DC.

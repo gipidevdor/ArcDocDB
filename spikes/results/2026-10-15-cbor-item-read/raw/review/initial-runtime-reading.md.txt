@@ -1,0 +1,122 @@
+# Prima esecuzione del primo item CBOR — lettura DATA indipendente
+
+Lettura C4 del 2026-10-15 da parte del responsabile del corpus, distinto
+dall'autore del prodotto. Sono letti soltanto record conclusi e snapshot:
+nessun LOAD/COMPILE/chiamata del prodotto, corpus o driver, nessun rerun.
+Sono caricati esclusivamente gli strumenti di lettura delle prove.
+
+Input registrati:
+
+- `spikes/out/4001073649-command-78906-0/report.lisp`, blob descriptor
+  `e02b7b33f9cfe0f184e0f72b262f6b7a01dd1680`;
+- `spikes/out/4001073636-command-77979-0/report.lisp`, blob
+  `7f0b6c54ee8812aa74b25eed7686e66d5776251a`;
+- `frozen/snapshot-index.lisp`, blob
+  `e67dadddd9c24993696ff712810f30d907b7a277`.
+
+Il descriptor della prima esecuzione verifica gzip165331byte, SHA256
+`cbd77d16f56a4c9903ea2c62e1bab8cbbbf30b967744eb439af618d48519e3b1`,
+e1483301byte espansi, SHA256
+`32479786b8402bc840f422943c750b23e4f3fd351f3f7babaebd0febead18905`.
+Il lettore comune verifica lunghezza/hash compressi ed espansi, singola
+plist con READ-EVAL NIL ed EOF. Non è una garanzia di autenticità.
+
+## Esito osservato
+
+Comando `make build lint trace links`: schema1, COMMAND-VERIFICATION,
+STATUS OK, exit0, SOURCE-CONSISTENCY STABLE, **85.774692s WALL**.
+HEAD `46aee8b920d447aafae4a4e47a44d13631c47cb1`, working-tree vuoto;
+**931 sorgenti unici** e inventari before/after identici. I quattro pin
+prodotto/corpus sono verificati negli inventari e nel contenuto corrente
+prima e dopo la lettura:
+
+| File | Blob |
+| --- | --- |
+| src/codec/cbor-item-read.lisp |b9099dc8a8c96281063811e686deb4dcb2b1d39b|
+| tests/codec/cbor-item-read-support.lisp |0326100362a1c4b24d2c7e511e45357f09a56d33|
+| tests/codec/cbor-item-read.lisp |b2cbdcb4255c51d9da4fe73b28939c1cb923fefe|
+| tests/codec/cbor-item-read-threads.lisp |a0da65545ed80ede0a967cadbb337731f6fe1ce9|
+
+**1547 righe `ok` uniche =1545 nominali+2 smoke**. I17 item nominali
+sono presenti una volta, con esattamente gli stessi nomi e ordine del
+corpus congelato. Smoke: versione stringa e package ARCDOCDB presente.
+Non sono inclusi in questo processo i quattro self-test del linter.
+
+- Lint: **225 file,0 violazioni**.
+- Trace: **122 requisiti,65 invarianti,13 scenari FI,52ADR,0 errori**.
+- Link: **511 file,3076 link,0 rotti**.
+- Stdout252233caratteri, stderr1037099caratteri; **2845 righe note**
+  di ottimizzazione. Nessun marker WARNING:, STYLE-WARNING:, Unhandled
+  o COMPILE-FILE-ERROR in stdout/stderr. Stderr non è vuoto.
+
+## Fuzz e letture parallele
+
+Raw fuzz presente:1024 casi,512 successi e64 per ciascuna delle otto
+classi rifiuto byte/nodi/depth/nonminimal/range/workspace/byte-limit/
+truncated. LCG32 seme49544538, finale **6CB25938**, ricomputato in modo
+freddo con conteggi `#(512 64 64 64 64 64 64 64 64)`. Il finale è
+asserito dal corpus congelato ma non stampato nel raw.
+
+Due worker reali riusati, due ondate da4096 letture totali ciascuna,
+8192 complessive. I timestamp individuali sono presenti nel raw:
+
+| Onda | Worker | START | FIRST verificato | END | Sink |
+| --- | --- | ---: | ---: | ---: | ---: |
+|0|0|45477805|45477816|45482666|74129408|
+|0|1|45477835|45477837|45483635|74129408|
+|1|0|45482673|45482676|45487293|74129408|
+|1|1|45483641|45483643|45488009|74129408|
+
+Il lettore verifica ordine START<=FIRST<=END e durata positiva,
+MAX(FIRST)<=MIN(END), sink, sequenza delle ondate e formula
+MIN(END)−MAX(START). Overlap osservati **4831 e3652tick**,
+**1000000tick/s**, cioè0.004831s e0.003652s. Il rendezvous segue il
+primo item letto e verificato; l'intervallo WALL include attesa e
+controlli. Nessuna inferenza su tempo puro decoder, simultaneità
+sui core, scaling o prestazioni del motore.
+
+La fixture fredda è ricostruita soltanto aritmeticamente: buffer23byte,
+START7,END18, item `C0 A1 61 61 82 F4 F5` e coda `FF 1C 18 00`.
+Attesi **NODES6/PEAK2/NEXT14**, token36196 e sink2048×36196=74129408.
+I tre valori e lo stato dello scratch sono verificati dal worker
+congelato che termina con successo, ma i valori6/2/14 non sono
+stampati individualmente nel raw. Scratch privati e input intero
+immutabile sono asseriti dal nominale parallelo passato.
+
+Piano9901chiamate confermato aritmeticamente:685 non-fuzz551/134,
+1024fuzz512/512,8192parallele8192/0; totale9255successi/646rifiuti.
+Non è un contatore strumentato delle chiamate API. I controlli scanner
+secondari520 sul prefisso,390 trailing e2 sul concatenato restano
+distinti. Nessuna nuova chiamata API è eseguita da questa lettura.
+
+## Snapshot e stabilità
+
+Il record freeze è OK/exit0/STABLE, HEAD e931sorgenti identici alla
+build, **8.631527s WALL**, stdout umano `Snapshot:24 sorgenti con tre
+confronti per copia`, stderr vuoto. Non è una plist annidata.
+L'indice contiene24 file unici, **240535byte** totali copiati, commit
+corretto. Su ciascun file il lettore esegue e confronta con l'indice
+tre misure indipendenti **originale/copia/originale** di byte e SHA256:
+**72 verifiche** esatte. Lo scope comprende prodotto, dipendenze,
+corpus, package/ASDF/coverage, metodo/API/C1/decisioni e tracciabilità.
+
+Descriptor, payload, record freeze, indice e lettore mantengono byte
+e SHA256 tra ingresso e uscita della lettura; i quattro pin correnti
+restano immutati. Nessuna scrittura a sorgenti, indice Git o HEAD.
+
+## Strumento congelato e preparazioni
+
+Lettore finale `review/initial-runtime-reading-v2.lisp`, blob
+**f0b628d0028bac1f4bd866c0ca68eca8b40e6860**; stdout
+`review/initial-runtime-reading-v2.output.txt`,3672byte, blob
+**cf91000b9aba788dcdc4aa48db61e8913414de9b**; stderr omonimo0byte,
+exit0. Sono conservate separatamente due preparazioni fallite:
+`inspect-initial-runtime.lisp` tenta erroneamente READ dello stdout
+umano dello snapshot come plist; `initial-runtime-reading.lisp` usa
+erroneamente EQUALP con tre argomenti. Warning/errori di questi soli
+lettori restano nei relativi stderr e non sono errori del prodotto.
+Nessun originale o stdout precedente è sovrascritto.
+
+La lettura non riguarda il successivo make check, self-test dei driver,
+heap, copertura o mutazioni. Qualifica C1/MC/DC e requisiti LIM-001/002
+restano aperti; i denominatori grezzi non sono ridotti.

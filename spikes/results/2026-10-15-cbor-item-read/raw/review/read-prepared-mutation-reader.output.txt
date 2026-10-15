@@ -1,0 +1,2 @@
+Lettore preparato DATA-EOF,38forme READ-EVAL NIL; nessuna forma valutata/caricata.
+Catalogo DATA-EOF: :UNIQUE-SOURCE-SUBSTITUTIONS8tuple da4stringhe,1source; whitelist17funzioni. Nessun report/log/copia corrente letto.

@@ -3,7 +3,8 @@
 `arcdocdb.cbor:leggi-item-cbor-minimo` verifica il primo item nella
 finestra autorizzata e restituisce tre valori: numero di nodi,
 picco dei livelli array/map e frontiera assoluta NEXT.
-Il [metodo preregistrato](cbor-item-metodo.md) fissa precedenze e prove.
+Il [metodo preregistrato](cbor-item-metodo.md) fissa precedenze e prove;
+le [verifiche](cbor-item-risultati.md) conservano risultati e limiti.
 
 ```lisp
 (leggi-item-cbor-minimo buffer start end space

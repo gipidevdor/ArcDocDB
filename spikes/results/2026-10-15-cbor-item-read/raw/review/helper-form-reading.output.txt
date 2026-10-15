@@ -1,0 +1,7 @@
+tools/foundation-coverage.lisp: 10 forms, EOF.
+spikes/out/cbor-item-read-20261015/collection/collect.lisp: 35 forms, EOF.
+spikes/out/cbor-item-read-20261015/collection/append.lisp: 14 forms, EOF.
+spikes/out/cbor-item-read-20261015/collection/preflight-archive.lisp: 31 forms, EOF.
+spikes/out/cbor-item-read-20261015/collection/read-collection.lisp: 3 forms, EOF.
+spikes/out/cbor-item-read-20261015/collection/preserve-originals.lisp: 3 forms, EOF.
+spikes/out/cbor-item-read-20261015/collection/build-manifest.lisp: 20 forms, EOF.

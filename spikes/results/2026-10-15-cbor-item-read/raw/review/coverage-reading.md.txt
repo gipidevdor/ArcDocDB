@@ -1,0 +1,112 @@
+# Lettura C4 indipendente dei dati di copertura
+
+2026-10-15. Esito DATA: PASS. Nessun LOAD/compile/call del prodotto,
+driver o FASL; nessuna campagna o benchmark rieseguito. Il solo
+strumento fidato caricato dal lettore è `tools/evidence-storage.lisp`,
+blob `fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`.
+
+Il lettore nuovo adatta soltanto le routine DATA/path/HTML del vecchio
+lettore TAG, con classificazione locale. Una esecuzione riuscita:
+exit0, stderr0 byte,202249 controlli; nessuna variante post-esecuzione
+o tentativo del lettore fallito. Tutte le forme wrapper/raw e fonte
+sono lette con READ-EVAL NIL, readtable standard, base10 ed EOF
+sentinella. I quattro sorgenti e i quattro artefatti fisici risultano
+immutati prima/dopo. I raw rimangono originali, non compressi.
+
+## Wrapper e fonti
+
+Wrapper `spikes/out/4001073826-command-89361-0/report.lisp`:
+schema1, kind COMMAND-VERIFICATION, status OK, exit0, fonti STABLE,
+931 voci before/after identiche, HEAD
+`46aee8b920d447aafae4a4e47a44d13631c47cb1`, working-tree vuoto,
+SBCL2.6.9, wall34.561382s,17 nominali distinti. STDERR è risultato
+vuoto dopo la lettura effettiva; il criterio non lo presupponeva e
+avrebbe conservato compiler NOTES senza confonderli con warning.
+L'argv autorizza esattamente `--report` sulla directory item e scope
+`cbor-item-read`. HEAD corrente resta identico alla chiusura.
+
+| Fonte | Pin before = after = corrente |
+|---|---|
+| `src/codec/cbor-item-read.lisp` | `b9099dc8a8c96281063811e686deb4dcb2b1d39b` |
+| `tests/codec/cbor-item-read-support.lisp` | `0326100362a1c4b24d2c7e511e45357f09a56d33` |
+| `tests/codec/cbor-item-read.lisp` | `b2cbdcb4255c51d9da4fe73b28939c1cb923fefe` |
+| `tests/codec/cbor-item-read-threads.lisp` | `a0da65545ed80ede0a967cadbb337731f6fe1ce9` |
+
+## Denominatori completi e concordanza HTML
+
+Lo scope selezionato contiene esattamente un sorgente,102 record:
+
+| Misura SB-COVER | Coperti | Totali | Missed | Percentuale |
+|---|---:|---:|---:|---:|
+| Espressioni | 64 | 90 | 26 | 71.111111% |
+| Rami | 8 | 12 | 4 | 66.666667% |
+
+I conteggi raw coincidono con il riepilogo del sorgente e l'unico
+link di `cover-index.html`, che arrotondano a71.1% e66.7%. Il file
+HTML è `949a9f275fe32f5a5a3b7d1c0873388a.html`: header assoluto
+corretto e tutte le44 righe di sorgente, decodificate da entity e
+markup, coincidono con il sorgente pinned. Tutti i percorsi dei102
+record sono risolti nelle quattro forme fonte; ciascun sito branch
+ha esattamente una THEN e una ELSE. I cinque ERROR sono rossi/non
+eseguiti nell'HTML, coerentemente con i corrispondenti record zero.
+
+Il raw globale conserva376 file compilati, espressioni3152/159388 e
+rami334/20460. Sono denominatori globali distinti: il filtro HTML
+seleziona il solo nuovo file e non dimostra la copertura del motore.
+
+## Tutti i30 record missed, senza esclusioni
+
+Gli indici sono zero-based nella coppia vettore-path/bit del raw.
+Il dettaglio di ogni path, forma e reason è nell'output del lettore.
+
+| Categoria | Record | Numero |
+|---|---|---:|
+| Espressioni di dichiarazione IN-PACKAGE/OPTIMIZE/FTYPE | 0,1,2 | 3 |
+| Espressioni dei cinque ERROR, inclusi quote/reason | 11–14,46–49,54–57,65–68,75–78 | 20 |
+| Espressioni default keyword MAX-BYTES/MAX-NODES/MAX-DEPTH | 99,100,101 | 3 |
+| Rami ELSE di quattro guardie | 10,45,64,74 | 4 |
+
+Totale:26 espressioni e4 rami; nessun record :OTHER. I tre record
+default sono le forme lambda-list delle righe11–12 non marcate da
+SB-COVER; ciò non dimostra che il corpus non abbia omesso le keyword.
+Restano integralmente nel denominatore, come dichiarazioni e guardie.
+
+| Guardia / linea ERROR | Record espressioni, tutti0 | ELSE missed |
+|---|---|---|
+| `:cbor-item-loop-span` /23 | 11,12,13,14 | 10 |
+| `:cbor-item-loop-bound` /34 | 46,47,48,49 | 45 |
+| `:cbor-item-empty-header` /36 | 54,55,56,57 | nessun ramo proprio |
+| `:cbor-item-read-progress` /40 | 65,66,67,68 | 64 |
+| `:cbor-item-read-range` /42 | 75,76,77,78 | 74 |
+
+Le quattro ELSE sono l'esito falso dei confronti binari alle
+righe22,33,39,41. Le rispettive THEN9,44,63,73 sono coperte. Il
+drain nel loop, riga30, copre THEN24/ELSE26; quello finale, riga32,
+copre THEN38/ELSE39. Il fallback ERROR36 non ha un confronto proprio:
+segue la chiamata header vuoto che deve segnalare :cbor-truncated.
+
+Le guardie proteggono contratti dei callee e restano fail-stop
+sempre attivi. Le ragioni statiche per non raggiungerne i bracci con
+callee corretti, già discusse nella C1, non vengono usate per togliere
+record, riequilibrare percentuali o dichiarare copertura completa.
+La nozione SB-COVER di12 esiti di6 predicati è distinta dagli8
+percorsi conservativi C1 che includono LOOP. AND/OR nel nuovo file:0;
+non segue una qualifica MC/DC complessiva o dei moduli riusati.
+
+## Pin degli originali e della lettura
+
+| Originale | Byte | SHA256 |
+|---|---:|---|
+| wrapper report.lisp | 195526 | `be48146d9a85f1dd5397ea885d09d6d6437bdbe6c63ae5e13e67497986ef17b5` |
+| coverage-state.lisp | 3004878 | `795f90f4291b16ddc8fcb61ca82150eabd1499539a02e04275daf542dfcc54cd` |
+| cover-index.html | 1754 | `9f8991791441f9a1df15813f0700845722538113c4305849d7514264173050db` |
+| HTML sorgente | 16786 | `fa4d79d83f9238d128194443b228b1fc776e97efca20e0f381786df390a5b860` |
+
+- `review/coverage-reading.lisp`: `66cecc61341bcc9fc160b654bc5e629dcac64be9`.
+- `review/coverage-reading.output.txt`: `d9e9a6645a801522a64cf62640a6f0b01be6d0f0`.
+- `review/coverage-reading.error.txt`: `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
+
+Questa lettura attesta concordanza dei dati e stabilità locale dei
+byte osservati; non autenticità né snapshot atomico. Build completa,
+benchmark, mutazione, integrazione e qualifica C1 rimangono evidenze
+distinte. Nessun raw, fonte, nota precedente, indice o HEAD modificato.

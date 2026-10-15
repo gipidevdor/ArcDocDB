@@ -1,0 +1,35 @@
+diff --git a/spikes/out/cbor-item-read-20261015/drivers/mutation-before-audit-selftest-fix-87d1d3dc.lisp b/spikes/out/cbor-item-read-20261015/drivers/mutation.lisp
+index 87d1d3dc..8489ea79 100644
+--- a/spikes/out/cbor-item-read-20261015/drivers/mutation-before-audit-selftest-fix-87d1d3dc.lisp
++++ b/spikes/out/cbor-item-read-20261015/drivers/mutation.lisp
+@@ -19,7 +19,7 @@
+                                          ("tests/codec/cbor-item-read.lisp"
+                                           "b2cbdcb4255c51d9da4fe73b28939c1cb923fefe")
+                                          ("tests/codec/cbor-item-read-threads.lisp"
+-                                          "a0da65545ed80ede0a967cadbb337731f6fe1ce9")))(defparameter *catalogue-data-blob* '"e5461badb6b4235557e1cec12f48540ce7f6ef84")(defparameter *catalogue-raw-fingerprints* '(("src/codec/cbor-item-read.lisp"
++                                          "a0da65545ed80ede0a967cadbb337731f6fe1ce9")))(defparameter *catalogue-data-blob* '"72fd332903fa222ceb2caaa7bbf9f546d44525aa")(defparameter *catalogue-raw-fingerprints* '(("src/codec/cbor-item-read.lisp"
+                                               #A((32) BASE-CHAR
+                                                  . "39603f3dc085bcae02483b1bf9028873"))
+                                              ("tests/codec/cbor-item-read-support.lisp"
+@@ -39,10 +39,10 @@
+                                                  . "075fd8060d77c8665164a2d20c12b417"))
+                                              ("spikes/out/cbor-item-read-20261015/drivers/audit.lisp"
+                                               #A((32) BASE-CHAR
+-                                                 . "5c8ec64487f8c95e4f1d8cc09fb170d0"))
++                                                 . "213a90a9fb13d527f4370bb342ea7e37"))
+                                              ("spikes/out/cbor-item-read-20261015/drivers/catalogue-materialized.lisp"
+                                               #A((32) BASE-CHAR
+-                                                 . "eae98ce2f2239254630848f5b8a9e2e9"))))(defparameter *mutants* '(("src/codec/cbor-item-read.lisp" "generic-scan"
++                                                 . "ceb8c40fcd3e5f6a8e3765f98018bf98"))))(defparameter *mutants* '(("src/codec/cbor-item-read.lisp" "generic-scan"
+                            "(passo-struttura-cbor bytes scratch limit node-limit depth-limit t)"
+                            "(passo-struttura-cbor bytes scratch limit node-limit depth-limit nil)")
+                           ("src/codec/cbor-item-read.lisp"
+@@ -803,7 +803,7 @@ Le funzioni nominali ammesse sono congelate nel corpus prima delle campagne."
+         :corpus-frame-functions *corpus-frame-functions* :cold-origin-frame *cold-origin-frame*
+         :frozen-other-driver-blobs
+         '(("bench.lisp" "118c779ca567411675e5dfbb0866b5b17e77c7f0")
+-          ("audit.lisp" "6cf528ab25ee0af5d785d501b6072970449a7fa4"))
++          ("audit.lisp" "b6fcd88b73f31c5a9109dc83c8f311cf5b47082e"))
+         :semantic-catalogue-blob *semantic-catalogue-blob*
+         :method-blob *method-blob* :corpus-plan-blob *corpus-plan-blob*
+         :corpus-plan-declared-api-calls *corpus-plan-declared-api-calls*

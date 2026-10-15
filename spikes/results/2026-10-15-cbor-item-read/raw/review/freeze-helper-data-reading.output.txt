@@ -1,0 +1,27 @@
+DATA READ only; READ-EVAL NIL; balanced EOF reached.
+Forms: 4; planned source keys: 24; distinct: 24.
+arcdocdb.asd
+src/codec/cbor-package.lisp
+src/codec/cbor-item-read.lisp
+src/codec/cbor-header.lisp
+src/codec/cbor-minimal.lisp
+src/codec/cbor-float-minimal.lisp
+src/codec/utf8.lisp
+src/codec/cbor-space.lisp
+src/codec/cbor-scan-input.lisp
+src/codec/cbor-scan-stack.lisp
+src/codec/cbor-scan-items.lisp
+src/codec/cbor-scan.lisp
+src/codec/cbor-scan-minimal.lisp
+tests/codec/cbor-item-read-support.lisp
+tests/codec/cbor-item-read.lisp
+tests/codec/cbor-item-read-threads.lisp
+tools/foundation-coverage.lisp
+docs/implementazione/cbor-item-metodo.md
+docs/implementazione/cbor-item.md
+docs/implementazione/cbor-item-revisione.md
+docs/implementazione/cbor-item-lettura.md
+docs/implementazione/cbor-item-decisioni.md
+docs/tracciabilita/requisiti.lisp
+docs/tracciabilita/matrice.md
+No forms loaded or evaluated; no snapshot/copy/product invoked.

@@ -1,0 +1,84 @@
+# Lettura indipendente C4 di benchmark e audit conclusi
+
+2026-10-15. PASS DATA; nessuna nuova misura, LOAD/compile/call del
+prodotto o dei driver. Letti soltanto i due wrapper già conclusi,
+il catalogo freddo e le impronte correnti. Il lettore usa READ-EVAL
+NIL, readtable standard, base10, una forma e EOF sentinella, con
+`tools/evidence-storage.lisp` fidato `fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`.
+
+Benchmark `4001074008-command-2418-0/report.lisp`: OK/exit0,
+wall3.358691s. Audit `4001074123-command-8636-0/report.lisp`:
+OK/exit0, wall2.835036s. Entrambi hanno931 fonti before/after
+identiche, STABLE, working-tree vuoto e HEAD
+`46aee8b920d447aafae4a4e47a44d13631c47cb1`, ancora corrente.
+Quattro pin before/after/current coincidono: kernel `b9099dc8…`,
+support `03261003…`, seriale `b2cbdcb4…`, worker `a0da6554…`;
+i valori completi sono nell'output. Driver benchmark `118c779c…`,
+auditor `b6fcd88b…`, catalogo freddo `c6a22e67…` invariati.
+
+| Fixture | NODES, PEAK, NEXT freddi | Token | Sink di ciascuna delle5 repliche |
+|---|---|---:|---:|
+| scalare | 1,0,3 | 201232 | 206585344 |
+| testo | 1,0,5 | 335499 | 344074752 |
+| array | 3,1,5 | 335486 | 344061440 |
+| mappa | 6,2,10 | 671472 | 688111104 |
+| tag | 4,1,7 | 469665 | 481460736 |
+| array misto | 5,2,11 | 738173 | 756412928 |
+
+Per tutte le sei celle concordano item e coda letterali, START/END,
+intero buffer fisico atteso/osservato, tre cold-values esatti e tutti
+i sei scalari scratch (CURSOR/TOP/NODES/DEPTH/PEAK-DEPTH/PENDING-TAG).
+Le dichiarazioni dei controlli per chiamata sono T; i controller
+corrispondenti sono quelli già letti prima delle campagne.
+
+Le30 repliche, ciascuna con1024 chiamate e warmup64, conservano un
+campo :heap-bytes presente, intero e zero; nessuna assenza/NIL è
+interpretata come zero. Tutti i sink sono ricostruiti aritmeticamente
+da token e indici, e tick/secondi/rate concordano. Somma campioni:
+35106 tick a1MHz =0.035106s, inclusi consumer e controlli. La wall
+complessiva comprende anche caricamento, warmup e self-test; nessuna
+misura di throughput puro decoder o scaling viene derivata qui.
+
+Baseline: heap0,1024 chiamate/warmup64,10 tick. Positivo:16 chiamate
+con oggetto vivo da1MiB, heap16777472 byte,41 tick. L'auditor riporta
+effettivamente71252 controlli,6 celle,30 campioni, heap0, arità3,
+baseline0, positivo16777472 e228 impronte interne before/after stabili.
+Osservazioni before/after dell'auditor identificano esattamente il
+wrapper benchmark originale per path canonico, byte e SHA256.
+Entrambi gli STDERR sono risultati vuoti, senza presupporlo.
+
+## Originali e lettore conservati
+
+| Wrapper originale | Byte | SHA256 |
+|---|---:|---|
+| benchmark | 254464 | `6f6e5658f9d29568dc59cb407bcbb4b4711f3d48e7f74127df29d7c26c9a8655` |
+| audit | 195079 | `c5a14ee6974ca54db3c2c2f0f04bdb5d7a6bf1ff138e82f09ffbd4d53152555e` |
+
+Il primo lettore locale `benchmark-reading.lisp`, blob
+`79b97946929fa12ad8b804a44ea3d1d09597f374`, esce1 su :AUDIT-COMMAND:
+il controllo attendeva un path relativo, mentre il comando registrato
+usa correttamente il path assoluto. Output vuoto e stderr originale
+19792 byte, blob `e98851c251a73155c7b54f38cea08c25b6352bad`, sono
+preservati. È un errore di assunzione del lettore, non del benchmark.
+
+La variante `benchmark-reading-2.lisp` cambia soltanto il confronto
+del path con TRUENAME del report; exit0,8389 controlli, stderr0 byte:
+
+- reader `504607ecdc0c51aec7235d8243a011e22f5157e0`;
+- output `df57aa2388bea4c7e25c0194b1c4186ba7aa242e`;
+- error vuoto `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
+
+È distinto anche il precedente errore inline del coordinatore:
+forma `root-bench-query-before-fix.lisp` `d24c7d84…`, nota
+`root-bench-query-note.md` `c20c0af0…`, variante DATA
+`root-bench-summary.lisp` `64099cae…` con output `42219c06…` e stderr
+vuoto. La nota dichiara che l'errore di parentesi avvenne prima della
+lettura del record e che il diagnostico era nella conversazione,
+senza attribuirgli un log locale inesistente. Nessuna preparazione
+fallita è contata come fallimento di misura o ripetizione di campagna.
+
+Wrapper, catalogo e quattro fonti sono immutati prima/dopo la lettura.
+Nessuna scrittura a fonti, driver, note precedenti, indice o HEAD;
+la compressione della copertura è un'operazione distinta. Coerenza
+locale e contatori osservati non attestano autenticità, assenza
+assoluta di allocazioni, qualifica C1/MC/DC o prestazioni del motore.

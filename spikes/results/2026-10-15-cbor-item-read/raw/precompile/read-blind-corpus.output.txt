@@ -1,0 +1,7 @@
+tests/codec/cbor-item-read-support.lisp: DATA-EOF, 15 forme, 0 nominali.
+tests/codec/cbor-item-read.lisp: DATA-EOF, 17 forme, 16 nominali.
+tests/codec/cbor-item-read-threads.lisp: DATA-EOF, 2 forme, 1 nominali.
+Totale 34 forme, 17 nominali unici; nessun LOAD o COMPILE del corpus/prodotto.
+LCG freddo: seme49544538, finale6CB25938 dopo1024 passi.
+Fixture fredda: start7/end18/fisico23, valori6/2/14, token36196, sink74129408.
+Denominatore freddo: non-fuzz 551 successi/134 rifiuti; fuzz512/512; parallelo8192/0; totale9901 (9255/646).

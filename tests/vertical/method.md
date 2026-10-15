@@ -66,3 +66,12 @@ La suite completa prevede 18 workload, 71 processi, 26 SIGKILL intenzionali
 e due errori attesi. Nessuna misura di prestazione. È ancora una fixture C4
 seriale, con una sola Serie, soli record ordinari e decision log vuoto;
 non è un'API di recovery o un gate generale di ammissione dell'Archivio.
+
+## Collegamento alla proposta ID di prodotto
+
+Il 2026-10-15 la fixture sostituisce la ricerca del primo ID libero con
+`scegli-id-segmento-recovery`: manifest autorevole e inventario completo
+dei nomi `.tmp`/`.seg` nel suo namespace di otto ID. Verifica lo stato
+`:ready`, il successore e il proprio budget; non applica le azioni del piano.
+La prova resta C4, con gli stessi 18 workload e gli stessi oracoli costanti.
+Il contratto e la verifica C1 della proposta ID sono separati dalla fixture.

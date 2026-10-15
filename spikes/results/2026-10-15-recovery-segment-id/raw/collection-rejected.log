@@ -1,0 +1,3 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-COLLECTION :STATUS :FAILED :REASON
+ :DUPLICATE-TARGET :DIAGNOSTIC
+ "Raccolta rifiutata :DUPLICATE-TARGET: raw/recovery-id-mutation-2/tools/runner.lisp.txt.")

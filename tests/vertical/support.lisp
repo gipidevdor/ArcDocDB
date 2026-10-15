@@ -212,16 +212,23 @@
                  :max-batch-records 4 :max-batch-bytes 8192) maps)))
     (coerce (nreverse maps) 'simple-vector)))
 
-(defun next-id (env)
-  "Prenotazione C4 senza riutilizzare temporanei preparati prima del crash."
-  (loop for id from 2 to 8
-        unless (or (probe-file (leaf env (format nil "segment-~D.tmp" id)))
-                   (probe-file (leaf env (format nil "segment-~D.seg" id))))
-          do (return-from next-id id))
-  (error "Budget di otto segmenti esaurito."))
+(defun next-id (env manifest)
+  "Proposta di prodotto da tutti i nomi del namespace C4 limitato a otto ID."
+  (let ((files nil))
+    (loop for id from 1 to 8 do
+      (dolist (form '(("tmp" :temporary) ("seg" :final)))
+        (when (probe-file (leaf env (format nil "segment-~D.~A" id (first form))))
+          (push (mf:file-segmento id (second form)) files))))
+    (multiple-value-bind (id next plan)
+        (mf:scegli-id-segmento-recovery manifest (coerce files 'simple-vector)
+                                      :max-files 16 :max-segmenti 8)
+      (is (= next (1+ id))) (is (<= id 8))
+      (is (eq :ready (mf:stato-riconciliazione plan)))
+      id)))
 
 (defun checkpoint (env &optional stop-before-publication)
-  (let* ((control (read-control env)) (recovered (read-active env control)) (id (next-id env)))
+  (let* ((control (read-control env)) (recovered (read-active env control))
+         (id (next-id env (c:manifest-control-recuperato control))))
     (multiple-value-bind (prepared append) (prepare-active env id)
       (when (probe-file (leaf env "control.log.tmp"))
         (io:rinomina-nella-directory (environment-directory env) "control.log.tmp" "unpublished-control.tmp")

@@ -19,4 +19,5 @@
            #:numero-segmenti-chiusi #:numero-segmenti-rimossi
            #:trova-segmento #:trova-esito-chiusura
            #:file-segmento #:pianifica-riconciliazione #:stato-riconciliazione
-           #:numero-azioni-riconciliazione #:azione-riconciliazione))
+           #:numero-azioni-riconciliazione #:azione-riconciliazione
+           #:scegli-id-segmento-recovery))

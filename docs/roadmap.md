@@ -26,6 +26,11 @@ del traffico restano lavoro di prodotto.
 
 La priorità di sviluppo è trasferire questa composizione nel motore:
 
+Il primo passo di prodotto è la [scelta dell'ID del nuovo segmento](implementazione/id-segmento-recovery.md):
+proposta pura dal manifest e dall'inventario completo, usata anche dalla
+fixture verticale. Enumerazione generale del namespace, identità dei file,
+ownership delle capacità e coordinamento del recovery restano da implementare.
+
 | Ordine | Incremento | Confine da verificare |
 |---|---|---|
 | 1 | Apertura e recovery di una Serie nel prodotto | Inventario generale, identità, ownership delle capacità e fallimenti a ogni passo |

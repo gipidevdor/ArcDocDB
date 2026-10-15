@@ -107,7 +107,7 @@
                              (:file "manifest-decode") (:file "manifest-fold")
                              (:file "manifest-build") (:file "manifest-query") (:file "manifest-transition")
                              (:file "inventory-types") (:file "inventory-build")
-                             (:file "inventory-query")))
+                             (:file "inventory-query") (:file "inventory-id")))
                (:module "get-resolver" :serial t
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
                              (:file "rows") (:file "build") (:file "read")
@@ -226,7 +226,7 @@
                              (:file "decisions-support") (:file "decisions")
                              (:file "decisions-audit") (:file "decisions-radix") (:file "manifest-support")
                              (:file "manifest") (:file "manifest-audit") (:file "manifest-transition")
-                             (:file "inventory-support") (:file "inventory")))
+                             (:file "inventory-support") (:file "inventory") (:file "inventory-id")))
                (:module "recovery-active" :serial t
                 :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
                (:module "recovery-archive" :serial t

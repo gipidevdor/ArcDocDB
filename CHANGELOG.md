@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Proposta dell'ID del nuovo segmento dopo recovery, oltre il high-water del
+  manifest e ogni nome dell'inventario, inclusi i temporanei orfani. Piano
+  posseduto, limiti u64 e budget espliciti; collegamento alla prova verticale.
+  Nessuna prenotazione, modifica di file o ammissione del traffico.
+
 - Documentazione full text riallineata fra scope v1, contratto/catalogo,
   interfacce query, roadmap, glossario, valutazione, costi, rischi e piano
   di verifica. ADR-0053 resta la decisione di riferimento; implementazione,

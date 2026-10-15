@@ -127,7 +127,10 @@
                (:module "recovery-active" :serial t
                 :components ((:file "package") (:file "types") (:file "read") (:file "frames")
                              (:file "resolve") (:file "build") (:file "query")
-                             (:file "closure") (:file "publication"))))
+                             (:file "closure") (:file "publication")))
+               (:module "recovery-archive" :serial t
+                :components ((:file "package") (:file "types") (:file "read")
+                             (:file "build") (:file "query") (:file "active"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

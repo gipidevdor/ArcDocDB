@@ -38,7 +38,19 @@
                    (av-bytes 0))))
     (values (av-cat prefix tail) (length prefix))))
 
-(defun apub-decisions (fixture path identity version deadline local-decision-p)
+(defun apub-seed (fixture path directory name bytes deadline)
+  "Setup privato: create esclusiva .tmp, flush, rinomina del nome di fixture e flush parent."
+  (multiple-value-bind (input append)
+      (ct::rp-seed fixture path (concatenate 'string name ".tmp") bytes deadline)
+    (let ((target (ct::native-leaf fixture path name)))
+      (ct::native-seconds-left deadline :active-fixture-seed-rename)
+      (sb-posix:rename (namestring (merge-pathnames (concatenate 'string name ".tmp") path))
+                       (namestring target))
+      (is (zerop (ct::native-bounded deadline :active-fixture-seed-flush
+                   (lambda () (io:durable-flush directory))))))
+    (values input append)))
+
+(defun apub-decisions (fixture path directory identity version deadline local-decision-p)
   "Log completo dell'Archivio della fixture: header verificato e tabella ricostruita a EOF."
   (let* ((participants (list identity (rt::participant-id 99 128)))
          (specs (append (list (rt::decision-spec #xffffffffffffffff #xfedcba9876543210 participants)
@@ -53,7 +65,7 @@
         (rt::decision-log-fixture (list specs) :version version :prefix 64 :file-offset 0)
       (is (= start 64)) (is (= end (length bytes)))
       (replace bytes header)
-      (multiple-value-bind (input append) (ct::rp-seed fixture path "multiserie.log" bytes deadline)
+      (multiple-value-bind (input append) (apub-seed fixture path directory "multiserie.log" bytes deadline)
         (is (= end (io:posizione-scritta append) (io:posizione-durevole append)))
         (let ((read (ct::native-read-bytes input bytes deadline)))
           (multiple-value-bind (body actual-version)
@@ -142,9 +154,9 @@
           (apub-read-control fixture case (apub-case-control-input case) control-bytes
                              (length control-prefix) deadline))
     (ct::rp-manifest (arcdocdb.control:manifest-control-recuperato (apub-case-control case)) nil)
-    (let ((decisions (apub-decisions fixture path identity version deadline local-decision-p)))
+    (let ((decisions (apub-decisions fixture path directory identity version deadline local-decision-p)))
       (multiple-value-bind (bytes prefix) (apub-source version tail-p)
-        (multiple-value-bind (input append) (ct::rp-seed fixture path "9.seg" bytes deadline)
+        (multiple-value-bind (input append) (apub-seed fixture path directory "9.seg" bytes deadline)
           (is (= (length bytes) (io:posizione-scritta append) (io:posizione-durevole append)))
           (setf (apub-case-input case) input (apub-case-bytes case) bytes (apub-case-prefix case) prefix)))
       (setf (apub-case-recovered case) (apub-read-active fixture case decisions deadline))

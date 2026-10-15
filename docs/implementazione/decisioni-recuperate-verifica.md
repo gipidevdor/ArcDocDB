@@ -20,7 +20,12 @@ osservati separatamente. Le prove verificano preflight senza I/O, identità
 completa, budget, trasferimenti corti, errori originali, prefisso sigillato,
 proprietà delle copie e query scalari. Le sostituzioni di funzioni, se
 necessarie per guardie irraggiungibili con dipendenze corrette, sono seriali,
-delimitate e ripristinate prima del ritorno.
+delimitate e ripristinate prima del ritorno. `guards.lisp` inietta risultati
+incoerenti da preflight, trasferimento, decoder header e replay: ogni rifiuto
+precede la consegna e viene seguito da una lettura valida con dipendenze
+ripristinate. Le coppie del predicato corpo e i limiti/coerenza di P sono
+espliciti. Anche i costruttori privati sono invocati dinamicamente con tipi
+invalidi, senza sopprimere warning o indebolire i tipi del prodotto.
 
 Il bridge usa un Archivio con UUID distinto dalla Serie, associato al suo
 stesso ambito GET canonico. Sono separati identità dei byte, identità

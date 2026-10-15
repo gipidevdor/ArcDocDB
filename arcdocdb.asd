@@ -227,7 +227,7 @@
                 :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
                (:module "recovery-archive" :serial t
                 :components ((:file "support") (:file "read") (:file "query")
-                             (:file "active") (:file "native")))
+                             (:file "active") (:file "native") (:file "guards")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))

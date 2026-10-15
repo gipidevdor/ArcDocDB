@@ -7,4 +7,4 @@
                 #:invariant-violation)
   (:export #:dispatcher-writer-pool #:crea-dispatcher-writer-pool
            #:prendi-collegamento-pool #:collega-obbligo-pool #:ricircola-collegamento-pool
-           #:inizia-obbligo-pool))
+           #:inizia-obbligo-pool #:passo-dispatcher-pool))

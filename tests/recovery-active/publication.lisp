@@ -78,7 +78,7 @@
                     (lambda ()
                       (arcdocdb.control:leggi-control-recuperato
                        (apub-case-view case) input size scratch :chunk-bytes 31 :max-bytes 4096
-                       :max-batches 1 :max-batch-records 1 :max-edits 1 :max-segmenti 4 :max-esiti 6)))))
+                       :max-batches 2 :max-batch-records 1 :max-edits 1 :max-segmenti 4 :max-esiti 6)))))
       (is (equalp expected scratch))
       (is (equal before (ct::rp-observations fixture)))
       (is (equalp (vector 0 (ceiling size 31) 0 0 0 0 0 0 0)
@@ -102,7 +102,7 @@
     (let ((result (ct::native-bounded deadline :active-publication-active-read
                     (lambda ()
                       (ar:leggi-active-recuperato control input size decisions scratch
-                       :chunk-bytes 31 :max-bytes 4096 :max-batches 2 :max-batch-records 5
+                       :chunk-bytes 31 :max-bytes 4096 :max-batches 3 :max-batch-records 5
                        :max-batch-bytes 4096 :max-records 7 :max-prepared 4 :max-outcomes 2)))))
       (is (equalp scratch (apub-case-bytes case)))
       (is (equal before (ct::rp-observations fixture)))

@@ -238,7 +238,10 @@
     (push (raw-entry *load-truename* (merge-pathnames "publication-tool-source.txt" base)) raw)
     (dolist (leaf '("README.md" "report.md" "revisione-autore.md" "revisione-indipendente.md"
                     "collect.lisp" "collect-source.txt" "coverage-summary.lisp" "coverage-summary-source.txt"
-                    "coverage.lisp" "control-coverage.lisp" "supervise.lisp" "supervise-source.txt"))
+                    "coverage.lisp" "control-coverage.lisp" "supervise.lisp" "supervise-source.txt"
+                    "control-coverage-summary.lisp" "control-coverage-summary-source.txt"
+                    "retention.lisp" "retention-source.txt" "coordinamento.lisp"
+                    "benchmark-attempt-A-source.txt"))
       (let ((path (merge-pathnames leaf base)))
         (push (raw-entry path path base) raw)))
     (unless entries (error "Nessun registro concluso."))

@@ -1,0 +1,19 @@
+Lettura statica indipendente del fix API, 2026-10-15.
+
+PASS statico sul delta 82100f5a..6d47d2df: collector
+d2eb1bd8a62b0fd98ec023243b2a768c19988dc7; test invariati
+49da390b7e170acc9ffdafa78285f215aec75f44. Il revisore non e autore
+del collector o dei test. La precedente nota sul pin 48c4 resta immutata.
+
+Il nuovo helper api-pathname-string lascia inalterate le stringhe,
+converte soltanto i pathname con NAMESTRING e rifiuta gli altri tipi con
+:arguments. Tre binding iniziali di collect-archive normalizzano manifest,
+destinazione e osservazioni prima del preflight. Il parser dei campi del
+manifest e invariato: SOURCE/PATH restano stringhe e conservano i rifiuti
+precedenti. La documentazione precisa esattamente questo confine API.
+
+La causa comunicata del tentativo precedente e coerente con il delta:
+le fixture passano pathname alla API, mentre il vecchio confine accettava
+solo stringhe. Questa lettura non ha consultato output dei runtime e non
+valida i futuri risultati; i tentativi falliti devono restare conservati
+con i vecchi pin. Nessun LOAD, compilazione, test o modifica alle fonti.

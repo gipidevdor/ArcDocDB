@@ -1,0 +1,18 @@
+# Preparazione del manifesto della campagna collector
+
+Prima di ogni esecuzione del helper, la prima lettura READ ha rilevato
+una parentesi finale in eccesso alla linea173. La bozza esatta
+`9d6fc0eeb8c5c1db6b6d720a0b989df2b9d9c393` è preservata come
+prepare-manifest-before-syntax-fix-9d6fc0ee.lisp prima della correzione.
+Il diagnostico della prima lettura è soltanto nella conversazione;
+non si dichiara un file di log locale originale. Nessun helper,
+collector, prodotto o report runtime è stato eseguito o modificato.
+
+Un successivo riordino del solo helper ARTIFACT separa il rifiuto di
+un candidato descriptor invalido dall'aggiunta dei target: collisioni
+o errori di selezione devono interrompere la preparazione, non essere
+mascherati come esclusioni. La lettura seguente ha rilevato una
+parentesi mancante alla chiusura della lista LABELS; la bozza esatta
+`0c1fd70a5ddad709070b684fc2211e470dc62adc` è preservata prima della
+correzione in prepare-manifest-before-artifact-close-fix-0c1fd70a.lisp.
+Anche quel diagnostico appartiene soltanto alla conversazione.

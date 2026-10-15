@@ -1,0 +1,182 @@
+;;;; Campagna C4 del collector: selezione esplicita di registri e report dei casi conclusi.
+;;;; --manifest NEWPATH [--record LABEL ABSREPORT]... [--case-root LABEL ABSROOT]...
+;;;; Nessuna esecuzione del collector; nessun input, budget fixture o archivio parziale copiato.
+(require :asdf)
+(require :sb-posix)
+(load "tools/evidence-storage.lisp")
+(defpackage #:arcdocdb.command-archive.campaign-selection (:use #:cl))
+(in-package #:arcdocdb.command-archive.campaign-selection)
+(declaim (optimize (safety 3) (debug 3)))
+(defparameter *helper-source* (truename *load-truename*))
+(defparameter *campaign-root*
+  (uiop:pathname-parent-directory-pathname (uiop:pathname-directory-pathname *helper-source*)))
+(defconstant +plain-limit+ 1048576)
+(defconstant +gzip-limit+ 8388608)
+(defconstant +entry-limit+ 100000)
+
+(defun require-that (value control &rest arguments)
+  (unless value (error (apply #'format nil control arguments))))
+
+(defun relative-parts (value)
+  (require-that (and (stringp value) (<= 1 (length value) 4096)
+                     (not (find-if (lambda (character)
+                                     (or (< (char-code character) 32) (= 127 (char-code character))
+                                         (find character "\\:*?[]"))) value))) "Path relativo non semplice")
+  (let ((parts (uiop:split-string value :separator "/")))
+    (require-that (and (<= (length parts) 128)
+                       (every (lambda (part) (and (plusp (length part))
+                                                  (not (member part '("." "..") :test #'string=)))) parts))
+                  "Path relativo non semplice: ~A" value) parts))
+
+(defun label-p (value)
+  (= 1 (length (relative-parts value))))
+
+(defun path-mode (path)
+  (let ((name (namestring path)))
+    (sb-posix:stat-mode (sb-posix:lstat (if (> (length name) 1) (string-right-trim "/" name) name)))))
+
+(defun regular-p (path)
+  (and (probe-file path) (sb-posix:s-isreg (path-mode path))))
+
+(defun read-plain (path)
+  (let ((*read-eval* nil) (*readtable* (copy-readtable nil)) (*read-base* 10)
+        (*read-suppress* nil) (*package* (find-package :cl-user)) (eof (gensym "EOF")))
+    (with-open-file (stream path :external-format :utf-8)
+      (let* ((data (read stream nil eof)) (size (and (consp data) (list-length data))))
+        (require-that (and size (evenp size) (loop for key in data by #'cddr always (keywordp key)))
+                      "Plist DATA richiesta: ~A" path)
+        (require-that (eq eof (read stream nil eof)) "Forma extra: ~A" path) data))))
+
+(defun data-label (path)
+  (if (string-equal "md" (or (pathname-type path) "")) (concatenate 'string (file-namestring path) ".txt")
+      (file-namestring path)))
+
+(defun selected-case-directories (root)
+  (sort (remove-if-not
+         (lambda (path)
+           (let ((name (car (last (pathname-directory path)))))
+             (and (stringp name) (<= 5 (length name)) (string= "case-" name :end2 5)
+                  (sb-posix:s-isdir (path-mode path)))))
+         (uiop:subdirectories root)) #'string< :key #'namestring))
+
+(defun arguments ()
+  (let ((args (uiop:command-line-arguments)) (manifest nil) (records nil) (roots nil))
+    (loop while args for option = (pop args)
+          do (cond ((and (string= option "--manifest") args (null manifest)) (setf manifest (pop args)))
+                   ((and (string= option "--record") (<= 2 (length args)))
+                    (push (list (pop args) (pop args)) records))
+                   ((and (string= option "--case-root") (<= 2 (length args)))
+                    (push (list (pop args) (pop args)) roots))
+                   (t (error "Usare --manifest NEWPATH, --record LABEL ABSREPORT e --case-root LABEL ABSROOT."))))
+    (require-that (and manifest records) "Manifesto e almeno un record richiesti")
+    (values manifest (nreverse records) (nreverse roots))))
+
+(defun prepare (destination records roots)
+  (let ((files nil) (processes nil) (excluded nil) (target-table (make-hash-table :test #'equal))
+        (record-labels (make-hash-table :test #'equal)) (root-labels (make-hash-table :test #'equal))
+        (case-count 0) (record-observations nil))
+    (require-that (not (probe-file destination)) "Manifesto gia esistente: ~A" destination)
+    (labels ((add (source relative)
+               (relative-parts relative)
+               (require-that (regular-p source) "Origine non regolare: ~A" source)
+               (let* ((real (truename source)) (previous (gethash relative target-table))
+                      (limit (if (equal "gz" (pathname-type relative)) +gzip-limit+ +plain-limit+)))
+                 (require-that (<= (arcdocdb.evidence:file-bytes real) limit) "File oltre budget: ~A" real)
+                 (if previous
+                     (require-that (equal previous real) "Destinazione duplicata: ~A" relative)
+                     (progn
+                       (require-that (< (hash-table-count target-table) +entry-limit+) "Selezione oltre budget")
+                       (setf (gethash relative target-table) real)
+                       (push (list :source (namestring real) :path relative) files)))))
+             (artifact (source relative &key required skip-invalid)
+               (when (or required (probe-file source))
+                 (let ((real nil) (payload nil) (accepted nil))
+                   (handler-case
+                       (progn
+                         (require-that (regular-p source) "Origine non regolare: ~A" source)
+                         (setf real (truename source))
+                         (arcdocdb.evidence:call-with-evidence-bytes
+                          real
+                          (lambda (plain)
+                            (unless (equal real plain)
+                              (let* ((raw (read-plain real)) (leaf (getf raw :payload)))
+                                (require-that (and (stringp leaf) (label-p leaf) (equal "gz" (pathname-type leaf)))
+                                              "Payload gzip leaf richiesto: ~A" real)
+                                (setf payload (merge-pathnames leaf (uiop:pathname-directory-pathname real))))))
+                          :max-expanded-bytes 134217728)
+                         (setf accepted t))
+                     (error (condition)
+                       (if skip-invalid
+                           (push (list :source (namestring (pathname source)) :reason :invalid-or-unselected-data
+                                       :diagnostic (princ-to-string condition)) excluded)
+                           (error condition))))
+                   (when accepted
+                     (add real relative)
+                     (when payload
+                       (let ((slash (position #\/ relative :from-end t)))
+                         (add payload (concatenate 'string (if slash (subseq relative 0 (1+ slash)) "")
+                                                   (file-namestring payload))))))))))
+      (dolist (entry records)
+        (destructuring-bind (label argument) entry
+          (require-that (and (label-p label) (not (gethash label record-labels))) "Label processo duplicata: ~A" label)
+          (setf (gethash label record-labels) t)
+          (require-that (uiop:absolute-pathname-p (pathname argument)) "Record assoluto richiesto")
+          (let* ((path (truename argument)) (directory (uiop:pathname-directory-pathname path))
+                 (data (arcdocdb.evidence:read-evidence path :max-expanded-bytes 134217728))
+                 (relative (format nil "processes/~A/report.lisp" label)))
+            (require-that (and (string= "report.lisp" (file-namestring path))
+                               (eql 1 (getf data :schema-version)) (eq :command-verification (getf data :kind))
+                               (member (getf data :status) '(:ok :failed :source-changed))
+                               (typep (getf data :finished-at-universal-time) '(integer 0 *)))
+                          "Record comando non concluso: ~A" path)
+            (artifact path relative :required t)
+            (dolist (leaf '("report.lisp.gz" "conservazione.lisp" "conservazione.lisp.gz"))
+              (artifact (merge-pathnames leaf directory) (format nil "processes/~A/~A" label leaf)))
+            (push (list :label label :record-path relative) processes)
+            (push (list :label label :source (namestring path) :status (getf data :status)
+                        :exit-code (getf data :exit-code) :finished-at-universal-time (getf data :finished-at-universal-time))
+                  record-observations))))
+      (dolist (entry roots)
+        (destructuring-bind (label argument) entry
+          (require-that (and (label-p label) (not (gethash label root-labels))) "Label casi duplicata: ~A" label)
+          (setf (gethash label root-labels) t)
+          (require-that (uiop:absolute-pathname-p (pathname argument)) "Root casi assoluta richiesta")
+          (let ((root (uiop:ensure-directory-pathname (truename argument))) (prefix (format nil "raw/cases/~A/" label)))
+            (require-that (sb-posix:s-isdir (path-mode root)) "Root casi non directory")
+            (artifact (merge-pathnames "self-test-report.lisp" root)
+                      (concatenate 'string prefix "self-test-report.lisp") :required t)
+            (dolist (directory (selected-case-directories root))
+              (incf case-count)
+              (let ((case-prefix (concatenate 'string prefix (car (last (pathname-directory directory))) "/")))
+                (dolist (leaf '("case-result.lisp" "observations/report.lisp" "observations/closed-check.log"
+                                "independent-recheck.stdout.lisp" "independent-recheck.stderr.log"
+                                "cli.stdout.lisp" "cli.stderr.log"))
+                  (artifact (merge-pathnames leaf directory) (concatenate 'string case-prefix leaf)
+                            :required (string= leaf "case-result.lisp"))))))))
+      (dolist (relative '("precompile/" "review/"))
+        (let ((directory (merge-pathnames relative *campaign-root*)))
+          (when (probe-file directory)
+            (dolist (path (sort (uiop:directory-files directory) #'string< :key #'namestring))
+              (cond ((or (not (regular-p path)) (string-equal "fasl" (or (pathname-type path) ""))
+                         (> (arcdocdb.evidence:file-bytes path) +plain-limit+))
+                     (push (list :source (namestring path) :reason :not-top-level-plain-budget-data) excluded))
+                    (t (artifact path (concatenate 'string "raw/" relative (data-label path)) :skip-invalid t)))))))
+      (artifact *helper-source* "raw/collection/prepare-manifest.lisp" :required t))
+    (let ((manifest (list :schema-version 1 :kind :command-archive-manifest :date "2026-10-15"
+                          :files (sort files #'string< :key (lambda (entry) (getf entry :path)))
+                          :processes (nreverse processes))))
+      (ensure-directories-exist destination)
+      (with-open-file (stream destination :direction :output :if-exists :error :external-format :utf-8)
+        (let ((*print-readably* t)) (write manifest :stream stream :pretty t) (terpri stream)))
+      (list :schema-version 1 :kind :collector-campaign-manifest-preparation :status :ok
+            :manifest (namestring (truename destination)) :processes (nreverse record-observations)
+            :file-count (length files) :case-directory-count case-count :excluded (nreverse excluded)
+            :limits '(:explicit-completed-records-including-failures :selected-case-reports-only
+                      :no-inputs-or-complete-fixtures :no-product-or-collector-execution
+                      :top-level-frozen-review-precompile-only :manifest-not-a-copy-authentication)))))
+
+(defun main ()
+  (multiple-value-bind (destination records roots) (arguments)
+    (let ((*print-readably* t)) (write (prepare destination records roots) :pretty t) (terpri))))
+
+(main)

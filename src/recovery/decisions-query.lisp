@@ -9,7 +9,7 @@
 Violazioni dei tipi del contratto segnalano TYPE-ERROR con safety 3."
   (length (%table-entries table)))
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-TXM-005 REQ-AFF-008
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (decision-table) (values boolean u64 &optional)) massimo-csn-decisioni))
 (defun massimo-csn-decisioni (table)
   "Pre: tabella completa posseduta dal replay canonico. Post: presenza e massimo CSN di tutte le DECISION.

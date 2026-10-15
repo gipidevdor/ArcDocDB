@@ -92,7 +92,7 @@ richieste o dei commit, né misure di throughput/latency in questo incremento.
 
 ## Decisioni e qualifica
 
-Requisiti: REQ-REC-001, REQ-MVC-005, REQ-TXM-005/007, REQ-STO-006,
+Requisiti: REQ-REC-001, REQ-MVC-005/006, REQ-TXM-005/007, REQ-STO-006,
 REQ-CMP-009, REQ-AFF-008. Invarianti coinvolti: INV-A2, INV-M5 e INV-P6;
 il massimo non sostituisce le prove di commit né produce scritture fra Serie.
 

@@ -3,7 +3,7 @@
 (in-package #:arcdocdb.recovery.archive)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-TXM-005 REQ-AFF-008
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (decisioni-recuperate) (values boolean u64 &optional))
                 massimo-csn-decisioni-recuperate))
 (defun massimo-csn-decisioni-recuperate (recovered)

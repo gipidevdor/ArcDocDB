@@ -3,7 +3,7 @@
 (in-package #:arcdocdb.recovery.active)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-TXM-007
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-007
 (declaim (ftype (function (workspace-active u64) null) registra-csn-active))
 (defun registra-csn-active (workspace csn)
   "Pre: CSN da fonte già verificata; mai TXID, offset o ordine di un log di controllo.
@@ -13,7 +13,7 @@ TYPE-ERROR per tipi invalidi; nessuna allocazione di contenitori, I/O o assegnaz
         (workspace-active-csn-present workspace) t)
   nil)
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-TXM-007
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-007
 (declaim (ftype (function (active-recuperato) (values boolean u64 &optional))
                 massimo-csn-active-recuperato))
 (defun massimo-csn-active-recuperato (recovered)

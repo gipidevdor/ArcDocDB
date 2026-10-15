@@ -3,7 +3,7 @@
 (in-package #:arcdocdb.recovery.closed)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-STO-006 REQ-AFF-008
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-STO-006 REQ-AFF-008
 (declaim (ftype (function (active-recuperato simple-vector &key (:max-segmenti index))
                          (values boolean u64 &optional)) massimo-csn-serie-recuperata))
 (defun massimo-csn-serie-recuperata (active closed &key (max-segmenti 65536))

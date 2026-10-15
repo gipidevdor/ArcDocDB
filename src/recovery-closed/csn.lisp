@@ -3,7 +3,7 @@
 (in-package #:arcdocdb.recovery.closed)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-TXM-007 REQ-AFF-008
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-007 REQ-AFF-008
 (declaim (ftype (function (manifest u64 boolean u64) (values boolean u64 &optional)) massimo-csn-chiusura))
 (defun massimo-csn-chiusura (manifest id present maximum)
   "Pre: CLOSED canonico con budget esiti già verificato; risoluzione dei prepared terminata.
@@ -15,7 +15,7 @@ INVARIANT-VIOLATION se il segmento non è CLOSED; nessun TXID contribuisce al ma
           do (setf present t maximum (max maximum csn))))
   (values present maximum))
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-CMP-009 REQ-AFF-008
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-CMP-009 REQ-AFF-008
 (declaim (ftype (function (octets index (member 1 2) index) (values boolean u64 &optional))
                 massimo-csn-compattato))
 (defun massimo-csn-compattato (buffer prefix version count)
@@ -30,16 +30,17 @@ Ciclo esatto COUNT, già limitato dal verificatore; nessun array aggiuntivo."
     (declare (type index pos) (type u64 maximum))
     (loop repeat count
           do (multiple-value-bind (next kind flags value-start)
-          (arcdocdb.recovery.active::cornice-active-verificata buffer pos prefix version)
-        (declare (ignore value-start)) ; posizione già verificata, nessun esito d'errore.
-        (unless (and (or (= kind arcdocdb.record:+put+) (= kind arcdocdb.record:+tombstone+))
-                     (not (logtest flags arcdocdb.record:+prepared+)))
-          (error 'invariant-violation :reason :closed-recovery-csn-kind :offset pos))
-        (setf maximum (max maximum (leggi-u64 buffer (+ pos arcdocdb.record::+stamp-offset+))) pos next)))
+                 (arcdocdb.recovery.active::cornice-active-verificata buffer pos prefix version)
+               (declare (ignore value-start)) ; posizione verificata, nessun esito d'errore.
+               (unless (and (or (= kind arcdocdb.record:+put+) (= kind arcdocdb.record:+tombstone+))
+                            (not (logtest flags arcdocdb.record:+prepared+)))
+                 (error 'invariant-violation :reason :closed-recovery-csn-kind :offset pos))
+               (setf maximum (max maximum (leggi-u64 buffer (+ pos arcdocdb.record::+stamp-offset+)))
+                     pos next)))
     (unless (= pos prefix) (error 'invariant-violation :reason :closed-recovery-csn-consumption :offset pos))
     (values (plusp count) maximum)))
 
-;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-TXM-007
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-007
 (declaim (ftype (function (closed-recuperato) (values boolean u64 &optional))
                 massimo-csn-closed-recuperato))
 (defun massimo-csn-closed-recuperato (recovered)

@@ -11,6 +11,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   letta, budget della finestra autorizzata e scratch privato per worker.
   Consente di ricavare le frontiere degli item concatenati; qualifica C1
   e profilo documentale restano aperti.
+- Lettura readonly di `Registri/multiserie.log`: header UUID/CRC/formato
+  verificato prima del corpo, replay completo fino all'EOF attestato e
+  decisioni possedute. Nuovo ingresso ACTIVE vincolato allo stesso ambito
+  canonico dell'Archivio; formati invariati, qualifica C1 dedicata aperta.
 
 - Rendezvous delle fixture concorrenti residue CBOR, UTF-8 e due Serie:
   checkpoint dopo il primo lavoro effettivo, mantenendo conteggi, sink e

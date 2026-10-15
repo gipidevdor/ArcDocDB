@@ -196,6 +196,30 @@ considerato nel disegno delle interfacce tra moduli (buffer riutilizzati, risult
 memoria fornita dal chiamante). La durata delle pause con heap di decine di GB è la misura che
 SPK-02 deve produrre.
 
+## Ricerca full text
+
+[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) aggiunge il
+full text alla v1. Le precedenti stime di byte per entry del primary index,
+di GET e di query semplice non includono analisi, posting o posizioni.
+Non sono quindi stime di capacità o prestazione della ricerca testuale.
+
+| Voce da dimensionare | Dati necessari |
+|---|---|
+| Analisi dei documenti e delle query | Byte di testo, campi, profilo e versione Unicode, token prodotti; CPU e memoria temporanea |
+| Dizionario | Coppie distinte campo/termine e loro lunghezze |
+| Posting e frequenze | Associazioni termine/riga, distribuzione dei termini e codec dei blocchi |
+| Posizioni | Occorrenze dei token per campo, ripetizioni e codifica delle posizioni |
+| Delta ACTIVE e pubblicazione | Budget dei buffer, crescita con i documenti, latenza del commit e interferenza sul writer |
+| Build, cambio generazione e compaction | Coesistenza di vecchi/nuovi derivati e reader, spazio transitorio, banda I/O e tempo di completamento |
+
+L'assenza di un WAL autonomo per gli indici non elimina le scritture dei
+file derivati. La sola lunghezza media dei documenti non determina né il
+vocabolario né il numero di posting e posizioni. Prima di attribuire byte
+per documento o target di throughput servono corpus, profilo, codec e
+misure della [campagna full text](../13-benchmark.md#ricerca-full-text).
+I costi della nuova funzione vanno inclusi anche nei workload misti e
+nelle misure di GC, P99 e isolamento, distinguendo indici abilitati e disabilitati.
+
 ## Riepilogo
 
 | Target | Giudizio a tavolino | Dipende da |
@@ -204,6 +228,7 @@ SPK-02 deve produrre.
 | GET da NVMe | plausibile nella fascia bassa; fascia alta richiede I/O molto concorrente | QA-19 |
 | INSERT / UPDATE / DELETE | plausibile come aggregato; fascia alta al limite del dispositivo con documenti grandi | QA-02, QA-26 |
 | Query indicizzata | non valutabile: dipende da QA-25 e dal Query Engine | QA-25 |
+| Full text: parole, frasi e filtri | non quantificato; semantica approvata, implementazione e formato binario da produrre | ADR-0053, corpus e campagna dedicata |
 | Scan sequenziale, CLEAN | plausibili: lavoro sequenziale limitato dal dispositivo | priorità di I/O |
 | Transazioni multiserie | plausibile se il group commit forma gruppi ampi | QA-06, QA-07 |
 | Bassa latenza P95/P99 | obiettivi definiti da ADR-0028; rispetto durante compaction ancora da misurare | SPK-02, SPK-06, motore |

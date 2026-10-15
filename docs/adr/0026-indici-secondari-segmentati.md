@@ -10,6 +10,16 @@
 
 ## Contesto
 
+> **Integrazione 2026-10-15:** [ADR-0053](0053-ricerca-full-text-indici-invertiti.md)
+> aggiunge un tipo full text alla famiglia `.idx`: dizionario per campo/termine,
+> posting, frequenze e posizioni, con delta ACTIVE e generazioni complete.
+> Per questi indici precisa pubblicazione, snapshot, build e rebuild;
+> la versione visibile si risolve anche tramite le versioni trattenute del
+> motore, senza limitarsi alla sola entry corrente del primary index.
+> Il formato binario concreto resta da fissare prima dell'implementazione.
+> Gli algoritmi di analisi e il costo per documento richiedono misure proprie:
+> append O(1) per entry non significa indicizzazione O(1) per documento.
+
 Gli indici secondari devono restare coerenti con commit, snapshot e recovery, costare poco al
 writer, e permettere algoritmi ottimi (sequenziali, SIMD-friendly). La specifica chiede
 strutture specializzate per tipo e un modello base + delta.

@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Documentazione full text riallineata fra scope v1, contratto/catalogo,
+  interfacce query, roadmap, glossario, valutazione, costi, rischi e piano
+  di verifica. ADR-0053 resta la decisione di riferimento; implementazione,
+  formato binario e qualifica rimangono nella fase 8.
+
 - Ripresa delle scritture nella prova verticale v1/v2: ricostruzione della
   base CSN, nuovo ambiente coerente, quattro commit e secondo SIGKILL con
   recupero indipendente. Oracolo negativo del riuso CSN prima dell'append;

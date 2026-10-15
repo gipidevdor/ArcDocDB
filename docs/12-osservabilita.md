@@ -15,6 +15,7 @@ e le scelte rinviate ai benchmark (2Q, SIMD) dipendono da essi.
 | Storage | segment count; segment size; live/dead ratio; bytes reclaimed; CLEAN throughput; MERGE throughput | selezione dei candidati alla compaction |
 | WAL | append throughput; fsync latency; group size; WAL queue depth | scheduler, low-load policy |
 | Index | hit rate; lookup latency; rebuild time | — |
+| Full text, fase 8 | byte analizzati; token; posting visitati; candidati/risultati; spazio dizionario/posting/posizioni; RAM delta; build/rebuild; copertura e generazione; errori di budget/indice non disponibile | verifica del contratto e dell'interferenza |
 | Cache | hit/miss; eviction; occupazione per Serie; scan pollution | decisione CLOCK → 2Q |
 | Scheduler | worker count; queue depth; CPU utilization; I/O utilization; compaction concurrency | scheduler, low-load policy |
 | GC/SBCL | allocation rate; GC frequency; GC pause; heap usage | valutazione di RSK-01 |
@@ -32,6 +33,18 @@ e le scelte rinviate ai benchmark (2Q, SIMD) dipendono da essi.
 >   oltre che aggregate: l'isolamento tra Serie (INV-P3) si verifica solo così.
 > - **Finestre.** I controllori leggono valori smussati (EWMA); l'esposizione verso l'esterno
 >   può usare finestre diverse.
+
+## Metriche full text da implementare
+
+[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) e la
+[campagna dedicata](13-benchmark.md#ricerca-full-text) richiedono di
+distinguere analisi, query, pubblicazione del delta e build/rebuild.
+Associare le misure a Serie, indice, generazione e profilo; misurare
+anche l'impatto sulla latenza di commit, sui GET e sulle altre Serie.
+Copertura incompleta ed esaurimento di risorse devono essere osservabili.
+I contatori seguono il modello per worker/Serie e l'aggregazione già
+previsti, senza nuovi contatori globali per documento. Sono metriche
+progettate: la loro presenza qui non indica strumentazione già disponibile.
 
 ## Questioni decise
 

@@ -9,6 +9,13 @@ Dal 2026-10-08 l'autore ha autorizzato il codice di prodotto: i componenti già
 realizzati e i loro confini sono nell'[indice di implementazione](implementazione/README.md).
 La loro presenza non chiude i gate sperimentali né qualifica il motore completo.
 
+Il perimetro della v1 include la **ricerca full text** approvata con
+[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md): implementazione
+e qualifica sono nella fase 8, insieme a indici secondari e Query Engine.
+I test attuali di indice primario e recovery non verificano questi nuovi
+requisiti. Formato binario degli indici, analizzatori e misure dedicate
+restano da produrre secondo il [piano di verifica](affidabilita/piano-di-verifica.md#ricerca-full-text).
+
 La [prova verticale con SIGKILL](implementazione/prova-verticale.md) collega
 ora scrittura durevole, indice e GET, recovery, checkpoint e rotazione in
 una fixture C4. Nei formati v1/v2 verifica anche nuove scritture dopo la
@@ -62,7 +69,8 @@ applicativo di riferimento confermato dall'autore il 2026-10-15. Le esigenze
 di lookup, intervalli ordinati, pubblicazione multiserie, retention e recovery
 orientano la valutazione delle fasi esistenti. La richiesta attuale riguarda
 la documentazione dell'obiettivo; sviluppo del demone e benchmark applicativi
-restano futuri, senza anticipare i gate o cambiare lo scope v1.
+restano futuri. La successiva richiesta di ricerca full text estende invece
+esplicitamente lo scope v1 tramite ADR-0053, senza anticipare i gate.
 
 Scopo: arrivare all'implementazione con le decisioni strutturali prese, i rischi principali
 misurati e i protocolli critici verificati su modello.

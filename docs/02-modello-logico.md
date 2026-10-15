@@ -43,6 +43,12 @@ lo riduce al solo `multiserie.log` (e alle risorse di calcolo governate dallo sc
 > **Deciso (QA-21 → [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md))** — La specifica non definisce il linguaggio dello schema/contratto né le
 > regole di evoluzione dello schema.
 
+Il contratto può dichiarare indici **full text** con nome, campi testuali
+scalari e profilo di analisi immutabile e versionato
+([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)). Documento e
+query usano lo stesso profilo. Il testo originale resta nel documento;
+un cambio di analizzatore costruisce una nuova generazione dell'indice.
+
 ### Documento
 
 L'unità logica di dati. Ha un `_id` univoco **all'interno della Serie** e può avere versioni
@@ -79,13 +85,16 @@ esistere un file separato per ogni transazione.
 | nome | identifica la Serie nell'Archivio |
 | configurazione | parametri generali |
 | schema/contratto | struttura e validazione dei documenti |
-| configurazione degli indici | quali indici secondari e di che tipo ([08](08-indici.md)) |
+| configurazione degli indici | nomi, tipi e campi; per il full text anche il profilo di analisi versionato ([08](08-indici.md)) |
 | segment configuration | es. dimensione target del segmento (default ~256 MB) |
 | stato | stato della Serie |
 | metadata per il recovery | quanto serve al [Recovery Manager](11-recovery.md) |
 
 Il catalogo DEVE essere modificabile in modo **transazionale e crash-safe**: creare, modificare
 o eliminare una Serie non può lasciare il catalogo in uno stato intermedio dopo un crash.
+Per il full text il contratto nel catalogo è autorevole; file, delta e
+readiness sono derivati ricostruibili. Una generazione viene resa
+interrogabile soltanto quando copre completamente la vista richiesta.
 
 ## Layout fisico
 

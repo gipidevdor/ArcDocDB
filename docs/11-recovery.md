@@ -84,6 +84,20 @@ Con riferimento ai passi del [workflow](07-compaction.md#workflow):
 > file con nome definitivo che il manifest non conosce non viene eliminato: è un'anomalia
 > segnalata (INV-A10).
 
+## Recovery degli indici full text
+
+Secondo [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md), il
+contratto autorevole e i documenti committed permettono di ricostruire
+file e delta full text. Il recovery verifica identità, CRC, profilo,
+generazione e copertura; un file mancante o corrotto non significa
+assenza di documenti corrispondenti alla query.
+
+Finché il rebuild non copre completamente la vista richiesta, la query
+riceve un errore esplicito di indice non disponibile. Un eventuale ripiego
+su scansione conserva semantica e budget del contratto. Anche il restore
+deve ricostruire e verificare questi derivati. Le prove verticali attuali
+di una Serie non verificano ancora questo percorso della fase 8.
+
 ## Questioni decise e rischi
 
 - **QA-04** ([ADR-0018](adr/0018-control-log-manifest-swap.md)) — Manifest dei segmenti e meccanismo dello swap.

@@ -4,6 +4,13 @@ Fondazioni introdotte dopo la richiesta dell'autore del 2026-10-08 di iniziare l
 del codice. L'autorizzazione non equivale alla chiusura dei criteri della Fase 0 o alla
 qualifica del motore completo.
 
+La **ricerca full text** è un requisito approvato della v1
+([ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md)), con
+implementazione e qualifica previste nella fase 8. Non è ancora un
+componente di prodotto: codec CBOR, primary index, GET e prove verticali
+non dimostrano tokenizzazione, posting list, frasi o visibilità full text.
+I criteri sono nel [piano di verifica](../affidabilita/piano-di-verifica.md#ricerca-full-text).
+
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
 | Prova verticale di una Serie | [Scrittura, SIGKILL, recovery, ripresa e secondo crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |

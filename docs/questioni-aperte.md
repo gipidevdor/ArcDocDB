@@ -43,9 +43,9 @@ motivazione della scelta è nell'ADR.
 | [QA-20](#qa-20) | Protocollo di rete e linguaggio di query | C | Risolta da [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md) | — | — |
 | [QA-21](#qa-21) | Schema/contratto della Serie | C | Risolta da [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md) | — | — |
 | [QA-22](#qa-22) | Dipendenze e framework di test | B | Risolta da [ADR-0027](adr/0027-dipendenze-e-test.md) | — | — |
-| [QA-23](#qa-23) | Funzioni fuori dallo scope v1 | C | Risolta da [ADR-0030](adr/0030-scope-v1.md), confermata il 2026-10-08 | — | RSK-14 |
+| [QA-23](#qa-23) | Funzioni fuori dallo scope v1 | C | Risolta da [ADR-0030](adr/0030-scope-v1.md), confermata il 2026-10-08; full text aggiunto da [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) | — | RSK-14 |
 | [QA-24](#qa-24) | Primary index: MVCC, concorrenza, rilocazione | A | Risolta da [ADR-0015](adr/0015-primary-index-swiss-table-swmr.md); struttura rivista da [ADR-0043](adr/0043-primary-index-a-frammenti.md) | SPK-01, SPK-07 | RSK-02 |
-| [QA-25](#qa-25) | Indici secondari: sincronia, snapshot, persistenza | B | Risolta da [ADR-0026](adr/0026-indici-secondari-segmentati.md) | — | RSK-13 |
+| [QA-25](#qa-25) | Indici secondari: sincronia, snapshot, persistenza | B | Risolta da [ADR-0026](adr/0026-indici-secondari-segmentati.md), integrata per il full text da [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) | — | RSK-13 |
 | [QA-26](#qa-26) | Target: per Serie o aggregati; obiettivi numerici di latenza | A | Risolta da [ADR-0028](adr/0028-target-e-obiettivi-di-latenza.md), confermata il 2026-10-08 | — | RSK-04 |
 
 ---
@@ -314,6 +314,10 @@ autorizzazione, cifratura non sono menzionati dalla specifica. Vanno dichiarati 
 fuori scope oppure aggiunti; alcune (backup, replica) sono favorite dai segmenti immutabili e
 conviene non precluderle nei formati.
 
+**Esito aggiornato:** ADR-0030 include backup/restore e verifica offline;
+ADR-0053 aggiunge esplicitamente il full text alla v1, nella fase 8.
+La domanda precedente conserva il testo iniziale della valutazione.
+
 ### QA-24
 
 **Primary index: MVCC, concorrenza, rilocazione.** È la questione architetturale più densa:
@@ -344,6 +348,11 @@ tre requisiti insistono sulla stessa struttura.
 **Indici secondari.** Aggiornamento sincrono con il commit o differito? Che cosa vede uno
 snapshot attraverso un indice secondario? Persistenza o ricostruzione al riavvio? Costo sul
 writer logico della Serie.
+
+**Estensione full text:** ADR-0053 fissa indici invertiti dedicati,
+pubblicazione coerente con commit/snapshot e generazioni complete.
+Formato binario, codice e qualifica rimangono da produrre; i dettagli
+non sono dimostrati dalle campagne degli indici già implementati.
 
 ### QA-26
 

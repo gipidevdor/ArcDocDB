@@ -206,6 +206,18 @@ Priorità (INV-P4):
 traffico utente  >  WAL/durability  >  CLEAN necessario  >  MERGE opportunistico
 ```
 
+## Derivati full text
+
+Per [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md), CLEAN e
+MERGE ricostruiscono dizionario, posting e posizioni sulle righe dei nuovi
+segmenti. Gli ordinali dipendono dall'hint del segmento: non si copiano
+come se identificassero globalmente i documenti. Si conservano le versioni
+necessarie agli snapshot; pubblicazione e reclaim seguono EDIT ed EBR.
+
+Il lavoro sui derivati rientra nei budget di calcolo, I/O e spazio della
+compaction e nelle misure di interferenza con GET e commit. La relativa
+implementazione e qualifica full text restano nella fase 8.
+
 ## Metriche
 
 Segment count e size, live/dead ratio, bytes reclaimed, throughput di CLEAN e MERGE,

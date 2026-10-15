@@ -18,12 +18,19 @@ progetto consolidato è in [architettura.md](architettura.md), i formati persist
 le campagne degli [spike](valutazione/piano-spike.md), con gli
 [esperimenti già eseguibili](../spikes/README.md).
 
+La v1 comprende ora anche la **ricerca full text**, approvata in
+[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md): indici invertiti
+dedicati, parole e frasi, filtri strutturati e visibilità coerente con gli
+snapshot. Semantica e responsabilità sono definite; implementazione,
+formato binario degli indici e qualifica appartengono alla fase 8.
+
 ## Da dove iniziare
 
 | Se vuoi… | Parti da qui |
 |---|---|
 | Capire il prodotto | [Visione](01-visione-e-obiettivi.md) e [modello logico](02-modello-logico.md) |
 | Leggere il progetto attuale | [Architettura](architettura.md) e [formati su disco](formati-su-disco.md) |
+| Capire la ricerca full text | [Contratto degli indici](08-indici.md#ricerca-full-text), [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) e [verifica prevista](affidabilita/piano-di-verifica.md#ricerca-full-text) |
 | Capire le scelte | [Analisi progettuale](analisi-progettuale.md) e [decisioni architetturali](adr/README.md) |
 | Valutare le garanzie | [Affidabilità](affidabilita/README.md), [invarianti](invarianti.md) e [tracciabilità](tracciabilita/README.md) |
 | Vedere le evidenze disponibili | [Esperimenti](../spikes/README.md) e [valutazione](valutazione/README.md) |

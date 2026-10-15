@@ -5,6 +5,10 @@
 - **Rapporto con la specifica:** chiude QA-23
 - **Riferimenti:** RSK-14
 
+> **Estensione approvata il 2026-10-15:** [ADR-0053](0053-ricerca-full-text-indici-invertiti.md)
+> aggiunge la ricerca full text al perimetro della v1. La decisione iniziale
+> resta datata 2026-10-03; l'estensione è progettata, da implementare e qualificare nella fase 8.
+
 ## Decisione
 
 **Dentro la v1:** tutto ciò che la specifica descrive — un processo, un dispositivo, più
@@ -16,6 +20,11 @@ più, per l'affidabilità ([ADR-0031](0031-software-critico-criteri-e-priorita.m
   un CSN; i segmenti immutabili lo rendono incrementale);
 - **verificatore offline** `arcdocdb-verify` ([ADR-0033](0033-fail-stop-e-integrita-end-to-end.md) §7);
 - **scrubbing** continuo dei segmenti chiusi.
+
+Il perimetro aggiornato comprende inoltre **ricerca full text** con indici
+invertiti dedicati per segmento, parole e frasi, analizzatori versionati e
+filtri strutturati nella stessa vista snapshot (ADR-0053). Il server NNTP
+è un'applicazione futura di riferimento e non un nuovo modulo del motore.
 
 Senza una seconda copia dei dati la perdita del supporto è la perdita dei dati (RSK-17): il
 backup è la risposta minima.
@@ -33,5 +42,6 @@ backup è la risposta minima.
 
 ## Conseguenze
 
-- L'ampiezza (RSK-14) è contenuta a ciò che la specifica richiede.
+- L'ampiezza (RSK-14) è contenuta alla specifica e alle estensioni esplicitamente
+  approvate, inclusa la ricerca full text; i relativi costi e gate restano da verificare.
 - Le funzioni rinviate hanno un punto di innesto dichiarato: nessun formato va riscritto.

@@ -102,6 +102,21 @@
 | **Stato di carico** | `basso` / `normale` / `alto`: governa CLEAN e MERGE. ADR-0023. |
 | **Rilocazione condizionale** | Aggiornamento di una entry dell'indice dopo la compaction, applicato solo se punta ancora alla location sorgente. ADR-0015. |
 
+## Ricerca full text
+
+Terminologia di [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md),
+requisito approvato per la v1 con implementazione futura nella fase 8.
+
+| Termine | Definizione |
+|---|---|
+| **Full text** | Ricerca per parole e frasi su campi testuali dichiarati, combinata con filtri strutturati nella stessa vista snapshot. |
+| **Analizzatore / profilo di analisi** | Regole immutabili e versionate di normalizzazione, case folding e segmentazione; identiche per documento e query. |
+| **Indice invertito** | Dizionario per campo e termine, con posting list di righe, frequenze e posizioni; derivato dai documenti committed. |
+| **Posting** | Riferimento candidato a una riga dello stesso segmento; chiave, esito e versione visibile devono essere risolti prima di restituire il documento. |
+| **Posizione** | Ordinale del token nel campo; le posizioni consecutive consentono le frasi, senza attraversare campi diversi. |
+| **Generazione dell'indice** | Identità del build e del profilo fissata dalla query; un cambio di analizzatore costruisce una nuova generazione senza mescolarle. |
+| **Readiness / copertura** | Stato derivato che permette di usare un indice solo quando copre completamente la vista richiesta; incompletezza o corruzione non equivalgono a risultato vuoto. |
+
 ## Termini introdotti dall'analisi progettuale
 
 | Termine | Definizione |

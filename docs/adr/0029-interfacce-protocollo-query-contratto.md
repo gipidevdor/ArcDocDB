@@ -49,3 +49,18 @@ query come AST dati (MongoDB, Datalog); evoluzione additiva degli schemi (Protoc
 ## Contratto documentale v2
 
 [ADR-0048](0048-limiti-documentali-e-formato-v2.md) definisce documenti CBOR fino a 16 MiB e 100 livelli. Il budget di frame è distinto dal documento: deve ammettere un documento massimo più chiave e envelope della richiesta, con un limite esplicito e verifica della lunghezza prima di allocare. I batch hanno budget separati e non sono ammessi senza limite.
+
+## Estensione full text (2026-10-15)
+
+[ADR-0053](0053-ricerca-full-text-indici-invertiti.md) aggiunge all'AST i
+predicati logici `text-match(campo, testo, all/any)` e
+`text-phrase(campo, testo)`, combinabili con i filtri strutturati nella
+stessa vista MVCC. Il testo è un valore da analizzare secondo il profilo
+versionato dell'indice, senza introdurre un linguaggio testuale di query.
+Nomi e codifica wire dei nodi si fissano nelle fasi 8–9.
+
+Il contratto dichiara campi scalari e profilo immutabile; il cambio di
+analizzatore crea una nuova generazione. Le query mantengono generazione
+e profilo per tutta la durata; indice non pronto e budget esaurito
+producono errori espliciti. La semantica approvata non implica che API,
+parser o indici full text siano già implementati.

@@ -252,10 +252,32 @@ ne consumano il budget.
 - *Mitigazioni:* rinviare a dopo lo storage di base; decidere QA-25; introdurre un tipo di
   indice alla volta.
 
+**Aggiornamento 2026-10-15 — full text approvato.**
+[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) aggiunge
+analizzatori versionati, dizionario, posting e posizioni, delta ACTIVE e
+cambio generazione. Aumentano CPU, RAM, I/O di build/rebuild e lavoro da
+completare prima della conferma del commit. I rischi comprendono risultati
+incompleti, versioni mescolate e interferenza con GET e altre Serie.
+
+- *Mitigazioni definite:* budget verificati prima della decisione durevole;
+  copertura completa e generazione fissata per query; visibilità della stessa
+  versione per testo e filtri; errori espliciti per derivati non disponibili;
+  nessun nuovo coordinamento globale per documento.
+- *Verifiche ancora da produrre:* oracolo a scansione, Unicode, update/delete,
+  snapshot, abort, cambio generazione, crash/restore, corruzione e saturazione;
+  [misure dedicate](../13-benchmark.md#ricerca-full-text) di memoria, spazio,
+  latenza del commit, P99, scalabilità e isolamento. Gli spike del primary
+  index e delle bitmap non chiudono questo rischio per il full text.
+
 ### RSK-14
 
 **Ampiezza.** Diciotto moduli, tra cui un motore di query, un protocollo di rete e un
 controllore adattivo, sono un impegno considerevole.
+
+L'estensione v1 full text di ADR-0053 aggiunge lavoro a M06/M15 nella fase 8.
+La sua approvazione non ne completa implementazione o qualifica, e non
+sposta le priorità immediate di storage/recovery. Ranking, fuzzy search e
+sinonimi non entrano implicitamente nel perimetro approvato.
 
 - *Mitigazioni:* fetta verticale minima (una Serie, GET/PUT, WAL, recovery) prima di ogni
   altra cosa; funzioni fuori scope dichiarate (QA-23); fasi con criteri di uscita

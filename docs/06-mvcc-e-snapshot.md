@@ -48,6 +48,19 @@ Snapshot S vede ancora:   A = 100, B = 200   (fino alla sua conclusione)
 - La cache DEVE essere consapevole della versione/epoch del dato: un reader non deve ottenere
   una versione incompatibile con il proprio snapshot (INV-M3). Vedi [09 Cache](09-cache.md).
 
+## Visibilità della ricerca full text
+
+[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) applica la stessa
+vista ai termini, alle frasi e ai filtri strutturati. I posting sono
+candidati: vanno risolti chiave, esito committed e versione visibile,
+incluse le versioni trattenute per gli snapshot storici. Un aggiornamento
+o una tombstone non deve cambiare i risultati di uno snapshot ancora valido.
+
+Ogni query mantiene una sola generazione e un solo profilo per indice.
+La copertura deve includere CLOSED e delta ACTIVE della vista richiesta;
+un derivato assente, corrotto o incompleto produce un errore esplicito.
+Questo contratto è progettato, da implementare e verificare nella fase 8.
+
 ## Reclaim
 
 Il reclaim di un segmento avviene solo quando (INV-R1):

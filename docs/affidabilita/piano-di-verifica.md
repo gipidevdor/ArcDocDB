@@ -66,6 +66,28 @@ verificato in revisione e dai test di mutazione sugli operatori logici.
     revisione controlla che l'elenco di ciò che le Serie condividono resti quello di
     [architettura](../architettura.md#archivio-coordinamento-minimo).
 
+## Ricerca full text
+
+[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) aggiunge
+REQ-SEC-003…REQ-SEC-006 e INV-I4. Sono requisiti **progettati**: le prove
+esistenti del primary index, del codec e del recovery non li qualificano.
+La fase 8 deve produrre queste evidenze, prima dei benchmark:
+
+| Requisito | Evidenza da realizzare |
+|---|---|
+| REQ-SEC-003 — semantica e analisi | Oracolo indipendente a scansione per parole, frasi, all/any, and/or/not, filtri e campi assenti; profili Unicode fissati, accenti, equivalenze canoniche, ripetizioni e confini dei campi |
+| REQ-SEC-004 — commit e snapshot | Stessa versione per testo e filtri; update/delete, abort, ACTIVE/CLOSED, snapshot storici e compaction; esplorazione dei punti di pubblicazione e fault injection prima/dopo SEAL e DECISION |
+| REQ-SEC-005 — generazioni e derivati | Build concorrente, cambio analizzatore, riavvio/restore, file mancanti, CRC/identità errati e copertura incompleta; generazione unica per query ed errore esplicito fino a readiness completa |
+| REQ-SEC-006 — limiti e isolamento | Saturazione di ogni budget, rifiuto della scrittura prima della decisione durevole, cancellazione e timeout; errore di query distinto dal limit richiesto, senza risultati parziali silenziosi; carico sulle altre Serie |
+
+Si applicano le classi già assegnate: C2 alla semantica di interrogazione
+e C1 ai percorsi di pubblicazione, visibilità e recovery dei derivati.
+Copertura, condizioni, revisione, mutazioni e modelli seguono le regole
+della classe. Corpus, profili, generazioni e attesi devono essere
+riproducibili; un controllo negativo deve dimostrare la sensibilità
+dell'oracolo. La [campagna prestazionale](../13-benchmark.md#ricerca-full-text)
+misura separatamente analisi, ricerca, commit, build/rebuild e interferenza.
+
 ## Revisione e configurazione
 
 - Lista di controllo del [standard di codifica](standard-di-codifica.md#lista-di-controllo-di-revisione-c1)

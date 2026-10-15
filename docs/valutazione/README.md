@@ -32,14 +32,24 @@ coordinamento e replay dell'indice restano nella fixture.
 | I meccanismi possono essere implementati in SBCL? | Fondazioni di prodotto e prove funzionali native | Qualifica completa dei contratti e dei percorsi di guasto |
 | Scrittura e recovery possono essere composti? | Prova verticale v1/v2: SIGKILL, ripresa delle scritture e secondo recupero | Coordinatore di prodotto, inventario generale, CSN di Archivio e ammissione |
 | Concorrenza e isolamento sono dimostrati? | Prove dedicate di componenti e catena pool/Serie | Percorso dati completo sotto concorrenza, MVCC e multiserie |
+| La ricerca full text è disponibile? | Semantica e architettura approvate in [ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md), REQ-SEC-003…006 progettati | Analizzatori, formato binario, indici/delta, query, rebuild e qualifica della fase 8 |
 | I target prestazionali sono raggiunti? | Microbenchmark e campagne locali con scope dichiarato | Pool persistente, GC, P99, carico prolungato e hardware di riferimento |
-| La v1 è completa? | Componenti e integrazioni parziali | Compaction completa, backup/restore, query, rete e gate della roadmap |
+| La v1 è completa? | Componenti e integrazioni parziali | Compaction completa, backup/restore, query e full text, rete e gate della roadmap |
 
 La prossima riduzione dell'incertezza richiede l'orchestrazione di apertura
 e recovery nel motore, seguita dall'ammissione di nuove scritture con CSN
 ricostruito. La prova seriale non autorizza a promettere prestazioni o
 affidabilità dell'intero database. I risultati e i tentativi falliti sono
 conservati nella [campagna](../../spikes/results/2026-10-15-vertical-crash/README.md).
+
+Il full text aggiunge costi di analisi, delta, dizionario, posting e
+posizioni, oltre a build e rebuild concorrenti. Le misure del primary
+index e i target delle query semplici non si trasferiscono alla ricerca
+testuale. La fattibilità quantitativa resta da valutare con la
+[campagna dedicata](../13-benchmark.md#ricerca-full-text), aggiornando
+[costi](stime-ordine-di-grandezza.md#ricerca-full-text) e
+[rischi RSK-13/14](registro-rischi.md#rsk-13). NNTP guida parte del corpus;
+il motore e gli indici restano general-purpose.
 
 ## Documenti
 

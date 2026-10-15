@@ -1,0 +1,69 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery/inventory-types.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>7</td><td>18</td><td> 38.9</td></tr>
+<tr class='even'><td>branch</td><td>0</td><td>2</td><td>  0.0</td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#59;&#160;Descrittori&#160;e&#160;piani&#160;di&#160;riconciliazione&#160;dei&#160;nomi&#59;&#160;nessun&#160;accesso&#160;al&#160;filesystem&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;il&#160;chiamante&#160;possiede&#160;l&#39;inventario&#59;&#160;ogni&#160;piano&#160;possiede&#160;le&#160;proprie&#160;entry&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;manifest&#160;e&#160;piani&#160;pubblicati&#160;immutabili&#59;&#160;nessuna&#160;scrittura&#160;fra&#160;Serie&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;recovery&#46;manifest&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;REC&#45;002&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;segment&#45;file&#160;&#40;&#58;constructor&#160;&#37;make&#45;segment&#45;file&#160;&#40;id&#160;form&#41;&#41;&#160;&#40;&#58;conc&#45;name&#160;&#37;file&#45;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;ID&#160;u64&#160;e&#160;forma&#160;verificata&#160;dal&#160;chiamante&#46;&#160;Post&#58;&#160;descrittore&#160;immutabile&#160;di&#160;un&#160;nome&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-1'>Zero&#160;è&#160;un&#160;ID&#160;valido&#160;per&#160;CLOSED&#47;REMOVED&#59;&#160;i&#160;tipi&#160;sono&#160;controllati&#160;con&#160;safety3&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;id&#160;0&#160;&#58;type&#160;u64&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;form&#160;&#58;final&#160;&#58;type&#160;&#40;member&#160;&#58;temporary&#160;&#58;final&#41;&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-1'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>13</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>14</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;REC&#45;002&#160;REQ&#45;AFF&#45;008&#160;REQ&#45;AFF&#45;018</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>15</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;u64&#160;&#40;member&#160;&#58;temporary&#160;&#58;final&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>16</code></div><code>&#160;<span class='state-2'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;values&#160;segment&#45;file&#160;&#38;optional&#41;&#41;&#160;file&#45;segmento&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>17</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;file&#45;segmento&#160;&#40;id&#160;forma&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>18</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;identità&#160;completa&#160;u64&#160;e&#160;nome&#160;interpretato&#160;come&#160;&#46;seg&#46;tmp&#160;o&#160;&#46;seg&#160;dal&#160;chiamante&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>19</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;descrittore&#160;posseduto&#160;read&#45;only&#59;&#160;TYPE&#45;ERROR&#160;per&#160;tipi&#160;invalidi&#44;&#160;nessun&#160;parsing&#160;o&#160;I&#47;O&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>20</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;&#37;make&#45;segment&#45;file&#160;id&#160;forma&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>21</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>22</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;REC&#45;002&#160;REQ&#45;AFF&#45;008&#160;REQ&#45;AFF&#45;018</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>23</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;reconciliation&#45;entry</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>24</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;&#58;constructor&#160;&#37;make&#45;reconciliation&#45;entry&#160;&#40;id&#160;form&#160;action&#160;state&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>25</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;&#58;conc&#45;name&#160;&#37;re&#45;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>26</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;un&#160;ID&#160;unico&#160;del&#160;piano&#44;&#160;presenza&#160;e&#160;stato&#160;verificati&#46;&#160;Post&#58;&#160;decisione&#160;scalare&#160;immutabile&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>27</code></div><code>&#160;<span class='state-1'>I&#160;tipi&#160;runtime&#160;impediscono&#160;stati&#160;fuori&#160;dal&#160;contratto&#59;&#160;nessuna&#160;prova&#160;di&#160;integrità&#160;dei&#160;contenuti&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>28</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;id&#160;0&#160;&#58;type&#160;u64&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>29</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;form&#160;&#58;absent&#160;&#58;type&#160;</span><span class='state-10'>&#40;member&#160;&#58;temporary&#160;&#58;final&#160;&#58;absent&#160;&#58;both&#41;</span><span class='state-2'>&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>30</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;action&#160;&#58;missing&#160;&#58;type&#160;&#40;member&#160;&#58;use&#160;&#58;rename&#160;&#58;delete&#160;&#58;anomaly&#160;&#58;missing&#160;&#58;conflict&#41;&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>31</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;state&#160;&#58;unknown&#160;&#58;type&#160;&#40;member&#160;&#58;active&#160;&#58;closed&#160;&#58;removed&#160;&#58;unknown&#41;&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-1'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>32</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>33</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;REC&#45;002&#160;REQ&#45;AFF&#45;008&#160;REQ&#45;AFF&#45;018</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>34</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;reconciliation&#45;plan</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>35</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;&#58;constructor&#160;&#37;make&#45;reconciliation&#45;plan&#160;&#40;entries&#160;health&#41;&#41;&#160;&#40;&#58;conc&#45;name&#160;&#37;plan&#45;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>36</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;entry&#160;ordinate&#160;per&#160;ID&#160;u64&#160;e&#160;possedute&#44;&#160;stato&#160;aggregato&#160;verificato&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>37</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;piano&#160;read&#45;only&#59;&#160;nessun&#160;vettore&#160;dell&#39;inventario&#160;o&#160;hash&#160;del&#160;manifest&#160;esposto&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>38</code></div><code>&#160;<span class='state-1'>I&#160;tipi&#160;safety3&#160;sono&#160;sempre&#160;attivi&#59;&#160;le&#160;query&#160;non&#160;eseguono&#160;azioni&#160;sul&#160;filesystem&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>39</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;entries&#160;&#35;&#40;&#41;&#160;&#58;type&#160;simple&#45;vector&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>40</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;health&#160;&#58;ready&#160;&#58;type&#160;&#40;member&#160;&#58;ready&#160;&#58;degraded&#160;&#58;faulted&#41;&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-1'>&#41;</code></div></body></html>

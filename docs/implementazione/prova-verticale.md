@@ -59,12 +59,17 @@ verifica la tracciabilità aggiornata, mantenendo distinti i nuovi requisiti pro
 
 ## Confine rispetto al prodotto
 
-Bootstrap, inventario limitato a otto ID, prenotazione dei nomi, ordine
+Bootstrap, enumerazione dell'inventario limitata a otto ID, creazione dei nomi, ordine
 del recovery e replay dell'indice sono codice di test. Il replay accetta
 solo record ordinari, dopo verifica di tutti i prefissi CLOSED; rifiuta
 prepared/OUTCOME. La pubblicazione seriale dei candidati segue la radice
 del controller: non dimostra l'atomicità fra indice e radice sotto concorrenza.
 UUID e completezza del namespace sono fatti della fixture.
+
+La scelta del nuovo ID usa ora l'[API di prodotto](id-segmento-recovery.md)
+sul manifest autorevole e su tutti i nomi della fixture, senza cercare il
+primo buco libero. La fixture controlla separatamente il proprio limite di
+otto ID e lo stato `:ready`; non esegue le azioni di rimozione del piano.
 
 La ripresa ricostruisce H/CSN nel solo caso della fixture e verifica GET
 correnti; non implementa il gate di ammissione del motore o snapshot storici
@@ -86,5 +91,7 @@ ambiente nuovo senza riuso delle capacità dell'ispezione; un registro comune
 a WAL/controller/snapshot; oracoli costanti per dati e CSN; errore tipizzato
 prima dell'append nel negativo; byte originali immutati dopo entrambi i crash.
 La cancellazione di una chiave già assente è ammessa solo se il GET ne
-conferma l'assenza. Nessun sorgente C1 è modificato; non è una revisione
-indipendente o una qualifica C1 del Recovery Manager.
+conferma l'assenza. Quella estensione non modificava sorgenti C1. Il successivo
+collegamento alla scelta ID di prodotto ha contratto e verifiche dedicati;
+questa lettura C4 non è una revisione indipendente o una qualifica C1 del
+Recovery Manager.

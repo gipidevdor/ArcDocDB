@@ -1,0 +1,24 @@
+(load "tools/evidence-storage.lisp")
+(let* ((r (arcdocdb.evidence:read-evidence "spikes/out/4001085323-command-41709-0/report.lisp"))
+       (lines (uiop:split-string (getf r :stdout) :separator '(#\Newline)))
+       (named (remove-if-not (lambda (line) (uiop:string-prefix-p "ok    " line)) lines)))
+  (unless (and (eq :ok (getf r :status)) (eq :stable (getf r :source-consistency))
+               (zerop (getf r :exit-code))) (error "Verifica non qualificabile."))
+  (format t "~S exit=~S ~S ~,6F s, sorgenti=~D, stderr=~D, righe-ok=~D~%"
+          (getf r :status) (getf r :exit-code) (getf r :source-consistency)
+          (getf r :wall-seconds) (length (getf r :source-blobs-after))
+          (length (getf r :stderr)) (length named))
+  (dolist (line lines)
+    (when (or (search "test recovery superati" line) (search "test verticali" line)
+              (search "errori" line) (search "link controllati" line)
+              (search "sorgenti" line) (search "Evidenze" line)
+              (search "Tutti" line) (search "superati" line) (search "archive" line))
+      (when (< (length line) 500) (write-line line))))
+  (with-open-file (out "spikes/out/recovery-id-audit/full-check-summary.lisp"
+                       :direction :output :if-exists :error)
+    (write (list :schema-version 1 :kind :recovery-id-full-check-summary :status :ok
+                 :source-consistency :stable :source-count (length (getf r :source-blobs-after))
+                 :wall-seconds (getf r :wall-seconds) :stderr-characters (length (getf r :stderr))
+                 :ok-lines (length named) :qualified-commit "c8a1adab7da1adf171e1beaf41cc71ac2e801601"
+                 :original-record "processes/full-check/report.lisp"
+                 :no-independent-review t) :stream out :pretty t) (terpri out)))

@@ -73,7 +73,10 @@ Il codice è **solo Common Lisp** ([ADR-0001](adr/0001-common-lisp-sbcl.md)).
 > **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — La ricerca full
 > text rientra nei moduli M06/M15 esistenti. L'analisi si prepara sui worker di calcolo;
 > il writer della Serie applica e pubblica il delta con i documenti. Implementazione
-> e contratti binari restano da realizzare e qualificare nella fase 8.
+> e qualifica restano nella fase 8. Il completamento successivo di
+> [ADR-0054](adr/0054-contratto-e-formato-full-text.md) definisce
+> [interfacce e ownership](full-text.md#confini-tra-moduli) e
+> [formato binario](formato-indice-full-text.md).
 
 ## Contratti tra moduli
 

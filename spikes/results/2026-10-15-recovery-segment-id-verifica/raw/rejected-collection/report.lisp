@@ -1,0 +1,15 @@
+(:DIAGNOSTIC
+ #A((87) BASE-CHAR
+    . "Raccolta rifiutata :DUPLICATE-TARGET: raw/recovery-id-mutation-2/tools/runner.lisp.txt.")
+ :REASON :DUPLICATE-TARGET :SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-COLLECTION
+ :STATUS :FAILED :PHASE :PLANNING :DESTINATION
+ #A((107) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-recovery-segment-id/")
+ :OBSERVATIONS
+ #A((95) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/recovery-id-collection/")
+ :WORKERS 4 :SHA-PER-COPY 3 :LIMITS
+ (:EXPLICIT-FILE-MANIFEST :COMPLETED-COMMAND-RECORDS-ONLY
+  :FRESH-DESTINATION-ONLY :NO-AUTO-SIDECARS-OR-TREES
+  :LOCAL-PER-FILE-OBSERVATIONS :NO-ATOMICITY-OR-AUTHENTICATION
+  :NO-RESULT-OR-GATE-INFERENCE :NO-MCDC-OR-RELEASE-QUALIFICATION))

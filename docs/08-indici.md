@@ -127,6 +127,14 @@ completo. Semantica e protocollo di pubblicazione sono nell'ADR; sezioni logiche
 disco in [formati](formati-su-disco.md#indice-full-text) e prove future in
 [benchmark](13-benchmark.md#ricerca-full-text).
 
+> **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Il
+> [contratto operativo](full-text.md) completa profilo Unicode, foglie AST, ownership,
+> generazioni, budget e criteri di accettazione. Il
+> [formato `.idx` v2/type 5](formato-indice-full-text.md) fissa header, sezioni e array,
+> con legame all'hint e riserva conservativa dei byte prima del commit. Questa versione
+> iniziale usa array a larghezza fissa; le ottimizzazioni del codec richiedono una nuova
+> versione e misure dedicate. L'implementazione resta futura.
+
 ## Index snapshot
 
 Gli indici DEVONO essere immutabili per i reader (INV-I1):

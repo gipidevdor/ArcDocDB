@@ -2,7 +2,7 @@
 
 > **Generata** da [requisiti.lisp](requisiti.lisp) con `make trace-write`. Non modificare a mano: `make trace` fallisce se non coincide.
 
-**Sommario.** 127 requisiti. Per classe: C1 101, C2 7, C3 12, C4 7. Per stato: specificato 0, progettato 115, implementato 11, verificato 1. Invarianti coperti: 66/66. Scenari FI coperti: 13/13.
+**Sommario.** 131 requisiti. Per classe: C1 104, C2 8, C3 12, C4 7. Per stato: specificato 0, progettato 119, implementato 11, verificato 1. Invarianti coperti: 68/68. Scenari FI coperti: 13/13.
 
 ## Requisiti
 
@@ -68,6 +68,10 @@
 | REQ-SEC-004 | Il delta full text è pubblicato con i documenti prima della conferma e dell'avanzamento della visibilità; ogni risultato e filtro usa la medesima versione committed visibile nello snapshot, anche dopo update, delete, abort e compaction. | ADR-0053 | C1 | progettato | INV-I4, INV-M1, INV-V5 | [0053](../adr/0053-ricerca-full-text-indici-invertiti.md), [0038](../adr/0038-orizzonte-di-visibilita.md), [0041](../adr/0041-multiserie-segmenti-autosufficienti.md) | test, diff, model, fi | FI-05, FI-06, FI-11 |
 | REQ-SEC-005 | Gli indici full text sono derivati ricostruibili: identità, CRC, profilo e copertura sono verificati; build e cambio analizzatore pubblicano una generazione completa senza mescolanze; perdita, corruzione o rebuild incompleto sono dichiarati esplicitamente anche dopo recovery e restore. | ADR-0053 | C1 | progettato | INV-I4, INV-A10, INV-A11 | [0053](../adr/0053-ricerca-full-text-indici-invertiti.md), [0026](../adr/0026-indici-secondari-segmentati.md), [0040](../adr/0040-manifest-a-record-unico.md) | test, diff, corr, fi | FI-09, FI-10, FI-13 |
 | REQ-SEC-006 | Analisi, delta e query full text hanno budget finiti; una scrittura oltre limite è rifiutata prima della decisione durevole, una query oltre budget termina con errore esplicito senza presentare risultati parziali come completi; nessun coordinamento globale per documento. | ADR-0053 | C1 | progettato | INV-A8, INV-P6 | [0053](../adr/0053-ricerca-full-text-indici-invertiti.md), [0036](../adr/0036-leggi-di-progetto.md), [0045](../adr/0045-modello-di-esecuzione.md) | test, soak, bench, rev |  |
+| REQ-SEC-007 | Il profilo unicode-word-18.0.0-v1 fissa Unicode 18.0.0, NFC, case folding C/F e word break; foglie AST esplicite, frase con ripetizioni, ordinamento stabile e stato terminale hanno semantica riproducibile con corpus ufficiali e attesi manuali. | ADR-0054 | C2 | progettato | INV-I4 | [0053](../adr/0053-ricerca-full-text-indici-invertiti.md), [0054](../adr/0054-contratto-e-formato-full-text.md) | test, diff, rev |  |
+| REQ-SEC-008 | Il file full text .idx v2 tipo 5 verifica header, sei sezioni, array a larghezza fissa, CRC, ordini e limiti; identità e configurazione coincidono con catalogo, segmento e byte esatti dell'hint, senza riusare ordinali di un altro hint. | ADR-0054 | C1 | progettato | INV-I5, INV-A2 | [0054](../adr/0054-contratto-e-formato-full-text.md) | test, fuzz, corr, mut, rev |  |
+| REQ-SEC-009 | La generazione full text cattura i nuovi commit senza buchi rispetto al prefisso iniziale e diventa READY solo dopo ricontrollo dell'inventario e delle frontiere; file distinti per generazione, ritiro deciso dal catalogo e reclaim dopo quiescenza. | ADR-0054 | C1 | progettato | INV-I4, INV-I6, INV-A10, INV-A11 | [0054](../adr/0054-contratto-e-formato-full-text.md), [0040](../adr/0040-manifest-a-record-unico.md) | test, diff, model, fi | FI-06, FI-09, FI-10, FI-11, FI-13 |
+| REQ-SEC-010 | Prima di SEAL/PREPARE il writer riserva delta, staging e limite superiore conservativo del file full text; la rotazione previene indici oltre budget; query e build conteggiano risorse, lavoro, deadline e tentativi con cleanup e completamento terminale unici. | ADR-0054 | C1 | progettato | INV-I6, INV-A8, INV-P6 | [0054](../adr/0054-contratto-e-formato-full-text.md), [0041](../adr/0041-multiserie-segmenti-autosufficienti.md), [0045](../adr/0045-modello-di-esecuzione.md) | test, model, soak, bench, rev |  |
 | REQ-IDX-007 | Il reader ricontrolla root e generazione dopo il sondaggio anche su miss, con tentativi limitati; la manutenzione dichiara e controlla separatamente slot, byte delle chiavi, riferimenti della directory e memoria transitoria. | ADR-0050 | C1 | progettato | INV-I3, INV-A8 | [0043](../adr/0043-primary-index-a-frammenti.md), [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | test, model, bench, rev |  |
 | REQ-CCH-001 | La cache usa CLOCK, può essere partizionata per Serie e misura la scan pollution per decidere un'eventuale evoluzione a 2Q. | Cache | C3 | progettato |  | [0010](../adr/0010-cache-clock.md), [0025](../adr/0025-cache-per-location.md) | test, bench |  |
 | REQ-CCH-002 | La cache è consapevole della versione: un reader non ottiene mai una versione incompatibile con il proprio snapshot. | Cache e snapshot | C1 | progettato | INV-M3 | [0025](../adr/0025-cache-per-location.md), [0044](../adr/0044-cache-acceleratore-puro.md) | test, prop |  |
@@ -170,7 +174,9 @@
 | INV-M3 | REQ-CCH-002, REQ-CCH-004 |
 | INV-I1 | REQ-IDX-002, REQ-IDX-003 |
 | INV-I2 | REQ-SEC-001 |
-| INV-I4 | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005 |
+| INV-I4 | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-007, REQ-SEC-009 |
+| INV-I5 | REQ-SEC-008 |
+| INV-I6 | REQ-SEC-009, REQ-SEC-010 |
 | INV-P1 | REQ-TXS-002, REQ-CON-001 |
 | INV-P2 | REQ-CON-002 |
 | INV-P3 | REQ-ARC-002, REQ-TXM-006, REQ-CON-003, REQ-CON-005 |
@@ -184,13 +190,13 @@
 | INV-V3 | REQ-IDX-004 |
 | INV-V4 | REQ-CON-002 |
 | INV-A1 | REQ-AFF-001, REQ-AFF-009, REQ-AFF-015 |
-| INV-A2 | REQ-FOR-004, REQ-AFF-002 |
+| INV-A2 | REQ-SEC-008, REQ-FOR-004, REQ-AFF-002 |
 | INV-A3 | REQ-AFF-003 |
 | INV-A4 | REQ-AFF-004 |
 | INV-A5 | REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-AFF-005 |
 | INV-A6 | REQ-AFF-006 |
 | INV-A7 | REQ-REG-002, REQ-CMP-004, REQ-TXM-005, REQ-REC-002, REQ-AFF-007, REQ-AFF-017, REQ-AFF-019 |
-| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-IDX-007, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
+| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-SEC-010, REQ-IDX-007, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
 | INV-F2 | REQ-WAL-005, REQ-FOR-003 |
 | INV-F3 | REQ-AFF-009 |
 | INV-V5 | REQ-WAL-006, REQ-TXM-008, REQ-SEC-004 |
@@ -200,11 +206,11 @@
 | INV-S7 | REQ-CMP-009, REQ-TXM-007, REQ-FOR-004 |
 | INV-C11 | REQ-CMP-008, REQ-IDX-006 |
 | INV-I3 | REQ-IDX-005, REQ-IDX-007 |
-| INV-P6 | REQ-SEC-006, REQ-CON-005, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
+| INV-P6 | REQ-SEC-006, REQ-SEC-010, REQ-CON-005, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
 | INV-P5 | REQ-CON-004 |
 | INV-A9 | REQ-AFF-017 |
-| INV-A10 | REQ-SEC-005, REQ-AFF-018 |
-| INV-A11 | REQ-REG-002, REQ-SEC-005, REQ-AFF-019, REQ-LIM-003 |
+| INV-A10 | REQ-SEC-005, REQ-SEC-009, REQ-AFF-018 |
+| INV-A11 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-AFF-019, REQ-LIM-003 |
 | INV-A12 | REQ-CCH-004 |
 
 ## Copertura degli scenari di fault injection
@@ -216,14 +222,14 @@
 | FI-03 | REQ-TXM-002, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-FLT-001 |
 | FI-04 | REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-FLT-001 |
 | FI-05 | REQ-WAL-003, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-REC-003, REQ-FLT-001 |
-| FI-06 | REQ-CMP-002, REQ-CMP-003, REQ-IDX-002, REQ-IDX-004, REQ-SEC-004, REQ-REC-001, REQ-REC-003, REQ-REC-004, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019, REQ-LIM-003 |
+| FI-06 | REQ-CMP-002, REQ-CMP-003, REQ-IDX-002, REQ-IDX-004, REQ-SEC-004, REQ-SEC-009, REQ-REC-001, REQ-REC-003, REQ-REC-004, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019, REQ-LIM-003 |
 | FI-07 | REQ-CLN-002, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
 | FI-08 | REQ-MRG-001, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
-| FI-09 | REQ-CMP-007, REQ-SEC-005, REQ-REC-003, REQ-FLT-001, REQ-AFF-018 |
-| FI-10 | REQ-MET-001, REQ-IDX-006, REQ-SEC-005, REQ-REC-002, REQ-REC-003, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-017 |
-| FI-11 | REQ-CMP-007, REQ-SEC-004, REQ-MVC-001, REQ-MVC-003, REQ-MVC-005, REQ-FLT-001 |
+| FI-09 | REQ-CMP-007, REQ-SEC-005, REQ-SEC-009, REQ-REC-003, REQ-FLT-001, REQ-AFF-018 |
+| FI-10 | REQ-MET-001, REQ-IDX-006, REQ-SEC-005, REQ-SEC-009, REQ-REC-002, REQ-REC-003, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-017 |
+| FI-11 | REQ-CMP-007, REQ-SEC-004, REQ-SEC-009, REQ-MVC-001, REQ-MVC-003, REQ-MVC-005, REQ-FLT-001 |
 | FI-12 | REQ-TXM-001, REQ-TXM-004, REQ-TXM-007, REQ-TXM-008, REQ-MVC-002, REQ-MVC-005, REQ-FLT-001 |
-| FI-13 | REQ-REG-002, REQ-SEC-005, REQ-FLT-001, REQ-AFF-018, REQ-AFF-019 |
+| FI-13 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-FLT-001, REQ-AFF-018, REQ-AFF-019 |
 
 ## Decisioni (ADR) e requisiti che le realizzano
 
@@ -268,12 +274,12 @@
 | [0037](../adr/0037-lotto-sigillato.md) | REQ-WAL-002, REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-AFF-009, REQ-AFF-017 |
 | [0038](../adr/0038-orizzonte-di-visibilita.md) | REQ-VER-001, REQ-TXM-004, REQ-SEC-004, REQ-MVC-002, REQ-MVC-005, REQ-MVC-006, REQ-MVC-007 |
 | [0039](../adr/0039-cornice-unica-dei-record.md) | REQ-WAL-005, REQ-IDX-006, REQ-SEC-001, REQ-FOR-001, REQ-FOR-003, REQ-FOR-004, REQ-AFF-002 |
-| [0040](../adr/0040-manifest-a-record-unico.md) | REQ-REG-002, REQ-STO-006, REQ-MET-001, REQ-CLN-002, REQ-CMP-002, REQ-CMP-003, REQ-CMP-004, REQ-TXM-007, REQ-SEC-005, REQ-REC-002, REQ-REC-004, REQ-AFF-017, REQ-AFF-018, REQ-AFF-019 |
-| [0041](../adr/0041-multiserie-segmenti-autosufficienti.md) | REQ-CMP-009, REQ-WAL-004, REQ-TXM-001, REQ-TXM-002, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-REC-002 |
+| [0040](../adr/0040-manifest-a-record-unico.md) | REQ-REG-002, REQ-STO-006, REQ-MET-001, REQ-CLN-002, REQ-CMP-002, REQ-CMP-003, REQ-CMP-004, REQ-TXM-007, REQ-SEC-005, REQ-SEC-009, REQ-REC-002, REQ-REC-004, REQ-AFF-017, REQ-AFF-018, REQ-AFF-019 |
+| [0041](../adr/0041-multiserie-segmenti-autosufficienti.md) | REQ-CMP-009, REQ-WAL-004, REQ-TXM-001, REQ-TXM-002, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-SEC-010, REQ-REC-002 |
 | [0042](../adr/0042-tombstone-e-indice-dei-vivi.md) | REQ-CMP-008, REQ-CMP-009, REQ-IDX-006 |
 | [0043](../adr/0043-primary-index-a-frammenti.md) | REQ-IDX-001, REQ-IDX-003, REQ-IDX-005, REQ-IDX-007 |
 | [0044](../adr/0044-cache-acceleratore-puro.md) | REQ-CCH-002, REQ-CCH-004 |
-| [0045](../adr/0045-modello-di-esecuzione.md) | REQ-SEC-006, REQ-CON-005, REQ-CON-004 |
+| [0045](../adr/0045-modello-di-esecuzione.md) | REQ-SEC-006, REQ-SEC-010, REQ-CON-005, REQ-CON-004 |
 | [0046](../adr/0046-orizzonte-con-registro-limitato.md) | REQ-MVC-008 |
 | [0047](../adr/0047-verifica-csn-dei-record-prepared.md) | REQ-FOR-004 |
 | [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
@@ -281,4 +287,5 @@
 | [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | REQ-IDX-007 |
 | [0051](../adr/0051-presentazione-della-documentazione.md) | —  (decisione senza requisito diretto) |
 | [0052](../adr/0052-header-dei-log-di-controllo.md) | REQ-FOR-001, REQ-FOR-002 |
-| [0053](../adr/0053-ricerca-full-text-indici-invertiti.md) | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-006 |
+| [0053](../adr/0053-ricerca-full-text-indici-invertiti.md) | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-006, REQ-SEC-007 |
+| [0054](../adr/0054-contratto-e-formato-full-text.md) | REQ-SEC-007, REQ-SEC-008, REQ-SEC-009, REQ-SEC-010 |

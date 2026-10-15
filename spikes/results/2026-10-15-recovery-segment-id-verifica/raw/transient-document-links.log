@@ -1,0 +1,6 @@
+sbcl --script tools/check-trace.lisp
+126 requisiti, 66 invarianti, 13 scenari FI, 53 ADR: 0 errori
+sbcl --script tools/check-links.lisp .
+ROTTO  docs/implementazione/id-segmento-recovery.md -> ../../spikes/results/2026-10-15-recovery-segment-id/README.md (file mancante)
+498 file, 3417 link controllati, 1 rotti
+make: *** [links] Error 1

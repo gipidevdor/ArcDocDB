@@ -207,6 +207,18 @@
  (:id "REQ-SEC-006" :src "ADR-0053" :cls "C1" :stato :progettato
   :txt "Analisi, delta e query full text hanno budget finiti; una scrittura oltre limite è rifiutata prima della decisione durevole, una query oltre budget termina con errore esplicito senza presentare risultati parziali come completi; nessun coordinamento globale per documento."
   :inv ("INV-A8" "INV-P6") :adr ("ADR-0053" "ADR-0036" "ADR-0045") :ver (:test :soak :bench :rev) :fi ())
+ (:id "REQ-SEC-007" :src "ADR-0054" :cls "C2" :stato :progettato
+  :txt "Il profilo unicode-word-18.0.0-v1 fissa Unicode 18.0.0, NFC, case folding C/F e word break; foglie AST esplicite, frase con ripetizioni, ordinamento stabile e stato terminale hanno semantica riproducibile con corpus ufficiali e attesi manuali."
+  :inv ("INV-I4") :adr ("ADR-0053" "ADR-0054") :ver (:test :diff :rev) :fi ())
+ (:id "REQ-SEC-008" :src "ADR-0054" :cls "C1" :stato :progettato
+  :txt "Il file full text .idx v2 tipo 5 verifica header, sei sezioni, array a larghezza fissa, CRC, ordini e limiti; identità e configurazione coincidono con catalogo, segmento e byte esatti dell'hint, senza riusare ordinali di un altro hint."
+  :inv ("INV-I5" "INV-A2") :adr ("ADR-0054") :ver (:test :fuzz :corr :mut :rev) :fi ())
+ (:id "REQ-SEC-009" :src "ADR-0054" :cls "C1" :stato :progettato
+  :txt "La generazione full text cattura i nuovi commit senza buchi rispetto al prefisso iniziale e diventa READY solo dopo ricontrollo dell'inventario e delle frontiere; file distinti per generazione, ritiro deciso dal catalogo e reclaim dopo quiescenza."
+  :inv ("INV-I4" "INV-I6" "INV-A10" "INV-A11") :adr ("ADR-0054" "ADR-0040") :ver (:test :diff :model :fi) :fi ("FI-06" "FI-09" "FI-10" "FI-11" "FI-13"))
+ (:id "REQ-SEC-010" :src "ADR-0054" :cls "C1" :stato :progettato
+  :txt "Prima di SEAL/PREPARE il writer riserva delta, staging e limite superiore conservativo del file full text; la rotazione previene indici oltre budget; query e build conteggiano risorse, lavoro, deadline e tentativi con cleanup e completamento terminale unici."
+  :inv ("INV-I6" "INV-A8" "INV-P6") :adr ("ADR-0054" "ADR-0041" "ADR-0045") :ver (:test :model :soak :bench :rev) :fi ())
 
  (:id "REQ-IDX-007" :src "ADR-0050" :cls "C1" :stato :progettato
   :txt "Il reader ricontrolla root e generazione dopo il sondaggio anche su miss, con tentativi limitati; la manutenzione dichiara e controlla separatamente slot, byte delle chiavi, riferimenti della directory e memoria transitoria."

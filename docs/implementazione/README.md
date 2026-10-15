@@ -10,6 +10,9 @@ implementazione e qualifica previste nella fase 8. Non è ancora un
 componente di prodotto: codec CBOR, primary index, GET e prove verticali
 non dimostrano tokenizzazione, posting list, frasi o visibilità full text.
 I criteri sono nel [piano di verifica](../affidabilita/piano-di-verifica.md#ricerca-full-text).
+Il [contratto operativo](../full-text.md) e il
+[formato `.idx` v2/type 5](../formato-indice-full-text.md) sono definiti da
+[ADR-0054](../adr/0054-contratto-e-formato-full-text.md); restano specifiche di progetto.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
@@ -89,6 +92,7 @@ I criteri sono nel [piano di verifica](../affidabilita/piano-di-verifica.md#rice
 | Decision log dell'Archivio | [Lettura readonly, identità e collegamento al recovery ACTIVE](decisioni-recuperate.md) | [`src/recovery-archive/`](../../src/recovery-archive/) |
 | Manifest della Serie | [Ripiegamento degli EDIT del control log](manifest-control-log.md) | [`src/recovery/`](../../src/recovery/) |
 | Inventario recovery | [Piano di riconciliazione dei nomi dei segmenti](inventario.md) | [`src/recovery/inventory-build.lisp`](../../src/recovery/inventory-build.lisp) |
+| ID dopo recovery | [Proposta oltre high-water e nomi osservati, senza prenotazione](id-segmento-recovery.md) | [`src/recovery/inventory-id.lisp`](../../src/recovery/inventory-id.lisp) |
 | Ordinamento delle decisioni | [Radix misurato e query concorrenti](decisioni-radix-risultati.md) | [`src/recovery/decisions-radix.lisp`](../../src/recovery/decisions-radix.lisp) |
 
 Le evidenze hanno un ambito esplicito: un test del codec non verifica transazioni,

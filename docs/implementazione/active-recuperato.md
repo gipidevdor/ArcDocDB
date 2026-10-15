@@ -182,7 +182,7 @@ Il risultato locale appartiene al commit congelato dichiarato nella campagna;
 qualifica C1, matrice completa delle decisioni e misure restano aperte.
 Il [lettore del decision log legato all'Archivio](decisioni-recuperate.md)
 è ora disponibile con qualifica dedicata ancora aperta. Restano da integrare
-la riconciliazione dei CLOSED, gli
+la riconciliazione fisica dei nomi, gli
 indici/orizzonte CSN e il gate di ammissione del Recovery Manager.
 Questo risultato non autorizza da solo a dimenticare decisioni globali o
 riaprire il traffico della Serie.
@@ -190,3 +190,7 @@ riaprire il traffico della Serie.
 Il [builder completo del checkpoint](checkpoint-recovery.md) deriva ora
 lo stato dal risultato ACTIVE e dal CONTROL trattenuto, con qualifica
 dedicata ancora aperta; conserva il publisher unico già descritto.
+
+Il [lettore CLOSED e il controllo dell'insieme](closed-recuperato.md) verificano
+ora i prefissi nominati e offrono `pubblica-control-con-closed` prima del
+publisher canonico. La qualifica dedicata di questi nuovi ingressi resta aperta.

@@ -195,6 +195,18 @@
  (:id "REQ-SEC-002" :src "Secondary index delta" :cls "C2" :stato :progettato
   :txt "Gli indici secondari seguono il modello base più delta immutabili e la nuova base è costruita senza bloccare i reader."
   :inv () :adr ("ADR-0026") :ver (:test :diff) :fi ())
+ (:id "REQ-SEC-003" :src "ADR-0053" :cls "C2" :stato :progettato
+  :txt "La Serie dichiara indici full text dedicati: dizionario per campo e termine, posting per riga e frequenza, posizioni per le frasi; analizzatore deterministico e versionato comune a documenti e query, combinazione con filtri strutturati."
+  :inv ("INV-I4") :adr ("ADR-0053" "ADR-0026" "ADR-0029") :ver (:test :diff :bench) :fi ())
+ (:id "REQ-SEC-004" :src "ADR-0053" :cls "C1" :stato :progettato
+  :txt "Il delta full text è pubblicato con i documenti prima della conferma e dell'avanzamento della visibilità; ogni risultato e filtro usa la medesima versione committed visibile nello snapshot, anche dopo update, delete, abort e compaction."
+  :inv ("INV-I4" "INV-M1" "INV-V5") :adr ("ADR-0053" "ADR-0038" "ADR-0041") :ver (:test :diff :model :fi) :fi ("FI-05" "FI-06" "FI-11"))
+ (:id "REQ-SEC-005" :src "ADR-0053" :cls "C1" :stato :progettato
+  :txt "Gli indici full text sono derivati ricostruibili: identità, CRC, profilo e copertura sono verificati; build e cambio analizzatore pubblicano una generazione completa senza mescolanze; perdita, corruzione o rebuild incompleto sono dichiarati esplicitamente anche dopo recovery e restore."
+  :inv ("INV-I4" "INV-A10" "INV-A11") :adr ("ADR-0053" "ADR-0026" "ADR-0040") :ver (:test :diff :corr :fi) :fi ("FI-09" "FI-10" "FI-13"))
+ (:id "REQ-SEC-006" :src "ADR-0053" :cls "C1" :stato :progettato
+  :txt "Analisi, delta e query full text hanno budget finiti; una scrittura oltre limite è rifiutata prima della decisione durevole, una query oltre budget termina con errore esplicito senza presentare risultati parziali come completi; nessun coordinamento globale per documento."
+  :inv ("INV-A8" "INV-P6") :adr ("ADR-0053" "ADR-0036" "ADR-0045") :ver (:test :soak :bench :rev) :fi ())
 
  (:id "REQ-IDX-007" :src "ADR-0050" :cls "C1" :stato :progettato
   :txt "Il reader ricontrolla root e generazione dopo il sondaggio anche su miss, con tentativi limitati; la manutenzione dichiara e controlla separatamente slot, byte delle chiavi, riferimenti della directory e memoria transitoria."

@@ -73,6 +73,7 @@ revisione del progetto o benchmark.
 |---|---|---|---|
 | INV-I1 | Gli indici sono immutabili per i reader; gli aggiornamenti diventano visibili tramite atomic swap e i reader precedenti completano sulla versione vecchia. | Index snapshot | test di concorrenza, FI-06 |
 | INV-I2 | Il Bloom filter per segmento indica solo «sicuramente assente / potenzialmente presente»; non è mai la struttura di localizzazione definitiva. | Secondary index | revisione, test |
+| INV-I4 | Una query full text usa una sola generazione e un solo profilo di analisi per indice, con copertura completa della vista richiesta; risultati e filtri appartengono alla stessa versione committed visibile del documento. Un derivato assente, corrotto o incompleto produce un errore esplicito, mai un risultato vuoto o incompleto dichiarato corretto. | [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) | confronto con scansione, snapshot e aggiornamenti concorrenti, corruzione, rebuild e riavvio (verifiche da realizzare) |
 
 ## Concorrenza e priorità
 

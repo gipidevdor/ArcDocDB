@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Ricerca full text nel progetto della v1 (ADR-0053): indici invertiti dedicati
+  per segmento, parole e frasi, analizzatori versionati, filtri strutturati e
+  coerenza con commit/snapshot. Documentati rebuild, corruzione, budget e caso
+  NNTP; quattro requisiti progettati e INV-I4. Implementazione e qualifica
+  previste nella fase 8, senza codice full text introdotto.
+
 - Obiettivo applicativo confermato: ArcDocDB come database di un futuro
   server NNTP in Common Lisp. Documentati lookup degli articoli, overview
   ordinate, cross-posting, retention, integrazione e criteri di valutazione;

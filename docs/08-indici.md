@@ -8,7 +8,9 @@
 > [ADR-0039](adr/0039-cornice-unica-dei-record.md) (hint per segmento),
 > [ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md) (solo documenti vivi, ricostruzione per
 > CSN massimo), [ADR-0026](adr/0026-indici-secondari-segmentati.md) (indici
-> secondari **per segmento**, a formato fisso, con delta in memoria per l'ACTIVE). Formati in
+> secondari **per segmento**, a formato fisso, con delta in memoria per l'ACTIVE),
+> [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) (ricerca full text con indici
+> invertiti dedicati; implementazione da realizzare). Formati in
 > [formati-su-disco.md](formati-su-disco.md#file-indice).
 
 ## Primary index
@@ -55,6 +57,7 @@ Strutture diverse per tipo di query:
 | Numeri, date, range | B+ tree o struttura ordinata equivalente |
 | Categorie | posting lists |
 | Boolean, bassa cardinalità | bitmap |
+| Testo, parole e frasi | indice invertito dedicato: dizionario, posting list e posizioni ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) |
 
 **Bloom filter per segmento.** Serve solo a stabilire che un valore è *sicuramente assente*
 oppure *potenzialmente presente*. NON DEVE essere usato come struttura di localizzazione
@@ -81,6 +84,48 @@ category="sport" → ADD 42
 ```
 
 La nuova base viene costruita **senza bloccare globalmente i reader**.
+
+### Ricerca full text
+
+> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — La ricerca full text
+> entra nel progetto della v1 con indici appositi. È una funzionalità da implementare e
+> verificare nella fase 8, anche in vista del [server NNTP](valutazione/caso-duso-nntp.md).
+
+Il contratto della Serie dichiara i campi testuali e un analizzatore versionato, comune
+a indicizzazione e query. Il profilo base normalizza Unicode e maiuscole/minuscole,
+conserva gli accenti e non elimina parole o applica stemming implicitamente. Il documento
+originale è conservato integralmente. Ogni indice ha questa struttura logica:
+
+```
+(campo, termine) → posting list di righe → frequenze e posizioni nel campo
+                         │
+                         └→ hint del segmento → chiave e CSN → versione visibile
+```
+
+Un file `.idx` immutabile per segmento `CLOSED` contiene dizionario, posting e posizioni;
+il delta dell'`ACTIVE` include i nuovi documenti prima della loro pubblicazione.
+Tokenizzazione e preparazione avvengono fuori dal writer; l'applicazione del delta resta
+seriale nella Serie. Non si aggiungono un WAL o uno scheduler dedicati al full text.
+
+Sono previsti predicati strutturati per tutti/almeno uno dei termini e per frasi con
+posizioni consecutive nello stesso campo. Si combinano con `and/or/not`, filtri per data,
+uguaglianza e intervallo. `not` usa i documenti vivi dello stesso snapshot; testo di query
+senza termini produce un rifiuto esplicito. Ordinamento e spareggio per `_id` sono
+deterministici; ranking per rilevanza e ricerche fuzzy restano decisioni successive.
+
+Update, delete e abort non devono lasciare corrispondenze di versioni invisibili:
+ogni candidato è verificato contro la versione committed dello snapshot, comprese le
+versioni trattenute, prima di applicare insieme testo e filtri. CLEAN/MERGE ricostruiscono
+i posting con le nuove righe. Gli indici sono derivati ricostruibili dai documenti;
+file mancante o corrotto e generazione incompleta producono un errore esplicito.
+Una nuova generazione di analizzatore diventa utilizzabile soltanto con copertura
+completa, senza mescolare profili nella stessa query (INV-I4).
+
+Byte analizzati, termini, posizioni, memoria del delta e lavoro della query hanno budget
+finiti; nessun troncamento silenzioso in scrittura o risultato parziale dichiarato
+completo. Semantica e protocollo di pubblicazione sono nell'ADR; sezioni logiche su
+disco in [formati](formati-su-disco.md#indice-full-text) e prove future in
+[benchmark](13-benchmark.md#ricerca-full-text).
 
 ## Index snapshot
 
@@ -112,3 +157,6 @@ reader precedenti → completano su v17
 ## Metriche
 
 Hit rate, latenza di lookup, tempo di rebuild ([12 Osservabilità](12-osservabilita.md)).
+Per il full text: byte di dizionario/posting/posizioni, memoria del delta, costo di
+analisi e commit, posting visitati, candidati scartati per visibilità, latenza e
+copertura della generazione. Sono misure da produrre, senza riusare i target del GET.

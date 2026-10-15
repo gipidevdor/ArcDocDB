@@ -13,9 +13,11 @@ indici, scheduling e recovery; l'applicazione NNTP possiede protocollo,
 connessioni e regole di pubblicazione. Il caso d'uso aiuta a valutare i
 contratti esistenti e il lavoro residuo della [roadmap](../roadmap.md).
 
-ArcDocDB mantiene la propria natura general-purpose. L'obiettivo applicativo
+ArcDocDB mantiene la propria natura general-purpose. L'indirizzo NNTP da solo
 non modifica formati, invarianti, livelli di durability o scope degli ADR
-accettati; eventuali modifiche a tali contratti richiederanno il normale ADR.
+accettati; le modifiche ai contratti passano dal normale ADR. La successiva
+richiesta dell'autore di ricerca full text è registrata in
+[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md).
 Protocollo NNTP, demone, TLS, autenticazione e benchmark applicativo sono
 lavori futuri: questo documento non li introduce nell'implementazione attuale.
 
@@ -26,6 +28,7 @@ lavori futuri: questo documento non li introduce nell'implementazione attuale.
 | Articoli normalmente immutabili e letture per Message-ID | Append-only, lookup puntuale, conservazione dei byte e verifica in lettura |
 | Un articolo presente in più newsgroup | Una copia del contenuto e più appartenenze; coerenza delle pubblicazioni fra Serie |
 | Overview per intervallo di numeri in un gruppo | Scansioni ordinate, indici secondari e visibilità coerente con gli articoli |
+| Ricerca per parole e frasi in oggetto, autore e corpo | Indici invertiti dedicati sui campi testuali, combinati con filtri per gruppo e data nella stessa vista |
 | Molti lettori e picchi di nuove pubblicazioni | Parallelismo, code e buffer limitati, controllo dell'ammissione e isolamento fra Serie |
 | Scadenza degli articoli e lettori già attivi | Tombstone, retention delle appartenenze, CLEAN/MERGE e reclaim dopo quiescenza |
 | Riavvio dopo un arresto forzato | Recupero delle pubblicazioni confermate con durability esplicita, indice ricostruibile e ritentativi applicativi senza duplicazione |
@@ -57,6 +60,29 @@ usato da altri gruppi. La rimozione fisica richiede inoltre il rispetto di
 snapshot e lettori attivi. Un ritentativo dopo commit riuscito e risposta
 persa deve avere una semantica esplicita per deduplicazione e numerazione.
 
+## Ricerca full text degli articoli
+
+> **Deciso ([ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md))** — Il motore
+> prevede indici full text dedicati. L'applicazione NNTP ne guida la valutazione;
+> questa aggiunta riguarda il progetto, con implementazione futura nella fase 8.
+
+L'applicazione estrae testo ricercabile da `Subject`, autore e corpo: decodifica MIME,
+charset e selezione delle parti sono responsabilità del server NNTP. I campi indicizzati
+sono stringhe esplicite nel documento; i byte originali dell'articolo restano conservati.
+Message-ID rimane una chiave opaca per il lookup puntuale; la ricerca testuale usa il
+profilo versionato dell'indice, senza modificare identità o numerazione del gruppo.
+
+Una copia dell'articolo può essere indicizzata una volta e collegata alle sue appartenenze.
+Una ricerca limitata a un gruppo combina i risultati testuali con appartenenze e retention
+visibili nello stesso snapshot, anche se distribuite tra Serie; non deve ritrovare un
+articolo attraverso un'appartenenza già scaduta. Il risultato applicativo è deduplicato
+per Message-ID. Partizionamento e costo di questa combinazione restano da valutare.
+
+`ARTICLE` continua a richiedere lookup puntuale e `OVER` intervalli ordinati: l'indice
+full text si aggiunge a questi percorsi. L'esposizione della ricerca al client richiederà
+una scelta applicativa esplicita; questo documento non definisce un nuovo comando NNTP
+né attribuisce la ricerca full text al protocollo standard di RFC 3977.
+
 ## Integrazione con il futuro demone
 
 L'[architettura](../architettura.md#interfacce) prevede già un motore libreria
@@ -79,7 +105,8 @@ valutati sul percorso completo.
 > per valutare i percorsi del motore quando i contratti necessari saranno
 > disponibili. Le prove di correttezza precedono le misure prestazionali.
 
-Le valutazioni dovranno distinguere lookup puntuale e intervalli ordinati;
+Le valutazioni dovranno distinguere lookup puntuale, intervalli ordinati e ricerca
+full text con filtri di gruppo/data;
 pubblicazione singola e cross-posting; cache calda e accesso al dispositivo;
 durability della conferma; cancellazione di appartenenze e reclaim fisico.
 I casi di guasto rilevanti includono commit prima della perdita della risposta,
@@ -87,6 +114,9 @@ riavvio con transazioni in corso e retention durante letture già ammesse.
 Le misure future comprendono throughput, p50/p99, memoria degli indici,
 interferenza di compaction/GC e durata del recovery, con parametri e limiti
 registrati secondo il [metodo delle prove](registro-delle-prove.md).
+La [campagna full text](../13-benchmark.md#ricerca-full-text) aggiunge corpus testuali,
+analizzatori riproducibili, memoria dei posting/posizioni e confronto con scansione;
+nessuna prestazione è già dimostrata per questo caso d'uso.
 
 La [prova verticale esistente](../implementazione/prova-verticale.md) verifica
 componenti generici di una Serie con crash e riapertura. Il suo coordinamento

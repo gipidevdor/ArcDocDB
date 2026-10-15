@@ -125,3 +125,9 @@ risultato consolidato è in [architettura.md](../architettura.md) e
 | ADR | Decisione | Stato |
 |---|---|---|
 | [0052](0052-header-dei-log-di-controllo.md) | Offset, identità e CRC degli header control e multiserie | Accettata; primo codec |
+
+## Ricerca testuale (2026-10-15)
+
+| ADR | Decisione | Stato |
+|---|---|---|
+| [0053](0053-ricerca-full-text-indici-invertiti.md) | Ricerca full text: indici invertiti per segmento, termini e posizioni, analizzatori versionati, coerenza con commit e snapshot | Accettata per il progetto; implementazione e qualifica da produrre |

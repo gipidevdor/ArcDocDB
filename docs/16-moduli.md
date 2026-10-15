@@ -14,7 +14,7 @@ identificativi `M01…M18` seguono l'ordine della specifica.
 | M03 | Segment Manager | Ciclo di vita dei segmenti: ACTIVE unico, rotazione, stati, lettura | [03](03-storage.md) |
 | M04 | Segment Metadata Manager | Contatori live/dead e tempi; dati derivati, ricostruibili | [03](03-storage.md#segment-metadata) |
 | M05 | Primary Index Manager | `_id → location`, tabella compatta in RAM | [08](08-indici.md) |
-| M06 | Secondary Index Manager | ART, B+ tree, posting lists, bitmap, Bloom; base + delta | [08](08-indici.md#indici-secondari) |
+| M06 | Secondary Index Manager | ART, B+ tree, posting lists, bitmap, Bloom; indici invertiti full text con posizioni e generazioni; base + delta | [08](08-indici.md#indici-secondari) |
 | M07 | Cache Manager | CLOCK, partizionamento per Serie, consapevolezza delle versioni | [09](09-cache.md) |
 | M08 | Snapshot/MVCC Manager | Snapshot logici, visibilità, protezione delle versioni dal reclaim | [06](06-mvcc-e-snapshot.md) |
 | M09 | Transaction Manager | Transazioni single-Series (OCC) e coordinamento multiserie | [05](05-transazioni.md) |
@@ -23,7 +23,7 @@ identificativi `M01…M18` seguono l'ordine della specifica.
 | M12 | Recovery Manager | Ripartenza dopo crash | [11](11-recovery.md) |
 | M13 | Scheduler | Controllo del carico: request scheduler e Compaction Scheduler | [10](10-concorrenza-e-scheduling.md) |
 | M14 | Dynamic Thread Pool | Worker riutilizzati, dimensionamento dinamico | [10](10-concorrenza-e-scheduling.md#thread-pool-dinamico) |
-| M15 | Query Engine | Esecuzione di query su indici e scansioni | [08](08-indici.md) |
+| M15 | Query Engine | Esecuzione di query su indici e scansioni; predicati full text e frasi combinati con filtri, nella stessa vista MVCC | [08](08-indici.md) |
 | M16 | Network/Protocol Layer | Connessioni e protocollo | — (QA-20) |
 | M17 | Archivio/Serie/Documento Catalog Manager | Catalogo in `Registri/catalog/`, transazionale | [02](02-modello-logico.md#catalogo) |
 | M18 | SIMD/Hot Path Optimization Layer | Primitive ottimizzate per gli hot path | [15](15-ottimizzazioni-native.md) |
@@ -69,6 +69,11 @@ Dipendenze che attraversano gli strati e meritano attenzione:
 > interfacce tra moduli saranno fissate dalle decisioni della [Fase 0](roadmap.md).
 
 Il codice è **solo Common Lisp** ([ADR-0001](adr/0001-common-lisp-sbcl.md)).
+
+> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — La ricerca full
+> text rientra nei moduli M06/M15 esistenti. L'analisi si prepara sui worker di calcolo;
+> il writer della Serie applica e pubblica il delta con i documenti. Implementazione
+> e contratti binari restano da realizzare e qualificare nella fase 8.
 
 ## Contratti tra moduli
 

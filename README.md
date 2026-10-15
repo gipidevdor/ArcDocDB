@@ -68,7 +68,12 @@ rather than from shortcuts.
 
 A reference application is a future **NNTP server written in Common Lisp**, using ArcDocDB
 as its database. This [use case](docs/valutazione/caso-duso-nntp.md) guides evaluation of
-article lookup, ordered group overviews, cross-posting, retention and recovery.
+article lookup, ordered group overviews, full-text search, cross-posting, retention and recovery.
+
+Planned **full-text search** uses dedicated per-segment inverted indexes for words and
+phrases, combined with structured filters and snapshot visibility. The
+[design](docs/08-indici.md#ricerca-full-text) is recorded; implementation and validation
+belong to phase 8.
 
 ## How it works
 
@@ -99,6 +104,7 @@ Each decision records its context, constraints and verification method.
 | Storage | The ACTIVE segment is the log. Each record is written once, in sealed batches. | [0013](docs/adr/0013-log-structured-segmento-active-come-log.md) · [0037](docs/adr/0037-lotto-sigillato.md) |
 | Index | A directory of small flat hash tables in memory: one writer, lock-free readers. | [0043](docs/adr/0043-primary-index-a-frammenti.md) · [0032](docs/adr/0032-seqlock-a-64-bit.md) |
 | Secondary indexes | One immutable, fixed-format file per segment. | [0026](docs/adr/0026-indici-secondari-segmentati.md) |
+| Full-text search | Dedicated inverted indexes with term positions, versioned analyzers and complete snapshot coverage. Planned for phase 8. | [0053](docs/adr/0053-ricerca-full-text-indici-invertiti.md) |
 | Durability | Group commit by default. The writer never waits for a flush. | [0019](docs/adr/0019-durability-e-group-commit-pipelined.md) · [0037](docs/adr/0037-lotto-sigillato.md) |
 | Snapshots | One commit sequence per Archivio; it is also the document version. A snapshot is born when everything below it is visible. | [0020](docs/adr/0020-csn-snapshot-isolamento.md) · [0038](docs/adr/0038-orizzonte-di-visibilita.md) |
 | Transactions | Two-phase commit across Serie, with a writer that never blocks. | [0021](docs/adr/0021-2pc-intenti-outcome.md) · [0041](docs/adr/0041-multiserie-segmenti-autosufficienti.md) |

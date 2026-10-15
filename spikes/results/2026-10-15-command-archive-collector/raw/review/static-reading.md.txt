@@ -1,0 +1,74 @@
+# Lettura statica indipendente C4 della raccolta comandi
+
+2026-10-15. PASS statico sui pin congelati:
+
+- `tools/collect-command-archive.lisp`:
+  `48c4e1a23390a43767a3630d66514d9c03a79159`.
+- `tools/collect-command-archive-tests.lisp`:
+  `49da390b7e170acc9ffdafa78285f215aec75f44`.
+
+Autore del collector: item_drivers. Autore delle fixture: item_tests.
+Revisore indipendente del codice: cbor_next_contract; nessuna modifica
+ai due sorgenti, alla documentazione, all'indice o a HEAD da questo
+revisore. Nessun LOAD, compilazione o test eseguito dal revisore.
+La nota viene salvata dopo l'avvio dei runtime C4 comunicato dal
+coordinatore su merge82100f5a, senza leggerne gli output o usarne
+gli esiti per questa lettura. Non è una delle due letture C1: lo
+strumento è C4, con COD-60/COD-61 e REQ-VAL-001.
+
+## Verifiche del codice
+
+Manifesto esplicito schema1, data e campi ammessi; nessun tree,
+sidecar o comando scoperto automaticamente. SOURCE parte dal
+manifesto; tutti i target sono relativi, univoci e senza escape.
+File/directory in collisione e quattro nomi riservati sono rifiutati.
+Destinazione e osservazioni nuove e disgiunte; il preflight precede
+la creazione della destinazione. I limiti plain/gzip/espanso sono
+1/8/128MiB; inventario e profondità sono limitati.
+
+Ogni processo richiede schema/kind, metadata presenti, fine registrata
+e stato terminale. RUNNING e ignoto sono rifiutati; FAILED, anche con
+exit NIL, e SOURCE-CHANGED rimangono storici e non diventano OK.
+Il confronto post-copia usa metadata e fine; byte/SHA proteggono
+il contenuto intero senza confronti ricorsivi di record opachi.
+
+L'API pubblica call-with-evidence-bytes verifica tutti i descriptor,
+compresi accessori fuori PROCESSES. Il callback riceve il pathname
+originale per plain e un temporaneo per descriptor: su questa
+distinzione si fonda il riconoscimento. Il sibling payload deve già
+essere esplicito nel piano al path indicato, con byte/SHA coincidenti.
+L'integrità dei target viene verificata di nuovo dopo i join.
+
+Quattro worker hanno buffer privati, un primo task quando disponibile,
+coda con mutex e risultati per indice. READY/GO/join hanno deadline;
+timeout ed errori di cleanup impediscono il successo. Ogni copia
+apre un target nuovo, legge soltanto il numero di byte pinned e un
+ulteriore byte per verificare EOF, controlla origine prima/dopo e
+destinazione. Nessuna sovrascrittura intenzionale o cancellazione.
+
+Indice/catalogo nascono dopo join e controlli. Il checker committed
+parte in un processo distinto; exit0, segnale NIL, schema/kind/status,
+closed-inventory e metadata devono concordare prima di COMPLETE/OK.
+Log e report finali rimangono fuori archivio; nessun append successivo.
+La ricorsione esclusa è l'archiviazione del proprio esito nella medesima
+raccolta, non il walker bounded del checker esistente.
+
+## Rilievi risolti e fixture
+
+Tre rilievi emersi dalla lettura sono stati corretti dagli autori prima
+dei pin finali: LABEL vuota ora produce PROCESS-LABEL; descriptor
+accessori richiedono il payload esplicito; il self-test senza argomento
+costruisce MKDTEMP da un directory-pathname, senza ereditare `.lisp`.
+Letti anche gli ultimi delta: canonicalizzazione del genitore output
+esistente e forma semplice LOOP/WHILE della copia bounded.
+
+Conteggiati staticamente59 casi, inclusi quattro worker reali con
+rendezvous, preservazione dei fallimenti, descriptor accessori ±payload,
+limiti esatti/+1, copie/fonti alterate, READ-EVAL/EOF, CLI e archivio
+esistente. Il nuovo negativo hidden-extra richiede CLOSED-CHECK nel
+collector, INVENTORY nel checker e conserva extra, report e log.
+Il numero59 descrive le fixture presenti, non test già superati.
+
+Nessun difetto concreto residuo rilevato. Restano distinti test runtime,
+osservazioni per file, autenticità, atomicità durevole e qualifica del
+motore; nessun claim di scalabilità o MC/DC deriva da questa lettura.

@@ -5,6 +5,8 @@ comandi già conclusi in un archivio nuovo. Applica il registro delle prove
 di [ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) e i
 controlli COD-60/COD-61 dello [standard](../affidabilita/standard-di-codifica.md).
 Non interviene sul motore o sui suoi formati persistenti.
+Le [verifiche conservate](raccolta-comandi-risultati.md) riportano tentativi,
+risultati e limiti della prima campagna.
 
 La lista degli ingressi è esplicita. Il chiamante sceglie ogni file e ogni
 record; un file vicino al record non entra automaticamente nell'archivio.
@@ -72,7 +74,7 @@ protetta da mutex. Ogni risultato
 ha un solo proprietario; indice e catalogo sono costruiti dopo i join.
 Gli hash SHA256 confrontano gli ingressi prima e dopo le copie e le
 destinazioni. I metadati dei record copiati sono riletti e confrontati con
-quelli degli originali; l'intero contenuto resta autenticato dai byte.
+quelli degli originali; la verifica SHA256 copre l'intero contenuto.
 
 L'ultima verifica avvia `tools/check-command-archive.lisp` in un processo
 separato. Controlla l'inventario chiuso, gli hash e i metadati dei processi;

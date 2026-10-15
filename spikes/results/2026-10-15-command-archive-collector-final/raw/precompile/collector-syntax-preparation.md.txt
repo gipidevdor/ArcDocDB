@@ -1,0 +1,21 @@
+# Preparazione della lettura sintattica del collector
+
+Prima di qualsiasi caricamento o compilazione del nuovo collector, una
+lettura READ con package stub e READ-EVAL NIL si è fermata per EOF nella
+bozza Git blob `d4e6fa19af62dc83a3f6eee89ca70adfdc4478d2`, dopo45forme.
+Mancava una parentesi finale nella lista delle funzioni locali LABELS
+di COPY-PLAN. La correzione precede ogni runtime del collector.
+
+Il diagnostico originale è disponibile soltanto nella conversazione;
+non si dichiara un file di log locale originale. La prima bozza non fu
+copiata prima della correzione, già avvenuta quando arrivò la richiesta
+di preservare tutte le successive varianti sintattiche. Una copia esatta
+della versione seguente viene conservata prima della seconda READ.
+La visita degli accessori descriptor, il confronto dei soli metadata,
+il bound della copia e i piccoli controlli label/root sono correzioni
+statiche richieste durante la review, non risultati runtime.
+
+Una successiva query inline conteneva una parentesi finale in eccesso
+e si è fermata leggendo il proprio argomento --eval, prima di leggere
+il collector. Anche tale diagnostico esiste soltanto in conversazione.
+Il lettore salvato syntax-read-collector.lisp evita quelle query inline.

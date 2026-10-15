@@ -92,5 +92,10 @@ nessun handler generico, retry, close, rollback, eliminazione o troncatura.
 Le [evidenze locali](../../spikes/results/2026-10-15-recovery-checkpoint/README.md)
 riguardano compilazione e controlli statici. Qualifica C1, revisione
 indipendente, casi funzionali/FI e misure dedicate restano aperti.
-Riconciliazione fisica e verifica CLOSED, indici/orizzonte CSN, dimenticanza
+Riconciliazione fisica, indici/orizzonte CSN, dimenticanza
 delle decisioni e gate del Recovery Manager restano da integrare.
+
+Il [lettore CLOSED e il controllo dell'insieme](closed-recuperato.md) sono
+ora disponibili con qualifica dedicata aperta. L'ingresso aggiuntivo
+`pubblica-control-con-closed` verifica i vecchi CLOSED prima di delegare al
+publisher ACTIVE; questo builder e il formato del piano restano invariati.

@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Recovery readonly dei CLOSED dal CONTROL autorevole: lettura solo fino a P,
+  verifica writer/compaction e prepared risolti da OUTCOME o chiusura EDIT,
+  senza decision log globale. Controllo dell'insieme completo prima del
+  publisher canonico, ID u64 senza troncamento; qualifica C1 dedicata aperta.
+
 - Lettura del primo item CBOR minimo con frontiera assoluta: coda non
   letta, budget della finestra autorizzata e scratch privato per worker.
   Consente di ricavare le frontiere degli item concatenati; qualifica C1

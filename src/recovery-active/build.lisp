@@ -58,4 +58,5 @@ Errori tipizzati originali propagati; nessun append, fsync, troncatura, rename, 
           (arcdocdb.io::esigi-aperto (arcdocdb.control::control-recuperato-input control) :input)
           (%make-active-recuperato control segment size prefix status batches records
                                   (hash-table-count (workspace-active-prepared workspace))
-                                  (workspace-active-local workspace) (workspace-active-aborted workspace) ids csns))))))
+                                  (workspace-active-local workspace) (workspace-active-aborted workspace) ids csns
+                                  (workspace-active-csn-present workspace) (workspace-active-max-csn workspace)))))))

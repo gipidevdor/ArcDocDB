@@ -126,7 +126,7 @@
                              (:file "publication") (:file "publication-read")
                              (:file "recovery-types") (:file "recovery-read") (:file "recovery-publication")))
                (:module "recovery-active" :serial t
-                :components ((:file "package") (:file "types") (:file "read") (:file "frames")
+                :components ((:file "package") (:file "types") (:file "read") (:file "csn") (:file "frames")
                              (:file "resolve") (:file "build") (:file "query")
                              (:file "closure") (:file "publication")))
                (:module "recovery-archive" :serial t
@@ -137,7 +137,8 @@
                              (:file "sections") (:file "build")))
                (:module "recovery-closed" :serial t
                 :components ((:file "package") (:file "types") (:file "read") (:file "verify")
-                             (:file "resolve") (:file "build") (:file "publication"))))
+                             (:file "resolve") (:file "csn") (:file "build") (:file "publication")
+                             (:file "csn-serie"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

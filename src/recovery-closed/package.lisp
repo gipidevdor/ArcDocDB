@@ -3,7 +3,7 @@
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-TXM-007 REQ-AFF-008 REQ-AFF-018
 (defpackage #:arcdocdb.recovery.closed
   (:use #:cl)
-  (:import-from #:arcdocdb.binary #:octets #:index #:u32 #:u64 #:check-range)
+  (:import-from #:arcdocdb.binary #:octets #:index #:u32 #:u64 #:check-range #:leggi-u64)
   (:import-from #:arcdocdb.conditions #:invalid-argument #:corruption-detected
                 #:resource-exhausted #:invariant-violation)
   (:import-from #:arcdocdb.io #:file-io #:leggi-esatto #:verifica-capienza-lettura)
@@ -17,4 +17,5 @@
   (:import-from #:arcdocdb.recovery.active #:active-recuperato #:pubblica-control-da-active
                 #:workspace-active #:workspace-active-prepared #:workspace-active-outcomes #:attraversa-active)
   (:export #:closed-recuperato #:leggi-closed-recuperato #:frontiere-closed-recuperato
+           #:massimo-csn-closed-recuperato #:massimo-csn-serie-recuperata
            #:statistiche-closed-recuperato #:verifica-closed-completi #:pubblica-control-con-closed))

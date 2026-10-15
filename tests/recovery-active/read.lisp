@@ -23,7 +23,7 @@
   "Due identità, header separato, poi chunk: richieste residue esatte, incluso EOF prematuro."
   (is (<= 64 size 4096)) (is (plusp chunk)) (is (plusp short))
   (is (<= 0 physical-size size))
-  (let ((events '((:identity 301) (:identity 302))))
+  (let ((events (list (list :identity 301) (list :identity 302))))
     (dolist (range (cons '(0 64)
                         (loop for base from 64 below size by chunk
                               collect (list base (min size (+ base chunk))))))

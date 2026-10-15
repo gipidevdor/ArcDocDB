@@ -450,7 +450,7 @@
                   (is (equalp expected (av-fixture-scratch f))))))
             (is (null (av-events f)))
             (av-noeffects f)
-            (avs-read-success f '(1 3 3 0 3 0)))))
+            (avs-read-success f '(1 3 3 0 3 0))))
         :version version :decision-specs (mapcar (lambda (pair) (apply #'avs-decision pair)) outcomes)))))
 
 ;;;; FI outside-contract: guardie non raggiungibili da file/tabella canonici.

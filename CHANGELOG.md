@@ -7,6 +7,18 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Obiettivo applicativo confermato: ArcDocDB come database di un futuro
+  server NNTP in Common Lisp. Documentati lookup degli articoli, overview
+  ordinate, cross-posting, retention, integrazione e criteri di valutazione;
+  il motore resta general-purpose, con sviluppo NNTP futuro.
+
+- Prova verticale di una Serie nei formati v1/v2: scrittura durevole,
+  aggiornamenti, tombstone e GET, SIGKILL reale, recovery e checkpoint in
+  un processo nuovo, seconda riapertura indipendente. Include coda senza
+  SEAL, checkpoint non pubblicato, rotazione con nuovi commit, confronto
+  dei segmenti originali e controllo negativo dell'oracolo. Coordinamento
+  e replay dell'indice sono C4; nessuna promozione del motore completo.
+
 - Verifica dedicata del decision log dell'Archivio: preflight, identità,
   query, ownership e collegamento al recovery ACTIVE, con catena nativa
   fino alla pubblicazione CONTROL nei formati v1/v2. Copertura separata

@@ -8,6 +8,17 @@ ArcDocDB è un database server **documentale general-purpose**, scritto principa
 Lisp con **SBCL** come implementazione di riferimento. Non è pensato per un dominio applicativo
 specifico (non è un motore per blogging o CMS).
 
+## Applicazione di riferimento
+
+> **Deciso (indirizzo dell'autore, 2026-10-15)** — L'obiettivo applicativo è
+> usare ArcDocDB come database di un server NNTP scritto in Common Lisp.
+
+Il [caso d'uso NNTP](valutazione/caso-duso-nntp.md) guida le valutazioni di
+letture per Message-ID, scansioni ordinate per gruppo, pubblicazioni su più
+gruppi, retention e recovery. Il motore mantiene la propria natura
+general-purpose; l'indirizzo attuale riguarda la progettazione e la
+documentazione, con sviluppo del demone e benchmark applicativi futuri.
+
 ## Obiettivi
 
 | Obiettivo | Come la specifica intende ottenerlo | Documento |

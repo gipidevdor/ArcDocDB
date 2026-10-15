@@ -66,6 +66,10 @@ ArcDocDB is a general-purpose document engine, written in Common Lisp and engine
 safety-critical software. Reliability comes first; performance follows from the layout
 rather than from shortcuts.
 
+A reference application is a future **NNTP server written in Common Lisp**, using ArcDocDB
+as its database. This [use case](docs/valutazione/caso-duso-nntp.md) guides evaluation of
+article lookup, ordered group overviews, cross-posting, retention and recovery.
+
 ## How it works
 
 <p align="center">
@@ -102,7 +106,7 @@ Each decision records its context, constraints and verification method.
 | Integrity | Fail-stop on any write error. Verification on every read. Recovery never truncates. | [0033](docs/adr/0033-fail-stop-e-integrita-end-to-end.md) · [0039](docs/adr/0039-cornice-unica-dei-record.md) |
 | Code | Checks always on. No warnings. No dependencies. | [0034](docs/adr/0034-policy-di-compilazione-e-standard-di-codifica.md) · [0027](docs/adr/0027-dipendenze-e-test.md) |
 
-All fifty are in the [decision log](docs/adr/README.md); the reasoning that ties them
+All decisions are in the [decision log](docs/adr/README.md); the reasoning that ties them
 together is the [design analysis](docs/analisi-progettuale.md).
 
 ## Reliability
@@ -137,13 +141,14 @@ Every limit and where it comes from: [limiti.md](docs/limiti.md).
 
 [![CI](https://github.com/gpicchiarelli/ArcDocDB/actions/workflows/ci.yml/badge.svg)](https://github.com/gpicchiarelli/ArcDocDB/actions/workflows/ci.yml)
 
-**Phase 0 — architecture and evaluation.** The design is documented; experiments are evaluating its assumptions. The database engine is not implemented yet.
+**Phase 0 — architecture, foundations and integration testing.** Product components are implemented; experiments and integration tests evaluate their contracts. The complete database engine remains under development.
 
 | | |
 |---|---|
-| Done | Specification · architecture · design analysis · on-disk formats · 50 decisions · 65 invariants · 114 traced requirements |
-| Now | Five executable [experiments](spikes/README.md): index, GC, flush, protocols and integrity; local results, explicit remaining limits |
-| Next | Complete the reference-scale campaigns and protocol models in the [spike plan](docs/valutazione/piano-spike.md) |
+| Done | Specification · architecture · on-disk formats · [product foundations](docs/implementazione/README.md) for storage, index, reads, recovery and scheduling |
+| Now | A [single-Serie integration test](docs/implementazione/prova-verticale.md) with durable writes, updates, deletion, reads, SIGKILL, recovery and rotation; coordination remains in the test harness |
+| Next | Integrate production startup, recovery and request admission; complete the reference-scale campaigns and protocol models in the [spike plan](docs/valutazione/piano-spike.md) |
+| Reference application | Database for a future Common Lisp NNTP server; application requirements are documented, protocol implementation remains future work |
 | Then | Ten implementation phases, each closed by a verification gate: the [roadmap](docs/roadmap.md) |
 
 Product throughput figures remain targets or estimates. Measurements from individual
@@ -160,7 +165,7 @@ make check
 ```
 
 `make check` builds with every warning treated as an error, runs the tests and the linter,
-verifies the traceability matrix and every link, and runs the five experiment checks.
+verifies the traceability matrix and every link, and runs the ten experiment checks.
 `make spikes-bench` runs local measurements in isolated processes, one experiment at a time;
 the raw reports include commands and environment under `spikes/out/`.
 
@@ -169,7 +174,7 @@ the raw reports include commands and environment under `spikes/out/`.
 | Location | Purpose |
 |---|---|
 | [`docs/`](docs/README.md) | Specification, architecture, decisions, reliability, traceability. Written in Italian. |
-| [`src/`](src) · [`tests/`](tests) | The system. Minimal until Phase 1. |
+| [`src/`](src) · [`tests/`](tests) | Product foundations and their component and integration tests. |
 | [`spikes/`](spikes/README.md) | Disposable experiments. |
 | [`tools/`](tools) | Build, linter, traceability and link checkers, in Common Lisp. |
 | [`assets/`](assets/README.md) | The design language. |

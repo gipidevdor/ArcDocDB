@@ -3,6 +3,10 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+La [prova verticale 2026-10-15](2026-10-15-vertical-crash/README.md)
+conserva sviluppo e verifica di scrittura, SIGKILL, recovery e riapertura
+di una Serie, con confini C4 espliciti.
+
 Ogni directory datata conserva report originali, importazioni strutturate dei
 report precedenti e diagnostiche. Il [catalogo 2026-10-08](2026-10-08/catalogo.lisp)
 identifica varianti, tipi di prova e artefatti originali, senza duplicarne i

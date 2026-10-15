@@ -3,17 +3,47 @@
 [Documentazione](../README.md) · [Esperimenti](../../spikes/README.md) · [Roadmap](../roadmap.md)
 
 Questa sezione valuta l'architettura descritta dalla
-[specifica](../specifica/specifica-originale.md) **prima** dell'implementazione: che cosa regge,
-che cosa è ancora indefinito, che cosa è rischioso e come lo si verifica.
+[specifica](../specifica/specifica-originale.md): che cosa regge, che cosa è
+ancora indefinito, che cosa è rischioso e come lo si verifica. Comprende
+la valutazione iniziale e le evidenze delle fondazioni implementate.
 
-> **Natura di questi documenti.** È una valutazione *preliminare*, fatta a tavolino. Le stime
-> sono ordini di grandezza con ipotesi dichiarate, non misure. Ogni conclusione è da
-> confermare o smentire con gli spike; i documenti vanno aggiornati con i risultati.
+> **Natura di questi documenti.** Le sezioni iniziali conservano la valutazione
+> preliminare a tavolino. Le stime restano ordini di grandezza; le campagne
+> eseguibili hanno risultati e limiti propri. Il successo di una componente
+> o di una fixture non qualifica automaticamente l'intero motore.
+
+## Fattibilità aggiornata al 2026-10-15
+
+> **Proposta** — Il giudizio attuale sostiene la realizzabilità dei meccanismi
+> fondamentali. L'integrazione del prodotto e i target quantitativi restano aperti.
+
+Il progetto dispone di codice per WAL/CSN, indice, cache, snapshot, I/O,
+GET, recovery e scheduling, con [campagne dedicate](../implementazione/README.md).
+La [prova verticale](../implementazione/prova-verticale.md) compone una Serie:
+scrive e legge, interrompe realmente il processo, recupera i file, pubblica
+il checkpoint e rilegge valori e cancellazioni in processi nuovi, anche
+dopo rotazione. Questo aggiunge evidenza sperimentale alla plausibilità del
+progetto; bootstrap, coordinamento e replay dell'indice restano nella fixture.
+
+| Domanda | Evidenza disponibile | Lavoro residuo |
+|---|---|---|
+| I meccanismi possono essere implementati in SBCL? | Fondazioni di prodotto e prove funzionali native | Qualifica completa dei contratti e dei percorsi di guasto |
+| Scrittura e recovery possono essere composti? | Prova verticale v1/v2 con SIGKILL e seconda riapertura | Coordinatore di prodotto, inventario generale, CSN recuperato e ammissione |
+| Concorrenza e isolamento sono dimostrati? | Prove dedicate di componenti e catena pool/Serie | Percorso dati completo sotto concorrenza, MVCC e multiserie |
+| I target prestazionali sono raggiunti? | Microbenchmark e campagne locali con scope dichiarato | Pool persistente, GC, P99, carico prolungato e hardware di riferimento |
+| La v1 è completa? | Componenti e integrazioni parziali | Compaction completa, backup/restore, query, rete e gate della roadmap |
+
+La prossima riduzione dell'incertezza richiede l'orchestrazione di apertura
+e recovery nel motore, seguita dall'ammissione di nuove scritture con CSN
+ricostruito. La prova seriale non autorizza a promettere prestazioni o
+affidabilità dell'intero database. I risultati e i tentativi falliti sono
+conservati nella [campagna](../../spikes/results/2026-10-15-vertical-crash/README.md).
 
 ## Documenti
 
 | Documento | Contenuto |
 |---|---|
+| [Caso d'uso NNTP](caso-duso-nntp.md) | Obiettivo di usare ArcDocDB come database di un server NNTP in Common Lisp; esigenze e confini per le valutazioni future |
 | [SPK-08, bitmap](risultati-SPK-08-bitmap-2026-10-08.md) | Conteggio su array byte/u64, codice generato e confronto locale senza packing |
 | [Analisi critica](analisi-critica.md) | Punti di forza, tensioni interne alla specifica, lacune di progetto |
 | [Stime di ordine di grandezza](stime-ordine-di-grandezza.md) | Plausibilità dei target rispetto ai limiti dell'hardware |

@@ -9,6 +9,12 @@ Dal 2026-10-08 l'autore ha autorizzato il codice di prodotto: i componenti già
 realizzati e i loro confini sono nell'[indice di implementazione](implementazione/README.md).
 La loro presenza non chiude i gate sperimentali né qualifica il motore completo.
 
+La [prova verticale con SIGKILL](implementazione/prova-verticale.md) collega
+ora scrittura durevole, indice e GET, recovery, checkpoint e rotazione in
+una fixture C4. La riapertura avviene in processi distinti, nei formati v1/v2.
+Il coordinamento resta nel test: il Recovery Manager, l'orizzonte CSN
+ricostruito e l'ammissione del traffico restano lavoro di prodotto.
+
 Al 2026-10-03 la parte di **definizione è completa**: le 26 questioni aperte sono chiuse dagli
 ADR 0013–0030, il progetto è consolidato in [architettura.md](architettura.md) e i formati in
 [formati-su-disco.md](formati-su-disco.md). L'[analisi progettuale](analisi-progettuale.md)
@@ -37,6 +43,13 @@ correttezza, disassemblato e 70 campioni seriali locali. Restano x86-64,
 integrazione dell'indice, bitmap/checksum e piattaforma di riferimento.
 
 ## Fase 0 — Definizione architetturale e valutazione
+
+Il [server NNTP in Common Lisp](valutazione/caso-duso-nntp.md) è il caso
+applicativo di riferimento confermato dall'autore il 2026-10-15. Le esigenze
+di lookup, intervalli ordinati, pubblicazione multiserie, retention e recovery
+orientano la valutazione delle fasi esistenti. La richiesta attuale riguarda
+la documentazione dell'obiettivo; sviluppo del demone e benchmark applicativi
+restano futuri, senza anticipare i gate o cambiare lo scope v1.
 
 Scopo: arrivare all'implementazione con le decisioni strutturali prese, i rischi principali
 misurati e i protocolli critici verificati su modello.

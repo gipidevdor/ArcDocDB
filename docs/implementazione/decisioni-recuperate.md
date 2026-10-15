@@ -106,7 +106,7 @@ latenza o heap zero. Nessun lock o nuova scrittura condivisa tra Serie.
 
 ## Decisioni e qualifica
 
-| ID | Decisione composta o confine | Casi richiesti, ancora aperti |
+| ID | Decisione composta o confine | Casi della campagna dedicata |
 |---|---|---|
 | DAR-D01 | chunk positivo e byte budget almeno header | ciascuna falsa, entrambe vere; size 63/64 e budget esatto/superato |
 | DAR-D02 | chunk positivo e size almeno header nel lettore corpo | ciascuna falsa, entrambe vere; corpo vuoto e ultimo chunk corto |

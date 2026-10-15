@@ -1,0 +1,126 @@
+# Lettura C4 pre-esecuzione: copertura e raccolta del primo item CBOR
+
+2026-10-15. Lettura statica, diff/impronte Git e lettura DATA/EOF dei soli
+strumenti. Nessun prodotto, corpus, builder, collector, benchmark o campagna
+caricato, compilato o eseguito. Prodotto e corpus item non esistevano ancora
+al momento della lettura. Unica nuova scrittura: questa nota ignored e i
+due file output/error della lettura DATA. Nessun helper o fonte tracked
+modificato dal revisore. Esito: **nessun difetto bloccante residuo**, dopo
+la correzione della data descritta sotto; risultati runtime ancora da produrre.
+
+## Strumento di copertura
+
+`tools/foundation-coverage.lisp`, blob
+`19369e3ea8f944a420efa1918383c7ac28544c6d`, confrontato integralmente con
+`5be241d8` (blob precedente `350f7f76`). La diff aggiunge soltanto lo scope
+`cbor-item-read`, relativo dispatch e RUN aggregato, fixture e CLI/help.
+Scope precedenti, policy di compilazione, cache, sensore e rendering preservati.
+
+- Selezione esatta del solo `/src/codec/cbor-item-read.lisp`, mediante
+  suffix ancorato alla fine del path: nessuna directory o coppia di file.
+- Un positivo sul sorgente previsto e quattro negativi: file test,
+  suffisso `.fake`, percorso `/child` e vecchio scanner `cbor-scan.lisp`.
+- Dispatch diretto verso `arcdocdb.cbor.item.read.tests:run`; lo scope
+  aggregato codec chiama anche quel RUN dopo tag, conservando tutti i precedenti.
+- Nome ammesso nel controllo CLI, nel messaggio d'uso e nel commento help.
+
+La selezione restringe il report HTML; `coverage-state.lisp` resta lo stato
+globale dei file compilati. Non si deve interpretare il denominatore globale
+come copertura del nuovo file, né il singolo scope come qualifica del motore.
+Le fixture sono presenti ma il self-test non è stato eseguito dal revisore.
+ASDF/export/corpus/prodotto e il nuovo scope effettivo richiedono le loro
+verifiche dopo il freeze, non dedotte da questo solo delta C4.
+
+## Provenienza delle copie
+
+Origine `spikes/out/cbor-tag-write-20261014/collection/`; nuove copie sotto
+`spikes/out/cbor-item-read-20261015/collection/`. Le impronte sono blob Git,
+non SHA256 di copie già raccolte.
+
+| File | Origine/draft | Copia finale |
+| --- | --- | --- |
+| collect.lisp | `372dccdbb5f57c3ebc89f75f7e72d7dd4db4458f` | `272c5564ced6830db233de3a74caaf6bdd61e341` |
+| preflight-archive.lisp | `993e0c0c318618317d950368ec8e964f52b2da61` | `df735018ff75ba24fa611e65047badc081a3139a` |
+| append.lisp | `da360edd68b575ba52ebd379720ca8875215bba7` | identica |
+| read-collection.lisp | `ae2c37800a747a3db628348643f60acafa1d7199` | identica |
+| preserve-originals.lisp | `a19a9fff8a32a159859192bc31d3f76a26dd0a84` | identica |
+| build-manifest.lisp | `ac326fab50ae25289c757f699e69d6e46da739b3` | `b019753a96ded71a65979677be209f229db9f36b` |
+
+Le copie iniziali di collector e preflight conservavano `:date "2026-10-14"`:
+rilievo segnalato prima della raccolta. Il coordinatore ha preservato i
+draft identici in `collect-before-date-fix.lisp` e
+`preflight-before-date-fix.lisp`, con i due blob origine sopra. Le diff
+complete finali mostrano soltanto il literal data cambiato in2026-10-15
+nel catalogo effettivo e nella sua rappresentazione di preflight. Nessun
+algoritmo, policy, printer, conteggio worker o budget cambiato; i draft
+precedenti non sono stati sovrascritti o reinterpretati come nuove raccolte.
+
+Builder: esattamente tre hunk da due sostituzioni di stringhe. La base
+tag20261014 diventa item20261015 nel parametro *base* e nel prefisso
+drivers/selftests; il riconoscitore del worker self-test adotta item-read.
+Package e kind storici `cbor-tag.collection-manifest` e
+`:cbor-tag-collection-manifest-preparation` restano identici all'origine:
+sono nomi ereditati dello strumento, non una nuova attestazione di scope
+tag o di formato documentale. Le liste iniziali restano tutte NIL.
+
+## Limiti operativi invariati
+
+Manifest builder: solo CLI esplicita, niente latest; registri completati
+OK o FAILED conservati come dati. Rifiuta target duplicati e alberi live
+base/review/collection, salvo collection/self-test. Markdown raw rinominato
+TXT senza cambiare SOURCE; directory FASL escluse e file .fasl raw esclusi
+o rifiutati. Le directory --process conservano la loro selezione originale
+ALL: il filtro dei .fasl isolati e la rinomina MD non sono universali.
+
+La completezza dipende dalla CLI finale e da tutti i writer congelati,
+non dalla sola presenza del builder. Le directory self-test citate dagli
+stdout devono essere coperte da alberi richiesti; i log/observation esterni
+alla directory self-test vanno selezionati esplicitamente quando necessari.
+Una futura CLI deve essere confrontata con i report terminati effettivi.
+Il builder non autentica tutti i byte e non limita preventivamente ogni
+enumerazione DIRECTORY: limiti e chiusura rigorosa restano alle fasi seguenti.
+
+Collector: piano sequenziale <=100000 task, quattro worker READY/GO e
+claim mutex, join con deadline1800s; nessuna misura di scaling dedotta.
+Per ogni copia bytes/SHA origine prima, origine dopo e destinazione;
+registri decodificati EQUALP dopo i join. Indice/catalogo solo dopo copie
+senza errori; COMPLETE/OK soltanto dopo child trusted con exit0/signalNIL
+e inventario chiuso. Una root già popolata non prova successo della chiusura.
+La deadline dei worker non è un limite garantito dell'intera procedura.
+
+Preflight: dimensioni reali e SHA placeholder lowercase64 per il rendering,
+non un indice sintetico pubblicato. Budget plain/indice1MiB, gzip8MiB,
+espansione128MiB, coda100000 invariati. Il collector/checker ricontrolla
+byte reali, percorsi regolari e inventario esatto; preflight non li sostituisce.
+
+Append si usa soltanto tramite --append, serialmente: conserva originali,
+tre impronte e confronto del record, aggiorna indice, audit prima/dopo.
+Il suo ramo legacy --collect mantiene header-write e data2026-10-11 e
+non viene usato per questa raccolta. --append non riscrive la data del
+catalogo. Audit storico diverso dalla chiusura rigorosa: questa va ripetuta
+dopo gli append, senza inferire atomicità/durabilità dal semplice UPDATE.
+
+Reader collection interpreta metadata completati, quattro worker, somme,
+errori NIL e child-closure; non esegue un nuovo sweep delle fonti.
+Preserve-originals ammette soltanto un record completato OK/exit0 e crea
+copie nuove di observation/closure/tool con tre confronti bytes/SHA entro
+1MiB; la conservazione va effettuata prima di espandere la directory
+del record nel manifest. Nessun originale viene riscritto da questo helper.
+
+## Lettura DATA e stato del gate
+
+Una breve lettura READ, READ-EVAL NIL, readtable standard, base10,
+CL-USER ed EOF univoco ha contato10/35/14/31/3/3/20 forme rispettivamente
+in coverage/collector/append/preflight/reader/preserve/builder, senza valutarle.
+Caricate soltanto dipendenze trusted ASDF/SB-POSIX/SB-COVER/evidence-storage;
+nessun source di prodotto o corpus. Exit0; output
+`review/helper-form-reading.output.txt`, blob
+`a7855bb0b741fccc4ddb31924a662aba4ff663d8`; error vuoto, blob
+`e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`. Non è una compilazione o prova
+di correttezza dei helper. Le sole correzioni di data, rilette come diff,
+non cambiano la struttura sintattica o quei conteggi.
+
+Prima di eseguire campagne restano corpus/prodotto congelati, due letture
+C1 e self-test registrati appropriati. Prima di pubblicare restano CLI
+finale, preflight, copie e chiusura effettive; nessuna qualifica C1/MC/DC,
+autenticità, completezza futura o promozione di requisiti dedotta qui.

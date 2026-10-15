@@ -171,7 +171,11 @@ riguardano compilazione e controlli statici. Qualifica C1, revisione
 indipendente, prove funzionali/FI e misure dei nuovi ingressi restano aperte.
 Il [lettore del decision log legato all'Archivio](decisioni-recuperate.md)
 è ora disponibile con qualifica dedicata ancora aperta. Restano da integrare
-la riconciliazione dei CLOSED, il builder completo del checkpoint, gli
+la riconciliazione dei CLOSED, gli
 indici/orizzonte CSN e il gate di ammissione del Recovery Manager.
 Questo risultato non autorizza da solo a dimenticare decisioni globali o
 riaprire il traffico della Serie.
+
+Il [builder completo del checkpoint](checkpoint-recovery.md) deriva ora
+lo stato dal risultato ACTIVE e dal CONTROL trattenuto, con qualifica
+dedicata ancora aperta; conserva il publisher unico già descritto.

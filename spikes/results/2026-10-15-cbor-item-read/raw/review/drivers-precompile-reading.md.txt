@@ -1,0 +1,176 @@
+# Lettura indipendente C4 dei driver finali
+
+2026-10-15. Solo lettura di testo, diff, pin e dati già conservati;
+nessun driver o immagine mutante caricato, eseguito o compilato dal
+revisore. PASS statico locale: nessun difetto concreto residuo rilevato.
+I self-test e le campagne restano gate successivi, senza esiti anticipati.
+HEAD osservato durante la lettura: `46aee8b920d447aafae4a4e47a44d13631c47cb1`.
+
+## Pin finali verificati prima e dopo la lettura
+
+| File in `drivers/` | Git blob |
+|---|---|
+| `bench.lisp` | `118c779ca567411675e5dfbb0866b5b17e77c7f0` |
+| `audit.lisp` | `b6fcd88b73f31c5a9109dc83c8f311cf5b47082e` |
+| `mutation.lisp` | `8489ea798f0d83477e30e33b2ba34146296f9f66` |
+| `catalogue-materialized.lisp` | `72fd332903fa222ceb2caaa7bbf9f546d44525aa` |
+| `nominal-whitelist.lisp` | `8cb9ddf8b7ceb454600e64093640679d854be039` |
+| `fixtures-and-mutations.lisp` | `c6a22e6751cab0eff88dd1173ed81543d595a659` |
+| `materialization-history.md` | `840bdbee35fd5ff36263952e30f46d2d43436fec` |
+
+MD5 ricalcolati: benchmark `075fd8060d77c8665164a2d20c12b417`,
+auditor `213a90a9fb13d527f4370bb342ea7e37`, catalogo materializzato
+`ceb8c40fcd3e5f6a8e3765f98018bf98`; coincidono con i letterali
+dipendenti del mutatore e del catalogo. Il pin kernel resta
+`b9099dc8a8c96281063811e686deb4dcb2b1d39b`. I tre pin corpus sono
+`0326100362a1c4b24d2c7e511e45357f09a56d33`,
+`b2cbdcb4255c51d9da4fe73b28939c1cb923fefe`,
+`a0da65545ed80ede0a967cadbb337731f6fe1ce9`, nell'ordine
+support/seriale/worker. Sono gli stessi quattro pin fonte nelle
+dichiarazioni della materializzazione; i controlli di avvio verificano
+anche le relative impronte raw, non soltanto la forma dei letterali.
+Metodo `a67a79bf4fefe11c4778cd881eb5279a006966ca`, piano corpus
+`63a749b0e8737f49d400f40b0a98c454c2dc3cfc`, 17 nomi nominali
+congelati, 16 seriali e uno con worker.
+
+## Sei fixture e controller del benchmark
+
+Letti integralmente i sei item di `fixtures-and-mutations.lisp` e
+`bench.lisp:249–256`, senza usare scanner o writer come oracolo.
+START=2; coda autorizzata FF 1C 18 00; prefisso e due byte oltre END
+valgono A5. La ricostruzione aritmetica indipendente dei sei token
+conferma tutte le costanti:
+
+| Fixture / item esadecimale | Nodi | Picco | NEXT | END | Token |
+|---|---:|---:|---:|---:|---:|
+| scalare / 00 | 1 | 0 | 3 | 7 | 201232 |
+| testo / 62 C3 A9 | 1 | 0 | 5 | 9 | 335499 |
+| array / 82 00 F5 | 3 | 1 | 5 | 9 | 335486 |
+| mappa / A2 61 61 00 61 62 81 F4 | 6 | 2 | 10 | 14 | 671472 |
+| tag / C0 C1 81 61 7A | 4 | 1 | 7 | 11 | 469665 |
+| array misto / 84 20 F9 3C 00 42 00 FF A0 | 5 | 2 | 11 | 15 | 738173 |
+
+I nodi includono tag e contenitori; i byte della stringa binaria non
+diventano nodi e il picco include soltanto array/map. Il token somma
+17*NODES +257*PEAK +65537*NEXT e il checksum pesato dell'intero
+buffer fisico. Il sink somma token e indici delle chiamate, con maschera
+fixnum; l'auditor ricostruisce lo stesso residuo usando MOD/FLOOR.
+
+Il controllo freddo richiede tre valori esatti, incluso il rifiuto di
+un quarto NIL (`bench:87–91`). Ogni chiamata misurata passa tutti i
+valori a un consumer con tre argomenti obbligatori (`223–247`), che
+controlla NODES/PEAK/NEXT, ogni byte e tutti i sei scalari scratch:
+CURSOR/TOP/NODES/DEPTH/PEAK-DEPTH/PENDING-TAG (`93–110`). Il consumer
+non si limita a MULTIPLE-VALUE-BIND, che scarterebbe valori aggiuntivi.
+
+Warmup64 e GC precedono i contatori; sei fixture per cinque repliche
+producono 30 campioni da 1024 chiamate. Il campo :heap-bytes deve
+essere presente, intero non negativo e zero (`190–206`, `281–282`).
+Baseline nulla e positivo con oggetto vivo da 16 allocazioni di1MiB
+controllano il sensore (`208–221`). I self-test alterano separatamente
+tre risultati, dimensione e quattro regioni buffer, sei scalari,
+sink, heap nonzero/assente/NIL/negativo/nonintero. Le attese e i clock
+appartengono agli strumenti, non al kernel. Tempo e heap includono
+consumer/checksum; nessuna soglia di velocità o prova assoluta di
+nonallocazione deriva dal contatore.
+
+`synthetic-values`, NOTINLINE, usa VALUES-LIST runtime per verificare
+il consumer con due e quattro risultati senza arità sbagliata nota al
+compilatore (`128–149`). Si richiede PROGRAM-ERROR per entrambe;
+altri errori non sono accettati. La variante originale `702c8172` e il
+diff sono conservati: cambia solo questo self-test, non la misura.
+
+## Auditor DATA
+
+Letto interamente `audit.lisp`. Richiede una sola forma e EOF con
+READ-EVAL NIL/readtable standard, liste proprie acicliche, chiavi
+keyword non duplicate, campi obbligatori presenti e budget cons
+inferiore a un milione (`47–98`). La lettura evidenze è limitata a
+64MiB espansi e osserva byte/SHA256 prima/dopo (`552–565`).
+
+Controlla schema/kind/status esatti del wrapper e del benchmark,
+exit0, argv finale esatto, stabilità before/after, kernel fornito dalla
+CLI, metodo congelato, MD5 driver/fixture congelati, ambiente/clock,
+sei nomi ordinati, cinque campioni per cella e dunque 30 campioni.
+Ogni :heap-bytes deve esistere ed essere intero zero; positivo,
+baseline, sink, token, arità, buffer e sei scalari sono verificati
+separatamente (`152–344`). STDERR deve essere una stringa: non si
+asserisce che sia vuoto, perché può conservare compiler NOTES.
+
+Quattro positivi sintetici includono clock zero e overhead metadata;
+82 negativi sono previsti dal conteggio statico dei cicli della
+self-test, ognuno con motivo specifico (`445–550`). Non sono esiti
+misurati. Il caso :whole-window-declaration ora cambia un campo
+:LIMITS già presente a NIL, così raggiunge :metadata-limits invece
+di :missing-field. Il draft `6cf528ab` e il relativo diff restano
+preservati; rispetto a `1cabd9a0` i due pin benchmark erano già stati
+aggiornati separatamente. Catalogo e mutatore finali cambiano soltanto
+i pin dipendenti di questa correzione, non i target o le misure.
+
+L'audit verifica i campi previsti ma ammette metadata extra; non
+attraversa grafi dentro vettori generali. Le impronte dichiarate
+attestano coerenza locale, non autenticità, esecuzione o inventario
+completo; il MD5 prodotto interno non è dimostrato associato al Git
+blob senza i byte fonte. Questi limiti sono dichiarati dal driver.
+
+## Otto mutanti e classificatore
+
+Letti tutti gli otto frammenti materializzati e l'intero mutatore.
+Tutti sostituiscono un unico frammento nel solo nuovo kernel:
+
+| Mutante | Difetto materiale |
+|---|---|
+| generic-scan | MINIMAL passa da T a NIL |
+| drain-on-physical-end | solo il WHEN del loop usa END fisico, anchor unico |
+| next-equals-end | cursore scratch e argomento risultato diventano END |
+| node-budget-ignored | limite operativo nodi diventa massimo |
+| depth-budget-ignored | limite operativo depth diventa massimo |
+| byte-budget-ignored | preflight usa massimo, conservando riferimento a MAX-BYTES |
+| start-skipped | BEGIN diventa zero, START resta verificato dal preflight |
+| extra-return-value | ritorno aggiunge NIL e FTYPE locale dichiara il quarto NULL |
+
+I target sono univoci nel sorgente congelato; tutti conservano tipi
+plausibili per la compilazione. NEXT=END aggiorna anche il cursore
+per evitare un fallimento interno estraneo al difetto scelto; l'arità
+aggiorna insieme FTYPE e ritorno per evitare una falsa rilevazione di
+compilazione. La compilabilità senza warning resta da osservare,
+non è provata dalla sintassi. Le preparazioni precedenti del drain e
+di NEXT sono conservate con diff; whitelist prima/dopo identica.
+
+La baseline completa e ciascun mutante hanno directory nuove e cache
+FASL private (`mutation:516–559`). La build copia ASDF, src, tests e
+tools/build, forza la compilazione e rende fatali warning/style-warning.
+Baseline valida solo con exit0, segnale NIL, smoke prima di completamento,
+nessun Unhandled o warning (`364–376`). Otto risultati sono richiesti;
+sopravvivenza, guasto worker o invalidità impediscono status OK.
+
+Un rilevamento richiede exit1, segnale NIL, nessuna compilazione fallita
+o warning, riga smoke esatta prima di Unhandled e frame nominale esatto
+tra i 17 congelati, con zero argomenti (`279–394`). Nomi citati,
+helper, prefissi parziali, frame wrapper, citazioni multilinea, errori
+prima dello smoke e guasti dopo completamento non contano. Il self-test
+prevede 47 casi mutante e7 baseline, dispatcher2 positivi/6 negativi,
+lettore report2 positivi/5 negativi e fixture reali separate per SIGKILL
+ed exit7; exit/segnali/log/report sono salvati prima delle asserzioni.
+Setup e trasporto falliti restano worker-error con contatore distinto.
+
+Le attese child non hanno un timeout interno nel mutatore; la campagna
+va supervisionata esternamente. Le copie sono seriali; questa verifica
+non dichiara scaling o simultaneità sui core. Il metodo non qualifica
+il motore durevole, MC/DC o la totalità dei difetti possibili.
+
+## Conservazione e limiti di questa lettura
+
+Letti il lettore sintattico dell'autore e il suo nuovo output finale
+`read-drivers-syntax-3.output.txt`, blob
+`7dbf132acc1accdbbccfb803ddae3262f2d2c65f`, stderr0 byte
+`e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`. Riporta DATA/EOF con
+package stub: bench33 forme, audit46, mutation75, catalogo1,
+whitelist1 e quattro forme per ognuna delle otto immagini. Il revisore
+non lo ha rieseguito e non converte tale dato in una prova di build.
+
+La cronologia distingue materializzazioni fallite/preparatorie, i draft
+mai eseguiti e i canonici; non attribuisce successi a versioni precedenti.
+La precedente collection note, la nota freeze helper e le due letture
+C1 restano immutabili. Nessun file driver, fonte, indice o HEAD è stato
+modificato da questa lettura; l'unica scrittura è questa nuova nota ignored.

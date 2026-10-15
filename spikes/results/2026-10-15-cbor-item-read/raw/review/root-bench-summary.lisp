@@ -1,0 +1,16 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((path "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074008-command-2418-0/report.lisp")
+       (wrapper (arcdocdb.evidence:read-evidence path))
+       (data (with-input-from-string (stream (getf wrapper :stdout))
+               (arcdocdb.evidence::%read-plist-stream stream path))))
+  (let ((samples (loop for campaign in (getf data :campaigns)
+                      append (getf campaign :samples))))
+    (assert (= 30 (length samples)))
+    (assert (every (lambda (sample) (eql 0 (getf sample :heap-bytes :absent))) samples))
+    (format t "~S~%" (list :status (getf wrapper :status)
+                           :wall (getf wrapper :wall-seconds)
+                           :stable (getf wrapper :source-consistency)
+                           :samples (length samples) :all-heap-zero t
+                           :positive (getf (getf data :self-test) :positive-control)))))
+

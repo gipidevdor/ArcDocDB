@@ -1,0 +1,152 @@
+# Lettura C4 del check completo del primo item CBOR
+
+Lettura DATA del 2026-10-15 da parte dell'autore dei driver C4, distinto
+dall'autore del prodotto e del comando integrato. Riguarda il make check
+concluso, non la campagna del proprio mutatore. Caricato esclusivamente
+`tools/evidence-storage.lisp`: nessun prodotto, corpus, benchmark o mutatore
+caricato, compilato, chiamato o rieseguito. Nessuna modifica a fonti,
+indice Git o HEAD. Driver finali immutati.
+
+## Record principale e byte
+
+Input `spikes/out/4001073778-command-87117-0/report.lisp`, descriptor317byte,
+SHA256 `0db4abd2b76657a06d7c843f38c17465741459d4132b0afd98dd93545012b0ec`.
+Payload gzip172081byte,
+SHA `82cda615ef92ad8a1cc5bd1b71d68184fa6ace31572f64dcacb0f248b972dc75`;
+raw espanso1526243byte,
+SHA `0c813dc703c063f82fccbd5d3e95ac501a0441bcea35b4fc1292f405ec10560b`.
+Il trusted reader verifica byte/hash compressi ed espansi, singola plist,
+READ-EVAL NIL, readtable standard ed EOF. Il raw espanso non è dichiarato
+come ulteriore file fisico separato. Nessuna autenticità o atomicità dedotta.
+
+Schema1/COMMAND-VERIFICATION, OK/exit0/STABLE; comando `make check-core`,
+wall469.058080s. HEAD `46aee8b920d447aafae4a4e47a44d13631c47cb1`,
+working-tree vuoto.931 nomi sorgente unici, inventari prima/dopo uguali.
+I quattro pin attesi coincidono con gli inventari del processo:
+
+| File | Git blob |
+| --- | --- |
+| src/codec/cbor-item-read.lisp |b9099dc8a8c96281063811e686deb4dcb2b1d39b|
+| tests/codec/cbor-item-read-support.lisp |0326100362a1c4b24d2c7e511e45357f09a56d33|
+| tests/codec/cbor-item-read.lisp |b2cbdcb4255c51d9da4fe73b28939c1cb923fefe|
+| tests/codec/cbor-item-read-threads.lisp |a0da65545ed80ede0a967cadbb337731f6fe1ce9|
+
+1551 righe OK uniche:1545 nominali,2 smoke,4 self-test del linter.
+I17 nomi item coincidono esattamente con la whitelist fredda del corpus,
+compresa la nominale dei worker riusati. Smoke versione/package;
+linter bad/good/keyword-barrier/qualified-reader. Lint225file/0violazioni;
+trace122requisiti/65invarianti/13FI/52ADR/0errori;
+links511file/3076controlli/0rotti.
+
+Stdout293909 e stderr1037249caratteri. Stderr contiene2845 righe con
+`note:` di ottimizzazione e non è vuoto. Nessun WARNING, STYLE-WARNING,
+COMPILE-FILE-ERROR o Unhandled nella fase compilazione/build prima del
+marker esatto di completamento, né nello stderr principale. Dopo tale
+marker stdout conserva intenzionalmente le diagnostiche dei negativi.
+
+## Fuzz e letture parallele
+
+Il raw riporta seme49544538,1024casi,512successi e64 rifiuti per ciascuna
+delle otto classi byte/nodi/depth/nonminimal/range/workspace/byte-limit/
+truncated. LCG32 ricomputato freddo: finale6CB25938 e distribuzione
+`#(512 64 64 64 64 64 64 64 64)`. Il finale è asserito dal test passato;
+non viene presentato come campo stampato dal raw.
+
+Due worker riusati per due ondate da4096letture,8192complessive:
+
+| Onda | Worker | START | FIRST | END | Sink |
+| --- | --- | ---: | ---: | ---: | ---: |
+|0|0|57214005|57214014|57217367|74129408|
+|0|1|57214028|57214033|57217527|74129408|
+|1|0|57217373|57217375|57220210|74129408|
+|1|1|57217529|57217531|57221075|74129408|
+
+Verificati ordine START<=FIRST<=END, durata positiva, sink, due ondate,
+MAX(FIRST)<=MIN(END) e formula MIN(END)-MAX(START). Overlap3339/2681tick
+a1000000tick/s, cioè0.003339/0.002681s. WALL include rendezvous e controlli;
+nessuna inferenza su decoder puro, simultaneità sui core o scaling.
+
+Il piano9901chiamate resta aritmetico:685non-fuzz+1024fuzz+8192parallele,
+9255successi/646rifiuti. Nessun contatore API strumentato. I controlli
+scanner secondari520prefissi+390trailing+2concatenati restano distinti.
+
+## Conservazione, negativi attesi e self-test
+
+Evidence riporta OK,114cataloghi,3393riferimenti e40699file conservati.
+Sono i conteggi del record, non un nuovo sweep degli archivi del reviewer.
+Limiti: STRUCTURE-PRESENCE-SIZE-AND-COMPRESSED-INTEGRITY e
+NO-RESULT-REINTERPRETATION.
+
+EVIDENCE-PUBLICATION-TESTS schema1/OK,2checks/2casi: fuori-catalogo.lisp
+1048577byte e fuori-catalogo.gz8388609byte. Entrambi STATUS OK,
+exit osservato1, stdout vuoto, Unhandled SIMPLE-ERROR conservato nello
+stderr del child. Sono rifiuti intenzionali serializzati come DATA nello
+stdout del processo integrato; non errori della compilazione.
+
+Report fisici riferiti dallo stdout:
+
+- `spikes/out/4001073853-snapshot-self-test-90652-0/report.lisp`;
+- `spikes/out/4001073853-reader-self-test-90682-0/report.lisp`.
+
+Metadata embedded SNAPSHOT-MUTATIONS/READER-MUTATIONS schema1/OK,
+worker-errors0,21/34fonti prima=dopo/STABLE, target unici10/8 e SELF-TEST OK.
+BASELINE/MUTANTS NIL: non sono campagne di mutazioni eseguite.
+I due report diretti sono PASSED con2worker-errors attesi ciascuno.
+
+Tutti e4 raw stdout dei child sono singola forma/EOF, EQUALP ai dati
+EXECUTION.REPORT; raw stderr vuoti. SIGNAL: exit137/signal9,
+FAILED/TESTS/RUNTIME, failed-test fixture. COMPLETION-EXIT: exit7/signalNIL,
+OK/COMPLETE e passed-tests fixture. Entrambi classificati WORKER-ERROR,
+mai DETECTED; segnale ed exit sono conservati senza normalizzazione.
+
+## Dieci spike
+
+Aggregato `spikes/out/4001074204-check-12420-0/report.lisp`, schema1,
+COMPLETE, mode --check,10RUNS/10RUN-ARTIFACTS. Ogni artefatto fisico è
+EQUALP alla corrispondente voce RUNS; stdout raw singola forma/EOF EQUALP
+a RESULT, inclusi gli array confrontati per contenuto. Tutti exit0,
+stderr vuoto, sorgenti prima=dopo/STABLE e intervalli dentro il padre.
+
+| Spike | Stato | Fonti | WALL secondi |
+| --- | --- | ---: | ---: |
+|SPK-01|OK|5|1.391976|
+|SPK-02|OK|3|0.596566|
+|SPK-03|OK|3|0.589495|
+|SPK-04|OK|5|1.100605|
+|SPK-05|OK|5|0.978179|
+|SPK-06|OK|7|1.286452|
+|SPK-07|PASS|17|10.899646|
+|SPK-08|OK|6|2.953501|
+|SPK-09|OK|3|1.037723|
+|SPK-10|OK|8|3.884666|
+
+Risultati dei prototipi registrati; nessun runner o model rieseguito.
+Non attestano motore, hardware memory model, durabilità globale o release.
+
+## Lettore e preparazioni congelate
+
+Lettore finale `integrated-runtime-reading-v2.lisp`,21026byte,
+blob `5da93f229c60376fdc899e3e71e5eb503b93f1d6`,
+SHA256 `5f59f18703c6a0a96423c619e7edc017e2ad0106f0499f2880936eb15020eec1`.
+Output omonimo7598byte, blob `b888427c9eda6e18db7b5bd27e3cf10dd7525cea`,
+SHA `98cb391699d0412d7307587a11d91acd4de675977b87402f3b37e128ab232396`.
+Exit0; error omonimo0byte.
+
+Descriptor/payload/lettore stabili fra osservazione iniziale e finale.
+23file metadata/raw/descriptor direttamente riferiti conservano le
+impronte locali fra acquisizione e controllo finale; alcune acquisizioni
+seguono la prima deserializzazione. Non si deduce atomicità o sweep SHA
+dei sorgenti e degli archivi. `integrated-runtime-inventory.*` conserva
+byte/hash e riferimenti effettivi; il suo stderr è vuoto.
+
+La prima preparazione `integrated-runtime-reading.lisp`,blob2a546275,
+si è fermata dopo tutti i controlli precedenti agli spike: lo stdout
+indica una directory aggregata, ma il primo adattatore la trattava come
+file. La variante2 aggiunge `report.lisp` ai soli riferimenti directory
+e aggiorna il proprio percorso. Originale, stdout5660byte, stderr26252byte,
+adattatore e lettura sintattica preliminare16forme/EOF restano presenti.
+Il difetto era nel reviewer; nessun originale o input è stato corretto.
+
+Nota, reader, output/error, inventario e preparazioni congelati.
+Questa lettura non rivede i dati del proprio benchmark o mutatore.
+Qualifica C1/MC/DC e REQ-LIM-001/002 restano aperti.

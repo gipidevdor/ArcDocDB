@@ -145,8 +145,9 @@ preparatorio FAILED/exit 1; tutti hanno fonti STABLE. I 411 file
 indicizzati sommano 8444662 byte; i file complessivi sono 413 includendo
 indice e catalogo.
 L'indice misura 147480 byte; i limiti restano 1 MiB plain e 8 MiB gzip.
-La chiusura indipendente passa dopo ogni append. La raccolta parallela
-iniziale e le append successive conservano scope distinti.
+L'audit delle impronte e dei metadata passa prima e dopo ogni append.
+Il validator indipendente dell'inventario chiuso riguarda la raccolta
+iniziale di 397 file; il suo esito non si estende alle append.
 
 L'archivio pubblicato conserva i log, ASDF, runner, prodotto e corpus
 dei tag per tutte le nove copie e il report con le impronte complete.
@@ -164,6 +165,5 @@ corretta in una variante preservata: il diagnostico originale è
 riportato nella nota, senza attribuirgli un log locale non disponibile.
 Le altre varianti preparatorie sono inventariate nelle letture.
 
-La chiusura riguarda l'inventario effettivamente indicizzato.
-C1 e MC/DC restano aperti.
+Le verifiche conservano questi scope distinti. C1 e MC/DC restano aperti.
 

@@ -1,0 +1,15 @@
+diff --git a/spikes/out/cbor-item-read-20261015/drivers/audit-before-bench-pin-update-1cabd9a0.lisp b/spikes/out/cbor-item-read-20261015/drivers/audit.lisp
+index 1cabd9a0..6cf528ab 100644
+--- a/spikes/out/cbor-item-read-20261015/drivers/audit-before-bench-pin-update-1cabd9a0.lisp
++++ b/spikes/out/cbor-item-read-20261015/drivers/audit.lisp
+@@ -10,8 +10,8 @@
+ (in-package #:arcdocdb.cir.audit)
+ (declaim (optimize (safety 3) (debug 2)))
+ 
+-(defconstant +driver-blob+ "702c8172ae1ebad30c683fe5eb5ad66f88e434ea")
+-(defconstant +driver-md5+ "559682b05cfde7088d738eda0ad7e7a8")
++(defconstant +driver-blob+ "118c779ca567411675e5dfbb0866b5b17e77c7f0")
++(defconstant +driver-md5+ "075fd8060d77c8665164a2d20c12b417")
+ (defconstant +method-blob+ "a67a79bf4fefe11c4778cd881eb5279a006966ca")
+ ;;; Il pin del solo nuovo kernel viene fornito dalla CLI, non dedotto dal report.
+ (defparameter *item-blob* nil)

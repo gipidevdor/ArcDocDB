@@ -1,0 +1,100 @@
+diff --git a/spikes/out/cbor-item-read-20261015/drivers/mutation-before-next-drain-adjustment-50a1932f.lisp b/spikes/out/cbor-item-read-20261015/drivers/mutation.lisp
+index 50a1932f..87d1d3dc 100644
+--- a/spikes/out/cbor-item-read-20261015/drivers/mutation-before-next-drain-adjustment-50a1932f.lisp
++++ b/spikes/out/cbor-item-read-20261015/drivers/mutation.lisp
+@@ -19,7 +19,7 @@
+                                          ("tests/codec/cbor-item-read.lisp"
+                                           "b2cbdcb4255c51d9da4fe73b28939c1cb923fefe")
+                                          ("tests/codec/cbor-item-read-threads.lisp"
+-                                          "a0da65545ed80ede0a967cadbb337731f6fe1ce9")))(defparameter *catalogue-data-blob* '"a1cc13f416bb80f360457cc0ca7eb6a773c29088")(defparameter *catalogue-raw-fingerprints* '(("src/codec/cbor-item-read.lisp"
++                                          "a0da65545ed80ede0a967cadbb337731f6fe1ce9")))(defparameter *catalogue-data-blob* '"e5461badb6b4235557e1cec12f48540ce7f6ef84")(defparameter *catalogue-raw-fingerprints* '(("src/codec/cbor-item-read.lisp"
+                                               #A((32) BASE-CHAR
+                                                  . "39603f3dc085bcae02483b1bf9028873"))
+                                              ("tests/codec/cbor-item-read-support.lisp"
+@@ -42,82 +42,16 @@
+                                                  . "5c8ec64487f8c95e4f1d8cc09fb170d0"))
+                                              ("spikes/out/cbor-item-read-20261015/drivers/catalogue-materialized.lisp"
+                                               #A((32) BASE-CHAR
+-                                                 . "26956c2298f7597a15de3db7c7f4c92e"))))(defparameter *mutants* '(("src/codec/cbor-item-read.lisp" "generic-scan"
++                                                 . "eae98ce2f2239254630848f5b8a9e2e9"))))(defparameter *mutants* '(("src/codec/cbor-item-read.lisp" "generic-scan"
+                            "(passo-struttura-cbor bytes scratch limit node-limit depth-limit t)"
+                            "(passo-struttura-cbor bytes scratch limit node-limit depth-limit nil)")
+                           ("src/codec/cbor-item-read.lisp"
+                            "drain-on-physical-end"
+-                           "(defun leggi-item-cbor-minimo (buffer start end space
+-                              &key (max-bytes +cbor-scan-max-bytes+)
+-                                (max-nodes +cbor-scan-max-bytes+) (max-depth +cbor-scan-max-depth+))
+-  \"Pre: simple u8 stabile, finestra e budget verificati; scratch privato.
+-Post: esattamente NODES, PEAK array/map, NEXT assoluto del primo item minimo;
+-START<NEXT<=END, coda non letta, statistiche del solo item. MAX-BYTES limita
+-l'intera finestra, coda inclusa. Preflight senza mutare scratch; reset prima
+-del parsing, riuso dopo errore. Propaga INVALID-ARGUMENT, RESOURCE-EXHAUSTED,
+-CORRUPTION-DETECTED (offset assoluti) e INVARIANT-VIOLATION.
+-Al piu SPAN passi e drain102; nessun AST, semantica tag, attesa o I/O.\"
+-  (let ((span (check-input-struttura-cbor buffer start end space max-bytes max-nodes max-depth)))
+-    (declare (type index span))
+-    (unless (<= span +cbor-scan-max-bytes+)
+-      (error 'invariant-violation :reason :cbor-item-loop-span))
+-    (let ((bytes (the octets buffer)) (begin (the index start)) (limit (the index end))
+-          (scratch (the spazio-cbor space))
+-          (node-limit (the (integer 1 16777216) max-nodes))
+-          (depth-limit (the (integer 0 100) max-depth)))
+-      (azzera-spazio-cbor scratch begin)
+-      (loop repeat span
+-            do (when (svuota-frame-cbor scratch (spazio-cbor-cursor scratch)) (return))
+-               (passo-struttura-cbor bytes scratch limit node-limit depth-limit t))
+-      (unless (svuota-frame-cbor scratch (spazio-cbor-cursor scratch))
+-        (unless (= (spazio-cbor-cursor scratch) limit)
+-          (error 'invariant-violation :reason :cbor-item-loop-bound))
+-        (leggi-header-cbor bytes limit limit)
+-        (error 'invariant-violation :reason :cbor-item-empty-header))
+-      (let ((next (spazio-cbor-cursor scratch)))
+-        (declare (type index next))
+-        (unless (< begin next)
+-          (error 'invariant-violation :reason :cbor-item-read-progress))
+-        (unless (<= next limit)
+-          (error 'invariant-violation :reason :cbor-item-read-range))
+-        (risultato-struttura-cbor scratch next node-limit depth-limit)))))"
+-                           "(defun leggi-item-cbor-minimo (buffer start end space
+-                              &key (max-bytes +cbor-scan-max-bytes+)
+-                                (max-nodes +cbor-scan-max-bytes+) (max-depth +cbor-scan-max-depth+))
+-  \"Pre: simple u8 stabile, finestra e budget verificati; scratch privato.
+-Post: esattamente NODES, PEAK array/map, NEXT assoluto del primo item minimo;
+-START<NEXT<=END, coda non letta, statistiche del solo item. MAX-BYTES limita
+-l'intera finestra, coda inclusa. Preflight senza mutare scratch; reset prima
+-del parsing, riuso dopo errore. Propaga INVALID-ARGUMENT, RESOURCE-EXHAUSTED,
+-CORRUPTION-DETECTED (offset assoluti) e INVARIANT-VIOLATION.
+-Al piu SPAN passi e drain102; nessun AST, semantica tag, attesa o I/O.\"
+-  (let ((span (check-input-struttura-cbor buffer start end space max-bytes max-nodes max-depth)))
+-    (declare (type index span))
+-    (unless (<= span +cbor-scan-max-bytes+)
+-      (error 'invariant-violation :reason :cbor-item-loop-span))
+-    (let ((bytes (the octets buffer)) (begin (the index start)) (limit (the index end))
+-          (scratch (the spazio-cbor space))
+-          (node-limit (the (integer 1 16777216) max-nodes))
+-          (depth-limit (the (integer 0 100) max-depth)))
+-      (azzera-spazio-cbor scratch begin)
+-      (loop repeat span
+-            do (when (svuota-frame-cbor scratch limit) (return))
+-               (passo-struttura-cbor bytes scratch limit node-limit depth-limit t))
+-      (unless (svuota-frame-cbor scratch limit)
+-        (unless (= (spazio-cbor-cursor scratch) limit)
+-          (error 'invariant-violation :reason :cbor-item-loop-bound))
+-        (leggi-header-cbor bytes limit limit)
+-        (error 'invariant-violation :reason :cbor-item-empty-header))
+-      (let ((next (spazio-cbor-cursor scratch)))
+-        (declare (type index next))
+-        (unless (< begin next)
+-          (error 'invariant-violation :reason :cbor-item-read-progress))
+-        (unless (<= next limit)
+-          (error 'invariant-violation :reason :cbor-item-read-range))
+-        (risultato-struttura-cbor scratch next node-limit depth-limit)))))")
++                           "(when (svuota-frame-cbor scratch (spazio-cbor-cursor scratch)) (return))"
++                           "(when (svuota-frame-cbor scratch limit) (return))")
+                           ("src/codec/cbor-item-read.lisp" "next-equals-end"
+                            "(risultato-struttura-cbor scratch next node-limit depth-limit)"
+-                           "(multiple-value-bind (nodes peak position) (risultato-struttura-cbor scratch next node-limit depth-limit) (declare (ignore position)) (values nodes peak limit))")
++                           "(progn (setf (spazio-cbor-cursor scratch) limit) (risultato-struttura-cbor scratch limit node-limit depth-limit))")
+                           ("src/codec/cbor-item-read.lisp"
+                            "node-budget-ignored"
+                            "(node-limit (the (integer 1 16777216) max-nodes))"

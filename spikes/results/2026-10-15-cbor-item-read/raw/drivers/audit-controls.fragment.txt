@@ -1,0 +1,59 @@
+(defun audit-self-controls (controls timer)
+  "Baseline zero, positivo 16MiB e marker dei checker indipendenti con valori esatti."
+  (checked-plist controls '(:status :baseline :positive-control :output-checker :arity-checker
+                           :sensor-checker :workspace-checker))
+  (require-check (eq :ok (getf controls :status)) :self-control-status)
+  (let ((baseline (getf controls :baseline)) (positive (getf controls :positive-control)))
+    (checked-plist baseline '(:heap-bytes))
+    (require-check (eql 0 (getf baseline :heap-bytes)) :baseline-heap)
+    (dolist (spec '((:output-checker :checker-self-test
+                    (:status :ok :expected-token 201232 :altered-three-results-rejected 3
+                     :altered-buffer-shape-rejected 1 :altered-prefix-item-tail-physical-tail-rejected 4
+                     :reason-specific-rejection t))
+                   (:arity-checker :arity-self-test
+                    (:status :ok :exact-three-accepted t :wrong-arity-rejected 5
+                     :wrong-results-rejected 3 :fixed-arity-hot-consumer-rejected 2))
+                   (:sensor-checker :sensor-self-test
+                    (:status :ok :wrong-sink-rejected t :nonzero-heap-rejected t
+                     :missing-or-invalid-heap-rejected 4 :reason-specific-rejection t))
+                   (:workspace-checker :workspace-self-test
+                    (:status :ok :altered-scalar-fields-rejected 6 :reason-specific-rejection t))))
+      (let ((observed (getf controls (first spec))) (expected (third spec)))
+        (checked-plist observed (loop for key in expected by #'cddr collect key))
+        (loop for (key value) on expected by #'cddr
+              do (require-check (equal value (getf observed key)) (second spec) key))))
+    (+ (audit-sample baseline 1024 64 0 timer :zero)
+       (audit-sample positive 16 0 1048576 timer :positive))))
+
+(defun audit-cell (cell spec timer)
+  "Sei fixture letterali, tre valori, buffer intero e scalari terminali, cinque repliche."
+  (checked-plist cell '(:name :item-literal :tail-literal :expected-nodes :expected-peak
+                       :expected-next :expected-token :expected-full-buffer :observed-full-buffer
+                       :start :end :cold-values :cold-value-count :cold-workspace
+                       :preallocated-readonly-source :private-preallocated-workspace
+                       :complete-source-checked-per-call :exact-three-values-checked-per-call
+                       :complete-scalar-workspace-checked-per-call :samples))
+  (let* ((ref (reference-cell spec)) (nodes (getf ref :nodes)) (peak (getf ref :peak))
+         (next (getf ref :next)) (token (getf ref :token)) (samples (getf cell :samples)))
+    (dolist (mapping '((:name :name) (:item-literal :item) (:tail-literal :tail)
+                       (:expected-nodes :nodes) (:expected-peak :peak)))
+      (require-check (equal (getf cell (first mapping)) (getf ref (second mapping)))
+                     :fixture-definition (list (getf ref :name) (first mapping))))
+    (require-check (equal (getf ref :full) (getf cell :expected-full-buffer)) :fixture-buffer)
+    (require-check (equal (getf ref :full) (getf cell :observed-full-buffer)) :fixture-observed-buffer)
+    (require-check (eql next (getf cell :expected-next)) :fixture-next)
+    (require-check (eql token (getf cell :expected-token)) :fixture-token)
+    (require-check (and (eql 3 (proper-length (getf cell :cold-values)))
+                        (eql 3 (getf cell :cold-value-count))
+                        (equal (list nodes peak next) (getf cell :cold-values))) :fixture-arity)
+    (checked-plist (getf cell :cold-workspace) '(:cursor :top :nodes :depth :peak-depth :pending-tag))
+    (loop for (key value) on (getf ref :workspace) by #'cddr
+          do (require-check (equal value (getf (getf cell :cold-workspace) key)) :fixture-workspace key))
+    (require-check (and (eql 2 (getf cell :start)) (eql (getf ref :end) (getf cell :end))) :fixture-span)
+    (dolist (key '(:preallocated-readonly-source :private-preallocated-workspace
+                   :complete-source-checked-per-call :exact-three-values-checked-per-call
+                   :complete-scalar-workspace-checked-per-call))
+      (require-check (eq t (getf cell key)) :fixture-observation key))
+    (require-check (eql 5 (proper-length samples)) :fixture-sample-count)
+    (loop for sample in samples sum (audit-sample sample 1024 64 token timer :zero))))
+

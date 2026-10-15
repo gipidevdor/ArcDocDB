@@ -1,0 +1,22 @@
+diff --git a/spikes/out/cbor-item-read-20261015/drivers/catalogue-before-audit-selftest-fix-e5461bad.lisp b/spikes/out/cbor-item-read-20261015/drivers/catalogue-materialized.lisp
+index e5461bad..72fd3329 100644
+--- a/spikes/out/cbor-item-read-20261015/drivers/catalogue-before-audit-selftest-fix-e5461bad.lisp
++++ b/spikes/out/cbor-item-read-20261015/drivers/catalogue-materialized.lisp
+@@ -20,7 +20,7 @@
+    "a0da65545ed80ede0a967cadbb337731f6fe1ce9"))
+  :OTHER-DRIVER-BLOBS
+  (("bench.lisp" "118c779ca567411675e5dfbb0866b5b17e77c7f0")
+-  ("audit.lisp" "6cf528ab25ee0af5d785d501b6072970449a7fa4"))
++  ("audit.lisp" "b6fcd88b73f31c5a9109dc83c8f311cf5b47082e"))
+  :RAW-MD5-PINS
+  (("src/codec/cbor-item-read.lisp"
+    #A((32) BASE-CHAR . "39603f3dc085bcae02483b1bf9028873"))
+@@ -35,7 +35,7 @@
+   ("spikes/out/cbor-item-read-20261015/drivers/bench.lisp"
+    #A((32) BASE-CHAR . "075fd8060d77c8665164a2d20c12b417"))
+   ("spikes/out/cbor-item-read-20261015/drivers/audit.lisp"
+-   #A((32) BASE-CHAR . "5c8ec64487f8c95e4f1d8cc09fb170d0")))
++   #A((32) BASE-CHAR . "213a90a9fb13d527f4370bb342ea7e37")))
+  :SERIAL-NOMINAL-TESTS 16 :PARALLEL-NOMINAL-TESTS 1 :FROZEN-NOMINAL-TEST-COUNT
+  17 :NOMINAL-LINE-SELECTOR
+  ("rg" "--no-filename" "^\\(deftest test-REQ-CBR-008-"

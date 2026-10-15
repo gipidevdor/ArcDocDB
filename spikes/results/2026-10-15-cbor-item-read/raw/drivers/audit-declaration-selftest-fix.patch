@@ -1,0 +1,13 @@
+diff --git a/spikes/out/cbor-item-read-20261015/drivers/audit-before-declaration-selftest-fix-6cf528ab.lisp b/spikes/out/cbor-item-read-20261015/drivers/audit.lisp
+index 6cf528ab..b6fcd88b 100644
+--- a/spikes/out/cbor-item-read-20261015/drivers/audit-before-declaration-selftest-fix-6cf528ab.lisp
++++ b/spikes/out/cbor-item-read-20261015/drivers/audit.lisp
+@@ -527,7 +527,7 @@ Non attraversa vettori generali: non verifica grafi Lisp arbitrari dentro tali v
+       (bad-report :timer :metadata-timer (lambda (r) (setf (getf r :timer-units-per-second) 0)))
+       (bad-report :workers :metadata-workers (lambda (r) (setf (getf r :workers) 2)))
+       (bad-report :metadata :metadata-environment (lambda (r) (setf (getf r :sbcl) "other")))
+-      (bad-report :whole-window-declaration :metadata-limits (lambda (r) (remf r :limits) (setf (getf r :limits) nil)))
++      (bad-report :whole-window-declaration :metadata-limits (lambda (r) (setf (getf r :limits) nil)))
+       (bad-wrapper :exit :wrapper-exit (lambda (r) (setf (getf r :exit-code) 1)))
+       (bad-wrapper :source-stability :wrapper-source-stability (lambda (r) (setf (getf r :source-consistency) :changed)))
+       (bad-wrapper :item-hash :wrapper-item-blob

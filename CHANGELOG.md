@@ -7,6 +7,17 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Lettura del primo item CBOR minimo con frontiera assoluta: coda non
+  letta, budget della finestra autorizzata e scratch privato per worker.
+  Consente di ricavare le frontiere degli item concatenati; qualifica C1
+  e profilo documentale restano aperti.
+
+- Builder del checkpoint dal recovery ACTIVE: deriva lo stato completo
+  dal CONTROL autorevole, conserva CLOSED/REMOVED/esiti, chiude il vecchio
+  ACTIVE a P e collega il nuovo ID verificato. Budget prima degli array e
+  verifica della transizione in memoria; preparatore e publisher canonici
+  invariati, qualifica C1 dedicata aperta.
+
 - Prove dedicate del recovery ACTIVE: lettura readonly, risoluzione dei
   prepared, chiusura deterministica e pubblicazione su file reali v1/v2.
   Oracoli indipendenti, fault injection, copertura e misure separate

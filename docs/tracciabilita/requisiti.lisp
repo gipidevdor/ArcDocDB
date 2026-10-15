@@ -318,7 +318,7 @@
   :inv ("INV-A2" "INV-S7") :adr ("ADR-0039" "ADR-0047") :ver (:test :corr :fuzz :diff) :fi ())
 
  ;; ---- Codec documentale --------------------------------------------------
- (:id "REQ-CBR-008" :src "ADR-0014" :cls "C1" :stato :progettato
+ (:id "REQ-CBR-008" :src "ADR-0014" :cls "C1" :stato :implementato
   :txt "La lettura del primo item CBOR strutturale minimo restituisce nodi, profondita array/map e frontiera assoluta senza interpretare la coda; verifica prima i limiti dell'intera finestra, usa scratch privato e conserva il buffer condivisibile in lettura. Gli scanner esatti restano distinti; semantica applicativa e profilo documentale restano aperti."
   :inv ("INV-A5" "INV-A8" "INV-P6") :adr ("ADR-0014" "ADR-0024" "ADR-0035" "ADR-0048")
   :ver (:test :diff :fuzz :bench :mut :rev) :fi ())

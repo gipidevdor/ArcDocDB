@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Lettura del primo item CBOR minimo con frontiera assoluta: coda non
+  letta, budget della finestra autorizzata e scratch privato per worker.
+  Consente di ricavare le frontiere degli item concatenati; qualifica C1
+  e profilo documentale restano aperti.
+
 - Rendezvous delle fixture concorrenti residue CBOR, UTF-8 e due Serie:
   checkpoint dopo il primo lavoro effettivo, mantenendo conteggi, sink e
   oracoli. Diagnostica prima delle asserzioni temporali; intervalli WALL

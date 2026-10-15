@@ -14,6 +14,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   Corpus e criteri di accettazione restano da realizzare nella fase 8;
   nessun codice full text introdotto.
 
+- Massimo CSN osservato dai reader ACTIVE/CLOSED e dal decision log, con
+  aggregazione di tutti i segmenti della stessa Serie dopo il gate canonico.
+  Distinti zero e assenza; inclusi CSN dei SEAL writer, OUTCOME ed esiti EDIT,
+  esclusi TXID e code non valide. Nessuna assegnazione CSN o ammissione del
+  traffico; qualifica funzionale, fault injection e prestazioni ancora aperte.
+
 - Documentazione full text riallineata fra scope v1, contratto/catalogo,
   interfacce query, roadmap, glossario, valutazione, costi, rischi e piano
   di verifica. ADR-0053 resta la decisione di riferimento; implementazione,

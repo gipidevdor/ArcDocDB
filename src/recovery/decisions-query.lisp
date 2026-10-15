@@ -9,6 +9,18 @@
 Violazioni dei tipi del contratto segnalano TYPE-ERROR con safety 3."
   (length (%table-entries table)))
 
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-005 REQ-AFF-008
+(declaim (ftype (function (decision-table) (values boolean u64 &optional)) massimo-csn-decisioni))
+(defun massimo-csn-decisioni (table)
+  "Pre: tabella completa posseduta dal replay canonico. Post: presenza e massimo CSN di tutte le DECISION.
+NIL/0 sul vuoto; TXID, stamp SEAL del log di controllo e coda non contribuiscono.
+Ciclo limitato alla cardinalità verificata; TYPE-ERROR per tipi invalidi, nessun contenitore allocato."
+  (let ((entries (%table-entries table)) (maximum 0))
+    (declare (type u64 maximum))
+    (loop for entry across entries
+          do (setf maximum (max maximum (%entry-csn (the decision-entry entry)))))
+    (values (plusp (length entries)) maximum)))
+
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (decision-table u64) (values boolean index &optional)) find-decision-index))
 (defun find-decision-index (table txid)

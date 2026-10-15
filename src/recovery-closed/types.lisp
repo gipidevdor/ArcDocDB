@@ -6,7 +6,8 @@
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-TXM-007 REQ-AFF-008
 (defstruct (closed-recuperato
              (:constructor %make-closed-recuperato
-                 (control input id prefix version origin batches records prepared local closure aborted))
+                 (control input id prefix version origin batches records prepared local closure aborted
+                  csn-present max-csn))
              (:copier nil))
   "Pre: header dal medesimo FD e prefisso CLOSED interamente verificati, prepared risolti localmente.
 Post: capacità readonly e scalari posseduti, nessun buffer/workspace; ID completo u64 incluso zero.
@@ -22,7 +23,9 @@ Non attesta EOF fisico, inventario, autorità del catalogo o ammissione del traf
   (prepared 0 :type index :read-only t)
   (local 0 :type index :read-only t)
   (closure 0 :type index :read-only t)
-  (aborted 0 :type index :read-only t))
+  (aborted 0 :type index :read-only t)
+  (csn-present nil :type boolean :read-only t)
+  (max-csn 0 :type u64 :read-only t))
 
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-STO-006
 (declaim (ftype (function (closed-recuperato)

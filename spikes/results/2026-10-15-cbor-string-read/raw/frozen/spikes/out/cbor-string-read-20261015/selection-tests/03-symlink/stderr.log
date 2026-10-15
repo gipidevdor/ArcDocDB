@@ -1,0 +1,50 @@
+Unhandled SIMPLE-ERROR in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
+                                    {80086B0423}>:
+  The assertion
+  (SB-POSIX:S-ISDIR
+   (SB-POSIX:STAT-MODE
+    (SB-POSIX:LSTAT (STRING-RIGHT-TRIM "/" (NAMESTRING DIRECTORY)))))
+  failed with
+  (SB-POSIX:STAT-MODE
+   (SB-POSIX:LSTAT (STRING-RIGHT-TRIM "/" (NAMESTRING DIRECTORY))))
+  = 41453.
+
+Backtrace for: #<SB-THREAD:THREAD tid=259 "main thread" RUNNING {80086B0423}>
+0: (SB-DEBUG::DEBUGGER-DISABLED-HOOK #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {8006C0A093}> #<unused argument> :QUIT T)
+1: (SB-DEBUG::RUN-HOOK *INVOKE-DEBUGGER-HOOK* #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {8006C0A093}>)
+2: (INVOKE-DEBUGGER #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {8006C0A093}>)
+3: (ERROR #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {8006C0A093}>)
+4: (SB-KERNEL:WITH-SIMPLE-CONDITION-RESTARTS ERROR NIL #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {8006C0A093}>)
+5: (SB-KERNEL:ASSERT-ERROR (SB-POSIX:S-ISDIR (SB-POSIX:STAT-MODE (SB-POSIX:LSTAT (STRING-RIGHT-TRIM "/" (NAMESTRING DIRECTORY))))) 1 (SB-POSIX:STAT-MODE (SB-POSIX:LSTAT (STRING-RIGHT-TRIM "/" (NAMESTRING DIRECTORY)))) 41453)
+6: ((LABELS WALK :IN ARCHIVE-SELECTION) #P"/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection-tests/03-symlink/source/" #P"/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection-tests/03-symlink/source/linked-directory/" "raw/03-symlink/" 1)
+7: ((LABELS WALK :IN ARCHIVE-SELECTION) #P"/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection-tests/03-symlink/source/" #P"/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection-tests/03-symlink/source/" "raw/03-symlink/" 0)
+8: (ARCHIVE-SELECTION (:RECORDS NIL :ROOTS (("03-symlink" "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection-tests/03-symlink/source/")) :FROZEN NIL :DESTINATION "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection-tests/03-symlink/manifest.lisp"))
+9: ((FLET "G" :IN SB-C::%COMPILE-IN-LEXENV))
+10: (SB-C::%COMPILE-IN-LEXENV (LET ((ARGS (UIOP/IMAGE:COMMAND-LINE-ARGUMENTS))) (ASSERT (= 1 (LENGTH ARGS))) (ARCHIVE-SELECTION (DATA-FILE (FIRST ARGS)))) #<NULL-LEXENV> NIL #<SB-C::SOURCE-INFO {8008680423}> 6 NIL T T)
+11: (SB-C:EVAL-WITH-COMPILE-IN-LEXENV (LET ((ARGS (UIOP/IMAGE:COMMAND-LINE-ARGUMENTS))) (ASSERT (= 1 (LENGTH ARGS))) (ARCHIVE-SELECTION (DATA-FILE (FIRST ARGS)))) #<NULL-LEXENV> #<SB-C::SOURCE-INFO {8008680423}> 6 NIL)
+12: (SB-IMPL::%SIMPLE-EVAL (LET ((ARGS (UIOP/IMAGE:COMMAND-LINE-ARGUMENTS))) (ASSERT (= 1 (LENGTH ARGS))) (ARCHIVE-SELECTION (DATA-FILE (FIRST ARGS)))) #<NULL-LEXENV>)
+13: (SB-INT:SIMPLE-EVAL-IN-LEXENV (LET ((ARGS (UIOP/IMAGE:COMMAND-LINE-ARGUMENTS))) (ASSERT (= 1 (LENGTH ARGS))) (ARCHIVE-SELECTION (DATA-FILE (FIRST ARGS)))) #<NULL-LEXENV>)
+14: (EVAL-TLF (LET ((ARGS (UIOP/IMAGE:COMMAND-LINE-ARGUMENTS))) (ASSERT (= 1 (LENGTH ARGS))) (ARCHIVE-SELECTION (DATA-FILE (FIRST ARGS)))) 6 NIL)
+15: ((LABELS SB-FASL::EVAL-FORM :IN SB-INT:LOAD-AS-SOURCE) (LET ((ARGS (UIOP/IMAGE:COMMAND-LINE-ARGUMENTS))) (ASSERT (= 1 (LENGTH ARGS))) (ARCHIVE-SELECTION (DATA-FILE (FIRST ARGS)))) 6)
+16: ((LAMBDA (SB-KERNEL:FORM &KEY :CURRENT-INDEX &ALLOW-OTHER-KEYS) :IN SB-INT:LOAD-AS-SOURCE) (LET ((ARGS (UIOP/IMAGE:COMMAND-LINE-ARGUMENTS))) (ASSERT (= 1 (LENGTH ARGS))) (ARCHIVE-SELECTION (DATA-FILE (FIRST ARGS)))) :CURRENT-INDEX 6)
+17: (SB-C::%DO-FORMS-FROM-INFO #<FUNCTION (LAMBDA (SB-KERNEL:FORM &KEY :CURRENT-INDEX &ALLOW-OTHER-KEYS) :IN SB-INT:LOAD-AS-SOURCE) {1072D0F1B}> #<SB-C::SOURCE-INFO {8008680423}> SB-C::INPUT-ERROR-IN-LOAD)
+18: (SB-INT:LOAD-AS-SOURCE #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp" {8008680043}> :VERBOSE NIL :PRINT NIL :CONTEXT "loading")
+19: ((LABELS SB-FASL::LOAD-STREAM-1 :IN LOAD) #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp" {8008680043}> NIL)
+20: (SB-FASL::CALL-WITH-LOAD-BINDINGS #<FUNCTION (LABELS SB-FASL::LOAD-STREAM-1 :IN LOAD) {1072D09EB}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp" {8008680043}> NIL #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp" {8008680043}>)
+21: ((LABELS SB-FASL::LOAD-STREAM :IN LOAD) #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp" {8008680043}> NIL)
+22: (LOAD #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp" {8008680043}> :VERBOSE NIL :PRINT NIL :IF-DOES-NOT-EXIST :ERROR :EXTERNAL-FORMAT :DEFAULT)
+23: ((FLET SB-IMPL::LOAD-SCRIPT :IN SB-IMPL::PROCESS-SCRIPT) #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp" {8008680043}>)
+24: ((FLET SB-UNIX::BODY :IN SB-IMPL::PROCESS-SCRIPT))
+25: ((FLET "WITHOUT-INTERRUPTS-BODY-" :IN SB-IMPL::PROCESS-SCRIPT))
+26: (SB-IMPL::PROCESS-SCRIPT "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/selection/prepare.lisp")
+27: (SB-IMPL::TOPLEVEL-INIT)
+28: ((FLET SB-UNIX::BODY :IN SB-IMPL::START-LISP))
+29: ((FLET "WITHOUT-INTERRUPTS-BODY-3" :IN SB-IMPL::START-LISP))
+30: (SB-IMPL::%START-LISP)
+
+unhandled condition in --disable-debugger mode, quitting

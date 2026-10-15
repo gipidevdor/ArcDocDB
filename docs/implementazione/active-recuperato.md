@@ -149,6 +149,13 @@ CSN o scrittura condivisa tra Serie viene introdotto.
 
 ## Decisioni da qualificare
 
+Il [metodo delle prove funzionali](active-recovery-metodo.md) registra
+la verifica integrata readonly, degli esiti e del collegamento al publisher.
+Esiti e limiti delle esecuzioni restano distinti dalla matrice C1 completa.
+La [campagna parallela di verifica](active-recuperato-verifica.md) conserva
+altri 59 test e le proprie letture, fault injection e misure. Le due suite
+usano package e registri distinti e vengono eseguite entrambe da ASDF.
+
 | ID | Decisione | Casi |
 |---|---|---|
 | ARV-D01 | chunk positivo e byte budget almeno header | ciascuna falsa, entrambe vere; size 63/64; soglie byte |
@@ -166,9 +173,13 @@ CSN o scrittura condivisa tra Serie viene introdotto.
 | ARV-D13 | checkpoint CLOSED con P/count esatti | stato, P, count falsi separatamente; esito omesso/aggiunto/modificato |
 | ARV-D14 | esito presente e CSN identico | assente, differente, zero presente; FD chiuso prima del claim |
 
-Le [prove locali](../../spikes/results/2026-10-14-active-recovery/README.md)
-riguardano compilazione e controlli statici. Qualifica C1, revisione
-indipendente, prove funzionali/FI e misure dei nuovi ingressi restano aperte.
+Le [prime prove locali](../../spikes/results/2026-10-14-active-recovery/README.md)
+riguardano compilazione e controlli statici. La successiva
+[campagna funzionale](../../spikes/results/2026-10-15-active-recovery-verification/README.md)
+aggiunge 27 test con varianti v1/v2 su FD reali: risoluzione, errori,
+query e serializer, chiusura verso il publisher e riapertura del control log.
+Il risultato locale appartiene al commit congelato dichiarato nella campagna;
+qualifica C1, matrice completa delle decisioni e misure restano aperte.
 Il [lettore del decision log legato all'Archivio](decisioni-recuperate.md)
 è ora disponibile con qualifica dedicata ancora aperta. Restano da integrare
 la riconciliazione dei CLOSED, gli

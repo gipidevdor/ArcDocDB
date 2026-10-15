@@ -35,7 +35,7 @@ Ciclo esatto COUNT, già limitato dal verificatore; nessun array aggiuntivo."
         (unless (and (or (= kind arcdocdb.record:+put+) (= kind arcdocdb.record:+tombstone+))
                      (not (logtest flags arcdocdb.record:+prepared+)))
           (error 'invariant-violation :reason :closed-recovery-csn-kind :offset pos))
-        (setf maximum (max maximum (leggi-u64 buffer (+ pos arcdocdb.record:+stamp-offset+))) pos next)))
+        (setf maximum (max maximum (leggi-u64 buffer (+ pos arcdocdb.record::+stamp-offset+))) pos next)))
     (unless (= pos prefix) (error 'invariant-violation :reason :closed-recovery-csn-consumption :offset pos))
     (values (plusp count) maximum)))
 

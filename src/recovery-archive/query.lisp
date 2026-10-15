@@ -3,6 +3,16 @@
 (in-package #:arcdocdb.recovery.archive)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-TXM-005 REQ-AFF-008
+(declaim (ftype (function (decisioni-recuperate) (values boolean u64 &optional))
+                massimo-csn-decisioni-recuperate))
+(defun massimo-csn-decisioni-recuperate (recovered)
+  "Pre: decision log completo legato all'Archivio; controller mantiene il FD aperto.
+Post: presenza e massimo CSN di ogni DECISION, anche senza prepared nelle Serie aperte.
+Propaga condizioni tipizzate; controlla lifetime, senza I/O, mutazioni o ammissione del traffico."
+  (arcdocdb.io::esigi-aperto (decisioni-recuperate-input recovered) :input)
+  (arcdocdb.recovery.decisions:massimo-csn-decisioni (decisioni-recuperate-table recovered)))
+
 ;;; REQ: REQ-REC-001 REQ-TXM-005 REQ-AFF-009
 (declaim (ftype (function (decisioni-recuperate)
                          (values index index (member :complete :tail) (member 1 2) &optional))

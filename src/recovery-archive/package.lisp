@@ -14,4 +14,5 @@
   (:export #:archivio-recovery #:crea-archivio-recovery #:decisioni-recuperate
            #:leggi-decisioni-recuperate #:frontiere-decisioni-recuperate
            #:numero-decisioni-recuperate #:trova-decisione-recuperata #:partecipante-decisione-recuperata-p
+           #:massimo-csn-decisioni-recuperate
            #:leggi-active-con-decisioni))

@@ -19,7 +19,9 @@ CORRUPTION-DETECTED per partecipante/CSN incoerente; esiti da DECISION senza OUT
           (error 'corruption-detected :reason :active-recovery-decision-conflict)))
       (cond
         (local-present (incf (workspace-active-local workspace)))
-        (decision-present (setf (gethash txid (workspace-active-derived workspace)) decision-csn))
+        (decision-present
+         (setf (gethash txid (workspace-active-derived workspace)) decision-csn)
+         (registra-csn-active workspace decision-csn))
         (t (incf (workspace-active-aborted workspace))))))
   nil)
 

@@ -1,0 +1,208 @@
+WRAPPER OK exit0 STABLE sources931 HEAD46aee8b920d447aafae4a4e47a44d13631c47cb1 wall405.513322d0; inner OK worker0 before/after-files387; baseline1545+2+17item complete.
+DETECTED (:NAME "generic-scan" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32 :UNHANDLED
+          28178 :EXACT-ORIGINS
+          ((:OFFSET 29368 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-CONCATENATED-FRONTIERS-AND-EXACT-SCANNERS-STILL-TRAILING"
+            :FRAME
+            "5: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-CONCATENATED-FRONTIERS-AND-EXACT-SCANNERS-STILL-TRAILING)")))
+DETECTED (:NAME "drain-on-physical-end" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 28041 :EXACT-ORIGINS
+          ((:OFFSET 29565 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL"
+            :FRAME
+            "8: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL)")))
+DETECTED (:NAME "next-equals-end" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32 :UNHANDLED
+          28040 :EXACT-ORIGINS
+          ((:OFFSET 29346 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL"
+            :FRAME
+            "6: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL)")))
+DETECTED (:NAME "node-budget-ignored" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 28657 :EXACT-ORIGINS
+          ((:OFFSET 29663 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-ROOT-AND-TAG-CHAIN-NODE-BUDGET-WITHOUT-TAIL-NODES"
+            :FRAME
+            "5: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-ROOT-AND-TAG-CHAIN-NODE-BUDGET-WITHOUT-TAIL-NODES)")))
+DETECTED (:NAME "depth-budget-ignored" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 28735 :EXACT-ORIGINS
+          ((:OFFSET 29703 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-DEPTH-ZERO-AND-100-101-WITHOUT-TAIL-DEPTH"
+            :FRAME
+            "5: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-DEPTH-ZERO-AND-100-101-WITHOUT-TAIL-DEPTH)")))
+DETECTED (:NAME "byte-budget-ignored" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 28503 :EXACT-ORIGINS
+          ((:OFFSET 29775 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-CONFIGURED-LIMITS-AND-ALL-PREFLIGHT-PRECEDENCES"
+            :FRAME
+            "6: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-CONFIGURED-LIMITS-AND-ALL-PREFLIGHT-PRECEDENCES)")))
+DETECTED (:NAME "start-skipped" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32 :UNHANDLED
+          28041 :EXACT-ORIGINS
+          ((:OFFSET 30206 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL"
+            :FRAME
+            "10: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL)")))
+DETECTED (:NAME "extra-return-value" :EXIT-CODE 1 :SIGNAL NIL :SMOKE 32
+          :UNHANDLED 28040 :EXACT-ORIGINS
+          ((:OFFSET 29020 :FUNCTION
+            "ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL"
+            :FRAME
+            "6: (ARCDOCDB.CBOR.ITEM.READ.TESTS::TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL)")))
+COPIES ((:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/baseline/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 0 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/baseline/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/baseline/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/0/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/0/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/0/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/1/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/1/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/1/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/2/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/2/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/2/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/3/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/3/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/3/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/4/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/4/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/4/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/5/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/5/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/5/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/6/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/6/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/6/tools/cbor-item-read-isolated-build.lisp")
+        (:COPY
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/7/"
+         :SOURCE-COUNT 382 :BYTE-COMPARED-ALL T :MODIFIED-FILES 1 :CACHE
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/7/fasl/"
+         :RUNNER
+         "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/7/tools/cbor-item-read-isolated-build.lisp"))
+FOUR-PINS (("src/codec/cbor-item-read.lisp"
+            "b9099dc8a8c96281063811e686deb4dcb2b1d39b")
+           ("tests/codec/cbor-item-read-support.lisp"
+            "0326100362a1c4b24d2c7e511e45357f09a56d33")
+           ("tests/codec/cbor-item-read.lisp"
+            "b2cbdcb4255c51d9da4fe73b28939c1cb923fefe")
+           ("tests/codec/cbor-item-read-threads.lisp"
+            "a0da65545ed80ede0a967cadbb337731f6fe1ce9"))
+PHYSICAL-OBSERVATIONS (("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074008-command-2420-0/report.lisp"
+                        293428
+                        "ad8adf0007bdbb67a251fc867871b9b1d28fe698fc40a7325ca2fe0b719f1320")
+                       ("spikes/out/cbor-item-read-20261015/mutations/report.lisp"
+                        96655
+                        "267e948edce9a999821c392377cc4ec55fc4500056be6c048e74ce81c75673a4")
+                       ("spikes/out/cbor-item-read-20261015/drivers/catalogue-materialized.lisp"
+                        10517
+                        "0dbe784fcc03e739d0577ebd5077b6ec6304ee216f60f80d412cf04f7f2c9172")
+                       ("spikes/out/cbor-item-read-20261015/drivers/mutation.lisp"
+                        55484
+                        "3fa6091bc119849c5490537a6842519bd581a0597edf46b3bd57a8fad8da5638")
+                       ("spikes/out/cbor-item-read-20261015/drivers/nominal-whitelist.lisp"
+                        2354
+                        "df753153dbbfe6beb8e35dc31425dfac7b1b5df9f2973b2dde8dad2d754af1c0")
+                       ("tools/evidence-storage.lisp" 21261
+                        "8f287772a41b1ebe0e7b3ecc3826a4148082efed428a9749655977e62a9c15a6")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/baseline/test.log"
+                        115751
+                        "24451b8015f0c3b1a4fe72b557a42b8a85996744b77757cc21537c6d94157ec7")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/0/test.log"
+                        38609
+                        "d8ea173b4e0a5e5a58903a85ab1657b46eba68757f697c2932c712d162a69a25")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/1/test.log"
+                        38794
+                        "7919d8dc7350db534e4fd2e50336c448f1c2aa9e4a5b893ed2b673b8b741f117")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/2/test.log"
+                        38573
+                        "bb529720f2e8a04510fd26403988bdee914d35fa1255b39c3e010447d943b4fb")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/3/test.log"
+                        38897
+                        "36ece48566a754109ec816691434dc0ff3239f7087068a217437eb90cfa612a6")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/4/test.log"
+                        38929
+                        "1e3e9ba46ae5a7263e0751540081915c6fa7cfc70d731a15b4c1151e2ca9b1f0")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/5/test.log"
+                        39008
+                        "9f60e377260aeb3efd9d45462c19ddfc554b6139d7478e076e777a5d66507705")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/6/test.log"
+                        39437
+                        "76e7b8bc5cc75f39b4c74399fe6013e4466bd23ee7ab851a05b136b3ec5adae9")
+                       ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/cbor-item-read-20261015/mutations/7/test.log"
+                        38247
+                        "ef2ca5060e4e783e5b3b26425fef1e876dcae82ff560322bb1b324f3e3dd7c06")
+                       ("spikes/out/cbor-item-read-20261015/mutations/0/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "bf16c035db9a0085580113a1531e27ed3f7d4fd8665e5815478417ed5710c37d")
+                       ("spikes/out/cbor-item-read-20261015/mutations/1/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "626b17c28541c1a5d37fec8979fcd73e64d48f0430eafb419251d1bb7274adb8")
+                       ("spikes/out/cbor-item-read-20261015/mutations/2/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "025e584cb1e26a759e69dcf49d00ff07db3023b36b807788e4d685e40b4e2c0d")
+                       ("spikes/out/cbor-item-read-20261015/mutations/3/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "bb6d501dc8e90f5579b9d5dc2665fe955f165b04ba482d3fe58cb6491953b8eb")
+                       ("spikes/out/cbor-item-read-20261015/mutations/4/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "81f6d5d3b747757874eb90bb4f932ade576260a95148ad993cccb9ff0f733040")
+                       ("spikes/out/cbor-item-read-20261015/mutations/5/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "aef3880b914ccc9ab1fc518e5785ca6b884fff814e91da59783b5a35456bf207")
+                       ("spikes/out/cbor-item-read-20261015/mutations/6/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "df822c0f3a71226a39886eefe858e5f5f3811481e108ffcf493b819d8bec375a")
+                       ("spikes/out/cbor-item-read-20261015/mutations/7/tools/cbor-item-read-isolated-build.lisp"
+                        470
+                        "79805872579085d16ac5b74076e287426c4813a25df7d8eb62ad111f17967530")
+                       ("spikes/out/cbor-item-read-20261015/mutations/baseline/tools/cbor-item-read-isolated-build.lisp"
+                        484
+                        "e57e7db131d177f804efd224ccbc2e687889f0dee94cb3041a294c71855e721c")
+                       ("spikes/out/cbor-item-read-20261015/mutations/0/src/codec/cbor-item-read.lisp"
+                        2714
+                        "1b4986f310c728f041071aece5ca30a248961407a92462f0b81ae484fa7498ce")
+                       ("spikes/out/cbor-item-read-20261015/mutations/1/src/codec/cbor-item-read.lisp"
+                        2689
+                        "88093381bdbf3199c2e92d3fb8f27bff7d16227cecc0e4a4f2e5536be4addde3")
+                       ("spikes/out/cbor-item-read-20261015/mutations/2/src/codec/cbor-item-read.lisp"
+                        2763
+                        "8b1affab1bd9cef4687772029f359551a6744383a3201af02db70394f8be4ce8")
+                       ("spikes/out/cbor-item-read-20261015/mutations/3/src/codec/cbor-item-read.lisp"
+                        2724
+                        "22dc0a0c7cefc02e5d4eb77a4c07b29cea8aad2ef8e69d541bd19122704d7f81")
+                       ("spikes/out/cbor-item-read-20261015/mutations/4/src/codec/cbor-item-read.lisp"
+                        2724
+                        "6a75be78a71dcafe445e3d7ba2322dd88db705af2dd9f60266049fa8d0435f71")
+                       ("spikes/out/cbor-item-read-20261015/mutations/5/src/codec/cbor-item-read.lisp"
+                        2753
+                        "50f6af52d39bc12861502ac8fc69ffe4682b0e389f1e855fafb345ab600ce498")
+                       ("spikes/out/cbor-item-read-20261015/mutations/6/src/codec/cbor-item-read.lisp"
+                        2708
+                        "21a70f7ffea8b1eedd11d13e7dff63408cade99c0a5b828634aac1505b03bf59")
+                       ("spikes/out/cbor-item-read-20261015/mutations/7/src/codec/cbor-item-read.lisp"
+                        2794
+                        "7d5c1debf76203708838a68e3ed891ed7eb43308572b529a8fbf2e617e9995cb"))
+GIT-CONTEXT 46aee8b920d447aafae4a4e47a44d13631c47cb1; entire copied inventory compared to stored Git bytes and current frozen sources.
+DATA READING PASS checks23481;8 strict detected,9 private copies, all382 copied files compared per copy, exact8patches. No SHA sweep of all copies; no product/driver run, LOAD or compile; no authenticity or exclusive-cause proof.

@@ -1,0 +1,116 @@
+(defun reference-self-test ()
+  "Costanti fredde literalizzate per tutti i risultati e token; nessuna API richiamata."
+  (let ((expected '((:scalar 1 0 3 201232) (:text 1 0 5 335499) (:array 3 1 5 335486)
+                    (:map 6 2 10 671472) (:tag-chain 4 1 7 469665) (:mixed-array 5 2 11 738173))))
+    (loop for spec in *catalog* for ref = (reference-cell spec) for cold in expected
+          do (require-check (equal cold (list (getf ref :name) (getf ref :nodes) (getf ref :peak)
+                                             (getf ref :next) (getf ref :token))) :reference-cold))
+    (list :status :ok :cold-fixtures 6 :arithmetic-token t :three-results-literal t :tail-not-scanned t)))
+
+(defun self-test ()
+  "Quattro positivi e alterazioni singole; motivi esatti e nessun prodotto caricato."
+  (let* ((*item-blob* (make-string 40 :initial-element #\2))
+         (good (synthetic-report)) (wrapper (synthetic-wrapper good)) (fixtures nil)
+         (reference (reference-self-test)))
+    (audit-wrapper wrapper)
+    (let ((earlier (copy-tree wrapper)))
+      (setf (getf (getf earlier :environment) :date-universal-time) 999) (audit-wrapper earlier))
+    (let ((overhead (copy-tree wrapper))) (setf (getf overhead :wall-seconds) 5d0) (audit-wrapper overhead))
+    (let ((zero-clock (copy-tree good)))
+      (setf (getf (first-sample zero-clock) :raw-ticks) 0
+            (getf (first-sample zero-clock) :seconds) 0d0
+            (getf (first-sample zero-clock) :calls-per-second) nil)
+      (audit-wrapper (synthetic-wrapper zero-clock)))
+    (labels ((bad-report (name reason mutator)
+               (let ((data (copy-tree good)))
+                 (funcall mutator data)
+                 (expected-rejection reason (lambda () (audit-benchmark data wrapper)))
+                 (push (list :name name :reason reason) fixtures)))
+             (bad-wrapper (name reason mutator)
+               (let ((data (copy-tree wrapper)))
+                 (funcall mutator data)
+                 (expected-rejection reason (lambda () (audit-wrapper data)))
+                 (push (list :name name :reason reason) fixtures))))
+      (dolist (key '(:expected-nodes :expected-peak))
+        (bad-report key :fixture-definition (lambda (r) (incf (getf (first-cell r) key)))))
+      (dolist (key '(:item-literal :tail-literal))
+        (bad-report key :fixture-definition (lambda (r) (incf (first (getf (first-cell r) key))))))
+      (dolist (key '(:expected-full-buffer :observed-full-buffer))
+        (dolist (index '(0 2 3 8))
+          (bad-report (list key index) (if (eq key :expected-full-buffer) :fixture-buffer :fixture-observed-buffer)
+                      (lambda (r) (incf (nth index (getf (first-cell r) key)))))))
+      (bad-report :next :fixture-next (lambda (r) (incf (getf (first-cell r) :expected-next))))
+      (bad-report :token :fixture-token (lambda (r) (incf (getf (first-cell r) :expected-token))))
+      (dolist (values '(nil (1) (1 0) (1 0 3 nil) (1 0 3 4) (2 0 3) (1 1 3) (1 0 4)))
+        (bad-report (list :arity-values values) :fixture-arity
+                    (lambda (r) (setf (getf (first-cell r) :cold-values) values))))
+      (bad-report :arity-count :fixture-arity (lambda (r) (incf (getf (first-cell r) :cold-value-count))))
+      (dolist (key '(:cursor :top :nodes :depth :peak-depth :pending-tag))
+        (bad-report key :fixture-workspace
+                    (lambda (r) (setf (getf (getf (first-cell r) :cold-workspace) key)
+                                     (if (eq key :pending-tag) t -1)))))
+      (dolist (key '(:start :end))
+        (bad-report key :fixture-span (lambda (r) (incf (getf (first-cell r) key)))))
+      (bad-report :samples :fixture-sample-count (lambda (r) (pop (getf (first-cell r) :samples))))
+      (dolist (key '(:preallocated-readonly-source :private-preallocated-workspace
+                     :complete-source-checked-per-call :exact-three-values-checked-per-call
+                     :complete-scalar-workspace-checked-per-call))
+        (bad-report key :fixture-observation (lambda (r) (setf (getf (first-cell r) key) nil))))
+      (bad-report :missing-heap :missing-field (lambda (r) (remf (first-sample r) :heap-bytes)))
+      (dolist (invalid '(nil -1 0d0 :absent))
+        (bad-report (list :invalid-heap invalid) :sample-heap-shape
+                    (lambda (r) (setf (getf (first-sample r) :heap-bytes) invalid))))
+      (dolist (spec '((:iterations :sample-iterations) (:warmup-iterations :sample-warmup)
+                      (:expected-return-token :sample-token) (:heap-bytes :sample-heap)
+                      (:sink :sample-sink) (:expected-sink :sample-sink)
+                      (:raw-ticks :sample-time) (:seconds :sample-time) (:calls-per-second :sample-rate)))
+        (bad-report (first spec) (second spec) (lambda (r) (incf (getf (first-sample r) (first spec))))))
+      (bad-report :zero-rate :sample-rate
+                  (lambda (r) (setf (getf (first-sample r) :raw-ticks) 0
+                                    (getf (first-sample r) :seconds) 0d0
+                                    (getf (first-sample r) :calls-per-second) 0d0)))
+      (bad-report :positive-sensor :positive-counter
+                  (lambda (r) (setf (getf (getf (getf r :self-test) :positive-control) :heap-bytes) 0)))
+      (bad-report :baseline :baseline-heap
+                  (lambda (r) (setf (getf (getf (getf r :self-test) :baseline) :heap-bytes) 1)))
+      (dolist (spec '((:output-checker :checker-self-test :expected-token)
+                     (:arity-checker :arity-self-test :exact-three-accepted)
+                     (:sensor-checker :sensor-self-test :wrong-sink-rejected)
+                     (:workspace-checker :workspace-self-test :altered-scalar-fields-rejected)))
+        (bad-report (first spec) (second spec)
+                    (lambda (r) (setf (getf (getf (getf r :self-test) (first spec)) (third spec)) nil))))
+      (bad-report :fingerprint-stability :fingerprint-stability (lambda (r) (setf (getf r :source-consistency) :changed)))
+      (bad-report :driver-md5 :fingerprint-driver
+                  (lambda (r) (dolist (key '(:source-fingerprints-before :source-fingerprints-after))
+                                (setf (getf (second (getf r key)) :md5) (make-string 32 :initial-element #\1)))))
+      (bad-report :fixture-freeze :fixture-catalogue-freeze
+                  (lambda (r) (setf (getf r :fixture-catalogue-blob) (make-string 40 :initial-element #\1))))
+      (bad-report :fixture-inner-md5 :fingerprint-fixture-catalogue
+                  (lambda (r) (dolist (key '(:source-fingerprints-before :source-fingerprints-after))
+                                (setf (getf (fourth (getf r key)) :md5) (make-string 32 :initial-element #\1)))))
+      (bad-report :benchmark-status :benchmark-status (lambda (r) (setf (getf r :status) :failed)))
+      (bad-report :timer :metadata-timer (lambda (r) (setf (getf r :timer-units-per-second) 0)))
+      (bad-report :workers :metadata-workers (lambda (r) (setf (getf r :workers) 2)))
+      (bad-report :metadata :metadata-environment (lambda (r) (setf (getf r :sbcl) "other")))
+      (bad-report :whole-window-declaration :metadata-limits (lambda (r) (remf r :limits) (setf (getf r :limits) nil)))
+      (bad-wrapper :exit :wrapper-exit (lambda (r) (setf (getf r :exit-code) 1)))
+      (bad-wrapper :source-stability :wrapper-source-stability (lambda (r) (setf (getf r :source-consistency) :changed)))
+      (bad-wrapper :item-hash :wrapper-item-blob
+                   (lambda (r) (dolist (key '(:source-blobs-before :source-blobs-after))
+                                 (setf (getf (second (getf r key)) :git-blob) (make-string 40 :initial-element #\1)))))
+      (bad-wrapper :method-hash :wrapper-method-blob
+                   (lambda (r) (dolist (key '(:source-blobs-before :source-blobs-after))
+                                 (setf (getf (third (getf r key)) :git-blob) (make-string 40 :initial-element #\1)))))
+      (bad-wrapper :command :wrapper-command (lambda (r) (setf (getf r :command) '("sbcl" "--self-test"))))
+      (bad-wrapper :time :wrapper-time (lambda (r) (setf (getf r :wall-seconds) -1)))
+      (bad-wrapper :duplicate-key :duplicate-key (lambda (r) (nconc r (list :status :ok))))
+      (dolist (spec '((:reader-error "#.(list :a 1)") (:reader-trailing "(:a 1) (:b 2)")
+                      (:reader-trailing "(:a 1) :eof") (:reader-empty "")
+                      (:data-improper-list "(:a . 1)") (:data-cycle "#1=(:a 1 . #1#)")
+                      (:data-cycle "(:unused #1=(:a #1#))") (:duplicate-key "(:a 1 :a 2)")))
+        (expected-rejection (first spec) (lambda () (read-one (second spec))))
+        (push (list :name :reader-fixture :reason (first spec)) fixtures)))
+    (list :synthetic-only t :positive-fixture-count 4 :negative-fixture-count (length fixtures)
+          :negative-fixtures (nreverse fixtures) :reference-self-test reference
+          :specific-reasons-required t :driver-or-product-loaded nil)))
+

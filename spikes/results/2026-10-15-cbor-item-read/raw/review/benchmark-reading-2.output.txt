@@ -1,0 +1,12 @@
+CELL :SCALAR cold(1 0 3) token201232 replicas5 heap-present-zero5 ticks(1570 485 494 547 435) sinks(206585344 206585344 206585344 206585344 206585344).
+CELL :TEXT cold(1 0 5) token335499 replicas5 heap-present-zero5 ticks(590 596 579 590 1795) sinks(344074752 344074752 344074752 344074752 344074752).
+CELL :ARRAY cold(3 1 5) token335486 replicas5 heap-present-zero5 ticks(1381 1318 878 778 944) sinks(344061440 344061440 344061440 344061440 344061440).
+CELL :MAP cold(6 2 10) token671472 replicas5 heap-present-zero5 ticks(2562 1344 4003 1445 1534) sinks(688111104 688111104 688111104 688111104 688111104).
+CELL :TAG-CHAIN cold(4 1 7) token469665 replicas5 heap-present-zero5 ticks(1116 975 966 1124 967) sinks(481460736 481460736 481460736 481460736 481460736).
+CELL :MIXED-ARRAY cold(5 2 11) token738173 replicas5 heap-present-zero5 ticks(1034 1216 1038 1413 1389) sinks(756412928 756412928 756412928 756412928 756412928).
+CONTROLS baseline0 positive16777472 bytes ticks10/41.
+SUMMARY samples30 heap-present-zero30 sample-ticks35106 sample-seconds0.035106 auditchecks71252 bench-wall3.358691d0 audit-wall2.835036d0 outer-sources931 stable.
+STDERR bench-chars0 audit-chars0.
+PHYSICAL (("spikes/out/4001074008-command-2418-0/report.lisp" 254464 "6f6e5658f9d29568dc59cb407bcbb4b4711f3d48e7f74127df29d7c26c9a8655") ("spikes/out/4001074123-command-8636-0/report.lisp" 195079 "c5a14ee6974ca54db3c2c2f0f04bdb5d7a6bf1ff138e82f09ffbd4d53152555e") ("spikes/out/cbor-item-read-20261015/drivers/fixtures-and-mutations.lisp" 2670 "fccacec1434ab7026c02434f4010230fd979b138fb65c1be34865d3daa7305f5"))
+SOURCE-PINS (("src/codec/cbor-item-read.lisp" "b9099dc8a8c96281063811e686deb4dcb2b1d39b") ("tests/codec/cbor-item-read-support.lisp" "0326100362a1c4b24d2c7e511e45357f09a56d33") ("tests/codec/cbor-item-read.lisp" "b2cbdcb4255c51d9da4fe73b28939c1cb923fefe") ("tests/codec/cbor-item-read-threads.lisp" "a0da65545ed80ede0a967cadbb337731f6fe1ce9"))
+DATA PASS checks8389; no product/driver load, compilation or measurements.

@@ -1,0 +1,65 @@
+# Lettura C4 statica del congelamento sorgenti
+
+2026-10-15. Lettura del solo helper come testo e DATA, senza LOAD,
+compilazione, copie o invocazione del prodotto. Esito: PASS locale della
+preparazione; non attesta uno snapshot già eseguito o completo.
+
+## Pin e differenze
+
+- Canonico `freeze-sources.lisp`: `34bcf10abba82188ecc2e86b0ca380358901aedf`.
+- Bozza preservata `freeze-sources-before-character-fix.lisp`:
+  `409807e1d55088c13f0130fe78a5daf1b0d1f31a`.
+- Origine TAG: `b3c429003b0978a0f23a4af18d21f08f46be7119`.
+- La precedente `review/collection-precompile-reading.md` rimane
+  `413f450dc56e5f861e3bd78631be8069f763e788`, non riscritta.
+
+Fra bozza e canonico cambia soltanto la riga43: il trim del risultato
+di `git rev-parse HEAD` usa `(list (code-char 10) (code-char 13))`.
+La bozza conserva l'escape ambiguo, corretto prima dell'esecuzione
+dell'helper; questa lettura non registra un fallimento di esecuzione
+di quella bozza. Rispetto al TAG cambiano commento, base, inventario,
+stesso trim e spazio finale; algoritmo di copia e indice invariati.
+
+## Inventario e comportamento
+
+Le righe8–22 dichiarano esattamente24 chiavi stringa distinte:
+ASDF1, sorgenti codec12, corpus3, tool1, documenti implementazione5,
+tracciabilità2. L'elenco integrale è conservato nell'output DATA.
+È lo scope futuro richiesto al freeze, non la prova della presenza,
+della stabilità o della completezza dei24 contenuti in questo momento.
+
+Il ciclo sequenziale delle righe23–38 acquisisce byte/SHA256
+dell'origine prima della copia, rifiuta target esistente, copia, poi
+confronta l'osservazione iniziale sia con la copia sia con l'origine
+successiva. I Markdown diventano `.md.txt`; l'indice annota chiave,
+snapshot relativo, byte e SHA256. L'indice viene creato con
+`:if-exists :error` soltanto dopo tutte le copie (righe39–46).
+L'helper richiede il solo strumento `tools/evidence-storage.lisp`;
+i24 sorgenti vengono copiati, mai caricati come codice.
+
+Il freeze richiede tutti gli autori fermi e tutte le fonti finali,
+incluse entrambe le note C1 e la matrice. Le verifiche per copia non
+costituiscono uno snapshot atomico dell'insieme né autenticano le
+fonti; un errore può lasciare copie parziali senza indice. Il controllo
+di assenza del target non è un lock contro altri scrittori. Le24
+iterazioni sono fisse, senza limite totale di byte o tempo di I/O
+dimostrato qui. Nessuna garanzia di concorrenza o quattro worker è
+attribuita a questo helper sequenziale.
+
+## Lettura DATA e conservazione
+
+Un processo SBCL distinto ha eseguito soltanto il lettore con
+`*read-eval* NIL`, readtable standard, base10 e EOF sentinella.
+ASDF inizializza il package UIOP; il package ARCDOCDB.EVIDENCE e i
+due simboli esportati sono predisposti senza caricare l'helper o
+`evidence-storage.lisp`. Nessuna forma letta viene valutata.
+Verificati EOF bilanciato,4 forme,24 stringhe e24 chiavi distinte;
+exit0, stderr0 byte.
+
+- `review/freeze-helper-data-reading.output.txt`:
+  `8e437a2b30be3a2392091d29d5a7ef477681b8ef`.
+- `review/freeze-helper-data-reading.error.txt`:
+  `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391`.
+
+Gli output sono nuovi, senza sostituire le letture precedenti.
+Nessun file helper, corpus o prodotto modificato da questa revisione.

@@ -1,0 +1,112 @@
+(:SCHEMA-VERSION 1 :KIND :CBOR-ITEM-ARCHIVE-SELECTION-READING :STATUS :OK
+ :HELPER-BLOB "2f2a6d84c2fe795b0f3435e85a52a43b49441ad0" :HELPER-FORMS 2
+ :HELPER-EXECUTED NIL :BUILDER-EXECUTED NIL :EXISTING-PROCESSES
+ ((:LABEL "freeze-sources" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-freeze.txt" :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073636-command-77979-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "initial-build-lint-trace-links" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-initial-build.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073649-command-78906-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "bench-self-test" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-bench-self.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073958-command-98504-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "audit-self-test" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-audit-self.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073958-command-98503-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "mutation-self-test" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-mutation-self.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073958-command-98508-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "coverage-self-test" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-coverage-self.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073779-command-87188-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "collection-self-test" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-collector-self.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073781-command-87262-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "bench" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-bench.txt" :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074008-command-2418-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "bench-data-audit" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-bench-audit.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074123-command-8636-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "coverage-item" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-coverage.txt" :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073826-command-89361-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "integrated-check" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-full-check.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001073778-command-87117-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "mutation-campaign" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-mutation.txt" :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074008-command-2420-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1")
+  (:LABEL "coverage-compression" :MARKER
+   "spikes/out/cbor-item-read-20261015/collection/record-coverage-compression.txt"
+   :REPORT
+   "/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074359-command-20179-0/report.lisp"
+   :STATUS :OK :EXIT 0 :SOURCE-COUNT 931 :HEAD
+   "46aee8b920d447aafae4a4e47a44d13631c47cb1"))
+ :FUTURE-CLI-PROCESS-COUNT 1 :PLANNED-PROCESS-COUNT 14 :TREES
+ ((:LABEL "frozen" :PATH "spikes/out/cbor-item-read-20261015/frozen/" :MODE
+   :ALL :SELECTED-FILES 25)
+  (:LABEL "drivers" :PATH "spikes/out/cbor-item-read-20261015/drivers/" :MODE
+   :ALL :SELECTED-FILES 79)
+  (:LABEL "coverage" :PATH "spikes/out/cbor-item-read-20261015/coverage/" :MODE
+   :ALL :SELECTED-FILES 4)
+  (:LABEL "coverage-self-test" :PATH
+   "spikes/out/cbor-item-read-20261015/coverage-self-test/" :MODE :ALL
+   :SELECTED-FILES 3)
+  (:LABEL "collection-self-test" :PATH
+   "spikes/out/cbor-item-read-20261015/collection/self-test/" :MODE :ALL
+   :SELECTED-FILES 57)
+  (:LABEL "integrated-spikes" :PATH "spikes/out/4001074204-check-12420-0/"
+   :MODE :LISP-AND-LOG :SELECTED-FILES 14)
+  (:LABEL "snapshot-self-test" :PATH
+   "spikes/out/4001073853-snapshot-self-test-90652-0/" :MODE :ALL
+   :SELECTED-FILES 7)
+  (:LABEL "reader-self-test" :PATH
+   "spikes/out/4001073853-reader-self-test-90682-0/" :MODE :ALL :SELECTED-FILES
+   7))
+ :EXTERNAL-SELF-COLLECTOR-SIDECARS 5 :SELECTED-MUTATION-FILES-WITH-REPORT 73
+ :FULL-MIRRORS-SELECTED NIL :OBSERVED-UNIQUE-CURRENT-SOURCE-FILES 411
+ :LARGEST-PLAIN
+ ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074008-command-2420-0/report.lisp"
+  293428)
+ :LARGEST-GZIP
+ ("/Users/gpicchiarelli/.codex/worktrees/cbor-float-write/ArcDocDB/spikes/out/4001074204-check-12420-0/report.lisp.gz"
+  466971)
+ :CURRENT-FILE-BUDGET-VIOLATIONS NIL :FUTURE-INPUTS-NOT-YET-MEASURED
+ ("final integration report and its directory" "final-integration-reading.md"
+  "archive-selection-reading.md" "results-draft.md.txt")
+ :LIMITS
+ (:STATIC-AND-DATA-ONLY :NO-MANIFEST-OR-COLLECTION-EXECUTION
+  :CURRENT-FILE-BUDGET-NOT-FINAL-INDEX-PREFLIGHT :ALL-WRITERS-FREEZE-REQUIRED))

@@ -1,0 +1,36 @@
+build e test: nessun avviso, tutti i controlli superati
+225 file, 0 violazioni
+122 requisiti, 65 invarianti, 13 scenari FI, 52 ADR: 0 errori
+511 file, 3076 link controllati, 0 rotti
+INITIAL schema1/OK/exit0/STABLE HEAD46aee8b9 clean;931 unique sources before=after;4 product/corpus pins before/after/current.
+stdout252233 chars/stderr1037099 chars,2845 optimization-note lines,0 forbidden diagnostics; wall85.774692d0 s.
+OK1547 unique = nominal1545 + smoke2; item17 exact frozen order/names.
+SMOKE ("ok    ARCDOCDB:*VERSION* è una stringa"
+       "ok    package ARCDOCDB presente")
+ok    TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL
+ok    TEST-REQ-CBR-008-ITEM-INTEGER-TAG-AND-STRING-WIDTH-BOUNDARIES
+ok    TEST-REQ-CBR-008-ITEM-CONCATENATED-FRONTIERS-AND-EXACT-SCANNERS-STILL-TRAILING
+ok    TEST-REQ-CBR-008-ITEM-AUTHORIZED-END-PHYSICAL-SENTINELS-AND-NONZERO-START
+ok    TEST-REQ-CBR-008-ITEM-BUFFER-TYPE-RANGE-AND-WHOLE-BACKING-ARRAY-PRESERVATION
+ok    TEST-REQ-CBR-008-ITEM-WORKSPACE-TYPE-ALIAS-AND-PREFLIGHT-BEFORE-RESET
+ok    TEST-REQ-CBR-008-ITEM-CONFIGURED-LIMITS-AND-ALL-PREFLIGHT-PRECEDENCES
+ok    TEST-REQ-CBR-008-ITEM-BYTE-BUDGET-INCLUDES-ENTIRE-WINDOW-AND-UNREAD-TAIL
+ok    TEST-REQ-CBR-008-ITEM-ROOT-AND-TAG-CHAIN-NODE-BUDGET-WITHOUT-TAIL-NODES
+ok    TEST-REQ-CBR-008-ITEM-DEPTH-ZERO-AND-100-101-WITHOUT-TAIL-DEPTH
+ok    TEST-REQ-CBR-008-ITEM-MALFORMED-FIRST-ITEM-ABSOLUTE-ERRORS-AND-MINIMALITY
+ok    TEST-REQ-CBR-008-ITEM-EVERY-TRUNCATION-IS-BOUNDED-BY-AUTHORIZED-END
+ok    TEST-REQ-CBR-008-ITEM-HEADER-PREFERENCE-BEFORE-NODES-DEPTH-AND-PAYLOAD
+ok    TEST-REQ-CBR-008-ITEM-SCRATCH-REUSE-AND-CONTENT-STATISTICS-WITHOUT-TAIL
+ok    TEST-REQ-CBR-008-ITEM-FULL-16MIB-WINDOW-TAIL-AND-COMPLETE-PAYLOAD-BOUNDARY
+ok    TEST-REQ-CBR-008-ITEM-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASS-COUNTS
+ok    TEST-REQ-CBR-008-ITEM-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-BUFFER
+  CBOR item fuzz: seed49544538, 1024 casi, 512 successi e 64 ciascuno byte/nodi/depth/nonminimal/range/workspace/byte-limit/truncated.
+COLD LCG final6CB25938 counts#(512 64 64 64 64 64 64 64 64); final state asserted by frozen test, not printed in raw.
+  CBOR item: onda 0, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 45477805/45477816/45482666, sink 74129408; worker 1 start/first/end 45477835/45477837/45483635, sink 74129408; overlap 4831 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+WAVE0 overlap0.004831s; timeline and sinks recomputed from raw, WALL includes rendezvous/checks.
+  CBOR item: onda 1, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 45482673/45482676/45487293, sink 74129408; worker 1 start/first/end 45483641/45483643/45488009, sink 74129408; overlap 3652 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+WAVE1 overlap0.003652s; timeline and sinks recomputed from raw, WALL includes rendezvous/checks.
+COLD worker fixture nodes6/peak2/NEXT14 token36196; values checked by frozen successful worker, not individually printed by raw.
+ARITHMETIC planned APIcalls685+1024+8192=9901; success9255/reject646; no runtime APIcounter claim. Secondary exact-scanner calls520+390+2 separate.
+SNAPSHOT24 unique original/copy/original,72 independent byte+SHA256 checks,240535bytes copied; registered snapshot OK/exit0/STABLE wall8.631527d0 s.
+FINAL5 input files bytes/SHA256 stable,4 current source pins stable; descriptor/payload verified by evidence reader READ-EVAL NIL/EOF. DATA only, no product/corpus LOAD/compile/call/rerun; no heap/coverage/mutation/full-check/MC/DC/core-simultaneity/scaling claim.

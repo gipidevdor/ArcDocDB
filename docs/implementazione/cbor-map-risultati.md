@@ -138,8 +138,9 @@ DATA e copie verificate dell'osservazione/closure originali. L'inventario
 finale contiene 19 processi registrati, tutti OK/exit 0/STABLE, e 325 file
 indicizzati (327 con indice e catalogo). I file indicizzati sommano
 7644795 byte; l'indice misura 118625 byte. I limiti restano 1 MiB plain
-e 8 MiB gzip. La chiusura indipendente passa dopo ogni append; la raccolta
-parallela iniziale e le append successive conservano scope distinti.
+e 8 MiB gzip. L'audit delle impronte e dei metadata passa prima e dopo
+ogni append. Il validator indipendente dell'inventario chiuso riguarda
+la raccolta iniziale di 311 file; il suo esito non si estende alle append.
 
 Le nove copie integrali dei mutanti restano nel backup locale verificato.
 L'archivio pubblicato conserva log, ASDF, runner, prodotti/corpus delle
@@ -148,5 +149,4 @@ sorgenti immutati sono ricostruibili dal commit `15c458ef`; i nove mirror
 integrali non sono tutti duplicati nell'archivio.
 
 Le preparazioni e i tentativi falliti riportati nelle letture sono preservati.
-La chiusura riguarda l'inventario effettivamente indicizzato: C1 e MC/DC
-restano aperti.
+Le verifiche conservano questi scope distinti. C1 e MC/DC restano aperti.

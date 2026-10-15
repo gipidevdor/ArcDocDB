@@ -1,0 +1,58 @@
+# Preparazione dei driver C4 del primo item CBOR
+
+Il catalogo semantico freddo `c6a22e6751cab0eff88dd1173ed81543d595a659`
+precede il prodotto. Il mutatore `mutation-before-product.lisp` conserva
+bersagli e whitelist NIL; non può avviare self-test o campagne.
+
+Il benchmark iniziale `702c8172ae1ebad30c683fe5eb5ad66f88e434ea` è
+preservato in `bench-before-synthetic-arity-hardening-702c8172.lisp`.
+Prima di ogni esecuzione è stato introdotto un helper `NOTINLINE` su
+`VALUES-LIST` runtime per il solo self-test dell'arità: il consumer a tre
+argomenti e la misura sono invariati. Le due chiamate sintetiche errate
+continuano a richiedere due valori oppure quattro, incluso il quarto NIL.
+Contatori invariati. La modifica evita di affidare l'esito del self-test
+alla possibilità di una diagnostica statica di SBCL per arità nota.
+
+L'auditor iniziale `1cabd9a00e99e72baa1cc6b8067e4d3c4e4f0916` è
+preservato in `audit-before-bench-pin-update-1cabd9a0.lisp`;
+sono aggiornati soltanto i due pin del benchmark. Entrambi i diff sono
+conservati. Non sono state caricate o eseguite quelle versioni iniziali.
+
+La prima preparazione `materialize.lisp` si è fermata prima di scrivere
+catalogo, whitelist o mutatore: cercava i pin già aggiornati nel modello,
+che conteneva invece i due pin storici della mappa. `materialize-2.lisp`
+corregge solo quelle due stringhe, collegandole ai driver item finali.
+Entrambe le preparazioni e i rispettivi stdout/stderr restano presenti.
+
+La materializzazione legge il solo kernel nuovo come stringa; del corpus
+legge esclusivamente le 17 righe di nomi DEFTEST, dopo autorizzazione
+del coordinatore e congelamento dei tre pin. Nessun corpo di test viene
+letto per progettare i mutanti. Ogni immagine cambia un solo frammento
+del solo nuovo sorgente. Il mutante di arità cambia nello stesso frammento
+sia FTYPE sia ritorno, per evitare una falsa rilevazione da compilazione.
+
+Una prima interrogazione estemporanea del solo MD5 usò un formato di
+stampa malformato e non caricò prodotto o corpus; la query corretta seguì
+subito. Non si afferma di conservare su file quella diagnostica estemporanea.
+Questa cronologia non dichiara superati self-test o campagne.
+
+Prima della lettura C4 finale, il coordinatore ha ristretto il bersaglio
+drain alla sola chiamata nel WHEN del loop, con anchor unico, e ha reso
+il mutante NEXT=END coerente anche con il cursore scratch portato a END.
+Le immagini precedenti `catalogue-before-next-drain-adjustment-a1cc13f4.lisp`
+e `mutation-before-next-drain-adjustment-50a1932f.lisp`, mai compilate,
+restano disponibili. `materialize-3.lisp` mantiene gli altri sei target
+e tutti i pin; preserva anche la whitelist e le righe nominali originarie,
+che restano byte per byte identiche nella seconda materializzazione.
+Il lettore sintattico legge tutte le forme dei driver e delle otto
+immagini con package stub, READ-EVAL NIL ed EOF, senza valutarle.
+
+Prima della review C4 finale è stata corretta una sola fixture sintetica
+dell'auditor: il caso `whole-window-declaration` ora cambia soltanto il
+valore già presente di `:LIMITS` a NIL. Il precedente REMF seguito da
+SETF di una plist locale poteva lasciare al chiamante un campo assente
+e quindi un diverso motivo di rifiuto. Sono preservati l'auditor
+`6cf528ab`, il catalogo `e5461bad`, il mutatore `87d1d3dc` e i diff;
+`materialize-4.lisp` aggiorna il solo pin audit e le impronte dipendenti.
+Nessun target mutante o funzione di misura cambia. Questa correzione
+precede ogni self-test dell'auditor e la lettura C4 definitiva.

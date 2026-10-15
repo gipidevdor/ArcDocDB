@@ -1,0 +1,87 @@
+# Primo item CBOR — lettura DATA dopo integrazione
+
+Lettura indipendente del 2026-10-15 sul processo concluso
+`spikes/out/4001074655-command-41141-0/report.lisp`.
+L'autore del corpus non esegue LOAD/COMPILE/chiamate di prodotto,
+corpus o driver e non ripete alcuna campagna; legge soltanto la prova
+con READ-EVAL NIL/EOF e confronta i quattro pin correnti.
+
+## Ambito ed esito
+
+Merge di main2cf3c38d nel commit
+**203e3c719f6b5cd9c74a5dcd7fae2f1f1cfb45ed**. Il comando registrato
+è esattamente `make build lint trace links`, schema1,
+COMMAND-VERIFICATION, **OK/exit0/STABLE**, working-tree vuoto,
+**938 sorgenti unici before/after identici**, WALL **57.257384s**.
+
+- **1547 righe ok uniche =1545 nominali+2 smoke**; i17 item hanno
+  esattamente i nomi del corpus/whitelist congelati.
+- Lint: **231 file,0 violazioni**.
+- Trace: **122 requisiti,65 invarianti,13 scenari FI,52 ADR,0 errori**.
+- Link: **520 file,3089 link,0 rotti**.
+- Stdout254447caratteri; stderr1038956caratteri, **2847 righe note**
+  di ottimizzazione. Nessun marker WARNING:, STYLE-WARNING:,
+  Unhandled o COMPILE-FILE-ERROR in entrambi gli stream. Stderr
+  non è vuoto; le note non sono warning.
+
+I quattro blob combaciano negli inventari before/after e nel contenuto
+corrente prima/dopo la lettura:
+
+| File | Blob Git |
+| --- | --- |
+| src/codec/cbor-item-read.lisp |b9099dc8a8c96281063811e686deb4dcb2b1d39b|
+| tests/codec/cbor-item-read-support.lisp |0326100362a1c4b24d2c7e511e45357f09a56d33|
+| tests/codec/cbor-item-read.lisp |b2cbdcb4255c51d9da4fe73b28939c1cb923fefe|
+| tests/codec/cbor-item-read-threads.lisp |a0da65545ed80ede0a967cadbb337731f6fe1ce9|
+
+La whitelist ha pin8cb9ddf8b7ceb454600e64093640679d854be039 e17nomi;
+entrambi gli smoke sono esatti e tutti gli ok sono unici.
+
+## Dati paralleli dell'esecuzione corrente
+
+I timestamp sono quelli di questa integrazione, senza riusare i numeri
+della precedente build o del precedente make check:
+
+| Onda | Worker | START | FIRST verificato | END | Sink |
+| --- | --- | ---: | ---: | ---: | ---: |
+|0|0|32501197|32501208|32503367|74129408|
+|0|1|32501216|32501221|32503706|74129408|
+|1|0|32503370|32503371|32506358|74129408|
+|1|1|32503709|32503710|32505987|74129408|
+
+Due ondate da4096letture, due worker riusati, **8192 complessive**.
+Il lettore verifica ordine dei timestamp, durate positive,
+MAX(FIRST)<=MIN(END), sink e formula dell'overlap:
+**2151/2278tick a1000000tick/s**, cioè0.002151/0.002278s.
+Il WALL comprende rendezvous e controlli; non misura tempo puro
+decoder o scaling e non prova simultaneità sui core.
+
+La fixture congelata controlla6nodi/picco2/NEXT14 e token36196,
+ma i tre valori non sono stampati individualmente nel raw. La riga
+fuzz1024/512+8×64 è presente. Il totale9901APIcalls del piano è
+aritmetico, non un contatore di chiamate strumentato.
+
+## Conservazione e lettore
+
+Descriptor317byte SHA256
+`7000e90b7c93b1e52210c2725165db6b7120aaf619a0384ff3459c2581655ed9`;
+gzip165882byte SHA256
+`03aacff383b7dc9cb7693e0a4ea492cd3ce0589c1788c77ab5fcf4b9c82280d0`;
+espanso1488814byte SHA256
+`211635b4fec64c18cd5e3b05a3678d547217c9050e9ee0dd2c3e1f99dcf9f8c1`.
+Dimensioni/hash compressi/espansi e singola plist sono verificati
+dal lettore comune; descriptor/payload mantengono byte/SHA tra
+ingresso e uscita. Anche lettore/whitelist e quattro pin restano stabili.
+
+Lettore `review/final-integration-reading.lisp`, blob
+**80817a4cf3b60e15a4c3a2a751d484f03c75f27f**; output omonimo
+`.output.txt`, blob **b1c93ecd465235116414104d0f144cd9361a510b**;
+stderr omonimo vuoto, exit0. Prima esecuzione del lettore riuscita,
+nessuna variante fallita; nessuna modifica a sorgenti, indice Git o HEAD.
+
+L'ambito di questa nuova integrazione è **build/lint/trace/links**.
+Il precedente make check con1545nominali+2smoke+4self-testlinter,
+114cataloghi e dieci spike resta riferito al precedente HEAD46aee8b9;
+non viene attribuito al nuovo merge. Heap, copertura e mutazioni
+conservano i propri processi e pin congelati. Nessuna attestazione
+di autenticità o qualifica C1/MC/DC; LIM-001/002 restano aperti.

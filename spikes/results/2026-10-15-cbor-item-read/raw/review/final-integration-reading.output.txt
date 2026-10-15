@@ -1,0 +1,39 @@
+INTEGRATION schema1/OK/exit0/STABLE HEAD203e3c719f6b5cd9c74a5dcd7fae2f1f1cfb45ed clean;938 unique sources before=after;4 frozen pins before/after/current;wall57.257384d0 s.
+OK1547 unique = nominal1545+smoke2;item17 exact frozen names.
+STDOUT254447chars STDERR1038956chars 2847 optimization-note lines,0 forbidden warning/style/Unhandled/compilefail markers.
+SMOKE ("ok    ARCDOCDB:*VERSION* è una stringa"
+       "ok    package ARCDOCDB presente")
+ok    TEST-REQ-CBR-008-ITEM-LITERAL-ALL-MAJORS-AND-UNREAD-POISON-TAIL
+ok    TEST-REQ-CBR-008-ITEM-INTEGER-TAG-AND-STRING-WIDTH-BOUNDARIES
+ok    TEST-REQ-CBR-008-ITEM-CONCATENATED-FRONTIERS-AND-EXACT-SCANNERS-STILL-TRAILING
+ok    TEST-REQ-CBR-008-ITEM-AUTHORIZED-END-PHYSICAL-SENTINELS-AND-NONZERO-START
+ok    TEST-REQ-CBR-008-ITEM-BUFFER-TYPE-RANGE-AND-WHOLE-BACKING-ARRAY-PRESERVATION
+ok    TEST-REQ-CBR-008-ITEM-WORKSPACE-TYPE-ALIAS-AND-PREFLIGHT-BEFORE-RESET
+ok    TEST-REQ-CBR-008-ITEM-CONFIGURED-LIMITS-AND-ALL-PREFLIGHT-PRECEDENCES
+ok    TEST-REQ-CBR-008-ITEM-BYTE-BUDGET-INCLUDES-ENTIRE-WINDOW-AND-UNREAD-TAIL
+ok    TEST-REQ-CBR-008-ITEM-ROOT-AND-TAG-CHAIN-NODE-BUDGET-WITHOUT-TAIL-NODES
+ok    TEST-REQ-CBR-008-ITEM-DEPTH-ZERO-AND-100-101-WITHOUT-TAIL-DEPTH
+ok    TEST-REQ-CBR-008-ITEM-MALFORMED-FIRST-ITEM-ABSOLUTE-ERRORS-AND-MINIMALITY
+ok    TEST-REQ-CBR-008-ITEM-EVERY-TRUNCATION-IS-BOUNDED-BY-AUTHORIZED-END
+ok    TEST-REQ-CBR-008-ITEM-HEADER-PREFERENCE-BEFORE-NODES-DEPTH-AND-PAYLOAD
+ok    TEST-REQ-CBR-008-ITEM-SCRATCH-REUSE-AND-CONTENT-STATISTICS-WITHOUT-TAIL
+ok    TEST-REQ-CBR-008-ITEM-FULL-16MIB-WINDOW-TAIL-AND-COMPLETE-PAYLOAD-BOUNDARY
+ok    TEST-REQ-CBR-008-ITEM-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASS-COUNTS
+ok    TEST-REQ-CBR-008-ITEM-TWO-REUSED-WORKERS-PRIVATE-SCRATCH-AND-READONLY-BUFFER
+231 file, 0 violazioni
+122 requisiti, 65 invarianti, 13 scenari FI, 52 ADR: 0 errori
+520 file, 3089 link controllati, 0 rotti
+  CBOR item: onda 0, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 32501197/32501208/32503367, sink 74129408; worker 1 start/first/end 32501216/32501221/32503706, sink 74129408; overlap 2151 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+  CBOR item: onda 1, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 32503370/32503371/32506358, sink 74129408; worker 1 start/first/end 32503709/32503710/32505987, sink 74129408; overlap 2278 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+PHYSICAL-INPUTS (("spikes/out/4001074655-command-41141-0/report.lisp" 317
+                  "7000e90b7c93b1e52210c2725165db6b7120aaf619a0384ff3459c2581655ed9")
+                 ("spikes/out/cbor-item-read-20261015/review/final-integration-reading.lisp"
+                  9451
+                  "b6b92c5122ea7facad356ebdb341c70380a3805b17401e2b58bb185f2bcc9256")
+                 ("spikes/out/cbor-item-read-20261015/drivers/nominal-whitelist.lisp"
+                  2354
+                  "df753153dbbfe6beb8e35dc31425dfac7b1b5df9f2973b2dde8dad2d754af1c0")
+                 ("spikes/out/4001074655-command-41141-0/report.lisp.gz" 165882
+                  "03aacff383b7dc9cb7693e0a4ea492cd3ce0589c1788c77ab5fcf4b9c82280d0"))
+Descriptor/payload verified:165882 compressed/1488814 expanded bytes, expanded SHA211635b4fec64c18cd5e3b05a3678d547217c9050e9ee0dd2c3e1f99dcf9f8c1.
+FINAL physical inputs bytes/SHA stable;DATA only, no product/corpus LOAD/compile/run. Scope here build/lint/trace/links after merge; earlier fullcheck1545+2+4 and114catalogs remains HEAD46aee8b9. Planned9901APIcalls is arithmetic, worker6/2/NEXT14 checked by frozen corpus, not individually printed. WALL includes rendezvous/checks; no MC/DC/core/scaling claim.

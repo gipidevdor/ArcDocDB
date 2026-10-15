@@ -35,6 +35,11 @@ La priorità di sviluppo è trasferire questa composizione nel motore:
 
 Questi incrementi non anticipano la chiusura dei gate della Fase 0.
 
+Il primo incremento dispone della [raccolta readonly dell'inventario](implementazione/inventario.md#raccolta-dalla-directory)
+da una capacità directory, con nomi e identità verificati prima del planner.
+Riconciliazione fisica, apertura delle capacità dei segmenti e coordinamento
+del recovery della Serie restano passi successivi.
+
 Al 2026-10-03 la parte di **definizione è completa**: le 26 questioni aperte sono chiuse dagli
 ADR 0013–0030, il progetto è consolidato in [architettura.md](architettura.md) e i formati in
 [formati-su-disco.md](formati-su-disco.md). L'[analisi progettuale](analisi-progettuale.md)

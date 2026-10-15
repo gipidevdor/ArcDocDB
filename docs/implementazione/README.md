@@ -86,7 +86,7 @@ I criteri sono nel [piano di verifica](../affidabilita/piano-di-verifica.md#rice
 | Decisioni multiserie | [Tabella TXID, CSN e partecipanti](decisioni-multiserie.md) | [`src/recovery/decisions-build.lisp`](../../src/recovery/decisions-build.lisp) |
 | Decision log dell'Archivio | [Lettura readonly, identità e collegamento al recovery ACTIVE](decisioni-recuperate.md) | [`src/recovery-archive/`](../../src/recovery-archive/) |
 | Manifest della Serie | [Ripiegamento degli EDIT del control log](manifest-control-log.md) | [`src/recovery/`](../../src/recovery/) |
-| Inventario recovery | [Piano di riconciliazione dei nomi dei segmenti](inventario.md) | [`src/recovery/inventory-build.lisp`](../../src/recovery/inventory-build.lisp) |
+| Inventario recovery | [Piano e raccolta readonly dalla directory](inventario.md); [metodo delle prove native](inventario-directory-metodo.md) | [`src/recovery/inventory-build.lisp`](../../src/recovery/inventory-build.lisp), [`inventory-directory.lisp`](../../src/recovery/inventory-directory.lisp) |
 | Ordinamento delle decisioni | [Radix misurato e query concorrenti](decisioni-radix-risultati.md) | [`src/recovery/decisions-radix.lisp`](../../src/recovery/decisions-radix.lisp) |
 
 Le evidenze hanno un ambito esplicito: un test del codec non verifica transazioni,

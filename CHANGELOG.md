@@ -403,6 +403,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   rilievi `AP-…`; quattordici nuovi invarianti (INV-F2, F3, V5, M4, M5, S7, C11, I3, P5, P6,
   A9…A12), 107 requisiti, 27 modi di guasto, rischio residuo RES-05.
 
+- Inventario dei segmenti dalla directory posseduta dalla Serie: cursore
+  readonly indipendente e limitato, nomi canonici u64 e identità senza
+  symlink verificati prima del piano di riconciliazione. Nessun elenco
+  parziale su EOF mancante, budget esaurito o guasto di cleanup.
+
 ### Cambiato
 
 - I test con worker riusati delle stringhe CBOR usano segnali distinti

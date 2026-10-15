@@ -6,7 +6,7 @@
                 #:invariant-violation #:unsupported-format)
   (:export #:backend #:make-backend #:file-io
            #:associazione-file #:associa-file #:verifica-associazione-file #:verifica-file-distinti
-           #:apri-lettura #:crea-temporaneo #:apri-directory #:chiudi
+           #:apri-lettura #:crea-temporaneo #:apri-directory #:chiudi #:elenca-directory
            #:leggi-esatto #:append-esatto #:durable-flush #:rinomina-nella-directory #:mode-file #:verifica-capienza-append
            #:stato-file #:posizione-scritta #:posizione-durevole #:verifica-capienza-lettura
            #:verifica-capacita-sostituzione #:sostituisci-temporaneo))

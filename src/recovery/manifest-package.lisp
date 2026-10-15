@@ -18,5 +18,6 @@
   (:export #:ricostruisci-manifest #:verifica-transizione-recovery #:segmento-attivo #:prossimo-id-segmento
            #:numero-segmenti-chiusi #:numero-segmenti-rimossi
            #:trova-segmento #:trova-esito-chiusura
-           #:file-segmento #:pianifica-riconciliazione #:stato-riconciliazione
+           #:file-segmento #:pianifica-riconciliazione #:pianifica-riconciliazione-directory
+           #:stato-riconciliazione
            #:numero-azioni-riconciliazione #:azione-riconciliazione))

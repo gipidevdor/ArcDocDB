@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "kind": "closing-copy-receipt",
+  "status": "copied",
+  "files": [
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077436-command-43520-0/report.lisp",
+      "target": "chiusura/produttore/report.lisp",
+      "bytes": 202188,
+      "sha256": "176b6f74e000e41327e1f860342c42c410920db594dea6c72d8918135218dad2"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077436-command-43520-0/conservazione.lisp",
+      "target": "chiusura/produttore/conservazione.lisp",
+      "bytes": 1159,
+      "sha256": "75cf0dffc442caac444a7fa938770380ef9bc66c4ee1d1361089b7ff2529f8ef"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077446-command-43801-0/report.lisp",
+      "target": "chiusura/links/report.lisp",
+      "bytes": 201013,
+      "sha256": "b2874f740f4c33408234381c8e0144ad08a05fc5dc7f405ddea25da8bceabbb6"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077446-command-43801-0/conservazione.lisp",
+      "target": "chiusura/links/conservazione.lisp",
+      "bytes": 1159,
+      "sha256": "bec7127b11d9d8606c83745f6385a4dadf0de2f4e7bb2a036e52ca25076604d6"
+    }
+  ],
+  "limits": [
+    "byte-copy-only",
+    "closed-producers",
+    "no-self-certification",
+    "not-an-engine-test"
+  ]
+}

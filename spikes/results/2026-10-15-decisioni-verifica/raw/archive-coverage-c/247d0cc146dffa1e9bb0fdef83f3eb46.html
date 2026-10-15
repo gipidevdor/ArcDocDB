@@ -1,0 +1,66 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/src/recovery-archive/types.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>16</td><td>28</td><td> 57.1</td></tr>
+<tr class='even'><td>branch</td><td>2</td><td>4</td><td> 50.0</td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;controller&#160;associa&#160;una&#160;volta&#160;UUID&#160;autorevole&#160;e&#160;ambito&#160;canonico&#59;&#160;copie&#160;possedute&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;risultato&#160;immutabile&#44;&#160;nessun&#160;array&#160;o&#160;scratch&#160;esportato&#160;alle&#160;Serie&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;recovery&#46;archive&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;speed&#160;2&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;FOR&#45;001&#160;REQ&#45;TXM&#45;005&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;archivio&#45;recovery&#160;&#40;&#58;constructor&#160;&#37;make&#45;archivio&#45;recovery&#160;&#40;scope&#160;identity&#41;&#41;&#160;&#40;&#58;copier&#160;nil&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;controller&#160;associa&#160;UUID&#160;autorevole&#160;e&#160;ambito&#160;dello&#160;stesso&#160;Archivio&#160;prima&#160;del&#160;recovery&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;legami&#160;immutabili&#44;&#160;copia&#160;privata&#160;dell&#39;UUID&#59;&#160;non&#160;certifica&#160;il&#160;catalogo&#160;o&#160;la&#160;sua&#160;unicità&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-1'>TYPE&#45;ERROR&#160;per&#160;tipi&#160;invalidi&#59;&#160;nessun&#160;accessor&#160;di&#160;array&#160;esportato&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;scope&#160;nil&#160;&#58;type&#160;ambito&#45;get&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;identity&#160;&#35;&#40;&#41;&#160;&#58;type&#160;&#40;simple&#45;array&#160;&#40;unsigned&#45;byte&#160;8&#41;&#160;&#40;&#35;&#46;&#43;log&#45;identity&#45;bytes&#43;&#41;&#41;&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-1'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>13</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>14</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;FOR&#45;001&#160;REQ&#45;TXM&#45;005&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>15</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;ambito&#45;get&#160;octets&#41;&#160;archivio&#45;recovery&#41;&#160;crea&#45;archivio&#45;recovery&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>16</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;crea&#45;archivio&#45;recovery&#160;&#40;scope&#160;identity&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>17</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;bootstrap&#160;esclusivo&#44;&#160;UUID&#160;canonico&#160;stabile&#44;&#160;ambito&#160;GET&#160;del&#160;medesimo&#160;Archivio&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>18</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;copia&#160;posseduta&#160;dei&#160;sedici&#160;byte&#44;&#160;senza&#160;alias&#160;con&#160;ID&#160;del&#160;caller&#160;o&#160;scratch&#160;futuri&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>19</code></div><code>&#160;<span class='state-1'>INVALID&#45;ARGUMENT&#160;per&#160;lunghezza&#160;diversa&#59;&#160;associazione&#160;iniziale&#160;garantita&#160;dal&#160;controller&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>20</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;unless&#160;</span><span class='state-5'>&#40;&#61;&#160;</span><span class='state-1'>&#40;length&#160;identity&#41;</span><span class='state-5'>&#160;</span><span class='state-1'>&#43;log&#45;identity&#45;bytes&#43;</span><span class='state-5'>&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>21</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#40;error&#160;&#39;invalid&#45;argument&#160;&#58;reason&#160;&#58;archive&#45;recovery&#45;identity&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>22</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;&#37;make&#45;archivio&#45;recovery&#160;scope&#160;&#40;copy&#45;seq&#160;identity&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>23</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>24</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;TXM&#45;005&#160;REQ&#45;FOR&#45;003&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>25</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;decisioni&#45;recuperate</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>26</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;&#58;constructor&#160;&#37;make&#45;decisioni&#45;recuperate&#160;&#40;archive&#160;input&#160;table&#160;size&#160;prefix&#160;status&#160;version&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>27</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#40;&#58;copier&#160;nil&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>28</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;stesso&#160;FD&#160;readonly&#160;letto&#160;fino&#160;a&#160;EOF&#160;attestato&#44;&#160;header&#160;e&#160;intero&#160;prefisso&#160;DECISION&#160;verificati&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>29</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;risultato&#160;posseduto&#160;legato&#160;all&#39;Archivio&#44;&#160;senza&#160;alias&#160;allo&#160;scratch&#59;&#160;nessuna&#160;tabella&#160;parziale&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>30</code></div><code>&#160;<span class='state-1'>Non&#160;misura&#160;EOF&#44;&#160;certifica&#160;catalogo&#160;o&#160;salute&#160;futura&#59;&#160;TYPE&#45;ERROR&#160;per&#160;tipi&#160;invalidi&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>31</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;archive&#160;nil&#160;&#58;type&#160;archivio&#45;recovery&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>32</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;input&#160;nil&#160;&#58;type&#160;file&#45;io&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>33</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;table&#160;nil&#160;&#58;type&#160;arcdocdb&#46;recovery&#46;decisions&#58;&#58;decision&#45;table&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>34</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;size&#160;0&#160;&#58;type&#160;index&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>35</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;prefix&#160;0&#160;&#58;type&#160;index&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>36</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;status&#160;&#58;complete&#160;&#58;type&#160;&#40;member&#160;&#58;complete&#160;&#58;tail&#41;&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>37</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;version&#160;2&#160;&#58;type&#160;</span><span class='state-10'>&#40;member&#160;1&#160;2&#41;</span><span class='state-2'>&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-1'>&#41;</code></div></body></html>

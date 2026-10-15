@@ -36,8 +36,9 @@ CORRUPTION-DETECTED per header troncato; argomenti/capacità/budget con condizio
 Magic multiserie, CRC, UUID completo, versione e riservati verificati prima del corpo.
 Errori originali propagati; nessun risultato o modifica dei file."
   (check-range scratch 0 +log-header-bytes+)
-  (unless (= (leggi-esatto input scratch 0 +log-header-bytes+ 0) +log-header-bytes+)
-    (error 'invariant-violation :reason :archive-recovery-header-read))
+  (let ((next (leggi-esatto input scratch 0 +log-header-bytes+ 0)))
+    (unless (= next +log-header-bytes+)
+      (error 'invariant-violation :reason :archive-recovery-header-read)))
   (multiple-value-bind (next version)
       (verifica-header-log scratch 0 +log-header-bytes+ :multiserie (archivio-recovery-identity archive))
     (unless (= next +log-header-bytes+)
@@ -55,7 +56,8 @@ Errori I/O propagati senza retry, chiusura o troncatura; nessun risultato parzia
   (check-range scratch 0 size)
   (loop repeat (ceiling (- size +log-header-bytes+) chunk)
         for start from +log-header-bytes+ by chunk for end = (min size (+ start chunk))
-        do (unless (= (leggi-esatto input scratch start end start) end)
-             (error 'invariant-violation :reason :archive-recovery-read :offset start)))
+        do (let ((next (leggi-esatto input scratch start end start)))
+             (unless (= next end)
+               (error 'invariant-violation :reason :archive-recovery-read :offset start))))
   (arcdocdb.io::esigi-aperto input :input)
   nil)

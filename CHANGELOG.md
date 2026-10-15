@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Verifica dedicata del decision log dell'Archivio: preflight, identità,
+  query, ownership e collegamento al recovery ACTIVE, con catena nativa
+  fino alla pubblicazione CONTROL nei formati v1/v2. Copertura separata
+  del modulo e registrazione di ogni tentativo nella campagna dedicata.
+
 - Verifica integrata pool/dispatcher/Serie con due worker reali: 32 quantum
   su una Serie mentre l'altra mantiene lease o debito batch, più ritiro con
   ring pieno/libero e trasferimento del lavoro residuo a un altro worker.

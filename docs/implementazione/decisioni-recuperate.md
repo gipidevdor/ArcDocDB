@@ -116,10 +116,13 @@ latenza o heap zero. Nessun lock o nuova scrittura condivisa tra Serie.
 | DAR-G03 | ambito canonico identico prima di I/O ACTIVE | stessa/differente identità, anche con uguale UUID; log chiuso prima/durante lettura |
 | DAR-G04 | replay e query canonici | duplicati, conflitti, zero/u64 alto, budget partecipanti, mutazione scratch dopo ritorno |
 
-Le [evidenze locali](../../spikes/results/2026-10-15-archive-recovery/README.md)
+Le [prime evidenze locali](../../spikes/results/2026-10-15-archive-recovery/README.md)
 distinguono compilazione, letture statiche e conservazione dei byte da prove
-funzionali. Qualifica C1, revisione indipendente, fault injection e misure
-dei nuovi ingressi restano aperte. Il componente non completa riconciliazione
+funzionali. Il [metodo della nuova verifica](decisioni-recuperate-verifica.md)
+definisce prove funzionali, fault injection e catena nativa; la
+[revisione indipendente](decisioni-recuperate-revisione.md) resta distinta
+dai risultati eseguiti. Qualifica C1 completa e misure dei nuovi ingressi
+restano aperte. Il componente non completa riconciliazione
 CLOSED, indici/orizzonte CSN o gate del Recovery Manager. Il
 [builder completo del checkpoint](checkpoint-recovery.md) è ora disponibile
 con qualifica dedicata ancora aperta.

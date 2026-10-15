@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Verifica dedicata del decision log dell'Archivio: preflight, identità,
+  query, ownership e collegamento al recovery ACTIVE, con catena nativa
+  fino alla pubblicazione CONTROL nei formati v1/v2. Copertura separata
+  del modulo e registrazione di ogni tentativo nella campagna dedicata.
+
 - Builder del checkpoint dal recovery ACTIVE: deriva lo stato completo
   dal CONTROL autorevole, conserva CLOSED/REMOVED/esiti, chiude il vecchio
   ACTIVE a P e collega il nuovo ID verificato. Budget prima degli array e

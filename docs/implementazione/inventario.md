@@ -115,6 +115,10 @@ ne dichiarano i confini statici. L'esclusività del namespace resta
 una precondizione: l'enumerazione POSIX non certifica uno snapshot atomico.
 Header, CRC e contenuti richiedono i lettori successivi. Non si eseguono
 rinomine, rimozioni, allocazione di CSN o ammissione del traffico.
+I [risultati conservati](../../spikes/results/2026-10-15-serie-inventory/README.md)
+distinguono i tentativi falliti, il controllo completo locale e i limiti.
+La [verifica della raccolta](../../spikes/results/2026-10-15-serie-inventory-collection/catalogo.lisp)
+conserva il confronto dei byte e il controllo indipendente dell'archivio chiuso.
 
 ### Planner in memoria
 

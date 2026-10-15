@@ -30,8 +30,9 @@ La priorità di sviluppo è trasferire questa composizione nel motore:
 
 Il primo passo di prodotto è la [scelta dell'ID del nuovo segmento](implementazione/id-segmento-recovery.md):
 proposta pura dal manifest e dall'inventario completo, usata anche dalla
-fixture verticale. Enumerazione generale del namespace, identità dei file,
-ownership delle capacità e coordinamento del recovery restano da implementare.
+fixture verticale. La raccolta del namespace e delle identità è descritta
+sotto; riconciliazione fisica, apertura delle capacità dei segmenti e
+coordinamento del recovery restano da implementare.
 
 | Ordine | Incremento | Confine da verificare |
 |---|---|---|

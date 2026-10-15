@@ -1,0 +1,1 @@
+:FAILED: sbcl --noinform --disable-debugger --script spikes/out/serie-inventory-count-tools/count-tests.lisp --workspace /Users/gpicchiarelli/.codex/worktrees/serie-recovery/ArcDocDB --commit 88a8cdd77027bfebdbab01c47ce3d4dfbbedec85; record: /Users/gpicchiarelli/.codex/worktrees/serie-recovery/ArcDocDB/spikes/out/4001085326-command-41872-0/report.lisp

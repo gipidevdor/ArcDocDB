@@ -3,6 +3,10 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+L'[inventario della directory della Serie](2026-10-15-serie-inventory/README.md)
+conserva i 19 nuovi test, il controllo completo locale, le due correzioni
+e i registri originali della raccolta readonly nel prodotto.
+
 La [prova verticale 2026-10-15](2026-10-15-vertical-crash/README.md)
 conserva sviluppo e verifica di scrittura, SIGKILL, recovery e riapertura
 di una Serie, con confini C4 espliciti.

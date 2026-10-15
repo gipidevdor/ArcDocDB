@@ -39,10 +39,28 @@ Il successo di compilazione/statica o della CI automatica non chiude C1.
   Il controllo completo delle evidenze riguarda l'insieme disponibile prima
   della nuova raccolta, non certifica gli archivi aggiunti successivamente.
 
-Le ultime modifiche allineano l'indentazione e aggiungono esplicitamente
-REQ-MVC-006, che richiede versioni non riutilizzate. Sono previste nuova
-compilazione e statica sul contenuto definitivo; esiti e blob effettivi sono
-nei record degli originali.
+- `242f47e8`: allineata l'indentazione e aggiunto esplicitamente REQ-MVC-006,
+  che richiede versioni non riutilizzate. Compilazione del prodotto,
+  disassemblaggio e controlli di stile, tracciabilità e collegamenti
+  nuovamente riusciti. Il sorgente di prodotto rimane congelato da questa
+  variante; commit e blob effettivi sono nei record degli originali.
+
+Gli originali dei diciotto processi, inclusi i due falliti, e i rispettivi
+sidecar sono raccolti separatamente nell'
+[archivio chiuso](../2026-10-15-recovery-csn-originals/archive-index.lisp). Il collector ufficiale
+conserva anche il manifest esplicito e i tre helper C4 usati per compilare,
+disassemblare e preparare il manifest. Le osservazioni della raccolta sono
+esterne a quell'archivio; il relativo record di comando viene conservato
+qui senza modificare l'inventario chiuso.
+
+Raccolta riuscita con quattro worker e 41 ingressi pianificati; il checker
+separato termina con exit 0. Sono conservati il rapporto della raccolta,
+il suo record di comando e sidecar, l'output del checker e l'audit delle
+quattro copie esterne. Confronto per dimensioni e SHA256, senza dichiarare
+un confronto letterale byte per byte. Il diagnostico finale dell'helper
+di conservazione stampava `COPIES 1` dopo `NREVERSE`: l'audit DATA contiene
+correttamente quattro copie, contate nuovamente in lettura. La nota è in
+[riletture.lisp](riletture.lisp); non manca alcuna delle quattro copie.
 
 ## Due letture dell'autore
 

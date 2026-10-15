@@ -1,0 +1,37 @@
+(require :asdf)
+(let* ((base (merge-pathnames "spikes/out/cbor-string-read-20261015/" (truename "./")))
+       (records '(("bench-diff-fuzz" "4001085071-command-33054-0")
+                  ("full-check" "4001085107-command-33694-0")
+                  ("coverage" "4001085107-command-33695-0")
+                  ("coverage-selftest" "4001085107-command-33696-0")
+                  ("mutation-selftest" "4001085216-command-37227-0")
+                  ("mutations" "4001085241-command-38293-0")
+                  ("selection-fixtures" "4001085383-command-44412-0")
+                  ("independent-runtime" "4001085677-command-51505-0")
+                  ("independent-mutations" "4001085732-command-52866-0")
+                  ("independent-fullcheck" "4001085792-command-54189-0")))
+       (roots '("review" "driver-preparation" "frozen-qualification" "mutation-driver"
+                "mutations-R1" "independent-reading" "independent-mutations" "selection"
+                "coverage" "coverage-selftest"))
+       (selection-tests (merge-pathnames "selection-tests/" base))
+       (files (list (merge-pathnames "prepare-coverage.lisp" base)))
+       (plan-file (merge-pathnames "selection/main-plan.lisp" base)))
+  (assert (not (probe-file plan-file)))
+  (dolist (directory (cons selection-tests
+                          (loop for name in '("01-positive" "02-collision" "03-symlink" "04-depth33")
+                                collect (merge-pathnames (concatenate 'string name "/") selection-tests))))
+    (setf files (append (uiop:directory-files directory) files)))
+  (let ((plan
+          (list :destination (namestring (merge-pathnames "spikes/out/cbor-string-read-manifests/main.lisp" (truename "./")))
+                :records (loop for (label directory) in records collect
+                               (list label (namestring (truename (merge-pathnames (format nil "spikes/out/~A/report.lisp" directory) (truename "./"))))))
+                :roots (append (loop for name in roots collect
+                                     (list name (namestring (truename (merge-pathnames (concatenate 'string name "/") base)))))
+                               (list (list "selection-positive-inputs" (namestring (truename (merge-pathnames "01-positive/source/" selection-tests))))))
+                :frozen (sort (mapcar (lambda (path) (enough-namestring path (truename "./"))) files) #'string<))))
+    (with-open-file (out plan-file :direction :output :if-exists :error)
+      (let ((*print-readably* t)) (write plan :stream out :pretty t) (terpri out)))
+    (format t "~S~%" (list :status :ok :plan (namestring plan-file) :records (length records)
+                          :roots (length (getf plan :roots)) :explicit-support-files (length files)
+                          :excluded '(:fasl-cache :negative-fixture-symlinks-and-empty-deep-directories)
+                          :all-excluded-inputs-preserved-in-ignored-backup t))))

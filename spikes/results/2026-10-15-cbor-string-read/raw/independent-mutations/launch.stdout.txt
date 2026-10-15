@@ -1,0 +1,1 @@
+:OK: sbcl --noinform --no-userinit --no-sysinit --script spikes/out/cbor-string-read-20261015/independent-mutations/reading.lisp; record: /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/4001085732-command-52866-0/report.lisp

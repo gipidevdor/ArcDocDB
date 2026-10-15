@@ -1,0 +1,84 @@
+# Lettura C4 indipendente dell'integrazione finale
+
+Audit DATA del2026-10-15, distinto da autore prodotto e preparazione
+archivio. Nessun LOAD/compile/call di prodotto, corpus o driver; solo
+`tools/evidence-storage.lisp` per la lettura autenticata dei dati.
+Nessun file nelle cartelle precedentemente congelate è stato modificato.
+I nuovi file sono soltanto in `independent-integration/`, ignored.
+
+Versione finale `reading.lisp`, blob
+`ed7e614361922e391806d6dcabb5b753a43bcc23`, eseguita una volta sotto
+`tools/record-command.lisp`: **`spikes/out/4001086202-command-65022-0/report.lisp`**,
+blob `0a607b0e65dcea2504c36a3e04f3f11d354920c8`.
+Audit OK/exit0/stderr vuoto,215 controlli DATA; inventario sorgenti stabile.
+Il record conserva argv, stdout e stderr fisici. L'esplorazione precedente
+`inspect-records.lisp` e i suoi output/error sono preservati accanto.
+
+## Comando combinato e fase fallita
+
+`spikes/out/4001085841-command-55587-0/report.lisp` è e resta
+**FAILED/exit2**, non un PASS globale. Comando argv esatto:
+`make test lint trace links`. Finito, signal NIL, sorgenti STABLE1019,
+HEAD `e1bffcae6ee38fb87c079a480fede1513d1a3389`, working tree pulito
+nei metadata. Descriptor e gzip sono letti con evidence e improntati
+prima/dopo; nessun dato viene valutato come codice.
+
+Prima dell'unico marker esatto
+`build e test: nessun avviso, tutti i controlli superati`, riga3890
+con indice1, sono presenti **1743 nominali unici anche senza distinzione
+tra maiuscole/minuscole +2 smoke =1745 righe ok**. Tutti i17 nuovi
+REQ-CBR-009-STRING coincidono esattamente con i17 DEFTEST del corpus
+congelato, letto DATA per31forme. Nessun output di fixture o strumenti
+successivo al marker entra nel conteggio.
+
+Il log successivo conferma249 file sorgenti/0violazioni lint e
+127requisiti/66invarianti/13scenariFI/53ADR/0errori di tracciabilità.
+Il gate links riporta517file/3718link/**282rotti**; lette e contate tutte
+le282 righe ROTTO, tutte sotto
+`spikes/out/cbor-string-read-20261015/frozen-qualification/`.
+Lo stderr termina con `make: *** [links] Error 1`: il fallimento deriva
+da quella fase. Lo stderr contiene1455262 caratteri,4100 occorrenze
+`note:` e0 `WARNING:`/`STYLE-WARNING:`; le note del compilatore e
+l'errore make sono conservati separatamente da qualunque dichiarazione PASS.
+
+## Correzione dei nomi raw e nuovo controllo links
+
+`spikes/out/4001086038-command-60740-0/report.lisp` è
+OK/exit0/STABLE1019 sullo stesso HEAD. La plist stdout viene letta con
+READ-EVAL NIL, unicità chiavi ed EOF. Sei documenti storici raw sono
+rinominati da `.md` a `.md.txt`; per ciascuno il vecchio nome è assente,
+il nuovo nome è presente e il suo SHA256 attuale coincide con lo SHA256
+pre-rinomina registrato. I sei nomi e hash sono conservati nello stdout
+dell'audit. Questo confronto documenta byte identici ai pin registrati;
+non attribuisce al comando combinato un esito diverso.
+
+`spikes/out/4001086070-command-61411-0/report.lisp` esegue soltanto
+`make links`: **OK/exit0**, finito/signalNIL/STABLE1019, stesso HEAD.
+Stdout esatto: invocazione checker e
+`511 file, 3430 link controllati, 0 rotti`; stderr vuoto.
+È questo controllo successivo dei collegamenti a essere PASS.
+
+Il record di compattazione
+`spikes/out/4001085907-command-57424-0/report.lisp` è inoltre
+OK/exit0/STABLE1019. Il raw coverage compresso viene decodificato dalla
+API evidence; il risultato conserva3374141byte e SHA256
+`2def05b7cc27de690b6a26bc16a02a3dac6d610c0ba024eddeb38bca27a9e298`,
+identico al raw letto prima del freeze. L'audit non ripete la campagna.
+
+## Pin e conservazione
+
+Tutti e quattro i record originali hanno i quattro pin invariati prima
+e dopo; il lettore li confronta anche con i file correnti:
+
+| Fonte | Blob |
+| --- | --- |
+| src/codec/cbor-string-read.lisp |d4a4f774c2264c46349e7eda61ee4a2a3118d742|
+| tests/codec/cbor-string-read-support.lisp |cfd55cd47d782673113e67af625c1360195a345c|
+| tests/codec/cbor-string-read.lisp |8437bdcaa4cf308dbf4614e748cdab4be2ae6d62|
+| tests/codec/cbor-string-read-threads.lisp |8fc4ae5d9214108a6ae6bf26e644db1a42733cdd|
+
+Le osservazioni complete byte/SHA256 degli otto input fisici, inclusi
+descriptor, payload, lettore e record, sono nel raw registrato e identiche
+prima/dopo. Si conservano sia il fallimento del comando combinato sia la
+successiva correzione/verifica links. Nessuna promozione automatica di
+requisiti o attestazione MC/DC/C1 da questo audit di dati.

@@ -1,0 +1,3 @@
+  CBOR string read fuzz: seed53545239, 1024 casi, 512 successi e 64 ciascuno byte/type/nonminimal/truncated/utf8/range/byte-limit/empty.
+  CBOR string read: onda 0, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 4069900/4069907/4070759, sink 84649984; worker 1 start/first/end 4069931/4069936/4070875, sink 85010432; overlap 828 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+  CBOR string read: onda 1, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 4070762/4070762/4071729, sink 84649984; worker 1 start/first/end 4070877/4070878/4071819, sink 85010432; overlap 852 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.

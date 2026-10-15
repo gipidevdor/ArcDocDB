@@ -20,7 +20,9 @@ durante la chiamata e durante l'uso dell'intervallo restituito. Più
 worker possono leggerlo insieme; la funzione non possiede scratch.
 
 Il [metodo preregistrato](cbor-stringa-lettura-metodo.md) specifica errori,
-precedenze e limiti. Il lettore minimo esistente verifica la testata;
+precedenze e limiti; i [risultati conservati](cbor-stringa-lettura-risultati.md)
+riportano corpus, parallelismo, misure e copertura.
+Il lettore minimo esistente verifica la testata;
 prima dell'UTF-8 si verifica che l'intero payload sia presente. Non ci
 sono conversione in stringa Common Lisp, normalizzazione o scelte sul
 profilo documentale. REQ-CBR-009 è un requisito locale del codec; qualifica

@@ -1,0 +1,115 @@
+# Corpus freddo della lettura delle stringhe CBOR minime
+
+Congelato il2026-10-15 sul contratto REQ-CBR-009 comunicato prima
+del kernel. L'autore del corpus è distinto dall'autore del prodotto.
+Il lettore DATA verifica esplicitamente che
+`src/codec/cbor-string-read.lisp` non esiste ancora. Nessun LOAD,
+COMPILE o chiamata del corpus o del prodotto.
+
+Firma del corpus: i tre blob e SHA256 completi della tabella sottostante.
+Si tratta di identificazione dei byte congelati, non di autenticità
+o firma crittografica del processo di esecuzione.
+
+## Pin e lettura DATA
+
+| File | Byte | Blob Git | SHA256 |
+| --- | ---: | --- | --- |
+| tests/codec/cbor-string-read-support.lisp |5184|cfd55cd47d782673113e67af625c1360195a345c|461556a3a18f30a44a0eec63c574ca3e68bf27a57863318a7b9b1a1468a29a96|
+| tests/codec/cbor-string-read.lisp |12677|8437bdcaa4cf308dbf4614e748cdab4be2ae6d62|b89e7b3f1b07556c4c5240ae077f84479abcc5e6f567b4988b9c49a26fbc5084|
+| tests/codec/cbor-string-read-threads.lisp |3617|8fc4ae5d9214108a6ae6bf26e644db1a42733cdd|ba71397bb3fdc50da2ec4f4f0153ce0018a085981bf02357f1d3cb57467ad75b|
+
+Lettura READ-EVAL NIL fino a EOF: **12/17/2 forme**, totale31,
+**16 nominali seriali+1 parallelo**,17 nomi DEFTEST unici. Package
+stub soltanto per READ, senza valutare le forme lette. Strumento
+`review/read-blind-corpus.lisp`, output/error omonimi conservati;
+exit0, stderr vuoto. La prima lettura inline, anch'essa riuscita,
+precede il lettore fisico; non si inventa uno stdout locale per essa.
+
+## Contratto e oracoli
+
+`leggi-stringa-cbor-minima` restituisce esattamente tre fixnum
+MAJOR/PAYLOAD-START/NEXT. Solo MT2 raw e MT3 UTF8, definite e minime;
+START<PAYLOAD-START<=NEXT<=END. Zero payload ammesso. Tutto il buffer
+fisico rimane immutato; la coda non viene interpretata ma contribuisce
+al budget dell'intera finestra END−START.
+
+Oracoli letterali e testate aritmetiche fredde, mai writer/reader del
+prodotto come riferimento. Le lunghezze0/1/23/24/255/256/65535/65536
+verificano tutte le larghezze utili; header u64 minimi fino a2^64−1
+senza payload verificano HIGH e LOW contro la finestra.
+MT2 include tutti i256 octet e sequenze non UTF8. MT3 include NUL,
+BOM, noncaratteri e frontiere U+007F/U+0080/U+07FF/U+0800/U+D7FF/
+U+E000/U+10000/U+10FFFF; nessuna normalizzazione.
+
+`csr-probe` usa START0/7 e code vuota, scalare valido00, FF e1C1800.
+Concatenazione controllata con frontiere assolute e payload vuoti;
+nessuno scanner secondario è usato come oracolo o incluso nei conteggi.
+
+Precedenze congelate: range→byte-limit→byte-budget→sintassi header→
+minimalità→major2/3→fit intero payload→UTF8. Offset preflight NIL;
+tipo a START, CBOR troncato a END, UTF8 ai propri offset assoluti.
+Esempi: `63 FF` produce CBOR-truncated a END prima di UTF8-leading;
+`61 C2` con coda80 produce UTF8-truncated al NEXT del payload, senza
+usare80 per completare la sequenza. Header minimo MT4 con HIGH1
+produce string-type a START prima del fit della lunghezza enorme.
+Header riservati/nonminimi precedono il controllo del major.
+
+## Denominatore statico
+
+| Nominale seriale (ordine nel file) | Successi | Rifiuti |
+| --- | ---: | ---: |
+| literal-empty-utf8-and-unread-tails |112|0|
+| length-width-boundaries-and-payload-offset |128|0|
+| raw-bytes-never-validated-as-utf8 |72|0|
+| concatenation-and-zero-length-payload-frontiers |5|1|
+| buffer-type-range-and-backing-array-preserved |0|16|
+| byte-limit-domain-and-preflight-precedences |0|10|
+| budget-covers-whole-window-and-empty-span |2|4|
+| type-precedes-fit-for-every-other-major |0|30|
+| header-syntax-and-minimality-precede-type |0|76|
+| nonminimal-lengths-before-fit-or-utf8 |0|32|
+| u64-length-and-low-word-fit-before-payload |0|16|
+| every-header-and-payload-truncation-at-authorized-end |6|114|
+| utf8-reasons-and-absolute-payload-offsets |0|36|
+| fit-before-utf8-and-validation-stops-at-payload-end |8|16|
+| full-16MiB-window-payload-and-one-byte-over |3|3|
+| fixed-seed-1024-fuzz-and-frozen-classes |512|512|
+| due worker riusati, due ondate |8192|0|
+| **Totale nuova API** |**9040**|**866**|
+
+**9906 chiamate previste**:690non-fuzz336/354 +1024fuzz512/512
++8192parallele. È aritmetica del piano, non un contatore runtime.
+Tutti i successi verificano arità/tipi/frontiere/intero buffer; ogni
+rifiuto verifica classe/motivo/offset, nessun ritorno normale e buffer
+intero immutato, compresi backing e celle oltre il fill-pointer invalidi.
+
+Fuzz LCG32: state=(1664525×state+1013904223) mod2^32,
+seme **53545239**, finale **F8417639** dopo1024 passi, ricomputato
+freddamente. Iteration mod16: otto classi successo e otto rifiuto,
+512 successi e64 ciascuno byte/type/nonminimal/truncated/UTF8/range/
+byte-limit/empty; vettore successo=(state>>8) mod8, START=state mod16.
+Conteggi e finale sono asseriti dal corpus, non già eseguiti.
+
+## Calcolo parallelo
+
+Un solo buffer read-only di25byte, contenuto da START7:
+`44 00 FF 1C 80 63 E2 82 AC`, coda `FF 1C 18 00`, END20.
+Due worker reali riusati per due ondate da2048 chiamate ciascuno:
+**8192 letture**, senza scratch o destinazioni condivise scrivibili.
+
+| Worker | START | MAJOR/PAYLOAD-START/NEXT | Token | Sink per ondata |
+| --- | ---: | --- | ---: | ---: |
+|0|7|2/8/12|41333|84649984|
+|1|12|3/13/16|41509|85010432|
+
+Token=17×MAJOR+31×PAYLOAD-START+NEXT+somma((i+1)×buffer[i]),
+ricomputato senza prodotto. Ogni chiamata controlla tre valori,
+frontiere e intero buffer fisico. Ogni worker stampa START/FIRST/END
+e sink; FIRST segue la prima chiamata letta e verificata, poi READY/GO.
+Il supervisore attende entrambi i READY prima di GO, e poi entrambi
+i DONE; verifica ordine timestamp, overlap positivo e sink.
+
+Attesa15s, join20s e cleanup con cessazione verificata riusano gli
+helper generici della struttura CBOR. Il WALL include rendezvous e
+controlli; nessuna inferenza sul solo decoder, sui core o sullo scaling.
+Tutti i risultati runtime e la qualifica C1/MC/DC restano pendenti.

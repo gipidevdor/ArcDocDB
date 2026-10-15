@@ -1,0 +1,17 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((record (arcdocdb.evidence:read-evidence "spikes/out/4001085107-command-33694-0/report.lisp"))
+       (lines (uiop:split-string (getf record :stdout) :separator '(#\Newline)))
+       (marker "build e test: nessun avviso, tutti i controlli superati")
+       (position (position marker lines :test #'string=))
+       (before (subseq lines 0 position))
+       (nominals (remove-if-not (lambda (line) (uiop:string-prefix-p "ok    TEST-" line)) before)))
+  (format t "STATUS~S/exit~S/sources~D/HEAD~A command~S markers~D position~S lines~D nominal~D unique~D~%"
+    (getf record :status) (getf record :exit-code) (length (getf record :source-blobs-before))
+    (getf (getf record :environment) :commit) (getf record :command) (count marker lines :test #'string=) position
+    (length lines) (length nominals) (length (remove-duplicates nominals :test #'string=)))
+  (dolist (line lines)
+    (when (or (and (search "ok" line) (not (uiop:string-prefix-p "ok    TEST-" line)))
+              (search "nessun avviso" line) (search "lint" line :test #'char-equal)
+              (search "trace" line :test #'char-equal) (search "link" line :test #'char-equal))
+      (when (< (length line) 500) (write-line line)))))

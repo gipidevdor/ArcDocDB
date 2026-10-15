@@ -1,0 +1,16 @@
+Preparazione della raccolta, 2026-10-15.
+
+La prima versione di create-plan chiamava impropriamente backup gli input
+sintetici esclusi, che erano ancora nella directory originale ignored.
+Non aveva verificato una seconda copia. Il sorgente eseguito e il suo
+record 4001085963-command-59411-0 sono conservati; la versione successiva
+nomina correttamente il supporto originale, senza promuovere il campo
+a verifica di backup. La copia separata e il suo confronto sono finali.
+
+La build integrata del record 4001085841-command-55587-0 ha superato
+compilazione, suite, lint e trace. La fase links e fallita su 282 link
+relativi nelle copie storiche parziali di Markdown sotto spikes/out.
+Quelle copie sono state rinominate .md.txt, mantenendo i byte originali
+e verificando SHA256 prima/dopo (record 4001086038-command-60740-0).
+Il controllo links successivo e distinto; il fallimento non e eliminato
+o riclassificato come esito positivo della build combinata.

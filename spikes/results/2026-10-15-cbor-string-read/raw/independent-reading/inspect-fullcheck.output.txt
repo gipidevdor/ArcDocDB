@@ -1,0 +1,40 @@
+STATUS:OK/exit0/sources1015/HEADf7c9e0503577b45e2bd20de66c72b6e7232a8c76 command("make"
+                                                                                 "check-core") markers1 position3872 lines4805 nominal1739 unique1739
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/src/get/lookup.lisp" (written 15 OCT 2026 08:13:37 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/src/get/lookup-tmp6F83SDCV.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/tests/smoke.lisp" (written 15 OCT 2026 08:13:37 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/tests/smoke-tmpHX0IAQ8A.fasl
+ok    package ARCDOCDB presente
+ok    ARCDOCDB:*VERSION* è una stringa
+ok    TEST-REQ-CON-005-POOL-INDEPENDENT-CONTROLLERS-HAVE-DETERMINISTIC-PARALLEL-TRACES
+ok    TEST-REQ-AFF-008-POOL-DISPATCH-CORRUPT-LINK-FAULTS-AFTER-CLAIM-WITHOUT-BEGIN-OR-ROLLBACK
+ok    TEST-REQ-AFF-008-POOL-START-DEFENSIVE-STATUS-AND-LINK-PAIRS-ARE-OPERATIONAL
+ok    TEST-REQ-AFF-008-IO-RENAME-NATIVE-VERIFIED-HARDLINK-ALIAS-BEFORE-RENAME
+ok    TEST-REQ-AFF-008-CONTROL-NATIVE-SOURCE-SYMLINK-REJECTED-BEFORE-EFFECTS
+ok    TEST-REQ-AFF-008-CONTROL-NATIVE-TARGET-SYMLINK-REJECTED-BEFORE-EFFECTS
+ok    TEST-REQ-AFF-008-CONTROL-NATIVE-HARDLINK-ALIAS-REJECTED-BEFORE-EFFECTS
+ok    TEST-REQ-AFF-008-ROUTING-CORRUPT-LINK-IS-DETECTED-BEFORE-LEASE-OR-POP
+ok    test-REQ-REC-001-vertical-native-SIGKILL-reopen-v1-v2
+ok    test-REQ-VAL-001-vertical-oracle-rejects-wrong-value
+ok    test-REQ-REC-001-vertical-resume-writes-second-SIGKILL-v1-v2
+ok    test-REQ-VAL-001-vertical-oracle-rejects-reused-CSN
+build e test: nessun avviso, tutti i controlli superati
+sbcl --script tools/lint.lisp src
+sbcl --script tools/lint.lisp --self-test
+ok    bad.lisp: COD-02 COD-03 COD-12 COD-20 COD-22 COD-34 COD-43 COD-50
+ok    good.lisp: nessuna violazione
+ok    keyword-barrier.lisp: nessuna violazione
+ok    qualified-reader.lisp: COD-34
+sbcl --script tools/check-trace.lisp
+sbcl --script tools/check-links.lisp .
+506 file, 3419 link controllati, 0 rotti
+Backtrace for: #<SB-THREAD:THREAD tid=259 \"main thread\" RUNNING {80086A0423}>
+Backtrace for: #<SB-THREAD:THREAD tid=259 \"main thread\" RUNNING {80086A0423}>
+  (:NAME "ok-with-failing-exit" :STATUS :OK :DETAIL
+   "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-If3HHe/case-31-ok-with-failing-exit/"
+  (:NAME "ok-with-changed-source" :STATUS :OK :DETAIL
+   "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-If3HHe/case-32-ok-with-changed-source/"
+  (:NAME "source-leaf-symlink" :STATUS :OK :DETAIL
+    "File regolare senza symlink finale: /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/command-archive-collector-self-test-If3HHe/case-38-source-leaf-symlink/inputs/config/../raw/link.bin")
+   "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-If3HHe/case-38-source-leaf-symlink/"
+                Stream: #<SB-SYS:FD-STREAM for \"file /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/command-archive-collector-self-test-If3HHe/case-53-record-read-eval-disabled/inputs/records/ok.lisp\" {80060ECF63}>")

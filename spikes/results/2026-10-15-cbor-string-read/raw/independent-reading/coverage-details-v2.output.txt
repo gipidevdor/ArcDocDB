@@ -1,0 +1,15 @@
+WAVE 0 stamps(22407872 22407877 22408822)/(22407909 22407914 22408964) sinks84649984/85010432 overlap913 fixture-wall ticks, 4096 declared calls.
+WAVE 1 stamps(22408823 22408824 22409898)/(22408966 22408967 22410016) sinks84649984/85010432 overlap932 fixture-wall ticks, 4096 declared calls.
+CLASSIFICATION all45missed: top-level IN-PACKAGE0/DECLAIM1,2,47=4expr; default MAX-BYTES180=1expr; internal SPAN37..40=4expr+branch36; FORM62..67,COUNT117..122,PROGRESS136..141,PAYLOAD148..153,RANGE160..165=30expr+branches61,116,135,147,159. No exclusions.
+SELFTEST wrapper schema1/ok/exit0/signalNIL/completed/STABLE1015/HEADf7c9/4pins, exact CLI/stdout; stderr0.
+OBSERVATIONS (("spikes/out/4001085107-command-33695-0/report.lisp" 213480
+               "efe91f7d48abfe59c2e0d998979b33b95506acc8bd37dfff92420cb2edbd9d67")
+              ("spikes/out/4001085107-command-33696-0/report.lisp" 211172
+               "f1bfb486e47a2d79abfdd0a0f44e6f75819b2b0a1942f180c4901cc5d7b95dae")
+              ("spikes/out/cbor-string-read-20261015/coverage/coverage-state.lisp"
+               3374141
+               "2def05b7cc27de690b6a26bc16a02a3dac6d610c0ba024eddeb38bca27a9e298")
+              ("spikes/out/cbor-string-read-20261015/independent-reading/coverage-details-v2.lisp"
+               7947
+               "6afde4a85aea9cad56240e28c389c8172f92ef633a84388d58b4a77877fda5a5"))
+C4 DETAILS PASS checks131; DATA only, no product/test/driver LOAD/compile/call.

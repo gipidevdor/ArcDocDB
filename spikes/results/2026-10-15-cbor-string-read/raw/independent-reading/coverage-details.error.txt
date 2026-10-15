@@ -1,0 +1,27 @@
+
+; file: /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/independent-reading/coverage-details.lisp
+; in:
+;      LET* ((OBSERVATIONS (MAPCAR #'OBSERVATION *PATHS*))
+;        (SOURCE-PINS (MAPCAR (LAMBDA (PIN) (LIST # #)) *PINS*))
+;        (COVERAGE (ARCDOCDB.EVIDENCE:READ-EVIDENCE (FIRST *PATHS*)))
+;        (SELFTEST (ARCDOCDB.EVIDENCE:READ-EVIDENCE (SECOND *PATHS*)))
+;        (LINES
+;         (UIOP/UTILITY:SPLIT-STRING (GETF COVERAGE :STDOUT) :SEPARATOR
+;                                    '(#\Newline)))
+;        (WORKERS
+;         (REMOVE-IF-NOT (LAMBDA (LINE) (SEARCH "CBOR string read: onda " LINE))
+;                        LINES))
+;        (PREVIOUS-ENDS #(0 0)))
+;     (AREF STRING.COVERAGE.DETAILS::PREVIOUS-ENDS STRING.COVERAGE.DETAILS::WORKER)
+; --> FUNCALL 
+; ==>
+;   1
+; 
+; caught WARNING:
+;   Destructive function (SETF AREF) called on constant data: #(0 0)
+;   See also:
+;     The ANSI Standard, Special Operator QUOTE
+;     The ANSI Standard, Section 3.7.1
+; 
+; compilation unit finished
+;   caught 1 WARNING condition

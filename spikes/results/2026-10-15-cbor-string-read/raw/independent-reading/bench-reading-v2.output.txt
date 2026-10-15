@@ -1,0 +1,23 @@
+FUZZ independent seed43535239 finalD8407639,1024pairs/2048declaredcalls,items130131,tokens4270814;8families128.
+FIXTURE :BYTES-EMPTY values(2 4 4) token194 checksum10448;5samplesheap0.
+FIXTURE :BYTES-23 values(2 4 27) token907 checksum131198;5samplesheap0.
+FIXTURE :BYTES-24 values(2 5 29) token986 checksum146914;5samplesheap0.
+FIXTURE :BYTES-256 values(2 6 262) token8226 checksum9091541;5samplesheap0.
+FIXTURE :BYTES-65536 values(2 8 65544) token2032002 checksum547826809718;5samplesheap0.
+FIXTURE :TEXT-EMPTY values(3 4 4) token195 checksum10576;5samplesheap0.
+FIXTURE :TEXT-23 values(3 4 27) token908 checksum73182;5samplesheap0.
+FIXTURE :TEXT-24 values(3 5 29) token987 checksum80682;5samplesheap0.
+FIXTURE :TEXT-256 values(3 6 262) token8227 checksum3651413;5samplesheap0.
+FIXTURE :TEXT-65536 values(3 8 65544) token2032003 checksum208436378614;5samplesheap0.
+FIXTURE :RAW-256 values(2 6 262) token8226 checksum6099541;5samplesheap0.
+FIXTURE :UNICODE-16 values(3 4 20) token691 checksum66259;5samplesheap0.
+BENCH60heap-present0 samples;timed61440/warm3840/cold12/total65292;items675727360/windows675973120;sample-seconds4.053010.
+OUTERHEADf7c9e0503577b45e2bd20de66c72b6e7232a8c76 sources1015 wall10.230927d0,innerMD5files248;positiveheap16777472/nullheap0;C4checks71989.
+PHYSICAL(("spikes/out/4001085071-command-33054-0/report.lisp" 296391
+          "e50cf294831a3c4f465f3868dc5fa92dd7ecc517da273e50cd708a949304f0fc")
+         ("spikes/out/cbor-string-read-20261015/independent-reading/bench-reading-v2.lisp"
+          14539
+          "915cf7db359bd2d99a933bf49e3b62aef9848c31776547fcf4bbf4707c0be673")
+         ("tools/cbor-string-read-driver.lisp" 22062
+          "3ab22f03b76e4990f0a17760542c19d00339bae63607b1266e26464378e62143"))
+DATAonly no product/corpus/driver LOAD/compile/call;denominators arithmetic/declared,not instrumentedcalls;no absolute-nonallocation/throughput/scaling/MC-DC claim.

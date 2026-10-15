@@ -1,0 +1,8 @@
+Preparazione accessoria fallita prima della lettura DATA: exit1,
+SIMPLE-ERROR, "Multiple expressions in --eval option".
+La forma originale e conservata in query-before-reader.lisp.txt.
+Questo e un estratto diagnostico; il backtrace completo resta nel tool
+della conversazione, non e stato registrato come file stderr fisico.
+Nessuna esecuzione del prodotto, nessuna lettura dei rapporti da quella
+query e nessuna inferenza di fallimento della campagna. La variante
+successiva e il lettore completo reading.lisp, conservato separatamente.

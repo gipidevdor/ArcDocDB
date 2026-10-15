@@ -1,0 +1,74 @@
+build e test: nessun avviso, tutti i controlli superati
+sbcl --script tools/lint.lisp src
+246 file, 0 violazioni
+sbcl --script tools/lint.lisp --self-test
+ok    bad.lisp: COD-02 COD-03 COD-12 COD-20 COD-22 COD-34 COD-43 COD-50
+ok    good.lisp: nessuna violazione
+ok    keyword-barrier.lisp: nessuna violazione
+ok    qualified-reader.lisp: COD-34
+sbcl --noinform --no-userinit --no-sysinit --script tools/snapshot-mutation.lisp --self-test
+Snapshot: fixture processi conservate in /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/4001085199-snapshot-self-test-36290-0/report.lisp
+(:SOURCE-CONSISTENCY :STABLE :SOURCE-FINGERPRINTS-AFTER
+ ((:FILE "src/foundation/package.lisp" :MD5
+   #A((32) BASE-CHAR . "5ee593a112958d94163dab17c5aa4ba2"))
+  (:FILE "src/foundation/conditions.lisp" :MD5
+   #A((32) BASE-CHAR . "942b596396c19815290a57830af2121b"))
+  (:FILE "src/foundation/binary.lisp" :MD5
+   #A((32) BASE-CHAR . "a06115175f450776762761dce25acdb8"))
+  (:FILE "src/foundation/crc32c.lisp" :MD5
+   #A((32) BASE-CHAR . "4db58e2f48bf77d751f1b83bb9f84b5c"))
+  (:FILE "src/foundation/record.lisp" :MD5
+   #A((32) BASE-CHAR . "c3ed0f09fa3fa6fe20c98e2ed6e69abe"))
+  (:FILE "src/foundation/batch.lisp" :MD5
+   #A((32) BASE-CHAR . "ca642ea47e4bff76f78f5b6d7287d6bd"))
+  (:FILE "src/csn/package.lisp" :MD5
+   #A((32) BASE-CHAR . "1130012fc5613a5648d22ed8628be0e8"))
+  (:FILE "src/csn/registry.lisp" :MD5
+   #A((32) BASE-CHAR . "a1cdb5661fc54beba5bf00e4765f3235"))
+  (:FILE "src/mvcc/package.lisp" :MD5
+   #A((32) BASE-CHAR . "f188d1dbd5d0adb49f53acf09157aef9"))
+  (:FILE "src/mvcc/types.lisp" :MD5
+   #A((32) BASE-CHAR . "a9bc70eab6720b5c6f8503178e2c966b"))
+  (:FILE "src/mvcc/snapshots-types.lisp" :MD5
+   #A((32) BASE-CHAR . "475517bd7ba04a1c37a82efeb8ff73d9"))
+  (:FILE "src/mvcc/snapshots-core.lisp" :MD5
+   #A((32) BASE-CHAR . "8bb066aab61a18eff175b9edb11e42a2"))
+STDERR chars1444252 first2000:
+
+; file: /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/src/hash/arithmetic.lisp
+; in: DEFUN READ64
+;     (DEFUN ARCDOCDB.HASH64::READ64 (ARCDOCDB.HASH64::BUFFER POSITION)
+;       "Pre: otto byte nello span verificato. Post: parola LE nativa nel codice inline.
+;   Non restituita attraverso il confine pubblico; nessuna modifica del buffer."
+;       (LOGIOR (ARCDOCDB.HASH64::READ32 ARCDOCDB.HASH64::BUFFER POSITION)
+;               (ASH
+;                (ARCDOCDB.HASH64::READ32 ARCDOCDB.HASH64::BUFFER (+ POSITION 4))
+;                32)))
+; --> SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA 
+; ==>
+;   #'(SB-INT:NAMED-LAMBDA ARCDOCDB.HASH64::READ64
+;         (ARCDOCDB.HASH64::BUFFER POSITION)
+;       (DECLARE (SB-C::TOP-LEVEL-FORM))
+;       "Pre: otto byte nello span verificato. Post: parola LE nativa nel codice inline.
+; Non restituita attraverso il confine pubblico; nessuna modifica del buffer."
+;       (BLOCK ARCDOCDB.HASH64::READ64
+;         (LOGIOR (ARCDOCDB.HASH64::READ32 ARCDOCDB.HASH64::BUFFER POSITION)
+;                 (ASH (ARCDOCDB.HASH64::READ32 ARCDOCDB.HASH64::BUFFER #) 32))))
+; 
+; note: doing unsigned word to integer coercion (cost 20) to "<return value>"
+
+; in: DEFUN ROTATE64
+;     (DEFUN ARCDOCDB.HASH64::ROTATE64 (ARCDOCDB.HASH64::VALUE COUNT)
+;       "Pre: u64 e rotazione tra 1 e 63. Post: rotazione circolare modulo 2^64.
+;   Helper inline; i chiamanti fissano COUNT a una costante dell'algoritmo."
+;       (LOGAND ARCDOCDB.HASH64::+MASK64+
+;               (LOGIOR (ASH ARCDOCDB.HASH64::VALUE COUNT)
+;                       (ASH ARCDOCDB.HASH64::VALUE (- COUNT 64)))))
+; --> SB-IMPL::%DEFUN SB-IMPL::%DEFUN SB-INT:NAMED-LAMBDA 
+; ==>
+;   #'(SB-INT:NAMED-LAMBDA ARCDOCDB.HASH64::ROTATE64
+;         (ARCDOCDB.HASH64::VALUE COUNT)
+;       (DECLARE (SB-C::TOP-LEVEL-FORM))
+;       "Pre: u64 e rotazione tra 1 e 63. Post: rotazione circolare modulo 2^64.
+; Helper inline; i chiamanti fissano COUNT a una costante dell'algoritmo."
+;     

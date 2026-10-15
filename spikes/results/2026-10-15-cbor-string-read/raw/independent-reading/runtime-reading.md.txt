@@ -1,0 +1,180 @@
+# Lettura C4 indipendente — stringhe CBOR
+
+Lettura DATA il 2026-10-15 da parte dell'autore del corpus cieco, distinto
+dall'autore del kernel e dei driver. Non sono stati caricati, compilati o
+chiamati prodotto, corpus o driver da questi audit. Il solo modulo di
+lettura caricato è `tools/evidence-storage.lisp`, blob
+`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`. READ-EVAL NIL e una sola
+forma con EOF sono verificati dove si leggono forme dati; i record gzip
+passano da `arcdocdb.evidence:read-evidence` e dai suoi controlli fisici.
+Nessuna fonte, HEAD o index modificati. Nessuna nuova prova del prodotto.
+
+## Record conclusi e versioni riproducibili
+
+Tutti i record del prodotto sotto hanno HEAD
+`f7c9e0503577b45e2bd20de66c72b6e7232a8c76`, 1015 sorgenti distinti
+prima/dopo identici e stato STABLE. Il benchmark ha anche 248 file MD5
+interni effettivi, controllati dinamicamente prima/dopo, non un numero
+dedotto dai metadata esterni. I quattro pin sono invariati nei record e
+nel filesystem al momento della lettura:
+
+| Fonte | Blob |
+| --- | --- |
+| src/codec/cbor-string-read.lisp | d4a4f774c2264c46349e7eda61ee4a2a3118d742 |
+| tests/codec/cbor-string-read-support.lisp | cfd55cd47d782673113e67af625c1360195a345c |
+| tests/codec/cbor-string-read.lisp | 8437bdcaa4cf308dbf4614e748cdab4be2ae6d62 |
+| tests/codec/cbor-string-read-threads.lisp | 8fc4ae5d9214108a6ae6bf26e644db1a42733cdd |
+
+Input originali: benchmark `spikes/out/4001085071-command-33054-0/report.lisp`;
+copertura `spikes/out/4001085107-command-33695-0/report.lisp`;
+selftest scope `spikes/out/4001085107-command-33696-0/report.lisp`;
+fullcheck `spikes/out/4001085107-command-33694-0/report.lisp` (descriptor
+e gzip entrambi letti e improntati). Ogni lettore verifica i byte e SHA256
+fisici dei suoi input prima/dopo; le osservazioni complete sono nei raw.
+
+La versione finale dei primi tre lettori è stata eseguita una volta sotto
+`tools/record-command.lisp`, attraverso `run-final-data-readers.lisp`:
+**`spikes/out/4001085677-command-51505-0/report.lisp`**, blob
+`33139eca946ea7a0ccdb7640bc3caf75c2795ff3`: schema1 command-verification,
+OK, exit0, stderr vuoto, fonti STABLE. Ciascuno dei tre subprocessi ha
+exit0 e stderr vuoto; il wrapper conserva gli stdout integrali e argv.
+
+| Lettore finale | Blob |
+| --- | --- |
+| bench-reading-v2.lisp | 5ca90a23d8cb43edf038ffa618554e959da0f376 |
+| coverage-reading-v3.lisp | 3ea60d6f94242610f5448c2bd83dd8f806bd1585 |
+| coverage-details-v2.lisp | 0ad476b261160ecddcecb27ac5cd84198d027cb8 |
+| run-final-data-readers.lisp | 3f642df8906c2fd1b387806741463d5f609a8f2d |
+
+## Benchmark
+
+PASS di 71989 controlli DATA. Non basta `:status`: controllati struttura e
+unicità chiavi, EOF del risultato interno, schema/status/stabilità,
+comando e driver congelato `a6b65bd233dba2a2eec941d96a75b9db948d19f8`,
+4 pin, inventari interni, tre valori, denominatori interi, campioni e
+checksum del buffer fisico intero. Ricostruiti indipendentemente tutti i
+12 buffer da header letterali e aritmetica fredda, senza writer prodotto:
+MT2/MT3 vuoti, lunghezze23/24/256/65536, RAW256, Unicode16. Valori,
+token, checksum, dimensioni fisiche, finestra autorizzata, conteggio
+consumato e sink coincidono per ogni fixture e per tutti i 60 campioni.
+
+Tutti i 60 campioni hanno `heap-bytes` presente, intero e pari a0;
+baseline nulla0 e sensore positivo16777472 byte (16 allocazioni da1MiB
+più overhead osservato) impediscono di confondere una misura assente con0.
+61440 chiamate timed +3840 warm +12 cold =65292 dichiarate dal driver;
+675727360 byte item e675973120 byte di finestre autorizzate timed.
+La somma delle durate dei campioni è4.053010 secondi, il comando intero
+10.230927d0 secondi. Misure includono il consumatore seriale: nessuna
+misura di decoder puro, nessuna stima di throughput o heap assolutamente
+nullo per ogni esecuzione possibile.
+
+Differenziale:12 successi e24 rifiuti,36 chiamate dichiarate.
+Fuzz:1024 coppie/2048 chiamate dichiarate, seed43535239, finaleD8407639,
+8 famiglie da128,130131 byte item riusciti e token aggregato4270814,
+ricomputati dal lettore. Questo seed del driver è distinto da53545239
+del corpus. Sono conti aritmetici del piano/driver, non contatori
+strumentati delle chiamate effettive all'API.
+
+## Copertura grezza e inventario completo dei mancanti
+
+PASS di222140 controlli del lettore principale più131 del lettore dettagli.
+Il raw contiene423 file dell'intero sistema,2358/178944 espressioni e
+219/22440 rami; questi dati globali non sono lo scope di questo incremento.
+Il report seleziona esattamente un file, `src/codec/cbor-string-read.lisp`:
+**116/155 espressioni,20/26 rami**,181 record complessivi. Raw, HTML del
+file e index coincidono; le percentuali HTML sono74.8 e76.9 per il solo
+arrotondamento. Nessun denominatore ridotto o record escluso.
+
+Tutti i45 record a0 sono elencati con path e forma nello stdout del
+lettore principale e verificati per ID nel lettore dettagli:
+
+| Classificazione | ID espressioni mancanti | ID rami mancanti | Motivo e limite |
+| --- | --- | --- | --- |
+| Top-level |0,1,2,47|nessuno|IN-PACKAGE e tre DECLAIM, rappresentati da SB-COVER nel denominatore. Non prove runtime del corpo.|
+| Default keyword |180|nessuno|MAX-BYTES default; il corpus passa esplicitamente il budget. Resta mancante.|
+| Invariante SPAN, riga20/21 |37–40|36|4 espressioni della segnalazione; SPAN<=budget<=16MiB dopo i controlli anteriori corretti.|
+| Invariante FORM, riga41/42 |62–67|61|6 espressioni; il lettore minimo corretto restituisce :ARGUMENT.|
+| Invariante COUNT, riga53/54 |117–122|116|6 espressioni; il conteggio UTF8 corretto non supera i byte LOW.|
+| Invariante PROGRESS, riga55/56 |136–141|135|6 espressioni; un header valido avanza da BEGIN a PAYLOAD-START.|
+| Invariante PAYLOAD, riga57/58 |148–153|147|6 espressioni; LOW non negativo e somma verificata.|
+| Invariante RANGE, riga59/60 |160–165|159|6 espressioni; il fit prima della somma garantisce NEXT<=LIMIT.|
+
+Totali:4 top-level +1default +34 espressioni nei sei ERROR interni =39;
+sei rami ELSE interni =6. Le motivazioni degli invarianti sono obblighi
+statici con dipendenze corrette, non coppie runtime inventate o esclusioni.
+Tutte le altre116 espressioni e20 direzioni di ramo sono osservate a1.
+Non si attesta MC/DC o completezza C1 dalla percentuale SB-COVER.
+
+## Corpus, worker e selftest scope
+
+Copertura:17 nominali unici, tutti REQ-CBR-009-STRING, coincidono con il
+corpus congelato; nessuna compilazione/prova nuova da questo audit.
+Il piano freddo conserva9906 chiamate dichiarate:690 non-fuzz,1024 fuzz,
+8192 parallele. Il log mostra il fuzz seed53545239 con1024 casi,
+512 successi e64 per ciascuna delle8 classi di rifiuto.
+
+Due worker realmente creati dal corpus condividono il buffer readonly
+e sono riusati in due ondate,4096 letture dichiarate per onda. Le attese
+dei tre valori sono(2 8 12) e(3 13 16), congelate prima del prodotto;
+non sono ristampate dal runtime. Sono verificati nel log i sink84649984
+e85010432, lo stesso ordine stampato e i limiti delle finestre dal corpus.
+
+| Onda | Worker0 start/first/end | Worker1 start/first/end | Overlap start/end ricalcolato |
+| --- | --- | --- | ---: |
+|0|22407872/22407877/22408822|22407909/22407914/22408964|913 tick|
+|1|22408823/22408824/22409898|22408966/22408967/22410016|932 tick|
+
+1000000 tick/s. Ordini per worker, continuità tra ondate e
+max(FIRST0,FIRST1)<=min(END0,END1) verificati. READY segue la prima
+chiamata verificata e il controller apre GO dopo entrambe le READY,
+come letto DATA nel corpus congelato. Sono intervalli WALL della
+fixture, con rendezvous e controlli; non attestano core, scaling o
+parallelismo CPU del decoder.
+
+Selftest scope: comando argv esatto, output esatto
+`Copertura: self-test del ramo mancante superato.`, stderr vuoto,
+exit0, fine presente, stato STABLE1015 e4pin; lo scope nel sorgente
+fissato contiene il positivo esatto e quattro negativi (test, suffisso
+.fake, figlio di .lisp, altro codec). Nessun risultato di quel selftest
+è contato come nominale prodotto.
+
+## Fullcheck: conteggio corretto del segmento prodotto
+
+Versione finale `fullcheck-reading.lisp`, blob
+`ee71645b173cf4bfe488f7fa3875ee1abdea0e30`, registrata una volta sotto
+`tools/record-command.lisp`:
+**`spikes/out/4001085792-command-54189-0/report.lisp`**, blob
+`e4c4d62886f4edcc9f0862e7988ac3190224ca7e`: OK/exit0/stderr0/STABLE,
+52 controlli DATA. Il descriptor originale e il suo payload gzip sono
+improntati prima/dopo e decodificati dal lettore evidence.
+
+Nel solo stdout precedente all'unica riga esatta
+`build e test: nessun avviso, tutti i controlli superati` (riga3873,
+indice1,4805righe complessive) ci sono **1743 nominali unici anche
+ignorando maiuscole/minuscole +2 smoke =1745 righe ok**. Il prefisso
+maiuscolo TEST- conta1739 e quello minuscolo test- conta4; questi ultimi
+comprendono la nuova resume. I17 nuovi nominali coincidono esattamente
+con i17 DEFTEST del corpus, letto solo DATA per31forme. Le fixture lint,
+mutation, evidence e collector dopo il marker sono escluse dal conteggio.
+Il log riporta246 file sorgenti/0violazioni e506file/3419link/0rotti.
+Lo stderr originale contiene1444252 caratteri,4088 occorrenze `note:` e
+0 `WARNING:`/`STYLE-WARNING:`; sono note del compilatore, non warning.
+
+## Conservazione dei tentativi
+
+Tutti i tentativi sono preservati, senza sostituire raw o diagnostici:
+`bench-reading.lisp` presumeva wrapper gzip mentre era plain e fallì;
+v2 gestisce entrambi. `prepare-coverage-reading.lisp` fallì per una
+sostituzione ridondante, poi l'invocazione del target non ancora creato
+fallì per file assente; v2 della preparazione lo crea. Il primo lettore
+coverage fallì sull'argv perché mancavano i due argomenti reali
+`--dynamic-space-size 4096`; v3 li confronta esattamente. Il primo
+`coverage-details.lisp` passò i controlli DATA ma produsse un WARNING
+nel solo lettore per SETF su vettore letterale; v2 usa VECTOR e il run
+finale ha stderr0. Gli output/error originali sono nel medesimo
+direttorio; non sono presentati come prove PASS del prodotto.
+
+I report registrati finali attestano gli exit e gli stderr finali; non
+sono state ricostruite artificialmente uscite raw. Solo file ignored
+sono stati creati. I pin sopra e le misure si riferiscono a f7c9e050,
+prima di integrazioni successive. Nessuna promozione automatica requisiti.

@@ -1,0 +1,1 @@
+Lettore DATA copertura adattato inspikes/out/cbor-string-read-20261015/independent-reading/coverage-reading.lisp; nessuna esecuzione prodotto.

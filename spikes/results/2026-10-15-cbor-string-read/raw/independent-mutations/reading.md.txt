@@ -1,0 +1,89 @@
+FREEZE, 2026-10-15: PASS della lettura DATA indipendente delle mutazioni R1.
+
+Revisore distinto dagli autori del kernel, del corpus e del driver.
+Il revisore ha eseguito anche la seconda lettura C1 del kernel; non ha
+creato o eseguito questi mutanti. Nessun nuovo LOAD, compilazione o test
+del prodotto: letti soltanto dati, sorgenti come byte e metadata.
+
+Lettore finale reading.lisp:
+c42c9bff07cd51c45a806f90dd25c52e1196ec72.
+Preparazione sintattica READ-EVAL NIL/EOF: 28 forme, exit0, stderr vuoto.
+Unica esecuzione della versione finale, sotto record-command:
+spikes/out/4001085732-command-52866-0/report.lisp.
+Record :ok, exit0, :stable, 1015 sorgenti, 4.845247 secondi,
+stderr vuoto. Output copiato integralmente in stdout.lisp, stderr.log;
+metadata effettivi in status.lisp, estrazione conclusa con exit0.
+
+Fonti di prova lette:
+mutations-R1/report.lisp e wrapper originale
+spikes/out/4001085241-command-38293-0/report.lisp;
+catalogo/driver/child correnti e copie nella campagna; nove piani,
+nove stdout DATA e nove stderr fisici dei child, oltre alle fonti.
+Wrapper originale :ok/exit0/:stable su HEAD
+f7c9e0503577b45e2bd20de66c72b6e7232a8c76; stdout e rapporto fisico
+semanticamente uguali. HEAD e kernel d4a4f774 rimasti invariati.
+
+Pin C4: run 867843182ed779ce3e69447d30c31e2108355a22;
+catalog df01668036d0b9fcd9825bb87b8830c621f86a3b;
+child 62d888ba880578cd047d594c47e358bc74c7645e.
+Quattro blob congelati kernel/corpus e tutti i 38 SHA origin-before /
+origin-after / current verificati. Driver before/after/current e copie
+completi e uguali. Il self-test incorporato conferma 12 classificazioni,
+due rifiuti del bersaglio e nessuna esecuzione del prodotto.
+
+4791 verifiche; 424 file fisici con SHA256, bytes e write-date invariati
+fra osservazioni iniziali e finali. Lettura DATA con READ-EVAL NIL/EOF;
+descriptor e relativo payload gzip autenticati tramite read-evidence
+quando presenti. Hash SHA256 in gruppi finiti di argomenti espliciti,
+senza shell o scoperta automatica dei file.
+
+342 confronti binari completi delle 38 fonti per ciascuna delle nove
+copie: baseline esatta; in ogni mutante cambia soltanto il kernel.
+I byte attesi del kernel sono ricostruiti indipendentemente con i soli
+frammenti del catalogo, presenti una sola volta, e confrontati con la
+copia fisica. Posizioni/frammenti, footprint e SHA dei piani concordano
+con le strutture del parent. I child fisici sono identici al congelato.
+Nove cache private hanno presenti i 38 FASL previsti, senza caricarli.
+
+Tutti i child dichiarano compilazione completa dei 38 file nell'ordine
+esatto e inventario dei 17 test. I nove raw sono uguali ai child-report
+del parent. Baseline phase :ok, tests-completed T, 17 passati, exit0 e
+signal NIL. Gli otto mutanti hanno phase :test-failed, tests-completed
+NIL, failed-test esattamente atteso e tests-passed uguale all'intero
+prefisso precedente; exit1, signal NIL, nessun timeout, parse error o
+errore del trasporto. Nessuna deduzione da sottostringhe diagnostiche.
+
+Mutante                   Passati prima del fallimento  Frammenti
+major-permissive          7                              1
+skip-utf8                 12                             1
+next-is-end               0                              1
+ignore-requested-budget   5                              1
+start-is-zero             0                              1
+extra-fourth-nil          0                              2
+skip-header-minimality    3                              1
+ignore-high-length-word   10                             1
+
+Ogni mutante rappresenta una sostituzione semantica dichiarata. Quello
+di arità usa due frammenti coerenti: ritorno del quarto NIL e FTYPE della
+sola copia privata. Sei mutazioni sono del metodo preregistrato; le due
+estensioni sono dichiarate nel catalogo prima della campagna.
+
+I 777 byte di stderr della baseline sono stati letti: una riga del fuzz
+(1024 casi, 512 successi e otto classi da64) e due righe delle onde worker
+(4096 letture per onda, sink e tempi della fixture). Non sono errori o
+warning di compilazione e non vengono descritti come stderr vuoto.
+Gli otto stderr dei mutanti sono effettivamente vuoti. In generale il
+lettore non presume assenza di compiler NOTES da exit0.
+
+Preparazione accessoria preservata: query-before-reader.lisp.txt ebbe
+un errore di parentesi, "Multiple expressions in --eval option", prima
+di leggere DATA. Forma ed estratto diagnostico sono conservati; il
+backtrace completo resta nel tool della conversazione, senza inventare
+uno stderr fisico. Non e un fallimento della campagna o del lettore
+finale. Nessuna variante del prodotto e stata eseguita dal revisore.
+
+Limiti: questa e una verifica locale dei dati R1, delle copie, dei piani
+e del rilevamento nominale. Non ripete le compilazioni e non dimostra
+una chiusura C1/MC-DC, la completezza del motore o scaling sui core.
+I tempi citati misurano il lettore C4 o la fixture, non throughput.
+Solo questo supporto ignored e stato scritto; fonti/index/HEAD intatti.

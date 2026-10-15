@@ -1,0 +1,5 @@
+C4 BENCH FAILED:The value
+                  NIL
+                is not of type
+                  (OR STRING PATHNAME SYNONYM-STREAM FILE-STREAM)
+                when binding PATHNAME

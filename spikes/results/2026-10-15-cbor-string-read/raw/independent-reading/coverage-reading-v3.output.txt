@@ -1,0 +1,76 @@
+WRAPPER status:OK exit0 stable:STABLE HEADf7c9e0503577b45e2bd20de66c72b6e7232a8c76 sources1015 wall24.017196d0 stderr-chars0 scope cbor-string-read
+ok    TEST-REQ-CBR-009-STRING-LITERAL-EMPTY-UTF8-AND-UNREAD-TAILS
+ok    TEST-REQ-CBR-009-STRING-LENGTH-WIDTH-BOUNDARIES-AND-PAYLOAD-OFFSET
+ok    TEST-REQ-CBR-009-STRING-RAW-BYTES-NEVER-VALIDATED-AS-UTF8
+ok    TEST-REQ-CBR-009-STRING-CONCATENATION-AND-ZERO-LENGTH-PAYLOAD-FRONTIERS
+ok    TEST-REQ-CBR-009-STRING-BUFFER-TYPE-RANGE-AND-BACKING-ARRAY-PRESERVED
+ok    TEST-REQ-CBR-009-STRING-BYTE-LIMIT-DOMAIN-AND-PREFLIGHT-PRECEDENCES
+ok    TEST-REQ-CBR-009-STRING-BUDGET-COVERS-WHOLE-WINDOW-AND-EMPTY-SPAN
+ok    TEST-REQ-CBR-009-STRING-TYPE-PRECEDES-FIT-FOR-EVERY-OTHER-MAJOR
+ok    TEST-REQ-CBR-009-STRING-HEADER-SYNTAX-AND-MINIMALITY-PRECEDE-TYPE
+ok    TEST-REQ-CBR-009-STRING-NONMINIMAL-LENGTHS-BEFORE-FIT-OR-UTF8
+ok    TEST-REQ-CBR-009-STRING-U64-LENGTH-AND-LOW-WORD-FIT-BEFORE-PAYLOAD
+ok    TEST-REQ-CBR-009-STRING-EVERY-HEADER-AND-PAYLOAD-TRUNCATION-AT-AUTHORIZED-END
+ok    TEST-REQ-CBR-009-STRING-UTF8-REASONS-AND-ABSOLUTE-PAYLOAD-OFFSETS
+ok    TEST-REQ-CBR-009-STRING-FIT-BEFORE-UTF8-AND-VALIDATION-STOPS-AT-PAYLOAD-END
+ok    TEST-REQ-CBR-009-STRING-FULL-16MIB-WINDOW-PAYLOAD-AND-ONE-BYTE-OVER
+  CBOR string read fuzz: seed53545239, 1024 casi, 512 successi e 64 ciascuno byte/type/nonminimal/truncated/utf8/range/byte-limit/empty.
+ok    TEST-REQ-CBR-009-STRING-FIXED-SEED-1024-FUZZ-AND-FROZEN-CLASSES
+  CBOR string read: onda 0, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 22407872/22407877/22408822, sink 84649984; worker 1 start/first/end 22407909/22407914/22408964, sink 85010432; overlap 913 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+  CBOR string read: onda 1, 2 worker riusati, 4096 letture; WALL fixture con rendezvous/controlli: worker 0 start/first/end 22408823/22408824/22409898, sink 84649984; worker 1 start/first/end 22408966/22408967/22410016, sink 85010432; overlap 932 tick (1000000 tick/s); nessuna inferenza su tempo puro decoder, CPU o scaling.
+ok    TEST-REQ-CBR-009-STRING-TWO-REUSED-WORKERS-SHARE-BUFFER-WITH-DISTINCT-RAW-AND-TEXT-WINDOWS
+17 test della lettura delle stringhe CBOR minime superati.
+Rapporto: /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/coverage/cover-index.html
+
+GLOBAL RAW files423 expression2358/178944 branch219/22440; not selected scope.
+SELECTED src/codec/cbor-string-read.lisp expression116/155 (74.838710 percent) branch20/26 (76.923077 percent) raw-records181 HTML/index coherent.
+UNCOVERED src/codec/cbor-string-read.lisp record0 :EXPRESSION path(0) form(IN-PACKAGE #:ARCDOCDB.CBOR) ownerIN-PACKAGE
+UNCOVERED src/codec/cbor-string-read.lisp record1 :EXPRESSION path(1) form(DECLAIM (OPTIMIZE (SAFETY 3) (SPEED 2) (DEBUG 2))) ownerDECLAIM
+UNCOVERED src/codec/cbor-string-read.lisp record2 :EXPRESSION path(2) form(DECLAIM (FTYPE (FUNCTION (T T T T) (VALUES INDEX &OPTIONAL)) CHECK-INPUT-STRING-CBOR-READ)) ownerDECLAIM
+UNCOVERED src/codec/cbor-string-read.lisp record36 :BRANCH path(:ELSE 1 5 4 3) form(<= SPAN +CBOR-SCAN-MAX-BYTES+) ownerCHECK-INPUT-STRING-CBOR-READ
+UNCOVERED src/codec/cbor-string-read.lisp record37 :EXPRESSION path(2 5 4 3) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-STRING-READ-SPAN) ownerCHECK-INPUT-STRING-CBOR-READ
+UNCOVERED src/codec/cbor-string-read.lisp record38 :EXPRESSION path(1 2 5 4 3) form(QUOTE INVARIANT-VIOLATION) ownerCHECK-INPUT-STRING-CBOR-READ
+UNCOVERED src/codec/cbor-string-read.lisp record39 :EXPRESSION path(2 2 5 4 3) form:REASON ownerCHECK-INPUT-STRING-CBOR-READ
+UNCOVERED src/codec/cbor-string-read.lisp record40 :EXPRESSION path(3 2 5 4 3) form:CBOR-STRING-READ-SPAN ownerCHECK-INPUT-STRING-CBOR-READ
+UNCOVERED src/codec/cbor-string-read.lisp record47 :EXPRESSION path(4) form(DECLAIM (FTYPE (FUNCTION (T T T &KEY (:MAX-BYTES T)) (VALUES (INTEGER 2 3) INDEX INDEX &OPTIONAL)) LEGGI-STRINGA-CBOR-MINIMA)) ownerDECLAIM
+UNCOVERED src/codec/cbor-string-read.lisp record61 :BRANCH path(:ELSE 1 4 2 5 5) form(EQ FORM :ARGUMENT) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record62 :EXPRESSION path(2 4 2 5 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-STRING-READ-FORM :OFFSET BEGIN) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record63 :EXPRESSION path(1 2 4 2 5 5) form(QUOTE INVARIANT-VIOLATION) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record64 :EXPRESSION path(2 2 4 2 5 5) form:REASON ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record65 :EXPRESSION path(3 2 4 2 5 5) form:CBOR-STRING-READ-FORM ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record66 :EXPRESSION path(4 2 4 2 5 5) form:OFFSET ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record67 :EXPRESSION path(5 2 4 2 5 5) formBEGIN ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record116 :BRANCH path(:ELSE 1 2 2 3 8 2 5 5) form(<= COUNT LOW) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record117 :EXPRESSION path(2 2 2 3 8 2 5 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-STRING-READ-COUNT :OFFSET PAYLOAD-START) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record118 :EXPRESSION path(1 2 2 2 3 8 2 5 5) form(QUOTE INVARIANT-VIOLATION) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record119 :EXPRESSION path(2 2 2 2 3 8 2 5 5) form:REASON ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record120 :EXPRESSION path(3 2 2 2 3 8 2 5 5) form:CBOR-STRING-READ-COUNT ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record121 :EXPRESSION path(4 2 2 2 3 8 2 5 5) form:OFFSET ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record122 :EXPRESSION path(5 2 2 2 3 8 2 5 5) formPAYLOAD-START ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record135 :BRANCH path(:ELSE 1 4 8 2 5 5) form(< BEGIN PAYLOAD-START) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record136 :EXPRESSION path(2 4 8 2 5 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-STRING-READ-PROGRESS :OFFSET BEGIN) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record137 :EXPRESSION path(1 2 4 8 2 5 5) form(QUOTE INVARIANT-VIOLATION) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record138 :EXPRESSION path(2 2 4 8 2 5 5) form:REASON ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record139 :EXPRESSION path(3 2 4 8 2 5 5) form:CBOR-STRING-READ-PROGRESS ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record140 :EXPRESSION path(4 2 4 8 2 5 5) form:OFFSET ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record141 :EXPRESSION path(5 2 4 8 2 5 5) formBEGIN ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record147 :BRANCH path(:ELSE 1 5 8 2 5 5) form(<= PAYLOAD-START NEXT) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record148 :EXPRESSION path(2 5 8 2 5 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-STRING-READ-PAYLOAD :OFFSET PAYLOAD-START) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record149 :EXPRESSION path(1 2 5 8 2 5 5) form(QUOTE INVARIANT-VIOLATION) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record150 :EXPRESSION path(2 2 5 8 2 5 5) form:REASON ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record151 :EXPRESSION path(3 2 5 8 2 5 5) form:CBOR-STRING-READ-PAYLOAD ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record152 :EXPRESSION path(4 2 5 8 2 5 5) form:OFFSET ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record153 :EXPRESSION path(5 2 5 8 2 5 5) formPAYLOAD-START ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record159 :BRANCH path(:ELSE 1 6 8 2 5 5) form(<= NEXT LIMIT) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record160 :EXPRESSION path(2 6 8 2 5 5) form(ERROR (QUOTE INVARIANT-VIOLATION) :REASON :CBOR-STRING-READ-RANGE :OFFSET NEXT) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record161 :EXPRESSION path(1 2 6 8 2 5 5) form(QUOTE INVARIANT-VIOLATION) ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record162 :EXPRESSION path(2 2 6 8 2 5 5) form:REASON ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record163 :EXPRESSION path(3 2 6 8 2 5 5) form:CBOR-STRING-READ-RANGE ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record164 :EXPRESSION path(4 2 6 8 2 5 5) form:OFFSET ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record165 :EXPRESSION path(5 2 6 8 2 5 5) formNEXT ownerLEGGI-STRINGA-CBOR-MINIMA
+UNCOVERED src/codec/cbor-string-read.lisp record180 :EXPRESSION path(4 2 5) form(MAX-BYTES +CBOR-SCAN-MAX-BYTES+) ownerLEGGI-STRINGA-CBOR-MINIMA
+SELECTED TOTAL expression116/155 (74.838710 percent) branch20/26 (76.923077 percent); all uncovered, no exclusions.
+OBSERVATIONS (("spikes/out/4001085107-command-33695-0/report.lisp" 213480 "efe91f7d48abfe59c2e0d998979b33b95506acc8bd37dfff92420cb2edbd9d67") ("spikes/out/cbor-string-read-20261015/coverage/coverage-state.lisp" 3374141 "2def05b7cc27de690b6a26bc16a02a3dac6d610c0ba024eddeb38bca27a9e298") ("spikes/out/cbor-string-read-20261015/coverage/cover-index.html" 1768 "38ca1d5590d78c0cf3a76005a45c564fec347abd7cb1a60fe45fe036574b3682") ("spikes/out/cbor-string-read-20261015/coverage/f23b78e5d15c717c2a8dbd67d393e70d.html" 22340 "d693561b19d656d3983f3e6a110ea8e6eabfa484c04010eeddc3a43789bc1426") ("spikes/out/cbor-string-read-20261015/independent-reading/coverage-reading-v3.lisp" 14269 "cfab052015ae78cd4262497d7aca191c55fe363bec5b0d66bfe371cdabe8de07"))
+FOUR-SOURCE-PINS (("src/codec/cbor-string-read.lisp" "d4a4f774c2264c46349e7eda61ee4a2a3118d742") ("tests/codec/cbor-string-read-support.lisp" "cfd55cd47d782673113e67af625c1360195a345c") ("tests/codec/cbor-string-read.lisp" "8437bdcaa4cf308dbf4614e748cdab4be2ae6d62") ("tests/codec/cbor-string-read-threads.lisp" "8fc4ae5d9214108a6ae6bf26e644db1a42733cdd"))
+TRUSTED-READER fa2b5d36dca0837e2ed5e49b282887b2e110b2b7
+DATA READING PASS checks222140; physical before/after stable. No evaluated source/data, product/driver load, compile or call; no campaign rerun, MC/DC/C1 or authenticity claim.

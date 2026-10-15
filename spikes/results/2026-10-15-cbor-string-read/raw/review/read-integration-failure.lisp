@@ -1,0 +1,7 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((r (arcdocdb.evidence:read-evidence "spikes/out/4001085841-command-55587-0/report.lisp" :max-expanded-bytes 134217728))
+       (out (getf r :stdout)) (err (getf r :stderr)))
+  (format t "STATUS ~S EXIT ~S CONSISTENCY ~S~%" (getf r :status) (getf r :exit-code) (getf r :source-consistency))
+  (format t "STDOUT-END~%~A~%" (subseq out (max 0 (- (length out) 8000))))
+  (format t "STDERR-END~%~A~%" (subseq err (max 0 (- (length err) 8000)))))

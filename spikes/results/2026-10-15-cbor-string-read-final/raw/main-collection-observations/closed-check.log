@@ -1,0 +1,62 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/results/2026-10-15-cbor-string-read/"
+ :INDEXED-FILES 602 :ACTUAL-FILES 604 :INDEXED-BYTES 6736470 :PROCESSES
+ ((:LABEL "bench-diff-fuzz" :RECORD-PATH
+   "processes/bench-diff-fuzz/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/cbor-string-read-driver.lisp" "--all")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "full-check" :RECORD-PATH "processes/full-check/report.lisp" :COMMAND
+   ("make" "check-core") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage" :RECORD-PATH "processes/coverage/report.lisp" :COMMAND
+   ("sbcl" "--dynamic-space-size" "4096" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script" "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/cbor-string-read-20261015/coverage/" "cbor-string-read")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-selftest" :RECORD-PATH
+   "processes/coverage-selftest/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--self-test"
+    "spikes/out/cbor-string-read-20261015/coverage-selftest/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-selftest" :RECORD-PATH
+   "processes/mutation-selftest/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--script"
+    "spikes/out/cbor-string-read-20261015/mutation-driver/run.lisp"
+    "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutations" :RECORD-PATH "processes/mutations/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--script"
+    "spikes/out/cbor-string-read-20261015/mutation-driver/run.lisp" "--run"
+    "spikes/out/cbor-string-read-20261015/mutations-R1/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "selection-fixtures" :RECORD-PATH
+   "processes/selection-fixtures/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-string-read-20261015/selection-tests/run.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "independent-runtime" :RECORD-PATH
+   "processes/independent-runtime/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-string-read-20261015/independent-reading/run-final-data-readers.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "independent-mutations" :RECORD-PATH
+   "processes/independent-mutations/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-string-read-20261015/independent-mutations/reading.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "independent-fullcheck" :RECORD-PATH
+   "processes/independent-fullcheck/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/cbor-string-read-20261015/independent-reading/fullcheck-reading.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "82a8c88cb0b6961677ae5ad430114596f4818196f0f5d5de8ace1d7690442b7c"
+ :CATALOGUE-SHA256
+ "15f799b88c33b7d1d188b28bb0b1a3d9b2a7378cd774f821fe55dbeef83d4c50"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

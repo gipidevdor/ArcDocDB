@@ -1,0 +1,7 @@
+2026-10-15, cwd /Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB
+
+Syntax READ: sbcl --noinform --non-interactive --eval '(require :asdf)' --eval '(require :sb-md5)' --eval '(let ((*read-eval* nil) (*readtable* (copy-readtable nil)) (count 0) (eof (gensym))) (with-open-file (stream "tools/cbor-string-read-driver.lisp") (loop for form = (read stream nil eof) until (eq form eof) do (incf count))) (format t "~D forms; EOF.~%" count))'
+
+Self-test, no product LOAD: sbcl --noinform --script tools/cbor-string-read-driver.lisp --self-test
+
+Initial syntax READ of exact draft blob 49c03f559dc1df5a64fa0ac108bddc89622a4017 failed with unmatched close parenthesis at line 352, column 67. The excess close was in the REPORT binding at line 328. The exact draft is preserved as driver-before-main-close-fix.lisp. The original diagnostic is available in the conversation only; no local original log is claimed. Final syntax READ and self-test stdout/stderr are saved separately below this directory. No product has been loaded or called by this preparation.

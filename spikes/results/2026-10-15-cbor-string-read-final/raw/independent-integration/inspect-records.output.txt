@@ -1,0 +1,114 @@
+
+RECORD spikes/out/4001085841-command-55587-0/report.lisp :FAILED/exit2/stable:STABLE/sources1019/HEADe1bffcae6ee38fb87c079a480fede1513d1a3389 command("make"
+                                                                                                                                                      "test"
+                                                                                                                                                      "lint"
+                                                                                                                                                      "trace"
+                                                                                                                                                      "links")
+build e test: nessun avviso, tutti i controlli superati
+sbcl --script tools/lint.lisp src
+249 file, 0 violazioni
+sbcl --script tools/check-trace.lisp
+127 requisiti, 66 invarianti, 13 scenari FI, 53 ADR: 0 errori
+sbcl --script tools/check-links.lisp .
+517 file, 3718 link controllati, 282 rotti
+STDOUT-LAST
+ROTTO  spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md -> ../adr/0048-limiti-documentali-e-formato-v2.md (file mancante)
+ROTTO  spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md -> ../adr/0049-capacita-oltre-la-ram.md (file mancante)
+ROTTO  spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md -> ../adr/0050-pubblicazione-e-costi-della-directory.md (file mancante)
+ROTTO  spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md -> ../adr/0051-presentazione-della-documentazione.md (file mancante)
+ROTTO  spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md -> ../adr/0052-header-dei-log-di-controllo.md (file mancante)
+ROTTO  spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md -> ../adr/0053-ricerca-full-text-indici-invertiti.md (file mancante)
+517 file, 3718 link controllati, 282 rotti
+
+STDERR chars1455262 LAST
+E ARCDOCDB.VERTICAL.TESTS::PROCESS))
+; 
+; note: unable to
+;   open-code FLOAT to RATIONAL comparison
+; due to type uncertainty:
+;   The first argument is a NUMBER, not a SINGLE-FLOAT.
+;   The second argument is a NUMBER, not a RATIONAL.
+; 
+; note: unable to
+;   open-code FLOAT to RATIONAL comparison
+; due to type uncertainty:
+;   The first argument is a NUMBER, not a DOUBLE-FLOAT.
+;   The second argument is a NUMBER, not a RATIONAL.
+; 
+; note: unable to
+;   open-code FLOAT to RATIONAL comparison
+; due to type uncertainty:
+;   The first argument is a NUMBER, not a (COMPLEX SINGLE-FLOAT).
+;   The second argument is a NUMBER, not a RATIONAL.
+; 
+; note: unable to
+;   open-code FLOAT to RATIONAL comparison
+; due to type uncertainty:
+;   The first argument is a NUMBER, not a (COMPLEX DOUBLE-FLOAT).
+;   The second argument is a NUMBER, not a RATIONAL.
+; 
+; note: unable to open code because: The operands might not be the same type.
+; 
+; note: forced to do full call
+;       unable to do inline float comparison (cost 3) because:
+;       The first argument is a T, not a SINGLE-FLOAT.
+;       The second argument is a T, not a SINGLE-FLOAT.
+;       unable to do inline float comparison (cost 3) because:
+;       The first argument is a T, not a DOUBLE-FLOAT.
+;       The second argument is a T, not a DOUBLE-FLOAT.
+; 
+; compilation unit finished
+;   printed 3716 notes
+make: *** [links] Error 1
+
+
+RECORD spikes/out/4001086070-command-61411-0/report.lisp :OK/exit0/stable:STABLE/sources1019/HEADe1bffcae6ee38fb87c079a480fede1513d1a3389 command("make"
+                                                                                                                                                  "links")
+sbcl --script tools/check-links.lisp .
+511 file, 3430 link controllati, 0 rotti
+STDOUT-LAST
+sbcl --script tools/check-links.lisp .
+511 file, 3430 link controllati, 0 rotti
+
+STDERR chars0 LAST
+
+
+RECORD spikes/out/4001086038-command-60740-0/report.lisp :OK/exit0/stable:STABLE/sources1019/HEADe1bffcae6ee38fb87c079a480fede1513d1a3389 command("sbcl"
+                                                                                                                                                  "--noinform"
+                                                                                                                                                  "--no-userinit"
+                                                                                                                                                  "--no-sysinit"
+                                                                                                                                                  "--script"
+                                                                                                                                                  "spikes/out/cbor-string-read-20261015/selection/rename-raw-documents.lisp")
+STDOUT-LAST
+   "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/frozen-qualification/docs/implementazione/cbor-stringa-lettura.md.txt"
+   :SHA256 "28a1de42b0bce490a355fe04de4672d5b9d24caacd34d0c8db9c092bfb3aff8e")
+  (:SOURCE
+   "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md"
+   :TARGET
+   "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/cbor-string-read-20261015/frozen-qualification/docs/tracciabilita/matrice.md.txt"
+   :SHA256 "d9607856e4d5a03bee71d1667c552ffd1eb3d84bf6ff25497f9e90737087787a")))
+
+STDERR chars0 LAST
+
+
+RECORD spikes/out/4001085907-command-57424-0/report.lisp :OK/exit0/stable:STABLE/sources1019/HEADe1bffcae6ee38fb87c079a480fede1513d1a3389 command("sbcl"
+                                                                                                                                                  "--noinform"
+                                                                                                                                                  "--no-userinit"
+                                                                                                                                                  "--no-sysinit"
+                                                                                                                                                  "--script"
+                                                                                                                                                  "tools/compact-evidence.lisp"
+                                                                                                                                                  "--root"
+                                                                                                                                                  "spikes/out/cbor-string-read-20261015/"
+                                                                                                                                                  "--jobs"
+                                                                                                                                                  "4")
+STDOUT-LAST
+    "coverage-state.lisp.gz" :UNCOMPRESSED-BYTES 3374141 :UNCOMPRESSED-SHA256
+    "2def05b7cc27de690b6a26bc16a02a3dac6d610c0ba024eddeb38bca27a9e298"
+    :COMPRESSED-BYTES 479930 :COMPRESSED-SHA256
+    "57af1b21e8ccfefdb664a66b700113c02695cfef1e8dcd35b1e1921de304edcf")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+
+STDERR chars0 LAST
+

@@ -1,0 +1,7 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(let* ((record (arcdocdb.evidence:read-evidence "spikes/out/4001085107-command-33694-0/report.lisp"))
+       (lines (uiop:split-string (getf record :stdout) :separator '(#\Newline)))
+       (marker (position "build e test: nessun avviso, tutti i controlli superati" lines :test #'string=)))
+  (dolist (line (subseq lines marker (+ marker 35))) (write-line line))
+  (format t "STDERR chars~D first2000:~%~A~%" (length (getf record :stderr)) (subseq (getf record :stderr) 0 (min 2000 (length (getf record :stderr))))))

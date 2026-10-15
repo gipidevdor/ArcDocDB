@@ -1,0 +1,8 @@
+tests/codec/cbor-string-read-support.lisp DATA-EOF 12forme/0nominali,bytes5184 SHA256461556a3a18f30a44a0eec63c574ca3e68bf27a57863318a7b9b1a1468a29a96 BLOBcfd55cd47d782673113e67af625c1360195a345c
+tests/codec/cbor-string-read.lisp DATA-EOF 17forme/16nominali,bytes12677 SHA256b89e7b3f1b07556c4c5240ae077f84479abcc5e6f567b4988b9c49a26fbc5084 BLOB8437bdcaa4cf308dbf4614e748cdab4be2ae6d62
+tests/codec/cbor-string-read-threads.lisp DATA-EOF 2forme/1nominali,bytes3617 SHA256ba71397bb3fdc50da2ec4f4f0153ce0018a085981bf02357f1d3cb57467ad75b BLOB8fc4ae5d9214108a6ae6bf26e644db1a42733cdd
+TOTAL31forme,17nominali unici;READ-EVAL NIL/EOF;BODYprodotto assente;nessun LOAD/compile corpus/prodotto.
+LCG seed53545239 finalF8417639.
+WORKERcold (2 8 12) token41333 sink84649984.
+WORKERcold (3 13 16) token41509 sink85010432.
+PLAN arithmetic:690nonfuzz336/354 +1024fuzz512/512 +8192parallel=9906calls,9040success/866reject;not runtimecounters.

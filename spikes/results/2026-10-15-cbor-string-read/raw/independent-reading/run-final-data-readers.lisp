@@ -1,0 +1,15 @@
+;;;; Tre lettori DATA isolati; nessun LOAD di prodotto, corpus o driver.
+(require :asdf)
+(let ((readers '("bench-reading-v2.lisp" "coverage-reading-v3.lisp" "coverage-details-v2.lisp"))
+      (base (uiop:pathname-directory-pathname *load-truename*)))
+  (dolist (reader readers)
+    (let ((argv (list "sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+                      (namestring (merge-pathnames reader base)))))
+      (format t "C4 DATA READER BEGIN ~S~%" argv) (force-output)
+      (multiple-value-bind (stdout stderr code)
+          (uiop:run-program argv :output :string :error-output :string :ignore-error-status t)
+        (write-string stdout *standard-output*) (write-string stderr *error-output*)
+        (format t "C4 DATA READER END ~A exit~S stderr-bytes~D~%" reader code (length stderr))
+        (unless (and (eql code 0) (zerop (length stderr)))
+          (error "Lettore DATA fallito: ~A codice~S" reader code)))))
+  (format t "C4 DATA READERS FINAL PASS 3/3; solo lettura artefatti conclusi.~%"))

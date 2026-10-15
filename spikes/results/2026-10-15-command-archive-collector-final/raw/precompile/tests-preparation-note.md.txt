@@ -1,0 +1,31 @@
+# Preparazione del self-test del collector
+
+Il primo file di test aveva una lettura DATA riuscita (30 forme), prima
+dei casi accessori. L'aggiunta del positivo con descriptor accessorio ha
+introdotto una parentesi finale in più. La successiva lettura DATA con
+READ-EVAL NIL è terminata exit1: unmatched close parenthesis, riga526,
+colonna15, posizione34447. Nessun LOAD/COMPILE/esecuzione del file di
+test o del collector. Quel diagnostico è disponibile soltanto nell'output
+della conversazione: questa nota non è lo stderr originale.
+
+Il file difettoso è conservato prima della correzione in
+`collect-command-archive-tests-before-accessory-paren-fix-657a4fec.lisp`,
+blob `657a4feccc5635bb875a73fb9a25a2fc9e033caa`. La correzione rimuove
+una parentesi dalla fine del solo nuovo caso. Si aggiunge successivamente
+il caso richiesto dell'extra non indicizzato per verificare il checker
+finale. La nuova lettura conserva stdout/stderr ed esito fisici separati.
+
+Il primo helper `read-tests-syntax.lisp` aveva a sua volta una parentesi
+mancante nel LET* del lettore: il processo termina exit1 prima del relativo
+handler. Sorgente e stdout/stderr fisici sono conservati; non fu prodotto
+il file di stato previsto. `read-tests-syntax-v2.lisp` corregge soltanto
+quella parentesi e usa nuovi nomi di output/stato. Legge30 forme DATA
+e conta59 casi previsti mediante aritmetica dei DOLIST letterali:
+stdout conservato, stderr vuoto, file di stato0 ed exit0 osservato.
+Non carica/valuta/compila il file di test o il collector.
+
+Prima del freeze, la revisione ha inoltre corretto la sola espressione
+del parent della directory self-test predefinita: i default di pathname
+sono ora una directory, per non ereditare nome/tipo `.lisp` del sorgente
+nel template MKDTEMP. È una correzione statica, non un esito runtime
+del collector. Il backup iniziale conserva anche la vecchia espressione.

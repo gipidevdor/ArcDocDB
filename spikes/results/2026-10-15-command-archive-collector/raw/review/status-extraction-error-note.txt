@@ -1,0 +1,10 @@
+L'estrazione accessoria dello status del primo lettore, dopo il PASS v2,
+e fallita in fase di parsing dell'argomento --eval: exit1,
+SB-INT:SIMPLE-READER-ERROR, "unmatched close parenthesis".
+Nessun DATA e stato letto e nessun file status creato dal tentativo.
+La forma originale e conservata in status-extraction-original-form.lisp.txt.
+Il diagnostico completo resta nell'output del tool di questa conversazione;
+questa nota e un estratto, non una falsa copia dello stderr integrale.
+La variante extract-reader-status.lisp elimina l'eccesso di parentesi.
+Questo errore accessorio non e un fallimento del collector o della lettura
+v2 registrata e non ha modificato gli originali di prova.

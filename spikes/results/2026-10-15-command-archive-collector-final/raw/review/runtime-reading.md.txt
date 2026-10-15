@@ -1,0 +1,87 @@
+FREEZE della lettura DATA indipendente, 2026-10-15: PASS.
+
+Revisore distinto dall'autore collector e dall'autore test. Lettore preparato
+a9eb867ccf4a96128526bee98ba1cf77d7f773aa, variante corretta
+6acdca94e59463b909274a74cea54693190e5f19. Nessun LOAD del collector,
+dei suoi test o del prodotto; caricata soltanto tools/evidence-storage.lisp.
+READ-EVAL NIL e EOF dei record; read-evidence autentica anche descriptor
+e gzip. Nessuna ripetizione delle campagne di prodotto o delle fixture.
+
+Record della lettura conclusa:
+spikes/out/4001078716-command-74447-0/report.lisp
+:ok, exit 0, :stable, 972 sorgenti, 69.258032 secondi, stderr vuoto.
+1694 verifiche del lettore; 251 file fisici osservati con bytes/SHA256,
+truename e write-date identici prima e dopo. Anche HEAD e i due pin
+di fonte corrente e gli snapshot metadata dei quattro wrapper sono stabili.
+HEAD 6d47d2dfcee66de4f2abe64c8b63ef568ba6ed2c;
+collector d2eb1bd8a62b0fd98ec023243b2a768c19988dc7;
+test 49da390b7e170acc9ffdafa78285f215aec75f44.
+
+Wrapper PASS letti:
+spikes/out/4001078088-command-58422-0/report.lisp
+spikes/out/4001078089-command-58445-0/report.lisp
+Root fisica principale: command-archive-collector-20261015/self-test-fixed/.
+59 casi :ok, 2807 checks; ogni case-result fisico coincide con il summary.
+Anche il summary collector incorporato nel FULL passa 59 casi/2807 checks;
+non e stato nuovamente percorso il suo secondo albero fisico default.
+
+Positivo: nove file indicizzati, undici effettivi, quattro worker con
+contatori (3 2 2 2), nove copy-results :ok, nessun worker/cleanup error.
+La fixture fissata asserisce quattro thread distinti, rendezvous e join;
+i report non contengono gli identificatori dei thread. Confrontati tutti
+i nove file sorgente/copia byte per byte e con bytes/SHA dell'indice.
+Quattro record storici decodificati uguali agli originali, compresi stdout,
+stderr e ambiente: :ok/0/:stable, :failed/NIL/:stable,
+:source-changed/0/:changed, :failed/7/:stable. Nessuna promozione a successo.
+Log strict uguale al risultato incluso: exit0, nessun segnale,
+closed-inventory T, 9 indexed/11 actual; secondo recheck conservato OK.
+
+Accessorio gzip positivo: nove file, tre processi, worker (3 2 3 1),
+altri nove confronti binari completi, record gzip originale/copia uguale,
+strict closure OK. Accessorio senza payload e altri tre rifiuti descriptor
+osservati precisamente :decoded-record. I due payload al limite sono
+confrontati interamente (1048576 e 8388608 byte). Fallimenti di copia
+e sorgente mutata conservati :failed con motivi :copied-bytes e
+:source-changed. Hidden extra #(23 45) conservato; log checker finale
+:failed/:inventory, rifiuto collector :closed-check. Quattro casi READ/EOF
+osservati :data-shape, marker di #. assenti.
+
+FULL: 1657 righe con prefisso esatto "ok    ", tutte uniche:
+1651 TEST-* nominali + 2 smoke + 4 fixture C4 del linter.
+1655 e il totale non-smoke, non il numero di test del prodotto.
+Lint: 237 file, 0 violazioni.
+Trace: 122 requisiti, 65 invarianti, 13 scenari FI, 52 ADR, 0 errori.
+Links: 476 file, 3199 link, 0 rotti.
+Evidence: 123 cataloghi, 3565 riferimenti, 42702 file, 1138547016 byte.
+Il checker evidence verifica struttura/presenza/dimensioni/integrita gzip,
+non reinterpreta gli esiti. Dieci spike --check conclusi, raw e summary
+uguali, exit0, sorgenti stabili, status :ok/:pass; nessun benchmark.
+
+Originali falliti preservati e letti separatamente con pin 48c4e1a2/49da390b:
+spikes/out/4001077810-command-50855-0/report.lisp, exit1;
+spikes/out/4001077811-command-50873-0/report.lisp, exit2.
+Entrambi :failed/:stable, 59 casi/984 checks, 48 casi falliti; summary e
+59 case-result fisici concordanti per ciascuno. Root self-test-initial/
+e command-archive-collector-self-test-7ftAjf/ conservate. La diagnosi API
+pathname del fix resta distinta nella nota fix-reading.md.txt.
+
+Primo tentativo DEL LETTORE, non del collector:
+spikes/out/4001078592-command-72804-0/report.lisp :failed/exit1/:stable,
+1235 verifiche, stderr vuoto, diagnostico "Nominali assenti/duplicati".
+Il filtro cercava erroneamente "::" in nomi stampati con ~A. Originale,
+stdout/stderr/status e record sono preservati; la variante v2 modifica
+solo il conteggio, separando TEST-*, smoke e quattro fixture del linter.
+Nessun errore di prodotto e stato dedotto da questo errore del lettore.
+Una successiva estrazione accessoria dello status v1 ha avuto un errore
+di parentesi nel testo --eval prima di leggere DATA. Forma ed estratto
+diagnostico sono preservati in status-extraction-*. La variante separata
+extract-reader-status.lisp conserva i metadata effettivi dello stesso
+record concluso. Non e una ripetizione della lettura o delle campagne.
+
+Limiti: l'immutabilita precedente dei sorgenti fixture nei casi negativi
+e un'asserzione dei test fissati, non un recupero indipendente dei buffer
+pre-copia (non pubblicati). I confronti binari indipendenti coprono tutte
+le copie dei due positivi e dei due limiti esatti. Stabilita locale delle
+prove lette, non autenticita storica assoluta. Nessuna copertura C1/MC-DC,
+nessun dato di throughput o scaling e nessuna prova di quattro core fisici.
+Fonti, indice Git e HEAD non modificati.

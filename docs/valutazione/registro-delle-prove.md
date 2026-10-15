@@ -73,6 +73,12 @@ Il [catalogo delle evidenze](../../spikes/results/README.md) tiene distinti cont
 benchmark, profili, fallimenti e varianti; ambiente e comandi restano nei singoli
 record originali.
 
+La [raccolta degli archivi di comandi](../implementazione/raccolta-comandi.md)
+usa un manifest con file e record espliciti, copie verificate su quattro
+worker e controllo indipendente dell'inventario chiuso. Conserva anche i
+record dei comandi falliti, con i loro esiti originali. Il rapporto della
+raccolta rimane esterno all'archivio appena verificato.
+
 I registri superiori a 1 MiB vengono conservati senza perdita secondo il
 [metodo di conservazione compatta](conservazione-compatta.md): il percorso
 originale contiene un descriptor e il payload gzip è accanto. Dimensioni e

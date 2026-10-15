@@ -84,5 +84,8 @@ qualifica del motore completo.
 Le evidenze hanno un ambito esplicito: un test del codec non verifica transazioni,
 durability, recovery o prestazioni del database.
 
+La [raccolta degli archivi di comandi](raccolta-comandi.md) usa un manifest
+esplicito, quattro worker e il controllo finale dell'inventario chiuso.
+
 Gli [esiti dei processi nelle mutazioni CBOR](cbor-mutazioni-processi.md)
 distinguono i rilevamenti dei mutanti dagli errori dei worker di verifica.

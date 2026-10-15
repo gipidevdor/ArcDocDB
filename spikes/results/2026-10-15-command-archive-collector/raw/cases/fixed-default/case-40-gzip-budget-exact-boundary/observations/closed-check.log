@@ -1,0 +1,25 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/command-archive-collector/ArcDocDB/spikes/out/command-archive-collector-self-test-7KiW2A/case-40-gzip-budget-exact-boundary/archive/"
+ :INDEXED-FILES 9 :ACTUAL-FILES 11 :INDEXED-BYTES 8422873 :PROCESSES
+ ((:LABEL "process-0" :RECORD-PATH "processes/0/report.lisp" :COMMAND
+   ("fixture" "ok" "literal argument") :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-1" :RECORD-PATH "processes/1/report.lisp" :COMMAND
+   ("fixture" "failed" "literal argument") :STATUS :FAILED :EXIT-CODE NIL
+   :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-2" :RECORD-PATH "processes/2/report.lisp" :COMMAND
+   ("fixture" "changed" "literal argument") :STATUS :SOURCE-CHANGED :EXIT-CODE
+   0 :SOURCE-CONSISTENCY :CHANGED)
+  (:LABEL "gzip-failed" :RECORD-PATH "processes/gzip/report.lisp" :COMMAND
+   ("fixture" "compressed-failed" "literal argument") :STATUS :FAILED
+   :EXIT-CODE 7 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "6d7e0ff03a2ec6554496aeb1ff27e2c8a8f1553d2c349530ac1c4fc3c5e743d0"
+ :CATALOGUE-SHA256
+ "0356a31d7c69a2f612104aa4b2badd329e40e65fbe09a3e38730a58286a42c2c"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

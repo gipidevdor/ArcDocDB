@@ -36,18 +36,38 @@ workload e limiti. I [risultati conservati](../../spikes/results/2026-10-15-vert
 distinguono sviluppo e controllo completo finale, senza attribuire prove
 precedenti a sorgenti modificati successivamente.
 
+## Ripresa delle scritture e secondo crash
+
+La [nuova fixture](../../tests/vertical/resume.lisp) estende ciascuno degli
+otto scenari: un processo nuovo verifica tutti i prefissi CLOSED e ACTIVE
+vuoto, ricava il massimo CSN anche dalle tombstone e costruisce un ambiente
+distinto con registro, snapshot e controller sulla stessa base. Dopo un
+checkpoint esegue quattro nuovi commit e verifica subito i GET e H.
+Segue un secondo SIGKILL; due processi nuovi recuperano e rileggono gli
+effetti. Il CSN massimo finale appartiene a una chiave cancellata.
+
+La suite esegue 16 scenari positivi e due controlli negativi: 71 processi,
+26 SIGKILL intenzionali, attesi costanti e conservazione dei segmenti.
+Il nuovo negativo reinizializza il registro a zero: deve rilevare il riuso
+del CSN prima dell'append e lasciare il nuovo ACTIVE di soli 64 byte.
+Le [evidenze della ripresa](../../spikes/results/2026-10-15-vertical-resume/README.md)
+conservano anche i tentativi falliti della fixture.
+La [verifica completa finale](../../spikes/results/2026-10-15-vertical-resume-verifica/README.md)
+conserva `make check`, le sorgenti verificate e i risultati dei dieci spike.
+
 ## Confine rispetto al prodotto
 
-Bootstrap, inventario limitato a quattro ID, prenotazione dei nomi, ordine
+Bootstrap, inventario limitato a otto ID, prenotazione dei nomi, ordine
 del recovery e replay dell'indice sono codice di test. Il replay accetta
 solo record ordinari, dopo verifica di tutti i prefissi CLOSED; rifiuta
 prepared/OUTCOME. La pubblicazione seriale dei candidati segue la radice
 del controller: non dimostra l'atomicità fra indice e radice sotto concorrenza.
 UUID e completezza del namespace sono fatti della fixture.
 
-La riapertura verifica GET correnti; non ricostruisce l'orizzonte CSN per
-ammettere nuove scritture o snapshot storici dopo il crash. Il decision log
-è vuoto: l'ingresso autorevole viene esercitato, la semantica multiserie
+La ripresa ricostruisce H/CSN nel solo caso della fixture e verifica GET
+correnti; non implementa il gate di ammissione del motore o snapshot storici
+dopo il crash. Il decision log è vuoto: l'ingresso autorevole viene
+esercitato, la semantica multiserie
 completa resta nelle campagne dedicate. I file sono piccoli e in cache;
 nessuna misura di prestazione, power loss o qualifica C1/MC/DC.
 
@@ -55,3 +75,14 @@ La prova rende concreta la composizione di una Serie e il suo recovery.
 Resta da trasferire il coordinamento nel motore con contratti, errori e
 verifiche propri, integrare MVCC e multiserie, e qualificare carichi prolungati,
 GC, piattaforma di riferimento e funzionalità successive della roadmap.
+
+## Revisione dell'estensione C4
+
+Una lettura con lista di controllo verifica: budget di file/processi/cicli;
+verifica di tutti i CLOSED prima del replay; ACTIVE vuoto prima del rebasing;
+ambiente nuovo senza riuso delle capacità dell'ispezione; un registro comune
+a WAL/controller/snapshot; oracoli costanti per dati e CSN; errore tipizzato
+prima dell'append nel negativo; byte originali immutati dopo entrambi i crash.
+La cancellazione di una chiave già assente è ammessa solo se il GET ne
+conferma l'assenza. Nessun sorgente C1 è modificato; non è una revisione
+indipendente o una qualifica C1 del Recovery Manager.

@@ -11,9 +11,22 @@ La loro presenza non chiude i gate sperimentali né qualifica il motore completo
 
 La [prova verticale con SIGKILL](implementazione/prova-verticale.md) collega
 ora scrittura durevole, indice e GET, recovery, checkpoint e rotazione in
-una fixture C4. La riapertura avviene in processi distinti, nei formati v1/v2.
-Il coordinamento resta nel test: il Recovery Manager, l'orizzonte CSN
-ricostruito e l'ammissione del traffico restano lavoro di prodotto.
+una fixture C4. Nei formati v1/v2 verifica anche nuove scritture dopo la
+riapertura, seguite da un secondo crash e recupero. La fixture ricostruisce
+la base CSN per una sola Serie con record ordinari; il coordinamento resta
+nel test. Recovery Manager, frontiera dell'intero Archivio e ammissione
+del traffico restano lavoro di prodotto.
+
+La priorità di sviluppo è trasferire questa composizione nel motore:
+
+| Ordine | Incremento | Confine da verificare |
+|---|---|---|
+| 1 | Apertura e recovery di una Serie nel prodotto | Inventario generale, identità, ownership delle capacità e fallimenti a ogni passo |
+| 2 | Ricostruzione CSN dell'Archivio e ammissione | Tutte le Serie e decisioni durevoli, pendenti risolti, registro unico per scritture e snapshot |
+| 3 | Percorso completo concorrente | Pubblicazione coerente indice/radice, isolamento, MVCC e multiserie |
+| 4 | Qualifica di carico | Pool persistente, crash ripetuti, GC e P99 sulla piattaforma di riferimento |
+
+Questi incrementi non anticipano la chiusura dei gate della Fase 0.
 
 Al 2026-10-03 la parte di **definizione è completa**: le 26 questioni aperte sono chiuse dagli
 ADR 0013–0030, il progetto è consolidato in [architettura.md](architettura.md) e i formati in

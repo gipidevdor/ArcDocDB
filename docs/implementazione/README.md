@@ -6,7 +6,7 @@ qualifica del motore completo.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
-| Prova verticale di una Serie | [Scrittura, lettura, SIGKILL, checkpoint e riapertura](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
+| Prova verticale di una Serie | [Scrittura, SIGKILL, recovery, ripresa e secondo crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
 | Fondazioni binarie | [Record v1/v2, CRC32C e lotti SEAL](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |
 | Testo UTF-8 | [Validazione limitata, pura e parallela](utf8.md) | [`src/codec/utf8.lisp`](../../src/codec/utf8.lisp) |
 | Testate CBOR | [Lettura pura in sei valori](cbor-header.md) | [`src/codec/cbor-header.lisp`](../../src/codec/cbor-header.lisp) |

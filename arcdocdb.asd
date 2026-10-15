@@ -247,7 +247,7 @@
                              (:file "primary-support") (:file "primary") (:file "primary-threads")
                              (:file "rebuild") (:file "hash-digests")))
                (:module "vertical" :serial t
-                :components ((:file "support") (:file "scenarios") (:file "processes"))))
+                :components ((:file "support") (:file "scenarios") (:file "resume") (:file "processes"))))
   :perform (test-op (o c)
              (uiop:symbol-call '#:arcdocdb.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.hash64.tests '#:run)

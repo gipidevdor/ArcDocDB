@@ -146,7 +146,7 @@ Every limit and where it comes from: [limiti.md](docs/limiti.md).
 | | |
 |---|---|
 | Done | Specification · architecture · on-disk formats · [product foundations](docs/implementazione/README.md) for storage, index, reads, recovery and scheduling |
-| Now | A [single-Serie integration test](docs/implementazione/prova-verticale.md) with durable writes, updates, deletion, reads, SIGKILL, recovery and rotation; coordination remains in the test harness |
+| Now | A [single-Serie integration test](docs/implementazione/prova-verticale.md) with durable writes, rotation, SIGKILL, recovery, resumed writes and a second crash; coordination remains in the test harness |
 | Next | Integrate production startup, recovery and request admission; complete the reference-scale campaigns and protocol models in the [spike plan](docs/valutazione/piano-spike.md) |
 | Reference application | Database for a future Common Lisp NNTP server; application requirements are documented, protocol implementation remains future work |
 | Then | Ten implementation phases, each closed by a verification gate: the [roadmap](docs/roadmap.md) |

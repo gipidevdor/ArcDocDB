@@ -21,9 +21,16 @@
              (write-string errors)
              (when (string= mode "verify-wrong")
                (is (search "VERTICAL-ORACLE-MISMATCH" errors)))
-             (when (string= mode "write")
+             (when (string= mode "resume-wrong-csn")
+               (is (search "VERTICAL-CSN-MISMATCH" errors))
+               (is (search "REJECTED-CSN-BEFORE-APPEND" text)))
+             (when (member mode '("recover-resumed" "verify-resumed") :test #'string=)
+               (is (search "REVERIFIED" text)))
+             (when (member mode '("write" "resume") :test #'string=)
                (is (search (format nil "CRASH-READY ~S"
-                                   (if (eq stage :prepared) :checkpoint-prepared stage)) text))))
+                                   (cond ((string= mode "resume") :resumed)
+                                         ((eq stage :prepared) :checkpoint-prepared)
+                                         (t stage))) text))))
            (is (eq expected-status (sb-ext:process-status process)))
            (is (= expected-code (sb-ext:process-exit-code process))))
       (when (member (sb-ext:process-status process) '(:running :stopped))
@@ -52,10 +59,39 @@
 (defun test-REQ-VAL-001-vertical-oracle-rejects-wrong-value ()
   (scenario 2 :committed t))
 
+(defun resumed-scenario (version stage &optional negative)
+  (let ((root (arcdocdb.get.active.tests::active-fresh-root)))
+    (unwind-protect
+         (progn
+           (child root version stage "write" :signaled sb-posix:sigkill)
+           (child root version stage "recover" :exited 0)
+           (if negative
+               (child root version stage "resume-wrong-csn" :exited 1)
+               (progn
+                 (child root version stage "resume" :signaled sb-posix:sigkill)
+                 (child root version stage "recover-resumed" :exited 0)
+                 (child root version stage "verify-resumed" :exited 0))))
+      (uiop:delete-directory-tree root :validate t))))
+
+;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-WAL-006 REQ-AFF-009 REQ-AFF-018
+(defun test-REQ-REC-001-vertical-resume-writes-second-SIGKILL-v1-v2 ()
+  (dolist (version '(1 2))
+    (dolist (stage '(:committed :tail :prepared :rotated))
+      (resumed-scenario version stage)
+      (format t "~&VERTICAL-RESUME v~D ~S PASS~%" version stage))))
+
+;;; REQ: REQ-VAL-001 REQ-MVC-005 REQ-AFF-012
+(defun test-REQ-VAL-001-vertical-oracle-rejects-reused-CSN ()
+  (resumed-scenario 2 :rotated t))
+
 (defun run ()
   (test-REQ-REC-001-vertical-native-SIGKILL-reopen-v1-v2)
   (format t "ok    test-REQ-REC-001-vertical-native-SIGKILL-reopen-v1-v2~%")
   (test-REQ-VAL-001-vertical-oracle-rejects-wrong-value)
   (format t "ok    test-REQ-VAL-001-vertical-oracle-rejects-wrong-value~%")
-  (format t "2 test verticali superati; 8 scenari positivi e controllo negativo.~%")
+  (test-REQ-REC-001-vertical-resume-writes-second-SIGKILL-v1-v2)
+  (format t "ok    test-REQ-REC-001-vertical-resume-writes-second-SIGKILL-v1-v2~%")
+  (test-REQ-VAL-001-vertical-oracle-rejects-reused-CSN)
+  (format t "ok    test-REQ-VAL-001-vertical-oracle-rejects-reused-CSN~%")
+  (format t "4 test verticali superati; 16 scenari positivi e 2 controlli negativi.~%")
   t)

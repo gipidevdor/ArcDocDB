@@ -56,7 +56,7 @@
 (defun replay-index (env manifest)
   "Replay C4 di sole cornici ordinarie già verificate da tutte le mappe CLOSED."
   (let ((previous-csn 0) (count 0))
-    (loop for id from 1 to 4 do
+    (loop for id from 1 to 8 do
       (multiple-value-bind (state end outcomes) (mf:trova-segmento manifest id)
         (when (eq state :closed)
           (is (zerop outcomes))
@@ -83,7 +83,7 @@
     (check-get env (key-bytes 4) (when rotated (value-bytes 5)) directory)))
 
 (defun segment-images (env)
-  (loop for id from 1 to 4 append
+  (loop for id from 1 to 8 append
     (loop for extension in '("tmp" "seg")
           for name = (format nil "segment-~D.~A" id extension)
           when (probe-file (leaf env name)) collect (cons name (file-image (leaf env name))))))
@@ -110,19 +110,3 @@
         (is (= 3 (mf:segmento-attivo manifest))))
       (format t "~&VERIFIED v~D ~S recovery=~S closed=~D originals-unchanged=~D~%"
               (environment-version env) stage recover-p (length maps) (length originals)))))
-
-(defun child-main (arguments)
-  (destructuring-bind (mode root version stage) arguments
-    (let ((env (make-environment (uiop:ensure-directory-pathname root) (parse-integer version)))
-          (stage (cond ((string-equal stage "committed") :committed)
-                       ((string-equal stage "tail") :tail)
-                       ((string-equal stage "prepared") :prepared)
-                       ((string-equal stage "rotated") :rotated)
-                       (t (error "Punto di arresto sconosciuto: ~A" stage)))))
-      (unwind-protect
-           (cond ((string= mode "write") (writer env stage))
-                 ((string= mode "recover") (verify env stage t))
-                 ((string= mode "verify") (verify env stage nil))
-                 ((string= mode "verify-wrong") (verify env stage nil t))
-                 (t (error "Modalità sconosciuta: ~A" mode)))
-        (close-environment env)))))

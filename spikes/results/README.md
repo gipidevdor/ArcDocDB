@@ -7,6 +7,10 @@ La [prova verticale 2026-10-15](2026-10-15-vertical-crash/README.md)
 conserva sviluppo e verifica di scrittura, SIGKILL, recovery e riapertura
 di una Serie, con confini C4 espliciti.
 
+La [ripresa delle scritture](2026-10-15-vertical-resume/README.md) estende
+la fixture con base CSN ricostruita, nuovi commit e secondo SIGKILL;
+conserva i tre tentativi e le loro varianti sorgente.
+
 Ogni directory datata conserva report originali, importazioni strutturate dei
 report precedenti e diagnostiche. Il [catalogo 2026-10-08](2026-10-08/catalogo.lisp)
 identifica varianti, tipi di prova e artefatti originali, senza duplicarne i

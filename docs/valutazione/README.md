@@ -22,13 +22,15 @@ GET, recovery e scheduling, con [campagne dedicate](../implementazione/README.md
 La [prova verticale](../implementazione/prova-verticale.md) compone una Serie:
 scrive e legge, interrompe realmente il processo, recupera i file, pubblica
 il checkpoint e rilegge valori e cancellazioni in processi nuovi, anche
-dopo rotazione. Questo aggiunge evidenza sperimentale alla plausibilità del
-progetto; bootstrap, coordinamento e replay dell'indice restano nella fixture.
+dopo rotazione. La prova comprende nuove scritture con base CSN ricostruita
+e un secondo crash, per una sola Serie con record ordinari. Questo aggiunge
+evidenza sperimentale alla plausibilità del progetto; bootstrap,
+coordinamento e replay dell'indice restano nella fixture.
 
 | Domanda | Evidenza disponibile | Lavoro residuo |
 |---|---|---|
 | I meccanismi possono essere implementati in SBCL? | Fondazioni di prodotto e prove funzionali native | Qualifica completa dei contratti e dei percorsi di guasto |
-| Scrittura e recovery possono essere composti? | Prova verticale v1/v2 con SIGKILL e seconda riapertura | Coordinatore di prodotto, inventario generale, CSN recuperato e ammissione |
+| Scrittura e recovery possono essere composti? | Prova verticale v1/v2: SIGKILL, ripresa delle scritture e secondo recupero | Coordinatore di prodotto, inventario generale, CSN di Archivio e ammissione |
 | Concorrenza e isolamento sono dimostrati? | Prove dedicate di componenti e catena pool/Serie | Percorso dati completo sotto concorrenza, MVCC e multiserie |
 | I target prestazionali sono raggiunti? | Microbenchmark e campagne locali con scope dichiarato | Pool persistente, GC, P99, carico prolungato e hardware di riferimento |
 | La v1 è completa? | Componenti e integrazioni parziali | Compaction completa, backup/restore, query, rete e gate della roadmap |

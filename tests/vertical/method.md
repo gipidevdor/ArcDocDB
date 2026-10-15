@@ -36,3 +36,33 @@ Esecuzione prevista attraverso `tools/record-command.lisp`, anche per tentativi
 falliti; controllo completo finale con `make check`. La suite fa parte di ASDF;
 il driver dedicato consente di ripeterla separatamente. I registri originali
 e i blob dei sorgenti vengono conservati nella campagna dei risultati.
+
+## Estensione preregistrata: nuove scritture dopo il recovery
+
+Il 2026-10-15, prima di modificare la fixture, si aggiunge una domanda:
+la Serie recuperata può assegnare CSN successivi, scrivere nuovamente e
+conservare questi effetti dopo un secondo SIGKILL?
+
+Per ciascuno degli otto scenari precedenti, dopo il primo recovery un nuovo
+processo verifica tutti i CLOSED, ricostruisce il massimo CSN da tutti i
+record ordinari, tombstone inclusi, e verifica che ACTIVE sia vuoto. Chiude
+le capacità dell'ispezione e crea un ambiente distinto: registro CSN,
+snapshot, ambito GET e controller condividono la stessa nuova base.
+Un checkpoint conserva anche l'ACTIVE vuoto e apre un segmento nuovo.
+Seguono quattro commit: inserimento E, aggiornamento C, cancellazione A,
+cancellazione E. Ogni effetto è letto subito; poi il processo subisce SIGKILL.
+Due ulteriori processi eseguono recovery e verifica indipendente.
+
+Gli attesi restano costanti: massimo e numero di record 9 oppure 12 dopo
+rotazione; A/B/E assenti, C aggiornato, D presente solo dopo rotazione.
+L'ultimo CSN è una tombstone, non una chiave viva. H deve coincidere con
+l'ultimo CSN dopo ogni commit risolto. Tutti i byte preesistenti restano
+immutati, inclusa la coda senza SEAL. Un negativo reinizializza intenzionalmente
+il registro a zero: l'oracolo tipizzato deve intercettare il CSN riusato
+prima di appendere dati, con uscita 1 e ACTIVE ancora di soli 64 byte.
+
+Il budget dei nomi sale da quattro a otto ID; gli altri limiti restano.
+La suite completa prevede 18 workload, 71 processi, 26 SIGKILL intenzionali
+e due errori attesi. Nessuna misura di prestazione. È ancora una fixture C4
+seriale, con una sola Serie, soli record ordinari e decision log vuoto;
+non è un'API di recovery o un gate generale di ammissione dell'Archivio.

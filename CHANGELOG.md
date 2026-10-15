@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Ripresa delle scritture nella prova verticale v1/v2: ricostruzione della
+  base CSN, nuovo ambiente coerente, quattro commit e secondo SIGKILL con
+  recupero indipendente. Oracolo negativo del riuso CSN prima dell'append;
+  coordinamento ancora C4, con priorità di sviluppo aggiornate nella roadmap.
+
 - Obiettivo applicativo confermato: ArcDocDB come database di un futuro
   server NNTP in Common Lisp. Documentati lookup degli articoli, overview
   ordinate, cross-posting, retention, integrazione e criteri di valutazione;

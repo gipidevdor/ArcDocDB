@@ -23,6 +23,18 @@
              (declare (ignore condition))
              (write-string "VERTICAL-ORACLE-MISMATCH: valore diverso dall'atteso indipendente." stream))))
 
+(define-condition oracle-csn-mismatch (error)
+  ((expected :initarg :expected :reader expected-csn)
+   (observed :initarg :observed :reader observed-csn))
+  (:report (lambda (condition stream)
+             (format stream "VERTICAL-CSN-MISMATCH: atteso ~D, osservato ~D."
+                     (expected-csn condition) (observed-csn condition)))))
+
+(defun check-csn (expected high low)
+  (let ((observed (logior (ash high 32) low)))
+    (unless (= expected observed)
+      (error 'oracle-csn-mismatch :expected expected :observed observed))))
+
 (defun bytes (count &optional (value 0))
   (make-array count :element-type '(unsigned-byte 8) :initial-element value))
 (defun key-bytes (id) (bytes 16 id))
@@ -48,8 +60,11 @@
       (is (<= size 8192))
       (is (= size (read-sequence buffer stream))) buffer)))
 
-(defun make-environment (root version)
-  (let* ((registry (arcdocdb.csn:crea-registro-csn :capacity 16))
+(defun make-environment (root version &key (initial-csn 0))
+  (is (typep initial-csn '(unsigned-byte 64)))
+  (let* ((registry (arcdocdb.csn:crea-registro-csn :capacity 16
+                    :initial-high (ldb (byte 32 32) initial-csn)
+                    :initial-low (ldb (byte 32 0) initial-csn)))
          (snapshots (arcdocdb.mvcc:crea-registro-snapshot registry 4 20 5))
          (epochs (arcdocdb.epochs:crea-registro-epoche 1 4))
          (scope (g:crea-ambito-get epochs snapshots))
@@ -122,7 +137,9 @@
                (setf (aref words 0) csn (aref words 1) (logior (ash id 32) offset)
                      (aref words 2) (logior (ash (length key) 32) (ash 1 48)) (aref words 3) size)
                (p:pubblica-chiave-indice index fragment key 0 (length key) high low words scratch)))
-          (2 (is (p:rimuovi-chiave-indice index fragment key 0 (length key) high low scratch))))))))
+          (2 (unless (p:rimuovi-chiave-indice index fragment key 0 (length key) high low scratch)
+               ;; NIL è l'assenza preesistente: l'oracolo GET deve confermarla.
+               (check-get env key nil))))))))
 
 (defun commit-record (env id kind key value expected-csn)
   (let* ((controller (environment-controller env)) (lease (environment-lease env))
@@ -132,8 +149,11 @@
          (log (a:log-segmento-attivo-preparato (environment-active env))))
     (w:aggiungi-record batch kind key value)
     (r:verifica-capienza-get-attiva source lease batch previous)
-    (w:sigilla-lotto-con-csn batch (environment-registry env) log start
-                           (io:posizione-durevole (environment-append env)))
+    (multiple-value-bind (sealed-bytes high low)
+        (w:sigilla-lotto-con-csn batch (environment-registry env) log start
+                               (io:posizione-durevole (environment-append env)))
+      (is (<= 56 sealed-bytes 512))
+      (check-csn expected-csn high low))
     (multiple-value-bind (event generation root)
         (gd:registra-lotto-fonti-get-attivo source lease batch previous (environment-sources env) :group)
       (is (typep root 'r:radice-get-attiva))
@@ -142,7 +162,7 @@
         (w:aggiungi-lotto group batch) (w:chiudi-gruppo group)
         (w:scrivi-gruppo group) (w:sincronizza-gruppo group)
         (multiple-value-bind (status high low) (s:pubblica-commit-serie controller lease event generation)
-          (is (eq status :risolto)) (is (= expected-csn (logior (ash high 32) low))))
+          (is (eq status :risolto)) (check-csn expected-csn high low))
         (publish-index env id start (+ 24 (length key) (length value)) expected-csn kind key)
         (s:completa-io-commit-serie controller lease event generation)
         (w:riusa-gruppo group) (s:riusa-commit-serie controller lease event generation)))))
@@ -170,7 +190,7 @@
 (defun read-control (env)
   (let* ((image (file-image (leaf env "control.log"))) (input (input env "control.log")))
     (c:leggi-control-recuperato (environment-view env) input (length image) (bytes (length image))
-                              :max-bytes 8192 :max-batches 4 :max-edits 4 :max-segmenti 4)))
+                              :max-bytes 8192 :max-batches 4 :max-edits 4 :max-segmenti 8)))
 
 (defun read-active (env control)
   (let* ((archive (dar:crea-archivio-recovery (environment-scope env) (archive-id)))
@@ -185,7 +205,7 @@
 
 (defun closed-maps (env manifest)
   (let ((maps nil))
-    (loop for id from 1 to 4 do
+    (loop for id from 1 to 8 do
       (when (eq :closed (mf:trova-segmento manifest id))
         (push (r:crea-mappa-segmento-get (environment-view env) (input env (segment-name env id))
                  manifest id (bytes 8192) :max-bytes 8192 :max-records 32 :max-batches 16
@@ -194,11 +214,11 @@
 
 (defun next-id (env)
   "Prenotazione C4 senza riutilizzare temporanei preparati prima del crash."
-  (loop for id from 2 to 4
+  (loop for id from 2 to 8
         unless (or (probe-file (leaf env (format nil "segment-~D.tmp" id)))
                    (probe-file (leaf env (format nil "segment-~D.seg" id))))
           do (return-from next-id id))
-  (error "Budget di quattro segmenti esaurito."))
+  (error "Budget di otto segmenti esaurito."))
 
 (defun checkpoint (env &optional stop-before-publication)
   (let* ((control (read-control env)) (recovered (read-active env control)) (id (next-id env)))

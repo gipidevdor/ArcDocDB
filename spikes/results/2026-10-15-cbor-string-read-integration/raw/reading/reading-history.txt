@@ -1,0 +1,6 @@
+La prima versione del lettore finale ha stampato i conteggi attesi, ma e
+uscita1 per una parentesi finale in eccesso dopo la forma eseguita. Non
+costituisce una lettura superata. Sorgente/stdout/stderr originali sono
+conservati come reading-before-close-fix.*. Dopo la correzione della sola
+parentesi, reading.lisp e terminato0, stderr vuoto, confermando1751nominali
+unici,2smoke,17CBR009 e il successo STABLE del comando originale70257.

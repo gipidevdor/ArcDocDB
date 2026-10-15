@@ -33,60 +33,66 @@ piano comprendono 690 non fuzz, 1024 fuzz e 8192 concorrenti: 9040 successi
 e 866 rifiuti. Sono denominatori aritmetici, non contatori strumentati.
 Range, budget, tutte le larghezze, u64, UTF-8 e precedenze, arità esatta,
 finestre da 16MiB e immutabilità fisica sono controllati a freddo.
-Il fuzz del corpus usa seed53545239 e finaleF8417639: 512 successi e
-512 rifiuti, in otto famiglie da64.
+Il fuzz del corpus usa seed `53545239` e finale `F8417639`: 512 successi e
+512 rifiuti, in otto famiglie da 64.
 
-Due worker reali riusati, due ondate da2048 chiamate per worker. Lo stesso
+Due worker reali riusati, due ondate da 2048 chiamate per worker. Lo stesso
 buffer contiene una finestra MT2 e una MT3: risultati2/8/12 e3/13/16,
-token41333/41509 e sink84649984/85010432 per worker/ondata. Rendezvous
+token 41333/41509 e sink 84649984/85010432 per worker/ondata. Rendezvous
 dopo la prima chiamata verificata, timeout, join e cleanup sono bounded.
 Gli intervalli WALL includono controlli e attese; nessuna misura di scaling
 o simultaneità sui core viene dedotta.
 
-Il driver separato passa 36 confronti e 1024 coppie fuzz con seed43535239.
-Benchmark: 12 fixture, 60 campioni da1024 chiamate, 3840 warmup e12 cold,
+Il driver separato passa 36 confronti e 1024 coppie fuzz con seed `43535239`.
+Benchmark: 12 fixture, 60 campioni da 1024 chiamate, 3840 warmup e 12 cold,
 65292 chiamate complessive; 67376 includendo diff/fuzz. Tutti i tre valori,
 sink, checksum e buffer sono controllati. Heap osservato zero in tutti
-i60 campioni; baseline nulla e sensore positivo16×1MiB=16777472 byte.
-I675727360 byte degli item sono un denominatore, non byte effettivamente
+i 60 campioni; baseline nulla e sensore positivo 16×1MiB=16777472 byte.
+I 675727360 byte degli item sono un denominatore, non byte effettivamente
 letti: MT2 non attraversa il payload. Costi del consumer inclusi, carico
 esterno non controllato, nessuna soglia di velocità o throughput del motore.
 
 Otto mutanti compilabili sono rilevati dal nominale atteso dopo tutte
-le38 compilazioni: major permissivo, UTF-8 saltato, NEXT=END, budget
+le 38 compilazioni: major permissivo, UTF-8 saltato, NEXT=END, budget
 ignorato, START=0, arità extra, minimalità saltata e HIGH ignorato.
 Sei erano preregistrati; due estensioni sono dichiarate prima della
-campagna. Arity cambia due frammenti coerenti, corpo e FTYPE, nella sola
-copia. Baseline17/17; otto exit1/segnaleNIL. Warning, compilefail,
+campagna. Il mutante sull'arità cambia due frammenti coerenti, corpo e FTYPE,
+nella sola copia. Baseline 17/17; otto exit1/segnaleNIL. Warning, compilefail,
 helper, segnali e guasti dopo completamento non contano come rilevamenti.
-La lettura indipendente passa4791 verifiche: 342 confronti byte delle
-38 fonti×9 copie, frammenti esatti e424 file/metadata stabili.
+La lettura indipendente passa 4791 verifiche: 342 confronti byte delle
+38 fonti×9 copie, frammenti esatti e 424 file/metadata stabili.
 
 ## Copertura e integrazione
 
-Scope esatto del nuovo file: **116/155 espressioni e20/26 rami**.
-Tutte45 voci mancanti restano incluse: quattro forme top-level, un
+Scope esatto del nuovo file: **116/155 espressioni e 20/26 rami**.
+Tutte le 45 voci mancanti restano incluse: quattro forme top-level, un
 default keyword, 34 espressioni e sei rami delle sei guardie interne.
-Raw globale423 file, HTML e indice dello scope locale concordano.
-Il raw di3374141 byte è compattato senza perdita dopo la lettura DATA;
+Raw globale di 423 file, HTML e indice dello scope locale concordano.
+Il raw di 3374141 byte è compattato senza perdita dopo la lettura DATA;
 il supplemento verifica nuovamente SHA256 e dimensione decodificata.
 
-`make check-core` su f7c9e050 passa1743 nominali unici e due smoke;
-i17 nuovi nomi concordano col corpus DATA. Le note del compilatore sono
+`make check-core` su f7c9e050 passa 1743 nominali unici e due smoke;
+i 17 nuovi nomi concordano col corpus DATA. Le note del compilatore sono
 conservate; nessun WARNING o STYLE-WARNING. L'integrazione e1bffcae
-con il recupero CSN passa la stessa suite, lint249 file e trace127 requisiti.
+con il recupero CSN passa la stessa suite, lint su 249 file e trace con 127 requisiti.
 Il comando combinato resta FAILED nella fase links: sei copie storiche
-Markdown ignored provocavano282 link relativi rotti. Rinominate .md.txt
+Markdown ignored provocavano 282 link relativi rotti. Rinominate .md.txt
 con SHA256 invariato, la successiva verifica links passa con zero rotti.
 Il fallimento e la correzione sono entrambi conservati. Le integrazioni
 successive mantengono gli stessi pin del lettore e del corpus.
+
+La build finale `4af9f054` integra anche la proposta degli ID e il
+contratto full text: **1751 nominali unici e due smoke**, lint, trace e
+links superati nel medesimo comando. Il [registro finale](../../spikes/results/2026-10-15-cbor-string-read-integration/catalogo.lisp)
+conserva quel processo e la lettura dei conteggi, compreso il primo
+tentativo fallito del solo lettore C4 e la sua correzione.
 
 ## Conservazione e limiti
 
 L'[archivio principale](../../spikes/results/2026-10-15-cbor-string-read/catalogo.lisp)
 contiene dieci record conclusi OK, snapshot storico e originali delle
 preparazioni, compresi gli errori dei lettori C4. Raccolta con quattro
-worker e inventario chiuso indipendente: **602 file indicizzati,604 fisici,
+worker e inventario chiuso indipendente: **602 file indicizzati, 604 fisici,
 6736470 byte indicizzati**, senza append dopo il controllo.
 Il [supplemento](../../spikes/results/2026-10-15-cbor-string-read-final/catalogo.lisp)
 conserva integrazione, rinomina, compattazione, lettura indipendente e

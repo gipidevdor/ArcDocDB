@@ -71,8 +71,8 @@ La lettura DATA indipendente ha superato 1.694 verifiche su 251 file
 fisici, con hash e metadati prima/dopo stabili. Verifica i due wrapper
 riusciti, i due falliti, le copie, i quattro worker, i metadati storici e
 il checker finale. I wrapper hanno osservato 972 sorgenti stabili.
-Un primo lettore aveva contato le quattro fixture del linter come test
-nominali: anche quel tentativo fallito e la variante corretta sono conservati.
+Il primo lettore non riconosceva i nomi dei test nel formato stampato;
+il tentativo fallito e la variante corretta sono conservati.
 
 ## Conservazione
 

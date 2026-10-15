@@ -6,9 +6,9 @@ sul collegamento al planner. Il metodo e i casi sono in
 [inventario-directory-metodo.md](inventario-directory-metodo.md).
 
 Le fonti finali della lettura sono `native-directory.lisp` SHA-256
-`77cb85183a5d036c0abde487112a39d67c6a46e02b04c36dcb7ec9b96fbce9d0`
+`781b3fcf6d422efa811e0c136c11735aa9f9123d1a42f45fc2d4c8d4e82ac08b`
 e `inventory-directory.lisp`
-`30fe064d636baefdb5366daabdc96e7dc9766a06808ee4b70045e312c20a6a60`.
+`c3d45d7c41661865b9739fda5bf9762fc1e238ab213638285579cfe4d2c86fb4`.
 Gli altri file sono identificati dai blob del commit delle esecuzioni.
 
 | Controllo | Esito statico |
@@ -31,9 +31,12 @@ motivi del risultato nativo. Il binding della codifica è una variabile
 speciale SB-EXT ereditata da SB-ALIEN: verificato nel runtime e nelle
 fonti installate, senza introdurre un convertitore alternativo.
 La prima compilazione ha inoltre rilevato un tipo troppo stretto per il
-suffisso letterale: il suo argomento usa ora `simple-string`, mentre il
-nome posseduto dall'I/O resta `simple-base-string`. La patch minima è stata
-riletta separatamente; il tentativo fallito precede tutti i test ed è conservato.
+suffisso letterale: il suo argomento usa ora `simple-string`. Il secondo
+tentativo ha raggiunto il caso Latin1 e rilevato che `base-char` non copre
+il byte 255: le copie dei nomi usano ora array semplici di `character`,
+e il parser accetta `simple-string`. La validazione resta limitata ai
+codici 1…255. Entrambe le correzioni sono state rilette separatamente;
+i tentativi falliti sono conservati.
 
 ## Limiti
 

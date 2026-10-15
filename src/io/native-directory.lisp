@@ -37,7 +37,7 @@ Latin1 conserva ciascun byte del nome; . e .. sono gli unici nomi esclusi dai bu
                          ((> size (- max-total-name-bytes bytes))
                           (return (values nil :io-directory-total-name-bytes)))
                          (t nil))
-                   (push (map 'simple-base-string #'identity name) names)
+                   (push (map '(simple-array character (*)) #'identity name) names)
                    (incf count) (incf bytes size))))
           finally (return (values nil :io-directory-names)))))
 

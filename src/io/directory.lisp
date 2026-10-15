@@ -35,7 +35,7 @@ Rifiuta risultato incompleto o fuori contratto; budget applicati anche ai nomi e
                                            (and (<= 1 code 255) (/= code 47)))) name)
           (error 'invariant-violation :reason :io-directory-name))
         (incf bytes (length name))
-        (setf (svref result i) (map 'simple-base-string #'identity name))))))
+        (setf (svref result i) (map '(simple-array character (*)) #'identity name))))))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (file-io &key (:max-names t) (:max-total-name-bytes t) (:max-name-bytes t))

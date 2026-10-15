@@ -197,7 +197,8 @@
                (:module "scheduler" :serial t
                 :components ((:file "support") (:file "controller") (:file "lifecycle")
                              (:file "pool-claim") (:file "dispatch") (:file "pool-recycle")
-                             (:file "pool-begin") (:file "pool-step")))
+                             (:file "pool-begin") (:file "pool-step")
+                             (:file "pool-chain-support") (:file "pool-chain")))
                (:module "storage"
                 :serial t
                 :components ((:file "support") (:file "segment-header") (:file "log-header")

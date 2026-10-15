@@ -194,14 +194,17 @@ una query di uguaglianza di saltare il segmento.
 ### Indice full text
 
 > **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Un tipo full text
-> estende la famiglia `.idx`. Il contenuto logico è definito; layout binario, codec e
-> identificativo numerico del tipo richiedono una versione esplicita prima del primo codec.
+> estende la famiglia `.idx`. Il completamento successivo in
+> [ADR-0054](adr/0054-contratto-e-formato-full-text.md) fissa il
+> [layout `.idx` v2, tipo 5](formato-indice-full-text.md), distinto dalla versione dei
+> documenti. Il codec di prodotto e la sua qualifica restano da realizzare.
 
 Un file per indice full text e segmento contiene identità di Serie/segmento, generazione
 e profilo di analisi; dizionario ordinato `(campo, termine)`; posting list ordinate di
 ordinali di riga con frequenze; posizioni dei token nel campo; conteggi e limiti delle
 sezioni, protetti da CRC32C. Le righe si risolvono esclusivamente con l'hint del segmento
-associato. Un Bloom opzionale sui termini indica solo assenza o possibile presenza.
+associato. Il primo layout non include Bloom o compressione; un eventuale filtro sui
+termini in un codec futuro indicherà solo assenza o possibile presenza.
 
 Prima dell'uso si verificano versione, identità, generazione/profilo, CRC, confini delle
 sezioni, conteggi, ordine e intervallo delle righe/posizioni. Il decoder rifiuta valori

@@ -12,6 +12,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   posseduto, limiti u64 e budget espliciti; collegamento alla prova verticale.
   Nessuna prenotazione, modifica di file o ammissione del traffico.
 
+- Completamento progettuale full text (ADR-0054): profilo Unicode 18.0.0,
+  foglie query, contratti dei moduli, generazioni e ritiro, riserve prima del
+  commit e default di ammissione. Definito il formato `.idx` v2/type 5 con
+  sei sezioni e legame all'hint; quattro nuovi requisiti e due invarianti.
+  Corpus e criteri di accettazione restano da realizzare nella fase 8;
+  nessun codice full text introdotto.
+
 - Massimo CSN osservato dai reader ACTIVE/CLOSED e dal decision log, con
   aggregazione di tutti i segmenti della stessa Serie dopo il gate canonico.
   Distinti zero e assenza; inclusi CSN dei SEAL writer, OUTCOME ed esiti EDIT,

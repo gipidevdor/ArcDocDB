@@ -63,8 +63,11 @@ configurato; il superamento produce un rifiuto esplicito.
 ## Budget della ricerca full text
 
 > **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Gli indici invertiti
-> dedicati richiedono budget aggiuntivi; valori di default e limiti binari si fissano e
-> si verificano prima dell'implementazione della fase 8, senza dedurli dal limite del documento.
+> dedicati richiedono budget aggiuntivi. Il successivo
+> [ADR-0054](adr/0054-contratto-e-formato-full-text.md) fissa
+> [default e regole di ammissione](full-text.md#budget-iniziali), con
+> [limiti binari](formato-indice-full-text.md) distinti dai documenti. La qualifica
+> resta nella fase 8.
 
 Il contratto limita byte analizzati, byte per termine, token e posizioni per documento.
 La Serie limita numero di indici e generazioni mantenute, memoria del delta e spazio

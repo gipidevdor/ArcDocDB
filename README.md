@@ -76,6 +76,10 @@ phrases, combined with structured filters and snapshot visibility. The
 [design](docs/08-indici.md#ricerca-full-text) is recorded; implementation and validation
 belong to phase 8.
 
+The [full-text contract](docs/full-text.md) and
+[binary index format](docs/formato-indice-full-text.md) specify the analyzer, queries,
+generation lifecycle, resource limits and acceptance criteria for that implementation.
+
 ## How it works
 
 <p align="center">

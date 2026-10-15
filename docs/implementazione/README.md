@@ -10,6 +10,9 @@ implementazione e qualifica previste nella fase 8. Non è ancora un
 componente di prodotto: codec CBOR, primary index, GET e prove verticali
 non dimostrano tokenizzazione, posting list, frasi o visibilità full text.
 I criteri sono nel [piano di verifica](../affidabilita/piano-di-verifica.md#ricerca-full-text).
+Il [contratto operativo](../full-text.md) e il
+[formato `.idx` v2/type 5](../formato-indice-full-text.md) sono definiti da
+[ADR-0054](../adr/0054-contratto-e-formato-full-text.md); restano specifiche di progetto.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|

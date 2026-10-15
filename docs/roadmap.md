@@ -13,8 +13,10 @@ Il perimetro della v1 include la **ricerca full text** approvata con
 [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md): implementazione
 e qualifica sono nella fase 8, insieme a indici secondari e Query Engine.
 I test attuali di indice primario e recovery non verificano questi nuovi
-requisiti. Formato binario degli indici, analizzatori e misure dedicate
-restano da produrre secondo il [piano di verifica](affidabilita/piano-di-verifica.md#ricerca-full-text).
+requisiti. [ADR-0054](adr/0054-contratto-e-formato-full-text.md) completa il
+[contratto operativo](full-text.md) e il [formato binario](formato-indice-full-text.md).
+Codec, analizzatore e misure dedicate restano da realizzare secondo il
+[piano di verifica](affidabilita/piano-di-verifica.md#ricerca-full-text).
 
 La [prova verticale con SIGKILL](implementazione/prova-verticale.md) collega
 ora scrittura durevole, indice e GET, recovery, checkpoint e rotazione in

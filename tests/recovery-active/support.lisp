@@ -149,7 +149,7 @@
 (defun ra-no-writes (case)
   "Assertion: nessuna open/write/flush/close/entry/rename; pread e identity sono lecite."
   (let ((calls (ra-calls case)))
-    (dolist (index '(0 2 3 4 5 7 8)) (is (zerop (aref calls index)))))
+    (dolist (index '(0 2 3 4 5 7 8)) (is (zerop (aref calls index))))))
 
 (defun ra-check-bytes (case)
   "Oracoli nativi aggiungono pread veri: nessun reset o ripristino dei contatori."

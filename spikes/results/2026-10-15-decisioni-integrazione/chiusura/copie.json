@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "kind": "closing-copy-receipt",
+  "status": "copied",
+  "files": [
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077923-command-53918-0/report.lisp",
+      "target": "chiusura/publication/report.lisp",
+      "bytes": 204209,
+      "sha256": "6ba5355c3fd4c64c137f3639864d893ff7054d61adb486feb8ed7e0d2e9d76ff"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077923-command-53918-0/conservazione.lisp",
+      "target": "chiusura/publication/conservazione.lisp",
+      "bytes": 1159,
+      "sha256": "83d25ed7d4b532083cb713fd225d73c22f19772acf82af3ae2bffe915edc13eb"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077956-command-54982-0/report.lisp",
+      "target": "chiusura/audit/report.lisp",
+      "bytes": 204212,
+      "sha256": "b41af55ab4d713fd491a59b50dfb7a824c661b2fc9f2cf5b75df230348d3490a"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077956-command-54982-0/conservazione.lisp",
+      "target": "chiusura/audit/conservazione.lisp",
+      "bytes": 1159,
+      "sha256": "27f4ed2299cc6dcf2dd4f6b4f8993f03baa4667bce87664a3adbb7d7458eea86"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077956-command-54983-0/report.lisp",
+      "target": "chiusura/links/report.lisp",
+      "bytes": 203035,
+      "sha256": "b055de417d00fb9e1e79fa1ef84840c62d76a15ccd98a6958876b882006a0e1e"
+    },
+    {
+      "source": "/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB/spikes/out/4001077956-command-54983-0/conservazione.lisp",
+      "target": "chiusura/links/conservazione.lisp",
+      "bytes": 1159,
+      "sha256": "96b9087a2b49f08590d6c4ad4586c34020425758e6a53208b3a1617308021574"
+    }
+  ],
+  "limits": [
+    "byte-copy-only",
+    "closed-producers",
+    "no-self-certification"
+  ]
+}

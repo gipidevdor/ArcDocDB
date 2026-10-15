@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Passo bounded del dispatcher pool/Serie: sceglie una sola operazione fra
+  nuova presa IDLE, collegamento del CLAIMED e ricircolo RESCHEDULE.
+  Origine esplicita distingue cursore, count e assenza di trasferimento;
+  gli obblighi esistenti non consultano il pool. Nessun secondo claim,
+  begin o retry implicito; fasi attive e prima causa restano conservate.
+
 - Rendezvous delle fixture concorrenti residue CBOR, UTF-8 e due Serie:
   checkpoint dopo il primo lavoro effettivo, mantenendo conteggi, sink e
   oracoli. Diagnostica prima delle asserzioni temporali; intervalli WALL

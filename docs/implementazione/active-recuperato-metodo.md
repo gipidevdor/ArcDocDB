@@ -40,7 +40,11 @@ non misura prestazioni. Il bootstrap riprende quello di
 fatali anche warning/style-warning nelle definizioni del driver. Il percorso
 benchmark carica ASD e `arcdocdb/tests` una volta, senza `test-op` né `run`.
 Le output translations ASDF sono private, sotto `<output>/fasl/`, ignorando
-la configurazione ereditata. Anche i warning di caricamento sono fatali.
+la configurazione ereditata. Nel solo caricamento ASDF, gli avvisi
+`redefinition-warning` sono registrati con conteggio e fino a 16 messaggi,
+poi muffled: compilare e caricare una macro nello stesso processo può
+ridefinirla. Tutti gli altri warning restano fatali. La policy ha casi
+negativi nei self-test; gli avvisi effettivi restano anche nello stderr.
 
 ## Caso fisso e oracolo
 

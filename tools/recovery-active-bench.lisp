@@ -184,6 +184,21 @@
               :sink (if quiet (loop for r in records sum (getf r :sink)) :unavailable)
               :wall-ticks wall :bytes-consed bytes)))))
 
+(defun loading-warning-action (asdf-p redefinition-p)
+  (if (and asdf-p redefinition-p) :record :error))
+(defun call-asdf (thunk)
+  "Solo ridefinizioni ASDF registrate; ogni altro warning resta fatale."
+  (let ((count 0) (messages nil))
+    (handler-bind
+        ((warning (lambda (c)
+                    (if (eq :record (loading-warning-action t (typep c 'sb-kernel:redefinition-warning)))
+                        (progn (incf count)
+                               (when (< (length messages) 16) (push (condition-data c) messages))
+                               (format *error-output* "~&ASDF-REDEFINITION ~A~%" c)
+                               (muffle-warning c))
+                        (reject (list :bootstrap-warning (condition-data c)))))))
+      (funcall thunk))
+    (list :count count :messages (nreverse messages) :message-limit 16)))
 (defun load-product (root out)
   (require :asdf)
   (let ((*default-pathname-defaults* root) (*compile-verbose* nil) (*compile-print* nil)
@@ -192,10 +207,12 @@
              (list :output-translations (list t (namestring (merge-pathnames "fasl/" out)))
                    :ignore-inherited-configuration))
     ;; Un solo LOAD-ASD/LOAD-SYSTEM; registra i test senza TEST-OP o RUN.
-    (progv (list (find-symbol "*COMPILE-FILE-WARNINGS-BEHAVIOUR*" "ASDF")
-                 (find-symbol "*COMPILE-FILE-FAILURE-BEHAVIOUR*" "ASDF")) '(:error :error)
-      (funcall (api "ASDF" "LOAD-ASD") (merge-pathnames "arcdocdb.asd" root))
-      (funcall (api "ASDF" "LOAD-SYSTEM") "arcdocdb/tests" :verbose nil))))
+    (call-asdf
+     (lambda ()
+       (progv (list (find-symbol "*COMPILE-FILE-WARNINGS-BEHAVIOUR*" "ASDF")
+                    (find-symbol "*COMPILE-FILE-FAILURE-BEHAVIOUR*" "ASDF")) '(:error :error)
+         (funcall (api "ASDF" "LOAD-ASD") (merge-pathnames "arcdocdb.asd" root))
+         (funcall (api "ASDF" "LOAD-SYSTEM") "arcdocdb/tests" :verbose nil))))))
 (defun acquire-output (root requested)
   (require :sb-posix)
   (let ((out (merge-pathnames requested root)))
@@ -225,7 +242,7 @@
     (save-report report out)
     (handler-case
         (progn
-          (load-product root out)
+          (setf (getf report :bootstrap-redefinitions) (load-product root out))
           (dolist (case (matrix))
             (destructuring-bind (version workers replica) case
               (declare (ignore replica))
@@ -259,6 +276,12 @@
       (check (= 24 (+ 8 4 4 4 4)))
       (check (= 12 (+ 4 4 4)))
       (check (= 13 (length (expected-queries))))
+      (dolist (pair '((nil nil) (nil t) (t nil) (t t)))
+        (check (eq (if (equal pair '(t t)) :record :error) (apply #'loading-warning-action pair))))
+      (dolist (condition (list (make-condition 'simple-warning :format-control "fixture" :format-arguments nil)
+                               (make-condition 'style-warning)))
+        (check (handler-case (progn (call-asdf (lambda () (warn condition))) nil)
+                 (bench-failure () t))))
       (dolist (v '(1 2))
         (let ((f (list +size+ +size+ :complete v)) (s '(1 24 12 4 4 4)) (q (expected-queries)))
           (check (oracle-p f s q v)) (check (= (+ 4294968891 v) (expected-token v)))

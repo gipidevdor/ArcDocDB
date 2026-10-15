@@ -33,3 +33,12 @@ L'audit confronta lunghezza e SHA256 di report e sidecar con gli originali
 prima dell'archiviazione del worktree. Fallimenti e varianti restano distinti.
 La CI automatica del commit pubblicato verifica le suite presenti e rimane
 distinta dalla qualifica dedicata; nessuna misura del database completo.
+
+## Integrazione
+
+La variante successiva integra `7f1cc544` senza riscrivere gli antenati:
+nuove prove ACTIVE native e pool, con sorgenti di prodotto invariati.
+Conserva tutte le voci del changelog e i collegamenti delle campagne.
+Ripete compilazione del prodotto e controlli statici, registrati separatamente.
+Le suite importate non sono eseguite localmente in questa campagna e non
+qualificano il nuovo lettore CLOSED; la CI del commit pubblicato resta distinta.

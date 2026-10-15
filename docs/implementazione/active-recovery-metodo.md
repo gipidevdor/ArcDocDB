@@ -20,6 +20,11 @@ scorciatoia per l'assenza di decisioni. Completezza e appartenenza allo
 stesso Archivio restano precondizioni del controller: la prova non realizza
 il lettore del log dell'Archivio né l'esclusione di altri processi.
 
+La campagna esercita l'ingresso `leggi-active-recuperato` con tabella nuda.
+L'ingresso `leggi-active-con-decisioni`, introdotto successivamente nel
+[lettore dell'Archivio](decisioni-recuperate.md), mantiene una qualifica
+dedicata distinta da questi casi.
+
 Packing little-endian, CRC bitwise, record e SEAL delle fixture sono
 indipendenti dagli encoder di prodotto. Offset, prefisso atteso, conteggi
 e coppie TXID/CSN sono fatti dichiarati della fixture. Le factory reali

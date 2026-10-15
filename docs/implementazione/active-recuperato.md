@@ -45,6 +45,11 @@ collegamento e la completezza restano precondizioni esplicite. Una tabella
 parziale, di un altro Archivio o costruita solo per rappresentare «nessuna
 decisione» non autorizza presumed abort. Non esiste fallback da `nil`.
 
+Il nuovo ingresso [`leggi-active-con-decisioni`](decisioni-recuperate.md)
+riceve il risultato completo del lettore readonly del decision log e
+verifica lo stesso ambito canonico dell'Archivio prima dell'I/O ACTIVE.
+La precondizione sulla tabella nuda resta per l'API precedente.
+
 Il risultato trattiene control log recuperato, capacità del segmento e
 scalari; gli esiti derivati occupano due array u64 privati. Non trattiene
 scratch, workspace o tabella dell'Archivio. Il controller mantiene il FD
@@ -165,10 +170,15 @@ Esiti e limiti delle esecuzioni restano distinti dalla matrice C1 completa.
 | ARV-D13 | checkpoint CLOSED con P/count esatti | stato, P, count falsi separatamente; esito omesso/aggiunto/modificato |
 | ARV-D14 | esito presente e CSN identico | assente, differente, zero presente; FD chiuso prima del claim |
 
-Le [prove locali](../../spikes/results/2026-10-14-active-recovery/README.md)
-riguardano compilazione e controlli statici. Qualifica C1, revisione
-indipendente, prove funzionali/FI e misure dei nuovi ingressi restano aperte.
-Restano inoltre da integrare il lettore del decision log legato all'Archivio,
+Le [prime prove locali](../../spikes/results/2026-10-14-active-recovery/README.md)
+riguardano compilazione e controlli statici. La successiva
+[campagna funzionale](../../spikes/results/2026-10-15-active-recovery-verification/README.md)
+aggiunge 27 test con varianti v1/v2 su FD reali: risoluzione, errori,
+query e serializer, chiusura verso il publisher e riapertura del control log.
+Il risultato locale appartiene al commit congelato dichiarato nella campagna;
+qualifica C1, matrice completa delle decisioni e misure restano aperte.
+Il [lettore del decision log legato all'Archivio](decisioni-recuperate.md)
+è ora disponibile con qualifica dedicata ancora aperta. Restano da integrare
 la riconciliazione dei CLOSED, il builder completo del checkpoint, gli
 indici/orizzonte CSN e il gate di ammissione del Recovery Manager.
 Questo risultato non autorizza da solo a dimenticare decisioni globali o

@@ -12,6 +12,7 @@ Le query consultano il piano senza eseguire operazioni sul filesystem.
 |---|---|
 | `file-segmento(id, forma)` | Descrittore immutabile, ID u64 incluso zero, forma `:temporary` o `:final` |
 | `pianifica-riconciliazione(manifest, files, :max-files, :max-segmenti)` | Piano posseduto da un simple-vector completo e stabile di descrittori |
+| `pianifica-riconciliazione-directory(manifest, directory, …)` | Inventario completo dalla capacità directory, identità dei segmenti verificate e stesso piano |
 | `stato-riconciliazione(plan)` | `:ready`, `:degraded` o `:faulted` per la disponibilità dei nomi richiesti |
 | `numero-azioni-riconciliazione(plan)` | Numero di ID distinti del piano |
 | `azione-riconciliazione(plan, indice)` | ID, forma, azione e stato nel manifest, tutti scalari |
@@ -20,7 +21,7 @@ La [scelta dell'ID dopo recovery](id-segmento-recovery.md) riusa questo piano
 per proporre un ID oltre tutti i nomi osservati e almeno pari al high-water
 del manifest. La proposta non riserva il nome, esegue azioni o ammette traffico.
 
-Il chiamante interpreta `.seg` e `.seg.tmp`, esclude altre categorie
+Nell'ingresso in memoria il chiamante interpreta `.seg` e `.seg.tmp`, esclude altre categorie
 e fornisce un inventario completo: un elenco parziale renderebbe
 falsamente mancanti i segmenti esclusi. Il modulo non verifica questa
 precondizione, la stabilità del filesystem, header, identità fisica,
@@ -80,6 +81,46 @@ pubblicato sono in sola lettura. Il planner non crea thread, non
 modifica input e non introduce lock o scritture condivise fra Serie.
 
 ## Verifica
+
+### Raccolta dalla directory
+
+> **Proposta di API** — Contratto applicativo conservativo su ADR-0040,
+> senza nuovi formati o azioni del recovery.
+
+L'ingresso `pianifica-riconciliazione-directory` trasferisce nel prodotto
+la raccolta dei nomi. Riceve una capacità `io:apri-directory` già aperta
+sulla directory `segments`, con namespace congelato dal controller.
+`io:elenca-directory` usa un cursore indipendente relativo al FD parent,
+consegna soltanto dopo EOF e chiusura riuscita e lascia il parent aperto.
+Il backend iniettato deve fornire `directory-entries` e `entry-identity`;
+le callback mancanti producono un errore esplicito.
+
+I nomi dei segmenti rispettano il formato `<segment-id:016x>.seg` o
+`.seg.tmp`: sedici cifre minuscole ASCII, senza restringere l'ID u64.
+I nomi di altre categorie restano intatti; i nomi simili a segmenti ma
+non canonici sono rifiutati. Ogni segmento deve essere un file regolare
+senza symlink, verificato con `fstatat` sul medesimo parent. Alias fisici
+tra nomi distinti producono `corruption-detected`. Il manifest e il planner
+restano immutati; soltanto la raccolta completa alimenta il piano.
+
+Oltre a `max-files` e `max-segmenti`, i budget configurabili sono:
+`max-names` (65.536), `max-total-name-bytes` (16 MiB) e `max-name-bytes`
+(255, da 1 a 255). Tutti i nomi, anche quelli ignorati dal parser storage,
+consumano questi budget; solo `.` e `..` sono esclusi. I primi due possono
+essere zero per una directory vuota. Non si tratta di un tetto RSS.
+
+Il [metodo preregistrato](inventario-directory-metodo.md) descrive le
+decisioni, i guasti e le prove native; le [letture C1](inventario-directory-revisione.md)
+ne dichiarano i confini statici. L'esclusività del namespace resta
+una precondizione: l'enumerazione POSIX non certifica uno snapshot atomico.
+Header, CRC e contenuti richiedono i lettori successivi. Non si eseguono
+rinomine, rimozioni, allocazione di CSN o ammissione del traffico.
+I [risultati conservati](../../spikes/results/2026-10-15-serie-inventory/README.md)
+distinguono i tentativi falliti, il controllo completo locale e i limiti.
+La [verifica della raccolta](../../spikes/results/2026-10-15-serie-inventory-collection/catalogo.lisp)
+conserva il confronto dei byte e il controllo indipendente dell'archivio chiuso.
+
+### Planner in memoria
 
 Il [metodo preregistrato](inventario-metodo.md) prescrive un oracle
 indipendente, matrice esaustiva, permutazioni, u64 e budget, ownership,

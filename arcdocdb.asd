@@ -58,7 +58,8 @@
                              (:file "payload-write")))
                (:module "io" :serial t
                 :components ((:file "package") (:file "types") (:file "identity-types")
-                             (:file "native") (:file "native-namespace") (:file "lifecycle") (:file "identity")
+                             (:file "native") (:file "native-namespace") (:file "native-directory")
+                             (:file "lifecycle") (:file "identity") (:file "directory")
                              (:file "rename") (:file "namespace") (:file "transfer") (:file "flush")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
@@ -107,7 +108,8 @@
                              (:file "manifest-decode") (:file "manifest-fold")
                              (:file "manifest-build") (:file "manifest-query") (:file "manifest-transition")
                              (:file "inventory-types") (:file "inventory-build")
-                             (:file "inventory-query") (:file "inventory-id")))
+                             (:file "inventory-query") (:file "inventory-id")
+                             (:file "inventory-directory")))
                (:module "get-resolver" :serial t
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
                              (:file "rows") (:file "build") (:file "read")
@@ -229,7 +231,10 @@
                              (:file "decisions-support") (:file "decisions")
                              (:file "decisions-audit") (:file "decisions-radix") (:file "manifest-support")
                              (:file "manifest") (:file "manifest-audit") (:file "manifest-transition")
-                             (:file "inventory-support") (:file "inventory") (:file "inventory-id")))
+                             (:file "inventory-support") (:file "inventory")
+                             (:file "inventory-id")
+                             (:file "inventory-directory-support") (:file "inventory-directory")
+                             (:file "inventory-directory-native")))
                (:module "recovery-active" :serial t
                 :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
                (:module "recovery-archive" :serial t

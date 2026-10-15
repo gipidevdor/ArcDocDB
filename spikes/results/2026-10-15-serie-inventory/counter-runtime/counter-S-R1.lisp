@@ -1,0 +1,2 @@
+(:SCHEMA-VERSION 1 :KIND :FROZEN-GIT-TEST-INVENTORY :STATUS :FAILED :DIAGNOSTIC
+ #A((45) BASE-CHAR . "Frozen ASD suite order/count is inconsistent."))

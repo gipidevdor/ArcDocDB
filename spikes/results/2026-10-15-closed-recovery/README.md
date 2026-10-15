@@ -48,3 +48,8 @@ Archivio e bridge ACTIVE. I controlli registrati prima restano attribuiti
 ai loro sorgenti congelati: il controllo del catalogo non copre queste
 aggiunte successive. Il record CI finale è distinto. Il lettore Archivio
 separa ora chiamate I/O e verifiche dei ritorni, senza cambiare le API.
+
+Anche il nuovo lettore CLOSED adotta questa separazione (COD-25): prima
+memorizza il ritorno I/O, poi esegue il controllo puro. Non cambiano API,
+frontiere, condizioni o ordine delle operazioni. La lettura statica aggiuntiva
+e i controlli finali restano una variante distinta delle prove precedenti.

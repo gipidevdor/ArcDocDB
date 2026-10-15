@@ -48,8 +48,9 @@ Errori di argomenti/risorse/capacità tipizzati; CORRUPTION-DETECTED per frontie
 Verifica Serie/ID u64 completi, CRC, riservati, origine e versione prima del corpo.
 Condizioni originali propagate, INVARIANT-VIOLATION per ritorno interno impossibile; nessuna scrittura su file."
   (check-range scratch 0 +segment-header-bytes+)
-  (unless (= (leggi-esatto input scratch 0 +segment-header-bytes+ 0) +segment-header-bytes+)
-    (error 'invariant-violation :reason :closed-recovery-header-read))
+  (let ((next (leggi-esatto input scratch 0 +segment-header-bytes+ 0)))
+    (unless (= next +segment-header-bytes+)
+      (error 'invariant-violation :reason :closed-recovery-header-read)))
   (multiple-value-bind (next version origin created-offset)
       (verifica-header-segmento scratch 0 +segment-header-bytes+
        (arcdocdb.get::vista-get-serie-identity (arcdocdb.control::control-recuperato-view control)) id)
@@ -68,7 +69,8 @@ Condizioni originali propagate senza retry, close, troncatura o risultato parzia
   (check-range scratch 0 prefix)
   (loop repeat (ceiling (- prefix +segment-header-bytes+) chunk)
         for start from +segment-header-bytes+ by chunk for end = (min prefix (+ start chunk))
-        do (unless (= (leggi-esatto input scratch start end start) end)
-             (error 'invariant-violation :reason :closed-recovery-read :offset start)))
+        do (let ((next (leggi-esatto input scratch start end start)))
+             (unless (= next end)
+               (error 'invariant-violation :reason :closed-recovery-read :offset start))))
   (arcdocdb.io::esigi-aperto input :input)
   nil)

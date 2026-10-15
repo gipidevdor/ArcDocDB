@@ -101,6 +101,17 @@ positivi e due negativi, 71 processi e 26 SIGKILL intenzionali. I byte dei
 segmenti preesistenti restano immutati dopo entrambi i crash; nessuna azione
 di rimozione è eseguita da questa nuova funzione.
 
+La [verifica completa della versione integrata](../../spikes/results/2026-10-15-recovery-segment-id-verifica/README.md)
+è `OK / exit 0 / STABLE`, 484,751351 s su 1.012 sorgenti, al commit
+`c8a1adab7da1adf171e1beaf41cc71ac2e801601`, comprendente anche il recupero CSN
+pubblicato nel frattempo. Passano 1.734 test nominati, due smoke test,
+249 file di prodotto senza violazioni, tracciabilità, link, controlli delle
+evidenze e dieci spike. Il tentativo precedente, interrotto per integrare
+il recupero CSN, resta conservato come `FAILED / exit 143`, non come test
+riuscito. La raccolta finale conserva entrambi i registri e gli originali
+degli spike; i successivi aggiornamenti dei risultati non cambiano codice,
+test o strumenti verificati. Nessuna promozione della qualifica C1 del motore.
+
 ## Due letture con lista C1
 
 Le due letture dell'autore riguardano prima contratto/algoritmo, poi diff,

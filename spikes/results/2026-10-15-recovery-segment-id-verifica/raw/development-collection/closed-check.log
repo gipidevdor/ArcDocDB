@@ -1,0 +1,48 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-15-recovery-segment-id/"
+ :INDEXED-FILES 144 :ACTUAL-FILES 146 :INDEXED-BYTES 3618454 :PROCESSES
+ ((:LABEL "coverage" :RECORD-PATH "processes/coverage/report.lisp" :COMMAND
+   ("sbcl" "--script" "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/recovery-id-coverage/" "recovery")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "self-test-incomplete-copy" :RECORD-PATH
+   "processes/self-test-incomplete-copy/report.lisp" :COMMAND
+   ("sbcl" "--script" "tools/foundation-mutation.lisp" "--self-test") :STATUS
+   :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-incomplete-copy" :RECORD-PATH
+   "processes/mutation-incomplete-copy/report.lisp" :COMMAND
+   ("sbcl" "--script" "tools/foundation-mutation.lisp" "--run"
+    "spikes/out/recovery-id-mutation/" "inventory-id" "--jobs" "4")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "self-test-fixed-copy" :RECORD-PATH
+   "processes/self-test-fixed-copy/report.lisp" :COMMAND
+   ("sbcl" "--script" "tools/foundation-mutation.lisp" "--self-test") :STATUS
+   :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-compile-rejection" :RECORD-PATH
+   "processes/mutation-compile-rejection/report.lisp" :COMMAND
+   ("sbcl" "--script" "tools/foundation-mutation.lisp" "--run"
+    "spikes/out/recovery-id-mutation-2/" "inventory-id" "--jobs" "4")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "self-test-final" :RECORD-PATH
+   "processes/self-test-final/report.lisp" :COMMAND
+   ("sbcl" "--script" "tools/foundation-mutation.lisp" "--self-test") :STATUS
+   :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-final" :RECORD-PATH "processes/mutation-final/report.lisp"
+   :COMMAND
+   ("sbcl" "--script" "tools/foundation-mutation.lisp" "--run"
+    "spikes/out/recovery-id-mutation-3/" "inventory-id" "--jobs" "4")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "vertical" :RECORD-PATH "processes/vertical/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/vertical-crash.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "6638f58e6c46bfa9d9dea22b202ba47867b42c8b0dcdecda5d752c2a00bf786d"
+ :CATALOGUE-SHA256
+ "69db25126ae7f69324d750914ecf85a59ea7a35613beca403a3046be61ccba94"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

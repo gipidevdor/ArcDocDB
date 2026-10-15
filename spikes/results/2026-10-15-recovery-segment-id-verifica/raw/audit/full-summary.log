@@ -1,0 +1,141 @@
+:OK exit=0 :STABLE 484.751351 s, sorgenti=1012, stderr=1463392, righe-ok=1740
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/package.lisp" (written 15 OCT 2026 10:35:08 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/package-tmpV4YWE7CS.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/types.lisp" (written 15 OCT 2026 07:17:36 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/types-tmpC487WU3K.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/read.lisp" (written 15 OCT 2026 08:42:33 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/read-tmpKMQH3GP.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/build.lisp" (written 15 OCT 2026 07:17:36 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/build-tmp8N0WO2QA.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/query.lisp" (written 15 OCT 2026 10:35:08 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/query-tmpZ9QI367A.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/active.lisp" (written 15 OCT 2026 07:17:36 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/src/recovery-archive/active-tmpRD10QMAI.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/support.lisp" (written 15 OCT 2026 08:42:33 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/support-tmpRB2S59DB.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/read.lisp" (written 15 OCT 2026 08:42:33 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/read-tmpU1JZ7FXZ.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/query.lisp" (written 15 OCT 2026 08:42:33 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/query-tmp2DUJ9I.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/active.lisp" (written 15 OCT 2026 08:42:33 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/active-tmpU602JQSD.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/native.lisp" (written 15 OCT 2026 08:42:33 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/native-tmp5O3OCPXW.fasl
+; compiling file "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/guards.lisp" (written 15 OCT 2026 08:42:33 PM):
+; wrote /Users/gpicchiarelli/.cache/common-lisp/sbcl-2.6.9-macosx-arm64/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tests/recovery-archive/guards-tmpOLTFAEPG.fasl
+28 test XXH64 superati.
+28 test delle fondazioni superati.
+17 test UTF-8 superati.
+17 test degli header CBOR superati.
+15 test delle testate CBOR minime superati.
+24 test della struttura CBOR superati.
+22 test della struttura CBOR minima superati.
+17 test della scrittura degli header CBOR minimi superati.
+21 test della scrittura delle stringhe CBOR minime superati.
+16 test della scrittura dei valori semplici CBOR superati.
+18 test della scrittura dei float CBOR superati.
+20 test della composizione degli array CBOR superati.
+20 test della composizione delle mappe CBOR superati.
+20 test della composizione dei tag CBOR superati.
+17 test della lettura del primo item CBOR minimo superati.
+20 test del registro CSN superati.
+43 test snapshot/CSN superati.
+34 test epoche/reclaim superati.
+30 test dei compiti di lettura superati.
+70 test GET superati.
+19 test del contratto GET per benchmark superati.
+72 test directory GET superati.
+42 test resolver GET superati.
+42 test GET ACTIVE superati.
+89 test delle code writer superati.
+129 test del controllore pool superati.
+44 test dei metadati storage superati.
+107 test I/O superati.
+138 test CONTROL superati.
+125 test recovery superati.
+59 test recovery ACTIVE superati.
+54 test recovery Archivio superati.
+27 test RECOVERY ACTIVE superati.
+48 test WAL superati.
+101 test del controller Serie superati.
+64 test degli slot indice v2 superati.
+73 test dell'indice primario superati.
+4 test verticali superati; 16 scenari positivi e 2 controlli negativi.
+build e test: nessun avviso, tutti i controlli superati
+126 requisiti, 66 invarianti, 13 scenari FI, 53 ADR: 0 errori
+501 file, 3432 link controllati, 0 rotti
+sbcl --noinform --no-userinit --no-sysinit --script tools/collect-command-archive.lisp --self-test
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-01-explicit-closed-parallel-history/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-02-schema-version/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-03-manifest-kind/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-04-date-format/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-05-unknown-trees/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-06-duplicate-manifest-key/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-07-relative-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-08-relative-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-09-relative-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-10-relative-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-11-relative-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-12-relative-target/"
+    :DIAGNOSTIC "Path riservato: archive-index.lisp")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-13-reserved-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-14-reserved-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-15-reserved-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-16-reserved-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-17-duplicate-target/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-18-file-directory-collision/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-19-unknown-file-field/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-20-unknown-process-field/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-21-invalid-process-label/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-22-invalid-process-label/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-23-duplicate-process-label/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-24-record-not-in-files/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-25-duplicate-process-record/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-26-wrong-record-kind/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-27-nonterminal-record/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-28-nonterminal-record/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-29-unfinished-record/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-30-invalid-record-metadata/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-31-ok-with-failing-exit/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-32-ok-with-changed-source/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-33-explicit-gzip-payload-required/inputs/records/gzip/report.lisp: Raccolta rifiutata :DECODED-RECORD: Payload autenticato non selezionato al path processes/gzip/report.lisp.gz.")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-33-explicit-gzip-payload-required/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-34-accessory-descriptor-also-needs-explicit-payload/inputs/records/gzip/report.lisp: Raccolta rifiutata :DECODED-RECORD: Payload autenticato non selezionato al path processes/gzip/report.lisp.gz.")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-34-accessory-descriptor-also-needs-explicit-payload/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-35-accessory-compressed-record-retained-with-payload/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-36-gzip-target-must-match-descriptor/inputs/records/gzip/report.lisp: Raccolta rifiutata :DECODED-RECORD: Payload autenticato non selezionato al path processes/gzip/report.lisp.gz.")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-36-gzip-target-must-match-descriptor/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-37-descriptor-hash-mismatch/inputs/records/gzip/report.lisp: Evidenza non valida /Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-37-descriptor-hash-mismatch/inputs/records/gzip/report.lisp: SHA256 del PAYLOAD diverso da COMPRESSED-SHA256.")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-37-descriptor-hash-mismatch/"
+    "File regolare senza symlink finale: /Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-38-source-leaf-symlink/inputs/config/../raw/link.bin")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-38-source-leaf-symlink/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-39-plain-budget-exact-boundary/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-40-gzip-budget-exact-boundary/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-41-plain-budget-over/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-42-gzip-budget-over/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-43-existing-destination-never-overwritten/archive/")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-43-existing-destination-never-overwritten/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-44-existing-observations-never-overwritten/observations/")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-44-existing-observations-never-overwritten/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-45-destination-observations-overlap/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-46-destination-observations-overlap/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-47-destination-observations-overlap/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-48-corrupt-copy-retains-failure/archive/raw/data.bin")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-48-corrupt-copy-retains-failure/"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-49-source-change-retains-failure/inputs/raw/data.bin")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-49-source-change-retains-failure/"
+    "Exit 1 signal NIL, log /Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-50-unindexed-extra-rejected-by-final-checker/observations/closed-check.log"
+    "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-50-unindexed-extra-rejected-by-final-checker/observations/closed-check.log")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-50-unindexed-extra-rejected-by-final-checker/"
+                Stream: #<SB-SYS:FD-STREAM for \"file /Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-51-manifest-read-eval-disabled/inputs/config/manifest.lisp\" {8005ECAF83}>")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-51-manifest-read-eval-disabled/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-52-manifest-eof-required/"
+                Stream: #<SB-SYS:FD-STREAM for \"file /Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/command-archive-collector-self-test-YaAGWy/case-53-record-read-eval-disabled/inputs/records/ok.lisp\" {80060AB783}>")
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-53-record-read-eval-disabled/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-54-record-eof-required/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-55-cli-arguments/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-56-cli-arguments/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-57-cli-arguments/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-58-cli-arguments/"
+   "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/case-59-cli-arguments/"
+ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-YaAGWy/"

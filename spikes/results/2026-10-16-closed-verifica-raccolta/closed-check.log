@@ -1,0 +1,87 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/closed-verifica/ArcDocDB/spikes/results/2026-10-16-closed-verifica/"
+ :INDEXED-FILES 84 :ACTUAL-FILES 86 :INDEXED-BYTES 4539676 :PROCESSES
+ ((:LABEL "trace-a" :RECORD-PATH "processes/trace-a/report.lisp" :COMMAND
+   ("make" "trace-write") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-self" :RECORD-PATH "processes/coverage-self/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--self-test"
+    "spikes/out/closed-coverage-self-a/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-a" :RECORD-PATH "processes/coverage-a/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report" "spikes/out/closed-coverage-a/"
+    "recovery-closed")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-b" :RECORD-PATH "processes/coverage-b/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report" "spikes/out/closed-coverage-b/"
+    "recovery-closed")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "parentheses" :RECORD-PATH "processes/parentheses/report.lisp"
+   :COMMAND
+   ("python3" "-c" "from pathlib import Path
+errors=[]
+for path in sorted(Path(\"tests/recovery-closed\").glob(\"*.lisp\")):
+ text=path.read_text(); depth=0; string=False; escape=False; comment=False; line=1
+ for c in text:
+  if c==\"\\n\": line+=1; comment=False
+  if comment: continue
+  if string:
+   if escape: escape=False
+   elif c==\"\\\\\": escape=True
+   elif c==chr(34): string=False
+  elif c==\";\": comment=True
+  elif c==chr(34): string=True
+  elif c==\"(\": depth+=1
+  elif c==\")\":
+   depth-=1
+   if depth<0: errors.append((str(path),line,\"extra close\")); depth=0
+ if depth or string: errors.append((str(path),line,depth,string))
+print(errors)
+raise SystemExit(bool(errors))")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-c" :RECORD-PATH "processes/coverage-c/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report" "spikes/out/closed-coverage-c/"
+    "recovery-closed")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-d" :RECORD-PATH "processes/coverage-d/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report" "spikes/out/closed-coverage-d/"
+    "recovery-closed")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "diagnostic" :RECORD-PATH "processes/diagnostic/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/get-series-capture.lisp" "--" "sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script" "spikes/out/closed-input/diagnose.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "trace-b" :RECORD-PATH "processes/trace-b/report.lisp" :COMMAND
+   ("make" "trace-write") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-e" :RECORD-PATH "processes/coverage-e/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report" "spikes/out/closed-coverage-e/"
+    "recovery-closed")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "check" :RECORD-PATH "processes/check/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-status" :RECORD-PATH "processes/process-status/report.lisp"
+   :COMMAND
+   ("/bin/sh" "-c"
+    "show() { ps -p \"$1\" -o pid=,ppid=,etime=,pcpu=,command=; for child in $(pgrep -P \"$1\"); do show \"$child\"; done; }; show 95398")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "integration" :RECORD-PATH "processes/integration/report.lisp"
+   :COMMAND ("make" "build" "lint" "lint-selftest" "trace") :STATUS :OK
+   :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "e2a36faf88375f1b88b0218590e9b15a63056e12a666ee4ab2f0517828d0e053"
+ :CATALOGUE-SHA256
+ "b9da04f9b2a0cbc657dc4149b0fdc6910a87c651d4969faaf5815a4b7df3920b"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

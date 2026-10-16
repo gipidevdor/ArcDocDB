@@ -1,0 +1,5 @@
+git diff --exit-code 4031944b -- src tools arcdocdb.asd Makefile .github
+Exit 0; stdout e stderr vuoti.
+git diff --exit-code 4ebde6fc -- src/recovery/inventory-id.lisp src/recovery/inventory-directory-id.lisp src/recovery/manifest-package.lisp tests/recovery/inventory-directory-id.lisp tests/vertical tools/foundation-mutation.lisp
+Exit 0; stdout e stderr vuoti.
+Testa integrata: 4c7a0ca705fab5df25a58ef005371f3e2d50fb56

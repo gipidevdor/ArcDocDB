@@ -3,6 +3,10 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+Il [recovery CLOSED del 2026-10-16](2026-10-16-closed-verifica/report.md)
+conserva 69 test composti, pubblicazione nativa, FI, copertura grezza e
+correzione delle prove OUTCOME/EDIT orfane discordanti; C1/MC/DC aperte.
+
 L'[inventario della directory della Serie](2026-10-15-serie-inventory/README.md)
 conserva i 19 nuovi test, il controllo completo locale, le due correzioni
 e i registri originali della raccolta readonly nel prodotto.

@@ -5,6 +5,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ## [Non rilasciato]
 
+### Corretto
+
+- Fixture concorrente della lettura stringhe CBOR: durata e overlap WALL
+  possono essere zero quando l'ondata cade nello stesso tick. Preservati
+  rendezvous, risultati esatti, conteggi, immutabilità e limiti delle attese;
+  nessuna attesa artificiale o modifica al decoder.
+
 ### Aggiunto
 
 - Primo nucleo full text: analizzatore riprendibile Unicode 18.0.0 con dati e licenze
@@ -12,6 +19,23 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   cornice `.idx` v2/type 5 con CRC e preflight. Corpus ufficiali, scansione indipendente,
   saturazione, concorrenza, allocazioni e controlli negativi in `make check`.
   Persistenza completa, writer, snapshot e Query Engine restano da integrare.
+
+- Scelta dell'ID recovery direttamente dalla directory posseduta: una sola
+  enumerazione attestata, cinque budget conservati, selezione comune dal
+  piano canonico e nessuna prenotazione. La prova verticale usa nomi canonici
+  e questo ingresso di prodotto al posto dell'inventario costruito nel test.
+
+- Suite dedicata del recovery CLOSED: lettura fino al P del CONTROL,
+  risoluzione OUTCOME/EDIT, origini writer/compaction, massimo CSN e gate
+  dell'insieme. Oracoli indipendenti, matrice v1/v2 e pubblicazione nativa;
+  copertura e risultati conservati separatamente dalla qualifica C1 completa.
+
+- Piano CSN dell'Archivio: elenco Serie posseduto con Registri inclusa,
+  UUID unici, stessa autorità delle decisioni e gate CLOSED per ogni Serie.
+  Massimo completo rispetto all'elenco canonico fornito e parole della base
+  senza incremento; marker di replay leggero nel risultato ACTIVE.
+  Nessun nuovo I/O o allocatore; catalogo persistente, ammissione e qualifica
+  dedicata restano da collegare.
 
 - Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
   del payload senza copie, UTF-8 verificato per il testo, coda ignorata

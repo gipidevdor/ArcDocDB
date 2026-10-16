@@ -16,17 +16,14 @@ INVARIANT-VIOLATION per incoerenza privata; nessuna mutazione o prenotazione."
   nil)
 
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-FOR-003 REQ-AFF-008 REQ-AFF-018
-(declaim (ftype (function (manifest simple-vector
-                          &key (:max-files integer) (:max-segmenti integer))
-                         (values u64 u64 reconciliation-plan &optional)) scegli-id-segmento-recovery))
-(defun scegli-id-segmento-recovery (manifest files &key (max-files 65536) (max-segmenti 65536))
-  "Pre: recovery esclusivo, manifest autorevole e inventario completo/stabile fino al nuovo temporaneo.
-Post: proposta >= high-water e oltre tutti i nomi, successore u64 e piano posseduto; nessun I/O.
-Non riserva ID, modifica manifest, risolve anomalie o ammette traffico; nessun punto atomico durevole.
-Errori del planner propagati, RESOURCE-EXHAUSTED per ID esauriti, INVARIANT-VIOLATION per forma privata.
-Budget verificati dal planner prima della scelta; percorso freddo con allocazioni, senza nuovi lock."
-  (let* ((plan (pianifica-riconciliazione manifest files :max-files max-files :max-segmenti max-segmenti))
-         (count (numero-azioni-riconciliazione plan)))
+(declaim (ftype (function (manifest reconciliation-plan)
+                         (values u64 u64 reconciliation-plan &optional)) proponi-id-segmento-da-piano))
+(defun proponi-id-segmento-da-piano (manifest plan)
+  "Pre: manifest autorevole e suo piano canonico completo, ordinato e posseduto dal caller esclusivo.
+Post: proposta >= high-water e oltre i nomi, successore u64 e stesso piano; nessun I/O o prenotazione.
+RESOURCE-EXHAUSTED per ID esauriti; INVARIANT-VIOLATION per piano vuoto o frontiere private incoerenti.
+Solo le due API di inventario costruiscono il piano; non ricostruire i nomi dalle azioni."
+  (let ((count (numero-azioni-riconciliazione plan)))
     (multiple-value-bind (available minimum) (prossimo-id-segmento manifest)
       (unless available (error 'resource-exhausted :reason :recovery-segment-id-exhausted))
       (unless (plusp count) (error 'invariant-violation :reason :recovery-segment-id-empty-plan))
@@ -37,3 +34,16 @@ Budget verificati dal planner prima della scelta; percorso freddo con allocazion
             (error 'resource-exhausted :reason :recovery-segment-id-exhausted))
           (verifica-id-segmento-recovery minimum maximum (the u64 candidate) next)
           (values candidate next plan))))))
+
+;;; REQ: REQ-REC-001 REQ-REC-002 REQ-FOR-003 REQ-AFF-008 REQ-AFF-018
+(declaim (ftype (function (manifest simple-vector
+                          &key (:max-files integer) (:max-segmenti integer))
+                         (values u64 u64 reconciliation-plan &optional)) scegli-id-segmento-recovery))
+(defun scegli-id-segmento-recovery (manifest files &key (max-files 65536) (max-segmenti 65536))
+  "Pre: recovery esclusivo, manifest autorevole e inventario completo/stabile fino al nuovo temporaneo.
+Post: proposta >= high-water e oltre tutti i nomi, successore u64 e piano posseduto; nessun I/O.
+Non riserva ID, modifica manifest, risolve anomalie o ammette traffico; nessun punto atomico durevole.
+Errori del planner propagati, RESOURCE-EXHAUSTED per ID esauriti, INVARIANT-VIOLATION per forma privata.
+Budget verificati dal planner prima della scelta; percorso freddo con allocazioni, senza nuovi lock."
+  (proponi-id-segmento-da-piano manifest
+    (pianifica-riconciliazione manifest files :max-files max-files :max-segmenti max-segmenti)))

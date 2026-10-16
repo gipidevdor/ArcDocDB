@@ -118,7 +118,7 @@
                              (:file "manifest-build") (:file "manifest-query") (:file "manifest-transition")
                              (:file "inventory-types") (:file "inventory-build")
                              (:file "inventory-query") (:file "inventory-id")
-                             (:file "inventory-directory")))
+                             (:file "inventory-directory") (:file "inventory-directory-id")))
                (:module "get-resolver" :serial t
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
                              (:file "rows") (:file "build") (:file "read")
@@ -149,7 +149,10 @@
                (:module "recovery-closed" :serial t
                 :components ((:file "package") (:file "types") (:file "read") (:file "verify")
                              (:file "resolve") (:file "csn") (:file "build") (:file "publication")
-                             (:file "csn-serie"))))
+                             (:file "csn-serie")))
+               (:module "recovery-archive-csn" :serial t
+                :components ((:file "package") (:file "types") (:file "series") (:file "preflight")
+                             (:file "build") (:file "query"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -248,7 +251,7 @@
                              (:file "inventory-support") (:file "inventory")
                              (:file "inventory-id")
                              (:file "inventory-directory-support") (:file "inventory-directory")
-                             (:file "inventory-directory-native")))
+                             (:file "inventory-directory-native") (:file "inventory-directory-id")))
                (:module "recovery-active" :serial t
                 :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
                (:module "recovery-archive" :serial t
@@ -258,6 +261,9 @@
                (:module "recovery-active-checkpoint" :serial t
                 :components ((:file "support") (:file "semantics") (:file "guards")
                              (:file "publication")))
+               (:module "recovery-closed" :serial t
+                :components ((:file "support") (:file "read") (:file "semantics")
+                                  (:file "csn") (:file "publication") (:file "guards")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
@@ -309,6 +315,7 @@
              (uiop:symbol-call '#:arcdocdb.recovery.archive.tests '#:run)
 
              (uiop:symbol-call '#:arcdocdb.recovery.active.checkpoint.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.recovery.closed.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)

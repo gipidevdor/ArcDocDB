@@ -42,11 +42,14 @@
                  (force-output)
                  (dotimes (index 2)
                    (is (= (aref sinks index wave) (svref expected-sinks index)))
-                   (is (> (aref finishes index wave) (aref starts index wave)))
+                   ;; Il clock può quantizzare un'ondata intera nello stesso tick.
+                   (is (>= (aref finishes index wave) (aref starts index wave)))
                    (is (<= (aref starts index wave) (aref firsts index wave) (aref finishes index wave))))
                  (is (<= (max (aref firsts 0 wave) (aref firsts 1 wave))
                          (min (aref finishes 0 wave) (aref finishes 1 wave))))
-                 (is (plusp overlap))))
+                 ;; READY dopo la prima lettura attesta entrambi i partecipanti;
+                 ;; un overlap di zero tick non misura una durata negativa.
+                 (is (not (minusp overlap)))))
              (dolist (thread threads) (cs-join thread)) (is (equalp buffer before)))
         (dotimes (wave 2) (sb-thread:signal-semaphore (svref go wave) 2))
         (cs-stop-workers threads)))))

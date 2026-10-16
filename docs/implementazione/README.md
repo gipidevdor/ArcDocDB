@@ -67,6 +67,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 | Checkpoint dal recovery | [Stato completo da CONTROL e ACTIVE](checkpoint-recovery.md) | [`src/recovery-checkpoint/`](../../src/recovery-checkpoint/) |
 | CLOSED recuperati | [Prefisso autorevole, esiti locali e insieme completo prima del publisher](closed-recuperato.md) | [`src/recovery-closed/`](../../src/recovery-closed/) |
 | CSN recuperati | [Massimo osservato, fonti autorevoli e aggregazione di una Serie completa](recovery-csn.md) | [`src/recovery-active/csn.lisp`](../../src/recovery-active/csn.lisp), [`src/recovery-closed/csn-serie.lisp`](../../src/recovery-closed/csn-serie.lisp) |
+| Piano CSN dell'Archivio | [Insieme Serie, provenienza dei replay e massimo complessivo](csn-archivio-recovery.md) | [`src/recovery-archive-csn/`](../../src/recovery-archive-csn/) |
 | Lotti WAL | [Formazione, SEAL e group commit](wal.md) | [`src/wal/`](../../src/wal/) |
 | CSN dei lotti WAL | [Chiusura, token e risoluzione](wal-csn.md) | [`src/wal/csn.lisp`](../../src/wal/csn.lisp) |
 | Controller della Serie | [Pubblicazione FIFO, token e ritiro I/O](controller-serie.md) | [`src/series/`](../../src/series/) |
@@ -96,6 +97,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 | Manifest della Serie | [Ripiegamento degli EDIT del control log](manifest-control-log.md) | [`src/recovery/`](../../src/recovery/) |
 | Inventario recovery | [Piano e raccolta readonly dalla directory](inventario.md); [metodo delle prove native](inventario-directory-metodo.md) | [`src/recovery/inventory-build.lisp`](../../src/recovery/inventory-build.lisp), [`inventory-directory.lisp`](../../src/recovery/inventory-directory.lisp) |
 | ID dopo recovery | [Proposta oltre high-water e nomi osservati, senza prenotazione](id-segmento-recovery.md) | [`src/recovery/inventory-id.lisp`](../../src/recovery/inventory-id.lisp) |
+| ID dall'inventario directory | [Una enumerazione attestata, selezione dal piano e directory prestata](id-directory-recovery.md) | [`src/recovery/inventory-directory-id.lisp`](../../src/recovery/inventory-directory-id.lisp) |
 | Ordinamento delle decisioni | [Radix misurato e query concorrenti](decisioni-radix-risultati.md) | [`src/recovery/decisions-radix.lisp`](../../src/recovery/decisions-radix.lisp) |
 
 Le evidenze hanno un ambito esplicito: un test del codec non verifica transazioni,

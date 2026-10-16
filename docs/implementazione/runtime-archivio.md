@@ -71,6 +71,10 @@ viste vengono respinte per identità dello scope: non vanno riusati neppure
 i `segmento-get` che le trattengono. Il vecchio ambiente resta riservato al
 bootstrap, non viene revocato. Nessun pin o ritiro EBR viene importato.
 
+L'[adozione verificata dell'ACTIVE](adozione-controller-runtime.md) costruisce
+ora il controller reale con CSN runtime, ambito esatto e binding unico sul
+log canonico; decisione del catalogo e ammissione restano del coordinatore.
+
 **H=M non certifica la pubblicazione degli effetti recuperati.** Prima
 dell'uso operativo rimangono catalogo/inventari autorevoli, riconciliazione
 fisica, indici/radici coerenti, chiusura/pubblicazione del vecchio ACTIVE e

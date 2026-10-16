@@ -14,4 +14,5 @@
   (:import-from #:arcdocdb.get #:ambito-get #:crea-ambito-get)
   (:export #:runtime-archivio #:crea-runtime-archivio #:trova-runtime-archivio
            #:csn-runtime-archivio #:ambito-runtime-archivio
-           #:snapshot-runtime-archivio #:epoche-runtime-archivio))
+           #:snapshot-runtime-archivio #:epoche-runtime-archivio
+           #:adotta-controllore-active))

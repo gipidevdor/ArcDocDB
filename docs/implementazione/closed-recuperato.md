@@ -13,6 +13,8 @@ Non cambia formati, politica CLEAN/MERGE o publisher canonico.
 | `leggi-closed-recuperato(control, input, id, scratch, …)` | header e prefisso dal medesimo FD readonly, prepared risolti localmente |
 | `frontiere-closed-recuperato(result)` | ID u64, P dal manifest, versione 1/2 e origine writer=1/compaction=2 |
 | `statistiche-closed-recuperato(result)` | lotti, record esclusi SEAL, TXID prepared distinti, commit locali, commit solo EDIT, abort |
+| `massimo-csn-closed-recuperato(result)` | presenza e massimo locale, includendo EDIT orfani; NIL/0 distinto da T/0 |
+| `massimo-csn-serie-recuperata(active, vector, :max-segmenti)` | massimo ACTIVE + insieme completo dei CLOSED; fonti ancora aperte |
 | `verifica-closed-completi(control, vector, :max-segmenti)` | tutti e soli i vecchi CLOSED, una volta per ID, con stesso CONTROL, P e file aperti |
 | `pubblica-control-con-closed(prepared, active, vector, :max-segmenti)` | verifica l'insieme prima del claim, poi delega a `pubblica-control-da-active` |
 
@@ -145,8 +147,10 @@ RSS, latenza o throughput. Nessun nuovo lock o scrittura condivisa tra Serie.
 | CDR-G05 | ingresso publisher | rifiuti prima del claim senza effetti, stesso gettone e guasti canonici dopo il claim |
 
 Le [prime evidenze locali](../../spikes/results/2026-10-15-closed-recovery/README.md)
-riguardano compilazione e controlli statici. Qualifica C1, revisione
-indipendente, casi funzionali/FI e misure dei nuovi ingressi restano aperti.
+riguardano compilazione e controlli statici. La
+[campagna dedicata](../../spikes/results/2026-10-16-closed-verifica/report.md)
+conserva 69 test composti, FI, prove native e revisione statica.
+Qualifica C1/MC/DC e misure dei nuovi ingressi restano aperte.
 Le prove dei parser preesistenti non qualificano automaticamente il nuovo
 binding CLOSED/CONTROL, la risoluzione EDIT o il controllo dell'insieme.
 Il [metodo della verifica dedicata](closed-recuperato-verifica.md) definisce

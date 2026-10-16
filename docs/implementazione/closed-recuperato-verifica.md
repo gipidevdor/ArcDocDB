@@ -78,3 +78,11 @@ oracoli e fixture; il carico esterno è incontrollato. Non si deducono
 throughput DB, heap zero, scalabilità o copertura C1 completa dal solo
 successo locale. Fonti fisiche, catalogo e namespace restano precondizioni
 del controller fino alla pubblicazione e al successivo gate di ammissione.
+
+## Esiti conservati
+
+La [campagna del 2026-10-16](../../spikes/results/2026-10-16-closed-verifica/report.md)
+conserva 69 test superati, i tentativi falliti, le varianti e i controlli
+d'integrazione. Copertura grezza: 739/814 forme e 87/94 rami; tre rami
+applicativi di conteggio e quattro generati restano non raggiunti.
+Il report mantiene denominatori, oracoli e limiti; C1/MC/DC restano aperte.

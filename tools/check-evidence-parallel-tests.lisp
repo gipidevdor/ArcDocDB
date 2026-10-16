@@ -393,6 +393,76 @@
       (ept-check (not (ept-alive-p (ept-one-data pid-path))) "Processo protocollo raccolto"))
     (ept-unchanged snapshot)))
 
+(defun ept-scan-stub (path counter variant)
+  "CLI iniettabile: due errori espliciti poi PS reale, oppure fallimento controllato."
+  (ept-write-text path
+    (with-output-to-string (stream)
+      (format stream "(require :asdf)~%(require :sb-posix)~%")
+      (format stream "(let* ((*read-eval* nil) (attempt (1+ (if (probe-file ~S) (with-open-file (s ~S) (read s)) 0))))~%"
+              (namestring counter) (namestring counter))
+      (format stream "(with-open-file (s ~S :direction :output :if-exists :supersede) (write attempt :stream s))~%"
+              (namestring counter))
+      (ecase variant
+        (:retry
+         (write-string "(if (< attempt 3) (progn (format *error-output* \"EXPECTED-SCAN-FAILURE attempt~D~%\" attempt) (sb-ext:exit :code 2))
+ (multiple-value-bind (output diagnostic exit) (uiop:run-program '(\"ps\" \"-axo\" \"pid=\") :output :string :error-output :string :ignore-error-status t)
+   (write-string output) (write-string diagnostic *error-output*) (sb-ext:exit :code exit)))
+" stream))
+        (:failed (write-string "(format *error-output* \"EXPECTED-SCAN-FAILURE attempt~D~%\" attempt) (sb-ext:exit :code 2)
+" stream))
+        (:nonnumeric (write-string "(write-line \"not-a-pid\") (sb-ext:exit :code 0)
+" stream))
+        (:empty (write-string "(sb-ext:exit :code 0)
+" stream)))
+      (format stream ")~%"))))
+
+(defun ept-scan-retry (directory variant)
+  "Una scansione incompleta non equivale mai all'assenza di processi nella sessione."
+  (let* ((logs (ept-directory (merge-pathnames "scan-logs/" directory)))
+         (counter (merge-pathnames "attempt-counter.lisp" directory))
+         (stub (merge-pathnames "scan-command.lisp" directory))
+         (driver (merge-pathnames "scan-driver.lisp" directory))
+         (argv (ept-sbcl stub)) (members nil))
+    (ept-scan-stub stub counter variant)
+    (if (eq variant :retry)
+        (let ((*process-scan-command* argv) (*process-scan-serial* 0))
+          (setf members (processi-sessione (ept-session-id 0) logs))
+          (ept-check (= 3 *process-scan-serial*) "Tre tentativi prima del successo")
+          (ept-check (member (sb-posix:getpid) members) "Snapshot completo include PID del chiamante")
+          (ept-write-data (merge-pathnames "scan-result.lisp" directory)
+                          (list :status :ok :caller-pid (sb-posix:getpid) :caller-pgrp (sb-posix:getpgrp)
+                                :caller-sid (ept-session-id 0) :members members)))
+        (progn
+          (ept-write-text driver
+            (with-output-to-string (stream)
+              (format stream "(require :asdf)~%(require :sb-posix)~%")
+              (format stream "(let ((*features* (cons :arcdocdb-evidence-check-library *features*))) (load ~S :verbose nil :print nil))~%" (namestring *ept-checker*))
+              (format stream "(let ((arcdocdb.evidence.check::*process-scan-command* '~S) (arcdocdb.evidence.check::*process-scan-serial* 0))~%" argv)
+              (format stream "(handler-case (progn (uiop:symbol-call :arcdocdb.evidence.check :processi-sessione (sb-posix:getsid 0) ~S) (sb-ext:exit :code 0)) (error (condition) (write-line (princ-to-string condition) *error-output*) (sb-ext:exit :code 1))))~%" (namestring logs))))
+          (multiple-value-bind (exit signal stdout stderr)
+              (ept-child (ept-sbcl driver) directory "scan-rejected")
+            (declare (ignore stdout))
+            (ept-check (and (eql 1 exit) (null signal)) "Scansione definitivamente invalida: exit1/signal NIL")
+            (ept-check (search "nessuno snapshot completo" (uiop:read-file-string stderr) :test #'char-equal)
+                       "Rifiuto esplicito dopo tre snapshot incompleti"))))
+    (ept-check (= 3 (ept-one-data counter)) "Contatore CLI esattamente tre")
+    (ept-check (= 9 (length (uiop:directory-files logs))) "Tre stdout, tre stderr e tre metadata conservati")
+    (loop for attempt from 1 to 3
+          for metadata = (merge-pathnames (format nil "scan-~D.lisp" attempt) logs)
+          for stdout = (merge-pathnames (format nil "scan-~D.stdout.log" attempt) logs)
+          for stderr = (merge-pathnames (format nil "scan-~D.stderr.log" attempt) logs)
+          for data = (ept-one-data metadata)
+          for expected-exit = (if (or (eq variant :failed) (and (eq variant :retry) (< attempt 3))) 2 0)
+          do (ept-check (and (eql 1 (getf data :schema-version)) (eq :process-snapshot (getf data :kind))) "Schema scan metadata")
+             (ept-check (equal argv (getf data :command)) "Comando scan esatto conservato")
+             (ept-check (and (eql expected-exit (getf data :exit-code)) (null (getf data :signal))) "Exit e segnale del singolo tentativo")
+             (ept-check (and (probe-file stdout) (probe-file stderr)
+                            (equal (truename stdout) (truename (getf data :stdout)))
+                            (equal (truename stderr) (truename (getf data :stderr)))) "Log scan fisici associati")
+             (when (eq variant :empty) (ept-check (zerop (arcdocdb.evidence:file-bytes stdout)) "Output vuoto reale"))
+             (when (eq variant :nonnumeric)
+               (ept-check (string= (uiop:read-file-string stdout) (format nil "not-a-pid~%")) "Output nonnumerico reale")))))
+
 (defun ept-exercise ()
   (ept-case "equivalence-and-cli"
     (lambda (directory)
@@ -481,7 +551,11 @@
   (ept-case "process-bound-four" (lambda (directory) (ept-process-bound directory 4)))
   (ept-case "worker-timeout-cleanup" (lambda (directory) (ept-process-bound directory 4 t)))
   (ept-case "session-timeout-grandchild-other-group" (lambda (directory) (ept-session-cleanup directory nil)))
-  (ept-case "session-dead-leader-grandchild-other-group" (lambda (directory) (ept-session-cleanup directory t))))
+  (ept-case "session-dead-leader-grandchild-other-group" (lambda (directory) (ept-session-cleanup directory t)))
+  (dolist (variant '(:retry :failed :nonnumeric :empty))
+    (let ((variant variant))
+      (ept-case (format nil "process-scan-~A" (string-downcase (symbol-name variant)))
+        (lambda (directory) (ept-scan-retry directory variant))))))
 
 (defun self-test (&optional root)
   "Fixture esclusive conservate con report e output; nessuna pulizia distruttiva o promozione."

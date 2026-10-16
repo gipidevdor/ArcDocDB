@@ -37,6 +37,11 @@ raccoglie il figlio con un ulteriore limite di cinque secondi. L'eventuale
 raccolta forzata del processo `ps` ha un secondo di margine aggiuntivo;
 un errore di cleanup impedisce sempre l'esito positivo. Per i nipoti si
 osserva la cessazione, mentre il reap riguarda il solo figlio diretto.
+L'enumerazione richiede uno snapshot `ps` concluso con exit zero, nessun
+segnale o diagnostica, PID positivi e presenza del parent: può
+riprovare fino a tre volte entro la stessa deadline. Uno snapshot fallito
+o incompleto non dimostra mai l'assenza di processi; stdout, stderr e stato
+di ogni tentativo vengono conservati accanto ai log del worker.
 Log e temporanei appartengono a una
 directory esclusiva sotto `spikes/out/evidence-check-*`, conservata anche
 in caso di errore. Un protocollo malformato, un segnale o un exit incoerente

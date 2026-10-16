@@ -11,6 +11,8 @@
 
 (defparameter *checker-source* *load-truename*)
 (defvar *worker-command-hook* nil)
+(defvar *process-scan-serial* 0)
+(defvar *process-scan-command* '("ps" "-axo" "pid="))
 
 (define-condition invalid-evidence (error)
   ((path :initarg :path :reader evidence-path)
@@ -112,27 +114,52 @@
             (error "Marker sessione non valido: ~A." marker))))
       t)))
 
-(defun processi-sessione (session)
-  "Enumera PID soltanto; nessuna command line viene letta o conservata."
-  (let ((process nil))
+(defun acquisisci-pid (logs)
+  "Snapshot PS concluso con exit zero; stdout, stderr e stato restano conservati."
+  (let* ((serial (incf *process-scan-serial*))
+         (stdout (merge-pathnames (format nil "scan-~D.stdout.log" serial) logs))
+         (stderr (merge-pathnames (format nil "scan-~D.stderr.log" serial) logs))
+         (metadata (merge-pathnames (format nil "scan-~D.lisp" serial) logs))
+         (process nil))
     (unwind-protect
          (progn
-           (setf process (uiop:launch-program '("ps" "-axo" "pid=") :output :stream :error-output nil))
-           (let ((members
-                   (loop for line = (read-line (uiop:process-info-output process) nil nil) while line
-                         for pid = (parse-integer line)
-                         when (handler-case (= session (sb-posix:getsid pid))
-                                (sb-posix:syscall-error (c)
-                                  (unless (member (sb-posix:syscall-errno c) (list sb-posix:esrch sb-posix:eperm))
-                                    (error c))
-                                  nil))
-                           collect pid)))
-             (unless (eql 0 (uiop:wait-process process)) (error "Enumera PID: ps fallito."))
-             members))
+           (setf process (uiop:launch-program *process-scan-command* :output stdout :error-output stderr
+                                            :if-output-exists :error :if-error-output-exists :error))
+           (multiple-value-bind (exit signal) (uiop:wait-process process)
+             (with-open-file (out metadata :direction :output :if-exists :error)
+               (write (list :schema-version 1 :kind :process-snapshot :command *process-scan-command*
+                            :exit-code exit :signal signal :stdout (namestring stdout) :stderr (namestring stderr))
+                      :stream out))
+             (unless (and (eql 0 exit) (null signal)
+                          (zerop (arcdocdb.evidence:file-bytes stderr)))
+               (error "Enumera PID: ps exit ~S signal ~S. Log: ~A e ~A." exit signal stdout stderr)))
+           (with-open-file (input stdout)
+             (let ((pids (loop for line = (read-line input nil nil) while line
+                               collect (parse-integer line))))
+               (unless (and (every (lambda (pid) (plusp pid)) pids)
+                            (member (sb-posix:getpid) pids))
+                 (error "Enumera PID: snapshot incompleto. Log: ~A." stdout))
+               pids)))
       (when process
         (when (uiop:process-alive-p process) (uiop:terminate-process process :urgent t))
         (sb-ext:with-timeout 1 (uiop:wait-process process))
         (uiop:close-streams process)))))
+
+(defun processi-sessione (session logs)
+  "Tre tentativi bounded; uno snapshot incompleto non prova mai l'assenza di membri."
+  (let ((pids nil) (failures nil) (complete nil))
+    (dotimes (attempt 3)
+      (handler-case
+          (progn (setf pids (acquisisci-pid logs) complete t) (return))
+        (sb-ext:timeout (c) (error c))
+        (error (c) (push (princ-to-string c) failures))))
+    (unless complete (error "Enumera PID: nessuno snapshot completo: ~{~A~^; ~}." (nreverse failures)))
+    (loop for pid in pids
+          when (handler-case (= session (sb-posix:getsid pid))
+                 (sb-posix:syscall-error (c)
+                   (unless (member (sb-posix:syscall-errno c) (list sb-posix:esrch sb-posix:eperm)) (error c))
+                   nil))
+            collect pid)))
 
 (defun uccidi-pid (pid)
   (handler-case (sb-posix:kill pid sb-posix:sigkill)
@@ -149,7 +176,7 @@
            (when (uiop:process-alive-p process) (uiop:terminate-process process :urgent t))
            (uiop:wait-process process)
            (if (sessione-worker-p worker pid)
-               (loop for members = (processi-sessione pid) while members
+               (loop for members = (processi-sessione pid (getf worker :directory)) while members
                      do (dolist (member (remove pid members)) (uccidi-pid member))
                         (when (member pid members) (uccidi-pid pid))
                         (sleep 0.01))

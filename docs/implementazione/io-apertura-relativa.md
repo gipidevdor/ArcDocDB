@@ -41,3 +41,8 @@ precedono le esecuzioni. Nessuna rinomina, eliminazione, creazione o
 riapertura in scrittura avviene in questa API. La raccolta posseduta
 dell'insieme ACTIVE/CLOSED e il coordinamento del recovery restano
 incrementi successivi.
+
+Le [prove locali conservate](../../spikes/results/2026-10-16-io-apertura-relativa/README.md)
+distinguono il controllo completo sul commit congelato dall'integrazione
+successiva. Il [rapporto di raccolta](../../spikes/results/2026-10-16-io-apertura-relativa-collection/collection.lisp)
+e il checker indipendente attestano la conservazione dell'archivio chiuso.

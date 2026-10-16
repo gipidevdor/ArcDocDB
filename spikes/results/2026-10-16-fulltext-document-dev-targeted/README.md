@@ -26,6 +26,39 @@ I 17 nuovi test, aggiunti ai 39 precedenti, includono:
   misurato su SBCL 2.6.9 arm64, anche con ID e limiti u64 massimi.
 - Otto mutanti semantici rilevati in totale, due nuovi su selezione e costo dei duplicati.
 
+## Prove sul prodotto finale
+
+- [Verifica mirata finale](../2026-10-16-fulltext-document-targeted/report.lisp):
+  `make fulltext-check lint trace links`, stato `:ok`, sorgenti `:stable`,
+  39,444105 secondi. Tutti i 56 test e gli otto mutanti; 314 file di prodotto
+  senza violazioni del linter. Precede la sola integrazione documentale di ADR-0055.
+- [Copertura diagnostica](../2026-10-16-fulltext-document-coverage/catalogo.lisp):
+  stato `:ok`, sorgenti `:stable`, 39,994756 secondi, sul commit `fd4ffcb2`.
+  Conservati stato SB-COVER e HTML originali come dati compressi, senza caricarli
+  come codice. Quattro test di allocazione esclusi dalla strumentazione e misurati
+  separatamente. Le righe non percorse, inclusi errori interni e costruttori,
+  restano visibili: non si dichiara MC/DC completa o qualifica C1.
+- [Verifica completa locale](../2026-10-16-fulltext-document-final-check/report.lisp):
+  `make check`, stato `:ok`, sorgenti `:stable`, exit code 0, 579,497503 secondi
+  sul commit `fd4ffcb2`. Inclusi 56 test full text, otto mutanti, compilazione,
+  lint, tracciabilita, link, autocontrolli delle prove e dieci spike. Verificati
+  222 cataloghi, 3901 riferimenti, 46686 file e 1243930320 byte conservati;
+  il catalogo di questa stessa esecuzione viene aggiunto dopo il controllo.
+- [CI Linux](../2026-10-16-fulltext-document-ci-linux/report.lisp),
+  [esecuzione GitHub](https://github.com/gpicchiarelli/ArcDocDB/actions/runs/38947465706):
+  `make check`, stato `:ok`, sorgenti `:stable`, exit code 0, 306,049575 secondi.
+  Confrontata per uguaglianza l'intera lista dei blob sorgente con la prova locale.
+  Verificati nel registro anche zero byte consed per 1000 preparazioni/query
+  con ID 1 e UINT64_MAX, 115200 confronti e tutti gli otto mutanti.
+- [CI macOS](../2026-10-16-fulltext-document-ci-macos/report.lisp):
+  stessa esecuzione GitHub, `make check`, stato `:ok`, sorgenti `:stable`,
+  exit code 0, 529,092237 secondi. Stesso confronto completo dei blob e degli
+  attesi su allocazioni, confronti indipendenti e mutanti, tutti riusciti.
+
+I registri CI riguardano il prodotto al commit `fd4ffcb2`; il commit conclusivo
+di conservazione aggiunge soltanto prove e questo riepilogo. Nessuna nuova
+campagna di prodotto e stata avviata durante la chiusura coordinata.
+
 ## Tentativi conservati
 
 | Catalogo | Esito e causa |

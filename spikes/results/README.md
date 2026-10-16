@@ -3,6 +3,10 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+Il [piano CSN Archivio del 2026-10-16](2026-10-16-archivio-csn-verifica/report.md)
+conserva 54 test composti, provenienza dei replay, gate delle Serie e ponte
+di prova al registro CSN, con catena nativa e limiti C1/MC/DC espliciti.
+
 Il [recovery CLOSED del 2026-10-16](2026-10-16-closed-verifica/report.md)
 conserva 69 test composti, pubblicazione nativa, FI, copertura grezza e
 correzione delle prove OUTCOME/EDIT orfane discordanti; C1/MC/DC aperte.

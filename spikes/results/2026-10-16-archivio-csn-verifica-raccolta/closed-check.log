@@ -1,0 +1,46 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/archivio-csn-verifica/ArcDocDB/spikes/results/2026-10-16-archivio-csn-verifica/"
+ :INDEXED-FILES 63 :ACTUAL-FILES 65 :INDEXED-BYTES 3142972 :PROCESSES
+ ((:LABEL "trace" :RECORD-PATH "processes/trace/report.lisp" :COMMAND
+   ("make" "trace-write") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "diagnostic-a" :RECORD-PATH "processes/diagnostic-a/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/get-series-capture.lisp" "--" "sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script" "spikes/out/archivio-csn-input/diagnose.lisp")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-self" :RECORD-PATH "processes/coverage-self/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--self-test"
+    "spikes/out/archivio-csn-coverage-self-a/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "diagnostic-b" :RECORD-PATH "processes/diagnostic-b/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/get-series-capture.lisp" "--" "sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script" "spikes/out/archivio-csn-input/diagnose.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage" :RECORD-PATH "processes/coverage/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/archivio-csn-coverage-a/" "recovery-archive-csn")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "check" :RECORD-PATH "processes/check/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "process-status" :RECORD-PATH "processes/process-status/report.lisp"
+   :COMMAND
+   ("/bin/sh" "-c"
+    "show() { ps -p \"$1\" -o pid=,ppid=,etime=,pcpu=,command=; for child in $(pgrep -P \"$1\"); do show \"$child\"; done; }; show 58097")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "0ddf4af3eb312f3ecd9347e0acec307dc4ec74241d94e0b220496d3530b6003b"
+ :CATALOGUE-SHA256
+ "34c77890838d679435fa2ee7e6223a3652dbb6652873b7fbb280c3fa45ad6565"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

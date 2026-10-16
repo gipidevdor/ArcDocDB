@@ -264,6 +264,9 @@
                (:module "recovery-closed" :serial t
                 :components ((:file "support") (:file "read") (:file "semantics")
                                   (:file "csn") (:file "publication") (:file "guards")))
+               (:module "recovery-archive-csn" :serial t
+                :components ((:file "support") (:file "set") (:file "plan") (:file "native")
+                             (:file "guards")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
@@ -316,6 +319,7 @@
 
              (uiop:symbol-call '#:arcdocdb.recovery.active.checkpoint.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.closed.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.recovery.archive.csn.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)

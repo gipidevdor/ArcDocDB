@@ -1,0 +1,18 @@
+;;;; Diagnostica finita della sola suite Archivio CSN; errori registrati per caso.
+(require :asdf)
+(setf asdf:*compile-file-failure-behaviour* :error asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                          (unless (typep condition 'sb-kernel:redefinition-warning) (error condition)))))
+  (asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+  (asdf:load-system "arcdocdb/tests"))
+(let ((tests (reverse arcdocdb.recovery.archive.csn.tests::*tests*)) (failed nil) (passed 0))
+  (unless (<= 1 (length tests) 256) (error "Cardinalita dei test fuori limite."))
+  (dolist (test tests)
+    (handler-case
+        (progn (funcall test) (incf passed) (format t "ok ~S~%" test))
+      (error (condition)
+        (push test failed) (format t "FAILED ~S: ~A~%" test condition)
+        (sb-debug:print-backtrace :stream *standard-output* :count 16))))
+  (format t "ARCHIVE-CSN-DIAGNOSTIC ~S~%"
+          (list :total (length tests) :passed passed :failed (reverse failed)))
+  (when failed (sb-ext:exit :code 1)))

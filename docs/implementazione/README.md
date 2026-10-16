@@ -117,5 +117,9 @@ senza acquisire lease o decidere il catalogo.
 La [raccolta degli archivi di comandi](raccolta-comandi.md) usa un manifest
 esplicito, quattro worker e il controllo finale dell'inventario chiuso.
 
+Il [progetto CI e statistiche](ci-statistiche.md) definisce misure per la
+versione corrente, runner GitHub e pubblicazione compatta dei risultati
+in `main`; resta una proposta da implementare e verificare.
+
 Gli [esiti dei processi nelle mutazioni CBOR](cbor-mutazioni-processi.md)
 distinguono i rilevamenti dei mutanti dagli errori dei worker di verifica.

@@ -1,0 +1,63 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/archivio-csn-verifica/ArcDocDB/src/recovery-archive-csn/query.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>17</td><td>23</td><td> 73.9</td></tr>
+<tr class='even'><td>branch</td><td>0</td><td>0</td><td>nil  </td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;risultato&#160;consegnato&#160;al&#160;controller&#59;&#160;getter&#160;scalari&#160;non&#160;rileggono&#160;le&#160;fonti&#160;o&#160;il&#160;catalogo&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;nessuna&#160;mutazione&#44;&#160;attesa&#44;&#160;cache&#160;o&#160;nuova&#160;identità&#160;di&#160;Archivio&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;recovery&#46;archive&#46;csn&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;speed&#160;2&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;insieme&#45;serie&#45;recovery&#41;&#160;index&#41;&#160;numero&#45;serie&#45;recovery&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;numero&#45;serie&#45;recovery&#160;&#40;set&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;insieme&#160;completo&#160;costruito&#46;&#160;Post&#58;&#160;cardinalità&#160;della&#160;copia&#160;posseduta&#44;&#160;nessun&#160;vettore&#160;esportato&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-1'>TYPE&#45;ERROR&#160;per&#160;tipi&#160;invalidi&#59;&#160;nessuna&#160;certificazione&#160;aggiuntiva&#160;del&#160;catalogo&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;length&#160;&#40;insieme&#45;serie&#45;recovery&#45;views&#160;set&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>13</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;MVC&#45;006</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>14</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;piano&#45;csn&#45;archivio&#41;&#160;&#40;values&#160;boolean&#160;u64&#160;&#38;optional&#41;&#41;&#160;massimo&#45;csn&#45;archivio&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>15</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;massimo&#45;csn&#45;archivio&#160;&#40;plan&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>16</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;piano&#160;completato&#46;&#160;Post&#58;&#160;presenza&#160;e&#160;massimo&#160;CSN&#160;osservato&#59;&#160;NIL&#47;0&#160;distinto&#160;da&#160;T&#47;0&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>17</code></div><code>&#160;<span class='state-1'>TYPE&#45;ERROR&#160;per&#160;tipi&#160;invalidi&#59;&#160;non&#160;certifica&#160;salute&#160;futura&#44;&#160;visibilità&#160;o&#160;assenza&#160;di&#160;obblighi&#160;pendenti&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>18</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;values&#160;&#40;piano&#45;csn&#45;archivio&#45;present&#160;plan&#41;&#160;&#40;piano&#45;csn&#45;archivio&#45;maximum&#160;plan&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>19</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>20</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>21</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;piano&#45;csn&#45;archivio&#41;&#160;&#40;values&#160;index&#160;index&#160;&#38;optional&#41;&#41;&#160;statistiche&#45;piano&#45;csn&#45;archivio&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>22</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;statistiche&#45;piano&#45;csn&#45;archivio&#160;&#40;plan&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>23</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;piano&#160;completo&#46;&#160;Post&#58;&#160;numero&#160;Serie&#160;e&#160;numero&#160;segmenti&#44;&#160;inclusi&#160;i&#160;loro&#160;ACTIVE&#160;e&#160;tutti&#160;i&#160;CLOSED&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>24</code></div><code>&#160;<span class='state-1'>TYPE&#45;ERROR&#160;per&#160;tipi&#160;invalidi&#59;&#160;non&#160;è&#160;il&#160;conteggio&#160;dei&#160;file&#160;fisici&#44;&#160;dei&#160;record&#160;o&#160;delle&#160;transazioni&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>25</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;values&#160;&#40;piano&#45;csn&#45;archivio&#45;series&#160;plan&#41;&#160;&#40;piano&#45;csn&#45;archivio&#45;segments&#160;plan&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>26</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>27</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;REC&#45;001&#160;REQ&#45;MVC&#45;006</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>28</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;ftype&#160;&#40;function&#160;&#40;piano&#45;csn&#45;archivio&#41;&#160;&#40;values&#160;u32&#160;u32&#160;&#38;optional&#41;&#41;&#160;parole&#45;base&#45;csn&#45;archivio&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>29</code></div><code>&#160;<span class='state-1'>&#40;defun&#160;parole&#45;base&#45;csn&#45;archivio&#160;&#40;plan&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>30</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;piano&#160;completo&#46;&#160;Post&#58;&#160;high&#47;low&#160;dell&#39;ultimo&#160;CSN&#44;&#160;zero&#47;zero&#160;se&#160;nessuna&#160;fonte&#59;&#160;nessun&#160;incremento&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>31</code></div><code>&#160;<span class='state-1'>Base&#160;M&#160;per&#160;il&#160;futuro&#160;registro&#44;&#160;non&#160;M&#43;1&#59;&#160;massimo&#160;u64&#160;resta&#160;rappresentabile&#160;senza&#160;wrap&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>32</code></div><code>&#160;<span class='state-1'>TYPE&#45;ERROR&#160;per&#160;tipi&#160;invalidi&#59;&#160;non&#160;crea&#160;né&#160;autorizza&#160;un&#160;altro&#160;allocatore&#160;nello&#160;stesso&#160;Archivio&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>33</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#40;let&#160;&#40;&#40;maximum&#160;&#40;piano&#45;csn&#45;archivio&#45;maximum&#160;plan&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>34</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#160;&#160;&#40;values&#160;&#40;ldb&#160;&#40;byte&#160;32&#160;32&#41;&#160;maximum&#41;&#160;&#40;ldb&#160;&#40;byte&#160;32&#160;0&#41;&#160;maximum&#41;&#41;&#41;&#41;</code></div></body></html>

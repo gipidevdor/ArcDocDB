@@ -18,6 +18,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   heap e tempo per catalogo configurabili, errori ridotti nell'ordine seriale
   e log dei worker conservati. Percorso seriale disponibile per confronto.
 
+- Suite dedicata del piano CSN dell'Archivio: insieme completo delle Serie,
+  Registri, provenienza del replay, gate CLOSED e base u64 senza incremento.
+  Matrici v1/v2, catena nativa e collegamento di prova al registro esistente;
+  risultati e limiti separati dalla qualifica C1 e dall'ammissione del traffico.
+
 - Scelta dell'ID recovery direttamente dalla directory posseduta: una sola
   enumerazione attestata, cinque budget conservati, selezione comune dal
   piano canonico e nessuna prenotazione. La prova verticale usa nomi canonici

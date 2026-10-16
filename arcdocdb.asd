@@ -142,7 +142,10 @@
                (:module "recovery-closed" :serial t
                 :components ((:file "package") (:file "types") (:file "read") (:file "verify")
                              (:file "resolve") (:file "csn") (:file "build") (:file "publication")
-                             (:file "csn-serie"))))
+                             (:file "csn-serie")))
+               (:module "recovery-archive-csn" :serial t
+                :components ((:file "package") (:file "types") (:file "series") (:file "preflight")
+                             (:file "build") (:file "query"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

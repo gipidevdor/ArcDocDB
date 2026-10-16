@@ -52,6 +52,15 @@ Due worker reali condividono buffer readonly in due ondate, con rendezvous
 dopo la prima chiamata controllata, timeout e cleanup. Nessuna inferenza
 di scaling dai tempi della fixture.
 
+Correzione della fixture del 2026-10-16: il clock è richiesto monotono,
+senza avanzamento strettamente positivo per ondata. START, FIRST ed END
+possono coincidere nello stesso tick; durata e overlap devono essere
+non negativi. Rendezvous dopo la prima lettura verificata, sink esatti,
+conteggi, immutabilità, timeout e join restano i controlli della fixture.
+Non si aggiungono attese artificiali o chiamate per far avanzare il clock.
+Il [fallimento Linux originale](../../spikes/results/2026-10-16-archive-csn-plan/README.md)
+e la sua causa sono conservati separatamente dai controlli del prodotto CSN.
+
 Due letture C1 e inventario di tutte le decisioni precedono la prima
 compilazione. Funzioni entro 60 righe e dieci percorsi, invarianti attivi,
 FTYPE completo e safety 3. Nessuna esclusione dalla copertura grezza del

@@ -1,0 +1,41 @@
+<html><head><style type='text/css'>
+*.state-0 { background-color: #eeeeee }
+*.state-1 { background-color: #aaffaa }
+*.state-5 { background-color: #44dd44 }
+*.state-2 { background-color: #ffaaaa }
+*.state-10 { background-color: #ee6666 }
+*.state-15 { color: #aaaaaa; background-color: #eeeeee }
+*.state-9,*.state-6 { background-color: #ffffaa }
+div.key { margin: 20px; width: 200px }
+div.source { width: 88ex; background-color: #eeeeee; padding-left: 5px;
+             /* border-style: solid none none none; border-width: 1px;
+             border-color: #dddddd */ }
+
+*.line-number { color: #666666; float: left; width: 6ex; text-align: right; margin-right: 1ex; }
+
+table.summary tr.head-row { background-color: #aaaaff }
+table.summary tr td.text-cell { text-align: left }
+table.summary tr td.main-head { text-align: center }
+table.summary tr td { text-align: right }
+table.summary tr.even { background-color: #eeeeff }
+table.summary tr.subheading { background-color: #aaaaff}
+table.summary tr.subheading td { text-align: left; font-weight: bold; padding-left: 5ex; }
+</style></head><body><h3>Coverage report: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/src/runtime/types.lisp <br />
+</h3>
+<table class='summary'><tr class='head-row'><td width='80px'>Kind</td><td width='80px'>Covered</td><td width='80px'>All</td><td width='80px'>%</td><tr class='odd'><td>expression</td><td>1</td><td>5</td><td> 20.0</td></tr>
+<tr class='even'><td>branch</td><td>0</td><td>0</td><td>nil  </td></tr>
+</table><div class='key'><b>Key</b><br />
+<div class='state-0'>Not instrumented</div><div class='state-15'>Conditionalized out</div><div class='state-1'>Executed</div><div class='state-2'>Not executed</div><div>&#160;</div><div class='state-5'>Both branches taken</div><div class='state-6'>One branch taken</div><div class='state-10'>Neither branch taken</div></div><nobr><div><code>
+</code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>1</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;OWNER&#58;&#160;candidato&#160;privato&#160;fino&#160;al&#160;CAS&#59;&#160;dopo&#44;&#160;legami&#160;immutabili&#160;della&#160;famiglia&#160;runtime&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>2</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;SHARED&#58;&#160;solo&#160;i&#160;registri&#160;esistenti&#44;&#160;con&#160;i&#160;rispettivi&#160;protocolli&#160;e&#160;frequenze&#160;di&#160;accesso&#46;</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>3</code></div><code>&#160;<span class='state-2'>&#40;in&#45;package&#160;&#35;&#58;arcdocdb&#46;runtime&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>4</code></div><code>&#160;<span class='state-2'>&#40;declaim&#160;&#40;optimize&#160;&#40;safety&#160;3&#41;&#160;&#40;speed&#160;2&#41;&#160;&#40;debug&#160;2&#41;&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>5</code></div><code>&#160;<span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>6</code></div><code>&#160;<span class='state-0'>&#59;&#59;&#59;&#160;REQ&#58;&#160;REQ&#45;MVC&#45;006&#160;REQ&#45;MVC&#45;008&#160;REQ&#45;CMP&#45;007&#160;REQ&#45;AFF&#45;008</span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>7</code></div><code>&#160;<span class='state-1'>&#40;defstruct&#160;&#40;runtime&#45;archivio&#160;&#40;&#58;constructor&#160;&#37;make&#45;runtime&#45;archivio&#160;&#40;csns&#160;scope&#41;&#41;&#160;&#40;&#58;copier&#160;nil&#41;&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>8</code></div><code>&#160;<span class='state-1'>&#160;&#160;&#34;Pre&#58;&#160;registri&#160;nuovi&#44;&#160;snapshot&#160;legato&#160;a&#160;CSNS&#44;&#160;scope&#160;con&#160;quel&#160;registro&#160;ed&#160;EBR&#160;privato&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>9</code></div><code>&#160;<span class='state-1'>Post&#58;&#160;legami&#160;readonly&#59;&#160;nessun&#160;piano&#44;&#160;vecchio&#160;ambito&#44;&#160;risultato&#160;recovery&#44;&#160;tabella&#160;o&#160;FD&#160;trattenuto&#46;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>10</code></div><code>&#160;<span class='state-1'>La&#160;capsula&#160;configura&#160;il&#160;runtime&#59;&#160;non&#160;certifica&#160;pubblicazione&#160;degli&#160;indici&#160;o&#160;ammissione&#46;&#34;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>11</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;csns&#160;nil&#160;&#58;type&#160;registro&#45;csn&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-0'></span></code></div></nobr>
+<nobr><div class='source'><div class='line-number'><code>12</code></div><code>&#160;<span class='state-1'>&#160;&#160;</span><span class='state-2'>&#40;scope&#160;nil&#160;&#58;type&#160;ambito&#45;get&#160;&#58;read&#45;only&#160;t&#41;</span><span class='state-1'>&#41;</code></div></body></html>

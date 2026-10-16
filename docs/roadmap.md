@@ -31,7 +31,7 @@ La priorità di sviluppo è trasferire questa composizione nel motore:
 Il primo passo di prodotto è la [scelta dell'ID del nuovo segmento](implementazione/id-segmento-recovery.md):
 proposta pura dal manifest e dall'inventario completo, usata anche dalla
 fixture verticale. La raccolta del namespace e delle identità è descritta
-sotto; riconciliazione fisica, apertura delle capacità dei segmenti e
+sotto; riconciliazione fisica, acquisizione completa delle capacità dei segmenti e
 coordinamento del recovery restano da implementare.
 
 L'[ingresso ID dalla directory](implementazione/id-directory-recovery.md)
@@ -48,10 +48,17 @@ canonici; il suo limite di otto ID non limita l'inventario di prodotto.
 
 Questi incrementi non anticipano la chiusura dei gate della Fase 0.
 
+Il [bootstrap runtime dell'Archivio](implementazione/runtime-archivio.md)
+collega ora il piano CSN completo alla famiglia unica CSN/snapshot/epoche
+e al nuovo ambito GET. Riconciliazione, pubblicazione degli effetti,
+costruzione dei controller Serie e ammissione restano da coordinare.
+
 Il primo incremento dispone della [raccolta readonly dell'inventario](implementazione/inventario.md#raccolta-dalla-directory)
 da una capacità directory, con nomi e identità verificati prima del planner.
-Riconciliazione fisica, apertura delle capacità dei segmenti e coordinamento
-del recovery della Serie restano passi successivi.
+L'[apertura readonly relativa](implementazione/io-apertura-relativa.md)
+fornisce ora capacità e dimensione dallo stesso FD ed è usata nei reader
+della prova verticale. Raccolta posseduta dell'insieme dei segmenti vivi,
+riconciliazione fisica e coordinamento del recovery restano passi successivi.
 
 Al 2026-10-03 la parte di **definizione è completa**: le 26 questioni aperte sono chiuse dagli
 ADR 0013–0030, il progetto è consolidato in [architettura.md](architettura.md) e i formati in

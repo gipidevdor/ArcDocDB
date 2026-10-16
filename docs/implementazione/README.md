@@ -57,7 +57,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 | Passo del dispatcher pool/Serie | [Scelta unica fra ammissione e obblighi esistenti](pool-step.md) | [`src/dispatch/step.lisp`](../../src/dispatch/step.lisp) |
 | Catena pool/dispatcher/Serie | [Worker reali, isolamento e ritiro con handoff](pool-catena-risultati.md); [metodo](pool-catena-metodo.md) | [`tests/scheduler/pool-chain.lisp`](../../tests/scheduler/pool-chain.lisp) |
 | Preparazione di un tratto pool/Serie | [Selezione e un solo avvio, con token e rifiuti espliciti](pool-prepara.md); [risultati](pool-prepara-risultati.md) | [`src/dispatch/start.lisp`](../../src/dispatch/start.lisp) |
-| Confine I/O | [Append, pread e flush durevole](io.md) | [`src/io/`](../../src/io/) |
+| Confine I/O | [Append, pread e flush durevole](io.md); [apertura readonly relativa e dimensione](io-apertura-relativa.md) | [`src/io/`](../../src/io/) |
 | Completamento I/O | [Cleanup, frontiere e capacità dopo short I/O](io-completamento.md) | [`src/io/flush.lisp`](../../src/io/flush.lisp), [`src/io/transfer.lisp`](../../src/io/transfer.lisp) |
 | Rinomina nella directory | [FD parent, cambio atomico e fail-stop locale](io-rinomina.md) | [`src/io/rename.lisp`](../../src/io/rename.lisp) |
 | Associazione dei file | [Device/inode e capacità readonly/append del medesimo ACTIVE](associazione-file.md) | [`src/io/identity.lisp`](../../src/io/identity.lisp) |
@@ -105,6 +105,10 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 
 Le evidenze hanno un ambito esplicito: un test del codec non verifica transazioni,
 durability, recovery o prestazioni del database.
+
+Il [bootstrap del runtime Archivio](runtime-archivio.md) collega il piano
+CSN alla famiglia unica CSN/snapshot/epoche e al nuovo ambito GET. Il binding
+non autorizza ancora il traffico.
 
 La [raccolta degli archivi di comandi](raccolta-comandi.md) usa un manifest
 esplicito, quattro worker e il controllo finale dell'inventario chiuso.

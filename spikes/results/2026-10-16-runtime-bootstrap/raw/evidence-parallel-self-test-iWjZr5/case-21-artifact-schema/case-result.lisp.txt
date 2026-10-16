@@ -1,0 +1,1 @@
+(:NAME "artifact-schema" :STATUS :OK :CHECKS 7)

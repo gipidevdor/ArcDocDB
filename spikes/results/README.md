@@ -3,6 +3,10 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+Il [bootstrap runtime Archivio del 2026-10-16](2026-10-16-runtime-bootstrap/report.md)
+conserva 27 test composti, famiglia unica CSN/snapshot/epoche, concorrenza,
+GET e catena nativa, con copertura e controllo completo. Ammissione e C1/MC/DC aperte.
+
 Il [piano CSN Archivio del 2026-10-16](2026-10-16-archivio-csn-verifica/report.md)
 conserva 54 test composti, provenienza dei replay, gate delle Serie e ponte
 di prova al registro CSN, con catena nativa e limiti C1/MC/DC espliciti.

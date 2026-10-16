@@ -1,0 +1,2 @@
+(:JOBS 1 :CONDITION ARCDOCDB.EVIDENCE:INVALID-EVIDENCE :DIAGNOSTIC
+ "Evidenza non valida /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-25-trailing/input/2026-10-16-00/artifact.lisp: Il file contiene più di una forma Lisp.")

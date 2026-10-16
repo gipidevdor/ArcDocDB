@@ -1,0 +1,1 @@
+(:NAME "equivalence-and-cli" :STATUS :OK :CHECKS 35)

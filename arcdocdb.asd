@@ -74,8 +74,10 @@
                (:module "io" :serial t
                 :components ((:file "package") (:file "types") (:file "identity-types")
                              (:file "native") (:file "native-namespace") (:file "native-directory")
+                             (:file "native-open-relative")
                              (:file "lifecycle") (:file "identity") (:file "directory")
-                             (:file "rename") (:file "namespace") (:file "transfer") (:file "flush")))
+                             (:file "rename") (:file "namespace") (:file "open-relative")
+                             (:file "transfer") (:file "flush")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
                              (:file "group") (:file "executor") (:file "csn")))
@@ -158,7 +160,10 @@
                              (:file "csn-serie")))
                (:module "recovery-archive-csn" :serial t
                 :components ((:file "package") (:file "types") (:file "series") (:file "preflight")
-                             (:file "build") (:file "query"))))
+                             (:file "build") (:file "query")))
+               (:module "runtime" :serial t
+                :components ((:file "package") (:file "types") (:file "preflight")
+                             (:file "query") (:file "build"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -248,7 +253,8 @@
                (:module "io" :serial t
                 :components ((:file "support") (:file "transfer") (:file "native")
                              (:file "rename") (:file "rename-native") (:file "flush-failure")
-                             (:file "transfer-failure")))
+                             (:file "transfer-failure") (:file "open-relative-support")
+                             (:file "open-relative") (:file "open-relative-native")))
                (:module "control" :serial t
                 :components ((:file "support") (:file "publication") (:file "native")
                              (:file "recovery-read") (:file "recovery-publication") (:file "recovery-guards")))
@@ -277,6 +283,9 @@
                (:module "recovery-archive-csn" :serial t
                 :components ((:file "support") (:file "set") (:file "plan") (:file "native")
                              (:file "guards")))
+               (:module "runtime" :serial t
+                :components ((:file "support") (:file "bootstrap") (:file "threads")
+                             (:file "native") (:file "guards")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
@@ -331,6 +340,7 @@
              (uiop:symbol-call '#:arcdocdb.recovery.active.checkpoint.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.closed.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.recovery.archive.csn.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.runtime.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)

@@ -1,0 +1,1 @@
+(:NAME "compressed-hash" :STATUS :OK :CHECKS 8)

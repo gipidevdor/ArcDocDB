@@ -1,0 +1,5 @@
+(:JOBS 4 :CONDITION INVALID-EVIDENCE :DIAGNOSTIC
+ #A((462) BASE-CHAR
+    . "Evidenza non valida: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-24-read-eval/input/2026-10-16-00/catalogo.lisp. Evidenza non valida /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-24-read-eval/input/2026-10-16-00/artifact.lisp: can't read #. while *READ-EVAL* is NIL
+
+  Stream: #<SB-SYS:FD-STREAM for \"descriptor 6\" {80088AF163}>"))

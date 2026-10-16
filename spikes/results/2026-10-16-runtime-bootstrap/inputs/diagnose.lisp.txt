@@ -1,0 +1,28 @@
+;;;; C4: esegue tutti i casi runtime, registra anche ogni fallimento e termina nonzero.
+(require :asdf)
+(setf asdf:*compile-file-failure-behaviour* :error
+      asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                          (unless (typep condition 'sb-kernel:redefinition-warning)
+                            (error condition)))))
+  (asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+  (asdf:load-system "arcdocdb/tests"))
+(let* ((package (find-package "ARCDOCDB.RUNTIME.TESTS"))
+       (tests (reverse (symbol-value (find-symbol "*TESTS*" package))))
+       (passed 0) (results nil))
+  (dolist (test tests)
+    (handler-case
+        (progn (funcall test) (incf passed)
+               (push (list :test test :status :ok) results)
+               (format t "ok ~A~%" test))
+      (error (condition)
+        (push (list :test test :status :failed :condition (type-of condition)
+                    :diagnostic (princ-to-string condition)) results)
+        (format t "FAILED ~A: ~A~%" test condition))))
+  (write (list :schema-version 1 :kind :runtime-diagnostic
+               :status (if (= passed (length tests)) :ok :failed)
+               :passed passed :total (length tests) :tests (nreverse results)
+               :limits '(:per-test-error-boundary :no-benchmark :local-platform))
+         :pretty t :readably t)
+  (terpri)
+  (sb-ext:exit :code (if (= passed (length tests)) 0 1)))

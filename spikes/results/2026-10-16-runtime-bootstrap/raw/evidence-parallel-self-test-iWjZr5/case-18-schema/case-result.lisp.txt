@@ -1,0 +1,1 @@
+(:NAME #A((6) BASE-CHAR . "schema") :STATUS :OK :CHECKS 7)

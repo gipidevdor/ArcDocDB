@@ -1,0 +1,1 @@
+(:NAME "no-catalog" :STATUS :OK :CHECKS 4)

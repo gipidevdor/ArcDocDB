@@ -46,7 +46,10 @@
 (defun owned (env file)
   (push file (environment-fds env)) file)
 (defun input (env name)
-  (owned env (io:apri-lettura (leaf env name) :max-transfer 8192)))
+  (multiple-value-bind (file size)
+      (io:apri-lettura-nella-directory (environment-directory env) name
+                                     :max-transfer 8192 :max-file-bytes 8192)
+    (values (owned env file) size)))
 (defun output (env name)
   (owned env (io:crea-temporaneo (leaf env name) :max-transfer 8192 :max-file-bytes 8192)))
 (defun segment-leaf (id form)
@@ -190,20 +193,23 @@
       (g:abbandona-get context))))
 
 (defun read-control (env)
-  (let* ((image (file-image (leaf env "control.log"))) (input (input env "control.log")))
-    (c:leggi-control-recuperato (environment-view env) input (length image) (bytes (length image))
+  (multiple-value-bind (input size) (input env "control.log")
+    (c:leggi-control-recuperato (environment-view env) input size (bytes size)
                               :max-bytes 8192 :max-batches 4 :max-edits 4 :max-segmenti 8)))
+
+(defun read-decisions (env archive)
+  (multiple-value-bind (input size) (input env "multiserie.log")
+    (dar:leggi-decisioni-recuperate archive input size (bytes size) :max-bytes 8192)))
 
 (defun read-active (env control)
   (let* ((archive (dar:crea-archivio-recovery (environment-scope env) (archive-id)))
-         (image (file-image (leaf env "multiserie.log")))
-         (decisions (dar:leggi-decisioni-recuperate archive (input env "multiserie.log")
-                        (length image) (bytes (length image)) :max-bytes 8192))
+         (decisions (read-decisions env archive))
          (id (mf:segmento-attivo (c:manifest-control-recuperato control)))
-         (name (segment-name env id)) (image (file-image (leaf env name))))
+         (name (segment-name env id)))
     (is (zerop (dar:numero-decisioni-recuperate decisions)))
-    (dar:leggi-active-con-decisioni control (input env name) (length image) decisions
-                                  (bytes (length image)) :max-bytes 8192 :max-records 32)))
+    (multiple-value-bind (input size) (input env name)
+      (dar:leggi-active-con-decisioni control input size decisions
+                                    (bytes size) :max-bytes 8192 :max-records 32))))
 
 (defun closed-maps (env manifest)
   (let ((maps nil))

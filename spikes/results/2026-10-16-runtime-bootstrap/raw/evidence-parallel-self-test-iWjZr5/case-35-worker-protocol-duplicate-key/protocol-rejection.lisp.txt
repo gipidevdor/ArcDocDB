@@ -1,0 +1,3 @@
+(:VARIANT :DUPLICATE-KEY :CONDITION INVALID-EVIDENCE :DIAGNOSTIC
+ #A((488) BASE-CHAR
+    . "Evidenza non valida: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-35-worker-protocol-duplicate-key/input/2026-10-16-00/catalogo.lisp. Dispatch reader vietato nel protocollo worker. Log: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-TqmFLL/0/stdout.lisp e /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-TqmFLL/0/stderr.log."))

@@ -1,0 +1,1 @@
+(:NAME "cleanup-workers-timeout-then-error" :STATUS :OK :CHECKS 8)

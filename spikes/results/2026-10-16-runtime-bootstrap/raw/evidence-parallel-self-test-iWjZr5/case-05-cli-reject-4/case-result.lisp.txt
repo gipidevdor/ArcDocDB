@@ -1,0 +1,1 @@
+(:NAME #A((12) BASE-CHAR . "cli-reject-4") :STATUS :OK :CHECKS 6)

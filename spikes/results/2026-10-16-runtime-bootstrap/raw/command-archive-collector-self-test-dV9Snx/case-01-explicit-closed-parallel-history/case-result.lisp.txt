@@ -1,0 +1,8 @@
+(:NAME "explicit-closed-parallel-history" :STATUS :OK :DETAIL
+ (:PLANNED-FILES 9 :WORKERS 4 :HISTORICAL-STATUSES
+  (:OK :FAILED :SOURCE-CHANGED :FAILED) :STRICT-CLOSURE T
+  :INPUT-BYTES-UNCHANGED T :SCALING-CLAIM NIL)
+ :CASE-ID 1 :DIRECTORY
+ #A((165) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-dV9Snx/case-01-explicit-closed-parallel-history/")
+ :CHECKS 136)

@@ -1,0 +1,2 @@
+(:JOBS 1 :CONDITION INVALID-EVIDENCE :DIAGNOSTIC
+ #A((23) BASE-CHAR . "Evidenza non valida: .."))

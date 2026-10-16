@@ -1,0 +1,7 @@
+(:ORDER :ERROR-FIRST :CALLS (:ONE :TWO :THREE) :FUNCTION-RESTORED T :CONDITION
+ SIMPLE-ERROR :DIAGNOSTIC
+ #A((253) BASE-CHAR
+    . "Cleanup worker fallito: EXPECTED-CLEANUP-GENERIC-FAULT; Timeout occurred.. Log: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-47-cleanup-workers-error-then-timeout/cleanup-logs/.")
+ :LOGS
+ #A((172) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-47-cleanup-workers-error-then-timeout/cleanup-logs/"))

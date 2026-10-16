@@ -26,6 +26,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   saturazione, concorrenza, allocazioni e controlli negativi in `make check`.
   Persistenza completa, writer, snapshot e Query Engine restano da integrare.
 
+- Bootstrap del runtime dall'intero piano CSN dell'Archivio: famiglia unica
+  CSN/snapshot/epoche e nuovo ambito GET, pubblicazione atomica senza reset
+  e recupero del binding dopo interruzione. Nessun nuovo I/O o lock sul
+  percorso delle Serie; gate del traffico e qualifica C1 ancora aperti.
+
 - Verifica dei cataloghi delle evidenze con fino a quattro processi isolati,
   heap e tempo per catalogo configurabili, errori ridotti nell'ordine seriale
   e log dei worker conservati. Percorso seriale disponibile per confronto.
@@ -475,6 +480,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   readonly indipendente e limitato, nomi canonici u64 e identità senza
   symlink verificati prima del piano di riconciliazione. Nessun elenco
   parziale su EOF mancante, budget esaurito o guasto di cleanup.
+
+- Apertura readonly relativa alla capacità directory, con dimensione
+  dello stesso FD, verifica del legame device/inode e cleanup del child
+  non pubblicato. CONTROL, decision log e ACTIVE della prova verticale
+  usano capacità e dimensione della stessa apertura; i file esistenti
+  restano in sola lettura.
 
 ### Cambiato
 

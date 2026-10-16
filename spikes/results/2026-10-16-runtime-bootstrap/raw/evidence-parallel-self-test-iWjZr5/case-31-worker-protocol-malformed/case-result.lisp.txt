@@ -1,0 +1,1 @@
+(:NAME "worker-protocol-malformed" :STATUS :OK :CHECKS 26)

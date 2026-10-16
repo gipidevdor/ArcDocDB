@@ -11,6 +11,13 @@ CONTROL e il decision log completo dell'Archivio, recupera ACTIVE tramite
 il lettore autorevole, costruisce e pubblica il checkpoint e rilegge i dati.
 Un terzo processo ricostruisce nuovamente indice e letture dai file pubblicati.
 
+Le capacità readonly sono aperte dall'API di prodotto
+`io:apri-lettura-nella-directory`, relativa al FD della directory posseduta.
+Le letture di recovery di CONTROL, decision log e ACTIVE usano l'EOF
+restituito insieme alla rispettiva capacità, rilevato sullo stesso FD.
+Le immagini indipendenti della fixture restano disponibili per confrontare
+i byte; non forniscono la dimensione di queste tre letture canoniche.
+
 | Punto di arresto, in entrambi i formati | Verifica dopo riapertura |
 |---|---|
 | Cinque commit durevoli | Ultimo valore aggiornato di A, C presente, B cancellato |
@@ -65,6 +72,11 @@ solo record ordinari, dopo verifica di tutti i prefissi CLOSED; rifiuta
 prepared/OUTCOME. La pubblicazione seriale dei candidati segue la radice
 del controller: non dimostra l'atomicità fra indice e radice sotto concorrenza.
 UUID e completezza del namespace sono fatti della fixture.
+Anche con aperture ed EOF di prodotto, bootstrap, creazione degli output,
+selezione tramite probe fra nome temporaneo e definitivo e coordinamento
+restano C4. La fixture
+registra le capacità restituite e ne mantiene l'ownership fino al cleanup;
+non viene introdotta una raccolta di capacità gestita dal motore.
 
 Dal 2026-10-16 la scelta del nuovo ID usa l'[ingresso di prodotto dalla directory](id-directory-recovery.md)
 sul manifest autorevole e sul parent posseduto: nomi canonici e una sola

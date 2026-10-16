@@ -1,0 +1,3 @@
+(:JOBS 4 :CONDITION INVALID-EVIDENCE :DIAGNOSTIC
+ #A((210) BASE-CHAR
+    . "Evidenza non valida: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-11-invalid-leaf-10/input/2026-10-16-00/catalogo.lisp. Evidenza non valida: .."))

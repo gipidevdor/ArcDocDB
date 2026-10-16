@@ -1,0 +1,11 @@
+(:ARGV
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--noinform" "--no-userinit" "--no-sysinit" "--disable-debugger" "--script"
+  #A((159) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-44-process-scan-empty/scan-driver.lisp"))
+ :EXIT-CODE 1 :SIGNAL NIL :STDOUT
+ #A((168) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-44-process-scan-empty/scan-rejected.stdout.lisp")
+ :STDERR
+ #A((167) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-44-process-scan-empty/scan-rejected.stderr.log"))

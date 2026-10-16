@@ -1,0 +1,1 @@
+(:NAME "plain-global-size" :STATUS :OK :CHECKS 7)

@@ -1,0 +1,9 @@
+(:NAME "source-leaf-symlink" :STATUS :OK :DETAIL
+ (:EXPECTED-REASON :NONREGULAR-SOURCE :OBSERVED-REASON :NONREGULAR-SOURCE
+  :DIAGNOSTIC
+  #A((208) BASE-CHAR
+     . "File regolare senza symlink finale: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/command-archive-collector-self-test-dV9Snx/case-38-source-leaf-symlink/inputs/config/../raw/link.bin"))
+ :CASE-ID 38 :DIRECTORY
+ #A((152) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-dV9Snx/case-38-source-leaf-symlink/")
+ :CHECKS 50)

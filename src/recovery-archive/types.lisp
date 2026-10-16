@@ -1,15 +1,18 @@
 ;;; OWNER: controller associa una volta UUID autorevole e ambito canonico; copie possedute.
-;;; SHARED: risultato immutabile, nessun array o scratch esportato alle Serie.
+;;; SHARED: identità immutabile; binding runtime una sola volta via CAS, solo nel bootstrap.
 (in-package #:arcdocdb.recovery.archive)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-TXM-005 REQ-AFF-008
 (defstruct (archivio-recovery (:constructor %make-archivio-recovery (scope identity)) (:copier nil))
   "Pre: controller associa UUID autorevole e ambito dello stesso Archivio prima del recovery.
-Post: legami immutabili, copia privata dell'UUID; non certifica il catalogo o la sua unicità.
+Post: legami immutabili e binding runtime inizialmente NIL; non certifica unicità del catalogo.
 TYPE-ERROR per tipi invalidi; nessun accessor di array esportato."
   (scope nil :type ambito-get :read-only t)
-  (identity #() :type (simple-array (unsigned-byte 8) (#.+log-identity-bytes+)) :read-only t))
+  (identity #() :type (simple-array (unsigned-byte 8) (#.+log-identity-bytes+)) :read-only t)
+  ;; Tipo opaco per evitare dipendenza circolare: il solo writer è ARCDOCDB.RUNTIME.
+  ;; Nessun reset o accesso sul percorso delle operazioni delle Serie.
+  (runtime nil :type t))
 
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (ambito-get octets) archivio-recovery) crea-archivio-recovery))

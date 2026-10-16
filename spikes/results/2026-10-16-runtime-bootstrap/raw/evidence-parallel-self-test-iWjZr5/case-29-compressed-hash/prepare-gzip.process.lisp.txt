@@ -1,0 +1,6 @@
+(:ARGV ("gzip" "-n" "-9" "-c") :EXIT-CODE 0 :SIGNAL NIL :STDOUT
+ #A((173) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-29-compressed-hash/input/2026-10-16/artifact.lisp.gz")
+ :STDERR
+ #A((163) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-29-compressed-hash/prepare-gzip.stderr.log"))

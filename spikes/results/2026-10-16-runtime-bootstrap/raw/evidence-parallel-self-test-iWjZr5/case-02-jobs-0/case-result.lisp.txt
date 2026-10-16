@@ -1,0 +1,1 @@
+(:NAME #A((6) BASE-CHAR . "jobs-0") :STATUS :OK :CHECKS 6)

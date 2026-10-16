@@ -1,0 +1,3 @@
+(:JOBS 4 :CONDITION SIMPLE-ERROR :DIAGNOSTIC
+ #A((224) BASE-CHAR
+    . "Artefatto /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-26-plain-global-size/input/unlisted.bin: 1048577 byte, limite 1048576. Eseguire make compact-evidence."))

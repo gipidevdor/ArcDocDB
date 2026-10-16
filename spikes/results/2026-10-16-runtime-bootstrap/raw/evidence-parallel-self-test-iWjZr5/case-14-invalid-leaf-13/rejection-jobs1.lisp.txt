@@ -1,0 +1,2 @@
+(:JOBS 1 :CONDITION INVALID-EVIDENCE :DIAGNOSTIC
+ #A((35) BASE-CHAR . "Evidenza non valida: sub/file.lisp."))

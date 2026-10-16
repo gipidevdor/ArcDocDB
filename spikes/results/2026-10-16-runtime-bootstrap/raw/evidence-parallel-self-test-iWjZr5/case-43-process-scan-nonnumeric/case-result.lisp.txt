@@ -1,0 +1,1 @@
+(:NAME "process-scan-nonnumeric" :STATUS :OK :CHECKS 28)

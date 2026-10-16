@@ -473,7 +473,9 @@ Esclude solo ROOT/PLANNED-ROOT; nelle FI esclude anche la transizione di salute.
 (deftest test-REQ-WAL-005-series-adopts-sealed-before-io-and-captures-token
   (with-series (f :root nil)
     (let* ((lot (series-seal f))
-           (before (series-image (list lot (series-fixture-registry f) (series-fixture-file f))))
+           ;; Il backlink del log non amplia il dominio WAL/CSN al controller mutato.
+           (before (series-image (list lot (series-fixture-registry f) (series-fixture-file f))
+                                 :opaque (list (series-fixture-controller f))))
            (token (multiple-value-list (arcdocdb.wal:leggi-csn-lotto lot)))
            (root (series-root 17 nil)))
       (multiple-value-bind (event generation actual-root) (series-adopt f lot :root root)
@@ -482,7 +484,10 @@ Esclude solo ROOT/PLANNED-ROOT; nelle FI esclude anche la transizione di salute.
         (is (equal token (multiple-value-list
                          (leggi-csn-commit-serie (series-fixture-controller f) event generation))))
         (is (series-image-equal
-             before (series-image (list lot (series-fixture-registry f) (series-fixture-file f)))))
+             before (series-image (list lot (series-fixture-registry f) (series-fixture-file f))
+                                  :opaque (list (series-fixture-controller f)))))
+        (is (eq (series-fixture-controller f)
+                (arcdocdb.series:trova-controllore-serie (series-fixture-log f))))
         (series-counts f 1 1 0)
         (is (equalp #(1 0 0 0) (series-fixture-calls f)))
         (series-frontiers (series-fixture-registry f) 1 '(1))))))
@@ -1099,13 +1104,19 @@ Esclude solo ROOT/PLANNED-ROOT; nelle FI esclude anche la transizione di salute.
           (series-complete f event generation)
           ;; La copertura WAL resta valida; il guasto appare al resolver dopo il CAS.
           (setf (arcdocdb.csn::registro-csn-used (series-fixture-registry f)) 0)
-          (let ((before (series-image (list lot (series-fixture-registry f) group))))
+          ;; Root e salute cambiano come verificato sotto; WAL, CSN e gruppo restano intatti.
+          (let ((before (series-image (list lot (series-fixture-registry f) group)
+                                      :opaque (list (series-fixture-controller f)))))
             (series-error
              (lambda () (pubblica-commit-serie
                          (series-fixture-controller f) (series-fixture-lease f) event generation))
              'invariant-violation)
             (series-faulted f :archive)
-            (is (series-image-equal before (series-image (list lot (series-fixture-registry f) group)))))
+            (is (series-image-equal
+                 before (series-image (list lot (series-fixture-registry f) group)
+                                      :opaque (list (series-fixture-controller f)))))
+            (is (eq (series-fixture-controller f)
+                    (arcdocdb.series:trova-controllore-serie (series-fixture-log f)))))
           (is (eq root (slot-value (series-fixture-controller f)
                                   (sb-mop:slot-definition-name
                                    (series-private-slot (series-fixture-controller f) "ROOT")))))

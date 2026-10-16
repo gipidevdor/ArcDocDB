@@ -14,6 +14,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Adozione dell'ACTIVE preparato nel runtime Archivio con ambito esatto e
+  registro CSN comune. Binding unico del controller sul log canonico,
+  recuperabile dopo interruzione senza reset o nuovo costo per operazione.
+
 - Bootstrap del runtime dall'intero piano CSN dell'Archivio: famiglia unica
   CSN/snapshot/epoche e nuovo ambito GET, pubblicazione atomica senza reset
   e recupero del binding dopo interruzione. Nessun nuovo I/O o lock sul

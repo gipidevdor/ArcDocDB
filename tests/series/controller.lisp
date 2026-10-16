@@ -421,12 +421,7 @@ Esclude solo ROOT/PLANNED-ROOT; nelle FI esclude anche la transizione di salute.
       (series-healthy f)
       (series-counts f 0 0 0)
       (is (null (leggi-radice-serie (series-fixture-controller f))))))
-  (with-series (f :capacity 1 :csn-capacity 65 :root nil)
-    (rilascia-controllore-serie (series-fixture-controller f) (series-fixture-lease f))
-    (setf (series-fixture-lease f) nil
-          (series-fixture-controller f)
-          (crea-controllore-serie (series-fixture-registry f) (series-fixture-log f))
-          (series-fixture-lease f) (acquisisci-controllore-serie (series-fixture-controller f)))
+  (with-series (f :use-default-capacity t :csn-capacity 65 :root nil)
     (dotimes (i 64) (series-adopt f (series-seal f) :root (series-root i nil)))
     (series-counts f 64 64 0)
     (let ((extra (series-seal f)))

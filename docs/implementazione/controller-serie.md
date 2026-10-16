@@ -6,6 +6,10 @@ ogni slot è un evento preallocato, legato a un solo controller. La radice
 è un riferimento a una vista immutabile costruita dall'indice chiamante.
 Il modulo non costruisce ancora l'indice primario o uno snapshot.
 
+La factory impone ora il binding unico sul log canonico;
+`trova-controllore-serie` ne recupera il riferimento. Contratto, adozione
+nel runtime e metodo sono in [adozione ACTIVE](adozione-controller-runtime.md).
+
 ## Protocollo
 
 1. Creare un controller per registro/log segmento, con radice iniziale e

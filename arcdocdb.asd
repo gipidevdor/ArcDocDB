@@ -148,7 +148,7 @@
                              (:file "build") (:file "query")))
                (:module "runtime" :serial t
                 :components ((:file "package") (:file "types") (:file "preflight")
-                             (:file "query") (:file "build"))))
+                             (:file "query") (:file "build") (:file "active"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -261,13 +261,13 @@
                              (:file "guards")))
                (:module "runtime" :serial t
                 :components ((:file "support") (:file "bootstrap") (:file "threads")
-                             (:file "native") (:file "guards")))
+                             (:file "native") (:file "guards") (:file "adoption")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))
                (:module "series" :serial t
                 :components ((:file "support") (:file "controller") (:file "boundaries") (:file "threads")
-                             (:file "worker-bridge") (:file "worker-routing")))
+                             (:file "worker-bridge") (:file "worker-routing") (:file "log-binding")))
                (:module "index" :serial t
                 :components ((:file "slot-support") (:file "slots") (:file "slot-threads")
                              (:file "primary-support") (:file "primary") (:file "primary-threads")

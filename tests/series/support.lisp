@@ -55,7 +55,7 @@
 
 (defun call-with-series-fixture (thunk &key (capacity 4) (csn-capacity 16) (base 0)
                                        registry (file-id 31) (root (series-root 0 nil))
-                                       (next-offset 0) writer flush)
+                                       (next-offset 0) writer flush use-default-capacity)
   (multiple-value-bind (high low) (floor base +series-word-base+)
     (let* ((calls (make-array 4 :initial-element 0))
            (file (series-file calls writer flush))
@@ -67,8 +67,11 @@
            (progn
              (setf (series-fixture-log f) (arcdocdb.wal:crea-log-io file :segment file-id)
                    (series-fixture-controller f)
-                   (crea-controllore-serie (series-fixture-registry f) (series-fixture-log f)
-                                          :capacity capacity :root root :next-offset next-offset)
+                   (if use-default-capacity
+                       (crea-controllore-serie (series-fixture-registry f) (series-fixture-log f)
+                                              :root root :next-offset next-offset)
+                       (crea-controllore-serie (series-fixture-registry f) (series-fixture-log f)
+                                              :capacity capacity :root root :next-offset next-offset))
                    (series-fixture-lease f)
                    (acquisisci-controllore-serie (series-fixture-controller f)))
              (funcall thunk f))

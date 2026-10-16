@@ -298,7 +298,7 @@
             (cdr-expect 'io-fault :io-unavailable
                         (lambda () (cr:verifica-closed-completi (cdr-fixture-control f) (vector result))))
             (cdrs-immagini-invariate f)))
-        :version version)))))
+        :version version))))
 
 ;;; Il budget precede cardinalita e tabella seen; il limite esatto deve riuscire.
 ;;; REQ: REQ-STO-006 REQ-AFF-008

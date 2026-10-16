@@ -264,4 +264,4 @@
               (cdr-expect 'io-fault :io-unavailable
                           (lambda () (cr:massimo-csn-serie-recuperata active (vector closed))))
               (cdrs-immagini-invariate f))))
-        :version version)))))
+        :version version))))

@@ -1,0 +1,51 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/results/2026-10-16-runtime-active/"
+ :INDEXED-FILES 65 :ACTUAL-FILES 67 :INDEXED-BYTES 3381559 :PROCESSES
+ ((:LABEL "trace-initial" :RECORD-PATH "processes/trace-initial/report.lisp"
+   :COMMAND ("make" "trace-write" "trace" "links") :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "diagnostic-first" :RECORD-PATH
+   "processes/diagnostic-first/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/get-series-capture.lisp" "--" "sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script" "spikes/out/runtime-active-input/diagnose.lisp")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-self-test" :RECORD-PATH
+   "processes/coverage-self-test/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--self-test"
+    "spikes/out/runtime-active-cover-self/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "diagnostic" :RECORD-PATH "processes/diagnostic/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/get-series-capture.lisp" "--" "sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script" "spikes/out/runtime-active-input/diagnose.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-first" :RECORD-PATH "processes/coverage-first/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/runtime-active-cover/" "runtime-active")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "check-first" :RECORD-PATH "processes/check-first/report.lisp"
+   :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :FAILED :EXIT-CODE 2 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage" :RECORD-PATH "processes/coverage/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/runtime-active-cover-final/" "runtime-active")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "check" :RECORD-PATH "processes/check/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "38e7e51439988b4940180a1994fc2cdeffdb2ca8eefbfa12698acbf494e31440"
+ :CATALOGUE-SHA256
+ "20a2ac731b5f2482d40ebb6df4debf571333720b1f502ea5fe616f017e0b53d7"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

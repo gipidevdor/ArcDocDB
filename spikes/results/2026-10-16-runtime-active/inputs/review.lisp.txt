@@ -1,0 +1,19 @@
+(:schema-version 1 :kind :static-review :date "2026-10-16"
+ :reviewer "Hume" :agent "01a145c4-627f-79b2-a239-aa64f30db5c4"
+ :readings 2 :independent-of-authors t :writes nil :runtime-executions nil
+ :final-reread :no-new-finding
+ :resolved-before-freeze
+ (:compound-postchecks-in-decision-table :candidate-serie-invariant
+  :forward-ftype :foreign-controller-not-mutated :coordinator-stop-obligation-explicit)
+ :final-report
+ "Review statica delle tre modifiche chiusa: nessun nuovo rilievo.
+Postverifiche del candidato tramite %serie-invariant, con ftype anticipato coerente;
+restano prima del CAS. Getter invariato nel comportamento: segnala l'invariante,
+documenta l'arresto demandato al coordinatore e non muta controller estranei o log.
+Metodo coerente: RCA-D09/D10 completano il censimento; COD-24 complessivo resta
+esplicitamente aperto, senza deroghe implicite. Nessun controllo fallibile aggiunto
+dopo il CAS riuscito. Restano da qualificare confine generale di arresto, copertura
+e MC/DC. Nessuna modifica o esecuzione effettuata."
+ :coordinator-followup (:two-existing-wal-oracles-explicit-controller-identity
+                       :unused-test-helper-argument-removed)
+ :limits (:static-only :not-full-c1 :not-mcdc :coordinator-followup-not-independent-review))

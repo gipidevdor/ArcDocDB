@@ -142,3 +142,12 @@ documentali sono ripetuti su `4c7a0ca7`. I registri restano distinti, tutti
 STABLE; gli aggiornamenti finali dei risultati non cambiano codice o test.
 Queste prove non chiudono la qualifica indipendente, il Recovery Manager o
 le verifiche dedicate dei calcoli CSN dell'Archivio.
+
+Il push successivo ha trovato nuove modifiche CLOSED su `main`, integrate
+in `94e2abd6`. La [verifica aggiuntiva](../../spikes/results/2026-10-16-recovery-directory-id-closed/README.md)
+registra nuovamente l'intera suite e i controlli sorgenti/documentali:
+**1.849 test nominati**, 260 file di prodotto senza violazioni, tracciabilità
+e link riusciti. Passa anche il self-test dello strumento di copertura
+aggiornato per CLOSED. I file della selezione ID e i suoi test restano quelli
+misurati nel commit `4ebde6fc`; nessuna copertura viene trasferita ai nuovi
+percorsi CLOSED da questo risultato.

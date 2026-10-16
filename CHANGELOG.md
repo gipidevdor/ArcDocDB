@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Bootstrap del runtime dall'intero piano CSN dell'Archivio: famiglia unica
+  CSN/snapshot/epoche e nuovo ambito GET, pubblicazione atomica senza reset
+  e recupero del binding dopo interruzione. Nessun nuovo I/O o lock sul
+  percorso delle Serie; gate del traffico e qualifica C1 ancora aperti.
+
 - Verifica dei cataloghi delle evidenze con fino a quattro processi isolati,
   heap e tempo per catalogo configurabili, errori ridotti nell'ordine seriale
   e log dei worker conservati. Percorso seriale disponibile per confronto.

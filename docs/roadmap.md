@@ -48,6 +48,11 @@ canonici; il suo limite di otto ID non limita l'inventario di prodotto.
 
 Questi incrementi non anticipano la chiusura dei gate della Fase 0.
 
+Il [bootstrap runtime dell'Archivio](implementazione/runtime-archivio.md)
+collega ora il piano CSN completo alla famiglia unica CSN/snapshot/epoche
+e al nuovo ambito GET. Riconciliazione, pubblicazione degli effetti,
+costruzione dei controller Serie e ammissione restano da coordinare.
+
 Il primo incremento dispone della [raccolta readonly dell'inventario](implementazione/inventario.md#raccolta-dalla-directory)
 da una capacità directory, con nomi e identità verificati prima del planner.
 L'[apertura readonly relativa](implementazione/io-apertura-relativa.md)

@@ -7,6 +7,8 @@ cambiare ADR-0020, ADR-0038, ADR-0041 o ADR-0046.
 
 Il piano prepara la base del futuro registro CSN. Non crea il registro,
 non ricostruisce gli indici e non autorizza l'ammissione del traffico.
+Il [bootstrap runtime](runtime-archivio.md) collega ora questa base alla
+famiglia unica dei registri; l'ammissione resta responsabilità del controller.
 
 ## Insieme delle Serie
 
@@ -90,13 +92,14 @@ le assegnazioni successive sono rifiutate con `:csn-exhausted`, senza wrap.
 
 L'ambito GET del recovery può essere un ambito di bootstrap. Il piano non
 riscrive il suo registro snapshot o il registro CSN già associato. Il
-controller deve ancora costruire l'unico ambiente runtime con la base
-validata, associare scritture/snapshot/viste e completare gli obblighi di
-pubblicazione. Due piani non autorizzano due allocatori per lo stesso Archivio.
+bootstrap runtime costruisce la famiglia unica dei registri con la base
+validata. Il controller deve ancora associare scritture/snapshot/viste e
+completare gli obblighi di pubblicazione. Due piani non autorizzano due
+allocatori per lo stesso Archivio canonico.
 
 Prima dell'ammissione restano catalogo/inventari autorevoli, riconciliazione
 fisica, indici e radici coerenti, chiusura/pubblicazione del vecchio ACTIVE,
-obblighi multiserie completati e registro unico dell'Archivio.
+obblighi multiserie completati e uso dello stesso registro da tutti i controller.
 
 ## Decisioni e qualifica
 
@@ -123,7 +126,8 @@ separavano build, statica e due letture dell'autore dalla qualifica.
 La [campagna dedicata](../../spikes/results/2026-10-16-archivio-csn-verifica/report.md)
 conserva 54 test composti, prove native/FI, revisione indipendente e controllo
 completo locale. C1/MC/DC, allocazioni/prestazioni e integrazione nel controller
-restano aperte; il ponte al registro esistente è verificato soltanto nei test.
+restano aperte; quella campagna verificava il ponte al registro esistente
+soltanto nei test. Il bootstrap di prodotto ha un metodo dedicato.
 Il [metodo della verifica dedicata](archivio-csn-verifica.md) definisce le
 fixture pubbliche, il ponte di prova al registro e la conservazione dei run.
 La query fonte DECISION ricontrolla forma delle entry e consumo/normalizzazione

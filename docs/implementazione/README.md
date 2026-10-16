@@ -101,6 +101,10 @@ Il [contratto operativo](../full-text.md) e il
 Le evidenze hanno un ambito esplicito: un test del codec non verifica transazioni,
 durability, recovery o prestazioni del database.
 
+Il [bootstrap del runtime Archivio](runtime-archivio.md) collega il piano
+CSN alla famiglia unica CSN/snapshot/epoche e al nuovo ambito GET. Il binding
+non autorizza ancora il traffico.
+
 La [raccolta degli archivi di comandi](raccolta-comandi.md) usa un manifest
 esplicito, quattro worker e il controllo finale dell'inventario chiuso.
 

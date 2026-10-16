@@ -64,7 +64,8 @@ persa deve avere una semantica esplicita per deduplicazione e numerazione.
 
 > **Deciso ([ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md))** — Il motore
 > prevede indici full text dedicati. L'applicazione NNTP ne guida la valutazione;
-> questa aggiunta riguarda il progetto, con implementazione futura nella fase 8.
+> il primo [nucleo general-purpose](../implementazione/full-text.md) implementa analisi,
+> run posizionali e cornice; l'integrazione completa rimane nella fase 8.
 
 L'applicazione estrae testo ricercabile da `Subject`, autore e corpo: decodifica MIME,
 charset e selezione delle parti sono responsabilità del server NNTP. I campi indicizzati

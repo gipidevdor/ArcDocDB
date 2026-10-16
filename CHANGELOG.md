@@ -7,6 +7,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Primo nucleo full text: analizzatore riprendibile Unicode 18.0.0 con dati e licenze
+  versionati, run invertiti posizionali in memoria e ricerca all/any/frase per riga/campo,
+  cornice `.idx` v2/type 5 con CRC e preflight. Corpus ufficiali, scansione indipendente,
+  saturazione, concorrenza, allocazioni e controlli negativi in `make check`.
+  Persistenza completa, writer, snapshot e Query Engine restano da integrare.
+
 - Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
   del payload senza copie, UTF-8 verificato per il testo, coda ignorata
   e budget dell'intera finestra. Buffer condivisibile in sola lettura;

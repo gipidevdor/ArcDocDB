@@ -1,8 +1,12 @@
-;;;; UTF-8 rigoroso secondo RFC 3629, senza decodifica o normalizzazione.
+;;;; UTF-8 rigoroso secondo RFC 3629: verifica e lettura di scalari, senza normalizzazione.
 ;;; OWNER: chiamante; BUFFER resta immutabile per l'intera verifica.
 ;;; SHARED: sola lettura del buffer; cursore e conteggio locali a ogni chiamata.
 (in-package #:arcdocdb.utf8)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
+
+;;; REQ: REQ-SEC-007 REQ-AFF-004
+(declaim (ftype (function (t t t) (values (integer 0 1114111) index &optional))
+                leggi-scalare-utf8))
 
 ;;; REQ: REQ-LIM-001 REQ-LIM-002 REQ-AFF-008
 (defconstant +max-utf8-bytes+ 16777216)
@@ -87,6 +91,23 @@ per lead invalido (offset CURSOR); propaga errori ordinati di suite e scalare."
     (unless (and (< cursor next) (<= next end))
       (error 'invariant-violation :reason :utf8-progress :offset cursor))
     next))
+
+;;; REQ: REQ-SEC-007 REQ-AFF-004
+(defun leggi-scalare-utf8 (buffer start end)
+  "Pre: span simple u8 stabile. Post: scalare verificato e cursore successivo.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED per input/budget; CORRUPTION-DETECTED per
+UTF-8 invalido o vuoto. Nessuna allocazione, modifica, normalizzazione o locale."
+  (check-utf8-arguments buffer start end +max-utf8-bytes+)
+  (when (= start end) (error 'corruption-detected :reason :utf8-truncated :offset end))
+  (let* ((bytes (the octets buffer)) (begin (the index start))
+         (next (verifica-carattere-utf8 bytes begin end)) (width (- next begin))
+         (cp (logand (aref bytes begin) (case width (1 #x7f) (2 #x1f) (3 #x0f) (4 7)
+                                         (otherwise (error 'invariant-violation :reason :utf8-scalar-width))))))
+    (loop for position from (1+ begin) below next do
+      (setf cp (logior (ash cp 6) (logand (aref bytes position) 63))))
+    (unless (<= 0 cp #x10ffff) (error 'invariant-violation :reason :utf8-scalar-result))
+    (unless (< begin next) (error 'invariant-violation :reason :utf8-scalar-progress))
+    (values cp next)))
 
 ;;; REQ: REQ-LIM-001 REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t t &key (:max-bytes t)) (values index &optional))

@@ -10,7 +10,7 @@
 > CSN massimo), [ADR-0026](adr/0026-indici-secondari-segmentati.md) (indici
 > secondari **per segmento**, a formato fisso, con delta in memoria per l'ACTIVE),
 > [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) (ricerca full text con indici
-> invertiti dedicati; implementazione da realizzare). Formati in
+> invertiti dedicati; nucleo disponibile, integrazione da completare). Formati in
 > [formati-su-disco.md](formati-su-disco.md#file-indice).
 
 ## Primary index
@@ -88,8 +88,9 @@ La nuova base viene costruita **senza bloccare globalmente i reader**.
 ### Ricerca full text
 
 > **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — La ricerca full text
-> entra nel progetto della v1 con indici appositi. È una funzionalità da implementare e
-> verificare nella fase 8, anche in vista del [server NNTP](valutazione/caso-duso-nntp.md).
+> entra nel progetto della v1 con indici appositi. Il primo [nucleo](implementazione/full-text.md)
+> implementa analisi, run posizionali e cornice; integrazione e qualifica restano nella fase 8,
+> anche in vista del [server NNTP](valutazione/caso-duso-nntp.md).
 
 Il contratto della Serie dichiara i campi testuali e un analizzatore versionato, comune
 a indicizzazione e query. Il profilo base normalizza Unicode e maiuscole/minuscole,
@@ -133,7 +134,8 @@ disco in [formati](formati-su-disco.md#indice-full-text) e prove future in
 > [formato `.idx` v2/type 5](formato-indice-full-text.md) fissa header, sezioni e array,
 > con legame all'hint e riserva conservativa dei byte prima del commit. Questa versione
 > iniziale usa array a larghezza fissa; le ottimizzazioni del codec richiedono una nuova
-> versione e misure dedicate. L'implementazione resta futura.
+> versione e misure dedicate. La [cornice implementata](implementazione/full-text.md#cornice-binaria)
+> non comprende ancora il codec semantico completo e il legame all'hint.
 
 ## Index snapshot
 

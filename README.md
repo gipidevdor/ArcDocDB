@@ -73,7 +73,9 @@ article lookup, ordered group overviews, full-text search, cross-posting, retent
 **Full-text search** is an approved v1 requirement, designed around dedicated
 per-segment inverted indexes for words and
 phrases, combined with structured filters and snapshot visibility. The
-[design](docs/08-indici.md#ricerca-full-text) is recorded; implementation and validation
+[design](docs/08-indici.md#ricerca-full-text) is recorded. The first
+[product core](docs/implementazione/full-text.md) implements Unicode analysis,
+in-memory positional runs and binary index framing; integration and full qualification
 belong to phase 8.
 
 The [full-text contract](docs/full-text.md) and
@@ -160,7 +162,7 @@ Every limit and where it comes from: [limiti.md](docs/limiti.md).
 | Now | A [single-Serie integration test](docs/implementazione/prova-verticale.md) with durable writes, rotation, SIGKILL, recovery, resumed writes and a second crash; coordination remains in the test harness |
 | Next | Integrate production startup, recovery and request admission; complete the reference-scale campaigns and protocol models in the [spike plan](docs/valutazione/piano-spike.md) |
 | Reference application | Database for a future Common Lisp NNTP server; application requirements are documented, protocol implementation remains future work |
-| Full-text requirement | Approved for v1, phase 8: words, phrases and structured filters; implementation, binary index format and qualification remain pending |
+| Full-text requirement | Unicode 18 analysis, positional all/any/phrase predicates and `.idx` framing implemented; persistent index bodies, writer/MVCC and Query Engine integration remain pending |
 | Then | Ten implementation phases, each closed by a verification gate: the [roadmap](docs/roadmap.md) |
 
 Product throughput figures remain targets or estimates. Measurements from individual

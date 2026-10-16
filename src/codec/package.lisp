@@ -5,4 +5,4 @@
   (:import-from #:arcdocdb.binary #:octets #:index #:u8)
   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted
                 #:corruption-detected #:invariant-violation)
-  (:export #:verifica-utf8))
+  (:export #:verifica-utf8 #:leggi-scalare-utf8))

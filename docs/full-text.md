@@ -2,7 +2,8 @@
 
 > **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Specifica normativa
 > che completa [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md).
-> Stato: progettato; nessun codice, formato prodotto o benchmark full text già disponibile.
+> Stato: integrazione progettata; disponibile il primo [nucleo implementato](implementazione/full-text.md)
+> per analisi, run posizionali e cornice. Nessun benchmark del motore full text completo.
 
 La prima versione cerca termini e frasi in campi testuali scalari di una Serie, insieme
 ai filtri strutturati. Ranking, fuzzy search, sinonimi, wildcard testuali, stemming e
@@ -58,10 +59,10 @@ predefinita non promette un'analisi linguistica di ogni lingua. Testo originale 
 rimangono invariati. Non si usano automaticamente tabelle di una diversa versione di SBCL.
 Una versione non supportata produce un errore esplicito di profilo non supportato.
 
-L'implementazione futura deve conservare versione e SHA256 dei file UCD usati per costruire
-le tabelle, inclusi dati di normalizzazione, categorie, case folding e word break, con le
-rispettive licenze. I corpus ufficiali della stessa release sono ingressi di qualifica;
-questa specifica non dichiara già acquisite o verificate le tabelle.
+Versione, SHA256 e licenze dei file UCD usati per le tabelle sono conservati nei
+[dati Unicode](../data/unicode/18.0.0/README.md), inclusi normalizzazione, categorie,
+case folding e word break. La prima implementazione verifica i corpus ufficiali
+della stessa release; questi controlli non qualificano le integrazioni ancora mancanti.
 
 ## Query e risultati
 

@@ -1,7 +1,8 @@
 # Formato binario dell'indice full text
 
 > **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Formato di progetto
-> `.idx` versione 2, tipo full text 5. Nessun encoder/decoder di prodotto ancora presente.
+> `.idx` versione 2, tipo full text 5. Disponibile la [cornice di prodotto](implementazione/full-text.md#cornice-binaria);
+> encoder/decoder semantico delle sezioni ancora da completare.
 > Completa la famiglia descritta in [formati-su-disco.md](formati-su-disco.md#file-indice).
 
 Gli interi a larghezza fissa sono unsigned little-endian. Intervalli di byte e array

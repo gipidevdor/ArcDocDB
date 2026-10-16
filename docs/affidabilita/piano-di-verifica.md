@@ -73,6 +73,9 @@ REQ-SEC-003…REQ-SEC-006 e INV-I4; il completamento in
 [ADR-0054](../adr/0054-contratto-e-formato-full-text.md) aggiunge
 REQ-SEC-007…REQ-SEC-010 e INV-I5/INV-I6. Sono requisiti **progettati**: le prove
 esistenti del primary index, del codec e del recovery non li qualificano.
+Il [nucleo full text](../implementazione/full-text.md) aggiunge corpus Unicode,
+oracolo posizionale, corruzione della cornice, budget, allocazioni e controlli negativi;
+non qualifica ancora i requisiti nel perimetro completo della Serie.
 La fase 8 deve produrre queste evidenze, prima dei benchmark:
 
 | Requisito | Evidenza da realizzare |

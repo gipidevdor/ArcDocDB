@@ -34,6 +34,15 @@
                              (:file "cbor-map-input") (:file "cbor-map-write")
                              (:file "cbor-tag-input") (:file "cbor-tag-write")
                              (:file "cbor-item-read") (:file "cbor-string-read")))
+               (:module "fulltext" :serial t
+                :components ((:file "format-package") (:file "format-constants")
+                             (:file "format-input") (:file "format-write") (:file "format-read")
+                             (:file "analysis-package") (:file "unicode-tables")
+                             (:file "analysis-space") (:file "analysis-properties")
+                             (:file "analysis-nfc") (:file "analysis-word-context")
+                             (:file "analysis-word-rules") (:file "analysis-emit")
+                             (:file "analysis") (:file "index-package") (:file "index-build")
+                             (:file "index-sort") (:file "index-step") (:file "index-lookup")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
                (:module "cache" :serial t
@@ -157,6 +166,11 @@
                 :serial t
                 :components ((:file "support") (:file "binary")
                              (:file "record") (:file "batch")))
+               (:module "fulltext" :serial t
+                :components ((:file "format-support") (:file "format")
+                             (:file "format-guards") (:file "format-threads")
+                             (:file "analysis-support") (:file "analysis-conformance") (:file "analysis")
+                             (:file "index") (:file "allocation-threads")))
                (:module "codec" :serial t
                 :components ((:file "support") (:file "utf8") (:file "threads")
                              (:file "cbor-support") (:file "cbor-header") (:file "cbor-threads")
@@ -260,6 +274,8 @@
              (uiop:symbol-call '#:arcdocdb.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.hash64.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.foundation.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.fulltext.format.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.fulltext.analysis.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.utf8.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.tests '#:run)

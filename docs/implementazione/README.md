@@ -6,16 +6,19 @@ qualifica del motore completo.
 
 La **ricerca full text** è un requisito approvato della v1
 ([ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md)), con
-implementazione e qualifica previste nella fase 8. Non è ancora un
-componente di prodotto: codec CBOR, primary index, GET e prove verticali
-non dimostrano tokenizzazione, posting list, frasi o visibilità full text.
+integrazione e qualifica previste nella fase 8. Il primo
+[nucleo di prodotto](full-text.md) comprende analizzatore Unicode 18.0.0,
+run invertiti posizionali con predicati all/any/frase e cornice binaria.
+Commit, visibilita MVCC e formato completo dei posting restano da integrare.
 I criteri sono nel [piano di verifica](../affidabilita/piano-di-verifica.md#ricerca-full-text).
 Il [contratto operativo](../full-text.md) e il
 [formato `.idx` v2/type 5](../formato-indice-full-text.md) sono definiti da
-[ADR-0054](../adr/0054-contratto-e-formato-full-text.md); restano specifiche di progetto.
+[ADR-0054](../adr/0054-contratto-e-formato-full-text.md); la prima implementazione
+non chiude ancora i requisiti nel loro perimetro complessivo.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
+| Nucleo full text | [Profilo Unicode, run posizionale, predicati e cornice](full-text.md), [decisioni](full-text-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
 | Prova verticale di una Serie | [Scrittura, SIGKILL, recovery, ripresa e secondo crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
 | Fondazioni binarie | [Record v1/v2, CRC32C e lotti SEAL](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |
 | Testo UTF-8 | [Validazione limitata, pura e parallela](utf8.md) | [`src/codec/utf8.lisp`](../../src/codec/utf8.lisp) |

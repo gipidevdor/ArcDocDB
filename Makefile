@@ -1,7 +1,7 @@
 SBCL ?= sbcl
 EVIDENCE_DYNAMIC_SPACE_SIZE ?= 2048
 
-.PHONY: build test lint lint-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest
+.PHONY: build test lint lint-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check
 build test:  ## compila senza avvisi (COD-01) ed esegue gli smoke test
 	$(SBCL) --noinform --no-userinit --non-interactive --load tools/build.lisp
 
@@ -47,4 +47,10 @@ spikes-bench:  ## misure locali, in serie; dati grezzi e ambiente in spikes/out/
 check:  ## tutti i controlli, con record strutturato anche in caso di fallimento
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- $(MAKE) check-core
 
-check-core: test lint lint-selftest snapshot-mutation-selftest reader-mutation-selftest trace links evidence-selftest evidence spikes-check  ## controlli chiamati dal registro
+fulltext-check:  ## tabelle Unicode riproducibili, strumenti e sensibilita degli oracoli
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-unicode-tables.lisp --self-test
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-unicode-tables.lisp --check data/unicode/18.0.0/ src/fulltext/unicode-tables.lisp
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-qualification.lisp --self-test
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-qualification.lisp --check
+
+check-core: test lint lint-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check  ## controlli chiamati dal registro

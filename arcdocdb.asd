@@ -48,7 +48,11 @@
                              (:file "codec-run") (:file "codec-plan") (:file "codec-write-entries")
                              (:file "codec-write") (:file "codec-read-base") (:file "codec-read-lengths")
                              (:file "codec-read-term") (:file "codec-read-postings") (:file "codec-read-dict")
-                             (:file "codec-view") (:file "codec-query")))
+                             (:file "codec-view") (:file "codec-query")
+                             (:file "document-package") (:file "document-config-input") (:file "document-config")
+                             (:file "document-space") (:file "document-start") (:file "document-paths")
+                             (:file "document-scan") (:file "document-analysis") (:file "document-bound")
+                             (:file "document")))
                (:module "csn" :serial t
                 :components ((:file "package") (:file "registry")))
                (:module "cache" :serial t
@@ -188,6 +192,8 @@
                              (:file "codec-support") (:file "codec")
                              (:file "codec-corruption") (:file "codec-guards")
                              (:file "codec-differential")
+                             (:file "document-support") (:file "document") (:file "document-guards")
+                             (:file "document-differential")
                              (:static-file "minimum-v2.hex")))
                (:module "codec" :serial t
                 :components ((:file "support") (:file "utf8") (:file "threads")
@@ -305,6 +311,7 @@
              (uiop:symbol-call '#:arcdocdb.fulltext.format.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.fulltext.analysis.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.fulltext.codec.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.fulltext.document.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.utf8.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.tests '#:run)

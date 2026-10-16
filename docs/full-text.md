@@ -4,6 +4,8 @@
 > che completa [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md).
 > Stato: integrazione progettata; disponibile il primo [nucleo implementato](implementazione/full-text.md)
 > per analisi e run posizionali, con [codec completo e viste verificate](implementazione/full-text-codec.md).
+> Disponibile anche la [preparazione dai documenti CBOR](implementazione/full-text-documenti.md)
+> con budget cumulativi e limite superiore; la riserva nel writer resta da collegare.
 > Nessun benchmark del motore full text completo.
 
 La prima versione cerca termini e frasi in campi testuali scalari di una Serie, insieme

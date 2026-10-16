@@ -118,3 +118,6 @@ inventario/frontiere READY, validazione dell'hint e rianalisi dei documenti,
 MVCC, Query Engine e reclaim. REQ-SEC-003…REQ-SEC-010 restano progettati nel loro
 perimetro complessivo. Una vista strutturalmente valida non certifica la copertura
 di una Serie o una risposta NNTP completa.
+
+La [preparazione documentale](full-text-documenti.md) estrae ora i campi CBOR,
+produce un run SEALED e calcola il costo conservativo prima del futuro aggancio al writer.

@@ -21,6 +21,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 |---|---|---|
 | Nucleo full text | [Profilo Unicode, run posizionale, predicati e cornice](full-text.md), [decisioni](full-text-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
 | Codec e viste full text | [File completo, legame al descriptor e query sui byte](full-text-codec.md), [revisione](full-text-codec-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
+| Preparazione documentale full text | [CBOR, percorsi, budget cumulativi e limite del file](full-text-documenti.md), [revisione](full-text-documenti-decisioni.md) | [`src/fulltext/document.lisp`](../../src/fulltext/document.lisp) |
 | Verifica delle evidenze (C4) | [Processi isolati, limiti e riduzione ordinata](evidenze-parallele.md) | [`tools/check-evidence.lisp`](../../tools/check-evidence.lisp) |
 | Prova verticale di una Serie | [Scrittura, SIGKILL, recovery, ripresa e secondo crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
 | Fondazioni binarie | [Record v1/v2, CRC32C e lotti SEAL](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |

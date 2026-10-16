@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Preparazione full text direttamente dai documenti CBOR: percorsi annidati,
+  tipi e duplicati selezionati verificati, analisi riprendibile e run sigillato.
+  Budget cumulativi e limite superiore del file prima del futuro aggancio al writer;
+  fixture NNTP, scansione indipendente e cancellazione nei diversi stadi.
+
 - Codec completo `.idx` full text v2/type 5: descriptor META canonico copiato,
   legame ai byte hint e mappa PUT fornita, serializzazione senza allocazioni per entry,
   verifica di termini/posting/posizioni e vista immutabile per all/any/frasi sul file.

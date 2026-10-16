@@ -79,4 +79,4 @@ RESOURCE-EXHAUSTED prima delle copie oltre budget. Costruttore freddo, nessun I/
     (error 'resource-exhausted :reason :fulltext-descriptor-memory))
   (multiple-value-bind (fields term tokens)
       (verifica-meta-descrittore meta source-bytes hint hint-start hint-end rows)
-    (%descrittore-full-text (copy-seq meta) (copy-seq identity) segment (copy-seq rows) fields term tokens)))
+    (%descrittore-full-text (copy-seq meta) (copy-seq identity) (list segment) (copy-seq rows) fields term tokens)))

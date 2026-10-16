@@ -32,7 +32,7 @@ CRC e confronto META addebitati al budget prima dell'uso dei payload."
   (lavoro-codec space (- end start))
   (multiple-value-bind (next meta-start meta-end)
       (f:verifica-cornice-indice-full-text buffer start end (descrittore-full-text-identity descriptor)
-                                         (descrittore-full-text-segment descriptor) :max-bytes max-bytes)
+                                         (car (descrittore-full-text-segment-box descriptor)) :max-bytes max-bytes)
     (unless (= next end) (error 'invariant-violation :reason :fulltext-read-frame-end))
     (unless (zerop (confronta-span-codec buffer meta-start meta-end (descrittore-full-text-meta descriptor)
                                       0 (length (descrittore-full-text-meta descriptor)) space))

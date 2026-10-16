@@ -63,7 +63,7 @@ INVARIANT-VIOLATION interna; il proprietario scarta il buffer e applica fail-sto
       (replace buffer (descrittore-full-text-meta descriptor) :start1 (aref (spazio-codec-full-text-starts space) 0))
       (scrivi-occorrenze-run buffer space run) (scrivi-lunghezze-run buffer space run)
       (let ((result (f:scrivi-cornice-indice-full-text buffer start next (descrittore-full-text-identity descriptor)
-                                                    (descrittore-full-text-segment descriptor)
+                                                    (car (descrittore-full-text-segment-box descriptor))
                                                     (spazio-codec-full-text-lengths space) :max-bytes max-bytes)))
         (unless (= result next) (error 'invariant-violation :reason :fulltext-write-result)))
       next)))

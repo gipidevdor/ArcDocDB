@@ -15,6 +15,7 @@ o una qualifica C1 completa. Copertura diagnostica e prove di allocazione sono s
 | LENGTHS | Ordine stretto row/field, riservati zero, campo dichiarato, row entro bitmap e bit committed; token per documento e somma totale controllati |
 | Termini del run | Campo/termine ordinati, righe e posizioni crescenti; contatori partizionano tutte le sezioni e postcondizioni dei byte scritti |
 | U64 esterni | Parole high/low confrontate col massimo prima della ricomposizione; UINT64_MAX nei riferimenti rifiutato senza bignum sul percorso caldo |
+| ID segmento posseduto | Intero boxed una volta nella cella privata del descrittore; nessuna lettura di raw slot u64 da passare alla cornice. Il test con UINT64_MAX resta invariato dopo il fallimento CI x86-64 |
 | META del file | Confronto integrale con la copia canonica autorevole, oltre a identita e CRC della cornice; configurazione/hint non sostituibili con un semplice hash |
 | DICT | Campo dichiarato e riservato zero; lunghezza positiva entro limite e residuo; offset e primo posting esatti; ordine stretto, almeno un posting |
 | Normalizzazione | Input termine entro scratch, un solo token identico; maiuscole, segmenti multipli, sola punteggiatura e UTF-8 invalido rifiutati con CRC corretto |

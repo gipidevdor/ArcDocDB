@@ -26,6 +26,9 @@ u32. Produce copie private di META, identita, campi e bitmap; non trattiene l'hi
 I percorsi hanno 1…100 chiavi testuali; il costruttore corrente ammette fino a 16 campi,
 oltre segnala `resource-exhausted`. META e al massimo 64 KiB. `:max-memory` viene
 controllato conservativamente prima delle copie e delle tabelle temporanee.
+L'ID segmento viene conservato gia boxed in una cella privata creata all'apertura:
+la lettura ripetuta di uno slot raw u64 allocava su SBCL x86-64 per ID oltre fixnum.
+La cella e immutabile dopo la costruzione e rientra nell'overhead del descrittore.
 
 Un file deve coincidere byte per byte con questo META canonico: non basta un hash
 della configurazione. Un hint ricostruito con byte o ordine diversi richiede un nuovo

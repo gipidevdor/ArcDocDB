@@ -26,13 +26,14 @@
 
 ;;; REQ: REQ-SEC-008
 (defstruct (descrittore-full-text
-             (:constructor %descrittore-full-text (meta identity segment rows fields term-limit token-limit))
+             (:constructor %descrittore-full-text (meta identity segment-box rows fields term-limit token-limit))
              (:copier nil))
   "Autorita copiata dal chiamante: META canonico e mappa dei PUT gia risolti.
 Non verifica il formato dell'hint o il replay dei record; mai una prova di readiness."
   (meta (make-array 0 :element-type '(unsigned-byte 8)) :type octets :read-only t)
   (identity (make-array 0 :element-type '(unsigned-byte 8)) :type octets :read-only t)
-  (segment 0 :type u64 :read-only t)
+  ;; Il CAR conserva l'intero boxed freddo: leggere un raw slot u64 puo allocare su x86-64.
+  (segment-box (list 0) :type (cons u64 null) :read-only t)
   (rows #* :type simple-bit-vector :read-only t)
   (fields (make-array 0 :element-type 'u32) :type vettore-u32 :read-only t)
   (term-limit 1 :type u64 :read-only t) (token-limit 1 :type u32 :read-only t))

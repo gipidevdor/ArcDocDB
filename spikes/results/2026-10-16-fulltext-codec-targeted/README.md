@@ -62,3 +62,21 @@ o qualifica C1 del motore.
 
 Restano da integrare I/O e pubblicazione delle generazioni, writer, autorita
 dell'hint e rianalisi del documento, inventario READY, MVCC, Query Engine e reclaim.
+
+## Integrazione e controllo Linux
+
+Dopo integrazione di `main` a `0410116a`, il [controllo completo su ARM](../2026-10-16-fulltext-codec-integration-before-u64-fix/report.lisp)
+ha stato `:ok`, sorgenti `:stable`, exit code 0 e durata 515,485371 secondi.
+Sono completati dieci spike e controllati 199 cataloghi e 3852 riferimenti.
+
+Il [job Linux](https://github.com/gpicchiarelli/ArcDocDB/actions/runs/38939953512/job/117104785571)
+ha invece rilevato [allocazioni con ID massimo](../2026-10-16-fulltext-codec-ci-linux-high-id-failure/report.lisp):
+0 byte con ID 1 e 32768 byte consed con UINT64_MAX su 1000 iterazioni.
+Il registro originale ha stato `:failed`, sorgenti `:stable`, exit code 2;
+il test e rimasto invariato. Il descrittore conserva ora l'ID gia boxed in una
+cella privata immutabile costruita all'apertura, evitando l'estrazione ripetuta
+da uno slot raw u64. Wire e API pubbliche rimangono gli stessi.
+
+Le [prove mirate dopo la correzione](../2026-10-16-fulltext-codec-u64-targeted/report.lisp)
+`make fulltext-check lint trace links` passano sui sorgenti stabili con exit code 0.
+L'esito locale ARM e distinto dalla verifica x86-64 del job successivo.

@@ -6,6 +6,11 @@ e dall'[architettura](../architettura.md#recovery). Questo incremento fornisce
 le query sui risultati readonly e l'aggregazione di una Serie completa.
 Non costruisce il registro e non apre il traffico.
 
+Il [piano dell'Archivio](csn-archivio-recovery.md) aggrega ora queste query
+rispetto all'elenco canonico fornito dal controller, inclusa Registri,
+e verifica che ogni ACTIVE abbia usato lo stesso replay delle decisioni.
+Catalogo persistente e ammissione restano da collegare.
+
 ## Contratto pubblico
 
 Ogni query restituisce **due valori: presenza, massimo u64**.
@@ -21,7 +26,8 @@ Nessuna somma o conversione in u32 tronca il massimo.
 | `arcdocdb.recovery.decisions` | `massimo-csn-decisioni(table)` | Query scalare della tabella canonica, priva da sola dell'identità di Archivio |
 
 I risultati dei reader conservano due scalari readonly aggiuntivi. Non
-trattengono scratch, nuove tabelle o callback. Le firme pubbliche e i
+trattengono scratch, nuove tabelle o callback. ACTIVE conserva inoltre un
+marker privato del replay, che non trattiene la tabella. Le firme pubbliche e i
 valori precedenti dei reader restano gli stessi; cambia la rappresentazione
 privata dei risultati ACTIVE/CLOSED, che richiede ricaricamento del sistema.
 

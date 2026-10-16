@@ -5,11 +5,25 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ## [Non rilasciato]
 
+### Corretto
+
+- Fixture concorrente della lettura stringhe CBOR: durata e overlap WALL
+  possono essere zero quando l'ondata cade nello stesso tick. Preservati
+  rendezvous, risultati esatti, conteggi, immutabilità e limiti delle attese;
+  nessuna attesa artificiale o modifica al decoder.
+
 ### Aggiunto
 
 - Verifica dei cataloghi delle evidenze con fino a quattro processi isolati,
   heap e tempo per catalogo configurabili, errori ridotti nell'ordine seriale
   e log dei worker conservati. Percorso seriale disponibile per confronto.
+
+- Piano CSN dell'Archivio: elenco Serie posseduto con Registri inclusa,
+  UUID unici, stessa autorità delle decisioni e gate CLOSED per ogni Serie.
+  Massimo completo rispetto all'elenco canonico fornito e parole della base
+  senza incremento; marker di replay leggero nel risultato ACTIVE.
+  Nessun nuovo I/O o allocatore; catalogo persistente, ammissione e qualifica
+  dedicata restano da collegare.
 
 - Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
   del payload senza copie, UTF-8 verificato per il testo, coda ignorata

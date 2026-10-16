@@ -59,8 +59,10 @@
                (:module "io" :serial t
                 :components ((:file "package") (:file "types") (:file "identity-types")
                              (:file "native") (:file "native-namespace") (:file "native-directory")
+                             (:file "native-open-relative")
                              (:file "lifecycle") (:file "identity") (:file "directory")
-                             (:file "rename") (:file "namespace") (:file "transfer") (:file "flush")))
+                             (:file "rename") (:file "namespace") (:file "open-relative")
+                             (:file "transfer") (:file "flush")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
                              (:file "group") (:file "executor") (:file "csn")))
@@ -221,7 +223,8 @@
                (:module "io" :serial t
                 :components ((:file "support") (:file "transfer") (:file "native")
                              (:file "rename") (:file "rename-native") (:file "flush-failure")
-                             (:file "transfer-failure")))
+                             (:file "transfer-failure") (:file "open-relative-support")
+                             (:file "open-relative") (:file "open-relative-native")))
                (:module "control" :serial t
                 :components ((:file "support") (:file "publication") (:file "native")
                              (:file "recovery-read") (:file "recovery-publication") (:file "recovery-guards")))

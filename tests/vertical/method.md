@@ -75,3 +75,26 @@ dei nomi `.tmp`/`.seg` nel suo namespace di otto ID. Verifica lo stato
 `:ready`, il successore e il proprio budget; non applica le azioni del piano.
 La prova resta C4, con gli stessi 18 workload e gli stessi oracoli costanti.
 Il contratto e la verifica C1 della proposta ID sono separati dalla fixture.
+
+## Collegamento preregistrato alle aperture relative e all'EOF
+
+Il 2026-10-16, prima delle esecuzioni, si collega `input` alla nuova API
+`io:apri-lettura-nella-directory`. Ogni capacità readonly viene aperta
+rispetto al FD della directory già posseduta dalla fixture, con budget
+di trasferimento e dimensione pari a 8 KiB. L'API restituisce la capacità
+posseduta e l'EOF rilevato sullo stesso FD; la fixture registra subito la
+capacità per la chiusura e conserva i due valori.
+
+Le letture canoniche di CONTROL, decision log e vecchio ACTIVE ricevono
+questo EOF e uno scratch della stessa dimensione. Non ricavano più la
+dimensione da un'immagine aperta separatamente tramite pathname.
+`file-image` resta indipendente per i confronti dei byte preesistenti e
+le altre operazioni C4. Preparazione e output, scelta dei nomi temporanei
+o definitivi, inventario degli otto ID e orchestrazione restano della fixture.
+
+Restano identici i 16 scenari positivi e i due negativi, i 71 processi,
+i 26 SIGKILL intenzionali, gli attesi costanti e gli oracoli sui byte.
+Questa estensione esercita apertura relativa ed EOF di prodotto; non
+introduce un bundle di capacità, riconciliazione fisica o un coordinatore
+di recovery. Il contratto e la verifica dell'API I/O restano distinti
+dalle prove C4 della composizione.

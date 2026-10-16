@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Suite dedicata del recovery CLOSED: lettura fino al P del CONTROL,
+  risoluzione OUTCOME/EDIT, origini writer/compaction, massimo CSN e gate
+  dell'insieme. Oracoli indipendenti, matrice v1/v2 e pubblicazione nativa;
+  copertura e risultati conservati separatamente dalla qualifica C1 completa.
+
 - Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
   del payload senza copie, UTF-8 verificato per il testo, coda ignorata
   e budget dell'intera finestra. Buffer condivisibile in sola lettura;

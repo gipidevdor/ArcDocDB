@@ -8,11 +8,18 @@
 (defun massimo-csn-chiusura (manifest id present maximum)
   "Pre: CLOSED canonico con budget esiti già verificato; risoluzione dei prepared terminata.
 Post: ogni CSN nell'EDIT contribuisce al massimo, anche senza prepared nel prefisso.
-INVARIANT-VIOLATION se il segmento non è CLOSED; nessun TXID contribuisce al massimo."
+INVARIANT-VIOLATION per stato, CSN fuori u64 o attraversamento incompleto; nessun TXID contribuisce al massimo."
   (let ((entry (gethash id (arcdocdb.recovery.manifest::%manifest-closed manifest))))
     (unless entry (error 'invariant-violation :reason :closed-recovery-csn-state))
-    (loop for csn being the hash-values of (arcdocdb.recovery.manifest::%closed-outcomes entry)
-          do (setf present t maximum (max maximum csn))))
+    (let* ((outcomes (arcdocdb.recovery.manifest::%closed-outcomes entry))
+           (expected (hash-table-count outcomes)) (used 0))
+      (loop for csn being the hash-values of outcomes
+            do (unless (typep csn 'u64)
+                 (error 'invariant-violation :reason :closed-recovery-csn-value))
+               (setf present t maximum (max maximum csn))
+               (incf used))
+      (unless (= used expected)
+        (error 'invariant-violation :reason :closed-recovery-csn-outcomes))))
   (values present maximum))
 
 ;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-CMP-009 REQ-AFF-008

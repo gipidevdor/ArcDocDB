@@ -9,20 +9,20 @@
 (defun risolvi-prepared-closed (workspace manifest id)
   "Pre: prefisso interamente verificato, semantica dei prepared/OUTCOME raccolta, manifest dello stesso CLOSED.
 Post: TXID prepared = commit locali + commit solo EDIT + abort, senza decision log globale.
-Entrambe le prove presenti devono avere lo stesso CSN; zero e bit alti sono significativi.
+Tutti gli OUTCOME, anche orfani, devono concordare con l'EDIT omonimo; zero e bit alti sono significativi.
 CORRUPTION-DETECTED per contraddizione, INVARIANT-VIOLATION per conteggi; nessun workspace esportato."
   (unless (eq (nth-value 0 (trova-segmento manifest id)) :closed)
     (error 'invariant-violation :reason :closed-recovery-resolution-state))
   (let ((prepared (workspace-active-prepared workspace)) (outcomes (workspace-active-outcomes workspace))
         (local 0) (closure 0) (aborted 0))
+    (loop for txid being the hash-keys of outcomes using (hash-value local-csn)
+          do (multiple-value-bind (edit-present edit-csn) (trova-esito-chiusura manifest id txid)
+               (when (and edit-present (/= local-csn edit-csn))
+                 (error 'corruption-detected :reason :closed-recovery-outcome-conflict))))
     (loop for txid being the hash-keys of prepared
-          do (multiple-value-bind (local-csn local-present) (gethash txid outcomes)
-               (multiple-value-bind (edit-present edit-csn) (trova-esito-chiusura manifest id txid)
-                 (when (and local-present edit-present (/= local-csn edit-csn))
-                   (error 'corruption-detected :reason :closed-recovery-outcome-conflict))
-                 (cond (local-present (incf local))
-                       (edit-present (incf closure))
-                       (t (incf aborted))))))
+          do (cond ((nth-value 1 (gethash txid outcomes)) (incf local))
+                   ((nth-value 0 (trova-esito-chiusura manifest id txid)) (incf closure))
+                   (t (incf aborted))))
     (unless (= (hash-table-count prepared) (+ local closure aborted))
       (error 'invariant-violation :reason :closed-recovery-resolution-count))
     (values (hash-table-count prepared) local closure aborted)))

@@ -80,3 +80,40 @@ da uno slot raw u64. Wire e API pubbliche rimangono gli stessi.
 Le [prove mirate dopo la correzione](../2026-10-16-fulltext-codec-u64-targeted/report.lisp)
 `make fulltext-check lint trace links` passano sui sorgenti stabili con exit code 0.
 L'esito locale ARM e distinto dalla verifica x86-64 del job successivo.
+
+La [copertura aggiornata](../2026-10-16-fulltext-codec-coverage-final/coverage.lisp),
+con il suo [registro](../2026-10-16-fulltext-codec-coverage-final/report.lisp),
+riguarda il sorgente dopo la correzione dell'ID preallocato. Restano gli stessi
+limiti diagnostici e l'esclusione dei tre test di allocazione dall'esecuzione strumentata.
+
+## Esito finale sul prodotto corretto
+
+Il [registro finale locale](../2026-10-16-fulltext-codec-final-check/report.lisp)
+di `make check` ha stato `:ok`, sorgenti `:stable`, exit code 0 e durata
+478,762980 secondi: dieci spike, 203 cataloghi e 3862 riferimenti verificati.
+
+Il [job Linux corretto](https://github.com/gpicchiarelli/ArcDocDB/actions/runs/38941078055/job/117108567017)
+ha superato `make check`; il [registro originale](../2026-10-16-fulltext-codec-ci-linux/report.lisp)
+ha stato `:ok`, sorgenti `:stable`, exit code 0 e durata 199,349670 secondi.
+La lista completa dei blob dei sorgenti coincide con quella del registro locale.
+Entrambi gli ID, 1 e UINT64_MAX, registrano zero byte consed per 1000 iterazioni;
+passano i 39 test full text, i sei controlli negativi e la riapertura nei child.
+
+Conservati anche due errori di invocazione del controllore, per
+[Linux](../2026-10-16-fulltext-codec-catalog-linux-root-error/report.lisp) e
+[locale](../2026-10-16-fulltext-codec-catalog-local-root-error/report.lisp):
+`--root` era la singola directory datata, mentre il programma cerca cataloghi
+nelle sue sottodirectory. Il rifiuto e `Nessun catalogo`, senza esame degli artefatti.
+La verifica finale usa la radice completa `spikes/results/`.
+
+Il [job macOS](https://github.com/gpicchiarelli/ArcDocDB/actions/runs/38941078055/job/117108566848)
+ha a sua volta superato `make check`: il [registro originale](../2026-10-16-fulltext-codec-ci-macos/report.lisp)
+ha stato `:ok`, sorgenti `:stable`, exit code 0 e durata 555,467853 secondi.
+Anche qui i blob sorgente coincidono con quelli locali e le due misure con ID 1
+e UINT64_MAX riportano zero byte consed. Tutti e tre i job CI del prodotto a
+`3a974589` sono riusciti; i commit successivi conservano soltanto queste evidenze.
+
+La [verifica finale degli archivi](../2026-10-16-fulltext-codec-evidence-final/report.lisp)
+`make evidence links trace` ha stato `:ok`, sorgenti `:stable` ed exit code 0.
+Il record CI macOS e stato acquisito dopo questa scansione, validando il payload
+compresso con il lettore delle evidenze prima della copia senza trasformazioni.

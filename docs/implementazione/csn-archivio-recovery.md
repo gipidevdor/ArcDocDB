@@ -116,9 +116,14 @@ invarianti INV-M5, INV-T2, INV-S7, INV-A8 e INV-P6.
 | ACR-D09 | Nessun CSN, zero presente, bit alti, massimo u64; nessun incremento |
 | ACR-D10 | Consumo esatto AND (presenza OR massimo zero); ogni condizione |
 | ACR-D11 | Copia del vettore posseduta; nessun elenco o fonte pesante trattenuto nel piano |
+| ACR-D12 | Query DECISION: consumo esatto AND (count positivo OR massimo zero); forma entry verificata prima del massimo |
 
 Il [metodo preregistrato](../../spikes/results/2026-10-16-archive-csn-plan/README.md)
 separa build, statica e due letture dell'autore dalla qualifica. Non sono
 aggiunti o eseguiti test locali. MC/DC, casi funzionali dedicati, fault
 injection, allocazioni/prestazioni e revisione indipendente restano aperti.
 La CI automatica verifica la regressione esistente, senza chiudere questi obblighi.
+Il [metodo della verifica dedicata](archivio-csn-verifica.md) definisce le
+fixture pubbliche, il ponte di prova al registro e la conservazione dei run.
+La query fonte DECISION ricontrolla forma delle entry e consumo/normalizzazione
+prima del ritorno; nessun nuovo contenitore o secondo attraversamento.

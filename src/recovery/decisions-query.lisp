@@ -14,12 +14,17 @@ Violazioni dei tipi del contratto segnalano TYPE-ERROR con safety 3."
 (defun massimo-csn-decisioni (table)
   "Pre: tabella completa posseduta dal replay canonico. Post: presenza e massimo CSN di tutte le DECISION.
 NIL/0 sul vuoto; TXID, stamp SEAL del log di controllo e coda non contribuiscono.
-Ciclo limitato alla cardinalità verificata; TYPE-ERROR per tipi invalidi, nessun contenitore allocato."
-  (let ((entries (%table-entries table)) (maximum 0))
+Ciclo limitato alla cardinalità verificata; forma entry e consumo ricontrollati senza nuovi contenitori.
+TYPE-ERROR per tipi invalidi, INVARIANT-VIOLATION per forma o risultato interno incoerente."
+  (let* ((entries (%table-entries table)) (count (length entries)) (used 0) (maximum 0))
     (declare (type u64 maximum))
     (loop for entry across entries
-          do (setf maximum (max maximum (%entry-csn (the decision-entry entry)))))
-    (values (plusp (length entries)) maximum)))
+          do (check-entry-shape (the decision-entry entry))
+             (setf maximum (max maximum (%entry-csn entry)))
+             (incf used))
+    (unless (and (= used count) (or (plusp count) (zerop maximum)))
+      (error 'invariant-violation :reason :decision-csn-result))
+    (values (plusp count) maximum)))
 
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (decision-table u64) (values boolean index &optional)) find-decision-index))

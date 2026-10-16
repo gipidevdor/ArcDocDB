@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|recovery-closed|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|recovery-closed|recovery-archive-csn|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -14,7 +14,13 @@
 (defun scope-path-p (scope path)
   "Gli scope con elenchi espliciti selezionano file esatti; gli altri il modulo intero."
   (let ((suffixes
-          (cond ((string= scope "recovery-closed")
+          (cond ((string= scope "recovery-archive-csn")
+                 '("/src/recovery-archive-csn/types.lisp" "/src/recovery-archive-csn/series.lisp"
+                   "/src/recovery-archive-csn/preflight.lisp" "/src/recovery-archive-csn/build.lisp"
+                   "/src/recovery-archive-csn/query.lisp" "/src/recovery/decisions-types.lisp"
+                   "/src/recovery/decisions-query.lisp"
+                   "/src/recovery-active/types.lisp" "/src/recovery-active/build.lisp"))
+                ((string= scope "recovery-closed")
                  '("/src/recovery-closed/types.lisp" "/src/recovery-closed/read.lisp"
                    "/src/recovery-closed/verify.lisp" "/src/recovery-closed/resolve.lisp"
                    "/src/recovery-closed/build.lisp" "/src/recovery-closed/csn.lisp"
@@ -110,6 +116,20 @@
       actual)))
 
 (defun self-test (directory)
+  (unless (and (every (lambda (name)
+                        (scope-path-p "recovery-archive-csn"
+                                      (format nil "/repo/src/recovery-archive-csn/~A.lisp" name)))
+                      '("types" "series" "preflight" "build" "query"))
+               (every (lambda (path) (scope-path-p "recovery-archive-csn" path))
+                      '("/repo/src/recovery/decisions-types.lisp" "/repo/src/recovery/decisions-query.lisp"
+                        "/repo/src/recovery-active/types.lisp"
+                        "/repo/src/recovery-active/build.lisp"))
+               (every (lambda (path) (not (scope-path-p "recovery-archive-csn" path)))
+                      '("/repo/src/recovery-archive-csn/package.lisp" "/repo/tests/recovery-archive-csn/plan.lisp"
+                        "/repo/src/recovery-archive-csn/build.lisp.fake"
+                        "/repo/src/recovery-archive-csn/build.lisp/child" "/repo/src/recovery/decisions-csn.lisp"
+                        "/repo/src/recovery/decisions-query.lisp.fake")))
+    (error "foundation-coverage.lisp COD-60: scope piano Archivio CSN errato."))
   (unless (and (every (lambda (name)
                         (scope-path-p "recovery-closed" (format nil "/repo/src/recovery-closed/~A.lisp" name)))
                       '("types" "read" "verify" "resolve" "build" "csn" "csn-serie" "publication"))
@@ -299,9 +319,10 @@
       (isolate-output root directory)
       (asdf:load-system "arcdocdb" :force t)
       (asdf:load-system "arcdocdb/tests" :force t)
-      (when (member scope '("recovery-active" "recovery-archive" "recovery-closed") :test #'string=)
+      (when (member scope '("recovery-active" "recovery-archive" "recovery-closed" "recovery-archive-csn") :test #'string=)
         (sb-cover:reset-coverage))
-      (uiop:symbol-call (cond ((string= scope "recovery-closed") '#:arcdocdb.recovery.closed.tests)
+      (uiop:symbol-call (cond ((string= scope "recovery-archive-csn") '#:arcdocdb.recovery.archive.csn.tests)
+                             ((string= scope "recovery-closed") '#:arcdocdb.recovery.closed.tests)
                              ((string= scope "recovery-archive") '#:arcdocdb.recovery.archive.tests)
                              ((string= scope "recovery-active") '#:arcdocdb.recovery.active.tests)
                              ((member scope '("hash" "key-hash") :test #'string=) '#:arcdocdb.hash64.tests)
@@ -375,8 +396,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-float-write" "cbor-array-write" "cbor-map-write" "cbor-tag-write" "cbor-item-read" "cbor-string-read" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "get-series" "get-active-init" "io-rename" "control-publication" "control-recovery" "recovery-active" "recovery-archive" "recovery-closed" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|recovery-closed|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
+                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-float-write" "cbor-array-write" "cbor-map-write" "cbor-tag-write" "cbor-item-read" "cbor-string-read" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "get-series" "get-active-init" "io-rename" "control-publication" "control-recovery" "recovery-active" "recovery-archive" "recovery-closed" "recovery-archive-csn" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|recovery-closed|recovery-archive-csn|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

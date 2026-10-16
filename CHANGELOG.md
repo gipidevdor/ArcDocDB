@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Suite dedicata del piano CSN dell'Archivio: insieme completo delle Serie,
+  Registri, provenienza del replay, gate CLOSED e base u64 senza incremento.
+  Matrici v1/v2, catena nativa e collegamento di prova al registro esistente;
+  risultati e limiti separati dalla qualifica C1 e dall'ammissione del traffico.
+
 - Suite dedicata del recovery CLOSED: lettura fino al P del CONTROL,
   risoluzione OUTCOME/EDIT, origini writer/compaction, massimo CSN e gate
   dell'insieme. Oracoli indipendenti, matrice v1/v2 e pubblicazione nativa;

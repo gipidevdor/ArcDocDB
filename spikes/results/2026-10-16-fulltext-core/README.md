@@ -7,6 +7,7 @@ ancora writer, snapshot, generazioni o codec semantico completo del `.idx`.
 | Prova | Registro |
 |---|---|
 | `make check` completo: 560,407 secondi, sorgenti stabili, 10 spike | [repository](../2026-10-16-fulltext-repository-check/report.lisp) |
+| Dopo merge di `origin/main` a `110e79f1`: build/test, lint, trace, link e fulltext-check, sorgenti stabili | [integrazione](../2026-10-16-fulltext-integration/report.lisp) |
 | 24 test, corpus Unicode, scansione indipendente e quattro controlli negativi | [core](report.lisp) |
 | Lint, tracciabilita e link prima della documentazione finale | [statici](../2026-10-16-fulltext-static/report.lisp) |
 | Rigenerazione identica delle tabelle | [Unicode](../2026-10-16-fulltext-unicode/report.lisp) |

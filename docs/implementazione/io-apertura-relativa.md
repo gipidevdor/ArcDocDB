@@ -46,3 +46,6 @@ Le [prove locali conservate](../../spikes/results/2026-10-16-io-apertura-relativ
 distinguono il controllo completo sul commit congelato dall'integrazione
 successiva. Il [rapporto di raccolta](../../spikes/results/2026-10-16-io-apertura-relativa-collection/collection.lisp)
 e il checker indipendente attestano la conservazione dell'archivio chiuso.
+Il [supplemento di integrazione](../../spikes/results/2026-10-16-io-apertura-relativa-integrazione/README.md)
+conserva separatamente la prima CI e la verifica locale della composizione
+con scelta ID dalla directory e nomi canonici; il codice I/O resta invariato.

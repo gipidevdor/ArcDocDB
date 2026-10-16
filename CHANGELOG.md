@@ -7,6 +7,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Piano CSN dell'Archivio: elenco Serie posseduto con Registri inclusa,
+  UUID unici, stessa autorità delle decisioni e gate CLOSED per ogni Serie.
+  Massimo completo rispetto all'elenco canonico fornito e parole della base
+  senza incremento; marker di replay leggero nel risultato ACTIVE.
+  Nessun nuovo I/O o allocatore; catalogo persistente, ammissione e qualifica
+  dedicata restano da collegare.
+
 - Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
   del payload senza copie, UTF-8 verificato per il testo, coda ignorata
   e budget dell'intera finestra. Buffer condivisibile in sola lettura;

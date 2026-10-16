@@ -1,5 +1,9 @@
 # Recovery readonly del vecchio ACTIVE
 
+Il risultato conserva anche il marker privato del replay DECISION usato,
+senza trattenere la tabella. Il [piano CSN dell'Archivio](csn-archivio-recovery.md)
+confronta questa provenienza prima di aggregare le Serie.
+
 Il modulo [`src/recovery-active/`](../../src/recovery-active/) collega il
 [control log recuperato](control-recuperato.md) alla chiusura del vecchio
 ACTIVE, secondo [ADR-0037](../adr/0037-lotto-sigillato.md#4-il-recovery-non-tronca-inv-a9),

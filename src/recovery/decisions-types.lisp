@@ -4,6 +4,12 @@
 (in-package #:arcdocdb.recovery.decisions)
 (declaim (optimize (safety 3) (debug 2)))
 
+;;; REQ: REQ-TXM-005 REQ-REC-001 REQ-AFF-008
+(defstruct (origine-decisioni (:constructor %make-origine-decisioni ()) (:copier nil))
+  "Pre: una nuova tabella di replay. Post: identità EQ unica, senza entry, buffer o FD.
+Il marker è privato e non è una firma o capacità per input esterno; nessun dato mutabile.
+Conservare il marker non trattiene la tabella delle decisioni.")
+
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-FOR-003
 (defstruct (decision-entry
             (:constructor %make-decision-entry (txid csn count participants source-offset))
@@ -22,7 +28,8 @@ I tipi dichiarati sono precondizioni controllate dal runtime con safety 3."
   "Pre: ENTRIES privato, ordinato per TXID unici; entry verificate e possedute.
 Post: tabella completa, campi read-only; nessun vettore esposto dalle API pubbliche.
 I tipi dichiarati sono precondizioni rilevate dal runtime; nessun effetto durevole."
-  (entries (make-array 0 :element-type t) :type simple-vector :read-only t))
+  (entries (make-array 0 :element-type t) :type simple-vector :read-only t)
+  (origin (%make-origine-decisioni) :type origine-decisioni :read-only t))
 
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (decision-entry) null) check-entry-shape))

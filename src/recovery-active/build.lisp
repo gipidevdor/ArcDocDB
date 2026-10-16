@@ -59,4 +59,5 @@ Errori tipizzati originali propagati; nessun append, fsync, troncatura, rename, 
           (%make-active-recuperato control segment size prefix status batches records
                                   (hash-table-count (workspace-active-prepared workspace))
                                   (workspace-active-local workspace) (workspace-active-aborted workspace) ids csns
-                                  (workspace-active-csn-present workspace) (workspace-active-max-csn workspace)))))))
+                                  (workspace-active-csn-present workspace) (workspace-active-max-csn workspace)
+                                  (arcdocdb.recovery.decisions::%table-origin decisions)))))))

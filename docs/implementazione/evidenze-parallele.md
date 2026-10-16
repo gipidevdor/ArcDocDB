@@ -66,3 +66,33 @@ protocollo, concorrenza effettiva e timeout con raccolta dei figli.
 Le regressioni del lettore compresso rimangono nella suite storage già
 richiamata dallo stesso target. Tempi osservati e risultati della
 qualificazione sono registrati separatamente; nessuno speedup è assunto.
+
+## Risultati del 2026-10-16
+
+Il giro completo su `33ffda01` è positivo, con sorgenti stabili: build e
+test senza avvisi, lint, self-test degli strumenti, tracciabilità, link,
+evidenze ed esperimenti. La suite del checker ha eseguito 46 casi e 738
+asserzioni. Il successivo completamento del cleanup è verificato con due
+casi permanenti aggiuntivi e 18 asserzioni, richiamando la stessa funzione
+di test; i 46 casi precedenti non sono stati ripetuti in quella probe.
+
+Dopo l'integrazione finale su `15a17713`, build/test, lint, tracciabilità
+e link sono positivi. Un controllo globale delle evidenze separato è
+positivo sul medesimo stato, con checker `e3df9f52`. I due comandi sono
+stati eseguiti in parallelo, senza i self-test che mutano l'albero results.
+Questo qualifica lo strumento C4; non chiude criteri C1 o MC/DC del motore.
+
+Un confronto precedente, con checker `d75c465b` e base `fc487afa`, ha
+restituito gli stessi 150 cataloghi, 3747 riferimenti e 44686 file
+(1190618013 byte conservati): 197,929 secondi con un processo e 110,730
+con quattro. È un solo campione per modalità, seriale prima del parallelo,
+prima dell'ultimo completamento delle diagnostiche e del cleanup. Cache e
+carico esterno non erano controllati; non è una garanzia di scalabilità.
+
+Il [catalogo della campagna](../../spikes/results/2026-10-16-evidenze-parallele/catalogo.lisp)
+conserva 13 record conclusi, compresi i tentativi falliti e interrotti.
+Il [riepilogo](../../spikes/results/2026-10-16-evidenze-parallele/tools/results-report.lisp)
+ne distingue i motivi senza modificare gli originali. Le fixture, i log
+dei worker, le osservazioni dei processi e i symlink intenzionalmente
+invalidi sono nel [contenitore raw](../../spikes/results/2026-10-16-evidenze-parallele/raw.tar.gz).
+Il collector ha verificato copie, metadati dei processi e inventario chiuso.

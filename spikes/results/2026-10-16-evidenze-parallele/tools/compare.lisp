@@ -1,0 +1,22 @@
+(require :asdf)
+(let ((*features* (cons :arcdocdb-evidence-check-library *features*)))
+  (load "tools/check-evidence.lisp"))
+(let ((samples nil) (expected nil))
+  (dolist (jobs '(1 4))
+    (sb-ext:gc :full t)
+    (let* ((start (get-internal-real-time))
+           (data (arcdocdb.evidence.check:verifica-evidenze "spikes/results/" :jobs jobs))
+           (seconds (/ (- (get-internal-real-time) start)
+                       (float internal-time-units-per-second 1d0)))
+           (stable (loop for key in '(:status :catalogs :artifact-references :stored-files :stored-bytes :limits)
+                         append (list key (getf data key)))))
+      (if expected (unless (equal stable expected) (error "Seriale e parallelo divergono."))
+          (setf expected stable))
+      (push (list :jobs jobs :wall-seconds seconds :result data) samples)))
+  (write (list :schema-version 1 :kind :evidence-parallel-comparison :status :ok
+               :helper-sha256 (arcdocdb.evidence:file-sha256 *load-truename*)
+               :samples (nreverse samples) :same-stable-result t
+               :limits '(:one-sample-per-mode :serial-before-parallel
+                         :cache-and-external-load-uncontrolled :no-general-speedup-claim))
+         :pretty t)
+  (terpri))

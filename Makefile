@@ -51,9 +51,12 @@ check:  ## tutti i controlli, con record strutturato anche in caso di fallimento
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- $(MAKE) check-core
 
 fulltext-check:  ## tabelle Unicode riproducibili, strumenti e sensibilita degli oracoli
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-codec-fixture.lisp --self-test
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-codec-fixture.lisp --check tests/fulltext/minimum-v2.hex
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-unicode-tables.lisp --self-test
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-unicode-tables.lisp --check data/unicode/18.0.0/ src/fulltext/unicode-tables.lisp
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-qualification.lisp --self-test
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-qualification.lisp --check
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-persistence.lisp --self-test
 
 check-core: test lint lint-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check  ## controlli chiamati dal registro

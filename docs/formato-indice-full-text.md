@@ -1,8 +1,9 @@
 # Formato binario dell'indice full text
 
 > **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Formato di progetto
-> `.idx` versione 2, tipo full text 5. Disponibile la [cornice di prodotto](implementazione/full-text.md#cornice-binaria);
-> encoder/decoder semantico delle sezioni ancora da completare.
+> `.idx` versione 2, tipo full text 5. Disponibile il [codec di prodotto](implementazione/full-text-codec.md)
+> per le sei sezioni e la verifica locale rispetto al descrittore; pubblicazione durevole
+> e qualifica del motore restano da completare.
 > Completa la famiglia descritta in [formati-su-disco.md](formati-su-disco.md#file-indice).
 
 Gli interi a larghezza fissa sono unsigned little-endian. Intervalli di byte e array
@@ -166,7 +167,7 @@ non entra in un segmento vuoto viene rifiutata. Il budget di spazio temporaneo v
 prenotato prima del build. La stima non è una misura di spazio o prestazione: evita di
 scoprire a posteriori che il formato ammesso non può rappresentare i documenti committed.
 
-## Fixture binaria minima da produrre
+## Fixture binaria minima indipendente
 
 Una fixture indipendente usa un campo con due righe: riga 0 `alpha beta alpha`, riga 1
 `beta`. DICT contiene `alpha`, `beta`; TERMS è la concatenazione dei due UTF-8.
@@ -174,5 +175,8 @@ POSTINGS contiene le righe `[0]` per `alpha` e `[0,1]` per `beta`, con frequenze
 e `[1,1]`. POSITIONS segue l'ordine dei posting: `[0,2,1,0]`. LENGTHS contiene
 `(0,campo,3)` e `(1,campo,1)`. Si verificano frase `alpha beta`, frase `beta alpha`,
 duplicazione di row, scambio dell'hint, offset fuori sezione e posizioni alterate con
-CRC ricalcolato. I byte completi e i CRC attesi vanno calcolati e conservati da un
-oracolo indipendente prima della prima implementazione: questa modifica non li genera.
+CRC ricalcolato. I [468 byte completi](../tests/fulltext/minimum-v2.hex) e i CRC attesi
+sono calcolati da un [oracolo indipendente](../tools/fulltext-codec-fixture.lisp), senza
+caricare il prodotto, e congelati prima della prima esecuzione dell'encoder.
+Il [metodo implementativo](implementazione/full-text-codec.md) distingue questa prova
+dalla verifica dell'hint e dalla rianalisi dei documenti.

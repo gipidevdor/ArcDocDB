@@ -4,7 +4,8 @@ Implementazione autorizzata dall'autore il 16 ottobre 2026, secondo
 [ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) e
 [ADR-0054](../adr/0054-contratto-e-formato-full-text.md).
 Sono disponibili analizzatore Unicode, run invertito posizionale in memoria e
-cornice binaria dell'indice. La ricerca su una Serie con commit, snapshot,
+cornice binaria dell'indice. Il successivo [codec completo](full-text-codec.md) aggiunge
+serializzazione delle sezioni e query su viste verificate. La ricerca su una Serie con commit, snapshot,
 catalogo delle generazioni e persistenza completa rimane da integrare.
 REQ-SEC-003…REQ-SEC-010 restano **progettati** nel loro perimetro complessivo.
 
@@ -13,6 +14,7 @@ REQ-SEC-003…REQ-SEC-010 restano **progettati** nel loro perimetro complessivo.
 | `arcdocdb.fulltext.analysis` | UTF-8 rigoroso, NFC, full case fold, NFC, Word_Break e filtro L/N | Un campo scalare alla volta; estrazione dei percorsi CBOR successiva |
 | `arcdocdb.fulltext.index` | Run ordinato per campo/termine/riga/posizione; `all`, `any`, frase | La riga identifica una versione locale, non certifica commit o visibilita MVCC |
 | `arcdocdb.fulltext.format` | Header, directory, padding, footer e CRC del `.idx` v2/type 5 | META, dizionario, posting, hint e copertura non sono validati da questa API |
+| `arcdocdb.fulltext.codec` | [Sei sezioni complete e vista di ricerca verificata](full-text-codec.md) | Autorita di hint/decisioni fornita dal chiamante; pubblicazione/MVCC ancora da integrare |
 
 Il server NNTP rimane un'applicazione futura. Il nucleo puo indicizzare separatamente
 oggetto e corpo degli articoli, senza conoscere MIME, gruppi o comandi NNTP.
@@ -105,7 +107,8 @@ file, e non esiste qui un punto di atomicita durevole.
 
 ## Verifica
 
-`make test` compila senza warning/style-warning e include 24 test full text:
+`make test` compila senza warning/style-warning e include i 24 test del primo nucleo,
+piu 15 test del [codec completo](full-text-codec.md#prove-e-confini-residui):
 
 - 20.171 righe NFC, 100.855 confronti; 1.944 righe Word_Break, 8.487 confini;
   1.606 mapping C/F e lettura di tutti gli 1.112.064 scalari Unicode.
@@ -121,7 +124,8 @@ file, e non esiste qui un punto di atomicita durevole.
 `make fulltext-check` verifica anche gli strumenti e introduce quattro mutanti
 semantici temporanei, in un processo di test: NFC senza composizione, confine ovunque,
 frase sempre accettata e header non verificato. Tutti devono essere rilevati; le funzioni
-originali sono ripristinate. Non e una campagna di mutazione esaustiva.
+originali sono ripristinate. Il codec aggiunge altri due mutanti e una prova di riapertura
+in processi separati. Non e una campagna di mutazione esaustiva.
 La [revisione delle decisioni](full-text-decisioni.md) registra le due letture del nucleo.
 Copertura diagnostica separata dalle misure di allocazione:
 
@@ -130,7 +134,7 @@ sbcl --script tools/fulltext-qualification.lisp --coverage spikes/out/fulltext-c
 make check
 ```
 
-Le prove qui descritte non qualificano ancora il validatore completo `.idx`,
-l'ammissione pre-SEAL/PREPARE, la pubblicazione prima di H/ACK, il build concorrente,
+Le prove qui descritte non qualificano ancora l'ammissione pre-SEAL/PREPARE,
+la pubblicazione prima di H/ACK, il build concorrente,
 il recovery delle generazioni o la ricerca con MVCC. Questi sono i successivi raccordi
 previsti dal [contratto full text](../full-text.md).

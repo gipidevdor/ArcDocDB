@@ -14,6 +14,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Codec completo `.idx` full text v2/type 5: descriptor META canonico copiato,
+  legame ai byte hint e mappa PUT fornita, serializzazione senza allocazioni per entry,
+  verifica di termini/posting/posizioni e vista immutabile per all/any/frasi sul file.
+  Fixture wire indipendente, fuzz con CRC corretto e riapertura in child SBCL su campi
+  subject/body NNTP. I/O e pubblicazione durevole delle generazioni restano da integrare.
+
 - Primo nucleo full text: analizzatore riprendibile Unicode 18.0.0 con dati e licenze
   versionati, run invertiti posizionali in memoria e ricerca all/any/frase per riga/campo,
   cornice `.idx` v2/type 5 con CRC e preflight. Corpus ufficiali, scansione indipendente,

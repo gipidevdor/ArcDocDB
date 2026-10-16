@@ -3,7 +3,8 @@
 > **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Specifica normativa
 > che completa [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md).
 > Stato: integrazione progettata; disponibile il primo [nucleo implementato](implementazione/full-text.md)
-> per analisi, run posizionali e cornice. Nessun benchmark del motore full text completo.
+> per analisi e run posizionali, con [codec completo e viste verificate](implementazione/full-text-codec.md).
+> Nessun benchmark del motore full text completo.
 
 La prima versione cerca termini e frasi in campi testuali scalari di una Serie, insieme
 ai filtri strutturati. Ranking, fuzzy search, sinonimi, wildcard testuali, stemming e

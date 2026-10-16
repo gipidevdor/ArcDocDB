@@ -89,7 +89,8 @@ La nuova base viene costruita **senza bloccare globalmente i reader**.
 
 > **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — La ricerca full text
 > entra nel progetto della v1 con indici appositi. Il primo [nucleo](implementazione/full-text.md)
-> implementa analisi, run posizionali e cornice; integrazione e qualifica restano nella fase 8,
+> implementa analisi, run posizionali, codec completo e viste verificate;
+> integrazione e qualifica restano nella fase 8,
 > anche in vista del [server NNTP](valutazione/caso-duso-nntp.md).
 
 Il contratto della Serie dichiara i campi testuali e un analizzatore versionato, comune
@@ -134,8 +135,9 @@ disco in [formati](formati-su-disco.md#indice-full-text) e prove future in
 > [formato `.idx` v2/type 5](formato-indice-full-text.md) fissa header, sezioni e array,
 > con legame all'hint e riserva conservativa dei byte prima del commit. Questa versione
 > iniziale usa array a larghezza fissa; le ottimizzazioni del codec richiedono una nuova
-> versione e misure dedicate. La [cornice implementata](implementazione/full-text.md#cornice-binaria)
-> non comprende ancora il codec semantico completo e il legame all'hint.
+> versione e misure dedicate. Il [codec implementato](implementazione/full-text-codec.md)
+> verifica sezioni e legame al descrittore/hint fornito; la verifica dell'hint stesso,
+> dei documenti e della copertura della generazione rimane da integrare.
 
 ## Index snapshot
 

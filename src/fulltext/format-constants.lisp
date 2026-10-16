@@ -29,6 +29,18 @@
 (defconstant +footer-bytes+ 4)
 (defconstant +meta-max-bytes+ 65536)
 (defconstant +default-file-budget+ 17179869184)
+(defconstant +dict-width+ 32)
+(defconstant +dict-term-length+ 4)
+(defconstant +dict-term-offset+ 8)
+(defconstant +dict-first-posting+ 16)
+(defconstant +dict-posting-count+ 24)
+(defconstant +posting-width+ 16)
+(defconstant +posting-frequency+ 4)
+(defconstant +posting-first-position+ 8)
+(defconstant +position-width+ 4)
+(defconstant +length-width+ 16)
+(defconstant +length-field+ 4)
+(defconstant +length-count+ 8)
 
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (index) (values index &optional)) allinea-indice-full-text))
@@ -45,4 +57,4 @@ INVALID-ARGUMENT per overflow; nessuna mutazione o allocazione prevista."
 (defun larghezza-sezione-full-text (section)
   "Pre: ordinale di sezione 0..5. Post: divisore della lunghezza della sezione.
 Nessuna modifica; tipi controllati, META e TERMS hanno byte come unita."
-  (case section (1 32) ((3 5) 16) (4 4) (otherwise 1)))
+  (case section (1 +dict-width+) (3 +posting-width+) (5 +length-width+) (4 +position-width+) (otherwise 1)))

@@ -110,3 +110,13 @@ Due letture statiche C1 sono distinte dai test. Conservazione con
 controllo indipendente dell'inventario. Nessun benchmark nuovo: tempi dei
 comandi includono compilazione/fixture e non sono throughput DB.
 C1/MC/DC, piattaforma di riferimento e ammissione rimangono aperti.
+
+## Esiti conservati
+
+La [campagna dedicata](../../spikes/results/2026-10-16-runtime-bootstrap/report.md)
+conserva 27 test composti superati, inclusi due concorrenti e tre nativi,
+controllo completo locale e copertura: modulo 178/201 forme e 34/34 rami;
+con contesto Archivio 190/230 forme e 35/40 rami. Nessun residuo escluso.
+Il CAS perdente è osservato nel run, senza garanzia dello scheduling futuro.
+La [revisione statica](runtime-archivio-revisione.md) resta distinta da
+MC/DC, qualifica C1 e prova dinamica dell'interruzione dopo il CAS.

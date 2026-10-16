@@ -5,6 +5,13 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ## [Non rilasciato]
 
+### Corretto
+
+- Fixture concorrente della lettura stringhe CBOR: durata e overlap WALL
+  possono essere zero quando l'ondata cade nello stesso tick. Preservati
+  rendezvous, risultati esatti, conteggi, immutabilità e limiti delle attese;
+  nessuna attesa artificiale o modifica al decoder.
+
 ### Aggiunto
 
 - Suite dedicata del recovery CLOSED: lettura fino al P del CONTROL,

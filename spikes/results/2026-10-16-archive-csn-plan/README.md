@@ -62,3 +62,7 @@ Le letture non sostituiscono la revisione indipendente né i casi
 ACR-D01…D11. Catalogo persistente, registro unico, ambiente runtime e
 ammissione restano da collegare. La CI automatica resta distinta dalla
 qualifica dedicata dei nuovi calcoli.
+
+La prima CI sul commit pubblicato ha segnalato un vincolo temporale
+errato nella fixture CBOR preesistente. [Causa, correzione e originali](../2026-10-16-archive-csn-plan-ci/README.md)
+sono separati dalla presente campagna; il codice prodotto CSN è invariato.

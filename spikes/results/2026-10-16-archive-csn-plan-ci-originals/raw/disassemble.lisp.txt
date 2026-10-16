@@ -1,0 +1,12 @@
+(require :asdf)
+(asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+(asdf:load-system "arcdocdb")
+(dolist (name '(arcdocdb.recovery.archive.csn:crea-insieme-serie-recovery
+                arcdocdb.recovery.archive.csn::copia-serie-recovery
+                arcdocdb.recovery.archive.csn::verifica-piano-csn-preflight
+                arcdocdb.recovery.archive.csn::verifica-origine-active-csn
+                arcdocdb.recovery.archive.csn:crea-piano-csn-archivio
+                arcdocdb.recovery.archive.csn:parole-base-csn-archivio
+                arcdocdb.recovery.active::%make-active-recuperato))
+  (format t "~&FUNZIONE ~S~%" name)
+  (disassemble name))

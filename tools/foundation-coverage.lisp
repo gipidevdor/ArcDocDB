@@ -1,5 +1,5 @@
 ;;;; Copertura con contrib SBCL; processo e cache separati dai benchmark.
-;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
+;;;; Uso: --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|recovery-closed|execution|storage|recovery|io|wal|series|index] oppure --self-test directory/
 ;;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-LIM-001 REQ-VAL-001
 (require :asdf)
 (require :sb-cover)
@@ -14,7 +14,12 @@
 (defun scope-path-p (scope path)
   "Gli scope con elenchi espliciti selezionano file esatti; gli altri il modulo intero."
   (let ((suffixes
-          (cond ((string= scope "recovery-archive")
+          (cond ((string= scope "recovery-closed")
+                 '("/src/recovery-closed/types.lisp" "/src/recovery-closed/read.lisp"
+                   "/src/recovery-closed/verify.lisp" "/src/recovery-closed/resolve.lisp"
+                   "/src/recovery-closed/build.lisp" "/src/recovery-closed/csn.lisp"
+                   "/src/recovery-closed/csn-serie.lisp" "/src/recovery-closed/publication.lisp"))
+                ((string= scope "recovery-archive")
                  '("/src/recovery-archive/types.lisp" "/src/recovery-archive/read.lisp"
                    "/src/recovery-archive/build.lisp" "/src/recovery-archive/query.lisp"
                    "/src/recovery-archive/active.lisp"))
@@ -105,6 +110,14 @@
       actual)))
 
 (defun self-test (directory)
+  (unless (and (every (lambda (name)
+                        (scope-path-p "recovery-closed" (format nil "/repo/src/recovery-closed/~A.lisp" name)))
+                      '("types" "read" "verify" "resolve" "build" "csn" "csn-serie" "publication"))
+               (every (lambda (path) (not (scope-path-p "recovery-closed" path)))
+                      '("/repo/src/recovery-closed/package.lisp" "/repo/tests/recovery-closed/read.lisp"
+                        "/repo/src/recovery-closed/read.lisp.fake" "/repo/src/recovery-closed/read.lisp/child"
+                        "/repo/src/recovery-active/build.lisp")))
+    (error "foundation-coverage.lisp COD-60: scope CLOSED errato."))
   (let ((actual (isolate-output (truename "./") directory)))
     (unless (search "/fasl/src/foundation/record.fasl" (namestring actual))
       (error "foundation-coverage.lisp COD-60: mapping ricorsivo della cache errato.")))
@@ -286,8 +299,10 @@
       (isolate-output root directory)
       (asdf:load-system "arcdocdb" :force t)
       (asdf:load-system "arcdocdb/tests" :force t)
-      (when (member scope '("recovery-active" "recovery-archive") :test #'string=) (sb-cover:reset-coverage))
-      (uiop:symbol-call (cond ((string= scope "recovery-archive") '#:arcdocdb.recovery.archive.tests)
+      (when (member scope '("recovery-active" "recovery-archive" "recovery-closed") :test #'string=)
+        (sb-cover:reset-coverage))
+      (uiop:symbol-call (cond ((string= scope "recovery-closed") '#:arcdocdb.recovery.closed.tests)
+                             ((string= scope "recovery-archive") '#:arcdocdb.recovery.archive.tests)
                              ((string= scope "recovery-active") '#:arcdocdb.recovery.active.tests)
                              ((member scope '("hash" "key-hash") :test #'string=) '#:arcdocdb.hash64.tests)
                              ((string= scope "cbor") '#:arcdocdb.cbor.tests)
@@ -360,8 +375,8 @@
   (unless (and (<= 2 (length args) 3) (member (first args) '("--report" "--self-test")
                                             :test #'string=)
                (or (= (length args) 2)
-                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-float-write" "cbor-array-write" "cbor-map-write" "cbor-tag-write" "cbor-item-read" "cbor-string-read" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "get-series" "get-active-init" "io-rename" "control-publication" "control-recovery" "recovery-active" "recovery-archive" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
-    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
+                   (member (third args) '("foundation" "hash" "key-hash" "codec" "cbor" "cbor-write" "cbor-string-write" "cbor-simple-write" "cbor-float-write" "cbor-array-write" "cbor-map-write" "cbor-tag-write" "cbor-item-read" "cbor-string-read" "cbor-minimal" "cbor-minimal-scan" "cbor-structure" "csn" "mvcc" "epochs" "read" "get" "get-performance" "get-directory" "get-series" "get-active-init" "io-rename" "control-publication" "control-recovery" "recovery-active" "recovery-archive" "recovery-closed" "execution" "storage" "recovery" "io" "wal" "series" "index") :test #'string=)))
+    (error "foundation-coverage.lisp: usare --report directory/ [foundation|hash|key-hash|codec|cbor|cbor-write|cbor-string-write|cbor-simple-write|cbor-float-write|cbor-array-write|cbor-map-write|cbor-tag-write|cbor-item-read|cbor-string-read|cbor-minimal|cbor-minimal-scan|cbor-structure|csn|mvcc|epochs|read|get|get-performance|get-directory|get-series|get-active-init|io-rename|control-publication|control-recovery|recovery-active|recovery-archive|recovery-closed|execution|storage|recovery|io|wal|series|index] o --self-test directory/."))
   (let ((directory (merge-pathnames (uiop:ensure-directory-pathname (second args))
                                    (truename "./")))
         (scope (or (third args) "foundation")))

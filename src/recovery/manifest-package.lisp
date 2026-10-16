@@ -21,4 +21,4 @@
            #:file-segmento #:pianifica-riconciliazione #:pianifica-riconciliazione-directory
            #:stato-riconciliazione
            #:numero-azioni-riconciliazione #:azione-riconciliazione
-           #:scegli-id-segmento-recovery))
+           #:scegli-id-segmento-recovery #:scegli-id-segmento-recovery-directory))

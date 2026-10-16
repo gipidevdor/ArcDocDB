@@ -1,0 +1,59 @@
+;;;; C4: contatori nativi e HTML, nessun reset, esclusione o modifica dei bit.
+(require :asdf)
+(defun did-counts (row)
+  (let ((paths (second row)) (bits (cddr row))
+        (covered 0) (forms 0) (taken 0) (branches 0) (missing nil))
+    (unless (and (vectorp paths) (typep bits 'bit-vector) (= (length paths) (length bits)))
+      (error "Dimensioni native discordanti."))
+    (loop for path across paths for bit across bits for index from 0 do
+      (if (member (first path) '(:then :else))
+          (progn (incf branches) (incf taken bit))
+          (progn (incf forms) (incf covered bit)))
+      (when (zerop bit) (push (list index path) missing)))
+    (list :forms covered :total-forms forms :branches taken :total-branches branches
+          :missing (nreverse missing))))
+(defun did-self-test ()
+  (unless (equal (did-counts '("fixture" #((0) (:then 1) (:else 1)) . #*110))
+                 '(:forms 1 :total-forms 1 :branches 1 :total-branches 2 :missing ((2 (:else 1)))))
+    (error "Oracolo indipendente dei contatori fallito."))
+  (let ((rejected nil))
+    (handler-case (did-counts '("fixture" #((0)) . #*10)) (error () (setf rejected t)))
+    (unless rejected (error "Dimensioni discordanti non rifiutate."))))
+(did-self-test)
+(let* ((*read-eval* nil)
+       (rows (with-open-file (input "spikes/out/directory-id-coverage-2/coverage-state.lisp") (read input)))
+       (html (uiop:read-file-string "spikes/out/directory-id-coverage-2/cover-index.html"))
+       (expected '(("inventory-id.lisp"
+                    :forms 74 :total-forms 81 :branches 10 :total-branches 10
+                    :missing ((0 (0)) (1 (1)) (2 (2)) (32 (4)) (78 (6))
+                              (89 (3 2 7)) (90 (4 2 7))))
+                   ("inventory-directory-id.lisp"
+                    :forms 18 :total-forms 26 :branches 0 :total-branches 0
+                    :missing ((0 (0)) (1 (1)) (2 (2)) (21 (3 2 3)) (22 (4 2 3))
+                              (23 (5 2 3)) (24 (6 2 3)) (25 (7 2 3))))))
+       (observed nil))
+  (dolist (spec expected)
+    (let* ((name (first spec)) (suffix (concatenate 'string "/src/recovery/" name))
+           (selected (remove-if-not (lambda (row) (uiop:string-suffix-p (first row) suffix)) rows)))
+      (unless (= 1 (length selected)) (error "Sorgente assente o ambiguo: ~A" name))
+      (let* ((counts (did-counts (first selected)))
+             (position (search (concatenate 'string name "</a>") html))
+             (start (and position (search "<tr" html :end2 position :from-end t)))
+             (end (and position (search "</tr>" html :start2 position)))
+             (row (and start end (subseq html start (+ end 5)))))
+        (unless (equal counts (rest spec)) (error "Contatori inattesi: ~S" counts))
+        (dolist (pair '((:forms :total-forms) (:branches :total-branches)))
+          (unless (and row (search (format nil "<td>~D</td><td>~D</td>"
+                                          (getf counts (first pair)) (getf counts (second pair))) row))
+            (error "HTML e dati nativi discordanti: ~A" name)))
+        (push (list :file (subseq suffix 1) :counts counts :html-row row) observed))))
+  (with-open-file (output "spikes/out/directory-id-audit/coverage-audit-result.lisp"
+                          :direction :output :if-exists :error)
+    (write (list :schema-version 1 :kind :directory-id-coverage-audit :status :ok
+                 :self-test :passed :scope :two-selection-files :files (nreverse observed)
+                 :forms 92 :total-forms 107 :branches 10 :total-branches 10
+                 :exclusions nil :qualification :open
+                 :missing-kind '(:eight-top-level-forms :seven-keyword-defaults)
+                 :native "raw/coverage/coverage-state.lisp.gz") :stream output :pretty t)
+    (terpri output))
+  (format t "Selezione ID: 92/107 forme e 10/10 rami, senza esclusioni; due file concordanti con HTML.~%"))

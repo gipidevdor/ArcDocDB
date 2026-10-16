@@ -34,6 +34,11 @@ fixture verticale. La raccolta del namespace e delle identità è descritta
 sotto; riconciliazione fisica, acquisizione completa delle capacità dei segmenti e
 coordinamento del recovery restano da implementare.
 
+L'[ingresso ID dalla directory](implementazione/id-directory-recovery.md)
+collega ora l'inventario reale alla proposta del nuovo segmento senza una
+seconda scansione. Anche la fixture con SIGKILL usa questo percorso su nomi
+canonici; il suo limite di otto ID non limita l'inventario di prodotto.
+
 | Ordine | Incremento | Confine da verificare |
 |---|---|---|
 | 1 | Apertura e recovery di una Serie nel prodotto | Inventario generale, identità, ownership delle capacità e fallimenti a ogni passo |

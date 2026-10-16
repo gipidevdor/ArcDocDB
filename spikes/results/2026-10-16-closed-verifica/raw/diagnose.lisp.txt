@@ -1,0 +1,22 @@
+;;;; Diagnostica finita: tutti i test CLOSED, errori per caso; nessuna modifica al prodotto.
+(require :asdf)
+(require :sb-cover)
+(let* ((root (truename "./"))
+       (cache (merge-pathnames "spikes/out/closed-coverage-d/fasl/" root)))
+  (asdf:initialize-output-translations
+   `(:output-translations (,(merge-pathnames "**/*.*" root) ,(merge-pathnames "**/*.*" cache))
+     :ignore-inherited-configuration))
+  (handler-bind ((warning (lambda (c) (error c))))
+    (asdf:load-asd (merge-pathnames "arcdocdb.asd" root))
+    (asdf:load-system "arcdocdb/tests")))
+(let ((tests (reverse arcdocdb.recovery.closed.tests::*tests*)) (failed nil) (passed 0))
+  (unless (<= 1 (length tests) 256) (error "Numero casi fuori limite."))
+  (dolist (test tests)
+    (handler-case
+        (progn (funcall test) (incf passed) (format t "ok ~S~%" test))
+      (error (condition)
+        (push test failed)
+        (format t "FAILED ~S: ~A~%" test condition)
+        (sb-debug:print-backtrace :stream *standard-output* :count 18))))
+  (format t "CLOSED-DIAGNOSTIC ~S~%" (list :total (length tests) :passed passed :failed (reverse failed)))
+  (when failed (sb-ext:exit :code 1)))

@@ -24,8 +24,8 @@
   (multiple-value-bind (prepared append manifest) (checkpoint env)
     (s:rilascia-controllore-serie (environment-controller env) (environment-lease env))
     (setf (environment-lease env) nil)
-    (io:rinomina-nella-directory (environment-directory env) "segment-1.tmp" "segment-1.seg")
-    (io:rinomina-nella-directory (environment-directory env) "segment-2.tmp" "segment-2.seg")
+    (io:rinomina-nella-directory (environment-directory env) (segment-leaf 1 :temporary) (segment-leaf 1 :final))
+    (io:rinomina-nella-directory (environment-directory env) (segment-leaf 2 :temporary) (segment-leaf 2 :final))
     (is (zerop (io:durable-flush (environment-directory env))))
     (start-active env prepared append (closed-maps env manifest))
     (check-get env (key-bytes 1) (value-bytes 3))
@@ -84,8 +84,8 @@
 
 (defun segment-images (env)
   (loop for id from 1 to 8 append
-    (loop for extension in '("tmp" "seg")
-          for name = (format nil "segment-~D.~A" id extension)
+    (loop for form in '(:temporary :final)
+          for name = (segment-leaf id form)
           when (probe-file (leaf env name)) collect (cons name (file-image (leaf env name))))))
 
 (defun verify (env stage recover-p &optional wrong-expected)

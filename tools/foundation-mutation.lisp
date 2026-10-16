@@ -153,7 +153,20 @@
     ("id-empty-plan" "inventory-id.lisp"
       "(unless (plusp count) (error" "(when (plusp count) (error")
     ("id-checks-candidate-not-successor" "inventory-id.lisp"
-      "(unless (typep next 'u64)" "(unless (typep candidate 'u64)")))
+      "(unless (typep next 'u64)" "(unless (typep candidate 'u64)")
+    ("directory-id-file-budget" "inventory-directory-id.lisp"
+      ":max-files max-files" ":max-files (max max-files 65536)")
+    ("directory-id-live-budget" "inventory-directory-id.lisp"
+      ":max-segmenti max-segmenti" ":max-segmenti (max max-segmenti 65536)")
+    ("directory-id-name-budget" "inventory-directory-id.lisp"
+      ":max-names max-names" ":max-names (max max-names 65536)")
+    ("directory-id-total-byte-budget" "inventory-directory-id.lisp"
+      ":max-total-name-bytes max-total-name-bytes" ":max-total-name-bytes (max max-total-name-bytes 16777216)")
+    ("directory-id-single-byte-budget" "inventory-directory-id.lisp"
+      ":max-name-bytes max-name-bytes" ":max-name-bytes (max max-name-bytes 255)")
+    ("directory-id-enumerates-twice" "inventory-directory-id.lisp"
+      "(proponi-id-segmento-da-piano manifest plan)"
+      "(progn (arcdocdb.io:elenca-directory directory) (proponi-id-segmento-da-piano manifest plan))")))
 
 (defparameter *io-mutants*
   '(("input-mutates-health" "types.lisp" "(unless (eq operation :read)" "(when (eq operation :read)")
@@ -294,7 +307,8 @@
                          ((string= scope "manifest")
                           '("tests/recovery/manifest.lisp" "tests/recovery/manifest-audit.lisp"))
                          ((string= scope "inventory") '("tests/recovery/inventory.lisp"))
-                         ((string= scope "inventory-id") '("tests/recovery/inventory-id.lisp"))
+                         ((string= scope "inventory-id")
+                          '("tests/recovery/inventory-id.lisp" "tests/recovery/inventory-directory-id.lisp"))
                          (t (error "Ambito senza test dedicati: ~A" scope))))
        (let ((selected 0))
          (with-open-file (input file :external-format :utf-8)

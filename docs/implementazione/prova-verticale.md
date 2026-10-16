@@ -59,7 +59,7 @@ verifica la tracciabilità aggiornata, mantenendo distinti i nuovi requisiti pro
 
 ## Confine rispetto al prodotto
 
-Bootstrap, enumerazione dell'inventario limitata a otto ID, creazione dei nomi, ordine
+Bootstrap, budget di otto ID proposti, creazione dei nomi, ordine
 del recovery e replay dell'indice sono codice di test. Il replay accetta
 solo record ordinari, dopo verifica di tutti i prefissi CLOSED; rifiuta
 prepared/OUTCOME. La pubblicazione seriale dei candidati segue la radice

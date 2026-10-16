@@ -48,7 +48,7 @@
         (destructuring-bind (specs expected) case
           (idr-run (idr-names specs)
             (lambda (state directory)
-              (idrd-check state directory manifest 7 '(0) '(99) specs expected)))))))))
+              (idrd-check state directory manifest 7 '(0) '(99) specs expected))))))))
 
 ;;; REQ: REQ-REC-001 REQ-FOR-003 REQ-AFF-008 REQ-AFF-018
 (deftest test-REQ-REC-001-directory-id-u64-frontiers-and-error-order

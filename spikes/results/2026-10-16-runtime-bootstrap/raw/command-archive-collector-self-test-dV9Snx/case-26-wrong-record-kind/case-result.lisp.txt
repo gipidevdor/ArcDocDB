@@ -1,0 +1,7 @@
+(:NAME "wrong-record-kind" :STATUS :OK :DETAIL
+ (:EXPECTED-REASON :PROCESS-SCHEMA :OBSERVED-REASON :PROCESS-SCHEMA :DIAGNOSTIC
+  #A((45) BASE-CHAR . "Record schema1 COMMAND-VERIFICATION richiesto"))
+ :CASE-ID 26 :DIRECTORY
+ #A((150) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-dV9Snx/case-26-wrong-record-kind/")
+ :CHECKS 50)

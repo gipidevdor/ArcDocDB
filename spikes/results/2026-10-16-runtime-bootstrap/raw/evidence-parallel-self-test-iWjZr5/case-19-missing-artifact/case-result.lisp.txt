@@ -1,0 +1,1 @@
+(:NAME #A((16) BASE-CHAR . "missing-artifact") :STATUS :OK :CHECKS 7)

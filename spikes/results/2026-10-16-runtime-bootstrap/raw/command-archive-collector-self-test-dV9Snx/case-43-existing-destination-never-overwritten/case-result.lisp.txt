@@ -1,0 +1,9 @@
+(:NAME "existing-destination-never-overwritten" :STATUS :OK :DETAIL
+ (:EXPECTED-REASON :EXISTING-DESTINATION :OBSERVED-REASON :EXISTING-DESTINATION
+  :DIAGNOSTIC
+  #A((170) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/command-archive-collector-self-test-dV9Snx/case-43-existing-destination-never-overwritten/archive/"))
+ :CASE-ID 43 :DIRECTORY
+ #A((171) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-dV9Snx/case-43-existing-destination-never-overwritten/")
+ :CHECKS 52)

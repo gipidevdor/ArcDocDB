@@ -1,0 +1,15 @@
+(:ARGV
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--noinform" "--no-userinit" "--no-sysinit" "--disable-debugger" "--script"
+  #A((86) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/check-evidence.lisp")
+  "--root"
+  #A((143) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-08-cli-reject-7/input/")
+  "--jobs")
+ :EXIT-CODE 1 :SIGNAL NIL :STDOUT
+ #A((160) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-08-cli-reject-7/cli-invalid.stdout.lisp")
+ :STDERR
+ #A((159) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-parallel-self-test-iWjZr5/case-08-cli-reject-7/cli-invalid.stderr.log"))

@@ -1,0 +1,8 @@
+(:NAME "source-change-retains-failure" :STATUS :OK :DETAIL
+ (:EXPECTED-REASON :SOURCE-CHANGED :OBSERVED-REASON :SOURCE-CHANGED :DIAGNOSTIC
+  #A((172) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/command-archive-collector-self-test-dV9Snx/case-49-source-change-retains-failure/inputs/raw/data.bin"))
+ :CASE-ID 49 :DIRECTORY
+ #A((162) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-dV9Snx/case-49-source-change-retains-failure/")
+ :CHECKS 48)

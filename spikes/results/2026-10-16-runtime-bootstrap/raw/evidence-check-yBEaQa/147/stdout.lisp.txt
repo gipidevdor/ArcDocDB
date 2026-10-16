@@ -1,0 +1,3 @@
+(:SCHEMA-VERSION 1 :KIND :EVIDENCE-CATALOG-CHECK :CATALOG
+ "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/results/2026-10-15-vertical-resume-integrazione/catalogo.lisp"
+ :STATUS :OK :ARTIFACT-REFERENCES 1)

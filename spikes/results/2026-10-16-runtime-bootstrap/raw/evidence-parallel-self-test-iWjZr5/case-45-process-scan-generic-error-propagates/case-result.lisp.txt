@@ -1,0 +1,1 @@
+(:NAME "process-scan-generic-error-propagates" :STATUS :OK :CHECKS 5)

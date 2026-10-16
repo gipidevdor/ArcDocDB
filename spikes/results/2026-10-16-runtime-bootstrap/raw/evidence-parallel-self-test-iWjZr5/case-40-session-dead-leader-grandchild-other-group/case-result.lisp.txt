@@ -1,0 +1,1 @@
+(:NAME "session-dead-leader-grandchild-other-group" :STATUS :OK :CHECKS 27)

@@ -1,0 +1,1 @@
+(:NAME "worker-protocol-descriptor" :STATUS :OK :CHECKS 26)

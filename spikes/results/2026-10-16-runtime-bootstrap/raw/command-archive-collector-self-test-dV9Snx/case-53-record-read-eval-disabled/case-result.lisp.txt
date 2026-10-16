@@ -1,0 +1,11 @@
+(:NAME "record-read-eval-disabled" :STATUS :OK :DETAIL
+ (:EXPECTED-REASON :DATA-SHAPE :OBSERVED-REASON :DATA-SHAPE :DIAGNOSTIC
+  #A((351) BASE-CHAR . "Lettura DATA: can't read #. while *READ-EVAL* is NIL
+
+                Line: 1, Column: 288, File-Position: 288
+
+                Stream: #<SB-SYS:FD-STREAM for \"file /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/command-archive-collector-self-test-dV9Snx/case-53-record-read-eval-disabled/inputs/records/ok.lisp\" {800606B8C3}>"))
+ :CASE-ID 53 :DIRECTORY
+ #A((158) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-dV9Snx/case-53-record-read-eval-disabled/")
+ :CHECKS 51)

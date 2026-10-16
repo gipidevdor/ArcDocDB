@@ -1,0 +1,7 @@
+(:NAME "ok-with-changed-source" :STATUS :OK :DETAIL
+ (:EXPECTED-REASON :PROCESS-METADATA :OBSERVED-REASON :PROCESS-METADATA
+  :DIAGNOSTIC #A((24) BASE-CHAR . "OK richiede exit0/STABLE"))
+ :CASE-ID 32 :DIRECTORY
+ #A((155) BASE-CHAR
+    . "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/command-archive-collector-self-test-dV9Snx/case-32-ok-with-changed-source/")
+ :CHECKS 50)

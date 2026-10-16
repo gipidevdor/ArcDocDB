@@ -1,0 +1,1 @@
+(:NAME #A((9) BASE-CHAR . "read-eval") :STATUS :OK :CHECKS 8)

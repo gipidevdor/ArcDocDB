@@ -1,0 +1,44 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/results/2026-10-16-runtime-bootstrap/"
+ :INDEXED-FILES 1118 :ACTUAL-FILES 1120 :INDEXED-BYTES 4323706 :PROCESSES
+ ((:LABEL "trace-write" :RECORD-PATH "processes/trace-write/report.lisp"
+   :COMMAND ("make" "trace-write") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY
+   :STABLE)
+  (:LABEL "diagnostic" :RECORD-PATH "processes/diagnostic/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/get-series-capture.lisp" "--" "sbcl" "--noinform" "--no-userinit"
+    "--no-sysinit" "--script"
+    "spikes/out/runtime-bootstrap-input/diagnose.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-self-test" :RECORD-PATH
+   "processes/coverage-self-test/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--self-test"
+    "spikes/out/runtime-coverage-self/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage" :RECORD-PATH "processes/coverage/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report" "spikes/out/runtime-coverage/"
+    "runtime")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "check" :RECORD-PATH "processes/check/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "collection-first" :RECORD-PATH
+   "processes/collection-first/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/collect-command-archive.lisp" "--collect"
+    "spikes/out/runtime-bootstrap-input/manifest.lisp"
+    "spikes/results/2026-10-16-runtime-bootstrap/" "--observations"
+    "spikes/out/runtime-bootstrap-collection/" "--jobs" "4")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "997722d0052f7d193fa2ffbb67a2d33c1db250b51290e7bde99ee36b955e8c62"
+ :CATALOGUE-SHA256
+ "7c60d6aea1e86bb907a9337daaeed46d882d8df7f5c7141a02645e6d9d9087c2"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

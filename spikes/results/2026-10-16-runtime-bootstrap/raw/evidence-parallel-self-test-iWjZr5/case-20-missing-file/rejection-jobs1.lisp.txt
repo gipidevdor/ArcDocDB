@@ -1,0 +1,5 @@
+(:JOBS 1 :CONDITION ARCDOCDB.EVIDENCE:INVALID-EVIDENCE :DIAGNOSTIC
+ #A((401) BASE-CHAR
+    . "Evidenza non valida /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-20-missing-file/input/2026-10-16-00/absent.lisp: Failed to find the TRUENAME of /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-20-missing-file/input/2026-10-16-00/absent.lisp:
+
+  No such file or directory"))

@@ -1,0 +1,1 @@
+(:NAME "compressed-positive" :STATUS :OK :CHECKS 23)

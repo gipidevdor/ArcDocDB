@@ -1,0 +1,3 @@
+(:VARIANT :DESCRIPTOR :CONDITION INVALID-EVIDENCE :DIAGNOSTIC
+ #A((592) BASE-CHAR
+    . "Evidenza non valida: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-33-worker-protocol-descriptor/input/2026-10-16-00/catalogo.lisp. Protocollo worker plain non valido: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-n3EwiG/0/stdout.lisp. Log: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-n3EwiG/0/stdout.lisp e /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-n3EwiG/0/stderr.log."))

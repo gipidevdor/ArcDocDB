@@ -1,0 +1,3 @@
+(:VARIANT :MALFORMED :CONDITION INVALID-EVIDENCE :DIAGNOSTIC
+ #A((613) BASE-CHAR
+    . "Evidenza non valida: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/out/evidence-parallel-self-test-iWjZr5/case-31-worker-protocol-malformed/input/2026-10-16-00/catalogo.lisp. end of file on #<SB-SYS:FD-STREAM for \"file /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-5OMPhh/0/stdout.lisp\" {8007AF9EE3}> Log: /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-5OMPhh/0/stdout.lisp e /Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/tools/../spikes/out/evidence-check-5OMPhh/0/stderr.log."))

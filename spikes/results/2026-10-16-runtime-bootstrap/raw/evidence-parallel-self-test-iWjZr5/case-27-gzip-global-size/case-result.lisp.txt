@@ -1,0 +1,1 @@
+(:NAME "gzip-global-size" :STATUS :OK :CHECKS 7)

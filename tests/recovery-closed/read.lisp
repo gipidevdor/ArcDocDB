@@ -111,7 +111,7 @@
       (dolist (id '(0 2 #x100000002 #xffffffffffffffff))
         (cdr-with-fixture (cdr-log nil :version version :origin origin :id id)
           (lambda (f)
-            (dolist (bytes '(64 268435456))
+            (dolist (bytes '(64 #xffffffff))
               (cdr-clear f)
               (setf (cdr-fixture-scratch f) (cdrr-bytes 71))
               (cdrr-success f version origin 0 0 :chunk-bytes 1 :max-bytes bytes :max-batches 1
@@ -123,7 +123,7 @@
 (deftest test-REQ-AFF-008-CLOSED-READ-CDR-D01-each-false-and-byte-bounds
   (dolist (version '(1 2))
     (dolist (origin '(1 2))
-      (dolist (options '((:chunk-bytes 0) (:max-bytes 63) (:max-bytes 268435457)
+      (dolist (options '((:chunk-bytes 0) (:max-bytes 63) (:max-bytes #x100000000)
                          (:max-batches 0) (:max-batch-records 0) (:max-batch-bytes 55)
                          (:chunk-bytes 0 :max-bytes 63 :max-batches 0
                           :max-batch-records 0 :max-batch-bytes 55)))

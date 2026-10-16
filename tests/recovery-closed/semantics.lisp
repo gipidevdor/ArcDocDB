@@ -282,7 +282,7 @@
           (is (null (cr:verifica-closed-completi other (vector foreign))))
           (is (null (cdr-events f)))
           (cdr-noeffects f)))
-      :version version))))
+      :version version)))
 
 ;;; Le chiusure qui sono azioni intenzionali del caller, mai FI nei risultati del prodotto.
 ;;; REQ: REQ-STO-006 REQ-AFF-008
@@ -315,7 +315,7 @@
                       (lambda () (cr:verifica-closed-completi control (vector result result) :max-segmenti 1)))
           (is (null (cdr-events f)))
           (cdr-noeffects f)))
-      :version version))))
+      :version version)))
 
 ;;; CSR-D04: OUTCOME e EDIT omonimi devono concordare anche senza prepared locale.
 ;;; REQ: REQ-TXM-007 REQ-MVC-005 REQ-MVC-006 REQ-AFF-008

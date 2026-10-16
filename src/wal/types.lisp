@@ -1,5 +1,5 @@
 ;;; OWNER: writer del lotto; compito I/O del log; nessun riuso con consumatori attivi.
-;;; SHARED: stato locale al log; CAS locale per gruppo, mai tra Serie.
+;;; SHARED: stato locale al log; CAS per gruppo e binding unico del controller all'avvio.
 (in-package #:arcdocdb.wal)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
@@ -10,14 +10,17 @@
 (defconstant +max-group-lots+ 1024)
 (deftype log-kind () '(member :segment :control :multiserie))
 
-;;; REQ: REQ-WAL-002 REQ-AFF-001
+;;; REQ: REQ-WAL-002 REQ-CON-002 REQ-AFF-001 REQ-AFF-008
 (defstruct (log-io (:constructor %make-log-io (file kind file-id version)) (:copier nil))
   "Pre: capacità append posseduta esclusivamente dal log. Post: log aperto.
-Un gruppo in volo tramite CAS; nessun lock o contatore globale."
+Un gruppo in volo tramite CAS; nessun lock o contatore globale.
+CONTROLLER è opaco al WAL: NIL, poi binding unico posseduto da arcdocdb.series, senza reset.
+L'unicità riguarda questo oggetto log; esclusione fisica e canonicalità restano al caller."
   (file nil :type file-io :read-only t)
   (kind :segment :type log-kind :read-only t) (file-id 0 :type u64 :read-only t)
   (version 2 :type (integer 1 2) :read-only t)
   (state :open :type (member :open :faulted))
+  (controller nil :type t)
   (active nil :type t))
 
 ;;; REQ: REQ-WAL-005 REQ-AFF-008

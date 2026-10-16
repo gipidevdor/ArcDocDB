@@ -12,7 +12,7 @@
                 #:verifica-ritiro-lotto #:verifica-riuso-lotto #:riusa-lotto)
   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted
                 #:invariant-violation #:io-fault #:error-reason)
-  (:export #:controllore-serie #:commit-serie #:crea-controllore-serie
+  (:export #:controllore-serie #:commit-serie #:crea-controllore-serie #:trova-controllore-serie
            #:acquisisci-controllore-serie #:rilascia-controllore-serie
            #:inizializza-radice-serie
            #:registra-commit-serie #:inizia-io-commit-serie #:completa-io-commit-serie

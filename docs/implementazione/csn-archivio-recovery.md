@@ -42,6 +42,9 @@ Il marker è un controllo interno, non una firma o un confine di sicurezza
 contro codice Lisp che accede agli interni privati. Nessun formato su
 disco o registro condiviso fra Serie cambia.
 
+Cambiano i layout privati della tabella e del risultato ACTIVE: occorre
+ricompilare e ricaricare il sistema, senza riutilizzare vecchie istanze.
+
 ## API pubbliche
 
 | API | Risultato |

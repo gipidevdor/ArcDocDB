@@ -463,6 +463,29 @@
              (when (eq variant :nonnumeric)
                (ept-check (string= (uiop:read-file-string stdout) (format nil "not-a-pid~%")) "Output nonnumerico reale")))))
 
+(defun ept-scan-propagates (directory timeout)
+  "Errori estranei allo snapshot e deadline non vengono consumati da una riprova."
+  (let* ((logs (ept-directory (merge-pathnames "scan-logs/" directory)))
+         (original (symbol-function 'acquisisci-pid)) (calls 0) (observed nil)
+         (injected (if timeout (make-condition 'sb-ext:timeout)
+                       (make-condition 'simple-error :format-control "EXPECTED-GENERIC-SCAN-FAULT" :format-arguments nil))))
+    (unwind-protect
+         (progn
+           (setf (symbol-function 'acquisisci-pid)
+                 (lambda (path)
+                   (incf calls)
+                   (if (= calls 1) (error injected) (funcall original path))))
+           (setf observed (ept-error (lambda () (processi-sessione (ept-session-id 0) logs)))))
+      (setf (symbol-function 'acquisisci-pid) original)
+      (ept-write-data (merge-pathnames "propagation-observations.lisp" directory)
+                      (list :timeout timeout :calls calls :injected-type (type-of injected)
+                            :observed-type (and observed (type-of observed))
+                            :same-condition (eq injected observed)
+                            :function-restored (eq original (symbol-function 'acquisisci-pid)))))
+    (ept-check (eq original (symbol-function 'acquisisci-pid)) "FDEFINITION ripristinata anche su errore")
+    (ept-check (= 1 calls) "Guasto generico o timeout propagato alla prima chiamata")
+    (ept-check (eq injected observed) "Condizione originale propagata senza mascheramento")))
+
 (defun ept-exercise ()
   (ept-case "equivalence-and-cli"
     (lambda (directory)
@@ -555,7 +578,9 @@
   (dolist (variant '(:retry :failed :nonnumeric :empty))
     (let ((variant variant))
       (ept-case (format nil "process-scan-~A" (string-downcase (symbol-name variant)))
-        (lambda (directory) (ept-scan-retry directory variant))))))
+        (lambda (directory) (ept-scan-retry directory variant)))))
+  (ept-case "process-scan-generic-error-propagates" (lambda (directory) (ept-scan-propagates directory nil)))
+  (ept-case "process-scan-timeout-propagates" (lambda (directory) (ept-scan-propagates directory t))))
 
 (defun self-test (&optional root)
   "Fixture esclusive conservate con report e output; nessuna pulizia distruttiva o promozione."

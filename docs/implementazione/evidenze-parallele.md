@@ -42,6 +42,8 @@ segnale o diagnostica, PID positivi e presenza del parent: può
 riprovare fino a tre volte entro la stessa deadline. Uno snapshot fallito
 o incompleto non dimostra mai l'assenza di processi; stdout, stderr e stato
 di ogni tentativo vengono conservati accanto ai log del worker.
+Si ritentano soltanto gli snapshot invalidi. Errori di avvio, I/O,
+cleanup e timeout si propagano senza essere convertiti in una nuova scansione.
 Log e temporanei appartengono a una
 directory esclusiva sotto `spikes/out/evidence-check-*`, conservata anche
 in caso di errore. Un protocollo malformato, un segnale o un exit incoerente

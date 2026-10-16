@@ -21,6 +21,11 @@
              (format stream "Evidenza non valida: ~A.~@[ ~A~]"
                      (evidence-path c) (evidence-detail c)))))
 
+(define-condition invalid-process-snapshot (simple-error) ())
+
+(defun snapshot-invalido (control &rest arguments)
+  (error 'invalid-process-snapshot :format-control control :format-arguments arguments))
+
 (defun leggi-dati (path)
   "Una sola plist; read-eval disabilitato, nessun load del record."
   (arcdocdb.evidence:read-evidence path))
@@ -132,13 +137,15 @@
                       :stream out))
              (unless (and (eql 0 exit) (null signal)
                           (zerop (arcdocdb.evidence:file-bytes stderr)))
-               (error "Enumera PID: ps exit ~S signal ~S. Log: ~A e ~A." exit signal stdout stderr)))
+               (snapshot-invalido "Enumera PID: ps exit ~S signal ~S. Log: ~A e ~A." exit signal stdout stderr)))
            (with-open-file (input stdout)
              (let ((pids (loop for line = (read-line input nil nil) while line
-                               collect (parse-integer line))))
+                               collect (handler-case (parse-integer line)
+                                         (parse-error ()
+                                           (snapshot-invalido "Enumera PID: riga non numerica. Log: ~A." stdout))))))
                (unless (and (every (lambda (pid) (plusp pid)) pids)
                             (member (sb-posix:getpid) pids))
-                 (error "Enumera PID: snapshot incompleto. Log: ~A." stdout))
+                 (snapshot-invalido "Enumera PID: snapshot incompleto. Log: ~A." stdout))
                pids)))
       (when process
         (when (uiop:process-alive-p process) (uiop:terminate-process process :urgent t))
@@ -151,8 +158,7 @@
     (dotimes (attempt 3)
       (handler-case
           (progn (setf pids (acquisisci-pid logs) complete t) (return))
-        (sb-ext:timeout (c) (error c))
-        (error (c) (push (princ-to-string c) failures))))
+        (invalid-process-snapshot (c) (push (princ-to-string c) failures))))
     (unless complete (error "Enumera PID: nessuno snapshot completo: ~{~A~^; ~}." (nreverse failures)))
     (loop for pid in pids
           when (handler-case (= session (sb-posix:getsid pid))

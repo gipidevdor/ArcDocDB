@@ -72,3 +72,25 @@ fixture restano C4; non vengono qualificati dal collegamento dell'inventario.
 
 Requisiti: REQ-REC-001/002, REQ-FOR-003, REQ-AFF-001/004/008/018,
 REQ-VAL-001. Invarianti coinvolti: INV-A7/A8/A9/A10/A11 e INV-P6.
+
+## Due letture C1 prima delle esecuzioni
+
+Lettura 1 dell'autore: contratto, responsabilità delle dipendenze, frontiere
+u64 e propagazione dei cinque budget. Lettura 2 dell'autore: diff, oracoli,
+FI/callback, limite delle attese e ownership. Non sono letture indipendenti;
+la revisione indipendente e la qualifica complessiva restano aperte.
+
+| Lista C1 | Esito delle letture del sorgente |
+|---|---|
+| 1. Requisiti e ADR | Commenti tracciati, ADR-0040; metodo nel commit preregistrato |
+| 2. Invarianti | Selezione identica, piani privati, nessuna prenotazione o mutazione |
+| 3. Errori | Condizioni originali delegate; nessuna traduzione o risultato parziale |
+| 4. Limiti | Un inventario limitato da cinque budget; scelta senza ciclo aggiuntivo |
+| 5. Allocazioni | Percorso freddo; nessun nuovo hot path o pretesa prestazionale |
+| 6. Uscita | Tre valori; guardie comuni per high-water, freschezza e successore |
+| 7. Decisioni | RID e IND riusate; nessuna nuova decisione composta |
+| 8. Proprietà | Parent prestato e controller esclusivo; piani e fixture privati |
+| 9. Tracciabilità/check | Requisiti esistenti; esecuzioni e controllo completo da registrare |
+| 10. Deviazioni | Nessuna esclusione prevista; denominatore nativo conservato |
+| 11. Fra Serie | Nessun nuovo lock, thread, contatore o coordinamento condiviso |
+| 12. Atomicità | Nessun nuovo effetto durevole; creazione esclusiva/EDIT restano al caller |

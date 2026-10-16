@@ -49,8 +49,10 @@
   (owned env (io:apri-lettura (leaf env name) :max-transfer 8192)))
 (defun output (env name)
   (owned env (io:crea-temporaneo (leaf env name) :max-transfer 8192 :max-file-bytes 8192)))
+(defun segment-leaf (id form)
+  (string-downcase (format nil "~16,'0X.seg~A" id (ecase form (:temporary ".tmp") (:final "")))))
 (defun segment-name (env id)
-  (let ((final (format nil "segment-~D.seg" id)) (temporary (format nil "segment-~D.tmp" id)))
+  (let ((final (segment-leaf id :final)) (temporary (segment-leaf id :temporary)))
     (cond ((probe-file (leaf env final)) final)
           ((probe-file (leaf env temporary)) temporary)
           (t (error "Segmento ~D assente." id)))))
@@ -84,7 +86,7 @@
   (dolist (file (environment-fds env)) (io:chiudi file)))
 
 (defun prepare-active (env id)
-  (let* ((name (format nil "segment-~D.tmp" id)) (append (output env name))
+  (let* ((name (segment-leaf id :temporary)) (append (output env name))
          (input (input env name)))
     (values (a:prepara-segmento-attivo (environment-view env) input append
                 (environment-directory env) id 0 (bytes 64) (bytes 64)
@@ -213,18 +215,14 @@
     (coerce (nreverse maps) 'simple-vector)))
 
 (defun next-id (env manifest)
-  "Proposta di prodotto da tutti i nomi del namespace C4 limitato a otto ID."
-  (let ((files nil))
-    (loop for id from 1 to 8 do
-      (dolist (form '(("tmp" :temporary) ("seg" :final)))
-        (when (probe-file (leaf env (format nil "segment-~D.~A" id (first form))))
-          (push (mf:file-segmento id (second form)) files))))
-    (multiple-value-bind (id next plan)
-        (mf:scegli-id-segmento-recovery manifest (coerce files 'simple-vector)
-                                      :max-files 16 :max-segmenti 8)
-      (is (= next (1+ id))) (is (<= id 8))
-      (is (eq :ready (mf:stato-riconciliazione plan)))
-      id)))
+  "Un solo inventario di prodotto sul parent posseduto; otto ID restano il budget C4."
+  (multiple-value-bind (id next plan)
+      (mf:scegli-id-segmento-recovery-directory
+       manifest (environment-directory env) :max-files 16 :max-segmenti 8
+       :max-names 64 :max-total-name-bytes 8192 :max-name-bytes 255)
+    (is (= next (1+ id))) (is (<= id 8))
+    (is (eq :ready (mf:stato-riconciliazione plan)))
+    id))
 
 (defun checkpoint (env &optional stop-before-publication)
   (let* ((control (read-control env)) (recovered (read-active env control))

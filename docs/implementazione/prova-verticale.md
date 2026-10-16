@@ -66,10 +66,12 @@ prepared/OUTCOME. La pubblicazione seriale dei candidati segue la radice
 del controller: non dimostra l'atomicità fra indice e radice sotto concorrenza.
 UUID e completezza del namespace sono fatti della fixture.
 
-La scelta del nuovo ID usa ora l'[API di prodotto](id-segmento-recovery.md)
-sul manifest autorevole e su tutti i nomi della fixture, senza cercare il
-primo buco libero. La fixture controlla separatamente il proprio limite di
-otto ID e lo stato `:ready`; non esegue le azioni di rimozione del piano.
+Dal 2026-10-16 la scelta del nuovo ID usa l'[ingresso di prodotto dalla directory](id-directory-recovery.md)
+sul manifest autorevole e sul parent posseduto: nomi canonici e una sola
+enumerazione attestata, senza costruire un inventario C4 di otto ID.
+La fixture controlla separatamente il proprio limite di otto ID e lo stato
+`:ready`; non esegue le azioni di rimozione del piano. La scansione dei nomi
+è di prodotto; ordine del recovery e replay restano C4.
 
 La ripresa ricostruisce H/CSN nel solo caso della fixture e verifica GET
 correnti; non implementa il gate di ammissione del motore o snapshot storici

@@ -7,6 +7,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Scelta dell'ID recovery direttamente dalla directory posseduta: una sola
+  enumerazione attestata, cinque budget conservati, selezione comune dal
+  piano canonico e nessuna prenotazione. La prova verticale usa nomi canonici
+  e questo ingresso di prodotto al posto dell'inventario costruito nel test.
+
 - Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
   del payload senza copie, UTF-8 verificato per il testo, coda ignorata
   e budget dell'intera finestra. Buffer condivisibile in sola lettura;

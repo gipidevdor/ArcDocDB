@@ -59,7 +59,11 @@ prodotto `types`, `read`, `verify`, `resolve`, `build`, `csn`, `csn-serie`,
 dopo il caricamento, prima della sola suite CLOSED. Self-test positivi e
 negativi controllano il selettore e il rilevamento di un ramo mancante.
 Forme/rami SBCL non misurano MC/DC. Eventuali residui restano nel
-denominatore, senza eccezioni approvate implicitamente.
+denominatore, senza eccezioni approvate implicitamente. Le FI seriali
+di `guards.lisp` sostituiscono ritorni delle dipendenze entro la sola
+chiamata, con `unwind-protect`, poi ripetono il percorso positivo. Le FI
+dei costruttori e della tabella EDIT sono separate dalle fixture valide.
+Non simulano power loss o accesso concorrente a una hash table congelata.
 
 La [revisione indipendente](closed-recuperato-revisione.md) conserva due
 letture dello stesso revisore, distinte dalla rilettura del coordinatore

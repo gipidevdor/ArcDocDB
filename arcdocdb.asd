@@ -246,7 +246,7 @@
                              (:file "publication")))
                (:module "recovery-closed" :serial t
                 :components ((:file "support") (:file "read") (:file "semantics")
-                             (:file "csn") (:file "publication")))
+                                  (:file "csn") (:file "publication") (:file "guards")))
                (:module "wal" :serial t
                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
                              (:file "native") (:file "csn") (:file "csn-threads")))

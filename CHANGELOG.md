@@ -18,11 +18,16 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   Registri, provenienza del replay, gate CLOSED e base u64 senza incremento.
   Matrici v1/v2, catena nativa e collegamento di prova al registro esistente;
   risultati e limiti separati dalla qualifica C1 e dall'ammissione del traffico.
+- Scelta dell'ID recovery direttamente dalla directory posseduta: una sola
+  enumerazione attestata, cinque budget conservati, selezione comune dal
+  piano canonico e nessuna prenotazione. La prova verticale usa nomi canonici
+  e questo ingresso di prodotto al posto dell'inventario costruito nel test.
 
 - Suite dedicata del recovery CLOSED: lettura fino al P del CONTROL,
   risoluzione OUTCOME/EDIT, origini writer/compaction, massimo CSN e gate
   dell'insieme. Oracoli indipendenti, matrice v1/v2 e pubblicazione nativa;
   copertura e risultati conservati separatamente dalla qualifica C1 completa.
+
 - Piano CSN dell'Archivio: elenco Serie posseduto con Registri inclusa,
   UUID unici, stessa autorità delle decisioni e gate CLOSED per ogni Serie.
   Massimo completo rispetto all'elenco canonico fornito e parole della base

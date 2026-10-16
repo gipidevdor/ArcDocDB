@@ -10,6 +10,12 @@ budget `max-files` e `max-segmenti`; nessun file o manifest è modificato.
 
 ## Contratto
 
+Dal 2026-10-16 l'[ingresso dalla directory](id-directory-recovery.md)
+compone inventario nativo e selezione ID con un'unica enumerazione.
+Le due API riusano l'helper privato di selezione dal piano canonico.
+Le misure del 2026-10-15 sotto restano riferite alla versione allora verificata;
+la composizione e il refactoring hanno metodo e risultati separati.
+
 Il manifest è completo e autorevole; l'inventario contiene tutti i nomi
 fisici `.seg`/`.seg.tmp`, è stabile e appartiene al controller esclusivo.
 Il planner valida descrittori, duplicati e budget e possiede il piano.

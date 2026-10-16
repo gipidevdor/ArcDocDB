@@ -109,7 +109,7 @@
                              (:file "manifest-build") (:file "manifest-query") (:file "manifest-transition")
                              (:file "inventory-types") (:file "inventory-build")
                              (:file "inventory-query") (:file "inventory-id")
-                             (:file "inventory-directory")))
+                             (:file "inventory-directory") (:file "inventory-directory-id")))
                (:module "get-resolver" :serial t
                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
                              (:file "rows") (:file "build") (:file "read")
@@ -237,7 +237,7 @@
                              (:file "inventory-support") (:file "inventory")
                              (:file "inventory-id")
                              (:file "inventory-directory-support") (:file "inventory-directory")
-                             (:file "inventory-directory-native")))
+                             (:file "inventory-directory-native") (:file "inventory-directory-id")))
                (:module "recovery-active" :serial t
                 :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
                (:module "recovery-archive" :serial t

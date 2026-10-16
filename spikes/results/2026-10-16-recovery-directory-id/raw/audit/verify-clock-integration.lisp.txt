@@ -1,0 +1,11 @@
+(require :asdf)
+(setf asdf:*compile-file-failure-behaviour* :error
+      asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                          (unless (typep condition 'sb-kernel:redefinition-warning)
+                            (error "Avviso non ammesso: ~A" condition)))))
+  (asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+  (asdf:load-system "arcdocdb" :force t)
+  (asdf:load-system "arcdocdb/tests" :force t))
+(uiop:symbol-call :arcdocdb.cbor.string.read.tests :run)
+(uiop:run-program '("make" "trace" "links") :output t :error-output t)

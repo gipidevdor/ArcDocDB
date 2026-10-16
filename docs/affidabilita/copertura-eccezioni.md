@@ -16,6 +16,19 @@ raggiungibile senza motivo è un difetto di test o codice morto: va coperta o ri
 
 Nessuna eccezione è approvata. Le misure locali seguenti conservano il denominatore grezzo.
 
+## ID dalla directory — 2026-10-16
+
+La [composizione dell'inventario e della selezione](../implementazione/id-directory-recovery.md)
+misura due file: `inventory-id.lisp`, 74/81 forme e 10/10 rami, e
+`inventory-directory-id.lisp`, 18/26 forme e nessun ramo applicativo nuovo.
+Il totale grezzo è 92/107 forme e 10/10 rami. Le 15 forme non marcate sono
+otto forme di package/declaim e sette inizializzatori keyword. Questi ultimi
+sono esercitati dalle API senza opzioni, ma restano non marcati dal contrib.
+Il rapporto conserva tutti i percorsi nativi mancanti e la concordanza HTML.
+Nessuna esclusione o ricarica artificiale; la misura non qualifica l'intero
+inventario, l'I/O o il Recovery Manager. Restano aperte indipendenza e
+qualifica complessiva.
+
 ## Proposta ID dopo recovery — 2026-10-15
 
 Il nuovo [`inventory-id.lisp`](../../src/recovery/inventory-id.lisp) osserva

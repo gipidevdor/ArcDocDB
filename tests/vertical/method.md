@@ -75,3 +75,16 @@ dei nomi `.tmp`/`.seg` nel suo namespace di otto ID. Verifica lo stato
 `:ready`, il successore e il proprio budget; non applica le azioni del piano.
 La prova resta C4, con gli stessi 18 workload e gli stessi oracoli costanti.
 Il contratto e la verifica C1 della proposta ID sono separati dalla fixture.
+
+## Collegamento alla directory posseduta — 2026-10-16
+
+La fixture adotta nomi canonici di sedici cifre esadecimali minuscole,
+seguiti da `.seg`/`.seg.tmp`. La scelta ID usa ora direttamente
+`scegli-id-segmento-recovery-directory` sul parent posseduto, con una sola
+enumerazione fino a EOF, senza costruire un inventario C4 cercando otto ID.
+Limiti espliciti: 16 nomi segmento, otto segmenti vivi, 64 nomi complessivi,
+8.192 byte complessivi dei nomi e 255 byte per nome. Il limite di otto ID
+proposti resta un controllo distinto della fixture. Gli scenari, i processi,
+i crash e gli oracoli restano quelli preregistrati; nessuna azione del piano
+è eseguita. La raccolta reale controlla anche gli altri nomi dei processi,
+ignorati dal parser storage ma inclusi nei budget.

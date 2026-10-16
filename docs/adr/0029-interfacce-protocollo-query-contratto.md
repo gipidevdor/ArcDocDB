@@ -1,6 +1,6 @@
 # ADR-0029 — Interfacce: protocollo a frame CBOR, query come dati, contratto della Serie
 
-- **Stato:** Accettata (dettagli di superficie rinviati alla fase 8–9 della roadmap)
+- **Stato:** Accettata; scelta TCP primaria sostituita da [ADR-0055](0055-interfaccia-locale-unix-socket.md). Query, contratto e framing restano validi; prima integrazione locale anticipata nella roadmap.
 - **Data:** 2026-10-03
 - **Rapporto con la specifica:** chiude QA-20 e QA-21
 - **Riferimenti:** [architettura](../architettura.md#interfacce), [ADR-0014](0014-formato-record-documento-id.md)

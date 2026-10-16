@@ -21,6 +21,8 @@ non modifica formati, invarianti, livelli di durability o scope degli ADR
 accettati; le modifiche ai contratti passano dal normale ADR. La successiva
 richiesta dell'autore di ricerca full text è registrata in
 [ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md).
+La richiesta successiva del 2026-10-16 fissa il socket Unix locale come interfaccia
+predefinita e prioritaria in [ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md).
 Protocollo NNTP, demone, TLS, autenticazione e benchmark applicativo sono
 lavori futuri: questo documento non li introduce nell'implementazione attuale.
 
@@ -33,6 +35,7 @@ lavori futuri: questo documento non li introduce nell'implementazione attuale.
 | Overview per intervallo di numeri in un gruppo | Scansioni ordinate, indici secondari e visibilità coerente con gli articoli |
 | Ricerca per parole e frasi in oggetto, autore e corpo | Indici invertiti dedicati sui campi testuali, combinati con filtri per gruppo e data nella stessa vista |
 | Molti lettori e picchi di nuove pubblicazioni | Parallelismo, code e buffer limitati, controllo dell'ammissione e isolamento fra Serie |
+| Demone NNTP e database sulla stessa macchina | Socket Unix locale come interfaccia predefinita, priorità alla prima integrazione client/server, directory runtime protetta |
 | Scadenza degli articoli e lettori già attivi | Tombstone, retention delle appartenenze, CLEAN/MERGE e reclaim dopo quiescenza |
 | Riavvio dopo un arresto forzato | Recupero delle pubblicazioni confermate con durability esplicita, indice ricostruibile e ritentativi applicativi senza duplicazione |
 
@@ -89,12 +92,21 @@ né attribuisce la ricerca full text al protocollo standard di RFC 3977.
 
 ## Integrazione con il futuro demone
 
-L'[architettura](../architettura.md#interfacce) prevede già un motore libreria
-con interfaccia «richiesta più continuazione» e un guscio TCP/CBOR. L'uso
-diretto nello stesso processo SBCL è un'opzione da valutare per NNTP;
-la scelta rispetto al collegamento TCP resta aperta. L'integrazione diretta
-evita il trasporto e il framing delle richieste, mantenendo la codifica dei
-documenti e condividendo heap, GC e destino del processo.
+> **Deciso ([ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md), 2026-10-16)** —
+> Il futuro demone NNTP comunica con ArcDocDB attraverso un socket Unix locale
+> di tipo stream. Questo percorso ha priorità di sviluppo; TCP è opzionale e successivo.
+
+L'[architettura](../architettura.md#interfacce) conserva il motore libreria con
+interfaccia «richiesta più continuazione». Il percorso NNTP di riferimento usa
+due processi sulla stessa macchina e frame CBOR con identificativi di richiesta;
+percorso del socket, directory e accesso locale sono configurati per istanza.
+Il listener TCP è disabilitato per default e un errore locale non lo attiva.
+L'embedding resta possibile per il motore, ma la scelta di integrazione NNTP
+è ora fissata sul socket Unix. Listener e client sono ancora da implementare.
+
+La prima integrazione locale segue avvio, recovery e ammissione del motore,
+senza attendere il completamento del Query Engine o di TCP. I comandi NNTP e
+le query avanzate dipendono comunque dai rispettivi contratti di prodotto.
 
 La gestione delle connessioni conserva stato e ordine richiesti da NNTP,
 usa capacità limitate e rispetta il controllo dell'ammissione del motore.
@@ -102,6 +114,11 @@ I worker di ArcDocDB mantengono proprietà delle code e dei compiti di storage;
 le sezioni EBR terminano prima di attendere la rete o un client lento.
 La distribuzione dei compiti, le copie dei buffer e il costo del GC vanno
 valutati sul percorso completo.
+
+Una disconnessione può lasciare ignoto al demone l'esito di una scrittura già
+committed. La riconnessione non ripete automaticamente le richieste e gli ID
+del multiplexing non deduplicano tra connessioni. Le prove applicative devono
+includere questa condizione insieme al controllo per Message-ID.
 
 ## Criteri per le valutazioni future
 
@@ -118,6 +135,9 @@ riavvio con transazioni in corso e retention durante letture già ammesse.
 Le misure future comprendono throughput, p50/p99, memoria degli indici,
 interferenza di compaction/GC e durata del recovery, con parametri e limiti
 registrati secondo il [metodo delle prove](registro-delle-prove.md).
+Il percorso di riferimento include client e server in processi distinti collegati
+dal socket Unix: framing, copie, buffer, ammissione e invio della risposta sono
+parte della misura. Eventuali misure del solo motore restano distinte.
 La [campagna full text](../13-benchmark.md#ricerca-full-text) aggiunge corpus testuali,
 analizzatori riproducibili, memoria dei posting/posizioni e confronto con scansione;
 nessuna prestazione è già dimostrata per questo caso d'uso.

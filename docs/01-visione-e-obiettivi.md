@@ -19,6 +19,12 @@ letture per Message-ID, scansioni ordinate per gruppo, pubblicazioni su più
 gruppi, ricerca full text, retention e recovery. Il motore mantiene la propria natura
 general-purpose; sviluppo del demone e benchmark applicativi restano futuri.
 
+> **Deciso ([ADR-0055](adr/0055-interfaccia-locale-unix-socket.md), 2026-10-16)** —
+> Per il primo impiego NNTP l'interfaccia predefinita e prioritaria è un socket
+> Unix locale fra demone e database. La prima integrazione segue avvio, recovery
+> e ammissione; TCP resta opzionale e successivo. Implementazione e qualifica
+> dell'interfaccia sono ancora da produrre.
+
 ## Obiettivi
 
 | Obiettivo | Come la specifica intende ottenerlo | Documento |

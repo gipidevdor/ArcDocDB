@@ -22,7 +22,7 @@ SBCL, senza allocazioni sui percorsi caldi.
 ```
                  Motore (libreria) dentro il Server (processo SBCL)
  ┌─────────────────────────────────────────────────────────────────────┐
- │ Protocollo (TCP, frame CBOR)    Scheduler · pool di calcolo · pool I/O│
+ │ Socket Unix · frame CBOR       Scheduler · pool di calcolo · pool I/O│
  │                                                                      │
  │  Archivio ─ CSN ─ orizzonte ─ coordinatore ─ Registri/multiserie.log │
  │   │                                                                  │
@@ -414,11 +414,22 @@ scheduler sceglie numeri dentro intervalli verificati: non può cambiare un dato
 
 ## Interfacce
 
-Il motore è una **libreria** con interfaccia «richiesta più continuazione»; il server è un
-guscio che la espone con un protocollo a frame CBOR su TCP con multiplexing; query come dati;
-contratto della Serie nel catalogo con evoluzione additiva
+Il motore è una **libreria** con interfaccia «richiesta più continuazione»; il server la
+espone tramite **socket Unix locale di tipo stream**, con frame CBOR e multiplexing.
+È il trasporto predefinito e il percorso prioritario per il futuro demone NNTP, in un
+processo distinto sulla stessa macchina. TCP resta opzionale e successivo, disabilitato
+per default, senza ripiego automatico. Query come dati e contratto della Serie nel
+catalogo con evoluzione additiva restano quelli di ADR-0029
 ([ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md),
-[ADR-0045](adr/0045-modello-di-esecuzione.md)).
+[ADR-0045](adr/0045-modello-di-esecuzione.md),
+[ADR-0055](adr/0055-interfaccia-locale-unix-socket.md)).
+
+Il percorso del socket è configurabile in una directory runtime protetta; collisioni
+e orfani producono errori espliciti. Frame parziali, richieste in volo e buffer hanno
+limiti verificati prima dell'ammissione; nessuna attesa del client trattiene epoche EBR
+o blocca il writer. Una risposta persa non annulla un commit né autorizza replay
+automatici. La prima integrazione locale di M16 segue avvio, recovery e ammissione
+del motore, prima del completamento degli indici/query e di TCP; è ancora da implementare.
 
 ## Contratti
 

@@ -14,6 +14,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Interfaccia locale prioritaria per il primo impiego NNTP (ADR-0055): socket
+  Unix stream predefinito fra demone e database, TCP opzionale successivo e
+  disabilitato per default. Anticipata la prima integrazione M16 dopo avvio,
+  recovery e ammissione; tracciati requisiti, limiti, ciclo di vita e prove.
+  Decisione progettuale; listener e client restano da implementare.
+
 - Codec completo `.idx` full text v2/type 5: descriptor META canonico copiato,
   legame ai byte hint e mappa PUT fornita, serializzazione senza allocazioni per entry,
   verifica di termini/posting/posizioni e vista immutabile per all/any/frasi sul file.

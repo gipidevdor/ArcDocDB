@@ -96,7 +96,7 @@ risultato consolidato è in [architettura.md](../architettura.md) e
 | [0026](0026-indici-secondari-segmentati.md) | Indici secondari per segmento, formato fisso, delta in memoria | QA-25 | Accettata (Bloom: 0039, 0042) |
 | [0027](0027-dipendenze-e-test.md) | Nessuna dipendenza esterna; harness proprio | QA-22 | Accettata |
 | [0028](0028-target-e-obiettivi-di-latenza.md) | Target aggregati; obiettivi numerici di latenza e di pausa GC | QA-26 | Accettata dall'autore il 2026-10-08 |
-| [0029](0029-interfacce-protocollo-query-contratto.md) | Protocollo a frame CBOR; query come dati; contratto additivo | QA-20, QA-21 | Accettata |
+| [0029](0029-interfacce-protocollo-query-contratto.md) | Protocollo a frame CBOR; query come dati; contratto additivo | QA-20, QA-21 | Accettata; trasporto primario sostituito da 0055 |
 | [0030](0030-scope-v1.md) | Scope della v1 | QA-23 | Accettata dall'autore il 2026-10-08 |
 
 ## Valutazione sperimentale (2026-10-08)
@@ -132,3 +132,9 @@ risultato consolidato è in [architettura.md](../architettura.md) e
 |---|---|---|
 | [0053](0053-ricerca-full-text-indici-invertiti.md) | Ricerca full text: indici invertiti per segmento, termini e posizioni, analizzatori versionati, coerenza con commit e snapshot | Accettata per il progetto; implementazione e qualifica da produrre |
 | [0054](0054-contratto-e-formato-full-text.md) | Contratto operativo full text: profilo Unicode fissato, query, interfacce, generazioni, budget e formato `.idx` v2 | Accettata per il progetto; implementazione e qualifica da produrre |
+
+## Interfaccia locale (2026-10-16)
+
+| ADR | Decisione | Stato |
+|---|---|---|
+| [0055](0055-interfaccia-locale-unix-socket.md) | Socket Unix locale predefinito e prioritario per NNTP; TCP opzionale successivo; prima integrazione M16 anticipata | Accettata per indirizzo dell'autore; implementazione e qualifica da produrre |

@@ -24,6 +24,11 @@ dedicati, parole e frasi, filtri strutturati e visibilità coerente con gli
 snapshot. Semantica e responsabilità sono definite; implementazione,
 formato binario degli indici e qualifica appartengono alla fase 8.
 
+Per il primo impiego NNTP, [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md)
+stabilisce un **socket Unix locale predefinito e prioritario**. La prima integrazione
+client/server segue avvio, recovery e ammissione; TCP resta opzionale e successivo.
+Il livello di protocollo è ancora da implementare e verificare.
+
 ## Da dove iniziare
 
 | Se vuoi… | Parti da qui |

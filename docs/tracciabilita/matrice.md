@@ -2,7 +2,7 @@
 
 > **Generata** da [requisiti.lisp](requisiti.lisp) con `make trace-write`. Non modificare a mano: `make trace` fallisce se non coincide.
 
-**Sommario.** 131 requisiti. Per classe: C1 104, C2 8, C3 12, C4 7. Per stato: specificato 0, progettato 119, implementato 11, verificato 1. Invarianti coperti: 68/68. Scenari FI coperti: 13/13.
+**Sommario.** 135 requisiti. Per classe: C1 106, C2 10, C3 12, C4 7. Per stato: specificato 0, progettato 123, implementato 11, verificato 1. Invarianti coperti: 69/69. Scenari FI coperti: 13/13.
 
 ## Requisiti
 
@@ -95,6 +95,10 @@
 | REQ-REC-002 | Dopo un crash il sistema recupera i log delle Serie, ricostruisce o verifica gli indici, identifica i segmenti, completa o annulla le compaction incomplete, processa multiserie.log e completa le multiserie preparate. | Recovery | C1 | progettato | INV-A7 | [0018](../adr/0018-control-log-manifest-swap.md), [0021](../adr/0021-2pc-intenti-outcome.md), [0040](../adr/0040-manifest-a-record-unico.md), [0041](../adr/0041-multiserie-segmenti-autosufficienti.md) | test, fi, soak | FI-07, FI-08, FI-10 |
 | REQ-REC-003 | Nessun dato committed è perso. | Fault injection | C1 | progettato | INV-D1 | [0013](../adr/0013-log-structured-segmento-active-come-log.md), [0019](../adr/0019-durability-e-group-commit-pipelined.md), [0037](../adr/0037-lotto-sigillato.md) | fi, diff, soak | FI-01, FI-02, FI-05, FI-06, FI-09, FI-10 |
 | REQ-REC-004 | Un atomic swap incompleto è riconoscibile durante il recovery. | Recovery | C1 | progettato | INV-C7 | [0018](../adr/0018-control-log-manifest-swap.md), [0040](../adr/0040-manifest-a-record-unico.md) | model, fi | FI-06 |
+| REQ-IPC-001 | L'interfaccia client predefinita usa un socket Unix stream con percorso assoluto configurabile per istanza; TCP è opzionale, successivo e disabilitato per default, senza ripiego automatico su errori locali. La prima integrazione M16 segue avvio, recovery e ammissione e precede il completamento query/TCP. | ADR-0055 | C2 | progettato | INV-N1 | [0055](../adr/0055-interfaccia-locale-unix-socket.md) | test, rev |  |
+| REQ-IPC-002 | Il trasporto locale usa frame u32 più CBOR, versione e identificativi multiplexati; gestisce trasferimenti parziali e verifica limiti prima di allocazione e ammissione. Connessioni, richieste, buffer e attese sono limitati; client lenti non trattengono epoche EBR né bloccano writer o worker di calcolo. | ADR-0055 | C1 | progettato | INV-A8, INV-P5, INV-P6 | [0029](../adr/0029-interfacce-protocollo-query-contratto.md), [0045](../adr/0045-modello-di-esecuzione.md), [0048](../adr/0048-limiti-documentali-e-formato-v2.md), [0055](../adr/0055-interfaccia-locale-unix-socket.md) | test, fuzz, model, bench, rev |  |
+| REQ-IPC-003 | Il listener locale verifica percorso, directory runtime, proprietario e accesso ristretto prima dell'esposizione; un nome occupato fallisce senza rimozioni automatiche all'avvio. L'arresto rimuove soltanto il nodo ancora identificato come proprio in una directory protetta; gli orfani richiedono intervento esplicito. | ADR-0055 | C2 | progettato |  | [0055](../adr/0055-interfaccia-locale-unix-socket.md) | test, rev |  |
+| REQ-IPC-004 | La conferma sul socket locale segue pubblicazione e durability del motore; il traffico applicativo è ammesso dopo recovery. Una disconnessione non annulla commit decisi né ripete scritture: risposta persa significa esito potenzialmente ignoto al client, senza deduplicazione implicita degli ID di richiesta. | ADR-0055 | C1 | progettato | INV-D1, INV-V1, INV-V5, INV-A11 | [0037](../adr/0037-lotto-sigillato.md), [0041](../adr/0041-multiserie-segmenti-autosufficienti.md), [0055](../adr/0055-interfaccia-locale-unix-socket.md) | test, diff, model, fi, rev | FI-01, FI-02, FI-05 |
 | REQ-OBS-001 | Sono esposte le metriche di richiesta: throughput, P50, P95, P99, P99.9. | Osservabilità | C3 | progettato |  | [0011](../adr/0011-thread-pool-dinamico.md) | test |  |
 | REQ-OBS-002 | Sono esposte le metriche di storage, log, indici, cache, scheduler e GC elencate dalla specifica. | Osservabilità | C3 | progettato |  | [0011](../adr/0011-thread-pool-dinamico.md) | test |  |
 | REQ-BEN-001 | I benchmark sono riproducibili e, nei confronti con altri sistemi, eseguiti su hardware, dataset, indici, durability, concorrenza e semantica equivalenti. | Benchmark | C4 | progettato | INV-X2 | [0028](../adr/0028-target-e-obiettivi-di-latenza.md) | bench, rev |  |
@@ -163,7 +167,7 @@
 | INV-R1 | REQ-VER-001, REQ-CMP-007 |
 | INV-W1 | REQ-ARC-002, REQ-REG-003, REQ-WAL-001 |
 | INV-W2 | REQ-REG-001, REQ-WAL-004 |
-| INV-D1 | REQ-CMP-008, REQ-WAL-003, REQ-REC-003 |
+| INV-D1 | REQ-CMP-008, REQ-WAL-003, REQ-REC-003, REQ-IPC-004 |
 | INV-T1 | REQ-TXS-001 |
 | INV-T2 | REQ-TXS-002, REQ-TXS-003, REQ-MVC-006 |
 | INV-T3 | REQ-TXM-003, REQ-TXM-008 |
@@ -181,11 +185,12 @@
 | INV-P2 | REQ-CON-002 |
 | INV-P3 | REQ-ARC-002, REQ-TXM-006, REQ-CON-003, REQ-CON-005 |
 | INV-P4 | REQ-MRG-004, REQ-CMP-006 |
+| INV-N1 | REQ-IPC-001 |
 | INV-X1 | REQ-SIM-001 |
 | INV-X2 | REQ-BEN-001, REQ-BEN-002, REQ-VAL-001 |
 | INV-X3 | REQ-SIM-002, REQ-VAL-001, REQ-AFF-016 |
 | INV-F1 | REQ-WAL-001, REQ-REC-001, REQ-FOR-001, REQ-FOR-002, REQ-FOR-003, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-009, REQ-AFF-010, REQ-AFF-014, REQ-LIM-001 |
-| INV-V1 | REQ-WAL-003, REQ-WAL-006 |
+| INV-V1 | REQ-WAL-003, REQ-WAL-006, REQ-IPC-004 |
 | INV-V2 | REQ-TXM-004, REQ-MVC-002 |
 | INV-V3 | REQ-IDX-004 |
 | INV-V4 | REQ-CON-002 |
@@ -196,32 +201,32 @@
 | INV-A5 | REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-AFF-005 |
 | INV-A6 | REQ-AFF-006 |
 | INV-A7 | REQ-REG-002, REQ-CMP-004, REQ-TXM-005, REQ-REC-002, REQ-AFF-007, REQ-AFF-017, REQ-AFF-019 |
-| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-SEC-010, REQ-IDX-007, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
+| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-SEC-010, REQ-IDX-007, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
 | INV-F2 | REQ-WAL-005, REQ-FOR-003 |
 | INV-F3 | REQ-AFF-009 |
-| INV-V5 | REQ-WAL-006, REQ-TXM-008, REQ-SEC-004 |
+| INV-V5 | REQ-WAL-006, REQ-TXM-008, REQ-SEC-004, REQ-IPC-004 |
 | INV-M4 | REQ-MVC-005, REQ-MVC-008 |
 | INV-M5 | REQ-WAL-005, REQ-MVC-006 |
 | INV-M6 | REQ-MVC-008 |
 | INV-S7 | REQ-CMP-009, REQ-TXM-007, REQ-FOR-004 |
 | INV-C11 | REQ-CMP-008, REQ-IDX-006 |
 | INV-I3 | REQ-IDX-005, REQ-IDX-007 |
-| INV-P6 | REQ-SEC-006, REQ-SEC-010, REQ-CON-005, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
-| INV-P5 | REQ-CON-004 |
+| INV-P6 | REQ-SEC-006, REQ-SEC-010, REQ-CON-005, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
+| INV-P5 | REQ-CON-004, REQ-IPC-002 |
 | INV-A9 | REQ-AFF-017 |
 | INV-A10 | REQ-SEC-005, REQ-SEC-009, REQ-AFF-018 |
-| INV-A11 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-AFF-019, REQ-LIM-003 |
+| INV-A11 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-IPC-004, REQ-AFF-019, REQ-LIM-003 |
 | INV-A12 | REQ-CCH-004 |
 
 ## Copertura degli scenari di fault injection
 
 | Scenario | Requisiti |
 |---|---|
-| FI-01 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-009, REQ-AFF-017, REQ-LIM-001 |
-| FI-02 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-003, REQ-FLT-001, REQ-AFF-001, REQ-AFF-009, REQ-AFF-017 |
+| FI-01 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-009, REQ-AFF-017, REQ-LIM-001 |
+| FI-02 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-AFF-001, REQ-AFF-009, REQ-AFF-017 |
 | FI-03 | REQ-TXM-002, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-FLT-001 |
 | FI-04 | REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-FLT-001 |
-| FI-05 | REQ-WAL-003, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-REC-003, REQ-FLT-001 |
+| FI-05 | REQ-WAL-003, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-REC-003, REQ-IPC-004, REQ-FLT-001 |
 | FI-06 | REQ-CMP-002, REQ-CMP-003, REQ-IDX-002, REQ-IDX-004, REQ-SEC-004, REQ-SEC-009, REQ-REC-001, REQ-REC-003, REQ-REC-004, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019, REQ-LIM-003 |
 | FI-07 | REQ-CLN-002, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
 | FI-08 | REQ-MRG-001, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
@@ -263,7 +268,7 @@
 | [0026](../adr/0026-indici-secondari-segmentati.md) | REQ-SEC-001, REQ-SEC-002, REQ-SEC-003, REQ-SEC-005 |
 | [0027](../adr/0027-dipendenze-e-test.md) | REQ-SIM-002, REQ-AFF-016 |
 | [0028](../adr/0028-target-e-obiettivi-di-latenza.md) | REQ-BEN-001, REQ-BEN-002, REQ-AFF-012 |
-| [0029](../adr/0029-interfacce-protocollo-query-contratto.md) | REQ-SEC-003 |
+| [0029](../adr/0029-interfacce-protocollo-query-contratto.md) | REQ-SEC-003, REQ-IPC-002 |
 | [0030](../adr/0030-scope-v1.md) | REQ-AFF-014 |
 | [0031](../adr/0031-software-critico-criteri-e-priorita.md) | REQ-MOD-001, REQ-AFF-012 |
 | [0032](../adr/0032-seqlock-a-64-bit.md) | REQ-IDX-003 |
@@ -271,21 +276,22 @@
 | [0034](../adr/0034-policy-di-compilazione-e-standard-di-codifica.md) | REQ-AFF-003, REQ-AFF-004, REQ-AFF-008 |
 | [0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) | REQ-FLT-001, REQ-VAL-001, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001, REQ-AFF-005, REQ-AFF-013 |
 | [0036](../adr/0036-leggi-di-progetto.md) | REQ-SEC-006, REQ-CON-005, REQ-AFF-007, REQ-AFF-017, REQ-AFF-018, REQ-AFF-019 |
-| [0037](../adr/0037-lotto-sigillato.md) | REQ-WAL-002, REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-AFF-009, REQ-AFF-017 |
+| [0037](../adr/0037-lotto-sigillato.md) | REQ-WAL-002, REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-IPC-004, REQ-AFF-009, REQ-AFF-017 |
 | [0038](../adr/0038-orizzonte-di-visibilita.md) | REQ-VER-001, REQ-TXM-004, REQ-SEC-004, REQ-MVC-002, REQ-MVC-005, REQ-MVC-006, REQ-MVC-007 |
 | [0039](../adr/0039-cornice-unica-dei-record.md) | REQ-WAL-005, REQ-IDX-006, REQ-SEC-001, REQ-FOR-001, REQ-FOR-003, REQ-FOR-004, REQ-AFF-002 |
 | [0040](../adr/0040-manifest-a-record-unico.md) | REQ-REG-002, REQ-STO-006, REQ-MET-001, REQ-CLN-002, REQ-CMP-002, REQ-CMP-003, REQ-CMP-004, REQ-TXM-007, REQ-SEC-005, REQ-SEC-009, REQ-REC-002, REQ-REC-004, REQ-AFF-017, REQ-AFF-018, REQ-AFF-019 |
-| [0041](../adr/0041-multiserie-segmenti-autosufficienti.md) | REQ-CMP-009, REQ-WAL-004, REQ-TXM-001, REQ-TXM-002, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-SEC-010, REQ-REC-002 |
+| [0041](../adr/0041-multiserie-segmenti-autosufficienti.md) | REQ-CMP-009, REQ-WAL-004, REQ-TXM-001, REQ-TXM-002, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-SEC-010, REQ-REC-002, REQ-IPC-004 |
 | [0042](../adr/0042-tombstone-e-indice-dei-vivi.md) | REQ-CMP-008, REQ-CMP-009, REQ-IDX-006 |
 | [0043](../adr/0043-primary-index-a-frammenti.md) | REQ-IDX-001, REQ-IDX-003, REQ-IDX-005, REQ-IDX-007 |
 | [0044](../adr/0044-cache-acceleratore-puro.md) | REQ-CCH-002, REQ-CCH-004 |
-| [0045](../adr/0045-modello-di-esecuzione.md) | REQ-SEC-006, REQ-SEC-010, REQ-CON-005, REQ-CON-004 |
+| [0045](../adr/0045-modello-di-esecuzione.md) | REQ-SEC-006, REQ-SEC-010, REQ-CON-005, REQ-CON-004, REQ-IPC-002 |
 | [0046](../adr/0046-orizzonte-con-registro-limitato.md) | REQ-MVC-008 |
 | [0047](../adr/0047-verifica-csn-dei-record-prepared.md) | REQ-FOR-004 |
-| [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
+| [0048](../adr/0048-limiti-documentali-e-formato-v2.md) | REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
 | [0049](../adr/0049-capacita-oltre-la-ram.md) | —  (decisione senza requisito diretto) |
 | [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | REQ-IDX-007 |
 | [0051](../adr/0051-presentazione-della-documentazione.md) | —  (decisione senza requisito diretto) |
 | [0052](../adr/0052-header-dei-log-di-controllo.md) | REQ-FOR-001, REQ-FOR-002 |
 | [0053](../adr/0053-ricerca-full-text-indici-invertiti.md) | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-006, REQ-SEC-007 |
 | [0054](../adr/0054-contratto-e-formato-full-text.md) | REQ-SEC-007, REQ-SEC-008, REQ-SEC-009, REQ-SEC-010 |
+| [0055](../adr/0055-interfaccia-locale-unix-socket.md) | REQ-IPC-001, REQ-IPC-002, REQ-IPC-003, REQ-IPC-004 |

@@ -76,6 +76,31 @@ dei nomi `.tmp`/`.seg` nel suo namespace di otto ID. Verifica lo stato
 La prova resta C4, con gli stessi 18 workload e gli stessi oracoli costanti.
 Il contratto e la verifica C1 della proposta ID sono separati dalla fixture.
 
+## Collegamento preregistrato alle aperture relative e all'EOF
+
+Il 2026-10-16, prima delle esecuzioni, si collega `input` alla nuova API
+`io:apri-lettura-nella-directory`. Ogni capacità readonly viene aperta
+rispetto al FD della directory già posseduta dalla fixture, con budget
+di trasferimento e dimensione pari a 8 KiB. L'API restituisce la capacità
+posseduta e l'EOF rilevato sullo stesso FD; la fixture registra subito la
+capacità per la chiusura e conserva i due valori.
+
+Le letture canoniche di CONTROL, decision log e vecchio ACTIVE ricevono
+questo EOF e uno scratch della stessa dimensione. Non ricavano più la
+dimensione da un'immagine aperta separatamente tramite pathname.
+`file-image` resta indipendente per i confronti dei byte preesistenti e
+le altre operazioni C4. Preparazione e output, selezione tramite probe
+fra il nome temporaneo e definitivo e orchestrazione restano della fixture.
+L'inventario e la proposta ID usano il prodotto, come descritto sotto;
+il limite di otto ID proposti resta un budget distinto C4.
+
+Restano identici i 16 scenari positivi e i due negativi, i 71 processi,
+i 26 SIGKILL intenzionali, gli attesi costanti e gli oracoli sui byte.
+Questa estensione esercita apertura relativa ed EOF di prodotto; non
+introduce un bundle di capacità, riconciliazione fisica o un coordinatore
+di recovery. Il contratto e la verifica dell'API I/O restano distinti
+dalle prove C4 della composizione.
+
 ## Collegamento alla directory posseduta — 2026-10-16
 
 La fixture adotta nomi canonici di sedici cifre esadecimali minuscole,
@@ -88,3 +113,13 @@ proposti resta un controllo distinto della fixture. Gli scenari, i processi,
 i crash e gli oracoli restano quelli preregistrati; nessuna azione del piano
 è eseguita. La raccolta reale controlla anche gli altri nomi dei processi,
 ignorati dal parser storage ma inclusi nei budget.
+
+## Verifica della composizione delle due integrazioni
+
+Prima della nuova esecuzione, root e revisore distinto leggono la
+composizione con `main` a `110e79f1`: apertura/EOF e raccolta dei nomi
+usano lo stesso parent posseduto, con nomi canonici e budget indipendenti.
+Il codice I/O resta identico a S1; cambia la composizione della fixture.
+Si congela il merge e si esegue `make test lint trace links` con cache
+ASDF nuova. Il record originale resta distinto dal full S1 e dalla CI;
+non si promuove questo controllo a un nuovo full `make check`.

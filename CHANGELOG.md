@@ -464,6 +464,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   symlink verificati prima del piano di riconciliazione. Nessun elenco
   parziale su EOF mancante, budget esaurito o guasto di cleanup.
 
+- Apertura readonly relativa alla capacità directory, con dimensione
+  dello stesso FD, verifica del legame device/inode e cleanup del child
+  non pubblicato. CONTROL, decision log e ACTIVE della prova verticale
+  usano capacità e dimensione della stessa apertura; i file esistenti
+  restano in sola lettura.
+
 ### Cambiato
 
 - I test con worker riusati delle stringhe CBOR usano segnali distinti

@@ -66,8 +66,8 @@ ArcDocDB is a general-purpose document engine, written in Common Lisp and engine
 safety-critical software. Reliability comes first; performance follows from the layout
 rather than from shortcuts.
 
-A reference application is a future **NNTP server written in Common Lisp**, using ArcDocDB
-as its database. This [use case](docs/valutazione/caso-duso-nntp.md) guides evaluation of
+The first intended use of ArcDocDB is as the database of a **Usenet NNTP server written
+in Common Lisp**. This primary [use case](docs/valutazione/caso-duso-nntp.md) guides implementation and validation of
 article lookup, ordered group overviews, full-text search, cross-posting, retention and recovery.
 
 **Full-text search** is an approved v1 requirement, designed around dedicated

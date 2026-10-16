@@ -10,14 +10,14 @@ specifico (non è un motore per blogging o CMS).
 
 ## Applicazione di riferimento
 
-> **Deciso (indirizzo dell'autore, 2026-10-15)** — L'obiettivo applicativo è
-> usare ArcDocDB come database di un server NNTP scritto in Common Lisp.
+> **Deciso (indirizzo dell'autore, 2026-10-15; priorità confermata il 2026-10-16)** —
+> Il primo impiego di ArcDocDB sarà come database di un server NNTP Usenet
+> scritto in Common Lisp. Questo impiego guida le priorità implementative e di verifica.
 
 Il [caso d'uso NNTP](valutazione/caso-duso-nntp.md) guida le valutazioni di
 letture per Message-ID, scansioni ordinate per gruppo, pubblicazioni su più
 gruppi, ricerca full text, retention e recovery. Il motore mantiene la propria natura
-general-purpose; l'indirizzo attuale riguarda la progettazione e la
-documentazione, con sviluppo del demone e benchmark applicativi futuri.
+general-purpose; sviluppo del demone e benchmark applicativi restano futuri.
 
 ## Obiettivi
 

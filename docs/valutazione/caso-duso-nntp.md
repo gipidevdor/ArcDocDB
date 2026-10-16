@@ -1,9 +1,9 @@
 # Caso d'uso di riferimento: server NNTP in Common Lisp
 
-> **Deciso (indirizzo dell'autore, 2026-10-15)** — ArcDocDB è destinato a
-> diventare il database di un server NNTP scritto in Common Lisp. Questo
-> caso d'uso orienta le valutazioni del motore general-purpose. La richiesta
-> attuale riguarda l'indirizzo progettuale e la sua documentazione.
+> **Deciso (indirizzo dell'autore, 2026-10-15; priorità confermata il 2026-10-16)** —
+> Il primo impiego di ArcDocDB sarà come database di un server NNTP Usenet
+> scritto in Common Lisp. È il caso applicativo prioritario per l'implementazione
+> e la validazione del motore general-purpose.
 
 ## Obiettivo applicativo
 
@@ -12,6 +12,9 @@ di overview e metadati di retention. ArcDocDB fornisce storage, transazioni,
 indici, scheduling e recovery; l'applicazione NNTP possiede protocollo,
 connessioni e regole di pubblicazione. Il caso d'uso aiuta a valutare i
 contratti esistenti e il lavoro residuo della [roadmap](../roadmap.md).
+Le scelte di API, indici, concorrenza e recovery vanno valutate prima rispetto
+ai carichi NNTP descritti qui: pubblicazione, lookup per Message-ID, overview,
+cross-posting, ricerca testuale e retention.
 
 ArcDocDB mantiene la propria natura general-purpose. L'indirizzo NNTP da solo
 non modifica formati, invarianti, livelli di durability o scope degli ADR

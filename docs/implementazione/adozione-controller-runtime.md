@@ -128,3 +128,10 @@ corrotto. Rilettura finale delle tre modifiche: nessun nuovo rilievo.
 I test del binding sono otto; quelli dell'adozione undici, con 26 casi
 parametrizzati dichiarati dall'autore. Questi conteggi sono inventario,
 non esiti dei run.
+
+## Risultati
+
+La [campagna del 2026-10-16](../../spikes/results/2026-10-16-runtime-active/report.md)
+conserva 19 nuove prove, 147 test runtime/Serie, copertura grezza e controllo
+completo locale. Conserva anche i due fallimenti iniziali e le tre varianti;
+confine generale COD-24, ammissione e C1/MC/DC restano aperti.

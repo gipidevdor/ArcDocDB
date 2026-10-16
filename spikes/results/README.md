@@ -3,6 +3,11 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+L'[adozione ACTIVE del 2026-10-16](2026-10-16-runtime-active/report.md)
+conserva 19 nuove prove, 147 test runtime/Serie, controller unico per log,
+due Serie con commit durevoli e snapshot comune, copertura e due fallimenti
+corretti. [Raccolta e copie](2026-10-16-runtime-active-raccolta/README.md).
+
 Il [bootstrap runtime Archivio del 2026-10-16](2026-10-16-runtime-bootstrap/report.md)
 conserva 27 test composti, famiglia unica CSN/snapshot/epoche, concorrenza,
 GET e catena nativa, con copertura e controllo completo. Ammissione e C1/MC/DC aperte.

@@ -105,6 +105,10 @@ Il [bootstrap del runtime Archivio](runtime-archivio.md) collega il piano
 CSN alla famiglia unica CSN/snapshot/epoche e al nuovo ambito GET. Il binding
 non autorizza ancora il traffico.
 
+L'[adozione dell'ACTIVE nel runtime](adozione-controller-runtime.md) collega
+il prepared al CSN comune e rende unico il controller per log canonico,
+senza acquisire lease o decidere il catalogo.
+
 La [raccolta degli archivi di comandi](raccolta-comandi.md) usa un manifest
 esplicito, quattro worker e il controllo finale dell'inventario chiuso.
 

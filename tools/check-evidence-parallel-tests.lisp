@@ -489,6 +489,38 @@
     (ept-check (= 1 calls) "Guasto generico o timeout propagato alla prima chiamata")
     (ept-check (eq injected observed) "Condizione originale propagata senza mascheramento")))
 
+(defun ept-cleanup-workers (directory order)
+  "Cleanup completo anche con ERROR e TIMEOUT, nei due ordini; nessun processo avviato."
+  (let* ((symbol 'termina-worker) (original (fdefinition symbol))
+         (logs (ept-directory (merge-pathnames "cleanup-logs/" directory)))
+         (generic (make-condition 'simple-error :format-control "EXPECTED-CLEANUP-GENERIC-FAULT"
+                                 :format-arguments nil))
+         (timeout (make-condition 'sb-ext:timeout)) (calls nil) (caught nil))
+    (unwind-protect
+         (progn
+           (setf (fdefinition symbol)
+                 (lambda (worker)
+                   (push worker calls)
+                   (ecase worker
+                     (:one (error (if (eq order :error-first) generic timeout)))
+                     (:two (error (if (eq order :error-first) timeout generic)))
+                     (:three nil))))
+           (handler-case (chiudi-workers '(:one :two :three) logs)
+             (serious-condition (condition) (setf caught condition))))
+      (setf (fdefinition symbol) original))
+    (let* ((diagnostic (princ-to-string caught))
+           (observed (list :order order :calls (reverse calls) :function-restored (eq original (fdefinition symbol))
+                           :condition (and caught (type-of caught)) :diagnostic diagnostic :logs (namestring logs))))
+      (ept-write-data (merge-pathnames "cleanup-observations.lisp" directory) observed)
+      (ept-check (eq original (fdefinition symbol)) "FDEFINITION originale ripristinata")
+      (ept-check (equal (reverse calls) '(:one :two :three)) "Tutti e tre i worker chiusi, una volta e in ordine")
+      (ept-check (typep caught 'error) "Errore ordinario aggregato dopo il cleanup completo")
+      (ept-check (and (not (eq caught generic)) (not (eq caught timeout))) "Nessun rethrow prematuro della condizione originaria")
+      (ept-check (search "EXPECTED-CLEANUP-GENERIC-FAULT" diagnostic) "Diagnostico del guasto generico conservato")
+      (ept-check (search (princ-to-string timeout) diagnostic) "Diagnostico del timeout conservato")
+      (ept-check (search (namestring logs) diagnostic) "Riferimento LOGS nel riepilogo")
+      (list :status :ok :observations observed))))
+
 (defun ept-exercise ()
   (ept-case "equivalence-and-cli"
     (lambda (directory)
@@ -583,7 +615,9 @@
       (ept-case (format nil "process-scan-~A" (string-downcase (symbol-name variant)))
         (lambda (directory) (ept-scan-retry directory variant)))))
   (ept-case "process-scan-generic-error-propagates" (lambda (directory) (ept-scan-propagates directory nil)))
-  (ept-case "process-scan-timeout-propagates" (lambda (directory) (ept-scan-propagates directory t))))
+  (ept-case "process-scan-timeout-propagates" (lambda (directory) (ept-scan-propagates directory t)))
+  (ept-case "cleanup-workers-error-then-timeout" (lambda (directory) (ept-cleanup-workers directory :error-first)))
+  (ept-case "cleanup-workers-timeout-then-error" (lambda (directory) (ept-cleanup-workers directory :timeout-first))))
 
 (defun self-test (&optional root)
   "Fixture esclusive conservate con report e output; nessuna pulizia distruttiva o promozione."

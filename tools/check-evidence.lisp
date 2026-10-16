@@ -232,6 +232,14 @@
         :diagnostic (format nil "~A Log: ~A e ~A."
                             detail (getf worker :stdout) (getf worker :stderr))))
 
+(defun chiudi-workers (workers logs)
+  "Prova ogni cleanup anche dopo un timeout; nessuna condizione grave è assorbita."
+  (let ((errors nil))
+    (dolist (worker workers)
+      (handler-case (termina-worker worker)
+        (serious-condition (c) (push (princ-to-string c) errors))))
+    (when errors (error "Cleanup worker fallito: ~{~A~^; ~}. Log: ~A." (nreverse errors) logs))))
+
 (defun verifica-parallela (paths jobs seconds heap)
   "Finestra di processi limitata; nessuna stampa concorrente, riduzione per indice."
   (let* ((logs (nuova-root-worker)) (results (make-array (length paths) :initial-element nil))
@@ -262,11 +270,7 @@
                         (unless timeout (termina-worker worker))
                         (setf active (delete worker active :test #'eq)))))
                   (when active (sleep 0.01)))
-      (let ((errors nil))
-        (dolist (worker active)
-          (handler-case (termina-worker worker)
-            (error (c) (push (princ-to-string c) errors))))
-        (when errors (error "Cleanup worker fallito: ~{~A~^; ~}. Log: ~A." errors logs))))
+      (chiudi-workers active logs))
     (loop for result across results for path across paths
           unless (eq :ok (getf result :status))
             do (error 'invalid-evidence :path path :detail (getf result :diagnostic)))
@@ -332,6 +336,8 @@ La directory di input deve restare immutata per tutta la verifica."
                             (t (error "Opzione non valida: ~A." key))))
              (write (verifica-evidenze root :jobs jobs :worker-seconds seconds :worker-heap-mib heap))
              (terpri)))))
-    (error (c) (format *error-output* "~&~A~%" c) (sb-ext:exit :code 1))))
+    (serious-condition (c)
+      (format *error-output* "~&Verifica evidenze (~A): ~A~%" *checker-source* c)
+      (sb-ext:exit :code 1))))
 
 (unless (member :arcdocdb-evidence-check-library *features*) (main))

@@ -44,6 +44,8 @@ o incompleto non dimostra mai l'assenza di processi; stdout, stderr e stato
 di ogni tentativo vengono conservati accanto ai log del worker.
 Si ritentano soltanto gli snapshot invalidi. Errori di avvio, I/O,
 cleanup e timeout si propagano senza essere convertiti in una nuova scansione.
+Anche dopo una condizione grave durante il cleanup vengono tentate le
+chiusure degli altri worker; tutti i guasti confluiscono nel rifiuto finale.
 Log e temporanei appartengono a una
 directory esclusiva sotto `spikes/out/evidence-check-*`, conservata anche
 in caso di errore. Un protocollo malformato, un segnale o un exit incoerente

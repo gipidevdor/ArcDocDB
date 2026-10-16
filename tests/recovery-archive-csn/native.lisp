@@ -8,7 +8,7 @@
 
 (defstruct (acn-fixture (:constructor acn-make-fixture))
   native deadline version archive scope views registri set decisions decision-input
-  controls control-inputs active active-inputs closed closed-inputs
+  controls control-inputs active active-inputs active-prefixes closed closed-inputs
   (images nil) (scratch nil) (identities nil))
 
 (defun acn-readonly (input)
@@ -145,6 +145,9 @@
                    (lambda () (da:leggi-active-con-decisioni control input size decisions scratch
                                 :chunk-bytes 31 :max-bytes 4096 :max-batches 8 :max-records 16
                                 :max-batch-records 8 :max-batch-bytes 4096 :max-prepared 8 :max-outcomes 8)))))
+    (let ((prefix (aref (acn-fixture-active-prefixes f) i)))
+      (is (equal (list size prefix (if (= prefix size) :complete :tail) (acn-fixture-version f))
+                 (multiple-value-list (arcdocdb.recovery.active:frontiere-active-recuperato result)))))
     (acn-consumed scratch (acn-image f input) size) result))
 
 (defun acn-read-closed (f i j id prefix)
@@ -182,6 +185,7 @@
            (source (ct::crr-cat active (or (getf spec :tail) (ct::zeros 0)))))
       (setf (aref (acn-fixture-control-inputs f) i) input
             (aref (acn-fixture-controls f) i) (acn-read-control f i)
+            (aref (acn-fixture-active-prefixes f) i) (length active)
             (aref (acn-fixture-active-inputs f) i) (acn-seed f directory path "9.seg" source)))
     (nreverse prefixes)))
 
@@ -192,6 +196,7 @@
               :archive (da:crea-archivio-recovery scope (acr-archive-id))
               :views (make-array count :initial-element nil) :controls (make-array count :initial-element nil)
               :control-inputs (make-array count :initial-element nil) :active (make-array count :initial-element nil)
+              :active-prefixes (make-array count :initial-element nil)
               :active-inputs (make-array count :initial-element nil) :closed (make-array count :initial-element nil)
               :closed-inputs (make-array count :initial-element nil)))
          (directory (ct::native-open native (ct::native-fixture-root native) :directory deadline))
@@ -235,11 +240,11 @@
   "Tre Serie: writer con esiti EDIT, compaction, e ACTIVE di Registri con massimo distinto."
   (list
    (acr-serie 1
-     :active (list (cd::cdr-batch #x100000002
+     :active (list (cd::cdr-batch #x100000003
                      (cd::cdr-record :put #x100000003 :value #(246))
                      (cd::cdr-record :prepared-put #xffffffffffffffff :value #(245))))
      :closed (list (acr-closed 2
-                     :batches (list (cd::cdr-batch #x100000004 (cd::cdr-record :tombstone 17)))
+                     :batches (list (cd::cdr-batch #x100000004 (cd::cdr-record :tombstone #x100000004)))
                      :outcomes '((101 #x100000007)) :tail (acn-tail version)))
      :tail (acn-tail version))
    (acr-serie 2
@@ -248,7 +253,7 @@
                                     (cd::cdr-record :tombstone #x100000009))
                      :tail (acn-tail version))))
    (acr-serie 3
-     :active (list (cd::cdr-batch #x10000000a (cd::cdr-record :tombstone #x10000000b)))
+     :active (list (cd::cdr-batch #x10000000b (cd::cdr-record :tombstone #x10000000b)))
      :closed (list (acr-closed 2 :tail (acn-tail version))))))
 
 (defun acn-rich (version registri decision-maximum)
@@ -336,7 +341,7 @@
 (defun acn-gate-series ()
   "Due Serie e due CLOSED: writer prepared deciso da EDIT e compaction ordinaria."
   (list (acr-serie 1
-          :active (list (cd::cdr-batch 17 (cd::cdr-record :put 23 :value #(246))))
+          :active (list (cd::cdr-batch 23 (cd::cdr-record :put 23 :value #(246))))
           :closed (list (acr-closed 2
                           :batches (list (cd::cdr-batch 7 (cd::cdr-record :prepared-tombstone 101)))
                           :outcomes '((101 11)))

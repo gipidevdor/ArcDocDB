@@ -49,7 +49,7 @@
 
 (defstruct (acr-fixture (:constructor %acr-fixture))
   archive scope views registri set decisions decision-input decision-bytes
-  controls control-inputs control-bytes active active-inputs active-bytes
+  controls control-inputs control-bytes active active-inputs active-bytes active-prefixes
   closed closed-inputs closed-bytes version specs backend inputs
   (images (make-hash-table :test 'eql)) (references (make-hash-table :test 'eql))
   (paths (make-hash-table :test 'equal)) (closed-fds (make-hash-table :test 'eql))
@@ -113,10 +113,13 @@
       (ct::crr-bytes (length bytes)) :chunk-bytes 31 :max-bytes 4096 :max-batches 4
       :max-batch-records 4 :max-edits 4 :max-segmenti 8 :max-esiti 32)))
 (defun acr-read-active (f i decisions &optional (control (aref (acr-fixture-controls f) i)))
-  (let ((bytes (aref (acr-fixture-active-bytes f) i)))
-    (da:leggi-active-con-decisioni control (aref (acr-fixture-active-inputs f) i) (length bytes)
-      decisions (ct::crr-bytes (length bytes)) :chunk-bytes 31 :max-bytes 4096 :max-batches 16
-      :max-batch-records 16 :max-batch-bytes 4096 :max-records 32 :max-prepared 16 :max-outcomes 16)))
+  (let* ((bytes (aref (acr-fixture-active-bytes f) i)) (prefix (aref (acr-fixture-active-prefixes f) i))
+         (result (da:leggi-active-con-decisioni control (aref (acr-fixture-active-inputs f) i) (length bytes)
+                   decisions (ct::crr-bytes (length bytes)) :chunk-bytes 31 :max-bytes 4096 :max-batches 16
+                   :max-batch-records 16 :max-batch-bytes 4096 :max-records 32 :max-prepared 16 :max-outcomes 16)))
+    (is (equal (list (length bytes) prefix (if (= prefix (length bytes)) :complete :tail) (acr-fixture-version f))
+               (multiple-value-list (arcdocdb.recovery.active:frontiere-active-recuperato result))))
+    result))
 (defun acr-read-closed (f i j &optional (control (aref (acr-fixture-controls f) i)))
   (let* ((spec (nth j (getf (aref (acr-fixture-specs f) i) :closed)))
          (bytes (aref (aref (acr-fixture-closed-bytes f) i) j)))
@@ -145,6 +148,7 @@
             (aref (acr-fixture-control-inputs f) i) (acr-open f control)
             (aref (acr-fixture-controls f) i) (acr-read-control f i)
             (aref (acr-fixture-active-bytes f) i) bytes
+            (aref (acr-fixture-active-prefixes f) i) (length active)
             (aref (acr-fixture-active-inputs f) i) (acr-open f bytes)
             (aref (acr-fixture-active f) i) (acr-read-active f i (acr-fixture-decisions f))
             (aref (acr-fixture-closed f) i)
@@ -159,6 +163,7 @@
               :archive (da:crea-archivio-recovery scope (acr-archive-id)) :version version
               :specs (coerce series 'simple-vector) :controls (make-array n) :control-inputs (make-array n)
               :control-bytes (make-array n) :active (make-array n) :active-inputs (make-array n)
+              :active-prefixes (make-array n)
               :active-bytes (make-array n) :closed (make-array n) :closed-inputs (make-array n)
               :closed-bytes (make-array n))))
     (setf (acr-fixture-backend f) (acr-backend f))

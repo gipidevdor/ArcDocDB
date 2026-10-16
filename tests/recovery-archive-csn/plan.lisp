@@ -339,7 +339,7 @@
          (lambda (f)
            (acrp-success f '(nil 0) 1 2)
            (is (= 64 (nth-value 1 (da:frontiere-decisioni-recuperate (acr-fixture-decisions f)))))
-           (is (= 64 (nth-value 0 (arcdocdb.recovery.active:frontiere-active-recuperato
+           (is (= 64 (nth-value 1 (arcdocdb.recovery.active:frontiere-active-recuperato
                                    (aref (acr-fixture-active f) 0)))))
            (is (= 64 (nth-value 1 (cr:frontiere-closed-recuperato
                                    (aref (aref (acr-fixture-closed f) 0) 0)))))

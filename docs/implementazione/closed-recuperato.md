@@ -13,6 +13,8 @@ Non cambia formati, politica CLEAN/MERGE o publisher canonico.
 | `leggi-closed-recuperato(control, input, id, scratch, …)` | header e prefisso dal medesimo FD readonly, prepared risolti localmente |
 | `frontiere-closed-recuperato(result)` | ID u64, P dal manifest, versione 1/2 e origine writer=1/compaction=2 |
 | `statistiche-closed-recuperato(result)` | lotti, record esclusi SEAL, TXID prepared distinti, commit locali, commit solo EDIT, abort |
+| `massimo-csn-closed-recuperato(result)` | presenza e massimo locale, includendo EDIT orfani; NIL/0 distinto da T/0 |
+| `massimo-csn-serie-recuperata(active, vector, :max-segmenti)` | massimo ACTIVE + insieme completo dei CLOSED; fonti ancora aperte |
 | `verifica-closed-completi(control, vector, :max-segmenti)` | tutti e soli i vecchi CLOSED, una volta per ID, con stesso CONTROL, P e file aperti |
 | `pubblica-control-con-closed(prepared, active, vector, :max-segmenti)` | verifica l'insieme prima del claim, poi delega a `pubblica-control-da-active` |
 
@@ -65,7 +67,9 @@ passaggio ricontrolla gli header senza ricalcolare i CRC dei documenti.
 Nessun accesso a `multiserie.log`. Zero presente è distinto dall'assenza;
 nessun troncamento dei bit alti. Ogni TXID prepared è classificato una volta:
 `prepared = locali + solo-EDIT + abort`. OUTCOME o esiti EDIT senza prepared
-nel prefisso non creano versioni o nuovi commit. I metadati del manifest
+nel prefisso non creano versioni o nuovi commit. Tutti gli OUTCOME, anche
+orfani, sono confrontati con l'eventuale EDIT omonimo: prove discordanti
+impediscono il risultato e il massimo CSN. I metadati del manifest
 restano intatti e non vengono scartati.
 
 Per origine compaction si riusa il verificatore integrale esistente: solo
@@ -117,7 +121,9 @@ EDIT sono già canonici dal replay CONTROL.
 La capacità I/O ammette `max(64, min(P-64, chunk))` byte per trasferimento.
 Header e `ceiling((P-64)/chunk)` trasferimenti esatti; ogni byte letto una
 volta. Writer: verifica CRC integrale, poi visita limitata a lotti+record
-e query per TXID distinti. Compaction: codec integrale delle cornici.
+e query EDIT per OUTCOME distinti prima della classificazione dei prepared.
+Il fold EDIT verifica valori u64 e cardinalità attraversata. Compaction:
+codec integrale delle cornici.
 Workspace semantico con hash table del parser canonico, limitato da
 prepared/OUTCOME; non viene trattenuto dal risultato. Il controllo insieme
 usa una tabella privata e lavoro medio O(N). Nessuna misura di heap zero,
@@ -132,7 +138,7 @@ RSS, latenza o throughput. Nessun nuovo lock o scrittura condivisa tra Serie.
 | CDR-D03 | chunk positivo e P almeno header nel lettore corpo | ciascuna falsa, entrambe vere; chunk corto/esatto |
 | CDR-D04 | progresso/fine/stamp/durable del lotto | ciascun risultato impossibile, tutti coerenti; budget al limite |
 | CDR-D05 | fine/versione/count/budget compaction | ogni discordanza separata; prepared/OUTCOME/SEAL rifiutati |
-| CDR-D06 | OUTCOME presente, EDIT presente, CSN diverso | ogni combinazione delle prove, zero e bit alti |
+| CDR-D06 | EDIT presente e CSN diverso per ogni OUTCOME; poi presenza locale/EDIT per prepared | ogni combinazione, anche OUTCOME orfani, zero e bit alti |
 | CDR-D07 | stato CLOSED e P uguale nell'insieme | ciascuna falsa, entrambe vere |
 | CDR-G01 | preflight e identità prima del corpo | alias, scratch, backend, stato e budget; UUID/ID/CRC/riservati/origine |
 | CDR-G02 | prefisso esatto | metà lotto, corruzione prima di P, file corto, coda dopo P intatta/non letta |
@@ -140,8 +146,13 @@ RSS, latenza o throughput. Nessun nuovo lock o scrittura condivisa tra Serie.
 | CDR-G04 | copertura del manifest | mancante/extra/duplicato, altro CONTROL, FD chiuso, vettore vuoto, ID zero/u64 alto |
 | CDR-G05 | ingresso publisher | rifiuti prima del claim senza effetti, stesso gettone e guasti canonici dopo il claim |
 
-Le [evidenze locali](../../spikes/results/2026-10-15-closed-recovery/README.md)
-riguardano compilazione e controlli statici. Qualifica C1, revisione
-indipendente, casi funzionali/FI e misure dei nuovi ingressi restano aperti.
+Le [prime evidenze locali](../../spikes/results/2026-10-15-closed-recovery/README.md)
+riguardano compilazione e controlli statici. La
+[campagna dedicata](../../spikes/results/2026-10-16-closed-verifica/report.md)
+conserva 69 test composti, FI, prove native e revisione statica.
+Qualifica C1/MC/DC e misure dei nuovi ingressi restano aperte.
 Le prove dei parser preesistenti non qualificano automaticamente il nuovo
 binding CLOSED/CONTROL, la risoluzione EDIT o il controllo dell'insieme.
+Il [metodo della verifica dedicata](closed-recuperato-verifica.md) definisce
+oracoli, matrici funzionali, prove native, copertura e conservazione della
+campagna successiva, mantenendo distinti esiti eseguiti e requisiti aperti.

@@ -71,3 +71,12 @@ Nessun nuovo benchmark previsto. Tempi del recorder includono compilazione
 e fixture, sotto carico esterno incontrollato: non sono throughput DB,
 scalabilità, RSS o heap zero. La scansione del piano resta lavoro di
 bootstrap; il costo e la completezza del catalogo sono obblighi distinti.
+
+## Esiti conservati
+
+La [campagna 2026-10-16](../../spikes/results/2026-10-16-archivio-csn-verifica/report.md)
+conserva 54 test superati, la diagnostica fallita e la correzione delle
+fixture, copertura e controllo completo sulla revisione integrata.
+Solo modulo: 267/301 forme e 34/36 rami; nove file grezzi di modulo e
+contesto: 589/736 forme e 57/74 rami. Nessun residuo è escluso dal totale;
+assenza di MC/DC o qualifica C1 mantenuta esplicita nel report.

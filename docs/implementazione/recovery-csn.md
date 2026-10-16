@@ -115,9 +115,10 @@ il massimo non sostituisce le prove di commit né produce scritture fra Serie.
 | CSR-D09 | DECISION senza prepared locale, duplicati identici, ordine TXID diverso dall'ordine CSN |
 | CSR-D10 | Registro unico, base M, prima assegnazione M+1, esaurimento senza wrap |
 
-Il [metodo e registro della campagna](../../spikes/results/2026-10-15-recovery-csn/README.md)
-separano compilazione, controlli statici e letture dell'autore dalle prove
-funzionali. Non sono stati aggiunti o eseguiti test locali per questo
-incremento. Restano aperti casi dedicati, MC/DC, fault injection,
-allocazioni/prestazioni e revisione indipendente. I test preesistenti dei
-reader e la CI automatica non qualificano questi nuovi calcoli.
+Le [prime evidenze](../../spikes/results/2026-10-15-recovery-csn/README.md)
+separavano compilazione, controlli statici e letture dell'autore dalle prove
+funzionali. Le campagne dedicate [CLOSED/Serie](../../spikes/results/2026-10-16-closed-verifica/report.md)
+e [piano Archivio](../../spikes/results/2026-10-16-archivio-csn-verifica/report.md)
+conservano test funzionali, FI, prove native, revisione e copertura grezza,
+con i rispettivi confini. Restano MC/DC/C1, allocazioni/prestazioni e
+integrazione del controller/registro unico; la CI non chiude questi obblighi.

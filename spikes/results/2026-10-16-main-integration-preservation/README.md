@@ -27,3 +27,8 @@ registri `make check` riusciti e stabili: locale, Linux e macOS. Lo
 [script riproducibile](raw/verify-record-inputs.lisp.txt) verifica anche che tutti
 gli ingressi correnti siano coperti; documentazione e cataloghi sono controllati
 separatamente dopo l’integrazione.
+
+Il [controllo precedente alla correzione](pre-fix-documentation-check.lisp)
+conserva il fallimento del catalogo CI: il riferimento annidato non rispettava
+il vincolo sui nomi di file del verificatore. La correzione aggiunge alias
+byte per byte nella radice del catalogo CI e conserva gli originali.

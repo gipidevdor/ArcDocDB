@@ -12,3 +12,8 @@ Questa copia non costituisce un secondo audit indipendente.
 
 Si tratta della verifica del documento progettuale; nessuna attivazione
 della nuova CI o misura prestazionale del prodotto è attestata.
+
+Il catalogo usa anche `producer-report.lisp` e `producer-conservazione.lisp`,
+copie identiche nella radice compatibili con il vincolo sui nomi del verificatore.
+`catalog-aliases.lisp` registra dimensioni e SHA-256 delle due coppie; gli
+originali nella directory `producer/` restano conservati.

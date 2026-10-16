@@ -358,7 +358,7 @@
       (p:pubblica-chiave-indice primary (p:frammento-corrente-indice primary high)
                                key 0 (length key) high low words (p:crea-contesto-indice)))))
 
-(defun rba-commit (runtime entry native deadline version number id expected)
+(defun rba-commit (runtime entry deadline version number id expected)
   "Primo lotto reale: M+1 nel token, poi written, durable, root e H; oracolo file bytewise."
   (destructuring-bind (prepared view controller lease source sources previous) entry
     (let* ((log (arcdocdb.active:log-segmento-attivo-preparato prepared))
@@ -465,7 +465,7 @@
                    (setf entries (nreverse entries))
                    (loop for entry in entries for number from 1 for id from 13
                          do (ct::native-bounded deadline :runtime-active-first-commit
-                              (lambda () (rba-commit runtime entry native deadline version number id
+                              (lambda () (rba-commit runtime entry deadline version number id
                                                      (+ maximum number)))))
                    (rba-frontiers runtime (+ maximum 2) (+ maximum 2))
                    (setf snapshot (mvcc:crea-contesto-snapshot (r:snapshot-runtime-archivio runtime)))

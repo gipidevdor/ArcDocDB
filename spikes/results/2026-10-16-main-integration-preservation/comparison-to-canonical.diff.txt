@@ -1,0 +1,162 @@
+diff --git a/spikes/results/2026-10-16-main-integration-preservation/raw/arcdocdb-preexisting-copy.asd.txt b/arcdocdb.asd
+index f20f1395..6d988741 100644
+--- a/spikes/results/2026-10-16-main-integration-preservation/raw/arcdocdb-preexisting-copy.asd.txt
++++ b/arcdocdb.asd
+@@ -41,7 +41,18 @@
+                              (:file "analysis-space") (:file "analysis-properties")
+                              (:file "analysis-nfc") (:file "analysis-word-context")
+                              (:file "analysis-word-rules") (:file "analysis-emit")
+-                             (:file "analysis")))
++                             (:file "analysis") (:file "index-package") (:file "index-build")
++                             (:file "index-sort") (:file "index-step") (:file "index-lookup")
++                             (:file "codec-package") (:file "meta-read") (:file "meta-fields")
++                             (:file "descriptor") (:file "codec-space") (:file "codec-input")
++                             (:file "codec-run") (:file "codec-plan") (:file "codec-write-entries")
++                             (:file "codec-write") (:file "codec-read-base") (:file "codec-read-lengths")
++                             (:file "codec-read-term") (:file "codec-read-postings") (:file "codec-read-dict")
++                             (:file "codec-view") (:file "codec-query")
++                             (:file "document-package") (:file "document-config-input") (:file "document-config")
++                             (:file "document-space") (:file "document-start") (:file "document-paths")
++                             (:file "document-scan") (:file "document-analysis") (:file "document-bound")
++                             (:file "document")))
+                (:module "csn" :serial t
+                 :components ((:file "package") (:file "registry")))
+                (:module "cache" :serial t
+@@ -67,8 +78,10 @@
+                (:module "io" :serial t
+                 :components ((:file "package") (:file "types") (:file "identity-types")
+                              (:file "native") (:file "native-namespace") (:file "native-directory")
++                             (:file "native-open-relative")
+                              (:file "lifecycle") (:file "identity") (:file "directory")
+-                             (:file "rename") (:file "namespace") (:file "transfer") (:file "flush")))
++                             (:file "rename") (:file "namespace") (:file "open-relative")
++                             (:file "transfer") (:file "flush")))
+                (:module "wal" :serial t
+                 :components ((:file "package") (:file "types") (:file "builder")
+                              (:file "group") (:file "executor") (:file "csn")))
+@@ -117,7 +130,7 @@
+                              (:file "manifest-build") (:file "manifest-query") (:file "manifest-transition")
+                              (:file "inventory-types") (:file "inventory-build")
+                              (:file "inventory-query") (:file "inventory-id")
+-                             (:file "inventory-directory")))
++                             (:file "inventory-directory") (:file "inventory-directory-id")))
+                (:module "get-resolver" :serial t
+                 :components ((:file "package") (:file "types") (:file "scan") (:file "sort")
+                              (:file "rows") (:file "build") (:file "read")
+@@ -148,7 +161,13 @@
+                (:module "recovery-closed" :serial t
+                 :components ((:file "package") (:file "types") (:file "read") (:file "verify")
+                              (:file "resolve") (:file "csn") (:file "build") (:file "publication")
+-                             (:file "csn-serie"))))
++                             (:file "csn-serie")))
++               (:module "recovery-archive-csn" :serial t
++                :components ((:file "package") (:file "types") (:file "series") (:file "preflight")
++                             (:file "build") (:file "query")))
++               (:module "runtime" :serial t
++                :components ((:file "package") (:file "types") (:file "preflight")
++                             (:file "query") (:file "build") (:file "active"))))
+   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
+ 
+ (defsystem "arcdocdb/tests"
+@@ -168,7 +187,14 @@
+                (:module "fulltext" :serial t
+                 :components ((:file "format-support") (:file "format")
+                              (:file "format-guards") (:file "format-threads")
+-                             (:file "analysis-support") (:file "analysis-conformance") (:file "analysis")))
++                             (:file "analysis-support") (:file "analysis-conformance") (:file "analysis")
++                             (:file "index") (:file "allocation-threads")
++                             (:file "codec-support") (:file "codec")
++                             (:file "codec-corruption") (:file "codec-guards")
++                             (:file "codec-differential")
++                             (:file "document-support") (:file "document") (:file "document-guards")
++                             (:file "document-differential")
++                             (:static-file "minimum-v2.hex")))
+                (:module "codec" :serial t
+                 :components ((:file "support") (:file "utf8") (:file "threads")
+                              (:file "cbor-support") (:file "cbor-header") (:file "cbor-threads")
+@@ -233,7 +259,8 @@
+                (:module "io" :serial t
+                 :components ((:file "support") (:file "transfer") (:file "native")
+                              (:file "rename") (:file "rename-native") (:file "flush-failure")
+-                             (:file "transfer-failure")))
++                             (:file "transfer-failure") (:file "open-relative-support")
++                             (:file "open-relative") (:file "open-relative-native")))
+                (:module "control" :serial t
+                 :components ((:file "support") (:file "publication") (:file "native")
+                              (:file "recovery-read") (:file "recovery-publication") (:file "recovery-guards")))
+@@ -246,7 +273,7 @@
+                              (:file "inventory-support") (:file "inventory")
+                              (:file "inventory-id")
+                              (:file "inventory-directory-support") (:file "inventory-directory")
+-                             (:file "inventory-directory-native")))
++                             (:file "inventory-directory-native") (:file "inventory-directory-id")))
+                (:module "recovery-active" :serial t
+                 :components ((:file "support") (:file "read") (:file "semantics") (:file "publication")))
+                (:module "recovery-archive" :serial t
+@@ -256,12 +283,21 @@
+                (:module "recovery-active-checkpoint" :serial t
+                 :components ((:file "support") (:file "semantics") (:file "guards")
+                              (:file "publication")))
++               (:module "recovery-closed" :serial t
++                :components ((:file "support") (:file "read") (:file "semantics")
++                                  (:file "csn") (:file "publication") (:file "guards")))
++               (:module "recovery-archive-csn" :serial t
++                :components ((:file "support") (:file "set") (:file "plan") (:file "native")
++                             (:file "guards")))
++               (:module "runtime" :serial t
++                :components ((:file "support") (:file "bootstrap") (:file "threads")
++                             (:file "native") (:file "guards") (:file "adoption")))
+                (:module "wal" :serial t
+                 :components ((:file "support") (:file "builder") (:file "group") (:file "fault")
+                              (:file "native") (:file "csn") (:file "csn-threads")))
+                (:module "series" :serial t
+                 :components ((:file "support") (:file "controller") (:file "boundaries") (:file "threads")
+-                             (:file "worker-bridge") (:file "worker-routing")))
++                             (:file "worker-bridge") (:file "worker-routing") (:file "log-binding")))
+                (:module "index" :serial t
+                 :components ((:file "slot-support") (:file "slots") (:file "slot-threads")
+                              (:file "primary-support") (:file "primary") (:file "primary-threads")
+@@ -274,6 +310,8 @@
+              (uiop:symbol-call '#:arcdocdb.foundation.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.fulltext.format.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.fulltext.analysis.tests '#:run)
++             (uiop:symbol-call '#:arcdocdb.fulltext.codec.tests '#:run)
++             (uiop:symbol-call '#:arcdocdb.fulltext.document.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.utf8.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.cbor.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.cbor.minimal.tests '#:run)
+@@ -307,6 +345,9 @@
+              (uiop:symbol-call '#:arcdocdb.recovery.archive.tests '#:run)
+ 
+              (uiop:symbol-call '#:arcdocdb.recovery.active.checkpoint.tests '#:run)
++             (uiop:symbol-call '#:arcdocdb.recovery.closed.tests '#:run)
++             (uiop:symbol-call '#:arcdocdb.recovery.archive.csn.tests '#:run)
++             (uiop:symbol-call '#:arcdocdb.runtime.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.wal.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.series.tests '#:run)
+              (uiop:symbol-call '#:arcdocdb.index.slots.tests '#:run)
+
+src/codec/package 2.lisp -> src/codec/package.lisp: byte-identical
+
+diff --git a/spikes/results/2026-10-16-main-integration-preservation/raw/codec-utf8-preexisting-copy.lisp.txt b/src/codec/utf8.lisp
+index badbbff5..e2339f23 100644
+--- a/spikes/results/2026-10-16-main-integration-preservation/raw/codec-utf8-preexisting-copy.lisp.txt
++++ b/src/codec/utf8.lisp
+@@ -1,4 +1,4 @@
+-;;;; UTF-8 rigoroso secondo RFC 3629, senza decodifica o normalizzazione.
++;;;; UTF-8 rigoroso secondo RFC 3629: verifica e lettura di scalari, senza normalizzazione.
+ ;;; OWNER: chiamante; BUFFER resta immutabile per l'intera verifica.
+ ;;; SHARED: sola lettura del buffer; cursore e conteggio locali a ogni chiamata.
+ (in-package #:arcdocdb.utf8)
+@@ -101,7 +101,8 @@ UTF-8 invalido o vuoto. Nessuna allocazione, modifica, normalizzazione o locale.
+   (when (= start end) (error 'corruption-detected :reason :utf8-truncated :offset end))
+   (let* ((bytes (the octets buffer)) (begin (the index start))
+          (next (verifica-carattere-utf8 bytes begin end)) (width (- next begin))
+-         (cp (logand (aref bytes begin) (case width (1 #x7f) (2 #x1f) (3 #x0f) (otherwise 7)))))
++         (cp (logand (aref bytes begin) (case width (1 #x7f) (2 #x1f) (3 #x0f) (4 7)
++                                         (otherwise (error 'invariant-violation :reason :utf8-scalar-width))))))
+     (loop for position from (1+ begin) below next do
+       (setf cp (logior (ash cp 6) (logand (aref bytes position) 63))))
+     (unless (<= 0 cp #x10ffff) (error 'invariant-violation :reason :utf8-scalar-result))
+
+docs/adr/0055-interfaccia-locale-unix-socket 2.md -> docs/adr/0055-interfaccia-locale-unix-socket.md: byte-identical

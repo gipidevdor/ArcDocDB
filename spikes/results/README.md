@@ -3,6 +3,10 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+La [conservazione dell’integrazione completa](2026-10-16-main-integration-preservation/README.md)
+verifica i branch originali e tutte le HEAD dei worktree; conserva le quattro
+copie locali e confronta gli ingressi del prodotto con i registri locali, Linux e macOS.
+
 L'[adozione ACTIVE del 2026-10-16](2026-10-16-runtime-active/report.md)
 conserva 19 nuove prove, 147 test runtime/Serie, controller unico per log,
 due Serie con commit durevoli e snapshot comune, copertura e due fallimenti

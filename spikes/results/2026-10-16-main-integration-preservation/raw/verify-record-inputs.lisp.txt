@@ -1,0 +1,59 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(declaim (optimize (safety 3) (debug 3)))
+
+(defun verification-input-p (path)
+  (or (member path '("Makefile" "arcdocdb.asd") :test #'string=)
+      (some (lambda (prefix) (uiop:string-prefix-p prefix path))
+            '("src/" "tests/" "tools/" "data/" ".github/" "spikes/SPK-"))))
+
+(defun git-output (&rest args)
+  (string-trim '(#\Newline #\Return)
+               (uiop:run-program (cons "git" args) :output :string :error-output :string)))
+
+(defun nonempty-lines (text)
+  (remove "" (uiop:split-string text :separator '(#\Newline)) :test #'string=))
+
+(let* ((records '("spikes/results/2026-10-16-fulltext-document-final-check/report.lisp"
+                  "spikes/results/2026-10-16-fulltext-document-ci-linux/report.lisp"
+                  "spikes/results/2026-10-16-fulltext-document-ci-macos/report.lisp"))
+       (current (remove-if-not
+                 #'verification-input-p
+                 (remove "" (uiop:split-string (git-output "ls-files" "-z")
+                                               :separator '(#\Null)) :test #'string=)))
+       (results nil))
+  (dolist (path records)
+    (let* ((record (arcdocdb.evidence:read-evidence path))
+           (entries (remove-if-not
+                     (lambda (entry) (verification-input-p (getf entry :path)))
+                     (getf record :source-blobs-after)))
+           (paths (mapcar (lambda (entry) (getf entry :path)) entries))
+           (hashes (nonempty-lines (apply #'git-output "hash-object" "--" paths))))
+      (assert (and (eq (getf record :status) :ok)
+                   (eql (getf record :exit-code) 0)
+                   (eq (getf record :source-consistency) :stable)))
+      (assert entries)
+      (assert (= (length entries) (length hashes)))
+      (dolist (name current)
+        (assert (member name paths :test #'string=) () "Unverified current input ~A" name))
+      (loop for entry in entries for actual in hashes do
+        (assert (equal (getf entry :git-blob) actual) ()
+                "Input differs from successful run: ~A / ~A" path (getf entry :path)))
+      (push (list :record path :status :ok :source-consistency :stable
+                  :original-command (getf record :command)
+                  :original-commit (getf (getf record :environment) :commit)
+                  :matching-inputs (length entries) :all-current-inputs-covered t)
+            results)))
+  (let ((result (list :schema-version 1 :kind :integration-verification-input-audit
+                      :status :ok :main-at-audit (git-output "rev-parse" "HEAD")
+                      :script-blob (git-output "hash-object" "--" (namestring *load-truename*))
+                      :current-input-count (length current) :checks (nreverse results)
+                      :scope '("src/" "tests/" "tools/" "data/" ".github/" "spikes/SPK-"
+                               "Makefile" "arcdocdb.asd")
+                      :limits '(:exact-git-blob-comparison :documentation-checked-separately
+                                :no-new-runtime-execution :no-engine-qualification-promotion))))
+    (with-open-file (stream "spikes/results/2026-10-16-main-integration-preservation/verification-inputs.lisp"
+                            :direction :output :if-exists :error)
+      (let ((*print-readably* t)) (write result :stream stream :pretty t) (terpri stream)))
+    (format t "Three successful make-check records match all ~D current verification inputs.~%"
+            (length current))))

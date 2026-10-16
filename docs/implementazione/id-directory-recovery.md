@@ -3,7 +3,7 @@
 > Metodo preregistrato il 2026-10-16, prima dell'implementazione.
 > Incremento C1 di composizione; nessuna chiusura del Recovery Manager.
 
-## Contratto previsto
+## Contratto
 
 `scegli-id-segmento-recovery-directory(manifest, directory, …)` restituisce
 tre valori: proposta ID u64, high-water successivo u64 e piano posseduto.
@@ -90,7 +90,55 @@ la revisione indipendente e la qualifica complessiva restano aperte.
 | 6. Uscita | Tre valori; guardie comuni per high-water, freschezza e successore |
 | 7. Decisioni | RID e IND riusate; nessuna nuova decisione composta |
 | 8. Proprietà | Parent prestato e controller esclusivo; piani e fixture privati |
-| 9. Tracciabilità/check | Requisiti esistenti; esecuzioni e controllo completo da registrare |
+| 9. Tracciabilità/check | Requisiti esistenti; controllo completo e integrazioni registrati nei risultati sotto |
 | 10. Deviazioni | Nessuna esclusione prevista; denominatore nativo conservato |
 | 11. Fra Serie | Nessun nuovo lock, thread, contatore o coordinamento condiviso |
 | 12. Atomicità | Nessun nuovo effetto durevole; creazione esclusiva/EDIT restano al caller |
+
+## Risultati del 2026-10-16
+
+La [raccolta originale](../../spikes/results/2026-10-16-recovery-directory-id/README.md)
+conserva metodo preregistrato, varianti, nove registri di comando, copertura,
+log dei mutanti e originali degli spike. Il primo tentativo è fallito in
+compilazione per una parentesi in eccesso nel nuovo test high-water, corretta
+nel commit successivo; non ha prodotto una misura di copertura valida.
+
+La suite recovery passa con **154 test**, dieci dei quali nuovi. L'oracolo
+indipendente confronta 6.144 proposte e tutti i piani, contando una sola
+enumerazione per chiamata. Sono esercitati u64, cinque budget, input errati,
+errori originali, ownership e 64 chiamate su quattro backend iniettati privati.
+Le prove native mantengono byte e capacità, riusano la directory e distinguono
+il FD originale da un namespace sostitutivo dopo la rinomina del parent.
+
+La campagna di mutazione ha baseline riuscita e **17/17 mutanti rilevati**,
+nessun errore di compilazione, sopravvissuto o guasto worker. Gli ultimi sei
+mutanti alterano ciascuno dei cinque budget o aggiungono una enumerazione;
+falliscono nei test dedicati di budget o nel modello a enumerazione unica.
+Quattro processi isolati al massimo, con copie e cache private.
+
+Copertura nativa: `inventory-id.lisp` **74/81 forme e 10/10 rami**;
+`inventory-directory-id.lisp` **18/26 forme e 0/0 rami**. Totale **92/107
+forme e 10/10 alternative**, senza esclusioni. Otto forme di package/declaim
+e sette inizializzatori keyword restano non marcati, anche quando i default
+sono esercitati dalle chiamate senza opzioni. Il lettore C4 con self-test
+confronta dati nativi e HTML; il denominatore grezzo resta conservato.
+La misura non viene estesa al planner o alle dipendenze I/O.
+
+La prova verticale con nomi canonici passa: 16 scenari positivi, due negativi,
+71 processi e 26 SIGKILL. Il checkpoint preparato conserva il temporaneo
+orfano e la nuova API ne supera l'ID; i segmenti originali restano immutati.
+
+`make check` passa sul commit `4ebde6fc9ad1395b94e614049593ad4821079319`:
+1.780 test nominati, due smoke, controlli statici/documentali, conservazione
+e dieci spike. Dopo l'integrazione del piano CSN dell'Archivio, l'intera suite
+e i controlli sorgenti/documentali passano nuovamente su `4031944b`, con 1.780
+test e 260 file di prodotto senza violazioni; anche il controllo degli
+archivi aggiornati è riuscito. I file di questa selezione e i suoi test
+restano identici alla versione misurata.
+
+L'ulteriore correzione CI del clock nella fixture CBOR non cambia codice di
+prodotto: compilazione rigorosa, suite CBOR interessata e controlli
+documentali sono ripetuti su `4c7a0ca7`. I registri restano distinti, tutti
+STABLE; gli aggiornamenti finali dei risultati non cambiano codice o test.
+Queste prove non chiudono la qualifica indipendente, il Recovery Manager o
+le verifiche dedicate dei calcoli CSN dell'Archivio.

@@ -86,6 +86,12 @@ revisione del progetto o benchmark.
 | INV-P3 | Le Serie sono isolate nel carico: il traffico su una Serie non impedisce scritture, query o compaction controllata sulle altre. | Parallelismo | benchmark (burst) |
 | INV-P4 | Priorità: traffico utente > WAL/durability > CLEAN necessario > MERGE opportunistico. | Compaction scheduler dinamico | benchmark, test della policy |
 
+## Interfacce
+
+| ID | Invariante | Fonte | Verifica |
+|---|---|---|---|
+| INV-N1 | L'interfaccia client predefinita è un socket Unix locale di tipo stream; TCP richiede attivazione esplicita e non è mai un ripiego automatico in caso di errore locale. | [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md) | configurazione predefinita, indisponibilità del socket, nessun listener o tentativo TCP implicito (prove da realizzare) |
+
 ## Metodo
 
 | ID | Invariante | Fonte | Verifica |

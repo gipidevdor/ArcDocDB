@@ -24,7 +24,7 @@ identificativi `M01…M18` seguono l'ordine della specifica.
 | M13 | Scheduler | Controllo del carico: request scheduler e Compaction Scheduler | [10](10-concorrenza-e-scheduling.md) |
 | M14 | Dynamic Thread Pool | Worker riutilizzati, dimensionamento dinamico | [10](10-concorrenza-e-scheduling.md#thread-pool-dinamico) |
 | M15 | Query Engine | Esecuzione di query su indici e scansioni; predicati full text e frasi combinati con filtri, nella stessa vista MVCC | [08](08-indici.md) |
-| M16 | Network/Protocol Layer | Connessioni e protocollo | — (QA-20) |
+| M16 | Network/Protocol Layer | Socket Unix locale prioritario, connessioni, framing CBOR e ammissione; TCP opzionale successivo | [Interfacce](architettura.md#interfacce), [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md) |
 | M17 | Archivio/Serie/Documento Catalog Manager | Catalogo in `Registri/catalog/`, transazionale | [02](02-modello-logico.md#catalogo) |
 | M18 | SIMD/Hot Path Optimization Layer | Primitive ottimizzate per gli hot path | [15](15-ottimizzazioni-native.md) |
 

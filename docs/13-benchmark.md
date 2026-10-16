@@ -44,6 +44,23 @@ Nei confronti con altri sistemi l'hardware DEVE essere identico.
 Throughput; P50, P95, P99; CPU; RAM; cache hit rate; WAL bandwidth; fsync latency; NVMe
 bandwidth; queue depth; compaction throughput; numero di worker; contention; GC di SBCL.
 
+## Interfaccia locale Unix socket
+
+> **Deciso ([ADR-0055](adr/0055-interfaccia-locale-unix-socket.md))** — Il percorso
+> client/server di riferimento per il primo impiego NNTP usa un socket Unix locale.
+> Implementazione e misure sono future; non si attribuisce un vantaggio numerico a UDS.
+
+Dopo le [prove di correttezza](affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket),
+misurare con client e database in processi distinti sulla stessa macchina:
+throughput, p50/p95/p99 dell'intera richiesta, CPU, copie, allocazioni/GC,
+memoria dei buffer, richieste in volo e tempo di ammissione. Variare dimensione
+dei frame, numero di connessioni, multiplexing e client lenti; misurare anche
+l'isolamento delle altre Serie sotto saturazione. Registrare percorso, permessi,
+budget, scadenze, operazioni disponibili e durability insieme all'ambiente.
+I benchmark del solo motore escludono il costo del trasporto e si riportano
+separatamente. Un futuro confronto con TCP deve mantenere gli stessi frame,
+operazioni, concorrenza e garanzie di conferma.
+
 ## Ricerca full text
 
 > **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Campagna futura

@@ -298,6 +298,20 @@
   :txt "Un atomic swap incompleto è riconoscibile durante il recovery."
   :inv ("INV-C7") :adr ("ADR-0018" "ADR-0040") :ver (:model :fi) :fi ("FI-06"))
 
+ ;; ---- Interfaccia locale ---------------------------------------------------
+ (:id "REQ-IPC-001" :src "ADR-0055" :cls "C2" :stato :progettato
+  :txt "L'interfaccia client predefinita usa un socket Unix stream con percorso assoluto configurabile per istanza; TCP è opzionale, successivo e disabilitato per default, senza ripiego automatico su errori locali. La prima integrazione M16 segue avvio, recovery e ammissione e precede il completamento query/TCP."
+  :inv ("INV-N1") :adr ("ADR-0055") :ver (:test :rev) :fi ())
+ (:id "REQ-IPC-002" :src "ADR-0055" :cls "C1" :stato :progettato
+  :txt "Il trasporto locale usa frame u32 più CBOR, versione e identificativi multiplexati; gestisce trasferimenti parziali e verifica limiti prima di allocazione e ammissione. Connessioni, richieste, buffer e attese sono limitati; client lenti non trattengono epoche EBR né bloccano writer o worker di calcolo."
+  :inv ("INV-A8" "INV-P5" "INV-P6") :adr ("ADR-0029" "ADR-0045" "ADR-0048" "ADR-0055") :ver (:test :fuzz :model :bench :rev) :fi ())
+ (:id "REQ-IPC-003" :src "ADR-0055" :cls "C2" :stato :progettato
+  :txt "Il listener locale verifica percorso, directory runtime, proprietario e accesso ristretto prima dell'esposizione; un nome occupato fallisce senza rimozioni automatiche all'avvio. L'arresto rimuove soltanto il nodo ancora identificato come proprio in una directory protetta; gli orfani richiedono intervento esplicito."
+  :inv () :adr ("ADR-0055") :ver (:test :rev) :fi ())
+ (:id "REQ-IPC-004" :src "ADR-0055" :cls "C1" :stato :progettato
+  :txt "La conferma sul socket locale segue pubblicazione e durability del motore; il traffico applicativo è ammesso dopo recovery. Una disconnessione non annulla commit decisi né ripete scritture: risposta persa significa esito potenzialmente ignoto al client, senza deduplicazione implicita degli ID di richiesta."
+  :inv ("INV-D1" "INV-V1" "INV-V5" "INV-A11") :adr ("ADR-0037" "ADR-0041" "ADR-0055") :ver (:test :diff :model :fi :rev) :fi ("FI-01" "FI-02" "FI-05"))
+
  ;; ---- Osservabilità, benchmark, fault injection, nativo, moduli --------------
  (:id "REQ-OBS-001" :src "Osservabilità" :cls "C3" :stato :progettato
   :txt "Sono esposte le metriche di richiesta: throughput, P50, P95, P99, P99.9."

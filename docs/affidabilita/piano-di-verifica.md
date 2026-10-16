@@ -66,6 +66,28 @@ verificato in revisione e dai test di mutazione sugli operatori logici.
     revisione controlla che l'elenco di ciò che le Serie condividono resti quello di
     [architettura](../architettura.md#archivio-coordinamento-minimo).
 
+## Interfaccia locale Unix socket
+
+[ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md) aggiunge
+REQ-IPC-001…REQ-IPC-004 e INV-N1, tutti ancora **progettati**.
+Le prove esistenti del motore non verificano un listener o un client locale.
+La prima integrazione M16, anticipata nella [roadmap](../roadmap.md), deve
+produrre queste evidenze con due processi reali e I/O iniettabile:
+
+| Requisito | Evidenza da realizzare |
+|---|---|
+| REQ-IPC-001 — trasporto e priorità | Configurazione predefinita con solo socket Unix, percorso esplicito, errore su socket assente/inaccessibile e nessun tentativo o listener TCP implicito; prima integrazione delle operazioni disponibili indipendente dal completamento query/TCP |
+| REQ-IPC-002 — framing e ammissione | Header/corpo ricevuti a frammenti, frame accorpati, invii parziali, versione e lunghezze errate, CBOR malformato, correlazione delle risposte fuori ordine; massimo documento più envelope; saturazione di ogni limite e client lento con traffico su un'altra Serie, senza epoche trattenute né starvation |
+| REQ-IPC-003 — risorse runtime | Percorsi mancanti, invalidi o troppo lunghi, account ammessi e negati, directory con proprietario/permessi errati; nome occupato da listener, socket orfano, file o link, sempre preservato all'avvio; arresto e nodo sostituito; crash e riavvio con diagnostica dell'orfano |
+| REQ-IPC-004 — confini del commit | Disconnessione prima dell'ammissione, durante il commit e dopo pubblicazione prima della risposta; confronto con l'oracolo durevole dopo riapertura, nessun replay alla riconnessione, nessuna conferma anticipata e nessun traffico applicativo prima del recovery |
+
+Framing e ordinamento si esplorano su modelli finiti e con fuzzing del decoder;
+gli scenari FI-01/FI-02/FI-05 sono ripetuti attraversando il socket locale.
+Le verifiche di accesso devono usare identità distinte sulla piattaforma di
+riferimento. Si applicano copertura, revisione e metodi delle classi assegnate.
+Le misure del [percorso locale](../13-benchmark.md#interfaccia-locale-unix-socket)
+seguono le prove di correttezza e restano distinte dai benchmark del solo motore.
+
 ## Ricerca full text
 
 [ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) aggiunge

@@ -26,7 +26,12 @@ la base CSN per una sola Serie con record ordinari; il coordinamento resta
 nel test. Recovery Manager, frontiera dell'intero Archivio e ammissione
 del traffico restano lavoro di prodotto.
 
-La priorità di sviluppo è trasferire questa composizione nel motore:
+La priorità di sviluppo è trasferire questa composizione nel motore e renderla
+accessibile localmente. [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md)
+fissa il **socket Unix locale come interfaccia predefinita e prioritaria** per
+il primo impiego NNTP: la prima integrazione M16 segue avvio, recovery e
+ammissione, senza attendere il completamento delle fasi 8–9. TCP è opzionale
+e successivo. Listener e client locale restano da implementare.
 
 Il primo passo di prodotto è la [scelta dell'ID del nuovo segmento](implementazione/id-segmento-recovery.md):
 proposta pura dal manifest e dall'inventario completo, usata anche dalla
@@ -43,8 +48,9 @@ canonici; il suo limite di otto ID non limita l'inventario di prodotto.
 |---|---|---|
 | 1 | Apertura e recovery di una Serie nel prodotto | Inventario generale, identità, ownership delle capacità e fallimenti a ogni passo |
 | 2 | Ricostruzione CSN dell'Archivio e ammissione | Tutte le Serie e decisioni durevoli, pendenti risolti, registro unico per scritture e snapshot |
-| 3 | Percorso completo concorrente | Pubblicazione coerente indice/radice, isolamento, MVCC e multiserie |
-| 4 | Qualifica di carico | Pool persistente, crash ripetuti, GC e P99 sulla piattaforma di riferimento |
+| 3 | Prima integrazione M16 su socket Unix locale, con le operazioni fondamentali disponibili | Due processi, framing CBOR, directory e permessi, collisioni, limiti, client lento e risposta persa; [piano di verifica](affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket) |
+| 4 | Percorso completo concorrente | Pubblicazione coerente indice/radice, isolamento, MVCC e multiserie, esposti anche al client locale quando disponibili |
+| 5 | Qualifica di carico | Pool persistente, crash ripetuti, GC e P99 sulla piattaforma di riferimento, includendo il socket Unix |
 
 Questi incrementi non anticipano la chiusura dei gate della Fase 0.
 
@@ -162,7 +168,7 @@ si definisce alla chiusura della Fase 0.
 | 6 | Transazioni multiserie e `multiserie.log` | M09, M10 | FI-03, FI-04, FI-05, FI-12 |
 | 7 | MERGE, low-load policy, Compaction Scheduler | M11, M13 | FI-08, benchmark di interferenza |
 | 8 | Indici secondari, **ricerca full text con indici invertiti dedicati** e Query Engine ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) | M06, M15 | confronto con scansione, snapshot/update/delete, build/rebuild, corruzione e budget; [campagna full text](13-benchmark.md#ricerca-full-text) |
-| 9 | Protocollo di rete e server | M16 | — |
+| 9 | Completamento protocollo/server M16 e trasporto TCP opzionale; prima integrazione Unix socket già anticipata dopo avvio/recovery/ammissione (ADR-0055) | M16 | stessa semantica e stessi limiti del percorso locale; TCP solo con attivazione esplicita |
 | 10 | Campagna di benchmark; ottimizzazioni sugli hot path misurati | M18 | [13 Benchmark](13-benchmark.md) |
 
 ## Avanzamento SPK-04

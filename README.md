@@ -69,6 +69,10 @@ rather than from shortcuts.
 The first intended use of ArcDocDB is as the database of a **Usenet NNTP server written
 in Common Lisp**. This primary [use case](docs/valutazione/caso-duso-nntp.md) guides implementation and validation of
 article lookup, ordered group overviews, full-text search, cross-posting, retention and recovery.
+The default client interface will be a **local Unix stream socket** between the NNTP
+daemon and database processes. Its first integration takes priority after engine startup,
+recovery and request admission; TCP is an optional later transport, disabled by default
+([ADR-0055](docs/adr/0055-interfaccia-locale-unix-socket.md)). The interface remains to be implemented.
 
 **Full-text search** is an approved v1 requirement, designed around dedicated
 per-segment inverted indexes for words and
@@ -163,7 +167,7 @@ Every limit and where it comes from: [limiti.md](docs/limiti.md).
 |---|---|
 | Done | Specification · architecture · on-disk formats · [product foundations](docs/implementazione/README.md) for storage, index, reads, recovery and scheduling |
 | Now | A [single-Serie integration test](docs/implementazione/prova-verticale.md) with durable writes, rotation, SIGKILL, recovery, resumed writes and a second crash; coordination remains in the test harness |
-| Next | Integrate production startup, recovery and request admission; complete the reference-scale campaigns and protocol models in the [spike plan](docs/valutazione/piano-spike.md) |
+| Next | Integrate production startup, recovery and request admission, then the first local Unix socket client/server path; complete the reference-scale campaigns and protocol models in the [spike plan](docs/valutazione/piano-spike.md) |
 | Reference application | Database for a future Common Lisp NNTP server; application requirements are documented, protocol implementation remains future work |
 | Full-text requirement | Unicode 18 analysis, CBOR document preparation, positional all/any/phrase predicates, complete `.idx` codec and verified file views implemented; durable publication, writer/MVCC and Query Engine integration remain pending |
 | Then | Ten implementation phases, each closed by a verification gate: the [roadmap](docs/roadmap.md) |

@@ -40,7 +40,7 @@ motivazione della scelta è nell'ADR.
 | [QA-17](#qa-17) | Granularità e chiave della cache | B | Risolta da [ADR-0025](adr/0025-cache-per-location.md); rivista da [ADR-0044](adr/0044-cache-acceleratore-puro.md) | SPK-05 | RSK-10 |
 | [QA-18](#qa-18) | GC di SBCL e memoria fuori heap | A | Risolta da [ADR-0024](adr/0024-memoria-e-gc.md) (ipotesi verificata da SPK-02) | SPK-02 | RSK-01 |
 | [QA-19](#qa-19) | Piattaforma di riferimento e primitive di I/O | A | Risolta da [ADR-0017](adr/0017-piattaforma-e-io.md); precisata da [ADR-0045](adr/0045-modello-di-esecuzione.md) | SPK-03, SPK-05 | RSK-11 |
-| [QA-20](#qa-20) | Protocollo di rete e linguaggio di query | C | Risolta da [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md) | — | — |
+| [QA-20](#qa-20) | Protocollo di rete e linguaggio di query | C | Risolta da [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md); trasporto primario aggiornato da [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md) | — | — |
 | [QA-21](#qa-21) | Schema/contratto della Serie | C | Risolta da [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md) | — | — |
 | [QA-22](#qa-22) | Dipendenze e framework di test | B | Risolta da [ADR-0027](adr/0027-dipendenze-e-test.md) | — | — |
 | [QA-23](#qa-23) | Funzioni fuori dallo scope v1 | C | Risolta da [ADR-0030](adr/0030-scope-v1.md), confermata il 2026-10-08; full text aggiunto da [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) | — | RSK-14 |

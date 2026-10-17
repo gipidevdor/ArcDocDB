@@ -584,3 +584,11 @@ Il [catalogo dei registri e degli originali](../../spikes/results/2026-10-17-ci-
 conserva anche i tentativi falliti. Il codice è committato in `c7caed5f`;
 verifica completa della composizione, integrazione e push restano al
 coordinatore della chiusura.
+
+## Rapporti nei processi freschi
+
+La [regressione del wire isolato](ci-wire-processi.md) verifica che un rapporto
+ordinario del producer sia leggibile caricando soltanto il modulo DATA,
+senza keyword rese note incidentalmente da altri moduli o dal prodotto.
+L'esito di seal resta distinto: conserva raccolte incomplete e restituisce
+fallimento quando una verifica manca o fallisce.

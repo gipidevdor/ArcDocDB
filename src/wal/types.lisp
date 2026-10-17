@@ -36,6 +36,7 @@ Il writer è proprietario fino a chiusura; dopo, niente mutazione fino al riuso 
   (seal-value #() :type octets :read-only t)
   (empty-key #() :type octets :read-only t)
   (used 0 :type index) (count 0 :type u32) (start 0 :type file-offset)
+  (incarnation 1 :type index)
   (owner nil :type t)
   (csn-registry nil :type (or null registro-csn))
   (csn-log nil :type (or null log-io))

@@ -23,8 +23,8 @@ Invocazione riservata al coordinator dopo chiusura writer. Scrive test-self-test
                (ci-coverage-parse-lcov (format nil "SF:src/fixture.lisp~%~Aend_of_record~%" body))))
       (unwind-protect
            (progn
-             (check :catalog-49-suites
-                    (lambda () (= 49 (length (arcdocdb.ci.tests:suite-specifications)))))
+             (check :catalog-50-suites
+                    (lambda () (= 50 (length (arcdocdb.ci.tests:suite-specifications)))))
              (check :catalog-merged-cache-and-fulltext-admission
                     (lambda ()
                       (let ((ids (mapcar (lambda (row) (getf row :id))
@@ -43,15 +43,15 @@ Invocazione riservata al coordinator dopo chiusura writer. Scrive test-self-test
                     (lambda () (let ((ids (mapcar (lambda (r) (getf r :id))
                                                    (arcdocdb.ci.tests:suite-specifications))))
                                  (= (length ids) (length (remove-duplicates ids :test #'equal))))))
-             (check :catalog-five-fulltext-suites
-                    (lambda () (= 5 (count-if (lambda (r) (search "ARCDOCDB.FULLTEXT." (getf r :id)))
+             (check :catalog-six-fulltext-suites
+                    (lambda () (= 6 (count-if (lambda (r) (search "ARCDOCDB.FULLTEXT." (getf r :id)))
                                                (arcdocdb.ci.tests:suite-specifications)))))
              (check :catalog-two-named-smoke-cases
                     (lambda () (= 2 (length (getf (first (arcdocdb.ci.tests:suite-specifications)) :cases)))))
              (check :catalog-four-explicit-vertical-cases
                     (lambda () (= 4 (length arcdocdb.ci.tests::*vertical-cases*))))
-             (check :catalog-five-explicit-allocation-exclusions
-                    (lambda () (= 5 (length arcdocdb.ci.tests::*coverage-exclusions*))))
+             (check :catalog-six-explicit-allocation-exclusions
+                    (lambda () (= 6 (length arcdocdb.ci.tests::*coverage-exclusions*))))
              (check :symbol-list-registry
                     (lambda () (let ((rows (arcdocdb.ci.tests::normalize-registry name :symbol-list (list two one))))
                                  (and (= 2 (length rows)) (equal "ONE" (getf (first rows) :name))

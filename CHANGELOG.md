@@ -14,6 +14,12 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Legame full text agli esatti byte PUT: cornice privata per tutte le generazioni,
+  riserva collettiva e append nel lotto WAL dopo i preflight. Formati v1/v2,
+  ordinari/prepared, riferimenti protetti dal riuso del lotto e fail-stop dopo
+  trasferimento incompleto. CRC/spans attestati nel worker, controlli costanti e
+  sola copia del body sotto lease writer. Pubblicazione durevole, esiti 2PC, MVCC e ritiro aperti.
+
 - Proposta del contratto di sessione M16 (ADR-0056) e SPK-11 su socket Unix:
   due processi reali, frame parziali/accorpati, documento e chiave massimi,
   rifiuti prima dell'allocazione e nomi occupati preservati. Il listener di
@@ -32,7 +38,7 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 - Riserve full text locali sotto lease del writer: budget di tutte le generazioni
   verificati prima degli effetti, copia riprendibile in run posseduti e task protetti
   dal riuso. Cancellazione pre-append e trasferimento con costi trattenuti;
-  binding PUT, pipeline WAL, pubblicazione e ritiro restano da integrare.
+  il ponte PUT/WAL e aggiunto nell'incremento successivo; pubblicazione e ritiro aperti.
 
 - Adozione delle mappe CLOSED recuperate nello scope runtime: insieme completo,
   autorità e FD esatti verificati, wrapper nuovi e righe immutabili condivise.

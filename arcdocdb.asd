@@ -88,7 +88,11 @@
                              (:file "transfer") (:file "flush")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
-                             (:file "group") (:file "executor") (:file "csn")))
+                             (:file "frame") (:file "group") (:file "executor") (:file "csn")))
+               (:module "fulltext-put" :serial t
+                :components ((:file "package") (:file "types") (:file "build")
+                             (:file "start") (:file "prepare") (:file "reserve")
+                             (:file "append") (:file "binding")))
                (:module "series" :serial t
                 :components ((:file "package") (:file "types") (:file "ownership")
                              (:file "events") (:file "io-events") (:file "publication")
@@ -206,6 +210,8 @@
                              (:file "admission-support") (:file "admission")
                              (:file "admission-guards") (:file "admission-resources")
                              (:file "admission-lifecycle") (:file "admission-concurrency")
+                             (:file "put-support") (:file "put") (:file "put-guards")
+                             (:file "put-lifecycle") (:file "put-concurrency")
                              (:static-file "minimum-v2.hex")))
                (:module "codec" :serial t
                 :components ((:file "support") (:file "utf8") (:file "threads")

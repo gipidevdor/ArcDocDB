@@ -14,6 +14,7 @@
   (:import-from #:arcdocdb.conditions #:invalid-argument #:invariant-violation
                 #:resource-exhausted #:io-fault)
   (:export #:lotto #:crea-lotto #:aggiungi-record #:sigilla-lotto #:riusa-lotto
+           #:verifica-append-cornice #:aggiungi-cornice
            #:stato-lotto #:lunghezza-lotto #:inizio-lotto
            #:sigilla-lotto-con-csn #:stato-csn-lotto #:leggi-csn-lotto
            #:verifica-token-lotto #:verifica-pubblicazione-lotto

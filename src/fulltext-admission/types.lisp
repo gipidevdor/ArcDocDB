@@ -28,5 +28,9 @@ SOURCES e i borrower impediscono il riuso dei task durante la copia riprendibile
   (runs #() :type simple-vector :read-only t) (sources #() :type simple-vector :read-only t)
   (costs (make-array 0 :element-type 'fixnum) :type contatori-full-text :read-only t)
   (generation 0 :type index) (row 0 :type u32) (bytes 0 :type index)
+  ;; Il ponte PUT, caricato dopo WAL, cattura solo un lotto validato e posseduto.
+  ;; Trasferiti mai riusati: il legame resta stabile, nessun prestito del frame worker.
+  (record-source nil :type t) (record-incarnation 0 :type index) (record-number 0 :type index)
+  (record-start 0 :type index) (record-end 0 :type index)
   (config-index 0 :type index) (part 0 :type (integer 0 2)) (cursor 0 :type index)
   (state :free :type (member :free :copying :ready :transferred :cancelled)))

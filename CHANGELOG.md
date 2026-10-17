@@ -20,6 +20,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   trasferimento incompleto. CRC/spans attestati nel worker, controlli costanti e
   sola copia del body sotto lease writer. Pubblicazione durevole, esiti 2PC, MVCC e ritiro aperti.
 
+- Recovery semantico dell'intera Serie dalle fonti readonly possedute:
+  preflight completo e budget cumulativo prima dei dati, ACTIVE con replay
+  decisioni canonico, tutti i CLOSED con scratch riusato e gate finale.
+  Nessuna pubblicazione parziale o gestione implicita dei FD; qualifica dedicata aperta.
+
 - Proposta del contratto di sessione M16 (ADR-0056) e SPK-11 su socket Unix:
   due processi reali, frame parziali/accorpati, documento e chiave massimi,
   rifiuti prima dell'allocazione e nomi occupati preservati. Il listener di

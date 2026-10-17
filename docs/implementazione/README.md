@@ -118,6 +118,10 @@ Il [bootstrap del runtime Archivio](runtime-archivio.md) collega il piano
 CSN alla famiglia unica CSN/snapshot/epoche e al nuovo ambito GET. Il binding
 non autorizza ancora il traffico.
 
+Il [recovery semantico della Serie](recovery-serie.md) collega le fonti
+readonly possedute ai reader ACTIVE/CLOSED: insieme e budget verificati
+prima dei dati, scratch riusato e due risultati solo dopo il gate completo.
+
 La [sessione locale M16](sessione-locale.md) propone il contratto necessario
 al socket prioritario: framing, handshake, budget e scadenze. SPK-11 esercita
 il solo trasporto; avvio/recovery/ammissione del prodotto restano prerequisiti.

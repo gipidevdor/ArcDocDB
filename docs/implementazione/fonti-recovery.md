@@ -42,6 +42,10 @@ segmento, CRC, prefisso, chiusura dell'ACTIVE, replay degli indici, CSN e
 ammissione restano dei reader e del futuro Recovery Manager. Nessuna
 rinomina, cancellazione, scrittura, flush, prenotazione o allocazione CSN.
 
+Il [coordinamento semantico di una Serie](recovery-serie.md) usa ora questo
+set prestato per recuperare ACTIVE e tutti i CLOSED, dopo un preflight
+complessivo e con un solo scratch. La gestione fisica del set resta al caller.
+
 La prova verticale usa il set per ACTIVE e CLOSED e lo chiude dopo tutti i
 reader; elimina la scansione manuale degli ID CLOSED 1…8. Il limite otto
 resta una capacità della fixture C4. I risultati non qualificano l'intero

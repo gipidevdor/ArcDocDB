@@ -222,6 +222,11 @@ nelle misure di GC, P99 e isolamento, distinguendo indici abilitati e disabilita
 
 ## Riepilogo
 
+La [sessione locale proposta](../implementazione/sessione-locale.md) separa
+documento, envelope e frame. I default dei pool sono budget di configurazione,
+non memoria RSS misurata. SPK-11 verifica i byte e il ciclo di vita del socket:
+non attribuisce ancora throughput, latenza o vantaggi rispetto a TCP al motore.
+
 | Target | Giudizio a tavolino | Dipende da |
 |---|---|---|
 | GET da cache/indice | plausibile | protocollo, allocazioni, GC |

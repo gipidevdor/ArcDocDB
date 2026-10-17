@@ -29,8 +29,16 @@ prodotto è una **misura con una raccomandazione**.
 | [SPK-08](#spk-08) | SIMD e codice generato | QA-19 | RSK-11, RSK-16 | 5 |
 | [SPK-09](#spk-09) | Costo dei controlli di affidabilità | ADR-0033, ADR-0034 | RSK-19 | 1 |
 | [SPK-10](#spk-10) | Limiti, formati e migrazione v2 | ADR-0048 | RSK-02, RSK-07, RSK-19 | 1, prima del motore |
+| [SPK-11](#spk-11) | Socket Unix fra due processi | ADR-0055, proposta ADR-0056 | RSK-14, RSK-16 | 1, contratto prima di M16 |
 
 ---
+
+### SPK-11
+
+**Trasporto locale prioritario.** Il [metodo preregistrato](../../spikes/SPK-11-unix-socket/README.md)
+verifica framing bounded, due processi SBCL, documento/chiave massimi, nomi
+occupati e rilascio del nodo. Nessun benchmark o qualifica del motore;
+accesso con identità distinte e Linux/macOS restano prove separate.
 
 ### SPK-01
 

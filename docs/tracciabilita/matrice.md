@@ -295,3 +295,4 @@
 | [0053](../adr/0053-ricerca-full-text-indici-invertiti.md) | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-006, REQ-SEC-007 |
 | [0054](../adr/0054-contratto-e-formato-full-text.md) | REQ-SEC-007, REQ-SEC-008, REQ-SEC-009, REQ-SEC-010 |
 | [0055](../adr/0055-interfaccia-locale-unix-socket.md) | REQ-IPC-001, REQ-IPC-002, REQ-IPC-003, REQ-IPC-004 |
+| [0056](../adr/0056-sessione-locale-m16.md) | —  (decisione senza requisito diretto) |

@@ -54,6 +54,11 @@ canonici; il suo limite di otto ID non limita l'inventario di prodotto.
 
 Questi incrementi non anticipano la chiusura dei gate della Fase 0.
 
+Il [contratto di sessione M16](implementazione/sessione-locale.md) è una
+proposta preparatoria. [SPK-11](../spikes/SPK-11-unix-socket/README.md) verifica
+il trasporto fra processi prima del codice M16; l'integrazione applicativa
+resta nell'ordine 3, dopo recovery e ammissione.
+
 Il [bootstrap runtime dell'Archivio](implementazione/runtime-archivio.md)
 collega ora il piano CSN completo alla famiglia unica CSN/snapshot/epoche
 e al nuovo ambito GET. Riconciliazione, pubblicazione degli effetti,

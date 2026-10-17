@@ -85,6 +85,9 @@ Framing e ordinamento si esplorano su modelli finiti e con fuzzing del decoder;
 gli scenari FI-01/FI-02/FI-05 sono ripetuti attraversando il socket locale.
 Le verifiche di accesso devono usare identità distinte sulla piattaforma di
 riferimento. Si applicano copertura, revisione e metodi delle classi assegnate.
+La [prova SPK-11](../../spikes/SPK-11-unix-socket/README.md) esercita il solo
+trasporto con due processi; il [contratto di sessione](../implementazione/sessione-locale.md)
+resta una proposta. Nessun requisito IPC viene promosso dal successo dello spike.
 Le misure del [percorso locale](../13-benchmark.md#interfaccia-locale-unix-socket)
 seguono le prove di correttezza e restano distinte dai benchmark del solo motore.
 

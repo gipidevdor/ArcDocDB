@@ -354,3 +354,13 @@ background: tutti consumano CPU e banda.
 ## Impatto dei limiti v2
 
 ADR-0048 amplia chiavi e slot: aumenta RSK-07 (memoria) e il costo di split, hashing e verifica. Le evidenze SPK-01/SPK-09 v1 non chiudono questi rischi per v2. Richieste massime e profondità richiedono budget di decoder e protocollo. ADR-0049 resta una proposta: lookup freddi, write amplification e crash del nuovo indice richiedono evidenze prima dell’adozione.
+
+## Trasporto locale (2026-10-17)
+
+[SPK-11](../../spikes/SPK-11-unix-socket/README.md) aggiunge prove del trasporto
+SBCL fra processi a RSK-14/RSK-16, senza chiuderli. Il bind grezzo su macOS
+può seguire un link pendente: il preflight del nome occupato nella directory
+posseduta è obbligatorio prima di chiamarlo. `socket-receive` del contrib
+alloca un buffer alien per chiamata; il futuro adattatore di prodotto deve
+usare buffer preallocati, con I/O iniettabile e scadenze. Restano ammissione,
+commit, isolamento e piattaforma di riferimento; nessun target di latenza dimostrato.

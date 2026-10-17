@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Proposta del contratto di sessione M16 (ADR-0056) e SPK-11 su socket Unix:
+  due processi reali, frame parziali/accorpati, documento e chiave massimi,
+  rifiuti prima dell'allocazione e nomi occupati preservati. Il listener di
+  prodotto resta subordinato ad avvio, recovery e ammissione del motore.
+
 - Preparazione full text direttamente dai documenti CBOR: percorsi annidati,
   tipi e duplicati selezionati verificati, analisi riprendibile e run sigillato.
   Budget cumulativi e limite superiore del file prima del futuro aggancio al writer;

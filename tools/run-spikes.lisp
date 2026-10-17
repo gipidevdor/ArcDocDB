@@ -23,7 +23,8 @@
     ("SPK-07" . "spikes/SPK-07-protocols/run.lisp")
     ("SPK-08" . "spikes/SPK-08-generated-code/run.lisp")
     ("SPK-09" . "spikes/SPK-09-integrity/run.lisp")
-    ("SPK-10" . "spikes/SPK-10-v2-limits/run.lisp")))
+    ("SPK-10" . "spikes/SPK-10-v2-limits/run.lisp")
+    ("SPK-11" . "spikes/SPK-11-unix-socket/run.lisp")))
 
 (defun command-output (command)
   "Esegue un comando senza shell e restituisce il suo output senza spazi esterni."
@@ -71,6 +72,12 @@
             '("spikes/SPK-10-v2-limits/codec.lisp" "spikes/SPK-10-v2-limits/indice.lisp"
               "spikes/SPK-10-v2-limits/cbor.lisp" "spikes/SPK-10-v2-limits/migrazione.lisp"
               "spikes/SPK-09-integrity/core.lisp"))
+          (when (string= (car entry) "SPK-11")
+            (append '("spikes/SPK-11-unix-socket/transport.lisp"
+                      "spikes/SPK-11-unix-socket/scenarios.lisp"
+                      "spikes/SPK-11-unix-socket/codec-inputs.lisp")
+                    (with-open-file (stream "spikes/SPK-11-unix-socket/codec-inputs.lisp")
+                      (let ((*read-eval* nil)) (getf (read stream) :sources)))))
           (when (string= (car entry) "SPK-01")
             '("spikes/SPK-01-primary-index/lettura-buffer.lisp"
               "spikes/SPK-01-primary-index/check-lettura-buffer.lisp"))

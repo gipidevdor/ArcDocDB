@@ -138,3 +138,4 @@ risultato consolidato è in [architettura.md](../architettura.md) e
 | ADR | Decisione | Stato |
 |---|---|---|
 | [0055](0055-interfaccia-locale-unix-socket.md) | Socket Unix locale predefinito e prioritario per NNTP; TCP opzionale successivo; prima integrazione M16 anticipata | Accettata per indirizzo dell'autore; implementazione e qualifica da produrre |
+| [0056](0056-sessione-locale-m16.md) | Proposta del contratto M16: framing, handshake, correlazione, budget e scadenze locali | Proposta; istruttoria SPK-11 |

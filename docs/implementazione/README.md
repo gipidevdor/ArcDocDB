@@ -122,6 +122,10 @@ Il [recovery semantico della Serie](recovery-serie.md) collega le fonti
 readonly possedute ai reader ACTIVE/CLOSED: insieme e budget verificati
 prima dei dati, scratch riusato e due risultati solo dopo il gate completo.
 
+La [lettura coordinata dell'Archivio](recovery-archivio.md) applica prima
+i preflight di tutte le Serie e i budget globali, poi restituisce letture
+complete e piano CSN canonico, senza avviare il runtime o pubblicare effetti.
+
 La [sessione locale M16](sessione-locale.md) propone il contratto necessario
 al socket prioritario: framing, handshake, budget e scadenze. SPK-11 esercita
 il solo trasporto; avvio/recovery/ammissione del prodotto restano prerequisiti.

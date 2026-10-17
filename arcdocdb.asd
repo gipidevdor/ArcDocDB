@@ -167,7 +167,8 @@
                              (:file "build") (:file "query")))
                (:module "runtime" :serial t
                 :components ((:file "package") (:file "types") (:file "preflight")
-                             (:file "query") (:file "build") (:file "active"))))
+                             (:file "query") (:file "build") (:file "active")
+                             (:file "closed-preflight") (:file "closed-transfer") (:file "closed"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"
@@ -234,6 +235,8 @@
                 :components ((:file "support") (:file "lifecycle") (:file "segment")))
                (:module "get-performance" :serial t
                 :components ((:file "support") (:file "paths") (:file "guards") (:file "threads")))
+               (:module "cache" :serial t
+                :components ((:file "support") (:file "guards") (:file "threads")))
                (:module "get-directory" :serial t
                 :components ((:file "support") (:file "construction") (:file "read") (:file "threads")
                              (:file "series-support") (:file "series-read")
@@ -332,6 +335,7 @@
              (uiop:symbol-call '#:arcdocdb.read.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.performance.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.cache.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.directory.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.resolver.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.get.active.tests '#:run)

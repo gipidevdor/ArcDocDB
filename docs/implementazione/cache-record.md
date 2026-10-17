@@ -174,6 +174,11 @@ La scan pollution esposta è una metrica diagnostica, non un conteggio
 linearizzabile. Scheduler, aggregazione, allarme e decisione su 2Q restano
 integrazioni successive; non si cambia politica senza misure e ADR.
 
+La [suite di pubblicazione e sostituzione](../../tests/cache/README.md)
+aggiunge casi deterministici sugli stati dei posti e prove con quattro
+worker sullo stesso insieme. Il metodo distingue gli interleaving osservati
+dalla copertura delle finestre interne e dalla qualifica C1 completa.
+
 Ricerca: al massimo sedici classi, otto tag, una copia e una verifica
 proporzionali alla lunghezza del record e della eventuale prova. Inserimento:
 verifica dell’input, un tentativo di mutex, otto tag, al massimo sedici
@@ -200,8 +205,9 @@ come P95/P99 e scan pollution; non vengono dichiarate pari a zero.
 Metodo ed evidenze statiche nella
 [campagna](../../spikes/results/2026-10-09-cache-record/README.md).
 Compilazione e controlli statici non chiudono la qualifica C1.
-Restano prove differenziali cache attiva/budget zero, stress reale,
-fault injection, misure di allocazione, integrazione GET/EBR/snapshot,
+La suite della cache documenta una prima campagna concorrente limitata;
+restano prove differenziali cache attiva/budget zero, stress prolungato,
+fault injection completa, misure di allocazione, integrazione GET/EBR/snapshot,
 resolver OUTCOME, I/O, scheduler e metriche. I requisiti mantengono lo
 stato progettato fino alla qualifica richiesta dalla tracciabilità.
 

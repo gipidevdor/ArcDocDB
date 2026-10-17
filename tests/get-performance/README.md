@@ -106,19 +106,14 @@ la semantica e la consultazione finale della API numerica: non dimostra dove
 SBCL alloca bignum. Il driver di correttezza materializza anche il candidato
 e non deve essere usato come prova di allocazione del kernel GET.
 
-## Osservazione statica nel prodotto, da confermare nel runner
+## Riparazione e concorrenza
 
-Dopo il rifiuto CRC di uno slot, `verifica-copia-cache` conserva il tag e
-imposta `rejected`. `prova-inserimento-cache` può reinserire la stessa location
-in un altro slot libero: `gia-in-cache-p` ignora quello rifiutato, mentre CLOCK
-parte dalla mano avanzata. Alla lettura successiva `cerca-record-cache` si
-ferma al primo tag coincidente e restituisce miss se la copia di quel posto
-fallisce; non raggiunge la nuova copia valida in uno slot successivo.
+Il precedente rilievo sul tag rifiutato che nascondeva la copia reinserita
+è già corretto: `cerca-record-cache` salta i posti rifiutati o disabilitati
+prima del confronto del tag. Il test
+`test-REQ-CCH-004-performance-cache-repair-hit` richiede un HIT dopo il
+fallback e verifica anche il vecchio posto disabilitato.
 
-Il percorso dedotto è slot 0 rifiutato → reinserimento nello slot 1 → altro
-miss allo slot 0 → nuova lettura file, finché il tag iniziale non è sostituito.
-Riferimenti: `src/cache/read.lisp:62,87`, `src/cache/clock.lisp:16,44`,
-`src/cache/write.lisp:50`. È una perdita potenziale di hit dopo la riparazione
-opportunistica; il fallback verificato conserva la correttezza della risposta.
-Il test di fallback non assume che l'inserimento garantisca un successivo hit.
-Nessuna modifica del prodotto o esecuzione per confermare questa osservazione.
+Le letture concorrenti di questa fixture partono da una cache già popolata.
+La [suite della cache](../cache/README.md) aggiunge contesa, inserimenti e
+sostituzioni concorrenti; i due ambiti restano distinti.

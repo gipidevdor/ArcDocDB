@@ -15,6 +15,12 @@ allineati alle costanti esistenti e si e aggiunto un diciannovesimo test per il 
 dell'ultima configurazione, dopo che la prima entra, su token e bound del file.
 Le verifiche finali vengono conservate separatamente.
 
+La prima esecuzione di [make check](../2026-10-17-fulltext-reservation-check-syntax-failure/catalogo.lisp)
+e la raccolta di [copertura](../2026-10-17-fulltext-reservation-coverage-syntax-failure/catalogo.lisp)
+si sono fermate sulla stessa parentesi in piu nel nuovo diciannovesimo test.
+Entrambi i registri originali, con sorgenti stabili ed esito fallito, sono conservati.
+Corretto soltanto il test; nessun errore del prodotto e stato nascosto o riclassificato.
+
 Oracoli: fixture CBOR/attesi manuali, confronto delle tre regioni copiate dei run,
 256 confronti indipendenti dei bound su 128 operazioni, budget cumulativi a limite e
 limite meno uno, sedici generazioni, 64 punti di cancellazione e quattro writer

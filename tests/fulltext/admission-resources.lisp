@@ -1,7 +1,7 @@
 (in-package #:arcdocdb.fulltext.admission.tests)
 
 (deftest req-sec-010-reservation-last-index-refusal
-  (let* ((first (d:crea-configurazione-full-text (dt::fields '((1 "subject" ("subject"))))) 1 1 1))
+  (let* ((first (d:crea-configurazione-full-text (dt::fields '((1 "subject" ("subject")))) 1 1 1))
          (configs (vector first (config 2))) (sources (sources configs))
          (queue (ex:crea-coda-writer :capacity 16)) (lease (ex:acquisisci-writer queue)))
     (unwind-protect

@@ -168,6 +168,9 @@
                 :components ((:file "package") (:file "types") (:file "read") (:file "verify")
                              (:file "resolve") (:file "csn") (:file "build") (:file "publication")
                              (:file "csn-serie")))
+               (:module "recovery-series" :serial t
+                :components ((:file "package") (:file "types") (:file "entry")
+                             (:file "preflight") (:file "read") (:file "build")))
                (:module "recovery-archive-csn" :serial t
                 :components ((:file "package") (:file "types") (:file "series") (:file "preflight")
                              (:file "build") (:file "query")))

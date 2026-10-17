@@ -38,7 +38,7 @@ Oggetti, workspace dei reader, scratch prestato e GC non sono inclusi nel budget
   "Pre: capacità tipizzate finite. Post: configurazione readonly, limiti reader canonici verificati.
 MAX-SEGMENTI include ACTIVE; record/prepared/outcome/esiti sono limiti per segmento, zero ammesso.
 INVALID-ARGUMENT per geometria; TYPE-ERROR per tipi/range scalari. Nessun I/O o risultato parziale."
-  (unless (<= 1 max-segmenti 65536) (error 'invalid-argument :reason :series-recovery-configuration))
+  (unless (plusp max-segmenti) (error 'invalid-argument :reason :series-recovery-configuration))
   (arcdocdb.recovery.closed::verifica-budget-closed
    chunk-bytes max-bytes max-batches max-batch-records max-batch-bytes)
   (%make-limiti-recovery-serie max-segmenti budget-riferimenti max-byte-totali chunk-bytes

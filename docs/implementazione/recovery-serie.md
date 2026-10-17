@@ -85,7 +85,7 @@ Le decisioni del reader CLOSED vengono riusate nella factory, senza I/O.
 
 | Opzione | Default | Ambito |
 |---|---:|---|
-| `max-segmenti` | 65536 | Tutte le fonti, ACTIVE incluso; 1..65536 |
+| `max-segmenti` | 65536 | Tutte le fonti, ACTIVE incluso; `index` positivo configurabile |
 | `budget-riferimenti` | 524288 | 8*N CLOSED su SBCL 64 bit, prima del vettore |
 | `max-byte-totali` | 4 GiB−1 | Somma EOF ACTIVE + P CLOSED; zero ammesso |
 | `chunk-bytes` | 65536 | Trasferimento di ogni reader, positivo |

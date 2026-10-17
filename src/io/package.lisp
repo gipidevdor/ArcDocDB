@@ -9,4 +9,5 @@
            #:apri-lettura #:apri-lettura-nella-directory #:crea-temporaneo #:apri-directory #:chiudi #:elenca-directory
            #:leggi-esatto #:append-esatto #:durable-flush #:rinomina-nella-directory #:mode-file #:verifica-capienza-append
            #:stato-file #:posizione-scritta #:posizione-durevole #:verifica-capienza-lettura
-           #:verifica-capacita-sostituzione #:sostituisci-temporaneo))
+           #:verifica-capacita-sostituzione #:sostituisci-temporaneo
+           #:stabilizza-nome-temporaneo))

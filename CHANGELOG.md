@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Stabilizzazione del nome di una fonte recuperata: token ACTIVE/CLOSED,
+  FD e ID esatti prima del completamento, collisioni preservate e fsync
+  parent anche nel ramo già definitivo. Nessuna riapertura in scrittura;
+  orchestrazione completa e qualifica funzionale dedicata ancora aperte.
+
 - Estensione C4 di SPK-11 alla sessione locale proposta: HELLO/WELCOME,
   negoziazione, PING correlati e risposte invertite fra due processi.
   Fixture per mappe duplicate, limiti prima del corpo, ID u64, credito

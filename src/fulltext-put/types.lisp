@@ -12,6 +12,7 @@ analizzano gli stessi byte posseduti; la generation catturata impedisce risultat
   (version 2 :type (integer 1 2) :read-only t) (document-limit 1 :type index :read-only t)
   (key-limit 1 :type index :read-only t)
   (generation 0 :type index) (size 0 :type index) (value-start 0 :type index) (row 0 :type u32)
+  (validated-generation 0 :type index)
   (current 0 :type index) (active nil :type boolean) (work 0 :type index) (work-limit 268435456 :type index)
   (pool nil :type (or null f:riserve-full-text)) (slot nil :type (or null f:riserva-full-text))
   (slot-generation 0 :type index)
@@ -33,3 +34,14 @@ INVALID-ARGUMENT per tipo/stale; token zero non e mai una preparazione valida."
   "Pre: token corrente, accesso dal proprietario. Post: stato senza frame, task o parziali."
   (verifica-token-put request generation)
   (preparazione-put-full-text-state request))
+
+;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-WAL-005
+(declaim (ftype (function (preparazione-put-full-text) null) esigi-cornice-put-validata))
+(defun esigi-cornice-put-validata (request)
+  "Pre: request esclusivo, frame/task mai esposti. Post: attestazione del worker corrente.
+Il frame non cambia fra verifica CRC/analisi e append; solo inizia puo invalidarlo.
+Rifiuta attestazione assente/stale senza rileggere il body sotto la lease del writer."
+  (unless (and (plusp (preparazione-put-full-text-validated-generation request))
+               (= (preparazione-put-full-text-generation request) (preparazione-put-full-text-validated-generation request)))
+    (error 'invalid-argument :reason :fulltext-put-unvalidated))
+  nil)

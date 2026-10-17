@@ -65,3 +65,39 @@
         (rejected (lambda () (prepare short token 1)) 'resource-exhausted)
         (is (eq :failed (p:stato-put-full-text short token)))))
     (rejected (lambda () (request configs :max-memory 1)) 'resource-exhausted :fulltext-put-memory)))
+
+(deftest req-wal-005-put-writer-does-not-scan-body
+  (dolist (padding '(0 32768))
+    (let* ((configs (a::configs)) (queue (ex:crea-coda-writer :capacity 16)) (pool (a::pool queue configs))
+           (request (request configs :document-bytes 65536)) (batch (batch :capacity 131072))
+           (key (key)) (wire (if (zerop padding) (dt::wire)
+                                (dt::document '("subject" . "alpha") '("body" . "beta")
+                                              (cons "unused" (make-string padding :initial-element #\x)))))
+           (expected (ft::reference-put key wire 0 0))
+           (original (symbol-function 'b:crc32c)) (writer nil) (worker-scans 0) (writer-scans 0))
+      (unwind-protect
+           (progn
+             (setf (symbol-function 'b:crc32c)
+                   (lambda (buffer start end &optional (seed 0))
+                     (when (> (- end start) r::+header-crc-bytes+)
+                       (if writer (progn (incf writer-scans) (error "CRC body nel writer")) (incf worker-scans)))
+                     (funcall original buffer start end seed)))
+             (let ((generation (p:inizia-put-full-text request key wire 0)))
+               (prepare request generation 1)
+               (is (>= worker-scans 2)) ; encoder e verifica indipendente della cornice nel worker.
+               (let ((lease (ex:acquisisci-writer queue)))
+                 (setf writer t)
+                 (unwind-protect
+                      (progn
+                        ;; Controllo negativo: il vecchio percorso deve essere intercettato dal probe.
+                        (is (handler-case
+                                (progn (r:verifica-cornice (p::preparazione-put-full-text-frame request) 0
+                                                          (p::preparazione-put-full-text-size request)) nil)
+                              (simple-error () t)))
+                        (is (= writer-scans 1)) (setf writer-scans 0)
+                        (reserve pool lease request generation 1)
+                        (p:aggiungi-put-full-text pool lease request generation batch)
+                        (is (zerop writer-scans))
+                        (is (equalp expected (subseq (w::lotto-buffer batch) 0 (w::lotto-used batch)))))
+                   (setf writer nil) (ex:rilascia-writer queue lease)))))
+        (setf (symbol-function 'b:crc32c) original)))))

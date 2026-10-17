@@ -37,6 +37,7 @@ Una copia/CRC e limitata a un record del formato; nessuna promessa realtime o I/
     (unwind-protect
          (progn
            (incf (preparazione-put-full-text-generation request))
+           (setf (preparazione-put-full-text-validated-generation request) 0)
            (r:scrivi-record-parole (preparazione-put-full-text-frame request) 0 r:+put+ txid-high txid-low key value
                                   :version (preparazione-put-full-text-version request) :flags (if prepared r:+prepared+ 0)
                                   :document-limit (preparazione-put-full-text-document-limit request))

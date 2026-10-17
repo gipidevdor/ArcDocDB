@@ -36,8 +36,12 @@ ristampa solo gli ordinari con il CSN; conserva i TXID dei prepared.
 ## Analisi, consegna e ammissione
 
 `passo-put-full-text(request, generation, quantum)` avanza fino a `:prepared`,
-solo quando tutti i task sono DONE. Il lavoro e cumulativo per tutte le generazioni:
-due volte la dimensione della cornice, passi di controllo e lavoro documentale,
+solo quando tutti i task sono DONE e il worker ha verificato CRC e span della cornice.
+L'attestazione privata include la generation corrente e viene azzerata all'avvio,
+al fallimento o alla cancellazione. Il frame resta immutabile fino all'append:
+nessun ingresso pubblico permette di modificarlo o sostituirlo dopo l'attestazione.
+Il lavoro e cumulativo per tutte le generazioni: tre volte la dimensione della
+cornice (codifica e attestazione), passi di controllo e lavoro documentale,
 con limite predefinito 268435456 unita. Il quantum 1..65536 limita i passi;
 copia e CRC possono attraversare un intero record e non danno garanzie realtime.
 Errore CBOR o esaurimento del budget invalidano il risultato prima dell'ammissione.
@@ -57,8 +61,11 @@ pool, sulle configurazioni e sulla contabilita di tutte le viste trattenute.
 ## Append e riferimenti stabili
 
 `aggiungi-put-full-text(pool, lease, request, generation, batch)` richiede riserva
-pronta, lotto segment aperto dello stesso formato e segmento, cornice intera con
-CRC validi, posto per un record e spazio finale per SEAL. Questi preflight precedono
+pronta, attestazione corrente del worker, lotto segment aperto dello stesso formato
+e segmento, posto per un record e spazio finale per SEAL. Il writer verifica solo
+metadati, capacita e lifetime; il CRC del body e calcolato fuori dalla lease,
+come richiede [ADR-0039](../adr/0039-cornice-unica-dei-record.md).
+Questi preflight precedono
 il trasferimento irreversibile della riserva. Il writer copia poi esattamente la
 cornice privata nel buffer WAL, conserva delta/file/slot, restituisce staging e
 registra il legame nello slot stabile. Restituisce slot, token, start ed end.
@@ -75,7 +82,9 @@ necessari prima di consentire il riuso del buffer.
 La row u32 proposta non e il numero del record nel lotto, un offset fisico, un
 ordinale hint, un CSN o una prova di commit. Il ponte non assegna tali identita.
 `wal:verifica-append-cornice` e `wal:aggiungi-cornice` sono primitive generiche
-di cornice: da sole verificano formato/CRC e capacita, non analisi o contratto documentale.
+di verifica completa per cornici non fidate: da sole verificano formato/CRC e capacita,
+non analisi o contratto documentale. Eseguono una scansione e non sono usate dal
+percorso writer del ponte, che riceve esclusivamente la cornice privata attestata.
 
 ## Cancellazione e guasti
 
@@ -91,12 +100,17 @@ rollback di effetti incerti e non si produce ACK. Nessuna funzione del ponte ese
 
 ## Verifica e limiti
 
-I 16 test nuovi portano il totale full text a 91. Fixture CBOR congelata, encoder
+I 18 test nuovi portano il totale full text a 93. Fixture CBOR congelata, encoder
 record indipendente bitwise, input originari sovrascritti e confronto completo dei
 byte verificano l'ownership. Sono coperti v1/v2, ordinario/prepared, TXID massimo,
 sedici generazioni, limiti cumulativi, troncamenti/CRC, errori senza effetti,
 64 punti di cancellazione, riferimenti obsoleti e interruzioni prima/dopo la copia WAL.
 Quattro contesti indipendenti condividono solo configurazioni immutabili.
+Un probe sul CRC intercetta qualsiasi scansione oltre i 20 byte dell'header mentre
+il writer detiene la lease: verifica il rifiuto del vecchio percorso come controllo
+negativo e l'append corretto con padding 0/32768 byte. Verifica anche i calcoli CRC
+nel worker e il confronto completo del record. Header o chiave corrotti prima
+dell'attestazione falliscono nel worker; attestazioni assenti/stale non consentono append.
 
 Il [metodo e la tabella delle decisioni](full-text-put-metodo.md) riportano le due
 letture dello stesso autore. I [registri originali](../../spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)

@@ -62,11 +62,28 @@
             (rejected (lambda () (p:aggiungi-put-full-text pool lease request generation bad)) 'arcdocdb.conditions:arcdocdb-error)
             (is (equalp before (snapshot bad))) (is (equal '(146 146 1) (a::budget pool lease)))
             (is (eq :reserved (p:stato-put-full-text request generation))))))
-      (let* ((frame (p::preparazione-put-full-text-frame request)) (last (1- (p::preparazione-put-full-text-size request)))
-             (old (aref frame last)))
-        (setf (aref frame last) (logxor old 1))
-        (rejected (lambda () (p:aggiungi-put-full-text pool lease request generation good)) 'corruption-detected)
-        (is (equal '(146 146 1) (a::budget pool lease))) (setf (aref frame last) old))
+      (setf (p::preparazione-put-full-text-validated-generation request) 0)
+      (rejected (lambda () (p:aggiungi-put-full-text pool lease request generation good))
+                'invalid-argument :fulltext-put-unvalidated)
+      (is (equal '(146 146 1) (a::budget pool lease)))
+      (setf (p::preparazione-put-full-text-validated-generation request) generation)
       (p:aggiungi-put-full-text pool lease request generation good)
       (rejected (lambda () (p:aggiungi-put-full-text pool lease request generation good)) 'invalid-argument)
       (rejected (lambda () (p:annulla-riserva-put-full-text pool lease request generation)) 'invalid-argument))))
+
+(deftest req-wal-005-put-worker-attests-frame-before-reservation
+  (let* ((configs (a::configs)) (queue (ex:crea-coda-writer :capacity 16)) (pool (a::pool queue configs))
+         (request (request configs)) (key (key)) (wire (dt::wire)))
+    (dolist (offset '(0 24))
+      (let* ((generation (p:inizia-put-full-text request key wire 0)) (frame (p::preparazione-put-full-text-frame request)))
+        ;; Header o chiave corrotti; il CBOR selezionato resta valido, il CRC deve fallire nel worker.
+        (setf (aref frame offset) (logxor 1 (aref frame offset)))
+        (rejected (lambda () (prepare request generation 1)) 'corruption-detected)
+        (is (eq :failed (p:stato-put-full-text request generation)))
+        (is (zerop (p::preparazione-put-full-text-validated-generation request)))
+        (let ((lease (ex:acquisisci-writer queue)))
+          (unwind-protect
+               (progn
+                 (rejected (lambda () (p:prenota-put-full-text pool lease request generation)) 'invalid-argument)
+                 (is (equal '(0 0 0) (a::budget pool lease))))
+            (ex:rilascia-writer queue lease)))))))

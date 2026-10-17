@@ -3,6 +3,20 @@
 (in-package #:arcdocdb.wal)
 (declaim (optimize (safety 3) (debug 2)))
 
+;;; REQ: REQ-WAL-005 REQ-AFF-008
+(declaim (ftype (function (lotto index) null) verifica-capacita-cornice))
+(defun verifica-capacita-cornice (lotto size)
+  "Pre: dimensione attestata dal worker, writer esclusivo. Post: capienza e lifetime validi.
+Solo metadati costanti; nessun accesso ai byte o CRC del body. Rifiuti prima degli effetti."
+  (esigi-lotto lotto :open)
+  (when (lotto-csn-registry lotto) (error 'invalid-argument :reason :lotto-csn-bound))
+  (unless (<= (lotto-count lotto) (length (lotto-offsets lotto)))
+    (error 'invariant-violation :reason :lotto-record-count))
+  (when (or (= (lotto-count lotto) (length (lotto-offsets lotto)))
+            (> (+ size +seal-total+) (- (length (lotto-buffer lotto)) (lotto-used lotto))))
+    (error 'resource-exhausted :reason :lotto-capacity))
+  nil)
+
 ;;; REQ: REQ-WAL-005 REQ-AFF-008 REQ-FOR-003
 (declaim (ftype (function (t t t t) index) verifica-append-cornice))
 (defun verifica-append-cornice (lotto buffer start end)
@@ -22,11 +36,7 @@ Non attesta CBOR, contratto o commit; scansione limitata a un record del formato
     (declare (ignore flags ks ke vs ve)) ; verificati dal decoder; qui conta il tipo ammesso dal log.
     (unless (and (= next end) (log-record-p (lotto-kind lotto) kind))
       (error 'invalid-argument :reason :lotto-frame-kind)))
-  (unless (<= (lotto-count lotto) (length (lotto-offsets lotto)))
-    (error 'invariant-violation :reason :lotto-record-count))
-  (when (or (= (lotto-count lotto) (length (lotto-offsets lotto)))
-            (> (+ (- end start) +seal-total+) (- (length (lotto-buffer lotto)) (lotto-used lotto))))
-    (error 'resource-exhausted :reason :lotto-capacity))
+  (verifica-capacita-cornice lotto (- end start))
   (- end start))
 
 ;;; REQ: REQ-WAL-005 REQ-AFF-008

@@ -22,9 +22,9 @@ Conservare comandi, sorgenti effettivi, output originali e ogni fallimento.
 | Costruzione | configurazioni canoniche ordinate, tutte le capacita e costo cumulativo prima delle allocazioni |
 | Avvio | token/stato, input u8 non alias, row u32, prepared e TXID coerenti, generazione senza wrap |
 | Frame | limiti v1/v2, copia chiave/valore e CRC prima dell'analisi; nessuna sorgente esterna trattenuta |
-| Analisi | stesso span privato per tutti, lavoro cumulativo, nessun risultato finche tutti i task non sono DONE |
+| Analisi | stesso span privato per tutti, lavoro cumulativo, tutti DONE e attestazione CRC/spans corrente nel worker |
 | Riserva | lease canonica, task privati, configurazioni correnti; handle non esportati durante copia/cancellazione |
-| Append | formato/segmento e batch aperto, CRC e spazio SEAL prima del trasferimento; nessun errore ordinario dopo |
+| Append | attestazione posseduta corrente, formato/segmento e batch aperto, spazio SEAL; solo metadati e copia sotto lease |
 | Legame | slot trasferito, batch/incarnazione/ordinale/intervallo catturati; vecchi batch riusati rifiutati |
 | Guasto | interruzione dopo trasferimento => request, pool e lotto FAULTED; riserva conservata, nessun rollback o ACK |
 
@@ -46,6 +46,15 @@ saturazione dell'incarnazione e stato spostato nel preflight pubblico `verifica-
 cosi il controller di Serie lo vede prima della propria mutazione. Rinforzati i
 limiti dell'intervallo catturato e incluso il nuovo gruppo nel catalogo CI centrale.
 Queste due letture non costituiscono una revisione indipendente.
+
+La rilettura di integrazione ha individuato un calcolo body-CRC nel preflight del
+writer, contrario ad ADR-0039. L'attestazione completa e spostata nel worker dopo
+l'analisi; generation privata, stato e ownership del frame ne garantiscono il lifetime.
+Il writer controlla attestazione corrente, formato/segmento, stato e capacita senza
+scansioni del body. Due nuove prove coprono corruzioni prima dell'attestazione e
+un probe CRC con controllo negativo del vecchio percorso, su due dimensioni.
+Un tredicesimo mutante verifica che l'attestazione non possa essere ignorata.
+Il percorso legacy `aggiungi-record` resta fuori da questo incremento.
 
 Le [evidenze](../../spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
 conservano anche i due arresti di compilazione e separano le verifiche finali.

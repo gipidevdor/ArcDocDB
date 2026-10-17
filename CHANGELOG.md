@@ -17,7 +17,8 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 - Legame full text agli esatti byte PUT: cornice privata per tutte le generazioni,
   riserva collettiva e append nel lotto WAL dopo i preflight. Formati v1/v2,
   ordinari/prepared, riferimenti protetti dal riuso del lotto e fail-stop dopo
-  trasferimento incompleto. Pubblicazione durevole, esiti 2PC, MVCC e ritiro aperti.
+  trasferimento incompleto. CRC/spans attestati nel worker, controlli costanti e
+  sola copia del body sotto lease writer. Pubblicazione durevole, esiti 2PC, MVCC e ritiro aperti.
 
 - Proposta del contratto di sessione M16 (ADR-0056) e SPK-11 su socket Unix:
   due processi reali, frame parziali/accorpati, documento e chiave massimi,

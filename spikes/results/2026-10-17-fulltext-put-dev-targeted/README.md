@@ -33,7 +33,25 @@ La [copertura diagnostica](../2026-10-17-fulltext-put-coverage/catalogo.lisp) su
 e 30,453031 secondi. Stato SB-COVER e HTML originali sono stringhe in un payload
 compresso con hash e dimensioni verificabili. Include fulltext, admission, put e
 WAL frame/builder/types; sei misure di allocazione escluse dalla strumentazione.
-La successiva correzione CI non modifica questi sorgenti, i test o il metodo di copertura.
+La correzione CI non modifica quei sorgenti, i test o il metodo di copertura.
+Questa raccolta precede pero la successiva correzione del percorso CRC e non e la
+copertura del prodotto finale.
+
+Il [secondo controllo completo](../2026-10-17-fulltext-put-check-writer-crc-interrupted/catalogo.lisp)
+e stato interrotto esplicitamente sul rilievo del body-CRC sotto lease writer:
+exit 143, stato `:failed`, sorgenti `:stable`, 359,605769 secondi. Anche questo
+registro originale resta conservato e non costituisce una verifica completa riuscita.
+L'attestazione CRC/spans e stata spostata nel worker prima della consegna, con
+generation privata richiesta sia dalla riserva sia dall'append. Il writer ora
+controlla metadati e capacita e copia il frame senza scansioni del body.
+
+La [prova mirata dopo la correzione](../2026-10-17-fulltext-put-worker-crc-targeted/report.lisp),
+`make fulltext-check lint trace`, ha stato `:ok`, sorgenti `:stable`, exit 0 e
+33,850694 secondi. Superati 93 test full text (18 PUT/WAL), tredici mutanti semantici,
+lint di 339 file e tracciabilita. Il probe CRC dimostra il calcolo nel worker e
+intercetta il vecchio percorso come controllo negativo; append di fixture con
+padding 0/32768 byte senza scansioni CRC sotto lease. Confermati zero byte consed
+nelle due misure di mille operazioni con ID 1 e UINT64_MAX.
 
 L'incremento prepara memoria del lotto, senza I/O, assegnazione CSN, pubblicazione
 documento/posting prima di H/ACK, esiti 2PC, vista MVCC o reclaim. Pool/log/configurazioni

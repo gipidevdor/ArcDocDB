@@ -56,7 +56,10 @@
     "ARCDOCDB.FULLTEXT.PUT.TESTS" "REQ-SEC-003-PUT-APPEND-PREFLIGHT-RETAINS-RESERVATION")
   (with-mutant "ARCDOCDB.FULLTEXT.PUT" "VERIFICA-INCARNAZIONE-PUT"
     (lambda (slot batch) (declare (ignore slot batch)) nil)
-    "ARCDOCDB.FULLTEXT.PUT.TESTS" "REQ-WAL-005-PUT-STALE-BATCH-INCARNATION"))
+    "ARCDOCDB.FULLTEXT.PUT.TESTS" "REQ-WAL-005-PUT-STALE-BATCH-INCARNATION")
+  (with-mutant "ARCDOCDB.FULLTEXT.PUT" "ESIGI-CORNICE-PUT-VALIDATA"
+    (lambda (request) (declare (ignore request)) nil)
+    "ARCDOCDB.FULLTEXT.PUT.TESTS" "REQ-SEC-003-PUT-APPEND-PREFLIGHT-RETAINS-RESERVATION"))
 (defun scope-p (path)
   (not (null (or (search "/src/fulltext/" (namestring path))
                  (search "/src/fulltext-admission/" (namestring path))
@@ -117,7 +120,7 @@
          (test-call "ARCDOCDB.FULLTEXT.ADMISSION.TESTS" "RUN")
          (test-call "ARCDOCDB.FULLTEXT.PUT.TESTS" "RUN")
          (negative-controls)
-         (format t "(:schema-version 1 :kind :fulltext-core-qualification :status :ok :negative-controls 12)~%"))
+         (format t "(:schema-version 1 :kind :fulltext-core-qualification :status :ok :negative-controls 13)~%"))
         ((and (= 2 (length args)) (string= "--coverage" (first args)))
          (coverage (merge-pathnames (uiop:ensure-directory-pathname (second args)) (truename "./"))))
         (t (error "Uso: --self-test | --check | --coverage directory-privata/"))))

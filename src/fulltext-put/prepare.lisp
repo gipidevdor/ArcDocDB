@@ -1,6 +1,26 @@
 (in-package #:arcdocdb.fulltext.put)
 (declaim (optimize (safety 3) (debug 2)))
 
+;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-WAL-005
+(declaim (ftype (function (preparazione-put-full-text) null) attesta-cornice-put-worker))
+(defun attesta-cornice-put-worker (request)
+  "Pre: worker esclusivo, tutti i task DONE sullo stesso frame immutabile.
+Post: CRC/spans verificati e attestazione della generation, prima di ogni lease writer.
+Scansione body addebitata al budget worker; errore invalida il risultato, nessuna riserva."
+  (let ((size (preparazione-put-full-text-size request)))
+    (when (> size (- (preparazione-put-full-text-work-limit request) (preparazione-put-full-text-work request)))
+      (error 'resource-exhausted :reason :fulltext-put-work))
+    (incf (preparazione-put-full-text-work request) size)
+    (multiple-value-bind (next kind flags ks ke vs ve)
+        (r:verifica-cornice (preparazione-put-full-text-frame request) 0 size
+                           :version (preparazione-put-full-text-version request)
+                           :document-limit (preparazione-put-full-text-document-limit request))
+      (declare (ignore flags ks ke)) ; prodotti dal codec privato e verificati dal decoder.
+      (unless (and (= next size) (= kind r:+put+) (= vs (preparazione-put-full-text-value-start request)) (= ve size))
+        (error 'invariant-violation :reason :fulltext-put-worker-frame)))
+    (setf (preparazione-put-full-text-validated-generation request) (preparazione-put-full-text-generation request)))
+  nil)
+
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (preparazione-put-full-text) null) analizza-unita-put))
 (defun analizza-unita-put (request)
@@ -30,6 +50,7 @@ Ogni task analizza lo span dello stesso frame privato; lavoro cumulativo prima d
           (incf (preparazione-put-full-text-current request))
           (setf (preparazione-put-full-text-active request) nil)
           (when (= (preparazione-put-full-text-current request) (length (preparazione-put-full-text-tasks request)))
+            (attesta-cornice-put-worker request)
             (setf (preparazione-put-full-text-state request) :prepared))))))
   nil)
 
@@ -41,7 +62,8 @@ Buffer privati conservati, nessun rollback di WAL o riserva; errori interni rich
   (when (preparazione-put-full-text-active request)
     (let ((task (svref (preparazione-put-full-text-tasks request) (preparazione-put-full-text-current request))))
       (when (eq :running (d:stato-preparazione-full-text task)) (d:annulla-preparazione-full-text task))))
-  (setf (preparazione-put-full-text-active request) nil (preparazione-put-full-text-state request) state)
+  (setf (preparazione-put-full-text-active request) nil (preparazione-put-full-text-state request) state
+        (preparazione-put-full-text-validated-generation request) 0)
   nil)
 
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010

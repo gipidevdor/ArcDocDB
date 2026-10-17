@@ -22,6 +22,7 @@ Rifiuti del pool prima degli effetti; uscita incompleta nell'adozione => request
   (verifica-token-put request generation) (f::verifica-writer-riserve pool lease)
   (unless (eq :prepared (preparazione-put-full-text-state request))
     (error 'invalid-argument :reason :fulltext-put-not-prepared))
+  (esigi-cornice-put-validata request)
   (let ((complete nil) (before (f::riserve-full-text-generation pool)))
     (unwind-protect
          (multiple-value-bind (slot token) (f:prenota-full-text pool lease (preparazione-put-full-text-tasks request))

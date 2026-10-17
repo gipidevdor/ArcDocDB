@@ -4,9 +4,10 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-WAL-005 REQ-CON-002
 (declaim (ftype (function (f:riserve-full-text preparazione-put-full-text t) null) preflight-append-put))
 (defun preflight-append-put (pool request batch)
-  "Pre: lease e request riservato. Post: stesso formato/segmento, una cornice intera e spazio SEAL.
+  "Pre: lease e request riservato. Post: attestazione corrente, stesso formato/segmento e spazio SEAL.
 Il file-id viene letto dai byte preallocati per evitare boxing u64 nel writer.
-Tutti i rifiuti ordinari precedono il trasferimento irreversibile della riserva."
+CRC e cornice attestati dal worker, nessuna scansione body sotto lease; solo copia nell'append."
+  (esigi-cornice-put-validata request)
   (unless (and (typep batch 'w:lotto) (eq :reserved (preparazione-put-full-text-state request))
                (eq :segment (w::lotto-kind batch)) (= (w::lotto-version batch) (preparazione-put-full-text-version request)))
     (error 'invalid-argument :reason :fulltext-put-batch))
@@ -16,7 +17,7 @@ Tutti i rifiuti ordinari precedono il trasferimento irreversibile della riserva.
       (error 'invalid-argument :reason :fulltext-put-segment)))
   (unless (eq :ready (f::riserva-full-text-state (preparazione-put-full-text-slot request)))
     (error 'invariant-violation :reason :fulltext-put-run-state))
-  (w:verifica-append-cornice batch (preparazione-put-full-text-frame request) 0 (preparazione-put-full-text-size request))
+  (w::verifica-capacita-cornice batch (preparazione-put-full-text-size request))
   nil)
 
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-WAL-005 REQ-AFF-008 REQ-CON-002

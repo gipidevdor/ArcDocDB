@@ -1,0 +1,9 @@
+(require :asdf)
+(asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+(asdf:load-system "arcdocdb")
+(dolist (name '(arcdocdb.recovery.series::verifica-fonti-serie
+                arcdocdb.recovery.bootstrap::verifica-ingressi-bootstrap
+                arcdocdb.recovery.bootstrap::verifica-bootstrap-archivio
+                arcdocdb.recovery.bootstrap:leggi-archivio-recuperato))
+  (format t "~&~S~%" name)
+  (disassemble name))

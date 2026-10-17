@@ -122,3 +122,6 @@ da revisione indipendente. Nessun test funzionale, FI, MC/DC, copertura,
 modello o benchmark nuovo viene aggiunto o eseguito in questo incremento.
 RBA-D01…D11, qualifica C1, pubblicazione degli effetti e gate del traffico
 restano aperti; CI generale e controlli statici non li sostituiscono.
+
+I [record locali e le riletture](../../spikes/results/2026-10-17-archive-bootstrap/README.md)
+conservano compilazione, controlli statici e disassemblaggio della revisione congelata.

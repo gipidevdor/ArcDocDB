@@ -19,6 +19,16 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   con più errori di close. Collegamento alla fixture verticale; riconciliazione
   fisica e ammissione restano da implementare.
 
+- Prove della cache con quattro worker che inseriscono e leggono record
+  concorrenti nello stesso insieme, oltre a casi deterministici per contesa,
+  sequenza dispari, credito esaurito e posti disabilitati. Confronto completo
+  con record indipendenti nei formati v1/v2; qualifica C1 ancora aperta.
+
+- Adozione delle mappe CLOSED recuperate nello scope runtime: insieme completo,
+  autorità e FD esatti verificati, wrapper nuovi e righe immutabili condivise.
+  Budget prima delle allocazioni; nessuna rilettura dei segmenti o pubblicazione
+  del primary. Qualifica funzionale e ammissione restano aperte.
+
 - Preparazione full text direttamente dai documenti CBOR: percorsi annidati,
   tipi e duplicati selezionati verificati, analisi riprendibile e run sigillato.
   Budget cumulativi e limite superiore del file prima del futuro aggancio al writer;

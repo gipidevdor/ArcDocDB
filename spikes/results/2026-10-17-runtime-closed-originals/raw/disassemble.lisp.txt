@@ -1,0 +1,10 @@
+(require :asdf)
+(asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+(asdf:load-system "arcdocdb")
+(dolist (name '(arcdocdb.runtime::verifica-budget-closed-runtime
+                arcdocdb.runtime::verifica-autorita-closed-runtime
+                arcdocdb.runtime::verifica-mappa-closed-runtime
+                arcdocdb.runtime::trasferisci-mappa-closed-runtime
+                arcdocdb.runtime:adotta-directory-closed))
+  (format t "~&~S~%" name)
+  (disassemble name))

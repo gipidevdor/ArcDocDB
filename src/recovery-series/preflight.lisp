@@ -3,6 +3,21 @@
 (in-package #:arcdocdb.recovery.series)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
+;;; REQ: REQ-REC-001 REQ-REC-004 REQ-STO-006 REQ-AFF-008
+(declaim (ftype (function (control-recuperato recovery-sources limiti-recovery-serie)
+                         (values index index &optional)) verifica-capienza-fonti-serie))
+(defun verifica-capienza-fonti-serie (control sources limits)
+  "Pre: set stabile, CONTROL autorevole e limiti validi. Post: count fonti/CLOSED ammessi prima della scansione.
+INVALID-ARGUMENT per cardinalità, RESOURCE-EXHAUSTED per segmenti/riferimenti; nessun I/O o array nuovo."
+  (let* ((count (numero-fonti-recovery sources))
+         (closed (numero-segmenti-chiusi (manifest-control-recuperato control))))
+    (when (> count (limits-segments limits))
+      (error 'resource-exhausted :reason :series-recovery-segment-budget))
+    (unless (= count (1+ closed)) (error 'invalid-argument :reason :series-recovery-source-count))
+    (when (> (* 8 closed) (limits-references limits))
+      (error 'resource-exhausted :reason :series-recovery-reference-budget))
+    (values count closed)))
+
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-STO-006 REQ-TXM-007 REQ-AFF-008
 (declaim (ftype (function (control-recuperato recovery-sources decisioni-recuperate octets
                           limiti-recovery-serie) (values index index &optional)) verifica-fonti-serie))
@@ -11,13 +26,7 @@
 Count, budget riferimenti/byte, ordine u64, appartenenza e preflight di OGNI fonte prima di leggere dati.
 Ordine stretto più cardinalità e appartenenza provano completezza senza un'altra tabella dei duplicati.
 INVALID-ARGUMENT/RESOURCE-EXHAUSTED o condizioni canoniche; nessuna allocazione del vettore risultato."
-  (let* ((count (numero-fonti-recovery sources))
-         (closed (numero-segmenti-chiusi (manifest-control-recuperato control))))
-    (when (> count (limits-segments limits))
-      (error 'resource-exhausted :reason :series-recovery-segment-budget))
-    (unless (= count (1+ closed)) (error 'invalid-argument :reason :series-recovery-source-count))
-    (when (> (* 8 closed) (limits-references limits))
-      (error 'resource-exhausted :reason :series-recovery-reference-budget))
+  (multiple-value-bind (count closed) (verifica-capienza-fonti-serie control sources limits)
     (arcdocdb.recovery.archive::verifica-archivio-active control decisions scratch)
     (let ((active nil) (previous nil) (total 0))
       (dotimes (i count)

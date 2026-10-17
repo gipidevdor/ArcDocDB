@@ -21,7 +21,7 @@
                 (let ((row (multiple-value-list (arcdocdb.recovery.manifest:fonte-recovery sources i))))
                   (is (= 5 (length row))) (is (equal expected (subseq row 0 3)))
                   (is (= 5 (fifth row))) (is (eq :input (arcdocdb.io:mode-file (fourth row))))))
-            (is (equal '(:open 0 0) (idr-observation directory)))))))))
+            (is (equal '(:open 0 0) (idr-observation directory))))))))))
 
 ;;; REQ: REQ-REC-002 REQ-REC-004 REQ-AFF-008
 (deftest test-REQ-REC-002-sources-nonready-before-any-open
@@ -56,7 +56,7 @@
             (frs-check-closed fixture files)
             (is (= 4 (arcdocdb.recovery.manifest:numero-fonti-recovery sources)))
             (signals invalid-argument (arcdocdb.recovery.manifest:fonte-recovery sources 0)
-                     :recovery-sources-closed))))))))
+                     :recovery-sources-closed)))))))
 
 ;;; REQ: REQ-AFF-008 REQ-REC-001 REQ-AFF-018
 (deftest test-REQ-AFF-008-sources-budgets-exact-and-one-under

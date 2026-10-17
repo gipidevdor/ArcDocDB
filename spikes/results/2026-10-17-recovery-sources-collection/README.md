@@ -12,3 +12,9 @@ temporanea richiesta dal modo worker: esito fallito conservato in
 `catalog-check-first.log`. Creata la directory, il controllo finale è OK
 (`catalog-check-final.log`). Trace e link finali sono conservati separatamente:
 135 requisiti, 69 invarianti, 13 FI, 55 ADR e 3.908 link senza errori.
+
+Un ulteriore controllo del catalogo dopo il commit è conservato in
+`post-commit-report.lisp` e `post-commit-conservazione.lisp`: OK con sorgenti
+STABLE. Un tentativo diretto del modo worker aveva ricevuto EPERM da SETPGID;
+la chiamata tramite processo figlio registrato è riuscita. Questo diagnostico
+non è un errore del prodotto; provenienza e limiti sono dichiarati separatamente.

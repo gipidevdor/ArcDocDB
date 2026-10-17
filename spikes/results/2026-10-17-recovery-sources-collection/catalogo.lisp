@@ -1,3 +1,5 @@
 (:schema-version 1 :kind :evidence-catalog :date "2026-10-17"
  :entries ((:kind :command-archive-collection :artifact "collection.lisp")
-           (:kind :retention-receipt :artifact "copies.lisp")) :pending nil)
+           (:kind :retention-receipt :artifact "copies.lisp")
+           (:kind :command-verification :artifact "post-commit-report.lisp"
+            :process-artifact "post-commit-conservazione.lisp")) :pending nil)

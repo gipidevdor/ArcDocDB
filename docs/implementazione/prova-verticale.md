@@ -109,3 +109,12 @@ conferma l'assenza. Quella estensione non modificava sorgenti C1. Il successivo
 collegamento alla scelta ID di prodotto ha contratto e verifiche dedicati;
 questa lettura C4 non è una revisione indipendente o una qualifica C1 del
 Recovery Manager.
+
+### Acquisizione delle fonti — 2026-10-17
+
+ACTIVE e CLOSED vengono ora aperti tramite il [set posseduto di prodotto](fonti-recovery.md),
+una volta per manifest canonico della fixture. Il test usa le capacità prestate,
+termina i reader e chiude i set prima del parent; non scansiona più gli ID
+CLOSED da uno a otto. Otto resta il budget C4, senza restringere ID o inventario
+nel prodotto. La campagna mantiene i 16 scenari positivi e i due controlli
+negativi; replay e coordinamento complessivo restano nel test.

@@ -1,0 +1,71 @@
+from pathlib import Path
+import subprocess, shutil, gzip, hashlib, json
+root=Path.cwd()
+stage=root/'spikes/out/sources-publication'
+assert (root/'arcdocdb.asd').exists()
+files={}
+def add(source,destination):
+    source=Path(source).resolve()
+    assert source.is_file(),str(source)
+    assert destination not in files,destination
+    assert '..' not in Path(destination).parts
+    files[destination]=source
+commits=['c7a40bf4','30bb0fe3','dd19d48e','55e9441a','bd2fd9c2','b43626da','b7f3b866','6a4947e6','8aaa0621']
+for commit in commits:
+    names=subprocess.check_output(['git','diff-tree','--no-commit-id','--name-only','-r',commit],text=True).splitlines()
+    if commit=='8aaa0621':
+        names=subprocess.check_output(['git','diff','--name-only','c9e97fd0',commit,'--','src','tests','tools','arcdocdb.asd','docs/implementazione/fonti-recovery.md','docs/implementazione/fonti-recovery-metodo.md'],text=True).splitlines()
+    for name in names:
+        if name.startswith('spikes/results/'):continue
+        data=subprocess.check_output(['git','show',f'{commit}:{name}'])
+        target=stage/'variants'/commit/(name+'.txt');target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_bytes(data); add(target,'raw/variants/'+commit+'/'+name+'.txt')
+entries=[('initial-compile','4001217236-command-75881-0'),('initial-budgets','4001217279-command-77284-0'),
+('mutation-self-initial','4001217286-command-77574-0'),('targeted-first','4001217356-command-78886-0'),
+('targeted-symlink','4001217410-command-79559-0'),('targeted-before-nesting-fix','4001217433-command-79967-0'),
+('mutation-before-nesting-fix','4001217447-command-80244-0'),('coverage-before-nesting-fix','4001217447-command-80246-0'),
+('check-interrupted','4001217447-command-80269-0'),('targeted-u64-history','4001217621-command-84148-0'),
+('targeted-final','4001217691-command-85566-0'),('mutation-self-merge-diagnostic','4001217712-command-85921-0'),
+('mutation-self-final','4001217724-command-86188-0'),('mutation-final','4001217731-command-86323-0'),
+('coverage-final','4001217731-command-86325-0'),('check-final','4001217731-command-86347-0'),('targeted-count-final','4001218074-command-95965-0')]
+for label,record in entries:
+    directory=root/'spikes/out'/record
+    for source in sorted(directory.iterdir()):
+        if source.is_file():add(source,'processes/'+label+'/'+source.name)
+for scope in ['sources-coverage','sources-coverage-final']:
+    directory=root/'spikes/out'/scope
+    original=directory/'coverage-state.lisp'; compressed=stage/(scope+'-state.lisp.gz')
+    with gzip.GzipFile(filename=str(compressed),mode='wb',mtime=0) as out:out.write(original.read_bytes())
+    assert gzip.decompress(compressed.read_bytes())==original.read_bytes()
+    add(compressed,'raw/'+scope+'/coverage-state.lisp.gz')
+    for source in sorted(directory.glob('*.html')):add(source,'raw/'+scope+'/'+source.name)
+for scope in ['sources-mutations','sources-mutations-final']:
+    directory=root/'spikes/out'/scope
+    add(directory/'report.lisp','raw/'+scope+'/report.lisp')
+    for worker in sorted(p for p in directory.iterdir() if p.is_dir() and (p/'test.log').exists()):
+        for suffix in ['test.log','tools/mutation-isolated-build.lisp','arcdocdb.asd']:
+            add(worker/suffix,'raw/'+scope+'/'+worker.name+'/'+suffix+('' if suffix=='test.log' else '.txt'))
+        for source in sorted((worker/'src/recovery').glob('inventory-sources*.lisp')):
+            add(source,'raw/'+scope+'/'+worker.name+'/src/recovery/'+source.name+'.txt')
+for source in sorted((root/'spikes/out/sources-audit').iterdir()):
+    if source.is_file():add(source,'raw/audit/'+source.name+('.txt' if source.suffix=='.lisp' else ''))
+# The native spike suite directory is an explicit input, not a recursive discovery of archives.
+spike_path=stage/'spike-path.txt'
+spikes=Path(spike_path.read_text().strip())
+assert spikes.is_dir()
+for source in sorted(spikes.iterdir()):
+    if source.is_file():add(source,'raw/spikes/'+source.name)
+add(stage/'report.md','report.md')
+add(stage/'manifest-builder.py','raw/audit/manifest-builder.py.txt')
+receipt=stage/'input-receipt.json'
+receipt.write_text(json.dumps([{'source':str(source),'path':destination,'sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'bytes':source.stat().st_size} for destination,source in sorted(files.items())],indent=2)+chr(10))
+add(receipt,'raw/audit/input-receipt.json')
+def q(value):
+    value=str(value)
+    assert not any(character in value for character in [chr(34),chr(92),chr(10),chr(13)])
+    return chr(34)+value+chr(34)
+manifest='(:schema-version 1 :kind :command-archive-manifest :date "2026-10-17" :files ('+chr(10)
+manifest+=chr(10).join('(:source '+q(source)+' :path '+q(destination)+')' for destination,source in sorted(files.items()))
+manifest+=') :processes ('+chr(10)+chr(10).join('(:label '+q(label)+' :record-path '+q('processes/'+label+'/report.lisp')+')' for label,record in entries)+'))'+chr(10)
+(stage/'manifest.lisp').write_text(manifest)
+print('Explicit files:',len(files),'processes:',len(entries),'bytes:',sum(path.stat().st_size for path in files.values()))

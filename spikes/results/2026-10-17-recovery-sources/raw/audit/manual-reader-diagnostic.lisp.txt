@@ -1,0 +1,6 @@
+(:schema-version 1 :kind :manual-reader-diagnostic :product-failure nil
+ :reason :uiop-package-missing-in-one-unrecorded-summary-eval
+ :correction :require-asdf-before-reading-uiop-symbols
+ :original-command-output :retained-in-chat-tool-transcript
+ :original-stderr-file :not-captured
+ :final-command :success :authoritative-data :original-command-records)

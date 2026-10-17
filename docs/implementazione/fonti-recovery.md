@@ -57,3 +57,28 @@ nessun dato parziale pubblicato, lock o scrittura fra Serie; allocazioni solo
 nel percorso freddo. Decisioni FRS-D01…D07 nel metodo e test FI nominati;
 compilazione, trace, lint, link e controllo completo da eseguire e conservare.
 Le due letture sono dell'autore e non soddisfano la revisione indipendente.
+
+## Esiti conservati — 2026-10-17
+
+La [campagna locale](../../spikes/results/2026-10-17-recovery-sources/report.md)
+conserva 17 record, tutti STABLE, compresi fallimenti e un controllo interrotto
+per correggere due test annidati. La baseline finale comprende 16 test autonomi;
+11/11 mutanti sono rilevati a runtime con quattro processi isolati, zero errori
+di compilazione/pre-test/worker. Il runner rifiuta ora DEFTEST annidati.
+
+`make check` è passato sul commit `8aaa0621`: 2.054 test nominati più due smoke,
+170 recovery, quattro verticali con 16 scenari positivi e due negativi, dieci
+spike; 321 file di prodotto senza violazioni, 135 requisiti/69 invarianti/
+13 FI/55 ADR senza errori, 564 Markdown e 3.903 link senza rotture. Sono comprese
+le verifiche full text e cache; non qualificano visibilità o recovery full text.
+
+Copertura grezza dei quattro file: 293/327 forme e 22/26 rami, con tutti i
+22 rami dei tre file operativi marcati. I residui di dichiarazioni, slot e
+keyword restano nel denominatore; nessuna esclusione approvata. Native/HTML
+e missing path sono conservati, insieme ai limiti dei helper manuali e alle
+varianti dei test. Secondo revisore, MC/DC e qualifica C1 restano aperti.
+
+La [ricevuta di raccolta](../../spikes/results/2026-10-17-recovery-sources-collection/README.md)
+conserva collector e checker dell'inventario chiuso. Il codice dei quattro
+file di prodotto è invariato rispetto alla prima implementazione; le correzioni
+successive riguardano fixture, runner, integrazione e documentazione.

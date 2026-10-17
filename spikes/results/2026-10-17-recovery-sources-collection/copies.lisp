@@ -1,0 +1,5 @@
+(:schema-version 1 :kind :retention-receipt :date "2026-10-17" :status :ok :copies ((:target "collection.lisp" :bytes 138363 :sha256 "d2c086b4c20dd39bfabbf1f2891b1c06750e84ca972930607ea57fc50d053031" :status :byte-equal)
+(:target "closed-check.log" :bytes 5428 :sha256 "18f368f85816dc084a5613f7def86d020df326aebfccd2dbb490ed37ad5d9a94" :status :byte-equal)
+(:target "catalog-check-first.log" :bytes 480 :sha256 "54e814e7527f9bbe1e22294ae3e2715db0a476244eb504484f5b13c67b2b6abc" :status :byte-equal)
+(:target "catalog-check-final.log" :bytes 166 :sha256 "1644cda96ef546d3951bad4bdde0c8f96b3d35fa35c2dc04bdd67460aaaf5975" :status :byte-equal)
+(:target "trace-links-final.log" :bytes 179 :sha256 "ccd9311bb319e126915c77f445ab35fea406f2cb5059ffa0391c6d60ce39ea6d" :status :byte-equal)) :limits (:copies-after-closed-process :not-independent-self-audit))

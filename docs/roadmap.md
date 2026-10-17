@@ -37,8 +37,8 @@ e successivo. Listener e client locale restano da implementare.
 Il primo passo di prodotto è la [scelta dell'ID del nuovo segmento](implementazione/id-segmento-recovery.md):
 proposta pura dal manifest e dall'inventario completo, usata anche dalla
 fixture verticale. La raccolta del namespace e delle identità è descritta
-sotto; riconciliazione fisica, acquisizione completa delle capacità dei segmenti e
-coordinamento del recovery restano da implementare.
+sotto; riconciliazione fisica e coordinamento del recovery restano da implementare;
+l’acquisizione readonly completa è ora collegata al piano della directory.
 
 L'[ingresso ID dalla directory](implementazione/id-directory-recovery.md)
 collega ora l'inventario reale alla proposta del nuovo segmento senza una

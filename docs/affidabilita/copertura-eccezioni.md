@@ -223,3 +223,15 @@ Nessuna forma top-level, ramo difensivo o postcondizione è sottratta dal
 denominatore. Le fixture FI sono dichiarate e non autorizzano a violare
 ownership con thread attivi. Nessuna esclusione approvata, MC/DC completa
 o chiusura del gate C1 del motore è implicita.
+
+## Fonti possedute recovery — 2026-10-17
+
+La [campagna delle fonti](../implementazione/fonti-recovery.md#esiti-conservati--2026-10-17)
+conserva il totale grezzo 293/327 forme e 22/26 rami dei quattro nuovi file.
+I tre file operativi hanno 22/22 rami marcati; nel file dei tipi restano
+quattro alternative associate alle dichiarazioni MEMBER di stato e forma.
+Le 34 forme residue comprendono 18 dichiarazioni top-level, otto inizializzatori
+di slot e otto default keyword non marcati. Native e HTML concordano; tutti i
+missing path sono conservati. Nessuna esclusione è approvata, nessun bit è
+modificato e nessun reload artificiale altera i conteggi. MC/DC, revisione
+indipendente e qualifica C1 rimangono aperti.

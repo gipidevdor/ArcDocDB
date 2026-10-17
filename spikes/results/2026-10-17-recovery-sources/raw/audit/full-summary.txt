@@ -1,0 +1,54 @@
+wall=746.206849d0 source=1189 stderr-chars=1924679
+28 test XXH64 superati.
+28 test delle fondazioni superati.
+11 test della cornice full text superati.
+13 test dell'analisi full text superati.
+15 test del codec completo full text superati.
+17 test della preparazione documentale full text superati.
+17 test UTF-8 superati.
+17 test degli header CBOR superati.
+15 test delle testate CBOR minime superati.
+24 test della struttura CBOR superati.
+22 test della struttura CBOR minima superati.
+17 test della scrittura degli header CBOR minimi superati.
+21 test della scrittura delle stringhe CBOR minime superati.
+16 test della scrittura dei valori semplici CBOR superati.
+18 test della scrittura dei float CBOR superati.
+20 test della composizione degli array CBOR superati.
+20 test della composizione delle mappe CBOR superati.
+20 test della composizione dei tag CBOR superati.
+17 test della lettura del primo item CBOR minimo superati.
+17 test della lettura delle stringhe CBOR minime superati.
+20 test del registro CSN superati.
+43 test snapshot/CSN superati.
+34 test epoche/reclaim superati.
+30 test dei compiti di lettura superati.
+70 test GET superati.
+19 test del contratto GET per benchmark superati.
+14 test della pubblicazione cache superati.
+72 test directory GET superati.
+42 test resolver GET superati.
+42 test GET ACTIVE superati.
+89 test delle code writer superati.
+129 test del controllore pool superati.
+44 test dei metadati storage superati.
+126 test I/O superati.
+138 test CONTROL superati.
+170 test recovery superati.
+59 test recovery ACTIVE superati.
+54 test recovery Archivio superati.
+27 test RECOVERY ACTIVE superati.
+69 test recovery CLOSED superati.
+54 test piano CSN Archivio superati.
+38 test bootstrap runtime superati.
+48 test WAL superati.
+109 test del controller Serie superati.
+64 test degli slot indice v2 superati.
+73 test dell'indice primario superati.
+4 test verticali superati; 16 scenari positivi e 2 controlli negativi.
+(:schema-version 1 :kind :fulltext-golden-self-test :status :ok)
+(:schema-version 1 :kind :fulltext-qualification-self-test :status :ok)
+11 test della cornice full text superati.
+13 test dell'analisi full text superati.
+15 test del codec completo full text superati.
+17 test della preparazione documentale full text superati.

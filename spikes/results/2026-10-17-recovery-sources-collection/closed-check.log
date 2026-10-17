@@ -1,0 +1,98 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-17-recovery-sources/"
+ :INDEXED-FILES 345 :ACTUAL-FILES 347 :INDEXED-BYTES 10619593 :PROCESSES
+ ((:LABEL "initial-compile" :RECORD-PATH
+   "processes/initial-compile/report.lisp" :COMMAND
+   ("make" "test" "lint" "trace" "links") :STATUS :FAILED :EXIT-CODE 2
+   :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "initial-budgets" :RECORD-PATH
+   "processes/initial-budgets/report.lisp" :COMMAND
+   ("make" "test" "lint" "trace" "links") :STATUS :FAILED :EXIT-CODE 2
+   :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-self-initial" :RECORD-PATH
+   "processes/mutation-self-initial/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-mutation.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "targeted-first" :RECORD-PATH "processes/targeted-first/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/sources-audit/targeted.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "targeted-symlink" :RECORD-PATH
+   "processes/targeted-symlink/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/sources-audit/targeted.lisp")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "targeted-before-nesting-fix" :RECORD-PATH
+   "processes/targeted-before-nesting-fix/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/sources-audit/targeted.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-before-nesting-fix" :RECORD-PATH
+   "processes/mutation-before-nesting-fix/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-mutation.lisp" "--run" "spikes/out/sources-mutations/"
+    "inventory-sources" "--jobs" "4")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-before-nesting-fix" :RECORD-PATH
+   "processes/coverage-before-nesting-fix/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report" "spikes/out/sources-coverage/"
+    "recovery")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "check-interrupted" :RECORD-PATH
+   "processes/check-interrupted/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :FAILED :EXIT-CODE 143 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "targeted-u64-history" :RECORD-PATH
+   "processes/targeted-u64-history/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/sources-audit/targeted.lisp")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "targeted-final" :RECORD-PATH "processes/targeted-final/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/sources-audit/targeted.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-self-merge-diagnostic" :RECORD-PATH
+   "processes/mutation-self-merge-diagnostic/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-mutation.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-self-final" :RECORD-PATH
+   "processes/mutation-self-final/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-mutation.lisp" "--self-test")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "mutation-final" :RECORD-PATH "processes/mutation-final/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-mutation.lisp" "--run"
+    "spikes/out/sources-mutations-final/" "inventory-sources" "--jobs" "4")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "coverage-final" :RECORD-PATH "processes/coverage-final/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/foundation-coverage.lisp" "--report"
+    "spikes/out/sources-coverage-final/" "recovery")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "check-final" :RECORD-PATH "processes/check-final/report.lisp"
+   :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "targeted-count-final" :RECORD-PATH
+   "processes/targeted-count-final/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/sources-audit/targeted.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "1b0eb0e698603c602bdc529ee52c2e310f79e611d993593f0033cf6e6116da77"
+ :CATALOGUE-SHA256
+ "63543ad17768c48c9a7cf21d130ee585385928a6688923473bf4c810a40d1c40"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

@@ -21,6 +21,20 @@ La seconda lettura ha poi portato la saturazione dell'incarnazione nel preflight
 pubblico di riuso del lotto, prima della mutazione del controller di Serie.
 Le verifiche finali sono conservate separatamente a completamento della raccolta.
 
+Il [primo controllo completo](../2026-10-17-fulltext-put-check-interrupted/catalogo.lisp)
+e stato interrotto esplicitamente dopo la segnalazione di tre aspettative fisse del
+self-test CI ancora ferme a 49 suite, cinque suite full text e cinque esclusioni.
+Il registro conserva exit 143, stato `:failed`, sorgenti `:stable` e 136,166153 secondi;
+non e un controllo completo riuscito. Aggiornati i tre valori e i nomi dei casi a
+50/6/6 senza eliminare suite, misure o controlli. Prodotto e test PUT invariati.
+
+La [copertura diagnostica](../2026-10-17-fulltext-put-coverage/catalogo.lisp) sul commit
+`d1b5363f19a17f1a99afc74122a9b41799194825` ha stato `:ok`, sorgenti `:stable`, exit 0
+e 30,453031 secondi. Stato SB-COVER e HTML originali sono stringhe in un payload
+compresso con hash e dimensioni verificabili. Include fulltext, admission, put e
+WAL frame/builder/types; sei misure di allocazione escluse dalla strumentazione.
+La successiva correzione CI non modifica questi sorgenti, i test o il metodo di copertura.
+
 L'incremento prepara memoria del lotto, senza I/O, assegnazione CSN, pubblicazione
 documento/posting prima di H/ACK, esiti 2PC, vista MVCC o reclaim. Pool/log/configurazioni
 canonici restano obbligo del runtime. Requisiti complessivi progettati;

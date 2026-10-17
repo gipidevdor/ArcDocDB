@@ -3,6 +3,11 @@
 (in-package #:arcdocdb.ci)
 (declaim (optimize (safety 3) (debug 3)))
 
+(defun ci-entry-newer-p (a b)
+  (or (> (parse-integer (getf a :run-id)) (parse-integer (getf b :run-id)))
+      (and (equal (getf a :run-id) (getf b :run-id))
+           (> (parse-integer (getf a :attempt)) (parse-integer (getf b :attempt))))))
+
 (defun ci-status (&optional (ref "HEAD"))
   "Nessun fallback verde: seleziona solo source-id e policy-id della revisione richiesta."
   (let* ((identity (ci-source ref)) (index-path (merge-pathnames "spikes/results/ci/index.lisp" *ci-root*))
@@ -11,10 +16,7 @@
                    (lambda (r) (and (equal (getf r :source-id) (getf identity :source-id))
                                     (equal (getf r :policy-id) (getf identity :policy-id))))
                    (getf index :runs)))
-         (latest (first (sort entries (lambda (a b)
-                         (or (> (parse-integer (getf a :run-id)) (parse-integer (getf b :run-id)))
-                             (and (equal (getf a :run-id) (getf b :run-id))
-                                  (> (parse-integer (getf a :attempt)) (parse-integer (getf b :attempt)))))))))
+         (latest (first (sort entries #'ci-entry-newer-p))))
     (let ((report (list :schema-version 1 :kind :ci-status
                         :head-sha (getf identity :tested-sha) :source-id (getf identity :source-id)
                         :policy-id (getf identity :policy-id)

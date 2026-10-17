@@ -263,7 +263,7 @@ le fixture e tutti gli esiti restano disponibili per la revisione C4."
                        (unwind-protect (not (ci-working-clean-p))
                          (%ci-data-test-write (merge-pathnames "docs/note.md" fixture)
                                               "Documentazione modificata" :replace t)
-                         (ci-git '("update-index" "--no-assume-unchanged" "--" "docs/note.md"))))))
+                         (ci-git '("update-index" "--no-assume-unchanged" "--" "docs/note.md")))))
               (check "git-untracked-source-fails-ignored-too"
                      (lambda ()
                        (%ci-data-test-write (merge-pathnames ".git/info/exclude" fixture)

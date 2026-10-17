@@ -103,3 +103,7 @@ Non aggiunge o esegue test funzionali, FI, copertura, modelli o benchmark.
 Due riletture dell'autore non costituiscono revisione indipendente.
 RCL-D01…D10, MC/DC, confine generale COD-24, misure e qualifica C1 rimangono
 aperti. Anche la CI generale non sostituisce una suite dedicata all'adattatore.
+
+I [record locali e le due riletture dell'autore](../../spikes/results/2026-10-17-runtime-closed/README.md)
+conservano compilazione, controlli statici e disassemblaggio della revisione
+congelata, senza promuoverli a qualifica funzionale.

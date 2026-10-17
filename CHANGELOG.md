@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Riserve full text locali sotto lease del writer: budget di tutte le generazioni
+  verificati prima degli effetti, copia riprendibile in run posseduti e task protetti
+  dal riuso. Cancellazione pre-append e trasferimento con costi trattenuti;
+  binding PUT, pipeline WAL, pubblicazione e ritiro restano da integrare.
+
 - Preparazione full text direttamente dai documenti CBOR: percorsi annidati,
   tipi e duplicati selezionati verificati, analisi riprendibile e run sigillato.
   Budget cumulativi e limite superiore del file prima del futuro aggancio al writer;

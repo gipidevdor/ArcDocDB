@@ -5,7 +5,8 @@
 > Stato: integrazione progettata; disponibile il primo [nucleo implementato](implementazione/full-text.md)
 > per analisi e run posizionali, con [codec completo e viste verificate](implementazione/full-text-codec.md).
 > Disponibile anche la [preparazione dai documenti CBOR](implementazione/full-text-documenti.md)
-> con budget cumulativi e limite superiore; la riserva nel writer resta da collegare.
+> con budget cumulativi e limite superiore, e le [riserve locali del writer](implementazione/full-text-riserve.md)
+> con copie possedute; binding PUT, pipeline WAL e pubblicazione restano da collegare.
 > Nessun benchmark del motore full text completo.
 
 La prima versione cerca termini e frasi in campi testuali scalari di una Serie, insieme

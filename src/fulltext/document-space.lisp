@@ -24,6 +24,7 @@ Ripartire invalida il risultato precedente; il proprietario deve averne terminat
   (levels (make-array 102 :element-type '(unsigned-byte 8) :initial-element 0)
           :type (simple-array (unsigned-byte 8) (102)) :read-only t)
   (input nil :type (or null octets)) (start 0 :type index) (end 0 :type index) (row 0 :type u32)
+  (borrower nil :type t)
   (phase :idle :type keyword) (field 0 :type index) (measure 0 :type index)
   (input-bytes 0 :type index) (prepared-bytes 0 :type index) (bound 0 :type index)
   (work 0 :type index) (work-limit 268435456 :type index)

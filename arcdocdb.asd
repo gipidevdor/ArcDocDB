@@ -63,6 +63,10 @@
                              (:file "handoff") (:file "ready-types") (:file "ready")
                              (:file "ready-recycle")
                              (:file "worker-types") (:file "worker-boundary") (:file "worker-claim") (:file "worker-run")))
+               (:module "fulltext-admission" :serial t
+                :components ((:file "package") (:file "types") (:file "build")
+                             (:file "guards") (:file "preflight") (:file "reserve")
+                             (:file "copy") (:file "lifecycle") (:file "query")))
                (:module "scheduler" :serial t
                 :components ((:file "package") (:file "types") (:file "build")
                              (:file "read") (:file "policy") (:file "update")
@@ -194,6 +198,9 @@
                              (:file "codec-differential")
                              (:file "document-support") (:file "document") (:file "document-guards")
                              (:file "document-differential")
+                             (:file "admission-support") (:file "admission")
+                             (:file "admission-guards") (:file "admission-resources")
+                             (:file "admission-lifecycle") (:file "admission-concurrency")
                              (:static-file "minimum-v2.hex")))
                (:module "codec" :serial t
                 :components ((:file "support") (:file "utf8") (:file "threads")
@@ -312,6 +319,7 @@
              (uiop:symbol-call '#:arcdocdb.fulltext.analysis.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.fulltext.codec.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.fulltext.document.tests '#:run)
+             (uiop:symbol-call '#:arcdocdb.fulltext.admission.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.utf8.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.tests '#:run)
              (uiop:symbol-call '#:arcdocdb.cbor.minimal.tests '#:run)

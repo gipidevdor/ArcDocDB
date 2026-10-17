@@ -44,6 +44,8 @@ RESOURCE-EXHAUSTED per span; nessun WAL, riserva di Serie, commit o I/O."
     (error 'invalid-argument :reason :fulltext-document-input))
   (unless (member (preparazione-full-text-phase task) '(:idle :done :failed :cancelled))
     (error 'invalid-argument :reason :fulltext-document-busy))
+  (when (preparazione-full-text-borrower task)
+    (error 'invalid-argument :reason :fulltext-document-borrowed))
   (controlla-alias-documento task input)
   (when (> (- end start) 16777216) (error 'resource-exhausted :reason :fulltext-document-bytes))
   (setf (preparazione-full-text-work-limit task)

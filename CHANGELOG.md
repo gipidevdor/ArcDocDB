@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Adozione delle mappe CLOSED recuperate nello scope runtime: insieme completo,
+  autorità e FD esatti verificati, wrapper nuovi e righe immutabili condivise.
+  Budget prima delle allocazioni; nessuna rilettura dei segmenti o pubblicazione
+  del primary. Qualifica funzionale e ammissione restano aperte.
+
 - Preparazione full text direttamente dai documenti CBOR: percorsi annidati,
   tipi e duplicati selezionati verificati, analisi riprendibile e run sigillato.
   Budget cumulativi e limite superiore del file prima del futuro aggancio al writer;

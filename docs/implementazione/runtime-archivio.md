@@ -75,6 +75,10 @@ L'[adozione verificata dell'ACTIVE](adozione-controller-runtime.md) costruisce
 ora il controller reale con CSN runtime, ambito esatto e binding unico sul
 log canonico; decisione del catalogo e ammissione restano del coordinatore.
 
+L'[adozione dei CLOSED](adozione-closed-runtime.md) collega inoltre le mappe
+GET verificate al nuovo ambito, riusando righe immutabili e gli stessi FD.
+Non pubblica il primary o le fonti e non trasferisce la proprietà dei file.
+
 **H=M non certifica la pubblicazione degli effetti recuperati.** Prima
 dell'uso operativo rimangono catalogo/inventari autorevoli, riconciliazione
 fisica, indici/radici coerenti, chiusura/pubblicazione del vecchio ACTIVE e

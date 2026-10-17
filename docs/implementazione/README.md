@@ -115,6 +115,10 @@ L'[adozione dell'ACTIVE nel runtime](adozione-controller-runtime.md) collega
 il prepared al CSN comune e rende unico il controller per log canonico,
 senza acquisire lease o decidere il catalogo.
 
+L'[adozione dei CLOSED nel runtime](adozione-closed-runtime.md) verifica insieme,
+autorità e capacità esatte delle mappe recuperate e costruisce una directory
+nel nuovo ambito condividendo le righe immutabili, senza riletture o pubblicazione.
+
 La [raccolta degli archivi di comandi](raccolta-comandi.md) usa un manifest
 esplicito, quattro worker e il controllo finale dell'inventario chiuso.
 

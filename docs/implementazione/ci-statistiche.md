@@ -592,3 +592,9 @@ ordinario del producer sia leggibile caricando soltanto il modulo DATA,
 senza keyword rese note incidentalmente da altri moduli o dal prodotto.
 L'esito di seal resta distinto: conserva raccolte incomplete e restituisce
 fallimento quando una verifica manca o fallisce.
+
+Il risultato compatto di coverage espone EXPECTED-FILES come conteggio;
+TOTALS conserva i denominatori. Le righe con percorso e blob restano nel
+piano e nel rapporto raw, inclusi nel pacchetto verificato. Questo evita
+che sealed duplichi l'inventario oltre il limite di 64 KiB. Prove ordinarie,
+file mancanti e stato dei test restano integralmente nel risultato compatto.

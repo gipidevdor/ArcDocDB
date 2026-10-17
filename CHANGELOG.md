@@ -11,6 +11,8 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   trusted completo per SKIPPED, METRICS-STATUS ed EXECUTION, senza dipendere
   dal caricamento del prodotto. Regressioni in nuovi processi e rifiuto dei
   token sconosciuti; raccolte incomplete continuano a restituire errore.
+  Riepilogo di copertura entro il budget: conteggio dei file nel risultato
+  compatto, inventario completo negli allegati originali verificati.
 
 - Fixture concorrente della lettura stringhe CBOR: durata e overlap WALL
   possono essere zero quando l'ondata cade nello stesso tick. Preservati

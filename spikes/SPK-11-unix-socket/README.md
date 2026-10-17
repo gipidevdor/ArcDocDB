@@ -69,7 +69,9 @@ La prova non chiude RSK-14/RSK-16 e non promuove REQ-IPC-001…REQ-IPC-004.
 
 ## Risultati
 
-Da eseguire dopo il congelamento dei sorgenti. Nessuna prestazione stimata.
+La [campagna locale e gli originali](../results/2026-10-17-unix-socket/report.md)
+conservano gli scambi riusciti, i rifiuti, i cinque fallimenti iniziali e i
+controlli completi intermedi. Nessuna prestazione stimata o qualifica M16.
 
 Variante del metodo dopo il primo controllo dei nomi: su macOS il bind
 grezzo ha accettato il link pendente senza cambiarne l'identita. Il rifiuto

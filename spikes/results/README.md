@@ -3,7 +3,11 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
-La [conservazione dell’integrazione completa](2026-10-16-main-integration-preservation/README.md)
+La [prova locale del socket Unix](2026-10-17-unix-socket/report.md) conserva
+framing, documento/chiave massimi, nomi occupati, fallimenti e controlli intermedi
+con CI, cache e riserve full text. Non attesta la chiusura del nuovo PUT/WAL in corso.
+
+La [conservazione dell’integrazione del 2026-10-16](2026-10-16-main-integration-preservation/README.md)
 verifica i branch originali e tutte le HEAD dei worktree; conserva le quattro
 copie locali e confronta gli ingressi del prodotto con i registri locali, Linux e macOS.
 

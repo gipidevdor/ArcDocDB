@@ -45,4 +45,4 @@ in `spikes/out/`. Gli esiti non promuovono automaticamente i requisiti del motor
 | [SPK-08 SIMD e codice generato](SPK-08-generated-code/README.md) | impronte scalar/SWAR e NEON con 70 campioni; bitmap byte/u64 con altri 90 campioni a safety 3; x86-64 e motore concorrente da verificare |
 | [SPK-09 Costo dei controlli di affidabilità](SPK-09-integrity/README.md) | CRC/decoder verificati e benchmark locale; resolver del manifest e motore da implementare |
 | [SPK-10 Limiti v2](SPK-10-v2-limits/README.md) | quattro moduli e integrazione in memoria verificati; benchmark distinti, gate completo aperto |
-| [SPK-11 Socket Unix locale](SPK-11-unix-socket/README.md) | metodo e prova fra processi; contratto M16 proposto, qualifica del motore aperta |
+| [SPK-11 Socket Unix locale](SPK-11-unix-socket/README.md) | prova locale fra processi superata, originali e fallimenti conservati; contratto M16 proposto, qualifica del motore aperta |

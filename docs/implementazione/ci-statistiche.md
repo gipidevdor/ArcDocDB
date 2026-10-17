@@ -502,14 +502,16 @@ nessuna prova di una pipeline attivata viene dedotta dalla revisione.
 
 ## 11. Implementazione e verifica locale — 2026-10-17
 
-Disponibili `tools/ci.lisp`, il catalogo condiviso delle 47 suite, i due
+Disponibili `tools/ci.lisp`, il catalogo condiviso delle suite di prodotto, i due
 workflow e la toolchain fissata. Il publisher valida dati inerti, unisce i
 payload dello stesso attempt e pubblica con normali push e retry. Il recupero
 mantiene un cursore per run/attempt. Il limite di 2 MiB comprende payload,
 raccolte e ricevute dell'attempt; 2 MiB dei 256 MiB del deposito sono riservati
 ai metadata di recupero. Un superamento resta un errore dichiarato.
 
-[Report e originali della verifica locale](../../spikes/results/2026-10-17-ci-implementazione/report.md):
+La baseline del ramo CI, prima dell'integrazione delle nuove suite cache e
+riserve full text, conserva questi
+[report e originali locali](../../spikes/results/2026-10-17-ci-implementazione/report.md):
 
 - 315 controlli degli strumenti superati, con fixture positive e negative;
 - compilazione e test del prodotto senza avvisi; il nuovo runner registra
@@ -524,7 +526,7 @@ Ogni risultato conserva il proprio SHA e metodo; questi esiti non sono
 misure di un futuro merge. Le righe fisiche dell'inventario comprendono
 documenti, dati ed evidenze storiche, anche binarie: non equivalgono a LOC
 eseguibili. I moduli `src/*` rimangono distinti. Per i soli file untracked
-sono ammesse anche le dieci cache `spikes/SPK-*/out/` enumerate dal codice;
+sono ammesse anche le cache `spikes/SPK-*/out/` enumerate dal codice, incluso SPK-11;
 ogni altro file tracked viene comunque verificato byte per byte.
 
 Restano da verificare sui runner GitHub: installazione fissata, copertura

@@ -100,7 +100,7 @@
             (unless (and (member mode '("100644" "100755") :test #'string=)
                          (string= type "blob") (%ci-hex-p blob width))
               (%ci-fail "Sorgente ~S: symlink, submodule o modo Git non ammesso." path))
-            (push (list :path path :mode mode :blob (string-downcase blob)) rows)))))
+            (push (list :path path :mode mode :blob (string-downcase blob) :bytes 0) rows)))))
     (sort rows #'%ci-byte-less-p :key (lambda (row) (getf row :path)))))
 
 (defun %ci-small-line (stream limit)

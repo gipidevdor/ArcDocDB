@@ -91,7 +91,7 @@
          (setup "./.github/actions/setup-sbcl")
          (expected-producer (append (make-list 6 :initial-element (first uses))
                                     (make-list 6 :initial-element (second uses))
-                                    (list (third uses)) (make-list 6 :initial-element setup)))
+                                    (make-list 2 :initial-element (third uses)) (make-list 6 :initial-element setup)))
          (expected-publisher (list (first uses) setup))
          (checks nil))
     (push (ci-workflow-check ".github/workflows/ci.yml" "uses-pins"
@@ -239,7 +239,8 @@ Le keyword sono note al parser wire dopo il caricamento di questo modulo."
       ("          - os: ubuntu-24.04" 1) ("          - os: macos-15" 1)
       ("            job: verify-linux" 1) ("            job: verify-macos" 1)
       ("            minutes: 30" 1) ("            minutes: 65" 1)
-      ("      fail-fast: false" 1) ("    needs: plan" 4)
+      ("      fail-fast: false" 1) ("    needs: plan" 3) ("    needs: [plan, verify]" 1)
+      ("          CI_NORMAL_TEST_REPORT: ${{ runner.temp }}/arcdocdb-normal-verify/result.lisp" 1)
       ("          if-no-files-found: warn" 6) ("          retention-days: 30" 6)
       ("          compression-level: 0" 6) ("          persist-credentials: false" 6))
     '("contents: write" "actions: write" "secrets." "GH_TOKEN:" "pull_request_target:"

@@ -18,7 +18,8 @@
       (multiple-value-bind (expanded stream)
           (arcdocdb.evidence::%expand-to-temporary input descriptor path remaining)
         (unwind-protect
-             (unless (and (= bytes (ci-bytes expanded)) (string= hash (ci-sha256 expanded)))
+             (unless (and (= bytes (ci-bytes (truename expanded)))
+                          (string= hash (ci-sha256 (truename expanded))))
                (error "Espansione diversa dall'originale: ~A" path))
           (when stream (close stream))
           (when (probe-file expanded) (delete-file expanded)))))

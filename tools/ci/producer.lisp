@@ -11,7 +11,8 @@
                     (string= "local" (getf context :event))) '("bench"))))
 
 (defun ci-plan (out)
-  (unless (ci-working-clean-p) (error "Checkout sporco: piano non attribuibile."))
+  (multiple-value-bind (clean reason) (ci-working-clean-p)
+    (unless clean (error "Checkout sporco: piano non attribuibile: ~A" reason)))
   (let* ((root (ci-mkdir out)) (work (ci-mkdir (merge-pathnames "work/" root)))
          (identity (ci-source))
          (result (list :schema-version 1 :kind :ci-job-result :job "plan" :status :passed

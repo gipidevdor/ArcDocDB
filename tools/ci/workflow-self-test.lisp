@@ -266,7 +266,10 @@ Le keyword sono note al parser wire dopo il caricamento di questo modulo."
                                 (if (string= job "seal")
                                     (list "${{ runner.temp }}/arcdocdb-ci-downloaded"
                                           "spikes/out/ci/sealed/packet/")
-                                    (list (format nil "spikes/out/ci/~A/packet/" out)))
+                                    (if (string= job "coverage")
+                                        (list "${{ runner.temp }}/arcdocdb-normal-verify"
+                                              (format nil "spikes/out/ci/~A/packet/" out))
+                                        (list (format nil "spikes/out/ci/~A/packet/" out))))
                                 (ci-workflow-field-values block "path")) checks)
         (push (ci-workflow-check file (format nil "~A/timeout" job)
                                 (if (string= job "verify") (list "${{ matrix.minutes }}" "30")

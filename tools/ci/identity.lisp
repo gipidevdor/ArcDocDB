@@ -15,7 +15,12 @@
   (%ci-prefix-p "spikes/results/ci/" path))
 
 (defun %ci-working-output-p (path)
-  (or (%ci-results-path-p path) (%ci-prefix-p "spikes/out/" path)))
+  (or (%ci-results-path-p path) (%ci-prefix-p "spikes/out/" path)
+      ;; Cache ricostruibili dei dieci spike: nomi chiusi, non qualsiasi /out/.
+      (loop for name in '("SPK-01-primary-index" "SPK-02-gc" "SPK-03-group-commit"
+                           "SPK-04-writer-pool" "SPK-05-segment-read" "SPK-06-compaction-load"
+                           "SPK-07-protocols" "SPK-08-generated-code" "SPK-09-integrity" "SPK-10-v2-limits")
+            thereis (%ci-prefix-p (format nil "spikes/~A/out/" name) path))))
 
 (defun %ci-one-line (text)
   ;; Rimuove soltanto il LF finale del protocollo, non spazi dei nomi Git.
@@ -222,7 +227,7 @@ tools/ci[.lisp|/], tests/ci-catalog.lisp, .github/ e Makefile."
 
 (defun %ci-dirty-index-or-untracked-p (sha)
   ;; --OTHERS senza --EXCLUDE-STANDARD include anche sorgenti nuovi ignorati.
-  (or (some (lambda (path) (not (%ci-working-output-p path)))
+  (or (some (lambda (path) (not (%ci-results-path-p path)))
             (%ci-nul-records (ci-git (list "diff" "--cached" "--name-only" "-z"
                                          "--no-ext-diff" "--no-renames" sha "--"))))
       (some (lambda (path) (not (%ci-working-output-p path)))
@@ -272,8 +277,7 @@ Non prova assenza di una modifica transitoria poi perfettamente annullata."
   (handler-case
       (multiple-value-bind (sha object-format width) (%ci-ref "HEAD")
         (declare (ignore object-format))
-        (let ((rows (remove-if (lambda (row) (%ci-working-output-p (getf row :path)))
-                               (%ci-tree-rows sha width))))
+        (let ((rows (%ci-tree-rows sha width)))
           (when (%ci-dirty-index-or-untracked-p sha) (%ci-fail "Index o sorgenti nuovi sporchi."))
           (let ((before (%ci-working-snapshot rows width))
                 (after (%ci-working-snapshot rows width)))

@@ -532,3 +532,17 @@ Linux, trasporto degli artifact e pubblicazione con il token del workflow.
 Le fixture Git locali non certificano permessi o protezioni del repository
 GitHub. In accordo con la richiesta del coordinatore, questo lavoro viene
 lasciato committato nel worktree; integrazione e push spettano al coordinatore.
+
+La raccolta locale usa il collector comune e quattro worker: 19 registri di
+comando, 136 file indicizzati e inventario chiuso di 138 file, con controllo
+indipendente. Le [osservazioni della raccolta](../../spikes/results/2026-10-17-ci-implementazione-raccolta/collection/report.lisp)
+e i [conteggi autorevoli](../../spikes/results/2026-10-17-ci-implementazione-raccolta/counts.lisp)
+sono conservati separatamente, senza append all'archivio chiuso. È registrato
+anche un errore nel solo display del preparatore; il manifesto completo e
+gli inventari del collector non sono stati troncati.
+
+Il composto in `main` gestito dal coordinatore include altre suite e SPK-11:
+le prove locali qui citate restano quelle dei rispettivi SHA. Catalogo,
+aspettative numeriche dei self-test e lista delle cache devono essere
+allineati e nuovamente verificati sul composto, senza riattribuire questi
+risultati alla versione integrata.

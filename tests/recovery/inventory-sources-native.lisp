@@ -111,7 +111,7 @@
          (ecase kind (:symlink (sb-posix:symlink (namestring (first file)) (namestring alias)))
                      (:hardlink (sb-posix:link (namestring (first file)) (namestring alias))))
          (if (eq kind :symlink)
-             (signals invalid-argument
+             (signals arcdocdb.conditions:io-fault
                       (arcdocdb.recovery.manifest:apri-fonti-recovery (inventory-manifest 7 '(0) nil) directory)
                       :io-entry-kind)
              (signals corruption-detected

@@ -87,7 +87,7 @@
                                 (is (= 2 (arcdocdb.recovery.manifest:numero-fonti-recovery sources)))
                                 (arcdocdb.recovery.manifest:chiudi-fonti-recovery sources)
                                 (dolist (file files) (is (eq :closed (arcdocdb.io:stato-file file))))))
-                            (setf (aref results slot) (= 16 (length (frs-events fixture :enumerate)))))))
+                            (setf (aref results slot) (= 16 (length (frs-events fixture :enumerate))))))
                         :done)
                       :name "recovery-sources-private") workers)))
            (sb-thread:signal-semaphore gate 4)

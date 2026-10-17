@@ -70,7 +70,7 @@
                                 :max-transfer 1 :max-file-bytes 5 :max-total-file-bytes 10)))
           (dolist (file (frs-files sources))
             (is (= 1 (arcdocdb.io::file-max-transfer file)))
-            (is (= 5 (arcdocdb.io::file-max-file-bytes file))))))
+            (is (= 5 (arcdocdb.io::file-max-file-bytes file)))))))
     (dolist (budget '((:max-files 2 :inventory-file-budget) (:max-segmenti 1 :inventory-segment-budget)
                       (:max-names 2 :io-directory-names) (:max-total-name-bytes 63 :io-directory-total-name-bytes)
                       (:max-name-bytes 23 :io-directory-name-bytes) (:max-file-bytes 4 :io-file-bytes)

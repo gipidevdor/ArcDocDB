@@ -12,7 +12,9 @@ run invertiti posizionali con predicati all/any/frase e cornice binaria.
 Il [codec completo](full-text-codec.md) aggiunge le sezioni `.idx` e query su viste
 verificate dei file. Commit, visibilita MVCC e pubblicazione durevole restano da integrare.
 Le [riserve locali del writer](full-text-riserve.md) aggiungono ammissione dei budget
-e copie possedute sotto lease; il legame PUT/WAL e il ritiro restano da collegare.
+e copie possedute sotto lease. Il [ponte PUT/WAL](full-text-put.md) analizza una cornice
+privata e ne accoda gli stessi byte, trattenendo il legame al lotto e alla sua incarnazione.
+Pubblicazione durevole, MVCC e ritiro restano da collegare.
 I criteri sono nel [piano di verifica](../affidabilita/piano-di-verifica.md#ricerca-full-text).
 Il [contratto operativo](../full-text.md) e il
 [formato `.idx` v2/type 5](../formato-indice-full-text.md) sono definiti da
@@ -25,6 +27,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 | Codec e viste full text | [File completo, legame al descriptor e query sui byte](full-text-codec.md), [revisione](full-text-codec-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
 | Preparazione documentale full text | [CBOR, percorsi, budget cumulativi e limite del file](full-text-documenti.md), [revisione](full-text-documenti-decisioni.md) | [`src/fulltext/document.lisp`](../../src/fulltext/document.lisp) |
 | Riserve full text del writer | [Budget collettivi, copie possedute e ownership](full-text-riserve.md), [metodo e decisioni](full-text-riserve-metodo.md) | [`src/fulltext-admission/`](../../src/fulltext-admission/) |
+| Legame PUT/WAL full text | [Cornice posseduta, append e riferimenti al lotto](full-text-put.md), [metodo e decisioni](full-text-put-metodo.md) | [`src/fulltext-put/`](../../src/fulltext-put/) |
 | Verifica delle evidenze (C4) | [Processi isolati, limiti e riduzione ordinata](evidenze-parallele.md) | [`tools/check-evidence.lisp`](../../tools/check-evidence.lisp) |
 | Prova verticale di una Serie | [Scrittura, SIGKILL, recovery, ripresa e secondo crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
 | Fondazioni binarie | [Record v1/v2, CRC32C e lotti SEAL](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |

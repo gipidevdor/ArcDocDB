@@ -6,7 +6,8 @@
 > per analisi e run posizionali, con [codec completo e viste verificate](implementazione/full-text-codec.md).
 > Disponibile anche la [preparazione dai documenti CBOR](implementazione/full-text-documenti.md)
 > con budget cumulativi e limite superiore, e le [riserve locali del writer](implementazione/full-text-riserve.md)
-> con copie possedute; binding PUT, pipeline WAL e pubblicazione restano da collegare.
+> con copie possedute. Il [ponte PUT/WAL](implementazione/full-text-put.md) collega
+> analisi e append degli stessi byte; pubblicazione durevole e MVCC restano da collegare.
 > Nessun benchmark del motore full text completo.
 
 La prima versione cerca termini e frasi in campi testuali scalari di una Serie, insieme

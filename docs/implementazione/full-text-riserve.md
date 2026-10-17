@@ -7,9 +7,10 @@ prenota insieme capacita e costi di tutti gli indici e copia i run in buffer
 posseduti dal writer. Il caso di riferimento resta NNTP Usenet in Common Lisp,
 con indici su subject/body e interfaccia locale via [socket Unix](../adr/0055-interfaccia-locale-unix-socket.md).
 
-E una primitiva del writer, non il gate completo del traffico: manca ancora il
-legame della preparazione agli esatti byte del PUT e alla sua validazione di Serie,
-l'aggancio alla pipeline WAL, l'esito autorevole dei prepared, la pubblicazione
+Il [ponte PUT/WAL](full-text-put.md) puo ora possedere la cornice del record,
+analizzare quegli esatti byte e accodarli dopo la riserva. Le primitive di questa pagina,
+usate da sole, non attestano questo legame. Il gate completo richiede ancora
+validazione generale di Serie, integrazione della pubblicazione durevole, esito autorevole dei prepared, pubblicazione
 con documento/H/ACK, MVCC e il ritiro dopo quiescenza. Le funzioni non eseguono I/O,
 non assegnano CSN o ID del catalogo e non rendono un indice READY per le query.
 

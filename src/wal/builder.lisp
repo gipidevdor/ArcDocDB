@@ -117,18 +117,23 @@ Nessuna mutazione o attestazione autonoma sullo scheduler."
 (defun verifica-riuso-lotto (lotto)
   "Pre: writer osserva fine I/O e ritiro dal gruppo. Post: riuso ammissibile.
 INVALID-ARGUMENT per stato, CSN pendente o gruppo proprietario; nessuna mutazione.
+RESOURCE-EXHAUSTED prima degli effetti se l'incarnazione non puo avanzare senza wrap.
 Non attesta il ritiro di riferimenti esterni, che rimane obbligo del controller."
   (esigi-lotto lotto :durable)
   (when (lotto-csn-pending lotto) (error 'invalid-argument :reason :lotto-csn-pending))
   (unless (null (lotto-owner lotto)) (error 'invalid-argument :reason :lotto-owned))
+  (when (= (lotto-incarnation lotto) most-positive-fixnum)
+    (error 'resource-exhausted :reason :lotto-incarnation))
   nil)
 
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto) null) riusa-lotto))
 (defun riusa-lotto (lotto)
   "Pre: durevole, rimosso dal gruppo e nessun consumatore/riferimento in volo.
-Post: stesso buffer aperto e vuoto. INVALID-ARGUMENT se non durevole; non attesta reclaim."
+Post: stesso buffer aperto e vuoto, incarnazione avanzata senza wrap.
+Rifiuti prima degli effetti; non attesta reclaim o assenza di riferimenti esterni."
   (verifica-riuso-lotto lotto)
+  (incf (lotto-incarnation lotto))
   (setf (lotto-used lotto) 0 (lotto-count lotto) 0 (lotto-start lotto) 0 (lotto-state lotto) :open
         (lotto-csn-registry lotto) nil (lotto-csn-log lotto) nil (lotto-csn-pending lotto) nil
         (lotto-csn-slot lotto) 0 (lotto-csn-high lotto) 0 (lotto-csn-low lotto) 0)

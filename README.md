@@ -84,7 +84,9 @@ in-memory positional runs, the complete binary index codec and queries on verifi
 cumulative limits and a conservative file size bound before writer admission.
 [Writer reservations](docs/implementazione/full-text-riserve.md) add collective budget checks,
 owned run copies and cancellation under the existing writer lease;
-writer/MVCC integration, generation publication and full qualification
+[PUT/WAL binding](docs/implementazione/full-text-put.md) analyzes one owned record frame
+and appends those exact bytes after all reservations are ready.
+Durable publication, MVCC integration, generation lifecycle and full qualification
 belong to phase 8.
 
 The [full-text contract](docs/full-text.md) and

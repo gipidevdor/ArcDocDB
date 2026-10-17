@@ -141,7 +141,8 @@ La [revisione delle decisioni](full-text-documenti-decisioni.md) esplicita il pe
 I [registri e tentativi originali](../../spikes/results/2026-10-16-fulltext-document-dev-targeted/README.md)
 conservano sorgenti, comandi, risultati e limiti.
 Sono disponibili prenotazione locale e copie possedute nelle riserve del writer.
-Restano il gate completo e il legame ai byte del PUT/WAL,
-il trasferimento nella vista pubblicata del delta, la pubblicazione prima di H/ACK, il catalogo delle
+Il [ponte PUT/WAL](full-text-put.md) possiede gli stessi byte per analisi e append.
+Restano il gate completo, il trasferimento nella vista pubblicata del delta,
+la pubblicazione prima di H/ACK, il catalogo delle
 generazioni, I/O durevole, MVCC e Query Engine. I requisiti complessivi restano progettati;
 questa preparazione non rende il database pronto per il traffico NNTP.

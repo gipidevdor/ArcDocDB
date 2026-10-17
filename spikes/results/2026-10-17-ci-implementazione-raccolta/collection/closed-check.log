@@ -1,0 +1,102 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/results/2026-10-17-ci-implementazione/"
+ :INDEXED-FILES 136 :ACTUAL-FILES 138 :INDEXED-BYTES 2468365 :PROCESSES
+ ((:LABEL "command-01" :RECORD-PATH "processes/command-01/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-01/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-02" :RECORD-PATH "processes/command-02/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-02/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-03" :RECORD-PATH "processes/command-03/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--non-interactive"
+    "--eval" "(require :asdf)" "--eval" "(require :sb-posix)" "--eval"
+    "(defpackage :arcdocdb.ci (:use :cl))" "--load" "tests/ci-catalog.lisp"
+    "--eval"
+    "(let ((rows nil) (failed 0)) (dolist (p (directory \"tools/ci/*.lisp\")) (handler-case (with-open-file (s p) (loop for x = (read s nil :end) until (eq x :end)) (push (list :path (namestring p) :status :passed) rows)) (error (c) (incf failed) (push (list :path (namestring p) :status :failed :reason (princ-to-string c)) rows)))) (write (list :kind :ci-reader-audit :failed failed :files (nreverse rows))) (terpri) (sb-ext:exit :code (if (zerop failed) 0 1)))")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-04" :RECORD-PATH "processes/command-04/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-03/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-05" :RECORD-PATH "processes/command-05/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-04/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-06" :RECORD-PATH "processes/command-06/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-05/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-07" :RECORD-PATH "processes/command-07/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "plan" "--out" "spikes/out/ci/plan-integration-01/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-08" :RECORD-PATH "processes/command-08/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-06/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-09" :RECORD-PATH "processes/command-09/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "plan" "--out" "spikes/out/ci/plan-integration-02/")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-10" :RECORD-PATH "processes/command-10/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-07/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-11" :RECORD-PATH "processes/command-11/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "plan" "--out" "spikes/out/ci/plan-integration-03/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-12" :RECORD-PATH "processes/command-12/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "run" "--job" "verify-macos" "--out"
+    "spikes/out/ci/verify-integration-01/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-13" :RECORD-PATH "processes/command-13/report.lisp" :COMMAND
+   ("make" "test") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-14" :RECORD-PATH "processes/command-14/report.lisp" :COMMAND
+   ("sbcl" "--dynamic-space-size" "256" "--noinform" "--no-userinit"
+    "--no-sysinit" "--non-interactive" "--eval"
+    "(defpackage :arcdocdb.ci (:use :cl))" "--load" "tools/ci/measure.lisp"
+    "--eval"
+    "(arcdocdb.ci::ci-measure-worker \"spikes/out/ci/worker-integration-01.lisp\" 1)")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-15" :RECORD-PATH "processes/command-15/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out"
+    "spikes/out/ci/integration-selftest-08/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-16" :RECORD-PATH "processes/command-16/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "run" "--job" "bench" "--out"
+    "spikes/out/ci/bench-integration-01/")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-17" :RECORD-PATH "processes/command-17/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/ci/publisher-fixture.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-18" :RECORD-PATH "processes/command-18/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/ci/publisher-race-fixture.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "command-19" :RECORD-PATH "processes/command-19/report.lisp" :COMMAND
+   ("make" "trace-write" "trace" "links") :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "3f635fea9e18da389a62dbaaeb69d2c6ff1f734d10ea5d459cd1b76285b27b5d"
+ :CATALOGUE-SHA256
+ "135a7ea78482a2421225f647e342707c828f966f0b3f042cf97ea473f111d224"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

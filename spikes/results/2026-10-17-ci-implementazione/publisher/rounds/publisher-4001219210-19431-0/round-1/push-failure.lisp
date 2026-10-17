@@ -1,0 +1,1 @@
+(:KIND :CI-PUSH-FAILURE :ROUND 1 :REASON "Comando git fallito: stato :EXITED, codice 1.")

@@ -174,6 +174,8 @@
                (:module "recovery-archive-csn" :serial t
                 :components ((:file "package") (:file "types") (:file "series") (:file "preflight")
                              (:file "build") (:file "query")))
+               (:module "recovery-bootstrap" :serial t
+                :components ((:file "package") (:file "shape") (:file "preflight") (:file "build")))
                (:module "runtime" :serial t
                 :components ((:file "package") (:file "types") (:file "preflight")
                              (:file "query") (:file "build") (:file "active")

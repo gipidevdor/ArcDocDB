@@ -20,9 +20,9 @@ INVALID-ARGUMENT per cardinalità, RESOURCE-EXHAUSTED per segmenti/riferimenti; 
 
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-STO-006 REQ-TXM-007 REQ-AFF-008
 (declaim (ftype (function (control-recuperato recovery-sources decisioni-recuperate octets
-                          limiti-recovery-serie) (values index index &optional)) verifica-fonti-serie))
+                          limiti-recovery-serie) (values index index index &optional)) verifica-fonti-serie))
 (defun verifica-fonti-serie (control sources decisions scratch limits)
-  "Pre: recovery esclusivo, fonti complete e namespace congelato. Post: indice ACTIVE e count CLOSED.
+  "Pre: recovery esclusivo, fonti complete e namespace congelato. Post: indice ACTIVE, count CLOSED e byte totali.
 Count, budget riferimenti/byte, ordine u64, appartenenza e preflight di OGNI fonte prima di leggere dati.
 Ordine stretto più cardinalità e appartenenza provano completezza senza un'altra tabella dei duplicati.
 INVALID-ARGUMENT/RESOURCE-EXHAUSTED o condizioni canoniche; nessuna allocazione del vettore risultato."
@@ -42,4 +42,4 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED o condizioni canoniche; nessuna allocazione 
           (when (> total (limits-total-bytes limits))
             (error 'resource-exhausted :reason :series-recovery-total-byte-budget))))
       (unless active (error 'invalid-argument :reason :series-recovery-active-missing))
-      (values active closed))))
+      (values active closed total))))

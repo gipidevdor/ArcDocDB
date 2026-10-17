@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Lettura coordinata dell'Archivio: preflight di tutte le Serie e budget
+  aggregati prima dei dati; scratch riusato e piano CSN completo solo dopo
+  i reader canonici. Budget byte esplicito, nessun binding o risultato parziale;
+  qualifica funzionale dedicata ancora aperta.
+
 - Recovery semantico dell'intera Serie dalle fonti readonly possedute:
   preflight completo e budget cumulativo prima dei dati, ACTIVE con replay
   decisioni canonico, tutti i CLOSED con scratch riusato e gate finale.

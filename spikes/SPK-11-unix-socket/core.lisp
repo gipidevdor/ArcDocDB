@@ -29,7 +29,7 @@
 
 (defstruct decoder
   "Stato esclusivo C4; ALLOCATIONS conta solo la creazione dei corpi."
-  (header-count 0 :type fixnum) (size 0 :type integer)
+  (header-count 0 :type fixnum) (size 0 :type integer) (limit +frame-limit+ :type integer)
   (body nil :type (or null (simple-array (unsigned-byte 8) (*))))
   (offset 0 :type fixnum) (allocations 0 :type fixnum))
 
@@ -42,7 +42,8 @@
             (setf (decoder-size state) (+ (ash (decoder-size state) 8) (aref input cursor)))
             (incf cursor) (incf (decoder-header-count state))
             (when (= (decoder-header-count state) 4)
-              (unless (<= 1 (decoder-size state) +frame-limit+)
+              (demand (<= 1 (decoder-limit state) +frame-limit+) :decoder-limit)
+              (unless (<= 1 (decoder-size state) (decoder-limit state))
                 (error 'rejection :reason :length))
               (setf (decoder-body state)
                     (make-array (decoder-size state) :element-type '(unsigned-byte 8)))

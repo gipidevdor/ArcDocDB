@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Estensione C4 di SPK-11 alla sessione locale proposta: HELLO/WELCOME,
+  negoziazione, PING correlati e risposte invertite fra due processi.
+  Fixture per mappe duplicate, limiti prima del corpo, ID u64, credito
+  trattenuto e deadline assolute; gate simulato e integrazione M16 ancora aperta.
+
 - Legame full text agli esatti byte PUT: cornice privata per tutte le generazioni,
   riserva collettiva e append nel lotto WAL dopo i preflight. Formati v1/v2,
   ordinari/prepared, riferimenti protetti dal riuso del lotto e fail-stop dopo

@@ -33,7 +33,7 @@
       (error "Uso SPK-11: --check|--bench oppure --client PATH MODE FASLDIR"))
     (loop for source in (spk11-codec-inputs base) for n from 0 do
       (spk11-load (merge-pathnames source root) (merge-pathnames (format nil "codec-~D.fasl" n) build) client))
-    (dolist (name '("core" "transport" "scenarios"))
+    (dolist (name '("core" "session-wire" "session-model" "session-checks" "transport" "session-transport" "scenarios"))
       (spk11-load (merge-pathnames (format nil "~A.lisp" name) base)
                   (merge-pathnames (format nil "~A.fasl" name) build) client))
     (cond (client (uiop:symbol-call :arcdocdb.spk11 :client (second args) (third args)))

@@ -15,7 +15,9 @@ Non ci sono magic, delimitatore, padding, compressione o negoziazione TCP.
 EOF con prefisso o corpo incompleto è una troncatura; EOF tra frame è chiusura.
 
 Il corpo contiene esattamente un item CBOR deterministico RFC 8949: header
-minimi, lunghezze definite, mappe ordinate e senza chiavi duplicate, niente
+minimi, lunghezze definite, mappe ordinate lessicograficamente sui byte
+delle chiavi secondo [RFC 8949 §4.2.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1)
+e senza chiavi duplicate, niente
 byte finali. Si riusa il codec del prodotto. Il suo scanner strutturale da
 solo non certifica ordinamento/deduplica delle mappe: questi controlli sono
 obblighi del decoder della sessione. Nessun dato esterno passa dal reader Lisp.
@@ -154,3 +156,9 @@ Prima del codice di prodotto servono accettazione ADR-0056, fixture del
 decoder della sessione (incluse mappe e negoziazione), API I/O iniettabile e
 contratti dei comandi dati. Prima dell'integrazione applicativa restano tutti
 i gate del [piano di verifica](../affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket).
+
+La [variante C4 di SPK-11](../../spikes/SPK-11-unix-socket/session-method.md)
+verifica ora il profilo di controllo da 4096 byte: handshake, limiti,
+mappe, ID, risposte invertite e deadline logiche. L'indicatore di gate e i
+crediti sono un modello; il pool e l'ammissione reali restano da collegare.
+Non si estende quel risultato a documenti, comandi dati o listener di prodotto.

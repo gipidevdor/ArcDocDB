@@ -74,6 +74,10 @@
               "spikes/SPK-09-integrity/core.lisp"))
           (when (string= (car entry) "SPK-11")
             (append '("spikes/SPK-11-unix-socket/transport.lisp"
+                      "spikes/SPK-11-unix-socket/session-wire.lisp"
+                      "spikes/SPK-11-unix-socket/session-model.lisp"
+                      "spikes/SPK-11-unix-socket/session-checks.lisp"
+                      "spikes/SPK-11-unix-socket/session-transport.lisp"
                       "spikes/SPK-11-unix-socket/scenarios.lisp"
                       "spikes/SPK-11-unix-socket/codec-inputs.lisp")
                     (with-open-file (stream "spikes/SPK-11-unix-socket/codec-inputs.lisp")

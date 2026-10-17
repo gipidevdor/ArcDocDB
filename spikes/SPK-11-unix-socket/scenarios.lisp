@@ -32,6 +32,9 @@
   "Oracoli sul contenuto e sul rifiuto; nessuna simulazione di commit o query."
   (let ((until (deadline)))
     (cond
+      ((member mode '("session" "session-invalid-hello" "session-pre-hello"
+                      "session-oversize-hello" "session-id-reuse") :test #'string=)
+       (server-session-exchange socket mode until))
       ((member mode '("fragmented" "coalesced") :test #'string=)
        (let ((input (receive-count socket 2 (if (string= mode "fragmented") 1 64) until)))
          (same-frames input (list (ping 1) (ping 2)))
@@ -59,7 +62,7 @@
          (err (merge-pathnames (format nil "~A.stderr" mode) out))
          (args (list "--noinform" "--no-userinit" "--no-sysinit" "--script"
                      (namestring (merge-pathnames "run.lisp" base)) "--client" path mode (namestring build)))
-         (result nil) (failure nil))
+         (result nil) (failure nil) (observation nil))
     (unwind-protect
          (handler-case
              (progn
@@ -75,12 +78,12 @@
                (setf peer (sb-bsd-sockets:socket-accept listener))
                (demand peer :accept-interrupted)
                (setf (sb-bsd-sockets:non-blocking-mode peer) t)
-               (server-exchange peer mode)
+               (setf observation (server-exchange peer mode))
                (close-socket peer)
                (demand (zerop (await-child process (deadline 15))) :child-exit)
                (setf result (list :status :ok :mode mode :server-pid (sb-posix:getpid)
                                   :client-pid (sb-ext:process-pid process) :argv args
-                                  :exit-code (sb-ext:process-exit-code process)
+                                  :exit-code (sb-ext:process-exit-code process) :observation observation
                                   :stdout (uiop:read-file-string out) :stderr (uiop:read-file-string err)))
                (demand (/= (getf result :server-pid) (getf result :client-pid)) :same-process))
            (error (condition) (setf failure condition)))
@@ -146,11 +149,13 @@
     (unwind-protect
          (progn
            (demand (= #o700 (logand #o777 (sb-posix:stat-mode (sb-posix:stat directory)))) :directory-mode)
-           (list :status :ok :spike :spk-11 :framing (check-framing)
-                 :processes (loop for mode in '("fragmented" "coalesced" "maximum" "zero" "oversize" "truncated")
+           (list :status :ok :spike :spk-11 :framing (check-framing) :session (check-session)
+                 :processes (loop for mode in '("fragmented" "coalesced" "maximum" "zero" "oversize" "truncated"
+                                               "session" "session-invalid-hello" "session-pre-hello"
+                                               "session-oversize-hello" "session-id-reuse")
                                   collect (run-exchange base build directory mode))
                  :namespace (check-names directory)
                  :native-symlink-bind (native-symlink-probe directory)
-                 :limits '(:transport-only :no-engine-admission :no-durability
+                 :limits '(:transport-and-control-model :no-engine-admission :no-durability
                            :no-distinct-uid :no-performance-measurement)))
       (uiop:delete-directory-tree root :validate t :if-does-not-exist :error))))

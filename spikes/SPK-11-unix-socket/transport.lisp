@@ -37,9 +37,9 @@
           (incf offset sent))))
     offset))
 
-(defun receive-frames (socket count chunk until)
+(defun receive-frames (socket count chunk until &optional (limit +frame-limit+))
   "Legge COUNT frame ed EOF; un EOF parziale non viene convertito in risultato completo."
-  (let ((state (make-decoder)) (buffer (make-array chunk :element-type '(unsigned-byte 8)))
+  (let ((state (make-decoder :limit limit)) (buffer (make-array chunk :element-type '(unsigned-byte 8)))
         (result nil))
     (loop repeat (+ (* (max 1 count) (+ +frame-limit+ 4)) 1) do
       (wait-socket socket :input until)
@@ -54,9 +54,9 @@
           (demand (<= (length result) count) :extra-frame))))
     (error 'rejection :reason :receive-bound)))
 
-(defun receive-count (socket count chunk until)
+(defun receive-count (socket count chunk until &optional (limit +frame-limit+))
   "Riceve il numero esatto di frame della fase, prima della chiusura bidirezionale."
-  (let ((state (make-decoder)) (buffer (make-array chunk :element-type '(unsigned-byte 8)))
+  (let ((state (make-decoder :limit limit)) (buffer (make-array chunk :element-type '(unsigned-byte 8)))
         (result nil))
     (loop repeat (+ (* count (+ +frame-limit+ 4)) 1) do
       (wait-socket socket :input until)
@@ -96,6 +96,8 @@
   (let ((code (sb-bsd-sockets:sockopt-error socket)))
     (unless (zerop code) (sb-bsd-sockets:socket-error "SPK-11 connect" code))))
 
+(declaim (ftype (function (t t t) t) client-session-exchange))
+
 (defun client (path mode)
   "Figlio reale, senza shell o clock usato per sincronizzarsi con l'accept."
   (let ((socket (new-socket)) (until (deadline)))
@@ -103,6 +105,9 @@
          (progn
            (connect-local socket path until)
            (cond
+             ((member mode '("session" "session-invalid-hello" "session-pre-hello"
+                             "session-oversize-hello" "session-id-reuse") :test #'string=)
+              (client-session-exchange socket mode until))
              ((member mode '("fragmented" "coalesced") :test #'string=)
               (let ((input (concatenate '(simple-array (unsigned-byte 8) (*))
                                         (frame (ping 1)) (frame (ping 2)))))

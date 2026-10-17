@@ -1,9 +1,11 @@
-# SPK-11 — Trasporto Unix socket locale
+# SPK-11 — Trasporto Unix e sessione locale di controllo
 
 Metodo preregistrato 2026-10-17, prima dei run. REQ-IPC-001…REQ-IPC-003,
 REQ-VAL-001; [ADR-0055](../../docs/adr/0055-interfaccia-locale-unix-socket.md).
 Il [contratto della sessione](../../docs/implementazione/sessione-locale.md)
 è una proposta distinta: questo esperimento non lo implementa interamente.
+La [variante preregistrata della sessione](session-method.md) aggiunge
+HELLO/WELCOME e PING nel solo profilo C4 di controllo da 4096 byte.
 
 ## Domanda e criterio
 
@@ -46,6 +48,23 @@ Nessun file persistente del database viene aperto o modificato. I file
 runtime di prova sono creati in una directory esclusiva sotto `/tmp`,
 rimossa soltanto dopo aver chiuso e raccolto tutte le risorse possedute.
 
+## Variante di sessione
+
+Otto famiglie verificano fixture binarie congelate, mappe ordinate e senza
+duplicati codificati anche annidati, negoziazione, correlazione u64, crediti,
+clock logico e isolamento dei contesti. Quattro mutazioni controllano gli
+oracoli. Il limite al prefisso passa da 4096 prima di HELLO a quello della
+fase; le prove precedenti conservano il default di 17 MiB.
+
+Cinque nuovi scambi fra due processi verificano handshake frammentato e
+PING accorpati con risposte invertite, chiave HELLO duplicata, richiesta
+prima di HELLO, prefisso oltre il limite handshake e ID riutilizzato.
+I crediti logici dei risultati restano occupati fino all'ultimo byte;
+la saturazione non consuma ID. Il massimo u64 arresta nuove letture e
+impone riconnessione dopo lo svuotamento. I progressi non rinnovano le
+deadline logiche. Il gate simulato produce `unavailable` senza chiamate
+al motore; non costituisce una prova di recovery completato.
+
 ## Esecuzione
 
 ```sh
@@ -60,12 +79,16 @@ nei registri originali, comprese le varianti corrette successivamente.
 
 ## Limiti
 
-Non sono prove di un listener di prodotto, handshake, API del motore,
+Non sono prove di un listener o dispatcher di prodotto, API del motore,
 recovery/ammissione, commit/durability, perdita di risposta, EBR,
 saturazione del pool, negazione dell'accesso con un altro UID, o qualifica
 Linux/macOS. Nessun thread per connessione viene proposto per il prodotto.
 Le risposte invertite sono fixture di trasporto, non risultati di query.
 La prova non chiude RSK-14/RSK-16 e non promuove REQ-IPC-001…REQ-IPC-004.
+Il modello alloca e contabilizza soltanto i risultati REQUEST; restano il
+pool reale del proprietario I/O, scratch/handshake, deadline idle, buffer
+del prodotto, massimo envelope e comandi dati. Il controllo delle mappe
+non attesta la semantica applicativa di tag o equivalenza delle chiavi.
 
 ## Risultati
 

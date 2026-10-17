@@ -41,7 +41,8 @@
            (specs (cons '(7 :final) (mapcar (lambda (id) (list id :temporary)) ids)))
            (manifest (inventory-fixture-manifest
                       (list (manifest-spec :completo t :open 7 :next-id #xffffffffffffffff
-                                           :chiusi (mapcar (lambda (id) (list id 64 nil)) ids)))
+                                           :chiusi (mapcar (lambda (id) (list id 64 nil)) (butlast ids)))
+                            (manifest-spec :open #xffffffffffffffff :chiusi '((7 64 nil))))
                       :version version)))
       (frs-run (reverse specs)
         (lambda (fixture directory)

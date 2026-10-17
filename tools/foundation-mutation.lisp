@@ -314,6 +314,13 @@
           (error "foundation-mutation.lisp: COD-60, bersaglio assente/ambiguo: ~A" name)))))
   nil)
 
+(defun nested-test-definition-p (form marker)
+  "C4: attraversa solo il form sorgente finito, senza valutare o espandere macro."
+  (and (consp form)
+       (or (eq (first form) marker)
+           (nested-test-definition-p (car form) marker)
+           (nested-test-definition-p (cdr form) marker))))
+
 (defun dedicated-test-form (scope)
   "Seleziona DEFTEST caricati: tre file DECISION, due manifest, uno inventory; senza eval."
   `(let* ((*package* (or (find-package "ARCDOCDB.RECOVERY.TESTS")
@@ -333,6 +340,11 @@
        (let ((selected 0))
          (with-open-file (input file :external-format :utf-8)
            (loop for form = (read input nil :eof) until (eq form :eof)
+                 do (labels ((nested (node)
+                               (and (consp node)
+                                    (or (eq (car node) deftest) (nested (car node)) (nested (cdr node))))))
+                      (when (nested (if (and (consp form) (eq (car form) deftest)) (cdr form) form))
+                        (error "DEFTEST annidato, escluso dalla baseline: ~A" file)))
                  when (and (consp form) (eq (first form) deftest))
                    do (push (second form) tests) (incf selected)))
          (unless (plusp selected) (error "File senza test dedicati: ~A" file))))
@@ -710,6 +722,11 @@
                (not (detected-p "ok    ARCDOCDB:*VERSION*" 0))
                (not (detected-p "compilation aborted" 1)))
     (error "foundation-mutation.lisp: COD-60, sostituzione o classificazione errata."))
+  (unless (and (nested-test-definition-p '(defun wrapper () (deftest hidden t)) 'deftest)
+               (nested-test-definition-p '(deftest outer (deftest hidden t)) 'deftest)
+               (not (nested-test-definition-p '(defun helper () t) 'deftest))
+               (not (nested-test-definition-p (cdr '(deftest top (is t))) 'deftest)))
+    (error "foundation-mutation.lisp: COD-60, DEFTEST annidato non rilevato."))
   (classifier-self-test)
   (configuration-self-test)
   (copier-self-test)

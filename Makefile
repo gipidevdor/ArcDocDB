@@ -3,7 +3,7 @@ EVIDENCE_DYNAMIC_SPACE_SIZE ?= 2048
 EVIDENCE_JOBS ?= 4
 EVIDENCE_WORKER_SECONDS ?= 300
 
-.PHONY: build test lint lint-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check
+.PHONY: build test lint lint-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check ci-status ci-selftest ci-audit
 build test:  ## compila senza avvisi (COD-01) ed esegue gli smoke test
 	$(SBCL) --noinform --no-userinit --non-interactive --load tools/build.lisp
 
@@ -59,4 +59,12 @@ fulltext-check:  ## tabelle Unicode riproducibili, strumenti e sensibilita degli
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-qualification.lisp --check
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/fulltext-persistence.lisp --self-test
 
-check-core: test lint lint-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check  ## controlli chiamati dal registro
+ci-status:  ## dati riferiti esattamente ai sorgenti attuali
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/ci.lisp status
+
+ci-selftest:  ## confini wire, catalogo, metriche, workflow e archivi CI
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- $(SBCL) --noinform --no-userinit --no-sysinit --script tools/ci.lisp self-test --out spikes/out/ci/selftest-$(shell date +%s)-$(shell echo $$$$)
+
+ci-audit: lint-selftest snapshot-mutation-selftest reader-mutation-selftest fulltext-check evidence-selftest evidence spikes-check ci-selftest
+
+check-core: test lint lint-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check ci-selftest  ## controlli chiamati dal registro

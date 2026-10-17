@@ -69,12 +69,33 @@
   (with-open-file (stream path :direction :output :if-exists :supersede)
     (let ((*print-readably* t)) (write record :stream stream :pretty t) (terpri stream))))
 
+(defun direttorio-esplicito (name)
+  "Destinazione CI esclusiva sotto spikes/out, senza risalita o antenati simbolici."
+  (let* ((root (truename "./"))
+         (path (merge-pathnames (uiop:ensure-directory-pathname name) root)))
+    (unless (and (uiop:subpathp path (merge-pathnames "spikes/out/" root))
+                 (notany (lambda (part) (member part '(:up :back))) (pathname-directory path)))
+      (error 'recording-error :messaggio "--out deve stare sotto spikes/out, senza risalita."))
+    (loop for parent = path then (uiop:pathname-parent-directory-pathname parent)
+          until (equal parent root)
+          do (handler-case
+                 (when (sb-posix:s-islnk (sb-posix:stat-mode (sb-posix:lstat (namestring parent))))
+                   (error 'recording-error :messaggio "Antenato simbolico in --out."))
+               (sb-posix:syscall-error (c)
+                 (unless (= (sb-posix:syscall-errno c) sb-posix:enoent) (error c)))))
+    (ensure-directories-exist (merge-pathnames ".parent" (uiop:pathname-parent-directory-pathname path)))
+    (sb-posix:mkdir path #o700)
+    path))
+
 (defun main ()
-  "Uso: -- argv...; nessuna shell, interpretazione Lisp o inferenza di risultati."
-  (let* ((args (uiop:command-line-arguments)) (argv (rest args)))
+  "Uso: [--out directory/] -- argv...; il percorso esplicito non sovrascrive un run."
+  (let* ((args (uiop:command-line-arguments))
+         (explicit (when (equal (first args) "--out") (second args)))
+         (args (if explicit (cddr args) args)) (argv (rest args)))
     (unless (and (equal (first args) "--") argv)
       (error 'recording-error :messaggio "Uso: sbcl --script tools/record-command.lisp -- make check"))
-    (let* ((out (nuovo-direttorio)) (path (merge-pathnames "report.lisp" out))
+    (let* ((out (if explicit (direttorio-esplicito explicit) (nuovo-direttorio)))
+           (path (merge-pathnames "report.lisp" out))
            (before (sorgenti)) (ticks (get-internal-real-time))
            (record (list :schema-version 1 :kind :command-verification :environment (ambiente)
                          :command argv :status :running :started-at-universal-time (get-universal-time)

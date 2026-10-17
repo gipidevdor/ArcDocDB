@@ -2,6 +2,8 @@
 ;;;;
 ;;;; Uso:  sbcl --script tools/lint.lisp [dir ...]      (predefinito: src)
 ;;;;       sbcl --script tools/lint.lisp --self-test    (verifica il linter su fixture)
+;;;;       --report FILE può precedere o seguire directory e --self-test.
+;;;;       FILE è esclusivo, UTF-8, una plist :kind :ci-check; nessun package CI.
 ;;;; Esce con 1 se trova violazioni.
 ;;;;
 ;;;; Regole verificate:
@@ -19,6 +21,74 @@
 ;;;;
 ;;;; REQ: REQ-AFF-003
 ;;;; Solo Common Lisp (ADR-0001, ADR-0027).
+
+(declaim (optimize (safety 3) (debug 2)))
+
+;;; REQ: REQ-VAL-001 REQ-AFF-012
+(defun check-report-options (args)
+  "Estrae --report FILE in qualsiasi posizione; rifiuta duplicati e FILE mancante."
+  (let ((remaining nil) (report nil))
+    (loop while args do
+      (let ((argument (pop args)))
+        (if (string= argument "--report")
+            (progn
+              (when (or report (null args) (zerop (length (first args)))
+                        (and (>= (length (first args)) 2)
+                             (string= "--" (first args) :end2 2)))
+                (error 'simple-error :format-control "--report richiede un solo FILE."))
+              (setf report (pop args)))
+            (push argument remaining))))
+    (values (nreverse remaining) report)))
+
+(defun check-report-text (data)
+  "Wire canonico limitato: liste proprie, keyword ASCII, stringhe, interi, NIL/T."
+  (let ((nodes 0))
+    (with-output-to-string (stream)
+      (labels ((emit (value depth)
+                 (when (or (> depth 16) (> (incf nodes) 10000))
+                   (error 'simple-error :format-control "Budget del report superato."))
+                 (cond
+                   ((null value) (write-string "NIL" stream))
+                   ((eq value t) (write-string "T" stream))
+                   ((keywordp value)
+                    (let ((name (symbol-name value)))
+                      (unless (and (plusp (length name))
+                                   (every (lambda (c) (or (find c "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                                                         (find c "0123456789-"))) name))
+                        (error 'simple-error :format-control "Keyword wire non valida."))
+                      (write-char #\: stream) (write-string name stream)))
+                   ((integerp value)
+                    (let ((*print-base* 10) (*print-radix* nil))
+                      (format stream "~D" value)))
+                   ((stringp value)
+                    (write-char #\" stream)
+                    (loop for c across value do
+                      (when (find c '(#\\ #\")) (write-char #\\ stream))
+                      (write-char c stream))
+                    (write-char #\" stream))
+                   ((consp value)
+                    (write-char #\( stream)
+                    (loop for tail = value then (cdr tail) while tail do
+                      (unless (consp tail)
+                        (error 'simple-error :format-control "Lista wire impropria."))
+                      (unless (eq tail value) (write-char #\Space stream))
+                      (emit (car tail) (1+ depth))
+                      (when (> nodes 10000)
+                        (error 'simple-error :format-control "Budget wire superato.")))
+                    (write-char #\) stream))
+                   (t (error 'simple-error :format-control "Tipo wire vietato.")))))
+        (emit data 0))
+      (terpri stream))))
+
+(defun write-check-report (path check passed counts)
+  "Scrive una plist primitiva in modo esclusivo; propaga gli errori seri."
+  (let ((text (check-report-text
+               (list :kind :ci-check :check check :status (if passed :passed :failed)
+                     :counts counts))))
+    (with-open-file (stream path :direction :output :if-exists :error
+                           :if-does-not-exist :create :external-format :utf-8)
+      (write-string text stream)
+      (finish-output stream))))
 
 (defstruct tok kind text line depth)
 
@@ -202,32 +272,43 @@
                  (if sp (setf start (1+ sp)) (return)))
         (sort acc #'string<)))))
 
-(defun self-test ()
-  (let ((failures 0))
+(defun self-test (&optional report)
+  (let ((failures 0) (cases 0) (fixtures 0) (violations 0) (token-violations 0))
     (dolist (case '(("src/io/guard.lisp" t) ("src/io/sub/guard.lisp" t)
                     ("src/io-extra/guard.lisp" nil) ("src/other/io/guard.lisp" nil)
                     ("tests/src/io/guard.lisp" nil) ("src/io/../other/guard.lisp" nil)))
+      (incf cases)
       (unless (eq (second case) (not (null (io-module-path-p (first case)))))
         (incf failures) (format t "FAIL COD-43 perimetro ~S~%" case)))
     (dolist (file '("src/io/guard.lisp" "src/other/guard.lisp"))
+      (incf cases)
       (setf *violations* nil)
       (check-token-rules file (scan "(sb-sys:without-interrupts (sb-sys:without-gcing nil))"))
+      (incf token-violations (length *violations*))
       (unless (= (if (io-module-path-p file) 0 2) (count "COD-43" *violations* :key #'third :test #'string=))
         (incf failures) (format t "FAIL COD-43 token ~A~%" file)))
     (dolist (p (directory "tests/lint-fixtures/*.lisp"))
+      (incf cases)
+      (incf fixtures)
       (setf *violations* '())
       (lint-file p)
+      (incf violations (length *violations*))
       (let ((found (sort (remove-duplicates (mapcar #'third *violations*) :test #'string=) #'string<))
             (expected (expected-rules p)))
         (if (equal found expected)
             (format t "ok    ~A: ~{~A~^ ~}~%" (file-namestring p) (or found '("nessuna violazione")))
             (progn (incf failures)
                    (format t "FAIL  ~A: attese ~S, trovate ~S~%" (file-namestring p) expected found)))))
+    (when report
+      (write-check-report report :lint (zerop failures)
+                          (list :mode :self-test :cases cases :passed (- cases failures)
+                                :failed failures :files fixtures :violations violations
+                                :token-violations token-violations)))
     (sb-ext:exit :code (if (zerop failures) 0 1))))
 
 (defun main ()
-  (let ((args (rest sb-ext:*posix-argv*)))
-    (when (member "--self-test" args :test #'string=) (self-test))
+  (multiple-value-bind (args report) (check-report-options (rest sb-ext:*posix-argv*))
+    (when (member "--self-test" args :test #'string=) (self-test report))
     (let ((dirs (or (remove-if (lambda (a) (char= (char a 0) #\-)) args) '("src"))) (n 0))
       (dolist (d dirs)
         (dolist (p (lisp-files d)) (incf n) (lint-file p)))
@@ -236,6 +317,15 @@
                                          (and (string= (first a) (first b)) (< (second a) (second b)))))))
         (format t "~A:~D  ~A  ~A~%" (first v) (second v) (third v) (fourth v)))
       (format t "~D file, ~D violazioni~%" n (length *violations*))
+      (when report
+        (write-check-report report :lint (null *violations*)
+                            (list :mode :check :files n :violations (length *violations*)
+                                  :by-rule
+                                  (loop for rule in '("COD-02" "COD-03" "COD-12" "COD-20"
+                                                       "COD-22" "COD-34" "COD-43" "COD-50")
+                                        collect (list :rule rule :violations
+                                                      (count rule *violations* :key #'third
+                                                             :test #'string=))))))
       (sb-ext:exit :code (if *violations* 1 0)))))
 
 (main)

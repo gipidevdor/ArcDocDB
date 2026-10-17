@@ -97,6 +97,7 @@
 (defun ci-self-test (out)
   (let ((root (ci-mkdir out)) (reports nil))
     (dolist (spec '(("data" ci-data-self-test) ("tests" ci-test-self-test)
+                    ("conditions" ci-conditions-self-test)
                     ("measure" ci-measure-self-test) ("workflow" ci-workflow-self-test)
                     ("boundaries" ci-boundary-self-test)))
       (let* ((path (merge-pathnames (format nil "~A/" (first spec)) root))
@@ -119,7 +120,7 @@
   (handler-case
       (sb-ext:with-timeout (if (string= job "bench") 180 1500)
         (ci-child job out))
-    (error (c)
+    (serious-condition (c)
       (let ((path (merge-pathnames "child-result.lisp" (ci-directory out))))
         (unless (ci-lstat path)
           (ci-save path (list :schema-version 1 :kind :ci-child-failure :status :failed

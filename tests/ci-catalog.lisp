@@ -122,7 +122,7 @@
                (error "Catalogo: registro ~A ~S non valido." package adapter))
           do (when (gethash id seen) (error "Catalogo: ID duplicato ~A." id))
              (setf (gethash id seen) t)
-          collect (list :id id :suite package :name (symbol-name name)))))
+          collect (list :id id :suite package :name (symbol-name name) :source nil))))
 
 (defun begin-source (source)
   "Un load dello stesso FASL sostituisce solo la sua provenienza precedente."
@@ -222,7 +222,8 @@ Fonte API: https://asdf.common-lisp.dev/asdf.html#Controlling-file-compilation"
                       (list :status (if reason :missing :ready) :reason reason
                             :planned (unless reason (length rows)))) suites)
         (dolist (row rows)
-          (push (append row (list :status :not-run :reason :not-started :duration-ticks nil)) tests))))
+          (push (append row (list :status :not-run :reason :not-started
+                                  :condition nil :duration-ticks nil)) tests))))
     (dolist (pkg (list-all-packages))
       (let* ((name (package-name pkg)) (n (length name)) (run (find-symbol "RUN" pkg)))
         (when (and (> n 15) (string= name "ARCDOCDB." :end1 9)
@@ -377,7 +378,7 @@ Senza REPORT-PATH propaga il fallimento ad ASDF. Nessun test viene eseguito al l
                        (setf (getf row :status) :passed
                              (getf row :duration-ticks) (- (get-internal-real-time) start))
                        (event :passed row))
-                   (error (condition)
+                   (serious-condition (condition)
                      (setf (getf row :status) :failed (getf row :reason) :test-error
                            (getf row :condition) (condition-text condition)
                            (getf row :duration-ticks) (- (get-internal-real-time) start))
@@ -413,7 +414,7 @@ Senza REPORT-PATH propaga il fallimento ad ASDF. Nessun test viene eseguito al l
                                  (error "Il runner non ha eseguito tutti i casi inventariati."))
                                (setf (getf suite :status) :passed)
                                (event :suite-passed (list :suite (getf suite :id))))
-                           (error (condition)
+                           (serious-condition (condition)
                              (setf failure (condition-text condition)
                                    (getf suite :status) :failed (getf suite :reason) :runner-stopped)
                              (event :suite-failed (list :suite (getf suite :id)) failure))))

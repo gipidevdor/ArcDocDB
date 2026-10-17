@@ -16,10 +16,11 @@
 
 (defun %ci-working-output-p (path)
   (or (%ci-results-path-p path) (%ci-prefix-p "spikes/out/" path)
-      ;; Cache ricostruibili dei dieci spike: nomi chiusi, non qualsiasi /out/.
+      ;; Cache ricostruibili degli undici spike: nomi chiusi, non qualsiasi /out/.
       (loop for name in '("SPK-01-primary-index" "SPK-02-gc" "SPK-03-group-commit"
                            "SPK-04-writer-pool" "SPK-05-segment-read" "SPK-06-compaction-load"
-                           "SPK-07-protocols" "SPK-08-generated-code" "SPK-09-integrity" "SPK-10-v2-limits")
+                           "SPK-07-protocols" "SPK-08-generated-code" "SPK-09-integrity" "SPK-10-v2-limits"
+                           "SPK-11-unix-socket")
             thereis (%ci-prefix-p (format nil "spikes/~A/out/" name) path))))
 
 (defun %ci-one-line (text)

@@ -31,6 +31,14 @@ Invocazione riservata al coordinator dopo chiusura writer. Scrive test-self-test
                                          (arcdocdb.ci.tests:suite-specifications))))
                         (and (member "ARCDOCDB.CACHE.TESTS" ids :test #'equal)
                              (member "ARCDOCDB.FULLTEXT.ADMISSION.TESTS" ids :test #'equal)))))
+             (check :spk11-explicit-output-cache
+                    (lambda ()
+                      (and (%ci-working-output-p "spikes/SPK-11-unix-socket/out/build-a/core.fasl")
+                           (not (%ci-working-output-p "spikes/SPK-11-unix-socket/core.lisp")))))
+             (check :reject-unlisted-output-prefixes
+                    (lambda ()
+                      (and (not (%ci-working-output-p "spikes/SPK-12-unknown/out/core.fasl"))
+                           (not (%ci-working-output-p "src/out/core.fasl")))) t)
              (check :catalog-suite-ids-unique
                     (lambda () (let ((ids (mapcar (lambda (r) (getf r :id))
                                                    (arcdocdb.ci.tests:suite-specifications))))

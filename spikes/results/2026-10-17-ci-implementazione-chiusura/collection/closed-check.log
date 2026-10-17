@@ -1,0 +1,24 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/results/2026-10-17-ci-implementazione-raccolta/"
+ :INDEXED-FILES 9 :ACTUAL-FILES 11 :INDEXED-BYTES 656086 :PROCESSES
+ ((:LABEL "preparation" :RECORD-PATH "preparation/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "spikes/out/ci/prepare-integration-archive.lisp")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "producer" :RECORD-PATH "producer/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/collect-command-archive.lisp" "--collect"
+    "spikes/out/ci/archive-manifest.lisp"
+    "spikes/results/2026-10-17-ci-implementazione/" "--observations"
+    "spikes/out/ci/collection-observations/" "--jobs" "4")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "727fc9d8efa6a6b32ba6e4981aba0dc99fc1996cd5480383ba089a237c277b73"
+ :CATALOGUE-SHA256
+ "4259812992a9ee747e13fd3ca4c99984551ceca3ea5bb96cde7d2c71649219d5"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

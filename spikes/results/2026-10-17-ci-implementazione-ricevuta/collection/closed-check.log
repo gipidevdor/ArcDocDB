@@ -1,0 +1,27 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/bootstrap-csn/ArcDocDB/spikes/results/2026-10-17-ci-implementazione-chiusura/"
+ :INDEXED-FILES 11 :ACTUAL-FILES 13 :INDEXED-BYTES 793928 :PROCESSES
+ ((:LABEL "collection-producer" :RECORD-PATH "collection-producer/report.lisp"
+   :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/collect-command-archive.lisp" "--collect"
+    "spikes/out/ci/receipt-manifest.lisp"
+    "spikes/results/2026-10-17-ci-implementazione-raccolta/" "--observations"
+    "spikes/out/ci/receipt-observations/" "--jobs" "4")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "documentation-failed" :RECORD-PATH
+   "documentation-failed/report.lisp" :COMMAND ("make" "links" "trace") :STATUS
+   :FAILED :EXIT-CODE 2 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "documentation-final" :RECORD-PATH "documentation-final/report.lisp"
+   :COMMAND ("make" "links" "trace") :STATUS :OK :EXIT-CODE 0
+   :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "e9037bbddc76519cfa1bc4b1aae4281af06113c3fc6318b368c1f205a41d3eb1"
+ :CATALOGUE-SHA256
+ "5cb01eb5790d85cc1e80cbfb688883ab41a00635283ddc2ea3927e880bcdd421"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

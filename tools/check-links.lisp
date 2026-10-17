@@ -2,7 +2,78 @@
 ;;;; compresi gli attributi src e srcset delle parti HTML.
 ;;;;
 ;;;; Uso:  sbcl --script tools/check-links.lisp [directory-radice]
+;;;;       --report FILE ammesso prima/dopo directory-radice; FILE esclusivo UTF-8.
+;;;;       Report plist :kind :ci-check, indipendente dal package CI.
 ;;;; Esce con codice 1 se trova link rotti. Solo Common Lisp (ADR-0001, ADR-0027).
+
+;;; REQ: REQ-VAL-001 REQ-AFF-012
+(declaim (optimize (safety 3) (debug 2)))
+
+;;; REQ: REQ-VAL-001 REQ-AFF-012
+(defun check-report-options (args)
+  "Estrae --report FILE in qualsiasi posizione; rifiuta duplicati e FILE mancante."
+  (let ((remaining nil) (report nil))
+    (loop while args do
+      (let ((argument (pop args)))
+        (if (string= argument "--report")
+            (progn
+              (when (or report (null args) (zerop (length (first args)))
+                        (and (>= (length (first args)) 2)
+                             (string= "--" (first args) :end2 2)))
+                (error 'simple-error :format-control "--report richiede un solo FILE."))
+              (setf report (pop args)))
+            (push argument remaining))))
+    (values (nreverse remaining) report)))
+
+(defun check-report-text (data)
+  "Wire canonico limitato: liste proprie, keyword ASCII, stringhe, interi, NIL/T."
+  (let ((nodes 0))
+    (with-output-to-string (stream)
+      (labels ((emit (value depth)
+                 (when (or (> depth 16) (> (incf nodes) 10000))
+                   (error 'simple-error :format-control "Budget del report superato."))
+                 (cond
+                   ((null value) (write-string "NIL" stream))
+                   ((eq value t) (write-string "T" stream))
+                   ((keywordp value)
+                    (let ((name (symbol-name value)))
+                      (unless (and (plusp (length name))
+                                   (every (lambda (c) (or (find c "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                                                         (find c "0123456789-"))) name))
+                        (error 'simple-error :format-control "Keyword wire non valida."))
+                      (write-char #\: stream) (write-string name stream)))
+                   ((integerp value)
+                    (let ((*print-base* 10) (*print-radix* nil))
+                      (format stream "~D" value)))
+                   ((stringp value)
+                    (write-char #\" stream)
+                    (loop for c across value do
+                      (when (find c '(#\\ #\")) (write-char #\\ stream))
+                      (write-char c stream))
+                    (write-char #\" stream))
+                   ((consp value)
+                    (write-char #\( stream)
+                    (loop for tail = value then (cdr tail) while tail do
+                      (unless (consp tail)
+                        (error 'simple-error :format-control "Lista wire impropria."))
+                      (unless (eq tail value) (write-char #\Space stream))
+                      (emit (car tail) (1+ depth))
+                      (when (> nodes 10000)
+                        (error 'simple-error :format-control "Budget wire superato.")))
+                    (write-char #\) stream))
+                   (t (error 'simple-error :format-control "Tipo wire vietato.")))))
+        (emit data 0))
+      (terpri stream))))
+
+(defun write-check-report (path check passed counts)
+  "Scrive una plist primitiva in modo esclusivo; propaga gli errori seri."
+  (let ((text (check-report-text
+               (list :kind :ci-check :check check :status (if passed :passed :failed)
+                     :counts counts))))
+    (with-open-file (stream path :direction :output :if-exists :error
+                           :if-does-not-exist :create :external-format :utf-8)
+      (write-string text stream)
+      (finish-output stream))))
 
 (defun read-file (path)
   (with-open-file (in path :external-format :utf-8)
@@ -92,21 +163,24 @@
   (truename (if (char= (char s (1- (length s))) #\/) s (concatenate 'string s "/"))))
 
 (defun main ()
-  (let* ((root (if (second sb-ext:*posix-argv*)
-                   (directory-argument (second sb-ext:*posix-argv*))
+  (multiple-value-bind (args report) (check-report-options (rest sb-ext:*posix-argv*))
+  (let* ((root (if (first args)
+                   (directory-argument (first args))
                    (truename "./")))
          (files (markdown-files root))
          (heading-cache (make-hash-table :test #'equal))
-         (broken 0) (checked 0))
+         (broken 0) (checked 0) (missing-files 0) (missing-anchors 0)
+         (markdown-targets 0) (html-targets 0))
     (flet ((anchors-of (path)
              (or (gethash (namestring path) heading-cache)
                  (setf (gethash (namestring path) heading-cache)
                        (let ((text (read-file path)))
                          (append (headings text) (explicit-ids text)))))))
       (dolist (file files)
-        (let ((text (read-file file))
-              (dir (make-pathname :name nil :type nil :defaults file)))
-          (dolist (target (append (links text) (attribute-targets text)))
+        (let* ((text (read-file file))
+               (dir (make-pathname :name nil :type nil :defaults file))
+               (markdown (links text)) (html (attribute-targets text)))
+          (dolist (target (append markdown html))
             (incf checked)
             (multiple-value-bind (rel anchor) (split-anchor target)
               (let* ((path (if (string= rel "") file
@@ -114,14 +188,24 @@
                      (exists (probe-file path)))
                 (cond ((not exists)
                        (incf broken)
+                       (incf missing-files)
                        (format t "ROTTO  ~A -> ~A (file mancante)~%"
                                (enough-namestring file root) target))
                       ((and anchor (equalp (pathname-type path) "md")
                             (not (member anchor (anchors-of exists) :test #'string=)))
                        (incf broken)
+                       (incf missing-anchors)
                        (format t "ROTTO  ~A -> ~A (ancora mancante)~%"
-                               (enough-namestring file root) target)))))))))
+                               (enough-namestring file root) target))))))
+          (incf markdown-targets (length markdown))
+          (incf html-targets (length html)))))
     (format t "~D file, ~D link controllati, ~D rotti~%" (length files) checked broken)
-    (sb-ext:exit :code (if (zerop broken) 0 1))))
+    (when report
+      (write-check-report report :links (zerop broken)
+                          (list :files (length files) :checked checked :broken broken
+                                :passed (- checked broken) :missing-files missing-files
+                                :missing-anchors missing-anchors :markdown-targets markdown-targets
+                                :html-targets html-targets)))
+    (sb-ext:exit :code (if (zerop broken) 0 1)))))
 
 (main)

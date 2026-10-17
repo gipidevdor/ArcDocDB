@@ -4,6 +4,8 @@
 ;;;;   senza opzioni: verifica; esce con 1 se qualcosa è incoerente o la matrice
 ;;;;                  committata non coincide con quella generata
 ;;;;   --write:       rigenera docs/tracciabilita/matrice.md
+;;;;   --report FILE: prima/dopo --write, report UTF-8 esclusivo :kind :ci-check.
+;;;;                  Scritto anche con incoerenze; nessuna dipendenza dal package CI.
 ;;;;
 ;;;; Controlli:
 ;;;;   1. forma di ogni requisito (campi, classe, stato, metodi di verifica)
@@ -14,10 +16,77 @@
 ;;;;   6. i riferimenti REQ- nel codice (src, tests, tools, spikes) indicano requisiti esistenti
 ;;;;   7. un requisito :implementato o :verificato è citato nel codice (src o tools)
 ;;;;
-;;;; REQ: REQ-AFF-005
+;;;; REQ: REQ-AFF-005 REQ-VAL-001 REQ-AFF-012
 ;;;; Solo Common Lisp (ADR-0001, ADR-0027).
 
 (setf *read-eval* nil)
+(declaim (optimize (safety 3) (debug 2)))
+
+;;; REQ: REQ-VAL-001 REQ-AFF-012
+(defun check-report-options (args)
+  "Estrae --report FILE in qualsiasi posizione; rifiuta duplicati e FILE mancante."
+  (let ((remaining nil) (report nil))
+    (loop while args do
+      (let ((argument (pop args)))
+        (if (string= argument "--report")
+            (progn
+              (when (or report (null args) (zerop (length (first args)))
+                        (and (>= (length (first args)) 2)
+                             (string= "--" (first args) :end2 2)))
+                (error 'simple-error :format-control "--report richiede un solo FILE."))
+              (setf report (pop args)))
+            (push argument remaining))))
+    (values (nreverse remaining) report)))
+
+(defun check-report-text (data)
+  "Wire canonico limitato: liste proprie, keyword ASCII, stringhe, interi, NIL/T."
+  (let ((nodes 0))
+    (with-output-to-string (stream)
+      (labels ((emit (value depth)
+                 (when (or (> depth 16) (> (incf nodes) 10000))
+                   (error 'simple-error :format-control "Budget del report superato."))
+                 (cond
+                   ((null value) (write-string "NIL" stream))
+                   ((eq value t) (write-string "T" stream))
+                   ((keywordp value)
+                    (let ((name (symbol-name value)))
+                      (unless (and (plusp (length name))
+                                   (every (lambda (c) (or (find c "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+                                                         (find c "0123456789-"))) name))
+                        (error 'simple-error :format-control "Keyword wire non valida."))
+                      (write-char #\: stream) (write-string name stream)))
+                   ((integerp value)
+                    (let ((*print-base* 10) (*print-radix* nil))
+                      (format stream "~D" value)))
+                   ((stringp value)
+                    (write-char #\" stream)
+                    (loop for c across value do
+                      (when (find c '(#\\ #\")) (write-char #\\ stream))
+                      (write-char c stream))
+                    (write-char #\" stream))
+                   ((consp value)
+                    (write-char #\( stream)
+                    (loop for tail = value then (cdr tail) while tail do
+                      (unless (consp tail)
+                        (error 'simple-error :format-control "Lista wire impropria."))
+                      (unless (eq tail value) (write-char #\Space stream))
+                      (emit (car tail) (1+ depth))
+                      (when (> nodes 10000)
+                        (error 'simple-error :format-control "Budget wire superato.")))
+                    (write-char #\) stream))
+                   (t (error 'simple-error :format-control "Tipo wire vietato.")))))
+        (emit data 0))
+      (terpri stream))))
+
+(defun write-check-report (path check passed counts)
+  "Scrive una plist primitiva in modo esclusivo; propaga gli errori seri."
+  (let ((text (check-report-text
+               (list :kind :ci-check :check check :status (if passed :passed :failed)
+                     :counts counts))))
+    (with-open-file (stream path :direction :output :if-exists :error
+                           :if-does-not-exist :create :external-format :utf-8)
+      (write-string text stream)
+      (finish-output stream))))
 
 (defparameter *classes* '("C1" "C2" "C3" "C4"))
 (defparameter *stati* '(:specificato :progettato :implementato :verificato))
@@ -151,8 +220,8 @@
                       (loop for p in (lisp-files dir)
                             append (req-refs-in (read-text p))))))
 
-(defun check-code-refs (reqs)
-  (let ((refs (code-refs)) (known (mapcar (lambda (r) (prop r :id)) reqs)))
+(defun check-code-refs (reqs &optional (refs (code-refs)))
+  (let ((known (mapcar (lambda (r) (prop r :id)) reqs)))
     (dolist (entry refs)
       (dolist (id (cdr entry))
         (unless (member id known :test #'string=)
@@ -221,27 +290,85 @@
   (with-open-file (out path :direction :output :if-exists :supersede :external-format :utf-8)
     (write-string text out)))
 
+(defun trace-report-counts (reqs invs fis adrs refs matrix-current write-p)
+  "Conteggi della stessa scansione autorevole usata per il verdetto."
+  (let ((known (mapcar (lambda (r) (prop r :id)) reqs)))
+    (list :requirements (length reqs) :errors *errors*
+          :invariants (length invs)
+          :invariants-covered (count-if (lambda (id) (covered-by reqs :inv id)) invs)
+          :fi-scenarios (length fis)
+          :fi-covered (count-if (lambda (id) (covered-by reqs :fi id)) fis)
+          :adrs (length adrs) :matrix-current matrix-current :matrix-written (not (null write-p))
+          :requirements-with-verification (count-if (lambda (r) (prop r :ver)) reqs)
+          :requirements-without-verification (count-if-not (lambda (r) (prop r :ver)) reqs)
+          :invalid-classes (count-if-not (lambda (r) (member (prop r :cls) *classes* :test #'equal)) reqs)
+          :invalid-statuses (count-if-not (lambda (r) (member (prop r :stato) *stati*)) reqs)
+          :by-verification-method
+          (loop for method in *metodi*
+                collect (list :method method :requirements
+                              (count-if (lambda (r) (member method (prop r :ver))) reqs)))
+          :invariant-references (loop for r in reqs sum (length (prop r :inv)))
+          :unknown-invariant-references
+          (loop for r in reqs sum (count-if-not (lambda (id) (member id invs :test #'string=)) (prop r :inv)))
+          :adr-references (loop for r in reqs sum (length (prop r :adr)))
+          :unknown-adr-references
+          (loop for r in reqs sum (count-if-not (lambda (id) (assoc id adrs :test #'string=)) (prop r :adr)))
+          :fi-references (loop for r in reqs sum (length (prop r :fi)))
+          :unknown-fi-references
+          (loop for r in reqs sum (count-if-not (lambda (id) (member id fis :test #'string=)) (prop r :fi)))
+          :by-class (loop for class in *classes*
+                          collect (list :class class :requirements (count-where reqs :cls class)))
+          :by-status (loop for status in *stati*
+                           collect (list :status status :requirements (count-where reqs :stato status)))
+          :code-references
+          (loop for (dir . ids) in refs
+                collect (list :directory dir :references (length ids)
+                              :unique-requirements (length (remove-duplicates ids :test #'string=))
+                              :unknown-references (count-if-not
+                                                   (lambda (id) (member id known :test #'string=)) ids)))
+          :missing-implementation-references
+          (count-if (lambda (r)
+                      (and (member (prop r :stato) '(:implementato :verificato))
+                           (not (or (member (prop r :id) (cdr (assoc "src" refs :test #'string=))
+                                            :test #'string=)
+                                    (member (prop r :id) (cdr (assoc "tools" refs :test #'string=))
+                                            :test #'string=))))) reqs)
+          :missing-test-references
+          (count-if (lambda (r)
+                      (and (member (prop r :stato) '(:implementato :verificato))
+                           (not (equal (prop r :cls) "C4"))
+                           (not (member (prop r :id) (cdr (assoc "tests" refs :test #'string=))
+                                        :test #'string=)))) reqs))))
+
 (defun main ()
-  (let* ((write-p (member "--write" sb-ext:*posix-argv* :test #'string=))
+  (multiple-value-bind (args report) (check-report-options (rest sb-ext:*posix-argv*))
+  (let* ((write-p (member "--write" args :test #'string=))
          (reqs (load-requirements))
          (invs (table-ids "docs/invarianti.md" "INV-"))
          (fis (table-ids "docs/14-fault-injection.md" "FI-"))
-         (adrs (adr-table)))
+         (adrs (adr-table))
+         (refs nil) (matrix-current nil))
     (check-source-selection)
     (check-shape reqs)
     (check-references reqs invs adrs fis)
     (check-coverage reqs invs fis)
-    (check-code-refs reqs)
+    (setf refs (code-refs))
+    (check-code-refs reqs refs)
     (let ((generated (render-matrix reqs invs adrs fis)))
       (cond (write-p
              (write-file *matrix-file* generated)
+             (setf matrix-current t)
              (format t "scritto ~A~%" *matrix-file*))
             ((not (probe-file *matrix-file*))
              (fail "~A non esiste: eseguire make trace-write" *matrix-file*))
             ((string/= generated (read-text *matrix-file*))
-             (fail "~A non è aggiornata: eseguire make trace-write" *matrix-file*))))
+             (fail "~A non è aggiornata: eseguire make trace-write" *matrix-file*))
+            (t (setf matrix-current t))))
     (format t "~D requisiti, ~D invarianti, ~D scenari FI, ~D ADR: ~D errori~%"
             (length reqs) (length invs) (length fis) (length adrs) *errors*)
-    (sb-ext:exit :code (if (zerop *errors*) 0 1))))
+    (when report
+      (write-check-report report :trace (zerop *errors*)
+                          (trace-report-counts reqs invs fis adrs refs matrix-current write-p)))
+    (sb-ext:exit :code (if (zerop *errors*) 0 1)))))
 
 (main)

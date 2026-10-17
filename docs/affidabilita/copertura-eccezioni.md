@@ -235,3 +235,14 @@ di slot e otto default keyword non marcati. Native e HTML concordano; tutti i
 missing path sono conservati. Nessuna esclusione è approvata, nessun bit è
 modificato e nessun reload artificiale altera i conteggi. MC/DC, revisione
 indipendente e qualifica C1 rimangono aperti.
+
+## Misure delle allocazioni nel catalogo CI
+
+Il catalogo CI distingue cinque test che misurano le allocazioni del codice
+non strumentato. L'integrazione delle riserve full text aggiunge
+`ARCDOCDB.FULLTEXT.ADMISSION.TESTS::REQ-SEC-010-RESERVATION-HOT-ALLOCATION`
+ai quattro casi già espliciti. Si omette soltanto la loro esecuzione durante
+`sb-cover`, che altera le allocazioni; tutti devono essere passati nel run
+normale della stessa revisione prima di accettare la misura CI di copertura.
+Il test resta nel catalogo e il motivo è visibile. Non si sottraggono forme o
+rami dal denominatore del prodotto e non si promuove la qualifica C1.

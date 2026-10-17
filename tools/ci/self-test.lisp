@@ -39,6 +39,16 @@
       (check :known-zero-is-measured
              (lambda () (ci-metrics-valid-p '(:job "verify-linux" :metrics
                         (:planned 0 :passed 0 :failed 0 :not-run 0 :skipped 0)))))
+      (check :measurement-identity-rejects-missing-fields
+             (lambda () (rejects (lambda () (ci-validate-measure-identity '(:tested-sha "fixture"))))))
+      (check :measurement-identity-handoff
+             (lambda ()
+               (let ((*ci-measure-coordinator-identity*
+                       (list :tested-sha (make-string 40 :initial-element #\a)
+                             :source-id (make-string 64 :initial-element #\b)
+                             :policy-id (make-string 64 :initial-element #\c))))
+                 (and (ci-validate-measure-identity *ci-measure-coordinator-identity*)
+                      (equal *ci-measure-coordinator-identity* (ci-measure-source-fingerprint))))))
       (check :missing-plan-is-not-closed
              (lambda () (let* ((dir (ci-mkdir (merge-pathnames "empty/" root)))
                               (summary (ci-collect dir)))
@@ -98,7 +108,7 @@
         (let ((counts (or (getf report :counts) report)))
           (push (list :module (first spec) :status (getf report :status)
                       :planned (getf counts :planned) :passed (getf counts :passed)
-                      :failed (getf counts :failed)) reports))))
+                      :failed (getf counts :failed) :not-run (getf counts :not-run 0)) reports))))
     (let ((report (list :schema-version 1 :kind :ci-self-test
                         :status (if (every (lambda (r) (eq :passed (getf r :status))) reports) :passed :failed)
                         :modules (nreverse reports))))

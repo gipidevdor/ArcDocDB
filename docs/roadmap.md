@@ -15,7 +15,8 @@ e qualifica sono nella fase 8, insieme a indici secondari e Query Engine.
 I test attuali di indice primario e recovery non verificano questi nuovi
 requisiti. [ADR-0054](adr/0054-contratto-e-formato-full-text.md) completa il
 [contratto operativo](full-text.md) e il [formato binario](formato-indice-full-text.md).
-Codec, analizzatore e misure dedicate restano da realizzare secondo il
+Il nucleo Unicode, il codec e la preparazione documentale sono ora presenti;
+commit, visibilità MVCC e pubblicazione durevole restano da integrare secondo il
 [piano di verifica](affidabilita/piano-di-verifica.md#ricerca-full-text).
 
 La [prova verticale con SIGKILL](implementazione/prova-verticale.md) collega
@@ -68,8 +69,10 @@ Il primo incremento dispone della [raccolta readonly dell'inventario](implementa
 da una capacità directory, con nomi e identità verificati prima del planner.
 L'[apertura readonly relativa](implementazione/io-apertura-relativa.md)
 fornisce ora capacità e dimensione dallo stesso FD ed è usata nei reader
-della prova verticale. Raccolta posseduta dell'insieme dei segmenti vivi,
-riconciliazione fisica e coordinamento del recovery restano passi successivi.
+della prova verticale. L'[acquisizione posseduta delle fonti](implementazione/fonti-recovery.md)
+collega ora il piano completo ad ACTIVE/CLOSED readonly con budget cumulativo
+e cleanup dei figli; riconciliazione fisica e coordinamento del recovery
+restano passi successivi.
 
 Al 2026-10-03 la parte di **definizione è completa**: le 26 questioni aperte sono chiuse dagli
 ADR 0013–0030, il progetto è consolidato in [architettura.md](architettura.md) e i formati in

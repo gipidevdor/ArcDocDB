@@ -19,6 +19,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   rifiuti prima dell'allocazione e nomi occupati preservati. Il listener di
   prodotto resta subordinato ad avvio, recovery e ammissione del motore.
 
+- Acquisizione readonly posseduta di tutti i segmenti ACTIVE/CLOSED da un solo
+  inventario directory, budget cumulativo degli EOF e cleanup completo anche
+  con più errori di close. Collegamento alla fixture verticale; riconciliazione
+  fisica e ammissione restano da implementare.
+
 - Prove della cache con quattro worker che inseriscono e leggono record
   concorrenti nello stesso insieme, oltre a casi deterministici per contesa,
   sequenza dispari, credito esaurito e posti disabilitati. Confronto completo

@@ -1,5 +1,5 @@
 ;;;; Mutazioni mirate in copie isolate; nessun sorgente del repository viene riscritto.
-;;;; Uso: --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|inventory-id|io|wal] [--jobs 1..4]
+;;;; Uso: --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|inventory-id|inventory-sources|io|wal] [--jobs 1..4]
 ;;;; oppure --self-test; baseline seriale, copie e processi dei mutanti indipendenti.
 ;;;; REQ: REQ-FOR-003 REQ-FOR-004 REQ-AFF-002 REQ-LIM-001 REQ-LIM-003 REQ-VAL-001
 (require :asdf)
@@ -168,6 +168,24 @@
       "(proponi-id-segmento-da-piano manifest plan)"
       "(progn (arcdocdb.io:elenca-directory directory) (proponi-id-segmento-da-piano manifest plan))")))
 
+;;; REQ: REQ-REC-001 REQ-REC-004 REQ-AFF-004 REQ-AFF-008 REQ-VAL-001
+(defparameter *inventory-sources-mutants*
+  '(("sources-ready" "inventory-sources-build.lisp" "(unless (eq (stato-riconciliazione plan) :ready)" "(when (eq (stato-riconciliazione plan) :ready)")
+    ("sources-skip-closed" "inventory-sources-build.lisp" "(member state '(:active :closed))" "(member state '(:active))")
+    ("sources-final-and-or" "inventory-sources-build.lisp" "(and (eq form :final) (eq action :use))" "(or (eq form :final) (eq action :use))")
+    ("sources-temp-and-or" "inventory-sources-build.lisp" "(and (eq form :temporary) (eq action :rename))" "(or (eq form :temporary) (eq action :rename))")
+    ("sources-total-boundary" "inventory-sources-build.lisp" "(when (> size (- total-budget total))" "(when (>= size (- total-budget total))")
+    ("sources-total-not-cumulative" "inventory-sources-build.lisp" "(when (> size (- total-budget total))" "(when (> size total-budget)")
+    ("sources-register-too-late" "inventory-sources-build.lisp" "(setf (%rs-file entry) file (%rs-size entry) size)
+          (when (> size (- total-budget total))
+            (error 'resource-exhausted :reason :recovery-sources-total-bytes))" "(when (> size (- total-budget total))
+            (error 'resource-exhausted :reason :recovery-sources-total-bytes))
+          (setf (%rs-file entry) file (%rs-size entry) size)")
+    ("sources-close-skip-last" "inventory-sources-query.lisp" "(dotimes (i (length entries))" "(dotimes (i (max 0 (1- (length entries))))")
+    ("sources-close-stops-at-first" "inventory-sources-query.lisp" "(incf failures)" "(incf failures) (error condition)")
+    ("sources-transfer-budget" "inventory-sources.lisp" "directory max-transfer max-file-bytes max-total-file-bytes)" "directory (max max-transfer 268435456) max-file-bytes max-total-file-bytes)")
+    ("sources-file-budget" "inventory-sources.lisp" "directory max-transfer max-file-bytes max-total-file-bytes)" "directory max-transfer (max max-file-bytes #xffffffff) max-total-file-bytes)")))
+
 (defparameter *io-mutants*
   '(("input-mutates-health" "types.lisp" "(unless (eq operation :read)" "(when (eq operation :read)")
     ("write-does-not-fault" "types.lisp" "(setf (file-state file) :faulted)"
@@ -251,7 +269,7 @@
 
 (defun dedicated-scope-p (scope)
   "DECISION, manifest e inventory richiedono marker e compilazione rigorosa."
-  (member scope '("decisions" "manifest" "inventory" "inventory-id") :test #'string=))
+  (member scope '("decisions" "manifest" "inventory" "inventory-id" "inventory-sources") :test #'string=))
 
 (defun scope-token (scope)
   "Token stabile dei marker dei test dedicati."
@@ -296,6 +314,13 @@
           (error "foundation-mutation.lisp: COD-60, bersaglio assente/ambiguo: ~A" name)))))
   nil)
 
+(defun nested-test-definition-p (form marker)
+  "C4: attraversa solo il form sorgente finito, senza valutare o espandere macro."
+  (and (consp form)
+       (or (eq (first form) marker)
+           (nested-test-definition-p (car form) marker)
+           (nested-test-definition-p (cdr form) marker))))
+
 (defun dedicated-test-form (scope)
   "Seleziona DEFTEST caricati: tre file DECISION, due manifest, uno inventory; senza eval."
   `(let* ((*package* (or (find-package "ARCDOCDB.RECOVERY.TESTS")
@@ -309,10 +334,17 @@
                          ((string= scope "inventory") '("tests/recovery/inventory.lisp"))
                          ((string= scope "inventory-id")
                           '("tests/recovery/inventory-id.lisp" "tests/recovery/inventory-directory-id.lisp"))
+                         ((string= scope "inventory-sources")
+                          '("tests/recovery/inventory-sources.lisp" "tests/recovery/inventory-sources-native.lisp"))
                          (t (error "Ambito senza test dedicati: ~A" scope))))
        (let ((selected 0))
          (with-open-file (input file :external-format :utf-8)
            (loop for form = (read input nil :eof) until (eq form :eof)
+                 do (labels ((nested (node)
+                               (and (consp node)
+                                    (or (eq (car node) deftest) (nested (car node)) (nested (cdr node))))))
+                      (when (nested (if (and (consp form) (eq (car form) deftest)) (cdr form) form))
+                        (error "DEFTEST annidato, escluso dalla baseline: ~A" file)))
                  when (and (consp form) (eq (first form) deftest))
                    do (push (second form) tests) (incf selected)))
          (unless (plusp selected) (error "File senza test dedicati: ~A" file))))
@@ -398,10 +430,10 @@
           ((and (<= 2 (length positional) 3) (string= (first positional) "--run")
                 (or (= (length positional) 2)
                     (member (third positional)
-                            '("foundation" "storage" "recovery" "decisions" "manifest" "inventory" "inventory-id" "io" "wal")
+                            '("foundation" "storage" "recovery" "decisions" "manifest" "inventory" "inventory-id" "inventory-sources" "io" "wal")
                             :test #'string=)))
            (values :run (second positional) (or (third positional) "foundation") jobs))
-          (t (error "foundation-mutation.lisp: COD-61, usare --self-test oppure --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|inventory-id|io|wal] [--jobs 1..4].")))))
+          (t (error "foundation-mutation.lisp: COD-61, usare --self-test oppure --run directory-nuova/ [foundation|storage|recovery|decisions|manifest|inventory|inventory-id|inventory-sources|io|wal] [--jobs 1..4].")))))
 
 (defun worker-failure (task condition &optional exit signal)
   "I guasti di preparazione, avvio e raccolta non interrompono gli altri worker."
@@ -505,7 +537,7 @@
 
 (defun classifier-self-test ()
   "Rifiuta marker nel backtrace, marker dell'altro ambito e guasti di compilazione."
-  (dolist (scope '("decisions" "manifest" "inventory" "inventory-id"))
+  (dolist (scope '("decisions" "manifest" "inventory" "inventory-id" "inventory-sources"))
     (multiple-value-bind (start complete) (scope-markers scope)
       (let ((started (concatenate 'string start "TEST")))
         (unless (and (eq :detected (decision-result started 1 scope))
@@ -527,7 +559,7 @@
                      (eq :compilation-failure (decision-result
                                                  (format nil "~A~%compilation aborted" started) 1 scope)))
           (error "foundation-mutation.lisp: COD-60, classificazione ~A errata." scope))))
-    (dolist (other '("decisions" "manifest" "inventory" "inventory-id"))
+    (dolist (other '("decisions" "manifest" "inventory" "inventory-id" "inventory-sources"))
       (unless (string= scope other)
         (multiple-value-bind (start complete) (scope-markers other)
           (unless (eq :before-tests
@@ -690,6 +722,11 @@
                (not (detected-p "ok    ARCDOCDB:*VERSION*" 0))
                (not (detected-p "compilation aborted" 1)))
     (error "foundation-mutation.lisp: COD-60, sostituzione o classificazione errata."))
+  (unless (and (nested-test-definition-p '(defun wrapper () (deftest hidden t)) 'deftest)
+               (nested-test-definition-p '(deftest outer (deftest hidden t)) 'deftest)
+               (not (nested-test-definition-p '(defun helper () t) 'deftest))
+               (not (nested-test-definition-p (cdr '(deftest top (is t))) 'deftest)))
+    (error "foundation-mutation.lisp: COD-60, DEFTEST annidato non rilevato."))
   (classifier-self-test)
   (configuration-self-test)
   (copier-self-test)
@@ -697,6 +734,7 @@
   (validate-decision-mutants *manifest-mutants*)
   (validate-decision-mutants *inventory-mutants*)
   (validate-decision-mutants *inventory-id-mutants*)
+  (validate-decision-mutants *inventory-sources-mutants*)
   (parallel-self-test)
   (format t "Mutazioni: self-test superato.~%"))
 
@@ -709,6 +747,7 @@
         ((string= scope "manifest") *manifest-mutants*)
         ((string= scope "inventory") *inventory-mutants*)
         ((string= scope "inventory-id") *inventory-id-mutants*)
+        ((string= scope "inventory-sources") *inventory-sources-mutants*)
         ((string= scope "io") *io-mutants*)
         ((string= scope "wal") *wal-mutants*)
         (t (error "foundation-mutation.lisp: COD-61, ambito non supportato: ~A" scope))))

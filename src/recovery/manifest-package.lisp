@@ -21,4 +21,7 @@
            #:file-segmento #:pianifica-riconciliazione #:pianifica-riconciliazione-directory
            #:stato-riconciliazione
            #:numero-azioni-riconciliazione #:azione-riconciliazione
-           #:scegli-id-segmento-recovery #:scegli-id-segmento-recovery-directory))
+           #:scegli-id-segmento-recovery #:scegli-id-segmento-recovery-directory
+           #:apri-fonti-recovery #:numero-fonti-recovery #:fonte-recovery #:chiudi-fonti-recovery
+           #:recovery-sources-cleanup-error #:recovery-sources-primary
+           #:recovery-sources-cleanup #:recovery-sources-cleanup-count))

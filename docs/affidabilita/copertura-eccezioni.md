@@ -238,10 +238,12 @@ indipendente e qualifica C1 rimangono aperti.
 
 ## Misure delle allocazioni nel catalogo CI
 
-Il catalogo CI distingue cinque test che misurano le allocazioni del codice
+Il catalogo CI distingue sei test che misurano le allocazioni del codice
 non strumentato. L'integrazione delle riserve full text aggiunge
 `ARCDOCDB.FULLTEXT.ADMISSION.TESTS::REQ-SEC-010-RESERVATION-HOT-ALLOCATION`
-ai quattro casi già espliciti. Si omette soltanto la loro esecuzione durante
+ai quattro casi già espliciti; il collegamento PUT/WAL aggiunge
+`ARCDOCDB.FULLTEXT.PUT.TESTS::REQ-SEC-010-PUT-HOT-ALLOCATION`.
+Si omette soltanto la loro esecuzione durante
 `sb-cover`, che altera le allocazioni; tutti devono essere passati nel run
 normale della stessa revisione prima di accettare la misura CI di copertura.
 Il test resta nel catalogo e il motivo è visibile. Non si sottraggono forme o

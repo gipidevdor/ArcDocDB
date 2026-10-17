@@ -42,7 +42,7 @@
     (list :run-id run-id :attempt attempt :event (third row)
           :head-sha (fourth row) :ref (concatenate 'string "refs/heads/" (fifth row))
           :conclusion (seventh row) :repository repo :created-at (tenth row)
-          :check-suite-id suite-id :check-suite-sha check-sha)))))
+          :check-suite-id suite-id :check-suite-sha check-sha))))
 
 (defun ci-github-artifacts (run-id attempt)
   (let ((prefix (format nil "ci-~A-~A-" run-id attempt)) (found nil))

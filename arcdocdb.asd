@@ -171,7 +171,8 @@
                              (:file "build") (:file "query")))
                (:module "runtime" :serial t
                 :components ((:file "package") (:file "types") (:file "preflight")
-                             (:file "query") (:file "build") (:file "active"))))
+                             (:file "query") (:file "build") (:file "active")
+                             (:file "closed-preflight") (:file "closed-transfer") (:file "closed"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/tests"

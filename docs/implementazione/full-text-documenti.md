@@ -117,6 +117,11 @@ run parziali non sono accessibili. Un nuovo avvio puo riusare lo scratch. Gli er
 interni richiedono fail-stop al confine del worker; non diventano retry di un commit.
 `stato-preparazione-full-text` espone solo IDLE/RUNNING/DONE/FAILED/CANCELLED.
 
+Le [riserve del writer](full-text-riserve.md) possono ora prendere in prestito il run
+DONE durante la copia posseduta. Il task resta DONE ma un nuovo avvio rifiuta con
+`:fulltext-document-borrowed` fino alla fine della copia o alla cancellazione della riserva.
+Il risultato preso in prestito dal caller non autorizza a bypassare questa ownership.
+
 ## Verifica e limiti
 
 I 17 test documentali si aggiungono ai 39 precedenti. Una fixture CBOR di 25 byte
@@ -135,7 +140,8 @@ delle chiavi e deduplica del costo; la copertura strumentata esclude le allocazi
 La [revisione delle decisioni](full-text-documenti-decisioni.md) esplicita il perimetro.
 I [registri e tentativi originali](../../spikes/results/2026-10-16-fulltext-document-dev-targeted/README.md)
 conservano sorgenti, comandi, risultati e limiti.
-Restano l'ammissione e la riserva effettiva nel writer, il legame ai byte del PUT,
-il trasferimento del run al delta, la pubblicazione prima di H/ACK, il catalogo delle
+Sono disponibili prenotazione locale e copie possedute nelle riserve del writer.
+Restano il gate completo e il legame ai byte del PUT/WAL,
+il trasferimento nella vista pubblicata del delta, la pubblicazione prima di H/ACK, il catalogo delle
 generazioni, I/O durevole, MVCC e Query Engine. I requisiti complessivi restano progettati;
 questa preparazione non rende il database pronto per il traffico NNTP.

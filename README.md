@@ -81,7 +81,9 @@ phrases, combined with structured filters and snapshot visibility. The
 [product core](docs/implementazione/full-text.md) implements Unicode analysis,
 in-memory positional runs, the complete binary index codec and queries on verified file views.
 [CBOR document preparation](docs/implementazione/full-text-documenti.md) adds nested field extraction,
-cumulative limits and a conservative file size bound before writer admission;
+cumulative limits and a conservative file size bound before writer admission.
+[Writer reservations](docs/implementazione/full-text-riserve.md) add collective budget checks,
+owned run copies and cancellation under the existing writer lease;
 writer/MVCC integration, generation publication and full qualification
 belong to phase 8.
 
@@ -169,7 +171,7 @@ Every limit and where it comes from: [limiti.md](docs/limiti.md).
 | Now | A [single-Serie integration test](docs/implementazione/prova-verticale.md) with durable writes, rotation, SIGKILL, recovery, resumed writes and a second crash; coordination remains in the test harness |
 | Next | Integrate production startup, recovery and request admission, then the first local Unix socket client/server path; complete the reference-scale campaigns and protocol models in the [spike plan](docs/valutazione/piano-spike.md) |
 | Reference application | Database for a future Common Lisp NNTP server; application requirements are documented, protocol implementation remains future work |
-| Full-text requirement | Unicode 18 analysis, CBOR document preparation, positional all/any/phrase predicates, complete `.idx` codec and verified file views implemented; durable publication, writer/MVCC and Query Engine integration remain pending |
+| Full-text requirement | Unicode 18 analysis, CBOR preparation, writer reservations and owned run copies, positional predicates, complete `.idx` codec and verified file views implemented; PUT/WAL binding, durable publication, MVCC and Query Engine integration remain pending |
 | Then | Ten implementation phases, each closed by a verification gate: the [roadmap](docs/roadmap.md) |
 
 Product throughput figures remain targets or estimates. Measurements from individual

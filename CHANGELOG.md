@@ -24,6 +24,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   sequenza dispari, credito esaurito e posti disabilitati. Confronto completo
   con record indipendenti nei formati v1/v2; qualifica C1 ancora aperta.
 
+- Riserve full text locali sotto lease del writer: budget di tutte le generazioni
+  verificati prima degli effetti, copia riprendibile in run posseduti e task protetti
+  dal riuso. Cancellazione pre-append e trasferimento con costi trattenuti;
+  binding PUT, pipeline WAL, pubblicazione e ritiro restano da integrare.
+
 - Adozione delle mappe CLOSED recuperate nello scope runtime: insieme completo,
   autorità e FD esatti verificati, wrapper nuovi e righe immutabili condivise.
   Budget prima delle allocazioni; nessuna rilettura dei segmenti o pubblicazione

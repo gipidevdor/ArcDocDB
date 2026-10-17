@@ -548,3 +548,39 @@ le prove locali qui citate restano quelle dei rispettivi SHA. Catalogo,
 aspettative numeriche dei self-test e lista delle cache devono essere
 allineati e nuovamente verificati sul composto, senza riattribuire questi
 risultati alla versione integrata.
+
+## 12. Attribuzione degli esiti anche sui timeout
+
+Il catalogo inizializza `:source` e `:condition` nelle righe dei casi prima
+di aggiornarle. Aggiungere una chiave assente con `SETF GETF` al solo binding
+locale del ciclo perdeva la provenienza o la diagnosi nello snapshot finale.
+I confini del caso, della suite e del child CI intercettano ora
+`SERIOUS-CONDITION`: `SB-EXT:TIMEOUT` non appartiene a `ERROR` e prima
+sfuggiva alla registrazione, lasciando il rapporto in stato `:running`.
+
+Un timeout del caso produce riga ed evento `:failed`; la suite si arresta
+e i casi successivi conservano `:not-run` con motivo `:runner-stopped`.
+Un timeout prima dell'ingresso in un caso fallisce la suite senza inventare
+un caso eseguito. Senza destinazione del rapporto, ASDF continua a ricevere
+un errore. Il confine child conserva il fallback fallito quando manca il
+risultato, con uscita 1 e diagnosi. Non introduce retry dei test.
+
+Le nove regressioni C4 in `tools/ci/conditions-self-test.lisp` iniettano
+oggetti `SB-EXT:TIMEOUT`, senza sleep né dipendenza dallo scheduler. Sei
+casi sono negativi. Verificano conteggi, provenienza, diagnosi, eventi,
+snapshot persistiti, arresto dei corpi successivi e ripristino del delegato
+child della fixture. Non misurano la precisione delle scadenze reali.
+
+Sulla base `a91896bd` la prima fixture si è fermata prima dei casi per un
+nome locale che collidiva con `CL:DIRECTORY`; originale e registro sono
+conservati. Dopo la correzione della fixture, il codice precedente passa
+2 casi e ne fallisce 7. La sola riparazione della provenienza porta a
+3 passati e 6 falliti, isolando la perdita della diagnosi. La correzione
+completa passa 9/9; l'autocontrollo CI passa 327/327 nei sei moduli.
+Questi conteggi appartengono al ramo locale verificato, prima degli
+ulteriori merge full text/recovery del coordinatore.
+
+Il [catalogo dei registri e degli originali](../../spikes/results/2026-10-17-ci-serious-conditions/catalogo.lisp)
+conserva anche i tentativi falliti. Il codice è committato in `c7caed5f`;
+verifica completa della composizione, integrazione e push restano al
+coordinatore della chiusura.

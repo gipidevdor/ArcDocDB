@@ -21,6 +21,26 @@ si sono fermate sulla stessa parentesi in piu nel nuovo diciannovesimo test.
 Entrambi i registri originali, con sorgenti stabili ed esito fallito, sono conservati.
 Corretto soltanto il test; nessun errore del prodotto e stato nascosto o riclassificato.
 
+La [copertura diagnostica finale](../2026-10-17-fulltext-reservation-coverage/catalogo.lisp)
+ha stato `:ok`, sorgenti `:stable`, exit code 0, 35,838443 secondi, sul commit `8363286c`.
+Lo stato SB-COVER e gli HTML sono conservati come stringhe originali in un payload
+compresso verificabile: scope `src/fulltext/` e `src/fulltext-admission/`.
+Cinque test di allocazione sono esclusi dalla strumentazione e misurati separatamente.
+Non si dichiara copertura MC/DC completa; le righe non percorse rimangono visibili.
+
+La [verifica completa finale](../2026-10-17-fulltext-reservation-final-check/report.lisp),
+`make check`, ha stato `:ok`, sorgenti `:stable`, exit code 0, 748,601166 secondi,
+sul commit `8363286c`. Superati 75 test full text (19 delle riserve), dieci mutanti,
+compilazione senza avvisi, lint, tracciabilita, link, autocontrolli delle evidenze e
+dieci spike. Il controllo ha verificato 235 cataloghi, 3940 riferimenti, 46782 file
+e 1250847081 byte conservati; il catalogo della stessa esecuzione viene aggiunto dopo.
+Confermati anche zero byte consed per le mille operazioni con ID 1 e UINT64_MAX.
+I blob completi dei sorgenti coincidono con quelli della copertura finale.
+
+Il commit conclusivo aggiunge solo conservazione e riepilogo. Questa raccolta non
+contiene una nuova esecuzione CI Linux/macOS delle riserve: la pubblicazione completa
+e la verifica del ramo integrato restano alla chiusura coordinata in main.
+
 Oracoli: fixture CBOR/attesi manuali, confronto delle tre regioni copiate dei run,
 256 confronti indipendenti dei bound su 128 operazioni, budget cumulativi a limite e
 limite meno uno, sedici generazioni, 64 punti di cancellazione e quattro writer

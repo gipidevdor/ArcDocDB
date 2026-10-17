@@ -53,6 +53,29 @@ intercetta il vecchio percorso come controllo negativo; append di fixture con
 padding 0/32768 byte senza scansioni CRC sotto lease. Confermati zero byte consed
 nelle due misure di mille operazioni con ID 1 e UINT64_MAX.
 
+La [copertura finale](../2026-10-17-fulltext-put-final-coverage/catalogo.lisp) sul commit
+`8766c2c2a3d69564776337d0930c99b3e601ae3e` ha stato `:ok`, sorgenti `:stable`,
+exit 0 e 29,8248 secondi. Conservati stato SB-COVER e HTML originali come stringhe
+nel payload compresso verificabile; scope fulltext/admission/put e WAL frame/builder/types.
+Le sei misure di allocazione sono escluse dalla strumentazione. Nessuna percentuale
+di copertura MC/DC o qualifica C1 viene dedotta dagli HTML diagnostici.
+
+La [verifica completa finale](../2026-10-17-fulltext-put-final-check/report.lisp),
+`make check`, sullo stesso commit ha stato `:ok`, sorgenti `:stable`, exit 0 e
+515,807284 secondi. Superati compilazione senza avvisi, test del prodotto,
+93 test full text, tredici mutanti, lint, tracciabilita, link, autocontrolli delle
+evidenze, undici spike e autocontrollo CI con aspettative 50/6/6 aggiornate.
+Il controllo ha verificato 247 cataloghi, 3968 riferimenti, 47187 file e
+1266212559 byte conservati; il catalogo della stessa esecuzione e aggiunto dopo.
+Confermati zero byte consed per entrambe le misure di mille PUT/analisi/riserva/WAL/query.
+I blob completi dei sorgenti coincidono esattamente con quelli della copertura finale.
+Superato anche il [controllo conclusivo dei link](../2026-10-17-fulltext-put-final-links/report.lisp)
+dopo l'aggiunta del riepilogo e dei registri finali, con sorgenti stabili.
+
+Il commit di chiusura aggiunge solo questa conservazione e il riepilogo;
+il prodotto verificato resta invariato. Ramo locale pronto per l'integrazione
+coordinata; nessun merge, push o nuova campagna remota eseguiti da questa raccolta.
+
 L'incremento prepara memoria del lotto, senza I/O, assegnazione CSN, pubblicazione
 documento/posting prima di H/ACK, esiti 2PC, vista MVCC o reclaim. Pool/log/configurazioni
 canonici restano obbligo del runtime. Requisiti complessivi progettati;

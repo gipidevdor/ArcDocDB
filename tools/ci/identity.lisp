@@ -19,7 +19,7 @@
 
 (defun %ci-one-line (text)
   ;; Rimuove soltanto il LF finale del protocollo, non spazi dei nomi Git.
-  (unless (and (plusp (length text)) (char= #\Newline (char text (1- (length text))))
+  (unless (and (plusp (length text)) (char= #\Newline (char text (1- (length text)))))
     (%ci-fail "Risposta Git senza terminatore LF."))
   (let ((line (subseq text 0 (1- (length text)))))
     (when (find #\Newline line) (%ci-fail "Risposta Git con più righe."))

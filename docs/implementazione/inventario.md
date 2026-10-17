@@ -50,6 +50,8 @@ La doppia forma non è risolta dalla tabella ADR: questo **contratto
 applicativo conservativo** evita di scegliere o sovrascrivere un file
 senza verificarne identità e contenuti. La proposta locale per un
 temporaneo REMOVED usa la prova positiva di rimozione del manifest.
+L’[acquisizione readonly delle fonti](fonti-recovery.md) apre soltanto
+ACTIVE/CLOSED dal piano completo, senza eseguire le azioni.
 Le azioni sono indicazioni: il futuro esecutore I/O dovrà controllare
 prove, identità e stabilità prima degli effetti durevoli.
 

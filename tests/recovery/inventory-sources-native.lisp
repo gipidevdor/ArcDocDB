@@ -97,3 +97,25 @@
       (dolist (worker workers)
         (when (sb-thread:thread-alive-p worker) (sb-thread:terminate-thread worker))
         (sb-thread:join-thread worker :timeout 5 :default nil)))))
+
+;;; REQ: REQ-REC-001 REQ-AFF-017 REQ-AFF-018
+(deftest test-REQ-REC-001-sources-native-symlink-and-hardlink-refused
+  (dolist (kind '(:symlink :hardlink))
+    (arcdocdb.control.tests::native-run-case
+     (lambda (fixture deadline)
+       (let* ((path (arcdocdb.control.tests::native-fixture-root fixture))
+              (file (idr-native-file fixture path (idr-name 7 :final) deadline))
+              (alias (arcdocdb.control.tests::native-leaf fixture path (idr-name 0 :final)))
+              (directory (arcdocdb.control.tests::native-open fixture path :directory deadline nil))
+              (before (idr-native-check-files (list file) deadline)))
+         (ecase kind (:symlink (sb-posix:symlink (namestring (first file)) (namestring alias)))
+                     (:hardlink (sb-posix:link (namestring (first file)) (namestring alias))))
+         (if (eq kind :symlink)
+             (signals invalid-argument
+                      (arcdocdb.recovery.manifest:apri-fonti-recovery (inventory-manifest 7 '(0) nil) directory)
+                      :io-entry-kind)
+             (signals corruption-detected
+                      (arcdocdb.recovery.manifest:apri-fonti-recovery (inventory-manifest 7 '(0) nil) directory)
+                      :inventory-physical-alias))
+         (is (equal before (idr-native-check-files (list file) deadline)))
+         (is (eq :open (arcdocdb.io:stato-file directory))))))))

@@ -38,9 +38,9 @@ rimane C4.
 Il [metodo](io-apertura-relativa-metodo.md) specifica budget, errori,
 ownership e decisioni; le [due letture C1](io-apertura-relativa-revisione.md)
 precedono le esecuzioni. Nessuna rinomina, eliminazione, creazione o
-riapertura in scrittura avviene in questa API. La raccolta posseduta
-dell'insieme ACTIVE/CLOSED e il coordinamento del recovery restano
-incrementi successivi.
+riapertura in scrittura avviene in questa API. La [raccolta posseduta delle fonti](fonti-recovery.md)
+acquisisce ora l’insieme ACTIVE/CLOSED con budget e cleanup; il coordinamento
+del recovery resta un incremento successivo.
 
 Le [prove locali conservate](../../spikes/results/2026-10-16-io-apertura-relativa/README.md)
 distinguono il controllo completo sul commit congelato dall'integrazione

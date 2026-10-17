@@ -239,3 +239,43 @@
                 (when (eq event :open) (incf count) (when (= count 2) (throw 'frs-exit :escaped)))))
         (is (eq :escaped (catch 'frs-exit (frs-open fixture (inventory-manifest 7 '(0) nil)))))
         (frs-check-closed fixture nil)))))
+
+;;; REQ: REQ-REC-001 REQ-AFF-004 REQ-AFF-008
+(deftest test-REQ-AFF-004-sources-current-child-cleanup-and-prior-cleanup-preserved
+  (frs-run '((7 :final) (0 :final) (1 :final))
+    (lambda (fixture directory)
+      (declare (ignore directory))
+      (let ((original (frs-original)))
+        (setf (frs-fixture-hook fixture)
+              (lambda (state event &rest args)
+                (declare (ignore state))
+                (when (and (eq event :metadata) (= (first args) 102)) (error original))
+                (when (and (eq event :close) (member (first args) '(100 102)))
+                  (error 'arcdocdb.conditions:io-fault :reason :frs-close :operation :close
+                         :errno (if (= 102 (first args)) 23 31)))))
+        (let* ((caught (signals arcdocdb.recovery.manifest:recovery-sources-cleanup-error
+                                (frs-open fixture (inventory-manifest 7 '(0 1) nil))))
+               (primary (arcdocdb.recovery.manifest:recovery-sources-primary caught))
+               (cleanup (arcdocdb.recovery.manifest:recovery-sources-cleanup caught)))
+          (is (eq :frs-injected (error-reason primary)))
+          (is (eq :read (arcdocdb.conditions:error-operation primary)))
+          (is (= 9 (arcdocdb.conditions:error-errno primary)))
+          (is (= 2 (arcdocdb.conditions:error-transferred primary)))
+          (is (= 23 (arcdocdb.conditions:error-cleanup-errno primary)))
+          (is (= 31 (arcdocdb.conditions:error-errno cleanup)))
+          (is (= 1 (arcdocdb.recovery.manifest:recovery-sources-cleanup-count caught))))
+        (setf (frs-fixture-hook fixture) nil)
+        (frs-check-closed fixture nil)))))
+
+;;; REQ: REQ-AFF-008 REQ-AFF-018
+(deftest test-REQ-AFF-008-sources-total-fixnum-overflow-refused-before-addition
+  (let ((size (1+ (floor most-positive-fixnum 2))))
+    (frs-run '((7 :final) (0 :final))
+      (lambda (fixture directory)
+        (declare (ignore directory))
+        (signals resource-exhausted
+                 (frs-open fixture (inventory-manifest 7 '(0) nil)
+                           :max-file-bytes size :max-total-file-bytes most-positive-fixnum)
+                 :recovery-sources-total-bytes)
+        (frs-check-closed fixture nil))
+      :sizes (list (cons (idr-name 0 :final) size) (cons (idr-name 7 :final) size)))))

@@ -13,7 +13,8 @@
 (load (merge-pathnames "tests/ci-catalog.lisp" *ci-root*))
 (dolist (module '("data" "identity" "support" "tests" "coverage" "measure"
                   "archive" "producer" "github" "publish" "self-test"
-                  "data-self-test" "test-self-test" "measure-self-test" "workflow-self-test"))
+                  "data-self-test" "test-self-test" "conditions-self-test"
+                  "measure-self-test" "workflow-self-test"))
   (load (merge-pathnames (format nil "tools/ci/~A.lisp" module) *ci-root*)))
 (uiop:with-current-directory (*ci-root*)
   (handler-case

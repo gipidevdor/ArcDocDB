@@ -1,0 +1,9 @@
+(:schema-version 1 :kind :manual-helper-history
+ :targeted-before-count-fix :captured-before-final-change
+ :earlier-helper-versions :not-captured-at-execution
+ :initial-helper-change :add-exact-sixteen-and-fboundp-guards
+ :count-display-defect :nreverse-return-used-without-updating-list-reference
+ :test-execution :all-selected-tests-executed
+ :authoritative-baseline-count :dedicated-mutation-runner
+ :final-helper-change :store-nreverse-result-before-traversal-and-count
+ :product-and-test-files :all-tracked-variants-preserved)

@@ -1,0 +1,4 @@
+sbcl --script tools/check-trace.lisp
+135 requisiti, 69 invarianti, 13 scenari FI, 55 ADR: 0 errori
+sbcl --script tools/check-links.lisp .
+567 file, 3908 link controllati, 0 rotti

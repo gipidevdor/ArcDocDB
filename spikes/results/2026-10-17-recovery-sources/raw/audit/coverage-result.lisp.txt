@@ -1,0 +1,28 @@
+(:SCHEMA-VERSION 1 :KIND :RECOVERY-SOURCES-COVERAGE-AUDIT :STATUS :OK
+ :SELF-TEST :PASSED :SCOPE :FOUR-NEW-PRODUCT-FILES :FILES
+ ((:FILE "src/recovery/inventory-sources-types.lisp" :COUNTS
+   (:FORMS 2 :TOTAL-FORMS 13 :BRANCHES 0 :TOTAL-BRANCHES 4 :MISSING
+    ((0 (0)) (1 (1)) (2 (2)) (4 (3 3)) (5 (4 3)) (6 (5 3)) (7 (6 3)) (8 (7 3))
+     (9 (8 3)) (10 (:THEN 3 4 3)) (11 (:THEN 3 5 3)) (12 (:ELSE 3 5 3))
+     (13 (:ELSE 3 4 3)) (15 (3 4)) (16 (4 4))))
+   :HTML-ROW
+   "<tr class='even'><td class='text-cell'><a href='c312423b02576e0c44868555409eebbb.html'>inventory-sources-types.lisp</a></td><td>2</td><td>13</td><td> 15.4</td><td>0</td><td>4</td><td>  0.0</td></tr>")
+  (:FILE "src/recovery/inventory-sources-query.lisp" :COUNTS
+   (:FORMS 83 :TOTAL-FORMS 93 :BRANCHES 5 :TOTAL-BRANCHES 6 :MISSING
+    ((0 (0)) (1 (1)) (2 (2)) (35 (4)) (52 (6)) (56 (8)) (60 (:THEN 1 4 9))
+     (61 (2 4 9)) (62 (1 2 4 9)) (63 (2 2 4 9)) (64 (3 2 4 9))))
+   :HTML-ROW
+   "<tr class='odd'><td class='text-cell'><a href='e5a252f2b78bfc90e9f6bed2f3a82a5a.html'>inventory-sources-query.lisp</a></td><td>83</td><td>93</td><td> 89.2</td><td>5</td><td>6</td><td> 83.3</td></tr>")
+  (:FILE "src/recovery/inventory-sources-build.lisp" :COUNTS
+   (:FORMS 131 :TOTAL-FORMS 136 :BRANCHES 14 :TOTAL-BRANCHES 14 :MISSING
+    ((0 (0)) (1 (1)) (2 (2)) (37 (4)) (109 (6))))
+   :HTML-ROW
+   "<tr class='even'><td class='text-cell'><a href='39a4a933106751f9c95c85c11ebf2948.html'>inventory-sources-build.lisp</a></td><td>131</td><td>136</td><td> 96.3</td><td>14</td><td>14</td><td>100.0</td></tr>")
+  (:FILE "src/recovery/inventory-sources.lisp" :COUNTS
+   (:FORMS 73 :TOTAL-FORMS 85 :BRANCHES 2 :TOTAL-BRANCHES 2 :MISSING
+    ((0 (0)) (1 (1)) (2 (2)) (19 (4)) (79 (3 2 5)) (80 (4 2 5)) (81 (5 2 5))
+     (82 (6 2 5)) (83 (7 2 5)) (84 (8 2 5)) (85 (9 2 5)) (86 (10 2 5))))
+   :HTML-ROW
+   "<tr class='odd'><td class='text-cell'><a href='955df0ca38b9a24b16a3a1c47d1b09f8.html'>inventory-sources.lisp</a></td><td>73</td><td>85</td><td> 85.9</td><td>2</td><td>2</td><td>100.0</td></tr>"))
+ :FORMS 289 :TOTAL-FORMS 327 :BRANCHES 21 :TOTAL-BRANCHES 26 :EXCLUSIONS NIL
+ :QUALIFICATION :OPEN)

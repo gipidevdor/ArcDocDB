@@ -1,0 +1,30 @@
+[
+  {
+    "path": "src/recovery/inventory-sources-types.lisp",
+    "initial_commit": "30bb0fe3",
+    "qualified_commit": "8aaa0621",
+    "identical": true,
+    "sha256": "95a5cc6cdc00c927dec547d51f114e3d8f192a6b9585f07fa8898a01de8ff68c"
+  },
+  {
+    "path": "src/recovery/inventory-sources-query.lisp",
+    "initial_commit": "30bb0fe3",
+    "qualified_commit": "8aaa0621",
+    "identical": true,
+    "sha256": "f13f24ce1bab5c2d5e70e00cb77cea8393c1a2d4bd9be81588afc40b79b8d799"
+  },
+  {
+    "path": "src/recovery/inventory-sources-build.lisp",
+    "initial_commit": "30bb0fe3",
+    "qualified_commit": "8aaa0621",
+    "identical": true,
+    "sha256": "636573df05856a10210242066d6417fb17436b632f08912893a345a54664d90e"
+  },
+  {
+    "path": "src/recovery/inventory-sources.lisp",
+    "initial_commit": "30bb0fe3",
+    "qualified_commit": "8aaa0621",
+    "identical": true,
+    "sha256": "92b4f91a81bc19b7c0b068e82e945f287f6ab1f2bf6be7fe8cb6ab46539cc769"
+  }
+]

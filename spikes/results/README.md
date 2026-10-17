@@ -3,6 +3,11 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+La [sessione locale C4 del 2026-10-17](2026-10-17-unix-session/report.md)
+aggiunge HELLO/WELCOME, negoziazione e PING fra processi: otto famiglie di
+controlli, cinque nuovi scenari, ID u64, crediti e deadline logiche. Conserva
+tre varianti, il tentativo fallito e la verifica completa; il gate è simulato.
+
 L'[audit finale dell'integrazione del 2026-10-17](2026-10-17-main-integration-final/report.md)
 conserva il controllo completo sul codice riunito, il confronto di 824 ingressi,
 gli 11 worktree puliti e integrati, i registri CI e la verifica delle copie locali.

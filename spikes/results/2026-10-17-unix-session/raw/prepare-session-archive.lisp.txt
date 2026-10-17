@@ -1,0 +1,51 @@
+(require :asdf)
+(load "/Users/gpicchiarelli/Documents/ArcDocDB/tools/evidence-storage.lisp")
+
+(defun result-directory (record)
+  (let* ((output (getf record :stdout)) (marker "spike completati; risultati: ")
+         (where (and (stringp output) (search marker output))))
+    (when where
+      (let* ((start (+ where (length marker)))
+             (end (or (position #\Newline output :start start) (length output))))
+        (string-trim '(#\Space #\Return #\Newline) (subseq output start end))))))
+
+(let* ((args (uiop:command-line-arguments)) (destination (first args)) (proof (second args))
+       (files nil) (processes nil) (harnesses (list "spikes/out/4001224275-check-9681-0/"))
+       (base (uiop:pathname-directory-pathname *load-truename*)))
+  (labels ((add (source path) (push (list :source (namestring (truename source)) :path path) files))
+           (directory-files (source prefix)
+             (dolist (file (uiop:directory-files (truename source)))
+               (add file (format nil "~A/~A" prefix (file-namestring file))))))
+    (loop for directory in (cddr args) for i from 0 do
+      (let* ((root (truename directory)) (label (format nil "command-~D" i))
+             (record (arcdocdb.evidence:read-evidence (merge-pathnames "report.lisp" root)))
+             (nested (result-directory record)))
+        (directory-files root (format nil "processes/~A" label))
+        (push (list :label label :record-path (format nil "processes/~A/report.lisp" label)) processes)
+        (when nested (push nested harnesses))))
+    (loop for directory in (remove-duplicates harnesses :test #'equal) for i from 0 do
+      (directory-files directory (format nil "raw/harness-~D" i)))
+    (loop for variant in '("v1" "v2" "v3") for record-index in '(0 1 3) do
+      (let ((record (arcdocdb.evidence:read-evidence
+                     (merge-pathnames "report.lisp" (truename (nth record-index (cddr args)))))))
+        (dolist (file (uiop:directory-files (merge-pathnames (format nil "~A/" variant) base)))
+          (let* ((name (file-namestring file))
+                 (relative (if (string= name "run-spikes.lisp") "tools/run-spikes.lisp"
+                               (concatenate 'string "spikes/SPK-11-unix-socket/" name)))
+                 (row (find relative (getf record :source-blobs-after)
+                            :key (lambda (entry) (getf entry :path)) :test #'equal))
+                 (actual (string-trim '(#\Newline #\Return)
+                          (uiop:run-program (list "git" "hash-object" "--" (namestring file)) :output :string))))
+            (unless (and row (equal actual (getf row :git-blob)))
+              (error "Snapshot ~A diverso dall'input originale: ~A" variant relative)))
+          (add file (format nil "sources/~A/~A.txt" variant (file-namestring file))))))
+    (add "spikes/SPK-11-unix-socket/session-method.md" "sources/session-method.md.txt")
+    (add *load-truename* "raw/prepare-session-archive.lisp.txt")
+    (add "/tmp/arcdocdb-unix-integration-Zq6kA8/verify-final-integration.lisp" "raw/verify-inputs.lisp.txt")
+    (add proof "raw/verified-inputs.lisp")
+    (add (merge-pathnames "report.md" base) "report.md")
+    (with-open-file (stream destination :direction :output :if-exists :error)
+      (write (list :schema-version 1 :kind :command-archive-manifest :date "2026-10-17"
+                   :files (reverse files) :processes (reverse processes)) :stream stream :pretty t)
+      (terpri stream))
+    (format t "~D file, ~D processi.~%" (length files) (length processes))))

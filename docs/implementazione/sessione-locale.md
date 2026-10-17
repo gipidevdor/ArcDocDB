@@ -162,3 +162,5 @@ verifica ora il profilo di controllo da 4096 byte: handshake, limiti,
 mappe, ID, risposte invertite e deadline logiche. L'indicatore di gate e i
 crediti sono un modello; il pool e l'ammissione reali restano da collegare.
 Non si estende quel risultato a documenti, comandi dati o listener di prodotto.
+Il [rapporto e gli originali](../../spikes/results/2026-10-17-unix-session/report.md)
+conservano le tre varianti, il fallimento dell'harness e la verifica completa.

@@ -159,6 +159,10 @@
           do (case c (#\< (write-string "&lt;" out)) (#\> (write-string "&gt;" out))
                    (#\& (write-string "&amp;" out)) (#\| (write-string "&#124;" out))
                    (#\Newline (write-char #\Space out))
+                   (#\Return (write-char #\Space out)) (#\Tab (write-char #\Space out))
+                   (#\[ (write-string "&#91;" out)) (#\] (write-string "&#93;" out))
+                   (#\` (write-string "&#96;" out)) (#\* (write-string "&#42;" out))
+                   (#\_ (write-string "&#95;" out)) (#\\ (write-string "&#92;" out))
                    (otherwise (write-char c out))))))
 
 (defun ci-report-markdown (summary path)

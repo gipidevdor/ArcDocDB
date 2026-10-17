@@ -272,8 +272,9 @@ tools/ci[.lisp|/], tests/ci-catalog.lisp, .github/ e Makefile."
 
 (defun ci-working-clean-p ()
   "T soltanto per checkout stabile: due snapshot dei byte, index e untracked.
-Esclusi solo spikes/out/ e spikes/results/ci/. Untracked ignorati altrove
-falliscono. Secondo valore: diagnostica stringa oppure NIL; errore fail-closed.
+Solo per untracked sono ammesse le cache chiuse degli spike e spikes/out/;
+spikes/results/ci/ è escluso dall'identità. Ogni altro tracked è verificato,
+anche sotto una directory di output. Secondo valore: diagnostica o NIL.
 Non prova assenza di una modifica transitoria poi perfettamente annullata."
   (handler-case
       (multiple-value-bind (sha object-format width) (%ci-ref "HEAD")

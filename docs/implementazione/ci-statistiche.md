@@ -499,3 +499,36 @@ del producer, limiti degli hash, nuove collection per recuperi, ricevuta
 esterna alla misura, cursore per attempt con margine di retention e budget
 aggregato di espansione. Rilettura delle correzioni del coordinatore;
 nessuna prova di una pipeline attivata viene dedotta dalla revisione.
+
+## 11. Implementazione e verifica locale — 2026-10-17
+
+Disponibili `tools/ci.lisp`, il catalogo condiviso delle 47 suite, i due
+workflow e la toolchain fissata. Il publisher valida dati inerti, unisce i
+payload dello stesso attempt e pubblica con normali push e retry. Il recupero
+mantiene un cursore per run/attempt. Il limite di 2 MiB comprende payload,
+raccolte e ricevute dell'attempt; 2 MiB dei 256 MiB del deposito sono riservati
+ai metadata di recupero. Un superamento resta un errore dichiarato.
+
+[Report e originali della verifica locale](../../spikes/results/2026-10-17-ci-implementazione/report.md):
+
+- 315 controlli degli strumenti superati, con fixture positive e negative;
+- compilazione e test del prodotto senza avvisi; il nuovo runner registra
+  2.026 casi superati, zero fallimenti e zero casi saltati;
+- piano e pacchetto verificati sull'inventario completo del repository;
+- cinque repliche seriali del profilo CRC32C/UTF-8 completate; il budget di
+  misura usa l'identità fornita e verificata dal coordinatore prima/dopo il job;
+- sette controlli del publisher su un remoto Git bare privato, più un
+  conflitto iniettato: retry riuscito e sorgente concorrente conservato.
+
+Ogni risultato conserva il proprio SHA e metodo; questi esiti non sono
+misure di un futuro merge. Le righe fisiche dell'inventario comprendono
+documenti, dati ed evidenze storiche, anche binarie: non equivalgono a LOC
+eseguibili. I moduli `src/*` rimangono distinti. Per i soli file untracked
+sono ammesse anche le dieci cache `spikes/SPK-*/out/` enumerate dal codice;
+ogni altro file tracked viene comunque verificato byte per byte.
+
+Restano da verificare sui runner GitHub: installazione fissata, copertura
+Linux, trasporto degli artifact e pubblicazione con il token del workflow.
+Le fixture Git locali non certificano permessi o protezioni del repository
+GitHub. In accordo con la richiesta del coordinatore, questo lavoro viene
+lasciato committato nel worktree; integrazione e push spettano al coordinatore.

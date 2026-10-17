@@ -68,7 +68,11 @@
                        ((string= job "coverage")
                         (let ((*ci-coverage-normal-report* (uiop:getenv "CI_NORMAL_TEST_REPORT")))
                           (ci-run-coverage root)))
-                       ((string= job "bench") (ci-run-measure root))
+                       ((string= job "bench")
+                        (let ((*ci-measure-coordinator-identity*
+                                (ci-read (merge-pathnames "coordinator-identity.lisp" root))))
+                          (ci-validate-measure-identity *ci-measure-coordinator-identity*)
+                          (ci-run-measure root)))
                        ((string= job "audit") (ci-run-audit root))
                        (t (error "Job sconosciuto: ~A" job)))))
     (ci-save (merge-pathnames "child-result.lisp" root) result)
@@ -95,6 +99,8 @@
          (identity (ci-source)) (before (getf identity :source-id))
          (ticks (get-internal-real-time)) (data nil) (failure nil) (execution nil))
     (ci-installation-record work)
+    (when (string= job "bench")
+      (ci-save (merge-pathnames "coordinator-identity.lisp" work) (ci-measure-identity identity)))
     (handler-case
         (progn
           (setf execution
@@ -103,7 +109,11 @@
           (let ((file (merge-pathnames "child-result.lisp" work)))
             (when (probe-file file) (setf data (ci-read file :max-bytes (* 16 1024 1024)))))
           (unless (and data (eq :passed (getf execution :status)))
-            (setf failure :child-failed)))
+            (setf failure :child-failed))
+          (when (and data (string= job "bench")
+                     (not (and (equal (ci-measure-identity identity) (getf data :source-before))
+                               (equal (ci-measure-identity identity) (getf data :source-after)))))
+            (setf failure :source-changed)))
       (error (c) (setf failure (princ-to-string c))))
     (unless (and (ci-working-clean-p) (string= before (getf (ci-source) :source-id)))
       (setf failure :source-changed))
@@ -225,3 +235,13 @@
 
 (defun ci-public-summary (summary)
   (loop for (key value) on summary by #'cddr unless (eq key :packets) append (list key value)))
+
+(defun ci-measure-identity (identity)
+  (loop for k in '(:tested-sha :source-id :policy-id) append (list k (getf identity k))))
+
+(defun ci-validate-measure-identity (identity)
+  (ci-plist-check identity '(:tested-sha :source-id :policy-id) '(:tested-sha :source-id :policy-id))
+  (unless (and (ci-hex-id-p (getf identity :tested-sha) 40)
+               (ci-hex-id-p (getf identity :source-id)) (ci-hex-id-p (getf identity :policy-id)))
+    (error "Identità del coordinatore benchmark non valida."))
+  identity)

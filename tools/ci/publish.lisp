@@ -128,9 +128,13 @@
                               :source-id (getf summary :source-id)
                               :tested-sha (getf summary :tested-sha) :server server)))
       (unless already (ci-update-index store summary id collection server))
+      (when (> (loop for file in (ci-files run :limit 100000 :max-depth 32) sum (ci-bytes file))
+               +ci-packet-bytes+)
+        (error "Payload, raccolte e ricevute dell'attempt oltre 2MiB."))
       (let ((bytes (loop for file in (ci-files store :limit 200000 :max-depth 32)
                          sum (ci-bytes file))))
-        (when (> bytes +ci-store-bytes+) (error "Archivio CI oltre 256MiB; conservati gli artifact GitHub."))
+        (when (> bytes (- +ci-store-bytes+ (* 2 1024 1024)))
+          (error "Archivio CI oltre 254MiB; 2MiB riservati a stato e lacune, artifact GitHub conservati."))
         (when (> bytes (* 128 1024 1024)) (format *error-output* "~&Archivio CI oltre 128MiB.~%")))
       (values summary id (not already)))))
 
@@ -228,6 +232,10 @@
                     (if (ci-lstat receipt)
                         (unless (equal (ci-read receipt) state) (error "Ricevuta cursore già presente e diversa."))
                         (ci-save receipt state))
+                    (when (> (loop for file in (ci-files (merge-pathnames *ci-store-prefix* checkout)
+                                                        :limit 200000 :max-depth 32)
+                                   sum (ci-bytes file)) +ci-store-bytes+)
+                      (error "Archivio CI, compresi i marker di recupero, oltre 256MiB."))
                     (ci-git (list "add" "--" relative (enough-namestring receipt checkout)) checkout)
                     (ci-git (list "-c" "user.name=github-actions[bot]"
                                   "-c" "user.email=41898282+github-actions[bot]@users.noreply.github.com"

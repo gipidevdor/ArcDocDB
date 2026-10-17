@@ -32,6 +32,7 @@
     "src/foundation/binary.lisp" "src/foundation/crc32c.lisp"
     "src/codec/package.lisp" "src/codec/utf8.lisp"))
 (defparameter *ci-measure-workloads* '(:crc32c-check-vector :crc32c-4096 :utf8-mixed-4090))
+(defvar *ci-measure-coordinator-identity* nil)
 
 ;;; Standalone checkers cannot load CI code. Intern their finite report schema here
 ;;; so the dedicated CI reader can recognize it without interning external input.
@@ -437,7 +438,7 @@
 
 (defun ci-measure-source-fingerprint ()
   "Keep the common tested SHA/source/policy identity without duplicating its inventory."
-  (let ((source (funcall (fdefinition 'ci-source))))
+  (let ((source (or *ci-measure-coordinator-identity* (funcall (fdefinition 'ci-source)))))
     (loop for key in '(:tested-sha :source-id :policy-id)
           for value = (getf source key)
           unless (and (stringp value) (plusp (length value)))
@@ -468,7 +469,7 @@ Require clean stable source. The CLI/recorder must fail on any status other than
       (ci-measure-reject "measure.lisp already exists"))
     (handler-case
         (sb-ext:with-timeout +ci-measure-budget-seconds+
-          (unless (funcall (fdefinition 'ci-working-clean-p))
+          (unless (or *ci-measure-coordinator-identity* (funcall (fdefinition 'ci-working-clean-p)))
             (ci-measure-reject "dirty source before measurement"))
           (setf before (ci-measure-source-fingerprint))
           (dotimes (index +ci-measure-replicas+)
@@ -479,7 +480,8 @@ Require clean stable source. The CLI/recorder must fail on any status other than
                 (setf status (getf replica :status) reason (getf replica :reason))
                 (return))))
           (setf after (ci-measure-source-fingerprint))
-          (unless (and (equal before after) (funcall (fdefinition 'ci-working-clean-p)))
+          (unless (and (equal before after)
+                       (or *ci-measure-coordinator-identity* (funcall (fdefinition 'ci-working-clean-p))))
             (ci-measure-reject "source changed during measurement")))
       (sb-ext:timeout ()
         (setf status :budget-exhausted reason "campaign exceeded 170 seconds"))
@@ -490,6 +492,7 @@ Require clean stable source. The CLI/recorder must fail on any status other than
             (list :kind :ci-measure :schema-version 1 :status status :reason reason
                   :method "ci-micro-v1" :exploratory t :performance-gate nil :safety 3
                   :source-before before :source-after after :source-attribution :coordinator
+                  :source-proof (if *ci-measure-coordinator-identity* :outer-job-before-and-after :local-before-and-after)
                   :product-source-files (copy-list *ci-measure-product-files*)
                   :sbcl (lisp-implementation-version) :machine (machine-type)
                   :os (software-type) :cpu (machine-version)

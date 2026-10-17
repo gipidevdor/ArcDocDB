@@ -132,3 +132,6 @@ indipendente. Nessun nuovo test funzionale, FI, copertura, modello o
 benchmark viene aggiunto o eseguito in questo incremento. SRS-D01…D11,
 MC/DC, qualifica C1, arresto generale e integrazione completa restano aperti;
 la CI generale non sostituisce le prove dedicate mancanti.
+
+I [registri delle tre revisioni e le due riletture](../../spikes/results/2026-10-17-serie-semantic/README.md)
+conservano compilazione e controlli statici, inclusi i log dei worker C4.

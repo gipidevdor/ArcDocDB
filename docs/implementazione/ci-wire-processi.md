@@ -22,3 +22,19 @@ e fallita: il suo exit non zero è coerente con coverage assente. Questa
 semantica resta invariata; nessuna riclassificazione dei run storici.
 
 REQ-VAL-001, REQ-AFF-012. Percorso C4, nessun codice di prodotto modificato.
+
+## Budget del riepilogo di copertura
+
+Secondo controllo preregistrato prima della correzione del producer. Il
+riepilogo storico misura 26.473 byte; aggiungendo soltanto le 349 righe
+EXPECTED-FILES originali, il risultato sealed richiederebbe almeno 68.380
+caratteri, oltre i 65.536 byte ammessi. È una fixture di limite inferiore,
+non una nuova misura di copertura né una modifica del run fallito.
+
+Il riepilogo compatto deve contenere il conteggio dei file attesi; il piano
+e il rapporto raw conservano tutte le righe originali. La regressione usa
+600 file, impacchetta un risultato sealed entro il limite e rilegge il raw
+compresso confrontandolo con l'originale. Verifica separatamente che una
+prova ordinaria mancante resti incompleta dopo la compattazione. Prima
+il caso di impacchettamento deve fallire; dopo entrambi devono passare.
+Nessun aumento dei budget e nessun cambiamento degli esiti seal.

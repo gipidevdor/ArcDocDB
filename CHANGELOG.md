@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Acquisizione readonly posseduta di tutti i segmenti ACTIVE/CLOSED da un solo
+  inventario directory, budget cumulativo degli EOF e cleanup completo anche
+  con più errori di close. Collegamento alla fixture verticale; riconciliazione
+  fisica e ammissione restano da implementare.
+
 - Preparazione full text direttamente dai documenti CBOR: percorsi annidati,
   tipi e duplicati selezionati verificati, analisi riprendibile e run sigillato.
   Budget cumulativi e limite superiore del file prima del futuro aggancio al writer;

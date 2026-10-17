@@ -16,7 +16,7 @@
 (declaim (optimize (safety 3) (speed 2) (debug 3)))
 
 (defstruct (environment (:constructor %make-environment)) root version registry index scope view directory
-  controller lease source sources active append (fds nil))
+  controller lease source sources active append (fds nil) (recovery-sets nil))
 
 (define-condition oracle-value-mismatch (error) ()
   (:report (lambda (condition stream)
@@ -86,6 +86,7 @@
   (when (environment-lease env)
     (s:rilascia-controllore-serie (environment-controller env) (environment-lease env))
     (setf (environment-lease env) nil))
+  (dolist (pair (environment-recovery-sets env)) (mf:chiudi-fonti-recovery (cdr pair)))
   (dolist (file (environment-fds env)) (io:chiudi file)))
 
 (defun prepare-active (env id)
@@ -201,23 +202,41 @@
   (multiple-value-bind (input size) (input env "multiserie.log")
     (dar:leggi-decisioni-recuperate archive input size (bytes size) :max-bytes 8192)))
 
+(defun recovery-sources (env manifest)
+  "Set posseduto per manifest canonico C4; chiuso soltanto dopo tutti i reader."
+  (or (cdr (assoc manifest (environment-recovery-sets env) :test #'eq))
+      (let ((sources (mf:apri-fonti-recovery
+                      manifest (environment-directory env) :max-files 16 :max-segmenti 8
+                      :max-names 64 :max-total-name-bytes 8192 :max-name-bytes 255
+                      :max-transfer 8192 :max-file-bytes 8192 :max-total-file-bytes 65536)))
+        (push (cons manifest sources) (environment-recovery-sets env)) sources)))
+
+(defun recovery-input (sources wanted)
+  (dotimes (i (mf:numero-fonti-recovery sources))
+    (multiple-value-bind (id state form file size) (mf:fonte-recovery sources i)
+      (declare (ignore state form))
+      (when (= id wanted) (return-from recovery-input (values file size)))))
+  (error "Fonte recovery ~D assente dal set completo." wanted))
+
 (defun read-active (env control)
   (let* ((archive (dar:crea-archivio-recovery (environment-scope env) (archive-id)))
          (decisions (read-decisions env archive))
-         (id (mf:segmento-attivo (c:manifest-control-recuperato control)))
-         (name (segment-name env id)))
+         (manifest (c:manifest-control-recuperato control))
+         (id (mf:segmento-attivo manifest)))
     (is (zerop (dar:numero-decisioni-recuperate decisions)))
-    (multiple-value-bind (input size) (input env name)
+    (multiple-value-bind (input size) (recovery-input (recovery-sources env manifest) id)
       (dar:leggi-active-con-decisioni control input size decisions
                                     (bytes size) :max-bytes 8192 :max-records 32))))
 
 (defun closed-maps (env manifest)
-  (let ((maps nil))
-    (loop for id from 1 to 8 do
-      (when (eq :closed (mf:trova-segmento manifest id))
-        (push (r:crea-mappa-segmento-get (environment-view env) (input env (segment-name env id))
-                 manifest id (bytes 8192) :max-bytes 8192 :max-records 32 :max-batches 16
-                 :max-batch-records 4 :max-batch-bytes 8192) maps)))
+  (let ((maps nil) (sources (recovery-sources env manifest)))
+    (dotimes (i (mf:numero-fonti-recovery sources))
+      (multiple-value-bind (id state form file size) (mf:fonte-recovery sources i)
+        (declare (ignore form size))
+        (when (eq state :closed)
+          (push (r:crea-mappa-segmento-get (environment-view env) file
+                   manifest id (bytes 8192) :max-bytes 8192 :max-records 32 :max-batches 16
+                   :max-batch-records 4 :max-batch-bytes 8192) maps))))
     (coerce (nreverse maps) 'simple-vector)))
 
 (defun next-id (env manifest)

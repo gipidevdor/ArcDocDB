@@ -8,7 +8,7 @@
 (defun stabilizza-nome-temporaneo (directory file temporary final)
   "Pre: compito I/O, namespace esclusivo; FILE readonly già verificato e nominato dalla fonte autorevole.
 Post: solo FINAL lega lo stesso FD, parent sincronizzato; T se rinominato, NIL se già definitivo.
-Punto atomico della preparazione già deciso a monte; renameat completa il nome, fsync ne completa la durability.
+Decisione atomica già nell'EDIT autorevole; renameat completa il nome, fsync ne completa la durability.
 Non verifica manifest/CRC o durability dei dati. Non sostituisce target esistenti, non chiude/tronca file.
 Rifiuti di preflight senza effetti; uscita incompleta dopo preflight => directory FAULTED, causa intatta.
 Nessun retry/rollback: riacquisire capacità e namespace dalla fonte autorevole dopo un esito incerto."

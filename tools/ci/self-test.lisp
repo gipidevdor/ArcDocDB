@@ -77,7 +77,7 @@
                       (packet (ci-pack-job out work "audit" '(:source-id "fixture")
                                           '(:job "audit" :status :failed :metrics nil)))
                       (copy (ci-copy-packet packet (merge-pathnames "copy/" root))))
-                 (string= (ci-packet-digest packet) (ci-packet-digest copy))))))
+                 (string= (ci-packet-digest packet) (ci-packet-digest copy)))))
       (let* ((failed (count :failed cases :key (lambda (r) (getf r :status))))
              (report (list :schema-version 1 :kind :ci-boundary-self-test :status (if (zerop failed) :passed :failed)
                            :planned (length cases) :passed (- (length cases) failed) :failed failed

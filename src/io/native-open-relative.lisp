@@ -25,7 +25,7 @@ Nessun fstat o cleanup qui; SYSCALL-ERROR cattura errno subito, nessun retry o c
 (declaim (ftype (function (fd) (values identity-component identity-component integer &optional))
                 native-file-metadata))
 (defun native-file-metadata (descriptor)
-  "Pre: FD readonly gia' posseduto dal wrapper, senza close concorrente.
+  "Pre: FD input o append gia' posseduto dal wrapper, senza close concorrente.
 Post: identita' e dimensione del regolare da una fstat, senza restringere gli interi.
 IO-FAULT per tipo diverso, SYSCALL-ERROR originario; nessuna close, lettura o mutazione."
   (let ((stat (sb-posix:fstat descriptor)))

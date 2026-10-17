@@ -14,7 +14,8 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-008
 (defstruct (backend (:constructor make-backend
                          (open reader writer flush directory-flush close
-                          &key identity entry-identity rename directory-entries open-relative file-metadata))
+                          &key identity entry-identity rename directory-entries open-relative file-metadata
+                               create-relative))
                     (:copier nil))
   "Pre: funzioni fidate e stabili. Post: tabella immutabile delle chiamate iniettabili.
 Open riceve nome/mode; read fd/octets/start/count/offset; write fd/octets/start/count.
@@ -25,6 +26,9 @@ Rename opzionale riceve directory-fd/nome sorgente/nome target; zero per success
 Directory-entries opzionale riceve fd e tre budget; restituisce vettore di nomi e T a EOF.
 Open-relative opzionale riceve directory-fd/foglia ASCII privata/:input; restituisce un nuovo FD.
 File-metadata opzionale riceve fd regolare; restituisce device/inode/dimensione esatti.
+Create-relative opzionale riceve directory-fd/foglia ASCII privata/:append; crea un nuovo .tmp vuoto
+con WRONLY/CREAT/EXCL/APPEND/CLOEXEC/NOFOLLOW e permessi richiesti 0600 (soggetti a umask).
+Restituisce un nuovo FD posseduto dal chiamante, senza riaprire o troncare file esistenti.
 Nessun fallback nativo per callback mancanti."
   (open #'identity :type function :read-only t)
   (reader #'identity :type function :read-only t)
@@ -37,7 +41,8 @@ Nessun fallback nativo per callback mancanti."
   (rename nil :type (or null function) :read-only t)
   (directory-entries nil :type (or null function) :read-only t)
   (open-relative nil :type (or null function) :read-only t)
-  (file-metadata nil :type (or null function) :read-only t))
+  (file-metadata nil :type (or null function) :read-only t)
+  (create-relative nil :type (or null function) :read-only t))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-STO-003
 (defstruct (file-io (:constructor %make-file (mode backend max-transfer max-file-bytes))

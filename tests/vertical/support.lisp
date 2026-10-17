@@ -51,7 +51,8 @@
                                      :max-transfer 8192 :max-file-bytes 8192)
     (values (owned env file) size)))
 (defun output (env name)
-  (owned env (io:crea-temporaneo (leaf env name) :max-transfer 8192 :max-file-bytes 8192)))
+  (owned env (io:crea-temporaneo-nella-directory
+              (environment-directory env) name :max-transfer 8192 :max-file-bytes 8192)))
 (defun segment-leaf (id form)
   (string-downcase (format nil "~16,'0X.seg~A" id (ecase form (:temporary ".tmp") (:final "")))))
 (defun segment-name (env id)

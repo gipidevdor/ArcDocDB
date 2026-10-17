@@ -14,6 +14,7 @@ Il pool e il motore delle transazioni restano moduli da integrare.
 | `apri-lettura` | capacità di file regolare readonly, pread concorrenti su buffer distinti |
 | `apri-lettura-nella-directory` | [capacità readonly e dimensione dallo stesso FD](io-apertura-relativa.md), ancorate alla directory posseduta |
 | `crea-temporaneo` | nuovo `.tmp` con O_EXCL, O_APPEND e permessi 0600; nessuna riapertura in scrittura |
+| `crea-temporaneo-nella-directory` | [nuovo `.tmp` relativo al FD del parent](io-creazione-relativa.md), regolare vuoto e identità verificata prima del ritorno |
 | `apri-directory` | capacità di directory per fsync |
 | `leggi-esatto` | riempie `[start,end)` da offset esplicito; restituisce end, senza modificare il cursore |
 | `append-esatto` | completa il range e restituisce posizione scritta; non attesta commit/durability |
@@ -87,7 +88,9 @@ per associare due capacità allo stesso file. `:entry-identity` e `:rename`
 sono opzionali per la [pubblicazione del control log](pubblicazione-control.md),
 con rifiuto della sostituzione quando mancano. `:open-relative` e
 `:file-metadata`, insieme a `:entry-identity`, sono necessarie soltanto
-per la nuova apertura readonly relativa. Riceve vettori/intervalli, mai SAP.
+per l'apertura readonly relativa. `:create-relative`, insieme a
+`:file-metadata` ed `:entry-identity`, è richiesto per la creazione relativa
+esclusiva di nuovi `.tmp`. Riceve vettori/intervalli, mai SAP.
 I callback sono codice fidato, segnalano syscall-error per errno e rispettano
 durata e proprietà dei buffer. `nil` seleziona il percorso nativo, con le due
 chiamate alien inline; nessun C/C++/Rust o libreria del progetto fuori da Lisp.

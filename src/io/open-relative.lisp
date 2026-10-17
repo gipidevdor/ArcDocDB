@@ -73,17 +73,20 @@ IO-FAULT originario o syscall normalizzata, anche per parent non disponibile; ne
              :errno (sb-posix:syscall-errno condition)))))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-FOR-001 REQ-REC-001
-(declaim (ftype (function (file-io file-io simple-base-string identity-component identity-component) null)
+(declaim (ftype (function (file-io file-io simple-base-string identity-component identity-component
+                          &optional (member :input :append) keyword) null)
                 verifica-entry-relativa))
-(defun verifica-entry-relativa (directory file leaf device inode)
+(defun verifica-entry-relativa (directory file leaf device inode
+                                &optional (mode :input) (reason :io-open-relative-identity))
   "Pre: identita' del child regolare gia' misurata. Post: stessa identita' alla foglia nofollow.
-Parent verificato prima/dopo callback; INVALID-ARGUMENT al disaccordo, niente risultato parziale."
+Parent verificato prima/dopo callback; INVALID-ARGUMENT al disaccordo o modo;
+IO-FAULT per capacita' non disponibile, niente risultato parziale."
   (esigi-aperto directory :directory)
   (multiple-value-bind (entry-device entry-inode) (leggi-identita-entry directory leaf)
     (esigi-aperto directory :directory)
     (unless (and (= device entry-device) (= inode entry-inode))
-      (error 'invalid-argument :reason :io-open-relative-identity)))
-  (esigi-aperto file :input)
+      (error 'invalid-argument :reason reason)))
+  (esigi-aperto file mode)
   nil)
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
@@ -108,23 +111,27 @@ ritorno diverso da zero conserva fallimento con errno NIL; altre condizioni fuor
       (values nil nil)))
 
 ;;; REQ: REQ-AFF-004 REQ-AFF-008
-(declaim (ftype (function ((or null arcdocdb.conditions:arcdocdb-error) (or null fixnum) boolean) null)
+(declaim (ftype (function ((or null arcdocdb.conditions:arcdocdb-error) (or null fixnum) boolean
+                          &optional (member :open-relative :create-relative)) null)
                 segnala-apertura-relativa))
-(defun segnala-apertura-relativa (primary cleanup-errno cleanup-failed)
+(defun segnala-apertura-relativa (primary cleanup-errno cleanup-failed &optional (operation :open-relative))
   "Pre: cleanup concluso o tentato. Post: condizione primaria EQ se cleanup riuscito.
 Guasto di cleanup produce IO-FAULT con reason/offset primari e campi I/O originali se presenti.
-Errno NIL non distingue il ritorno close nonzero da un IO-FAULT close senza errno."
+Errno NIL non distingue il ritorno close nonzero da un IO-FAULT close senza errno.
+OPERATION identifica apertura/creazione per una primaria non I/O; cleanup senza primaria viola l'invariante."
   (when primary
     (if cleanup-failed
         (let ((io-primary (typep primary 'io-fault)))
           (error 'io-fault :reason (arcdocdb.conditions:error-reason primary)
                  :offset (arcdocdb.conditions:error-offset primary)
-                 :operation (if io-primary (arcdocdb.conditions:error-operation primary) :open-relative)
+                 :operation (if io-primary (arcdocdb.conditions:error-operation primary) operation)
                  :errno (if io-primary (arcdocdb.conditions:error-errno primary) nil)
                  :transferred (if io-primary (arcdocdb.conditions:error-transferred primary) 0)
                  :cleanup-errno cleanup-errno))
         (error primary)))
-  (when cleanup-failed (error 'invariant-violation :reason :io-open-relative-cleanup))
+  (when cleanup-failed
+    (error 'invariant-violation :reason (if (eq operation :create-relative)
+                                          :io-create-relative-cleanup :io-open-relative-cleanup)))
   nil)
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-AFF-008 REQ-STO-003 REQ-REC-001

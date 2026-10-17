@@ -89,8 +89,8 @@ Le letture canoniche di CONTROL, decision log e vecchio ACTIVE ricevono
 questo EOF e uno scratch della stessa dimensione. Non ricavano più la
 dimensione da un'immagine aperta separatamente tramite pathname.
 `file-image` resta indipendente per i confronti dei byte preesistenti e
-le altre operazioni C4. Preparazione e output, selezione tramite probe
-fra il nome temporaneo e definitivo e orchestrazione restano della fixture.
+le altre operazioni C4. In questa estensione preparazione e output, selezione
+tramite probe fra il nome temporaneo e definitivo e orchestrazione restano della fixture.
 L'inventario e la proposta ID usano il prodotto, come descritto sotto;
 il limite di otto ID proposti resta un budget distinto C4.
 
@@ -123,3 +123,20 @@ Il codice I/O resta identico a S1; cambia la composizione della fixture.
 Si congela il merge e si esegue `make test lint trace links` con cache
 ASDF nuova. Il record originale resta distinto dal full S1 e dalla CI;
 non si promuove questo controllo a un nuovo full `make check`.
+
+## Creazione relativa dei temporanei — 2026-10-17
+
+Prima delle esecuzioni, `output` viene collegato a
+`io:crea-temporaneo-nella-directory`: riceve il parent già posseduto dalla
+fixture e la sola foglia `.tmp`, con gli stessi budget di 8 KiB. La capacità
+append restituita viene subito registrata per il cleanup. CONTROL, decision
+log e nuovi segmenti usano così la creazione esclusiva relativa di prodotto;
+la fixture continua a scegliere i nomi e l'ordine della preparazione.
+
+Il [contratto](../../docs/implementazione/io-creazione-relativa.md) e il
+[metodo I/O preregistrato](../../docs/implementazione/io-creazione-relativa-metodo.md)
+distinguono le prove native dai guasti iniettati e restano separati da questa
+composizione C4. Non cambiano i 16 scenari positivi, i due negativi, i 71
+processi, i 26 SIGKILL intenzionali e gli oracoli costanti. Non si aggiunge
+riconciliazione fisica o ammissione generale dell'Archivio: un errore dopo
+la creazione può lasciare un `.tmp` orfano e non implica rimozione o flush.

@@ -14,6 +14,10 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Creazione esclusiva dei `.tmp` relativa alla directory posseduta: nuovo
+  regolare vuoto, identità verificata, append e cleanup del solo child.
+  Collegata agli output della prova verticale; nessun unlink, flush o rename implicito.
+
 - Estensione C4 di SPK-11 alla sessione locale proposta: HELLO/WELCOME,
   negoziazione, PING correlati e risposte invertite fra due processi.
   Fixture per mappe duplicate, limiti prima del corpo, ID u64, credito

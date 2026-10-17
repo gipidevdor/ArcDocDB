@@ -76,6 +76,9 @@ della prova verticale. L'[acquisizione posseduta delle fonti](implementazione/fo
 collega ora il piano completo ad ACTIVE/CLOSED readonly con budget cumulativo
 e cleanup dei figli; riconciliazione fisica e coordinamento del recovery
 restano passi successivi.
+La [creazione relativa dei temporanei](implementazione/io-creazione-relativa.md)
+completa il confine per i nuovi output della prova verticale, senza
+riaprire il percorso del parent o decidere la riconciliazione degli orfani.
 
 Al 2026-10-03 la parte di **definizione è completa**: le 26 questioni aperte sono chiuse dagli
 ADR 0013–0030, il progetto è consolidato in [architettura.md](architettura.md) e i formati in

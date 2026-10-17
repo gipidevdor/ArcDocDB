@@ -18,6 +18,12 @@ restituito insieme alla rispettiva capacità, rilevato sullo stesso FD.
 Le immagini indipendenti della fixture restano disponibili per confrontare
 i byte; non forniscono la dimensione di queste tre letture canoniche.
 
+Dal 2026-10-17 anche i nuovi output `.tmp` usano la
+[creazione esclusiva relativa di prodotto](io-creazione-relativa.md), tramite
+`io:crea-temporaneo-nella-directory` sullo stesso parent posseduto. La fixture
+registra subito la capacità append, con budget di trasferimento e dimensione
+di 8 KiB; scelta dei nomi e ordine della preparazione restano C4.
+
 | Punto di arresto, in entrambi i formati | Verifica dopo riapertura |
 |---|---|
 | Cinque commit durevoli | Ultimo valore aggiornato di A, C presente, B cancellato |
@@ -66,13 +72,13 @@ verifica la tracciabilità aggiornata, mantenendo distinti i nuovi requisiti pro
 
 ## Confine rispetto al prodotto
 
-Bootstrap, budget di otto ID proposti, creazione dei nomi, ordine
+Bootstrap, budget di otto ID proposti, scelta dei nomi, ordine
 del recovery e replay dell'indice sono codice di test. Il replay accetta
 solo record ordinari, dopo verifica di tutti i prefissi CLOSED; rifiuta
 prepared/OUTCOME. La pubblicazione seriale dei candidati segue la radice
 del controller: non dimostra l'atomicità fra indice e radice sotto concorrenza.
 UUID e completezza del namespace sono fatti della fixture.
-Anche con aperture ed EOF di prodotto, bootstrap, creazione degli output,
+Anche con aperture, EOF e creazione esclusiva dei temporanei di prodotto, bootstrap,
 selezione tramite probe fra nome temporaneo e definitivo e coordinamento
 restano C4. La fixture
 registra le capacità restituite e ne mantiene l'ownership fino al cleanup;

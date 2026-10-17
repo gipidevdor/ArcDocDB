@@ -30,6 +30,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 | Legame PUT/WAL full text | [Cornice posseduta, append e riferimenti al lotto](full-text-put.md), [metodo e decisioni](full-text-put-metodo.md) | [`src/fulltext-put/`](../../src/fulltext-put/) |
 | Verifica delle evidenze (C4) | [Processi isolati, limiti e riduzione ordinata](evidenze-parallele.md) | [`tools/check-evidence.lisp`](../../tools/check-evidence.lisp) |
 | Prova verticale di una Serie | [Scrittura, SIGKILL, recovery, ripresa e secondo crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
+| Creazione relativa dei temporanei | [Nuovo file esclusivo dal parent posseduto](io-creazione-relativa.md), [metodo](io-creazione-relativa-metodo.md) | [`src/io/create-relative.lisp`](../../src/io/create-relative.lisp) |
 | Fondazioni binarie | [Record v1/v2, CRC32C e lotti SEAL](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |
 | Testo UTF-8 | [Validazione limitata, pura e parallela](utf8.md) | [`src/codec/utf8.lisp`](../../src/codec/utf8.lisp) |
 | Testate CBOR | [Lettura pura in sei valori](cbor-header.md) | [`src/codec/cbor-header.lisp`](../../src/codec/cbor-header.lisp) |

@@ -1,0 +1,50 @@
+(require :asdf)
+(load "/Users/gpicchiarelli/Documents/ArcDocDB/tools/evidence-storage.lisp")
+
+(defun spike-output-directory (record)
+  (let* ((output (getf record :stdout)) (marker "spike completati; risultati: ")
+         (position (and (stringp output) (search marker output))))
+    (when position
+      (let* ((start (+ position (length marker)))
+             (end (or (position #\Newline output :start start) (length output))))
+        (string-trim '(#\Space #\Return #\Newline) (subseq output start end))))))
+
+(let* ((args (uiop:command-line-arguments)) (manifest (first args)) (proof (second args))
+       (directories (cddr args)) (files nil) (processes nil) (extra nil))
+  (loop for directory in directories for n from 0 do
+    (let* ((root (truename directory)) (label (format nil "command-~D" n))
+           (record (arcdocdb.evidence:read-evidence (merge-pathnames "report.lisp" root)))
+           (path (format nil "processes/~A/report.lisp" label)))
+      (dolist (file (uiop:directory-files root))
+        (push (list :source (namestring file) :path (format nil "processes/~A/~A" label (file-namestring file))) files))
+      (when (eq :command-verification (getf record :kind))
+        (push (list :label label :record-path path) processes))
+      (let ((spikes (spike-output-directory record))) (when spikes (push spikes extra)))))
+  (loop for directory in (remove-duplicates extra :test #'equal) for n from 0 do
+    (dolist (file (uiop:directory-files (truename directory)))
+      (push (list :source (namestring file) :path (format nil "raw/spikes-~D/~A" n (file-namestring file))) files)))
+  (let ((ci-root (truename "spikes/out/ci/selftest-1792234524-1245/")))
+    (dolist (file (uiop:directory-files ci-root))
+      (push (list :source (namestring file) :path (format nil "raw/ci-self-test/~A" (file-namestring file))) files))
+    (labels ((walk (directory)
+               (dolist (file (uiop:directory-files directory))
+                 (push (list :source (namestring file)
+                             :path (format nil "raw/ci-self-test/~A" (enough-namestring file ci-root))) files))
+               (dolist (child (uiop:subdirectories directory)) (walk child))))
+      (walk (merge-pathnames "conditions/" ci-root))))
+  (dolist (name '("prepare-final-archive.lisp" "verify-final-integration.lisp"
+                  "verify-final-integration-before-fix.lisp.txt"
+                  "verify-final-integration-before-counter-fix.lisp.txt"
+                  "prepare-final-archive-before-counter-fix.lisp.txt"))
+    (push (list :source (namestring (merge-pathnames name *load-truename*))
+                :path (format nil "raw/~A.txt" name)) files))
+  (push (list :source (namestring (merge-pathnames "final-integration-report.md" *load-truename*)) :path "report.md") files)
+  (push (list :source (namestring (truename proof)) :path "raw/integration-inputs.lisp") files)
+  (push (list :source (namestring (merge-pathnames "final-integration-inputs.lisp" *load-truename*))
+              :path "raw/integration-inputs-before-counter-fix.lisp") files)
+  (setf files (nreverse files) processes (nreverse processes))
+  (with-open-file (stream manifest :direction :output :if-exists :error)
+    (write (list :schema-version 1 :kind :command-archive-manifest :date "2026-10-17"
+                 :files files :processes processes) :stream stream :pretty t)
+    (terpri stream))
+  (format t "~D file, ~D processi: ~A~%" (length files) (length processes) manifest))

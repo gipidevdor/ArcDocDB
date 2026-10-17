@@ -3,9 +3,15 @@
 [Registro delle prove](../../docs/valutazione/registro-delle-prove.md) ·
 [Risultati 2026-10-08](../../docs/valutazione/risultati-2026-10-08.md)
 
+L'[audit finale dell'integrazione del 2026-10-17](2026-10-17-main-integration-final/report.md)
+conserva il controllo completo sul codice riunito, il confronto di 824 ingressi,
+gli 11 worktree puliti e integrati, i registri CI e la verifica delle copie locali.
+Include PUT/WAL, recovery Serie/Archivio e correzione dei timeout CI.
+
 La [prova locale del socket Unix](2026-10-17-unix-socket/report.md) conserva
 framing, documento/chiave massimi, nomi occupati, fallimenti e controlli intermedi
-con CI, cache e riserve full text. Non attesta la chiusura del nuovo PUT/WAL in corso.
+con CI, cache e riserve full text. Precede la chiusura del PUT/WAL documentata
+nell'audit finale.
 
 La [conservazione dell’integrazione del 2026-10-16](2026-10-16-main-integration-preservation/README.md)
 verifica i branch originali e tutte le HEAD dei worktree; conserva le quattro

@@ -78,3 +78,10 @@ Se il figlio si interrompe prima del rapporto, il conteggio deve restare
 NIL; un inventario misurato vuoto deve invece restare zero. Due casi
 separati distinguono assenza e misura, senza trasformare NIL in zero
 tramite LENGTH. La raccolta precedente resta chiusa e immutata.
+
+Su `097ad02a` il self-test passa 332/333 casi: fallisce soltanto il
+conteggio erroneamente zero quando manca il rapporto. Su `18d761b2`
+passano 333/333 casi e `make check` completo; tutti i record hanno
+sorgenti STABLE. La [raccolta aggiuntiva](../../spikes/results/2026-10-22-ci-count-availability/catalogo.lisp)
+conserva prima/dopo, sorgenti e verifica completa. Il conteggio non
+richiede una nuova scansione dell'elenco: riusa il valore già misurato.

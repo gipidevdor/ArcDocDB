@@ -1,0 +1,88 @@
+(require :asdf)
+(pushnew :arcdocdb-command-archive-library *features*)
+(load "tools/collect-command-archive.lisp")
+
+;; One-off explicit inventory only. Existing collector guards supply regular-file
+;; and byte-budget checks; no collection, copying or compaction occurs here.
+(defparameter *fixture-publication* "spikes/out/creazione-relativa-publication/")
+(defparameter *fixture-groups*
+  '(("snapshot" "spikes/out/4001237562-snapshot-self-test-93280-0/")
+    ("reader" "spikes/out/4001237562-reader-self-test-93293-0/")
+    ("spk" "spikes/out/4001237957-check-4586-0/")))
+(defparameter *fixture-inner* "spikes/out/4001237419-command-89011-0/report.lisp")
+
+(defun fixture-data-new (name data)
+  (with-open-file (stream (concatenate 'string *fixture-publication* name)
+                          :direction :output :if-exists :error
+                          :if-does-not-exist :create :external-format :utf-8)
+    (let ((*print-readably* t) (*print-pretty* t) (*print-circle* nil)
+          (*print-right-margin* 100))
+      (write data :stream stream) (terpri stream))))
+
+(let* ((root (truename "./"))
+       (argv (append '("git" "ls-files" "--others" "--ignored" "--exclude-standard" "-z" "--")
+                     (mapcar #'second *fixture-groups*)))
+       (inventory (uiop:run-program argv :output :string :error-output :string
+                                        :force-shell nil))
+       (paths (remove "" (uiop:split-string inventory :separator (list #\Null))
+                      :test #'string=))
+       (inner (arcdocdb.evidence:read-evidence *fixture-inner*))
+       (rows nil) (context nil))
+  (assert (eq :ok (getf inner :status)))
+  (assert (eql 0 (getf inner :exit-code)))
+  (assert (eq :stable (getf inner :source-consistency)))
+  (with-open-file (stream (concatenate 'string *fixture-publication* "fixture-inventory-R1.nul")
+                          :direction :output :element-type '(unsigned-byte 8)
+                          :if-exists :error :if-does-not-exist :create)
+    (write-sequence (sb-ext:string-to-octets inventory :external-format :utf-8) stream))
+  (dolist (group *fixture-groups*)
+    (destructuring-bind (label prefix) group
+      (let* ((report (concatenate 'string prefix "report.lisp"))
+             (needle (if (string= label "spk")
+                         (format nil "11 spike completati; risultati: ~A~A" root prefix)
+                         (format nil "~A: fixture processi conservate in ~A~A"
+                                 (if (string= label "snapshot") "Snapshot" "Reader")
+                                 root report)))
+             (datum (arcdocdb.evidence:read-evidence report))
+             (selected (remove-if-not (lambda (path) (uiop:string-prefix-p prefix path)) paths)))
+        (assert (search needle (getf inner :stdout)))
+        (assert selected)
+        (push (list :label label :directory prefix :report report
+                    :inner-record *fixture-inner* :inner-stdout-exact-line needle
+                    :report-status-as-observed (getf datum :status)
+                    :selected-files selected) context)
+        (dolist (path selected)
+          ;; Every ancestor is checked by lstat before any regular-source/truename;
+          ;; a symbolic-link component is refused, not traversed.
+          (loop for parent = (uiop:pathname-directory-pathname (merge-pathnames path root))
+                  then (uiop:pathname-parent-directory-pathname parent)
+                until (equal parent root)
+                do (assert (sb-posix:s-isdir
+                             (arcdocdb.command-archive.collect::path-mode parent))))
+          (let* ((target (concatenate 'string "fixtures/" label "/" (subseq path (length prefix))))
+                 (source (arcdocdb.command-archive.collect::regular-source path root)))
+            (arcdocdb.command-archive.collect::file-budget source target)
+            (push (list :source (namestring source) :path target) rows))))))
+  (fixture-data-new "fixture-source-rows.lisp" (nreverse rows))
+  (fixture-data-new "fixture-context.lisp"
+                    (list :schema-version 1 :kind :explicit-closed-fixture-selection
+                          :status :closed :captured-at-universal-time (get-universal-time)
+                          :inventory-command argv
+                          :inventory-raw "fixture-inventory-R1.nul"
+                          :inner-record *fixture-inner*
+                          :policy '(:existing-collector-regular-source-and-file-budget
+                                    :lstat-ancestors-no-symlinks
+                                    :no-compaction-or-original-rewrite
+                                    :no-additional-execution :no-result-inference)
+                          :groups (nreverse context)))
+  (let ((extras nil))
+    (dolist (name '("prepare-source-S1.lisp.txt" "prepare-source-S1.stdout.txt"
+                    "prepare-source-S1.stderr.txt" "prepare-source-S1-R2.lisp.txt"
+                    "prepare-source-S1-R2.stdout.txt" "prepare-source-S1-R2.stderr.txt"))
+      (let* ((source (arcdocdb.command-archive.collect::regular-source
+                      (concatenate 'string *fixture-publication* name) root))
+             (target (concatenate 'string "preparation/" name)))
+        (arcdocdb.command-archive.collect::file-budget source target)
+        (push (list :source (namestring source) :path target) extras)))
+    (fixture-data-new "preparation-source-rows.lisp" (nreverse extras)))
+  (format t "Fixture rows CLOSED: ~D files, 3 groups; preparation rows: 6 files.~%" (length paths)))

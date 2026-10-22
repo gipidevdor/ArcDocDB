@@ -1,0 +1,30 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/results/2026-10-22-io-creazione-relativa/"
+ :INDEXED-FILES 83 :ACTUAL-FILES 85 :INDEXED-BYTES 2712612 :PROCESSES
+ ((:LABEL "trace-write" :RECORD-PATH "processes/trace-write/report.lisp"
+   :COMMAND ("make" "trace-write") :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY
+   :STABLE)
+  (:LABEL "r1-outer" :RECORD-PATH "processes/r1-outer/report.lisp" :COMMAND
+   ("env"
+    "ASDF_OUTPUT_TRANSLATIONS=(:output-translations (t \"/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-R1-fasl/\") :ignore-inherited-configuration)"
+    "make" "check")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "r1-inner" :RECORD-PATH "processes/r1-inner/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "r2-integration" :RECORD-PATH "processes/r2-integration/report.lisp"
+   :COMMAND
+   ("env"
+    "ASDF_OUTPUT_TRANSLATIONS=(:output-translations (t \"/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-R2-fasl/\") :ignore-inherited-configuration)"
+    "make" "test" "lint" "trace" "links")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "335bb2d441a214530a916531437a1ec10355f95812b5ee7b381ed6cd897052a8"
+ :CATALOGUE-SHA256
+ "f0b90477945fe0721ca4c3300d07fcf4d78be14a6efdd7d2965d9094e547f698"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

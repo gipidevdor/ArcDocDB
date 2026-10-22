@@ -1,0 +1,44 @@
+Unhandled SIMPLE-ERROR in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
+                                    {8008690423}>:
+  The assertion
+  (ZEROP (LENGTH (S1-GIT '("status" "--porcelain" "--untracked-files=no"))))
+  failed with
+  (LENGTH (S1-GIT '("status" "--porcelain" "--untracked-files=no"))) = 115097.
+
+Backtrace for: #<SB-THREAD:THREAD tid=259 "main thread" RUNNING {8008690423}>
+0: (SB-DEBUG::DEBUGGER-DISABLED-HOOK #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {80078A8A53}> #<unused argument> :QUIT T)
+1: (SB-DEBUG::RUN-HOOK *INVOKE-DEBUGGER-HOOK* #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {80078A8A53}>)
+2: (INVOKE-DEBUGGER #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {80078A8A53}>)
+3: (ERROR #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {80078A8A53}>)
+4: (SB-KERNEL:WITH-SIMPLE-CONDITION-RESTARTS ERROR NIL #<SIMPLE-ERROR "~@<The assertion ~S failed~:[.~:; ~
+                                           with ~:*~{~S = ~S~^, ~}.~]~:@>" {80078A8A53}>)
+5: (SB-KERNEL:ASSERT-ERROR (ZEROP (LENGTH (S1-GIT (QUOTE ("status" "--porcelain" "--untracked-files=no"))))) 1 (LENGTH (S1-GIT (QUOTE ("status" "--porcelain" "--untracked-files=no")))) 115097)
+6: ("top level form") [toplevel]
+7: ((FLET "G" :IN SB-C::%COMPILE-IN-LEXENV))
+8: (SB-C::%COMPILE-IN-LEXENV (TAGBODY #1=#:TRY (LET ((#2=#:TEMP429 #3=(LENGTH #))) (WHEN (ZEROP #2#) (GO . #4=(#:DONE))) (SB-KERNEL:ASSERT-ERROR (QUOTE (ZEROP #3#)) 1 (QUOTE #3#) #2#)) (GO #1#) . #4#) #<NULL-LEXENV> NIL #<SB-C::SOURCE-INFO {8008670423}> 14 NIL T T)
+9: (SB-C:EVAL-WITH-COMPILE-IN-LEXENV (TAGBODY #1=#:TRY (LET ((#2=#:TEMP429 #3=(LENGTH #))) (WHEN (ZEROP #2#) (GO . #4=(#:DONE))) (SB-KERNEL:ASSERT-ERROR (QUOTE (ZEROP #3#)) 1 (QUOTE #3#) #2#)) (GO #1#) . #4#) #<NULL-LEXENV> #<SB-C::SOURCE-INFO {8008670423}> 14 NIL)
+10: (SB-IMPL::%SIMPLE-EVAL (TAGBODY #1=#:TRY (LET ((#2=#:TEMP429 #3=(LENGTH #))) (WHEN (ZEROP #2#) (GO . #4=(#:DONE))) (SB-KERNEL:ASSERT-ERROR (QUOTE (ZEROP #3#)) 1 (QUOTE #3#) #2#)) (GO #1#) . #4#) #<NULL-LEXENV>)
+11: (SB-INT:SIMPLE-EVAL-IN-LEXENV (ASSERT (ZEROP (LENGTH (S1-GIT (QUOTE #))))) #<NULL-LEXENV>)
+12: (EVAL-TLF (ASSERT (ZEROP (LENGTH (S1-GIT (QUOTE #))))) 14 NIL)
+13: ((LABELS SB-FASL::EVAL-FORM :IN SB-INT:LOAD-AS-SOURCE) (ASSERT (ZEROP (LENGTH (S1-GIT (QUOTE #))))) 14)
+14: ((LAMBDA (SB-KERNEL:FORM &KEY :CURRENT-INDEX &ALLOW-OTHER-KEYS) :IN SB-INT:LOAD-AS-SOURCE) (ASSERT (ZEROP (LENGTH (S1-GIT (QUOTE #))))) :CURRENT-INDEX 14)
+15: (SB-C::%DO-FORMS-FROM-INFO #<FUNCTION (LAMBDA (SB-KERNEL:FORM &KEY :CURRENT-INDEX &ALLOW-OTHER-KEYS) :IN SB-INT:LOAD-AS-SOURCE) {107860F1B}> #<SB-C::SOURCE-INFO {8008670423}> SB-C::INPUT-ERROR-IN-LOAD)
+16: (SB-INT:LOAD-AS-SOURCE #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt" {8008670043}> :VERBOSE NIL :PRINT NIL :CONTEXT "loading")
+17: ((LABELS SB-FASL::LOAD-STREAM-1 :IN LOAD) #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt" {8008670043}> NIL)
+18: (SB-FASL::CALL-WITH-LOAD-BINDINGS #<FUNCTION (LABELS SB-FASL::LOAD-STREAM-1 :IN LOAD) {1078609EB}> #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt" {8008670043}> NIL #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt" {8008670043}>)
+19: ((LABELS SB-FASL::LOAD-STREAM :IN LOAD) #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt" {8008670043}> NIL)
+20: (LOAD #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt" {8008670043}> :VERBOSE NIL :PRINT NIL :IF-DOES-NOT-EXIST :ERROR :EXTERNAL-FORMAT :DEFAULT)
+21: ((FLET SB-IMPL::LOAD-SCRIPT :IN SB-IMPL::PROCESS-SCRIPT) #<SB-SYS:FD-STREAM for "file /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt" {8008670043}>)
+22: ((FLET SB-UNIX::BODY :IN SB-IMPL::PROCESS-SCRIPT))
+23: ((FLET "WITHOUT-INTERRUPTS-BODY-" :IN SB-IMPL::PROCESS-SCRIPT))
+24: (SB-IMPL::PROCESS-SCRIPT "spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt")
+25: (SB-IMPL::TOPLEVEL-INIT)
+26: ((FLET SB-UNIX::BODY :IN SB-IMPL::START-LISP))
+27: ((FLET "WITHOUT-INTERRUPTS-BODY-3" :IN SB-IMPL::START-LISP))
+28: (SB-IMPL::%START-LISP)
+
+unhandled condition in --disable-debugger mode, quitting

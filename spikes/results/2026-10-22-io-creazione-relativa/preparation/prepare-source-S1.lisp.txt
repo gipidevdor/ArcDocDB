@@ -1,0 +1,116 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+
+;; One-off reconstruction of the twenty S1 source blobs, after the Oct 17 run.
+;; This procedure is retained as .txt; serialized evidence is read as DATA only.
+(defparameter *s1-root* (truename "./"))
+(defparameter *s1-commit* "b5ad739ba1fc0252920c088e2442140e448451ad")
+(defparameter *s1-target-relative*
+  "spikes/out/creazione-relativa-publication/source-S1/")
+(defparameter *s1-target* (merge-pathnames *s1-target-relative* *s1-root*))
+(defparameter *s1-procedure*
+  "spikes/out/creazione-relativa-publication/prepare-source-S1.lisp.txt")
+(defparameter *s1-commands* nil)
+(defparameter *s1-start* (get-universal-time))
+
+(defun s1-git (arguments &optional (output :string))
+  (let ((argv (append (list "git" "-C" (namestring *s1-root*)) arguments)))
+    (push argv *s1-commands*)
+    (multiple-value-bind (result diagnostic code)
+        (uiop:run-program argv :output output :error-output :string
+                              :ignore-error-status t :force-shell nil)
+      (unless (eql code 0)
+        (error "Git ~S failed (~S): ~A" arguments code diagnostic))
+      result)))
+
+(defun s1-data-new (relative datum)
+  (let ((path (merge-pathnames relative *s1-root*)))
+    (ensure-directories-exist path)
+    (with-open-file (stream path :direction :output :if-exists :error
+                                :if-does-not-exist :create
+                                :external-format :utf-8)
+      (let ((*print-readably* t) (*print-pretty* t) (*print-circle* nil)
+            (*print-right-margin* 100))
+        (write datum :stream stream) (terpri stream)))))
+
+(defun s1-utc (time)
+  (multiple-value-bind (second minute hour day month year)
+      (decode-universal-time time 0)
+    (format nil "~4,'0D-~2,'0D-~2,'0DT~2,'0D:~2,'0D:~2,'0DZ"
+            year month day hour minute second)))
+
+(assert (not (probe-file *s1-target*)))
+(assert (string= *s1-commit*
+                 (string-trim '(#\Newline #\Return)
+                              (s1-git '("rev-parse" "HEAD")))))
+(assert (zerop (length (s1-git '("status" "--porcelain" "--untracked-files=no")))))
+
+(let* ((paths (remove "" (uiop:split-string
+                          (s1-git (list "diff-tree" "--no-commit-id" "--name-only"
+                                        "-r" *s1-commit*))
+                          :separator '(#\Newline)) :test #'string=))
+       (outer (arcdocdb.evidence:read-evidence
+               "spikes/out/creazione-relativa-R1/report.lisp"))
+       (inner (arcdocdb.evidence:read-evidence
+               "spikes/out/4001237419-command-89011-0/report.lisp"))
+       (rows nil) (copies nil))
+  (assert (= 20 (length paths)))
+  (dolist (record (list outer inner))
+    (assert (eq :ok (getf record :status)))
+    (assert (eql 0 (getf record :exit-code)))
+    (assert (eq :stable (getf record :source-consistency))))
+  (dolist (original paths)
+    (let* ((spec (concatenate 'string *s1-commit* ":" original))
+           (blob (string-trim '(#\Newline #\Return)
+                              (s1-git (list "rev-parse" spec))))
+           (relative (concatenate 'string *s1-target-relative* original ".txt"))
+           (destination (merge-pathnames relative *s1-root*)))
+      (ensure-directories-exist destination)
+      (with-open-file (stream destination :direction :output
+                              :element-type '(unsigned-byte 8) :if-exists :error
+                              :if-does-not-exist :create)
+        (s1-git (list "show" spec) stream))
+      (assert (string= blob (string-trim '(#\Newline #\Return)
+                                       (s1-git (list "hash-object"
+                                                     (namestring destination))))))
+      (dolist (record (list outer inner))
+        (dolist (field '(:source-blobs-before :source-blobs-after))
+          (assert (string= blob
+                           (getf (find original (getf record field)
+                                       :key (lambda (row) (getf row :path))
+                                       :test #'string=)
+                                 :git-blob)))))
+      (push (list :original original :git-spec spec :git-blob blob
+                  :copy relative
+                  :bytes (arcdocdb.evidence:file-bytes destination)
+                  :sha256 (arcdocdb.evidence:file-sha256 destination)) copies)
+      (push (list :source (namestring destination)
+                  :path (concatenate 'string "sources/S1/" original ".txt")) rows)))
+  (let ((finished (get-universal-time))
+        (provenance-relative
+          (concatenate 'string *s1-target-relative* "capture-provenance.lisp")))
+    (s1-data-new
+      provenance-relative
+      (list :schema-version 1 :kind :source-reconstruction-provenance
+            :status :closed :frozen-git-commit *s1-commit*
+            :capture-policy :reconstructed-after-freeze-from-immutable-git-blobs
+            :run-relationship :not-a-snapshot-captured-during-execution
+            :original-run-date "2026-10-17"
+            :started-at-universal-time *s1-start* :started-at-utc (s1-utc *s1-start*)
+            :finished-at-universal-time finished :finished-at-utc (s1-utc finished)
+            :procedure *s1-procedure*
+            :procedure-bytes (arcdocdb.evidence:file-bytes *s1-procedure*)
+            :procedure-sha256 (arcdocdb.evidence:file-sha256 *s1-procedure*)
+            :commands (nreverse *s1-commands*)
+            :records-matched-as-data
+            '("spikes/out/creazione-relativa-R1/report.lisp"
+              "spikes/out/4001237419-command-89011-0/report.lisp")
+            :files (nreverse copies)))
+    (s1-data-new
+      (concatenate 'string *s1-target-relative* "collector-source-rows.lisp")
+      (append (nreverse rows)
+              (list (list :source (namestring (merge-pathnames provenance-relative *s1-root*))
+                          :path "sources/S1/capture-provenance.lisp")
+                    (list :source (namestring (merge-pathnames *s1-procedure* *s1-root*))
+                          :path "sources/S1/prepare-source-S1.lisp.txt"))))
+    (format t "S1 reconstructed sources CLOSED: ~A~%UTC: ~A~%" *s1-target* (s1-utc finished))))

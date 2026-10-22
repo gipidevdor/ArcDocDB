@@ -45,3 +45,9 @@ restano C4. Il [metodo preregistrato](io-creazione-relativa-metodo.md)
 definisce decisioni, errori e limiti delle prove.
 Le [letture C1](io-creazione-relativa-revisione.md) registrano i sorgenti
 e i controlli statici che precedono le esecuzioni.
+
+Le [prove conservate](../../spikes/results/2026-10-22-io-creazione-relativa/README.md)
+distinguono il full R1 sul freeze S1 dal controllo d'integrazione R2.
+Il [rapporto di raccolta](../../spikes/results/2026-10-22-io-creazione-relativa-collection/collection.lisp)
+e il [checker indipendente](../../spikes/results/2026-10-22-io-creazione-relativa-collection/closed-check.log)
+attestano la conservazione dell'inventario chiuso.

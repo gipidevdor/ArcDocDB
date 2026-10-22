@@ -26,10 +26,13 @@ REQ-VAL-001, REQ-AFF-012. Percorso C4, nessun codice di prodotto modificato.
 ## Budget del riepilogo di copertura
 
 Secondo controllo preregistrato prima della correzione del producer. Il
-riepilogo storico misura 26.473 byte; aggiungendo soltanto le 349 righe
-EXPECTED-FILES originali, il risultato sealed richiederebbe almeno 68.380
-caratteri, oltre i 65.536 byte ammessi. È una fixture di limite inferiore,
-non una nuova misura di copertura né una modifica del run fallito.
+riepilogo storico misura 26.473 byte. La prima fixture con le 349 righe
+EXPECTED-FILES originali occupa 68.380 caratteri, includendo metadati del
+publisher che non appartengono a seal. Il ricalcolo del 2026-10-22 elimina
+questi metadati e rappresenta gli esiti positivi: la fixture sealed con
+le sole righe attese occupa 68.009 byte, oltre i 65.536 ammessi. Entrambe
+le fixture sono conservate; non sono misure di copertura e non modificano
+il run storico fallito.
 
 Il riepilogo compatto deve contenere il conteggio dei file attesi; il piano
 e il rapporto raw conservano tutte le righe originali. La regressione usa
@@ -38,3 +41,31 @@ compresso confrontandolo con l'originale. Verifica separatamente che una
 prova ordinaria mancante resti incompleta dopo la compattazione. Prima
 il caso di impacchettamento deve fallire; dopo entrambi devono passare.
 Nessun aumento dei budget e nessun cambiamento degli esiti seal.
+
+## Risultati locali e conservazione
+
+Prove del 2026-10-17 su SBCL 2.6.9, macOS ARM64, con carico esterno non
+controllato. Nessuna inferenza sulle prestazioni del motore.
+
+| Revisione | Prova | Esito |
+|---|---|---|
+| `a8226c10` | Self-test prima del vocabolario completo | 328/329; fallisce solo la lettura nel processo fresco |
+| `fb81a7e7` | Self-test dopo il vocabolario completo | 329/329 |
+| `fb81a7e7` | Rapporto Linux originale, processo senza prodotto | 6/6 prove ordinarie riconosciute |
+| `fb81a7e7` | `make check` | OK, sorgenti STABLE |
+| `edd4000b` | Self-test prima della compattazione | 330/331; fallisce soltanto il budget del riepilogo |
+| `8ecfadc4` | Self-test dopo la compattazione | 331/331 |
+| `8ecfadc4` | `make check` completo | OK, sorgenti STABLE |
+
+La fixture di 600 file conserva 118.298 byte di rapporto originale e
+produce un risultato compatto di 304 byte. Il pacchetto e il raw compresso
+sono riletti e confrontati con l'ingresso. Una prova ordinaria incompleta
+rimane incompleta.
+
+La [raccolta chiusa](../../spikes/results/2026-10-22-ci-wire-processi/catalogo.lisp)
+conserva record, output originali, fallimenti, fixture e varianti dei
+sorgenti. La raccolta è del 2026-10-22; le date dei processi originali
+restano nei rispettivi record. Il replay identifica il rapporto Linux
+originale tramite percorso e SHA-256, senza presentarlo come una nuova
+campagna Linux. La copertura reale Linux resta da verificare nel workflow
+della stessa revisione; nessuna promozione C1/MC/DC.

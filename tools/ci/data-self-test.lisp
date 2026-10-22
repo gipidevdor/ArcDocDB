@@ -29,6 +29,43 @@
                                          *ci-root*)
                             :input input))))))
 
+(defun %ci-data-test-fresh-wire (root stem wire success)
+  "Il figlio carica solo DATA: nessun keyword/schema viene internato dal test o dal prodotto.
+Input/output/stdout/stderr sono privati e conservati; timeout 30s, un solo figlio senza discendenti."
+  (let* ((input (merge-pathnames (concatenate 'string stem "-input.lisp") root))
+         (output (merge-pathnames (concatenate 'string stem "-output.lisp") root))
+         (command
+          (list (namestring sb-ext:*runtime-pathname*) "--noinform" "--no-userinit" "--no-sysinit"
+                "--non-interactive" "--eval" "(require :asdf)" "--eval" "(require :sb-posix)"
+                "--eval" "(defpackage :arcdocdb.ci (:use :cl))"
+                "--load" (namestring (merge-pathnames "tools/ci/data.lisp" *ci-root*))
+                "--eval" (format nil "(arcdocdb.ci::ci-save ~S (arcdocdb.ci::ci-read ~S))"
+                                 (namestring output) (namestring input))))
+         (process nil) (exit nil))
+    (%ci-data-test-write input wire)
+    (unwind-protect
+         (progn
+           (setf process (sb-ext:run-program
+                          (first command) (rest command) :search nil :wait nil
+                          :output (merge-pathnames (concatenate 'string stem "-stdout.log") root)
+                          :error (merge-pathnames (concatenate 'string stem "-stderr.log") root)
+                          :if-output-exists :error :if-error-exists :error))
+           (sb-ext:with-timeout 30 (sb-ext:process-wait process))
+           (unless (eq :exited (sb-ext:process-status process))
+             (error "Figlio wire senza uscita normale."))
+           (setf exit (sb-ext:process-exit-code process)))
+      (when process
+        (when (member (sb-ext:process-status process) '(:running :stopped))
+          (sb-ext:process-kill process sb-posix:sigkill))
+        (sb-ext:process-wait process) (sb-ext:process-close process)))
+    (ci-save (merge-pathnames (concatenate 'string stem "-result.lisp") root)
+             (list :kind :ci-check :command command :exit-code exit
+                   :status (if (eql 0 exit) :passed :failed)))
+    (if success
+        (and (eql 0 exit) (ci-regular-file-p output)
+             (string= (ci-sha256 input) (ci-sha256 output)))
+        (and (integerp exit) (not (zerop exit)) (not (probe-file output))))))
+
 (defun ci-data-self-test (out)
   "Crea OUT esclusivo quando invocata dal recorder; ritorna plist con conteggi.
 Non eseguita al caricamento. Git e file modificati soltanto in OUT/fixture/;
@@ -74,6 +111,25 @@ le fixture e tutti gli esiti restano disponibili per la revisione C4."
                              (eq symbol (%ci-parse-wire
                                          (concatenate 'string ":" (symbol-name symbol))))))
                       *ci-wire-canonical-keywords*)))
+      (check "wire-job-result-fresh-data-only-process"
+             (lambda ()
+               (%ci-data-test-fresh-wire
+                root "job-result-fresh"
+                (ci-wire-string
+                 '(:schema-version 1 :kind :ci-job-result :job "verify-linux" :status :passed
+                   :identity (:tested-sha "fixture" :source-id "fixture" :policy-id "fixture")
+                   :metrics (:planned 3 :passed 3 :failed 0 :not-run 0 :skipped 0)
+                   :metrics-status :passed :reason nil
+                   :execution (:name "job" :command ("sbcl" "child") :exit-code 0
+                               :status :passed :record "commands/job/report.lisp"))) t)))
+      (check "wire-fresh-unknown-keyword-is-rejected"
+             (lambda ()
+               (let ((name (format nil "CI-FRESH-UNKNOWN-~D-~D"
+                                   (get-universal-time) (sb-posix:getpid))))
+                 (and (null (find-symbol name "KEYWORD"))
+                      (%ci-data-test-fresh-wire root "unknown-keyword-fresh"
+                                                (concatenate 'string ":" name) nil)
+                      (null (find-symbol name "KEYWORD"))))))
       (dolist (attack '("#.(error \"evaluated\")" "#1=(NIL . #1#)" "#A((1) NIL)"
                         "#x10" "#\\A" "'NIL" "`NIL" ",NIL" "CL:T" "KEYWORD:PATH"
                         "::PATH" ":|PATH|" "(NIL . T)" "(T" "\"abc" "\"a\\n\""

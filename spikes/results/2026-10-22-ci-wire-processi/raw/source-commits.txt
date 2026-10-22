@@ -1,0 +1,8 @@
+a8226c1025a9eb8f30ec54bf1375f4f2c4a42d30 wire-before tools/ci/data.lisp
+a8226c1025a9eb8f30ec54bf1375f4f2c4a42d30 wire-before tools/ci/data-self-test.lisp
+edd4000b645ca6eec6fb80d7770719a322c66826 compact-before tools/ci/producer.lisp
+edd4000b645ca6eec6fb80d7770719a322c66826 compact-before tools/ci/self-test.lisp
+8ecfadc468b5568e4e25fde4cb4747e6938c8167 final tools/ci/data.lisp
+8ecfadc468b5568e4e25fde4cb4747e6938c8167 final tools/ci/data-self-test.lisp
+8ecfadc468b5568e4e25fde4cb4747e6938c8167 final tools/ci/producer.lisp
+8ecfadc468b5568e4e25fde4cb4747e6938c8167 final tools/ci/self-test.lisp

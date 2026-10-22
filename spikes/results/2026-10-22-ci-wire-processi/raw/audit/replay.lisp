@@ -1,0 +1,20 @@
+(require :asdf)
+(require :sb-posix)
+(defpackage :arcdocdb.ci (:use :cl))
+(dolist (source '("tests/ci-catalog.lisp" "tools/ci/data.lisp" "tools/ci/identity.lisp"
+                  "tools/ci/support.lisp" "tools/ci/tests.lisp" "tools/ci/coverage.lisp"))
+  (load source))
+(in-package :arcdocdb.ci)
+(assert (null (find-package :arcdocdb.wal)))
+(let* ((path (pathname "spikes/results/ci/by-source/c03b8fea6f389e27a11fc8a6017d09475584b2c00ec52e133b4218996e585127/runs/39028943515/1/payloads/verify-linux/6acf20d24649247244e080e8706fd373517481568309ca8abe9d6fe127ae0cb6/result.lisp"))
+       (*ci-coverage-normal-report* path)
+       (normal (ci-read path))
+       (proof (ci-coverage-normal-proof "unused/" (getf normal :identity))))
+  (assert (eq :passed (getf normal :status)))
+  (assert (every (lambda (row) (eq :passed (getf row :normal-status))) proof))
+  (assert (plusp (length proof)))
+  (ci-save "spikes/out/ci-wire-audit/replay-result.lisp"
+           (list :schema-version 1 :kind :ci-check :status :passed
+                 :normal-report (namestring path) :normal-report-sha256 (ci-sha256 path)
+                 :planned (length proof) :passed (length proof) :failed 0 :cases proof))
+  (format t "Originale Linux letto senza prodotto; ~D prove ordinarie confermate.~%" (length proof)))

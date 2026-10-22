@@ -14,6 +14,11 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
 
 ### Aggiunto
 
+- Selettore riusabile delle versioni recuperate per chiave (ADR-0042):
+  massimo CSN, spareggio per offset nello stesso segmento e tombstone
+  provvisorio. CRC completi, CSN prepared esplicito e ambiguità bloccante;
+  nessun array per candidato. Qualifica dedicata e pubblicazione dell'indice aperte.
+
 - Stabilizzazione del nome di una fonte recuperata: token ACTIVE/CLOSED,
   FD e ID esatti prima del completamento, collisioni preservate e fsync
   parent anche nel ramo già definitivo. Nessuna riapertura in scrittura;

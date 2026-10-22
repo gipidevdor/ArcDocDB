@@ -13,6 +13,7 @@ non ha ancora rilasci; le versioni seguiranno la [roadmap](docs/roadmap.md).
   token sconosciuti; raccolte incomplete continuano a restituire errore.
   Riepilogo di copertura entro il budget: conteggio dei file nel risultato
   compatto, inventario completo negli allegati originali verificati.
+  Conteggio assente distinto da inventario misurato vuoto.
 
 - Fixture concorrente della lettura stringhe CBOR: durata e overlap WALL
   possono essere zero quando l'ondata cade nello stesso tick. Preservati

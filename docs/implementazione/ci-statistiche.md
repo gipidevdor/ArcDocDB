@@ -598,3 +598,6 @@ TOTALS conserva i denominatori. Le righe con percorso e blob restano nel
 piano e nel rapporto raw, inclusi nel pacchetto verificato. Questo evita
 che sealed duplichi l'inventario oltre il limite di 64 KiB. Prove ordinarie,
 file mancanti e stato dei test restano integralmente nel risultato compatto.
+Il conteggio deriva da TOTALS: un rapporto assente mantiene NIL, un
+inventario misurato vuoto mantiene zero. La compattazione non ricava
+uno zero dall'assenza dell'elenco.

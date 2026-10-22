@@ -85,7 +85,7 @@
          (loop for key in '(:planned :passed :failed :not-run :skipped :ticks :time-unit)
                append (list key (getf data key))))
         ((string= job "coverage")
-         (list :totals (getf data :totals) :expected-files (length (getf data :expected-files))
+         (list :totals (getf data :totals) :expected-files (getf (getf data :totals) :expected-files)
                :missing-files (getf data :missing-files) :excluded-tests (getf data :excluded-tests)
                :tests-status (getf data :tests-status) :uninstrumented-children (getf data :uninstrumented-children)))
         ((string= job "bench") (list :metrics (getf data :metrics) :scope :exploratory))

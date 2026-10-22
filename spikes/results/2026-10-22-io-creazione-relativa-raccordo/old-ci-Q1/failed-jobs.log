@@ -1,0 +1,23 @@
+coverage	Copertura completa Linux	﻿2026-10-22T17:10:03.2645672Z ##[group]Run sbcl --script tools/ci.lisp run --job coverage --out spikes/out/ci/coverage
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2646414Z ^[[36;1msbcl --script tools/ci.lisp run --job coverage --out spikes/out/ci/coverage^[[0m
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2696187Z shell: /usr/bin/bash -e {0}
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2696408Z env:
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2696642Z   ARCDOCDB_CI_TOOLCHAIN_LOCK: .github/ci-toolchain.lock.lisp
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2696962Z   CI_HEAD_SHA: 28b7fae0731e9ec5cd9c235f4a4b2fc6cd3247f5
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2697244Z   CI_BASE_SHA: 56fc1c1a5ffb8ab5630513f1c7b8fedcb6e6ad9a
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2697821Z   SBCL_HOME: /home/runner/work/_temp/arcdocdb-sbcl.2rADcq6K/installed/lib/sbcl
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2698262Z   ARCDOCDB_CI_TOOLCHAIN_RECORD: /home/runner/work/_temp/arcdocdb-sbcl.2rADcq6K/installation.lisp
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2698714Z   CI_NORMAL_TEST_REPORT: /home/runner/work/_temp/arcdocdb-normal-verify/result.lisp
+coverage	Copertura completa Linux	2026-10-22T17:10:03.2699035Z ##[endgroup]
+coverage	Copertura completa Linux	2026-10-22T17:13:44.0662714Z ##[error]Process completed with exit code 1.
+seal	Chiudi la raccolta anche quando incompleta	﻿2026-10-22T17:14:27.9016191Z ##[group]Run sbcl --script tools/ci.lisp seal --input "$RUNNER_TEMP/arcdocdb-ci-downloaded" --out spikes/out/ci/sealed
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9017070Z ^[[36;1msbcl --script tools/ci.lisp seal --input "$RUNNER_TEMP/arcdocdb-ci-downloaded" --out spikes/out/ci/sealed^[[0m
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9085543Z shell: /usr/bin/bash -e {0}
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9085862Z env:
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9086198Z   ARCDOCDB_CI_TOOLCHAIN_LOCK: .github/ci-toolchain.lock.lisp
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9086645Z   CI_HEAD_SHA: 28b7fae0731e9ec5cd9c235f4a4b2fc6cd3247f5
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9087047Z   CI_BASE_SHA: 56fc1c1a5ffb8ab5630513f1c7b8fedcb6e6ad9a
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9087527Z   SBCL_HOME: /home/runner/work/_temp/arcdocdb-sbcl.fBR0hyW0/installed/lib/sbcl
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9088261Z   ARCDOCDB_CI_TOOLCHAIN_RECORD: /home/runner/work/_temp/arcdocdb-sbcl.fBR0hyW0/installation.lisp
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:27.9088760Z ##[endgroup]
+seal	Chiudi la raccolta anche quando incompleta	2026-10-22T17:14:32.1201294Z ##[error]Process completed with exit code 1.

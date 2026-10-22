@@ -1,0 +1,47 @@
+;;;; Single C4 regression, no product load or generic CI CLI execution.
+;;;; Use: sbcl --script THIS --out FRESH-ABSOLUTE-DIRECTORY/
+;;;; Parent deliberately loads producer; the regression itself creates a fresh consumer.
+(require :asdf)
+(require :sb-posix)
+(defpackage #:arcdocdb.ci (:use #:cl))
+(in-package #:arcdocdb.ci)
+(declaim (optimize (safety 3) (debug 3)))
+(defparameter *ci-root*
+  #p"/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/")
+(defparameter *ci-entry* (merge-pathnames "tools/ci.lisp" *ci-root*))
+(defparameter *ci-sbcl* (namestring sb-ext:*runtime-pathname*))
+
+(unless (equal *ci-root* (truename "./"))
+  (error "Run this frozen regression from the exact owned workspace."))
+
+;; Same order as tools/ci.lisp, without invoking CI-MAIN or a self-test suite.
+(load (merge-pathnames "tools/evidence-storage.lisp" *ci-root*) :verbose nil :print nil)
+(load (merge-pathnames "tests/ci-catalog.lisp" *ci-root*) :verbose nil :print nil)
+(dolist (module '("data" "identity" "support" "tests" "coverage" "measure"
+                  "archive" "producer" "github" "publish" "self-test"
+                  "data-self-test" "test-self-test" "conditions-self-test"
+                  "measure-self-test" "workflow-self-test"))
+  (load (merge-pathnames (format nil "tools/ci/~A.lisp" module) *ci-root*)
+        :verbose nil :print nil))
+
+(handler-case
+    (let* ((options (ci-options (uiop:command-line-arguments) '("--out")))
+           (argument (ci-required options "--out"))
+           (destination (uiop:ensure-directory-pathname argument)))
+      (unless (uiop:absolute-pathname-p destination)
+        (error "--out requires an absolute, fresh destination."))
+      (unless (and (fboundp 'ci-run-job)
+                   (find-symbol "METRICS-STATUS" "KEYWORD")
+                   (find-symbol "EXECUTION" "KEYWORD")
+                   (null (find-package "ARCDOCDB.IO")))
+        (error "Parent must load C4 producer without loading product."))
+      (let ((root (ci-mkdir destination)))
+        (unless (%ci-data-test-fresh-coverage-consumer root)
+          (error "Fresh coverage consumer returned NIL.")))
+      (write-line (ci-wire-string '(:status :passed :checks 1 :passed 1 :failed 0)))
+      (sb-ext:exit :code 0))
+  (error (condition)
+    (write-line (ci-wire-string (list :status :failed :checks 1 :passed 0 :failed 1
+                                     :diagnostic (princ-to-string condition))))
+    (format *error-output* "~&Fresh consumer regression: ~A~%" condition)
+    (sb-ext:exit :code 1)))

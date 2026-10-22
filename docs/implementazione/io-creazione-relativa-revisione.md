@@ -72,3 +72,11 @@ Il secondo raccordo del 2026-10-22 integra main `e75f9794`: il selettore
 aggiunto opera soltanto su buffer privati, senza dipendere dall'API I/O.
 Root e revisore distinto hanno riletto i raccordi ASD e documentali
 prima di R4, senza rilievi; i sei sorgenti I/O e i test non cambiano rispetto a `28b7fae0`.
+
+Il raccordo C4 con main `c46bc4c1` conserva vocabolario, producer e
+boundary test upstream. La differenza C4 rispetto a main è la regressione
+con i sei moduli del consumer coverage reale in un processo fresco:
+il producer resta assente nel figlio, e identità errata o test saltati
+non costituiscono una prova normale valida. Root e revisore distinto
+hanno riletto correzione minima e raccordo; parser, limiti e schemi
+non sono ampliati dall'input. I sorgenti I/O restano identici a R4.

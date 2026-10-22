@@ -51,3 +51,6 @@ distinguono il full R1 sul freeze S1 dal controllo d'integrazione R2.
 Il [rapporto di raccolta](../../spikes/results/2026-10-22-io-creazione-relativa-collection/collection.lisp)
 e il [checker indipendente](../../spikes/results/2026-10-22-io-creazione-relativa-collection/closed-check.log)
 attestano la conservazione dell'inventario chiuso.
+Il [supplemento di raccordo](../../spikes/results/2026-10-22-io-creazione-relativa-raccordo/README.md)
+conserva R4, il primo run CI fallito nel consumer dei report, la
+regressione prima/dopo la correzione e i controlli C4 sulle integrazioni.

@@ -1,0 +1,57 @@
+
+; file: /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tools/ci/support.lisp
+; in: DEFUN CI-SBCL-COMMAND
+;     (LIST ARCDOCDB.CI::*CI-SBCL* "--dynamic-space-size" "4096" "--noinform"
+;           "--no-userinit" "--no-sysinit" "--script")
+; 
+; caught WARNING:
+;   undefined variable: ARCDOCDB.CI::*CI-SBCL*
+; 
+; compilation unit finished
+;   Undefined variable:
+;     *CI-SBCL*
+;   caught 1 WARNING condition
+
+; file: /Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tools/ci/support.lisp
+; in: DEFUN CI-INSTALLATION-RECORD
+;     (ARCDOCDB.CI::CI-WORKFLOW-INSTALLATION-SCHEMA ARCDOCDB.CI::RECORD)
+; 
+; caught STYLE-WARNING:
+;   undefined function: ARCDOCDB.CI::CI-WORKFLOW-INSTALLATION-SCHEMA
+; 
+; compilation unit finished
+;   Undefined function:
+;     CI-WORKFLOW-INSTALLATION-SCHEMA
+;   caught 1 STYLE-WARNING condition
+Unhandled ARCDOCDB.CI::CI-DATA-ERROR in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
+                                                  {80086B03C3}>:
+  Keyword sconosciuta; nessun INTERN di input.
+
+Backtrace for: #<SB-THREAD:THREAD tid=259 "main thread" RUNNING {80086B03C3}>
+0: (SB-DEBUG::DEBUGGER-DISABLED-HOOK #<ARCDOCDB.CI::CI-DATA-ERROR {80073DA5F3}> #<unused argument> :QUIT T)
+1: (SB-DEBUG::RUN-HOOK *INVOKE-DEBUGGER-HOOK* #<ARCDOCDB.CI::CI-DATA-ERROR {80073DA5F3}>)
+2: (INVOKE-DEBUGGER #<ARCDOCDB.CI::CI-DATA-ERROR {80073DA5F3}>)
+3: (ERROR ARCDOCDB.CI::CI-DATA-ERROR :DETAIL "Keyword sconosciuta; nessun INTERN di input.")
+4: (ARCDOCDB.CI::%CI-FAIL "Keyword sconosciuta; nessun INTERN di input.")
+5: ((LABELS ARCDOCDB.CI::TOKEN-VALUE :IN ARCDOCDB.CI::%CI-PARSE-WIRE))
+6: ((LABELS ARCDOCDB.CI::VALUE :IN ARCDOCDB.CI::%CI-PARSE-WIRE) 1)
+7: ((LABELS ARCDOCDB.CI::VALUE :IN ARCDOCDB.CI::%CI-PARSE-WIRE) 0)
+8: (ARCDOCDB.CI::%CI-PARSE-WIRE #<(SIMPLE-ARRAY CHARACTER (676)) (:SCHEMA-VERSION 1 :KIND :CI-JOB-RESULT :JOB "verify-linux" :STATUS :PASSED :IDENTITY (:TESTED-SHA "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" :SOURCE-ID "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb... {80073D704F}> :MAX-BYTES 1048576)
+9: ((LAMBDA (STREAM ARCDOCDB.CI::STAT) :IN ARCDOCDB.CI::CI-READ) #<SB-SYS:FD-STREAM for "descriptor 3" {80073D4AF3}> #<SB-POSIX:STAT {80073E2AA3}>)
+10: (ARCDOCDB.CI::%CI-CALL-FILE #P"/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/verify-result.lisp" #<FUNCTION (LAMBDA (STREAM ARCDOCDB.CI::STAT) :IN ARCDOCDB.CI::CI-READ) {80072D514B}> :OUTPUT NIL :REPLACE NIL)
+11: (ARCDOCDB.CI::CI-READ #P"/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/verify-result.lisp" :MAX-BYTES NIL)
+12: ("top level form") [toplevel]
+13: ((FLET "G" :IN SB-C::%COMPILE-IN-LEXENV))
+14: (SB-C::%COMPILE-IN-LEXENV (LET* ((DIRECTORY (PATHNAME "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/")) (PATH (MERGE-PATHNAMES "verify-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* PATH) (NORMAL (ARCDOCDB.CI::CI-READ PATH)) (IDENTITY (GETF NORMAL :IDENTITY))) (ASSERT (NOT (FBOUNDP (FIND-SYMBOL "CI-RUN-JOB" "ARCDOCDB.CI")))) (ASSERT (NULL (FIND-PACKAGE "ARCDOCDB.IO"))) (ASSERT (= 6 (LENGTH ARCDOCDB.CI.TESTS::*COVERAGE-EXCLUSIONS*))) (ASSERT (EVERY (LAMBDA (ROW) (EQ :PASSED #)) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))) (LET ((WRONG (COPY-LIST IDENTITY))) (SETF (GETF WRONG :TESTED-SHA) "wrong") (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY WRONG)))) (ARCDOCDB.CI::CI-SAVE (MERGE-PATHNAMES "roundtrip.lisp" DIRECTORY) NORMAL) (SETF (GETF (GETF NORMAL :METRICS) :SKIPPED) 1) (LET* ((BAD (MERGE-PATHNAMES "skipped-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* BAD)) (ARCDOCDB.CI::CI-SAVE BAD NORMAL) (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))))) #<NULL-LEXENV> NIL NIL NIL NIL T T)
+15: (SB-C:EVAL-WITH-COMPILE-IN-LEXENV (LET* ((DIRECTORY (PATHNAME "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/")) (PATH (MERGE-PATHNAMES "verify-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* PATH) (NORMAL (ARCDOCDB.CI::CI-READ PATH)) (IDENTITY (GETF NORMAL :IDENTITY))) (ASSERT (NOT (FBOUNDP (FIND-SYMBOL "CI-RUN-JOB" "ARCDOCDB.CI")))) (ASSERT (NULL (FIND-PACKAGE "ARCDOCDB.IO"))) (ASSERT (= 6 (LENGTH ARCDOCDB.CI.TESTS::*COVERAGE-EXCLUSIONS*))) (ASSERT (EVERY (LAMBDA (ROW) (EQ :PASSED #)) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))) (LET ((WRONG (COPY-LIST IDENTITY))) (SETF (GETF WRONG :TESTED-SHA) "wrong") (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY WRONG)))) (ARCDOCDB.CI::CI-SAVE (MERGE-PATHNAMES "roundtrip.lisp" DIRECTORY) NORMAL) (SETF (GETF (GETF NORMAL :METRICS) :SKIPPED) 1) (LET* ((BAD (MERGE-PATHNAMES "skipped-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* BAD)) (ARCDOCDB.CI::CI-SAVE BAD NORMAL) (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))))) #<NULL-LEXENV> NIL NIL NIL)
+16: (SB-IMPL::%SIMPLE-EVAL (LET* ((DIRECTORY (PATHNAME "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/")) (PATH (MERGE-PATHNAMES "verify-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* PATH) (NORMAL (ARCDOCDB.CI::CI-READ PATH)) (IDENTITY (GETF NORMAL :IDENTITY))) (ASSERT (NOT (FBOUNDP (FIND-SYMBOL "CI-RUN-JOB" "ARCDOCDB.CI")))) (ASSERT (NULL (FIND-PACKAGE "ARCDOCDB.IO"))) (ASSERT (= 6 (LENGTH ARCDOCDB.CI.TESTS::*COVERAGE-EXCLUSIONS*))) (ASSERT (EVERY (LAMBDA (ROW) (EQ :PASSED #)) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))) (LET ((WRONG (COPY-LIST IDENTITY))) (SETF (GETF WRONG :TESTED-SHA) "wrong") (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY WRONG)))) (ARCDOCDB.CI::CI-SAVE (MERGE-PATHNAMES "roundtrip.lisp" DIRECTORY) NORMAL) (SETF (GETF (GETF NORMAL :METRICS) :SKIPPED) 1) (LET* ((BAD (MERGE-PATHNAMES "skipped-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* BAD)) (ARCDOCDB.CI::CI-SAVE BAD NORMAL) (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))))) #<NULL-LEXENV>)
+17: (SB-INT:SIMPLE-EVAL-IN-LEXENV (LET* ((DIRECTORY (PATHNAME "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/")) (PATH (MERGE-PATHNAMES "verify-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* PATH) (NORMAL (ARCDOCDB.CI::CI-READ PATH)) (IDENTITY (GETF NORMAL :IDENTITY))) (ASSERT (NOT (FBOUNDP (FIND-SYMBOL "CI-RUN-JOB" "ARCDOCDB.CI")))) (ASSERT (NULL (FIND-PACKAGE "ARCDOCDB.IO"))) (ASSERT (= 6 (LENGTH ARCDOCDB.CI.TESTS::*COVERAGE-EXCLUSIONS*))) (ASSERT (EVERY (LAMBDA (ROW) (EQ :PASSED #)) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))) (LET ((WRONG (COPY-LIST IDENTITY))) (SETF (GETF WRONG :TESTED-SHA) "wrong") (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY WRONG)))) (ARCDOCDB.CI::CI-SAVE (MERGE-PATHNAMES "roundtrip.lisp" DIRECTORY) NORMAL) (SETF (GETF (GETF NORMAL :METRICS) :SKIPPED) 1) (LET* ((BAD (MERGE-PATHNAMES "skipped-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* BAD)) (ARCDOCDB.CI::CI-SAVE BAD NORMAL) (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))))) #<NULL-LEXENV>)
+18: (EVAL (LET* ((DIRECTORY (PATHNAME "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/")) (PATH (MERGE-PATHNAMES "verify-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* PATH) (NORMAL (ARCDOCDB.CI::CI-READ PATH)) (IDENTITY (GETF NORMAL :IDENTITY))) (ASSERT (NOT (FBOUNDP (FIND-SYMBOL "CI-RUN-JOB" "ARCDOCDB.CI")))) (ASSERT (NULL (FIND-PACKAGE "ARCDOCDB.IO"))) (ASSERT (= 6 (LENGTH ARCDOCDB.CI.TESTS::*COVERAGE-EXCLUSIONS*))) (ASSERT (EVERY (LAMBDA (ROW) (EQ :PASSED #)) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))) (LET ((WRONG (COPY-LIST IDENTITY))) (SETF (GETF WRONG :TESTED-SHA) "wrong") (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY WRONG)))) (ARCDOCDB.CI::CI-SAVE (MERGE-PATHNAMES "roundtrip.lisp" DIRECTORY) NORMAL) (SETF (GETF (GETF NORMAL :METRICS) :SKIPPED) 1) (LET* ((BAD (MERGE-PATHNAMES "skipped-result.lisp" DIRECTORY)) (ARCDOCDB.CI::*CI-COVERAGE-NORMAL-REPORT* BAD)) (ARCDOCDB.CI::CI-SAVE BAD NORMAL) (ASSERT (EVERY (LAMBDA # #) (ARCDOCDB.CI::CI-COVERAGE-NORMAL-PROOF DIRECTORY IDENTITY))))))
+19: (SB-IMPL::PROCESS-EVAL/LOAD-OPTIONS ((:EVAL . "(require :asdf)") (:EVAL . "(require :sb-posix)") (:EVAL . "(defpackage :arcdocdb.ci (:use :cl))") (:LOAD . "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tests/ci-catalog.lisp") (:LOAD . "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tools/ci/data.lisp") (:LOAD . "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tools/ci/identity.lisp") (:LOAD . "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tools/ci/support.lisp") (:LOAD . "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tools/ci/tests.lisp") (:LOAD . "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/tools/ci/coverage.lisp") (:EVAL . #<(SIMPLE-BASE-STRING 1614) (let* ((directory (pathname "/Users/gpicchiarelli/.codex/worktrees/serie-create-relative/ArcDocDB/spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/"))
+                  ... {8008800D5F}>) (:QUIT)))
+20: (SB-IMPL::TOPLEVEL-INIT)
+21: ((FLET SB-UNIX::BODY :IN SB-IMPL::START-LISP))
+22: ((FLET "WITHOUT-INTERRUPTS-BODY-3" :IN SB-IMPL::START-LISP))
+23: (SB-IMPL::%START-LISP)
+
+unhandled condition in --disable-debugger mode, quitting

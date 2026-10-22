@@ -155,3 +155,11 @@ l'inventario originale. Restano entrambe le regressioni: reader data-only
 e consumer coverage completo, con producer assente nei rispettivi figli.
 I 328 controlli C4 della revisione `6c409f59` sono PASSED; il loro record
 resta distinto dal nuovo controllo completo C4 sul raccordo con PR21.
+
+Il raccordo `fc0a34a9` conclude i 334 controlli C4 con PASSED:
+59 dati, 37 test registry, nove condizioni, 43 misure, 172 workflow e
+14 confini. I recorder prima della correzione (`92fbfbbc`, exit 1 atteso),
+dopo (`6c409f59`, exit 0), e dei due self-test completi riportano sorgenti
+STABLE e checkout puliti. R4, a `1ebf8e71`, conclude
+`make test lint trace links` con cache nuova ed exit 0/STABLE.
+Questi esiti locali non sostituiscono la CI sul nuovo merge effettivo.

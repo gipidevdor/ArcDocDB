@@ -1,0 +1,134 @@
+;;;; Prepare an explicit NEW collector manifest after all input writers close.
+;;;; Loading defines the builder; it never invokes it, runs tests or collects.
+;;;; Call BUILD-CREATE-RELATIVE-SUPPLEMENT after review; R2 is frozen at fc0a34a9.
+;;;; The two previous closed archives are neither read for append nor modified.
+(require :asdf)
+(require :sb-posix)
+(pushnew :arcdocdb-command-archive-library *features*)
+(load "tools/collect-command-archive.lisp")
+(defpackage #:arcdocdb.ci (:use #:cl))
+(in-package #:arcdocdb.ci)
+(defparameter *ci-root* (truename "./"))
+(dolist (module '("data" "identity" "support" "archive"))
+  (load (merge-pathnames (format nil "tools/ci/~A.lisp" module) *ci-root*)))
+(in-package #:cl-user)
+
+(defun build-create-relative-supplement
+    (&key (selftest-r2-sha "fc0a34a91a8d32e2fcfb13723be97873b1d2882a")
+          (manifest "spikes/out/creazione-relativa-publication/supplement-manifest-R1.lisp")
+          (date "2026-10-22")
+          (selftest-r1-root
+            "/Users/gpicchiarelli/.codex/evidence-backups/ArcDocDB-serie-create-relative-ci-wire-selftest-R1/")
+          (selftest-r2-root
+            "/Users/gpicchiarelli/.codex/evidence-backups/ArcDocDB-serie-create-relative-ci-wire-selftest-R2/")
+          extra-files)
+  "Build only the existing command-archive-manifest schema from CLOSED inputs.
+EXTRA-FILES is an explicit list of existing (:SOURCE pathname-string :PATH target)
+rows, e.g. external driver logs. This function never runs the collector."
+  (unless (arcdocdb.ci::ci-hex-id-p selftest-r2-sha 40)
+    (error "The full frozen commit of CLOSED selftest-R2 is required."))
+  (let* ((root (truename "./"))
+         (publication (merge-pathnames "spikes/out/creazione-relativa-publication/" root))
+         (destination (merge-pathnames manifest root))
+         (files nil) (processes nil))
+    (when (probe-file destination) (error "Manifest already exists: ~A" destination))
+    (labels
+        ((add-file (source target)
+           (arcdocdb.ci::ci-safe-ancestors (merge-pathnames source root))
+           (let ((path (arcdocdb.command-archive.collect::regular-source
+                         (namestring (merge-pathnames source root)) root)))
+             (arcdocdb.command-archive.collect::relative-parts target)
+             (arcdocdb.command-archive.collect::file-budget path target)
+             (when (find target files :key (lambda (row) (getf row :path)) :test #'string=)
+               (error "Duplicate explicit collector target: ~A" target))
+             (push (list :source (namestring path) :path target) files)))
+         (add-tree (directory target)
+           ;; Existing bounded POSIX inventory rejects symlinks, hard links and
+           ;; special files. Restricted to these explicit, already closed trees.
+           (let ((base (arcdocdb.ci::ci-directory directory)))
+             (dolist (file (arcdocdb.ci::ci-files base :limit 10000 :max-depth 16))
+               (add-file file (concatenate 'string target (enough-namestring file base))))))
+         (add-process (label directory commit status exit)
+           (let* ((base (merge-pathnames directory root))
+                  (report-path (merge-pathnames "report.lisp" base))
+                  (report (arcdocdb.evidence:read-evidence report-path))
+                  (relative (format nil "processes/~A/report.lisp" label)))
+             ;; Qualified collector metadata guard establishes a finished record;
+             ;; the expected red is explicitly FAILED/1, never silently greened.
+             (arcdocdb.command-archive.collect::process-metadata report label relative)
+             (unless (and (eq status (getf report :status))
+                          (eql exit (getf report :exit-code))
+                          (eq :stable (getf report :source-consistency))
+                          (equal commit (getf (getf report :environment) :commit))
+                          (equal "" (getf (getf report :environment) :working-tree)))
+               (error "Closed recorder attribution/result differs: ~A" label))
+             (push (list :label label :record-path relative) processes)
+             (add-tree base (format nil "processes/~A/" label))))
+         (add-consumer-fixture (directory target green)
+           (dolist (name (append '("verify-result.lisp" "child.stdout" "child.stderr")
+                                (when green '("roundtrip.lisp" "skipped-result.lisp"))))
+             (add-file (merge-pathnames name (uiop:ensure-directory-pathname directory))
+                       (concatenate 'string target name))))
+         (add-selftest-results (directory target)
+           ;; Deliberately no recursive scan of the full selftest output: its
+           ;; private Git, symlink, hardlink and corruption fixtures stay intact.
+           (let ((base (uiop:ensure-directory-pathname directory)))
+             (dolist (name '("report.lisp" "data.lisp" "tests.lisp" "conditions.lisp"
+                             "measure.lisp" "workflow.lisp" "boundaries.lisp"))
+               (add-file (merge-pathnames name base) (concatenate 'string target name)))
+             (add-consumer-fixture (merge-pathnames "data/fresh-coverage-consumer/" base)
+                                   (concatenate 'string target "data/fresh-coverage-consumer/") t))))
+      (add-process "r4-product-integration" "spikes/out/creazione-relativa-R4/"
+                   "1ebf8e71ad6df7288975d6b49f4fd14e1da983d2" :ok 0)
+      (add-process "wire-regression-red-92fbfbbc" "spikes/out/creazione-relativa-ci-wire-before-R1/"
+                   "92fbfbbcf4d7cae3264bce234ac84f81fee684af" :failed 1)
+      (add-process "wire-regression-green-6c409f59" "spikes/out/creazione-relativa-ci-wire-after-R1/"
+                   "6c409f591d4b805fd74d0587b0e8be0ce034b716" :ok 0)
+      (add-process "c4-selftest-r1-6c409f59" "spikes/out/creazione-relativa-ci-wire-selftest-R1/"
+                   "6c409f591d4b805fd74d0587b0e8be0ce034b716" :ok 0)
+      (add-process "c4-selftest-r2-integration" "spikes/out/creazione-relativa-ci-wire-selftest-R2/"
+                   selftest-r2-sha :ok 0)
+      (add-consumer-fixture
+        (merge-pathnames "spikes/out/creazione-relativa-ci-wire-before-fixture-R1/fresh-coverage-consumer/" root)
+        "fixtures/wire-before/fresh-coverage-consumer/" nil)
+      (add-consumer-fixture
+        (merge-pathnames "spikes/out/creazione-relativa-ci-wire-after-fixture-R1/fresh-coverage-consumer/" root)
+        "fixtures/wire-after/fresh-coverage-consumer/" t)
+      (add-selftest-results selftest-r1-root "selftest-r1/")
+      (add-selftest-results selftest-r2-root "selftest-r2/")
+      ;; Complete six packets of Q1, retaining hashes, manifests, descriptors and
+      ;; payloads together. Their CI result records are FILES, not recorder rows.
+      (let ((ci-root (merge-pathnames "spikes/out/creazione-relativa-ci-PR20/" root)))
+        (dolist (artifact '("plan" "verify-linux" "verify-macos" "audit" "coverage" "seal"))
+          (let* ((name (concatenate 'string "ci-39817860664-1-" artifact))
+                 (directory (merge-pathnames (concatenate 'string name "/") ci-root)))
+            (arcdocdb.ci::ci-verify-packet directory)
+            (add-tree directory (format nil "old-ci-Q1/~A/" name))))
+        (add-file (merge-pathnames "failed-jobs.log" ci-root) "old-ci-Q1/failed-jobs.log"))
+      (unless (string= "6ec8ae530051d4609c859d3f954aacc1fff846fa806262bbe45e270158ba86fa"
+                       (arcdocdb.evidence:file-sha256
+                         (merge-pathnames "fresh-consumer-runner.lisp.txt" publication)))
+        (error "Frozen fresh-consumer runner differs."))
+      (dolist (pair '(("fresh-consumer-runner.lisp.txt" "procedures/fresh-consumer-runner.lisp.txt")
+                      ("supplement-manifest-builder.lisp.txt" "procedures/supplement-manifest-builder.lisp.txt")
+                      ("supplement-README.md.txt" "README.md")))
+        (add-file (merge-pathnames (first pair) publication) (second pair)))
+      (dolist (row extra-files)
+        (arcdocdb.command-archive.collect::check-plist row '(:source :path))
+        (add-file (arcdocdb.command-archive.collect::required row :source)
+                  (arcdocdb.command-archive.collect::required row :path)))
+      (setf files (sort files #'string< :key (lambda (row) (getf row :path)))
+            processes (nreverse processes))
+      (let ((data (list :schema-version 1 :kind :command-archive-manifest :date date
+                        :files files :processes processes)))
+        (arcdocdb.command-archive.collect::check-plist
+          data '(:schema-version :kind :date :files :processes))
+        (arcdocdb.ci::ci-safe-ancestors destination)
+        (ensure-directories-exist destination)
+        (with-open-file (stream destination :direction :output :if-exists :error
+                                           :if-does-not-exist :create :external-format :utf-8)
+          (let ((*print-readably* t) (*print-pretty* t) (*print-circle* nil))
+            (write data :stream stream) (terpri stream)))
+        (format t "New supplement manifest CLOSED: ~A (~D files; 5 recorder processes).~%"
+                destination (length files))
+        destination))))

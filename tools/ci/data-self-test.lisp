@@ -29,6 +29,80 @@
                                          *ci-root*)
                             :input input))))))
 
+(defun %ci-data-test-coverage-code (directory)
+  "Codice child senza keyword producer: l'unica loro fonte deve essere DATA.LISP.
+Il packet resta un file wire; il codice del child non legge/evaluta forme dal packet."
+  (format nil
+          "(let* ((directory (pathname ~S))
+                  (path (merge-pathnames \"verify-result.lisp\" directory))
+                  (arcdocdb.ci::*ci-coverage-normal-report* path)
+                  (normal (arcdocdb.ci::ci-read path))
+                  (identity (getf normal :identity)))
+             (assert (not (fboundp (find-symbol \"CI-RUN-JOB\" \"ARCDOCDB.CI\"))))
+             (assert (null (find-package \"ARCDOCDB.IO\")))
+             (assert (= 6 (length arcdocdb.ci.tests::*coverage-exclusions*)))
+             (assert (every (lambda (row) (eq :passed (getf row :normal-status)))
+                            (arcdocdb.ci::ci-coverage-normal-proof directory identity)))
+             (let ((wrong (copy-list identity)))
+               (setf (getf wrong :tested-sha) \"wrong\")
+               (assert (every (lambda (row) (eq :missing (getf row :normal-status)))
+                              (arcdocdb.ci::ci-coverage-normal-proof directory wrong))))
+             (arcdocdb.ci::ci-save (merge-pathnames \"roundtrip.lisp\" directory) normal)
+             (setf (getf (getf normal :metrics) :skipped) 1)
+             (let* ((bad (merge-pathnames \"skipped-result.lisp\" directory))
+                    (arcdocdb.ci::*ci-coverage-normal-report* bad))
+               (arcdocdb.ci::ci-save bad normal)
+               (assert (every (lambda (row) (eq :missing (getf row :normal-status)))
+                              (arcdocdb.ci::ci-coverage-normal-proof directory identity)))))"
+          (namestring directory)))
+
+(defun %ci-data-test-fresh-coverage-consumer (root)
+  "Subprocesso fresco con i soli moduli caricati dal consumer coverage reale.
+Producer assente: un parent che ha gia internato le keyword non puo mascherare il guasto.
+Una sola esecuzione bounded 30s; stdout/stderr e fixture preservati anche al fallimento."
+  (let* ((directory (merge-pathnames "fresh-coverage-consumer/" root))
+         (packet (list :schema-version 1 :kind :ci-job-result :job "verify-linux" :status :passed
+                       :identity (list :tested-sha (make-string 40 :initial-element #\a)
+                                       :source-id (make-string 64 :initial-element #\b)
+                                       :policy-id (make-string 64 :initial-element #\c))
+                       :context '(:run-id "fixture" :attempt "1" :event "pull_request"
+                                  :ref "refs/pull/fixture/merge" :repository "gpicchiarelli/ArcDocDB")
+                       :metrics '(:planned 2 :passed 2 :failed 0 :not-run 0 :skipped 0)
+                       :ticks 0 :time-unit 1000000 :reason nil :metrics-status :passed
+                       :execution '(:name "job" :command ("sbcl" "fixture") :exit-code 0
+                                    :status :passed :record "commands/job/report.lisp")))
+         (process nil))
+    (%ci-check-parents (string-right-trim "/" (namestring directory)))
+    (sb-posix:mkdir (string-right-trim "/" (namestring directory)) #o700)
+    (%ci-data-test-write (merge-pathnames "verify-result.lisp" directory) (ci-wire-string packet))
+    (unwind-protect
+         (progn
+           (setf process
+                 (sb-ext:run-program
+                  (namestring sb-ext:*runtime-pathname*)
+                  (append '("--noinform" "--no-userinit" "--no-sysinit" "--non-interactive"
+                            "--eval" "(require :asdf)" "--eval" "(require :sb-posix)"
+                            "--eval" "(defpackage :arcdocdb.ci (:use :cl))")
+                          (loop for source in '("tests/ci-catalog.lisp" "tools/ci/data.lisp"
+                                                "tools/ci/identity.lisp" "tools/ci/support.lisp"
+                                                "tools/ci/tests.lisp" "tools/ci/coverage.lisp")
+                                append (list "--load" (namestring (merge-pathnames source *ci-root*))))
+                          (list "--eval" (%ci-data-test-coverage-code directory)))
+                  :wait nil :search nil :directory *ci-root* :input nil
+                  :output (merge-pathnames "child.stdout" directory)
+                  :error (merge-pathnames "child.stderr" directory)
+                  :if-output-exists :error :if-error-exists :error))
+           (sb-ext:with-timeout 30 (sb-ext:process-wait process))
+           (unless (and (eq :exited (sb-ext:process-status process))
+                        (eql 0 (sb-ext:process-exit-code process)))
+             (%ci-fail "Consumer coverage fresco: ~S/~S; diagnostiche in ~A."
+                       (sb-ext:process-status process) (sb-ext:process-exit-code process) directory))
+           (equal packet (ci-read (merge-pathnames "roundtrip.lisp" directory))))
+      (when process
+        (when (member (sb-ext:process-status process) '(:running :stopped))
+          (sb-ext:process-kill process sb-posix:sigkill))
+        (sb-ext:process-wait process) (sb-ext:process-close process)))))
+
 (defun ci-data-self-test (out)
   "Crea OUT esclusivo quando invocata dal recorder; ritorna plist con conteggi.
 Non eseguita al caricamento. Git e file modificati soltanto in OUT/fixture/;
@@ -74,6 +148,8 @@ le fixture e tutti gli esiti restano disponibili per la revisione C4."
                              (eq symbol (%ci-parse-wire
                                          (concatenate 'string ":" (symbol-name symbol))))))
                       *ci-wire-canonical-keywords*)))
+      (check "wire-verify-result-in-fresh-coverage-consumer"
+             (lambda () (%ci-data-test-fresh-coverage-consumer root)))
       (dolist (attack '("#.(error \"evaluated\")" "#1=(NIL . #1#)" "#A((1) NIL)"
                         "#x10" "#\\A" "'NIL" "`NIL" ",NIL" "CL:T" "KEYWORD:PATH"
                         "::PATH" ":|PATH|" "(NIL . T)" "(T" "\"abc" "\"a\\n\""

@@ -126,3 +126,24 @@ Due letture statiche precedono il freeze di questo raccordo.
 Si esegue R4 `make test lint trace links` con cache nuova e si conserva
 il record distinto. La CI già avviata sul merge `046c64cc` mantiene
 quella precisa attribuzione; il nuovo head richiede la propria CI.
+
+## Raccordo dei report CI (C4) — 2026-10-22
+
+Il run PR20 `39817860664`, sul merge `046c64cc`, conclude con successo
+Linux, macOS e audit. Anche `coverage-tests.lisp` è PASSED; il worker
+si ferma dopo i test e LCOV, leggendo il risultato della verifica normale:
+il vocabolario del consumer fresco non registra tutti i campi emessi
+dal producer. Coverage e seal sono quindi FAILED e restano conservati
+come tali. Nessun esito globale verde è attribuito a quel run.
+
+Prima delle nuove prove si registra la correzione C4 minima: dichiarare
+nel vocabolario trusted i campi del risultato normale già ammessi dallo
+schema producer, senza internare simboli dall'input o ampliare gli schemi.
+La regressione deve usare un SBCL fresco con i moduli del consumer:
+il processo completo del self-test carica già il producer e maschera
+il difetto. Un controllo sulla revisione precedente deve rilevarlo;
+i rifiuti di token sconosciuti e forme eseguibili restano richiesti.
+
+Si conservano separatamente tentativo fallito, regressione e controllo
+C4 successivo; la nuova CI verificherà il nuovo head. La correzione
+non cambia i sorgenti I/O, le decisioni CTR o i loro test.

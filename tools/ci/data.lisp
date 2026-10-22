@@ -51,7 +51,7 @@
     :packets :payload :record :result :report :report-path :command :exit-code
     :raw-file :normal-report :normal-report-sha256 :normal-status :normal-reason
     :tests-status :normal-verification-same-sha-required :input-unchanged
-    :metrics :unit :value :method :samples :statistics :numerator :denominator
+    :metrics :metrics-status :execution :unit :value :method :samples :statistics :numerator :denominator
     :lines-covered :lines-total :branches-covered :branches-total
     :expressions-covered :expressions-total :lcov :lcov-sha256 :lcov-dialect
     :lcov-da-exact-counts :lcov-ba-exact-counts :lcov-branches-covered :lcov-branches-total

@@ -67,3 +67,8 @@ e i moduli della stabilizzazione dei nomi. L'ordine resta: native create
 dopo native open, wrapper create dopo wrapper open, stabilizzazione dopo
 transfer/flush. Root e revisore distinto hanno riletto il raccordo prima
 del controllo d'integrazione, senza rilievi aperti.
+
+Il secondo raccordo del 2026-10-22 integra main `e75f9794`: il selettore
+aggiunto opera soltanto su buffer privati, senza dipendere dall'API I/O.
+Root e revisore distinto hanno riletto i raccordi ASD e documentali
+prima di R4, senza rilievi; i sei sorgenti I/O e i test non cambiano rispetto a `28b7fae0`.

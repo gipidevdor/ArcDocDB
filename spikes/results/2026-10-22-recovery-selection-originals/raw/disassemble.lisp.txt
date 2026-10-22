@@ -1,0 +1,17 @@
+(require :asdf)
+(asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+(asdf:load-system "arcdocdb")
+(dolist (name '(arcdocdb.recovery.selection:crea-selettore-versione-recuperata
+                arcdocdb.recovery.selection::esigi-selettore-pronto
+                arcdocdb.recovery.selection::guasto-selettore
+                arcdocdb.recovery.selection::verifica-tupla-selezione
+                arcdocdb.recovery.selection:inizializza-chiave-recuperata
+                arcdocdb.recovery.selection::chiave-selezione-uguale-p
+                arcdocdb.recovery.selection::verifica-record-selezione
+                arcdocdb.recovery.selection::csn-candidato-recuperato
+                arcdocdb.recovery.selection::prepara-candidato-recuperato
+                arcdocdb.recovery.selection::confronta-versioni-recuperate
+                arcdocdb.recovery.selection::adotta-candidato-recuperato
+                arcdocdb.recovery.selection:considera-record-recuperato
+                arcdocdb.recovery.selection:leggi-versione-selezionata))
+ (disassemble name))

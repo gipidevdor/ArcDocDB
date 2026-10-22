@@ -113,3 +113,16 @@ e l'ordine dei moduli. Due letture statiche controllano questi raccordi.
 Dopo il nuovo freeze si esegue `make test lint trace links` con cache
 ASDF nuova e record distinto. Non si attribuisce il full R1 al merge;
 la CI del merge effettivamente provato resta una fotografia separata.
+
+## Secondo raccordo con main — 2026-10-22
+
+Durante la CI di PR20, main avanza a `e75f9794` aggiungendo il selettore
+in memoria delle versioni recuperate. Il nuovo modulo non esegue I/O
+e non modifica namespace, callback o capacità. I sorgenti I/O, i tre
+test e la fixture verticale restano identici al raccordo precedente.
+ASD conserva il selettore dopo recovery-bootstrap, prima del runtime.
+Due letture statiche precedono il freeze di questo raccordo.
+
+Si esegue R4 `make test lint trace links` con cache nuova e si conserva
+il record distinto. La CI già avviata sul merge `046c64cc` mantiene
+quella precisa attribuzione; il nuovo head richiede la propria CI.

@@ -88,6 +88,14 @@
                       (metrics (ci-compact-metrics data "coverage")))
                  (and (equal (getf data :excluded-tests) (getf metrics :excluded-tests))
                       (not (ci-metrics-valid-p (list :job "coverage" :metrics metrics)))))))
+      (check :coverage-compaction-keeps-unavailable-inventory-unknown
+             (lambda ()
+               (null (getf (ci-compact-metrics '(:status :failed) "coverage") :expected-files))))
+      (check :coverage-compaction-keeps-measured-empty-inventory-zero
+             (lambda ()
+               (eql 0 (getf (ci-compact-metrics '(:expected-files nil
+                                                :totals (:status :measured :expected-files 0)) "coverage")
+                             :expected-files))))
       (check :duplicate-cli-option
              (lambda () (rejects (lambda () (ci-options '("--job" "audit" "--job" "bench") '("--job"))))))
       (check :zip-truncated-is-rejected

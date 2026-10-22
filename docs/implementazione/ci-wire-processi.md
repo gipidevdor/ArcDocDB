@@ -69,3 +69,12 @@ restano nei rispettivi record. Il replay identifica il rapporto Linux
 originale tramite percorso e SHA-256, senza presentarlo come una nuova
 campagna Linux. La copertura reale Linux resta da verificare nel workflow
 della stessa revisione; nessuna promozione C1/MC/DC.
+
+### Disponibilità del conteggio
+
+Controllo aggiuntivo preregistrato il 2026-10-22: il risultato compatto
+ricava il conteggio da TOTALS, già prodotto dall'adattatore di copertura.
+Se il figlio si interrompe prima del rapporto, il conteggio deve restare
+NIL; un inventario misurato vuoto deve invece restare zero. Due casi
+separati distinguono assenza e misura, senza trasformare NIL in zero
+tramite LENGTH. La raccolta precedente resta chiusa e immutata.

@@ -147,3 +147,11 @@ i rifiuti di token sconosciuti e forme eseguibili restano richiesti.
 Si conservano separatamente tentativo fallito, regressione e controllo
 C4 successivo; la nuova CI verificherà il nuovo head. La correzione
 non cambia i sorgenti I/O, le decisioni CTR o i loro test.
+
+Il raccordo successivo integra main `c46bc4c1` (PR21), che contiene
+la stessa dichiarazione dei due campi, anche `:skipped` per il reader
+data-only, e mantiene compatto il riepilogo coverage conservando
+l'inventario originale. Restano entrambe le regressioni: reader data-only
+e consumer coverage completo, con producer assente nei rispettivi figli.
+I 328 controlli C4 della revisione `6c409f59` sono PASSED; il loro record
+resta distinto dal nuovo controllo completo C4 sul raccordo con PR21.

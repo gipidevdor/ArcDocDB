@@ -34,7 +34,7 @@
     :run-id :attempt :run-attempt :job-id :job :jobs :profile :event :ref
     :repository :url :workflow :workflow-id :run :producer :publisher
     :os :architecture :image :cpu :lisp-version :version :runner :machine
-    :planned :known-planned :started :passed :failed :not-run :not-started
+    :planned :known-planned :started :passed :failed :not-run :not-started :skipped
     :running :ready :missing :pending :unknown :unsupported :not-implemented
     :measured :partial :complete :ok :budget-exhausted :timeout :runner-stopped
     :condition :duration-ticks :duration-unit :internal-time-ticks :ticks-per-second

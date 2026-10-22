@@ -1,0 +1,24 @@
+(:SCHEMA-VERSION 1 :KIND :COMMAND-ARCHIVE-AUDIT :STATUS :OK :ARCHIVE
+ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/results/2026-10-22-ci-count-availability/"
+ :INDEXED-FILES 20 :ACTUAL-FILES 22 :INDEXED-BYTES 895251 :PROCESSES
+ ((:LABEL "before" :RECORD-PATH "processes/before/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out" "spikes/out/ci-count-before")
+   :STATUS :FAILED :EXIT-CODE 1 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "after" :RECORD-PATH "processes/after/report.lisp" :COMMAND
+   ("sbcl" "--noinform" "--no-userinit" "--no-sysinit" "--script"
+    "tools/ci.lisp" "self-test" "--out" "spikes/out/ci-count-after")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE)
+  (:LABEL "full-check" :RECORD-PATH "processes/full-check/report.lisp" :COMMAND
+   ("/Applications/Xcode.app/Contents/Developer/usr/bin/make" "check-core")
+   :STATUS :OK :EXIT-CODE 0 :SOURCE-CONSISTENCY :STABLE))
+ :INDEX-SHA256
+ "8fbcc2ef7e8b6f6b639801da7b8285efbbb2633729bc8abcb7e4d3b85f0d749e"
+ :CATALOGUE-SHA256
+ "6ef053eb452c05a6db1797f81a1f59a947afa9c2cda81beec1477d2abf2e7d61"
+ :ORIGINS-COMPARED NIL :CLOSED-INVENTORY T :READ-EVAL NIL :EOF-REQUIRED T
+ :LIMITS
+ (:PLAIN-BYTES 1048576 :GZIP-BYTES 8388608 :PROCESS-EXPANDED-BYTES 134217728
+  :ENTRIES 100000 :DIRECTORY-DEPTH 128 :DIRECTORY-ENUMERATION-NOT-PREBOUNDED T
+  :PER-FILE-LOCAL-OBSERVATION T :ATOMIC-PUBLICATION NIL
+  :RESULT-OR-GATE-INFERENCE NIL :MCDC-CLAIM NIL))

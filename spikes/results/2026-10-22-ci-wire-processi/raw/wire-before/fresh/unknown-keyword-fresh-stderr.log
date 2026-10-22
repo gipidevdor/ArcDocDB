@@ -1,0 +1,26 @@
+Unhandled ARCDOCDB.CI::CI-DATA-ERROR in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
+                                                  {80086B03C3}>:
+  Keyword sconosciuta; nessun INTERN di input.
+
+Backtrace for: #<SB-THREAD:THREAD tid=259 "main thread" RUNNING {80086B03C3}>
+0: (SB-DEBUG::DEBUGGER-DISABLED-HOOK #<ARCDOCDB.CI::CI-DATA-ERROR {80070BB603}> #<unused argument> :QUIT T)
+1: (SB-DEBUG::RUN-HOOK *INVOKE-DEBUGGER-HOOK* #<ARCDOCDB.CI::CI-DATA-ERROR {80070BB603}>)
+2: (INVOKE-DEBUGGER #<ARCDOCDB.CI::CI-DATA-ERROR {80070BB603}>)
+3: (ERROR ARCDOCDB.CI::CI-DATA-ERROR :DETAIL "Keyword sconosciuta; nessun INTERN di input.")
+4: (ARCDOCDB.CI::%CI-FAIL "Keyword sconosciuta; nessun INTERN di input.")
+5: ((LABELS ARCDOCDB.CI::TOKEN-VALUE :IN ARCDOCDB.CI::%CI-PARSE-WIRE))
+6: ((LABELS ARCDOCDB.CI::VALUE :IN ARCDOCDB.CI::%CI-PARSE-WIRE) 0)
+7: (ARCDOCDB.CI::%CI-PARSE-WIRE ":CI-FRESH-UNKNOWN-4001236378-63008" :MAX-BYTES 1048576)
+8: ((LAMBDA (STREAM ARCDOCDB.CI::STAT) :IN ARCDOCDB.CI::CI-READ) #<SB-SYS:FD-STREAM for "descriptor 3" {80070BAC33}> #<SB-POSIX:STAT {80070C2903}>)
+9: (ARCDOCDB.CI::%CI-CALL-FILE "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-input.lisp" #<FUNCTION (LAMBDA (STREAM ARCDOCDB.CI::STAT) :IN ARCDOCDB.CI::CI-READ) {8006FA933B}> :OUTPUT NIL :REPLACE NIL)
+10: (ARCDOCDB.CI::CI-READ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-input.lisp" :MAX-BYTES NIL)
+11: (SB-INT:SIMPLE-EVAL-IN-LEXENV (ARCDOCDB.CI::CI-READ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-input.lisp") #<NULL-LEXENV>)
+12: (SB-INT:SIMPLE-EVAL-IN-LEXENV (ARCDOCDB.CI::CI-SAVE "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-output.lisp" (ARCDOCDB.CI::CI-READ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-input.lisp")) #<NULL-LEXENV>)
+13: (EVAL (ARCDOCDB.CI::CI-SAVE "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-output.lisp" (ARCDOCDB.CI::CI-READ "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-input.lisp")))
+14: (SB-IMPL::PROCESS-EVAL/LOAD-OPTIONS ((:EVAL . "(require :asdf)") (:EVAL . "(require :sb-posix)") (:EVAL . "(defpackage :arcdocdb.ci (:use :cl))") (:LOAD . "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/tools/ci/data.lisp") (:EVAL . #<(SIMPLE-BASE-STRING 300) (arcdocdb.ci::ci-save "/Users/gpicchiarelli/.codex/worktrees/writer-worker/ArcDocDB/spikes/out/ci-wire-before/data/unknown-keyword-fresh-output.lisp" (arcdocdb.ci::ci-read "/Users/gpicchiarelli/.codex... {8008800B1F}>) (:QUIT)))
+15: (SB-IMPL::TOPLEVEL-INIT)
+16: ((FLET SB-UNIX::BODY :IN SB-IMPL::START-LISP))
+17: ((FLET "WITHOUT-INTERRUPTS-BODY-3" :IN SB-IMPL::START-LISP))
+18: (SB-IMPL::%START-LISP)
+
+unhandled condition in --disable-debugger mode, quitting

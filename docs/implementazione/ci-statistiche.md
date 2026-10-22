@@ -584,3 +584,20 @@ Il [catalogo dei registri e degli originali](../../spikes/results/2026-10-17-ci-
 conserva anche i tentativi falliti. Il codice è committato in `c7caed5f`;
 verifica completa della composizione, integrazione e push restano al
 coordinatore della chiusura.
+
+## Rapporti nei processi freschi
+
+La [regressione del wire isolato](ci-wire-processi.md) verifica che un rapporto
+ordinario del producer sia leggibile caricando soltanto il modulo DATA,
+senza keyword rese note incidentalmente da altri moduli o dal prodotto.
+L'esito di seal resta distinto: conserva raccolte incomplete e restituisce
+fallimento quando una verifica manca o fallisce.
+
+Il risultato compatto di coverage espone EXPECTED-FILES come conteggio;
+TOTALS conserva i denominatori. Le righe con percorso e blob restano nel
+piano e nel rapporto raw, inclusi nel pacchetto verificato. Questo evita
+che sealed duplichi l'inventario oltre il limite di 64 KiB. Prove ordinarie,
+file mancanti e stato dei test restano integralmente nel risultato compatto.
+Il conteggio deriva da TOTALS: un rapporto assente mantiene NIL, un
+inventario misurato vuoto mantiene zero. La compattazione non ricava
+uno zero dall'assenza dell'elenco.

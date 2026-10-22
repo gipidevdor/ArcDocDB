@@ -56,6 +56,46 @@
                               (null (getf summary :metrics-complete))
                               (null (getf summary :verification-passed))
                               (= 6 (length (getf summary :jobs)))))))
+      (check :coverage-summary-keeps-complete-raw-inventory
+             (lambda ()
+               (let* ((out (ci-mkdir (merge-pathnames "coverage-summary/" root)))
+                      (work (ci-mkdir (merge-pathnames "work/" out)))
+                      (files (loop for i below 600 collect
+                               (list :path (format nil "src/~A/unit-~D.lisp"
+                                                   (make-string 100 :initial-element #\x) i)
+                                     :tracked t :asdf t :blob (make-string 40 :initial-element #\a))))
+                      (data (list :expected-files files :totals '(:status :measured :expected-files 600)
+                                  :missing-files nil :excluded-tests '((:id "fixture" :normal-status :passed))
+                                  :tests-status :passed :uninstrumented-children '("fixture-child")))
+                      (metrics (ci-compact-metrics data "coverage"))
+                      (result (list :job "sealed" :status :passed :metrics
+                                    (list :jobs (list (list :job "coverage" :status :passed :metrics metrics)))))
+                      (raw (merge-pathnames "coverage.lisp" work)))
+                 (ci-save raw data)
+                 (let* ((packet (ci-pack-job out work "sealed" '(:source-id "fixture") result))
+                        (stored (merge-pathnames "raw/coverage.lisp" packet)))
+                   (and (> (ci-bytes raw) 65536)
+                        (= 600 (getf metrics :expected-files))
+                        (every (lambda (key) (equal (getf data key) (getf metrics key)))
+                               '(:totals :missing-files :excluded-tests :tests-status :uninstrumented-children))
+                        (< (ci-bytes (merge-pathnames "result.lisp" packet)) 65536)
+                        (equal result (ci-read (merge-pathnames "result.lisp" packet)))
+                        (equal data (arcdocdb.evidence:read-evidence stored)))))))
+      (check :coverage-compaction-preserves-incomplete-proof
+             (lambda ()
+               (let* ((data '(:totals (:status :measured) :expected-files nil
+                              :missing-files nil :excluded-tests ((:normal-status :not-run))))
+                      (metrics (ci-compact-metrics data "coverage")))
+                 (and (equal (getf data :excluded-tests) (getf metrics :excluded-tests))
+                      (not (ci-metrics-valid-p (list :job "coverage" :metrics metrics)))))))
+      (check :coverage-compaction-keeps-unavailable-inventory-unknown
+             (lambda ()
+               (null (getf (ci-compact-metrics '(:status :failed) "coverage") :expected-files))))
+      (check :coverage-compaction-keeps-measured-empty-inventory-zero
+             (lambda ()
+               (eql 0 (getf (ci-compact-metrics '(:expected-files nil
+                                                :totals (:status :measured :expected-files 0)) "coverage")
+                             :expected-files))))
       (check :duplicate-cli-option
              (lambda () (rejects (lambda () (ci-options '("--job" "audit" "--job" "bench") '("--job"))))))
       (check :zip-truncated-is-rejected

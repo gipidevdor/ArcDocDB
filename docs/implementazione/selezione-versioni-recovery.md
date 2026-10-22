@@ -28,7 +28,9 @@ alle decisioni o ai formati persistenti.
 ```
 
 I nomi nel codice sono esportati dal package `arcdocdb.recovery.selection`.
-Un worker possiede il selettore e lo riusa per chiavi successive. Prima
+Un worker possiede il selettore e lo riusa per chiavi successive. Ogni
+gruppo appartiene a una sola Serie: il chiamante non mescola namespace
+diversi con la stessa sequenza di byte della chiave. Prima
 del reset deve avere terminato o esplicitamente abbandonato la chiave
 precedente. Il reset non pubblica dati e non riabilita FAULTED.
 

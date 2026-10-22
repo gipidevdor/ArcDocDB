@@ -11,4 +11,5 @@
   (:import-from #:arcdocdb.recovery.archive #:decisioni-recuperate #:leggi-active-con-decisioni)
   (:import-from #:arcdocdb.recovery.active #:active-recuperato)
   (:import-from #:arcdocdb.recovery.closed #:leggi-closed-recuperato #:verifica-closed-completi)
-  (:export #:limiti-recovery-serie #:crea-limiti-recovery-serie #:leggi-serie-recuperata))
+  (:export #:limiti-recovery-serie #:crea-limiti-recovery-serie #:leggi-serie-recuperata
+           #:stabilizza-nome-fonte-recuperata))

@@ -1,0 +1,11 @@
+(require :asdf)
+(asdf:load-asd (merge-pathnames "arcdocdb.asd" (truename "./")))
+(asdf:load-system "arcdocdb")
+(dolist (symbol '(arcdocdb.io::identita-entry-presente
+                  arcdocdb.io::verifica-capacita-stabilizzazione
+                  arcdocdb.io::verifica-nomi-stabilizzazione
+                  arcdocdb.io:stabilizza-nome-temporaneo
+                  arcdocdb.recovery.series::verifica-active-stabilizzabile
+                  arcdocdb.recovery.series::verifica-closed-stabilizzabile
+                  arcdocdb.recovery.series:stabilizza-nome-fonte-recuperata))
+  (disassemble symbol))

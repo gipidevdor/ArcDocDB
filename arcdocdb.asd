@@ -87,7 +87,8 @@
                              (:file "lifecycle") (:file "identity") (:file "directory")
                              (:file "rename") (:file "namespace") (:file "open-relative")
                              (:file "create-relative")
-                             (:file "transfer") (:file "flush")))
+                             (:file "transfer") (:file "flush")
+                             (:file "stabilize-preflight") (:file "stabilize")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
                              (:file "frame") (:file "group") (:file "executor") (:file "csn")))
@@ -176,7 +177,8 @@
                              (:file "csn-serie")))
                (:module "recovery-series" :serial t
                 :components ((:file "package") (:file "types") (:file "entry")
-                             (:file "preflight") (:file "read") (:file "build")))
+                             (:file "preflight") (:file "read") (:file "build")
+                             (:file "stabilize-preflight") (:file "stabilize")))
                (:module "recovery-archive-csn" :serial t
                 :components ((:file "package") (:file "types") (:file "series") (:file "preflight")
                              (:file "build") (:file "query")))

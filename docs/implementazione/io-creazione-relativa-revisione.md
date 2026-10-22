@@ -57,3 +57,13 @@ Restano le precondizioni di namespace esclusivo, callback fidate e assenza
 di cancellazione asincrona. Nessun rilievo di flusso resta aperto nella
 lettura; qualifica completa C1, MC/DC, mutazioni mirate e prestazioni restano
 distinte dalle verifiche locali e dalla CI.
+
+## Raccordo del 2026-10-22
+
+La tabella SHA sopra identifica i sorgenti del freeze S1 `b5ad739b`.
+L'integrazione con main `56fc1c1a` conserva i cinque file di implementazione
+e i tre test senza variazioni; package e ASD aggiungono anche l'export
+e i moduli della stabilizzazione dei nomi. L'ordine resta: native create
+dopo native open, wrapper create dopo wrapper open, stabilizzazione dopo
+transfer/flush. Root e revisore distinto hanno riletto il raccordo prima
+del controllo d'integrazione, senza rilievi aperti.

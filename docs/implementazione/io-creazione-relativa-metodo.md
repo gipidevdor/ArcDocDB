@@ -100,3 +100,16 @@ REQ-FOR-001 e REQ-VAL-001. Invarianti: INV-A7/A9/A10/A11, INV-P6 e INV-X3.
 Restano aperti Recovery Manager, esecuzione della riconciliazione,
 ammissione, qualifica C1 completa, MC/DC, mutation testing dei nuovi
 percorsi e misure di prestazione.
+
+## Integrazione con main — 2026-10-22
+
+Il controllo completo R1 del 2026-10-17 appartiene al freeze
+`b5ad739ba1fc0252920c088e2442140e448451ad`. La ripresa del 2026-10-22
+integra main `56fc1c1a`, che aggiunge la stabilizzazione dei nomi recuperati
+e archivi CI. Le primitive di creazione, i relativi helper e i test
+restano identici a R1; package e ASD devono conservare entrambe le API
+e l'ordine dei moduli. Due letture statiche controllano questi raccordi.
+
+Dopo il nuovo freeze si esegue `make test lint trace links` con cache
+ASDF nuova e record distinto. Non si attribuisce il full R1 al merge;
+la CI del merge effettivamente provato resta una fotografia separata.

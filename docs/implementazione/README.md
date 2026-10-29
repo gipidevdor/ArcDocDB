@@ -27,6 +27,8 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
+| Delta immagini M1 | [Membership esatta bounded per PUT/DELETE](delta-indice-m1.md); residente ancora completo | [`src/engine/delta.lisp`](../../src/engine/delta.lisp) |
+| Attivazione immagini M1 | [Pubblicazione a caldo e chiusura dei file al ritiro](attivazione-indice-m1.md); scelta del controller, senza catalogo durevole | [`src/engine/image-activation.lisp`](../../src/engine/image-activation.lisp) |
 | Costruzione immagini M1 | [Piano da slot canonici, radix adattivo e verifica completa](costruzione-indice-m1.md); senza attivazione automatica | [`src/engine/image-build.lisp`](../../src/engine/image-build.lisp) |
 | Indice paginato M1 | [Fonte canonica, startup, GET e ritiro seriale](indice-paginato-m1.md); residente ancora presente, catalogo durevole separato | [`src/engine/image-recovery.lisp`](../../src/engine/image-recovery.lisp) |
 | Immagini indice e root | [Sigillo, verifica readonly e adozione seriale](immagini-indice-paginato.md); [startup M1 e GET seriale](indice-paginato-m1.md) collegati, catalogo durevole separato | [`src/index/image-recovery.lisp`](../../src/index/image-recovery.lisp) |

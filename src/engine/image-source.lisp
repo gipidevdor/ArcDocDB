@@ -55,11 +55,11 @@ Non presta indice o FD; diventa obsoleto al commit seguente, nessuna prenotazion
                          (member :live :absent :retry-limit)) sonda-indice-motore))
 (defun sonda-indice-motore (engine key start end probe destination)
   "Pre: GET ammesso nel contesto dell'attore M1, indice corrente stabile, scratch privati.
-Post: un solo backend; errori paginati propagati senza ripiego. Nessuna allocazione intenzionale."
+Post: delta toccato dal residente, altrimenti immagine se attiva; errori paginati propagati senza ripiego. Nessuna allocazione intenzionale."
   (esigi-owner-motore engine)
   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-image-lookup-admission))
   (let ((paged (motore-paged engine)))
-    (if paged
+    (if (and paged (not (chiave-nel-delta-motore-p engine key start end)))
         (arcdocdb.index.page:leggi-vista-indice-paginato paged key start end destination)
         (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key start end)
           (p:leggi-indice-primario (motore-index engine) key start end high low probe destination)))))

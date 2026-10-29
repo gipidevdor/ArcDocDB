@@ -155,3 +155,7 @@ risultato consolidato è in [architettura.md](../architettura.md) e
 | [0064](0064-adozione-indice-paginato-m1.md) | Fonte canonica M1, candidato esplicito readonly, GET paginato e ritiro prima della scrittura | Accettata nell’integrazione incrementale; catalogo durevole separato |
 
 | [0065](0065-costruzione-immagini-dal-motore.md) | Produzione bounded delle immagini dal residente M1, radix adattivo e verifica prima del successo | Accettata nell’integrazione incrementale; attivazione automatica separata |
+
+| [0066](0066-attivazione-seriale-immagini-m1.md) | Attivazione privata a caldo, ownership limitata e chiusura al ritiro dell’immagine M1 | Accettata nell’integrazione incrementale; selezione automatica e catalogo durevole separati |
+
+| [0067](0067-delta-seriale-indice-m1.md) | Membership esatta e bounded per PUT/DELETE senza ritiro dell’immagine M1 | Accettata nell’integrazione incrementale; residente ancora completo |

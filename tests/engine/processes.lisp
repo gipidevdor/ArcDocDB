@@ -8,6 +8,10 @@
 
 (defun child-main (arguments)
   (destructuring-bind (mode path format stage) arguments
+    (when (and (>= (length mode) 6) (string= mode "delta-" :end1 6))
+      (return-from child-main (delta-child-main arguments)))
+    (when (and (>= (length mode) 9) (string= mode "activate-" :end1 9))
+      (return-from child-main (activation-child-main arguments)))
     (when (and (>= (length mode) 6) (string= mode "build-" :end1 6))
       (return-from child-main (build-image-child-main arguments)))
     (when (and (>= (length mode) 6) (string= mode "image-" :end1 6))

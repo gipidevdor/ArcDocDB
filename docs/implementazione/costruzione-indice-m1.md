@@ -15,7 +15,8 @@ Il motore deve essere READY, chiamato dal proprio attore e senza richieste
 in volo. L'opzione indica un nuovo nome nella directory gia' esclusiva;
 il suo ID esadecimale deve stare in 1..2^60-1. Il ritorno e' lo stesso oggetto
 `option`: si puo' passare ad `apri-motore :index-image` dopo avere chiuso
-l'handle corrente. Il successo non cambia il backend corrente e non
+l'handle corrente, oppure al successivo [attivatore a caldo](attivazione-indice-m1.md)
+sullo stesso handle con una richiesta distinta. Il successo non cambia il backend corrente e non
 mantiene FD dell'immagine. Una scrittura successiva rende obsoleto il file;
 lo startup continuera' a rifiutarlo se non corrisponde piu' alla fonte.
 

@@ -232,7 +232,7 @@
 
  (:id "REQ-IDX-010" :src "ADR-0063" :cls "C1" :stato :progettato
   :txt "Una root paginata e' adottata soltanto da un'immagine completa verificata readonly contro fonte canonica, seme, conteggio e candidati autorevoli; completamento derivato distinto dal commit dati, budget cumulativi e rifiuto di duplicati/entry irraggiungibili."
-  :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0063" "ADR-0064" "ADR-0065" "ADR-0058" "ADR-0057") :ver (:test :diff :corr :fi :rev) :fi ("FI-06" "FI-10"))
+  :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0063" "ADR-0064" "ADR-0065" "ADR-0066" "ADR-0067" "ADR-0058" "ADR-0057") :ver (:test :diff :corr :fi :rev) :fi ("FI-06" "FI-10"))
 
  ;; ---- Cache -------------------------------------------------------------------
  (:id "REQ-CCH-001" :src "Cache" :cls "C3" :stato :progettato

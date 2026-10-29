@@ -7,6 +7,15 @@ non ha ancora rilasci del prodotto; le versioni seguiranno la [roadmap](docs/roa
 
 ### Aggiunto
 
+- [Delta seriale M1](docs/implementazione/delta-indice-m1.md) opzionale: PUT/DELETE
+  conservano l’immagine; membership esatta preallocata, quote prima del CSN/WAL
+  e letture delle chiavi toccate dal residente canonico (ADR-0067).
+
+- Attivazione a caldo delle immagini primarie M1 ([ADR-0066](docs/adr/0066-attivazione-seriale-immagini-m1.md)):
+  verifica completa prima dello swap privato, quota comprensiva della vecchia cache,
+  chiusura del file precedente e ritiro prima di qualsiasi effetto WAL.
+  [Contratto e limiti](docs/implementazione/attivazione-indice-m1.md).
+
 - Produzione delle immagini paginate dal motore M1 ([ADR-0065](docs/adr/0065-costruzione-immagini-dal-motore.md)):
   snapshot degli slot canonici senza copia globale delle chiavi, radix adattivo,
   sigillo e verifica readonly prima del successo; file locali chiusi su ogni uscita.

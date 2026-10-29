@@ -43,11 +43,15 @@ confronta tutte le cinque word con il residente, azzerando nel confronto
 solo l'offset dell'arena residente. Il verificatore del container continua
 a controllare hash, root, unicita', routing, conteggio e budget cumulativo.
 
+L'[attivazione a caldo](attivazione-indice-m1.md) permette anche il passaggio
+al paginato sullo stesso handle, dopo una nuova verifica integrale.
+
 Il file e l'EOF provengono dalla medesima apertura relativa readonly e
-verificata, sotto il lock di directory gia' esistente. Il FD viene registrato
-prima della verifica ed e' chiuso dal cleanup del motore, anche su errore o
-uscita non locale. Resta aperto fino al close anche quando l'immagine e'
-ritirata; nessun ritiro concorrente o reclaim viene dichiarato.
+verificata, sotto il lock di directory gia' esistente. Il FD viene posseduto
+in uno slot separato prima della verifica ed e' chiuso anche su startup
+incompleto. Il successivo [protocollo di attivazione e ritiro](attivazione-indice-m1.md)
+chiude il FD quando la root viene sostituita o ritirata, prima del close finale
+dell'handle. Nessun GET concorrente puo' trattenere quella capacita'.
 
 L'ammissione READY segue la verifica completa. File selezionato mancante,
 EOF o fonte incompatibili, budget esaurito e guasti di lettura rifiutano

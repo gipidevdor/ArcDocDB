@@ -92,11 +92,15 @@ incompleti rendono FAULTED. I callback non possono rientrare nel motore READY."
   (esigi-motore-pronto engine)
   (verifica-input-scrittura-motore engine kind key value)
   (verifica-capienza-indice-motore engine kind key)
+  (verifica-capienza-delta-motore engine key)
   (let ((complete nil) (cause nil))
     (unwind-protect
          (handler-case
              (progn
-               (setf (motore-busy engine) t (motore-paged engine) nil)
+               (setf (motore-busy engine) t)
+               (if (motore-delta engine)
+                   (registra-chiave-delta-motore engine key t)
+                   (ritira-indice-paginato-motore engine))
                (let ((csn (commetti-record-motore engine kind key value)))
                  (declare (type b:u64 csn))
                  (unless (and (motore-busy engine) (eq (motore-state engine) :ready)

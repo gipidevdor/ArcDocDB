@@ -1,0 +1,17 @@
+;;;; Driver C4: SIGKILL e riavvio di immagini derivate, nessuna fonte di dati o catalogo costruita dal prodotto.
+(require :asdf)
+(require :sb-posix)
+(setf asdf:*compile-file-failure-behaviour* :error asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                         (unless (typep condition 'sb-kernel:redefinition-warning) (error condition)))))
+  (asdf:load-asd (merge-pathnames "../arcdocdb.asd" *load-truename*))
+  (asdf:load-system "arcdocdb/tests"))
+(handler-case
+    (let ((args (uiop:command-line-arguments)))
+      (cond ((equal args '("--self-test"))
+             (uiop:symbol-call :arcdocdb.index.page.tests :req-idx-010-sigkill-prima-dopo-footer-flush-e-recovery-readonly))
+            ((= (length args) 3) (uiop:symbol-call :arcdocdb.index.page.tests :image-process-main args))
+            (t (error "Uso: --self-test oppure MODE DIRECTORY STAGE."))))
+  (error (condition)
+    (format *error-output* "~&IMAGE-FAIL ~A: ~A~%" (type-of condition) condition)
+    (sb-ext:exit :code 1)))

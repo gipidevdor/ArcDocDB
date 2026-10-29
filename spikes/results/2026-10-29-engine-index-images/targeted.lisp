@@ -1,0 +1,16 @@
+;;;; C4: solo i test del collegamento, compresi processi SIGKILL indipendenti.
+(require :asdf)
+(setf asdf:*compile-file-warnings-behaviour* :error asdf:*compile-file-failure-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                         (unless (typep condition 'sb-kernel:redefinition-warning) (error condition)))))
+  (asdf:load-asd (truename "arcdocdb.asd"))
+  (asdf:load-system "arcdocdb/tests"))
+(in-package #:arcdocdb.engine.tests)
+(let ((count 0) (prefix "TEST-REQ-IDX-010-"))
+  (dolist (test (reverse *tests*))
+    (let ((name (symbol-name test)))
+      (when (and (>= (length name) (length prefix)) (string= name prefix :end1 (length prefix)))
+        (funcall test) (incf count) (format t "~&ok    ~A~%" test))))
+  (assert (= count 11))
+  (format t "~&~S~%" (list :kind :engine-index-images :status :passed :tests count
+                          :sigkill-cases 6 :power-loss-qualification nil)))

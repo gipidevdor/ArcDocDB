@@ -38,25 +38,29 @@ Gate prima degli effetti, checkpoint e nomi prima di indice/runtime/radice; erro
                                (:max-file-bytes index) (:max-record-bytes index) (:max-records u32)
                                (:max-segments index) (:index-capacity index) (:key-arena-bytes index)
                                (:hash-seed-high u32) (:hash-seed-low u32)
-                               (:index-image (or null opzione-indice-paginato))) motore) apri-motore))
+                               (:index-image (or null opzione-indice-paginato))
+                               (:index-discovery (or null opzione-scoperta-indice))) motore) apri-motore))
 (defun apri-motore (directory archive-id series-id
                    &key (create nil) (version 2) clock observer record-validator (max-file-bytes 16777216)
                         (max-record-bytes 65536) (max-records 65536) (max-segments 64)
                         (index-capacity 4096) (key-arena-bytes 1048576) (hash-seed-high #x243f6a88)
-                        (hash-seed-low #x85a308d3) index-image)
+                        (hash-seed-low #x85a308d3) index-image index-discovery)
   "Pre: directory esistente privata, UUID espliciti, clock monotono iniettabile, nessuna cancellazione thread.
 Post: unico writer fisico e motore READY; init esplicito o recovery automatico senza harness.
-INDEX-IMAGE seleziona un derivato esistente verificato prima di READY; incompatibile con CREATE.
+INDEX-IMAGE seleziona un derivato; INDEX-DISCOVERY cerca footer coerenti con il canonico.
+Entrambe le scelte richiedono verifica completa prima di READY, sono esclusive e incompatibili con CREATE.
 Punti durevoli nei preparatori/publisher esistenti; nessuna admission prima di indice e fonti completi.
 Errori tipizzati, risorse tutte tentate; causa primaria e cleanup conservati, nessun retry/rollback."
   (when (and create index-image) (error 'invalid-argument :reason :engine-image-on-create))
+  (when (and create index-discovery) (error 'invalid-argument :reason :engine-discovery-on-create))
+  (when (and index-image index-discovery) (error 'invalid-argument :reason :engine-image-discovery-conflict))
   (unless (typep record-validator '(or null function))
     (error 'invalid-argument :reason :engine-record-validator))
   (verifica-configurazione-motore archive-id series-id version clock observer
                                  max-file-bytes max-records max-segments max-record-bytes)
   (let ((engine (%make-motore :archive-id (copy-seq archive-id) :series-id (copy-seq series-id)
                    :clock clock :observer observer :record-validator record-validator
-                   :version version :image-option index-image :max-file-bytes max-file-bytes
+                   :version version :image-option index-image :discovery-option index-discovery :max-file-bytes max-file-bytes
                    :max-record-bytes max-record-bytes :max-records max-records :max-segments max-segments
                    :scratch (make-array max-file-bytes :element-type '(unsigned-byte 8) :initial-element 0)
                    :empty (make-array 0 :element-type '(unsigned-byte 8)))) (complete nil) (cause nil))

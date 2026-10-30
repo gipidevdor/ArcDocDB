@@ -34,6 +34,7 @@ Nessun accessore pubblico sui FD o sulle radici; la capacita' non e' trasferibil
   (empty #() :type octets :read-only t)
   (words (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0)
          :type (simple-array (unsigned-byte 64) (5)) :read-only t)
+  (discovery-option nil :type (or null opzione-scoperta-indice) :read-only t)
   (image-option nil :type (or null opzione-indice-paginato) :read-only t)
   (delta nil :type (or null delta-indice-motore))
   (paged nil :type (or null arcdocdb.index.page:vista-indice-paginato))

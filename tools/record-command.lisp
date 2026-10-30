@@ -22,7 +22,9 @@
                                  :separator '(#\Null))
                       when (and (plusp (length path))
                                 (not (uiop:string-prefix-p "spikes/results/" path))) collect path))
-         (presenti (remove-if-not #'probe-file paths))
+         ;; Git separa tracked/untracked: normalizzare l'ordine, senza ignorare hash o path.
+         (ordered (sort paths #'string<))
+         (presenti (remove-if-not #'probe-file ordered))
          ;; Un solo processo Git per lo snapshot, mantenendo l'ordine argv/output.
          (hashes (when presenti (uiop:split-string
                                  (comando-output (append '("git" "hash-object" "--") presenti))
@@ -31,7 +33,7 @@
     (unless (= (length presenti) (length hashes))
       (error 'recording-error :messaggio "Hash dei sorgenti incompleti."))
     (loop for path in presenti for hash in hashes do (setf (gethash path tabella) hash))
-    (loop for path in paths collect (list :path path :git-blob (gethash path tabella :absent)))))
+    (loop for path in ordered collect (list :path path :git-blob (gethash path tabella :absent)))))
 
 (defun ambiente ()
   "Metadata osservati; il carico esterno non è controllato."
@@ -87,8 +89,43 @@
     (sb-posix:mkdir path #o700)
     path))
 
+(defun self-test-record-command ()
+  "Regressione reale su indice Git: promozione senza modifiche e tre variazioni di contenuto rilevate."
+  (let ((root (nuovo-direttorio)) (tests 0))
+    (uiop:with-current-directory (root)
+      (flet ((put (path value)
+               (with-open-file (stream path :direction :output :if-exists :supersede)
+                 (format stream "~A~%" value)))
+             (check (value message)
+               (unless value (error 'recording-error :messaggio message))))
+        (comando-output '("git" "init" "-q"))
+        (put "a.lisp" "before") (put "z.md" "stable")
+        (comando-output '("git" "add" "--force" "--" "a.lisp"))
+        (let ((before (sorgenti)))
+          (check (= 2 (length before)) "Fixture snapshot incompleta.")
+          (comando-output '("git" "add" "--force" "--" "z.md"))
+          (check (equal before (sorgenti)) "Solo l'ordine tracked/untracked cambia: falso SOURCE-CHANGED.")
+          (incf tests)
+          (put "a.lisp" "changed")
+          (check (not (equal before (sorgenti))) "Modifica del contenuto non rilevata.")
+          (incf tests) (put "a.lisp" "before")
+          (delete-file "z.md")
+          (check (not (equal before (sorgenti))) "Rimozione del sorgente non rilevata.")
+          (incf tests) (put "z.md" "stable")
+          (put "new.lisp" "added")
+          (check (not (equal before (sorgenti))) "Aggiunta del sorgente non rilevata.")
+          (incf tests))))
+    (let ((result (list :kind :record-command-self-test :status :passed :tests tests
+                        :git-index-promotion :unchanged :content-change :detected
+                        :removal :detected :addition :detected)))
+      (salva result (merge-pathnames "self-test-report.lisp" root))
+      (format t "~&~S~%" result)))
+  nil)
+
 (defun main ()
   "Uso: [--out directory/] -- argv...; il percorso esplicito non sovrascrive un run."
+  (when (equal (uiop:command-line-arguments) '("--self-test"))
+    (return-from main (self-test-record-command)))
   (let* ((args (uiop:command-line-arguments))
          (explicit (when (equal (first args) "--out") (second args)))
          (args (if explicit (cddr args) args)) (argv (rest args)))

@@ -7,6 +7,10 @@ non ha ancora rilasci del prodotto; le versioni seguiranno la [roadmap](docs/roa
 
 ### Aggiunto
 
+- [Scoperta readonly delle immagini M1](docs/implementazione/scoperta-indice-m1.md)
+  allo startup: inventario/candidati bounded, filtro sulla fonte canonica,
+  priorita' deterministica e verifica integrale obbligatoria (ADR-0070).
+
 - [Manutenzione a soglie del delta M1](docs/implementazione/manutenzione-indice-m1.md):
   policy immutabile su chiavi/byte, sonda readonly e rinnovo verificato solo
   quando necessario; quote preservate e no-op senza I/O (ADR-0069).

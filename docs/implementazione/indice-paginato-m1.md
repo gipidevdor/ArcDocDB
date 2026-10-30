@@ -109,3 +109,10 @@ Il residente resta allocato e limita ancora PUT e replay. Non si misura qui
 capacita' oltre RAM, throughput, RSS, migrazione automatica, snapshot o
 pubblicazione durevole nel catalogo. Questo incremento chiude soltanto il
 collegamento seriale startup/GET/ritiro del profilo M1.
+
+## Ricerca opzionale allo startup
+
+[ADR-0070](../adr/0070-scoperta-readonly-immagini-m1.md) aggiunge
+`:index-discovery`, alternativa alla selezione esplicita qui descritta:
+[scansione bounded e verifica completa](scoperta-indice-m1.md). La fonte
+canonica e' sempre ricostruita prima della ricerca; nessun catalogo nuovo.

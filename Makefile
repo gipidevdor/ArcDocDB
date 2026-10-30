@@ -3,7 +3,7 @@ EVIDENCE_DYNAMIC_SPACE_SIZE ?= 2048
 EVIDENCE_JOBS ?= 4
 EVIDENCE_WORKER_SECONDS ?= 300
 
-.PHONY: build test lint lint-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check ci-status ci-selftest ci-audit
+.PHONY: build test lint lint-selftest record-command-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check ci-status ci-selftest ci-audit
 build test:  ## compila senza avvisi (COD-01) ed esegue gli smoke test
 	$(SBCL) --noinform --no-userinit --non-interactive --load tools/build.lisp
 
@@ -12,6 +12,9 @@ lint:  ## divieti dello standard di codifica sul codice di prodotto (src/)
 
 lint-selftest:  ## verifica il linter su codice di prova corretto e scorretto
 	$(SBCL) --script tools/lint.lisp --self-test
+
+record-command-selftest:  ## invarianti dello snapshot sorgenti anche se cambia lo stato Git
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --self-test
 
 snapshot-mutation-selftest:  ## verifica classificazione e diagnostiche del runner snapshot
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/snapshot-mutation.lisp --self-test
@@ -65,6 +68,6 @@ ci-status:  ## dati riferiti esattamente ai sorgenti attuali
 ci-selftest:  ## confini wire, catalogo, metriche, workflow e archivi CI
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- $(SBCL) --noinform --no-userinit --no-sysinit --script tools/ci.lisp self-test --out spikes/out/ci/selftest-$(shell date +%s)-$(shell echo $$$$)
 
-ci-audit: lint-selftest snapshot-mutation-selftest reader-mutation-selftest fulltext-check evidence-selftest evidence spikes-check ci-selftest
+ci-audit: lint-selftest record-command-selftest snapshot-mutation-selftest reader-mutation-selftest fulltext-check evidence-selftest evidence spikes-check ci-selftest
 
-check-core: test lint lint-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check ci-selftest  ## controlli chiamati dal registro
+check-core: test lint lint-selftest record-command-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check ci-selftest  ## controlli chiamati dal registro

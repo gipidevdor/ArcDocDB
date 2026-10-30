@@ -8,6 +8,7 @@ Ogni metodo e risultato conserva il proprio perimetro.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
+| Scoperta immagini M1 | [Inventario bounded, fonte canonica e adozione integralmente verificata](scoperta-indice-m1.md) | [`src/engine/image-discovery.lisp`](../../src/engine/image-discovery.lisp) |
 | Manutenzione delta M1 | [Policy su chiavi/byte e rinnovo solo alla soglia](manutenzione-indice-m1.md) | [`src/engine/image-maintenance.lisp`](../../src/engine/image-maintenance.lisp) |
 | Rinnovo immagini M1 | [Costruzione e attivazione sotto una admission, quota totale e delta vuoto](rinnovo-indice-m1.md) | [`src/engine/image-renewal.lisp`](../../src/engine/image-renewal.lisp) |
 | Delta immagini M1 | [Membership esatta bounded per PUT/DELETE](delta-indice-m1.md); residente ancora completo | [`src/engine/delta.lisp`](../../src/engine/delta.lisp) |

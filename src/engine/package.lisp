@@ -17,6 +17,7 @@
            #:scrivi-documento #:cancella-documento #:leggi-documento #:frontiere-motore
            #:opzione-indice-paginato #:crea-opzione-indice-paginato #:fonte-indice-motore #:modo-indice-motore
            #:costruisci-indice-paginato-motore #:attiva-indice-paginato-motore #:rinnova-indice-paginato-motore
+           #:opzione-scoperta-indice #:crea-opzione-scoperta-indice
            #:politica-rinnovo-indice #:crea-politica-rinnovo-indice
            #:rinnovo-indice-richiesto-p #:mantieni-indice-paginato-motore
            #:errore-cleanup-motore #:causa-cleanup-motore #:errori-cleanup-motore))

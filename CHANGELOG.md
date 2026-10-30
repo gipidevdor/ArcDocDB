@@ -7,6 +7,10 @@ non ha ancora rilasci del prodotto; le versioni seguiranno la [roadmap](docs/roa
 
 ### Aggiunto
 
+- [Manutenzione a soglie del delta M1](docs/implementazione/manutenzione-indice-m1.md):
+  policy immutabile su chiavi/byte, sonda readonly e rinnovo verificato solo
+  quando necessario; quote preservate e no-op senza I/O (ADR-0069).
+
 - [Rinnovo seriale delle immagini M1](docs/implementazione/rinnovo-indice-m1.md):
   costruzione, verifica e attivazione sotto BUSY continuo, quota totale prima
   della creazione e delta vuoto per nuove scritture (ADR-0068).

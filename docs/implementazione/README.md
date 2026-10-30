@@ -27,6 +27,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
+| Manutenzione delta M1 | [Policy su chiavi/byte e rinnovo solo alla soglia](manutenzione-indice-m1.md) | [`src/engine/image-maintenance.lisp`](../../src/engine/image-maintenance.lisp) |
 | Rinnovo immagini M1 | [Costruzione e attivazione sotto una admission, quota totale e delta vuoto](rinnovo-indice-m1.md) | [`src/engine/image-renewal.lisp`](../../src/engine/image-renewal.lisp) |
 | Delta immagini M1 | [Membership esatta bounded per PUT/DELETE](delta-indice-m1.md); residente ancora completo | [`src/engine/delta.lisp`](../../src/engine/delta.lisp) |
 | Attivazione immagini M1 | [Pubblicazione a caldo e chiusura dei file al ritiro](attivazione-indice-m1.md); scelta del controller, senza catalogo durevole | [`src/engine/image-activation.lisp`](../../src/engine/image-activation.lisp) |

@@ -65,3 +65,7 @@ paginato autonomo. Prove riproducibili e limiti nel
 La [richiesta unica di rinnovo](rinnovo-indice-m1.md), introdotta da ADR-0068,
 costruisce e attiva una nuova immagine con delta vuoto sotto BUSY continuo.
 Il preflight riserva il payload di tutte le fasi prima di creare il file.
+
+La [manutenzione a soglie](manutenzione-indice-m1.md) di ADR-0069 permette
+al controller di sondare occupazione chiavi/byte e rinnovare soltanto quando
+la soglia e' raggiunta. Non ammette automaticamente una scrittura futura.

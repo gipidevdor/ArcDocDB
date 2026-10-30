@@ -1,29 +1,33 @@
-# Seconda lettura della scansione strutturale CBOR
+<a id="seconda-lettura-della-scansione-strutturale-cbor"></a>
 
-L'autore degli oracoli ha congelato lo snapshot originale dei tre file di test
-prima di leggere i sei file nuovi del kernel. Il supporto è stato scritto da un revisore subordinato
-nativo, anch'esso senza leggere il nuovo prodotto o lo spike; la consegna e il
-modello sono stati riletti dall'autore principale. Sono stati usati solo il
-contratto congelato, RFC 8949, documentazione del repository e oracolo freddo
-dell'header già congelato. Nessun parser di prodotto è usato come expected.
-Questa lettura statica locale è indipendente dall'autore del kernel e non è
-un'approvazione umana. Nessuna campagna è stata eseguita dal revisore.
+# Second reading of CBOR structural scanning
 
-Dopo la lettura, il coordinatore ha autorizzato soltanto un supplemento al
-test di profondità esistente: 100 array singolo figlio seguiti da stringa
-indefinita, chunk vuoto e break, sia testo sia bytes. I due expected
-(102 nodi, picco 100, uso di slot 101) derivano dal contratto, ma sono stati
-scritti dopo aver letto il prodotto. Non si dichiara quindi che l'intero file
-attuale sia stato congelato prima della lettura. Il file originale e il
-referto dati originale sono stati conservati byte per byte prima di cambiarli:
-`/tmp/cbor-structure-tests-original-before-read.lisp` (blob originale
-`d2f1ee8e57c0d587c7c1a7274ed171c16fb4fb53`) e
-`/tmp/cbor-structure-independent-review-before-supplement.lisp`. L'oracolo,
-gli altri expected, il test concorrente e il kernel sono rimasti invariati.
+The oracle author froze the original snapshot of three test files
+before reading the six new kernel files. Support was written by a native subordinate
+reviewer, also without reading new product or spike; delivery and
+model were reread by the main author. Only frozen
+contract, RFC 8949, repository documentation, and already-frozen cold header
+oracle were used. No product parser is used as expectation.
+This local static reading is independent of kernel author and is not
+human approval. No campaign was run by reviewer.
 
-## Identità dello snapshot
+After reading, the coordinator authorized only a supplement to the
+existing depth test: 100 single-child arrays followed by indefinite
+string, empty chunk, and break, both text and bytes. Both expectations
+(102 nodes, peak 100, slot 101 use) derive from contract but were
+written after reading product. It is therefore not claimed that the whole current
+file was frozen before reading. Original file and original data
+report were preserved byte for byte before changes:
+`/tmp/cbor-structure-tests-original-before-read.lisp` (original blob
+`d2f1ee8e57c0d587c7c1a7274ed171c16fb4fb53`) and
+`/tmp/cbor-structure-independent-review-before-supplement.lisp`. Oracle,
+other expectations, concurrent test, and kernel remained unchanged.
 
-Git blob, verificati dopo il freeze dei test e prima delle campagne:
+<a id="identità-dello-snapshot"></a>
+
+## Snapshot identity
+
+Git blobs, checked after test freeze and before campaigns:
 
 | File | Blob |
 |---|---|
@@ -34,86 +38,90 @@ Git blob, verificati dopo il freeze dei test e prima delle campagne:
 | `src/codec/cbor-scan-items.lisp` | `70272936e323b3e0cb05173c9fb68cb2b614c355` |
 | `src/codec/cbor-scan.lisp` | `1f89112b43a39d98cf25dc6dfb34e412428ba843` |
 | `tests/codec/cbor-structure-support.lisp` | `e9cc8a08917903cab7b7f5617225884b7d89e6c4` |
-| `tests/codec/cbor-structure.lisp` con supplemento | `7e9b7a518bc3a260d721e85d62ff986553bb06de` |
+| `tests/codec/cbor-structure.lisp` with supplement | `7e9b7a518bc3a260d721e85d62ff986553bb06de` |
 | `tests/codec/cbor-structure-threads.lisp` | `3624e1dde5f5a484a117f4c783d4e6b88027cc89` |
 
-I 24 test nominali comprendono vettori manuali, 256 AST con metadata generati
-durante la costruzione e mutazione trailing di ciascuno, 512 span sui 256 lead,
-4096 span casuali deterministici di 1..64 byte (seed `49CBA017`), troncature ad
-ogni offset di due fixture miste. Il modello indipendente è ricorsivo a freddo
-con limiti di 64 byte e 64 chiamate; accumula argomenti aritmeticamente e usa
-la grammatica UTF-8 manuale per la priorità degli errori. SBCL conferma solo
-l'accettazione del testo, senza fornire gli offset attesi.
+The 24 named tests include manual vectors, 256 ASTs with metadata generated
+during construction and a trailing mutation for each, 512 spans over 256 leads,
+4096 deterministic random spans of 1..64 bytes (seed `49CBA017`), truncations at
+every offset of two mixed fixtures. Independent model is cold recursive,
+with 64-byte and 64-call limits; accumulates arguments arithmetically and uses
+manual UTF-8 grammar for error priority. SBCL confirms only
+text acceptance, without supplying expected offsets.
 
-## Riscontri statici
+<a id="riscontri-statici"></a>
 
-Il preflight non legge byte e precede `azzera-spazio-cbor`. Verifica l'array
-semplice, gli estremi index e lo span prima dell'accesso allo scratch; poi
-workspace, alias, configurazioni e byte-budget nell'ordine pattuito. Nel test
-alias l'array kinds viene reso nonzero prima del rifiuto per osservare una
-modifica indebita. Questa fixture osserva kinds, mentre l'assenza di qualsiasi
-scrittura preflight viene verificata staticamente sul kernel completo.
+## Static findings
 
-Il padre è addebitato una volta all'inizio del terminale non-tag. Il tag conta
-un nodo e conserva pending senza aggiungere frame; un tag davanti a un
-contenitore consuma arità solo quando quel contenitore inizia. Le map
-indefinite alternano chiave/valore anche per figli taggati o contenitori. Il
-break controlla tag, frame indefinito e parità, non conta un nodo e chiude un
-solo frame. Il drain poppa soltanto i frame definiti con arità esaurita.
+Preflight reads no bytes and precedes `azzera-spazio-cbor`. It checks simple
+array, index endpoints, and span before scratch access; then
+workspace, aliases, configurations, and byte-budget in agreed order. In alias
+test, kinds array is made nonzero before rejection to observe an
+improper change. This fixture observes kinds, while absence of any
+preflight write is checked statically on complete kernel.
 
-Lo stack fisso copre radice + 100 array/map + una stringa indefinita: top 101
-è l'ultimo indice valido dei 102 slot. Le stringhe indefinite non si annidano
-tra chunk; le due fixture supplementari esercitano quel limite combinato.
-I tag non occupano frame. Array e map vuoti aumentano comunque il
-picco. I limiti di nodi e profondità precedono incremento/push; ogni passo
-consuma almeno un byte, il ciclo esterno è limitato allo span e il drain a 102
-passi. Non c'è ricorsione, attesa o creazione di thread nel prodotto.
+Parent is charged once at the start of non-tag terminal. A tag counts
+one node and retains pending without adding frame; a tag before a
+container consumes arity only when that container starts. Indefinite
+maps alternate key/value even for tagged children or containers.
+Break checks tag, indefinite frame, and parity, counts no node, and closes
+one frame only. Drain pops only definite frames with exhausted arity.
 
-Argomenti u64 rimangono high/low u32. La guardia high zero e low entro il room
-precede l'addizione del payload; map confronta coppie con floor(room/2) prima
-di raddoppiarle. Non è necessario costruire un intero u64 boxed. Payload
-troncato precede UTF-8; ogni chunk viene validato separatamente con offset
-assoluti. La radice completa segnala trailing prima di interpretare un secondo
-header. Escono esattamente tre valori dopo controllo di cursore, budget e
-assenza di frame/depth/tag residui; nessun AST o contenuto decodificato esce.
+Fixed stack covers root + 100 arrays/maps + one indefinite string: top 101
+is the last valid index of 102 slots. Indefinite strings do not nest
+between chunks; both supplementary fixtures exercise that combined limit.
+Tags occupy no frames. Empty arrays and maps still increase
+peak. Node and depth limits precede increment/push; each step
+consumes at least one byte, outer loop is span-bounded, and drain bounded to 102
+steps. No recursion, wait, or thread creation in product.
 
-Scratch e buffer sono del chiamante. Lo scratch non conserva riferimenti al
-buffer; i due array hanno riferimenti read-only e contenuto esclusivo. Il
-successo non presenta costruttori espliciti; ciò non attesta zero heap, che
-deve essere misurato su chiamate riuscite con fixture e scratch preallocati.
-Factory fredda e condizioni d'errore restano fuori dalla misura.
+u64 arguments remain high/low u32. Guard of zero high and low within room
+precedes payload addition; map compares pairs with floor(room/2) before
+doubling. No boxed u64 integer needs construction. Truncated
+payload precedes UTF-8; each chunk is validated separately with absolute
+offsets. Complete root signals trailing before interpreting a second
+header. Exactly three values emerge after checking cursor, budget, and
+absence of residual frames/depth/tags; no AST or decoded content emerges.
 
-Il test concorrente prealloca due buffer e due scratch distinti, controlla
-esattamente tre valori, sink e copie integrali. Sono previste 48 scansioni,
-2.359.344 nodi e 5.505.168 byte; sink attesi 4.718.784 e 3.145.920. Questi
-conteggi sono derivati dalle fixture, non risultati osservati. L'intervallo
-misurato con `get-internal-real-time` comincia dopo la barriera e termina
-dopo il calcolo; overlap degli intervalli di lavoro deve essere positivo.
-Non misura tempo CPU, simultaneità su core distinti o numero di core usati.
-Wait 15 s, join 20 s e cleanup 1 s sono limitati; cleanup
-verifica che ciascun worker noto sia terminato. Non è una misura di scaling
-del pool o un'implementazione di apply concorrente.
+Scratch and buffer belong to caller. Scratch retains no buffer
+references; both arrays have read-only references and exclusive contents.
+Success shows no explicit constructors; this does not attest zero heap allocation,
+which must be measured on successful calls with preallocated fixtures and scratch.
+Cold factory and error conditions remain outside measurement.
 
-Nessun difetto funzionale aperto rilevato. Restano pendenti build rigorosa,
-lint, tracciabilità, runtime, copertura, heap e mutazioni. Le difese interne
-propagano `invariant-violation`; il kernel non possiede una Serie o controller
-e non implementa la transizione `FAULTED`. Profilo deterministico, semantica
-dei tag, chiavi duplicate/ordinate, writer admission e gate del motore restano
-da implementare o verificare nei proprietari successivi.
+Concurrent test preallocates two buffers and two separate scratch areas, checks
+exactly three values, sinks, and complete copies. 48 scans,
+2,359,344 nodes, and 5,505,168 bytes are planned; expected sinks 4,718,784 and 3,145,920.
+These counts derive from fixtures, not observed results. The interval
+measured with `get-internal-real-time` starts after barrier and ends
+after computation; work-interval overlap must be positive.
+It does not measure CPU time, simultaneous execution on distinct cores, or core count used.
+Wait 15 s, join 20 s, and cleanup 1 s are bounded; cleanup
+checks every known worker has terminated. This is not a pool-scaling
+measurement or concurrent apply implementation.
 
-## Dodici punti C1
+No open functional defect detected. Strict build,
+lint, traceability, runtime, coverage, heap measurement, and mutations remain pending. Internal defenses
+propagate `invariant-violation`; kernel owns neither Serie nor controller
+and does not implement `FAULTED` transition. Deterministic profile, tag semantics,
+duplicate/ordered keys, writer admission, and engine gates remain
+to be implemented or verified by subsequent owners.
 
-| Punto | Lettura e limite |
+<a id="dodici-punti-c1"></a>
+
+## Twelve C1 points
+
+| Item | Reading and limit |
 |---|---|
-| 1. Requisiti/ADR | LIM-001/002 e AFF-004/008; CON-005 solo nella fixture concorrente. ADR-0048 per byte/profondità; ADR-0014 limitata allo scope strutturale, profilo ancora successivo. |
-| 2. Invarianti | Progresso, arità, parità, budget, frame/depth, ownership, immutable input e riuso hanno fixture indipendenti. Difese interne non sono dichiarate tutte esercitate. |
-| 3. Errori | Gerarchia tipizzata e reason/offset/precedenze pubbliche controllate; gestione del fault owner futura. Campagne pendenti. |
-| 4. Limiti | Prodotto iterativo: span passi, drain 102, depth 100; test/model/worker con tetti espliciti. |
-| 5. Heap | Nessun costruttore sul successo; factory separata. Attestazione heap **pendente**. |
-| 6. Uscita | Tre contatori/offset soltanto dopo item esatto e postcondizioni; buffer mai modificato. |
-| 7. Decisioni | [Inventario](cbor-struttura-decisioni.md): 20 composte, nessuna esclusione del denominatore; copertura e MC/DC non attestati. |
-| 8. Ownership | Buffer immutabile, scratch esclusivo per chiamata/worker, nessun buffer trattenuto o stato globale mutabile. |
-| 9. Integrazione | ASDF ordina header/UTF-8 prima dello scanner e supporto test prima della suite; `make check` e matrice restano da acquisire sullo snapshot. |
-| 10. Standard | FTYPE completi, slot tipizzati, safety3, docstring e guardie attive; controlli automatici pendenti, nessuna deroga approvata. |
-| 11. Parallelismo | Nessuna attesa/lock/scrittura condivisa per operazione tra Serie nel kernel; fixture privata a due worker, prova runtime ancora pendente. |
-| 12. Durabilità | Nessun I/O, delete o cambiamento durevole: non applicabile al kernel. |
+| 1. Requirements/ADRs | LIM-001/002 and AFF-004/008; CON-005 only in concurrent fixture. ADR-0048 for bytes/depth; ADR-0014 limited to structural scope, profile still subsequent. |
+| 2. Invariants | Progress, arity, parity, budgets, frame/depth, ownership, immutable input, and reuse have independent fixtures. Internal defenses are not all declared exercised. |
+| 3. Errors | Typed hierarchy and public reasons/offsets/precedence checked; future fault-owner handling. Campaigns pending. |
+| 4. Limits | Iterative product: span steps, drain 102, depth 100; tests/model/workers with explicit caps. |
+| 5. Heap | No constructor on success; factory separate. Heap attestation **pending**. |
+| 6. Output | Three counters/offsets only after exact item and postconditions; buffer never modified. |
+| 7. Decisions | [Inventory](cbor-struttura-decisioni.md): 20 compound decisions, no denominator exclusion; coverage and MC/DC not attested. |
+| 8. Ownership | Immutable buffer, exclusive scratch per call/worker, no retained buffer or mutable global state. |
+| 9. Integration | ASDF orders header/UTF-8 before scanner and test support before suite; `make check` and matrix remain to be acquired on snapshot. |
+| 10. Standard | Complete FTYPEs, typed slots, safety3, docstrings, and active guards; automatic checks pending, no exception approved. |
+| 11. Parallelism | No wait/lock/shared write per operation between Serie in kernel; private two-worker fixture, runtime test still pending. |
+| 12. Durability | No I/O, delete, or durable change: not applicable to kernel. |

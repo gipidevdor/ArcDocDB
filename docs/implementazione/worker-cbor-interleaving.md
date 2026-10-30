@@ -1,94 +1,102 @@
-# Rendezvous dei worker nelle fixture concorrenti
+<a id="rendezvous-dei-worker-nelle-fixture-concorrenti"></a>
 
-Metodo preregistrato prima della verifica della correzione. Il tentativo
-locale completo R1 della campagna [lifetime GET](get-lifetime.md) è fallito
-sull'overlap dei worker float; la CI della PR 13, run `38634044870`, è
-fallita su macOS sull'overlap dei worker tag. Ubuntu è riuscito. Le prove
-originali e gli esiti falliti restano distinti e conservati.
+# Worker rendezvous in concurrent fixtures
 
-Il rilascio simultaneo di due crediti del semaforo non impone allo
-scheduler di avviare entrambi i corpi prima che uno termini. Un intervallo
-non sovrapposto può quindi fallire il test dopo risultati corretti.
-La prima correzione riguarda soltanto le fixture float/tag, senza cambiare
-encoder, formati, conteggi di elementi, oracoli o API di prodotto.
+Method preregistered before correction verification. Full local
+attempt R1 of [GET lifetime](get-lifetime.md) campaign failed
+on float-worker overlap; PR 13 CI run `38634044870`
+failed on macOS tag-worker overlap. Ubuntu succeeded. Original
+evidence/failed outcomes separate and preserved.
 
-## Ordine controllato
+Simultaneous release of two semaphore credits does not require
+scheduler to start both bodies before one ends. Nonoverlapping
+interval may therefore fail test after correct results.
+First correction concerns float/tag fixtures only, without changing
+encoders, formats, item counts, oracles, product APIs.
 
-Ogni worker riusato registra il tempo reale iniziale, codifica il primo
-elemento e verifica risultato, immagine completa e contributo al sink.
-Registra poi il tempo del primo checkpoint, segnala `ready` e attende
-`go`. Il controller attende entrambi i checkpoint prima di consentire le
-rimanenti operazioni. Ogni onda mantiene semafori distinti; attese e join
-restano limitati e il cleanup libera le gate prima di arrestare i worker.
+<a id="ordine-controllato"></a>
 
-Nessun worker può terminare il proprio corpo prima che l'altro abbia
-completato il primo elemento. Si verificano `start <= first <= finish`,
-`max(first) <= min(finish)`, durata positiva e overlap positivo. I tempi
-sono osservati, senza arrotondamenti, clamp o timestamp sintetici. Prima
-delle asserzioni temporali vengono stampati e scaricati gli intervalli,
-i checkpoint, i sink e l'overlap, così anche un nuovo fallimento conserva
-la diagnosi. Gli oracoli sui valori e sull'immutabilità restano invariati.
+## Controlled order
 
-La metrica è l'intervallo wall della **fixture** e comprende il rendezvous
-e i controlli. Dimostra l'interleaving imposto dei compiti; non misura
-latency del solo encoder, simultaneità CPU o scaling. I due helper della
-prima correzione hanno un solo chiamante ciascuno nei test e non sono
-usati dai benchmark.
+Every reused worker records initial wall time, encodes first
+item, checks result, full image, sink contribution.
+Then records first-checkpoint time, signals `ready`, waits
+for `go`. Controller waits for both checkpoints before allowing
+remaining operations. Each wave retains distinct semaphores; waits/joins
+bounded, cleanup releases gates before stopping workers.
 
-## Verifica
+No worker can finish body before other has
+completed first item. Check `start <= first <= finish`,
+`max(first) <= min(finish)`, positive duration/overlap. Times
+observed without rounding, clamp, synthetic timestamps. Intervals,
+checkpoints, sinks, overlap printed/flushed before temporal
+assertions, preserving diagnostics even on new failure.
+Value/immutability oracles unchanged.
 
-Prima delle campagne viene congelato un nuovo commit di sorgenti e
-metodo. Una revisione indipendente verifica posizione del checkpoint,
-conteggi e cleanup. `make check` ricompila senza warning ed esegue tutte
-le suite, compresi i quattro casi lifetime v1/v2 invariati; la CI completa
-verifica poi Linux e macOS. Output originali, errori, configurazioni e
-cache private sono conservati; i dati sono letti con READ-EVAL NIL ed EOF,
-mai caricati come codice. Nessuna promozione di qualifica C1 o prestazionale.
+Metric is **fixture** wall interval, including rendezvous
+and checks. Demonstrates imposed task interleaving; measures neither
+encoder-only latency, CPU simultaneity, nor scaling. Two first-correction
+helpers each have one test caller, not used by
+benchmarks.
 
-Requisiti: REQ-CBR-004, REQ-CBR-007, REQ-CON-005, REQ-AFF-004,
-REQ-AFF-008 e REQ-VAL-001.
+<a id="verifica"></a>
 
-## Estensione preregistrata dopo il controllo su main
+## Verification
 
-La PR 13 è stata integrata nel commit
-`05a1c1f1688968c7c64b483a14528945a05b1335`, con la stessa tree del
-checkout CI riuscito. Il successivo run main `38640790953` è riuscito
-su Ubuntu e documentazione ma è fallito su macOS nell'overlap della
-seconda onda ARRAY write. La prima onda stampa un overlap positivo;
-il log della seconda precede ancora la correzione e non contiene gli
-intervalli falliti. I due intervalli FLOAT corretti risultano positivi.
-Il fallimento è conservato e non viene attribuito a un carico esterno.
+New source/method commit frozen before campaigns.
+Independent review checks checkpoint position,
+counts, cleanup. `make check` recompiles without warnings, runs all
+suites including four unchanged v1/v2 lifetime cases; full CI
+then checks Linux/macOS. Original outputs, errors, configurations,
+private caches preserved; data read with READ-EVAL NIL/EOF,
+never loaded as code. No C1/performance qualification promotion.
 
-Due letture indipendenti individuano lo stesso gate naturale in undici
-fixture residue: ARRAY, MAP, SIMPLE e STRING write; header write/read;
-header minimo; scansione minima/strutturale; UTF-8; calcolo della fixture
-di due Serie. Questa estensione riguarda quei test, senza cambiare
-prodotto, requisiti, nomi registrati o le fixture FLOAT/TAG già corrette.
+Requirements: REQ-CBR-004, REQ-CBR-007, REQ-CON-005, REQ-AFF-004,
+REQ-AFF-008, REQ-VAL-001.
 
-Il checkpoint segue una prima operazione reale con i controlli e il sink
-previsti, oppure il primo giro completo del piano. Header write completa
-i sette header del piano e verifica immagine e cursore prima della gate.
-Il test due Serie conserva separatamente il progresso di B mentre A
-mantiene guardia e gettone: il rendezvous del calcolo segue il rilascio
-di entrambe le lease e la prima CRC confrontata con il risultato freddo.
-Nessuna gate trattiene una risorsa necessaria all'altro worker.
+<a id="estensione-preregistrata-dopo-il-controllo-su-main"></a>
 
-I conteggi restano invariati: 8.192 composizioni ARRAY/MAP ciascuno;
-32.768 item SIMPLE/STRING ciascuno; 229.376 header write; 2.097.152 header
-read; 524.288 header minimi; 48 scansioni minime e 48 strutturali;
-128 chiamate UTF-8 per 83.886.080 byte; 64 CRC per ciascuna delle due
-Serie. Nessuna chiamata aggiuntiva dell'operazione misurata. Gli oracoli
-finali, gli input readonly, gli scratch privati e il cleanup limitato
-restano attivi. Le onde riusate conservano semafori distinti.
+## Preregistered extension after main check
 
-Si mantengono overlap strettamente positivo, durata positiva, ordine dei
-checkpoint e diagnostica scaricata prima delle asserzioni temporali.
-Anche le etichette storiche CPU diventano WALL della fixture: includono
-attese e controlli, senza una misura del tempo puro dell'operazione.
+PR 13 integrated in commit
+`05a1c1f1688968c7c64b483a14528945a05b1335`, same tree as
+successful CI checkout. Subsequent main run `38640790953` succeeded
+on Ubuntu/documentation but failed on macOS second ARRAY-write
+wave overlap. First wave prints positive overlap;
+second log still precedes correction, lacks failed
+intervals. Both corrected FLOAT intervals positive.
+Failure preserved, not attributed to external load.
 
-Tre autori lavorano su file esclusivi e si scambiano la revisione delle
-modifiche. Si congela un nuovo commit prima di una sola verifica completa
-con cache ASDF privata nuova. Conteggi e nomi sono derivati dal Git di
-quel commit e dei checkout CI reali; il totale attuale è 1.528 test in
-33 suite più due smoke. I tentativi originali, le configurazioni, i
-registri e le cache vengono conservati prima della pulizia.
+Two independent readings identify same natural gate in eleven remaining
+fixtures: ARRAY, MAP, SIMPLE, STRING write; header write/read;
+minimal header; minimal/structural scanning; UTF-8; two-Serie
+computation fixture. Extension concerns those tests, without product,
+requirement, registered-name changes or already corrected FLOAT/TAG fixtures.
+
+Checkpoint follows first real operation with intended checks/sink
+or first full plan iteration. Header write completes
+all seven planned headers, checks image/cursor before gate.
+Two-Serie test separately preserves B progress while A
+holds guard/token: computation rendezvous follows release
+of both leases and first CRC compared to cold result.
+No gate holds a resource needed by other worker.
+
+Counts unchanged: 8,192 ARRAY/MAP compositions each;
+32,768 SIMPLE/STRING items each; 229,376 header writes; 2,097,152 header
+reads; 524,288 minimal headers; 48 minimal scans, 48 structural scans;
+128 UTF-8 calls across 83,886,080 bytes; 64 CRCs per each of two
+Serie. No extra measured-operation call. Final oracles,
+read-only inputs, private scratch, bounded cleanup
+remain active. Reused waves retain distinct semaphores.
+
+Strictly positive overlap, positive duration, checkpoint order,
+flushed diagnostics before timing assertions retained.
+Historical CPU labels also become fixture WALL: include
+waits/checks, without pure-operation timing measurement.
+
+Three authors work on exclusive files, exchange change
+reviews. New commit frozen before one full check
+with new private ASDF cache. Counts/names derived from that commit's
+Git and actual CI checkouts; current total 1,528 tests in
+33 suites plus two smoke tests. Original attempts, configurations,
+records, caches preserved before cleanup.

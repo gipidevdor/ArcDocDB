@@ -1,58 +1,63 @@
-# Lavorare nel repository
+<a id="lavorare-nel-repository"></a>
 
-[Contribuire](../CONTRIBUTING.md) · [Implementazione](implementazione/README.md)
+# Working in the repository
 
-## Fonti e stato
+[Contributing](../CONTRIBUTING.md) · [Implementation](implementazione/README.md)
 
-La [gerarchia delle fonti e le convenzioni normative](riferimenti.md#convenzioni)
-stabiliscono come leggere specifica, ADR, invarianti e documenti tematici.
-Gli identificativi sono stabili: si ritirano, senza rinumerarli o cancellarne la storia.
+<a id="fonti-e-stato"></a>
+## Sources and status
 
-L'[implementazione](implementazione/README.md) descrive il profilo M1 disponibile;
-la [roadmap](roadmap.md) conserva i criteri di uscita delle fasi. Una componente
-implementata o una misura locale non chiude da sola un gate.
+The [source hierarchy and normative conventions](riferimenti.md#convenzioni)
+define how to read the specification, ADRs, invariants and subject guides.
+Identifiers are stable: retire them without renumbering them or deleting their history.
 
-## Regole
+The [implementation guide](implementazione/README.md) describes the available M1
+profile; the [roadmap](roadmap.md) records phase exit criteria. An implemented
+component or a local measurement does not close a gate on its own.
 
-- **Solo Common Lisp/SBCL**, anche negli spike; contrib ammessi, nessuna dipendenza
-  esterna: [ADR-0001](adr/0001-common-lisp-sbcl.md), [ADR-0027](adr/0027-dipendenze-e-test.md).
-- **Integrità prima delle prestazioni.** Ordine, modello dei guasti e garanzie
-  dichiarabili seguono [ADR-0031](adr/0031-software-critico-criteri-e-priorita.md)
-  e il [caso di affidabilità](affidabilita/README.md).
-- **Standard obbligatorio:** safety almeno 2, nessun warning o style-warning,
-  nessun `ignore-errors`, `truly-the` o `eval`;
-  [regole e controlli](affidabilita/standard-di-codifica.md). Le deviazioni richiedono
-  registrazione e approvazione nel [registro](affidabilita/deviazioni.md).
-- **Parallelismo e atomicità:** le Serie non si attendono tra loro;
-  nessuna nuova coordinazione condivisa senza ADR;
-  un punto di atomicità per operazione, preparare/decidere/completare, recovery
-  senza troncamenti o eliminazioni per assenza. Valgono le
-  [leggi di progetto](adr/0036-leggi-di-progetto.md) e gli [invarianti](invarianti.md).
-- **Garanzie motivate:** nessun argomento probabilistico o temporale come garanzia.
-  Per concorrenza e progresso indicare il perimetro effettivamente dimostrato:
-  [ADR-0032](adr/0032-seqlock-a-64-bit.md), [indice paginato](adr/0058-pagine-indice-primario.md).
-- **Tracciabilità:** requisiti in `tracciabilita/requisiti.lisp`, riferimenti `;;; REQ:`
-  nel codice e ID nei test. Dopo una modifica pertinente eseguire `make trace-write`
-  e `make trace`; la [matrice](tracciabilita/matrice.md) è generata.
-- **Prove riproducibili:** registrare comando, ambiente, revisione, hash dei sorgenti,
-  parametri, risultati, limiti e fallimenti secondo il
-  [registro delle prove](valutazione/registro-delle-prove.md).
-  Nel repository pubblicare sintesi e hash; i raw voluminosi seguono la
-  [conservazione esterna](../spikes/evidence/README.md).
+<a id="regole"></a>
+## Rules
 
-## Dove intervenire
+- **Common Lisp/SBCL only**, including spikes; contribs are allowed, external
+  dependencies are not: [ADR-0001](adr/0001-common-lisp-sbcl.md), [ADR-0027](adr/0027-dipendenze-e-test.md).
+- **Integrity before performance.** Priorities, the fault model and claims that
+  may be made follow [ADR-0031](adr/0031-software-critico-criteri-e-priorita.md)
+  and the [assurance case](affidabilita/README.md).
+- **Mandatory standard:** safety at least 2, no warnings or style warnings,
+  no `ignore-errors`, `truly-the` or `eval`;
+  see the [rules and checks](affidabilita/standard-di-codifica.md). Deviations require
+  recording and approval in the [register](affidabilita/deviazioni.md).
+- **Parallelism and atomicity:** Serie do not wait for one another;
+  no new shared coordination without an ADR;
+  one atomicity point per operation, prepare/decide/complete, and recovery
+  without truncation or deletion based on absence. The
+  [design laws](adr/0036-leggi-di-progetto.md) and [invariants](invarianti.md) apply.
+- **Justified guarantees:** no probabilistic or timing argument may serve as a guarantee.
+  For concurrency and progress, state the scope actually demonstrated:
+  [ADR-0032](adr/0032-seqlock-a-64-bit.md), [paged index](adr/0058-pagine-indice-primario.md).
+- **Traceability:** requirements are in `tracciabilita/requisiti.lisp`, with `;;; REQ:`
+  references in code and IDs in tests. After a relevant change, run `make trace-write`
+  and `make trace`; the [matrix](tracciabilita/matrice.md) is generated.
+- **Reproducible evidence:** record the command, environment, revision, source hashes,
+  parameters, results, limits and failures according to the
+  [evidence register](valutazione/registro-delle-prove.md).
+  Publish summaries and hashes in the repository; large raw data follows the
+  [external retention procedure](../spikes/evidence/README.md).
 
-| Percorso | Contenuto |
+<a id="dove-intervenire"></a>
+## Where to work
+
+| Path | Contents |
 |---|---|
-| `src/`, `tests/` | Prodotto e verifiche dei contratti |
-| `tools/` | Strumenti C4 in Common Lisp |
-| `spikes/` | Esperimenti usa-e-getta, con domanda, metodo e comandi |
-| `docs/` | Specifiche, decisioni, implementazione, valutazione |
+| `src/`, `tests/` | Product and contract verification |
+| `tools/` | C4 tools in Common Lisp |
+| `spikes/` | Disposable experiments with a question, method and commands |
+| `docs/` | Specifications, decisions, implementation and evaluation |
 
-Una modifica di requisito parte dalla specifica o da un ADR che la emenda e si
-propaga nello stesso commit a invarianti e documenti. Un ADR accettato resta
-immutato; una questione risolta conserva il riferimento alla decisione.
+A requirement change starts in the specification or an ADR that amends it and
+propagates to invariants and documents in the same commit. An accepted ADR remains
+unchanged in meaning; a resolved question retains its decision reference.
 
-Si scrive una volta sola con la soluzione migliore nota: valgono i
-[principi di ingegneria](principi-di-ingegneria.md). Prima della pubblicazione
-si esegue `make check`, come indicato in [Contribuire](../CONTRIBUTING.md).
+Write it once using the best known solution: the
+[engineering principles](principi-di-ingegneria.md) apply. Run `make check` before
+publication, as specified in [Contributing](../CONTRIBUTING.md).

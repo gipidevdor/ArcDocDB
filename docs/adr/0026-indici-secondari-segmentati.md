@@ -1,104 +1,124 @@
-# ADR-0026 — Indici secondari segmentati: un file immutabile a formato fisso per segmento, delta in memoria per l'ACTIVE
+<a id="adr-0026--indici-secondari-segmentati-un-file-immutabile-a-formato-fisso-per-segmento-delta-in-memoria-per-lactive"></a>
 
-- **Stato:** Accettata; **precisata da [ADR-0039](0039-cornice-unica-dei-record.md) e [ADR-0042](0042-tombstone-e-indice-dei-vivi.md)**: il filtro di Bloom sulle chiavi è una sezione dell'hint e serve allo scarto dei tombstone; i filtri sui valori sono una sezione dei file `.idx`; il file `.bloom` non esiste. Il delta dell'`ACTIVE` è fatto di soli array in aggiunta (nessun ART in memoria).
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-25; realizza «Secondary index», «Secondary index
-  delta», «Index snapshot». Decisione dell'autore (2026-10-03): gli indici hanno formato
-  predefinito e sono divisi per segmento.
-- **Riferimenti:** [architettura](../architettura.md#indici-secondari),
-  [formati su disco](../formati-su-disco.md#file-indice), INV-I1, INV-I2
+# ADR-0026 — Segmented secondary indexes: one immutable fixed-format file per segment, in-memory delta for ACTIVE
 
-## Contesto
+- **Status:** Accepted; **clarified by [ADR-0039](0039-cornice-unica-dei-record.md) and [ADR-0042](0042-tombstone-e-indice-dei-vivi.md)**: the key Bloom filter is a hint section and serves tombstone disposal; value filters are a section of `.idx` files; there is no `.bloom` file. The `ACTIVE` delta consists only of append-only arrays (no in-memory ART).
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-25; implements "Secondary index," "Secondary index
+  delta," "Index snapshot." Author's decision (2026-10-03): indexes have a predefined
+  format and are divided by segment.
+- **References:** [architecture](../architettura.md#indici-secondari),
+  [on-disk formats](../formati-su-disco.md#file-indice), INV-I1, INV-I2
 
-> **Integrazione 2026-10-15:** [ADR-0053](0053-ricerca-full-text-indici-invertiti.md)
-> aggiunge un tipo full text alla famiglia `.idx`: dizionario per campo/termine,
-> posting, frequenze e posizioni, con delta ACTIVE e generazioni complete.
-> Per questi indici precisa pubblicazione, snapshot, build e rebuild;
-> la versione visibile si risolve anche tramite le versioni trattenute del
-> motore, senza limitarsi alla sola entry corrente del primary index.
-> Il formato binario concreto resta da fissare prima dell'implementazione.
-> Gli algoritmi di analisi e il costo per documento richiedono misure proprie:
-> append O(1) per entry non significa indicizzazione O(1) per documento.
+<a id="contesto"></a>
 
-Gli indici secondari devono restare coerenti con commit, snapshot e recovery, costare poco al
-writer, e permettere algoritmi ottimi (sequenziali, SIMD-friendly). La specifica chiede
-strutture specializzate per tipo e un modello base + delta.
+## Context
 
-## Decisione
+> **Addition 2026-10-15:** [ADR-0053](0053-ricerca-full-text-indici-invertiti.md)
+> adds a full-text type to the `.idx` family: dictionary by field/term,
+> postings, frequencies, and positions, with an ACTIVE delta and complete generations.
+> For these indexes it clarifies publication, snapshots, build, and rebuild;
+> the visible version is also resolved through the engine's retained
+> versions, rather than being limited to the primary index's current entry.
+> The concrete binary format remains to be fixed before implementation.
+> Analysis algorithms and per-document cost require their own measurements:
+> O(1) append per entry does not mean O(1) indexing per document.
 
-### Segmentazione
+Secondary indexes must remain consistent with commits, snapshots, and recovery, cost little for the
+writer, and support optimal algorithms (sequential, SIMD-friendly). The specification calls for
+type-specialized structures and a base + delta model.
 
-**Ogni segmento chiuso possiede i propri file di indice, immutabili**, prodotti insieme al
-segmento (alla chiusura dall'`ACTIVE`, o dalla compaction per i suoi output):
+<a id="decisione"></a>
 
-- `<id>.hint` — primary index del segmento ([ADR-0015](0015-primary-index-swiss-table-swmr.md));
-- `<id>.<indice>.idx` — un file per ogni indice secondario definito nel contratto;
-- `<id>.bloom` — Bloom filter sulle chiavi del segmento.
+## Decision
 
-Il «base index» della specifica è l'**unione degli indici dei segmenti chiusi**; il «delta» è
-l'**indice in memoria del segmento `ACTIVE`**, aggiornato dal writer nel lotto (append in
-array specializzati, costo O(1) per entry). Il «merge asincrono» è la chiusura del segmento
-(che materializza il delta in file) e il MERGE dei segmenti (che fonde gli indici dei
-sorgenti). Non esistono altre strutture da fondere né da mantenere.
+<a id="segmentazione"></a>
 
-### Formato fisso
+### Segmentation
 
-Tutti i file di indice condividono la stessa **impronta**: intestazione fissa (magic, versione
-del formato, tipo di indice, segment-id, numero di entry, offset delle sezioni), sezioni ad
-array a larghezza fissa o a offset, piè di pagina con CRC32C. Sono letti con `pread` in buffer
-riutilizzati o caricati per intero in array specializzati: nessun parsing, nessuna
-allocazione per entry, accesso sequenziale.
+**Every closed segment owns its immutable index files**, produced together with the
+segment (when closing `ACTIVE`, or by compaction for its outputs):
 
-| Tipo (dal contratto) | Struttura nel file del segmento | Algoritmi |
+- `<id>.hint` — segment primary index ([ADR-0015](0015-primary-index-swiss-table-swmr.md));
+- `<id>.<indice>.idx` — one file for each secondary index defined in the contract;
+- `<id>.bloom` — Bloom filter on the segment's keys.
+
+The specification's "base index" is the **union of closed-segment indexes**; the "delta" is
+the **in-memory index of the `ACTIVE` segment**, updated by the writer within the batch (append to
+specialized arrays, O(1) cost per entry). "Asynchronous merge" is segment closure
+(which materializes the delta into files) and segment MERGE (which merges the source
+indexes). There are no other structures to merge or maintain.
+
+<a id="formato-fisso"></a>
+
+### Fixed format
+
+All index files share the same **shape**: fixed header (magic, format
+version, index type, segment-id, entry count, section offsets), fixed-width
+or offset-based array sections, footer with CRC32C. They are read with `pread` into reused
+buffers or loaded in full into specialized arrays: no parsing, no
+per-entry allocation, sequential access.
+
+| Type (from contract) | Structure in the segment file | Algorithms |
 |---|---|---|
-| stringa / prefix | chiavi ordinate con front-coding + array di offset (ART in memoria solo nel delta) | ricerca binaria, scansione di prefisso sequenziale |
-| numero / data / range | array ordinato di `(valore, riga)` a larghezza fissa | ricerca binaria, scansione di intervallo, vettorizzabile |
-| categoria | dizionario dei valori + posting list di righe (delta-encoded) | intersezione/unione sequenziale |
-| boolean / bassa cardinalità | bitmap per valore (una parola per 64 righe) | AND/OR/XOR su parole, SIMD-friendly |
-| Bloom | array di bit con k funzioni derivate dall'hash a 64 bit | test di assenza |
+| string / prefix | sorted keys with front-coding + offset array (in-memory ART only in the delta) | binary search, sequential prefix scan |
+| number / date / range | sorted fixed-width array of `(valore, riga)` | binary search, range scan, vectorizable |
+| category | value dictionary + row posting lists (delta-encoded) | sequential intersection/union |
+| boolean / low cardinality | bitmap per value (one word per 64 rows) | word-level AND/OR/XOR, SIMD-friendly |
+| Bloom | bit array with k functions derived from the 64-bit hash | absence test |
 
-La «riga» è l'ordinale del record nel segmento; dall'ordinale si risale a offset, chiave,
-versione e CSN tramite l'hint.
+A "row" is the record's ordinal in the segment; the hint maps the ordinal to offset, key,
+version, and CSN.
 
-### Query
+<a id="query"></a>
 
-Una query su un indice visita i segmenti **in parallelo** (sono indipendenti), ottiene righe
-per segmento, le converte in `(chiave, versione, CSN)` con l'hint, e **filtra per
-visibilità** con il primary index: una riga è un risultato solo se la versione è quella che
-lo snapshot (o il read committed) vede. Nessuna cancellazione negli indici dei segmenti: le
-versioni superate sono scartate dal filtro, e sparite dal file quando il CLEAN produce il
-nuovo segmento.
+### Queries
 
-### Coerenza e recovery
+An index query visits segments **in parallel** (they are independent), obtains rows
+per segment, converts them to `(chiave, versione, CSN)` through the hint, and **filters for
+visibility** through the primary index: a row is a result only if its version is the one
+the snapshot (or read committed) sees. No deletion in segment indexes:
+superseded versions are discarded by the filter and disappear from the file when CLEAN produces the
+new segment.
 
-- Aggiornamento **sincrono** con il commit (nel lotto del writer), quindi coerente con il
-  CSN per costruzione.
-- Gli indici dei segmenti sono dati derivati: al riavvio il delta dell'`ACTIVE` si ricostruisce
-  dalla scansione del segmento; un file indice mancante o corrotto si rigenera dal segmento.
-- Le modifiche al contratto (nuovo indice) generano i file mancanti in background, segmento
-  per segmento; il contratto registra da quale segment-id l'indice è completo.
+<a id="coerenza-e-recovery"></a>
 
-Pattern: indici immutabili per segmento fusi dalla compaction (Apache Lucene; SSTable di
-LevelDB/RocksDB con filtri per file); posting list e bitmap (Lucene, Roaring).
+### Consistency and recovery
 
-## Conseguenze
+- **Synchronous** update with commit (within the writer batch), therefore consistent with the
+  CSN by construction.
+- Segment indexes are derived data: on restart, the `ACTIVE` delta is rebuilt
+  by scanning the segment; a missing or corrupt index file is regenerated from the segment.
+- Contract changes (new index) generate missing files in the background, segment
+  by segment; the contract records the segment-id from which the index is complete.
 
-- Il writer paga solo append in memoria; la costruzione dei file avviene alla chiusura, fuori
-  dal percorso di commit.
-- Immutabilità e formato fisso rendono naturali SIMD, prefetch e `pread` senza parsing.
-- Il costo di una query cresce con il numero di segmenti: è il motivo per cui il MERGE esiste;
-  il Bloom filter e i metadati min/max per segmento riducono i segmenti visitati.
-- Un solo meccanismo di persistenza per tutti gli indici (il segmento e i suoi file).
+Patterns: immutable per-segment indexes merged by compaction (Apache Lucene; LevelDB/RocksDB
+SSTables with per-file filters); posting lists and bitmaps (Lucene, Roaring).
 
-## Alternative considerate
+<a id="conseguenze"></a>
 
-- *Indice secondario globale per Serie (B+ tree/ART in memoria) con delta LSM:* strutture a
-  puntatori, fusioni separate dalla compaction, persistenza propria; più meccanismi.
-- *Indici solo in memoria ricostruiti al riavvio:* richiede di rileggere tutti i documenti.
+## Consequences
 
-## Valutazione
+- The writer pays only for in-memory appends; files are built at close, outside
+  the commit path.
+- Immutability and fixed format make SIMD, prefetch, and `pread` without parsing natural.
+- Query cost grows with segment count: this is why MERGE exists;
+  the Bloom filter and per-segment min/max metadata reduce the number of segments visited.
+- A single persistence mechanism for all indexes (the segment and its files).
 
-- Verifica: benchmark «indexed query» con numero crescente di segmenti; test di coerenza con
-  snapshot; FI-10 (rigenerazione).
-- Rivedere se: la latenza delle query con molti segmenti (es. 1000) supera l'obiettivo anche
-  con Bloom e min/max → ADR su un indice riassuntivo per Serie.
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Global secondary index per Serie (in-memory B+ tree/ART) with LSM delta:* pointer
+  structures, merges separate from compaction, its own persistence; more mechanisms.
+- *Memory-only indexes rebuilt on restart:* requires rereading all documents.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Verification: "indexed query" benchmark with increasing segment counts; snapshot
+  consistency tests; FI-10 (regeneration).
+- Reconsider if: query latency with many segments (e.g. 1000) exceeds the target even
+  with Bloom and min/max → ADR on a summary index per Serie.

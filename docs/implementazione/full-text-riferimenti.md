@@ -1,101 +1,111 @@
-# Riferimenti fisici dei PUT full text
+<a id="riferimenti-fisici-dei-put-full-text"></a>
 
-Il [ponte PUT/WAL](full-text-put.md) conserva ora un riferimento fisico stabile per
-ogni riserva trasferita. La [directory privata delle righe](full-text-righe.md)
-lo risolve sotto lease; serve alla futura mappa pubblicata del delta e collega
-i posting di un articolo NNTP al record della stessa versione, anche dopo che
-il writer riutilizza il buffer WAL. Non costituisce ancora una vista pubblicata.
+# Physical references for full-text PUTs
 
-## Cattura prima dell'I/O
+The [PUT/WAL bridge](full-text-put.md) now retains a stable physical reference for
+every transferred reservation. The [private row directory](full-text-righe.md)
+resolves it under lease; it serves the future published delta map and connects
+an NNTP article's postings to the same-version record, even after
+writer reuses WAL buffer. It is not yet a published view.
+
+<a id="cattura-prima-dellio"></a>
+
+## Capture before I/O
 
 `cattura-riferimento-put-full-text(pool, lease, slot, generation, registry, log)`
-richiede il token restituito dall'append, la lease della coda canonica e il lotto
-sigillato con `wal:sigilla-lotto-con-csn`. Il lotto deve essere ancora SEALED e
-non posseduto da un gruppo I/O; il token CSN deve essere pendente e associato
-agli esatti oggetti registro/log. Un semplice `sigilla-lotto` con stamp del caller
-non fornisce questa autorita e viene rifiutato.
+requires append-returned token, canonical queue lease, and batch
+sealed with `wal:sigilla-lotto-con-csn`. Batch must still be SEALED and
+not owned by an I/O group; CSN token must be pending and bound
+to exact register/log objects. Simple `sigilla-lotto` with caller stamp
+does not supply this authority and is rejected.
 
-La funzione verifica incarnazione, ordinale e intervallo del legame originale,
-CRC del solo header (20 byte), formato, span, tipo PUT e flag. All'append il ponte
-ha conservato flag e stamp del frame privato del worker; alla cattura verifica
-che un prepared conservi lo stesso TXID, mentre un ordinario porti il CSN del lotto.
-Non ricalcola il CRC del body e non rianalizza il documento sotto lease.
+Function checks original binding's incarnation, ordinal, and range,
+header-only CRC (20 bytes), format, span, PUT type, and flags. On append, bridge
+retained worker-private frame flags and stamp; on capture verifies
+that prepared record retains same TXID while ordinary record carries batch CSN.
+It neither recalculates body CRC nor reanalyzes document under lease.
 
-Il riferimento viene fissato nei campi gia preallocati della riserva; la quota
-conservativa di 1024 byte per slot nel costruttore comprende questi metadati.
-Nessuna allocazione, ricerca per chiave, I/O o consultazione di H e aggiunta.
-Offset e lunghezza devono restare rappresentabili prima della mutazione.
-La pressione dei budget continua a essere verificata prima dell'append; una
-incoerenza interna dopo SEAL richiede fail-stop, senza convertire una decisione in abort.
+Reference fixed in reservation's already preallocated fields; constructor's
+conservative 1024-byte per-slot allowance includes this metadata.
+No allocation, key lookup, I/O, or H consultation added.
+Offset and length must remain representable before mutation.
+Budget pressure continues to be checked before append; an internal
+inconsistency after SEAL requires fail-stop, without converting a decision to abort.
 
-Il risultato `:sealed` indica una cattura completa in memoria. Il SEAL non e ancora
-necessariamente scritto o sincronizzato e il documento non e pubblicato. Il caller
-deve catturare tutti i riferimenti necessari prima della consegna del lotto all'I/O.
-Canonicalita di pool, catalogo, log fisico e posizione iniziale rimangono al runtime
-e al Segment Manager, come nel ponte WAL. Non si verificano qui header di segmento,
-inventari, contratti di Serie o un file esistente.
+Result `:sealed` indicates complete in-memory capture. SEAL is not yet
+necessarily written or synchronized and document is not published. Caller
+must capture all required references before delivering batch to I/O.
+Pool, catalog, physical-log, and initial-position canonicality remain with runtime
+and Segment Manager, as in WAL bridge. Segment headers,
+inventories, Serie contracts, or an existing file are not verified here.
 
-## Lettura dopo il riuso del buffer
+<a id="lettura-dopo-il-riuso-del-buffer"></a>
 
-`leggi-riferimento-put-full-text(pool, lease, slot, generation)` restituisce:
+## Reading after buffer reuse
 
-| Valore | Significato |
+`leggi-riferimento-put-full-text(pool, lease, slot, generation)` returns:
+
+| Value | Meaning |
 |---|---|
-| row | Riga proposta per il run; non e un ordinale hint |
-| segmento | ID u32 dell'ACTIVE associato alla riserva |
-| offset | Posizione del record nel file: inizio del lotto piu start relativo |
-| size | Lunghezza esatta del record, senza il SEAL |
-| formato | v1 oppure v2 |
-| stamp-kind | `:csn` per un ordinario, `:txid` per un prepared |
-| high, low | Due parole u32 dello stamp verificato |
+| row | Proposed run row; not a hint ordinal |
+| segment | u32 ID of ACTIVE bound to reservation |
+| offset | Record position in file: batch start plus relative start |
+| size | Exact record length, without SEAL |
+| format | v1 or v2 |
+| stamp-kind | `:csn` for ordinary, `:txid` for prepared |
+| high, low | Two u32 words of verified stamp |
 
-Il getter legge solo lo slot, senza accedere al buffer WAL. La generazione della
-riserva rimane valida perche non si introduce il riuso dei trasferiti. Il vecchio
-`leggi-legame-put-full-text`, invece, continua a rifiutare l'incarnazione obsoleta
-del buffer. Il riferimento fisico non prolunga quel prestito ne attesta commit.
+Getter reads slot only, without accessing WAL buffer. Reservation generation
+remains valid because transferred-slot reuse is not introduced. Old
+`leggi-legame-put-full-text`, in contrast, continues rejecting obsolete buffer
+incarnation. Physical reference neither extends that loan nor establishes commit.
 
-Per i cross-post NNTP e essenziale conservare `:txid`: il CSN del lotto che contiene
-un prepared non e il suo CSN effettivo. Quest'ultimo richiede l'esito autorevole
-2PC/OUTCOME, che questo incremento non produce. Il getter non converte TXID in CSN.
-Nemmeno uno stamp `:csn` da solo certifica visibilita o durability.
+Preserving `:txid` is essential for NNTP cross-posts: CSN of a batch containing
+a prepared record is not its effective CSN. The latter requires authoritative
+2PC/OUTCOME result, not produced by this increment. Getter does not convert TXID to CSN.
+Even a `:csn` stamp alone certifies neither visibility nor durability.
 
-## Errori e ownership
+<a id="errori-e-ownership"></a>
 
-Token o autorita sbagliati, lotto aperto, sigillo manuale, cattura tardiva o ripetuta
-sono rifiutati prima degli effetti. Header incoerenti, overflow interno o uscita
-incompleta durante la cattura rendono pool e lotto FAULTED, conservando byte, costi
-e obbligo CSN. Il confine del writer deve fermare la Serie; nessun rollback o ACK.
-Un riferimento assente o parzialmente catturato non viene restituito.
+## Errors and ownership
 
-I campi catturati non cambiano e il contesto di preparazione resta riutilizzabile.
-Non si rilasciano slot, run, file budget o riferimenti ai lotti: il ritiro sicuro
-richiede ancora i protocolli di pubblicazione e quiescenza. Il getter mantiene la
-lease del writer; non e un ingresso per i reader concorrenti o per il demone NNTP.
-Le altre Serie non condividono contatori o lock di questo meccanismo.
+Wrong token or authority, open batch, manual seal, late or repeated capture
+rejected before effects. Inconsistent headers, internal overflow, or incomplete
+exit during capture make pool and batch FAULTED, retaining bytes, costs,
+and CSN obligation. Writer boundary must stop Serie; no rollback or ACK.
+Missing or partially captured reference is not returned.
 
-## Verifica e limiti
+Captured fields do not change and preparation context remains reusable.
+Slots, runs, file budget, or batch references are not released: safe retirement
+still requires publication and quiescence protocols. Getter retains
+writer lease; it is not an entry for concurrent readers or NNTP daemon.
+Other Serie share no counters or locks of this mechanism.
 
-Nove test nuovi portano il totale full text a 102, di cui 27 del ponte PUT/WAL.
-Coprono v1/v2, ordinari/prepared, stamp fino a UINT64_MAX, ordinale diverso dalla
-row, offset di record preceduti da altri record, riuso reale del lotto, corruzioni
-anche con header-CRC ricalcolato, autorita sbagliata e interruzioni prima/dopo la
-cattura. Un probe CRC verifica una sola lettura di 20 byte e nessuna nel getter.
-Quattro writer indipendenti completano i propri riferimenti con attese limitate.
+<a id="verifica-e-limiti"></a>
 
-La prova nativa scrive header di segmento e lotto, sincronizza, chiude e riapre
-in sola lettura: i byte raggiunti dal riferimento coincidono con l'encoder
-indipendente bitwise. La fixture modella la pubblicazione necessaria a risolvere
-il token del lotto e riusarlo; non e una pubblicazione primary/delta di prodotto
-e non decide una transazione prepared.
+## Verification and limits
 
-La misura PUT esistente include ora chiusura WAL e mille catture/getter, restando
-una delle sei misure escluse dalla copertura strumentata. Il quattordicesimo
-mutante controlla che la verifica dell'header non possa essere omessa.
-Il [metodo preregistrato e le letture](full-text-riferimenti-metodo.md) e i
-[registri originali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-physical-dev-targeted/README.md)
-distinguono prove locali e qualifica complessiva.
+Nine new tests bring full-text total to 102, including 27 PUT/WAL-bridge tests.
+Cover v1/v2, ordinary/prepared records, stamps through UINT64_MAX, ordinal different
+from row, record offsets after preceding records, real batch reuse, corruption
+even with recalculated header-CRC, wrong authority, and interrupts before/after
+capture. CRC probe checks one 20-byte read and none in getter.
+Four independent writers complete references with bounded waits.
 
-Restano unicita delle righe e composizione della mappa del delta, esiti prepared,
-pubblicazione atomica documento/posting prima di H/ACK, acquisizione MVCC/EBR,
-Query Engine e ritiro sicuro. Nessun requisito complessivo viene dichiarato
-qualificato, nessun formato o ADR cambia, nessun benchmark del database completo.
+Native test writes segment header and batch, synchronizes, closes, and reopens
+read-only: bytes reached through reference match independent
+bitwise encoder. Fixture models publication needed to resolve
+batch token and reuse it; this is not product primary/delta publication
+and does not decide a prepared transaction.
+
+Existing PUT measurement now includes WAL closing and one thousand captures/getters,
+remaining one of six measurements excluded from instrumented coverage. Fourteenth
+mutant checks that header verification cannot be omitted.
+The [preregistered method and readings](full-text-riferimenti-metodo.md) and
+[original records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-physical-dev-targeted/README.md)
+distinguish local tests from overall qualification.
+
+Remaining: row uniqueness and delta-map composition, prepared outcomes,
+atomic document/posting publication before H/ACK, MVCC/EBR acquisition,
+Query Engine, and safe retirement. No overall requirement declared
+qualified, no format or ADR changes, no full-database benchmark.

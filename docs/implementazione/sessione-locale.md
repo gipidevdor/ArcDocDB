@@ -1,181 +1,193 @@
-# Sessione locale M16
+<a id="sessione-locale-m16"></a>
 
-**Proposta — ADR-0056.** Questo è un contratto da accettare prima del codice
-M16, non un servizio già disponibile. Attua la priorità di
-[ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md). Il
-[metodo SPK-11](../../spikes/SPK-11-unix-socket/README.md) distingue prove del
-trasporto da quelle ancora necessarie al prodotto.
+# M16 local session
 
-## Frame e vocabolario
+**Proposal — ADR-0056.** This is a contract to accept before M16
+code, not an already available service. It implements the priority in
+[ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md). The
+[SPK-11 method](../../spikes/SPK-11-unix-socket/README.md) distinguishes transport
+tests from those still needed for the product.
 
-Per il primo servizio di produzione, l'autore ha autorizzato il
-[profilo M1](production-unix-m1.md): stesso vocabolario di sessione e
-quattro comandi con payload fissato, un proprietario e limiti inferiori.
-La proposta estesa qui sotto resta distinta da quel profilo e dalla sua qualifica.
+<a id="frame-e-vocabolario"></a>
 
-Ogni frame è `length:u32be | body:length bytes`. La lunghezza esclude il
-prefisso e deve essere 1…17.825.792 byte (17 MiB). Zero e valori superiori
-chiudono la connessione dopo i quattro byte, prima di riservare il corpo.
-Non ci sono magic, delimitatore, padding, compressione o negoziazione TCP.
-EOF con prefisso o corpo incompleto è una troncatura; EOF tra frame è chiusura.
+## Frames and vocabulary
 
-Il corpo contiene esattamente un item CBOR deterministico RFC 8949: header
-minimi, lunghezze definite, mappe ordinate lessicograficamente sui byte
-delle chiavi secondo [RFC 8949 §4.2.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1)
-e senza chiavi duplicate, niente
-byte finali. Si riusa il codec del prodotto. Il suo scanner strutturale da
-solo non certifica ordinamento/deduplica delle mappe: questi controlli sono
-obblighi del decoder della sessione. Nessun dato esterno passa dal reader Lisp.
+For the first production service, the author authorized the
+[M1 profile](production-unix-m1.md): same session vocabulary and
+four commands with fixed payloads, one owner, and lower limits.
+The extended proposal below remains distinct from that profile and its qualification.
 
-L'envelope è un array di cinque elementi `[version, kind, id, code, payload]`.
-`version=1`; gli altri primi quattro campi sono interi unsigned, `id` al più
-u64, `kind` e `code` al più u16. Il payload è un item CBOR, la cui forma è
-stabilita dal comando. Profondità massima dell'envelope 8, esclusi eventuali
-documenti trasportati come byte string e verificati separatamente con il
-limite di 16 MiB/100 livelli. L'envelope e i metadati occupano al più 64 KiB;
-documenti e chiavi hanno budget separati. Un batch richiede un contratto
-ulteriore con limite di operazioni e byte; non è un comando implicito.
+Each frame is `length:u32be | body:length bytes`. Length excludes the
+prefix and must be 1…17,825,792 bytes (17 MiB). Zero and larger values
+close the connection after four bytes, before reserving the body.
+There is no magic, delimiter, padding, compression, or TCP negotiation.
+EOF with an incomplete prefix or body is truncation; EOF between frames is closure.
 
-## Handshake e correlazione
+The body contains exactly one RFC 8949 deterministic CBOR item: minimal
+headers, definite lengths, maps ordered lexicographically by key bytes
+according to [RFC 8949 §4.2.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1),
+without duplicate keys or
+trailing bytes. The product codec is reused. Its structural scanner alone
+does not certify map ordering/deduplication: these checks are
+session decoder obligations. No external data passes through the Lisp reader.
 
-| Kind | Direzione | ID/code | Payload |
+The envelope is a five-element array `[version, kind, id, code, payload]`.
+`version=1`; the other first four fields are unsigned integers, `id` at most
+u64, `kind` and `code` at most u16. Payload is a CBOR item whose form is
+defined by the command. Maximum envelope depth 8, excluding any
+documents carried as byte strings and checked separately with the
+16 MiB/100-level limit. Envelope and metadata occupy at most 64 KiB;
+documents and keys have separate budgets. A batch requires an
+additional contract with operation and byte limits; it is not an implicit command.
+
+<a id="handshake-e-correlazione"></a>
+
+## Handshake and correlation
+
+| Kind | Direction | ID/code | Payload |
 |---|---|---|---|
-| 0 HELLO | client → server, primo e unico | 0/0 | mappa `{0: max-frame, 1: max-inflight}` |
-| 1 WELCOME | server → client | 0/0 | mappa `{0: max-frame, 1: max-inflight, 2: [opcodes]}` |
-| 2 REQUEST | client → server dopo WELCOME | ID positivo/opcode | argomenti del comando |
-| 3 RESPONSE | server → client | stesso ID/status | risultato o `null` per errore |
+| 0 HELLO | client → server, first and only | 0/0 | map `{0: max-frame, 1: max-inflight}` |
+| 1 WELCOME | server → client | 0/0 | map `{0: max-frame, 1: max-inflight, 2: [opcodes]}` |
+| 2 REQUEST | client → server after WELCOME | positive ID/opcode | command arguments |
+| 3 RESPONSE | server → client | same ID/status | result or `null` on error |
 
-Le mappe HELLO/WELCOME hanno esattamente le chiavi indicate. Le capacità
-del client sono `4096 <= max-frame <= 17825792`, `1 <= max-inflight <= 16`;
-il server sceglie il minimo dei propri limiti e di quelli richiesti. I
-limiti valgono in entrambe le direzioni e WELCOME li conferma. HELLO/WELCOME
-stanno entro 4096 byte; prima dell'handshake il decoder applica quel limite.
-Nessuna richiesta è eseguita prima di WELCOME. Versione, kind, direzione,
-forma o ID invalidi chiudono senza risposta, compreso un secondo HELLO.
+HELLO/WELCOME maps have exactly the keys shown. Client
+capabilities are `4096 <= max-frame <= 17825792`, `1 <= max-inflight <= 16`;
+the server chooses the minimum of its limits and those requested. The
+limits apply in both directions and WELCOME confirms them. HELLO/WELCOME
+fit within 4096 bytes; before handshake the decoder applies that limit.
+No request executes before WELCOME. Invalid version, kind, direction,
+shape, or ID closes without response, including a second HELLO.
 
-Gli ID REQUEST crescono strettamente nell'ordine dei frame ricevuti, anche
-dopo il completamento; bastano ultimo ID e tabella delle richieste in volo.
-Non rappresentano un ordine di commit. Ogni richiesta ammessa ha una sola
-risposta terminale se la connessione sopravvive; le risposte possono arrivare
-fuori ordine. Risposta duplicata o sconosciuta è errore di protocollo del
-client. A u64 massimo si termina il lavoro in volo e si riconnette.
+REQUEST IDs increase strictly in received frame order, even
+after completion; last ID and an in-flight request table suffice.
+They do not represent commit order. Each admitted request has exactly one
+terminal response if the connection survives; responses may arrive
+out of order. A duplicate or unknown response is a client protocol
+error. At maximum u64, finish in-flight work and reconnect.
 
-L'unico opcode qui definito è `0 PING`, argomento `null`, risultato `null`.
-È disponibile soltanto dopo il gate del motore. Altri opcode producono
-`unsupported` senza ammissione al motore e senza chiudere la sessione;
-GET/PUT/DELETE, query e multiserie richiedono ciascuno un payload approvato.
-WELCOME annuncia soltanto le operazioni effettivamente abilitate.
-La lista degli opcode è strettamente crescente, senza duplicati, di interi u16.
+The only opcode defined here is `0 PING`, argument `null`, result `null`.
+It is available only after the engine gate. Other opcodes produce
+`unsupported` without engine admission and without closing the session;
+GET/PUT/DELETE, queries, and multiseries each require an approved payload.
+WELCOME announces only operations actually enabled.
+The opcode list is strictly increasing, without duplicates, of u16 integers.
 
-| Status | Significato |
+| Status | Meaning |
 |---|---|
-| 0 ok | Risultato secondo il comando |
-| 1 invalid-arguments | Envelope valido, argomenti del comando non validi; non ammesso |
-| 2 busy | Capacità del comando esaurita; non ammesso |
-| 3 unavailable | Stato del motore non operativo; non ammesso |
-| 4 unsupported | Opcode assente dalle capacità; non ammesso |
-| 5 limit-exceeded | Budget del comando superato prima dell'ammissione |
+| 0 ok | Result according to command |
+| 1 invalid-arguments | Valid envelope, invalid command arguments; not admitted |
+| 2 busy | Command capacity exhausted; not admitted |
+| 3 unavailable | Engine state not operational; not admitted |
+| 4 unsupported | Opcode absent from capabilities; not admitted |
+| 5 limit-exceeded | Command budget exceeded before admission |
 
-Questi errori non descrivono una scrittura già ammessa. L'esito dopo
-ammissione dipende dal comando e non può essere tradotto in un generico
-`busy` o `aborted`. Se il server non può completare una risposta corretta
-chiude; il client considera ignoto l'esito di richieste prive di risposta.
+These errors do not describe an already admitted write. The outcome after
+admission depends on the command and cannot be translated into a generic
+`busy` or `aborted`. If the server cannot complete a correct response,
+it closes; the client treats the outcome of unanswered requests as unknown.
 
-## Capacità, proprietà e scadenze
+<a id="capacità-proprietà-e-scadenze"></a>
 
-Default proposti, tutti verificati prima dell'apertura:
+## Capacity, ownership, and deadlines
 
-| Risorsa | Limite |
+Proposed defaults, all checked before opening:
+
+| Resource | Limit |
 |---|---|
-| Proprietari I/O del trasporto | 8, configurabili 1…64 |
-| Connessioni per proprietario | 8, inclusi handshake; backlog 64 per listener |
-| Richieste in volo per connessione | 16, inclusi risultati ancora da inviare |
-| Byte trattenuti in ingresso per connessione | 17 MiB + 4 |
-| Byte trattenuti in uscita per connessione | 17 MiB + 4 |
-| Pool byte per proprietario | 128 MiB, condiviso solo dalle sue connessioni |
-| HELLO completo | 5 s dall'accept |
-| Assemblaggio di un frame successivo | 30 s dal suo primo byte |
-| Risposta in coda fino all'ultimo byte inviato | 30 s dall'accodamento |
-| Connessione inattiva, senza lavoro in volo | 300 s dall'ultimo frame completo |
+| Transport I/O owners | 8, configurable 1…64 |
+| Connections per owner | 8, including handshakes; backlog 64 per listener |
+| In-flight requests per connection | 16, including results still to send |
+| Retained input bytes per connection | 17 MiB + 4 |
+| Retained output bytes per connection | 17 MiB + 4 |
+| Byte pool per owner | 128 MiB, shared only by its connections |
+| Complete HELLO | 5 s from accept |
+| Assembly of a subsequent frame | 30 s from its first byte |
+| Queued response through last byte sent | 30 s from enqueue |
+| Idle connection, without in-flight work | 300 s from last complete frame |
 
-Nessuna scadenza viene rinnovata da un trasferimento parziale. Il tempo è
-monotono e iniettabile. Il pool include i buffer trattenuti da richieste,
-risultati, prefissi e I/O pendente; lo spostamento di proprietà non libera
-il budget. Contesti, scratch del codec e metadati hanno dimensione fissa
-preallocata secondo capacità: vanno contabilizzati separatamente dal pool
-byte, prima di avviare il servizio. Questi limiti non sono un budget RSS.
+No deadline is renewed by partial transfer. Time is
+monotonic and injectable. The pool includes buffers retained by requests,
+results, prefixes, and pending I/O; ownership movement does not release
+budget. Contexts, codec scratch, and metadata have fixed size,
+preallocated by capacity: they must be accounted separately from the byte
+pool before starting service. These limits are not an RSS budget.
 
-Le connessioni hanno proprietario immutabile; il limite complessivo è il
-prodotto di proprietari e capacità locale. I pool sono disgiunti, senza
-contatore globale per richiesta. Si riserva il corpo dopo il prefisso
-valido, prima di riceverlo. Se manca capacità si sospende la lettura con
-scadenza conservata, senza accodare altrove. Al limite di richieste in volo
-si ferma la lettura; dati già accorpati restano nel buffer contabilizzato.
-Il prefisso non autorizza il comando: validazione completa e prenotazione
-del risultato precedono l'ammissione al motore.
+Connections have an immutable owner; the overall limit is the
+product of owners and local capacity. Pools are disjoint, without a
+global per-request counter. The body is reserved after the valid
+prefix, before receipt. If capacity is unavailable, reading pauses with
+the deadline retained, without queueing elsewhere. At the in-flight request limit,
+reading stops; already coalesced data remains in the accounted buffer.
+The prefix does not authorize the command: complete validation and result
+reservation precede engine admission.
 
-Scadenza, EOF incompleto o peer lento chiudono solo quella connessione.
-Il risultato copiato nel buffer d'uscita non trattiene pin EBR o lease del
-writer. La chiusura libera i contesti una volta completati gli I/O che li
-possiedono, senza liberare buffer ancora prestati. Il futuro codice deve
-verificare saturazione e isolamento con il pool ADR-0045 reale.
+Deadline, incomplete EOF, or slow peer closes only that connection.
+A result copied into the output buffer retains no EBR pin or writer
+lease. Closure releases contexts once I/Os that own them have
+completed, without releasing still-borrowed buffers. Future code must
+check saturation and isolation with the real ADR-0045 pool.
 
-## Percorso, avvio e arresto
+<a id="percorso-avvio-e-arresto"></a>
 
-Path assoluto esplicito, senza NUL, componente finale non vuota, massimo
-100 byte UTF-8 escluso NUL: tetto conservativo comune a Linux/macOS da
-verificare su entrambi, non dedotto dalla lunghezza in caratteri Lisp.
-La directory runtime deve già esistere, appartenere all'UID di servizio
-ed essere 0700 (stesso account) o 0750 (gruppo client configurato).
-Socket 0600 o 0660 secondo il modo; directory e catena del namespace devono
-essere possedute e non sostituibili da account non fidati. Si rifiutano
-symlink e directory scrivibili da gruppo/altri; l'apertura posseduta e le
-verifiche devono impedire gare fra controllo e uso del namespace.
+## Path, startup, and shutdown
 
-Il listener compare dopo recovery, pubblicazione delle radici e gate di
-ammissione del motore. La sola capsula runtime o H=M non è un'attestazione
-di recovery completato. Non esiste un listener TCP alternativo automatico.
-Un nodo occupato resta intatto, anche se è un socket orfano. All'arresto si
-chiude l'ammissione, poi connessioni/listener; si elimina soltanto il nodo
-con identità device/inode ancora uguale a quella creata dall'istanza nella
-directory protetta. Nodo sostituito: diagnostica e nessuna rimozione.
-La gestione degli orfani resta un'azione esplicita a servizio fermo.
+Explicit absolute path, without NUL, nonempty final component, maximum
+100 UTF-8 bytes excluding NUL: a conservative common Linux/macOS ceiling to
+verify on both, not inferred from Lisp character count.
+The runtime directory must already exist, belong to the service UID,
+and be 0700 (same account) or 0750 (configured client group).
+Socket 0600 or 0660 according to mode; directory and namespace chain must
+be owned and not replaceable by untrusted accounts. Symlinks
+and group/other-writable directories are rejected; owned opening and
+checks must prevent races between namespace check and use.
 
-## Fixture indipendenti e gate residui
+The listener appears after recovery, root publication, and the engine
+admission gate. The runtime capsule alone or H=M does not attest
+completed recovery. There is no automatic alternate TCP listener.
+An occupied node remains intact, even if it is an orphaned socket. Shutdown
+closes admission, then connections/listener; only the node whose
+device/inode identity still matches the one created by the instance in the
+protected directory is deleted. Replaced node: diagnostics and no removal.
+Orphan management remains an explicit action with the service stopped.
 
-PING richiesta ID 1: `00 00 00 06 85 01 02 01 00 f6`.
-Risposta: `00 00 00 06 85 01 03 01 00 f6`.
-L'ID 2 può ricevere risposta prima dell'ID 1. HELLO con capacità 4096/1:
+<a id="fixture-indipendenti-e-gate-residui"></a>
+
+## Independent fixtures and remaining gates
+
+PING request ID 1: `00 00 00 06 85 01 02 01 00 f6`.
+Response: `00 00 00 06 85 01 03 01 00 f6`.
+ID 2 may receive a response before ID 1. HELLO with capabilities 4096/1:
 `00 00 00 0c 85 01 00 00 00 a2 00 19 10 00 01 01`.
-Una variante negativa usa `0d` come lunghezza del corpo e deve risultare
-troncata a EOF. I test M16 dovranno includere entrambe.
+A negative variant uses `0d` as body length and must be
+truncated at EOF. M16 tests must include both.
 
-Il [sorgente SBCL 2.6.9 di socket-receive](https://github.com/sbcl/sbcl/blob/sbcl-2.6.9/contrib/sb-bsd-sockets/sockets.lisp)
-alloca un buffer alien temporaneo e copia i byte ricevuti. Lo spike C4 può
-usarlo; il percorso caldo del prodotto richiede un adattatore I/O nativo
-con buffer posseduti/preallocati e offset espliciti, verificato anche nelle
-allocazioni native. Il contrib resta utilizzabile per il ciclo di vita del
-socket. Nessun collegamento diretto dal worker di calcolo a recv/send.
+The [SBCL 2.6.9 socket-receive source](https://github.com/sbcl/sbcl/blob/sbcl-2.6.9/contrib/sb-bsd-sockets/sockets.lisp)
+allocates a temporary alien buffer and copies received bytes. The C4 spike may
+use it; the product hot path requires a native I/O adapter
+with owned/preallocated buffers and explicit offsets, also checked for native
+allocations. The contrib remains usable for socket
+lifecycle. No direct connection from compute worker to recv/send.
 
-Prima del codice di prodotto servono accettazione ADR-0056, fixture del
-decoder della sessione (incluse mappe e negoziazione), API I/O iniettabile e
-contratti dei comandi dati. Prima dell'integrazione applicativa restano tutti
-i gate del [piano di verifica](../affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket).
+Before product code, ADR-0056 acceptance, session decoder
+fixtures (including maps and negotiation), injectable I/O API, and data command
+contracts are needed. Before application integration, all gates in
+the [verification plan](../affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket) remain.
 
-La [variante C4 di SPK-11](../../spikes/SPK-11-unix-socket/session-method.md)
-verifica ora il profilo di controllo da 4096 byte: handshake, limiti,
-mappe, ID, risposte invertite e deadline logiche. L'indicatore di gate e i
-crediti sono un modello; il pool e l'ammissione reali restano da collegare.
-Non si estende quel risultato a documenti, comandi dati o listener di prodotto.
-Il [rapporto e gli originali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-unix-session/report.md)
-conservano le tre varianti, il fallimento dell'harness e la verifica completa.
+The [SPK-11 C4 variant](../../spikes/SPK-11-unix-socket/session-method.md)
+now checks the 4096-byte control profile: handshake, limits,
+maps, IDs, reversed responses, and logical deadlines. The gate indicator and
+credits are a model; the real pool and admission remain to be connected.
+That result does not extend to documents, data commands, or a product listener.
+The [report and originals](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-unix-session/report.md)
+retain the three variants, harness failure, and full verification.
 
-La [variante I/O su buffer posseduti](../../spikes/SPK-11-unix-socket/native-io-method.md)
-prepara ora un passo recv/send diretto su vettori preallocati, con backend
-sostituibile, offset e deadline espliciti. Attesa FD e parsing restano fuori
-dall'adattatore. Fault injection, peer indipendente e guardie controllano
-progresso e confini; il contatore Lisp e il disassemblato non qualificano
-malloc nativo, pool/scheduler o l'intera sessione. Resta codice sperimentale C4.
-La [raccolta degli originali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-unix-native-io/report.md)
-conserva i quattordici scenari, le cinque varianti e i due controlli completi
-eseguiti prima della successiva integrazione generale.
+The [I/O variant on owned buffers](../../spikes/SPK-11-unix-socket/native-io-method.md)
+now prepares one direct recv/send step on preallocated vectors, with replaceable
+backend, explicit offsets, and deadlines. FD waiting and parsing remain outside
+the adapter. Fault injection, independent peer, and guards check
+progress and boundaries; the Lisp counter and disassembly do not qualify
+native malloc, pool/scheduler, or the whole session. It remains C4 experimental code.
+The [collection of originals](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-unix-native-io/report.md)
+retains the fourteen scenarios, five variants, and two full checks
+run before the subsequent general integration.

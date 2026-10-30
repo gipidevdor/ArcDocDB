@@ -1,197 +1,213 @@
-# Decisioni composte e condizioni del ponte WAL–CSN
+<a id="decisioni-composte-e-condizioni-del-ponte-walcsn"></a>
 
-**Aggiornamento corrente:** guardie locali e complessità dopo la chiusura statica di R1
-sono nell'addendum finale; l'inventario composto precedente è preservato.
-Il successivo addendum preflight aggiunge il contratto delegato E08 e i rifiuti pre-CSN.
+# Compound decisions and conditions of the WAL–CSN bridge
 
-Data: 2026-10-09. Inventario statico COD-54 della seconda lettura indipendente.
-Versione, perimetro, conteggi di complessità e checklist delle due letture sono in
-[wal-csn-revisione.md](wal-csn-revisione.md). Il ponte letto ha impronta
-`a592a370135b8b24b548c38588215ad7d26bf1b5`; il gruppo ha impronta
+**Current update:** local guards and complexity after R1 static closure
+are in the final addendum; the earlier compound inventory is preserved.
+The subsequent preflight addendum adds delegated contract E08 and pre-CSN rejections.
+
+Date: 2026-10-09. Static COD-54 inventory from the second independent reading.
+Version, scope, complexity counts, and both readings' checklists are in
+[wal-csn-revisione.md](wal-csn-revisione.md). The bridge read has fingerprint
+`a592a370135b8b24b548c38588215ad7d26bf1b5`; the group has fingerprint
 `8245bc10cedafbff8665489fbced6833f078a373`.
 
-Le tabelle descrivono condizioni effettive del codice e **obblighi di verifica futura**.
-Non attestano test scritti/letti/eseguiti, copertura MC/DC, benchmark o allocazioni misurate.
-Nessuna certificazione umana e nessun claim di assenza di heap.
+Tables describe actual code conditions and **future verification obligations**.
+They attest no tests written/read/run, MC/DC coverage, benchmark, or measured allocations.
+No human certification or claim of absence of heap.
 
-## Inventario COD-54 delle funzioni modificate e nuove
+<a id="inventario-cod-54-delle-funzioni-modificate-e-nuove"></a>
 
-Ogni lettera indica un predicato atomico. `AND` e `OR` sono valutati da sinistra a destra
-con corto circuito. Per un AND di n predicati indipendenti, l'obbligo è il caso tutti veri
-e ciascun falso a turno con i precedenti veri; per un OR, tutti falsi e ciascun vero da
-solo. Si deve documentare l'eventuale impossibilità di una combinazione nello stato valido.
-Un caso di corruzione interna deve essere distinto da un input API valido.
+## COD-54 inventory of modified and new functions
 
-| ID | Funzione e decisione effettiva | Predicati atomici | Esito e obbligo per condizione |
+Each letter denotes an atomic predicate. `AND` and `OR` evaluate left to right
+with short-circuiting. For an AND of n independent predicates, the obligation is all true
+and each false in turn with preceding predicates true; for an OR, all false and each true
+alone. Any impossibility of a combination in valid state must be documented.
+Internal corruption cases must be distinguished from valid API input.
+
+| ID | Function and actual decision | Atomic predicates | Outcome and per-condition obligation |
 |---|---|---|---|
-| D01 | `aggiungi-record`: `A OR B` | A: count = lunghezza offset; B: byte record + SEAL > spazio residuo. | Ciascun limite da solo rifiuta `:lotto-capacity`; entrambi falsi consentono il passaggio. Il rifiuto precede la scrittura dei byte. |
-| D02 | `ristampa-record-parole`: `(A OR B OR C) AND NOT P` | A: PUT; B: TOMBSTONE; C: EDIT; P: bit prepared impostato. | Ogni tipo ordinario con P falso viene ristampato; con P vero preserva TXID. OUTCOME/DECISION/altro tipo ammesso con A/B/C falsi preserva stamp. A/B/C sono mutuamente esclusivi, non combinabili a piacere. |
-| D03 | `verifica-chiusura-lotto`: `A AND B` | A: durable ≤ file-start; B: file-start + used + SEAL ≤ most-positive-fixnum. | Ciascun falso rifiuta `:lotto-offset` prima della presa CSN. Caso al confine uguale incluso; numeri negativi fuori dal tipo dichiarato. |
-| D04 | `verifica-chiusura-lotto`: `A AND B` | A: count ≤ lunghezza offset; B: used + SEAL ≤ lunghezza buffer. | Ciascun falso segnala `:lotto-seal-space`; nessun CSN preso. A falso rappresenta corruzione interna, non normale saturazione D01. |
-| D05 | `verifica-log-csn`: `A AND B` | A: lotto di tipo segment; B: count > 0. | Controllo e lotto vuoto rifiutati separatamente con `:lotto-csn-content`; entrambi veri passano. |
-| D06 | `verifica-log-csn`: `A AND B AND C` | A: log di tipo segment; B: file-id del lotto = quello del log; C: versioni uguali. | Ciascun disaccordo rifiuta `:lotto-csn-log` prima della presa. Qui l'identità del log viene fissata per la prima volta; l'appartenenza all'Archivio è precondizione esterna. |
-| D07 | `esigi-csn-pendente`: `A AND B AND (C OR D)` | A: registry presente; B: log presente; C: high > 0; D: low > 0. | Con pending vero, ciascuna associazione mancante e high=low=0 segnala `:lotto-csn-token`. High=0/low>0 e high>0/low=0 sono entrambi token nonzero ammessi. Nessun accesso al registro nella guardia. |
-| D08 | `esigi-identita-csn-lotto`: `A AND B AND C AND D` | A: `eq` tra registry locale e atteso; B: slot uguale; C: high uguale; D: low uguale. | Ognuno dei quattro falsi, con gli altri uguali, rifiuta `:lotto-csn-stale` prima della risoluzione. Per A usare due oggetti registry con numeri identici: uguaglianza numerica non basta. |
-| D09 | `verifica-identita-lotto`: `A AND B AND C` | A: kind lotto/log uguale; B: file-id uguale; C: versione uguale. | Ogni differenza rifiuta `:group-identity-or-order` prima di acquisire ownership. |
-| D10 | `verifica-identita-lotto`: `A AND NOT B` | A: csn-log presente; B: `eq csn-log (gruppo-log group)`. | A vero/B falso rifiuta `:lotto-csn-log` anche con D09 tutto vero. A vero/B vero passa. A falso segue il contratto legacy e B non viene valutato. |
-| D11 | `verifica-identita-lotto`: `A OR B` | A: count gruppo zero; B: lotto-start = gruppo-start + gruppo-bytes. | Primo lotto passa senza usare la frontiera del gruppo vuoto; successivi passano solo contigui. Entrambi falsi rifiutano `:group-identity-or-order` prima del CAS. |
-| D12 | `aggiungi-lotto`: `A OR B` | A: count = numero slot; B: lotto-used > max-bytes − bytes. | Ciascun limite da solo rifiuta `:group-capacity` prima di mutare owner o gruppo. Entrambi falsi non escludono duplicati/ownership errata: seguono le guardie semplici. |
+| D01 | `aggiungi-record`: `A OR B` | A: count = offset length; B: record bytes + SEAL > remaining space. | Each limit alone rejects `:lotto-capacity`; both false allow passage. Rejection precedes byte writes. |
+| D02 | `ristampa-record-parole`: `(A OR B OR C) AND NOT P` | A: PUT; B: TOMBSTONE; C: EDIT; P: prepared bit set. | Each ordinary type with P false is restamped; P true preserves TXID. OUTCOME/DECISION/other allowed type with A/B/C false preserves stamp. A/B/C mutually exclusive, not arbitrarily combinable. |
+| D03 | `verifica-chiusura-lotto`: `A AND B` | A: durable ≤ file-start; B: file-start + used + SEAL ≤ most-positive-fixnum. | Each false rejects `:lotto-offset` before CSN claim. Equality boundary included; negative numbers outside declared type. |
+| D04 | `verifica-chiusura-lotto`: `A AND B` | A: count ≤ offset length; B: used + SEAL ≤ buffer length. | Each false signals `:lotto-seal-space`; no CSN claimed. False A represents internal corruption, not normal D01 saturation. |
+| D05 | `verifica-log-csn`: `A AND B` | A: batch of segment kind; B: count > 0. | Control and empty batch rejected separately with `:lotto-csn-content`; both true pass. |
+| D06 | `verifica-log-csn`: `A AND B AND C` | A: log of segment kind; B: batch file-id = log file-id; C: equal versions. | Each mismatch rejects `:lotto-csn-log` before claim. Log identity first fixed here; Archivio membership is an external precondition. |
+| D07 | `esigi-csn-pendente`: `A AND B AND (C OR D)` | A: registry present; B: log present; C: high > 0; D: low > 0. | With pending true, each missing association and high=low=0 signals `:lotto-csn-token`. High=0/low>0 and high>0/low=0 are both allowed nonzero tokens. No registry access in guard. |
+| D08 | `esigi-identita-csn-lotto`: `A AND B AND C AND D` | A: `eq` between local and expected registry; B: equal slot; C: equal high; D: equal low. | Each of four false with others equal rejects `:lotto-csn-stale` before resolution. For A use two registry objects with identical numbers: numeric equality insufficient. |
+| D09 | `verifica-identita-lotto`: `A AND B AND C` | A: equal batch/log kind; B: equal file-id; C: equal version. | Each difference rejects `:group-identity-or-order` before ownership acquisition. |
+| D10 | `verifica-identita-lotto`: `A AND NOT B` | A: csn-log present; B: `eq csn-log (gruppo-log group)`. | A true/B false rejects `:lotto-csn-log` even with all D09 true. A true/B true passes. A false follows legacy contract and B not evaluated. |
+| D11 | `verifica-identita-lotto`: `A OR B` | A: group count zero; B: batch-start = group-start + group-bytes. | First batch passes without using empty group's frontier; subsequent pass only if contiguous. Both false reject `:group-identity-or-order` before CAS. |
+| D12 | `aggiungi-lotto`: `A OR B` | A: count = slot count; B: batch-used > max-bytes − bytes. | Each limit alone rejects `:group-capacity` before mutating owner or group. Both false do not exclude duplicates/wrong ownership: simple guards follow. |
 
-D02 e D01 sono predicati già presenti nelle funzioni modificate; D09/D11 sono stati
-estratti dal predicato precedente del gruppo. D10 e D08 sono le protezioni di identità
-aggiunte. Non si confonde una decisione più corta con una copertura già ottenuta.
+D02 and D01 are predicates already present in modified functions; D09/D11 were
+extracted from the previous group predicate. D10 and D08 are added identity
+protections. A shorter decision is not confused with already achieved coverage.
 
-## Decisioni composte delegate o invariate nel contesto del diff
+<a id="decisioni-composte-delegate-o-invariate-nel-contesto-del-diff"></a>
 
-Non sono nuove decisioni del ponte, ma sono necessarie per le sue precondizioni.
+## Delegated or unchanged compound decisions in diff context
 
-| ID | Posizione nel contesto letto | Condizioni e obbligo |
+These are not new bridge decisions, but they are needed for its preconditions.
+
+| ID | Position in read context | Conditions and obligation |
 |---|---|---|
-| E01 | `encoding-size` | `eq buffer key OR eq buffer value`: ciascun alias da solo deve rifiutare prima della prima scrittura. |
-| E02 | `encoding-size` | `key-length ≤ key-limit AND total ≤ record-limit`: ciascun limite falso produce `:format-limit`. |
-| E03 | `encoding-size` | `kind = PUT AND value-length > document-limit`: budget documento applicato al PUT; gli altri tipi seguono le rispettive verifiche di formato. |
-| E04 | `configurazione-log` | `kind = segment OR file-id = 0`: segment può avere file-id nonzero, controllo richiede zero. |
-| E05 | `crea-lotto` | `SEAL ≤ capacity ≤ max-bytes AND 1 ≤ max-records ≤ max-records-limit`: ciascun budget invalido rifiutato prima dell'allocazione iniziale. |
-| E06 | `crea-log-io` | `stato-file = open AND mode-file = append`: ciascuna proprietà falsa respinta. L'esclusività del wrapper è una precondizione. |
-| E07 | `coperto-p` | `level = async AND kind ≠ segment`: async su controllo rifiutato; async segment richiede written/durable, group/strong richiedono durable. Questa funzione non verifica la salute del log. |
+| E01 | `encoding-size` | `eq buffer key OR eq buffer value`: each alias alone must reject before first write. |
+| E02 | `encoding-size` | `key-length ≤ key-limit AND total ≤ record-limit`: each false limit produces `:format-limit`. |
+| E03 | `encoding-size` | `kind = PUT AND value-length > document-limit`: document budget applied to PUT; other types follow their format checks. |
+| E04 | `configurazione-log` | `kind = segment OR file-id = 0`: segment may have nonzero file-id, control requires zero. |
+| E05 | `crea-lotto` | `SEAL ≤ capacity ≤ max-bytes AND 1 ≤ max-records ≤ max-records-limit`: each invalid budget rejected before initial allocation. |
+| E06 | `crea-log-io` | `stato-file = open AND mode-file = append`: each false property rejected. Wrapper exclusivity is a precondition. |
+| E07 | `coperto-p` | `level = async AND kind ≠ segment`: async on control rejected; async segment requires written/durable, group/strong require durable. Function does not check log health. |
 
-## Guardie semplici, ordine e rifiuto prima della mutazione
+<a id="guardie-semplici-ordine-e-rifiuto-prima-della-mutazione"></a>
 
-| Guardia | Ordine effettivo nel diff | Obbligo osservabile |
+## Simple guards, order, and rejection before mutation
+
+| Guard | Actual order in diff | Observable obligation |
 |---|---|---|
-| Lotto aperto e non già associato | `verifica-chiusura-lotto`, poi guardia registry di `verifica-log-csn`. | Seconda sigillatura non prende un altro CSN. Dopo errore post-presa con lotto ancora open, anche `aggiungi-record` e sigillatura legacy rifiutano l'associazione esistente. |
-| Salute alla chiusura | Dopo D05/D06, prima della frontiera storica e di `prendi-csn`. | Log già faulted dà `io-fault`; non si consuma credito. |
-| Frontiera storica | durable ≤ posizione-durevole del file associato, oltre D03. | Una frontiera futura è rifiutata anche se inferiore a file-start. Non si richiede l'uguaglianza con la frontiera attuale: il dato può essere storico. |
-| Pending prima dell'identità attesa | `esigi-csn-pendente` precede D08. | Libero/già risolto dà `:lotto-csn-not-pending`; token obsoleto su nuovo pendente dà `:lotto-csn-stale`. |
-| Salute alla pubblicazione | D08 precede salute originale, poi `coperto-p`, poi `risolvi-csn`. | Un vecchio lotto durable con log faulted non libera il token come pubblicato. Non basta il risultato vero di `coperto-p`. |
-| Salute all'annullamento | D08, poi log originale faulted, poi `risolvi-csn`. | Log sano rifiuta `:lotto-log-not-faulted`; evento vecchio rifiuta prima, anche se il nuovo log fosse faulted. |
-| Duplicato/owner del gruppo | Dopo identità/budget, ricerca limitata dei duplicati e CAS nil→group. | Oggetto lotto già presente dà `:group-duplicate`; owner di altro gruppo dà `:lotto-owned`; nessun incremento del count in entrambi i rifiuti. |
-| Riuso | Stato durable, pending falso, owner nullo, poi reset. | Risoluzione sola non abilita il riuso. Group release solo non libera il credito CSN. |
+| Open, not already associated batch | `verifica-chiusura-lotto`, then registry guard of `verifica-log-csn`. | Second seal does not claim another CSN. After post-claim error with batch still open, `aggiungi-record` and legacy seal also reject existing association. |
+| Health at closure | After D05/D06, before historical frontier and `prendi-csn`. | Already faulted log gives `io-fault`; no credit consumed. |
+| Historical frontier | durable ≤ durable-position of associated file, beyond D03. | Future frontier rejected even below file-start. Equality with current frontier not required: data may be historical. |
+| Pending before expected identity | `esigi-csn-pendente` precedes D08. | Free/already resolved gives `:lotto-csn-not-pending`; stale token on new pending gives `:lotto-csn-stale`. |
+| Health at publication | D08 precedes original health, then `coperto-p`, then `risolvi-csn`. | Old durable batch with faulted log does not release token as published. True `coperto-p` result insufficient. |
+| Health at cancellation | D08, then original log faulted, then `risolvi-csn`. | Healthy log rejects `:lotto-log-not-faulted`; old event rejects first even if new log faulted. |
+| Group duplicate/owner | After identity/budget, bounded duplicate search and nil→group CAS. | Already present batch object gives `:group-duplicate`; another group's owner gives `:lotto-owned`; no count increase in either rejection. |
+| Reuse | Durable state, pending false, null owner, then reset. | Resolution alone does not enable reuse. Group release alone does not release CSN credit. |
 
-## Identità dell'evento e scenari concreti da verificare successivamente
+<a id="identità-dellevento-e-scenari-concreti-da-verificare-successivamente"></a>
 
-L'evento conserva in campi preallocati il riferimento al **registry originale** e i numeri
-**slot/high/low originali**. Alla sigillatura sono noti registry e high/low restituiti;
-`leggi-csn-lotto`, chiamata dal writer prima del passaggio dell'evento, fornisce slot/high/low.
-La lettura del lotto corrente quando arriva un evento vecchio sostituirebbe il token atteso
-e annullerebbe la protezione contro il riuso. Questa disciplina è del controller.
+## Event identity and concrete scenarios to verify later
 
-| ID | Stato/azione | Risultato staticamente atteso e osservazioni da verificare |
+The event retains in preallocated fields the **original registry** reference and
+**original slot/high/low** numbers. At seal, registry and returned high/low are known;
+`leggi-csn-lotto`, called by writer before event handoff, supplies slot/high/low.
+Reading the current batch when an old event arrives would replace the expected token
+and defeat reuse protection. This discipline belongs to controller.
+
+| ID | State/action | Statically expected result and observations to verify |
 |---|---|---|
-| S01 | Sigillare A, conservare token T, completare write e pubblicazione async, chiamare risoluzione con T. | Token esatto/log sano/written: una sola risoluzione; pending falso. Conferma esterna dopo pubblicazione. Nessuna prova dinamica svolta. |
-| S02 | Come S01 con group/strong e lotto solamente written. | `:lotto-not-covered`, token ancora pendente e nessuno slot liberato; ripetere dopo durable può riuscire con lo stesso T. |
-| S03 | Risolvere T, chiamare nuovamente con T prima del riuso. | `:lotto-csn-not-pending`; nessuna seconda chiamata mutante al registro. |
-| S04 | Risolvere T, rendere durable, rilasciare owner, riusare A, sigillare ancora ottenendo T2, consegnare evento vecchio T. | Se T ≠ T2, `:lotto-csn-stale`; T2 resta pendente, byte/owner/registro non mutati dal ponte. Caso slot riutilizzato ma parole diverse incluso. |
-| S05 | A pendente con registry R; fornire registry R2 distinto con slot/high/low numericamente uguali. | `:lotto-csn-stale` per `eq` falso; nessuna risoluzione in R o R2. |
-| S06 | A pendente; alterare separatamente slot, high oppure low atteso, lasciando gli altri uguali. | Tre rifiuti separati `:lotto-csn-stale`; nessun rilascio del token reale. |
-| S07 | Dopo riuso A è libero, evento vecchio T arriva prima di una nuova sigillatura. | `:lotto-csn-not-pending`; non `:lotto-csn-stale`, perché pending viene controllato per primo. |
-| S08 | A bound a log L; gruppo G di L2 distinto, con stesso kind/file-id/versione e offset compatibili. | D09 passa, D10 rifiuta `:lotto-csn-log` prima del CAS; owner/count/bytes/slot del gruppo invariati. Poi A può essere aggiunto al gruppo di L. |
-| S09 | A written/durable e T pendente; un guasto successivo porta L a faulted. | Pubblicazione tramite ponte con T dà `io-fault` anche se `coperto-p` sarebbe vero. Dopo Serie FAULTED e consumatori ritirati, annullamento con T può risolvere. |
-| S10 | L faulted, ma evento di annullamento contiene T vecchio mentre A conserva T2. | D08 rifiuta `:lotto-csn-stale` prima di liberare il credito di T2. |
-| S11 | Registro pieno/busy/esaurito alla chiusura. | Secondo contratto registro: A rimane open senza token, bytes/count invariati. Esaurimento u64 non produce wrap; busy/pieno richiedono parcheggio limitato, non spin. |
-| S12 | Pubblicazione esterna completata, risoluzione con T rifiutata busy. | Conservare T e fatto-pubblicato in stato preallocato; retry della sola risoluzione. Non ripetere le modifiche all'indice. |
-| S13 | Fallimento di codifica dopo presa riuscita e associazione completa. | T pendente conservato; aggiunta record, nuova sigillatura e riuso rifiutati. Fail-stop, quiescenza I/O e annullamento con T. |
-| S14 | Interruzione tra presa e memorizzazione completa, oppure tra rilascio slot e reset pending. | Esito incerto tra registro e lotto; vietato retry ordinario. Riconciliazione esplicita o arresto Archivio; non attestare recuperabilità locale. |
-| S15 | CSN con low=0 e high>0; oppure high=0 e low>0; stamp ordinario e prepared in codifica. | D07 non rifiuta i token nonzero; ordine LE low/high coerente, stamp e CRC ordinari aggiornati, TXID prepared preservato. Nessuna ricostruzione u64 esplicita nel ponte. |
+| S01 | Seal A, retain token T, complete write and async publication, call resolution with T. | Exact token/healthy log/written: one resolution; pending false. External acknowledgment after publication. No dynamic test performed. |
+| S02 | As S01 with group/strong and batch only written. | `:lotto-not-covered`, token still pending and no slot released; repeating after durable may succeed with same T. |
+| S03 | Resolve T, call again with T before reuse. | `:lotto-csn-not-pending`; no second mutating registry call. |
+| S04 | Resolve T, make durable, release owner, reuse A, seal again obtaining T2, deliver old event T. | If T ≠ T2, `:lotto-csn-stale`; T2 remains pending, bytes/owner/registry not mutated by bridge. Includes reused slot but different words. |
+| S05 | A pending with registry R; supply distinct R2 registry with numerically equal slot/high/low. | `:lotto-csn-stale` for false `eq`; no resolution in R or R2. |
+| S06 | A pending; separately alter expected slot, high, or low, keeping others equal. | Three separate `:lotto-csn-stale` rejections; no real token release. |
+| S07 | After reuse A free, old event T arrives before new seal. | `:lotto-csn-not-pending`; not `:lotto-csn-stale`, because pending checked first. |
+| S08 | A bound to log L; group G of distinct L2, with same kind/file-id/version and compatible offsets. | D09 passes, D10 rejects `:lotto-csn-log` before CAS; group owner/count/bytes/slot unchanged. A may then be added to L's group. |
+| S09 | A written/durable and T pending; later fault makes L faulted. | Bridge publication with T gives `io-fault` even if `coperto-p` would be true. After FAULTED Serie and retired consumers, cancellation with T may resolve. |
+| S10 | L faulted, but cancellation event contains old T while A retains T2. | D08 rejects `:lotto-csn-stale` before releasing T2 credit. |
+| S11 | Registry full/busy/exhausted at closure. | Per registry contract: A remains open without token, bytes/count unchanged. U64 exhaustion does not wrap; busy/full need bounded parking, not spin. |
+| S12 | External publication complete, resolution with T rejected busy. | Retain T and published-fact in preallocated state; retry resolution only. Do not repeat index changes. |
+| S13 | Encoding failure after successful claim and complete association. | Pending T retained; record addition, new seal, and reuse rejected. Fail-stop, I/O quiescence, and cancellation with T. |
+| S14 | Interruption between claim and full storage, or between slot release and pending reset. | Uncertain registry/batch outcome; ordinary retry forbidden. Explicit reconciliation or Archivio stop; do not attest local recoverability. |
+| S15 | CSN with low=0 and high>0; or high=0 and low>0; ordinary and prepared stamp in encoding. | D07 does not reject nonzero tokens; consistent LE low/high order, ordinary stamp and CRC updated, prepared TXID preserved. No explicit u64 reconstruction in bridge. |
 
-Questi scenari richiedono in seguito osservazioni su credito, `H`, byte, pending, ownership
-e indice. In questa revisione non sono stati letti o creati file di test/benchmark: la
-responsabilità assegnata riguarda esclusivamente i due documenti.
+These scenarios later require observations of credit, `H`, bytes, pending, ownership,
+and index. No test/benchmark files were read or created in this review: assigned
+responsibility concerns only the two documents.
 
-## Stati preallocati e obblighi non blocking/fail-stop
+<a id="stati-preallocati-e-obblighi-non-blockingfail-stop"></a>
 
-| Stato | Campi e transizione | Obbligo esterno |
+## Preallocated states and nonblocking/fail-stop obligations
+
+| State | Fields and transition | External obligation |
 |---|---|---|
-| Libero | registry/log nil, pending nil; slot/high/low inizialmente zero. | Writer unico; nessun evento corrente autorizzato alla risoluzione. |
-| Pendente aperto parziale | Presa riuscita e associazione completa, sigillatura fallita prima di sealed. | Non continuare il lotto e non prendere un altro CSN. Serie/log faulted prima dell'annullamento; consumatori completati/ritirati. |
-| Pendente sealed/written/durable | registry/log/token conservati, pending vero; bytes immutabili dopo sealed. | I/O possiede il gruppo in volo; writer osserva gli esiti dopo handoff. Evento conserva identità originale. |
-| Pubblicato, risoluzione parcheggiata | Il ponte vede ancora pending; il controller conserva separatamente fatto-pubblicato e token. | Retry solo su rifiuto busy senza mutazione; lista di obblighi, byte e tempo limitati. |
-| Risolto | pending nil, registry/log/token conservati fino al riuso. | Duplicati respinti; attendere durable e rilascio di tutti i riferimenti prima del riuso. |
-| Nuova incarnazione dopo riuso | Reset dei campi CSN; nuova presa può riutilizzare slot ma non CSN nello stesso registry. | Un evento vecchio usa ancora i numeri catturati; mai sostituirli con quelli della nuova incarnazione. |
-| Incoerenza dopo interruzione | Token locale incompleto o pending vero con slot già liberato. | Stato da fail-stop e riconciliazione, non un normale pendente ritentabile. |
+| Free | registry/log nil, pending nil; slot/high/low initially zero. | Single writer; no current event authorized for resolution. |
+| Partially open pending | Successful claim and complete association, seal failed before sealed. | Do not continue batch or claim another CSN. Serie/log faulted before cancellation; consumers completed/retired. |
+| Pending sealed/written/durable | registry/log/token retained, pending true; bytes immutable after sealed. | I/O owns in-flight group; writer observes outcomes after handoff. Event retains original identity. |
+| Published, resolution parked | Bridge still sees pending; controller separately retains published-fact and token. | Retry only on nonmutating busy rejection; bounded obligation list, bytes, and time. |
+| Resolved | pending nil, registry/log/token retained until reuse. | Duplicates rejected; await durable and release of all references before reuse. |
+| New incarnation after reuse | CSN fields reset; new claim may reuse slot but not CSN in same registry. | Old event still uses captured numbers; never replace them with new incarnation's numbers. |
+| Inconsistency after interruption | Incomplete local token or pending true with slot already released. | Fail-stop and reconciliation state, not ordinary retryable pending. |
 
-Il ponte non conserva un bit fatto-pubblicato, non possiede stato della Serie né l'indice,
-e non parcheggia richieste. L'annullamento controlla solo log faulted, oltre al token:
-Serie FAULTED e quiescenza dei consumatori devono essere già veri al momento della chiamata.
+The bridge retains no published-fact bit, owns neither Serie state nor index,
+and parks no requests. Cancellation checks only faulted log, besides token:
+FAULTED Serie and consumer quiescence must already hold at call time.
 
-Per la conformità complessiva restano da dimostrare: rifiuti del registro prima della
-mutazione; identità interna slot/CSN; assegnazione e registrazione indivisibili; `H` monotono
-secondo ADR-0046; try-lock senza attesa bloccante; limite K delle scansioni; confini fail-stop
-e ordinamento reale dell'handoff. Il diff autorizzato contiene solo le chiamate al registro.
+Overall conformance still requires demonstrating: registry rejections before
+mutation; internal slot/CSN identity; indivisible assignment and registration; monotonic `H`
+under ADR-0046; try-lock without blocking wait; K-bounded scans; fail-stop boundaries
+and real handoff ordering. Authorized diff contains only registry calls.
 
-L'uso di due u32 evita la ricostruzione esplicita del CSN u64 nel ponte; non dimostra
-assenza di heap/boxing/GC nelle chiamate delegate, nei ritorni multipli, nei confronti u64
-o nella gestione degli errori. COD-30 resta **non attestato fino alle misurazioni**.
+Using two u32s avoids explicit u64 CSN reconstruction in bridge; it does not prove
+absence of heap/boxing/GC in delegated calls, multiple returns, u64 comparisons,
+or error handling. COD-30 remains **unattested until measurements**.
 
-## Addendum finale — guardie di ristampa dopo R1
+<a id="addendum-finale--guardie-di-ristampa-dopo-r1"></a>
 
-Riletto il builder finale `5b4be8856be1e25f35f7a6e68f45ae727c18b168`; le impronte della
-lettura precedente e del passaggio intermedio restano nel documento revisione.
-R1 risolto staticamente. **Nessuna nuova decisione composta**: restano 12 decisioni
-D01…D12 nelle funzioni modificate e 7 E01…E07 delegate/invariate. D02 preserva esattamente
-il predicato tipo/prepared; le nuove selezioni sono due `unless` semplici.
+## Final addendum — restamp guards after R1
 
-| Guardia aggiunta nel kernel | Condizione effettiva e ordine | Esito staticamente atteso |
+Final builder `5b4be8856be1e25f35f7a6e68f45ae727c18b168` reread; fingerprints of
+previous reading and intermediate step remain in review document.
+R1 resolved statically. **No new compound decision**: still 12 decisions
+D01…D12 in modified functions and 7 E01…E07 delegated/unchanged. D02 preserves exactly
+the type/prepared predicate; new selections are two simple `unless` forms.
+
+| Guard added to kernel | Actual condition and order | Statically expected outcome |
 |---|---|---|
-| Stato/limite buffer delegati | `esigi-lotto lotto :open` prima della ristampa. | Stato errato: `:lotto-state`; used oltre buffer: `:lotto-length`. Nessun header letto dal kernel. |
-| G-R1-count | count ≤ lunghezza offset, prima del ciclo e del primo accesso all'array. | Falso: `invariant-violation :lotto-record-count`; zero e uguaglianza al limite ammessi. La verifica esterna del ponte può anticipare il rifiuto con `:lotto-seal-space`. |
-| G-R1-offset | pos + header-bytes ≤ used, per ogni record prima di leggerne tipo/flag. | Falso: `invariant-violation :lotto-record-offset`; uguaglianza ammessa. La guardia non richiede che il body sia nuovamente verificato: il buffer proviene dal codec e resta esclusivo. |
+| Delegated state/buffer bound | `esigi-lotto lotto :open` before restamping. | Wrong state: `:lotto-state`; used beyond buffer: `:lotto-length`. Kernel reads no header. |
+| G-R1-count | count ≤ offset length, before loop and first array access. | False: `invariant-violation :lotto-record-count`; zero and equality at bound allowed. Outer bridge check may reject earlier with `:lotto-seal-space`. |
+| G-R1-offset | pos + header-bytes ≤ used, per record before reading type/flags. | False: `invariant-violation :lotto-record-offset`; equality allowed. Guard does not require body re-verification: buffer comes from codec and remains exclusive. |
 
-| Scenario aggiuntivo, da verificare successivamente | Risultato richiesto |
+| Additional scenario to verify later | Required result |
 |---|---|
-| S16 — count oltre l'array offset al confine del kernel; poi count uguale al limite. | Oltre limite: errore tipizzato prima dell'accesso; al limite: il ciclo resta limitato e visita i soli offset presenti. Nessuna esecuzione svolta. |
-| S17 — count valido e pos + header = used; poi pos + header = used + 1, anche con pos ancora entro la capacità del buffer. | Uguaglianza passa; oltre used rifiuta prima della lettura del relativo header, senza affidarsi al solo limite fisico del buffer. |
-| S18 — primo offset valido e secondo corrotto, sigillatura attraverso il ponte. | Il primo record può essere già ristampato; il secondo dà `:lotto-record-offset`. CSN già assegnato conservato pendente, nessun nuovo CSN/riuso/retry ordinario; gestione fail-stop O2. |
+| S16 — count beyond offset array at kernel boundary; then count equal to limit. | Beyond limit: typed error before access; at limit: loop bounded and visits only existing offsets. No execution performed. |
+| S17 — valid count and pos + header = used; then pos + header = used + 1, even with pos still within buffer capacity. | Equality passes; beyond used rejects before reading corresponding header, without relying only on physical buffer bound. |
+| S18 — first offset valid and second corrupt, sealing through bridge. | First record may already be restamped; second gives `:lotto-record-offset`. Already assigned CSN retained pending, no new CSN/reuse/ordinary retry; fail-stop O2 handling. |
 
-Complessità corrente del kernel: **1 + 4 selezioni/cicli + 3 corto circuito = 8**;
-incremento di 2 rispetto al 6 originario. Massimo di tutte le funzioni modificate
-invariato a **9**, entro COD-13. Le guardie non aggiungono cicli, attese o strutture
-allocate; questo riscontro non costituisce una misura heap.
+Current kernel complexity: **1 + 4 selections/loops + 3 short-circuits = 8**;
+increase of 2 over original 6. Maximum across modified functions
+unchanged at **9**, within COD-13. Guards add no loops, waits, or allocated
+structures; this finding is not a heap measurement.
 
-Il parent ha comunicato il test FI offset separato in `csn-threads`; non è stato letto
-né eseguito da questa revisione. O1/O2 concordati restano condizioni del controller,
-con implementazione non esaminata. Prima lettura del parent ancora da attestare;
-nessuna certificazione umana, copertura misurata o garanzia di assenza di heap.
+Parent reported separate offset FI test in `csn-threads`; it was not read
+or run by this review. Agreed O1/O2 remain controller conditions,
+whose implementation was not examined. Parent's first reading still to attest;
+no human certification, measured coverage, or heap-absence guarantee.
 
-## Addendum — preflight file e contratto delegato E08
+<a id="addendum--preflight-file-e-contratto-delegato-e08"></a>
 
-Ponte riletto: `9e1bcfc2dcc92908600dfced771869677b2e90b5`; l'impronta precedente
-`a592a370135b8b24b548c38588215ad7d26bf1b5` resta storica. In `verifica-log-csn`,
-la guardia durable originaria è ora dentro `verifica-file-csn`; identità/salute del log
-precedono il helper, e tutto il helper precede `prendi-csn`.
+## Addendum — file preflight and delegated E08 contract
 
-| ID/guardia | Predicato o contratto effettivamente osservato | Esito/limite |
+Bridge reread: `9e1bcfc2dcc92908600dfced771869677b2e90b5`; previous fingerprint
+`a592a370135b8b24b548c38588215ad7d26bf1b5` remains historical. In `verifica-log-csn`,
+the original durable guard is now inside `verifica-file-csn`; log identity/health
+precede helper, and the entire helper precedes `prendi-csn`.
+
+| ID/guard | Predicate or contract actually observed | Outcome/limit |
 |---|---|---|
-| G-file-written | written ≤ file-start, prima della chiamata al validatore I/O. | Falso: `invalid-argument :lotto-written-offset`; nessun credito preso. Uguale ammesso, maggiore distanza positiva ammessa. |
-| E08 — contratto delegato | `verifica-capienza-append(file, planned, size)`, con size = used + SEAL e planned = file-start − written + size. Requisiti congiunti riferiti: file disponibile/aperto, modalità append, trasferimento size ammesso, estensione pianificata ammessa. | Non è un nuovo `and` sorgente del ponte: è il predicato logico delegato del contratto I/O. Corpo e ordine interno dei controlli non letti; condizioni tipizzate/purezza dipendono da quel modulo. |
-| G-file-durable | durable ≤ posizione-durevole(file), dopo E08. | Falso: `invalid-argument :lotto-future-durable`; nessun credito preso. Un rifiuto E08 può precedere questo errore. |
+| G-file-written | written ≤ file-start, before I/O validator call. | False: `invalid-argument :lotto-written-offset`; no credit claimed. Equality allowed, greater positive distance allowed. |
+| E08 — delegated contract | `verifica-capienza-append(file, planned, size)`, with size = used + SEAL and planned = file-start − written + size. Referenced joint requirements: available/open file, append mode, allowed size transfer, allowed planned extension. | Not a new source `and` in bridge: delegated logical predicate of I/O contract. Body and internal check order not read; typed conditions/purity depend on that module. |
+| G-file-durable | durable ≤ posizione-durevole(file), after E08. | False: `invalid-argument :lotto-future-durable`; no credit claimed. E08 rejection may precede this error. |
 
-Restano **12 decisioni composte sorgente D01…D12** e **7 predicati sorgente delegati/invariati
-E01…E07** della lettura precedente; si aggiunge **1 contratto delegato E08**, senza
-attribuirgli una struttura `and`/`or` o una complessità interna non letta.
-`verifica-file-csn`: **1 + 2 selezioni + 0 corto circuito = 3**.
-`verifica-log-csn`: **1 + 4 selezioni + 3 corto circuito = 8**, prima 9.
-Massimo complessivo **9 ≤ 10**; nessun ciclo o attesa aggiunto localmente.
+Still **12 source compound decisions D01…D12** and **7 delegated/unchanged source predicates
+E01…E07** from previous reading; **1 delegated contract E08** added, without
+attributing an unread `and`/`or` structure or internal complexity to it.
+`verifica-file-csn`: **1 + 2 selections + 0 short-circuits = 3**.
+`verifica-log-csn`: **1 + 4 selections + 3 short-circuits = 8**, previously 9.
+Overall maximum **9 ≤ 10**; no loop or wait added locally.
 
-Se written=100, file-start=150 e size=40, gli argomenti pianificato/trasferimento sono
-90/40 e la fine pianificata è 190: questo distingue limite file e singolo trasferimento.
-La preflight non riserva la distanza né dimostra la contiguità dei lotti: il writer
-mantiene il piano e il gruppo verifica l'ordine. Lo stato file deve essere osservato
-tramite handoff sincronizzato; la sua disponibilità può cambiare prima dell'I/O.
+If written=100, file-start=150, and size=40, planned/transfer arguments are
+90/40 and planned end is 190: this distinguishes file limit from individual transfer.
+Preflight reserves no distance and does not prove batch contiguity: writer
+maintains plan and group checks order. File state must be observed
+through synchronized handoff; availability may change before I/O.
 
-| Scenario aggiuntivo da verificare successivamente | Obbligo osservabile prima della presa CSN |
+| Additional scenario to verify later | Observable obligation before CSN claim |
 |---|---|
-| S19 — written maggiore di file-start; poi uguale e minore. | Maggiore: `:lotto-written-offset`; uguale/minore: valutare E08 con la distanza esatta. Nessuna modifica locale su rifiuto. |
-| S20 — file indisponibile/non aperto, log wrapper ancora open. | E08 deve rifiutare secondo contratto I/O, anche se la salute del wrapper da sola passa. Nessun token assegnato. |
-| S21 — file aperto con modalità incompatibile con append. | E08 deve rifiutare prima del token; tipo/reason esatti dipendono dal modulo I/O non letto. |
-| S22 — size del lotto sigillato oltre il limite di trasferimento. | E08 deve rifiutare usando il terzo argomento size, anche se il budget totale del file ammetterebbe il lotto. |
-| S23 — singolo lotto entro il trasferimento ma fine pianificata oltre il budget file. | E08 deve rifiutare includendo file-start − written; al confine consentito il lotto è ammissibile. |
-| S24 — E08 valido e durable oltre la frontiera reale; poi uguale e inferiore. | Oltre: `:lotto-future-durable`; uguale/inferiore ammessi. Il valore storico non deve essere confuso con file-start. |
+| S19 — written greater than file-start; then equal and less. | Greater: `:lotto-written-offset`; equal/less: evaluate E08 with exact distance. No local mutation on rejection. |
+| S20 — unavailable/nonopen file, log wrapper still open. | E08 must reject under I/O contract even if wrapper health alone passes. No token assigned. |
+| S21 — open file with mode incompatible with append. | E08 must reject before token; exact type/reason depends on unread I/O module. |
+| S22 — sealed batch size beyond transfer limit. | E08 must reject using third size argument even if total file budget would allow batch. |
+| S23 — individual batch within transfer but planned end beyond file budget. | E08 must reject including file-start − written; at allowed boundary batch admissible. |
+| S24 — valid E08 and durable beyond real frontier; then equal and below. | Beyond: `:lotto-future-durable`; equal/below allowed. Historical value must not be confused with file-start. |
 
-Per ogni rifiuto: lotto open senza nuova associazione CSN, buffer/count/used invariati
-da parte del ponte, nessuna pubblicazione/conferma. L'immagine completa, inclusi registro
-e stato del file, richiede la prova che E08 sia solo una validazione. Questi sei assi
-descrivono gli obblighi del contratto; non attestano i dettagli dei sei test del parent.
-Il parent riferisce copertura di budget/disponibilità e immagine invariata; test non
-letti né eseguiti qui. R1 chiuso staticamente e O1/O2 concordati; nessuna certificazione
-umana, misura heap o attestazione della prima lettura del parent.
+For each rejection: open batch without new CSN association, buffer/count/used unchanged
+by bridge, no publication/acknowledgment. Complete image, including registry
+and file state, requires proof E08 is validation only. These six axes
+describe contract obligations; they do not attest details of parent's six tests.
+Parent reports budget/availability coverage and unchanged image; tests not
+read or run here. R1 closed statically and O1/O2 agreed; no human certification,
+heap measurement, or attestation of parent's first reading.

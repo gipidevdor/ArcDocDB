@@ -1,126 +1,130 @@
-# Metodo preregistrato: due reader seqlock, due slot, memoria SC
+<a id="metodo-preregistrato-due-reader-seqlock-due-slot-memoria-sc"></a>
 
-Registrato il 2026-10-08 prima di compilazioni e controlli di questo modulo.
-Fase 0, Common Lisp/SBCL, `safety 3`; warning e style-warning sono errori.
-Requisiti esistenti: REQ-IDX-003 (tuple coerenti, tentativi limitati e fallback),
-REQ-CON-001 (writer unico), REQ-VAL-001 (esperimenti riproducibili).
-Riferimenti: piano SPK-07 e ADR-0032; il limite sperimentale è **due** tentativi,
-mentre ADR-0032 propone otto. Nessun codice di produzione o benchmark.
+# Preregistered method: two seqlock readers, two slots, SC memory
 
-## Dominio e scheduling
+Registered on 2026-10-08 before this module's compilations and checks.
+Phase 0, Common Lisp/SBCL, `safety 3`; warnings and style-warnings are errors.
+Existing requirements: REQ-IDX-003 (consistent tuples, bounded attempts and
+fallback), REQ-CON-001 (single writer), REQ-VAL-001 (reproducible experiments).
+References: SPK-07 plan and ADR-0032; the experimental limit is **two** attempts,
+whereas ADR-0032 proposes eight. No production code or benchmark.
 
-Un writer, due reader identificati 0 e 1, due slot identificati 0 e 1.
-Ogni reader esegue una sola operazione, su un solo slot, invocata nello stato
-iniziale. Le assegnazioni sono `(0 0)`, `(1 1)`, `(0 1)`, `(1 0)`.
-Il writer aggiorna una volta ciascuno slot, negli ordini `(0 1)` e `(1 0)`:
-otto grafi corretti distinti, senza riduzione per simmetria.
+<a id="dominio-e-scheduling"></a>
 
-Ogni aggiornamento consiste in quattro azioni: seq dispari, version,
-location, seq pari e pubblicazione dell'evento nella storia logica.
-`location` è un registro astratto atomico completo (segmento, offset,
-lunghezza, chiave). I tre registri seq/version/location sono separati.
-Le tuple iniziali e finali usano dati espliciti distinti, non un checksum.
-Seq appartiene a `{0,1,2}`; generazione a `{0,1}`; nessun wrap o ABA.
-Gli identificatori degli eventi logici sono distinti dai registri fisici.
+## Domain and scheduling
 
-Un tentativo reader legge seq iniziale; se dispari, rifiuta subito.
-Altrimenti legge version, location, seq finale, poi valida uguaglianza e
-parità. Il primo rifiuto avvia il secondo tentativo; il secondo inoltra
-la richiesta al writer. Il servizio di fallback è un'azione del writer
-abilitata solo tra aggiornamenti completi (pc 0, 4, 8): copia una tuple
-intera, risponde e termina l'operazione. Il writer sceglie esplicitamente
-fra aggiornamento successivo e richieste pendenti, una per azione.
+One writer, two readers identified as 0 and 1, two slots identified as 0 and 1.
+Each reader executes a single operation on a single slot, invoked in the
+initial state. Assignments are `(0 0)`, `(1 1)`, `(0 1)`, `(1 0)`.
+The writer updates each slot once, in orders `(0 1)` and `(1 0)`:
+eight distinct correct graphs, without symmetry reduction.
 
-Ogni arco sceglie un'azione abilitata del writer o di uno dei due reader.
-Le azioni sono SC e indivisibili. Sono enumerati tutti gli interleaving
-di queste azioni; le sospensioni sono rappresentate dalla scelta degli
-altri attori, senza archi di stuttering. Nessun accorpamento dei reader.
+Each update consists of four actions: odd seq, version, location, even seq
+and publication of the event in logical history.
+`location` is a complete atomic abstract register (segment, offset, length,
+key). The three seq/version/location registers are separate. Initial and
+final tuples use distinct explicit data, rather than a checksum.
+Seq belongs to `{0,1,2}`; generation to `{0,1}`; no wraparound or ABA.
+Logical event identifiers are distinct from physical registers.
 
-Hit/miss: per ogni tuple accettata si controllano tre query per slot:
-chiave iniziale, chiave sostitutiva, chiave sempre assente. Questa
-fattorizzazione è esatta nel modello: la query interviene soltanto nella
-decodifica della risposta, senza cambiare registri, passi o scheduling.
-Si richiedono testimoni di hit e miss per entrambe le chiavi variabili,
-oltre al miss permanente, per ciascun reader in ciascun grafo.
-Non si modella il sondaggio di una tabella hash, la directory o uno
-snapshot atomico fra slot: ogni risposta riguarda esclusivamente uno slot.
+A reader attempt reads initial seq; if odd, it rejects immediately.
+Otherwise it reads version, location, final seq, then validates equality and
+parity. The first rejection starts the second attempt; the second forwards
+the request to the writer. Fallback service is a writer action enabled only
+between complete updates (pc 0, 4, 8): it copies a whole tuple, responds, and
+completes the operation. The writer explicitly chooses between the next update
+and pending requests, one per action.
 
-## Oracolo, mutanti e criteri preregistrati
+Each edge chooses an enabled action of the writer or one of the two readers.
+Actions are SC and indivisible. All interleavings of these actions are
+enumerated; suspensions are represented by choosing other actors, without
+stuttering edges. Readers are not combined.
 
-Si riusano `ARCDOCDB.SPK07::EXPLORE` e `::REQUIRE-OUTCOME` del core.
-Il core viene compilato e caricato prima del modulo.
-L'oracolo viene chiamato per ogni stato estratto dalla BFS, anche quando
-nessun reader ha ancora risposto. Ricostruisce dalla storia logica le
-tuple attese usando dati dichiarati separatamente dalle scritture del
-modello; controlla prefisso degli eventi, registri degli slot stabili,
-domini, tentativi e ogni risposta conservata nello stato.
+Hit/miss: for each accepted tuple, three queries per slot are checked: initial
+key, replacement key, and always-absent key. This factorization is exact in the
+model: the query participates only in response decoding, without changing
+registers, steps, or scheduling. Hit and miss witnesses for both variable keys,
+plus the permanent miss, are required for each reader in each graph.
+Hash table probing, the directory, and an atomic snapshot across slots are
+not modeled: each response concerns only one slot.
 
-Ogni risposta porta una generazione, version, location e il prefisso
-logico al suo punto di linearizzazione: lettura seq finale per il
-percorso ottimistico, copia del writer per il fallback. Si confrontano
-tutti i campi con l'oracolo a quel prefisso e si verifica che sia un
-prefisso della storia corrente. Il calcolo indipendente delle risposte
-hit/miss usa i record logici. Una risposta vecchia può restare valida
-dopo una pubblicazione successiva: l'oracolo usa il punto registrato,
-senza richiedere erroneamente la versione corrente alla risposta.
+<a id="oracolo-mutanti-e-criteri-preregistrati"></a>
 
-Per ciascuno degli otto scenari si esplorano mutanti diretti:
-writer senza odd in ciascuno slot letto; reader 0 o 1 senza validazione finale.
-Sono 28 grafi negativi: tre per scenario con slot comune, quattro con
-slot distinti. Una mutazione su uno slot mai letto non potrebbe produrre
-una tuple accettata scorretta: non viene contata come mutante rilevabile.
-Ogni mutante deve produrre una `:accepted-tuple-mismatch`, con slot o
-reader corrispondente al bersaglio, tuple osservata/attesa e percorso.
-Una violazione generica o la sola assenza di validazione non basta.
+## Oracle, mutants, and preregistered criteria
 
-Nei grafi corretti si richiedono testimoni per entrambi i reader di:
-retry, successo al secondo tentativo, richiesta di fallback e servizio
-concluso; inoltre completamento di entrambi via fallback, generazioni
-0 e 1, hit/miss dichiarati. Si conserva il cammino BFS verso ciascuno.
-Si controlla un rango strettamente crescente su ogni arco; il massimo
-è 36. Si ricostruiscono gli archi inversi e si verifica che **ogni stato**
-raggiunga un terminale con writer e reader conclusi. Terminali bloccati
-incompleti o stati senza cammino di completamento sono errori.
+The core's `ARCDOCDB.SPK07::EXPLORE` and `::REQUIRE-OUTCOME` are reused.
+The core is compiled and loaded before the module.
+The oracle is called for every state dequeued by BFS, even when neither reader
+has responded. It reconstructs expected tuples from logical history using
+data declared separately from model writes; it checks the event prefix,
+stable slot registers, domains, attempts, and every response retained in state.
 
-Tetto rigido **200000 stati per grafo**, parametro riducibile, mai
-aumentabile. Raggiungere il tetto è un errore, anche prima del tentativo
-di inserire lo stato successivo. Non si converte l'esaurimento in un
-risultato positivo. Un tentativo separato con tetto 32 deve fallire e
-conservare il record del fallimento. Nessuna ricerca casuale o seme.
+Every response carries a generation, version, location, and the logical prefix
+at its linearization point: final seq read for the optimistic path, writer
+copy for fallback. All fields are compared with the oracle at that prefix,
+and the prefix is checked against current history. Independent hit/miss
+response calculation uses logical records. An old response may remain valid
+after a later publication: the oracle uses the recorded point, without
+incorrectly requiring the current version at response time.
 
-Safety è la coerenza delle tuple in ogni stato raggiunto. I testimoni
-positivi dimostrano reachability. La completabilità universale riguarda
-il grafo finito senza stuttering; progressi reali richiedono che attori
-abilitati siano prima o poi schedulati. Due tentativi e rango 36 limitano
-il lavoro astratto, non il tempo trascorso durante sospensioni esterne.
-Non è una prova hardware, delle barriere SBCL o della memoria debole,
-né una prova per writer infiniti, più operazioni o wrap del contatore.
+For each of the eight scenarios, targeted mutants are explored: writer
+omitting odd in each read slot; reader 0 or 1 omitting final validation.
+There are 28 negative graphs: three per shared-slot scenario, four per
+distinct-slot scenario. A mutation on a slot never read could not produce an
+incorrect accepted tuple: it is not counted as a detectable mutant.
+Each mutant must produce an `:accepted-tuple-mismatch`, with slot or reader
+matching the target, observed/expected tuples, and a path. A generic violation
+or merely absent validation is insufficient.
 
-## Registrazione e consegna
+Correct graphs require witnesses for both readers of: retry, success on the
+second attempt, fallback request, and completed service; also both completing
+through fallback, generations 0 and 1, and the declared hits/misses. The BFS
+path to each is retained. A strictly increasing rank is checked on every edge;
+the maximum is 36. Reverse edges are reconstructed, and **every state** must
+reach a terminal state with writer and readers complete. Blocked incomplete
+terminal states or states without a completion path are errors.
 
-Solo `seqlock-readers.lisp`, questo metodo e nuovi file ignored in
-`spikes/SPK-07-protocols/out/` e `spikes/out/`. Nessun commit/push.
-Il runner locale e i report dati sono nuovi artefatti sotto `out/`;
-nessuna integrazione o modifica di core, suite, runner o tools esistenti.
+Hard ceiling of **200000 states per graph**, a parameter that may be reduced
+but never increased. Reaching the ceiling is an error, even before attempting
+to insert the next state. Exhaustion is not converted into a positive result.
+A separate attempt with ceiling 32 must fail and retain the failure record.
+No random search or seed.
 
-Ogni tentativo compile/check usa il wrapper `tools/record-command.lisp`
-con argv esplicito e stdin vuoto. Il runner salva inoltre un record
-schema 1 con argv/stdin, ambiente, contenuti sorgenti prima/dopo,
-risultati decodificati, stdout/stderr integrali, limiti e fasi di
-compilazione. Anche fallimenti e tentativi correttivi devono conservarsi.
-I report del modulo riportano conteggi per grafo e cumulativi, chiamate
-all'oracolo, testimoni, controesempi e controllo di completabilità.
-La consegna elencherà tutti i tentativi, percorsi, conteggi e limiti.
+Safety means tuple consistency in every reachable state. Positive witnesses
+prove reachability. Universal completability concerns the finite graph without
+stuttering; real progress requires enabled actors to be scheduled eventually.
+Two attempts and rank 36 bound abstract work, rather than elapsed time during
+external suspension. This is not a proof of hardware, SBCL barriers, or weak
+memory, nor a proof for infinite writers, multiple operations, or counter wraparound.
 
-## Risultati
+<a id="registrazione-e-consegna"></a>
 
-Esecuzioni nel checkout isolato
+## Recording and delivery
+
+Only `seqlock-readers.lisp`, this method, and new ignored files in
+`spikes/SPK-07-protocols/out/` and `spikes/out/`. No commit/push.
+The local runner and data reports are new artifacts under `out/`;
+no integration or changes to existing core, suite, runner, or tools.
+
+Every compile/check attempt uses wrapper `tools/record-command.lisp` with
+explicit argv and empty stdin. The runner also saves a schema 1 record with
+argv/stdin, environment, before/after source contents, decoded results, full
+stdout/stderr, limits, and compilation phases. Failures and corrective attempts
+must also be retained. Module reports include per-graph and cumulative counts,
+oracle calls, witnesses, counterexamples, and the completability check.
+The delivery will list all attempts, paths, counts, and limits.
+
+<a id="risultati"></a>
+
+## Results
+
+Executions in isolated checkout
 `/Users/gpicchiarelli/.codex/worktrees/valutazione-avanzata/ArcDocDB`.
-SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, 16 GiB, 10 CPU logiche;
-carico esterno non controllato. Seme assente. Questi sono controlli
-logici, senza misure di prestazioni o benchmark.
+SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, 16 GiB, 10 logical CPUs;
+external load uncontrolled. No seed. These are logical checks, without
+performance measurements or benchmarks.
 
-| Ordine writer | Slot reader 0 / 1 | Stati e chiamate oracolo | Archi | Terminali |
+| Writer order | Reader slots 0 / 1 | States and oracle calls | Edges | Terminal states |
 |---|---|---:|---:|---:|
 | 0, 1 | 0 / 0 | 5961 | 14385 | 49 |
 | 0, 1 | 1 / 1 | 1938 | 4057 | 25 |
@@ -131,47 +135,46 @@ logici, senza misure di prestazioni o benchmark.
 | 1, 0 | 0 / 1 | 3159 | 7053 | 35 |
 | 1, 0 | 1 / 0 | 3159 | 7053 | 35 |
 
-Totale corretto: **28434 stati**, **65096 archi**, **28434 chiamate
-all'oracolo**, 288 terminali. Tutti gli stati raggiungono un terminale
-completo; zero deadlock e violazioni. Sono conservati 24 testimoni per
-grafo, **192** complessivi, compresi retry, secondo tentativo riuscito,
-richiesta/servizio di fallback di entrambi i reader, hit/miss e generazioni.
-8240 controlli di tuple accettate e 24720 controlli delle risposte alle query;
-sono conteggi di controlli negli stati, non di operazioni distinte.
+Correct total: **28434 states**, **65096 edges**, **28434 oracle calls**,
+288 terminal states. Every state reaches a complete terminal state; zero
+deadlocks and violations. There are 24 retained witnesses per graph, **192**
+in total, including retries, successful second attempts, fallback request/
+service for both readers, hits/misses, and generations.
+8240 accepted-tuple checks and 24720 query-response checks; these are counts
+of checks within states, rather than distinct operations.
 
-I **28 mutanti** vengono tutti rilevati con `:accepted-tuple-mismatch`:
-14994 stati scoperti, 28238 archi, 10222 stati effettivamente visitati
-dall'oracolo prima dei controesempi; 1080 controlli di tuple e 3156
-controlli di query realmente eseguiti. Le BFS negative si fermano alla
-prima violazione e non sono esplorazioni esaustive del grafo mutante.
-Il massimo fra tutti i grafi è **5961 stati**, inferiore al tetto 200000.
-I contatori di controlli sulle risposte nella versione finale avanzano
-all'interno dell'oracolo, fino al punto effettivo di interruzione.
+All **28 mutants** are detected with `:accepted-tuple-mismatch`:
+14994 states discovered, 28238 edges, 10222 states actually visited by the
+oracle before the counterexamples; 1080 tuple checks and 3156 query checks
+actually executed. Negative BFSs stop at the first violation and are not
+exhaustive explorations of the mutant graph. The maximum across all graphs
+is **5961 states**, below the 200000 ceiling. In the final version, response
+check counters advance inside the oracle up to the actual interruption point.
 
-Esempio specifico: saltando odd nello slot 0, il reader accetta
-`(0 47 (:seg-a 13 9 :alpha))`, mentre la storia impone
-`(0 11 (:seg-a 13 9 :alpha))`: version nuova, location e generazione
-vecchie. Saltando la validazione finale del reader 0 o 1 si ottiene lo
-stesso tipo di tuple mista, con bersaglio distinto e cammino riproducibile.
-I testimoni annotano esplicitamente `:odd-skipped` o `:validation-skipped`.
+Specific example: skipping odd in slot 0 causes the reader to accept
+`(0 47 (:seg-a 13 9 :alpha))`, whereas history requires
+`(0 11 (:seg-a 13 9 :alpha))`: new version, old location and generation.
+Skipping final validation for reader 0 or 1 yields the same kind of mixed
+tuple, with a distinct target and reproducible path. Witnesses explicitly
+annotate `:odd-skipped` or `:validation-skipped`.
 
-Tutti i tentativi hanno stdin vuoto e sono elencati sotto; `record.lisp`
-contiene contenuti/hash prima e dopo, argv, ambiente, dati decodificati
-e stdout/stderr integrali. `data.lisp` contiene fasi compile/check,
-conteggi, testimoni, limiti ed eventuale fallimento del processo figlio.
+All attempts have empty stdin and are listed below; `record.lisp` contains
+before/after contents/hashes, argv, environment, decoded data, and full
+stdout/stderr. `data.lisp` contains compile/check phases, counts, witnesses,
+limits, and any child process failure.
 
-| Tentativo | Tetto | Esito e motivo |
+| Attempt | Ceiling | Outcome and reason |
 |---|---:|---|
-| [001](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Core compilato; modulo fallito per parentesi mancante nella forma `run-graph`; CHECK non avviato. |
-| [002](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Compile rigoroso e CHECK `:ok`, 8 grafi corretti e 28 controesempi. |
-| [003](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 32 | Compilazioni riuscite; errore atteso al raggiungimento di 32 stati. Il diagnostico precede l'aggiunta dei contatori strutturati del budget. |
-| [004](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Compile/CHECK `:ok` dopo l'aggiunta della condizione con dati di budget e annotazioni dei passi mutanti. |
-| [005](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 32 | Errore atteso: 32 stati, 13 chiamate oracolo, 39 archi enumerati. Ulteriore errore del registratore nel decodificare il simbolo qualificato della condizione: il processo padre non conosceva il package. Dati e output grezzi conservati; decodifica integrativa nel catalogo. |
-| [006](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 32 | Compilazioni riuscite; errore atteso a 32 stati, 13 chiamate oracolo, 39 archi enumerati; decodifica completa dopo serializzazione del tipo di condizione come stringa. |
-| [007 finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Compile rigoroso e CHECK `:ok` sui sorgenti finali: conteggi confermati, warning e style-warning assenti. |
+| [001](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Core compiled; module failed because of a missing parenthesis in form `run-graph`; CHECK not started. |
+| [002](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Strict compilation and CHECK `:ok`, 8 correct graphs and 28 counterexamples. |
+| [003](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 32 | Compilations succeeded; expected error upon reaching 32 states. The diagnostic predates structured budget counters. |
+| [004](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Compile/CHECK `:ok` after adding the condition with budget data and mutant-step annotations. |
+| [005](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 32 | Expected error: 32 states, 13 oracle calls, 39 enumerated edges. Additional recorder error decoding the condition's qualified symbol: the parent process did not know the package. Raw data and output retained; supplementary decoding in the catalog. |
+| [006](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 32 | Compilations succeeded; expected error at 32 states, 13 oracle calls, 39 enumerated edges; complete decoding after serializing the condition type as a string. |
+| [007 final](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp) | 200000 | Strict compilation and CHECK `:ok` on final sources: counts confirmed, no warnings or style-warnings. |
 
-Comando riproducibile, da eseguire nel checkout isolato con un nome di
-tentativo nuovo (il registratore rifiuta la sovrascrittura):
+Reproducible command, to run in the isolated checkout with a new attempt name
+(the recorder refuses to overwrite):
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- \
@@ -179,41 +182,39 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
   spikes/SPK-07-protocols/out/seqlock-readers-20261008/record.lisp NOME-NUOVO 200000 < /dev/null
 ```
 
-Il [catalogo della campagna](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp)
-riunisce i record del modulo, i report dati e i record del wrapper generico,
-conservando anche l'errore di decodifica del tentativo 005. Per leggere il
-vecchio report dati 005 il catalogatore crea soltanto il package necessario
-al reader Lisp: non carica o esegue codice del modulo. Il nuovo formato
-usa una stringa per il tipo della condizione.
+The [campaign catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/seqlock-readers-campaign-portable.lisp)
+collects module records, data reports, and generic wrapper records, also
+preserving the decoding error from attempt 005. To read old data report 005,
+the cataloger creates only the package needed by the Lisp reader: it does not
+load or execute module code. The new format uses a string for the condition type.
 
-Il catalogo conservato nel repository è un record portabile: `:raw-original`
-mantiene integralmente il catalogo originario, `:decoded-record` converte
-i simboli del package sperimentale in stringhe qualificate. Il normalizzatore
-è incluso come sorgente e non esegue dati. La prima lettura autonoma del
-catalogo originario è fallita; [record del fallimento](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/evidence-read-failure.lisp)
-e [lettura corretta](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/evidence-read-success.lisp)
-sono conservati. I nuovi risultati del modulo usano già una stringa per la
-condizione; l'intervento riguarda il vecchio dato recuperato del tentativo 005.
+The catalog retained in the repository is a portable record: `:raw-original`
+keeps the entire original catalog, `:decoded-record` converts experimental
+package symbols into qualified strings. The normalizer is included as source
+and does not execute data. The first standalone read of the original catalog
+failed; the [failure record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/evidence-read-failure.lisp)
+and [corrected read](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/evidence-read-success.lisp)
+are retained. New module results already use a string for the condition;
+the intervention concerns old recovered data from attempt 005.
 
-La campagna contiene sette tentativi compile/check: 14 compilazioni
-(13 riuscite e un errore sintattico iniziale), sei invocazioni di CHECK
-(tre riuscite e tre errori attesi di budget). Il tentativo 005 comprende
-anche il fallimento della decodifica nel padre, riparato senza scartare
-il record originale. Le compilazioni riuscite restituiscono
-`:warnings nil :failure nil`; il CHECK finale restituisce `:status :ok`.
-La catalogazione è una successiva lettura/aggregazione di dati, registrata
-anch'essa dal wrapper; non compila né esegue il modulo.
+The campaign contains seven compile/check attempts: 14 compilations
+(13 successful and one initial syntax error), six CHECK invocations
+(three successful and three expected budget errors). Attempt 005 also includes
+the parent's decoding failure, repaired without discarding the original
+record. Successful compilations return `:warnings nil :failure nil`;
+the final CHECK returns `:status :ok`.
+Cataloging is a subsequent data read/aggregation, itself recorded by the
+wrapper; it neither compiles nor executes the module.
 
-Sono state osservate modifiche concorrenti ad altri spike e a runner/suite
-nel checkout. Il wrapper del tentativo 003 segnala sorgenti globali
-`:changed`; gli input specifici del modulo e il core sono stabili nei
-relativi snapshot prima/dopo. Il catalogo distingue le due provenienze
-e conserva integralmente i record originali. Questa attività scrive
-soltanto i due file richiesti e i nuovi artefatti ignored sopra indicati.
+Concurrent changes to other spikes and runner/suite files were observed in
+the checkout. The wrapper for attempt 003 reports global sources as
+`:changed`; module-specific inputs and the core are stable in their respective
+before/after snapshots. The catalog distinguishes the two provenances and
+preserves the original records in full. This activity writes only the two
+requested files and the new ignored artifacts identified above.
 
-Restano i limiti preregistrati: una lettura per reader, un aggiornamento
-per slot, due tentativi, SC con location atomica, rango massimo 36.
-La completabilità riguarda lavoro finito con scheduling degli attori
-abilitati; nessun limite di tempo reale, snapshot fra slot, prova di
-barriere hardware o memoria debole. Nessuna integrazione nella suite,
-codice di produzione, modifica dei requisiti o decisioni, commit/push.
+Preregistered limits remain: one read per reader, one update per slot, two
+attempts, SC with atomic location, maximum rank 36. Completability concerns
+finite work with enabled actors being scheduled; no real-time bound, cross-slot
+snapshot, proof of hardware barriers, or weak memory. No suite integration,
+production code, requirement or decision changes, commit/push.

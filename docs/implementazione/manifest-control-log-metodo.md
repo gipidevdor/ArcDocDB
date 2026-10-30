@@ -1,62 +1,70 @@
-# Metodo di verifica del manifest
+<a id="metodo-di-verifica-del-manifest"></a>
 
-Metodo definito prima della campagna. Ambito: ricostruzione in memoria
-del manifest di una Serie, versioni 1 e 2; nessuna prova di I/O durevole.
+# Manifest verification method
 
-## Fixture e oracle
+Method defined before campaign. Scope: in-memory reconstruction
+of a Serie manifest, versions 1 and 2; no durable-I/O test.
 
-Le fixture impacchettano EDIT, cornice e SEAL con scrittura bytewise e
-CRC bitwise del harness. Non usano gli encoder EDIT del prodotto. Le
-storie dichiarano stato completo iniziale, rotazioni e sostituzioni di
-compaction; un oracle a liste interpreta gli insiemi senza chiamare
-decoder, hash table o funzioni di ripiegamento del prodotto.
+<a id="fixture-e-oracle"></a>
 
-La suite confronta ACTIVE, lunghezze, esiti, CLOSED, rimossi, sconosciuti
-e prossimo ID. Distingue CSN zero da esito assente. Permuta sezioni e
-duplicati, conserva l'ordine degli EDIT, prova limiti u64 e lunghezze
-da 64 a `#xffffffff`.
+## Fixtures and oracle
 
-Ogni troncamento della fixture deve preservare soltanto i lotti sigillati:
-nessun manifest utilizzabile senza completo iniziale. Una corruzione
-testimoniata successiva deve prevalere su un errore semantico o un budget
-degli EDIT anteriori. Si provano esattamente i limiti, il superamento e
-il consumo dei duplicati fisici. Il buffer resta invariato; avvelenarlo
-dopo la costruzione non cambia le query.
+Fixtures pack EDIT, frame, and SEAL with bytewise writing and
+harness bitwise CRC. Do not use product EDIT encoders.
+Histories declare complete initial state, rotations, and compaction
+replacements; a list-based oracle interprets sets without calling
+product decoders, hash tables, or folding functions.
 
-## Esecuzione parallela
+Suite compares ACTIVE, lengths, outcomes, CLOSED, removed, unknown,
+and next ID. Distinguishes zero CSN from absent outcome. Permutes sections and
+duplicates, retains EDIT order, tests u64 boundaries and lengths
+from 64 to `#xffffffff`.
 
-Una prova usa quattro thread SBCL, ciascuno con otto ricostruzioni di
-una Serie indipendente, e confronta i risultati con l'oracle. Il padre
-costruisce inoltre un manifest comune; dopo il riuso del buffer sorgente,
-tutti i worker lo consultano in sola lettura. I thread hanno input e
-workspace separati per le 32 ricostruzioni private. I join hanno
-un limite finito e un fallimento di worker deve fallire la prova. Questa
-è una prova di correttezza concorrente, senza inferenze di throughput,
-scalabilità o isolamento delle latenze del motore.
+Every fixture truncation must preserve only sealed batches:
+no usable manifest without initial complete checkpoint. Later witnessed
+corruption must take precedence over semantic error or budget
+of earlier EDITs. Exact limits, overruns, and physical-duplicate
+consumption tested. Buffer unchanged; poisoning after
+construction does not change queries.
 
-La campagna di mutazione esegue una baseline integra prima delle copie
-modificate. Seleziona solo i test manifest, verifica i marker di avvio e
-completamento e distingue rilevamento runtime, sopravvivenza, errore di
-compilazione, errore prima dei test ed errore dei worker. Un exit nonzero
-dopo il marker di completamento non conta come rilevamento. Tutti i
-mutanti copiano la baseline integra già verificata. Le copie possono
-eseguire in parallelo con directory, cache FASL e log propri, tramite
-`--jobs 4`. La baseline resta seriale. Il self-test dello strumento
-include un handshake fra processi che fallirebbe con avvio seriale,
-exit nonzero e guasti di avvio e raccolta. Le attese dei subprocessi della
-campagna non hanno un timeout automatico; questa campagna usa soltanto
-mutazioni note che conservano i limiti dei cicli.
+<a id="esecuzione-parallela"></a>
 
-## Evidenza
+## Parallel execution
 
-`tools/record-command.lisp` registra comando, ambiente, revisione,
-hash prima/dopo, exit code e output originale. La campagna definitiva
-parte soltanto quando sorgenti, test e tool sono stabili. Fallimenti e
-tentativi precedenti restano distinti e conservati.
+One test uses four SBCL threads, each with eight reconstructions of
+an independent Serie, and compares results with oracle. Parent
+also builds common manifest; after source-buffer reuse,
+all workers query it read-only. Threads have separate input and
+workspaces for 32 private reconstructions. Joins have
+finite limit and worker failure must fail test. This
+is concurrent-correctness testing, without inference of throughput,
+scalability, or engine-latency isolation.
 
-La copertura `recovery` include scanner e tabella DECISION; il riepilogo
-del manifest seleziona soltanto i suoi file, conservando il denominatore
-grezzo e lo stato originale `sb-cover`. Le forme mancanti non diventano
-esclusioni approvate. Due letture C1 controllano invarianti, errori,
-proprietari, cicli e predicati composti; copertura e mutazioni non
-certificano MC/DC o il recovery del motore.
+Mutation campaign runs intact baseline before modified
+copies. Selects only manifest tests, checks startup and
+completion markers, and distinguishes runtime detection, survival, compilation
+error, pre-test error, and worker error. Nonzero exit
+after completion marker does not count as detection. All
+mutants copy already-verified intact baseline. Copies may
+run in parallel with their own directories, FASL caches, and logs through
+`--jobs 4`. Baseline remains serial. Tool self-test
+includes interprocess handshake that would fail with serial startup,
+nonzero exit, and startup/reaping faults. Campaign subprocess
+waits have no automatic timeout; campaign uses only
+known mutations preserving loop bounds.
+
+<a id="evidenza"></a>
+
+## Evidence
+
+`tools/record-command.lisp` records command, environment, revision,
+before/after hashes, exit code, and original output. Final campaign
+starts only when sources, tests, and tool stable. Failures and
+preceding attempts remain distinct and preserved.
+
+`recovery` coverage includes scanner and DECISION table; manifest
+summary selects only its files, preserving raw
+denominator and original `sb-cover` state. Missing forms do not become
+approved exclusions. Two C1 readings check invariants, errors,
+owners, loops, and compound predicates; coverage and mutations do not
+certify MC/DC or engine recovery.

@@ -1,26 +1,30 @@
-# Seconda lettura degli header CBOR
+<a id="seconda-lettura-degli-header-cbor"></a>
 
-Lettura statica indipendente del 2026-10-09, dopo il congelamento dei test.
-Nessun difetto funzionale rilevato rispetto al contratto registrato nel
-[metodo](cbor-header-metodo.md). Compilazione, esecuzione, copertura,
-mutazioni e allocazioni sono **da acquisire** alla data di questa lettura;
-il revisore non ha eseguito campagne.
+# Second reading of CBOR headers
 
-## Provenienza e indipendenza
+Independent static reading on 2026-10-09, after test freeze.
+No functional defect found against the contract recorded in the
+[method](cbor-header-metodo.md). Compilation, execution, coverage,
+mutations, and allocations are **still to be acquired** as of this reading;
+the reviewer ran no campaigns.
 
-I tre file di test sono stati scritti senza leggere `src/codec/cbor-*`
-o implementazioni CBOR degli spike. Gli expected provengono dalla sintassi
-di [RFC 8949, §3 e §3.3](https://www.rfc-editor.org/rfc/rfc8949#section-3),
-dal contratto pubblico congelato e da un modello aritmetico locale.
-Il modello usa divisioni, resto e accumulo big-endian; può creare bignum
-a freddo. Non chiama il prodotto per ricavare il risultato atteso.
+<a id="provenienza-e-indipendenza"></a>
 
-Prima della lettura dei sorgenti sono stati comunicati i Git blob dei test
-e verificato staticamente il bilanciamento lessicale. Nessun test è stato
-modificato dopo quel congelamento. I due blob di prodotto sono stati
-acquisiti solo nella seconda lettura.
+## Provenance and independence
 
-| File | Git blob della lettura |
+The three test files were written without reading `src/codec/cbor-*`
+or spike CBOR implementations. Expected values come from the syntax
+of [RFC 8949, §3 and §3.3](https://www.rfc-editor.org/rfc/rfc8949#section-3),
+the frozen public contract, and a local arithmetic model.
+The model uses division, remainder, and big-endian accumulation; it may create bignums
+in cold code. It does not call the product to derive expected results.
+
+Before reading the sources, test Git blobs were communicated
+and lexical balance was checked statically. No test was
+modified after that freeze. The two product blobs were
+acquired only during the second reading.
+
+| File | Git blob read |
 |---|---|
 | [cbor-package.lisp](../../src/codec/cbor-package.lisp) | `d5f72309f3eca0a719507d257a635e5dd680013a` |
 | [cbor-header.lisp](../../src/codec/cbor-header.lisp) | `db635a50678f2712ec9516be335717ea254d4d09` |
@@ -28,64 +32,70 @@ acquisiti solo nella seconda lettura.
 | [cbor-header.lisp, test](../../tests/codec/cbor-header.lisp) | `a1541916590304adccc2092c226ef3be9c644168` |
 | [cbor-threads.lisp](../../tests/codec/cbor-threads.lisp) | `720d80c6dd5a962dc724835c1421635ba289b7ef` |
 
-## Riscontro sul contratto
+<a id="riscontro-sul-contratto"></a>
 
-Il preflight controlla il tipo semplice u8 e gli indici prima del lead.
-Uno span valido vuoto segnala troncatura all'offset `end`; un range invalido
-resta un errore di argomento senza offset. AI 28..30 e AI31 sono trattati
-prima del calcolo della larghezza. Per AI 24..27 l'intero argomento deve
-rientrare nello span prima di leggere i suoi byte. Il controllo F8 sotto
-32 viene dopo la disponibilità del secondo byte, con offset `start+1`.
+## Contract findings
 
-L'accumulo legge al massimo quattro byte per ciascuna parola: anche le due
-parole `FFFFFFFF` restano u32. Non assembla un valore u64 e non converte i
-bit in un oggetto float. Il controllo della larghezza precede la somma
-`start+width`, che resta entro `end`; il percorso immediato e i marker
-consumano un byte. Il risultato contiene sempre i sei valori pubblici
-nell'ordine major, AI, high, low, next, form.
+Preflight checks the simple u8 type and indices before the lead.
+A valid empty span reports truncation at offset `end`; an invalid range
+remains an argument error without an offset. AI 28..30 and AI31 are handled
+before width calculation. For AI 24..27 the entire argument must
+fit within the span before its bytes are read. The F8 check below
+32 follows availability of the second byte, with offset `start+1`.
 
-Gli argomenti non minimi sono conservati. Le forme `:indefinite` e `:break`
-non ricevono una validazione strutturale del contesto. Stringhe, contenitori
-e tag possono avere una testa completa senza il corpo o il figlio:
-l'esito riguarda soltanto la testa. Il profilo deterministico, l'UTF-8 del
-testo, le chiavi delle mappe, il budget documentale e la profondità restano
-responsabilità del futuro parser.
+Accumulation reads at most four bytes per word: even both
+`FFFFFFFF` words remain u32. It does not assemble a u64 value or convert
+bits into a float object. The width check precedes the sum
+`start+width`, which remains within `end`; the immediate path and markers
+consume one byte. The result always contains the six public values
+in the order major, AI, high, low, next, form.
 
-## Lista di controllo C1
+Nonminimal arguments are preserved. The `:indefinite` and `:break` forms
+receive no structural context validation. Strings, containers,
+and tags may have a complete head without the body or child:
+the outcome concerns only the head. The deterministic profile, text
+UTF-8, map keys, document budget, and depth remain
+the future parser's responsibility.
 
-| Punto | Riscontro e limite |
+<a id="lista-di-controllo-c1"></a>
+
+## C1 checklist
+
+| Point | Finding and limit |
 |---|---|
-| 1. Requisiti e ADR | REQ-AFF-004/008 e supporto iniziale a REQ-LIM-002, coerenti con ADR-0014/0048. Non attesta il decoder CBOR completo. |
-| 2. Invarianti e test | Range, ordine dei rifiuti, parole, progresso e immutabilità hanno oracoli indipendenti. Le guardie interne restano attive; gli input pubblici conformi non ne rendono false le postcondizioni. Copertura e mutazioni pendenti. |
-| 3. Errori tipizzati | `invalid-argument`, `corruption-detected` e `invariant-violation`; motivi e offset sono dichiarati. Nessun gestore nel prodotto nasconde un errore. Il kernel non possiede una Serie: la transizione `FAULTED` spetta al futuro proprietario. |
-| 4. Lavoro limitato | Un lead e al massimo otto byte aggiuntivi; nessuna ricorsione, attesa o ciclo dipendente dalla lunghezza dichiarata del payload. I test hanno tetti di iterazione, semafori entro 15 secondi, join entro 20 e controllo di cessazione nel cleanup. |
-| 5. Allocazioni | Nessun costruttore sul successo nel sorgente; locali index/u8/u32 e nessuna materializzazione u64/float. Zero heap richiede la campagna registrata con sensore positivo: risultato pendente. |
-| 6. Uscita verificata | I sei valori escono dopo la verifica della sintassi locale e dei confini della testa. Non escono un documento decodificato, il payload o una validazione implicita dell'item completo. |
-| 7. Decisioni composte | La [tabella](cbor-header-decisioni.md) include i cinque `and`: range pubblico, progresso dell'argomento, range del marker, rifiuto F8 e progresso pubblico. Non vi sono `or` nel prodotto. Guardie e ramo `otherwise` restano nel denominatore; nessuna qualifica MC/DC dichiarata. |
-| 8. Proprietà dei dati | Commenti OWNER/SHARED dichiarano buffer immutabile del chiamante e cursori/parole locali. Nessuno stato mutabile globale o scrittura sul buffer. |
-| 9. Integrazione e controlli | ASDF registra package/header dopo le fondazioni, i tre file di test e `arcdocdb.cbor.tests:run`. Build, lint, tracciabilità e `make check` sono pendenti alla lettura. |
-| 10. Regole di codifica | Safety 3, speed 2, FTYPE completi, argomenti pubblici T con controllo runtime e contratti delle funzioni. Nessuna violazione statica rilevata; nessuna deviazione o approvazione del gate concessa. |
-| 11. Parallelismo | Nessun lock, attesa, scrittura condivisa o coda globale per operazione. Il test previsto usa due buffer privati e misura il calcolo fuori dalle barriere; l'overlap resta da osservare, senza claim sul pool o sullo scaling del motore. |
-| 12. Atomicità durevole | Non applicabile: nessuna scrittura durevole, I/O, pubblicazione o eliminazione. |
+| 1. Requirements and ADRs | REQ-AFF-004/008 and initial support for REQ-LIM-002, consistent with ADR-0014/0048. Does not certify the complete CBOR decoder. |
+| 2. Invariants and tests | Ranges, rejection order, words, progress, and immutability have independent oracles. Internal guards remain active; conforming public inputs do not make their postconditions false. Coverage and mutations pending. |
+| 3. Typed errors | `invalid-argument`, `corruption-detected`, and `invariant-violation`; reasons and offsets are declared. No product handler hides an error. The kernel owns no Serie: the `FAULTED` transition belongs to the future owner. |
+| 4. Bounded work | One lead and at most eight additional bytes; no recursion, waits, or loop dependent on declared payload length. Tests have iteration ceilings, semaphore waits within 15 seconds, joins within 20, and termination checks in cleanup. |
+| 5. Allocations | No constructor on the success path in source; index/u8/u32 locals and no u64/float materialization. Zero heap requires the registered campaign with a positive sensor: result pending. |
+| 6. Verified output | The six values exit after local syntax and head-boundary verification. No decoded document, payload, or implicit full-item validation exits. |
+| 7. Compound decisions | The [table](cbor-header-decisioni.md) includes the five `and` forms: public range, argument progress, marker range, F8 rejection, and public progress. There are no `or` forms in the product. Guards and the `otherwise` branch remain in the denominator; no MC/DC qualification claimed. |
+| 8. Data ownership | OWNER/SHARED comments declare caller-owned immutable buffer and local cursors/words. No global mutable state or buffer writes. |
+| 9. Integration and checks | ASDF registers package/header after foundations, the three test files, and `arcdocdb.cbor.tests:run`. Build, lint, traceability, and `make check` are pending at the reading. |
+| 10. Coding rules | Safety 3, speed 2, complete FTYPEs, public arguments T with runtime checks, and function contracts. No static violation found; no deviation or gate approval granted. |
+| 11. Parallelism | No lock, wait, shared write, or global queue per operation. The planned test uses two private buffers and measures computation outside barriers; overlap remains to be observed, without claims about the engine pool or scaling. |
+| 12. Durable atomicity | Not applicable: no durable writes, I/O, publication, or deletion. |
 
-## Corpus registrato
+<a id="corpus-registrato"></a>
 
-Sono presenti 17 test nominali, di cui uno con due thread reali. I conteggi
-seguenti sono expected dell'oracolo, non risultati di una campagna:
+## Registered corpus
+
+There are 17 nominal tests, one using two real threads. The following counts
+are oracle expectations, not campaign results:
 
 | Corpus | Expected |
 |---|---|
-| Tutti i 256 lead, argomento fisicamente disponibile | 224 `:argument`, 4 `:indefinite`, 1 `:break`; 24 reserved e 3 indefinite illeciti |
-| Tutti i 256 lead su span di un byte | 192 `:argument`, 5 marker; 32 troncati, 24 reserved e 3 indefinite illeciti |
-| Tutti i 256 secondi byte F8 | 224 accettati, 32 malformati |
-| Argomenti big-endian a due byte | Tutti i 65.536 valori, comprese rappresentazioni non minime |
-| Prefissi delle quattro larghezze per otto major | 152 troncature, con byte mancanti fisicamente presenti fuori `end` |
-| Fuzz differenziale | 4.096 span di 1..9 byte, offset 1..7; seme `8949A11F`, LCG u32 con moltiplicatore 1664525 e incremento 1013904223 |
-| Calcolo concorrente previsto | 2 × 65.536 header × 16 passaggi; 2.097.152 header, 18.874.368 byte; sink 2.401.919.800.705.024 e 2.231.683.637.051.392 |
+| All 256 leads, argument physically available | 224 `:argument`, 4 `:indefinite`, 1 `:break`; 24 reserved and 3 illegal indefinite |
+| All 256 leads on a one-byte span | 192 `:argument`, 5 markers; 32 truncated, 24 reserved and 3 illegal indefinite |
+| All 256 F8 second bytes | 224 accepted, 32 malformed |
+| Two-byte big-endian arguments | All 65,536 values, including nonminimal representations |
+| Prefixes of the four widths for eight majors | 152 truncations, with missing bytes physically present outside `end` |
+| Differential fuzz | 4,096 spans of 1..9 bytes, offsets 1..7; seed `8949A11F`, u32 LCG with multiplier 1664525 and increment 1013904223 |
+| Planned concurrent computation | 2 × 65,536 headers × 16 passes; 2,097,152 headers, 18,874,368 bytes; sinks 2,401,919,800,705,024 and 2,231,683,637,051,392 |
 
-Fixture ulteriori coprono high/low asimmetrici e massimi, bit float per
-zero, segno, infinity e NaN, assenza di payload/figlio, code malformate
-ignorate, offset disallineati, input invalido e priorità dei rifiuti.
+Additional fixtures cover asymmetric and maximum high/low values, float bits for
+zero, sign, infinity, and NaN, missing payload/child, ignored malformed
+tails, unaligned offsets, invalid input, and rejection priority.
 
-Questa lettura non rimuove guardie dalla copertura, non approva eccezioni e
-non chiude MC/DC, fail-stop del runtime o gate di rilascio del motore.
+This reading removes no guards from coverage, approves no exceptions, and
+does not close MC/DC, runtime fail-stop, or the engine release gate.

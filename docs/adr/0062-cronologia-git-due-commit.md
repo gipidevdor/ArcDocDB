@@ -1,44 +1,50 @@
-# ADR-0062 — Cronologia Git ridotta a due commit
+<a id="adr-0062--cronologia-git-ridotta-a-due-commit"></a>
 
-- **Stato:** Accettata su richiesta dell'autore del 2026-10-23
-- **Data:** 2026-10-23
-- **Riferimenti:** REQ-AFF-012, INV-X2;
-  [conservazione delle prove](0061-conservazione-esterna-delle-prove.md).
-- **Rapporto con ADR-0061:** sostituisce, per questa operazione autorizzata,
-  la scelta di non riscrivere la cronologia. Gli asset e gli originali delle prove restano invariati.
-- **Rapporto con la specifica:** nessun cambio al prodotto o ai formati persistenti.
+# ADR-0062 — Git history reduced to two commits
 
-## Decisione
+- **Status:** Accepted at the author's request on 2026-10-23
+- **Date:** 2026-10-23
+- **References:** REQ-AFF-012, INV-X2;
+  [evidence preservation](0061-conservazione-esterna-delle-prove.md).
+- **Relationship to ADR-0061:** for this authorized operation, supersedes
+  the choice not to rewrite history. Assets and evidence originals remain unchanged.
+- **Relationship to the specification:** no change to the product or persistent formats.
 
-Si mantengono i due ultimi stati: verifica CRC32C e successiva pulizia delle
-prove. Il primo diventa un commit radice con **lo stesso albero Git originale**;
-il secondo ne è l'unico figlio. Nel secondo cambiano solo collegamenti e
-metadati di manutenzione necessari alla riscrittura. Il codice eseguibile
-rimane identico. I nuovi hash non vengono attribuiti alle esecuzioni storiche:
-i risultati conservano gli identificativi originali.
+<a id="decisione"></a>
 
-Prima della sostituzione si crea un bundle Git completo delle tre ref pubbliche
-precedenti, lo si verifica, lo si pubblica nell'asset esterno e lo si rilegge
-con SHA-256. Il checkpoint locale Codex coincide con un albero già presente
-nella cronologia salvata; nessun contenuto ulteriore da integrare.
+## Decision
 
-`main` e il tag della release vengono aggiornati insieme con lease sugli hash
-osservati. Il branch remoto obsoleto viene eliminato nella stessa operazione.
-Il tag punta al nuovo commit radice; gli asset conservano nome e hash originali.
-Il pubblicatore CI viene sospeso durante la manutenzione e poi riattivato.
+The two latest states are retained: CRC32C verification and subsequent evidence
+cleanup. The first becomes a root commit with **the same original Git tree**;
+the second is its only child. Only links and maintenance metadata
+required for the rewrite change in the second. Executable code
+remains identical. New hashes are not attributed to historical runs:
+results retain their original identifiers.
 
-## Verifica e conseguenze
+Before replacement, a complete Git bundle of the three previous public refs
+is created, verified, published in the external asset, and reread
+with SHA-256. The local Codex checkpoint matches a tree already present
+in the saved history; no additional content to integrate.
 
-- Uguaglianza dell'albero del primo commit prima e dopo la riscrittura.
-- Nessuna modifica al codice eseguibile del secondo commit.
-- Destinazioni dei collegamenti storici verificate nell'albero conservato.
-- Due commit raggiungibili da `main`, un solo padre per il secondo, nessuno per il primo.
-- Ref locali e remote allineate, cataloghi e collegamenti locali verificati.
-- Dopo il push, scadenza dei reflog locali e garbage collection degli oggetti orfani.
+`main` and the release tag are updated together with leases on the observed
+hashes. The obsolete remote branch is deleted in the same operation.
+The tag points to the new root commit; assets retain original names and hashes.
+The CI publisher is suspended during maintenance and then reenabled.
 
-Il primo stato conservato include ancora i raw storici: quei blob restano
-raggiungibili e continuano a occupare spazio Git. La richiesta riguarda la
-cronologia, non la modifica dei due stati conservati. La rimozione di oggetti
-irraggiungibili sui server GitHub dipende dal servizio. I commit futuri,
-compresi quelli del pubblicatore CI, possono nuovamente aumentare la cronologia.
-Il rollback completo è possibile importando il bundle verificato.
+<a id="verifica-e-conseguenze"></a>
+
+## Verification and consequences
+
+- Equality of the first commit's tree before and after the rewrite.
+- No executable-code changes in the second commit.
+- Historical-link targets verified in the preserved tree.
+- Two commits reachable from `main`, one parent for the second, none for the first.
+- Local and remote refs aligned, catalogs and local links verified.
+- After push, expiration of local reflogs and garbage collection of orphaned objects.
+
+The first preserved state still includes historical raw data: those blobs remain
+reachable and continue occupying Git space. The request concerns history,
+not changing the two preserved states. Removing unreachable
+objects on GitHub servers depends on the service. Future commits,
+including those from the CI publisher, may increase history again.
+Full rollback is possible by importing the verified bundle.

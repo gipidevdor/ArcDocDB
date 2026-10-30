@@ -1,178 +1,192 @@
-# Percorso GET: candidato, cache e record verificato
+<a id="percorso-get-candidato-cache-e-record-verificato"></a>
 
-Il modulo [`arcdocdb.get`](../../src/get/) collega indice primario, contesto
-di lettura, cache e I/O readonly. Implementa la lettura di un PUT corrente
-committed, anche quando tale versione è visibile a uno snapshot. La risposta
-rimane privata fino alla verifica snapshot finale e al rilascio EBR.
+# GET path: candidate, cache, verified record
 
-Non è ancora un endpoint del server. Il [resolver CLOSED](get-resolver.md)
-collega manifest e prove sul file; la [directory CLOSED](get-directory.md)
-seleziona il segmento del candidato. Il [resolver ACTIVE ordinario](get-active.md)
-acquisisce le pagine dalla radice pubblicata della Serie. Prove ACTIVE multiserie,
-pubblicazione della directory complessiva della Serie,
-ricerca delle versioni trattenute, lifecycle del seme, pool e protocollo restano da collegare.
-I requisiti restano **progettati**: compilazione e letture statiche non chiudono
-la qualifica C1. Il modulo non modifica formato, isolamento o decisioni ADR.
+Module [`arcdocdb.get`](../../src/get/) connects primary index, read
+context, cache, read-only I/O. Implements reading current committed
+PUT, including when version visible to snapshot. Response
+remains private until final snapshot verification and EBR release.
 
-Riferimenti: [ADR-0038](../adr/0038-orizzonte-di-visibilita.md),
+Not yet server endpoint. [CLOSED resolver](get-resolver.md)
+connects manifest/file proofs; [CLOSED directory](get-directory.md)
+selects candidate segment. [Ordinary ACTIVE resolver](get-active.md)
+acquires pages from Serie's published root. Multiseries ACTIVE proofs,
+publication of full Serie directory,
+retained-version search, seed lifecycle, pool, protocol remain to connect.
+Requirements remain **designed**: compilation/static readings do not close
+C1 qualification. Module changes neither format, isolation, nor ADR decisions.
+
+References: [ADR-0038](../adr/0038-orizzonte-di-visibilita.md),
 [ADR-0044](../adr/0044-cache-acceleratore-puro.md),
 [ADR-0045](../adr/0045-modello-di-esecuzione.md),
 [ADR-0047](../adr/0047-verifica-csn-dei-record-prepared.md),
-[indice primario](indice-primario.md), [cache](cache-record.md),
-[compiti di lettura](compiti-lettura.md).
+[primary index](indice-primario.md), [cache](cache-record.md),
+[read tasks](compiti-lettura.md).
 
-## Proprietari e configurazione
+<a id="proprietari-e-configurazione"></a>
 
-- Un `ambito-get` associa dominio EBR e registro snapshot dello stesso Archivio.
-  Il controller costruisce una sola identità canonica, prima dei pool. Viste
-  e worker la condividono: `avvia-get` rifiuta un'altra identità prima del pin.
-- Una `vista-get-serie` lega indice, cache opzionale e copia dell'identità
-  canonica della Serie. Il controller deve associare i tre dati correttamente;
-  il modulo non può dedurlo da un indice privo di identità storage.
-  `avvia-get` calcola il digest tramite il [seme posseduto dall'indice](hash-chiavi.md),
-  senza accettare digest forniti dalla richiesta. Un seme assente viene rifiutato.
-- Un `segmento-get` lega la vista a un file readonly. La costruzione legge
-  l'header **dal medesimo file**, verifica CRC, identità Serie/segmento e
-  formato, poi conserva campi immutabili. Si esegue nel pool I/O, fuori GET.
-- Un `contesto-get` appartiene a un worker e a un Archivio. Possiede contesto
-  EBR/snapshot, scratch indice, cinque word del candidato, limite snapshot,
-  buffer record e prova OUTCOME. Non appartiene a una richiesta o a una Serie.
+## Owners and configuration
 
-Il controller mantiene file e binding aperti fino al reclaim autorizzato
-dall'EBR. Un riferimento Lisp alla capacità non sostituisce questa garanzia.
-La costruzione non certifica il prefisso committed né la salute della Serie.
+- `ambito-get` associates EBR domain and snapshot register of same Archivio.
+  Controller builds one canonical identity before pools. Views
+  and workers share it: `avvia-get` rejects different identity before pin.
+- `vista-get-serie` binds index, optional cache, and copy of canonical
+  Serie identity. Controller must associate all three correctly;
+  module cannot infer from index lacking storage identity.
+  `avvia-get` calculates digest through [index-owned seed](hash-chiavi.md),
+  accepting no request-supplied digest. Missing seed rejected.
+- `segmento-get` binds view to read-only file. Construction reads
+  header **from same file**, checks CRC, Serie/segment identity,
+  format, retains immutable fields. Runs in I/O pool outside GET.
+- `contesto-get` belongs to worker/Archivio. Owns EBR/snapshot
+  context, index scratch, five candidate words, snapshot limit,
+  record buffer, OUTCOME proof. Does not belong to request or Serie.
+
+Controller keeps files/bindings open until EBR-authorized
+reclaim. Lisp capability reference does not replace guarantee.
+Construction certifies neither committed prefix nor Serie health.
 
 `crea-contesto-get(ambito, worker-id, :record-bytes B, :budget-payload P)`
-controlla `1 ≤ B ≤ 16.842.775` e `B + 152 ≤ P` prima delle allocazioni.
-Default: 65.536 byte record e 65.688 byte payload. I 152 byte comprendono
-scratch indice 40, candidato 40, snapshot 8, contesto read 32 e prova 32.
-`payload-contesto-get` restituisce questo payload, **non RSS**: oggetti,
-header, EBR, registri, vista, cache, risposta e GC sono esclusi.
+checks `1 ≤ B ≤ 16.842.775` and `B + 152 ≤ P` before allocation.
+Defaults: 65,536 record bytes, 65,688 payload bytes. The 152 bytes include
+index scratch 40, candidate 40, snapshot 8, read context 32, proof 32.
+`payload-contesto-get` returns payload, **not RSS**: objects,
+headers, EBR, registers, view, cache, response, GC excluded.
 
-Una versione più grande del buffer produce `:buffer-required` prima di
-qualsiasi I/O del record/prova. Il driver deve assegnare un worker con scratch
-adeguato e rieseguire la richiesta originale. Non è un limite documentale
-aggiuntivo; il driver deve prevedere anche la capacità massima del formato.
+Version larger than buffer produces `:buffer-required` before
+any record/proof I/O. Driver must assign worker with appropriate
+scratch and rerun original request. Not an additional document
+limit; driver must also allow format's maximum capacity.
 
-## Contratto del compito
+<a id="contratto-del-compito"></a>
 
-Il confine installa `unwind-protect` con `abbandona-get` **prima** di avviare
-il compito. Chiave e richiesta restano stabili ed esclusive fino alla fine.
-Nessun accessor di scratch è esportato. Non usare il contesto su due worker,
-non annidare una richiesta sullo stesso contesto, non inviare dati in rete
-dentro la sezione EBR.
+## Task contract
 
-| Operazione | Esito e responsabilità |
+Boundary installs `unwind-protect` with `abbandona-get` **before** starting
+task. Key/request remain stable/exclusive until end.
+No scratch accessor exported. Do not use context on two workers,
+nest request on same context, or send network data
+inside EBR section.
+
+| Operation | Outcome and responsibility |
 |---|---|
-| `avvia-get(ctx, vista, chiave, snapshot, generazione, now)` | Un tentativo EBR, hash con seme della Serie e lookup primario con budget di otto. `:candidate`, `:absent`, `:history-required`, `:retry` sono provvisori. `:retry` con stato `:idle` indica mancata ammissione, senza pin. |
-| `copia-candidato-get(ctx, cinque-u64)` | Copia le word del candidato dentro lo stesso compito EBR, per il resolver. Nessuna location attraversa una coda. |
-| `sonda-cache-get(ctx, segmento, valid-bytes, flags)` | Nessun I/O. `:hit` lascia `:verified`; `:miss`, `:verify-failed`, `:disabled`, `:proof-required`, `:buffer-required` lasciano `:candidate`. |
-| `leggi-record-get(ctx, segmento, valid-bytes, flags, :outcome-offset …)` | Solo pool I/O, dopo un nuovo lookup. Restituisce fonte, esito cache, esito inserimento, espulsione e scan. Fonte `:cache`/`:segment` lascia `:verified`; `:buffer-required` non legge e lascia `:candidate`. |
-| `copia-valore-get(ctx, risposta, start)` | Copia il valore nella risposta privata, lascia `:copied`, restituisce fine output. La copia non è ancora consegnabile. |
-| `concludi-get(ctx, now-fresco)` | Dopo la copia e ogni accesso: controlla snapshot e rilascia EBR prima di restituire `:found` e lunghezza. `:absent`, `:history-required`, `:retry` hanno lunghezza zero. |
-| `abbandona-get(ctx)` | Cleanup idempotente in `:idle`; scarta riferimenti, candidato e range. Non autorizza una risposta. `:faulted` resta terminale. |
+| `avvia-get(ctx, vista, chiave, snapshot, generazione, now)` | One EBR attempt, Serie-seeded hash, primary lookup with budget eight. `:candidate`, `:absent`, `:history-required`, `:retry` provisional. `:retry` with `:idle` state means no admission, no pin. |
+| `copia-candidato-get(ctx, cinque-u64)` | Copies candidate words within same EBR task for resolver. No location crosses queue. |
+| `sonda-cache-get(ctx, segmento, valid-bytes, flags)` | No I/O. `:hit` leaves `:verified`; `:miss`, `:verify-failed`, `:disabled`, `:proof-required`, `:buffer-required` leave `:candidate`. |
+| `leggi-record-get(ctx, segmento, valid-bytes, flags, :outcome-offset …)` | I/O pool only after new lookup. Returns source, cache outcome, insertion outcome, eviction, scan. Source `:cache`/`:segment` leaves `:verified`; `:buffer-required` reads nothing, leaves `:candidate`. |
+| `copia-valore-get(ctx, risposta, start)` | Copies value into private response, leaves `:copied`, returns output end. Copy not yet deliverable. |
+| `concludi-get(ctx, now-fresco)` | After copying and all access: checks snapshot, releases EBR before returning `:found` and length. `:absent`, `:history-required`, `:retry` length zero. |
+| `abbandona-get(ctx)` | Idempotent cleanup in `:idle`; discards references, candidate, range. Does not authorize response. `:faulted` terminal. |
 
-Un errore di precondizione/ordine viene respinto prima di prendere possesso
-dell'operazione: non deve liberare il compito eventualmente già attivo di un
-chiamante annidato. Il cleanup esterno resta obbligatorio. Dopo l'ammissione,
-errori/uscite non locali delle fasi operative liberano il pin. Un'interruzione
-del cleanup rende il contesto terminale; il controller lo isola.
+Precondition/order error rejected before taking ownership
+of operation: must not release any already active task of nested
+caller. External cleanup remains mandatory. After admission,
+errors/nonlocal exits in operational phases release pin. Cleanup
+interruption makes context terminal; controller isolates it.
 
-Lo scratch record/prova non viene azzerato a ogni richiesta. Rimane privato,
-e i byte precedenti non sono leggibili tramite API: stato e range validi
-vengono azzerati. Qualsiasi errore o uscita non locale invalida anche la copia
-nella risposta; solo il ritorno normale di `concludi-get` la autorizza.
+Record/proof scratch not zeroed every request. Remains private,
+previous bytes inaccessible through API: state/valid ranges
+cleared. Any error or nonlocal exit also invalidates response
+copy; only normal `concludi-get` return authorizes it.
 
-## Visibilità e ricerca storica
+<a id="visibilità-e-ricerca-storica"></a>
 
-GET corrente non attende H: l'indice deve pubblicare soltanto commit visibili
-secondo il contratto del controller. Con snapshot, `avvia-lettura` verifica
-identità, generazione, attivazione e deadline, e cattura `s` sotto EBR.
+## Visibility and historical search
 
-- Candidato corrente con `CSN ≤ s`: leggibile nello snapshot.
-- Candidato con `CSN > s`: `:history-required`.
-- Miss primario con snapshot: `:history-required`, perché una cancellazione
-  successiva a `s` potrebbe aver rimosso una versione da trattenere.
-- Miss primario senza snapshot: `:absent`, da confermare con `concludi-get`.
+Current GET does not wait for H: index must publish only visible commits
+under controller contract. With snapshot, `avvia-lettura` checks
+identity, generation, activation, deadline, captures `s` under EBR.
 
-Il driver conclude il compito anche per gli esiti senza valore. Non può
-trasformare `:history-required` in un miss. Il futuro resolver storico deve
-provare l'assenza e ripetere i controlli snapshot. Non è implementato qui.
+- Current candidate with `CSN ≤ s`: readable in snapshot.
+- Candidate with `CSN > s`: `:history-required`.
+- Primary miss with snapshot: `:history-required`, because deletion
+  after `s` may have removed version requiring retention.
+- Primary miss without snapshot: `:absent`, to confirm with `concludi-get`.
 
-## Fonte autorevole, cache e prepared
+Driver finishes task even for valueless outcomes. Cannot
+convert `:history-required` into miss. Future history resolver must
+prove absence and repeat snapshot checks. Not implemented here.
 
-Il resolver fornisce, sotto la stessa epoca, capacità del segmento, frontiera
-committed `valid-bytes` e flag **del record**. Il flag LIVE dello slot indice
-non è PREPARED. File size, hint e cache non determinano la frontiera.
-Il modulo controlla vista canonica, identità segmento, offset dopo l'header,
-fine entro prefisso, limiti del formato effettivo e flag PUT ammessi.
+<a id="fonte-autorevole-cache-e-prepared"></a>
 
-Gli slot v2 rappresentano l'ID segmento in 32 bit: la capacità deve avere
-parola alta zero e parola bassa uguale al candidato. Non si tronca un ID
-storage u64 per farlo coincidere. Il limite di rappresentazione è quello
-già documentato nel [payload v2](slot-indice-v2.md).
+## Authoritative source, cache, prepared records
 
-Nel pool di calcolo, un prepared restituisce `:proof-required`. Nel pool I/O
-la tabella autorevole deve fornire l'offset dell'OUTCOME nel medesimo segmento
-e prefisso committed. Non basta che l'OUTCOME abbia CRC valido o che esista nel
-file: il resolver deve certificarne l'appartenenza al lotto pubblicato.
-Il modulo legge la prova dallo stesso FD, ne controlla cornice, tipo e CSN
-prima del sondaggio cache. Il verificatore comune confronta poi TXID del PUT
-con quello della prova e CSN con quello del candidato. Un prepared in un
-segmento di origine compaction è un'invariante violata.
+Resolver supplies segment capability, committed `valid-bytes`
+frontier, **record flags** under same epoch. Index-slot LIVE
+flag is not PREPARED. File size, hints, cache do not determine frontier.
+Module checks canonical view, segment identity, offset after header,
+end within prefix, actual format limits, allowed PUT flags.
 
-Un hit cache ordinario non esegue I/O. Un hit prepared nel pool I/O richiede
-la lettura della prova; la cache non conserva un certificato di commit.
-Una `:verify-failed` della copia richiede allarme/metrica e lettura del PUT
-dal segmento. Corruzione della prova o dei byte letti dal file propaga come
-guasto della sorgente, senza essere nascosta come miss cache.
-La variante che risolve la prova dagli esiti EDIT del manifest resta aperta.
+v2 slots represent segment ID in 32 bits: capability must have
+zero high word and low word matching candidate. Storage u64 ID
+not truncated to force match. Representation limit already
+documented in [v2 payload](slot-indice-v2.md).
 
-Il PUT letto viene verificato prima dell'inserimento opportunistico. Contesa,
-bypass e indisponibilità della cache non attendono. L'inserimento ricontrolla
-l'input con l'API pubblica della cache: costo CRC aggiuntivo da misurare.
-Gli enum e i booleani permettono metriche locali del worker; aggregazione e
-allarme sono compiti del driver, senza contatori globali per operazione.
+In compute pool, prepared record returns `:proof-required`. In I/O pool,
+authoritative table must supply OUTCOME offset in same segment
+and committed prefix. Valid OUTCOME CRC or presence in file
+insufficient: resolver must certify membership in published batch.
+Module reads proof from same FD, checks frame, type, CSN
+before cache probe. Common verifier then compares PUT TXID
+with proof TXID, CSN with candidate CSN. Prepared record in
+compaction-origin segment violates invariant.
 
-## Migrazione e costi
+Ordinary cache hit performs no I/O. Prepared I/O-pool hit requires
+proof reading; cache retains no commit certificate.
+Copy `:verify-failed` requires alarm/metric and PUT read
+from segment. Proof/file-byte corruption propagates as source
+fault, not hidden as cache miss.
+Variant resolving proof from manifest EDIT outcomes remains open.
 
-Su miss/prova necessaria/buffer insufficiente, il worker di calcolo abbandona
-il contesto e accoda solo la richiesta originale. Il worker I/O riparte da
-`avvia-get`, riesegue il resolver e ricontrolla la cache. Nessun FD, location,
-prova o pin migra. La lettura bloccante esiste soltanto nel pool I/O.
+Read PUT verified before opportunistic insertion. Contention,
+bypass, unavailable cache do not wait. Insertion rechecks input
+through public cache API: additional CRC cost to measure.
+Enums/booleans allow worker-local metrics; aggregation/alarm
+belong to driver without per-operation global counters.
 
-Lavoro limitato dalla chiave di massimo 65.535 byte, dai budget esistenti dell'indice, dagli otto posti cache, da
-un PUT entro il limite formato e da una prova fissa. Nessuna nuova coda,
-retry infinito, mutex di Archivio sul GET, oggetto per entry o scrittura fra
-Serie. Le copie sono record → scratch → risposta, con verifiche CRC esplicite.
-Le misure del nucleo corrente sono raccolte nella [campagna prestazioni GET](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md),
-con [metodo preregistrato](get-performance-metodo.md). Il rapporto distingue heap
-globale, finestre seriali e gruppi paralleli; non misura la latenza del server.
-La [campagna di isolamento dei costi](get-costi-risultati.md) distingue CRC,
-copie e oracolo e misura la lookup fino a 4,19 milioni di chiavi; non cambia
-il percorso prodotto o le garanzie di progresso dichiarate.
+<a id="migrazione-e-costi"></a>
 
-## Decisioni C1 e qualifica aperta
+## Migration and costs
 
-| ID | Decisione composta | Copertura richiesta |
+On miss/proof required/insufficient buffer, compute worker abandons
+context and queues only original request. I/O worker restarts at
+`avvia-get`, reruns resolver, rechecks cache. No FD, location,
+proof, pin migrates. Blocking read exists only in I/O pool.
+
+Work bounded by maximum 65,535-byte key, existing index budgets, eight cache slots,
+one PUT within format limit, fixed proof. No new queue,
+infinite retry, Archivio mutex on GET, per-entry object, or write between
+Serie. Copies record → scratch → response with explicit CRC checks.
+Current-core measurements in [GET performance campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md),
+with [preregistered method](get-performance-metodo.md). Report distinguishes global
+heap, serial windows, parallel groups; does not measure server latency.
+[Cost-isolation campaign](get-costi-risultati.md) distinguishes CRC,
+copying, oracle, measures lookup through 4.19 million keys; changes neither
+product path nor declared progress guarantees.
+
+<a id="decisioni-c1-e-qualifica-aperta"></a>
+
+## C1 decisions and open qualification
+
+| ID | Compound decision | Required coverage |
 |---|---|---|
-| GET-D01 | Configurazione, capienza payload e identità della vista | Ogni limite, budget insufficiente prima di allocare, copie identità |
-| GET-D02 | Stato iniziale, Archivio canonico, alias chiave e residui del worker | Rientro, altro Archivio, contesti faulted, residui e cleanup interrotto |
-| GET-D03 | Snapshot presente, CSN candidato rispetto a s e miss | Limiti CSN, cancellazione dopo snapshot, H e scadenza |
-| GET-D04 | Proprietario/ID/offset/frontiera/formato/flag del target | Ogni campo discordante, parola alta ID, v1/v2, limiti estremi |
-| GET-D05 | Buffer insufficiente o prova necessaria | Nessuna syscall nel calcolo; nessun I/O con scratch insufficiente |
-| GET-D06 | Prova prepared obbligatoria, range e non sovrapposizione | Assente/inattesa, fuori prefisso, overlap, prova in altro segmento/lotto |
-| GET-D07 | OUTCOME: cornice/tipo/flag/CSN e TXID contro PUT | Ogni discordanza e bit alto; corruzione persistente distinta da cache |
-| GET-D08 | Hit/miss/errore cache e inserimento opportunistico | Cache disattivata, contesa, input corrotto, fallback e metriche |
-| GET-D09 | Range/alias output e conferma finale | Copia interrotta, scadenza dopo copia, errore su miss, no dati dopo unwind |
+| GET-D01 | Configuration, payload capacity, view identity | Every limit, insufficient budget before allocation, identity copies |
+| GET-D02 | Initial state, canonical Archivio, key aliases, worker residue | Reentry, other Archivio, faulted contexts, residue, interrupted cleanup |
+| GET-D03 | Snapshot present, candidate CSN relative to s, miss | CSN limits, deletion after snapshot, H, expiry |
+| GET-D04 | Target owner/ID/offset/frontier/format/flags | Every mismatching field, ID high word, v1/v2, extreme limits |
+| GET-D05 | Insufficient buffer or required proof | No compute syscall; no I/O with insufficient scratch |
+| GET-D06 | Mandatory prepared proof, range, nonoverlap | Missing/unexpected, outside prefix, overlap, proof in another segment/batch |
+| GET-D07 | OUTCOME: frame/type/flags/CSN, TXID against PUT | Every mismatch/high bit; persistent corruption distinct from cache |
+| GET-D08 | Cache hit/miss/error, opportunistic insertion | Disabled cache, contention, corrupt input, fallback, metrics |
+| GET-D09 | Output range/alias, final acknowledgment | Interrupted copy, expiry after copy, miss error, no data after unwind |
 
-Evidenze statiche nella [campagna GET](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-record/README.md).
-La [prima verifica funzionale](get-verifica.md) registra una campagna distinta,
-con esiti e ambito propri; non sostituisce le evidenze statiche precedenti.
-Restano qualifica C1 condizione per condizione, stress concorrente, fault
-injection, misure di allocazione e prestazioni; integrazioni con resolver,
-retention, scheduler, metriche e protocollo. Le due letture della sola campagna statica
-sono dell'autore; la prima campagna funzionale registra anche una revisione indipendente. La
-[revisione indipendente](get-performance-revisione.md) e le
-[prove di prestazione e stress](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md)
-hanno ambiti espliciti e non chiudono la qualifica completa C1.
+Static evidence in [GET campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-record/README.md).
+[First functional verification](get-verifica.md) records distinct campaign
+with its own outcomes/scope; does not replace previous static evidence.
+Remaining: condition-by-condition C1 qualification, concurrent stress, fault
+injection, allocation/performance measurements; resolver,
+retention, scheduler, metrics, protocol integrations. Static campaign's two readings
+by author; first functional campaign also records independent review.
+[Independent review](get-performance-revisione.md) and
+[performance/stress tests](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md)
+have explicit scopes and do not close full C1 qualification.

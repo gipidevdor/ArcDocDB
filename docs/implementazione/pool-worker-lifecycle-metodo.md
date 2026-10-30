@@ -1,97 +1,103 @@
-# Metodo preregistrato dell'attuazione logica dei worker
+<a id="metodo-preregistrato-dellattuazione-logica-dei-worker"></a>
 
-Preregistrazione del 2026-10-13, prima delle campagne congelate, sulla base
-`105ae0dd28a6ae3e7ee60ab1477815a49b1b350b`. Scope: cinque nuovi sorgenti
-`src/scheduler/lifecycle-{types,build,read,worker,update}.lisp`, modifiche
-del package e di ASDF, test e strumento locale C4. Il componente C3 collega
-il target del controllore a richieste e conferme per worker preallocati.
-Non crea thread, non esegue attese, non segnala semafori e non modifica
-ready, lease, obblighi o collegamenti Serie dei componenti C1.
+# Preregistered logical worker-actuation method
 
-L'attivazione e il ritiro sono logici: soltanto il thread del contesto può
-confermare una richiesta, dopo la barriera completa del worker IDLE.
-Il conteggio effettivo proviene dalle conferme; l'invio di un comando non
-equivale al suo completamento. La porta conserva proprietari e contesto;
-una generazione monotona impedisce riuso o sovrascrittura di comandi
-pendenti. Un owner fisico e la sua porta non si trasferiscono.
+Preregistration dated 2026-10-13, before frozen campaigns, on base
+`105ae0dd28a6ae3e7ee60ab1477815a49b1b350b`. Scope: five new sources
+`src/scheduler/lifecycle-{types,build,read,worker,update}.lisp`, package
+and ASDF changes, tests, and local C4 tool. C3 component connects
+controller target to requests and acknowledgments for preallocated workers.
+Creates no threads, waits, or semaphore signals; changes neither
+ready, leases, obligations, nor C1-component Serie connections.
 
-## Verifiche previste
+Activation and retirement logical: only context's thread can
+acknowledge request after complete IDLE-worker barrier.
+Actual count comes from acknowledgments; sending command does not
+equal completion. Gate retains owners and context;
+monotonic generation prevents reuse or overwriting of pending
+commands. Physical owner and its gate do not transfer.
 
-- Factory della porta sul proprietario del contesto e registrazione sul
-  proprietario del controllore; configurazione valida, contesti liberi,
-  porte e owner distinti, massimo coerente e prefisso iniziale attivo.
-  Copia del vettore di porte; input originario modificabile senza cambiare
-  il registro pubblicato. Domini e configurazioni errati devono essere
-  rifiutati prima di pubblicare o legare una struttura incompleta.
-- Valori packed e generazioni ai limiti; separazione fra comando e
-  conferma, conservazione della richiesta pendente e rifiuto di riuso,
-  regressione o esaurimento prima di qualsiasi mutazione.
-- Comando identico già applicato, passaggio attivo/inattivo e ritorno
-  attivo. Conferma soltanto sull'owner reale. Gli stati CLAIMED, RUNNING,
-  BATCH, FINISHING, RESCHEDULE e FAULTED non attestano IDLE; lease, debito,
-  riferimento e fault devono restare integri dopo un rifiuto o rinvio.
-- Tutti i conteggi di una lettura si riferiscono a conferme osservate;
-  richieste in corso non entrano nel numero dei worker attivi. Il registro
-  controlla owner e legame, intervalli e relazione richiesta/conferma.
-  Non dedurre quiescenza globale da una lista ready EMPTY o BUSY.
-- Wrapper del campione: preflight completo di metriche, tempo, conteggi e
-  budget di generazione prima delle scritture; target conservato quando
-  ci sono conferme pendenti. Un errore del campione non deve lasciare
-  comandi o un controllore aggiornati solo parzialmente.
-- Tracce finite con crescita, riduzione e inversione del carico, worker
-  occupato e conferma ritardata; prove su due owner reali con deadline nel
-  solo harness. Verificare che nessun comando sostituisca quello ancora
-  pendente e che il feedback attenda le conferme.
-- Lettura del codice per tipi, safety 3, dichiarazioni, REQ/OWNER/SHARED,
-  funzioni bounded, nessun callback, thread o attesa nel prodotto e nessuna
-  scrittura globale condivisa nel percorso di una richiesta. Le letture
-  automatiche indipendenti non sono una certificazione umana.
+<a id="verifiche-previste"></a>
 
-## Copertura e misure
+## Planned verification
 
-Il gate C3 è almeno 95% di espressioni e rami, confrontato tramite interi
-esatti senza arrotondare. Lo scope include tutti i cinque nuovi file e
-`src/scheduler/package.lisp`, compresi i percorsi generati dalle strutture;
-nessuna esclusione. I vecchi file del controllore e dei worker non sono
-attribuiti al nuovo componente. Il lettore verifica l'inventario completo,
-concordanza fra dato nativo SB-COVER e indice HTML, denominatori non nulli,
-identità e posizioni di ogni percorso mancante. I checkpoint pubblici
-SAVE-COVERAGE dopo il caricamento preservano i segni di startup prima che
-il runtime recuperi i code component; non alterano i segni. Conservare il
-dato nativo e tutti gli HTML originali anche nei tentativi falliti.
-SB-COVER non attesta MC/DC.
+- Gate factory on context owner and registration on
+  controller owner; valid configuration, free contexts,
+  distinct gates and owners, consistent maximum, initially active prefix.
+  Gate-vector copy; original input modifiable without changing
+  published registry. Incorrect domains and configurations must be
+  rejected before publishing or binding incomplete structure.
+- Packed values and generation endpoints; separation of command and
+  acknowledgment, pending-request preservation, and reuse,
+  regression, or exhaustion rejection before any mutation.
+- Identical already-applied command, active/inactive transition, and return
+  to active. Acknowledgment only on real owner. CLAIMED, RUNNING,
+  BATCH, FINISHING, RESCHEDULE, and FAULTED do not attest IDLE; lease, debt,
+  reference, and fault must remain intact after rejection or deferral.
+- Every count in a read concerns observed acknowledgments;
+  in-progress requests excluded from active-worker count. Registry
+  checks owner and binding, ranges, and request/acknowledgment relation.
+  Do not infer global quiescence from EMPTY or BUSY ready list.
+- Sample wrapper: full metric, time, count, and generation-budget
+  preflight before writes; target retained with pending
+  acknowledgments. Sample error must not leave partially
+  updated commands or controller.
+- Finite traces with growth, shrinkage, and load reversal, busy
+  worker and delayed acknowledgment; tests on two real owners with harness-only
+  deadlines. Verify no command replaces pending one
+  and feedback waits for acknowledgments.
+- Read code for types, safety 3, declarations, REQ/OWNER/SHARED,
+  bounded functions, no product callback, thread, or wait, and no
+  globally shared write on request path. Independent automated
+  readings are not human certification.
 
-La misura heap separa prodotto e coordinamento del test. Startup, factory,
-thread, sincronizzazione, oracoli e GC sono fuori dal tratto misurato.
-Warmup 128 cicli, cinque repliche da 4096 cicli, safety 3; nessun reset o
-wrap delle generazioni. Il sensore conserva byte heap, tick grezzi,
-conteggio completato e sink deterministico; un clock nullo significa
-sotto risoluzione, non tempo nullo. Nessuna soglia di tempo o prestazione
-viene ricavata dalla campagna e il carico esterno resta incontrollato.
+<a id="copertura-e-misure"></a>
 
-La campagna A applica sull'owner corrente del contesto una fixture C4 di
-comandi packed preallocata. Ogni ciclo conserva la progressione monotona
-e verifica ritiro, conferma ripetuta, attivazione e conferma ripetuta.
-La fixture può scrivere una richiesta a quiescenza senza concorrenti e conservando
-la progressione del protocollo, ma è dichiarata privata e non qualifica il coordinatore.
-La campagna B crea durante startup due contesti su owner reali distinti,
-con prefisso iniziale attivo, e misura soltanto update/lettura del registro
-sul coordinatore nelle condizioni hold e pending. Le barriere del test
-restano fuori dal sensore heap. Crescita, riduzione e conferme realmente
-concorrenti si verificano nei test d'integrazione; non si presentano come
-una misura priva di allocazioni del relativo harness.
+## Coverage and measurements
 
-Lo strumento C4 deve rilevare un'allocazione deliberata, un sink errato,
-un risultato di API diverso dall'oracolo, un clock sotto risoluzione,
-CLI invalida, destinazione preesistente e raw parziali dopo un errore.
-Il lettore di copertura deve respingere bit, lunghezze, duplicati e schema
-HTML malformati, conteggi discordanti e gate sotto soglia. Compilazione
-senza warning/style-warning e self-test precedono le misure del prodotto.
+C3 gate at least 95% of expressions and branches, compared using exact
+integers without rounding. Scope includes all five new files and
+`src/scheduler/package.lisp`, including structure-generated paths;
+no exclusions. Old controller and worker files not
+attributed to new component. Reader checks complete inventory,
+agreement between native SB-COVER data and HTML index, nonzero denominators,
+identity, and position of every missing path. Public
+SAVE-COVERAGE checkpoints after loading preserve startup marks before
+runtime reclaims code components; do not alter marks. Preserve
+native data and every original HTML even in failed attempts.
+SB-COVER does not attest MC/DC.
 
-Ogni processo di qualifica congelato usa `tools/record-command.lisp`:
-argv, ambiente, output originali, esito e identità sorgenti iniziale/finale.
-Cache dedicate evitano contaminazioni. I tentativi falliti rimangono prove
-fallite; nessun raw mancante è ricostruito o promosso. SHA e byte originali
-degli artefatti pubblicati sono verificati. Park/wake fisico, avvio e join,
-shutdown, worker morti, I/O, admission, sensori reali e taratura restano
-fuori scope: questa campagna qualifica l'attuazione logica bounded.
+Heap measurement separates product from test coordination. Startup, factories,
+threads, synchronization, oracles, and GC outside measured slice.
+Warmup 128 cycles, five replicates of 4096 cycles, safety 3; no generation
+reset or wrap. Sensor preserves heap bytes, raw ticks,
+completed count, and deterministic sink; zero clock means
+below resolution, not zero time. No timing or performance threshold
+derived from campaign; external load remains uncontrolled.
+
+Campaign A applies preallocated packed-command C4 fixture on current
+context owner. Each cycle retains monotonic progression
+and verifies retirement, repeated acknowledgment, activation, and repeated acknowledgment.
+Fixture may write request at quiescence without competitors while retaining
+protocol progression, but declared private and does not qualify coordinator.
+Campaign B creates two contexts on distinct real owners during startup,
+with initially active prefix, and measures only registry update/read
+on coordinator under hold and pending conditions. Test barriers
+remain outside heap sensor. Growth, shrinkage, and actually concurrent
+acknowledgments verified by integration tests; not presented as
+allocation-free measurement of that harness.
+
+C4 tool must detect deliberate allocation, incorrect sink,
+API result differing from oracle, clock below resolution,
+invalid CLI, existing destination, and partial raw data after error.
+Coverage reader must reject malformed bits, lengths, duplicates, and HTML
+schema, mismatched counts, and below-threshold gate. Compilation
+without warning/style-warning and self-tests precede product measurements.
+
+Every frozen qualification process uses `tools/record-command.lisp`:
+argv, environment, original output, outcome, and initial/final source identity.
+Dedicated caches avoid contamination. Failed attempts remain failed
+tests; no missing raw data reconstructed or promoted. SHA and original bytes
+of published artifacts verified. Physical park/wake, startup and joins,
+shutdown, dead workers, I/O, admission, real sensors, and tuning remain
+out of scope: campaign qualifies bounded logical actuation.

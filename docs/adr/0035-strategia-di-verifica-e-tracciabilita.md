@@ -1,102 +1,124 @@
-# ADR-0035 — Strategia di verifica e tracciabilità
+<a id="adr-0035--strategia-di-verifica-e-tracciabilità"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** realizza «Fault injection» e «Benchmark»; aggiunge la
-  tracciabilità. Nessuna emenda.
-- **Riferimenti:** [piano di verifica](../affidabilita/piano-di-verifica.md),
-  [tracciabilità](../tracciabilita/README.md), INV-A5
+# ADR-0035 — Verification and traceability strategy
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-03
+- **Relationship to the specification:** implements “Fault injection” and “Benchmark”; adds
+  traceability. No amendment.
+- **References:** [verification plan](../affidabilita/piano-di-verifica.md),
+  [traceability](../tracciabilita/README.md), INV-A5
 
-L'affidabilità non si dichiara: si dimostra con evidenze. Serve una strategia che renda ogni
-requisito verificato, ogni verifica ripetibile e ogni collegamento controllabile da uno
-strumento (ADR-0031 §2d).
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-### 1. Tracciabilità bidirezionale controllata da strumento
+Reliability is demonstrated with evidence, not declared. A strategy is needed that makes
+ every requirement verified, every verification repeatable, and every link checkable by a
+ tool (ADR-0031 §2d).
 
-- I **requisiti** hanno identificativo `REQ-<area>-<nnn>`, derivano dalla specifica o dagli
-  ADR, e sono elencati nel file di dati
-  [`requisiti.lisp`](../tracciabilita/requisiti.lisp) con: fonte, testo, classe di integrità,
-  invarianti, ADR, metodo di verifica, scenari FI.
-- La **matrice di tracciabilità** ([matrice.md](../tracciabilita/matrice.md)) è **generata**
-  da quel file; `make trace` fallisce se: un riferimento a INV/ADR/FI non esiste; un
-  requisito non ha verifica; un invariante o uno scenario FI non è coperto da alcun
-  requisito; la matrice committata non è quella generata.
-- **Dal codice:** ogni definizione di prodotto e ogni test riportano il requisito in un
-  commento `;;; REQ: REQ-…` (e il nome del test inizia con l'ID). Appena esiste codice,
-  `make trace` verifica che ogni requisito con stato «implementato» abbia almeno un
-  riferimento nel codice e uno nei test, e che ogni riferimento indichi un requisito
-  esistente. Ogni commit di codice riporta `Refs:` con gli ID.
+<a id="decisione"></a>
 
-### 2. Ambiente iniettabile e simulazione deterministica
+## Decision
 
-Tempo (orologio monotono e reale), casualità, schedulazione dei thread e I/O passano da
-**interfacce iniettabili**. In test, il sistema gira in un **simulatore deterministico**:
-un solo flusso di esecuzione cooperativo guidato da un seme, con I/O simulato che inietta
-crash, scritture parziali, errori, corruzioni, e con la schedulazione esplorata per seme. Ogni
-fallimento è riproducibile dal seme. Pattern: FoundationDB, TigerBeetle.
+<a id="1-tracciabilità-bidirezionale-controllata-da-strumento"></a>
 
-### 3. Livelli di verifica
+### 1. Tool-checked bidirectional traceability
 
-1. **Ispezione e analisi:** revisione con lista di controllo; compilazione senza avvisi;
+- **Requirements** have identifiers `REQ-<area>-<nnn>`, derive from the specification or
+  ADRs, and are listed in the data file
+  [`requisiti.lisp`](../tracciabilita/requisiti.lisp) with: source, text, integrity class,
+  invariants, ADRs, verification method, FI scenarios.
+- The **traceability matrix** ([matrice.md](../tracciabilita/matrice.md)) is **generated**
+  from that file; `make trace` fails if: an INV/ADR/FI reference does not exist; a
+  requirement has no verification; an invariant or FI scenario is not covered by any
+  requirement; the committed matrix differs from the generated one.
+- **From code:** every product definition and test includes the requirement in a
+  `;;; REQ: REQ-…` comment (and the test name starts with the ID). Once code exists,
+  `make trace` checks that every requirement with “implemented” status has at least one
+  reference in code and one in tests, and that every reference points to an existing
+  requirement. Every code commit includes `Refs:` with the IDs.
+
+<a id="2-ambiente-iniettabile-e-simulazione-deterministica"></a>
+
+### 2. Injectable environment and deterministic simulation
+
+Time (monotonic and wall clocks), randomness, thread scheduling, and I/O go through
+**injectable interfaces**. In tests, the system runs in a **deterministic simulator**:
+a single cooperative execution flow driven by a seed, with simulated I/O injecting
+crashes, partial writes, errors, corruption, and scheduling explored by seed. Every
+failure is reproducible from the seed. Pattern: FoundationDB, TigerBeetle.
+
+<a id="3-livelli-di-verifica"></a>
+
+### 3. Verification levels
+
+1. **Inspection and analysis:** checklist review; warning-free compilation;
    linter.
-2. **Test unitari e di modulo**, con copertura 100 % di istruzioni e rami per C1
-   (`sb-cover`) e **copertura delle condizioni** nelle decisioni composte di C1 (equivalente
-   di MC/DC: ogni condizione mostrata decisiva indipendentemente; elenco generato dal
-   linter e tabella delle decisioni nel piano di verifica).
-3. **Test di proprietà** e **test differenziale** contro un modello di riferimento in memoria
-   (stessa sequenza di operazioni sul motore e sul modello: i risultati devono coincidere,
-   anche dopo crash e recovery simulati).
-4. **Modelli dei protocolli** (2PC, compaction/swap/reclaim, seqlock) esplorati in modo
-   esaustivo su configurazioni piccole (SPK-07).
-5. **Fault injection** (FI-01…FI-13) nel simulatore e con crash reali (`kill -9`) su file
-   system reale; dopo ogni recovery, il verificatore offline e l'oracolo.
-6. **Fuzzing** di tutti i decoder (record, hint, indici, Bloom, control log,
-   `multiserie.log`, catalogo, protocollo): nessun crash, nessun errore non dichiarato,
-   nessuna lettura fuori limiti; ogni input malformato è *rilevato*.
-7. **Corruzione deliberata**: per ogni file persistente, ogni tipo di danno (bit, byte,
-   troncamento, blocco azzerato, blocco duplicato) deve essere rilevato (INV-A2, INV-F1).
-8. **Mutation testing** sui moduli C1: la suite deve uccidere i mutanti (operatori, limiti,
-   ordine di chiamata); i sopravvissuti sono difetti della suite.
-9. **Soak test** con carico misto, crash ripetuti e verifica periodica.
-10. **Benchmark** riproducibili per i minimi di prestazione e per i costi dei controlli.
+2. **Unit and module tests**, with 100 % statement and branch coverage for C1
+   (`sb-cover`) and **condition coverage** in C1 compound decisions (MC/DC
+   equivalent: each condition shown independently decisive; list generated by the
+   linter and decision table in the verification plan).
+3. **Property tests** and **differential tests** against an in-memory reference model
+   (same operation sequence on engine and model: results must match,
+   including after simulated crash and recovery).
+4. **Protocol models** (2PC, compaction/swap/reclaim, seqlock) explored
+   exhaustively in small configurations (SPK-07).
+5. **Fault injection** (FI-01…FI-13) in the simulator and with real crashes (`kill -9`) on
+   a real file system; after every recovery, the offline verifier and oracle.
+6. **Fuzzing** of every decoder (records, hints, indexes, Bloom, control log,
+   `multiserie.log`, catalog, protocol): no crash, no undeclared error,
+   no out-of-bounds read; every malformed input is *detected*.
+7. **Deliberate corruption**: for every persistent file, every damage type (bit, byte,
+   truncation, zeroed block, duplicated block) must be detected (INV-A2, INV-F1).
+8. **Mutation testing** on C1 modules: the suite must kill mutants (operators, bounds,
+   call order); survivors are suite defects.
+9. **Soak tests** with mixed load, repeated crashes, and periodic verification.
+10. **Reproducible benchmarks** for performance minimums and check costs.
 
-### 4. Gestione della configurazione
+<a id="4-gestione-della-configurazione"></a>
 
-- Versione di SBCL fissata e registrata; compilazione riproducibile; hash del core registrato
-  nelle note di rilascio.
-- Baseline firmate (tag) a ogni gate di fase; changelog; ADR per ogni cambio di decisione.
-- Nessuna modifica a codice C1 senza: requisito tracciato, test, revisione con lista di
-  controllo, matrice aggiornata.
+### 4. Configuration management
 
-### 5. Criteri di rilascio
+- SBCL version pinned and recorded; reproducible build; core hash recorded in
+  release notes.
+- Signed baselines (tags) at each phase gate; changelog; ADR for every decision change.
+- No change to C1 code without: traced requirement, tests, checklist review,
+  updated matrix.
 
-Un gate di fase si supera solo se: tutti i requisiti della fase hanno verifica eseguita e
-verde; copertura per classe raggiunta; nessuna violazione di invarianti nei modelli e nel
-fault injection; nessun rischio alto non mitigato; deviazioni solo se registrate e approvate.
+<a id="5-criteri-di-rilascio"></a>
 
-## Conseguenze
+### 5. Release criteria
 
-- Il sistema è progettato per essere testato in simulazione: i moduli non accedono a tempo,
-  casualità, thread, I/O se non tramite le interfacce (contratto 7 in
-  [architettura](../architettura.md#contratti)).
-- Il costo di verifica è una parte maggiore del lavoro del codice: è voluto.
+A phase gate passes only if: every requirement in the phase has completed, green verification;
+coverage is achieved for each class; no invariant violations in models or
+fault injection; no unmitigated high risk; deviations only if recorded and approved.
 
-## Alternative considerate
+<a id="conseguenze"></a>
 
-- *Soli test di esempio:* non coprono gli interleaving né le combinazioni di guasto.
-- *Linguaggi di specifica e verifica esterni (TLA+, Alloy, model checker in altri linguaggi):*
-  esclusi per decisione dell'autore (2026-10-03): per ora anche gli strumenti di verifica sono
-  solo Common Lisp (INV-X3). I modelli dei protocolli sono programmi Common Lisp con un
-  esploratore proprio. Si riesamina con un nuovo ADR, non prima.
-- *Metodi formali completi sul codice:* fuori portata per un progetto in Common Lisp con
-  singolo autore; si adottano modelli esplorabili dei protocolli, dove il rapporto
-  costo/beneficio è massimo.
+## Consequences
 
-## Valutazione
+- The system is designed for simulation testing: modules do not access time,
+  randomness, threads, or I/O except through interfaces (contract 7 in
+  [architecture](../architettura.md#contratti)).
+- Verification accounts for more work than code: this is intentional.
 
-- Rischi: RSK-20.
-- Verifica: `make trace` e `make lint` in CI; SPK-07 e SPK-09 in Fase 0.
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Example tests alone:* do not cover interleavings or fault combinations.
+- *External specification and verification languages (TLA+, Alloy, model checkers in other languages):*
+  excluded by the author's decision (2026-10-03): for now, verification tools are also
+  Common Lisp only (INV-X3). Protocol models are Common Lisp programs with a
+  custom explorer. Reconsider only through a new ADR.
+- *Complete formal methods on the code:* beyond reach for a Common Lisp project with
+  one author; explorable protocol models are adopted where the
+  cost/benefit ratio is highest.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-20.
+- Verification: `make trace` and `make lint` in CI; SPK-07 and SPK-09 in Phase 0.

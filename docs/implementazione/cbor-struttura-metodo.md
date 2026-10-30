@@ -1,106 +1,114 @@
-# Metodo di verifica della struttura CBOR
+<a id="metodo-di-verifica-della-struttura-cbor"></a>
 
-Metodo registrato prima delle campagne. Il blocco attraversa un item completo
-con stack iterativo preallocato e verifica struttura, testo UTF-8 e budget.
-Il profilo deterministico e la semantica dei tag di ADR-0014 restano successivi:
-chiavi duplicate o fuori ordine, interi non minimi e tutti i bit dei float
-sono accettati dalla sola scansione. Non si materializza un documento.
+# CBOR structure verification method
 
-## Contratto congelato
+Method registered before campaigns. The block traverses one complete item
+with a preallocated iterative stack and verifies structure, UTF-8 text, and budgets.
+ADR-0014's deterministic profile and tag semantics remain subsequent:
+duplicate or unordered keys, nonminimal integers, and all float bits
+are accepted by scanning alone. No document is materialized.
 
-`crea-spazio-cbor()` crea a freddo uno `spazio-cbor` esclusivo del chiamante.
+<a id="contratto-congelato"></a>
+
+## Frozen contract
+
+`crea-spazio-cbor()` cold-creates a caller-exclusive `spazio-cbor`.
 `verifica-struttura-cbor(buffer,start,end,spazio,&key max-bytes,max-nodes,max-depth)`
-restituisce esattamente tre valori: numero di header item, massima profondità
-di array/map e offset `end`. Lo span è `[start,end)` in un array semplice u8
-immutabile durante la chiamata. Default: 16 MiB, 16 Mi header, 100 livelli.
-Il tetto dei nodi è una scelta dell'API, derivata dal massimo numero di header
-in quello span; ADR-0048 richiede il budget ma non ne stabilisce il valore.
+returns exactly three values: item-header count, maximum array/map
+depth, and offset `end`. Span is `[start,end)` in a simple u8 array
+immutable during the call. Defaults: 16 MiB, 16 Mi headers, 100 levels.
+Node cap is an API choice derived from maximum header count
+in that span; ADR-0048 requires the budget but does not set its value.
 
-I nodi comprendono tag, contenitori e chunk definiti, anche vuoti; escludono
-il break. Solo array e map incrementano la profondità, compresi quelli vuoti;
-il contenitore radice ha livello 1. Il tetto zero ammette scalari, tag e stringhe.
-Una catena di tag non usa frame e addebita un solo figlio al padre, quando
-inizia l'item seguente. Le 102 celle coprono radice, 100 contenitori e una
-stringa indefinita. Quest'ultima ammette esclusivamente chunk definiti dello
-stesso major type, con UTF-8 completo separatamente in ciascun chunk di testo.
+Nodes include tags, containers, and definite chunks, including empty ones; exclude
+break. Only arrays and maps increment depth, including empty ones;
+root container has level 1. Zero cap permits scalars, tags, and strings.
+A tag chain uses no frame and charges a single child to its parent when
+the next item begins. The 102 cells cover root, 100 containers, and one
+indefinite string. The latter allows only definite chunks of the
+same major type, with complete UTF-8 separately in each text chunk.
 
-La sintassi e il contesto dei break seguono [RFC 8949, §3.2](https://www.rfc-editor.org/rfc/rfc8949#section-3.2).
-La scansione verifica anche UTF-8, ma non attesta tutta la validità semantica
-né il profilo deterministico di un documento. Tag sconosciuti, tag 0 con un
-contenuto generico, chiavi duplicate e NaN restano distinguibili da un errore
-strutturale e saranno materia del controllo del profilo.
+Break syntax and context follow [RFC 8949, §3.2](https://www.rfc-editor.org/rfc/rfc8949#section-3.2).
+Scanning also verifies UTF-8 but attests neither full semantic validity
+nor a document's deterministic profile. Unknown tags, tag 0 with generic
+content, duplicate keys, and NaNs remain distinguishable from a structural
+error and will belong to profile checking.
 
-Preflight, nell'ordine: range, tipo dello spazio, alias EQ tra buffer e array
-privato dei kind, configurazioni byte/nodi/profondità, span oltre budget byte.
-I primi errori sono `invalid-argument`, reason `:cbor-range`, `:cbor-workspace`,
+Preflight, in order: range, workspace type, EQ alias between buffer and private
+kind array, byte/node/depth configurations, span beyond byte budget.
+Initial errors are `invalid-argument`, reasons `:cbor-range`, `:cbor-workspace`,
 `:cbor-alias`, `:cbor-byte-limit`, `:cbor-node-limit`, `:cbor-depth-limit`;
-lo span eccessivo è `resource-exhausted :cbor-byte-budget`. Tutti senza offset.
-Il preflight invalido non modifica lo spazio; uno scan valido lo resetta.
-Un errore durante lo scan può sporcare lo spazio, che è riusabile alla chiamata
-successiva. Il buffer non viene mai modificato o trattenuto nello spazio.
+excessive span is `resource-exhausted :cbor-byte-budget`. All without offset.
+Invalid preflight does not modify workspace; a valid scan resets it.
+An error during scanning may dirty workspace, reusable on the next
+call. Buffer is never modified or retained in workspace.
 
-Lo scanner legge prima l'header, preservando le reason e gli offset della
-primitiva già verificata. Un chunk di tipo errato precede il budget nodi.
-Un break segue l'ordine tag pendente, contesto non indefinito, map con chiave
-senza valore. Reason: `:cbor-tag-break`, `:cbor-break`, `:cbor-map-value`.
-Per un item si controlla il budget nodi prima di incrementarlo; per un
-contenitore, profondità prima di arità e payload. Budget nodi/profondità sono
-`resource-exhausted`, offset del lead. Lunghezza o arità irrealizzabile è
-`corruption-detected :cbor-truncated`, offset `end`; parole u64 restano divise
-in high/low e il numero delle coppie viene confrontato prima di raddoppiarlo.
-Il completamento della radice seguito da altri byte dà `:cbor-trailing` al
-primo byte restante. Gli errori UTF-8 mantengono reason e offset assoluti.
+Scanner reads header first, preserving reasons and offsets of the
+already-verified primitive. Incorrect chunk type precedes node budget.
+A break follows order pending tag, non-indefinite context, map with key
+without value. Reasons: `:cbor-tag-break`, `:cbor-break`, `:cbor-map-value`.
+For an item, node budget is checked before incrementing; for a
+container, depth before arity and payload. Node/depth budgets are
+`resource-exhausted`, lead offset. Impossible length or arity is
+`corruption-detected :cbor-truncated`, offset `end`; u64 words remain split
+into high/low and pair count is compared before doubling.
+Root completion followed by other bytes gives `:cbor-trailing` at the
+first remaining byte. UTF-8 errors retain reasons and absolute offsets.
 
-## Oracoli e letture
+<a id="oracoli-e-letture"></a>
 
-Tre file di test indipendenti vengono congelati prima della lettura del nuovo
-prodotto da parte del loro autore. Fixture note e modello ricorsivo a freddo
-separato dalla scansione iterativa; quest'ultimo può usare interi boxed, con
-tetti espliciti per input e ricorsione. Fuzz differenziale finito: 4096 span
-fino a 64 byte. Expected di nodi, profondità e fine vengono ricavati senza
-chiamare il nuovo prodotto. Confini di range, budget, arità, troncatura, tag,
-chunk e UTF-8; contenitori ai livelli 100/101, documento di esattamente 16 MiB,
-sentinelle oltre lo span, immutabilità e riuso dopo errore. Dopo la lettura
-statica viene aggiunta una fixture mirata, dichiarata separatamente: 100
-array seguiti da una stringa indefinita con chunk vuoto, per osservare
-l’ultimo slot dello stack. Il corpus precedente conserva il freeze originale.
+## Oracles and readings
 
-Due worker reali usano buffer e scratch distinti, verificano tutti e tre i
-valori e l'intero input. Intervalli di lavoro sovrapposti su tempo reale sono osservati fuori dalla
-barriera di avvio; il clock non prova esecuzione simultanea su core distinti. Attese, iterazioni, join e cleanup hanno tetti espliciti.
-Il test prova isolamento e uso concorrente dell'API; non misura scaling.
+Three independent test files are frozen before their author reads new
+product. Known fixtures and cold recursive model
+separate from iterative scanning; the model may use boxed integers, with
+explicit input and recursion caps. Finite differential fuzz: 4096 spans
+up to 64 bytes. Expected nodes, depth, and end are derived without
+calling new product. Range, budget, arity, truncation, tag,
+chunk, and UTF-8 boundaries; containers at levels 100/101, exact 16 MiB document,
+sentinels beyond span, immutability, and reuse after error. After static
+reading, a targeted fixture is added and declared separately: 100
+arrays followed by an indefinite string with empty chunk, to observe
+the last stack slot. Previous corpus retains original freeze.
 
-Classe conservativa C1: due letture indipendenti del prodotto, inventario
-delle decisioni composte, FTYPE completi e safety 3. Le letture vengono
-attribuite ai rispettivi esecutori; non rappresentano approvazione umana.
-Controlli di compilazione rigorosa, lint e tracciabilità sullo snapshot.
+Two real workers use separate buffers and scratch, checking all three
+values and entire input. Overlapping wall-time work intervals are observed outside the
+startup barrier; the clock does not prove simultaneous execution on distinct cores. Waits, iterations, joins, and cleanup have explicit caps.
+The test proves isolation and concurrent API use; it does not measure scaling.
 
-## Campagne e conservazione
+Conservative class C1: two independent product readings, compound-decision
+inventory, complete FTYPEs, and safety 3. Readings are
+attributed to their respective performers; they do not represent human approval.
+Strict compilation, lint, and traceability checks on snapshot.
 
-Copertura focale `cbor-structure`: package, spazio e quattro file scan; sono
-esclusi dal filtro i moduli invariati header e UTF-8, mentre lo stato grezzo
-ASDF completo viene conservato. Self-test del filtro su tutti i sei file e
-suffissi falsi, più un ramo deliberatamente mancante. Tutti gli HTML e gli
-esiti grezzi restano presenti; nessuna guardia esclusa dal denominatore,
-nessuna attestazione MC/DC o del gate complessivo del motore.
+<a id="campagne-e-conservazione"></a>
 
-Misure seriali, separate da copertura e mutazione: sei fixture preallocate
-(u64 massimo, testo ASCII 32 KiB, 100 array, item misto con tag/map/chunk,
-array con 4096 scalari, 4096 tag seguiti da scalare), cinque repliche di 32
-chiamate, warmup 128. Tutti i tre valori alimentano un sink osservabile,
-con costanti indipendenti. Workspace e input, GC e report sono fuori dalla
-misura. Sensore con baseline zero e controllo positivo 16 × 1 MiB mantenuto
-vivo; criterio zero heap osservato, nessuna soglia di throughput. Errori e
-factory a freddo restano fuori dal percorso misurato.
+## Campaigns and preservation
 
-Mutanti scelti solo dopo il congelamento del kernel, compilabili in copie
-esclusive con cache separata. Baseline completa obbligatoria. Smoke e marker
-di completamento devono essere righe esatte; compilazione fallita e exit zero
-senza completamento sono INVALID. Un fallimento runtime dopo avvio reale è
-DETECTED, un run completo a zero è SURVIVED. Tutti i log, compresi tentativi
-invalidi, restano conservati con identità dei sorgenti prima e dopo.
+Focal coverage `cbor-structure`: package, workspace, and four scan files; unchanged
+header and UTF-8 modules are excluded from filter, while complete raw ASDF
+state is preserved. Filter self-test on all six files and
+false suffixes, plus a deliberately missing branch. All HTML and raw
+outcomes remain present; no guard excluded from denominator,
+no MC/DC or overall engine-gate attestation.
 
-Comandi e campagne registrano snapshot intero, stdout, stderr, exit e stato
-stabile. Il catalogo viene chiuso con risultati effettivi e riferimenti alle
-letture. La compressione eventualmente necessaria è senza perdita e mantiene
-byte originali, checksum, descrittore e prova di rilettura.
+Serial measurements, separate from coverage and mutation: six preallocated fixtures
+(maximum u64, 32 KiB ASCII text, 100 arrays, mixed item with tag/map/chunk,
+array with 4096 scalars, 4096 tags followed by scalar), five replicates of 32
+calls, warmup 128. All three values feed an observable sink,
+with independent constants. Workspace and input, GC and report are outside
+measurement. Sensor with zero baseline and positive control 16 × 1 MiB kept
+alive; zero observed heap allocation criterion, no throughput threshold. Errors and
+cold factory remain outside measured path.
+
+Mutants selected only after kernel freeze, compilable in exclusive
+copies with separate cache. Full baseline mandatory. Smoke and completion
+markers must be exact lines; failed compilation and zero exit
+without completion are INVALID. A runtime failure after actual startup is
+DETECTED, a complete zero-exit run is SURVIVED. All logs, including invalid
+attempts, remain preserved with before/after source identity.
+
+Commands and campaigns record whole snapshot, stdout, stderr, exit, and stable
+state. Catalog is closed with actual results and reading
+references. Any necessary compression is lossless and retains
+original bytes, checksum, descriptor, and rereading proof.

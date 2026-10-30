@@ -1,36 +1,41 @@
-# Contribuire
+<a id="contribuire"></a>
 
-ArcDocDB è in sviluppo. Le modifiche a codice, specifiche e prove seguono gli
-stessi contratti di integrità e verificabilità.
+# Contributing
 
-## Ambiente
+ArcDocDB is under development. Code, specification and evidence changes follow
+the same integrity and verifiability contracts.
 
-La CI usa **SBCL 2.6.9**, Linux x86-64 e macOS ARM64:
-[toolchain e ricette esatte](.github/ci-toolchain.lock.lisp).
-Per le verifiche locali servono anche `make`, Git, `gzip`, `shasum` e le utility POSIX.
-La CLI GitHub `gh` serve per consultare e pubblicare i risultati CI.
+<a id="ambiente"></a>
+## Environment
 
-Il prodotto usa Common Lisp e i contrib SBCL, senza dipendenze Lisp esterne.
+CI uses **SBCL 2.6.9**, Linux x86-64 and macOS ARM64:
+[exact toolchain and recipes](.github/ci-toolchain.lock.lisp).
+Local checks also require `make`, Git, `gzip`, `shasum` and POSIX utilities.
+The GitHub CLI, `gh`, is used to inspect and publish CI results.
 
-## Flusso
+The product uses Common Lisp and SBCL contribs, with no external Lisp dependencies.
 
-1. Leggere [stato e limiti](docs/implementazione/README.md) e [regole del repository](docs/guida-al-repository.md).
-2. Per cambiare un requisito o un formato, partire da un [ADR](docs/adr/README.md).
-   Un ADR accettato si sostituisce con una nuova decisione.
-3. Aggiornare nello stesso commit documenti, invarianti e verifiche interessati.
-4. Per prove e misure usare il [registro delle prove](docs/valutazione/registro-delle-prove.md).
+<a id="flusso"></a>
+## Workflow
 
-## Verifica
+1. Read the [current status and limits](docs/implementazione/README.md) and [repository rules](docs/guida-al-repository.md).
+2. Start with an [ADR](docs/adr/README.md) when changing a requirement or format.
+   Replace an accepted ADR with a new decision.
+3. Update the affected documents, invariants and verification in the same commit.
+4. Use the [evidence register](docs/valutazione/registro-delle-prove.md) for tests and measurements.
 
-Prima di aprire una pull request:
+<a id="verifica"></a>
+## Verification
+
+Before opening a pull request:
 
 ```sh
 make check
 ```
 
-Compila senza avvisi, esegue test e controlli degli spike, verifica linter,
-collegamenti, tracciabilità ed evidenze. `make spikes-bench` esegue le misure a parte.
+This builds without warnings, runs tests and experiment checks, and validates
+lint, links, traceability and evidence. `make spikes-bench` runs measurements separately.
 
-Documentazione e termini di dominio sono in italiano; il README pubblico resta
-in inglese. [Standard di codifica](docs/affidabilita/standard-di-codifica.md) ·
-[Glossario](docs/glossario.md) · [Linguaggio visivo](assets/README.md) · [Sicurezza](SECURITY.md).
+Documentation is written in American English. Domain terms and API identifiers retain
+their established spelling. [Coding standard](docs/affidabilita/standard-di-codifica.md) ·
+[Glossary](docs/glossario.md) · [Visual language](assets/README.md) · [Security](SECURITY.md).

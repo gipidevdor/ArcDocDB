@@ -1,68 +1,77 @@
-# 12 — Osservabilità
+<a id="12--osservabilità"></a>
 
-> **Fonte:** «Osservabilità» della [specifica](specifica/specifica-originale.md).
-> **Moduli:** trasversale (modulo di supporto *metrics*, vedi [16 Moduli](16-moduli.md)).
+# 12 — Observability
 
-Le metriche non sono un accessorio: sono l'**ingresso dei controllori** del sistema. Lo
-scheduler del thread pool e la low-load policy del MERGE decidono sulla base di questi valori,
-e le scelte rinviate ai benchmark (2Q, SIMD) dipendono da essi.
+> **Source:** ‘Observability’ of the [specification](specifica/specifica-originale.md).
+> **Modules:** cross-cutting (the *metrics* support module, see [16 Modules](16-moduli.md)).
 
-## Metriche richieste
+Metrics are not an accessory: they are the system controllers' **inputs**. The thread-pool
+scheduler and MERGE low-load policy decide based on these values, and choices deferred to
+benchmarks (2Q, SIMD) depend on them.
 
-| Area | Metriche | Usate anche da |
+<a id="metriche-richieste"></a>
+
+## Required metrics
+
+| Area | Metrics | Also used by |
 |---|---|---|
 | Request | throughput; P50, P95, P99, P99.9 | scheduler, low-load policy |
-| Storage | segment count; segment size; live/dead ratio; bytes reclaimed; CLEAN throughput; MERGE throughput | selezione dei candidati alla compaction |
+| Storage | segment count; segment size; live/dead ratio; bytes reclaimed; CLEAN throughput; MERGE throughput | compaction candidate selection |
 | WAL | append throughput; fsync latency; group size; WAL queue depth | scheduler, low-load policy |
 | Index | hit rate; lookup latency; rebuild time | — |
-| Full text, fase 8 | byte analizzati; token; posting visitati; candidati/risultati; spazio dizionario/posting/posizioni; RAM delta; build/rebuild; copertura e generazione; errori di budget/indice non disponibile | verifica del contratto e dell'interferenza |
-| Cache | hit/miss; eviction; occupazione per Serie; scan pollution | decisione CLOCK → 2Q |
+| Full text, phase 8 | analyzed bytes; tokens; postings visited; candidates/results; dictionary/posting/position space; delta RAM; build/rebuild; coverage and generation; budget/index-unavailable errors | contract and interference verification |
+| Cache | hit/miss; eviction; per-Serie occupancy; scan pollution | CLOCK → 2Q decision |
 | Scheduler | worker count; queue depth; CPU utilization; I/O utilization; compaction concurrency | scheduler, low-load policy |
-| GC/SBCL | allocation rate; GC frequency; GC pause; heap usage | valutazione di RSK-01 |
+| GC/SBCL | allocation rate; GC frequency; GC pause; heap usage | RSK-01 evaluation |
 
-## Requisiti derivati
+<a id="requisiti-derivati"></a>
 
-> **Proposta** — Dalla natura del sistema discendono alcuni requisiti non scritti nella
-> specifica:
+## Derived requirements
+
+> **Proposed** — The nature of the system implies several requirements not written in the
+> specification:
 >
-> - **Costo sul hot path.** Le metriche si aggiornano a ogni richiesta: l'aggiornamento non
->   deve allocare né contendere (contatori per worker o per Serie, aggregati in lettura).
-> - **Percentili.** P99 e P99.9 richiedono istogrammi a memoria limitata, non la conservazione
->   dei campioni.
-> - **Dimensioni.** Le metriche di richiesta, WAL, storage e cache vanno raccolte **per Serie**
->   oltre che aggregate: l'isolamento tra Serie (INV-P3) si verifica solo così.
-> - **Finestre.** I controllori leggono valori smussati (EWMA); l'esposizione verso l'esterno
->   può usare finestre diverse.
+> - **Hot-path cost.** Metrics are updated on every request: updates must neither allocate
+>   nor contend (per-worker or per-Serie counters, aggregated when read).
+> - **Percentiles.** P99 and P99.9 require bounded-memory histograms, not retained samples.
+> - **Dimensions.** Request, WAL, storage, and cache metrics must be collected **per Serie**
+>   as well as in aggregate: only this verifies isolation between Serie (INV-P3).
+> - **Windows.** Controllers read smoothed values (EWMA); external exposure may use
+>   different windows.
 
-## Metriche full text da implementare
+<a id="metriche-full-text-da-implementare"></a>
 
-[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) e la
-[campagna dedicata](13-benchmark.md#ricerca-full-text) richiedono di
-distinguere analisi, query, pubblicazione del delta e build/rebuild.
-Associare le misure a Serie, indice, generazione e profilo; misurare
-anche l'impatto sulla latenza di commit, sui GET e sulle altre Serie.
-Copertura incompleta ed esaurimento di risorse devono essere osservabili.
-I contatori seguono il modello per worker/Serie e l'aggregazione già
-previsti, senza nuovi contatori globali per documento. Sono metriche
-progettate: la loro presenza qui non indica strumentazione già disponibile.
+## Full-text metrics to implement
 
-## Questioni decise
+[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) and the
+[dedicated campaign](13-benchmark.md#ricerca-full-text) require analysis,
+query, delta publication, and build/rebuild to be distinguished.
+Associate measurements with Serie, index, generation, and profile; also
+measure impact on commit latency, GETs, and other Serie.
+Incomplete coverage and resource exhaustion must be observable.
+Counters follow the already planned per-worker/Serie model and
+aggregation, without new global per-document counters. These metrics
+are designed: their inclusion here does not indicate available instrumentation.
 
-- Esposizione delle metriche: attraverso il protocollo a frame CBOR
+<a id="questioni-decise"></a>
+
+## Decided questions
+
+- Metric exposure: through the CBOR-framed protocol
   ([ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md)).
-- «Scan pollution»: quota di slot inseriti da scansioni ed espulsi senza essere mai riletti
+- ‘Scan pollution’: fraction of slots inserted by scans and evicted without ever being reread
   ([ADR-0025](adr/0025-cache-per-location.md)).
-- Utilizzo del dispositivo: banda di flush e letture misurata dal modulo `io` rispetto alla
-  banda rilevata all'avvio ([ADR-0023](adr/0023-politiche-di-compaction.md)); la profondità
-  della coda di I/O del sistema operativo non è usata dai controllori.
-- Affidabilità: stati di salute di Serie e Archivio, segmenti in quarantena, avanzamento dello
-  scrubbing, ripieghi del seqlock, Serie in `:async`
+- Device utilization: flush and read bandwidth measured by `io` relative to bandwidth
+  measured at startup ([ADR-0023](adr/0023-politiche-di-compaction.md)); operating-system
+  I/O queue depth is not used by controllers.
+- Reliability: Serie and Archivio health states, quarantined segments, scrubbing progress,
+  seqlock fallbacks, Serie in `:async`
   ([ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md)).
-- Dall'[analisi progettuale](analisi-progettuale.md): CSN in volo e distanza tra CSN e
-  orizzonte, attesa alla nascita degli snapshot ([ADR-0038](adr/0038-orizzonte-di-visibilita.md));
-  lunghezza di ogni lista di parcheggio ([ADR-0045](adr/0045-modello-di-esecuzione.md));
-  divisioni di frammenti e byte per documento dell'indice
-  ([ADR-0043](adr/0043-primary-index-a-frammenti.md)); verifiche fallite in cache
-  ([ADR-0044](adr/0044-cache-acceleratore-puro.md)); tombstone conservati
-  ([ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md)); oggetti sconosciuti trovati al
-  riavvio ([ADR-0036](adr/0036-leggi-di-progetto.md)).
+- From the [design analysis](analisi-progettuale.md): in-flight CSNs and distance between CSN
+  and horizon, waiting at snapshot creation ([ADR-0038](adr/0038-orizzonte-di-visibilita.md));
+  length of each parking list ([ADR-0045](adr/0045-modello-di-esecuzione.md));
+  fragment splits and index bytes per document
+  ([ADR-0043](adr/0043-primary-index-a-frammenti.md)); failed cache verifications
+  ([ADR-0044](adr/0044-cache-acceleratore-puro.md)); retained tombstones
+  ([ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md)); unknown objects found on
+  restart ([ADR-0036](adr/0036-leggi-di-progetto.md)).

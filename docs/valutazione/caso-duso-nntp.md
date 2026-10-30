@@ -1,149 +1,163 @@
-# Caso d'uso di riferimento: server NNTP in Common Lisp
+<a id="caso-duso-di-riferimento-server-nntp-in-common-lisp"></a>
 
-> **Deciso (indirizzo dell'autore, 2026-10-15; priorità confermata il 2026-10-16)** —
-> Il primo impiego di ArcDocDB sarà come database di un server NNTP Usenet
-> scritto in Common Lisp. È il caso applicativo prioritario per l'implementazione
-> e la validazione del motore general-purpose.
+# Reference use case: NNTP server in Common Lisp
 
-## Obiettivo applicativo
+> **Decided (author direction, 2026-10-15; priority confirmed on 2026-10-16)** —
+> ArcDocDB's first use will be as the database for a Usenet NNTP server
+> written in Common Lisp. This is the priority application case for implementing
+> and validating the general-purpose engine.
 
-Il futuro server conserva articoli, appartenenze ai newsgroup, informazioni
-di overview e metadati di retention. ArcDocDB fornisce storage, transazioni,
-indici, scheduling e recovery; l'applicazione NNTP possiede protocollo,
-connessioni e regole di pubblicazione. Il caso d'uso aiuta a valutare i
-contratti esistenti e il lavoro residuo della [roadmap](../roadmap.md).
-Le scelte di API, indici, concorrenza e recovery vanno valutate prima rispetto
-ai carichi NNTP descritti qui: pubblicazione, lookup per Message-ID, overview,
-cross-posting, ricerca testuale e retention.
+<a id="obiettivo-applicativo"></a>
 
-ArcDocDB mantiene la propria natura general-purpose. L'indirizzo NNTP da solo
-non modifica formati, invarianti, livelli di durability o scope degli ADR
-accettati; le modifiche ai contratti passano dal normale ADR. La successiva
-richiesta dell'autore di ricerca full text è registrata in
+## Application objective
+
+The future server stores articles, newsgroup memberships, overview
+information, and retention metadata. ArcDocDB provides storage, transactions,
+indexes, scheduling, and recovery; the NNTP application owns protocol,
+connections, and publication rules. The use case helps assess existing
+contracts and remaining [roadmap](../roadmap.md) work.
+API, index, concurrency, and recovery choices must first be assessed against
+the NNTP workloads described here: publication, Message-ID lookup, overview,
+cross-posting, text search, and retention.
+
+ArcDocDB retains its general-purpose nature. NNTP direction alone
+does not change formats, invariants, durability levels, or accepted ADR
+scope; contract changes follow the normal ADR process. The author's subsequent
+full-text search request is recorded in
 [ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md).
-La richiesta successiva del 2026-10-16 fissa il socket Unix locale come interfaccia
-predefinita e prioritaria in [ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md).
-Protocollo NNTP, demone, TLS, autenticazione e benchmark applicativo sono
-lavori futuri: questo documento non li introduce nell'implementazione attuale.
+The subsequent request on 2026-10-16 establishes the local Unix socket as the default
+and priority interface in [ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md).
+NNTP protocol, daemon, TLS, authentication, and application benchmarks are
+future work: this document does not introduce them into the current implementation.
 
-## Esigenze da considerare nelle scelte del motore
+<a id="esigenze-da-considerare-nelle-scelte-del-motore"></a>
 
-| Esigenza NNTP | Implicazione da valutare per ArcDocDB |
+## Needs to consider in engine choices
+
+| NNTP need | Implication to assess for ArcDocDB |
 |---|---|
-| Articoli normalmente immutabili e letture per Message-ID | Append-only, lookup puntuale, conservazione dei byte e verifica in lettura |
-| Un articolo presente in più newsgroup | Una copia del contenuto e più appartenenze; coerenza delle pubblicazioni fra Serie |
-| Overview per intervallo di numeri in un gruppo | Scansioni ordinate, indici secondari e visibilità coerente con gli articoli |
-| Ricerca per parole e frasi in oggetto, autore e corpo | Indici invertiti dedicati sui campi testuali, combinati con filtri per gruppo e data nella stessa vista |
-| Molti lettori e picchi di nuove pubblicazioni | Parallelismo, code e buffer limitati, controllo dell'ammissione e isolamento fra Serie |
-| Demone NNTP e database sulla stessa macchina | Socket Unix locale come interfaccia predefinita, priorità alla prima integrazione client/server, directory runtime protetta |
-| Scadenza degli articoli e lettori già attivi | Tombstone, retention delle appartenenze, CLEAN/MERGE e reclaim dopo quiescenza |
-| Riavvio dopo un arresto forzato | Recupero delle pubblicazioni confermate con durability esplicita, indice ricostruibile e ritentativi applicativi senza duplicazione |
+| Normally immutable articles and Message-ID reads | Append-only, point lookup, byte preservation, and read validation |
+| Article present in multiple newsgroups | One content copy and multiple memberships; consistent publication across Serie |
+| Overview for a group's article-number range | Ordered scans, secondary indexes, and visibility consistent with articles |
+| Word and phrase search in subject, author, and body | Dedicated inverted indexes on text fields, combined with group and date filters in same view |
+| Many readers and new-publication bursts | Parallelism, bounded queues and buffers, admission control, and Serie isolation |
+| NNTP daemon and database on same machine | Local Unix socket as default interface, priority for first client/server integration, protected runtime directory |
+| Article expiration and already active readers | Tombstones, membership retention, CLEAN/MERGE, and reclaim after quiescence |
+| Restart after forced shutdown | Recovery of acknowledged publications with explicit durability, rebuildable index, and application retries without duplication |
 
-Il riferimento di protocollo è [RFC 3977](https://www.rfc-editor.org/rfc/rfc3977.txt),
-in particolare §§3.6, 6 e 8.3. Message-ID e numero dell'articolo nel gruppo
-sono identità distinte: il primo è confrontato come sequenza opaca di byte;
-il secondo appartiene al singolo gruppo. Un articolo pubblicato in più gruppi
-può avere numeri diversi in ciascuno. Il CSN del database rimane una versione
-e un ordine di commit, separato dalla numerazione NNTP.
+The protocol reference is [RFC 3977](https://www.rfc-editor.org/rfc/rfc3977.txt),
+particularly §§3.6, 6, and 8.3. Message-ID and article number within a group
+are distinct identities: the former is compared as an opaque byte sequence;
+the latter belongs to an individual group. An article published in multiple groups
+can have different numbers in each. The database CSN remains a version
+and commit order separate from NNTP numbering.
 
-## Modello applicativo da valutare
+<a id="modello-applicativo-da-valutare"></a>
 
-> **Proposta** — Separare contenuto e appartenenze: `Message-ID → articolo`
-> e `(gruppo, numero) → Message-ID + overview`. Metadati dei gruppi e policy
-> di retention hanno responsabilità proprie. Lo schema e il partizionamento
-> concreti restano da decidere con i contratti del motore disponibili.
+## Application model to assess
 
-Una singola Serie per tutti gli articoli concentra le scritture su un writer;
-lo stesso vale per una Serie globale delle overview o dei contatori. Nelle
-valutazioni del parallelismo occorre considerare il partizionamento e il
-caso dei gruppi molto attivi. Il cross-posting aggiunge coordinamento
-multiserie: la visibilità atomica desiderata è una scelta applicativa da
-realizzare con le transazioni del motore, non una garanzia già dimostrata
-dal solo formato del decision log.
+> **Proposal** — Separate content and memberships: `Message-ID → articolo`
+> and `(gruppo, numero) → Message-ID + overview`. Group metadata and retention
+> policies have separate responsibilities. The concrete schema and partitioning
+> remain to be decided with available engine contracts.
 
-La retention può rimuovere un'appartenenza senza eliminare il contenuto ancora
-usato da altri gruppi. La rimozione fisica richiede inoltre il rispetto di
-snapshot e lettori attivi. Un ritentativo dopo commit riuscito e risposta
-persa deve avere una semantica esplicita per deduplicazione e numerazione.
+One Serie for all articles concentrates writes on one writer;
+the same applies to a global overview or counter Serie. Parallelism
+assessments must consider partitioning and
+very active groups. Cross-posting adds multiseries
+coordination: desired atomic visibility is an application choice to
+implement using engine transactions, not a guarantee already demonstrated
+by the decision-log format alone.
 
-## Ricerca full text degli articoli
+Retention may remove a membership without deleting content still
+used by other groups. Physical removal must also respect
+snapshots and active readers. Retry after successful commit and a
+lost response must have explicit deduplication and numbering semantics.
 
-> **Deciso ([ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md))** — Il motore
-> prevede indici full text dedicati. L'applicazione NNTP ne guida la valutazione;
-> il primo [nucleo general-purpose](../implementazione/full-text.md) implementa analisi,
-> run posizionali e cornice; l'integrazione completa rimane nella fase 8.
+<a id="ricerca-full-text-degli-articoli"></a>
 
-L'applicazione estrae testo ricercabile da `Subject`, autore e corpo: decodifica MIME,
-charset e selezione delle parti sono responsabilità del server NNTP. I campi indicizzati
-sono stringhe esplicite nel documento; i byte originali dell'articolo restano conservati.
-Message-ID rimane una chiave opaca per il lookup puntuale; la ricerca testuale usa il
-profilo versionato dell'indice, senza modificare identità o numerazione del gruppo.
+## Full-text article search
 
-Una copia dell'articolo può essere indicizzata una volta e collegata alle sue appartenenze.
-Una ricerca limitata a un gruppo combina i risultati testuali con appartenenze e retention
-visibili nello stesso snapshot, anche se distribuite tra Serie; non deve ritrovare un
-articolo attraverso un'appartenenza già scaduta. Il risultato applicativo è deduplicato
-per Message-ID. Partizionamento e costo di questa combinazione restano da valutare.
+> **Decided ([ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md))** — The engine
+> plans dedicated full-text indexes. The NNTP application guides their assessment;
+> the first [general-purpose core](../implementazione/full-text.md) implements analysis,
+> positional runs, and framing; complete integration remains in phase 8.
 
-`ARTICLE` continua a richiedere lookup puntuale e `OVER` intervalli ordinati: l'indice
-full text si aggiunge a questi percorsi. L'esposizione della ricerca al client richiederà
-una scelta applicativa esplicita; questo documento non definisce un nuovo comando NNTP
-né attribuisce la ricerca full text al protocollo standard di RFC 3977.
+The application extracts searchable text from `Subject`, author, and body: MIME decoding,
+charset handling, and part selection are NNTP-server responsibilities. Indexed fields
+are explicit strings in the document; original article bytes remain preserved.
+Message-ID remains an opaque key for point lookup; text search uses the
+index's versioned profile without changing group identity or numbering.
 
-## Integrazione con il futuro demone
+One article copy can be indexed once and linked to its memberships.
+A group-restricted search combines text results with memberships and retention
+visible in the same snapshot, even across Serie; it must not find an
+article through an expired membership. Application results are deduplicated
+by Message-ID. Partitioning and combination cost remain to assess.
 
-> **Deciso ([ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md), 2026-10-16)** —
-> Il futuro demone NNTP comunica con ArcDocDB attraverso un socket Unix locale
-> di tipo stream. Questo percorso ha priorità di sviluppo; TCP è opzionale e successivo.
+`ARTICLE` continues to require point lookup and `OVER` ordered ranges: the full-text
+index adds to these paths. Exposing search to clients will require
+an explicit application choice; this document defines no new NNTP command
+and does not attribute full-text search to the RFC 3977 standard protocol.
 
-L'[architettura](../architettura.md#interfacce) conserva il motore libreria con
-interfaccia «richiesta più continuazione». Il percorso NNTP di riferimento usa
-due processi sulla stessa macchina e frame CBOR con identificativi di richiesta;
-percorso del socket, directory e accesso locale sono configurati per istanza.
-Il listener TCP è disabilitato per default e un errore locale non lo attiva.
-L'embedding resta possibile per il motore, ma la scelta di integrazione NNTP
-è ora fissata sul socket Unix. Listener e client sono ancora da implementare.
+<a id="integrazione-con-il-futuro-demone"></a>
 
-La prima integrazione locale segue avvio, recovery e ammissione del motore,
-senza attendere il completamento del Query Engine o di TCP. I comandi NNTP e
-le query avanzate dipendono comunque dai rispettivi contratti di prodotto.
+## Integration with the future daemon
 
-La gestione delle connessioni conserva stato e ordine richiesti da NNTP,
-usa capacità limitate e rispetta il controllo dell'ammissione del motore.
-I worker di ArcDocDB mantengono proprietà delle code e dei compiti di storage;
-le sezioni EBR terminano prima di attendere la rete o un client lento.
-La distribuzione dei compiti, le copie dei buffer e il costo del GC vanno
-valutati sul percorso completo.
+> **Decided ([ADR-0055](../adr/0055-interfaccia-locale-unix-socket.md), 2026-10-16)** —
+> The future NNTP daemon communicates with ArcDocDB through a local Unix
+> stream socket. This path has development priority; TCP is optional and later.
 
-Una disconnessione può lasciare ignoto al demone l'esito di una scrittura già
-committed. La riconnessione non ripete automaticamente le richieste e gli ID
-del multiplexing non deduplicano tra connessioni. Le prove applicative devono
-includere questa condizione insieme al controllo per Message-ID.
+The [architecture](../architettura.md#interfacce) retains the library engine with a
+“request plus continuation” interface. The reference NNTP path uses
+two processes on the same machine and CBOR frames with request IDs;
+socket path, directory, and local access are configured per instance.
+TCP listener is disabled by default and a local error does not activate it.
+Embedding remains possible for the engine, but NNTP integration
+is now fixed on the Unix socket. Listener and client remain to implement.
 
-## Criteri per le valutazioni future
+First local integration follows engine startup, recovery, and admission,
+without waiting for completion of Query Engine or TCP. NNTP commands and
+advanced queries still depend on their respective product contracts.
 
-> **Proposta** — Usare le operazioni applicative `POST`, `ARTICLE` e `OVER`
-> per valutare i percorsi del motore quando i contratti necessari saranno
-> disponibili. Le prove di correttezza precedono le misure prestazionali.
+Connection handling preserves state and order required by NNTP,
+uses bounded capacities, and respects engine admission control.
+ArcDocDB workers retain queue and storage-task ownership;
+EBR sections end before waiting for the network or a slow client.
+Task distribution, buffer copies, and GC cost must be
+assessed on the complete path.
 
-Le valutazioni dovranno distinguere lookup puntuale, intervalli ordinati e ricerca
-full text con filtri di gruppo/data;
-pubblicazione singola e cross-posting; cache calda e accesso al dispositivo;
-durability della conferma; cancellazione di appartenenze e reclaim fisico.
-I casi di guasto rilevanti includono commit prima della perdita della risposta,
-riavvio con transazioni in corso e retention durante letture già ammesse.
-Le misure future comprendono throughput, p50/p99, memoria degli indici,
-interferenza di compaction/GC e durata del recovery, con parametri e limiti
-registrati secondo il [metodo delle prove](registro-delle-prove.md).
-Il percorso di riferimento include client e server in processi distinti collegati
-dal socket Unix: framing, copie, buffer, ammissione e invio della risposta sono
-parte della misura. Eventuali misure del solo motore restano distinte.
-La [campagna full text](../13-benchmark.md#ricerca-full-text) aggiunge corpus testuali,
-analizzatori riproducibili, memoria dei posting/posizioni e confronto con scansione;
-nessuna prestazione è già dimostrata per questo caso d'uso.
+A disconnection can leave the daemon uncertain about the outcome of an already
+committed write. Reconnection does not automatically repeat requests, and multiplexing
+IDs do not deduplicate across connections. Application tests must
+include this condition along with Message-ID checking.
 
-La [prova verticale esistente](../implementazione/prova-verticale.md) verifica
-componenti generici di una Serie con crash e riapertura. Il suo coordinamento
-è nella fixture C4; non esercita il protocollo NNTP, un indice ordinato per
-`OVER` o il percorso completo delle transazioni multiserie. La fattibilità
-del futuro server dipende anche dalla chiusura di questi collegamenti.
+<a id="criteri-per-le-valutazioni-future"></a>
+
+## Criteria for future assessments
+
+> **Proposal** — Use application operations `POST`, `ARTICLE`, and `OVER`
+> to assess engine paths when the necessary contracts become
+> available. Correctness tests precede performance measurements.
+
+Assessments must distinguish point lookup, ordered ranges, and full-text
+search with group/date filters;
+single publication and cross-posting; warm cache and device access;
+acknowledgment durability; membership deletion and physical reclaim.
+Relevant fault cases include commit before response loss,
+restart with in-flight transactions, and retention during already admitted reads.
+Future measurements include throughput, p50/p99, index memory,
+compaction/GC interference, and recovery duration, with parameters and limitations
+recorded according to the [testing method](registro-delle-prove.md).
+The reference path includes client and server in separate processes connected
+through the Unix socket: framing, copies, buffers, admission, and response sending are
+part of measurement. Engine-only measurements remain distinct.
+The [full-text campaign](../13-benchmark.md#ricerca-full-text) adds text corpora,
+reproducible analyzers, posting/position memory, and comparison with scanning;
+no performance is already demonstrated for this use case.
+
+The [existing vertical test](../implementazione/prova-verticale.md) verifies
+generic single-Serie components with crash and reopen. Its coordination
+is in the C4 fixture; it does not exercise NNTP protocol, an ordered index for
+`OVER`, or the complete multiseries transaction path. Future server feasibility
+also depends on completing these connections.

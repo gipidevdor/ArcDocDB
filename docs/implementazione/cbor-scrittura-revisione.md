@@ -1,30 +1,32 @@
-# Prima lettura C1 delle testate CBOR in scrittura
+<a id="prima-lettura-c1-delle-testate-cbor-in-scrittura"></a>
 
-Lettura indipendente del blob `61f0d6e2783e4790ed7e19a45bba6407d6e5b3de`
-prima delle campagne. Il precedente `02c5313d…` superava COD-13 nel wrapper
-pubblico: 11 percorsi. Il preflight è stato estratto prima della compilazione,
-conservando il contratto. Nessun rilievo funzionale statico aperto.
+# First C1 reading of CBOR header writing
 
-| Checklist C1 | Riscontro statico e verifica dinamica richiesta |
+Independent reading of blob `61f0d6e2783e4790ed7e19a45bba6407d6e5b3de`
+before campaigns. The previous `02c5313d…` exceeded COD-13 in the public
+wrapper: 11 paths. Preflight was extracted before compilation,
+preserving the contract. No open static functional findings.
+
+| C1 checklist | Static finding and dynamic verification required |
 |---|---|
-| 1. Requisito e ADR | REQ-CBR-001 deriva da ADR-0014, AFF-004/008 per errori e confini; dominio MT0..6. |
-| 2. Invarianti | INV-F1/P6, destinazione esclusiva e testata standard; preflight e sentinelle nel corpus indipendente. |
-| 3. Errori | Range/major/high/low/capacità prima di scrivere, offset NIL; invariant-violation interno senza rollback. Nessun handler. |
-| 4. Limiti | Un dotimes di massimo quattro passi, due parole al massimo, nove byte; nessuna ricorsione o attesa. |
-| 5. Memoria | Nessun costruttore, closure o u64 ricomposto; heap e sensore positivo ancora da misurare. |
-| 6. Dati in uscita | NEXT dopo range/progresso, capacità prima della somma, lead entro u8. |
-| 7. Decisioni | Quattro forme nell'[inventario](cbor-scrittura-decisioni.md), senza esclusioni o attestazione MC/DC. |
-| 8. Proprietà | OWNER/SHARED espliciti, buffer esclusivo fino al ritorno, nessun riferimento trattenuto o stato globale. |
-| 9. Integrazione | Export/ASDF/runner/requisito/matrice predisposti; build/lint/trace/check da acquisire. |
-| 10. Standard | safety3, FTYPE/docstring/REQ; funzioni sotto60 righe. Percorsi: selezione9, parola8, preflight8, pubblico7, contando compound e ciclo. |
-| 11. Parallelismo | Nessun lock/attesa/scrittura condivisa tra Serie; worker privati verificano concorrenza, senza scaling. |
-| 12. Durevolezza | Nessuna pubblicazione durevole o eliminazione. Scrittura nel buffer esclusivo senza promessa atomica. |
+| 1. Requirement and ADR | REQ-CBR-001 derives from ADR-0014, AFF-004/008 for errors and boundaries; MT0..6 domain. |
+| 2. Invariants | INV-F1/P6, exclusive destination and standard header; preflight and sentinels in independent corpus. |
+| 3. Errors | Range/major/high/low/capacity before writing, offset NIL; internal invariant-violation without rollback. No handler. |
+| 4. Limits | One dotimes of at most four steps, at most two words, nine bytes; no recursion or wait. |
+| 5. Memory | No constructor, closure, or reassembled u64; heap allocation and positive sensor still to be measured. |
+| 6. Output data | NEXT after range/progress, capacity before addition, lead within u8. |
+| 7. Decisions | Four forms in the [inventory](cbor-scrittura-decisioni.md), without exclusions or MC/DC attestation. |
+| 8. Ownership | Explicit OWNER/SHARED, exclusive buffer until return, no retained reference or global state. |
+| 9. Integration | Export/ASDF/runner/requirement/matrix prepared; build/lint/trace/check to be acquired. |
+| 10. Standard | safety3, FTYPE/docstrings/REQ; functions below 60 lines. Paths: selection9, word8, preflight8, public7, counting compound decisions and loop. |
+| 11. Parallelism | No lock/wait/shared write between Serie; private workers verify concurrency, without scaling. |
+| 12. Durability | No durable publication or deletion. Writing to exclusive buffer without atomicity promise. |
 
-La mutazione della capacità fisica è prevista rilevabile come condizione
-errata: la guardia interna impedisce comunque lo sconfinamento. Non è una
-prova di scrittura fuori span. MT1 riceve l'argomento wire `-1-n`; lo span
-vuoto valido arriva alla capacità. Nessun limite documentale implicito.
+The physical-capacity mutation is expected to be detected as an incorrect
+condition: the internal guard still prevents overrun. This is not a
+test of writing outside span. MT1 receives wire argument `-1-n`; a valid empty
+span reaches capacity checking. No implicit document limit.
 
-La [seconda lettura](cbor-scrittura-lettura.md) valuta anche il corpus cieco.
-I [risultati](cbor-scrittura-risultati.md) completano le voci dinamiche;
-la lettura statica da sola non qualifica il prodotto o chiude un gate.
+The [second reading](cbor-scrittura-lettura.md) also evaluates the blind corpus.
+The [results](cbor-scrittura-risultati.md) complete dynamic items;
+static reading alone neither qualifies the product nor closes a gate.

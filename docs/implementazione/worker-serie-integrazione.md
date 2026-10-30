@@ -1,44 +1,46 @@
-# Integrazione delle verifiche reader dopo il primo controllo generale
+<a id="integrazione-delle-verifiche-reader-dopo-il-primo-controllo-generale"></a>
 
-Dopo il PASS sul congelamento `96c0f4f`, `main` ha incorporato la PR 8 fino
-a `65972a4e6e84bd4c31d1d654c9a9a29bf6c44eb0`. Il confronto degli alberi
-non rileva cambiamenti in alcun file `src/` o nei test già presenti.
-Si aggiungono 64 prove EBR/lettura, il loro self-test di mutazione nel
-Makefile, lo strumento reader-mutation, documenti ed evidenze.
-Le aggiunte ASDF delle nuove suite vengono conservate insieme al bridge.
+# Integrating reader verification after the first general check
 
-I quattro sorgenti del bridge, i suoi 26 test e il C4 sono byte-identici
-ai congelamenti qualificati. La modifica a foundation-coverage aggiunge
-soltanto selezione CLI, dispatch e self-test degli scope epochs/read;
-selezione ed esecuzione dello scope Series restano invariate.
-Non si ripetono le misure seriali e la copertura nativa: i loro esiti restano
-attribuiti al v3 su `8101eb8`, con denominatori e limiti originali.
+After PASS on freeze `96c0f4f`, `main` incorporated PR 8 through
+`65972a4e6e84bd4c31d1d654c9a9a29bf6c44eb0`. Tree comparison
+detects no changes in any `src/` file or existing tests.
+64 EBR/read tests, their mutation self-test in
+Makefile, reader-mutation tool, documents, and evidence are added.
+ASDF additions for new suites are preserved alongside bridge.
 
-Il nuovo `make check` verifica l'integrazione su `65972a4`, incluse le
-64 prove e il self-test aggiunti. Il primo PASS generale su `96c0f4f` e
-il suo gate documenti/evidenze rimangono conservati come esiti precedenti;
-non vengono rinominati o sostituiti dal controllo successivo.
-Il controllo aggiornato passa nel
+The bridge's four sources, its 26 tests, and C4 are byte-identical
+to qualified freezes. Foundation-coverage change adds
+only CLI selection, dispatch, and epochs/read scope self-tests;
+Series-scope selection and execution remain unchanged.
+Serial measurements and native coverage are not repeated: outcomes remain
+attributed to v3 on `8101eb8`, with original denominators and limits.
+
+New `make check` verifies integration on `65972a4`, including
+64 tests and added self-test. First general PASS on `96c0f4f` and
+its document/evidence gate remain preserved as preceding outcomes;
+they are neither renamed nor replaced by subsequent check.
+Updated check passes in
 [record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/full-check-reader-integration.lisp)
-`4000710249-command-34111-0`, `:OK/:STABLE`, exit 0: 641 sorgenti e
-documenti invariati, 796 test nominati e due smoke. Le due nuove suite
-comprendono 34 prove epoche e 30 lettura. Passano anche i self-test di
-mutazione snapshot e reader, con i relativi errori intenzionali conservati
-nel [bundle](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/reader-integration-selftests.lisp).
+`4000710249-command-34111-0`, `:OK/:STABLE`, exit 0: 641 unchanged sources and
+documents, 796 named tests and two smoke tests. Both new suites
+comprise 34 epoch tests and 30 read tests. Snapshot and reader mutation
+self-tests also pass, with intentional errors preserved
+in the [bundle](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/reader-integration-selftests.lisp).
 
-Il [master Fase 0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series-reader-spikes-check/report.lisp)
-`4000710392-check-37003-0` è `:COMPLETE`: tutti i dieci processi sono
-`:STABLE`, exit 0, stderr vuoto; SPK-07 `:PASS`, gli altri `:OK`.
-Conservazioni del comando e degli spike `:OK`, exit 0; nessun warning o
-style-warning nello stderr originale del comando. Sorgenti e documenti
-del congelamento sono nel
+The [Phase 0 master](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series-reader-spikes-check/report.lisp)
+`4000710392-check-37003-0` is `:COMPLETE`: all ten processes are
+`:STABLE`, exit 0, empty stderr; SPK-07 `:PASS`, others `:OK`.
+Command and spike preservation `:OK`, exit 0; no warning or
+style-warning in original command stderr. Frozen sources and documents
+are in the
 [bundle](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/source-reader-integration.lisp).
-La lettura ausiliaria corretta e gli output estratti sono conservati;
-nessun nuovo probe di sintassi e nessuna nuova misura C4.
+Corrected auxiliary reading and extracted outputs are preserved;
+no new syntax probe or new C4 measurement.
 
-L'inserimento di questi risultati e dei nuovi cataloghi è seguito da un
-controllo dei documenti, della tracciabilità e della conservazione. I suoi
-raw vengono aggiunti al catalogo senza ripetere prove o benchmark invariati.
+Insertion of these results and new catalogs is followed by document,
+traceability, and preservation checking. Its raw
+data is added to catalog without repeating unchanged tests or benchmarks.
 
-Il [risultato della campagna](worker-serie-risultati.md) e le
-[due letture](worker-serie-revisione.md) mantengono separati questi scope.
+The [campaign result](worker-serie-risultati.md) and
+[two readings](worker-serie-revisione.md) keep these scopes separate.

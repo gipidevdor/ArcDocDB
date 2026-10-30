@@ -1,145 +1,161 @@
-# Metodo preregistrato: chiusura WAL con registro CSN
+<a id="metodo-preregistrato-chiusura-wal-con-registro-csn"></a>
 
-Registrato il 2026-10-09 prima di ogni esecuzione. Strumento C4:
-`tools/wal-csn-bench.lisp`; prodotto C1: bridge nel package `arcdocdb.wal`.
+# Preregistered method: WAL closure with CSN registry
+
+Registered on 2026-10-09 before any execution. C4 tool:
+`tools/wal-csn-bench.lisp`; C1 product: bridge in package `arcdocdb.wal`.
 REQ-WAL-002, REQ-WAL-005, REQ-WAL-006, REQ-MVC-005, REQ-MVC-008,
 REQ-AFF-008, REQ-BEN-001, REQ-BEN-002, REQ-VAL-001.
-La compilazione usa safety 3 e tratta warning/style-warning come errori.
-Le due letture C1, prove negative, copertura e mutazioni del prodotto sono
-responsabilità della campagna del parent; questo sensore non le sostituisce.
+Compilation uses safety 3 and treats warning/style-warning as errors.
+The two C1 readings, negative tests, product coverage, and mutations are
+the parent campaign's responsibility; this sensor does not replace them.
 
-## Copertura e mutazioni preregistrate
+<a id="copertura-e-mutazioni-preregistrate"></a>
 
-Il parent esegue l'autoverifica C4, la copertura strumentale di `wal` e
-`foundation` e il gate completo `make check` fuori dalle finestre benchmark.
-`tools/wal-csn-mutation.lisp` isola quattro mutanti dei test d'integrazione:
-omissione del limb alto nello stamp del record; riuso con token pendente;
-pubblicazione accettata dopo fault del log; trasferimento del token a un altro
-log con lo stesso file-id. Una baseline dei quattro test precede la campagna dei mutanti. Il mutante conta
-come kill solo se compila e fallisce una pertinente asserzione d'integrazione:
-un errore di compilazione rende la prova invalida, non un kill. Autoverifica,
-baseline, output grezzi, fallimenti e copertura restano evidenze separate.
+## Preregistered coverage and mutations
 
-## Isolamento delle campagne e controlli del processo
+The parent runs the C4 self-check, instrumental coverage of `wal` and
+`foundation`, and the full `make check` gate outside benchmark windows.
+`tools/wal-csn-mutation.lisp` isolates four integration-test mutants:
+omitting the high limb in the record stamp; reuse with a pending token;
+publication accepted after log fault; token transfer to another log with
+the same file-id. A baseline of the four tests precedes the mutant campaign.
+A mutant counts as killed only if it compiles and fails a relevant integration
+assertion: a compilation error makes the test invalid, not a kill. Self-check,
+baseline, raw outputs, failures, and coverage remain separate evidence.
 
-Copertura e mutanti mappano esplicitamente `**/*.*` dal checkout alla propria
-cache privata, dopo il caricamento dell’ASD. Un controllo verifica la destinazione
-prima di compilare. L’autoverifica della copertura controlla anche il percorso
-ricorsivo. Una mappatura della sola directory radice non garantiva l’isolamento:
-la campagna iniziale lo ha rilevato e conserva quel fallimento. Le campagne
-successive usano la mappatura verificata. I mutanti scoprono i sorgenti e test
-Lisp del checkout integrato; ogni processo riceve una copia completa separata.
+<a id="isolamento-delle-campagne-e-controlli-del-processo"></a>
 
-## Contratto e ciclo osservato
+## Campaign isolation and process controls
 
-`sigilla-lotto-con-csn(lotto registro log file-start durable)` assegna un token
-solo dopo preflight di forma, offset, capienza, identità e salute del log.
-Prima del CSN verifica anche file aperto in append, `written <= file-start` e
-budget di trasferimento/file, inclusi i byte futuri pianificati, tramite
+Coverage and mutants explicitly map `**/*.*` from checkout to their own
+private cache after loading the ASD. A check verifies the destination before
+compilation. The coverage self-check also checks the recursive path. Mapping
+only the root directory did not guarantee isolation: the initial campaign
+detected this and retains that failure. Subsequent campaigns use the verified
+mapping. Mutants discover Lisp sources and tests from the integrated checkout;
+each process receives a separate complete copy.
+
+<a id="contratto-e-ciclo-osservato"></a>
+
+## Contract and observed cycle
+
+`sigilla-lotto-con-csn(lotto registro log file-start durable)` assigns a token
+only after shape, offset, capacity, identity, and log health preflight.
+Before the CSN it also checks an open append file, `written <= file-start`,
+and transfer/file budget, including planned future bytes, through
 `verifica-capienza-append`.
-Si applica a segmenti non vuoti. Conserva registro, log, slot e due limb u32
-nel lotto prima della sigillatura. I rifiuti prima dell'assegnazione preservano
-byte e CSN. Un'interruzione inattesa dopo l'assegnazione richiede fail-stop;
-non si presume rollback. L'API manuale e gli stamp prepared restano compatibili.
+It applies to nonempty segments. It retains registry, log, slot, and two u32
+limbs in the batch before sealing. Rejections before assignment preserve bytes
+and CSN. An unexpected interruption after assignment requires fail-stop;
+rollback is not assumed. The manual API and prepared stamps remain compatible.
 
-Il ciclo misurato aggiunge un PUT ordinario, chiude con il bridge, accoda il
-lotto al gruppo, chiude il gruppo, esegue write e flush simulati, pubblica
-atomicamente un riferimento a un descrittore d'indice preallocato, risolve con
-`risolvi-lotto-pubblicato` al livello `:group`, rilascia il gruppo e riusa il
-lotto. La pubblicazione è modellata da CAS su uno slot della fixture: è una
-precondizione esterna della risoluzione, non un indice del motore completo.
-Il callback usa la firma rafforzata
-`risolvi-lotto-pubblicato(lotto registro slot high low :group)`: registro e
-token atteso sono quelli catturati alla chiusura/lettura, conservati anche nel
-descrittore pubblicato. `annulla-csn-lotto(lotto registro slot high low)`
-ha lo stesso controllo d'identità. Un evento vecchio dopo riuso o un registro
-diverso con token numerico uguale deve essere rifiutato con `:lotto-csn-stale`
-prima di ogni mutazione; un doppio completamento risolto resta
-`:lotto-csn-not-pending`. Le relative prove negative appartengono al parent.
-Lo slot viene ritirato prima del riuso. Non si invoca `annulla-csn-lotto` sul
-percorso sano. Busy/full interrompono il campione e conservano le osservazioni;
-non ci sono retry nel ciclo né conferme implicite.
+The measured cycle adds an ordinary PUT, closes with the bridge, enqueues the
+batch into the group, closes the group, performs simulated write and flush,
+atomically publishes a reference to a preallocated index descriptor, resolves
+with `risolvi-lotto-pubblicato` at `:group` level, releases the group, and reuses
+the batch. Publication is modeled by CAS on a fixture slot: it is an external
+resolution precondition, not a complete engine index. The callback uses the
+strengthened signature
+`risolvi-lotto-pubblicato(lotto registro slot high low :group)`: registry and
+expected token are those captured at closure/reading, also retained in the
+published descriptor. `annulla-csn-lotto(lotto registro slot high low)`
+has the same identity check. An old event after reuse or a different registry
+with an equal numeric token must be rejected with `:lotto-csn-stale`
+before any mutation; double completion of a resolved token remains
+`:lotto-csn-not-pending`. Associated negative tests belong to the parent.
+The slot is retired before reuse. `annulla-csn-lotto` is not invoked on
+the healthy path. Busy/full interrupt the sample and retain observations;
+there are no retries in the cycle or implicit acknowledgments.
 
-Oracoli sempre attivi nel ciclo: successore indipendente a due parole,
-token leggibile e pendente dopo chiusura, byte del CSN nel PUT e nel SEAL,
-copertura durevole, H uguale al CSN appena risolto, token risolto prima del
-riuso e libero dopo il riuso. Alla fine si verificano frontiere del registro,
-proprietà rilasciata, conteggi write/flush/pubblicazioni e byte scritti/durevoli.
-Nessun u64 alto viene ricostruito nel ciclo. Il file-id massimo u64 viene
-preboxed una volta per invocazione, prima delle finestre.
+Always active cycle oracles: independent two-word successor, token readable
+and pending after closure, CSN bytes in PUT and SEAL, durable coverage, H
+equal to the just-resolved CSN, token resolved before reuse and free after
+reuse. At the end, registry frontiers, released ownership, write/flush/publication
+counts, and written/durable bytes are checked. No high u64 is reconstructed
+in the cycle. The maximum u64 file-id is preboxed once per invocation,
+before windows.
 
-## Fixture e campagne seriali
+<a id="fixture-e-campagne-seriali"></a>
 
-Capacità primaria del registro 256; lotto da 512 byte con un solo record,
-chiave di 16 byte e valore opaco di 64 byte. Gli offset di formato sono letti
-dalle costanti del prodotto. Backend, file simulato, log, gruppo, registro,
-lotto, buffer e descrittore pubblicato sono costruiti prima del clock.
-Warmup di 1024 cicli su fixture separata e GC completo prima della finestra.
-Ogni finestra usa una nuova fixture: il carry resta nel lavoro misurato.
+## Fixture and serial campaigns
 
-Si eseguono prima tutte le campagne seriali, senza sovrapposizioni: cinque
-repliche con base `(0, 0)`, poi cinque con base
-`(#x80000000, #xfffffff0)`. Nel secondo caso il sedicesimo ciclo misurato
-attraversa il carry. File-id `#xffffffffffffffff` in entrambe le campagne.
-Ogni campione parte da 20000 cicli. Se dura meno di 20 tick si raddoppia,
-al massimo cinque finestre: 20000, 40000, 80000, 160000, 320000.
-Si conservano tutti i tentativi, inclusi quelli sotto risoluzione e falliti.
-Nessuna soglia di throughput. Regressione seriale: anche un solo byte heap
-osservato sul successo rende l'invocazione fallita con exit nonzero.
+Primary registry capacity 256; 512-byte batch with one record, a 16-byte
+key, and an opaque 64-byte value. Format offsets are read from product
+constants. Backend, simulated file, log, group, registry, batch, buffer,
+and published descriptor are built before the clock. Warmup of 1024 cycles
+on a separate fixture and full GC before the window. Each window uses a
+new fixture: carry remains in measured work.
 
-## Autoverifica del sensore e conservazione delle metriche
+All serial campaigns run first, without overlap: five replicas with base
+`(0, 0)`, then five with base `(#x80000000, #xfffffff0)`. In the second
+case, the sixteenth measured cycle crosses the carry. File-id
+`#xffffffffffffffff` in both campaigns. Every sample starts at 20000 cycles.
+If it lasts less than 20 ticks, it doubles, at most five windows:
+20000, 40000, 80000, 160000, 320000. All attempts are retained, including
+below-resolution and failed attempts. No throughput threshold. Serial
+regression: even one observed heap byte on success makes the invocation
+fail with nonzero exit.
 
-Prima delle campagne: finestra vuota da 20000 chiamate, heap esattamente zero;
-controllo positivo con 16 array vivi da 1 MiB, almeno 16 MiB osservati.
-Queste finestre verificano il contatore, non stimano throughput, e possono
-essere sotto risoluzione. Si dimostra inoltre il rifiuto di clock non valido,
-heap nonzero quando richiesto zero e metrica mancante.
+<a id="autoverifica-del-sensore-e-conservazione-delle-metriche"></a>
 
-Tutte le chiavi aggiornate con `getf` esistono prima della misura: nessuna
-aggiunta può cambiare la testa di una plist già condivisa. L'autoverifica
-conserva un record con metriche impostate attraverso un alias, lo rilegge
-con `*read-eval* nil` e controlla identità in memoria e valori persistiti.
-Le metriche obbligatorie di ogni successo includono heap, tick, tempo, sink,
-lavoro completato e, per le campagne, cicli/s e byte/s. La consegna finale
-rilegge anche il rapporto completo e rifiuta campi mancanti/incoerenti.
+## Sensor self-check and metric retention
 
-## Campagna parallela limitata
+Before campaigns: empty window of 20000 calls, heap exactly zero;
+positive control with 16 live 1 MiB arrays, at least 16 MiB observed.
+These windows check the counter, do not estimate throughput, and may be
+below resolution. Rejection of invalid clock, nonzero heap when zero is
+required, and missing metric is also demonstrated.
 
-Dopo i seriali: 1, 2 e 4 worker reali, tre repliche per numerosità, base alta
-con carry. Ogni worker possiede registro, file, log, lotto, gruppo, buffer e
-slot pubblicato indipendenti; nessun archivio condiviso. Stessi 20000 cicli e
-calibrazione limitata a cinque finestre. Warmup, costruzione dei thread e
-GC precedono l'apertura della barriera. Deadline della replica 30 secondi,
-attese start/ready e join limitate; cleanup e join finale entro 2 secondi
-per thread. Non si leggono i campi di thread ancora vivi dopo il cleanup.
+All keys updated with `getf` exist before measurement: no addition can change
+the head of an already shared plist. The self-check retains a record with
+metrics set through an alias, rereads it with `*read-eval* nil`, and checks
+in-memory identity and persisted values. Mandatory metrics for each success
+include heap, ticks, time, sink, completed work, and, for campaigns, cycles/s
+and bytes/s. Final delivery also rereads the complete report and rejects
+missing/inconsistent fields.
 
-Si riportano tentativi busy/full e retry effettivi (sempre zero: fail-first),
-esiti per worker, lavoro totale e throughput aggregato calcolato dall'inizio
-del primo worker alla fine dell'ultimo. Il contatore heap di SBCL è globale
-al processo: le finestre dei worker si sovrappongono e non sono sommabili o
-attribuibili al singolo worker. La finestra globale comprende start e join;
-i suoi byte possono includere coordinamento del runtime. L'heap parallelo è
-osservazionale; il gate zero heap riguarda le finestre seriali di successo.
-Si rifiutano metriche mancanti, esiti errati e tempo sotto 20 tick al budget.
+<a id="campagna-parallela-limitata"></a>
 
-## Evidenza e limiti
+## Bounded parallel campaign
 
-Rapporti plist schema 1, metadata ambiente, fingerprint dei sorgenti prima
-e dopo, tentativi e diagnosi sono conservati anche al fallimento. Una modifica
-dei sorgenti durante il run impedisce il successo. La directory è esclusiva,
-configurabile come figlia diretta di `spikes/out/`; nessun output è sovrascritto
-da una successiva invocazione. Il parent usa `tools/record-command.lisp` per
-argv, ambiente, stdout/stderr, exit code e conservazione finale delle prove.
+After serial runs: 1, 2, and 4 real workers, three replicas per count, high
+base with carry. Every worker owns independent registry, file, log, batch,
+group, buffer, and published slot; no shared archive. Same 20000 cycles
+and calibration bounded to five windows. Warmup, thread construction, and
+GC precede barrier opening. Replica deadline 30 seconds, bounded start/ready
+waits and joins; cleanup and final join within 2 seconds per thread.
+Fields of threads still alive after cleanup are not read.
 
-Budget massimo: 10 campioni seriali × 5 finestre e 9 repliche parallele × 5
-finestre; fino a 620000 cicli per worker/campione sommando la calibrazione.
-Solo dati aggregati, nessuna traccia per record. Il sensore non prova assenza
-assoluta di allocazioni. Il carico esterno non è controllato. Il backend non
-effettua syscall di dati: nessuna conclusione su NVMe, latenza client,
-durability reale, recovery, snapshot o prestazioni del database.
+Actual busy/full attempts and retries are reported (always zero: fail-first),
+per-worker outcomes, total work, and aggregate throughput calculated from
+first worker start to last worker end. SBCL's heap counter is process-global:
+worker windows overlap and cannot be summed or attributed to individual
+workers. The global window includes start and join; its bytes may include
+runtime coordination. Parallel heap is observational; the zero-heap gate
+concerns successful serial windows. Missing metrics, wrong outcomes, and
+time below 20 ticks at budget are rejected.
 
-Nessuna esecuzione automatica fino al congelamento dei sorgenti da parte del
-parent. Uso dal worktree congelato (nomi di directory nuovi a ogni comando):
+<a id="evidenza-e-limiti"></a>
+
+## Evidence and limits
+
+Schema 1 plist reports, environment metadata, source fingerprints before
+and after, attempts, and diagnostics are retained even on failure. A source
+change during the run prevents success. The directory is exclusive,
+configurable as a direct child of `spikes/out/`; no output is overwritten
+by a subsequent invocation. The parent uses `tools/record-command.lisp` for
+argv, environment, stdout/stderr, exit code, and final evidence retention.
+
+Maximum budget: 10 serial samples × 5 windows and 9 parallel replicas × 5
+windows; up to 620000 cycles per worker/sample summing calibration.
+Only aggregate data, no per-record trace. The sensor does not prove absolute
+absence of allocation. External load is uncontrolled. The backend makes no
+data syscalls: no conclusion about NVMe, client latency, real durability,
+recovery, snapshots, or database performance.
+
+No automatic execution until the parent freezes sources.
+Usage from the frozen worktree (new directory names for every command):
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- \
@@ -150,7 +166,7 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
   --bench --output-dir spikes/out/wal-csn-bench-UNIQUE/
 ```
 
-Senza `--output-dir`, il tool sceglie un nome esclusivo con tempo/PID/tentativo.
-Output: `report.lisp` e `self-test-metrics.lisp` nella directory indicata;
-il rapporto completo viene emesso anche su stdout. La campagna `--bench`
-include automaticamente l'autoverifica del sensore.
+Without `--output-dir`, the tool chooses an exclusive name with time/PID/attempt.
+Output: `report.lisp` and `self-test-metrics.lisp` in the indicated directory;
+the complete report is also emitted to stdout. The `--bench` campaign
+automatically includes the sensor self-check.

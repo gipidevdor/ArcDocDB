@@ -1,63 +1,71 @@
-# Full text — revisione del nucleo e decisioni
+<a id="full-text--revisione-del-nucleo-e-decisioni"></a>
 
-Perimetro: [analizzatore, run posizionale e cornice](full-text.md).
-Classe C1 per la cornice; C2 per l'analisi e i predicati sul run.
-Le due letture del 16 ottobre 2026 sono revisioni dello stesso autore della modifica,
-non una revisione indipendente e non una qualifica del motore completo.
+# Full text — core review and decisions
 
-## Decisioni composte della cornice C1
+Scope: [analyzer, positional run, and frame](full-text.md).
+Class C1 for frame; C2 for analysis and run predicates.
+Both readings dated October 16, 2026 are reviews by the change's own author,
+not independent review or complete-engine qualification.
 
-Le asserzioni interne sono sempre attive; quando il nucleo sara collegato a un worker,
-quel confine dovra convertire `invariant-violation` nel fail-stop della Serie.
-I test dei rifiuti pubblici controllano condizione, motivo e preservazione dei byte.
+<a id="decisioni-composte-della-cornice-c1"></a>
 
-| Funzione / decisione | Condizioni e copertura |
+## C1 frame compound decisions
+
+Internal assertions are always active; when core is connected to a worker,
+that boundary must convert `invariant-violation` into Serie fail-stop.
+Public-rejection tests check condition, reason, and byte preservation.
+
+| Function / decision | Conditions and coverage |
 |---|---|
-| `controlla-input-cornice`: range | Array semplice u8, start/end index, start <= end <= length; buffer nil, start negativo, fine oltre buffer e range invertito, oltre agli span validi non allineati |
-| Stessa: identita e budget | Identita u8 di 16 byte; budget index positivo; identita corta/nil, budget zero/testuale e validi; segment-id fuori u64 rifiutato |
-| `controlla-lunghezze-cornice`: layout | Array u64 di sei elementi, META 1..65536, dimensione minima, divisibilita e capacita di ogni sezione; vettore generico, META zero/65537, larghezza errata, capacita insufficiente e u64 enorme |
-| Stessa: allineamento/fine | Padding entro capacita e cursore finale esatto; fixture con sezioni vuote, padding e META massimo; dimensione finale incompatibile rifiutata |
-| `scrivi-cornice-indice-full-text` | Input e capacita controllati prima di ogni scrittura; buffer/identita senza alias; budget file minore, uguale e maggiore dello span |
-| `verifica-header-full-text`: CRC/magic/versione/kind | Tutti i bit del campione; alterazioni con CRC ricalcolato; versione ignota distinta dal contenuto corrotto |
-| Stessa: count/flags/riservati | Count 6, flags zero, riservato zero verificato anche fuori dalla copertura CRC dell'header; ciascuno alterato separatamente |
-| Stessa: dimensione e directory | Dimensione esatta e offset directory 64; alterazione separata con CRC corretto |
-| Stessa: segmento e Serie | U64 confrontato senza ricomporre un bignum; identita byte per byte; segmento/Serie scambiati rifiutati |
-| `verifica-entry-full-text`: campi | Type ordinale esatto, flags e riservati zero; ciascun campo alterato per ognuna delle sei entry |
-| Stessa: intervallo | Offset atteso e lunghezza <= residuo; offset alterati, lunghezza u64 enorme, ampiezze fisse e META zero, oltre alle fixture valide |
-| `verifica-directory-full-text` | Allineamento entro footer e tutti i byte padding zero; padding alterato con CRC corretto, sezioni vuote e nessuna coda ammessa |
-| API reader: cornice completa | Span minimo prima delle letture; budget prima del contenuto; header prima del footer; directory prima del ritorno dello span META |
-| Guardie interne di header/directory/entry | Range e postcondizioni separati dai rifiuti del wire; i rami fail-stop non sono dichiarati tutti coperti dai casi pubblici |
+| `controlla-input-cornice`: range | Simple u8 array, start/end index, start <= end <= length; nil buffer, negative start, end beyond buffer, and reversed range, besides valid unaligned spans |
+| Same: identity and budget | 16-byte u8 identity; positive index budget; short/nil identity, zero/text budget and valid cases; out-of-u64 segment-id rejected |
+| `controlla-lunghezze-cornice`: layout | Six-element u64 array, META 1..65536, minimum size, divisibility, and capacity of every section; generic vector, META zero/65537, incorrect width, insufficient capacity, and huge u64 |
+| Same: alignment/end | Padding within capacity and exact final cursor; fixture with empty sections, padding, and maximum META; incompatible final size rejected |
+| `scrivi-cornice-indice-full-text` | Input and capacity checked before any write; buffer/identity without alias; file budget below, equal to, and above span |
+| `verifica-header-full-text`: CRC/magic/version/kind | All sample bits; alterations with recalculated CRC; unknown version distinct from corrupted content |
+| Same: count/flags/reserved | Count 6, zero flags, zero reserved checked even outside header CRC coverage; each altered separately |
+| Same: size and directory | Exact size and directory offset 64; separate alteration with correct CRC |
+| Same: segment and Serie | U64 compared without reassembling bignum; bytewise identity; swapped segment/Serie rejected |
+| `verifica-entry-full-text`: fields | Exact ordinal type, zero flags and reserved; each field altered for every one of six entries |
+| Same: range | Expected offset and length <= remainder; altered offsets, huge u64 length, fixed widths, and zero META, besides valid fixtures |
+| `verifica-directory-full-text` | Alignment within footer and all padding bytes zero; altered padding with correct CRC, empty sections, and no tail allowed |
+| Reader API: complete frame | Minimum span before reads; budget before content; header before footer; directory before returning META span |
+| Internal header/directory/entry guards | Range and postconditions separate from wire rejections; fail-stop branches not all declared covered by public cases |
 
-Le asserzioni di postcondizione non scrivono e non riparano dati. La copertura SB-COVER
-e diagnostica: le guardie interne non raggiunte, le decisioni composte e i limiti
-estremi non diventano qualificati solo perche tutti i test passano.
+Postcondition assertions neither write nor repair data. SB-COVER coverage
+is diagnostic: unreached internal guards, compound decisions, and extreme
+limits do not become qualified merely because all tests pass.
 
-## Lettura 1 — formato, invarianti ed errori
+<a id="lettura-1--formato-invarianti-ed-errori"></a>
 
-Riletti offset e larghezze contro ADR-0054: header 64, directory 144, sei sezioni da
-208, footer quattro byte; CRC dell'header escluso dal proprio span e CRC finale da 64.
-Nessun campo esterno diventa un oggetto Lisp o un percorso. Somme delle lunghezze
-solo dopo confronto con il residuo; padding calcolato entro capacita; identificativi
-u64 senza conversione lossy. Preflight del writer prima di modificare la destinazione.
-Fixture e CRC dell'oracolo sono costruiti separatamente dal prodotto.
+## Reading 1 — format, invariants, and errors
 
-Il controllo del layout non sostiene ancora INV-I5: mancano META, confronto con il
-descriptor autorevole e con l'hint, validazione di dizionario/posizioni/lunghezze.
-La prova `REQ-SEC-008-NO-SEMANTIC-PROMOTION` rende questo limite osservabile.
+Offsets and widths reread against ADR-0054: header 64, directory 144, six sections starting at
+208, four-byte footer; header CRC excluded from its own span and final CRC from 64.
+No external field becomes a Lisp object or path. Length sums
+only after comparing with remainder; padding calculated within capacity; u64
+identifiers without lossy conversion. Writer preflight before destination mutation.
+Oracle fixture and CRC constructed separately from product.
 
-## Lettura 2 — ownership, lavoro e risultati
+Layout check does not yet establish INV-I5: META, comparison with
+authoritative descriptor and hint, dictionary/position/length validation missing.
+Test `REQ-SEC-008-NO-SEMANTIC-PROMOTION` makes this limit observable.
 
-Rilette le transizioni: analisi `idle/done/failed -> decode -> … -> done/failed`;
+<a id="lettura-2--ownership-lavoro-e-risultati"></a>
+
+## Reading 2 — ownership, work, and results
+
+Transitions reread: analysis `idle/done/failed -> decode -> … -> done/failed`;
 run `building -> copying -> building -> heap-build -> heap-sort -> sealed/failed`.
-Un risultato analitico parziale non e accessibile; un run non sigillato non e cercabile.
-La query cambia solo il proprio contatore di lavoro. Tabelle Unicode e run sigillati
-sono condivisi solo in lettura; nessuna scrittura tra Serie per operazione.
+Partial analysis result inaccessible; unsealed run unsearchable.
+Query changes only its own work counter. Unicode tables and sealed runs
+shared read-only; no write between Serie per operation.
 
-I limiti di memoria precedono le allocazioni dei costruttori. I limiti del run
-precedono l'acquisizione dello scratch; limiti di analisi, confronto, copia e sort
-producono errori espliciti. Le frasi verificano posizione e ripetizioni nella medesima
-riga/campo; il componente non unisce versioni o verifica visibilita da solo.
-Nessun I/O, commit o cleanup durevole e introdotto qui; INV-I4/I6 richiedono ancora
-il raccordo con writer e Query Engine. Misure di allocazione e prove parallele sono
-separate dalla copertura strumentata. Il controllo completo del repository e
-registrato con hash dei sorgenti, ambiente, stdout, stderr e codice di uscita.
+Memory limits precede constructor allocations. Run limits
+precede scratch acquisition; analysis, comparison, copy, and sort limits
+produce explicit errors. Phrases check positions and repetitions within same
+row/field; component does not merge versions or check visibility by itself.
+No I/O, commit, or durable cleanup introduced here; INV-I4/I6 still require
+connection with writer and Query Engine. Allocation measurements and parallel tests
+separate from instrumented coverage. Full repository check
+recorded with source hashes, environment, stdout, stderr, and exit code.

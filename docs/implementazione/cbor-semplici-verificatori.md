@@ -1,13 +1,17 @@
-# Scrittura semplici CBOR — lettura C4 di strumenti e dati
+<a id="scrittura-semplici-cbor--lettura-c4-di-strumenti-e-dati"></a>
 
-Questa copia pubblica la lettura originaria, blob
-`a42a47b5651378d71b760642057e2b2538490849`, conservata
-[nell'archivio](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-simple-write/raw/readings/c4-review-draft.md.txt).
-Le dichiarazioni di scrittura ignorata sotto descrivono quella lettura.
+# CBOR simple-value writing — C4 reading of tools and data
 
-Data dichiarata dal client: 2026-10-11. Questa lettura riguarda strumenti congelati e record già prodotti; conserva i tempi universali del runtime senza convertirli nella data del client. Non ha caricato il prodotto, la suite, il driver o gli auditor, né ripetuto self-test o campagne. I record sono stati letti come dati con `tools/evidence-storage.lisp`; le sole operazioni aggiuntive sono letture di sorgenti e impronte di cinque file. L'unica scrittura è questo documento ignorato.
+This copy publishes the original reading, blob
+`a42a47b5651378d71b760642057e2b2538490849`, preserved
+[in the archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-simple-write/raw/readings/c4-review-draft.md.txt).
+Statements about writing to an ignored file below describe that reading.
 
-## Perimetro e impronte verificate
+Client-declared date: 2026-10-11. This reading concerns frozen tools and already-produced records; it retains runtime universal times without converting them to the client's date. It loaded neither product, suite, driver, nor auditors, and repeated no self-tests or campaigns. Records were read as data with `tools/evidence-storage.lisp`; the only additional operations were reading sources and fingerprints of five files. The only write is this ignored document.
+
+<a id="perimetro-e-impronte-verificate"></a>
+
+## Scope and verified fingerprints
 
 | File | Git blob |
 | --- | --- |
@@ -17,53 +21,65 @@ Data dichiarata dal client: 2026-10-11. Questa lettura riguarda strumenti congel
 | `tools/cbor-simple-write-bench.lisp` | `07e5b0b7773f95ddae9458267b285c0ccb24dba9` |
 | `src/codec/cbor-simple-write.lisp` | `58c7a3a040ec814fae2dfe636f569b5623cba8f0` |
 
-L'autore di questa lettura è anche autore dell'auditor del benchmark: non si attribuisce indipendenza alla revisione del proprio strumento. La lettura indipendente di quel codice è stata svolta dal coordinatore. Il suo controllo dei dati deriva comunque byte, NEXT, token e sink da VALUE, senza caricare prodotto o driver né riusarne builder e oracoli.
+The author of this reading also authored the benchmark auditor: no independence is attributed to review of their own tool. The coordinator performed the independent reading of that code. Its data check nevertheless derives bytes, NEXT, token, and sink from VALUE, without loading product or driver or reusing their builders and oracles.
 
-## Lettura statica
+<a id="lettura-statica"></a>
 
-- **Reader:** helper righe 101–116 e auditor righe 61–72 usano `*read-eval* NIL`, readtable standard, package CL-USER e una sola forma seguita da EOF. Le plist richiedono forma propria e chiavi keyword uniche. Il preambolo delle mutazioni è distinto dalla plist finale e deve corrispondere al preambolo noto. Nessuna lettura valuta codice del record. Questo è un controllo del formato previsto, non una sandbox generale contro ogni costo o comportamento del reader su dati ostili.
-- **Dati del benchmark:** auditor righe 208–303 controlla schema, sei fixture, trenta campioni, arità fredda esatta, array completo, token ponderato, sink modulare, heap e sensori; verifica metadata, safety 3, workers 1, impronte selezionate e snapshot dichiarati prima/dopo. La data ambiente può precedere STARTED di un tick, coerentemente con l'ordine del registratore. I tempi devono essere coerenti, senza soglia di velocità. Le impronte attese del prodotto sono argomenti espliciti della CLI.
-- **Copie e mutazioni:** catalogo di otto target, sostituzione univoca e confronto integrale del file mutato. La mutazione physical-capacity usa `(max span (- (length bytes) begin))`; extra-return-value modifica insieme FTYPE e DEFUN nella copia, evitando di classificare un errore di compilazione come rilevamento. Il prodotto originale resta escluso dalle scritture. Mutatore righe 323–361 crea directory nuove, runner e cache FASL locali, conserva log completi, exit e segnale; righe 185–189 e 215–225 separano compilazione, sopravvivenza e worker error.
-- **Snapshot:** helper righe 131–145 e auditor verificano uguaglianza prima/dopo e stato STABLE, con il blob prodotto congelato. Helper righe 467–473 ricontrolla anche byte e SHA256 degli input osservati. Sono confronti locali su inventari dichiarati; non dimostrano autenticità, esecuzione del processo attestato o assenza di modifiche transitorie tra due osservazioni.
-- **Copertura:** helper righe 322–355 confronta scope singolo, stato raw e due HTML esatti, con tutti i denominatori. Il parser conserva il caso SB-COVER di chiusura implicita del primo TR. La mappa dei gap associa sintatticamente path raw e sorgente: non prova irraggiungibilità, non esclude guardie e non attesta MC/DC.
-- **Output:** helper righe 357–363 scrive soltanto un nuovo output nel perimetro ignorato, rifiutando file esistenti; il mutatore conserva copie e rapporti anche in caso di fallimento. Il controllo lessicale dei percorsi non è una prova di assenza di symlink o di contenimento canonico di un albero arbitrario.
+## Static reading
 
-## Fragilità concrete e limiti da conservare
+- **Reader:** helper lines 101–116 and auditor lines 61–72 use `*read-eval* NIL`, standard readtable, CL-USER package, and one form followed by EOF. Plists require proper form and unique keyword keys. The mutation preamble is distinct from the final plist and must match the known preamble. No reading evaluates record code. This checks the expected format, not a general sandbox against every reader cost or behavior on hostile data.
+- **Benchmark data:** auditor lines 208–303 check schema, six fixtures, thirty samples, exact cold arity, complete array, weighted token, modular sink, heap allocation, and sensors; verify metadata, safety 3, workers 1, selected fingerprints, and declared before/after snapshots. Environment date may precede STARTED by one tick, consistent with recorder order. Times must be consistent, without a speed threshold. Expected product fingerprints are explicit CLI arguments.
+- **Copies and mutations:** eight-target catalog, unique replacement, and full mutated-file comparison. The physical-capacity mutation uses `(max span (- (length bytes) begin))`; extra-return-value changes FTYPE and DEFUN together in the copy, avoiding classifying a compilation error as detection. Original product is excluded from writes. Mutator lines 323–361 create new directories, runner, and local FASL caches, preserving complete logs, exit, and signal; lines 185–189 and 215–225 separate compilation, survival, and worker error.
+- **Snapshots:** helper lines 131–145 and auditor verify before/after equality and STABLE state, with frozen product blob. Helper lines 467–473 also recheck bytes and SHA256 of observed inputs. These are local comparisons on declared inventories; they demonstrate neither authenticity, execution of the attested process, nor absence of transient changes between observations.
+- **Coverage:** helper lines 322–355 compare single-source scope, raw state, and two exact HTML files, with all denominators. Parser retains the SB-COVER case of implicit first-TR closure. Gap mapping syntactically associates raw paths and source: it does not prove unreachability, exclude guards, or attest MC/DC.
+- **Output:** helper lines 357–363 write only a new output within ignored scope, rejecting existing files; the mutator preserves copies and reports even on failure. Lexical path checking does not prove absence of symlinks or canonical containment of an arbitrary tree.
 
-1. **Classificazione del rifiuto runtime:** helper righe 188–198 cerca smoke esatto e un qualsiasi `Unhandled `; non verifica l'ordine smoke → rifiuto né l'origine della condizione. Mutatore righe 215–225 classifica l'exit nonzero con smoke presente senza richiedere il rifiuto o la sua causa. Un guasto runtime estraneo dopo uno smoke, oppure un log artificiale con ordine invertito, può quindi soddisfare il classificatore. Il coordinatore ha comunicato l'esito della lettura separata degli otto log: smoke esatto prima di Unhandled, callsite REQ-CBR-003 della suite, nessun warning, fallimento di compilazione o segnale e otto sostituzioni esatte rilevate. Questo esito è attribuito al secondo lettore; questa revisione non ha duplicato la sua lettura integrale dei log.
-2. **Inventario delle copie:** helper righe 206–231 prova la sola differenza per i fingerprint dichiarati, non la completezza dell'albero copiato. Un catalogo che omette un file non viene scoperto da questo confronto. Il rapporto dichiara correttamente `NO-CLOSED-COPY-TREE-CLAIM`; runner e cache sono verificati per esistenza e configurazione, non mediante un inventario chiuso dell'intera copia.
-3. **Negativi del helper:** righe 380–381 accettano qualsiasi ERROR nelle fixture negative. Il PASS non prova quindi che ogni rifiuto provenga dalla guardia e dalla reason attesa: anche un errore di programmazione potrebbe soddisfarlo. L'auditor del benchmark richiede invece la propria condizione audit-rejection e la reason prevista. Non si estende tale garanzia al helper.
-4. **Autenticità e stabilità:** le impronte attese della CLI e gli snapshot dichiarati richiedono fiducia nel registratore e nel chiamante. L'uguaglianza delle osservazioni locali non costituisce una firma, una prova di isolamento OS o una prova atomica contro modifiche e ripristini intermedi. I controlli MD5 sulle copie non sono tutti compresi nelle osservazioni SHA256 finali.
+<a id="fragilità-concrete-e-limiti-da-conservare"></a>
 
-Nessun difetto obbligatorio che impedisca la lettura dei dati attuali è emerso. Le fragilità sopra impediscono claims più forti di quelli dichiarati; non richiedono di modificare i sorgenti congelati durante la raccolta.
+## Concrete weaknesses and limits to preserve
 
-## Record effettivamente letti
+1. **Runtime-rejection classification:** helper lines 188–198 seek exact smoke and any `Unhandled `; they verify neither smoke → rejection order nor condition origin. Mutator lines 215–225 classify nonzero exit with smoke present without requiring rejection or its cause. An unrelated runtime fault after smoke, or an artificial log with reversed order, can therefore satisfy the classifier. The coordinator communicated the separate reading's outcome for all eight logs: exact smoke before Unhandled, REQ-CBR-003 suite callsite, no warning, compilation failure, or signal, and eight exact replacements detected. This outcome is attributed to the second reader; this review did not duplicate their complete log reading.
+2. **Copy inventory:** helper lines 206–231 prove the sole difference for declared fingerprints, not completeness of the copied tree. A catalog omitting a file is not discovered by this comparison. The report correctly declares `NO-CLOSED-COPY-TREE-CLAIM`; runner and cache are checked for existence and configuration, not through a closed inventory of the entire copy.
+3. **Helper negatives:** lines 380–381 accept any ERROR in negative fixtures. PASS therefore does not prove every rejection comes from the expected guard and reason: a programming error could also satisfy it. The benchmark auditor instead requires its own audit-rejection condition and expected reason. That guarantee is not extended to the helper.
+4. **Authenticity and stability:** expected CLI fingerprints and declared snapshots require trust in recorder and caller. Equality of local observations is not a signature, proof of OS isolation, or atomic proof against intermediate changes and restorations. MD5 checks on copies are not all included in final SHA256 observations.
 
-I quattro wrapper completi riportano schema 1, KIND COMMAND-VERIFICATION, STATUS OK, exit 0, STDERR vuoto, SOURCE-CONSISTENCY STABLE e 685 voci SOURCE-BLOBS identiche prima/dopo. Lo stdout dell'auditor benchmark è una plist; quello del helper è un riepilogo testuale, verificato insieme al rispettivo artifact Lisp.
+No mandatory defect preventing reading of current data emerged. The weaknesses above prevent claims stronger than those declared; they do not require changing frozen sources during collection.
 
-| Wrapper | Intervallo universale runtime | Wall seconds | Esito dati |
+<a id="record-effettivamente-letti"></a>
+
+## Records actually read
+
+The four complete wrappers report schema 1, KIND COMMAND-VERIFICATION, STATUS OK, exit 0, empty STDERR, SOURCE-CONSISTENCY STABLE, and 685 identical before/after SOURCE-BLOBS entries. Benchmark-auditor stdout is a plist; helper stdout is a textual summary, checked alongside its Lisp artifact.
+
+| Wrapper | Runtime universal interval | Wall seconds | Data outcome |
 | --- | --- | --- | --- |
-| `spikes/out/4000714388-command-46985-0/report.lisp` | 4000714389–4000714390 | 1.009074 | audit benchmark OK, 20409 controlli |
-| `spikes/out/4000714391-command-47195-0/report.lisp` | 4000714391–4000714392 | 1.073152 | helper self-test OK, 529 controlli, 27 casi |
-| `spikes/out/4000714393-command-47353-0/report.lisp` | 4000714394–4000714400 | 6.516856 | audit mutazioni OK, 15320 controlli |
-| `spikes/out/4000714401-command-47888-0/report.lisp` | 4000714402–4000714403 | 1.613452 | audit copertura OK, 1178 controlli |
+| `spikes/out/4000714388-command-46985-0/report.lisp` | 4000714389–4000714390 | 1.009074 | benchmark audit OK, 20409 checks |
+| `spikes/out/4000714391-command-47195-0/report.lisp` | 4000714391–4000714392 | 1.073152 | helper self-test OK, 529 checks, 27 cases |
+| `spikes/out/4000714393-command-47353-0/report.lisp` | 4000714394–4000714400 | 6.516856 | mutation audit OK, 15320 checks |
+| `spikes/out/4000714401-command-47888-0/report.lisp` | 4000714402–4000714403 | 1.613452 | coverage audit OK, 1178 checks |
 
 ### Benchmark
 
-Il primo wrapper invoca `tools/cbor-simple-write-audit.lisp --bench` sul record `spikes/out/4000713808-command-19171-0/report.lisp`, fornendo blob prodotto `58c7a3a040ec814fae2dfe636f569b5623cba8f0` e MD5 `200373402e6e082dd8c7afde305302bb`. Il rapporto attesta sei celle e trenta campioni, heap osservato 0, arità fredda 1, baseline heap 0 e controllo positivo 16777472 byte per il budget di 16 MiB. Timer 1000000 tick/s; somma tempi campioni 0.022090000000000002 s e controlli 0.000064 s. Il record benchmark conserva STARTED 4000713809, FINISHED 4000713810 e RECORDED-AT 4000713809. L'osservazione locale del record di 183455 byte ha SHA256 `49e218bbe4a9eee8f137c381755929cab53c4cf298bb7df73a019ea0b7467e02` identico prima/dopo. Questi sono esiti di coerenza dei dati, senza claim di velocità, parallelismo, autenticità o esecuzione provata.
+The first wrapper invokes `tools/cbor-simple-write-audit.lisp --bench` on record `spikes/out/4000713808-command-19171-0/report.lisp`, supplying product blob `58c7a3a040ec814fae2dfe636f569b5623cba8f0` and MD5 `200373402e6e082dd8c7afde305302bb`. The report attests six cells and thirty samples, observed heap allocation 0, cold arity 1, heap-allocation baseline 0, and positive control 16777472 bytes for the 16 MiB budget. Timer 1000000 ticks/s; sample-time sum 0.022090000000000002 s and checks 0.000064 s. The benchmark record preserves STARTED 4000713809, FINISHED 4000713810, and RECORDED-AT 4000713809. Local observation of the 183455-byte record has SHA256 `49e218bbe4a9eee8f137c381755929cab53c4cf298bb7df73a019ea0b7467e02`, identical before/after. These are data-consistency outcomes, without claims of speed, parallelism, authenticity, or proven execution.
 
-### Helper e mutazioni
+<a id="helper-e-mutazioni"></a>
 
-Letto integralmente `audit-self-test/report.lisp`: STATUS OK, 529 controlli, 27 casi sintetici, prodotto non caricato e nessuna campagna eseguita dal self-test; una osservazione input uguale prima/dopo. Il limite sui negativi descritto sopra resta applicabile.
+### Helper and mutations
 
-Letto integralmente `audit-mutations.lisp`: STATUS OK, 15320 controlli e 36 osservazioni input identiche prima/dopo. Il record della campagna riporta otto detected, zero survived, zero invalid e zero worker errors. Baseline exit 0, smoke riga 2 e completamento riga 925; otto copie exit 1 senza segnale o completamento, smoke riga 2 e un rifiuto presente nei rispettivi log. Il helper verifica 254 file dichiarati per ciascuna delle nove copie: nessuna differenza nella baseline, soltanto `src/codec/cbor-simple-write.lisp` differente in ciascun mutante e sostituzioni esatte. Non si trasforma questo esito in inventario chiuso, né in prova indipendente dell'origine dei rifiuti runtime.
+`audit-self-test/report.lisp` read in full: STATUS OK, 529 checks, 27 synthetic cases, product not loaded, and no campaign performed by self-test; one equal before/after input observation. The negative-test limit described above remains applicable.
 
-### Copertura
+`audit-mutations.lisp` read in full: STATUS OK, 15320 checks, and 36 identical before/after input observations. The campaign record reports eight detected, zero survived, zero invalid, and zero worker errors. Baseline exit 0, smoke line 2, and completion line 925; eight copies exit 1 without signal or completion, smoke line 2, and a rejection present in their respective logs. The helper checks 254 declared files for each of nine copies: no baseline difference, only `src/codec/cbor-simple-write.lisp` different in each mutant, and exact replacements. This outcome is not turned into a closed inventory or independent proof of runtime-rejection origin.
 
-Letto integralmente `audit-coverage.lisp`: STATUS OK, 1178 controlli e cinque osservazioni input identiche prima/dopo. Lo stato salvato comprende 248 file, ma il perimetro HTML è esattamente un sorgente e due HTML: `cover-index.html` e `9ae2ab0021850480ee0bbfa07aef40ba.html`. Conteggi raw/index/source concordi: **95/111 espressioni, 20/24 esiti di ramo**. Mancano 16 espressioni, associate a quattro dichiarazioni e dodici nodi dei tre rami di errore interno; mancano quattro esiti delle guardie interne. Altre categorie: zero. Le reason e righe sono `cbor-simple-span` riga 22, `cbor-simple-target-span` riga 46 e `cbor-simple-progress` riga 52. Tutti i path raw restano nel rapporto e nel denominatore.
+<a id="copertura"></a>
 
-L'osservazione effettuata dal helper sullo stato raw riporta 1762263 byte e SHA256 `370f3694f1361132877df4dca8140e24160f338318d69dc108783f76585da6c8`. La successiva compressione degli output ignorati avviene dopo gli audit e va conservata tramite evidence-storage senza cambiare questi valori osservati sui byte decodificati. Questo documento non riqualifica MC/DC, la copertura completa, un gate o il rilascio.
+### Coverage
 
-## Chiusura
+`audit-coverage.lisp` read in full: STATUS OK, 1178 checks, and five identical before/after input observations. Saved state includes 248 files, but HTML scope is exactly one source and two HTML files: `cover-index.html` and `9ae2ab0021850480ee0bbfa07aef40ba.html`. Raw/index/source counts agree: **95/111 expressions, 20/24 branch outcomes**. 16 expressions are missing, associated with four declarations and twelve nodes of the three internal error branches; four internal-guard outcomes are missing. Other categories: zero. Reasons and lines are `cbor-simple-span` line 22, `cbor-simple-target-span` line 46, and `cbor-simple-progress` line 52. All raw paths remain in report and denominator.
 
-Lettura C4 completata, con risultati e limiti separati. Il documento è congelato dopo questa scrittura; nessun altro file è di competenza di questa attività. Il coordinatore ha comunicato anche la chiusura del controllo separato dei log; la fragilità generale del classificatore resta documentata.
+The helper's raw-state observation reports 1762263 bytes and SHA256 `370f3694f1361132877df4dca8140e24160f338318d69dc108783f76585da6c8`. Later compression of ignored outputs occurs after audits and must be preserved through evidence-storage without changing these values observed on decoded bytes. This document does not requalify MC/DC, full coverage, a gate, or release.
+
+<a id="chiusura"></a>
+
+## Closure
+
+C4 reading completed, with results and limits separate. The document is frozen after this write; no other file falls within this activity's responsibility. The coordinator also communicated completion of the separate log check; the classifier's general weakness remains documented.

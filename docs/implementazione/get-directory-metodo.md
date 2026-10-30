@@ -1,264 +1,277 @@
-# Metodo preregistrato C4: directory GET CLOSED
+<a id="metodo-preregistrato-c4-directory-get-closed"></a>
 
-Il driver [get-directory-bench.lisp](../../tools/get-directory-bench.lisp) misura
-due cicli GET corrente attraverso `arcdocdb.get.directory`. Questa consegna è
-stata preparata mediante sole letture statiche e modifiche dei due file
-assegnati: nessuna compilazione, caricamento Lisp, suite, benchmark, mutazione
-o check è stato eseguito. Le esecuzioni e la registrazione dei risultati spettano
-al padre dopo il congelamento dei sorgenti. `6eeb501` è l'antenato concordato;
-l'integrazione main `644e53f` sarà registrata dal padre prima del freeze.
-Non ci sono risultati prestazionali osservati in questo documento.
+# C4 preregistered method: CLOSED GET directory
 
-Il driver è autonomo per CLI, sensori, validazione, deadline e persistenza.
-Carica `arcdocdb/tests` mediante `asdf:load-system`, senza invocare `test-op`,
-e usa il supporto condiviso `tests/get-directory/support.lisp`. Se il supporto
-non è già incluso dal sistema, lo carica esplicitamente. Entrambe le operazioni,
-come eventuali compilazioni ASDF, avvengono fuori dalle finestre. **Questa
-campagna carica il sistema dei test e non rivendica un processo prod-only.**
+Driver [get-directory-bench.lisp](../../tools/get-directory-bench.lisp) measures
+two current-GET cycles through `arcdocdb.get.directory`. This delivery was
+prepared through static reads and edits to the two assigned files only:
+no compilation, Lisp load, suite, benchmark, mutation,
+or check was run. Executions and result recording belong
+to the parent after source freeze. `6eeb501` is the agreed ancestor;
+main integration `644e53f` will be recorded by the parent before freeze.
+There are no observed performance results in this document.
 
-## Conteggi fissati prima delle esecuzioni
+The driver handles its own CLI, sensors, validation, deadlines, and persistence.
+It loads `arcdocdb/tests` through `asdf:load-system` without invoking `test-op`
+and uses shared support `tests/get-directory/support.lisp`. If support
+is not already included in the system, it loads it explicitly. Both operations,
+including any ASDF compilations, occur outside windows. **This
+campaign loads the test system and does not claim a prod-only process.**
 
-| Parametro | Preregistrazione |
+<a id="conteggi-fissati-prima-delle-esecuzioni"></a>
+
+## Counts fixed before execution
+
+| Parameter | Preregistration |
 |---|---|
-| N: segmenti CLOSED / chiavi presenti | 1, 8, 32, 64 |
-| V: byte per valore | 16, 256 |
-| Formato | v2, PUT ordinario compaction, flags 0, prova NIL |
-| CSN | `#xffffffffffffffff`, in tutti i profili |
-| Chiavi | 16 byte; una chiave e un PUT per segmento |
-| Casi | `:resolve`, `:cache-hit` |
-| COUNT | 20.000 cicli per worker per finestra |
-| WARMUP | 1.000 cicli per worker, prima di ogni finestra |
-| Repliche | 5, ID 0..4 |
-| Seriale | main, un contesto, nessun thread creato |
-| Parallelo | nuovi thread per ogni finestra, 1/2/4 worker |
-| Self-test | T=8, warmup=8, una replica, tutte le celle |
-| Cache per fixture | una classe 1024 B, 256 insiemi, 8 posti/insieme, stripes=1 |
-| Budget tempo | run 600 s; finestra 30 s; join di cleanup 2 s complessivi |
+| N: CLOSED segments / present keys | 1, 8, 32, 64 |
+| V: bytes per value | 16, 256 |
+| Format | v2, ordinary compaction PUT, flags 0, NIL proof |
+| CSN | `#xffffffffffffffff`, in all profiles |
+| Keys | 16 bytes; one key and one PUT per segment |
+| Cases | `:resolve`, `:cache-hit` |
+| COUNT | 20,000 cycles per worker per window |
+| WARMUP | 1,000 cycles per worker before every window |
+| Replicates | 5, ID 0..4 |
+| Serial | main, one context, no thread created |
+| Parallel | new threads every window, 1/2/4 workers |
+| Self-test | T=8, warmup=8, one replicate, all cells |
+| Cache per fixture | one 1024 B class, 256 sets, 8 slots/set, stripes=1 |
+| Time budget | run 600 s; window 30 s; cleanup joins 2 s overall |
 
-Sono 16 profili N × V × caso, 80 finestre seriali e 240 parallele: **12.800.000
-cicli misurati**, con 640.000 cicli di warmup. `:resolve` include avvio e
-abbandono; `:cache-hit` include risposta privata e conclusione. Il self-test
-ha 64 finestre, 1.024 cicli misurati e 1.024 di warmup. Prima delle campagne
-sono inoltre effettuati, per ciascuna campagna, 210 GET nativi per scaldare
-tutte le chiavi delle otto fixture e 210 hit directory per verificarne la
-permanenza dopo l'ultimo inserimento. `--self-test` costruisce otto fixture
-in successione; `--bench` ne costruisce sedici, otto per il self-test e otto
-nuove per il benchmark, per 420 GET nativi e 420 verifiche iniziali. Queste
-operazioni sono fuori dalle finestre e non entrano nei conteggi della
-campagna o del warmup per finestra.
+There are 16 N × V × case profiles, 80 serial and 240 parallel windows: **12,800,000
+measured cycles**, with 640,000 warmup cycles. `:resolve` includes start and
+abandonment; `:cache-hit` includes private response and completion. The self-test
+has 64 windows, 1,024 measured cycles, and 1,024 warmup cycles. Before campaigns,
+each campaign also performs 210 native GETs to warm all
+keys in eight fixtures and 210 directory hits to check their
+retention after the last insertion. `--self-test` builds eight fixtures
+in succession; `--bench` builds sixteen, eight for self-test and eight
+new benchmark fixtures, for 420 native GETs and 420 initial checks. These
+operations are outside windows and do not enter campaign counts
+or per-window warmup counts.
 
-L'ordine è fisso: N crescente, V crescente, seriale poi parallelo nel singolo
-profilo N/V, resolve poi cache-hit, replica crescente, worker 1/2/4. La
-campagna piccola completa precede quella benchmark. COUNT, WARMUP, repliche,
-profili e dimensionamento cache non sono configurabili da CLI. Non ci sono
-calibrazione adattiva, conteggi dedotti dal timer, retry o selezione delle
-repliche riuscite. La validazione finale esige ciascuna cella esattamente una
-volta e rifiuta duplicati o campagne parziali.
+Order is fixed: increasing N, increasing V, serial then parallel within each
+N/V profile, resolve then cache-hit, increasing replicate, workers 1/2/4.
+The complete small campaign precedes the benchmark campaign. COUNT, WARMUP, replicates,
+profiles, and cache sizing are not CLI-configurable. No adaptive
+calibration, timer-derived counts, retries, or selection of successful
+replicates. Final validation requires each cell exactly
+once and rejects duplicates or partial campaigns.
 
-## Fixture e routing della cache
+<a id="fixture-e-routing-della-cache"></a>
 
-La firma consumata è `make-directory-fixture :count N :value-bytes V :workers 4
-:version 2 :csn MAX-u64 :cache-p t`; la liberazione usa
-`close-directory-fixture`. Il driver legge gli accessor concordati view,
-directory, maps, keys, values, contexts, outputs, epochs e gli oracoli pubblici
-ids, ends, images, files, cache. Non modifica il supporto, la directory o le
-mappe e non crea celle pubbliche, CAS o thread di manutenzione.
+## Fixtures and cache routing
 
-Ogni fixture possiede un namespace temporaneo esclusivo, N FD readonly aperti,
-una sola vista canonica, un registro EBR con quattro slot e quattro contesti
-con scratch/output privati. Il supporto costruisce immagini e manifest con
-encoding e CRC di riferimento; i PUT sono a offset 64. L'ultimo ID è
-`#xffffffff`, gli altri `17 + 2*i`, strettamente crescenti. La frontiera
-autorizzata è `104 + V`; gli undici byte invalidi successivi dimostrano che
-END è un dato del manifest, non la dimensione del file. L'ACTIVE richiesto
-dal formato del manifest è un ID esterno al dominio u32 CLOSED e non viene
-inserito nella directory o interrogato dalla campagna.
+The consumed signature is `make-directory-fixture :count N :value-bytes V :workers 4
+:version 2 :csn MAX-u64 :cache-p t`; release uses
+`close-directory-fixture`. The driver reads agreed accessors view,
+directory, maps, keys, values, contexts, outputs, epochs, and public oracles
+ids, ends, images, files, cache. It modifies neither support, directory, nor
+maps and creates no public cells, CAS, or maintenance threads.
 
-È viva una sola fixture N/V alla volta: setup, warmup, finestre seriali e
-parallele, join e chiusura precedono il profilo successivo. Il massimo è
-64 FD readonly della fixture, oltre ai FD di processo/checkpoint; la
-costruzione non trattiene i 210 FD di tutte le configurazioni. Una
-campagna successiva ricostruisce i dati in nuovi namespace mantenendo
-identici contenuti, oracoli, configurazione e conteggi.
+Every fixture owns an exclusive temporary namespace, N open read-only FDs,
+one canonical view, an EBR registry with four slots, and four contexts
+with private scratch/output. Support builds images and manifests with
+reference encoding and CRC; PUTs are at offset 64. The last ID is
+`#xffffffff`, others `17 + 2*i`, strictly increasing. The authorized
+frontier is `104 + V`; eleven subsequent invalid bytes demonstrate that
+END is manifest data rather than file size. The ACTIVE required
+by the manifest format has an ID outside the u32 CLOSED domain and is neither
+inserted in the directory nor queried by the campaign.
 
-La capacità cache è fissa anche per N=1. Il payload dichiarato dall'API deve
-essere esattamente 2.156.816 B: `8 + 256*8*(1024+29) + 256 + 8`, esclusi header
-Lisp e oggetti mutex. È vivo il payload cache di una sola fixture, 2.156.816 B;
-oggetti delle fixture chiuse possono restare nello heap fino al GC. La
-classe 1024 B contiene entrambi i record di 56/296 B;
-dimensione della classe e partizione non cambiano tra i profili.
+Only one N/V fixture is live at a time: setup, warmup, serial and parallel
+windows, joins, and closure precede the next profile. Maximum is
+64 read-only fixture FDs, beyond process/checkpoint FDs; construction
+does not retain the 210 FDs of all configurations. A later
+campaign rebuilds data in new namespaces while keeping identical
+contents, oracles, configuration, and counts.
 
-La lettura statica di `src/cache/core.lisp` stabilisce che il routing cache
-usa high/low del segmento e offset, distinto dal digest XXH64 delle chiavi
-nel primary. L'oracolo cold del driver riproduce il mix u32 e calcola
+Cache capacity is fixed even for N=1. API-declared payload must
+be exactly 2,156,816 B: `8 + 256*8*(1024+29) + 256 + 8`, excluding Lisp
+headers and mutex objects. Only one fixture's cache payload is live, 2,156,816 B;
+closed-fixture objects may remain on heap until GC. The
+1024 B class holds both 56/296 B records;
+class size and partition do not change across profiles.
+
+Static reading of `src/cache/core.lisp` establishes that cache routing
+uses segment high/low and offset, distinct from the key XXH64 digest
+in the primary index. The driver's cold oracle reproduces the u32 mix and calculates
 `mix(mix(0) xor mix(ID xor #x9e3779b9) xor mix(64 xor #x85ebca6b)) and 255`.
-Prima delle misure confronta ogni risultato con `insieme-cache`, verifica
-la configurazione reale e registra la massima occupazione per insieme;
-nessun insieme può richiedere più di otto posti. Questo controllo è una
-precondizione dell'esecuzione registrata, non un risultato già ottenuto.
-Gli accessor interni cache e quello map→segment sono usati in sola lettura
-per configurazione/oracoli fuori dalle finestre; il percorso GET usa API
-pubbliche risolte prima del clock.
+Before measurements it compares every result with `insieme-cache`, checks
+the actual configuration, and records maximum per-set occupancy;
+no set may require more than eight slots. This check is a
+recorded-execution precondition, not an already obtained result.
+Internal cache accessors and map→segment accessor are read-only
+for configuration/oracles outside windows; the GET path uses public APIs
+resolved before the clock.
 
-Il warmup iniziale usa `avvia-get` e `leggi-record-get` del nucleo con il
-segmento/END noto della fixture per ogni chiave. Richiede i cinque ritorni
-`:segment :miss :inserted NIL NIL`, oppure `:cache :hit :not-attempted NIL NIL`
-se già caldo, copia, verifica il valore e conclude. Dopo aver scaldato tutte
-le chiavi, un giro completo N via directory richiede hit su ciascuna. I
-campioni cache successivi richiedono hit a ogni iterazione, anche nel
-self-test e nel warmup. Un miss, eviction o scan inatteso causa FAILED;
-nessuna lettura dal file rimpiazza una sonda fallita nella finestra.
+Initial warmup uses core `avvia-get` and `leggi-record-get` with the
+fixture's known segment/END for every key. It requires five returns
+`:segment :miss :inserted NIL NIL`, or `:cache :hit :not-attempted NIL NIL`
+if already warm, copies, verifies value, and completes. After warming all
+keys, a complete N-pass through the directory requires a hit on each. Subsequent cache
+samples require a hit every iteration, including self-test
+and warmup. An unexpected miss, eviction, or scan causes FAILED;
+no file read replaces a failed probe inside the window.
 
-## Operazioni e oracoli nel ciclo
+<a id="operazioni-e-oracoli-nel-ciclo"></a>
 
-Ogni ciclo installa il cleanup prima dell'avvio e chiama
-`avvia-get(ctx, view, key[i], NIL, 0, 0)`. Richiede ritorno/stato CANDIDATE ed
-EBR attivo. Copia le cinque word del candidato in un array u64 privato già
-allocato; confronta CSN in due word u32 massime, ID, offset 64 e record-size
-`40 + V`. Solo a questo punto legge la directory tramite l'accessor della
-fixture, rappresentando l'acquisizione del controller sotto la stessa epoca.
-Il riferimento fisico resta nel compito e non viene inoltrato tra pool.
+## Operations and oracles in the loop
 
-1. **Resolve.** `trova-mappa-directory-get` deve restituire per EQ la mappa
-   dell'oracolo fixture. `risolvi-candidato-directory-get` deve restituire il
-   segmento della stessa mappa, END della fixture, flags 0 e prova NIL,
-   lasciando il contesto CANDIDATE. Il resolver CLOSED ricontrolla CSN, size,
-   owner e lifetime FD. Seguono abbandono e verifica IDLE/EBR libero;
-   l'output deve conservare tutte le sentinelle. Questo ciclo comprende
-   **due selezioni directory**: la selezione esplicita e quella interna
-   all'API di risoluzione. Non autorizza o consegna un valore.
-2. **Cache-hit.** `sonda-cache-directory-get` deve restituire `:hit`. Il driver
-   copia con `copia-valore-get` nell'output privato da offset 3, richiede fine
-   `3 + V`, poi `concludi-get(ctx, 1)` deve restituire `:found,V`. NOW=1 è il
-   valore fresco del tempo logico della fixture, successivo al NOW=0
-   d'avvio; il timer di misura è indipendente. Verifica tutti i V byte
-   dell'oracolo e tutte le sei sentinelle, stato IDLE e annuncio EBR libero.
-   Segue comunque cleanup idempotente. È una sola selezione directory.
+Every cycle installs cleanup before startup and calls
+`avvia-get(ctx, view, key[i], NIL, 0, 0)`. It requires CANDIDATE return/state and
+active EBR. It copies the candidate's five words into an already allocated private
+u64 array; compares CSN as two maximum u32 words, ID, offset 64, and record-size
+`40 + V`. Only then does it read the directory through the fixture
+accessor, representing controller acquisition under the same epoch.
+The physical reference stays within the task and is not forwarded between pools.
 
-I valori attesi, CSN, ID e END provengono dalle immagini/array indipendenti
-creati dal supporto; il driver non deriva l'oracolo dai ritorni del resolver
-che sta misurando. La corrispondenza immagine/valore viene controllata cold.
-Contatori e checksum aumentano solo dopo i controlli e il cleanup. Per
-resolve il contributo è `1 + END + ID + 2*#xffffffff + somma(valore atteso)`;
-per cache-hit è `1 + somma(byte realmente copiati)`. Il checksum resolve è
-un contatore di operazioni validate e usa metadati dell'oracolo: l'esito è
-accettato per i confronti espliciti di ogni ciclo, non per una somma del
-risultato. Il confronto integrale impedisce che una collisione della somma
-accetti una risposta cache errata.
+1. **Resolve.** `trova-mappa-directory-get` must return by EQ the fixture
+   oracle's map. `risolvi-candidato-directory-get` must return the
+   same map's segment, fixture END, flags 0, and NIL proof,
+   leaving the context CANDIDATE. The CLOSED resolver rechecks CSN, size,
+   owner, and FD lifetime. Abandonment and IDLE/free-EBR verification follow;
+   output must retain every sentinel. This cycle includes
+   **two directory selections**: explicit selection and selection inside
+   the resolution API. It neither authorizes nor delivers a value.
+2. **Cache-hit.** `sonda-cache-directory-get` must return `:hit`. The driver
+   copies with `copia-valore-get` into private output from offset 3, requires end
+   `3 + V`, then `concludi-get(ctx, 1)` must return `:found,V`. NOW=1 is the
+   fixture's fresh logical time, after startup NOW=0;
+   the measurement timer is independent. It checks all V oracle bytes
+   and all six sentinels, IDLE state, and free EBR announcement.
+   Idempotent cleanup follows regardless. This is one directory selection.
 
-Il cursore parte da `worker-id mod N` e procede modulo N. La closure del
-warmup è distinta da quella misurata, che riparte dal cursore prescritto.
-COUNT=20.000 non è divisibile per N=64: l'oracolo del checksum calcola anche
-il resto per ciascun worker, senza assumere un numero intero di giri. CSN
-viene controllato high/low senza ritornare un u64 generico nel ciclo; le
-somme calde stanno nel dominio fixnum SBCL64. Lo heap osservato può comunque
-includere allocazioni del prodotto, dei thread e del driver.
+Expected values, CSN, ID, and END come from independent images/arrays
+created by support; the driver does not derive the oracle from the resolver
+returns it measures. Image/value correspondence is checked cold.
+Counters and checksum increase only after checks and cleanup. For
+resolve the contribution is `1 + END + ID + 2*#xffffffff + sum(expected value)`;
+for cache-hit it is `1 + sum(bytes actually copied)`. The resolve checksum is
+a validated-operation counter using oracle metadata: acceptance
+comes from explicit per-cycle comparisons, not a result sum.
+Full comparison prevents a sum collision from accepting a wrong cache response.
 
-## Finestre e sensori
+The cursor starts at `worker-id mod N` and advances modulo N. The warmup
+closure differs from the measured closure, which restarts at the prescribed cursor.
+COUNT=20,000 is not divisible by N=64: the checksum oracle also calculates
+each worker's remainder without assuming complete passes. CSN
+is checked high/low without returning a generic u64 in the loop;
+hot sums stay in the SBCL64 fixnum domain. Observed heap may still
+include product, thread, and driver allocations.
 
-Fixture, oracoli, contesti, output, buffer candidato, closure, raw, checksum
-attesi, nomi thread e semafori sono allocati prima della finestra. Seguono
-warmup e full GC. Il main legge `get-internal-real-time` e
-`sb-ext:get-bytes-consed` prima/dopo l'intero gruppo: ordine tick-start,
-heap-start, heap-end, tick-end. Il report conserva tick e unità originali,
-secondi e qualità del tempo. Zero tick dà `:below-resolution`, secondi zero
-e rate NIL. Il rate esiste soltanto per una finestra completa riuscita.
+<a id="finestre-e-sensori"></a>
 
-Il contatore heap riguarda l'intero processo, comprese allocazioni dei nuovi
-thread; non si sommano contatori per worker. È memoria allocata cumulativa,
-non heap vivo, RSS o riserva. GC automatici sono inclusi; full GC esplicito,
-formattazione, costruzione dei record e checkpoint sono esclusi. L'ordine
-dei due sensori produce un piccolo disallineamento ai bordi.
+## Windows and sensors
 
-Nel seriale il main esegue il ciclo e il controllo finale di quiescenza.
-Nel parallelo, compreso il caso a un worker, la finestra parte prima di
-`make-thread` e include startup, ready/gate, cicli, join con deadline e
-controllo di tutti i contesti coinvolti. Il main affida i contesti ai thread
-soltanto dopo il warmup, li riacquisisce dopo join e non legge raw di thread
-ancora vivi. Startup/join non vengono sottratti o stimati. I thread sono
-nuovi a ogni finestra: questa misura non descrive un pool persistente.
+Fixtures, oracles, contexts, outputs, candidate buffer, closures, raw data, expected
+checksums, thread names, and semaphores are allocated before the window. Warmup
+and full GC follow. Main reads `get-internal-real-time` and
+`sb-ext:get-bytes-consed` before/after the entire group: order tick-start,
+heap-start, heap-end, tick-end. The report retains original ticks and units,
+seconds, and time quality. Zero ticks gives `:below-resolution`, zero seconds,
+and NIL rate. Rate exists only for a successfully completed window.
 
-Sono inclusi nei clock riempimento delle sentinelle, copia/verifica del
-candidato, confronti degli enum, verifica integrale output, checksum,
-osservazioni stato/EBR, cleanup del GET e contatori. Il controllo finale
-del supporto verifica anche residui privati, sotto ownership del main dopo
-join. Sono cicli completi con controlli di correttezza in finestra, non
-stime del costo isolato della ricerca binaria.
+The heap counter concerns the entire process, including new-thread
+allocations; per-worker counters are not summed. It is cumulative allocated memory,
+not live heap, RSS, or reservation. Automatic GCs are included; explicit full GC,
+formatting, record construction, and checkpoints are excluded. The two sensors'
+order causes a small boundary misalignment.
 
-Il sensore ha due finestre distinte: otto operazioni vuote e allocazione di
-quattro array u8 da 1 MiB trattenuti. Ogni raw viene scritto prima del gate.
-Il controllo positivo esige almeno 4.194.304 B osservati, completamento e
-checksum corretti, array vivi della dimensione attesa e sentinelle ai bordi.
-Il controllo vuoto registra il rumore e non esige heap zero. Nessun valore
-del sensore viene sottratto dalle misure GET. I test diagnostici del driver
-contengono REQ nel nome e rilevano `:completed` mancante, anche nel worker,
-schema mancante, falso completamento parziale e rate NIL a zero tick.
+Serially, main executes the loop and final quiescence check.
+In parallel, including the one-worker case, the window starts before
+`make-thread` and includes startup, ready/gate, loops, deadline-bound joins, and
+checks of all involved contexts. Main hands contexts to threads
+only after warmup, reacquires them after joins, and reads no raw data of
+still-live threads. Startup/join are neither subtracted nor estimated. Threads are
+new every window: this measurement does not describe a persistent pool.
 
-## Deadline, errori e conservazione
+Clocks include sentinel filling, candidate copy/verification,
+enum comparisons, full output verification, checksum,
+state/EBR observations, GET cleanup, and counters. The final support
+check also verifies private residuals under main ownership after
+join. These are complete cycles with correctness checks inside the window,
+not estimates of isolated binary-search cost.
 
-Il run ha deadline assoluta di 600 s, comprende load, setup, sensori,
-self-test e campagne. Ogni finestra ha un watchdog installato prima dei
-sensori e usa la minore fra deadline run e 30 s locali. Ready, start e tutti
-i join condividono questa stessa deadline; ogni attesa è bounded. Un
-fallimento non cambia COUNT. Il cleanup termina solo thread propri e ha
-un'unica deadline di 2 s complessivi per i quattro join; chiamate successive
-non aggiungono tempo. Il cleanup di un gruppo fallito avviene dopo la
-chiusura dei sensori e viene dichiarato fuori dalla finestra. I dati di
-quel gruppo sono diagnostici, con rate NIL.
+The sensor has two separate windows: eight empty operations and allocation of
+four retained 1 MiB u8 arrays. Each raw record is written before the gate.
+Positive control requires at least 4,194,304 B observed, completion and
+correct checksum, live arrays of expected size, and boundary sentinels.
+The empty control records noise and does not require zero heap. No sensor
+value is subtracted from GET measurements. Driver diagnostic tests
+have REQ in their names and detect missing `:completed`, including in workers,
+missing schema, false partial completion, and NIL rate at zero ticks.
 
-L'`unwind-protect` dei sensori conserva tick/heap anche su errore. Dopo
-cleanup, il driver costruisce il record parziale, lo copia nel checkpoint
-e lo persiste **prima della validazione**. Un worker vivo rende i suoi raw
-non osservabili: completed/checksum NIL e stato FAILED esplicito; non viene
-inventato un completamento. Un worker morto ha i contatori parziali reali,
-anche se fallisce prima del primo ciclo. Non si chiude alcun FD sotto un
-thread ancora vivo; in quel caso il run fallisce e la liberazione OS del
-processo è l'ultimo confine. I record precedenti rimangono conservati.
+<a id="deadline-errori-e-conservazione"></a>
 
-Le condizioni del driver sono tipizzate (`bench-failure`, `bench-timeout`);
-le diagnostiche sono limitate a 2.048 caratteri e riportano
-`tools/get-directory-bench.lisp COD-61`. Gli errori del prodotto vengono
-conservati nelle diagnostiche del worker/gruppo e causano exit 1. Non si
-trasforma una location di segmento mancante in documento `:absent`.
+## Deadlines, errors, and preservation
 
-Il run acquisisce una directory nuova 0700 con `mkdir` esclusivo; EEXIST
-fallisce senza riuso. I prefix sono `get-directory-bench*` e
-`get-directory-self-test*`, anche per la prova negativa. Le sole tre foglie
-pubblicate sono `report.lisp`, `self-test-metrics.lisp`,
-`self-test-sensor.lisp`; ciascuna è una plist plain UTF-8 minore di 1 MiB.
-Ogni checkpoint usa un file temporaneo acquisito esclusivamente e rename
-nella directory propria; rilegge una sola forma con READ-EVAL NIL e richiede
-uguaglianza. Il limite live della directory di report, incluso lo staging
-di una sola foglia, è 4 MiB. Non viene creato un file per replica.
+The run has an absolute 600 s deadline including load, setup, sensors,
+self-test, and campaigns. Each window has a watchdog installed before
+sensors and uses the earlier of run deadline and local 30 s. Ready, start, and all
+joins share this same deadline; every wait is bounded. Failure
+does not change COUNT. Cleanup terminates only owned threads and has
+one overall 2 s deadline for the four joins; later calls
+add no time. Failed-group cleanup occurs after closing
+sensors and is declared outside the window. That group's data are
+diagnostic, with NIL rate.
 
-Tutte le foglie dichiarano `:schema-version 1`, `:kind`, `:status`, `:source`
-e `:limits`. Anche finestre, worker, metriche sensore, routing e riepiloghi
-dichiarano schema 1/kind/status. Lo stato parte da RUNNING e termina OK o
-FAILED. Self-test e sensore hanno checkpoint dedicati; il report mantiene
-le campagne seriale/parallela distinte. `--negative-fixture` costruisce un
-record **sintetico** con `:completed` deliberatamente assente, lo conserva
-in `self-test-metrics.lisp`, poi richiede un rifiuto diagnosticato e exit 1.
-Non carica il prodotto e non spaccia i suoi zero tick/heap per misure reali.
+Sensor `unwind-protect` preserves ticks/heap even on error. After
+cleanup, the driver builds the partial record, copies it into checkpoint,
+and persists it **before validation**. A live worker makes its raw data
+unobservable: completed/checksum NIL and explicit FAILED state; no completion
+is invented. A dead worker has actual partial counters,
+even if it fails before the first cycle. No FD is closed beneath a
+still-live thread; then the run fails and process-level OS
+release is the final boundary. Previous records remain preserved.
 
-Le otto fixture di ciascuna campagna costruiscono in successione 210 file
-per 52.710 B di immagini (`sum_N N * ((115+16)+(115+256))`). Il massimo
-simultaneo è 64 file, 23.744 B, al profilo N=64/V=256; `--bench`, incluso
-self-test, costruisce complessivamente 420 file per 105.420 B. I file sono
-fuori dalla directory dei report, in root autonome del supporto, e vengono
-rimossi dopo quiescenza di ciascun profilo. Payload directory massimo vivo
-768 B e payload righe resolver massimo vivo 1.536 B sono distinti da
-cache, FD, header Lisp, temporanei di costruzione e sensore trattenuto.
-Il budget report esclude cache FASL e registrazione esterna del padre.
+Driver conditions are typed (`bench-failure`, `bench-timeout`);
+diagnostics are limited to 2,048 characters and cite
+`tools/get-directory-bench.lisp COD-61`. Product errors are
+preserved in worker/group diagnostics and cause exit 1. A missing-segment
+location is not transformed into an `:absent` document.
 
-## Esecuzioni che il padre deve registrare
+The run acquires a new 0700 directory with exclusive `mkdir`; EEXIST
+fails without reuse. Prefixes are `get-directory-bench*` and
+`get-directory-self-test*`, including for the negative test. The only three published
+leaves are `report.lisp`, `self-test-metrics.lisp`,
+`self-test-sensor.lisp`; each is a plain UTF-8 plist below 1 MiB.
+Every checkpoint uses an exclusively acquired temporary file and rename
+within its directory; it rereads one form with READ-EVAL NIL and requires
+equality. The live report-directory limit, including staging of
+one leaf, is 4 MiB. No per-replicate file is created.
 
-Il padre congela e registra argv, commit/base, working tree e blob sorgenti
-prima e dopo ciascun comando. Il driver annota gli argv applicativi e la
-responsabilità esterna del freeze; non certifica da solo la stabilità dei
-sorgenti. Un'evidenza prestazionale accettabile richiede inoltre
-`:source-consistency :stable` nel record esterno. I prefix e le tre foglie
-devono essere inclusi dal collector. I seguenti comandi sono preregistrati
-e **non sono stati eseguiti per questa consegna**:
+All leaves declare `:schema-version 1`, `:kind`, `:status`, `:source`,
+and `:limits`. Windows, workers, sensor metrics, routing, and summaries
+also declare schema 1/kind/status. State starts RUNNING and ends OK or
+FAILED. Self-test and sensor have dedicated checkpoints; the report keeps
+serial/parallel campaigns distinct. `--negative-fixture` builds a
+**synthetic** record with deliberately absent `:completed`, preserves it
+in `self-test-metrics.lisp`, then requires a diagnosed rejection and exit 1.
+It does not load the product or pass off its zero ticks/heap as real measurements.
+
+Each campaign's eight fixtures sequentially build 210 files
+for 52,710 B of images (`sum_N N * ((115+16)+(115+256))`). Maximum
+simultaneous count is 64 files, 23,744 B, at N=64/V=256; `--bench`, including
+self-test, builds 420 files overall for 105,420 B. Files are
+outside the report directory, in support-owned roots, and are
+removed after each profile becomes quiescent. Maximum live directory payload
+768 B and maximum live resolver-row payload 1,536 B are distinct from
+cache, FDs, Lisp headers, construction temporaries, and retained sensor.
+Report budget excludes FASL cache and the parent's external recording.
+
+<a id="esecuzioni-che-il-padre-deve-registrare"></a>
+
+## Executions the parent must record
+
+The parent freezes and records argv, commit/base, working tree, and source blobs
+before and after each command. The driver records application argv and external
+freeze responsibility; it does not itself certify source
+stability. Acceptable performance evidence also requires
+`:source-consistency :stable` in the external record. Prefixes and all three leaves
+must be included by the collector. The following commands are preregistered
+and **were not run for this delivery**:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/get-directory-bench.lisp --self-test spikes/out/get-directory-self-test-frozen/
@@ -266,19 +279,19 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/get-directory-bench.lisp --bench spikes/out/get-directory-bench-frozen/
 ```
 
-La prova negativa deve conservare exit-code 1, stderr COD-61 e foglie FAILED;
-un exit 0 sarebbe un difetto del rilevamento. `--bench` esegue prima sensore,
-diagnostiche e tutte le celle piccole, poi la matrice di 320 finestre. Un
-exit 0 richiede matrice completa, correttezza di ogni ciclo, quiescenza,
-cleanup delle fixture e persistenza/rilettura riuscita del report finale.
+The negative test must preserve exit-code 1, stderr COD-61, and FAILED leaves;
+exit 0 would be a detection defect. `--bench` first runs sensor,
+diagnostics, and all small cells, then the 320-window matrix. Exit 0
+requires a complete matrix, correctness of every cycle, quiescence,
+fixture cleanup, and successful final report persistence/rereading.
 
-La directory del prodotto supporta fino a 65.536 mappe, ricerca bounded a
-17 passi, con al più due confronti numerici per pivot, e payload degli array
-`12*N` B su SBCL64. Questi sono contratti
-del prodotto, distinti dai profili prestazionali fino a N=64: il driver non
-conta i passi o i confronti e non deduce il dominio massimo dai tempi. Pubblicazione,
-reclaim EBR, ACTIVE, prepared, snapshot/storico, recovery, code e migrazione
-fra pool sono fuori dal carico. CPU/frequenza, carico esterno, scheduler,
-cache CPU e pressione di memoria non sono controllati. Non si ricavano P99,
-durability, costi I/O sostenuti o throughput complessivo del database dal
-rate di questi cicli validati.
+The product directory supports up to 65,536 maps, bounded search in
+17 steps, with at most two numeric comparisons per pivot, and array payload
+`12*N` B on SBCL64. These are product contracts,
+distinct from performance profiles through N=64: the driver neither
+counts steps/comparisons nor infers maximum domain from timings. Publication,
+EBR reclamation, ACTIVE, prepared records, snapshots/history, recovery, queues, and migration
+between pools are outside workload. CPU/frequency, external load, scheduler,
+CPU cache, and memory pressure are uncontrolled. P99,
+durability, sustained I/O costs, or overall database throughput cannot be derived
+from these validated-cycle rates.

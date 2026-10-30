@@ -1,45 +1,57 @@
-# ADR-0051 — Presentazione della specifica e delle guide del repository
+<a id="adr-0051--presentazione-della-specifica-e-delle-guide-del-repository"></a>
 
-- **Stato:** Accettata (riordino documentale richiesto dall'autore)
-- **Data:** 2026-10-08
-- **Rapporto con la specifica:** emenda soltanto nome e nota introduttiva della
-  specifica originale; il corpo e i requisiti restano invariati.
-- **Riferimenti:** [specifica originale](../specifica/specifica-originale.md),
-  [guida al repository](../guida-al-repository.md),
-  [contributi](../../CONTRIBUTING.md), [registro delle prove](../valutazione/registro-delle-prove.md)
+# ADR-0051 — Presentation of the specification and repository guides
 
-## Contesto
+- **Status:** Accepted (documentation reorganization requested by the author)
+- **Date:** 2026-10-08
+- **Relationship to the specification:** amends only the name and introductory note of the
+  original specification; its body and requirements remain unchanged.
+- **References:** [original specification](../specifica/specifica-originale.md),
+  [repository guide](../guida-al-repository.md),
+  [contributing](../../CONTRIBUTING.md), [test register](../valutazione/registro-delle-prove.md)
 
-Le guide di lavoro sono duplicate e alcune note degli esperimenti descrivono
-l'organizzazione del lavoro anziché il metodo riproducibile. La documentazione
-pubblica deve descrivere il progetto, le verifiche e i loro limiti.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-1. La specifica originale ha un nome coerente con il suo ruolo di documento
-   tecnico. La nota introduttiva conserva i chiarimenti sulla trascrizione e
-   sul MERGE; il corpo successivo al separatore iniziale è identico.
-2. Le regole comuni sono raccolte nella guida al repository, collegata da
-   `CONTRIBUTING.md`. Le configurazioni locali degli strumenti restano locali.
-3. Le note degli spike descrivono moduli, runner, dipendenze e campagne.
-   Dati, comandi, hash dei sorgenti e output originali delle prove sono conservati.
+Work guides are duplicated and some experiment notes describe how work is organized
+rather than the reproducible method. Public documentation must describe the design,
+verification, and its limits.
 
-Il riordino non introduce serialità nel motore, scritture condivise o operazioni
-durevoli; non richiede un nuovo punto di atomicità.
+<a id="decisione"></a>
 
-## Conseguenze
+## Decision
 
-Una sola guida raccoglie le regole comuni. I collegamenti alla specifica sono
-aggiornati insieme al documento. Le evidenze storiche mantengono la loro
-provenienza e non sono riscritte per uniformarne il lessico.
+1. The original specification has a name consistent with its role as a technical
+   document. The introductory note preserves the clarifications about transcription and
+   MERGE; the body after the initial separator is identical.
+2. Common rules are collected in the repository guide, linked from
+   `CONTRIBUTING.md`. Local tool configurations remain local.
+3. Spike notes describe modules, runners, dependencies, and campaigns.
+   Data, commands, source hashes, and original test outputs are preserved.
 
-## Alternative considerate
+The reorganization introduces no serialization into the engine, shared writes, or durable
+operations; it requires no new atomicity point.
 
-- Conservare guide duplicate: richiede di mantenerle sincronizzate.
-- Riscrivere anche i report originali: compromette la verifica della provenienza.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-Confronto del corpo della specifica con la revisione precedente, controllo dei
-collegamenti e della tracciabilità e suite `make check`. Nessun requisito del
-motore cambia stato per effetto del riordino.
+A single guide collects common rules. Links to the specification are updated
+along with the document. Historical evidence retains its provenance and is not
+rewritten to standardize its vocabulary.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- Keeping duplicate guides: requires keeping them synchronized.
+- Rewriting original reports too: compromises provenance verification.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+Compare the specification body with the previous revision, check links and traceability,
+and run the `make check` suite. No engine requirement changes status as a result
+of the reorganization.

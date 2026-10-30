@@ -1,44 +1,50 @@
-# Seconda lettura del verificatore CBOR con testate minime
+<a id="seconda-lettura-del-verificatore-cbor-con-testate-minime"></a>
 
-Lettura statica locale completata il 9 ottobre 2026 dopo il congelamento dei tre file di test indipendenti. Non sono emersi difetti concreti nel nuovo diff. Questa lettura non costituisce approvazione umana né esito delle campagne: compilazione rigorosa, lint, esecuzione, copertura, mutazioni, misura dell'heap e verifica integrata sono ancora da acquisire.
+# Second reading of the CBOR verifier with minimal headers
 
-Il revisore ha scritto il corpus corrente senza leggere il nuovo prodotto e ha contribuito in passato ai kernel CBOR e UTF-8 già integrati. La seconda lettura riguarda la nuova export, il riuso del ciclo comune e la selezione del lettore minimo; non rappresenta una nuova lettura cieca dei componenti precedenti.
+Local static reading completed on October 9, 2026, after freezing the three independent test files. No concrete defects emerged in the new diff. This reading constitutes neither human approval nor campaign outcome: strict compilation, lint, execution, coverage, mutations, heap measurement, and integrated verification remain to be acquired.
 
-## Provenienza
+The reviewer wrote the current corpus without reading the new product and previously contributed to the already-integrated CBOR and UTF-8 kernels. The second reading concerns the new export, reuse of the common loop, and minimal-reader selection; it is not a new blind reading of previous components.
 
-Il corpus cieco comprende 22 test nominali, con oracoli freddi già congelati, aritmetica intera/razionale per le testate, un modello strutturale limitato, 768 confronti sulle testate iniziali, 512 alberi generati e 4096 casi fuzz preregistrati con seme `#x53434d31`. Le due attività concorrenti usano buffer e spazi privati, limiti di attesa 15/20 secondi e intervalli temporali locali; nessuna prova di core distinti o di accelerazione è dedotta. Non è stato aggiunto un supplemento dopo la lettura del prodotto.
+<a id="provenienza"></a>
 
-| File di test congelato prima della lettura | Git blob |
+## Provenance
+
+The blind corpus comprises 22 named tests, with already-frozen cold oracles, integer/rational header arithmetic, a bounded structural model, 768 initial-header comparisons, 512 generated trees, and 4096 preregistered fuzz cases with seed `#x53434d31`. The two concurrent tasks use private buffers and workspaces, 15/20-second wait limits, and local time intervals; no evidence of distinct cores or speedup is inferred. No supplement was added after reading the product.
+
+| Test file frozen before reading | Git blob |
 | --- | --- |
 | `tests/codec/cbor-minimal-scan-support.lisp` | `c2af64af4e5f8b5f669819fd56a00f416b3aaf0d` |
 | `tests/codec/cbor-minimal-scan.lisp` | `1742189ff6845197ba76996c09c1097d59216fcb` |
 | `tests/codec/cbor-minimal-scan-threads.lisp` | `56318b1632a7a0ae11f2987cdf0d4bec68e465cb` |
 
-| Sorgente letto dopo quel congelamento | Git blob |
+| Source read after that freeze | Git blob |
 | --- | --- |
 | `src/codec/cbor-package.lisp` | `9c9edc4775c24188cd38e4620da77b8bad349344` |
 | `src/codec/cbor-scan.lisp` | `e3d7d77407046338d23e26eb0b8a2e8fdc3d699d` |
 | `src/codec/cbor-scan-minimal.lisp` | `f1afe79c7a4d49abd6a6e5f6975dec830ef7b1f6` |
 
-La lettura sintattica dei soli test come dati Common Lisp, con `*read-eval* NIL` e controllo EOF, ha contato 20/22/2 forme e 0/21/1 test. Non ha caricato o eseguito prodotto o test. Il lettore e i due log sono esterni al repository: `/tmp/cbor-minimal-scan-source-read.lisp`, `/tmp/cbor-minimal-scan-source-read-first.log` e `/tmp/cbor-minimal-scan-source-read-final.log`.
+Syntactic reading of tests alone as Common Lisp data, with `*read-eval* NIL` and EOF checking, counted 20/22/2 forms and 0/21/1 tests. It neither loaded nor executed product or tests. The reader and two logs are outside the repository: `/tmp/cbor-minimal-scan-source-read.lisp`, `/tmp/cbor-minimal-scan-source-read-first.log`, and `/tmp/cbor-minimal-scan-source-read-final.log`.
 
-## Checklist C1
+<a id="checklist-c1"></a>
 
-| # | Controllo | Riscontro statico e limite |
+## C1 checklist
+
+| # | Check | Static finding and limit |
 | --- | --- | --- |
-| 1 | Requisiti e ADR | REQ-LIM-001/002 e REQ-AFF-004/008 sono collegati al controllo locale di struttura, UTF-8 e testate minime. ADR-0014/0048 non sono estesi a ordine delle mappe, duplicati o semantica dei tag. |
-| 2 | Invarianti e casi | INV-A8/P6, preflight, reset, budget, precedenze e risultati hanno casi nominali indipendenti. La loro esecuzione resta da acquisire. |
-| 3 | Condizioni tipizzate | Il lettore minimo precede contesto, nodi, profondità e payload. Le condizioni sintattiche e UTF-8 si propagano; `:cbor-trailing` precede la lettura della coda. Il confine FAULTED resta esterno al codec. |
-| 4 | Cicli e ricorsione | Il ciclo comune resta limitato dallo span e lo svuotamento dalla capacità 102 dello spazio. Nessuna nuova ricorsione o seconda scansione è introdotta. |
-| 5 | Allocazioni | Il nuovo percorso usa argomenti e stato locale, senza closure o materializzazione di float/u64. L'assenza di allocazione sul successo richiede misura. |
-| 6 | Risultati verificati | La postcondizione condivisa verifica cursor/end, conteggio/picco e stato finale prima dei tre valori. I test richiedono esattamente tre valori. |
-| 7 | Decisioni composte | D01, D02 e D03 della tabella dedicata sono preservate. Il selettore booleano è una decisione semplice; nessun ramo è escluso dal denominatore di copertura. |
-| 8 | Proprietà dei dati | Buffer immutabile del chiamante, spazio esclusivo e nessun riferimento al buffer trattenuto. Il selettore T/NIL è locale alla chiamata, non un campo condiviso. |
-| 9 | Integrazione | Ordine ASDF compatibile con dipendenze prodotto e oracoli congelati; suite dedicata aggiunta dopo quella strutturale. Build, trace, lint e full check restano da acquisire. |
-| 10 | Standard del sorgente | FTYPE completi, safety 3, funzioni contenute e guardie significative nelle funzioni non banali. Le due API pubbliche sono deleghe sottili al ciclo comune. Nessuna promozione di stato C1 è dedotta. |
-| 11 | Concorrenza | Nessuna scrittura globale o sincronizzazione nuova. Due worker con spazi e buffer privati sono previsti; REQ-CON-005 è coperto solo per la chiamabilità locale. Esito e sovrapposizione restano da misurare. |
-| 12 | Durabilità e atomicità | Non applicabili a questo kernel senza I/O, WAL o pubblicazione di dati. Non si rivendicano garanzie del motore. |
+| 1 | Requirements and ADRs | REQ-LIM-001/002 and REQ-AFF-004/008 are linked to local structure, UTF-8, and minimal-header checking. ADR-0014/0048 are not extended to map order, duplicates, or tag semantics. |
+| 2 | Invariants and cases | INV-A8/P6, preflight, reset, budgets, precedence, and results have independent named cases. Their execution remains to be acquired. |
+| 3 | Typed conditions | Minimal reader precedes context, nodes, depth, and payload. Syntactic and UTF-8 conditions propagate; `:cbor-trailing` precedes tail reading. FAULTED boundary remains outside codec. |
+| 4 | Loops and recursion | Common loop remains span-bounded and draining bounded by workspace capacity 102. No new recursion or second scan is introduced. |
+| 5 | Allocations | New path uses arguments and local state, without closures or materialization of floats/u64. No allocation on success requires measurement. |
+| 6 | Verified results | Shared postcondition checks cursor/end, count/peak, and final state before three values. Tests require exactly three values. |
+| 7 | Compound decisions | D01, D02, and D03 from the dedicated table are preserved. Boolean selector is a simple decision; no branch is excluded from coverage denominator. |
+| 8 | Data ownership | Immutable caller buffer, exclusive workspace, and no retained buffer reference. T/NIL selector is call-local, not a shared field. |
+| 9 | Integration | ASDF order compatible with product dependencies and frozen oracles; dedicated suite added after structural suite. Build, trace, lint, and full check remain to be acquired. |
+| 10 | Source standard | Complete FTYPEs, safety 3, bounded functions, and meaningful guards in nontrivial functions. Both public APIs are thin delegations to common loop. No C1 status promotion inferred. |
+| 11 | Concurrency | No global write or new synchronization. Two workers with private workspaces and buffers are planned; REQ-CON-005 covered only for local callability. Outcome and overlap remain to be measured. |
+| 12 | Durability and atomicity | Not applicable to this kernel without I/O, WAL, or data publication. No engine guarantees claimed. |
 
-Le tre decisioni composte sono: D01, avanzamento positivo del passo e cursor entro end; D02, nodi entro il limite e picco entro max-depth; D03, top e profondità a zero senza tag pendente. Le guardie false restano parte della copertura integrale; questa lettura non dimostra MC/DC.
+The three compound decisions are: D01, positive step advancement and cursor within end; D02, nodes within limit and peak within max-depth; D03, top and depth zero with no pending tag. False guard outcomes remain part of full coverage; this reading does not demonstrate MC/DC.
 
-Il wrapper generico conserva firma, valori di default e selezione NIL. Il wrapper minimo passa T al medesimo ciclo/preflight/reset/risultato. La validazione minima si applica solo alle testate effettivamente raggiunte: i payload restano opachi, mentre chiavi, valori e tag annidati sono visitati. La capacità minima dichiarata da un contenitore può determinare un errore di troncatura prima di raggiungere un figlio. Non risultano rilievi statici aperti; gli esiti dinamici saranno conservati separatamente secondo il [metodo preregistrato](cbor-minimo-struttura-metodo.md).
+The generic wrapper retains signature, defaults, and NIL selection. The minimal wrapper passes T to the same loop/preflight/reset/result. Minimal validation applies only to headers actually reached: payloads remain opaque, while nested keys, values, and tags are visited. A container's declared minimum capacity may cause a truncation error before reaching a child. No open static findings; dynamic outcomes will be preserved separately according to the [preregistered method](cbor-minimo-struttura-metodo.md).

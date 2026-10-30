@@ -1,114 +1,124 @@
-# Decision log recuperato — revisione statica C1
+<a id="decision-log-recuperato--revisione-statica-c1"></a>
 
-Data: 2026-10-15. Revisore: Codex, incarico di lettura indipendente.
-Worktree condiviso: `/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB`.
-Revisione Git osservata: `c6a21d810dabdc1218efbbeaa1f7dab560da8893`;
-le osservazioni riguardano i file di lavoro letti, senza attestare un freeze globale.
+# Recovered decision log — static C1 review
 
-**Esito:** due letture statiche concluse, entrambe dello **stesso revisore**.
-Un rilievo concreto di conformità a COD-25, descritto sotto. Nelle letture
-non sono emersi ulteriori difetti funzionali dimostrabili sotto le precondizioni
-del contratto. Questo esito non attesta assenza di difetti né qualifica C1.
+Date: 2026-10-15. Reviewer: Codex, independent reading assignment.
+Shared worktree: `/Users/gpicchiarelli/.codex/worktrees/decisioni-verifica/ArcDocDB`.
+Observed Git revision: `c6a21d810dabdc1218efbbeaa1f7dab560da8893`;
+observations concern the working files read, without attesting a global freeze.
 
-## Perimetro e metodo
+**Outcome:** two static readings completed, both by the **same reviewer**.
+One concrete COD-25 conformance finding, described below. Readings
+found no additional demonstrable functional defects under contract
+preconditions. This outcome attests neither absence of defects nor C1 qualification.
 
-Letti integralmente i sei file di `src/recovery-archive/`: `package.lisp`,
+<a id="perimetro-e-metodo"></a>
+
+## Scope and method
+
+Read all six files in `src/recovery-archive/` in full: `package.lisp`,
 `types.lisp`, `read.lisp`, `build.lisp`, `query.lisp`, `active.lisp`.
-Confronto con [contratto API](decisioni-recuperate.md), ADR-0041, ADR-0052,
-[standard di codifica](../affidabilita/standard-di-codifica.md), registro delle
-deviazioni, guida del repository, requisiti e matrice di tracciabilità.
+Compared with [API contract](decisioni-recuperate.md), ADR-0041, ADR-0052,
+[coding standard](../affidabilita/standard-di-codifica.md), deviation
+register, repository guide, requirements, and traceability matrix.
 
-Seguite staticamente le deleghe rilevanti: header e costanti storage;
-`io/types.lisp`, `io/transfer.lisp` e lifecycle; scanner recovery;
-`decisions-types/build/query/sort.lisp`; ingresso, preflight, risoluzione e
-risultato del recovery ACTIVE; identità di `ambito-get` e vista della Serie.
-Questo approfondimento delle deleghe non costituisce revisione completa di
-quei moduli o del Recovery Manager.
+Statically followed relevant delegations: storage header and constants;
+`io/types.lisp`, `io/transfer.lisp`, and lifecycle; recovery scanner;
+`decisions-types/build/query/sort.lisp`; ACTIVE recovery entry, preflight, resolution,
+and result; identity of `ambito-get` and Serie view.
+This deeper delegation reading does not constitute full review of
+those modules or the Recovery Manager.
 
-| Lettura | Metodo concreto | Esito |
+| Reading | Concrete method | Outcome |
 |---|---|---|
-| L1, stesso revisore Codex | Dal contratto al flusso: bootstrap, preflight, header, corpo, replay, query, collegamento ACTIVE; seguite le deleghe per controllarne i contratti. | Rilevato R1; precondizioni di EOF, catalogo e ownership distinte dai controlli locali. |
-| L2, stesso revisore Codex | Rilettura integrale in ordine inverso dei file; controllo dei rifiuti prima dell'I/O, estremi dei range, assenza/zero, coda/duplicati, FD e corrispondenza dei budget. | Confermato R1; nessun ulteriore difetto funzionale dimostrato nel perimetro. |
+| L1, same Codex reviewer | Contract to flow: bootstrap, preflight, header, body, replay, query, ACTIVE binding; followed delegations to check contracts. | R1 found; EOF, catalog, and ownership preconditions distinct from local checks. |
+| L2, same Codex reviewer | Full rereading in reverse file order; checked rejections before I/O, range extremes, absence/zero, tail/duplicates, FD, and budget correspondence. | R1 confirmed; no additional functional defect demonstrated within scope. |
 
-Le due letture sono due passaggi dello stesso revisore, non due revisori
-indipendenti. Nessun test, compilazione, lint, benchmark, strumento di copertura,
-mutazione o scansione security è stato eseguito. Nessuna skill utilizzata.
+Both readings are passes by the same reviewer, not two independent
+reviewers. No test, compilation, lint, benchmark, coverage tool,
+mutation, or security scan run. No skill used.
 
-## R1 — I/O dentro il predicato delle asserzioni di invariante
+<a id="r1--io-dentro-il-predicato-delle-asserzioni-di-invariante"></a>
 
-**Priorità media; non conformità statica a COD-25.** Rilevata in L1 e
-confermata in L2; nessun guasto runtime osservato o dedotto come inevitabile.
+## R1 — I/O within invariant assertion predicates
 
-- Posizioni: [`src/recovery-archive/read.lisp`](../../src/recovery-archive/read.lisp),
-  righe **39–40** (`leggi-header-decisioni`) e **58–59** (`leggi-corpo-decisioni`).
-- I due controlli `unless … (error 'invariant-violation …)` eseguono
-  `leggi-esatto` direttamente nel predicato dell'asserzione. Questa chiamata
-  effettua I/O e modifica lo scratch: la condizione non è priva di effetti.
-  La delega che rende concreto l'effetto è `src/io/transfer.lisp`, righe 55–77,
-  in particolare il trasferimento nel buffer alle righe 67–73.
-- I rami segnalano rispettivamente `:archive-recovery-header-read` e
-  `:archive-recovery-read`; quest'ultimo conserva `:offset start`.
-- COD-25 impone che nessuna asserzione abbia effetti collaterali. Questi sono
-  controlli espliciti di invariante anche se scritti con `unless`, anziché
-  con la macro `assert`. Il registro delle deviazioni letto non contiene
-  deroghe approvate.
-- Conseguenza concreta: l'operazione di lettura e la verifica del suo esito
-  sono accoppiate nel predicato; rimuovere o riformulare quel controllo può
-  rimuovere anche l'operazione. Nel codice attuale il controllo resta attivo:
-  non si sostiene che la lettura venga saltata o che vengano restituiti dati
-  corrotti.
-- Correzione proposta, non applicata: assegnare il risultato di `leggi-esatto`
-  a una variabile locale e verificare poi l'uguaglianza con un predicato puro,
-  mantenendo ordine, chiamata unica, condizione e offset originali.
+**Medium priority; static nonconformance with COD-25.** Found in L1 and
+confirmed in L2; no runtime fault observed or inferred as inevitable.
 
-## Confronto concreto tra contratto e implementazione
+- Locations: [`src/recovery-archive/read.lisp`](../../src/recovery-archive/read.lisp),
+  lines **39–40** (`leggi-header-decisioni`) and **58–59** (`leggi-corpo-decisioni`).
+- Both `unless … (error 'invariant-violation …)` checks execute
+  `leggi-esatto` directly in the assertion predicate. This call
+  performs I/O and modifies scratch: the condition is not side-effect-free.
+  The delegation making the effect concrete is `src/io/transfer.lisp`, lines 55–77,
+  particularly buffer transfer at lines 67–73.
+- Branches signal respectively `:archive-recovery-header-read` and
+  `:archive-recovery-read`; the latter retains `:offset start`.
+- COD-25 requires assertions to have no side effects. These are
+  explicit invariant checks even though written with `unless` rather than
+  the `assert` macro. The deviation register read contains no
+  approved waivers.
+- Concrete consequence: the read operation and result check
+  are coupled in the predicate; removing or reformulating the check may
+  also remove the operation. In current code the check remains active:
+  no claim that the read is skipped or corrupted data
+  returned.
+- Proposed correction, not applied: assign the `leggi-esatto` result
+  to a local variable and then check equality with a pure predicate,
+  retaining order, single call, original condition, and offset.
 
-| Aspetto | Evidenza statica e conclusione | Limite |
+<a id="confronto-concreto-tra-contratto-e-implementazione"></a>
+
+## Concrete contract-to-implementation comparison
+
+| Aspect | Static evidence and conclusion | Limit |
 |---|---|---|
-| Requisiti e ADR | I marcatori REQ delle definizioni coprono REQ-REC-001, REQ-TXM-001/005/007, REQ-FOR-001/002/003 e REQ-AFF-002/008/009 secondo la funzione. ADR-0052 governa header/identità, ADR-0041 decisioni e risoluzione. | Realizzazione parziale dei requisiti del Recovery Manager; non chiude l'intero requisito REQ-REC-001 o la durabilità degli esiti dei partecipanti. |
-| Preflight | `read.lisp:14–28`: capacità aperta `:input`, alias UUID, chunk, size/header, budget byte, scratch, capacità del trasferimento, budget replay e scanner, prima di `leggi-header-decisioni`. | La validità dei tipi degli argomenti è una precondizione delle firme; non tutti i rifiuti di tipo sono `invalid-argument`. |
-| Header e versione | `read.lisp:38–45` legge 64 byte; `storage/log-header.lisp:39–59` verifica range, CRC, magic multiserie, versione supportata, tutti i riservati e tutti i 16 byte UUID. `build.lisp:28` passa al replay la versione letta. | Nessuna prova bytewise v1/v2 eseguita. Il `2` nel preflight scanner non è la versione usata per decodificare il corpo. |
-| Ownership | `types.lisp:20–22` verifica 16 byte e usa `copy-seq`; slot readonly alle righe 11–12 e 31–37. `decisions-build.lisp:89–95` copia i partecipanti; il risultato conserva tabella posseduta, archivio e capacità, senza scratch. `package.lisp:14–17` non esporta accessor degli array. | L'immutabilità è quella del protocollo e delle API pubbliche; non una protezione da accessi agli internals Lisp o da mutazioni esterne al protocollo. |
-| Wrong scope | `active.lisp:15–19` confronta con `eq` l'ambito canonico dell'Archivio e quello della vista CONTROL, poi controlla alias e capacità. `active.lisp:37` precede la delega che effettua l'I/O ACTIVE. | UUID uguali non rendono equivalenti due ambiti distinti. Associazione iniziale UUID/ambito e unicità del bootstrap restano responsabilità del controller, come documentato. |
-| Lifetime FD | `read.lisp:14,60`, `build.lisp:36`, `active.lisp:19,43` richiedono capacità aperta readonly; `io/types.lisp:83–91` verifica modo, stato e descrittore. `io/transfer.lisp:65–73` ricontrolla la capacità attorno ai trasferimenti. | Il riferimento trattenuto non è una lease che impedisce close. Il controllo finale ACTIVE osserva il decision log al ritorno; non ne garantisce da solo la vita continua. Freeze di FD/file/namespace e close dopo i reader restano precondizioni. |
-| EOF e frontiere | `build.lisp:28–35` usa `file-size = size`, offset file zero e verifica `64 <= P <= size`, COMPLETE con `P = size`, TAIL con `P < size`. Lo scratch rappresenta il file dall'offset zero: P è quindi assoluto. | Nessuna misura EOF/fstat: un size non completo viola la precondizione. Readonly non impedisce una scrittura esterna. |
-| Coda e testimoni | `decisions-build.lisp:178–190` esegue prima lo scanner; `scan.lisp:181–184` cerca testimoni prima di restituire TAIL. `scan.lisp:144–158` visita ogni posizione candidata entro budget e segnala ricerca incompleta o corruzione durevole. | La coda esclude l'intero lotto fallito. Non attesta che il supporto o il file restino sani dopo il ritorno. |
-| Duplicati e assenza | `decisions-build.lisp:120–153` coalesce TXID uguali solo dopo confronto di CSN e insieme canonico dei partecipanti; conflitto con `:decision-conflict`. `decisions-sort.lisp:54–66` rifiuta partecipanti ripetuti. `decisions-query.lisp:35–43,69–78` distingue presenza/CSN zero e verifica ID16 anche per TXID assente. | Semantica delegata al replay canonico; questa lettura non riesegue le sue campagne pregresse. |
-| Risoluzione ACTIVE | `active.lisp:38–42` passa la tabella verificata al lettore canonico. `recovery-active/resolve.lisp:13–23` controlla partecipante e concordanza OUTCOME/DECISION prima della classificazione. | Nessun fallback da NIL o da un errore del lettore. Il risultato ACTIVE non conserva la tabella (`recovery-active/types.lisp:10–27`); pubblicazione e dimenticanza delle decisioni sono fuori perimetro. |
+| Requirements and ADR | Definition REQ markers cover REQ-REC-001, REQ-TXM-001/005/007, REQ-FOR-001/002/003, and REQ-AFF-002/008/009 by function. ADR-0052 governs header/identity, ADR-0041 decisions and resolution. | Partial implementation of Recovery Manager requirements; does not close all REQ-REC-001 or participant outcome durability. |
+| Preflight | `read.lisp:14–28`: open `:input` capability, UUID alias, chunk, size/header, byte budget, scratch, transfer capacity, replay and scanner budgets, before `leggi-header-decisioni`. | Argument type validity is a signature precondition; not all type rejections are `invalid-argument`. |
+| Header and version | `read.lisp:38–45` reads 64 bytes; `storage/log-header.lisp:39–59` checks range, CRC, multiseries magic, supported version, all reserved fields, and all 16 UUID bytes. `build.lisp:28` passes read version to replay. | No bytewise v1/v2 test run. The `2` in scanner preflight is not the version used to decode body. |
+| Ownership | `types.lisp:20–22` checks 16 bytes and uses `copy-seq`; read-only slots at lines 11–12 and 31–37. `decisions-build.lisp:89–95` copies participants; result retains owned table, Archivio, and capability, without scratch. `package.lisp:14–17` exports no array accessors. | Immutability is that of protocol and public APIs; not protection against access to Lisp internals or mutations outside protocol. |
+| Wrong scope | `active.lisp:15–19` compares canonical Archivio scope and CONTROL view scope with `eq`, then checks alias and capability. `active.lisp:37` precedes delegation performing ACTIVE I/O. | Equal UUIDs do not make distinct scopes equivalent. Initial UUID/scope association and bootstrap uniqueness remain controller responsibilities, as documented. |
+| FD lifetime | `read.lisp:14,60`, `build.lisp:36`, `active.lisp:19,43` require open read-only capability; `io/types.lisp:83–91` checks mode, state, and descriptor. `io/transfer.lisp:65–73` rechecks capability around transfers. | Retained reference is not a lease preventing close. Final ACTIVE check observes decision log on return; alone it does not guarantee continuous lifetime. FD/file/namespace freeze and close after readers remain preconditions. |
+| EOF and frontiers | `build.lisp:28–35` uses `file-size = size`, file offset zero, and checks `64 <= P <= size`, COMPLETE with `P = size`, TAIL with `P < size`. Scratch represents file from offset zero: P is therefore absolute. | No EOF/fstat measurement: incomplete size violates precondition. Read-only does not prevent external writes. |
+| Tail and witnesses | `decisions-build.lisp:178–190` runs scanner first; `scan.lisp:181–184` looks for witnesses before returning TAIL. `scan.lisp:144–158` visits every candidate position within budget and signals incomplete search or durable corruption. | Tail excludes the whole failed batch. Does not attest support or file remain healthy after return. |
+| Duplicates and absence | `decisions-build.lisp:120–153` coalesces equal TXIDs only after comparing CSN and canonical participant set; conflict with `:decision-conflict`. `decisions-sort.lisp:54–66` rejects repeated participants. `decisions-query.lisp:35–43,69–78` distinguishes presence/CSN zero and checks ID16 even for absent TXID. | Semantics delegated to canonical replay; this reading does not rerun its previous campaigns. |
+| ACTIVE resolution | `active.lisp:38–42` passes verified table to canonical reader. `recovery-active/resolve.lisp:13–23` checks participant and OUTCOME/DECISION agreement before classification. | No fallback from NIL or reader error. ACTIVE result does not retain table (`recovery-active/types.lisp:10–27`); publication and forgetting decisions outside scope. |
 
-### Bounds e inoltro dei budget
+<a id="bounds-e-inoltro-dei-budget"></a>
 
-Ponendo `H = 64`, `N = size`, `C = chunk`, il preflight impone `N >= H`,
-`C > 0`, `N <= max-bytes` e scratch lungo almeno N. Il ciclo di
-`read.lisp:56–59` ha `ceiling((N-H)/C)` iterazioni. Per ogni iterazione
-eseguita, `H <= start < end <= N`, con `end = min(N, start+C)`.
-Per N = H non legge il corpo; l'ultimo chunk può essere corto.
-Il controllo di capacità copre `max(H, min(N-H,C))`. L'aritmetica intera
-Lisp non introduce un wrap degli offset prima del `min`.
+### Bounds and budget forwarding
 
-Il limite riguarda le chiamate logiche a `leggi-esatto`: gli short read
-possono richiedere più chiamate al backend. La primitiva I/O ha un ciclo
-limitato dal conteggio dei byte e richiede progresso positivo
-(`io/transfer.lisp:31–38,64–76`). Non si deducono tempi massimi di syscall.
+Let `H = 64`, `N = size`, `C = chunk`; preflight imposes `N >= H`,
+`C > 0`, `N <= max-bytes`, and scratch length at least N. Loop in
+`read.lisp:56–59` has `ceiling((N-H)/C)` iterations. For every executed
+iteration, `H <= start < end <= N`, with `end = min(N, start+C)`.
+For N = H it does not read body; last chunk may be short.
+Capacity check covers `max(H, min(N-H,C))`. Lisp integer arithmetic
+introduces no offset wrap before `min`.
 
-In `build.lisp:28–32` sono inoltrati al replay `max-bytes`, `max-batches`,
-`max-batch-records`, `max-batch-bytes`, `max-decisions`, `max-participants`
-e `max-participants-per-decision`; `max-search-bytes` riceve `max-bytes`.
-`chunk-bytes` limita la lettura locale, non lo scanner. Il budget byte del
-wrapper include l'header; il budget scanner limita il corpo, dopo il più
-restrittivo controllo `size <= max-bytes` del wrapper.
+The limit concerns logical calls to `leggi-esatto`: short reads
+may require multiple backend calls. The I/O primitive has a loop
+bounded by byte count and requires positive progress
+(`io/transfer.lisp:31–38,64–76`). No maximum syscall times inferred.
 
-I conteggi fisici e cumulativi precedono la coalescenza: controllo DECISION
-in `decisions-build.lisp:183–184`, controllo dei partecipanti alle righe
-62–66, copie alle righe 89–95. I duplicati consumano budget prima di essere
-coalescenti; un errore non diventa presumed abort. Zero è ammesso per i
-conteggi DECISION/partecipanti nel caso vuoto, non per chunk o numero
-massimo di lotti della configurazione scanner (`scan.lisp:68–74`).
+In `build.lisp:28–32`, replay receives `max-bytes`, `max-batches`,
+`max-batch-records`, `max-batch-bytes`, `max-decisions`, `max-participants`,
+and `max-participants-per-decision`; `max-search-bytes` receives `max-bytes`.
+`chunk-bytes` bounds local reading, not scanner. Wrapper byte budget
+includes header; scanner budget bounds body, after the wrapper's more
+restrictive `size <= max-bytes` check.
 
-Nel wrapper ACTIVE gli otto budget esposti sono inoltrati senza sostituzioni
-(`active.lisp:28–31,40–42`, confrontati con `recovery-active/build.lisp:32–35`):
+Physical and cumulative counts precede coalescing: DECISION check
+in `decisions-build.lisp:183–184`, participant check at lines
+62–66, copies at lines 89–95. Duplicates consume budget before
+coalescing; an error does not become presumed abort. Zero is allowed for
+DECISION/participant counts in the empty case, not for chunk or maximum
+batch count of scanner configuration (`scan.lisp:68–74`).
 
-| Keyword | Valore trasmesso |
+In the ACTIVE wrapper, all eight exposed budgets are forwarded without replacement
+(`active.lisp:28–31,40–42`, compared with `recovery-active/build.lisp:32–35`):
+
+| Keyword | Transmitted value |
 |---|---|
 | `:chunk-bytes` | `chunk-bytes` |
 | `:max-bytes` | `max-bytes` |
@@ -119,103 +129,111 @@ Nel wrapper ACTIVE gli otto budget esposti sono inoltrati senza sostituzioni
 | `:max-prepared` | `max-prepared` |
 | `:max-outcomes` | `max-outcomes` |
 
-### Errori tipizzati e gestione
+<a id="errori-tipizzati-e-gestione"></a>
 
-| Origine | Condizione / `reason` osservabile nel codice |
+### Typed errors and handling
+
+| Origin | Condition / `reason` observable in code |
 |---|---|
-| UUID non lungo 16 byte | `invalid-argument / :archive-recovery-identity`, `types.lisp:20–21`. |
-| Alias, chunk o configurazione iniziale errata | `invalid-argument / :archive-recovery-alias` oppure `:archive-recovery-arguments`, `read.lisp:15–18`; scanner/replay propagano i propri motivi. |
-| Header fisicamente attestato troppo corto | `corruption-detected / :archive-recovery-header-truncated`, `read.lisp:19–20`. |
-| Budget totale file | `resource-exhausted / :archive-recovery-byte-budget`, `read.lisp:21`; capacità I/O: `:io-byte-budget`. |
-| Range scratch o ID16 | `invalid-argument / :buffer-range` o `:serie-id-length`, tramite le deleghe. |
-| Header integro ma incompatibile | `corruption-detected / :log-header-crc`, `:log-magic`, `:log-reserved`, `:log-identity`; versione ignota: `unsupported-format / :file-version`. |
-| Capacità errata o chiusa | `invalid-argument / :io-mode`, `io-fault / :io-unavailable`; lettura senza progresso: `:io-eof` o `:io-invalid-progress`; syscall: `:io-syscall`, tramite `io`. |
-| Ambito differente | `invalid-argument / :active-recovery-archive`, `active.lisp:15–16`, prima dell'I/O ACTIVE. |
-| Replay non valido | Propagati `log-corruption / :log-durable-corruption`, budget scanner/replay, `:decision-conflict`, `:decision-duplicate-participant` e condizioni dei codec. |
-| Risultati interni incoerenti | `invariant-violation / :archive-recovery-preflight`, `:archive-recovery-header-read`, `:archive-recovery-header`, `:archive-recovery-read`, `:archive-recovery-prefix`. |
+| UUID not 16 bytes long | `invalid-argument / :archive-recovery-identity`, `types.lisp:20–21`. |
+| Wrong alias, chunk, or initial configuration | `invalid-argument / :archive-recovery-alias` or `:archive-recovery-arguments`, `read.lisp:15–18`; scanner/replay propagate their own reasons. |
+| Physically attested header too short | `corruption-detected / :archive-recovery-header-truncated`, `read.lisp:19–20`. |
+| Total file budget | `resource-exhausted / :archive-recovery-byte-budget`, `read.lisp:21`; I/O capacity: `:io-byte-budget`. |
+| Scratch or ID16 range | `invalid-argument / :buffer-range` or `:serie-id-length`, through delegates. |
+| Intact but incompatible header | `corruption-detected / :log-header-crc`, `:log-magic`, `:log-reserved`, `:log-identity`; unknown version: `unsupported-format / :file-version`. |
+| Wrong or closed capability | `invalid-argument / :io-mode`, `io-fault / :io-unavailable`; no-progress read: `:io-eof` or `:io-invalid-progress`; syscall: `:io-syscall`, through `io`. |
+| Different scope | `invalid-argument / :active-recovery-archive`, `active.lisp:15–16`, before ACTIVE I/O. |
+| Invalid replay | Propagated `log-corruption / :log-durable-corruption`, scanner/replay budgets, `:decision-conflict`, `:decision-duplicate-participant`, and codec conditions. |
+| Inconsistent internal results | `invariant-violation / :archive-recovery-preflight`, `:archive-recovery-header-read`, `:archive-recovery-header`, `:archive-recovery-read`, `:archive-recovery-prefix`. |
 
-Il modulo non intercetta queste condizioni e non restituisce risultati
-parziali in loro sostituzione. La transizione FAULTED e la registrazione
-sono demandate al controller; non sono certificate in questo incarico.
-Le violazioni dei tipi precontrattuali possono segnalare `type-error`, come
-dichiarato nelle docstring: non vengono tradotte localmente in
-`arcdocdb-error`. La gestione al confine C1 di queste condizioni e dei
-fallimenti di allocazione resta da verificare; non si attesta conformità
-incondizionata a COD-22 o chiusura di COD-24 con la sola propagazione.
+The module does not catch these conditions or return partial
+results in their place. FAULTED transition and recording
+are delegated to controller; they are not certified in this assignment.
+Precontractual type violations may signal `type-error`, as
+declared in docstrings: they are not locally translated to
+`arcdocdb-error`. C1-boundary handling of these conditions and allocation
+failures remains to be checked; unconditional COD-22 conformance
+or COD-24 closure is not attested by propagation alone.
 
-## Checklist C1 — i dodici punti dello standard
+<a id="checklist-c1--i-dodici-punti-dello-standard"></a>
 
-«Coerente staticamente» indica soltanto una conclusione di lettura.
-«Aperto» richiede evidenza ulteriore, che il coordinatore raccoglie altrove.
+## C1 checklist — the standard's twelve points
 
-| N. | Punto dello standard | L1 — stesso revisore | L2 — stesso revisore |
+“Statically consistent” indicates only a reading conclusion.
+“Open” requires further evidence, collected elsewhere by coordinator.
+
+| No. | Standard point | L1 — same reviewer | L2 — same reviewer |
 |---|---|---|---|
-| 1 | Requisito REQ e ADR indicati e coerenti | Marcatori letti in tutte le definizioni; coerenti con ADR-0041/0052 per il sottocompito. | Confermata la distinzione tra lettura decisioni e completamento del Recovery Manager. |
-| 2 | Invarianti elencati e test che fallirebbe alla violazione | Interessati INV-F1/F2/F3, INV-A2/A4/A7/A8/A9, INV-T4/T5, INV-S7, INV-P5/P6 e INV-X3; INV-A10/A11 come vincoli di assenza di effetti durevoli. | Legami statici descritti sopra. Prove di violazione non eseguite né dichiarate coperte: aperto. |
-| 3 | Ogni errore ha tipo, gestione e test | Condizioni e reason censiti sopra; nessun gestore generico locale che nasconda il fallimento. | Propagazione confermata; gestione controller, TYPE-ERROR, allocazioni e prove dedicate restano aperti. |
-| 4 | Cicli/attese limitati, ricorsione limitata | Ciclo corpo con limite esplicito; scanner con budget e query binarie limitate. | Bounds riesaminati, nessuna ricorsione o attesa su lock introdotta. Blocco I/O ammesso solo nel compito I/O previsto dalla precondizione. |
-| 5 | Assenza di allocazioni sul percorso caldo, misurata | Lettura/replay sono apertura con allocazioni esplicitamente ammesse; copia UUID e tabella posseduta. | Nessuna misura heap, RSS o query: punto misurato aperto, nessuna promessa heap zero. |
-| 6 | Nessun dato non verificato lascia il modulo | Header prima del corpo, scanner prima dei payload/copie, risultato dopo frontiere e controllo capacità. | Query solo scalari; span e lunghezza ID16 verificati anche in assenza. Coerente staticamente sotto EOF/stabilità autorevoli. |
-| 7 | Decisioni composte nella tabella | DAR-D01 = `read.lisp:17`; DAR-D02 = `read.lisp:53`; DAR-D03 = `build.lisp:33–34`. | Censimento delle tre forme `and` confermato, inclusi i rami COMPLETE/TAIL di DAR-D03. Copertura condizione per condizione non attestata. |
-| 8 | Proprietario dello stato condiviso dichiarato e rispettato | OWNER/SHARED nei sei file; scratch esclusivo, copie private, risultato readonly. | Nessuna mutazione della tabella dal wrapper; freeze e lifetime affidati al controller. Coerente staticamente. |
-| 9 | Matrice aggiornata e `make check` superato | REQ e collegamenti della matrice letti; modulo registrato in ASDF. | Nessuna rigenerazione della matrice o esecuzione di `make check`; esito richiesto dallo standard aperto. |
-| 10 | Nessuna regola violata senza deviazione | R1 su COD-25; nessuna deviazione approvata nel registro letto. FTYPE, slot readonly e safety 3 presenti. | R1 confermato. Build senza avvisi, lint e conformità completa non attestati; gestione errori/invarianti limitata come sopra. |
-| 11 | Nessun nuovo lock/attesa/scrittura condivisa per operazione tra Serie | Solo letture delle decisioni e scratch privati; nessun nuovo lock, CSN o registro globale. | Confermato nel modulo; apertura dell'Archivio precede il recovery delle Serie. Nessuna misura di parallelismo eseguita. |
-| 12 | Punto di atomicità, preparazione/idempotenza, rimozione autorizzata | Nessun cambiamento durevole: solo lettura e costruzione in memoria; nessun punto atomico nuovo. | Nessun truncate/delete/rename/flush o pubblicazione introdotto. Gli effetti durevoli successivi e la loro idempotenza sono fuori perimetro. |
+| 1 | REQ requirement and ADR indicated and consistent | Markers read in all definitions; consistent with ADR-0041/0052 for subtask. | Distinction confirmed between reading decisions and completing Recovery Manager. |
+| 2 | Invariants listed and test that would fail on violation | INV-F1/F2/F3, INV-A2/A4/A7/A8/A9, INV-T4/T5, INV-S7, INV-P5/P6, and INV-X3 affected; INV-A10/A11 as constraints against durable effects. | Static connections described above. Violation tests neither run nor declared covered: open. |
+| 3 | Every error has type, handling, and test | Conditions and reasons inventoried above; no local generic handler hiding failure. | Propagation confirmed; controller handling, TYPE-ERROR, allocations, and dedicated tests remain open. |
+| 4 | Bounded loops/waits, bounded recursion | Body loop with explicit bound; budgeted scanner and bounded binary queries. | Bounds reexamined, no recursion or lock wait introduced. Blocking I/O allowed only in I/O task specified by precondition. |
+| 5 | Measured absence of hot-path allocations | Read/replay are opening with explicitly allowed allocations; UUID copy and owned table. | No heap, RSS, or query measurement: measured point open, no zero-heap promise. |
+| 6 | No unverified data leaves module | Header before body, scanner before payloads/copies, result after frontiers and capability check. | Scalar-only queries; ID16 span and length checked even on absence. Statically consistent under authoritative EOF/stability. |
+| 7 | Compound decisions in table | DAR-D01 = `read.lisp:17`; DAR-D02 = `read.lisp:53`; DAR-D03 = `build.lisp:33–34`. | Inventory of three `and` forms confirmed, including DAR-D03 COMPLETE/TAIL branches. Condition-by-condition coverage not attested. |
+| 8 | Shared-state owner declared and respected | OWNER/SHARED in six files; exclusive scratch, private copies, read-only result. | No table mutation by wrapper; freeze and lifetime entrusted to controller. Statically consistent. |
+| 9 | Matrix updated and `make check` passed | REQ and matrix links read; module registered in ASDF. | No matrix regeneration or `make check` run; standard-required outcome open. |
+| 10 | No rule violated without deviation | R1 on COD-25; no approved deviation in register read. FTYPE, read-only slots, and safety 3 present. | R1 confirmed. Warning-free build, lint, and full conformance not attested; error/invariant handling limited as above. |
+| 11 | No new lock/wait/shared write per operation between Serie | Only decision reads and private scratch; no new lock, CSN, or global registry. | Confirmed within module; Archivio opening precedes Serie recovery. No parallelism measurement run. |
+| 12 | Atomicity point, preparation/idempotence, authorized removal | No durable change: read and in-memory construction only; no new atomic point. | No truncate/delete/rename/flush or publication introduced. Subsequent durable effects and their idempotence outside scope. |
 
-## Limiti e consegna
+<a id="limiti-e-consegna"></a>
 
-Il freeze delle esecuzioni richiesto dal coordinamento è rispettato. Questa
-lettura non importa come propri risultati le precedenti evidenze locali e
-non aggiunge prove, campagna o risultati runtime. Restano aperti test dei
-nuovi ingressi, FI, mutazioni, copertura/MC/DC, compilazione e verifica
-completa, allocazioni/prestazioni e integrazione del controller/fail-stop.
+## Limits and delivery
 
-Il worktree è condiviso: durante la lettura sono comparse modifiche altrui
-in `arcdocdb.asd`, `tools/foundation-coverage.lisp` e `tests/recovery-archive/`.
-Non sono state modificate o ripristinate da questo incarico; le conclusioni
-non attestano la versione finale di tali lavori o del worktree intero.
+The execution freeze requested by coordination is respected. This
+reading does not import previous local evidence as its own results or
+add tests, campaign, or runtime outcomes. New entry-point tests,
+FI, mutations, coverage/MC/DC, compilation and full
+verification, allocations/performance, and controller/fail-stop integration remain open.
 
-**Unico file scritto da questo incarico:**
+The worktree is shared: during reading, others' changes appeared
+in `arcdocdb.asd`, `tools/foundation-coverage.lisp`, and `tests/recovery-archive/`.
+They were neither modified nor restored by this assignment; conclusions
+do not attest the final version of that work or the entire worktree.
+
+**Only file written by this assignment:**
 `docs/implementazione/decisioni-recuperate-revisione.md`.
-Nessun sorgente prodotto modificato; nessun commit. Le due letture e questa
-checklist costituiscono la consegna statica, con R1 aperto e senza pretesa
-di qualifica completa.
+No product source modified; no commit. Both readings and this
+checklist constitute static delivery, with R1 open and no claim
+of full qualification.
 
-## Addendum — seconda revisione statica della patch R1
+<a id="addendum--seconda-revisione-statica-della-patch-r1"></a>
 
-Data: 2026-10-15. Revisore: lo stesso Codex delle letture L1 e L2.
-Seconda revisione successiva alla correzione applicata dall'autore, limitata
-al diff di `src/recovery-archive/read.lisp`; non costituisce un secondo
-revisore indipendente né una nuova revisione completa del modulo.
+## Addendum — second static review of R1 patch
 
-L'osservazione originaria, la checklist e i riferimenti di riga precedenti
-restano conservati e descrivono il sorgente osservato alla revisione
-`c6a21d810dabdc1218efbbeaa1f7dab560da8893`. L'HEAD osservato è ancora quello;
-la patch esaminata è nel worktree. Il diff prodotto letto riporta due soli
-hunk, con identificativi abbreviati dei blob `a07e6357..b46823a3`.
-Le righe indicate qui sotto si riferiscono al file corretto, non aggiornano
-retroattivamente quelle dell'osservazione originaria.
+Date: 2026-10-15. Reviewer: the same Codex as readings L1 and L2.
+Second review after the author's applied correction, limited
+to the diff of `src/recovery-archive/read.lisp`; it is neither a second
+independent reviewer nor a new full module review.
 
-| Controllo della patch | Evidenza statica | Esito |
+The original observation, checklist, and earlier line references
+remain retained and describe source observed at revision
+`c6a21d810dabdc1218efbbeaa1f7dab560da8893`. Observed HEAD is still that revision;
+the examined patch is in the worktree. The product diff read reports only two
+hunks, with abbreviated blob IDs `a07e6357..b46823a3`.
+Lines below refer to the corrected file; they do not retroactively
+update those of the original observation.
+
+| Patch check | Static evidence | Outcome |
 |---|---|---|
-| Header: operazione separata dall'asserzione | `read.lisp:39–41`: `let` assegna a `next` il risultato di `leggi-esatto`; il predicato di `unless` confronta soltanto `next` con `+log-header-bytes+`. | Il predicato non effettua I/O né scrive nello scratch. |
-| Corpo: operazione separata dall'asserzione | `read.lisp:59–61`: a ogni iterazione `let` assegna a `next` il risultato della stessa lettura; `unless` confronta soltanto `next` con `end`. | Il predicato non effettua I/O né scrive nello scratch. |
-| Numero, argomenti e ordine delle letture | Resta una chiamata header con `input scratch 0 +log-header-bytes+ 0`, dopo `check-range` e prima della verifica dell'header; resta una chiamata corpo con `input scratch start end start` per iterazione. | Nessuna duplicazione, omissione o variazione d'ordine introdotta nei due hunk. |
-| Condizioni e propagazione | Restano `invariant-violation / :archive-recovery-header-read` e `invariant-violation / :archive-recovery-read`, con `:offset start` nel corpo. Nessun gestore, retry o cleanup aggiunto; le condizioni di `leggi-esatto` continuano a propagarsi prima del confronto. | Stessi controlli ed errori nel flusso esaminato. |
-| Ambito e limiti | I nuovi `next` sono lessicali; quello dell'header termina prima del successivo `multiple-value-bind`. Conteggio del ciclo, `start/end`, controllo finale della capacità, firme e budget non cambiano nei due hunk. | Nessuna interferenza lessicale o variazione dei bounds individuata nella patch. |
+| Header: operation separate from assertion | `read.lisp:39–41`: `let` assigns `next` the result of `leggi-esatto`; `unless` predicate only compares `next` with `+log-header-bytes+`. | Predicate performs no I/O or scratch write. |
+| Body: operation separate from assertion | `read.lisp:59–61`: at each iteration `let` assigns `next` the same read's result; `unless` only compares `next` with `end`. | Predicate performs no I/O or scratch write. |
+| Read count, arguments, and order | One header call with `input scratch 0 +log-header-bytes+ 0` remains, after `check-range` and before header verification; one body call with `input scratch start end start` per iteration remains. | No duplication, omission, or order change introduced in two hunks. |
+| Conditions and propagation | `invariant-violation / :archive-recovery-header-read` and `invariant-violation / :archive-recovery-read` remain, with `:offset start` in body. No handler, retry, or cleanup added; `leggi-esatto` conditions still propagate before comparison. | Same checks and errors in examined flow. |
+| Scope and bounds | New `next` variables lexical; header variable ends before next `multiple-value-bind`. Loop count, `start/end`, final capability check, signatures, and budgets unchanged in two hunks. | No lexical interference or bounds change identified in patch. |
 
-**Stato aggiornato: R1 chiuso esclusivamente sul piano statico per la patch
-esaminata.** L'I/O è ora eseguito prima del controllo e i due predicati di
-invariante sono privi dell'effetto collaterale contestato da COD-25.
-Non sono emersi nuovi rilievi nei due hunk. La voce R1 aperta e il punto 10
-della checklist precedente restano testimonianza della prima versione;
-questo addendum registra la successiva risoluzione statica.
+**Updated status: R1 closed exclusively statically for the examined
+patch.** I/O now executes before checking, and both invariant
+predicates are free of the side effect contested under COD-25.
+No new findings emerged in the two hunks. The earlier open R1 entry and checklist
+point 10 remain evidence of the first version;
+this addendum records subsequent static resolution.
 
-Nessuna esecuzione runtime, prova, compilazione, lint o benchmark svolto.
-La chiusura non attesta equivalenza misurata, assenza di regressioni runtime,
-conformità completa del modulo o qualifica C1; tutti gli altri limiti della
-revisione originaria restano validi. In questo seguito è stato soltanto
-aggiunto il presente addendum a `docs/implementazione/decisioni-recuperate-revisione.md`;
-nessun altro file modificato e nessun commit eseguito. Incarico concluso per
-il freeze coordinato.
+No runtime execution, test, compilation, lint, or benchmark performed.
+Closure does not attest measured equivalence, absence of runtime regressions,
+full module conformance, or C1 qualification; all other limits of the
+original review remain valid. This follow-up only
+added this addendum to `docs/implementazione/decisioni-recuperate-revisione.md`;
+no other file modified and no commit made. Assignment concluded for
+the coordinated freeze.

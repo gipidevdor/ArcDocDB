@@ -1,37 +1,39 @@
-# Scrittura dei valori semplici CBOR
+<a id="scrittura-dei-valori-semplici-cbor"></a>
 
-`arcdocdb.cbor:scrivi-semplice-cbor-minimo` scrive un codice wire MT7
-in una destinazione esclusiva. Realizza REQ-CBR-003; dominio, precedenza
-degli errori e prove sono nel [metodo preregistrato](cbor-semplici-metodo.md).
+# Writing CBOR simple values
+
+`arcdocdb.cbor:scrivi-semplice-cbor-minimo` writes an MT7 wire code
+to an exclusive destination. It implements REQ-CBR-003; domain, error
+precedence, and tests are in the [preregistered method](cbor-semplici-metodo.md).
 
 ```lisp
 (scrivi-semplice-cbor-minimo buffer start end value)
-;; => NEXT, esattamente un valore
+;; => NEXT, exactly one value
 ```
 
-VALUE è un intero 0..23 oppure 32..255. I codici 20/21/22/23 rappresentano
-false/true/null/undefined, senza conversione dei valori Common Lisp;
-i codici non assegnati non ricevono semantica applicativa. I codici
-riservati 24..31 sono rifiutati. La rappresentazione minima usa un byte
-per 0..23 e due per 32..255.
+VALUE is an integer 0..23 or 32..255. Codes 20/21/22/23 represent
+false/true/null/undefined, without conversion of Common Lisp values;
+unassigned codes receive no application semantics. Reserved
+codes 24..31 are rejected. Minimal representation uses one byte
+for 0..23 and two for 32..255.
 
-BUFFER deve essere un array simple u8 posseduto in esclusiva; START/END
-delimitano uno span half-open, anche vuoto. Il preflight controlla range,
-codice e capacità in quest'ordine. Un argomento invalido segnala
-invalid-argument; uno span insufficiente resource-exhausted. Offset NIL
-e intero array intatto su ogni errore pubblico. Lo spazio fisico dopo
-END non è disponibile per la scrittura.
+BUFFER must be an exclusively owned simple u8 array; START/END
+delimit a half-open span, including an empty one. Preflight checks range,
+code, and capacity in that order. An invalid argument reports
+invalid-argument; an insufficient span resource-exhausted. NIL offset
+and entire array intact on every public error. Physical space after
+END is unavailable for writing.
 
-Dopo il successo NEXT=START+dimensione e cambiano soltanto i byte
-`[START,NEXT)`. Prefisso, residuo dello span e coda fisica restano
-intatti. Le guardie interne segnalano invariant-violation senza rollback;
-il proprietario applica fail-stop. La primitiva non pubblica né rende
-durevoli dati.
+After success NEXT=START+size, and only bytes
+`[START,NEXT)` change. Prefix, remaining span, and physical tail remain
+intact. Internal guards report invariant-violation without rollback;
+the owner applies fail-stop. The primitive neither publishes data nor makes
+it durable.
 
-Il lavoro è limitato a due byte e variabili locali. Worker distinti
-possono chiamarla su destinazioni private, senza coordinamento tra Serie,
-attese, I/O o AST. Budget complessivo, profilo applicativo, float e
-composizione di documenti rimangono al livello superiore.
+Work is bounded to two bytes and local variables. Separate workers
+may call it on private destinations, without cross-Serie coordination,
+waits, I/O, or ASTs. Overall budget, application profile, floats, and
+document composition remain at the higher level.
 
-Il [rapporto delle prove](cbor-semplici-risultati.md) conserva corpus,
-misure, mutazioni e copertura grezza; la qualifica C1 del motore rimane aperta.
+The [test report](cbor-semplici-risultati.md) preserves corpus,
+measurements, mutations, and raw coverage; engine C1 qualification remains open.

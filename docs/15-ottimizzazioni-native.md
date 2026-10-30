@@ -1,104 +1,118 @@
-# 15 — Ottimizzazioni native e SIMD
+<a id="15--ottimizzazioni-native-e-simd"></a>
 
-> **Fonte:** «SIMD e ottimizzazioni native» della [specifica](specifica/specifica-originale.md),
-> emendata da [ADR-0001](adr/0001-common-lisp-sbcl.md).
-> **Moduli:** M18 SIMD/Hot Path Optimization Layer.
+# 15 — Native optimizations and SIMD
 
-## Vincolo corrente: solo Common Lisp
+> **Source:** ‘SIMD and native optimizations’ of the [specification](specifica/specifica-originale.md),
+> amended by [ADR-0001](adr/0001-common-lisp-sbcl.md).
+> **Modules:** M18 SIMD/Hot Path Optimization Layer.
 
-**Decisione del 2026-10-01:** per ora il progetto è **solo Common Lisp**. La specifica ammette,
-per hot path estremi, il ricorso a C/C++ o Rust tramite funzioni foreign; questa possibilità è
-**sospesa** finché non viene riaperta con un nuovo ADR. Tutto il codice del repository,
-compresi spike e strumenti di benchmark, è Common Lisp su SBCL.
+<a id="vincolo-corrente-solo-common-lisp"></a>
 
-Restano utilizzabili le estensioni e i contrib di SBCL (thread, primitive atomiche, accesso
-alle chiamate di sistema), perché sono Common Lisp sull'implementazione di riferimento.
+## Current constraint: Common Lisp only
 
-## Progettare «SIMD-friendly»
+**Decision of 2026-10-01:** for now, the project is **Common Lisp only**. The specification allows
+C/C++ or Rust via foreign functions for extreme hot paths; this option is **suspended**
+until reopened by a new ADR. All repository code, including spikes and benchmark tools,
+is Common Lisp on SBCL.
 
-Il database DEVE essere progettato per essere SIMD-friendly. In Common Lisp/SBCL questo
-significa, nell'ordine:
+SBCL extensions and contrib modules (threads, atomic primitives, system-call access)
+remain available, because they are Common Lisp on the reference implementation.
 
-1. usare strutture dati compatte;
-2. usare typed arrays;
-3. dichiarare i tipi;
-4. minimizzare boxing e allocazioni;
-5. favorire accessi sequenziali;
-6. profilare;
-7. valutare sistematicamente le varianti SIMD utilizzabili in sicurezza **su ogni hot path
-   misurato**, adottando quelle il cui beneficio è dimostrato (INV-X1).
+<a id="progettare-simd-friendly"></a>
 
-I primi cinque punti sono scelte di *layout dei dati*, e vanno fatte in fase di architettura:
-non si recuperano dopo. Gli ultimi due sono attività guidate dalle misure.
+## Designing for SIMD
 
-SBCL può generare codice SIMD automaticamente in alcuni casi numerici opportunamente tipizzati.
+The database MUST be designed to be SIMD-friendly. In Common Lisp/SBCL, this means,
+in order:
 
-## Scala di intervento
+1. use compact data structures;
+2. use typed arrays;
+3. declare types;
+4. minimize boxing and allocations;
+5. favor sequential access;
+6. profile;
+7. systematically evaluate SIMD variants that can be used safely **on each measured
+   hot path**, adopting those with demonstrated benefits (INV-X1).
 
-| Livello | Strumento | Stato |
+The first five points are *data-layout* choices, to make during architecture:
+they cannot be recovered later. The last two are measurement-driven activities.
+
+SBCL can generate SIMD code automatically in some appropriately typed numerical cases.
+
+<a id="scala-di-intervento"></a>
+
+## Intervention levels
+
+| Level | Tool | Status |
 |---|---|---|
-| 1 | Common Lisp tipizzato: array specializzati, dichiarazioni, nessuna allocazione | sempre |
-| 2 | Operazioni specifiche di SBCL | ammesso, sugli hot path misurati |
-| 3 | Funzioni foreign, C/C++, Rust | **sospeso** (solo Common Lisp per ora) |
+| 1 | Typed Common Lisp: specialized arrays, declarations, no allocation | always |
+| 2 | SBCL-specific operations | allowed on measured hot paths |
+| 3 | Foreign functions, C/C++, Rust | **suspended** (Common Lisp only for now) |
 
-Si valuta il livello successivo sui percorsi caldi misurati; lo si adotta solo quando
-le prove mostrano un beneficio mantenendo tutti i controlli.
+Evaluate the next level on measured hot paths; adopt it only when tests show a
+benefit while retaining every check.
 
-## Selezione sicura e verifica dei backend
+<a id="selezione-sicura-e-verifica-dei-backend"></a>
 
-Questi sono criteri obbligatori per introdurre un kernel nel motore; gli spike esistenti
-non attestano dispatcher, ripiego o qualificazione del prodotto.
+## Safe backend selection and verification
 
-La precisazione del 2026-10-22 ad [ADR-0012](adr/0012-simd-guidato-dai-benchmark.md)
-richiede di valutare tutte le varianti disponibili per gli hot path misurati su **Linux
-x86-64**, piattaforma di riferimento, e **macOS ARM64**, sviluppo supportato. La scelta
-dipende dall'operazione, dalla dimensione e dalle misure; una maggiore larghezza vettoriale
-non dimostra un vantaggio. Le estensioni non provate restano da qualificare.
+These are mandatory criteria for introducing a kernel into the engine; existing spikes
+do not establish product dispatch, fallback, or qualification.
 
-Prima di eseguire un kernel, la selezione deve verificare il supporto effettivo della CPU,
-del sistema operativo e del runtime SBCL. La sola architettura dichiarata non basta.
-Il percorso scalare di riferimento rimane sempre eseguibile e forzabile, come ogni backend
-disponibile nei test; viene usato se la variante è assente, non qualificata o non conveniente
-per quel carico. Un errore di dati o di invarianti conserva la propria semantica e non
-innesca un ripiego che lo nasconda.
+The 2026-10-22 clarification to [ADR-0012](adr/0012-simd-guidato-dai-benchmark.md)
+requires evaluating all available variants for measured hot paths on **Linux
+x86-64**, the reference platform, and **macOS ARM64**, supported for development. Selection
+depends on the operation, size, and measurements; greater vector width does not establish
+a benefit. Untested extensions remain unqualified.
 
-Ogni kernel conserva tipo, limiti, immutabilità degli input e semantica degli errori del
-riferimento. Vale `safety 3` predefinito, con le sole eccezioni già regolate da
-[ADR-0034](adr/0034-policy-di-compilazione-e-standard-di-codifica.md). Ogni caricamento
-e scrittura vettoriale deve rientrare interamente nella finestra logica autorizzata:
-nessuna lettura oltre la fine, neppure in padding accessibile. Le code hanno un percorso
-scalare verificato; un accesso disallineato è ammesso solo con semantica verificata sul
-backend, altrimenti si usa il percorso scalare.
+Before executing a kernel, selection must verify actual CPU, operating-system,
+and SBCL runtime support. The declared architecture alone is insufficient.
+The scalar reference path always remains executable and forceable, as does every available
+backend in tests; it is used if a variant is absent, unqualified, or unsuitable for that
+workload. A data or invariant error retains its semantics and does not trigger a fallback
+that conceals it.
 
-La verifica differenziale usa un oracolo indipendente e forza ciascun backend disponibile
-e quello scalare: buffer vuoti e corti, lunghezze attorno alla larghezza vettoriale,
-offset disallineati, code, input avversari e rifiuti devono dare risultati ed errori
-equivalenti senza modifiche estranee. Dataset, parametri e metodo dei benchmark sono comuni
-alle due piattaforme; per ciascuna si conservano ambiente, codice generato, risultati,
-allocazioni e costo della selezione. `unsupported` resta distinto da una prova superata.
-Un microbenchmark o una misura ARM64 non qualificano il percorso completo o x86-64.
+Each kernel preserves the reference's types, bounds, input immutability, and error
+semantics. The default is `safety 3`, with only the exceptions already governed by
+[ADR-0034](adr/0034-policy-di-compilazione-e-standard-di-codifica.md). Every vector load
+and store must fit entirely within the authorized logical window:
+no reads past the end, even into accessible padding. Tails have a verified scalar path;
+unaligned access is allowed only with verified backend semantics, otherwise the scalar
+path is used.
 
-## Candidati SIMD
+Differential verification uses an independent oracle and forces each available backend
+and the scalar path: empty and short buffers, lengths around the vector width,
+unaligned offsets, tails, adversarial inputs, and rejections must yield equivalent
+results and errors without unrelated modifications. Datasets, parameters, and benchmark
+methods are shared by both platforms; each retains its environment, generated code,
+results, allocations, and selection cost. `unsupported` remains distinct from a passed test.
+A microbenchmark or ARM64 measurement qualifies neither the complete path nor x86-64.
+
+<a id="candidati-simd"></a>
+
+## SIMD candidates
 
 - bitmap AND/OR/XOR;
-- Bloom filter;
-- scansioni;
-- confronti;
-- filtri;
+- Bloom filters;
+- scans;
+- comparisons;
+- filters;
 - parsing;
 - hashing;
-- compressione/decompressione.
+- compression/decompression.
 
-Lo storage append-only con segmenti immutabili e scansioni sequenziali favorisce queste
-ottimizzazioni: i dati sono contigui e non cambiano sotto il lettore.
+Append-only storage with immutable segments and sequential scans favors these
+optimizations: data are contiguous and do not change beneath the reader.
 
-## Questioni decise e rischi
+<a id="questioni-decise-e-rischi"></a>
 
-- **QA-18** ([ADR-0024](adr/0024-memoria-e-gc.md)) — Garbage collector e memoria: quali strutture vivono nello heap Lisp e quali
-  fuori (RSK-01). È il rischio tecnico principale della scelta di SBCL.
-- **QA-19** ([ADR-0017](adr/0017-piattaforma-e-io.md)) — Architettura di riferimento. Il supporto SIMD esplicito di SBCL va verificato
-  per architettura (x86-64 e ARM64): lo sviluppo avviene su macOS/ARM64, la piattaforma di
-  riferimento è Linux x86-64 (RSK-11).
-- Il vincolo «solo Common Lisp» riguarda anche le chiamate di sistema per l'I/O: va verificato
-  nello spike sul WAL che `fsync` e le letture posizionali siano raggiungibili senza codice
-  non-Lisp e senza allocazioni sul percorso critico (SPK-03, SPK-05).
+## Decided questions and risks
+
+- **QA-18** ([ADR-0024](adr/0024-memoria-e-gc.md)) — Garbage collector and memory: which structures live in the Lisp heap and
+  which outside it (RSK-01). This is the main technical risk of choosing SBCL.
+- **QA-19** ([ADR-0017](adr/0017-piattaforma-e-io.md)) — Reference architecture. SBCL's explicit SIMD support must be verified
+  per architecture (x86-64 and ARM64): development takes place on macOS/ARM64, while the
+  reference platform is Linux x86-64 (RSK-11).
+- The ‘Common Lisp only’ constraint also applies to I/O system calls: the WAL spike must
+  verify that `fsync` and positional reads are accessible without non-Lisp code and
+  without critical-path allocations (SPK-03, SPK-05).

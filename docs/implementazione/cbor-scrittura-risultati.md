@@ -1,123 +1,131 @@
-# Verifiche della scrittura delle testate CBOR
+<a id="verifiche-della-scrittura-delle-testate-cbor"></a>
 
-Campagne del 2026-10-11 sul contratto preregistrato nel
-[metodo](cbor-scrittura-metodo.md), con prodotto congelato al blob
-`61f0d6e2783e4790ed7e19a45bba6407d6e5b3de`. La funzione scrive soltanto
-testate MT0..6 minime, fino a nove byte; payload e profilo del documento
-completo restano fuori da questo incremento.
+# Verification of CBOR header writing
 
-## Correttezza e parallelismo
+Campaigns of 2026-10-11 against the contract preregistered in the
+[method](cbor-scrittura-metodo.md), with product frozen at blob
+`61f0d6e2783e4790ed7e19a45bba6407d6e5b3de`. The function writes only
+minimal MT0..6 headers, up to nine bytes; payloads and the full document
+profile remain outside this increment.
 
-17 nuovi test, compreso il round-trip supplementare di 77 coppie, portano
-la build a 475 test e 2 smoke: 477 esiti riusciti, senza avvisi. Il corpus
-cieco conserva i tre blob iniziali `92327e4…`, `903a213…`, `878f0fa…`.
-Sono verificati 458.752 argomenti u16 × 7 major, 4.096 casi differenziali
-seed57524342 e 140 capacità insufficienti, con intera destinazione
-invariata nei rifiuti. Il fuzz esercita le cinque larghezze in
-560/465/511/512/2048 casi rispettivamente.
+<a id="correttezza-e-parallelismo"></a>
 
-Due worker reali con destinazioni esclusive eseguono 229.376 testate e
-verificano i sink 15.466.496/17.006.592. Nella build preliminare gli
-intervalli di lavoro si sovrappongono per 6140 tick a 1.000.000 tick/s;
-nel controllo completo per 6134. Questa osservazione verifica concorrenza
-funzionale; non dimostra simultaneità sui core, scaling o throughput del
-pool. Semafori, join e cleanup hanno limiti espliciti.
+## Correctness and parallelism
 
-Le [due](cbor-scrittura-revisione.md) [letture C1](cbor-scrittura-lettura.md)
-non hanno rilievi statici aperti. Prima della compilazione è stato risolto
-COD-13 estraendo il preflight dal wrapper pubblico. La tracciabilità
-introduce REQ-CBR-001, senza attribuire la codifica al requisito di
-versionamento dei file REQ-FOR-002. Un controllo iniziale di setup, prima
-della creazione dei test, aveva segnalato correttamente il riferimento
-mancante; trascrizione del risultato e successivo controllo verde sono
-conservati, distinguendoli dai processi registrati.
+17 new tests, including the supplementary 77-pair roundtrip, bring
+the build to 475 tests and 2 smoke tests: 477 successful outcomes, without warnings. The blind
+corpus retains the three initial blobs `92327e4…`, `903a213…`, `878f0fa…`.
+Verified: 458,752 u16 arguments × 7 majors, 4,096 differential cases
+seed57524342, and 140 insufficient capacities, with the entire destination
+unchanged on rejections. Fuzz exercises the five widths in
+560/465/511/512/2048 cases, respectively.
 
-## Heap, mutazioni e copertura
+Two real workers with exclusive destinations execute 229,376 headers and
+check sinks 15,466,496/17,006,592. In the preliminary build,
+work intervals overlap by 6140 ticks at 1,000,000 ticks/s;
+in the full check by 6134. This observation verifies functional
+concurrency; it does not demonstrate simultaneous execution on cores, scaling, or pool
+throughput. Semaphores, joins, and cleanup have explicit bounds.
 
-Sette fixture × cinque repliche × 4096 chiamate, warmup 128: 35 campioni con
-heap osservato zero. Il sensore verifica baseline nulla e controllo
-positivo 16 × 1 MiB; NEXT e tutti i byte, comprese le sentinelle, alimentano
-token e sink verificati. Il costo dei controlli dell'output è incluso.
-L'audit indipendente ricalcola codifiche, token e sink: questi risultati
-locali non sono una prova assoluta di non allocazione o una soglia di
-velocità. Le misure sono seriali, separate dalle campagne parallele.
+The [two](cbor-scrittura-revisione.md) [C1 readings](cbor-scrittura-lettura.md)
+have no open static findings. Before compilation, COD-13 was resolved
+by extracting preflight from the public wrapper. Traceability
+introduces REQ-CBR-001 without attributing encoding to the file-versioning
+requirement REQ-FOR-002. An initial setup check, before
+test creation, correctly reported the missing reference;
+a transcript of that result and the subsequent green check are
+preserved, distinguished from recorded processes.
 
-Otto mutazioni: 8 DETECTED, 0 INVALID, 0 SURVIVED, 0 WORKER-ERROR, con baseline
-completa riuscita e copie/cache private. Smoke e completamento sono
-riconosciuti solo su righe esatte; compilazione fallita, segnali OS e
-guasti dopo completamento non contano come rilevamento. Self-test con
-processi reali ed errori di infrastruttura verificano queste distinzioni.
-La capacità sul suffisso fisico produce una condizione interna diversa
-da quella prevista: la guardia attiva impedisce comunque lo sconfinamento.
+<a id="heap-mutazioni-e-copertura"></a>
 
-Copertura del solo `src/codec/cbor-write.lisp`: 224/258 espressioni e 43/52
-rami; 34 espressioni e 9 rami mancanti restano nel denominatore. La mappa
-indipendente distingue 6 dichiarazioni e 28 forme di errore interno;
-i 9 rami mancanti sono guardie interne, senza casi non classificati. Stato
-grezzo completo e due HTML conservati. Le guardie interne non raggiunte
-dall'API valida e le dichiarazioni restano visibili; l'[inventario](cbor-scrittura-decisioni.md)
-documenta anche la condizione ridondante nel dominio u32. Nessuna
-attestazione di 100% o MC/DC, nessuna chiusura del gate C1 di ADR-0035.
+## Heap, mutations, and coverage
 
-Il terzo self-test dell'auditor aveva riportato OK emettendo un avviso
-per una forma SETF errata nella nuova mappa dei gap: sorgente e log sono
-conservati, la forma è stata corretta e i self-test ripetuti senza avvisi.
-Il primo audit finale ha poi rifiutato i conteggi del report sorgente
-per un proprio errore di parsing: SB-COVER lascia implicita la chiusura
-della riga d'intestazione HTML. Il parser è stato corretto e verificato
-anche sulla stessa forma HTML. I report originali restano invariati;
-processo fallito, versioni del tool e tentativi successivi sono conservati.
-Il quinto self-test passa senza avvisi: 30 fixture, 1561 controlli.
-L'audit finale riuscito esegue 11.069 controlli su misure, coverage e
-180 file dichiarati per copia delle mutazioni; non carica il prodotto per
-calcolare gli expected. Conferma baseline e otto sostituzioni esatte.
-Una lettura C4 aggiuntiva conserva due limiti del verificatore: il catalogo
-dei fingerprint non è confrontato con l'intero inventario del progetto,
-e il controllo automatico dei log non impone ordine/package del rifiuto.
-La lettura dei log reali mostra in tutti gli otto casi un assert della
-suite CBOR.WRITE.TESTS dopo lo smoke. La presenza di file ulteriori nelle
-copie non è esclusa da questo audit; le copie integrali restano nel backup.
+Seven fixtures × five replicates × 4096 calls, warmup 128: 35 samples with
+zero observed heap. The sensor verifies a zero baseline and positive
+control 16 × 1 MiB; NEXT and all bytes, including sentinels, feed
+verified tokens and sinks. Output-check costs are included.
+The independent audit recalculates encodings, tokens, and sinks: these local
+results are not absolute proof of no allocation or a speed
+threshold. Measurements are serial, separate from parallel campaigns.
 
-## Integrazione e conservazione
+Eight mutations: 8 DETECTED, 0 INVALID, 0 SURVIVED, 0 WORKER-ERROR, with a
+successful full baseline and private copies/caches. Smoke and completion are
+recognized only on exact lines; compilation failures, OS signals, and
+faults after completion do not count as detection. Self-tests with
+real processes and infrastructure errors verify these distinctions.
+Capacity on the physical suffix produces an internal condition different
+from the expected one: the active guard still prevents out-of-bounds access.
 
-`make check` completo passa: build, lint e suoi self-test, tracciabilità,
-link, conservazione delle evidenze e dieci spike. Il processo dura
-135,727259 secondi, con sorgenti stabili; queste prove non qualificano il
-motore o la piattaforma di riferimento. I controlli finali di link ed
-evidenze verificano anche la documentazione e gli archivi aggiunti.
+Coverage of only `src/codec/cbor-write.lisp`: 224/258 expressions and 43/52
+branches; 34 missing expressions and 9 branches remain in the denominator. The independent
+map distinguishes 6 declarations and 28 internal-error forms;
+the 9 missing branches are internal guards, with no unclassified cases. Full raw
+state and two HTML files preserved. Internal guards not reached
+through the valid API and declarations remain visible; the [inventory](cbor-scrittura-decisioni.md)
+also documents the redundant condition in the u32 domain. No
+100% or MC/DC attestation, no closure of the ADR-0035 C1 gate.
 
-Dopo l'integrazione di `f16e978` (ricostruzione dell'indice pubblicata
-separatamente), il controllo completo viene ripetuto su `7a8349c`:
-594 test e 2 smoke, 596 esiti di build riusciti, senza avvisi; anche gli
-altri controlli e dieci spike passano in 154,41837 secondi, sorgenti stabili.
-Il self-test del driver di copertura unificato passa. Il solo conflitto
-di integrazione riguardava elenco/uso degli scope nel driver C4, risolto
-conservando sia `cbor-write` sia `index`. Prodotto e tre test ciechi
-conservano gli stessi blob; le campagne locali non sono state riscritte.
+The auditor's third self-test reported OK while emitting a warning
+for a wrong SETF form in the new gap map: source and log are
+preserved, the form was corrected, and self-tests rerun without warnings.
+The first final audit then rejected source-report counts
+due to its own parsing error: SB-COVER leaves the HTML header
+row closure implicit. The parser was corrected and checked
+against that HTML form too. Original reports remain unchanged;
+failed process, tool versions, and later attempts are preserved.
+The fifth self-test passes without warnings: 30 fixtures, 1561 checks.
+The successful final audit performs 11,069 checks on measurements, coverage, and
+180 declared files per mutation copy; it does not load the product to
+calculate expected values. It confirms the baseline and eight exact replacements.
+An additional C4 reading retains two verifier limits: the fingerprint
+catalog is not compared with the project's entire inventory,
+and automatic log checking does not enforce rejection order/package.
+Reading the actual logs shows an assert from the
+CBOR.WRITE.TESTS suite after smoke in all eight cases. This audit does not rule out
+additional files in the copies; full copies remain in the backup.
 
-Il merge `b4ea74f` include poi gli snapshot di `f23b33c` e i worker di
-`d9aeae3`: controllo completo riuscito in 163,081183 secondi, con 660 test
-e 2 smoke, sorgenti stabili. L'elenco degli scope conserva anche `mvcc`.
-La successiva integrazione della cache `01dd641` su `997a85b` ripete tutti
-i controlli in 166,766875 secondi: stessi 662 esiti di build, nessun avviso,
-self-test del mutatore snapshot e dieci spike riusciti. Il driver di
-copertura unificato passa il suo self-test. Il codec e i test ciechi
-restano invariati; il nuovo modulo cache viene compilato, mentre le sue
-verifiche dedicate restano pendenti come dichiarato nel relativo
-[incremento](cache-record.md). Nel controllo finale i due worker CBOR
-conservano i sink previsti e si sovrappongono per 6175 tick; resta la stessa
-limitazione sulle conclusioni di scaling.
+<a id="integrazione-e-conservazione"></a>
 
-I [registri originali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-header-write/archive-index.lisp)
-conservano stdout/stderr, sorgenti, test, driver, coverage, copie mutate
-del nuovo file e log, self-test e audit Common Lisp con reader-eval NIL
-ed EOF. Byte e SHA256 sono verificati durante la copia e dall'auditor
-dell'archivio; il catalogo controlla struttura e presenza, senza inferire
-risultati o autenticità dalle dichiarazioni. Le copie integrali delle
-mutazioni e i FASL sono conservati anche nel backup locale
-`spikes/out/cbor-header-write-isolated-20261011/` del checkout principale.
-Le copie dei Markdown congelati sono dati originali `.md.txt`, senza
-riscrivere i collegamenti storici. I [registri conclusivi](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-header-write-final/archive-index.lisp)
-raccolgono verifiche della raccolta, i controlli integrati e la
-documentazione finale. Ogni esecuzione conserva il proprio commit e i
-propri conteggi: gli incrementi successivi non cambiano le prove originali.
+## Integration and preservation
+
+Full `make check` passes: build, lint and its self-tests, traceability,
+links, evidence preservation, and ten spikes. The process takes
+135.727259 seconds with stable sources; these tests do not qualify the
+engine or reference platform. Final link and evidence
+checks also verify the added documentation and archives.
+
+After integration of `f16e978` (index rebuild published
+separately), the full check is repeated on `7a8349c`:
+594 tests and 2 smoke tests, 596 successful build outcomes, without warnings; the
+other checks and ten spikes also pass in 154.41837 seconds, sources stable.
+The unified coverage driver's self-test passes. The only integration
+conflict concerned scope listing/usage in the C4 driver, resolved
+by retaining both `cbor-write` and `index`. Product and three blind tests
+retain the same blobs; local campaigns were not rewritten.
+
+Merge `b4ea74f` then includes snapshots from `f23b33c` and workers from
+`d9aeae3`: full check successful in 163.081183 seconds, with 660 tests
+and 2 smoke tests, sources stable. The scope list also retains `mvcc`.
+Subsequent cache integration `01dd641` on `997a85b` repeats all
+checks in 166.766875 seconds: the same 662 build outcomes, no warnings,
+snapshot mutator self-test and ten spikes successful. The unified coverage
+driver passes its self-test. Codec and blind tests
+remain unchanged; the new cache module is compiled, while its
+dedicated checks remain pending as stated in the corresponding
+[increment](cache-record.md). In the final check, both CBOR workers
+retain the expected sinks and overlap by 6175 ticks; the same
+limit on scaling conclusions applies.
+
+The [original records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-header-write/archive-index.lisp)
+preserve stdout/stderr, sources, tests, drivers, coverage, mutated copies
+of the new file and logs, self-tests, and Common Lisp audits with reader-eval NIL
+and EOF. Bytes and SHA256 are checked during copying and by the archive
+auditor; the catalog checks structure and presence without inferring
+results or authenticity from declarations. Full mutation
+copies and FASLs are also retained in the local backup
+`spikes/out/cbor-header-write-isolated-20261011/` in the main checkout.
+Frozen Markdown copies are original `.md.txt` data, without
+rewriting historical links. The [concluding records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-header-write-final/archive-index.lisp)
+collect collection checks, integrated checks, and final
+documentation. Each execution retains its own commit and
+counts: later increments do not change the original evidence.

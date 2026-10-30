@@ -1,101 +1,109 @@
-# Checkpoint completo dal recovery ACTIVE
+<a id="checkpoint-completo-dal-recovery-active"></a>
+
+# Complete checkpoint from ACTIVE recovery
 
 `arcdocdb.recovery.checkpoint:crea-checkpoint-da-active(recovered, active, stamp, …)`
-collega [ACTIVE recuperato](active-recuperato.md) e
-[nuovo ACTIVE preparato](inizializzazione-active.md) al
-[piano CONTROL](checkpoint-control.md). Applica
+connects [recovered ACTIVE](active-recuperato.md) and
+[new prepared ACTIVE](inizializzazione-active.md) to the
+[CONTROL plan](checkpoint-control.md). It applies
 [ADR-0040§3](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio)
-e [ADR-0041§4](../adr/0041-multiserie-segmenti-autosufficienti.md#4-recovery),
-senza cambiare formati o decisioni architetturali.
+and [ADR-0041§4](../adr/0041-multiserie-segmenti-autosufficienti.md#4-recovery)
+without changing formats or architectural decisions.
 
-## Contratto e composizione
+<a id="contratto-e-composizione"></a>
 
-Restituisce un `checkpoint-control` esistente: si consulta con le sue query,
-si prepara con `prepara-checkpoint-control` e si pubblica con
-`pubblica-control-da-active(prepared, recovered)`. Il payload EDIT completo
-viene derivato dalle fonti, senza ricostruzione manuale del chiamante.
-Nessun I/O, prenotazione ID, nuovo CSN o secondo gettone di pubblicazione.
-Lo stamp u64 è l'ordinale fornito dal controller.
+## Contract and composition
 
-Il recovery è esclusivo. Il controller mantiene CONTROL, vecchio ACTIVE,
-nuovo ACTIVE e namespace autorevoli, congelati e aperti fino alla
-pubblicazione. Il nuovo ACTIVE deve appartenere alla **stessa identica vista**
-del CONTROL e restare al solo header durevole. Controlli ripetuti al ritorno.
-L'autorità delle decisioni resta nel contratto del lettore ACTIVE usato;
-è disponibile il [lettore legato all'Archivio](decisioni-recuperate.md).
+Returns an existing `checkpoint-control`: consult its queries,
+prepare it with `prepara-checkpoint-control`, and publish it with
+`pubblica-control-da-active(prepared, recovered)`. Complete EDIT payload
+is derived from sources, without manual caller reconstruction.
+No I/O, ID reservation, new CSN, or second publication token.
+The u64 stamp is the ordinal supplied by the controller.
 
-L'ID nuovo proviene dal suo header verificato: deve essere almeno il
-high-water precedente e `next-id = id + 1` deve essere u64. Nessun wrap,
-riuso o nuovo sentinel su disco. Il controller riserva e prepara l'ID.
+Recovery is exclusive. The controller keeps CONTROL, old ACTIVE,
+new ACTIVE, and authoritative namespace frozen and open until
+publication. The new ACTIVE must belong to the **exact same view**
+as CONTROL and remain at only the durable header. Checks repeat on return.
+Decision authority remains in the contract of the ACTIVE reader used;
+the [Archivio-bound reader](decisioni-recuperate.md) is available.
 
-Lo stato conserva ogni CLOSED con lunghezza ed esiti, ogni REMOVED, il
-vecchio ACTIVE chiuso a **P esatto** con tutti e soli gli esiti derivati,
-il nuovo ACTIVE preparato e il high-water successivo. CLOSED/REMOVED sono
-ordinati per ID unsigned u64, gli esiti per TXID. Zero presente e bit alti
-restano significativi; le tabelle sorgenti restano immutabili.
+The new ID comes from its verified header: it must be at least the
+previous high-water and `next-id = id + 1` must be u64. No wrap,
+reuse, or new on-disk sentinel. The controller reserves and prepares the ID.
 
-Le sezioni private riusano serializer ACTIVE e `scrivi-valore-edit`.
-Il builder CONTROL canonico aggiunge header/EDIT/SEAL e ricostruisce il
-manifest. Una verifica finale confronta transizione, P, count e ogni esito
-derivato. Nessun piano parziale. L'atomicità resta la rinomina del control
-log; conferma dopo fsync del parent del publisher esistente. La sola
-costruzione o preparazione non rende il piano autorevole.
+State retains every CLOSED with length and outcomes, every REMOVED, the
+old ACTIVE closed at **exact P** with all and only derived outcomes,
+the new prepared ACTIVE, and the next high-water. CLOSED/REMOVED are
+sorted by unsigned u64 ID, outcomes by TXID. Present zero and high bits
+remain meaningful; source tables remain immutable.
 
-## Budget e costi
+Private sections reuse the ACTIVE serializer and `scrivi-valore-edit`.
+The canonical CONTROL builder adds header/EDIT/SEAL and rebuilds the
+manifest. Final verification compares transition, P, count, and every derived
+outcome. No partial plan. Atomicity remains the control log rename;
+acknowledgment after parent fsync by the existing publisher. Construction
+or preparation alone does not make the plan authoritative.
 
-| Configurazione | Default |
+<a id="budget-e-costi"></a>
+
+## Budgets and costs
+
+| Configuration | Default |
 |---|---:|
-| `max-payload` | 16 MiB, entro tetto metadata e capienza record v1/v2 |
-| `max-segmenti` | 65.536 menzioni, incluso il nuovo ACTIVE |
-| `max-esiti` | 65.536 coppie totali nei CLOSED, nuova chiusura inclusa |
-| `budget-workspace` | 64 MiB di payload degli array propri del builder |
+| `max-payload` | 16 MiB, within metadata ceiling and v1/v2 record capacity |
+| `max-segmenti` | 65,536 mentions, including the new ACTIVE |
+| `max-esiti` | 65,536 total pairs in CLOSED segments, including new closure |
+| `budget-workspace` | 64 MiB of array payload owned by the builder |
 
-Con C = CLOSED finali, R = REMOVED, E = esiti dei vecchi CLOSED e D = esiti
-derivati: `Bc = 20C + 16(E+D)`, `Br = 8R`, `Pedit = 24 + Bc + Br` byte.
-Gli array propri creano cumulativamente
-`Pedit + Bc + Br + 8(C+R+E)` byte, comprese le chiavi temporanee di ogni
-CLOSED, senza supporre un recupero immediato del GC. Sono esclusi
-oggetti/header Lisp, boxing, lavoro interno di `SORT`, builder CONTROL,
-manifest ricostruito e GC: **non è un tetto RSS**. Il controller contabilizza
-anche questi costi e i costruttori simultanei. Sezioni e payload temporanei
-non restano nel piano restituito.
+With C = final CLOSED segments, R = REMOVED, E = old CLOSED outcomes, and D = derived
+outcomes: `Bc = 20C + 16(E+D)`, `Br = 8R`, `Pedit = 24 + Bc + Br` bytes.
+Owned arrays cumulatively create
+`Pedit + Bc + Br + 8(C+R+E)` bytes, including each CLOSED's temporary keys,
+without assuming immediate GC reclamation. Excluded:
+Lisp objects/headers, boxing, internal `SORT` work, CONTROL builder,
+rebuilt manifest, and GC: **this is not an RSS ceiling**. The controller accounts
+for these costs too and for simultaneous builders. Temporary sections and payloads
+do not remain in the returned plan.
 
-Dimensioni, `1 + C + R` menzioni, esiti, capienza v1/v2 e workspace sono
-controllati prima degli array. Nessun metadato scartato per rientrare nei
-budget. Zero per esiti è valido se non ve ne sono; servono comunque nuovo
-CLOSED e nuovo ACTIVE. Sono budget del compito, non nuovi limiti del database.
-Cicli su cardinalità note e array finiti; `SORT` su copie locali del percorso
-di apertura. Nessun nuovo lock o scrittura condivisa fra Serie. Nessuna
-misura di heap, latenza, RSS o throughput dichiarata.
+Sizes, `1 + C + R` mentions, outcomes, v1/v2 capacity, and workspace are
+checked before arrays. No metadata is discarded to fit
+budgets. Zero outcomes is valid if none exist; new
+CLOSED and new ACTIVE are still required. These are task budgets, not new database limits.
+Loops over known cardinalities and finite arrays; `SORT` on local copies in the opening
+path. No new lock or shared write across Serie. No heap,
+latency, RSS, or throughput measurement claimed.
 
-## Decisioni ed errori
+<a id="decisioni-ed-errori"></a>
 
-`invalid-argument` per vista diversa, ID riusato o configurazione payload
-invalida; `resource-exhausted` per ID esauriti, next-id non rappresentabile
-o budget insufficienti; `invariant-violation` per incoerenze interne.
-Condizioni originali di capacità, codec, replay e transizione propagate;
-nessun handler generico, retry, close, rollback, eliminazione o troncatura.
+## Decisions and errors
 
-| ID | Decisione composta / confine | Casi richiesti, aperti |
+`invalid-argument` for a different view, reused ID, or invalid payload
+configuration; `resource-exhausted` for exhausted IDs, unrepresentable next-id,
+or insufficient budgets; `invariant-violation` for internal inconsistencies.
+Original capability, codec, replay, and transition conditions propagate;
+no generic handler, retry, close, rollback, deletion, or truncation.
+
+| ID | Compound decision / boundary | Required cases, open |
 |---|---|---|
-| CRB-D01 | payload oltre budget caller oppure capienza versione | ciascuna vera, entrambe false; confini v1/v2 |
-| CRB-D02 | EXTRA presente e già nella tabella | NIL, zero, ID nuovo, duplicato |
-| CRB-D03 | spazio per chiave e tipo u64 | ciascuna falsa, entrambe vere; cardinalità mutata |
-| CRB-D04 | esito presente e CSN u64 | assente, tipo errato, zero e high bits validi |
-| CRB-D05 | chiusura CLOSED, P e count esatti | ogni campo discordante separato, tutti esatti |
-| CRB-D06 | esito derivato presente e CSN uguale | assenza, discordanza, zero presente |
-| CRB-G01 | fonti canoniche e lifetime | vista diversa, FD chiusi, nuovo ACTIVE avanzato/faulted |
-| CRB-G02 | next-id e budget prima degli array | ID esaurito/sotto/al/sopra high-water; ogni budget esatto/insufficiente |
-| CRB-G03 | conservazione e ordine | zero/u64 alto; nessun/molti CLOSED e REMOVED; esiti coalescenti; ACTIVE a inizio/mezzo/fine |
-| CRB-G04 | consumo e postcondizioni | ritorni codec discordanti, fonte mutata, piano intero e nessun I/O |
+| CRB-D01 | payload beyond caller budget or version capacity | each true, both false; v1/v2 boundaries |
+| CRB-D02 | EXTRA present and already in table | NIL, zero, new ID, duplicate |
+| CRB-D03 | room for key and u64 type | each false, both true; changed cardinality |
+| CRB-D04 | outcome present and u64 CSN | absent, wrong type, valid zero and high bits |
+| CRB-D05 | exact CLOSED closure, P and count | each mismatching field separately, all exact |
+| CRB-D06 | derived outcome present and equal CSN | absence, mismatch, present zero |
+| CRB-G01 | canonical sources and lifetime | different view, closed FDs, advanced/faulted new ACTIVE |
+| CRB-G02 | next-id and budgets before arrays | ID exhausted/below/at/above high-water; each budget exact/insufficient |
+| CRB-G03 | preservation and order | zero/high u64; no/many CLOSED and REMOVED; coalescing outcomes; ACTIVE at start/middle/end |
+| CRB-G04 | consumption and postconditions | mismatching codec returns, mutated source, entire plan and no I/O |
 
-Le [evidenze locali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-checkpoint/README.md)
-riguardano compilazione e controlli statici. Qualifica C1, revisione
-indipendente, casi funzionali/FI e misure dedicate restano aperti.
-Riconciliazione fisica, indici/orizzonte CSN, dimenticanza
-delle decisioni e gate del Recovery Manager restano da integrare.
+The [local evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-checkpoint/README.md)
+concerns compilation and static checks. C1 qualification, independent
+review, functional/FI cases, and dedicated measurements remain open.
+Physical reconciliation, indexes/CSN horizon, decision forgetting,
+and Recovery Manager gates remain to be integrated.
 
-Il [lettore CLOSED e il controllo dell'insieme](closed-recuperato.md) sono
-ora disponibili con qualifica dedicata aperta. L'ingresso aggiuntivo
-`pubblica-control-con-closed` verifica i vecchi CLOSED prima di delegare al
-publisher ACTIVE; questo builder e il formato del piano restano invariati.
+The [CLOSED reader and set check](closed-recuperato.md) are
+now available with dedicated qualification open. The additional entry
+`pubblica-control-con-closed` verifies old CLOSED segments before delegating to the
+ACTIVE publisher; this builder and plan format remain unchanged.

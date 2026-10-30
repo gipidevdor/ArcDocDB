@@ -1,46 +1,52 @@
-# Metodo del pianificatore di inventario
+<a id="metodo-del-pianificatore-di-inventario"></a>
 
-Registrato prima delle prove del 2026-10-09. Ambito C1 limitato alla
-tabella di riconciliazione di [ADR-0040§3](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio),
-senza accesso al filesystem. Le fixture EDIT sono bytewise, con CRC
-indipendente; l'oracolo dell'inventario usa liste logiche e non i helper
-del prodotto. Non si rivendicano crash reali, verifica dei contenuti,
-durabilità o completamento del recovery del motore.
+# Inventory planner method
 
-## Casi e oracolo
+Registered before tests on 2026-10-09. C1 scope limited to the
+reconciliation table in [ADR-0040§3](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio),
+without filesystem access. EDIT fixtures are bytewise, with independent
+CRC; the inventory oracle uses logical lists rather than product
+helpers. No claim of real crashes, content verification,
+durability, or completed engine recovery.
 
-Si confrontano tutte le combinazioni di presenza assente, temporary,
-final e entrambe per ACTIVE, CLOSED, REMOVED e sconosciuto. Il modello
-include i CLOSED mancanti, non include REMOVED assenti e assegna priorità
-FAULTED a un ACTIVE mancante o in conflitto. Le permutazioni del vettore
-devono dare le stesse entry ordinate per ID unsigned u64. Si verificano
-ID zero, parole alte, massimo u64, stessi ID nelle due forme, duplicati
-esatti, budget fisici esatti e superati, budget dei segmenti vivi e
-argomenti/query fuori contratto. Nessun risultato parziale su errore.
+<a id="casi-e-oracolo"></a>
 
-I piani devono restare immutati dopo il riuso del vettore e del buffer
-EDIT. Una prova usa quattro thread SBCL con input privati e un piano
-comune letto dopo il riuso dell'input: errore del worker e join con
-limite finito fanno fallire la prova. Il parallelismo è una verifica di
-correttezza; non misura throughput o latenza.
+## Cases and oracle
 
-## Strumenti ed evidenze
+Compare all combinations of absent, temporary,
+final, and both presence for ACTIVE, CLOSED, REMOVED, and unknown. The model
+includes missing CLOSED segments, excludes absent REMOVED segments, and gives
+FAULTED priority for missing or conflicting ACTIVE. Vector permutations
+must give the same entries sorted by unsigned u64 ID. Check
+ID zero, high words, maximum u64, same IDs in both forms, exact
+duplicates, exact/exceeded physical budgets, live-segment budgets, and
+arguments/queries outside contract. No partial result on error.
 
-Lo scope `inventory` dello strumento di mutazione seleziona soltanto i
-test dedicati, dopo una baseline integra. Le copie, le cache e i log
-sono privati; quattro processi possono operare in parallelo. Nessun
-errore di compilazione, segnale OS o exit nonzero dopo il completamento
-dei test conta come rilevamento runtime. La campagna usa mutazioni note
-che conservano i limiti dei cicli, senza timeout automatico dei processi.
-Il self-test controlla classificazione, copia ASDF, errori e parallelismo.
+Plans must stay unchanged after vector and EDIT buffer
+reuse. One test uses four SBCL threads with private inputs and a common
+plan read after input reuse: worker error or a join exceeding
+its finite limit fails the test. Parallelism is correctness
+verification; it measures neither throughput nor latency.
 
-`tools/foundation-coverage.lisp` registra il denominatore recovery
-grezzo, stato originale `sb-cover` e HTML. Il riepilogo separa i tre
-file inventory senza sottrarre le guardie difensive. Due letture C1
-controllano invarianti, errori, cicli, ownership e tabella delle decisioni;
-forme non osservate non diventano eccezioni approvate, né MC/DC dimostrata.
+<a id="strumenti-ed-evidenze"></a>
 
-Ogni esecuzione è registrata con `tools/record-command.lisp`: argv,
-ambiente, revisione, hash prima/dopo, exit e output originali. Si
-congelano sorgenti, test, strumenti e documentazione durante le prove.
-Si conservano anche fallimenti e tentativi preliminari distinti.
+## Tools and evidence
+
+Mutation-tool scope `inventory` selects only dedicated
+tests after an intact baseline. Copies, caches, and logs
+are private; four processes may run in parallel. No
+compilation error, OS signal, or nonzero exit after test completion
+counts as runtime detection. The campaign uses known mutations
+preserving loop bounds without automatic process timeout.
+The self-test checks classification, ASDF copying, errors, and parallelism.
+
+`tools/foundation-coverage.lisp` records the raw recovery
+denominator, original `sb-cover` state, and HTML. Summary separates three
+inventory files without subtracting defensive guards. Two C1 readings
+check invariants, errors, loops, ownership, and decision table;
+unobserved forms become neither approved exceptions nor demonstrated MC/DC.
+
+Each execution is recorded with `tools/record-command.lisp`: argv,
+environment, revision, hashes before/after, exit, and original outputs.
+Sources, tests, tools, and documentation are frozen during tests.
+Distinct failures and preliminary attempts are preserved too.

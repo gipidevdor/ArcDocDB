@@ -1,167 +1,183 @@
-# Slot compatti dell'indice, formato v2
+<a id="slot-compatti-dellindice-formato-v2"></a>
 
-## Ambito — 2026-10-09
+# Compact index slots, v2 format
 
-`arcdocdb.index.slots` realizza il banco di parole di un frammento e il suo
-protocollo single-writer/multi-reader: cinque parole u64 per slot primario,
-sei per le versioni trattenute, secondo
+<a id="ambito--2026-10-09"></a>
+
+## Scope — 2026-10-09
+
+`arcdocdb.index.slots` implements a fragment's word bank and its
+single-writer/multi-reader protocol: five u64 words per primary slot,
+six for retained versions, according to
 [ADR-0048](../adr/0048-limiti-documentali-e-formato-v2.md).
-Con il controllo Swiss separato il costo previsto è 41/49 byte per slot,
-escluse chiavi, header degli array e runtime.
+With separate Swiss control, expected cost is 41/49 bytes per slot,
+excluding keys, array headers, and runtime.
 
-Il componente implementa payload e seqlock, secondo
+The component implements payload and seqlock, according to
 [ADR-0032](../adr/0032-seqlock-a-64-bit.md),
-[ADR-0043](../adr/0043-primary-index-a-frammenti.md) e
+[ADR-0043](../adr/0043-primary-index-a-frammenti.md), and
 [ADR-0050](../adr/0050-pubblicazione-e-costi-della-directory.md).
-Il [gestore dell'indice](indice-primario.md) aggiunge sondaggio, controllo
-Swiss, arena e pubblicazione della directory. Restano versioni trattenute
-ricercabili e GET completo; questo banco rimane la primitiva del payload.
+The [index manager](indice-primario.md) adds probing, Swiss
+control, arena, and directory publication. Searchable retained versions
+and complete GET remain; this bank remains the payload primitive.
 
-Classe C1: REQ-IDX-001, REQ-IDX-003, REQ-IDX-004, REQ-IDX-005,
+Class C1: REQ-IDX-001, REQ-IDX-003, REQ-IDX-004, REQ-IDX-005,
 REQ-IDX-006, REQ-IDX-007, REQ-LIM-001, REQ-LIM-003, REQ-CON-004,
-REQ-AFF-004 e REQ-AFF-008. Invarianti: INV-I1, INV-I3, INV-V3, INV-A8,
-INV-P6. I requisiti restano progettati; le decisioni architetturali invariate.
+REQ-AFF-004, and REQ-AFF-008. Invariants: INV-I1, INV-I3, INV-V3, INV-A8,
+INV-P6. Requirements remain designed; architectural decisions unchanged.
 
-## Proprietà, memoria e layout
+<a id="proprietà-memoria-e-layout"></a>
 
-Un banco appartiene a un frammento della Serie. Il controller lo alloca
-prima della pubblicazione; il writer con gettone esclusivo è l'unico a
-pubblicare, rimuovere, rilocare o congelare. Nessun thread permanente,
-mutex, coda, callback o I/O; nessun contatore comune tra Serie.
+## Ownership, memory, and layout
 
-Capacità 1..65.536 slot, default 8.192: è un limite del banco, non della
-Serie. Il budget controlla `capacità × parole × 8` prima dell'allocazione.
-Riguarda il solo payload, non RSS, directory o memoria transitoria.
-Il futuro gestore del frammento aggiunge i costi degli altri array.
-Nessun array cresce in questo componente.
+A bank belongs to a Serie fragment. The controller allocates it
+before publication; the writer with the exclusive token is the only one that
+publishes, removes, relocates, or freezes. No permanent thread,
+mutex, queue, callback, or I/O; no counter shared between Serie.
 
-| Word | Layout v2 |
+Capacity 1..65,536 slots, default 8,192: this is a bank limit, not a
+Serie limit. Budget checks `capacità × parole × 8` before allocation.
+It concerns payload only, not RSS, directory, or transient memory.
+The future fragment manager adds the costs of other arrays.
+No array grows in this component.
+
+| Word | v2 layout |
 |---|---|
 | 0 | CSN u64 |
-| 1 | segment-id nei 32 bit alti, offset nei 32 bit bassi |
-| 2 | key-off(32), key-len(16), flag(8), riservato(8), dal bit basso |
+| 1 | segment-id in high 32 bits, offset in low 32 bits |
+| 2 | key-off(32), key-len(16), flag(8), reserved(8), from low bit |
 | 3 | seqlock u64 |
-| 4 | record-len(32), riservato(32) |
-| 5, solo trattenuto | CSN di fine validità esclusivo |
+| 4 | record-len(32), reserved(32) |
+| 5, retained only | Exclusive validity end CSN |
 
-Flag vivo 1; slot vuoto con tutti i campi zero, salvo il seqlock. Non sono
-il controllo Swiss, il flag PREPARED o un tombstone dello storage.
-Controllati: riservati, chiavi 1..65.535, rappresentabilità dell'intervallo
-chiave, lunghezza record/documento, fine record entro i 4 GiB − 1 del
-segmento. Nel primario la fine è zero; nel trattenuto è maggiore del CSN.
-Arena, segmento, manifest, decisione di commit e integrità dei byte sono
-verificati dal livello superiore.
+Live flag 1; empty slot with all fields zero except seqlock. These are not
+Swiss control, the PREPARED flag, or a storage tombstone.
+Checked: reserved fields, keys 1..65,535, representability of the key
+range, record/document length, record end within the segment's
+4 GiB − 1. In primary, end is zero; in retained, it is greater than CSN.
+Arena, segment, manifest, commit decision, and byte integrity are
+verified by the upper layer.
 
-Il buffer privato preallocato del worker ha **cinque u64** in ordine
-`[CSN, location, key-meta, record-len, end-CSN]`. Non contiene seqlock,
-riferimenti o descrittori. Nessun altro worker modifica input/output
-durante la chiamata. Nessun u64 del payload è restituito come valore Lisp
-dal percorso di lettura; l'assenza di allocazioni richiede ancora misure.
+The worker's private preallocated buffer has **five u64s** in order
+`[CSN, location, key-meta, record-len, end-CSN]`. It contains no seqlock,
+references, or descriptors. No other worker modifies input/output
+during the call. No payload u64 is returned as a Lisp value
+by the read path; absence of allocations still requires measurement.
 
-## API e protocollo
+<a id="api-e-protocollo"></a>
 
-| API | Contratto |
+## API and protocol
+
+| API | Contract |
 |---|---|
-| `crea-banco-slot` | Preallocazione con capacità, tipo primario/trattenuto e budget. |
-| `leggi-slot-v2(bank, slot, buffer)` | `:live` copia dati coerenti; `:empty`/`:retry-limit` lasciano il buffer intatto. Non autorizza da sola un GET. |
-| `credito-scrittura-slot(bank, slot)` | Preflight: incrementi doppi ancora ammessi; non li prenota. |
-| `pubblica-slot-v2(bank, slot, source)` | Pubblica un payload vivo; conflitti, retention, chiave/arena e budget già risolti dal writer. |
-| `rimuovi-slot-v2(bank, slot)` | Azzera sotto seqlock; rimozione già conclusa idempotente; controllo Swiss DELETED dopo. |
-| `riloca-slot-v2(bank, slot, expected, replacement)` | Cambia solo la location se tutti i campi correnti coincidono con quelli originali; altrimenti `NIL`, senza modifiche. |
-| `congela-banco-slot(bank)` | Non scrivibile permanentemente, leggibile; non pubblica una directory. |
-| `invalida-banco-slot(bank)` | Salute terminale `FAULTED`, ripetibile senza mutex; il confine della Serie deve isolare il dominio. |
+| `crea-banco-slot` | Preallocation with capacity, primary/retained type, and budget. |
+| `leggi-slot-v2(bank, slot, buffer)` | `:live` copies consistent data; `:empty`/`:retry-limit` leave the buffer intact. Does not authorize a GET on its own. |
+| `credito-scrittura-slot(bank, slot)` | Preflight: double increments still allowed; does not reserve them. |
+| `pubblica-slot-v2(bank, slot, source)` | Publishes a live payload; conflicts, retention, key/arena, and budget already resolved by the writer. |
+| `rimuovi-slot-v2(bank, slot)` | Zeros under seqlock; already completed removal idempotent; Swiss DELETED control afterward. |
+| `riloca-slot-v2(bank, slot, expected, replacement)` | Changes only location if all current fields match the originals; otherwise `NIL`, without changes. |
+| `congela-banco-slot(bank)` | Permanently nonwritable, readable; does not publish a directory. |
+| `invalida-banco-slot(bank)` | Terminal health `FAULTED`, repeatable without mutex; the Serie boundary must isolate the domain. |
 
-Writer: contenuto originale e credito verificati, sequenza dispari,
-barriera di scrittura, campi, barriera di scrittura, sequenza pari.
-Il ritorno attesta la pubblicazione in memoria, senza durability o commit.
-Reader: prima sequenza, rifiuto se dispari, barriera di lettura, campi,
-barriera di lettura, seconda sequenza. Si verifica e copia solo un campione
-stabile. Incoerenza stabile porta a `FAULTED` e `invariant-violation`;
-campi transitori non vengono interpretati come corruzione. Salute acquisita
-prima/dopo la lettura e dopo la copia. Su errore o uscita non locale il
-chiamante scarta il risultato privato.
+Writer: original contents and credit checked, odd sequence,
+write barrier, fields, write barrier, even sequence.
+Return attests in-memory publication, without durability or commit.
+Reader: first sequence, rejection if odd, read barrier, fields,
+read barrier, second sequence. Only a stable sample is checked
+and copied. Stable inconsistency leads to `FAULTED` and `invariant-violation`;
+transient fields are not interpreted as corruption. Health acquired
+before/after the read and after copy. On error or nonlocal exit, the
+caller discards the private result.
 
-La API tenta al massimo otto volte. Il futuro sondaggio usa il tentativo
-interno nello **stesso budget complessivo**, senza moltiplicarlo per slot
-o cambi root. Al limite scarta la location e passa la richiesta originale
-al writer della Serie. Anche un miss richiede il ricontrollo finale di
-root/generazione di ADR-0050; seqlock valido non lo sostituisce.
+The API attempts at most eight times. Future probing uses the internal
+attempt within the **same overall budget**, without multiplying it by slots
+or root changes. At the limit it discards location and passes the original request
+to the Serie writer. Even a miss requires ADR-0050's final
+root/generation recheck; a valid seqlock does not replace it.
 
-## Crediti, rilocazione e interruzioni
+<a id="crediti-rilocazione-e-interruzioni"></a>
 
-La sequenza non raggiunge 2^62 e non fa wrap. Prima del commit il writer
-confronta il credito con **tutte** le mutazioni già prenotate dai lotti
-pendenti per lo slot, oppure prepara un rebuild. La contabilità dei lotti
-resta esterna; il numero restituito non è una prenotazione. La mutazione
-ricontrolla il credito prima del primo store. Verifiche, rimozioni già
-concluse e rilocazioni non applicabili non richiedono credito aggiuntivo.
+## Credits, relocation, and interruptions
 
-Rilocazione: CSN, key-meta, lunghezza e fine rimangono identici; confronto
-e applicazione serializzati dal writer. Versione più nuova o location già
-sostituita non vengono sovrascritte. Il messaggio di compaction si ricerca
-per chiave nella root corrente: non conserva slot o offset arena oltre
-split/rebuild. `expected` si associa a quel lookup corrente prima della
-primitiva. Copia durevole, manifest, retention e reclaim sono esterni.
+Sequence does not reach 2^62 and does not wrap. Before commit the writer
+compares credit with **all** mutations already reserved by pending
+batches for the slot, or prepares a rebuild. Batch accounting
+remains external; the returned number is not a reservation. Mutation
+rechecks credit before the first store. Checks, already completed
+removals, and inapplicable relocations require no additional credit.
 
-Uscita non locale nella mutazione => `FAULTED`, anche dopo la sequenza pari.
-Nessun rollback, reset o riapertura del banco congelato. Il futuro gestore
-pubblica root, controllo Swiss e arena con controlli e cleanup propri.
+Relocation: CSN, key-meta, length, and end remain identical; comparison
+and application serialized by the writer. A newer version or already
+replaced location is not overwritten. The compaction message is looked up
+by key in the current root: it retains no slot or arena offset across
+split/rebuild. `expected` is associated with that current lookup before the
+primitive. Durable copy, manifest, retention, and reclaim are external.
 
-## Decisioni da coprire — COD-54
+Nonlocal exit during mutation => `FAULTED`, even after even sequence.
+No rollback, reset, or reopening of a frozen bank. The future manager
+publishes root, Swiss control, and arena with its own checks and cleanup.
 
-| ID | Decisione composta | Condizioni indipendenti |
+<a id="decisioni-da-coprire--cod-54"></a>
+
+## Decisions to cover — COD-54
+
+| ID | Compound decision | Independent conditions |
 |---|---|---|
-| SLOT-D01 | Configurazione | Capacità nel range; budget positivo; payload entro budget. |
-| SLOT-D02 | Payload vivo | CSN positivo; flag 1; riservato key zero; key-len positiva; intervallo chiave rappresentabile. |
-| SLOT-D03 | Record/location | Riservato length zero; minimo header+key; massimo record; limite documento; fine record entro segmento. |
-| SLOT-D04 | Intervallo MVCC | Primario con fine zero; trattenuto con fine maggiore del CSN. |
-| SLOT-D05 | Sequenza writer | Dispari; oltre soglia; credito disponibile separato dalla verifica. |
-| SLOT-D06 | Identità attesa | Uguaglianza separata di CSN, location, key-meta, lunghezza e fine. |
-| SLOT-D07 | Copia da rilocare | CSN, key-meta, lunghezza e fine invariati; location distinta o uguale. |
+| SLOT-D01 | Configuration | Capacity in range; positive budget; payload within budget. |
+| SLOT-D02 | Live payload | Positive CSN; flag 1; zero key reserved field; positive key-len; representable key range. |
+| SLOT-D03 | Record/location | Zero length reserved field; minimum header+key; maximum record; document limit; record end within segment. |
+| SLOT-D04 | MVCC interval | Primary with zero end; retained with end greater than CSN. |
+| SLOT-D05 | Writer sequence | Odd; above threshold; available credit separate from checking. |
+| SLOT-D06 | Expected identity | Separate equality of CSN, location, key-meta, length, and end. |
+| SLOT-D07 | Copy to relocate | CSN, key-meta, length, and end unchanged; location different or equal. |
 
-Altre transizioni da esercitare: otto sequenze dispari/cambiate; incoerenza
-solo transitoria; vuoto e riuso; CSN oltre fixnum/fino a u64 massimo; chiavi
-massime; credito zero; guasto concorrente; interruzione prima/durante/dopo
-pubblicazione; congelamento e ritiro. Nessuna copertura dichiarata.
+Other transitions to exercise: eight odd/changed sequences; only transient
+inconsistency; empty and reuse; CSN beyond fixnum/up to maximum u64; maximum
+keys; zero credit; concurrent fault; interruption before/during/after
+publication; freeze and retirement. No coverage claimed.
 
-## Metodo delle evidenze e qualifica
+<a id="metodo-delle-evidenze-e-qualifica"></a>
 
-Metodo stabilito prima dei controlli: compilazione del solo `arcdocdb` con
-avvisi come errori; lint, tracciabilità, link e cataloghi. Record originali
-e disassemblato ARM64 della lettura/pubblicazione conservati per ispezione
-statica, senza chiamare le funzioni del nuovo modulo. Rifiuti conservati.
+## Evidence method and qualification
 
-Le due letture locali hanno controllato separatamente payload e protocollo:
-validazione solo dopo un campione stabile, rifiuto dei riservati, credito
-seqlock distinto dalle verifiche/rilocazioni senza effetto, proprietà dei
-buffer, congelamento e salute terminali. I predicati chiave e record sono
-separati e inline per contenere la complessità senza aggiungere ritorni u64.
-Il disassemblato ARM64 conserva i load/store delle parole native e le
-barriere `DMB ISHLD`/`DMB ISHST`; questa ispezione non è una prova concorrente.
+Method established before checks: compile only `arcdocdb` with
+warnings as errors; lint, traceability, links, and catalogs. Original records
+and ARM64 disassembly of read/publication retained for static
+inspection, without calling the new module's functions. Rejections retained.
 
-Il primo controllo dei cataloghi ha rifiutato riferimenti a sottocartelle.
-Catalogo iniziale e rifiuto sono conservati; i report e i metadati originali
-sono stati spostati senza ricodificarli in file nella directory della
-campagna, come richiede il verificatore esistente. La sorgente del collector
-iniziale e quella della correzione sono conservate come dati.
+The two local readings separately checked payload and protocol:
+validation only after a stable sample, reserved field rejection, seqlock
+credit distinct from checks/no-effect relocations, buffer ownership,
+terminal freeze and health. Key and record predicates are
+separate and inline to contain complexity without adding u64 returns.
+ARM64 disassembly retains native word loads/stores and
+`DMB ISHLD`/`DMB ISHST` barriers; this inspection is not a concurrent test.
 
-La [campagna dedicata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-index-slots/README.md)
-ha questo ambito. Nessun test funzionale, concorrente, fault injection,
-modello, benchmark o auto-verifica degli strumenti aggiunto/eseguito
-localmente. Il codice e le misure v1 di SPK-01 non qualificano il layout v2.
+The first catalog check rejected subdirectory references.
+Initial catalog and rejection are retained; original reports and metadata
+were moved without re-encoding to files in the campaign
+directory, as the existing verifier requires. The initial collector
+source and the correction's source are retained as data.
 
-Restano qualifica C1, interleaving e disassemblato x86-64, allocazione/P99,
-sondaggio/arena/directory con budget condiviso, retention, recovery e
-writer integrati. Gate del motore completo aperto. Le due letture locali
-del codice non sono revisioni indipendenti.
+The [dedicated campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-index-slots/README.md)
+has this scope. No functional, concurrent, fault injection,
+model, benchmark, or tool self-test added/executed
+locally. SPK-01's v1 code and measurements do not qualify v2 layout.
 
-## Prove successive — slot v2
+C1 qualification, interleavings and x86-64 disassembly, allocation/P99,
+probing/arena/directory with shared budget, retention, recovery, and
+integrated writer remain. Whole-engine gate open. The two local
+code readings are not independent reviews.
 
-La [campagna di ricostruzione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-index-rebuild/risultati.md)
-aggiunge 64 test degli slot v2, compresi payload oltre fixnum, rifiuti,
-aggiornamento, rilocazione, riuso e concorrenza tra writer e reader.
-Gli slot sono esercitati anche dalle 55 prove di indice primario e rebuild.
-La nota precedente descrive l'ambito della campagna iniziale. Il nuovo
-rapporto conserva risultati, copertura, revisioni e limiti: FI deterministica
-nel campione seqlock, interruzioni interne, fault durante la copia e x86-64
-restano da qualificare.
+<a id="prove-successive--slot-v2"></a>
+
+## Subsequent tests — v2 slots
+
+The [reconstruction campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-index-rebuild/risultati.md)
+adds 64 v2 slot tests, including beyond-fixnum payloads, rejections,
+updates, relocation, reuse, and writer/reader concurrency.
+Slots are also exercised by 55 primary index and rebuild tests.
+The preceding note describes the initial campaign's scope. The new
+report retains results, coverage, reviews, and limits: deterministic FI
+in the seqlock sample, internal interruptions, fault during copy, and x86-64
+remain to be qualified.

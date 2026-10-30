@@ -1,75 +1,83 @@
 # 14 — Fault injection
 
-> **Fonte:** «Fault injection» della [specifica](specifica/specifica-originale.md).
+> **Source:** ‘Fault injection’ of the [specification](specifica/specifica-originale.md).
 
-## Scenari
+<a id="scenari"></a>
 
-Vanno implementati test di fault injection almeno per i seguenti punti di crash.
+## Scenarios
 
-| ID | Crash… | Sottosistema | Invarianti da verificare |
+Fault-injection tests must be implemented for at least these crash points.
+
+| ID | Crash… | Subsystem | Invariants to check |
 |---|---|---|---|
-| FI-01 | durante WAL append | [WAL](04-wal-e-durability.md) | INV-D1 |
-| FI-02 | durante fsync | [WAL](04-wal-e-durability.md) | INV-D1 |
-| FI-03 | dopo prepare | [Transazioni](05-transazioni.md) | INV-T4, INV-D1 |
-| FI-04 | prima del commit decision | [Transazioni](05-transazioni.md) | INV-T4, INV-T3 |
-| FI-05 | dopo commit decision | [Transazioni](05-transazioni.md) | INV-T4, INV-T3, INV-D1 |
-| FI-06 | durante atomic index swap | [Compaction](07-compaction.md), [Indici](08-indici.md) | INV-C7, INV-C8, INV-D1 |
-| FI-07 | durante CLEAN | [Compaction](07-compaction.md) | INV-C3, INV-C8, INV-C9 |
-| FI-08 | durante MERGE | [Compaction](07-compaction.md) | INV-C3, INV-C8, INV-C9 |
-| FI-09 | durante reclaim | [Compaction](07-compaction.md), [MVCC](06-mvcc-e-snapshot.md) | INV-R1, INV-D1 |
-| FI-10 | durante rebuild index | [Recovery](11-recovery.md) | INV-D1, INV-S6 |
-| FI-11 | con snapshot attivi | [MVCC](06-mvcc-e-snapshot.md) | INV-M1, INV-M2, INV-R1 |
-| FI-12 | durante transazione multiserie | [Transazioni](05-transazioni.md) | INV-T4, INV-T5 |
-| FI-13 | durante creazione/eliminazione di una Serie (aggiunto da [ADR-0022](adr/0022-registri-come-serie-catalogo.md)) | [Modello logico](02-modello-logico.md#catalogo) | catalogo coerente con le directory; nessuna Serie a metà |
+| FI-01 | during WAL append | [WAL](04-wal-e-durability.md) | INV-D1 |
+| FI-02 | during fsync | [WAL](04-wal-e-durability.md) | INV-D1 |
+| FI-03 | after prepare | [Transactions](05-transazioni.md) | INV-T4, INV-D1 |
+| FI-04 | before the commit decision | [Transactions](05-transazioni.md) | INV-T4, INV-T3 |
+| FI-05 | after the commit decision | [Transactions](05-transazioni.md) | INV-T4, INV-T3, INV-D1 |
+| FI-06 | during atomic index swap | [Compaction](07-compaction.md), [Indexes](08-indici.md) | INV-C7, INV-C8, INV-D1 |
+| FI-07 | during CLEAN | [Compaction](07-compaction.md) | INV-C3, INV-C8, INV-C9 |
+| FI-08 | during MERGE | [Compaction](07-compaction.md) | INV-C3, INV-C8, INV-C9 |
+| FI-09 | during reclaim | [Compaction](07-compaction.md), [MVCC](06-mvcc-e-snapshot.md) | INV-R1, INV-D1 |
+| FI-10 | during index rebuild | [Recovery](11-recovery.md) | INV-D1, INV-S6 |
+| FI-11 | with active snapshots | [MVCC](06-mvcc-e-snapshot.md) | INV-M1, INV-M2, INV-R1 |
+| FI-12 | during a multiseries transaction | [Transactions](05-transazioni.md) | INV-T4, INV-T5 |
+| FI-13 | during Serie creation/deletion (added by [ADR-0022](adr/0022-registri-come-serie-catalogo.md)) | [Logical model](02-modello-logico.md#catalogo) | catalog consistent with directories; no partially created Serie |
 
-## Invarianti da verificare
+<a id="invarianti-da-verificare"></a>
 
-Dalla specifica, con il corrispondente identificativo in [invarianti.md](invarianti.md):
+## Invariants to check
 
-| # | Invariante | ID |
+From the specification, with corresponding identifiers in [invarianti.md](invarianti.md):
+
+| # | Invariant | ID |
 |---|---|---|
-| 1 | nessun dato committed deve andare perso | INV-D1 |
-| 2 | nessuna transazione multiserie deve risultare parzialmente committed | INV-T4 |
-| 3 | nessun segmento ancora referenziato deve essere eliminato | INV-R1 |
-| 4 | nessuno snapshot deve osservare una versione non coerente | INV-M1 |
-| 5 | un segmento sorgente deve rimanere recuperabile fino al completamento dello swap | INV-C8 |
-| 6 | una compaction interrotta deve essere ripetibile o completabile durante recovery | INV-C9 |
+| 1 | no committed data may be lost | INV-D1 |
+| 2 | no multiseries transaction may be partially committed | INV-T4 |
+| 3 | no still-referenced segment may be deleted | INV-R1 |
+| 4 | no snapshot may observe an inconsistent version | INV-M1 |
+| 5 | a source segment must remain recoverable until the swap completes | INV-C8 |
+| 6 | an interrupted compaction must be repeatable or completable during recovery | INV-C9 |
 
-## Implicazioni architetturali
+<a id="implicazioni-architetturali"></a>
 
-Il fault injection condiziona il progetto fin dall'inizio; non si aggiunge alla fine.
+## Architectural implications
 
-> **Deciso ([ADR-0035](adr/0035-strategia-di-verifica-e-tracciabilita.md))** — Requisiti di testabilità:
+Fault injection shapes the design from the start; it is not added at the end.
+
+> **Decided ([ADR-0035](adr/0035-strategia-di-verifica-e-tracciabilita.md))** — Testability requirements:
 >
-> - **Punti di crash nominati.** Ogni passo dei protocolli (append, fsync, prepare, decisione,
->   swap, cambio di stato del segmento, cancellazione) attraversa un punto di iniezione
->   identificabile, così gli scenari FI si esprimono come «crash al punto X».
-> - **Strato di I/O sostituibile.** Tutte le scritture e gli `fsync` passano da un'unica
->   interfaccia, che in test può simulare scritture parziali, `fsync` non eseguiti e perdita
->   dei dati non sincronizzati.
-> - **Oracolo.** Un modello di riferimento registra che cosa è stato confermato al client; dopo
->   il recovery si confronta lo stato del database con il modello.
-> - **Due livelli.** Simulazione deterministica in-process (veloce, esaustiva sui punti di
->   crash) e crash reali del processo SBCL (`kill -9`) su file system reale.
-> - **Modelli dei protocolli.** 2PC + recovery e workflow di compaction + reclaim sono
->   abbastanza piccoli da essere descritti come macchine a stati ed esplorati esaustivamente
->   prima di scrivere il codice: è un'attività della fase di valutazione
->   ([piano degli spike](valutazione/piano-spike.md), SPK-07).
+> - **Named crash points.** Each protocol step (append, fsync, prepare, decision,
+>   swap, segment-state change, deletion) passes through an identifiable injection point,
+>   so FI scenarios can be expressed as ‘crash at point X’.
+> - **Replaceable I/O layer.** All writes and `fsync`s go through one interface,
+>   which tests can use to simulate partial writes, skipped `fsync`s, and loss
+>   of unsynchronized data.
+> - **Oracle.** A reference model records what was acknowledged to the client; after
+>   recovery, database state is compared with the model.
+> - **Two levels.** Deterministic in-process simulation (fast, exhaustive over crash points)
+>   and real SBCL process crashes (`kill -9`) on a real filesystem.
+> - **Protocol models.** 2PC + recovery and the compaction + reclaim workflow are small
+>   enough to describe as state machines and explore exhaustively before writing code:
+>   this is an evaluation-phase activity
+>   ([spike plan](valutazione/piano-spike.md), SPK-07).
 
-## Questioni decise
+<a id="questioni-decise"></a>
 
-- «Committed» per l'oracolo: confermato a livello `:group` o `:strong`; con `:async` l'oracolo
-  pretende solo un prefisso coerente del log
+## Decided questions
+
+- ‘Committed’ for the oracle: acknowledged at `:group` or `:strong` level; with `:async`, the
+  oracle requires only a consistent log prefix
   ([ADR-0019](adr/0019-durability-e-group-commit-pipelined.md)).
-- Flush per piattaforma: `fdatasync` su Linux, `F_FULLFSYNC` su macOS, dietro un'unica
-  primitiva ([ADR-0017](adr/0017-piattaforma-e-io.md)). Un flush dichiarato riuscito ma non
-  durevole resta un rischio residuo dichiarato
+- Per-platform flush: `fdatasync` on Linux, `F_FULLFSYNC` on macOS, behind a single
+  primitive ([ADR-0017](adr/0017-piattaforma-e-io.md)). A flush reported successful but not
+  durable remains a declared residual risk
   ([FM-03](affidabilita/analisi-dei-guasti.md#fm-03)).
-- Oltre al crash, il simulatore inietta errori di I/O, corruzioni e scritture perse: vedi
-  l'[analisi dei guasti](affidabilita/analisi-dei-guasti.md).
-- In FI-01 e FI-02 il simulatore rende persistente **un sottoinsieme qualsiasi** dei lotti
-  non ancora sincronizzati, anche non in ordine e anche a metà: il recovery deve concludere
-  «coda» e non «corruzione» ([ADR-0037](adr/0037-lotto-sigillato.md), INV-F3).
-- Ogni scenario si esprime come «crash prima o dopo il punto di atomicità» dell'operazione
-  ([ADR-0036](adr/0036-leggi-di-progetto.md)); dopo ogni recovery si confrontano byte a byte
-  i segmenti con quelli di prima (INV-A9).
+- Beyond crashes, the simulator injects I/O errors, corruption, and lost writes: see
+  the [failure analysis](affidabilita/analisi-dei-guasti.md).
+- In FI-01 and FI-02, the simulator persists **any subset** of not-yet-synchronized
+  batches, including out of order and partially: recovery must conclude
+  ‘tail’, not ‘corruption’ ([ADR-0037](adr/0037-lotto-sigillato.md), INV-F3).
+- Every scenario is expressed as ‘crash before or after the operation's atomicity point’
+  ([ADR-0036](adr/0036-leggi-di-progetto.md)); after every recovery, segment bytes are
+  compared with their pre-recovery contents (INV-A9).

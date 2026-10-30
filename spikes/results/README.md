@@ -1,14 +1,16 @@
-# Risultati attuali
+<a id="risultati-attuali"></a>
 
-La [selezione delle campagne](2026-10-23-attuali/README.md) raccoglie sintesi e hash.
-I risultati CI sono indicizzati in [ci/](ci/README.md). I raw, i compilati e i temporanei delle
-campagne precedenti sono conservati nell'[archivio storico esterno](../evidence/README.md).
+# Current results
 
-`make evidence` controlla i cataloghi e i dati presenti nel checkout. Non scarica
-né ricontrolla automaticamente gli originali esterni. Per verificarli integralmente
-si seguono i comandi dell'archivio storico. Le citazioni delle prove precedenti
-puntano alla revisione Git originale, senza modificare i risultati registrati.
+The [campaign selection](2026-10-23-attuali/README.md) collects summaries and hashes.
+CI results are indexed under [ci/](ci/README.md). Raw data, compiled files and
+temporary files from earlier campaigns are retained in the [external historical archive](../evidence/README.md).
 
-I nuovi risultati pubblicati devono contenere una sintesi leggibile, parametri,
-identità dei sorgenti e hash; i raw voluminosi vanno in un asset esterno verificato.
-`spikes/out/` contiene esclusivamente output locali eliminabili delle prove.
+`make evidence` checks the catalogs and data in the checkout. It does not
+automatically download or recheck external originals. Use the historical archive's
+commands for full verification. References to earlier evidence identify its
+original Git revision without changing the recorded results.
+
+New published results must include a readable summary, parameters, source
+identity and hashes. Large raw data belongs in a verified external asset.
+`spikes/out/` contains only disposable local experiment output.

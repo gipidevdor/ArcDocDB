@@ -1,55 +1,63 @@
-# Metodo di verifica del confine I/O
+<a id="metodo-di-verifica-del-confine-io"></a>
 
-Registrato prima dell'implementazione e dell'esecuzione delle campagne. Ambito:
-apertura in sola lettura, creazione esclusiva di `.tmp`, pread esatta, append
-esatta, flush di file/directory, chiusura singola. Nessuna rinomina, cancellazione,
-troncamento, pubblicazione dell'indice o conferma di una transazione.
+# I/O-boundary verification method
 
-## Contratti da verificare
+Registered before implementation and campaign execution. Scope:
+read-only opening, exclusive `.tmp` creation, exact pread, exact append,
+file/directory flush, single close. No rename, deletion,
+truncation, index publication, or transaction acknowledgment.
 
-- Le letture non cambiano il cursore del file né scrivono stato condiviso; il
-  chiamante mantiene vivo il descrittore e possiede il buffer di destinazione.
-- Un compito possiede il file scrivibile fino al completamento dell'append/flush.
-  I file diversi non condividono stato mutabile, lock o contatori per operazione.
-- Ogni progresso positivo avanza di quanto restituito; ogni ciclo ha al massimo
-  tanti passi quanti sono i byte richiesti. Zero progresso e ritorni impossibili
-  sono errori. Un errore write/flush, incluso EINTR, non viene ritentato.
-- Budget, capacità e offset sono verificati prima della prima syscall. Un rifiuto
-  lascia il file utilizzabile; un guasto di scrittura/flush lo rende faulted.
-- La posizione durevole avanza solo dopo un flush riuscito. Un errore successivo
-  non annulla le posizioni storiche ma impedisce ogni futura operazione mutante.
-- Close invalida il descrittore prima di chiamare il backend: niente retry né
-  seconda close, anche con EINTR, perché il numero potrebbe essere riutilizzato.
-- Native: fdatasync Linux, F_FULLFSYNC macOS; fsync per directory. Buffer pinning
-  soltanto nel modulo io; nessun puntatore esportato dalle API pubbliche.
+<a id="contratti-da-verificare"></a>
 
-## Prove
+## Contracts to verify
 
-Backend iniettato con ritorni brevi, progresso di un byte, EOF iniziale/parziale,
-ritorni negativi/eccessivi/non interi, EIO, ENOSPC ed EINTR prima/dopo progresso.
-Si controllano argv/offset, contenuto dei buffer, numero di chiamate, stato del
-file, posizione scritta/durevole e assenza di chiamate dopo il guasto.
+- Reads do not change file cursor or write shared state; the
+  caller keeps descriptor alive and owns destination buffer.
+- A task owns the writable file until append/flush completes.
+  Different files share no mutable state, locks, or per-operation counters.
+- Every positive progress advances by the amount returned; every loop has at most
+  as many steps as requested bytes. Zero progress and impossible returns
+  are errors. A write/flush error, including EINTR, is not retried.
+- Budgets, capacity, and offsets checked before first syscall. A rejection
+  leaves file usable; a write/flush fault makes it faulted.
+- Durable position advances only after successful flush. A later error
+  does not undo historical positions but prevents future mutating operations.
+- Close invalidates descriptor before calling backend: no retry or
+  second close, even with EINTR, because the number could be reused.
+- Native: Linux fdatasync, macOS F_FULLFSYNC; fsync for directories. Buffer pinning
+  only in io module; no pointer exported through public APIs.
 
-Fixture reali in una directory temporanea esclusiva: creazione, append di un
-header e lotti SEAL, flush, riapertura readonly, confronto dei byte e verifica dei
-codec. Si sincronizza anche la directory. Si controllano file già esistenti,
-symlink, file/directory di tipo errato e letture posizionali ripetute/concorrenti.
-Queste prove non simulano perdita di alimentazione o malfunzionamenti del supporto.
+<a id="prove"></a>
 
-`make test lint` e `make check`. Il wrapper `tools/record-command.lisp` conserva
-comando, ambiente, revisione, blob prima/dopo, esito, stdout/stderr e fallimenti.
-Copertura e mutazioni mirate in processi separati dalle misure.
+## Tests
 
-## Misure
+Injected backend with short returns, one-byte progress, initial/partial EOF,
+negative/excessive/noninteger returns, EIO, ENOSPC, and EINTR before/after progress.
+Checks: argv/offset, buffer contents, call count, file
+state, written/durable position, and no calls after failure.
 
-Cinque campioni, warmup, fixture e buffer preallocati, GC completo prima del
-campione, safety 3. Misurare tempo e heap SBCL: pread reale da cache del filesystem
-(2 KiB), append reale senza flush per operazione e backend simulato per isolare il
-costo dei controlli. Un self-test rileva anche allocazioni deliberate. Controllare
-zero byte heap nei percorsi riusciti scelti, senza generalizzarlo agli errori.
+Real fixtures in an exclusive temporary directory: creation, append of a
+header and SEAL batches, flush, read-only reopening, byte comparison, and codec
+verification. Directory also synchronized. Checks include existing files,
+symlinks, wrong file/directory types, and repeated/concurrent positional reads.
+These tests do not simulate power loss or storage-media malfunction.
 
-Eventuali misure di flush sono latenza della syscall locale, non commit del motore
-né throughput NVMe sostenuto; i campioni sono conservati integralmente. Non si
-deduce P99 da cinque campioni. Carico esterno e cache OS non sono controllati.
-Qualifica C1, Linux x86-64, eventi della Serie/Archivio, pool I/O e guasti del
-motore integrato restano criteri separati.
+`make test lint` and `make check`. Wrapper `tools/record-command.lisp` preserves
+command, environment, revision, blobs before/after, outcome, stdout/stderr, and failures.
+Targeted coverage and mutations in processes separate from measurements.
+
+<a id="misure"></a>
+
+## Measurements
+
+Five samples, warmup, preallocated fixtures and buffers, full GC before
+sample, safety 3. Measure time and SBCL heap: real pread from file-system
+cache (2 KiB), real append without per-operation flush, and simulated backend to isolate
+check costs. A self-test also detects deliberate allocations. Check
+zero heap bytes in selected successful paths, without generalizing to errors.
+
+Any flush measurements are local syscall latency, not engine commits
+or sustained NVMe throughput; samples preserved in full. P99 is not
+inferred from five samples. External load and OS cache uncontrolled.
+C1 qualification, Linux x86-64, Serie/Archivio events, I/O pool, and integrated
+engine faults remain separate criteria.

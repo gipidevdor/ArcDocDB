@@ -1,130 +1,142 @@
-# Bootstrap del runtime dell'Archivio
+<a id="bootstrap-del-runtime-dellarchivio"></a>
 
-`arcdocdb.runtime` collega il [piano CSN completo](csn-archivio-recovery.md)
-ai registri esistenti di CSN, snapshot ed epoche. Realizza ADR-0046 e le
-voci condivise dell'[Archivio](../architettura.md#archivio-coordinamento-minimo).
-Non introduce formati o nuove sezioni critiche per operazione.
+# Archivio runtime bootstrap
 
-## Famiglia unica e pubblicazione
+`arcdocdb.runtime` connects [complete CSN plan](csn-archivio-recovery.md)
+to existing CSN, snapshot, and epoch registries. Implements ADR-0046 and
+shared [Archivio](../architettura.md#archivio-coordinamento-minimo) entries.
+Introduces no formats or new per-operation critical sections.
 
-Il controller mantiene un solo oggetto canonico `archivio-recovery` per
-Archivio fisico, con catalogo e fonti congelati attraverso il bootstrap.
-`crea-runtime-archivio` riceve un piano completo di quell'oggetto e
-costruisce in privato CSN con ultimo=H=M, snapshot legato per EQ a quel
-CSN, EBR e un nuovo ambito GET. Verifica legami e frontiere prima del CAS.
+<a id="famiglia-unica-e-pubblicazione"></a>
 
-Un solo CAS passa il binding privato dell'Archivio da NIL alla capsula.
-La barriera write precede il CAS; il getter carica una volta e acquisisce
-prima di interpretare il riferimento. Due tentativi, anche con piani
-distinti dello stesso Archivio, restituiscono al massimo una capsula
-pubblicata. Il perdente segnala `:archive-runtime-bound`; la sua candidata
-locale diventa recuperabile dal GC. Il controllo iniziale evita allocazioni
-quando il binding è già visibile; il CAS decide la concorrenza.
+## Single family and publication
 
-Dopo il CAS riuscito segue solo il ritorno. Non esiste reset, rollback o
-seconda pubblicazione. `trova-runtime-archivio` ritrova la stessa capsula
-se il caller perde il ritorno per interruzione. Gli errori prima del CAS
-non pubblicano stati intermedi. È una pubblicazione in memoria, senza
-atomicità durevole. La capsula contiene solo CSN e nuovo ambito; nessun
-piano, vecchio ambito, risultato recovery, tabella o FD trattenuto.
+Controller maintains one canonical `archivio-recovery` object per
+physical Archivio, with catalog and sources frozen through bootstrap.
+`crea-runtime-archivio` receives a complete plan from that object and
+privately constructs CSN with latest=H=M, snapshot EQ-bound to that
+CSN, EBR, and new GET scope. Checks bindings and frontiers before CAS.
 
-L'unicità vale **per oggetto Archivio canonico**. Canonicalità rispetto
-al catalogo, esclusione di altri processi e validità temporale del piano
-sono obblighi del controller. Due oggetti con lo stesso UUID non creano
-un'esclusione fisica. Gli accessi Lisp agli interni privati sono fuori
-dal contratto pubblico. Il nuovo slot privato cambia il layout: occorre
-ricompilare senza riutilizzare vecchie istanze.
+One CAS changes private Archivio binding from NIL to capsule.
+Write barrier precedes CAS; getter loads once and acquires
+before interpreting reference. Two attempts, even with different plans
+of same Archivio, return at most one published
+capsule. Loser signals `:archive-runtime-bound`; its local
+candidate becomes GC-reclaimable. Initial check avoids allocations
+when binding already visible; CAS decides race.
 
-## API e limiti
+Only return follows successful CAS. No reset, rollback, or
+second publication. `trova-runtime-archivio` retrieves same capsule
+if caller loses return through interruption. Errors before CAS
+publish no intermediate states. In-memory publication without
+durable atomicity. Capsule contains only CSN and new scope; retains no
+plan, old scope, recovery result, table, or FD.
 
-| API | Contratto |
+Uniqueness holds **per canonical Archivio object**. Canonical identity relative
+to catalog, exclusion of other processes, and temporal plan validity
+are controller obligations. Two objects with same UUID create no
+physical exclusion. Lisp access to private internals outside
+public contract. New private slot changes layout: must
+recompile without reusing old instances.
+
+<a id="api-e-limiti"></a>
+
+## API and limits
+
+| API | Contract |
 |---|---|
-| `crea-runtime-archivio(plan, lifetime-ticks, wait-ticks, :csn-capacity 256, :snapshot-capacity 256, :worker-capacity 64, :retirement-capacity 256)` | Costruzione e binding unico, senza assegnare CSN |
-| `trova-runtime-archivio(archive)` | NIL oppure capsula pubblicata per identità |
-| `csn-runtime-archivio(runtime)` | Registro da passare a writer e decisioni |
-| `ambito-runtime-archivio(runtime)` | Ambito per nuove viste e contesti GET |
-| `snapshot-runtime-archivio(runtime)` | Snapshot dello stesso CSN e ambito |
-| `epoche-runtime-archivio(runtime)` | EBR dello stesso ambito, reader preallocati |
+| `crea-runtime-archivio(plan, lifetime-ticks, wait-ticks, :csn-capacity 256, :snapshot-capacity 256, :worker-capacity 64, :retirement-capacity 256)` | Construction and single binding, without CSN assignment |
+| `trova-runtime-archivio(archive)` | NIL or published capsule by identity |
+| `csn-runtime-archivio(runtime)` | Registry to pass to writers and decisions |
+| `ambito-runtime-archivio(runtime)` | Scope for new GET views and contexts |
+| `snapshot-runtime-archivio(runtime)` | Snapshots of same CSN and scope |
+| `epoche-runtime-archivio(runtime)` | EBR of same scope, preallocated readers |
 
-Le capacità sono rispettivamente 1..65536, 1..65536, 1..4096 e 1..65536:
-i limiti esistenti dei registri. Tutti i tipi e limiti, incluso
-`1 <= wait-ticks <= lifetime-ticks <= max-u64`, sono verificati prima di
-allocare registri o fare binding. Le durate sono obbligatorie nella stessa
-unità monotona di NOW fornita poi alle API snapshot. Nessun clock, worker,
-timer o compito I/O avviato.
+Capacities respectively 1..65536, 1..65536, 1..4096, and 1..65536:
+existing registry limits. All types and limits, including
+`1 <= wait-ticks <= lifetime-ticks <= max-u64`, checked before
+allocating registries or binding. Durations required in same
+monotonic unit as NOW later supplied to snapshot APIs. No clock, worker,
+timer, or I/O task started.
 
-Il costo è quello delle capacità preallocate; oggetti Lisp e GC non sono
-un budget RSS. Candidate concorrenti possono moltiplicare temporaneamente
-il costo; il controller mantiene il bootstrap esclusivo. Il CAS difende
-dal doppio binding, non autorizza recovery concorrenti. Il binding non è
-toccato da assegnazione, risoluzione, snapshot o GET.
+Cost is preallocated capacities; Lisp objects and GC are not
+RSS budget. Concurrent candidates may temporarily multiply
+cost; controller keeps bootstrap exclusive. CAS protects
+against double binding, does not authorize concurrent recoveries. Binding not
+touched by assignment, resolution, snapshots, or GET.
 
-## Collegamento delle Serie e ammissione
+<a id="collegamento-delle-serie-e-ammissione"></a>
 
-La prima assegnazione restituisce M+1. Riporto u32 ed esaurimento u64
-restano quelli del registro canonico: la base massima è rappresentabile,
-un'assegnazione ulteriore fallisce senza wrap.
+## Serie connection and admission
 
-Il controller passa il CSN della capsula ai controller Serie e costruisce
-viste, contesti GET e capacità dei segmenti nel nuovo ambito. Le vecchie
-viste vengono respinte per identità dello scope: non vanno riusati neppure
-i `segmento-get` che le trattengono. Il vecchio ambiente resta riservato al
-bootstrap, non viene revocato. Nessun pin o ritiro EBR viene importato.
+First assignment returns M+1. u32 carry and u64 exhaustion
+remain canonical registry's: maximum base representable,
+further assignment fails without wrap.
 
-L'[adozione verificata dell'ACTIVE](adozione-controller-runtime.md) costruisce
-ora il controller reale con CSN runtime, ambito esatto e binding unico sul
-log canonico; decisione del catalogo e ammissione restano del coordinatore.
+Controller passes capsule CSN to Serie controllers and constructs
+views, GET contexts, and segment capabilities in new scope. Old
+views rejected by scope identity: even `segmento-get` objects retaining
+them must not be reused. Old environment remains reserved for
+bootstrap, not revoked. No EBR pin or retirement imported.
 
-L'[adozione dei CLOSED](adozione-closed-runtime.md) collega inoltre le mappe
-GET verificate al nuovo ambito, riusando righe immutabili e gli stessi FD.
-Non pubblica il primary o le fonti e non trasferisce la proprietà dei file.
+[Verified ACTIVE adoption](adozione-controller-runtime.md) now constructs
+real controller with runtime CSN, exact scope, and single binding on
+canonical log; catalog decision and admission remain coordinator's.
 
-**H=M non certifica la pubblicazione degli effetti recuperati.** Prima
-dell'uso operativo rimangono catalogo/inventari autorevoli, riconciliazione
-fisica, indici/radici coerenti, chiusura/pubblicazione del vecchio ACTIVE e
-obblighi multiserie. Recovery Manager e gate del traffico restano da
-implementare; queste API non qualificano l'intero motore.
+[CLOSED adoption](adozione-closed-runtime.md) also connects verified GET
+maps to new scope, reusing immutable rows and same FDs.
+Publishes neither primary nor sources and transfers no file ownership.
 
-## Decisioni e metodo preregistrato
+**H=M does not certify publication of recovered effects.** Before
+operational use, authoritative catalog/inventories, physical
+reconciliation, consistent indexes/roots, closure/publication of old ACTIVE, and
+multiseries obligations remain. Recovery Manager and traffic gate remain
+to implement; APIs do not qualify whole engine.
 
-| ID | Decisione e prova prevista |
+<a id="decisioni-e-metodo-preregistrato"></a>
+
+## Decisions and preregistered method
+
+| ID | Decision and planned test |
 |---|---|
-| RTA-D01 | Quattro capacità valide; ogni tipo e limite inferiore/superiore |
-| RTA-D02 | Lifetime valido AND wait valido AND wait <= lifetime; ogni condizione |
-| RTA-D03 | Serie positive AND segmenti >= Serie; presenza OR massimo zero |
-| RTA-D04 | Binding NIL oppure capsula; slot estraneo mediante FI |
-| RTA-D05 | Ambito diverso AND snapshot legato per EQ al CSN candidato |
-| RTA-D06 | Frontiere high e low uguali alla base; FI separate |
-| RTA-D07 | Binding già presente prima della costruzione; due piani, stessa autorità |
-| RTA-D08 | CAS riuscito/perdente; worker reali con deadline e join |
+| RTA-D01 | Four valid capacities; each type and lower/upper limit |
+| RTA-D02 | Valid lifetime AND valid wait AND wait <= lifetime; each condition |
+| RTA-D03 | Positive Serie count AND segments >= Serie count; presence OR zero maximum |
+| RTA-D04 | NIL binding or capsule; foreign slot through FI |
+| RTA-D05 | Different scope AND snapshot EQ-bound to candidate CSN |
+| RTA-D06 | High and low frontiers equal base; separate FI |
+| RTA-D07 | Binding already present before construction; two plans, same authority |
+| RTA-D08 | Successful/losing CAS; real workers with deadlines and joins |
 
-La suite `tests/runtime/` usa risultati pubblici delle fixture Archivio:
-v1/v2, zero assente/presente, DECISION/CLOSED, riporto/esaurimento, nessun
-I/O aggiuntivo e vecchio scope invariato. Le FI costruiscono stati interni
-deliberatamente incoerenti, separati dai positivi; binding estranei sempre
-ripristinati. Worker con limiti finiti, cleanup dopo join, celle possedute.
-Nessuna callback di prova introdotta nel prodotto.
+Suite `tests/runtime/` uses public Archivio fixture results:
+v1/v2, absent/present zero, DECISION/CLOSED, carry/exhaustion, no
+additional I/O, and unchanged old scope. FI constructs deliberately inconsistent
+internal states, separate from positives; foreign bindings always
+restored. Workers with finite limits, cleanup after joins, owned cells.
+No test callback introduced in product.
 
-Gli agenti scrivono file disgiunti; prima dei run vengono chiusi e la
-revisione è congelata e committed. Diagnostiche e fallimenti usano il
-recorder. Copertura con cache separata, contatori azzerati dopo il load e
-sola suite runtime: quattro file non-package del modulo più
-`recovery-archive/types.lisp` per il nuovo slot. Self-test dei confini dello
-scope e del rilevamento di un ramo mancante. Forme/rami SBCL non sono MC/DC;
-nessun residuo viene escluso dal denominatore.
+Agents write disjoint files; before runs, closed and
+revision frozen and committed. Diagnostics and failures use
+recorder. Coverage with separate cache, counters reset after load, and
+runtime suite only: four non-package module files plus
+`recovery-archive/types.lisp` for new slot. Scope-boundary
+and missing-branch detection self-tests. SBCL forms/branches are not MC/DC;
+no residue excluded from denominator.
 
-Due letture statiche C1 sono distinte dai test. Conservazione con
-[collector comune](raccolta-comandi.md), manifest, quattro worker, hash e
-controllo indipendente dell'inventario. Nessun benchmark nuovo: tempi dei
-comandi includono compilazione/fixture e non sono throughput DB.
-C1/MC/DC, piattaforma di riferimento e ammissione rimangono aperti.
+Two static C1 readings separate from tests. Preservation with
+[common collector](raccolta-comandi.md), manifest, four workers, hashes, and
+independent inventory check. No new benchmark: command times
+include compilation/fixtures and are not DB throughput.
+C1/MC/DC, reference platform, and admission remain open.
 
-## Esiti conservati
+<a id="esiti-conservati"></a>
 
-La [campagna dedicata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-runtime-bootstrap/report.md)
-conserva 27 test composti superati, inclusi due concorrenti e tre nativi,
-controllo completo locale e copertura: modulo 178/201 forme e 34/34 rami;
-con contesto Archivio 190/230 forme e 35/40 rami. Nessun residuo escluso.
-Il CAS perdente è osservato nel run, senza garanzia dello scheduling futuro.
-La [revisione statica](runtime-archivio-revisione.md) resta distinta da
-MC/DC, qualifica C1 e prova dinamica dell'interruzione dopo il CAS.
+## Preserved outcomes
+
+[Dedicated campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-runtime-bootstrap/report.md)
+preserves 27 passed compound tests, including two concurrent and three native,
+full local check, and coverage: module 178/201 forms and 34/34 branches;
+with Archivio context 190/230 forms and 35/40 branches. No residue excluded.
+Losing CAS observed in run, without future-scheduling guarantee.
+[Static review](runtime-archivio-revisione.md) remains distinct from
+MC/DC, C1 qualification, and dynamic post-CAS interruption test.

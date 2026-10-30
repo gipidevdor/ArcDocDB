@@ -1,56 +1,58 @@
-# Creazione del temporaneo dalla directory posseduta
+<a id="creazione-del-temporaneo-dalla-directory-posseduta"></a>
 
-> **Proposta di API** — completa il confine I/O relativo di ADR-0017,
-> senza cambiare formati, record decisivi o riconciliazione di ADR-0040.
+# Creating a temporary file from the owned directory
 
-`io:crea-temporaneo-nella-directory(directory, nome, …)` crea un nuovo
-file regolare vuoto `.tmp` e restituisce una capacità append posseduta.
-Il parent resta prestato e riutilizzabile. La creazione usa il suo FD,
-anche se il percorso originario della directory viene rinominato.
+> **API proposal** — completes ADR-0017's relative I/O boundary,
+> without changing formats, decisive records, or ADR-0040 reconciliation.
 
-Il nome foglia ASCII stampabile viene copiato prima dell'I/O. Sono
-esclusi separatori, NUL e dot path; il limite è 255 byte e il suffisso
-deve essere `.tmp`. Il nome `.tmp` stesso è ammesso, come nell'API
-preesistente. Un nome già occupato viene rifiutato senza modificarlo.
+`io:crea-temporaneo-nella-directory(directory, nome, …)` creates a new
+empty regular `.tmp` file and returns an owned append capability.
+The parent remains borrowed and reusable. Creation uses its FD,
+even if the directory's original path is renamed.
 
-| Opzione | Contratto |
+The printable ASCII leaf name is copied before I/O.
+Separators, NUL, and dot paths are excluded; limit 255 bytes and suffix
+must be `.tmp`. The name `.tmp` itself is allowed, as in the
+existing API. An already occupied name is rejected without modifying it.
+
+| Option | Contract |
 |---|---|
-| `max-transfer` | 1…256 MiB, predefinito 256 MiB |
-| `max-file-bytes` | 1…`most-positive-fixnum`, predefinito 4 GiB−1 |
+| `max-transfer` | 1…256 MiB, default 256 MiB |
+| `max-file-bytes` | 1…`most-positive-fixnum`, default 4 GiB−1 |
 
-Il percorso nativo usa `openat` con creazione esclusiva, append,
-`NOFOLLOW`, `CLOEXEC` e modo 0600 filtrato dalla umask del processo.
-Il quarto argomento variadico riceve il modo promosso a `int`, secondo
-l'ABI anche su Darwin ARM64. Prima della pubblicazione, `fstat` deve
-attestare un regolare vuoto e device/inode devono coincidere con l'entry
-nofollow nello stesso parent. Il controller possiede il namespace e
-impedisce modifiche o chiusure concorrenti durante la chiamata.
+The native path uses `openat` with exclusive creation, append,
+`NOFOLLOW`, `CLOEXEC`, and mode 0600 filtered by process umask.
+The fourth variadic argument receives mode promoted to `int`, per
+the ABI including Darwin ARM64. Before publication, `fstat` must
+establish an empty regular file and device/inode must match the nofollow
+entry in the same parent. The controller owns namespace and
+prevents concurrent changes or closes during the call.
 
-Il backend viene ereditato dal parent. Sono richieste `create-relative`,
-`file-metadata` ed `entry-identity`; l'assenza di una callback rifiuta
-l'operazione prima dell'I/O, senza fallback. La callback di creazione
-riceve `(fd-parent, foglia-privata, :append)` e deve realizzare la stessa
-creazione esclusiva. L'API readonly e il suo callback restano distinti.
+Backend is inherited from parent. Required: `create-relative`,
+`file-metadata`, and `entry-identity`; a missing callback rejects
+the operation before I/O, without fallback. Creation callback
+receives `(fd-parent, foglia-privata, :append)` and must implement the same
+exclusive creation. Read-only API and its callback remain distinct.
 
-Le frontiere written/durable del nuovo file sono zero. Non avviene
-alcun flush o rename. Un guasto successivo alla creazione chiude una sola
-volta il child non pubblicato, conservando causa primaria e guasto di
-cleanup. Il nome creato può restare presente: non viene eliminato
-implicitamente. Il controller dovrà riconciliarlo secondo la fonte di
-verità; questa API non prenota un ID di segmento e non decide un EDIT.
+New-file written/durable frontiers are zero. No
+flush or rename occurs. A fault after creation closes the unpublished
+child once, preserving primary cause and cleanup
+failure. The created name may remain present: it is not deleted
+implicitly. The controller must reconcile it according to the source of
+truth; this API neither reserves a segment ID nor decides an EDIT.
 
-La [prova verticale](prova-verticale.md) usa la primitiva per i propri
-output. Scelta dei nomi, bootstrap e orchestrazione della fixture
-restano C4. Il [metodo preregistrato](io-creazione-relativa-metodo.md)
-definisce decisioni, errori e limiti delle prove.
-Le [letture C1](io-creazione-relativa-revisione.md) registrano i sorgenti
-e i controlli statici che precedono le esecuzioni.
+The [vertical test](prova-verticale.md) uses the primitive for its
+outputs. Naming, bootstrap, and fixture orchestration
+remain C4. The [preregistered method](io-creazione-relativa-metodo.md)
+defines decisions, errors, and test limits.
+The [C1 readings](io-creazione-relativa-revisione.md) record sources
+and static checks preceding execution.
 
-Le [prove conservate](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa/README.md)
-distinguono il full R1 sul freeze S1 dal controllo d'integrazione R2.
-Il [rapporto di raccolta](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa-collection/collection.lisp)
-e il [checker indipendente](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa-collection/closed-check.log)
-attestano la conservazione dell'inventario chiuso.
-Il [supplemento di raccordo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa-raccordo/README.md)
-conserva R4, il primo run CI fallito nel consumer dei report, la
-regressione prima/dopo la correzione e i controlli C4 sulle integrazioni.
+[Preserved tests](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa/README.md)
+distinguish full R1 on freeze S1 from R2 integration check.
+The [collection report](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa-collection/collection.lisp)
+and [independent checker](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa-collection/closed-check.log)
+establish closed-inventory preservation.
+The [integration supplement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-io-creazione-relativa-raccordo/README.md)
+preserves R4, the first CI run failed in the report consumer,
+regression before/after correction, and C4 checks on integrations.

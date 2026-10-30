@@ -1,91 +1,101 @@
-# 16 — Moduli software
+<a id="16--moduli-software"></a>
 
-> **Fonte:** «Moduli software» della [specifica](specifica/specifica-originale.md).
+# 16 — Software modules
 
-La specifica chiede di organizzare il sistema **almeno** nei 18 moduli seguenti. Gli
-identificativi `M01…M18` seguono l'ordine della specifica.
+> **Source:** ‘Software modules’ of the [specification](specifica/specifica-originale.md).
 
-## Elenco e responsabilità
+The specification calls for organizing the system into **at least** the following 18 modules.
+Identifiers `M01…M18` follow specification order.
 
-| ID | Modulo | Responsabilità | Documento |
+<a id="elenco-e-responsabilità"></a>
+
+## List and responsibilities
+
+| ID | Module | Responsibility | Document |
 |---|---|---|---|
-| M01 | Storage Engine | Facciata per Serie: coordina WAL, segmenti, indice, cache sul percorso di lettura e scrittura | [03](03-storage.md) |
-| M02 | WAL Manager | WAL per Serie: append ordinato, group commit, flush, replay | [04](04-wal-e-durability.md) |
-| M03 | Segment Manager | Ciclo di vita dei segmenti: ACTIVE unico, rotazione, stati, lettura | [03](03-storage.md) |
-| M04 | Segment Metadata Manager | Contatori live/dead e tempi; dati derivati, ricostruibili | [03](03-storage.md#segment-metadata) |
-| M05 | Primary Index Manager | `_id → location`, tabella compatta in RAM | [08](08-indici.md) |
-| M06 | Secondary Index Manager | ART, B+ tree, posting lists, bitmap, Bloom; indici invertiti full text con posizioni e generazioni; base + delta | [08](08-indici.md#indici-secondari) |
-| M07 | Cache Manager | CLOCK, partizionamento per Serie, consapevolezza delle versioni | [09](09-cache.md) |
-| M08 | Snapshot/MVCC Manager | Snapshot logici, visibilità, protezione delle versioni dal reclaim | [06](06-mvcc-e-snapshot.md) |
-| M09 | Transaction Manager | Transazioni single-Series (OCC) e coordinamento multiserie | [05](05-transazioni.md) |
-| M10 | Multiseries Transaction Log Manager | `Registri/multiserie.log`: decisioni durevoli, group commit | [05](05-transazioni.md#multiserielog) |
-| M11 | Compaction Manager | CLEAN, MERGE, selezione candidati, swap, reclaim | [07](07-compaction.md) |
-| M12 | Recovery Manager | Ripartenza dopo crash | [11](11-recovery.md) |
-| M13 | Scheduler | Controllo del carico: request scheduler e Compaction Scheduler | [10](10-concorrenza-e-scheduling.md) |
-| M14 | Dynamic Thread Pool | Worker riutilizzati, dimensionamento dinamico | [10](10-concorrenza-e-scheduling.md#thread-pool-dinamico) |
-| M15 | Query Engine | Esecuzione di query su indici e scansioni; predicati full text e frasi combinati con filtri, nella stessa vista MVCC | [08](08-indici.md) |
-| M16 | Network/Protocol Layer | Socket Unix locale prioritario, connessioni, framing CBOR e ammissione; TCP opzionale successivo | [Interfacce](architettura.md#interfacce), [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md) |
-| M17 | Archivio/Serie/Documento Catalog Manager | Catalogo in `Registri/catalog/`, transazionale | [02](02-modello-logico.md#catalogo) |
-| M18 | SIMD/Hot Path Optimization Layer | Primitive ottimizzate per gli hot path | [15](15-ottimizzazioni-native.md) |
+| M01 | Storage Engine | Per-Serie facade: coordinates WAL, segments, index, and cache on read and write paths | [03](03-storage.md) |
+| M02 | WAL Manager | Per-Serie WAL: ordered append, group commit, flush, replay | [04](04-wal-e-durability.md) |
+| M03 | Segment Manager | Segment lifecycle: single ACTIVE, rotation, states, reads | [03](03-storage.md) |
+| M04 | Segment Metadata Manager | Live/dead counters and times; derived, rebuildable data | [03](03-storage.md#segment-metadata) |
+| M05 | Primary Index Manager | `_id → location`, compact in-RAM table | [08](08-indici.md) |
+| M06 | Secondary Index Manager | ART, B+ tree, posting lists, bitmap, Bloom; full-text inverted indexes with positions and generations; base + delta | [08](08-indici.md#indici-secondari) |
+| M07 | Cache Manager | CLOCK, per-Serie partitioning, version awareness | [09](09-cache.md) |
+| M08 | Snapshot/MVCC Manager | Logical snapshots, visibility, protection of versions from reclaim | [06](06-mvcc-e-snapshot.md) |
+| M09 | Transaction Manager | Single-Serie transactions (OCC) and multiseries coordination | [05](05-transazioni.md) |
+| M10 | Multiseries Transaction Log Manager | `Registri/multiserie.log`: durable decisions, group commit | [05](05-transazioni.md#multiserielog) |
+| M11 | Compaction Manager | CLEAN, MERGE, candidate selection, swap, reclaim | [07](07-compaction.md) |
+| M12 | Recovery Manager | Restart after a crash | [11](11-recovery.md) |
+| M13 | Scheduler | Load control: request scheduler and Compaction Scheduler | [10](10-concorrenza-e-scheduling.md) |
+| M14 | Dynamic Thread Pool | Reused workers, dynamic sizing | [10](10-concorrenza-e-scheduling.md#thread-pool-dinamico) |
+| M15 | Query Engine | Query execution over indexes and scans; full-text predicates and phrases combined with filters in the same MVCC view | [08](08-indici.md) |
+| M16 | Network/Protocol Layer | Priority local Unix socket, connections, CBOR framing, and admission; optional TCP later | [Interfaces](architettura.md#interfacce), [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md) |
+| M17 | Archivio/Serie/Documento Catalog Manager | Transactional catalog in `Registri/catalog/` | [02](02-modello-logico.md#catalogo) |
+| M18 | SIMD/Hot Path Optimization Layer | Optimized primitives for hot paths | [15](15-ottimizzazioni-native.md) |
 
-> **Proposta** — Due moduli di supporto non elencati nella specifica ma necessari:
-> **metrics** (richiesto dalla sezione Osservabilità e usato dai controllori) e **io**
-> (interfaccia unica verso file e `fsync`, necessaria al fault injection, vedi
+> **Proposed** — Two support modules not listed in the specification but required:
+> **metrics** (required by the Observability section and used by controllers) and **io**
+> (single interface to files and `fsync`, required for fault injection, see
 > [14](14-fault-injection.md#implicazioni-architetturali)).
 
-## Stratificazione
+<a id="stratificazione"></a>
 
-> **Proposta** — Dipendenze ammesse solo dall'alto verso il basso. Serve a mantenere i moduli
-> verificabili in isolamento e a evitare cicli tra package.
+## Layers
+
+> **Proposed** — Dependencies allowed only from higher to lower layers. This keeps modules
+> independently verifiable and avoids cycles between packages.
 
 ```
-Strato 5 — accesso        M16 Network/Protocol
+Layer 5 — access        M16 Network/Protocol
                           M15 Query Engine
-Strato 4 — coordinamento  M09 Transaction    M11 Compaction    M12 Recovery    M17 Catalog
-Strato 3 — Serie          M01 Storage Engine    M08 Snapshot/MVCC    M10 Multiseries Log
-Strato 2 — strutture      M02 WAL    M03 Segment    M04 Segment Metadata
+Layer 4 — coordination  M09 Transaction    M11 Compaction    M12 Recovery    M17 Catalog
+Layer 3 — Serie          M01 Storage Engine    M08 Snapshot/MVCC    M10 Multiseries Log
+Layer 2 — structures      M02 WAL    M03 Segment    M04 Segment Metadata
                           M05 Primary Index    M06 Secondary Index    M07 Cache
-Strato 1 — runtime        M13 Scheduler    M14 Thread Pool
-Strato 0 — base           M18 Hot Path    metrics    io
+Layer 1 — runtime        M13 Scheduler    M14 Thread Pool
+Layer 0 — foundation           M18 Hot Path    metrics    io
 ```
 
-Dipendenze che attraversano gli strati e meritano attenzione:
+Dependencies crossing layers that deserve attention:
 
-| Relazione | Perché è delicata |
+| Relationship | Why it is delicate |
 |---|---|
-| M11 Compaction ↔ M05 Primary Index ↔ writer della Serie (M01) | lo swap modifica l'indice mentre il writer lo aggiorna (QA-24) |
-| M11 Compaction → M08 MVCC | decide quali versioni sono necessarie e quando un segmento è reclamabile |
-| M09 Transaction → M10 Multiseries Log → M02 WAL | ordine dei flush nel 2PC (INV-T3) |
-| M12 Recovery → quasi tutto | deve conoscere i formati di ogni struttura persistente |
-| M13 Scheduler ← metrics ← tutti | i controllori dipendono da misure prodotte ovunque |
-| M17 Catalog → M01 Storage Engine | se Registri è una Serie, il catalogo usa lo storage che esso stesso descrive (QA-10) |
+| M11 Compaction ↔ M05 Primary Index ↔ Serie writer (M01) | swap modifies the index while the writer updates it (QA-24) |
+| M11 Compaction → M08 MVCC | determines which versions are needed and when a segment is reclaimable |
+| M09 Transaction → M10 Multiseries Log → M02 WAL | flush order in 2PC (INV-T3) |
+| M12 Recovery → almost everything | must know every persistent structure's format |
+| M13 Scheduler ← metrics ← all | controllers depend on measurements produced everywhere |
+| M17 Catalog → M01 Storage Engine | if Registri is a Serie, the catalog uses the storage it describes (QA-10) |
 
-## Organizzazione del codice
+<a id="organizzazione-del-codice"></a>
 
-> **Proposta** — Un package Common Lisp per modulo (`arcdocdb.wal`, `arcdocdb.segment`, …), un
-> sistema ASDF `arcdocdb` e un sistema di test `arcdocdb/tests`. Per ora il repository contiene
-> solo il sistema minimo (`arcdocdb.asd`, [`src/package.lisp`](../src/package.lisp)): la
-> suddivisione in package si introduce con la prima milestone di implementazione, quando le
-> interfacce tra moduli saranno fissate dalle decisioni della [Fase 0](roadmap.md).
+## Code organization
 
-Il codice è **solo Common Lisp** ([ADR-0001](adr/0001-common-lisp-sbcl.md)).
+> **Proposed** — One Common Lisp package per module (`arcdocdb.wal`, `arcdocdb.segment`, …), an
+> `arcdocdb` ASDF system and an `arcdocdb/tests` test system. For now, the repository contains
+> only the minimal system (`arcdocdb.asd`, [`src/package.lisp`](../src/package.lisp)): package
+> subdivision is introduced with the first implementation milestone, when interfaces
+> between modules have been fixed by [Phase 0](roadmap.md) decisions.
 
-> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — La ricerca full
-> text rientra nei moduli M06/M15 esistenti. L'analisi si prepara sui worker di calcolo;
-> il writer della Serie applica e pubblica il delta con i documenti. Implementazione
-> e qualifica restano nella fase 8. Il completamento successivo di
-> [ADR-0054](adr/0054-contratto-e-formato-full-text.md) definisce
-> [interfacce e ownership](full-text.md#confini-tra-moduli) e
-> [formato binario](formato-indice-full-text.md).
+The code is **Common Lisp only** ([ADR-0001](adr/0001-common-lisp-sbcl.md)).
 
-## Contratti tra moduli
+> **Decided ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Full-text search
+> belongs to existing modules M06/M15. Analysis is prepared on compute workers;
+> the Serie writer applies and publishes the delta with documents. Implementation
+> and qualification remain in phase 8. The later completion of
+> [ADR-0054](adr/0054-contratto-e-formato-full-text.md) defines
+> [interfaces and ownership](full-text.md#confini-tra-moduli) and the
+> [binary format](formato-indice-full-text.md).
 
-Le regole di interfaccia comuni sono fissate in [architettura.md](architettura.md#contratti).
-Per ogni modulo, prima dell'implementazione, si produce inoltre:
+<a id="contratti-tra-moduli"></a>
 
-- le operazioni offerte e i loro effetti durevoli;
-- gli invarianti che il modulo garantisce e quelli che assume dagli altri;
-- il modello di concorrenza (chi può chiamare che cosa, da quale contesto: writer della Serie,
-  reader, worker di compaction);
-- i formati persistenti di cui è proprietario;
-- i punti di crash esposti al fault injection.
+## Contracts between modules
+
+Common interface rules are established in [architettura.md](architettura.md#contratti).
+For each module, the following are also produced before implementation:
+
+- offered operations and their durable effects;
+- invariants the module guarantees and assumes from others;
+- concurrency model (who may call what, from which context: Serie writer,
+  reader, compaction worker);
+- persistent formats it owns;
+- crash points exposed for fault injection.

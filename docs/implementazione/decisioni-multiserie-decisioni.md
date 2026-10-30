@@ -1,64 +1,68 @@
-# Decisioni della tabella multiserie
+<a id="decisioni-della-tabella-multiserie"></a>
 
-Inventario COD-54 da verificare in due letture C1. I casi sono in
-[`tests/recovery/`](../../tests/recovery/). La tabella non certifica da sola
-copertura MC/DC, durability o applicazione atomica del motore.
-L'[inventario radix](decisioni-radix-decisioni.md) completa questo documento
-con i due dispatch, istogrammi, scatter e guardie dell'ordinamento adottato.
+# Multiseries table decisions
 
-| Controllo | Condizioni e casi |
+COD-54 inventory to verify in two C1 readings. Cases in
+[`tests/recovery/`](../../tests/recovery/). Table alone certifies neither
+MC/DC coverage, durability, nor atomic engine application.
+[Radix inventory](decisioni-radix-decisioni.md) complements this document
+with both dispatches, histograms, scatter, and adopted-sort guards.
+
+| Check | Conditions and cases |
 |---|---|
-| Configurazione | budget in intervallo; zero valido; valori negativi o oltre il tipo; controllo anche a log vuoto |
-| Scansione prima del risultato | prefisso completo; coda finale; corruzione testimoniata successiva; ricerca incompleta; nessuna tabella su errore |
-| Conteggio dei record | count zero; esattamente al limite; un record oltre; i duplicati consumano budget |
-| Payload DECISION | almeno due partecipanti; consumo esatto; conteggio incompatibile con i byte e byte residui nel prefisso con cornici verificate |
-| Cornice DECISION corta | lunghezza sotto il minimo prima del prefisso; coda senza testimone e corruzione con frontiera durevole successiva oltre l'inizio del lotto |
-| Conteggio dei partecipanti | limite per record; totale esatto; totale superato fra record, anche duplicati |
-| Ordinamento dei partecipanti | ID distinti, incluso zero; primo/ultimo byte diverso; bit alto; uguaglianza completa |
-| Coalescenza del TXID | nuovo TXID; duplicato con CSN/set uguali; set permutato; CSN o solo set discordante |
-| Ricerca del TXID | primo, intermedio e ultimo; assente sotto/fra/sopra; TXID/CSN zero e massimi; CSN condiviso |
-| Query di appartenenza | partecipante presente/assente; TXID assente; ID da slice non allineata; range invalido o lunghezza diversa da 16 anche a TXID assente |
-| Ownership | sorgente invariato durante costruzione; sorgente sovrascritto dopo costruzione; query stabili; nessun vettore interno esposto |
-| Progressione interna | cornici e conteggi coerenti con il prefisso verificato; ordinamento/range/capienza rispettati; guardie difensive sempre attive |
+| Configuration | budgets in range; zero valid; negative or beyond-type values; checked even with empty log |
+| Scan before result | complete prefix; final tail; later witnessed corruption; incomplete search; no table on error |
+| Record count | zero count; exact limit; one record beyond; duplicates consume budget |
+| DECISION payload | at least two participants; exact consumption; count incompatible with bytes and residual prefix bytes with verified frames |
+| Short DECISION frame | length below minimum before prefix; tail without witness and corruption with later durable frontier beyond batch start |
+| Participant count | per-record limit; exact total; total exceeded across records, including duplicates |
+| Participant ordering | distinct IDs including zero; different first/last byte; high bit; full equality |
+| TXID coalescing | new TXID; duplicate with same CSN/set; permuted set; CSN or set alone conflicting |
+| TXID search | first, middle, last; absent below/between/above; zero/maximum TXID/CSN; shared CSN |
+| Membership query | present/absent participant; absent TXID; ID from unaligned slice; invalid range or length other than 16 even with absent TXID |
+| Ownership | source unchanged during construction; source overwritten afterward; stable queries; no internal vector exposed |
+| Internal progress | frames and counts consistent with verified prefix; sorting/ranges/capacity respected; defensive guards always active |
 
-I loop di ordinamento sono limitati dai conteggi effettivi; le query usano
-ricerca binaria su dati ordinati. Le definizioni e le guardie interne restano
-nel denominatore grezzo della copertura. Eventuali forme non raggiungibili
-vengono motivate dopo la misura, senza sottrarle dai totali pubblicati.
+Sort loops bounded by actual counts; queries use
+binary search on sorted data. Definitions and internal guards remain
+in raw coverage denominator. Any unreachable forms
+justified after measurement without subtracting from published totals.
 
-Il [metodo](decisioni-multiserie-metodo.md) distingue prove di cornice,
-semantica e recovery completo. Una decisione semanticamente invalida dentro
-il prefisso con cornici e SEAL verificati non può trasformarsi in assenza e
-quindi presumed abort. I danni alla cornice restano soggetti alla ricerca del
-testimone e ai limiti dichiarati dallo scanner.
+The [method](decisioni-multiserie-metodo.md) distinguishes frame tests,
+semantics, and complete recovery. A semantically invalid decision within
+prefix with verified frames and SEAL cannot become absence and
+thus presumed abort. Frame damage remains subject to witness
+search and scanner's declared limits.
 
 
-## Predicati composti dei sorgenti
+<a id="predicati-composti-dei-sorgenti"></a>
 
-Le prove citate sono in `decisions.lisp` e `decisions-audit.lisp`;
-si omette soltanto il prefisso `test-REQ-…` dei nomi. Le guardie interne
-sono motivate nell'[inventario della copertura](../affidabilita/copertura-eccezioni.md).
-La distinzione fra casi osservati e invarianti interni non elimina forme
-dal denominatore e non costituisce una qualifica MC/DC.
+## Source compound predicates
 
-| Funzione e decisione | Clausole e verifica |
+Cited tests in `decisions.lisp` and `decisions-audit.lisp`;
+only name prefix `test-REQ-…` omitted. Internal guards
+justified in [coverage inventory](../affidabilita/copertura-eccezioni.md).
+Distinction between observed cases and internal invariants removes no forms
+from denominator and is not MC/DC qualification.
+
+| Function and decision | Clauses and verification |
 |---|---|
-| `check-decision-budgets`: `and` dei due tipi `index` | entrambi validi; invalido solo `max-decisions`; invalido solo `max-participants`. `invalid-decision-budgets-even-empty` prova negativi e overflow separati; `physical-duplicate-record-budgets` prova i limiti esatti |
-| `decision-frame`: `and` su avanzamento, confine, chiave vuota e flag zero | tutte vere per ogni cornice ammessa dallo scanner; le negazioni contraddicono il prefisso stabile già verificato. Guardia interna `decision-control-frame` |
-| `decision-frame`: `and` su range del payload e misura `count × 16` | range restituiti dal codec e consumo esatto; errore semantico provato da `sealed-invalid-decision-payload-is-not-tail` e `sealed-trailing-decision-payload`. Guardia interna `decision-payload-range` |
-| `preflight-decisions`: `and` su posizione finale e numero di decisioni | scanner e rilettura di un buffer stabile contano le stesse cornici. Guardia interna `decision-prefix-consumption` |
-| `decode-decisions`: `and` su posizione finale, entry prodotte e partecipanti letti | conteggi fissati da scanner e preflight; nessuna mutazione del buffer. Guardia interna `decision-prefix-consumption` |
-| `same-decision-p`: `and` su CSN, count e uguaglianza di ogni byte | `conflicting-csn-set-or-count` prova CSN diverso a set costante, set diverso a count costante e count diverso a CSN costante; `seeded-histories-and-permuted-duplicates` verifica uguaglianza dopo canonizzazione |
-| `unique-decision-count`: `and` su predecessore presente e TXID decrescente | primo record e successivi osservati; TXID decrescente impossibile dopo l'ordinamento stabile. Guardia interna `decision-entry-order` |
-| `unique-decision-count` e `collapse-decisions`: `and` su predecessore presente e TXID uguale | primo record, TXID nuovo, duplicato coerente o discordante; `decision-table-ordered-unordered-oracle`, `seeded-histories-and-permuted-duplicates`, `first-physical-decision-conflict-across-txid-groups` |
-| `merge-id-runs`: `and` su vettori non vuoti, misura uguale, identità distinta e multiplo di 16 | copie e workspace privati di misura verificata; negazioni contraddicono la costruzione. Guardia interna `decision-sort-arrays` |
-| `merge-entry-runs`: `and` su misura uguale e identità distinta | scratch della stessa lunghezza del vettore privato; guardia interna `decision-sort-arrays` |
-| Entrambi i merge: `or` su run destro esaurito e `and` su run sinistro disponibile/confronto | input inversi, permutazioni, duplicati, cardinalità dispari e massimo u16; `decision-table-ordered-unordered-oracle`, `seeded-histories-and-permuted-duplicates`, `maximum-u16-participant-count` |
-| Entrambi i merge: `and` sul consumo dei due run | un avanzamento per iterazione e `right-left` iterazioni; guardia interna `decision-sort-consumption` |
-| `partecipante-decisione-p`: `and` su TXID trovato e partecipante presente | TXID assente, presente con ID assente, presente con ID esatto; `participant-exact-bytes-and-query-ranges`, `participant-every-byte-and-every-bit` |
+| `check-decision-budgets`: `and` of two `index` types | both valid; only `max-decisions` invalid; only `max-participants` invalid. `invalid-decision-budgets-even-empty` tests negatives and overflows separately; `physical-duplicate-record-budgets` tests exact limits |
+| `decision-frame`: `and` on progress, boundary, empty key, zero flags | all true for every frame scanner allows; negations contradict already verified stable prefix. Internal `decision-control-frame` guard |
+| `decision-frame`: `and` on payload range and `count × 16` size | codec-returned ranges and exact consumption; semantic error tested by `sealed-invalid-decision-payload-is-not-tail` and `sealed-trailing-decision-payload`. Internal `decision-payload-range` guard |
+| `preflight-decisions`: `and` on final position and decision count | scanner and stable-buffer reread count same frames. Internal `decision-prefix-consumption` guard |
+| `decode-decisions`: `and` on final position, produced entries, participants read | counts fixed by scanner/preflight; no buffer mutation. Internal `decision-prefix-consumption` guard |
+| `same-decision-p`: `and` on CSN, count, every-byte equality | `conflicting-csn-set-or-count` tests different CSN with fixed set, different set with fixed count, different count with fixed CSN; `seeded-histories-and-permuted-duplicates` checks equality after canonicalization |
+| `unique-decision-count`: `and` on predecessor present and decreasing TXID | first and subsequent records observed; decreasing TXID impossible after stable sort. Internal `decision-entry-order` guard |
+| `unique-decision-count` and `collapse-decisions`: `and` on predecessor present and equal TXID | first record, new TXID, consistent/conflicting duplicate; `decision-table-ordered-unordered-oracle`, `seeded-histories-and-permuted-duplicates`, `first-physical-decision-conflict-across-txid-groups` |
+| `merge-id-runs`: `and` on nonempty vectors, equal size, distinct identity, multiple of 16 | private copies/workspace of verified size; negations contradict construction. Internal `decision-sort-arrays` guard |
+| `merge-entry-runs`: `and` on equal size and distinct identity | scratch same length as private vector; internal `decision-sort-arrays` guard |
+| Both merges: `or` on exhausted right run and `and` on available left run/comparison | reversed inputs, permutations, duplicates, odd cardinality, maximum u16; `decision-table-ordered-unordered-oracle`, `seeded-histories-and-permuted-duplicates`, `maximum-u16-participant-count` |
+| Both merges: `and` on both-run consumption | one advancement per iteration and `right-left` iterations; internal `decision-sort-consumption` guard |
+| `partecipante-decisione-p`: `and` on found TXID and present participant | absent TXID, present with absent ID, present with exact ID; `participant-exact-bytes-and-query-ranges`, `participant-every-byte-and-every-bit` |
 
-I confronti fra byte nel ciclo `same-decision-p` terminano alla prima
-ineguaglianza e restano limitati alla misura verificata. I test cambiano
-anche l'ultimo byte e ciascuno dei 128 bit, senza confondere una differenza
-di ID con la sola presenza del TXID. `public-default-budgets-and-explicit-version`
-chiama direttamente l'API e verifica i budget predefiniti e la versione obbligatoria.
+Byte comparisons in `same-decision-p` loop end at first
+inequality and stay bounded by verified size. Tests also change
+last byte and each of 128 bits without confusing an ID difference
+with TXID presence alone. `public-default-budgets-and-explicit-version`
+directly calls API and checks default budgets and required version.

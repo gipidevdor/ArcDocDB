@@ -1,60 +1,64 @@
-# Decisioni della scansione dei log
+<a id="decisioni-della-scansione-dei-log"></a>
 
-Inventario dei predicati composti secondo COD-54. I casi di regressione sono in
-[`tests/recovery/`](../../tests/recovery/). Questa tabella non certifica da sola
-copertura MC/DC o qualifica del recovery completo.
+# Log-scanning decisions
 
-| Funzione e decisione | Condizioni e casi |
+Compound-predicate inventory under COD-54. Regression cases in
+[`tests/recovery/`](../../tests/recovery/). This table alone certifies neither
+MC/DC coverage nor full-recovery qualification.
+
+| Function and decision | Conditions and cases |
 |---|---|
-| `check-scan-arguments`: tipo del log e file-id | segmento con ID opaco; control/multiserie con zero; altro tipo e ID non zero rifiutati, anche a log vuoto |
-| `check-scan-arguments`: tipi, minimi e somme dei budget | budget valido; ogni parametro negativo o nullo non ammesso; batch-records oltre u32; lotto sotto 56 byte; overflow di file-offset + end |
-| `check-scan-arguments`: EOF fisico | file-size u64 e uguale alla fine assoluta; valore assente o invalido; finestra che non arriva all'EOF |
-| `check-scan-arguments`: byte del log | intervallo esatto al budget accettato; un byte oltre rifiutato |
-| `checked-batch`: progressione e risultato del verificatore | lotto integro; errore interno del verificatore distinto da corruzione esterna; solo corruption-detected avvia la ricerca |
-| `seal-witness`: filtro del tipo | nessun SEAL; candidato presente, incluso non allineato; nessuna lunghezza esterna guida una lettura |
-| `seal-witness`: postcondizioni della cornice | 56 byte, tipo SEAL, flag zero, chiave vuota e corpo 32 byte già garantiti dal codec; controlli difensivi sempre attivi |
-| `seal-witness`: identità e posizioni | file esatto/diverso; inizio del lotto prima dell'area dei record, nell'area e oltre il candidato; frontiera non oltre/oltre il batch-start |
-| `search-durable-witness`: candidato e frontiera | candidato invalido; D < P, D = P e D > P; corpo del lotto testimone danneggiato con SEAL integro |
-| `search-durable-witness`: tutte le posizioni | primo/ultimo candidato, un SEAL non conclusivo prima del testimone; avanzamento di un byte e ricerca fino a end − 56 incluso |
-| `search-durable-witness`: budget | nessuna posizione possibile; budget esatto; una posizione mancante rifiuta la classificazione |
-| `scan-prefix`: fine, errore e limite lotti | log vuoto; fine esatta; lotto fallito con P al suo inizio; byte residui dopo l'ultimo lotto consentito; conteggi del solo prefisso |
+| `check-scan-arguments`: log type and file-id | segment with opaque ID; control/multiserie with zero; other type and nonzero ID rejected, even with empty log |
+| `check-scan-arguments`: budget types, minimums, and sums | valid budget; each prohibited negative or null parameter; batch-records beyond u32; batch below 56 bytes; file-offset + end overflow |
+| `check-scan-arguments`: physical EOF | u64 file-size equal absolute end; missing or invalid value; window not reaching EOF |
+| `check-scan-arguments`: log bytes | range exactly at budget accepted; one byte over rejected |
+| `checked-batch`: verifier progress and result | intact batch; internal verifier error distinct from external corruption; only corruption-detected starts search |
+| `seal-witness`: type filter | no SEAL; present candidate, including unaligned; no external length drives read |
+| `seal-witness`: frame postconditions | 56 bytes, SEAL type, zero flags, empty key, and 32-byte body already guaranteed by codec; defensive checks always active |
+| `seal-witness`: identity and positions | exact/different file; batch start before record area, inside area, and beyond candidate; frontier not beyond/beyond batch-start |
+| `search-durable-witness`: candidate and frontier | invalid candidate; D < P, D = P, and D > P; damaged witness-batch body with intact SEAL |
+| `search-durable-witness`: all positions | first/last candidate, inconclusive SEAL before witness; one-byte advancement and search through end − 56 inclusive |
+| `search-durable-witness`: budget | no possible position; exact budget; one missing position rejects classification |
+| `scan-prefix`: end, error, and batch limit | empty log; exact end; failed batch with P at its start; bytes remaining after last allowed batch; prefix-only counts |
 
-Le prove `REQ-AFF-009-every-log-truncation`,
+Tests `REQ-AFF-009-every-log-truncation`,
 `REQ-AFF-009-frontier-boundary-and-failed-batch-start`,
-`REQ-AFF-009-invalid-witnesses-are-ignored` e
-`REQ-AFF-008-invalid-configuration-is-never-tail` coprono i confini del
-prefisso, la frontiera stretta, ciascun campo esterno del testimone e i
-parametri della scansione. Le prove di tutti i bit sono in
-[`corruption.lisp`](../../tests/recovery/corruption.lisp), con chiamate
-dirette alla versione e agli offset espliciti dello scanner.
-`REQ-AFF-009-overlapping-seal-after-noncovering-frontier` costruisce due
-SEAL con CRC validi sovrapposti a distanza di 32 byte: quello non conclusivo
-non deve nascondere il successivo testimone `D > P`.
+`REQ-AFF-009-invalid-witnesses-are-ignored`, and
+`REQ-AFF-008-invalid-configuration-is-never-tail` cover prefix
+boundaries, strict frontier, every external witness field, and scanning
+parameters. All-bit tests in
+[`corruption.lisp`](../../tests/recovery/corruption.lisp), with direct
+calls to explicit scanner version and offsets.
+`REQ-AFF-009-overlapping-seal-after-noncovering-frontier` constructs two
+valid-CRC SEALs overlapping 32 bytes apart: inconclusive one
+must not hide later `D > P` witness.
 
-## Rami difensivi e confini della prova
+<a id="rami-difensivi-e-confini-della-prova"></a>
 
-`checked-batch` verifica le postcondizioni di `verifica-lotto`: progressione,
-range e conteggi. `seal-witness` ricontrolla la forma restituita dal codec.
-Il superamento di questi controlli non è ottenibile da byte esterni dopo una
-verifica corretta del livello inferiore; segnala un difetto interno.
-`scan-prefix` controlla inoltre che il conteggio dei record sia compatibile
-con i byte effettivamente consumati.
+## Defensive branches and test boundaries
 
-Definizioni, proclamazioni e rami difensivi restano nel denominatore della
-copertura grezza. Qualsiasi eccezione richiede registrazione e revisione
-secondo il [piano di verifica](../affidabilita/piano-di-verifica.md).
-Il [catalogo delle evidenze](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-recovery/catalogo.lisp)
-conserva il rapporto grezzo, la campagna di nove mutanti e le due letture
-indipendenti del modulo. La seconda lettura ha aggiunto al caso di
-configurazione invalida un budget di lotto oltre `most-positive-fixnum`;
-il controllo del tipo viene quindi esercitato separatamente dal minimo di
-56 byte. I rami difensivi elencati sopra non vengono sottratti dai totali.
-Il rapporto finale misura 416/480 espressioni (86,7%) e 52/66 rami (78,8%)
-in `scan.lisp`. I 14 rami non presi sono cinque postcondizioni/precondizioni
-di `checked-batch`, sei di `seal-witness`, il confine iniziale della ricerca
-e due controlli di `scan-prefix`; richiederebbero una violazione del contratto
-interno o un codec difettoso. Anche `package.lisp` resta nel rapporto con
-una definizione non eseguita e nessun ramo. Questi risultati non chiudono
-un gate di copertura o di qualifica del motore.
-I test di corruzione in memoria non simulano persistenza, flush o transizioni
-`FAULTED`; verificano il risultato della scansione sui byte forniti.
+`checked-batch` checks `verifica-lotto` postconditions: progress,
+ranges, and counts. `seal-witness` rechecks shape returned by codec.
+Failing these checks cannot result from external bytes after correct
+lower-level verification; it signals internal defect.
+`scan-prefix` also checks record count is compatible
+with actual bytes consumed.
+
+Definitions, proclamations, and defensive branches remain in raw
+coverage denominator. Any exception requires registration and review
+under [verification plan](../affidabilita/piano-di-verifica.md).
+The [evidence catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-recovery/catalogo.lisp)
+preserves raw report, nine-mutant campaign, and two independent
+module readings. Second reading added a batch budget beyond
+`most-positive-fixnum` to invalid-configuration case;
+type check therefore exercised separately from 56-byte
+minimum. Defensive branches listed above not subtracted from totals.
+Final report measures 416/480 expressions (86.7%) and 52/66 branches (78.8%)
+in `scan.lisp`. The 14 untaken branches are five `checked-batch`
+postconditions/preconditions, six in `seal-witness`, initial search
+boundary, and two `scan-prefix` checks; they would require internal-contract
+violation or defective codec. `package.lisp` also remains in report with
+one unexecuted definition and no branch. Results do not close
+coverage or engine-qualification gate.
+In-memory corruption tests simulate neither persistence, flush, nor
+`FAULTED` transitions; verify scan result on supplied bytes.

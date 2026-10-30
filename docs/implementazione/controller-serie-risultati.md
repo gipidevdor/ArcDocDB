@@ -1,130 +1,140 @@
-# Controller della Serie — risultati locali
+<a id="controller-della-serie--risultati-locali"></a>
 
-Data: 2026-10-09. Prodotto: `arcdocdb.series`, controller della pubblicazione,
-risoluzione CSN e ritiro I/O. [Contratto](controller-serie.md),
-[metodo](controller-serie-metodo.md), [decisioni](controller-serie-decisioni.md)
-e [due letture statiche](controller-serie-revisione.md) delimitano il risultato.
+# Serie controller — local results
 
-La campagna finale usa `ffa210780d36036572046cc2135486927d11361e`, checkout
-pulito e sorgenti stabili prima/dopo ogni invocazione riuscita. Include il merge
-`80b4834` con `main` a `e07d772`, preservando inventario recovery e codec CBOR
-minimo sviluppati in parallelo. Base del controller: `cf60913`.
-Le aggiunte successive a questa campagna sono documenti e prove conservate.
+Date: 2026-10-09. Product: `arcdocdb.series`, controller for publication,
+CSN resolution, and I/O retirement. [Contract](controller-serie.md),
+[method](controller-serie-metodo.md), [decisions](controller-serie-decisioni.md),
+and [two static readings](controller-serie-revisione.md) bound the result.
 
-## Correttezza e strumenti
+The final campaign uses `ffa210780d36036572046cc2135486927d11361e`, a clean
+checkout, and sources stable before/after every successful invocation. It includes merge
+`80b4834` with `main` at `e07d772`, preserving recovery inventory and minimal CBOR
+codec developed in parallel. Controller base: `cf60913`.
+Later additions to this campaign are documents and preserved evidence.
 
-| Verifica | Esito | Registro |
+<a id="correttezza-e-strumenti"></a>
+
+## Correctness and tools
+
+| Verification | Outcome | Record |
 |---|---|---|
-| Compilazione rigorosa, suite e controlli generali | 436 test unitari + 2 smoke; 44 test Series, inclusi 6 concorrenti; zero warning/style-warning. Lint su 72 file: zero violazioni. Tracciabilità, link, conservazione e spike di correttezza passano. | [Check integrato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/4000549590-command-22639-0-report.lisp) |
-| Controller: baseline e quattro difetti deliberati | Baseline passa; 4/4 mutanti compilano e falliscono nel test nominato, senza timeout. | [Mutazioni Series](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-mutations-02/report.lisp) |
-| Regressione del ponte WAL–CSN | Baseline passa; 4/4 mutanti rilevati. | [Mutazioni WAL](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-wal-mutations-02/report.lisp) |
-| Sensore delle misure | Finestra vuota: 0 byte; controllo positivo: 16 oggetti vivi da 1 MiB, 16.777.472 byte osservati; tempo nullo/negativo, heap nonzero e metrica mancante rifiutati. Campi persistiti e alias della plist verificati. | [Benchmark e self-test](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-bench-01-report.lisp) |
-| Conservazione della nuova raccolta | 12 controlli positivi/negativi: copie integre, gzip senza perdita oltre 1 MiB, idempotenza, rifiuto della sovrascrittura diversa, link HTML relativi validi e link mancante rifiutato. | [Self-test della raccolta](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/4000548975-command-79587-0-report.lisp) |
+| Strict compilation, suite and general checks | 436 unit tests + 2 smokes; 44 Series tests, including 6 concurrent; zero warnings/style-warnings. Lint on 72 files: zero violations. Traceability, links, preservation, and correctness spikes pass. | [Integrated check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/4000549590-command-22639-0-report.lisp) |
+| Controller: baseline and four deliberate defects | Baseline passes; 4/4 mutants compile and fail in the named test without timeout. | [Series mutations](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-mutations-02/report.lisp) |
+| WAL–CSN bridge regression | Baseline passes; 4/4 mutants detected. | [WAL mutations](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-wal-mutations-02/report.lisp) |
+| Measurement sensor | Empty window: 0 bytes; positive control: 16 live 1 MiB objects, 16,777,472 bytes observed; zero/negative time, nonzero heap, and missing metric rejected. Persisted fields and plist aliases checked. | [Benchmark and self-test](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-bench-01-report.lisp) |
+| New collection preservation | 12 positive/negative checks: intact copies, lossless gzip beyond 1 MiB, idempotence, refusal of differing overwrite, valid relative HTML links and rejected missing link. | [Collection self-test](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/4000548975-command-79587-0-report.lisp) |
 
-I quattro difetti Series eliminano, rispettivamente, il confronto di generazione,
-la FIFO di pubblicazione, il divieto di ripetere il CAS dopo busy e il vincolo di
-ritiro I/O prima del riuso. Compilazione fallita, timeout o test diverso dal
-bersaglio non vengono contati come rilevamento valido. Le copie ricostruibili
-dei sorgenti e i FASL sono esclusi dalla pubblicazione; variante concreta,
-ricetta, Git SHA, impronte, stdout e stderr sono conservati.
+The four Series defects respectively remove the generation comparison,
+publication FIFO, ban on repeating CAS after busy, and I/O retirement
+requirement before reuse. Failed compilation, timeout, or a test other than
+the target is not counted as valid detection. Reconstructible source
+copies and FASLs are excluded from publication; concrete variant,
+recipe, Git SHA, fingerprints, stdout, and stderr are preserved.
 
-Le prove comprendono full senza adozione parziale, stale/foreign, CSN alto e
-carry, H ritardato fra Serie, busy dopo CAS senza ripubblicazione, async con
-cursori distinti, write/flush fault, quiescenza prima dell'annullamento, ritiro
-di dispatch mai accettato, invarianti delle preflight e uscita nonlocale incerta.
-Lease, root immutabile e ritiro I/O ricevono anche prove concorrenti reali.
+Tests include full without partial adoption, stale/foreign, high CSN and
+carry, delayed H across Serie, busy after CAS without republication, async with
+separate cursors, write/flush faults, quiescence before cancellation, retirement
+of never-accepted dispatch, preflight invariants, and uncertain nonlocal exit.
+Lease, immutable root, and I/O retirement also receive real concurrent tests.
 
-### Condizioni composte e copertura
+<a id="condizioni-composte-e-copertura"></a>
 
-| Decisione diretta | Prova discriminante |
+### Compound conditions and coverage
+
+| Direct decision | Discriminating test |
 |---|---|
-| D01, budget factory | `series-invalid-configuration-preserves-wal`: tipo/capacità/offset falsi separati, rifiuto prima di costruire. Default, 1 e 1024 passano nel test dei limiti. |
-| D02, capacità e cursori | `series-ring-invalid-capacity-before-indexing` e `series-ring-cursors-fail-separately`: FI su capacità 0/1025 e head/tail/publish-head singolarmente. La capacità invalida è esclusa dalla factory normale e da SLOTS readonly. |
-| D03, contatori | `series-ring-counts-fail-separately`: count oltre capacity, unresolved oltre count e active-io oltre count; scope Archivio e grafo conservato. |
-| D04, lease | `series-lease-busy-stale-and-single-release` e prova di thread estraneo: tipo, zero, generazione e proprietario distinti. |
-| D05, evento | `series-foreign-event-same-generation-and-csn`, `series-false-event-and-invalid-generation-before-mutation`, `series-free-and-stale-preallocated-event-after-wrap`. |
-| D06, ordine CSN | `series-csn-after-explicit-truth-pairs`, carry e ordine stretto: high maggiore/minore, high uguale e low maggiore/uguale. |
+| D01, factory budget | `series-invalid-configuration-preserves-wal`: separately false type/capacity/offset, rejection before construction. Default, 1, and 1024 pass in the limit test. |
+| D02, capacity and cursors | `series-ring-invalid-capacity-before-indexing` and `series-ring-cursors-fail-separately`: FI on capacity 0/1025 and individual head/tail/publish-head. Invalid capacity is excluded by normal factory and read-only SLOTS. |
+| D03, counters | `series-ring-counts-fail-separately`: count above capacity, unresolved above count, and active-io above count; Archivio scope and graph preserved. |
+| D04, lease | `series-lease-busy-stale-and-single-release` and foreign-thread test: separate type, zero, generation, and owner. |
+| D05, event | `series-foreign-event-same-generation-and-csn`, `series-false-event-and-invalid-generation-before-mutation`, `series-free-and-stale-preallocated-event-after-wrap`. |
+| D06, CSN order | `series-csn-after-explicit-truth-pairs`, carry and strict order: high greater/less, equal high and low greater/equal. |
 
-Nomi abbreviati: i simboli completi nei registri includono prefissi `TEST-REQ-*`.
-I casi FI ripristinano la corruzione prima del cleanup della fixture;
-il fault resta terminale. Le decisioni WAL delegate mantengono la propria
-[matrice](wal-csn-decisioni.md) e ricevono test WAL e Series combinati.
+Abbreviated names: full symbols in records include `TEST-REQ-*` prefixes.
+FI cases restore corruption before fixture cleanup;
+fault remains terminal. Delegated WAL decisions retain their own
+[matrix](wal-csn-decisioni.md) and receive combined WAL and Series tests.
 
-| Perimetro SB-COVER | Espressioni | Rami | Rapporto grezzo |
+| SB-COVER scope | Expressions | Branches | Raw report |
 |---|---:|---:|---|
-| Series, 44 test | 1.155 / 1.383 = 83,51% | 141 / 186 = 75,81% | [HTML Series](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-coverage-02/cover-index.html) |
-| WAL, suite WAL + Series | 1.136 / 1.286 = 88,34% | 162 / 190 = 85,26% | [HTML WAL combinato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-wal-coverage-03/cover-index.html) |
+| Series, 44 tests | 1,155 / 1,383 = 83.51% | 141 / 186 = 75.81% | [Series HTML](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-coverage-02/cover-index.html) |
+| WAL, WAL + Series suites | 1,136 / 1,286 = 88.34% | 162 / 190 = 85.26% | [Combined WAL HTML](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/series-wal-coverage-03/cover-index.html) |
 
-Sono somme dei conteggi grezzi, incluse forme generate e package; i test sono
-esclusi dal denominatore. HTML e stato SB-COVER conservano i percorsi originali.
-Le percentuali non attestano tutti i percorsi d'interruzione, MC/DC generale,
-sicurezza o qualifica del motore. Le sei decisioni dirette hanno casi per
-condizione espliciti; questo non estende la conclusione a macro/runtime o
-alla totalità delle decisioni delegate.
+These sum raw counts, including generated forms and packages; tests are
+excluded from the denominator. HTML and SB-COVER state retain original paths.
+Percentages do not certify all interruption paths, general MC/DC,
+safety, or engine qualification. The six direct decisions have explicit
+per-condition cases; this does not extend the conclusion to macros/runtime or
+the entirety of delegated decisions.
 
-## Prestazioni del ciclo integrato
+<a id="prestazioni-del-ciclo-integrato"></a>
 
-Ambiente: Apple M4, 10 CPU logiche, 16 GiB RAM, Darwin 27.0.0, SBCL 2.6.9.
-Un ciclo forma un PUT con chiave 16 byte e valore 64 byte, sigilla WAL con CSN,
-adotta la radice, avvia I/O, scrive e sincronizza con backend simulato, riceve
-fine I/O, pubblica con CAS, risolve e ritira gruppo/lotto/evento. Sono 160 byte
-WAL per ciclo. L'oracolo di root, token, frontiere e contatori è nel clock.
-Factory, radici preallocate, lease, warmup di 1.024 cicli e raccolta delle
-metriche sono fuori dalla finestra seriale. Le finestre parallele hanno anche
-un contatore globale separato comprendente avvio e join.
+## Integrated-cycle performance
 
-Dieci finestre seriali, cinque per base, 20.000 cicli ciascuna; **0 byte heap
-in tutte e dieci**, zero busy/full/retry, tutti gli oracoli finali coerenti.
-I tempi sono fra 73.458 e 87.856 tick, con 1.000.000 tick al secondo.
+Environment: Apple M4, 10 logical CPUs, 16 GiB RAM, Darwin 27.0.0, SBCL 2.6.9.
+A cycle forms a PUT with 16-byte key and 64-byte value, seals WAL with CSN,
+adopts the root, starts I/O, writes and synchronizes with a simulated backend,
+receives I/O completion, publishes with CAS, resolves, and retires group/batch/event.
+That is 160 WAL bytes per cycle. Root, token, frontier, and counter oracles are inside the
+clock. Factory, preallocated roots, lease, warmup of 1,024 cycles, and metric
+collection are outside the serial window. Parallel windows also have
+a separate global counter including startup and joins.
 
-| Base CSN `(high low)` | Mediana cicli/s | Min–max cicli/s |
+Ten serial windows, five per base, 20,000 cycles each; **0 heap bytes
+in all ten**, zero busy/full/retry, all final oracles consistent.
+Times range from 73,458 to 87,856 ticks, at 1,000,000 ticks per second.
+
+| CSN base `(high low)` | Median cycles/s | Min–max cycles/s |
 |---|---:|---:|
-| `(0 0)` | 268.622 | 261.185–272.264 |
-| `(#x80000000 #xfffffff0)` | 259.041 | 227.645–266.852 |
+| `(0 0)` | 268,622 | 261,185–272,264 |
+| `(#x80000000 #xfffffff0)` | 259,041 | 227,645–266,852 |
 
-Nove finestre parallele, tre per numero di worker: ogni worker possiede
-controller, log, gruppo, lotto e **Archivio/registro indipendente**.
-Il test concorrente separato verifica il registro condiviso; queste misure
-non dimostrano scalabilità di più Serie sullo stesso registro di Archivio.
+Nine parallel windows, three per worker count: each worker owns
+controller, log, group, batch, and **independent Archivio/registry**.
+The separate concurrent test checks the shared registry; these measurements
+do not demonstrate scaling of several Serie on the same Archivio registry.
 
-| Worker | Mediana aggregata cicli/s | Min–max | Heap globale avvio/join per replica |
+| Workers | Aggregate median cycles/s | Min–max | Global startup/join heap per replicate |
 |---:|---:|---:|---:|
-| 1 | 265.530 | 258.301–265.904 | 65.520 byte |
-| 2 | 446.803 | 439.184–451.493 | 131.040 byte |
-| 4 | 789.679 | 782.695–820.462 | 262.080 byte |
+| 1 | 265,530 | 258,301–265,904 | 65,520 bytes |
+| 2 | 446,803 | 439,184–451,493 | 131,040 bytes |
+| 4 | 789,679 | 782,695–820,462 | 262,080 bytes |
 
-Con quattro worker la mediana locale è circa 2,97 volte quella a un worker.
-Le finestre dei worker usano lo stesso contatore heap di processo e si
-sovrappongono: **non sono sommabili**. L'heap parallelo resta un'osservazione,
-non passa per il gate zero del seriale. Anche lo zero seriale è una misura
-del sensore SBCL validato, non una prova assoluta di non allocazione.
+With four workers, the local median is about 2.97 times the one-worker median.
+Worker windows use the same process heap counter and
+overlap: **they cannot be summed**. Parallel heap remains an observation,
+not a pass through the serial zero gate. Serial zero is also a measurement
+of the validated SBCL sensor, not absolute proof of nonallocation.
 
-Il backend non esegue I/O fisico: nessuna prestazione NVMe, durability reale,
-latenza client o throughput del database è deducibile da questi numeri.
-Carico esterno non controllato, nessuna soglia di throughput di accettazione.
-Misure seriali completate prima di creare i worker; nessun altro controllo
-del parent o agente di sviluppo eseguito durante la campagna.
+The backend performs no physical I/O: no NVMe performance, real durability,
+client latency, or database throughput can be inferred from these figures.
+External load uncontrolled, no acceptance throughput threshold.
+Serial measurements completed before creating workers; no other parent
+check or development agent ran during the campaign.
 
-## Diagnostiche preservate e spazio
+<a id="diagnostiche-preservate-e-spazio"></a>
 
-Il [catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/catalogo.lisp)
-include anche i tentativi falliti: prima compilazione fermata dal tipo `null`
-del segnalatore d'invariante, CLI del self-test priva di `--output-dir`,
-falso positivo lint su keyword `:read`, primo mutante di generazione non
-compilabile. Gli strumenti non promuovono queste prove a successi. Nel primo
-CLI rifiutato il driver non aveva ancora raccolto l'impronta iniziale e marca
-il confronto locale changed; il wrapper osserva sorgenti stabili. Non è una
-campagna misurata né un cambio del codice durante una misura.
+## Preserved diagnostics and space
 
-I registri grandi sono descriptor più gzip verificato senza perdita;
-nessun taglio di stdout/stderr o modifica di stringhe serializzate. I file
-grezzi associati conservano dimensioni e SHA-256. Il raccoglitore applica
-gzip anche al raw oltre 1 MiB e verifica il contenuto decompresso.
-Il controllo whitespace riguarda sorgenti e documenti; stdout/stderr grezzi
-mantengono anche gli spazi originali del compilatore.
-Ogni file pubblicato di questa campagna resta sotto 1 MiB; copie/FASL
-temporanei vengono rimossi con l'archiviazione del worktree dopo il push.
+The [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-series-controller/catalogo.lisp)
+also includes failed attempts: first compilation stopped by the invariant signaler's
+`null` type, self-test CLI missing `--output-dir`,
+false positive lint on keyword `:read`, first generation mutant
+not compilable. Tools do not promote these tests to successes. In the first
+rejected CLI, the driver had not yet collected the initial fingerprint and marks
+the local comparison changed; the wrapper observes stable sources. This is neither a
+measured campaign nor a code change during measurement.
 
-Il controller è implementato nel perimetro dichiarato. Indice concreto,
-registrazione snapshot, pool, conferma client e coordinatore di Archivio
-restano lavoro successivo; nessun requisito dell'intero motore è promosso.
+Large records are descriptors plus verified lossless gzip;
+no stdout/stderr truncation or serialized-string modification. Associated raw
+files retain sizes and SHA-256. The collector also applies
+gzip to raw output above 1 MiB and verifies decompressed contents.
+Whitespace checks concern sources and documents; raw stdout/stderr
+retain the compiler's original spaces too.
+Every published file in this campaign stays below 1 MiB; temporary
+copies/FASLs are removed when archiving the worktree after push.
+
+The controller is implemented within the declared scope. Concrete index,
+snapshot registration, pool, client acknowledgment, and Archivio coordinator
+remain subsequent work; no whole-engine requirement is promoted.

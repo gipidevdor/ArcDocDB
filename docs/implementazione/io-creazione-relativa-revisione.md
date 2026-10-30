@@ -1,27 +1,29 @@
-# Creazione relativa: letture C1
+<a id="creazione-relativa-letture-c1"></a>
 
-Root e revisore distinto hanno letto i sei sorgenti finali, il collegamento
-ASDF e la fixture verticale prima della compilazione. L'autore dei test e
-root hanno letto i tre file di prove; il revisore distinto ha controllato
-anche gli oracoli. Il [metodo preregistrato](io-creazione-relativa-metodo.md)
-elenca CTR-D01…D17. Le letture statiche non attestano un esito dinamico.
+# Relative creation: C1 readings
 
-| Punto della checklist C1 | Lettura statica |
+Root and a distinct reviewer read the six final sources, ASDF
+connection, and vertical fixture before compilation. Test author and
+root read the three test files; the distinct reviewer also checked
+oracles. The [preregistered method](io-creazione-relativa-metodo.md)
+lists CTR-D01…D17. Static readings do not establish a dynamic outcome.
+
+| C1 checklist item | Static reading |
 |---|---|
-| 1. Requisiti e ADR | REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018, REQ-FOR-001; ADR-0017/0033/0035/0040 coerenti |
-| 2. Invarianti | INV-A7/A9/A10/A11, INV-P6/X3; nuovo file esclusivo, nessuna modifica ai file esistenti, nessuna eliminazione |
-| 3. Errori | Rifiuti prima degli effetti; FD invalido/alias; tuple e file non vuoto; causa EQ o doppio guasto con provenienza |
-| 4. Cicli e attese | Nessun ciclo nuovo di prodotto, foglia limitata a 255 byte; syscall nel pool I/O, nessuna deadline wall |
-| 5. Heap | Apertura con allocazioni ammesse, copia e capacità prima della syscall; nessuna misura del percorso caldo dichiarata |
-| 6. Confini | FD zero valido; metadata completi prima del restringimento, regolare vuoto e stessa identità nofollow prima del ritorno |
-| 7. Decisioni | CTR-D01…D17; guardie sul child privato lette staticamente, senza dichiarare MC/DC |
-| 8. Ownership | Parent borrowed, child posseduto dall'handoff; una close del child non pubblicato anche con parent invalidato |
-| 9. Tracciabilità e check | Riferimenti presenti, `trace-write` e `make check` previsti sul freeze; esiti da conservare separatamente |
-| 10. Regole | ftype, safety 3, docstring, funzioni brevi, nessun handler generico di prodotto o dipendenza nuova |
-| 11. Parallelismo | Nessun lock, attesa o scrittura condivisa tra Serie; namespace e capacità sotto proprietario unico |
-| 12. Durability | Preparazione prima dell'EDIT, nessun flush/rename/unlink implicito; orphan possibile dopo il fallimento |
+| 1. Requirements and ADRs | REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018, REQ-FOR-001; ADR-0017/0033/0035/0040 consistent |
+| 2. Invariants | INV-A7/A9/A10/A11, INV-P6/X3; exclusive new file, no changes to existing files, no deletion |
+| 3. Errors | Rejections before effects; invalid/alias FD; tuples and nonempty file; EQ cause or double fault with provenance |
+| 4. Loops and waits | No new product loops, leaf bounded to 255 bytes; syscalls in I/O pool, no wall deadline |
+| 5. Heap | Opening allows allocations, copy and capability before syscall; no hot-path measurement claimed |
+| 6. Boundaries | FD zero valid; complete metadata before narrowing, empty regular file and same nofollow identity before return |
+| 7. Decisions | CTR-D01…D17; private-child guards read statically, without claiming MC/DC |
+| 8. Ownership | Borrowed parent, child owned from handoff; one close of unpublished child even with invalidated parent |
+| 9. Traceability and checks | References present, `trace-write` and `make check` planned on freeze; outcomes to preserve separately |
+| 10. Rules | ftype, safety 3, docstrings, short functions, no generic product handler or new dependency |
+| 11. Parallelism | No lock, wait, or shared write between Serie; namespace and capabilities under one owner |
+| 12. Durability | Preparation before EDIT, no implicit flush/rename/unlink; possible orphan after failure |
 
-Fonti finali in `src/io/`, SHA-256:
+Final sources in `src/io/`, SHA-256:
 
 | File | SHA-256 |
 |---|---|
@@ -32,51 +34,53 @@ Fonti finali in `src/io/`, SHA-256:
 | `native-open-relative.lisp` | `5d3b7f128061a7b5fbae7ff611c1fe4b1e6e7e83e4909789dc1cbb5efeae0242` |
 | `open-relative.lisp` | `78faa5443804b61daca3bb58433064ce680a4ef50066541869c3affe2f01922c` |
 
-Il riuso di due helper privati aggiunge argomenti opzionali espliciti per
-modo, ragione del mismatch e operazione del doppio guasto. I default
-readonly restano `:input`, `:io-open-relative-identity`, `:open-relative`;
-il percorso preesistente e i suoi test restano parte del controllo completo.
-`native-file-metadata` mantiene il comportamento e documenta anche il FD append.
+Reuse of two private helpers adds explicit optional arguments for
+mode, mismatch reason, and double-fault operation. Read-only
+defaults remain `:input`, `:io-open-relative-identity`, `:open-relative`;
+the existing path and tests remain part of the full check.
+`native-file-metadata` retains behavior and also documents append FD.
 
-L'ABI è stata letta nel SDK locale (`sys/fcntl.h`, dichiarazione variadica
-di `openat`; `sys/_types.h`, `mode_t` Darwin a 16 bit) e nei sorgenti
-SBCL 2.6.9: `target-alieneval.lisp` interpreta `&optional`, `alieneval.lisp`
-ne conserva l'indice e `compiler/arm64/c-call.lisp` passa su stack i vararg
-Darwin. Anche `unix.lisp` e il contrib `sb-posix` usano il modo promosso
-variadico per `open`. Il nuovo binding passa sempre 0600 come `int`.
+ABI was read in the local SDK (`sys/fcntl.h`, variadic `openat`
+declaration; `sys/_types.h`, Darwin 16-bit `mode_t`) and SBCL 2.6.9
+sources: `target-alieneval.lisp` interprets `&optional`, `alieneval.lisp`
+retains its index, and `compiler/arm64/c-call.lisp` passes Darwin varargs
+on stack. `unix.lisp` and `sb-posix` contrib also use promoted
+variadic mode for `open`. New binding always passes 0600 as `int`.
 
-La fixture nativa esige 0600: la propria mkdir 0700 già attestata dimostra
-che la umask mantiene i bit owner, e nessun test la modifica. La prova
-rileva così anche un modo errato 000/0400 con un runner privilegiato.
-Non modifica la umask globale. Scrive dopo un riposizionamento del
-cursore per attestare append, verifica collisioni intatte e parent spostato.
-Il caso orphan combina creazione/close reali e guasto iniettato del callback
-di validazione: non viene presentato come guasto nativo di `fstat`.
+Native fixture requires 0600: its already verified mkdir 0700 demonstrates
+that umask preserves owner bits, and no test modifies it. The test
+thus also detects wrong modes 000/0400 with a privileged runner.
+It does not change global umask. It writes after repositioning the
+cursor to establish append, verifies intact collisions and moved parent.
+Orphan case combines real creation/close and injected validation-callback
+failure: it is not presented as native `fstat` failure.
 
-Restano le precondizioni di namespace esclusivo, callback fidate e assenza
-di cancellazione asincrona. Nessun rilievo di flusso resta aperto nella
-lettura; qualifica completa C1, MC/DC, mutazioni mirate e prestazioni restano
-distinte dalle verifiche locali e dalla CI.
+Exclusive-namespace, trusted-callback, and no-asynchronous-cancellation
+preconditions remain. No flow finding remains open in the
+reading; full C1 qualification, MC/DC, targeted mutations, and performance remain
+distinct from local verification and CI.
 
-## Raccordo del 2026-10-22
+<a id="raccordo-del-2026-10-22"></a>
 
-La tabella SHA sopra identifica i sorgenti del freeze S1 `b5ad739b`.
-L'integrazione con main `56fc1c1a` conserva i cinque file di implementazione
-e i tre test senza variazioni; package e ASD aggiungono anche l'export
-e i moduli della stabilizzazione dei nomi. L'ordine resta: native create
-dopo native open, wrapper create dopo wrapper open, stabilizzazione dopo
-transfer/flush. Root e revisore distinto hanno riletto il raccordo prima
-del controllo d'integrazione, senza rilievi aperti.
+## Integration of 2026-10-22
 
-Il secondo raccordo del 2026-10-22 integra main `e75f9794`: il selettore
-aggiunto opera soltanto su buffer privati, senza dipendere dall'API I/O.
-Root e revisore distinto hanno riletto i raccordi ASD e documentali
-prima di R4, senza rilievi; i sei sorgenti I/O e i test non cambiano rispetto a `28b7fae0`.
+The SHA table above identifies sources of freeze S1 `b5ad739b`.
+Integration with main `56fc1c1a` preserves five implementation files
+and three tests unchanged; package and ASD also add export
+and modules for name stabilization. Order remains: native create
+after native open, wrapper create after wrapper open, stabilization after
+transfer/flush. Root and a distinct reviewer reread integration before
+the integration check, without open findings.
 
-Il raccordo C4 con main `c46bc4c1` conserva vocabolario, producer e
-boundary test upstream. La differenza C4 rispetto a main è la regressione
-con i sei moduli del consumer coverage reale in un processo fresco:
-il producer resta assente nel figlio, e identità errata o test saltati
-non costituiscono una prova normale valida. Root e revisore distinto
-hanno riletto correzione minima e raccordo; parser, limiti e schemi
-non sono ampliati dall'input. I sorgenti I/O restano identici a R4.
+The second integration of 2026-10-22 incorporates main `e75f9794`: the added
+selector operates only on private buffers, without depending on I/O API.
+Root and a distinct reviewer reread ASD and documentation connections
+before R4, without findings; six I/O sources and tests unchanged from `28b7fae0`.
+
+C4 integration with main `c46bc4c1` retains upstream vocabulary, producer,
+and boundary tests. The C4 difference against main is the regression
+with all six real coverage-consumer modules in a fresh process:
+producer remains absent in child, and wrong identity or skipped tests
+do not constitute valid normal evidence. Root and a distinct reviewer
+reread minimal correction and integration; parser, limits, and schemas
+are not expanded by input. I/O sources remain identical to R4.

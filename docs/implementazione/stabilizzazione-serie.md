@@ -1,94 +1,104 @@
-# Completamento dei nomi dell'intera Serie
+<a id="completamento-dei-nomi-dellintera-serie"></a>
 
-`arcdocdb.recovery.series:stabilizza-nomi-serie-recuperata` coordina il
-[completamento per fonte](stabilizzazione-nomi-recovery.md) sull'intero
-insieme ACTIVE/CLOSED gia' recuperato. Il [metodo preregistrato](stabilizzazione-serie-metodo.md)
-elenca decisioni SGS-D01…D09 e limiti della verifica, prima del codice.
-Realizza ADR-0040 §2–3; nessun nuovo formato o punto di commit.
+# Completing names across the entire Serie
 
-## Uso e responsabilita'
+`arcdocdb.recovery.series:stabilizza-nomi-serie-recuperata` coordinates
+[per-source completion](stabilizzazione-nomi-recovery.md) across entire
+already-recovered ACTIVE/CLOSED set. [Preregistered method](stabilizzazione-serie-metodo.md)
+lists SGS-D01…D09 decisions and verification limits before code.
+Implements ADR-0040 §2–3; no new format or commit point.
+
+<a id="uso-e-responsabilita"></a>
+
+## Use and responsibilities
 
 ```lisp
 (arcdocdb.recovery.series:stabilizza-nomi-serie-recuperata
  directory sources active closed :max-segmenti 65536)
-;; Due valori: numero rinominati, numero gia' definitivi.
+;; Two values: renamed count, already-final count.
 ```
 
-`sources` e' il set posseduto aperto. `active` e `closed` sono i risultati
-di `leggi-serie-recuperata`: il vettore CLOSED e' completo e ordinato per
-ID u64. Il caller mantiene CONTROL autorevole, set, vettore, FD e namespace
-esclusivi e stabili per l'intera chiamata nel pool I/O. Non trasferisce
-ownership e non chiude singoli child. Il gate completo dell'Archivio resta
-necessario prima del completamento e dell'ammissione.
+`sources` is open owned set. `active` and `closed` are results
+of `leggi-serie-recuperata`: CLOSED vector complete and ordered by
+u64 ID. Caller keeps authoritative CONTROL, set, vector, FDs, and namespace
+exclusive and stable throughout call in I/O pool. Transfers no
+ownership and closes no individual children. Full Archivio gate remains
+necessary before completion and admission.
 
-Tre passaggi separano validazione ed effetti:
+Three passes separate validation and effects:
 
-| Passaggio | Controllo |
+| Pass | Check |
 |---|---|
-| Metadata di tutte le fonti | Budget/count, ID strettamente crescenti, unico ACTIVE, token CLOSED allineati e CONTROL identico per EQ |
-| Nomi di tutte le fonti | Stesso FD regolare, esattamente un nome, backend coerente, rinomina esclusiva disponibile quando serve |
-| Completamento | Ordine ID del set; primitiva per fonte con postcondizione e fsync parent in entrambi i rami |
+| All-source metadata | Budget/count, strictly increasing IDs, unique ACTIVE, aligned CLOSED tokens, and EQ-identical CONTROL |
+| All-source names | Same regular FD, exactly one name, consistent backend, exclusive rename available when needed |
+| Completion | Set ID order; per-source primitive with postcondition and parent fsync in both branches |
 
-Un errore di configurazione, token o namespace nell'ultima fonte non
-esegue prima rinomine o fsync sulle altre. I preflight dei nomi leggono
-soltanto identita', senza leggere header o contenuti dei segmenti. Le
-primitive ripetono i controlli prima dell'uso: il preflight globale non
-prenota nomi o protegge da mutatori esterni.
+Configuration, token, or namespace error in last source does not
+first rename or fsync others. Name preflights read
+only identities, not segment headers or contents. Primitives
+repeat checks before use: global preflight neither reserves
+names nor protects against external mutators.
 
-## Completezza senza un altro contenitore
+<a id="completezza-senza-un-altro-contenitore"></a>
 
-Il numero di CLOSED coincide con quello del manifest; il numero delle
-fonti e' CLOSED piu' uno. Il set ha ID strettamente crescenti e ogni riga
-corrisponde allo stato del manifest tramite le guardie canoniche per fonte.
-L'unico ACTIVE usa lo stesso ID/FD/EOF del token; ogni CLOSED consuma il
-successivo token con ID/FD/P esatti e CONTROL identico per EQ. Cardinalita',
-appartenenza e ordine provano completezza senza un altro array o hash.
+## Completeness without another container
 
-Un vettore CLOSED permutato viene rifiutato, anche se contiene gli stessi
-elementi. ID zero e bit alti restano significativi; NIL rappresenta
-ACTIVE non ancora trovato, quindi anche la posizione zero e' valida.
-Prima del ritorno si verificano consumo del vettore, somma dei due
-conteggi, parent e CONTROL ancora aperti. Il risultato esce solo completo.
+CLOSED count matches manifest; source
+count is CLOSED plus one. Set has strictly increasing IDs and every row
+matches manifest state through canonical per-source guards.
+Unique ACTIVE uses same ID/FD/EOF as token; each CLOSED consumes
+next token with exact ID/FD/P and EQ-identical CONTROL. Cardinality,
+membership, and order prove completeness without another array or hash.
 
-## Guasti ed effetti parziali
+Permuted CLOSED vector rejected even with same
+elements. Zero ID and high bits remain meaningful; NIL represents
+ACTIVE not yet found, so position zero valid too.
+Before return, checks vector consumption, sum of both
+counts, still-open parent and CONTROL. Result only emerges complete.
 
-Il gruppo non e' una transazione atomica. Un guasto durante la terza fase
-conserva i completamenti precedenti e propaga la stessa condizione, senza
-conteggi parziali, rollback, retry o close. Un errore durante un effetto
-I/O mantiene il fail-stop del parent della primitiva esistente. Se
-l'interruzione cade fra due chiamate completate, non c'e' I/O pendente da
-annullare; il coordinatore osserva nuovamente i nomi e mantiene il traffico
-non ammesso. Una capacita' guasta richiede una nuova acquisizione.
+<a id="guasti-ed-effetti-parziali"></a>
 
-La scelta ACTIVE/CLOSED e i controlli semantici vengono ripetuti dalla
-primitiva per fonte. Il caller impedisce chiusure o mutazioni del vettore
-durante l'esecuzione; il risultato non e' una lease sui FD. Il confine
-generale COD-24 della Serie e il coordinamento del Recovery Manager
-rimangono aperti.
+## Faults and partial effects
 
-## Preflight I/O riusabile e costo
+Group is not atomic transaction. Fault during third phase
+preserves previous completions and propagates same condition, without
+partial counts, rollback, retry, or close. Error during I/O effect
+retains existing primitive's parent fail-stop. If
+interruption falls between completed calls, no pending I/O to
+undo; coordinator observes names again and keeps traffic
+unadmitted. Faulted capability requires new acquisition.
+
+ACTIVE/CLOSED selection and semantic checks repeated by per-source
+primitive. Caller prevents closes or vector mutations
+during execution; result is no FD lease. General
+Serie COD-24 boundary and Recovery Manager coordination
+remain open.
+
+<a id="preflight-io-riusabile-e-costo"></a>
+
+## Reusable I/O preflight and cost
 
 `io:verifica-stabilizzazione-temporaneo(directory, file, temporary, final)`
-restituisce T per il nome temporaneo o NIL per il definitivo, dopo gli
-stessi controlli del completamento. Non esegue rinomina, fsync o close e
-non modifica lo stato del parent. Il risultato non e' un token di
-autorizzazione; l'helper privato che prepara le foglie e il ramo e' condiviso
-con `io:stabilizza-nome-temporaneo`.
+returns T for temporary name or NIL for final, after same
+completion checks. Performs no rename, fsync, or close and
+does not change parent state. Result is not authorization
+token; private helper preparing leaves and branch shared
+with `io:stabilizza-nome-temporaneo`.
 
-`max-segmenti` e' un `index`, default 65536 e zero ammesso; include ACTIVE.
-Budget superato: `resource-exhausted` prima delle scansioni. Cardinalita',
-ordine, insieme o autorita' errati: `invalid-argument`. Tipi/range scalari
-seguono i controlli safety3 delle firme; guasti I/O e invarianti propagano
-senza mascheramento. I budget uguali al count sono validi.
+`max-segmenti` is `index`, default 65536, zero allowed; includes ACTIVE.
+Exceeded budget: `resource-exhausted` before scans. Incorrect cardinality,
+order, set, or authority: `invalid-argument`. Scalar types/ranges
+follow signature safety3 checks; I/O faults and invariants propagate
+without masking. Budgets equal to count valid.
 
-Il lavoro cresce con il numero delle fonti; i cicli sono limitati dal count
-gia' ammesso. Nessun array o hash nuovo e nessun oggetto per documento.
-Nomi privati, controlli del runtime e FFI possono allocare sul percorso
-freddo; memoria effettiva e RSS non sono misurate. Ogni fonte riuscita
-mantiene il proprio fsync parent, anche se gia' definitiva.
+Work grows with source count; loops bounded by already-admitted
+count. No new array or hash and no per-document object.
+Private names, runtime checks, and FFI may allocate on cold
+path; actual memory and RSS unmeasured. Each successful source
+retains own parent fsync even when already final.
 
-Non si aggiungono lock, thread o scritture condivise tra Serie: la
-sequenza riguarda una sola Serie. Non vengono eseguite rimozioni, creato
-il nuovo ACTIVE, pubblicati CONTROL/indici o ammesso traffico.
-Compilazione e revisione statica sono distinte da test funzionali, FI,
-copertura, MC/DC, crash e misure di prestazione, ancora da eseguire.
+No locks, threads, or shared writes between Serie added:
+sequence concerns one Serie. No removal, new
+ACTIVE creation, CONTROL/index publication, or traffic admission performed.
+Compilation and static review separate from functional tests, FI,
+coverage, MC/DC, crashes, and performance measurement still to run.

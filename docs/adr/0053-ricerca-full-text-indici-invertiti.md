@@ -1,165 +1,185 @@
-# ADR-0053 — Ricerca full text con indici invertiti dedicati
+<a id="adr-0053--ricerca-full-text-con-indici-invertiti-dedicati"></a>
 
-- **Stato:** Accettata per il progetto; implementazione e qualifica da produrre
-- **Data:** 2026-10-15
-- **Rapporto con la specifica:** su richiesta dell'autore aggiunge la ricerca full text
-  a «Secondary index», «Query» e «Benchmark»; estende lo scope v1 di
-  [ADR-0030](0030-scope-v1.md), nella fase 8. Integra
-  [ADR-0026](0026-indici-secondari-segmentati.md) e
-  [ADR-0029](0029-interfacce-protocollo-query-contratto.md), senza sostituirne gli altri contratti.
-- **Riferimenti:** [indici](../08-indici.md#ricerca-full-text),
-  [caso NNTP](../valutazione/caso-duso-nntp.md), REQ-SEC-003…REQ-SEC-006, INV-I4
+# ADR-0053 — Full-text search with dedicated inverted indexes
 
-## Contesto
+- **Status:** Accepted for the design; implementation and qualification remain to be produced
+- **Date:** 2026-10-15
+- **Relationship to the specification:** at the author's request, adds full-text search
+  to “Secondary index,” “Query,” and “Benchmark”; extends the v1 scope of
+  [ADR-0030](0030-scope-v1.md), in phase 8. Supplements
+  [ADR-0026](0026-indici-secondari-segmentati.md) and
+  [ADR-0029](0029-interfacce-protocollo-query-contratto.md), without replacing their other contracts.
+- **References:** [indexes](../08-indici.md#ricerca-full-text),
+  [NNTP case](../valutazione/caso-duso-nntp.md), REQ-SEC-003…REQ-SEC-006, INV-I4
 
-Uguaglianza, prefissi e categorie non bastano per cercare parole e frasi nel contenuto
-di un documento. Il futuro server NNTP in Common Lisp richiede di considerare anche
-la ricerca in oggetto, autore e corpo degli articoli, combinata con gruppo e data.
-La funzionalità appartiene al motore general-purpose: MIME e protocollo NNTP restano
-responsabilità dell'applicazione. La richiesta attuale è progettuale, senza sviluppo di codice.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-### Contratto e semantica
+Equality, prefixes, and categories are insufficient to search for words and phrases in a
+document's contents. The future NNTP server in Common Lisp requires consideration of
+searching article subjects, authors, and bodies, combined with group and date.
+The feature belongs to the general-purpose engine: MIME and the NNTP protocol remain
+the application's responsibility. The current request concerns design, without code development.
 
-Il contratto della Serie dichiara indici di tipo **full-text**, distinti dagli indici
-di uguaglianza, categoria e intervallo. Ogni dichiarazione identifica nome, campi
-testuali scalari e profilo di analisi immutabile e versionato. Un campo assente o una
-stringa vuota non produce termini; un valore di tipo errato segue il rifiuto previsto
-dal contratto. Il testo originale resta nel documento, senza normalizzazioni distruttive.
+<a id="decisione"></a>
 
-Il profilo identifica versione Unicode, normalizzazione, case folding, segmentazione
-e ogni parametro linguistico. Il profilo base usa la sequenza **NFC → case folding
-Unicode completo → NFC → segmentazione in parole**; conserva i segmenti che contengono
-lettere o numeri, conserva gli accenti e non applica stemming né stopword implicite.
-Regole e tabelle sono fissate dalla versione del profilo, mai dalla locale del processo
-o dall'ultima versione disponibile. Documento e query usano esattamente lo stesso profilo.
-Eventuali profili linguistici aggiuntivi richiedono un contratto verificabile proprio.
+## Decision
 
-L'AST di query di ADR-0029 si estende con due predicati, ciascuno su un campo dichiarato:
+<a id="contratto-e-semantica"></a>
 
-| Predicato logico | Significato |
+### Contract and semantics
+
+The Serie's contract declares **full-text** indexes, distinct from equality,
+category, and range indexes. Each declaration identifies a name, scalar text fields,
+and an immutable, versioned analysis profile. A missing field or an
+empty string produces no terms; a value of the wrong type follows the rejection defined
+by the contract. The original text remains in the document, without destructive normalization.
+
+The profile identifies the Unicode version, normalization, case folding, segmentation,
+and every linguistic parameter. The base profile uses **NFC → full Unicode case folding
+→ NFC → word segmentation**; it retains segments containing
+letters or numbers, preserves accents, and applies neither stemming nor implicit stopwords.
+Rules and tables are fixed by the profile version, never by the process locale
+or the latest available version. Documents and queries use exactly the same profile.
+Any additional linguistic profiles require their own verifiable contract.
+
+The query AST of ADR-0029 is extended with two predicates, each on a declared field:
+
+| Logical predicate | Meaning |
 |---|---|
-| `text-match(campo, testo, all/any)` | analizza il testo della query; richiede tutti oppure almeno uno dei termini |
-| `text-phrase(campo, testo)` | richiede gli stessi termini in posizioni consecutive, nello stesso campo |
+| `text-match(campo, testo, all/any)` | analyzes the query text; requires all terms or at least one |
+| `text-phrase(campo, testo)` | requires the same terms in consecutive positions in the same field |
 
-Le foglie si combinano con `and/or/not` e con i filtri strutturati esistenti. Una frase
-non attraversa due campi. Il complemento di `not` si calcola sull'insieme dei documenti
-vivi visibili nello snapshot della query, inclusi quelli privi del campo. Una query che
-dopo l'analisi non contiene termini è rifiutata esplicitamente. Non si esegue codice
-ricevuto dal client. Nomi e codifica dei nodi sul wire si fissano con la superficie API
-della fase 8–9; qui è fissata la semantica, non un parser testuale.
+Leaves combine with `and/or/not` and existing structured filters. A phrase
+does not cross two fields. The complement of `not` is computed over the set of live
+documents visible in the query snapshot, including those without the field. A query
+containing no terms after analysis is explicitly rejected. Code received from the client
+is not executed. Node names and wire encoding will be fixed with the API surface
+in phases 8–9; this decision fixes semantics, not a text parser.
 
-La prima versione offre corrispondenza booleana e frasi, con ordinamento esplicito e
-spareggio stabile per `_id`. Ranking per rilevanza (ad esempio BM25), fuzzy search,
-sinonimi e prossimità diversa dalla frase richiedono decisioni successive. Le frequenze
-conservate nell'indice non implicano un ranking già definito.
+The first version offers Boolean matching and phrases, with explicit ordering and
+stable tie-breaking by `_id`. Relevance ranking (e.g., BM25), fuzzy search,
+synonyms, and proximity other than phrases require subsequent decisions. Frequencies
+stored in the index do not imply an already defined ranking.
 
-### Indice invertito per segmento
+<a id="indice-invertito-per-segmento"></a>
 
-Ogni segmento `CLOSED` ha un file immutabile dedicato per indice full text, nella
-famiglia `.idx` di ADR-0026. Il contenuto logico è:
+### Inverted index per segment
 
-| Sezione | Contenuto |
+Each `CLOSED` segment has a dedicated immutable file per full-text index, in the
+`.idx` family of ADR-0026. Its logical contents are:
+
+| Section | Contents |
 |---|---|
-| Identità | Serie, segmento, nome/generazione dell'indice, contratto e profilo di analisi |
-| Dizionario | coppie `(campo, termine)` ordinate e riferimenti alle posting list |
-| Posting list | ordinali di riga ordinati, frequenza del termine nella riga e riferimenti alle posizioni |
-| Posizioni | ordinali dei token nel campo, necessari alle frasi; niente attraversamento di campi |
-| Controlli | conteggi, limiti delle sezioni e CRC32C; eventuale Bloom sui termini solo come filtro negativo |
+| Identity | Serie, segment, index name/generation, contract, and analysis profile |
+| Dictionary | sorted `(campo, termine)` pairs and references to posting lists |
+| Posting list | sorted row ordinals, term frequency in the row, and references to positions |
+| Positions | token ordinals in the field, needed for phrases; no field crossing |
+| Checks | counts, section bounds, and CRC32C; optional term Bloom filter only as a negative filter |
 
-La riga identifica il record tramite l'hint dello stesso segmento: chiave e CSN non
-sono sostituiti da un identificativo testuale globale. Le posting list possono usare
-delta encoding e blocchi per saltare intervalli; codec, offset e limiti binari si fissano
-prima dell'implementazione con una versione esplicita del tipo di indice. Il formato
-dei record documentali v1/v2 non cambia. Non si adotta una dipendenza esterna.
+The row identifies the record through the same segment's hint: key and CSN are not
+replaced by a global text identifier. Posting lists may use
+delta encoding and blocks to skip ranges; codecs, offsets, and binary limits will be fixed
+before implementation with an explicit index-type version. The v1/v2 document
+record format does not change. No external dependency is adopted.
 
-Per l'`ACTIVE` si mantiene un delta in memoria coerente con la frontiera pubblicata,
-in array compatti e blocchi leggibili in modo stabile. Tokenizzazione e preparazione
-dei buffer avvengono sui worker di calcolo prima di sottoporre il lavoro al writer;
-contratto e generazione vengono ricontrollati prima del commit. La pubblicazione del
-delta resta seriale sul solo writer della Serie. Query e costruzione dei file `CLOSED`
-si distribuiscono per segmento, con budget propri; nessun nuovo lock o contatore globale
-per documento e nessun secondo scheduler full text.
+For `ACTIVE`, an in-memory delta consistent with the published frontier is maintained,
+in compact arrays and blocks that support stable reads. Tokenization and buffer preparation
+run on compute workers before submitting work to the writer;
+contract and generation are rechecked before commit. Delta publication
+remains serial on the Serie's writer alone. Queries and `CLOSED` file construction
+distribute by segment, with their own budgets; no new global lock or counter
+per document and no second full-text scheduler.
 
-### Commit, snapshot e manutenzione
+<a id="commit-snapshot-e-manutenzione"></a>
 
-L'indice è **derivato dai documenti committed**, senza WAL o commit autonomo. Il punto
-di atomicità durevole resta SEAL per la scrittura locale e DECISION per la transazione
-multiserie. Prima di avanzare l'orizzonte di visibilità e confermare la pubblicazione,
-ogni indice full text utilizzabile deve includere anche il delta dei nuovi record.
-Se la pubblicazione derivata fallisce dopo la decisione, si completa o si dichiara il
-guasto secondo i contratti esistenti: non si conferma uno stato ricercabile incompleto.
+### Commit, snapshots, and maintenance
 
-I posting sono **candidati**. Prima di restituire un risultato si risolvono chiave,
-esito committed e versione effettivamente visibile nello snapshot, con le versioni
-trattenute del motore; il confronto con la sola versione corrente non basta. Termini
-e filtri devono riferirsi alla stessa versione. Aggiornamenti e tombstone rendono i
-vecchi posting invisibili alle nuove viste; una vista precedente conserva i risultati
-dovuti finché è valida. Ogni documento viene emesso una sola volta e il record letto
-passa le verifiche di integrità ordinarie.
+The index is **derived from committed documents**, without its own WAL or commit. The durable
+atomicity point remains SEAL for local writes and DECISION for multiseries
+transactions. Before advancing the visibility horizon and acknowledging publication,
+every usable full-text index must also include the delta of new records.
+If derived publication fails after the decision, complete it or declare
+failure according to existing contracts: do not acknowledge an incomplete searchable state.
 
-CLEAN/MERGE ricostruiscono dizionario, posting e posizioni per le righe dei nuovi
-segmenti, conservando le versioni necessarie agli snapshot: non copiano ordinali
-legati ai vecchi hint. Pubblicazione e reclaim seguono EDIT ed EBR già previsti.
+Postings are **candidates**. Before returning a result, resolve the key,
+committed outcome, and version actually visible in the snapshot, using the engine's
+retained versions; comparison with only the current version is insufficient. Terms
+and filters must refer to the same version. Updates and tombstones make old
+postings invisible to new views; an earlier view retains the results it is entitled
+to while valid. Each document is emitted only once, and the record read
+undergoes ordinary integrity checks.
 
-Aggiunta di un indice o modifica dell'analizzatore crea una **nuova generazione**.
-Il contratto nel catalogo è la decisione durevole; readiness e file sono stato derivato
-ricostruibile. Il build copre i segmenti e il delta concorrente fino a una frontiera
-pubblicata, poi espone atomicamente una vista completa sulla Serie. Una query fissa
-generazione e profilo per tutta la propria durata; non mescola analizzatori. La vecchia
-generazione resta utilizzabile dai reader già ammessi fino alla loro quiescenza.
+CLEAN/MERGE rebuild the dictionary, postings, and positions for rows in new
+segments, retaining versions needed by snapshots: they do not copy ordinals
+tied to old hints. Publication and reclamation follow the existing EDIT and EBR protocols.
 
-File assente, CRC errato, identità incoerente o rebuild incompleto non significano
-«nessun risultato». Recovery e restore ricostruiscono dagli stessi documenti e dal
-contratto autorevole; finché manca copertura completa la query riceve un errore
-esplicito di indice non disponibile. Un eventuale ripiego su scansione deve applicare
-la stessa semantica e rispettare i budget, senza essere presentato come indice pronto.
-Un file corrotto si segnala e si esclude; la sua sostituzione segue il protocollo di
-pubblicazione dei derivati, senza modificare o cancellare alla cieca file definitivi.
+Adding an index or changing the analyzer creates a **new generation**.
+The catalog contract is the durable decision; readiness and files are reconstructible
+derived state. The build covers segments and the concurrent delta up to a published
+frontier, then atomically exposes a complete view of the Serie. A query fixes its
+generation and profile for its entire duration; it does not mix analyzers. The old
+generation remains usable by already admitted readers until they become quiescent.
 
-### Risorse e stato del lavoro
+A missing file, incorrect CRC, inconsistent identity, or incomplete rebuild does not mean
+“no results.” Recovery and restore rebuild from the same documents and the
+authoritative contract; until coverage is complete, the query receives an explicit
+index-unavailable error. Any scan fallback must apply
+the same semantics and respect budgets, without presenting itself as a ready index.
+A corrupt file is reported and excluded; its replacement follows the derivative
+publication protocol, without blindly modifying or deleting final files.
 
-Sono obbligatori limiti configurati per byte di testo analizzati, lunghezza dei termini,
-token e posizioni per documento, dimensione del delta, nodi e profondità della query,
-posting visitati, memoria temporanea, risultati e durata. Il superamento in scrittura
-è rifiutato prima della decisione durevole: nessun testo viene indicizzato a metà in
-silenzio. In lettura si restituisce un errore esplicito se il budget non consente il
-completamento; un `limit` richiesto è distinto da risultati parziali per esaurimento
-del budget. Cancellazione, parcheggi e I/O seguono il modello di esecuzione del motore.
+<a id="risorse-e-stato-del-lavoro"></a>
 
-M06 possiede i derivati full text e M15 i predicati e gli iteratori. La fase 8 comprende
-implementazione e verifica; questa decisione aggiunge il requisito e i criteri di
-accettazione, senza dichiarare disponibili codice, prove di correttezza o prestazioni.
+### Resources and work status
 
-## Conseguenze
+Configured limits are mandatory for analyzed text bytes, term length,
+tokens and positions per document, delta size, query nodes and depth,
+postings visited, temporary memory, results, and duration. Write-side excess
+is rejected before the durable decision: no text is silently partially indexed.
+Reads return an explicit error if the budget cannot support
+completion; a requested `limit` is distinct from partial results due to budget
+exhaustion. Cancellation, parking, and I/O follow the engine's execution model.
 
-- La ricerca testuale diventa una capacità esplicita del progetto, anche per NNTP.
-- Posizioni e delta aggiungono memoria, spazio su disco e costo di scrittura/rebuild:
-  i target delle query semplici non si trasferiscono alla ricerca full text.
-- La disponibilità della ricerca dipende dalla copertura verificata dell'indice; la
-  perdita di un derivato non modifica la fonte di verità documentale.
+M06 owns full-text derivatives and M15 owns predicates and iterators. Phase 8 includes
+implementation and verification; this decision adds the requirement and acceptance
+criteria without declaring code, correctness evidence, or performance available.
 
-## Alternative considerate
+<a id="conseguenze"></a>
 
-- Scansione del testo a ogni query: utile come oracolo, costosa sui corpus grandi.
-- Riutilizzare gli indici di categoria senza posizioni: non risolve le frasi.
-- Motore esterno: aggiunge dipendenze e un secondo protocollo di consistenza e recovery.
-- Indicizzazione asincrona con risultati incompleti dopo il commit: incompatibile con
-  il contratto di visibilità scelto.
+## Consequences
 
-## Valutazione
+- Text search becomes an explicit design capability, including for NNTP.
+- Positions and deltas add memory, disk space, and write/rebuild cost:
+  simple-query targets do not transfer to full-text search.
+- Search availability depends on verified index coverage; losing a derivative
+  does not change the documentary source of truth.
 
-Verifiche **da realizzare**, tracciate in REQ-SEC-003…REQ-SEC-006: confronto con scansione
-indipendente per termini/frasi e Unicode; aggiornamenti, delete, abort e snapshot;
-`ACTIVE` più `CLOSED`; CLEAN/MERGE; build concorrente e cambio generazione; restart,
-restore e corruzione dei derivati; saturazione e cancellazione. Misure e corpus sono
-descritti in [13 Benchmark](../13-benchmark.md#ricerca-full-text). Nessuna di queste
-prove è già dimostrata dai test esistenti del primary index o della prova verticale.
+<a id="alternative-considerate"></a>
 
-Il pattern di riferimento è l'indice invertito posizionale, descritto in
+## Alternatives considered
+
+- Scanning text on every query: useful as an oracle, costly for large corpora.
+- Reusing category indexes without positions: does not support phrases.
+- External engine: adds dependencies and a second consistency and recovery protocol.
+- Asynchronous indexing with incomplete results after commit: incompatible with
+  the chosen visibility contract.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+Verification **still to be implemented**, tracked in REQ-SEC-003…REQ-SEC-006: comparison with an
+independent scan for terms/phrases and Unicode; updates, deletes, aborts, and snapshots;
+`ACTIVE` plus `CLOSED`; CLEAN/MERGE; concurrent build and generation changes; restart,
+restore, and derivative corruption; saturation and cancellation. Measurements and corpora are
+described in [13 Benchmarks](../13-benchmark.md#ricerca-full-text). None of these
+tests is already demonstrated by existing primary index or vertical proof tests.
+
+The reference pattern is the positional inverted index, described in
 [Introduction to Information Retrieval, §2.4.2](https://nlp.stanford.edu/IR-book/html/htmledition/positional-indexes-1.html).
-Per l'analisi Unicode i riferimenti sono
-[UAX #29](https://www.unicode.org/reports/tr29/) e
-[UAX #15](https://www.unicode.org/reports/tr15/); la versione concreta deve essere
-fissata nel profilo, non desunta da questi collegamenti aggiornabili.
+References for Unicode analysis are
+[UAX #29](https://www.unicode.org/reports/tr29/) and
+[UAX #15](https://www.unicode.org/reports/tr15/); the specific version must be
+fixed in the profile, not inferred from these updateable links.

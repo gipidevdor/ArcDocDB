@@ -1,37 +1,50 @@
-# ADR-0003 — WAL per Serie, nessun global data WAL
+<a id="adr-0003--wal-per-serie-nessun-global-data-wal"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («WAL», «Layout
-  fisico»)
-- **Riferimenti:** [04 WAL e durability](../04-wal-e-durability.md), INV-W1, INV-W2
+# ADR-0003 — WAL per Serie, no global data WAL
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision (“WAL,” “Physical
+  layout”)
+- **References:** [04 WAL and durability](../04-wal-e-durability.md), INV-W1, INV-W2
 
-Un WAL unico è il modo classico di ottenere durability e un ordine globale, ma è anche un
-punto di serializzazione per tutte le scritture del sistema.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-Ogni Serie ha un WAL indipendente. Non esiste un WAL dei dati globale. L'unico log condiviso a
-livello di Archivio è `Registri/multiserie.log`, che contiene decisioni e non dati. Il sistema
-privilegia il group commit, anche su `multiserie.log`.
+A single WAL is the classic way to achieve durability and a global order, but it is also a
+serialization point for all writes in the system.
 
-## Conseguenze
+<a id="decisione"></a>
 
-- Le scritture su Serie diverse non si contendono un log.
-- Non esiste un ordine globale dei commit: va costruito dove serve (QA-06).
-- Il recovery tratta ogni WAL separatamente e in parallelo.
-- I flush di più WAL concorrono sullo stesso dispositivo.
+## Decision
 
-## Alternative considerate
+Each Serie has an independent WAL. There is no global data WAL. The only log shared at
+Archivio level is `Registri/multiserie.log`, which contains decisions rather than data. The
+system favors group commit, including on `multiserie.log`.
 
-- *WAL globale con group commit:* gruppi più grandi e un solo flusso di flush, ma tutte le
-  Serie condividono latenza e contesa; esplicitamente escluso dalla specifica.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-- Rischi: RSK-03 (amplificazione, legata a QA-02), RSK-06.
-- Verifica: SPK-03 misura il flush con 1…64 WAL concorrenti. Se il dispositivo serializza i
-  flush, il vantaggio sul percorso durevole è minore dell'atteso: il dato va riportato qui.
-- Aperto: rapporto WAL ↔ segmenti e troncamento (QA-02); livelli di durability (QA-05).
+- Writes to different Serie do not contend for a log.
+- There is no global commit order: one must be constructed where needed (QA-06).
+- Recovery handles each WAL separately and in parallel.
+- Flushes from several WALs compete on the same device.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Global WAL with group commit:* larger groups and a single flush stream, but all
+  Serie share latency and contention; explicitly excluded by the specification.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Risks: RSK-03 (amplification, related to QA-02), RSK-06.
+- Verification: SPK-03 measures flushes with 1…64 concurrent WALs. If the device serializes
+  flushes, the benefit on the durable path is smaller than expected: that result must be
+  recorded here.
+- Open: WAL ↔ segment relationship and truncation (QA-02); durability levels (QA-05).

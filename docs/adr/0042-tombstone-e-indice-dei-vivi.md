@@ -1,98 +1,118 @@
-# ADR-0042 — Tombstone: l'indice contiene solo documenti vivi; scarto per filtro di esistenza
+<a id="adr-0042--tombstone-lindice-contiene-solo-documenti-vivi-scarto-per-filtro-di-esistenza"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda; chiude di nuovo QA-15. **Sostituisce** la
-  sezione «Tombstone» di [ADR-0023](0023-politiche-di-compaction.md) e la ricostruzione «in
-  ordine di lineage» di [ADR-0015](0015-primary-index-swiss-table-swmr.md); assegna una
-  funzione al filtro di Bloom sulle chiavi di [ADR-0026](0026-indici-secondari-segmentati.md).
-  Soglie, stati di carico e limitatore di ADR-0023 restano.
-- **Riferimenti:** [analisi progettuale](../analisi-progettuale.md) AP-04, AP-11;
-  [architettura](../architettura.md#compaction); INV-C11, INV-D1, INV-I2
+# ADR-0042 — Tombstones: the index contains only live documents; disposal through an existence filter
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment; closes QA-15 again. **Supersedes** the
+  "Tombstone" section of [ADR-0023](0023-politiche-di-compaction.md) and reconstruction "in
+  lineage order" in [ADR-0015](0015-primary-index-swiss-table-swmr.md); assigns a
+  purpose to the key Bloom filter in [ADR-0026](0026-indici-secondari-segmentati.md).
+  Thresholds, load states, and the limiter in ADR-0023 remain.
+- **References:** [design analysis](../analisi-progettuale.md) AP-04, AP-11;
+  [architecture](../architettura.md#compaction); INV-C11, INV-D1, INV-I2
 
-Un tombstone esiste su disco per una sola ragione: impedire che, quando l'indice viene
-ricostruito dai segmenti, una versione più vecchia dello stesso documento torni a sembrare
-corrente. La regola per lineage di ADR-0023 non lo garantisce quando un MERGE unisce segmenti
-non adiacenti (controesempio in AP-04), e nella sua forma sicura non scarterebbe quasi mai.
-Inoltre non era definito se l'indice in memoria conservasse una entry per i documenti
-eliminati: in tal caso la memoria crescerebbe con le eliminazioni, senza limite.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-### 1. L'indice contiene solo documenti vivi
+A tombstone exists on disk for only one reason: to prevent an older version of the
+same document from appearing current again when the index is
+rebuilt from segments. ADR-0023's lineage rule does not ensure this when MERGE combines
+nonadjacent segments (counterexample in AP-04), and its safe form would almost never discard anything.
+It was also undefined whether the in-memory index retained an entry for deleted
+documents: in that case memory would grow with deletions, without bound.
 
-Alla pubblicazione di un tombstone il writer trattiene la versione precedente se uno snapshot
-ne ha bisogno ([ADR-0038](0038-orizzonte-di-visibilita.md)) e **rimuove la entry**. Un
-documento eliminato non occupa memoria. Una successiva creazione dello stesso `_id` è un
-documento nuovo, con un CSN maggiore di ogni versione passata.
+<a id="decisione"></a>
 
-### 2. Ricostruzione: vince il CSN massimo
+## Decision
 
-Per ogni chiave, il record committed con il **CSN più alto** tra tutti i segmenti è la
-versione corrente; se è un tombstone, la chiave non ha entry. A parità di CSN (due scritture
-dello stesso documento nello stesso lotto, quindi nello stesso segmento) vince l'offset
-maggiore. Il risultato **non dipende dall'ordine** in cui i segmenti sono letti: la
-ricostruzione procede in parallelo e in qualsiasi ordine. Durante la ricostruzione i tombstone
-occupano una entry provvisoria, tolta alla fine.
+<a id="1-lindice-contiene-solo-documenti-vivi"></a>
 
-### 3. Quando un tombstone si scarta
+### 1. The index contains only live documents
 
-Sia `t` un tombstone per la chiave `k` con CSN `c`, incontrato da una compaction con sorgenti
-`I`. `t` **non viene copiato** se vale una delle due:
+When publishing a tombstone, the writer retains the previous version if a snapshot
+needs it ([ADR-0038](0038-orizzonte-di-visibilita.md)) and **removes the entry**. A
+deleted document occupies no memory. A later creation of the same `_id` is a
+new document, with a CSN higher than every past version.
 
-- **(a) superato**: l'indice ha una entry per `k` con CSN `> c` il cui record sta in un
-  segmento `CLOSED`, quindi è durevole (il documento è stato ricreato: quel record, o il
-  tombstone che un giorno lo eliminerà, nasconde tutto ciò che `t` nascondeva);
-- **(b) senza più nulla da nascondere**: nessuna versione di `k` è trattenuta, e per ogni
-  segmento `S` della Serie non in `I` con `csn-min(S) < c`, il filtro di esistenza di `S`
-  risponde «sicuramente assente» per `k`.
+<a id="2-ricostruzione-vince-il-csn-massimo"></a>
 
-In ogni altro caso `t` è un record necessario e viene copiato. Il filtro di esistenza è la
-sezione Bloom dell'hint ([ADR-0039](0039-cornice-unica-dei-record.md)); un hint mancante o non
-valido vale «forse presente»; l'`ACTIVE` contiene solo record più recenti di qualunque
-tombstone in un segmento chiuso e non partecipa. Un falso positivo del filtro conserva un
-tombstone più a lungo: l'errore è nella direzione sicura, come prescrive INV-I2.
+### 2. Reconstruction: maximum CSN wins
 
-Le versioni più vecchie di `k` dentro i sorgenti `I` sono morte e non vengono copiate: per
-questo `I` è escluso dal controllo.
+For each key, the committed record with the **highest CSN** across all segments is the
+current version; if it is a tombstone, the key has no entry. When CSNs tie (two writes
+to the same document in the same batch, hence the same segment), the higher offset
+wins. The result **does not depend on the order** in which segments are read:
+reconstruction proceeds in parallel and in any order. During reconstruction, tombstones
+occupy temporary entries, removed at the end.
 
-### 4. Contabilità
+<a id="3-quando-un-tombstone-si-scarta"></a>
 
-Un tombstone è contato tra i byte **necessari** finché una compaction non stabilisce che è
-scartabile. Un segmento che contiene tombstone non è mai eliminato direttamente con la regola
-«live = 0»: passa da un CLEAN.
+### 3. When a tombstone is discarded
 
-Pattern: purga dei tombstone solo se nessun altro file può contenere dati più vecchi della
-stessa chiave, deciso con il filtro di Bloom e il timestamp minimo di ogni file (Apache
-Cassandra); indice in memoria dei soli vivi con tombstone solo su disco (Bitcask).
+Let `t` be a tombstone for key `k` with CSN `c`, encountered by compaction with sources
+`I`. `t` **is not copied** if either holds:
 
-## Conseguenze
+- **(a) superseded**: the index has an entry for `k` with CSN `> c` whose record is in a
+  `CLOSED` segment and therefore durable (the document was recreated: that record, or the
+  tombstone that eventually deletes it, hides everything `t` hid);
+- **(b) nothing left to hide**: no version of `k` is retained, and for every
+  Serie segment `S` outside `I` with `csn-min(S) < c`, the existence filter for `S`
+  answers "definitely absent" for `k`.
 
-- Nessuna riapparizione di documenti eliminati, per costruzione e senza ipotesi su quali
-  segmenti vengano uniti.
-- I tombstone su disco sono limitati dai record morti non ancora recuperati: ogni tombstone
-  conservato corrisponde ad almeno un record più vecchio della stessa chiave ancora presente
-  (o a un falso positivo del filtro, ~1 %).
-- Memoria dell'indice proporzionale ai documenti vivi.
-- `lineage-min` scompare da intestazione del segmento e manifest.
-- Costo: per ogni tombstone candidato, un test di Bloom per ogni segmento più vecchio. È
-  lavoro di compaction, fuori dal percorso delle richieste; i filtri si leggono su richiesta
-  dai file hint.
+In every other case, `t` is a necessary record and is copied. The existence filter is the
+hint's Bloom section ([ADR-0039](0039-cornice-unica-dei-record.md)); a missing or invalid
+hint means "possibly present"; `ACTIVE` contains only records newer than any
+tombstone in a closed segment and does not participate. A filter false positive retains a
+tombstone longer: the error is in the safe direction, as INV-I2 requires.
 
-## Alternative considerate
+Older versions of `k` inside sources `I` are dead and are not copied: this is why
+`I` is excluded from the check.
 
-- *Lineage (ADR-0023):* non sicura con MERGE non adiacenti.
-- *Scartare solo quando il segmento del tombstone è il più vecchio della Serie:* sicura, ma i
-  tombstone si accumulerebbero sopra i dati freddi per sempre.
-- *Checkpoint dell'indice come fonte di verità su ciò che è morto:* renderebbe l'indice non
-  più un dato derivato.
+<a id="4-contabilità"></a>
 
-## Valutazione
+### 4. Accounting
 
-- Verifica: test di proprietà contro il modello di riferimento con eliminazioni, ricreazioni,
-  CLEAN, MERGE di segmenti non adiacenti, snapshot attivi e riavvio in ogni punto (nessuna
-  chiave eliminata riappare; nessuna chiave viva scompare); FI-07, FI-08, FI-10.
-- Rivedere se: il costo dei test di Bloom rallenta il CLEAN sotto il minimo di
-  [ADR-0028](0028-target-e-obiettivi-di-latenza.md) con carichi ricchi di eliminazioni.
+A tombstone counts toward **necessary** bytes until compaction determines it can be
+discarded. A segment containing tombstones is never deleted directly through the
+"live = 0" rule: it goes through CLEAN.
+
+Patterns: purge tombstones only if no other file can contain older data for the
+same key, decided through the Bloom filter and each file's minimum timestamp (Apache
+Cassandra); in-memory index of live documents only, with tombstones only on disk (Bitcask).
+
+<a id="conseguenze"></a>
+
+## Consequences
+
+- No reappearance of deleted documents, by construction and without assumptions about which
+  segments are merged.
+- On-disk tombstones are bounded by dead records not yet reclaimed: every retained tombstone
+  corresponds to at least one older record of the same key still present
+  (or a filter false positive, ~1 %).
+- Index memory proportional to live documents.
+- `lineage-min` disappears from the segment header and manifest.
+- Cost: for each candidate tombstone, one Bloom test for every older segment. This is
+  compaction work, outside the request path; filters are read on demand
+  from hint files.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Lineage (ADR-0023):* unsafe with nonadjacent MERGEs.
+- *Discard only when the tombstone's segment is the oldest in the Serie:* safe, but
+  tombstones would accumulate over cold data forever.
+- *Index checkpoint as the source of truth for what is dead:* would make the index
+  cease to be derived data.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Verification: property tests against the reference model with deletions, recreations,
+  CLEAN, MERGE of nonadjacent segments, active snapshots, and restart at every point (no
+  deleted key reappears; no live key disappears); FI-07, FI-08, FI-10.
+- Reconsider if: Bloom-test cost slows CLEAN below the minimum in
+  [ADR-0028](0028-target-e-obiettivi-di-latenza.md) with deletion-heavy workloads.

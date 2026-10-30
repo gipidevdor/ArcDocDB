@@ -1,35 +1,37 @@
-# Prima lettura degli header CBOR
+<a id="prima-lettura-degli-header-cbor"></a>
 
-Lettura del coordinatore dopo il congelamento dei tre file di test indipendenti
-(17 nominali) e dei due sorgenti di prodotto. Il coordinatore ha stabilito il
-contratto e collegato ASDF; non ha scritto i due sorgenti. La seconda lettura
-è attribuita all'autore degli oracoli nel [referto separato](cbor-header-revisione.md).
-Queste sono letture automatizzate locali, senza approvazione umana di rilascio.
+# First reading of CBOR headers
 
-Nessun difetto del kernel riscontrato nella lettura statica. Il range pubblico
-verifica tipi prima della lunghezza e numeri prima dei byte. Span vuoto e AI
-riservati hanno motivi e offset distinti. AI31 ritorna prima del calcolo della
-larghezza; il caso major7 resta un marker senza attestazione strutturale.
-La guardia width<=end-start precede tutti i byte dell'argomento e garantisce
-che next=start+width sia un index. Si accumulano al massimo quattro byte per
-parola: le rotazioni BE non costruiscono un intero a 64 bit. F8 controlla il
-valore semplice dopo la disponibilità del secondo byte; F9/FA/FB conservano
-anche NaN e infinity. I sei valori sono coerenti con il contratto congelato.
+Coordinator reading after the three independent test files
+(17 nominal tests) and two product sources were frozen. The coordinator established the
+contract and connected ASDF; they did not write the two sources. The second reading
+is attributed to the oracle author in the [separate report](cbor-header-revisione.md).
+These are local automated readings, without human release approval.
 
-Il modulo ha quattro funzioni brevi, FTYPE completi, safety3, condizioni
-tipizzate, input di proprietà del chiamante e nessuno stato mutabile globale.
-Le guardie interne di range/progresso difendono le dipendenze fra helper;
-nessun input pubblico corretto le rende false. Il [registro delle decisioni](cbor-header-decisioni.md)
-le mantiene esplicite. Non vengono escluse dalla copertura.
+No kernel defect found in the static reading. The public range
+checks types before length and numbers before bytes. Empty spans and reserved
+AI have distinct reasons and offsets. AI31 returns before width
+calculation; the major7 case remains a marker without structural attestation.
+The width<=end-start guard precedes all argument bytes and guarantees
+that next=start+width is an index. At most four bytes are accumulated per
+word: BE rotations do not construct a 64-bit integer. F8 checks the
+simple value after the second byte is available; F9/FA/FB also preserve
+NaN and infinity. The six values match the frozen contract.
 
-Gli oracoli freddi possono costruire liste e bignum; il kernel e la misura
-non li usano come risultati caldi. Il test thread verifica i sei valori prima
-del sink, contenuto integrale e sovrapposizione dei soli intervalli di lavoro.
-Semafori, join e cleanup hanno timeout e controllano la cessazione. Queste
-prove attestano compatibilità con letture concorrenti su buffer privati;
-il runtime del pool e il parser completo restano successivi.
+The module has four short functions, complete FTYPEs, safety3, typed
+conditions, caller-owned input, and no global mutable state.
+Internal range/progress guards defend dependencies among helpers;
+no correct public input makes them false. The [decision register](cbor-header-decisioni.md)
+keeps them explicit. They are not excluded from coverage.
 
-Build, campagne di copertura/mutazione e allocazioni sono previste nel
-[metodo](cbor-header-metodo.md), ancora da eseguire al momento di questa lettura.
-Il referto statico non anticipa gli esiti. L'integrazione non promuove gate
-C1 completi, MC/DC, requisiti del decoder o qualificazione del motore.
+Cold oracles can build lists and bignums; the kernel and measurement
+do not use them as hot results. The thread test verifies all six values before
+the sink, full contents, and overlap of work intervals only.
+Semaphores, joins, and cleanup have timeouts and check termination. These
+tests establish compatibility with concurrent reads of private buffers;
+pool runtime and the complete parser remain later work.
+
+Build, coverage/mutation campaigns, and allocations are planned in the
+[method](cbor-header-metodo.md), still pending at the time of this reading.
+The static report does not anticipate outcomes. Integration does not promote complete
+C1 gates, MC/DC, decoder requirements, or engine qualification.

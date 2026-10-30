@@ -1,80 +1,88 @@
-# Lifetime delle fonti GET: metodo della verifica integrata
+<a id="lifetime-delle-fonti-get-metodo-della-verifica-integrata"></a>
 
-Questo metodo precede le esecuzioni dell'incremento. Verifica il ponte
-[fonti della Serie](get-fonti-serie.md) con le API GET, WAL, primary ed EBR
-esistenti, FD nativi e worker distinti. Non introduce codice di prodotto,
-formati o un esecutore di compaction/rotazione.
+# GET source lifetime: integrated-verification method
 
-## Autorità e perimetro
+This method precedes increment runs. Verifies
+[Serie source](get-fonti-serie.md) bridge with existing GET, WAL, primary, and EBR
+APIs, native FDs, and separate workers. Introduces no product code,
+formats, or compaction/rotation executor.
 
-Ogni caso usa una sola chiave CLOSED iniziale, un controller ACTIVE
-ordinario, contesti privati e nessuno snapshot registrato. Le radici nuove
-sono pubblicate da lotti reali attraverso `pubblica-commit-serie`; le
-location correnti cambiano attraverso l'API pubblica del primary.
-Un nuovo PUT della stessa chiave ha un nuovo CSN: è una sostituzione della
-versione corrente, non la rilocazione fisica di una versione invariata.
+<a id="autorità-e-perimetro"></a>
 
-La fixture mantiene valide le mappe native fino alla chiusura. La decisione
-durabile del catalogo e la retention MVCC sono precondizioni del caller,
-non conclusioni di questa prova. I file temporanei sono rimossi soltanto
-nel cleanup esclusivo finale; il reclaim osservato chiude il FD e libera
-il ticket, senza attestare una rimozione durabile del segmento.
+## Authority and scope
 
-L'obbligo `L ⊆ S(R)` vale a ogni acquisizione: il primo aggiornamento
-conserva CLOSED e ACTIVE insieme. La riduzione della directory avviene
-soltanto quando la vecchia location non è più nel primary corrente e
-l'unico vecchio reader ha già acquisito la capacità nel medesimo compito
-di lettura. Nessun nuovo lookup può allora copiare quella location.
-EBR protegge la capacità catturata, senza rendere risolvibile una mappa
-rimossa prima dell'acquisizione.
+Each case uses one initial CLOSED key, an ordinary ACTIVE
+controller, private contexts, and no registered snapshot. New roots
+published by real batches through `pubblica-commit-serie`; current
+locations change through primary's public API.
+A new PUT of same key has a new CSN: replacement of
+current version, not physical relocation of unchanged version.
 
-## Casi e oracoli preregistrati
+Fixture keeps native maps valid until close. Durable catalog
+decision and MVCC retention are caller preconditions,
+not test conclusions. Temporary files removed only
+in final exclusive cleanup; observed reclamation closes FD and releases
+ticket, without attesting durable segment removal.
 
-Quattro test registrati, ciascuno nei formati v1/v2. Il primo impone
-serialmente l'ordine lookup/pubblicazione/acquisizione; gli altri tre
-usano un worker I/O distinto dal writer:
+Obligation `L ⊆ S(R)` holds on every acquisition: first update
+retains CLOSED and ACTIVE together. Directory reduction occurs
+only when old location is no longer in current primary and
+sole old reader has already acquired capability in same read
+task. No new lookup can then copy that location.
+EBR protects captured capability, without making a map
+removed before acquisition resolvable.
 
-1. Un GET copia il candidato CLOSED; il writer pubblica un superset ACTIVE.
-   L'acquisizione successiva risolve ancora il candidato e legge i byte
-   attesi dal file nativo.
-2. Un GET si ferma nell'hook della lettura nativa, dopo l'acquisizione.
-   Il writer prenota il ritiro prima delle modifiche logiche, pubblica
-   prima il superset, sostituisce la location corrente e poi pubblica
-   fonti ridotte. Il ritiro pubblicato non è acquisibile con il vecchio
-   pin attivo. Dopo lettura, copia e conclusione, il claim riesce,
-   una sola chiusura nativa avviene e il credito torna libero. Un GET
-   successivo verifica la nuova location ACTIVE e il valore atteso.
-3. Lo stesso ordine con una condizione tipizzata nell'hook nativo:
-   causa originale, output intatto e pin liberato prima del cleanup
-   esterno; poi il reclaim può completare.
-4. Lo stesso ordine con uscita non locale: cleanup interno del GET,
-   output intatto e pin liberato prima del cleanup esterno; poi reclaim.
+<a id="casi-e-oracoli-preregistrati"></a>
 
-Gli oracoli confrontano input indipendenti, CSN/location del candidato,
-sentinelle del buffer, eventi I/O, stato FD, ticket, pin e crediti EBR.
-Le chiusure effettive sono osservate nel backend della fixture sotto
-mutex. Non si sostituiscono funzioni globali con worker in volo.
-Gate e timeout sono strumenti C4 per imporre l'interleaving, non attese
-aggiunte al prodotto; il worker I/O conserva il pin durante la syscall.
-Tutti i worker devono terminare prima di mutare contesti o chiudere FD
-dal controller. Timeout o mancato join falliscono il caso.
+## Preregistered cases and oracles
 
-## Esecuzioni e conservazione
+Four registered tests, each in v1/v2 formats. First serially
+imposes lookup/publication/acquisition order; other three
+use I/O worker separate from writer:
 
-Sorgenti, registrazione ASDF e metodo sono congelati in un commit prima
-delle campagne. Compilazione senza warning, suite completa e controlli
-del repository passano attraverso `tools/record-command.lisp`/`make check`.
-La selezione ACTIVE preesistente resta invariata; questo incremento non
-richiede di ripetere la sua campagna di mutazione senza cambiamenti del
-prodotto o del driver. Una lettura indipendente verifica il protocollo e
-gli esiti grezzi; la CI verifica anche Linux.
+1. GET copies CLOSED candidate; writer publishes ACTIVE superset.
+   Later acquisition still resolves candidate and reads expected
+   bytes from native file.
+2. GET stops in native-read hook after acquisition.
+   Writer reserves retirement before logical changes, first publishes
+   superset, replaces current location, then publishes reduced
+   sources. Published retirement cannot be claimed with old pin
+   active. After read, copy, and completion, claim succeeds,
+   one native close occurs, and credit becomes free. Later GET
+   verifies new ACTIVE location and expected value.
+3. Same order with typed condition in native hook:
+   original cause, intact output, and pin released before external
+   cleanup; reclamation can then complete.
+4. Same order with nonlocal exit: internal GET cleanup,
+   intact output and pin released before external cleanup; then reclamation.
 
-Output originali, errori eventualmente osservati, configurazioni e FASL
-privati sono conservati prima della pulizia. Report ed evidenze sono dati:
-lettura con `*read-eval* NIL` ed EOF, mai `LOAD`. La copia delle prove viene
-verificata integralmente prima della pubblicazione. Esiti e identità dei
-run saranno riportati nel catalogo della campagna dopo la verifica.
+Oracles compare independent inputs, candidate CSN/location,
+buffer sentinels, I/O events, FD state, ticket, pin, and EBR credits.
+Actual closes observed in fixture backend under
+mutex. No global function replacement with workers in flight.
+Gates and timeouts are C4 tools imposing interleaving, not waits
+added to product; I/O worker retains pin during syscall.
+All workers must terminate before controller mutates contexts or closes
+FDs. Timeout or missing join fails case.
 
-Requisiti: REQ-IDX-001, REQ-WAL-006, REQ-CMP-007, REQ-AFF-001,
-REQ-AFF-008 e REQ-VAL-001. Questa verifica funzionale non qualifica
-prestazioni, zero heap, C1 o MC/DC globale.
+<a id="esecuzioni-e-conservazione"></a>
+
+## Runs and preservation
+
+Sources, ASDF registration, and method frozen in commit before
+campaigns. Warning-free compilation, full suite, and repository
+checks through `tools/record-command.lisp`/`make check`.
+Existing ACTIVE selection remains unchanged; increment does not
+require repeating its mutation campaign without product
+or driver changes. Independent reading verifies protocol and
+raw outcomes; CI also verifies Linux.
+
+Original output, any observed errors, configurations, and private FASLs
+preserved before cleanup. Reports and evidence are data:
+reading with `*read-eval* NIL` and EOF, never `LOAD`. Evidence copy
+verified in full before publication. Outcomes and run identities
+will be reported in campaign catalog after verification.
+
+Requirements: REQ-IDX-001, REQ-WAL-006, REQ-CMP-007, REQ-AFF-001,
+REQ-AFF-008, and REQ-VAL-001. This functional verification qualifies neither
+performance, zero heap allocation, C1, nor overall MC/DC.

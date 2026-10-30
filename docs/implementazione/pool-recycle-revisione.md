@@ -1,30 +1,34 @@
-# Revisione indipendente del ricircolo pool/Serie
+<a id="revisione-indipendente-del-ricircolo-poolserie"></a>
 
-Lettura statica del 2026-10-14 sulla base
-`a5715a1aa0b2571d650d1b794e9bb7b7324e951e`, eseguita da un agente diverso
-dall'autore del codice. Esito: **positivo per lo scope C3 letto**, senza
-rilievi aperti sul prodotto. Il revisore ha modificato soltanto questo
-documento; non ha eseguito le campagne e non attesta compilazione, risultati
-dei test, copertura o allocazioni.
+# Independent pool/Serie recycling review
 
-Il quadro applicato comprende [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md),
+Static reading on 2026-10-14 at base
+`a5715a1aa0b2571d650d1b794e9bb7b7324e951e`, performed by an agent other
+than the code author. Outcome: **positive for the C3 scope read**, with
+no open product findings. The reviewer modified only this
+document; they did not run campaigns and do not attest compilation, test
+results, coverage, or allocations.
+
+The applied framework includes [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md),
 [ADR-0034](../adr/0034-policy-di-compilazione-e-standard-di-codifica.md),
-[ADR-0045](../adr/0045-modello-di-esecuzione.md) e lo
-[standard di codifica](../affidabilita/standard-di-codifica.md).
-Sono stati letti il [contratto](pool-recycle.md), il
-[metodo preregistrato](pool-recycle-metodo.md), i cinque sorgenti dispatch,
-l'ordine ASDF, le tredici nuove prove, le fixture dispatch preesistenti e
-le barriere C1 di ricircolo, contesto execution, routing e bridge Serie.
+[ADR-0045](../adr/0045-modello-di-esecuzione.md), and the
+[coding standard](../affidabilita/standard-di-codifica.md).
+Read: the [contract](pool-recycle.md),
+[preregistered method](pool-recycle-metodo.md), five dispatch sources,
+ASDF order, thirteen new tests, existing dispatch fixtures, and
+C1 barriers for recycling, execution context, routing, and Serie bridge.
 
-## Identità e denominatore
+<a id="identità-e-denominatore"></a>
 
-Lo scope di qualificazione è l'intero componente dispatch esteso: cinque
-file, senza esclusioni manuali o limitazione alle righe nuove. I conteggi
-devono essere pubblicati anche per ogni file, compreso `recycle.lisp`;
-una soglia aggregata non sostituisce l'indicazione dei suoi percorsi mancanti.
-I delegati C1 non entrano nel denominatore C3 e non sono riclassificati.
+## Identity and denominator
 
-| Fonte letta | SHA-256 |
+Qualification scope is the entire extended dispatch component: five
+files, without manual exclusions or restriction to new lines. Counts
+must also be published per file, including `recycle.lisp`;
+an aggregate threshold does not replace reporting its missing paths.
+C1 delegates do not enter the C3 denominator and are not reclassified.
+
+| Source read | SHA-256 |
 |---|---|
 | `src/dispatch/package.lisp` | `7f1eea26b8d8fd34186a85cff9aebae5842dc731de45b361058e0af4788090e8` |
 | `src/dispatch/types.lisp` | `cc44882c565a89de08f5add79333868ebfca4fc3f97bf9104d36375d014d4720` |
@@ -38,9 +42,9 @@ I delegati C1 non entrano nel denominatore C3 e non sono riclassificati.
 | `docs/implementazione/pool-recycle.md` | `65da387e05a4179fc930e440f4068a6025c9afc5f22d7917ac5bc748457b44ff` |
 | `docs/implementazione/pool-recycle-metodo.md` | `a3abb270ad16b8eb2262411faba5091dbe4fbaea54c6b30bf376f1339d56babb` |
 
-Le fonti delegate determinanti per il nuovo passo sono rimaste invariate:
+Delegated sources decisive for the new step remained unchanged:
 
-| Barriera | SHA-256 |
+| Barrier | SHA-256 |
 |---|---|
 | `src/execution/worker-claim.lisp` | `62804d27d1c5f734f16a0b498a7870afd8b9654c0140ce75bb98209f3834cb7e` |
 | `src/execution/worker-types.lisp` | `62412828a90415bfef28c42f3e839c436c53652f86ffbf9a970d52682c769317` |
@@ -49,117 +53,125 @@ Le fonti delegate determinanti per il nuovo passo sono rimaste invariate:
 | `src/series/routing-select.lisp` | `796e3ace762dd6c3d86119981a37c1904a637e664551ca0f5289544f0806714a` |
 | `src/series/worker-run.lisp` | `f448442c5f9233f492bb8642206ec4913f7b2f5f3c9a1fdf05896a439f1d429f` |
 
-Le impronte identificano i byte di questa lettura. La successiva qualifica
-deve confrontarli con quelli congelati, senza dedurre un PASS da questa tabella.
+Fingerprints identify this reading's bytes. Subsequent qualification
+must compare them with frozen bytes, without inferring a PASS from this table.
 
-## Un trasferimento e obblighi conservati
+<a id="un-trasferimento-e-obblighi-conservati"></a>
 
-La nuova API riusa il binding immutabile fra porta del pool e tabella
-locale. `%check-dispatcher-binding` controlla tipo della porta, owner, tipo
-della tabella e identità EQ dei contesti, prima di chiamare execution.
-Legge soltanto riferimenti e owner della porta; non legge request, ack o
-active e non chiama il gate lifecycle.
+## One transfer and retained obligations
 
-`ricircola-collegamento-pool` invoca una sola `ricircola-worker`, che richiede
-RESCHEDULE e obbligo unico senza lease o batch. Il C1 opera sulla sola
-partizione home. Con spazio, il vecchio writer passa al ring e il contesto
-torna IDLE: il nuovo ingresso restituisce NIL, `:published` e count, senza
-routing, polling o seconda presa. Il ritiro può essere applicato soltanto
-dalla successiva presa esplicita sul contesto libero.
+The new API reuses immutable binding between pool gate and local
+table. `%check-dispatcher-binding` checks gate type, owner, table
+type, and EQ context identity before calling execution.
+It reads only gate references and owner; it does not read request, ack, or
+active and does not call the lifecycle gate.
 
-Con ring pieno, il C1 pubblica il vecchio obbligo e consegna la testa al
-worker nella stessa sezione protetta. Il nuovo ingresso risolve il link
-del writer ora CLAIMED, mediante ordinale e identità verificati. Il link
-rimane IDLE: nessun begin, token o lease Serie viene introdotto. Home e
-cursore restano quelli di execution; count descrive il trasferimento locale,
-senza essere un cursore o uno snapshot al momento del ritorno.
+`ricircola-collegamento-pool` invokes a single `ricircola-worker`, which requires
+RESCHEDULE and unique obligation without lease or batch. C1 operates only on the
+home partition. With room, the old writer passes to the ring and the context
+returns to IDLE: the new entry point returns NIL, `:published`, and count, without
+routing, polling, or a second claim. Retirement may be applied only
+by the next explicit claim on the free context.
 
-Il ritiro pendente o la porta inattiva non revocano l'obbligo. Una catena di
-scambi full può continuare ad assegnare CLAIMED e non garantisce il ritorno
-a IDLE sotto saturazione perpetua. Il dispatcher non acquisisce autorità su
-park, wake, shutdown o coordinamento dell'Archivio.
+With a full ring, C1 publishes the old obligation and hands the head to the
+worker within the same protected section. The new entry point resolves the link
+of the now CLAIMED writer through checked ordinal and identity. The link
+remains IDLE: no begin, token, or Serie lease is introduced. Home and
+cursor remain those of execution; count describes the local transfer,
+without being a cursor or a snapshot at return time.
 
-Busy della guard conserva RESCHEDULE, writer e home; ogni retry è esplicito.
-Un routing invalido dopo scambio conserva invece il trasferimento già
-riuscito: vecchio writer nel ring, nuovo riferimento e home nel worker
-FAULTED attraverso la barriera C1. Non esiste rollback, cessione, cleanup
-o nuovo handler C3. Nessuna preimage immutata è promessa dopo tale successo
-parziale; controller e lease Serie non vengono acquisiti dal routing.
+Pending retirement or an inactive gate does not revoke the obligation. A chain of
+full swaps may continue assigning CLAIMED and does not guarantee return
+to IDLE under perpetual saturation. The dispatcher acquires no authority over
+park, wake, shutdown, or Archivio coordination.
 
-## Guardia del risultato e compilatore
+Guard busy retains RESCHEDULE, writer, and home; every retry is explicit.
+Invalid routing after swap instead retains the already successful
+transfer: old writer in ring, new reference and home in the worker
+FAULTED through the C1 barrier. There is no rollback, yield, cleanup,
+or new C3 handler. No unchanged preimage is promised after such partial
+success; routing acquires no controller or Serie lease.
 
-L'esito C1 è nominalmente ristretto dal suo ftype a `:claimed/:published`.
-Una `case` applicata direttamente a quel risultato non basta a dimostrare
-un rifiuto operativo di valori che violano il contratto: il compilatore
-può eliminare il ramo che considera impossibile.
+<a id="guardia-del-risultato-e-compilatore"></a>
 
-La versione letta introduce `%check-recycle-status`, con argomento T e
-NOTINLINE, prima del dispatch sul risultato. La guardia verifica il dominio
-nel proprio corpo e segnala `invariant-violation :pool-dispatcher-state`
-senza scrivere fault o stato. Il suo ritorno ristretto permette poi di
-specializzare la seconda `case`, che mantiene comunque un finale esplicito.
-Le due guardie writer/NIL controllano separatamente la relazione fra valori
-che il solo ftype non esprime.
+## Result guard and compiler
 
-La FI di uno status estraneo esercita questa barriera C3, non un ritorno
-C1 nominale. La variante FAULTED sostituisce deliberatamente il delegato:
-non dimostra che il vero C1 permetta il ricircolo da FAULTED. Tutte le
-sostituzioni sono quiescenti e ripristinate. I denominatori nativi devono
-restare quelli prodotti da SB-COVER, anche se un ramo difensivo successivo
-non genera sonde; non si inferisce MC/DC o copertura dal solo sorgente.
+The C1 outcome is nominally restricted by its ftype to `:claimed/:published`.
+A `case` applied directly to that result is insufficient to demonstrate
+operational rejection of values violating the contract: the compiler
+may eliminate the branch it considers impossible.
 
-## Lista di controllo
+The version read introduces `%check-recycle-status`, with argument T and
+NOTINLINE, before result dispatch. The guard checks the domain
+within its body and signals `invariant-violation :pool-dispatcher-state`
+without writing fault or state. Its restricted return then allows
+specialization of the second `case`, which still retains an explicit final branch.
+The two writer/NIL guards separately check the relationship among values
+that ftype alone does not express.
 
-I dodici punti C1 sono usati come controllo aggiuntivo per il singolo
-passaggio C3 previsto da ADR-0031. Questa lettura non sostituisce le due
-revisioni o le altre verifiche dei delegati C1.
+Foreign-status FI exercises this C3 barrier, not a nominal
+C1 return. The FAULTED variant deliberately replaces the delegate:
+it does not show that real C1 permits recycling from FAULTED. All
+substitutions are quiescent and restored. Native denominators must
+remain those produced by SB-COVER, even if a later defensive branch
+generates no probes; MC/DC or coverage is not inferred from source alone.
 
-| Punto | Valutazione statica e limite |
+<a id="lista-di-controllo"></a>
+
+## Checklist
+
+The twelve C1 points are used as an additional check for the single
+C3 pass required by ADR-0031. This reading does not replace the two
+reviews or other checks of C1 delegates.
+
+| Point | Static assessment and limit |
 |---|---|
-| 1. Requisiti e ADR | REQ-THR-001, REQ-CON-001/002/004/005 e REQ-AFF-008 tracciati; un accesso ready per tratto e compiti senza sospensione coerenti con ADR-0045 §6/8. Il pool completo resta aperto. |
-| 2. Invarianti | Binding verificato prima del trasferimento; una sola chiamata C1; routing soltanto per CLAIMED non-NIL; published termina IDLE senza nuova presa. Obbligo unico e bridge precedente chiuso restano precondizioni del caller. |
-| 3. Errori | Ragioni binding/owner riusate; fase, busy e fault delegati senza occultamento. Stato e relazione writer/status hanno rifiuto C3 typed senza mutazione o sostituzione della prima causa. |
-| 4. Limiti | Nessun ciclo, ricorsione, retry, callback o attesa nuovo. Ricircolo su home O(1), guard a tentativo singolo e routing O(1); nessuna scansione delle Serie o delle partizioni. |
-| 5. Allocazione | Nessun costruttore, lista, closure, hash o nuovo stato nel percorso caldo. Zero heap richiede la campagna misurata: non deriva dalla lettura statica. |
-| 6. Risultati | Tutti e tre i risultati sono usati; status validato con argomento T/NOTINLINE, writer verificato rispetto all'esito, count originale inoltrato senza inventare un nuovo significato. |
-| 7. Decisioni | Helper nuovo: complessità 2, 7 righe di defun; API nuova: complessità 5, 22 righe. Binding 5, factory 2, claim 5 e lookup 1; nessuna funzione supera 60 righe o 10 percorsi. Nessuna nuova decisione composta C1. |
-| 8. Proprietà | Dispatcher, contesto, tabella e link restano del thread creatore; owner e contesto EQ verificati prima della delega. Nessuna migrazione, reentrancy o struttura globale mutabile nuova. |
-| 9. Tracciabilità | REQ sulle nuove definizioni e sui tredici test; export e ASDF dopo claim corretti. Build strict, lint, trace e controllo completo devono essere attestati dai loro processi separati. |
-| 10. Standard | Safety 3, ftype espliciti, docstring e OWNER/SHARED; finali case typed. Nessun ignore-errors, handler generico, cleanup o rimozione di controlli C1. Nessuna deviazione individuata nel prodotto letto. |
-| 11. Parallelismo | Una sola guard del proprio shard per tratto; nessun lock comune, contatore globale o scrittura condivisa fra Serie per messaggio. Questa lettura non dimostra equità, assenza di starvation o scalabilità. |
-| 12. Durabilità | Nessun payload, controller, CSN o file modificato dal nuovo codice. Nessun cambiamento durevole o eliminazione; nessuna nuova atomicità persistente da qualificare. |
+| 1. Requirements and ADR | REQ-THR-001, REQ-CON-001/002/004/005, and REQ-AFF-008 traced; one ready access per slice and nonsuspending tasks consistent with ADR-0045 §6/8. Complete pool remains open. |
+| 2. Invariants | Binding checked before transfer; one C1 call; routing only for non-NIL CLAIMED; published ends IDLE without new claim. Unique obligation and previous closed bridge remain caller preconditions. |
+| 3. Errors | Binding/owner reasons reused; phase, busy, and fault delegated without hiding. State and writer/status relation have typed C3 rejection without mutation or replacement of first cause. |
+| 4. Bounds | No new loop, recursion, retry, callback, or wait. O(1) home recycling, single-attempt guard, and O(1) routing; no Serie or partition scan. |
+| 5. Allocation | No constructor, list, closure, hash, or new state on the hot path. Zero heap requires the measured campaign: it does not follow from static reading. |
+| 6. Results | All three results used; status validated with T/NOTINLINE argument, writer checked against outcome, original count forwarded without inventing a new meaning. |
+| 7. Decisions | New helper: complexity 2, 7 defun lines; new API: complexity 5, 22 lines. Binding 5, factory 2, claim 5, and lookup 1; no function exceeds 60 lines or 10 paths. No new C1 compound decision. |
+| 8. Ownership | Dispatcher, context, table, and link remain with the creating thread; owner and EQ context checked before delegation. No new migration, reentrancy, or global mutable structure. |
+| 9. Traceability | REQ on new definitions and thirteen tests; export and ASDF after claim correct. Strict build, lint, trace, and full check must be attested by separate processes. |
+| 10. Standards | Safety 3, explicit ftypes, docstrings, and OWNER/SHARED; typed case endings. No ignore-errors, generic handler, cleanup, or removal of C1 checks. No deviation identified in the product read. |
+| 11. Parallelism | One guard of its own shard per slice; no common lock, global counter, or shared write between Serie per message. This reading does not prove fairness, starvation freedom, or scalability. |
+| 12. Durability | No payload, controller, CSN, or file modified by new code. No durable change or deletion; no new persistent atomicity to qualify. |
 
-## Lettura delle prove e del sensore
+<a id="lettura-delle-prove-e-del-sensore"></a>
 
-Le tredici nuove prove sono state lette senza eseguirle. Le fixture usano
-primitive C1 e bridge reali dove indicato; le FI del protocollo e delle
-funzioni restano distinte dagli interleaving concorrenti.
+## Test and sensor reading
 
-| Gruppo | Evidenza prevista dalle fixture e limite |
+The thirteen new tests were read without running them. Fixtures use
+real C1 primitives and bridges where stated; protocol and function
+FI remain distinct from concurrent interleavings.
+
+| Group | Expected fixture evidence and limit |
 |---|---|
-| Room | Tre shard e capacity 2 separano home/count/cursore; FIFO B poi A, una chiamata al ricircolo e sentinelle su routing, gate e ACK. Controller intatti e link finali IDLE. |
-| Full | Scambio reale A→B su home diversa dal cursore, count invariato, link B IDLE senza begin; altri shard e stati writer/controller confrontati. Il successivo bridge è esplicito. |
-| Ready busy | Guardia reale detenuta tramite CAS; confronto di ring, contesto, writer, link, controller e parole pool. Retry soltanto successivo al rifiuto. Non è uno stress di contesa casuale. |
-| Fasi e prima causa | IDLE, CLAIMED, RUNNING, BATCH e FINISHING ottenuti da operazioni reali; FAULTED iniettato separatamente. Rifiuti conservano debito, lease e causa EQ. |
-| Indipendenza dal pool | Porta inattiva, parole corrotte e ritiro pendente quiescenti, con sentinelle sul gate; completamento del nuovo CLAIMED e ACK soltanto alla presa IDLE successiva. Prova room distinta per assenza di ACK implicito. |
-| Binding e owner | Contesti diversi e owner su thread reale distinto rifiutati prima del trasferimento; snapshot e sentinella sul ricircolo. Non è una prova di migrazione consentita. |
-| Fault dopo full | Writer estraneo al routing: vero scambio già riuscito, riferimento/home e causa conservati, vecchio A osservato nel ring. Controller e lease Serie intatti; nessun rollback dedotto dall'errore. |
-| Risultati e tipo | Writer/status contraddittori entro i tipi, dispatcher invalido e sei status fuori ftype. Rifiuto prima del routing, una sola chiamata interposta e immagini uguali; prima causa FAULTED conservata nella FI separata. |
-| Invariante ready | Head invalido dentro il tipo INDEX, verificato sotto vera guard: causa C1 originale, writer e dati diagnostici conservati; rifiuto successivo senza sostituire la causa. |
+| Room | Three shards and capacity 2 separate home/count/cursor; FIFO B then A, one recycling call, and routing/gate/ACK sentinels. Controllers intact and final links IDLE. |
+| Full | Real A→B swap on home different from cursor, unchanged count, B link IDLE without begin; other shards and writer/controller states compared. Subsequent bridge is explicit. |
+| Ready busy | Real guard held through CAS; comparison of ring, context, writer, link, controller, and pool words. Retry only after rejection. Not random contention stress. |
+| Phases and first cause | IDLE, CLAIMED, RUNNING, BATCH, and FINISHING obtained through real operations; FAULTED injected separately. Rejections retain debt, leases, and EQ cause. |
+| Pool independence | Quiescent inactive gate, corrupted words, and pending retirement, with gate sentinels; completion of new CLAIMED and ACK only on next IDLE claim. Separate room test for no implicit ACK. |
+| Binding and owner | Different contexts and owner on a distinct real thread rejected before transfer; snapshot and recycling sentinel. Not a test of permitted migration. |
+| Fault after full | Writer foreign to routing: real swap already successful, reference/home and cause retained, old A observed in ring. Controller and Serie lease intact; no rollback inferred from error. |
+| Results and type | Contradictory writer/status within types, invalid dispatcher, and six statuses outside ftype. Rejection before routing, one interposed call, and equal images; first FAULTED cause retained in separate FI. |
+| Ready invariant | Invalid head within INDEX type, checked under real guard: original C1 cause, writer, and diagnostic data retained; subsequent rejection without replacing cause. |
 
-Il sensore C4 letto usa fixture nuove per replica, payload preallocati,
-quantum uno e un ricircolo per ciclo. ROOM aggiunge una presa esplicita;
-FULL alterna i due writer. Begin, pop, ack ed end nel clock sono quelli
-execution: il bridge rimane IDLE e non viene acquisita una lease Serie.
-Gli oracoli scalari, il protocollo C1 e il routing fanno parte del tempo;
-non si misura il solo adapter. Factory, risoluzione API, GC e drain pubblico
-bounded restano fuori clock. Il drain nominale non qualifica l'arresto
-dell'Archivio dopo un fault.
+The C4 sensor read uses new fixtures per replicate, preallocated payloads,
+quantum one, and one recycle per cycle. ROOM adds an explicit claim;
+FULL alternates the two writers. Timed begin, pop, ack, and end are
+execution operations: the bridge remains IDLE and no Serie lease is acquired.
+Scalar oracles, C1 protocol, and routing are part of timing;
+the adapter alone is not measured. Factory, API resolution, GC, and bounded public
+drain remain outside timing. Nominal drain does not qualify Archivio
+shutdown after fault.
 
-I self-test del sensore prevedono heap positivo deliberato, sink errato,
-clock sotto risoluzione, tre risultati difformi, CLI/destinazioni rifiutate
-e raw parziali conservati. La lettura di tali controlli non ne attesta
-l'esecuzione. La soglia C3, il confronto SB-COVER/HTML, i conteggi per file,
-le repliche e la conservazione degli originali richiedono record separati.
-Non si qualificano payload del motore, sensori reali, admission, park/wake,
-worker morti, avvio/arresto fisici o un coordinatore concorrente.
+Sensor self-tests include deliberate positive heap, wrong sink,
+sub-resolution clock, three mismatched results, rejected CLI/destinations,
+and retained partial raw data. Reading these checks does not attest
+their execution. C3 threshold, SB-COVER/HTML comparison, per-file counts,
+replicates, and original retention require separate records.
+Engine payloads, real sensors, admission, park/wake,
+dead workers, physical startup/shutdown, or a concurrent coordinator are not qualified.

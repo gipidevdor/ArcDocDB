@@ -1,116 +1,122 @@
-# Revisione del collegamento worker–Serie
+<a id="revisione-del-collegamento-workerserie"></a>
 
-Due letture C1 del 2026-10-11 secondo la
-[lista di controllo](../affidabilita/standard-di-codifica.md#lista-di-controllo-di-revisione-c1).
-La prima ha esaminato contratto, sorgenti e fixture durante le correzioni;
-la seconda ha riletto i sorgenti finali e confrontato test, copertura nativa,
-HTML e misure del congelamento v3. Sono letture di agenti, non una
-attestazione di revisione umana. Nessun sorgente è stato modificato durante
-la seconda lettura.
+# Worker–Serie link review
 
-La base iniziale era `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`;
-v3 incorpora `8101eb856cbe9d7540682babb53afb00fde30f70`.
-La consegna integra poi `96c0f4f4d6d1f1882723da1b631e78f89e613059`,
-che aggiunge il nucleo GET senza cambiare execution/Series: la
-qualificazione dedicata bridge resta quella v3 su `8101eb8`, mentre
-`make check` è previsto sul pacchetto integrato su `96c0f4f`.
-La successiva [integrazione reader](worker-serie-integrazione.md) su `65972a4`
-non cambia alcun sorgente di prodotto; i raw su `96c0f4f` restano il primo
-controllo generale, seguito da una nuova verifica delle suite aggiunte.
-Questa verifica passa su `65972a4`: [record finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/full-check-reader-integration.lisp)
-`4000710249-command-34111-0`, `:OK/:STABLE`, exit0, 796 test nominati e due
-smoke, tutti i gate e dieci spike. Il root inserisce questo esito dopo le
-due letture; non modifica sorgenti, test del bridge o C4.
-I quattro SHA-256 del worktree finale e della copia congelata sono uguali
-a quelli dell'[inventario delle decisioni](worker-serie-decisioni.md):
+Two C1 readings on 2026-10-11 under the
+[checklist](../affidabilita/standard-di-codifica.md#lista-di-controllo-di-revisione-c1).
+The first examined contract, sources, and fixtures during corrections;
+the second reread final sources and compared tests, native coverage,
+HTML, and measurements from the v3 freeze. These are agent readings,
+not an attestation of human review. No source was modified during the
+second reading.
+
+The initial base was `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`;
+v3 incorporates `8101eb856cbe9d7540682babb53afb00fde30f70`.
+Delivery then integrates `96c0f4f4d6d1f1882723da1b631e78f89e613059`,
+which adds the GET core without changing execution/Series: dedicated bridge
+qualification remains v3 on `8101eb8`, while `make check` is planned on the
+integrated package on `96c0f4f`. Subsequent [reader integration](worker-serie-integrazione.md)
+on `65972a4` changes no product source; raw outputs on `96c0f4f` remain the
+first general check, followed by a new check of added suites. This check
+passes on `65972a4`: [final record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/full-check-reader-integration.lisp)
+`4000710249-command-34111-0`, `:OK/:STABLE`, exit0, 796 named tests and two
+smoke tests, all gates and ten spikes. Root inserts this outcome after
+both readings; it changes no sources, bridge tests, or C4.
+The four SHA-256 hashes of the final worktree and frozen copy equal those
+in the [decision inventory](worker-serie-decisioni.md):
 `worker-package`, `worker-types`, `worker-boundary`, `worker-run`.
-ASDF carica i quattro file dopo `series/retirement`; il namespace
-`arcdocdb.execution.series` dipende da execution e Series senza invertire
-le dipendenze di caricamento. Sono stati letti anche il test
-`tests/series/worker-bridge.lisp`, il C4 `tools/worker-series-bench.lisp`,
-il [contratto](worker-serie.md) e il [metodo](worker-serie-metodo.md).
+ASDF loads the four files after `series/retirement`; namespace
+`arcdocdb.execution.series` depends on execution and Series without reversing
+load dependencies. Test `tests/series/worker-bridge.lisp`, C4
+`tools/worker-series-bench.lisp`, the [contract](worker-serie.md), and
+[method](worker-serie-metodo.md) were also read.
 
-Le quattro osservazioni sul prodotto sono chiuse sul sorgente v3 e hanno
-regressioni passate. Dopo la consegna delle due letture, il root ha letto il
-gate generale `make check`: `4000709286-command-15279-0`, **PASS**,
-`:OK`, `:STABLE`, exit 0 sul congelamento integrato `96c0f4f`.
-La diagnosi preliminare del runner dell'audit coverage è conservata;
-il nuovo runner senza avvisi chiude il relativo gate, come descritto sotto.
+The four product findings are closed on v3 source and have passed regressions.
+After delivery of both readings, root read the general `make check` gate:
+`4000709286-command-15279-0`, **PASS**, `:OK`, `:STABLE`, exit 0 on the
+integrated `96c0f4f` freeze. The preliminary coverage audit runner diagnosis
+is retained; the new warning-free runner closes that gate, as described below.
 
-## Le due letture sui dodici punti C1
+<a id="le-due-letture-sui-dodici-punti-c1"></a>
 
-| Punto | Prima lettura: contratto e sorgente | Seconda lettura: sorgente finale ed evidenza |
+## Both readings on the twelve C1 points
+
+| Point | First reading: contract and source | Second reading: final source and evidence |
 |---|---|---|
-| 1. REQ e ADR coerenti | Intestazioni REQ-CON-001/002/004/005, REQ-AFF-001/004/008; ADR-0005/0033/0045. Il bridge compone due capacità preesistenti, conserva il writer logico e non crea uno scheduler. | Confermata la composizione: writer prima di Serie, nessun pop prima delle due lease, Serie rilasciata prima di end worker. L'unicità logica writer/Serie resta una precondizione del caller dichiarata nella factory e nel contratto. |
-| 2. Invarianti e test sensibili alla violazione | Individuati owner, binding immutabile, generazioni positive e monotone, debito batch, ordine delle release, obbligo schedule unico, fault senza rollback. WS-REV-02 richiedeva un controllo della generazione locale positiva. | Le 26 fixture finali controllano FIFO/identità/sentinelle, quantum e token, busy delle due acquisizioni, closing/end busy, debito e ack stale, wrong-thread, limiti delle generazioni, bypass delle lease, quattro scenari del gate di fault e competizione con thread reali. Rifiuti e FI confrontano gli stati; non si limita la verifica al solo segnale. I rami ancora non eseguiti restano nell'audit completo. |
-| 3. Tipo, gestione e test degli errori | Allowlist letterali per classe, ragione e passo; `resource-exhausted` atteso distinto da `invalid-argument`. WS-REV-01/03/04 hanno individuato cause sovrascritte o errori di un sottopasso erroneamente recuperabili. | Rilette le allowlist di tutte le cinque API e i due boundary nil/nil di acquire/release. Le tre classi iniettate nei sottopassi restano fatali e propagano la stessa condizione EQ. Un worker già faulted conserva la prima causa; il bridge registra quella corrente. Un fault lower non può rientrare nell'allowlist esterna. Le regressioni specifiche passano; non si attribuisce una prova esaustiva a tutti i guasti arbitrari dei verificatori privati. |
-| 4. Cicli, attese e ricorsione limitati | Nei tre corpi nuovi non ci sono cicli, ricorsione, retry, thread, callback o attese. Le liste `member` sono letterali e limitate. Copia batch, pop e ricircolo restano nel worker già bounded. | Confermato sul sorgente finale. Closing richiede una chiamata esplicita a termina; non riacquisisce Serie. I semafori e le deadline di cinque secondi sono nel solo harness concorrente. Il benchmark esegue un numero fissato di iterazioni. Nessuna proprietà di fairness del pool è dedotta. |
-| 5. Allocazione calda misurata | Binding, contesto, controller e target sono preallocati; il handler locale è `dynamic-extent`. La lettura statica da sola non chiudeva il punto. | Cinque campioni da 4096 cicli dopo warmup128 rilevano `[0,0,0,0,0]` byte heap, sink `8800256` in ciascuno. Il sensore rileva il controllo positivo da `16777472` byte e rifiuta un sink errato. È evidenza del percorso di successo seriale preallocato su questa build, con i limiti dichiarati sotto. |
-| 6. Dati verificati all'uscita | Ftype e slot typed, owner prima delle letture; token, fase, lease catturate e binding controllati. Pre/post significativi includono controlli delegati a execution/Series; payload e debito non vengono duplicati dal bridge. | Lease esposta soltanto ACTIVE/token corrente; pop e ack passano i controlli del bridge e poi quelli del worker. Target/span/alias e batch stale sono rifiutati prima del pop o dell'ack. Il begin espone i tre valori dichiarati; macro valutata una volta e valori multipli verificati. Il caller deve applicare il batch prima di ack: il bridge non certifica effetti esterni. |
-| 7. Decisioni composte inventariate | Inventario delle forme `case`/default, token/pre/post, boundary e allowlist; una sola nuova decisione composta nel fault marking: lease positiva, owner EQ corrente, generazione uguale. | Inventario finale: 32 controlli locali più il controllo owner delegato, sette istanze della macro e tutte le allowlist. Quattro fixture rendono falsa ciascuna delle tre condizioni con le altre vere, più tutte vere. Il corto circuito è esplicito; i valori della fixture non attestano automaticamente l'esecuzione di ogni operando. Non si inferisce MC/DC da sb-cover, né copertura totale dai test passati. |
-| 8. Proprietari dello stato condiviso | Tre riferimenti immutabili e campi locali al thread del contesto. Owner del controller rilevato soltanto tramite la sua capacità. Coupling privato a execution/Series elencato, senza registri o contatori globali. | Wrong-thread è rifiutato prima del handler e non avvelena gli oggetti. Il fault marker scrive sulla Serie soltanto con le tre condizioni vere; dopo release o lease stale non modifica il controller successivo. Il controllo scalare evita check-ring che potrebbero sostituire la causa. Il coordinamento Archivio dopo l'handoff resta un obbligo del caller. |
-| 9. Tracciabilità e `make check` | REQ e invarianti sono associati alle intestazioni del sorgente e ai nomi dei test; gli stati globali dei requisiti restano `progettato`. Nessuna promozione dell'intero modello di esecuzione. | Test mirati, suite Series e C4 hanno raw finali PASS. Il root ha completato `make check` sul congelamento integrato: 732 test nominati e due smoke, tracciabilità, link, conservazione/evidenze e dieci spike PASS; record `4000709286-command-15279-0`, `:OK/:STABLE`, exit0. L'inserimento documentale di questo esito e i nuovi cataloghi richiedono il successivo gate documenti/evidenze. |
-| 10. Regole e deviazioni | Safety3, ftype completi per funzioni, slot typed, docstring pre/post, REQ e OWNER/SHARED. Boundary unico per la classificazione, nessuna syscall introdotta. Correzioni richieste prima della chiusura. | Sorgenti finali entro 60 righe per funzione; massima complessità locale inventariata 9, nessuna nuova deviazione individuata. Il C4 è compilato interamente e caricato da FASL con avvisi fatali; il caricamento ASDF applica solo l'eccezione runtime `sb-kernel:redefinition-warning` già prevista da `tools/build.lisp`. Non si estende quell'eccezione agli avvisi del runner dell'audit coverage. Lacune di copertura conservate, senza esclusioni approvate. |
-| 11. Serializzazione e INV-P6 | Nessun lock, attesa o scrittura globale tra Serie per operazione. Sono seriali il singolo contesto worker, il suo writer e il controller posseduto nel tratto; scheduling/ready restano nelle API esistenti. | Due controller sono mantenuti ACTIVE contemporaneamente da thread reali prima delle release. Due writer contendenti su un controller hanno una sola lease ACTIVE, l'altro chiude senza pop. La correttezza di queste fixture non è una misura di throughput o scalabilità. Il benchmark ha un solo worker, una sola Serie e capacità1. |
-| 12. Atomicità durevole e scarto | Il bridge cambia proprietà e diagnosi in memoria; non scrive record durevoli, non modifica WAL, ritiro o regole di riuso. Nessun nuovo punto di atomicità durevole. | Nessun rollback o cleanup automatico dopo un fault. Riferimenti e token restano per la diagnosi; un prefisso di batch non è ripetuto. La fixture di drenaggio FINE I/O su controller FAULTED applica e annulla l'evento prima di ack/end. Durabilità reale, recovery e coordinamento Archivio non sono qualificati da questo modulo. |
+| 1. Consistent REQ and ADRs | REQ-CON-001/002/004/005, REQ-AFF-001/004/008 headers; ADR-0005/0033/0045. The bridge composes two existing capabilities, retains the logical writer, and creates no scheduler. | Composition confirmed: writer before Serie, no pop before both leases, Serie released before worker end. Logical writer/Serie uniqueness remains a caller precondition declared in factory and contract. |
+| 2. Invariants and violation-sensitive tests | Identified owner, immutable binding, positive and monotonic generations, batch debt, release order, unique schedule obligation, fault without rollback. WS-REV-02 required a positive local generation check. | The 26 final fixtures check FIFO/identity/sentinels, quantum and tokens, busy for both acquisitions, closing/busy end, debt and stale ack, wrong-thread, generation limits, lease bypasses, four fault-gate scenarios, and real-thread competition. Rejections and FI compare states; verification is not limited to signaling. Still unexecuted branches remain in the full audit. |
+| 3. Error type, handling, and tests | Literal allowlists by class, reason, and step; expected `resource-exhausted` distinct from `invalid-argument`. WS-REV-01/03/04 identified overwritten causes or substep errors incorrectly recoverable. | All five API allowlists and two acquire/release nil/nil boundaries reread. The three error classes injected in substeps remain fatal and propagate the same EQ condition. An already faulted worker retains its first cause; the bridge records the current one. A lower fault cannot reenter the outer allowlist. Specific regressions pass; exhaustive proof for all arbitrary private checker failures is not claimed. |
+| 4. Bounded loops, waits, and recursion | No loops, recursion, retries, threads, callbacks, or waits in the three new bodies. `member` lists are literal and bounded. Batch copy, pop, and recycling remain in the already bounded worker. | Confirmed on final source. Closing requires an explicit termination call; it does not reacquire Serie. Semaphores and five-second deadlines are only in the concurrent harness. Benchmark executes a fixed iteration count. No pool fairness property is inferred. |
+| 5. Measured hot allocation | Binding, context, controller, and target are preallocated; local handler is `dynamic-extent`. Static reading alone did not close this point. | Five 4096-cycle samples after warmup128 detect `[0,0,0,0,0]` heap bytes, sink `8800256` in each. Sensor detects the `16777472`-byte positive control and rejects a wrong sink. Evidence for the preallocated serial success path on this build, with limits below. |
+| 6. Data checked on exit | Ftypes and typed slots, owner before reads; token, phase, captured leases, and binding checked. Meaningful pre/postconditions include delegated execution/Series checks; payload and debt are not duplicated by bridge. | Lease exposed only ACTIVE/current token; pop and ack pass bridge checks then worker checks. Target/span/alias and stale batch are rejected before pop or ack. Begin exposes the three declared values; macro evaluated once and multiple values checked. Caller must apply batch before ack: bridge does not certify external effects. |
+| 7. Compound decisions inventoried | Inventory of `case`/default, token/pre/post, boundary, and allowlist forms; only one new compound decision in fault marking: positive lease, owner EQ current, equal generation. | Final inventory: 32 local checks plus delegated owner check, seven macro instances, and all allowlists. Four fixtures make each of the three conditions false with the others true, plus all true. Short-circuit is explicit; fixture values do not automatically attest to each operand's execution. MC/DC is not inferred from sb-cover, nor total coverage from passed tests. |
+| 8. Shared-state owners | Three immutable references and fields local to context thread. Controller owner detected only through its capability. Private execution/Series coupling listed, without global registries or counters. | Wrong-thread rejected before handler and does not poison objects. Fault marker writes Serie only when all three conditions are true; after release or stale lease it does not modify the subsequent controller. Scalar check avoids check-ring that could replace cause. Archivio coordination after handoff remains caller obligation. |
+| 9. Traceability and `make check` | REQs and invariants associated with source headers and test names; global requirement statuses remain `progettato`. No promotion of the entire execution model. | Targeted tests, Series suite, and C4 have final PASS raw outputs. Root completed `make check` on integrated freeze: 732 named tests and two smoke tests, traceability, links, retention/evidence, and ten spikes PASS; record `4000709286-command-15279-0`, `:OK/:STABLE`, exit0. Documentation insertion of this outcome and new catalogs require the subsequent documents/evidence gate. |
+| 10. Rules and deviations | Safety3, complete function ftypes, typed slots, pre/post docstrings, REQ and OWNER/SHARED. Single classification boundary, no introduced syscall. Corrections required before closure. | Final sources within 60 lines per function; maximum inventoried local complexity 9, no new deviation identified. C4 fully compiled and loaded from FASL with fatal warnings; ASDF loading applies only runtime exception `sb-kernel:redefinition-warning` already provided by `tools/build.lisp`. That exception is not extended to coverage audit runner warnings. Coverage gaps retained, without approved exclusions. |
+| 11. Serialization and INV-P6 | No lock, wait, or global write between Serie per operation. The individual worker context, its writer, and the controller owned during the segment are serial; scheduling/ready remain in existing APIs. | Two controllers kept ACTIVE simultaneously by real threads before releases. Two writers competing on one controller have only one ACTIVE lease, the other closes without pop. Correctness of these fixtures is not a throughput or scalability measurement. Benchmark has only one worker, one Serie, and capacity1. |
+| 12. Durable atomicity and discard | Bridge changes ownership and in-memory diagnosis; it writes no durable records, changes neither WAL, retirement, nor reuse rules. No new durable atomicity point. | No rollback or automatic cleanup after fault. References and tokens remain for diagnosis; batch prefix is not repeated. The I/O END drain fixture on a FAULTED controller applies and cancels the event before ack/end. Real durability, recovery, and Archivio coordination are not qualified by this module. |
 
-## Osservazioni sul prodotto chiuse
+<a id="osservazioni-sul-prodotto-chiuse"></a>
 
-| ID / priorità | Difetto individuato | Correzione riletta e regressione finale |
+## Closed product findings
+
+| ID / priority | Defect identified | Reread correction and final regression |
 |---|---|---|
-| WS-REV-01 / P1 | La classificazione bridge poteva sostituire la prima causa terminale di un worker già faulted con l'invariante del successivo uso raw. | `%fault-worker-serie` non riclassifica un worker già FAULTED. `preserves-earlier-worker-fault-on-raw-begin` verifica EQ della prima causa worker e della diagnosi corrente bridge; PASS nei 26 test. |
-| WS-REV-02 / P2 | Generazione locale zero in ACTIVE/CLOSING non era un'invariante verificata: il token veniva soltanto rifiutato come argomento, lasciando le capacità senza diagnosi terminale. | `%check-writer-worker-serie` verifica `plusp generation` prima delle capacità. `zero-active-generation-faults-only-owned-controller` copre ACTIVE e CLOSING, compresa Serie già ceduta; PASS. |
-| WS-REV-03 / P1 | Un errore inatteso di acquire Serie con una ragione ammessa dal begin writer poteva essere considerato ordinario dal boundary esterno. | Boundary nil/nil dentro `%acquire-worker-serie`; soltanto il handler-case interno converte le due ragioni Serie previste. `acquire-boundary-unknown-reasons-never-remain-recoverable` inietta resource/invalid/io-fault, conserva la condizione EQ, writer lease e token, senza acquisire Serie o estrarre payload; PASS. |
-| WS-REV-04 / P1 | Lo stesso mascheramento era possibile nella release Serie; inoltre un fault lower con ragione `:worker-serie-token` poteva coincidere con il rifiuto benigno del pop bridge. | Boundary nil/nil nella release; allowlist applicate soltanto se il worker non è già FAULTED. `release-boundary-unknown-reasons-retain-both-leases` copre tre classi e conserva entrambe le lease; `lower-worker-fault-cannot-match-benign-outer-token-reason` conserva lo stato terminale e la causa EQ; entrambe PASS. |
+| WS-REV-01 / P1 | Bridge classification could replace an already faulted worker's first terminal cause with the invariant from subsequent raw use. | `%fault-worker-serie` does not reclassify an already FAULTED worker. `preserves-earlier-worker-fault-on-raw-begin` checks EQ of first worker cause and current bridge diagnosis; PASS in 26 tests. |
+| WS-REV-02 / P2 | Zero local generation in ACTIVE/CLOSING was not a checked invariant: token was merely rejected as an argument, leaving capabilities without terminal diagnosis. | `%check-writer-worker-serie` checks `plusp generation` before capabilities. `zero-active-generation-faults-only-owned-controller` covers ACTIVE and CLOSING, including an already handed-off Serie; PASS. |
+| WS-REV-03 / P1 | An unexpected Serie acquire error with a reason allowed by writer begin could be considered ordinary by the outer boundary. | Nil/nil boundary inside `%acquire-worker-serie`; only inner handler-case converts the two expected Serie reasons. `acquire-boundary-unknown-reasons-never-remain-recoverable` injects resource/invalid/io-fault, retains EQ condition, writer lease and token, without acquiring Serie or extracting payload; PASS. |
+| WS-REV-04 / P1 | Same masking was possible in Serie release; a lower fault with reason `:worker-serie-token` could also match benign bridge pop rejection. | Nil/nil boundary in release; allowlists applied only if worker is not already FAULTED. `release-boundary-unknown-reasons-retain-both-leases` covers three classes and retains both leases; `lower-worker-fault-cannot-match-benign-outer-token-reason` retains terminal state and EQ cause; both PASS. |
 
-I nomi abbreviati della tabella hanno il prefisso
-`test-REQ-AFF-008-worker-serie-` nel file di test finale.
-WS-REV-01/02 derivano dalla prima revisione; WS-REV-03 dalla lettura
-dell'autore; WS-REV-04 dalla rilettura del sottopasso release e del fault
-lower. La seconda lettura ha verificato tutte e quattro le correzioni
-nel codice congelato. Nessuna osservazione sul prodotto resta aperta.
+Abbreviated table names have prefix `test-REQ-AFF-008-worker-serie-`
+in the final test file. WS-REV-01/02 come from the first review;
+WS-REV-03 from the author's reading; WS-REV-04 from rereading the release
+substep and lower fault. The second reading verified all four corrections
+in frozen code. No product finding remains open.
 
-## Gate locali e rapporti grezzi
+<a id="gate-locali-e-rapporti-grezzi"></a>
 
-Gli identificatori sono quelli di `tools/record-command.lisp`, non nomi
-attribuiti a posteriori. Ogni esito sotto è stato letto nel proprio raw,
-con `:STATUS :OK`, `:SOURCE-CONSISTENCY :STABLE` ed exit0. Le copie
-pubblicate sono nel
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/catalogo.lisp);
-i tentativi preliminari restano separati dai risultati v3.
+## Local gates and raw reports
 
-| Gate | Record v3 / raw pubblicato | Esito e ambito |
+Identifiers are those of `tools/record-command.lisp`, not names assigned
+afterward. Every outcome below was read in its raw output, with
+`:STATUS :OK`, `:SOURCE-CONSISTENCY :STABLE`, and exit0. Published copies
+are in the
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/catalogo.lisp);
+preliminary attempts remain separate from v3 results.
+
+| Gate | v3 record / published raw | Outcome and scope |
 |---|---|---|
-| Test mirati | `4000708313-command-79577-0`; [target-final.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/target-final.lisp) | 26 test bridge PASS. Il driver verifica anche che il numero selezionato sia esattamente 26. |
-| Suite e sb-cover Series | `4000708333-command-80909-0`; [coverage-process.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-process.lisp) e [bundle](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-bundle.lisp) | 70 test PASS, comprendenti 44 del controller e 26 nuovi; raw nativo e dodici pagine HTML conservati. |
-| Audit nativo contro HTML | `4000708823-command-7776-0`; [coverage-audit-final.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-audit-final.lisp) e [processo finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-audit-final-process.lisp) | COMPILE-FILE, caricamento FASL, self-test reader e inventario di tutti i missing PASS con warning fatali; stderr vuoto. Conteggi uguali al precedente audit, conservato come probe. |
-| C4 strictcompile e self-test FASL | `4000708361-command-83427-0`; [c4-final.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/c4-final.lisp) | COMPILE-FILE completo con warning/style-warning fatali; FASL self-test PASS, inclusi sensori, ciclo composto, CLI invalida, destinazione esistente e raw parziale. |
-| Heap locale | `4000708391-command-85710-0`; [benchmark-data.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/benchmark-data.lisp) e [processo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/benchmark-process.lisp) | Cinque campioni completi, heap0 e sink atteso in ciascuno; controllo positivo e diagnosi sink errato funzionanti. |
-| Controllo generale integrato | `4000709286-command-15279-0`; [full-check.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/full-check.lisp) e [master spike](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series-spikes-check/report.lisp) | **PASS**, `:OK/:STABLE`, exit0; 732 test nominati e due smoke, tutti i gate ordinari e dieci spike con esiti verificati nei singoli raw. Aggiornamento del root dopo le due letture, senza mutare codice/test/C4. |
+| Targeted tests | `4000708313-command-79577-0`; [target-final.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/target-final.lisp) | 26 bridge tests PASS. Driver also checks selected count is exactly 26. |
+| Series suite and sb-cover | `4000708333-command-80909-0`; [coverage-process.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-process.lisp) and [bundle](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-bundle.lisp) | 70 tests PASS, including 44 controller and 26 new tests; native raw and twelve HTML pages retained. |
+| Native versus HTML audit | `4000708823-command-7776-0`; [coverage-audit-final.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-audit-final.lisp) and [final process](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/coverage-audit-final-process.lisp) | COMPILE-FILE, FASL loading, reader self-tests, and inventory of all missing items PASS with fatal warnings; empty stderr. Counts equal previous audit, retained as probe. |
+| C4 strictcompile and FASL self-test | `4000708361-command-83427-0`; [c4-final.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/c4-final.lisp) | Complete COMPILE-FILE with fatal warning/style-warning; FASL self-tests PASS, including sensors, composed cycle, invalid CLI, existing destination, and partial raw. |
+| Local heap | `4000708391-command-85710-0`; [benchmark-data.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/benchmark-data.lisp) and [process](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/benchmark-process.lisp) | Five complete samples, heap0 and expected sink in each; positive control and wrong-sink diagnosis working. |
+| Integrated general check | `4000709286-command-15279-0`; [full-check.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/full-check.lisp) and [spike master](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series-spikes-check/report.lisp) | **PASS**, `:OK/:STABLE`, exit0; 732 named tests and two smoke tests, all ordinary gates and ten spikes with outcomes verified in individual raw outputs. Root update after both readings, without changing code/tests/C4. |
 
-Il probe dell'audit `4000708506-command-97108-0` conserva due
-`STYLE-WARNING` del runner `-eval` per riferimenti anticipati a
-`coverage-reader-main` e `coverage-reader-self-test`. Exit0 non li elimina
-e quel comando non viene promosso a gate privo di avvisi. Il successivo
-`4000708823-command-7776-0` usa eval distinti e `funcall/fdefinition` dopo
-il caricamento: handler warning fatale su compile, FASL, self-test e main;
-raw letto con stdout PASS, stderr vuoto, stato OK/STABLE ed exit0.
-La sorgente reader02 è conservata in
+Audit probe `4000708506-command-97108-0` retains two `STYLE-WARNING`s
+from the `-eval` runner for forward references to `coverage-reader-main`
+and `coverage-reader-self-test`. Exit0 does not remove them and that
+command is not promoted to a warning-free gate. Subsequent
+`4000708823-command-7776-0` uses separate evals and `funcall/fdefinition`
+after loading: fatal warning handler on compile, FASL, self-test, and main;
+raw read with stdout PASS, empty stderr, OK/STABLE status, and exit0.
+Reader02 source is retained in
 [orchestration-final.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-worker-series/orchestration-final.lisp).
-Il wrapper del publisher conserva separatamente un avviso anticipato per
-`compact-finished-directory`: riusa un helper preesistente di copia e
-compattazione, non è il C4 nuovo di benchmark o il reader qualificato.
-I suoi esiti di conservazione non sono presentati come compilazione C4
-priva di avvisi.
+The publisher wrapper separately retains a forward-reference warning for
+`compact-finished-directory`: it reuses an existing copy/compaction helper,
+not the new benchmark C4 or qualified reader. Its retention outcomes are
+not presented as warning-free C4 compilation.
 
-## Copertura conservata senza esclusioni
+<a id="copertura-conservata-senza-esclusioni"></a>
 
-I valori seguenti sono stati letti dall'indice HTML e coincidono con
-l'audit del formato nativo. Il denominatore include tutti i dodici file
-del modulo Series, anche package e quattro file late. Non si attribuisce
-allo scope Series la copertura delle implementazioni execution delegate.
+## Coverage retained without exclusions
 
-| File | Espressioni hit/totale | Rami hit/totale |
+The following values were read from the HTML index and match the native
+format audit. The denominator includes all twelve Series module files,
+including packages and four late files. Coverage of delegated execution
+implementations is not attributed to Series scope.
+
+| File | Hit/total expressions | Hit/total branches |
 |---|---:|---:|
 | events.lisp | 288/335 | 38/46 |
 | io-events.lisp | 185/220 | 23/32 |
@@ -124,43 +130,45 @@ allo scope Series la copertura delle implementazioni execution delegate.
 | worker-package.lisp | 0/1 | 0/0 |
 | worker-run.lisp | 145/161 | 12/14 |
 | worker-types.lisp | 124/168 | 19/30 |
-| Tutto Series | **1501/1799** | **191/250** |
-| Quattro file nuovi | **343/416** | **49/64** |
+| All Series | **1501/1799** | **191/250** |
+| Four new files | **343/416** | **49/64** |
 
-Restano **298 espressioni e 59 rami** non eseguiti in tutto Series;
-nei quattro file nuovi restano **73 espressioni e 15 rami**.
-L'audit conserva per ciascuno file, kind e path nativo: non sono esclusi
-né aggregati in una sola nota generica. Nei nuovi file i rami mancanti
-sono 2 in boundary, 2 in run e 11 in types, incluse forme generate e
-controlli interni. La lettura del sorgente non li promuove a impossibili
-e non sostituisce una loro esecuzione. L'inventario statico e i casi
-manuali della decisione a tre condizioni completano la descrizione,
-senza dichiarare MC/DC o copertura completa.
+**298 expressions and 59 branches** remain unexecuted in all Series;
+in the four new files, **73 expressions and 15 branches** remain.
+The audit retains file, kind, and native path for each: they are neither
+excluded nor aggregated into one generic note. Missing branches in the
+new files are 2 in boundary, 2 in run, and 11 in types, including generated
+forms and internal checks. Reading the source does not promote them to
+impossible and does not replace their execution. The static inventory and
+manual cases of the three-condition decision complete the description,
+without claiming MC/DC or complete coverage.
 
-## Limiti della misura e del protocollo
+<a id="limiti-della-misura-e-del-protocollo"></a>
 
-La misura usa SBCL 2.6.9 ARM64/Darwin, safety3, un worker, una Serie,
-capacità writer/ready/Serie1 e payload5. Ogni ciclo osserva enqueue,
-adozione, begin, lease, pop, identità del payload, ack ed end idle;
-la formula indipendente è `N*101+N*(N-1)/2`.
-GC, predisposizione della fixture e stampa sono fuori dalla finestra.
-Il timer a zero ha diagnosi distinta `:BELOW-RESOLUTION` e secondi NIL;
-il sink errato resta un rifiuto anche con clockzero. Il carico esterno
-è `:UNCONTROLLED`.
+## Measurement and protocol limits
 
-Heap0 è un dato locale del contatore, non una prova universale di
-assenza di allocazioni. Le finestre non misurano busy, closing, fault,
-contenzione, quantum maggiore di 1, pool parallelo, dispositivo reale,
-durabilità o recovery. I test concorrenti verificano il protocollo in
-fixture finite; non misurano scalabilità, throughput, P99 o fairness.
-Nessuna soglia temporale è usata per qualificare il prodotto.
+Measurement uses SBCL 2.6.9 ARM64/Darwin, safety3, one worker, one Serie,
+writer/ready/Serie capacity1, and payload5. Each cycle observes enqueue,
+adoption, begin, lease, pop, payload identity, ack, and idle end;
+the independent formula is `N*101+N*(N-1)/2`.
+GC, fixture setup, and printing are outside the window.
+A zero timer has distinct diagnosis `:BELOW-RESOLUTION` and NIL seconds;
+a wrong sink remains a rejection even with clockzero. External load
+is `:UNCONTROLLED`.
 
-Il caller deve mantenere mapping logico unico, non rientranza e uso
-esclusivo delle capacità del tratto. Deve elaborare il batch prima di
-ack, chiudere CLOSING prima del ricircolo, distinguere generation Serie
-esaurita da busy e non riprogrammarla indefinitamente. Dopo un fault
-fuori dalla lease Serie corrente deve fermare/coordinare l'Archivio:
-il bridge non può scrivere sul controller del nuovo owner. Il boundary
-registra errori; non promette quiescenza, rollback o cleanup per uscite
-non locali arbitrarie. Applicazione dei payload, routing, admission,
-pool e coordinatore restano fuori dall'ambito qualificato.
+Heap0 is a local counter observation, not universal proof of allocation
+absence. Windows do not measure busy, closing, fault, contention, quantum
+greater than 1, parallel pool, real device, durability, or recovery.
+Concurrent tests verify the protocol in finite fixtures; they do not
+measure scalability, throughput, P99, or fairness. No time threshold is
+used to qualify the product.
+
+The caller must maintain unique logical mapping, nonreentrancy, and exclusive
+use of segment capabilities. It must process the batch before ack, close
+CLOSING before recycling, distinguish exhausted Serie generation from busy,
+and not reschedule it indefinitely. After a fault outside the current Serie
+lease, it must stop/coordinate the Archivio: the bridge cannot write the
+new owner's controller. The boundary records errors; it does not promise
+quiescence, rollback, or cleanup for arbitrary nonlocal exits. Payload
+application, routing, admission, pool, and coordinator remain outside
+qualified scope.

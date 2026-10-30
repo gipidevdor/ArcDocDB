@@ -1,33 +1,35 @@
-# Lettura C4 dei driver dello scanner minimo
+<a id="lettura-c4-dei-driver-dello-scanner-minimo"></a>
 
-Lettura statica del coordinatore, prima di ogni esecuzione del prodotto e
-delle campagne. Il benchmark congelato ha blob
-`3cdd34a3dd5747f7fd0e513a1f2daeb7e2c2bbfb`; i test ciechi restano invariati.
+# C4 reading of minimal scanner drivers
 
-Le otto fixture sono costruite dai byte preregistrati, con input e scratch
-privati preparati fuori misura. Nodi, profondità, END e token sono costanti
-indipendenti; il controllo freddo richiede esattamente tre valori. Il ciclo
-misurato controlla i tre valori e li usa tutti nel sink. Warmup, GC e
-allocazione del report sono esterni ai delta heap e clock. Baseline nulla,
-allocazione deliberata viva, cinque repliche e immutabilità sono controllati.
-La stabilità delle impronte è distinta dall'autenticità; nessuna soglia di
-throughput, scaling o prova assoluta di nonallocazione è prevista.
+Coordinator's static reading, before any product execution or
+campaign. The frozen benchmark has blob
+`3cdd34a3dd5747f7fd0e513a1f2daeb7e2c2bbfb`; blind tests remain unchanged.
 
-La prima lettura ha rilevato che il solo MULTIPLE-VALUE-BIND non controllava
-l'arità esatta. La correzione aggiunge un MULTIPLE-VALUE-LIST freddo, prima
-del warmup. Originale bytewise `d0e85c152006e7949f9bdc80cbfebc1d15484650`
-e dato finding/fix sono conservati nella raccolta; nessuna misura precede
-la correzione.
+The eight fixtures are built from preregistered bytes, with private input and
+scratch prepared outside measurement. Nodes, depth, END, and token are independent
+constants; the cold check requires exactly three values. The measured
+loop checks all three and uses them all in the sink. Warmup, GC, and
+report allocation are outside heap and clock deltas. Null baseline,
+deliberate live allocation, five replicates, and immutability are checked.
+Fingerprint stability is distinct from authenticity; no throughput threshold,
+scaling, or absolute proof of nonallocation is planned.
 
-Gli otto mutanti dello scanner sono fissati prima di leggere i nuovi test.
-Copie private, baseline completa e frammenti unici impediscono sostituzioni
-ambigue. Il catalogo e il dispatcher estendono il runner preesistente;
-l'integrazione conserva le classificazioni upstream per segnali OS e
-guasti successivi al completamento. Questi guasti sono WORKER-ERROR e gli
-errori di compilazione INVALID, mai rilevamenti del mutante. I self-test
-esercitano anche child reali e quattro sintassi valide/dodici invalide.
-Compilabilità e rilevamento effettivi restano da acquisire nei rapporti.
+The first reading found that MULTIPLE-VALUE-BIND alone did not check
+exact arity. The correction adds a cold MULTIPLE-VALUE-LIST before
+warmup. Bytewise original `d0e85c152006e7949f9bdc80cbfebc1d15484650`
+and finding/fix datum are preserved in the collection; no measurement precedes
+the correction.
 
-La copertura ha una [lettura separata](cbor-minimo-struttura-strumenti-review.md).
-Nessun rilievo statico aperto nel benchmark finale o nel catalogo; i risultati
-runtime e la conservazione devono essere verificati sui dati originali.
+The scanner's eight mutants are fixed before reading the new tests.
+Private copies, complete baseline, and unique fragments prevent ambiguous
+substitutions. The catalog and dispatcher extend the existing runner;
+integration preserves upstream classifications for OS signals and
+failures after completion. These failures are WORKER-ERROR and
+compilation errors INVALID, never mutant detections. Self-tests
+also exercise real children and four valid/twelve invalid syntaxes.
+Actual compilability and detection remain to be acquired in reports.
+
+Coverage has a [separate reading](cbor-minimo-struttura-strumenti-review.md).
+No open static finding in the final benchmark or catalog; runtime
+results and preservation must be verified against original data.

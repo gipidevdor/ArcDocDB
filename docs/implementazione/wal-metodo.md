@@ -1,38 +1,45 @@
-# Metodo: lotti WAL e compito I/O
+<a id="metodo-lotti-wal-e-compito-io"></a>
 
-Registrato prima dell'implementazione. Ambito: buffer preallocato del lotto,
-CSN assegnato dal chiamante alla chiusura, SEAL, gruppi limitati, singolo compito
-I/O per log e frontiere dopo write/flush. Nessun catalogo, indice, conferma al
-client, scheduler, rollover o transazione completa.
+# Method: WAL batches and I/O task
 
-## Contratti
+Registered before implementation. Scope: preallocated batch buffer,
+CSN assigned by caller at closure, SEAL, bounded groups, one I/O task
+per log, and frontiers after write/flush. No catalog, index, client
+acknowledgment, scheduler, rollover, or complete transaction.
 
-- Il buffer privato è mutabile solo nel lotto aperto. Alla chiusura si assegna il
-  CSN ai record ordinari, preservando i TXID prepared/OUTCOME/DECISION. CRC delle
-  intestazioni e CRC aggregato sono ricalcolati; SEAL contiene posizione, file,
-  numero di record e frontiera durevole nota, con budget verificati prima.
-- Tutti i buffer e vettori sono allocati all'inizializzazione. I gruppi hanno
-  capienza finita e contengono lotti contigui dello stesso file/versione/log.
-- La preparazione non effettua I/O. Write e flush appartengono al compito del
-  pool I/O. Un CAS locale al log impedisce un secondo gruppo in volo, senza attesa
-  o scrittura condivisa tra Serie. Una sola transizione autorizza il flush.
-- Write completata e flush completato sono distinti. Un guasto impedisce nuove
-  operazioni e coperture; non si pubblica né si conferma dopo un guasto.
-- La copertura async vale solo per i dati; group/strong richiedono durability.
-  La copertura dei byte non prova la pubblicazione dell'indice o l'esito 2PC.
-- Il riuso di lotti/gruppi preallocati richiede completamento durevole e assenza
-  di riferimenti/consumatori; il chiamante possiede questo protocollo di durata.
+<a id="contratti"></a>
 
-## Prove e misure
+## Contracts
 
-Confronto con codec/verifica-lotto e scansione recovery v1/v2: lotti vuoti e
-non vuoti, PUT/tombstone/prepared/OUTCOME, EDIT/DECISION, stamp u64 al limite,
-offset fisico non zero, frontiera storica e scritture in gruppo. Backend iniettato
-per EIO/ENOSPC/EINTR, short write, crash a ogni prefisso, flush fallito,
-operazioni ripetute, riuso prematuro e concorrenza di gruppi sul medesimo log.
+- The private buffer is mutable only in the open batch. At closure the CSN
+  is assigned to ordinary records, preserving prepared/OUTCOME/DECISION TXIDs.
+  Header CRCs and aggregate CRC are recalculated; SEAL contains position, file,
+  record count, and known durable frontier, with budgets checked beforehand.
+- All buffers and vectors are allocated at initialization. Groups have finite
+  capacity and contain contiguous batches of the same file/version/log.
+- Preparation performs no I/O. Write and flush belong to the I/O pool task.
+  A log-local CAS prevents a second in-flight group, without waiting or shared
+  writes between Serie. Only one transition authorizes flush.
+- Completed write and completed flush are distinct. A failure prevents new
+  operations and coverage; there is no publication or acknowledgment after a fault.
+- Async coverage applies only to data; group/strong require durability.
+  Byte coverage does not prove index publication or 2PC outcome.
+- Reuse of preallocated batches/groups requires durable completion and absence
+  of references/consumers; the caller owns this lifetime protocol.
 
-Misure separate dai test: buffer preallocati, warmup, GC completo, cinque campioni,
-safety 3, heap e tempo. Misurare formazione/sigillatura e I/O simulato senza
-generalizzare a latenza o throughput del database. Conservare comando, ambiente,
-hash, output e fallimenti con `tools/record-command.lisp`; pubblicare catalogo,
-copertura grezza e mutazioni. C1 e integrazione del motore restano gate separati.
+<a id="prove-e-misure"></a>
+
+## Tests and measurements
+
+Comparison with codec/batch verification and v1/v2 recovery scan: empty and
+nonempty batches, PUT/tombstone/prepared/OUTCOME, EDIT/DECISION, u64 stamp at
+limit, nonzero physical offset, historical frontier, and group writes. Injected
+backend for EIO/ENOSPC/EINTR, short write, crash at every prefix, failed flush,
+repeated operations, premature reuse, and concurrent groups on the same log.
+
+Measurements separate from tests: preallocated buffers, warmup, full GC,
+five samples, safety 3, heap, and time. Measure formation/sealing and simulated
+I/O without generalizing to database latency or throughput. Retain command,
+environment, hashes, output, and failures with `tools/record-command.lisp`;
+publish catalog, raw coverage, and mutations. C1 and engine integration
+remain separate gates.

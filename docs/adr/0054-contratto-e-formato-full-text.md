@@ -1,89 +1,103 @@
-# ADR-0054 — Contratto operativo e formato degli indici full text
+<a id="adr-0054--contratto-operativo-e-formato-degli-indici-full-text"></a>
 
-- **Stato:** Accettata per il progetto; nessun componente full text implementato o qualificato
-- **Data:** 2026-10-15
-- **Rapporto con la specifica:** completa i dettagli rinviati da
-  [ADR-0053](0053-ricerca-full-text-indici-invertiti.md): profilo iniziale, query, budget,
-  interfacce, generazioni e formato binario. Estende il formato `.idx` di
-  [ADR-0026](0026-indici-secondari-segmentati.md) con una versione specifica per il
-  full text; precisa la pubblicazione dei derivati di
-  [ADR-0040](0040-manifest-a-record-unico.md). Gli altri indici e i record v1/v2 restano invariati.
-- **Riferimenti:** [contratto full text](../full-text.md),
-  [formato binario](../formato-indice-full-text.md), REQ-SEC-007…REQ-SEC-010,
+# ADR-0054 — Operational contract and format of full-text indexes
+
+- **Status:** Accepted for the design; no full-text component implemented or qualified
+- **Date:** 2026-10-15
+- **Relationship to the specification:** completes details deferred by
+  [ADR-0053](0053-ricerca-full-text-indici-invertiti.md): initial profile, queries, budgets,
+  interfaces, generations, and binary format. Extends the `.idx` format of
+  [ADR-0026](0026-indici-secondari-segmentati.md) with a full-text-specific
+  version; clarifies publication of derivatives under
+  [ADR-0040](0040-manifest-a-record-unico.md). Other indexes and v1/v2 records remain unchanged.
+- **References:** [full-text contract](../full-text.md),
+  [binary format](../formato-indice-full-text.md), REQ-SEC-007…REQ-SEC-010,
   INV-I4, INV-I5, INV-I6
 
-## Contesto
+<a id="contesto"></a>
 
-La ricerca full text è approvata, ma i dettagli lasciati alla fase 8 consentono ancora
-interpretazioni incompatibili: versione Unicode implicita, riuso degli ordinali di un
-altro hint, risultati parziali durante il build e saturazione dopo una decisione durevole.
-L'autore chiede di completare la progettazione senza sviluppare codice.
+## Context
 
-## Decisione
+Full-text search is approved, but details left to phase 8 still permit
+incompatible interpretations: implicit Unicode version, reuse of ordinals from
+another hint, partial results during build, and saturation after a durable decision.
+The author asks to complete the design without developing code.
 
-I due documenti collegati sopra sono parte normativa di questa decisione. Fissano:
+<a id="decisione"></a>
 
-1. Profilo `unicode-word-18.0.0-v1`, con tabelle Unicode 18.0.0, NFC, case folding
-   completo non turco e parole secondo UAX #29 revisione 49. La versione è esplicita;
-   non viene ereditata da SBCL, dal sistema operativo o dalla locale.
-2. Foglie AST full text con indice e campo espliciti, `all/any` e frasi. Ogni query ha
-   uno snapshot, una generazione per indice e un esito terminale; un risultato consegnato
-   prima di un errore non equivale a una ricerca completata.
-3. Indice invertito `.idx` versione 2, tipo 5, con header di 64 byte, sei sezioni,
-   dizionario e posting a larghezza fissa, posizioni `u32`, identità della generazione
-   e legame verificato con i byte dell'hint. Nessuna compressione o Bloom nel primo codec.
-4. Identificativi di indice e generazione allocati dal catalogo, mai riusati. Ogni
-   generazione ha file propri. Rebuild di un file definitivo corrotto passa a una nuova
-   generazione; non sovrascrive il vecchio file. La rimozione di una generazione è
-   autorizzata dal catalogo e completata dopo la quiescenza dei reader.
-5. Copertura verificata sull'inventario dei segmenti e sulle frontiere pubblicate,
-   con acquisizione dei nuovi commit durante il build. Readiness è stato derivato:
-   solo il writer della Serie pubblica la nuova vista completa.
-6. Capacità di delta e buffer riservata prima di SEAL o PREPARE; un limite superiore
-   conservativo alla dimensione del futuro file indice guida anche la rotazione.
-   Il documento di configurazione dichiara limiti finiti, con default di progetto.
-7. Contratti per analisi, ammissione, pubblicazione, query, I/O, build e reclaim, con
-   ownership e rifiuti espliciti. La ricerca iniziale riguarda una Serie; la combinazione
-   con le appartenenze NNTP in altre Serie appartiene all'applicazione sullo stesso snapshot.
+## Decision
 
-### Serializzazione e atomicità
+The two documents linked above are a normative part of this decision. They establish:
 
-Il writer della Serie serializza adozione del contratto, prenotazioni, applicazione dei
-delta e scambio della vista. Analisi, costruzione e verifica dei file operano su buffer
-privati nei pool esistenti. L'I/O passa dal pool dedicato. Nessuna scrittura condivisa
-per documento tra Serie, nuovo coordinatore globale o attesa dentro un'epoca EBR.
+1. Profile `unicode-word-18.0.0-v1`, with Unicode 18.0.0 tables, NFC, full
+   non-Turkic case folding, and words according to UAX #29 revision 49. The version is explicit;
+   it is not inherited from SBCL, the operating system, or the locale.
+2. Full-text AST leaves with explicit index and field, `all/any`, and phrases. Every query has
+   a snapshot, one generation per index, and a terminal outcome; a result delivered
+   before an error does not constitute a completed search.
+3. Inverted `.idx` index version 2, type 5, with a 64-byte header, six sections,
+   fixed-width dictionary and postings, `u32` positions, generation identity,
+   and verified binding to hint bytes. No compression or Bloom in the first codec.
+4. Index and generation identifiers allocated by the catalog, never reused. Each
+   generation has its own files. Rebuilding a corrupt final file moves to a new
+   generation; it does not overwrite the old file. Removal of a generation is
+   authorized by the catalog and completed after reader quiescence.
+5. Coverage verified against segment inventory and published frontiers,
+   capturing new commits during build. Readiness is derived state:
+   only the Serie writer publishes the new complete view.
+6. Delta and buffer capacity reserved before SEAL or PREPARE; a conservative upper
+   bound on future index-file size also guides rotation.
+   The configuration document declares finite limits, with design defaults.
+7. Contracts for analysis, admission, publication, queries, I/O, build, and reclamation, with
+   explicit ownership and rejections. Initial search covers one Serie; combining it
+   with NNTP memberships in other Serie belongs to the application on the same snapshot.
 
-SEAL e DECISION conservano il loro ruolo per i documenti. Una modifica della configurazione
-degli indici è decisa da un documento di catalogo con durability `:strong`. La rinomina
-di un derivato preparato completa una configurazione già decisa e non introduce un
-secondo commit del documento. La readiness in memoria si perde e si verifica nuovamente
-al riavvio. Rotazione e compaction restano decise da EDIT.
+<a id="serializzazione-e-atomicità"></a>
 
-## Conseguenze
+### Serialization and atomicity
 
-- Formato, semantica e confini dei moduli sono abbastanza precisi da sviluppare codec,
-  analizzatore e modelli senza scegliere comportamenti incompatibili fra loro.
-- Il primo formato usa più spazio rispetto a posting compressi; è una scelta di
-  verificabilità, da misurare prima di un eventuale nuovo codec/versione.
-- Un cambio profilo può rendere temporaneamente indisponibili le nuove query. I reader
-  già ammessi conservano la propria generazione e il proprio snapshot entro i budget.
-- Default e limiti sono politiche di ammissione, non risultati o promesse prestazionali.
-- Lo stato dei requisiti resta `:progettato`; i gate della fase 8 rimangono aperti.
+The Serie writer serializes contract adoption, reservations, delta application,
+and view swaps. File analysis, construction, and verification operate on private
+buffers in the existing pools. I/O goes through the dedicated pool. No shared write
+per document across Serie, new global coordinator, or waiting inside an EBR epoch.
 
-## Alternative considerate
+SEAL and DECISION retain their role for documents. An index-configuration
+change is decided by a catalog document with `:strong` durability. Renaming
+a prepared derivative completes an already-decided configuration and does not introduce a
+second document commit. In-memory readiness is lost and verified again
+on restart. Rotation and compaction remain decided by EDIT.
 
-- Affidare l'analisi alla versione Unicode del runtime: rende instabile il significato
-  degli indici esistenti durante un aggiornamento del processo.
-- Comprimere subito con varint, front-coding e salti: aumenta i casi del primo decoder;
-  si conserva un punto di estensione tramite nuova versione del formato.
-- Ricalcolare il full text dopo la conferma: introduce una finestra di risultati incompleti.
-- Sostituire in posto un file corrotto: complica identità, reader attivi e conservazione
-  dell'anomalia; una nuova generazione esplicita il passaggio.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-La [matrice di accettazione](../full-text.md#criteri-di-accettazione) specifica corpus,
-oracoli, crash, saturazione e casi negativi. Sono prove da realizzare, distinte dai
-controlli documentali eseguiti ora. Il profilo si qualifica con i corpus ufficiali
-Unicode della versione fissata e con attesi manuali; il codec con fixture binarie
-indipendenti, alterazioni anche con CRC ricalcolato e decoder/encoder separati.
+- Format, semantics, and module boundaries are precise enough to develop codecs,
+  analyzer, and models without choosing mutually incompatible behavior.
+- The first format uses more space than compressed postings; this is a verifiability
+  choice, to be measured before any new codec/version.
+- A profile change may make new queries temporarily unavailable. Already-admitted readers
+  retain their generation and snapshot within budgets.
+- Defaults and limits are admission policies, not performance results or promises.
+- Requirement status remains `:progettato`; phase 8 gates remain open.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- Delegating analysis to the runtime's Unicode version: makes the meaning of
+  existing indexes unstable during a process upgrade.
+- Compressing immediately with varints, front-coding, and skips: increases first-decoder cases;
+  an extension point is retained through a new format version.
+- Recalculating full text after acknowledgment: introduces a window of incomplete results.
+- Replacing a corrupt file in place: complicates identity, active readers, and preservation
+  of the anomaly; a new generation makes the transition explicit.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+The [acceptance matrix](../full-text.md#criteri-di-accettazione) specifies corpora,
+oracles, crashes, saturation, and negative cases. These tests are to be implemented, separate from the
+document checks performed now. The profile is qualified using official Unicode
+corpora for the fixed version and manual expectations; the codec using independent binary
+fixtures, alterations including recalculated CRCs, and separate decoder/encoder.

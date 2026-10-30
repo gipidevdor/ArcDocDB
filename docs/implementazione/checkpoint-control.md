@@ -1,142 +1,154 @@
-# Preparazione del checkpoint del control log
+<a id="preparazione-del-checkpoint-del-control-log"></a>
 
-`arcdocdb.control` costruisce e prepara un nuovo `control.log.tmp` contenente
-un header, un EDIT completo e un SEAL. Realizza la preparazione del file di
+# Preparing the control log checkpoint
+
+`arcdocdb.control` builds and prepares a new `control.log.tmp` containing
+a header, one complete EDIT, and a SEAL. It implements file preparation from
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio),
-con l'header di [ADR-0052](../adr/0052-header-dei-log-di-controllo.md).
-Il **punto di atomicità del recovery** resta la successiva rinomina sopra il
-control log autorevole. Il preparatore non rinomina; il
-[publisher del recovery](pubblicazione-control.md) esegue questo passaggio
-su un vecchio control log già verificato e autorevole.
+with the header from [ADR-0052](../adr/0052-header-dei-log-di-controllo.md).
+The **recovery atomicity point** remains the subsequent rename over the
+authoritative control log. The preparer does not rename; the
+[recovery publisher](pubblicazione-control.md) performs this step
+on an already verified, authoritative old control log.
 
-## API e proprietà
+<a id="api-e-proprietà"></a>
 
-| API | Contratto |
+## API and ownership
+
+| API | Contract |
 |---|---|
-| `crea-checkpoint-control(active, payload, stamp, :limiti…)` | costruisce in memoria il file privato e ne ricostruisce il manifest |
-| `lunghezza-checkpoint-control(plan)` | dimensione esatta del file, per configurare capacità e scratch |
-| `manifest-checkpoint-control(plan)` | manifest posseduto, consultabile tramite le query scalari esistenti |
-| `prepara-checkpoint-control(plan, input, append, directory, scratch, :chunk-bytes)` | scrittura, flush, rilettura completa, confronto e fsync del parent |
-| `log-control-preparato(prepared)` | log canonico `:control`, file-id zero, per il suo unico proprietario |
-| `manifest-control-preparato(prepared)` | manifest del checkpoint preparato e riletto uguale |
-| `io:verifica-file-distinti(left, right)` | due capacità readonly del medesimo backend, device/inode fisicamente diversi |
+| `crea-checkpoint-control(active, payload, stamp, :limiti…)` | builds the private file in memory and reconstructs its manifest |
+| `lunghezza-checkpoint-control(plan)` | exact file size, for configuring capacity and scratch |
+| `manifest-checkpoint-control(plan)` | owned manifest, consultable through existing scalar queries |
+| `prepara-checkpoint-control(plan, input, append, directory, scratch, :chunk-bytes)` | write, flush, full reread, comparison, and parent fsync |
+| `log-control-preparato(prepared)` | canonical `:control` log, file-id zero, for its sole owner |
+| `manifest-control-preparato(prepared)` | manifest of the prepared and identically reread checkpoint |
+| `io:verifica-file-distinti(left, right)` | two read-only capabilities of the same backend, physically different device/inode |
 
-Il nuovo ACTIVE deve essere il risultato di
-[`prepara-segmento-attivo`](inizializzazione-active.md), ancora fermo al solo
-header: capacità aperte, log sano e frontiere scritta/durevole entrambe 64.
-Il controllo viene ripetuto prima e dopo la costruzione e la preparazione.
-Il controller impedisce scritture e close concorrenti durante l'intero ciclo.
+The new ACTIVE must be the result of
+[`prepara-segmento-attivo`](inizializzazione-active.md), still containing only the
+header: open capabilities, healthy log, and written/durable frontiers both 64.
+The check repeats before and after construction and preparation.
+The controller prevents concurrent writes and closes throughout the cycle.
 
-Il payload è uno stato completo, codificato con `scrivi-valore-edit` dalla
-fonte autorevole: prossimo ID, nuovo ACTIVE, CLOSED con lunghezze/esiti e
-rimossi ancora da riconciliare. Il modulo lo copia nel piano privato;
-il chiamante può riusarlo dopo la costruzione. Non espone il buffer del piano.
-Identità della Serie e versione vengono dal nuovo ACTIVE già verificato;
-lo stamp u64 è il numero d'ordine fornito dal controller, **non un CSN**.
+Payload is a complete state, encoded with `scrivi-valore-edit` from the
+authoritative source: next ID, new ACTIVE, CLOSED with lengths/outcomes, and
+removed segments still to reconcile. The module copies it into the private plan;
+the caller may reuse it after construction. It exposes no plan buffer.
+Serie identity and version come from the already verified new ACTIVE;
+the u64 stamp is the sequence number supplied by the controller, **not a CSN**.
 
-## Costruzione senza I/O
+<a id="costruzione-senza-io"></a>
 
-1. Verificare salute, associazione e frontiere del nuovo ACTIVE, senza syscall.
-2. Verificare il budget del payload e la capienza del record nella versione v1/v2.
-3. Costruire un lotto CONTROL privato di un solo EDIT completo, TXID zero,
-   sigillato tramite il builder WAL esistente: file-id zero, inizio a 64 e
-   frontiera durevole **storica zero**, dato che il nuovo file non è ancora scritto.
-4. Aggiungere l'header canonico della Serie e copiare il lotto nel file privato.
-5. Verificare header, cornici, CRC, SEAL e payload usando il recovery esistente.
-   Richiedere un manifest completo che consumi l'intero file e nomini lo stesso
-   nuovo ACTIVE. Budget, disgiunzione degli insiemi, lunghezze, esiti e next-id
-   sono controllati dal ripiegamento del manifest.
-6. Ricontrollare il nuovo ACTIVE e restituire il piano completo.
+## Construction without I/O
 
-La costruzione può allocare; non appartiene al percorso caldo dei documenti.
-Non crea file, legge orologi, prenota ID, prende CSN o pubblica indici.
-Lo scanner in memoria non attesta la presenza dei CLOSED: inventario, verifica
-dei relativi dati e correttezza dell'allocatore restano obblighi del controller.
+1. Verify the new ACTIVE's health, binding, and frontiers without syscalls.
+2. Verify payload budget and record capacity in version v1/v2.
+3. Build a private CONTROL batch containing one complete EDIT, TXID zero,
+   sealed through the existing WAL builder: file-id zero, start at 64, and
+   **historical zero** durable frontier, since the new file is not yet written.
+4. Add the Serie's canonical header and copy the batch into the private file.
+5. Verify header, frames, CRCs, SEAL, and payload using existing recovery.
+   Require a complete manifest that consumes the entire file and names the same
+   new ACTIVE. Budgets, set disjointness, lengths, outcomes, and next-id
+   are checked by the manifest fold.
+6. Recheck the new ACTIVE and return the complete plan.
 
-Il [builder del recovery](checkpoint-recovery.md) ricava il payload completo
-da CONTROL e ACTIVE recuperati, conservando CLOSED, REMOVED ed esiti e
-verificando la transizione prima di restituire questo stesso piano.
+Construction may allocate; it is outside the document hot path.
+It creates no files, reads no clocks, reserves no IDs, takes no CSN, and publishes no indexes.
+The in-memory scanner does not certify CLOSED presence: inventory, verification
+of their data, and allocator correctness remain controller obligations.
 
-## Preparazione nel pool I/O
+The [recovery builder](checkpoint-recovery.md) derives complete payload
+from recovered CONTROL and ACTIVE, retaining CLOSED, REMOVED, and outcomes and
+verifying the transition before returning this same plan.
 
-Il controller crea il nuovo `control.log.tmp` con **O_EXCL**, apre readonly e
-directory parent autorevole e riserva il namespace. Il parent effettivo è una
-precondizione del controller; il modulo non lo deduce dagli inode dei file.
-Readonly, append, directory e nuovo ACTIVE usano lo stesso backend, incluso
-`nil` sul percorso nativo. I callback sono fidati e rispettano ownership e buffer.
+<a id="preparazione-nel-pool-io"></a>
 
-La preflight controlla alias, scratch, budget di trasferimento, budget totale
-del file, backend e frontiere append a zero, prima di fstat o modifiche.
-L'associazione readonly/append prova che le due capacità del control log
-individuano lo stesso file. Un secondo controllo prova che quel file sia
-**distinto dal nuovo ACTIVE**, prima di qualsiasi scrittura.
+## Preparation in the I/O pool
 
-Il compito scrive il piano per blocchi, sincronizza il file, lo rilegge per
-blocchi e confronta **ogni byte**, inclusi header, payload, stamp e SEAL.
-Il primo disaccordo segnala corruzione con offset assoluto. Poi sincronizza
-la directory e verifica capacità, dipendenza ACTIVE e frontiere esatte.
-Restituisce il risultato soltanto a completamento di tutti i passi.
+The controller creates the new `control.log.tmp` with **O_EXCL**, opens read-only and
+the authoritative parent directory, and reserves the namespace. The actual parent is a
+controller precondition; the module does not infer it from file inodes.
+Read-only, append, directory, and new ACTIVE use the same backend, including
+`nil` on the native path. Callbacks are trusted and respect ownership and buffers.
 
-Il risultato conserva log, manifest, dipendenza ACTIVE e associazione fisica;
-conserva anche directory canonica e frontiera preparata. Non conserva il piano
-serializzato o lo scratch. Il controller conserva tutte
-le capacità e completa la rinomina/adozione secondo ADR-0040. Il file completo
-e durevole non è ancora il control log autorevole e non conferma un documento.
+Preflight checks aliases, scratch, transfer budget, total file budget,
+backend, and zero append frontiers before fstat or modifications.
+Read-only/append binding proves that both control log capabilities
+identify the same file. A second check proves that file is
+**distinct from the new ACTIVE**, before any writing.
 
-## Errori e risorse
+The task writes the plan in chunks, synchronizes the file, rereads it in
+chunks, and compares **every byte**, including header, payload, stamp, and SEAL.
+The first mismatch reports corruption with an absolute offset. It then synchronizes
+the directory and verifies capabilities, ACTIVE dependency, and exact frontiers.
+It returns the result only after all steps complete.
 
-Gli errori tipizzati dei codec, recovery e I/O propagano senza handler generico,
-retry degli errori, rollback, troncamento, close o eliminazione implicita.
-Il caller mantiene la proprietà delle risorse e gestisce quarantena/cleanup.
-Nessun risultato parziale è consegnato. Dopo progresso, una nuova preparazione
-sullo stesso append viene rifiutata; write/flush guasti applicano `FAULTED`.
-Il temporaneo va riconciliato rispetto alla fonte autorevole prima di eliminarlo.
+The result retains log, manifest, ACTIVE dependency, and physical binding;
+it also retains the canonical directory and prepared frontier. It does not retain the serialized
+plan or scratch. The controller retains all
+capabilities and completes rename/adoption under ADR-0040. The complete,
+durable file is not yet the authoritative control log and acknowledges no document.
 
-| Rifiuto locale | Reason |
+<a id="errori-e-risorse"></a>
+
+## Errors and resources
+
+Typed codec, recovery, and I/O errors propagate without a generic handler,
+error retry, rollback, truncation, close, or implicit deletion.
+The caller retains resource ownership and handles quarantine/cleanup.
+No partial result is delivered. After progress, another preparation
+on the same append is rejected; failed write/flush applies `FAULTED`.
+The temporary file must be reconciled against the authoritative source before deletion.
+
+| Local rejection | Reason |
 |---|---|
-| ACTIVE avanzato oltre l'header | `:control-active-advanced` |
-| log ACTIVE non sano | `:control-active-log` |
-| budget/payload non ammessi | `:control-checkpoint-budget` / `:control-checkpoint-payload` |
-| manifest riferisce un altro ACTIVE | `:control-checkpoint-active` |
-| chunk nullo / scratch alias / backend diverso | `:control-checkpoint-chunk` / `:control-checkpoint-alias` / `:control-checkpoint-backend` |
-| append già iniziato | `:control-checkpoint-started` |
-| control log e ACTIVE sono lo stesso file | `:io-file-alias` |
-| rilettura diversa | `:control-checkpoint-readback` |
-| ritorni/frontiere interne impossibili | `:control-checkpoint-*`, condizione `invariant-violation` |
+| ACTIVE advanced beyond header | `:control-active-advanced` |
+| Unhealthy ACTIVE log | `:control-active-log` |
+| Disallowed budget/payload | `:control-checkpoint-budget` / `:control-checkpoint-payload` |
+| Manifest refers to another ACTIVE | `:control-checkpoint-active` |
+| Zero chunk / scratch alias / different backend | `:control-checkpoint-chunk` / `:control-checkpoint-alias` / `:control-checkpoint-backend` |
+| Append already started | `:control-checkpoint-started` |
+| Control log and ACTIVE are the same file | `:io-file-alias` |
+| Reread differs | `:control-checkpoint-readback` |
+| Impossible internal returns/frontiers | `:control-checkpoint-*`, `invariant-violation` condition |
 
-## Costi e decisioni da qualificare
+<a id="costi-e-decisioni-da-qualificare"></a>
 
-Con payload P, il file occupa **P + 144 byte**: 64 di header, 24 di cornice EDIT
-e 56 di SEAL. P è al massimo 16 MiB, con il limite del record v1 verificato
-separatamente. I budget del manifest sono quelli esistenti: 65.536 menzioni
-di segmenti ed esiti cumulativi per default, configurabili tramite l'API.
+## Costs and decisions to qualify
 
-Chunk predefinito 64 KiB; qualsiasi chunk positivo è limitato dai byte del
-piano e dalle capacità I/O. Lo scratch richiede `min(file-size, chunk)` byte.
-Ci sono `ceiling(file-size/chunk)` trasferimenti esatti in ciascuna direzione;
-gli short I/O positivi hanno il limite delle primitive esistenti. Al massimo
-quattro fstat e due flush. La rilettura non ricostruisce il manifest. Il piano
-trattiene il file privato e il manifest; il lotto intermedio può essere
-recuperato dal GC dopo la costruzione. Questi sono limiti statici, non misure
-di latenza, RSS, heap o throughput.
+With payload P, the file occupies **P + 144 bytes**: 64 header, 24 EDIT frame,
+and 56 SEAL. P is at most 16 MiB, with the v1 record limit checked
+separately. Manifest budgets are existing ones: 65,536 segment mentions
+and cumulative outcomes by default, configurable through the API.
 
-| ID | Decisione | Casi da qualificare |
+Default chunk 64 KiB; any positive chunk is bounded by plan
+bytes and I/O capabilities. Scratch requires `min(file-size, chunk)` bytes.
+There are `ceiling(file-size/chunk)` exact transfers in each direction;
+positive short I/O has the existing primitives' bound. At most
+four fstats and two flushes. Rereading does not rebuild the manifest. The plan
+retains the private file and manifest; the intermediate batch may be
+collected after construction. These are static bounds, not latency,
+RSS, heap, or throughput measurements.
+
+| ID | Decision | Cases to qualify |
 |---|---|---|
-| CPL-D01 | ACTIVE scritto/durevole a 64 | ciascuna frontiera diversa, entrambe esatte |
-| CPL-D02 | budget min/max e payload rappresentabile | ogni limite, v1/v2, un byte oltre |
-| CPL-D03 | header end/version corretti | ciascun valore discordante, entrambi corretti |
-| CPL-D04 | prefisso completo fino a EOF | prefisso corto, tail, completo |
-| CPL-D05 | manifest nomina il nuovo ACTIVE | altro ID, ID canonico |
-| CPL-D06 | scratch senza i tre alias | ciascun alias separato, buffer distinto |
-| CPL-D07 | i quattro backend sono identici | ciascuna associazione diversa, identici, nativo |
-| CPL-D08 | append scritto/durevole zero | ciascuna frontiera diversa, entrambe zero |
-| CPL-D09 | device/inode distinti | stesso device/altro inode, altro device/stesso inode, entrambi uguali |
-| CPL-D10 | frontiere finali uguali alla dimensione | ciascuna frontiera diversa, entrambe esatte |
-| CPL-D11 | size SEAL/lotto corretta | ciascun ritorno discordante, tutti corretti |
-| CPL-D12 | uguaglianza byte in ogni chunk | primo/centrale/ultimo byte, confine chunk e ultimo blocco corto |
+| CPL-D01 | ACTIVE written/durable at 64 | each frontier different, both exact |
+| CPL-D02 | min/max budget and representable payload | every limit, v1/v2, one byte beyond |
+| CPL-D03 | correct header end/version | each mismatching value, both correct |
+| CPL-D04 | complete prefix to EOF | short prefix, tail, complete |
+| CPL-D05 | manifest names new ACTIVE | other ID, canonical ID |
+| CPL-D06 | scratch without three aliases | each alias separately, distinct buffer |
+| CPL-D07 | all four backends identical | each binding different, identical, native |
+| CPL-D08 | append written/durable zero | each frontier different, both zero |
+| CPL-D09 | distinct device/inode | same device/other inode, other device/same inode, both equal |
+| CPL-D10 | final frontiers equal size | each frontier different, both exact |
+| CPL-D11 | correct SEAL/batch size | each mismatching return, all correct |
+| CPL-D12 | byte equality in every chunk | first/middle/last byte, chunk boundary and short final block |
 
-Qualifica C1, casi funzionali, fault injection, stress concorrente e misure
-dinamiche sono aperti. Le letture statiche dell'autore non costituiscono
-revisione indipendente. La [rinomina autorevole](pubblicazione-control.md)
-è ora un passaggio distinto del modulo; l'esecutore recovery, la creazione
-della Serie nel catalogo e la rotazione in esercizio restano da integrare.
+C1 qualification, functional cases, fault injection, concurrent stress, and dynamic
+measurements are open. Author static readings do not constitute
+independent review. The [authoritative rename](pubblicazione-control.md)
+is now a separate module step; the recovery executor, catalog Serie
+creation, and live rotation remain to be integrated.

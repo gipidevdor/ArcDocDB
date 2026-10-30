@@ -1,88 +1,96 @@
-# SPK-08 — bitmap e codice generato, 2026-10-08
+<a id="spk-08--bitmap-e-codice-generato-2026-10-08"></a>
 
-[Valutazione](README.md) · [Metodo preregistrato](../../spikes/SPK-08-generated-code/metodo-bitmap.md)
+# SPK-08 — bitmaps and generated code, 2026-10-08
 
-> **Proposta** — Estensione delle prove SPK-08: conteggio dei bit comuni
-> in due bitmap con lo stesso contenuto, per byte oppure per parole u64.
-> Nessuna ottimizzazione introdotta nel motore.
+[Assessment](README.md) · [Preregistered method](../../spikes/SPK-08-generated-code/metodo-bitmap.md)
 
-## Evidenze e correttezza
+> **Proposal** — Extension of SPK-08 tests: counting common bits
+> in two bitmaps with identical content, by byte or by u64 words.
+> No optimization introduced into the engine.
 
-Apple M4 ARM64, SBCL 2.6.9, Darwin 27.0.0, `safety 3`, carico esterno
-e cache non controllati. Ambiente, comando, revisione e sorgenti prima/dopo
-sono nei [record originali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/catalogo.lisp).
-Il [benchmark finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/benchmark.lisp)
-comprende CHECK, disassemblati e 90 campioni; le sorgenti risultano stabili.
+<a id="evidenze-e-correttezza"></a>
 
-I controlli confrontano i kernel con un oracolo bit per bit indipendente:
-24 fixture, dimensioni 0/8/16/128/8192/65.536 byte, zero, tutti uno, misti,
-alternate e bit alti. Superati 30 rifiuti di tipi, lunghezze e parametri.
-I layout byte/u64 coincidono byte per byte in little endian e gli input
-restano immutati, anche dopo i rifiuti e dopo ciascuna cella della matrice.
-Compilazione e caricamento finali senza warning o style-warning.
+## Evidence and correctness
 
-Due tentativi falliti restano nel catalogo. Il primo falliva durante la
-raccolta del disassemblato, perché `*print-readably*` impediva di stampare
-gli oggetti interni del compilatore; il testo ora è raccolto con quella
-variabile disattivata. Il secondo fermava il benchmark prima dei campioni:
-l'array del controllo positivo da 64 KiB non superava il controllo del
-contatore. Prima di ripetere la prova il payload è stato fissato a 1 MiB.
-Il sensore finale osserva 1.048.592 byte consed per quel payload osservabile;
-kernel, input e matrice non sono stati cambiati per scegliere una misura.
+Apple M4 ARM64, SBCL 2.6.9, Darwin 27.0.0, `safety 3`, external load
+and cache uncontrolled. Environment, command, revision, and before/after sources
+are in the [original records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/catalogo.lisp).
+The [final benchmark](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/benchmark.lisp)
+includes CHECK, disassembly, and 90 samples; sources are stable.
 
-## Misure locali
+Checks compare kernels with an independent bit-by-bit oracle:
+24 fixtures, sizes 0/8/16/128/8192/65.536 bytes, zero, all ones, mixed,
+alternating, and high bits. Passed 30 type, length, and parameter rejections.
+Byte/u64 layouts match byte for byte in little endian and inputs
+remain unchanged, including after rejections and each matrix cell.
+Final compilation and loading without warnings or style-warnings.
 
-Cinque repliche per dimensione/dataset/kernel; ordine alternato. Ogni
-campione attraversa 16 MiB logici dei due input, con passaggi fissi da
-128 a 65.536. Packing, oracoli, warmup, GC e report sono fuori dal ciclo.
-Ogni conteggio alimenta un sink verificato. La chiamata vuota dello stesso
-ciclo misura 262 tick per 65.536 passaggi, circa 4,00 ns/passaggio; il suo
-costo è conservato e non sottratto dai tempi dei kernel.
+Two failed attempts remain in the catalog. The first failed during
+disassembly collection because `*print-readably*` prevented printing
+internal compiler objects; text is now collected with that
+variable disabled. The second stopped the benchmark before samples:
+the 64 KiB positive-control array did not pass the counter
+check. Before repeating the test, payload was set to 1 MiB.
+The final sensor observes 1.048.592 consed bytes for that observable payload;
+kernels, inputs, and matrix were not changed to select a measurement.
 
-Mediane delle cinque repliche; il rapporto è la mediana dei confronti
-abbinati per replica. MiB/s indica byte logici dei due array elaborati;
-dispersione e campioni grezzi sono nel
-[confronto derivato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/comparison.lisp).
+<a id="misure-locali"></a>
 
-| Byte per bitmap | Dataset | Per byte, MiB/s | Per u64, MiB/s | Rapporto u64/byte |
+## Local measurements
+
+Five replicas per size/dataset/kernel; alternating order. Every
+sample traverses 16 logical MiB of the two inputs, with fixed pass counts from
+128 to 65.536. Packing, oracles, warmup, GC, and reports are outside the loop.
+Each count feeds a checked sink. The empty call in the same
+loop measures 262 ticks for 65.536 passes, about 4,00 ns/pass; its
+cost is retained and not subtracted from kernel timings.
+
+Medians of five replicas; ratio is the median of comparisons
+paired by replica. MiB/s denotes logical bytes of both processed arrays;
+spread and raw samples are in the
+[derived comparison](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/comparison.lisp).
+
+| Bytes per bitmap | Dataset | Per byte, MiB/s | Per u64, MiB/s | u64/byte ratio |
 |---:|---|---:|---:|---:|
-| 128 | misto | 1618,61 | 10012,52 | 6,17 |
+| 128 | mixed | 1618,61 | 10012,52 | 6,17 |
 | 128 | zero | 1644,40 | 10389,61 | 6,32 |
-| 128 | tutti uno | 1650,85 | 10050,25 | 6,11 |
-| 8192 | misto | 1891,25 | 14773,78 | 7,80 |
+| 128 | all ones | 1650,85 | 10050,25 | 6,11 |
+| 8192 | mixed | 1891,25 | 14773,78 | 7,80 |
 | 8192 | zero | 1897,53 | 15094,34 | 7,98 |
-| 8192 | tutti uno | 1888,80 | 14773,78 | 7,81 |
-| 65536 | misto | 1852,28 | 14571,95 | 7,87 |
+| 8192 | all ones | 1888,80 | 14773,78 | 7,81 |
+| 65536 | mixed | 1852,28 | 14571,95 | 7,87 |
 | 65536 | zero | 1889,91 | 15122,87 | 8,01 |
-| 65536 | tutti uno | 1890,36 | 14678,90 | 7,75 |
+| 65536 | all ones | 1890,36 | 14678,90 | 7,75 |
 
-Tutti i 90 cicli registrano delta zero per `get-bytes-consed`, come la
-baseline. È un'osservazione del sensore SBCL in questi campioni; il controllo
-positivo non dimostra sensibilità a ogni singola allocazione piccola.
-La durata minima dei campioni u64 supera 1 ms; la risoluzione del clock
-registrata è un microsecondo. Non si deducono percentili o garanzie temporali.
+All 90 loops record zero delta for `get-bytes-consed`, like the
+baseline. This is an SBCL sensor observation in these samples; the positive
+control does not demonstrate sensitivity to every individual small allocation.
+Minimum u64 sample duration exceeds 1 ms; recorded clock resolution
+is one microsecond. No percentiles or timing guarantees are deduced.
 
-## Codice generato e raccomandazione
+<a id="codice-generato-e-raccomandazione"></a>
 
-Il kernel byte ha due caricamenti `LDRB`; quello u64 ha due caricamenti
-di parole a 64 bit. Entrambi usano `AND` e la sequenza `FMOV`, `CNT .8B`,
-`UADDLV` per il popcount del singolo elemento. Il secondo tratta otto byte
-per iterazione e riduce il numero di caricamenti, conteggi e iterazioni.
-Non si osserva un ciclo vettorizzato tra più parole o caricamenti `LDR Q`.
-I controlli di tipo, range e overflow restano presenti; nel percorso normale
-dei kernel gli u64 restano nei registri senza boxing in bignum visibile.
+## Generated code and recommendation
 
-Le [diagnostiche del contrib](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/simd-availability.lisp)
-confermano NEON disponibile nel SBCL installato; l'inventario non trova
-un'API pubblica popcount in `SB-SIMD-NEON`. Questo non impedisce al compilatore
-di usare internamente `CNT` per il `LOGCOUNT` scalare.
+The byte kernel has two `LDRB` loads; the u64 kernel has two 64-bit
+word loads. Both use `AND` and sequence `FMOV`, `CNT .8B`,
+`UADDLV` for single-element popcount. The latter handles eight bytes
+per iteration and reduces loads, counts, and iterations.
+No loop vectorized across multiple words or `LDR Q` loads is observed.
+Type, range, and overflow checks remain present; on the kernels' normal
+path u64 values stay in registers without visible bignum boxing.
 
-> **Proposta** — Per bitmap già rappresentate in parole u64, il kernel
-> scalare tipizzato è un candidato da profilare nel motore prima di introdurre
-> SIMD esplicito. Il vantaggio misurato esclude la conversione del layout.
-> ADR-0012 e INV-X1 restano applicati: i microbenchmark non dimostrano che
-> l'operazione sia un hot path del database.
+[Contrib diagnostics](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/simd-availability.lisp)
+confirm NEON available in installed SBCL; inventory finds
+no public popcount API in `SB-SIMD-NEON`. This does not prevent the compiler
+from internally using `CNT` for scalar `LOGCOUNT`.
 
-Mancano x86-64, dataset oltre RAM, accessi concorrenti, cache del motore,
-query e costi di conversione. Le prove sulle impronte e sulle loro maschere
-restano nel [risultato distinto](risultati-SPK-07-08-2026-10-08.md).
+> **Proposal** — For bitmaps already represented as u64 words, the typed
+> scalar kernel is a candidate to profile in the engine before introducing
+> explicit SIMD. Measured advantage excludes layout conversion.
+> ADR-0012 and INV-X1 still apply: microbenchmarks do not demonstrate that
+> the operation is a database hot path.
+
+x86-64, datasets beyond RAM, concurrent access, engine cache,
+queries, and conversion costs are missing. Fingerprint and mask tests
+remain in the [separate result](risultati-SPK-07-08-2026-10-08.md).

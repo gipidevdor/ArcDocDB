@@ -1,188 +1,200 @@
-# Resolver GET del nuovo segmento ACTIVE
+<a id="resolver-get-del-nuovo-segmento-active"></a>
 
-`arcdocdb.get.resolver` collega i **lotti ordinari** del writer alla radice
-pubblicata da `arcdocdb.series`. Completa questo tratto del percorso ACTIVE,
-senza cambiare le decisioni di [ADR-0037](../adr/0037-lotto-sigillato.md) e
-[ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md). Le prove
-prepared/OUTCOME dell'ACTIVE restano da integrare: il wrapper le rifiuta
-esplicitamente, senza interpretarle come abort o come corruzione del formato.
+# GET resolver for the new ACTIVE segment
 
-La directory introdotta qui contiene **pagine di uno stesso ACTIVE**. La
-[directory della Serie](get-fonti-serie.md) sceglie fra ACTIVE e CLOSED.
-L'indice concreto, la rotazione/reclaim e il server restano integrazioni distinte.
+`arcdocdb.get.resolver` connects the writer's **ordinary batches** to the root
+published by `arcdocdb.series`. It completes this part of the ACTIVE path
+without changing decisions in [ADR-0037](../adr/0037-lotto-sigillato.md) and
+[ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md). ACTIVE
+prepared/OUTCOME proofs remain to be integrated: the wrapper explicitly
+rejects them without interpreting them as aborts or format corruption.
 
-## Autorità e ordine di pubblicazione
+The directory introduced here contains **pages of a single ACTIVE**. The
+[Serie directory](get-fonti-serie.md) selects between ACTIVE and CLOSED.
+Concrete index, rotation/reclamation, and server remain separate integrations.
 
-La frontiera non è la dimensione del file, la posizione scritta del WAL, H
-o un offset passato dal reader. Il reader acquisisce la radice effettiva
-tramite `leggi-radice-serie`, con la barriera acquire esistente, **dopo**
-`avvia-get` sotto EBR. Una radice soltanto pianificata non è acquisibile
-attraverso le API ACTIVE del reader.
+<a id="autorità-e-ordine-di-pubblicazione"></a>
 
-1. Nel pool I/O costruire `segmento-get` con header letto dal FD readonly.
-   Nel pool I/O usare [associa-file](associazione-file.md) per provare che questo
-   FD e quello append appartengono allo **stesso file fisico**, e mantenerli
-   aperti fino al reclaim. Identità/versione/header
-   non costituiscono, da soli, una prova di identità fisica dei due FD.
-2. Creare un controller locale per il nuovo ACTIVE, con root `nil` e
-   `:next-offset 64`, e acquisirne la lease. Con questa lease,
-   `crea-sorgente-get-attiva` verifica origine writer, ID positivo u32,
-   versione del log e configurazione. Passando `:associazione-file prova`,
-   verifica anche le due capacità effettive senza I/O. Omettere la prova conserva
-   l'obbligo originario del caller; il solo header non lo assolve.
-   Il [preparatore del nuovo writer](inizializzazione-active.md) fornisce una
-   factory che richiede la prova, dopo header durevole e verifica della rilettura.
-   Prima dell'ammissione, l'[avvio vuoto](get-active-vuoto.md) può pubblicare
-   le fonti recuperate con zero pagine e nessun evento o CSN.
-3. Sul lotto OPEN, chiamare `verifica-capienza-get-attiva` **prima** del
-   ponte WAL–CSN. La preflight verifica ring, contiguità, forma supportata,
-   spazio segmento e budget; restituisce il numero PUT, senza assegnare CSN
-   o riservare risorse. Mantenere lease, contenuto e radice precedente
-   **pianificata**, inizialmente `nil` oppure la radice vuota pubblicata,
-   stabili fino alla sigillatura/adozione.
-   Poi sigillare e preparare il payload immutabile del caller. La preflight
-   non certifica i CRC dei valori: la verifica completa segue la sigillatura.
-4. `registra-lotto-get-attivo` controlla lease, ring, token, log e ordine;
-   verifica **solo il nuovo lotto** in memoria, inclusi CRC, SEAL, posizione
-   assoluta, count e CSN. Copia i metadati dei PUT ordinari in una pagina
-   privata. I tombstone occupano il log e la frontiera, senza una riga PUT.
-5. Il wrapper adotta lotto e nuova radice con il normale
-   `registra-commit-serie`, prima del dispatch I/O. Restituisce evento,
-   generazione catturata e nuova radice pianificata. Non pubblica né
-   conferma al client.
-6. Il normale `pubblica-commit-serie` verifica copertura e FIFO prima del
-   CAS: `:async` dopo write, `:group`/`:strong` dopo la copertura durevole.
-   La risoluzione CSN segue il CAS; `:pendente` conserva l'obbligo e non
-   ripubblica. Fine I/O, ritiro e riuso restano al protocollo esistente.
+## Authority and publication order
 
-Il SEAL persistito è il punto di atomicità WAL; la preparazione di una
-pagina non attesta write/fsync. Il CAS pubblica memoria. Il payload del
-caller è leggibile con `contenuto-radice-get-attiva`, ma il wrapper non
-costruisce né verifica il contenuto di un indice concreto. Una location
-deve diventare osservabile **dopo** la pagina corrispondente; mutare un
-indice raggiungibile da radici pubblicate viola il contratto. Il collegamento
-atomico all'indice primario resta da completare.
+The frontier is neither file size, WAL written position, H,
+nor an offset supplied by the reader. The reader acquires the actual root
+through `leggi-radice-serie`, with the existing acquire barrier, **after**
+`avvia-get` under EBR. A merely planned root cannot be acquired
+through the reader's ACTIVE APIs.
 
-## Directory persistente e limiti di lavoro
+1. In the I/O pool, build `segmento-get` with the header read from the read-only FD.
+   In the I/O pool, use [associa-file](associazione-file.md) to prove that this
+   FD and the append FD belong to the **same physical file**, and keep them
+   open until reclamation. Identity/version/header
+   alone do not prove physical identity of the two FDs.
+2. Create a local controller for the new ACTIVE, with root `nil` and
+   `:next-offset 64`, and acquire its lease. With this lease,
+   `crea-sorgente-get-attiva` checks writer origin, positive u32 ID,
+   log version, and configuration. Passing `:associazione-file prova`
+   also checks both actual capabilities without I/O. Omitting proof retains
+   the caller's original obligation; the header alone does not discharge it.
+   The [new writer preparer](inizializzazione-active.md) provides a
+   factory requiring proof after the durable header and readback verification.
+   Before admission, [empty startup](get-active-vuoto.md) may publish
+   recovered sources with zero pages and no event or CSN.
+3. On the OPEN batch, call `verifica-capienza-get-attiva` **before** the
+   WAL–CSN bridge. Preflight checks ring, contiguity, supported shape,
+   segment space, and budget; it returns PUT count without assigning a CSN
+   or reserving resources. Keep lease, content, and the previous **planned**
+   root, initially `nil` or the published empty root,
+   stable until sealing/adoption.
+   Then seal and prepare the caller's immutable payload. Preflight
+   does not certify value CRCs: full verification follows sealing.
+4. `registra-lotto-get-attivo` checks lease, ring, token, log, and order;
+   it verifies **only the new batch** in memory, including CRCs, SEAL, absolute
+   position, count, and CSN. It copies ordinary PUT metadata into a
+   private page. Tombstones occupy log and frontier without a PUT row.
+5. The wrapper adopts batch and new root with normal
+   `registra-commit-serie`, before I/O dispatch. It returns event,
+   captured generation, and new planned root. It neither publishes nor
+   acknowledges the client.
+6. Normal `pubblica-commit-serie` checks coverage and FIFO before
+   CAS: `:async` after write, `:group`/`:strong` after durable coverage.
+   CSN resolution follows CAS; `:pendente` retains the obligation and does not
+   republish. I/O completion, retirement, and reuse remain with the existing protocol.
 
-La directory ha quattro livelli, ciascuno di sedici riferimenti, indicizzati
-con le quattro cifre binarie di un rank u16. Le pagine seguono l'ordine fisico
-dei lotti. Un append copia quattro vettori e condivide soltanto sottografi
-immutabili. Non ricopia i PUT precedenti, non rilegge il file ACTIVE e non
-conserva una catena di radici precedenti. Le radici vecchie rimangono valide.
+The persisted SEAL is the WAL atomicity point; preparing a page
+does not certify write/fsync. CAS publishes memory. Caller payload
+is readable with `contenuto-radice-get-attiva`, but the wrapper neither
+builds nor verifies a concrete index's contents. A location
+must become observable **after** its corresponding page; mutating an
+index reachable from published roots violates the contract. Atomic
+connection to the primary index remains to be completed.
 
-| Percorso | Limite |
+<a id="directory-persistente-e-limiti-di-lavoro"></a>
+
+## Persistent directory and work limits
+
+The directory has four levels, each with sixteen references, indexed
+by the four binary digits of a u16 rank. Pages follow physical batch
+order. An append copies four vectors and shares only immutable
+subgraphs. It does not recopy previous PUTs, reread the ACTIVE file, or
+retain a chain of previous roots. Old roots remain valid.
+
+| Path | Limit |
 |---|---|
-| Preflight prima del CSN | Header del lotto OPEN; nessuna copia del body, array o riserva |
-| Verifica del nuovo lotto | Byte e record del lotto, configurati prima dell'adozione |
-| Conteggio e copia metadati | Due passate sugli header del nuovo lotto; nessuna copia dei valori |
-| Append directory | Quattro vettori × sedici riferimenti; ricorsione limitata a quattro livelli |
-| Ricerca pagina per offset | Al più 17 confronti e un accesso finale, quattro livelli per accesso |
-| Ricerca PUT nella pagina | Resolver comune: al più 33 passi |
-| GET | Nessun I/O nella risoluzione/sonda; I/O soltanto nel pool dedicato |
+| Preflight before CSN | OPEN batch header; no body copy, array, or reservation |
+| New batch verification | Batch bytes and records, configured before adoption |
+| Metadata count and copy | Two passes over new-batch headers; no value copying |
+| Directory append | Four vectors × sixteen references; recursion bounded to four levels |
+| Page lookup by offset | At most 17 comparisons and one final access, four levels per access |
+| PUT lookup within page | Common resolver: at most 33 steps |
+| GET | No I/O in resolution/probe; I/O only in dedicated pool |
 
-Una ricerca nel caso massimo può usare tutti i diciassette confronti: la
-convergenza viene controllata anche dopo il ciclo, senza richiedere un
-diciottesimo confronto. Offset in header/SEAL/tombstone, fuori frontiera,
-o senza riga concorde **non** significano documento assente. Sono guasti
-di una location già pubblicata.
+A maximum-case search may use all seventeen comparisons:
+convergence is also checked after the loop without requiring an
+eighteenth comparison. Offsets in header/SEAL/tombstone, outside frontier,
+or without a matching row **do not** mean document absent. They are failures
+of an already published location.
 
-## Memoria
+<a id="memoria"></a>
 
-Budget predefiniti per sorgente: 65.536 pagine, 1.048.576 PUT, 65.536 record
-per lotto, 64 MiB per lotto, 64 MiB di payload del resolver. Sono budget di
-risorse, non nuovi limiti di dimensione dei documenti. La saturazione richiede
-backpressure/rotazione del controller; non produce wrap o crescita implicita.
+## Memory
 
-| Dato su SBCL a 64 bit | Payload |
+Default per-source budgets: 65,536 pages, 1,048,576 PUTs, 65,536 records
+per batch, 64 MiB per batch, 64 MiB resolver payload. These are resource
+budgets, not new document-size limits. Saturation requires
+controller backpressure/rotation; it produces neither wrap nor implicit growth.
+
+| Data on 64-bit SBCL | Payload |
 |---|---|
-| Riga PUT | Sei u32, 24 byte; offset assoluto, size, flag, due word CSN e proof zero |
-| Nodo della directory | Sedici riferimenti, 128 byte escluso header Lisp |
-| Vista con tutte le 65.536 pagine | 4.369 nodi, 559.232 byte per la directory |
-| Picco preflight di un append | Payload precedente + `24 × nuovi PUT` + 512 byte |
+| PUT row | Six u32s, 24 bytes; absolute offset, size, flags, two CSN words and zero proof |
+| Directory node | Sixteen references, 128 bytes excluding Lisp header |
+| View with all 65,536 pages | 4,369 nodes, 559,232 bytes for directory |
+| Append preflight peak | Previous payload + `24 × nuovi PUT` + 512 bytes |
 
-`payload-radice-get-attiva` conta righe e nodi raggiungibili dalla singola
-vista. Il picco considera la precedente vista durante la costruzione e
-quattro nuovi vettori, anche quando alcuni sostituiscono nodi esistenti.
-Array e pagine non vengono esposti al caller, che non può mutarli tramite
-l'API pubblica. Il lotto/evento riusabile non rimane nel grafo della root.
+`payload-radice-get-attiva` counts rows and nodes reachable from a single
+view. The peak includes the previous view during construction and
+four new vectors, even when some replace existing nodes.
+Arrays and pages are not exposed to the caller, who cannot mutate them through
+the public API. The reusable batch/event does not remain in the root graph.
 
-Oggetti/header Lisp, payload dell'indice chiamante, FD, buffer dei lotti,
-radici trattenute da eventi/reader e ritardi GC sono esclusi. Il controller
-deve imporre il budget complessivo delle viste vive e del backlog. Il
-costruttore alloca per lotto; assenza di heap esplicito nel lookup non è una
-misura di allocazione, latenza, RSS o throughput. Non si rivendica COD-30.
+Lisp objects/headers, calling-index payload, FDs, batch buffers,
+roots retained by events/readers, and GC delays are excluded. The controller
+must impose an overall budget for live views and backlog. The
+builder allocates per batch; absence of explicit heap in lookup is not an
+allocation, latency, RSS, or throughput measurement. COD-30 is not claimed.
 
-## Lettura, guasti e lifetime
+<a id="lettura-guasti-e-lifetime"></a>
 
-| API | Risultato |
+## Reading, failures, and lifetime
+
+| API | Result |
 |---|---|
-| `risolvi-candidato-attivo-get(context, source)` | Capacità readonly, fine della pagina del candidato, flag storage, prova `nil` |
-| `sonda-cache-attiva-get(context, source)` | Esito della sonda GET ordinaria con frontiera pubblicata |
-| `leggi-record-attivo-get(context, source)` | Cinque esiti del nucleo GET nel pool I/O |
+| `risolvi-candidato-attivo-get(context, source)` | Read-only capability, candidate page end, storage flags, `nil` proof |
+| `sonda-cache-attiva-get(context, source)` | Ordinary GET probe outcome with published frontier |
+| `leggi-record-attivo-get(context, source)` | Five core GET outcomes in I/O pool |
 
-Le tre API legate alla sorgente non accettano una radice o una frontiera
-fornita dal chiamante. Il [ponte delle fonti della Serie](get-fonti-serie.md)
-usa invece il resolver della radice già catturata sotto EBR, con gli
-obblighi di pubblicazione e lifetime dichiarati in quel contratto.
-Controlla identità sorgente/root, geometria directory e candidato tramite il
-resolver comune. GET verifica ancora CRC/chiave/CSN del record/cache; la
-pagina non sostituisce il dato fisico. Risposta privata fino a copia e
-`concludi-get` con tempo fresco; il cleanup esterno resta obbligatorio.
-La migrazione richiede nuovo `avvia-get`, nuova epoca e nuova acquisizione.
+The three source-bound APIs accept neither caller-supplied root nor
+frontier. The [Serie-source bridge](get-fonti-serie.md)
+instead uses the resolver for the root already captured under EBR, with
+publication and lifetime obligations declared in that contract.
+It checks source/root identity, directory geometry, and candidate through the
+common resolver. GET still checks record/cache CRC/key/CSN; the
+page does not replace physical data. Response stays private until copying and
+`concludi-get` with fresh time; external cleanup remains mandatory.
+Migration requires a new `avvia-get`, new epoch, and new acquisition.
 
-Rifiuti di configurazione, capacità e funzionalità non supportata precedono
-l'adozione. Con la preflight OPEN obbligatoria nel protocollo non si assegna
-CSN a un lotto che già supera questi budget. La successiva adozione
-ricontrolla i limiti; chi la chiama direttamente conserva lotto/token su
-rifiuto e deve gestirli col protocollo WAL esistente, senza scartarli.
-La preflight non garantisce allocazione riuscita o disponibilità del registro
-CSN condiviso. Corruzione di un buffer
-sealed posseduto dal writer o invariante impossibile durante preparazione/
-adozione marcano il controller FAULTED di Archivio e propagano la causa.
-Un'interruzione dell'adozione segue il fail-stop esistente. Il coordinatore
-deve fermare l'Archivio, non limitarsi a liberare il contesto della richiesta.
-Sul reader, salute guasta propagata e incoerenze rendono il GET FAULTED;
-gli errori e le uscite non locali rilasciano EBR senza autorizzare il valore.
+Configuration, capacity, and unsupported-feature rejections precede
+adoption. With mandatory OPEN preflight in the protocol, no CSN is assigned
+to a batch already exceeding these budgets. Subsequent adoption
+rechecks limits; a direct caller retains batch/token on rejection
+and must handle them through the existing WAL protocol without discarding them.
+Preflight guarantees neither successful allocation nor availability of the shared
+CSN registry. Corruption of a sealed buffer
+owned by the writer or an impossible invariant during preparation/
+adoption marks the controller Archivio FAULTED and propagates the cause.
+An adoption interruption follows existing fail-stop. The coordinator
+must stop the Archivio, not merely release the request context.
+On the reader, propagated faulty health and inconsistencies make GET FAULTED;
+errors and nonlocal exits release EBR without authorizing the value.
 
-FD e risorse esterne richiedono protezione EBR fino all'ultimo riferimento;
-un riferimento GC non autorizza la chiusura. Rotazione, selezione fra i
-segmenti, pubblicazione indice e reclaim devono rispettare questo ordine.
+FDs and external resources require EBR protection until the last reference;
+a GC reference does not authorize closure. Rotation, segment selection,
+index publication, and reclamation must respect this order.
 
-## Decisioni C1 e qualifica aperta
+<a id="decisioni-c1-e-qualifica-aperta"></a>
 
-Ogni decisione composta introdotta è registrata qui; la copertura condizione
-per condizione **non è stata eseguita** in questo incremento.
+## C1 decisions and open qualification
 
-| ID | Decisione | Casi da qualificare |
+Every introduced compound decision is recorded here; condition-by-condition
+coverage **was not performed** in this increment.
+
+| ID | Decision | Cases to qualify |
 |---|---|---|
-| GSA-D01 | Nodo NIL oppure larghezza sedici | NIL, valido, geometria impossibile |
-| GSA-D02 | Nodo reader è vettore e ha sedici figli | Tipo/forma errati separatamente |
-| GSA-D03 | Convergenza finale e rank nella vista | 65.536 pagine, estremi, rank mancante |
-| GSA-D04 | SEAL nella posizione/count esatti | Count, fine e ordine discordi |
-| GSA-D05 | Lotto: ID e versione della sorgente | Ciascuna discordanza |
-| GSA-D06 | Risultato lotto: fine, count, durable ≤ start | Ogni risultato impossibile separato |
-| GSA-D07 | CSN alto e basso del SEAL | Ciascuna word discordante |
-| GSA-D08 | Copia: fine e numero righe esatti | Fine/count discordi, zero PUT |
-| GSA-D09 | Configurazione: pagine, PUT, record, byte, payload | Tutti gli estremi e saturazioni |
-| GSA-D10 | Sorgente: high zero, low positivo, origine, ID e versione | Ogni identità discordante |
-| GSA-D11 | FD readonly e aperto | Mode/stato/lifetime errati |
-| GSA-D12 | Nuovo controller: root NIL, count zero, offset 64 | Controller già avviato/altro prefisso |
-| GSA-D13 | Root reader del tipo corretto e stessa sorgente | Root solo pianificata, root estranea |
-| GSA-D14 | Preflight OPEN: ID e versione della sorgente | Ciascuna discordanza prima del CSN |
+| GSA-D01 | Node NIL or width sixteen | NIL, valid, impossible geometry |
+| GSA-D02 | Reader node is a vector with sixteen children | Wrong type/shape separately |
+| GSA-D03 | Final convergence and rank in view | 65,536 pages, extremes, missing rank |
+| GSA-D04 | SEAL at exact position/count | Mismatching count, end, and order |
+| GSA-D05 | Batch: source ID and version | Each mismatch |
+| GSA-D06 | Batch result: end, count, durable ≤ start | Each impossible result separately |
+| GSA-D07 | SEAL high and low CSN | Each mismatching word |
+| GSA-D08 | Copy: exact end and row count | Mismatching end/count, zero PUTs |
+| GSA-D09 | Configuration: pages, PUTs, records, bytes, payload | All extremes and saturations |
+| GSA-D10 | Source: high zero, low positive, origin, ID and version | Every mismatching identity |
+| GSA-D11 | Read-only and open FD | Wrong mode/state/lifetime |
+| GSA-D12 | New controller: root NIL, count zero, offset 64 | Already started controller/other prefix |
+| GSA-D13 | Reader root has correct type and same source | Merely planned root, foreign root |
+| GSA-D14 | OPEN preflight: source ID and version | Each mismatch before CSN |
 
-Le [evidenze statiche](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-active/README.md)
-conservano compilazione e controlli di prodotto/documentazione. Le due letture
-sono locali dell'autore, non revisione indipendente. Nessun nuovo test,
-benchmark, fault injection, modello o self-test era stato aggiunto/eseguito
-localmente nell'incremento iniziale. La successiva [verifica funzionale
-dedicata](get-active-verifica.md), secondo il [metodo preregistrato](get-active-metodo.md),
-aggiunge 28 test ordinari, copertura diagnostica e audit indipendenti.
-Il [metodo dei rifiuti OPEN](get-active-preflight-metodo.md) registra il
-successivo approfondimento prima del CSN, con casi di identità, stato e
-capacità e mutazioni selezionate, mantenendo separate le attribuzioni.
-La [verifica dei rifiuti OPEN](get-active-preflight-verifica.md) conserva
-42 test ACTIVE, quattro mutanti mirati e gli audit delle prove complete.
-Restano aperti stress con thread reali, interruzioni in ogni fase, condition
-coverage, misure di heap/performance, prove ACTIVE multiserie, directory della
-Serie/rotazione/reclaim, indice concreto e qualifica C1.
+The [static evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-active/README.md)
+preserves compilation and product/documentation checks. Both readings
+are local author readings, not independent review. No new test,
+benchmark, fault injection, model, or self-test was added/run
+locally in the initial increment. Subsequent [dedicated functional
+verification](get-active-verifica.md), under the [preregistered method](get-active-metodo.md),
+adds 28 ordinary tests, diagnostic coverage, and independent audits.
+The [OPEN rejection method](get-active-preflight-metodo.md) records
+subsequent deeper checks before CSN, with identity, state, and
+capacity cases and selected mutations, keeping attribution separate.
+[OPEN rejection verification](get-active-preflight-verifica.md) preserves
+42 ACTIVE tests, four targeted mutants, and complete evidence audits.
+Real-thread stress, interruptions in every phase, condition
+coverage, heap/performance measurements, multiseries ACTIVE proofs, Serie
+directory/rotation/reclamation, concrete index, and C1 qualification remain open.

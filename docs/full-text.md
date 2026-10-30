@@ -1,332 +1,352 @@
-# Ricerca full text — contratto di progetto
+<a id="ricerca-full-text--contratto-di-progetto"></a>
 
-> **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Specifica normativa
-> che completa [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md).
-> Stato: integrazione progettata; disponibile il primo [nucleo implementato](implementazione/full-text.md)
-> per analisi e run posizionali, con [codec completo e viste verificate](implementazione/full-text-codec.md).
-> Disponibile anche la [preparazione dai documenti CBOR](implementazione/full-text-documenti.md)
-> con budget cumulativi e limite superiore, e le [riserve locali del writer](implementazione/full-text-riserve.md)
-> con copie possedute. Il [ponte PUT/WAL](implementazione/full-text-put.md) collega
-> analisi e append degli stessi byte; pubblicazione durevole e MVCC restano da collegare.
-> I [riferimenti fisici](implementazione/full-text-riferimenti.md) conservano posizione
-> e stamp dopo il riuso del buffer WAL, senza anticipare commit o visibilita.
-> La [directory privata delle righe](implementazione/full-text-righe.md) li risolve
-> sotto lease; la mappa immutabile pubblicata del delta resta da collegare.
-> Nessun benchmark del motore full text completo.
+# Full-text search — design contract
 
-La prima versione cerca termini e frasi in campi testuali scalari di una Serie, insieme
-ai filtri strutturati. Ranking, fuzzy search, sinonimi, wildcard testuali, stemming e
-array di testi richiedono decisioni successive. Il [formato binario](formato-indice-full-text.md)
-è separato dal formato documentale; il [caso NNTP](valutazione/caso-duso-nntp.md) resta
-un'applicazione del motore general-purpose.
+> **Decided ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Normative specification
+> completing [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md).
+> Status: integration designed; the first [implemented core](implementazione/full-text.md)
+> is available for analysis and positional runs, with [complete codec and verified views](implementazione/full-text-codec.md).
+> [Preparation from CBOR documents](implementazione/full-text-documenti.md) is also available,
+> with cumulative budgets and an upper bound, as are [local writer reservations](implementazione/full-text-riserve.md)
+> with owned copies. The [PUT/WAL bridge](implementazione/full-text-put.md) connects
+> analysis and append of the same bytes; durable publication and MVCC remain to be connected.
+> [Physical references](implementazione/full-text-riferimenti.md) retain position and
+> stamp after WAL-buffer reuse, without bringing forward commit or visibility.
+> The [private row directory](implementazione/full-text-righe.md) resolves them under
+> lease; the delta's published immutable map remains to be connected.
+> No complete full-text engine benchmarks.
 
-## Contratto della Serie
+The first version searches terms and phrases in a Serie's scalar text fields, together
+with structured filters. Ranking, fuzzy search, synonyms, text wildcards, stemming,
+and text arrays require later decisions. The [binary format](formato-indice-full-text.md)
+is separate from document format; the [NNTP case](valutazione/caso-duso-nntp.md) remains
+an application of the general-purpose engine.
 
-Ogni indice full text è una dichiarazione immutabile per generazione:
+<a id="contratto-della-serie"></a>
 
-| Campo | Regola |
+## Serie contract
+
+Each full-text index is an immutable declaration per generation:
+
+| Field | Rule |
 |---|---|
-| `index-id` | `u64` positivo, allocato dal catalogo della Serie; mai riusato, neppure dopo drop |
-| `name` | alias UTF-8, 1–64 byte, univoco fra gli indici della Serie; non diventa un percorso filesystem |
-| `generation-id` | `u64` positivo crescente per indice; esaurimento rifiutato, nessun wrap |
-| `contract-version` | versione del contratto che introduce la generazione |
-| `profile` | `unicode-word-18.0.0-v1` nella prima versione |
-| `fields` | lista ordinata per `field-id`, senza duplicati di ID, alias o percorso |
-| campo | `field-id u16` positivo; alias UTF-8 1–64 byte; percorso non vuoto di chiavi testuali CBOR, attraverso sole mappe, entro 100 livelli |
-| `analysis-limits` | byte di testo, byte per termine, token per documento/indice, byte dei buffer preparati e unità di analisi |
+| `index-id` | positive `u64`, allocated by Serie catalog; never reused, even after drop |
+| `name` | UTF-8 alias, 1–64 bytes, unique among Serie indexes; never becomes a filesystem path |
+| `generation-id` | positive increasing `u64` per index; exhaustion rejected, no wrap |
+| `contract-version` | contract version introducing the generation |
+| `profile` | `unicode-word-18.0.0-v1` in the first version |
+| `fields` | list ordered by `field-id`, without duplicate IDs, aliases, or paths |
+| field | positive `field-id u16`; UTF-8 alias 1–64 bytes; nonempty path of CBOR text keys through maps only, within 100 levels |
+| `analysis-limits` | text bytes, bytes per term, tokens per document/index, prepared-buffer bytes, and analysis units |
 
-Alias e percorsi sono confrontati byte per byte, senza case folding. Un percorso assente
-non produce token; una stringa vuota produce zero token; `null`, array, numeri o altri
-valori presenti sono errori di tipo. Il contratto continua a validare i documenti prima
-della scrittura. Per un indice aggiunto su dati esistenti, un valore incompatibile o oltre
-budget fa fallire il build esplicitamente: nessun documento viene omesso in silenzio.
+Aliases and paths are compared byte for byte, without case folding. A missing path
+produces no tokens; an empty string produces zero tokens; present `null`, arrays,
+numbers, or other values are type errors. The contract continues to validate documents
+before writes. For an index added over existing data, an incompatible or over-budget
+value explicitly fails build: no document is silently omitted.
 
-Il catalogo conserva la generazione desiderata, le precedenti ancora possedute da reader
-e le generazioni esplicitamente ritirate in attesa di cleanup. Ogni generazione conserva
-la propria dichiarazione completa. La rimozione del record di ritiro avviene solo dopo
-la verifica del cleanup; gli ID rimangono non riutilizzabili attraverso i contatori.
-Al massimo due generazioni per indice sono mantenute in costruzione/lettura/ritiro:
-un terzo cambio viene rifiutato finché una precedente non è stata liberata.
+The catalog retains the desired generation, previous generations still owned by readers,
+and explicitly retired generations awaiting cleanup. Every generation retains its full
+declaration. A retirement record is removed only after cleanup verification; counters
+keep IDs nonreusable. At most two generations per index are retained across
+construction/reading/retirement: a third change is rejected until a previous one is released.
 
-## Profilo di analisi
+<a id="profilo-di-analisi"></a>
 
-`unicode-word-18.0.0-v1` fissa la seguente sequenza:
+## Analysis profile
 
-1. Validazione della stringa come sequenza di scalari Unicode, con input UTF-8 valido.
-2. NFC secondo [UAX #15 revisione 58](https://www.unicode.org/reports/tr15/tr15-58.html).
-3. Case folding completo, con mapping **C + F**, esclusi **S e T**, di
+`unicode-word-18.0.0-v1` fixes this sequence:
+
+1. Validate the string as a sequence of Unicode scalars, with valid UTF-8 input.
+2. NFC under [UAX #15 revision 58](https://www.unicode.org/reports/tr15/tr15-58.html).
+3. Full case folding with **C + F** mappings, excluding **S and T**, from
    [CaseFolding-18.0.0.txt](https://www.unicode.org/Public/18.0.0/ucd/CaseFolding.txt).
-4. Nuova NFC, poi confini di parola predefiniti di
-   [UAX #29 revisione 49](https://www.unicode.org/reports/tr29/tr29-49.html), senza tailoring.
-5. Conservazione dell'intero segmento se contiene almeno uno scalare delle categorie
-   generali Unicode `L*` o `N*`; gli altri segmenti non diventano token. Codifica del
-   termine come UTF-8 del segmento trasformato. Posizioni consecutive da zero per campo.
+4. NFC again, then default word boundaries under
+   [UAX #29 revision 49](https://www.unicode.org/reports/tr29/tr29-49.html), without tailoring.
+5. Retain the entire segment if it contains at least one scalar in Unicode general
+   categories `L*` or `N*`; other segments do not become tokens. Encode the term
+   as UTF-8 of the transformed segment. Consecutive positions from zero per field.
 
-Accenti e segni interni a una parola rimangono; nessuna rimozione di stopword, sostituzione
-di apostrofi, normalizzazione di compatibilità o inferenza della lingua. La segmentazione
-predefinita non promette un'analisi linguistica di ogni lingua. Testo originale e Message-ID
-rimangono invariati. Non si usano automaticamente tabelle di una diversa versione di SBCL.
-Una versione non supportata produce un errore esplicito di profilo non supportato.
+Accents and marks inside words remain; no stopword removal, apostrophe replacement,
+compatibility normalization, or language inference. Default segmentation does not
+promise linguistic analysis of every language. Original text and Message-ID remain
+unchanged. Tables from a different SBCL version are not used automatically.
+An unsupported version produces an explicit unsupported-profile error.
 
-Versione, SHA256 e licenze dei file UCD usati per le tabelle sono conservati nei
-[dati Unicode](../data/unicode/18.0.0/README.md), inclusi normalizzazione, categorie,
-case folding e word break. La prima implementazione verifica i corpus ufficiali
-della stessa release; questi controlli non qualificano le integrazioni ancora mancanti.
+Versions, SHA256 hashes, and licenses of UCD files used for tables are retained in
+[Unicode data](../data/unicode/18.0.0/README.md), including normalization, categories,
+case folding, and word breaks. The first implementation verifies official corpora
+from the same release; these checks do not qualify integrations still missing.
 
-## Query e risultati
+<a id="query-e-risultati"></a>
 
-Le foglie AST sono mappe CBOR con i seguenti campi testuali esatti; le chiavi duplicate,
-quelle sconosciute e i tipi errati sono rifiutati. In Common Lisp rimangono dati.
+## Queries and results
 
-| Chiave | `text-match` | `text-phrase` |
+AST leaves are CBOR maps with these exact text fields; duplicate or unknown keys
+and incorrect types are rejected. In Common Lisp, they remain data.
+
+| Key | `text-match` | `text-phrase` |
 |---|---|---|
-| `op` | stringa `text-match` | stringa `text-phrase` |
-| `index` | alias dell'indice, obbligatorio | alias dell'indice, obbligatorio |
-| `field` | alias di un campo dell'indice | alias di un campo dell'indice |
-| `text` | stringa da analizzare con il profilo della generazione | stessa regola |
-| `mode` | stringa `all` oppure `any`, obbligatoria | vietata |
+| `op` | string `text-match` | string `text-phrase` |
+| `index` | index alias, mandatory | index alias, mandatory |
+| `field` | alias of an index field | alias of an index field |
+| `text` | string to analyze with generation profile | same rule |
+| `mode` | string `all` or `any`, mandatory | prohibited |
 
-`all` opera sull'insieme dei termini distinti; ripetere una parola non cambia il match.
-`any` è l'unione. La frase conserva ordine e ripetizioni: ogni termine deve occupare
-la posizione precedente più uno, nello stesso campo e nella stessa versione. Query senza
-termini dopo l'analisi: `invalid-query`. Foglie su campi diversi si combinano con l'AST
-booleano esistente. Il complemento di `not` include tutti i documenti vivi visibili,
-anche privi del campo; richiede l'enumerazione MVCC, non il solo insieme dei posting.
+`all` operates on the set of distinct terms; repeating a word does not change the match.
+`any` is union. A phrase preserves order and repetitions: each term must occupy the
+previous position plus one, in the same field and version. Queries with no terms
+after analysis: `invalid-query`. Leaves on different fields combine through the existing
+Boolean AST. The complement of `not` includes all visible live documents, including
+those without the field; it requires MVCC enumeration, not just the posting set.
 
-Prima dell'esecuzione M15 fissa snapshot, versioni di contratto, generazione per ciascun
-indice e ordinamento. In assenza di un ordine esplicito usa `_id` crescente come byte;
-ogni altro ordine termina con lo stesso spareggio. Le query iniziali sono su una Serie.
-Il filtro di gruppo NNTP su appartenenze in un'altra Serie è una combinazione applicativa
-sullo stesso snapshot di Archivio, con deduplicazione per Message-ID.
+Before execution, M15 fixes the snapshot, contract versions, generation for each index,
+and ordering. Without an explicit order it uses increasing `_id` bytes;
+every other order ends with the same tie-breaker. Initial queries cover one Serie.
+NNTP group filtering on memberships in another Serie is an application-level combination
+over the same Archivio snapshot, with Message-ID deduplication.
 
-Ogni candidato porta Serie, segmento, riga e generazione; hint e MVCC risolvono chiave,
-CSN e versione visibile. Termini e filtri della stessa foglia/AST si applicano a quella
-versione; non si intersecano termini appartenenti a due versioni diverse della chiave.
-Le foglie vengono prima valutate per riga/versione; solo dopo si combinano candidati
-visibili e si deduplicano le chiavi. Il fetch segue i controlli CRC e identità ordinari.
+Every candidate carries Serie, segment, row, and generation; hint and MVCC resolve key,
+CSN, and visible version. Terms and filters in the same leaf/AST apply to that version;
+terms belonging to two different versions of a key are not intersected.
+Leaves are first evaluated per row/version; only afterward are visible candidates
+combined and keys deduplicated. Fetch follows ordinary CRC and identity checks.
 
-La risposta logica contiene snapshot, generazioni usate, risultati ordinati e stato
-terminale. I batch intermedi sono provvisori fino a `complete`; errore, timeout o
-cancellazione rendono incompleta l'operazione e non certificano il prefisso ricevuto.
-`limit` termina regolarmente il prefisso richiesto con `complete`, senza promettere il
-conteggio totale. Nella prima versione non esiste cursore riprendibile fra richieste:
-una nuova richiesta crea una nuova vista, salvo snapshot esplicitamente ancora valido.
-Framing e envelope di rete generali rimangono quelli di ADR-0029.
-Il `limit` si applica dopo filtri e ordinamento: i primi N posting non sono necessariamente
-i primi N risultati. Un accumulatore top-N usa memoria limitata; l'uscita anticipata è
-ammessa solo se il piano dimostra che nessun candidato residuo può precedere il prefisso.
+The logical response contains snapshot, generations used, ordered results, and terminal
+state. Intermediate batches are provisional until `complete`; error, timeout, or
+cancellation makes the operation incomplete and does not certify the received prefix.
+`limit` normally completes the requested prefix with `complete`, without promising
+a total count. The first version has no cursor resumable between requests:
+a new request creates a new view, unless an explicitly still-valid snapshot is used.
+General network framing and envelopes remain those of ADR-0029.
+`limit` applies after filters and ordering: the first N postings are not necessarily
+the first N results. A top-N accumulator uses bounded memory; early exit is allowed
+only if the plan proves no remaining candidate can precede the prefix.
 
-## Confini tra moduli
+<a id="confini-tra-moduli"></a>
 
-Le operazioni qui sotto sono contratti logici, non nomi di funzioni già esportate.
-Gli ingressi sono immutabili o capacità con proprietario; le uscite usano buffer del
-chiamante. Gli esiti contengono codice, fase e contatori, senza cambiare ownership in
-caso di rifiuto. Ogni richiesta asincrona ha una sola continuazione terminale.
+## Module boundaries
 
-| Operazione | Proprietario e ingresso | Esito e obblighi |
+Operations below are logical contracts, not names of already exported functions.
+Inputs are immutable or owned capabilities; outputs use caller buffers.
+Outcomes contain code, phase, and counters without changing ownership on rejection.
+Every asynchronous request has a single terminal continuation.
+
+| Operation | Owner and input | Outcome and obligations |
 |---|---|---|
-| Analizzare | worker M06: documento, dichiarazione, scratch privato | termini/posizioni e limite superiore dei byte, oppure errore; non scrive stato di Serie |
-| Ammettere | writer M01/M06: buffer preparati, versione/generazione, budget | riserva delta, staging e costo indice; rifiuto prima di SEAL/PREPARE; una riserva non è un commit |
-| Pubblicare | writer: esito committed e buffer già riservati | rende visibili documento e posting insieme prima di H/ACK; abort libera le riserve |
-| Acquisire vista | M15 con M08: snapshot e indici richiesti | vista completa fissata, oppure indice non disponibile; nessuna attesa in EBR |
-| Iterare e verificare | compiti M15/M06: vista e budget della query | candidati, controllo MVCC e risultati nel buffer; ripartenze limitate e stato terminale |
-| Costruire/verificare file | worker M06 con M03/M12 e pool I/O: segmento, hint e configurazione verificati | file `.tmp` completo e validato, oppure errore; nessuno swap dal worker |
-| Installare copertura | writer: risultato del build e identità della vista sorgente | adotta solo copertura ancora valida; un cambio di inventario richiede riconciliazione |
-| Ritirare | catalogo M17, writer, M08/M11 | decisione di ritiro, poi quiescenza, chiusura e cleanup idempotente |
+| Analyze | M06 worker: document, declaration, private scratch | terms/positions and byte upper bound, or error; no Serie-state writes |
+| Admit | M01/M06 writer: prepared buffers, version/generation, budget | reserves delta, staging, and index cost; rejection before SEAL/PREPARE; reservation is not commit |
+| Publish | writer: committed outcome and already reserved buffers | makes document and postings visible together before H/ACK; abort releases reservations |
+| Acquire view | M15 with M08: snapshot and requested indexes | fixed complete view, or index unavailable; no waiting in EBR |
+| Iterate and verify | M15/M06 tasks: view and query budget | candidates, MVCC checks, and results in buffer; bounded restarts and terminal state |
+| Build/verify file | M06 worker with M03/M12 and I/O pool: verified segment, hint, and configuration | complete validated `.tmp` file, or error; no worker-driven swap |
+| Install coverage | writer: build result and source-view identity | adopts only still-valid coverage; inventory change requires reconciliation |
+| Retire | M17 catalog, writer, M08/M11 | retirement decision, then quiescence, closure, and idempotent cleanup |
 
-Le riserve dei record prepared restano possedute dalla transazione fino all'esito
-autorevole. Dopo DECISION non si può convertire un'insufficienza di memoria in abort:
-un errore inatteso di pubblicazione segue fail-stop e recovery, senza ACK riuscito.
-Una preparazione con contratto superato viene rifiutata con `contract-changed` e può
-essere rianalizzata fuori dal writer entro un numero finito di tentativi.
+Prepared-record reservations remain transaction-owned until the authoritative outcome.
+After DECISION, insufficient memory cannot be converted to abort: an unexpected
+publication error follows fail-stop and recovery, without successful ACK.
+Preparation with a superseded contract is rejected with `contract-changed` and may
+be reanalyzed outside the writer within a finite number of attempts.
 
-## Delta e frontiere
+<a id="delta-e-frontiere"></a>
 
-Il delta è organizzato in blocchi preallocati di coppie campo/termine, righe e posizioni.
-I byte non pubblicati restano privati del writer. Un reader acquisisce una vista con
-frontiera immutabile: modifiche successive non estendono i blocchi che può leggere.
-I buffer preparati sono ordinati per campo/termine/riga e formano run immutabili;
-la query consulta tutti i run della propria frontiera, entro il budget. La mappa delle
-righe del delta fa parte della vista e risolve offset e CSN; il passaggio a un `.idx`
-costruito con l'hint del CLOSED rimappa esplicitamente le righe, senza riusare ordinali
-di un'altra mappa. La vista precedente conserva la propria mappa fino alla quiescenza.
-L'indicizzazione di un lotto si prepara in staging prima della decisione. La pubblicazione
-segue il protocollo esistente: aggiornamento delle entry documentali con seqlock,
-completamento dei delta, pubblicazione dei riferimenti/frontiere e infine avanzamento
-di H e ACK. Nessuna copia integrale della tabella primaria per commit. Il reader fissa
-lo snapshot prima di acquisire la vista e verifica le frontiere pubblicate compatibili;
-un'acquisizione superata viene ripetuta entro il limite dei tentativi. Un vecchio reader
-termina sulla vecchia vista, protetta dagli stessi contratti MVCC/EBR.
+## Delta and frontiers
 
-Alla rotazione il delta diventa una fonte congelata del `CLOSED` e resta ricercabile
-fino all'installazione del suo `.idx` verificato. Un file assente non crea una finestra
-vuota. Anche i delta congelati e le viste trattenute contano nel budget della Serie;
-la pressione produce backpressure limitata prima dell'ammissione di nuove scritture.
+The delta is organized in preallocated blocks of field/term pairs, rows, and positions.
+Unpublished bytes remain writer-private. A reader acquires a view with an immutable
+frontier: later changes do not extend the blocks it may read.
+Prepared buffers are ordered by field/term/row and form immutable runs;
+the query consults every run at its frontier within budget. The delta row map belongs
+to the view and resolves offsets and CSNs; switching to an `.idx` built with the CLOSED
+hint explicitly remaps rows without reusing ordinals from another map. The previous
+view retains its own map until quiescence.
+Batch indexing is prepared in staging before the decision. Publication follows the
+existing protocol: document-entry updates with seqlocks, delta completion,
+reference/frontier publication, and finally H advancement and ACK. No complete
+primary-table copy per commit. The reader fixes its snapshot before acquiring the
+view and verifies compatible published frontiers; superseded acquisition retries
+within the attempt limit. An old reader finishes on the old view, protected by the
+same MVCC/EBR contracts.
 
-## Generazioni e costruzione concorrente
+On rotation, the delta becomes a frozen source for `CLOSED` and remains searchable
+until its verified `.idx` is installed. A missing file creates no empty window.
+Frozen deltas and retained views also count against the Serie budget;
+pressure causes bounded backpressure before admitting new writes.
 
-Gli stati seguenti sono derivati in memoria; la configurazione e i ritiri sono durevoli
-nel catalogo. Il semplice avanzamento di un CSN non è prova di copertura.
+<a id="generazioni-e-costruzione-concorrente"></a>
 
-| Stato | Query nuove | Transizione ammessa |
+## Generations and concurrent construction
+
+These states are derived in memory; configuration and retirements are durable
+in the catalog. Advancing a CSN alone is not proof of coverage.
+
+| State | New queries | Allowed transition |
 |---|---|---|
-| `BUILDING` | `index-unavailable` per la generazione desiderata | cattura del delta attiva, segmenti/dati precedenti in costruzione |
-| `READY` | vista completa acquisibile | ogni nuova pubblicazione mantiene la copertura; perdita di una fonte porta a `UNAVAILABLE` |
-| `UNAVAILABLE` | errore esplicito | rebuild; corruzione di file definitivo richiede nuova generazione |
-| `RETIRING` | nessuna nuova acquisizione | reader già ammessi, poi cleanup autorizzato |
-| `RETIRED` | nessuna | completamento del cleanup e rimozione del relativo record di ritiro |
+| `BUILDING` | `index-unavailable` for desired generation | delta capture active, previous segments/data under construction |
+| `READY` | complete view acquirable | every new publication maintains coverage; loss of a source leads to `UNAVAILABLE` |
+| `UNAVAILABLE` | explicit error | rebuild; corruption of definitive file requires new generation |
+| `RETIRING` | no new acquisition | already admitted readers, then authorized cleanup |
+| `RETIRED` | none | cleanup completion and removal of corresponding retirement record |
 
-Per aggiunta, modifica del profilo o rebuild con nuova generazione:
+For addition, profile change, or rebuild with a new generation:
 
-1. Il catalogo decide con durability `:strong` la nuova dichiarazione e la conserva con
-   la precedente. Le nuove query che la richiedono restano indisponibili fino a readiness.
-2. Il writer adotta la dichiarazione a un confine di pubblicazione: deve avere completato
-   i prepared e i lotti già decisi con il vecchio contratto. L'adozione usa ammissione e
-   attese finite; non trattiene un worker né blocca l'intero Archivio. Le preparazioni
-   non ancora ammesse con il contratto precedente vanno rianalizzate.
-3. Nello stesso passo fissa inventario e frontiere iniziali e attiva la cattura dei
-   posting della nuova generazione per ogni successiva scrittura ammessa. Tutti i PUT
-   committed nel prefisso iniziale, comprese le versioni storiche fisicamente presenti,
-   vengono analizzati in background; delete e abort non producono termini.
-4. Ogni segmento ha copertura identificata da Serie, segmento, lunghezza valida, hint
-   verificato e generazione. Per l'ACTIVE contano gli intervalli di record pubblicati
-   coperti dai blocchi. Prima e dopo il confine di cattura non devono esserci buchi o
-   doppie emissioni; un CSN di Archivio da solo non identifica questi intervalli.
-5. Compaction e rotazione cambiano l'inventario: i risultati del build per fonti obsolete
-   non si installano; si usano le nuove fonti o i delta congelati. Le capacità I/O
-   possiedono il file per la durata del compito; descrittori e buffer non dipendono da
-   un puntatore EBR conservato durante l'attesa. Pin MVCC e memoria del build sono limitati.
-6. Il worker propone una vista completa; il writer controlla configurazione corrente,
-   inventario e frontiere, incorpora il delta già catturato e pubblica `READY` con un solo
-   scambio in memoria. Un cambio concorrente invalida la proposta; i tentativi sono limitati.
+1. The catalog decides the new declaration with `:strong` durability and retains it
+   alongside the previous one. New queries requiring it remain unavailable until ready.
+2. The writer adopts the declaration at a publication boundary: it must have completed
+   prepared records and batches already decided under the old contract. Adoption uses
+   admission and finite waits; it neither holds a worker nor blocks the whole Archivio.
+   Preparations not yet admitted under the previous contract must be reanalyzed.
+3. In the same step, it fixes initial inventory and frontiers and activates capture of
+   new-generation postings for every subsequently admitted write. All committed PUTs
+   in the initial prefix, including physically present historical versions, are analyzed
+   in the background; deletes and aborts produce no terms.
+4. Each segment's coverage is identified by Serie, segment, valid length, verified hint,
+   and generation. For ACTIVE, published record ranges covered by blocks count.
+   There must be neither gaps nor duplicate emissions before or after the capture
+   boundary; an Archivio CSN alone does not identify these ranges.
+5. Compaction and rotation change inventory: build results for obsolete sources are not
+   installed; new sources or frozen deltas are used. I/O capabilities own the file for
+   the task duration; descriptors and buffers do not depend on an EBR pointer retained
+   while waiting. MVCC pins and build memory are bounded.
+6. The worker proposes a complete view; the writer checks current configuration,
+   inventory, and frontiers, incorporates the captured delta, and publishes `READY`
+   with one in-memory swap. A concurrent change invalidates the proposal; attempts are bounded.
 
-Il writer continua a pubblicare i commit ordinari entro i budget. Se il build non riesce
-a completarsi entro i propri limiti, resta un errore amministrativo dichiarato: nessuna
-promessa di completamento sotto scritture illimitate. Le vecchie query hanno già fissato
-uno snapshot; non richiedono che la generazione precedente indicizzi commit successivi.
+The writer continues publishing ordinary commits within budgets. If build cannot
+complete within its limits, it remains a declared administrative error: no completion
+promise under unlimited writes. Old queries already fixed a snapshot; they do not
+require the previous generation to index later commits.
 
-## File, recovery e ritiro
+<a id="file-recovery-e-ritiro"></a>
 
-Il nome derivato è `segments/<segment-id>.ft-<index-id>-<generation-id>.idx`, con interi
-decimali canonici senza zeri iniziali. La configurazione del catalogo e il segmento
-nominato dal manifest autorizzano quella famiglia di derivati.
+## Files, recovery, and retirement
 
-Un worker costruisce in un'area `.tmp` privata dello stesso filesystem, verifica il
-file, esegue flush e sincronizzazione necessari e propone l'installazione. Per lo stesso
-segmento/indice/generazione esiste un solo costruttore attivo: il ticket locale e limitato
-è assegnato dal writer. Se un file finale già esiste, viene verificato e riusato;
-non si rinomina sopra un file definitivo esistente. La rinomina completa un derivato
-di una configurazione già decisa, poi la directory viene sincronizzata. In crash si può
-perdere disponibilità dell'indice, senza perdere il commit del documento.
+The derived name is `segments/<segment-id>.ft-<index-id>-<generation-id>.idx`, with canonical
+decimal integers without leading zeros. Catalog configuration and the manifest-named
+segment authorize that derivative family.
 
-| Situazione al riavvio | Esito |
+A worker builds in a private `.tmp` area on the same filesystem, verifies the file,
+performs required flush and synchronization, and proposes installation. Only one builder
+is active per segment/index/generation: the local bounded ticket is assigned by the
+writer. If a final file already exists, it is verified and reused; an existing definitive
+file is not overwritten by rename. Rename completes a derivative of an already decided
+configuration, then the directory is synchronized. A crash may lose index availability
+without losing the document commit.
+
+| Situation on restart | Outcome |
 |---|---|
-| Configurazione valida, file finale e hint integri e coerenti | verificare la copertura prima di readiness |
-| File finale assente | ricostruire, query non disponibili fino a copertura completa |
-| `.tmp` senza installazione completata | non usare come copertura; eliminare il temporaneo non pubblicato e ricostruire |
-| File finale corrotto o associato a un altro hint | segnalare, generazione `UNAVAILABLE`; nuova generazione per il rebuild |
-| Generazione esplicitamente ritirata nel catalogo | dopo recovery non ci sono reader: completare il cleanup idempotente |
-| File definitivo di generazione/segmento mai nominato | anomalia, conservare; nessuna eliminazione per assenza |
-| Documento/segmento sorgente non integro | applicare gli stati di salute del motore; un rebuild dell'indice non ripara il dato |
+| Valid configuration, intact consistent final file and hint | verify coverage before readiness |
+| Final file absent | rebuild; queries unavailable until complete coverage |
+| `.tmp` without completed installation | do not use as coverage; delete unpublished temporary and rebuild |
+| Final file corrupt or bound to another hint | report, generation `UNAVAILABLE`; new generation for rebuild |
+| Generation explicitly retired in catalog | no readers after recovery: complete idempotent cleanup |
+| Definitive file of never-named generation/segment | anomaly, preserve; no deletion due to absence |
+| Source document/segment not intact | apply engine health states; index rebuild does not repair data |
 
-Il drop dell'indice decide il ritiro nel catalogo; un cambio di generazione decide
-esplicitamente anche il ritiro della precedente, preservandone il descrittore per i
-reader già ammessi. Un segmento rimosso da EDIT autorizza il cleanup dei suoi derivati
-dopo quiescenza. Il restore ricava generazioni e configurazioni dal catalogo ripristinato
-e ricostruisce i derivati rispetto ai segmenti ripristinati: un file più recente non basta.
-Il ritiro ferma nuove autorizzazioni di build/installazione e attende anche la chiusura
-dei ticket già concessi, con cancellazione e completamento limitati. Il descrittore di
-ritiro resta autorevole fino al termine di reader, ticket e cleanup: una rinomina I/O
-già autorizzata non può creare un file definitivo dopo la rimozione di tale descrittore.
+Index drop decides retirement in the catalog; a generation change also explicitly
+decides retirement of the previous one, preserving its descriptor for already admitted
+readers. A segment removed by EDIT authorizes cleanup of its derivatives after
+quiescence. Restore obtains generations and configurations from the restored catalog
+and rebuilds derivatives against restored segments: a newer file is insufficient.
+Retirement stops new build/install authorizations and also awaits closure of already
+granted tickets, with bounded cancellation and completion. The retirement descriptor
+remains authoritative until readers, tickets, and cleanup finish: an already authorized
+I/O rename cannot create a definitive file after that descriptor's removal.
 
-## Budget iniziali
+<a id="budget-iniziali"></a>
 
-Questi **default di progetto** sono politiche configurabili, da qualificare; non sono
-stime di throughput. Un limite effettivo è il minimo fra formato, dichiarazione e budget
-di Serie/worker. Le somme sono controllate prima delle allocazioni, senza overflow.
+## Initial budgets
 
-| Risorsa | Default |
+These **design defaults** are configurable policies requiring qualification; they are
+not throughput estimates. An effective limit is the minimum of format, declaration,
+and Serie/worker budget. Sums are checked before allocation, without overflow.
+
+| Resource | Default |
 |---|---|
-| Indici full text per Serie; campi per indice | 8; 16 |
-| Generazioni contemporanee per indice | 2, inclusi build, reader e ritiro |
-| Testo UTF-8 di input per documento, sommato sui campi di un indice | 16 MiB |
-| Termine dopo trasformazione | 1.024 byte UTF-8 |
-| Token/posizioni per documento e indice | 1.048.576, sommati su tutti i campi |
-| Lavoro di analisi per documento e indice | 268.435.456 unità; ogni scalare consumato/emesso o confronto di normalizzazione costa almeno una unità |
-| Memoria di analisi per worker e buffer preparati per richiesta | 64 MiB ciascuno; input e riserve già possedute conteggiati nei rispettivi pool |
-| Delta della Serie, inclusi congelati, riserve e vecchie viste | 256 MiB complessivi |
-| Memoria di build per Serie | 128 MiB, un build per indice e massimo due compiti di build per Serie |
-| File `.idx` full text per segmento/indice/generazione | 16 GiB; budget distinto dal segmento dati |
-| Spazio temporaneo di build per Serie | 32 GiB complessivi; ammissione prima di creare i file |
-| META di un `.idx` | 64 KiB |
-| AST di query; profondità; token analizzati per foglia | 256 nodi; 32 livelli; 256 token |
-| Testo della query | 64 KiB complessivi prima e dopo normalizzazione |
-| Memoria temporanea; posting visitati per query | 32 MiB; 1.000.000, conteggiati su tutte le foglie/segmenti |
-| Budget di lavoro della query | 4.000.000 unità: avanzamento posting, confronto di posizione/byte, sonda nel dizionario o documento enumerato/verificato costa almeno una unità; include l'analisi del testo della query |
-| Risultati; durata della query | 10.000; 5 secondi su orologio monotono iniettabile |
-| Durata del build; riproposte di una vista invalidata | 300 secondi; 8 tentativi |
+| Full-text indexes per Serie; fields per index | 8; 16 |
+| Concurrent generations per index | 2, including build, readers, and retirement |
+| UTF-8 input text per document, summed across an index's fields | 16 MiB |
+| Term after transformation | 1,024 UTF-8 bytes |
+| Tokens/positions per document and index | 1,048,576, summed across all fields |
+| Analysis work per document and index | 268,435,456 units; every scalar consumed/emitted or normalization comparison costs at least one unit |
+| Analysis memory per worker and prepared buffers per request | 64 MiB each; input and already owned reservations charged to respective pools |
+| Serie delta, including frozen deltas, reservations, and old views | 256 MiB total |
+| Build memory per Serie | 128 MiB, one build per index and at most two build tasks per Serie |
+| Full-text `.idx` file per segment/index/generation | 16 GiB; budget separate from data segment |
+| Temporary build space per Serie | 32 GiB total; admission before file creation |
+| `.idx` META | 64 KiB |
+| Query AST; depth; analyzed tokens per leaf | 256 nodes; 32 levels; 256 tokens |
+| Query text | 64 KiB total before and after normalization |
+| Temporary memory; postings visited per query | 32 MiB; 1,000,000, counted across all leaves/segments |
+| Query work budget | 4,000,000 units: posting advancement, position/byte comparison, dictionary probe, or document enumerated/verified costs at least one unit; includes query-text analysis |
+| Results; query duration | 10,000; 5 seconds on injectable monotonic clock |
+| Build duration; retries of invalidated view | 300 seconds; 8 attempts |
 
-Budget globali dei pool, snapshot e code restano quelli del motore. Una capacità configurata
-inferiore al massimo di una singola richiesta possibile provoca rifiuto esplicito, non una
-prenotazione parziale. Il conteggio delle unità copre anche scansioni per `not` e confronti
-di posizioni ripetute; il solo limite sul numero di posting non basta.
-Le durate sono deadline logiche, controllate ai confini dei compiti e prima dell'esito;
-non costituiscono una garanzia realtime o la possibilità di interrompere qualsiasi I/O.
-Anche normalizzazione e tokenizzazione procedono per compiti limitati con contesto
-privato riprendibile; un lungo testo con segni combinanti non autorizza un tratto di
-calcolo illimitato. I limiti si applicano congiuntamente: non si promette di raggiungerli
-tutti contemporaneamente sulla stessa richiesta.
+Global pool, snapshot, and queue budgets remain the engine's. A configured capacity
+below the maximum of one possible request produces explicit rejection, not a partial
+reservation. Unit accounting also covers `not` scans and repeated-position comparisons;
+a posting-count limit alone is insufficient.
+Durations are logical deadlines, checked at task boundaries and before outcome;
+they are neither a real-time guarantee nor the ability to interrupt any I/O.
+Normalization and tokenization also proceed through bounded tasks with resumable
+private context; a long combining-mark text does not authorize unbounded compute work.
+Limits apply jointly: reaching all of them simultaneously on one request is not promised.
 
-M06 calcola prima del commit un limite superiore conservativo dei byte serializzati
-([formula del formato](formato-indice-full-text.md#limite-superiore-e-rotazione)). M01 riserva
-anche quel costo: se il segmento supererebbe il budget di un indice, propone la rotazione
-prima dell'append. Se una singola richiesta non entra in un segmento vuoto, è rifiutata.
-La rotazione rispetta gli intenti pendenti di ADR-0041; non avviene a metà di un prepared.
+Before commit, M06 calculates a conservative serialized-byte upper bound
+([format formula](formato-indice-full-text.md#limite-superiore-e-rotazione)). M01 reserves
+that cost too: if a segment would exceed an index budget, it proposes rotation before
+append. A single request that cannot fit an empty segment is rejected.
+Rotation respects ADR-0041's pending intents; it does not occur midway through a prepared transaction.
 
-## Esiti
+<a id="esiti"></a>
 
-| Codice logico | Significato |
+## Outcomes
+
+| Logical code | Meaning |
 |---|---|
-| `complete` | risultato richiesto completato sulla vista dichiarata |
-| `invalid-query`, `invalid-document` | struttura, tipo o testo non valido |
-| `unsupported-profile`, `unsupported-format` | versione non supportata; nessun ripiego implicito |
-| `index-unavailable` | generazione richiesta non pronta o copertura mancante |
-| `index-corrupt` | fallimento di integrità del derivato; evento e generazione identificati |
-| `contract-changed` | preparazione precedente alla dichiarazione adottata; nessun commit eseguito |
-| `resource-limit`, `query-budget-exceeded` | capacità di ammissione o lavoro esaurita; non è un risultato completo |
-| `cancelled`, `timeout`, `snapshot-too-old` | richiesta terminata esplicitamente, cleanup delle risorse possedute |
-| `build-failed` | build terminato senza readiness, con fase e causa conservate |
+| `complete` | requested result completed on declared view |
+| `invalid-query`, `invalid-document` | invalid structure, type, or text |
+| `unsupported-profile`, `unsupported-format` | unsupported version; no implicit fallback |
+| `index-unavailable` | requested generation not ready or coverage missing |
+| `index-corrupt` | derivative integrity failure; event and generation identified |
+| `contract-changed` | preparation predates adopted declaration; no commit performed |
+| `resource-limit`, `query-budget-exceeded` | admission capacity or work exhausted; not a complete result |
+| `cancelled`, `timeout`, `snapshot-too-old` | request explicitly terminated, owned resources cleaned up |
+| `build-failed` | build ended without readiness, retaining phase and cause |
 
-Gli errori dei dati sorgenti e gli stati `FAULTED`/`DEGRADED` rimangono quelli del motore.
-Il retry di una richiesta che ha già una decisione durevole segue l'identità della
-transazione: questi codici non autorizzano a ripetere una pubblicazione alla cieca.
+Source-data errors and `FAULTED`/`DEGRADED` states remain the engine's.
+Retry of a request with an existing durable decision follows transaction identity:
+these codes do not authorize blindly repeating a publication.
 
-## Criteri di accettazione
+<a id="criteri-di-accettazione"></a>
 
-Queste prove sono **da implementare** nella fase 8. Ogni riga richiede attesi e ingressi
-preregistrati, controllo negativo dell'oracolo e conservazione di tutti i tentativi.
+## Acceptance criteria
 
-| Requisiti | Prova e condizione di riuscita |
+These tests are **to implement** in phase 8. Every row requires preregistered expected
+results and inputs, an oracle negative control, and retention of every attempt.
+
+| Requirements | Test and success condition |
 |---|---|
-| REQ-SEC-003, REQ-SEC-007 | Corpus ufficiali Unicode 18.0.0, mapping C/F, casi manuali sotto e confronto con analisi indipendente; uguali token e posizioni |
-| REQ-SEC-003, REQ-SEC-008 | Fixture binarie costruite indipendentemente, file vuoto, due campi, termini ripetuti, interi ai limiti, troncamenti a ogni confine e mutazioni; rifiuti anche con CRC valido |
-| REQ-SEC-004, REQ-SEC-009 | Vecchia versione con un termine e nuova con un altro; `all` non li combina; delete/abort, snapshot storici, ACTIVE/CLOSED e compaction danno gli stessi risultati della scansione |
-| REQ-SEC-005, REQ-SEC-009 | Writer fra taglio iniziale e cattura, rotazione/MERGE durante build, proposta con inventario superato, cambio profilo e ripartenza a ogni passo; nessun buco prima di READY |
-| REQ-SEC-005, REQ-SEC-008 | Hint riordinato, CRC/ID alterati, file assenti, definitivi corrotti, temporanei e file sconosciuti; readiness e cleanup seguono le tabelle, senza eliminare anomalie |
-| REQ-SEC-006, REQ-SEC-010 | Ogni budget a limite, limite meno uno e limite più uno; saturazione prima di PREPARE/SEAL; nessun errore di capacità normale dopo DECISION; cancellazione e rilascio esatto delle riserve |
-| REQ-SEC-009, REQ-SEC-010 | Reader lento, scadenza snapshot, errore dopo un batch e drop della generazione; un prefisso senza `complete` non è consumato come successo |
-| REQ-SEC-006 | Carico su più Serie e interferenza con GET/compaction; misure separate, nessuna scrittura condivisa per documento |
+| REQ-SEC-003, REQ-SEC-007 | Official Unicode 18.0.0 corpora, C/F mappings, manual cases below, and comparison with independent analysis; identical tokens and positions |
+| REQ-SEC-003, REQ-SEC-008 | Independently built binary fixtures, empty file, two fields, repeated terms, boundary integers, truncation at every boundary, and mutations; rejection even with valid CRC |
+| REQ-SEC-004, REQ-SEC-009 | Old version with one term and new version with another; `all` does not combine them; delete/abort, historical snapshots, ACTIVE/CLOSED, and compaction match scan results |
+| REQ-SEC-005, REQ-SEC-009 | Writer between initial cut and capture, rotation/MERGE during build, proposal with stale inventory, profile change, and restart at every step; no gaps before READY |
+| REQ-SEC-005, REQ-SEC-008 | Reordered hint, altered CRC/IDs, absent files, corrupt definitive files, temporaries, and unknown files; readiness and cleanup follow tables without deleting anomalies |
+| REQ-SEC-006, REQ-SEC-010 | Every budget at limit, limit minus one, and limit plus one; saturation before PREPARE/SEAL; no ordinary capacity error after DECISION; cancellation and exact reservation release |
+| REQ-SEC-009, REQ-SEC-010 | Slow reader, snapshot expiration, error after a batch, and generation drop; prefix without `complete` is not consumed as success |
+| REQ-SEC-006 | Load across multiple Serie and interference with GET/compaction; separate measurements, no shared per-document write |
 
-Corpus minimo manuale, senza invocare un analizzatore per produrre gli attesi:
+Minimal manual corpus, without invoking an analyzer to generate expected results:
 
-| Documento/campo | Termini e posizioni attesi |
+| Document/field | Expected terms and positions |
 |---|---|
 | `Subject = Caffè CAFÉ` | `caffè: [0]`, `café: [1]` |
-| `corpo = Stra\u00DFe` (dove `\u00DF` indica U+00DF, non sei byte letterali) | `strasse: [0]` |
-| `corpo = alpha, beta alpha` | `alpha: [0, 2]`, `beta: [1]`; frase `alpha beta` sì, `beta beta` no |
-| un campo `alpha`, un altro `beta` | la frase `alpha beta` non corrisponde in nessun campo |
-| campo assente oppure stringa vuota | nessun termine; `not text-match(..., alpha, all)` include il documento vivo |
+| `corpo = Stra\u00DFe` (where `\u00DF` denotes U+00DF, not six literal bytes) | `strasse: [0]` |
+| `corpo = alpha, beta alpha` | `alpha: [0, 2]`, `beta: [1]`; phrase `alpha beta` yes, `beta beta` no |
+| one field `alpha`, another `beta` | phrase `alpha beta` matches neither field |
+| missing field or empty string | no terms; `not text-match(..., alpha, all)` includes the live document |
 
-Una seconda fixture usa `cafe` seguito da U+0301 e deve produrre `café`; `cafe` senza
-accento non corrisponde. I test distinguono testo effettivo e notazione degli scalari.
-Le [misure](13-benchmark.md#ricerca-full-text) partono soltanto dopo queste verifiche.
+A second fixture uses `cafe` followed by U+0301 and must produce `café`; unaccented
+`cafe` does not match. Tests distinguish actual text from scalar notation.
+[Measurements](13-benchmark.md#ricerca-full-text) start only after these checks.

@@ -1,242 +1,262 @@
 # Roadmap
 
-> La roadmap è una **proposta di organizzazione del lavoro**: la specifica non prescrive fasi.
+> The roadmap is a **proposed organization of work**: the specification does not prescribe phases.
 
-## Stato attuale
+<a id="stato-attuale"></a>
 
-**Definizione architetturale completata; valutazione e sviluppo delle fondazioni in corso.**
-Dal 2026-10-08 l'autore ha autorizzato il codice di prodotto: i componenti già
-realizzati e i loro confini sono nell'[indice di implementazione](implementazione/README.md).
-La loro presenza non chiude i gate sperimentali né qualifica il motore completo.
+## Current status
 
-Il perimetro della v1 include la **ricerca full text** approvata con
-[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md): implementazione
-e qualifica sono nella fase 8, insieme a indici secondari e Query Engine.
-I test attuali di indice primario e recovery non verificano questi nuovi
-requisiti. [ADR-0054](adr/0054-contratto-e-formato-full-text.md) completa il
-[contratto operativo](full-text.md) e il [formato binario](formato-indice-full-text.md).
-Il nucleo Unicode, il codec e la preparazione documentale sono ora presenti;
-commit, visibilità MVCC e pubblicazione durevole restano da integrare secondo il
-[piano di verifica](affidabilita/piano-di-verifica.md#ricerca-full-text).
+**Architectural definition complete; evaluation and foundation development in progress.**
+Since 2026-10-08, the author has authorized product code: completed components and
+their boundaries are in the [implementation index](implementazione/README.md).
+Their presence neither closes experimental gates nor qualifies the complete engine.
 
-La [prova verticale con SIGKILL](implementazione/prova-verticale.md) collega
-ora scrittura durevole, indice e GET, recovery, checkpoint e rotazione in
-una fixture C4. Nei formati v1/v2 verifica anche nuove scritture dopo la
-riapertura, seguite da un secondo crash e recupero. La fixture ricostruisce
-la base CSN per una sola Serie con record ordinari; il coordinamento resta
-nel test. Il [nucleo M1](implementazione/production-engine-bootstrap.md)
-realizza ora startup, recovery e admission per una sola Serie. Recovery
-Manager e frontiera dell'intero Archivio restano lavoro di prodotto.
+V1 scope includes **full-text search** approved by
+[ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md): implementation and
+qualification are in phase 8, alongside secondary indexes and Query Engine.
+Current primary-index and recovery tests do not verify these new requirements.
+[ADR-0054](adr/0054-contratto-e-formato-full-text.md) completes the
+[operational contract](full-text.md) and [binary format](formato-indice-full-text.md).
+The Unicode core, codec, and document preparation are now present;
+commit, MVCC visibility, and durable publication remain to be integrated according to the
+[verification plan](affidabilita/piano-di-verifica.md#ricerca-full-text).
 
-La priorità di sviluppo è trasferire questa composizione nel motore e renderla
-accessibile localmente. [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md)
-fissa il **socket Unix locale come interfaccia predefinita e prioritaria** per
-il primo impiego NNTP: la prima integrazione M16 segue avvio, recovery e
-ammissione, senza attendere il completamento delle fasi 8–9. TCP è opzionale
-e successivo. Listener e client sono disponibili nel
-[profilo Unix M1](implementazione/production-unix-m1.md); il completamento
-del contratto M16 esteso resta aperto.
+The [vertical SIGKILL test](implementazione/prova-verticale.md) now connects
+durable writes, index and GET, recovery, checkpoint, and rotation in a C4 fixture.
+For v1/v2 formats, it also checks new writes after reopening, followed by a second
+crash and recovery. The fixture rebuilds the CSN base for one Serie with ordinary
+records; coordination remains in the test. The [M1 core](implementazione/production-engine-bootstrap.md)
+now implements startup, recovery, and admission for one Serie. The Recovery Manager
+and whole-Archivio frontier remain product work.
 
-Il primo passo di prodotto è la [scelta dell'ID del nuovo segmento](implementazione/id-segmento-recovery.md):
-proposta pura dal manifest e dall'inventario completo, usata anche dalla
-fixture verticale. La raccolta del namespace e delle identità è descritta
-sotto; riconciliazione fisica e coordinamento del recovery restano da implementare;
-l’acquisizione readonly completa è ora collegata al piano della directory.
-La [pubblicazione esclusiva di temporanei](implementazione/io-pubblicazione.md)
-fornisce ora la primitiva I/O che rifiuta target esistenti e verifica il
-legame nome/FD. La [stabilizzazione per fonte](implementazione/stabilizzazione-nomi-recovery.md)
-collega token semantico, CONTROL, pubblicazione esclusiva e fsync parent,
-anche per il nome già definitivo. Sequenza completa del Recovery Manager,
-qualifica funzionale e ammissione restano aperte.
+Development priority is moving this composition into the engine and making it
+locally accessible. [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md)
+sets the **local Unix socket as the default, highest-priority interface** for the
+first NNTP use: initial M16 integration follows startup, recovery, and admission,
+without waiting for phases 8–9 to finish. TCP is optional and later.
+Listener and client are available in the
+[Unix M1 profile](implementazione/production-unix-m1.md); completion of the
+extended M16 contract remains open.
 
-L'[ingresso ID dalla directory](implementazione/id-directory-recovery.md)
-collega ora l'inventario reale alla proposta del nuovo segmento senza una
-seconda scansione. Anche la fixture con SIGKILL usa questo percorso su nomi
-canonici; il suo limite di otto ID non limita l'inventario di prodotto.
+The first product step is [choosing the new segment ID](implementazione/id-segmento-recovery.md):
+a pure proposal from manifest and complete inventory, also used by the vertical
+fixture. Namespace and identity collection is described below;
+physical reconciliation and recovery coordination remain to be implemented;
+complete read-only acquisition is now connected to the directory plan.
+[Exclusive temporary-file publication](implementazione/io-pubblicazione.md)
+now provides the I/O primitive rejecting existing targets and verifying the
+name/FD binding. [Source-based stabilization](implementazione/stabilizzazione-nomi-recovery.md)
+connects semantic token, CONTROL, exclusive publication, and parent fsync,
+including for an already definitive name. The complete Recovery Manager sequence,
+functional qualification, and admission remain open.
 
-| Ordine | Incremento | Confine da verificare |
+[Directory ID input](implementazione/id-directory-recovery.md) now connects
+the real inventory to the new-segment proposal without a second scan.
+The SIGKILL fixture also uses this path on canonical names; its eight-ID limit
+does not limit product inventory.
+
+| Order | Increment | Boundary to verify |
 |---|---|---|
-| 1 | Apertura e recovery di una Serie nel prodotto | Inventario generale, identità, ownership delle capacità e fallimenti a ogni passo |
-| 2 | Ricostruzione CSN dell'Archivio e ammissione | Tutte le Serie e decisioni durevoli, pendenti risolti, registro unico per scritture e snapshot |
-| 3 | Prima integrazione M16 su socket Unix locale, con le operazioni fondamentali disponibili | Due processi, framing CBOR, directory e permessi, collisioni, limiti, client lento e risposta persa; [piano di verifica](affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket) |
-| 4 | Percorso completo concorrente | Pubblicazione coerente indice/radice, isolamento, MVCC e multiserie, esposti anche al client locale quando disponibili |
-| 5 | Qualifica di carico | Pool persistente, crash ripetuti, GC e P99 sulla piattaforma di riferimento, includendo il socket Unix |
+| 1 | Opening and recovering one Serie in the product | General inventory, identity, capability ownership, and failures at every step |
+| 2 | Archivio CSN reconstruction and admission | All Serie and durable decisions, resolved pending work, single registry for writes and snapshots |
+| 3 | Initial M16 integration on local Unix socket, with available fundamental operations | Two processes, CBOR framing, directory and permissions, collisions, limits, slow client, and lost response; [verification plan](affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket) |
+| 4 | Complete concurrent path | Consistent index/root publication, isolation, MVCC, and multiseries, also exposed to local client when available |
+| 5 | Load qualification | Persistent pool, repeated crashes, GC, and P99 on reference platform, including Unix socket |
 
-Questi incrementi non anticipano la chiusura dei gate della Fase 0.
+These increments do not bring forward closure of Phase-0 gates.
 
-Il [contratto di sessione M16](implementazione/sessione-locale.md) è una
-proposta estesa. Il [profilo M1 autorizzato](implementazione/production-unix-m1.md)
-realizza ora l'ordine 3 con PING/PUT/GET/DELETE dopo recovery e ammissione;
-la [qualifica locale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md)
-verifica processi distinti, crash, riavvio e risposta persa. Il profilo usa
-un owner e limiti inferiori; il completamento M16 e i gate restano aperti.
-[SPK-11](../spikes/SPK-11-unix-socket/README.md) conserva l'istruttoria precedente.
-La [variante di sessione C4](../spikes/SPK-11-unix-socket/session-method.md)
-aggiunge handshake, negoziazione e PING fra processi, con ID u64 e modelli
-di credito/deadline. Non anticipa l'accettazione del contratto o il gate reale.
-Il [passo I/O C4](../spikes/SPK-11-unix-socket/native-io-method.md) aggiunge
-recv/send su span posseduti e backend sostituibili: e un prerequisito del
-successivo adattatore di prodotto. Il profilo M1 integra l'ammissione reale
-con buffer preallocati e attore seriale; pool/scheduler estesi restano da integrare.
+The [M16 session contract](implementazione/sessione-locale.md) is an extended
+proposal. The [authorized M1 profile](implementazione/production-unix-m1.md)
+now implements order 3 with PING/PUT/GET/DELETE after recovery and admission;
+[local qualification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md)
+verifies separate processes, crashes, restart, and lost response. The profile
+uses one owner and lower limits; full M16 completion and gates remain open.
+[SPK-11](../spikes/SPK-11-unix-socket/README.md) retains the earlier investigation.
+The [C4 session variant](../spikes/SPK-11-unix-socket/session-method.md)
+adds handshake, negotiation, and PING between processes, with u64 IDs and
+credit/deadline models. It does not bring forward contract acceptance or the real gate.
+The [C4 I/O step](../spikes/SPK-11-unix-socket/native-io-method.md) adds
+recv/send over owned spans and replaceable backends: a prerequisite for the
+later product adapter. The M1 profile integrates real admission with
+preallocated buffers and a serial actor; extended pools/scheduler remain to be integrated.
 
-Il [bootstrap runtime dell'Archivio](implementazione/runtime-archivio.md)
-collega ora il piano CSN completo alla famiglia unica CSN/snapshot/epoche
-e al nuovo ambito GET. Riconciliazione, pubblicazione degli effetti,
-costruzione dei controller Serie e ammissione restano da coordinare.
+The [Archivio runtime bootstrap](implementazione/runtime-archivio.md)
+now connects the complete CSN plan to the single CSN/snapshot/epoch family
+and new GET scope. Reconciliation, effect publication, construction of
+Serie controllers, and admission remain to be coordinated.
 
-Il primo incremento dispone della [raccolta readonly dell'inventario](implementazione/inventario.md#raccolta-dalla-directory)
-da una capacità directory, con nomi e identità verificati prima del planner.
-L'[apertura readonly relativa](implementazione/io-apertura-relativa.md)
-fornisce ora capacità e dimensione dallo stesso FD ed è usata nei reader
-della prova verticale. L'[acquisizione posseduta delle fonti](implementazione/fonti-recovery.md)
-collega ora il piano completo ad ACTIVE/CLOSED readonly con budget cumulativo
-e cleanup dei figli; riconciliazione fisica e coordinamento del recovery
-restano passi successivi.
-La [creazione relativa dei temporanei](implementazione/io-creazione-relativa.md)
-completa il confine per i nuovi output della prova verticale, senza
-riaprire il percorso del parent o decidere la riconciliazione degli orfani.
+The first increment has [read-only inventory collection](implementazione/inventario.md#raccolta-dalla-directory)
+from a directory capability, with names and identities verified before the planner.
+[Relative read-only open](implementazione/io-apertura-relativa.md)
+now provides capability and size from the same FD and is used by vertical-test
+readers. [Owned source acquisition](implementazione/fonti-recovery.md)
+now connects the complete plan to read-only ACTIVE/CLOSED with a cumulative
+budget and child cleanup; physical reconciliation and recovery coordination
+remain subsequent steps.
+[Relative temporary-file creation](implementazione/io-creazione-relativa.md)
+completes the boundary for new vertical-test outputs without reopening the
+parent path or deciding orphan reconciliation.
 
-Al 2026-10-03 la parte di **definizione è completa**: le 26 questioni aperte sono chiuse dagli
-ADR 0013–0030, il progetto è consolidato in [architettura.md](architettura.md) e i formati in
-[formati-su-disco.md](formati-su-disco.md). L'[analisi progettuale](analisi-progettuale.md)
-dello stesso giorno ha riletto l'insieme, trovato cinque difetti di correttezza e li ha
-chiusi con gli ADR 0036–0045. ADR-0028 e ADR-0030 sono stati confermati dall'autore il
-2026-10-08. È in corso la **valutazione sperimentale**: suite degli spike SPK-01, SPK-02,
-SPK-03, SPK-07, SPK-09, con `make spikes-check` e `make spikes-bench`. SPK-07 ha già
-trovato un controesempio nell'anello dell'orizzonte, corretto da
+As of 2026-10-03, **definition is complete**: the 26 open questions are closed by
+ADR 0013–0030, the design is consolidated in [architettura.md](architettura.md), and formats in
+[formati-su-disco.md](formati-su-disco.md). The same day's [design analysis](analisi-progettuale.md)
+reread the whole, found five correctness defects, and closed them with ADR 0036–0045.
+ADR-0028 and ADR-0030 were confirmed by the author on 2026-10-08.
+**Experimental evaluation** is in progress: spike suite SPK-01, SPK-02, SPK-03, SPK-07,
+SPK-09, with `make spikes-check` and `make spikes-bench`. SPK-07 already found a
+counterexample in the horizon ring, corrected by
 [ADR-0046](adr/0046-orizzonte-con-registro-limitato.md).
-La suite SPK-07 comprende ora modelli finiti di pubblicazione dei frammenti,
-scadenza e protezione degli accessi già ammessi, compaction con writer ACTIVE
-e ordini di osservazione delle barriere, due reader/due slot in SC e crash
-sui byte con frontiera confermata esplicita. Metodo, risultati e lacune sono nel
-[README dello spike](../spikes/SPK-07-protocols/README.md).
+The SPK-07 suite now includes finite models of fragment publication,
+expiration and protection of already admitted accesses, compaction with an ACTIVE
+writer and barrier observation orders, two readers/two slots in SC, and byte-level
+crashes with an explicit acknowledged frontier. Methods, results, and gaps are in the
+[spike README](../spikes/SPK-07-protocols/README.md).
 
-La [campagna locale 2026-10-08](valutazione/risultati-2026-10-08.md) conserva
-misure e dati grezzi dei cinque spike v1 e di SPK-10: codec, indice, CBOR e
-migrazione v2 su modello, con integrazione in memoria dei confini massimi.
-`make check` registra l'intera verifica in forma strutturata, inclusi fallimenti.
-Restano le parti complete del gate v2, memoria debole completa e crash sui byte
-del motore, e le misure sulla
-piattaforma di riferimento; il gate non è chiuso.
+The [local 2026-10-08 campaign](valutazione/risultati-2026-10-08.md) retains
+measurements and raw data for five v1 spikes and SPK-10: v2 codec, index,
+CBOR, and model migration, with in-memory integration of maximum boundaries.
+`make check` records the whole verification in structured form, including failures.
+The complete v2 gate, full weak memory and engine byte-level crashes,
+and reference-platform measurements remain pending; the gate is not closed.
 
-SPK-08 aggiunge [maschere esatte e kernel NEON/SWAR](valutazione/risultati-SPK-07-08-2026-10-08.md):
-correttezza, disassemblato e 70 campioni seriali locali. Restano x86-64,
-integrazione dell'indice, bitmap/checksum e piattaforma di riferimento.
+SPK-08 adds [exact masks and NEON/SWAR kernels](valutazione/risultati-SPK-07-08-2026-10-08.md):
+correctness, disassembly, and 70 local serial samples. x86-64, index integration,
+bitmap/checksum, and reference platform remain pending.
 
-## Fase 0 — Definizione architetturale e valutazione
+<a id="fase-0--definizione-architetturale-e-valutazione"></a>
 
-Il [server NNTP in Common Lisp](valutazione/caso-duso-nntp.md) è il caso
-applicativo di riferimento confermato dall'autore il 2026-10-15. Le esigenze
-di lookup, intervalli ordinati, pubblicazione multiserie, retention e recovery
-orientano la valutazione delle fasi esistenti. La richiesta attuale riguarda
-la documentazione dell'obiettivo; sviluppo del demone e benchmark applicativi
-restano futuri. La successiva richiesta di ricerca full text estende invece
-esplicitamente lo scope v1 tramite ADR-0053, senza anticipare i gate.
+## Phase 0 — Architectural definition and evaluation
 
-Scopo: arrivare all'implementazione con le decisioni strutturali prese, i rischi principali
-misurati e i protocolli critici verificati su modello.
+The [Common Lisp NNTP server](valutazione/caso-duso-nntp.md) is the reference
+application confirmed by the author on 2026-10-15. Lookup, ordered ranges,
+multiseries publication, retention, and recovery needs guide evaluation of
+existing phases. The current request concerns documenting the objective;
+daemon development and application benchmarks remain future work.
+The later full-text search request explicitly extends v1 scope through
+ADR-0053, without bringing gates forward.
 
-### Filoni di lavoro
+Purpose: reach implementation with structural decisions made, main risks measured,
+and critical protocols checked on models.
 
-| Filone | Attività | Risultato |
+<a id="filoni-di-lavoro"></a>
+
+### Workstreams
+
+| Workstream | Activity | Outcome |
 |---|---|---|
-| **A. Decisioni** | Chiudere le [questioni aperte](questioni-aperte.md) di priorità A | Un ADR per ciascuna |
-| **B. Spike** | Eseguire gli [spike](valutazione/piano-spike.md) in ordine di rischio | Misure e raccomandazioni in `spikes/` |
-| **C. Modelli** | Descrivere come macchine a stati 2PC + recovery e compaction + swap + reclaim; esplorarne i crash | Protocolli verificati rispetto agli [invarianti](invarianti.md) |
-| **D. Formati** | Definire i formati persistenti: record, WAL, segmento, manifest, `multiserie.log`, catalogo | Documento dei formati su disco |
-| **E. Contratti** | Definire le interfacce tra i [moduli](16-moduli.md#contratti-tra-moduli) | Contratto per modulo |
-| **F. Valutazione** | Aggiornare [registro rischi](valutazione/registro-rischi.md) e [stime](valutazione/stime-ordine-di-grandezza.md) con i risultati | Verdetto di fattibilità |
+| **A. Decisions** | Close priority-A [open questions](questioni-aperte.md) | One ADR per question |
+| **B. Spikes** | Run [spikes](valutazione/piano-spike.md) in risk order | Measurements and recommendations in `spikes/` |
+| **C. Models** | Describe 2PC + recovery and compaction + swap + reclaim as state machines; explore crashes | Protocols verified against [invariants](invarianti.md) |
+| **D. Formats** | Define persistent formats: record, WAL, segment, manifest, `multiserie.log`, catalog | On-disk format document |
+| **E. Contracts** | Define interfaces between [modules](16-moduli.md#contratti-tra-moduli) | Contract per module |
+| **F. Evaluation** | Update [risk register](valutazione/registro-rischi.md) and [estimates](valutazione/stime-ordine-di-grandezza.md) with results | Feasibility verdict |
 
-### Ordine consigliato (parte restante)
+<a id="ordine-consigliato-parte-restante"></a>
 
-1. Conferma di **ADR-0028** (target, latenze, pausa GC ≤ 5 ms) e **ADR-0030** (scope).
-2. **SPK-02** (GC) e **SPK-01** (primary index): i due rischi che possono mettere in
-   discussione le scelte di base.
-3. **SPK-07** (modello di 2PC + compaction/swap/reclaim con crash in ogni punto).
-4. **SPK-03** (flush concorrenti di molte Serie).
-5. Completare le verifiche residue di SPK-04, SPK-05 e SPK-06, che hanno prime campagne
-   locali, e completare SPK-08 sulla piattaforma di riferimento; gli spike restanti
-   sono eseguibili anche durante la Fase 1.
+### Recommended order (remaining work)
 
-### Criteri di uscita
+1. Confirmation of **ADR-0028** (targets, latency, GC pause ≤ 5 ms) and **ADR-0030** (scope).
+2. **SPK-02** (GC) and **SPK-01** (primary index): the two risks that could challenge
+   foundational choices.
+3. **SPK-07** (2PC + compaction/swap/reclaim model with crashes at every point).
+4. **SPK-03** (concurrent flushes across many Serie).
+5. Complete remaining checks for SPK-04, SPK-05, and SPK-06, which have first local
+   campaigns, and complete SPK-08 on the reference platform; remaining spikes can
+   also run during Phase 1.
 
-- [x] Tutte le questioni di priorità A sono chiuse da un ADR (2026-10-03).
-- [x] I formati persistenti sono documentati ([formati-su-disco.md](formati-su-disco.md)).
-- [x] Ogni rischio con esposizione alta ha una mitigazione decisa o è stato accettato
-      esplicitamente ([registro](valutazione/registro-rischi.md#stato-dopo-gli-adr-2026-10-03)).
-- [x] I contratti tra moduli sono definiti ([architettura](architettura.md#contratti)).
-- [x] Analisi progettuale eseguita; rilievi AP-01…AP-16 chiusi dagli ADR 0036–0045
-      ([analisi](analisi-progettuale.md)).
-- [x] Criteri di software critico adottati ([ADR-0031](adr/0031-software-critico-criteri-e-priorita.md)): analisi dei guasti, standard di codifica, piano di verifica, requisiti tracciati, `make check` con linter e tracciabilità.
-- [x] ADR-0028 (con i minimi di prestazione) e ADR-0030 (con backup e verificatore nella v1) confermati dall'autore il 2026-10-08.
-- [ ] SPK-01, SPK-02, SPK-03 e **SPK-09** eseguiti, con risultati riproducibili nel repository.
-- [ ] Il modello SPK-07 (2PC, compaction/swap/reclaim, seqlock, idempotenza del recovery, lotto e frontiera durevole, orizzonte di visibilità, segmenti autosufficienti, tombstone, punti di atomicità) non viola gli invarianti in nessuno degli scenari FI-01…FI-13.
-- [ ] I target di [13 Benchmark](13-benchmark.md) sono confermati o rivisti alla luce di stime
-      e spike.
-- [ ] Decisione esplicita di procedere alla Fase 1.
+<a id="criteri-di-uscita"></a>
 
-## Gate di ogni fase
+### Exit criteria
 
-Ogni fase successiva si chiude solo con i [criteri di rilascio](affidabilita/piano-di-verifica.md#criteri-di-rilascio-di-una-fase):
-requisiti tracciati e verificati, copertura per classe, nessuna violazione in modelli e fault
-injection, verificatore offline pulito dopo i crash, punteggio di mutazione di C1, `make check`
-verde, nessuna deviazione non approvata.
+- [x] All priority-A questions closed by an ADR (2026-10-03).
+- [x] Persistent formats documented ([formati-su-disco.md](formati-su-disco.md)).
+- [x] Every high-exposure risk has a decided mitigation or explicit acceptance
+      ([register](valutazione/registro-rischi.md#stato-dopo-gli-adr-2026-10-03)).
+- [x] Intermodule contracts defined ([architecture](architettura.md#contratti)).
+- [x] Design analysis performed; AP-01…AP-16 findings closed by ADR 0036–0045
+      ([analysis](analisi-progettuale.md)).
+- [x] Critical-software criteria adopted ([ADR-0031](adr/0031-software-critico-criteri-e-priorita.md)): failure analysis, coding standard, verification plan, traced requirements, `make check` with linter and traceability.
+- [x] ADR-0028 (with performance minima) and ADR-0030 (with backup and verifier in v1) confirmed by author on 2026-10-08.
+- [ ] SPK-01, SPK-02, SPK-03, and **SPK-09** executed, with reproducible repository results.
+- [ ] The SPK-07 model (2PC, compaction/swap/reclaim, seqlock, recovery idempotence, batch and durable frontier, visibility horizon, self-contained segments, tombstones, atomicity points) violates no invariants in any FI-01…FI-13 scenario.
+- [ ] Targets in [13 Benchmarks](13-benchmark.md) confirmed or revised in light of estimates
+      and spikes.
+- [ ] Explicit decision to proceed to Phase 1.
 
-## Fasi successive (schema)
+<a id="gate-di-ogni-fase"></a>
 
-L'ordine segue due principi: una **fetta verticale** funzionante il prima possibile e
-l'infrastruttura di **fault injection** prima dei protocolli che deve verificare. Il dettaglio
-si definisce alla chiusura della Fase 0.
+## Gate for every phase
 
-| Fase | Contenuto | Moduli | Verifica |
+Every later phase closes only with the [release criteria](affidabilita/piano-di-verifica.md#criteri-di-rilascio-di-una-fase):
+traced and verified requirements, class-specific coverage, no violations in models and
+fault injection, clean offline verifier after crashes, C1 mutation score, passing
+`make check`, no unapproved deviations.
+
+<a id="fasi-successive-schema"></a>
+
+## Later phases (outline)
+
+Order follows two principles: a working **vertical slice** as soon as possible, and
+**fault-injection** infrastructure before the protocols it must verify. Details are
+defined when Phase 0 closes.
+
+| Phase | Contents | Modules | Verification |
 |---|---|---|---|
-| 1 | Una Serie: cornice dei record, lotti sigillati nel segmento ACTIVE, manifest a record EDIT, rotazione, primary index a frammenti con seqlock a 64 bit, GET/PUT/DELETE, recovery non distruttivo; compiti a completamento; **ambiente iniettabile** (tempo, casualità, schedulazione, I/O) e **simulatore deterministico**; verifica in lettura; **verificatore offline**; harness di test, modello di riferimento, fuzzing dei decoder, mutation testing | M01–M05, M12, io | FI-01, FI-02, FI-10 |
-| 2 | Group commit con un compito di I/O alla volta, livelli di durability, cache, metriche | M02, M07, metrics | benchmark di base |
-| 3 | Orizzonte di visibilità, snapshot/MVCC e transazioni single-Series | M08, M09 | FI-11 |
+| 1 | One Serie: record frame, sealed batches in ACTIVE segment, EDIT-record manifest, rotation, fragmented primary index with 64-bit seqlocks, GET/PUT/DELETE, nondestructive recovery; run-to-completion tasks; **injectable environment** (time, randomness, scheduling, I/O) and **deterministic simulator**; read-time verification; **offline verifier**; test harness, reference model, decoder fuzzing, mutation testing | M01–M05, M12, io | FI-01, FI-02, FI-10 |
+| 2 | Group commit with one I/O task at a time, durability levels, cache, metrics | M02, M07, metrics | basic benchmarks |
+| 3 | Visibility horizon, snapshots/MVCC, and single-Serie transactions | M08, M09 | FI-11 |
 | 4 | CLEAN, swap, reclaim; **scrubbing** | M11, M04 | FI-06, FI-07, FI-09 |
-| 5 | Archivio, Registri, catalogo, più Serie; writer logici su thread pool dinamico; scheduler; **backup e restore verificato** | M13, M14, M17 | FI-13, benchmark di isolamento tra Serie |
-| 6 | Transazioni multiserie e `multiserie.log` | M09, M10 | FI-03, FI-04, FI-05, FI-12 |
-| 7 | MERGE, low-load policy, Compaction Scheduler | M11, M13 | FI-08, benchmark di interferenza |
-| 8 | Indici secondari, **ricerca full text con indici invertiti dedicati** e Query Engine ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) | M06, M15 | confronto con scansione, snapshot/update/delete, build/rebuild, corruzione e budget; [campagna full text](13-benchmark.md#ricerca-full-text) |
-| 9 | Completamento protocollo/server M16 e trasporto TCP opzionale; prima integrazione Unix socket già anticipata dopo avvio/recovery/ammissione (ADR-0055) | M16 | stessa semantica e stessi limiti del percorso locale; TCP solo con attivazione esplicita |
-| 10 | Campagna di benchmark; ottimizzazioni sugli hot path misurati | M18 | [13 Benchmark](13-benchmark.md) |
+| 5 | Archivio, Registri, catalog, multiple Serie; logical writers on dynamic thread pool; scheduler; **backup and verified restore** | M13, M14, M17 | FI-13, isolation benchmarks between Serie |
+| 6 | Multiseries transactions and `multiserie.log` | M09, M10 | FI-03, FI-04, FI-05, FI-12 |
+| 7 | MERGE, low-load policy, Compaction Scheduler | M11, M13 | FI-08, interference benchmarks |
+| 8 | Secondary indexes, **full-text search with dedicated inverted indexes**, and Query Engine ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) | M06, M15 | comparison with scan, snapshot/update/delete, build/rebuild, corruption, and budgets; [full-text campaign](13-benchmark.md#ricerca-full-text) |
+| 9 | M16 protocol/server completion and optional TCP transport; initial Unix socket integration already brought forward after startup/recovery/admission (ADR-0055) | M16 | same semantics and limits as local path; TCP only with explicit activation |
+| 10 | Benchmark campaign; optimizations on measured hot paths | M18 | [13 Benchmarks](13-benchmark.md) |
 
-## Avanzamento SPK-04
+<a id="avanzamento-spk-04"></a>
 
-La [prima campagna SPK-04](valutazione/risultati-SPK-04-2026-10-08.md)
-aggiunge un pool eseguibile e modelli finiti di parcheggio e ripartenza
-delle letture. Restano carico vivo, messaggi, scheduler adattivo e misure
-significative sulla piattaforma di riferimento; la Fase 0 resta aperta.
+## SPK-04 progress
 
-## Gate del formato v2
+The [first SPK-04 campaign](valutazione/risultati-SPK-04-2026-10-08.md)
+adds an executable pool and finite models of read parking and restart.
+Live load, messages, adaptive scheduler, and meaningful reference-platform
+measurements remain pending; Phase 0 remains open.
 
-Prima del motore: campagne dei limiti ADR-0048 (documenti, profondità, chiavi), decoder v1/v2, migrazione interrotta e budget del nuovo slot. Aggiornare SPK-01 e SPK-09 con risultati distinti. La ricerca oltre RAM (ADR-0049) richiede confronto e ADR prima di cambiare lo scope v1.
+<a id="gate-del-formato-v2"></a>
 
-Il 2026-10-22 l'autore autorizza l'implementazione incrementale del modo
-automatico [ADR-0057](adr/0057-selezione-automatica-indice.md). Il primo
-[incremento](implementazione/indice-automatico.md#incrementi-successivi-e-completamento)
-aggiunge il selettore di budget e il modello C4 del lifetime: seguono formato,
-cache, backend differenziale, attuatore con crescita/rientro e qualifica.
-L'indice del runtime rimane residente; nessun gate oltre RAM e' chiuso.
+## V2 format gate
 
-I2 introduce [ADR-0058](adr/0058-pagine-indice-primario.md) e il
-[codec delle pagine](implementazione/pagine-indice.md). Pagine e PageRef sono
-verificabili localmente; cache, split del writer, grafo completo, recovery e
-cambi automatici in esercizio richiedono ancora gli incrementi successivi.
+Before the engine: campaigns for ADR-0048 limits (documents, depth, keys), v1/v2 decoders, interrupted migration, and new-slot budgets. Update SPK-01 and SPK-09 with separate results. Beyond-RAM research (ADR-0049) requires comparison and an ADR before changing v1 scope.
 
-## Avanzamento SPK-05
+On 2026-10-22, the author authorized incremental implementation of automatic
+mode [ADR-0057](adr/0057-selezione-automatica-indice.md). The first
+[increment](implementazione/indice-automatico.md#incrementi-successivi-e-completamento)
+adds the budget selector and C4 lifetime model: format, cache, differential
+backend, actuator with growth/return, and qualification follow.
+The runtime index remains resident; no beyond-RAM gate is closed.
 
-> **Proposta** — Il [confronto locale](valutazione/risultati-SPK-05-2026-10-08.md)
-> aggiunge letture posizionali e mapping di file reali, con controlli CRC,
-> chiave e stamp. La scelta pread di ADR-0017 resta confermata dal progetto;
-> dataset oltre RAM, granularità della cache e target NVMe restano da verificare.
+I2 introduces [ADR-0058](adr/0058-pagine-indice-primario.md) and the
+[page codec](implementazione/pagine-indice.md). Pages and PageRefs are
+locally verifiable; cache, writer split, complete graph, recovery, and
+automatic live switching still require subsequent increments.
 
-## Avanzamento SPK-06
+<a id="avanzamento-spk-05"></a>
 
-> **Proposta** — La [prima campagna locale](valutazione/risultati-SPK-06-2026-10-08.md)
-> verifica il modello del carico, ammissibilità del MERGE e quote su input finiti;
-> misura inoltre copie buffered concorrenti a letture posizionali. Le due prove
-> sono indipendenti: il modello non governa le copie tramite segnali reali.
-> Restano compaction del motore, calibrazione e feedback sul dispositivo,
-> piattaforma di riferimento e rispetto del P99 durante CLEAN/MERGE. I gate
-> della fase e i target di prestazione restano aperti.
+## SPK-05 progress
+
+> **Proposed** — The [local comparison](valutazione/risultati-SPK-05-2026-10-08.md)
+> adds positional reads and real-file mapping, with CRC, key, and stamp checks.
+> ADR-0017's pread choice remains confirmed by the design; beyond-RAM datasets,
+> cache granularity, and NVMe targets remain to be verified.
+
+<a id="avanzamento-spk-06"></a>
+
+## SPK-06 progress
+
+> **Proposed** — The [first local campaign](valutazione/risultati-SPK-06-2026-10-08.md)
+> verifies the load model, MERGE admission, and quotas on finite inputs;
+> it also measures buffered copies concurrent with positional reads. The two
+> tests are independent: the model does not control copies through real signals.
+> Engine compaction, calibration and device feedback, reference platform, and
+> P99 compliance during CLEAN/MERGE remain pending. Phase gates and performance
+> targets remain open.

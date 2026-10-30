@@ -1,27 +1,31 @@
-# Valutazione
+<a id="valutazione"></a>
 
-[Documentazione](../README.md) · [Implementazione](../implementazione/README.md)
+# Evaluation
 
-Ogni risultato vale per il comando, i dati, la macchina e il perimetro dichiarati.
-Un microbenchmark o una prova di componente non qualifica il motore completo.
+[Documentation](../README.md) · [Implementation](../implementazione/README.md)
 
-## Leggere le prove
+Every result applies to the stated command, data, machine and scope.
+A microbenchmark or component test does not qualify the complete engine.
 
-| Per | Riferimento |
+<a id="leggere-le-prove"></a>
+## Reading the evidence
+
+| To | Reference |
 |---|---|
-| Vedere le campagne recenti selezionate | [Risultati](../../spikes/results/README.md) |
-| Ripetere gli esperimenti | [Spike](../../spikes/README.md) e [piano](piano-spike.md) |
-| Conservare o verificare una prova | [Registro delle prove](registro-delle-prove.md) e [archivio storico](../../spikes/evidence/README.md) |
-| Valutare i rischi e i costi | [Registro dei rischi](registro-rischi.md), [analisi critica](analisi-critica.md), [stime](stime-ordine-di-grandezza.md) |
-| Capire il primo impiego | [Caso d'uso NNTP](caso-duso-nntp.md) |
+| Browse selected recent campaigns | [Results](../../spikes/results/README.md) |
+| Repeat the experiments | [Spikes](../../spikes/README.md) and [plan](piano-spike.md) |
+| Preserve or verify evidence | [Evidence register](registro-delle-prove.md) and [historical archive](../../spikes/evidence/README.md) |
+| Assess risks and costs | [Risk register](registro-rischi.md), [critical analysis](analisi-critica.md), [estimates](stime-ordine-di-grandezza.md) |
+| Understand the first application | [NNTP use case](caso-duso-nntp.md) |
 
-## Stato della verifica
+<a id="stato-della-verifica"></a>
+## Verification status
 
-Il percorso M1 compone startup, recovery e servizio Unix. Le sue prove e i suoi
-limiti sono descritti nell'[implementazione](../implementazione/README.md).
-Prestazioni complessive, carico prolungato, scale oltre RAM e gate di rilascio
-richiedono le rispettive campagne.
+M1 composes startup, recovery and the Unix service. Its tests and limits are
+described in the [implementation guide](../implementazione/README.md).
+Whole-engine performance, sustained load, scales beyond RAM and release gates
+require their respective campaigns.
 
-Le [regole dei benchmark](../13-benchmark.md) distinguono misure, target e stime.
-La [cronologia delle valutazioni](cronologia.md) conserva i giudizi iniziali,
-i controesempi e le campagne datate, senza presentarli come stato corrente.
+The [benchmark rules](../13-benchmark.md) distinguish measurements, targets and estimates.
+The [evaluation history](cronologia.md) retains the initial assessments,
+counterexamples and dated campaigns without presenting them as the current status.

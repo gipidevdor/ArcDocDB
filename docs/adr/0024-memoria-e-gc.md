@@ -1,56 +1,68 @@
-# ADR-0024 — Modello di memoria: array specializzati a vita lunga, zero allocazione sul hot path
+<a id="adr-0024--modello-di-memoria-array-specializzati-a-vita-lunga-zero-allocazione-sul-hot-path"></a>
 
-- **Stato:** Accettata (ipotesi sulle pause verificata da SPK-02); **punto 3 precisato da [ADR-0043](0043-primary-index-a-frammenti.md)**: l'indice cresce un frammento alla volta e le strutture sostituite le ritira il collector.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-18; realizza «SIMD e ottimizzazioni native» punti 1–5
-- **Riferimenti:** [architettura](../architettura.md#memoria), RSK-01
+# ADR-0024 — Memory model: long-lived specialized arrays, zero allocation on the hot path
 
-## Contesto
+- **Status:** Accepted (pause hypothesis verified by SPK-02); **item 3 clarified by [ADR-0043](0043-primary-index-a-frammenti.md)**: the index grows one fragment at a time and the collector retires replaced structures.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-18; implements "SIMD and native optimizations" items 1–5
+- **References:** [architecture](../architettura.md#memoria), RSK-01
 
-Il collector di SBCL ferma tutti i thread. Le pause dipendono da quanto deve esaminare (oggetti
-con puntatori) e copiare (oggetti piccoli vivi), e dalla frequenza (tasso di allocazione).
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-1. **Tutte le strutture grandi sono array specializzati** (`(unsigned-byte 8)`,
-   `(unsigned-byte 64)`) **allocati una volta** e a vita lunga: tabelle dell'indice, key
-   arena, versioni trattenute, arena della cache, buffer dei segmenti e di I/O, delta degli
-   indici secondari, istogrammi delle metriche. Non contengono puntatori: il collector non li
-   esamina; essendo oggetti grandi, non li copia.
-2. **Zero allocazione sul hot path**: GET, PUT, lookup, lettura dal segmento, aggiornamento
-   delle metriche non allocano nello heap gestito. I risultati si scrivono in buffer forniti
-   dal chiamante; i record si passano come (array, inizio, fine). Le interfacce tra moduli
-   sono progettate di conseguenza ([architettura](../architettura.md#contratti)).
-3. **Crescita** delle strutture per sostituzione: nuova area, copia, scambio atomico, ritiro
-   con EBR ([ADR-0016](0016-epoch-based-reclamation.md)). Nessuna struttura cresce «a pezzi»
-   con puntatori.
-4. **Memoria nello heap gestito**, non esterna: evita pinning esplicito e doppia gestione; gli
-   array passati alle chiamate di sistema sono pinnati per la durata della chiamata.
-5. **Parametri del collector** fissati all'avvio in funzione della RAM: dimensione dello heap
-   dinamico, soglia di allocazione tra collezioni ampia, generazioni tarate perché le
-   strutture a vita lunga raggiungano presto la generazione più vecchia.
-6. Ogni allocazione residua su un percorso caldo è un difetto e ha una metrica (tasso di
-   allocazione per worker).
+SBCL's collector stops all threads. Pauses depend on how much it must examine (objects
+with pointers) and copy (small live objects), and on frequency (allocation rate).
 
-Pattern: arene e strutture «flat» senza puntatori; zero-allocation hot path (motori di storage
-in linguaggi con GC: Cassandra off-heap, Go pebble).
+<a id="decisione"></a>
 
-## Conseguenze
+## Decision
 
-- Il GC vede uno heap grande ma quasi privo di puntatori e un tasso di allocazione basso:
-  collezioni rare e brevi è l'ipotesi, da misurare.
-- Stile di codice vincolato: dichiarazioni di tipo, `simple-array`, niente liste né chiusure
-  sui percorsi caldi.
+1. **All large structures are specialized arrays** (`(unsigned-byte 8)`,
+   `(unsigned-byte 64)`) **allocated once** and long-lived: index tables, key
+   arena, retained versions, cache arena, segment and I/O buffers, secondary-index
+   deltas, metric histograms. They contain no pointers: the collector does not
+   scan them; as large objects, it does not copy them.
+2. **Zero allocation on the hot path**: GET, PUT, lookup, segment reads, and metric
+   updates do not allocate in the managed heap. Results are written to buffers supplied
+   by the caller; records are passed as (array, start, end). Interfaces between modules
+   are designed accordingly ([architecture](../architettura.md#contratti)).
+3. **Growth** through structure replacement: new area, copy, atomic swap, retirement
+   with EBR ([ADR-0016](0016-epoch-based-reclamation.md)). No structure grows "in pieces"
+   with pointers.
+4. **Memory in the managed heap**, not external: avoids explicit pinning and dual management;
+   arrays passed to system calls are pinned for the duration of the call.
+5. **Collector parameters** set at startup based on RAM: dynamic heap
+   size, large allocation threshold between collections, generations tuned so
+   long-lived structures reach the oldest generation quickly.
+6. Any remaining allocation on a hot path is a defect and has a metric (allocation
+   rate per worker).
 
-## Alternative considerate
+Patterns: arenas and pointer-free flat structures; zero-allocation hot path (storage engines
+in GC languages: Cassandra off-heap, Go pebble).
 
-- *Memoria esterna allo heap (alien):* nessun vantaggio sul GC rispetto agli array
-  specializzati grandi, e costo di gestione manuale.
-- *Oggetti per entry:* esclusi dalla specifica.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-- Verifica: SPK-02 misura le pause con heap da decine di GB e carico sintetico; SPK-01 e
-  SPK-05 misurano l'allocazione per operazione (obiettivo: 0 byte).
-- Rivedere se: pause oltre l'obiettivo di P99 ([ADR-0028](0028-target-e-obiettivi-di-latenza.md))
-  anche con allocazione nulla → sostituire con ADR su collector alternativo o memoria esterna.
+- The GC sees a large but nearly pointer-free heap and a low allocation rate:
+  infrequent, brief collections are the hypothesis, to be measured.
+- Constrained coding style: type declarations, `simple-array`, no lists or closures
+  on hot paths.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Off-heap memory (alien):* no GC advantage over large specialized
+  arrays, with the cost of manual management.
+- *Per-entry objects:* ruled out by the specification.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Verification: SPK-02 measures pauses with heaps of tens of GB and synthetic load; SPK-01 and
+  SPK-05 measure allocation per operation (target: 0 bytes).
+- Reconsider if: pauses exceed the P99 target ([ADR-0028](0028-target-e-obiettivi-di-latenza.md))
+  even with zero allocation → replace with an ADR on an alternative collector or external memory.

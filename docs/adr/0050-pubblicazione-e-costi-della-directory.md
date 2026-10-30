@@ -1,60 +1,68 @@
-# ADR-0050 — Pubblicazione e costi della directory dell'indice
+<a id="adr-0050--pubblicazione-e-costi-della-directory-dellindice"></a>
 
-- **Stato:** Accettata; modello di memoria e scala da verificare.
-- **Data:** 2026-10-08
-- **Rapporto con la specifica:** nessuna emenda; precisa i punti 2 e 3 e le
-  conseguenze di [ADR-0043](0043-primary-index-a-frammenti.md). Vale anche per
-  il layout v2 di [ADR-0048](0048-limiti-documentali-e-formato-v2.md).
-- **Riferimenti:** INV-I3, INV-A8, REQ-IDX-007,
+# ADR-0050 — Publication and costs of the index directory
+
+- **Status:** Accepted; memory model and scaling remain to be verified.
+- **Date:** 2026-10-08
+- **Relationship to the specification:** no amendment; clarifies items 2 and 3 and the
+  consequences of [ADR-0043](0043-primary-index-a-frammenti.md). Also applies to
+  the v2 layout in [ADR-0048](0048-limiti-documentali-e-formato-v2.md).
+- **References:** INV-I3, INV-A8, REQ-IDX-007,
   [SPK-01](../../spikes/SPK-01-primary-index/README.md).
 
-## Contesto
+<a id="contesto"></a>
 
-L'esperimento usa una root immutabile, pubblicata con CAS. Ogni split o rebuild
-produce una directory nuova. Copiare al massimo C slot del frammento non limita
-il costo di questa directory: si copiano **2^G riferimenti**, anche se non si
-raddoppia. La dichiarazione precedente di costo massimo C e assenza di pausa
-proporzionale alla Serie ometteva questo lavoro e la copia delle chiavi.
+## Context
 
-La lettura di un frammento ritirato può ancora essere linearizzabile durante
-l'operazione. Il suo stato congelato non fissa però il punto di linearizzazione
-alla lettura iniziale del riferimento: il writer può aggiornare uno slot tra
-quella lettura e il ritiro. Il reader osserverebbe lo stato successivo. Questa
-osservazione corregge un istante proposto, **non dimostra** una risposta errata
-del vecchio protocollo in ogni caso di sostituzione.
+The experiment uses an immutable root, published through CAS. Each split or rebuild
+produces a new directory. Copying at most C fragment slots does not bound
+this directory's cost: **2^G references** are copied, even when it does not
+ double. The earlier claim of maximum cost C and no pause proportional to
+Serie size omitted this work and key copying.
 
-## Decisione
+Reading a retired fragment can still be linearizable during the operation.
+Its frozen state does not, however, set the linearization point at the
+initial reference read: the writer can update a slot between that read
+and retirement. The reader would observe the later state. This
+observation corrects a proposed instant; it **does not prove** an incorrect answer
+from the old protocol in every replacement case.
 
-1. Il writer costruisce frammenti e directory fuori dalla root pubblicata e
-   pubblica una nuova root indivisibile con generazione crescente. Non modifica
-   più i frammenti sostituiti. Generazioni e seqlock non possono fare wrap.
-2. Il reader acquisisce la root, legge il frammento col seqlock, esegue la
-   barriera di lettura e ricontrolla root e generazione **anche su miss**. Se
-   sono cambiate, scarta il risultato. I tentativi condividono il limite del
-   seqlock; al limite il compito passa al writer della stessa Serie, senza spin
-   illimitato. Il mutex del solo harness non è il meccanismo di produzione.
-3. Ogni manutenzione dichiara separatamente slot visitati/copiati, byte delle
-   chiavi, riferimenti della directory, memoria transitoria e durata. Il limite
-   C riguarda gli slot di un frammento sorgente. La directory costa O(2^G), con
-   profondità massima configurata e budget controllato prima della pubblicazione.
-4. Il budget transitorio comprende vecchi e nuovi array della manutenzione e
-   la directory nuova. Il payload vivo non è RSS: root trattenute dai reader,
-   garbage non raccolto, header e runtime hanno costi aggiuntivi. Il numero di
-   worker e le operazioni in volo restano limitati secondo ADR-0045.
-5. Non si dichiara una pausa indipendente dalla dimensione della Serie per
-   questa rappresentazione. SPK-01 misura il costo della directory e delle
-   chiavi; SPK-02 misura il collector. Una directory paginata o persistente
-   richiederà un ADR e un confronto se le misure non rispettano i budget.
+<a id="decisione"></a>
 
-Non compare alcun coordinamento fra Serie. Sono seriali costruzione e
-pubblicazione nel writer proprietario; i reader non modificano contatori comuni
-per operazione. Nessun formato persistente cambia.
+## Decision
 
-## Verifica e limiti
+1. The writer builds fragments and directories outside the published root and
+   publishes a new indivisible root with an increasing generation. It no longer modifies
+   replaced fragments. Generations and seqlocks cannot wrap.
+2. The reader acquires the root, reads the fragment using the seqlock, executes the
+   read barrier, and rechecks root and generation **even on a miss**. If
+   they changed, it discards the result. Retries share the seqlock
+   limit; at the limit, the task passes to the same Serie's writer, without unbounded
+   spinning. The harness-only mutex is not the production mechanism.
+3. Each maintenance operation separately states slots visited/copied, key
+   bytes, directory references, transient memory, and duration. The C limit
+   concerns the slots of one source fragment. The directory costs O(2^G), with
+   a configured maximum depth and budget checked before publication.
+4. The transient budget includes old and new maintenance arrays and
+   the new directory. Live payload is not RSS: roots retained by readers,
+   uncollected garbage, headers, and runtime have additional costs. Worker count
+   and in-flight operations remain bounded under ADR-0045.
+5. No pause independent of Serie size is claimed for
+   this representation. SPK-01 measures directory and key costs;
+   SPK-02 measures the collector. A paged or persistent directory
+   will require an ADR and comparison if measurements miss the budgets.
 
-SPK-01 inietta una sostituzione tra acquisizione del frammento e sondaggio:
-controlla il retry sia per un hit vecchio sia per un miss diventato hit. La
-suite differenziale e lo stress restano evidenze limitate agli scenari eseguiti.
-SPK-07 deve ancora modellare la pubblicazione reale; il disassemblato e il
-modello di memoria vanno verificati su ARM64 e x86-64. Il GC mantiene gli
-oggetti referenziati, ma non garantisce un tempo massimo di rilascio.
+No coordination between Serie is introduced. Construction and publication
+are serial in the owning writer; readers do not modify shared counters
+per operation. No persistent format changes.
+
+<a id="verifica-e-limiti"></a>
+
+## Verification and limits
+
+SPK-01 injects a replacement between fragment acquisition and probing:
+it checks retries for both an old hit and a miss that becomes a hit. The
+differential suite and stress tests remain evidence limited to the scenarios run.
+SPK-07 still needs to model actual publication; disassembly and the
+memory model must be verified on ARM64 and x86-64. GC retains referenced
+objects but does not guarantee a maximum release time.

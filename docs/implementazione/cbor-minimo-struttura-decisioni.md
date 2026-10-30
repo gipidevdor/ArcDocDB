@@ -1,81 +1,91 @@
-# Decisioni della scansione CBOR con testate minime
+<a id="decisioni-della-scansione-cbor-con-testate-minime"></a>
 
-Inventario e auto-lettura statica dell'autore del refactor, prima delle
-campagne. Non costituisce lettura C1 indipendente o approvazione umana.
-I nuovi test non sono stati letti dall'autore del prodotto. Build rigorosa,
-lint, tracciabilità, test, copertura, mutazioni e misura heap sono pendenti;
-le righe sotto si riferiscono ai sorgenti di questa consegna.
+# CBOR scanning decisions with minimal headers
 
-## Ambito e percorso
+Inventory and static self-reading by the refactor author before
+campaigns. Does not constitute an independent C1 reading or human approval.
+The product author has not read the new tests. Strict build,
+lint, traceability, tests, coverage, mutations, and heap measurement are pending;
+lines below refer to sources in this delivery.
 
-`verifica-struttura-cbor-minima` passa T a
-`verifica-struttura-cbor-interna`; `verifica-struttura-cbor` conserva la
-firma pubblica con gli stessi keyword e default, passando NIL. Nessun modo
-nuovo è esposto sulla API generica. Il parametro booleano interno e
-posizionale seleziona direttamente il lettore in `passo-struttura-cbor`;
-non introduce closure, callback, keyword dinamici o un secondo attraversamento.
+<a id="ambito-e-percorso"></a>
 
-Il nucleo condiviso esegue il preflight prima del reset dello scratch.
-Conserva lo spazio esclusivo di 102 celle, il ciclo limitato da SPAN e il
-drain limitato a 102 frame. Contenitori e testi usano gli helper invariati:
-profondità soltanto per array/map, UTF-8 dopo la disponibilità dell'intero
-payload e nessuna ricostruzione u64/float. Tre valori escono soltanto dalle
-postcondizioni di `risultato-struttura-cbor`.
+## Scope and path
 
-La nuova API richiede testate minime in ogni posizione raggiunta, incluse
-chiavi, valori e tag. Non verifica semantica dei tag, ordine o duplicati
-delle mappe; non attesta il profilo documentale completo di ADR-0014/0048.
-Il kernel non possiede una Serie e propaga gli invarianti: il controller
-responsabile deve realizzare la transizione FAULTED, fuori da questa API.
+`verifica-struttura-cbor-minima` passes T to
+`verifica-struttura-cbor-interna`; `verifica-struttura-cbor` retains its
+public signature with the same keywords and defaults, passing NIL. No new
+mode is exposed on the generic API. The internal positional
+boolean directly selects the reader in `passo-struttura-cbor`;
+it introduces no closure, callback, dynamic keywords, or second traversal.
 
-## Decisioni composte
+The shared core performs preflight before scratch reset.
+It retains exclusive 102-cell workspace, SPAN-bounded loop, and
+drain bounded to 102 frames. Containers and text use unchanged helpers:
+depth only for array/map, UTF-8 after availability of the entire
+payload, and no u64/float reconstruction. Three values emerge only from
+the postconditions of `risultato-struttura-cbor`.
 
-Le **tre decisioni composte nel file rifattorizzato sono preservate**;
-la selezione nuova del lettore è una decisione semplice. I wrapper non
-contengono decisioni: delegano con il booleano costante. Gli inventari
-esistenti di header minimo, input, scratch, stack e item restano separati.
+The new API requires minimal headers at every position reached, including
+keys, values, and tags. It does not verify tag semantics, map order, or
+duplicates; it does not attest the complete ADR-0014/0048 document profile.
+The kernel owns no Serie and propagates invariants: the responsible
+controller must implement the FAULTED transition outside this API.
 
-| ID | File, funzione e riga | Condizioni | Verifica prevista o limite |
+<a id="decisioni-composte"></a>
+
+## Compound decisions
+
+The **three compound decisions in the refactored file are preserved**;
+new reader selection is a simple decision. Wrappers contain
+no decisions: they delegate with a constant boolean. Existing inventories
+of minimal header, input, scratch, stack, and item remain separate.
+
+| ID | File, function, and line | Conditions | Planned verification or limit |
 |---|---|---|---|
-| D01 | `cbor-scan.lisp`, `passo-struttura-cbor`, 29 | lead < cursore dopo il passo; cursore <= END | Corpus generico/minimo, troncature e input annidati devono avanzare o segnalare errore. Esito contrario è difesa interna, mantenuta nel denominatore. |
-| D02 | `cbor-scan.lisp`, `risultato-struttura-cbor`, 41 | 1 <= nodi <= max-nodes; picco <= max-depth | Limiti esatti, scalari depth zero e profondità 100; la postcondizione interna resta nel denominatore. |
-| D03 | stessa funzione, 44 | top zero; depth zero; nessun tag pendente | Item esatti, tag concatenati e contenitori vuoti/non vuoti. Stato residuo su successo è difesa interna; nessuna prova di irraggiungibilità. |
+| D01 | `cbor-scan.lisp`, `passo-struttura-cbor`, 29 | lead < cursor after step; cursor <= END | Generic/minimal corpus, truncations, and nested inputs must advance or signal an error. Opposite outcome is internal defense, retained in denominator. |
+| D02 | `cbor-scan.lisp`, `risultato-struttura-cbor`, 41 | 1 <= nodes <= max-nodes; peak <= max-depth | Exact limits, depth-zero scalars, and depth 100; internal postcondition remains in denominator. |
+| D03 | same function, 44 | top zero; depth zero; no pending tag | Exact items, chained tags, and empty/nonempty containers. Residual state on success is internal defense; no unreachability proof. |
 
-Fixture e risultati spettano all'oracolo indipendente e alle campagne.
-Questa tabella non dimostra copertura condizione per condizione o MC/DC;
-non approva esclusioni di guardie, dichiarazioni, default o fallback.
+Fixtures and results belong to the independent oracle and campaigns.
+This table demonstrates neither condition-by-condition coverage nor MC/DC;
+it approves no exclusions of guards, declarations, defaults, or fallbacks.
 
-## Selezioni e priorità osservabili
+<a id="selezioni-e-priorità-osservabili"></a>
 
-| Punto del percorso | Ordine preservato o introdotto |
+## Observable selections and priorities
+
+| Path point | Preserved or introduced order |
 |---|---|
-| Wrapper | Stessi keyword e default; generico NIL, minimo T. Nessun altro ingresso pubblico al booleano. |
-| Preflight | Range → workspace → alias EQ kinds → byte-limit → node-limit → depth-limit → byte-budget, prima di reset o lettura dei byte. |
-| Passo, righe 19–24 | T: lettore sintattico base dentro il lettore minimo → minimalità → contesto; NIL: lettore generico → contesto. Header sintatticamente incompleto o illegale precede `:cbor-nonminimal`. |
-| Nodo e corpo, righe 25–28 | Minimalità completata prima di node-budget, depth-budget, disponibilità del payload e UTF-8. Indefinito/break sintatticamente ammesso è nonminimal sul lead nella API minima. |
-| Drain, righe 70–73 | Frame/radice prima del prossimo header. Una radice già conclusa segnala `:cbor-trailing` al primo byte residuo, senza applicare minimalità alla coda. |
-| Fine incompleta, righe 73–77 | Lo span `END..END` viene letto dal lettore base: `:cbor-truncated` a END anche per span vuoto o tag senza item terminale. Non esiste una testata completa cui applicare minimalità. |
-| Riutilizzo | Rifiuto preflight lascia lo scratch invariato; rifiuto durante scansione può sporcarlo. La successiva chiamata valida esegue il reset prima di entrambi i percorsi. |
+| Wrapper | Same keywords and defaults; generic NIL, minimal T. No other public entry to the boolean. |
+| Preflight | Range → workspace → alias EQ kinds → byte-limit → node-limit → depth-limit → byte-budget, before reset or byte reading. |
+| Step, lines 19–24 | T: base syntactic reader inside minimal reader → minimality → context; NIL: generic reader → context. Syntactically incomplete or illegal header precedes `:cbor-nonminimal`. |
+| Node and body, lines 25–28 | Minimality completed before node-budget, depth-budget, payload availability, and UTF-8. Syntactically permitted indefinite/break is nonminimal at lead in minimal API. |
+| Drain, lines 70–73 | Frame/root before next header. An already-completed root signals `:cbor-trailing` at first remaining byte, without applying minimality to tail. |
+| Incomplete end, lines 73–77 | Span `END..END` is read by base reader: `:cbor-truncated` at END even for empty span or tag without terminal item. No complete header exists to apply minimality to. |
+| Reuse | Preflight rejection leaves scratch unchanged; rejection during scanning may dirty it. The next valid call resets before either path. |
 
-## Checklist C1 dell'autore
+<a id="checklist-c1-dellautore"></a>
 
-| Punto | Riscontro statico e limite |
+## Author's C1 checklist
+
+| Item | Static finding and limit |
 |---|---|
-| 1. Requisiti/ADR | REQ-LIM-001/002 e AFF-004/008 dichiarati; ADR-0014/0048 per header, ADR-0031/0035 per disciplina C1. Profilo completo fuori ambito. |
-| 2. Invarianti | Buffer immutabile, scratch esclusivo, progresso e risultati controllati; INV-F1/A8/P6. Oracoli e prove dei confini ancora pendenti. |
-| 3. Errori | Condizioni tipizzate propagate; priorità sintassi/minimalità e trailing descritte sopra. Nessun handler nuovo; transizione Serie FAULTED fuori dal kernel. |
-| 4. Limiti | Un solo ciclo repeat SPAN e drain102 invariato, header massimo nove byte; nessuna ricorsione o attesa nuova. |
-| 5. Heap | Solo argomenti/valori locali nel refactor, scratch esistente preallocato e chiamate dirette. Nonallocazione non attestata: misura e sensore positivo pendenti. |
-| 6. Uscita | Solo tre valori dopo le postcondizioni condivise, nessun AST/payload decodificato o copiato. |
-| 7. Decisioni | D01–D03 confrontate con il codice; selezione semplice T/NIL e priorità inventariate. Copertura grezza e MC/DC non attestati. |
-| 8. Proprietà | Commenti OWNER/SHARED nei due file: buffer del chiamante, scratch di un solo worker/chiamata; nessun globale mutabile nuovo. |
-| 9. Integrazione | Export aggiunto. ASDF, matrice, build/lint/trace e `make check` sono compito del coordinatore e restano pendenti. |
-| 10. Standard | safety3, FTYPE completi, docstring/REQ, funzioni entro 60 righe. Passo, risultato e nucleo hanno almeno due controlli attivi; i wrapper sono deleghe banali. Nessuna deviazione introdotta o approvata. |
-| 11. Parallelismo | Nessun lock, stato condiviso, attesa, I/O o creazione thread. La condivisione concorrente dello stesso scratch viola la precondizione; worker indipendenti devono averne uno ciascuno. |
-| 12. Durabilità | Nessuna scrittura durevole, pubblicazione o eliminazione. Punto di atomicità non applicabile. |
+| 1. Requirements/ADRs | REQ-LIM-001/002 and AFF-004/008 declared; ADR-0014/0048 for headers, ADR-0031/0035 for C1 discipline. Complete profile out of scope. |
+| 2. Invariants | Immutable buffer, exclusive scratch, checked progress and results; INV-F1/A8/P6. Oracles and boundary tests still pending. |
+| 3. Errors | Typed conditions propagated; syntax/minimality and trailing priority described above. No new handler; Serie FAULTED transition outside kernel. |
+| 4. Limits | Single repeat SPAN loop and unchanged drain102, maximum nine-byte header; no new recursion or wait. |
+| 5. Heap | Only local arguments/values in refactor, existing preallocated scratch, and direct calls. Nonallocation not attested: measurement and positive sensor pending. |
+| 6. Output | Only three values after shared postconditions, no decoded or copied AST/payload. |
+| 7. Decisions | D01–D03 compared with code; simple T/NIL selection and priorities inventoried. Raw coverage and MC/DC not attested. |
+| 8. Ownership | OWNER/SHARED comments in both files: caller buffer, scratch of one worker/call; no new mutable global. |
+| 9. Integration | Export added. ASDF, matrix, build/lint/trace, and `make check` are coordinator tasks and remain pending. |
+| 10. Standard | safety3, complete FTYPEs, docstrings/REQ, functions within 60 lines. Step, result, and core have at least two active checks; wrappers are trivial delegations. No deviation introduced or approved. |
+| 11. Parallelism | No lock, shared state, wait, I/O, or thread creation. Concurrent sharing of the same scratch violates the precondition; independent workers must each have one. |
+| 12. Durability | No durable write, publication, or deletion. Atomicity point not applicable. |
 
-Il riscontro statico non contiene rilievi aperti. Le campagne del
-coordinatore devono ancora verificare il comportamento osservabile,
-anche della API generica dopo lo spostamento del corpo, e quantificare
-heap e copertura senza restringere il denominatore. Questa consegna non
-chiude un gate del motore o un'approvazione umana.
+Static findings contain no open issues. Coordinator campaigns
+must still verify observable behavior,
+including generic API behavior after moving its body, and quantify
+heap allocation and coverage without narrowing the denominator. This delivery does not
+close an engine gate or human approval.

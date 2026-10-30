@@ -1,97 +1,103 @@
-# Verifica funzionale del GET ACTIVE ordinario
+<a id="verifica-funzionale-del-get-active-ordinario"></a>
 
-La suite dedicata aggiunge **28 test nominati**: 12 per costruzione e
-preflight, quattro per la geometria della directory e 12 per lettura.
-Segue il [metodo preregistrato](get-active-metodo.md). Le iterazioni sui
-formati e sui confini rimangono casi interni degli stessi test.
+# Functional verification of ordinary GET ACTIVE
 
-La [prima raccolta](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active/) conserva
-comandi, output, compilazioni, stato grezzo e HTML di copertura, fixture
-di processo e tutti i dieci spike. I suoi
-[audit delle copie](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-audits/)
-conservano separatamente verificatori, contratti, tentativi e risultati.
-La [ripetizione integrata](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-integration/)
-e i relativi
-[audit delle copie](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-integration-audits/)
-mantengono l'attribuzione al secondo freeze. FASL e report sono dati,
-mai codice da caricare; la compressione dei file grandi è senza perdita
-e conserva l'impronta del contenuto espanso.
+Dedicated suite adds **28 named tests**: 12 construction/
+preflight, four directory geometry, 12 reading.
+Follows [preregistered method](get-active-metodo.md). Format/boundary
+iterations remain internal cases within same tests.
 
-## Risultati locali e attribuzione
+[First collection](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active/) preserves
+commands, outputs, builds, raw coverage state/HTML, process
+fixtures, all ten spikes. Its
+[copy audits](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-audits/)
+separately preserve verifiers, contracts, attempts, results.
+[Integrated repetition](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-integration/)
+and its
+[copy audits](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-integration-audits/)
+retain attribution to second freeze. FASLs/reports are data,
+never code to load; large-file compression lossless,
+preserving expanded-content hash.
 
-Il primo freeze, `42dcad77530c09784f9d77fabb92ff4477927983`, supera
-`make check` R2 senza avvisi: **1.080 test di modulo in 29 suite e due
-smoke check**. I processi separati di copertura eseguono i 28 test ACTIVE
-e i 42 CLOSED. I record positivi hanno exit 0, working tree iniziale
-pulito e gli stessi **771 path/blob** prima e dopo, verificati contro il
-commit; l'inventario esclude `spikes/results/`.
+<a id="risultati-locali-e-attribuzione"></a>
 
-L'integrazione delle fonti GET della Serie con il main esatto
-`64a5ef06987af61c36ce9818eb24ca8f0a0eb7f4` modifica il wrapper ACTIVE
-per delegare al resolver della radice catturata e aggiunge 27 test di
-un'altra suite. Sul freeze `e8c88a4cdc697422eb05b0c6a7f79d0ec9480e26`
-il controllo completo passa senza avvisi con **1.107 test di modulo in
-29 suite e due smoke check**. Le due coperture isolate ripassano 28 test
-ACTIVE e 42 CLOSED. I record hanno exit 0 e **781 path/blob** stabili,
-corrispondenti all'intero inventario Git del freeze, esclusi i risultati.
-L'audit indipendente ricava dal Git congelato nomi, ordine e totali dei
-test; verifica anche l'associazione fra comando esterno e record interno.
-Questi esiti appartengono ai rispettivi freeze locali, non alla CI.
+## Local results and attribution
 
-Prima della pull request si integra anche il main esatto
-`061e638200f0d97fc2443c7dec38d4362ef274e1`. Le 18 nuove prove del pool
-di worker portano il totale a **1.125 test di modulo in 29 suite e due
-smoke check**. Una terza copia separata supera `make check` sul freeze
-`ae4022fb66914c53a8f9fba69298e88ce2a35d98`, con working tree pulito,
-exit 0 e **807 path/blob** stabili e corrispondenti al Git congelato.
-Non compaiono WARNING o STYLE-WARNING; le NOTE del compilatore nello
-stderr originale rimangono conservate. L'audit indipendente ricava
-conteggi e ordine dai sorgenti, associa i record esterno/interno, verifica
-i quattro errori attesi delle fixture e l'esatto inventario dei 314 FASL
-del sistema e dei test, letti soltanto come byte.
+First freeze `42dcad77530c09784f9d77fabb92ff4477927983` passes
+`make check` R2 without warnings: **1,080 module tests in 29 suites and two
+smoke checks**. Separate coverage processes run 28 ACTIVE tests
+and 42 CLOSED. Positive records exit 0, initially clean working
+tree, same **771 path/blob** pairs before/after verified against
+commit; inventory excludes `spikes/results/`.
 
-La [raccolta finale](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-final/)
-conserva i gruppi completi di questa verifica e i suoi due audit locali;
-gli [audit delle copie](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-final-audits/)
-sono separati. R1 usa un controllo di associazione della cache basato
-sulla presenza della directory nell'argomento ASDF. R2 rafforza il solo
-helper: legge l'argomento come dati con `read-eval` disabilitato ed EOF e
-verifica esattamente i due pathname wildcard sorgente/destinazione e
-l'esclusione della configurazione ereditata. Entrambi i tentativi e le
-rispettive fonti sono conservati; la verifica del mapping esatto appartiene
-a R2. I dieci sorgenti di copertura sono invariati rispetto a `e8c88a4`:
-le misure rimangono attribuite a quel freeze, senza una nuova esecuzione.
+Integration of Serie GET sources with exact main
+`64a5ef06987af61c36ce9818eb24ca8f0a0eb7f4` changes ACTIVE wrapper
+to delegate to captured-root resolver and adds 27 tests of
+another suite. At freeze `e8c88a4cdc697422eb05b0c6a7f79d0ec9480e26`,
+full check passes without warnings with **1,107 module tests in
+29 suites and two smoke checks**. Both isolated coverage runs again pass 28
+ACTIVE and 42 CLOSED tests. Records exit 0 and **781 path/blob** pairs stable,
+matching full freeze Git inventory excluding results.
+Independent audit derives test names/order/totals from frozen
+Git; also checks external-command/internal-record association.
+Outcomes belong to respective local freezes, not CI.
 
-Nota editoriale sul README originale conservato nella raccolta finale:
-645.763 è il numero di **caratteri** della stringa `:stderr` del core,
-corrispondente a **645.773 byte UTF-8**. L'etichetta originale «byte» è
-imprecisa; gli output, le impronte e gli esiti rimangono invariati.
+Before pull request also integrate exact main
+`061e638200f0d97fc2443c7dec38d4362ef274e1`. 18 new worker-pool
+tests bring total to **1,125 module tests in 29 suites and two
+smoke checks**. Third separate copy passes `make check` at freeze
+`ae4022fb66914c53a8f9fba69298e88ce2a35d98`, clean working tree,
+exit 0, **807 path/blob** pairs stable/matching frozen Git.
+No WARNING/STYLE-WARNING; compiler NOTEs in original
+stderr preserved. Independent audit derives counts/order
+from sources, associates external/internal records, checks
+four expected fixture errors and exact inventory of 314 system/test
+FASLs, read only as bytes.
 
-Le fixture ACTIVE usano file reali, header v1/v2, cornici e CRC attesi
-indipendenti dagli encoder del prodotto. Le frontiere derivano da offset
-letterali e dal piano del lotto; la mappa costruita non fornisce l'oracolo.
-I test comprendono CSN oltre la word bassa, flag ordinari 0/4, tombstone,
-budget esatti e un byte sotto, persistenza della radice e riuso del lotto.
-La vista sintetica di 65.536 pagine verifica la ricerca e la convergenza,
-non rappresenta altrettanti lotti nativi.
+[Final collection](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-final/)
+preserves full groups of this check and both local audits;
+[copy audits](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-active-final-audits/)
+separate. R1 uses cache-association check based
+on directory presence in ASDF argument. R2 strengthens helper
+only: reads argument as data with disabled `read-eval` and EOF,
+checks exactly two source/destination wildcard pathnames and
+exclusion of inherited configuration. Both attempts and sources
+preserved; exact-mapping verification belongs
+to R2. Ten coverage sources unchanged from `e8c88a4`:
+measurements attributed to that freeze, without new execution.
 
-Le letture entrano da `avvia-get` con snapshot ed EBR reali. Confrontano
-byte, sentinelle, i cinque esiti, cache fredda/calda e frontiera della
-pagina anche dopo append. Una radice soltanto pianificata non autorizza
-la lettura. Location incoerenti, CSN o dimensione errati, proprietario
-estraneo e FD chiuso verificano i guasti; buffer piccolo, nuovo ingresso,
-scadenza dopo copia provvisoria e uscita non locale durante pread
-verificano il cleanup GET/EBR prima del cleanup esterno. Resolve e probe
-non eseguono I/O.
+Editorial note on original README preserved in final collection:
+645,763 is **character** count of core `:stderr` string,
+corresponding to **645,773 UTF-8 bytes**. Original “bytes” label
+imprecise; outputs, hashes, outcomes unchanged.
 
-## Copertura diagnostica isolata
+ACTIVE fixtures use real files, v1/v2 headers, frames/CRCs expected
+independently of product encoders. Frontiers derive from literal
+offsets and batch plan; built map does not supply oracle.
+Tests include CSNs beyond low word, ordinary flags 0/4, tombstones,
+exact and one-byte-below budgets, root persistence, batch reuse.
+Synthetic 65,536-page view verifies search/convergence,
+not that many native batches.
 
-SB-COVER viene azzerato dopo il caricamento e prima dei soli 28 test
-ACTIVE. Stato grezzo, riepilogo e conteggi HTML sono confrontati per
-ciascuna sorgente. Il profilo contiene dieci file e undici HTML, incluso
-l'indice. La tabella appartiene al freeze integrato `e8c88a4`.
+Reads enter from `avvia-get` with real snapshots/EBR. Compare
+bytes, sentinels, five outcomes, cold/hot cache, page
+frontier even after append. Merely planned root does not authorize
+read. Inconsistent locations, wrong CSN/size, foreign owner,
+closed FD check faults; small buffer, new entry,
+expiry after provisional copy, nonlocal exit during pread
+check GET/EBR cleanup before external cleanup. Resolve/probe
+perform no I/O.
 
-| File in `src/get-resolver/` | Espressioni eseguite/totali | Rami eseguiti/totali |
+<a id="copertura-diagnostica-isolata"></a>
+
+## Isolated diagnostic coverage
+
+SB-COVER reset after loading, before only 28 ACTIVE
+tests. Raw state, summary, HTML counts compared per
+source. Profile contains ten files, eleven HTML files including
+index. Table belongs to integrated freeze `e8c88a4`.
+
+| File in `src/get-resolver/` | Executed/total expressions | Executed/total branches |
 |---|---:|---:|
 | package.lisp | 0/1 | 0/0 |
 | types.lisp | 1/29 | 0/0 |
@@ -103,54 +109,56 @@ l'indice. La tabella appartiene al freeze integrato `e8c88a4`.
 | active-build.lisp | 244/274 | 29/36 |
 | active-preflight.lisp | 130/193 | 16/26 |
 | active-read.lisp | 102/115 | 7/8 |
-| **Totale** | **1028/1491 (68,95%)** | **122/192 (63,54%)** |
+| **Total** | **1028/1491 (68.95%)** | **122/192 (63.54%)** |
 
-Il primo freeze aveva 1001/1459 espressioni e 121/190 rami; i denominatori
-appartengono ai rispettivi sorgenti congelati. Zero rami significa
-denominatore zero, senza percentuale inventata. Il processo separato
-CLOSED mantiene i **42 test** e il perimetro di sette sorgenti/otto HTML:
-**1156/1416 espressioni (81,64%)** e **131/184 rami (71,20%)**, invariati
-fra i due freeze. La [verifica CLOSED](get-resolver-verifica.md) descrive
-il suo distinto perimetro OUTCOME.
+First freeze had 1001/1459 expressions, 121/190 branches; denominators
+belong to respective frozen sources. Zero branches means
+zero denominator, no invented percentage. Separate CLOSED
+process retains **42 tests** and seven-source/eight-HTML scope:
+**1156/1416 expressions (81.64%)**, **131/184 branches (71.20%)**, unchanged
+between freezes. [CLOSED verification](get-resolver-verifica.md) describes
+its distinct OUTCOME scope.
 
-## Tentativi conservati e limiti delle prove
+<a id="tentativi-conservati-e-limiti-delle-prove"></a>
 
-Il primo `make check` R1 fallisce sulla configurazione della cache ASDF
-privata, che usa stringhe wildcard anziché pathname: non si osservano
-output di compilazione o riepiloghi dei test. R2 corregge soltanto
-l'argomento del comando sullo stesso
-freeze. Il fallimento e il suo audit separato restano conservati e non
-sono promossi a esito complessivo positivo.
+## Preserved attempts and test limits
 
-Le tre fixture CLI iniziali terminano con errore di uso senza creare
-directory di rapporto. Il duplicato suite iniziale ha sei argomenti e
-raggiunge soltanto il guard di cardinalità. La ripetizione integrata usa
-quattro argomenti, `--suite active --suite active`, e verifica il messaggio
-specifico del duplicato con exit 1, senza richiedere un rapporto. Le
-fixture reader/snapshot conservano quattro errori di processo attesi:
-SIGKILL prima del completamento ed exit 7 dopo `COMPLETE`. Non sono
-fallimenti del prodotto; l'audit verifica record e output grezzi come dati.
+First `make check` R1 fails at private ASDF cache
+configuration using wildcard strings instead of pathnames: no
+compilation output or test summaries observed. R2 corrects command
+argument only on same
+freeze. Failure/separate audit preserved, not
+promoted to overall success.
 
-Sono conservati anche i tentativi falliti degli helper. Il primo
-verificatore indipendente dei report di copertura ha un errore sintattico
-prima della lettura delle prove:
-stdout/stderr sono disponibili, ma il suo sorgente iniziale non è stato
-preservato. Questa lacuna non viene ricostruita né descritta come
-provenienza completa. Gli altri tentativi corretti conservano il sorgente
-precedente e gli output. L'audit delle copie iniziale R1 termina con exit
-0 ma emette un avviso per una coda costante passata a `sort`; i contatori
-console sono inoltre alterati da `nreverse`. R2 corregge il solo helper
-e ripete con exit 0 senza avvisi, inventari e SHA stabili; il tentativo R1
-rimane conservato.
+Three initial CLI fixtures end in usage error without creating
+report directories. Initial duplicate suite has six arguments,
+reaches cardinality guard only. Integrated repetition uses
+four arguments, `--suite active --suite active`, verifies specific
+duplicate message with exit 1, without requiring report.
+Reader/snapshot fixtures retain four expected process errors:
+SIGKILL before completion and exit 7 after `COMPLETE`. Not product
+failures; audit verifies records/raw output as data.
 
-La lettura indipendente usa `tools/evidence-storage.lisp`, `read-eval`
-disabilitato e un solo dato seguito da EOF. Verifica inventari e hash in
-due passaggi, senza caricare report o FASL. La copertura è diagnostica:
-non dimostra MC/DC, qualifica C1 o risultati di mutazioni. Non si misurano
-prestazioni, heap o RSS; i payload sono calcoli di geometria.
+Failed helper attempts also preserved. First independent
+coverage-report verifier has syntax error
+before reading evidence:
+stdout/stderr available, but initial source not
+preserved. Gap neither reconstructed nor described as
+complete provenance. Other corrected attempts preserve previous
+source and outputs. Initial copy audit R1 exits
+0 but emits warning for constant tail passed to `sort`; console
+counts also altered by `nreverse`. R2 corrects helper only,
+repeats with exit 0, no warnings, stable inventories/SHAs; R1 attempt
+preserved.
 
-Questi 28 test ordinari non qualificano autonomamente la nuova API della
-radice catturata, prepared/OUTCOME ACTIVE, EDIT, directory mista,
-pubblicazione concorrente, indice concreto atomico, rotazione/reclaim,
-multiserie o server. Restano aperti decisioni non esercitate, requisiti,
-qualifica C1 e Fase 0.
+Independent reading uses `tools/evidence-storage.lisp`, disabled `read-eval`,
+one datum followed by EOF. Checks inventories/hashes in
+two passes without loading reports/FASLs. Coverage diagnostic:
+demonstrates neither MC/DC, C1 qualification, nor mutation results. No
+performance/heap/RSS measurement; payloads are geometry calculations.
+
+These 28 ordinary tests do not independently qualify new captured-root
+API, prepared/OUTCOME ACTIVE, EDIT, mixed directory,
+concurrent publication, atomic concrete index, rotation/reclaim,
+multiseries, server. Unexercised decisions, requirements,
+C1 qualification, Phase 0 remain open.

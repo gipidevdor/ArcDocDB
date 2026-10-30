@@ -1,62 +1,68 @@
-# ADR-0064 — Adozione seriale delle immagini primarie nello startup M1
+<a id="adr-0064--adozione-seriale-delle-immagini-primarie-nello-startup-m1"></a>
 
-- **Stato:** Accettata nell'integrazione incrementale autorizzata dall'autore il 2026-10-29
-- **Data:** 2026-10-29
-- **Riferimenti:** ADR-0057, ADR-0058, ADR-0063; REQ-IDX-010, INV-I8, INV-A2, INV-A8, INV-P6
-- **Rapporto con la specifica:** concretizza il collegamento M1; nessun emendamento ai formati autorevoli
+# ADR-0064 — Serial adoption of primary images at M1 startup
 
-## Decisione
+- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-29
+- **Date:** 2026-10-29
+- **References:** ADR-0057, ADR-0058, ADR-0063; REQ-IDX-010, INV-I8, INV-A2, INV-A8, INV-P6
+- **Relationship to the specification:** implements the M1 connection; no amendment to authoritative formats
 
-M1 puo' ricevere un candidato privato esplicito `primary-<16 hex>.idx.tmp`
-nella directory gia' esclusiva del motore. La selezione del nome non e' una
-decisione durevole, non abilita rinomina o cancellazione e non sostituisce
-CONTROL/WAL. L'inventario dei segmenti continua a ignorare questo nome estraneo.
-Nessun nuovo documento di catalogo viene introdotto. La selezione e' incompatibile
-con CREATE, che richiede una directory vuota: la combinazione e' rifiutata prima dell’I/O.
+<a id="decisione"></a>
 
-Il recovery completa i gate e il checkpoint canonici e ricostruisce il
-residente. Solo allora verifica il derivato contro una fonte ricavata dal
-replay: UUID Archivio/Serie, ultimo CSN, cardinalita' viva esatta e un token
-di 32 byte. Nel solo profilo M1 append-only il token codifica quattro u64
-little endian: versione dati, ID segmento, offset e lunghezza dell'ultimo
-record committed, PUT o tombstone. Prima del primo record contiene la
-versione e tre zeri. Il CSN zero non e' usato come indicatore di assenza.
+## Decision
 
-La validita' dell'identita' del prefisso discende dai segmenti immutabili,
-dagli ID mai riusati e dal rifiuto M1 di compaction, prepared e rimozioni.
-Checkpoint e nuovi ACTIVE vuoti non cambiano la fonte. Non e' un hash del
-dataset: estendere M1 a riscritture/compaction richiede un nuovo legame
-canonico; questa regola non e' riutilizzabile per quei piani.
+M1 may receive an explicit private candidate `primary-<16 hex>.idx.tmp`
+in the engine's already exclusive directory. Selecting the name is not a
+durable decision, does not enable rename or deletion, and does not replace
+CONTROL/WAL. The segment inventory continues to ignore this unrelated name.
+No new catalog document is introduced. Selection is incompatible
+with CREATE, which requires an empty directory: the combination is rejected before I/O.
 
-Ogni candidato viene confrontato con il residente ricostruito, normalizzando
-il solo offset dell'arena, estraneo al formato paginato. Cardinalita',
-appartenenza e unicita' gia' verificate da ADR-0063 chiudono la copertura.
-Il motore possiede il medesimo FD readonly fino al close, anche dopo il ritiro.
-Un candidato esplicito mancante, incompatibile, corrotto o oltre budget
-rifiuta lo startup senza admission e senza fallback. Il checkpoint dei dati
-puo' essere gia' completato: il rifiuto non e' un rollback del recovery canonico.
+Recovery completes the canonical gates and checkpoint and rebuilds the
+resident index. Only then does it verify the derivative against a source derived from
+replay: Archivio/Serie UUID, last CSN, exact live cardinality, and a
+32-byte token. Only in the M1 append-only profile, the token encodes four
+little-endian u64s: data version, segment ID, offset, and length of the last
+committed record, PUT or tombstone. Before the first record it contains
+the version and three zeros. CSN zero is not used as an absence marker.
 
-Il GET M1 usa un selettore fidato e seriale del controller, immutabile nella
-vista GET. Un solo lookup produce il candidato; risoluzione del segmento,
-controlli del record e copia del valore restano nel resolver esistente.
-Nessun errore del paginato viene reinterpretato come assenza o ripiego.
+The validity of the prefix identity follows from immutable segments,
+never-reused IDs, and M1's rejection of compaction, prepared records, and removals.
+Checkpoints and new empty ACTIVE segments do not change the source. It is not a dataset
+hash: extending M1 to rewrites/compaction requires a new
+canonical binding; this rule cannot be reused for those plans.
 
-Le verifiche ordinarie di input e capienza precedono il ritiro. All'ingresso
-di una scrittura ammessa, prima del commit, il motore ritira il riferimento
-privato all'immagine e torna al residente. Il commit aggiorna il residente e
-la fonte prima dell'ACK; errori successivi chiudono admission secondo il
-protocollo M1 esistente. Il ritiro non alloca e non modifica/chiude il derivato.
+Every candidate is compared with the rebuilt resident index, normalizing
+only the arena offset, which is outside the paged format. Cardinality,
+membership, and uniqueness already verified by ADR-0063 establish complete coverage.
+The engine owns the same read-only FD until close, even after retirement.
+A missing, incompatible, corrupt, or over-budget explicit candidate
+refuses startup without admission or fallback. The data checkpoint
+may already be complete: refusal does not roll back canonical recovery.
 
-## Limiti e seguito
+M1 GET uses a trusted serial controller selector, immutable in the
+GET view. A single lookup produces the candidate; segment resolution,
+record checks, and value copying remain in the existing resolver.
+No paged-index error is reinterpreted as absence or fallback.
 
-Il residente resta presente ed e' ancora il limite di capienza del writer:
-questa integrazione non dimostra dataset oltre RAM e non attua la selezione
-automatica di ADR-0057. Costruzione completa dal motore, delta writer,
-catalogo durevole, reclamation, snapshot e swap concorrenti restano separati.
-La selezione esplicita e' un ingresso di integrazione del controller, non
-il contratto finale di configurazione automatica del prodotto.
+Ordinary input and capacity checks precede retirement. On entry to an
+admitted write, before commit, the engine retires the private image
+reference and returns to the resident index. Commit updates the resident index and
+source before ACK; subsequent errors close admission according to the
+existing M1 protocol. Retirement allocates nothing and does not modify/close the derivative.
 
-Rimuovendo l'opzione di selezione, il successivo startup usa il residente;
-il file derivato resta intatto. Nessuna migrazione dei dati o nuovo lock
-tra Serie. Contratto, decisioni e prove nel
-[collegamento M1](../implementazione/indice-paginato-m1.md).
+<a id="limiti-e-seguito"></a>
+
+## Limits and follow-up
+
+The resident index remains present and is still the writer's capacity limit:
+this integration does not demonstrate datasets beyond RAM and does not implement
+ADR-0057's automatic selection. Complete engine-driven construction, writer delta,
+durable catalog, reclamation, snapshots, and concurrent swaps remain separate.
+Explicit selection is a controller integration entry point rather than
+the final automatic product configuration contract.
+
+Removing the selection option makes the next startup use the resident index;
+the derived file remains intact. No data migration or new lock
+across Serie. Contract, decisions, and tests in the
+[M1 connection](../implementazione/indice-paginato-m1.md).

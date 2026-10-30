@@ -1,26 +1,28 @@
-# Preparazione del tratto: rilettura C3/C4
+<a id="preparazione-del-tratto-rilettura-c3c4"></a>
 
-Lettura dell'autore il 2026-10-15, dopo le fixture di sviluppo e prima delle
-campagne formali. Una lettura C3 con checklist ADR-0031/0034; non è una nuova
-revisione C1 né una revisione indipendente. Esito statico favorevole, senza
-rilievi aperti. Copertura, misure e controlli completi restano evidenze separate.
+# Preparing the execution slice: C3/C4 rereading
 
-| Controllo | Riscontro |
+Author's reading on 2026-10-15, after development fixtures and before
+formal campaigns. One C3 reading with ADR-0031/0034 checklist; neither a new
+C1 review nor an independent review. Favorable static outcome, without
+open findings. Coverage, measurements, and full checks remain separate evidence.
+
+| Check | Finding |
 |---|---|
-| Requisiti e ambito | REQ-THR-001, REQ-CON-001/002/004/005, REQ-AFF-008; sole modifiche C3/C4. |
-| Stato e owner | Nessun nuovo stato; passo pubblico verifica porta/owner/binding/fase prima della selezione. |
-| Flusso limitato | Un passo e al più un begin; nessun ciclo o attesa nuovi nel prodotto. |
-| Routing | Il link scelto viene usato direttamente; spy verifica un routing e zero chiamate al secondo adapter. |
-| Risultati | Sette valori scalari; token originale con ACTIVE/CLOSING, zero con esiti senza begin; metadati originali. |
-| CLOSING e busy | Distinti ritorni gate e condizioni writer/ready; chiusura esplicita con token vivo, nessun retry implicito. |
-| Errori dopo trasferimento | Test con writer busy e routing invalido conservano claim/ACK riusciti; nessun rollback. |
-| Difese operative | Link/status T e helper NOTINLINE; FI su dieci coppie/status, prima del begin. |
-| Guasto terminale | Causa EQ, riferimenti e lease writer conservati; nessun handler o fault marking C3; limiti del caller documentati. |
-| Memoria e parallelismo | Nessuna nuova allocazione intenzionale o stato globale; nessuna scrittura condivisa per messaggio. Misura formale separata. |
-| C4 | Sette oracoli negativi; sensore heap/sink/clock condiviso, driver CLI/partial verificato; cinque fixture fresche per campagna. |
-| Copertura e conservazione | Reader nativo/HTML a otto file, fixture indipendente 8/9 e 1/2 rami; raw, missing e tentativi conservati senza esclusioni. |
+| Requirements and scope | REQ-THR-001, REQ-CON-001/002/004/005, REQ-AFF-008; C3/C4 changes only. |
+| State and owner | No new state; public step checks port/owner/binding/phase before selection. |
+| Bounded flow | One step and at most one begin; no new loops or waits in product. |
+| Routing | Selected link used directly; spy checks one routing and zero calls to second adapter. |
+| Results | Seven scalar values; original token with ACTIVE/CLOSING, zero with outcomes without begin; original metadata. |
+| CLOSING and busy | Distinct gate returns and writer/ready conditions; explicit close with live token, no implicit retry. |
+| Errors after transfer | Writer-busy and invalid-routing tests preserve successful claim/ACK; no rollback. |
+| Operational defenses | Link/status T and NOTINLINE helper; FI on ten pairs/statuses, before begin. |
+| Terminal fault | EQ cause, references, and writer lease retained; no C3 handler or fault marking; caller limits documented. |
+| Memory and parallelism | No new intentional allocation or global state; no shared per-message write. Separate formal measurement. |
+| C4 | Seven negative oracles; shared heap/sink/clock sensor, CLI/partial driver checked; five fresh fixtures per campaign. |
+| Coverage and preservation | Native/HTML reader across eight files, independent fixture 8/9 and 1/2 branches; raw, missing, and attempts preserved without exclusions. |
 
-Identità SHA-256 dei file letti (il documento stesso non è autoreferenziale):
+SHA-256 identities of files read (document itself is not self-referential):
 
 | File | SHA-256 |
 |---|---|

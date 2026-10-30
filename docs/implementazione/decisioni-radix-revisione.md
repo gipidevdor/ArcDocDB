@@ -1,283 +1,299 @@
-# Seconda lettura C1 dell'ordinamento radix integrato
+<a id="seconda-lettura-c1-dellordinamento-radix-integrato"></a>
 
-Lettura indipendente del 2026-10-09, eseguita dall'agente
-`/root/scan_audit` sull'ordinamento DECISION integrato e sul test dei
-lettori concorrenti. Esito dell'ispezione: nessun difetto funzionale
-individuato nei sorgenti delimitati sotto. È una lettura automatica su
-file verificabili, non un'approvazione umana né una qualifica di rilascio.
+# Second C1 reading of integrated radix sorting
 
-## Versione e ambito
+Independent reading on 2026-10-09 by agent
+`/root/scan_audit` of integrated DECISION sorting and the concurrent-reader
+test. Inspection outcome: no functional defect
+identified in the sources delimited below. This is an automated reading of
+verifiable files, not human approval or release qualification.
 
-Gli hash sono SHA256 dei contenuti letti, non identificatori Git.
+<a id="versione-e-ambito"></a>
+
+## Version and scope
+
+Hashes are SHA256 of content read, not Git identifiers.
 
 | File | SHA256 |
 |---|---|
 | [`src/recovery/decisions-radix.lisp`](../../src/recovery/decisions-radix.lisp) | `564becba75721f15317b260b9a949eba716e682a9062c4e009d5463040c21e54` |
-| [`src/recovery/decisions-build.lisp`](../../src/recovery/decisions-build.lisp), due chiamate integrate | `be292ec655087a229a1630179876da9e302a6121985ec3141a5e35226885a115` |
-| [`tests/recovery/decisions-radix.lisp`](../../tests/recovery/decisions-radix.lisp), freeze finale | `75296b2de5620afd4f67117445197cb227adb4b9f65203e299ef6a4ee79518c0` |
-| [`src/recovery/decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), baseline e controlli delegati | `cfb4d0c6e02bb0253cff992b4ab0f9664c18b9054ee334d541e69931ff0876a2` |
-| [`src/recovery/decisions-query.lisp`](../../src/recovery/decisions-query.lisp), query preesistenti rilette | `08196938136a920e5e1cc84838726f721d1f43b59f1f677fac10871574171e24` |
+| [`src/recovery/decisions-build.lisp`](../../src/recovery/decisions-build.lisp), two integrated calls | `be292ec655087a229a1630179876da9e302a6121985ec3141a5e35226885a115` |
+| [`tests/recovery/decisions-radix.lisp`](../../tests/recovery/decisions-radix.lisp), final freeze | `75296b2de5620afd4f67117445197cb227adb4b9f65203e299ef6a4ee79518c0` |
+| [`src/recovery/decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), baseline and delegated checks | `cfb4d0c6e02bb0253cff992b4ab0f9664c18b9054ee334d541e69931ff0876a2` |
+| [`src/recovery/decisions-query.lisp`](../../src/recovery/decisions-query.lisp), existing queries reread | `08196938136a920e5e1cc84838726f721d1f43b59f1f677fac10871574171e24` |
 
-Sono stati consultati anche tipi, builder e fixture della tabella per
-controllare ownership, provenienza degli offset e limiti dei conteggi.
-Questa lettura comprende il collegamento al builder, non riqualifica
-l'intero recovery. Il diff rispetto al candidato preliminare SHA256
+Table types, builder, and fixtures were also consulted to
+check ownership, offset provenance, and count bounds.
+This reading includes the builder connection; it does not requalify
+all recovery. The diff from preliminary candidate SHA256
 `5093e1dda2876d3b31fd5a6e9196dc76bec04aa8a61ce933c63de59f73f36505`
-cambia l'header e aggiunge due costanti e due wrapper `if` in fondo al
-file; il corpo degli ordinamenti coincide esattamente. Ripristinando
-soltanto le due chiamate del builder si ottiene il precedente SHA256
+changes the header and adds two constants and two `if` wrappers at the end
+of the file; sorting bodies match exactly. Restoring
+only the two builder calls yields the prior SHA256
 `1bfedd82822ac47e17dcfa1ccf185bb48125d316daa3423cc501a2e0e624b3fb`.
-La versione preliminare dei test era SHA256
+The preliminary test version was SHA256
 `81d22bb4c5ac5375cf0daaa7443011b15a9563007151dd29d91dbfbbdfe9b915`;
-il freeze sopra aggiunge guardie e regressioni pubbliche.
+the freeze above adds guards and public regressions.
 
-Sorgente radix e test congelati coincidono per hash con la copia finale
-`arcdocdb-radix-final-pen8ap8t`. Tale copia parte dalla baseline
-`10576a0` più le aggiunte del modulo radix; l'ASD della root contiene
-lavori del runtime di altre chat ancora in corso. Le evidenze del clone
-non attestano quei lavori né la loro integrazione nella root. Nessun
-ASD, sorgente o test viene modificato da questa revisione.
+Frozen radix source and tests match by hash the final copy
+`arcdocdb-radix-final-pen8ap8t`. That copy starts from baseline
+`10576a0` plus radix module additions; the root ASD contains
+ongoing runtime work from other chats. Clone evidence
+attests neither to that work nor to its integration into root. No
+ASD, source, or test is modified by this review.
 
-L'[inventario delle decisioni e delle guardie](decisioni-radix-decisioni.md)
-riporta le clausole dei predicati, i casi dei test e i limiti delle
-motivazioni difensive. Il [metodo delle misure](decisioni-radix-metodo.md)
-è distinto da questa lettura.
+The [decision and guard inventory](decisioni-radix-decisioni.md)
+lists predicate clauses, test cases, and limits of
+defensive rationales. The [measurement method](decisioni-radix-metodo.md)
+is separate from this reading.
 
-## Controlli sull'ordinamento
+<a id="controlli-sullordinamento"></a>
 
-| Oggetto | Riscontro della seconda lettura |
+## Sorting checks
+
+| Subject | Second reading observation |
 |---|---|
-| Ordine unsigned | TXID u64 è ordinato con otto cifre da meno a più significative. Nessuna rotazione del bit di segno; zero, bit alto e massimo sono valori ordinari. ID16 è ordinato lessicograficamente con sedici passate dal byte 15 al byte 0. |
-| Istogramma e somme | Ogni passata conta l'intera sorgente corrente. Celle u64; totale `index`. La guardia `frequency <= N - total` precede l'incremento e la somma finale deve essere N. I prefissi esclusivi sono calcolati soltanto dopo questa verifica. |
-| Uniformità | Zero o una classe occupata restituiscono falso. Il chiamante non esegue né scatter né swap; nessuno scratch non inizializzato viene letto come sorgente. L'uniformità non è dedotta da campioni. |
-| Stabilità | Scatter in ordine crescente della sorgente e cursore crescente della classe. TXID uguali mantengono l'ordine fisico; il riferimento iniziale del gruppo non viene sostituito da CSN o altre chiavi. |
-| Limiti degli array | Misura ID16 esatta, scratch della stessa lunghezza e identità distinta prima delle scritture. Cifra limitata a 16/8 e posizione inferiore alla cardinalità prima del cast a `index`. |
-| Cursori dopo scatter | Monotonia, limite N e ultimo estremo esattamente N. La frequenza esatta di ogni classe deriva dal prefisso validato e dall'incremento per ogni elemento; non viene confrontata con una copia separata delle frequenze dopo scatter. |
-| Risultato e corruzione | Restituito il buffer corrente, anche dopo un numero dispari di passate effettive. Controllo finale di ordine TXID; controllo finale ID16 conserva errore tipizzato per duplicato e offset del record. Il builder mantiene coalescenza tutto-o-niente dopo l'ordinamento e non restituisce una tabella su errore. |
-| Ownership | Sorgente iniziale e scratch sono privati della costruzione; il sorter può riordinare la copia iniziale. Lo scatter non modifica la sorgente della singola passata. Le entry sono riferimenti a strutture private, senza scrittura dei loro campi. Nessun buffer originale viene esportato. |
-| Risorse e controllo del flusso | Nessuna ricorsione. Cicli di cifra limitati a 8/16; istogramma e cursori a 256; scan/scatter alla cardinalità effettiva. Workspace della misura effettiva più 256 celle, non della capienza inutilizzata di un budget. |
-| Effetti | Nessun I/O, attesa, pubblicazione, lock o stato globale mutabile. Il file dichiara OWNER/SHARED; allocazioni ammesse nel percorso di apertura. `safety 3`, `ftype`, docstring e riferimenti REQ presenti. |
-| Selezione | `count < 1024` sceglie merge per ID16; `length(entries) < 256` sceglie merge per TXID. Alla soglia e oltre viene scelto radix. IF semplici, senza campionamento o nuovi percorsi di gestione dell'errore. |
-| Sequenza del builder | `decode-decisions` passa copie private al wrapper ID16; il builder ordina le entry con il wrapper TXID prima di collapse. Scanner, budget e preflight restano prima delle copie. La soglia TXID riguarda i duplicati fisici prima della coalescenza. |
+| Unsigned order | u64 TXID sorted with eight digits from least to most significant. No sign-bit rotation; zero, high bit, and maximum are ordinary values. ID16 sorted lexicographically with sixteen passes from byte 15 to byte 0. |
+| Histogram and sums | Each pass counts the entire current source. u64 cells; total `index`. Guard `frequency <= N - total` precedes increment and final sum must be N. Exclusive prefixes computed only after this check. |
+| Uniformity | Zero or one occupied bucket returns false. Caller performs neither scatter nor swap; no uninitialized scratch is read as source. Uniformity is not deduced from samples. |
+| Stability | Scatter in increasing source order with increasing bucket cursor. Equal TXIDs preserve physical order; the initial group reference is not replaced by CSN or other keys. |
+| Array bounds | Exact ID16 size, scratch of same length and distinct identity before writes. Digit bounded to 16/8 and position below cardinality before cast to `index`. |
+| Cursors after scatter | Monotonicity, bound N, and final endpoint exactly N. Each bucket's exact frequency follows from validated prefix and increment for every element; it is not compared with a separate frequency copy after scatter. |
+| Result and corruption | Returns current buffer, including after an odd number of effective passes. Final TXID order check; final ID16 check retains typed duplicate error and record offset. Builder preserves all-or-nothing coalescing after sorting and returns no table on error. |
+| Ownership | Initial source and scratch private to construction; sorter may reorder initial copy. Scatter does not modify the individual pass's source. Entries are references to private structures, without field writes. No original buffer is exported. |
+| Resources and control flow | No recursion. Digit loops bounded to 8/16; histogram and cursors to 256; scan/scatter to actual cardinality. Workspace sized to actual size plus 256 cells, not unused budget capacity. |
+| Effects | No I/O, wait, publication, lock, or mutable global state. File declares OWNER/SHARED; allocations permitted on opening path. `safety 3`, `ftype`, docstrings, and REQ references present. |
+| Selection | `count < 1024` selects merge for ID16; `length(entries) < 256` selects merge for TXID. At and above threshold, radix selected. Simple IFs, without sampling or new error handling paths. |
+| Builder sequence | `decode-decisions` passes private copies to ID16 wrapper; builder sorts entries with TXID wrapper before collapse. Scanner, budgets, and preflights remain before copies. TXID threshold concerns physical duplicates before coalescing. |
 
-Il principio LSD con passate stabili e conteggio per classi è descritto
-nel [riferimento primario di Princeton](https://www.cs.princeton.edu/courses/archive/fall07/cos226/lectures/18RadixSort.pdf).
-L'applicazione agli unsigned u64, il salto delle passate uniformi e
-l'argomento sui buffer sono verifiche dell'adattamento locale, non
-garanzie di prestazione tratte dal riferimento.
+The LSD principle with stable passes and bucket counting is described
+in the [primary Princeton reference](https://www.cs.princeton.edu/courses/archive/fall07/cos226/lectures/18RadixSort.pdf).
+Application to unsigned u64, skipping uniform passes, and the buffer
+argument are checks of the local adaptation, not performance
+guarantees drawn from the reference.
 
-## Controlli sui test
+<a id="controlli-sui-test"></a>
 
-L'oracolo ID16 converte tutti i 128 bit in interi big-endian, ordina con
-`CL:STABLE-SORT` e ricostruisce ogni ottetto. L'oracolo delle entry
-ordina una copia soltanto per TXID e confronta ogni riferimento con
-`eq`; la stabilità non viene dedotta dal solo ordine numerico. Entrambi
-i sorter ricevono copie distinte delle fixture.
+## Test checks
 
-La versione dei test identificata sopra include cardinalità 0/1 per
-le funzioni private, cardinalità dispari e massimo u16 per ID16, tre
-pattern deterministici, ciascuno dei 128 bit degli ID e dei 64 bit dei
-TXID in entrambi gli ordini, errori di misura e offset dei partecipanti
-duplicati. Il caso a 65.536 entry, uniforme e con classe dominante più
-outlier, colma la lacuna rilevata nella prima ispezione: una frequenza o
-un cursore oltre u16 diventano osservabili. Non si attribuisce a questi
-casi privati la validità di una DECISION pubblica con meno di due
-partecipanti.
+The ID16 oracle converts all 128 bits to big-endian integers, sorts with
+`CL:STABLE-SORT`, and reconstructs every octet. The entry oracle
+sorts a copy only by TXID and compares every reference with
+`eq`; stability is not deduced from numeric order alone. Both
+sorters receive separate fixture copies.
 
-Il freeze finale contiene 18 test: nove iniziali, sei per le guardie
-private e tre regressioni pubbliche. Le guardie sono negate
-deliberatamente per somme e consumo, tipo delle entry, cifra fuori
-range, ogni clausola dei due array guard, cursori fuori limite e
-cursori finali decrescenti/incompleti. Si verificano rifiuti tipizzati
-prima delle scritture dove previsto, sorgenti invariate e controlli
-postscatter per prefissi sovrapposti. Restano distinti il limite u64
-della cardinalità e la postcondizione di ordine finale del sorter.
+The test version identified above includes cardinality 0/1 for
+private functions, odd cardinalities and maximum u16 for ID16, three
+deterministic patterns, each of the 128 ID bits and 64 TXID bits
+in both orders, size errors, and duplicate participant
+offsets. The 65.536-entry case, uniform and with a dominant bucket plus
+outlier, fills the gap identified in first inspection: frequency or
+cursor beyond u16 becomes observable. These private
+cases do not establish validity of a public DECISION with fewer than two
+participants.
 
-Le regressioni pubbliche provano ID16 1.023/1.024/1.025 ed entry
-255/256/257, in versioni 1/2 e con oracolo indipendente. Gli stessi
-conteggi di entry sono provati sia con TXID distinti sia con duplicati
-fisici coerenti che diventano un solo TXID. Il conflitto globale usa
-258 record in tre lotti: il gruppo TXID massimo presenta il primo
-conflitto fisico, il gruppo zero quello successivo. L'API deve indicare
-l'offset del primo, non quello del primo gruppo visitato numericamente.
-Sono verificati due tentativi e buffer invariato.
+The final freeze contains 18 tests: nine initial, six private-guard
+tests, and three public regressions. Guards are deliberately negated
+for sums and consumption, entry type, out-of-range digit,
+every clause of both array guards, out-of-bound cursors, and
+final decreasing/incomplete cursors. Typed rejections before
+writes where required, unchanged sources, and postscatter
+checks for overlapping prefixes are verified. The u64 cardinality
+bound and sorter's final order postcondition remain distinct.
 
-Il test concorrente costruisce una tabella completa e sovrascrive il
-log originale prima di creare sei thread reali. Le closure condividono
-la tabella e probe dichiarativi immutati; ogni thread possiede buffer
-ID, posizione e output distinti. I risultati includono esplicitamente
-found, CSN, count e membership, quindi CSN zero non viene confuso con
-assenza. Sono presenti TXID zero/massimo, gap e cardinalità 3/5/17.
+Public regressions test ID16 1.023/1.024/1.025 and entries
+255/256/257, in versions 1/2 with an independent oracle. The same
+entry counts are tested both with distinct TXIDs and consistent physical
+duplicates that become one TXID. Global conflict uses
+258 records in three batches: the maximum TXID group has the first
+physical conflict, the zero group the next. The API must report
+the former's offset, not that of the first numerically visited group.
+Two attempts and unchanged buffer are checked.
 
-Ready e release coordinano la fixture con timeout; il worker restituisce
-una condizione in caso di errore. I join hanno timeout e default di
-fallimento; il test accetta soltanto ritorni `t`, verifica thread
-terminati e confronta tutti gli output con l'oracolo. Il cleanup
-rilascia e attende i thread già creati senza sopprimere l'errore della
-preparazione. Le attese sono dell'harness e non entrano nella query o
-in un worker di calcolo del motore. Le query restano scalari, prive
-di scritture condivise per operazione.
+The concurrent test constructs a complete table and overwrites the
+original log before creating six real threads. Closures share
+the table and unchanged declarative probes; every thread owns distinct
+ID buffers, positions, and output. Results explicitly include
+found, CSN, count, and membership, so CSN zero is not confused with
+absence. Zero/maximum TXID, gaps, and cardinalities 3/5/17 are present.
 
-La baseline rigorosa isolata dell'agente `/root/review_changes` ha
-riportato exit 0 e nessun warning, con 43 test DECISION selezionati
-(25 preesistenti più i 18 sopra). È stato letto il termine del log
-`arcdocdb-radix-test-corrected-kbi2xy7r/baseline/test.log`, che contiene
-`decision-tests-complete 43`. Questa lettura non ripete la build.
+Ready and release coordinate the fixture with timeouts; the worker returns
+a condition on error. Joins have timeouts and failure
+defaults; the test accepts only `t` returns, checks terminated
+threads, and compares all outputs with the oracle. Cleanup
+releases and waits for created threads without suppressing the setup
+error. Waits belong to the harness and do not enter the query or
+an engine compute worker. Queries remain scalar, without
+shared per-operation writes.
 
-## Selezione misurata riletta
+The isolated strict baseline from agent `/root/review_changes`
+reported exit 0 and no warnings, with 43 selected DECISION tests
+(25 existing plus the 18 above). The end of log
+`arcdocdb-radix-test-corrected-kbi2xy7r/baseline/test.log` was read; it contains
+`decision-tests-complete 43`. This reading does not repeat the build.
 
-Sono stati letti come dati, senza eseguire il driver, i registri
-`spikes/results/2026-10-09-radix/benchmark-100ms-dati.lisp` e
-`spikes/results/2026-10-09-radix/selezione-100ms.lisp` nella copia
-finale. Il [metodo](decisioni-radix-metodo.md) conserva la prima matrice
-e l'emendamento precedente alla ripetizione: target di calibrazione
-100 ms, minimo di ogni campione 50 ms, stesso criterio di rapporto
-fra mediane al massimo 0,9 e stessa matrice completa.
+<a id="selezione-misurata-riletta"></a>
 
-| Ambito | Soglia adottata | Scenari misurati alla soglia e oltre | Peggior rapporto mediana radix/merge fra questi scenari |
+## Rereading measured selection
+
+Records
+`spikes/results/2026-10-09-radix/benchmark-100ms-dati.lisp` and
+`spikes/results/2026-10-09-radix/selezione-100ms.lisp` were read as data
+in the final copy, without running the driver. The [method](decisioni-radix-metodo.md)
+retains the first matrix and amendment before repetition: calibration target
+100 ms, minimum per sample 50 ms, same median-ratio criterion
+of at most 0,9, and same complete matrix.
+
+| Scope | Adopted threshold | Scenarios measured at and above threshold | Worst radix/merge median ratio among these scenarios |
 |---|---|---|---|
-| ID16 | 1.024 partecipanti | 16, tutti usabili e conformi al criterio | `0.857956293237167` |
-| TXID | 256 entry fisiche | 25, tutti usabili e conformi al criterio | `0.759877353704754` |
+| ID16 | 1.024 participants | 16, all usable and meeting criterion | `0.857956293237167` |
+| TXID | 256 physical entries | 25, all usable and meeting criterion | `0.759877353704754` |
 
-Il registro conserva 63 scenari, di cui 58 usabili. I cinque non
-usabili sono entry di cardinalità 16, nei pattern ordered, reverse,
-mixed, duplicates e uniform: la calibrazione non raggiunge il target
-prima del limite e questi scenari non entrano nel criterio. Non si
-afferma che tutti i 63 scenari siano qualificati. Tutti i 41 scenari
-alla soglia adottata e oltre sono invece usabili e passano il criterio.
+The record retains 63 scenarios, 58 usable. The five unusable
+scenarios are entries of cardinality 16 in ordered, reverse,
+mixed, duplicates, and uniform patterns: calibration does not reach target
+before the limit and these scenarios do not enter the criterion. It is not
+claimed that all 63 scenarios are qualified. All 41 scenarios
+at and above adopted thresholds are usable and pass the criterion.
 
-La scelta è locale all'ambiente della misura e alle distribuzioni
-provate. Il pattern ID16 con tutti i byte variabili ha le due metà
-correlate; non rappresenta campionamento uniforme di tutti i 128 bit.
-La misura comprende scratch e GC dell'ordinamento, conserva i dati
-heap e non dimostra zero heap. Non viene estrapolata a cardinalità
-non misurate, Linux/x86-64, throughput del motore o P99.
+Selection is local to the measured environment and tested
+distributions. The all-variable-byte ID16 pattern has correlated
+halves; it does not represent uniform sampling of all 128 bits.
+Measurement includes sorting scratch and GC, retains heap
+data, and does not demonstrate zero heap. It is not extrapolated to unmeasured
+cardinalities, Linux/x86-64, engine throughput, or P99.
 
-## Copertura grezza e guardie residue
+<a id="copertura-grezza-e-guardie-residue"></a>
 
-È stato letto come dati lo stato grezzo della copertura
-`spikes/out/decisions-radix-coverage-final/` nella copia finale.
-I conteggi ricalcolati e confrontati con l'inventario sono:
+## Raw coverage and remaining guards
 
-| Ambito | Espressioni osservate/totali | Alternative di ramo osservate/totali |
+Raw coverage state
+`spikes/out/decisions-radix-coverage-final/` in the final copy was read as data.
+Counts recalculated and compared with inventory are:
+
+| Scope | Observed/total expressions | Observed/total branch alternatives |
 |---|---|---|
-| Sei sorgenti DECISION | 1.332 / 1.530 | 138 / 176 |
-| Solo `decisions-radix.lisp` | 384 / 409 | 53 / 54 |
+| Six DECISION sources | 1.332 / 1.530 | 138 / 176 |
+| Only `decisions-radix.lisp` | 384 / 409 | 53 / 54 |
 
-Le 25 espressioni mancanti nel radix sono 16 forme top-level
-(package, policy optimize, costanti, deftype e declaim), una sottoforma
-del tipo histogram e otto forme di errore in due siti: quattro per
-cardinalità non u64 e quattro per ordine finale delle entry errato.
-L'unica alternativa mancante è la negazione di
-`typep(length(source), u64)`, RAD-G06. Il limite fixnum `index` e i
-limiti degli array del runtime SBCL usato sono più stretti di u64:
-la lunghezza non può violare quel controllo. RAD-G17 resta una
-postcondizione difensiva contro un difetto dell'algoritmo; nella
-misura sono assenti le forme del suo errore, senza un'ulteriore
-alternativa di ramo mancante associata al `loop`.
+The 25 missing radix expressions are 16 top-level forms
+(package, optimize policy, constants, deftype, and declaim), one histogram
+type subform, and eight error forms at two sites: four for
+non-u64 cardinality and four for incorrect final entry order.
+The only missing alternative is negation of
+`typep(length(source), u64)`, RAD-G06. The fixnum `index` bound and
+array bounds of the SBCL runtime used are tighter than u64:
+length cannot violate this check. RAD-G17 remains a
+defensive postcondition against an algorithm defect; its error
+forms are absent in measurement, without an additional
+missing branch alternative associated with `loop`.
 
-I test privati provano invece le negazioni di prefissi, cifre, array,
-tipo delle entry e cursori, come registrato nell'inventario. Le forme
-residue restano nel denominatore grezzo. Nessuna esclusione approvata
-o attestazione MC/DC deriva da questi numeri. L'inventario qui riguarda
-il nuovo sorgente radix. Le motivazioni dei residui degli altri cinque
-sorgenti sono nell'[inventario preesistente](../affidabilita/copertura-eccezioni.md),
-da confrontare con la nuova misura: i test coprono ora count e misura
-di `check-entry-shape` e misura di `sort-participants`, cioè tre
-alternative prima non osservate. Le 40 alternative mancanti precedenti
-diventano 37; con la nuova alternativa radix sono 38 su 176.
+Private tests instead exercise prefix, digit, array,
+entry-type, and cursor negations, as recorded in inventory. Remaining forms
+stay in the raw denominator. No approved exclusion
+or MC/DC attestation follows from these numbers. This inventory concerns
+the new radix source. Rationales for residual gaps in the other five
+sources are in the [existing inventory](../affidabilita/copertura-eccezioni.md),
+to compare against new measurement: tests now cover count and size
+in `check-entry-shape` and size in `sort-participants`, three
+previously unobserved alternatives. The previous 40 missing alternatives
+become 37; with the new radix alternative there are 38 of 176.
 
-La root ha comunicato una campagna finale con 14 mutanti rilevati,
-zero sopravvissuti e zero guasti di compilazione o prima dei test.
-Questa lettura non esegue la campagna né riesamina singolarmente
-tutti i suoi log: il rapporto di mutazione è un'evidenza distinta.
+Root communicated a final campaign with 14 detected mutants,
+zero survivors, and zero compilation or pre-test faults.
+This reading neither executes the campaign nor individually reexamines
+all its logs: the mutation report is separate evidence.
 
-## Lista di controllo C1 e limiti
+<a id="lista-di-controllo-c1-e-limiti"></a>
 
-La lettura usa lo [standard di codifica](../affidabilita/standard-di-codifica.md)
-e il [piano di verifica](../affidabilita/piano-di-verifica.md). I requisiti
-richiamati dal sorgente sono contributi locali a REQ-TXM-005,
-REQ-TXM-001 e REQ-AFF-008; REQ-VAL-001 identifica la tracciabilità delle
-prove; le due costanti richiamano anche REQ-BEN-001 per la scelta
-misurata. Il test concorrente contribuisce a REQ-CON-005 senza completare
-l'implementazione del runtime parallelo.
+## C1 checklist and limitations
 
-| Punto della lista C1 | Stato delimitato |
+The reading uses the [coding standard](../affidabilita/standard-di-codifica.md)
+and [verification plan](../affidabilita/piano-di-verifica.md). Requirements
+referenced by source are local contributions to REQ-TXM-005,
+REQ-TXM-001, and REQ-AFF-008; REQ-VAL-001 identifies test traceability;
+both constants also reference REQ-BEN-001 for measured
+selection. The concurrent test contributes to REQ-CON-005 without completing
+parallel runtime implementation.
+
+| C1 checklist item | Bounded status |
 |---|---|
-| Requisiti e ADR | Coerenza locale con ordinamento della tabella e limiti delle risorse; strategia di verifica ADR-0035 e standard ADR-0034. Nessuna modifica al formato persistente o al protocollo 2PC. |
-| Invarianti e test | Somme/prefissi, stabilità, ordine unsigned, copia privata e dimensioni analizzati; oracoli indipendenti, caso oltre u16, negazioni delle guardie e confini pubblici presenti. La copertura grezza è distinta dalla copertura delle condizioni. |
-| Errori | Guardie locali segnalano `invariant-violation`; il controllo delegato conserva `corruption-detected` con offset per ID duplicato. Errori di tipo restano quelli del contratto con safety 3. La transizione FAULTED appartiene al chiamante del recovery, non è implementata dal sorter. |
-| Cicli e attese | Limiti espliciti verificati per tutti i cicli dell'ordinamento. Attese dei test finite; nessuna attesa nel prodotto. |
-| Allocazione sul percorso caldo | L'ordinamento è di apertura e alloca scratch/istogramma. Il benchmark letto registra heap senza affermare zero heap; nessuna estensione alle query sul runtime di destinazione. |
-| Dati verificati | Il contratto privato richiede copie e entry verificate; controlli di shape e postordine mantenuti. I wrapper non sostituiscono scanner e preflight né decidono presumed abort. |
-| Decisioni composte | Due array guard nuove inventariate clausola per clausola; decisione della query preesistente e controlli della fixture esplicitati separatamente. Nessuna attestazione MC/DC. |
-| Proprietario e condivisione | Scratch esclusivo della costruzione; tabella completa sola lettura; buffer/output dei lettori esclusivi. Pubblicazione attraverso il futuro runtime non provata dal test. |
-| Trace, compilazione, lint e check | Riferimenti e diff ispezionati; termine della baseline isolata letto. Questa lettura non esegue i comandi e non estende tale esito all'ASD della root in corso di modifica. Gli esiti finali restano nei registri dedicati. |
-| Deviazioni | Nessuna deroga richiesta dall'ispezione; nessuna esclusione di copertura approvata qui. |
-| Parallelismo fra Serie | Nessun nuovo lock, attesa o store condiviso per query; nessun pool per richiesta. Il test non dimostra isolamento o scalabilità del motore rispetto a INV-P6. |
-| Atomicità e rimozioni | Nessuna scrittura persistente, flush, rimozione o nuovo punto di atomicità nell'ordinamento o nei wrapper. Contratti di durability preesistenti non riqualificati. |
+| Requirements and ADRs | Local consistency with table sorting and resource bounds; ADR-0035 verification strategy and ADR-0034 standard. No persistent format or 2PC protocol change. |
+| Invariants and tests | Sums/prefixes, stability, unsigned order, private copy, and sizes analyzed; independent oracles, beyond-u16 case, guard negations, and public boundaries present. Raw coverage distinct from condition coverage. |
+| Errors | Local guards signal `invariant-violation`; delegated check retains `corruption-detected` with duplicate-ID offset. Type errors remain those of the safety 3 contract. FAULTED transition belongs to recovery caller and is not implemented by sorter. |
+| Loops and waits | Explicit bounds checked for all sorting loops. Finite test waits; no wait in product. |
+| Hot-path allocation | Sorting occurs at opening and allocates scratch/histogram. Benchmark read records heap without claiming zero heap; no extension to queries on target runtime. |
+| Validated data | Private contract requires validated copies and entries; shape and final-order checks retained. Wrappers do not replace scanner/preflight or decide presumed abort. |
+| Compound decisions | Two new array guards inventoried clause by clause; existing query decision and fixture checks made explicit separately. No MC/DC attestation. |
+| Owner and sharing | Construction-exclusive scratch; complete read-only table; exclusive reader buffers/outputs. Publication through future runtime not proved by test. |
+| Trace, compilation, lint, and checks | References and diff inspected; end of isolated baseline read. This reading does not execute commands or extend that outcome to root ASD being modified. Final outcomes remain in dedicated records. |
+| Deviations | No exception requested by inspection; no coverage exclusion approved here. |
+| Parallelism across Serie | No new lock, wait, or shared store per query; no per-request pool. Test does not demonstrate engine isolation or scalability under INV-P6. |
+| Atomicity and removals | No persistent write, flush, removal, or new atomicity point in sorting or wrappers. Existing durability contracts not requalified. |
 
-Questa seconda lettura non esegue la suite; distingue i registri
-eseguibili dalla conclusione dell'ispezione. La scelta merge/radix
-adottata è stata confrontata con i dati della seconda matrice.
-Le passate uniformi risparmiano
-scatter ma conservano scansione e verifica dell'istogramma; anche input
-0/1 del radix privato alloca workspace e attraversa le cifre. Il
-wrapper usa merge sotto soglia; nessun algoritmo viene scelto soltanto
-sulla complessità asintotica.
+This second reading does not run the suite; it distinguishes executable
+records from the inspection conclusion. Adopted merge/radix
+selection was compared against second-matrix data.
+Uniform passes save
+scatter but retain histogram scanning and checking; even private radix
+0/1 input allocates workspace and traverses digits. The
+wrapper uses merge below threshold; neither algorithm is selected solely
+on asymptotic complexity.
 
-I thread reali non costituiscono esplorazione esaustiva degli
-interleaving, simulatore deterministico o misura di scalabilità. Il test
-non qualifica il pool riusabile del runtime, la pubblicazione tramite
-catalogo, P99, Linux/x86-64, durability o applicazione dei prepared.
+Real threads do not constitute exhaustive interleaving
+exploration, a deterministic simulator, or a scalability measurement. The test
+does not qualify the runtime's reusable pool, publication through
+catalog, P99, Linux/x86-64, durability, or application of prepared records.
 
-L'integrazione e i test congelati sono riletti in questo addendum.
-Copertura, mutanti, compilazione, lint e controllo complessivo finali
-devono essere collegati ai rispettivi registri sugli stessi hash.
-Eventuali ulteriori modifiche richiedono una nuova lettura del diff;
-la presente conclusione resta riferita ai soli hash sopra.
+Integration and frozen tests are reread in this addendum.
+Final coverage, mutants, compilation, lint, and overall check
+must link to their respective records on the same hashes.
+Any further changes require a new diff reading;
+the present conclusion remains tied only to hashes above.
 
-## Prima lettura C1 dell'autore sul candidato preliminare
+<a id="prima-lettura-c1-dellautore-sul-candidato-preliminare"></a>
 
-La lettura storica che segue precede l'integrazione dei wrapper.
-La [lettura finale dell'autore](decisioni-radix-lettura-autore.md)
-identifica gli hash integrati; l'addendum indipendente sopra usa quegli
-stessi sorgenti e test congelati.
+## Author's first C1 reading of the preliminary candidate
 
-Lettura del 2026-10-09 dell'agente `/root/segment_header_code`, autore del
-candidato. È distinta dalla seconda lettura indipendente conservata
-sopra. Il sorgente riletto ha SHA256
+The following historical reading precedes wrapper integration.
+The [author's final reading](decisioni-radix-lettura-autore.md)
+identifies integrated hashes; the independent addendum above uses those
+same sources and frozen tests.
+
+Reading on 2026-10-09 by agent `/root/segment_header_code`, candidate
+author. It is distinct from the independent second reading preserved
+above. Reread source has SHA256
 `5093e1dda2876d3b31fd5a6e9196dc76bec04aa8a61ce933c63de59f73f36505`;
-i test riletti hanno SHA256
+reread tests have SHA256
 `81d22bb4c5ac5375cf0daaa7443011b15a9563007151dd29d91dbfbbdfe9b915`.
-Entrambi gli hash sono stati ricontrollati sui file della versione preliminare. Esito:
-nessun difetto funzionale individuato nell'ambito del candidato privato.
+Both hashes were rechecked on preliminary-version files. Outcome:
+no functional defect identified within the private candidate's scope.
 
-La lista segue i dodici punti dello
-[standard di codifica](../affidabilita/standard-di-codifica.md).
-I nomi dei test nella tabella sono quelli dei
-[test indipendenti](../../tests/recovery/decisions-radix.lisp).
-L'ispezione non esegue processi di verifica durante la campagna delle
-misure e non anticipa il relativo risultato o la scelta delle soglie.
+The list follows the twelve items in the
+[coding standard](../affidabilita/standard-di-codifica.md).
+Test names in the table are those of the
+[independent tests](../../tests/recovery/decisions-radix.lisp).
+Inspection does not run verification processes during the measurement
+campaign or anticipate its outcome or threshold selection.
 
-| Punto C1 | Riscontro concreto dell'autore e limite |
+| C1 item | Author's concrete observation and limitation |
 |---|---|
-| 1. Requisiti e ADR | Le otto funzioni riportano REQ-TXM-005, REQ-AFF-008 e REQ-VAL-001; le operazioni sulle entry richiamano anche REQ-TXM-001. La stabilità conserva l'identità fisica a parità di TXID senza introdurre vincoli su CSN, positività o monotonia. Coerenza locale con ADR-0034/0035 e con il contratto della tabella; nessuna modifica al formato o al 2PC. |
-| 2. Invarianti e test | `radix-prefix-starts` verifica somma entro N ed esattamente N; gli scatter verificano range e capienze prima degli store; `radix-check-cursors` verifica monotonia e termine N. `radix-entry-cardinalities-patterns-and-stability` confronta ogni riferimento con l'oracolo e gli offset dei TXID uguali; `radix-entry-65536-bucket-counts` rende osservabili conteggi oltre u16. La regressione pubblica del primo conflitto fisico resta necessaria sul builder integrato. |
-| 3. Errori e gestione | Le guardie locali segnalano `invariant-violation`; `check-participant-order` conserva `corruption-detected :decision-duplicate-participant` e l'offset del record. I test `radix-participant-shape-before-sort`, `radix-entry-shape-before-sort` e `radix-duplicate-participant-offset` verificano misure, count e offset, incluso u64 massimo. Tipi e allocazioni mantengono anche le condizioni del runtime; il sorter non gestisce il ciclo di vita FAULTED della Serie. Non si dichiara copertura di ogni guardia difensiva. |
-| 4. Cicli e attese | Nessuna ricorsione o attesa nel candidato: 16/8 cifre, 256 classi e N elementi effettivi per conteggio e scatter. Il salto uniforme segue il conteggio completo e non ruota i buffer. I test per ogni bit, cardinalità dispari e pattern uniformi esercitano i confini; i timeout dei sei lettori appartengono soltanto all'harness. |
-| 5. Allocazioni e percorso caldo | Scratch della lunghezza effettiva e 256 celle u64 sono allocati nella costruzione/apertura, anche per input privati 0/1. Operazioni su u64 possono inoltre allocare nel runtime. Il candidato non è un percorso caldo e non prova zero heap; i test di lettura concorrente non misurano allocazioni o pause del collector. |
-| 6. Dati verificati | La misura dei partecipanti precede lo scratch; le entry sono controllate per tipo, count e lunghezza prima di leggere TXID. Prima del ritorno sono verificati ordine e, per ID16, distinzione. Il contratto richiede copie private già decodificate dal builder: scanner, CRC, preflight del payload e budget non vengono sostituiti. Count 0/1 nei test privati non rende valide DECISION pubbliche con meno di due partecipanti. |
-| 7. Decisioni composte | Le due guardie degli array sono elencate per clausola come RAD-D01 e RAD-D02 nell'[inventario](decisioni-radix-decisioni.md), insieme ai 17 siti locali di errore e ai controlli delegati. Le negazioni private non esercitate restano nel denominatore delle misure successive; questa lettura non certifica MC/DC né approva esclusioni. |
-| 8. Proprietario e condivisione | OWNER/SHARED dichiarano una sola costruzione. Sorgente iniziale e scratch sono privati e possono essere riordinati; lo scatter lascia invariata la sorgente della singola passata e non scrive i campi read-only delle entry. `concurrent-immutable-table-queries` sovrascrive il log prima dei thread, usa buffer e output distinti e ricontrolla la tabella dopo i join. Non prova la pubblicazione attraverso il futuro runtime. |
-| 9. Trace, compilazione, lint e check | Prima della campagna l'autore ha compilato il candidato in copia isolata senza warning/style-warning, ottenuto lint su 8 file senza violazioni e superato 1.290 confronti con il merge, oltre al duplicato con offset massimo. Questa prova usa la baseline; gli oracoli indipendenti sono nei test riletti qui. `ftype`, tipi degli array, `safety 3`, docstring, REQ e funzioni entro 60 righe sono presenti. `make check`, trace, copertura e mutanti del diff adottato richiedono le evidenze finali. |
-| 10. Deviazioni | Nessuna deroga individuata nell'ambito letto. Le allocazioni sono esplicitamente ammesse nell'apertura e non costituiscono una deroga al requisito dei percorsi caldi. Guardie e controlli dei limiti restano attivi; nessuna promessa di prestazione o esclusione di copertura è concessa dalla revisione. |
-| 11. Parallelismo fra Serie | Il candidato non aggiunge lock, attese, pool o store condivisi per operazione di una Serie: modifica soltanto workspace posseduto durante il recovery. Le query preesistenti leggono la tabella immutabile; i sei worker possiedono il proprio output. Il test non dimostra scalabilità, isolamento fra Serie, scheduler o conformità completa a INV-P6 del motore. |
-| 12. Atomicità e rimozioni | Nessun I/O, flush, pubblicazione, applicazione di prepared, eliminazione o cambiamento durevole nel candidato. Nessun nuovo punto di atomicità da dichiarare; i contratti di durability e recovery dello scanner restano esterni a questa modifica e non vengono riqualificati. |
+| 1. Requirements and ADRs | All eight functions list REQ-TXM-005, REQ-AFF-008, and REQ-VAL-001; entry operations also reference REQ-TXM-001. Stability preserves physical identity for equal TXIDs without introducing CSN, positivity, or monotonicity constraints. Local consistency with ADR-0034/0035 and table contract; no format or 2PC change. |
+| 2. Invariants and tests | `radix-prefix-starts` checks sum within N and exactly N; scatters check ranges and capacities before stores; `radix-check-cursors` checks monotonicity and endpoint N. `radix-entry-cardinalities-patterns-and-stability` compares every reference with oracle and equal-TXID offsets; `radix-entry-65536-bucket-counts` makes counts beyond u16 observable. Public regression for first physical conflict remains necessary on integrated builder. |
+| 3. Errors and handling | Local guards signal `invariant-violation`; `check-participant-order` retains `corruption-detected :decision-duplicate-participant` and record offset. Tests `radix-participant-shape-before-sort`, `radix-entry-shape-before-sort`, and `radix-duplicate-participant-offset` check sizes, count, and offset, including maximum u64. Types and allocations also retain runtime conditions; sorter does not handle Serie FAULTED lifecycle. Coverage of every defensive guard is not claimed. |
+| 4. Loops and waits | No recursion or waiting in candidate: 16/8 digits, 256 buckets, and N actual elements for counting and scatter. Uniform skip follows full counting and does not rotate buffers. Tests for each bit, odd cardinalities, and uniform patterns exercise boundaries; six-reader timeouts belong only to harness. |
+| 5. Allocations and hot path | Scratch of actual length and 256 u64 cells allocated at construction/opening, even for private 0/1 input. u64 operations can also allocate in runtime. Candidate is not a hot path and does not prove zero heap; concurrent-reading tests do not measure allocations or collector pauses. |
+| 6. Validated data | Participant size precedes scratch; entries checked for type, count, and length before reading TXID. Order and, for ID16, distinctness checked before return. Contract requires private copies already decoded by builder: scanner, CRC, payload preflight, and budgets are not replaced. Count 0/1 in private tests does not make public DECISION records with fewer than two participants valid. |
+| 7. Compound decisions | Both array guards listed clause by clause as RAD-D01 and RAD-D02 in the [inventory](decisioni-radix-decisioni.md), with 17 local error sites and delegated checks. Unexercised private negations remain in subsequent measurement denominators; this reading neither certifies MC/DC nor approves exclusions. |
+| 8. Owner and sharing | OWNER/SHARED declare one construction. Initial source and scratch are private and may be reordered; scatter leaves the individual pass's source unchanged and does not write read-only entry fields. `concurrent-immutable-table-queries` overwrites log before threads, uses separate buffers and outputs, and rechecks table after joins. It does not prove publication through future runtime. |
+| 9. Trace, compilation, lint, and checks | Before campaign, author compiled candidate in isolated copy without warnings/style-warnings, obtained lint on 8 files with no violations, and passed 1.290 comparisons with merge, plus duplicate with maximum offset. This test uses baseline; independent oracles are in tests reread here. `ftype`, array types, `safety 3`, docstrings, REQ, and functions within 60 lines present. `make check`, trace, coverage, and mutants for adopted diff require final evidence. |
+| 10. Deviations | No exception identified in scope read. Allocations explicitly permitted at opening and are not an exception to hot-path requirements. Guards and bounds checks remain active; no performance promise or coverage exclusion granted by review. |
+| 11. Parallelism across Serie | Candidate adds no lock, wait, pool, or shared store per Serie operation: it changes only workspace owned during recovery. Existing queries read immutable table; six workers own their outputs. Test does not demonstrate scalability, Serie isolation, scheduler, or full engine compliance with INV-P6. |
+| 12. Atomicity and removals | No I/O, flush, publication, prepared application, deletion, or durable change in candidate. No new atomicity point to declare; scanner durability and recovery contracts remain external to this change and are not requalified. |
 
-Questa prima lettura riguarda il candidato congelato, ancora non
-raggiunto dal builder pubblico. La revisione finale dovrà identificare
-algoritmi e soglie scelti, rileggere il diff effettivamente integrato e
-collegare le regressioni pubbliche agli stessi contenuti verificati.
-Non costituisce una qualifica del runtime parallelo, del motore completo,
-di P99, zero heap, durability o Linux/x86-64.
+This first reading concerns the frozen candidate, not yet
+reached by the public builder. Final review must identify
+selected algorithms and thresholds, reread the actual integrated diff, and
+link public regressions to the same verified content.
+It does not qualify parallel runtime, complete engine,
+P99, zero heap, durability, or Linux/x86-64.

@@ -1,200 +1,214 @@
-# Recovery readonly del vecchio ACTIVE
+<a id="recovery-readonly-del-vecchio-active"></a>
 
-Il risultato conserva anche il marker privato del replay DECISION usato,
-senza trattenere la tabella. Il [piano CSN dell'Archivio](csn-archivio-recovery.md)
-confronta questa provenienza prima di aggregare le Serie.
+# Read-only recovery of the old ACTIVE
 
-Il modulo [`src/recovery-active/`](../../src/recovery-active/) collega il
-[control log recuperato](control-recuperato.md) alla chiusura del vecchio
-ACTIVE, secondo [ADR-0037](../adr/0037-lotto-sigillato.md#4-il-recovery-non-tronca-inv-a9),
-[ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio) e
+Result also retains private marker of DECISION replay used,
+without retaining table. The [Archivio CSN plan](csn-archivio-recovery.md)
+compares this provenance before aggregating Serie.
+
+Module [`src/recovery-active/`](../../src/recovery-active/) connects
+[recovered control log](control-recuperato.md) to old ACTIVE
+closing, under [ADR-0037](../adr/0037-lotto-sigillato.md#4-il-recovery-non-tronca-inv-a9),
+[ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio), and
 [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md#4-recovery).
-La lunghezza valida e gli esiti da registrare provengono ora dal file letto
-e dalla tabella delle decisioni dell'Archivio.
+Valid length and outcomes to record now derive from read file
+and Archivio decision table.
 
 ## API
 
-| API | Risultato |
+| API | Result |
 |---|---|
-| `leggi-active-recuperato(control, input, size, decisions, scratch, …)` | vecchio ACTIVE readonly, prefisso verificato e prepared risolti |
-| `frontiere-active-recuperato(result)` | EOF attestato, P assoluto, `:complete`/`:tail`, formato 1/2 |
-| `statistiche-active-recuperato(result)` | lotti, record esclusi SEAL, TXID prepared distinti, commit locali, commit derivati, abort |
-| `segmento-active-recuperato(result)` | capacità opaca del vecchio segmento, senza trasferire ownership |
-| `esito-chiusura-active(result, txid)` | presenza e CSN **da DECISION da inserire nell'EDIT**, `nil/0` se assente |
-| `lunghezza-chiusura-active(result)` | byte esatti della entry CLOSED, esclusi gli altri campi dell'EDIT |
-| `scrivi-chiusura-active(result, output, start)` | entry CLOSED deterministica con ID, P ed esiti derivati ordinati |
-| `pubblica-control-da-active(prepared, result)` | verifica la chiusura ricavata dalla scansione e delega al publisher canonico |
+| `leggi-active-recuperato(control, input, size, decisions, scratch, …)` | old read-only ACTIVE, verified prefix, resolved prepared records |
+| `frontiere-active-recuperato(result)` | attested EOF, absolute P, `:complete`/`:tail`, format 1/2 |
+| `statistiche-active-recuperato(result)` | batches, records excluding SEAL, distinct prepared TXIDs, local commits, derived commits, aborts |
+| `segmento-active-recuperato(result)` | opaque old-segment capability, without ownership transfer |
+| `esito-chiusura-active(result, txid)` | presence and CSN **from DECISION to insert in EDIT**, `nil/0` if absent |
+| `lunghezza-chiusura-active(result)` | exact CLOSED-entry bytes, excluding other EDIT fields |
+| `scrivi-chiusura-active(result, output, start)` | deterministic CLOSED entry with ID, P, and sorted derived outcomes |
+| `pubblica-control-da-active(prepared, result)` | verifies scan-derived closing and delegates to canonical publisher |
 
-Un esito assente nella query non significa abort: può già esserci un OUTCOME
-nel segmento. I CSN zero presenti e tutti i bit u64 di ID/TXID/CSN sono
-significativi. Nessun buffer, array, hash table o FD numerico è esportato.
+Absent query outcome does not mean abort: segment may already contain OUTCOME.
+Present zero CSNs and all u64 ID/TXID/CSN bits are
+significant. No buffer, array, hash table, or numeric FD exported.
 
-## Autorità e ownership
+<a id="autorità-e-ownership"></a>
 
-Il compito si esegue nel pool I/O durante il recovery esclusivo della Serie.
-`control` è il risultato della lettura del control log dal catalogo; da quel
-manifest proviene l'ID dell'ACTIVE. L'header letto dalla stessa capacità
-readonly verifica Serie, ID, CRC, riservati e versione. L'origine deve essere
-writer, controllata prima di leggere il corpo.
+## Authority and ownership
 
-Il chiamante attesta `size` come **EOF fisico completo e stabile**, mantiene
-aperti control log e segmento, e congela file/FD/namespace fino alla pubblicazione.
-Readonly non impedisce una mutazione esterna. La dimensione fisica e la
-riconciliazione dell'inventario restano responsabilità del controller.
+Task runs in I/O pool during exclusive Serie recovery.
+`control` is catalog control-log reading result; that
+manifest supplies ACTIVE ID. Header read through same read-only
+capability checks Serie, ID, CRC, reserved fields, and version. Origin must be
+writer, checked before body reading.
 
-`decisions` è obbligatoriamente la tabella completa e autorevole di
-`Registri/multiserie.log` **dello stesso Archivio**, con header già verificato.
-Il tipo esistente della tabella non conserva l'identità dell'Archivio: il
-collegamento e la completezza restano precondizioni esplicite. Una tabella
-parziale, di un altro Archivio o costruita solo per rappresentare «nessuna
-decisione» non autorizza presumed abort. Non esiste fallback da `nil`.
+Caller attests `size` as **complete stable physical EOF**, keeps
+control log and segment open, and freezes file/FD/namespace until publication.
+Read-only does not prevent external mutation. Physical size and inventory
+reconciliation remain controller responsibilities.
 
-Il nuovo ingresso [`leggi-active-con-decisioni`](decisioni-recuperate.md)
-riceve il risultato completo del lettore readonly del decision log e
-verifica lo stesso ambito canonico dell'Archivio prima dell'I/O ACTIVE.
-La precondizione sulla tabella nuda resta per l'API precedente.
+`decisions` must be complete authoritative table of
+`Registri/multiserie.log` **from same Archivio**, header already verified.
+Existing table type does not retain Archivio identity:
+binding and completeness remain explicit preconditions. A partial table,
+one from another Archivio, or one built only to represent “no
+decision” does not authorize presumed abort. No fallback from `nil`.
 
-Il risultato trattiene control log recuperato, capacità del segmento e
-scalari; gli esiti derivati occupano due array u64 privati. Non trattiene
-scratch, workspace o tabella dell'Archivio. Il controller mantiene il FD
-del vecchio segmento fino al reclaim previsto da EBR; nessun close implicito.
+New entry [`leggi-active-con-decisioni`](decisioni-recuperate.md)
+receives complete read-only decision-log reader result and
+checks same canonical Archivio scope before ACTIVE I/O.
+Bare-table precondition remains for previous API.
 
-## Ordine della lettura
+Result retains recovered control log, segment capability, and
+scalars; derived outcomes occupy two private u64 arrays. Retains no
+scratch, workspace, or Archivio table. Controller keeps old
+segment FD until EBR-authorized reclamation; no implicit close.
 
-1. Preflight senza I/O: capacità, alias dello scratch, range e budget completi.
-2. Verificare che vecchio segmento e control log siano file fisicamente
-   distinti nello stesso backend, con la primitiva I/O esistente.
-3. Creare la capacità GET dall'header letto dallo stesso FD; rifiutare
-   origine compaction. L'header viene letto una sola volta.
-4. Leggere il corpo fino a EOF per chunk, senza rileggere l'header.
-5. Usare lo scanner esistente sull'**intero file**. CRC, SEAL, file-id,
-   frontiere e ricerca dei testimoni precedono qualsiasi semantica.
-6. Attraversare soltanto il prefisso verificato: header ricontrollati,
-   body già coperti dal primo passaggio CRC e buffer ancora esclusivo.
-7. Risolvere i TXID prepared, controllare i conteggi, ordinare e copiare
-   gli esiti da conservare; consegnare solo un risultato completo.
+<a id="ordine-della-lettura"></a>
 
-Una coda resta sul file ed è ignorata oltre P; non viene troncata. Un SEAL
-testimone di corruzione durevole, un budget esaurito o una contraddizione
-semantica propagano condizioni tipizzate al controller per fail-stop.
-Non viene pubblicato un risultato parziale o un record della coda.
+## Read order
 
-## Risoluzione dei prepared
+1. No-I/O preflight: capabilities, scratch aliases, complete ranges and budgets.
+2. Verify old segment and control log physically distinct
+   files in same backend through existing I/O primitive.
+3. Create GET capability from header read from same FD; reject
+   compaction origin. Header read once.
+4. Read body through EOF by chunks without rereading header.
+5. Use existing scanner on **entire file**. CRCs, SEAL, file-id,
+   frontiers, and witness search precede all semantics.
+6. Traverse only verified prefix: headers rechecked,
+   bodies already covered by first CRC pass, buffer still exclusive.
+7. Resolve prepared TXIDs, check counts, sort and copy
+   outcomes to retain; deliver only complete result.
 
-| OUTCOME nel prefisso | DECISION autorevole | Risoluzione |
+Tail stays in file and is ignored beyond P; not truncated. A SEAL
+witness of durable corruption, exhausted budget, or semantic
+contradiction propagates typed conditions to controller for fail-stop.
+No partial result or tail record published.
+
+<a id="risoluzione-dei-prepared"></a>
+
+## Prepared resolution
+
+| OUTCOME in prefix | Authoritative DECISION | Resolution |
 |---|---|---|
-| presente | assente | committed locale; la decisione può essere già dimenticata |
-| presente | presente, stessa Serie e stesso CSN | committed locale, nessun esito duplicato nell'EDIT |
-| assente | presente, Serie partecipante | committed; coppia TXID/CSN da registrare nella chiusura |
-| assente | assente | presumed abort, nessun esito scritto |
-| qualsiasi | presente ma partecipante/CSN incoerente | corruzione, nessuna pubblicazione |
+| present | absent | locally committed; decision may already be forgotten |
+| present | present, same Serie and CSN | locally committed, no duplicate EDIT outcome |
+| absent | present, Serie participating | committed; TXID/CSN pair to record in closing |
+| absent | absent | presumed abort, no outcome written |
+| any | present but inconsistent participant/CSN | corruption, no publication |
 
-Le operazioni prepared dello stesso TXID devono appartenere a un solo lotto
+Prepared operations of same TXID must belong to one batch
 ([ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md#1-protocollo)).
-Un prepared che segue un OUTCOME per lo stesso TXID è rifiutato, come nel
-[resolver CLOSED](get-resolver.md). Duplicati OUTCOME con lo stesso CSN sono
-coalescenti; un CSN differente è corruzione. Gli OUTCOME senza prepared in
-questo segmento non creano effetti o esiti di chiusura da soli.
+Prepared record following OUTCOME for same TXID rejected, as in
+[CLOSED resolver](get-resolver.md). Duplicate OUTCOMEs with same CSN
+coalesce; different CSN is corruption. OUTCOMEs without prepared records in
+this segment create no effects or closing outcomes on their own.
 
-Il controllo visita i TXID distinti: ciascuno è classificato una volta.
-`prepared = locali + derivati + abort` è verificato prima del risultato.
-Il formato dei documenti resta opaco; questa API non verifica schema/CBOR
-o ricostruisce il primary index.
+Check visits distinct TXIDs: each classified once.
+`prepared = locali + derivati + abort` checked before result.
+Document format remains opaque; API neither verifies schema/CBOR
+nor rebuilds primary index.
 
-## Chiusura e pubblicazione
+<a id="chiusura-e-pubblicazione"></a>
 
-La entry CLOSED è esattamente `20 + 16 × E` byte: ID u64, P u64, count u32,
-poi coppie TXID/CSN ordinate per TXID. Le dimensioni e gli offset provengono
-dalle costanti del codec esistente. Il writer del checkpoint conserva gli
-altri CLOSED e REMOVED e costruisce un EDIT completo con questa entry.
+## Closing and publication
 
-Il serializer verifica alias, forma e tutto il range prima della prima
-scrittura in memoria. Il packing rifiuta una entry oltre il limite del
-codec metadata prima di allocare gli array; il budget dell'EDIT intero
-resta verificato dal preparatore del checkpoint.
+CLOSED entry exactly `20 + 16 × E` bytes: u64 ID, u64 P, u32 count,
+then TXID/CSN pairs ordered by TXID. Sizes and offsets derive
+from existing codec constants. Checkpoint writer preserves other
+CLOSED and REMOVED entries and builds complete EDIT with this entry.
 
-`pubblica-control-da-active` richiede nel nuovo manifest CLOSED per il
-vecchio ID, **lunghezza esattamente P e tutti e soli gli esiti derivati**.
-Verifica che il vecchio FD sia ancora aperto, prima di qualsiasi claim.
-Delega poi alla transizione conservativa del control log: stessa vista,
-conservazione degli altri segmenti/esiti, nuovo ID e publisher unico.
-Il punto atomico resta la rinomina del control log; la conferma segue il
-fsync della directory, con gli stessi stati terminali e condizioni originali.
+Serializer checks aliases, shape, and entire range before first
+in-memory write. Packing rejects entry beyond metadata-codec
+limit before array allocation; whole-EDIT budget
+still checked by checkpoint preparer.
 
-## Budget e costi
+`pubblica-control-da-active` requires old ID CLOSED in new manifest,
+**length exactly P and all and only derived outcomes**.
+Checks old FD still open before any claim.
+Then delegates to conservative control-log transition: same view,
+preservation of other segments/outcomes, new ID, single publisher.
+Atomic point remains control-log rename; acknowledgment follows
+directory fsync, with same terminal states and original conditions.
 
-| Budget di apertura | Default |
+<a id="budget-e-costi"></a>
+
+## Budgets and costs
+
+| Opening budget | Default |
 |---|---:|
-| file/scratch intero | 256 MiB |
-| chunk del corpo | 64 KiB |
-| lotti / record per lotto | 65.536 / 65.536 |
-| byte per lotto | 64 MiB |
-| record totali, SEAL esclusi | 1.048.576 |
-| TXID prepared distinti | 65.536 |
-| OUTCOME fisici, inclusi duplicati | 65.536 |
+| whole file/scratch | 256 MiB |
+| body chunk | 64 KiB |
+| batches / records per batch | 65,536 / 65,536 |
+| bytes per batch | 64 MiB |
+| total records, excluding SEAL | 1,048,576 |
+| distinct prepared TXIDs | 65,536 |
+| physical OUTCOMEs, including duplicates | 65,536 |
 
-Sono budget configurabili del compito, non nuovi limiti persistenti del
-database. Resta il massimo del formato del segmento. La capacità deve
-consentire `max(64, min(size-64, chunk))` byte per trasferimento.
-I limiti zero di prepared/outcome permettono l'apertura di file che non li
-contengono; non cancellano o ignorano record oltre il budget.
+Configurable task budgets, not new persistent database
+limits. Segment-format maximum remains. Capability must
+allow `max(64, min(size-64, chunk))` bytes per transfer.
+Zero prepared/outcome limits allow opening files without them;
+they do not delete or ignore over-budget records.
 
-Costo di lettura: due osservazioni d'identità, header e
-`ceiling((size-64)/chunk)` trasferimenti esatti. Scanner e attraversamento
-sono limitati da byte/lotti/cornici; il secondo passaggio non ricalcola il
-CRC dei documenti. Le query DECISION usano le ricerche binarie esistenti.
-Il packing ordina TXID privati; gli esiti nel risultato occupano `16 × E`
-byte di payload, esclusi oggetti Lisp. Gli hash table transitori sono
-limitati dai conteggi configurati, con lookup medi O(1).
+Read cost: two identity observations, header, and
+`ceiling((size-64)/chunk)` exact transfers. Scanner and traversal
+bounded by bytes/batches/frames; second pass does not recalculate
+ document CRCs. DECISION queries use existing binary searches.
+Packing sorts private TXIDs; result outcomes occupy `16 × E`
+payload bytes excluding Lisp objects. Transient hash tables
+bounded by configured counts, average O(1) lookup.
 
-Percorso di apertura con allocazioni, boxing u64 e ordinamento: nessuna
-promessa di heap zero, latenza o throughput. Nessun lock, incremento di
-CSN o scrittura condivisa tra Serie viene introdotto.
+Opening path with allocations, u64 boxing, and sorting: no
+zero-heap, latency, or throughput promise. No locks, CSN increments,
+or shared writes between Serie introduced.
 
-## Decisioni da qualificare
+<a id="decisioni-da-qualificare"></a>
 
-Il [metodo delle prove funzionali](active-recovery-metodo.md) registra
-la verifica integrata readonly, degli esiti e del collegamento al publisher.
-Esiti e limiti delle esecuzioni restano distinti dalla matrice C1 completa.
-La [campagna parallela di verifica](active-recuperato-verifica.md) conserva
-altri 59 test e le proprie letture, fault injection e misure. Le due suite
-usano package e registri distinti e vengono eseguite entrambe da ASDF.
+## Decisions to qualify
 
-| ID | Decisione | Casi |
+The [functional-test method](active-recovery-metodo.md) records
+integrated read-only verification, outcomes, and publisher connection.
+Execution outcomes/limits remain distinct from complete C1 matrix.
+The [parallel verification campaign](active-recuperato-verifica.md) preserves
+59 further tests and its own readings, fault injection, and measurements. Both suites
+use distinct packages and records and both run through ASDF.
+
+| ID | Decision | Cases |
 |---|---|---|
-| ARV-D01 | chunk positivo e byte budget almeno header | ciascuna falsa, entrambe vere; size 63/64; soglie byte |
-| ARV-D02 | superamento budget caller o formato | ciascuna vera, entrambe false; backend diverso/alias fisico |
-| ARV-D03 | progresso header, fine entro prefisso, range valore coerente | ciascuna falsa, tutte vere; v1/v2 |
-| ARV-D04 | TXID già presente e lotto diverso | primo, ripetuto nello stesso/altro lotto; prepared dopo OUTCOME |
-| ARV-D05 | OUTCOME già presente e CSN diverso | assente, duplicato identico, differente, zero/u64 alto |
-| ARV-D06 | consumo prefisso/lotti/record esatti | ogni conteggio diverso; header-only; coda e corruzione durevole |
-| ARV-D07 | DECISION con almeno due partecipanti e Serie presente | ciascuna falsa, entrambe vere |
-| ARV-D08 | OUTCOME presente e CSN differente da DECISION | ogni ramo della tabella di risoluzione |
-| ARV-D09 | contatori locali/abort/derivati iniziali a zero | ciascuno diverso; conteggio finale delle classi |
-| ARV-D10 | packing: ordine crescente e presenza/tipo del CSN | input disordinato, zero, high bits, entry oltre codec |
-| ARV-D11 | prefisso entro range e stato COMPLETE/TAIL coerente | confini e ciascun ramo incoerente |
-| ARV-D12 | serializer: lunghezze uguali e count u32 | ciascuna falsa; alias, range esatto/insufficiente |
-| ARV-D13 | checkpoint CLOSED con P/count esatti | stato, P, count falsi separatamente; esito omesso/aggiunto/modificato |
-| ARV-D14 | esito presente e CSN identico | assente, differente, zero presente; FD chiuso prima del claim |
+| ARV-D01 | positive chunk and byte budget at least header | each false, both true; size 63/64; byte thresholds |
+| ARV-D02 | caller-budget or format overrun | each true, both false; different backend/physical alias |
+| ARV-D03 | header progress, end within prefix, coherent value range | each false, all true; v1/v2 |
+| ARV-D04 | TXID already present and different batch | first, repeated in same/another batch; prepared after OUTCOME |
+| ARV-D05 | OUTCOME already present and different CSN | absent, identical duplicate, different, zero/high u64 |
+| ARV-D06 | exact prefix/batch/record consumption | each count different; header only; tail and durable corruption |
+| ARV-D07 | DECISION with at least two participants and Serie present | each false, both true |
+| ARV-D08 | OUTCOME present and CSN differs from DECISION | every resolution-table branch |
+| ARV-D09 | initial local/abort/derived counters zero | each different; final class counts |
+| ARV-D10 | packing: increasing order and CSN presence/type | unordered input, zero, high bits, entry beyond codec |
+| ARV-D11 | prefix within range and coherent COMPLETE/TAIL state | boundaries and each inconsistent branch |
+| ARV-D12 | serializer: equal lengths and u32 count | each false; alias, exact/insufficient range |
+| ARV-D13 | checkpoint CLOSED with exact P/count | false state, P, count separately; omitted/added/changed outcome |
+| ARV-D14 | outcome present and identical CSN | absent, different, present zero; FD closed before claim |
 
-Le [prime prove locali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-active-recovery/README.md)
-riguardano compilazione e controlli statici. La successiva
-[campagna funzionale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-active-recovery-verification/README.md)
-aggiunge 27 test con varianti v1/v2 su FD reali: risoluzione, errori,
-query e serializer, chiusura verso il publisher e riapertura del control log.
-Il risultato locale appartiene al commit congelato dichiarato nella campagna;
-qualifica C1, matrice completa delle decisioni e misure restano aperte.
-Il [lettore del decision log legato all'Archivio](decisioni-recuperate.md)
-è ora disponibile con qualifica dedicata ancora aperta. Restano da integrare
-la riconciliazione fisica dei nomi, gli
-indici/orizzonte CSN e il gate di ammissione del Recovery Manager.
-Questo risultato non autorizza da solo a dimenticare decisioni globali o
-riaprire il traffico della Serie.
+[Initial local tests](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-active-recovery/README.md)
+concern compilation and static checks. Later
+[functional campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-active-recovery-verification/README.md)
+adds 27 tests with v1/v2 variants on real FDs: resolution, errors,
+queries and serializer, closing to publisher, and control-log reopening.
+Local result belongs to frozen commit declared in campaign;
+C1 qualification, complete decision matrix, and measurements remain open.
+The [Archivio-bound decision-log reader](decisioni-recuperate.md)
+now available, dedicated qualification still open. Physical name
+reconciliation, indexes/CSN horizon, and Recovery Manager admission gate
+remain to integrate.
+Result alone does not authorize forgetting global decisions or
+reopening Serie traffic.
 
-Il [builder completo del checkpoint](checkpoint-recovery.md) deriva ora
-lo stato dal risultato ACTIVE e dal CONTROL trattenuto, con qualifica
-dedicata ancora aperta; conserva il publisher unico già descritto.
+[Complete checkpoint builder](checkpoint-recovery.md) now derives
+state from ACTIVE result and retained CONTROL, dedicated
+qualification still open; preserves single publisher described above.
 
-Il [lettore CLOSED e il controllo dell'insieme](closed-recuperato.md) verificano
-ora i prefissi nominati e offrono `pubblica-control-con-closed` prima del
-publisher canonico. La qualifica dedicata di questi nuovi ingressi resta aperta.
+[CLOSED reader and set check](closed-recuperato.md) now verify
+named prefixes and offer `pubblica-control-con-closed` before
+canonical publisher. Dedicated qualification of new entries remains open.

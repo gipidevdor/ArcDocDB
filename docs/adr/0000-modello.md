@@ -1,35 +1,41 @@
-# ADR-NNNN — Titolo breve della decisione
+<a id="adr-nnnn--titolo-breve-della-decisione"></a>
 
-- **Stato:** Proposta | Accettata | Sostituita da ADR-nnnn | Ritirata
-- **Data:** AAAA-MM-GG
-- **Rapporto con la specifica:** registra una decisione della specifica | chiude QA-nn |
-  emenda la sezione «…»
-- **Riferimenti:** documenti tematici, invarianti, spike
+# ADR-NNNN — Short decision title
 
-## Contesto
+- **Status:** Proposed | Accepted | Superseded by ADR-nnnn | Withdrawn
+- **Date:** YYYY-MM-DD
+- **Relationship to the specification:** records a specification decision | resolves QA-nn |
+  amends section …
+- **References:** subject guides, invariants, spikes
 
-Il problema e i vincoli. Che cosa rende necessaria una decisione adesso.
+<a id="contesto"></a>
+## Context
 
-## Decisione
+The problem and constraints. Why a decision is needed now.
 
-Che cosa si è deciso, in forma prescrittiva. Ogni decisione risponde anche alle due domande
-delle [leggi di progetto](0036-leggi-di-progetto.md):
+<a id="decisione"></a>
+## Decision
 
-- **che cosa rende seriale**, e a quale livello (il parallelismo è fondante: nessun punto
-  condiviso tra Serie fuori dall'elenco chiuso);
-- **qual è il punto di atomicità**, se l'operazione cambia lo stato durevole (che cosa è
-  preparazione, che cosa è completamento).
+What was decided, in prescriptive form. Every decision also answers the two
+questions from the [design laws](0036-leggi-di-progetto.md):
 
-## Conseguenze
+- **what it serializes**, and at which level: parallelism is foundational, with no
+  shared point across Serie outside the closed list;
+- **where its atomicity point is**, if the operation changes durable state:
+  what is preparation and what is completion.
 
-Che cosa diventa più semplice, che cosa più difficile, quali obblighi nascono per gli altri
-moduli.
+<a id="conseguenze"></a>
+## Consequences
 
-## Alternative considerate
+What becomes simpler, what becomes harder, and what obligations arise for other modules.
 
-Per ciascuna: descrizione in una riga e motivo dello scarto.
+<a id="alternative-considerate"></a>
+## Alternatives considered
 
-## Valutazione
+For each alternative: a one-line description and the reason it was rejected.
 
-Rischi collegati (`RSK-…`), come si verifica che la decisione regge (`SPK-…`, benchmark, test),
-e quale risultato porterebbe a rivederla.
+<a id="valutazione"></a>
+## Evaluation
+
+Related risks (`RSK-…`), how the decision is verified (`SPK-…`, benchmarks, tests),
+and what result would lead to reconsidering it.

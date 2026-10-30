@@ -1,122 +1,134 @@
-# SPK-05 — prima campagna locale, 2026-10-08
+<a id="spk-05--prima-campagna-locale-2026-10-08"></a>
 
-[Valutazione](README.md) · [Metodo e codice](../../spikes/SPK-05-segment-read/README.md)
+# SPK-05 — first local campaign, 2026-10-08
 
-> **Proposta** — Confronto sperimentale di letture da file immutabili sintetici,
-> con CRC32C, chiave e stamp verificati. Non attesta commit, visibilità,
-> validità CBOR, durability o i target del database.
+[Assessment](README.md) · [Method and code](../../spikes/SPK-05-segment-read/README.md)
 
-## Ambiente e prove
+> **Proposal** — Experimental comparison of reads from synthetic immutable files,
+> with CRC32C, key, and stamp validated. Does not attest to commit, visibility,
+> CBOR validity, durability, or database targets.
 
-SBCL 2.6.9, `safety 3`, heap dei processi 4 GiB, Apple M4 ARM64,
-16 GiB RAM; SBCL riporta Darwin 27.0.0. Il commit di riferimento è `eca1ab5`,
-con modifiche locali esplicite. Hardware, carico esterno non controllato,
-comando e blob dei sorgenti sono nei report. I quattro sorgenti dello spike
-e l'harness sono identificati prima/dopo: check e benchmark finali riportano
+<a id="ambiente-e-prove"></a>
+
+## Environment and tests
+
+SBCL 2.6.9, `safety 3`, process heaps 4 GiB, Apple M4 ARM64,
+16 GiB RAM; SBCL reports Darwin 27.0.0. Reference commit is `eca1ab5`,
+with explicit local changes. Hardware, uncontrolled external load,
+command, and source blobs are in reports. Four spike sources
+and harness are identified before/after: final check and benchmark report
 `:source-consistency :stable`.
 
-- [Controlli finali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check.lisp).
-- [Benchmark finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-bench.lisp).
-- [Verifica completa](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-full-check.lisp):
-  `make check` riuscito, sorgenti stabili, otto spike e controlli del repository.
-- [Prima variante](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-bench-initial.lisp) e
-  [relativo check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-initial.lisp).
-- [Seconda variante](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-bench-inline-shared-sap.lisp) e
-  [relativo check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-inline-shared-sap.lisp).
-- [Prime iniezioni I/O](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-io-first-check.lisp),
-  [iniezioni estese](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-io-check.lisp) e
-  [fixture del record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-record-check.lisp).
-- [Errore iniziale di compilazione del record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-record-compilation-failed.lisp).
-- [Errore iniziale del controller](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-compilation-failed.lisp)
-  e [diagnostica del processo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-compilation-failed-process.lisp).
+- [Final checks](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check.lisp).
+- [Final benchmark](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-bench.lisp).
+- [Full verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-full-check.lisp):
+  successful `make check`, stable sources, eight spikes, and repository checks.
+- [First variant](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-bench-initial.lisp) and
+  [its check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-initial.lisp).
+- [Second variant](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-bench-inline-shared-sap.lisp) and
+  [its check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-inline-shared-sap.lisp).
+- [First I/O injections](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-io-first-check.lisp),
+  [extended injections](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-io-check.lisp), and
+  [record fixture](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-record-check.lisp).
+- [Initial record compilation error](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-record-compilation-failed.lisp).
+- [Initial controller error](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-compilation-failed.lisp)
+  and [process diagnostics](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk05-check-compilation-failed-process.lisp).
 
-I due errori iniziali erano parentesi in eccesso. I fallimenti restano
-conservati; compilazione e caricamento finali non producono avvisi.
+Both initial errors were extra parentheses. Failures remain
+preserved; final compilation and loading produce no warnings.
 
-## Correttezza osservata
+<a id="correttezza-osservata"></a>
 
-| Ambito | Controllo ed esito |
+## Observed correctness
+
+| Scope | Check and outcome |
 |---|---|
-| Primitive I/O | 14 gruppi di iniezione: short read/write, offset e SAP crescenti, reset e tetto EINTR, EOF anche parziale, ritorni invalidi, EIO e limiti prima della syscall |
-| File reale | 5 casi: apertura esclusiva su file esistente rifiutata, scrittura su fd readonly rifiutata, lettura oltre EOF, mapping troppo lungo, fd chiuso verificato con EBADF |
-| Record sintetico | 49 casi, golden CRC32C `123456789`, oracolo bitwise separato, 12.096 byte di payload controllati con ricorrenza indipendente, numeri fino a u32 massimo, offset, troncamenti e corruzioni |
-| CRC validi e dati errati | Layout, chiave e stamp alterati con CRC ricalcolati restano rifiutati |
-| Worker | Due errori reali, EOF per pread e range incompleto per mmap, propagati dopo join; il file viene verificato integralmente dopo gli errori |
-| Letture concorrenti | 4 casi reali sul file da 12 record: 2 worker, casuale/sequenziale, pread/mmap; conteggi e range coerenti |
+| I/O primitives | 14 injection groups: short read/write, increasing offset and SAP, EINTR reset and ceiling, EOF including partial, invalid returns, EIO, and bounds before syscall |
+| Actual file | 5 cases: exclusive open on existing file rejected, write on read-only fd rejected, read beyond EOF, overly long mapping, closed fd checked with EBADF |
+| Synthetic record | 49 cases, golden CRC32C `123456789`, separate bitwise oracle, 12.096 payload bytes checked with independent recurrence, numbers through maximum u32, offsets, truncations, and corruptions |
+| Valid CRCs and incorrect data | Layout, key, and stamp altered with recalculated CRCs still rejected |
+| Worker | Two actual errors, pread EOF and incomplete mmap range, propagated after join; entire file checked after errors |
+| Concurrent reads | 4 actual cases on 12-record file: 2 workers, random/sequential, pread/mmap; consistent counts and ranges |
 
-La fixture usa PUT v2, flag zero, chiave u64 e stamp derivati dal numero
-del record. Il body non è CBOR. Il verificatore controlla l'header prima di
-interpretare le lunghezze, poi body, chiave e stamp prima di restituire il range.
-Il CRC non rende impossibile una corruzione né copre errori con CRC coerente.
+The fixture uses PUT v2, zero flags, u64 key, and stamp derived from record
+number. Body is not CBOR. The validator checks header before
+interpreting lengths, then body, key, and stamp before returning range.
+CRC neither makes corruption impossible nor covers errors with consistent CRCs.
 
-## Confronto locale
+<a id="confronto-locale"></a>
 
-File di **8192 record da 2048 byte, 16 MiB**. Tre repliche, 1/2/4 worker,
-accessi casuali deterministici e scansioni sequenziali disgiunte, ordine dei
-due metodi alternato. I **36 casi** completano **294.912 letture verificate**,
-576 MiB di record letti; il processo dura **3,897763 s**, inclusi compilazione,
-controlli, preparazione e output. I tempi di ogni caso delimitano solo lettura,
-verifica e campionamento tra primo avvio e ultima conclusione dei worker.
+## Local comparison
 
-Throughput mediano delle tre repliche, con intervallo minimo–massimo:
+File of **8192 records of 2048 bytes, 16 MiB**. Three replicas, 1/2/4 workers,
+deterministic random access and disjoint sequential scans, alternating
+method order. **36 cases** complete **294.912 validated reads**,
+576 MiB of records read; process lasts **3,897763 s**, including compilation,
+checks, preparation, and output. Individual case times delimit only reading,
+validation, and sampling between first worker start and last completion.
 
-| Accesso | Worker | pread, k record/s | mmap, k record/s |
+Median throughput of three replicas, with minimum–maximum range:
+
+| Access | Workers | pread, k records/s | mmap, k records/s |
 |---|---:|---:|---:|
-| Sequenziale | 1 | 81,3 (77,8–81,7) | 92,2 (88,3–95,3) |
-| Sequenziale | 2 | 159,0 (156,0–160,8) | 188,7 (182,6–191,1) |
-| Sequenziale | 4 | 307,0 (297,9–324,0) | 365,8 (349,3–369,0) |
-| Casuale | 1 | 82,6 (80,7–84,1) | 89,5 (87,9–94,9) |
-| Casuale | 2 | 158,6 (150,4–160,4) | 181,7 (179,6–190,2) |
-| Casuale | 4 | 300,9 (272,6–305,9) | 367,4 (335,5–402,0) |
+| Sequential | 1 | 81,3 (77,8–81,7) | 92,2 (88,3–95,3) |
+| Sequential | 2 | 159,0 (156,0–160,8) | 188,7 (182,6–191,1) |
+| Sequential | 4 | 307,0 (297,9–324,0) | 365,8 (349,3–369,0) |
+| Random | 1 | 82,6 (80,7–84,1) | 89,5 (87,9–94,9) |
+| Random | 2 | 158,6 (150,4–160,4) | 181,7 (179,6–190,2) |
+| Random | 4 | 300,9 (272,6–305,9) | 367,4 (335,5–402,0) |
 
-Il P99 dei campioni per lettura va da 13 a 20 µs in questi casi finali;
-include syscall o accesso al mapping, CRC e due letture del clock.
-I tempi sono espressi in secondi, con campioni grezzi in tick SBCL. Non è latenza client né P99 di
-servizio sotto carico. La seconda campagna ha una variabilità maggiore
-(un P99 locale arriva a 345 µs), conservata senza selezionare solo la variante
-più veloce. Il carico esterno non è controllato.
+Per-read sample P99 ranges from 13 to 20 µs in these final cases;
+it includes syscall or mapping access, CRC, and two clock reads.
+Times are in seconds, with raw samples in SBCL ticks. This is neither client latency nor service P99
+under load. The second campaign has greater variability
+(one local P99 reaches 345 µs), preserved without selecting only the fastest
+variant. External load is uncontrolled.
 
-## Allocazioni e varianti
+<a id="allocazioni-e-varianti"></a>
 
-La misura separata usa il solo thread del controller, buffer e piano già
-pronti, warmup completo e nessun campione di tempo per operazione. Il delta
-`get-bytes-consed` viene letto prima di creare il resoconto.
+## Allocations and variants
 
-| Variante | pread, byte su 8192 letture | mmap, byte su 8192 letture |
+Separate measurement uses only the controller thread, buffer and plan already
+prepared, full warmup, and no per-operation timing sample. The
+`get-bytes-consed` delta is read before creating the report.
+
+| Variant | pread, bytes over 8192 reads | mmap, bytes over 8192 reads |
 |---|---:|---:|
-| Callback nativo nel loop comune | 131.072 | 0 |
-| Call nativo inline, SAP intermedio comune | 131.072 | 0 |
-| Call nativo inline, SAP formato nel ramo usato | 0 | 0 |
+| Native callback in common loop | 131.072 | 0 |
+| Inline native call, shared intermediate SAP | 131.072 | 0 |
+| Inline native call, SAP formed in used branch | 0 | 0 |
 
-La seconda variante non risolve l'allocazione. Il codice generato mostra
-un oggetto SAP di 16 byte materializzato prima della scelta tra ramo nativo
-e callback. Formarlo separatamente nel ramo usato elimina il delta osservato
-nel campione finale. Short read, EINTR, budget, controlli di ritorno e
-iniezioni restano nel medesimo loop, con `safety 3`.
+The second variant does not resolve allocation. Generated code shows
+a 16-byte SAP object materialized before choosing native or
+callback branch. Forming it separately in the used branch eliminates observed delta
+in the final sample. Short reads, EINTR, budgets, return checks, and
+injections remain in the same loop, with `safety 3`.
 
-Un delta nullo riguarda questo kernel e questo campione SBCL; non è una
-garanzia sul motore o sugli errori. Le allocazioni della matrice comprendono
-avvio dei thread, warmup, controller e join, e sono riportate separatamente.
+Zero delta concerns this kernel and this SBCL sample; it is not an
+engine or error-path guarantee. Matrix allocations include
+thread startup, warmup, controller, and join, and are reported separately.
 
-## Conseguenze e limiti
+<a id="conseguenze-e-limiti"></a>
 
-> **Proposta** — Le primitive richieste sono raggiungibili da Common Lisp,
-> e il ciclo pread con verifica non mostra allocazioni nel campione isolato.
-> La scelta di prodotto resta pread in buffer riutilizzati (ADR-0017): il
-> vantaggio locale del mapping su un file piccolo non giustifica un cambio di ADR.
+## Consequences and limitations
 
-Il file è appena generato e riletto; dataset e page cache restano piccoli,
-senza controllo dell'evizione. Non si misurano GET da NVMe a cache fredda,
-dataset oltre RAM, cache propria, perdita di calore dopo CLEAN/MERGE,
-memoria trattenuta dalle epoche o page fault iniettati. RSK-10 rimane aperto;
-RSK-16 riceve questa evidenza limitata sulle primitive, senza chiudere le
-altre primitive o la verifica Linux x86-64.
+> **Proposal** — Required primitives are reachable from Common Lisp,
+> and the pread loop with validation shows no allocations in the isolated sample.
+> The product choice remains pread into reused buffers (ADR-0017): local
+> mapping advantage on a small file does not justify an ADR change.
 
-Ogni worker possiede fd, buffer, piano e campioni. Non esistono scritture
-condivise per lettura; mapping readonly e porte del controller riguardano
-solo l'esperimento. Le syscall sono bloccanti, esclusivamente nei worker
-di questa prova I/O. Timeout e limite di tentativi sono diagnostici:
-una syscall bloccata può superarli. Un worker ancora vivo impedisce munmap,
-close e rimozione della fixture fino all'uscita del processo. `MAP_PRIVATE`
-non protegge da mutazioni esterne o `SIGBUS`; il file resta immutabile per
-l'intera prova. Le fixture normali sono state rimosse al termine.
+The file is newly generated and reread; dataset and page cache remain small,
+without eviction control. Measurements do not cover cold-cache NVMe GETs,
+beyond-RAM datasets, own cache, loss of cache warmth after CLEAN/MERGE,
+memory retained by epochs, or injected page faults. RSK-10 remains open;
+RSK-16 receives this limited primitive evidence without closing other
+primitives or Linux x86-64 verification.
+
+Each worker owns fd, buffer, plan, and samples. There are no shared
+writes per read; read-only mappings and controller ports concern only
+the experiment. Syscalls are blocking, exclusively in this I/O test's
+workers. Timeout and attempt limit are diagnostic:
+a blocked syscall can exceed them. A still-live worker prevents munmap,
+close, and fixture removal until process exit. `MAP_PRIVATE`
+does not protect against external mutations or `SIGBUS`; the file remains immutable
+throughout the test. Normal fixtures were removed at completion.

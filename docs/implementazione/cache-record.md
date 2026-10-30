@@ -1,33 +1,37 @@
-# Cache dei record per Serie
+<a id="cache-dei-record-per-serie"></a>
 
-## Contratto
+# Per-Serie record cache
 
-`arcdocdb.cache` implementa la partizione in memoria prevista da
-[ADR-0025](../adr/0025-cache-per-location.md) e
-[ADR-0044](../adr/0044-cache-acceleratore-puro.md): classi di dimensione,
-insiemi di otto posti, sostituzione CLOCK, ricerca senza lock e inserimento
-opportunistico. La chiave è la location fisica, non l’`_id`.
+<a id="contratto"></a>
 
-Requisiti: REQ-CCH-001, REQ-CCH-002, REQ-CCH-004, REQ-AFF-002,
-REQ-AFF-008, REQ-OBS-002. Invarianti: INV-A2, INV-A8, INV-A12, INV-M3,
-INV-P5, INV-P6. La politica CLOCK è C3; copia e verifica sono C1.
-L’implementazione è disponibile; la qualifica concorrente resta aperta.
+## Contract
 
-La cache non determina visibilità o commit. Il chiamante risolve prima
-la versione committed nell’indice, sotto il
-[contesto di lettura](compiti-lettura.md); passa location, lunghezza,
-chiave, CSN, flag e versione di formato. Dopo il risultato completa il
-controllo dello snapshot. La cache non conserva file, epoche, snapshot,
-root dell’indice o riferimenti ad altre Serie.
+`arcdocdb.cache` implements the in-memory partition planned by
+[ADR-0025](../adr/0025-cache-per-location.md) and
+[ADR-0044](../adr/0044-cache-acceleratore-puro.md): size classes,
+eight-way sets, CLOCK replacement, lookup without locks, and opportunistic
+insertion. The key is the physical location, not `_id`.
+
+Requirements: REQ-CCH-001, REQ-CCH-002, REQ-CCH-004, REQ-AFF-002,
+REQ-AFF-008, REQ-OBS-002. Invariants: INV-A2, INV-A8, INV-A12, INV-M3,
+INV-P5, INV-P6. CLOCK policy is C3; copy and verification are C1.
+Implementation is available; concurrent qualification remains open.
+
+The cache does not determine visibility or commit. The caller first resolves
+the committed version in the index, under the
+[read context](compiti-lettura.md); it passes location, length,
+key, CSN, flags, and format version. After the result, it completes
+the snapshot check. The cache retains no files, epochs, snapshots,
+index roots, or references to other Serie.
 
 ## API
 
 ```lisp
-;; Configurazione del controller, fuori dal percorso delle richieste.
+;; Controller configuration, outside the request path.
 (crea-cache-serie sizes counts budget-payload :stripes 16)
 (payload-cache-serie cache)
 
-;; Location: segment-high/segment-low u32, offset u32; CSN: due u32.
+;; Location: segment-high/segment-low u32, offset u32; CSN: two u32s.
 (cerca-record-cache cache segment-high segment-low offset record-length
                     key csn-high csn-low flags destination start
                     :version 2 :proof-buffer proof
@@ -42,180 +46,192 @@ root dell’indice o riferimenti ad altre Serie.
 ;;    evicted-p, scan-without-reread-p
 ```
 
-`sizes` e `counts` sono array semplici u32, stabili durante la costruzione,
-non trattenuti dal risultato. Al massimo sedici classi in ordine crescente;
-dimensioni potenze di due tra 1 KiB e 32 MiB. Il numero di insiemi per classe
-è zero oppure una potenza di due fino a 65.536; zero omette quella classe.
-La classe selezionata è la prima attiva abbastanza grande per **l’intero
-record**, header e chiave inclusi. Un record oltre tutte le classi salta
-la cache. Nessun limite documentale viene abbassato dalla configurazione
-della cache: una classe da 16 KiB può convivere con documenti da 16 MiB.
+`sizes` and `counts` are simple u32 arrays, stable during construction,
+not retained by the result. At most sixteen classes in ascending order;
+sizes are powers of two between 1 KiB and 32 MiB. Sets per class
+are zero or a power of two up to 65,536; zero omits that class.
+The selected class is the first active one large enough for **the entire
+record**, including header and key. A record beyond all classes bypasses
+the cache. Cache configuration lowers no document
+limit: a 16 KiB class can coexist with 16 MiB documents.
 
-Tutti i conteggi zero e budget zero producono una partizione vuota.
-Il numero di strisce è una potenza di due tra 1 e 256, ridotta al numero
-di insiemi della singola classe. Il controller verifica tutte le classi
-e l’intero budget prima della prima allocazione di arena.
+All-zero counts and zero budget produce an empty partition.
+Stripe count is a power of two between 1 and 256, reduced to the number
+of sets in each class. The controller checks every class
+and the entire budget before the first arena allocation.
 
-Nessuna operazione pubblica di invalidazione, ri-etichettatura, svuotamento
-o ridimensionamento. Segment-id non riusati impediscono di confondere una
-location vecchia con un file nuovo. La compaction scalda le nuove location
-attraverso le letture ordinarie. Il reclaim non consulta la cache.
+No public invalidation, relabeling, clearing,
+or resizing operation. Nonreused segment-ids prevent confusing an
+old location with a new file. Compaction warms new locations
+through ordinary reads. Reclamation does not consult the cache.
 
-## Layout e budget
+<a id="layout-e-budget"></a>
 
-Ogni posto contiene, in array specializzati separati:
+## Layout and budget
 
-| Campo | Payload |
+Each way contains, in separate specialized arrays:
+
+| Field | Payload |
 |---|---:|
-| Record | Dimensione della classe |
-| Tag: segment-high, segment-low, offset, lunghezza | 16 byte |
-| Sequenza seqlock | 8 byte |
-| CLOCK, origine scan, rilettura, rifiutato, disabilitato | 5 byte |
+| Record | Class size |
+| Tag: segment-high, segment-low, offset, length | 16 bytes |
+| Seqlock sequence | 8 bytes |
+| CLOCK, scan origin, reread, rejected, disabled | 5 bytes |
 
-Per una classe con `S` insiemi e dimensione `B`, il payload è:
+For a class with `S` sets and size `B`, payload is:
 `8 × S × (B + 29) + S + 8 × min(S, strisce)`.
-Include le mani CLOCK e il vettore dei riferimenti ai mutex. Si aggiungono
-otto byte per riferimento nel vettore delle classi attive.
-Il valore restituito da `payload-cache-serie` è immutabile.
+It includes CLOCK hands and the mutex-reference vector. Add
+eight bytes per reference in the active-class vector.
+The value returned by `payload-cache-serie` is immutable.
 
-Header Lisp, oggetti mutex, allineamento, buffer dei worker, partizioni
-pregresse e garbage pendente non sono inclusi. Il budget è del payload,
-non RSS né budget globale: lo scheduler deve riservare anche questi costi.
-La capacità è fissa; sostituire una partizione richiede un’operazione del
-controller con pubblicazione e contabilizzazione delle vecchie referenze.
-Questo collegamento allo scheduler non è ancora implementato.
+Lisp headers, mutex objects, alignment, worker buffers, previous
+partitions, and pending garbage are excluded. The budget is payload,
+not RSS or global budget: the scheduler must also reserve these costs.
+Capacity is fixed; replacing a partition requires a controller
+operation with publication and accounting for old references.
+This scheduler connection is not yet implemented.
 
-## Ricerca
+<a id="ricerca"></a>
 
-1. Verifica gli argomenti fisici e di formato, sceglie una classe e un insieme.
-   Il mescolamento deterministico include segmento a 64 bit e offset a 32 bit.
-2. Esamina al massimo otto tag. Un match provvisorio avvia **una** lettura
-   seqlock: contatore pari, barriera acquire, tag e stato, copia nel buffer
-   privato, barriera, ricontrollo del contatore e dello stato.
-3. Dispari, contatore oltre limite, cambiamento o posto scartato/disabilitato
-   diventano `:miss`. Non ripete il tentativo e non legge fuori dall’insieme.
-4. Verifica la copia privata con `arcdocdb.record:verifica-put-parole`:
-   CRC header/body, cornice e lunghezza esatta, PUT, flag, chiave completa,
-   CSN oppure TXID e prova OUTCOME autorevole per un prepared.
-5. Solo dopo la verifica restituisce `:hit` e il range del valore. Aggiorna
-   i byte CLOCK e rilettura: il loro valore non decide coerenza o visibilità.
+## Lookup
 
-`destination` è scratch esclusivo del worker. Deve contenere il record
-completo a partire da `start` e non essere alias di arena, chiave o prova.
-Un esito negativo può aver copiato byte provvisori: i range sono zero e
-il chiamante deve scartare lo scratch. Anche una condizione o un’uscita
-non locale rende il risultato inutilizzabile.
+1. Checks physical and format arguments, selects a class and set.
+   Deterministic mixing includes 64-bit segment and 32-bit offset.
+2. Examines at most eight tags. A provisional match starts **one** seqlock
+   read: even counter, acquire barrier, tag and state, copy to private
+   buffer, barrier, recheck counter and state.
+3. Odd counter, counter beyond limit, change, or rejected/disabled way
+   becomes `:miss`. It does not retry or read outside the set.
+4. Verifies the private copy with `arcdocdb.record:verifica-put-parole`:
+   header/body CRC, frame and exact length, PUT, flags, complete key,
+   CSN or TXID and authoritative OUTCOME proof for a prepared record.
+5. Only after verification returns `:hit` and the value range. Updates
+   CLOCK and reread bytes: their values do not determine consistency or visibility.
 
-La stessa verifica a due parole è disponibile alle letture dal segmento.
-`verifica-put` mantiene la firma precedente e delega al verificatore
-comune; la cornice v1/v2 non cambia. La cache conserva solo il PUT; la
-prova prepared viene risolta dal caller e resta autorevole. Un hit di un
-prepared richiede la prova, già stabile nel compito corrente: la cache
-non certifica da sola il commit multiserie.
+`destination` is worker-exclusive scratch. It must hold the complete
+record starting at `start` and must not alias arena, key, or proof.
+A negative outcome may have copied provisional bytes: ranges are zero and
+the caller must discard scratch. A condition or nonlocal
+exit also makes the result unusable.
 
-## Scarto, inserimento e CLOCK
+The same two-word verification is available to segment reads.
+`verifica-put` retains its previous signature and delegates to the common
+verifier; the v1/v2 frame does not change. The cache stores only PUT;
+prepared proof is resolved by the caller and remains authoritative. A hit on a
+prepared record requires proof already stable in the current task: the cache
+does not certify multiseries commit by itself.
 
-Una `corruption-detected` durante la verifica della **copia in cache**:
+<a id="scarto-inserimento-e-clock"></a>
 
-- restituisce `:verify-failed`, senza range del valore;
-- marca il posto rifiutato senza attesa;
-- richiede al caller metrica/allarme `cache-verify-failed` e rilettura
-  dal segmento; solo quest’ultima può accusare il dato persistente.
+## Rejection, insertion, and CLOCK
 
-Il bit di rifiuto è conservativo: una sostituzione concorrente può ricevere
-lo scarto di una copia precedente. Questo provoca un miss aggiuntivo;
-non rende valido un record errato. Il successivo inserimento sotto mutex
-può riutilizzare il posto rifiutato. Errori di argomenti, risorse o invarianti
-non vengono assorbiti dal gestore della corruzione.
+A `corruption-detected` during verification of the **cached copy**:
 
-L’inserimento verifica **il proprio input** con lo stesso verificatore
-prima di acquisire il mutex della striscia, con `wait-p nil`:
+- returns `:verify-failed`, without a value range;
+- marks the way rejected without waiting;
+- requires the caller to record metric/alarm `cache-verify-failed` and reread
+  from the segment; only the latter can implicate persistent data.
 
-- classe assente: `:bypassed`; il caller conserva la responsabilità di
-  verificare il record dal segmento anche quando la cache è disattivata;
-- contesa: `:busy`, nessuna attesa o copia;
-- stessa location già leggibile: `:present`, nessuna copia;
-- nessuna vittima con credito entro due giri CLOCK: `:unavailable`;
-- altrimenti: sequenza dispari, barriera, record/tag/stato, barriera,
-  nuova sequenza pari e `:inserted`.
+The rejection bit is conservative: a concurrent replacement may receive
+rejection intended for a previous copy. This causes an additional miss;
+it does not validate an incorrect record. A subsequent insertion under mutex
+can reuse the rejected way. Argument, resource, or invariant errors
+are not absorbed by the corruption handler.
 
-La corruzione del buffer **inserito dal segmento** propaga al caller del
-segmento, distinta da `:verify-failed`: non viene nascosta come difetto
-della cache. La copia inserita è una verifica supplementare; il suo costo
-CRC rispetto alla lettura già verificata va misurato.
-PUT e prova OUTCOME possono risiedere in intervalli dello stesso buffer
-input stabile: l’inserimento lo legge soltanto. Il divieto di alias con
-la prova riguarda la destinazione modificata dalla ricerca.
+Insertion verifies **its own input** with the same verifier
+before acquiring the stripe mutex, with `wait-p nil`:
 
-CLOCK visita al massimo sedici posti, azzerando i riferimenti accesi.
-Le scansioni entrano con riferimento zero; le richieste puntuali con uno.
-La mano è mascherata a tre bit, quindi non può uscire dall’insieme.
-Una rilettura può riaccendere tutti i riferimenti durante entrambe le
-passate: l’inserimento rinuncia invece di attendere una vittima.
+- absent class: `:bypassed`; the caller remains responsible for
+  verifying the segment record even when the cache is disabled;
+- contention: `:busy`, no waiting or copying;
+- same location already readable: `:present`, no copy;
+- no victim with credit within two CLOCK passes: `:unavailable`;
+- otherwise: odd sequence, barrier, record/tag/state, barrier,
+  new even sequence, and `:inserted`.
 
-Sequenze a 64 bit limitate sotto `2^62`, nessun wrap. Un posto con sequenza
-dispari inattesa, credito esaurito o mutazione interrotta viene disabilitato
-per tutta la vita della partizione. Il cleanup disabilita prima del rilascio
-del mutex e propaga l’errore originale. La disponibilità residua può calare
-fino a zero; il percorso dal segmento resta disponibile. Non c’è rollback
-del contatore né riapertura del posto disabilitato.
+Corruption of the buffer **inserted from the segment** propagates to the segment
+caller, distinct from `:verify-failed`: it is not hidden as a cache
+defect. The inserted copy is an additional verification; its CRC
+cost relative to an already-verified read must be measured.
+PUT and OUTCOME proof may occupy ranges of the same stable input
+buffer: insertion only reads it. The proof-alias prohibition
+concerns the destination modified by lookup.
 
-## Metriche e costi
+CLOCK visits at most sixteen ways, clearing set reference bits.
+Scans enter with reference zero; point requests with one.
+The hand is masked to three bits, so it cannot leave the set.
+A reread can set all references during both
+passes: insertion gives up rather than waiting for a victim.
 
-Gli enum distinguono hit, miss, errore di verifica, contesa, bypass e
-indisponibilità; i due booleani di inserimento descrivono espulsione e
-origine scan senza rilettura osservata. Il caller li conta nei contatori
-del worker, da aggregare fuori dal percorso della richiesta. Nessun
-contatore centrale o scrittura fra Serie.
+64-bit sequences bounded below `2^62`, no wraparound. A way with an unexpected
+odd sequence, exhausted credit, or interrupted mutation is disabled
+for the partition's entire lifetime. Cleanup disables it before releasing
+the mutex and propagates the original error. Remaining availability may fall
+to zero; the segment path remains available. There is no counter rollback
+or reopening of a disabled way.
 
-Calore e osservazione delle riletture sono approssimativi: una scrittura
-conservativa di un reader precedente può influenzare la vittima successiva.
-La scan pollution esposta è una metrica diagnostica, non un conteggio
-linearizzabile. Scheduler, aggregazione, allarme e decisione su 2Q restano
-integrazioni successive; non si cambia politica senza misure e ADR.
+<a id="metriche-e-costi"></a>
 
-La [suite di pubblicazione e sostituzione](../../tests/cache/README.md)
-aggiunge casi deterministici sugli stati dei posti e prove con quattro
-worker sullo stesso insieme. Il metodo distingue gli interleaving osservati
-dalla copertura delle finestre interne e dalla qualifica C1 completa.
+## Metrics and costs
 
-Ricerca: al massimo sedici classi, otto tag, una copia e una verifica
-proporzionali alla lunghezza del record e della eventuale prova. Inserimento:
-verifica dell’input, un tentativo di mutex, otto tag, al massimo sedici
-visite CLOCK e una copia. Nessun I/O o lavoro non limitato nel modulo.
-Array specializzati, nessun oggetto per entry, CSN in due u32. Allocazioni
-ed efficienza reale dei percorsi di successo restano da misurare, così
-come P95/P99 e scan pollution; non vengono dichiarate pari a zero.
+Enums distinguish hit, miss, verification error, contention, bypass, and
+unavailability; the two insertion booleans describe eviction and scan
+origin without observed reread. The caller counts them in worker
+counters, aggregated outside the request path. No
+central counter or write between Serie.
 
-## Decisioni C1 e qualifica
+Heat and reread observation are approximate: a conservative write
+by an earlier reader can affect the next victim.
+Exposed scan pollution is a diagnostic metric, not a linearizable
+count. Scheduler, aggregation, alarm, and a decision on 2Q remain
+later integrations; policy does not change without measurements and an ADR.
 
-| ID | Decisione composta | Copertura ancora richiesta |
+The [publication and replacement suite](../../tests/cache/README.md)
+adds deterministic way-state cases and tests with four
+workers on the same set. The method distinguishes observed interleavings
+from coverage of internal windows and full C1 qualification.
+
+Lookup: at most sixteen classes, eight tags, one copy and one verification
+proportional to record and any proof length. Insertion:
+input verification, one mutex attempt, eight tags, at most sixteen
+CLOCK visits, and one copy. No I/O or unbounded work in the module.
+Specialized arrays, no per-entry object, CSN in two u32s. Allocations
+and actual efficiency of success paths remain to be measured, as
+do P95/P99 and scan pollution; they are not declared zero.
+
+<a id="decisioni-c1-e-qualifica"></a>
+
+## C1 decisions and qualification
+
+| ID | Compound decision | Coverage still required |
 |---|---|---|
-| CCH-D01 | Configurazione: dimensioni/conteggi, classi ordinate, potenze e budget | Ogni limite, classe omessa, budget zero e preflight senza allocazione |
-| CCH-D02 | Location/CSN non zero, chiave, record, range e flag | Campi zero, estremi u32/u64, v1/v2, limiti documento |
-| CCH-D03 | Alias distruttivo in lettura, input stabile in inserimento, spazio e prova prepared | Ogni alias, PUT/OUTCOME nello stesso input, start finale, prova mancante e intervalli errati |
-| CCH-D04 | Tag composto e seqlock pari/stabile con posto leggibile | Ogni campo discordante, scrittura concorrente e lettura mista |
-| CCH-D05 | CRC/tipo/flag/chiave/CSN o TXID+OUTCOME | Ogni discordanza, due parole alte, prova di altro lotto |
-| CCH-D06 | Credito, parity e stato terminale del posto | Ultimo credito, contatore dispari e interruzioni prima/dopo il pari |
-| CCH-D07 | Vittima vuota/rifiutata/fredda o doppio giro esaurito | Ogni ramo, tutti caldi e contesa con calore concorrente |
-| CCH-D08 | Espulsione di uno scan senza rilettura osservata | Origine/rilettura e race conservative nelle metriche |
-| CCH-D10 | Disponibilità prima del tag: posto disabilitato/rifiutato o candidato leggibile | Vecchio tag rifiutato/disabilitato seguito da copia valida; secondo controllo nella copia e race conservative |
-| CCH-D09 | Corruzione della copia contro corruzione dell’input | Cache scartata senza quarantena; input propagato al caller storage |
+| CCH-D01 | Configuration: sizes/counts, ordered classes, powers, and budget | Every limit, omitted class, zero budget, and allocation-free preflight |
+| CCH-D02 | Nonzero location/CSN, key, record, range, and flags | Zero fields, u32/u64 endpoints, v1/v2, document limits |
+| CCH-D03 | Destructive alias in reads, stable input in insertion, space, and prepared proof | Every alias, PUT/OUTCOME in same input, final start, missing proof, and incorrect ranges |
+| CCH-D04 | Compound tag and even/stable seqlock with readable way | Every mismatched field, concurrent write, and mixed read |
+| CCH-D05 | CRC/type/flags/key/CSN or TXID+OUTCOME | Every mismatch, two high words, proof from another batch |
+| CCH-D06 | Credit, parity, and terminal way state | Last credit, odd counter, and interruptions before/after even |
+| CCH-D07 | Empty/rejected/cold victim or exhausted double pass | Every branch, all hot, and contention with concurrent heat |
+| CCH-D08 | Eviction of a scan without observed reread | Origin/reread and conservative metric races |
+| CCH-D10 | Availability before tag: disabled/rejected way or readable candidate | Old rejected/disabled tag followed by valid copy; second check within copy and conservative races |
+| CCH-D09 | Copy corruption versus input corruption | Cache rejected without quarantine; input propagated to storage caller |
 
-Metodo ed evidenze statiche nella
-[campagna](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cache-record/README.md).
-Compilazione e controlli statici non chiudono la qualifica C1.
-La suite della cache documenta una prima campagna concorrente limitata;
-restano prove differenziali cache attiva/budget zero, stress prolungato,
-fault injection completa, misure di allocazione, integrazione GET/EBR/snapshot,
-resolver OUTCOME, I/O, scheduler e metriche. I requisiti mantengono lo
-stato progettato fino alla qualifica richiesta dalla tracciabilità.
+Method and static evidence in the
+[campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cache-record/README.md).
+Compilation and static checks do not close C1 qualification.
+The cache suite documents an initial limited concurrent campaign;
+differential tests with cache enabled/zero budget, prolonged stress,
+complete fault injection, allocation measurements, GET/EBR/snapshot integration,
+OUTCOME resolver, I/O, scheduler, and metrics remain. Requirements retain
+designed status until the qualification required by traceability.
 
-## Riparazione opportunistica del percorso GET
+<a id="riparazione-opportunistica-del-percorso-get"></a>
 
-Il reader salta i posti già rifiutati o disabilitati prima del confronto del tag.
-Una copia valida reinserita in un altro way resta raggiungibile; le guardie
-della copia sotto seqlock vengono ricontrollate. Il primo errore CRC resta
-`:verify-failed` e impone il fallback al segmento. La scansione conserva il
-budget di otto way e non ritenta una copia concorrente non confermata.
-Regressione e misure: [campagna GET](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md).
+## Opportunistic GET-path repair
+
+The reader skips already-rejected or disabled ways before comparing the tag.
+A valid copy reinserted in another way remains reachable; copy guards
+under seqlock are rechecked. The first CRC error remains
+`:verify-failed` and requires segment fallback. Scanning retains the
+eight-way budget and does not retry an unconfirmed concurrent copy.
+Regression and measurements: [GET campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md).

@@ -1,81 +1,89 @@
-# Collegamento della stabilizzazione alla pubblicazione esclusiva
+<a id="collegamento-della-stabilizzazione-alla-pubblicazione-esclusiva"></a>
 
-> **Proposta di integrazione** — Metodo del 2026-10-22, prima delle
-> modifiche funzionali e delle diagnostiche. Applica ADR-0040 §2–3 e
-> INV-A9/A10/A11 senza modificare formati, decisioni o ammissione.
+# Connecting stabilization to exclusive publication
 
-## Base e incremento
+> **Integration proposal** — Method of 2026-10-22, before functional
+> changes and diagnostics. Applies ADR-0040 §2–3 and
+> INV-A9/A10/A11 without changing formats, decisions, or admission.
 
-Si compongono la pubblicazione esclusiva del branch
-`codex/recovery-publish-temporary` (`a478cf94`) e la stabilizzazione
-idempotente entrata in `main` (`52ca4f77`). L'integrazione risolve soltanto
-gli elenchi di componenti/export in ASD e package, mantenendo entrambe
-le API e tutti gli originali già versionati. La copia primaria non viene
-modificata da questa attività.
+<a id="base-e-incremento"></a>
 
-`stabilizza-nome-fonte-recuperata` continua a verificare token semantico,
-CONTROL, riga del set e FD readonly prima di delegare al modulo I/O.
-`stabilizza-nome-temporaneo` mantiene le due osservazioni dei nomi e il
-ritorno T/NIL; cambia soltanto il percorso di rinomina:
+## Base and increment
 
-1. Preflight comune di nomi, modi e backend di identità.
-2. Osservazione: esattamente uno dei due nomi deve designare il FD.
-3. Se temporaneo, preflight della pubblicazione esclusiva **prima** del
-   confine dell'effetto; callback esclusiva obbligatoria, nessun ripiego.
-4. Nel confine di cleanup già esistente, il ramo temporaneo chiama
-   `pubblica-temporaneo`; il ramo definitivo non invoca alcuna rinomina.
-5. Postcondizione comune dei due nomi, fsync parent e FD ancora aperto.
+Composes exclusive publication from branch
+`codex/recovery-publish-temporary` (`a478cf94`) and idempotent
+stabilization merged into `main` (`52ca4f77`). Integration resolves only
+component/export lists in ASD and package, retaining both
+APIs and all versioned originals. Primary copy not
+modified by this work.
 
-Il ramo definitivo richiede identità e flush, senza callback di rinomina
-ordinaria/esclusiva o simbolo nativo di rinomina. Il ramo temporaneo
-richiede `:rename-exclusive` anche se il backend dispone di `:rename`.
-L'API pubblica di pubblicazione mantiene preflight, copie private bounded
-e verifica dell'identità: nessun secondo motore di rinomina.
-Le copie aggiuntive di nomi brevi sono un costo dichiarato del percorso
-freddo; non viene introdotto un nuovo percorso privato per evitarle.
+`stabilizza-nome-fonte-recuperata` continues checking semantic token,
+CONTROL, set row, and read-only FD before delegating to I/O module.
+`stabilizza-nome-temporaneo` retains both name observations and
+T/NIL return; only rename path changes:
 
-## Guasti, autorità e limiti
+1. Common preflight of names, modes, and identity backends.
+2. Observation: exactly one of both names must designate FD.
+3. If temporary, exclusive-publication preflight **before** effect
+   boundary; exclusive callback mandatory, no fallback.
+4. Within existing cleanup boundary, temporary branch calls
+   `pubblica-temporaneo`; final branch invokes no rename.
+5. Common postcondition on both names, parent fsync, and FD still open.
 
-Il controllo preliminare di assenza resta un diagnostico del namespace;
-la syscall esclusiva impedisce la sostituzione del target anche se compare
-prima della rinomina. L'identità del sorgente richiede tuttora namespace
-esclusivo e stabile. Nessuna promessa di recovery concorrente.
+Final branch requires identity and flush without ordinary/exclusive
+rename callback or native rename symbol. Temporary branch
+requires `:rename-exclusive` even if backend has `:rename`.
+Public publication API retains preflight, bounded private copies,
+and identity verification: no second rename engine.
+Additional short-name copies are a declared cold-path
+cost; no new private path introduced to avoid them.
 
-Callback/simbolo mancante nel ramo temporaneo: rifiuto prima del confine
-dell'effetto, capacità ancora aperte. Errore di rinomina, collisione alla
-syscall, postcondizione o flush falliti e interruzione nel completamento:
-cleanup originario, parent ancora OPEN diventa FAULTED, causa preservata.
-Nessun retry, rollback, close, unlink o scrittura/troncamento del segmento.
-Una nuova acquisizione osserva temporaneo o definitivo e ripete soltanto
-il completamento giustificato dall'EDIT autorevole.
+<a id="guasti-autorità-e-limiti"></a>
 
-Il nuovo collegamento non completa l'esecuzione di tutte le azioni del
-recovery, la rimozione con prova, il checkpoint, gli indici o l'ammissione.
-La Serie resta l'unità indipendente: nessun thread, lock, registro o
-scrittura aggiunta fra Serie; fsync parent rimane per fonte riuscita.
+## Faults, authority, and limits
 
-## Decisioni e piano delle diagnostiche
+Preliminary absence check remains a namespace diagnostic;
+exclusive syscall prevents target replacement even if target appears
+before rename. Source identity still requires exclusive,
+stable namespace. No concurrent-recovery promise.
 
-| ID | Confine da qualificare |
+Missing callback/symbol in temporary branch: rejection before effect
+boundary, capabilities still open. Rename error, syscall collision,
+failed postcondition or flush, and interruption during completion:
+original cleanup, still-OPEN parent becomes FAULTED, cause preserved.
+No retry, rollback, close, unlink, or segment write/truncation.
+Reacquisition observes temporary or final state and repeats only
+completion justified by authoritative EDIT.
+
+New connection does not complete all recovery actions,
+proof-based removal, checkpoint, indexes, or admission.
+Serie remains independent unit: no thread, lock, register, or
+write added between Serie; parent fsync remains per successful source.
+
+<a id="decisioni-e-piano-delle-diagnostiche"></a>
+
+## Decisions and diagnostic plan
+
+| ID | Boundary to qualify |
 |---|---|
-| SNE-D01 | Preflight comune senza callback di rinomina; ciascuna callback identità necessaria |
-| SNE-D02 | Solo ramo temporaneo richiede callback/simbolo esclusivo, prima dell'effetto |
-| SNE-D03 | Ramo temporaneo usa pubblicazione esclusiva; `:rename` non è fallback |
-| SNE-D04 | Ramo definitivo senza rinomina conserva postcondizione e fsync obbligatoria |
-| SNE-D05 | Due livelli di cleanup preservano la causa e non riaprono CLOSED/FAULTED |
-| SNE-D06 | Token ACTIVE/CLOSED, ID u64, FD e CONTROL restano quelli della fonte verificata |
+| SNE-D01 | Common preflight without rename callback; each required identity callback |
+| SNE-D02 | Only temporary branch requires exclusive callback/symbol, before effect |
+| SNE-D03 | Temporary branch uses exclusive publication; `:rename` is not fallback |
+| SNE-D04 | Final branch without rename retains postcondition and required fsync |
+| SNE-D05 | Two cleanup levels preserve cause and do not reopen CLOSED/FAULTED |
+| SNE-D06 | ACTIVE/CLOSED tokens, u64 IDs, FD, and CONTROL remain those of verified source |
 
-Codice e documentazione vengono committati prima dei processi; gli agenti
-di revisione sono chiusi prima delle diagnostiche. Compilazione forzata
-del solo prodotto con avvisi fatali e cache privata gerarchica; lint,
-tracciabilità, collegamenti e lettura del disassemblato, tutti registrati
-con revisione, hash, ambiente e originali. Una revisione indipendente e
-due riletture C1 dell'autore restano statiche.
+Code and documentation committed before processes; review agents
+closed before diagnostics. Forced product-only compilation
+with fatal warnings and private hierarchical cache; lint,
+traceability, links, and disassembly reading, all recorded
+with revision, hashes, environment, and originals. Independent review and
+two author C1 rereadings remain static.
 
-Non si aggiungono o eseguono test funzionali, FI, copertura, mutazioni o
-benchmark. SNE-D01…D06, PIO-D01…D09 e SNR-D01…D09 restano da qualificare.
-La diagnostica locale non è esecuzione della nuova API o della CI GitHub.
-I registri vengono raccolti in archivi nuovi e chiusi con il collector
-comune, quattro worker e checker indipendente; gli originali precedenti
-restano invariati. La conservazione lossless può usare descriptor gzip
-prima della raccolta; nessun FASL o cache viene pubblicato.
+No functional tests, FI, coverage, mutations, or benchmarks added
+or run. SNE-D01…D06, PIO-D01…D09, and SNR-D01…D09 remain to qualify.
+Local diagnostics are not execution of new API or GitHub CI.
+Records collected into new closed archives with common collector,
+four workers, and independent checker; earlier originals
+remain unchanged. Lossless preservation may use gzip descriptors
+before collection; no FASL or cache published.

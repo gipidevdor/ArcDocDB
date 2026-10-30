@@ -1,158 +1,168 @@
-# Scrittura dei valori semplici CBOR — lettura indipendente dei dati
+<a id="scrittura-dei-valori-semplici-cbor--lettura-indipendente-dei-dati"></a>
 
-Questa copia pubblica la lettura originaria, blob
-`19c968cf4aab940c19b8e22e0b1d2c5ef53d1818`. Il testo conserva lo stato
-delle verifiche al momento della lettura; gli esiti successivi sono nel
-[resoconto delle campagne](cbor-semplici-risultati.md).
-L'[originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-simple-write-final/raw/readings/data-review-draft.md.txt)
-è conservato senza modifiche nel supplemento finale.
+# CBOR simple-value writing — independent data reading
 
-Lettura definitiva ignorata del 2026-10-11. Confronta i record completi
-del preliminare, benchmark, self-test, mutazioni, coverage e audit con il
-corpus congelato. I riscontri locali sono coerenti; MAKE CHECK completo
-dopo la raccolta resta pendente. Nessun file tracciato è stato scritto
-durante questa lettura; prodotto e test non sono stati caricati o chiamati
-dai lettori dei dati.
+This copy publishes the original reading, blob
+`19c968cf4aab940c19b8e22e0b1d2c5ef53d1818`. The text preserves verification
+status at reading time; later outcomes are in the
+[campaign account](cbor-semplici-risultati.md).
+The [original](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-simple-write-final/raw/readings/data-review-draft.md.txt)
+is preserved unchanged in the final supplement.
 
-## Metodo e provenienza
+Final ignored reading dated 2026-10-11. Compares complete preliminary,
+benchmark, self-test, mutation, coverage, and audit records against the
+frozen corpus. Local findings are consistent; full MAKE CHECK
+after collection remains pending. No tracked file was written
+during this reading; product and tests were neither loaded nor called
+by data readers.
 
-I record sono stati letti integralmente come dati tramite
+<a id="metodo-e-provenienza"></a>
+
+## Method and provenance
+
+Records were read in full as data through
 `tools/evidence-storage.lisp`, blob
-`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`. Il reader accetta una sola
-plist con chiavi keyword e READ-EVAL NIL; un eventuale descriptor viene
-verificato ed espanso tramite il medesimo strumento. I report benchmark
-incorporati in STDOUT sono stati letti come una sola forma con READ-EVAL
-NIL ed EOF finale. Non sono stati valutati dati del report.
+`fa2b5d36dca0837e2ed5e49b282887b2e110b2b7`. The reader accepts a single
+plist with keyword keys and READ-EVAL NIL; any descriptor is
+verified and expanded through the same tool. Benchmark reports
+embedded in STDOUT were read as one form with READ-EVAL
+NIL and final EOF. No report data was evaluated.
 
-| Record | Stato/exit | Secondi | Byte originali | SHA-256 dei byte originali |
+| Record | Status/exit | Seconds | Original bytes | SHA-256 of original bytes |
 |---|---|---:|---:|---|
 | `spikes/out/4000713780-command-17360-0/report.lisp` | OK / 0 | 22.106124 | 695896 | d7a184fe1d77302fd0484f43f8e028264d327b2208d22eb7e9d2e7b5ea9e5428 |
 | `spikes/out/4000713808-command-19171-0/report.lisp` | OK / 0 | 1.2138 | 183455 | 49e218bbe4a9eee8f137c381755929cab53c4cf298bb7df73a019ea0b7467e02 |
 | `spikes/out/4000713806-command-19078-0/report.lisp` | OK / 0 | 0.898278 | 175469 | 9bbfcbbf3c198d87318f5b63db01416d2c2155c64edcf10b0bfae06f22695498 |
 
-Tutti e tre registrano commit
-`0865b2c3eaca5a0ea8a29b2de0f8e3d283ba2952`, working tree vuoto,
-SBCL 2.6.9, Darwin 27.0.0, ARM64 Apple M4, memoria 17.179.869.184 byte,
-10 CPU logiche e carico esterno non controllato. I 685 elementi
-SOURCE-BLOBS-BEFORE/AFTER sono stati confrontati integralmente e sono
-uguali, oltre al campo SOURCE-CONSISTENCY STABLE. Nel benchmark e nel
-self-test sono uguali anche i 152 fingerprint MD5 interni del driver.
-Questi confronti provano stabilità dell'inventario dichiarato, senza
-attestare autenticità o un inventario chiuso dell'intero filesystem.
+All three record commit
+`0865b2c3eaca5a0ea8a29b2de0f8e3d283ba2952`, empty working tree,
+SBCL 2.6.9, Darwin 27.0.0, ARM64 Apple M4, memory 17,179,869,184 bytes,
+10 logical CPUs, and uncontrolled external load. All 685
+SOURCE-BLOBS-BEFORE/AFTER elements were compared and are
+equal, beyond the SOURCE-CONSISTENCY STABLE field. In benchmark and
+self-test, the driver's 152 internal MD5 fingerprints are also equal.
+These comparisons prove stability of the declared inventory, without
+attesting authenticity or a closed inventory of the entire filesystem.
 
-Nei due snapshot di ciascun record, e nei file correnti, coincidono:
+Both snapshots of each record and current files match:
 
-| File congelato | Blob |
+| Frozen file | Blob |
 |---|---|
 | `src/codec/cbor-simple-write.lisp` | 58c7a3a040ec814fae2dfe636f569b5623cba8f0 |
 | `tests/codec/cbor-simple-write-support.lisp` | 10979b4a89af0b00d48abbc7bf6760afc3b5aa9b |
 | `tests/codec/cbor-simple-write.lisp` | efaa31b8ea2d74af162fd00a3b4e923ae5f60cdd |
 | `tests/codec/cbor-simple-write-threads.lisp` | a7bee65793fc3a3e0c89c9c73871d7c183669a3e |
-| `tests/codec/cbor-string-write-support.lisp`, dopo fix delle ondate | 5a7f38de22be659787305441b65c689de4bd6dba |
-| `tests/codec/cbor-string-write-threads.lisp`, dopo fix delle ondate | 43c4b1ffe8c3dee1a37e9f7b07f655ec3959896b |
+| `tests/codec/cbor-string-write-support.lisp`, after wave fix | 5a7f38de22be659787305441b65c689de4bd6dba |
+| `tests/codec/cbor-string-write-threads.lisp`, after wave fix | 43c4b1ffe8c3dee1a37e9f7b07f655ec3959896b |
 
-Il documento statico conserva il blob
-`46a0480b0bc29938f8654ce8f59cdaee5b720a4a`. I tre nuovi test mantengono
-gli hash comunicati prima della scrittura del prodotto. Le copie prima/
-dopo e il diff del precedente harness sono conservati in
-`worker-protocol-fix/`; i vecchi archivi non sono stati riscritti.
+The static document retains blob
+`46a0480b0bc29938f8654ce8f59cdaee5b720a4a`. The three new tests retain
+hashes communicated before product writing. Before/after
+copies and the previous harness diff are preserved in
+`worker-protocol-fix/`; old archives were not rewritten.
 
-## Preliminare: suite completa, compilazione, lint e trace
+<a id="preliminare-suite-completa-compilazione-lint-e-trace"></a>
 
-Il comando registrato è `make test lint trace`. STDOUT contiene 149.884
-caratteri, STDERR 403.878. Le righe che iniziano esattamente con `ok    `
-sono **854**, tutte distinte e senza duplicati: **852 test nominali e due
-smoke**, `package ARCDOCDB presente` e `ARCDOCDB:*VERSION* è una stringa`.
-La somma indipendente dei conteggi delle 23 suite è 852:
+## Preliminary run: full suite, compilation, lint, and trace
 
-| Suite | Test nominali |
+The recorded command is `make test lint trace`. STDOUT contains 149,884
+characters, STDERR 403,878. Lines beginning exactly with `ok    `
+number **854**, all distinct without duplicates: **852 named tests and two
+smoke tests**, `package ARCDOCDB presente` and `ARCDOCDB:*VERSION* è una stringa`.
+The independent sum of counts across 23 suites is 852:
+
+| Suite | Named tests |
 |---|---:|
 | XXH64 | 28 |
-| Fondazioni | 28 |
+| Foundations | 28 |
 | UTF-8 | 17 |
-| Header CBOR | 17 |
-| Header minimo | 15 |
-| Struttura CBOR | 24 |
-| Struttura minima | 22 |
+| CBOR headers | 17 |
+| Minimal headers | 15 |
+| CBOR structure | 24 |
+| Minimal structure | 22 |
 | Header writer | 17 |
 | String writer | 21 |
 | Simple writer | 16 |
-| Registro CSN | 20 |
+| CSN registry | 20 |
 | MVCC snapshot/CSN | 43 |
-| Epoche/reclaim | 34 |
-| Compiti di lettura | 30 |
-| Contratto GET benchmark | 19 |
-| Code writer/execution | 89 |
-| Metadati storage | 44 |
+| Epochs/reclamation | 34 |
+| Read tasks | 30 |
+| GET benchmark contract | 19 |
+| Writer queues/execution | 89 |
+| Storage metadata | 44 |
 | I/O | 18 |
 | Recovery | 95 |
 | WAL | 48 |
-| Controller Serie | 70 |
-| Slot indice v2 | 64 |
-| Indice primario | 73 |
+| Serie controller | 70 |
+| Index slots v2 | 64 |
+| Primary index | 73 |
 
-I nomi dei 16 test congelati sono stati confrontati con le righe OK:
-presenti tutti una volta. Questo include letterali, dominio esaustivo,
-tutte le capacità, riservati, tipi/range, non-simple e backing displaced,
-vuoti, estremo fisico, riuso, concatenazione, arità, fuzz, supplementi
-reader/scanner e due worker. I conteggi interni 5.952 confronti esaustivi,
-3.776 capacità insufficienti e 256 riservati sono asseriti dai test
-congelati che risultano OK; non sono conteggi ricostruiti dal numero di
-righe del log. Il fuzz registra esplicitamente seed 53494D43 e 2.048 casi:
-768 successi, 512 valori invalidi, 256 capacità insufficienti e 512
-destinazioni/range invalidi, come preregistrato.
+The 16 frozen test names were compared with OK lines:
+all present once. This includes literals, exhaustive domain,
+all capacities, reserved values, types/ranges, nonsimple and displaced backing,
+empty cases, physical endpoint, reuse, concatenation, arity, fuzz, supplementary
+reader/scanner checks, and two workers. Internal counts of 5,952 exhaustive comparisons,
+3,776 insufficient capacities, and 256 reserved values are asserted by frozen
+tests that report OK; they are not counts reconstructed from the number of
+log lines. Fuzz explicitly records seed 53494D43 and 2,048 cases:
+768 successes, 512 invalid values, 256 insufficient capacities, and 512
+invalid destinations/ranges, as preregistered.
 
-Il build forza la ricompilazione del prodotto con WARNING e STYLE-WARNING
-fatali; la sola eccezione nel handler sono gli avvisi di ridefinizione
-ASDF. Nel record non compaiono `caught WARNING`, `caught STYLE-WARNING`,
-`WARNING:`, `STYLE-WARNING:` o `Unhandled` in STDERR. Sono registrate
-180 note di compilazione del prodotto e 612 dei test, distinte dagli
-avvisi. Il marker finale riporta build/test senza avvisi. Lint: **150
-file, zero violazioni**. Trace: **117 requisiti, 65 invarianti, 13 scenari
-FI, 52 ADR, zero errori**. MAKE CHECK completo resta separato e pendente.
+The build forces product recompilation with fatal WARNING and STYLE-WARNING;
+the handler's only exception is ASDF redefinition
+warnings. The record contains no `caught WARNING`, `caught STYLE-WARNING`,
+`WARNING:`, `STYLE-WARNING:`, or `Unhandled` in STDERR. It records
+180 product compilation notes and 612 test notes, distinct from
+warnings. Final marker reports warning-free build/tests. Lint: **150
+files, zero violations**. Trace: **117 requirements, 65 invariants, 13 FI
+scenarios, 52 ADRs, zero errors**. Full MAKE CHECK remains separate and pending.
 
-## Due ondate e controllo del precedente harness
+<a id="due-ondate-e-controllo-del-precedente-harness"></a>
 
-Il test congelato usa due worker reali riusati, destinazioni private e
-piani di otto item preparati prima dell'avvio. Sono 8.192 chiamate per
-worker/ondata: 16.384 per ondata e **32.768 complessive**. Ogni chiamata
-ripristina le sentinelle fredde e confronta arità uno, NEXT fixnum e
-array fisico completo. Il padre confronta anche piano, sentinelle,
-array finale, sink, intervalli e join; semafori distinti per ondata,
-attese 15 s, join 20 s e cleanup limitato con terminazione verificata.
+## Two waves and checking the previous harness
 
-Il sink viene dai byte effettivi e NEXT; il risultato freddo del piano
-è 3.715/3.747 per giro di otto item, moltiplicato per 1.024. Il log
-registra **3.804.160 / 3.836.928** in entrambe le ondate, con overlap
-**2.098 e 2.077 tick**, frequenza 1.000.000 tick/s. Questi sono intervalli
-della fixture, comprendenti ripristino e confronti; non provano
-simultaneità sui core, scaling o tempo isolato della primitiva.
+The frozen test uses two real reused workers, private destinations, and
+eight-item plans prepared before startup. There are 8,192 calls per
+worker/wave: 16,384 per wave and **32,768 overall**. Every call
+restores cold sentinels and compares arity one, fixnum NEXT, and
+complete physical array. The parent also compares plan, sentinels,
+final array, sink, intervals, and joins; separate semaphores per wave,
+15 s waits, 20 s joins, and bounded cleanup with verified termination.
 
-Il vecchio corpus stringhe corretto passa anch'esso nella medesima suite:
-due ondate di 16.384 item, sink **9.707.520 / 9.969.664** per ondata,
-overlap **48.278 e 48.460 tick**. I blob support/thread corrispondono al
-fix dei soli semafori, prima e dopo il comando. I risultati precedenti
-rimangono storici; questi sono i riscontri del protocollo corretto.
+The sink comes from actual bytes and NEXT; the plan's cold result
+is 3,715/3,747 per eight-item round, multiplied by 1,024. The log
+records **3,804,160 / 3,836,928** in both waves, with overlap
+**2,098 and 2,077 ticks**, frequency 1,000,000 ticks/s. These are fixture
+intervals, including restoration and comparisons; they do not prove
+simultaneous execution on cores, scaling, or isolated primitive time.
 
-## Benchmark seriale e sensori
+The corrected old string corpus also passes in the same suite:
+two waves of 16,384 items, sinks **9,707,520 / 9,969,664** per wave,
+overlap **48,278 and 48,460 ticks**. Support/thread blobs match the
+semaphore-only fix before and after the command. Previous results
+remain historical; these are findings from the corrected protocol.
 
-Driver esaminato in sola lettura, blob
-`07e5b0b7773f95ddae9458267b285c0ccb24dba9`. Il report contiene sei fixture
-0/20/22/23/32/255, ciascuna con **cinque campioni**, 4.096 chiamate e
-warmup 128: **30 campioni, 122.880 chiamate misurate**. Heap osservato
-**zero in tutti i 30 campioni**. Status OK sia nel wrapper sia nel
-report interno. STDERR del benchmark e del self-test è vuoto.
+<a id="benchmark-seriale-e-sensori"></a>
 
-Gli expected sono stati ricontrollati senza chiamare il prodotto:
-wire 224+VALUE oppure 248/VALUE; START=2; NEXT=2+dimensione;
-END=NEXT+2; due sentinelle 165 prima e quattro dopo il wire, di cui
-due oltre END. Tutto l'array atteso, non solo il wire, coincide nei
-report. COLD-VALUES è esattamente la lista del singolo NEXT per ogni
-fixture. Token indipendente = NEXT + somma BYTE[i]×(i+1) sull'intero
-array. Sink = 4.096×TOKEN + 4.096×4.095/2. Tutti i 30 sink, token,
-conteggi, heap, RAW-TICKS/SECONDS e CALLS-PER-SECOND sono coerenti.
+## Serial benchmark and sensors
 
-| VALUE | Wire | NEXT | Token completo | Sink per campione |
+Driver examined read-only, blob
+`07e5b0b7773f95ddae9458267b285c0ccb24dba9`. The report contains six fixtures
+0/20/22/23/32/255, each with **five samples**, 4,096 calls and
+warmup 128: **30 samples, 122,880 measured calls**. Observed heap allocation
+**zero in all 30 samples**. Status OK in both wrapper and
+internal report. Benchmark and self-test STDERR is empty.
+
+Expectations were rechecked without calling the product:
+wire 224+VALUE or 248/VALUE; START=2; NEXT=2+size;
+END=NEXT+2; two 165 sentinels before and four after wire, including
+two beyond END. The entire expected array, not just wire, matches in
+reports. COLD-VALUES is exactly the list of the single NEXT for each
+fixture. Independent token = NEXT + sum BYTE[i]×(i+1) over the entire
+array. Sink = 4,096×TOKEN + 4,096×4,095/2. All 30 sinks, tokens,
+counts, heap values, RAW-TICKS/SECONDS, and CALLS-PER-SECOND are consistent.
+
+| VALUE | Wire | NEXT | Complete token | Sink per sample |
 |---:|---|---:|---:|---:|
 | 0 | E0 | 3 | 4800 | 28047360 |
 | 20 | F4 | 3 | 4860 | 28293120 |
@@ -161,67 +171,69 @@ conteggi, heap, RAW-TICKS/SECONDS e CALLS-PER-SECOND sono coerenti.
 | 32 | F8 20 | 4 | 5661 | 31574016 |
 | 255 | F8 FF | 4 | 6553 | 35227648 |
 
-La somma dei tempi misurati è **22.090 tick = 0,02209 s**, minore della
-durata del wrapper 1,2138 s. Ogni tempo è positivo e rapportato alla
-frequenza 1.000.000 tick/s. Nessuna soglia di velocità è applicata.
+Measured times sum to **22,090 ticks = 0.02209 s**, less than the
+wrapper duration of 1.2138 s. Every time is positive and related to the
+1,000,000 ticks/s frequency. No speed threshold is applied.
 
-Il self-test separato e quello incluso nel benchmark riportano:
+The separate self-test and the one included in the benchmark report:
 
-- Baseline 4.096 chiamate, warmup 128: heap 0, token 0,
-  sink 8.386.560 coerente con la somma degli indici.
-- Sensore positivo 16 allocazioni da 1 MiB, warmup 0: heap osservato
-  16.777.472 byte, almeno 16 MiB; token 1.048.576 e sink 16.777.336.
-- Output checker: token positivo 5.661, NEXT alterato e cinque
-  alterazioni distinte di prefisso/lead/valore/residuo/coda rifiutati.
-- Arity checker: un singolo valore accettato, quattro casi di arità
-  o NEXT errati rifiutati; sensor checker rifiuta sink errato e heap
-  nonzero, entrambi con status OK.
+- Baseline 4,096 calls, warmup 128: heap allocation 0, token 0,
+  sink 8,386,560 consistent with the sum of indices.
+- Positive sensor 16 allocations of 1 MiB, warmup 0: observed heap allocation
+  16,777,472 bytes, at least 16 MiB; token 1,048,576 and sink 16,777,336.
+- Output checker: positive token 5,661, altered NEXT and five
+  distinct prefix/lead/value/remainder/tail alterations rejected.
+- Arity checker: one value accepted, four incorrect arity
+  or NEXT cases rejected; sensor checker rejects incorrect sink and nonzero
+  heap allocation, both with status OK.
 
-La lettura del driver conferma buffer/expected preallocati, confronto
-dell'intero buffer per chiamata, warmup e GC fuori dalle misure, sink
-osservabile e baseline/sensore positivo. L'arità esatta del benchmark
-è controllata sulla chiamata fredda; il ciclo caldo usa il valore
-primario, mentre il corpus funzionale controlla arità su ogni successo.
-Il tempo include il checker; sono misure seriali del solo successo con
-carico esterno non controllato, senza throughput di pool/dispositivo,
-scaling o prova assoluta di assenza di allocazione.
+Driver reading confirms preallocated buffer/expected, comparison
+of the entire buffer per call, warmup and GC outside measurement, observable
+sink, and baseline/positive sensor. Exact benchmark arity
+is checked on the cold call; the hot loop uses the primary
+value, while functional corpus checks arity on every success.
+Time includes the checker; these are serial measurements of success only with
+uncontrolled external load, without pool/device throughput,
+scaling, or absolute proof of nonallocation.
 
-## Audit del benchmark e verificatore dei dati
+<a id="audit-del-benchmark-e-verificatore-dei-dati"></a>
 
-L'audit benchmark registrato
-`spikes/out/4000714388-command-46985-0/report.lisp` è OK/exit 0/STABLE,
-1,009074 s, **20.409 controlli**. I byte del wrapper benchmark prima e
-dopo l'audit sono identici, 183.455 byte e SHA-256
+## Benchmark audit and data verifier
+
+The recorded benchmark audit
+`spikes/out/4000714388-command-46985-0/report.lisp` is OK/exit 0/STABLE,
+1.009074 s, **20,409 checks**. Benchmark-wrapper bytes before and
+after auditing are identical, 183,455 bytes and SHA-256
 `49e218bbe4a9eee8f137c381755929cab53c4cf298bb7df73a019ea0b7467e02`.
-Il risultato conferma sei celle, 30 campioni, heap zero, arità fredda
-uno, baseline zero, controllo positivo 16.777.472 byte, 152 fingerprint
-interni, 0,022090000000000002 s di campioni e 0,000064 s di controlli.
-La differenza dall'espressione 0,02209 s è la somma floating point.
-Il verificatore controlla consistenza dei dati; non carica prodotto o
-driver e non prova autenticità o esecuzione. Le impronte attese del
-prodotto sono fornite dal chiamante e qui coincidono col freeze cieco.
+Result confirms six cells, 30 samples, zero heap allocation, cold arity
+one, zero baseline, positive control 16,777,472 bytes, 152 internal
+fingerprints, 0.022090000000000002 s of samples, and 0.000064 s of checks.
+Difference from 0.02209 s is floating-point summation.
+The verifier checks data consistency; it loads neither product nor
+driver and proves neither authenticity nor execution. Expected product
+fingerprints are supplied by the caller and here match the blind freeze.
 
-Il helper distinto di mutazioni/coverage è
+The separate mutation/coverage helper is
 `spikes/out/cbor-simple-write-20261011/data-audit.lisp`, blob
-`4ca865ddfca6da36a73c81fb5041df4df60d79ab`. Il suo self-test registrato
-`spikes/out/4000714391-command-47195-0/report.lisp` è OK/exit 0/STABLE,
-1,073152 s, **529 controlli su 27 casi sintetici**. Comprende processi,
-catalogo e risultati delle mutazioni, lettore/preambolo, coverage,
-chiusura implicita delle righe HTML, associazione delle lacune e
-sostituzione unica/ambigua. Il report
-`audit-self-test/report.lisp` conserva una osservazione del prodotto
-prima/dopo identica; nessuna campagna o prodotto viene eseguito dal
-self-test del verificatore.
+`4ca865ddfca6da36a73c81fb5041df4df60d79ab`. Its recorded self-test
+`spikes/out/4000714391-command-47195-0/report.lisp` is OK/exit 0/STABLE,
+1.073152 s, **529 checks over 27 synthetic cases**. It includes processes,
+mutation catalog and results, reader/preamble, coverage,
+implicit HTML-row closure, gap mapping, and
+unique/ambiguous replacement. Report
+`audit-self-test/report.lisp` preserves one identical before/after product
+observation; no campaign or product is run by the
+verifier self-test.
 
-I sei record successivi a quelli iniziali registrano commit
-`7bfd3bf01c753fe6cdf228cdc74533c127e32bad`, working tree vuoto, 685
-snapshot prima/dopo uguali e SOURCE-CONSISTENCY STABLE. Metodo, prodotto,
-tre file ciechi e precedente harness corretto coincidono col freeze
-nei record e nei file correnti. Il cambio di commit conserva il freeze
-del prodotto/corpus e comprende la revisione del catalogo mutazioni
-prima della campagna; non è un cambiamento durante i comandi.
+The six records following the initial ones record commit
+`7bfd3bf01c753fe6cdf228cdc74533c127e32bad`, empty working tree, 685
+equal before/after snapshots, and SOURCE-CONSISTENCY STABLE. Method, product,
+three blind files, and corrected previous harness match the freeze
+in records and current files. The commit change preserves product/corpus
+freeze and includes mutation-catalog revision
+before the campaign; it is not a change during commands.
 
-| Record sotto `spikes/out/` | Secondi | Byte originali | SHA-256 dei byte originali |
+| Record under `spikes/out/` | Seconds | Original bytes | SHA-256 of original bytes |
 |---|---:|---:|---|
 | `4000714190-command-35834-0/report.lisp` | 165.36714 | 205648 | 940cb518692cea9c32dd1f372cb20dcb06a96c211447c0ef7a5aef92c264d649 |
 | `4000714357-command-44709-0/report.lisp` | 10.309638 | 143512 | e0a78c97970b94febf0881a047cb4249d581cf118d022c829825b614d8dc4a79 |
@@ -230,81 +242,83 @@ prima della campagna; non è un cambiamento durante i comandi.
 | `4000714393-command-47353-0/report.lisp` | 6.516856 | 141997 | 1ab2161173596210de8240858fb56da56f1fccbc2ea8a23b840130a0efef67ef |
 | `4000714401-command-47888-0/report.lisp` | 1.613452 | 141993 | be5d11d83c9d70d71db8205dd5c4cbf4de4c46e9adf96741eabfc08cfbe40b5e |
 
-Tutti sono OK/exit 0; STDERR è vuoto. L'audit benchmark registrato usa
-`tools/cbor-simple-write-audit.lisp`, esaminato anche in sola lettura,
-blob corrente `6acfcc656bfed5f8b4c59e487cffb5325d30d790`.
+All are OK/exit 0; STDERR is empty. The recorded benchmark audit uses
+`tools/cbor-simple-write-audit.lisp`, also examined read-only,
+current blob `6acfcc656bfed5f8b4c59e487cffb5325d30d790`.
 
-## Mutazioni: copie, baseline e tutti gli otto log
+<a id="mutazioni-copie-baseline-e-tutti-gli-otto-log"></a>
 
-La campagna `4000714190-command-35834-0` e il report
-`mutations/report.lisp` sono OK. Il report finale su disco coincide
-integralmente con la forma finale di STDOUT dopo l'unico preambolo
-esatto del self-test worker. I 255 fingerprint interni prima/dopo sono
-uguali; catalogo ALIGNED sul blob prodotto congelato e otto nomi
-preregistrati. Sono **otto rilevati, zero sopravvissuti/invalidi/errori
-worker**. Tutti i mutanti hanno exit 1 e SIGNAL NIL.
+## Mutations: copies, baseline, and all eight logs
 
-Il mutatore congelato per la campagna è
-`ec2fe6b3235591ec5b3bb82b32046e906b045bf6`. Il target physical-capacity
-usa `(max span (- (length bytes) begin))`, conservando l'uso di SPAN:
-il difetto è di capacità runtime, senza introdurre un avviso da variabile
-inutilizzata. Per extra-return-value, la sostituzione unica del frammento
-pubblico aggiorna anche FTYPE nella copia per dichiarare il secondo NIL;
-il difetto runtime è l'arità extra, senza farne un errore di compilazione.
-Le versioni precedenti e i diff restano conservati separatamente dal
-coordinatore in `physical-capacity-revision/`.
+Campaign `4000714190-command-35834-0` and report
+`mutations/report.lisp` are OK. The final on-disk report matches
+the final STDOUT form in full after the single exact worker
+self-test preamble. All 255 internal before/after fingerprints are
+equal; catalog ALIGNED on frozen product blob and eight preregistered
+names. There are **eight detected, zero survived/invalid/worker
+errors**. All mutants have exit 1 and SIGNAL NIL.
 
-L'audit registrato `4000714393-command-47353-0` riporta **15.320 controlli**,
-OK, `audit-mutations.lisp` con 36 osservazioni byte/SHA prima/dopo
-identiche. La baseline e le otto copie contengono ciascuna **254 file
-dell'inventario dichiarato**: baseline identica e ciascuna mutazione
-cambia soltanto `src/codec/cbor-simple-write.lisp`, esattamente secondo
-la sostituzione unica dichiarata. Runner e cache FASL privati verificati;
-il runner della baseline letto usa ASDF output translations verso la
-propria directory FASL, IGNORE-INHERITED-CONFIGURATION e la build rigorosa
-originale. Questo non è un inventario chiuso delle directory delle copie.
+The mutator frozen for the campaign is
+`ec2fe6b3235591ec5b3bb82b32046e906b045bf6`. The physical-capacity target
+uses `(max span (- (length bytes) begin))`, retaining SPAN use:
+the defect is runtime capacity, without introducing an unused-variable
+warning. For extra-return-value, unique public-fragment
+replacement also updates FTYPE in the copy to declare the second NIL;
+the runtime defect is extra arity, without turning it into a compilation error.
+Previous versions and diffs remain separately preserved by the
+coordinator in `physical-capacity-revision/`.
 
-La baseline è stata letta integralmente: **854 OK distinti**, smoke esatto
-alla riga 2, completamento esatto alla riga **925**, exit 0, SIGNAL NIL,
-nessun Unhandled, warning/style-warning o errore di compilazione. Per
-ciascuno degli otto log è stato verificato separatamente che lo smoke
-esatto riga 2 precede Unhandled e il backtrace del test REQ-CBR-003:
+Recorded audit `4000714393-command-47353-0` reports **15,320 checks**,
+OK, `audit-mutations.lisp` with 36 identical before/after byte/SHA
+observations. Baseline and eight copies each contain **254 files
+in the declared inventory**: baseline identical and each mutation
+changes only `src/codec/cbor-simple-write.lisp`, exactly according
+to the declared unique replacement. Private runner and FASL cache verified;
+the read baseline runner uses ASDF output translations toward its own
+FASL directory, IGNORE-INHERITED-CONFIGURATION, and the original strict
+build. This is not a closed inventory of copy directories.
 
-| Copia / mutazione | Primo Unhandled, riga | Origine osservata nel test congelato |
+Baseline was read in full: **854 distinct OK**, exact smoke
+at line 2, exact completion at line **925**, exit 0, SIGNAL NIL,
+no Unhandled, warning/style-warning, or compilation error. For
+each of eight logs, exact smoke at line 2 was separately verified
+to precede Unhandled and the REQ-CBR-003 test backtrace:
+
+| Copy / mutation | First Unhandled, line | Origin observed in frozen test |
 |---|---:|---|
-| 0 / reserved-codes-accepted | 232 | CSW-REJECT, ALL-EIGHT-RESERVED-BEFORE-CAPACITY, VALUE24 e capacità0: classe della condizione diversa da invalid-argument |
-| 1 / one-byte-threshold-22 | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE23: NEXT diverso dall'atteso; wire osservato F8 17 invece di F7 |
-| 2 / wrong-major | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE0: array diverso, C0 invece di E0 |
-| 3 / wrong-extended-lead | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE32: array diverso, F9 20 invece di F8 20 |
-| 4 / physical-capacity | 231 | CSW-REJECT, EVERY-INSUFFICIENT-CAPACITY-AND-PHYSICAL-SUFFIX, VALUE0 e capacità0: classe diversa da resource-exhausted |
-| 5 / extended-value-zeroed | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE32: array diverso, F8 00 invece di F8 20 |
-| 6 / next-one-too-far | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE0: NEXT diverso, byte E0 presente |
-| 7 / extra-return-value | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE0: LENGTH ACTUAL diverso da1, byte E0 presente |
+| 0 / reserved-codes-accepted | 232 | CSW-REJECT, ALL-EIGHT-RESERVED-BEFORE-CAPACITY, VALUE24 and capacity0: condition class different from invalid-argument |
+| 1 / one-byte-threshold-22 | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE23: NEXT differs from expected; observed wire F8 17 instead of F7 |
+| 2 / wrong-major | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE0: different array, C0 instead of E0 |
+| 3 / wrong-extended-lead | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE32: different array, F9 20 instead of F8 20 |
+| 4 / physical-capacity | 231 | CSW-REJECT, EVERY-INSUFFICIENT-CAPACITY-AND-PHYSICAL-SUFFIX, VALUE0 and capacity0: class different from resource-exhausted |
+| 5 / extended-value-zeroed | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE32: different array, F8 00 instead of F8 20 |
+| 6 / next-one-too-far | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE0: different NEXT, byte E0 present |
+| 7 / extra-return-value | 229 | CSW-ACCEPT, LITERAL-VECTORS, VALUE0: LENGTH ACTUAL differs from1, byte E0 present |
 
-Ogni log contiene l'asserzione e il frame del proprio test
-`ARCDOCDB.CBOR.SIMPLE.WRITE.TESTS::TEST-REQ-CBR-003-...`, senza marker di
-completamento. Non compaiono `caught WARNING`, `caught STYLE-WARNING`,
-`WARNING:`, `STYLE-WARNING:`, `COMPILE-FILE-ERROR`, `COMPILE-FILE-WARNED`
-o `compilation aborted`. Nessun segnale OS o guasto worker è contato
-come rilevamento. Le due mutazioni di preflight falliscono sulla classe
-della condizione catturata: la lettura del solo difetto con l'input del
-backtrace spiega il successivo controllo capacità o guardia interna,
-senza inferire un write fuori span dal log.
+Every log contains its test's assertion and frame
+`ARCDOCDB.CBOR.SIMPLE.WRITE.TESTS::TEST-REQ-CBR-003-...`, without completion
+marker. There are no `caught WARNING`, `caught STYLE-WARNING`,
+`WARNING:`, `STYLE-WARNING:`, `COMPILE-FILE-ERROR`, `COMPILE-FILE-WARNED`,
+or `compilation aborted`. No OS signal or worker fault is counted
+as detection. Both preflight mutations fail on the caught condition's
+class: reading just the defect with the backtrace input
+explains the later capacity check or internal guard,
+without inferring an out-of-span write from the log.
 
-La funzione pubblica mutata non è un frame attivo quando l'asserzione del
-helper fallisce: ha già restituito, oppure il suo errore è stato catturato.
-L'attribuzione alla primitiva deriva dal callsite diretto congelato di
-CSW-ACCEPT/REJECT, dal solo file prodotto modificato e dagli effetti
-osservati coerenti con la sostituzione. Non viene inventato un frame del
-prodotto assente dal backtrace.
+The mutated public function is not an active frame when the helper's
+assertion fails: it has already returned, or its error was caught.
+Attribution to the primitive comes from the frozen direct
+CSW-ACCEPT/REJECT callsite, the sole changed product file, and observed
+effects consistent with replacement. No product frame absent from
+the backtrace is invented.
 
-Il classificatore automatico e il log-check dell'audit ereditato verificano
-presenza dei marker e assenza di errori di compilazione, ma non provano
-ordine smoke→rifiuto o causalità del rifiuto. Queste proprietà dei nove
-log reali sono state controllate qui separatamente; il PASS automatico
-non è promosso a una capacità generale del verificatore.
+The automatic classifier and inherited audit log-check verify
+marker presence and absence of compilation errors, but do not prove
+smoke→rejection order or rejection causality. These properties of the nine
+actual logs were checked separately here; automatic PASS
+is not promoted to a general verifier capability.
 
-| Log sotto `mutations/` | Byte originali | SHA-256 |
+| Log under `mutations/` | Original bytes | SHA-256 |
 |---|---:|---|
 | `baseline/test.log` | 59871 | b45fa4fe6652976ecbc941033db5576fce22c821b4c7982e1f200f5e13314c89 |
 | `0/test.log` | 25594 | 2c69ddc9ace30a4c0df6d50279e37c8381f22bd155f632c1d2769923c0d3a3e9 |
@@ -316,50 +330,52 @@ non è promosso a una capacità generale del verificatore.
 | `6/test.log` | 25429 | e6fca97134acb741cd5271679cd4d5b785e4d84fa8675922d98ced9461026183 |
 | `7/test.log` | 25332 | aacbaff8c0915f8b5c75dd1976323d9d874fceeab92e96220d6871de848de7b0 |
 
-Il self-test worker incorporato conserva il report
+Embedded worker self-test preserves report
 `spikes/out/4000714191-cbor-simple-write-worker-self-test-35886/report.lisp`,
-PASSED. I due difetti infrastrutturali deliberati sono worker-error con
-DETECTED NIL: SIGKILL exit137/signal9 e fallimento dopo completamento
-exit7/signalNIL. Le fixture baseline-copy e baseline-transport sono
-PASSED, ciascuna con un worker-error, exit/signal NIL e diagnosi
-INFRASTRUCTURE-ERROR. Questi quattro guasti deliberati appartengono ai
-self-test, non alle otto mutazioni del prodotto. Il dispatcher registra
-due ingressi validi e sei rifiuti prima della creazione delle directory;
-missing/ambiguous target, compilazione e marker citati nel backtrace
-restano INVALID.
+PASSED. The two deliberate infrastructure defects are worker-error with
+DETECTED NIL: SIGKILL exit137/signal9 and failure after completion
+exit7/signalNIL. Baseline-copy and baseline-transport fixtures are
+PASSED, each with one worker-error, exit/signal NIL, and diagnosis
+INFRASTRUCTURE-ERROR. These four deliberate faults belong to
+self-tests, not the eight product mutations. Dispatcher records
+two valid entries and six rejections before directory creation;
+missing/ambiguous target, compilation, and markers quoted in backtrace
+remain INVALID.
 
-## Coverage: raw, HTML e associazione delle lacune
+<a id="coverage-raw-html-e-associazione-delle-lacune"></a>
 
-La campagna `4000714357-command-44709-0` è OK/exit 0/STABLE, 10,309638 s.
-Il revisore indipendente dei dati ha letto il raw come singola forma con
-READ-EVAL NIL attraverso evidence-storage, senza LOAD del prodotto:
-**248 file salvati**, un solo target esatto
-`src/codec/cbor-simple-write.lisp`, blob congelato. I **135 path/bit** del
-target sono 111 espressioni e 24 esiti di ramo: **95/111 espressioni
-coperte (85,6%) e 20/24 esiti di ramo (83,3%)**. Indice e sorgente HTML
-riportano gli stessi conteggi; tutte le 53 righe del sorgente HTML
-corrispondono al file congelato dopo decodifica entità/NBSP e spazi di
-presentazione. Non si confondono i 248 file salvati con l'unico sorgente
-nuovo oggetto della campagna.
+## Coverage: raw, HTML, and gap mapping
 
-L'audit registrato `4000714401-command-47888-0` è OK/exit 0/STABLE,
-1,613452 s e **1.178 controlli**, `audit-coverage.lisp`. Le cinque
-osservazioni byte/SHA prima/dopo sono identiche e corrispondono ai file
-letti. Il confronto indipendente raw/HTML/AST conferma tutte le lacune:
+Campaign `4000714357-command-44709-0` is OK/exit 0/STABLE, 10.309638 s.
+The independent data reviewer read raw state as one form with
+READ-EVAL NIL through evidence-storage, without product LOAD:
+**248 saved files**, a single exact target,
+`src/codec/cbor-simple-write.lisp`, frozen blob. The target's **135 paths/bits**
+are 111 expressions and 24 branch outcomes: **95/111 expressions
+covered (85.6%) and 20/24 branch outcomes (83.3%)**. HTML index and source
+report the same counts; all 53 source-HTML lines
+match the frozen file after decoding entities/NBSP and presentation
+spacing. The 248 saved files are not confused with the single new
+source targeted by the campaign.
 
-- **16 espressioni**: quattro dichiarazioni top-level ai path (0), (1),
-  (2), (4), e dodici forme nei tre ERROR interni :cbor-simple-span
-  (riga 22), :cbor-simple-target-span (46), :cbor-simple-progress (52).
-- **Quattro esiti di ramo**: la guardia span alla riga 21, due esiti
-  nell'AND target-span alla riga 45 e la guardia progresso alla riga 51.
-- **OTHER=0**: nessun default o parametro scoperto da riclassificare.
+Recorded audit `4000714401-command-47888-0` is OK/exit 0/STABLE,
+1.613452 s and **1,178 checks**, `audit-coverage.lisp`. The five
+before/after byte/SHA observations are identical and match the files
+read. Independent raw/HTML/AST comparison confirms every gap:
 
-Le associazioni sono sintattiche e verificabili sul prodotto congelato,
-senza escludere dichiarazioni/errori interni dai denominatori. Non
-costituiscono una prova di irraggiungibilità, indipendenza dei predicati,
-MC/DC o completezza funzionale; le guardie restano attive e visibili.
+- **16 expressions**: four top-level declarations at paths (0), (1),
+  (2), (4), and twelve forms in three internal ERRORs :cbor-simple-span
+  (line 22), :cbor-simple-target-span (46), :cbor-simple-progress (52).
+- **Four branch outcomes**: span guard at line 21, two outcomes
+  in target-span AND at line 45, and progress guard at line 51.
+- **OTHER=0**: no uncovered default or parameter to reclassify.
 
-| Artefatto sotto `spikes/out/cbor-simple-write-20261011/` | SHA-256 dei byte originali |
+Mappings are syntactic and verifiable on the frozen product,
+without excluding declarations/internal errors from denominators. They do not
+prove unreachability, predicate independence,
+MC/DC, or functional completeness; guards remain active and visible.
+
+| Artifact under `spikes/out/cbor-simple-write-20261011/` | SHA-256 of original bytes |
 |---|---|
 | `coverage/coverage-state.lisp` | 370f3694f1361132877df4dca8140e24160f338318d69dc108783f76585da6c8 |
 | `coverage/cover-index.html` | f5bbcc1b6dfe30392a712c320ca2fd3b55836cad907d3b61bee00db21b477d58 |
@@ -368,21 +384,23 @@ MC/DC o completezza funzionale; le guardie restano attive e visibili.
 | `audit-mutations.lisp` | e0dc3942dedefbe00024317bdd8c76244e5666a1960667c9bf62e7fdf7e9c58d |
 | `audit-self-test/report.lisp` | bd8bc14f3e01f854191c4cc2615b60500514cf00a687fd5628ac39c883d0a32d |
 
-Il coordinatore conserva i grandi file ignored anche come descriptor
-più gzip senza perdita. Le impronte sopra riguardano i byte originali:
-la variazione della rappresentazione fisica non cambia il contenuto
-logico letto con evidence-storage e non riscrive le campagne storiche.
+The coordinator also preserves large ignored files as descriptor
+plus lossless gzip. Fingerprints above concern original bytes:
+changing physical representation does not change logical
+content read with evidence-storage or rewrite historical campaigns.
 
-## Tentativi errati dei lettori ad hoc
+<a id="tentativi-errati-dei-lettori-ad-hoc"></a>
 
-È conservata qui la diagnostica disponibile di un tentativo inline
-errato, distinto dai comandi registrati del prodotto e dai verificatori.
-Il frammento tentava di riunire i controlli freeze/benchmark/conteggi
-in un unico DOLIST su STDIN e aveva una parentesi di chiusura mancante.
-Non è stato caricato o eseguito prodotto/test; l'errore è del lettore
-ad hoc. Nessun output mancante è ricostruito.
+## Incorrect ad hoc reader attempts
 
-Tool chunk `b6c9c7`, exit 1, wall 0.178726959 s, estratto originale:
+Available diagnostics of one incorrect inline attempt are preserved
+here, separate from recorded product and verifier commands.
+The fragment attempted to combine freeze/benchmark/count checks
+in one DOLIST on STDIN and lacked a closing parenthesis.
+Product/tests were neither loaded nor executed; the error belongs to the ad hoc
+reader. No missing output is reconstructed.
+
+Tool chunk `b6c9c7`, exit 1, wall 0.178726959 s, original excerpt:
 
 ```text
 Unhandled SB-C::INPUT-ERROR-IN-LOAD in thread #<SB-THREAD:THREAD tid=259 "main thread" RUNNING
@@ -394,15 +412,15 @@ Unhandled SB-C::INPUT-ERROR-IN-LOAD in thread #<SB-THREAD:THREAD tid=259 "main t
     (in form starting at line: 13, column: 96, file-position: 813)
 ```
 
-La correzione ha separato i controlli in due letture più brevi:
-chunk `f12a33`, exit 0, controlli snapshot/freeze, 854 OK distinti,
-852 nominali e tutti i 16 nomi; chunk `a43a7b`, exit 0, byte freddi,
-30 campioni, tempi e sensori. Sono verifiche dei dati, non nuove
-campagne runtime né self-test registrati dei driver.
+The correction split checks into two shorter readings:
+chunk `f12a33`, exit 0, snapshot/freeze checks, 854 distinct OK,
+852 named, and all 16 names; chunk `a43a7b`, exit 0, cold bytes,
+30 samples, times, and sensors. These are data checks, not new
+runtime campaigns or recorded driver self-tests.
 
-Durante la lettura delle mutazioni un ulteriore tentativo inline aveva
-una costante di percorso errata, scritta con `\u002f` come se fosse
-un escape JSON dentro una stringa Common Lisp. Estratto disponibile
+During mutation reading, another inline attempt had
+an incorrect path constant, written with `\u002f` as though it were
+a JSON escape inside a Common Lisp string. Available excerpt,
 chunk `621acd`, exit 1, wall 0.200004583 s:
 
 ```text
@@ -413,32 +431,34 @@ failed with (GETF (GETF DATA :SELF-TEST) :SIGNAL-FIXTURE-REPORT) =
 "/Users/gpicchiarelli/.codex/worktrees/cbor-simple-write/ArcDocDB/spikes/out/4000714191-cbor-simple-write-worker-self-test-35886/report.lisp".
 ```
 
-Il frammento sbagliato era il confronto del percorso con la costante
-`"\u002fUsers/..."`. Il retry `c76a28`, exit0, confronta il preambolo
-direttamente con il percorso realmente contenuto nel report: forma
-STDOUT/report finale uguale, 255 fingerprint uguali e fixture dei guasti
-baseline correttamente classificate. Nessun dato è stato modificato.
+The incorrect fragment compared the path with constant
+`"\u002fUsers/..."`. Retry `c76a28`, exit0, compares the preamble
+directly with the path actually contained in the report: equal
+STDOUT/final report form, 255 equal fingerprints, and correctly classified baseline
+fault fixtures. No data was modified.
 
-Il revisore coverage ha comunicato anche tre tentativi errati del proprio
-reader, con i frammenti/diagnostiche originali disponibili:
+The coverage reviewer also communicated three incorrect attempts of their own
+reader, with original fragments/diagnostics available:
 
-| Chunk / exit / wall | Errore del reader e frammento effettivo | Correzione riuscita |
+| Chunk / exit / wall | Reader error and actual fragment | Successful correction |
 |---|---|---|
-| `fab4e0` / 1 / 0.379981959 s | `READ error during LOAD: unmatched close parenthesis. Line: 17, Column: 140, File-Position: 1428.` Il FORMAT finale del LET aveva una chiusura extra: `(format t "~&HELPER PATH ~A ~D bytes SHA ~A~%~S~%" path (arcdocdb.evidence:file-bytes path) (arcdocdb.evidence:file-sha256 path) data)))`. Wrapper e helper erano già letti e stampati. | Letture successive separate completate; nessuna ripetizione del fallimento. |
-| `18cee0` / 1 / 0.30530525 s | `The value #*000 is not of type LIST`. Il reader usava `(subseq (first data) 0 (min 5 (length (first data))))` su una entry SB-COVER dotted; frame disponibile `(LENGTH ("/Users/gpicchiarelli/.codex/worktrees/cbor-simple-write/ArcDocDB/src/package.lisp" #((0) (1) (2)) . #*000))`. | `abe41d`, exit0: CAR/CADR/CDDR, senza assumere lista propria. |
-| `94014c` / 1 / 0.564907917 s | `The assertion (EQUAL SOURCE-LINES HTML-LINES) failed`. Frammento `(assert (equal source-lines html-lines))`; il testo HTML usava NBSP U+00A0, assenti dal sorgente. | `109a71`, exit0: normalizzazione della sola presentazione e 53 righe uguali. |
+| `fab4e0` / 1 / 0.379981959 s | `READ error during LOAD: unmatched close parenthesis. Line: 17, Column: 140, File-Position: 1428.` The LET's final FORMAT had an extra close: `(format t "~&HELPER PATH ~A ~D bytes SHA ~A~%~S~%" path (arcdocdb.evidence:file-bytes path) (arcdocdb.evidence:file-sha256 path) data)))`. Wrapper and helper had already been read and printed. | Later separate readings completed; no repetition of failure. |
+| `18cee0` / 1 / 0.30530525 s | `The value #*000 is not of type LIST`. The reader used `(subseq (first data) 0 (min 5 (length (first data))))` on a dotted SB-COVER entry; available frame `(LENGTH ("/Users/gpicchiarelli/.codex/worktrees/cbor-simple-write/ArcDocDB/src/package.lisp" #((0) (1) (2)) . #*000))`. | `abe41d`, exit0: CAR/CADR/CDDR, without assuming a proper list. |
+| `94014c` / 1 / 0.564907917 s | `The assertion (EQUAL SOURCE-LINES HTML-LINES) failed`. Fragment `(assert (equal source-lines html-lines))`; HTML text used NBSP U+00A0, absent from source. | `109a71`, exit0: presentation-only normalization and 53 equal lines. |
 
-Il reader AST/raw `9fe8ab` e quello finale HTML/hash `109a71` terminano
-exit0. Questi sono errori dei lettori ad hoc, distinti dai risultati
-registrati e dal prodotto. Gli estratti sono parziali e non ricostruiscono
-output mancanti; nessun nuovo guasto è stato deliberatamente rieseguito
-per produrre un log sostitutivo.
+AST/raw reader `9fe8ab` and final HTML/hash reader `109a71` finish
+exit0. These are ad hoc reader errors, separate from recorded
+results and product. Excerpts are partial and do not reconstruct
+missing output; no new fault was deliberately rerun
+to produce a substitute log.
 
-## Pendenti e limiti
+<a id="pendenti-e-limiti"></a>
 
-I dati disponibili sono coerenti col corpus cieco e con il contratto
-locale. MAKE CHECK completo dopo la raccolta resta pendente. Stabilità
-dei fingerprint, associazione sintattica delle lacune, inventario delle
-copie dichiarato e classificazione automatica conservano i limiti sopra.
-Questa lettura non chiude gate C1, non rinnova qualifiche delle dipendenze,
-non attesta MC/DC o autenticità dei report e non è un'approvazione umana.
+## Pending work and limits
+
+Available data is consistent with the blind corpus and local
+contract. Full MAKE CHECK after collection remains pending. Fingerprint
+stability, syntactic gap mapping, declared copy inventory,
+and automatic classification retain the limits above.
+This reading does not close C1 gates, renew dependency qualifications,
+attest MC/DC or report authenticity, or constitute human approval.

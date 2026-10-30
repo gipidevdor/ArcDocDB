@@ -1,65 +1,79 @@
-# ADR-0020 — CSN di Archivio, snapshot e livelli di isolamento
+<a id="adr-0020--csn-di-archivio-snapshot-e-livelli-di-isolamento"></a>
 
-- **Stato:** Accettata; **sostituita in parte da [ADR-0038](0038-orizzonte-di-visibilita.md)**: lo snapshot nasce quando l'orizzonte di visibilità lo ha raggiunto (non attende le sole multiserie), il CSN è preso alla chiusura del lotto, la versione del documento è il CSN. Isolamento, durata massima e `snapshot-too-old` restano.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-06, QA-09 e QA-14; realizza «Snapshot/MVCC»
-- **Riferimenti:** [architettura](../architettura.md#snapshot-e-mvcc), INV-M1, INV-M2, INV-V2
+# ADR-0020 — Archivio CSN, snapshots, and isolation levels
 
-## Decisione
+- **Status:** Accepted; **partially superseded by [ADR-0038](0038-orizzonte-di-visibilita.md)**: a snapshot is created when the visibility horizon has reached it (it does not wait only for multiseries transactions), the CSN is acquired at batch closure, and the document version is the CSN. Isolation, maximum lifetime, and `snapshot-too-old` remain.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-06, QA-09, and QA-14; implements “Snapshot/MVCC”
+- **References:** [architecture](../architettura.md#snapshot-e-mvcc), INV-M1, INV-M2, INV-V2
+
+<a id="decisione"></a>
+
+## Decision
 
 ### Commit Sequence Number
 
-- Ogni Archivio ha un **CSN**: contatore a 64 bit, incrementato con un'operazione atomica.
-- Transazioni single-Series: il writer assegna **un CSN per lotto** di group commit (un
-  incremento atomico per lotto). Tutte le versioni del lotto portano quel CSN nel record.
-- Transazioni multiserie: il CSN è assegnato dal coordinatore **dopo** che la decisione
-  COMMIT è durevole in `multiserie.log` ([ADR-0021](0021-2pc-intenti-outcome.md)).
-- Ogni versione nell'indice porta il CSN con cui è diventata visibile.
+- Each Archivio has a **CSN**: a 64-bit counter, incremented with an atomic operation.
+- Single-Serie transactions: the writer assigns **one CSN per batch** of group commit (one
+  atomic increment per batch). All versions in the batch carry that CSN in the record.
+- Multiseries transactions: the coordinator assigns the CSN **after** the COMMIT decision
+  is durable in `multiserie.log` ([ADR-0021](0021-2pc-intenti-outcome.md)).
+- Each version in the index carries the CSN at which it became visible.
 
-### Snapshot
+<a id="snapshot"></a>
 
-- Uno snapshot è un numero `s`: vede la versione di ogni documento con il CSN più alto
-  `≤ s`. Serie e Archivio usano lo stesso meccanismo.
-- Creazione: `s ← CSN corrente`; poi si attende che nessuna transazione multiserie con CSN
-  `≤ s` sia ancora in applicazione (insieme ordinato delle multiserie «in applicazione»,
-  tenuto dal coordinatore; l'applicazione è in memoria, microsecondi). INV-V2: uno snapshot
-  vede una transazione multiserie tutta o per niente.
-- Gli snapshot attivi sono registrati per Archivio con il loro CSN; il minimo attivo
-  governa le versioni trattenute ([ADR-0015](0015-primary-index-swiss-table-swmr.md)) e il
+### Snapshots
+
+- A snapshot is a number `s`: it sees the version of each document with the highest CSN
+  `≤ s`. Serie and Archivio use the same mechanism.
+- Creation: `s ← current CSN`; then wait until no multiseries transaction with CSN
+  `≤ s` is still being applied (ordered set of multiseries transactions “being applied,”
+  maintained by the coordinator; application is in memory, microseconds). INV-V2: a snapshot
+  sees a multiseries transaction entirely or not at all.
+- Active snapshots are registered per Archivio with their CSN; the active minimum
+  governs retained versions ([ADR-0015](0015-primary-index-swiss-table-swmr.md)) and
   CLEAN.
-- **Durata massima** configurabile (default 1 ora): oltre, lo snapshot è terminato e le
-  operazioni che lo usano ricevono l'errore `snapshot-too-old`. Metrica: età del più vecchio
-  snapshot attivo.
+- Configurable **maximum lifetime** (default 1 hour): beyond it, the snapshot is terminated and
+  operations using it receive the `snapshot-too-old` error. Metric: age of the oldest
+  active snapshot.
 
-### Isolamento
+<a id="isolamento"></a>
 
-| Operazione | Livello |
+### Isolation
+
+| Operation | Level |
 |---|---|
-| GET senza snapshot | read committed: ultima versione pubblicata della Serie |
-| Transazione (single-Series o multiserie) | **snapshot isolation**: legge dallo snapshot, scrive con expected-version (first-committer-wins) |
-| Transazione con `:serializable` | come sopra, più validazione al commit delle versioni di tutti i documenti **letti** (read-set), in ciascun partecipante |
+| GET without a snapshot | read committed: latest published version of the Serie |
+| Transaction (single-Serie or multiseries) | **snapshot isolation**: reads from the snapshot, writes with expected-version (first-committer-wins) |
+| Transaction with `:serializable` | as above, plus commit-time validation of the versions of all documents **read** (read-set), in each participant |
 
-Due GET senza snapshot su Serie diverse non sono atomici rispetto a una multiserie in
-applicazione: chi lo richiede usa uno snapshot.
+Two GETs without a snapshot on different Serie are not atomic with respect to a multiseries
+transaction being applied: callers that require this use a snapshot.
 
-Pattern: CSN/SCN per la visibilità (Oracle SCN, PostgreSQL CSN); snapshot isolation con
+Pattern: CSN/SCN for visibility (Oracle SCN, PostgreSQL CSN); snapshot isolation with
 first-committer-wins; `snapshot too old` (Oracle ORA-01555, PostgreSQL
-`old_snapshot_threshold`); validazione del read-set per la serializzabilità (OCC classico).
+`old_snapshot_threshold`); read-set validation for serializability (classic OCC).
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Un solo elemento condiviso tra Serie: un incremento atomico per lotto. Nessun I/O condiviso.
-- Il CSN finisce nei record e negli hint: 8 byte per record.
-- Dopo un riavvio il CSN riparte dal massimo osservato + 1; gli snapshot non sopravvivono al
-  processo.
+## Consequences
 
-## Alternative considerate
+- Only one shared element across Serie: an atomic increment per batch. No shared I/O.
+- The CSN goes into records and hints: 8 bytes per record.
+- After a restart, the CSN resumes from the maximum observed + 1; snapshots do not survive
+  the process.
 
-- *Vettore di posizioni per Serie:* nessun contatore condiviso, ma coordinamento complesso per
-  le multiserie e snapshot di dimensione O(Serie).
-- *Timestamp fisici:* richiedono orologi affidabili; non necessari in un solo processo.
+<a id="alternative-considerate"></a>
 
-## Valutazione
+## Alternatives considered
 
-- Verifica: FI-11, FI-12; modello in SPK-07 (snapshot durante l'applicazione di una
-  multiserie); test di write-skew per `:serializable`.
+- *Per-Serie position vector:* no shared counter, but complex coordination for
+  multiseries transactions and O(Serie)-sized snapshots.
+- *Physical timestamps:* require reliable clocks; unnecessary within a single process.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Verification: FI-11, FI-12; model in SPK-07 (snapshot during application of a
+  multiseries transaction); write-skew tests for `:serializable`.

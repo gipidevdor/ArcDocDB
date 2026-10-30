@@ -1,47 +1,59 @@
-# ADR-0001 — Common Lisp/SBCL; solo Common Lisp per ora
+<a id="adr-0001--common-lispsbcl-solo-common-lisp-per-ora"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra la scelta di linguaggio della specifica ed **emenda**
-  la sezione «SIMD e ottimizzazioni native» (vedi Decisione, punto 2)
-- **Riferimenti:** [15 Ottimizzazioni native](../15-ottimizzazioni-native.md), INV-X3
+# ADR-0001 — Common Lisp/SBCL; Common Lisp only for now
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records the specification's language choice and **amends**
+  the “SIMD and native optimizations” section (see Decision, item 2)
+- **References:** [15 Native optimizations](../15-ottimizzazioni-native.md), INV-X3
 
-La specifica chiede un database «scritto principalmente in Common Lisp, con SBCL come
-implementazione di riferimento», e ammette per gli hot path estremi operazioni specifiche di
-SBCL, funzioni foreign, C/C++ o Rust.
+<a id="contesto"></a>
 
-Il 2026-10-01, durante la strutturazione del progetto, l'autore ha deciso che per ora il
-progetto sia **solo Common Lisp**.
+## Context
 
-## Decisione
+The specification calls for a database “written primarily in Common Lisp, with SBCL as the
+reference implementation,” and allows SBCL-specific operations, foreign functions, C/C++, or
+Rust for the most demanding hot paths.
 
-1. Il linguaggio del progetto è Common Lisp; SBCL è l'implementazione di riferimento.
-2. **Per ora tutto il codice del repository è Common Lisp**: nessun componente in C, C++ o
-   Rust, nemmeno per gli hot path. La possibilità prevista dalla specifica è sospesa.
-3. Le estensioni e i contrib di SBCL sono ammessi.
-4. Il vincolo si riapre solo con un nuovo ADR, sostenuto da una misura che mostri un hot path
-   non risolvibile altrimenti.
+On 2026-10-01, while structuring the project, the author decided that the project would use
+**Common Lisp only** for now.
 
-## Conseguenze
+<a id="decisione"></a>
 
-- Un solo linguaggio, un solo modello di memoria, nessun confine foreign sul hot path.
-- Primitive che altrove si prenderebbero da librerie C (checksum, hash, compressione, I/O
-  asincrono) vanno scritte in Common Lisp o ottenute dalle facility di SBCL.
-- Il comportamento del GC di SBCL diventa un vincolo di progetto: strutture compatte, nessuna
-  allocazione sul hot path.
-- Da chiarire: se sono ammesse librerie Common Lisp di terze parti (QA-22).
+## Decision
 
-## Alternative considerate
+1. The project language is Common Lisp; SBCL is the reference implementation.
+2. **For now, all code in the repository is Common Lisp**: no components in C, C++, or
+   Rust, even for hot paths. The option allowed by the specification is suspended.
+3. SBCL extensions and contrib modules are allowed.
+4. This constraint can be reconsidered only through a new ADR, supported by measurements
+   showing a hot path that cannot be addressed otherwise.
 
-- *Nucleo in C/Rust con logica in Lisp:* scartata dalla decisione dell'autore; rinviabile.
-- *Altra implementazione Common Lisp:* SBCL è indicata dalla specifica come riferimento.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-- Rischi: RSK-01 (GC), RSK-16 (primitive senza codice foreign), RSK-11 (piattaforme).
-- Verifica: SPK-02 (GC), SPK-01 (indice), SPK-03 e SPK-05 (I/O), SPK-08 (codice generato).
-- Porterebbe a rivedere la decisione: pause del GC incompatibili con l'obiettivo di P99 anche
-  nella configurazione migliore; un hot path misurato fuori target senza rimedio in Common
+- One language, one memory model, no foreign boundary on the hot path.
+- Primitives that would otherwise come from C libraries (checksums, hashing, compression,
+  asynchronous I/O) must be written in Common Lisp or obtained through SBCL facilities.
+- SBCL's GC behavior becomes a design constraint: compact structures, no allocation on
+  the hot path.
+- To clarify: whether third-party Common Lisp libraries are allowed (QA-22).
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *C/Rust core with Lisp logic:* rejected by the author's decision; may be revisited later.
+- *Another Common Lisp implementation:* the specification names SBCL as the reference.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-01 (GC), RSK-16 (primitives without foreign code), RSK-11 (platforms).
+- Verification: SPK-02 (GC), SPK-01 (index), SPK-03 and SPK-05 (I/O), SPK-08 (generated code).
+- Reasons to revisit the decision: GC pauses incompatible with the P99 target even in the
+  best configuration; a measured hot path missing its target with no remedy in Common
   Lisp.

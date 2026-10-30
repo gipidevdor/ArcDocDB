@@ -1,111 +1,119 @@
-# Lettura seriale dell'indice primario paginato
+<a id="lettura-seriale-dellindice-primario-paginato"></a>
 
-Incremento di integrazione autorizzato il 2026-10-24: ADR-0057, ADR-0058,
+# Serial reading of the paged primary index
+
+Integration increment authorized on 2026-10-24: ADR-0057, ADR-0058,
 REQ-IDX-001, REQ-IDX-009, REQ-LIM-003; INV-I8, INV-A2, INV-A8, INV-P6.
-Collega [cache e I/O](cache-pagine.md) alla visita di directory radix,
-bucket flat, overflow e catene di chiavi. Il motore M1 usa ancora il primario
-residente: la [costruzione incrementale delle pagine](costruzione-indice-paginato.md)
-usa ora questo lettore nei test. Pubblicazione, PUT/DELETE, recovery e selettore
-automatico non sono ancora collegati al backend paginato.
+Connects [cache and I/O](cache-pagine.md) to traversal of radix directories,
+flat buckets, overflow, and key chains. M1 engine still uses resident
+primary: [incremental page construction](costruzione-indice-paginato.md)
+now uses this reader in tests. Publication, PUT/DELETE, recovery, and automatic
+selector not yet connected to paged backend.
 
-## API e ownership
+<a id="api-e-ownership"></a>
+
+## API and ownership
 
 `arcdocdb.index.page:crea-lettore-indice-pagine(cache, root, :max-pages 1024,
-:max-key-bytes 1048576)` copia la root e prepara due scratch della taglia della
-cache, oltre a un cursore d'identita' privato. Cache e lettore hanno lo stesso
-attore I/O proprietario; nessun uso concorrente o rientrante. Il file immutabile
-rimane prestato sotto il contratto della cache. L'immagine e i suoi riferimenti
-restano stabili per tutta la vita del lettore.
+:max-key-bytes 1048576)` copies root and prepares two scratch buffers of cache
+size, plus a private identity cursor. Cache and reader share same
+owning I/O actor; no concurrent or reentrant use. Immutable file
+remains borrowed under cache contract. Image and references
+stay stable for reader lifetime.
 
-`leggi-indice-pagine(reader, key, start, end, high, low, destination)` accetta
-uno span di chiave e il digest XXH64 fidato della Serie, come l'interfaccia
-avanzata del residente. Il controller deve conoscere il seme autorevole.
-Il lettore non usa un seme implicito e non interpreta il digest come prova
-di uguaglianza. La root proviene dal controller; la verifica locale delle
-pagine non certifica da sola copertura globale, digest corretti nel dataset,
-unicita' delle chiavi o visibilita' delle entry. Questi sono obblighi del
-builder/verificatore dell'immagine prima della pubblicazione.
+`leggi-indice-pagine(reader, key, start, end, high, low, destination)` accepts
+a key span and Serie's trusted XXH64 digest, like resident advanced
+interface. Controller must know authoritative seed.
+Reader uses no implicit seed or digest as equality
+proof. Root comes from controller; local page verification
+alone certifies neither global coverage, correct dataset digests,
+key uniqueness, nor entry visibility. These are image builder/verifier
+obligations before publication.
 
-Il risultato e' `:live` con cinque u64 in DESTINATION o `:absent` senza
-modificarla. Layout compatibile con il candidato del primario residente:
-CSN, location (segmento/offset), lunghezza chiave e flag live, lunghezza record,
-END zero. L'offset nell'arena del backend e' zero: non e' un riferimento a
-una chiave prestata. Il risultato non autorizza un valore documento: il futuro
-GET deve applicare MVCC, pin del segmento, controllo CRC e verifica della
-chiave nel record attraverso i protocolli esistenti.
+Result is `:live` with five u64 words in DESTINATION or `:absent` without
+modifying it. Layout compatible with resident primary candidate:
+CSN, location (segment/offset), key length and live flags, record length,
+END zero. Backend arena offset is zero: not a borrowed
+key reference. Result does not authorize a document value: future
+GET must apply MVCC, segment pin, CRC checks, and record-key
+verification through existing protocols.
 
-Le identita' caller restano immutabili per contratto. La rappresentazione
-consente soltanto a cache e lettore di aggiornare i propri cursori privati;
-non sono esportati setter o accessori. La cache prealloca un'identita' posseduta
-per frame e copia i campi dal cursore dopo la verifica, prima di rendere valido
-lo slot. Non trattiene piu' il cursore del chiamante: l'avanzamento del lettore
-non cambia la chiave delle pagine in cache. Il cursore posseduto da un frame
-si modifica soltanto dopo aver invalidato lo slot. Il contratto resta seriale,
-senza lease su frame e senza nuove scritture condivise fra Serie.
+Caller identities remain immutable by contract. Representation
+allows only cache and reader to update private cursors;
+no setters or accessors exported. Cache preallocates an owned identity
+per frame and copies cursor fields after verification, before making
+slot valid. No longer retains caller cursor: reader advancement
+does not change cached-page key. Frame-owned cursor
+changes only after slot invalidation. Contract remains serial,
+without frame leases or new shared writes between Serie.
 
-## Attraversamento e limiti
+<a id="attraversamento-e-limiti"></a>
 
-Le directory selezionano un campo del digest a 64 bit, anche a cavallo dei
-due u32. I campi dei livelli successivi devono trovarsi sotto quello del
-padre, senza sovrapposizioni. Una directory dopo un bucket e una pagina chiave
-nel percorso directory/overflow sono corruzioni. I riferimenti decrescenti
-in offset e generazione vengono verificati dal codec a ogni caricamento.
+## Traversal and bounds
 
-Il bucket usa gruppi da 16: esamina tutti i candidati del gruppo prima di
-fermarsi a EMPTY. Anche dopo un miss locale segue l'eventuale overflow.
-Fingerprint e digest completo filtrano i candidati; i byte della chiave
-inline o esterna decidono l'uguaglianza. Le catene esterne vengono verificate
-fino alla fine anche dopo un mismatch: tipo, totale, posizione, ultimo
-frammento e riferimenti devono essere coerenti con la entry.
+Directories select a field of the 64-bit digest, including across
+both u32 words. Fields at subsequent levels must lie below parent's
+field without overlap. Directory after bucket and key page
+in directory/overflow path are corruption. References decreasing
+in offset and generation checked by codec on every load.
 
-Ogni visita consuma un credito pagina, inclusi hit della cache e frammenti
-esterni; limite configurabile 1..65536. I confronti consumano la lunghezza
-richiesta prima di leggere i byte, anche se il primo byte differisce;
-limite cumulativo 1..16777216. I crediti si ripristinano a ogni lookup.
-Esaurimento => `resource-exhausted`, mai falsa assenza. Confronti di lunghezze
-diverse non leggono byte; le catene esterne continuano a consumare pagine.
-I cicli hanno limiti espliciti in pagine, capacita' del bucket o byte chiave.
+Bucket uses groups of 16: examines all group candidates before
+stopping at EMPTY. Even after local miss follows any overflow.
+Fingerprint and full digest filter candidates; inline or external key
+bytes decide equality. External chains checked
+through end even after mismatch: type, total, position, final
+fragment, and references must agree with entry.
 
-Il miss con I/O rimane bloccante nel suo attore. La memoria di prodotto e'
-O(frame-count * page-size) per la cache, piu' due pagine scratch e metadati
-O(frame-count); non c'e' un vettore residente di tutte le PageRef dell'immagine.
-Il limite payload della cache non rappresenta la quota RSS totale del motore.
-Nessuna promessa lock-free o qualifica oltre RAM deriva da questa API.
+Every visit consumes a page credit, including cache hits and external
+fragments; configurable limit 1..65536. Comparisons consume required
+length before reading bytes, even if first byte differs;
+cumulative limit 1..16777216. Credits reset for each lookup.
+Exhaustion => `resource-exhausted`, never false absence. Different-length
+comparisons read no bytes; external chains continue consuming pages.
+Loops have explicit page, bucket-capacity, or key-byte bounds.
 
-## Errori e verifica
+I/O miss remains blocking within its actor. Product memory is
+O(frame-count * page-size) for cache, plus two scratch pages and
+O(frame-count) metadata; no resident vector of all image PageRefs.
+Cache payload limit is not total engine RSS quota.
+No lock-free promise or beyond-RAM qualification derives from API.
 
-Preflight senza I/O per owner, rientro, range, lunghezza e alias dello scratch.
-I/O/CRC/identita'/topologia/limiti falliscono prima della copia del candidato;
-DESTINATION rimane intatta. Ogni uscita, incluse uscite non locali dal
-caricatore, libera BUSY. Gli errori non fanno pubblicare una root e non
-modificano log: al futuro confine del motore resta la transizione FAULTED.
-Nessun punto di atomicita' durevole nuovo; rollback senza migrazione dati.
+<a id="errori-e-verifica"></a>
 
-Metodo: fixture manuali indipendenti dal codec writer, tre taglie, collisioni
-complete, EMPTY prima di un candidato nello stesso gruppo, directory a piu'
-livelli, overflow, chiave massima con cache di un frame, budget esatto e
-insufficiente, corruzioni coerenti localmente ma incoerenti fra pagine,
-uscite non locali e rientro. Confronto differenziale con il residente per
-candidati e assenza; il suo offset arena viene normalizzato. Sei collisioni
-nel differenziale rispettano gli otto campioni del residente: con venti
-collisioni quel reader puo' restituire `:retry-limit`, non e' un oracolo di
-assenza. Il paginato viene verificato separatamente con venti collisioni.
-La misura delle allocazioni e' separata da SB-COVER: hit inline, directory
-con un solo frame e chiave esterna massima con un solo frame, CSN/location
-con bit alti impostati. Non misura RSS, latenza o concorrenza.
+## Errors and verification
 
-| Decisione composta C1 | Condizioni e casi |
+Preflight without I/O for owner, reentry, range, length, and scratch aliases.
+I/O/CRC/identity/topology/limit failures occur before candidate copy;
+DESTINATION intact. Every exit, including nonlocal loader
+exits, releases BUSY. Errors publish no root and modify no
+logs: FAULTED transition remains at future engine boundary.
+No new durable atomicity point; rollback without data migration.
+
+Method: manual fixtures independent of writer codec, three sizes, complete
+collisions, EMPTY before candidate in same group, multilevel
+directories, overflow, maximum key with one-frame cache, exact and
+insufficient budgets, locally consistent but cross-page inconsistent corruption,
+nonlocal exits, and reentry. Differential comparison with resident for
+candidates and absence; its arena offset normalized. Six collisions
+in differential respect resident's eight samples: with twenty
+collisions that reader may return `:retry-limit`, not an absence
+oracle. Paged reader checked separately with twenty collisions.
+Allocation measurement separate from SB-COVER: inline hit, directory
+with one frame, and maximum external key with one frame, CSN/location
+high bits set. Does not measure RSS, latency, or concurrency.
+
+| Compound C1 decision | Conditions and cases |
 |---|---|
-| Budget factory | pagine intere 1..65536, byte interi 1..16777216; minimi/massimi, zero, negativo, frazionario, massimo+1 |
-| Dominio radix | bits 1..11, shift 0..63, somma <=64; geometria dal codec; confronto numerico indipendente a tutti gli shift validi |
-| Candidato bucket | fingerprint, low, high, byte chiave; collisioni complete, fingerprint/digest diverso e byte diverso |
-| Inline uguale | lunghezza uguale e byte uguali; lunghezza diversa, stessa lunghezza con mismatch, hit |
-| Catena esterna | tipo chiave, totale e posizione; tipo errato, posizione errata, totale errato; catena massima e mismatch all'ultimo byte |
-| Directory successiva | bucket gia' visto oppure campo oltre limite; overflow di tipo errato e directory con bit sovrapposti |
-| Alias input | scratch bucket o scratch chiave; preflight esclude entrambe le sorgenti private |
-| CSN positivo codec | parola low positiva oppure high positiva; fixture CSN massimo, zero respinto e CSN low-only/high-only |
+| Factory budget | integer pages 1..65536, integer bytes 1..16777216; minima/maxima, zero, negative, fractional, maximum+1 |
+| Radix domain | bits 1..11, shift 0..63, sum <=64; codec geometry; independent numeric comparison at every valid shift |
+| Bucket candidate | fingerprint, low, high, key bytes; complete collisions, different fingerprint/digest and different byte |
+| Inline equality | same length and bytes; different length, same length with mismatch, hit |
+| External chain | key type, total, and position; wrong type, wrong position, wrong total; maximum chain and last-byte mismatch |
+| Next directory | bucket already seen or field beyond limit; wrong-type overflow and directory with overlapping bits |
+| Input alias | bucket scratch or key scratch; preflight excludes both private sources |
+| Positive codec CSN | positive low word or positive high word; maximum-CSN fixture, zero rejected, low-only/high-only CSNs |
 
-Due letture C1 dello stesso autore: prima, contratti/layout/budget/topologia;
-seconda, ownership dei cursori, invalidazione/pubblicazione del frame,
-propagazione errori, copia solo dopo esito completo e allocazioni dei valori
-u64. Non sono revisione indipendente o qualifica MC/DC dell'intero motore.
+Two C1 readings by same author: first, contracts/layout/budgets/topology;
+second, cursor ownership, frame invalidation/publication,
+error propagation, copying only after complete outcome, and u64-value
+allocations. Neither independent review nor whole-engine MC/DC qualification.

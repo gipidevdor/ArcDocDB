@@ -1,66 +1,74 @@
-# Revisione indipendente del controller di Serie
+<a id="revisione-indipendente-del-controller-di-serie"></a>
 
-Data: 2026-10-09. Base dichiarata e osservata:
-`cf6091367853ec311fed7b05961a2812fd05a8f1`. Worktree condiviso:
+# Independent review of the Serie controller
+
+Date: 2026-10-09. Declared and observed base:
+`cf6091367853ec311fed7b05961a2812fd05a8f1`. Shared worktree:
 `/Users/gpicchiarelli/.codex/worktrees/controller-serie/ArcDocDB`.
 
-## Stato della lettura
+<a id="stato-della-lettura"></a>
 
-Prima fase: contratto, rischi e inventario delle decisioni attese preparati.
-`src/series/` e le nuove preflight WAL non erano presenti alla prima ricognizione.
-Sono poi comparsi tutti gli otto file di `src/series/` e le nuove preflight WAL.
-Le letture statiche complete B/C e l'addendum D sono svolti. Nella fase D il
-parent dichiara congelato il prodotto, mentre test/strumenti sono ancora in
-integrazione. L'aggiornamento comprende fix P2 e ritiro I/O senza consegna:
-42 funzioni Series e 6 helper WAL, massimo di complessità 8 includendo corto
-circuito, case e handler. I due P2 B/C sono chiusi alla rilettura D; nessun
-nuovo P1/P2 individuato sotto le precondizioni dichiarate. La review C1 della
-modifica con prove e due letture resta alla campagna di integrazione.
+## Reading status
 
-Attività esclusivamente statica; nessun test, build, benchmark, driver, misurazione
-di heap o campagna di mutazione eseguita. Nessuna certificazione umana, MC/DC o garanzia del
-motore completo. Il parent esegue la propria prima lettura e l'integrazione; questa
-è la lettura indipendente assegnata.
+First phase: contract, risks, and inventory of expected decisions prepared.
+`src/series/` and new WAL preflights were absent at the first inspection.
+All eight `src/series/` files and new WAL preflights then appeared.
+Complete static readings B/C and addendum D are done. In phase D the
+parent declares the product frozen while tests/tools are still being
+integrated. The update includes P2 fixes and I/O retirement without delivery:
+42 Series functions and 6 WAL helpers, maximum complexity 8 including short
+circuit, case, and handlers. Both B/C P2 findings are closed in rereading D; no
+new P1/P2 identified under declared preconditions. C1 review of the
+change with tests and two readings remains with the integration campaign.
 
-## Ambito e proprietà dei file
+Exclusively static activity; no test, build, benchmark, driver, heap
+measurement, or mutation campaign run. No human certification, MC/DC, or complete-engine
+guarantee. The parent performs its own first reading and integration; this
+is the assigned independent reading.
 
-Scritture di questo incarico limitate a:
+<a id="ambito-e-proprietà-dei-file"></a>
+
+## Scope and file ownership
+
+Writes for this assignment are limited to:
 
 - `docs/implementazione/controller-serie-decisioni.md`;
 - `docs/implementazione/controller-serie-revisione.md`.
 
-Nessuna modifica a prodotto, ASDF, test, strumenti o documenti degli altri agenti.
-Nessun branch, commit o push creato. Non vengono duplicati prodotti, prove o
-benchmark degli incarichi paralleli.
+No changes to product, ASDF, tests, tools, or other agents' documents.
+No branch, commit, or push created. Products, tests, or benchmarks from
+parallel assignments are not duplicated.
 
-Sorgenti del perimetro letti: **tutti** i file di `src/series/`, le
-preflight pubbliche `verifica-token-lotto`, `verifica-pubblicazione-lotto` e
-`marca-log-faulted`, con `verifica-log-segmento`, `verifica-riuso-lotto`,
-`verifica-ritiro-lotto`, relativi export e contesto del resolver WAL preservato.
-ASDF viene consultato per il confine delle dipendenze, senza modificarlo.
+In-scope sources read: **all** `src/series/` files, public
+preflights `verifica-token-lotto`, `verifica-pubblicazione-lotto`, and
+`marca-log-faulted`, with `verifica-log-segmento`, `verifica-riuso-lotto`,
+`verifica-ritiro-lotto`, related exports, and context of the preserved WAL resolver.
+ASDF is consulted for dependency boundaries without modification.
 
-Contesto già letto: `src/wal/csn.lisp`, `src/wal/types.lisp`,
+Context already read: `src/wal/csn.lisp`, `src/wal/types.lisp`,
 `src/wal/group.lisp`, `src/wal/executor.lisp`, `src/wal/package.lisp`,
-`src/csn/registry.lisp`, `src/csn/package.lisp`, condizioni di fondazione,
-ADR-0037/0046/0033 e standard di codifica.
+`src/csn/registry.lisp`, `src/csn/package.lisp`, foundation conditions,
+ADR-0037/0046/0033, and coding standard.
 
-## Criterio per l'identità delle evidenze
+<a id="criterio-per-lidentità-delle-evidenze"></a>
 
-La base Git identifica il punto di partenza; nel worktree condiviso non identifica
-automaticamente il contenuto corrente. A ogni lettura del prodotto si registrano
-file e impronte del contenuto letto, distinguendo una revisione intermedia dalla
-revisione congelata. Un confronto d'impronte prima/dopo documenta solo la stabilità
-durante quell'osservazione; non sostituisce la dichiarazione di congelamento
-dell'integrazione. I registri runtime source-stable competono alla campagna del
-parent dopo il congelamento.
+## Evidence identity criterion
 
-| Fase | Identità | Conclusione permessa |
+The Git base identifies the starting point; in the shared worktree it does not
+automatically identify current content. At every product reading, files and
+fingerprints of content read are recorded, distinguishing an intermediate review
+from a frozen review. A before/after fingerprint comparison documents only stability
+during that observation; it does not replace the integration freeze
+declaration. Source-stable runtime records belong to the parent's
+campaign after freeze.
+
+| Phase | Identity | Permitted conclusion |
 |---|---|---|
-| Preparazione | Base `cf6091367853ec311fed7b05961a2812fd05a8f1`, controller assente. | Obblighi/rischi attesi e contesto WAL. |
-| Lettura intermedia A | Quattro file Series: package/types/ownership/events; WAL builder/csn/executor/package. Impronte del percorso CS-REV-01 sotto. | Osservazioni statiche sul solo contenuto letto; integrazione ancora aperta. |
-| Addendum D prima delle prove | Congelamento del prodotto dichiarato dal parent nel messaggio; blob C1 e SHA-256 sotto. Test/strumenti ancora in scrittura. | Chiusura statica dei P2 e revisione del nuovo ritiro; nessun esito runtime attribuito a questa review. |
+| Preparation | Base `cf6091367853ec311fed7b05961a2812fd05a8f1`, controller absent. | Expected obligations/risks and WAL context. |
+| Intermediate reading A | Four Series files: package/types/ownership/events; WAL builder/csn/executor/package. Fingerprints for CS-REV-01 path below. | Static observations only on content read; integration still open. |
+| Addendum D before tests | Product freeze declared by parent in message; C1 blobs and SHA-256 below. Tests/tools still being written. | Static P2 closure and review of new retirement; no runtime outcome attributed to this review. |
 
-Impronte SHA-256 della lettura intermedia A (non registro source-stable di campagna):
+SHA-256 fingerprints for intermediate reading A (not a campaign source-stable record):
 
 | File | SHA-256 |
 |---|---|
@@ -68,11 +76,11 @@ Impronte SHA-256 della lettura intermedia A (non registro source-stable di campa
 | `src/series/ownership.lisp` | `ce9292668f85d7cc5ba036c0ebd71a8910d67029d02eaab82d9bcf8650489c0c` |
 | `src/wal/csn.lisp` | `7439be1ce198f9d894988108d5aa05ef2c692a2af732e94304f4b6393b172339` |
 
-Impronte SHA-256 della lettura completa B, successiva all'annuncio del prodotto
-scritto. Questa è identità della lettura statica, **non congelamento né registro
-source-stable di campagna**:
+SHA-256 fingerprints for complete reading B, after announcement that the product
+was written. This identifies the static reading, **neither a freeze nor a campaign
+source-stable record**:
 
-| File letto | SHA-256 |
+| File read | SHA-256 |
 |---|---|
 | `src/series/package.lisp` | `a13ff4b2a08ac287203575f99a04c4c23653d5ffeb86cf5290b44562e7ec8bcd` |
 | `src/series/types.lisp` | `a225d83965f7a9e049a46a1a9c5715829e060284840527814904463e3bba8eed` |
@@ -88,13 +96,15 @@ source-stable di campagna**:
 | `src/wal/package.lisp` | `ed438c9bad09752e8b898b8ad858a62e3129c4f723803e65cb9af67abbca43f8` |
 | `arcdocdb.asd` | `61bad4cbfbb0defe8cc325beb5ddf7100b265829e06af40523f609a04e5697e3` |
 
-### Aggiornamento C: geometria ring, log segmento e contratto parent
+<a id="aggiornamento-c-geometria-ring-log-segmento-e-contratto-parent"></a>
 
-La lettura C sostituisce nella tabella B le seguenti impronte; per gli altri
-file le impronte B sono immutate. Il contratto del parent viene aggiunto come
-fonte. Ancora nessun congelamento o esecuzione di campagna:
+### Update C: ring geometry, segment log, and parent contract
 
-| File | SHA-256 lettura C |
+Reading C replaces the following fingerprints in table B; fingerprints B
+are unchanged for other files. The parent's contract is added as a
+source. Still no freeze or campaign execution:
+
+| File | Reading C SHA-256 |
 |---|---|
 | `src/series/types.lisp` | `f4421765dc166310ab2f1801052d2c4b8083be19cb0b32d84d2dcdfd41afb3e4` |
 | `src/series/ownership.lisp` | `640368ff404af2c02f31ac2525a8a1887de5d1c0e62f645bc64a9ecbe708fb6d` |
@@ -105,167 +115,177 @@ fonte. Ancora nessun congelamento o esecuzione di campagna:
 | `arcdocdb.asd` | `3863976de1b2b6ba63c8fafa42b1549f8e596d40a885992de41ffc5d2923da19` |
 | `docs/implementazione/controller-serie.md` | `6a593ca77f1987f55221e5e901c957782597a35a373e283abb8decaa4bd78509` |
 
-`%check-ring` chiama `%check-geometry` dopo i limiti: verifica entrambe le
-identità modulari `tail=head+count` e `tail=publish-head+unresolved`.
-`%position-after` somma solo position<capacity e amount≤capacity: somma massima
-2047, al più una sottrazione, nessun wrap fixnum. I nuovi helper sono senza
-scansione e senza mutazione del ring. Le post-guardie di adozione, advance e
-riuso vengono eseguite dopo gli aggiornamenti di tutti i cursori/contatori.
+`%check-ring` calls `%check-geometry` after bounds: it checks both
+modular identities `tail=head+count` and `tail=publish-head+unresolved`.
+`%position-after` adds only position<capacity and amount≤capacity: maximum sum
+2047, at most one subtraction, no fixnum wraparound. New helpers do not
+scan or mutate the ring. Adoption, advance, and reuse post-guards
+run after updating all cursors/counters.
 
-La factory delega `verifica-log-segmento` prima delle allocazioni, con
-invalid-argument `:log-segment-kind` per control/multiserie e io-fault per log
-guasto. La preflight di pubblicazione delega la stessa verifica; la guardia
-originale del resolver su `lotto-csn-log` è invariata, con una sola occorrenza
-dell'anchor del mutatore WAL precedente. Questo è confronto testuale statico:
-nessun test o mutatore è stato avviato.
+The factory delegates `verifica-log-segmento` before allocations, with
+invalid-argument `:log-segment-kind` for control/multiseries and io-fault for a
+faulty log. Publication preflight delegates the same check; the resolver's
+original `lotto-csn-log` guard is unchanged, with one occurrence
+of the prior WAL mutator anchor. This is static textual comparison:
+no test or mutator was started.
 
-## Obblighi prioritari della lettura
+<a id="obblighi-prioritari-della-lettura"></a>
 
-1. Separare CAS della radice, risoluzione del token, fine I/O e due FIFO;
-   `:async` risolto può restare occupato/attivo fino al flush.
-2. Verificare authority della lease: CAS singolo, thread, generazione corrente,
-   budget fixnum senza wrap e rilascio/riacquisizione per trasferimento.
-3. Verificare authority dell'evento: oggetto del ring del controller più
-   generazione catturata; mai autorizzazione tramite soli slot/CSN numerici.
-4. Verificare adozione `:sealed` prima del dispatch, root `nil` valida,
-   contiguità offset, CSN crescente in due parole, capacità e budget pre-mutazione.
-5. Verificare preflight di log/token/copertura prima del CAS; solo `:csn-busy`
-   diventa pendente; `:pubblicato` ritenta il resolver senza un nuovo CAS.
-6. Verificare fine I/O dopo handoff conclusivo durable/faulted, doppio dispatch
-   rifiutato, decremento esatto e drenaggio possibile dopo fault.
-7. Verificare guasto terminale e upgrade Serie→Archivio; stato incerto o
-   invariant richiede Archivio, guasto I/O noto Serie.
-8. Verificare annullamento FIFO solo faulted Serie con **tutto** l'I/O quiescente;
-   token catturato e log faulted; rifiuto automatico in ambito Archivio.
-9. Verificare riuso FIFO solo risolto/retired/durable/owner nullo;
-   rifiuti prematuri prima del reset e generazione conservata.
-10. Inventariare ogni funzione e decisione composta, complessità massimo 10
-    includendo corto circuito, tipi/docstring/pre-post e limiti di scansione.
+## Priority reading obligations
 
-La matrice dei predicati e dei rischi è in
+1. Separate root CAS, token resolution, I/O completion, and the two FIFOs;
+   resolved `:async` can remain occupied/active until flush.
+2. Check lease authority: single CAS, thread, current generation,
+   fixnum budget without wraparound, and release/reacquisition for transfer.
+3. Check event authority: controller ring object plus
+   captured generation; never authorization by numeric slot/CSN alone.
+4. Check `:sealed` adoption before dispatch, valid `nil` root,
+   offset contiguity, increasing two-word CSN, capacity, and premutation budget.
+5. Check log/token/coverage preflight before CAS; only `:csn-busy`
+   becomes pending; `:pubblicato` retries resolver without another CAS.
+6. Check I/O completion after final durable/faulted handoff, double dispatch
+   rejected, exact decrement, and draining possible after fault.
+7. Check terminal fault and Serie→Archivio upgrade; uncertain state or
+   invariant requires Archivio, known I/O fault requires Serie.
+8. Check FIFO abort only for faulted Serie with **all** I/O quiescent;
+   captured token and faulted log; automatic rejection in Archivio scope.
+9. Check FIFO reuse only when resolved/retired/durable/owner null;
+   premature rejections before reset and generation preserved.
+10. Inventory every function and compound decision, maximum complexity 10
+    including short circuit, types/docstrings/pre-post, and scan bounds.
+
+The predicate and risk matrix is in
 [controller-serie-decisioni.md](controller-serie-decisioni.md).
 
-## Precondizioni che la review non può dimostrare dal solo controller
+<a id="precondizioni-che-la-review-non-può-dimostrare-dal-solo-controller"></a>
 
-La root è immutabile e preparata fuori dal controller. Il chiamante esegue un
-handoff attendibile della fine I/O. L'adozione precede il dispatch. Un confine
-chiamante deve applicare fail-stop Archivio per interruzioni nonlocali nella
-finestra root/stadio o registro/token incerta. L'unicità controller/log e il
-rilascio del gruppo prima del riuso sono discipline di ownership. La lettura
-statica può verificare che queste precondizioni siano esplicite e rispettate dai
-percorsi locali; non certifica scheduler, indice o recovery del motore.
+## Preconditions the review cannot prove from the controller alone
 
-## Riscontri sul prodotto
+The root is immutable and prepared outside the controller. The caller performs a
+reliable I/O completion handoff. Adoption precedes dispatch. A caller
+boundary must apply Archivio fail-stop for nonlocal interruptions in the
+uncertain root/stage or register/token window. Controller/log uniqueness and
+group release before reuse are ownership disciplines. Static reading
+can check that these preconditions are explicit and respected by local
+paths; it does not certify engine scheduler, index, or recovery.
 
-| ID | Priorità | File/funzione | Trigger e conseguenza | Stato |
+<a id="riscontri-sul-prodotto"></a>
+
+## Product findings
+
+| ID | Priority | File/function | Trigger and consequence | Status |
 |---|---|---|---|---|
-| CS-REV-01 | P2 originario | `src/series/events.lisp:83` e `src/series/retirement.lisp:21` nella versione B/C. | Le preflight token e riuso potevano propagare un'invariante prima di `%begin-effect`, lasciando il controller healthy. | Chiuso staticamente nell'addendum D tramite `%capture-token` e `%check-lotto-release`. |
-| CS-REV-02 | P2 originario | `src/series/query.lisp:48` nella versione B/C. | Il getter poteva restituire la phase interna `:pubblicando`, fuori dai cinque esiti contrattuali. | Chiuso staticamente nell'addendum D: case su cinque stati; altrimenti serie-event-uncertain e Archivio. |
-| CS-REV-03 | Osservazione normativa | `src/series/ownership.lisp`, `%end-effect`; sei percorsi originali e nuovo ritiro I/O. | Prima lettura letterale conservativa proponeva una deviazione; riesaminata la risorsa acquisita/rilasciata e il contratto del parent. | Richiesta di deviazione ritirata: cleanup di proprietà con marcatura terminale protettiva, secondo l'interpretazione motivata sotto. Nessuna approvazione umana attribuita. |
+| CS-REV-01 | Original P2 | `src/series/events.lisp:83` and `src/series/retirement.lisp:21` in version B/C. | Token and reuse preflights could propagate an invariant before `%begin-effect`, leaving the controller healthy. | Statically closed in addendum D through `%capture-token` and `%check-lotto-release`. |
+| CS-REV-02 | Original P2 | `src/series/query.lisp:48` in version B/C. | Getter could return internal phase `:pubblicando`, outside the five contractual outcomes. | Statically closed in addendum D: case over five states; otherwise serie-event-uncertain and Archivio. |
+| CS-REV-03 | Standards observation | `src/series/ownership.lisp`, `%end-effect`; six original paths and new I/O retirement. | Conservative literal first reading proposed a deviation; acquired/released resource and parent contract reexamined. | Deviation request withdrawn: ownership cleanup with protective terminal marking, under the reasoned interpretation below. No human approval attributed. |
 
-Le spiegazioni CS-REV-01/02 seguenti conservano i percorsi della versione B/C;
-la chiusura effettiva e le identità D sono nell'addendum successivo.
+The following CS-REV-01/02 explanations preserve version B/C paths;
+actual closure and D identities appear in the subsequent addendum.
 
-**CS-REV-01 — Fail-stop della preflight di adozione (storico B/C).** La guardia di lease/ring
-è già passata, ma la chiamata diretta a `verifica-token-lotto` può propagare
-un'invariante del ponte WAL senza `%mark-fault`. Un esempio di stato corrotto
-è `csn-pending=t` con `csn-high=csn-low=0` oppure log assente: il ponte segnala
-l'invariante senza mutare il registro, mentre il controller resta healthy.
-Non è un normale rifiuto stale/full e non va normalizzato a pending.
-La stessa funzione usa già `%check-captured-token` per convertire difetti di
-un evento adottato in fault Archivio, ma l'adozione iniziale bypassa quel confine.
-Nella lettura B lo stesso problema è presente nel riuso: un lotto durable con
-`lotto-used > length(lotto-buffer)` attraversa le guardie evento/retired/FIFO e
-`verifica-riuso-lotto` segnala `invariant-violation :lotto-length` tramite
-`esigi-lotto`. La prima preflight è esterna all'effetto protetto; evento e lotto
-non vengono riusati, ma la Serie resta healthy. Il secondo controllo dentro
-`riusa-lotto` è protetto e non compensa quello precedente.
+**CS-REV-01 — Adoption preflight fail-stop (B/C history).** The lease/ring guard
+has passed, but a direct call to `verifica-token-lotto` can propagate
+a WAL bridge invariant without `%mark-fault`. One corrupt-state example
+is `csn-pending=t` with `csn-high=csn-low=0` or absent log: the bridge signals
+the invariant without mutating the register, while the controller remains healthy.
+This is not ordinary stale/full rejection and must not be normalized to pending.
+The same function already uses `%check-captured-token` to convert adopted-event
+defects to Archivio fault, but initial adoption bypasses that boundary.
+In reading B, the same problem exists in reuse: a durable batch with
+`lotto-used > length(lotto-buffer)` passes event/retired/FIFO guards and
+`verifica-riuso-lotto` signals `invariant-violation :lotto-length` through
+`esigi-lotto`. The first preflight is outside the protected effect; event and batch
+are not reused, but the Serie remains healthy. The second check inside
+`riusa-lotto` is protected and does not compensate for the earlier one.
 
-Richiesta: garantire faulted Archivio anche per l'invariante di queste preflight,
-conservando i normali rifiuti invalid-argument pre-adozione e lotto/token al caller.
-Nessuna correzione di prodotto eseguita dal revisore.
+Request: guarantee faulted Archivio for these preflight invariants too,
+while preserving ordinary pre-adoption invalid-argument rejections and leaving batch/token with the caller.
+The reviewer made no product correction.
 
-**CS-REV-02 — Stato pubblico fuori dal contratto (storico B/C).** `%publish-root` assegna
-`:pubblicando` prima del CAS e `:pubblicato` dopo. Un trasferimento nonlocale
-fra quelle assegnazioni lascia la phase intermedia; `%end-effect` rende il
-controller archive-faulted. Con oggetto/generazione ancora validi, il getter
-pubblico ritorna comunque `:pubblicando`. È utile conservare questo marcatore
-interno per riconoscere lo stato incerto, ma il chiamante non può trattarlo come
-uno dei cinque esiti API promessi. Allineare il getter al contratto, rifiutando
-la fase incerta con condizione tipizzata, oppure esplicitare l'estensione nella
-specifica pubblica e nei suoi obblighi di verifica. Non normalizzare uno stato
-incerto a `:preparato` o `:pubblicato`.
+**CS-REV-02 — Public state outside contract (B/C history).** `%publish-root` assigns
+`:pubblicando` before CAS and `:pubblicato` after. A nonlocal transfer
+between these assignments leaves the intermediate phase; `%end-effect` makes the
+controller archive-faulted. With object/generation still valid, the public
+getter nevertheless returns `:pubblicando`. Retaining this internal marker
+to recognize uncertain state is useful, but the caller cannot treat it as
+one of five promised API outcomes. Align the getter with the contract by rejecting
+the uncertain phase with a typed condition, or make the extension explicit in the
+public specification and its verification obligations. Do not normalize an uncertain
+state to `:preparato` or `:pubblicato`.
 
-**CS-REV-03 — COD-26 e rilascio dell'effetto, rivalutazione.** Testo letto nello standard:
-«`unwind-protect` solo per rilasciare risorse; mai per nascondere un errore».
-`effect-active` è una proprietà locale: `%begin-effect` la acquisisce,
-`%end-effect` la rilascia. Se `complete=nil`, prima del rilascio viene anche
-marcato l'ambito Archivio. La seconda parte della norma è rispettata sul codice
-letto: nessun catch generico, rollback o soppressione della condizione/trasferimento
-originale nel cleanup; la strada Archivio di `%mark-fault` esegue solo il set della
-parola di stato e ritorna. La prima lettura conservativa considerava la marcatura
-un effetto aggiuntivo al rilascio e proponeva una deviazione. Dopo lettura del
-[contratto del parent](controller-serie.md) e del protocollo completo, il revisore
-ritira quella richiesta: l'effetto ha una proprietà effettiva acquisita prima
-del corpo, controllata per rientranza e rilasciata in ogni cleanup, anche sul
-successo. La marcatura terminale è parte del rilascio sicuro di questa proprietà
-quando il corpo non l'ha finalizzata, mantenendo indisponibile alla prosecuzione
-una risorsa con esito incerto. Non è un mero pretesto per eseguire recovery nel
+**CS-REV-03 — COD-26 and effect release, reassessment.** Wording read in the standard:
+“`unwind-protect` only to release resources; never to hide an error.”
+`effect-active` is local ownership: `%begin-effect` acquires it,
+`%end-effect` releases it. If `complete=nil`, Archivio scope is also
+marked before release. The code read respects the rule's second part:
+no generic catch, rollback, or suppression of the original condition/transfer
+in cleanup; `%mark-fault`'s Archivio path only sets the
+state word and returns. The conservative first reading considered marking
+an additional effect beyond release and proposed a deviation. After reading the
+[parent contract](controller-serie.md) and complete protocol, the reviewer
+withdraws that request: the effect has actual ownership acquired before
+the body, checked for reentrancy, and released in every cleanup, including
+success. Terminal marking is part of safely releasing this ownership
+when the body has not finalized it, keeping a resource with an uncertain outcome
+unavailable for continued operation. It is not merely a pretext for recovery in
 cleanup.
 
-La motivazione concreta è che un `handler-case` di condizioni tipizzate non
-intercetta ogni uscita nonlocale, mentre la finestra CAS/stadio o registro/evento
-incerta deve bloccare nuove operazioni e l'annullamento automatico. Eliminare il
-fault dal cleanup lascerebbe quell'obbligo senza presidio locale. L'ambito della
-conclusione comprende soltanto la marcatura terminale Archivio su uscita incompleta
-durante il rilascio dell'effetto; riferimenti/token e causa originale sono
-preservati. Rollback, risoluzione token, I/O, callback e retry non fanno parte del
-cleanup letto e richiederebbero una nuova valutazione. Ambito:
-adozione, inizio/fine/ritiro I/O, pubblicazione, riuso e annullamento. Il rilascio owner
-durante acquisizione della lease è già un uso di rilascio risorsa distinto.
+The concrete reason is that `handler-case` for typed conditions does not
+catch every nonlocal exit, while the uncertain CAS/stage or register/event window
+must block new operations and automatic abort. Removing fault
+from cleanup would leave that obligation without a local safeguard. The conclusion's
+scope includes only terminal Archivio marking on incomplete exit
+during effect release; references/tokens and original cause are
+preserved. Rollback, token resolution, I/O, callbacks, and retries are not part of the
+cleanup read and would require reassessment. Scope:
+adoption, I/O start/completion/retirement, publication, reuse, and abort. Owner release
+during lease acquisition is already a separate resource-release use.
 
-Questa è un'interpretazione motivata del revisore, non certificazione C1 o
-approvazione umana. Non si registra né si inventa una deviazione approvata.
-`docs/affidabilita/deviazioni.md`, letto e ancora senza deviazioni approvate,
-non viene modificato da questo incarico. Il suo vincolo «approvazione dell'autore»
-varrebbe per una vera deviazione da registrare, non costituisce un'autorizzazione
-a inventare una persona/data di approvazione.
+This is the reviewer's reasoned interpretation, not C1 certification or
+human approval. No approved deviation is recorded or invented.
+`docs/affidabilita/deviazioni.md`, read and still without approved deviations,
+is not modified by this assignment. Its “author approval” constraint
+would apply to an actual deviation being recorded; it does not authorize
+inventing an approving person/date.
 
-## Percorsi esaminati nella lettura completa B
+<a id="percorsi-esaminati-nella-lettura-completa-b"></a>
 
-| Protocollo | Evidenza statica e limite |
+## Paths examined in complete reading B
+
+| Protocol | Static evidence and limitation |
 |---|---|
-| Salute e ambito | Una sola parola enum `:healthy/:faulted/:archive-faulted`. `%mark-fault :serie` usa CAS healthy→faulted; su archive-faulted non fa downgrade. I due getter derivano ciascuno da una lettura di quella parola con barriera; due chiamate distinte possono naturalmente vedere tempi diversi. |
-| Adozione | Guardie capacity/generation, livello, planned-root `eq`, sealed, next-offset e somma fixnum; token registry/log `eq`; CSN lessicografico crescente prima dell'effetto. Non prende un nuovo CSN; root nil lecita. Eccezione C1 CS-REV-01. |
-| Evento e lease | Lease legata al current-thread e generation; evento con controller `eq`, generation, range position e identità nello slot. Riuso preserva generation dell'evento e avanza quella del controller al prossimo ingresso. |
-| Root/token | `%check-publication` precede CAS; `:pubblicando` marca la finestra incerta. `%publish-root :pubblicato` non ripete CAS. Resolver usa i campi catturati; solo `:csn-busy` produce pending/zero/zero senza avanzare cursor. |
-| I/O e async | Inizio idle→active prima del dispatch; fine ammette durable/faulted, mai il solo written. Pubblicazione accetta active per async coperto, senza diminuire count/active-io. Publish-head avanza alla risoluzione; head di ritiro avanza solo al riuso. |
-| Guasto e cancellazione | Fault impedisce nuovi ingressi/dispatch/pubblicazioni, ma completa-io non richiede healthy. Annullamento richiede scope Serie e active-io zero, poi scansione di tutti gli slot senza active, token esatto, marca-log-faulted e resolver. Nessun riuso dei buffer annullati/guasti. |
-| Riuso | Head FIFO, phase risolto, io retired, preflight WAL durable/CSN non pending/owner nullo prima del reset. Riferimenti liberati dopo `riusa-lotto`; generation non azzerata. Eccezione C1 CS-REV-01. |
-| Parallelismo e limiti | CAS owner per tratto, CAS root per lotto, registro condiviso alla risoluzione per lotto. Scansione guasto ≤ 1024; factory ≤ 1024; nessun thread di prodotto, callback, I/O o ciclo di retry. |
-| WAL e ASDF | Nuove preflight ed export coerenti; `verifica-riuso-lotto` estratta senza mutare prima delle guardie. `marca-log-faulted` non libera active e ha precondizione quiescente oppure chiamata dal worker proprietario sul proprio fault. Resolver esistente preservato; Series caricato dopo WAL. |
+| Health and scope | One enum word `:healthy/:faulted/:archive-faulted`. `%mark-fault :serie` uses CAS healthy→faulted; no downgrade from archive-faulted. Both getters each derive from a barrier-protected read of that word; two separate calls can naturally observe different times. |
+| Adoption | Capacity/generation guards, level, planned-root `eq`, sealed, next-offset, and fixnum sum; registry/log token `eq`; lexicographically increasing CSN before effect. No new CSN allocated; nil root allowed. C1 exception CS-REV-01. |
+| Event and lease | Lease bound to current-thread and generation; event with controller `eq`, generation, position range, and identity in slot. Reuse preserves event generation and advances controller generation on next entry. |
+| Root/token | `%check-publication` precedes CAS; `:pubblicando` marks uncertain window. `%publish-root :pubblicato` does not repeat CAS. Resolver uses captured fields; only `:csn-busy` produces pending/zero/zero without advancing cursor. |
+| I/O and async | Start idle→active before dispatch; completion accepts durable/faulted, never written alone. Publication accepts active for covered async, without decreasing count/active-io. Publish-head advances at resolution; retirement head advances only on reuse. |
+| Fault and cancellation | Fault prevents new entries/dispatch/publications, but completa-io does not require healthy. Abort requires Serie scope and zero active-io, then a scan of all slots for none active, exact token, marca-log-faulted, and resolver. No reuse of aborted/faulty buffers. |
+| Reuse | FIFO head, resolved phase, retired io, WAL preflight durable/CSN not pending/null owner before reset. References released after `riusa-lotto`; generation not zeroed. C1 exception CS-REV-01. |
+| Parallelism and bounds | Owner CAS per segment, root CAS per batch, shared register at per-batch resolution. Fault scan ≤ 1024; factory ≤ 1024; no product thread, callback, I/O, or retry loop. |
+| WAL and ASDF | New preflights and exports consistent; `verifica-riuso-lotto` extracted without mutation before guards. `marca-log-faulted` does not release active and requires quiescence or a call by the owning worker on its own fault. Existing resolver preserved; Series loaded after WAL. |
 
-Il controller non possiede l'Archivio: archive-faulted codifica l'obbligo al
-coordinatore di fermare tutti i controller dell'Archivio. Non realizza direttamente
-quel fail-stop globale. L'handoff di write usato per async durante flush non è
-l'handoff di fine: deve dare una lettura attendibile della copertura mentre il
-buffer resta indisponibile al riuso.
+The controller does not own Archivio: archive-faulted encodes the coordinator's
+obligation to stop all controllers in Archivio. It does not directly implement
+that global fail-stop. The write handoff used for async during flush is not
+the completion handoff: it must provide a reliable coverage reading while the
+buffer remains unavailable for reuse.
 
-Un P1/P2 viene segnalato appena riproducibile come percorso statico, con funzione,
-trigger, conseguenza e correzione richiesta. La chiusura di un riscontro richiede
-rilettura del codice modificato e nuova identità dei sorgenti; non la sola risposta
-dell'autore. Nessuna riimplementazione viene introdotta dal revisore.
+A P1/P2 is reported as soon as reproducible as a static path, with function,
+trigger, consequence, and requested correction. Finding closure requires
+rereading modified code and a new source identity, not merely the author's
+response. The reviewer introduces no reimplementation.
 
-## Addendum D — fix P2, ritiro I/O e identità prima delle prove
+<a id="addendum-d--fix-p2-ritiro-io-e-identità-prima-delle-prove"></a>
 
-Riletti i file cambiati, le nuove preflight, gli export e il contratto parent.
-I file Series invariati sono identificati dallo stesso contenuto già letto in C.
-Il congelamento riguarda il **prodotto dichiarato dal parent**, non tutto il
-checkout condiviso: test, strumenti e documenti possono ancora cambiare. Questi
-blob identificano il contenuto della review; non costituiscono un risultato di
-build/test/benchmark o una certificazione source-stable della campagna futura.
+## Addendum D — P2 fixes, I/O retirement, and identity before tests
 
-| File C1 | Blob Git del contenuto letto | SHA-256 |
+Changed files, new preflights, exports, and parent contract reread.
+Unchanged Series files are identified by the same content already read in C.
+Freeze concerns the **product declared by the parent**, not the whole
+shared checkout: tests, tools, and documents may still change. These
+blobs identify review content; they are not a build/test/benchmark
+result or source-stable certification of the future campaign.
+
+| C1 file | Git blob of content read | SHA-256 |
 |---|---|---|
 | `src/series/package.lisp` | `0cccb1f1b9bb8f63a308352d64426a420bd1e283` | `7433162105df63d324141167e6dcf6bfee74611aa1cf7291cc6c92f41f3c7408` |
 | `src/series/types.lisp` | `ab736479f4e40237a060cab4f16cff139ed176e7` | `f4421765dc166310ab2f1801052d2c4b8083be19cb0b32d84d2dcdfd41afb3e4` |
@@ -280,102 +300,112 @@ build/test/benchmark o una certificazione source-stable della campagna futura.
 | `src/wal/executor.lisp` | `edc8ce7474365e0885925d557a378779655d2e70` | `d5fce79d73f6d5115602fabb822ba36ab4ec376dfba5025c5bf1426f6ec438d8` |
 | `src/wal/package.lisp` | `ad1b1356eeb10248526f15ac31d2cc9b59811fc5` | `483c7fd8debf44765375cca8429dfc111bc4775a6db2eb5f0d7e6991f1e5ad89` |
 
-Metadati consultati: ASDF blob `fdbafde57394cefb7965beaf65e4ac04c0d6fe95`,
+Metadata consulted: ASDF blob `fdbafde57394cefb7965beaf65e4ac04c0d6fe95`,
 SHA-256 `3863976de1b2b6ba63c8fafa42b1549f8e596d40a885992de41ffc5d2923da19`;
-contratto parent blob `fbd177aee0fe0d21532f9e7aaaa013b8755de10e`, SHA-256
+parent contract blob `fbd177aee0fe0d21532f9e7aaaa013b8755de10e`, SHA-256
 `1d96cb0a16733a22020f09cfc4d089ca22e8dcbf01eb54610661ef86a5315d9b`.
-Non si estende questa identità ai file di test/strumenti ancora in scrittura.
+This identity does not extend to test/tool files still being written.
 
-### Chiusura dei riscontri alla rilettura
+<a id="chiusura-dei-riscontri-alla-rilettura"></a>
 
-| Riscontro | Correzione letta | Esito statico |
+### Finding closure on rereading
+
+| Finding | Correction read | Static outcome |
 |---|---|---|
-| CS-REV-01, adozione | `%capture-token` in `events.lisp:75`, chiamato da registra prima dell'effetto, protegge lettura/preflight WAL con handler invariant-violation. | Marca Archivio e ripropaga la condizione originale. Invalid-argument ordinari non vengono trasformati in busy/fault; nessuna mutazione di evento/credito prima del successo. Chiuso. |
-| CS-REV-01, rilascio | `%check-lotto-release` in `events.lisp:87`, chiamato dal riuso con `:riuso` e dal ritiro I/O con `:ritiro`. | Invarianti della preflight → Archivio prima del reset/decremento; rifiuti prematuri ordinari lasciano riferimenti/obbligo. Chiuso anche sul nuovo percorso. |
-| CS-REV-02 | Getter in `query.lisp:44`: case ammette solo libero/preparato/pubblicato/risolto/annullato; otherwise `%serie-invariant :serie-event-uncertain`. | Stato incerto resta interno; getter segnala invariante e Archivio, senza inventare una fase ordinaria. Chiuso. |
+| CS-REV-01, adoption | `%capture-token` in `events.lisp:75`, called by registration before effect, protects WAL reading/preflight with invariant-violation handler. | Marks Archivio and repropagates original condition. Ordinary invalid-argument rejections are not converted to busy/fault; no event/credit mutation before success. Closed. |
+| CS-REV-01, release | `%check-lotto-release` in `events.lisp:87`, called by reuse with `:riuso` and by I/O retirement with `:ritiro`. | Preflight invariants → Archivio before reset/decrement; ordinary premature rejections retain references/obligation. Closed on new path too. |
+| CS-REV-02 | Getter in `query.lisp:44`: case allows only libero/preparato/pubblicato/risolto/annullato; otherwise `%serie-invariant :serie-event-uncertain`. | Uncertain state remains internal; getter signals invariant and Archivio without inventing an ordinary phase. Closed. |
 
-Nessun nuovo P1/P2 individuato nei percorsi aggiunti. Chiusura **statica**;
-le prove discriminanti sono delegate alla campagna del parent, senza essere
-anticipate, duplicate o certificate da questo incarico.
+No new P1/P2 identified in added paths. **Static** closure;
+discriminating tests are delegated to the parent's campaign without being
+anticipated, duplicated, or certified by this assignment.
 
-### Ritiro di un obbligo I/O senza esecuzione
+<a id="ritiro-di-un-obbligo-io-senza-esecuzione"></a>
 
-`ritira-io-commit-serie` rifiuta healthy con `invalid-argument :serie-not-faulted`.
-Richiede evento/generation correnti, phase preparato, io active, token catturato
-esatto, lotto sealed senza owner di gruppo e active-io positivo. Le guardie
-precedono l'effetto: stato scritto/durevole/guasto o gruppo ancora owner non
-autorizzano questo ritiro. La preflight `verifica-ritiro-lotto` delega anche
-l'invariante di lunghezza; il wrapper marca Archivio se questa fallisce.
+### Retiring an I/O obligation without execution
 
-Al successo cambia soltanto io-state→retired e active-io→active-io−1,
-con post-guardie del ring e dell'evento. Token ancora pendente, phase preparato,
-root, count, unresolved e i due cursori FIFO sono conservati. Un doppio ritiro
-rifiuta io retired; non ripete il decremento. Non scrive, non fa flush, non
-annulla il token e non riapre il lotto. Ambito Archivio consente il drenaggio
-locale ma conserva il divieto di annullamento automatico.
+`ritira-io-commit-serie` rejects healthy with `invalid-argument :serie-not-faulted`.
+It requires current event/generation, prepared phase, active io, exact captured
+token, sealed batch without group owner, and positive active-io. Guards
+precede effect: written/durable/faulted state or a group still owning the batch does not
+authorize retirement. Preflight `verifica-ritiro-lotto` also delegates
+the length invariant; the wrapper marks Archivio if it fails.
 
-La prova esterna del ritiro/mai accettato è **precondizione**, legata al compito
-del messaggio con evento e generazione catturati. Il caller deve escludere
-definitivamente accessi di worker, poi annullare il gruppo mai scritto prima
-di questa API. `sealed` e owner nullo non provano autonomamente la quiescenza
-dello scheduler. Dopo i ritiri, `annulla-commit-serie` ricontrolla ancora tutto
-l'I/O della Serie, active-io zero e tutti gli slot non active, prima di marcare
-il log e risolvere il token catturato. Questa separazione evita l'abbandono
-permanente dell'obbligo active dopo un rifiuto scheduler seguito da fault.
+On success it changes only io-state→retired and active-io→active-io−1,
+with ring and event post-guards. Token still pending, prepared phase,
+root, count, unresolved, and both FIFO cursors are preserved. Double retirement
+rejects retired io; it does not repeat decrement. It does not write, flush,
+abort the token, or reopen the batch. Archivio scope allows local draining
+but retains the prohibition on automatic abort.
 
-Il nuovo cleanup usa la stessa proprietà effect-active acquisita/rilasciata:
-la motivazione COD-26 rimane valida per sette percorsi di effetto. Nessuna
-deviazione o approvazione umana introdotta. L'anchor WAL precedente resta unica
-e invariata; nessun mutatore eseguito.
+External proof of retirement/never accepted is a **precondition** tied to the
+message task with captured event and generation. The caller must definitively
+exclude worker access, then abort the never-written group before
+this API. `sealed` and null owner do not independently prove scheduler
+quiescence. After retirements, `annulla-commit-serie` still rechecks all
+Serie I/O, zero active-io, and every slot non-active before marking
+the log and resolving the captured token. This separation prevents permanently
+abandoning the active obligation after scheduler rejection followed by fault.
 
-## Checklist C1 e limiti della fase corrente
+The new cleanup uses the same acquired/released effect-active ownership:
+the COD-26 rationale remains valid for seven effect paths. No
+deviation or human approval introduced. The previous WAL anchor remains unique
+and unchanged; no mutator run.
 
-### Complessità preliminare — lettura intermedia A
+<a id="checklist-c1-e-limiti-della-fase-corrente"></a>
 
-Conteggio locale manuale, confrontato con scansione sintattica senza caricare o
-compilare il prodotto. Base 1; `if/when/unless` e ciclo aggiungono 1;
-`and/or` aggiungono N−1; ogni clausola `handler-case` aggiunge 1. Non si
-espandono macro del runtime o helper chiamati. Massimo delle **20 funzioni
-disponibili: 8 ≤ 10**; non è ancora il massimo del modulo completo.
+## C1 checklist and current phase limits
 
-| File | Funzioni e complessità |
+<a id="complessità-preliminare--lettura-intermedia-a"></a>
+
+### Preliminary complexity — intermediate reading A
+
+Manual local count compared with syntactic scanning without loading or
+compiling product. Base 1; `if/when/unless` and loop add 1;
+`and/or` add N−1; each `handler-case` clause adds 1. Runtime
+macros and called helpers are not expanded. Maximum of **20 available
+functions: 8 ≤ 10**; not yet the complete module maximum.
+
+| File | Functions and complexity |
 |---|---|
 | `src/series/types.lisp` | `crea-controllore-serie` 6. |
 | `src/series/ownership.lisp` | `%mark-fault` 2; `%serie-invariant` 1; `%check-ring` 8; `%check-owner` 5; `%release-owner` 3; `acquisisci-controllore-serie` 4; `rilascia-controllore-serie` 2; `%require-healthy` 3; `%begin-effect` 2; `%end-effect` 2; `%next-position` 4. |
 | `src/series/events.lisp` | `%check-event` 8; `%live-event` 3; `%csn-after-p` 3; `%check-admission` 8; `%check-new-slot` 4; `registra-commit-serie` 2; `%check-captured-token` 3; `%check-publish-head` 4. |
 
-Nuove preflight WAL: `verifica-token-lotto` 2,
+New WAL preflights: `verifica-token-lotto` 2,
 `verifica-pubblicazione-lotto` 3, `verifica-riuso-lotto` 3,
-`marca-log-faulted` 1. Il conteggio non incorpora le guardie delegate;
-queste restano nel contesto letto e negli obblighi di decisione.
+`marca-log-faulted` 1. The count does not incorporate delegated guards;
+these remain in the context read and decision obligations.
 
 ### Checklist
 
-| Voce dello standard | Evidenza corrente | Stato |
+| Standard item | Current evidence | Status |
 |---|---|---|
-| 1. Requisiti e ADR coerenti | Contratto parent, otto file Series, preflight WAL, export e ASDF letti. Nessun requisito motore promosso. | Lettura statica svolta. |
-| 2. Invarianti e test discriminanti | Obblighi elencati nella matrice; prove a un altro incarico. | Non attestato. |
-| 3. Errori tipizzati, gestione e test | Reason effettive inventariate; CS-REV-01 e CS-REV-02 chiusi staticamente in D. Test non eseguiti/letti come evidenza della review. | Gestione statica riletta; prove non attestate. |
-| 4. Cicli/attese limitati | Factory e quiescenza al più capacity≤1024, CAS singoli, nessuna attesa o retry. Massimo complessità 8; tabella D sotto. | Staticamente conforme ai limiti osservati. |
-| 5. Allocazioni misurate | Nessuna misura eseguita o letta per il nuovo controller. | Non attestato. |
-| 6. Dati verificati in uscita | Root/token/lease validati e stato pubblico ristretto ai cinque esiti; immutabilità/handoff e cancel-proof restano precondizioni. | Lettura statica svolta sotto precondizioni. |
-| 7. Decisioni composte | Tutti i sei predicati composti diretti e selezioni/guardie effettive inventariati; helper WAL preesistenti identificati. | Inventario statico completo; MC/DC non attestata. |
-| 8. Ownership | Thread/lease, oggetto+generation e log/registry sorgente distinti; effect-active risorsa reale con cleanup protettivo. | Lettura statica svolta; protocollo esterno resta precondizione. |
-| 9. Tracciabilità e check | Competenza parent; nessun check durante integrazione. | Non attestato. |
-| 10. Deviazioni | COD-26 rivalutata come rilascio sicuro della proprietà dell'effetto; motivazione CS-REV-03. Nessuna deviazione/approvazione umana registrata. | Interpretazione statica esplicita, non certificazione. |
-| 11. Parallelismo fra Serie | Owner/root/count locali, registro CSN condiviso solo per lotto. Nessuna scrittura comune per documento introdotta. | Lettura statica svolta; benchmark non attestati. |
-| 12. Atomicità e rimozioni | CAS root volatile distinto dal SEAL persistito; nessun file I/O o rimozione nel controller. Stato incerto richiede fail-stop Archivio. | Lettura statica svolta sotto precondizioni. |
+| 1. Consistent requirements and ADRs | Parent contract, eight Series files, WAL preflights, exports, and ASDF read. No engine requirement promoted. | Static reading performed. |
+| 2. Invariants and discriminating tests | Obligations listed in matrix; tests assigned elsewhere. | Not attested. |
+| 3. Typed errors, handling, and tests | Actual reasons inventoried; CS-REV-01 and CS-REV-02 statically closed in D. Tests not executed/read as review evidence. | Static handling reread; tests unattested. |
+| 4. Bounded loops/waits | Factory and quiescence at most capacity≤1024, single CAS operations, no wait or retry. Maximum complexity 8; table D below. | Statically compliant with observed bounds. |
+| 5. Measured allocations | No measurement run or read for new controller. | Not attested. |
+| 6. Validated output data | Root/token/lease validated and public state restricted to five outcomes; immutability/handoff and cancel-proof remain preconditions. | Static reading performed under preconditions. |
+| 7. Compound decisions | All six direct compound predicates and actual selections/guards inventoried; existing WAL helpers identified. | Static inventory complete; MC/DC unattested. |
+| 8. Ownership | Thread/lease, object+generation, and source log/registry distinct; effect-active is an actual resource with protective cleanup. | Static reading performed; external protocol remains a precondition. |
+| 9. Traceability and checks | Parent responsibility; no check during integration. | Not attested. |
+| 10. Deviations | COD-26 reassessed as safe release of effect ownership; rationale CS-REV-03. No deviation/human approval recorded. | Explicit static interpretation, not certification. |
+| 11. Parallelism across Serie | Local owner/root/count, CSN register shared only per batch. No shared per-document write introduced. | Static reading performed; benchmarks unattested. |
+| 12. Atomicity and removals | Volatile root CAS distinct from persisted SEAL; no file I/O or removal in controller. Uncertain state requires Archivio fail-stop. | Static reading performed under preconditions. |
 
-### Complessità completa — lettura D
+<a id="complessità-completa--lettura-d"></a>
 
-Stesso criterio della fase A, con `case` contato per alternativa esplicita
-non default; per prudenza si contano anche i singoli valori di una clausola
-raggruppata. Esempio `%mark-fault`: 1 base + 1 if + 3 valori accettati dal case
-= 5. Esempio `%check-ring`: 1 base + 2 unless + 3 and + 2 and = 8;
-il helper geometria viene contato separatamente. I rami delle macro del runtime
-e degli helper chiamati non vengono espansi nella funzione chiamante.
+### Complete complexity — reading D
 
-| File | Ogni funzione e complessità C1 locale |
+Same criterion as phase A, with `case` counted per explicit nondefault
+alternative; conservatively, individual values in a grouped clause
+are also counted. Example `%mark-fault`: 1 base + 1 if + 3 values accepted by case
+= 5. Example `%check-ring`: 1 base + 2 unless + 3 and + 2 and = 8;
+the geometry helper is counted separately. Runtime macro and called-helper
+branches are not expanded in the calling function.
+
+| File | Each function and local C1 complexity |
 |---|---|
 | `src/series/types.lisp` | `crea-controllore-serie` 5. |
 | `src/series/ownership.lisp` | `%mark-fault` 5; `%serie-invariant` 1; `%check-ring` 8; `%position-after` 4; `%check-geometry` 3; `%check-owner` 5; `%release-owner` 3; `acquisisci-controllore-serie` 4; `rilascia-controllore-serie` 2; `%require-healthy` 3; `%begin-effect` 2; `%end-effect` 2; `%next-position` 4. |
@@ -384,41 +414,43 @@ e degli helper chiamati non vengono espansi nella funzione chiamante.
 | `src/series/publication.lisp` | `%check-publication` 6; `%publish-root` 6; `%advance-publication` 3; `%resolve-publication` 5; `pubblica-commit-serie` 2. |
 | `src/series/query.lisp` | `stato-controllore-serie` 2; `ambito-fault-serie` 4; `leggi-radice-serie` 3; `stato-commit-serie` 6; `leggi-csn-commit-serie` 1; `conta-commit-serie` 1. |
 | `src/series/retirement.lisp` | `riusa-commit-serie` 6; `fault-controllore-serie` 3; `annulla-commit-serie` 4. |
-| `src/wal/csn.lisp`, nuove preflight | `verifica-log-segmento` 3; `verifica-token-lotto` 2; `verifica-pubblicazione-lotto` 2. |
-| `src/wal/builder.lisp`, nuovi helper | `verifica-riuso-lotto` 3; `verifica-ritiro-lotto` 2. |
-| `src/wal/executor.lisp`, nuovo helper | `marca-log-faulted` 1. |
+| `src/wal/csn.lisp`, new preflights | `verifica-log-segmento` 3; `verifica-token-lotto` 2; `verifica-pubblicazione-lotto` 2. |
+| `src/wal/builder.lisp`, new helpers | `verifica-riuso-lotto` 3; `verifica-ritiro-lotto` 2. |
+| `src/wal/executor.lisp`, new helper | `marca-log-faulted` 1. |
 
-Sono 42 funzioni Series e 6 nuovi helper WAL. Massimo **8 ≤ 10**, inclusi
-corto circuito e handler, per la versione D. Le definizioni Series arrivano a
-29 righe dalla riga `defun` alla parentesi finale, includendo docstring/commenti;
-nessuna oltre il limite COD-12 di 60. Sono osservazioni sintattiche, non esito
-di lint/build o copertura. Tipi e docstring osservati; nessuna verifica runtime
-dei rifiuti, barriere o interruzioni. I due P2 precedenti sono chiusi staticamente;
-la checklist C1 complessiva con due letture e prove è responsabilità dell'integrazione.
+There are 42 Series functions and 6 new WAL helpers. Maximum **8 ≤ 10**, including
+short circuit and handlers, for version D. Series definitions reach
+29 lines from `defun` through final parenthesis, including docstrings/comments;
+none exceeds COD-12's limit of 60. These are syntactic observations, not
+lint/build or coverage outcomes. Types and docstrings observed; no runtime verification
+of rejections, barriers, or interruptions. The two previous P2 findings are statically closed;
+the overall C1 checklist with two readings and tests is integration's responsibility.
 
-## Addendum E — dichiarazioni e lettura dell'integratore
+<a id="addendum-e--dichiarazioni-e-lettura-dellintegratore"></a>
 
-L'integratore ha riletto ownership, geometria del ring, adozione, pubblicazione,
-ritiro, query e nuove preflight WAL; la lettura indipendente D ha prodotto i
-due P2 poi corretti. Nessun P1/P2 aperto nel perimetro sotto le precondizioni
-P01–P08. Pool, indice, snapshot e arresto globale dell'Archivio restano esterni.
+## Addendum E — declarations and integrator reading
 
-Dopo il primo build fermato da COD-01, `%serie-invariant` dichiara ritorno
-`nil`, il tipo vuoto, invece di `null`: la funzione segnala sempre una condizione
-e non ritorna normalmente. La dichiarazione anticipata del getter di salute
-coincide con quella in `query.lisp`. Una seconda rilettura indipendente del
-delta non ha trovato regressioni o nuovi P1/P2; massimo 8 e 42 funzioni invariati.
+The integrator reread ownership, ring geometry, adoption, publication,
+retirement, queries, and new WAL preflights; independent reading D produced the
+two P2 findings subsequently corrected. No open P1/P2 in scope under preconditions
+P01–P08. Pool, index, snapshot, and global Archivio shutdown remain external.
 
-| File riletto | Blob Git | SHA-256 |
+After the first build stopped under COD-01, `%serie-invariant` declares return
+`nil`, the empty type, instead of `null`: the function always signals a condition
+and never returns normally. The health getter's forward declaration
+matches the one in `query.lisp`. A second independent rereading of the
+delta found no regression or new P1/P2; maximum 8 and 42 functions unchanged.
+
+| File reread | Git blob | SHA-256 |
 |---|---|---|
 | `src/series/ownership.lisp` | `7352a27581b8e2e68407611e65e46773efdc333c` | `195e71c81a6993d5c021ba520918885f6c91629af7940688f723fe421fc388e4` |
 | `src/series/types.lisp` | `a0def7fc9452d291e2e60dbeff26a56a2b06e3a3` | `5b35f8f0b017476e14078ba073840e40f182438af41750dd1b3262d0a80c1ca9` |
 
-Il lint distingue ora `(:read)` della barriera da `(cl:read stream)`: le due
-fixture positive/negative verificano questa distinzione. La rilettura indipendente
-conferma il divieto sulle chiamate dirette al reader, anche non qualificate o
-con package `common-lisp:`. È una proprietà sintattica, non un'analisi semantica
-generale del programma. La matrice D02/D03 riceve FI separate su capacità,
-cursori e contatori; D06 riceve truth-pairs esplicite. Gli esiti runtime e
-l'allocazione sono responsabilità dei registri della campagna, distinti dalle
-due letture statiche.
+Lint now distinguishes barrier `(:read)` from `(cl:read stream)`: both
+positive/negative fixtures verify this distinction. Independent rereading
+confirms the prohibition on direct reader calls, including unqualified calls or
+package `common-lisp:`. This is a syntactic property, not a general semantic
+program analysis. Matrix D02/D03 receives separate capacity,
+cursor, and counter FIs; D06 receives explicit truth pairs. Runtime outcomes and
+allocation belong to campaign records, distinct from the
+two static readings.

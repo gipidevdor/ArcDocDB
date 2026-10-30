@@ -1,61 +1,67 @@
-# Metodo di verifica delle code dei writer
+<a id="metodo-di-verifica-delle-code-dei-writer"></a>
 
-Ambito registrato prima delle campagne: coda MPSC limitata, privata di una
-Serie, e gettone del writer su worker riutilizzabili. Contratto da
-[ADR-0045, punti 6 e 8](../adr/0045-modello-di-esecuzione.md),
-[concorrenza](../10-concorrenza-e-scheduling.md) e
-[architettura](../architettura.md#thread-pool).
+# Writer-queue verification method
 
-## Contratto e oracoli
+Scope registered before campaigns: bounded MPSC queue, private to a
+Serie, and writer token on reusable workers. Contract from
+[ADR-0045, items 6 and 8](../adr/0045-modello-di-esecuzione.md),
+[concurrency](../10-concorrenza-e-scheduling.md), and
+[architecture](../architettura.md#thread-pool).
 
-Ring preallocato; capacità e messaggi estraibili per tratto limitati.
-Ogni operazione prova una sola volta la guardia locale tramite CAS: niente
-spin, attesa, callback o I/O. Coda piena e contesa segnalano motivi distinti
-di `resource-exhausted`, senza accettare il messaggio. FIFO significa ordine
-di accettazione, non ordine di invocazione di produttori concorrenti.
+<a id="contratto-e-oracoli"></a>
 
-Un solo worker detiene il gettone della Serie. Il gettone restituito include
-una generazione fixnum monotona: estrazione e rilascio controllano anche il
-thread corrente, e un gettone vecchio resta invalido dopo una nuova acquisizione
-dello stesso thread. La generazione non si avvolge. L'estrazione riempie uno
-span di un vettore del chiamante e addebita i messaggi realmente estratti alla
-quota del tratto; chiamate successive non azzerano la quota. `NIL` è un
-messaggio valido, distinto dal vuoto tramite il conteggio restituito.
+## Contract and oracles
 
-Oracoli indipendenti: lista FIFO dichiarata, identità dei messaggi preallocati,
-contatori per produttore e bitmap di accettazione/consegna. Capacità 1/2/3 e
-cardinalità maggiori, giri del ring, span disallineati, vuoto, pieno e quota
-esatta/esaurita; configurazione invalida, target invalido o alias del ring,
-gettone passato al thread sbagliato, acquisizione ricorsiva, rilascio doppio e
-gettone vecchio sullo stesso thread. Il contatore vicino al massimo viene
-preparato in un oggetto privato senza worker, come stato legalmente raggiungibile,
-per controllare il rifiuto dell'overflow senza miliardi di acquisizioni.
+Preallocated ring; capacity and messages extractable per execution slice bounded.
+Each operation tries the local guard once through CAS: no
+spin, wait, callback, or I/O. Full queue and contention signal distinct
+`resource-exhausted` reasons without accepting message. FIFO means acceptance
+order, not concurrent-producer invocation order.
 
-## Thread reali e limiti
+Only one worker holds the Serie token. Returned token includes
+a monotonic fixnum generation: extraction and release also check current
+thread, and an old token remains invalid after a new acquisition
+by the same thread. Generation does not wrap. Extraction fills a
+span of a caller vector and charges messages actually extracted to the
+slice quota; subsequent calls do not reset quota. `NIL` is a
+valid message, distinguished from empty by returned count.
 
-Produttori e consumatori realmente sovrapposti su una coda piccola: tutti
-i messaggi accettati devono essere consegnati una volta, mantenendo l'ordine
-di ciascun produttore. I rifiuti non trasferiscono proprietà. Worker creati
-una volta per campagna e riutilizzati su più messaggi, buffer privati e lavoro
-di calcolo reale fuori dalla guardia. Una Serie deve avanzare mentre guardia
-e gettone di un'altra sono occupati. Semafori rendono deterministiche le
-prove avverse; retry e join del solo harness hanno tetti espliciti. Niente
-successo dedotto da un ritardo o da una coda soltanto precompilata.
+Independent oracles: declared FIFO list, preallocated-message identity,
+per-producer counters, and acceptance/delivery bitmap. Capacities 1/2/3 and
+larger cardinalities, ring wraps, unaligned spans, empty, full, and exact/
+exhausted quota; invalid configuration, invalid target or ring alias,
+token passed to wrong thread, recursive acquisition, double release, and
+old token on same thread. Counter near maximum is
+prepared in a private object without workers, as a legally reachable state,
+to check overflow rejection without billions of acquisitions.
 
-Build rigorosa, lint, tracciabilità, link e controllo integrato; due letture
-C1 e tabella delle decisioni. Copertura strumentata separata, con self-test e
-denominatore completo. Mutanti mirati in copie nuove: baseline invariata
-obbligatoria, classificatore con smoke su riga esatta e compilazione fallita
-sempre invalida. Si verificano FIFO, wrap, pieno, contesa, proprietario,
-generazione, quota cumulativa e span del target; tutte le prove restano conservate.
+<a id="thread-reali-e-limiti"></a>
 
-Allocazioni sul percorso riuscito: cinque repliche di 4.096 cicli con code,
-messaggi e target preallocati, warmup 128 e GC fuori dalla misura. Fixture con
-capacità 1 e con batch di 32 messaggi; ogni ciclo acquisisce, accoda, estrae e
-rilascia, e verifica un risultato osservabile atteso. Self-test del contatore
-con baseline e controllo positivo 16 × 1 MiB. Zero heap misurato richiesto,
-nessuna soglia di throughput o promessa di scalabilità del motore.
+## Real threads and limits
 
-Questo blocco non implementa lista delle Serie pronte, risvegli, pool adattivo,
-controller, pubblicazione, conferme o gestione FAULTED della Serie. Non chiude
-il protocollo contro i risvegli persi né i requisiti del motore completo.
+Producers and consumers actually overlapping on a small queue: every
+accepted message must be delivered once, maintaining each
+producer's order. Rejections transfer no ownership. Workers created
+once per campaign and reused over multiple messages, private buffers, and real
+compute work outside guard. One Serie must progress while another's guard
+and token are occupied. Semaphores make adverse tests
+deterministic; harness-only retries and joins have explicit caps. No
+success inferred from a delay or a merely prefilled queue.
+
+Strict build, lint, traceability, links, and integrated check; two C1
+readings and decision table. Separate instrumented coverage, with self-test and
+full denominator. Targeted mutants in new copies: unchanged baseline
+mandatory, classifier with exact-line smoke and failed compilation
+always invalid. FIFO, wrap, full, contention, owner,
+generation, cumulative quota, and target span verified; all tests preserved.
+
+Successful-path allocations: five replicates of 4,096 cycles with preallocated queues,
+messages, and targets, warmup 128 and GC outside measurement. Fixtures with
+capacity 1 and batches of 32 messages; every cycle acquires, enqueues, extracts, and
+releases, and verifies an expected observable result. Counter self-test
+with baseline and positive control 16 × 1 MiB. Zero measured heap allocation required,
+no throughput threshold or engine-scalability promise.
+
+This block does not implement ready-Serie list, wakeups, adaptive pool,
+controller, publication, acknowledgments, or Serie FAULTED handling. It does not close
+the lost-wakeup protocol or complete-engine requirements.

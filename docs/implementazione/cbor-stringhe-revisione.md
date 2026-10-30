@@ -1,52 +1,58 @@
-# Prima lettura C1 della scrittura di stringhe CBOR
+<a id="prima-lettura-c1-della-scrittura-di-stringhe-cbor"></a>
 
-Lettura statica del 2026-10-11, **prima delle campagne e della compilazione**.
-Il revisore ha letto il contratto e il nuovo prodotto, senza scrivere il
-prodotto o le nuove prove e senza leggere il corpus cieco in costruzione.
-Non sono stati eseguiti build, test, benchmark, copertura o mutazioni.
+# First C1 reading of CBOR string writing
+
+Static reading of 2026-10-11, **before campaigns and compilation**.
+The reviewer read the contract and new product without writing the
+product or new tests and without reading the blind corpus under construction.
+No builds, tests, benchmarks, coverage, or mutations were run.
 
 Base: `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`.
-Sorgente letto: `src/codec/cbor-string-write.lisp`, blob Git
+Source read: `src/codec/cbor-string-write.lisp`, Git blob
 `a2c5c77dd51bff760bff4508e998d94370921eda`.
-Contratto: [metodo](cbor-stringhe-metodo.md), blob
+Contract: [method](cbor-stringhe-metodo.md), blob
 `56342dae95caf8705e0b28b3c0ea7ac86fdd8fa0`.
 
-## Esito statico
+<a id="esito-statico"></a>
 
-Nessun difetto funzionale o correzione obbligatoria individuato sul blob
-letto. Il sorgente puo essere congelato per le prove preregistrate; questo
-esito non attesta compilazione senza avvisi, heap zero, successo del corpus,
-copertura, MC/DC o completamento dei gate.
+## Static outcome
 
-Il preflight verifica destinazione, major, sorgente e budget prima del cast
-del payload a u32. Il rifiuto preliminare `span > budget` impedisce che una
-sorgente fisicamente grande raggiunga il selettore tipizzato. La testata e
-inclusa nel budget, poi viene verificata la capacita dello span destinazione.
-Solo dopo si calcola NEXT: dalla capacita verificata segue NEXT <= END e
-quindi NEXT resta un index. Lo spazio fisico dopo END non viene utilizzato.
+No functional defect or mandatory correction identified in the
+read blob. The source can be frozen for preregistered tests; this
+outcome does not establish warning-free compilation, zero heap, corpus success,
+coverage, MC/DC, or gate completion.
 
-L'overlap riguarda `[START,NEXT)`, compresa la testata, e viene controllato
-prima di UTF-8 e di ogni scrittura. Con array simple u8 il caso di memoria
-condivisa ammesso dal contratto e lo stesso oggetto array: il confronto EQ
-e sufficiente nel dominio dichiarato. Le disuguaglianze strette ammettono
-gli intervalli toccanti; il controllo della lunghezza sorgente ammette
-anche lo span vuoto, qualunque sia la sua posizione nell'array.
+Preflight checks destination, major, source, and budget before casting
+the payload to u32. Preliminary rejection `span > budget` prevents a
+physically large source from reaching the typed selector. The header is
+included in the budget; destination-span capacity is then checked.
+Only afterward is NEXT calculated: checked capacity implies NEXT <= END and
+therefore NEXT remains an index. Physical space after END is not used.
 
-MT3 verifica l'intero span sorgente prima di scrivere la testata e controlla
-il conteggio restituito da UTF-8. MT2 non interpreta il contenuto. Lunghezza
-e testata usano sempre i byte, non il numero di scalari. Gli errori UTF-8
-conservano classe, motivo e offset nella sorgente; gli errori di preflight
-hanno offset NIL. Dopo la prima scrittura restano soltanto guardie interne
-su dati gia verificati, con fail-stop esterno e senza rollback.
+Overlap concerns `[START,NEXT)`, including the header, and is checked
+before UTF-8 and every write. With simple u8 arrays, the shared-memory case
+allowed by the contract is the same array object: EQ comparison
+suffices in the declared domain. Strict inequalities allow
+touching ranges; the source-length check also allows
+a zero-length span, wherever it lies in the array.
 
-## Lunghezza e complessita
+MT3 verifies the entire source span before writing the header and checks
+the count returned by UTF-8. MT2 does not interpret contents. Length
+and header always use bytes, not scalar count. UTF-8 errors
+retain class, reason, and source offset; preflight errors
+have offset NIL. After the first write, only internal guards remain
+on already verified data, with external fail-stop and no rollback.
 
-Conteggio sintattico dei percorsi indipendenti: uno iniziale, un incremento
-per ciascun controllo di flusso, ciascun AND/OR aggiuntivo e il ciclo LOOP.
-Non comprende l'espansione dei controlli dei tipi o dei confronti primitivi.
-L'inventario delle decisioni e un artefatto separato curato dall'autore.
+<a id="lunghezza-e-complessita"></a>
 
-| Funzione | Righe DEFUN incluse | Percorsi |
+## Length and complexity
+
+Syntactic count of independent paths: one initially, one increment
+for each flow control, each additional AND/OR, and the LOOP.
+It does not include expansion of type checks or primitive comparisons.
+The decision inventory is a separate artifact maintained by the author.
+
+| Function | Lines including DEFUN | Paths |
 |---|---:|---:|
 | `check-span-string-cbor-write` (10-21) | 12 | 6 |
 | `check-input-string-cbor-write` (27-53) | 27 | 8 |
@@ -54,44 +60,48 @@ L'inventario delle decisioni e un artefatto separato curato dall'autore.
 | `copia-stringa-cbor-write` (75-93) | 19 | 8 |
 | `scrivi-stringa-cbor-minima` (98-129) | 32 | 5 |
 
-Tutte rispettano COD-12 e COD-13. La copia esegue esattamente SPAN passi,
-con SPAN controllato entro 16 MiB e uguale alla lunghezza destinazione.
-Le guardie prima del ciclo verificano entrambi i range; quelle successive
-verificano fine di lettura e scrittura. Lo span vuoto non legge ne scrive
-payload. Il percorso pubblico controlla anche la fine della testata e il
-cursore finale restituito dalla copia.
+All comply with COD-12 and COD-13. Copying performs exactly SPAN steps,
+with SPAN checked within 16 MiB and equal to destination length.
+Pre-loop guards check both ranges; subsequent guards
+check read and write completion. An empty span neither reads nor writes
+payload. The public path also checks header completion and the
+final cursor returned by copying.
 
-## Checklist C1
+<a id="checklist-c1"></a>
 
-| Voce | Prima lettura |
+## C1 checklist
+
+| Item | First reading |
 |---|---|
-| 1. Requisiti e ADR | REQ-CBR-002, ADR-0014/0048 e AFF-004/008 coerenti con MT2/3, budget dell'item e preflight. Il limite locale non qualifica il documento composito o il contratto della Serie. |
-| 2. Invarianti | Budget comprensivo della testata, capacita half-open, sorgente stabile, destinazione esclusiva e assenza di overlap verificati prima della mutazione. Prove falsificanti ancora pendenti. |
-| 3. Errori | Ordine conforme al metodo: range destinazione, major, range sorgente, tipo/limite budget, budget payload/item, capacita, overlap, UTF-8. Tutti i rifiuti pubblici precedono la prima scrittura. Gli invarianti interni restano senza rollback. |
-| 4. Limiti | Un ciclo di copia con tetto esplicito; UTF-8 gia limitato e chiamato con budget SPAN. Nessuna ricorsione, attesa o creazione di thread. |
-| 5. Heap | Nessun costruttore, closure o materializzazione di u64/float/AST nel nuovo successo. Aritmetica su index/u32 entro range gia controllati; chiamata keyword UTF-8 e NTH-VALUE richiedono comunque misura locale. Heap zero non attestato. |
-| 6. Dati verificati | MT3 valida tutto UTF-8 prima della testata; MT2 conserva byte arbitrari per contratto. Header e copia ricevono span e lunghezze gia verificati; il conteggio UTF-8 viene controllato. |
-| 7. Decisioni composte | AND del range, budget, overlap e guardie di copia presenti; conteggio statico entro limite. Inventario e coppie di indipendenza restano da verificare separatamente. Nessuna attestazione MC/DC. |
-| 8. Proprietario | Commenti OWNER/SHARED espliciti. Il chiamante possiede la destinazione; i byte sorgente restano stabili. Stesso array consentito solo con footprint disgiunto. |
-| 9. Integrazione | Export aggiunta e ASDF seriale dopo UTF-8, limiti e header writer. REQ-CBR-002 inserito; matrice generata, build rigorosa e MAKE CHECK ancora pendenti. |
-| 10. Regole | FTYPE completi, docstring con pre/post/errori, safety 3, guardie di ingresso e uscita senza effetti collaterali. Nessuna deviazione statica individuata; compilazione senza avvisi non eseguita. |
-| 11. Parallelismo | Stato soltanto locale, nessun lock o contatore condiviso per operazione. Sorgenti immutabili possono essere condivise tra worker con destinazioni private; concorrenza effettiva e scaling non dimostrati da questa lettura. |
-| 12. Durabilita | Nessun I/O, pubblicazione o cambiamento durevole. La destinazione resta del chiamante; una guardia interna puo fallire dopo una scrittura e richiede il confine fail-stop previsto dal contratto. |
+| 1. Requirements and ADRs | REQ-CBR-002, ADR-0014/0048, and AFF-004/008 consistent with MT2/3, item budget, and preflight. The local limit does not qualify the composite document or Serie contract. |
+| 2. Invariants | Budget including header, half-open capacity, stable source, exclusive destination, and no overlap checked before mutation. Falsification tests still pending. |
+| 3. Errors | Order follows the method: destination range, major, source range, budget type/limit, payload/item budget, capacity, overlap, UTF-8. All public rejections precede the first write. Internal invariants remain without rollback. |
+| 4. Bounds | One copy loop with explicit bound; UTF-8 already bounded and called with budget SPAN. No recursion, waiting, or thread creation. |
+| 5. Heap | No constructor, closure, or u64/float/AST materialization in the new success path. Arithmetic on index/u32 within already checked ranges; the UTF-8 keyword call and NTH-VALUE still require local measurement. Zero heap not established. |
+| 6. Verified data | MT3 validates all UTF-8 before the header; MT2 preserves arbitrary bytes by contract. Header and copy receive already checked spans and lengths; UTF-8 count is checked. |
+| 7. Compound decisions | Range, budget, overlap, and copy-guard ANDs present; static count within limit. Inventory and independence pairs remain to be checked separately. No MC/DC attestation. |
+| 8. Owner | Explicit OWNER/SHARED comments. The caller owns the destination; source bytes remain stable. Same array allowed only with disjoint footprint. |
+| 9. Integration | Export added and serial ASDF after UTF-8, limits, and header writer. REQ-CBR-002 inserted; generated matrix, strict build, and MAKE CHECK still pending. |
+| 10. Rules | Complete FTYPEs, docstrings with pre/post/errors, safety 3, entry and exit guards without side effects. No static deviation found; warning-free compilation not run. |
+| 11. Parallelism | Local state only, no lock or shared counter per operation. Immutable sources can be shared among workers with private destinations; actual concurrency and scaling are not demonstrated by this reading. |
+| 12. Durability | No I/O, publication, or durable change. The destination remains the caller's; an internal guard can fail after a write and requires the fail-stop boundary specified by the contract. |
 
-## Confini e verifiche ancora necessarie
+<a id="confini-e-verifiche-ancora-necessarie"></a>
 
-Non risultano differenze nei kernel gia integrati `cbor-write.lisp`,
-`utf8.lisp` e `cbor-scan-input.lisp` rispetto alla base. La prima lettura
-non rinnova la qualifica completa di queste dipendenze. I loro limiti di
-copertura e i gate storici restano quelli conservati nelle relative campagne.
+## Boundaries and checks still needed
 
-La seconda lettura dovra valutare i dati del corpus cieco, inclusi ordine
-degli errori, massimo e massimo+1, alias nei due ordini, overlap della sola
-testata, UTF-8 malformato con offset sorgente, sentinelle e arita esatta.
-Le misure devono conservare il contenuto completo e verificare i sensori;
-copertura e mutazioni devono preservare denominatori, copie, log e tentativi
-falliti secondo il metodo preregistrato.
+No differences found in already integrated kernels `cbor-write.lisp`,
+`utf8.lisp`, and `cbor-scan-input.lisp` against the base. The first reading
+does not renew full qualification of those dependencies. Their coverage
+limits and historical gates remain those preserved in their campaigns.
 
-Altri blob letti: package `12d573ec29468f1fdae3e674a494d786a390c33e`,
-ASDF `0f3902e2459e9bda66a27046d640e35e0feadc1a`, requisiti
+The second reading must assess blind-corpus data, including error
+order, maximum and maximum+1, aliasing in both orders, header-only
+overlap, malformed UTF-8 with source offset, sentinels, and exact arity.
+Measurements must preserve full contents and check sensors;
+coverage and mutations must preserve denominators, copies, logs, and failed
+attempts under the preregistered method.
+
+Other blobs read: package `12d573ec29468f1fdae3e674a494d786a390c33e`,
+ASDF `0f3902e2459e9bda66a27046d640e35e0feadc1a`, requirements
 `52300ff2ab7310e14b02fce2dc414b56a08c8f6c`.

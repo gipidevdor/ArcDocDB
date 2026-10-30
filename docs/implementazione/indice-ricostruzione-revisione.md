@@ -1,161 +1,179 @@
-# Ricostruzione dell'indice — lettura C1 indipendente
+<a id="ricostruzione-dellindice--lettura-c1-indipendente"></a>
 
-## Ambito e stato delle evidenze
+# Index reconstruction — independent C1 reading
 
-Lettura statica del 2026-10-09 di `src/index/rebuild-scan.lisp`,
-`rebuild-budget.lisp`, `rebuild-copy.lisp` e `rebuild.lisp`, con lettura delle
-primitive slot v2, writer, arena e directory già esistenti. Il codice è in
-scrittura concorrente: questo referto non dichiara un freeze. I test assegnati
-sono esclusivamente in `tests/index/rebuild.lisp`, nel package del supporto
-primario scritto da Noether. Nessun test, compilazione, benchmark, copertura
-o mutazione è stato eseguito dal revisore. Il parent congela ed esegue i record.
+<a id="ambito-e-stato-delle-evidenze"></a>
 
-Riferimenti: [ADR-0032](../adr/0032-seqlock-a-64-bit.md),
+## Scope and evidence status
+
+Static reading on 2026-10-09 of `src/index/rebuild-scan.lisp`,
+`rebuild-budget.lisp`, `rebuild-copy.lisp`, and `rebuild.lisp`, including existing
+v2 slot, writer, arena, and directory primitives. Code is being written
+concurrently: this report declares no freeze. Assigned tests
+are exclusively in `tests/index/rebuild.lisp`, in the primary support package
+written by Noether. The reviewer ran no test, compilation, benchmark, coverage,
+or mutation. The parent freezes and runs the records.
+
+References: [ADR-0032](../adr/0032-seqlock-a-64-bit.md),
 [ADR-0043](../adr/0043-primary-index-a-frammenti.md),
 [ADR-0048](../adr/0048-limiti-documentali-e-formato-v2.md),
 [ADR-0050](../adr/0050-pubblicazione-e-costi-della-directory.md),
 [standard](../affidabilita/standard-di-codifica.md).
 REQ-IDX-001/003/005/006/007, REQ-LIM-001/003, REQ-AFF-004/008;
-invarianti INV-I1, INV-I3, INV-A8, INV-P6. Nessuna qualifica C1 o deroga approvata.
+invariants INV-I1, INV-I3, INV-A8, INV-P6. No C1 qualification or approved waiver.
 
-## Contratto controllato
+<a id="contratto-controllato"></a>
 
-`ricostruisci-frammento-indice` riceve HIGH/LOW u32 per **slot originale**;
-gli elementi relativi a EMPTY/DELETED non sono interpretati. Restituisce cinque
-valori: piano verificato, C capacità del sorgente, byte delle chiavi vive copiati,
-riferimenti della directory nuova e payload transitorio. C è una dimensione,
-non il numero totale di visite: misura, copia e verifica compiono tre scansioni
-complete di C slot. Si aggiungono probe di al più C slot per chiave viva nelle
-tre fasi; con L entry vive il lavoro dei probe è limitato da 3×L×C. Copia e
-confronto delle chiavi e costruzione di 2^G riferimenti restano costi distinti.
+## Checked contract
 
-Il preflight verifica identità corrente, owner, stato published/writable,
-used entro arena, forma digest, profondità, coerenza controlli/payload,
-conteggio vivo, discoverability, budget e crediti prima dei candidati.
-La copia non modifica arena, payload, controlli, contatori vivi o stato del
-banco sorgente; incrementa la revisione dell'indice tramite il writer dei
-candidati. Il sorgente rimane published/writable e la root conserva la sua
-identità fino a `pubblica-directory-indice`. La pubblicazione congela e ritira
-il sorgente, incrementa revisione/generazione e applica un solo CAS della root.
+`ricostruisci-frammento-indice` receives HIGH/LOW u32 per **original slot**;
+elements for EMPTY/DELETED are not interpreted. It returns five
+values: verified plan, source capacity C, copied live-key bytes,
+new directory references, and transient payload. C is a size,
+not the total number of visits: measure, copy, and verify perform three complete
+scans of C slots. Probes of at most C slots per live key are added in
+the three phases; with L live entries, probe work is bounded by 3×L×C. Key copying
+and comparison and construction of 2^G references remain separate costs.
 
-La memoria conteggiata è vecchia root e frammenti distinti + directory nuova
-+ 41×C per candidato + arena di ciascun candidato, almeno un byte anche se
-vuoto. Scratch fissi, digest forniti dal chiamante, altre root trattenute,
-header, runtime e garbage sono prenotazioni del controller; payload non è RSS.
-Il budget esatto è ammesso, un byte in meno è rifiutato prima di allocare
-candidati, consumare revisione o congelare il sorgente.
+Preflight checks current identity, owner, published/writable state,
+used within arena, digest shape, depth, control/payload consistency,
+live count, discoverability, budget, and credits before candidates.
+Copy does not change source bank arena, payload, controls, live counters, or
+state; it increments index revision through the candidate
+writer. Source remains published/writable and root retains its
+identity until `pubblica-directory-indice`. Publication freezes and retires
+source, increments revision/generation, and applies a single root CAS.
 
-L'hash non è ricalcolato: prefisso già usato, H2 e lookup originale sono
-verificati, ma bit HIGH non discriminati dalla profondità corrente e bit LOW
-che non alterano il probe restano un contratto del fornitore fidato. Il primo
-split a profondità zero non può dimostrare autonomamente il bit HIGH successivo.
+Accounted memory is old root and distinct fragments + new directory
++ 41×C per candidate + each candidate's arena, at least one byte even if
+empty. Fixed scratch, caller-supplied digests, other retained roots,
+headers, runtime, and garbage are controller reservations; payload is not RSS.
+Exact budget is allowed; one byte less is rejected before allocating
+candidates, consuming revision, or freezing source.
 
-## Riscontri e azioni correttive
+Hash is not recalculated: already used prefix, H2, and original lookup are
+checked, but HIGH bits not discriminated by current depth and LOW bits
+that do not change the probe remain a trusted provider contract. The first
+split at depth zero cannot independently prove the next HIGH bit.
 
-**IR-C1-01 — propagazione del guasto del banco durante il preflight (P2,
-da chiudere).** `campiona-ricostruzione` chiama direttamente
-`tenta-lettura-slot`. Una parola payload stabile malformata o una sequenza
-oltre limite passa per `guasto-slot`, che rende il banco FAULTED e segnala
-INVARIANT-VIOLATION. In questa uscita non viene chiamato `guasto-indice`:
-il preflight può restituire la condizione con `indice-primario-health` ancora
-`:open`. La successiva guardia del frammento propaga il guasto; non lo fa la
-sola guardia dell'indice, né una chiamata relativa a un altro frammento sano.
-Root e bytes sorgente non cambiano, ma non è un fail-stop immediato dell'intero
-dominio dell'indice. Azione del parent: propagare il guasto del banco al dominio
-prima dell'uscita, oppure documentare e provare il confine obbligatorio del
-controller che impedisce altre operazioni nella Serie dopo tale condizione.
-Nessuna correzione delle sorgenti da parte del revisore.
+<a id="riscontri-e-azioni-correttive"></a>
 
-**IR-C1-02 — COD-26, rivalutato sul main aggiornato.** Il main non contiene
-più `unwind-protect`. Non acquisisce risorse esterne né un contesto condiviso:
-scratch e candidati sono locali e scartabili dal GC. Le primitive writer
-rilasciano il contesto busy e governano il fail-stop delle proprie mutazioni;
-la verifica di una copia diversa chiama esplicitamente `guasto-indice`.
-L'abbandono in una fase fredda non rende terminale l'indice solo perché il
-lavoro è incompleto. La revisione già avanzata può invalidare conservativamente
-un piano precedente. Non emerge una nuova violazione COD-26 nel main letto.
-La sostituzione temporanea C4 di `symbol-function` nei test usa cleanup per
-rilasciare/ripristinare quella risorsa del harness, preservando la condizione.
+## Findings and corrective actions
 
-## Inventario delle decisioni — COD-54
+**IR-C1-01 — propagation of bank fault during preflight (P2,
+to close).** `campiona-ricostruzione` directly calls
+`tenta-lettura-slot`. A malformed stable payload word or a sequence
+beyond the limit goes through `guasto-slot`, which makes the bank FAULTED and signals
+INVARIANT-VIOLATION. This exit does not call `guasto-indice`:
+preflight may return the condition with `indice-primario-health` still
+`:open`. The next fragment guard propagates the fault; the index
+guard alone does not, nor does a call concerning another healthy fragment.
+Root and source bytes do not change, but this is not immediate fail-stop of the entire
+index domain. Parent action: propagate the bank fault to the domain
+before exit, or document and test the mandatory controller
+boundary that prevents further operations in the Serie after that condition.
+No source correction by the reviewer.
 
-Le coppie indicate sono obiettivi delle fixture, non esiti di copertura o MC/DC.
-Le guardie delegate preesistenti sono inventariate in
-[indice primario](indice-primario.md) e [slot v2](slot-indice-v2.md).
+**IR-C1-02 — COD-26, reevaluated on updated main.** Main no longer contains
+`unwind-protect`. It acquires no external resources or shared context:
+scratch and candidates are local and GC-discardable. Writer primitives
+release the busy context and govern fail-stop of their own mutations;
+verification of a different copy explicitly calls `guasto-indice`.
+Abandonment in a cold phase does not make the index terminal merely because
+work is incomplete. The already advanced revision may conservatively invalidate
+a previous plan. No new COD-26 violation emerges in the main read.
+Temporary C4 replacement of `symbol-function` in tests uses cleanup to
+release/restore that harness resource, preserving the condition.
 
-| ID | Nuova decisione composta | Condizioni da isolare |
+<a id="inventario-delle-decisioni--cod-54"></a>
+
+## Decision inventory — COD-54
+
+The listed pairs are fixture targets, not coverage or MC/DC outcomes.
+Existing delegated guards are inventoried in
+[primary index](indice-primario.md) and [v2 slots](slot-indice-v2.md).
+
+| ID | New compound decision | Conditions to isolate |
 |---|---|---|
-| IR-D01 | `esigi-ricostruzione`: `and` configurazione | length HIGH=C; length LOW=C; 1≤budget≤most-positive-fixnum. Separare HIGH corto, LOW corto, budget zero/oltre massimo e configurazione valida. |
-| IR-D02 | `esigi-ricostruzione`: `and` profondità split | split richiesto; depth sorgente≥max-depth. Con depth al limite, rebuild ammesso e split rifiutato; split sotto il limite ammesso. |
-| IR-D03 | `verifica-digest-ricostruzione`: `and` lookup originale | trovato; found-slot=slot originale. LOW che cambia gruppo con EMPTY dà miss; duplicato fisico della chiave dà hit su un altro slot. |
-| IR-D04 | `misura-ricostruzione`: `and` destinazione | split; parità dispari del prefisso alla nuova profondità. HIGH sui due lati e rebuild con HIGH alto. |
-| IR-D05 | `budget-ricostruzione`: `or`/`and` frammenti | primo payload oltre budget; split; secondo payload oltre budget. Entrambi entro soglia, primo oltre, secondo oltre solo nello split; secondo irrilevante nel rebuild. |
-| IR-D06 | `copia-ricostruzione-uguale-p`: `and` cinque confronti | CSN; location; key-meta senza offset basso; record-length; end-CSN. Cambiare un solo campo per volta; offset arena diverso ammesso. Predicato usato in IR-D07. |
-| IR-D07 | `verifica-ricostruzione`: `and` copia | trovato; found-slot≥0; cinque confronti IR-D06. Miss e payload diverso devono rendere l'indice FAULTED. Un hit con slot negativo è escluso dal contratto di sonda-writer: eventuale FI C4 esplicita, nessuna esclusione di copertura approvata. |
+| IR-D01 | `esigi-ricostruzione`: configuration `and` | length HIGH=C; length LOW=C; 1≤budget≤most-positive-fixnum. Separate short HIGH, short LOW, zero/above-maximum budget, and valid configuration. |
+| IR-D02 | `esigi-ricostruzione`: split depth `and` | split requested; source depth≥max-depth. At limit depth, rebuild allowed and split rejected; split below limit allowed. |
+| IR-D03 | `verifica-digest-ricostruzione`: original lookup `and` | found; found-slot=original slot. LOW changing group with EMPTY gives miss; physical key duplicate gives hit on another slot. |
+| IR-D04 | `misura-ricostruzione`: destination `and` | split; odd prefix parity at new depth. HIGH on both sides and rebuild with high HIGH. |
+| IR-D05 | `budget-ricostruzione`: fragment `or`/`and` | first payload over budget; split; second payload over budget. Both within threshold, first over, second over only in split; second irrelevant in rebuild. |
+| IR-D06 | `copia-ricostruzione-uguale-p`: five-comparison `and` | CSN; location; key-meta without low offset; record-length; end-CSN. Change only one field at a time; different arena offset allowed. Predicate used in IR-D07. |
+| IR-D07 | `verifica-ricostruzione`: copy `and` | found; found-slot≥0; five IR-D06 comparisons. Miss and different payload must make index FAULTED. A hit with negative slot is excluded by the sonda-writer contract: any explicit C4 FI, no approved coverage exclusion. |
 
-Altre decisioni semplici da coprire: controllo valido/vivo/libero, stato retry
-del writer, intervallo chiave entro used, used entro arena, conteggio vivo,
-fingerprint, soglie directory/transitorio, generazione e credito revisione,
-split con figlio vuoto, selezione figlio, assenza del secondo candidato.
+Other simple decisions to cover: valid/live/free control, writer retry
+state, key range within used, used within arena, live count,
+fingerprint, directory/transient thresholds, generation and revision credit,
+split with empty child, child selection, absent second candidate.
 
-## Checklist C1
+<a id="checklist-c1"></a>
 
-| Punto | Riscontro e limite |
+## C1 checklist
+
+| Point | Finding and limit |
 |---|---|
-| 1. Requisiti/ADR | Annotazioni REQ e contratti coerenti con slot v2 e ADR-0050; nessun formato persistente nuovo. |
-| 2. Invarianti | Fixture per root/sorgente immutati, arena compatta, payload fedele, freeze solo alla pubblicazione, revisione/generazione senza wrap. Esiti runtime demandati al parent. |
-| 3. Errori | INVALID-ARGUMENT per input/digest/stale; RESOURCE-EXHAUSTED per budget/profondità/credito; INVARIANT-VIOLATION per corruzione/copia diversa. IR-C1-01 aperto. |
-| 4. Limiti | Tre scansioni di C≤65536; probe≤C; chiave≤65535; directory≤2^max-depth con max-depth≤30 e budget prima dell'allocazione. Nessuna attesa o ricorsione. |
-| 5. Allocazioni | Percorso di manutenzione writer, candidati/scratch allocati esplicitamente; il lookup reader non cambia. Nessuna misura heap/GC/P99 eseguita. |
-| 6. Risultati verificati | Lookup sorgente prima copia, verifica byte/per-payload dopo copia e piano dopo verifica; fiducia residua nell'hash dichiarata sopra. |
-| 7. Decisioni | IR-D01…07 include confronti payload dipendenti; condizioni escluse dal contratto da distinguere dalla prova runtime. |
-| 8. Proprietà | Un writer mantiene il gettone lungo l'intera chiamata; digest/scratch privati; root immutabile e CAS locale. C4 symbol-function solo runner seriale isolato. |
-| 9. Tracciabilità | Test con REQ nel nome; nessun `make check` eseguito. Caricamento ASDF e record spettano al parent. |
-| 10. Standard | Safety 3, ftype e tipi specializzati; COD-26 sul main rivalutato. COD-24 pre/post dei piccoli helper va valutato insieme alle guardie delegate; nessuna deroga inventata. |
-| 11. Serie | Nessun mutex, attesa, stato o contatore comune tra Serie; costruzione seriale solo nel writer proprietario. |
-| 12. Durability | Nessun I/O, eliminazione o commit; punto atomico in memoria rimane il CAS di pubblica-directory-indice. |
+| 1. Requirements/ADR | REQ annotations and contracts consistent with v2 slots and ADR-0050; no new persistent format. |
+| 2. Invariants | Fixtures for unchanged root/source, compact arena, faithful payload, freeze only at publication, revision/generation without wrap. Runtime outcomes delegated to parent. |
+| 3. Errors | INVALID-ARGUMENT for input/digest/stale; RESOURCE-EXHAUSTED for budget/depth/credit; INVARIANT-VIOLATION for corruption/different copy. IR-C1-01 open. |
+| 4. Bounds | Three scans of C≤65536; probe≤C; key≤65535; directory≤2^max-depth with max-depth≤30 and budget before allocation. No wait or recursion. |
+| 5. Allocations | Writer maintenance path, explicitly allocated candidates/scratch; reader lookup unchanged. No heap/GC/P99 measurement performed. |
+| 6. Verified results | Source lookup before copy, byte/per-payload check after copy, and plan after verification; residual hash trust declared above. |
+| 7. Decisions | IR-D01…07 includes dependent payload comparisons; contract-excluded conditions to distinguish from runtime proof. |
+| 8. Ownership | One writer retains the token throughout the call; private digests/scratch; immutable root and local CAS. C4 symbol-function only in isolated serial runner. |
+| 9. Traceability | Tests with REQ in name; no `make check` run. ASDF loading and records belong to parent. |
+| 10. Standards | Safety 3, ftypes, and specialized types; COD-26 on main reevaluated. COD-24 pre/post of small helpers to assess with delegated guards; no invented waiver. |
+| 11. Serie | No mutex, wait, state, or counter shared between Serie; construction serial only in owning writer. |
+| 12. Durability | No I/O, deletion, or commit; in-memory atomic point remains the pubblica-directory-indice CAS. |
 
-## Test consegnati e mutanti
+<a id="test-consegnati-e-mutanti"></a>
 
-Inventario finale dei casi e nomi dei quattro bersagli runtime da completare
-insieme al file di test. Tutti i casi sono seriali, deterministici e bounded;
-nessun esito positivo è attribuito prima dell'esecuzione registrata dal parent.
+## Delivered tests and mutants
 
-## Chiusura del parent dopo il freeze
+Final inventory of cases and names of the four runtime targets to complete
+with the test file. All cases are serial, deterministic, and bounded;
+no positive outcome attributed before the parent's recorded run.
 
-La sezione IR-C1-01 sopra conserva il riscontro iniziale del revisore. Il
-parent lo ha chiuso con guardie specifiche su INVARIANT-VIOLATION sia in
-`campiona-ricostruzione` sia in `sonda-ricostruzione`: indice FAULTED prima
-della propagazione della stessa condizione del banco. I test del banco
-corrotto nella scansione e del candidato corrotto incontrato dal probe
-prima del proprio turno di scansione sono nella suite finale.
+<a id="chiusura-del-parent-dopo-il-freeze"></a>
 
-La lettura dell'indice di Noether ha segnalato un'ambiguità nel conteggio
-slot/cambi-root. Il contratto è precisato come otto crediti di campionamento
-e riavvio: una conferma finale fallita a credito zero termina senza un
-nuovo probe e senza output. Il test dedicato inietta il cambio root dopo
-l'ottavo campione e controlla esattamente un probe. Nessun cambiamento del
-protocollo o del limite di riavvio; la conferma resta obbligatoria anche sul miss.
+## Parent closure after freeze
 
-Il parent ha riletto tipi, budget, prefix routing, fedeltà della copia,
-cleanup e complessità dei nuovi helper, separando i crediti in una funzione
-per contenere i percorsi. Restano i limiti delle primitive preesistenti:
-FI deterministica su sequenza cambiata durante il campione, interruzioni
-interne della mutazione, fault durante la copia, x86-64 e qualifica del
-motore completo. Nessuna copertura MC/DC completa dichiarata.
+Section IR-C1-01 above retains the reviewer's initial finding. The
+parent closed it with specific INVARIANT-VIOLATION guards in both
+`campiona-ricostruzione` and `sonda-ricostruzione`: index FAULTED before
+propagating the same bank condition. Tests for a corrupted bank
+during scan and a corrupted candidate encountered by probe
+before its own scan turn are in the final suite.
 
-## Seconda lettura indipendente — Averroes
+Noether's index reading identified ambiguity in the slot/root-change
+count. The contract is clarified as eight sampling and restart
+credits: failed final confirmation at zero credit ends without a
+new probe or output. The dedicated test injects a root change after
+the eighth sample and checks exactly one probe. No protocol or
+restart-limit change; confirmation remains mandatory even on miss.
 
-HEAD esaminato: `6796eb3931af81d4f82479c416cd9deae4b2f261`, hash riletti
-stabili dal revisore. Nessun difetto funzionale bloccante rilevato; IR-C1-01
-chiuso staticamente. Sono stati controllati requisiti/ADR, limiti, ownership,
-preflight, fedeltà del digest/payload, crediti, integrazione e CAS.
-Il revisore non ha eseguito prove e non attesta gli esiti runtime del parent.
+The parent reread types, budgets, prefix routing, copy fidelity,
+cleanup, and new helper complexity, separating credits into a function
+to contain paths. Existing primitive limits remain:
+deterministic FI on a changed sequence during sampling, internal
+mutation interruptions, fault during copy, x86-64, and whole-engine
+qualification. No complete MC/DC coverage claimed.
 
-Riscontro P2 su IR-D06: la fixture isolava soltanto location. Il parent ha
-aggiunto variazioni indipendenti di CSN, key-meta alto e record-length, oltre
-alla fine validità, mantenendo tutti gli altri campi identici. Offset arena
-locale diverso resta ammesso. La variazione di end-CSN è FI del predicato:
-nel percorso primario valido entrambi i valori sono zero, e la validazione
-del banco rifiuta una fine non zero. Non qualifica retention o snapshot;
-nessuna esclusione MC/DC o deroga normativa viene dichiarata approvata.
+<a id="seconda-lettura-indipendente--averroes"></a>
+
+## Second independent reading — Averroes
+
+HEAD examined: `6796eb3931af81d4f82479c416cd9deae4b2f261`, hashes reread
+stable by reviewer. No blocking functional defect found; IR-C1-01
+closed statically. Requirements/ADR, bounds, ownership,
+preflight, digest/payload fidelity, credits, integration, and CAS were checked.
+The reviewer ran no tests and does not attest the parent's runtime outcomes.
+
+P2 finding on IR-D06: the fixture isolated only location. The parent
+added independent variations of CSN, high key-meta, and record-length, as well
+as validity end, keeping all other fields identical. Different local
+arena offset remains allowed. The end-CSN variation is predicate FI:
+on the valid primary path both values are zero, and bank validation
+rejects a nonzero end. It does not qualify retention or snapshots;
+no MC/DC exclusion or standards waiver is declared approved.

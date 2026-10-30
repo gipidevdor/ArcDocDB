@@ -1,28 +1,32 @@
-# Archivio storico esterno
+<a id="archivio-storico-esterno"></a>
 
-> **Deciso — [ADR-0061](../../docs/adr/0061-conservazione-esterna-delle-prove.md),
-> successiva riduzione Git in [ADR-0062](../../docs/adr/0062-cronologia-git-due-commit.md).**
+# External historical archive
 
-Lo snapshot alla revisione `fea3c113514c804a0daf13251a146c687cc3953c` conserva
-**52.277 file originali**, inclusi i sottoprodotti inclusi negli inventari chiusi.
-I byte non sono stati riscritti. Nel checkout restano sintesi e riferimenti;
-gli originali si recuperano dagli asset verificati. Gli hash dei commit nei
-metadati identificano le esecuzioni storiche anche quando la cronologia Git è stata ridotta.
+> **Decided — [ADR-0061](../../docs/adr/0061-conservazione-esterna-delle-prove.md),
+> later Git reduction in [ADR-0062](../../docs/adr/0062-cronologia-git-due-commit.md).**
 
-[Release con archivio e inventario SHA-256](https://github.com/gpicchiarelli/ArcDocDB/releases/tag/evidence-2026-10-23-fea3c113).
-Il [manifesto locale](snapshot.lisp) registra identità, dimensioni e hash.
+The snapshot at revision `fea3c113514c804a0daf13251a146c687cc3953c` retains
+**52,277 original files**, including byproducts included in closed inventories.
+Bytes were not rewritten. Summaries and references remain in the checkout;
+originals are recovered from verified assets. Commit hashes in metadata identify
+historical executions even when Git history has been reduced.
 
-| Oggetto | SHA-256 |
+[Release with archive and SHA-256 inventory](https://github.com/gpicchiarelli/ArcDocDB/releases/tag/evidence-2026-10-23-fea3c113).
+The [local manifest](snapshot.lisp) records identity, sizes, and hashes.
+
+| Object | SHA-256 |
 |---|---|
 | `results-fea3c113.tar.zst` | `aa1ac178eb931e97cdf45e596d7ff85c5f3114ef94635fbe857bcdf55a36f182` |
 | `inventory.sha256` | `61514c583a88afe90890bbb4483f1db539e36aaac86c1f118c8b2d7e9aaba071` |
-| TAR decompresso | `5a2df702ef3f0864e88ed21d800f7af321ea67f8b774bd8f1a6d9d26738a9a40` |
+| Decompressed TAR | `5a2df702ef3f0864e88ed21d800f7af321ea67f8b774bd8f1a6d9d26738a9a40` |
 
-## Recupero e verifica
+<a id="recupero-e-verifica"></a>
 
-Servono `gh`, `zstd`, `tar`, `shasum` e SBCL. Usare una directory separata dal
-checkout: l'estrazione completa ricrea circa 1,4 GiB e oltre 52.000 file.
-Il download e l'estrazione non avvengono durante `make evidence`.
+## Recovery and verification
+
+Requires `gh`, `zstd`, `tar`, `shasum`, and SBCL. Use a directory separate from the
+checkout: full extraction recreates approximately 1.4 GiB and over 52,000 files.
+Download and extraction do not happen during `make evidence`.
 
 ```sh
 mkdir -p /tmp/arcdocdb-evidence-download /tmp/arcdocdb-evidence-restored
@@ -31,7 +35,7 @@ cd /tmp/arcdocdb-evidence-download
 shasum -a 256 results-fea3c113.tar.zst inventory.sha256
 ```
 
-Confrontare entrambi gli hash con la tabella **prima di estrarre**. Quindi:
+Compare both hashes with the table **before extraction**. Then:
 
 ```sh
 zstd -dc results-fea3c113.tar.zst | tar -xf - -C /tmp/arcdocdb-evidence-restored
@@ -39,40 +43,44 @@ cd /tmp/arcdocdb-evidence-restored
 shasum -a 256 --strict --status -c /tmp/arcdocdb-evidence-download/inventory.sha256
 ```
 
-L'uscita zero verifica tutti i file rispetto all'inventario. Si può poi eseguire,
-dalla propria copia di ArcDocDB, il verificatore storico sulla directory estratta:
+Zero exit status verifies all files against the inventory. From your ArcDocDB copy,
+you can then run the historical verifier on the extracted directory:
 
 ```sh
 sbcl --script tools/check-evidence.lisp --root /tmp/arcdocdb-evidence-restored/spikes/results/
 ```
 
-I registri Lisp sono **dati**, mai argomenti di `load`. Il lettore
-`tools/read-evidence.lisp` gestisce i descriptor gzip originali.
-L'asset è stato riletto da GitHub e i suoi hash sono stati confrontati con la copia
-locale verificata. Questo protegge l'integrità; non garantisce la disponibilità
-perpetua del servizio esterno. Per lavoro offline conservarne una copia separata.
+Lisp records are **data**, never `load` arguments. The `tools/read-evidence.lisp`
+reader handles original gzip descriptors.
+The asset was reread from GitHub and its hashes compared with the verified local
+copy. This protects integrity; it does not guarantee perpetual availability of the
+external service. Retain a separate copy for offline work.
 
-## Nuove pubblicazioni
+<a id="nuove-pubblicazioni"></a>
 
-Conservare nel repository sintesi, parametri, identità sorgenti e SHA-256 dei raw.
-Pubblicare e rileggere l'asset prima di eliminare la copia locale. Non forzare in Git
-`.fasl`, `.tmp`, `.bytes`, cache ASDF o copie complete delle directory di lavoro.
-La raccolta C4 esistente continua a creare archivi locali chiusi: la selezione
-per la pubblicazione avviene dopo la verifica, senza cambiarne gli originali.
+## New publications
 
-## Cronologia Git precedente
+Keep summaries, parameters, source identities, and raw-data SHA-256 hashes in the repository.
+Publish and reread the asset before deleting the local copy. Do not force `.fasl`, `.tmp`,
+`.bytes`, ASDF caches, or full working-directory copies into Git.
+Existing C4 collection continues creating closed local archives: publication selection
+happens after verification without changing originals.
 
-Il [manifesto della manutenzione](history.lisp) registra la precedente riduzione
-a due commit. Un intervento successivo ha conservato il solo ultimo stato,
-senza cambiare i suoi file; le [note della release](https://github.com/gpicchiarelli/ArcDocDB/releases/tag/evidence-2026-10-23-fea3c113)
-documentano i payload necessari al recupero dei commit intermedi.
-I metadati delle prove conservano le SHA delle esecuzioni originali.
+<a id="cronologia-git-precedente"></a>
 
-La cronologia precedente completa è nell'asset `history-before-e97b823d.bundle`,
-225.295.869 byte, SHA-256
+## Previous Git history
+
+The [maintenance manifest](history.lisp) records the earlier reduction to two commits.
+A later intervention retained only the latest state without changing its files;
+[release notes](https://github.com/gpicchiarelli/ArcDocDB/releases/tag/evidence-2026-10-23-fea3c113)
+document payloads needed to recover intermediate commits.
+Evidence metadata retain original execution SHAs.
+
+Complete previous history is in asset `history-before-e97b823d.bundle`,
+225,295,869 bytes, SHA-256
 `94b1a368a35ffef76b64ca4474a0c63b388ae57bd2e16b0bc7372a96e6c6d1dd`.
-Bundle e hash sono stati riletti da GitHub prima della sostituzione delle ref.
-Per ripristinarli in una nuova directory:
+Bundle and hash were reread from GitHub before ref replacement.
+To restore in a new directory:
 
 ```sh
 mkdir -p /tmp/arcdocdb-git-history
@@ -82,6 +90,6 @@ shasum -a 256 -c history-before-e97b823d.bundle.sha256
 git clone --branch main history-before-e97b823d.bundle restored
 ```
 
-Il backup esterno permette il recupero anche quando i vecchi commit non sono
-raggiungibili nelle ref correnti. I nomi e gli hash degli asset identificano
-lo snapshot archiviato, indipendentemente dal commit a cui punta il tag della release.
+The external backup permits recovery even when old commits are unreachable from
+current refs. Asset names and hashes identify the archived snapshot independently
+of the commit targeted by the release tag.

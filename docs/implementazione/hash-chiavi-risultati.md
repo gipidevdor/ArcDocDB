@@ -1,14 +1,16 @@
-# Hash delle chiavi — prove e misure
+<a id="hash-delle-chiavi--prove-e-misure"></a>
 
-[Risultati e registri strutturati](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-key-hash/risultati.md):
-706 test integrati piu due smoke, 46 nuove regressioni, sette mutanti,
-240 finestre seriali senza heap e 360 gruppi paralleli.
+# Key hashing — tests and measurements
 
-Su SBCL/macOS ARM64: circa 38,6 milioni di hash/s per chiavi di 16 byte
-in seriale; 75,7–113,1 milioni aggregati con quattro worker, secondo
-la fixture/seme. Mediane di cinque repliche; tutte le lunghezze e i semi
-sono conservati. Il percorso parallelo misura heap globale positivo.
+[Results and structured records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-key-hash/risultati.md):
+706 integrated tests plus two smokes, 46 new regressions, seven mutants,
+240 serial windows without heap and 360 parallel groups.
 
-Questi numeri riguardano la primitiva con validazione e sink del harness.
-Copertura incompleta degli helper inline/guardie, MC/DC, motore completo,
-P99, lifecycle del seme e x86-64 rimangono limiti dichiarati.
+On SBCL/macOS ARM64: about 38.6 million hashes/s for 16-byte keys
+serially; 75.7–113.1 million aggregate with four workers, depending on
+fixture/seed. Medians of five replicates; all lengths and seeds
+are preserved. The parallel path measures positive global heap.
+
+These figures concern the primitive with harness validation and sink.
+Incomplete coverage of inline helpers/guards, MC/DC, complete engine,
+P99, seed lifecycle, and x86-64 remain declared limits.

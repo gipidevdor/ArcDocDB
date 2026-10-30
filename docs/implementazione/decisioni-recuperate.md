@@ -1,128 +1,140 @@
-# Decision log recuperato dell'Archivio
+<a id="decision-log-recuperato-dellarchivio"></a>
 
-Il modulo [`src/recovery-archive/`](../../src/recovery-archive/) legge
-`Registri/multiserie.log` e collega il suo risultato al
-[recovery ACTIVE](active-recuperato.md). Applica i formati e la semantica di
-[ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md) e
-[ADR-0052](../adr/0052-header-dei-log-di-controllo.md), senza emendarli.
+# Recovered Archivio decision log
 
-## API e autorità
+The [`src/recovery-archive/`](../../src/recovery-archive/) module reads
+`Registri/multiserie.log` and connects its result to
+[ACTIVE recovery](active-recuperato.md). Applies formats and semantics of
+[ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md) and
+[ADR-0052](../adr/0052-header-dei-log-di-controllo.md), without amendment.
+
+<a id="api-e-autorità"></a>
+
+## API and authority
 
 Namespace: `arcdocdb.recovery.archive`.
 
-| API | Contratto |
+| API | Contract |
 |---|---|
-| `crea-archivio-recovery(scope, identity)` | associa l'ambito GET canonico dell'Archivio a una copia privata del suo UUID16 autorevole |
-| `leggi-decisioni-recuperate(archive, input, size, scratch, …)` | legge header e corpo sullo stesso FD readonly; restituisce solo la tabella completa del prefisso verificato |
-| `frontiere-decisioni-recuperate(result)` | EOF attestato, prefisso assoluto P, `:complete`/`:tail`, versione 1/2 |
-| `numero-decisioni-recuperate(result)` | TXID distinti dopo la coalescenza |
-| `trova-decisione-recuperata(result, txid)` | presenza, CSN, numero partecipanti; `nil/0/0` se assente |
-| `partecipante-decisione-recuperata-p(result, txid, id, start, end)` | presenza esatta dell'ID16; range verificato anche per TXID assente |
-| `leggi-active-con-decisioni(control, input, size, result, scratch, …)` | verifica ambito e lifetime del decision log, poi delega al recovery ACTIVE canonico |
+| `crea-archivio-recovery(scope, identity)` | associates canonical Archivio GET scope with private copy of authoritative UUID16 |
+| `leggi-decisioni-recuperate(archive, input, size, scratch, …)` | reads header and body from same read-only FD; returns only complete table of verified prefix |
+| `frontiere-decisioni-recuperate(result)` | attested EOF, absolute prefix P, `:complete`/`:tail`, version 1/2 |
+| `numero-decisioni-recuperate(result)` | distinct TXIDs after coalescing |
+| `trova-decisione-recuperata(result, txid)` | presence, CSN, participant count; `nil/0/0` if absent |
+| `partecipante-decisione-recuperata-p(result, txid, id, start, end)` | exact ID16 presence; range checked even for absent TXID |
+| `leggi-active-con-decisioni(control, input, size, result, scratch, …)` | checks decision-log scope and lifetime, then delegates to canonical ACTIVE recovery |
 
-Il bootstrap associa **una volta sola** UUID e `ambito-get` dello stesso
-Archivio, provenienti dal catalogo. Il costruttore copia tutti i sedici byte;
-non certifica il catalogo, l'unicità dell'associazione o i percorsi nel
-filesystem. L'uguaglianza UUID da sola non sostituisce l'identità canonica
-dell'ambito condiviso dalle viste delle Serie.
+Bootstrap associates **once only** UUID and `ambito-get` of same
+Archivio from catalog. Constructor copies all sixteen bytes;
+certifies neither catalog, association uniqueness, nor filesystem
+paths. UUID equality alone does not replace canonical identity
+of scope shared by Serie views.
 
-Il controller attesta `size` come **EOF fisico completo e stabile**. La
-capacità readonly non misura EOF e non impedisce scritture esterne. File,
-FD e namespace restano congelati e aperti fino al completamento del recovery
-delle Serie; scratch esclusivo fino al ritorno del lettore. L'API non apre,
-chiude, tronca, rinomina o rende durevole alcun file.
+Controller attests `size` as **complete stable physical EOF**. Read-only
+capability measures no EOF and prevents no external writes. File,
+FD, and namespace stay frozen and open until Serie recovery
+completes; scratch exclusive until reader return. API does not open,
+close, truncate, rename, or make any file durable.
 
-## Ordine dei controlli
+<a id="ordine-dei-controlli"></a>
 
-1. Senza syscall: capacità aperta readonly, assenza di alias con UUID
-   posseduto, chunk positivo, header completo, range e tutti i budget.
-2. Leggere esattamente l'header di 64 byte dallo stesso FD; verificare
-   magic `ARCDMSL1`, CRC, tutti i byte UUID, versione effettiva e riservati.
-   Un header incompatibile fallisce prima di leggere il corpo.
-3. Leggere il corpo fino all'EOF attestato, in chunk limitati, senza
-   rileggere l'header.
-4. Eseguire `ricostruisci-decisioni` con la versione dell'header e
-   `file-size = size`: scanner, ricerca dei testimoni, preflight dei
-   partecipanti, copie possedute, ordinamento e controllo dei conflitti.
-5. Verificare frontiere e capacità ancora aperta; consegnare il risultato
-   completo senza scratch, workspace o array esportati.
+## Check order
 
-Il SEAL con file-id zero non sostituisce l'UUID dell'header. La coda resta
-sul file: `:tail` significa ricerca completa dei testimoni ed esclusione
-del lotto incompleto, non replay parziale di quel lotto. Un testimone di
-corruzione durevole, un conflitto DECISION o un budget esaurito propagano
-le condizioni originali; il controller applica fail-stop.
+1. Without syscall: open read-only capability, no alias with owned
+   UUID, positive chunk, complete header, range, and all budgets.
+2. Read exactly 64-byte header from same FD; verify
+   magic `ARCDMSL1`, CRC, all UUID bytes, actual version, and reserved areas.
+   Incompatible header fails before body reading.
+3. Read body through attested EOF, in bounded chunks, without
+   rereading header.
+4. Run `ricostruisci-decisioni` with header version and
+   `file-size = size`: scanner, witness search, participant
+   preflight, owned copies, sorting, and conflict checking.
+5. Verify frontiers and still-open capability; deliver complete
+   result without exported scratch, workspace, or arrays.
 
-Il [replay canonico](decisioni-multiserie.md) conserva TXID e CSN u64 opachi,
-anche zero e massimo; duplicati identici sono idempotenti, decisioni
-contraddittorie sono corruzione. Le query restituiscono scalari e non
-attestano che il file sia ancora aperto o sano al momento della query.
+SEAL with zero file-id does not replace header UUID. Tail remains
+in file: `:tail` means complete witness search and exclusion
+of incomplete batch, not partial replay of that batch. Durable-corruption
+witness, DECISION conflict, or exhausted budget propagate
+original conditions; controller applies fail-stop.
 
-## Collegamento alla Serie
+[Canonical replay](decisioni-multiserie.md) retains opaque u64 TXID and CSN,
+including zero and maximum; identical duplicates idempotent, contradictory
+decisions corruption. Queries return scalars and do not
+attest file remains open or healthy at query time.
 
-`leggi-active-con-decisioni` accetta esclusivamente `decisioni-recuperate`.
-Prima di qualsiasi I/O ACTIVE esige `eq` tra l'ambito dell'Archivio e
-quello della vista nel CONTROL recuperato, rifiuta alias con UUID e
-controlla che il decision log sia aperto readonly. Delega quindi al
-lettore ACTIVE esistente, inoltrando tutti i budget; ricontrolla il
-lifetime del decision log prima di restituire il risultato.
+<a id="collegamento-alla-serie"></a>
 
-Un'assenza DECISION può così essere risolta dal percorso canonico a partire
-da una scansione completa dell'Archivio corretto, sotto le precondizioni
-di bootstrap ed EOF. OUTCOME locali, partecipanti e CSN restano controllati
-dal resolver ACTIVE; non viene introdotta una seconda semantica.
+## Serie connection
 
-`leggi-active-recuperato` resta disponibile con il precedente contratto:
-chi passa direttamente una tabella nuda ne garantisce identità e completezza.
-Non c'è fallback da `nil` o da un log non letto. Il risultato ACTIVE non
-trattiene la tabella dell'Archivio. Il nuovo ingresso non autorizza
-dimenticanza delle decisioni, nuovi CSN o ammissione del traffico.
+`leggi-active-con-decisioni` accepts only `decisioni-recuperate`.
+Before any ACTIVE I/O, requires `eq` between Archivio scope and
+view scope in recovered CONTROL, rejects UUID aliases, and
+checks decision log open read-only. Then delegates to
+existing ACTIVE reader, forwarding all budgets; rechecks decision-log
+lifetime before returning result.
 
-## Budget, memoria e prestazioni
+Absent DECISION can thus be resolved through canonical path from
+complete scan of correct Archivio, under bootstrap and EOF
+preconditions. Local OUTCOMEs, participants, and CSNs remain checked
+by ACTIVE resolver; no second semantics introduced.
 
-| Budget di apertura | Default |
+`leggi-active-recuperato` remains available with previous contract:
+caller passing bare table directly guarantees identity and completeness.
+No fallback from `nil` or unread log. ACTIVE result does not
+retain Archivio table. New entry does not authorize forgetting
+decisions, new CSNs, or traffic admission.
+
+<a id="budget-memoria-e-prestazioni"></a>
+
+## Budgets, memory, and performance
+
+| Open budget | Default |
 |---|---:|
-| byte totali del file, header incluso | 64 MiB |
-| chunk del corpo | 64 KiB |
-| lotti / record per lotto | 65.536 / 65.536 |
-| byte per lotto | 64 MiB |
-| DECISION fisiche, duplicati inclusi | 65.536 |
-| partecipanti cumulativi, duplicati inclusi | 65.536 |
-| partecipanti per DECISION | 65.535 |
+| total file bytes, header included | 64 MiB |
+| body chunk | 64 KiB |
+| batches / records per batch | 65,536 / 65,536 |
+| bytes per batch | 64 MiB |
+| physical DECISIONs, duplicates included | 65,536 |
+| cumulative participants, duplicates included | 65,536 |
+| participants per DECISION | 65,535 |
 
-Sono budget configurabili del compito di apertura, non nuovi limiti del
-database. Il tetto per DECISION deriva dal campo u16 del formato. Zero è
-ammesso per i conteggi DECISION/partecipanti quando il file non li contiene;
-un record oltre il budget non viene ignorato. La capacità I/O consente
-`max(64, min(size-64, chunk))` byte per trasferimento.
+Configurable open-task budgets, not new database
+limits. Per-DECISION cap derives from format's u16 field. Zero
+allowed for DECISION/participant counts when file contains none;
+over-budget record not ignored. I/O capability permits
+`max(64, min(size-64, chunk))` bytes per transfer.
 
-Scratch di almeno `size` byte, fornito dal chiamante; UUID posseduto di
-16 byte; tabella e workspace del replay limitati da record e partecipanti.
-Questi limiti non sono una misura di RSS o dell'overhead degli oggetti Lisp.
-Il file è letto una volta: header e `ceiling((size-64)/chunk)` trasferimenti
-esatti. Query binarie e ordinamento restano quelli del replay esistente.
-Percorso di apertura con allocazioni: nessuna promessa di throughput,
-latenza o heap zero. Nessun lock o nuova scrittura condivisa tra Serie.
+Caller-supplied scratch at least `size` bytes; owned 16-byte
+UUID; replay table and workspace bounded by records and participants.
+Limits do not measure RSS or Lisp-object overhead.
+File read once: header and `ceiling((size-64)/chunk)` exact
+transfers. Binary queries and sorting remain existing replay's.
+Open path with allocations: no throughput,
+latency, or zero-heap-allocation promise. No lock or new shared write between Serie.
 
-## Decisioni e qualifica
+<a id="decisioni-e-qualifica"></a>
 
-| ID | Decisione composta o confine | Casi della campagna dedicata |
+## Decisions and qualification
+
+| ID | Compound decision or boundary | Dedicated campaign cases |
 |---|---|---|
-| DAR-D01 | chunk positivo e byte budget almeno header | ciascuna falsa, entrambe vere; size 63/64 e budget esatto/superato |
-| DAR-D02 | chunk positivo e size almeno header nel lettore corpo | ciascuna falsa, entrambe vere; corpo vuoto e ultimo chunk corto |
-| DAR-D03 | P nel range e stato coerente con EOF | ogni limite falso, complete/tail, header-only, coda, testimone durevole |
-| DAR-G01 | UUID esatto e copia posseduta | UUID di 15/16/17 byte; modifica del caller; mismatch byte alto, CRC, riservati, versioni 1/2 |
-| DAR-G02 | preflight completo prima di I/O | readonly/closed, alias, scratch insufficiente, budget scanner/replay e capacità chunk |
-| DAR-G03 | ambito canonico identico prima di I/O ACTIVE | stessa/differente identità, anche con uguale UUID; log chiuso prima/durante lettura |
-| DAR-G04 | replay e query canonici | duplicati, conflitti, zero/u64 alto, budget partecipanti, mutazione scratch dopo ritorno |
+| DAR-D01 | positive chunk and byte budget at least header | each false, both true; size 63/64 and exact/exceeded budget |
+| DAR-D02 | positive chunk and size at least header in body reader | each false, both true; empty body and short last chunk |
+| DAR-D03 | P within range and state consistent with EOF | each false limit, complete/tail, header-only, tail, durable witness |
+| DAR-G01 | exact UUID and owned copy | 15/16/17-byte UUID; caller mutation; high-byte mismatch, CRC, reserved areas, versions 1/2 |
+| DAR-G02 | full preflight before I/O | read-only/closed, alias, insufficient scratch, scanner/replay budgets, and chunk capacity |
+| DAR-G03 | identical canonical scope before ACTIVE I/O | same/different identity, even with equal UUID; log closed before/during read |
+| DAR-G04 | canonical replay and queries | duplicates, conflicts, zero/high u64, participant budgets, scratch mutation after return |
 
-Le [prime evidenze locali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-archive-recovery/README.md)
-distinguono compilazione, letture statiche e conservazione dei byte da prove
-funzionali. Il [metodo della nuova verifica](decisioni-recuperate-verifica.md)
-definisce prove funzionali, fault injection e catena nativa; la
-[revisione indipendente](decisioni-recuperate-revisione.md) resta distinta
-dai risultati eseguiti. Qualifica C1 completa e misure dei nuovi ingressi
-restano aperte. Il componente non completa riconciliazione
-CLOSED, indici/orizzonte CSN o gate del Recovery Manager. Il
-[builder completo del checkpoint](checkpoint-recovery.md) è ora disponibile
-con qualifica dedicata ancora aperta.
+[Initial local evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-archive-recovery/README.md)
+distinguishes compilation, static readings, and byte preservation from functional
+tests. [New verification method](decisioni-recuperate-verifica.md)
+defines functional tests, fault injection, and native chain;
+[independent review](decisioni-recuperate-revisione.md) remains separate
+from executed results. Full C1 qualification and new-entry measurements
+remain open. Component does not complete CLOSED
+reconciliation, indexes/CSN horizon, or Recovery Manager gate.
+[Complete checkpoint builder](checkpoint-recovery.md) now available
+with dedicated qualification still open.

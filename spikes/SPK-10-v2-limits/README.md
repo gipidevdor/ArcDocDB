@@ -1,65 +1,70 @@
-# SPK-10 — limiti, formati e migrazione v2
+<a id="spk-10--limiti-formati-e-migrazione-v2"></a>
 
-> **Proposta** — Esperimento di Fase 0 registrato prima dell'esecuzione.
-> Solo Common Lisp/SBCL, nessun codice del motore. Valuta i limiti aggiornati
-> di [ADR-0048](../../docs/adr/0048-limiti-documentali-e-formato-v2.md).
+# SPK-10 — V2 limits, formats, and migration
 
-## Domanda
+> **Proposed** — Phase-0 experiment recorded before execution.
+> Common Lisp/SBCL only, no engine code. Evaluates updated limits from
+> [ADR-0048](../../docs/adr/0048-limiti-documentali-e-formato-v2.md).
 
-Il formato v2 rappresenta e controlla documenti CBOR da 16 MiB effettivi,
-100 livelli di contenitori e chiavi binarie da 1–65.535 byte? Le arene e
-la conversione rispettano budget espliciti senza perdere i sorgenti o
-pubblicare risultati non verificati?
+<a id="domanda"></a>
 
-## Metodo e ambiti
+## Question
 
-Quattro moduli indipendenti, compilati senza warning/style-warning, `safety 3`:
+Does v2 represent and check effective 16 MiB CBOR documents, 100 container levels,
+and binary keys of 1–65,535 bytes? Do arenas and conversion respect explicit
+budgets without losing sources or publishing unverified results?
 
-| Modulo | Domanda | Metodo dichiarato prima delle prove |
+<a id="metodo-e-ambiti"></a>
+
+## Method and scopes
+
+Four independent modules, compiled without warning/style-warning, `safety 3`:
+
+| Module | Question | Method declared before tests |
 |---|---|---|
-| Codec | lunghezze, versioni, CRC e hint | [metodo-codec.md](metodo-codec.md) |
-| Indice | slot v2, chiavi estese e arene limitate | [metodo-indice.md](metodo-indice.md) |
-| CBOR | profondità, byte, nodi e parsing senza ricorsione | [metodo-cbor.md](metodo-cbor.md) |
-| Migrazione | versione del file, EDIT, conservazione e ripetibilità | [metodo-migrazione.md](metodo-migrazione.md) |
+| Codec | lengths, versions, CRCs, and hints | [metodo-codec.md](metodo-codec.md) |
+| Index | v2 slots, extended keys, bounded arenas | [metodo-indice.md](metodo-indice.md) |
+| CBOR | depth, bytes, nodes, nonrecursive parsing | [metodo-cbor.md](metodo-cbor.md) |
+| Migration | file version, EDIT, preservation, repeatability | [metodo-migrazione.md](metodo-migrazione.md) |
 
-Il codec usa il kernel CRC32C già verificato da SPK-09; i suoi risultati
-restano distinti dai risultati v1. Gli altri moduli dichiarano le proprie
-dipendenze e le parti non implementate. La migrazione è un **modello finito**,
-non un convertitore su filesystem. I controlli indipendenti non sostituiscono
-una fetta completa con storage, manifest, snapshot e fault injection reali.
+Codec uses CRC32C kernel already verified by SPK-09; results remain separate
+from v1 results. Other modules declare dependencies and unimplemented parts.
+Migration is a **finite model**, not a filesystem converter. Independent checks
+do not replace a complete slice with real storage, manifest, snapshots, and fault injection.
 
-Confini obbligatori: documenti 16 MiB/16 MiB+1, profondità 100/101,
-chiavi 1/255/256/65.535/65.536, versioni v1/v2/sconosciuta, troncamenti,
-lunghezze alterate e saturazione dei budget. I metodi precisano copertura,
-subset del CBOR, fixture, quantità e oracle. Nessun numero prestazionale
-è anticipato e nessun requisito del motore è promosso automaticamente.
+Mandatory boundaries: documents 16 MiB/16 MiB+1, depth 100/101,
+keys 1/255/256/65,535/65,536, versions v1/v2/unknown, truncation, altered lengths,
+and saturated budgets. Methods specify coverage, CBOR subset, fixtures, quantities,
+and oracles. No performance number predicted; no engine requirement automatically promoted.
 
-## Esecuzione
+<a id="esecuzione"></a>
 
-### Metodo dell'integrazione, registrato prima dell'esecuzione
+## Execution
 
-`core.lisp` collega i moduli con fixture in memoria: fileheader verificato →
-parser selezionato per versione → record ordinario e due CRC → documento CBOR →
-hint → inserimento e lookup nell'indice. Sedici combinazioni positive:
-mappe da 4 byte/profondità 2 e da 102 byte/profondità 100, chiavi 1/255 byte
-per v1 e 1/255/256/65.535 per v2; mappa di **16 MiB codificati effettivi**
-con le quattro chiavi v2. Il massimo documentale non è rappresentabile nel
-record v1 u24, che comprende header e chiave. CSN u64 alto e offset non nullo.
+<a id="metodo-dellintegrazione-registrato-prima-dellesecuzione"></a>
 
-Oracle indipendenti confrontano versione, callback, intervalli, CSN, profondità,
-metadati hint e campi letti dallo slot. Una fixture negativa ha entrambi i CRC
-validi ma CBOR non minimo: il codec la verifica e il validatore deve rifiutarla.
-Il risultato espone casi, asserzioni e dimensione massima del record.
+### Integration method, recorded before execution
 
-Il validatore accetta un vettore intero: l'integrazione copia esplicitamente
-l'intervallo del valore nel solo harness. La fixture massima usa meno di 128 MiB
-di payload simultaneo degli array del singolo caso, senza contare garbage,
-header Lisp e runtime. Nessun throughput viene derivato da questi controlli.
-CRC delle sezioni hint, prepared, storage e commit durevole restano esclusi.
+`core.lisp` connects modules with in-memory fixtures: verified file header →
+version-selected parser → ordinary record and two CRCs → CBOR document → hint →
+index insertion and lookup. Sixteen positive combinations: maps of 4 bytes/depth 2
+and 102 bytes/depth 100, keys 1/255 bytes for v1 and 1/255/256/65,535 for v2;
+map of **an actual encoded 16 MiB** with four v2 keys. Maximum document size cannot
+fit the v1 u24 record, which includes header and key. High u64 CSN and nonzero offset.
 
-`run.lisp` risolve tutti i file rispetto al proprio percorso, carica il
-kernel SPK-09 e compila i quattro moduli in `out/`. Controlli e misure
-rimangono separati. Il runner è integrato nell'harness seriale:
+Independent oracles compare version, callback, ranges, CSN, depth, hint metadata,
+and fields read from slot. A negative fixture has both CRCs valid but nonminimal
+CBOR: codec verifies it and validator must reject. Result exposes cases,
+assertions, and maximum record size.
+
+Validator accepts a whole vector: integration explicitly copies value range in
+harness only. Maximum fixture uses under 128 MiB simultaneous array payload per
+case, excluding garbage, Lisp headers, and runtime. No throughput derived from
+these checks. Hint-section CRCs, prepared records, storage, and durable commit excluded.
+
+`run.lisp` resolves all files relative to its path, loads SPK-09 kernel, and compiles
+four modules into `out/`. Checks and measurements remain separate.
+Runner integrated into serial harness:
 
 ```sh
 sbcl --dynamic-space-size 4096 --noinform --no-userinit --no-sysinit \
@@ -68,26 +73,26 @@ sbcl --dynamic-space-size 4096 --noinform --no-userinit --no-sysinit \
   --script tools/run-spikes.lisp --bench SPK-10
 ```
 
-Per gli esperimenti si dichiarano memoria viva, allocazioni transitorie e
-budget cooperativi; un budget temporale non interrompe una syscall e non
-garantisce una latenza. Errori espliciti, stdout con una sola plist,
-output grezzo e sorgenti identificati nell'harness.
+Experiments declare live memory, transient allocations, and cooperative budgets;
+a time budget neither interrupts syscalls nor guarantees latency.
+Explicit errors, one plist on stdout, raw output, and identified sources in harness.
 
-## Risultato e limiti
+<a id="risultato-e-limiti"></a>
 
-La prima [suite integrata e campagna locale](../../docs/valutazione/risultati-2026-10-08.md#spk-10--limiti-v2-e-integrazione)
-è completata: 416 casi del codec, 614 CBOR, otto gruppi dell'indice,
-208 crash e 4.160 interruzioni recovery sul modello, 16 combinazioni positive
-e una negativa tra moduli. Il record massimo di 16.842.775 byte è costruito,
-verificato e rappresentato nello slot. Report distinti per controlli e misure,
-con sorgenti identificati prima/dopo. Il gate completo resta aperto.
-La variante CBOR con pila creata su richiesta supera 629 casi (614 precedenti
-e 15 nuovi) e ha due benchmark separati, mantenendo anche la misura più lenta.
-Il percorso oltre RAM di ADR-0049 resta una proposta distinta: questo
-esperimento non lo implementa. Prima del motore occorrono anche memoria
-debole, modelli mancanti, I/O e conversione reale interrotta, decoder
-completo e campagna sulla piattaforma Linux di riferimento.
+## Result and limits
 
-Requisiti collegati: REQ-LIM-001, REQ-LIM-002, REQ-LIM-003,
+The first [integrated suite and local campaign](../../docs/valutazione/risultati-2026-10-08.md#spk-10--limiti-v2-e-integrazione)
+is complete: 416 codec cases, 614 CBOR cases, eight index groups, 208 crashes and
+4,160 recovery interruptions on model, 16 positive and one negative cross-module
+combinations. Maximum 16,842,775-byte record built, verified, and represented in slot.
+Separate check/measurement reports, with sources identified before/after.
+Full gate remains open.
+On-demand-stack CBOR variant passes 629 cases (614 previous and 15 new) and has two
+separate benchmarks, retaining the slower measurement too. ADR-0049's beyond-RAM
+path remains a separate proposal: this experiment does not implement it.
+Before engine, weak memory, missing models, I/O and interrupted real conversion,
+complete decoder, and Linux reference-platform campaign are also required.
+
+Related requirements: REQ-LIM-001, REQ-LIM-002, REQ-LIM-003,
 REQ-IDX-007, REQ-FOR-002, REQ-AFF-007, REQ-AFF-008, REQ-AFF-019,
-REQ-VAL-001. Identificativi e fonti non sono cambiati dai moduli sperimentali.
+REQ-VAL-001. Experimental modules change neither identifiers nor sources.

@@ -1,9 +1,12 @@
-# Sicurezza
+<a id="sicurezza"></a>
 
-ArcDocDB è in fase di progettazione e non è software di produzione: autenticazione,
-autorizzazione e cifratura sono **fuori dallo scope della v1**
+# Security
+
+ArcDocDB is in the design phase and is not production software. Authentication,
+authorization and encryption are **outside the scope of v1**
 ([ADR-0030](docs/adr/0030-scope-v1.md)).
 
-Per segnalare un problema di sicurezza nella progettazione o nel codice, apri una
-[security advisory privata](https://github.com/gpicchiarelli/ArcDocDB/security/advisories/new) sul repository, oppure scrivi al
-maintainer (indirizzo nel profilo GitHub). Non pubblicare dettagli in una issue.
+To report a security issue in the design or code, open a
+[private security advisory](https://github.com/gpicchiarelli/ArcDocDB/security/advisories/new)
+on the repository, or contact the maintainer using the address in the GitHub profile.
+Do not publish details in an issue.

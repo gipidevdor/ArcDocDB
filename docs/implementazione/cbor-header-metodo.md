@@ -1,61 +1,67 @@
-# Metodo di verifica degli header CBOR
+<a id="metodo-di-verifica-degli-header-cbor"></a>
 
-Metodo registrato prima delle campagne. La primitiva legge un header di
-al massimo nove byte dallo span immutabile del chiamante. Il profilo
-documentale di ADR-0014/0048 resta al parser successivo: questo blocco non
-attraversa payload, contenitori, tag o testo e non applica il limite di 100
-livelli o il budget del documento completo.
+# CBOR header verification method
 
-## Contratto e oracoli
+Method registered before the campaigns. The primitive reads a header of
+at most nine bytes from the caller's immutable span. The document
+profile in ADR-0014/0048 remains for the later parser: this block does not
+traverse payloads, containers, tags, or text and does not apply the 100-level
+limit or the full document budget.
 
-`arcdocdb.cbor:leggi-header-cbor(buffer,start,end)` restituisce sei valori:
-major type, additional information, parola alta e bassa dell'argomento,
-offset successivo e forma (`:argument`, `:indefinite`, `:break`). L'argomento
-resta in due u32, compresi tutti i bit di un float64; non si crea un intero
-u64 boxed né un oggetto float nell’implementazione prevista; la campagna
-verificherà il percorso riuscito su SBCL a 64 bit.
+<a id="contratto-e-oracoli"></a>
 
-Lo span è `[start,end)`, dentro un array semplice a byte. Range invalido:
-`invalid-argument :cbor-range`, senza offset. Span vuoto o header incompleto:
-`corruption-detected :cbor-truncated`, offset assoluto `end`. Si controlla
-l'intera larghezza prima dei byte dell'argomento; un suffisso fisico fuori
-dallo span non completa l'header. AI 28..30 sono riservati; AI 31 è ammesso
-come forma indefinita per major 2..5 e come break per major 7, rifiutato
-per 0/1/6. Un simple value con lead F8 e secondo byte sotto 32 è malformato.
-Gli altri argomenti sono unsigned big-endian: larghezze 0/1/2/4/8 byte.
+## Contract and oracles
 
-La sintassi segue [RFC 8949, §3 e §3.3](https://www.rfc-editor.org/rfc/rfc8949#section-3).
-L'API conserva AI e bit originali: non rifiuta una rappresentazione intera
-non minima, non interpreta float/tag e non attesta il contesto di un break.
-Il profilo deterministico del documento deve applicare questi controlli
-successivamente. Un esito riuscito non valida l'intero item CBOR.
+`arcdocdb.cbor:leggi-header-cbor(buffer,start,end)` returns six values:
+major type, additional information, argument high and low words,
+next offset, and form (`:argument`, `:indefinite`, `:break`). The argument
+stays in two u32 words, including every bit of a float64; the planned implementation
+creates neither a boxed u64 integer nor a float object; the campaign
+will verify the successful path on 64-bit SBCL.
 
-Test indipendenti congelati prima di leggere il prodotto: tutti i 256 lead,
-tutti i secondi byte di F8, tutti i 65.536 argomenti a due byte e fixture
-asimmetriche per endianness e separazione high/low. Confini u32/u64,
-float raw (zero, infinity, NaN), forme indefinite, non minimi e test di
-priorità/troncatura con sentinelle. Fuzz differenziale finito di 4096 span
-da 1..9 byte con modello aritmetico locale, che può usare bignum a freddo.
-Nessun expected viene calcolato chiamando la primitiva di prodotto.
+The span is `[start,end)`, within a simple byte array. Invalid range:
+`invalid-argument :cbor-range`, without offset. Empty span or incomplete header:
+`corruption-detected :cbor-truncated`, absolute offset `end`. The
+full width is checked before argument bytes; a physical suffix outside
+the span does not complete the header. AI 28..30 are reserved; AI 31 is allowed
+as an indefinite form for major 2..5 and as break for major 7, rejected
+for 0/1/6. A simple value with lead F8 and second byte below 32 is malformed.
+Other arguments are unsigned big-endian: widths 0/1/2/4/8 bytes.
 
-## Concorrenza e strumenti
+Syntax follows [RFC 8949, §3 and §3.3](https://www.rfc-editor.org/rfc/rfc8949#section-3).
+The API preserves AI and original bits: it does not reject a nonminimal integer
+representation, interpret floats/tags, or establish break context.
+The deterministic document profile must apply these checks
+later. Success does not validate the entire CBOR item.
 
-Due thread reali percorrono header su buffer privati immutabili, verificano
-tutti i sei valori, il contenuto integrale e intervalli di lavoro sovrapposti
-fuori dalla barriera iniziale. Attese, iterazioni, join e cleanup hanno tetti
-espliciti. Non è una misura dello scaling del pool.
+Independent tests frozen before reading the product: all 256 lead bytes,
+all F8 second bytes, all 65,536 two-byte arguments, and asymmetric
+fixtures for endianness and high/low separation. u32/u64 boundaries,
+raw floats (zero, infinity, NaN), indefinite forms, nonminimal forms, and
+priority/truncation tests with sentinels. Finite differential fuzz of 4096 spans
+of 1..9 bytes with a local arithmetic model, which may use cold bignums.
+No expected value is calculated by calling the product primitive.
 
-Build rigorosa, lint, tracciabilità, due letture C1 e inventario delle
-decisioni composte. Copertura con scope esplicito dei due sorgenti CBOR,
-stato grezzo e tutti gli HTML; nessuna guardia viene rimossa dal denominatore.
-Self-test del filtro e del ramo mancante. Mutanti compilabili in copie
-esclusive: baseline completa obbligatoria, smoke su riga esatta,
-compilazione fallita sempre invalida. Ogni tentativo e log resta conservato.
+<a id="concorrenza-e-strumenti"></a>
 
-Allocazioni: fixture preallocate per tutte le larghezze, argomento u64
-massimo, simple, float raw, indefinito e break; cinque repliche per cella,
-4096 chiamate per replica, warmup 128 e GC fuori dalla misura. Tutti i sei valori alimentano un sink
-osservabile confrontato con costanti indipendenti. Sensore con baseline
-zero e controllo positivo 16 × 1 MiB. Criterio: zero heap osservato,
-nessuna soglia di throughput. Le misure sono seriali e separate dalle
-campagne di copertura/mutazione; non qualificano il motore completo.
+## Concurrency and tools
+
+Two real threads traverse headers on private immutable buffers, verify
+all six values, full contents, and overlapping work intervals
+outside the initial barrier. Waits, iterations, joins, and cleanup have explicit
+bounds. This is not a measurement of pool scaling.
+
+Strict build, lint, traceability, two C1 readings, and compound-decision
+inventory. Coverage explicitly scoped to the two CBOR sources,
+raw state and all HTML; no guard is removed from the denominator.
+Filter and missing-branch self-tests. Compilable mutants in exclusive
+copies: full baseline required, smoke on exact line,
+failed compilation always invalid. Every attempt and log is retained.
+
+Allocations: preallocated fixtures for all widths, maximum u64
+argument, simple, raw float, indefinite, and break; five replicates per cell,
+4096 calls per replicate, warmup 128, and GC outside measurement. All six values feed an
+observable sink compared with independent constants. Sensor with zero
+baseline and positive control 16 × 1 MiB. Criterion: zero observed heap,
+no throughput threshold. Measurements are serial and separate from
+coverage/mutation campaigns; they do not qualify the whole engine.

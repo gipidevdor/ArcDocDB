@@ -1,80 +1,86 @@
-# Lettura delle stringhe CBOR — contratto e metodo
+<a id="lettura-delle-stringhe-cbor--contratto-e-metodo"></a>
 
-Incremento C1 preregistrato il 2026-10-15 prima del nuovo prodotto.
-REQ-CBR-009 deriva da ADR-0014 e ADR-0048. Il corpus e il driver
-sono preparati da autori distinti e congelati prima del kernel.
+# Reading CBOR strings — contract and method
 
-## Contratto
+C1 increment preregistered on 2026-10-15 before the new product.
+REQ-CBR-009 derives from ADR-0014 and ADR-0048. The corpus and driver
+are prepared by separate authors and frozen before the kernel.
+
+<a id="contratto"></a>
+
+## Contract
 
 ```lisp
 (leggi-stringa-cbor-minima buffer start end :max-bytes 16777216)
-;; => esattamente MAJOR, PAYLOAD-START, NEXT
+;; => exactly MAJOR, PAYLOAD-START, NEXT
 ```
 
-Legge soltanto la prima stringa MT2/3 a lunghezza definita con testata
-minima. Restituisce tre fixnum: tipo e intervallo assoluto del payload
-`[PAYLOAD-START,NEXT)`, senza allocare una stringa o copiare i byte.
-Vale `START < PAYLOAD-START <= NEXT <= END`; il payload vuoto è ammesso.
-MT2 accetta byte arbitrari; MT3 verifica UTF-8 con i motivi e gli offset
-assoluti del validatore esistente, senza normalizzazione.
+Reads only the first definite-length MT2/3 string with a minimal
+header. Returns three fixnums: type and absolute payload range
+`[PAYLOAD-START,NEXT)`, without allocating a string or copying bytes.
+`START < PAYLOAD-START <= NEXT <= END` holds; an empty payload is allowed.
+MT2 accepts arbitrary bytes; MT3 checks UTF-8 with the existing validator's
+reasons and absolute offsets, without normalization.
 
-La coda `[NEXT,END)` non viene interpretata. MAX-BYTES limita però tutta
-la finestra autorizzata END-START, coda e testata comprese, come nel
-lettore del primo item. I limiti validi sono 0..16MiB. Per esempio,
-`40 FF` con budget 1 è rifiutato prima della lettura della stringa vuota.
-BUFFER è un simple array u8 stabile, condivisibile in sola lettura;
-nessuno scratch, stato globale, attesa o I/O appartiene al prodotto.
+Tail `[NEXT,END)` is not interpreted. MAX-BYTES nevertheless limits the entire
+authorized window END-START, including tail and header, as in the
+first-item reader. Valid limits are 0..16MiB. For example,
+`40 FF` with budget 1 is rejected before reading the empty string.
+BUFFER is a stable simple u8 array, shareable read-only;
+no scratch, global state, wait, or I/O belongs to the product.
 
-Precedenze congelate:
+Frozen precedence:
 
 1. Range: INVALID-ARGUMENT, `:cbor-range`, offset NIL.
-2. Budget fuori tipo/intervallo: INVALID-ARGUMENT, `:cbor-byte-limit`, NIL.
-3. Finestra oltre budget: RESOURCE-EXHAUSTED, `:cbor-byte-budget`, NIL.
-4. Testata e minimalità: errori del lettore minimo esistente.
-5. Major diverso da 2/3: CORRUPTION-DETECTED, `:cbor-string-type`, START.
-6. HIGH non zero o payload non interamente presente: `:cbor-truncated`, END.
-7. UTF-8 del solo payload MT3, dopo la verifica della lunghezza completa.
+2. Budget outside type/range: INVALID-ARGUMENT, `:cbor-byte-limit`, NIL.
+3. Window over budget: RESOURCE-EXHAUSTED, `:cbor-byte-budget`, NIL.
+4. Header and minimality: existing minimal-reader errors.
+5. Major other than 2/3: CORRUPTION-DETECTED, `:cbor-string-type`, START.
+6. Nonzero HIGH or payload not fully present: `:cbor-truncated`, END.
+7. UTF-8 of MT3 payload only, after full-length verification.
 
-Una testata malformata/nonminima precede il major errato. Un payload
-incompleto precede eventuali byte UTF-8 errati già disponibili. Nessun
-risultato parziale, mutazione o accesso fuori finestra, neppure in errore.
-I limiti sono controllati prima della somma; lavoro limitato alla testata
-di nove byte e al payload UTF-8 entro 16MiB. Il tipo MT2 non scandisce
-il payload. Si riusano controllo span, lettore minimo e validatore UTF-8.
+A malformed/nonminimal header precedes a wrong major. An incomplete
+payload precedes any invalid UTF-8 bytes already available. No
+partial result, mutation, or out-of-window access, even on error.
+Limits are checked before addition; work bounded by the nine-byte
+header and UTF-8 payload within 16MiB. MT2 does not scan
+the payload. Span check, minimal reader, and UTF-8 validator are reused.
 
-## Verifica preregistrata
+<a id="verifica-preregistrata"></a>
 
-Corpus indipendente: vettori letterali e testate ricavate aritmeticamente,
-mai dal writer del prodotto come oracolo primario. Include larghezze,
-lunghezze 23/24,255/256,65535/65536, limiti byte, UTF-8 valido e invalido,
-offset non zero, coda non valida, precedenze, arità e immutabilità fisica.
-Due worker reali condividono buffer readonly in due ondate, con rendezvous
-dopo la prima chiamata controllata, timeout e cleanup. Nessuna inferenza
-di scaling dai tempi della fixture.
+## Preregistered verification
 
-Correzione della fixture del 2026-10-16: il clock è richiesto monotono,
-senza avanzamento strettamente positivo per ondata. START, FIRST ed END
-possono coincidere nello stesso tick; durata e overlap devono essere
-non negativi. Rendezvous dopo la prima lettura verificata, sink esatti,
-conteggi, immutabilità, timeout e join restano i controlli della fixture.
-Non si aggiungono attese artificiali o chiamate per far avanzare il clock.
-Il [fallimento Linux originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archive-csn-plan/README.md)
-e la sua causa sono conservati separatamente dai controlli del prodotto CSN.
+Independent corpus: literal vectors and arithmetically derived headers,
+never the product writer as primary oracle. Includes widths,
+lengths 23/24,255/256,65535/65536, byte limits, valid and invalid UTF-8,
+nonzero offsets, invalid tails, precedence, arity, and physical immutability.
+Two real workers share read-only buffers in two waves, with rendezvous
+after the first checked call, timeouts, and cleanup. No inference
+of scaling from fixture timings.
 
-Due letture C1 e inventario di tutte le decisioni precedono la prima
-compilazione. Funzioni entro 60 righe e dieci percorsi, invarianti attivi,
-FTYPE completo e safety 3. Nessuna esclusione dalla copertura grezza del
-nuovo sorgente; SB-COVER non viene presentato come prova MC/DC.
+Fixture correction of 2026-10-16: the clock must be monotonic,
+without strictly positive advancement per wave. START, FIRST, and END
+can coincide in the same tick; duration and overlap must be
+nonnegative. Rendezvous after the first verified read, exact sinks,
+counts, immutability, timeouts, and joins remain fixture checks.
+No artificial waits or calls are added to advance the clock.
+The [original Linux failure](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archive-csn-plan/README.md)
+and its cause are preserved separately from CSN product checks.
 
-Driver separato con fixture fredde, almeno 1024 casi deterministici e
-benchmark con warmup, repliche, checksum fisico e tre risultati. Heap
-zero è un criterio locale osservato, senza soglia di velocità. Mutazioni
-a sostituzione singola: major permissivo, UTF-8 saltato, NEXT=END,
-budget ignorato, offset iniziale saltato e arità aggiunta. Baseline e
-mutanti in processi/cache privati; contano soltanto test nominali falliti
-dopo compilazione riuscita, mai warning o errori dello strumento.
+Two C1 readings and an inventory of all decisions precede first
+compilation. Functions within 60 lines and ten paths, active invariants,
+complete FTYPE, and safety 3. No exclusion from raw coverage of the
+new source; SB-COVER is not presented as MC/DC evidence.
 
-Comandi registrati con sorgenti/indice/HEAD stabili. Originali, errori,
-correzioni degli strumenti e risultati restano conservati; raccolta con
-manifest esplicito, quattro worker e controllo dell'inventario chiuso.
-REQ-LIM-001/002, profilo documentale e qualifica C1/MC/DC restano aperti.
+Separate driver with cold fixtures, at least 1024 deterministic cases, and
+benchmark with warmup, replicates, physical checksum, and three results. Zero
+heap is a local observed criterion, without a speed threshold. Single-replacement
+mutations: permissive major, skipped UTF-8, NEXT=END,
+ignored budget, skipped initial offset, and added arity. Baseline and
+mutants in private processes/caches; only nominal tests failed
+after successful compilation count, never warnings or tool errors.
+
+Commands recorded with sources/index/HEAD stable. Originals, errors,
+tool corrections, and results remain preserved; collection with an
+explicit manifest, four workers, and closed-inventory checking.
+REQ-LIM-001/002, document profile, and C1/MC/DC qualification remain open.

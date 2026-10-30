@@ -1,88 +1,96 @@
-# Scrittura dei float CBOR — contratto e metodo
+<a id="scrittura-dei-float-cbor--contratto-e-metodo"></a>
 
-Incremento C1 preregistrato il 2026-10-13, prima del nuovo corpus,
-del prodotto e delle campagne. REQ-CBR-004 deriva da ADR-0014;
-ADR-0048 mantiene il budget del documento al livello superiore.
+# Writing CBOR floats — contract and method
 
-## Contratto locale
+C1 increment preregistered on 2026-10-13, before the new corpus,
+product, and campaigns. REQ-CBR-004 derives from ADR-0014;
+ADR-0048 keeps the document budget at the higher level.
+
+<a id="contratto-locale"></a>
+
+## Local contract
 
 ```lisp
 (scrivi-float-cbor-minimo buffer start end ai high low)
-;; => esattamente NEXT
+;; => exactly NEXT
 ```
 
-BUFFER simple u8 esclusivo, START/END index delimitano uno span half-open
-valido anche vuoto. AI 25/26/27 descrive bit IEEE binary16/32/64;
-HIGH/LOW u32 sono parole raw. HIGH deve essere zero per AI25/26;
-LOW deve essere u16 per AI25. Non sono float nativi Common Lisp.
+Exclusive simple u8 BUFFER; START/END indices delimit a half-open
+span, valid even when empty. AI 25/26/27 describes IEEE binary16/32/64 bits;
+HIGH/LOW u32 are raw words. HIGH must be zero for AI25/26;
+LOW must be u16 for AI25. These are not native Common Lisp floats.
 
-Si accettano tutte le codifiche IEEE, anche quelle accorciabili.
-Si sceglie la larghezza esatta piu corta, anche passando da 64 a 32 e 16:
-nessun arrotondamento, ricomposizione u64, AST o conversione applicativa.
-Segno, zero, infinito e significando NaN con padding a destra sono
-preservati, compreso signaling/quiet. E la preferenza locale del
-[contratto vigente](cbor-minimo-metodo.md), coerente con
+All IEEE encodings are accepted, including those that can be shortened.
+The shortest exact width is selected, including going from 64 to 32 and 16:
+no rounding, u64 reconstruction, AST, or application conversion.
+Sign, zero, infinity, and the right-padded NaN significand are
+preserved, including signaling/quiet. This is the local preference of the
+[current contract](cbor-minimo-metodo.md), consistent with
 [RFC 8949 §4.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-4.1).
-Profilo documentale, equivalenze applicative e normalizzazione dei NaN
-rimangono superiori; non si attesta determinismo dell'intero documento.
+Document profile, application equivalences, and NaN normalization
+remain at higher levels; whole-document determinism is not established.
 
-Output: F9/FA/FB, parole big-endian, 3/5/9 byte. NEXT=START+dimensione;
-solo [START,NEXT) cambia, compresi residuo dello span e coda fisica
-immutati. Al massimo nove byte, variabili immediate, nessuna scrittura
-condivisa, attesa, I/O o pubblicazione durevole/atomica.
+Output: F9/FA/FB, big-endian words, 3/5/9 bytes. NEXT=START+size;
+only [START,NEXT) changes, with the span remainder and physical tail
+unchanged. At most nine bytes, immediate variables, no shared write,
+wait, I/O, or durable/atomic publication.
 
 Preflight: range (:cbor-range), AI (:cbor-float-ai), HIGH
-(:cbor-float-high), LOW (:cbor-float-low), coerenza parole
-(:cbor-float-words), capacita della forma scelta (:cbor-float-capacity).
-I primi cinque segnalano INVALID-ARGUMENT, l'ultimo RESOURCE-EXHAUSTED;
-offset NIL e intero array fisico intatto. END e il limite, non la coda
-fisica. Errori di invariante interni senza rollback: proprietario fail-stop.
-Le nuove conversioni esatte raw sono il rischio principale dell'incremento.
+(:cbor-float-high), LOW (:cbor-float-low), word consistency
+(:cbor-float-words), selected-form capacity (:cbor-float-capacity).
+The first five signal INVALID-ARGUMENT, the last RESOURCE-EXHAUSTED;
+offset NIL and the entire physical array intact. END is the limit, not the physical
+tail. Internal invariant errors have no rollback: the owner applies fail-stop.
+The new exact raw conversions are the increment's main risk.
 
-## Corpus congelato prima del prodotto
+<a id="corpus-congelato-prima-del-prodotto"></a>
 
-Un autore distinto prepara il corpus senza leggere i nuovi sorgenti,
-poi ne comunica le impronte. Solo dopo viene scritto il prodotto;
-compilazione e campagne seguono due letture statiche C1.
+## Corpus frozen before the product
 
-Oracolo freddo aritmetico su interi/razionali, indipendente dagli helper
-del prodotto. Byte letterali per 1.5 nelle tre larghezze, zero con entrambi
-i segni, infinito, finiti solo32/solo64 e NaN. Tutti i 65.536 binary16 e
-le espansioni esatte32/64; soglie normali/subnormali, adiacenti e payload
-NaN allineati/non allineati. Offset multipli, capacita esatta/residua e
-tutte quelle insufficienti, tipi/range, precedenza degli errori, destinazioni
-non simple/displaced, arita esatta, sentinelle, riuso e concatenazione.
-Fuzz 2.048 casi seed464C5434 e conteggi congelati. Decoder e scanner sono
-soltanto controlli supplementari dopo il confronto freddo dei byte.
+A separate author prepares the corpus without reading the new sources,
+then reports its hashes. Only then is the product written;
+build and campaigns follow two static C1 readings.
 
-Due worker reali riusati, due ondate di 8.192 chiamate per worker,
-destinazioni private e piani immutabili: 32.768 scritture. READY/GO/DONE
-distinti per ondata, sink e intero buffer verificati, timeout/join/cleanup
-limitati. Intervalli osservati senza inferenza di scaling o simultaneita
-sui core. Parallelismo tra chiamate indipendenti.
+Cold integer/rational arithmetic oracle, independent of product
+helpers. Literal bytes for 1.5 at all three widths, zero with both
+signs, infinity, finite only32/only64 values, and NaNs. All 65,536 binary16 values and
+exact32/64 expansions; normal/subnormal thresholds, neighbors, and aligned/unaligned
+NaN payloads. Multiple offsets, exact/residual capacity and
+every insufficient capacity, types/ranges, error precedence, non-simple/displaced
+destinations, exact arity, sentinels, reuse, and concatenation.
+Fuzz 2,048 cases seed464C5434 and frozen counts. Decoder and scanner are
+only supplementary checks after the cold byte comparison.
 
-## Misure, difetti e conservazione
+Two real workers reused, two waves of 8,192 calls per worker,
+private destinations and immutable plans: 32,768 writes. Separate READY/GO/DONE
+for each wave, sink and full buffer verified, bounded timeout/join/cleanup.
+Observed intervals without inference of scaling or simultaneous execution
+on cores. Parallelism between independent calls.
 
-Benchmark separato seriale: sei fixture congelate prima del prodotto,
-che includono riduzione64→16,64→32,64 mantenuto, subnormale e NaN.
-Cinque repliche ×4.096 chiamate, warmup128; NEXT e tutti i byte nel sink,
-arita fredda esatta. Baseline nulla, controllo positivo16×1MiB; criterio
-locale heap osservato zero, senza soglia di velocita o prova assoluta.
+<a id="misure-difetti-e-conservazione"></a>
 
-Otto mutazioni compilabili e uniche: riduzione32 omessa; riduzione64
-omessa; segno16 perso; frazione normale16 errata; subnormale32 errato;
-capacita fisica; lead float errato; arita extra. Catalogo congelato prima
-della campagna, copie/cache private, baseline completa, smoke/fine esatti.
-Compilazione, segnali e guasti worker non valgono come rilevamento;
-si controllano ordine e origine del rifiuto runtime nei log completi.
+## Measurements, defects, and preservation
 
-Coverage grezza dei soli nuovi sorgenti, inventario completo delle
-decisioni composte, senza escludere guardie/dichiarazioni o attestare
-MC/DC. Due letture C1 con checklist12punti, self-test dei driver, letture
-indipendenti dei dati, make check completo prima di push.
+Separate serial benchmark: six fixtures frozen before the product,
+including reduction64→16,64→32,64 retained, subnormal, and NaN.
+Five replicates ×4,096 calls, warmup128; NEXT and all bytes in the sink,
+exact cold arity. Zero baseline, positive control16×1MiB; local criterion
+of zero observed heap, without a speed threshold or absolute proof.
 
-Strumenti Common Lisp (INV-X3), READ-EVAL NIL ed EOF per i dati;
-sorgenti, indice e HEAD stabili durante ogni comando registrato.
-Sorgenti, stdout/stderr, copie mutanti, fallimenti, misure e coverage
-conservati con impronte e copie verificate. Nessuna promozione del gate C1
-o del motore completo da queste prove locali.
+Eight compilable, unique mutations: omitted reduction32; omitted reduction64;
+lost sign16; wrong normal16 fraction; wrong subnormal32;
+physical capacity; wrong float lead; extra arity. Catalog frozen before
+the campaign, private copies/caches, full baseline, exact smoke/final markers.
+Compilation failures, signals, and worker faults do not count as detection;
+the order and origin of runtime rejection are checked in the complete logs.
+
+Raw coverage of only the new sources, full compound-decision
+inventory, without excluding guards/declarations or establishing
+MC/DC. Two C1 readings with a 12-point checklist, driver self-tests, independent
+readings of data, full make check before push.
+
+Common Lisp tools (INV-X3), READ-EVAL NIL and EOF for data;
+sources, index, and HEAD stable during every recorded command.
+Sources, stdout/stderr, mutant copies, failures, measurements, and coverage
+preserved with hashes and verified copies. No promotion of the C1 gate
+or whole engine from these local tests.

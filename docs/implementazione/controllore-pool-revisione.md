@@ -1,18 +1,20 @@
-# Prima lettura del controllore di calcolo
+<a id="prima-lettura-del-controllore-di-calcolo"></a>
 
-Lettura statica del 2026-10-13 sulla base
-`4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`, eseguita da un agente diverso
-dall'autore del codice. Sono stati letti tutti i sei file del package,
-l'integrazione ASDF, le fixture scheduler, il [contratto](controllore-pool.md),
-il [metodo](controllore-pool-metodo.md), ADR-0011/0031/0035/0045 e lo
-[standard](../affidabilita/standard-di-codifica.md).
+# First reading of the compute controller
 
-Il componente è C3. I dodici punti C1 sono utilizzati come lista aggiuntiva:
-questa lettura non attribuisce classe C1 alla policy e non sostituisce build,
-copertura, misura o controllo generale. Nessun test è stato eseguito dal
-revisore. I risultati delle campagne devono essere collegati separatamente.
+Static reading on 2026-10-13 against base
+`4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`, by an agent other
+than the code author. All six package files,
+ASDF integration, scheduler fixtures, [contract](controllore-pool.md),
+[method](controllore-pool-metodo.md), ADR-0011/0031/0035/0045, and the
+[standard](../affidabilita/standard-di-codifica.md) were read.
 
-| File letto | SHA-256 |
+The component is C3. The twelve C1 points are used as an additional checklist:
+this reading neither assigns class C1 to the policy nor replaces build,
+coverage, measurement, or general checks. The reviewer ran no tests.
+Campaign results must be linked separately.
+
+| File read | SHA-256 |
 |---|---|
 | `src/scheduler/package.lisp` | `1ae4001c0349d4e9f7d282e9c05129573149d50418880073789a46fa18b1968b` |
 | `src/scheduler/types.lisp` | `3b174be0919f8b27312ada4071d831c3753d62bb12be99d7e9394c48dcab474a` |
@@ -24,127 +26,133 @@ revisore. I risultati delle campagne devono essere collegati separatamente.
 | `tests/scheduler/controller.lisp` | `04a223429449e26eae1a651e74b7b736e5952a08f1cee6aacf066c53c7ab0c7d` |
 | `arcdocdb.asd` | `3593d876c5096f55a472f742f1de5f74eb4518f561953e75518d2e6efe93a23e` |
 
-## Dodici punti
+<a id="dodici-punti"></a>
 
-1. **Requisiti e ADR:** REQ-THR-001, REQ-CON-005 e REQ-AFF-008/013
-   identificano policy, separazione dal percorso caldo, limiti e ingressi
-   iniettati. ADR-0011 richiede EWMA/AIMD/isteresi; ADR-0031 limita C3 a
-   scelte di risorse. La policy non scrive alcun dato C1/C2 e non dichiara un
-   pool completo o sensori di REQ-OBS-001/002.
-2. **Invarianti:** owner corrente, target minimum..maximum, since≤last;
-   campioni e intermedi aritmetici limitati, nessun wrap del tick. La factory
-   valida gli ordinamenti e i tipi degli slot preservano i domini. Le fixture
-   leggono il getter pubblico per confrontare sensori, candidato e clock;
-   le iniezioni quiescenti di target e clock verificano entrambi i rami
-   invariant. Il helper AIMD è provato con un simbolo estraneo.
-3. **Errori:** tutte le ragioni input sono esplicite; owner e stato si
-   verificano prima di validare il campione. La validazione completa precede
-   il primo setf. Configurazione e rifiuti campione sono coperti da fixture
-   staticamente presenti, incluse le iniezioni dei rami invariant e della
-   direzione privata inattesa. Il tipo symbol del helper rende raggiungibile
-   il suo rifiuto esplicito. Non si nascondono condizioni e non esistono
-   handler o rollback nel prodotto.
-4. **Limiti:** non ci sono cicli, ricorsioni, lock, attese o retry nei sei
-   sorgenti. L'aritmetica EWMA ha massimo intermedio 2^31; i tick sono interi
-   limitati a 2^40−1. I due confronti temporali usano soltanto input validati
-   e campi locali coerenti. Pending è un esito di una chiamata breve, non un
-   thread in attesa dell'attuatore.
-5. **Allocazione:** factory separata; nessuna lista, closure, copia, hash,
-   allocazione esplicita o razionale crescente nei passi e nel getter.
-   `%pool-range` usa tipo fixnum e confronto scalare, senza costruire una
-   specifica di tipo a runtime. L'assenza di heap osservato resta da misurare
-   con sensore C4 verificato, non si deduce dalla sola lettura.
-6. **Dati verificati:** il getter espone sette valori scalari dopo owner e
-   invarianti, senza pubblicare rappresentazione o capacità mutabile.
-   L'aggiornamento espone target bounded e quattro esiti chiusi. Nessun dato
-   di richiesta, Serie o storage entra o esce dal package.
-7. **Decisioni:** inventario completo dei predicati espliciti e dei delegati
-   qui sotto. Le soglie composte hanno fixture che rendono decisivo ogni
-   operando. Per C3 non è prescritto MC/DC; non si inferisce tale proprietà
-   da numeri di test o sb-cover.
-8. **Proprietà:** owner immutabile creato sul thread scheduler, getter e
-   aggiornamento owner-only, API non rientranti e prive di callback. Nessuno
-   stato globale mutabile. La fixture foreign-owner conserva lo snapshot del
-   proprietario; otto thread costruiscono ciascuno un controllore privato,
-   dopo una barriera del solo harness con timeout di 15 secondi.
-9. **Tracciabilità e verifica:** definizioni e test nominano i requisiti;
-   ASDF carica il package dopo execution e i test scheduler nel controllo
-   generale. Build, heap, copertura e `make check` non sono stati eseguiti
-   dal revisore; il minimo C3 è 95% di istruzioni e rami, non una percentuale
-   già raggiunta dalla presenza dei test. Le campagne e le loro lacune vanno
-   lette nei [risultati](controllore-pool-risultati.md).
-10. **Standard:** safety 3, tipi completi delle funzioni, slot typed/read-only
-    e copier NIL, docstring e OWNER/SHARED. Corpi entro 60 righe e complessità
-    contenuta; nessuna nuova macro, syscall, `ignore-errors` o eccezione di
-    compilazione. Non è stata identificata una deviazione da registrare;
-    lint e build rimangono verifiche eseguibili distinte dalla lettura.
-11. **Parallelismo:** nessuna scrittura comune per richiesta né dipendenza
-    fra Serie; la policy opera nella voce scheduler/metriche dell'elenco
-    chiuso. I test paralleli verificano isolamento locale e determinismo
-    delle EWMA, senza misurare scalabilità, fairness o isolamento del motore.
-12. **Durabilità:** nessun cambiamento persistente, file, lease, batch,
-    controller Serie o CSN toccato. Non esiste un punto di atomicità su disco
-    da dichiarare per questo componente.
+## Twelve points
 
-## Inventario dei predicati
+1. **Requirements and ADRs:** REQ-THR-001, REQ-CON-005, and REQ-AFF-008/013
+   identify policy, separation from the hot path, limits, and injected
+   inputs. ADR-0011 requires EWMA/AIMD/hysteresis; ADR-0031 limits C3 to
+   resource choices. The policy writes no C1/C2 data and claims neither a
+   complete pool nor REQ-OBS-001/002 sensors.
+2. **Invariants:** current owner, target minimum..maximum, since≤last;
+   bounded samples and arithmetic intermediates, no tick wrap. The factory
+   validates ordering and slot types preserve domains. Fixtures
+   read the public getter to compare sensors, candidate, and clock;
+   quiescent target and clock injections check both invariant
+   branches. The AIMD helper is tested with a foreign symbol.
+3. **Errors:** all input reasons are explicit; owner and state are
+   checked before sample validation. Full validation precedes
+   the first setf. Configuration and sample rejections have statically
+   present fixtures, including invariant-branch and unexpected private
+   direction injections. The helper's symbol type makes
+   its explicit rejection reachable. Conditions are not hidden and there are
+   no handlers or rollback in the product.
+4. **Limits:** no loops, recursion, locks, waits, or retries in the six
+   sources. EWMA arithmetic has maximum intermediate 2^31; ticks are integers
+   bounded to 2^40−1. The two time comparisons use only validated inputs
+   and consistent local fields. Pending is the outcome of a short call, not
+   a thread waiting for an actuator.
+5. **Allocation:** separate factory; no list, closure, copy, hash,
+   explicit allocation, or growing rational in steps or getter.
+   `%pool-range` uses fixnum type and scalar comparison without constructing a
+   runtime type specifier. Absence of observed heap remains to be measured
+   with a verified C4 sensor; it is not inferred from reading alone.
+6. **Verified data:** the getter exposes seven scalar values after owner and
+   invariants, without publishing mutable representation or capability.
+   Update exposes a bounded target and four closed outcomes. No request,
+   Serie, or storage data enter or leave the package.
+7. **Decisions:** complete inventory of explicit and delegated predicates
+   below. Compound thresholds have fixtures making every
+   operand decisive. C3 does not prescribe MC/DC; that property is not inferred
+   from test counts or sb-cover.
+8. **Ownership:** immutable owner created on the scheduler thread, owner-only
+   getter and update, non-reentrant APIs without callbacks. No
+   mutable global state. The foreign-owner fixture retains the owner's snapshot;
+   eight threads each construct a private controller,
+   after a harness-only barrier with 15-second timeout.
+9. **Traceability and verification:** definitions and tests name requirements;
+   ASDF loads the package after execution and scheduler tests in the general
+   check. Build, heap, coverage, and `make check` were not run
+   by the reviewer; C3 minimum is 95% statements and branches, not a percentage
+   already reached by test presence. Campaigns and their gaps must be
+   read in the [results](controllore-pool-risultati.md).
+10. **Standard:** safety 3, complete function types, typed/read-only slots
+    and copier NIL, docstrings and OWNER/SHARED. Bodies within 60 lines and bounded
+    complexity; no new macro, syscall, `ignore-errors`, or compilation
+    exception. No deviation requiring registration was identified;
+    lint and build remain executable checks distinct from reading.
+11. **Parallelism:** no common per-request write or dependency
+    across Serie; policy operates in the scheduler/metrics entry of the closed
+    list. Parallel tests verify local isolation and EWMA determinism
+    without measuring engine scalability, fairness, or isolation.
+12. **Durability:** no persistent change, file, lease, batch,
+    Serie controller, or CSN touched. There is no on-disk atomicity point
+    to declare for this component.
 
-L'inventario è una lettura del sorgente, non un rapporto di copertura.
-Tipi degli slot, forme package/ASDF e codice prodotto dalle forme di
-definizione restano nell'ambito dei file completi del denominatore sb-cover.
+<a id="inventario-dei-predicati"></a>
 
-| ID / funzione | Predicato o ramo esplicito | Effetto |
+## Predicate inventory
+
+The inventory is a source reading, not a coverage report.
+Slot types, package/ASDF forms, and code generated by definition forms
+remain within the complete-file scope of the sb-cover denominator.
+
+| ID / function | Explicit predicate or branch | Effect |
 |---|---|---|
-| B01 / `%pool-range` | `and` di tipo fixnum e range lower..upper | Entrambi veri restituisce il valore; altrimenti invalid typed prima della mutazione. |
-| B02 / factory | Maximum presente | Usa maximum, oppure default 2×cores. NIL esplicito usa il default. |
-| B03 / factory | Initial presente | Usa initial, oppure minimum. NIL esplicito usa il default. |
-| C01 / `%check-pool` | Owner EQ thread corrente | Estraneo invalid prima di ogni lettura di stato pubblica o scrittura. |
-| C02 / `%check-pool` | Minimum≤target≤maximum | Incoerente invariant `:pool-state`. |
-| C03 / `%check-pool` | Since≤last | Incoerente invariant `:pool-state`. |
-| G01, G02 / getter | Initialized, due occorrenze | Last/since numerici dopo campione, NIL prima. |
-| E01 / `%pool-ewma` | Reset | Campione×256, oppure floor della media 1/8. |
-| D01 / `%pool-direction` | `or` di P99≥1200×256 e `and` coda<256/CPU≤300×256 | Shrink con precedenza. |
-| D02 / `%pool-direction` | `and` coda≥queue-high×256, CPU<700×256, P99≤1000×256 | Grow soltanto se shrink falso e tutti veri. |
-| D03 / `%pool-direction` | Fallback cond | Hold esplicito. |
-| A01 / `%pool-apply` | Case grow/shrink/hold/otherwise | Target successivo bounded; direction privata estranea invariant. |
-| A02 / `%pool-apply` | Target successivo uguale al corrente | Hold e reset, anche quando una direzione incontra il limite. |
-| A03 / `%pool-apply` | Direzione diversa dal candidato | Avvia nuova permanenza; nessuna azione. |
-| A04 / `%pool-apply` | Elapsed<dwell | Hold; soglia inclusiva agisce nel fallback. |
-| A05 / `%pool-apply` | Fallback cond | Applica target e resetta candidato hold/since=tick. |
-| S01 / `%pool-sample` | Initialized | Prima chiamata senza delta; dopo, valida almeno period. |
-| S02 / `%pool-sample` | Delta≥period | Troppo breve/regressivo invalid prima delle scritture. |
-| U01 / aggiornamento | `or` non-initialized/gap>2×period | Reset sensori e permanenza; gap esatto 2 period continua. |
-| U02 / aggiornamento | Reset | Candidato :hold e since=tick, poi valutazione del campione corrente. |
-| U03 / aggiornamento | Actual diverso dal target | Sensori aggiornati, pending con target identico e reset della permanenza. |
+| B01 / `%pool-range` | `and` of fixnum type and range lower..upper | Both true return the value; otherwise typed invalid before mutation. |
+| B02 / factory | Maximum present | Uses maximum, or default 2×cores. Explicit NIL uses default. |
+| B03 / factory | Initial present | Uses initial, or minimum. Explicit NIL uses default. |
+| C01 / `%check-pool` | Owner EQ current thread | Foreign owner invalid before every public state read or write. |
+| C02 / `%check-pool` | Minimum≤target≤maximum | Inconsistent invariant `:pool-state`. |
+| C03 / `%check-pool` | Since≤last | Inconsistent invariant `:pool-state`. |
+| G01, G02 / getter | Initialized, two occurrences | Numeric last/since after sample, NIL before. |
+| E01 / `%pool-ewma` | Reset | Sample×256, or floor of 1/8 average. |
+| D01 / `%pool-direction` | `or` of P99≥1200×256 and `and` queue<256/CPU≤300×256 | Shrink takes precedence. |
+| D02 / `%pool-direction` | `and` queue≥queue-high×256, CPU<700×256, P99≤1000×256 | Grow only if shrink false and all true. |
+| D03 / `%pool-direction` | Fallback cond | Explicit hold. |
+| A01 / `%pool-apply` | Case grow/shrink/hold/otherwise | Bounded next target; foreign private direction invariant. |
+| A02 / `%pool-apply` | Next target equals current | Hold and reset, including when direction meets a limit. |
+| A03 / `%pool-apply` | Direction differs from candidate | Starts new dwell; no action. |
+| A04 / `%pool-apply` | Elapsed<dwell | Hold; inclusive threshold acts in fallback. |
+| A05 / `%pool-apply` | Fallback cond | Applies target and resets candidate hold/since=tick. |
+| S01 / `%pool-sample` | Initialized | First call without delta; afterward validates at least period. |
+| S02 / `%pool-sample` | Delta≥period | Too short/regressive invalid before writes. |
+| U01 / update | `or` non-initialized/gap>2×period | Resets sensors and dwell; gap exactly 2 periods continues. |
+| U02 / update | Reset | Candidate :hold and since=tick, then evaluates current sample. |
+| U03 / update | Actual differs from target | Sensors updated, pending with identical target and dwell reset. |
 
-Delegati dell'aggiornamento: `%check-pool` prima e dopo, `%pool-sample`
-completo prima del setf, tre `%pool-ewma`, `%pool-direction` e `%pool-apply`.
-Il getter delega un `%check-pool`. Le chiamate a `%pool-range` hanno limiti
-letterali o derivati dalla configurazione validata; non sono loop o retry.
+Update delegates: `%check-pool` before and after, complete `%pool-sample`
+before setf, three `%pool-ewma`, `%pool-direction`, and `%pool-apply`.
+The getter delegates one `%check-pool`. `%pool-range` calls have literal
+limits or limits derived from validated configuration; they are not loops or retries.
 
-## Lacune e rischi dichiarati
+<a id="lacune-e-rischi-dichiarati"></a>
 
-Nessun bug funzionale è stato identificato nella lettura della versione
-descritta. La rilettura finale include i due verificatori invariant, il
-rifiuto del simbolo direction estraneo e la barriera degli otto thread;
-gli SHA sopra identificano questi sorgenti. Nessun ramo va rimosso dal
-denominatore prima di valutare il 95%.
+## Declared gaps and risks
 
-L'oracolo parallelo della suite confronta i sensori EWMA; gli esiti della
-policy nelle inversioni P99 sono controllati da vettori attesi manuali.
-Il C4 `tools/pool-controller-bench.lisp` aggiunge un oracolo startup della
-traccia grow/shrink con CPU/P99 costanti, confrontando tutte le sette uscite
-ad ogni passo, più pending e hold. È una trace finita specifica, non una
-dimostrazione esaustiva della policy o del feedback reale.
+No functional bug identified in reading the described version.
+Final rereading includes both invariant verifiers,
+rejection of a foreign direction symbol, and the eight-thread barrier;
+the SHAs above identify these sources. No branch should be removed from the
+denominator before assessing 95%.
 
-La policy non rileva ogni alterazione arbitraria dei campi privati. Una
-crescita pending resta target anche se P99 peggiora; nessuna revoca o
-scadenza dell'attuatore è implementata. Gap resetta l'evidenza di permanenza
-e può ritardare indefinitamente un comando in presenza di campioni troppo
-sporadici; è una scelta conservativa, non una garanzia di progresso.
+The suite's parallel oracle compares EWMA sensors; policy outcomes
+on P99 reversals are checked with manual expected vectors.
+C4 `tools/pool-controller-bench.lisp` adds a startup oracle for the
+grow/shrink trace with constant CPU/P99, comparing all seven outputs
+at every step, plus pending and hold. This is a specific finite trace, not an
+exhaustive demonstration of policy or real feedback.
 
-Actual è un numero attestato dal caller, non contato dal componente.
-Conferme sbagliate o metriche errate possono produrre scelte sbagliate di
-risorse, ma la policy non può modificare dati C1/C2. Mancano attuatore,
-protocollo di comandi obsoleti, wake/park e shutdown; RSK-12 resta aperto su
-feedback reale e calibrazione. La verifica finale del prodotto e del C4 e
-i byte delle prove sono responsabilità delle campagne separate.
+The policy does not detect every arbitrary alteration of private fields. A
+pending growth remains the target even if P99 worsens; no actuator revocation or
+expiration is implemented. Gap resets dwell evidence
+and may defer a command indefinitely with overly sporadic
+samples; this is a conservative choice, not a progress guarantee.
+
+Actual is a caller-certified number, not counted by the component.
+Wrong acknowledgments or metrics may produce wrong resource
+choices, but policy cannot modify C1/C2 data. Actuator,
+stale-command protocol, wake/park, and shutdown are missing; RSK-12 remains open for
+real feedback and calibration. Final product and C4 verification and
+evidence bytes belong to separate campaigns.

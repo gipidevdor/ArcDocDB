@@ -1,78 +1,90 @@
-# ADR-0032 — Seqlock a 64 bit con tentativi limitati e ripiego sul writer
+<a id="adr-0032--seqlock-a-64-bit-con-tentativi-limitati-e-ripiego-sul-writer"></a>
 
-- **Stato:** Accettata; **punto 2 (layout dello slot) sostituito da [ADR-0043](0043-primary-index-a-frammenti.md)**: slot a 4 parole; al raggiungimento della soglia del contatore il frammento si ricostruisce invece di fermare la Serie. Protocollo, 64 bit e tentativi limitati restano.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda; **sostituisce in parte**
-  [ADR-0015](0015-primary-index-swiss-table-swmr.md) (dettaglio del seqlock e layout dello
-  slot). Il resto di ADR-0015 resta valido.
-- **Riferimenti:** [architettura](../architettura.md#primary-index), INV-I1, INV-A8
+# ADR-0032 — 64-bit seqlock with bounded retries and writer fallback
 
-## Contesto
+- **Status:** Accepted; **item 2 (slot layout) superseded by [ADR-0043](0043-primary-index-a-frammenti.md)**: four-word slots; when the counter reaches its threshold, the fragment is rebuilt instead of stopping the Serie. Protocol, 64 bits, and bounded retries remain.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment; **partly supersedes**
+  [ADR-0015](0015-primary-index-swiss-table-swmr.md) (seqlock details and slot
+  layout). The rest of ADR-0015 remains valid.
+- **References:** [architecture](../architettura.md#primary-index), INV-I1, INV-A8
 
-[ADR-0015](0015-primary-index-swiss-table-swmr.md) usava un contatore seqlock a 8 bit,
-giustificato così: un falso «uguale» richiederebbe 256 scritture sullo stesso slot durante
-una lettura di ~100 ns. È un argomento sulla **velocità relativa dei thread**, non una
-garanzia: un reader sospeso a metà lettura (preemption, pausa del GC, scheduler del sistema
-operativo) può osservare 256 scritture e rilevare lo stesso contatore con campi incoerenti.
-In un sistema critico la correttezza non può dipendere dai tempi (ADR-0031, priorità 2).
+<a id="contesto"></a>
 
-Inoltre un ciclo di tentativi illimitato non è ammesso (INV-A8): un writer che modifica
-continuamente lo stesso slot affamerebbe un reader.
+## Context
 
-## Decisione
+[ADR-0015](0015-primary-index-swiss-table-swmr.md) used an 8-bit seqlock counter,
+justified as follows: a false “equal” would require 256 writes to the same slot during
+an approximately 100 ns read. This is an argument about **relative thread speed**, not a
+guarantee: a reader suspended midway through a read (preemption, GC pause, operating
+system scheduler) can observe 256 writes and see the same counter with inconsistent fields.
+In a critical system, correctness cannot depend on timing (ADR-0031, priority 2).
 
-1. **Contatore a 64 bit per slot**, in un array `(unsigned-byte 64)` parallelo agli altri.
-   Ogni scrittura lo incrementa due volte. Il ritorno a un valore già visto richiederebbe 2⁶³
-   modifiche dello stesso slot: oltre 290 anni a 10⁹ modifiche al secondo. L'assunzione è
-   dichiarata e verificata da un controllo che rende fatale (fail-stop) il superamento di
-   2⁶² (ADR-0033).
-2. **Slot: 6 parole da 64 bit + 1 byte di controllo = 49 byte**; a fattore di carico 7/8
-   ≈ **56 byte per entry**. Il CSN torna a 64 bit pieni.
+An unbounded retry loop is also prohibited (INV-A8): a writer continually modifying
+the same slot would starve a reader.
 
-   | Parola | Contenuto |
+<a id="decisione"></a>
+
+## Decision
+
+1. **64-bit counter per slot**, in an `(unsigned-byte 64)` array parallel to the others.
+   Each write increments it twice. Returning to an already observed value would require 2⁶³
+   changes to the same slot: over 290 years at 10⁹ changes per second. This assumption is
+   declared and checked by a guard that makes exceeding 2⁶² fatal (fail-stop)
+   (ADR-0033).
+2. **Slot: six 64-bit words + one control byte = 49 bytes**; at a 7/8 load factor,
+   approximately **56 bytes per entry**. The CSN returns to a full 64 bits.
+
+   | Word | Contents |
    |---|---|
-   | 0 | hash64 della chiave |
-   | 1 | key-off (40 bit) · key-len (8) · tipo (8) · flag (8) |
+   | 0 | key hash64 |
+   | 1 | key-off (40 bits) · key-len (8) · type (8) · flags (8) |
    | 2 | segment-id (32) · offset (32) |
-   | 3 | length (24) · versione (40) |
+   | 3 | length (24) · version (40) |
    | 4 | csn (64) |
-   | 5 | contatore seqlock (64) |
+   | 5 | seqlock counter (64) |
 
-3. **Protocollo.** Writer: `s ← seq`; `seq ← s+1` (dispari); barriera di scrittura; scrittura
-   dei campi; barriera di scrittura; `seq ← s+2`. Reader: `s1 ← seq`; se dispari, nuovo
-   tentativo; barriera di lettura; lettura dei campi; barriera di lettura; `s2 ← seq`; se
-   `s1 ≠ s2`, nuovo tentativo. Le barriere sono `sb-thread:barrier`.
-4. **Tentativi limitati: al più 8.** Se esauriti, il reader inoltra la lettura al **writer
-   logico della Serie** come richiesta serializzata: sempre coerente per costruzione, mai
-   illimitata. Il caso è raro ed è una metrica (`seqlock-fallback`).
-5. La **key arena** è append-only e immutabile dopo la pubblicazione: si pubblica con barriera
-   di scrittura e poi con l'aggiornamento dello slot; nessun seqlock è necessario. La
-   **tabella delle versioni trattenute** usa lo stesso protocollo del punto 3.
-6. **Verifica.** (a) Il protocollo è un modello esplorato in modo esaustivo (1 writer, 2
-   reader, 2 slot, ogni interleaving, ogni sospensione) in SPK-07. (b) Stress test con writer
-   che scrive pattern autoconsistenti (tutti i campi derivati da un solo valore) e reader che
-   verificano la coerenza, con sospensioni artificiali tramite lo schedulatore iniettabile
+3. **Protocol.** Writer: `s ← seq`; `seq ← s+1` (odd); write barrier; write
+   fields; write barrier; `seq ← s+2`. Reader: `s1 ← seq`; if odd, retry;
+   read barrier; read fields; read barrier; `s2 ← seq`; if
+   `s1 ≠ s2`, retry. Barriers use `sb-thread:barrier`.
+4. **Bounded retries: at most 8.** When exhausted, the reader forwards the read to the
+   **Serie's logical writer** as a serialized request: always consistent by construction,
+   never unbounded. This rare case is tracked by a metric (`seqlock-fallback`).
+5. The **key arena** is append-only and immutable after publication: published with a write
+   barrier followed by the slot update; no seqlock is needed. The
+   **retained-version table** uses the protocol from item 3.
+6. **Verification.** (a) The protocol is a model explored exhaustively (1 writer, 2
+   readers, 2 slots, every interleaving, every suspension) in SPK-07. (b) Stress test with a writer
+   writing self-consistent patterns (all fields derived from one value) and readers
+   checking consistency, with artificial suspensions through the injectable scheduler
    ([ADR-0035](0035-strategia-di-verifica-e-tracciabilita.md)).
 
-Pattern: seqlock (kernel Linux) con contatore a larghezza piena; lettura ottimistica con
-ripiego bloccante (SeqLock in Linux `seqlock_t`, Folly SeqLock).
+Pattern: seqlock (Linux kernel) with a full-width counter; optimistic read with
+blocking fallback (Linux `seqlock_t` SeqLock, Folly SeqLock).
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- +8 byte per entry (48 → 56 B): [limiti](../limiti.md) e [stime](../valutazione/stime-ordine-di-grandezza.md)
-  aggiornati.
-- Nessun argomento di correttezza dipende dai tempi.
-- Nessun ciclo illimitato sul percorso di lettura.
+## Consequences
 
-## Alternative considerate
+- +8 bytes per entry (48 → 56 B): [limits](../limiti.md) and [estimates](../valutazione/stime-ordine-di-grandezza.md)
+  updated.
+- No correctness argument depends on timing.
+- No unbounded loop on the read path.
 
-- *Contatore a 8 o 16 bit:* correttezza probabilistica; scartata.
-- *Lock lettore/scrittore per slot o per tabella:* contesa tra reader e writer sul percorso
-  caldo.
-- *Una nuova copia dell'entry a ogni modifica (RCU per entry):* un oggetto per entry, contro
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *8- or 16-bit counter:* probabilistic correctness; rejected.
+- *Reader/writer lock per slot or table:* contention between readers and writers on the
+  hot path.
+- *A new entry copy on every change (RCU per entry):* one object per entry, against
   ADR-0024.
 
-## Valutazione
+<a id="valutazione"></a>
 
-- Rischi: RSK-02 (parte prestazionale, SPK-01).
-- Rivedere se: la frequenza di `seqlock-fallback` è non trascurabile sotto carico (SPK-01).
+## Assessment
+
+- Risks: RSK-02 (performance portion, SPK-01).
+- Revisit if: the frequency of `seqlock-fallback` is significant under load (SPK-01).

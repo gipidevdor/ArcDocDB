@@ -1,14 +1,18 @@
-# Lettura coordinata dell'Archivio
+<a id="lettura-coordinata-dellarchivio"></a>
 
-`arcdocdb.recovery.bootstrap` collega il [recovery semantico della Serie](recovery-serie.md)
-al [piano CSN completo](csn-archivio-recovery.md). È un percorso di bootstrap
-readonly: nessun nuovo formato o punto di atomicità durevole.
+# Coordinated Archivio reading
 
-Il [completamento dei nomi dell'Archivio](stabilizzazione-archivio.md)
-riconferma il gate sui risultati correnti e verifica tutti i nomi prima
-degli effetti. Rimozioni, checkpoint, indici e ammissione restano aperti.
+`arcdocdb.recovery.bootstrap` connects [semantic Serie recovery](recovery-serie.md)
+to the [complete CSN plan](csn-archivio-recovery.md). It is a read-only bootstrap
+path: no new format or durable atomicity point.
 
-## Ingressi e risultati
+[Archivio name completion](stabilizzazione-archivio.md) reconfirms the gate
+on current results and checks all names before effects. Removals, checkpoints,
+indexes, and admission remain open.
+
+<a id="ingressi-e-risultati"></a>
+
+## Inputs and results
 
 ```lisp
 (arcdocdb.recovery.bootstrap:leggi-archivio-recuperato
@@ -16,116 +20,121 @@ degli effetti. Rimozioni, checkpoint, indici e ammissione restano aperti.
  :max-segmenti-totali 1048576 :budget-riferimenti 16777216)
 ```
 
-`series-set` è l'insieme canonico completo creato dal catalogo, Registri
-inclusa. `decisions` è il replay completo dello **stesso oggetto Archivio**.
-CONTROLS, SOURCE-SETS e PER-SERIES-LIMITS sono simple-vector nel medesimo
-ordine delle viste del set. Ogni controllo deve riferire la vista esatta
-per EQ; UUID uguali o ambiti clonati non sostituiscono questa autorità.
-Ogni Serie conserva la propria configurazione readonly dei limiti.
+`series-set` is the complete canonical set created from the catalog, including
+Registri. `decisions` is the complete replay of the **same Archivio object**.
+CONTROLS, SOURCE-SETS, and PER-SERIES-LIMITS are simple-vectors in the same
+order as the set's views. Each control must refer to the exact view by EQ;
+equal UUIDs or cloned scopes do not substitute for this authority. Each Serie
+retains its own read-only limit configuration.
 
-Il caller mantiene tutti i set acquisiti, FD, namespace e ingressi stabili
-per l'intera operazione, in recovery esclusivo nel pool I/O. Il catalogo
-completo resta una precondizione: l'API non scopre una Serie omessa dal set
-attestato dal chiamante. Non acquisisce directory o file e non effettua
-riconciliazione fisica o modifiche dei nomi.
+The caller keeps all acquired sets, FDs, namespace, and inputs stable throughout
+the operation, in exclusive recovery in the I/O pool. The complete catalog
+remains a precondition: the API does not discover a Serie omitted from the set
+attested by the caller. It does not acquire directories or files or perform
+physical reconciliation or name changes.
 
-Al successo restituisce tre valori:
+On success it returns three values:
 
-1. piano CSN canonico dell'Archivio;
-2. nuovo simple-vector di ACTIVE recuperati;
-3. nuovo simple-vector di vettori CLOSED recuperati, uno per Serie.
+1. canonical Archivio CSN plan;
+2. new simple-vector of recovered ACTIVE results;
+3. new simple-vector of recovered CLOSED vectors, one per Serie.
 
-Gli output mantengono l'ordine del set. Vettori nuovi del caller, token
-readonly dei reader; nessun buffer trattenuto. La chiamata successiva a
-`crea-runtime-archivio` può usare il piano, con i propri obblighi ancora
-aperti su effetti recuperati, indici e ammissione.
+Outputs retain set order. New caller-owned vectors, read-only reader tokens;
+no buffer retained. The subsequent `crea-runtime-archivio` call can use the
+plan, with its own obligations still open for recovered effects, indexes,
+and admission.
 
-## Tutti i preflight prima dei dati
+<a id="tutti-i-preflight-prima-dei-dati"></a>
 
-Prima di leggere il primo header vengono verificati autorità Archivio,
-forma e lunghezze dei tre vettori. I budget minimi coprono almeno un ACTIVE
-per Serie e i due vettori esterni. Poi ogni Serie viene verificata senza
-leggerne i dati: vista esatta, cardinalità, stato/ordine ID, FD, backend,
-scratch, P CLOSED rispetto a EOF e limiti locali.
+## All preflights before data
 
-Le capacità aggregate vengono controllate prima della scansione completa
-delle fonti della riga: numero di segmenti e riferimenti. La somma dei byte
-viene controllata dopo il preflight della riga, sempre prima di qualsiasi
-header. Un errore di configurazione nell'ultima Serie non avvia prima la
-lettura delle altre Serie. Identità binarie, CRC e semantica sono invece
-verificati dai reader durante la successiva fase di lettura.
+Before reading the first header, Archivio authority and the shape and lengths
+of the three vectors are checked. Minimum budgets cover at least one ACTIVE
+per Serie and the two outer vectors. Then each Serie is checked without
+reading its data: exact view, cardinality, ID state/order, FDs, backend,
+scratch, CLOSED P against EOF, and local limits.
 
-Il preflight interno della Serie restituisce ora anche il totale dei byte.
-Il terzo valore aggiunge metadati, senza modificare i due risultati pubblici
-di `leggi-serie-recuperata` o eseguire un'altra scansione dei dati.
+Aggregate capacities are checked before the full scan of the row's sources:
+segment and reference counts. The byte sum is checked after row preflight,
+still before any header. A configuration error in the last Serie does not
+first start reading the other Serie. Binary identities, CRC, and semantics
+are instead checked by readers during the subsequent reading phase.
 
-## Budget globali e costo
+Internal Serie preflight now also returns total bytes. The third value
+adds metadata without changing the two public results of
+`leggi-serie-recuperata` or performing another data scan.
 
-Il budget byte è un `index` obbligatorio, esplicito e senza default o
-clamping. Zero è ammesso e impedisce la lettura di qualunque Archivio non
-vuoto. Misura somma EOF degli ACTIVE più P dei CLOSED; non IOPS o tempo.
-`max-segmenti-totali` è un `index` configurabile, default 1048576, inclusi
-ACTIVE. Zero rifiuta il set canonico non vuoto prima delle scansioni.
+<a id="budget-globali-e-costo"></a>
 
-Per N Serie e S segmenti complessivi, i nuovi array di riferimenti hanno
-payload 8*(N+S) su SBCL 64 bit: 16*N per i due vettori esterni e 8*(S−N)
-per i vettori CLOSED. Default `budget-riferimenti`: 16 MiB, configurabile.
-Ogni budget locale resta applicato alla relativa Serie. Il gate finale del
-piano usa il budget globale come limite superiore per i CLOSED di una Serie;
-i limiti più stretti sono già verificati prima dei dati e dai reader locali.
+## Global budgets and cost
 
-Sono esclusi scratch prestato, token, workspace e hash dei gate, oggetti,
-header e GC: non è un limite RSS. Lo stesso scratch viene riusato per tutte
-le Serie e deve contenere il massimo EOF ACTIVE/P CLOSED ammesso. Le Serie
-vengono lette in sequenza in questo ingresso di bootstrap; nessun lock o
-nuova serializzazione nel percorso operativo tra Serie. Restano disponibili
-i reader separati per un futuro avvio parallelo governato dal coordinatore.
+The byte budget is a required, explicit `index`, without a default or
+clamping. Zero is allowed and prevents reading any nonempty Archivio.
+It measures the sum of ACTIVE EOF plus CLOSED P; not IOPS or time.
+`max-segmenti-totali` is a configurable `index`, default 1048576, including
+ACTIVE. Zero rejects the nonempty canonical set before scans.
 
-Le verifiche metadata vengono ripetute dai reader prima dell'uso; il gate
-canonico finale riverifica insiemi, provenienza ACTIVE e tutte le decisioni.
-Nessuna riapertura, enumerazione directory o nuova scansione dati per il
-calcolo CSN. Non si deducono prestazioni da questa composizione; costo di
-avvio, memoria, GC e parallelismo del bootstrap restano da misurare.
+For N Serie and S total segments, new reference arrays have payload
+8*(N+S) on 64-bit SBCL: 16*N for the two outer vectors and 8*(S−N)
+for CLOSED vectors. Default `budget-riferimenti`: 16 MiB, configurable.
+Each local budget remains applied to its Serie. The final plan gate uses
+the global budget as an upper limit for a Serie's CLOSED segments;
+stricter limits are already checked before data and by local readers.
 
-## Ritorno completo e lifetime
+Borrowed scratch, tokens, gate workspaces and hashes, objects, headers, and
+GC are excluded: this is not an RSS limit. The same scratch is reused for
+all Serie and must hold the maximum allowed ACTIVE EOF/CLOSED P. Serie
+are read sequentially in this bootstrap entry point; no lock or new
+serialization on the operational path between Serie. Separate readers
+remain available for future parallel startup controlled by the coordinator.
 
-Dopo tutte le letture viene costruito il piano esistente, comprendendo
-anche DECISION senza prepared locale. Il conteggio delle Serie e dei
-segmenti del piano deve corrispondere al preflight. Solo allora escono i
-tre valori. Se una qualunque lettura o l'ultimo gate fallisce, i risultati
-precedenti restano privati e recuperabili dal GC, senza effetti pubblicati.
-Lo scratch può essere stato modificato; nessun rollback dei buffer.
+Metadata checks are repeated by readers before use; the final canonical
+gate rechecks sets, ACTIVE provenance, and all decisions. No reopening,
+directory enumeration, or new data scan for CSN calculation. Performance is
+not inferred from this composition; startup cost, memory, GC, and bootstrap
+parallelism remain to be measured.
 
-Le capacità rimangono dei proprietari dei set: nessuna close implicita su
-successo o errore. I risultati non sono una lease sui FD e non impediscono
-una chiusura illegittima del caller. Il proprietario termina i borrower
-prima del cleanup. Condizioni originali propagate senza mascheramento o
-retry. Il confine generale di arresto C1 e la gestione del cleanup del
-coordinatore restano aperti.
+<a id="ritorno-completo-e-lifetime"></a>
 
-## Decisioni e metodo preregistrato
+## Complete return and lifetime
 
-| ID | Casi dedicati da verificare |
+After all readings, the existing plan is built, including DECISION without
+local prepared data. The plan's Serie and segment counts must match preflight.
+Only then are the three values returned. If any reading or the final gate
+fails, previous results remain private and GC-reclaimable, without published
+effects. Scratch may have changed; no buffer rollback.
+
+Capabilities remain owned by the sets' owners: no implicit close on success
+or error. Results are not a lease on FDs and do not prevent an illegitimate
+caller close. The owner terminates borrowers before cleanup. Original
+conditions propagate without masking or retry. The general C1 shutdown
+boundary and coordinator cleanup handling remain open.
+
+<a id="decisioni-e-metodo-preregistrato"></a>
+
+## Decisions and preregistered method
+
+| ID | Dedicated cases to verify |
 |---|---|
-| RBA-D01 | Stesso Archivio EQ del replay; clone e UUID uguale non bastano |
-| RBA-D02 | Tre simple-vector: ogni tipo e ogni lunghezza errati separatamente |
-| RBA-D03 | Budget minimo ACTIVE/vettori, zero ed uguaglianza/meno uno prima delle scansioni |
-| RBA-D04 | CONTROL della vista esatta per ogni riga; scambio e clone |
-| RBA-D05 | Configurazioni diverse per Serie; tutti i preflight locali prima dei dati |
-| RBA-D06 | Somma segmenti/riferimenti: uguaglianza/meno uno, compresa ultima riga |
-| RBA-D07 | Somma byte: EOF ACTIVE e P CLOSED, limite esatto/meno uno; ultima riga invalida |
-| RBA-D08 | Conteggio CLOSED stabile; Serie <= segmenti <= budget AND formula riferimenti AND byte nel budget |
-| RBA-D09 | Reader canonici v1/v2, OUTCOME/EDIT/DECISION e provenienza del replay; scratch unico |
-| RBA-D10 | Errore primo/ultimo reader o gate: nessun output/close/binding/CSN |
-| RBA-D11 | Conteggio Serie AND segmenti del piano coerenti; singole FI; vettori nuovi |
+| RBA-D01 | Same Archivio EQ as replay; clone and equal UUID are insufficient |
+| RBA-D02 | Three simple-vectors: each incorrect type and length separately |
+| RBA-D03 | Minimum ACTIVE/vector budgets, zero and equality/minus one before scans |
+| RBA-D04 | CONTROL of the exact view for each row; swap and clone |
+| RBA-D05 | Different configurations per Serie; all local preflights before data |
+| RBA-D06 | Segment/reference sum: equality/minus one, including last row |
+| RBA-D07 | Byte sum: ACTIVE EOF and CLOSED P, exact limit/minus one; invalid last row |
+| RBA-D08 | Stable CLOSED count; Serie <= segments <= budget AND reference formula AND bytes within budget |
+| RBA-D09 | Canonical v1/v2 readers, OUTCOME/EDIT/DECISION and replay provenance; single scratch |
+| RBA-D10 | First/last reader or gate error: no output/close/binding/CSN |
+| RBA-D11 | Consistent plan Serie AND segment counts; individual FI; new vectors |
 
-Metodo: compilazione del solo prodotto senza avvisi, stile, tracciabilità,
-link, disassemblaggio senza chiamare le nuove API, controllo C4 degli
-archivi e conservazione degli originali. Due letture dell'autore separate
-da revisione indipendente. Nessun test funzionale, FI, MC/DC, copertura,
-modello o benchmark nuovo viene aggiunto o eseguito in questo incremento.
-RBA-D01…D11, qualifica C1, pubblicazione degli effetti e gate del traffico
-restano aperti; CI generale e controlli statici non li sostituiscono.
+Method: product-only compilation without warnings, style, traceability,
+links, disassembly without calling the new APIs, C4 archive checking,
+and retention of originals. Two author readings separate from independent
+review. No new functional test, FI, MC/DC, coverage, model, or benchmark
+is added or run in this increment. RBA-D01…D11, C1 qualification, effect
+publication, and traffic gate remain open; general CI and static checks
+do not replace them.
 
-I [record locali e le riletture](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-archive-bootstrap/README.md)
-conservano compilazione, controlli statici e disassemblaggio della revisione congelata.
+The [local records and rereadings](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-archive-bootstrap/README.md)
+retain compilation, static checks, and disassembly of the frozen revision.

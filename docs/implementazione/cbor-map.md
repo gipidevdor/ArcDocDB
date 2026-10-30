@@ -1,60 +1,62 @@
-# Composizione delle mappe CBOR
+<a id="composizione-delle-mappe-cbor"></a>
 
-`arcdocdb.cbor:scrivi-mappa-cbor-minima` compone una mappa da chiavi e
-valori già codificati, verificandoli prima della prima scrittura.
-Il [metodo preregistrato](cbor-map-metodo.md) definisce REQ-CBR-006,
-precedenza degli errori e campagne previste.
-Le [verifiche conservate](cbor-map-risultati.md) riportano corpus,
-parallelismo, mutazioni, copertura grezza e limiti della qualifica.
+# CBOR map composition
+
+`arcdocdb.cbor:scrivi-mappa-cbor-minima` composes a map from already-encoded
+keys and values, verifying them before the first write.
+The [preregistered method](cbor-map-metodo.md) defines REQ-CBR-006,
+error precedence, and planned campaigns.
+The [preserved verification](cbor-map-risultati.md) reports corpus,
+parallelism, mutations, raw coverage, and qualification limits.
 
 ```lisp
 (scrivi-mappa-cbor-minima
  buffer start end source source-start source-end item-ends count space
  :max-bytes 16777216 :max-nodes 16777216 :max-depth 100)
-;; => NEXT, un solo valore
+;; => NEXT, only one value
 ```
 
-COUNT conta le coppie. SOURCE è un simple u8 che contiene chiave,
-valore, chiave, valore in uno span half-open. Le prime 2*COUNT celle
-della tabella simple u32 ITEM-ENDS delimitano i singoli item con fini
-relative a SOURCE-START, crescenti, ultima uguale allo span. Le celle
-successive sono ignorate, anche se la tabella fisica è molto più lunga.
-COUNT0 richiede sorgente vuota e produce `A0` senza leggere entry.
+COUNT counts pairs. SOURCE is a simple u8 containing key,
+value, key, value in a half-open span. The first 2*COUNT cells
+of simple u32 table ITEM-ENDS delimit individual items with ends
+relative to SOURCE-START, increasing, last equal to span. Subsequent
+cells are ignored, even if the physical table is much longer.
+COUNT0 requires empty source and produces `A0` without reading entries.
 
-Per esempio `61 61 01 61 62 82 F4 F5`, fini `#(2 3 5 8)` e COUNT2
-producono `A2 61 61 01 61 62 82 F4 F5`. La testata usa il numero delle
-coppie; il payload conserva esattamente ordine e byte della sorgente.
-Ogni segmento deve essere un item strutturale minimo completo:
-troncamenti, trailing, testate non minime e UTF-8 invalido vengono
-rifiutati anche quando si trovano in una chiave o nell'ultimo valore.
+For example, `61 61 01 61 62 82 F4 F5`, ends `#(2 3 5 8)`, and COUNT2
+produce `A2 61 61 01 61 62 82 F4 F5`. The header uses pair
+count; payload preserves source order and bytes exactly.
+Every segment must be one complete minimal structural item:
+truncations, trailing data, nonminimal headers, and invalid UTF-8 are
+rejected even in a key or the last value.
 
-MAX-BYTES include testata e payload della mappa completa. MAX-NODES
-include radice, tutte le chiavi, tutti i valori e i tag. MAX-DEPTH
-conta array/map con la radice al livello1; scalari e tag non aggiungono
-livelli. I massimi sono16MiB,16Mi nodi e100 livelli. Una mappa vuota
-richiede un byte, un nodo e un livello; una coppia scalare tre nodi.
-L'esaurimento del residuo prima del prossimo item viene segnalato al
-suo offset assoluto nella sorgente, prima del reset dello scanner.
+MAX-BYTES includes header and payload of the complete map. MAX-NODES
+includes root, all keys, all values, and tags. MAX-DEPTH
+counts array/map with root at level1; scalars and tags add no
+levels. Maximums are 16MiB,16Mi nodes, and 100 levels. An empty map
+requires one byte, one node, and one level; a scalar pair requires three nodes.
+Exhaustion of the remainder before the next item is reported at
+its absolute source offset, before scanner reset.
 
-BUFFER e SPACE appartengono in esclusiva al chiamante durante la
-chiamata. SOURCE e ITEM-ENDS restano stabili e possono essere condivisi
-in lettura fra worker con destinazioni e scratch distinti. Gli array
-interni dello scratch non possono essere destinazione, sorgente o tabella.
-Lo stesso array sorgente/destinazione è ammesso con span disgiunti dal
-footprint completo [START,NEXT), testata inclusa. Confini toccanti e
-sorgente vuota sono ammessi. A successo viene conservato lo span sorgente,
-mentre cambia soltanto il footprint destinazione nello stesso array fisico.
+BUFFER and SPACE belong exclusively to the caller during the
+call. SOURCE and ITEM-ENDS remain stable and may be shared
+for reading among workers with separate destinations and scratch. Internal
+scratch arrays cannot be destination, source, or table.
+The same source/destination array is allowed with spans disjoint from
+the complete footprint [START,NEXT), including header. Touching boundaries and
+empty source are allowed. Success preserves the source span,
+while changing only the destination footprint in the same physical array.
 
-Tipi, range, limiti, capacità, overlap e tabella vengono verificati
-prima del parsing o reset. Ogni errore pubblico conserva l'intera
-destinazione fisica, sorgente e tabella. Il preflight conserva anche
-lo scratch già sporco; il parsing fallito può modificarlo ed è riusabile
-alla chiamata successiva. Dopo successo descrive l'ultimo valore;
-con mappa vuota resta intatto. Gli invarianti interni sono fail-stop,
-senza rollback. La coda fisica oltre END non offre capacità aggiuntiva.
+Types, ranges, limits, capacity, overlap, and table are checked
+before parsing or reset. Every public error preserves the entire
+physical destination, source, and table. Preflight also preserves
+already-dirty scratch; failed parsing may modify it, and it is reusable
+on the next call. After success it describes the last value;
+with an empty map it remains intact. Internal invariants are fail-stop,
+without rollback. The physical tail beyond END offers no additional capacity.
 
-La primitiva preserva l'ordine ricevuto e non impone unicità o tipi
-delle chiavi. Il profilo documentale deterministico di ADR-0014,
-l'ordinamento e i tag applicativi restano ai livelli superiori.
-Scansione e copia sono limitate dai budget, senza AST, thread,
-attese, I/O o pubblicazione durevole.
+The primitive preserves received order and imposes neither uniqueness nor
+key types. ADR-0014's deterministic document profile,
+ordering, and application tags remain higher-level.
+Scanning and copying are budget-bounded, without AST, threads,
+waits, I/O, or durable publication.

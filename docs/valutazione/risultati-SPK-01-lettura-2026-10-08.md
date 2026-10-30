@@ -1,172 +1,186 @@
-# SPK-01 — lettura in buffer, 2026-10-08
+<a id="spk-01--lettura-in-buffer-2026-10-08"></a>
 
-> **Proposta** — Evidenze locali di Fase 0; kernel sperimentale Common Lisp,
-> non qualificazione del motore. Layout ADR-0043 v1, quattro parole o cinque
-> con CSN finale aggiuntivo; questa quinta parola non è il formato v2.
+# SPK-01 — reading into buffers, 2026-10-08
 
-## Provenienza e contratto
+> **Proposal** — Local Phase 0 evidence; experimental Common Lisp kernel,
+> not engine qualification. ADR-0043 v1 layout, four words or five
+> with an additional final CSN; this fifth word is not the v2 format.
 
-Checkout isolato da `74f0949`, Apple M4 ARM64, 16 GiB, Darwin 27.0.0,
-SBCL 2.6.9. Tre agenti hanno sviluppato kernel, CHECK indipendente e consumer
-su file disgiunti; il parent integra, profila e misura in serie. Carico esterno
-non controllato, clock a 1 µs, heap del processo benchmark 4 GiB.
+<a id="provenienza-e-contratto"></a>
 
-Il [catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/catalogo.lisp) conserva
-anche i fallimenti, sorgenti integrali dei driver, hash prima/dopo, comandi,
-stdout/stderr originali e risultati decodificati. I registri sono dati schema1,
-letti con `*read-eval*=nil` senza caricare i package dello spike.
-Riferimenti: REQ-VAL-001, REQ-AFF-012, REQ-IDX-001, REQ-IDX-007, REQ-BEN-001.
-Nessun requisito del motore cambia stato.
+## Provenance and contract
 
-`arcdocdb.spk01.lettura-buffer:leggi` riceve un buffer privato simple-array
-u64 di quattro parole: CSN, location, length, end-CSN. Restituisce stato e
-tentativi scartati. Solo HIT scrive, dopo controllo del seqlock e ricontrollo
-root/generazione; miss, retry-limit ed errori sincroni conservano il buffer.
-Al massimo otto tentativi; un solo writer per indice, nessun nuovo lock o
-stato condiviso fra Serie. I due percorsi, diretto e con callback di fixture,
-sono espansioni dello stesso algoritmo. Entrambi mantengono `safety 3`.
-La destinazione non è condivisibile durante la chiamata o pubblicata
-atomicamente a un altro reader. Callback arbitrari non hanno limite temporale.
+Isolated checkout from `74f0949`, Apple M4 ARM64, 16 GiB, Darwin 27.0.0,
+SBCL 2.6.9. Three agents developed kernel, independent CHECK, and consumer
+in disjoint files; parent integrates, profiles, and measures serially. External load
+uncontrolled, 1 µs clock, benchmark process heap 4 GiB.
 
-Il candidato HIT rappresenta l'intervallo stabile del seqlock; il ricontrollo
-della root è il punto di accettazione. Un writer può aggiornare lo slot dopo
-la seconda lettura della sequenza: non si attribuisce al payload lo stato
-all'istante della successiva rilettura root. Valgono le qualificazioni di
-ADR-0050. [Metodo del kernel](../../spikes/SPK-01-primary-index/metodo-lettura-buffer.md)
-e [metodo d'integrazione](../../spikes/SPK-01-primary-index/metodo-integrazione-lettura-buffer.md).
+The [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/catalogo.lisp) also preserves
+failures, full driver sources, before/after hashes, commands,
+original stdout/stderr, and decoded results. Records are schema1 data,
+read with `*read-eval*=nil` without loading spike packages.
+References: REQ-VAL-001, REQ-AFF-012, REQ-IDX-001, REQ-IDX-007, REQ-BEN-001.
+No engine requirement changes status.
 
-## Profilo e diagnosi del residuo
+`arcdocdb.spk01.lettura-buffer:leggi` receives a private four-word u64
+simple-array buffer: CSN, location, length, end-CSN. It returns status and
+discarded attempts. Only HIT writes, after seqlock checking and root/generation
+rechecking; miss, retry-limit, and synchronous errors preserve the buffer.
+At most eight attempts; one writer per index, no new lock or
+shared state across Serie. Both paths, direct and with fixture callback,
+are expansions of the same algorithm. Both retain `safety 3`.
+The destination cannot be shared during the call or atomically
+published to another reader. Arbitrary callbacks have no time bound.
 
-Il [profilo iniziale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/profile-before.lisp)
-osserva, su un milione di chiamate e chiave fissa, 47.960.640 byte allocati
-dal lookup, cioè 47,96064 B/op. Generazione della chiave e hash in array u64
-osservano zero. La
-[prima matrice](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/benchmark.lisp)
-completa 80 campioni: la variante buffer riduce le allocazioni dei campi
-u64 alti ma conserva 47,604375 B/op in tutte le celle. Il risultato che
-contraddice l'ipotesi di zero allocazione resta pubblicato.
+The HIT candidate represents the stable seqlock interval; root rechecking
+is the acceptance point. A writer can update the slot after
+the second sequence read: payload is not attributed the state at
+the instant of subsequent root rereading. ADR-0050 qualifications
+apply. [Kernel method](../../spikes/SPK-01-primary-index/metodo-lettura-buffer.md)
+and [integration method](../../spikes/SPK-01-primary-index/metodo-integrazione-lettura-buffer.md).
 
-Il validatore generico `intero-limitato` costruisce `(integer minimo massimo)`
-a ogni chiamata. La
-[diagnostica isolata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/validazione-profilo.lisp)
-confronta controlli dinamici e statici su 1.000.000 di valori 1..8, warmup
-10.000 separato, sink uguale e rifiuti equivalenti su cinque ingressi invalidi:
-il dinamico osserva **47.960.640 byte**, lo statico **zero**. Questa diagnosi
-sostiene l'attribuzione del residuo al validatore in questo percorso.
+<a id="profilo-e-diagnosi-del-residuo"></a>
 
-Il kernel buffer usa quindi il tipo letterale `(integer 1 8)` e lo stesso
-`type-error`, mantenendo i controlli degli ingressi. Il core del confronto
-rimane identico. Il confronto finale riguarda l'intera variante: buffer,
-intermedi tipizzati, sondaggio espanso e controllo statico, con `speed 3`
-contro `speed 2` del core. Non isola il solo cambio di API.
+## Profile and diagnosis of residual allocation
 
-## Prove funzionali
+The [initial profile](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/profile-before.lisp)
+observes 47.960.640 bytes allocated by lookup over one million calls
+with a fixed key, or 47,96064 B/op. Key generation and hash in u64 arrays
+observe zero. The
+[first matrix](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/benchmark.lisp)
+completes 80 samples: the buffer variant reduces high-u64 field
+allocations but retains 47,604375 B/op in every cell. The result
+contradicting the zero-allocation hypothesis remains published.
 
-[Metodo indipendente](../../spikes/SPK-01-primary-index/metodo-check-lettura-buffer.md),
-[primo CHECK](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/check-indipendente.lisp)
-e [CHECK finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/check-finale.lisp).
-Il launcher verifica sempre sia il core sia il buffer; la nuova suite è
-compresa in `make check`.
+Generic validator `intero-limitato` constructs `(integer minimo massimo)`
+on every call. The
+[isolated diagnostic](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/validazione-profilo.lisp)
+compares dynamic and static checks on 1.000.000 values 1..8, separate
+10.000 warmup, equal sink, and equivalent rejections on five invalid inputs:
+dynamic observes **47.960.640 bytes**, static **zero**. This diagnosis
+supports attributing residual allocation to the validator on this path.
 
-| Controllo | Risultato |
+The buffer kernel therefore uses literal type `(integer 1 8)` and the same
+`type-error`, retaining input checks. The comparison core
+remains identical. Final comparison concerns the entire variant: buffer,
+typed intermediates, expanded probing, and static checking, with `speed 3`
+versus core `speed 2`. It does not isolate the API change alone.
+
+<a id="prove-funzionali"></a>
+
+## Functional tests
+
+[Independent method](../../spikes/SPK-01-primary-index/metodo-check-lettura-buffer.md),
+[first CHECK](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/check-indipendente.lisp),
+and [final CHECK](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/check-finale.lisp).
+The launcher always checks both core and buffer; the new suite is
+included in `make check`.
+
+| Check | Result |
 |---|---:|
-| Casi principali | 54 |
-| Confronti mappa indipendente / kernel / baseline | 2.032 |
-| Witness root/seqlock e callback | 18 |
-| Budget retry distinti, per entrambe le larghezze | 16 |
-| Controlli negativi | 79 |
-| Mutanti rilevati con ragione pertinente | 16 |
-| Assert finali / tetto | 26.227 / 200.000 |
+| Main cases | 54 |
+| Independent map / kernel / baseline comparisons | 2.032 |
+| Root/seqlock witnesses and callbacks | 18 |
+| Distinct retry budgets, for both widths | 16 |
+| Negative checks | 79 |
+| Mutants detected with relevant reason | 16 |
+| Final asserts / ceiling | 26.227 / 200.000 |
 
-Il journal viene rigiocato integralmente e confrontato con la mappa attesa;
-ogni larghezza esegue 1.024 operazioni seeded, 576 eventi di storia, sei split
-e 18 rebuild. La ricerca bounded trova sette chiavi con stessa impronta e
-sonda iniziale, includendo il wrap 15→0; visita 11.870 candidati.
-Confini: zero, fixnum-max/+1, 2^63, max64, location con due u32 massimi e
-length massima a 24 bit. Sono verificati conservazione dell'output, errori
-originali dei callback e rifiuti di ingressi/budget. I mutanti eliminano
-root/seqlock, troncano u64 oppure scrivono prematuramente nel buffer.
+The journal is replayed in full and compared with the expected map;
+each width executes 1.024 seeded operations, 576 history events, six splits,
+and 18 rebuilds. Bounded search finds seven keys with identical fingerprint and
+initial probe, including wrap 15→0; visits 11.870 candidates.
+Boundaries: zero, fixnum-max/+1, 2^63, max64, location with two maximum u32s, and
+maximum 24-bit length. Output preservation, original callback errors,
+and input/budget rejections are checked. Mutants remove
+root/seqlock, truncate u64, or write prematurely into the buffer.
 
-Gli interleaving sono sincroni e deterministici; non sono stress con scheduler
-o una prova del modello di memoria hardware. Le compilazioni strict finali
-riescono senza warning/style-warning. Sono conservati anche un errore iniziale
-di ordine degli argomenti SBCL, un errore sintattico del consumer e una
-ridefinizione DEFMACRO rifiutata. Il consumer finale usa MACROLET locale.
-Quattro rifiuti CLI attesi sono separati dai CHECK: variante ignota,
-opzione duplicata, opzione della matrice estranea, zero operazioni.
+Interleavings are synchronous and deterministic; they are not scheduler
+stress or a hardware memory-model proof. Final strict compilations
+succeed without warnings/style-warnings. An initial SBCL argument-order
+error, consumer syntax error, and rejected DEFMACRO redefinition
+are also preserved. Final consumer uses local MACROLET.
+Four expected CLI rejections are separate from CHECKs: unknown variant,
+duplicate option, unrelated matrix option, zero operations.
 
-## Matrice seriale finale
+<a id="matrice-seriale-finale"></a>
 
-[Metodo](../../spikes/SPK-01-primary-index/metodo-bench-lettura-buffer.md),
-[dati grezzi](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/benchmark-finale.lisp)
-e [statistiche con sorgente](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/statistiche-finali.lisp).
+## Final serial matrix
+
+[Method](../../spikes/SPK-01-primary-index/metodo-bench-lettura-buffer.md),
+[raw data](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/benchmark-finale.lisp),
+and [statistics with source](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/statistiche-finali.lisp).
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --bench SPK-01 -- --variant buffer
 ```
 
-4.096 documenti per cella, capacità 8.192, cinque repliche, 128.000 lookup per
-campione, 4.096 di warmup per metodo/cella. Otto celle, 40 coppie, 80 campioni,
-**10.240.000 lookup misurati**, metà per metodo. Ordine 20 AB / 20 BA.
-Un solo indice immutabile serve entrambi i metodi nella coppia; nessun writer
-durante la misura. Query, oracle e buffer sono preparati prima dei campioni.
-Full GC prima di ogni campione; GC nel ciclo incluso. Il consumatore verifica
-quattro campi, hit/miss, retry e checksum, uguali per ogni coppia.
+4.096 documents per cell, capacity 8.192, five replicas, 128.000 lookups per
+sample, 4.096 warmup per method/cell. Eight cells, 40 pairs, 80 samples,
+**10.240.000 measured lookups**, half per method. Order 20 AB / 20 BA.
+One immutable index serves both methods in a pair; no writer
+during measurement. Queries, oracle, and buffer are prepared before samples.
+Full GC before every sample; in-loop GC included. Consumer checks
+four fields, hit/miss, retry, and checksum, equal for every pair.
 
-Mediane locali, tempi comprensivi di lookup, oracle, checksum e guardie:
+Local medians, times including lookup, oracle, checksum, and guards:
 
-| Parole | Campi | Query | Baseline ns/op | Buffer ns/op | Baseline B/op | Buffer B/op |
+| Words | Fields | Queries | Baseline ns/op | Buffer ns/op | Baseline B/op | Buffer B/op |
 |---|---|---|---:|---:|---:|---:|
 | 4 | fixnum | hit | 153,16 | 78,09 | 47,60 | 0 |
 | 4 | fixnum | hit/miss | 150,28 | 68,70 | 47,60 | 0 |
-| 4 | u64 massimi | hit | 171,58 | 79,34 | 111,60 | 0 |
-| 4 | u64 massimi | hit/miss | 160,33 | 68,59 | 79,86 | 0 |
+| 4 | maximum u64 | hit | 171,58 | 79,34 | 111,60 | 0 |
+| 4 | maximum u64 | hit/miss | 160,33 | 68,59 | 79,86 | 0 |
 | 5 extra-end | fixnum | hit | 153,60 | 78,74 | 47,60 | 0 |
 | 5 extra-end | fixnum | hit/miss | 149,36 | 68,43 | 47,60 | 0 |
-| 5 extra-end | u64 massimi | hit | 177,30 | 78,75 | 143,86 | 0 |
-| 5 extra-end | u64 massimi | hit/miss | 166,08 | 69,23 | 96,24 | 0 |
+| 5 extra-end | maximum u64 | hit | 177,30 | 78,75 | 143,86 | 0 |
+| 5 extra-end | maximum u64 | hit/miss | 166,08 | 69,23 | 96,24 | 0 |
 
-Tutti i **40 campioni buffer** osservano zero byte consed, anche per valori
-oltre fixnum e per miss. Le mediane dei rapporti fra tempi delle singole
-coppie vanno da 1,95 a 2,40; intervalli e tutte le repliche rimangono nel
-registro, senza significatività statistica dichiarata.
+All **40 buffer samples** observe zero consed bytes, including values
+beyond fixnum and misses. Median ratios of individual-pair timings
+range from 1,95 to 2,40; intervals and all replicas remain in the
+record without claimed statistical significance.
 
-Il controllo positivo pubblica un array u8 in un globale e lo mantiene vivo
-oltre la misura: payload 262.144 byte, dimensione primitive-object-size
-262.160, delta consed 262.160, contenuto finale osservato 172. Questo controlla
-il sensore senza presumere che un array non escaped venga allocato sullo heap.
-Il contatore è cumulativo di processo; non misura RSS. Lo zero osservato
-non garantisce ogni percorso, callback o configurazione futura del compilatore.
+The positive control publishes a u8 array in a global and keeps it live
+past measurement: payload 262.144 bytes, primitive-object-size
+262.160, consed delta 262.160, observed final content 172. This checks
+the sensor without assuming a nonescaped array is heap-allocated.
+The counter is process-cumulative; it does not measure RSS. Observed zero
+does not guarantee every path, callback, or future compiler configuration.
 
-## Valutazione e seguito
+<a id="valutazione-e-seguito"></a>
 
-> **Proposta** — Usare questa variante come riferimento per il futuro reader
-> tipizzato: tipi letterali per vincoli fissi, u64 mantenuti in array/registri,
-> buffer privato e pubblicazione solo dopo validazione. Prima di adottarla nel
-> motore occorrono integrazione v2 e misure alla scala del suo indice.
+## Assessment and follow-up
 
-Il dataset è piccolo e residente in memoria; non misura GET/s del database,
-P99, latenza I/O, WAL, snapshot, MVCC, compaction, scala oltre cache/RAM,
-writer concorrente, Linux o x86-64. La campagna non chiude ADR-0028, il gate
-v2 o RSK-02. Non sono introdotte dipendenze foreign, stato globale nel reader
-o abbassamenti della priorità dell'integrità dei dati.
+> **Proposal** — Use this variant as reference for the future typed
+> reader: literal types for fixed constraints, u64 retained in arrays/registers,
+> private buffer, and publication only after validation. Before engine
+> adoption, v2 integration and measurements at its index scale are required.
 
-## Verifica dell'integrazione
+The dataset is small and memory-resident; it does not measure database GET/s,
+P99, I/O latency, WAL, snapshots, MVCC, compaction, beyond-cache/RAM scale,
+concurrent writer, Linux, or x86-64. The campaign does not close ADR-0028, the v2
+gate, or RSK-02. No foreign dependency, global reader state,
+or lower priority for data integrity is introduced.
 
-Il [record completo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-integrazione.lisp)
-verifica `362f3f3` in checkout pulito, con sorgenti stabili: compilazione
-senza warning/style-warning, 26 test delle fondazioni, 18 storage, 18 I/O,
-19 recovery, lint e relativo self-test, tracciabilità, link e cataloghi.
-La [campagna dei dieci spike](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/spikes-verifica.lisp)
-include output originali e risultati di ogni processo, conservando anche
-le dipendenze del lavoro già integrato su I/O e bitmap. Le note informative
-del compilatore SBCL rimangono negli stream originali. La verifica non
-promuove requisiti del motore sulla base delle sole prove sperimentali.
-È conservato il [rifiuto durante la pubblicazione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-pubblicazione-incompleta.lisp):
-il packager iniziale non accettava il risultato legacy `:pass` e il catalogo
-riferiva un artefatto composito ancora mancante. Il packaging corretto conserva
-gli esiti originali `:ok`/`:pass`; la verifica viene ripetuta prima del push.
-La [ripetizione finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-finale.lisp)
-riesce su `0c43f45`, checkout pulito e sorgenti stabili; i
-[dieci processi finali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/spikes-verifica-finale.lisp)
-sono conservati integralmente. Il codice del reader resta quello della matrice finale.
+<a id="verifica-dellintegrazione"></a>
+
+## Integration verification
+
+The [complete record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-integrazione.lisp)
+checks `362f3f3` in a clean checkout with stable sources: compilation
+without warnings/style-warnings, 26 foundation tests, 18 storage, 18 I/O,
+19 recovery, lint and its self-test, traceability, links, and catalogs.
+The [ten-spike campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/spikes-verifica.lisp)
+includes original outputs and each process's results, also preserving
+dependencies from already integrated I/O and bitmap work. SBCL compiler
+informational notes remain in original streams. Verification does not
+promote engine requirements based solely on experimental tests.
+The [publication rejection](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-pubblicazione-incompleta.lisp) is preserved:
+initial packager did not accept legacy result `:pass` and catalog
+referenced a still-missing composite artifact. Corrected packaging retains
+original `:ok`/`:pass` outcomes; verification is repeated before push.
+The [final repetition](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-finale.lisp)
+succeeds on `0c43f45`, clean checkout and stable sources; the
+[ten final processes](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/spikes-verifica-finale.lisp)
+are preserved in full. Reader code remains the final matrix's version.

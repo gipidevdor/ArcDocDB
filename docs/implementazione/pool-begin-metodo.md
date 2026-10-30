@@ -1,51 +1,57 @@
-# Metodo dell'avvio pool/Serie
+<a id="metodo-dellavvio-poolserie"></a>
 
-Preregistrazione del 2026-10-14, base
-`ad829a40f6ce72837b59982d2e4f83e8c9ca9f3e`, prima delle campagne formali.
-Scope C3: tutti i sei file di `src/dispatch/`, inclusi `begin.lisp` e i cinque
-gia qualificati. Nessuna modifica C1; [contratto](pool-begin.md).
+# Pool/Serie startup method
 
-## Prove funzionali e revisione
+Preregistration on 2026-10-14, base
+`ad829a40f6ce72837b59982d2e4f83e8c9ca9f3e`, before formal campaigns.
+C3 scope: all six `src/dispatch/` files, including `begin.lisp` and five
+already qualified files. No C1 change; [contract](pool-begin.md).
 
-- Avvio reale: link/token/fase/ragione, doppia lease, pop/ack/end espliciti.
-- Scambio full A→B: begin del link B corrente, mai del precedente A.
-- CLAIMED con porta inattiva, ritiro pendente o comandi incoerenti: nessun
-  accesso al gate, ACK, seconda presa o ricircolo.
-- Writer busy reale: CLAIMED, IDLE e generazione del bridge conservati.
-- Serie busy e generazione esaurita: CLOSING con token, nessun pop o
-  riacquisizione; fine esplicita attraverso il bridge originale.
-- Generazione del token bridge esaurita: rifiuto prima del begin, distinto
-  dall'esaurimento della lease Serie successivo alla presa del writer.
-- Owner estraneo e binding incoerente prima di routing e acquisizione.
-- Fasi non ammesse, debito, lease e prima causa conservati; routing
-  invalido e guasti di begin propagano la condizione C1 originale.
-- Una lettura indipendente C3 con lista di controllo; compilazione strict,
-  safety 3, lint, tracciabilita e regressione completa.
+<a id="prove-funzionali-e-revisione"></a>
 
-## Copertura, misura e conservazione
+## Functional tests and review
 
-Gate C3 almeno 95% di espressioni e rami sull'intero package, senza
-esclusioni manuali. Conservare SB-COVER nativo, HTML e audit concordante,
-con denominatori e tutti i missing; nessuna deduzione MC/DC o qualifica C1.
-Il reader C4 verificato viene riusato con adattamento esplicito di scope.
+- Real startup: link/token/phase/reason, dual leases, explicit pop/ack/end.
+- Full A→B exchange: begin on current link B, never previous A.
+- CLAIMED with inactive port, pending retirement, or inconsistent commands: no
+  gate access, ACK, second acquisition, or recycling.
+- Actual writer busy: CLAIMED, IDLE, and bridge generation retained.
+- Serie busy and exhausted generation: CLOSING with token, no pop or
+  reacquisition; explicit end through original bridge.
+- Exhausted bridge-token generation: rejection before begin, distinct
+  from Serie-lease exhaustion after writer acquisition.
+- Foreign owner and inconsistent binding before routing/acquisition.
+- Disallowed phases, debt, lease, and first cause retained; invalid
+  routing and begin failures propagate original C1 condition.
+- Independent C3 reading with checklist; strict compilation,
+  safety 3, lint, traceability, and full regression.
 
-Sensore locale con cinque repliche di 4096 cicli e 128 warmup. Fixture,
-factory, lookup API e GC fuori clock. Un ciclo comprende l'avvio del bridge
-e la fine esplicita, ricircolo e nuova presa execution necessari per
-ripetere il tratto; i quattro risultati e le identita entrano nell'oracolo.
-Nessun reset privato, callback o applicazione dei payload. Il protocollo C1
-fa parte del costo: nessuna attribuzione al solo adapter o conclusione sul
-throughput del motore. Conservare cicli completati, sink, tick e heap;
-heap zero osservato non dimostra non allocazione universale.
+<a id="copertura-misura-e-conservazione"></a>
 
-Unica campagna ACTIVE: un payload simbolico reale rimane accodato, senza
-pop nel clock. Il drain finale fuori clock lo consuma e conferma attraverso
-il bridge, poi termina entrambe le lease. CLOSING e i rifiuti busy sono
-coperti dalle prove funzionali e non vengono misurati dal sensore.
+## Coverage, measurement, and preservation
 
-Self-test positivi e negativi del sensore: ritorni errati, sink, clock sotto
-risoluzione, allocazione deliberata, CLI, raw parziali e destinazione
-preesistente. Carico esterno incontrollato; nessuna soglia o taratura.
-Campagne su copia congelata con `record-command.lisp` e cache dedicate:
-argv, output, exit e identita iniziali/finali. Conservare anche fallimenti
-e versioni preliminari, copie byte per byte e nuovi manifesti esclusivi.
+C3 gate at least 95% expressions and branches across the entire package without
+manual exclusions. Preserve native SB-COVER, HTML, and agreeing audit,
+with denominators and all missing entries; no MC/DC inference or C1 qualification.
+Verified C4 reader reused with explicit scope adaptation.
+
+Local sensor with five replicates of 4096 cycles and 128 warmup. Fixtures,
+factory, API lookup, and GC outside clock. One cycle includes bridge startup
+and explicit ending, recycling and new execution acquisition needed to
+repeat the slice; four results and identities enter the oracle.
+No private reset, callback, or payload application. The C1 protocol
+is part of cost: no attribution to adapter alone or conclusion on
+engine throughput. Preserve completed cycles, sink, ticks, and heap;
+observed zero heap does not demonstrate universal nonallocation.
+
+Single ACTIVE campaign: one actual symbolic payload stays queued without
+pop inside clock. Final drain outside clock consumes and acknowledges it through
+the bridge, then ends both leases. CLOSING and busy rejections are
+covered by functional tests and not measured by sensor.
+
+Positive/negative sensor self-tests: wrong returns, sink, below-resolution clock,
+deliberate allocation, CLI, partial raw data, and existing destination.
+External load uncontrolled; no threshold or tuning.
+Campaigns on frozen copies with `record-command.lisp` and dedicated caches:
+argv, output, exit, and initial/final identities. Preserve failures
+and preliminary versions too, bytewise copies, and new exclusive manifests.

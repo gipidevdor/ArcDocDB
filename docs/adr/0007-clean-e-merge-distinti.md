@@ -1,45 +1,57 @@
-# ADR-0007 — CLEAN e MERGE distinti, copy-on-write
+<a id="adr-0007--clean-e-merge-distinti-copy-on-write"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («Clean», «Merge»,
-  «Politica generale di compaction», «Workflow Clean/Merge», «Compaction parallela»)
-- **Riferimenti:** [07 Compaction](../07-compaction.md), INV-C1…INV-C4, INV-C7…INV-C10, INV-R1
+# ADR-0007 — Separate CLEAN and MERGE, copy-on-write
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision (“Clean,” “Merge,”
+  “General compaction policy,” “Clean/Merge workflow,” “Parallel compaction”)
+- **References:** [07 Compaction](../07-compaction.md), INV-C1…INV-C4, INV-C7…INV-C10, INV-R1
 
-Lo storage append-only accumula versioni morte. Recuperare spazio e ridurre la frammentazione
-sono due esigenze con urgenze diverse.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-- **CLEAN:** 1 segmento → 1 nuovo segmento immutabile con i soli record live/necessari.
-- **MERGE:** N segmenti piccoli → 1 nuovo segmento immutabile.
-- Entrambe sono copy-on-write: i sorgenti non vengono mai modificati; diventano `OBSOLETE`
-  dopo lo swap e si eliminano solo quando nessuno li usa.
-- Un segmento con `live = 0` si elimina direttamente; con `live ≈ total` non si tocca.
-- Nessun MERGE automatico dopo un CLEAN; un segmento pulito può restare piccolo.
-- I segmenti prodotti non hanno requisiti di dimensione e non ricevono mai nuove scritture.
-- La compaction è parallelizzabile per segmento e per Serie; nessun worker globale unico.
-- Il nuovo segmento diventa visibile solo dopo essere durevole; i reader non vengono bloccati
-  globalmente.
+Append-only storage accumulates dead versions. Reclaiming space and reducing fragmentation
+are two needs with different degrees of urgency.
 
-## Conseguenze
+<a id="decisione"></a>
 
-- Fino allo swap un'operazione interrotta non lascia effetti e si può ripetere.
-- Lo spazio si recupera senza dipendere dalla deframmentazione.
-- Durante la compaction serve spazio aggiuntivo pari ai dati copiati.
-- Il numero di segmenti può crescere (segmenti piccoli non fusi).
-- Lo swap deve coordinarsi con il writer della Serie e con gli snapshot.
+## Decision
 
-## Alternative considerate
+- **CLEAN:** 1 segment → 1 new immutable segment containing only live/required records.
+- **MERGE:** N small segments → 1 new immutable segment.
+- Both are copy-on-write: sources are never modified; they become `OBSOLETE`
+  after the swap and are deleted only when no one uses them.
+- A segment with `live = 0` is deleted directly; one with `live ≈ total` is left untouched.
+- No automatic MERGE after a CLEAN; a cleaned segment may remain small.
+- Produced segments have no size requirements and never receive new writes.
+- Compaction can run in parallel by segment and by Serie; no single global worker.
+- The new segment becomes visible only after it is durable; readers are not blocked
+  globally.
 
-- *Un'unica operazione di compaction che pulisce e fonde:* più semplice da descrivere, ma lega
-  il recupero di spazio a un lavoro più pesante e meno rinviabile.
-- *Riutilizzo in-place dello spazio morto:* contrario all'append-only.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-- Rischi: RSK-02 (swap), RSK-08, RSK-10.
-- Verifica: SPK-07 (modello swap/reclaim), SPK-06 (interferenza); FI-06…FI-09.
-- Aperto: manifest e swap (QA-04, QA-24), soglie (QA-11), tombstone (QA-15).
+- Until the swap, an interrupted operation leaves no effects and can be repeated.
+- Space is reclaimed without depending on defragmentation.
+- Compaction requires additional space equal to the data copied.
+- The number of segments may grow (small segments that are not merged).
+- The swap must coordinate with the Serie's writer and with snapshots.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *A single compaction operation that cleans and merges:* simpler to describe, but ties
+  space reclamation to heavier work that is harder to defer.
+- *In-place reuse of dead space:* contrary to append-only storage.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Risks: RSK-02 (swap), RSK-08, RSK-10.
+- Verification: SPK-07 (swap/reclaim model), SPK-06 (interference); FI-06…FI-09.
+- Open: manifest and swap (QA-04, QA-24), thresholds (QA-11), tombstones (QA-15).

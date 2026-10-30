@@ -1,82 +1,86 @@
-# Provenienza dei sorgenti delle PR
+<a id="provenienza-dei-sorgenti-delle-pr"></a>
 
-Metodo C4 preregistrato il 2026-10-22, prima della correzione.
-REQ-VAL-001, REQ-AFF-012. Nessuna modifica al prodotto o ai formati del database.
+# PR source provenance
 
-GitHub espone l'head della PR nei metadata del run e del check suite, mentre
-il checkout predefinito prova il merge sintetico. Nel run 39818673128 sono
-rispettivamente `258ffd35…` e `53bf6ef4…`; il publisher 39821678927 rifiuta
-quindi un rapporto valido. Dopo il merge, il riferimento temporaneo scompare
-e l'associazione del run alla PR può risultare vuota.
+C4 method preregistered on 2026-10-22 before correction.
+REQ-VAL-001, REQ-AFF-012. No change to product or database formats.
 
-Il percorso diretto mantiene il confronto con head/check suite. Il percorso
-PR aggiuntivo richiede che le API GitHub riconoscano il commit come merge
-firmato validamente da web-flow, con due parent e secondo parent uguale
-all'head del run. Le PR associate a quell'head devono appartenere allo
-stesso repository e conservare esattamente quell'head. Un merge indicato
-da GitHub per una di queste PR fornisce l'ancora dei contenuti.
+GitHub exposes PR head in run and check-suite metadata, while
+default checkout tests synthetic merge. In run 39818673128 these are
+`258ffd35…` and `53bf6ef4…` respectively; publisher 39821678927 therefore rejects
+a valid report. After merge, the temporary reference disappears
+and run association with PR may be empty.
 
-Il confronto usa l'inventario immutabile di path, modi e blob Git, con la
-sola esclusione già prevista di `spikes/results/ci/`. Anche documentazione,
-test, strumenti e workflow devono coincidere. Nessun checkout o LOAD del
-producer; limiti e rifiuto di symlink/submodule restano attivi. Il confronto
-dell'ancora non rilegge i byte dei blob o ricalcola le statistiche fisiche.
+Direct path retains comparison with head/check suite. Additional
+PR path requires GitHub APIs to recognize commit as a merge
+validly signed by web-flow, with two parents and second parent equal
+to run head. PRs associated with that head must belong to the
+same repository and retain exactly that head. A merge reported
+by GitHub for one of those PRs supplies the content anchor.
 
-La prova conserva SHA dichiarata del checkout, head del run, numero PR,
-SHA dell'ancora GitHub, SOURCE-ID e POLICY-ID. Il metodo dichiara
-**equivalenza dei sorgenti**, non uguaglianza degli SHA né attestazione
-crittografica dell'esecuzione. Il livello del producer resta UNTRUSTED-PR;
-i risultati non diventano qualifiche C1/MC/DC. Se l'head è cambiato o manca
-un'ancora con sorgenti identici, la pubblicazione resta rifiutata.
-Il publisher aggiunge soltanto il permesso di lettura delle PR; i permessi
-dei producer e il checkout del main fidato restano invariati.
+Comparison uses immutable inventory of paths, modes, and Git blobs, with
+only the existing exclusion of `spikes/results/ci/`. Documentation,
+tests, tools, and workflows must also match. No producer checkout or LOAD;
+limits and rejection of symlinks/submodules remain active. Anchor
+comparison neither rereads blob bytes nor recalculates physical statistics.
 
-Regressioni prima/dopo: merge equivalente, esclusione dei soli dati CI,
-firma/signer/parent invalidi, documentazione e policy diverse, metadata PR
-duplicati/mancanti/di altro repository, inventario API limitato, identità
-dichiarata falsa e contesto run divergente. Le API simulate operano su
-oggetti Git privati; un replay separato usa le API e gli artifact originali
-del run 39818673128. Il caso positivo deve fallire prima del fix.
+Evidence retains declared checkout SHA, run head, PR number,
+GitHub anchor SHA, SOURCE-ID, and POLICY-ID. Method declares
+**source equivalence**, not SHA equality or cryptographic attestation
+of execution. Producer level remains UNTRUSTED-PR;
+results do not become C1/MC/DC qualifications. If head changed or no
+anchor with identical sources exists, publication remains rejected.
+Publisher adds only PR read permission; producer
+permissions and trusted main checkout remain unchanged.
 
-Una seconda regressione esercita la prima ricevuta del riconciliatore con
-un vero push verso un bare locale: devono essere creati gli antenati di
-`reconciliation/runs/`, conservando stato e ricevuta. Nessun push GitHub
-nelle fixture e nessun allentamento dei controlli di CI-SAVE.
+Before/after regressions: equivalent merge, exclusion of CI data only,
+invalid signature/signer/parents, differing documentation and policy, duplicate/
+missing/other-repository PR metadata, bounded API inventory, false declared
+identity, and divergent run context. Simulated APIs operate on
+private Git objects; a separate replay uses original APIs and artifacts
+from run 39818673128. Positive case must fail before fix.
 
-## Risultati del 2026-10-22
+A second regression exercises reconciler's first receipt with
+a real push to a local bare repository: ancestors of
+`reconciliation/runs/` must be created, preserving state and receipt. No GitHub push
+in fixtures or relaxation of CI-SAVE checks.
 
-Su `1edd2085`, le 22 nuove prove di pubblicazione producono i due errori
-attesi: merge sintetico rifiutato e parent della prima ricevuta assente.
-Le altre 20 prove e i 333 controlli CI precedenti passano. Su `3dfadeb3`,
-tutte le 355 prove passano. Su `59c38ae3`, con i due controlli aggiuntivi
-sul permesso di sola lettura delle PR, il controllo completo `make check`
-passa, comprese **357 prove CI** e gli undici spike. I record attestano
-sorgenti stabili durante ogni esecuzione.
+<a id="risultati-del-2026-10-22"></a>
 
-Il replay in sola preparazione del run originale `39818673128`, attempt 1,
-riesce con le API e i pacchetti reali. Conserva lo SHA sintetico
-`53bf6ef451bf7751b8b774adf8001226f8185372`, l'head
-`258ffd35563847e5f7da86d995b97afad473a1bc` e l'ancora del merge della PR #21
-`c46bc4c1dda191a31cf806c6f519f08aaa186df6`, con SOURCE-ID e POLICY-ID
-identici. Il replay non effettua push; il producer resta UNTRUSTED-PR.
+## Results dated 2026-10-22
 
-Un primo controllo completo, avviato in parallelo al replay, fallisce
-nel controllo dei collegamenti: enumera il checkout temporaneo del
-publisher mentre questo viene rimosso al termine del replay. Il record
-fallito resta conservato; il controllo completo riuscito è un'esecuzione
-successiva, avviata dopo la chiusura del replay. Questi due comandi non
-devono essere sovrapposti quando condividono la stessa directory di lavoro.
+On `1edd2085`, 22 new publication tests produce the two expected
+errors: synthetic merge rejected and first-receipt parent absent.
+Other 20 tests and 333 previous CI checks pass. On `3dfadeb3`,
+all 355 tests pass. On `59c38ae3`, with two additional
+checks on PR read-only permission, full `make check`
+passes, including **357 CI tests** and eleven spikes. Records attest
+stable sources during every run.
 
-L'[archivio chiuso](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-ci-publisher-provenance/catalogo.lisp)
-conserva i sei processi registrati, i risultati prima/dopo, i pacchetti
-originali scaricati, le risposte API selezionate e i sorgenti utilizzati.
-Due bundle mantengono gli oggetti Git delle fixture private; un pack
-incrementale mantiene il merge sintetico originale, con i due parent
-esplicitati come prerequisiti. Log e dati Lisp si leggono come dati,
-mai tramite LOAD. La riuscita locale non attesta ancora l'esecuzione del
-publisher nel workflow integrato su main.
+Preparation-only replay of original run `39818673128`, attempt 1,
+succeeds with actual APIs and packages. It retains synthetic SHA
+`53bf6ef451bf7751b8b774adf8001226f8185372`, head
+`258ffd35563847e5f7da86d995b97afad473a1bc`, and PR #21 merge anchor
+`c46bc4c1dda191a31cf806c6f519f08aaa186df6`, with identical SOURCE-ID and POLICY-ID.
+Replay performs no push; producer remains UNTRUSTED-PR.
 
-Fonti: [evento pull_request](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request),
-[PR associate a un commit](https://docs.github.com/en/rest/commits/commits#list-pull-requests-associated-with-a-commit),
-[semantica di merge_commit_sha](https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request),
-[verifica delle firme](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).
+A first full check, started alongside replay, fails
+in link checking: it enumerates publisher's temporary checkout
+as it is removed at replay completion. Failed record
+remains preserved; successful full check is a later run
+started after replay closed. These two commands must not
+overlap when sharing the same working directory.
+
+The [sealed archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-ci-publisher-provenance/catalogo.lisp)
+preserves six recorded processes, before/after results, original
+downloaded packages, selected API responses, and sources used.
+Two bundles retain private-fixture Git objects; an incremental
+pack retains original synthetic merge, with both parents
+explicit as prerequisites. Logs and Lisp data are read as data,
+never through LOAD. Local success does not yet attest publisher
+execution in integrated workflow on main.
+
+Sources: [pull_request event](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request),
+[PRs associated with a commit](https://docs.github.com/en/rest/commits/commits#list-pull-requests-associated-with-a-commit),
+[merge_commit_sha semantics](https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request),
+[signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification).

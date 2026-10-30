@@ -1,130 +1,152 @@
-# ADR-0055 — Socket Unix locale come interfaccia prioritaria
+<a id="adr-0055--socket-unix-locale-come-interfaccia-prioritaria"></a>
 
-- **Stato:** Accettata per indirizzo dell'autore; implementazione e qualifica da produrre
-- **Data:** 2026-10-16
-- **Rapporto con la specifica:** sostituisce la scelta TCP come trasporto primario
-  di [ADR-0029](0029-interfacce-protocollo-query-contratto.md); query, contratto della
-  Serie e framing CBOR restano validi. Anticipa l'integrazione locale di M16 nella roadmap.
-- **Riferimenti:** [architettura](../architettura.md#interfacce),
-  [caso NNTP](../valutazione/caso-duso-nntp.md#integrazione-con-il-futuro-demone),
+# ADR-0055 — Local Unix socket as the priority interface
+
+- **Status:** Accepted at the author's direction; implementation and qualification to be produced
+- **Date:** 2026-10-16
+- **Relationship to the specification:** supersedes TCP as the primary transport
+  chosen in [ADR-0029](0029-interfacce-protocollo-query-contratto.md); queries, Serie
+  contract, and CBOR framing remain valid. Moves M16 local integration earlier in the roadmap.
+- **References:** [architecture](../architettura.md#interfacce),
+  [NNTP case](../valutazione/caso-duso-nntp.md#integrazione-con-il-futuro-demone),
   [roadmap](../roadmap.md), REQ-IPC-001…REQ-IPC-004, INV-N1
 
-## Contesto
+<a id="contesto"></a>
 
-Il primo impiego previsto è il database di un server NNTP in Common Lisp.
-L'autore richiede che l'interfaccia tra applicazione e database passi da un
-socket Unix locale e abbia priorità di sviluppo. La precedente alternativa
-aperta fra embedding e TCP non rappresenta più il percorso di riferimento.
-Il livello M16 non è ancora implementato.
+## Context
 
-## Decisione
+The first intended use is the database for an NNTP server in Common Lisp.
+The author requires the interface between application and database to use a
+local Unix socket and have development priority. The previous open alternative
+between embedding and TCP no longer represents the reference path.
+The M16 layer is not yet implemented.
 
-### Trasporto e confine applicativo
+<a id="decisione"></a>
 
-1. L'interfaccia client predefinita è un **socket Unix locale di tipo stream**
-   (`AF_UNIX`/`AF_LOCAL`), con indirizzo nel filesystem. Il demone NNTP e il
-   processo ArcDocDB comunicano attraverso questo socket sulla stessa macchina.
-2. Il percorso assoluto del socket è configurabile per istanza, in una directory
-   runtime dedicata. La configurazione deve dichiararlo; un percorso mancante,
-   non valido o troppo lungo produce un errore esplicito prima dell'apertura.
-3. TCP è un trasporto opzionale successivo, disabilitato nella configurazione
-   predefinita e attivabile soltanto esplicitamente. Un errore del socket locale
-   non causa ripiego automatico su TCP, nemmeno su loopback.
-4. Il motore rimane una libreria con API «richiesta più continuazione».
-   L'embedding resta tecnicamente possibile, ma l'integrazione NNTP di riferimento
-   e le sue prove usano il socket Unix. M16 possiede connessioni e framing;
-   protocollo NNTP, TLS e identità dei client NNTP appartengono all'applicazione.
+## Decision
 
-### Protocollo e controllo dell'ammissione
+<a id="trasporto-e-confine-applicativo"></a>
 
-Il socket trasporta lo stesso protocollo di ADR-0029: `u32 len` più corpo CBOR,
-versione e handshake estendibile, identificativi di richiesta e risposte
-multiplexate che possono completare fuori ordine. Non si introduce un secondo
-codec o una semantica speciale per le richieste locali.
+### Transport and application boundary
 
-Lo stream può dividere o accorpare i frame: ricezione e invio conservano uno stato
-esplicito per i trasferimenti parziali. Lunghezza e budget sono verificati prima
-di allocare o accodare il corpo; documento, envelope e batch hanno i limiti
-distinti di ADR-0029/ADR-0048. Connessioni, richieste in volo, buffer in ingresso
-e uscita e durata delle attese hanno capacità e scadenze finite. I valori numerici
-e la codifica wire completa si fissano nel contratto M16 prima del suo codice.
+1. The default client interface is a **local Unix stream socket**
+   (`AF_UNIX`/`AF_LOCAL`), with a filesystem address. The NNTP daemon and
+   ArcDocDB process communicate through this socket on the same machine.
+2. The absolute socket path is configurable per instance, in a dedicated
+   runtime directory. Configuration must declare it; a missing,
+   invalid, or overly long path produces an explicit error before opening.
+3. TCP is a later optional transport, disabled in the default
+   configuration and enabled only explicitly. A local-socket error
+   does not cause automatic fallback to TCP, even on loopback.
+4. The engine remains a library with a "request plus continuation" API.
+   Embedding remains technically possible, but the reference NNTP integration
+   and its tests use the Unix socket. M16 owns connections and framing;
+   NNTP protocol, TLS, and NNTP client identities belong to the application.
 
-Una connessione lenta o satura ferma la propria ammissione o viene chiusa secondo
-il contratto, senza trattenere epoche EBR né bloccare writer o worker di calcolo.
-Le operazioni su socket passano dall'I/O iniettabile; i compiti rispettano
-[ADR-0045](0045-modello-di-esecuzione.md). Risultati e buffer rimangono posseduti
-fino al completamento o al rilascio della risposta.
+<a id="protocollo-e-controllo-dellammissione"></a>
 
-### Accesso locale e ciclo di vita
+### Protocol and admission control
 
-La directory runtime è posseduta dall'account di servizio e scrivibile soltanto
-da esso; accesso e attraversamento sono concessi solo agli account o al gruppo
-configurati per il client. Si verificano directory, proprietario e permessi prima
-di esporre il listener. I permessi del nodo socket si restringono dove supportato;
-la protezione della directory resta necessaria. Questo controllo locale non
-aggiunge autenticazione applicativa o cifratura allo scope di ADR-0030.
+The socket carries the same protocol as ADR-0029: `u32 len` plus CBOR body,
+version and extensible handshake, request identifiers, and multiplexed
+responses that may complete out of order. No second
+codec or special semantics for local requests are introduced.
 
-Un nome già occupato produce un errore: l'avvio non elimina automaticamente
-file, link o socket preesistenti, anche dopo un crash. La rimozione di un orfano
-richiede un intervento esplicito a servizio fermo. Durante l'arresto si chiudono
-listener e connessioni; si rimuove il nodo solo se è ancora quello creato
-dall'istanza nella directory protetta. Il nodo è una risorsa runtime, separata
-dai file persistenti dell'Archivio.
+The stream may split or coalesce frames: receiving and sending retain explicit
+state for partial transfers. Length and budgets are checked before
+allocating or queuing the body; document, envelope, and batch have the separate limits
+in ADR-0029/ADR-0048. Connections, in-flight requests, input and output
+buffers, and waiting duration have finite capacities and deadlines. Numeric values
+and complete wire encoding are fixed in the M16 contract before its code.
 
-### Guasti, parallelismo e atomicità
+A slow or saturated connection stops its own admission or is closed according to
+the contract, without retaining EBR epochs or blocking writers or compute workers.
+Socket operations go through injectable I/O; tasks comply with
+[ADR-0045](0045-modello-di-esecuzione.md). Results and buffers remain owned
+until the response completes or is released.
 
-Una disconnessione non annulla un commit già deciso e non autorizza il trasporto
-a ripetere una scrittura. Se la risposta si perde, l'esito può essere ignoto al
-client: identificativo di richiesta e riconnessione non sono una garanzia di
-deduplicazione. Il demone NNTP deve risolvere i ritentativi secondo il contratto
-applicativo, inclusa la chiave Message-ID.
+<a id="accesso-locale-e-ciclo-di-vita"></a>
 
-L'invio della risposta segue le stesse regole di pubblicazione e durability del
-motore. I punti di atomicità restano SEAL, DECISION e gli altri già definiti;
-il trasporto non introduce commit o log persistenti propri. L'ammissione del
-traffico applicativo attende il completamento del recovery.
+### Local access and lifecycle
 
-È ordinato soltanto il flusso di byte della singola connessione. Le richieste
-sono distribuite sui percorsi esistenti delle Serie; nessun lock o contatore
-globale per richiesta e nessun thread per connessione o richiesta. La priorità
-qui stabilita riguarda il percorso di integrazione e l'ordine di sviluppo;
-restano le priorità e l'isolamento dello scheduler già definiti.
+The runtime directory is owned by the service account and writable only
+by that account; access and traversal are granted only to accounts or the group
+configured for the client. Directory, owner, and permissions are verified before
+exposing the listener. Socket-node permissions are restricted where supported;
+directory protection remains necessary. This local control does not
+add application authentication or encryption to ADR-0030's scope.
 
-### Priorità di realizzazione
+An occupied name produces an error: startup does not automatically delete
+existing files, links, or sockets, even after a crash. Removing an orphan
+requires explicit intervention while the service is stopped. Shutdown closes
+the listener and connections; it removes the node only if it is still the one created
+by the instance in the protected directory. The node is a runtime resource, separate
+from the Archivio's persistent files.
 
-Dopo avvio, recovery e ammissione del motore si realizza la prima integrazione
-client/server locale di M16 con le operazioni fondamentali disponibili. Non
-attende il completamento della fase 8 o del trasporto TCP della fase 9.
-Le query, le transazioni multiserie e gli indici sono esposti quando i rispettivi
-contratti di prodotto sono disponibili e verificati; il socket non li anticipa.
+<a id="guasti-parallelismo-e-atomicità"></a>
 
-## Conseguenze
+### Faults, parallelism, and atomicity
 
-Il primo percorso applicativo esercita due processi e un'interfaccia locale
-esplicita. TCP usa in seguito lo stesso dispatcher e codec; le prove NNTP e le
-misure iniziali includono framing, copie, ammissione e risposta sul socket Unix.
-Servono configurazione della directory runtime e gestione esplicita degli orfani.
-Questa decisione definisce progetto e priorità; non rende disponibile un listener.
+A disconnection does not cancel an already-decided commit or authorize the transport
+to repeat a write. If the response is lost, the outcome may be unknown to the
+client: request identifier and reconnection do not guarantee
+deduplication. The NNTP daemon must resolve retries under the application
+contract, including the Message-ID key.
 
-## Alternative considerate
+Sending a response follows the engine's existing publication and durability
+rules. Atomicity points remain SEAL, DECISION, and the others already defined;
+the transport introduces no commits or persistent logs of its own. Admission of
+application traffic waits for recovery to finish.
 
-- TCP su loopback come prima interfaccia: non soddisfa l'indirizzo locale richiesto.
-- Embedding come percorso principale NNTP: non esercita il confine tra processi richiesto.
-- Datagrammi o namespace astratto: il percorso scelto usa uno stream e un nodo nel
-  filesystem, con directory protetta e ciclo di vita osservabile.
+Only the byte stream of an individual connection is ordered. Requests
+are distributed through existing Serie paths; no global lock or counter
+per request and no thread per connection or request. The priority
+established here concerns integration path and development order;
+the scheduler's existing priorities and isolation remain.
 
-Il pattern di collegamento locale tramite socket Unix è impiegato da
+<a id="priorità-di-realizzazione"></a>
+
+### Implementation priority
+
+After engine startup, recovery, and admission, implement M16's first local
+client/server integration with the available fundamental operations. It does not
+wait for completion of phase 8 or phase 9's TCP transport.
+Queries, multiseries transactions, and indexes are exposed when their respective
+product contracts are available and verified; the socket does not bring them forward.
+
+<a id="conseguenze"></a>
+
+## Consequences
+
+The first application path exercises two processes and an explicit local
+interface. TCP later uses the same dispatcher and codec; NNTP tests and
+initial measurements include framing, copies, admission, and response over the Unix socket.
+Runtime-directory configuration and explicit orphan management are needed.
+This decision defines design and priority; it does not make a listener available.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- Loopback TCP as the first interface: does not meet the requested local direction.
+- Embedding as the main NNTP path: does not exercise the required process boundary.
+- Datagrams or abstract namespace: the chosen path uses a stream and a filesystem
+  node, with a protected directory and observable lifecycle.
+
+The local connection pattern through Unix sockets is used by
 [PostgreSQL/libpq](https://www.postgresql.org/docs/18/libpq-connect.html).
-La directory scrivibile solo dall'account fidato segue la protezione descritta
-nella [documentazione PostgreSQL](https://www.postgresql.org/docs/17/preventing-server-spoofing.html).
-Il contrib [SBCL `sb-bsd-sockets`](https://www.sbcl.org/manual/index.html#Local-Domain-Sockets)
-offre `local-socket`, senza dipendenze esterne al runtime consentito.
+A directory writable only by the trusted account follows the protection described
+in the [PostgreSQL documentation](https://www.postgresql.org/docs/17/preventing-server-spoofing.html).
+The [SBCL `sb-bsd-sockets`](https://www.sbcl.org/manual/index.html#Local-Domain-Sockets)
+contrib provides `local-socket`, without dependencies outside the allowed runtime.
 
-## Valutazione
+<a id="valutazione"></a>
 
-Il [piano di verifica](../affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket)
-lega i quattro requisiti a prove da realizzare: selezione del solo trasporto
-locale, due processi reali, permessi e collisioni, frame parziali e malformati,
-saturazione, client lenti, perdita della risposta e riavvio. La prima integrazione
-deve superarle prima delle misure sul percorso completo.
-Prestazioni del socket Unix e vantaggi rispetto a TCP non sono ancora misurati.
+## Assessment
+
+The [verification plan](../affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket)
+ties the four requirements to tests to be implemented: selection of only local
+transport, two real processes, permissions and collisions, partial and malformed frames,
+saturation, slow clients, response loss, and restart. The first integration
+must pass them before measurements of the complete path.
+Unix-socket performance and advantages over TCP have not yet been measured.

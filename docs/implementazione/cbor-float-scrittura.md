@@ -1,41 +1,43 @@
-# Scrittura dei float CBOR
+<a id="scrittura-dei-float-cbor"></a>
 
-La primitiva `arcdocdb.cbor:scrivi-float-cbor-minimo` riceve
-`BUFFER START END AI HIGH LOW` e restituisce un solo NEXT.
-Le parole contengono i bit IEEE, con AI25/26/27 per binary16/32/64;
-HIGH è zero nelle prime due larghezze e LOW è u16 per binary16.
-La destinazione simple u8 appartiene esclusivamente al chiamante.
+# Writing CBOR floats
 
-La riduzione sceglie una forma esatta più corta, senza arrotondare
-o materializzare un float Lisp. Conserva segno, zero, infinito e payload
-NaN, incluso il bit signaling/quiet, secondo la preferenza locale del
-[lettore minimo](cbor-minimo-metodo.md). Codifiche applicative equivalenti
-e normalizzazione dei NaN richiedono un profilo superiore.
+The `arcdocdb.cbor:scrivi-float-cbor-minimo` primitive receives
+`BUFFER START END AI HIGH LOW` and returns a single NEXT.
+Words contain IEEE bits, with AI25/26/27 for binary16/32/64;
+HIGH is zero for the first two widths and LOW is u16 for binary16.
+The simple u8 destination belongs exclusively to the caller.
 
-L'output contiene F9/FA/FB e parole big-endian, per 3/5/9 byte.
-NEXT=START+dimensione; il resto dell'array fisico è invariato.
-Prima di scrivere vengono verificati range, AI, HIGH, LOW, coerenza
-delle parole e capacità della forma scelta, in quest'ordine. Gli errori
-pubblici hanno offset NIL e lasciano tutti i byte intatti:
+Reduction chooses a shorter exact form, without rounding
+or materializing a Lisp float. It preserves sign, zero, infinity, and NaN
+payload, including the signaling/quiet bit, according to the local preference of the
+[minimal reader](cbor-minimo-metodo.md). Equivalent application encodings
+and NaN normalization require a higher-level profile.
 
-| Controllo | Condizione | Motivo |
+Output contains F9/FA/FB and big-endian words, totaling 3/5/9 bytes.
+NEXT=START+size; the rest of the physical array is unchanged.
+Before writing, range, AI, HIGH, LOW, word consistency,
+and selected-form capacity are checked, in that order. Public
+errors have offset NIL and leave every byte intact:
+
+| Check | Condition | Reason |
 |---|---|---|
-| Destinazione/range | invalid-argument | :cbor-range |
+| Destination/range | invalid-argument | :cbor-range |
 | AI25/26/27 | invalid-argument | :cbor-float-ai |
 | HIGH u32 | invalid-argument | :cbor-float-high |
 | LOW u32 | invalid-argument | :cbor-float-low |
-| Coerenza delle parole | invalid-argument | :cbor-float-words |
-| Capacità fino a END | resource-exhausted | :cbor-float-capacity |
+| Word consistency | invalid-argument | :cbor-float-words |
+| Capacity up to END | resource-exhausted | :cbor-float-capacity |
 
-Le guardie interne richiedono fail-stop senza rollback. Non sono
-pubblicazione atomica o durevole; la composizione e il budget del
-documento rimangono superiori. Non vi sono attese, I/O o scritture
-condivise per operazione; chiamate su buffer privati possono essere
-eseguite in parallelo.
+Internal guards require fail-stop without rollback. They are not
+atomic or durable publication; composition and document
+budget remain higher-level. There are no waits, I/O, or shared writes
+per operation; calls on private buffers can run
+in parallel.
 
-Il [metodo preregistrato](cbor-float-scrittura-metodo.md) fissa corpus,
-misure, difetti e conservazione. La qualifica C1 e il gate del motore
-restano aperti fino alle evidenze richieste da ADR-0035.
+The [preregistered method](cbor-float-scrittura-metodo.md) fixes corpus,
+measurements, defects, and preservation. C1 qualification and engine gate
+remain open until the evidence required by ADR-0035.
 
-I [risultati delle verifiche](cbor-float-scrittura-risultati.md) riportano
-prove parallele, mutazioni, misure e limiti della copertura osservata.
+The [verification results](cbor-float-scrittura-risultati.md) report
+parallel tests, mutations, measurements, and limits of observed coverage.

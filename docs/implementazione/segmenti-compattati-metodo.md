@@ -1,50 +1,56 @@
-# Metodo di verifica dei segmenti compattati
+<a id="metodo-di-verifica-dei-segmenti-compattati"></a>
 
-Ambito registrato prima delle campagne: verifica in memoria del prefisso CLOSED
-di un segmento origine compaction, secondo [formati su disco](../formati-su-disco.md)
-e [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md).
-Nessuna applicazione, I/O, manifest, ricostruzione di indici o resolver.
+# Compacted-segment verification method
 
-## Contratto e oracoli
+Scope registered before campaigns: in-memory verification of a CLOSED
+prefix of a compaction-origin segment, under [on-disk formats](../formati-su-disco.md)
+and [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md).
+No application, I/O, manifest, index rebuild, or resolver.
 
-Buffer stabile che inizia all'offset zero del file e contiene almeno
-`valid-bytes` byte. Serie, segment-id e lunghezza valida provengono dalla fonte
-autorevole. Si verificano header, versione e origine compaction; dall'offset
-64 al limite valido, solo PUT/TOMBSTONE ordinari con cornice e CRC completi.
-Il limite logico CLOSED non viene presentato come EOF fisico allo scanner
-dei lotti. Nessuna classificazione TAIL: un record incompleto nel prefisso
-autorevole è corruzione; i byte dopo il limite valido non sono interpretati.
+<a id="contratto-e-oracoli"></a>
 
-Fixture manuali: magic ASCII, packing bytewise, CRC32C bitwise indipendente.
-Storie di record dichiarate alimentano i conteggi attesi senza il decoder
-del prodotto. Entrambe le versioni, chiavi e body diversi, record disallineati,
-CSN u64 estremi e flag contratto-versionato dei PUT ordinari.
+## Contract and oracles
 
-Prove negative: identità diversa in ogni byte e in entrambe le metà del
-segment-id; header alterato e versione ignota con CRC valido; origine writer;
-prepared PUT/TOMBSTONE e record OUTCOME/SEAL/EDIT/DECISION integri; tutti i
-punti di troncamento del contenuto, con successo soltanto sui confini noti;
-alterazione di ogni bit di una fixture piccola; lunghezze incoerenti riparando
-il CRC; input e budget invalidi/esatti/esauriti; buffer invariati, compresa
-la coda fisica ignorata. I risultati vengono restituiti soltanto al termine.
+Stable buffer starting at file offset zero and containing at least
+`valid-bytes` bytes. Serie, segment-id, and valid length come from authoritative
+source. Header, version, and compaction origin checked; from offset
+64 through valid limit, only ordinary PUT/TOMBSTONE records with complete frame and CRC.
+Logical CLOSED limit is not presented as physical EOF to batch
+scanner. No TAIL classification: incomplete record in authoritative
+prefix is corruption; bytes beyond valid limit not interpreted.
 
-## Campagne e criteri
+Manual fixtures: ASCII magic, bytewise packing, independent bitwise CRC32C.
+Declared record histories feed expected counts without product
+decoder. Both versions, different keys and bodies, misaligned records,
+extreme u64 CSNs, and contract-versioned flag on ordinary PUTs.
 
-Build senza warning/style-warning, lint, collegamenti, tracciabilità e check
-integrato. Due letture C1 su formato/errori e poi limiti/ownership/decisioni.
-Copertura strumentata separata con self-test del ramo mancante, conservando
-il denominatore completo. Mutazioni in copie isolate, baseline invariata
-obbligatoria e self-test del classificatore: origine, tipi ammessi, prepared,
-limite valido, budget byte/record, versione dal file e conteggi. Una compilazione
-fallita non conta come difetto rilevato. Tutti i tentativi rimangono conservati.
+Negative tests: different identity in each byte and both segment-id
+halves; altered header and unknown version with valid CRC; writer origin;
+intact prepared PUT/TOMBSTONE and OUTCOME/SEAL/EDIT/DECISION records; all content
+truncation points, success only at known boundaries;
+every bit altered in a small fixture; inconsistent lengths with repaired
+CRC; invalid/exact/exhausted inputs and budgets; unchanged buffers, including
+ignored physical tail. Results returned only at completion.
 
-Misura seriale del percorso riuscito: fixture preallocate da 64 byte e da
-256 record (PUT/TOMBSTONE alternati), entrambe le versioni; cinque repliche di
-4.096 chiamate, warmup 128 e GC completo prima di ogni replica. Tempo monotono,
-delta heap SBCL e risultato osservabile. Self-test con baseline nulla e
-controllo positivo 16 × 1 MiB. Criterio zero heap misurato; nessuna soglia di
-throughput promessa e nessuna assenza assoluta di allocazioni dedotta dal
-contatore. Un worker, safety 3, carico esterno non controllato, niente I/O.
+<a id="campagne-e-criteri"></a>
 
-Le prove riguardano il verificatore in memoria. Non promuovono requisiti del
-motore né chiudono recovery, transazioni, compaction o gate di rilascio.
+## Campaigns and criteria
+
+Build without warnings/style-warnings, lint, links, traceability, and integrated
+check. Two C1 readings on format/errors then bounds/ownership/decisions.
+Separate instrumented coverage with missing-branch self-test, preserving
+full denominator. Mutations in isolated copies, mandatory unchanged
+baseline and classifier self-test: origin, allowed types, prepared,
+valid limit, byte/record budgets, version from file, and counts. Failed
+compilation does not count as detected defect. All attempts preserved.
+
+Serial measurement of successful path: preallocated 64-byte and
+256-record fixtures (alternating PUT/TOMBSTONE), both versions; five replicates of
+4,096 calls, warmup 128, and full GC before each replicate. Monotonic time,
+SBCL heap delta, and observable result. Self-test with zero baseline and
+positive control 16 × 1 MiB. Criterion zero measured heap; no promised
+throughput threshold or absolute absence of allocations inferred from
+counter. One worker, safety 3, uncontrolled external load, no I/O.
+
+Tests concern in-memory verifier. They do not promote engine
+requirements or close recovery, transactions, compaction, or release gates.

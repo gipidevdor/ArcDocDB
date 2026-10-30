@@ -1,33 +1,37 @@
-# Campagne recenti rilevanti
+<a id="campagne-recenti-rilevanti"></a>
 
-La [sintesi strutturata](risultati.lisp) conserva revisione, hash dei cataloghi
-originali e riferimento all'archivio esterno. Questa selezione non è una nuova
-esecuzione e non cambia gli esiti delle prove.
+# Recent relevant campaigns
 
-| Campagna | Risultato e documentazione corrente |
+The [structured summary](risultati.lisp) retains revision, original catalog hashes,
+and external-archive reference. This selection is not a new execution and does
+not change test outcomes.
+
+| Campaign | Result and current documentation |
 |---|---|
-| CRC32C, srotolamento e GET | [Confronto 16/32 byte](../../../docs/implementazione/crc32c-unroll32.md): mantenuto il kernel 16 byte; GET caldo da 4 KiB a 1,647 µs senza oracolo nella finestra e 9,813 µs con oracolo, sull'M4 misurato. |
-| Portabilità CRC32C | [Caricamento e fallback](../../../docs/adr/0060-crc32c-caricamento-portabile.md): prove hardware e software, selezione runtime e limiti delle piattaforme qualificate. |
-| Costi GET | [Originali della campagna](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-get-costs). |
-| Pagine dell'indice | [Originali della verifica finale](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-index-pages-final). |
-| Selezione automatica dell'indice | [Originali della verifica](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-index-auto-final). |
-| Socket Unix M1 | [Qualifica e limiti](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md). |
-| Full text | [Verifica finale](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-fulltext-rows-final-check) e [copertura](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-fulltext-rows-final-coverage). |
+| CRC32C, unrolling, and GET | [16/32-byte comparison](../../../docs/implementazione/crc32c-unroll32.md): retained 16-byte kernel; warm 4 KiB GET at 1.647 µs without oracle in window and 9.813 µs with oracle, on the measured M4. |
+| CRC32C portability | [Loading and fallback](../../../docs/adr/0060-crc32c-caricamento-portabile.md): hardware and software tests, runtime selection, and qualified-platform limits. |
+| GET costs | [Campaign originals](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-get-costs). |
+| Index pages | [Final-verification originals](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-index-pages-final). |
+| Automatic index selection | [Verification originals](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-index-auto-final). |
+| Unix socket M1 | [Qualification and limits](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md). |
+| Full text | [Final verification](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-fulltext-rows-final-check) and [coverage](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-fulltext-rows-final-coverage). |
 
-Le misure restano specifiche della campagna e della macchina indicate negli originali.
-Gli originali completi si recuperano dall'[archivio storico](../../evidence/README.md).
+Measurements remain specific to the campaign and machine identified in originals.
+Complete originals are recovered from the [historical archive](../../evidence/README.md).
 
-## Verifica della pulizia e dei pacchetti CI
+<a id="verifica-della-pulizia-e-dei-pacchetti-ci"></a>
 
-La [suite CI](ci-selftest.lisp) supera 364 controlli in sette moduli; il
-[comando nativo](report.lisp) conserva sorgenti stabili, stdout, stderr e uscita zero.
-Il messaggio di timeout in stderr appartiene a un controllo negativo previsto.
+## Cleanup and CI-package verification
 
-La [ricompressione](ci-repack.lisp) dei sei pacchetti originali del run
-`40010510208` passa da 2.128.803 a 2.028.608 byte, sotto il limite invariato
-di 2.097.152 byte. Le copie raw sono verificate per hash. Sono conservati il
-[sorgente C4 del confronto](ci-repack-source.txt) e il suo SHA-256 nel risultato.
-È un confronto di impacchettamento: non riesegue i test del vecchio run e non
-attesta una nuova esecuzione GitHub. Per ripeterlo, scaricare gli asset del run
-in `spikes/out/evidence-cleanup/ci-input/` ed eseguire il sorgente dalla root
-con SBCL, usando una nuova directory di output.
+The [CI suite](ci-selftest.lisp) passes 364 checks in seven modules; the
+[native command](report.lisp) retains stable sources, stdout, stderr, and zero exit status.
+The stderr timeout message belongs to an expected negative control.
+
+[Recompression](ci-repack.lisp) of the six original packages from run
+`40010510208` reduces 2,128,803 to 2,028,608 bytes, below the unchanged
+2,097,152-byte limit. Raw copies are hash-verified. The
+[C4 comparison source](ci-repack-source.txt) and its SHA-256 are retained in the result.
+This is a packaging comparison: it does not rerun the old run's tests or attest a
+new GitHub execution. To repeat it, download the run's assets into
+`spikes/out/evidence-cleanup/ci-input/` and execute the source from the repository
+root with SBCL, using a new output directory.

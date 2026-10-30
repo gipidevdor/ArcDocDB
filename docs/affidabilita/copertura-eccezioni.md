@@ -1,250 +1,264 @@
-# Eccezioni alla copertura
+<a id="eccezioni-alla-copertura"></a>
 
-Elenco delle righe di codice C1/C2 che la suite **non** può raggiungere, con motivazione e
-verifica sostitutiva ([piano di verifica](piano-di-verifica.md#copertura)). Una riga non
-raggiungibile senza motivo è un difetto di test o codice morto: va coperta o rimossa.
+# Coverage exceptions
 
-| Campo | Contenuto |
+List of C1/C2 code lines the suite **cannot** reach, with rationale and substitute
+verification ([verification plan](piano-di-verifica.md#copertura)). An unreachable line
+without justification is a test defect or dead code: cover or remove it.
+
+| Field | Contents |
 |---|---|
-| ID | `COV-nnn`, stabile |
-| Dove | modulo, funzione, riga |
-| Perché non raggiungibile | ad esempio ramo difensivo su un invariante già garantito dal tipo |
-| Verifica sostitutiva | ispezione, asserzione, test del modello |
-| Approvazione | data |
+| ID | `COV-nnn`, stable |
+| Where | module, function, line |
+| Why unreachable | e.g., defensive branch on an invariant already guaranteed by type |
+| Substitute verification | inspection, assertion, model test |
+| Approval | date |
 
-## Eccezioni approvate
+<a id="eccezioni-approvate"></a>
 
-Nessuna eccezione è approvata. Le misure locali seguenti conservano il denominatore grezzo.
+## Approved exceptions
 
-## ID dalla directory — 2026-10-16
+No exceptions are approved. The local measurements below retain the raw denominator.
 
-La [composizione dell'inventario e della selezione](../implementazione/id-directory-recovery.md)
-misura due file: `inventory-id.lisp`, 74/81 forme e 10/10 rami, e
-`inventory-directory-id.lisp`, 18/26 forme e nessun ramo applicativo nuovo.
-Il totale grezzo è 92/107 forme e 10/10 rami. Le 15 forme non marcate sono
-otto forme di package/declaim e sette inizializzatori keyword. Questi ultimi
-sono esercitati dalle API senza opzioni, ma restano non marcati dal contrib.
-Il rapporto conserva tutti i percorsi nativi mancanti e la concordanza HTML.
-Nessuna esclusione o ricarica artificiale; la misura non qualifica l'intero
-inventario, l'I/O o il Recovery Manager. Restano aperte indipendenza e
-qualifica complessiva.
+<a id="id-dalla-directory--2026-10-16"></a>
 
-## Proposta ID dopo recovery — 2026-10-15
+## IDs from directory — 2026-10-16
 
-Il nuovo [`inventory-id.lisp`](../../src/recovery/inventory-id.lisp) osserva
-71/77 forme e 10/10 alternative di ramo. Le sei forme non marcate sono
-`in-package`, tre `declaim` e i due inizializzatori keyword `max-files` e
-`max-segmenti`. Questi ultimi sono esercitati dalle chiamate pubbliche senza
-opzioni, ma restano non marcati dalla strumentazione; non sono dichiarati
-irraggiungibili. I percorsi nativi mancanti sono `(0)`, `(1)`, `(2)`, `(4)`,
-`(3 2 5)` e `(4 2 5)`. Nessuna forma viene esclusa o marcata con ricaricamenti.
-La [tabella delle decisioni](../implementazione/id-segmento-recovery.md)
-documenta le coppie di indipendenza e la fault injection sul piano vuoto.
-Questo risultato riguarda il solo nuovo file, non qualifica il planner
-preesistente o il Recovery Manager; la qualifica complessiva resta aperta.
+[Inventory/selection composition](../implementazione/id-directory-recovery.md)
+measures two files: `inventory-id.lisp`, 74/81 forms and 10/10 branches, and
+`inventory-directory-id.lisp`, 18/26 forms and no new application branch.
+Raw total is 92/107 forms and 10/10 branches. The 15 unmarked forms are eight
+package/declaim forms and seven keyword initializers. These are exercised by
+option-free API calls but remain unmarked by the contrib.
+The report retains all missing native paths and HTML agreement.
+No exclusions or artificial reloads; the measurement qualifies neither complete
+inventory, I/O, nor Recovery Manager. Independence and overall qualification remain open.
 
-## Recovery CONTROL — approfondimento del 2026-10-15
+<a id="proposta-id-dopo-recovery--2026-10-15"></a>
 
-Le forme non marcate nella [campagna precedente](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-control-transizione/report.md)
-comprendono `in-package`, `declaim`, inizializzatori keyword e specifiche di
-slot del costruttore BOA, oltre al rifiuto privato di chunk zero.
-`tests/control/recovery-guards.lisp` esercita quest'ultimo senza I/O e
-controlla dinamicamente ciascun argomento invalido del costruttore, insieme
-ai due formati e ai due stati validi. Le istanze private non vengono passate
-al publisher; le prove sono deliberatamente fuori dal contratto pubblico.
+## Post-recovery ID proposal — 2026-10-15
 
-L'[approfondimento](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-active-verifica/report.md)
-conserva un nuovo report grezzo e la distinzione fra forme dichiarative e
-percorsi eseguiti. Non si ricaricano i sorgenti per marcare artificialmente
-le dichiarazioni e non si sottrae alcuna forma dal denominatore. Nessuna
-eccezione è approvata e la qualifica MC/DC resta aperta.
+New [`inventory-id.lisp`](../../src/recovery/inventory-id.lisp) observes
+71/77 forms and 10/10 branch alternatives. The six unmarked forms are
+`in-package`, three `declaim`s, and keyword initializers `max-files` and
+`max-segmenti`. The latter are exercised by option-free public calls but remain
+unmarked by instrumentation; they are not declared unreachable.
+Missing native paths are `(0)`, `(1)`, `(2)`, `(4)`, `(3 2 5)`, and `(4 2 5)`.
+No form is excluded or marked through reloads.
+The [decision table](../implementazione/id-segmento-recovery.md) documents independence
+pairs and fault injection on the empty plan. This result concerns only the new file,
+qualifying neither the existing planner nor Recovery Manager; overall qualification remains open.
+
+<a id="recovery-control--approfondimento-del-2026-10-15"></a>
+
+## CONTROL recovery — follow-up of 2026-10-15
+
+Unmarked forms in the [previous campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-control-transizione/report.md)
+include `in-package`, `declaim`, keyword initializers, and BOA constructor slot
+specifications, plus private rejection of zero chunks.
+`tests/control/recovery-guards.lisp` exercises that rejection without I/O and
+dynamically checks each invalid constructor argument, together with both formats
+and both valid states. Private instances are not passed to the publisher;
+tests are deliberately outside the public contract.
+
+The [follow-up](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-active-verifica/report.md)
+retains a new raw report and the distinction between declarative forms and executed
+paths. Sources are not reloaded to mark declarations artificially, and no form is
+subtracted from the denominator. No exception is approved; MC/DC qualification remains open.
 
 
-## Inventario locale delle decisioni multiserie
+<a id="inventario-locale-delle-decisioni-multiserie"></a>
 
-Misura iniziale del 2026-10-09: 935/1121 espressioni e 82/122 rami sui cinque
-file `decisions-*`, con tutte le forme nel denominatore. Le 40 alternative
-di ramo mancanti appartengono a 30 siti di segnalazione difensiva: una
-condizione composta può registrare più alternative. Le letture dell'autore
-e di un revisore indipendente sono conservate nel
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-decisions-verifica/catalogo.lisp).
+## Local multiseries-decision inventory
 
-La successiva [variante radix](../implementazione/decisioni-radix-decisioni.md)
-osserva 1.332/1.530 espressioni e 138/176 alternative sui sei file.
-I test privati di forma coprono anche le negazioni prima mancanti di
-COV-020, COV-029 e COV-030: le alternative mancanti dei cinque file
-preesistenti scendono da 40 a 37. Il file radix aggiunge una alternativa
-non osservata, per 38 complessive. Il controllo richiede una lunghezza
-array non rappresentabile in u64, impossibile sul runtime esaminato con
-`index` fixnum più stretto. L'inventario iniziale sotto è conservato come
-storia della misura; l'inventario radix descrive guardie, forme dichiarative
-e postcondizioni ancora mancanti. Nessuna eccezione viene approvata.
+Initial measurement of 2026-10-09: 935/1121 expressions and 82/122 branches across
+five `decisions-*` files, with every form in the denominator. The 40 missing branch
+alternatives belong to 30 defensive signaling sites: one compound condition may
+record multiple alternatives. Author and independent-reviewer readings are retained
+in the [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-decisions-verifica/catalogo.lisp).
 
-Queste sono motivazioni osservate e verifiche sostitutive locali; non sono
-esclusioni approvate, copertura MC/DC o chiusura del gate C1. Il contratto
-richiede input stabile e passaggio attraverso l'API pubblica; un bypass
-che costruisca oggetti privati incoerenti è fuori da quel contratto.
+The later [radix variant](../implementazione/decisioni-radix-decisioni.md)
+observes 1,332/1,530 expressions and 138/176 alternatives across six files.
+Private shape tests also cover the previously missing negations of COV-020,
+COV-029, and COV-030: missing alternatives in the five existing files drop
+from 40 to 37. The radix file adds one unobserved alternative, making 38 total.
+The check requires an array length not representable in u64, impossible on the
+examined runtime with a narrower fixnum `index`. The initial inventory below is
+retained as measurement history; the radix inventory describes guards, declarative
+forms, and postconditions still missing. No exception is approved.
 
-| ID | Sorgente, funzione e riga | Controllo | Motivazione / verifica sostitutiva |
+These are observed rationales and local substitute checks, not approved exclusions,
+MC/DC coverage, or C1 gate closure. The contract requires stable input and the public
+API; a bypass constructing inconsistent private objects is outside that contract.
+
+| ID | Source, function, and line | Check | Rationale / substitute verification |
 |---|---|---|---|
-| COV-001 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, riga 26 | posizione prima della fine | Lo scanner conta cornici intere del prefisso. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-002 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, riga 30 | avanzamento, confine, chiave e flag | Cornice di controllo già validata; buffer stabile. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-003 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, riga 37 | span e misura del payload | Il codec garantisce span ordinati e consumo esatto. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-004 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, riga 41 | tipo DECISION o SEAL | Il log multiserie verificato ammette soltanto questi tipi. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-005 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `preflight-decisions`, riga 53 | capienza del numero di cornici | Contatori prodotti dallo scanner; ogni cornice occupa almeno un header. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-006 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `preflight-decisions`, riga 60 | misura dei partecipanti | Il codec ha verificato count e span di ID16. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-007 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `preflight-decisions`, riga 68 | consumo del prefisso e numero di decisioni | Rilettura stabile delle stesse cornici contate dallo scanner. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-008 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decode-decisions`, riga 80 | count, frames e capienza | Scanner e preflight hanno fissato i conteggi. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-009 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decode-decisions`, riga 87 | capienza del vettore entry | Una entry per ogni DECISION contata dal preflight. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-010 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decode-decisions`, riga 99 | consumo, entry e partecipanti | Le copie non modificano il buffer e ripetono il preflight. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-011 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `unique-decision-count`, riga 124 | ordine TXID | Il merge stabile precede la coalescenza. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-012 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `unique-decision-count`, riga 133 | unici non oltre entry | Ogni iterazione incrementa al massimo una volta. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-013 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `collapse-decisions`, riga 147 | capienza del risultato | Il conteggio degli unici ha letto lo stesso vettore privato. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-014 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `collapse-decisions`, riga 151 | consumo del risultato | Ogni nuovo TXID produce esattamente una entry. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-015 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, riga 35 | misura, identità e multiplo di 16 | Workspace distinto della misura della copia privata di ID16. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-016 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, riga 38 | intervalli dei run | I confini sono calcolati con min sul count verificato. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-017 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, riga 48 | consumo di entrambi i run | Una copia e un avanzamento per right-left passi. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-018 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `check-participant-order`, riga 58 | forma dei partecipanti | Count e copia provengono dallo stesso payload verificato. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-019 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `check-participant-order`, riga 66 | ordine crescente | Il merge ordina tutti i16byte; duplicati sono invece un errore pubblico coperto. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-020 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `sort-participants`, riga 75 | forma della copia | Il builder copia esattamente lo span verificato. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-021 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, riga 95 | misura e identità dei vettori | Workspace distinto della stessa lunghezza del vettore entry. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-022 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, riga 97 | intervalli dei run | I confini sono limitati dal numero di entry. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-023 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, riga 108 | consumo dei run | Una entry e un avanzamento per right-left passi. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-024 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `sort-entries`, riga 131 | ordine TXID | Merge stabile su tutte le passate fino alla lunghezza totale. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-025 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `find-decision-index`, riga 22 | intervallo della ricerca | Middle è calcolato dentro il range semiaperto non vuoto. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-026 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `find-decision-index`, riga 29 | limite dei passi | Il range si dimezza; integer-length(N) copre la ricerca. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-027 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `participant-present-p`, riga 61 | risultato del confronto | compare-id16 restituisce soltanto -1,0,1 per contratto e implementazione. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-028 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `participant-present-p`, riga 62 | limite dei passi | Il range si dimezza; integer-length(count) copre la ricerca. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-029 | [`decisions-types.lisp`](../../src/recovery/decisions-types.lisp), `check-entry-shape`, riga 32 | almeno due partecipanti | Il codec ha verificato la cardinalità prima della costruzione. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
-| COV-030 | [`decisions-types.lisp`](../../src/recovery/decisions-types.lisp), `check-entry-shape`, riga 34 | misura del vettore ID16 | Count e copia derivano dal medesimo span verificato. Ispezione delle due letture; oracoli su input arbitrari, cardinalità dispari e valori estremi. |
+| COV-001 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, line 26 | position before end | Scanner counts whole frames in the prefix. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-002 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, line 30 | advancement, boundary, key, and flags | Control frame already validated; stable buffer. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-003 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, line 37 | payload span and size | Codec guarantees ordered spans and exact consumption. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-004 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decision-frame`, line 41 | DECISION or SEAL type | Verified multiseries log permits only these types. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-005 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `preflight-decisions`, line 53 | frame-count capacity | Scanner-produced counters; each frame occupies at least a header. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-006 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `preflight-decisions`, line 60 | participant size | Codec verified count and ID16 span. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-007 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `preflight-decisions`, line 68 | prefix consumption and decision count | Stable reread of the same frames counted by scanner. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-008 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decode-decisions`, line 80 | count, frames, and capacity | Scanner and preflight fixed the counts. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-009 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decode-decisions`, line 87 | entry-vector capacity | One entry per DECISION counted by preflight. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-010 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `decode-decisions`, line 99 | consumption, entries, and participants | Copies do not modify buffer and repeat preflight. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-011 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `unique-decision-count`, line 124 | TXID order | Stable merge precedes coalescing. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-012 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `unique-decision-count`, line 133 | unique count within entry count | Each iteration increments at most once. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-013 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `collapse-decisions`, line 147 | result capacity | Unique-count pass read the same private vector. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-014 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `collapse-decisions`, line 151 | result consumption | Each new TXID produces exactly one entry. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-015 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, line 35 | size, identity, and multiple of 16 | Separate workspace matching private ID16 copy size. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-016 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, line 38 | run ranges | Boundaries computed with min over verified count. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-017 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, line 48 | consumption of both runs | One copy and advancement per right-left steps. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-018 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `check-participant-order`, line 58 | participant shape | Count and copy come from the same verified payload. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-019 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `check-participant-order`, line 66 | increasing order | Merge sorts all 16 bytes; duplicates are a covered public error. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-020 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `sort-participants`, line 75 | copy shape | Builder copies exactly the verified span. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-021 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, line 95 | vector size and identity | Separate workspace of the same length as entry vector. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-022 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, line 97 | run ranges | Boundaries limited by entry count. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-023 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, line 108 | run consumption | One entry and advancement per right-left steps. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-024 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `sort-entries`, line 131 | TXID order | Stable merge on all passes through total length. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-025 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `find-decision-index`, line 22 | search range | Middle computed inside nonempty half-open range. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-026 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `find-decision-index`, line 29 | step bound | Range halves; integer-length(N) covers search. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-027 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `participant-present-p`, line 61 | comparison result | compare-id16 returns only -1,0,1 by contract and implementation. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-028 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `participant-present-p`, line 62 | step bound | Range halves; integer-length(count) covers search. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-029 | [`decisions-types.lisp`](../../src/recovery/decisions-types.lisp), `check-entry-shape`, line 32 | at least two participants | Codec verified cardinality before construction. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-030 | [`decisions-types.lisp`](../../src/recovery/decisions-types.lisp), `check-entry-shape`, line 34 | ID16 vector size | Count and copy derive from the same verified span. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 
-Le ulteriori 46 forme non marcate sono 30 forme dichiarative di package,
-`in-package` e `declaim`, sei forme degli slot `defstruct` e dieci
-inizializzatori `&key`. Questi ultimi sono raggiungibili e verificati dal
-test pubblico `public-default-budgets-and-explicit-version`: restano
-non marcati da `sb-cover` e non vengono presentati come invarianti
-irraggiungibili. Le altre 140 espressioni mancanti appartengono alle
-segnalazioni difensive e ai loro operandi. Nessuna forma viene sottratta
-dalle 1121 espressioni o dai 122 rami pubblicati.
+The other 46 unmarked forms are 30 declarative package, `in-package`, and `declaim`
+forms, six `defstruct` slot forms, and ten `&key` initializers. The latter are
+reachable and verified by the public test `public-default-budgets-and-explicit-version`:
+they remain unmarked by `sb-cover` and are not presented as unreachable invariants.
+The other 140 missing expressions belong to defensive signaling and its operands.
+No form is subtracted from the published 1121 expressions or 122 branches.
 
-La [tabella dei predicati composti](../implementazione/decisioni-multiserie-decisioni.md)
-collega le clausole pubbliche ai test e le guardie interne a questo inventario.
-Le eccezioni degli altri moduli non sono inventariate da questa misura.
+The [compound-predicate table](../implementazione/decisioni-multiserie-decisioni.md)
+connects public clauses to tests and internal guards to this inventory.
+Other modules' exceptions are not inventoried by this measurement.
 
-## Inventario locale del manifest
+<a id="inventario-locale-del-manifest"></a>
 
-Misura del 2026-10-09 sui sei file `manifest-*`: 888/1067 espressioni e
-114/146 rami, con 20 test dedicati nella suite recovery iniziale di 64 test. I 32
-rami non osservati comprendono 28 alternative di guardie interne e quattro
-alternative non marcate nelle specifiche di tipo `NEXT-ID` dei due
-`defstruct`. Lo stato e gli HTML originali sono nel
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-manifest/catalogo.lisp).
-Le due letture C1 verificano l'inventario insieme ai
-[predicati composti](../implementazione/manifest-control-log-decisioni.md).
+## Local manifest inventory
 
-| ID | Sorgente, funzione e riga | Alternative non osservate | Motivazione / verifica sostitutiva |
+Measurement of 2026-10-09 across six `manifest-*` files: 888/1067 expressions and
+114/146 branches, with 20 dedicated tests in the initial 64-test recovery suite.
+The 32 unobserved branches include 28 internal-guard alternatives and four unmarked
+alternatives in the two `defstruct`s' `NEXT-ID` type specifications.
+Original state and HTML are in the
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-manifest/catalogo.lisp).
+Both C1 readings verify the inventory alongside
+[compound predicates](../implementazione/manifest-control-log-decisioni.md).
+
+| ID | Source, function, and line | Unobserved alternatives | Rationale / substitute verification |
 |---|---|---|---|
-| COV-031 | `manifest-build.lisp`, `manifest-frame`, 28 | 1: posizione prima della fine | Lo scanner conta solo cornici intere; troncamenti a ogni byte e ispezione dei passaggi |
-| COV-032 | `manifest-build.lisp`, `manifest-frame`, 32 | 3: avanzamento, confine e predicato composto | Cornice di controllo già verificata nel prefisso stabile; scanner e oracoli v1/v2 |
-| COV-033 | `manifest-build.lisp`, `manifest-frame`, 36 | 1: flags SEAL nonzero | Lo scanner rifiuta flags non ammessi prima della rilettura |
-| COV-034 | `manifest-build.lisp`, `manifest-frame`, 39 | 1: fallback fuori da EDIT/SEAL | Lo scanner del control log ammette soltanto questi record |
-| COV-035 | `manifest-build.lisp`, `manifest-frame`, 45 | 1: span payload non ordinati | Il codec attesta gli span; lunghezze e consumo corrotti sono verificati dall'API |
-| COV-036 | `manifest-build.lisp`, `preflight-manifest`, 61 | 1: conteggi non coerenti con i byte | Conteggi autorevoli dello scanner, con almeno un header per cornice |
-| COV-037 | `manifest-build.lisp`, `preflight-manifest`, 80 | 2: posizione finale e predicato composto | Rilettura delle stesse cornici su input stabile; conteggio fisico provato prima della coalescenza |
-| COV-038 | `manifest-build.lisp`, `decode-manifest`, 92 | 1: conteggi non coerenti con i byte | Scanner e preflight hanno già fissato questi valori |
-| COV-039 | `manifest-build.lisp`, `decode-manifest`, 107 | 3: posizione, numero EDIT e predicato composto | Fold e preflight consumano gli stessi span; copia posseduta e input invariato |
-| COV-040 | `manifest-decode.lisp`, `check-closed-shape`, 12 | 1: lunghezza fuori formato | Codec già verificato; test pubblici su 0, 63, 64, u32 massimo e valori superiori |
-| COV-041 | `manifest-decode.lisp`, `check-closed-shape`, 14 | 1: mappa non EQL | Ogni mappa privata è creata con EQL; ispezione delle costruzioni |
-| COV-042 | `manifest-decode.lisp`, `decode-closure-outcomes`, 39 | 1: coppie oltre byte disponibili | Span e count già verificati dal codec; test budget e payload corrotti |
-| COV-043 | `manifest-decode.lisp`, `decode-closure-outcomes`, 50 | 2: consumo e predicato composto | Una coppia letta per passo; coalescenza può solo ridurre la cardinalità |
-| COV-044 | `manifest-decode.lisp`, `decode-edit-closed`, 67 | 1: entry fissa oltre confine | Codec e span CLOSED già verificati |
-| COV-045 | `manifest-decode.lisp`, `decode-edit-closed`, 80 | 2: consumo e predicato composto | Un passo per CLOSED fisico; duplicati coerenti/discordanti verificati |
-| COV-046 | `manifest-decode.lisp`, `decode-edit-removed`, 92 | 1: span diverso da count × 8 | Misura già verificata dal codec; rimozioni ultime e duplicate provate |
-| COV-047 | `manifest-decode.lisp`, `decode-edit-removed`, 97 | 1: cardinalità oltre conteggio | Un inserimento per menzione fisica, con duplicati coalescenti |
-| COV-048 | `manifest-fold.lisp`, `apply-manifest-delta`, 81 | 1: alias delle mappe | Decodifica crea mappe nuove per ogni EDIT; prove di ownership e quattro worker |
-| COV-049 | `manifest-fold.lisp`, `apply-manifest-delta`, 91 | 3: ACTIVE zero, sua negazione e predicato composto | Snapshot nonzero, OPEN zero conserva ACTIVE, limite aggiornato con MAX; storie e u64 esaurito |
-| COV-050 | `manifest-types.lisp`, `manifest-state`, 52 | 2: specifica di tipo NEXT-ID non marcata | Dato grezzo su `(integer 1 18446744073709551616)`, non un ramo applicativo; tipi e limite esaurito verificati |
-| COV-051 | `manifest-types.lisp`, `manifest`, 62 | 2: specifica di tipo NEXT-ID non marcata | Stessa specifica del workspace; nessuna sottrazione dal denominatore |
+| COV-031 | `manifest-build.lisp`, `manifest-frame`, 28 | 1: position before end | Scanner counts only whole frames; truncation at every byte and inspection of passes |
+| COV-032 | `manifest-build.lisp`, `manifest-frame`, 32 | 3: advancement, boundary, and compound predicate | Control frame already verified in stable prefix; scanner and v1/v2 oracles |
+| COV-033 | `manifest-build.lisp`, `manifest-frame`, 36 | 1: nonzero SEAL flags | Scanner rejects disallowed flags before reread |
+| COV-034 | `manifest-build.lisp`, `manifest-frame`, 39 | 1: fallback outside EDIT/SEAL | Control-log scanner allows only these records |
+| COV-035 | `manifest-build.lisp`, `manifest-frame`, 45 | 1: unordered payload spans | Codec attests spans; corrupted lengths and consumption checked by API |
+| COV-036 | `manifest-build.lisp`, `preflight-manifest`, 61 | 1: counts inconsistent with bytes | Authoritative scanner counts, with at least one header per frame |
+| COV-037 | `manifest-build.lisp`, `preflight-manifest`, 80 | 2: final position and compound predicate | Reread of same frames on stable input; physical count checked before coalescing |
+| COV-038 | `manifest-build.lisp`, `decode-manifest`, 92 | 1: counts inconsistent with bytes | Scanner and preflight already fixed these values |
+| COV-039 | `manifest-build.lisp`, `decode-manifest`, 107 | 3: position, EDIT count, and compound predicate | Fold and preflight consume same spans; owned copy and unchanged input |
+| COV-040 | `manifest-decode.lisp`, `check-closed-shape`, 12 | 1: out-of-format length | Codec already verified; public tests on 0, 63, 64, u32 maximum, and greater values |
+| COV-041 | `manifest-decode.lisp`, `check-closed-shape`, 14 | 1: non-EQL map | Every private map created with EQL; construction inspection |
+| COV-042 | `manifest-decode.lisp`, `decode-closure-outcomes`, 39 | 1: pairs beyond available bytes | Spans and count already verified by codec; budget and corrupt-payload tests |
+| COV-043 | `manifest-decode.lisp`, `decode-closure-outcomes`, 50 | 2: consumption and compound predicate | One pair read per step; coalescing can only reduce cardinality |
+| COV-044 | `manifest-decode.lisp`, `decode-edit-closed`, 67 | 1: fixed entry beyond boundary | Codec and CLOSED spans already verified |
+| COV-045 | `manifest-decode.lisp`, `decode-edit-closed`, 80 | 2: consumption and compound predicate | One step per physical CLOSED; consistent/conflicting duplicates tested |
+| COV-046 | `manifest-decode.lisp`, `decode-edit-removed`, 92 | 1: span differs from count × 8 | Size already checked by codec; final and duplicate removals tested |
+| COV-047 | `manifest-decode.lisp`, `decode-edit-removed`, 97 | 1: cardinality beyond count | One insertion per physical mention, with coalesced duplicates |
+| COV-048 | `manifest-fold.lisp`, `apply-manifest-delta`, 81 | 1: map alias | Decoding creates fresh maps per EDIT; ownership and four-worker tests |
+| COV-049 | `manifest-fold.lisp`, `apply-manifest-delta`, 91 | 3: zero ACTIVE, its negation, and compound predicate | Nonzero snapshot, zero OPEN preserves ACTIVE, bound updated with MAX; histories and exhausted u64 |
+| COV-050 | `manifest-types.lisp`, `manifest-state`, 52 | 2: unmarked NEXT-ID type specification | Raw data on `(integer 1 18446744073709551616)`, not an application branch; types and exhausted bound tested |
+| COV-051 | `manifest-types.lisp`, `manifest`, 62 | 2: unmarked NEXT-ID type specification | Same specification as workspace; no subtraction from denominator |
 
-I contatori di `sb-cover` non equivalgono a un ramo per ogni operando Lisp.
-Le 179 espressioni non marcate includono segnalazioni difensive e forme
-dichiarative, slot e inizializzatori dei keyword. I default sono
-raggiungibili e verificati dal test diretto
-`direct-api-defaults-and-required-options`; non diventano invarianti
-irraggiungibili per il solo fatto che la strumentazione non li marca.
-Nessuna forma o alternativa è esclusa dalle 1067 espressioni e dai 146
-rami pubblicati. Nessuna eccezione è approvata e il gate C1 del motore
-resta aperto.
+`sb-cover` counters do not equate to one branch per Lisp operand.
+The 179 unmarked expressions include defensive signaling and declarative forms,
+slots, and keyword initializers. Defaults are reachable and verified by the direct
+test `direct-api-defaults-and-required-options`; instrumentation failing to mark
+them does not turn them into unreachable invariants. No form or alternative is
+excluded from the published 1067 expressions and 146 branches.
+No exception is approved; the engine's C1 gate remains open.
 
-## Consegna locale dei writer — 2026-10-09
+<a id="consegna-locale-dei-writer--2026-10-09"></a>
 
-La [campagna handoff](../implementazione/writer-handoff-decisioni.md#copertura-raw-osservata)
-conserva il denominatore completo dei quattro file execution: 505/593
-espressioni e 76/94 esiti. Il nuovo handoff ha 173/190 espressioni e 16/16
-esiti strumentati; le 17 forme non marcate (dichiarazioni, default e otherwise
-difensivo) sono inventariate nel documento. Il nuovo helper di accettazione
-non ha esiti strumentati scoperti. Le lacune legacy restano: 42 espressioni
-e dieci esiti in queue, 28 e otto in writer, una forma del package.
-Nessuna esclusione approvata, MC/DC completa o chiusura del gate C1 implicita.
+## Local writer handoff — 2026-10-09
 
-
-## Lista dei writer pronti — 2026-10-09
-
-La [campagna ready](../implementazione/writer-ready-decisioni.md) conserva
-848/974 espressioni e 126/146 esiti sui sei file execution. I due nuovi file
-osservano 343/381 espressioni e 50/52 esiti: 17 forme di definizione/default
-non marcate in ready-types; 21 forme in ready (nove definizioni, otto nelle
-due condizioni CAS difensive e quattro nell’otherwise). I due esiti mancanti
-sono la postcondizione della proprietà acquisita e il vecchio valore del
-CAS di rilascio; non vengono provocati violando la proprietà con thread
-attivi. Le lacune dei quattro file precedenti rimangono nel denominatore.
-Nessuna esclusione approvata, MC/DC completa o chiusura del gate C1 implicita.
+The [handoff campaign](../implementazione/writer-handoff-decisioni.md#copertura-raw-osservata)
+retains the complete denominator for four execution files: 505/593 expressions
+and 76/94 outcomes. New handoff has 173/190 expressions and 16/16 instrumented
+outcomes; its 17 unmarked forms (declarations, defaults, defensive otherwise)
+are inventoried in the document. The new acceptance helper has no uncovered
+instrumented outcomes. Legacy gaps remain: 42 expressions and ten outcomes in
+queue, 28 and eight in writer, one package form.
+No approved exclusion, full MC/DC, or C1 gate closure is implied.
 
 
-## Ricircolo dei writer pronti — 2026-10-09
+<a id="lista-dei-writer-pronti--2026-10-09"></a>
 
-La [campagna recycle](../implementazione/writer-recycle-decisioni.md) mantiene
-929/1060 espressioni e 134/154 esiti su sette file execution. Il nuovo file
-ha 81/86 espressioni e 8/8 esiti; le cinque forme non marcate sono package,
-declaim optimize e tre ftype top-level. Le lacune precedenti restano nel
-denominatore completo, compresi i due esiti CAS difensivi della lista pronta.
-Nessuna esclusione approvata, MC/DC completa o chiusura del gate C1 implicita.
+## Ready-writer list — 2026-10-09
+
+The [ready campaign](../implementazione/writer-ready-decisioni.md) retains
+848/974 expressions and 126/146 outcomes across six execution files.
+The two new files observe 343/381 expressions and 50/52 outcomes: 17 unmarked
+definition/default forms in ready-types; 21 forms in ready (nine definitions,
+eight in two defensive CAS conditions, four in otherwise). The two missing
+outcomes are the acquired-ownership postcondition and release CAS's old value;
+they are not provoked by violating ownership with active threads.
+Gaps in the four previous files remain in the denominator.
+No approved exclusion, full MC/DC, or C1 gate closure is implied.
 
 
-## Contesto worker dei writer — 2026-10-09
+<a id="ricircolo-dei-writer-pronti--2026-10-09"></a>
 
-La [campagna worker](../implementazione/writer-worker-decisioni.md) conserva
-1427/1660 espressioni e 199/230 esiti su tutti gli undici file execution.
-I quattro nuovi file hanno 498/600 espressioni e 65/76 esiti; le 102 forme
-e undici alternative nuove non marcate sono mappate nell'inventario,
-insieme alle 131 forme e venti alternative dei sette file precedenti.
-Native, HTML ed export corrispondono anche per ciascun missing path.
-Nessuna forma top-level, ramo difensivo o postcondizione è sottratta dal
-denominatore. Le fixture FI sono dichiarate e non autorizzano a violare
-ownership con thread attivi. Nessuna esclusione approvata, MC/DC completa
-o chiusura del gate C1 del motore è implicita.
+## Ready-writer recycling — 2026-10-09
 
-## Fonti possedute recovery — 2026-10-17
+The [recycle campaign](../implementazione/writer-recycle-decisioni.md) retains
+929/1060 expressions and 134/154 outcomes across seven execution files.
+The new file has 81/86 expressions and 8/8 outcomes; five unmarked forms are
+package, declaim optimize, and three top-level ftypes. Prior gaps remain in
+the complete denominator, including the ready list's two defensive CAS outcomes.
+No approved exclusion, full MC/DC, or C1 gate closure is implied.
 
-La [campagna delle fonti](../implementazione/fonti-recovery.md#esiti-conservati--2026-10-17)
-conserva il totale grezzo 293/327 forme e 22/26 rami dei quattro nuovi file.
-I tre file operativi hanno 22/22 rami marcati; nel file dei tipi restano
-quattro alternative associate alle dichiarazioni MEMBER di stato e forma.
-Le 34 forme residue comprendono 18 dichiarazioni top-level, otto inizializzatori
-di slot e otto default keyword non marcati. Native e HTML concordano; tutti i
-missing path sono conservati. Nessuna esclusione è approvata, nessun bit è
-modificato e nessun reload artificiale altera i conteggi. MC/DC, revisione
-indipendente e qualifica C1 rimangono aperti.
 
-## Misure delle allocazioni nel catalogo CI
+<a id="contesto-worker-dei-writer--2026-10-09"></a>
 
-Il catalogo CI distingue sei test che misurano le allocazioni del codice
-non strumentato. L'integrazione delle riserve full text aggiunge
+## Writer worker context — 2026-10-09
+
+The [worker campaign](../implementazione/writer-worker-decisioni.md) retains
+1427/1660 expressions and 199/230 outcomes across all eleven execution files.
+The four new files have 498/600 expressions and 65/76 outcomes; 102 unmarked
+forms and eleven new alternatives are mapped in the inventory alongside 131
+forms and twenty alternatives from seven previous files. Native, HTML, and
+export also agree on each missing path. No top-level form, defensive branch,
+or postcondition is subtracted from the denominator. FI fixtures are declared
+and do not authorize violating ownership with active threads.
+No approved exclusion, full MC/DC, or engine C1 gate closure is implied.
+
+<a id="fonti-possedute-recovery--2026-10-17"></a>
+
+## Owned recovery sources — 2026-10-17
+
+The [source campaign](../implementazione/fonti-recovery.md#esiti-conservati--2026-10-17)
+retains the raw total of 293/327 forms and 22/26 branches across four new files.
+The three operational files have 22/22 branches marked; the types file retains
+four alternatives associated with state and shape MEMBER declarations.
+The remaining 34 forms include 18 top-level declarations, eight slot initializers,
+and eight unmarked keyword defaults. Native and HTML agree; all missing paths
+are retained. No exclusion is approved, no bit is modified, and no artificial
+reload changes the counts. MC/DC, independent review, and C1 qualification remain open.
+
+<a id="misure-delle-allocazioni-nel-catalogo-ci"></a>
+
+## Allocation measurements in the CI catalog
+
+The CI catalog distinguishes six tests measuring uninstrumented-code allocations.
+Full-text reservation integration adds
 `ARCDOCDB.FULLTEXT.ADMISSION.TESTS::REQ-SEC-010-RESERVATION-HOT-ALLOCATION`
-ai quattro casi già espliciti; il collegamento PUT/WAL aggiunge
+to the four already explicit cases; PUT/WAL integration adds
 `ARCDOCDB.FULLTEXT.PUT.TESTS::REQ-SEC-010-PUT-HOT-ALLOCATION`.
-Si omette soltanto la loro esecuzione durante
-`sb-cover`, che altera le allocazioni; tutti devono essere passati nel run
-normale della stessa revisione prima di accettare la misura CI di copertura.
-Il test resta nel catalogo e il motivo è visibile. Non si sottraggono forme o
-rami dal denominatore del prodotto e non si promuove la qualifica C1.
+Only execution during `sb-cover`, which changes allocations, is omitted;
+all must pass in the normal run of the same revision before accepting the CI
+coverage measurement. Tests remain in the catalog with visible reasons.
+No forms or branches are subtracted from the product denominator, and C1
+qualification is not promoted.

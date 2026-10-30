@@ -1,129 +1,139 @@
-# Attuazione logica del pool di worker
+<a id="attuazione-logica-del-pool-di-worker"></a>
 
-Il registro di `arcdocdb.scheduler` collega il [controllore EWMA/AIMD](controllore-pool.md)
-a worker preesistenti, ciascuno proprietario del proprio contesto writer. La crescita
-e il ritiro diventano richieste persistenti; il numero effettivo cambia soltanto
-quando il worker conferma. È un incremento C3 di REQ-THR-001, REQ-CON-005 e
-REQ-AFF-008/013 secondo [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md).
-La [metodologia](pool-worker-lifecycle-metodo.md) preregistra le prove; la
-[revisione indipendente](pool-worker-lifecycle-revisione.md) e
-[i risultati](pool-worker-lifecycle-risultati.md) delimitano l'evidenza disponibile.
+# Logical worker pool actuation
 
-## Confine e proprietà
+The `arcdocdb.scheduler` registry connects the [EWMA/AIMD controller](controllore-pool.md)
+to existing workers, each owning its own writer context. Growth and retirement
+become persistent requests; the actual count changes only when the worker
+acknowledges. This is a C3 increment for REQ-THR-001, REQ-CON-005, and
+REQ-AFF-008/013 under [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md).
+The [methodology](pool-worker-lifecycle-metodo.md) preregisters tests; the
+[independent review](pool-worker-lifecycle-revisione.md) and
+[results](pool-worker-lifecycle-risultati.md) bound the available evidence.
 
-Il coordinatore possiede un controller e un registro, in modo esclusivo e non
-rientrante. Ogni worker crea sul proprio thread un contesto e una porta; il caller
-pubblica queste porte al coordinatore tramite un handshake di avvio. La factory del
-registro copia il vettore, verifica tutti gli elementi e poi lega permanentemente
-le porte. Un controller è usato in un solo registro; dopo il collegamento si aggiorna
-esclusivamente tramite `aggiorna-registro-pool`. Il getter originale resta utilizzabile.
-Il caller non accede alla rappresentazione privata né riutilizza una porta in un altro
-pool. Crea una sola porta operativa per contesto e mantiene il vettore di input
-esclusivo durante la factory. La factory rifiuta il secondo binding delle porte;
-non rileva duplicazioni di nuove porte dello stesso contesto fra registri differenti.
+<a id="confine-e-proprietà"></a>
 
-Il vettore contiene esattamente `controller.maximum` porte con owner distinti. I
-worker attivi iniziali sono il prefisso di lunghezza `controller.target`; gli altri
-sono già creati ma logicamente inattivi. Tutti iniziano con generazione zero e stato
-confermato, senza comando pendente. La costruzione alloca; i passi successivi usano
-solo parole fixnum, valori multipli e scansioni bounded. La deduplicazione usa un hash
-EQ all'avvio, evitando ricerche quadratiche.
+## Boundary and ownership
 
-`actual` conta **attivazioni logiche confermate**, non thread OS, worker sani, epoche
-o richieste. Il worker usa il Boolean restituito dal proprio passo per decidere se
-può iniziare altri compiti. Un dispatcher deve rispettare quel Boolean: le API
-execution esistenti non consultano la porta. Non sono introdotti spawn, join, kill,
-attese, semafori, mutex, clock reali o callback nel codice di prodotto. Thread e
-contesti inattivi restano disponibili per il riuso.
+The coordinator owns one controller and one registry, exclusively and without
+reentrancy. Each worker creates a context and a port on its own thread; the caller
+publishes these ports to the coordinator through a startup handshake. The registry
+factory copies the vector, checks all elements, and then permanently binds the
+ports. A controller is used in only one registry; after attachment it is updated
+exclusively through `aggiorna-registro-pool`. The original getter remains usable.
+The caller does not access the private representation or reuse a port in another
+pool. It creates only one operational port per context and keeps the input vector
+exclusive during the factory. The factory rejects a second binding of ports;
+it does not detect duplicate new ports for the same context across different registries.
 
-La conferma avviene tra compiti a completamento, senza epoche di lettura né risorse
-esterne al contesto writer. Il verificatore C1 esistente
-`execution::%richiedi-worker :idle` è chiamato soltanto in lettura; controlla owner,
-stato, riferimento al writer, lease e debito batch. L'attuatore non modifica writer,
-ready, Serie o bridge. Nessuna nuova barriera d'integrità viene affidata a C3.
-Questo confine rispetta [ADR-0045](../adr/0045-modello-di-esecuzione.md): non sospende
-un compito e non esegue chiamate bloccanti.
+The vector contains exactly `controller.maximum` ports with distinct owners. The
+initial active workers are the prefix of length `controller.target`; the others
+are already created but logically inactive. All start at generation zero and in an
+acknowledged state, without a pending command. Construction allocates; subsequent
+steps use only fixnum words, multiple values, and bounded scans. Deduplication uses
+an EQ hash at startup, avoiding quadratic searches.
+
+`actual` counts **acknowledged logical activations**, not OS threads, healthy workers,
+epochs, or requests. The worker uses the Boolean returned by its own step to decide
+whether it can start further tasks. A dispatcher must honor that Boolean: the
+existing execution APIs do not consult the port. No spawn, join, kill, waits,
+semaphores, mutexes, real clocks, or callbacks are introduced in product code.
+Inactive threads and contexts remain available for reuse.
+
+Acknowledgment occurs between run-to-completion tasks, without read epochs or
+resources outside the writer context. The existing C1 checker
+`execution::%richiedi-worker :idle` is called only for reading; it checks owner,
+state, writer reference, lease, and batch debt. The actuator does not modify the
+writer, ready, Serie, or bridge. No new integrity barrier is entrusted to C3.
+This boundary follows [ADR-0045](../adr/0045-modello-di-esecuzione.md): it does not
+suspend a task or make blocking calls.
 
 ## API
 
-| API | Risultato e obblighi |
+| API | Result and obligations |
 |---|---|
-| `crea-porta-worker-pool context &key coordinator active` | Sul thread owner, contesto IDLE verificato; default coordinator corrente e active=T. Costruisce una porta con stato iniziale già confermato. |
-| `crea-registro-pool controller ports` | Sul coordinatore del controller; vettore semplice della capacità esatta, porte owner distinti, prefisso attivo conforme e stabile. Copia privata e binding solo dopo la validazione completa. |
-| `applica-stato-worker-pool port` | Sul worker owner. Restituisce active confermato e `:unchanged`, `:activated`, `:retired`, `:busy` oppure `:faulted`; massimo un comando applicato. |
-| `leggi-registro-pool registry` | Sul coordinatore. Restituisce actual, target e pending senza copia heap. La scansione è progressiva durante le conferme concorrenti. |
-| `aggiorna-registro-pool registry tick queue cpu p99` | Sul coordinatore. Restituisce target, azione del controller, actual letto prima del campione e pending conservativo. Tempo e metriche restano iniettati. |
+| `crea-porta-worker-pool context &key coordinator active` | On the owner thread, verified IDLE context; defaults to current coordinator and active=T. Builds a port with an already acknowledged initial state. |
+| `crea-registro-pool controller ports` | On the controller's coordinator; simple vector of exact capacity, distinct port owners, compliant and stable active prefix. Private copy and binding only after full validation. |
+| `applica-stato-worker-pool port` | On the owner worker. Returns acknowledged active and `:unchanged`, `:activated`, `:retired`, `:busy`, or `:faulted`; at most one command applied. |
+| `leggi-registro-pool registry` | On the coordinator. Returns actual, target, and pending without a heap copy. The scan is progressive during concurrent acknowledgments. |
+| `aggiorna-registro-pool registry tick queue cpu p99` | On the coordinator. Returns target, controller action, actual read before the sample, and conservative pending. Time and metrics remain injected. |
 
-Non c'è comando da applicare quando request=ack: il passo restituisce `:unchanged`
-senza ispezionare lo stato execution; questo esito non certifica salute né IDLE.
-Quando c'è un comando, CLAIMED, RUNNING,
-BATCH, FINISHING e RESCHEDULE producono `:busy`; FAULTED produce `:faulted`.
-In entrambi i casi il comando resta pendente e contesto, lease e diagnostica restano
-intatti. Un contesto che dichiara IDLE ma ha obblighi incoerenti fallisce nella
-barriera C1 prima della conferma.
+There is no command to apply when request=ack: the step returns `:unchanged`
+without inspecting execution state; this outcome certifies neither health nor IDLE.
+When a command exists, CLAIMED, RUNNING,
+BATCH, FINISHING, and RESCHEDULE produce `:busy`; FAULTED produces `:faulted`.
+In both cases the command remains pending and the context, lease, and diagnostics
+remain intact. A context that declares IDLE but has inconsistent obligations fails
+at the C1 barrier before acknowledgment.
 
-## Protocollo e concorrenza
+<a id="protocollo-e-concorrenza"></a>
 
-Ogni porta ha due parole atomiche: `request` del coordinatore e `ack` del worker.
-La codifica è `2 × generation + active-bit`, con generation da zero a
-`floor(most-positive-fixnum/2)`. Una sola richiesta può essere pendente. Il coordinatore
-pubblica con barriera release e CAS; il worker legge acquire, controlla IDLE e
-pubblica ack con release/CAS. Il coordinatore legge ack acquire. Il solo writer di
-ciascuna parola è il suo proprietario; nessun retry CAS o ciclo di attesa è necessario.
+## Protocol and concurrency
 
-Una nuova richiesta cambia il bit active e incrementa generation di uno. Porte
-già nello stato desiderato non ricevono comandi. Il target seleziona sempre un
-prefisso, quindi ogni ondata contiene soltanto attivazioni oppure soltanto ritiri.
-Il prefisso minimo resta sempre attivo. Finché resta un comando pendente,
-actual differisce dal target e il controller conserva la proposta con `:pending`.
-Il tempo passato ad attendere conferme non matura una nuova isteresi.
+Each port has two atomic words: the coordinator's `request` and the worker's `ack`.
+The encoding is `2 × generation + active-bit`, with generation from zero to
+`floor(most-positive-fixnum/2)`. Only one request may be pending. The coordinator
+publishes with a release barrier and CAS; the worker reads acquire, checks IDLE,
+and publishes ack with release/CAS. The coordinator reads ack acquire. The only
+writer of each word is its owner; no CAS retry or waiting loop is necessary.
 
-Le conferme possono arrivare fuori ordine: durante la crescita, un worker successivo
-può attivarsi prima del precedente. Il prefisso vale per le request; non è richiesto
-agli ack intermedi. Il getter restituisce un conteggio progressivo, conservativo
-rispetto al completamento dell'ondata. Se pending=NIL, tutte le conferme lette sono
-uguali alle richieste correnti e actual=target. Il wrapper può restituire pending=T
-anche se l'ultima conferma arriva subito dopo la lettura.
+A new request changes the active bit and increments generation by one. Ports
+already in the desired state receive no commands. The target always selects a
+prefix, so each wave contains only activations or only retirements. The minimum
+prefix always stays active. While a command remains pending, actual differs from
+target and the controller retains the proposal with `:pending`. Time spent
+waiting for acknowledgments does not advance a new hysteresis period.
 
-L'invariante delle parole ammette request=ack, oppure una generazione di differenza
-con bit active diverso. Un comando regressivo, un salto di generazione o un comando
-senza cambio di stato è rifiutato. Nessuna generation fa wrap o viene azzerata.
-Prima di aggiornare un controller stabile si verifica il budget di generazione di
-tutte le porte: l'esaurimento è un rifiuto conservativo anche per un campione hold.
-L'esaurimento richiede la sostituzione amministrativa del componente; non autorizza
-a resettare contesti o abbandonare comandi. Ogni preflight precede le scritture del
-campione e delle request, evitando applicazioni parziali per errori ordinari.
+Acknowledgments can arrive out of order: during growth, a later worker may
+activate before an earlier one. The prefix applies to requests; it is not required
+of intermediate acks. The getter returns a progressive count, conservative with
+respect to wave completion. If pending=NIL, all acknowledgments read equal the
+current requests and actual=target. The wrapper may return pending=T even if the
+last acknowledgment arrives immediately after the read.
 
-Il registro ha costo O(maximum) per lettura/aggiornamento; il worker fa un passo O(1),
-oltre alla barriera C1 bounded. Le scritture condivise avvengono per campione e per
-conferma, fuori dalle operazioni della Serie, senza un contatore globale caldo.
-Rispetta quindi INV-P6 e l'[elenco di stato condiviso](../architettura.md#archivio-coordinamento-minimo).
+The word invariant allows request=ack, or a difference of one generation with a
+different active bit. A regressive command, generation jump, or command without
+a state change is rejected. No generation wraps or is reset.
+Before updating a stable controller, the generation budget of all ports is checked:
+exhaustion is a conservative rejection even for a hold sample. Exhaustion requires
+administrative replacement of the component; it does not authorize resetting
+contexts or abandoning commands. Every preflight precedes sample and request
+writes, avoiding partial application for ordinary errors.
 
-## Errori
+The registry costs O(maximum) per read/update; the worker performs an O(1) step,
+beyond the bounded C1 barrier. Shared writes occur per sample and acknowledgment,
+outside Serie operations, without a hot global counter.
+It therefore follows INV-P6 and the [shared state inventory](../architettura.md#archivio-coordinamento-minimo).
 
-| Condizione | Ragione |
+<a id="errori"></a>
+
+## Errors
+
+| Condition | Reason |
 |---|---|
-| `invalid-argument` | `:pool-owner` per coordinatore invalido/estraneo; `:pool-worker-owner` per owner del passo estraneo; `:pool-active` per Boolean invalido. |
-| `invalid-argument` | `:pool-ports` per vettore/capacità/elemento/owner duplicato; `:pool-binding` per una porta già legata; `:pool-port-state` per startup non stabile, non iniziale o prefisso errato. |
-| `invariant-violation` | `:pool-port-state` per parole o richieste incoerenti; `:pool-state` per target/controller/capacità o conteggio privato incoerenti. |
-| `resource-exhausted` | `:pool-generation` per budget di comando esaurito, senza mutazione. |
-| Verificatori delegati | Factory e passo propagano le condizioni execution; il wrapper propaga i rifiuti di campioni del controller. |
+| `invalid-argument` | `:pool-owner` for an invalid/foreign coordinator; `:pool-worker-owner` for a foreign step owner; `:pool-active` for an invalid Boolean. |
+| `invalid-argument` | `:pool-ports` for vector/capacity/element/duplicate owner; `:pool-binding` for an already bound port; `:pool-port-state` for unstable, noninitial startup or an incorrect prefix. |
+| `invariant-violation` | `:pool-port-state` for inconsistent words or requests; `:pool-state` for inconsistent target/controller/capacity or private count. |
+| `resource-exhausted` | `:pool-generation` for exhausted command budget, without mutation. |
+| Delegated checkers | Factory and step propagate execution conditions; the wrapper propagates controller sample rejections. |
 
-Un comando bloccato da FAULTED resta diagnosticabile. Il coordinatore deve gestire
-il guasto dell'Archivio e la mancata progressione; il componente non libera risorse
-o decrementa un conteggio per nascondere il problema. Non ci sono handler generici,
-cleanup che occultano errori o policy di recovery implicite.
+A command blocked by FAULTED remains diagnosable. The coordinator must handle
+Archivio failure and lack of progress; the component does not free resources or
+decrement a count to hide the problem. There are no generic handlers, cleanup
+that hides errors, or implicit recovery policies.
 
-Un conflitto CAS viola l'esclusività dei proprietari ed è un'invariante terminale,
-non un rifiuto ordinario recuperabile. La pubblicazione di un'ondata può essere
-parziale in questo caso; non si continua a usare il registro. Il passo non attesta
-una conferma fallita, e nessuno dei campi d'integrità C1 viene modificato.
+A CAS conflict violates owner exclusivity and is a terminal invariant,
+not an ordinary recoverable rejection. Wave publication may be partial in this
+case; use of the registry does not continue. The step does not attest to a failed
+acknowledgment, and none of the C1 integrity fields is modified.
 
-## Integrazione ancora richiesta
+<a id="integrazione-ancora-richiesta"></a>
 
-La [presa governata dal pool](pool-worker-claim.md) rispetta active e collega il
-passo IDLE alla presa C1. REQ-THR-001 resta progettato a livello del motore completo.
-Mancano dispatcher del server, sensori e coordinamento dell'Archivio, avvio graduale dei thread,
-risveglio persistente dalla ready, gestione del guasto del pool e arresto fisico.
-Il componente non qualifica un'attesa idle nativa, il pump di risveglio, il numero
-di thread da avviare sull'hardware o la latenza end-to-end. QA-12/19 restano aperte.
+## Integration still required
+
+The [pool-controlled claim](pool-worker-claim.md) honors active and connects the
+IDLE step to the C1 claim. REQ-THR-001 remains designed at the complete engine level.
+The server dispatcher, sensors and Archivio coordination, gradual thread startup,
+persistent wakeup from ready, pool fault handling, and physical shutdown are missing.
+The component does not qualify a native idle wait, the wakeup pump, the number of
+threads to start on hardware, or end-to-end latency. QA-12/19 remain open.

@@ -1,66 +1,72 @@
-# Verifica dell'avvio pool/Serie
+<a id="verifica-dellavvio-poolserie"></a>
 
-La qualifica segue il [contratto](pool-begin.md), il
-[metodo preregistrato](pool-begin-metodo.md) e la
-[revisione indipendente C3](pool-begin-revisione.md). Base congelata
-`ad829a40f6ce72837b59982d2e4f83e8c9ca9f3e`: quindici fonti e quattordici
-helper copiati byte per byte; diciassette impronte della revisione coincidono
-in checkout e clone. Originali nel
-[catalogo della campagna](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/).
+# Pool/Serie start verification
 
-## Processi e prove
+Qualification follows the [contract](pool-begin.md),
+[preregistered method](pool-begin-metodo.md), and
+[independent C3 review](pool-begin-revisione.md). Frozen base
+`ad829a40f6ce72837b59982d2e4f83e8c9ca9f3e`: fifteen sources and fourteen
+helpers copied byte for byte; seventeen review fingerprints match
+in checkout and clone. Originals in the
+[campaign catalog](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/).
 
-| Processo | Record originale | Esito |
+<a id="processi-e-prove"></a>
+
+## Processes and tests
+
+| Process | Original record | Outcome |
 |---|---|---|
-| Adattatore di pubblicazione e self-test | [4000996071-command-39309-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/publisher-selftest/report.lisp) | OK, STABLE, exit 0 |
-| Reader native/HTML strict | [4000996086-command-40256-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/coverage-reader/report.lisp) | OK, STABLE, exit 0 |
-| Sensore strict e self-test | [4000996086-command-40255-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/selftest/report.lisp) | OK, STABLE, exit 0 |
-| Copertura e scheduler completo | [4000996086-command-40257-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/coverage/report.lisp) | OK, STABLE, exit 0 |
-| Campagna ACTIVE | [4000996125-command-41073-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/benchmark/report.lisp) | OK, STABLE, exit 0 |
-| Controllo completo congelato | [4000996069-command-39211-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/check-core/report.lisp) | OK, STABLE, exit 0 |
+| Publication adapter and self-test | [4000996071-command-39309-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/publisher-selftest/report.lisp) | OK, STABLE, exit 0 |
+| Strict native/HTML reader | [4000996086-command-40256-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/coverage-reader/report.lisp) | OK, STABLE, exit 0 |
+| Strict sensor and self-test | [4000996086-command-40255-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/selftest/report.lisp) | OK, STABLE, exit 0 |
+| Coverage and complete scheduler | [4000996086-command-40257-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/coverage/report.lisp) | OK, STABLE, exit 0 |
+| ACTIVE campaign | [4000996125-command-41073-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/benchmark/report.lisp) | OK, STABLE, exit 0 |
+| Frozen full check | [4000996069-command-39211-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/check-core/report.lisp) | OK, STABLE, exit 0 |
 
-Passano **14 nuove prove** e lo scheduler completo **94/94**. Verificano
-l'avvio reale con doppia lease e tutti e quattro i valori, un solo begin,
-pop/ACK/fine espliciti, e lo scambio full A→B che avvia B mentre A rimane
-nel ring. Un CLAIMED con porta inattiva, comandi incoerenti o ritiro pendente
-rimane completabile senza gate, ACK lifecycle, claim o recycle impliciti.
+**14 new tests** and the complete scheduler **94/94** pass. They check
+real start with dual lease and all four values, a single begin,
+explicit pop/ACK/end, and full swap A→B that starts B while A remains
+in the ring. A CLAIMED with inactive gate, inconsistent commands, or pending retirement
+remains completable without implicit gate, lifecycle ACK, claim, or recycle.
 
-La contesa reale del writer conserva CLAIMED, link IDLE e generazione;
-la contesa della Serie e l'esaurimento della sua lease restituiscono
-CLOSING e token da chiudere esplicitamente. Il limite della generazione
-del bridge viene invece rifiutato prima di acquisire il writer.
-Owner su thread distinto, binding incoerente e fasi non ammesse precedono
-l'acquisizione; debito, lease e prima causa rimangono conservati.
+Real writer contention preserves CLAIMED, IDLE link, and generation;
+Serie contention and exhaustion of its lease return
+CLOSING and a token to close explicitly. The bridge generation
+limit is instead rejected before acquiring the writer.
+Owner on a different thread, inconsistent binding, and disallowed phases precede
+acquisition; debt, leases, and first cause remain retained.
 
-Routing invalido, writer realmente non pronto ed errore iniettato durante
-la seconda acquisizione verificano causa C1 originale EQ e capacità
-residue. Un errore inatteso non restituisce i quattro valori e non promette
-cleanup: il caller conserva i riferimenti e coordina l'Archivio. Il cleanup
-delle sole fixture C4 non viene presentato come recovery del prodotto.
+Invalid routing, actually not-ready writer, and an error injected during
+the second acquisition check the EQ original C1 cause and remaining
+capabilities. An unexpected error does not return the four values or promise
+cleanup: the caller retains references and coordinates the Archivio. Cleanup
+of C4 fixtures alone is not presented as product recovery.
 
-Il controllo completo passa **1420 prove nominate del prodotto, due smoke
-e quattro fixture del linter**, oltre a lint, trace, link, self-test C4,
-conservazione e dieci spike. I 1426 marker `ok` comprendono le fixture,
-che non vengono chiamate test del prodotto. Lint su 213 file senza
-violazioni; trace su 120 requisiti, 65 invarianti, 13 scenari FI e 52 ADR,
-senza errori. Il processo dura 269,513968 secondi con 891 sorgenti stabili.
-Compilazione senza warning/style-warning; stderr conserva 861956 caratteri
-di note del compilatore, equivalenti a 861966 byte UTF-8.
+The full check passes **1420 named product tests, two smoke
+tests, and four linter fixtures**, plus lint, trace, links, C4 self-tests,
+retention, and ten spikes. The 1426 `ok` markers include fixtures,
+which are not called product tests. Lint on 213 files without
+violations; trace on 120 requirements, 65 invariants, 13 FI scenarios, and 52 ADR,
+without errors. The process lasts 269.513968 seconds with 891 stable sources.
+Compilation without warning/style-warning; stderr retains 861956 characters
+of compiler notes, equivalent to 861966 UTF-8 bytes.
 
-Nessuno dei sei processi formali è fallito. Il controllo dell'archivio
-preesistente vede 106 cataloghi, 3241 riferimenti, 37401 file e 961373366
-byte conservati: questi conteggi precedono il nuovo namespace begin.
+None of the six formal processes failed. The preexisting archive
+check sees 106 catalogs, 3241 references, 37401 files, and 961373366
+retained bytes: these counts precede the new begin namespace.
 
-## Copertura
+<a id="copertura"></a>
 
-SB-COVER nativo e sette HTML originali concordano sull'intero package di
-sei file: **176/184 espressioni (95,652%) e 10/10 rami nativi (100%)**,
-senza esclusioni. Il nuovo ingresso copre 21/21 espressioni. Il nativo
-originale occupa 2769774 byte. L'[audit della biblioteca](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/coverage-audit/coverage-audit.lisp)
-e l'[audit del componente](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/begin-coverage-audit/coverage-dispatch-audit.lisp)
-conservano denominatori, confronto native/HTML e tutti i missing.
+## Coverage
 
-| File | Espressioni | Rami nativi | Missing |
+Native SB-COVER and seven original HTML files agree on the entire six-file
+package: **176/184 expressions (95.652%) and 10/10 native branches (100%)**,
+without exclusions. The new entry point covers 21/21 expressions. The original
+native data occupies 2769774 bytes. The [library audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/coverage-audit/coverage-audit.lisp)
+and [component audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/begin-coverage-audit/coverage-dispatch-audit.lisp)
+retain denominators, native/HTML comparison, and all missing items.
+
+| File | Expressions | Native branches | Missing |
 |---|---:|---:|---:|
 | `package.lisp` | 1/1 | 0/0 | 0 |
 | `types.lisp` | 40/40 | 8/8 | 0 |
@@ -69,28 +75,30 @@ conservano denominatori, confronto native/HTML e tutti i missing.
 | `recycle.lisp` | 45/49 | 0/0 | 4 |
 | `begin.lisp` | 21/21 | 0/0 | 0 |
 
-Gli otto missing sono uguali, nei dati e nei percorsi, alla campagna di
-ricircolo precedente: gli otherwise finali di claim e recycle, mantenuti
-nel denominatore. Claim: indici 31–34, percorsi `(1 4 3 3 4 3)`,
+The eight missing items match the previous recycling campaign in data
+and paths: final otherwise branches of claim and recycle, retained
+in the denominator. Claim: indices 31–34, paths `(1 4 3 3 4 3)`,
 `(1 1 4 3 3 4 3)`, `(2 1 4 3 3 4 3)`, `(3 1 4 3 3 4 3)`.
-Recycle: indici 39–42, percorsi `(1 4 2 3 3 4 6)`,
+Recycle: indices 39–42, paths `(1 4 2 3 3 4 6)`,
 `(1 1 4 2 3 3 4 6)`, `(2 1 4 2 3 3 4 6)`, `(3 1 4 2 3 3 4 6)`.
-Nel primo caso il dominio dichiarato del gate consente la rimozione del
-ramo; nel secondo la guardia precedente valida lo status. Nessuna nuova
-lacuna in begin, nessuna inferenza MC/DC e nessun denominatore C1 ereditato.
-Zero sonde native di ramo non equivale ad assenza di decisioni nel sorgente.
+In the first case, the gate's declared domain permits branch
+elimination; in the second, the preceding guard validates status. No new
+gap in begin, no MC/DC inference, and no inherited C1 denominator.
+Zero native branch probes does not mean absence of source decisions.
 
-## Misura locale ACTIVE
+<a id="misura-locale-active"></a>
 
-Il [rapporto originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/benchmark/report.lisp)
-conserva cinque repliche, ciascuna con una fixture nuova: **4096 cicli e
-128 warmup**, 20480 cicli misurati complessivi. Un payload simbolico reale
-rimane in coda. Nel clock: avvio del bridge con oracolo dei quattro valori,
-token monotono e doppia lease, fine senza pop, ricircolo room C1 e presa C1
-esplicita. Nessun reset privato. Factory, lookup API, GC e drain pubblico
-finale con pop/ACK/end restano fuori clock.
+## Local ACTIVE measurement
 
-| Replica | Tick | Cicli completati | Heap osservato | Sink |
+The [original report](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/benchmark/report.lisp)
+retains five replicates, each with a new fixture: **4096 cycles and
+128 warmup**, 20480 measured cycles overall. A real symbolic payload
+remains queued. Timed: bridge start with four-value oracle,
+monotonic token and dual lease, end without pop, C1 room recycling, and explicit
+C1 claim. No private reset. Factory, API lookup, GC, and final public
+drain with pop/ACK/end remain outside timing.
+
+| Replicate | Ticks | Completed cycles | Observed heap | Sink |
 |---|---:|---:|---:|---:|
 | 0 | 4930 | 4096 | 0 | 8579072 |
 | 1 | 4863 | 4096 | 0 | 8579072 |
@@ -98,47 +106,49 @@ finale con pop/ACK/end restano fuori clock.
 | 3 | 4866 | 4096 | 0 | 8579072 |
 | 4 | 4878 | 4096 | 0 | 8579072 |
 
-SBCL 2.6.9, ARM64, Darwin 27.0.0, clock 1000000 unità/s e safety 3;
-il protocollo C1 e gli oracoli scalari
-sono parte del costo. Non si attribuisce il tempo al solo adapter. Carico
-esterno incontrollato, nessuna soglia o taratura; heap zero osservato non
-prova non allocazione universale. Non vengono misurati CLOSING, busy,
-coordinamento concorrente o throughput del motore.
+SBCL 2.6.9, ARM64, Darwin 27.0.0, clock 1000000 units/s and safety 3;
+the C1 protocol and scalar oracles
+are part of the cost. Time is not attributed to the adapter alone. Uncontrolled
+external load, no threshold or tuning; observed zero heap does not
+prove universal nonallocation. CLOSING, busy,
+concurrent coordination, and engine throughput are not measured.
 
-Il self-test rileva 16777472 byte deliberati, sink errato, quattro valori
-difformi e clock sotto risoluzione; verifica anche l'oracolo CLOSING,
-CLI, destinazioni preesistenti e raw parziali conservati. Il reader C4
-verifica sei file e denominatori/missing inattesi. La pubblicazione verifica
-una fixture positiva e sette negative: ogni sorgente runtime mancante e
-un'impronta alterata. Nessun risultato fuori contratto viene attribuito a
-un ritorno nominale C1.
+Self-test detects 16777472 deliberate bytes, wrong sink, four
+mismatched values, and sub-resolution clock; it also checks the CLOSING oracle,
+CLI, preexisting destinations, and retained partial raw data. The C4 reader
+checks six files and unexpected denominators/missing items. Publication checks
+one positive and seven negative fixtures: each missing runtime source and
+an altered fingerprint. No out-of-contract result is attributed to
+a nominal C1 return.
 
-## Integrazione e conservazione
+<a id="integrazione-e-conservazione"></a>
 
-Il commit del prodotto `5b3673f407777ebeeefa7caa6320f387a14c85db`
-contiene gli stessi byte qualificati. Il nuovo ingresso inoltra direttamente
-i tre valori del bridge: nessuna guardia C3 dopo acquisizione separa il
-token dal caller. Non cambia alcun sorgente C1.
+## Integration and retention
 
-Le evidenze preliminari rimangono separate: quattordici prove e scheduler
-passati al primo tentativo; sensore con due self-test di sviluppo passati
-(il secondo con cache privata), reader passato e compilazione strict del
-prodotto senza avvisi. Solo i FASL intermedi sono esclusi dai bundle.
-I processi formali mantengono argv, output originali, exit e impronte,
-con fonti stabili. Writer C4 e formati generici legacy sono riusati senza
-ampliare lo scope del nuovo manifesto specifico.
+Product commit `5b3673f407777ebeeefa7caa6320f387a14c85db`
+contains the same qualified bytes. The new entry point directly forwards
+the bridge's three values: no C3 guard after acquisition separates the
+token from caller. No C1 source changes.
 
-La [pubblicazione originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/publication/report.lisp)
-passa in 306,647160 secondi e la successiva
-[verifica di link e archivio](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/final-verification/report.lisp)
-in 221,384083 secondi. Entrambi i processi mantengono OK, STABLE ed exit 0,
-892 sorgenti stabili e stderr vuoto. La verifica controlla 431 file e 3007
-link, nessuno rotto; 107 cataloghi, 3252 riferimenti, 37444 file e 965767686
-byte conservati. I conteggi precedono le copie di chiusura e i due link
-aggiunti in questo paragrafo. Il manifesto di chiusura conserva i due
-processi originali, il documento finale e le fonti; le prove precedenti
-non vengono riscritte.
+Preliminary evidence remains separate: fourteen tests and scheduler
+passed on first attempt; sensor with two passing development self-tests
+(second with private cache), reader passed, and strict product
+compilation without warnings. Only intermediate FASLs are excluded from bundles.
+Formal processes retain argv, original outputs, exit, and fingerprints,
+with stable sources. C4 writers and legacy generic formats are reused without
+broadening the new specific manifest's scope.
 
-Non sono realizzati loop server, applicazione dei payload, admission,
-sensori reali, park/wake, avvio/arresto fisico o coordinamento dell'Archivio.
-Protocolli durevoli e gate del motore completo restano aperti.
+The [original publication](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/publication/report.lisp)
+passes in 306.647160 seconds and the subsequent
+[link and archive check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/processes/final-verification/report.lisp)
+in 221.384083 seconds. Both processes retain OK, STABLE, and exit 0,
+892 stable sources, and empty stderr. Verification checks 431 files and 3007
+links, none broken; 107 catalogs, 3252 references, 37444 files, and 965767686
+retained bytes. Counts precede closure copies and the two links
+added in this paragraph. The closure manifest retains both
+original processes, final document, and sources; earlier tests
+are not rewritten.
+
+Server loops, payload application, admission,
+real sensors, park/wake, physical startup/shutdown, and Archivio coordination are not implemented.
+Durable protocols and whole-engine gates remain open.

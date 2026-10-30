@@ -1,8 +1,10 @@
-# Costruzione delle immagini dal motore M1
+<a id="costruzione-delle-immagini-dal-motore-m1"></a>
 
-> **Deciso (2026-10-29 → [ADR-0065](../adr/0065-costruzione-immagini-dal-motore.md))** —
-> Il produttore M1 prepara un derivato dalla propria fonte canonica e lo verifica
-> interamente prima del successo. Il residente resta presente.
+# Building images from the M1 engine
+
+> **Decided (2026-10-29 → [ADR-0065](../adr/0065-costruzione-immagini-dal-motore.md))** —
+> M1 producer prepares a derived object from its canonical source and verifies
+> it fully before success. Resident index remains present.
 
 ```lisp
 (let ((option (arcdocdb.engine:crea-opzione-indice-paginato
@@ -11,108 +13,114 @@
     :max-build-payload 67108864 :max-pages 65536))
 ```
 
-Il motore deve essere READY, chiamato dal proprio attore e senza richieste
-in volo. L'opzione indica un nuovo nome nella directory gia' esclusiva;
-il suo ID esadecimale deve stare in 1..2^60-1. Il ritorno e' lo stesso oggetto
-`option`: si puo' passare ad `apri-motore :index-image` dopo avere chiuso
-l'handle corrente, oppure al successivo [attivatore a caldo](attivazione-indice-m1.md)
-sullo stesso handle con una richiesta distinta. Il successo non cambia il backend corrente e non
-mantiene FD dell'immagine. Una scrittura successiva rende obsoleto il file;
-lo startup continuera' a rifiutarlo se non corrisponde piu' alla fonte.
+Engine must be READY, called by its own actor, with no requests
+in flight. Option specifies a new name in already exclusive directory;
+its hexadecimal ID must be in 1..2^60-1. Return is same `option`
+object: can pass it to `apri-motore :index-image` after closing
+current handle, or to later [hot activator](attivazione-indice-m1.md)
+on same handle with a distinct request. Success does not change current backend or
+retain image FDs. Subsequent write makes file obsolete;
+startup will continue rejecting it if it no longer matches source.
 
-## Piano e costruzione
+<a id="piano-e-costruzione"></a>
 
-Il piano acquisisce dalla root M1 depth=0 il frammento canonico, il token
-della fonte, la revisione e il conteggio vivo. Prima degli array controlla
-il carico massimo; poi visita al massimo C slot, verificando controlli,
-payload seqlock e range nell'arena. Ogni LIVE deve contribuire esattamente
-una volta; i fingerprint devono corrispondere al digest ricalcolato.
+## Plan and construction
 
-Due array u32 C conservano digest high/low; due array u32 N gli ID degli
-slot e lo scratch. Otto passaggi radix stabili da otto bit ordinano i soli
-ID. I 256 contatori sono riusati. Non si ordinano o duplicano le chiavi nel
-piano e non si modifica l'indice sorgente.
+Plan acquires canonical fragment, source token,
+revision, and live count from depth=0 M1 root. Before arrays it checks
+maximum load; then visits at most C slots, checking controls,
+seqlock payload, and arena ranges. Every LIVE must contribute exactly
+once; fingerprints must match recalculated digest.
 
-Il produttore sceglie il numero di bit dal numero di bucket necessari,
-limitato a sette per directory. Per uno span ordinato, primo e ultimo
-digest identificano il prefisso comune a tutti: quel prefisso viene saltato.
-Il campo residuo del figlio e' strettamente minore; la ricorsione ha al
-massimo 65 chiamate. Tutti i digest identici terminano in overflow bounded
-dal conteggio N. Un bucket contiene al massimo 28, 112 o 448 entry nelle
-tre taglie; una directory al massimo 128 riferimenti. I riferimenti vengono
-verificati e scritti postorder, root per ultima.
+Two C-sized u32 arrays retain high/low digests; two N-sized u32 arrays retain slot
+IDs and scratch. Eight stable eight-bit radix passes sort only
+IDs. The 256 counters are reused. Keys are neither sorted nor duplicated in
+plan and source index is not modified.
 
-`crea-entry-costruzione` accetta ora `:start` e `:end`: verifica il range,
-key-len e metadati, calcola il digest sullo span e ne fa una sola copia
-posseduta. Le chiamate precedenti senza keyword mantengono il contratto.
+Producer chooses bit count from required bucket count,
+limited to seven per directory. For a sorted span, first and last
+digests identify common prefix: that prefix is skipped.
+Child's remaining bit field is strictly smaller; recursion has at
+most 65 calls. All identical digests end in overflow bounded
+by count N. A bucket holds at most 28, 112, or 448 entries at
+three sizes; a directory at most 128 references. References
+checked and written postorder, root last.
 
-## Limiti, risorse e guasti
+`crea-entry-costruzione` now accepts `:start` and `:end`: checks range,
+key-len and metadata, computes digest on span, and makes one owned
+copy. Previous calls without keywords retain contract.
 
-`:max-build-payload` accetta 0..512 MiB, default 64 MiB. La riserva
-conservativa e' calcolata da `payload-costruzione-immagine` prima degli
-array/file: 16*C per digest/ID, contatori e word, stack di 65*128
-riferimenti, lotto massimo di chiavi, buffer del builder e del verificatore,
-piu' 256 KiB per gli array piccoli delle identita'/prove/cache. Non misura
-header Lisp, oggetti, garbage, GC o RSS; la riserva totale del controller
-non viene qualificata in questa prova. I limiti di N e C sono ancora quelli
-del residente M1, al massimo C=65536 e N=57344.
+<a id="limiti-risorse-e-guasti"></a>
 
-`:max-pages` accetta 1..65536. Byte massimi del file, taglia, frame cache
-e visite di verifica provengono dall'opzione esistente. Ogni lotto controlla
-la quota prima di scrivere: non viene prenotata l'intera immagine a monte.
-Un fallimento tardivo lascia il preparato e rende il motore FAULTED.
-L'inventario canonico non sceglie o cancella quel preparato.
+## Limits, resources, and faults
 
-Il nome occupato e le configurazioni/quote iniziali invalide sono rifiuti
-ordinari prima dell'ammissione. Errori del namespace rendono FAULTED.
-Durante il lavoro l'API chiude il rientro con BUSY, senza cambiare la root
-GET esistente. Errori/uscite non locali ammesse chiudono admission; il
-cleanup tenta entrambi i FD e conserva la causa primaria. Non accumula FD
-nella lista del motore, neppure su fallimento. Non cancella il file e non
-riusa un nome o un costruttore incompleto.
+`:max-build-payload` accepts 0..512 MiB, default 64 MiB. Conservative
+reservation calculated by `payload-costruzione-immagine` before
+arrays/files: 16*C for digests/IDs, counters and words, stack of 65*128
+references, maximum key batch, builder and verifier buffers,
+plus 256 KiB for small identity/proof/cache arrays. Does not measure
+Lisp headers, objects, garbage, GC, or RSS; total controller reservation
+not qualified by this test. N and C limits still those
+of M1 resident, at most C=65536 and N=57344.
 
-Le fasi osservabili sono `:image-build-planned`, `:image-build-created`,
+`:max-pages` accepts 1..65536. Maximum file bytes, size, cache
+frames, and verification visits come from existing option. Every batch checks
+quota before writing: entire image is not reserved upfront.
+A late failure leaves prepared file and makes engine FAULTED.
+Canonical inventory neither selects nor deletes that prepared file.
+
+Occupied name and invalid initial configurations/quotas are ordinary
+rejections before admission. Namespace errors make FAULTED.
+During work API prevents reentry with BUSY, without changing existing GET
+root. Allowed errors/nonlocal exits close admission; cleanup
+attempts both FDs and preserves primary cause. Does not accumulate FDs
+in engine list, even on failure. Does not delete file or
+reuse a name or incomplete builder.
+
+Observable phases are `:image-build-planned`, `:image-build-created`,
 `:image-build-pages`, `:image-build-before-footer`, `:image-build-after-footer`,
-`:image-build-after-flush` e `:image-build-verified`. L'osservatore fidato
-ritorna NIL; non modifica dati privati, non trattiene buffer e non rientra.
+`:image-build-after-flush`, and `:image-build-verified`. Trusted observer
+returns NIL; does not modify private data, retain buffers, or reenter.
 
-Il completamento sigilla/flush il file, esegue fsync della directory, chiude
-l'append e apre readonly con EOF esatto. Il verificatore esistente rilegge
-tutte le pagine, unicita', routing e candidati contro il residente. La fonte
-e la revisione vengono ricontrollate prima del footer e dopo la verifica.
-Nessun nuovo punto di commit dati o pubblicazione di catalogo.
+Completion seals/flushes file, fsyncs directory, closes
+append, and opens read-only with exact EOF. Existing verifier rereads
+all pages, uniqueness, routing, and candidates against resident. Source
+and revision rechecked before footer and after verification.
+No new data commit point or catalog publication.
 
-## Verifica e decisioni C1
+<a id="verifica-e-decisioni-c1"></a>
 
-[Test motore](../../tests/engine/image-build.lisp) e
-[test degli span](../../tests/index/page-build.lisp): v1/v2, tutte le taglie,
-600 chiavi, prefissi sbilanciati, chiave massima, fonte vuota/tombstone,
-confronto GET dopo riavvio, rifiuti iniziali, esaurimento tardivo, rientro,
-uscite non locali, causa IO preservata, entrambi i close tentati. Sei casi
-SIGKILL e riavvio indipendente coprono creazione, pagine senza footer e
-completamento dopo flush. Sono prove locali di processo, non power loss.
+## Verification and C1 decisions
 
-Il ramo overflow con collisione completa e' esercitato forzando soltanto
-i digest nel piano privato C4: il builder ricalcola quelli reali delle chiavi.
-Non si dichiara una collisione reale di XXH64. Il confronto ordinamento usa
-un oracolo u64 separato e verifica anche la permutazione degli slot.
+[Engine tests](../../tests/engine/image-build.lisp) and
+[span tests](../../tests/index/page-build.lisp): v1/v2, all sizes,
+600 keys, skewed prefixes, maximum key, empty/tombstone source,
+GET comparison after restart, initial rejections, late exhaustion, reentry,
+nonlocal exits, preserved IO cause, both closes attempted. Six
+SIGKILL and independent-restart cases cover creation, pages without footer, and
+completion after flush. Local process tests, not power loss.
 
-| Decisione composta (COD-54) | Copertura |
+Overflow branch with complete collision exercised by forcing only
+digests in private C4 plan: builder recalculates actual key digests.
+No real XXH64 collision claimed. Sorting comparison uses
+separate u64 oracle and also checks slot permutation.
+
+| Compound decision (COD-54) | Coverage |
 |---|---|
-| Budget payload e pagine nel dominio | Limiti inferiori/superiori invalidi, riserva esatta e meno uno |
-| Span arena non vuoto e contenuto | Source normale e test diretti di range invalidi |
-| Stato BUSY, revisione e fonte invariati | Percorso normale, rientro respinto e revisione alterata |
-| Profondita', bit residui e span del piano | Costruzione normale e rifiuti separati delle guardie |
-| Close dopo successo con nuovi guasti cleanup | Due FD fittizi, ciascun close fallisce, complete T/NIL |
-| Metadati/span nella factory delle entry | Test precedenti e nuovi range/ownership della copia |
+| Payload and page budgets in domain | Invalid lower/upper bounds, exact reservation and minus one |
+| Nonempty, contained arena span | Normal source and direct invalid-range tests |
+| BUSY state, revision and source unchanged | Normal path, rejected reentry, altered revision |
+| Depth, remaining bits, and plan span | Normal construction and separate guard rejections |
+| Close after success with new cleanup faults | Two fake FDs, each close fails, complete T/NIL |
+| Metadata/span in entry factory | Previous tests and new ranges/copy ownership |
 
-Prima lettura C1: fonte canonica, slot unici, ordinamento unsigned e routing,
-limiti dei cicli e profondita' decrescente. Seconda lettura: capienza prima
-degli effetti, massimo due FD locali, cleanup su ogni uscita, nessun ACK o
-mutazione dei dati, fonte/revisione stabili e verifica integrale finale.
-Nessun nuovo stato condiviso o lock fra Serie. Le prove riproducibili sono in
+First C1 reading: canonical source, unique slots, unsigned ordering and routing,
+loop bounds, and decreasing depth. Second: capacity before
+effects, at most two local FDs, cleanup on every exit, no ACK or
+data mutation, stable source/revision, full final verification.
+No new shared state or locks between Serie. Reproducible tests in
 [spikes/results/2026-10-29-engine-image-build/](../../spikes/results/2026-10-29-engine-image-build/).
 
-Restano aperti selezione automatica, delta writer, snapshot, catalogo durevole
-e qualifica della quota totale oltre RAM. Questa API costruisce un derivato
-del residente M1, senza aumentare la capienza delle scritture.
+Automatic selection, writer delta, snapshots, durable catalog,
+and total-quota qualification beyond RAM remain open. API builds a derived object
+from M1 resident without increasing write capacity.

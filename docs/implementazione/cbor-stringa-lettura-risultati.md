@@ -1,19 +1,23 @@
-# Verifiche della lettura diretta delle stringhe CBOR
+<a id="verifiche-della-lettura-diretta-delle-stringhe-cbor"></a>
 
-Campagna del 2026-10-15 per REQ-CBR-009. La funzione restituisce
-MAJOR, PAYLOAD-START e NEXT del primo item MT2/3 minimo, senza copie;
-MT3 verifica UTF-8, la coda resta ignorata e il budget riguarda tutta
-la finestra. Il [metodo](cbor-stringa-lettura-metodo.md) precede il prodotto.
+# Verification of direct CBOR string reading
 
-## Freeze e revisioni
+Campaign dated 2026-10-15 for REQ-CBR-009. The function returns
+MAJOR, PAYLOAD-START, and NEXT of the first minimal MT2/3 item, without copies;
+MT3 verifies UTF-8, tail remains ignored, and budget covers the whole
+window. The [method](cbor-stringa-lettura-metodo.md) precedes the product.
 
-Contratto preregistrato in `d31d888b`; corpus e driver indipendenti
-congelati in `b83a0bda` prima del kernel. Le due letture C1
-([prima](cbor-stringa-lettura-prima-revisione.md),
-[seconda](cbor-stringa-lettura-seconda-revisione.md)) precedono ogni
-compilazione. Freeze qualificato `f7c9e0503577b45e2bd20de66c72b6e7232a8c76`.
+<a id="freeze-e-revisioni"></a>
 
-| Sorgente | Blob Git |
+## Freeze and revisions
+
+Contract preregistered in `d31d888b`; independent corpus and driver
+frozen in `b83a0bda` before kernel. Both C1 readings
+([first](cbor-stringa-lettura-prima-revisione.md),
+[second](cbor-stringa-lettura-seconda-revisione.md)) precede every
+compilation. Qualified freeze `f7c9e0503577b45e2bd20de66c72b6e7232a8c76`.
+
+| Source | Git blob |
 |---|---|
 | src/codec/cbor-string-read.lisp | d4a4f774c2264c46349e7eda61ee4a2a3118d742 |
 | tests/codec/cbor-string-read-support.lisp | cfd55cd47d782673113e67af625c1360195a345c |
@@ -21,86 +25,92 @@ compilazione. Freeze qualificato `f7c9e0503577b45e2bd20de66c72b6e7232a8c76`.
 | tests/codec/cbor-string-read-threads.lisp | 8fc4ae5d9214108a6ae6bf26e644db1a42733cdd |
 | tools/cbor-string-read-driver.lisp | a6b65bd233dba2a2eec941d96a75b9db948d19f8 |
 
-Due funzioni di 14/35 righe e 5/10 percorsi, includendo il cortocircuito
-AND. La [tabella completa](cbor-stringa-lettura-decisioni.md) conta dodici
-guardie, un AND con due operandi, undici ERROR e nove confronti binari;
-nessun ciclo nuovo. Guardia interna e default keyword restano nei denominatori.
+Two functions of 14/35 lines and 5/10 paths, including AND
+short-circuiting. The [complete table](cbor-stringa-lettura-decisioni.md) counts twelve
+guards, one AND with two operands, eleven ERRORs, and nine binary comparisons;
+no new loop. Internal guard and keyword default remain in denominators.
 
-## Corpus, parallelismo e misure
+<a id="corpus-parallelismo-e-misure"></a>
 
-Passano 17 nominali: 16 seriali e uno concorrente. Le 9906 chiamate del
-piano comprendono 690 non fuzz, 1024 fuzz e 8192 concorrenti: 9040 successi
-e 866 rifiuti. Sono denominatori aritmetici, non contatori strumentati.
-Range, budget, tutte le larghezze, u64, UTF-8 e precedenze, arità esatta,
-finestre da 16MiB e immutabilità fisica sono controllati a freddo.
-Il fuzz del corpus usa seed `53545239` e finale `F8417639`: 512 successi e
-512 rifiuti, in otto famiglie da 64.
+## Corpus, parallelism, and measurements
 
-Due worker reali riusati, due ondate da 2048 chiamate per worker. Lo stesso
-buffer contiene una finestra MT2 e una MT3: risultati2/8/12 e3/13/16,
-token 41333/41509 e sink 84649984/85010432 per worker/ondata. Rendezvous
-dopo la prima chiamata verificata, timeout, join e cleanup sono bounded.
-Gli intervalli WALL includono controlli e attese; nessuna misura di scaling
-o simultaneità sui core viene dedotta.
+17 named tests pass: 16 serial and one concurrent. The plan's 9906 calls
+comprise 690 non-fuzz, 1024 fuzz, and 8192 concurrent: 9040 successes
+and 866 rejections. These are arithmetic denominators, not instrumented counters.
+Ranges, budgets, all widths, u64, UTF-8 and precedence, exact arity,
+16MiB windows, and physical immutability are checked cold.
+Corpus fuzz uses seed `53545239` and final `F8417639`: 512 successes and
+512 rejections, in eight families of 64.
 
-Il driver separato passa 36 confronti e 1024 coppie fuzz con seed `43535239`.
-Benchmark: 12 fixture, 60 campioni da 1024 chiamate, 3840 warmup e 12 cold,
-65292 chiamate complessive; 67376 includendo diff/fuzz. Tutti i tre valori,
-sink, checksum e buffer sono controllati. Heap osservato zero in tutti
-i 60 campioni; baseline nulla e sensore positivo 16×1MiB=16777472 byte.
-I 675727360 byte degli item sono un denominatore, non byte effettivamente
-letti: MT2 non attraversa il payload. Costi del consumer inclusi, carico
-esterno non controllato, nessuna soglia di velocità o throughput del motore.
+Two real reused workers, two waves of 2048 calls per worker. The same
+buffer contains an MT2 and MT3 window: results2/8/12 and3/13/16,
+tokens 41333/41509 and sinks 84649984/85010432 per worker/wave. Rendezvous
+after first verified call, timeout, joins, and cleanup are bounded.
+WALL intervals include checks and waits; no measurement of scaling
+or simultaneous execution on cores is inferred.
 
-Otto mutanti compilabili sono rilevati dal nominale atteso dopo tutte
-le 38 compilazioni: major permissivo, UTF-8 saltato, NEXT=END, budget
-ignorato, START=0, arità extra, minimalità saltata e HIGH ignorato.
-Sei erano preregistrati; due estensioni sono dichiarate prima della
-campagna. Il mutante sull'arità cambia due frammenti coerenti, corpo e FTYPE,
-nella sola copia. Baseline 17/17; otto exit1/segnaleNIL. Warning, compilefail,
-helper, segnali e guasti dopo completamento non contano come rilevamenti.
-La lettura indipendente passa 4791 verifiche: 342 confronti byte delle
-38 fonti×9 copie, frammenti esatti e 424 file/metadata stabili.
+The separate driver passes 36 comparisons and 1024 fuzz pairs with seed `43535239`.
+Benchmark: 12 fixtures, 60 samples of 1024 calls, 3840 warmups and 12 cold calls,
+65292 total calls; 67376 including diff/fuzz. All three values,
+sinks, checksums, and buffers checked. Zero observed heap allocation in all
+60 samples; zero baseline and positive sensor 16×1MiB=16777472 bytes.
+The 675727360 item bytes are a denominator, not bytes actually
+read: MT2 does not traverse payload. Consumer costs included, external
+load uncontrolled, no speed threshold or engine throughput.
 
-## Copertura e integrazione
+Eight compilable mutants are detected by the expected named test after all
+38 compilations: permissive major, skipped UTF-8, NEXT=END, ignored
+budget, START=0, extra arity, skipped minimality, and ignored HIGH.
+Six were preregistered; two extensions declared before
+campaign. Arity mutant changes two consistent fragments, body and FTYPE,
+in the copy only. Baseline 17/17; eight exit1/signalNIL. Warnings, compilefail,
+helper errors, signals, and faults after completion do not count as detections.
+Independent reading passes 4791 checks: 342 byte comparisons of
+38 sources×9 copies, exact fragments, and 424 stable files/metadata.
 
-Scope esatto del nuovo file: **116/155 espressioni e 20/26 rami**.
-Tutte le 45 voci mancanti restano incluse: quattro forme top-level, un
-default keyword, 34 espressioni e sei rami delle sei guardie interne.
-Raw globale di 423 file, HTML e indice dello scope locale concordano.
-Il raw di 3374141 byte è compattato senza perdita dopo la lettura DATA;
-il supplemento verifica nuovamente SHA256 e dimensione decodificata.
+<a id="copertura-e-integrazione"></a>
 
-`make check-core` su f7c9e050 passa 1743 nominali unici e due smoke;
-i 17 nuovi nomi concordano col corpus DATA. Le note del compilatore sono
-conservate; nessun WARNING o STYLE-WARNING. L'integrazione e1bffcae
-con il recupero CSN passa la stessa suite, lint su 249 file e trace con 127 requisiti.
-Il comando combinato resta FAILED nella fase links: sei copie storiche
-Markdown ignored provocavano 282 link relativi rotti. Rinominate .md.txt
-con SHA256 invariato, la successiva verifica links passa con zero rotti.
-Il fallimento e la correzione sono entrambi conservati. Le integrazioni
-successive mantengono gli stessi pin del lettore e del corpus.
+## Coverage and integration
 
-La build finale `4af9f054` integra anche la proposta degli ID e il
-contratto full text: **1751 nominali unici e due smoke**, lint, trace e
-links superati nel medesimo comando. Il [registro finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read-integration/catalogo.lisp)
-conserva quel processo e la lettura dei conteggi, compreso il primo
-tentativo fallito del solo lettore C4 e la sua correzione.
+Exact new-file scope: **116/155 expressions and 20/26 branches**.
+All 45 missing entries remain included: four top-level forms, one
+keyword default, 34 expressions, and six branches of six internal guards.
+Global raw state of 423 files, HTML, and local-scope index agree.
+The 3374141-byte raw state is losslessly compacted after DATA reading;
+the supplement reverifies SHA256 and decoded size.
 
-## Conservazione e limiti
+`make check-core` on f7c9e050 passes 1743 unique named tests and two smoke tests;
+the 17 new names agree with DATA corpus. Compiler notes are
+preserved; no WARNING or STYLE-WARNING. Integration e1bffcae
+with CSN recovery passes the same suite, lint on 249 files, and trace with 127 requirements.
+The combined command remains FAILED at links: six ignored historical
+Markdown copies caused 282 broken relative links. Renamed .md.txt
+with unchanged SHA256, the later links check passes with zero broken links.
+Failure and correction are both preserved. Subsequent integrations
+retain the same reader and corpus pins.
 
-L'[archivio principale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read/catalogo.lisp)
-contiene dieci record conclusi OK, snapshot storico e originali delle
-preparazioni, compresi gli errori dei lettori C4. Raccolta con quattro
-worker e inventario chiuso indipendente: **602 file indicizzati, 604 fisici,
-6736470 byte indicizzati**, senza append dopo il controllo.
-Il [supplemento](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read-final/catalogo.lisp)
-conserva integrazione, rinomina, compattazione, lettura indipendente e
-record/osservazioni della raccolta principale; mantiene distinto il
-comando FAILED. Non comprende ricorsivamente la propria raccolta.
+Final build `4af9f054` also integrates the ID proposal and
+full-text contract: **1751 unique named tests and two smoke tests**, lint, trace, and
+links passed in the same command. The [final register](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read-integration/catalogo.lisp)
+preserves that process and count reading, including the first
+failed attempt of the C4 reader alone and its correction.
 
-Le copie/cache private e gli input sintetici con symlink/directory vuote
-profonde restano nel supporto ignored, copiato separatamente a fine lavoro.
-I file selezionati sono espliciti: l'inventario chiuso attesta quell'insieme,
-non ogni file del checkout. REQ-CBR-009 è implementato; REQ-LIM-001/002,
-profilo documentale e qualifica C1/MC/DC restano aperti.
+<a id="conservazione-e-limiti"></a>
+
+## Preservation and limits
+
+The [main archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read/catalogo.lisp)
+contains ten records completed OK, historical snapshot, and preparation
+originals, including C4 reader errors. Collection with four
+workers and independent closed inventory: **602 indexed files, 604 physical,
+6736470 indexed bytes**, without append after checking.
+The [supplement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read-final/catalogo.lisp)
+preserves integration, rename, compaction, independent reading, and
+records/observations of main collection; it keeps the FAILED
+command distinct. It does not recursively include its own collection.
+
+Private copies/caches and synthetic inputs with symlinks/deep empty
+directories remain in ignored support, copied separately at work completion.
+Selected files are explicit: closed inventory attests that set,
+not every checkout file. REQ-CBR-009 is implemented; REQ-LIM-001/002,
+document profile, and C1/MC/DC qualification remain open.

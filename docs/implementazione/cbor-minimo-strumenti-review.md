@@ -1,83 +1,91 @@
-# Lettura C4 degli strumenti per le testate CBOR minime
+<a id="lettura-c4-degli-strumenti-per-le-testate-cbor-minime"></a>
 
-Lettura statica dell'autore del nuovo kernel, conclusa prima delle campagne
-del prodotto. Riguarda `tools/foundation-coverage.lisp` e
-`spikes/out/cbor-minimal-collection/collect.lisp`, con lettura mirata della
-dipendenza invariata `tools/evidence-storage.lisp`. Non costituisce una lettura
-C1 indipendente del prodotto o un'approvazione umana. Nessun prodotto, test,
-compilazione, coverage, collector o guard è stato eseguito dal revisore.
+# C4 reading of tools for minimal CBOR headers
 
-## Copertura
+Static reading by the new kernel's author, completed before product
+campaigns. Covers `tools/foundation-coverage.lisp` and
+`spikes/out/cbor-minimal-collection/collect.lisp`, with targeted reading of
+the unchanged dependency `tools/evidence-storage.lisp`. It is not an independent
+C1 product reading or human approval. The reviewer executed no product, tests,
+build, coverage, collector, or guard.
 
-Lo scope `cbor-minimal` seleziona soltanto i suffissi esatti dei due file nuovi
-`cbor-float-minimal.lisp` e `cbor-minimal.lisp`. Il self-test contiene entrambi
-i positivi e negativi per header invariato, UTF-8, percorso dei test, suffisso
-`.fake` e sottopercorso `/child`. Il dispatcher chiama la suite
-`arcdocdb.cbor.minimal.tests:run`; lo scope `codec` include anche la nuova suite
-oltre a UTF-8, header e struttura. Lo stato SB-COVER completo viene salvato
-prima del report HTML filtrato; dichiarazioni e guardie dei file selezionati
-restano nel denominatore. Export/package e moduli invariati non appartengono
-al filtro focale, pur essendo caricati dalla build completa.
+<a id="copertura"></a>
 
-La cache viene tradotta esplicitamente sotto la directory di misura e il
-driver controlla che il mapping FASL sia interno. Compilazioni forzate e
-warning promossi ad errori impediscono una copertura apparentemente riuscita
-dopo una build incompleta. Il chiamante assegna una directory nuova: il driver
-non dimostra da solo che la directory sia esclusiva o priva di report vecchi.
-Self-test e numeratori effettivi restano pendenti; nessuna attestazione MC/DC.
+## Coverage
 
-## Raccolta, finding e correzione
+Scope `cbor-minimal` selects only the exact suffixes of the two new files
+`cbor-float-minimal.lisp` and `cbor-minimal.lisp`. The self-test contains both
+positives and negatives for unchanged header, UTF-8, test path, suffix
+`.fake`, and subpath `/child`. The dispatcher calls suite
+`arcdocdb.cbor.minimal.tests:run`; scope `codec` also includes the new suite
+alongside UTF-8, headers, and structure. Complete SB-COVER state is saved
+before the filtered HTML report; declarations and guards in selected files
+remain in the denominator. Export/package and unchanged modules are outside
+the focal filter, though loaded by the full build.
 
-Il collector legge manifest e indice con `*read-eval* NIL` e EOF; legge i
-rapporti tramite `read-evidence`, che valida anche descriptor, SHA256 e bytes
-compressi/espansi. Il `load` presente riguarda il solo strumento locale
-`tools/evidence-storage.lisp`, non manifest, report o log esterni.
+The cache is explicitly translated under the measurement directory and the
+driver checks that FASL mapping is internal. Forced compilation and
+warnings promoted to errors prevent apparently successful coverage
+after an incomplete build. The caller assigns a new directory: the driver
+alone does not demonstrate exclusivity or absence of old reports.
+Self-tests and actual numerators remain pending; no MC/DC attestation.
 
-È stato rilevato un difetto nel primo filtro dei tree `:lisp-and-log`: ammetteva
-solo `.lisp`/`.log`, quindi copiava un descriptor `report.lisp` senza il
-payload `.gz`. L'audit dei file copiati poteva riuscire senza garantire la
-rilettura di quel rapporto. Finding sul blob originale collector
-`4ec1aa3c993f0236caa44bd0ef30867ac37c73b7`, righe 43–45. Prima di eseguire il
-collector, il coordinatore ha aggiunto `.gz` agli stessi suffissi. Il blob
-corretto `12670016a52b29eaedca72bb746343f840824b53` è stato riletto: descriptor
-e payload prodotti da `compact-evidence.lisp` (nome originale + `.gz`) vengono
-copiati mantenendo lo stesso percorso relativo. Il guard separato deve ancora
-verificare descriptor+payload in tree filtrato e tra i file di un processo.
-Non si dichiara guard PASS sulla sola correzione statica.
+<a id="raccolta-finding-e-correzione"></a>
 
-Ogni copia conserva bytes e SHA256 del sorgente e confronta sia sorgente
-dopo copia sia destinazione. Per i processi, il report decodificato viene
-confrontato integralmente dopo la copia; la directory viene copiata senza
-filtro di estensione, mantenendo il payload leaf del descriptor. Destinazioni
-esistenti sono rifiutate. I tree filtrati includono ora `.lisp`, `.log`, `.gz`
-e omettono i sottoalberi `fasl`; tree non filtrati conservano ogni file fuori
-da quei sottoalberi. Il manifest stabilisce esplicitamente quali tree e file
-singoli appartengono alla raccolta. Payload con un'altra estensione non sono
-inclusi automaticamente dal modo filtrato: occorre un tree non filtrato o
-un item esplicito; questa lettura attesta la correzione per i payload `.gz`
-generati dallo strumento corrente, non per ogni possibile nome leaf.
+## Collection, finding, and correction
 
-I report originali non vengono riscritti. Status, exit, command e stabilità
-vengono copiati come metadata osservati, senza trasformarli in attestazioni
-di requisiti o gate. L'audit verifica hash/bytes dei file elencati e metadata
-dei processi; non inferisce risultati delle campagne. L'append verifica prima
-la raccolta precedente, aggiunge una directory di processo nuova e riscrive
-solo l'indice derivato. Non fornisce pubblicazione atomica o storico automatico
-dell'indice, né garanzie crash del collector. Il manifest locale e i suoi label
-sono input del coordinatore: questo strumento non è un confine di sicurezza
-per label arbitrari forniti da utenti esterni.
+The collector reads manifests and index with `*read-eval* NIL` and EOF; it reads
+reports through `read-evidence`, which also validates descriptors, SHA256, and compressed/expanded
+bytes. The `load` concerns only the local tool
+`tools/evidence-storage.lisp`, not external manifests, reports, or logs.
 
-## Snapshot e limiti
+A defect was found in the first `:lisp-and-log` tree filter: it allowed
+only `.lisp`/`.log`, so it copied a `report.lisp` descriptor without the
+`.gz` payload. Auditing copied files could succeed without guaranteeing
+reread of that report. Finding on original collector blob
+`4ec1aa3c993f0236caa44bd0ef30867ac37c73b7`, lines 43–45. Before running the
+collector, the coordinator added `.gz` to the same suffixes. Corrected blob
+`12670016a52b29eaedca72bb746343f840824b53` was reread: descriptors
+and payloads produced by `compact-evidence.lisp` (original name + `.gz`) are
+copied preserving the same relative path. The separate guard still needs to
+verify descriptor+payload in filtered trees and among process files.
+Guard PASS is not claimed from the static correction alone.
 
-| Fonte | Git blob letto |
+Each copy retains source bytes and SHA256 and compares both source
+after copying and destination. For processes, the decoded report is
+compared in full after copying; the directory is copied without
+an extension filter, preserving the descriptor's payload leaf. Existing destinations
+are rejected. Filtered trees now include `.lisp`, `.log`, `.gz`
+and omit `fasl` subtrees; unfiltered trees retain every file outside
+those subtrees. The manifest explicitly defines which trees and individual
+files belong to collection. Payloads with another extension are not
+automatically included by filtered mode: they need an unfiltered tree or
+an explicit item; this reading establishes the correction for `.gz` payloads
+generated by the current tool, not for every possible leaf name.
+
+Original reports are not rewritten. Status, exit, command, and stability
+are copied as observed metadata, without turning them into attestations
+of requirements or gates. The audit checks listed-file hashes/bytes and process
+metadata; it does not infer campaign results. Append first verifies
+the previous collection, adds a new process directory, and rewrites
+only the derived index. It supplies neither atomic publication nor automatic index
+history, nor collector crash guarantees. The local manifest and its labels
+are coordinator inputs: this tool is not a security boundary
+for arbitrary labels supplied by external users.
+
+<a id="snapshot-e-limiti"></a>
+
+## Snapshots and limits
+
+| Source | Git blob read |
 |---|---|
 | `tools/foundation-coverage.lisp` | `554b840090373179043aa39dd6491cd35433552a` |
-| `spikes/out/cbor-minimal-collection/collect.lisp` corretto | `12670016a52b29eaedca72bb746343f840824b53` |
-| `tools/evidence-storage.lisp`, dipendenza invariata | `fa2b5d36dca0837e2ed5e49b282887b2e110b2b7` |
+| corrected `spikes/out/cbor-minimal-collection/collect.lisp` | `12670016a52b29eaedca72bb746343f840824b53` |
+| `tools/evidence-storage.lisp`, unchanged dependency | `fa2b5d36dca0837e2ed5e49b282887b2e110b2b7` |
 
-Non resta un finding aperto per il filtro dei payload correnti dopo la
-correzione. Restano pendenti guard del collector, self-test coverage, campagne
-del prodotto e audit bytewise del dataset finale. Benchmark e mutatore sono
-fuori da questa lettura. Il referto dati è
-`spikes/out/cbor-minimal-tools-review.lisp`, schema 1, con fonte statica e
-attribuzione del finding e della correzione.
+No finding remains open for the current-payload filter after correction.
+Collector guard, coverage self-test, product campaigns,
+and bytewise audit of the final dataset remain pending. Benchmark and mutator are
+outside this reading. The data report is
+`spikes/out/cbor-minimal-tools-review.lisp`, schema 1, with static source and
+attribution of finding and correction.

@@ -1,88 +1,94 @@
-# Fonti possedute per il recovery della Serie
+<a id="fonti-possedute-per-il-recovery-della-serie"></a>
 
-`arcdocdb.recovery.manifest:apri-fonti-recovery` collega il planner directory
-all'apertura readonly relativa. Restituisce due valori: insieme posseduto dei
-segmenti vivi e piano completo, con anomalie/rimozioni ancora esplicite.
-Il [metodo preregistrato](fonti-recovery-metodo.md) definisce responsabilità,
-decisioni e prove prima del codice. Nessun nuovo formato o punto durevole.
+# Owned sources for Serie recovery
 
-| API | Contratto |
+`arcdocdb.recovery.manifest:apri-fonti-recovery` connects directory planner
+to relative read-only opening. Returns two values: owned live-segment
+set and complete plan, with anomalies/removals still explicit.
+The [preregistered method](fonti-recovery-metodo.md) defines responsibilities,
+decisions, and tests before code. No new format or durable point.
+
+| API | Contract |
 |---|---|
-| `apri-fonti-recovery(manifest, directory, …)` | Una enumerazione completa; tutti e soli ACTIVE/CLOSED in ordine u64, piano READY obbligatorio |
-| `numero-fonti-recovery(set)` | Numero immutabile di fonti, anche dopo close |
-| `fonte-recovery(set, index)` | Cinque valori: ID, stato, forma, capacità readonly prestata, EOF dello stesso FD |
-| `chiudi-fonti-recovery(set)` | Invalida prima, tenta ogni child, ripetizione senza syscall |
+| `apri-fonti-recovery(manifest, directory, …)` | One complete enumeration; all and only ACTIVE/CLOSED in u64 order, READY plan required |
+| `numero-fonti-recovery(set)` | Immutable source count, even after close |
+| `fonte-recovery(set, index)` | Five values: ID, state, form, borrowed read-only capability, EOF from same FD |
+| `chiudi-fonti-recovery(set)` | Invalidates first, attempts every child, repeat without syscall |
 
-Un solo proprietario mantiene il set e termina i reader prima della chiusura.
-Non chiude i singoli child; parent e manifest restano del chiamante e non sono
-trattenuti dal risultato. Configurazione e callback sono verificate prima
-dell'enumerazione. Il namespace deve restare esclusivo e stabile; nessuna
-cancellazione asincrona durante acquisizione/close. L'apertura POSIX non è
-uno snapshot del filesystem. Temporanei vivi sono aperti con il loro nome;
-REMOVED, UNKNOWN e temporanei orfani restano intatti.
+One owner retains set and finishes readers before closing.
+Does not close individual children; parent and manifest remain caller's and are
+not retained in result. Configuration and callbacks checked before
+enumeration. Namespace must remain exclusive and stable; no
+asynchronous cancellation during acquisition/close. POSIX opening is not
+a file-system snapshot. Live temporary files opened by their names;
+REMOVED, UNKNOWN, and orphan temporary files intact.
 
-I cinque budget dell'[inventario](inventario.md#raccolta-dalla-directory) e i
-due budget dell'[apertura relativa](io-apertura-relativa.md) mantengono
-semantica/default. `max-total-file-bytes` aggiunge il budget cumulativo degli
-EOF vivi (default 4 GiB−1, intero `index`, zero ammesso). È un budget di
-acquisizione, senza promessa RSS; uguaglianza valida e somma senza wrap.
-Il set possiede anche il child che fa superare il budget per chiuderlo.
+Five [inventory](inventario.md#raccolta-dalla-directory) budgets and
+two [relative-opening](io-apertura-relativa.md) budgets retain
+semantics/defaults. `max-total-file-bytes` adds cumulative live EOF
+budget (default 4 GiB−1, `index` integer, zero allowed). Acquisition
+budget without RSS promise; equality valid and sum without wrapping.
+Set also owns child exceeding budget so it can close it.
 
-Su errore si tentano tutti i close già acquisiti. Se riescono, la stessa
-condizione primaria viene propagata. `recovery-sources-cleanup-error`
-conserva tramite `recovery-sources-primary` la causa iniziale (NIL per close
-esplicita), tramite `recovery-sources-cleanup` il primo IO-FAULT del cleanup
-e tramite `recovery-sources-cleanup-count` il numero delle close fallite.
-Un guasto nell'apertura del child corrente è già pulito dallo strato I/O,
-che conserva il proprio eventuale `cleanup-errno`. Non si riprova close:
-il FD può essere stato riutilizzato. Il set resta invalidato anche dopo errore.
+On error, all already acquired closes attempted. If successful, same
+primary condition propagated. `recovery-sources-cleanup-error`
+retains initial cause through `recovery-sources-primary` (NIL for explicit
+close), first cleanup IO-FAULT through `recovery-sources-cleanup`,
+and failed-close count through `recovery-sources-cleanup-count`.
+Failure while opening current child already cleaned by I/O layer,
+which preserves any `cleanup-errno`. Close not retried:
+FD may have been reused. Set remains invalidated even after error.
 
-`:ready` certifica solo disponibilità dei nomi. Header, identità logica del
-segmento, CRC, prefisso, chiusura dell'ACTIVE, replay degli indici, CSN e
-ammissione restano dei reader e del futuro Recovery Manager. Nessuna
-rinomina, cancellazione, scrittura, flush, prenotazione o allocazione CSN.
+`:ready` certifies name availability only. Headers, logical segment
+identity, CRCs, prefix, ACTIVE closing, index replay, CSNs, and
+admission remain reader and future Recovery Manager responsibilities. No
+rename, deletion, write, flush, reservation, or CSN allocation.
 
-Il [coordinamento semantico di una Serie](recovery-serie.md) usa ora questo
-set prestato per recuperare ACTIVE e tutti i CLOSED, dopo un preflight
-complessivo e con un solo scratch. La gestione fisica del set resta al caller.
+[Semantic Serie coordination](recovery-serie.md) now uses this
+borrowed set to recover ACTIVE and all CLOSED after overall
+preflight and with one scratch. Physical set management remains caller's.
 
-La prova verticale usa il set per ACTIVE e CLOSED e lo chiude dopo tutti i
-reader; elimina la scansione manuale degli ID CLOSED 1…8. Il limite otto
-resta una capacità della fixture C4. I risultati non qualificano l'intero
-motore; copertura C1, MC/DC, secondo revisore e piattaforma restano aperti.
+Vertical test uses set for ACTIVE/CLOSED and closes it after all
+readers; eliminates manual CLOSED ID scan 1…8. Limit eight
+remains C4 fixture capacity. Results do not qualify whole
+engine; C1 coverage, MC/DC, second reviewer, and platform remain open.
 
-## Due letture C1 dell'autore, prima dei run
+<a id="due-letture-c1-dellautore-prima-dei-run"></a>
 
-Prima lettura: REQ/ADR e INV-A7/A8/A9/A10/A11/P6 coerenti; nessuna modifica
-durevole; parent borrowed e figli posseduti; configurazione verificata prima
-dell'I/O. Seconda lettura: cleanup completo anche dopo più errori, condizione
-primaria originale e totale senza overflow; cicli limitati da piano/vettori;
-nessun dato parziale pubblicato, lock o scrittura fra Serie; allocazioni solo
-nel percorso freddo. Decisioni FRS-D01…D07 nel metodo e test FI nominati;
-compilazione, trace, lint, link e controllo completo da eseguire e conservare.
-Le due letture sono dell'autore e non soddisfano la revisione indipendente.
+## Two author C1 readings, before runs
 
-## Esiti conservati — 2026-10-17
+First reading: REQ/ADRs and INV-A7/A8/A9/A10/A11/P6 consistent; no durable
+change; borrowed parent and owned children; configuration checked before
+I/O. Second: complete cleanup even after multiple errors, original primary
+condition and total without overflow; loops bounded by plan/vectors;
+no partial data published, lock, or write between Serie; allocations only
+on cold path. Decisions FRS-D01…D07 in method and named FI tests;
+compilation, trace, lint, links, and full check to run and preserve.
+Both readings by author do not satisfy independent review.
 
-La [campagna locale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-recovery-sources/report.md)
-conserva 17 record, tutti STABLE, compresi fallimenti e un controllo interrotto
-per correggere due test annidati. La baseline finale comprende 16 test autonomi;
-11/11 mutanti sono rilevati a runtime con quattro processi isolati, zero errori
-di compilazione/pre-test/worker. Il runner rifiuta ora DEFTEST annidati.
+<a id="esiti-conservati--2026-10-17"></a>
 
-`make check` è passato sul commit `8aaa0621`: 2.054 test nominati più due smoke,
-170 recovery, quattro verticali con 16 scenari positivi e due negativi, dieci
-spike; 321 file di prodotto senza violazioni, 135 requisiti/69 invarianti/
-13 FI/55 ADR senza errori, 564 Markdown e 3.903 link senza rotture. Sono comprese
-le verifiche full text e cache; non qualificano visibilità o recovery full text.
+## Preserved outcomes — 2026-10-17
 
-Copertura grezza dei quattro file: 293/327 forme e 22/26 rami, con tutti i
-22 rami dei tre file operativi marcati. I residui di dichiarazioni, slot e
-keyword restano nel denominatore; nessuna esclusione approvata. Native/HTML
-e missing path sono conservati, insieme ai limiti dei helper manuali e alle
-varianti dei test. Secondo revisore, MC/DC e qualifica C1 restano aperti.
+The [local campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-recovery-sources/report.md)
+preserves 17 records, all STABLE, including failures and one check interrupted
+to correct two nested tests. Final baseline has 16 standalone tests;
+11/11 mutants detected at runtime with four isolated processes, zero compilation/
+pre-test/worker errors. Runner now rejects nested DEFTESTs.
 
-La [ricevuta di raccolta](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-recovery-sources-collection/README.md)
-conserva collector e checker dell'inventario chiuso. Il codice dei quattro
-file di prodotto è invariato rispetto alla prima implementazione; le correzioni
-successive riguardano fixture, runner, integrazione e documentazione.
+`make check` passed on commit `8aaa0621`: 2,054 named tests plus two smoke tests,
+170 recovery, four vertical tests with 16 positive scenarios and two negatives, ten
+spikes; 321 product files without violations, 135 requirements/69 invariants/
+13 FI/55 ADR without errors, 564 Markdown files and 3,903 links without breakage. Includes
+full-text and cache checks; these qualify neither full-text visibility nor recovery.
+
+Raw coverage of four files: 293/327 forms and 22/26 branches, all
+22 branches of three operational files marked. Residual declarations, slots, and
+keywords remain in denominator; no approved exclusion. Native/HTML
+and missing paths preserved, along with manual-helper limits and test
+variants. Second reviewer, MC/DC, and C1 qualification remain open.
+
+The [collection receipt](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-recovery-sources-collection/README.md)
+preserves collector and closed-inventory checker. Four product
+files unchanged from first implementation; later corrections
+concern fixtures, runner, integration, and documentation.

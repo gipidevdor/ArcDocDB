@@ -1,163 +1,165 @@
-# Moduli e verifiche
+<a id="moduli-e-verifiche"></a>
 
-[Implementazione](README.md) · [Architettura](../architettura.md) · [Moduli del progetto](../16-moduli.md)
+# Modules and verification
 
-Catalogo dei contratti, del codice e delle verifiche di componente. Per lo stato
-dell'integrazione si parte dall'[indice dell'implementazione](README.md).
-Ogni metodo e risultato conserva il proprio perimetro.
+[Implementation](README.md) · [Architecture](../architettura.md) · [Project modules](../16-moduli.md)
 
-| Modulo | Contratto e verifica | Codice |
+Catalog of component contracts, code, and verification. For integration
+status, start with the [implementation index](README.md).
+Each method and result retains its own scope.
+
+| Module | Contract and verification | Code |
 |---|---|---|
-| Scoperta immagini M1 | [Inventario bounded, fonte canonica e adozione integralmente verificata](scoperta-indice-m1.md) | [`src/engine/image-discovery.lisp`](../../src/engine/image-discovery.lisp) |
-| Manutenzione delta M1 | [Policy su chiavi/byte e rinnovo solo alla soglia](manutenzione-indice-m1.md) | [`src/engine/image-maintenance.lisp`](../../src/engine/image-maintenance.lisp) |
-| Rinnovo immagini M1 | [Costruzione e attivazione sotto una admission, quota totale e delta vuoto](rinnovo-indice-m1.md) | [`src/engine/image-renewal.lisp`](../../src/engine/image-renewal.lisp) |
-| Delta immagini M1 | [Membership esatta bounded per PUT/DELETE](delta-indice-m1.md); residente ancora completo | [`src/engine/delta.lisp`](../../src/engine/delta.lisp) |
-| Attivazione immagini M1 | [Pubblicazione a caldo e chiusura dei file al ritiro](attivazione-indice-m1.md); scelta del controller, senza catalogo durevole | [`src/engine/image-activation.lisp`](../../src/engine/image-activation.lisp) |
-| Costruzione immagini M1 | [Piano da slot canonici, radix adattivo e verifica completa](costruzione-indice-m1.md); senza attivazione automatica | [`src/engine/image-build.lisp`](../../src/engine/image-build.lisp) |
-| Indice paginato M1 | [Fonte canonica, startup, GET e ritiro seriale](indice-paginato-m1.md); residente ancora presente, catalogo durevole separato | [`src/engine/image-recovery.lisp`](../../src/engine/image-recovery.lisp) |
-| Immagini indice e root | [Sigillo, verifica readonly e adozione seriale](immagini-indice-paginato.md); [startup M1 e GET seriale](indice-paginato-m1.md) collegati, catalogo durevole separato | [`src/index/image-recovery.lisp`](../../src/index/image-recovery.lisp) |
-| Costruzione pagine indice | [Piani limitati, chiavi, bucket e directory append-only](costruzione-indice-paginato.md); pubblicazione ancora separata | [`src/index/page-build.lisp`](../../src/index/page-build.lisp) |
-| Lettura indice paginato | [Directory, bucket, overflow e chiavi complete](lettura-indice-paginato.md); candidati compatibili con il residente | [`src/index/page-lookup.lisp`](../../src/index/page-lookup.lisp) |
-| Cache pagine seriale | [Frame fissi, copie private e PREAD verificato](cache-pagine.md); backend collegato al GET M1 opzionale | [`src/index/page-cache.lisp`](../../src/index/page-cache.lisp) |
-| M1 Single-Series Durable Core | [Startup, recovery, admission e richieste di produzione](production-engine-bootstrap.md), [metodo](production-engine-bootstrap-metodo.md), [evidenze del nucleo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-production-engine-bootstrap/report.md) | [`src/engine/`](../../src/engine/) |
-| Sessione Unix M1 | [Contratto, limiti e CLI di produzione](production-unix-m1.md), [qualifica locale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md) | [`src/local/`](../../src/local/) |
-| Completamento nomi Archivio | [Gate canonico, preflight globale ed effetti per Serie](stabilizzazione-archivio.md), [metodo](stabilizzazione-archivio-metodo.md) | [`src/recovery-bootstrap/`](../../src/recovery-bootstrap/) |
-| Nucleo full text | [Profilo Unicode, run posizionale, predicati e cornice](full-text.md), [decisioni](full-text-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
-| Codec e viste full text | [File completo, legame al descriptor e query sui byte](full-text-codec.md), [revisione](full-text-codec-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
-| Preparazione documentale full text | [CBOR, percorsi, budget cumulativi e limite del file](full-text-documenti.md), [revisione](full-text-documenti-decisioni.md) | [`src/fulltext/document.lisp`](../../src/fulltext/document.lisp) |
-| Riserve full text del writer | [Budget collettivi, copie possedute e ownership](full-text-riserve.md), [metodo e decisioni](full-text-riserve-metodo.md) | [`src/fulltext-admission/`](../../src/fulltext-admission/) |
-| Legame PUT/WAL full text | [Cornice posseduta, append e riferimenti al lotto](full-text-put.md), [metodo e decisioni](full-text-put-metodo.md) | [`src/fulltext-put/`](../../src/fulltext-put/) |
-| Riferimenti fisici full text | [Cattura dal lotto sigillato e lifetime](full-text-riferimenti.md), [metodo e decisioni](full-text-riferimenti-metodo.md) | [`src/fulltext-put/physical.lisp`](../../src/fulltext-put/physical.lisp) |
-| Directory delle righe full text | [Ricerca locale e riferimenti](full-text-righe.md), [metodo e decisioni](full-text-righe-metodo.md) | [`src/fulltext-admission/rows.lisp`](../../src/fulltext-admission/rows.lisp), [`src/fulltext-put/row-reference.lisp`](../../src/fulltext-put/row-reference.lisp) |
-| Verifica delle evidenze (C4) | [Processi isolati, limiti e riduzione ordinata](evidenze-parallele.md) | [`tools/check-evidence.lisp`](../../tools/check-evidence.lisp) |
-| Prova verticale di una Serie | [Scrittura, SIGKILL, recovery, ripresa e secondo crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
-| Creazione relativa dei temporanei | [Nuovo file esclusivo dal parent posseduto](io-creazione-relativa.md), [metodo](io-creazione-relativa-metodo.md) | [`src/io/create-relative.lisp`](../../src/io/create-relative.lisp) |
-| Fondazioni binarie | [Record v1/v2, CRC32C e lotti SEAL](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |
-| CRC32C ARM64 | [Backend Lisp/SBCL e risultati GET](crc32c-arm64.md); [metodo](crc32c-arm64-metodo.md) | [`crc32c-native.lisp`](../../src/foundation/crc32c-native.lisp) |
-| CRC32C 16/32 B | [Confronto, piccoli record e GET completo](crc32c-unroll32.md); mantenuto il kernel 16 B | [`spike e metodo`](../../spikes/SPK-08-generated-code/metodo-crc32c-unroll32.md) |
-| Testo UTF-8 | [Validazione limitata, pura e parallela](utf8.md) | [`src/codec/utf8.lisp`](../../src/codec/utf8.lisp) |
-| Testate CBOR | [Lettura pura in sei valori](cbor-header.md) | [`src/codec/cbor-header.lisp`](../../src/codec/cbor-header.lisp) |
-| Testate CBOR minime | [Larghezze di argomenti e float, senza decodifica](cbor-minimo.md) | [`src/codec/cbor-minimal.lisp`](../../src/codec/cbor-minimal.lisp) |
-| Scrittura delle testate CBOR | [MT0..6 minimi, destinazione privata e preflight](cbor-scrittura.md) | [`src/codec/cbor-write.lisp`](../../src/codec/cbor-write.lisp) |
-| Scrittura delle stringhe CBOR | [Item MT2/3, budget completo, UTF-8 e overlap](cbor-stringhe.md) | [`src/codec/cbor-string-write.lisp`](../../src/codec/cbor-string-write.lisp) |
-| Scrittura dei valori semplici CBOR | [Codici wire MT7, preflight e destinazione privata](cbor-semplici.md) | [`src/codec/cbor-simple-write.lisp`](../../src/codec/cbor-simple-write.lisp) |
-| Scrittura dei float CBOR | [Bit IEEE, riduzione esatta e destinazione privata](cbor-float-scrittura.md) | [`src/codec/cbor-float-write.lisp`](../../src/codec/cbor-float-write.lisp) |
-| Composizione degli array CBOR | [Item verificati, budget della radice e scratch privato](cbor-array.md), [verifiche](cbor-array-risultati.md) | [`src/codec/cbor-array-write.lisp`](../../src/codec/cbor-array-write.lisp) |
-| Composizione delle mappe CBOR | [Coppie verificate, budget della radice e scratch privato](cbor-map.md), [verifiche](cbor-map-risultati.md) | [`src/codec/cbor-map-write.lisp`](../../src/codec/cbor-map-write.lisp) |
-| Composizione dei tag CBOR | [Contenuto verificato, nodi inclusivi e profondità invariata](cbor-tag.md), [verifiche](cbor-tag-risultati.md) | [`src/codec/cbor-tag-write.lisp`](../../src/codec/cbor-tag-write.lisp) |
-| Lettura del primo item CBOR | [Frontiera assoluta, coda non letta e scratch privato](cbor-item.md), [verifiche](cbor-item-risultati.md) | [`src/codec/cbor-item-read.lisp`](../../src/codec/cbor-item-read.lisp) |
-| Lettura delle stringhe CBOR | [Intervallo readonly del payload MT2/3 e UTF-8](cbor-stringa-lettura.md), [verifiche](cbor-stringa-lettura-risultati.md) | [`src/codec/cbor-string-read.lisp`](../../src/codec/cbor-string-read.lisp) |
-| Struttura CBOR | [Item completo, UTF-8 e budget con scratch per worker](cbor-struttura.md) | [`src/codec/cbor-scan.lisp`](../../src/codec/cbor-scan.lisp) |
-| Item CBOR con testate minime | [Un attraversamento, limiti e scratch privato](cbor-minimo-struttura.md) | [`src/codec/cbor-scan-minimal.lisp`](../../src/codec/cbor-scan-minimal.lisp) |
-| CSN di Archivio | [Registro dei commit in corso e orizzonte](csn.md) | [`src/csn/`](../../src/csn/) |
-| Metadati storage | [Header dei segmenti, EDIT e DECISION](metadati-storage.md) | [`src/storage/`](../../src/storage/) |
-| Header dei log | [Identità e integrità di control e multiserie](header-log.md) | [`src/storage/log-header.lisp`](../../src/storage/log-header.lisp) |
-| Segmenti compattati | [Prefisso CLOSED e record ordinari](segmenti-compattati.md) | [`src/storage/compaction-scan.lisp`](../../src/storage/compaction-scan.lisp) |
-| Code dei writer | [MPSC locale, gettone e tratti limitati](code-writer.md) | [`src/execution/`](../../src/execution/) |
-| Consegna dei writer | [Idle, pronto, in esecuzione e obbligo di scheduling](writer-handoff.md) | [`src/execution/handoff.lisp`](../../src/execution/handoff.lisp) |
-| Lista dei writer pronti | [Ring preallocati, partizioni indipendenti e scansione limitata](writer-ready.md) | [`src/execution/ready.lisp`](../../src/execution/ready.lisp) |
-| Ricircolo dei writer pronti | [Scambio FIFO atomico a ring pieno](writer-recycle.md) | [`src/execution/ready-recycle.lisp`](../../src/execution/ready-recycle.lisp) |
-| Contesto worker | [Lease, batch confermati, retry e fault locale](writer-worker.md) | [`src/execution/worker-types.lisp`](../../src/execution/worker-types.lisp) |
-| Integrazione dei worker | [Base comune, scope e controllo completo](writer-worker-integrazione.md) | [`arcdocdb.asd`](../../arcdocdb.asd) |
-| Controllore del pool | [Target limitato, EWMA, AIMD e isteresi](controllore-pool.md) | [`src/scheduler/`](../../src/scheduler/) |
-| Attuazione del pool | [Attivazione e ritiro confermati dai worker](pool-worker-lifecycle.md) | [`src/scheduler/lifecycle-worker.lisp`](../../src/scheduler/lifecycle-worker.lisp) |
-| Presa governata dal pool | [Gate active, contesto IDLE e presa C1 delegata](pool-worker-claim.md) | [`src/scheduler/pool-claim.lisp`](../../src/scheduler/pool-claim.lisp) |
-| Collegamento pool/Serie | [Binding immutabile, nuova presa e obblighi già assunti](pool-dispatch.md) | [`src/dispatch/`](../../src/dispatch/) |
-| Ricircolo pool/Serie | [Un solo trasferimento ready e routing del nuovo CLAIMED](pool-recycle.md) | [`src/dispatch/recycle.lisp`](../../src/dispatch/recycle.lisp) |
-| Avvio dell'obbligo pool/Serie | [Routing corrente e doppia lease esplicita](pool-begin.md) | [`src/dispatch/begin.lisp`](../../src/dispatch/begin.lisp) |
-| Passo del dispatcher pool/Serie | [Scelta unica fra ammissione e obblighi esistenti](pool-step.md) | [`src/dispatch/step.lisp`](../../src/dispatch/step.lisp) |
-| Catena pool/dispatcher/Serie | [Worker reali, isolamento e ritiro con handoff](pool-catena-risultati.md); [metodo](pool-catena-metodo.md) | [`tests/scheduler/pool-chain.lisp`](../../tests/scheduler/pool-chain.lisp) |
-| Preparazione di un tratto pool/Serie | [Selezione e un solo avvio, con token e rifiuti espliciti](pool-prepara.md); [risultati](pool-prepara-risultati.md) | [`src/dispatch/start.lisp`](../../src/dispatch/start.lisp) |
-| Confine I/O | [Append, pread e flush durevole](io.md); [apertura readonly relativa e dimensione](io-apertura-relativa.md) | [`src/io/`](../../src/io/) |
-| Completamento I/O | [Cleanup, frontiere e capacità dopo short I/O](io-completamento.md) | [`src/io/flush.lisp`](../../src/io/flush.lisp), [`src/io/transfer.lisp`](../../src/io/transfer.lisp) |
-| Rinomina nella directory | [FD parent, cambio atomico e fail-stop locale](io-rinomina.md) | [`src/io/rename.lisp`](../../src/io/rename.lisp) |
-| Pubblicazione di temporanei | [Rinomina esclusiva, identità e completamento senza sostituzione](io-pubblicazione.md) | [`src/io/publish.lisp`](../../src/io/publish.lisp) |
-| Associazione dei file | [Device/inode e capacità readonly/append del medesimo ACTIVE](associazione-file.md) | [`src/io/identity.lisp`](../../src/io/identity.lisp) |
-| Nuovo segmento writer | [Header durevole, rilettura, directory e sorgente certificata](inizializzazione-active.md) | [`src/active/`](../../src/active/) |
-| ACTIVE vuoto | [Radice iniziale, CLOSED recuperati e primo lotto](get-active-vuoto.md) | [active-init.lisp](../../src/get-resolver/active-init.lisp) |
-| Checkpoint del control log | [EDIT completo, piano privato e preparazione durevole a blocchi](checkpoint-control.md) | [`src/control/`](../../src/control/) |
-| Pubblicazione del control log | [Rinomina ancorata, identità dei nomi e gettone unico](pubblicazione-control.md) | [`src/control/publication.lisp`](../../src/control/publication.lisp) |
-| Control log recuperato | [Lettura readonly, manifest posseduto e transizione conservativa](control-recuperato.md); [metodo delle misure](control-transizione-metodo.md) | [`src/control/recovery-read.lisp`](../../src/control/recovery-read.lisp) |
-| Vecchio ACTIVE recuperato | [Prefisso readonly, prepared risolti e chiusura verificata](active-recuperato.md); [verifiche](active-recuperato-verifica.md) e [metodo delle misure](active-recuperato-metodo.md) | [`src/recovery-active/`](../../src/recovery-active/) |
-| Checkpoint dal recovery | [Stato completo da CONTROL e ACTIVE](checkpoint-recovery.md) | [`src/recovery-checkpoint/`](../../src/recovery-checkpoint/) |
-| CLOSED recuperati | [Prefisso autorevole, esiti locali e insieme completo prima del publisher](closed-recuperato.md) | [`src/recovery-closed/`](../../src/recovery-closed/) |
-| CSN recuperati | [Massimo osservato, fonti autorevoli e aggregazione di una Serie completa](recovery-csn.md) | [`src/recovery-active/csn.lisp`](../../src/recovery-active/csn.lisp), [`src/recovery-closed/csn-serie.lisp`](../../src/recovery-closed/csn-serie.lisp) |
-| Piano CSN dell'Archivio | [Insieme Serie, provenienza dei replay e massimo complessivo](csn-archivio-recovery.md) | [`src/recovery-archive-csn/`](../../src/recovery-archive-csn/) |
-| Lotti WAL | [Formazione, SEAL e group commit](wal.md) | [`src/wal/`](../../src/wal/) |
-| CSN dei lotti WAL | [Chiusura, token e risoluzione](wal-csn.md) | [`src/wal/csn.lisp`](../../src/wal/csn.lisp) |
-| Controller della Serie | [Pubblicazione FIFO, token e ritiro I/O](controller-serie.md) | [`src/series/`](../../src/series/) |
-| Worker e Serie | [Doppia lease, debito batch e ordine dell'handoff](worker-serie.md) | [`src/series/worker-run.lisp`](../../src/series/worker-run.lisp) |
-| Routing dei worker | [Ordinali immutabili, registro copiato e selezione diretta](routing-worker.md) | [`src/series/routing-select.lisp`](../../src/series/routing-select.lisp) |
-| Verifica del controller | [Prove strutturate, copertura e misure parallele](controller-serie-risultati.md) | [`tests/series/`](../../tests/series/) |
-| Slot dell'indice v2 | [Payload compatto, seqlock e rilocazione](slot-indice-v2.md) | [`src/index/`](../../src/index/) |
-| Indice primario v2 | [Chiavi, gruppi Swiss e pubblicazione della directory](indice-primario.md) | [`src/index/primary-read.lisp`](../../src/index/primary-read.lisp) |
-| Modo automatico dell'indice | [Primo selettore residente/paginato e modello del lifetime](indice-automatico.md); backend e attuatore aperti | [`src/index/mode-policy.lisp`](../../src/index/mode-policy.lisp) |
-| Pagine dell'indice | [Codec e formato per bucket, directory e chiavi lunghe](pagine-indice.md) | [`src/index/page-read.lisp`](../../src/index/page-read.lisp) |
-| Hash delle chiavi | [XXH64 tipizzato, seme immutabile e mappe fisiche](hash-chiavi.md) | [`src/hash/`](../../src/hash/) |
-| Cache dei record | [Insiemi associativi, CLOCK e copie verificate](cache-record.md) | [`src/cache/`](../../src/cache/) |
-| Prestazioni del nucleo GET | [Metodo, oracoli e stress parallelo](get-performance-metodo.md) | [`tests/get-performance/`](../../tests/get-performance/) |
-| Costi GET e cardinalità | [Metodo preregistrato](get-costi-metodo.md); [risultati su CRC, copie e 4,19 milioni di chiavi](get-costi-risultati.md) | [`tools/get-cost-bench.lisp`](../../tools/get-cost-bench.lisp) |
-| Percorso GET | [Candidato, fonte readonly, cache e conferma snapshot](get-record.md) | [`src/get/`](../../src/get/) |
-| Verifica GET | [Prima suite funzionale, metodo e limiti](get-verifica.md) | [`tests/get/`](../../tests/get/) |
-| Collegamento CSN/snapshot | [Registro unico e coordinamento senza attese](snapshot-csn.md) | [`src/mvcc/snapshots-csn.lisp`](../../src/mvcc/snapshots-csn.lisp) |
-| Verifica snapshot e CSN | [Metodo preregistrato, decisioni e limiti](snapshot-verifica.md) | Registro e adattatore già presenti in `src/mvcc/` |
-| Registro snapshot | [Pin, identità, attivazione e scadenza](registro-snapshot.md) | [`src/mvcc/snapshots-register.lisp`](../../src/mvcc/snapshots-register.lisp) |
-| Epoche e reclaim | [Slot dei reader e ticket limitati per i segmenti](epoche-e-reclaim.md) | [`src/epochs/`](../../src/epochs/) |
-| Compiti di lettura | [Ingresso EBR, controlli snapshot e cleanup](compiti-lettura.md) | [`src/read/`](../../src/read/) |
-| Verifica EBR e lettura | [Suite, metodo, mutanti e limiti](lettura-verifica.md) | [`tests/epochs/`](../../tests/epochs/) e [`tests/read/`](../../tests/read/) |
-| Resolver GET CLOSED | [Frontiera dal manifest, flag e prova OUTCOME](get-resolver.md); [metodo delle prove funzionali](get-resolver-metodo.md) | [`src/get-resolver/`](../../src/get-resolver/) |
-| Directory GET CLOSED | [Selezione limitata del segmento nella Serie](get-directory.md) | [`src/get-directory/`](../../src/get-directory/) |
-| Fonti GET della Serie | [Acquisizione ACTIVE/CLOSED dalla singola radice pubblicata](get-fonti-serie.md) | [`src/get-directory/sources-read.lisp`](../../src/get-directory/sources-read.lisp) |
-| Resolver GET ACTIVE ordinario | [Lotti verificati, root della Serie e directory persistente](get-active.md); [prove funzionali](get-active-verifica.md), [metodo](get-active-preflight-metodo.md) e [verifica dei rifiuti OPEN](get-active-preflight-verifica.md) | [`src/get-resolver/active-build.lisp`](../../src/get-resolver/active-build.lisp) |
-| Scansione recovery | [Prefisso dei log e testimonianze SEAL](scansione-log.md) | [`src/recovery/`](../../src/recovery/) |
-| Decisioni multiserie | [Tabella TXID, CSN e partecipanti](decisioni-multiserie.md) | [`src/recovery/decisions-build.lisp`](../../src/recovery/decisions-build.lisp) |
-| Decision log dell'Archivio | [Lettura readonly, identità e collegamento al recovery ACTIVE](decisioni-recuperate.md) | [`src/recovery-archive/`](../../src/recovery-archive/) |
-| Manifest della Serie | [Ripiegamento degli EDIT del control log](manifest-control-log.md) | [`src/recovery/`](../../src/recovery/) |
-| Inventario recovery | [Piano e raccolta readonly dalla directory](inventario.md); [metodo delle prove native](inventario-directory-metodo.md) | [`src/recovery/inventory-build.lisp`](../../src/recovery/inventory-build.lisp), [`inventory-directory.lisp`](../../src/recovery/inventory-directory.lisp) |
-| Fonti possedute recovery | [Insieme readonly completo, budget e cleanup](fonti-recovery.md); [metodo](fonti-recovery-metodo.md) | [`src/recovery/inventory-sources.lisp`](../../src/recovery/inventory-sources.lisp) |
-| Nomi recuperati | [Completamento idempotente di una fonte viva, identità e fsync parent](stabilizzazione-nomi-recovery.md) | [`src/recovery-series/stabilize.lisp`](../../src/recovery-series/stabilize.lisp), [`src/io/stabilize.lisp`](../../src/io/stabilize.lisp) |
-| Versioni recuperate | [Massimo CSN, offset fisici e tombstone provvisorio per chiave](selezione-versioni-recovery.md) | [`src/recovery-selection/`](../../src/recovery-selection/) |
-| Indice dal recovery | [Materializzazione privata per chiave e ripristino idempotente](indice-da-recovery.md) | [`src/recovery-selection/index.lisp`](../../src/recovery-selection/index.lisp), [`src/index/primary-restore.lisp`](../../src/index/primary-restore.lisp) |
-| Visita CLOSED per il replay | [Prefisso interamente verificato e consegna dei soli dati committed](replay-closed.md) | [`src/recovery-replay/`](../../src/recovery-replay/) |
-| Nomi dell'intera Serie | [Preflight globale prima degli effetti, completamento e conteggi](stabilizzazione-serie.md) | [`src/recovery-series/stabilize-set.lisp`](../../src/recovery-series/stabilize-set.lisp) |
-| ID dopo recovery | [Proposta oltre high-water e nomi osservati, senza prenotazione](id-segmento-recovery.md) | [`src/recovery/inventory-id.lisp`](../../src/recovery/inventory-id.lisp) |
-| ID dall'inventario directory | [Una enumerazione attestata, selezione dal piano e directory prestata](id-directory-recovery.md) | [`src/recovery/inventory-directory-id.lisp`](../../src/recovery/inventory-directory-id.lisp) |
-| Ordinamento delle decisioni | [Radix misurato e query concorrenti](decisioni-radix-risultati.md) | [`src/recovery/decisions-radix.lisp`](../../src/recovery/decisions-radix.lisp) |
+| M1 image discovery | [Bounded inventory, canonical source, and fully verified adoption](scoperta-indice-m1.md) | [`src/engine/image-discovery.lisp`](../../src/engine/image-discovery.lisp) |
+| M1 delta maintenance | [Key/byte policy and renewal only at threshold](manutenzione-indice-m1.md) | [`src/engine/image-maintenance.lisp`](../../src/engine/image-maintenance.lisp) |
+| M1 image renewal | [Build and activation under one admission, total quota, and empty delta](rinnovo-indice-m1.md) | [`src/engine/image-renewal.lisp`](../../src/engine/image-renewal.lisp) |
+| M1 image delta | [Exact bounded membership for PUT/DELETE](delta-indice-m1.md); resident still complete | [`src/engine/delta.lisp`](../../src/engine/delta.lisp) |
+| M1 image activation | [Hot publication and file closure on retirement](attivazione-indice-m1.md); controller choice, without durable catalog | [`src/engine/image-activation.lisp`](../../src/engine/image-activation.lisp) |
+| M1 image construction | [Plan from canonical slots, adaptive radix, and full verification](costruzione-indice-m1.md); without automatic activation | [`src/engine/image-build.lisp`](../../src/engine/image-build.lisp) |
+| M1 paged index | [Canonical source, startup, GET, and serial retirement](indice-paginato-m1.md); resident still present, durable catalog separate | [`src/engine/image-recovery.lisp`](../../src/engine/image-recovery.lisp) |
+| Index images and root | [Seal, read-only verification, and serial adoption](immagini-indice-paginato.md); [M1 startup and serial GET](indice-paginato-m1.md) connected, durable catalog separate | [`src/index/image-recovery.lisp`](../../src/index/image-recovery.lisp) |
+| Index page construction | [Bounded plans, keys, buckets, and append-only directory](costruzione-indice-paginato.md); publication still separate | [`src/index/page-build.lisp`](../../src/index/page-build.lisp) |
+| Paged index reads | [Directory, buckets, overflow, and complete keys](lettura-indice-paginato.md); candidates compatible with resident | [`src/index/page-lookup.lisp`](../../src/index/page-lookup.lisp) |
+| Serial page cache | [Fixed frames, private copies, and verified PREAD](cache-pagine.md); backend connected to optional M1 GET | [`src/index/page-cache.lisp`](../../src/index/page-cache.lisp) |
+| M1 Single-Series Durable Core | [Startup, recovery, admission, and production requests](production-engine-bootstrap.md), [method](production-engine-bootstrap-metodo.md), [core evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-production-engine-bootstrap/report.md) | [`src/engine/`](../../src/engine/) |
+| M1 Unix session | [Contract, limits, and production CLI](production-unix-m1.md), [local qualification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md) | [`src/local/`](../../src/local/) |
+| Archivio name completion | [Canonical gate, global preflight, and per-Serie effects](stabilizzazione-archivio.md), [method](stabilizzazione-archivio-metodo.md) | [`src/recovery-bootstrap/`](../../src/recovery-bootstrap/) |
+| Full-text core | [Unicode profile, positional run, predicates, and frame](full-text.md), [decisions](full-text-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
+| Full-text codec and views | [Complete file, descriptor binding, and queries on bytes](full-text-codec.md), [review](full-text-codec-decisioni.md) | [`src/fulltext/`](../../src/fulltext/) |
+| Full-text document preparation | [CBOR, paths, cumulative budgets, and file limit](full-text-documenti.md), [review](full-text-documenti-decisioni.md) | [`src/fulltext/document.lisp`](../../src/fulltext/document.lisp) |
+| Writer full-text reservations | [Collective budgets, owned copies, and ownership](full-text-riserve.md), [method and decisions](full-text-riserve-metodo.md) | [`src/fulltext-admission/`](../../src/fulltext-admission/) |
+| Full-text PUT/WAL binding | [Owned frame, append, and batch references](full-text-put.md), [method and decisions](full-text-put-metodo.md) | [`src/fulltext-put/`](../../src/fulltext-put/) |
+| Full-text physical references | [Capture from sealed batch and lifetime](full-text-riferimenti.md), [method and decisions](full-text-riferimenti-metodo.md) | [`src/fulltext-put/physical.lisp`](../../src/fulltext-put/physical.lisp) |
+| Full-text row directory | [Local lookup and references](full-text-righe.md), [method and decisions](full-text-righe-metodo.md) | [`src/fulltext-admission/rows.lisp`](../../src/fulltext-admission/rows.lisp), [`src/fulltext-put/row-reference.lisp`](../../src/fulltext-put/row-reference.lisp) |
+| Evidence verification (C4) | [Isolated processes, limits, and ordered reduction](evidenze-parallele.md) | [`tools/check-evidence.lisp`](../../tools/check-evidence.lisp) |
+| Vertical Serie test | [Writing, SIGKILL, recovery, resume, and second crash](prova-verticale.md) | [`tests/vertical/`](../../tests/vertical/) |
+| Relative temporary creation | [New exclusive file from owned parent](io-creazione-relativa.md), [method](io-creazione-relativa-metodo.md) | [`src/io/create-relative.lisp`](../../src/io/create-relative.lisp) |
+| Binary foundations | [v1/v2 records, CRC32C, and SEAL batches](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |
+| ARM64 CRC32C | [Lisp/SBCL backend and GET results](crc32c-arm64.md); [method](crc32c-arm64-metodo.md) | [`crc32c-native.lisp`](../../src/foundation/crc32c-native.lisp) |
+| 16/32 B CRC32C | [Comparison, small records, and full GET](crc32c-unroll32.md); 16 B kernel retained | [`spike e metodo`](../../spikes/SPK-08-generated-code/metodo-crc32c-unroll32.md) |
+| UTF-8 text | [Bounded, pure, parallel validation](utf8.md) | [`src/codec/utf8.lisp`](../../src/codec/utf8.lisp) |
+| CBOR headers | [Pure read in six values](cbor-header.md) | [`src/codec/cbor-header.lisp`](../../src/codec/cbor-header.lisp) |
+| Minimal CBOR headers | [Argument and float widths, without decoding](cbor-minimo.md) | [`src/codec/cbor-minimal.lisp`](../../src/codec/cbor-minimal.lisp) |
+| CBOR header writing | [Minimal MT0..6, private destination, and preflight](cbor-scrittura.md) | [`src/codec/cbor-write.lisp`](../../src/codec/cbor-write.lisp) |
+| CBOR string writing | [MT2/3 items, full budget, UTF-8, and overlap](cbor-stringhe.md) | [`src/codec/cbor-string-write.lisp`](../../src/codec/cbor-string-write.lisp) |
+| CBOR simple value writing | [MT7 wire codes, preflight, and private destination](cbor-semplici.md) | [`src/codec/cbor-simple-write.lisp`](../../src/codec/cbor-simple-write.lisp) |
+| CBOR float writing | [IEEE bits, exact reduction, and private destination](cbor-float-scrittura.md) | [`src/codec/cbor-float-write.lisp`](../../src/codec/cbor-float-write.lisp) |
+| CBOR array composition | [Verified items, root budget, and private scratch](cbor-array.md), [checks](cbor-array-risultati.md) | [`src/codec/cbor-array-write.lisp`](../../src/codec/cbor-array-write.lisp) |
+| CBOR map composition | [Verified pairs, root budget, and private scratch](cbor-map.md), [checks](cbor-map-risultati.md) | [`src/codec/cbor-map-write.lisp`](../../src/codec/cbor-map-write.lisp) |
+| CBOR tag composition | [Verified contents, inclusive nodes, and unchanged depth](cbor-tag.md), [checks](cbor-tag-risultati.md) | [`src/codec/cbor-tag-write.lisp`](../../src/codec/cbor-tag-write.lisp) |
+| First CBOR item reading | [Absolute frontier, unread tail, and private scratch](cbor-item.md), [checks](cbor-item-risultati.md) | [`src/codec/cbor-item-read.lisp`](../../src/codec/cbor-item-read.lisp) |
+| CBOR string reading | [Read-only MT2/3 payload range and UTF-8](cbor-stringa-lettura.md), [checks](cbor-stringa-lettura-risultati.md) | [`src/codec/cbor-string-read.lisp`](../../src/codec/cbor-string-read.lisp) |
+| CBOR structure | [Complete item, UTF-8, and budget with per-worker scratch](cbor-struttura.md) | [`src/codec/cbor-scan.lisp`](../../src/codec/cbor-scan.lisp) |
+| CBOR item with minimal headers | [One traversal, limits, and private scratch](cbor-minimo-struttura.md) | [`src/codec/cbor-scan-minimal.lisp`](../../src/codec/cbor-scan-minimal.lisp) |
+| Archivio CSN | [In-progress commit registry and horizon](csn.md) | [`src/csn/`](../../src/csn/) |
+| Storage metadata | [Segment headers, EDIT, and DECISION](metadati-storage.md) | [`src/storage/`](../../src/storage/) |
+| Log headers | [Control and multiseries identity and integrity](header-log.md) | [`src/storage/log-header.lisp`](../../src/storage/log-header.lisp) |
+| Compacted segments | [CLOSED prefix and ordinary records](segmenti-compattati.md) | [`src/storage/compaction-scan.lisp`](../../src/storage/compaction-scan.lisp) |
+| Writer queues | [Local MPSC, token, and bounded slices](code-writer.md) | [`src/execution/`](../../src/execution/) |
+| Writer handoff | [Idle, ready, running, and scheduling obligation](writer-handoff.md) | [`src/execution/handoff.lisp`](../../src/execution/handoff.lisp) |
+| Ready writer list | [Preallocated rings, independent partitions, and bounded scan](writer-ready.md) | [`src/execution/ready.lisp`](../../src/execution/ready.lisp) |
+| Ready writer recycling | [Atomic FIFO swap on full ring](writer-recycle.md) | [`src/execution/ready-recycle.lisp`](../../src/execution/ready-recycle.lisp) |
+| Worker context | [Lease, acknowledged batches, retries, and local fault](writer-worker.md) | [`src/execution/worker-types.lisp`](../../src/execution/worker-types.lisp) |
+| Worker integration | [Common base, scope, and full check](writer-worker-integrazione.md) | [`arcdocdb.asd`](../../arcdocdb.asd) |
+| Pool controller | [Bounded target, EWMA, AIMD, and hysteresis](controllore-pool.md) | [`src/scheduler/`](../../src/scheduler/) |
+| Pool actuation | [Worker-acknowledged activation and retirement](pool-worker-lifecycle.md) | [`src/scheduler/lifecycle-worker.lisp`](../../src/scheduler/lifecycle-worker.lisp) |
+| Pool-governed claim | [Active gate, IDLE context, and delegated C1 claim](pool-worker-claim.md) | [`src/scheduler/pool-claim.lisp`](../../src/scheduler/pool-claim.lisp) |
+| Pool/Serie binding | [Immutable binding, new claim, and existing obligations](pool-dispatch.md) | [`src/dispatch/`](../../src/dispatch/) |
+| Pool/Serie recycling | [One ready transfer and routing of new CLAIMED](pool-recycle.md) | [`src/dispatch/recycle.lisp`](../../src/dispatch/recycle.lisp) |
+| Pool/Serie obligation start | [Current routing and explicit dual lease](pool-begin.md) | [`src/dispatch/begin.lisp`](../../src/dispatch/begin.lisp) |
+| Pool/Serie dispatcher step | [Single choice between admission and existing obligations](pool-step.md) | [`src/dispatch/step.lisp`](../../src/dispatch/step.lisp) |
+| Pool/dispatcher/Serie chain | [Real workers, isolation, and retirement with handoff](pool-catena-risultati.md); [method](pool-catena-metodo.md) | [`tests/scheduler/pool-chain.lisp`](../../tests/scheduler/pool-chain.lisp) |
+| Pool/Serie slice preparation | [Selection and one start, with explicit tokens and rejections](pool-prepara.md); [results](pool-prepara-risultati.md) | [`src/dispatch/start.lisp`](../../src/dispatch/start.lisp) |
+| I/O boundary | [Append, pread, and durable flush](io.md); [relative read-only opening and size](io-apertura-relativa.md) | [`src/io/`](../../src/io/) |
+| I/O completion | [Cleanup, frontiers, and capabilities after short I/O](io-completamento.md) | [`src/io/flush.lisp`](../../src/io/flush.lisp), [`src/io/transfer.lisp`](../../src/io/transfer.lisp) |
+| Directory rename | [Parent FD, atomic change, and local fail-stop](io-rinomina.md) | [`src/io/rename.lisp`](../../src/io/rename.lisp) |
+| Temporary publication | [Exclusive rename, identity, and completion without replacement](io-pubblicazione.md) | [`src/io/publish.lisp`](../../src/io/publish.lisp) |
+| File association | [Device/inode and read-only/append capabilities for the same ACTIVE](associazione-file.md) | [`src/io/identity.lisp`](../../src/io/identity.lisp) |
+| New writer segment | [Durable header, reread, directory, and certified source](inizializzazione-active.md) | [`src/active/`](../../src/active/) |
+| Empty ACTIVE | [Initial root, recovered CLOSED, and first batch](get-active-vuoto.md) | [active-init.lisp](../../src/get-resolver/active-init.lisp) |
+| Control log checkpoint | [Complete EDIT, private plan, and blockwise durable preparation](checkpoint-control.md) | [`src/control/`](../../src/control/) |
+| Control log publication | [Anchored rename, name identity, and unique token](pubblicazione-control.md) | [`src/control/publication.lisp`](../../src/control/publication.lisp) |
+| Recovered control log | [Read-only read, owned manifest, and conservative transition](control-recuperato.md); [measurement method](control-transizione-metodo.md) | [`src/control/recovery-read.lisp`](../../src/control/recovery-read.lisp) |
+| Recovered old ACTIVE | [Read-only prefix, resolved prepared records, and verified closure](active-recuperato.md); [checks](active-recuperato-verifica.md) and [measurement method](active-recuperato-metodo.md) | [`src/recovery-active/`](../../src/recovery-active/) |
+| Recovery checkpoint | [Complete state from CONTROL and ACTIVE](checkpoint-recovery.md) | [`src/recovery-checkpoint/`](../../src/recovery-checkpoint/) |
+| Recovered CLOSED | [Authoritative prefix, local outcomes, and complete set before publisher](closed-recuperato.md) | [`src/recovery-closed/`](../../src/recovery-closed/) |
+| Recovered CSNs | [Observed maximum, authoritative sources, and complete Serie aggregation](recovery-csn.md) | [`src/recovery-active/csn.lisp`](../../src/recovery-active/csn.lisp), [`src/recovery-closed/csn-serie.lisp`](../../src/recovery-closed/csn-serie.lisp) |
+| Archivio CSN plan | [Serie set, replay provenance, and overall maximum](csn-archivio-recovery.md) | [`src/recovery-archive-csn/`](../../src/recovery-archive-csn/) |
+| WAL batches | [Formation, SEAL, and group commit](wal.md) | [`src/wal/`](../../src/wal/) |
+| WAL batch CSNs | [Closure, token, and resolution](wal-csn.md) | [`src/wal/csn.lisp`](../../src/wal/csn.lisp) |
+| Serie controller | [FIFO publication, token, and I/O retirement](controller-serie.md) | [`src/series/`](../../src/series/) |
+| Worker and Serie | [Dual lease, batch debt, and handoff order](worker-serie.md) | [`src/series/worker-run.lisp`](../../src/series/worker-run.lisp) |
+| Worker routing | [Immutable ordinals, copied registry, and direct selection](routing-worker.md) | [`src/series/routing-select.lisp`](../../src/series/routing-select.lisp) |
+| Controller verification | [Structured tests, coverage, and parallel measurements](controller-serie-risultati.md) | [`tests/series/`](../../tests/series/) |
+| v2 index slots | [Compact payload, seqlock, and relocation](slot-indice-v2.md) | [`src/index/`](../../src/index/) |
+| v2 primary index | [Keys, Swiss groups, and directory publication](indice-primario.md) | [`src/index/primary-read.lisp`](../../src/index/primary-read.lisp) |
+| Automatic index mode | [First resident/paged selector and lifetime model](indice-automatico.md); backend and actuator open | [`src/index/mode-policy.lisp`](../../src/index/mode-policy.lisp) |
+| Index pages | [Codec and format for buckets, directory, and long keys](pagine-indice.md) | [`src/index/page-read.lisp`](../../src/index/page-read.lisp) |
+| Key hashing | [Typed XXH64, immutable seed, and physical maps](hash-chiavi.md) | [`src/hash/`](../../src/hash/) |
+| Record cache | [Associative sets, CLOCK, and verified copies](cache-record.md) | [`src/cache/`](../../src/cache/) |
+| GET core performance | [Method, oracles, and parallel stress](get-performance-metodo.md) | [`tests/get-performance/`](../../tests/get-performance/) |
+| GET costs and cardinality | [Preregistered method](get-costi-metodo.md); [results on CRC, copies, and 4.19 million keys](get-costi-risultati.md) | [`tools/get-cost-bench.lisp`](../../tools/get-cost-bench.lisp) |
+| GET path | [Candidate, read-only source, cache, and snapshot confirmation](get-record.md) | [`src/get/`](../../src/get/) |
+| GET verification | [First functional suite, method, and limits](get-verifica.md) | [`tests/get/`](../../tests/get/) |
+| CSN/snapshot binding | [Single registry and coordination without waits](snapshot-csn.md) | [`src/mvcc/snapshots-csn.lisp`](../../src/mvcc/snapshots-csn.lisp) |
+| Snapshot and CSN verification | [Preregistered method, decisions, and limits](snapshot-verifica.md) | Registry and adapter already present in `src/mvcc/` |
+| Snapshot registry | [Pins, identity, activation, and expiration](registro-snapshot.md) | [`src/mvcc/snapshots-register.lisp`](../../src/mvcc/snapshots-register.lisp) |
+| Epochs and reclaim | [Reader slots and bounded segment tickets](epoche-e-reclaim.md) | [`src/epochs/`](../../src/epochs/) |
+| Read tasks | [EBR entry, snapshot checks, and cleanup](compiti-lettura.md) | [`src/read/`](../../src/read/) |
+| EBR and read verification | [Suites, method, mutants, and limits](lettura-verifica.md) | [`tests/epochs/`](../../tests/epochs/) and [`tests/read/`](../../tests/read/) |
+| CLOSED GET resolver | [Manifest frontier, flags, and OUTCOME proof](get-resolver.md); [functional test method](get-resolver-metodo.md) | [`src/get-resolver/`](../../src/get-resolver/) |
+| CLOSED GET directory | [Bounded segment selection in the Serie](get-directory.md) | [`src/get-directory/`](../../src/get-directory/) |
+| Serie GET sources | [ACTIVE/CLOSED acquisition from the single published root](get-fonti-serie.md) | [`src/get-directory/sources-read.lisp`](../../src/get-directory/sources-read.lisp) |
+| Ordinary ACTIVE GET resolver | [Verified batches, Serie root, and persistent directory](get-active.md); [functional tests](get-active-verifica.md), [method](get-active-preflight-metodo.md), and [OPEN rejection verification](get-active-preflight-verifica.md) | [`src/get-resolver/active-build.lisp`](../../src/get-resolver/active-build.lisp) |
+| Recovery scanning | [Log prefix and SEAL witnesses](scansione-log.md) | [`src/recovery/`](../../src/recovery/) |
+| Multiseries decisions | [TXID, CSN, and participant table](decisioni-multiserie.md) | [`src/recovery/decisions-build.lisp`](../../src/recovery/decisions-build.lisp) |
+| Archivio decision log | [Read-only read, identity, and ACTIVE recovery binding](decisioni-recuperate.md) | [`src/recovery-archive/`](../../src/recovery-archive/) |
+| Serie manifest | [Folding control log EDITs](manifest-control-log.md) | [`src/recovery/`](../../src/recovery/) |
+| Recovery inventory | [Plan and read-only directory collection](inventario.md); [native test method](inventario-directory-metodo.md) | [`src/recovery/inventory-build.lisp`](../../src/recovery/inventory-build.lisp), [`inventory-directory.lisp`](../../src/recovery/inventory-directory.lisp) |
+| Owned recovery sources | [Complete read-only set, budget, and cleanup](fonti-recovery.md); [method](fonti-recovery-metodo.md) | [`src/recovery/inventory-sources.lisp`](../../src/recovery/inventory-sources.lisp) |
+| Recovered names | [Idempotent completion of a live source, identity, and parent fsync](stabilizzazione-nomi-recovery.md) | [`src/recovery-series/stabilize.lisp`](../../src/recovery-series/stabilize.lisp), [`src/io/stabilize.lisp`](../../src/io/stabilize.lisp) |
+| Recovered versions | [Maximum CSN, physical offsets, and provisional tombstone per key](selezione-versioni-recovery.md) | [`src/recovery-selection/`](../../src/recovery-selection/) |
+| Index from recovery | [Private per-key materialization and idempotent restoration](indice-da-recovery.md) | [`src/recovery-selection/index.lisp`](../../src/recovery-selection/index.lisp), [`src/index/primary-restore.lisp`](../../src/index/primary-restore.lisp) |
+| CLOSED visit for replay | [Fully verified prefix and delivery of committed data only](replay-closed.md) | [`src/recovery-replay/`](../../src/recovery-replay/) |
+| Whole-Serie names | [Global preflight before effects, completion, and counts](stabilizzazione-serie.md) | [`src/recovery-series/stabilize-set.lisp`](../../src/recovery-series/stabilize-set.lisp) |
+| IDs after recovery | [Proposal above high-water and observed names, without reservation](id-segmento-recovery.md) | [`src/recovery/inventory-id.lisp`](../../src/recovery/inventory-id.lisp) |
+| IDs from directory inventory | [One attested enumeration, plan selection, and borrowed directory](id-directory-recovery.md) | [`src/recovery/inventory-directory-id.lisp`](../../src/recovery/inventory-directory-id.lisp) |
+| Decision ordering | [Measured radix and concurrent queries](decisioni-radix-risultati.md) | [`src/recovery/decisions-radix.lisp`](../../src/recovery/decisions-radix.lisp) |
 
-Le evidenze hanno un ambito esplicito: un test del codec non verifica transazioni,
-durability, recovery o prestazioni del database.
+Evidence has an explicit scope: a codec test does not verify transactions,
+durability, recovery, or database performance.
 
-Il [bootstrap del runtime Archivio](runtime-archivio.md) collega il piano
-CSN alla famiglia unica CSN/snapshot/epoche e al nuovo ambito GET. Il binding
-non autorizza ancora il traffico.
+[Archivio runtime bootstrap](runtime-archivio.md) connects the CSN
+plan to the single CSN/snapshot/epoch family and the new GET scope. The binding
+does not yet authorize traffic.
 
-Il [recovery semantico della Serie](recovery-serie.md) collega le fonti
-readonly possedute ai reader ACTIVE/CLOSED: insieme e budget verificati
-prima dei dati, scratch riusato e due risultati solo dopo il gate completo.
+[Serie semantic recovery](recovery-serie.md) connects owned read-only
+sources to ACTIVE/CLOSED readers: set and budgets checked
+before data, scratch reused, and two results only after the complete gate.
 
-La [lettura coordinata dell'Archivio](recovery-archivio.md) applica prima
-i preflight di tutte le Serie e i budget globali, poi restituisce letture
-complete e piano CSN canonico, senza avviare il runtime o pubblicare effetti.
+The [coordinated Archivio read](recovery-archivio.md) first applies
+all Serie preflights and global budgets, then returns complete
+reads and a canonical CSN plan, without starting runtime or publishing effects.
 
-La [sessione locale M16](sessione-locale.md) propone il contratto necessario
-al socket prioritario: framing, handshake, budget e scadenze. SPK-11 esercita
-il solo trasporto; avvio/recovery/ammissione del prodotto restano prerequisiti.
+The [M16 local session](sessione-locale.md) proposes the contract needed
+for the priority socket: framing, handshake, budgets, and deadlines. SPK-11 exercises
+transport only; product startup/recovery/admission remain prerequisites.
 
-L'[adozione dell'ACTIVE nel runtime](adozione-controller-runtime.md) collega
-il prepared al CSN comune e rende unico il controller per log canonico,
-senza acquisire lease o decidere il catalogo.
+[ACTIVE adoption into runtime](adozione-controller-runtime.md) connects
+the prepared object to the common CSN and makes the controller unique per canonical log,
+without acquiring leases or deciding the catalog.
 
-L'[adozione dei CLOSED nel runtime](adozione-closed-runtime.md) verifica insieme,
-autorità e capacità esatte delle mappe recuperate e costruisce una directory
-nel nuovo ambito condividendo le righe immutabili, senza riletture o pubblicazione.
+[CLOSED adoption into runtime](adozione-closed-runtime.md) checks the set,
+authority, and exact capabilities of recovered maps and builds a directory
+in the new scope, sharing immutable rows without rereads or publication.
 
-La [raccolta degli archivi di comandi](raccolta-comandi.md) usa un manifest
-esplicito, quattro worker e il controllo finale dell'inventario chiuso.
+[Command archive collection](raccolta-comandi.md) uses an explicit
+manifest, four workers, and the final closed inventory check.
 
-Il [progetto iniziale CI e statistiche](ci-statistiche.md) descrive misure,
-runner GitHub e pubblicazione compatta dei risultati. L'ingresso eseguibile
-è la [CLI CI](../../tools/ci.lisp); la [provenienza delle PR](ci-provenienza-pr.md)
-documenta il collegamento fra esecuzioni e sorgenti verificati.
+The [initial CI and statistics design](ci-statistiche.md) describes measurements,
+GitHub runners, and compact result publication. The executable entry point
+is the [CI CLI](../../tools/ci.lisp); [PR provenance](ci-provenienza-pr.md)
+documents the connection between runs and verified sources.
 
-Gli [esiti dei processi nelle mutazioni CBOR](cbor-mutazioni-processi.md)
-distinguono i rilevamenti dei mutanti dagli errori dei worker di verifica.
+[Process outcomes in CBOR mutations](cbor-mutazioni-processi.md)
+distinguish detected mutants from verification worker errors.

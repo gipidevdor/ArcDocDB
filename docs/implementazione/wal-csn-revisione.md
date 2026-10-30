@@ -1,34 +1,38 @@
-# Revisione C1 statica del ponte WAL–CSN
+<a id="revisione-c1-statica-del-ponte-walcsn"></a>
 
-**Stato corrente: R1 risolto staticamente nell'addendum finale.** Le osservazioni e le
-impronte della lettura precedente sono conservate sotto per tracciabilità.
-L'addendum sul preflight file documenta l'ultima revisione del ponte e la sua impronta.
+# Static C1 review of the WAL–CSN bridge
 
-Data: 2026-10-09. Seconda lettura indipendente svolta da Codex sul diff di prodotto.
-Questa è una revisione automatica statica: **nessuna certificazione umana**, nessuna
-esecuzione di test, benchmark, compilazione, lint, trace o `make check`. Nessuna modifica
-al prodotto e nessun commit. I soli file scritti da questa revisione sono questo documento
-e [wal-csn-decisioni.md](wal-csn-decisioni.md).
+**Current status: R1 statically resolved in the final addendum.** Observations and
+fingerprints from the earlier reading are preserved below for traceability.
+The file-preflight addendum documents the bridge's latest revision and fingerprint.
 
-## Perimetro e versione letta
+Date: 2026-10-09. Independent second reading by Codex of the product diff.
+This is an automated static review: **no human certification**, no
+execution of tests, benchmarks, compilation, lint, trace, or `make check`. No product
+change and no commit. The only files written by this review are this document
+and [wal-csn-decisioni.md](wal-csn-decisioni.md).
 
-Diff rispetto a `HEAD=673987ad819dd48741a7c0a4ff259137a1ed0bef`:
+<a id="perimetro-e-versione-letta"></a>
+
+## Scope and version read
+
+Diff from `HEAD=673987ad819dd48741a7c0a4ff259137a1ed0bef`:
 `src/foundation/{record,package}.lisp`, `src/wal/{types,builder,package,csn,group}.lisp`,
-`arcdocdb.asd`. `group.lisp` è stato incluso su richiesta esplicita del parent.
-Il file nuovo `src/wal/csn.lisp` è stato letto come aggiunta rispetto a `/dev/null`.
-Il contesto invariato dei diff è stato usato solo per capire le funzioni modificate.
+`arcdocdb.asd`. `group.lisp` was included at the parent's explicit request.
+New file `src/wal/csn.lisp` was read as an addition against `/dev/null`.
+Unchanged diff context was used only to understand modified functions.
 
-Fonti normative lette: [ADR-0037](../adr/0037-lotto-sigillato.md),
+Normative sources read: [ADR-0037](../adr/0037-lotto-sigillato.md),
 [ADR-0038](../adr/0038-orizzonte-di-visibilita.md),
 [ADR-0046](../adr/0046-orizzonte-con-registro-limitato.md),
-[standard di codifica](../affidabilita/standard-di-codifica.md) e relativa
+[coding standard](../affidabilita/standard-di-codifica.md), and related
 [ADR-0034](../adr/0034-policy-di-compilazione-e-standard-di-codifica.md).
-Non sono stati letti test, benchmark, implementazione del registro CSN, executor,
-controller, indice, scheduler o recovery. Le loro proprietà restano assunzioni esplicite.
+Tests, benchmarks, CSN register implementation, executor,
+controller, index, scheduler, and recovery were not read. Their properties remain explicit assumptions.
 
-Impronte Git dei contenuti letti, calcolate senza scrivere oggetti:
+Git fingerprints of content read, calculated without writing objects:
 
-| File | Impronta |
+| File | Fingerprint |
 |---|---|
 | `src/foundation/record.lisp` | `251ba51cfb723f4944df669788b4532489bd07ad` |
 | `src/foundation/package.lisp` | `12cdf3488cf5d389f50e1d97cdb44fa564c04207` |
@@ -39,107 +43,121 @@ Impronte Git dei contenuti letti, calcolate senza scrivere oggetti:
 | `src/wal/group.lisp` | `8245bc10cedafbff8665489fbced6833f078a373` |
 | `arcdocdb.asd` | `0c0a05d798f04ee5012d1c3a3a98930ae9fba2d5` |
 
-La revisione incorpora la firma finale con token atteso:
-`risolvi-lotto-pubblicato(lotto registry slot high low level)` e
+The review incorporates the final signature with expected token:
+`risolvi-lotto-pubblicato(lotto registry slot high low level)` and
 `annulla-csn-lotto(lotto registry slot high low)`.
-L'ultimo diff ASDF include anche `csn-threads` nel sistema di test; il file di test
-non è stato letto né eseguito.
-Una modifica successiva alle impronte richiede una rilettura della parte interessata.
+The latest ASDF diff also includes `csn-threads` in the test system; the test file
+was neither read nor executed.
+A subsequent change to fingerprints requires rereading the affected portion.
 
-## Rilievi azionabili
+<a id="rilievi-azionabili"></a>
 
-### R1 — P2: evidenza locale COD-24 mancante nel kernel di ristampa
+## Actionable findings
 
-In `src/wal/builder.lisp:41`, `ristampa-record-parole` è una funzione C1 non banale:
-attraversa gli offset, modifica stamp e CRC e restituisce il checksum aggregato, ma non
-contiene asserzioni esplicite di precondizione/postcondizione. COD-24 richiede almeno due
-asserzioni significative per funzione C1 non banale. Il chiamante controlla count e spazio
-SEAL in `verifica-chiusura-lotto` e la lunghezza finale in `sigilla-lotto-parole`, ma questo
-non documenta due asserzioni del kernel né verifica la validità di ogni offset.
+<a id="r1--p2-evidenza-locale-cod-24-mancante-nel-kernel-di-ristampa"></a>
 
-La lacuna era presente nel kernel precedente e resta nella funzione rinominata; non è
-evidenza di una nuova corruzione introdotta dal diff. Azione: esplicitare le due verifiche
-significative del kernel, oppure portare alla prima lettura l'evidenza del controllo
-delegato e la deviazione formale necessaria. Non si attesta una deviazione registrata:
-il registro delle deviazioni è fuori dal perimetro autorizzato.
+### R1 — P2: missing local COD-24 evidence in the restamping kernel
 
-### O1 — Obbligo del controller: validare l'evento prima della pubblicazione esterna
+In `src/wal/builder.lisp:41`, `ristampa-record-parole` is a nontrivial C1 function:
+it traverses offsets, modifies stamps and CRCs, and returns the aggregate checksum, but
+contains no explicit precondition/postcondition assertions. COD-24 requires at least two
+meaningful assertions per nontrivial C1 function. The caller checks count and SEAL
+space in `verifica-chiusura-lotto` and final length in `sigilla-lotto-parole`, but this
+does not document two kernel assertions or check each offset's validity.
 
-In `src/wal/csn.lisp:80`, `risolvi-lotto-pubblicato` verifica identità attesa, salute e
-copertura **dopo** la pubblicazione dell'indice richiesta dalla sua precondizione.
-La funzione protegge il rilascio del credito; non può impedire una pubblicazione esterna
-già eseguita con un evento vecchio o con un log guasto. Un controller che pubblicasse
-prima di scartare quell'evento potrebbe alterare l'indice anche se il ponte lo rifiuta.
-Il controller non è stato letto: questo è un obbligo d'integrazione, non un difetto
-dimostrato nel suo codice.
+The gap existed in the previous kernel and remains in the renamed function; it is not
+evidence of new corruption introduced by the diff. Action: make the kernel's two meaningful
+checks explicit, or bring evidence of the delegated check and necessary formal
+deviation to the first reading. No recorded deviation is attested:
+the deviation register is outside authorized scope.
 
-Azione: al confine del writer, verificare token catturato nell'evento, incarnazione del
-lotto, log sano, copertura e ordine prima di pubblicare; rendere indivisibile rispetto
-agli altri eventi del writer la sequenza di verifica/pubblicazione/risoluzione.
-Non ricostruire il token atteso leggendo il lotto corrente all'arrivo dell'evento.
-Con `busy` dopo pubblicazione, conservarne l'esito e ritentare solo la risoluzione.
+<a id="o1--obbligo-del-controller-validare-levento-prima-della-pubblicazione-esterna"></a>
 
-### O2 — Obbligo fail-stop: distinguere rifiuto sicuro e interruzione dopo mutazione
+### O1 — Controller obligation: validate the event before external publication
 
-In `src/wal/csn.lisp:35`, il registro viene modificato da `prendi-csn` prima che tutti i
-campi del token siano conservati nel lotto; in `src/wal/csn.lisp:72`, `risolvi-csn` libera
-lo slot prima che `csn-pending` diventi `nil`. I due passaggi tra oggetti non sono una
-singola scrittura atomica. La docstring richiede fail-stop per l'interruzione inattesa
-durante risoluzione e per l'errore dopo assegnazione: questo requisito è coerente.
+In `src/wal/csn.lisp:80`, `risolvi-lotto-pubblicato` checks expected identity, health, and
+coverage **after** index publication required by its precondition.
+The function protects credit release; it cannot prevent external publication
+already performed with an old event or faulty log. A controller publishing
+before discarding that event could alter the index even if the bridge rejects it.
+The controller was not read: this is an integration obligation, not a defect
+demonstrated in its code.
 
-Azione: distinguere `resource-exhausted` prima della mutazione dal fallimento inatteso
-dopo la mutazione. Portare Serie/log in stato guasto, ritirare i consumatori e vietare
-il retry ordinario. Con token completo ancora pendente, l'annullamento usa lo stesso
-registro e le stesse parole; con associazione incompleta o esito del registro incerto,
-il controller deve avere una strategia esplicita di riconciliazione o arresto dell'Archivio.
-Il solo arresto del writer senza risolvere quel credito può lasciare `H` fermo.
-Non è stata verificata l'implementazione di questa gestione esterna.
+Action: at the writer boundary, check token captured in event, batch incarnation,
+healthy log, coverage, and order before publishing; make the
+check/publication/resolution sequence indivisible relative to other writer events.
+Do not reconstruct the expected token by reading the current batch when the event arrives.
+On `busy` after publication, retain its outcome and retry only resolution.
 
-## Riscontri statici positivi e confini
+<a id="o2--obbligo-fail-stop-distinguere-rifiuto-sicuro-e-interruzione-dopo-mutazione"></a>
 
-| Aspetto | Riscontro sul diff | Limite della conclusione |
+### O2 — Fail-stop obligation: distinguish safe rejection from interruption after mutation
+
+In `src/wal/csn.lisp:35`, `prendi-csn` modifies the register before all
+token fields are retained in the batch; in `src/wal/csn.lisp:72`, `risolvi-csn` frees
+the slot before `csn-pending` becomes `nil`. These cross-object steps are not a
+single atomic write. The docstring requires fail-stop for unexpected interruption
+during resolution and error after assignment: this requirement is consistent.
+
+Action: distinguish `resource-exhausted` before mutation from unexpected failure
+after mutation. Move Serie/log to faulty state, retire consumers, and prohibit
+ordinary retry. With a complete token still pending, abort uses the same
+register and words; with incomplete association or uncertain register outcome,
+the controller must have an explicit reconciliation or Archivio shutdown strategy.
+Stopping only the writer without resolving that credit can leave `H` stalled.
+Implementation of this external handling was not verified.
+
+<a id="riscontri-statici-positivi-e-confini"></a>
+
+## Positive static observations and boundaries
+
+| Aspect | Diff observation | Conclusion limitation |
 |---|---|---|
-| CSN alla chiusura | Le validazioni del lotto/log precedono `prendi-csn`; poi il token viene conservato e i byte sigillati. | Assegnazione/registrazione indivisibili e rifiuti senza mutazione dipendono dal registro non letto. |
-| Identità sul disco | Stamp scritto low u32, poi high u32, sia nei record ordinari sia nel SEAL; CRC header aggiornati e checksum aggregato ricalcolato. | Codec binario e recovery non riesaminati. |
-| Prepared/TXID | Il predicato di ristampa cambia PUT/TOMBSTONE/EDIT solo se il bit prepared è assente. | Il ponte accetta segmenti non vuoti; non prova che siano lotti di sole operazioni ordinarie. Il controller governa l'uso single-Serie. |
-| Punto di atomicità | La sigillatura prepara il SEAL; `:async` richiede write, `:group`/`:strong` richiedono copertura durevole. | Nessuna sigillatura costituisce da sola I/O durevole o pubblicazione dell'indice. |
-| Gruppo del log sbagliato | `verifica-identita-lotto`, `group.lisp:18`, rifiuta `csn-log` diverso tramite `eq` prima del CAS di ownership e della modifica del gruppo. | Numericamente uguali file-id/versione non sostituiscono l'identità dell'oggetto log. Lotti senza ponte seguono il contratto legacy. |
-| Evento vecchio dopo riuso | `esigi-identita-csn-lotto`, `csn.lisp:43`, controlla `eq registry` e uguaglianza di slot/high/low prima della salute/copertura e della risoluzione. | Il token atteso deve appartenere all'evento originale; unicità senza wrap è responsabilità del registro. |
-| Altro registro, stessi numeri | `eq` sul registro respinge l'altro Archivio anche se slot/high/low coincidono. | Il controllo non prova che il registro fornito alla sigillatura fosse quello dell'Archivio corretto; questa è una precondizione. |
-| Risoluzione duplicata | La verifica di pending precede l'identità: un token già risolto dà `:lotto-csn-not-pending`; un evento obsoleto su un nuovo pendente dà `:lotto-csn-stale`. | `leggi-csn-lotto` conserva i numeri anche dopo risoluzione; non autorizza una seconda risoluzione. |
-| Vecchio lotto coperto, log ora guasto | `risolvi-lotto-pubblicato` controlla salute del log originale anche se il lotto è ancora `:written`/`:durable`. | `coperto-p` osserva solo lo stato del lotto: da solo non è una prova di salute o pubblicazione. |
-| Annullamento | Richiede token esatto e log originale `:faulted`, poi risolve; non riapre né elimina dati. | Serie FAULTED e assenza di consumatori sono precondizioni del controller, non verifiche del ponte. |
-| Riuso | `riusa-lotto` richiede durevole, token non pendente e owner nullo, poi azzera l'associazione. | Owner nullo non prova l'assenza di eventi/reader esterni; il controller deve aver completato il loro ciclo. |
-| Preallocazione | Token in slot tipizzati del lotto esistente; buffer, offset, SEAL e slot di gruppo preallocati. | Nessuna misura di allocazioni. **Nessun claim di assenza di heap**, boxing o GC. |
-| Non blocking | Nel codice modificato non compaiono syscall, attese, lock bloccanti o cicli di retry; un tentativo di presa/risoluzione per chiamata. | Non sono state lette le funzioni del registro; try-lock, limite della sezione critica e parcheggio con tempo/byte limitati restano da provare. |
-| Wiring | Package importa i nuovi simboli; ASDF carica il modulo CSN prima del WAL e il ponte dopo group/executor; `log-io` precede il suo uso nel tipo del lotto. | Nessuna attestazione di build senza warning o dei test registrati in ASDF. |
+| CSN at closure | Batch/log validation precedes `prendi-csn`; token then retained and bytes sealed. | Indivisible assignment/registration and rejection without mutation depend on unread register. |
+| On-disk identity | Stamp written low u32 then high u32, in ordinary records and SEAL; header CRCs updated and aggregate checksum recalculated. | Binary codec and recovery not reexamined. |
+| Prepared/TXID | Restamping predicate changes PUT/TOMBSTONE/EDIT only when prepared bit absent. | Bridge accepts nonempty segments; it does not prove batches contain only ordinary operations. Controller governs single-Serie use. |
+| Atomicity point | Sealing prepares SEAL; `:async` requires write, `:group`/`:strong` require durable coverage. | Sealing alone is neither durable I/O nor index publication. |
+| Group from wrong log | `verifica-identita-lotto`, `group.lisp:18`, rejects differing `csn-log` via `eq` before ownership CAS and group modification. | Numerically equal file-id/version do not replace log object identity. Batches without bridge follow legacy contract. |
+| Old event after reuse | `esigi-identita-csn-lotto`, `csn.lisp:43`, checks `eq registry` and slot/high/low equality before health/coverage and resolution. | Expected token must belong to original event; uniqueness without wraparound is register responsibility. |
+| Other register, same numbers | Register `eq` rejects other Archivio even if slot/high/low match. | Check does not prove register supplied at sealing belonged to correct Archivio; this is a precondition. |
+| Duplicate resolution | Pending check precedes identity: already resolved token yields `:lotto-csn-not-pending`; stale event on new pending token yields `:lotto-csn-stale`. | `leggi-csn-lotto` retains numbers after resolution; it does not authorize a second resolution. |
+| Old covered batch, log now faulty | `risolvi-lotto-pubblicato` checks original log health even if batch remains `:written`/`:durable`. | `coperto-p` observes only batch state: alone it does not prove health or publication. |
+| Abort | Requires exact token and original log `:faulted`, then resolves; does not reopen or delete data. | FAULTED Serie and absence of consumers are controller preconditions, not bridge checks. |
+| Reuse | `riusa-lotto` requires durable, nonpending token, and null owner, then clears association. | Null owner does not prove absence of external events/readers; controller must have completed their lifecycle. |
+| Preallocation | Token in typed slots of existing batch; buffer, offsets, SEAL, and group slots preallocated. | No allocation measurements. **No claim of absence of heap**, boxing, or GC. |
+| Nonblocking | Modified code has no syscall, wait, blocking lock, or retry loop; one allocation/resolution attempt per call. | Register functions not read; try-lock, critical-section bound, and parking bounded by time/bytes remain to be proved. |
+| Wiring | Package imports new symbols; ASDF loads CSN module before WAL and bridge after group/executor; `log-io` precedes its use in batch type. | No attestation of warning-free build or ASDF-registered tests. |
 
-## Errori, precondizioni e stati da conservare
+<a id="errori-precondizioni-e-stati-da-conservare"></a>
 
-| Fase | Condizione o fallimento | Stato previsto e gestione |
+## Errors, preconditions, and states to preserve
+
+| Phase | Condition or failure | Expected state and handling |
 |---|---|---|
-| Prima della presa CSN | Stato/associazione/contenuto/identità/frontiera errati: `invalid-argument`; log guasto: `io-fault`; budget interno incoerente: `invariant-violation`. | Nessun CSN preso dal ponte. Errori d'invariante richiedono il confine fail-stop C1; gli altri rifiuti non autorizzano mutazione o pubblicazione. |
-| Presa CSN | Registro pieno/busy/64 bit esauriti: `resource-exhausted`, secondo contratto esterno. | Lotto aperto e senza associazione se il registro rifiuta prima della mutazione. Busy/pieno: riprogrammare con limiti; esaurimento 64 bit: nessun wrap né retry infinito. |
-| Dopo presa riuscita | Fallimento della codifica o interruzione nel trasferimento del token. | Non richiedere un secondo CSN. Associazione completa conservata finché risolta; buffer aperto parziale o sealed non riusabile. Fail-stop secondo O2. |
-| Risoluzione con evento errato | `:lotto-csn-stale` o `:lotto-csn-not-pending`. | Nessuna chiamata a `risolvi-csn`; nessuna modifica di pending/credito/H da parte del ponte. |
-| Pubblicazione richiesta | Log guasto: `io-fault`; lotto non coperto: `invalid-argument`. | Token resta pendente. Non pubblicare/confermare usando il solo vecchio stato del lotto; eseguire la gestione della Serie guasta. |
-| Risoluzione busy | `resource-exhausted`, solo se il registro garantisce nessuna modifica sul busy. | Pending e identità conservati; parcheggiare l'obbligo. Se indice già pubblicato, non pubblicarlo nuovamente. |
-| Risoluzione con token interno errato/interruzione | `invariant-violation` o fallimento inatteso. | Fail-stop; non trattare come busy. Slot eventualmente già liberato e pending locale ancora vero richiedono O2. |
-| Annullamento | Log sano: `:lotto-log-not-faulted`. | Credito conservato; non si usa l'annullamento per scartare un commit sano. |
-| Riuso anticipato | Pending oppure owner presente: `invalid-argument`. | Nessun reset del token/buffer. Un lotto guasto non è automaticamente riapribile. |
+| Before CSN allocation | Incorrect state/association/content/identity/frontier: `invalid-argument`; faulty log: `io-fault`; inconsistent internal budget: `invariant-violation`. | Bridge allocates no CSN. Invariant errors require C1 fail-stop boundary; other rejections authorize neither mutation nor publication. |
+| CSN allocation | Register full/busy/64 bits exhausted: `resource-exhausted`, according to external contract. | Batch open and unassociated if register rejects before mutation. Busy/full: reschedule with bounds; 64-bit exhaustion: no wraparound or infinite retry. |
+| After successful allocation | Encoding failure or interruption during token transfer. | Do not request a second CSN. Complete association retained until resolved; partially open or sealed buffer not reusable. Fail-stop according to O2. |
+| Resolution with wrong event | `:lotto-csn-stale` or `:lotto-csn-not-pending`. | No `risolvi-csn` call; no bridge change to pending/credit/H. |
+| Publication requested | Faulty log: `io-fault`; uncovered batch: `invalid-argument`. | Token remains pending. Do not publish/acknowledge using only old batch state; handle faulty Serie. |
+| Busy resolution | `resource-exhausted`, only if register guarantees no mutation on busy. | Pending and identity preserved; park obligation. If index already published, do not publish it again. |
+| Resolution with wrong internal token/interruption | `invariant-violation` or unexpected failure. | Fail-stop; do not treat as busy. Slot potentially already freed and local pending still true require O2. |
+| Abort | Healthy log: `:lotto-log-not-faulted`. | Credit preserved; abort is not used to discard a healthy commit. |
+| Premature reuse | Pending or owner present: `invalid-argument`. | No token/buffer reset. A faulty batch cannot automatically reopen. |
 
-Tipi Lisp errati, offset interni corrotti e interruzioni asincrone non sono provati come
-condizioni della gerarchia ArcDocDB dal solo `safety 3`: il confine worker/controller deve
-convertire o registrare il fallimento e compiere la transizione fail-stop. Non è stato letto.
+Wrong Lisp types, corrupt internal offsets, and asynchronous interruptions are not proved to be
+conditions in the ArcDocDB hierarchy by `safety 3` alone: the worker/controller boundary must
+convert or record failure and perform the fail-stop transition. It was not read.
 
-## Complessità COD-13
+<a id="complessità-cod-13"></a>
 
-Conteggio statico manuale per funzione: base 1; +1 per `if`/`when`/`unless`, ciclo e uscita
-anticipata `thereis`; +`n-1` per ciascun `and`/`or` di `n` operandi, anche annidato.
-`not`, confronti e chiamate non aggiungono decisioni; il costo delle funzioni chiamate
-è conteggiato nella rispettiva funzione. Non equivale a copertura misurata.
+## COD-13 complexity
 
-| Funzione modificata/nuova | Base | Selezioni e cicli | Corto circuito | Totale |
+Manual static count per function: base 1; +1 per `if`/`when`/`unless`, loop, and early
+exit `thereis`; +`n-1` per `and`/`or` with `n` operands, including nested forms.
+`not`, comparisons, and calls add no decisions; called-function cost
+is counted in the respective function. This is not measured coverage.
+
+| Modified/new function | Base | Selections and loops | Short circuit | Total |
 |---|---:|---:|---:|---:|
 | `scrivi-record` | 1 | 0 | 0 | 1 |
 | `scrivi-record-parole` | 1 | 0 | 0 | 1 |
@@ -161,165 +179,175 @@ anticipata `thereis`; +`n-1` per ciascun `and`/`or` di `n` operandi, anche annid
 | `stato-csn-lotto` | 1 | 2 | 0 | 3 |
 | `leggi-csn-lotto` | 1 | 1 | 0 | 2 |
 
-Massimo 9, quindi nessuna funzione modificata supera 10 con questo conteggio.
-Il ciclo di ristampa è limitato da count ≤ offset preallocati; la ricerca duplicati da
-count del gruppo ≤ slot preallocati. I limiti costruttivi visibili nel contesto del diff
-sono 65.536 record, 64 MiB per lotto e 1.024 lotti per gruppo; la correttezza di uno stato
-interno corrotto non discende dal solo limite. Nessuna ricorsione aggiunta.
+Maximum 9, so no modified function exceeds 10 with this count.
+Restamping loop bounded by count ≤ preallocated offsets; duplicate search by
+group count ≤ preallocated slots. Construction bounds visible in diff context
+are 65.536 records, 64 MiB per batch, and 1.024 batches per group; correctness of corrupt
+internal state does not follow from the bound alone. No recursion added.
 
-## Checklist delle due letture, nell'ordine richiesto
+<a id="checklist-delle-due-letture-nellordine-richiesto"></a>
 
-**Lettura 1: parent.** Responsabilità assegnata al parent; evidenza puntuale delle sue
-12 risposte e riferimenti di revisione non fornita in questa sessione. Le comunicazioni
-sulle modifiche non attestano da sole una checklist completa. La colonna resta da
-compilare dal parent, senza firma o certificazione umana implicita.
+## Two-reading checklist, in required order
 
-**Lettura 2: questa revisione indipendente.** Completata sul perimetro e sulle impronte
-sopra; riletto il nuovo controllo `eq` del gruppo e la firma con token atteso dopo gli
-aggiornamenti del parent. Non si attesta che la prima lettura completa abbia preceduto
-questa: la sequenza formale resta da documentare dal parent.
+**Reading 1: parent.** Responsibility assigned to parent; specific evidence of its
+12 answers and review references was not provided in this session. Communications
+about changes alone do not attest to a complete checklist. The column remains for
+the parent to complete, without implicit human signature or certification.
 
-| # | Voce dello standard | Lettura 1 — parent | Lettura 2 — evidenza statica |
+**Reading 2: this independent review.** Completed on scope and fingerprints
+above; new group `eq` check and expected-token signature reread after
+parent updates. It is not attested that a complete first reading preceded
+this one: the parent must still document the formal sequence.
+
+| # | Standard item | Reading 1 — parent | Reading 2 — static evidence |
 |---|---|---|---|
-| 1 | REQ e ADR coerenti | Da attestare | REQ-FOR/LIM/WAL/MVC/AFF presenti; chiusura e token coerenti con ADR-0037/0038/0046. Semantica interna del registro fuori perimetro. |
-| 2 | Invarianti e test capaci di fallire | Da attestare | INV-F2/F3/V5/M4/M5/A8/A11/P6 analizzati; scenari concreti nel documento decisioni. Nessun test letto o eseguito. |
-| 3 | Tipo, gestione e test di ogni errore | Da attestare | Tabella errori sopra; gestione esterna O1/O2 non verificata, test non attestati. |
-| 4 | Cicli e attese limitati | Da attestare | Cicli sullo stato preallocato e complessità ≤10; non blocking del registro/parcheggio condizionale. |
-| 5 | Nessuna allocazione, misurata | Da attestare | **Non attestato: misure assenti.** Due u32 e preallocazione sono evidenza strutturale, non una misura heap. |
-| 6 | Nessun dato non verificato esce dal modulo | Da attestare | Validazione prima di scrittura; token e high/low restituiti con precondizioni di ownership. Idoneità alla pubblicazione esterna resta O1. |
-| 7 | Nuove decisioni composte elencate | Da attestare | Inventario COD-54 in `wal-csn-decisioni.md`, inclusa identità registry/slot/high/low. Copertura per condizione non eseguita. |
-| 8 | Proprietario dello stato condiviso | Da attestare | OWNER/SHARED dichiarano writer, I/O e registro per lotto; handoff e mutua esclusione esterni non verificati. |
-| 9 | Trace aggiornata e `make check` | Da attestare | ASDF aggiornato; matrice, trace e `make check` non letti/eseguiti. |
-| 10 | Nessuna violazione senza deviazione | Da attestare | R1 aperto su COD-24. Nessuna attestazione del registro deviazioni; COD-01/30 richiedono prove successive. |
-| 11 | Nessuna serializzazione per operazione tra Serie | Da attestare | Il diff tocca il registro solo a chiusura/risoluzione; costo e progress del registro da misurare/verificare. |
-| 12 | Atomicità, scartabilità, idempotenza, eliminazione | Da attestare | SEAL preparato esplicitamente; nessuna eliminazione. Duplicati/stale respinti; retry solo dopo rifiuto senza mutazione, O2 per interruzioni. |
+| 1 | Consistent REQ and ADRs | To attest | REQ-FOR/LIM/WAL/MVC/AFF present; closure and token consistent with ADR-0037/0038/0046. Register internals outside scope. |
+| 2 | Invariants and tests capable of failure | To attest | INV-F2/F3/V5/M4/M5/A8/A11/P6 analyzed; concrete scenarios in decisions document. No test read or run. |
+| 3 | Type, handling, and tests for every error | To attest | Error table above; external O1/O2 handling unverified, tests unattested. |
+| 4 | Bounded loops and waits | To attest | Loops on preallocated state and complexity ≤10; register nonblocking/parking conditional. |
+| 5 | No allocation, measured | To attest | **Unattested: measurements absent.** Two u32 words and preallocation are structural evidence, not a heap measurement. |
+| 6 | No unvalidated data leaves module | To attest | Validation before writing; token and high/low returned with ownership preconditions. Suitability for external publication remains O1. |
+| 7 | New compound decisions listed | To attest | COD-54 inventory in `wal-csn-decisioni.md`, including registry/slot/high/low identity. Per-condition coverage not run. |
+| 8 | Owner of shared state | To attest | OWNER/SHARED declare writer, I/O, and register per batch; external handoff and mutual exclusion unverified. |
+| 9 | Updated trace and `make check` | To attest | ASDF updated; matrix, trace, and `make check` not read/run. |
+| 10 | No violation without deviation | To attest | R1 open on COD-24. No attestation of deviation register; COD-01/30 require subsequent tests. |
+| 11 | No per-operation serialization across Serie | To attest | Diff touches register only at closure/resolution; register cost and progress require measurement/verification. |
+| 12 | Atomicity, discardability, idempotence, deletion | To attest | SEAL explicitly prepared; no deletion. Duplicates/stale rejected; retry only after rejection without mutation, O2 for interruptions. |
 
-Esito: seconda lettura statica completata, con R1 e obblighi esterni O1/O2 aperti.
-Non costituisce approvazione C1 completa, prova di copertura, misura heap o certificazione umana.
+Outcome: independent second static reading completed, with R1 and external obligations O1/O2 open.
+It is not complete C1 approval, coverage proof, heap measurement, or human certification.
 
-## Addendum finale — R1 risolto, 2026-10-09
+<a id="addendum-finale--r1-risolto-2026-10-09"></a>
 
-Riletto il diff finale di `builder.lisp`, comprese le sole rifiniture di formattazione.
-**R1 è risolto staticamente**: `ristampa-record-parole` richiede ora `esigi-lotto :open`,
-asserisce count ≤ lunghezza offset prima dell'iterazione (`:lotto-record-count`) e,
-per ogni record, pos + header-bytes ≤ used prima della lettura dell'header
-(`:lotto-record-offset`). Entrambe le nuove asserzioni esplicite segnalano
-`invariant-violation`; la docstring ne descrive le condizioni. Con pos u32 non negativo
-e used ≤ buffer già verificato, l'header del record corrente è entro i byte utilizzati.
+## Final addendum — R1 resolved, 2026-10-09
 
-| Osservazione preservata | Impronta |
+Final `builder.lisp` diff reread, including formatting-only refinements.
+**R1 is statically resolved**: `ristampa-record-parole` now requires `esigi-lotto :open`,
+asserts count ≤ offset length before iteration (`:lotto-record-count`), and,
+for each record, pos + header-bytes ≤ used before reading header
+(`:lotto-record-offset`). Both new explicit assertions signal
+`invariant-violation`; the docstring describes conditions. With nonnegative u32 pos
+and used ≤ buffer already checked, the current record's header lies within used bytes.
+
+| Preserved observation | Fingerprint |
 |---|---|
-| Builder alla lettura originaria, prima della correzione R1 | `91f964cc5b0c2195a6962a004317ba78f3c5f18c` |
-| Builder dopo le guardie, prima della rifinitura di formato | `63db635f031d5f74d954b9cdcc9d2ad01680561c` |
-| **Builder finale riletto** | **`5b4be8856be1e25f35f7a6e68f45ae727c18b168`** |
-| ASDF osservato inizialmente, prima dell'aggiunta test `csn-threads` | `09ac3f6db87d5f45709bd9eee453131cae5de580` |
-| ASDF dopo la sola aggiunta test `csn-threads`, già riletto nel diff | `0c0a05d798f04ee5012d1c3a3a98930ae9fba2d5` |
+| Builder at original reading, before R1 correction | `91f964cc5b0c2195a6962a004317ba78f3c5f18c` |
+| Builder after guards, before format refinement | `63db635f031d5f74d954b9cdcc9d2ad01680561c` |
+| **Final builder reread** | **`5b4be8856be1e25f35f7a6e68f45ae727c18b168`** |
+| ASDF initially observed, before adding test `csn-threads` | `09ac3f6db87d5f45709bd9eee453131cae5de580` |
+| ASDF after adding only test `csn-threads`, already reread in diff | `0c0a05d798f04ee5012d1c3a3a98930ae9fba2d5` |
 
-Calcolate nuovamente le impronte degli otto file del perimetro finale: tutte le altre
-coincidono con la tabella della lettura precedente. Nessuna impronta storica è sostituita
-da questo addendum; l'impronta builder finale identifica la versione della chiusura R1.
+Fingerprints of eight final in-scope files recalculated: all others
+match the earlier-reading table. No historical fingerprint is replaced
+by this addendum; final builder fingerprint identifies R1 closure version.
 
-Il conteggio corrente di `ristampa-record-parole` è **1 base + 4 selezioni/cicli + 3
-corti circuiti = 8** (prima: 6). `esigi-lotto` resta conteggiata nella propria funzione.
-Massimo complessivo invariato: **9 ≤ 10**. Le due guardie nuove sono semplici, senza
-nuovi `and`/`or`: l'inventario composto D01…D12 ed E01…E07 non cambia.
+Current `ristampa-record-parole` count is **1 base + 4 selections/loops + 3
+short circuits = 8** (previously: 6). `esigi-lotto` remains counted in its own function.
+Overall maximum unchanged: **9 ≤ 10**. Both new guards are simple, without
+new `and`/`or`: compound inventory D01…D12 and E01…E07 unchanged.
 
-Il controllo offset precede l'accesso al relativo header, non tutte le modifiche al
-lotto: record precedenti possono già essere ristampati. Nel ponte la ristampa avviene
-dopo la presa e memorizzazione del CSN; un offset corrotto conserva quindi l'obbligo
-pendente e richiede il fail-stop O2, senza rollback o retry ordinario. Per count corrotto,
-la verifica esterna può già rifiutare `:lotto-seal-space` prima della presa; la nuova
-guardia locale tutela anche il kernel con `:lotto-record-count`.
+The offset check precedes access to its header, not every batch
+modification: earlier records may already be restamped. In the bridge, restamping occurs
+after CSN allocation and storage; a corrupt offset therefore preserves the pending
+obligation and requires O2 fail-stop, without rollback or ordinary retry. For corrupt count,
+the external check may already reject `:lotto-seal-space` before allocation; the new
+local guard also protects the kernel with `:lotto-record-count`.
 
-La voce 10 della seconda checklist è aggiornata a **R1 chiuso staticamente**; le voci
-2/3 includono ora gli scenari di conteggio/offset tipizzati dell'addendum decisioni.
-O1/O2 sono obblighi esterni concordati dal parent, con implementazione ancora fuori
-perimetro. Il parent ha comunicato l'aggiunta del test FI offset in `csn-threads` e
-attesterà la propria prima lettura dopo questo aggiornamento: nessuna delle due
-evidenze è certificata qui. Non sono stati letti o eseguiti test, né eseguite misure.
-Nessuna modifica al prodotto o commit; nessuna certificazione umana o garanzia heap.
+Item 10 of the second checklist is updated to **R1 statically closed**; items
+2/3 now include typed count/offset scenarios from the decisions addendum.
+O1/O2 are external obligations agreed by the parent, with implementation still outside
+scope. The parent communicated addition of the offset FI test in `csn-threads` and
+will attest to its first reading after this update: neither item of
+evidence is certified here. No test was read or run, and no measurements were made.
+No product change or commit; no human certification or heap guarantee.
 
-## Addendum — preflight file prima della presa CSN, 2026-10-09
+<a id="addendum--preflight-file-prima-della-presa-csn-2026-10-09"></a>
 
-Riletto il diff del ponte dopo l'introduzione di `verifica-file-csn` (`csn.lisp:9`).
-Impronta precedente preservata: `a592a370135b8b24b548c38588215ad7d26bf1b5`;
-**impronta corrente: `9e1bcfc2dcc92908600dfced771869677b2e90b5`**.
-Ricalcolate le impronte degli otto file autorizzati: tutte le altre restano quelle
-documentate nell'addendum precedente, incluso builder `5b4be8856be1e25f35f7a6e68f45ae727c18b168`.
+## Addendum — file preflight before CSN allocation, 2026-10-09
 
-L'ordine effettivo è verifica chiusura → associazione/contenuto/identità log → salute log
-→ preflight file → `prendi-csn` → memorizzazione token → codifica. Il nuovo helper:
+Bridge diff reread after introducing `verifica-file-csn` (`csn.lisp:9`).
+Previous fingerprint preserved: `a592a370135b8b24b548c38588215ad7d26bf1b5`;
+**current fingerprint: `9e1bcfc2dcc92908600dfced771869677b2e90b5`**.
+Fingerprints of eight authorized files recalculated: all others remain as
+documented in previous addendum, including builder `5b4be8856be1e25f35f7a6e68f45ae727c18b168`.
 
-1. Legge written del file appartenente al log e calcola size = used + SEAL.
-2. Rifiuta written > file-start con `invalid-argument :lotto-written-offset`.
-3. Chiama `verifica-capienza-append(file, (file-start − written) + size, size)`.
-4. Rifiuta durable > posizione-durevole del file con `:lotto-future-durable`.
+Actual order is closure check → log association/content/identity → log health
+→ file preflight → `prendi-csn` → token storage → encoding. The new helper:
 
-L'identità aritmetica written + budget-pianificato = file-start + size include anche
-i byte pianificati prima del lotto corrente. Il terzo argomento è la sola size del
-lotto sigillato: il budget cumulativo non viene usato come singolo trasferimento.
-L'uguaglianza written = file-start è ammessa e produce un budget pari a size;
-written < file-start è ammesso per lotti già pianificati. Questo controllo non prova
-da solo che la sequenza pianificata sia contigua: l'ordine resta del writer/gruppo.
+1. Reads written from the log's file and calculates size = used + SEAL.
+2. Rejects written > file-start with `invalid-argument :lotto-written-offset`.
+3. Calls `verifica-capienza-append(file, (file-start − written) + size, size)`.
+4. Rejects durable > file durable-position with `:lotto-future-durable`.
 
-Disponibilità del file, modalità append, limite di trasferimento e budget finale sono
-delegati alla funzione I/O esistente. Il suo corpo resta fuori perimetro: questi sono
-obblighi del contratto, non una rilettura dei suoi predicati o una prova della sua purezza.
-I rifiuti avvengono nel ponte prima della presa e prima di qualunque sua mutazione;
-l'assenza di modifiche anche nel validatore I/O resta condizionata al suo contratto.
-La preflight valida uno stato osservato dopo handoff, non riserva spazio né garantisce
-che il file resti disponibile fino al successivo compito I/O.
+The arithmetic identity written + planned-budget = file-start + size also includes
+bytes planned before the current batch. The third argument is only the sealed
+batch's size: cumulative budget is not used as a single transfer.
+Equality written = file-start is allowed and produces a budget equal to size;
+written < file-start is allowed for already planned batches. This check alone does not prove
+the planned sequence contiguous: order remains the writer/group's responsibility.
 
-| Funzione | Base | Selezioni/cicli | Corto circuito | Totale corrente |
+File availability, append mode, transfer limit, and final budget are
+delegated to the existing I/O function. Its body remains outside scope: these are
+contract obligations, not a rereading of predicates or proof of purity.
+Rejections occur in the bridge before allocation and any bridge mutation;
+absence of changes in the I/O validator also remains conditional on its contract.
+Preflight validates a state observed after handoff; it neither reserves space nor guarantees
+file availability through the subsequent I/O task.
+
+| Function | Base | Selections/loops | Short circuit | Current total |
 |---|---:|---:|---:|---:|
 | `verifica-file-csn` | 1 | 2 | 0 | **3** |
-| `verifica-log-csn` | 1 | 4 | 3 | **8**, prima 9 |
+| `verifica-log-csn` | 1 | 4 | 3 | **8**, previously 9 |
 
-Nessun nuovo `and`/`or`, ciclo o retry nel helper. Massimo complessivo ancora **9 ≤ 10**;
-il costo del validatore delegato non è sommato alla complessità locale né riesaminato.
-La docstring e il REQ del nuovo helper dichiarano frontiere, budget, condizioni e nessuna
-syscall. Il controllo durable è stato spostato, senza cambiarne il predicato.
+No new `and`/`or`, loop, or retry in helper. Overall maximum still **9 ≤ 10**;
+delegated validator cost is neither added to local complexity nor reexamined.
+The new helper's docstring and REQ declare frontiers, budgets, conditions, and no
+syscall. Durable check moved without changing predicate.
 
-Le voci 2/3/6/7 della seconda checklist incorporano i rifiuti pre-CSN e il contratto
-delegato E08 nel documento decisioni. Il parent comunica copertura di sei casi di
-budget/disponibilità e immagine invariata: **evidenza riferita, non verificata qui**.
-R1 resta chiuso staticamente; O1/O2 restano obblighi esterni concordati. Nessun nuovo
-rilievo sul diff locale. Prima lettura del parent da attestare; nessun test o benchmark
-letto/eseguito, modifica al prodotto, commit, certificazione umana o garanzia heap.
+Items 2/3/6/7 of second checklist incorporate pre-CSN rejections and delegated
+contract E08 in decisions document. The parent reports coverage of six budget/availability
+cases and unchanged image: **reported evidence, not verified here**.
+R1 remains statically closed; O1/O2 remain agreed external obligations. No new
+local-diff finding. Parent's first reading requires attestation; no test or benchmark
+read/run, product change, commit, human certification, or heap guarantee.
 
-## Prima lettura del parent — 2026-10-09, prima delle campagne
+<a id="prima-lettura-del-parent--2026-10-09-prima-delle-campagne"></a>
 
-L’autore ha riletto il prodotto e i test integrati: codec a parole e wrapper,
-chiusura con preflight di log/file/budget, conservazione di registro e token,
-identità dell’evento e del log, copertura distinta da pubblicazione, annullamento
-solo dopo FAULTED e riuso solo dopo risoluzione/durability/quiescenza.
-Ha corretto R1 e aggiunto controlli di disponibilità e budget pianificato.
+## Parent's first reading — 2026-10-09, before campaigns
 
-Le voci 1, 4, 6, 7, 8, 11 e 12 della prima checklist sono argomentate dal
-contratto e dal prodotto riletto. Le voci 2 e 3 hanno test dedicati ai rifiuti,
-carry/max, eventi vecchi e registry distinto, guasti append/flush, conteggio e
-offset interni corrotti; un test con quattro Serie e K=3 forza saturazione e
-verifica 2000 cicli, unicità e convergenza. Questi test sono ancora da eseguire.
-Per 5, 9 e 10 restano da raccogliere misure heap, build senza avvisi e gate.
-Nessun requisito dell’intero motore viene promosso a verificato.
+The author reread integrated product and tests: word codec and wrapper,
+closure with log/file/budget preflight, register and token preservation,
+event and log identity, coverage distinct from publication, abort
+only after FAULTED, and reuse only after resolution/durability/quiescence.
+The author corrected R1 and added availability and planned-budget checks.
 
-O1 e O2 sono accettati come obblighi dell’integrazione futura: evento atteso
-validato prima della pubblicazione, esito già pubblicato conservato sul busy;
-fail-stop dell’Archivio per interruzioni dopo mutazione o stato incerto.
-Indice, lifecycle di Serie e scheduler non sono implementati dal ponte.
-Questa prima lettura e quella indipendente sono automatizzate, senza
-certificazione umana. Le prove saranno riportate nei risultati della campagna.
+Items 1, 4, 6, 7, 8, 11, and 12 of the first checklist are supported by the
+contract and reread product. Items 2 and 3 have dedicated tests for rejections,
+carry/max, stale events and distinct registry, append/flush faults, corrupt internal
+count and offsets; a four-Serie test with K=3 forces saturation and
+checks 2000 cycles, uniqueness, and convergence. These tests are still to run.
+For 5, 9, and 10, heap measurements, warning-free build, and gates remain to collect.
+No whole-engine requirement is promoted to verified.
 
-## Esiti della campagna del parent
+O1 and O2 are accepted as future integration obligations: expected event
+validated before publication, already-published outcome preserved on busy;
+Archivio fail-stop for interruption after mutation or uncertain state.
+Index, Serie lifecycle, and scheduler are not implemented by the bridge.
+This first reading and independent reading are automated, without
+human certification. Tests will be reported in campaign results.
 
-I [risultati](wal-csn-risultati.md) registrano build e test integrati, C4,
-mutanti, copertura e misure heap. Il ponte ha 40/40 rami coperti nel rapporto
-SB-COVER finale; non è una dichiarazione MC/DC. Tre campagne osservano zero
-heap nelle trenta finestre seriali di successo e rilevano il controllo positivo.
-Le prime prove fallite e i fix dei soli strumenti/test sono conservati.
+<a id="esiti-della-campagna-del-parent"></a>
 
-La verifica complessiva sul codice integrato include 364 test e due smoke,
-trace, link, lint, evidenze e dieci spike. Questo riscontro del parent completa
-le prove locali delle voci 5 e 9 e la verifica dinamica associata a 2/3/10;
-non estende la seconda lettura statica agli strumenti modificati. O1/O2 e
-l’assenza di controller/indice/snapshot restano i confini dell’integrazione.
+## Parent campaign outcomes
+
+[Results](wal-csn-risultati.md) record integrated build and tests, C4,
+mutants, coverage, and heap measurements. The bridge has 40/40 covered branches in the
+final SB-COVER report; this is not an MC/DC declaration. Three campaigns observe zero
+heap in thirty successful serial windows and detect the positive control.
+Initial failed tests and tool/test-only fixes are preserved.
+
+Overall verification on integrated code includes 364 tests and two smoke tests,
+trace, links, lint, evidence, and ten spikes. This parent observation completes
+local tests for items 5 and 9 and dynamic verification associated with 2/3/10;
+it does not extend the static second reading to modified tools. O1/O2 and
+absence of controller/index/snapshot remain integration boundaries.

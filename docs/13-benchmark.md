@@ -1,149 +1,170 @@
-# 13 — Benchmark
+<a id="13--benchmark"></a>
 
-> **Fonte:** «Benchmark», «Target preliminari», «Confronto con Oracle, MySQL e MongoDB» della
-> [specifica](specifica/specifica-originale.md).
+# 13 — Benchmarks
 
-## Principio
+> **Source:** ‘Benchmarks’, ‘Preliminary targets’, and ‘Comparison with Oracle, MySQL, and MongoDB’ of the
+> [specification](specifica/specifica-originale.md).
 
-Le prestazioni si **misurano**; non si dichiarano. I numeri di questo documento sono target
-architetturali, non risultati (INV-X2).
+<a id="principio"></a>
 
-## Hardware di riferimento
+## Principle
 
-| Risorsa | Valore |
+Performance is **measured**, not declared. The numbers in this document are architectural
+targets, not results (INV-X2).
+
+<a id="hardware-di-riferimento"></a>
+
+## Reference hardware
+
+| Resource | Value |
 |---|---|
-| CPU | 16–32 core |
+| CPU | 16–32 cores |
 | RAM | 64–128 GB |
 | Storage | NVMe PCIe 4/5 |
-| Dataset | abbastanza grande da non essere interamente in cache quando si misura lo storage |
-| Documenti | indicativamente 1–4 KB |
+| Dataset | large enough not to fit entirely in cache when measuring storage |
+| Documents | approximately 1–4 KB |
 
-Nei confronti con altri sistemi l'hardware DEVE essere identico.
+Hardware MUST be identical in comparisons with other systems.
 
-## Workload
+<a id="workload"></a>
 
-| Categoria | Workload |
+## Workloads
+
+| Category | Workload |
 |---|---|
-| Letture puntuali | GET `_id`; GET `_id` con cache hit; GET `_id` con accesso NVMe |
-| Scritture | INSERT; UPDATE; DELETE/tombstone |
-| Query | indexed query; sequential scan |
-| Ricerca full text | termini, combinazioni booleane, frasi e filtri strutturati; indici invertiti dedicati ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) |
-| Manutenzione | CLEAN; MERGE |
-| Misti | mixed read/write; burst di sole letture; burst di scritture |
-| Transazioni | single-Series; multiserie |
+| Point reads | GET `_id`; GET `_id` with cache hit; GET `_id` with NVMe access |
+| Writes | INSERT; UPDATE; DELETE/tombstone |
+| Queries | indexed query; sequential scan |
+| Full-text search | terms, Boolean combinations, phrases, and structured filters; dedicated inverted indexes ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) |
+| Maintenance | CLEAN; MERGE |
+| Mixed | mixed read/write; read-only bursts; write bursts |
+| Transactions | single-Serie; multiseries |
 
-> **Deciso ([ADR-0036](adr/0036-leggi-di-progetto.md))** — Poiché il parallelismo è un
-> principio fondante (INV-P6), ai workload della specifica se ne aggiungono due che lo
-> verificano: **scalabilità** (lo stesso carico distribuito su 1, 2, 4, … Serie e su un numero
-> crescente di core: il throughput aggregato deve crescere finché ci sono core e banda del
-> dispositivo) e **isolamento** (un burst su una Serie, con latenza e throughput misurati
-> sulle altre). Il risultato è una misura, non un target dichiarato in anticipo (INV-X2).
+> **Decided ([ADR-0036](adr/0036-leggi-di-progetto.md))** — Because parallelism is a
+> foundational principle (INV-P6), two workloads are added to verify it:
+> **scalability** (the same load distributed over 1, 2, 4, … Serie and an increasing
+> number of cores: aggregate throughput should grow while cores and device bandwidth
+> remain available) and **isolation** (a burst on one Serie, with latency and throughput
+> measured on the others). The result is a measurement, not a target declared in advance (INV-X2).
 
-## Che cosa misurare sempre
+<a id="che-cosa-misurare-sempre"></a>
+
+## What to measure every time
 
 Throughput; P50, P95, P99; CPU; RAM; cache hit rate; WAL bandwidth; fsync latency; NVMe
-bandwidth; queue depth; compaction throughput; numero di worker; contention; GC di SBCL.
+bandwidth; queue depth; compaction throughput; worker count; contention; SBCL GC.
 
-## Interfaccia locale Unix socket
+<a id="interfaccia-locale-unix-socket"></a>
 
-> **Deciso ([ADR-0055](adr/0055-interfaccia-locale-unix-socket.md))** — Il percorso
-> client/server di riferimento per il primo impiego NNTP usa un socket Unix locale.
-> Implementazione e misure sono future; non si attribuisce un vantaggio numerico a UDS.
+## Local Unix socket interface
 
-Dopo le [prove di correttezza](affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket),
-misurare con client e database in processi distinti sulla stessa macchina:
-throughput, p50/p95/p99 dell'intera richiesta, CPU, copie, allocazioni/GC,
-memoria dei buffer, richieste in volo e tempo di ammissione. Variare dimensione
-dei frame, numero di connessioni, multiplexing e client lenti; misurare anche
-l'isolamento delle altre Serie sotto saturazione. Registrare percorso, permessi,
-budget, scadenze, operazioni disponibili e durability insieme all'ambiente.
-I benchmark del solo motore escludono il costo del trasporto e si riportano
-separatamente. Un futuro confronto con TCP deve mantenere gli stessi frame,
-operazioni, concorrenza e garanzie di conferma.
+> **Decided ([ADR-0055](adr/0055-interfaccia-locale-unix-socket.md))** — The reference
+> client/server path for the first NNTP use uses a local Unix socket.
+> Implementation and measurements are future work; no numerical advantage is attributed to UDS.
 
-## Ricerca full text
+After the [correctness tests](affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket),
+measure with client and database in separate processes on the same machine:
+throughput, p50/p95/p99 of the whole request, CPU, copies, allocations/GC,
+buffer memory, in-flight requests, and admission time. Vary frame size,
+connection count, multiplexing, and slow clients; also measure isolation of
+other Serie under saturation. Record path, permissions, budgets, deadlines,
+available operations, and durability alongside the environment.
+Engine-only benchmarks exclude transport cost and are reported separately.
+A future TCP comparison must keep the same frames, operations, concurrency,
+and acknowledgment guarantees.
 
-> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Campagna futura
-> della fase 8; nessun risultato full text è disponibile con questa modifica progettuale.
+<a id="ricerca-full-text"></a>
 
-Prima delle misure, un oracolo indipendente a scansione deve dare gli stessi risultati
-per termini e frasi, `all/any`, `and/or/not`, campi assenti, testo vuoto, filtri e snapshot.
-Il corpus include accenti, forme Unicode canonicamente equivalenti, case folding,
-punteggiatura, token ripetuti e confini fra campi. Si verificano anche update/delete,
-abort multiserie, `ACTIVE` più `CLOSED`, compaction con snapshot, cambio generazione
-durante scritture, crash/recovery, restore e indici assenti o corrotti. Budget esauriti
-devono produrre gli esiti espliciti del contratto, senza risultati incompleti silenziosi.
+## Full-text search
 
-| Variazione | Misure e confronto |
+> **Decided ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Future phase-8
+> campaign; no full-text results are available from this design change.
+
+Before measurement, an independent scan oracle must return the same results
+for terms and phrases, `all/any`, `and/or/not`, missing fields, empty text, filters, and snapshots.
+The corpus includes accents, canonically equivalent Unicode forms, case folding,
+punctuation, repeated tokens, and field boundaries. Also verify updates/deletes,
+multiseries aborts, `ACTIVE` plus `CLOSED`, compaction with snapshots, generation changes
+during writes, crash/recovery, restore, and missing or corrupt indexes. Exhausted budgets
+must produce the contract's explicit outcomes, without silently incomplete results.
+
+| Variation | Measurements and comparison |
 |---|---|
-| Termini rari, comuni e molto frequenti; frasi brevi/lunghe; filtri selettivi e poco selettivi | p50/p95/p99, throughput, posting visitati, candidati e risultati; confronto con scansione equivalente |
-| Lunghezza del testo, vocabolario, campi e posizioni; corpus NNTP e general-purpose | spazio di dizionario/posting/posizioni, RAM del delta e memoria temporanea per query |
-| Nuove pubblicazioni con letture concorrenti | costo di analisi, latenza del commit, accodamento, impatto su GET e sulle altre Serie |
-| Segmenti e Serie crescenti; cache calda e fredda | costo del fan-out, I/O, CPU, GC, scalabilità e isolamento |
-| Build, cambio profilo, CLEAN/MERGE e riavvio | tempo e spazio transitori, recupero della copertura e interferenza sul traffico |
+| Rare, common, and very frequent terms; short/long phrases; selective and unselective filters | p50/p95/p99, throughput, postings visited, candidates, and results; comparison with equivalent scan |
+| Text length, vocabulary, fields, and positions; NNTP and general-purpose corpora | dictionary/posting/position space, delta RAM, and temporary query memory |
+| New publications with concurrent reads | analysis cost, commit latency, queuing, impact on GETs and other Serie |
+| Increasing segments and Serie; warm and cold cache | fan-out cost, I/O, CPU, GC, scalability, and isolation |
+| Build, profile change, CLEAN/MERGE, and restart | transient time and space, coverage restoration, and interference with traffic |
 
-Registrare corpus e seme, profilo e versione Unicode, generazione, campi indicizzati,
-distribuzione dei termini, concorrenza, budget, durability e snapshot. I target di GET
-e query indicizzata semplice non sono target della ricerca full text; nuovi obiettivi
-numerici richiedono evidenze specifiche.
+Record corpus and seed, profile and Unicode version, generation, indexed fields,
+term distribution, concurrency, budgets, durability, and snapshots. GET and simple
+indexed-query targets are not full-text search targets; new numerical objectives
+require specific evidence.
 
-## Target preliminari
+<a id="target-preliminari"></a>
 
-**Target architetturali indicativi, NON benchmark dimostrati.** Su hardware adeguato:
+## Preliminary targets
 
-| Operazione | Target |
+**Illustrative architectural targets, NOT demonstrated benchmarks.** On suitable hardware:
+
+| Operation | Target |
 |---|---|
-| GET `_id`, cache/index | ~1–4 M ops/s aggregati |
+| GET `_id`, cache/index | ~1–4 M ops/s aggregate |
 | GET `_id`, NVMe | ~150k–600k ops/s |
-| INSERT, durability async | ~700k–2 M ops/s |
+| INSERT, async durability | ~700k–2 M ops/s |
 | INSERT, group commit | ~300k–1 M ops/s |
 | UPDATE append-only | ~400k–1,2 M ops/s |
 | DELETE/tombstone | ~500k–1,5 M ops/s |
-| Query indicizzata semplice | ~500k–2 M ops/s |
+| Simple indexed query | ~500k–2 M ops/s |
 | Sequential scan | ~1–5+ GB/s |
 | CLEAN | ~0,5–3+ GB/s |
-| MERGE | dipende da numero e dimensione dei segmenti, layout, I/O e carico disponibile |
-| Transazioni multiserie | da decine a centinaia di migliaia di tx/s, secondo il numero di Serie coinvolte e il costo del commit durevole |
+| MERGE | depends on segment count and size, layout, I/O, and available load capacity |
+| Multiseries transactions | tens to hundreds of thousands of tx/s, depending on participating Serie count and durable-commit cost |
 
-Questi numeri DEVONO essere verificati con benchmark reali. Una prima verifica di plausibilità
-rispetto ai limiti fisici dell'hardware è in
+These numbers MUST be verified with real benchmarks. An initial plausibility check
+against physical hardware limits is in
 [valutazione/stime-ordine-di-grandezza.md](valutazione/stime-ordine-di-grandezza.md).
 
-> **Deciso (QA-26 → [ADR-0028](adr/0028-target-e-obiettivi-di-latenza.md))** — Solo il primo target è dichiarato «aggregato». Per gli altri va chiarito
-> se si intendono per singola Serie o sommati su tutte le Serie: la differenza è sostanziale,
-> perché ogni Serie ha un solo writer logico.
+> **Decided (QA-26 → [ADR-0028](adr/0028-target-e-obiettivi-di-latenza.md))** — Only the first target is declared ‘aggregate’. For the others, whether
+> they apply per Serie or summed across all Serie needs clarification: the difference is
+> substantial, because each Serie has only one logical writer.
 
-## Confronto con altri sistemi
+<a id="confronto-con-altri-sistemi"></a>
 
-NON usare benchmark eterogenei per dichiarare superiorità diretta. Oracle, MySQL/InnoDB e
-MongoDB hanno architetture, semantiche, livelli di durability, workload e configurazioni
-differenti.
+## Comparison with other systems
 
-L'**ipotesi architetturale** — da verificare sperimentalmente — è che ArcDocDB possa avere un
-percorso particolarmente corto per operazioni document/KV semplici, grazie a: Serie
-indipendenti, un writer logico per Serie, primary index in RAM, storage append-only, WAL per
-Serie, group commit, segmenti immutabili, cache, parallelismo orizzontale tra Serie.
+Do NOT use heterogeneous benchmarks to claim direct superiority. Oracle, MySQL/InnoDB, and
+MongoDB have different architectures, semantics, durability levels, workloads, and
+configurations.
 
-Un confronto è corretto solo a parità di:
+The **architectural hypothesis** — to be tested experimentally — is that ArcDocDB may have a
+particularly short path for simple document/KV operations, thanks to: independent
+Serie, one logical writer per Serie, primary index in RAM, append-only storage, per-Serie
+WAL, group commit, immutable segments, cache, and horizontal parallelism between Serie.
+
+A comparison is valid only with equivalent:
 
 - hardware;
-- dataset e dimensione dei documenti;
-- indici;
-- livello di durability;
-- concorrenza;
-- workload (equivalente);
-- semantica della transazione.
+- dataset and document size;
+- indexes;
+- durability level;
+- concurrency;
+- workload;
+- transaction semantics.
 
-## Riproducibilità
+<a id="riproducibilità"></a>
 
-> **Proposta** — Ogni risultato pubblicato nei documenti va accompagnato da: revisione del
-> codice, versione di SBCL e parametri di avvio (dimensione heap, GC), hardware e sistema
-> operativo, configurazione della Serie (durability, dimensione segmento, indici), generatore
-> del dataset con seme, comando esatto. Senza questi dati un numero non entra nella
-> documentazione.
+## Reproducibility
 
-## Relazione con la fase di valutazione
+> **Proposed** — Every result published in the documents must include: code revision,
+> SBCL version and startup parameters (heap size, GC), hardware and operating system,
+> Serie configuration (durability, segment size, indexes), dataset generator with seed,
+> and exact command. A number without these details does not enter the documentation.
 
-I benchmark completi richiedono il sistema implementato. Nella fase di definizione
-architetturale si eseguono solo **spike** mirati, che misurano singole ipotesi (indice, GC,
-group commit…): vedi il [piano degli spike](valutazione/piano-spike.md).
+<a id="relazione-con-la-fase-di-valutazione"></a>
+
+## Relationship to the evaluation phase
+
+Full benchmarks require the implemented system. During architectural definition,
+only targeted **spikes** are run to measure individual hypotheses (index, GC,
+group commit…): see the [spike plan](valutazione/piano-spike.md).

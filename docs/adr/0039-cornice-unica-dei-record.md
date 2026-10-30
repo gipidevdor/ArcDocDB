@@ -1,115 +1,135 @@
-# ADR-0039 — Cornice unica dei record: due CRC, quattro tipi nei segmenti, hint risolto
+<a id="adr-0039--cornice-unica-dei-record-due-crc-quattro-tipi-nei-segmenti-hint-risolto"></a>
 
-> **Revisione:** [ADR-0048](0048-limiti-documentali-e-formato-v2.md) sostituisce i limiti documentali e il layout v2 pertinenti. Il testo seguente conserva la decisione storica v1.
+# ADR-0039 — Common record frame: two CRCs, four segment types, resolved hints
 
-- **Stato:** Accettata; verifica dei prepared precisata da [ADR-0047](0047-verifica-csn-dei-record-prepared.md): il CSN effettivo è verificato attraverso OUTCOME o esito del manifest, non dal solo flag.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda. **Sostituisce in parte**
-  [ADR-0014](0014-formato-record-documento-id.md) punto 3 (intestazione e tipi del record) e
-  la parte sui file hint di [ADR-0015](0015-primary-index-swiss-table-swmr.md). Documento
-  (CBOR), `_id` e hash di ADR-0014 restano.
-- **Riferimenti:** [analisi progettuale](../analisi-progettuale.md) AP-08, AP-11, AP-13;
-  [formati su disco](../formati-su-disco.md); INV-F1, INV-F2, INV-A2
+> **Revision:** [ADR-0048](0048-limiti-documentali-e-formato-v2.md) supersedes the relevant document limits and v2 layout. The following text preserves the historical v1 decision.
 
-## Contesto
+- **Status:** Accepted; verification of prepared records clarified by [ADR-0047](0047-verifica-csn-dei-record-prepared.md): the effective CSN is verified through OUTCOME or the manifest outcome, not through the flag alone.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment. **Partly supersedes**
+  [ADR-0014](0014-formato-record-documento-id.md) item 3 (record header and types) and
+  the hint-file portion of [ADR-0015](0015-primary-index-swiss-table-swmr.md). The document
+  (CBOR), `_id`, and hash from ADR-0014 remain.
+- **References:** [design analysis](../analisi-progettuale.md) AP-08, AP-11, AP-13;
+  [on-disk formats](../formati-su-disco.md); INV-F1, INV-F2, INV-A2
 
-Il formato v1 non è ancora implementato: si può correggere senza migrazione. Tre problemi:
-il CRC unico copre campi che solo il writer conosce, quindi il writer deve calcolare il CRC di
-tutto il documento (AP-13); segmento, control log e `multiserie.log` hanno tre intestazioni
-diverse; alcuni campi e un tipo di record non hanno funzione.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-### 1. Una sola cornice per ogni record di ogni log
+The v1 format is not yet implemented: it can be corrected without migration. Three problems:
+the single CRC covers fields only the writer knows, so the writer must calculate the CRC of
+the entire document (AP-13); segments, the control log, and `multiserie.log` have three different
+headers; some fields and one record type serve no purpose.
 
-Intestazione fissa di **24 byte**, poi chiave e valore:
+<a id="decisione"></a>
 
-| Offset | Tipo | Campo |
+## Decision
+
+<a id="1-una-sola-cornice-per-ogni-record-di-ogni-log"></a>
+
+### 1. One frame for every record in every log
+
+Fixed **24-byte** header, followed by key and value:
+
+| Offset | Type | Field |
 |---|---|---|
-| 0 | `u32` | `header-crc`: CRC32C dei byte 4–23 |
-| 4 | `u32` | `body-crc`: CRC32C di chiave e valore |
-| 8 | `u8` | tipo |
-| 9 | `u8` | flag |
+| 0 | `u32` | `header-crc`: CRC32C of bytes 4–23 |
+| 4 | `u32` | `body-crc`: CRC32C of key and value |
+| 8 | `u8` | type |
+| 9 | `u8` | flags |
 | 10 | `u8` | `key-len` |
-| 11 | `u8` | riservato |
+| 11 | `u8` | reserved |
 | 12 | `u32` | `value-len` |
 | 16 | `u64` | `stamp` |
 
-- La lunghezza del record è `24 + key-len + value-len`: non esiste un campo di lunghezza
-  separato che possa mentire. L'intestazione si verifica **da sola** prima di fidarsi delle
-  lunghezze.
-- `header-crc` copre `body-crc`: intestazione e corpo sono legati.
-- **Chi calcola che cosa.** Il worker che riceve la richiesta calcola `body-crc` (lavoro
-  proporzionale ai byte, fuori dal writer). Il writer, alla chiusura del lotto, scrive `stamp`
-  e calcola `header-crc` su 20 byte: nessun lavoro per byte nella parte seriale oltre alla
-  copia nel buffer.
+- Record length is `24 + key-len + value-len`: there is no separate length field
+  that could lie. The header is verified **on its own** before trusting the
+  lengths.
+- `header-crc` covers `body-crc`: header and body are linked.
+- **Who calculates what.** The worker receiving the request calculates `body-crc` (work
+  proportional to bytes, outside the writer). When closing the batch, the writer writes `stamp`
+  and calculates `header-crc` over 20 bytes: no per-byte work in the serial portion beyond
+  copying into the buffer.
 
-### 2. Tipi
+<a id="2-tipi"></a>
 
-| Tipo | Dove | `stamp` | Valore |
+### 2. Types
+
+| Type | Where | `stamp` | Value |
 |---|---|---|---|
-| 1 PUT | segmento | CSN; TXID se prepared | documento |
-| 2 TOMBSTONE | segmento | CSN; TXID se prepared | vuoto |
-| 3 SEAL | ogni log | CSN del lotto (segmento); numero d'ordine (log di controllo) | identificativo del file, inizio del lotto, frontiera durevole, numero di record, CRC del lotto |
-| 4 OUTCOME | segmento | TXID | CSN della transazione |
-| 5 EDIT | control log | numero d'ordine | apre, chiude, rimuove ([ADR-0040](0040-manifest-a-record-unico.md)) |
-| 6 DECISION | `multiserie.log` | TXID | CSN, partecipanti |
+| 1 PUT | segment | CSN; TXID if prepared | document |
+| 2 TOMBSTONE | segment | CSN; TXID if prepared | empty |
+| 3 SEAL | every log | batch CSN (segment); sequence number (control log) | file identifier, batch start, durable frontier, record count, batch CRC |
+| 4 OUTCOME | segment | TXID | transaction CSN |
+| 5 EDIT | control log | sequence number | opens, closes, removes ([ADR-0040](0040-manifest-a-record-unico.md)) |
+| 6 DECISION | `multiserie.log` | TXID | CSN, participants |
 
-Rispetto al formato precedente scompaiono: il record `PREPARE` (i record prepared sono
-riconosciuti dal flag e resi atomici dal SEAL del loro lotto), il campo `version`
-([ADR-0038](0038-orizzonte-di-visibilita.md)), il TXID per le operazioni ordinarie (un lotto è
-atomico per posizione, [ADR-0037](0037-lotto-sigillato.md)), gli esiti `ABORT`
-([ADR-0041](0041-multiserie-segmenti-autosufficienti.md)), l'intestazione propria del control
-log e di `multiserie.log`.
+Compared with the previous format, the following disappear: the `PREPARE` record (prepared
+records are recognized by their flag and made atomic by their batch's SEAL), the `version`
+field ([ADR-0038](0038-orizzonte-di-visibilita.md)), TXID for ordinary operations (a batch is
+atomic by position, [ADR-0037](0037-lotto-sigillato.md)), `ABORT` outcomes
+([ADR-0041](0041-multiserie-segmenti-autosufficienti.md)), and the dedicated headers for the control
+log and `multiserie.log`.
 
-### 3. Hint: sempre risolto, con il filtro di esistenza
+<a id="3-hint-sempre-risolto-con-il-filtro-di-esistenza"></a>
 
-Il file hint di un segmento chiuso ha una entry di **24 byte** per ogni record PUT o
-TOMBSTONE **committed**, in ordine di offset, con il CSN **definitivo** (per i record
-prepared, quello dell'esito: alla chiusura ogni esito è noto, INV-S7). Contiene inoltre:
+### 3. Hints: always resolved, with the existence filter
 
-- nell'intestazione, `csn-min` e `csn-max` del segmento;
-- una sezione **Bloom** sulle chiavi delle entry: è il filtro di esistenza che governa lo
-  scarto dei tombstone ([ADR-0042](0042-tombstone-e-indice-dei-vivi.md)).
+A closed segment's hint file has one **24-byte** entry for each **committed** PUT or
+TOMBSTONE record, in offset order, with the **final** CSN (for prepared records,
+the outcome's CSN: every outcome is known at closing, INV-S7). It also contains:
 
-Il file `.bloom` separato non esiste più. I filtri sui **valori** degli indici secondari sono
-una sezione dei rispettivi file `.idx` ([ADR-0026](0026-indici-secondari-segmentati.md)), come
-chiede la specifica («Bloom filter per segmento … un valore è sicuramente assente»).
+- in the header, the segment's `csn-min` and `csn-max`;
+- a **Bloom** section over entry keys: the existence filter governing
+  tombstone removal ([ADR-0042](0042-tombstone-e-indice-dei-vivi.md)).
 
-L'hint resta un dato derivato: si rigenera dal segmento e dal manifest; se manca o non
-verifica, lo scarto dei tombstone lo tratta come «forse presente» e la ricostruzione
-dell'indice scansiona il segmento.
+The separate `.bloom` file no longer exists. Filters on secondary-index **values** are
+sections of their respective `.idx` files ([ADR-0026](0026-indici-secondari-segmentati.md)), as
+required by the specification (“Bloom filter per segment … a value is definitely absent”).
 
-### 4. Verifica in lettura (precisa INV-A2)
+The hint remains derived data: it is regenerated from the segment and manifest; if missing
+or invalid, tombstone removal treats it as “possibly present” and index rebuilding
+scans the segment.
 
-Un record raggiunto da una entry dell'indice è restituito solo se: `header-crc` è valido; il
-tipo è PUT; la lunghezza calcolata coincide con quella della entry; `body-crc` è valido; la
-chiave coincide; e — se il record non è prepared — `stamp` coincide con il CSN della entry.
-Se il record è prepared, la entry deve portare il flag corrispondente (il CSN viene
-dall'esito). La regola è la stessa da disco e da cache.
+<a id="4-verifica-in-lettura-precisa-inv-a2"></a>
 
-Pattern: CRC di intestazione e di corpo distinti, con il primo che copre il secondo
-(TigerBeetle); record auto-delimitato verificabile prima di leggerne il corpo (Kafka record
-batch); filtro di esistenza per file (SSTable di LevelDB/RocksDB, Cassandra).
+### 4. Verification on read (clarifies INV-A2)
 
-## Conseguenze
+A record reached through an index entry is returned only if: `header-crc` is valid; the
+type is PUT; the calculated length matches the entry's length; `body-crc` is valid; the
+key matches; and — if the record is not prepared — `stamp` matches the entry's CSN.
+If the record is prepared, the entry must carry the corresponding flag (the CSN comes
+from the outcome). The rule is identical for disk and cache.
 
-- Un solo codec e un solo fuzzer per segmenti, control log e `multiserie.log`.
-- 24 byte per record invece di 40; 24 byte per entry di hint invece di 32.
-- Il budget del writer per operazione non dipende più dalla dimensione del documento, salvo
-  la copia.
-- Un difetto del worker nel calcolo di `body-crc` produce un record che non verifica: viene
-  rilevato alla prima lettura e dallo scrubbing, non corrompe in silenzio.
+Pattern: separate header and body CRCs, with the former covering the latter
+(TigerBeetle); self-delimiting record verifiable before reading its body (Kafka record
+batch); per-file existence filter (LevelDB/RocksDB SSTables, Cassandra).
 
-## Alternative considerate
+<a id="conseguenze"></a>
 
-- *CRC unico calcolato dal writer:* lavoro per byte nella parte seriale.
-- *CRC unico calcolato prima, con CSN fuori dal record:* i segmenti prodotti dalla compaction
-  contengono record di lotti diversi e hanno comunque bisogno del CSN per record.
-- *Combinare due CRC con l'algebra del CRC:* evita il secondo campo, ma è un algoritmo in più
-  da verificare per risparmiare 4 byte.
+## Consequences
 
-## Valutazione
+- One codec and one fuzzer for segments, the control log, and `multiserie.log`.
+- 24 bytes per record instead of 40; 24 bytes per hint entry instead of 32.
+- The writer's per-operation budget no longer depends on document size, except
+  for copying.
+- A worker defect in calculating `body-crc` produces an invalid record: it is
+  detected on the first read and by scrubbing, without silent corruption.
 
-- Verifica: fuzzing della cornice; corruzione deliberata di ogni campo (ogni danno rilevato);
-  SPK-09 misura il CRC separato per intestazione e corpo.
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Single CRC calculated by the writer:* per-byte work in the serial portion.
+- *Single CRC calculated beforehand, with CSN outside the record:* segments produced by compaction
+  contain records from different batches and still need a CSN per record.
+- *Combine two CRCs using CRC algebra:* avoids the second field, but adds another algorithm
+  to verify to save 4 bytes.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Verification: frame fuzzing; deliberate corruption of every field (every damage detected);
+  SPK-09 measures separate header and body CRCs.

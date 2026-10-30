@@ -1,47 +1,59 @@
-# ADR-0006 — Transazioni multiserie 2PC-like con un unico `multiserie.log`
+<a id="adr-0006--transazioni-multiserie-2pc-like-con-un-unico-multiserielog"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («Serie speciale
-  Registri», «Transazioni multiserie»)
-- **Riferimenti:** [05 Transazioni](../05-transazioni.md), INV-T3, INV-T4, INV-T5, INV-W2
+# ADR-0006 — 2PC-like multiseries transactions with a single `multiserie.log`
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision ("Special Serie
+  Registri," "Multiseries transactions")
+- **References:** [05 Transactions](../05-transazioni.md), INV-T3, INV-T4, INV-T5, INV-W2
 
-Le Serie sono fisicamente indipendenti e non esiste un WAL globale. Una transazione che
-modifica più Serie deve comunque essere atomica, anche attraverso un crash.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-- Una transazione che modifica più Serie segue un protocollo equivalente al two-phase commit:
-  BEGIN, PREPARE sui partecipanti, flush dei loro WAL, decisione durevole, COMMIT o ABORT,
-  applicazione sui partecipanti.
-- Tutte le modifiche condividono un unico TXID.
-- La decisione è registrata in `Registri/multiserie.log`: un solo file per Archivio, nessun
-  file per transazione, group commit dove appropriato.
-- La transazione è committed solo quando la decisione COMMIT è durevole in `multiserie.log`.
-- In recovery il Recovery Manager legge `multiserie.log`, individua le transazioni preparate o
-  incomplete e completa COMMIT o ABORT sui WAL dei partecipanti.
+Serie are physically independent, and there is no global WAL. A transaction that
+modifies multiple Serie must still be atomic, including across a crash.
 
-## Conseguenze
+<a id="decisione"></a>
 
-- Le transazioni single-Series non pagano nulla.
-- Un commit multiserie costa almeno due flush in sequenza.
-- Tra PREPARE e decisione i documenti coinvolti hanno una modifica pendente da gestire senza
-  fermare il writer della Serie.
-- `multiserie.log` è un punto condiviso dell'Archivio e va troncato.
+## Decision
 
-## Alternative considerate
+- A transaction that modifies multiple Serie follows a protocol equivalent to two-phase commit:
+  BEGIN, PREPARE on the participants, flush their WALs, durable decision, COMMIT or ABORT,
+  apply to the participants.
+- All changes share a single TXID.
+- The decision is recorded in `Registri/multiserie.log`: one file per Archivio, no
+  per-transaction file, and group commit where appropriate.
+- The transaction is committed only when the COMMIT decision is durable in `multiserie.log`.
+- During recovery, the Recovery Manager reads `multiserie.log`, identifies prepared or
+  incomplete transactions, and completes COMMIT or ABORT on the participants' WALs.
 
-- *WAL globale per le transazioni multiserie:* atomicità con un solo flush, ma reintroduce un
-  log di dati condiviso; escluso dalla specifica.
-- *Un file per transazione:* escluso dalla specifica.
-- *Nessuna transazione multiserie (saga applicative):* non soddisfa il requisito.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-- Rischi: RSK-05, RSK-06.
-- Verifica: SPK-07 (modello del protocollo con crash in ogni punto); FI-03, FI-04, FI-05,
+- Single-Serie transactions incur no overhead.
+- A multiseries commit costs at least two sequential flushes.
+- Between PREPARE and the decision, the affected documents have a pending change that must be managed without
+  stopping the Serie writer.
+- `multiserie.log` is a shared point in the Archivio and must be truncated.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Global WAL for multiseries transactions:* atomicity with a single flush, but it reintroduces a
+  shared data log; ruled out by the specification.
+- *One file per transaction:* ruled out by the specification.
+- *No multiseries transactions (application sagas):* does not meet the requirement.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-05, RSK-06.
+- Verification: SPK-07 (protocol model with a crash at every point); FI-03, FI-04, FI-05,
   FI-12.
-- Aperto: ordine di commit di Archivio (QA-06), stato PREPARED (QA-07), troncamento (QA-08),
-  isolamento (QA-09).
+- Open: Archivio commit order (QA-06), PREPARED state (QA-07), truncation (QA-08),
+  isolation (QA-09).

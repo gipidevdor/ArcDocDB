@@ -1,71 +1,79 @@
-# Revisione della consegna locale dei writer
+<a id="revisione-della-consegna-locale-dei-writer"></a>
 
-Lettura dell'autore sul codice finale e sui dati della copia congelata;
-lettura indipendente e verifica integrata conservate nel
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/catalogo.lisp).
-I due rilievi della prima lettura sono conservati nella
-[tabella delle decisioni](writer-handoff-decisioni.md#prima-lettura-indipendente-e-correzioni):
-contratto dei retry e complessità del controllo degli stati, entrambi corretti.
+# Local writer handoff review
 
-| Sorgente | SHA-256 |
+Author's reading of the final code and the frozen copy's data;
+independent reading and integrated verification retained in the
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/catalogo.lisp).
+The two findings from the first reading are retained in the
+[decision table](writer-handoff-decisioni.md#prima-lettura-indipendente-e-correzioni):
+retry contract and state-check complexity, both corrected.
+
+| Source | SHA-256 |
 |---|---|
 | `queue.lisp` | `244259780ecaf905d21a641417abf58a4368bdf3cc24a09fc0d34c4284684f90` |
 | `handoff.lisp` | `ee90c809ef51134efa21e08b819e5530304efaf9f9e26b63c7e4afbf6d48e607` |
 | `tests/execution/handoff.lisp` | `7f6403baba22b175d3047cfd0ba92d7f5ca8313668242a884e5954627f3d5e6e` |
 
-## Lettura dell'autore
+<a id="lettura-dellautore"></a>
 
-| Punto C1 | Esito e ambito |
+## Author's reading
+
+| C1 point | Outcome and scope |
 |---|---|
-| 1. Requisiti/ADR | REQ-CON-001/002/004/005 e REQ-AFF-008; ADR-0045 §§6/8. Nessun cambio di requisito o formato. |
-| 2. Invarianti | INV-P1/P2: FIFO, lease e quantum cumulativo; INV-P5/P6: solo guard locale, nessun blocco o stato fra Serie. INV-A8/V4: budget e proprietari espliciti. Oracolo di 7200 passi e prove su thread reali; nessuna qualifica dell'intero motore. |
-| 3. Errori | Full/busy precedono l'accettazione; busy al termine conserva la lease e non richiede rielaborazione. Gettoni vecchi/estranei e target invalidi rifiutati. Generation permanente, not-ready non eleggibile/duplicato. FI privata sulle guardie e sette stati incoerenti; invarianti al controller per fail-stop. |
-| 4. Limiti | Nessun nuovo ciclo/ricorsione/attesa nel prodotto; un tentativo CAS per guard. Prelievo delegato bounded dal quantum e dallo span. I timeout e le attese con lease nelle fixture forzano interleaving, non costituiscono compiti del prodotto. |
-| 5. Allocazioni | Oggetti e ring all'avvio; nessuna allocazione esplicita nel percorso normale. Dieci campioni preallocati osservano zero heap; controllo positivo rileva 16.777.472 byte. Misura seriale locale, esclusi startup, errori e controller; nessuna prova universale. |
-| 6. Dati verificati | Payload interno opaco, ownership trasferita al conteggio riuscito; FIFO/span/lease delegati alle primitive. Nessun dato persistente decodificato o restituito da questo componente. |
-| 7. Decisioni | Inventario scalari/CASE/cleanup completo; nessun nuovo and/or composto in handoff. Raw 173/190 espressioni e 16/16 esiti; 17 forme non marcate incluse, nessuna esclusione o MC/DC completa. Tutti i 16 mutanti compilano e sono rilevati. |
-| 8. Proprietà | Wrapper e ring privati di una Serie. Guard del ring protegge anche stato/count; lease lega owner/generation al thread. Coda interna non esposta, copier assente; nessuna seconda guard. |
-| 9. Tracciabilità/check | Annotazioni REQ coerenti; build forzata senza avvisi, suite execution riuscita. `make check` finale passa sulla base `4215fca`, con sorgenti stabili; record e output nel catalogo. Nessun requisito promosso. |
-| 10. Standard | Safety 3, ftype completi, slot tipizzati, docstring pre/post/errori, funzioni sotto 60 righe. Helper degli stati con otto e quattro percorsi, entro COD-13; nessuna deviazione approvata o introdotta. |
-| 11. Parallelismo | Messaggi modificano solo la propria Serie. Obbligo comune futuro solo su avvio/riaccodamento del tratto. B avanza con A che mantiene guard e lease nella fixture; nessuna misura di throughput, fairness o latenza del database. |
-| 12. Atomicità | Nessun cambiamento durevole o eliminazione. Count e decisione ready/idle sono coordinati nella stessa sezione locale; release owner precede stato finale e rilascio guard. |
+| 1. Requirements/ADR | REQ-CON-001/002/004/005 and REQ-AFF-008; ADR-0045 §§6/8. No requirement or format change. |
+| 2. Invariants | INV-P1/P2: FIFO, lease, and cumulative quantum; INV-P5/P6: local guard only, no blocking or state across Serie. INV-A8/V4: explicit budgets and owners. 7200-step oracle and real-thread tests; no qualification of the whole engine. |
+| 3. Errors | Full/busy precede acceptance; busy at end retains the lease and does not require reprocessing. Old/foreign tokens and invalid targets rejected. Permanent generation, not-ready ineligible/duplicate. Private FI on guards and seven inconsistent states; invariants to the controller for fail-stop. |
+| 4. Bounds | No new loop/recursion/wait in the product; one CAS attempt per guard. Pop delegated, bounded by quantum and span. Timeouts and waits with leases in fixtures force interleavings, and are not product tasks. |
+| 5. Allocations | Objects and rings at startup; no explicit allocation on the normal path. Ten preallocated samples observe zero heap; positive control detects 16,777,472 bytes. Local serial measurement, excluding startup, errors, and controller; no universal proof. |
+| 6. Verified data | Opaque internal payload, ownership transferred on successful count; FIFO/span/lease delegated to primitives. No persistent data decoded or returned by this component. |
+| 7. Decisions | Complete scalar/CASE/cleanup inventory; no new compound and/or in handoff. Raw 173/190 expressions and 16/16 outcomes; 17 unmarked forms included, no exclusions or complete MC/DC. All 16 mutants compile and are detected. |
+| 8. Ownership | Wrappers and rings private to a Serie. Ring guard also protects state/count; lease ties owner/generation to the thread. Internal queue not exposed, no copier; no second guard. |
+| 9. Traceability/check | Consistent REQ annotations; forced build without warnings, execution suite passes. Final `make check` passes at base `4215fca`, with stable sources; record and output in the catalog. No requirement promoted. |
+| 10. Standards | Safety 3, complete ftypes, typed slots, pre/post/error docstrings, functions under 60 lines. State helpers with eight and four paths, within COD-13; no deviation approved or introduced. |
+| 11. Parallelism | Messages modify only their own Serie. Future shared obligation only at slice start/requeue. B progresses while A holds guard and lease in the fixture; no measurement of database throughput, fairness, or latency. |
+| 12. Atomicity | No durable change or deletion. Count and ready/idle decision coordinated within the same local section; owner release precedes final state and guard release. |
 
-Nessun rilievo funzionale residuo nel contratto locale. Il chiamante deve
-conservare ed eseguire una sola volta il compito restituito da `:schedule`;
-il wrapper non implementa lista pronta, risvegli, shutdown o pool adattivo.
-Non garantisce progresso se il chiamante abbandona l'obbligo o la lease.
+No remaining functional findings within the local contract. The caller must
+retain and execute exactly once the task returned by `:schedule`;
+the wrapper does not implement a ready list, wakeups, shutdown, or an adaptive pool.
+It does not guarantee progress if the caller abandons the obligation or lease.
 
-## Lettura indipendente
+<a id="lettura-indipendente"></a>
 
-La [lettura originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/lettura-indipendente.lisp)
-conserva i dodici punti verbatim e l’appendice che chiude il check sulla
-base `4215fca`. La [lettura dell’autore](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/lettura-autore.lisp)
-conserva separatamente il documento e il suo Git blob prima delle aggiunte
-editoriali finali. I [probe del revisore](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/probe-revisore.lisp)
-conservano sia l’errore dell’adattatore ispettivo sia la lettura corretta;
-i metadati mancanti sono dichiarati senza ricostruzione.
+## Independent reading
 
-L’integrazione successiva della validazione UTF-8 su `7f8ca93` aggiunge
-il modulo codec ad ASDF e la relativa riga all’indice. Il codice execution,
-i suoi test e i due strumenti della campagna restano invariati; ASDF e
-l’indice conservano entrambi i contributi. La [verifica completa dell’integrazione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/check-integrato.lisp)
-passa con exit 0 e sorgenti stabili: 220 test di modulo più smoke,
-40 file nel linter senza violazioni e dieci spike. Il nuovo SHA-256 ASDF è
+The [original reading](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/lettura-indipendente.lisp)
+retains the twelve points verbatim and the appendix closing the check at
+base `4215fca`. The [author's reading](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/lettura-autore.lisp)
+retains the document and its Git blob separately, before final editorial
+additions. The [reviewer probes](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/probe-revisore.lisp)
+retain both the inspection adapter error and the corrected reading;
+missing metadata is declared without reconstruction.
+
+The subsequent integration of UTF-8 validation at `7f8ca93` adds
+the codec module to ASDF and its row to the index. Execution code,
+its tests, and the two campaign tools remain unchanged; ASDF and
+the index retain both contributions. The [full integration check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/check-integrato.lisp)
+passes with exit 0 and stable sources: 220 module tests plus smoke,
+40 files in the linter without violations, and ten spikes. The new ASDF SHA-256 is
 `189c9601616e7b4f013d68954fa0a249b76f9416096b19950b841a4c63621b7e`.
-L’[appendice indipendente](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/lettura-indipendente.lisp)
-verifica separatamente questa integrazione, conservando la lettura precedente.
+The [independent appendix](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/lettura-indipendente.lisp)
+checks this integration separately, retaining the previous reading.
 
-## Strumenti e tentativi conservati
+<a id="strumenti-e-tentativi-conservati"></a>
 
-Gli strumenti C4 sono compilati per intero con warning/style-warning fatali.
-I self-test verificano marker autentici, target mancanti/ambigui, sink errato,
-clock nullo, destinazione esistente e persistenza dei report parziali.
-Baseline, log dei sedici mutanti e misure sono conservati integralmente.
+## Tools and retained attempts
 
-I primi due tentativi dell'adattatore di compilazione hanno fallito prima
-delle campagne: contrib `sb-md5` non precaricato durante `compile-file`,
-poi argv SBCL non impostato per il main del FASL. L'adattatore corretto
-precarica i contrib e imposta entrambi gli argv. Il primo esportatore della
-copertura cercava `index.html` invece di `cover-index.html`: il path è corretto,
-senza modificare o ripetere la campagna di copertura. Output e sorgenti di
-questi tentativi sono conservati; non vengono conteggiati come mutanti rilevati.
+C4 tools are compiled in full with fatal warning/style-warning.
+Self-tests check authentic markers, missing/ambiguous targets, wrong sink,
+zero clock, existing destination, and persistence of partial reports.
+Baseline, logs for all sixteen mutants, and measurements are retained in full.
+
+The compilation adapter's first two attempts failed before
+the campaigns: contrib `sb-md5` not preloaded during `compile-file`,
+then SBCL argv not set for the FASL main. The corrected adapter
+preloads contribs and sets both argv values. The first coverage
+exporter looked for `index.html` instead of `cover-index.html`: the path was corrected,
+without changing or repeating the coverage campaign. Output and sources for
+these attempts are retained; they are not counted as detected mutants.

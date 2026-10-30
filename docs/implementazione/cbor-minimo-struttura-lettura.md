@@ -1,26 +1,28 @@
-# Item CBOR con testate minime — prima lettura C1
+<a id="item-cbor-con-testate-minime--prima-lettura-c1"></a>
 
-Lettura del coordinatore indipendente dall'autore del prodotto, sul diff
-congelato prima delle campagne. Riferimento: package `9c9edc4`, scanner
-`e3d7d77`, wrapper minimo `f1afe79`. I risultati runtime sono separati.
+# CBOR items with minimal headers — first C1 reading
 
-| Punto della checklist | Riscontro e limite |
+Coordinator reading independent of the product author, on the diff
+frozen before campaigns. Reference: package `9c9edc4`, scanner
+`e3d7d77`, minimal wrapper `f1afe79`. Runtime results are separate.
+
+| Checklist item | Finding and limit |
 |---|---|
-| 1. Requisiti e ADR | REQ-LIM-001/002, AFF-004/008 e ADR-0014/0048; incremento locale del codec, senza chiusura dei gate. |
-| 2. Invarianti | INV-F1/A8/P6: input immutabile, budget prima dell'ammissione, scratch esclusivo; progresso e postcondizioni del kernel preservati. |
-| 3. Errori | Preflight invariato prima del reset; scelta del lettore prima di contesto/nodi; minimalità precede payload/depth. Drain prima della lettura della coda; fallback vuoto dal lettore base. Nessun nuovo handler. |
-| 4. Limiti | Repeat SPAN, drain102 e stack102 invariati; nessun nuovo ciclo, ricorsione o attesa. Ogni passo avanza almeno un byte o segnala errore. |
-| 5. Heap | Nessun nuovo oggetto, closure, callback o parametro keyword dinamico; solo booleano posizionale e chiamate dirette. Misura locale e sensore positivo ancora necessari. |
-| 6. Uscita | Tre valori della funzione risultato, dopo le postcondizioni su cursore/nodi/profondità/stato; nessuna vista o copia del payload. |
-| 7. Decisioni | Tre compound preservati e selezione semplice MINIMAL; tabella confrontata con righe effettive. Nessuna attestazione MC/DC o esclusione. |
-| 8. Proprietà | Buffer del chiamante; un solo worker possiede lo scratch. Nessuna mutazione globale, condivisione nuova o buffer trattenuto. |
-| 9. Integrazione | ASDF predisposto per wrapper e suite dedicata; la build attende il congelamento del corpus. Build/lint/trace/check restano da registrare. |
-| 10. Standard | safety3, FTYPE/docstring/REQ; funzioni entro 60 righe. Tre funzioni non banali preservano almeno due controlli attivi; wrapper deleganti banali. |
-| 11. Parallelismo | Nessuna scrittura, attesa o lock fra Serie; buffer/scratch indipendenti nelle prove con due worker. La sovrapposizione temporale non prova scaling. |
-| 12. Durabilità | Nessuna scrittura, eliminazione o pubblicazione durevole del kernel; punto di atomicità non applicabile. |
+| 1. Requirements and ADRs | REQ-LIM-001/002, AFF-004/008, and ADR-0014/0048; local codec increment, without gate closure. |
+| 2. Invariants | INV-F1/A8/P6: immutable input, budget before admission, exclusive scratch; kernel progress and postconditions preserved. |
+| 3. Errors | Unchanged preflight before reset; reader selection before context/nodes; minimality precedes payload/depth. Drain before tail reading; empty fallback from base reader. No new handler. |
+| 4. Limits | Repeat SPAN, drain102, and stack102 unchanged; no new loop, recursion, or wait. Every step advances at least one byte or signals an error. |
+| 5. Heap | No new object, closure, callback, or dynamic keyword parameter; only positional boolean and direct calls. Local measurement and positive sensor still needed. |
+| 6. Output | Three values from result function after cursor/nodes/depth/state postconditions; no payload view or copy. |
+| 7. Decisions | Three compound decisions preserved and simple MINIMAL selection; table compared with actual lines. No MC/DC attestation or exclusion. |
+| 8. Ownership | Caller buffer; one worker owns scratch. No global mutation, new sharing, or retained buffer. |
+| 9. Integration | ASDF prepared for wrapper and dedicated suite; build awaits corpus freeze. Build/lint/trace/check remain to be recorded. |
+| 10. Standard | safety3, FTYPE/docstrings/REQ; functions within 60 lines. Three nontrivial functions preserve at least two active checks; trivial delegating wrappers. |
+| 11. Parallelism | No write, wait, or lock between Serie; independent buffer/scratch in two-worker tests. Temporal overlap does not prove scaling. |
+| 12. Durability | No durable write, deletion, or publication by kernel; atomicity point not applicable. |
 
-Il corpo della scansione generica è spostato senza cambiare ordine delle
-operazioni. Il wrapper generico passa NIL; quello minimo passa T. Input,
-UTF-8, stack, item e lettori header sono byte-identici alla base.
-Nessun rilievo statico aperto. Compilazione, regressioni, corpus cieco,
-copertura, mutazioni e heap devono ancora confermare il comportamento.
+The generic scan body is moved without changing operation
+order. The generic wrapper passes NIL; the minimal wrapper passes T. Input,
+UTF-8, stack, item, and header readers are byte-identical to base.
+No open static findings. Compilation, regressions, blind corpus,
+coverage, mutations, and heap measurement must still confirm behavior.

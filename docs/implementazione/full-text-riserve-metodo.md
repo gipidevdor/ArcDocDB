@@ -1,45 +1,49 @@
-# Riserve full text — metodo e decisioni
+<a id="riserve-full-text--metodo-e-decisioni"></a>
 
-Incremento del 17 ottobre 2026 per ADR-0054, REQ-SEC-003/006/010 e REQ-CON-002.
-Prima dell'esecuzione: fixture documentale NNTP manuale di 25 byte, due configurazioni,
-73 byte di payload e U=145 per ciascuna. Modello indipendente su 128 operazioni;
-confronti dei run copiati e ricerche subject/body. Bordi cumulativi, ultima configurazione
-rifiutata, rotazione, cancellazione durante tutte le unita della piccola copia,
-generation/lease stale, sedici generazioni e quattro writer indipendenti.
+# Full-text reservations — method and decisions
 
-Heap: 100 warm-up, GC completa, 1000 prenotazioni/copie/query/cancellazioni; ID 1 e
-UINT64_MAX. Nessuna asserzione di latenza, RSS o durata realtime. Misura separata
-dalla copertura diagnostica, che esclude i test di allocazione. Conservare output
-originali e fallimenti; `make check` verifica anche integrazione, strumenti e spike.
+Increment dated October 17, 2026 for ADR-0054, REQ-SEC-003/006/010, and REQ-CON-002.
+Before execution: manual 25-byte NNTP document fixture, two configurations,
+73 payload bytes, and U=145 for each. Independent model over 128 operations;
+comparisons of copied runs and subject/body searches. Cumulative boundaries, rejected last
+configuration, rotation, cancellation during every small-copy unit,
+stale generation/lease, sixteen generations, and four independent writers.
 
-| Decisione composta | Condizioni da verificare |
+Heap allocation: 100 warmups, full GC, 1000 reservations/copies/queries/cancellations; IDs 1 and
+UINT64_MAX. No latency, RSS, or realtime-duration assertion. Measurement separate
+from diagnostic coverage, which excludes allocation tests. Preserve original
+outputs and failures; `make check` also verifies integration, tools, and spikes.
+
+| Compound decision | Conditions to verify |
 |---|---|
-| Costruzione | coda, 1..16 configurazioni, ordine ID/generazione, otto indici e due generazioni, capacita e costi prima delle allocazioni |
-| Lease | pool canonico, thread e generation della coda, stato sano, nessun effetto pendente |
-| Slot | oggetto canonico del pool, generation catturata positiva e senza wrap |
-| Sorgenti | tutti DONE, configurazioni canoniche attuali, nessun borrower, stessa row, run SEALED e costo coerente |
-| Ammissione | tutte le capacita fisiche, delta/staging cumulativi, tutti i bound file, row non gia trattenuta |
-| File | costo fisso una volta; richiesta maggiore del file vuoto distinta da rotazione prima dell'append |
-| Copia | prestito ancora posseduto; un byte/parola o transizione per passo; risultato solo dopo tutti gli indici |
-| Cancellazione | solo prima del trasferimento, rilascio esatto e idempotente fino al riuso; stale/trasferiti rifiutati |
-| Trasferimento | solo READY, staging restituito, delta/file/slot conservati senza reclaim per assenza |
-| Interruzione | effetto incompleto o fonte persa => pool FAULTED, riferimenti conservati, fail-stop della Serie al confine del caller |
+| Construction | queue, 1..16 configurations, ID/generation order, eight indexes and two generations, capacities and costs before allocations |
+| Lease | canonical pool, queue thread and generation, healthy state, no pending effect |
+| Slot | canonical pool object, positive captured generation without wrap |
+| Sources | all DONE, current canonical configurations, no borrower, same row, SEALED run, and consistent cost |
+| Admission | all physical capacities, cumulative delta/staging, all file bounds, row not already retained |
+| File | fixed cost once; request larger than empty file distinct from rotation before append |
+| Copy | loan still owned; one byte/word or transition per step; result only after every index |
+| Cancellation | only before transfer, exact idempotent release until reuse; stale/transferred rejected |
+| Transfer | only READY, staging returned, delta/file/slot preserved without reclamation by absence |
+| Interruption | incomplete effect or lost source => pool FAULTED, references retained, Serie fail-stop at caller boundary |
 
-La qualifica C1 completa e MC/DC restano aperte. Le due letture finali devono distinguere
-questa riserva locale dalla validazione generale del documento e dal binding agli esatti
-byte del PUT. Il pool non esegue append, SEAL, PREPARE, DECISION, H/ACK o query MVCC.
-Non e l'allocatore del catalogo o l'inventario durevole di un ACTIVE esistente.
+Full C1 qualification and MC/DC remain open. Both final readings must distinguish
+this local reservation from general document validation and binding to exact
+PUT bytes. Pool performs no append, SEAL, PREPARE, DECISION, H/ACK, or MVCC query.
+It is neither catalog allocator nor durable inventory of an existing ACTIVE.
 
-## Due letture del 17 ottobre 2026
+<a id="due-letture-del-17-ottobre-2026"></a>
 
-Lettura 1, dati e budget: riletti tutti i preflight prima dell'effetto, il costo fisso
-una volta per file, le somme di tutte le generazioni e la distinzione richiesta troppo
-grande/rotazione. Aggiunta una prova con prima configurazione ammessa e seconda rifiutata
-per token o bound. Le larghezze della copia usano le costanti del run esistente.
+## Two readings dated October 17, 2026
 
-Lettura 2, ownership e guasti: riletti i borrower, il rilascio del singolo task a copia
-conclusa, generation e lease catturate, cancellazione prima del trasferimento e costi
-permanenti dopo. Le uscite incomplete conservano gli effetti parziali e impongono fail-stop.
-Non sono revisione indipendente: binding PUT, pipeline WAL, prepared, pubblicazione e
-quiescenza restano da collegare. La factory richiede un pool autorevole e un ACTIVE nuovo;
-non dimostra canonicalita ne fa sparire i costi di altri pool o delle viste congelate.
+Reading 1, data and budgets: reread every preflight before effect, fixed cost
+once per file, sums over all generations, and request-too-large/rotation
+distinction. Added a test with first configuration admitted and second rejected
+by tokens or bound. Copy widths use existing-run constants.
+
+Reading 2, ownership and faults: reread borrowers, single-task release on copy
+completion, captured generation and lease, cancellation before transfer, and permanent
+costs afterward. Incomplete exits preserve partial effects and require fail-stop.
+Not independent review: PUT binding, WAL pipeline, prepared, publication, and
+quiescence remain to connect. Factory requires authoritative pool and new ACTIVE;
+it does not prove canonical identity or erase costs of other pools or frozen views.

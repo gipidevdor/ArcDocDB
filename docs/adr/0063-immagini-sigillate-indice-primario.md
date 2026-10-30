@@ -1,58 +1,64 @@
-# ADR-0063 — Completamento e verifica readonly delle immagini primarie
+<a id="adr-0063--completamento-e-verifica-readonly-delle-immagini-primarie"></a>
 
-- **Stato:** Accettata nell'integrazione incrementale autorizzata dall'autore il 2026-10-28
-- **Data:** 2026-10-28
-- **Riferimenti:** ADR-0057, ADR-0058; REQ-IDX-010, INV-I8, INV-A2, INV-A8, INV-P6
-- **Rapporto con la specifica:** concretizza un container derivato; nessun emendamento a WAL, SEAL, EDIT, DECISION o catalogo
+# ADR-0063 — Completion and read-only verification of primary images
 
-## Decisione
+- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-28
+- **Date:** 2026-10-28
+- **References:** ADR-0057, ADR-0058; REQ-IDX-010, INV-I8, INV-A2, INV-A8, INV-P6
+- **Relationship to the specification:** makes a derived container concrete; no amendment to WAL, SEAL, EDIT, DECISION, or catalog
 
-Un'immagine privata usa una pagina iniziale zero, pagine ARCIPG01 contigue
-dallo stesso dominio/generazione e una pagina finale ARCIRF01. La pagina
-finale descrive root, numero pagine/entry, seme e legame alla fonte canonica:
-Archivio, Serie, CSN e token di 32 byte fornito dal recovery autorevole.
-Il token e' un'identita' fidata del piano canonico, non un hash calcolato da
-questo codec o una garanzia crittografica. Il controller ne impedisce il
-riuso per piani diversi, comprese compaction allo stesso CSN.
+<a id="decisione"></a>
 
-ARCIRF01 versione 1 ha checksum CRC32C dell'intera pagina esclusi gli ultimi
-quattro byte. Geometria, offset e campi sono specificati nel
-[contratto](../implementazione/immagini-indice-paginato.md). La root e'
-l'ultima pagina dati: non si sigilla una prova vecchia o un lotto incompleto.
-La preparazione collega esattamente il file append al costruttore, scrive
-il footer e completa un durable flush prima di restituire. Il costruttore
-sigillato non puo' aggiungere altre pagine; un effetto incompleto e' FAULTED.
+## Decision
 
-Al riavvio si legge esclusivamente una capacita' readonly mantenuta viva,
-con EOF esatto osservato dal controller. Si verificano footer, fonte e seme,
-prefisso, tutte le pagine, digest e chiavi. Ogni entry deve essere ritrovata
-dalla root nello stesso slot fisico: due copie della stessa chiave non
-possono entrambe superare il controllo, neppure con payload identico.
-Un validatore fidato attesta ogni candidato rispetto alla fonte gia'
-recuperata, il cui conteggio esatto deve coincidere. Unicita', appartenenza
-e cardinalita' esatta stabiliscono la copertura delle entry. Pagine
-strutturalmente valide senza entry raggiungibili possono restare inutilizzate;
-non si certifica la raggiungibilita' di ogni pagina fisica.
+A private image uses an initial zero page, contiguous ARCIPG01 pages
+from the same domain/generation, and a final ARCIRF01 page. The final
+page describes root, page/entry counts, seed, and binding to the canonical source:
+Archivio, Serie, CSN, and a 32-byte token supplied by authoritative recovery.
+The token is a trusted identity of the canonical plan, not a hash calculated by
+this codec or a cryptographic guarantee. The controller prevents its
+reuse for different plans, including compactions at the same CSN.
 
-La verifica ha memoria di lavoro limitata, senza bitmap residente di tutte
-le pagine o chiavi, e un budget cumulativo di visite. Esaurimento e guasto
-non sono assenza di chiavi. Nessuna immagine parziale viene restituita come
-pronta. Una vista seriale adotta solo prove readonly verificate della stessa
-fonte; il cambio della fonte invalida la vista precedente.
+ARCIRF01 version 1 has a CRC32C checksum over the entire page except its final
+four bytes. Geometry, offsets, and fields are specified in the
+[contract](../implementazione/immagini-indice-paginato.md). The root is
+the last data page: an old proof or incomplete batch is not sealed.
+Preparation binds exactly the append file to the builder, writes
+the footer, and completes a durable flush before returning. A sealed
+builder cannot add more pages; an incomplete effect is FAULTED.
 
-## Autorita', rollback e limiti
+Restart reads exclusively through a retained read-only capability,
+with exact EOF observed by the controller. Footer, source, seed,
+prefix, all pages, digests, and keys are verified. Every entry must be found
+from the root in the same physical slot: two copies of the same key cannot
+both pass the check, even with identical payload.
+A trusted validator attests every candidate against the already recovered
+source, whose exact count must match. Uniqueness, membership,
+and exact cardinality establish entry coverage. Structurally valid
+pages without reachable entries may remain unused;
+reachability of every physical page is not certified.
 
-Il footer e' un indicatore di completamento del derivato, **non un commit**
-di dati o una nuova fonte di verita'. Un'immagine completa sopravvissuta
-anche senza conferma di flush puo' essere rivalidata readonly: la validita'
-dipende dai byte e dalla fonte committed, non dalla storia del suo ACK.
-Un'immagine incompatibile/corrotta non modifica la fonte: il futuro
-controller scegliera' esplicitamente ricostruzione o errore.
+Verification has bounded working memory, without a resident bitmap of all
+pages or keys, and a cumulative visit budget. Exhaustion and failure
+are not key absence. No partial image is returned as
+ready. A serial view adopts only verified read-only proofs of the same
+source; a source change invalidates the previous view.
 
-Questo incremento non autorizza una rinomina tramite un'API che richiede una
-decisione di catalogo assente. Nome canonico, inventario, riuso dei derivati
-nello startup M1, delta writer, MVCC e migrazione automatica restano da
-integrare. La pubblicazione qui e' soltanto la radice della vista seriale
-privata; non si dichiara uno swap concorrente o durevole nel catalogo.
-Il rollback rimuove un container derivato, ricostruibile dalle fonti: nessuna
-migrazione o cancellazione di dati utente e nessun nuovo lock fra Serie.
+<a id="autorita-rollback-e-limiti"></a>
+
+## Authority, rollback, and limits
+
+The footer is a derived object's completion indicator, **not a data commit**
+or a new source of truth. A complete image surviving
+even without flush acknowledgment can be revalidated read-only: validity
+depends on bytes and the committed source, not its ACK history.
+An incompatible/corrupt image does not change the source: the future
+controller will explicitly choose rebuilding or an error.
+
+This increment does not authorize renaming through an API requiring an
+absent catalog decision. Canonical name, inventory, reuse of derived objects
+in M1 startup, writer delta, MVCC, and automatic migration remain to be
+integrated. Publication here is only the private serial view's
+root; no concurrent swap or durable catalog swap is claimed.
+Rollback removes a derived container, rebuildable from sources: no
+migration or deletion of user data and no new lock between Serie.

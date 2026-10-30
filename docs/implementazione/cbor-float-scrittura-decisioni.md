@@ -1,32 +1,34 @@
-# Float CBOR — decisioni composte
+<a id="float-cbor--decisioni-composte"></a>
 
-Inventario sintattico dei due nuovi file C1, dopo la correzione statica
-della postcondizione del quoziente. Non esclude espressioni o rami e
-non attesta MC/DC, copertura completa o irraggiungibilità delle guardie.
+# CBOR floats — compound decisions
 
-| Funzione | Decisione | Condizioni e priorità |
+Syntactic inventory of the two new C1 files, after the static correction
+to the quotient postcondition. It excludes no expressions or branches and
+does not establish MC/DC, full coverage, or guard unreachability.
+
+| Function | Decision | Conditions and priority |
 |---|---|---|
-| check-float-cbor-range | AND di range | BUFFER octets; START index; END index; START≤END≤length |
-| check-float-cbor-words | AND del caso AI25 | HIGH zero; LOW≤65535, dopo entrambi i controlli u32 |
-| seleziona-float-cbor | OR di ingresso | AI27 oppure HIGH zero |
-| seleziona-float-cbor | AND riduzione64 | AI27 e bit64 accorciabili esattamente |
-| seleziona-float-cbor | AND riduzione32 | AI26 e bit32 accorciabili esattamente, anche dopo riduzione64 |
-| seleziona-float-cbor | OR di uscita | AI scelto27 oppure HIGH scelto zero |
+| check-float-cbor-range | range AND | BUFFER octets; START index; END index; START≤END≤length |
+| check-float-cbor-words | AI25-case AND | HIGH zero; LOW≤65535, after both u32 checks |
+| seleziona-float-cbor | entry OR | AI27 or HIGH zero |
+| seleziona-float-cbor | reduction64 AND | AI27 and bit64 can be shortened exactly |
+| seleziona-float-cbor | reduction32 AND | AI26 and bit32 can be shortened exactly, including after reduction64 |
+| seleziona-float-cbor | exit OR | selected AI27 or selected HIGH zero |
 
-Anche le relazioni numeriche concatenate conservano le componenti:
-START≤END e END≤length nel range; limite inferiore/esponente/limite
-superiore nelle quattro finestre normali/subnormali dei riduttori;
-BEGIN≤CURSOR, CURSOR≤NEXT e NEXT≤LIMIT nella guardia della destinazione.
+Chained numeric relations also retain their components:
+START≤END and END≤length in the range; lower bound/exponent/upper
+bound in the reducers' four normal/subnormal windows;
+BEGIN≤CURSOR, CURSOR≤NEXT, and NEXT≤LIMIT in the destination guard.
 
-La postcondizione del significando64 confronta separatamente le parole
-originali con quelle ricostruite. La seconda guardia usa IF: SHIFT<32
-ricostruisce LOW dai bit bassi del quoziente, altrimenti LOW deve essere
-zero. Non ricompone un u64. Il corpus include i passaggi fra SHIFT30,
-31, 32 e quelli superiori, nonché adiacenti non allineati.
+The significand64 postcondition separately compares the original
+words with the reconstructed words. The second guard uses IF: SHIFT<32
+reconstructs LOW from the quotient's low bits; otherwise LOW must be
+zero. It does not reconstruct a u64. The corpus includes transitions between SHIFT30,
+31, 32, and larger shifts, as well as unaligned neighbors.
 
-I controlli freddi coprono argomenti, forme e risultato completo, inclusi
-selezione64→32→16, NaN accorciabili/non accorciabili e coda fisica oltre
-END. Le guardie interne e i default inattesi rimangono nel denominatore
-della coverage anche quando non raggiunti dal dominio pubblico valido.
-La [preregistrazione](cbor-float-scrittura-metodo.md) definisce il metodo;
-gli esiti saranno distinti dall'inventario dopo le campagne.
+Cold checks cover arguments, forms, and the full result, including
+selection64→32→16, shorten-able/non-shorten-able NaNs, and the physical tail beyond
+END. Internal guards and unexpected defaults remain in the coverage
+denominator even when unreachable from the valid public domain.
+The [preregistration](cbor-float-scrittura-metodo.md) defines the method;
+outcomes will be distinguished from the inventory after the campaigns.

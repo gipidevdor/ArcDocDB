@@ -1,93 +1,103 @@
-# Radice ACTIVE vuota con fonti recuperate
+<a id="radice-active-vuota-con-fonti-recuperate"></a>
 
-Il bootstrap pubblica le fonti GET prima del primo documento. Completa il
-ponte [ACTIVE/CLOSED](get-fonti-serie.md) e usa l'header preparato dal
-[modulo di apertura](inizializzazione-active.md). La decisione durevole EDIT
-e l'ammissione delle richieste rimangono responsabilità del controller esterno.
+# Empty ACTIVE root with recovered sources
 
-## Protocollo
+Bootstrap publishes GET sources before the first document. It completes the
+[ACTIVE/CLOSED](get-fonti-serie.md) bridge and uses the header prepared by the
+[opening module](inizializzazione-active.md). The durable EDIT decision
+and request admission remain the external controller's responsibility.
 
-1. Preparare il nuovo segmento writer: header di 64 byte, file e directory
-   sincronizzati, readonly associato fisicamente all'append.
-2. Completare la decisione EDIT che apre il segmento nel manifest.
-3. Creare un solo controller per quel log, root NIL e next-offset 64.
-   Acquisire la lease e creare la sorgente GET, preferibilmente tramite
+<a id="protocollo"></a>
+
+## Protocol
+
+1. Prepare the new writer segment: 64-byte header, file and directory
+   synchronized, read-only physically bound to append.
+2. Complete the EDIT decision opening the segment in the manifest.
+3. Create only one controller for that log, root NIL and next-offset 64.
+   Acquire the lease and create the GET source, preferably through
    `crea-sorgente-get-preparata`.
-4. Costruire `fonti-get-serie` dai CLOSED recuperati e chiamare
+4. Build `fonti-get-serie` from recovered CLOSED segments and call
    `inizializza-fonti-get-attive(source, lease, sources)`.
-5. Dopo il ritorno, ammettere le richieste. Le location recuperate sono
-   risolvibili dalla stessa radice; il nuovo ACTIVE non contiene documenti.
-6. Registrare il primo lotto con `previous = radice-vuota`. Pubblicarlo
-   con il normale protocollo WAL prima di esporre le sue location nel primary.
+5. After return, admit requests. Recovered locations are
+   resolvable from the same root; the new ACTIVE contains no documents.
+6. Register the first batch with `previous = radice-vuota`. Publish it
+   through normal WAL protocol before exposing its locations in the primary index.
 
-Il bootstrap non crea un record WAL, non incrementa CSN o generazioni evento
-e non modifica frontiere, ring o ultimo CSN. Il CAS pubblica memoria nello
-slot canonico della Serie. Non attesta la decisione EDIT né un commit documento.
-Il controller legacy iniziale NIL può ancora registrare direttamente il primo lotto.
+Bootstrap creates no WAL record, increments neither CSN nor event generation,
+and modifies neither frontiers, ring, nor last CSN. CAS publishes memory in the
+Serie's canonical slot. It certifies neither EDIT decision nor document commit.
+The initial legacy NIL controller may still register the first batch directly.
 
-## API e struttura
+<a id="api-e-struttura"></a>
 
-| API | Contratto |
+## API and structure
+
+| API | Contract |
 |---|---|
-| `series:inizializza-radice-serie(controller, lease, root)` | Una sola inizializzazione con radice opaca non NIL, controller mai usato |
-| `get.resolver:inizializza-radice-get-attiva(source, lease, :content)` | Header fermo a 64; radice vuota pubblicata e pianificata |
-| `get.directory:inizializza-fonti-get-attive(source, lease, sources)` | Stessa vista canonica e ID ACTIVE assente dai CLOSED; content = sources |
+| `series:inizializza-radice-serie(controller, lease, root)` | One initialization with opaque non-NIL root, never-used controller |
+| `get.resolver:inizializza-radice-get-attiva(source, lease, :content)` | Header still at 64; empty root published and planned |
+| `get.directory:inizializza-fonti-get-attive(source, lease, sources)` | Same canonical view and ACTIVE ID absent from CLOSED; content = sources |
 
-La radice vuota contiene soltanto sorgente, contenuto e metadati scalari:
-directory NIL, count/puts/nodes zero, end 64. Non alloca pagine o vettori
-di righe. Il payload di pagine/righe è zero; l'oggetto Lisp della radice
-e le fonti esistenti hanno comunque un costo. Il primo delta inserisce
-la pagina di rango zero e quattro nodi, mantenendo immutabile la radice vuota.
+The empty root contains only source, content, and scalar metadata:
+directory NIL, count/puts/nodes zero, end 64. It allocates neither pages nor row
+vectors. Page/row payload is zero; the Lisp root object
+and existing sources still have a cost. The first delta inserts
+the rank-zero page and four nodes, keeping the empty root immutable.
 
-Un candidato ACTIVE prima del primo lotto è impossibile: nessun offset
-appartiene al range [64,64). Il resolver segnala il guasto del candidato
-e libera il pin EBR; non restituisce assenza da una location pubblicata incoerente.
-I CLOSED seguono il percorso esistente, con una sola acquisizione della radice.
+An ACTIVE candidate before the first batch is impossible: no offset
+belongs to [64,64). The resolver signals candidate failure
+and releases the EBR pin; it does not return absence from an inconsistent published location.
+CLOSED segments follow the existing path with one root acquisition.
 
-## Rifiuti e interruzioni
+<a id="rifiuti-e-interruzioni"></a>
 
-Lease e salute precedono la verifica delle fonti. Owner/duplicato, radice NIL,
-controller già avviato, readonly/append non aperti e file avanzato sono rifiuti ordinari
-prima dell'effetto. Un controller che abbia usato e ritirato eventi rimane
-avviato, anche con ring vuoto: event-generation deve essere zero.
+## Rejections and interruptions
 
-Durante l'effetto, planned-root viene impostata prima del CAS NIL → root.
-Il writer è esclusivo e l'ammissione resta chiusa fino al ritorno. Invariante
-CAS/radice/ring o uscita incompleta rendono l'Archivio FAULTED, propagando
-la causa originale; nessun rollback, retry, close o unlink. Il risultato
-pubblicato non è una prova di quiescenza.
+Lease and health precede source verification. Owner/duplicate, NIL root,
+already started controller, unopened read-only/append, and advanced file are ordinary rejections
+before the effect. A controller that has used and retired events remains
+started even with an empty ring: event-generation must be zero.
 
-Il cleanup è installato prima dell'acquisizione dell'effetto locale:
-un'interruzione durante quell'acquisizione non lascia il controller HEALTHY
-con un effetto orfano. La rientranza è rifiutata prima del cleanup, che
-non deve rilasciare una risorsa appartenente all'effetto già in corso.
+During the effect, planned-root is set before CAS NIL → root.
+The writer is exclusive and admission stays closed until return. A CAS/root/ring
+invariant or incomplete exit makes the Archivio FAULTED, propagating
+the original cause; no rollback, retry, close, or unlink. The published
+result is not proof of quiescence.
 
-Il grafo content e le capacità sono presi in prestito. Il proprietario ne
-garantisce immutabilità e lifetime; le pubblicazioni successive conservano
-le location ancora osservabili dai reader ammessi. Non è introdotto uno
-stato condiviso tra Serie o una scrittura sul percorso GET.
+Cleanup is installed before local effect acquisition:
+an interruption during that acquisition does not leave the controller HEALTHY
+with an orphaned effect. Reentrancy is rejected before cleanup, which
+must not release a resource belonging to the effect already in progress.
 
-## Decisioni da verificare
+The content graph and capabilities are borrowed. The owner guarantees
+immutability and lifetime; subsequent publications retain
+locations still observable by admitted readers. No shared state across Serie
+or write on the GET path is introduced.
 
-| ID | Decisione | Casi |
+<a id="decisioni-da-verificare"></a>
+
+## Decisions to verify
+
+| ID | Decision | Cases |
 |---|---|---|
-| AEV-D01 | Root non NIL | NIL e valore canonico |
-| AEV-D02 | root NIL, planned NIL, event-generation zero, count zero | Ogni condizione separata, ring vuoto dopo uso, avvio ripetuto |
-| AEV-D03 | Il CAS restituisce NIL | Successo e CAS discordante tramite FI; precede la postcondizione EQ |
-| AEV-D03b | Root pubblicata e pianificata EQ al risultato | Entrambe vere nel protocollo; mutante che omette planned-root rileva la seconda foglia falsa |
-| AEV-D04 | Readonly e append aperti | Entrambi aperti; ciascuna capacità non aperta separatamente |
-| AEV-D05 | next-offset, scritto e durevole tutti a 64 | Ogni frontiera diversa separatamente |
-| AEV-D06 | Vista CLOSED EQ a owner ACTIVE | Altra vista, canonica |
-| AEV-D07 | ID ACTIVE assente dai CLOSED | Assente, presente, geometria impossibile |
-| AEV-D08 | Nessun effetto locale già posseduto | Avvio normale e rientranza, senza rilascio dell'effetto precedente |
+| AEV-D01 | Non-NIL root | NIL and canonical value |
+| AEV-D02 | root NIL, planned NIL, event-generation zero, count zero | Every condition separately, empty ring after use, repeated startup |
+| AEV-D03 | CAS returns NIL | Success and mismatching CAS via FI; precedes EQ postcondition |
+| AEV-D03b | Published and planned roots EQ to result | Both true in protocol; mutant omitting planned-root detects second false leaf |
+| AEV-D04 | Read-only and append open | Both open; each capability not open separately |
+| AEV-D05 | next-offset, written and durable all at 64 | Each different frontier separately |
+| AEV-D06 | CLOSED view EQ to ACTIVE owner | Other view, canonical |
+| AEV-D07 | ACTIVE ID absent from CLOSED | Absent, present, impossible geometry |
+| AEV-D08 | No local effect already owned | Normal startup and reentrancy, without releasing previous effect |
 
-La revisione indipendente, le prove funzionali, le mutazioni e le misure
-locali sono registrate nella campagna dell'incremento. Non qualificano
-apertura completa, recovery, rotazione o reclaim del motore.
+Independent review, functional tests, mutations, and local
+measurements are recorded in the increment's campaign. They do not qualify
+complete engine opening, recovery, rotation, or reclamation.
 
-AEV-D03b è una postcondizione difensiva. Con lease esclusiva, il CAS appena
-riuscito imposta root al risultato e il writer ha già impostato planned-root:
-le foglie false non sono raggiungibili da una transizione conforme. Un CAS
-discordante fallisce in D03 e non copre D03b. Il mutante planned-root
-dimostra sensibilità al difetto strutturale, senza attestare copertura MC/DC
-di quelle foglie nel prodotto conforme.
+AEV-D03b is a defensive postcondition. With an exclusive lease, the just-successful
+CAS sets root to result and the writer has already set planned-root:
+false leaves are unreachable through a conforming transition. A mismatching
+CAS fails at D03 and does not cover D03b. The planned-root mutant
+demonstrates sensitivity to the structural defect without certifying MC/DC coverage
+of those leaves in the conforming product.

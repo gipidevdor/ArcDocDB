@@ -1,105 +1,114 @@
-# Linguaggio visivo
+<a id="linguaggio-visivo"></a>
 
-Tutto ciò che nel repository si vede — marchio, immagini, badge, pagina iniziale — segue
-queste regole. Sono poche perché devono essere rispettate sempre.
+# Visual language
 
-## Principi
+The repository's identity, images and entry pages follow these rules.
 
-1. **Un solo colore, un solo significato.** L'identità è monocroma. L'unico colore è l'ambra,
-   e indica sempre e solo *ciò che può cambiare*: il segmento `ACTIVE` nei disegni, la fase del
-   progetto tra i badge. Tutto ciò che è immutabile è inchiostro.
-2. **Niente che non serva.** Ogni elemento deve dire qualcosa del sistema. Nessuna decorazione,
-   nessuna ombra, nessun gradiente, nessuna cornice.
-3. **Il materiale è la pagina.** Le immagini hanno sfondo trasparente e si posano sulla pagina
-   di GitHub, chiara o scura. Ogni immagine esiste nelle due varianti.
-4. **Una sola forma.** La capsula: una linea con le estremità tonde. È un segmento. Marchio,
-   illustrazione e diagramma sono fatti solo di capsule, archi e linee sottili.
-5. **I numeri sono testo.** Un numero si scrive nel testo, dove può essere letto e corretto.
-   Non diventa un badge.
+<a id="principi"></a>
+## Principles
 
-## Colori
+1. **One color, one meaning.** The identity is monochrome. Amber is the only
+   accent and always denotes *what can change*: the `ACTIVE` segment in drawings,
+   or the project phase in a badge. Immutable elements use ink.
+2. **Only what serves a purpose.** Every element communicates something about
+   the system. No decoration, shadows, gradients or borders.
+3. **The page is the material.** Images have transparent backgrounds and sit on
+   GitHub's light or dark page. Each image has both variants.
+4. **One shape.** The capsule: a line with rounded ends. It represents a segment.
+   The mark, illustrations and diagrams use capsules, arcs and thin lines.
+5. **Numbers are text.** Keep numbers in text where they can be read and corrected.
+   Do not turn them into badges.
 
-| Nome | Chiaro | Scuro | Uso |
+<a id="colori"></a>
+## Colors
+
+| Name | Light | Dark | Use |
 |---|---|---|---|
-| Inchiostro | `#1d1d1f` | `#f5f5f7` | marchio, segmenti immutabili, testo dei nodi |
-| Grafite | `#6e6e73` | `#a1a1a6` | descrizioni, etichette, fili del diagramma |
-| Nebbia | `#d2d2d7` | `#48484a` | contorni, parentesi, tratteggi |
-| **Ambra** | `#c9892f` | `#e9a84c` | ciò che cambia: `ACTIVE`, fase corrente |
+| Ink | `#1d1d1f` | `#f5f5f7` | Mark, immutable segments, node text |
+| Graphite | `#6e6e73` | `#a1a1a6` | Descriptions, labels, diagram connections |
+| Mist | `#d2d2d7` | `#48484a` | Outlines, brackets, dashed lines |
+| **Amber** | `#c9892f` | `#e9a84c` | What changes: `ACTIVE`, current phase |
 
-Nient'altro. Verde e rosso compaiono solo dove li impone GitHub (l'esito della CI).
+No other colors. Green and red appear only where GitHub supplies them, such as CI status.
 
-## Tipografia
+<a id="tipografia"></a>
+## Typography
 
-Carattere di sistema, in quest'ordine: `-apple-system`, `BlinkMacSystemFont`, `SF Pro Text`,
+Use system fonts in this order: `-apple-system`, `BlinkMacSystemFont`, `SF Pro Text`,
 `Helvetica Neue`, `Helvetica`, `Arial`, `sans-serif`.
 
-| Ruolo | Corpo | Peso | Spaziatura |
+| Role | Size | Weight | Spacing |
 |---|---|---|---|
-| Nodo del diagramma | 14 | 500 | normale |
-| Descrizione | 13 | 400 | normale |
-| Etichetta (maiuscolo) | 9,5–10 | 600 | +1,2 – +1,5 |
+| Diagram node | 14 | 500 | Normal |
+| Description | 13 | 400 | Normal |
+| Label, uppercase | 9.5–10 | 600 | +1.2 – +1.5 |
 
-Il nome del progetto è testo vero nel README, non un'immagine. Le etichette in maiuscolo
-spaziato sono riservate ai nomi di stato e alle proprietà (`ACTIVE`, `IMMUTABLE`).
+The project name is actual README text, not an image. Spaced uppercase labels
+are reserved for state names and properties (`ACTIVE`, `IMMUTABLE`).
 
-## Marchio
+<a id="marchio"></a>
+## Mark
 
-Un arco sopra tre segmenti: l'Archivio e ciò che custodisce. Il primo segmento è ambra.
+An arc above three segments: the Archivio and what it holds. The first segment is amber.
 
-| Costruzione | Valore |
+| Construction | Value |
 |---|---|
-| Griglia | 64 × 64 |
-| Tratto | 5, estremità tonde, per arco e segmenti |
-| Arco | semicerchio di raggio 21, centro (32, 30) |
-| Segmenti | da x = 11 a x = 53, a y = 39, 48, 57 (passo 9) |
-| Spazio di rispetto | un tratto e mezzo su ogni lato |
-| Dimensione minima | 16 px |
+| Grid | 64 × 64 |
+| Stroke | 5, rounded ends, for arc and segments |
+| Arc | Semicircle of radius 21, centered at (32, 30) |
+| Segments | From x = 11 to x = 53, at y = 39, 48, 57, spaced by 9 |
+| Clear space | One and a half stroke widths on each side |
+| Minimum size | 16 px |
 
-Non si ruota, non si deforma, non si ricolora, non si affianca al nome in un'unica immagine.
+Do not rotate, distort or recolor the mark, or combine it with the name in one image.
 
-## File
+<a id="file"></a>
 
-| File | Contenuto |
+## Files
+
+| File | Contents |
 |---|---|
-| [`img/mark-light.svg`](img/mark-light.svg) · [`img/mark-dark.svg`](img/mark-dark.svg) | il marchio |
-| [`img/hero-light.svg`](img/hero-light.svg) · [`img/hero-dark.svg`](img/hero-dark.svg) | i segmenti di una Serie |
-| [`img/flow-light.svg`](img/flow-light.svg) · [`img/flow-dark.svg`](img/flow-dark.svg) | il percorso di una scrittura e di una lettura |
-| [`img/social.svg`](img/social.svg) · [`img/social.png`](img/social.png) | anteprima per i social, 1280 × 640 |
+| [`img/mark-light.svg`](img/mark-light.svg) · [`img/mark-dark.svg`](img/mark-dark.svg) | The mark |
+| [`img/hero-light.svg`](img/hero-light.svg) · [`img/hero-dark.svg`](img/hero-dark.svg) | The segments of a Serie |
+| [`img/flow-light.svg`](img/flow-light.svg) · [`img/flow-dark.svg`](img/flow-dark.svg) | Write and read paths |
+| [`img/social.svg`](img/social.svg) · [`img/social.png`](img/social.png) | Social preview, 1280 × 640 |
 
-La variante scura di un'immagine è la variante chiara con i quattro colori sostituiti secondo
-la tabella sopra; la geometria è identica. Ogni immagine ha `title` e `desc` per chi non la
-vede.
+The dark variant replaces the four colors according to the table above;
+geometry stays identical. Every image has `title` and `desc` for readers who cannot see it.
 
-L'anteprima per i social non si imposta da riga di comando: si carica `img/social.png` in
-*Settings → General → Social preview*.
+Upload `img/social.png` under *Settings → General → Social preview*.
+The social preview is not configured from the command line.
 
-## Pagine di ingresso
+<a id="pagine-di-ingresso"></a>
+## Entry pages
 
-Il README usa un marchio piccolo, il nome come testo, una frase sul prodotto e
-lo stato attuale. Seguono il comando per iniziare e pochi collegamenti utili.
-Niente riga di badge, schede, navigazione duplicata o illustrazioni introduttive.
+The README uses a small mark, the name as text, one sentence about the product
+and its current status. The start command and a few useful links follow.
+No badge row, cards, duplicate navigation or introductory illustrations.
 
-Gli indici delle sezioni iniziano direttamente dal titolo. Una pagina ha un
-compito: orientare, descrivere un contratto o conservare una prova. I cataloghi
-completi e la cronologia restano accessibili un livello sotto gli ingressi.
-La gerarchia e lo spazio rendono leggibile il contenuto.
+Section indexes start directly with their title. A page has one purpose:
+orient the reader, describe a contract or retain evidence. Complete catalogs
+and history remain accessible one level below the entry pages.
+Hierarchy and space make the content readable.
 
-## Che cosa non si fa
+<a id="che-cosa-non-si-fa"></a>
+## What to avoid
 
-- Aggiungere un colore.
-- Usare l'ambra per qualcosa che non cambia.
-- Mettere testo dentro un'immagine quando può stare nella pagina.
-- Aggiungere un badge per un numero.
-- Usare un'immagine con lo sfondo.
+- Adding a color.
+- Using amber for something that does not change.
+- Putting text inside an image when it can be on the page.
+- Adding a badge for a number.
+- Using an image with a background.
 
-## Il repository come prodotto
+<a id="il-repository-come-prodotto"></a>
+## The repository as a product
 
-Il README presenta scopo, funzionamento e maturità. L'indice della documentazione orienta
-per domanda; gli indici di sezione offrono collegamenti ai percorsi vicini. La guida ai
-contributi descrive il lavoro possibile oggi e i controlli effettivamente disponibili.
+The README presents purpose, operation and maturity. The documentation index
+orients readers by question; section indexes link to related paths. The
+contribution guide describes work that can be done now and the checks available.
 
-- Conservare marchio, palette, geometrie e varianti chiara e scura.
-- Usare titoli descrittivi e intestazioni esplicite nelle tabelle di confronto.
-- Distinguere una garanzia progettata da un risultato verificato; lo stato deve essere leggibile.
-- Collegare i documenti con etichette comprensibili, senza ripetere il marchio in ogni pagina.
-- Tenere i dettagli tecnici nei documenti dedicati; il README deve fornire accesso a quei dettagli.
+- Preserve the mark, palette, geometry, and light and dark variants.
+- Use descriptive titles and explicit headers in comparison tables.
+- Distinguish a designed guarantee from a verified result; make status readable.
+- Link documents with meaningful labels, without repeating the mark on every page.
+- Keep technical details in dedicated documents and provide access from the README.

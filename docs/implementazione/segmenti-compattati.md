@@ -1,115 +1,125 @@
-# Verifica dei segmenti compattati
+<a id="verifica-dei-segmenti-compattati"></a>
 
-`arcdocdb.storage.format:verifica-segmento-compattato` verifica il formato
-dei segmenti CLOSED con origine compaction, già definito da
-[ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md) e dai
-[formati su disco](../formati-su-disco.md#contenuto).
-Il modulo non sceglie i record da conservare né esegue CLEAN/MERGE.
+# Compacted-segment verification
 
-## Contratto
+`arcdocdb.storage.format:verifica-segmento-compattato` verifies format
+of compaction-origin CLOSED segments already defined by
+[ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md) and
+[on-disk formats](../formati-su-disco.md#contenuto).
+Module neither selects records to retain nor performs CLEAN/MERGE.
 
-Argomenti: `buffer`, `valid-bytes`, `id-serie`, `segment-id`;
-budget keyword `max-bytes` (default 64 MiB) e `max-records` (default 65.536).
-Il buffer specializzato di byte inizia all'offset zero del file, resta stabile
-durante la chiamata e contiene tutto il prefisso valido. Identità e lunghezza
-valida sono fornite dalla fonte autorevole del segmento chiuso.
+<a id="contratto"></a>
 
-Si verifica l'header contro Serie e segment-id, si seleziona la versione 1/2
-effettiva e si richiede origine compaction. Dall'offset 64 al limite valido
-si verificano cornici contigue, CRC e soli PUT/TOMBSTONE ordinari. PUT con flag
-contratto-versionato è ammesso; prepared, OUTCOME, SEAL, EDIT e DECISION sono
-rifiutati. I CSN restano opachi: nessun ordine o positività viene imposto.
+## Contract
 
-Solo al termine vengono restituiti cinque valori: fine del prefisso, versione,
-numero di record, PUT e TOMBSTONE. I conteggi descrivono record fisici; non
-attestano numero di chiavi distinte, visibilità o policy di conservazione.
-Un segmento vuoto composto dal solo header è valido per il codec; spetta
-al manifest decidere se un output vuoto debba essere registrato o rimosso.
+Arguments: `buffer`, `valid-bytes`, `id-serie`, `segment-id`;
+keyword budgets `max-bytes` (default 64 MiB), `max-records` (default 65,536).
+Specialized byte buffer starts at file offset zero, remains stable
+during call, contains complete valid prefix. Identity/valid
+length supplied by closed segment's authoritative source.
 
-La coda fisica dopo `valid-bytes` non viene letta. Il limite logico CLOSED
-non viene spacciato per EOF fisico: questa API non usa la scansione dei lotti
-e non restituisce TAIL. Un record incompleto nel prefisso dichiarato valido
-è corruzione, senza conteggi parziali utilizzabili.
+Header checked against Serie/segment-id, actual version 1/2
+selected, compaction origin required. From offset 64 to valid limit,
+contiguous frames, CRCs, ordinary PUT/TOMBSTONE only verified. PUT with
+contract-versioned flag allowed; prepared, OUTCOME, SEAL, EDIT, DECISION
+rejected. CSNs opaque: no order/positivity imposed.
 
-| Esito negativo | Condizione |
+Only at completion five values returned: prefix end, version,
+record count, PUTs, TOMBSTONEs. Counts describe physical records;
+establish neither distinct-key count, visibility, nor retention policy.
+Empty header-only segment valid for codec; manifest
+must decide whether empty output recorded or removed.
+
+Physical tail after `valid-bytes` unread. Logical CLOSED limit
+not passed off as physical EOF: API does not use batch scanning
+or return TAIL. Incomplete record in declared valid prefix
+is corruption, without usable partial counts.
+
+| Negative outcome | Condition |
 |---|---|
-| Input incompleto per il prefisso, identità o budget del chiamante invalidi | `invalid-argument` |
-| Segmento writer valido fornito al verificatore compaction | `invalid-argument`, `:compaction-origin` |
-| Header, CRC, cornice, tipi o prepared non validi | `corruption-detected` |
-| Versione ignota con header integro | `unsupported-format` |
-| Budget byte/record superato | `resource-exhausted` |
-| Mancato progresso o conteggi interni incoerenti | `invariant-violation` |
+| Incomplete prefix input, invalid caller identity/budgets | `invalid-argument` |
+| Valid writer segment supplied to compaction verifier | `invalid-argument`, `:compaction-origin` |
+| Invalid header, CRC, frame, types, or prepared records | `corruption-detected` |
+| Unknown version with intact header | `unsupported-format` |
+| Byte/record budget exceeded | `resource-exhausted` |
+| No progress or inconsistent internal counts | `invariant-violation` |
 
-## Lavoro e proprietà
+<a id="lavoro-e-proprietà"></a>
 
-Il budget byte precede la scansione dei CRC; il budget record precede il
-record successivo. Il ciclo ha un limite derivato dai byte del prefisso e
-dalla cornice minima; ogni passo deve avanzare entro il limite valido.
-Niente allocazioni dipendenti da lunghezze del file, copie di record, letture
-u64 materializzate, attese o stato condiviso. Il chiamante mantiene i buffer
-stabili; il verificatore non li modifica e non apre, tronca o elimina file.
+## Work and ownership
 
-> **Proposta** — I budget iniziali sono operativi e configurabili, distinti
-> dal limite persistente del segmento (4 GiB meno un byte). Questa prima API
-> richiede il prefisso in memoria; una scansione streaming resta da integrare.
+Byte budget precedes CRC scan; record budget precedes
+next record. Loop bound derives from prefix bytes and
+minimum frame; every step must advance within valid limit.
+No file-length-dependent allocation, record copies, materialized u64
+reads, waits, shared state. Caller keeps buffers
+stable; verifier neither modifies them nor opens/truncates/deletes files.
 
-## Verifica
+> **Proposal** — Initial budgets operational/configurable, distinct
+> from persistent segment limit (4 GiB minus one byte). First API
+> requires in-memory prefix; streaming scan remains to integrate.
 
-[Metodo registrato prima delle campagne](segmenti-compattati-metodo.md).
+<a id="verifica"></a>
 
-| Decisione | Condizioni e prove |
+## Verification
+
+[Method registered before campaigns](segmenti-compattati-metodo.md).
+
+| Decision | Conditions and tests |
 |---|---|
-| Configurazione valida (`and`) | Indice valido, limite 64..4 GiB−1 contenuto nel buffer, budget byte nello stesso intervallo, budget record indice, identità di 16 byte. Ogni limite invalido viene rifiutato prima dei CRC; fixture vuote ed esatte esercitano il successo. |
-| Budget byte (`>`) | Limite esatto ammesso; un byte sotto il prefisso esaurisce il budget. |
-| Origine (`=`) | Compaction ammessa; writer integro rifiutato; origine malformata resta errore dell'header. |
-| Progresso (`and`) | `pos < next <= end`, garantito dal codec verificato. Troncamenti esercitano il codec; il rifiuto difensivo resta nel denominatore della copertura. |
-| Tipo ordinario (`or`) | PUT e TOMBSTONE ammessi separatamente; SEAL, OUTCOME, EDIT e DECISION integri rifiutati. |
-| Prepared (`logtest`) | PUT con flag 0/4 e TOMBSTONE ordinari; PUT con flag 1/5 e TOMBSTONE prepared rifiutati. |
-| Fine e budget record | Fine esatta prima del budget, compreso il vuoto con budget 0; limite record esatto ammesso e 0/1 insufficienti rifiutati. |
-| Conteggi (`and`, `if`) | PUT e TOMBSTONE incrementano contatori distinti; totale uguale alla somma e compatibile con le cornici minime. L'incoerenza interna resta ramo difensivo. |
-| Risultato (`and`) | Fine uguale al limite autorevole e totale uguale alla somma. Conteggi dichiarati dalle fixture per vuoto, misti e prefissi sui confini; rifiuto difensivo senza simulare errori dei helper. |
-| Limite del ciclo | Derivato dal numero massimo di cornici nel prefisso; l'esaurimento senza ritorno è una difesa interna, non una condizione di input raggiungibile. |
+| Valid configuration (`and`) | Valid index, limit 64..4 GiB−1 within buffer, byte budget same range, index record budget, 16-byte identity. Every invalid limit rejected before CRC; empty/exact fixtures exercise success. |
+| Byte budget (`>`) | Exact limit allowed; one byte below prefix exhausts budget. |
+| Origin (`=`) | Compaction allowed; intact writer rejected; malformed origin remains header error. |
+| Progress (`and`) | `pos < next <= end`, guaranteed by verified codec. Truncations exercise codec; defensive rejection remains coverage denominator. |
+| Ordinary type (`or`) | PUT/TOMBSTONE separately allowed; intact SEAL/OUTCOME/EDIT/DECISION rejected. |
+| Prepared (`logtest`) | PUT flags 0/4 and ordinary TOMBSTONE; PUT flags 1/5 and prepared TOMBSTONE rejected. |
+| End and record budget | Exact end before budget, including empty with budget 0; exact record limit allowed, insufficient 0/1 rejected. |
+| Counts (`and`, `if`) | PUT/TOMBSTONE increment separate counters; total equal sum, compatible with minimum frames. Internal inconsistency remains defensive branch. |
+| Result (`and`) | End equal authoritative limit, total equal sum. Fixture-declared counts for empty/mixed/boundary prefixes; defensive rejection without simulating helper errors. |
+| Loop bound | Derived from maximum prefix frames; exhaustion without return internal defense, not reachable input condition. |
 
-Le [evidenze conservate](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-compaction/catalogo.lisp)
-comprendono due letture C1, 15 test con fixture indipendenti, self-test degli
-strumenti, comandi, ambiente, hash prima/dopo e output grezzi. Otto mutanti
-compilabili sono rilevati dopo una baseline invariata riuscita. Il controllo
-integrato viene registrato separatamente nel catalogo.
+[Preserved evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-compaction/catalogo.lisp)
+includes two C1 readings, 15 independent-fixture tests, tool
+self-tests, commands, environment, hashes before/after, raw output. Eight compilable
+mutants detected after successful unchanged baseline. Integrated
+check recorded separately in catalog.
 
-Il benchmark seriale osserva zero byte heap in tutte le 20 repliche:
-versioni 1/2, header vuoto o 256 record alternati, cinque repliche di 4.096
-chiamate per caso. Tutti i cinque valori restituiti alimentano un risultato
-osservabile confrontato con un atteso esplicito. Il self-test osserva zero
-heap nella baseline e almeno 16 MiB nel controllo positivo. La misura riguarda
-queste fixture in memoria e non prova assenza assoluta di allocazioni o
-prestazioni del motore completo.
+Serial benchmark observes zero heap bytes in all 20 replicates:
+versions 1/2, empty header or 256 alternating records, five replicates of 4,096
+calls per case. All five returned values feed observable
+result compared with explicit expected value. Self-test observes zero
+baseline heap, at least 16 MiB in positive control. Measurement concerns
+these in-memory fixtures, proves neither absolute nonallocation nor
+whole-engine performance.
 
-### Inventario della copertura locale
+<a id="inventario-della-copertura-locale"></a>
 
-La copertura grezza del modulo è 202/234 espressioni e 30/36 rami. Le sei
-alternative mancanti sono gli esiti falsi dei tre `and` difensivi riportati
-qui; i loro rifiuti non sono raggiungibili tramite l'API pubblica con buffer
-stabile e codec corretto.
+### Local coverage inventory
 
-| Guardia, funzione e riga | Motivazione e verifica sostitutiva |
+Raw module coverage 202/234 expressions, 30/36 branches. Six
+missing alternatives are false outcomes of three defensive `and` forms listed
+here; rejections unreachable through public API with stable
+buffer/correct codec.
+
+| Guard, function, line | Reason and alternative verification |
 |---|---|
-| `:compaction-progress`, `verifica-record-compattato`, 35–36 | Il codec restituisce la fine di una cornice completa dentro il range. Due letture e troncamento in ogni posizione; nessuna simulazione di un decoder incoerente. |
-| `:compaction-count`, `scansiona-compattato`, 61–63 | Un incremento totale e uno del tipo per ogni cornice di almeno 24 byte. Oracoli di conteggi fisici e mutante che scambia PUT/TOMBSTONE. |
-| `:compaction-loop-bound`, `scansiona-compattato`, 65 | Ogni passo consuma almeno una cornice minima; un controllo di fine precede il budget e il record successivo. Ispezione del limite del ciclo, fixture vuote e confini esatti. |
-| `:compaction-result`, `verifica-segmento-compattato`, 87–88 | Lo scanner restituisce solo sulla fine esatta e conserva la somma dei contatori. Due letture, cinque valori verificati per ogni fixture e coda fisica ignorata. |
+| `:compaction-progress`, `verifica-record-compattato`, 35–36 | Codec returns end of complete frame within range. Two readings and truncation at every position; no inconsistent-decoder simulation. |
+| `:compaction-count`, `scansiona-compattato`, 61–63 | One total increment and one type increment per frame of at least 24 bytes. Physical-count oracles, mutant swapping PUT/TOMBSTONE. |
+| `:compaction-loop-bound`, `scansiona-compattato`, 65 | Every step consumes at least minimum frame; end check precedes budget/next record. Loop-bound inspection, empty fixtures/exact boundaries. |
+| `:compaction-result`, `verifica-segmento-compattato`, 87–88 | Scanner returns only at exact end, preserves counter sum. Two readings, five values checked per fixture, physical tail ignored. |
 
-Le 32 espressioni non marcate sono sei forme dichiarative, 24 forme nelle
-quattro segnalazioni difensive e due inizializzatori keyword. I default
-sono esercitati dalle chiamate senza keyword delle fixture vuote e miste,
-pur restando non marcati da `sb-cover`; non sono classificati come codice
-irraggiungibile. Tutti i rami pubblici di argomenti, origine, tipi, prepared
-e budget hanno entrambi gli esiti osservati.
+32 unmarked expressions: six declarative forms, 24 forms in
+four defensive signals, two keyword initializers. Defaults
+exercised by empty/mixed-fixture calls without keywords,
+though unmarked by `sb-cover`; not classified as
+unreachable code. Every public argument/origin/type/prepared/
+budget branch has both outcomes observed.
 
-Il denominatore resta completo: questo inventario è una motivazione locale,
-non un'esclusione approvata, una qualifica MC/DC o la chiusura del gate C1.
+Denominator complete: inventory local justification,
+not approved exclusion, MC/DC qualification, or C1-gate closure.
 
-Requisiti collegati: REQ-CMP-009, REQ-FOR-001/002/003, REQ-AFF-008.
-Invarianti: INV-C1, INV-S7, INV-F1/F2, INV-A8/A9, INV-P6.
-Il controllo del formato è una parte di quei requisiti: non verifica la scelta
-dei record, il manifest, la pubblicazione atomica della compaction, la salute
-del database o il recovery completo. Nessuno stato di requisito viene promosso.
+Related requirements: REQ-CMP-009, REQ-FOR-001/002/003, REQ-AFF-008.
+Invariants: INV-C1, INV-S7, INV-F1/F2, INV-A8/A9, INV-P6.
+Format check part of those requirements: verifies neither record
+selection, manifest, atomic compaction publication, database
+health, nor full recovery. No requirement status promoted.

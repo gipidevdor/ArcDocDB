@@ -1,90 +1,100 @@
-# Decisioni del ricircolo dei writer pronti
+<a id="decisioni-del-ricircolo-dei-writer-pronti"></a>
 
-Inventario C1 di [`ready-recycle.lisp`](../../src/execution/ready-recycle.lisp),
-secondo il [metodo preregistrato](writer-recycle-metodo.md). Riferimenti:
+# Ready writer recycling decisions
+
+C1 inventory of [`ready-recycle.lisp`](../../src/execution/ready-recycle.lisp),
+under the [preregistered method](writer-recycle-metodo.md). References:
 REQ-CON-001/002/004/005, REQ-AFF-008; INV-P1/P2/P5/P6, INV-A8, INV-V4;
-[ADR-0005](../adr/0005-writer-logico-per-serie.md) e
+[ADR-0005](../adr/0005-writer-logico-per-serie.md) and
 [ADR-0045 §§6/8](../adr/0045-modello-di-esecuzione.md).
 
-Il ricircolo riceve un obbligo `:schedule` unico del chiamante e lo
-trasferisce al ring. Con spazio restituisce NIL/`:published`; con ring
-pieno trasferisce simultaneamente la vecchia testa al chiamante e il nuovo
-riferimento al ring, restituendo testa/`:writer`. Busy conserva l'obbligo
-originario. Il componente non legge lo stato dei writer e non aggiunge
-membership, thread, attese, callback, I/O o uno stato globale.
+Recycling receives a unique caller-owned `:schedule` obligation and transfers
+it to the ring. With space, it returns NIL/`:published`; with a full ring,
+it simultaneously transfers the old head to the caller and the new reference
+to the ring, returning head/`:writer`. Busy retains the original obligation.
+The component does not read writer state and adds no membership, threads,
+waits, callbacks, I/O, or global state.
 
-## Decisioni scalari e pre/postcondizioni
+<a id="decisioni-scalari-e-prepostcondizioni"></a>
 
-Nel nuovo sorgente non vi sono decisioni composte `and`/`or` in `if`,
-`when`, `unless` o `cond`. L'`or` nei tipi dei ritorni è un'unione di tipi,
-non una decisione composta di COD-54. L'inventario non deduce MC/DC dalla
-copertura dei rami o dalla sola assenza di nuovi predicati composti.
+## Scalar decisions and pre/postconditions
 
-I suffissi seguenti si riferiscono ai test `test-REQ-…-recycle-…` in
+The new source has no compound `and`/`or` decisions in `if`, `when`,
+`unless`, or `cond`. The `or` in return types is a type union, not a
+COD-54 compound decision. The inventory does not infer MC/DC from branch
+coverage or mere absence of new compound predicates.
+
+The following suffixes refer to `test-REQ-…-recycle-…` tests in
 [`tests/execution/ready-recycle.lisp`](../../tests/execution/ready-recycle.lisp).
-Descrivono fixture lette; non attestano ancora una loro esecuzione.
+They describe fixtures read; they do not yet attest to execution.
 
-| Punto | Condizione o obbligo | Fixture letta e limite |
+| Point | Condition or obligation | Fixture read and limitation |
 |---|---|---|
-| `%scambia-pronto`: pre/post | `%check-pronta` controlla proprietà della guard e forma del ring prima e dopo le scritture. | `helper-rejects-missing-and-foreign-guard`; FI di forma; oracoli FIFO e wrap. I rami dei verificatori appartengono all'inventario ready precedente. |
-| `%scambia-pronto`: pieno | Count uguale a capacity; altrimenti `invariant-violation :ready-recycle-full` prima delle scritture. | `malformed-full-head-and-free-tail-pre-mutation`: helper full chiamato su ring vuoto con guard posseduta; snapshot conservato. |
-| `%scambia-pronto`: tipo testa | Il riferimento a head deve essere `writer-programmabile`; altrimenti `:ready-queue-invariant`, prima delle scritture. | Stessa fixture: full con testa NIL o keyword; ring e writer entrante conservati. Non viene effettuata una scansione dei payload non toccati. |
-| `%scambia-pronto`: FIFO | In full la relazione verificata `tail = (head + count) mod capacity` implica head=tail. Si sostituisce quello slot e si avanzano entrambi gli indici di uno; count invariato. | `capacity-one-transfers-old-and-keeps-new`, `full-wrap-preserves-independent-list-order`, oracolo con seme. `[C,B,…,Z]` diventa `[B,…,Z,A]`; capacity 1 è `[C]`→`[A]`. |
-| `%scambia-pronto`: ritorni | Vecchia testa verificata, `:writer`, capacity. A appartiene al ring; C al chiamante. | Identità/count/status negli oracoli; `returned-obligation-survives-begin-busy` conserva C senza ripubblicare A. |
-| `%ricircola-pronto`: scelta | Count uguale a capacity sceglie lo scambio; count inferiore sceglie `%pubblica-pronto`. La forma verificata esclude count superiore. | Full e room, capacità 1/2/3/9, confine esatto e wrap. |
-| `%ricircola-pronto`: post | Le postcondizioni sono verificate da `%scambia-pronto` o `%pubblica-pronto`; room restituisce NIL/`:published` e il nuovo count. | `room-publishes-and-preserves-fifo`; per room il tail libero viene verificato dal helper precedente. |
-| API: partizione | `%partizione-verificata` precede guard e scritture; verifica indice, cardinalità e riferimento privato. | `shard-writer-preflight-before-held-guard`, `private-ring-and-partition-shapes-pre-mutation`; input invalidi vengono rifiutati anche con guard occupata. |
-| API: tipo entrante | Writer di tipo `writer-programmabile`; altrimenti `invalid-argument :ready-writer` prima della guard. | Preflight: NIL, keyword, vettore e coda bassa; snapshot conservato. L'oggetto non viene interrogato per eleggibilità. |
-| API: CAS busy | Acquisizione NIL causa `resource-exhausted :ready-queue-busy`, prima della mutazione; nessun retry. | `busy-retains-obligation-and-both-ring-shapes`: full e room, stesso obbligo conservato e successivo trasferimento unico. |
-| API: cleanup | `unwind-protect` rilascia soltanto la guard dopo acquisizione verificata; errori non nascosti. | Successi, rifiuti e FI; ripubblicazione/drain successivi verificano guard libera. I rami difensivi del CAS restano nella copertura ready precedente. |
-| Obblighi unici | A è un obbligo del chiamante; C appartiene al ring prima dello scambio. Sotto il protocollo legale C≠A. | Oracoli pubblici con `:schedule`, completamento prima del riuso; `private-opaque-duplicate-is-outside-handoff-protocol` è solo FI privata, senza qualificazione di deduplicazione. |
-| Pieno dei consumer | Tutti i consumer possono avere un obbligo mentre il ring è full. Ricircolo consegna una testa senza un dequeue esterno preliminare. | `all-consumers-reschedule-after-producer-refills-full` conserva il controesempio alla sola pubblicazione; poi due rotazioni e drain dei payload residui. |
-| Handoff/new wave | Nessun cleanup scheduler sul writer dopo end; l'obbligo della nuova ondata non viene cancellato. | `handoff-before-release-and-new-wave-without-cleanup`: enqueue prima di end e nuova ondata dopo idle. |
-| Concorrenza | Producer, consumer e ricircolo accedono al ring sotto la medesima guard; nessuna guard tra shard. | Due consumer e un producer riusati; `other-shard-progresses-while-first-guard-is-held`. Fixture lette, esiti ancora da registrare. |
+| `%scambia-pronto`: pre/post | `%check-pronta` checks guard ownership and ring shape before and after writes. | `helper-rejects-missing-and-foreign-guard`; shape FI; FIFO and wrap oracles. Checker branches belong to previous ready inventory. |
+| `%scambia-pronto`: full | Count equal to capacity; otherwise `invariant-violation :ready-recycle-full` before writes. | `malformed-full-head-and-free-tail-pre-mutation`: full helper called on empty ring with owned guard; snapshot preserved. |
+| `%scambia-pronto`: head type | Head reference must be `writer-programmabile`; otherwise `:ready-queue-invariant`, before writes. | Same fixture: full with NIL or keyword head; ring and incoming writer preserved. No scan of untouched payloads. |
+| `%scambia-pronto`: FIFO | In full, verified relation `tail = (head + count) mod capacity` implies head=tail. That slot is replaced and both indices advance by one; count unchanged. | `capacity-one-transfers-old-and-keeps-new`, `full-wrap-preserves-independent-list-order`, seeded oracle. `[C,B,…,Z]` becomes `[B,…,Z,A]`; capacity 1 is `[C]`→`[A]`. |
+| `%scambia-pronto`: returns | Verified old head, `:writer`, capacity. A belongs to ring; C to caller. | Identity/count/status in oracles; `returned-obligation-survives-begin-busy` retains C without republishing A. |
+| `%ricircola-pronto`: choice | Count equal to capacity selects exchange; lower count selects `%pubblica-pronto`. Verified shape excludes higher count. | Full and room, capacity 1/2/3/9, exact boundary and wrap. |
+| `%ricircola-pronto`: post | Postconditions checked by `%scambia-pronto` or `%pubblica-pronto`; room returns NIL/`:published` and new count. | `room-publishes-and-preserves-fifo`; for room, free tail checked by previous helper. |
+| API: partition | `%partizione-verificata` precedes guard and writes; checks index, cardinality, and private reference. | `shard-writer-preflight-before-held-guard`, `private-ring-and-partition-shapes-pre-mutation`; invalid inputs rejected even with busy guard. |
+| API: incoming type | Writer of type `writer-programmabile`; otherwise `invalid-argument :ready-writer` before guard. | Preflight: NIL, keyword, vector, and low-level queue; snapshot preserved. Object not queried for eligibility. |
+| API: busy CAS | NIL acquisition causes `resource-exhausted :ready-queue-busy`, before mutation; no retry. | `busy-retains-obligation-and-both-ring-shapes`: full and room, same obligation retained and subsequent unique transfer. |
+| API: cleanup | `unwind-protect` releases only guard after verified acquisition; errors not hidden. | Successes, rejections, and FI; subsequent republication/drain verify free guard. Defensive CAS branches remain in previous ready coverage. |
+| Unique obligations | A is caller-owned obligation; C belongs to ring before exchange. Under legal protocol C≠A. | Public oracles with `:schedule`, completion before reuse; `private-opaque-duplicate-is-outside-handoff-protocol` is private FI only, without deduplication qualification. |
+| Full consumers | All consumers may hold an obligation while ring is full. Recycling delivers a head without preliminary external dequeue. | `all-consumers-reschedule-after-producer-refills-full` retains counterexample to publication alone; then two rotations and drain of remaining payloads. |
+| Handoff/new wave | No scheduler cleanup on writer after end; new wave obligation is not canceled. | `handoff-before-release-and-new-wave-without-cleanup`: enqueue before end and new wave after idle. |
+| Concurrency | Producer, consumer, and recycling access ring under same guard; no guard between shards. | Two consumers and one producer reused; `other-shard-progresses-while-first-guard-is-held`. Fixtures read, outcomes still to record. |
 
-## Limiti della prova
+<a id="limiti-della-prova"></a>
 
-Lo scambio elimina il blocco dovuto alla sola capienza nel protocollo
-modellato. Non garantisce progresso se la guard rimane contesa, il
-chiamante abbandona l'obbligo o il writer è faulted. Una catena full può
-servire continuamente lo stesso shard e lasciare i nuovi producer pending:
-equità globale e admission richiedono un controller. `:empty` resta una
-sequenza di osservazioni locali, senza autorizzare parcheggio o shutdown.
+## Test limits
 
-Non vi sono cicli nel nuovo sorgente: costo O(1), una acquisizione e un
-rilascio CAS. Le verifiche transitive di lista/forma sono bounded e non
-scansionano tutto il ring. Gli invarianti sono segnalati al proprietario
-che deve applicare fail-stop; il modulo non implementa ancora FAULTED
-della Serie. Nessun cambiamento persistente o punto di atomicità durevole.
+Exchange removes blocking caused by capacity alone in the modeled protocol.
+It does not guarantee progress if the guard remains contended, the caller
+abandons the obligation, or the writer is faulted. A full chain can keep
+serving the same shard and leave new producers pending: global fairness
+and admission require a controller. `:empty` remains a sequence of local
+observations, without authorizing parking or shutdown.
 
-## Prima lettura indipendente C1
+There are no loops in the new source: O(1) cost, one acquisition and one
+release CAS. Transitive list/shape checks are bounded and do not scan the
+entire ring. Invariants are signaled to the owner, who must apply fail-stop;
+the module does not yet implement Serie FAULTED. No persistent change or
+durable atomicity point.
 
-Base `673987ad819dd48741a7c0a4ff259137a1ed0bef`. Sorgente iniziale letto
+<a id="prima-lettura-indipendente-c1"></a>
+
+## First independent C1 reading
+
+Base `673987ad819dd48741a7c0a4ff259137a1ed0bef`. Initial source read
 SHA-256 `51ddbf06d1639427317ac25d00140ec2020be14b315ed364fd1ae425ebed145c`;
-test letto SHA-256
+test read SHA-256
 `c1ec12ce11df80b7679f00eed72a2a6ae3b97999eef5b20f08627a949549fbae`.
-La prima riga del sorgente conteneva il refuso testuale `publica`, che il
-responsabile della modifica correggerà. Nessun difetto funzionale trovato
-nella prima lettura; non è un esito di compilazione, test o copertura.
-Il report completo sui dodici punti è conservato come dato UTF-8 in
-`spikes/out/recycle-c1-initial.lisp`, senza cambiare i sorgenti di prodotto.
+The first source line contained typo `publica`, which the change owner
+will correct. No functional defect found in the first reading; this is
+not a compilation, test, or coverage outcome. The complete twelve-point
+report is retained as UTF-8 data in `spikes/out/recycle-c1-initial.lisp`,
+without changing product sources.
 
-I requisiti e gli ADR sono coerenti con le tre funzioni. Tipo della testa,
-guard/forma, scambio FIFO e conservazione dell'obbligo hanno fixture
-dedicate. Ftype completi, safety 3, funzioni sotto 60 righe, proprietari e
-accessi per tratto sono dichiarati. Le condizioni restano tipizzate e il
-cleanup non nasconde i guasti. Misura delle allocazioni, esecuzione dei test,
-raw coverage, mutanti, tracciabilità e `make check` sono ancora in attesa.
+Requirements and ADRs are consistent with the three functions. Head type,
+guard/shape, FIFO exchange, and obligation retention have dedicated fixtures.
+Complete ftypes, safety 3, functions below 60 lines, owners, and per-segment
+access are declared. Conditions remain typed and cleanup does not hide
+failures. Allocation measurement, test execution, raw coverage, mutants,
+traceability, and `make check` are still pending.
 
-## Denominatori execution precedenti e campagna da leggere
+<a id="denominatori-execution-precedenti-e-campagna-da-leggere"></a>
 
-I sei file precedenti rimangono nello scope della futura copertura raw,
-insieme a `ready-recycle.lisp`. La precedente campagna ready riportava i
-seguenti denominatori; sono dati storici, non risultati attribuiti alla
-nuova campagna. L'export futuro deve conservare native, HTML e tutti i
-percorsi mancanti, verificando nuovamente i conteggi.
+## Previous execution denominators and campaign to read
 
-| File execution precedente | Espressioni marcate / totali storiche | Esiti marcati / totali storici |
+The six previous files remain in the scope of future raw coverage,
+together with `ready-recycle.lisp`. The previous ready campaign reported
+the following denominators; these are historical data, not results attributed
+to the new campaign. Future export must retain native data, HTML, and all
+missing paths, verifying counts again.
+
+| Previous execution file | Historical marked / total expressions | Historical marked / total outcomes |
 |---|---|---|
 | `package.lisp` | 0 / 1 | 0 / 0 |
 | `queue.lisp` | 142 / 184 | 24 / 34 |
@@ -92,23 +102,25 @@ percorsi mancanti, verificando nuovamente i conteggi.
 | `handoff.lisp` | 173 / 190 | 16 / 16 |
 | `ready-types.lisp` | 170 / 187 | 30 / 30 |
 | `ready.lisp` | 173 / 194 | 20 / 22 |
-| Totale precedente | 848 / 974 | 126 / 146 |
+| Previous total | 848 / 974 | 126 / 146 |
 
-Le forme e i rami scoperti precedenti sono mappati integralmente nell'
-[inventario ready](writer-ready-decisioni.md#copertura-raw-osservata-e-mappatura-delle-lacune).
-Non vengono sottratti dal denominatore del ricircolo. I nuovi conteggi e la
-loro mappatura attendono i dati congelati. Nessuna esclusione approvata,
-nessuna promozione dei requisiti o inferenza di MC/DC completa.
+Previous uncovered forms and branches are fully mapped in the
+[ready inventory](writer-ready-decisioni.md#copertura-raw-osservata-e-mappatura-delle-lacune).
+They are not subtracted from the recycling denominator. New counts and
+mapping await frozen data. No approved exclusion, requirement promotion,
+or inference of complete MC/DC.
 
-## Copertura raw della copia congelata
+<a id="copertura-raw-della-copia-congelata"></a>
 
-La copia `arcdocdb-recycle-verify-7meus4m5`, base `673987a`, conserva native,
-HTML ed export. Il probe indipendente `4000528971-command-81260-0` ricalcola
-i vettori di percorsi e i bit del native con `*read-eval*` NIL e confronta
-separatamente le celle HTML tramite `HTMLParser`: coincidono tutti i sette
-file. Non viene sottratta alcuna forma. Il processo è `:ok/:stable`, exit 0.
+## Raw coverage of the frozen copy
 
-| File execution | Espressioni marcate / totali | Esiti marcati / totali |
+Copy `arcdocdb-recycle-verify-7meus4m5`, base `673987a`, retains native data,
+HTML, and export. Independent probe `4000528971-command-81260-0` recalculates
+native path vectors and bits with `*read-eval*` NIL and separately compares
+HTML cells through `HTMLParser`: all seven files match. No form is
+subtracted. Process is `:ok/:stable`, exit 0.
+
+| Execution file | Marked / total expressions | Marked / total outcomes |
 |---|---|---|
 | `package.lisp` | 0 / 1 | 0 / 0 |
 | `queue.lisp` | 142 / 184 | 24 / 34 |
@@ -117,83 +129,85 @@ file. Non viene sottratta alcuna forma. Il processo è `:ok/:stable`, exit 0.
 | `ready-types.lisp` | 170 / 187 | 30 / 30 |
 | `ready.lisp` | 173 / 194 | 20 / 22 |
 | `ready-recycle.lisp` | 81 / 86 | 8 / 8 |
-| Totale | 929 / 1060 | 134 / 154 |
+| Total | 929 / 1060 | 134 / 154 |
 
-Il native conserva tutti i percorsi. Gli indici sono inversi: l'ultimo
-identifica la forma top-level; leggendoli da destra a sinistra si scende nei
-sottoelementi. Ogni errore radice sotto elencato contiene quattro forme raw:
-chiamata, designatore, keyword `:reason` e ragione. Le radici e le forme di
-definizione/default seguenti mappano tutte le 131 espressioni non marcate.
+Native data retains all paths. Indices are reversed: the last identifies
+the top-level form; reading right to left descends into subelements.
+Every root error listed below contains four raw forms: call, designator,
+`:reason` keyword, and reason. Following roots and definition/default forms
+map all 131 unmarked expressions.
 
-| File | Tutte le forme non marcate e mappatura |
+| File | All unmarked forms and mapping |
 |---|---|
-| `package.lisp`, 1 | `(0)`: `defpackage`, inclusa la nuova esportazione. |
-| `queue.lisp`, 42 | 22 definizioni/default: top-level `(0) (1) (2) (3) (5) (7) (9) (11) (13) (15)`; dieci slot `(3 4)`..`(12 4)`; keyword `(1 2 12) (2 2 12)`. Venti forme nei cinque errori radice `(2 2 4 6) (2 3 4 6) (2 3 4 8) (2 4 10) (2 5 10)`: forma/FIFO, proprietà dopo acquisizione, proprietà e CAS del rilascio. |
-| `writer.lisp`, 28 | Otto top-level `(0) (1) (2) (4) (6) (8) (10) (12)`. Venti forme negli errori radice `(2 5 3) (2 4 5) (2 5 5) (2 1 1 3 4 7) (2 6 2 1 2 4 3 5 11)`: quota lease, proprietà/CAS owner, proprietà di acquisizione e postcondizione del prelievo. |
-| `handoff.lisp`, 17 | Nove top-level `(0) (1) (3) (5) (7) (9) (11) (13) (15)`; due slot `(3 2) (4 2)`; due default `(1 2 8) (2 2 8)`. Quattro forme nell'errore `otherwise` dello stato, radice `(1 5 4 4 6)`. |
-| `ready-types.lisp`, 17 | Otto top-level `(0) (1) (2) (3) (6) (8) (10) (12)`; sette slot `(3 4)`..`(8 4)` e `(3 5)`; due default factory `(1 2 13) (2 2 13)`: definizioni, slots/capacity/head/tail/count/guard/partitions, default shards/capacity. |
-| `ready.lisp`, 21 | Nove top-level `(0) (1) (2) (4) (6) (8) (10) (12) (14)`. Dodici forme in tre errori radice `(2 3 4 3) (2 5 5) (1 5 3 2 2 5 15)`: proprietà dopo acquisizione, vecchio valore CAS di rilascio, stato difensivo inatteso della scansione. |
-| `ready-recycle.lisp`, 5 | Solo top-level `(0) (1) (2) (4) (6)`: `in-package`, ottimizzazione e tre `ftype`. Nessuna forma operativa mancante nel native; le definizioni restano nel denominatore. |
+| `package.lisp`, 1 | `(0)`: `defpackage`, including new export. |
+| `queue.lisp`, 42 | 22 definitions/defaults: top-level `(0) (1) (2) (3) (5) (7) (9) (11) (13) (15)`; ten slots `(3 4)`..`(12 4)`; keywords `(1 2 12) (2 2 12)`. Twenty forms in five root errors `(2 2 4 6) (2 3 4 6) (2 3 4 8) (2 4 10) (2 5 10)`: shape/FIFO, ownership after acquisition, release ownership and CAS. |
+| `writer.lisp`, 28 | Eight top-level `(0) (1) (2) (4) (6) (8) (10) (12)`. Twenty forms in root errors `(2 5 3) (2 4 5) (2 5 5) (2 1 1 3 4 7) (2 6 2 1 2 4 3 5 11)`: lease quota, owner ownership/CAS, acquisition ownership, and extraction postcondition. |
+| `handoff.lisp`, 17 | Nine top-level `(0) (1) (3) (5) (7) (9) (11) (13) (15)`; two slots `(3 2) (4 2)`; two defaults `(1 2 8) (2 2 8)`. Four forms in state `otherwise` error, root `(1 5 4 4 6)`. |
+| `ready-types.lisp`, 17 | Eight top-level `(0) (1) (2) (3) (6) (8) (10) (12)`; seven slots `(3 4)`..`(8 4)` and `(3 5)`; two factory defaults `(1 2 13) (2 2 13)`: definitions, slots/capacity/head/tail/count/guard/partitions, shards/capacity defaults. |
+| `ready.lisp`, 21 | Nine top-level `(0) (1) (2) (4) (6) (8) (10) (12) (14)`. Twelve forms in three root errors `(2 3 4 3) (2 5 5) (1 5 3 2 2 5 15)`: ownership after acquisition, old release CAS value, unexpected defensive scan state. |
+| `ready-recycle.lisp`, 5 | Only top-level `(0) (1) (2) (4) (6)`: `in-package`, optimization, and three `ftype`. No missing operational form in native data; definitions remain in denominator. |
 
-Tutti i venti esiti strumentati non marcati appartengono ai file precedenti:
+All twenty unmarked instrumented outcomes belong to previous files:
 
-| File | Tutti i percorsi degli esiti non marcati |
+| File | All unmarked outcome paths |
 |---|---|
-| `queue.lisp`, 10 | `(:then 3 9 4)`, `(:else 3 9 4)`, `(:else 3 1 2 4 6)`, `(:else 2 1 2 4 6)`, `(:else 1 1 2 4 6)`, `(:else 1 2 4 6)`, `(:else 1 3 4 6)`, `(:else 1 3 4 8)`, `(:else 1 4 10)`, `(:else 1 5 10)`: unione tipo guard, limiti/forma/FIFO, proprietà e CAS. |
-| `writer.lisp`, 8 | `(:else 1 1 5 3)`, `(:else 1 5 3)`, `(:else 1 4 5)`, `(:else 1 5 5)`, `(:else 1 1 1 1 3 4 7)`, `(:else 1 1 1 3 4 7)`, `(:else 1 1 6 2 1 2 4 3 5 11)`, `(:else 1 6 2 1 2 4 3 5 11)`: quota, proprietà/CAS owner, pre/post acquisizione e prelievo. |
-| `ready.lisp`, 2 | `(:else 1 3 4 3)` e `(:else 1 5 5)`: proprietà dopo CAS riuscito e vecchio valore CAS al rilascio dopo precontrollo. Non provocati alterando una guard condivisa durante prove concorrenti. |
-| Gli altri quattro file | Nessun esito strumentato non marcato. Questo non qualifica MC/DC o tutti i controlli sorgente. |
+| `queue.lisp`, 10 | `(:then 3 9 4)`, `(:else 3 9 4)`, `(:else 3 1 2 4 6)`, `(:else 2 1 2 4 6)`, `(:else 1 1 2 4 6)`, `(:else 1 2 4 6)`, `(:else 1 3 4 6)`, `(:else 1 3 4 8)`, `(:else 1 4 10)`, `(:else 1 5 10)`: guard type union, bounds/shape/FIFO, ownership, and CAS. |
+| `writer.lisp`, 8 | `(:else 1 1 5 3)`, `(:else 1 5 3)`, `(:else 1 4 5)`, `(:else 1 5 5)`, `(:else 1 1 1 1 3 4 7)`, `(:else 1 1 1 3 4 7)`, `(:else 1 1 6 2 1 2 4 3 5 11)`, `(:else 1 6 2 1 2 4 3 5 11)`: quota, owner ownership/CAS, acquisition and extraction pre/post. |
+| `ready.lisp`, 2 | `(:else 1 3 4 3)` and `(:else 1 5 5)`: ownership after successful CAS and old release CAS value after precheck. Not induced by altering shared guard during concurrent tests. |
+| Other four files | No unmarked instrumented outcome. This does not qualify MC/DC or all source checks. |
 
-La copertura `4000528494-command-77200-0` e l'export con self-test
-`4000528526-command-77598-0` sono `:ok/:stable`, exit 0. Il primo probe
-indipendente `4000528942-command-81018-0` è fallito perché il native,
-che non è una plist, era stato passato al lettore delle evidenze. La prima
-versione dell'adapter e il fallimento sono conservati; il probe corretto
-legge direttamente il native con `*read-eval*` NIL. Non è un guasto di
-prodotto, export o C4, e non sostituisce la campagna di copertura.
+Coverage `4000528494-command-77200-0` and export with self-test
+`4000528526-command-77598-0` are `:ok/:stable`, exit 0. First independent
+probe `4000528942-command-81018-0` failed because native data, which is
+not a plist, had been passed to the evidence reader. The first adapter
+version and failure are retained; corrected probe reads native data
+directly with `*read-eval*` NIL. This is not a product, export, or C4
+failure and does not replace the coverage campaign.
 
-## Seconda lettura indipendente C1
+<a id="seconda-lettura-indipendente-c1"></a>
 
-Sorgente finale SHA-256
+## Second independent C1 reading
+
+Final source SHA-256
 `2873a5f4bb34a5e0119af41bdc1220c4c02767b985ade16c7437e4e7d13e525b`;
-test invariato `c1ec12ce11df80b7679f00eed72a2a6ae3b97999eef5b20f08627a949549fbae`.
-La sola correzione rispetto alla prima lettura è `publica`→`pubblica` nel
-commento iniziale. Report indipendente completo sui dodici punti:
-`spikes/out/recycle-c1-final.lisp`. Nessun finding funzionale aperto.
+unchanged test `c1ec12ce11df80b7679f00eed72a2a6ae3b97999eef5b20f08627a949549fbae`.
+The only correction from first reading is `publica`→`pubblica` in the
+initial comment. Complete independent twelve-point report:
+`spikes/out/recycle-c1-final.lisp`. No open functional finding.
 
-Letti i record tramite `evidence:read-evidence`, con payload compressi
-validati. Gli strict C4 `4000528528-command-77652-0` e
-`4000528528-command-77653-0` sono `:ok/:stable`, exit 0: COMPILE-FILE
-intero e self-test dei FASL. La fixture SIGKILL
-`4000528529-recycle-signal-self-test-77690` riporta exit 137, signal 9,
-un worker-error e zero detected; baseline pending riguarda solo la fixture.
+Records read through `evidence:read-evidence`, with compressed payloads
+validated. Strict C4 runs `4000528528-command-77652-0` and
+`4000528528-command-77653-0` are `:ok/:stable`, exit 0: whole COMPILE-FILE
+and FASL self-tests. SIGKILL fixture
+`4000528529-recycle-signal-self-test-77690` reports exit 137, signal 9,
+one worker-error and zero detected; pending baseline concerns only fixture.
 
-Mutazioni `4000528603-command-78553-0`, dati `recycle-mutations/report.lisp`:
-baseline completa con 66 start/ok e completion 66; 11/11 detected,
-zero survived/compilation-failures/before-tests/worker-errors. Letti tutti
-i dodici log: i guasti avvengono dopo start di un test recycle e prima
-completion, ciascuno exit 1/signal NIL; baseline exit 0/signal NIL.
+Mutations `4000528603-command-78553-0`, data `recycle-mutations/report.lisp`:
+complete baseline with 66 start/ok and completion 66; 11/11 detected,
+zero survived/compilation-failures/before-tests/worker-errors. All twelve
+logs read: failures occur after a recycle test start and before completion,
+each exit 1/signal NIL; baseline exit 0/signal NIL.
 
-Benchmark `4000528603-command-78552-0`, dati
-`recycle-allocations/report.lisp`: quattro configurazioni K=1/4 e C=1/3,
-cinque campioni di 4096 cicli ciascuna; tutti i venti riportano heap zero.
-Token e sink ricalcolati indipendentemente: 257/9439232, 558/10672128,
-1223/13395968, 3231/21620736, nell'ordine (1,1)/(1,3)/(4,1)/(4,3).
-Controllo positivo 16777472 byte, sink errato rifiutato; clock zero,
-report parziale e destinazione preesistente restano controlli distinti.
-Nessuna prova universale di non allocazione, speedup, throughput o P99.
+Benchmark `4000528603-command-78552-0`, data
+`recycle-allocations/report.lisp`: four configurations K=1/4 and C=1/3,
+five 4096-cycle samples each; all twenty report zero heap. Tokens and
+sinks independently recalculated: 257/9439232, 558/10672128, 1223/13395968,
+3231/21620736, in order (1,1)/(1,3)/(4,1)/(4,3). Positive control 16777472
+bytes, wrong sink rejected; zero clock, partial report, and preexisting
+destination remain distinct controls. No universal proof of nonallocation,
+speedup, throughput, or P99.
 
-Il check `4000528494-command-77199-0`, `:ok/:stable`, exit 0,
-wall 107.748252 s, riporta 309 test dei nove moduli oltre allo smoke:
+Check `4000528494-command-77199-0`, `:ok/:stable`, exit 0,
+wall 107.748252 s, reports 309 tests in nine modules beyond smoke:
 26+17 UTF-8+17 CBOR+20 CSN+66 execution+44 storage+18 I/O+82 recovery+19 WAL.
-Lint 53 file/zero violazioni; trace 114 REQ/65 INV/13 FI/52 ADR/zero errori;
-links 199 file/1921 link/zero rotti. Nessuna riga di warning/style-warning
-reale rilevata. Il master `4000528568-check-78100-0` è complete con dieci
-run e dieci artifact: tutti exit 0/stable, nove `:ok` e SPK-07 `:pass`.
-I guasti attesi dei self-test del repository rimangono dati attesi.
+Lint 53 files/zero violations; trace 114 REQ/65 INV/13 FI/52 ADR/zero errors;
+links 199 files/1921 links/zero broken. No actual warning/style-warning
+line detected. Master `4000528568-check-78100-0` is complete with ten runs
+and ten artifacts: all exit 0/stable, nine `:ok` and SPK-07 `:pass`.
+Expected repository self-test failures remain expected data.
 
-Questa chiusura riguarda il ricircolo locale sulla base congelata.
-Non qualifica gli altri componenti letti soltanto per integrazione, il
-pool completo, wake/park, shutdown, admission o il controller FAULTED.
-Tutti i denominatori e le lacune raw restano visibili, senza esclusioni
-approvate, promozioni dei requisiti o MC/DC dedotta.
+This closure concerns local recycling on the frozen base. It does not
+qualify other components read only for integration, the complete pool,
+wake/park, shutdown, admission, or FAULTED controller. All denominators
+and raw gaps remain visible, without approved exclusions, requirement
+promotions, or inferred MC/DC.

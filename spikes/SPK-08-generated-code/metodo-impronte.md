@@ -1,215 +1,230 @@
-# SPK-08 — metodo preregistrato per le impronte
+<a id="spk-08--metodo-preregistrato-per-le-impronte"></a>
+
+# SPK-08 — Preregistered fingerprint method
 
 ;;; REQ: REQ-SIM-001 REQ-SIM-002 REQ-BEN-002 REQ-VAL-001 REQ-AFF-003 REQ-AFF-008 REQ-AFF-016
 
-Registrato prima di qualsiasi compile/CHECK. Ambito Phase0: solo il nuovo
-`impronte.lisp`, package `ARCDOCDB.SPK08.IMPRONTE`, export `CHECK` e `BENCH`.
-Tutto il lavoro avviene nel checkout isolato
+Registered before any compile/CHECK. Phase 0 scope: only the new
+`impronte.lisp`, package `ARCDOCDB.SPK08.IMPRONTE`, exports `CHECK` and `BENCH`.
+All work takes place in the isolated checkout
 `/Users/gpicchiarelli/.codex/worktrees/valutazione-avanzata/ArcDocDB`.
-Common Lisp/SBCL, safety 3, nessuna dipendenza da altri spike e nessuna
-integrazione dell'indice. Nessun commit o push.
+Common Lisp/SBCL, safety 3, no dependencies on other spikes and no index
+integration. No commit or push.
 
-## Contratto e algoritmo
+<a id="contratto-e-algoritmo"></a>
 
-Un gruppo contiene 16 byte ctrl. Le impronte valide sono 0–127; empty = 128,
-deleted = 254. Tutti gli altri byte con alto bit acceso sono esclusi dal match.
-La maschera risultante ha il bit i per la posizione i (0–15). Query fuori
-0–127, tipi errati e finestre di meno di 16 byte producono errore.
-L'input è di sola lettura. La serializzazione delle due parole u64 è
-esplicitamente little endian: byte i nei bit 8*i; il risultato non dipende
-dall'endian della macchina. Non si usano accessi di memoria non allineati o VOP.
+## Contract and algorithm
 
-Per x = word XOR query ripetuta, la maschera esatta degli zeri è
+A group contains 16 ctrl bytes. Valid fingerprints are 0–127; empty = 128,
+deleted = 254. All other bytes with the high bit set are excluded from matching.
+The resulting mask has bit i for position i (0–15). Queries outside 0–127,
+wrong types, and windows shorter than 16 bytes produce errors.
+Input is read-only. Serialization of the two u64 words is explicitly little
+endian: byte i in bits 8*i; the result does not depend on machine endianness.
+No unaligned memory accesses or VOPs are used.
+
+For x = word XOR repeated query, the exact zero mask is
 `NOT (((x AND 0x7f7f7f7f7f7f7f7f) + 0x7f7f7f7f7f7f7f7f) OR x OR
 0x7f7f7f7f7f7f7f7f) AND 0x8080808080808080`.
-Ogni somma di lane è al massimo 254: non c'è riporto fra byte.
-Tre piegature comprimono gli otto bit alti in un byte; due parole danno u16.
-Il mutante `(x - 0x0101010101010101) AND NOT x AND 0x8080808080808080`
-conserva il limite del prestito, con x = byte 0 seguito da byte 1: utile come
-test di esistenza di uno zero, inadeguato come maschera esatta per posizione.
-Il mutante resta una funzione separata, mai una variante selezionabile dei kernel.
+Each lane sum is at most 254: no carry between bytes.
+Three folds compress the eight high bits into one byte; two words yield u16.
+The mutant `(x - 0x0101010101010101) AND NOT x AND 0x8080808080808080`
+retains the borrow limitation, with x = byte 0 followed by byte 1: useful for
+testing whether a zero exists, unsuitable as an exact positional mask.
+The mutant remains a separate function, never a selectable kernel variant.
 
-Kernel: `scalar16` e `packedmask16` su byte array e offset; `scalar-u64` e
-`typedu64` su due u64. Tipi specializzati, safety 3 e chiamate dirette/inline
-nei cicli. La compilazione/disassemblato e i campioni di bytes-consed
-permettono di valutare le allocazioni; non si presume che una chiamata Lisp
-esterna con u64 boxed non allochi. SWAR è aritmetica su parole intere, non
-SIMD hardware. Un oracle scalare distinto legge solo i byte e somma potenze
-di due, senza riusare packing, compressione o formula SWAR.
+Kernels: `scalar16` and `packedmask16` over a byte array and offset;
+`scalar-u64` and `typedu64` over two u64s. Specialized types, safety 3, and
+direct/inline calls in loops. Compilation/disassembly and bytes-consed samples
+allow allocation assessment; an external Lisp call with boxed u64s is not
+assumed allocation-free. SWAR is integer-word arithmetic, rather than hardware
+SIMD. A separate scalar oracle reads only bytes and sums powers of two,
+without reusing packing, compression, or the SWAR formula.
 
-## CHECK e budget
+<a id="check-e-budget"></a>
 
-1. Strict compile in processo SBCL senza init: warning e style-warning sono
-   fatali, oltre ai valori warnings/failure di compile-file. FASL solo in `out/`.
-2. Tutti i 256 byte, tutte le 128 query e tutte le 16 posizioni isolate.
-3. Tutte le coppie di byte (256²) nelle 15 coppie adiacenti, query 0 e 127;
-   comprende il confine fra le parole e ogni posizione con prestito.
-4. Tutte le 16² coppie di posizioni, byte nel dominio piccolo
-   {0, 1, 126, 127, 128, 129, 254, 255}, query {0, 1, 126, 127}.
-5. Tutte le 4^8 parole su {0, 1, 128, 254}, ciascuna nelle due metà, query
-   {0, 1, 127}; dominio piccolo interamente enumerato, non campionato.
-6. Differenziale più grande: 20.000 gruppi da LCG u32 con seme fisso;
-   offset 0–31, byte arbitrari, query 0–127. Fixture golden endian e maschere
-   vuota/piena/alternata; tutte le maschere u16 per la compressione.
-7. Controlli negativi del mutante, invalid args attraverso chiamata dinamica
-   per evitare warning statici intenzionali; confronto integrale input
-   prima/dopo, anche sul rifiuto. Rifiuti deterministici di budget CHECK/BENCH
-   prima di qualsiasi misura BENCH.
+## CHECK and budgets
 
-CHECK ha limite massimo 4.000.000 confronti di gruppo, default uguale al
-massimo, 20.000 gruppi differenziali (tetto 100.000), 120 secondi (tetto 300).
-Scadenza controllata ogni 4096 confronti e alla conclusione, limite cooperativo;
-un limite esaurito è errore, mai successo parziale. I conteggi sono riportati
-per campagna, con controlli di congruenza. Conservare disassemblato locale
-dei quattro kernel e dei cicli diretti. La plist riporta :status :ok solo
-dopo tutte le campagne e include limiti e piattaforma reale.
+1. Strict compilation in an SBCL process without init: warnings and
+   style-warnings are fatal, as are compile-file warnings/failure values.
+   FASLs only in `out/`.
+2. All 256 bytes, all 128 queries, and all 16 isolated positions.
+3. All byte pairs (256²) in the 15 adjacent pairs, queries 0 and 127;
+   includes the word boundary and every position with borrowing.
+4. All 16² position pairs, bytes in the small domain
+   {0, 1, 126, 127, 128, 129, 254, 255}, queries {0, 1, 126, 127}.
+5. All 4^8 words over {0, 1, 128, 254}, each in both halves, queries
+   {0, 1, 127}; the small domain is fully enumerated, without sampling.
+6. Larger differential test: 20,000 groups from a u32 LCG with fixed seed;
+   offsets 0–31, arbitrary bytes, queries 0–127. Golden endianness fixtures
+   and empty/full/alternating masks; all u16 masks for compression.
+7. Negative mutant checks, invalid arguments through dynamic calls to avoid
+   intentional static warnings; full before/after input comparison, including
+   rejection. Deterministic CHECK/BENCH budget rejections before any BENCH measure.
 
-## BENCH da eseguire soltanto nel parent
+CHECK has a maximum of 4,000,000 group comparisons, default equal to the
+maximum, 20,000 differential groups (ceiling 100,000), 120 seconds (ceiling 300).
+The deadline is checked every 4096 comparisons and at completion, as a
+cooperative limit; an exhausted limit is an error, never partial success.
+Counts are reported per campaign, with consistency checks. Retain local
+disassembly of the four kernels and direct loops. The plist reports :status
+:ok only after all campaigns, including limits and the actual platform.
 
-API prevista: `(bench &key (rows 1024) (passes 64) (warmup-passes 2)
-(seconds 60) (byte-budget 16777216))`. Cinque repliche obbligatorie.
-Due dataset, misto e avversario (prestiti, hit pieno, miss, speciali, alto bit,
-0/127, confine di parola); matrice di byte e parole preallocata, stessi query
-e oracle per entrambi i kernel di ciascun confronto. Offset 0–15 su righe
-da 32 byte. Packing/preparazione/validazione/oracle/warmup esclusi dalle
-misure. Confronti: scalar16/packedmask16 e scalar-u64/typedu64.
-Ordine alternato AB/BA per replica e cella della matrice, esplicitamente
-riportato. Accumulatore numerico verificato contro oracle e pubblicato.
+<a id="bench-da-eseguire-soltanto-nel-parent"></a>
 
-Ogni campione misura ticks e bytes-consed solo intorno al ciclo diretto;
-riporta operazioni effettive, ns/op calcolati, byte totali e per operazione,
-checksum, ordine e replica. Non si sottrae un overhead stimato e non si
-inventano tempi; ticks = 0 rende la misura non risolta e produce errore.
-GC e scheduling durante il ciclo restano inclusi. Allocazioni del report
-e fixture escluse; bytes-consed non è RSS. Il ciclo legge i dati preallocati
-e produce un checksum fixnum; non crea strutture per chiamata.
-I limiti sono rows 16–8192, passes 1–1024, warmup 1–64, seconds >0 e ≤300,
-payload byte-budget ≤64 MiB e operazioni totali ≤200.000.000.
-La scadenza è cooperativa fra blocchi di al massimo 4096 operazioni, con
-stessi controlli nei due cicli; esaurimento segnala errore senza plist :ok.
-BENCH restituisce :status :ok, :measurements, limiti e campioni raw,
-solo dopo cinque repliche complete per tutte le celle. Non viene eseguito
-in questo lavoro, neppure per warmup o smoke test.
+## BENCH to be run only by the parent
 
-## Evidenze e limiti dell'inferenza
+Planned API: `(bench &key (rows 1024) (passes 64) (warmup-passes 2)
+(seconds 60) (byte-budget 16777216))`. Five mandatory replicates.
+Two datasets, mixed and adversarial (borrows, full hit, miss, special values,
+high bit, 0/127, word boundary); preallocated byte and word matrices, same
+queries and oracle for both kernels in each comparison. Offsets 0–15 in
+32-byte rows. Packing/preparation/validation/oracle/warmup excluded from
+measurements. Comparisons: scalar16/packedmask16 and scalar-u64/typedu64.
+Alternating AB/BA order per replicate and matrix cell, explicitly reported.
+Numeric accumulator checked against the oracle and published.
 
-Ogni tentativo compile/CHECK, incluso un fallimento, avrà nuovi file ignored
-`out/` con schema-version 1, argv e stdin esplicito, ambiente, hash/contenuti
-prima/dopo, risultato decodificato, stdout/stderr integrali e limiti.
-Il wrapper esistente `tools/record-command.lisp` può registrare il comando;
-un driver nuovo in `out/` aggiunge risultato del modulo, warning, source
-immutato e log senza troncamento. Driver e stdin vengono inclusi nelle prove.
-Nessun file esistente di core/run/suite/tools/docs/ADR/REQ viene modificato.
-Alla consegna si elencano tutti i tentativi, i percorsi e i conteggi reali.
+Each sample measures ticks and bytes-consed only around the direct loop;
+it reports actual operations, calculated ns/op, total and per-operation bytes,
+checksum, order, and replicate. No estimated overhead is subtracted and no
+times are invented; ticks = 0 makes a measurement unresolved and produces an
+error. GC and scheduling during the loop remain included. Report and fixture
+allocations excluded; bytes-consed is not RSS. The loop reads preallocated
+data and produces a fixnum checksum; it creates no structures per call.
+Limits are rows 16–8192, passes 1–1024, warmup 1–64, seconds >0 and ≤300,
+payload byte-budget ≤64 MiB, and total operations ≤200,000,000.
+The deadline is cooperative between blocks of at most 4096 operations, with
+the same checks in both loops; exhaustion signals an error without an :ok
+plist. BENCH returns :status :ok, :measurements, limits, and raw samples only
+after five complete replicates for every cell. It is not run in this work,
+even for warmup or a smoke test.
 
-Piattaforma osservata inizialmente: Darwin 27.0.0, arm64, SBCL da
-`/opt/homebrew/bin/sbcl`. Versione SBCL, CPU, risoluzione clock e feature
-endian vengono raccolte dai processi registrati. La prova riguarda questa
-piattaforma; non qualifica x86-64, SIMD hardware, l'indice o il motore.
-Nessuna superiorità prestazionale prima dei campioni del parent.
+<a id="evidenze-e-limiti-dellinferenza"></a>
 
-## API per il parent
+## Evidence and inference limits
 
-Gli unici simboli esportati sono `ARCDOCDB.SPK08.IMPRONTE:CHECK` e
-`ARCDOCDB.SPK08.IMPRONTE:BENCH`: entrambi accettano la chiamata senza argomenti.
-I kernel rimangono simboli interni (`ARCDOCDB.SPK08.IMPRONTE::...`).
+Every compile/CHECK attempt, including failures, will have new ignored files
+in `out/` with schema-version 1, explicit argv and stdin, environment,
+before/after hashes/contents, decoded result, full stdout/stderr, and limits.
+The existing wrapper `tools/record-command.lisp` can record the command;
+a new driver in `out/` adds module result, warnings, unchanged source, and
+untruncated logs. Driver and stdin are included in the evidence.
+No existing core/run/suite/tools/docs/ADR/REQ file is changed.
+All attempts, paths, and actual counts are listed at delivery.
 
-| Simbolo interno | Argomenti | Risultato |
+Initially observed platform: Darwin 27.0.0, arm64, SBCL from
+`/opt/homebrew/bin/sbcl`. SBCL version, CPU, clock resolution, and endianness
+features are collected by recorded processes. The check concerns this platform;
+it does not qualify x86-64, hardware SIMD, the index, or the engine.
+No performance superiority before the parent's samples.
+
+<a id="api-per-il-parent"></a>
+
+## API for the parent
+
+The only exported symbols are `ARCDOCDB.SPK08.IMPRONTE:CHECK` and
+`ARCDOCDB.SPK08.IMPRONTE:BENCH`: both accept calls without arguments.
+Kernels remain internal symbols (`ARCDOCDB.SPK08.IMPRONTE::...`).
+
+| Internal symbol | Arguments | Result |
 |---|---|---|
-| `SCALAR16` | ctrl simple-array u8, start fixnum, h7 | mask16 scalare |
-| `PACKEDMASK16` | gli stessi argomenti | mask16 SWAR, packing LE incluso |
-| `SCALAR-U64` | low u64, high u64, h7 | mask16 scalare su parole pronte |
-| `TYPEDU64` | gli stessi argomenti | mask16 SWAR su parole pronte |
+| `SCALAR16` | ctrl simple-array u8, start fixnum, h7 | scalar mask16 |
+| `PACKEDMASK16` | same arguments | SWAR mask16, including LE packing |
+| `SCALAR-U64` | low u64, high u64, h7 | scalar mask16 over prepared words |
+| `TYPEDU64` | same arguments | SWAR mask16 over prepared words |
 
-Il bit i corrisponde al byte i. Le due parole rappresentano rispettivamente
-i byte 0–7 e 8–15 della finestra. I byte con alto bit acceso non corrispondono
-mai a una query valida. Nessuna query viene troncata a sette bit.
+Bit i corresponds to byte i. The two words represent bytes 0–7 and 8–15 of
+the window respectively. Bytes with the high bit set never match a valid query.
+No query is truncated to seven bits.
 
-La chiamata senza argomenti di BENCH prepara 1024 righe per dataset,
-64 passaggi per campione e due passaggi di warmup. Sono previsti 40 campioni
-raw, 2.621.440 operazioni misurate e 16.384 operazioni di warmup,
-payload di 106.496 byte e termine cooperativo di 60 secondi. Questi sono
-parametri e conteggi pianificati, non misure eseguite. Il parent può scegliere
-più passaggi tramite `:passes`, mantenendo i limiti dichiarati e registrando
-la chiamata completa. Nessun BENCH è stato eseguito durante questo lavoro.
+Calling BENCH without arguments prepares 1024 rows per dataset, 64 passes
+per sample, and two warmup passes. The plan includes 40 raw samples,
+2,621,440 measured operations and 16,384 warmup operations, 106,496 bytes of
+payload, and a cooperative deadline of 60 seconds. These are planned
+parameters and counts, rather than completed measurements. The parent may
+choose more passes through `:passes`, retaining declared limits and recording
+the full call. No BENCH was run during this work.
 
-## Esiti successivi alla preregistrazione
+<a id="esiti-successivi-alla-preregistrazione"></a>
 
-Ambiente dei processi registrati: SBCL 2.6.9, Darwin 27.0.0, ARM64, Apple M4,
-16 GiB RAM, 10 CPU logiche; host little endian, clock con 1.000.000 unità/s.
-Carico esterno non controllato. Safety 3 invariato in tutti i tentativi.
+## Outcomes after preregistration
 
-Tutti i tentativi usano lo stesso argv, con stdin vuoto da `/dev/null`:
+Recorded process environment: SBCL 2.6.9, Darwin 27.0.0, ARM64, Apple M4,
+16 GiB RAM, 10 logical CPUs; little-endian host, clock with 1,000,000 units/s.
+External load uncontrolled. Safety 3 unchanged in every attempt.
+
+Every attempt uses the same argv, with empty stdin from `/dev/null`:
 
 ```text
 /opt/homebrew/bin/sbcl --noinform --no-sysinit --no-userinit --script spikes/SPK-08-generated-code/out/record-impronte.lisp compile-check
 ```
 
-| Tentativo | Record schema 1 relativo a questo modulo | Esito |
+| Attempt | Schema 1 record relative to this module | Outcome |
 |---|---|---|
-| 1 | `out/4000480808-impronte-86996-0/report.lisp` | Compile riuscita, zero warning; caricamento fermato da uno style-warning di ridefinizione di DEFMACRO. CHECK non eseguito. |
-| 2 | `out/4000480868-impronte-87419-0/report.lisp` | Macro resa locale con MACROLET. Compile, load e CHECK :ok, zero warning/style-warning. |
-| 3 | `out/4000481031-impronte-88302-0/report.lisp` | Helper rinominati in italiano. Compile, load e CHECK :ok, zero warning/style-warning. |
-| 4 | `out/4000481114-impronte-88523-0/report.lisp` | Ultima revisione dei commenti italiani. Compile, load e CHECK :ok, zero warning/style-warning. |
+| 1 | `out/4000480808-impronte-86996-0/report.lisp` | Compilation succeeded, zero warnings; loading stopped by a DEFMACRO redefinition style-warning. CHECK not run. |
+| 2 | `out/4000480868-impronte-87419-0/report.lisp` | Macro made local with MACROLET. Compile, load, and CHECK :ok, zero warnings/style-warnings. |
+| 3 | `out/4000481031-impronte-88302-0/report.lisp` | Helpers renamed in Italian. Compile, load, and CHECK :ok, zero warnings/style-warnings. |
+| 4 | `out/4000481114-impronte-88523-0/report.lisp` | Final revision of Italian comments. Compile, load, and CHECK :ok, zero warnings/style-warnings. |
 
-Quattro compilazioni riuscite, un caricamento rifiutato, tre CHECK completi.
-Ogni record conserva integralmente stdout/stderr, argv/stdin, ambiente,
-contenuti e Git blob prima/dopo di modulo, metodo e driver. Tutti gli snapshot
-di ogni tentativo risultano stabili. Le successive modifiche intenzionali
-sono documentate dai tentativi successivi; questa sezione è un'aggiunta
-documentale dopo l'ultima esecuzione e non modifica il modulo compilato.
-Non vengono fotografati i moduli di altri agenti, che lavorano in parallelo.
+Four successful compilations, one rejected load, three complete CHECKs.
+Every record preserves full stdout/stderr, argv/stdin, environment, contents,
+and before/after Git blobs of module, method, and driver. All snapshots of
+every attempt are stable. Subsequent intentional changes are documented by
+later attempts; this section is a documentation addition after the last run
+and does not change the compiled module. Other agents' modules, being worked
+on in parallel, are not captured.
 
-I tre CHECK riusciti hanno gli stessi conteggi:
+The three successful CHECKs have the same counts:
 
-| Campagna | Gruppi | Confronti dei quattro kernel |
+| Campaign | Groups | Comparisons of the four kernels |
 |---|---:|---:|
-| Tutti byte/query/posizione | 524.288 | 2.097.152 |
-| Tutte le coppie di byte adiacenti, query 0/127 | 1.966.080 | 7.864.320 |
-| Tutte le coppie di posizioni, dominio piccolo | 65.536 | 262.144 |
-| Tutte le 4^8 parole, due metà, tre query | 393.216 | 1.572.864 |
-| Tutte le maschere u16 | 65.536 | 262.144 |
-| Offset, endian e frontiere | 518 | 2.072 |
-| Differenziale deterministico | 20.000 | 80.000 |
-| Testimoni del mutante e confine fra parole | 29 | 116 |
-| Totale CHECK principale | 3.035.203 | 12.140.812 |
+| All bytes/queries/positions | 524,288 | 2,097,152 |
+| All adjacent byte pairs, queries 0/127 | 1,966,080 | 7,864,320 |
+| All position pairs, small domain | 65,536 | 262,144 |
+| All 4^8 words, two halves, three queries | 393,216 | 1,572,864 |
+| All u16 masks | 65,536 | 262,144 |
+| Offsets, endianness, and boundaries | 518 | 2,072 |
+| Deterministic differential | 20,000 | 80,000 |
+| Mutant witnesses and word boundary | 29 | 116 |
+| Main CHECK total | 3,035,203 | 12,140,812 |
 
-Inoltre, 77 controlli negativi per CHECK: 34 sugli ingressi byte, 26 sulle
-parole/query, cinque sui limiti CHECK/tempo, 12 sul preflight BENCH (nessuna
-chiamata a BENCH). Un CHECK annidato con budget di un gruppo rifiuta
-l'operazione successiva; il suo gruppo appartiene al controllo negativo,
-non al conteggio del CHECK principale. Il mutante è smentito da 28 testimoni,
-per entrambe le query e tutte le coppie nella medesima parola. Il controllo
-alla frontiera 7/8 conferma che il prestito non attraversa le due parole.
-I buffer sono confrontati integralmente prima/dopo anche sul rifiuto.
+In addition, 77 negative checks per CHECK: 34 for byte inputs, 26 for words/
+queries, five for CHECK/time limits, 12 for BENCH preflight (no BENCH call).
+A nested CHECK with a one-group budget rejects the next operation; its group
+belongs to the negative check, rather than the main CHECK count. The mutant
+is refuted by 28 witnesses, for both queries and all pairs within the same
+word. The 7/8 boundary check confirms that borrowing does not cross the two
+words. Buffers are compared in full before/after, including rejection.
 
-Limiti effettivi CHECK: 4.000.000 gruppi, 20.000 casi differenziali,
-120 secondi, checkpoint ogni 4096 gruppi. Ogni rifiuto è una condizione;
-nessun limite esaurito restituisce :ok. Le tre esecuzioni complete sono
-entro questi limiti. I tempi di CHECK nei record non sono benchmark.
+Actual CHECK limits: 4,000,000 groups, 20,000 differential cases, 120 seconds,
+checkpoint every 4096 groups. Every rejection is a condition; no exhausted
+limit returns :ok. The three complete runs remain within these limits.
+CHECK times in records are not benchmarks.
 
-L'ultima directory conserva `check-data.lisp`, il FASL, `stdout.txt`,
-`stderr.txt` e otto file `disassembly-*.txt` dei quattro kernel e quattro
-cicli. L'aritmetica osservata usa registri interi ARM64 (MUL/EOR/AND/ADD/ORR
-e shift), con controlli safety 3 e rami di errore. Nei percorsi normali dei
-kernel SWAR non si osservano chiamate di allocazione; i cicli contengono
-anche percorsi freddi di errore. L'assenza di bytes-consed nel ciclo e
-l'eventuale vantaggio prestazionale restano da misurare nel parent.
+The final directory retains `check-data.lisp`, the FASL, `stdout.txt`,
+`stderr.txt`, and eight `disassembly-*.txt` files for the four kernels and
+four loops. Observed arithmetic uses ARM64 integer registers (MUL/EOR/AND/ADD/
+ORR and shifts), with safety 3 checks and error branches. No allocation calls
+are observed in normal SWAR kernel paths; loops also contain cold error paths.
+The absence of bytes-consed in the loop and any performance advantage remain
+to be measured by the parent.
 
-## Integrazione e lettura autonoma dei report
+<a id="integrazione-e-lettura-autonoma-dei-report"></a>
 
-Prima del CHECK integrato, il runner converte soltanto gli identificatori
-dei package sperimentali in stringhe qualificate. Numeri, byte, output e
-risultati restano invariati. Il report può così essere letto con
-`*read-eval*=nil` senza caricare il modulo. I quattro record originali sono
-conservati integralmente nel campo `:raw-original` delle evidenze portabili
-in [catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/catalogo.lisp); il campo
-`:decoded-record` dichiara la stessa conversione di rappresentazione.
-I kernel misurati non cambiano.
+## Integration and standalone report reading
 
-Il parent ha poi eseguito il BENCH con tutti i parametri predefiniti nel
-[runner integrato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/spk08-benchmark.lisp):
-40 campioni scalar/SWAR completi, cinque repliche/cella, checksum congruenti,
-zero byte consed osservati nei cicli. Il medesimo processo esegue dopo il
-modulo nativo, in serie. Il [resoconto](../../docs/valutazione/risultati-SPK-07-08-2026-10-08.md)
-distingue le due matrici e i limiti delle conclusioni.
+Before the integrated CHECK, the runner converts only experimental package
+identifiers to qualified strings. Numbers, bytes, output, and results remain
+unchanged. The report can then be read with `*read-eval*=nil` without loading
+the module. The four original records are retained in full in the
+`:raw-original` field of portable evidence in the
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/catalogo.lisp); the
+`:decoded-record` field declares the same representation conversion.
+Measured kernels do not change.
+
+The parent subsequently ran BENCH with all default parameters in the
+[integrated runner](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/spk08-benchmark.lisp):
+40 complete scalar/SWAR samples, five replicates/cell, consistent checksums,
+zero consed bytes observed in the loops. The same process then runs the native
+module, sequentially. The [report](../../docs/valutazione/risultati-SPK-07-08-2026-10-08.md)
+distinguishes the two matrices and the limits of the conclusions.

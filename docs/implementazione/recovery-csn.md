@@ -1,124 +1,136 @@
-# Massimo CSN osservato nel recovery
+<a id="massimo-csn-osservato-nel-recovery"></a>
 
-Il recovery raccoglie i CSN verificati prima di inizializzare il registro
-dell'Archivio, come previsto da [ADR-0020](../adr/0020-csn-snapshot-isolamento.md)
-e dall'[architettura](../architettura.md#recovery). Questo incremento fornisce
-le query sui risultati readonly e l'aggregazione di una Serie completa.
-Non costruisce il registro e non apre il traffico.
+# Maximum CSN observed during recovery
 
-Il [piano dell'Archivio](csn-archivio-recovery.md) aggrega ora queste query
-rispetto all'elenco canonico fornito dal controller, inclusa Registri,
-e verifica che ogni ACTIVE abbia usato lo stesso replay delle decisioni.
-Catalogo persistente e ammissione restano da collegare.
+Recovery collects verified CSNs before initializing the Archivio registry,
+as specified by [ADR-0020](../adr/0020-csn-snapshot-isolamento.md)
+and the [architecture](../architettura.md#recovery). This increment provides
+queries on read-only results and aggregation of a complete Serie.
+It does not build the registry or open traffic.
 
-## Contratto pubblico
+The [Archivio plan](csn-archivio-recovery.md) now aggregates these queries
+against the canonical list supplied by the controller, including Registri,
+and checks that every ACTIVE used the same decision replay.
+Persistent catalog and admission remain to be connected.
 
-Ogni query restituisce **due valori: presenza, massimo u64**.
-`NIL, 0` significa nessuna fonte; `T, 0` significa CSN zero realmente osservato.
-Nessuna somma o conversione in u32 tronca il massimo.
+<a id="contratto-pubblico"></a>
 
-| Namespace | API | Fonte |
+## Public contract
+
+Each query returns **two values: presence, u64 maximum**.
+`NIL, 0` means no source; `T, 0` means CSN zero actually observed.
+No sum or conversion to u32 truncates the maximum.
+
+| Namespace | API | Source |
 |---|---|---|
-| `arcdocdb.recovery.active` | `massimo-csn-active-recuperato(result)` | Vecchio ACTIVE completamente verificato e risolto |
-| `arcdocdb.recovery.closed` | `massimo-csn-closed-recuperato(result)` | CLOSED verificato fino al P del CONTROL e suoi esiti EDIT |
-| `arcdocdb.recovery.closed` | `massimo-csn-serie-recuperata(active, closed :max-segmenti 65536)` | ACTIVE e tutti i CLOSED dello stesso CONTROL |
-| `arcdocdb.recovery.archive` | `massimo-csn-decisioni-recuperate(result)` | Tutte le DECISION del prefisso verificato di `multiserie.log` |
-| `arcdocdb.recovery.decisions` | `massimo-csn-decisioni(table)` | Query scalare della tabella canonica, priva da sola dell'identità di Archivio |
+| `arcdocdb.recovery.active` | `massimo-csn-active-recuperato(result)` | Fully verified and resolved old ACTIVE |
+| `arcdocdb.recovery.closed` | `massimo-csn-closed-recuperato(result)` | CLOSED verified up to CONTROL P and its EDIT outcomes |
+| `arcdocdb.recovery.closed` | `massimo-csn-serie-recuperata(active, closed :max-segmenti 65536)` | ACTIVE and all CLOSED of the same CONTROL |
+| `arcdocdb.recovery.archive` | `massimo-csn-decisioni-recuperate(result)` | All DECISION records in the verified prefix of `multiserie.log` |
+| `arcdocdb.recovery.decisions` | `massimo-csn-decisioni(table)` | Scalar query of the canonical table, lacking Archivio identity on its own |
 
-I risultati dei reader conservano due scalari readonly aggiuntivi. Non
-trattengono scratch, nuove tabelle o callback. ACTIVE conserva inoltre un
-marker privato del replay, che non trattiene la tabella. Le firme pubbliche e i
-valori precedenti dei reader restano gli stessi; cambia la rappresentazione
-privata dei risultati ACTIVE/CLOSED, che richiede ricaricamento del sistema.
+Reader results retain two additional read-only scalars. They do not retain
+scratch, new tables, or callbacks. ACTIVE also retains a private replay
+marker, which does not retain the table. Public signatures and previous
+reader values remain the same; the private representation of ACTIVE/CLOSED
+results changes, requiring a system reload.
 
-## Che cosa contribuisce
+<a id="che-cosa-contribuisce"></a>
 
-| Fonte già verificata | Valore incluso |
+## What contributes
+
+| Already verified source | Included value |
 |---|---|
-| PUT/TOMBSTONE ordinario | `stamp`, che è il CSN |
-| PUT/TOMBSTONE prepared | Nessun contributo dal suo `stamp`: è un TXID |
-| SEAL di un segmento writer | CSN del lotto, anche se contiene soltanto prepared |
-| OUTCOME nel segmento | CSN del payload, anche senza prepared locale |
-| DECISION che risolve un prepared ACTIVE senza OUTCOME | CSN della decisione |
-| Esiti EDIT del CLOSED | Tutti i CSN, anche senza prepared raggiungibile nel prefisso |
-| Segmento compattato | Stamp dei soli PUT/TOMBSTONE ordinari, più gli eventuali esiti EDIT conservati |
-| Tabella completa delle DECISION | Tutti i CSN, anche senza prepared nelle Serie aperte |
-| Header, TXID, ID segmento, frontiere, SEAL di CONTROL/multiserie | Nessun contributo |
-| Byte oltre P, coda ACTIVE non valida, coda del decision log | Nessun contributo |
+| Ordinary PUT/TOMBSTONE | `stamp`, which is the CSN |
+| Prepared PUT/TOMBSTONE | No contribution from its `stamp`: it is a TXID |
+| SEAL of a writer segment | Batch CSN, even if it contains only prepared records |
+| OUTCOME in the segment | Payload CSN, even without local prepared records |
+| DECISION resolving an ACTIVE prepared record without OUTCOME | Decision CSN |
+| CLOSED EDIT outcomes | All CSNs, even without prepared records reachable in the prefix |
+| Compacted segment | Stamps of ordinary PUT/TOMBSTONE records only, plus any retained EDIT outcomes |
+| Complete DECISION table | All CSNs, even without prepared records in the open Serie |
+| Header, TXID, segment ID, frontiers, CONTROL/multiserie SEAL | No contribution |
+| Bytes beyond P, invalid ACTIVE tail, decision log tail | No contribution |
 
-Il risultato è un **massimo osservato**, non l'orizzonte di visibilità H
-o un elenco di transazioni da confermare. Conservare il massimo di una
-prova valida senza documento locale evita di abbassare la base quando
-alcuni dati sono stati eliminati. Un esito non crea un documento; un SEAL
-non rende committed un prepared privo di prova. Conflitti fra prove e
-partecipanti restano errori dei reader canonici e impediscono il risultato.
+The result is an **observed maximum**, not the visibility horizon H
+or a list of transactions to acknowledge. Retaining the maximum of valid
+proof without a local document avoids lowering the base when some data
+has been deleted. An outcome does not create a document; a SEAL does not
+commit a prepared record without proof. Conflicts between proofs and
+participants remain canonical reader errors and prevent the result.
 
-## Autorità e insieme completo
+<a id="autorità-e-insieme-completo"></a>
 
-L'aggregazione della Serie usa `verifica-closed-completi` prima di
-consumare i massimi: cardinalità esatta, stesso token CONTROL per identità
-`EQ`, ID u64 unici, appartenenza CLOSED e P esatto. Controlla anche che
-ACTIVE, CONTROL e CLOSED mantengano aperte le capacità readonly.
-Il budget `max-segmenti` precede la tabella privata dei duplicati.
+## Authority and complete set
 
-Il controller congela fonti, vettore e namespace per l'intera operazione.
-Il risultato non certifica riconciliazione fisica, nomi, inode, catalogo,
-salute futura dei FD o inventario completo dell'Archivio. Le query scalari
-sui singoli token descrivono la lettura già conclusa; non rileggono i file.
-La query sul decision log controlla che il suo FD resti aperto.
+Serie aggregation uses `verifica-closed-completi` before consuming maxima:
+exact cardinality, same CONTROL token by `EQ` identity, unique u64 IDs,
+CLOSED membership, and exact P. It also checks that ACTIVE, CONTROL,
+and CLOSED keep their read-only capabilities open.
+The `max-segmenti` budget precedes the private duplicate table.
 
-Il coordinatore dell'Archivio deve ancora:
+The controller freezes sources, vector, and namespace throughout the operation.
+The result does not certify physical reconciliation, names, inodes, catalog,
+future FD health, or a complete Archivio inventory. Scalar queries on
+individual tokens describe the already completed reading; they do not reread
+files. The decision log query checks that its FD remains open.
 
-1. conoscere tutte le Serie canoniche, inclusa Registri;
-2. recuperarle e verificare le decisioni e gli obblighi pendenti;
-3. aggregare i massimi delle Serie **e del decision log completo**;
-4. costruire l'unico registro CSN e il registro snapshot che lo usa;
-5. completare pubblicazioni e obblighi prima dell'ammissione.
+The Archivio coordinator must still:
 
-La [creazione del registro](csn.md) riceve l'**ultimo CSN**, non il prossimo.
-Con base `M`, la prima assegnazione produce `M+1`; passare `M+1` alla
-creazione salterebbe un valore. Se `M = 2^64-1`, il registro esistente
-rifiuta ogni nuova assegnazione con `:csn-exhausted`: nessun wrap o reset.
-Un sottoinsieme delle Serie non autorizza una base di Archivio.
+1. know all canonical Serie, including Registri;
+2. recover them and verify decisions and pending obligations;
+3. aggregate maxima of the Serie **and the complete decision log**;
+4. build the single CSN registry and the snapshot registry that uses it;
+5. complete publications and obligations before admission.
 
-## Costi e limiti
+[Registry creation](csn.md) receives the **last CSN**, not the next one.
+With base `M`, the first assignment produces `M+1`; passing `M+1` to
+creation would skip a value. If `M = 2^64-1`, the existing registry
+rejects every new assignment with `:csn-exhausted`: no wrap or reset.
+A subset of Serie does not authorize an Archivio base.
 
-- Writer ACTIVE/CLOSED: aggiornamenti scalari durante l'attraversamento
-  semantico esistente; nessun nuovo passaggio o I/O.
-- CLOSED compattato: un passaggio aggiuntivo di `COUNT` header sullo
-  scratch già verificato; non ricalcola i CRC dei body e non rilegge il file.
-- EDIT: un passaggio sui suoi esiti già limitati dal budget del reader.
-- DECISION: un passaggio sulle entry uniche della tabella posseduta.
-- Serie: un passaggio sui CLOSED oltre al gate completo. Il gate alloca
-  la tabella privata degli ID come già documentato; non è un tetto RSS.
+<a id="costi-e-limiti"></a>
 
-Nessun contenitore aggiuntivo per record. Boxing degli interi u64, oggetti
-Lisp e GC restano da misurare. Non ci sono modifiche ai percorsi delle
-richieste o dei commit, né misure di throughput/latency in questo incremento.
+## Costs and limits
 
-## Decisioni e qualifica
+- Writer ACTIVE/CLOSED: scalar updates during the existing semantic
+  traversal; no new pass or I/O.
+- Compacted CLOSED: one additional pass over `COUNT` headers in the
+  already verified scratch; does not recalculate body CRCs or reread the file.
+- EDIT: one pass over its outcomes, already bounded by the reader budget.
+- DECISION: one pass over the unique entries of the owned table.
+- Serie: one pass over CLOSED beyond the complete gate. The gate allocates
+  the private ID table as already documented; this is not an RSS cap.
 
-Requisiti: REQ-REC-001, REQ-MVC-005/006, REQ-TXM-005/007, REQ-STO-006,
-REQ-CMP-009, REQ-AFF-008. Invarianti coinvolti: INV-A2, INV-M5 e INV-P6;
-il massimo non sostituisce le prove di commit né produce scritture fra Serie.
+No additional per-record container. Boxing of u64 integers, Lisp objects,
+and GC remain to be measured. There are no changes to request or commit
+paths, or throughput/latency measurements in this increment.
 
-| Caso | Decisione/obbligo di verifica dedicata |
+<a id="decisioni-e-qualifica"></a>
+
+## Decisions and qualification
+
+Requirements: REQ-REC-001, REQ-MVC-005/006, REQ-TXM-005/007, REQ-STO-006,
+REQ-CMP-009, REQ-AFF-008. Invariants involved: INV-A2, INV-M5, and INV-P6;
+the maximum neither replaces commit proofs nor produces writes between Serie.
+
+| Case | Decision/dedicated verification obligation |
 |---|---|
-| CSR-D01 | Ordinario/prepared: stessi bit di stamp, solo l'ordinario contribuisce come stamp |
-| CSR-D02 | Presenza distinta dal valore: vuoto, CSN zero, bit alti e massimo u64 |
-| CSR-D03 | SEAL writer e OUTCOME: inclusi anche senza dati ordinari o prepared locale |
-| CSR-D04 | DECISION/OUTCOME/EDIT coerenti; conflitto rifiutato prima del risultato |
-| CSR-D05 | EDIT presente/assente, anche senza prepared e per compaction vuota |
-| CSR-D06 | Compaction: `(PUT OR TOMBSTONE) AND NOT PREPARED`; ogni condizione, progresso e count |
-| CSR-D07 | Intero prefisso e coda esclusa, v1/v2, origine writer/compaction |
-| CSR-D08 | Serie completa: count, duplicati, CONTROL diverso, P diverso, FD chiuso, budget |
-| CSR-D09 | DECISION senza prepared locale, duplicati identici, ordine TXID diverso dall'ordine CSN |
-| CSR-D10 | Registro unico, base M, prima assegnazione M+1, esaurimento senza wrap |
+| CSR-D01 | Ordinary/prepared: same stamp bits, only the ordinary record contributes as stamp |
+| CSR-D02 | Presence distinct from value: empty, CSN zero, high bits, and maximum u64 |
+| CSR-D03 | Writer SEAL and OUTCOME: included even without ordinary data or local prepared records |
+| CSR-D04 | Consistent DECISION/OUTCOME/EDIT; conflict rejected before the result |
+| CSR-D05 | EDIT present/absent, even without prepared records and for empty compaction |
+| CSR-D06 | Compaction: `(PUT OR TOMBSTONE) AND NOT PREPARED`; each condition, progress, and count |
+| CSR-D07 | Entire prefix and excluded tail, v1/v2, writer/compaction origin |
+| CSR-D08 | Complete Serie: count, duplicates, different CONTROL, different P, closed FD, budget |
+| CSR-D09 | DECISION without local prepared records, identical duplicates, TXID order different from CSN order |
+| CSR-D10 | Single registry, base M, first assignment M+1, exhaustion without wrap |
 
-Le [prime evidenze](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-csn/README.md)
-separavano compilazione, controlli statici e letture dell'autore dalle prove
-funzionali. Le campagne dedicate [CLOSED/Serie](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-closed-verifica/report.md)
-e [piano Archivio](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archivio-csn-verifica/report.md)
-conservano test funzionali, FI, prove native, revisione e copertura grezza,
-con i rispettivi confini. Restano MC/DC/C1, allocazioni/prestazioni e
-integrazione del controller/registro unico; la CI non chiude questi obblighi.
+The [initial evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-csn/README.md)
+separated compilation, static checks, and author readings from functional
+tests. The dedicated [CLOSED/Serie](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-closed-verifica/report.md)
+and [Archivio plan](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archivio-csn-verifica/report.md)
+campaigns retain functional tests, FI, native tests, review, and raw coverage,
+with their respective boundaries. MC/DC/C1, allocations/performance, and
+controller/single registry integration remain open; CI does not close these obligations.

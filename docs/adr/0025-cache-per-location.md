@@ -1,41 +1,49 @@
-# ADR-0025 — Cache dei record per location, arena a slot, CLOCK per partizione
+<a id="adr-0025--cache-dei-record-per-location-arena-a-slot-clock-per-partizione"></a>
 
-- **Stato:** Accettata; **sostituita in parte da [ADR-0044](0044-cache-acceleratore-puro.md)**: insieme associativo al posto della tabella hash (punto 3), nessuna ri-etichettatura (punto 5), nessuno svuotamento per segmento. Unità, chiave, CLOCK e partizioni restano.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-17; realizza [ADR-0010](0010-cache-clock.md)
-- **Riferimenti:** [architettura](../architettura.md#percorso-di-lettura), INV-M3
+# ADR-0025 — Record cache by location, slot arena, CLOCK per partition
 
-## Decisione
+- **Status:** Accepted; **partly superseded by [ADR-0044](0044-cache-acceleratore-puro.md)**: set associativity replaces the hash table (item 3), no relabeling (item 5), no per-segment eviction. Unit, key, CLOCK, and partitions remain.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-17; implements [ADR-0010](0010-cache-clock.md)
+- **References:** [architecture](../architettura.md#percorso-di-lettura), INV-M3
 
-1. **Unità:** il record (documento + intestazione).
-2. **Chiave:** la location `(segment-id, offset)`. I segmenti chiusi sono immutabili: una entry
-   non diventa mai stale, non serve invalidazione e INV-M3 vale per costruzione, perché il
-   reader arriva alla cache con la location della versione che il suo snapshot vede.
-3. **Memoria:** arena per Serie di slot a dimensione fissa in classi (es. 1, 2, 4, 8, 16 KB),
-   in array `(unsigned-byte 8)`; il record è copiato nello slot da `pread`. Indice della cache:
-   tabella hash compatta `(segment-id, offset) → slot`, stesso layout del primary index.
-4. **Sostituzione:** CLOCK per partizione; una partizione per Serie, con budget assegnato
-   dallo scheduler (quota configurabile per Serie, il resto proporzionale all'uso recente
-   con un minimo garantito). Il bit di riferimento è un byte per slot.
-5. **Letture durante la compaction:** quando il writer applica una rilocazione condizionale,
-   se la location vecchia è in cache la entry viene **ri-etichettata** con la nuova location
-   (stesso contenuto): nessuna perdita di calore.
-6. La page cache del sistema operativo è un secondo livello non controllato; i benchmark
-   misurano con dataset maggiore della RAM.
-7. **Metrica di scan pollution:** quota di slot inseriti da scansioni ed espulsi senza mai
-   essere stati riletti. Se supera il 30 % in un benchmark di riferimento, un nuovo ADR
-   valuta 2Q (come previsto dalla specifica).
+<a id="decisione"></a>
 
-Pattern: cache a blocchi con CLOCK (PostgreSQL buffer pool, clock-sweep); chiave per
-posizione fisica immutabile (block cache di RocksDB per SST immutabili).
+## Decision
 
-## Conseguenze
+1. **Unit:** the record (document + header).
+2. **Key:** the location `(segment-id, offset)`. Closed segments are immutable: an entry
+   never becomes stale, no invalidation is needed, and INV-M3 holds by construction,
+   because the reader reaches the cache with the location of the version its snapshot sees.
+3. **Memory:** a per-Serie arena of fixed-size slots in classes (e.g., 1, 2, 4, 8, 16 KB),
+   in `(unsigned-byte 8)` arrays; `pread` copies the record into the slot. Cache index:
+   compact hash table `(segment-id, offset) → slot`, same layout as the primary index.
+4. **Replacement:** CLOCK per partition; one partition per Serie, with a budget assigned
+   by the scheduler (configurable per-Serie quota, the rest proportional to recent use
+   with a guaranteed minimum). The reference bit occupies one byte per slot.
+5. **Reads during compaction:** when the writer applies a conditional relocation,
+   if the old location is cached, the entry is **relabeled** with the new location
+   (same contents): no loss of cache warmth.
+6. The operating system page cache is an uncontrolled second level; benchmarks
+   measure with a dataset larger than RAM.
+7. **Scan-pollution metric:** fraction of slots inserted by scans and evicted without
+   ever being reread. If it exceeds 30 % in a reference benchmark, a new ADR
+   evaluates 2Q (as specified).
 
-- Nessuna invalidazione sulle scritture; la cache non partecipa ai protocolli di coerenza.
-- Il record resta in cache finché il segmento esiste, anche se la versione è morta: lo spazio
-  si libera con CLOCK o al reclaim del segmento (le entry del segmento sono eliminate).
-- Il costo per Serie è un budget da governare: parte dello scheduler.
+Pattern: block cache with CLOCK (PostgreSQL buffer pool, clock-sweep); key based on
+immutable physical location (RocksDB block cache for immutable SSTs).
 
-## Valutazione
+<a id="conseguenze"></a>
 
-- Verifica: SPK-05; benchmark GET con cache hit/miss e con scansioni concorrenti.
+## Consequences
+
+- No invalidation on writes; the cache does not participate in consistency protocols.
+- The record stays cached as long as the segment exists, even if the version is dead:
+  space is freed by CLOCK or when the segment is reclaimed (its entries are removed).
+- Per-Serie cost is a budget to control: part of the scheduler.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Verification: SPK-05; GET benchmarks with cache hits/misses and concurrent scans.

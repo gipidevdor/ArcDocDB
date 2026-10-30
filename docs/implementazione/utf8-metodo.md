@@ -1,61 +1,67 @@
-# Metodo di verifica della validazione UTF-8
+<a id="metodo-di-verifica-della-validazione-utf-8"></a>
 
-Metodo registrato prima delle campagne. Il blocco controlla uno span di byte
-senza decodificarlo in una stringa, con budget massimo di 16 MiB. Supporta i
-limiti del futuro decoder CBOR; non implementa il parser, la profondità,
-la normalizzazione o la validazione di uno schema.
+# UTF-8 validation verification method
 
-## Contratto e oracoli
+Method registered before campaigns. Block checks a byte span
+without decoding into a string, with maximum 16 MiB budget. Supports
+future CBOR decoder limits; does not implement parser, depth,
+normalization, or schema validation.
 
-Buffer semplice specializzato a byte, span `[start,end)` e budget intero
-non negativo entro 16 MiB. Il controllo dello span precede quello del budget;
-il superamento del budget precede l'ispezione dei byte. Anche lo span vuoto
-è valido. Il risultato è il numero di valori scalari Unicode, con NUL, BOM
-e noncaratteri ammessi. Nessuna sostituzione o normalizzazione.
+<a id="contratto-e-oracoli"></a>
 
-La grammatica è quella di [RFC 3629, §4](https://www.rfc-editor.org/rfc/rfc3629#section-4);
-[RFC 8949, §3.1](https://www.rfc-editor.org/rfc/rfc8949#section-3.1) richiede UTF-8 valido
-per il testo CBOR. Dopo il riconoscimento del byte iniziale, l'intera sequenza
-deve stare nello span prima di leggere le continuazioni. Si controllano poi
-le continuazioni da sinistra, infine overlong, surrogate e limite U+10FFFF.
-Gli errori riportano motivo tipizzato e offset assoluto: byte iniziale,
-fine dello span per troncatura, prima continuazione invalida, secondo byte
-per un valore scalare escluso. Gli errori di argomento non hanno offset.
+## Contract and oracles
 
-Test congelati prima di leggere il prodotto: tutti i 256 input di un byte e
-i 65.536 input di due byte confrontati con il decoder strict SBCL, dopo un
-self-check su fixture manuali. Il decoder è oracolo per accettazione e
-conteggio; la priorità e gli offset degli errori hanno oracoli manuali.
-Vettori indipendenti per confini a tre/quattro byte, tutte le troncature,
-continuazioni invalide, span con sentinelle, budget e input invalidi.
-Fuzz differenziale: 4096 input di 3..8 byte con seme `3629A11F`, piu una
-sequenza di 521 scalari codificati dall'oracolo con seme `3629` e slice ai
-confini dei caratteri. Nessun risultato atteso viene ricavato dal prodotto.
+Simple specialized byte buffer, span `[start,end)`, and nonnegative
+integer budget within 16 MiB. Span check precedes budget check;
+exceeding budget precedes byte inspection. Empty span
+is valid too. Result is Unicode scalar-value count, with NUL, BOM,
+and noncharacters allowed. No substitution or normalization.
 
-## Parallelismo e campagne
+Grammar from [RFC 3629, §4](https://www.rfc-editor.org/rfc/rfc3629#section-4);
+[RFC 8949, §3.1](https://www.rfc-editor.org/rfc/rfc8949#section-3.1) requires valid UTF-8
+for CBOR text. After recognizing leading byte, entire sequence
+must fit span before reading continuations. Continuations
+then checked from left, finally overlong, surrogate, and U+10FFFF limit.
+Errors report typed reason and absolute offset: leading byte,
+span end for truncation, first invalid continuation, second byte
+for excluded scalar value. Argument errors have no offset.
 
-Il chiamante mantiene immutabile lo span fino al ritorno. La funzione non
-scrive il buffer né altri oggetti e non usa stato mutabile globale. Due thread
-eseguono validazioni su buffer distinti preallocati; si verificano conteggi,
-contenuto e intervalli di calcolo sovrapposti fuori dalla barriera iniziale.
-Due buffer da 655.360 byte, 64 chiamate ciascuno; semafori entro 15 secondi
-e join entro 20, con cessazione dei worker verificata anche nel cleanup.
-Questa prova non misura lo scaling del pool o del motore.
+Tests frozen before reading product: all 256 one-byte inputs and
+65,536 two-byte inputs compared with strict SBCL decoder after
+self-check on manual fixtures. Decoder is acceptance and count
+oracle; error priority and offsets have manual oracles.
+Independent vectors for three/four-byte boundaries, all truncations,
+invalid continuations, sentinel spans, budgets, and invalid input.
+Differential fuzz: 4096 inputs of 3..8 bytes with seed `3629A11F`, plus
+sequence of 521 scalars encoded by oracle with seed `3629` and slices at
+character boundaries. No expected result derived from product.
 
-Build senza avvisi, lint, tracciabilità e due letture C1. Tabella delle
-decisioni con condizioni composte esplicite. Copertura SBCL separata con
-self-test, stato grezzo e denominatore intero; nessun dato viene escluso
-per ottenere una percentuale artificiale. Mutanti mirati in copie nuove,
-baseline obbligatoria, compilazione fallita sempre invalida e smoke su riga
-esatta. Sono conservati anche i tentativi falliti.
+<a id="parallelismo-e-campagne"></a>
 
-Allocazioni su successi: buffer preallocati ASCII, a due/tre/quattro byte e
-misti, cinque repliche per cella, warmup 128, GC fuori dalla misura. Ogni
-cella usa uno span entro 16 MiB, con conteggio atteso indipendente e sink
-osservabile. Il sensore ha baseline e controllo positivo 16 × 1 MiB.
-Zero heap osservato è il criterio; nessuna soglia temporale. Le misure sono
-seriali, separate dalla copertura e dalla campagna di mutazione.
+## Parallelism and campaigns
 
-Il kernel è trattato conservativamente come C1. Le letture automatizzate
-non costituiscono approvazione umana; non chiudono MC/DC, requisiti completi
-del decoder, controller FAULTED o gate di rilascio del motore.
+Caller keeps span immutable until return. Function writes
+neither buffer nor other objects and uses no global mutable state. Two threads
+perform validations on separate preallocated buffers; counts,
+contents, and overlapping compute intervals outside startup barrier verified.
+Two 655,360-byte buffers, 64 calls each; semaphores within 15 seconds
+and joins within 20, with worker termination checked during cleanup too.
+This test does not measure pool or engine scaling.
+
+Warning-free build, lint, traceability, and two C1 readings. Decision
+table with explicit compound conditions. Separate SBCL coverage with
+self-test, raw state, and entire denominator; no data excluded
+to obtain artificial percentage. Targeted mutants in new copies,
+mandatory baseline, failed compilation always invalid, and exact-line
+smoke. Failed attempts preserved too.
+
+Successful-path allocations: preallocated ASCII, two/three/four-byte, and mixed
+buffers, five replicates per cell, warmup 128, GC outside measurement. Each
+cell uses a span within 16 MiB, with independent expected count and observable
+sink. Sensor has baseline and positive control 16 × 1 MiB.
+Observed zero heap allocation is criterion; no timing threshold. Measurements are
+serial, separate from coverage and mutation campaign.
+
+Kernel treated conservatively as C1. Automated readings
+do not constitute human approval; do not close MC/DC, complete decoder
+requirements, FAULTED controller, or engine release gates.

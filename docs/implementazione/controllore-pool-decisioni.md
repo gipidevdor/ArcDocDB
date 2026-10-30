@@ -1,21 +1,23 @@
-# Decisioni del controllore del pool
+<a id="decisioni-del-controllore-del-pool"></a>
 
-Il componente è C3 ([ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md));
-la copertura minima è 95% di istruzioni e rami su tutti i sei file di
-[`src/scheduler/`](../../src/scheduler/), inclusi gli accessor generati.
-Non si deduce MC/DC dalla copertura dei rami. Le decisioni composte sono
-elencate comunque per facilitare le due letture.
+# Pool-controller decisions
 
-| Decisione | Condizioni, in ordine | Prova prevista |
+The component is C3 ([ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md));
+minimum coverage is 95% of statements and branches across all six files in
+[`src/scheduler/`](../../src/scheduler/), including generated accessors.
+MC/DC is not inferred from branch coverage. Compound decisions are
+listed anyway to facilitate both readings.
+
+| Decision | Conditions, in order | Planned test |
 |---|---|---|
-| `%pool-range` | fixnum; lower ≤ value ≤ upper | tipo non intero, bignum, minimo/massimo validi e fuori intervallo |
-| `%pool-direction` shrink | P99 ≥1200; oppure coda <1 e CPU ≤300 | P99 degradato con coda alta; coda vuota con CPU bassa/alta; coda occupata con CPU bassa |
-| `%pool-direction` grow | coda ≥queue-high; CPU <700; P99 ≤1000 | soglie inclusive/esclusive e blocco per ciascun segnale |
-| aggiornamento reset | primo campione; oppure gap >2×period | primo tick zero/nonzero, gap uguale al limite e un tick oltre |
+| `%pool-range` | fixnum; lower ≤ value ≤ upper | noninteger type, bignum, valid and out-of-range minimum/maximum |
+| `%pool-direction` shrink | P99 ≥1200; or queue <1 and CPU ≤300 | degraded P99 with high queue; empty queue with low/high CPU; busy queue with low CPU |
+| `%pool-direction` grow | queue ≥queue-high; CPU <700; P99 ≤1000 | inclusive/exclusive thresholds and blocking by each signal |
+| reset update | first sample; or gap >2×period | first tick zero/nonzero, gap equal to limit and one tick beyond |
 
-Tutti i segnali confrontati sono EWMA con scala 256. Le soglie sono una
-politica iniziale esplicita e configurabile solo per pressione della coda;
-non sono tarate su carichi del database. Le condizioni singole comprendono
-owner, intervallo dei campioni, limiti target, clock interno, pending,
-direzione, permanenza e clamp. La fault injection è limitata alle due
-invarianti controllate e alla direzione privata inattesa.
+All compared signals are EWMAs scaled by 256. Thresholds are an
+explicit initial policy, configurable only for queue pressure;
+they are not tuned to database workloads. Individual conditions include
+owner, sample interval, target bounds, internal clock, pending,
+direction, dwell, and clamp. Fault injection is limited to the two
+checked invariants and unexpected private direction.

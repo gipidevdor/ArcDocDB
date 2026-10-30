@@ -1,12 +1,14 @@
-# Inventario delle decisioni del routing worker/Serie
+<a id="inventario-delle-decisioni-del-routing-workerserie"></a>
 
-Lettura del 2026-10-11 sulla base
-`92decf4265554cd4959e32a1c881cf00758bb6a1`, dopo RW-REV-01.
-Questo inventario manuale non è una misura di copertura o MC/DC.
-Il [metodo](routing-worker-metodo.md), il [contratto](routing-worker.md)
-e la [revisione C1](routing-worker-revisione.md) delimitano lo scope.
+# Worker/Serie routing decision inventory
 
-| Sorgente letto | SHA-256 |
+Reading on 2026-10-11 against base
+`92decf4265554cd4959e32a1c881cf00758bb6a1`, after RW-REV-01.
+This manual inventory is not a coverage or MC/DC measurement.
+The [method](routing-worker-metodo.md), [contract](routing-worker.md),
+and [C1 review](routing-worker-revisione.md) bound the scope.
+
+| Source read | SHA-256 |
 |---|---|
 | `src/execution/handoff.lisp` | `3ce9f47008416f210173fd3a83ee7665b2103f26039d36e2601b31e5e3ebd72a` |
 | `src/execution/package.lisp` | `833e501e6ee6e3acb8a6d37139c4605a05e06c425a35318adbcf651aa2f9db30` |
@@ -16,125 +18,133 @@ e la [revisione C1](routing-worker-revisione.md) delimitano lo scope.
 | `src/series/routing-select.lisp` | `796e3ace762dd6c3d86119981a37c1904a637e664551ca0f5289544f0806714a` |
 | `arcdocdb.asd` | `a4852ba400f91c52af42df0143b921fbcb1895479d4e250f16d57ad8d65f7fb9` |
 
-## Controlli locali
+<a id="controlli-locali"></a>
 
-Gli ID comprendono tutti i 21 predicati scalari dei tre file nuovi,
-la decisione composta aggiunta alla factory writer, i due cicli startup
-e i due gate macro della selezione. Le decisioni già presenti in handoff,
-worker e bridge restano nei loro inventari; non si eliminano dal
-denominatore della copertura dei file completi.
+## Local checks
 
-| ID / posizione | Decisione | Esiti e obbligo |
+The IDs cover all 21 scalar predicates in the three new files,
+the compound decision added to the writer factory, the two startup loops,
+and the two selection macro gates. Existing decisions in handoff,
+worker, and bridge remain in their inventories; they are not removed
+from the complete-file coverage denominator.
+
+| ID / location | Decision | Outcomes and obligation |
 |---|---|---|
-| H01 / handoff:71–72 | Factory writer, `unless (or A B)` | A: indice NIL; B: indice del tipo integer0..65535. Almeno uno vero accetta; entrambi falsi `invalid-argument :writer-configuration` prima della coda. |
-| T01 / types:33 | `%routing-size`, `unless (<= 1 size 65536)` | Nel budget prosegue; fuori produce `invariant-violation :worker-serie-routing`. Nessuna scansione. |
-| T02 / types:35 | Stesso helper, lunghezze writers/controllers uguali | Uguali restituisce size; diverse invariante prima di usare elementi. |
-| I01 / build:12 | `%routing-input-size`, writers simple-vector | Tipo accettato prosegue; altro `invalid-argument :worker-serie-routing-configuration`. |
-| I02 / build:14 | Stesso helper, controllers simple-vector | Tipo accettato prosegue; altro stesso rifiuto, prima delle copie. |
-| I03 / build:17 | Stesso helper, size1..65536 | Budget accettato prosegue; vuoto/eccessivo stesso rifiuto. |
-| I04 / build:19 | Stesso helper, lunghezze uguali | Uguali restituisce size; diverse stesso rifiuto. |
-| E01 / build:28 | `%routing-input-entry`, tipo writer | Writer valido prosegue; altro `invalid-argument :worker-serie-routing-binding`. |
-| E02 / build:30 | Stesso helper, indice writer EQL ordinal | Ordinale esatto prosegue; NIL, ordinal diverso o writer duplicato nello slot diverso stesso rifiuto. |
-| E03 / build:32 | Stesso helper, tipo controller | Controller valido prosegue; altro stesso rifiuto. Non consulta salute/owner/ring. |
-| E04 / build:34 | Stesso helper, `when (gethash controller seen)` | Già visto EQ rifiuta il duplicato; nuovo entra nel solo hash startup. |
-| R01 / build:51 | Factory registro, size finale uguale a size input | Postcondizione coerente restituisce registro; diversa invariante, senza pubblicazione. |
-| W01 / build:68 | Factory tabella, lunghezza links uguale a size | Postcondizione coerente restituisce tabella; diversa invariante, nessuna lease assunta. |
-| O01 / select:14 | `%routing-ordinal`, lunghezza links uguale al registro | Uguale prosegue; diversa invariante prima dell'accesso link. |
-| O02 / select:16 | Stesso helper, ordinal del tipo index | Index prosegue; NIL/invalido invariante dopo claim. |
-| O03 / select:18 | Stesso helper, ordinal minore di size | Nel range prosegue; fuori invariante prima di `svref`. |
-| O04 / select:20 | Stesso helper, writer EQ nello slot | Identico restituisce ordinal; estraneo, anche con stesso numero, invariante. |
-| L01 / select:31 | `%routing-link`, tipo link | Collegamento valido prosegue; altro invariante. |
-| L02 / select:33 | Stesso helper, contesto link EQ contesto tabella | Identico prosegue; estraneo invariante prima dell'accesso alle capacità. |
-| L03 / select:35 | Stesso helper, writer link EQ writer corrente | Identico prosegue; altro invariante. Nessun riuso del link del tratto precedente. |
-| L04 / select:37–38 | Stesso helper, controller link EQ controller registro | Identico prosegue; altro invariante, senza leggere lo stato del controller. |
-| L05 / select:40 | Stesso helper, fase link IDLE | IDLE delega forma/lease locale a `%check-worker-serie` e restituisce link; altro invariante, nessun cleanup. |
-| C01 / select:53 | Gate FAULTED di `%passo-worker` esterno | Terminale rifiuta prima del handler preservando la prima diagnosi; operativo esegue il preflight CLAIMED. Owner è controllato prima del gate. |
-| C02 / select:55 | Gate FAULTED di `%passo-worker` interno | Terminale rifiuta prima del handler; operativo protegge soltanto i helper lookup con allowlist vuote. RW-REV-01. |
-| Q01 / build:48 | `dotimes` della factory registro | Esattamente N iterazioni, N validato1..65536; nessun retry e nessun ciclo nel lookup. |
-| Q02 / build:64 | `dotimes` della factory tabella | Esattamente N binding preallocati; limite dal registro T01/T02 prima dell'array. |
+| H01 / handoff:71–72 | Writer factory, `unless (or A B)` | A: NIL index; B: index of type integer0..65535. At least one true accepts; both false produce `invalid-argument :writer-configuration` before the queue. |
+| T01 / types:33 | `%routing-size`, `unless (<= 1 size 65536)` | Within budget continues; outside produces `invariant-violation :worker-serie-routing`. No scan. |
+| T02 / types:35 | Same helper, equal writers/controllers lengths | Equal returns size; different signals invariant before using elements. |
+| I01 / build:12 | `%routing-input-size`, writers simple-vector | Accepted type continues; other produces `invalid-argument :worker-serie-routing-configuration`. |
+| I02 / build:14 | Same helper, controllers simple-vector | Accepted type continues; other produces same rejection, before copies. |
+| I03 / build:17 | Same helper, size1..65536 | Accepted budget continues; empty/excessive produces same rejection. |
+| I04 / build:19 | Same helper, equal lengths | Equal returns size; different produces same rejection. |
+| E01 / build:28 | `%routing-input-entry`, writer type | Valid writer continues; other produces `invalid-argument :worker-serie-routing-binding`. |
+| E02 / build:30 | Same helper, writer index EQL ordinal | Exact ordinal continues; NIL, different ordinal, or duplicate writer in a different slot produces same rejection. |
+| E03 / build:32 | Same helper, controller type | Valid controller continues; other produces same rejection. Does not consult health/owner/ring. |
+| E04 / build:34 | Same helper, `when (gethash controller seen)` | Already seen EQ rejects duplicate; new enters startup-only hash. |
+| R01 / build:51 | Registry factory, final size equals input size | Consistent postcondition returns registry; different signals invariant, without publication. |
+| W01 / build:68 | Table factory, links length equals size | Consistent postcondition returns table; different signals invariant, no lease assumed. |
+| O01 / select:14 | `%routing-ordinal`, links length equals registry | Equal continues; different signals invariant before link access. |
+| O02 / select:16 | Same helper, ordinal of type index | Index continues; NIL/invalid signals invariant after claim. |
+| O03 / select:18 | Same helper, ordinal less than size | In range continues; outside signals invariant before `svref`. |
+| O04 / select:20 | Same helper, writer EQ in slot | Identical returns ordinal; foreign, even with same number, signals invariant. |
+| L01 / select:31 | `%routing-link`, link type | Valid link continues; other signals invariant. |
+| L02 / select:33 | Same helper, link context EQ table context | Identical continues; foreign signals invariant before capability access. |
+| L03 / select:35 | Same helper, link writer EQ current writer | Identical continues; other signals invariant. No reuse of previous writer segment's link. |
+| L04 / select:37–38 | Same helper, link controller EQ registry controller | Identical continues; other signals invariant, without reading controller state. |
+| L05 / select:40 | Same helper, link phase IDLE | IDLE delegates local shape/lease to `%check-worker-serie` and returns link; other signals invariant, no cleanup. |
+| C01 / select:53 | Outer `%passo-worker` FAULTED gate | Terminal rejects before handler, preserving first diagnosis; operational performs CLAIMED preflight. Owner checked before gate. |
+| C02 / select:55 | Inner `%passo-worker` FAULTED gate | Terminal rejects before handler; operational protects only lookup helpers with empty allowlists. RW-REV-01. |
+| Q01 / build:48 | Registry factory `dotimes` | Exactly N iterations, N validated1..65536; no retry and no loop in lookup. |
+| Q02 / build:64 | Table factory `dotimes` | Exactly N preallocated bindings; bound from registry T01/T02 before array. |
 
-Il getter `indice-routing-writer`, le strutture e i package non aggiungono
-altre decisioni. La factory tabella delega il controllo IDLE del worker
-prima di allocare; la selezione delega CLAIMED prima del boundary interno.
-Entrambi verificano il proprietario attraverso execution.
+The `indice-routing-writer` getter, structures, and packages add no
+other decisions. The table factory delegates the worker IDLE check
+before allocation; selection delegates CLAIMED before the inner boundary.
+Both check the owner through execution.
 
-## Decisione composta H01
+<a id="decisione-composta-h01"></a>
 
-A è `(null routing-index)`; B è
+## Compound decision H01
+
+A is `(null routing-index)`; B is
 `(typep routing-index '(integer 0 65535))`.
-Le assegnazioni richieste dalle fixture sono indipendenti rispetto alla
-decisione di accettazione:
+The assignments required by fixtures are independent with respect to
+the acceptance decision:
 
-| Input della fixture | A | B | Decisione | Contrasto |
+| Fixture input | A | B | Decision | Contrast |
 |---|---|---|---|---|
-| Simbolo estraneo | F | F | Rifiuta configurazione. | Base comune. |
-| `NIL` | V | F | Accetta writer compatibile senza routing. | Con base cambia soltanto A. |
-| `0` | F | V | Accetta ordinale0. | Con base cambia soltanto B. |
-| `65535` | F | V | Accetta limite superiore. | Verifica ulteriore del budget. |
-| `65536`, `-1`, float o stringa | F | F | Rifiuta configurazione. | Verifica ulteriore di tipo/range. |
+| Foreign symbol | F | F | Rejects configuration. | Common base. |
+| `NIL` | T | F | Accepts compatible writer without routing. | Only A changes from base. |
+| `0` | F | T | Accepts ordinal0. | Only B changes from base. |
+| `65535` | F | T | Accepts upper limit. | Additional budget check. |
+| `65536`, `-1`, float or string | F | F | Rejects configuration. | Additional type/range check. |
 
-`or` cortocircuita: con A vero B non viene valutato. I valori della tabella
-sono quelli degli input, non una attestazione di esecuzione di ogni operando.
-Non si inferisce MC/DC da sb-cover o dal solo successo della fixture.
+`or` short-circuits: with A true, B is not evaluated. The table values
+are those of the inputs, not an attestation that every operand executed.
+MC/DC is not inferred from sb-cover or fixture success alone.
 
-## Confine degli errori e controlli delegati
+<a id="confine-degli-errori-e-controlli-delegati"></a>
 
-| Passo | Resource recuperabili | Invalid recuperabili |
+## Error boundary and delegated checks
+
+| Step | Recoverable resource reasons | Recoverable invalid reasons |
 |---|---|---|
-| Factory writer/registro/tabella | Nessun handler nuovo; input/fase rifiutati prima della pubblicazione. | Nessun handler nuovo. |
-| Selezione esterna, preflight owner/CLAIMED | Soltanto `:worker-state`. | Nessuna. |
-| Selezione interna, helper lookup | Nessuna. | Nessuna. |
+| Writer/registry/table factory | No new handler; inputs/phase rejected before publication. | No new handler. |
+| Outer selection, owner/CLAIMED preflight | Only `:worker-state`. | None. |
+| Inner selection, lookup helpers | None. | None. |
 
-La selezione esterna permette la chiamata fuori fase senza mutazione.
-Il lookup interno non può usare quella allowlist: un errore del lookup
-con la stessa ragione `:worker-state` viene registrato come terminale prima
-del passaggio nel confine esterno. La condizione è propagata senza cambiarne
-l'identità; se l'esterno la riconosce, il worker è comunque già FAULTED.
-Un nuovo passo sul worker terminale rifiuta fuori dai handler senza
-sostituire la diagnosi. Wrong-thread è analogamente rifiutato prima del
-handler, senza poisoning del contesto, tabella, link o controller.
+Outer selection permits an out-of-phase call without mutation.
+Inner lookup cannot use that allowlist: a lookup error with the same
+`:worker-state` reason is recorded as terminal before passing through the
+outer boundary. The condition propagates without changing identity;
+if the outer boundary recognizes it, the worker is already FAULTED anyway.
+A new step on the terminal worker rejects outside handlers without
+replacing the diagnosis. Wrong-thread is likewise rejected before the
+handler, without poisoning the context, table, link, or controller.
 
-| Delegato letto | Obbligo |
+| Delegate read | Obligation |
 |---|---|
-| `execution::%passo-worker` | Valutazione singola del contesto, owner/gate terminale fuori dal handler, valori del corpo preservati e diagnosi persistente. Due istanze locali dynamic-extent; macro già documentata e testata nel worker. |
-| `execution::%richiedi-worker` | Forma/capacità/cursori del worker e fase richiesta; factory IDLE, selezione CLAIMED. Non assume un nuovo obbligo. |
-| `writer-worker-writer` | Getter owner-only; riferimento current writer conservato dopo claim. |
-| `%check-worker-serie` | Forma IDLE, fault NIL e lease locali zero; non consulta lo stato vivo della Serie in IDLE. |
-| `crea-collegamento-worker-serie` | Preallocazione sul thread del contesto, riferimenti immutabili, nessuna lease. |
+| `execution::%passo-worker` | Single context evaluation, owner/terminal gate outside handler, preserved body values, and persistent diagnosis. Two local dynamic-extent instances; macro already documented and tested in worker. |
+| `execution::%richiedi-worker` | Worker shape/capability/cursors and requested phase; factory IDLE, selection CLAIMED. Assumes no new obligation. |
+| `writer-worker-writer` | Owner-only getter; current writer reference retained after claim. |
+| `%check-worker-serie` | IDLE shape, NIL fault, and zero local leases; does not consult live Serie state in IDLE. |
+| `crea-collegamento-worker-serie` | Preallocation on context thread, immutable references, no lease. |
 
-Questo coupling interno resta esplicito e richiede rilettura se cambiano
-worker, macro, binding o forma del registro. Nessuna salute Archivio è
-scritta sul percorso normale. Non si marca una Serie su un errore routing
-senza averne la lease: il coordinamento del guasto rimane aperto.
+This internal coupling remains explicit and requires rereading if the worker,
+macro, binding, or registry shape changes. No Archivio health is written
+on the normal path. A routing error does not mark a Serie without owning
+its lease: fault coordination remains open.
 
-## Limiti e denominatori
+<a id="limiti-e-denominatori"></a>
 
-La complessità locale si conta come una base più ogni `when`/`unless`,
-un ingresso ulteriore per il secondo operando di `or` e un ingresso per
-ogni `dotimes`; i controlli dei delegati restano nei loro helper. Il massimo
-dei tre file nuovi è6 in `%routing-link`; `%routing-input-size`,
-`%routing-input-entry` e `%routing-ordinal` sono5, `%routing-size` è3,
-le due factory sono3. La selezione pubblica è3 includendo i due gate delle
-espansioni macro; la factory writer modificata è3. Corpi entro60righe,
-nessuna nuova ricorsione, attesa, callback, retry, thread o syscall.
+## Bounds and denominators
 
-Ogni accesso hot è O(1). La factory registro occupa O(N) spazio e usa hash
-EQ solo per l'unicità all'avvio; non si promette un costo worst-case O(N)
-del runtime hash. La tabella occupa O(N) spazio per worker. Il limite
-N≤65536 controlla memoria/cicli del componente; il caller deve includerlo
-nel budget complessivo di startup.
+Local complexity is counted as a base plus each `when`/`unless`, one
+additional entry for the second operand of `or`, and one entry for each
+`dotimes`; delegate checks remain in their helpers. The maximum in the
+three new files is6 in `%routing-link`; `%routing-input-size`,
+`%routing-input-entry`, and `%routing-ordinal` are5, `%routing-size` is3,
+and the two factories are3. Public selection is3 including both macro
+expansion gates; the modified writer factory is3. Bodies within60lines,
+no new recursion, wait, callback, retry, thread, or syscall.
 
-La copertura dedicata deve mantenere i file completi: 15 sorgenti Series,
-inclusi package e tre nuovi file late, e 11 sorgenti execution, incluso
-handoff modificato. L'ordinal writer e i controlli del worker non vengono
-attribuiti allo scope Series. Rapporti nativi/HTML, denominatori e tutte
-le identità missing restano nel risultato grezzo; nessuna esclusione è
-approvata. Il numero di test passati non attesta copertura totale, tutti
-gli interleaving, heap nullo universale o qualifica del motore.
+Every hot access is O(1). The registry factory occupies O(N) space and uses
+an EQ hash only for startup uniqueness; no O(N) worst-case runtime hash
+cost is promised. The table occupies O(N) space per worker. The N≤65536
+limit controls component memory/loops; the caller must include it in
+the overall startup budget.
 
-La tabella degli SHA sopra identifica lo scope delle campagne dedicate
-v2 sulla base92decf4. Il congelamento generale integra d155db3, che cambia
-ASDF per CBORstring-write e GETresolver senza cambiare execution/Series;
-8fb3051 aggiunge poi solo artefatti, senza cambiare sorgenti, tool o docs.
-La [revisione](routing-worker-revisione.md#integrazione-con-main-avanzato)
-mantiene distinti qualificazione dedicata e controllo generale integrato.
+Dedicated coverage must retain complete files: 15 Series sources,
+including packages and three new late files, and 11 execution sources,
+including modified handoff. Writer ordinal and worker checks are not
+attributed to Series scope. Native/HTML reports, denominators, and all
+missing identities remain in the raw result; no exclusion is approved.
+The passed test count does not attest to total coverage, all interleavings,
+universal zero heap, or engine qualification.
+
+The SHA table above identifies the scope of dedicated v2 campaigns
+on base92decf4. The general freeze integrates d155db3, which changes
+ASDF for CBORstring-write and GETresolver without changing execution/Series;
+8fb3051 then adds only artifacts, without changing sources, tools, or docs.
+The [review](routing-worker-revisione.md#integrazione-con-main-avanzato)
+keeps dedicated qualification and the integrated general check distinct.

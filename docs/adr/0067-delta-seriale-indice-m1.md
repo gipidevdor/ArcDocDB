@@ -1,46 +1,52 @@
-# ADR-0067 — Delta seriale limitato per l'immagine primaria M1
+<a id="adr-0067--delta-seriale-limitato-per-limmagine-primaria-m1"></a>
 
-- **Stato:** Accettata nell'integrazione incrementale autorizzata dall'autore il 2026-10-29
-- **Data:** 2026-10-29
-- **Riferimenti:** ADR-0064, ADR-0065, ADR-0066; REQ-IDX-010, INV-I8, INV-I1, INV-P6
-- **Rapporto con la specifica:** nessun formato durevole nuovo; estende il ritiro prima della scrittura di ADR-0066 con delta esplicito
+# ADR-0067 — Bounded serial delta for the M1 primary image
 
-## Decisione
+- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-29
+- **Date:** 2026-10-29
+- **References:** ADR-0064, ADR-0065, ADR-0066; REQ-IDX-010, INV-I8, INV-I1, INV-P6
+- **Relationship to the specification:** no new durable format; extends ADR-0066's retirement before writing with an explicit delta
 
-L'attivazione seriale puo' prenotare un insieme esatto delle chiavi toccate
-con `:delta-keys` e `:delta-key-bytes`. Entrambi zero mantengono il contratto
-precedente: la prima scrittura ammessa ritira l'immagine. Entrambi positivi
-abilitano il delta, senza cambiare lo startup e senza selezione automatica.
+<a id="decisione"></a>
 
-Il delta conserva solo membership: digest, range e copia della chiave.
-Per ogni chiave toccata GET consulta il residente canonico corrente, anche
-se assente per tombstone. Per le altre consulta l'immagine verificata.
-Una cancellazione di chiave assente viene comunque registrata: una chiave
-toccata non ricade mai sul derivato precedente. Le collisioni di digest
-richiedono confronto dei byte completi. Non c'e' fallback su errore I/O.
+## Decision
 
-Tabella open-addressing al massimo meta' piena, linear probing limitato
-alla capacita', arena append-only e array sono prenotati all'attivazione.
-Il preflight contabilizza vecchio e nuovo delta oltre ai reader/cache.
-Esaurire chiavi o byte e' un rifiuto ordinario prima del CSN e del WAL:
-READY, immagine e file restano invariati. Aggiornare una chiave gia'
-registrata non consuma spazio aggiuntivo, anche dopo DELETE e resurrezione.
-Nessuna eliminazione o riuso di entry fino alla prossima pubblicazione.
+Serial activation can reserve an exact set of touched keys
+with `:delta-keys` and `:delta-key-bytes`. Both zero retain the previous
+contract: the first admitted write retires the image. Both positive
+enable the delta, without changing startup or adding automatic selection.
 
-Dopo preflight e admission BUSY si copia la membership prima del commit;
-SEAL resta l'unico punto di atomicita' dei dati. Qualsiasi uscita incompleta
-rende FAULTED e impedisce letture di stato parziale. Uno swap verificato
-sulla nuova fonte sostituisce insieme vista e delta vuoto. Ritiro e close
-azzerano entrambi. Ownership, esclusione dei callback e cleanup restano
-quelli di ADR-0066; nessuna risorsa condivisa fra Serie.
+The delta retains membership only: digest, range, and key copy.
+For every touched key, GET consults the current canonical resident index, including
+absence due to a tombstone. For other keys it consults the verified image.
+Deleting an absent key is still recorded: a touched key
+never falls back to the previous derived object. Digest collisions
+require full-byte comparison. No fallback on I/O error.
 
-## Limiti e verifica
+An open-addressing table at most half full, linear probing bounded by
+capacity, an append-only arena, and arrays are reserved at activation.
+Preflight accounts for old and new deltas as well as readers/cache.
+Exhausting keys or bytes is an ordinary rejection before CSN and WAL:
+READY, image, and file remain unchanged. Updating a key already
+registered consumes no additional space, even after DELETE and resurrection.
+No entry deletion or reuse until the next publication.
 
-Il residente resta interamente presente e ne restano i limiti di capienza;
-questo incremento non abilita un indice maggiore della RAM. Il delta non
-si persiste e non autorizza il recupero di un'immagine obsoleta: il riavvio
-ricostruisce sempre il canonico e il candidato esplicito deve corrispondere
-all'intera fonte corrente. Compattazione del delta, catalogo durevole,
-writer interamente paginato, snapshot e selezione automatica restano aperti.
+After preflight and BUSY admission, membership is copied before commit;
+SEAL remains the sole data atomicity point. Any incomplete exit
+makes the state FAULTED and prevents reads of partial state. A verified swap
+onto the new source replaces the view and empty delta together. Retirement and close
+clear both. Ownership, callback exclusion, and cleanup remain
+as in ADR-0066; no resources shared between Serie.
 
-[Contratto, decisioni e prove](../implementazione/delta-indice-m1.md).
+<a id="limiti-e-verifica"></a>
+
+## Limits and verification
+
+The full resident index remains present, along with its capacity limits;
+this increment does not enable an index larger than RAM. The delta is not
+persisted and does not authorize recovery of an obsolete image: restart
+always rebuilds the canonical index, and the explicit candidate must match
+the entire current source. Delta compaction, durable catalog,
+a fully paged writer, snapshots, and automatic selection remain open.
+
+[Contract, decisions, and evidence](../implementazione/delta-indice-m1.md).

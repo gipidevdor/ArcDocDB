@@ -1,39 +1,41 @@
-# Seconda lettura del controllore del pool
+<a id="seconda-lettura-del-controllore-del-pool"></a>
 
-Lettura del 2026-10-13 da un agente distinto dall'autore del prodotto, su
-`src/scheduler/{package,types,build,read,policy,update}.lisp`, test e
-strumento `tools/pool-controller-bench.lisp`. Il componente è C3; questa
-lettura usa anche i dodici punti C1 come controllo ulteriore. Ho letto la suite finale di 23 test, inclusa la fixture EQUALP con
-cinque differenze singole provate in entrambi gli ordini. Non è una
-revisione umana né una certificazione. Il [contratto](controllore-pool.md),
-il [metodo](controllore-pool-metodo.md), l'[inventario](controllore-pool-decisioni.md)
-e i [risultati conservati](controllore-pool-risultati.md) delimitano le conclusioni.
+# Second reading of the pool controller
 
-| Punto | Esito della lettura |
+Reading on 2026-10-13 by an agent distinct from the product author, covering
+`src/scheduler/{package,types,build,read,policy,update}.lisp`, tests, and
+tool `tools/pool-controller-bench.lisp`. The component is C3; this
+reading also uses the twelve C1 points as an additional check. I read the final 23-test suite, including the EQUALP fixture with
+five individual differences tested in both orders. This is neither human
+review nor certification. The [contract](controllore-pool.md),
+[method](controllore-pool-metodo.md), [inventory](controllore-pool-decisioni.md),
+and [preserved results](controllore-pool-risultati.md) bound the conclusions.
+
+| Point | Reading outcome |
 |---|---|
-| 1. Requisiti e ADR | REQ-THR-001, REQ-CON-005 e REQ-AFF-008/013 indicati nelle definizioni. ADR-0011 consente la policy iniziale con pochi segnali; ADR-0031 la classifica C3 e ADR-0045 delimita l'esecuzione non bloccante. La modifica realizza il calcolo del target, senza dichiarare un pool operativo. |
-| 2. Invarianti | Target entro minimum..maximum e since≤last controllati prima e dopo gli aggiornamenti. Test di fault injection della rappresentazione privata e della direzione inattesa; domini, clamp e proprietario hanno regressioni dedicate. Gli slot tipizzati proteggono la forma della rappresentazione. |
-| 3. Errori | INVALID-ARGUMENT distingue configurazione, campioni, periodo e owner; INVARIANT-VIOLATION segnala stato privato. Il campione completo viene validato prima della prima scrittura. Test confrontano la preimmagine dopo rifiuti, anche sullo stato inizializzato/pending. Un errore del caller non viene trasformato in un comando applicato. |
-| 4. Limiti | Prodotto senza loop, ricorsione, callback, attesa, thread nuovi o I/O. Core≤65536, worker≤131072, tempo<2^40 e segnali bounded; EWMA usa interi di grandezza fissa, senza denominatori crescenti. |
-| 5. Heap caldo | Factory e trace sono startup. Update e getter restituiscono valori scalari e modificano slot preallocati. Il tool preregistra cinque repliche di 4096 cicli con 128 warmup, verifica tutti i sette valori e gli esiti grow/shrink/hold/pending. L'evidenza qualificata e i limiti del contatore sono nei risultati; la sola lettura non prova heap zero. |
-| 6. Dati in uscita | Il getter verifica owner e invarianti. I due risultati dell'update arrivano dopo il controllo finale; sette risultati del getter senza riferimenti mutabili allo stato. La policy propone un target: il caller conferma actual e applica le variazioni con un futuro protocollo. |
-| 7. Decisioni | Tabella delle decisioni per range, soglie e reset. Test esercitano operandi decisivi, soglie inclusive/esclusive, precedenza shrink, isteresi interrotta, pending, gap e limiti. La copertura include package, factory, helper, accessor e confronto EQUALP generati; i cinque confronti degli slot numerici sono verificati con uguaglianza e differenza singola. Non è MC/DC. |
-| 8. Proprietario | Owner immutabile è il thread creatore. Getter e update verificano lo stesso thread; due controller non condividono stato. Commenti OWNER/SHARED collocano il controllo nella voce scheduler/metriche dell'elenco chiuso dell'architettura. |
-| 9. Tracciabilità e check | Definizioni e test nominano gli ID esistenti; gli stati globali dei requisiti restano progettato. Build senza avvisi, copertura integrale C3, lint, trace, link e controllo generale devono risultare nello snapshot congelato descritto nei risultati. I dryrun durante gli edit non sostituiscono questi gate. |
-| 10. Deviazioni | Safety3, tipi degli slot, configurazione read-only, ftype completi, funzioni brevi, docstring e REQ presenti. Nessuna deviazione nuova richiesta o identificata nella lettura. Gli strumenti C4 hanno self-test positivo/negativo e diagnosi nonzero. |
-| 11. Parallelismo | Il controller serializza soltanto la propria amministrazione periodica sul suo owner. Nessun lock né scrittura condivisa per operazione tra Serie, nessun accesso alla ready list e nessuna inferenza EMPTY=quiescenza. Metriche reali, attuatore, park/wake e scaling restano fuori scope. |
-| 12. Durabilità | Nessun cambiamento durevole, syscall, cancellazione, segmento, log o lease attraversa questa policy. Non introduce nuovi punti di atomicità o autorizzazioni di rimozione. |
+| 1. Requirements and ADRs | REQ-THR-001, REQ-CON-005, and REQ-AFF-008/013 identified in definitions. ADR-0011 permits an initial policy with few signals; ADR-0031 classifies it C3 and ADR-0045 bounds nonblocking execution. The change implements target calculation without claiming an operational pool. |
+| 2. Invariants | Target within minimum..maximum and since≤last checked before and after updates. Fault-injection tests of private representation and unexpected direction; domains, clamps, and owner have dedicated regressions. Typed slots protect representation shape. |
+| 3. Errors | INVALID-ARGUMENT distinguishes configuration, samples, period, and owner; INVARIANT-VIOLATION reports private state. The entire sample is validated before the first write. Tests compare the preimage after rejections, including initialized/pending state. Caller error is not transformed into an applied command. |
+| 4. Limits | Product without loops, recursion, callbacks, waits, new threads, or I/O. Core≤65536, worker≤131072, time<2^40, and bounded signals; EWMA uses fixed-size integers without growing denominators. |
+| 5. Hot heap | Factory and trace are startup work. Update and getter return scalar values and modify preallocated slots. The tool preregisters five replicates of 4096 cycles with 128 warmup, checking all seven values and grow/shrink/hold/pending outcomes. Qualified evidence and counter limits are in results; reading alone does not prove zero heap. |
+| 6. Output data | The getter checks owner and invariants. The two update results follow final checking; seven getter results without mutable state references. Policy proposes a target: the caller confirms actual and applies changes through a future protocol. |
+| 7. Decisions | Decision table for ranges, thresholds, and resets. Tests exercise decisive operands, inclusive/exclusive thresholds, shrink precedence, interrupted hysteresis, pending, gaps, and limits. Coverage includes generated package, factory, helpers, accessors, and EQUALP comparison; the five numeric-slot comparisons are checked with equality and individual differences. This is not MC/DC. |
+| 8. Owner | Immutable owner is the creating thread. Getter and update check the same thread; two controllers share no state. OWNER/SHARED comments place control in the scheduler/metrics entry of the architecture's closed list. |
+| 9. Traceability and checks | Definitions and tests name existing IDs; global requirement states remain designed. Warning-free build, full C3 coverage, lint, trace, links, and general check must be evidenced in the frozen snapshot described in results. Edit-time dry runs do not replace these gates. |
+| 10. Deviations | Safety3, slot types, read-only configuration, complete ftypes, short functions, docstrings, and REQs present. No new deviation requested or identified in the reading. C4 tools have positive/negative self-tests and nonzero diagnostics. |
+| 11. Parallelism | The controller serializes only its own periodic administration on its owner. No lock or shared per-operation write across Serie, no access to the ready list, and no EMPTY=quiescence inference. Real metrics, actuator, park/wake, and scaling remain out of scope. |
+| 12. Durability | No durable change, syscall, deletion, segment, log, or lease crosses this policy. It introduces no new atomicity point or removal authorization. |
 
-Ho verificato due dettagli che limitano l'interpretazione della policy.
-Dopo l'inizializzazione il getter restituisce un tick `since` anche quando
-il candidato è `:hold`; NIL è riservato allo stato precedente al primo
-campione. Se actual è diverso dal target, la policy continua ad aggiornare
-i sensori e mantiene `:pending` anche se P99 peggiora. I test rendono
-esplicito questo comportamento; diagnosi, revoca e scadenza dei comandi
-sono responsabilità del futuro attuatore, senza claim di sicurezza del
-feedback reale.
+I checked two details that limit policy interpretation.
+After initialization, the getter returns a `since` tick even when
+the candidate is `:hold`; NIL is reserved for the state before the first
+sample. If actual differs from target, the policy keeps updating
+sensors and retains `:pending` even if P99 worsens. Tests make
+this behavior explicit; diagnosis, revocation, and command expiration
+belong to the future actuator, without safety claims about
+real feedback.
 
-La revisione non identifica difetti bloccanti nel contratto limitato.
-L'esito di pubblicazione dipende dai gate e dagli artefatti dello snapshot
-congelato, non da questa lettura né dai dryrun. RSK-12 e lo sviluppo del
-pool vivo restano aperti.
+The review identifies no blocking defects in the limited contract.
+Publication outcome depends on gates and frozen-snapshot artifacts,
+not this reading or dry runs. RSK-12 and development of the
+live pool remain open.

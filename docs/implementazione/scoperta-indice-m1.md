@@ -1,6 +1,8 @@
-# Scoperta delle immagini M1 allo startup
+<a id="scoperta-delle-immagini-m1-allo-startup"></a>
 
-> **Deciso (integrazione incrementale autorizzata → ADR-0070)** — C1;
+# Discovering M1 images at startup
+
+> **Decided (authorized incremental integration → ADR-0070)** — C1;
 > REQ-IDX-010, REQ-REC-001, INV-I8, INV-A8, INV-P6.
 
 ```lisp
@@ -12,92 +14,98 @@
   :clock monotonic-clock :index-discovery discovery)
 ```
 
-La factory valida il profilo con le stesse regole dell'opzione esplicita.
-Limiti: 1..65536 nomi, 1..1024 candidati, candidati <= nomi, payload 0..512 MiB.
-Budget insufficienti sono rifiutati dalla factory prima dell'I/O. Il nome
-placeholder del profilo non seleziona alcun file. Le opzioni `:index-image`
-e `:index-discovery` sono esclusive e nessuna e' ammessa con `:create t`.
+Factory validates profile with same rules as explicit option.
+Limits: 1..65536 names, 1..1024 candidates, candidates <= names, payload 0..512 MiB.
+Insufficient budgets rejected by factory before I/O. Profile
+placeholder name selects no file. Options `:index-image`
+and `:index-discovery` exclusive, neither allowed with `:create t`.
 
-Dopo replay e checkpoint canonici il motore mantiene RECOVERING. La ricerca
-inventa un candidato soltanto da un inventario completo e bounded. Nomi
-estranei non vengono aperti. La quota nomi comprende tutti gli entry della
-directory, anche estranei; i limiti canonici preesistenti di startup restano
-applicabili (compreso `max-files` derivato da `max-segments`). Il checkpoint
-puo' gia' essere completato quando un candidato o una quota sono rifiutati:
-non si promette rollback dei suoi effetti canonici.
+After canonical replay and checkpoint, engine stays RECOVERING. Search
+derives candidate only from complete bounded inventory. Foreign
+names not opened. Name quota includes every directory
+entry, including foreign ones; existing canonical startup limits remain
+applicable (including `max-files` derived from `max-segments`). Checkpoint
+may already be complete when candidate or quota rejected:
+no rollback of canonical effects promised.
 
-## Sonda, scelta e verifica
+<a id="sonda-scelta-e-verifica"></a>
 
-Ogni nome canonico viene aperto readonly con EOF esatto e limiti I/O del
-profilo. Geometria fuori formato, footer senza CRC valido, codice pagina
-incompatibile e fonte/seed non corrispondenti rendono il file ineligibile.
-Un candidato ineligibile viene chiuso, resta sul disco e non e' adottato.
-Un'immagine completa con bitrot del footer puo' essere scartata come un
-incompleto: la ricerca non certifica integrita' dei derivati abbandonati.
+## Probe, selection, and verification
 
-Con CRC e profilo idonei, errori di magic, versione, campi riservati o root
-propagano; una versione integra ignota produce UNSUPPORTED-FORMAT. Errori
-I/O, symlink, tipo di file errato, file oltre budget o close fallito non
-vengono trasformati in assenza. La sola incongruenza di fonte produce il
-rifiuto ordinario del suggerimento, perche' i derivati obsoleti sono attesi.
+Every canonical name opened read-only with exact EOF and profile
+I/O limits. Out-of-format geometry, footer without valid CRC, incompatible page
+code, and mismatched source/seed make file ineligible.
+Ineligible candidate closed, remains on disk, not adopted.
+Complete image with footer bit rot may be discarded like incomplete
+one: search does not certify integrity of abandoned derivatives.
 
-Il massimo nome hex fra footer idonei e' selezionato indipendentemente
-dall'ordine di enumerazione e dalla data del file. La fonte viene prima del
-nome: un'etichetta alta obsoleta non prevale su una bassa corrente. Il nome
-non deve provare cronologia, identita' interna o commit: il file riaperto deve
-superare il verificatore integrale esistente, inclusi prefisso, pagine,
-chiavi, appartenenza, unicita' e copertura del residente canonico.
-Se questa verifica fallisce lo startup fallisce, anche con un altro file sano.
-Senza footer idonei resta il residente. La selezione esplicita continua a
-rifiutare un file mancante/invalido e non usa la ricerca come fallback.
+With eligible CRC and profile, magic, version, reserved-field, or root errors
+propagate; intact unknown version produces UNSUPPORTED-FORMAT. I/O
+errors, symlinks, wrong file type, over-budget file, or failed close not
+converted to absence. Source mismatch alone causes ordinary
+hint rejection because stale derivatives expected.
 
-Observer: `:before-index-discovery`, una `:index-image-candidate` per nome
-canonico, `:index-image-discovered`, poi le fasi esistenti dell'adozione.
-Nessuna richiesta pubblica READY e' ammessa nei callback. Stato, fonte e
-revisione del residente sono riconfermati dopo la ricerca. Un FD locale alla
-volta, chiuso su ritorno, errore o uscita non locale; l'adozione finale usa lo
-slot posseduto del motore e il suo cleanup anche se lo startup non termina.
-La directory esclusiva mantiene stabile il namespace; il file riaperto viene
-comunque verificato di nuovo, senza fidarsi della sonda precedente.
+Maximum hex name among eligible footers selected independently
+of enumeration order and file date. Source precedes
+name: high stale label does not beat low current one. Name
+need not prove chronology, internal identity, or commit: reopened file must
+pass existing full verifier, including prefix, pages,
+keys, membership, uniqueness, and canonical-resident coverage.
+If verification fails, startup fails even with another healthy file.
+Without eligible footer, remains resident. Explicit selection continues
+rejecting missing/invalid file and does not use search as fallback.
 
-## Budget e limiti
+Observer: `:before-index-discovery`, one `:index-image-candidate` per canonical
+name, `:index-image-discovered`, then existing adoption phases.
+No public READY request admitted in callbacks. Resident state, source,
+and revision reconfirmed after search. One local FD at a
+time, closed on return, error, or nonlocal exit; final adoption uses
+engine-owned slot and cleanup even if startup does not finish.
+Exclusive directory keeps namespace stable; reopened file
+still reverified without trusting preceding probe.
 
-Riserva conservativa: `2*N*(4*255+16) + 1024*C + 65536 + 65535 + S*(F+6)`,
-con N massimo nomi, C massimo candidati, S taglia pagina e F frame cache.
-Copre due inventari di stringhe fino a quattro byte per carattere, riferimenti,
-transitori/copie dei candidati e buffer di sonda/verifica. Non assume GC fra
-sonde. La quota riguarda questi payload e non il totale RSS: oggetti, header,
-GC, scratch/canonico e residente richiedono riserva separata del controller.
+<a id="budget-e-limiti"></a>
 
-Cicli limitati a N nomi, 16 caratteri per etichetta, C sonde con una lettura
-footer al massimo, poi una sola verifica completa entro max-visits/max-bytes.
-Zero chiamate I/O per nomi estranei; nessun sort globale, bitmap del dataset,
-scansione degli interi file ineligibili, rename o cancellazione. La scelta
-non modifica WAL, CONTROL, CSN o file derivati; il punto durevole dei dati
-resta SEAL. La root scelta non e' una nuova decisione durevole di catalogo.
+## Budgets and limits
 
-## Decisioni e revisione C1
+Conservative reservation: `2*N*(4*255+16) + 1024*C + 65536 + 65535 + S*(F+6)`,
+N maximum names, C maximum candidates, S page size, F cache frames.
+Covers two string inventories at up to four bytes per character, references,
+candidate transients/copies, and probe/verification buffers. No GC assumption between
+probes. Quota concerns payloads, not total RSS: objects, headers,
+GC, canonical scratch, and resident require separate controller reservation.
 
-| Decisione composta | Copertura |
+Loops bounded to N names, 16 characters per label, C probes with at most
+one footer read, then one complete verification within max-visits/max-bytes.
+Zero I/O calls for foreign names; no global sort, dataset bitmap,
+scan of entire ineligible files, rename, or deletion. Selection
+changes neither WAL, CONTROL, CSN, nor derivative files; durable data point
+remains SEAL. Chosen root is no new durable catalog decision.
+
+<a id="decisioni-e-revisione-c1"></a>
+
+## C1 decisions and review
+
+| Compound decision | Coverage |
 |---|---|
-| Limiti nomi/candidati/payload validi | ogni dominio falso separatamente, limiti inclusivi, candidati > nomi |
-| Nome: stringa, 32 caratteri, prefisso, suffisso, hex | false separate, nome valido, zeri ed estremo hex |
-| Geometria: minimo, allineamento, massimo | vuoto, EOF non allineato sopra minimo, file sparso oltre massimo; immagine valida |
-| Priorita': nessuna scelta o nome maggiore | prima scelta, etichette maggiori/minori, scelta corrente sotto nome obsoleto |
-| Fonte: RECOVERING, salute controller, revisione, identita' esatta | ciascuna mutata separatamente dopo la ricerca |
-| CREATE/scoperta e esplicita/scoperta | combinazioni valide ed esclusive; errori prima dell'apertura |
+| Valid name/candidate/payload limits | each domain false separately, inclusive limits, candidates > names |
+| Name: string, 32 characters, prefix, suffix, hex | separate false cases, valid name, zeroes and hex endpoint |
+| Geometry: minimum, alignment, maximum | empty, unaligned EOF above minimum, sparse over-maximum file; valid image |
+| Priority: no selection or greater name | first selection, greater/lower labels, current selection below stale name |
+| Source: RECOVERING, controller health, revision, exact identity | each separately mutated after search |
+| CREATE/discovery and explicit/discovery | valid and exclusive combinations; errors before open |
 
-Le altre scelte sono rami singoli o verificatori gia' coperti nei moduli
-riusati. Due letture C1: fonte, filtro e verifica completa; poi quote, FD,
-callback, failure boundary e isolamento fra Serie. Dodici casi dedicati,
-sei SIGKILL v1/v2 e finestre GET; [registro e limiti](../../spikes/results/2026-10-30-engine-image-discovery/report.md).
+Other choices single branches or verifiers already covered in reused
+modules. Two C1 readings: source, filter, and full verification; then quotas, FDs,
+callbacks, failure boundary, and Serie isolation. Twelve dedicated cases,
+six v1/v2 SIGKILLs, and GET windows; [register and limits](../../spikes/results/2026-10-30-engine-image-discovery/report.md).
 
-Non e' un writer paginato autonomo o un indice oltre RAM. Delta non abilitato
-implicitamente; la prima scrittura ammessa ritira il file. Nessun catalogo,
-scheduler, scelta di modo in base alla RAM, rimozione automatica o snapshot
-concorrente. SIGKILL non qualifica power loss.
+Not autonomous paged writer or beyond-RAM index. Delta not implicitly
+enabled; first admitted write retires file. No catalog,
+scheduler, RAM-based mode selection, automatic deletion, or concurrent
+snapshot. SIGKILL does not qualify power loss.
 
-La conferma di fonte/revisione, stato RECOVERING e controller sano viene
-eseguita anche prima della pubblicazione, dopo il callback immagine pronta
-e dopo `:before-admission`, su percorsi esplicito e residente inclusi.
-Mutazioni rilevate impediscono il ritorno di un handle READY.
+Source/revision confirmation, RECOVERING state, and healthy controller
+also checked before publication, after image-ready callback,
+and after `:before-admission`, including explicit and resident paths.
+Detected mutations prevent returning READY handle.

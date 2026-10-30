@@ -1,128 +1,138 @@
-# Primo item CBOR minimo — prima revisione C1
+<a id="primo-item-cbor-minimo--prima-revisione-c1"></a>
 
-Lettura statica del responsabile del corpus freddo il 2026-10-15, dopo
-il freeze del corpus e la successiva scrittura del prodotto, prima della
-prima compilazione, load o campagna. Il revisore è distinto dall'autore
-del prodotto e non consulta la seconda lettura C1. Sorgente esaminato:
+# First minimal CBOR item — first C1 review
+
+Static reading by the cold-corpus owner on 2026-10-15, after
+corpus freeze and subsequent product writing, before first
+compilation, load, or campaign. The reviewer is distinct from the product
+author and does not consult the second C1 reading. Source examined:
 [cbor-item-read.lisp](../../src/codec/cbor-item-read.lisp), blob
-`b9099dc8a8c96281063811e686deb4dcb2b1d39b`. Metodo preregistrato
+`b9099dc8a8c96281063811e686deb4dcb2b1d39b`. Preregistered method
 [cbor-item-metodo.md](cbor-item-metodo.md), blob
 `a67a79bf4fefe11c4778cd881eb5279a006966ca`.
 
-Nessun difetto funzionale o rilievo statico aperto individuato nel blob.
-Prodotto e corpus non sono modificati da questa lettura. Compilazione
-rigorosa, lint, risultati del corpus, heap, intervalli paralleli,
-copertura e mutazioni restano pendenti. Questa revisione non chiude
-la qualifica C1/MC/DC né qualifica il motore.
+No functional defect or open static finding identified in the blob.
+Product and corpus are not modified by this reading. Strict
+compilation, lint, corpus results, heap, parallel intervals,
+coverage, and mutations remain pending. This review does not close
+C1/MC/DC qualification or qualify the engine.
 
-## Checklist C1
+<a id="checklist-c1"></a>
 
-| Punto | Riscontro statico e limite |
+## C1 checklist
+
+| Point | Static finding and limit |
 | --- | --- |
-| 1. Requisiti e ADR | REQ-CBR-008, LIM-001/002, AFF-004/008 e INV-A5/A8/P6 descrivono la primitiva strutturale bounded derivata da ADR-0014/0024/0035/0048. Il risultato è frontiera e conteggi del primo item, senza AST o interpretazione della coda. Il profilo documentale e la semantica dei tag restano aperti. |
-| 2. Invarianti | Preflight identico allo scanner, prima del reset. Guardie nuove su SPAN, esaurimento del ciclo, progresso START<NEXT e NEXT<=END; drain e risultato preesistenti verificano root/conteggi/stato. Nessuna dipendenza dalla validità della coda. |
-| 3. Errori | Ordine range/workspace/alias/limiti byte-nodi-depth/byte-budget preservato, offset NIL e scratch immutato. Parsing propaga header minimo, UTF8, nodi/depth con offset assoluti. Vuoto e troncamenti arrivano al lettore `[END,END)`: `:cbor-truncated` a END. Nessun risultato parziale; buffer immutato anche dopo errore e scratch riusabile. |
-| 4. Limiti | SPAN<=16MiB prima del ciclo, al più SPAN passi con progresso verificato. Ogni drain al più102 frame. Tag senza frame e profondità soltanto array/map. END originario sempre passato al passo; il controllo di completamento usa il cursore. Nessuna ricorsione, attesa o retry nuovo. |
-| 5. Heap | Variabili tipizzate locali e tre valori, nessun array/cons/AST/closure nuovo nel successo. Reset lavora sui due array preallocati; valori wire restano in parole. Keyword call e dipendenze richiedono benchmark con baseline nulla e controllo positivo; heap zero non è attestato staticamente. |
-| 6. Dati verificati | MINIMAL=T nel passo, intera finestra per MAX-BYTES, conteggi del solo item. Risultato chiamato con NEXT=CURSOR e non END fisico: restituisce esattamente NODES/PEAK/NEXT. Tre valori fissati da FTYPE e callee, nessuna ricostruzione u64 o copia buffer. |
-| 7. Decisioni composte | Sei predicati espliciti, cinque siti ERROR, un LOOP, zero AND/OR, quattro confronti binari e zero catene. Inventario completo nella [tabella](cbor-item-decisioni.md), incluse guardie interne e tre default keyword. Nessuna esclusione, coppia statica o assenza di AND/OR presentata come MC/DC misurato. |
-| 8. Proprietario | OWNER/SHARED dichiarano buffer stabile condivisibile read-only e spazio esclusivo della chiamata/worker. Preflight rifiuta BUFFER=KINDS prima di reset. Il tipo simple u8 esclude displaced/backing condivisi; REMAINING è simple u32 distinto su SBCL. Nessuna scrittura al buffer o stato globale. |
-| 9. Integrazione | Export package riga13; ASDF prodotto riga36 dopo gli scanner, tre file corpus righe171–172 e RUN incluso nel test-system. Scope coverage esatto del solo nuovo sorgente, un positivo/quattro negativi di selezione, RUN diretto e aggregato codec. REQ-CBR-008 e matrice già rigenerata risultano implementato con test/diff/fuzz/bench/mut/rev, senza :cov. Nessun make check eseguito da questa lettura. |
-| 10. Standard | Safety3, FTYPE completo con arità tre, REQ, docstring Pre/Post/errori e tipi ristretti dopo preflight. Una funzione34 righe/8 percorsi sintattici, entro60/10; almeno due controlli significativi. Nessuna deviazione proposta; warning/style-warning/lint devono ancora essere osservati. |
-| 11. Parallelismo | Nessun thread, lock, attesa o scrittura condivisa nuova nel prodotto. Corpus con due worker reali riusati, buffer condiviso read-only e scratch privati, due ondate, rendezvous dopo il primo item verificato, sink, timeout e cleanup. Timestamp/overlap devono ancora essere osservati; nessuna inferenza su core o scaling. |
-| 12. Durabilità | Solo memoria del chiamante, nessun I/O o pubblicazione atomica/durevole. La primitiva non cambia la Serie; la gestione FAULTED per invarianti interni resta del confine proprietario. |
+| 1. Requirements and ADRs | REQ-CBR-008, LIM-001/002, AFF-004/008, and INV-A5/A8/P6 describe the bounded structural primitive derived from ADR-0014/0024/0035/0048. Result is first-item boundary and counts, without AST or tail interpretation. Document profile and tag semantics remain open. |
+| 2. Invariants | Preflight identical to scanner, before reset. New guards on SPAN, loop exhaustion, START<NEXT progress, and NEXT<=END; existing drain and result check root/counts/state. No dependence on tail validity. |
+| 3. Errors | Range/workspace/aliases/byte-node-depth limits/byte-budget order preserved, offset NIL and scratch unchanged. Parsing propagates minimal header, UTF8, nodes/depth with absolute offsets. Empty and truncated inputs reach `[END,END)` reader: `:cbor-truncated` at END. No partial result; buffer unchanged even after error and scratch reusable. |
+| 4. Bounds | SPAN<=16MiB before loop, at most SPAN steps with checked progress. Each drain at most102 frames. Tags without frames and depth only arrays/maps. Original END always passed to step; completion check uses cursor. No new recursion, wait, or retry. |
+| 5. Heap | Local typed variables and three values, no new array/cons/AST/closure on success. Reset works on two preallocated arrays; wire values stay in words. Keyword calls and dependencies require benchmark with zero baseline and positive control; zero heap not established statically. |
+| 6. Verified data | MINIMAL=T in step, entire window for MAX-BYTES, counts for item only. Result called with NEXT=CURSOR, not physical END: returns exactly NODES/PEAK/NEXT. Three values fixed by FTYPE and callee, no u64 reconstruction or buffer copy. |
+| 7. Compound decisions | Six explicit predicates, five ERROR sites, one LOOP, zero AND/OR, four binary comparisons, and zero chains. Complete inventory in the [table](cbor-item-decisioni.md), including internal guards and three keyword defaults. No exclusion, static pair, or absence of AND/OR presented as measured MC/DC. |
+| 8. Owner | OWNER/SHARED declare stable buffer shareable read-only and space exclusive to call/worker. Preflight rejects BUFFER=KINDS before reset. Simple u8 type excludes displaced/shared backing; REMAINING is distinct simple u32 on SBCL. No buffer writes or global state. |
+| 9. Integration | Package export line13; product ASDF line36 after scanners, three corpus files lines171–172, and RUN included in test-system. Exact coverage scope for only new source, one positive/four negatives for selection, direct RUN and aggregate codec. REQ-CBR-008 and already regenerated matrix show implemented with test/diff/fuzz/bench/mut/rev, without :cov. No make check run by this reading. |
+| 10. Standard | Safety3, complete FTYPE with arity three, REQ, Pre/Post/error docstring, and restricted types after preflight. One function34 lines/8 syntactic paths, within60/10; at least two meaningful checks. No deviation proposed; warnings/style-warnings/lint still to be observed. |
+| 11. Parallelism | No new threads, locks, waits, or shared writes in product. Corpus with two reused real workers, shared read-only buffer and private scratch, two waves, rendezvous after first verified item, sinks, timeouts, and cleanup. Timestamps/overlap still to be observed; no inference about cores or scaling. |
+| 12. Durability | Caller memory only, no I/O or atomic/durable publication. Primitive does not change Serie; FAULTED handling for internal invariants remains at owner boundary. |
 
-## Finestra, completamento e coda
+<a id="finestra-completamento-e-coda"></a>
 
-`check-input-struttura-cbor` restituisce END−START e verifica tutti gli
-argomenti prima di leggere byte o cambiare lo scratch. MAX-BYTES riguarda
-l'intera finestra autorizzata, anche se il primo item termina subito.
-Una finestra di cinque byte `00 FF 1C 18 00` richiede budget5; budget1
-deve fallire prima del reset. Il chiamante può restringere END a1.
+## Window, completion, and tail
 
-Il vecchio drain impone EOF rispetto al proprio parametro END.
-Passargli il CURSOR corrente rende quel requisito identico al cursore
-già raggiunto, senza leggere la coda: root completa termina, root non
-completa ritorna NIL. In entrambi i punti del nuovo wrapper, il drain
-riceve CURSOR; il passo riceve invece LIMIT=END originario. Quest'ultimo
-deve poter leggere l'intero header/payload dell'item entro la finestra
-e conservare gli offset assoluti di errore.
+`check-input-struttura-cbor` returns END−START and checks all
+arguments before reading bytes or changing scratch. MAX-BYTES concerns
+the entire authorized window, even if the first item ends immediately.
+A five-byte window `00 FF 1C 18 00` requires budget5; budget1
+must fail before reset. The caller can restrict END to1.
 
-Esempio `C0 81 00 FF`: tag consuma un nodo senza frame, array un nodo
-e un livello, scalare un nodo. Dopo lo scalare il drain chiude array
-e root a NEXT3; FF non viene letto. `risultato-struttura-cbor` riceve3
-e verifica cursor=3, nodi3, peak1 e stato vuoto prima dei tre valori.
-Gli scanner esatti preesistenti continuano a passare END4 al drain e
-rifiutano FF con `:cbor-trailing` a3. Non sono stati modificati.
+The old drain requires EOF relative to its own END parameter.
+Passing current CURSOR makes that requirement equal to the cursor
+already reached, without reading the tail: a complete root ends, an incomplete
+root returns NIL. At both points in the new wrapper, drain
+receives CURSOR; step instead receives LIMIT=original END. The latter
+must be able to read the item's complete header/payload within the window
+and retain absolute error offsets.
 
-Ogni passo avanza almeno un byte e non supera END. Se il ciclo termina
-per esaurimento di SPAN senza root completa, il cursore deve essere END;
-il lettore header `[END,END)` produce il troncamento pubblico. La guardia
-ERROR successiva rileverebbe un ritorno impossibile del lettore.
-Per SPAN0 la stessa strada produce il troncamento, senza accettare
-l'item vuoto o restituire valori parziali. Nessun byte oltre NEXT è
-letto dopo la radice completa; le letture interne necessarie a decidere
-la lunghezza di un item non completo restano bounded da END.
+Example `C0 81 00 FF`: tag consumes one node without a frame, array one node
+and one level, scalar one node. After the scalar, drain closes array
+and root at NEXT3; FF is not read. `risultato-struttura-cbor` receives3
+and checks cursor=3, nodes3, peak1, and empty state before the three values.
+Existing exact scanners still pass END4 to drain and
+reject FF with `:cbor-trailing` at3. They were not modified.
 
-La root completata, il singolo passo progressivo e le guardie esplicite
-implicano START<NEXT<=END. Tag1024+scalare usa1025 nodi, profondità0 e
-nessun frame per tag; cento array ammettono peak100, il101esimo fallisce
-sul suo lead. Node/depth non comprendono item nella coda.
+Every step advances at least one byte and does not exceed END. If the loop ends
+by SPAN exhaustion without a complete root, cursor must be END;
+header reader `[END,END)` produces public truncation. The following
+ERROR guard would detect an impossible reader return.
+For SPAN0, the same path produces truncation, without accepting
+an empty item or returning partial values. No byte beyond NEXT is
+read after root completion; internal reads needed to determine
+a partially complete item's length remain bounded by END.
 
-## Corpus congelato e lettura DATA
+Completed root, the single progressive step, and explicit guards
+imply START<NEXT<=END. Tag1024+scalar uses1025 nodes, depth0, and
+no tag frames; one hundred arrays allow peak100, the101st fails
+at its lead. Nodes/depth exclude tail items.
 
-| File del corpus freddo | Blob Git |
+<a id="corpus-congelato-e-lettura-data"></a>
+
+## Frozen corpus and DATA reading
+
+| Cold-corpus file | Git blob |
 | --- | --- |
 | tests/codec/cbor-item-read-support.lisp |0326100362a1c4b24d2c7e511e45357f09a56d33|
 | tests/codec/cbor-item-read.lisp |b2cbdcb4255c51d9da4fe73b28939c1cb923fefe|
 | tests/codec/cbor-item-read-threads.lisp |a0da65545ed80ede0a967cadbb337731f6fe1ce9|
 
-Piano freddo `review/blind-plan.md` nel supporto ignored, blob
-`63a749b0e8737f49d400f40b0a98c454c2dc3cfc`:17 nominali,
-**9901 chiamate** attese alla nuova API:685 non-fuzz (551 successi/134
-rifiuti),1024 fuzz (512/512),8192 parallele. Totale9255/646.
-Sono conteggi statici del corpus, non risultati PASS. Scanner esatti
-secondari separati:520 sul prefisso,390 trailing e due sul concatenato.
+Cold plan `review/blind-plan.md` in ignored support, blob
+`63a749b0e8737f49d400f40b0a98c454c2dc3cfc`:17 nominal tests,
+**9901 calls** expected to new API:685 non-fuzz (551 successes/134
+rejections),1024 fuzz (512/512),8192 parallel. Total9255/646.
+These are static corpus counts, not PASS results. Separate secondary
+exact scanners:520 on prefix,390 trailing, and two on concatenation.
 
-LCG32 seme49544538 e finale6CB25938 sono ricomputati senza prodotto.
-Il finale provvisorio errato è corretto prima del freeze, conservando
-il seriale originario. Le34 forme del corpus sono state lette DATA,
-READ-EVAL NIL fino a EOF;17 nomi DEFTEST unici e stderr vuoto.
-Il corpus include MT0..7, float raw, UTF8, parole/lunghezze, buffer
-non validi e fisici, tutte le precedenze, alias, limiti16MiB/0/100/101,
-tag lunghi, ogni troncamento composito, arità e riuso dopo errore.
+LCG32 seed49544538 and final6CB25938 recalculated without product.
+The wrong provisional final value is corrected before freeze, preserving
+the original serial file. All34 corpus forms were read as DATA,
+READ-EVAL NIL through EOF;17 unique DEFTEST names and empty stderr.
+Corpus includes MT0..7, raw floats, UTF8, words/lengths, invalid
+and physical buffers, all precedence, aliases, limits16MiB/0/100/101,
+long tags, every composite truncation, arity, and reuse after error.
 
-Parallelo: due ondate da2048 letture per ciascuno dei due worker,
-fixture `C0 A1 61 61 82 F4 F5` e coda `FF 1C 18 00`, START7/END18,
-attesi6/2/NEXT14, token36196, sink74129408 per worker/ondata.
-START/FIRST/END, sink e overlap stampati prima delle asserzioni.
-Il rendezvous dopo la prima lettura verificata include controlli e
-attesa nel WALL; nessuna conclusione su tempo puro decoder o scaling.
-Attesa15s, join20s e cleanup con cessazione verificata.
+Parallel: two waves of2048 reads for each of two workers,
+fixture `C0 A1 61 61 82 F4 F5` and tail `FF 1C 18 00`, START7/END18,
+expected6/2/NEXT14, token36196, sink74129408 per worker/wave.
+START/FIRST/END, sink, and overlap printed before assertions.
+Rendezvous after first verified read includes checks and
+waiting in WALL; no conclusion about pure decoder time or scaling.
+Wait15s, join20s, and cleanup with verified termination.
 
-Il lettore meccanico `review/read-product-decisions-v2.lisp` legge
-quattro forme del prodotto come DATA con READ-EVAL NIL fino a EOF;
-conferma1 funzione,5UNLESS/1WHEN,1LOOP,5ERROR,0AND/OR,
-4 confronti binari e0 catene. Stdout conservato, stderr vuoto, exit0.
-Prima variante del solo lettore con parentesi mancante conservata
-con stdout/stderr; nessun LOAD/EVAL/COMPILE del prodotto.
+Mechanical reader `review/read-product-decisions-v2.lisp` reads
+four product forms as DATA with READ-EVAL NIL through EOF;
+confirms1 function,5UNLESS/1WHEN,1LOOP,5ERROR,0AND/OR,
+4 binary comparisons and0 chains. Stdout preserved, stderr empty, exit0.
+First reader-only variant with missing parenthesis preserved
+with stdout/stderr; no product LOAD/EVAL/COMPILE.
 
-## Integrazione e dipendenze lette
+<a id="integrazione-e-dipendenze-lette"></a>
+
+## Integration and dependencies read
 
 Package `64b3a838f6d5b432148e64604d5e1dfa4a3c32d4`, ASDF
 `8e36893806e499946cbffcc2c8475690ea40cba0`, coverage
 `19369e3ea8f944a420efa1918383c7ac28544c6d`.
-La matrice letta contiene REQ-CBR-008 implementato; la successiva
-verifica trace resta responsabilità dell'integrazione.
+The matrix read contains REQ-CBR-008 implemented; subsequent
+trace checking remains integration's responsibility.
 
-Dipendenze: preflight `57ffc48cc688a4de8ebec5cb14c1e69c4209704a`,
-spazio/reset `a8330e50a77b52a6b9044ebbb48f62bb4b3222a3`,
+Dependencies: preflight `57ffc48cc688a4de8ebec5cb14c1e69c4209704a`,
+space/reset `a8330e50a77b52a6b9044ebbb48f62bb4b3222a3`,
 stack/drain `c574e87af5e195ddf3f596a4ae527e69c7a3c6a6`,
-passo/items `70272936e323b3e0cb05173c9fb68cb2b614c355`,
-scanner/risultato `e3d7d77407046338d23e26eb0b8a2e8fdc3d699d`,
-wrapper minimo esatto `f1afe79c7a4d49abd6a6e5f6975dec830ef7b1f6`.
+step/items `70272936e323b3e0cb05173c9fb68cb2b614c355`,
+scanner/result `e3d7d77407046338d23e26eb0b8a2e8fdc3d699d`,
+exact minimal wrapper `f1afe79c7a4d49abd6a6e5f6975dec830ef7b1f6`.
 
-Rimangono compilazione senza warning/style-warning, lint, self-test e
-campagne con sorgenti/indice/HEAD stabili, heap, copertura completa
-senza esclusioni, otto mutazioni, letture distinte dei dati e make check
-integrato. Nessuna di queste misure è attestata dalla presente lettura.
+Remaining: compilation without warnings/style-warnings, lint, self-tests and
+campaigns with sources/index/HEAD stable, heap, complete coverage
+without exclusions, eight mutations, distinct data readings, and integrated
+make check. None of these measurements is established by this reading.

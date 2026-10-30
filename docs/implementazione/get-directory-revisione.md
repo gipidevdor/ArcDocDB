@@ -1,182 +1,200 @@
-# Revisione indipendente statica della directory GET CLOSED
+<a id="revisione-indipendente-statica-della-directory-get-closed"></a>
+
+# Independent static review of the CLOSED GET directory
 
 Base: `6eeb501d2eace49fad8e2ec333ed0c6c1386dd6c`. Worktree:
 `/Users/gpicchiarelli/.codex/worktrees/get-directory/ArcDocDB`.
-Data: 11 ottobre 2026. Unico file scritto dal revisore: questo rapporto.
-Nessuna esecuzione di prodotto o strumenti, compilazione, test, benchmark,
-commit o creazione di agenti. Le letture e gli identificatori blob sono
-osservazioni statiche del contenuto; non attestano risultati dinamici.
+Date: October 11, 2026. Only file written by the reviewer: this report.
+No product or tool execution, compilation, test, benchmark,
+commit, or agent creation. Readings and blob identifiers are
+static content observations; they certify no dynamic results.
 
-## Esito e sequenza delle letture
+<a id="esito-e-sequenza-delle-letture"></a>
 
-La prima lettura completa del prodotto e delle dipendenze GET/resolver/IO/EBR
-non ha individuato rilievi P0/P1/P2 nei percorsi del costruttore canonico.
-La seconda lettura è stata completata subito alla notifica del padre
-«prodotto canonico pronto», rileggendo i quattro sorgenti. I blob del
-prodotto erano identici nelle due letture. Il successivo caso FI di entry
-privata NIL, richiesto dal padre, introduce il rilievo GDR-R02 qui sotto.
+## Outcome and reading sequence
 
-I due rilievi P2 iniziali, sulla raccolta C4 di raw incompleti e sulla
-classificazione della corruzione di una entry privata, sono chiusi dalla
-lettura statica delle correzioni notificate dal padre. Nessun P0 o P1
-identificato sul contenuto letto. Questi esiti non costituiscono qualifica C1,
-dimostrazione di assenza di difetti o misura di prestazioni/allocazioni.
+The first complete reading of product and GET/resolver/IO/EBR dependencies
+found no P0/P1/P2 findings on canonical-constructor paths.
+The second reading completed immediately on the parent's “canonical
+product ready” notification, rereading all four sources. Product blobs
+were identical in both readings. The later private-NIL-entry FI case,
+requested by the parent, introduces finding GDR-R02 below.
 
-## Rilievi concreti
+The two initial P2 findings, concerning C4 collection of incomplete raw data and
+classification of private-entry corruption, are closed by static
+reading of corrections reported by the parent. No P0 or P1
+identified in read content. These outcomes are neither C1 qualification,
+proof of defect absence, nor performance/allocation measurements.
 
-### GDR-R01 — P2 — Raw di campagne non terminali raccolti senza controllo di chiusura
+<a id="rilievi-concreti"></a>
 
-Stato: **chiuso staticamente** sul blob corretto
+## Concrete findings
+
+<a id="gdr-r01--p2--raw-di-campagne-non-terminali-raccolti-senza-controllo-di-chiusura"></a>
+
+### GDR-R01 — P2 — Nonterminal campaign raw data collected without closure checks
+
+Status: **statically closed** on corrected blob
 `086da7ca0d664169bd433a60db943c221f3bb365`.
-`publication-raw-roots` seleziona soltanto le specifiche `:raw-roots` del
-manifesto. Prima di raccogliere ciascuna radice, `raw-root-metadata` richiede
-schema 1, kind command-verification, stato terminale OK/FAILED/SOURCE-CHANGED
-e timestamp di fine intero. RUNNING o timestamp assente interrompono publish.
-Ogni raw della radice e ogni sorgente mutata riceve produttore, stato,
-source-consistency e limiti espliciti su raw parziali dei produttori falliti,
-senza promozione del risultato. Lettura delle righe 129–201.
-I quattro controlli aggiunti al self-test (righe 235–245) accettano OK/FAILED
-terminali e rifiutano RUNNING/fine assente; `:checks 25` è un dato del
-sorgente, non un esito eseguito. La correttezza dell'associazione
-raw-root/produttore nel manifesto resta da leggere quando sarà disponibile.
+`publication-raw-roots` selects only the manifest's `:raw-roots`
+specifications. Before collecting each root, `raw-root-metadata` requires
+schema 1, kind command-verification, terminal status OK/FAILED/SOURCE-CHANGED,
+and an integer end timestamp. RUNNING or a missing timestamp stops publish.
+Every raw file in the root and every mutated source receives producer, status,
+source-consistency, and explicit limits on partial raw data from failed producers,
+without promoting the result. Reading of lines 129–201.
+The four added self-test checks (lines 235–245) accept terminal OK/FAILED
+and reject RUNNING/missing end; `:checks 25` is source
+data, not an executed outcome. Correct raw-root/producer association
+in the manifest remains to be read when available.
 
-Descrizione del rilievo sul contenuto precedente:
+Finding description for previous content:
 
 File: [`tools/get-directory-evidence.lisp`](../../tools/get-directory-evidence.lisp),
-righe 144 e 151–166. Blob letto:
+lines 144 and 151–166. Blob read:
 `09c68723c15f286641d9b24844bfe2f282394db9`.
 
-`publish` esclude un record `:running` dalla lista `:entries`, ma raccoglie
-ricorsivamente i raw di tutte le directory con prefisso coverage/mutations
-senza richiedere un report terminale. La raccolta delle sorgenti mutate
-controlla soltanto l'esistenza del report e del file. Il controllo finale
-richiede almeno una entry conclusa, non la chiusura delle radici dei raw.
+`publish` excludes a `:running` record from `:entries`, but recursively collects
+raw data from all coverage/mutations-prefixed directories
+without requiring a terminal report. Mutated-source collection
+checks only report and file existence. Final checking
+requires at least one completed entry, not closure of raw-data roots.
 
-Scenario concreto: un processo mutation interrotto lascia report `:running`
-e alcuni raw; un'altra esecuzione ha un record concluso. `publish` può
-concludere con `:status :ok` e archiviare quei raw parziali senza un attributo
-di incompletezza o un legame obbligatorio al report terminale. Digest e copia
-integra attestano i byte conservati, non la completezza della campagna.
-Il rischio riguarda la lettura del catalogo come raccolta conclusa; non è
-un difetto del GET né un risultato dinamico osservato.
+Concrete scenario: an interrupted mutation process leaves a `:running` report
+and some raw data; another execution has a completed record. `publish` can
+complete with `:status :ok` and archive that partial raw data without an incompleteness
+attribute or mandatory link to a terminal report. Digests and an intact
+copy certify retained bytes, not campaign completeness.
+The risk concerns reading the catalog as a completed collection; it is
+neither a GET defect nor an observed dynamic result.
 
-Proposta: richiedere un report terminale per ogni radice raw da pubblicare,
-oppure registrare esplicitamente radice e raw incompleti e impedirne l'uso
-come evidenza conclusa. Conservare i report terminali falliti con il loro
-stato. Il manifesto esplicito delle radici resta necessario; da solo non
-verifica lo stato dei report. Il self-test dovrebbe distinguere una radice
-conclusa da una `:running` con raw presenti.
+Proposal: require a terminal report for every raw root to publish,
+or explicitly record incomplete roots/raw data and prevent their use
+as completed evidence. Preserve failed terminal reports with their
+status. The explicit root manifest remains necessary; alone it does not
+check report status. The self-test should distinguish a completed
+root from a `:running` root with raw data present.
 
-Limite: la logica è ereditata dal collector get-performance; non si afferma
-che la copia di bytes parziali sia di per sé illecita, né che un artefatto
-parziale esista già in questa campagna. È il percorso statico di pubblicazione
-senza classificazione della completezza a essere segnalato.
+Limit: the logic is inherited from the get-performance collector; this does not claim
+that copying partial bytes is inherently impermissible, or that a partial artifact
+already exists in this campaign. The reported issue is the static publication
+path without completeness classification.
 
-### GDR-R02 — P2 — Entry privata NIL produce TYPE-ERROR e contesto IDLE
+<a id="gdr-r02--p2--entry-privata-nil-produce-type-error-e-contesto-idle"></a>
 
-Stato: **chiuso staticamente** sul blob corretto
+### GDR-R02 — P2 — Private NIL entry produces TYPE-ERROR and IDLE context
+
+Status: **statically closed** on corrected blob
 `b0e40d9ff3f504130aaf1e083a633dee9b146d29`.
-`read:23–26` legge la entry, controlla TYPEP prima del ritorno e chiama
-`guasto-get :directory-shape` per un tipo impossibile. Il contesto passa a
-FAULTED prima della condizione; l'unwind-protect del wrapper libera EBR e
-`abbandona-get` conserva FAULTED. La guardia aggiunge solo l'invariante del
-selettore e non modifica la ricerca, l'ownership o la delega al resolver.
-Riletti il percorso completo e il cleanup; nessuna esecuzione.
+`read:23–26` reads the entry, checks TYPEP before return, and calls
+`guasto-get :directory-shape` for an impossible type. Context enters
+FAULTED before the condition; wrapper unwind-protect releases EBR and
+`abbandona-get` preserves FAULTED. The guard adds only the selector
+invariant and changes neither search, ownership, nor resolver delegation.
+Complete path and cleanup reread; no execution.
 
-Descrizione del rilievo sul contenuto precedente:
+Finding description for previous content:
 
 File: [`src/get-directory/read.lisp`](../../src/get-directory/read.lisp),
-righe 23–24 e 35–46. Blob letto:
+lines 23–24 and 35–46. Blob read:
 `a6e13ce6f1b3f5aa23f479de2efbcdab78cf5f0f`.
-Dipendenza cleanup: [`src/get/lifecycle.lisp`](../../src/get/lifecycle.lisp),
+Cleanup dependency: [`src/get/lifecycle.lisp`](../../src/get/lifecycle.lisp),
 blob `23f16c3039b71be0bd46d6bf92f05791e444683e`.
 
-Se FI sostituisce con NIL la entry privata associata all'ID trovato,
-`(the mappa-segmento-get (svref maps middle))` segnala TYPE-ERROR con safety 3.
-Il controllo di geometria ha già accettato lunghezze uguali. Il contesto è
-ancora CANDIDATE: `abbandona-get` libera EBR e, in assenza di FAULTED
-preesistente, lo riporta a IDLE. La corruzione interna non passa quindi dal
-ramo di guasto terminale già previsto per geometria o ID mancanti.
+If FI replaces the private entry associated with the found ID with NIL,
+`(the mappa-segmento-get (svref maps middle))` raises TYPE-ERROR with safety 3.
+Geometry checking has already accepted equal lengths. Context is
+still CANDIDATE: `abbandona-get` releases EBR and, without preexisting
+FAULTED, returns it to IDLE. Internal corruption therefore does not take the
+terminal-failure branch already provided for impossible geometry or missing IDs.
 
-Proposta: leggere la entry, controllare `typep` per `mappa-segmento-get` e
-chiamare `guasto-get context :directory-shape` prima del ritorno se il tipo
-è impossibile. Il cleanup allora conserva FAULTED. È un controllo locale
-dell'invariante del selettore, senza duplicare CSN, size, FD o prove.
+Proposal: read the entry, check `typep` for `mappa-segmento-get`, and
+call `guasto-get context :directory-shape` before return if the type
+is impossible. Cleanup then preserves FAULTED. This is a local selector-invariant
+check without duplicating CSN, size, FD, or proofs.
 
-Limite: NIL non è producibile tramite il costruttore canonico con input
-stabile. La copia attuale impedisce che il riuso dell'input alteri la entry
-privata. Un mutante che rimuova la copia può invece esporre questo percorso.
-La guardia migliora la classificazione sotto FI/regressione di alias; non
-sostituisce la copia né controlla l'identità di una mappa del tipo corretto.
-Nessun valore è autorizzato dal percorso TYPE-ERROR esistente.
+Limit: NIL cannot be produced through the canonical constructor with stable
+input. Current copying prevents input reuse from altering the private
+entry. A mutant removing the copy can instead expose this path.
+The guard improves classification under FI/alias regression; it neither
+replaces copying nor checks identity of a correctly typed map.
+No value is authorized by the existing TYPE-ERROR path.
 
-## Checklist C1 — due letture statiche
+<a id="checklist-c1--due-letture-statiche"></a>
 
-«Letto» indica controllo del sorgente e ragionamento sui rami, non un test
-passato o copertura misurata. Riferimenti e numeri di riga sono quelli dei
-blob elencati nel rapporto.
+## C1 checklist — two static readings
 
-La checklist conserva le due letture iniziali sui blob precedenti. La
-rilettura successiva alla correzione R02 conferma anche il nuovo invariante
-di tipo della entry; gli altri tre sorgenti del prodotto hanno blob identici.
+“Read” indicates source checking and branch reasoning, not a passed
+test or measured coverage. References and line numbers are those of the
+blobs listed in this report.
 
-| Controllo | Prima lettura | Seconda lettura | Evidenza statica e limite |
+The checklist preserves both initial readings of previous blobs. The
+rereading after R02 correction also confirms the new entry-type
+invariant; the other three product sources have identical blobs.
+
+| Check | First reading | Second reading | Static evidence and limit |
 |---|---|---|---|
-| Identità della vista | Letto | Letto | `build:30–31`, `read:39–40`: EQ della vista canonica; stessi byte di identità non rendono intercambiabili due viste. |
-| ID intero u32, alto zero e basso positivo | Letto | Letto | `build:23–38`, slot u32 di segmento: zero e high nonzero rifiutati; `#xffffffff` rappresentabile senza troncamento. GDR-D02. |
-| Location del candidato u64 e FTYPE del selettore | Letto | Letto | `read:7–8,41–43`; GET content è un array u64. `ldb (byte 32 32)` estrae tutti i bit dell'ID, senza restringere la location a u32. |
-| Ordine strettamente crescente e duplicati | Letto | Letto | `build:37,49–56`: previous u32, ID iniziale zero; duplicati e inversioni rifiutati. Nessun ordinamento implicito. |
-| Copie e ownership degli array | Letto | Letto | `build:51–56`: nuovo array u32 e copia simple-vector; le mappe immutabili sono condivise per riferimento. Nessun accessor di array esportato. |
-| Budget prima degli array | Letto | Letto | `build:12–20,48–52`: forma, M in 1…65.536 e B index, count e 12N prima delle copie; poi verifica completa delle mappe. GDR-D01. |
-| Zero, massimo e payload | Letto | Letto | N=0 ammesso con M positivo e B=0; N=65.536 richiede 786.432 byte di payload logico SBCL64. Non include input, mappe, header, GC o vecchie radici. |
-| Ricerca massimo 17 sonde | Letto | Letto | `read:13–25`: intervallo semichiuso, massimo 65.536; primo/ultimo/missing/ID estremo considerati. GDR-D04. Argomento dettagliato sotto. |
-| Nessun falso ABSENT | Letto | Letto | Vuoto, geometria impossibile e ID mancante chiamano `guasto-get`; nessuna traduzione in documento assente. Entry di tipo impossibile: rilievo GDR-R02. |
-| Precondizione e cleanup in EBR | Letto | Letto | `read:35` precede unwind-protect; dopo l'accettazione, errori di vista e lookup abbandonano GET. Un ordine API errato non prende il cleanup di un compito altrui. Il cleanup esterno resta necessario prima di AVVIA-GET. |
-| Selezione mappa e delega dei controlli | Letto | Letto | `trova-mappa` restituisce una mappa; i tre wrapper chiamano resolver/GET, che ricontrollano offset, size, CSN, flag, frontiera, FD e, quando richiesto, CRC/chiave/OUTCOME. La selezione non autorizza una risposta. |
-| FD readonly/open e lifetime | Letto | Letto | `build:34–36`, resolver read: stato corrente ricontrollato; GDR-D03. La capacità Lisp non autorizza close/reclaim e non dimostra identità fisica o quiescenza. |
-| Fonte e frontiera CLOSED | Letto | Letto | Resolver build: manifest CLOSED, frontiera valid-bytes; header/body dallo stesso FD. Directory non ricava un limite da EOF, cache, H o hint. |
-| Heap e I/O | Letto | Letto | Il selettore non contiene allocazioni di array o I/O espliciti; sonda delegata senza I/O, leggi delegata nel pool I/O. FTYPE u64 non dimostra assenza di boxing o heap effettivo. |
-| Migrazione e risposta privata | Letto | Letto | Nuovo AVVIA-GET e nuova acquisizione dopo migrazione; copia privata e conclusione con tempo fresco restano obbligatorie. Nessun pin o location conservato in coda. |
-| ASD e scope coverage integrati | Letto sullo stato integrato | Letto | Modulo dopo get-resolver; scope dei tre file types/build/read. La presenza dello scope non attesta copertura o successo dei test. |
+| View identity | Read | Read | `build:30–31`, `read:39–40`: EQ of canonical view; equal identity bytes do not make two views interchangeable. |
+| Integer u32 ID, high zero and low positive | Read | Read | `build:23–38`, segment u32 slot: zero and nonzero high rejected; `#xffffffff` representable without truncation. GDR-D02. |
+| u64 candidate location and selector FTYPE | Read | Read | `read:7–8,41–43`; GET content is a u64 array. `ldb (byte 32 32)` extracts every ID bit without narrowing location to u32. |
+| Strictly increasing order and duplicates | Read | Read | `build:37,49–56`: previous u32, initial ID zero; duplicates and inversions rejected. No implicit sorting. |
+| Array copies and ownership | Read | Read | `build:51–56`: new u32 array and simple-vector copy; immutable maps shared by reference. No exported array accessor. |
+| Budget before arrays | Read | Read | `build:12–20,48–52`: shape, M in 1…65,536 and B index, count and 12N before copies; then full map verification. GDR-D01. |
+| Zero, maximum and payload | Read | Read | N=0 allowed with positive M and B=0; N=65,536 requires 786,432 bytes logical SBCL64 payload. Excludes input, maps, headers, GC, and old roots. |
+| Search at most 17 probes | Read | Read | `read:13–25`: half-open interval, maximum 65,536; first/last/missing/extreme ID considered. GDR-D04. Detailed argument below. |
+| No false ABSENT | Read | Read | Empty, impossible geometry, and missing ID call `guasto-get`; no translation into absent document. Impossible entry type: finding GDR-R02. |
+| EBR precondition and cleanup | Read | Read | `read:35` precedes unwind-protect; after acceptance, view and lookup errors abandon GET. Wrong API order does not acquire another task's cleanup. External cleanup remains necessary before AVVIA-GET. |
+| Map selection and delegated checks | Read | Read | `trova-mappa` returns a map; the three wrappers call resolver/GET, which recheck offset, size, CSN, flags, frontier, FD, and, when required, CRC/key/OUTCOME. Selection does not authorize a response. |
+| Read-only/open FD and lifetime | Read | Read | `build:34–36`, resolver read: current state rechecked; GDR-D03. Lisp capability neither authorizes close/reclamation nor demonstrates physical identity or quiescence. |
+| CLOSED source and frontier | Read | Read | Resolver build: CLOSED manifest, valid-bytes frontier; header/body from same FD. Directory derives no limit from EOF, cache, H, or hint. |
+| Heap and I/O | Read | Read | Selector contains no explicit array allocation or I/O; delegated probe without I/O, delegated read in I/O pool. u64 FTYPE does not demonstrate absence of boxing or actual heap. |
+| Migration and private response | Read | Read | New AVVIA-GET and acquisition after migration; private copying and completion with fresh time remain mandatory. No pin or location retained in queue. |
+| Integrated ASD and coverage scope | Read in integrated state | Read | Module after get-resolver; scope of three files types/build/read. Presence of scope does not certify coverage or test success. |
 
-### Argomento statico del limite di ricerca
+<a id="argomento-statico-del-limite-di-ricerca"></a>
 
-Per un intervallo di ampiezza N, `middle = left + floor(N/2)` è interno
-quando N>0. Dopo una sonda non risolutiva la metà sinistra ha al massimo
-`floor(N/2)` elementi e quella destra `N-floor(N/2)-1`.
+### Static search-bound argument
 
-Con N=65.536 la ricerca del primo elemento visita gli indici
-32.768, 16.384, 8.192, …, 2, 1, 0: diciassette sonde, con ritorno consentito
-anche nell'ultima iterazione. L'ultimo elemento richiede sedici sonde.
-Un ID sotto il minimo segue il primo percorso e termina in guasto; sopra
-il massimo esaurisce l'intervallo prima di una nuova lettura. I missing
-interni si esauriscono entro lo stesso limite; un array vuoto fallisce
-prima di AREF. L'ID positivo massimo `#xffffffff` è confrontato come u32
-esatto e segue il percorso della sua posizione, senza wrap o alias.
-Il limite riguarda le sonde di un pivot; il COND usa le relazioni `<` e `>`.
-Non è una misura di istruzioni, latenza o allocazioni.
+For an interval of width N, `middle = left + floor(N/2)` is internal
+when N>0. After an unsuccessful probe, the left half has at most
+`floor(N/2)` elements and the right half `N-floor(N/2)-1`.
 
-## C4 disponibile e lavoro non ancora leggibile
+With N=65,536, search for the first element visits indices
+32,768, 16,384, 8,192, …, 2, 1, 0: seventeen probes, with return allowed
+even on the last iteration. The last element requires sixteen probes.
+An ID below minimum follows the first path and ends in failure; above
+maximum it exhausts the interval before another read. Internal misses
+exhaust within the same bound; an empty array fails
+before AREF. Maximum positive ID `#xffffffff` is compared as exact
+u32 and follows its position's path without wrap or alias.
+The limit concerns pivot probes; COND uses relations `<` and `>`.
+It is not an instruction, latency, or allocation measurement.
 
-Letti contratto, preregistrazione e collector C4. Il confronto statico con
-get-performance-evidence mostra adattamenti di nomi, prefissi, scope,
-campagna e nome temporaneo; non si assume trasferita una qualifica dinamica.
-Il collector verifica copie/digest e gzip senza perdita; conserva stati dei
-record conclusi e controlla i link HTML. Il self-test contiene controlli
-positivi e negativi di copie, digest, compressione, selector e link.
-La raccolta raw ha il limite GDR-R01. Il manifesto `publication-roots.lisp`
-è richiesto prima di publish; la sua futura presenza non è attestata qui.
+<a id="c4-disponibile-e-lavoro-non-ancora-leggibile"></a>
 
-Alla chiusura di questa lettura non sono disponibili benchmark/metodo/mutation
-get-directory completi da valutare. Restano pertanto non valutati clock e
-regressione temporale, raw delle finestre interrotte, heap globale e relativo
-oracolo, conteggi fissi/non adattivi, controlli positivi/negativi dei sensori
-e timeout/join dei thread. Non si attribuisce loro né un difetto né un esito
-positivo in assenza del codice. L'eventuale aggiornamento è subordinato a
-nuovi messaggi prima del freeze; dopo freeze e durante le verifiche il
-revisore non scrive e non esegue strumenti.
+## Available C4 and work not yet readable
 
-## Identificatori del contenuto letto
+Contract, preregistration, and C4 collector read. Static comparison with
+get-performance-evidence shows adaptations of names, prefixes, scope,
+campaign, and temporary name; dynamic qualification is not assumed transferred.
+The collector verifies copies/digests and lossless gzip; it preserves completed
+record statuses and checks HTML links. The self-test contains positive
+and negative checks of copies, digests, compression, selector, and links.
+Raw collection has limit GDR-R01. Manifest `publication-roots.lisp`
+is required before publish; its future presence is not certified here.
+
+At this reading's close, complete get-directory benchmark/method/mutation files
+are unavailable for assessment. Clocks and temporal regression,
+raw interrupted-window data, global heap and its oracle,
+fixed/nonadaptive counts, positive/negative sensor checks,
+and thread timeouts/joins therefore remain unassessed. Neither a defect nor a positive
+outcome is assigned without code. Any update depends on
+new messages before freeze; after freeze and during verification,
+the reviewer neither writes nor runs tools.
+
+<a id="identificatori-del-contenuto-letto"></a>
+
+## Identifiers of content read
 
 | File | Blob |
 |---|---|
@@ -206,34 +224,36 @@ revisore non scrive e non esegue strumenti.
 | `docs/implementazione/get-directory.md` | `cf00b52a7dd8be53fd49ebafb320000978faa7e8` |
 | `spikes/results/2026-10-11-get-directory/README.md` | `2768e28d64c35853d0cbeac5d57f9d39a0a609ed` |
 
-La pubblicazione delle radici, la raggiungibilità delle fonti dei reader già
-ammessi e la conservazione dei FD fino al reclaim sono precondizioni del
-controller, esplicite nel contratto CLOSED. Questa directory non aggiunge
-una cella di pubblicazione. Le integrazioni ACTIVE/controller sviluppate
-altrove non sono duplicate o modificate da questa revisione.
+Root publication, source reachability for already admitted readers,
+and FD retention until reclamation are controller preconditions,
+explicit in the CLOSED contract. This directory adds no
+publication cell. ACTIVE/controller integrations developed
+elsewhere are neither duplicated nor modified by this review.
 
-## Chiusura dell'autore prima del congelamento
+<a id="chiusura-dellautore-prima-del-congelamento"></a>
 
-Questa sezione è scritta dall'autore, non dal revisore indipendente.
-Il revisore è stato chiuso prima delle esecuzioni dopo le due letture C1 e
-la rilettura statica delle correzioni R01/R02 già conservate sopra.
-La richiesta successiva di ampliare la lettura C4 non ha prodotto un handoff
-conclusivo: benchmark e mutazioni non ricevono una revisione indipendente
-completa da questo rapporto. Il loro metodo è stato letto dall'autore;
-i controlli dinamici e i sensori restano da eseguire e registrare.
+## Author closure before freeze
 
-L'integrazione include `main` fino a `7568456`, GET funzionale, resolver ACTIVE
-ordinario e routing dei worker. I conflitti ASDF e coverage preservano i due
-percorsi e i rispettivi scope. Il prodotto directory mantiene i quattro file
-elencati sopra, con la guardia R02. Le fixture benchmark sono sequenziali,
-con al massimo 64 FD readonly vivi; i conteggi rimangono fissati a 80/240
-finestre seriali/parallele. Il mutante di location conserva il guasto nel
-caso vuoto e altera soltanto la directory non vuota.
+This section is written by the author, not the independent reviewer.
+The reviewer was closed before executions after two C1 readings and
+static rereading of R01/R02 corrections already preserved above.
+The later request to extend C4 reading produced no conclusive
+handoff: benchmark and mutations do not receive complete independent
+review from this report. Their method was read by the author;
+dynamic checks and sensors remain to be run and recorded.
 
-La correzione in `get-resolver/build.lisp` confronta il ritorno di
-`leggi-esatto` con END, secondo il contratto di `io/transfer.lisp`, anziché
-con END−64. La nuova regressione su file reale verifica ritorno, regione,
-sentinelle e osservazione I/O. Non è stata eseguita prima del congelamento.
-I risultati successivi qualificano soltanto il contenuto effettivamente
-registrato nei rispettivi comandi; non si attribuisce una qualifica C1
-complessiva a questo incremento.
+Integration includes `main` through `7568456`, functional GET, ordinary ACTIVE
+resolver, and worker routing. ASDF and coverage conflicts preserve both
+paths and respective scopes. Directory product retains the four files
+listed above, with the R02 guard. Benchmark fixtures are sequential,
+with at most 64 live read-only FDs; counts remain fixed at 80/240
+serial/parallel windows. The location mutant preserves failure in
+the empty case and alters only nonempty directories.
+
+The correction in `get-resolver/build.lisp` compares the `leggi-esatto` return with END,
+under `io/transfer.lisp`'s contract, rather than
+END−64. The new real-file regression checks return, region,
+sentinels, and I/O observation. It was not run before freeze.
+Subsequent results qualify only content actually
+recorded in respective commands; no overall C1 qualification
+is assigned to this increment.

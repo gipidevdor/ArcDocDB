@@ -1,129 +1,138 @@
-# SPK-07 — Modelli eseguibili dei protocolli
+<a id="spk-07--modelli-eseguibili-dei-protocolli"></a>
 
-> **Proposta** — Esperimento della Fase 0; nessun componente del motore è implementato qui.
+# SPK-07 — Executable protocol models
 
-## Domanda e metodo
+> **Proposed** — Phase-0 experiment; no engine component is implemented here.
 
-I protocolli conservano dati e visibilità nei piccoli stati esplorati, anche quando il
-processo si arresta tra due passi? Un esploratore in Common Lisp visita gli stati distinti
-in ampiezza e conserva il percorso più breve verso una violazione. Le transizioni sono
-pure; il limite di stati è esplicito. L'oracolo legge fatti durevoli, separatamente dalle
-azioni del processo.
+<a id="domanda-e-metodo"></a>
 
-Modelli: anello dell'orizzonte, decisione multiserie e rotazione, EDIT e reclaim,
-registrazione di snapshot, seqlock, lotti e frontiera durevole,
-tombstone e ricostruzione indipendente dall'ordine. Le varianti difettose servono come
-controlli negativi: la suite deve trovare un controesempio, altrimenti fallisce.
+## Question and method
 
-La suite integra anche sei moduli con metodo preregistrato:
-[pubblicazione](metodo-pubblicazione.md), [scadenza](metodo-scadenza.md),
-[compaction con writer ACTIVE](metodo-compaction.md) e
-[ordini di osservazione delle barriere](metodo-memoria.md),
-[due reader e due slot in SC](metodo-seqlock-readers.md) e
-[crash sui byte con verifier dei lotti](metodo-byte-crash.md).
+Do protocols preserve data and visibility in the small explored states, including
+when the process stops between steps? A Common Lisp explorer visits distinct states
+breadth-first and retains the shortest path to a violation. Transitions are pure;
+state limit is explicit. The oracle reads durable facts separately from process actions.
 
-## Esecuzione
+Models: horizon ring, multiseries decision and rotation, EDIT and reclaim,
+snapshot registration, seqlock, batches and durable frontier, tombstones and
+order-independent reconstruction. Defective variants are negative controls:
+the suite must find a counterexample or fail.
+
+The suite also integrates six modules with preregistered methods:
+[publication](metodo-pubblicazione.md), [expiration](metodo-scadenza.md),
+[compaction with ACTIVE writer](metodo-compaction.md),
+[barrier observation orders](metodo-memoria.md),
+[two readers and two slots in SC](metodo-seqlock-readers.md), and
+[byte-level crashes with batch verifier](metodo-byte-crash.md).
+
+<a id="esecuzione"></a>
+
+## Execution
 
 ```bash
 sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --check SPK-07
 ```
 
-Il codice è compilato con `safety 3`; warning e style-warning interrompono l'esecuzione.
-L'harness conserva una plist schema 1 con comando, ambiente, revisione, hash dei
-sorgenti prima/dopo, risultati decodificati, output originale e fallimenti.
-Il risultato contiene conteggi, dimensioni del modello e controesempi. Nessuna
-casualità; gli ordini non dipendono dal clock. I file compilati vanno in `out/`,
-ignorata da Git. Una prova individuale usa `run-module.lisp nome-modello` tramite
-`tools/record-command.lisp`, come descritto nel metodo delle barriere.
+Code compiled with `safety 3`; warnings and style-warnings stop execution.
+Harness retains a schema-1 plist with command, environment, revision,
+before/after source hashes, decoded results, original output, and failures.
+Result contains counts, model sizes, and counterexamples. No randomness;
+orders do not depend on clock. Compiled files go to Git-ignored `out/`.
+An individual test uses `run-module.lisp nome-modello` through
+`tools/record-command.lisp`, as described in the barrier method.
 
-## Limiti dichiarati prima dell'esecuzione
+<a id="limiti-dichiarati-prima-dellesecuzione"></a>
 
-- Le transizioni atomiche e la memoria sequenzialmente consistente sono assunzioni del
-  modello; non è una prova delle barriere ARM64 o del codice macchina di SBCL.
-- Nei modelli di base i lotti sono entità logiche con validità già determinata.
-  L'estensione sui byte usa il verifier reale su fixture indipendenti; la frontiera
-  confermata è un fatto esterno esplicito, non un algoritmo di scoperta dopo il danno.
-- Due partecipanti, un trasferimento, due versioni per snapshot e un numero finito di CSN;
-  il risultato non prova configurazioni arbitrarie.
-- Gli scenari corrispondono a FI-01…FI-13 a livello astratto; non sostituiscono fault
-  injection su un motore né crash reali su file system.
-- Il gate della Fase 0 resta aperto: manca un modello architetturale completo della
-  memoria debole, con più reader/slot, e restano crash sui file reali, copertura
-  completa dei formati e fault injection sul motore. Pubblicazione, scadenza,
-  writer ACTIVE, byte e lettori SC sono coperti soltanto nei
-  domini finiti dichiarati dai rispettivi metodi.
-- Il modello tombstone di base assume un filtro esatto senza falsi negativi e non
-  mantiene snapshot attivi; l'estensione compaction aggiunge uno snapshot e un
-  filtro conservativo «forse», senza provare la policy concreta di ammissione MERGE.
+## Limits declared before execution
 
-## Ambiente e risultato
+- Atomic transitions and sequentially consistent memory are model assumptions;
+  this is not a proof of ARM64 barriers or SBCL machine code.
+- Base-model batches are logical entities with validity already determined.
+  Byte extension uses real verifier on independent fixtures; acknowledged frontier
+  is an explicit external fact, not an algorithm discovering it after damage.
+- Two participants, one transfer, two snapshot versions, and finite CSNs;
+  result does not prove arbitrary configurations.
+- Scenarios correspond abstractly to FI-01…FI-13; they replace neither engine
+  fault injection nor real filesystem crashes.
+- Phase-0 gate remains open: a complete architectural weak-memory model with
+  multiple readers/slots is missing; real-file crashes, full format coverage,
+  and engine fault injection remain pending. Publication, expiration, ACTIVE
+  writer, bytes, and SC readers are covered only in their methods' finite domains.
+- Base tombstone model assumes an exact filter without false negatives and keeps
+  no active snapshots; compaction extension adds one snapshot and conservative
+  ‘possibly’ filter without proving concrete MERGE admission policy.
 
-Eseguito il 2026-10-08 su Apple M4, 16 GiB, macOS/Darwin 27.0.0 ARM64, SBCL 2.6.9
-GENCGC. Comando riportato sopra; seme assente, nessuna scelta casuale.
+<a id="ambiente-e-risultato"></a>
 
-| Modello corretto | Stati distinti | Transizioni |
+## Environment and result
+
+Run on 2026-10-08, Apple M4, 16 GiB, macOS/Darwin 27.0.0 ARM64, SBCL 2.6.9
+GENCGC. Command above; no seed, no random choices.
+
+| Correct model | Distinct states | Transitions |
 |---|---|---|
-| Orizzonte, registro dei pendenti, fino a 6 CSN / capacità 2 | 43 | 72 |
-| Multiserie, 2 partecipanti | 59 | 114 |
-| EDIT e reclaim, 2 riferimenti | 19 | 28 |
-| Seqlock, 2 campi e 1 aggiornamento | 127 | 164 |
-| Registrazione snapshot, 1 sostituzione | 28 | 34 |
+| Horizon, pending registry, up to 6 CSNs / capacity 2 | 43 | 72 |
+| Multiseries, 2 participants | 59 | 114 |
+| EDIT and reclaim, 2 references | 19 | 28 |
+| Seqlock, 2 fields and 1 update | 127 | 164 |
+| Snapshot registration, 1 replacement | 28 | 34 |
 
-Altre enumerazioni: 85 combinazioni di persistenza non sincronizzata, 2 corruzioni
-testimoniate da un SEAL successivo, 2.256 compaction/ordini di ricostruzione di quattro
-record, 25 casi di riconciliazione/recovery. Nessuna violazione nei modelli corretti.
-Questi conteggi non sono una copertura del codice del motore.
+Other enumerations: 85 unsynchronized-persistence combinations, 2 corruptions
+witnessed by a later SEAL, 2,256 compaction/rebuild orders over four records,
+25 reconciliation/recovery cases. No violations in correct models.
+These counts are not engine-code coverage.
 
-**Difetto trovato nel progetto:** il modello dell'anello di ADR-0038 produce `H=4` dopo
-cinque commit già conclusi; il percorso riproducibile è conservato nell'output di `check` e
-in [ADR-0046](../../docs/adr/0046-orizzonte-con-registro-limitato.md). Il registro dei veri
-pendenti supera il modello; la soluzione alternativa basata sulla distanza supera 23 stati
-e 32 transizioni ma consuma la finestra anche per commit già finiti.
+**Defect found in design:** ADR-0038's ring model produces `H=4` after five
+already completed commits; reproducible path is retained in `check` output and
+[ADR-0046](../../docs/adr/0046-orizzonte-con-registro-limitato.md). The registry of actual
+pending commits passes the model; distance-based alternative passes 23 states and
+32 transitions but consumes its window for already finished commits too.
 
-Tre controlli negativi aggiuntivi sono rilevati: decisione dimenticata prima degli esiti
-durevoli, reclaim con riferimenti ancora attivi, lettura senza validazione del seqlock. La
-registrazione senza pubblicare la soglia perde inoltre la versione necessaria a uno
-snapshot. I risultati positivi dipendono dalle assunzioni dichiarate sopra.
+Three additional negative controls detected: forgetting decision before durable
+outcomes, reclaim with active references, read without seqlock validation.
+Registration without publishing threshold also loses a snapshot's needed version.
+Positive results depend on assumptions declared above.
 
-## Estensione dei modelli — 2026-10-08
+<a id="estensione-dei-modelli--2026-10-08"></a>
 
-| Modulo | Esplorazione osservata | Controlli negativi rilevati |
+## Model extensions — 2026-10-08
+
+| Module | Observed exploration | Negative controls detected |
 |---|---|---:|
-| Pubblicazione | 25 esplorazioni, 64.316 stati complessivi, 110.401 transizioni | 6 |
-| Scadenza | 2 grafi corretti, 67.558 stati, 256.971 transizioni; 14 witness positivi | 5 |
-| Compaction con writer ACTIVE | 98 grafi corretti, 7.994 stati, 16.952 transizioni; 11.592 proiezioni di crash | 8 |
-| Ordini osservati delle barriere | 280 ordini corretti; 840 ordini per ciascuno dei quattro mutanti | 4 |
-| Due reader / due slot, SC | 8 grafi corretti, 28.434 stati, 65.096 archi; 192 witness positivi | 28 |
-| Crash sui byte v1/v2 | 49.120 casi, 655.997 recovery, 303.432 interruzioni e ripartenze; input immutati | 3 |
+| Publication | 25 explorations, 64,316 total states, 110,401 transitions | 6 |
+| Expiration | 2 correct graphs, 67,558 states, 256,971 transitions; 14 positive witnesses | 5 |
+| Compaction with ACTIVE writer | 98 correct graphs, 7,994 states, 16,952 transitions; 11,592 crash projections | 8 |
+| Observed barrier orders | 280 correct orders; 840 orders per each of four mutants | 4 |
+| Two readers / two slots, SC | 8 correct graphs, 28,434 states, 65,096 edges; 192 positive witnesses | 28 |
+| Byte-level crashes v1/v2 | 49,120 cases, 655,997 recoveries, 303,432 interruptions/restarts; inputs unchanged | 3 |
 
-Pubblicazione conserva anche tre esplorazioni delle storie dei mutanti di
-generazione e quattro witness di raggiungibilità. Omettere il ricontrollo root
-viola il contratto di generazione nel modello, ma le storie esplorate restano
-linearizzabili: il risultato non dichiara una perdita di linearizzabilità.
+Publication also retains three explorations of generation-mutant histories and
+four reachability witnesses. Omitting root recheck violates generation contract
+in the model, but explored histories remain linearizable: result does not claim
+loss of linearizability.
 
-Scadenza distingue pin snapshot ed epoche degli accessi già ammessi. Tutti i
-67.507 stati del grafo lifetime hanno un percorso astratto verso un terminale;
-questo non è un limite temporale per un reader bloccato. Compaction confronta
-latest e storico con una storia committed indipendente; i crash sono proiezioni
-logiche, non arresti reali del filesystem.
+Expiration distinguishes snapshot pins from already admitted accesses' epochs.
+All 67,507 lifetime-graph states have an abstract path to a terminal; this is not
+a time bound for a blocked reader. Compaction compares latest and historical
+results with independent committed history; crashes are logical projections,
+not real filesystem stops.
 
-Le tensioni normative INV-I1/ADR-0043, ritardo di reclaim con reader bloccato in
-ADR-0016 e ammissione MERGE con snapshot sono dichiarate nei metodi. Questi
-spike non cambiano decisioni o requisiti del motore. Prove, tentativi falliti e
-limiti sono conservati nel [catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/catalogo.lisp).
+Normative tensions around INV-I1/ADR-0043, reclaim delay with a blocked reader in
+ADR-0016, and MERGE admission with snapshots are declared in methods. These spikes
+change no engine decisions or requirements. Tests, failed attempts, and limits are
+retained in the [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/catalogo.lisp).
 
-La [campagna integrata finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-final-spikes-check.lisp)
-verifica il codice del commit `8e4f98f` in un checkout pulito e conserva i
-risultati decodificati di tutti i sette spike allora registrati.
-`make check` supera anche 26 test delle fondazioni, compilazione senza avvisi,
-lint, tracciabilità, collegamenti e catalogo; il
-[record del comando](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-final-verification.lisp)
-conserva l'output originale. Nessun requisito del motore è promosso a verificato
-sulla base dei soli modelli.
+The [final integrated campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-final-spikes-check.lisp)
+verifies commit `8e4f98f` in a clean checkout and retains decoded results of all
+seven spikes then registered. `make check` also passes 26 foundation tests,
+warning-free compilation, lint, traceability, links, and catalog; the
+[command record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-final-verification.lisp)
+retains original output. No engine requirement is promoted to verified based
+solely on models.
 
-La [nuova verifica integrata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/integrated-check.lisp)
-comprende i sei moduli e SPK-08. La campagna sui byte conserva anche cinque
-controlli semantici del SEAL con CRC riparati e il witness sull'ultimo flush
-non testimoniato: bytes uguali possono rappresentare coda o danno confermato
-secondo la prova esterna della frontiera. Tutti i tentativi e i limiti sono nel
-[catalogo dell'avanzamento](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/catalogo.lisp).
+The [new integrated verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/integrated-check.lisp)
+includes six modules and SPK-08. Byte campaign also retains five semantic SEAL
+checks with repaired CRCs and the unwitnessed-final-flush witness: identical bytes
+can represent a tail or acknowledged damage depending on external frontier proof.
+All attempts and limits are in the
+[progress catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/catalogo.lisp).

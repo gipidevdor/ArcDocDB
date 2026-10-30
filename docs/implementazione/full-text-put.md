@@ -1,127 +1,139 @@
-# Legame full text tra PUT e lotto WAL
+<a id="legame-full-text-tra-put-e-lotto-wal"></a>
 
-`arcdocdb.fulltext.put` collega la [preparazione CBOR](full-text-documenti.md),
-le [riserve del writer](full-text-riserve.md) e il lotto WAL esistente. Il primo
-impiego resta un server NNTP Usenet scritto in Common Lisp, con Message-ID opaco
-come chiave e campi subject/body indicizzati. Trasporto e decodifica MIME restano
-al demone; il database riceve il documento CBOR.
+# Full-text binding between PUT and WAL batch
 
-## Una sola sorgente posseduta
+`arcdocdb.fulltext.put` connects [CBOR preparation](full-text-documenti.md),
+[writer reservations](full-text-riserve.md), and existing WAL batch. First
+use remains a Usenet NNTP server written in Common Lisp, with opaque Message-ID
+as key and indexed subject/body fields. Transport and MIME decoding remain
+with daemon; database receives CBOR document.
 
-`crea-preparazione-put-full-text(configs, ...)` prealloca una cornice record privata
-e un task per ciascuna configurazione canonica ordinata, fino a sedici generazioni.
-Il controllo cumulativo della memoria precede le allocazioni. Include frame, spazi
-di analisi, run e metadati locali; configurazioni condivise, pool delle riserve,
-altri contesti e RSS richiedono contabilita separata dal runtime.
+<a id="una-sola-sorgente-posseduta"></a>
 
-I limiti predefiniti sono documento 16 MiB, chiave 65535 byte, 65536 scalari,
-4096 token, 262144 byte di termini e memoria cumulativa 64 MiB. La dimensione
-del frame include i 24 byte dell'header; il limite del formato puo rifiutare un
-documento piu piccolo del limite applicativo. Il costruttore supporta v1/v2;
-i rispettivi limiti fisici sono verificati nuovamente all'avvio.
+## One owned source
 
-`inizia-put-full-text(request, key, value, row, ...)` usa il codec record esistente
-per copiare chiave e valore nella cornice, calcolarne i CRC e restituire una generation
-senza wrap. Al ritorno, i buffer originari possono essere riutilizzati. La chiave
-Message-ID e il documento originale restano byte esatti, senza normalizzazione.
-Tutti i task analizzano esclusivamente lo span del valore nella stessa cornice.
-L'identita deriva dall'ownership del buffer, senza affidarsi a un hash per confrontare
-due copie esterne. Frame, task e handle delle riserve rimangono privati fino all'append.
+`crea-preparazione-put-full-text(configs, ...)` preallocates a private record frame
+and one task per ordered canonical configuration, up to sixteen generations.
+Cumulative memory check precedes allocation. Includes frames, analysis
+spaces, runs, and local metadata; shared configurations, reservation pool,
+other contexts, and RSS require separate runtime accounting.
 
-L'API produce PUT ordinari, flag zero e stamp zero prima della chiusura, oppure
-prepared, flag uno e TXID positivo passato come `txid-high`/`txid-low` u32.
-Non introduce PUT contract-versioned o nuovi formati. La chiusura WAL successiva
-ristampa solo gli ordinari con il CSN; conserva i TXID dei prepared.
+Defaults are document 16 MiB, key 65535 bytes, 65536 scalars,
+4096 tokens, 262144 term bytes, and cumulative memory 64 MiB. Frame
+size includes 24 header bytes; format limit can reject a document
+smaller than application limit. Constructor supports v1/v2;
+respective physical limits checked again at start.
 
-## Analisi, consegna e ammissione
+`inizia-put-full-text(request, key, value, row, ...)` uses existing record codec
+to copy key and value into frame, calculate CRCs, and return a generation
+without wrapping. After return, original buffers may be reused. Message-ID
+key and original document remain exact bytes without normalization.
+All tasks analyze only value span in the same frame.
+Identity derives from buffer ownership, without relying on a hash to compare
+two external copies. Frame, tasks, and reservation handles remain private until append.
 
-`passo-put-full-text(request, generation, quantum)` avanza fino a `:prepared`,
-solo quando tutti i task sono DONE e il worker ha verificato CRC e span della cornice.
-L'attestazione privata include la generation corrente e viene azzerata all'avvio,
-al fallimento o alla cancellazione. Il frame resta immutabile fino all'append:
-nessun ingresso pubblico permette di modificarlo o sostituirlo dopo l'attestazione.
-Il lavoro e cumulativo per tutte le generazioni: tre volte la dimensione della
-cornice (codifica e attestazione), passi di controllo e lavoro documentale,
-con limite predefinito 268435456 unita. Il quantum 1..65536 limita i passi;
-copia e CRC possono attraversare un intero record e non danno garanzie realtime.
-Errore CBOR o esaurimento del budget invalidano il risultato prima dell'ammissione.
-Rifiuti di avvio, invece, preservano un risultato precedente ancora valido.
+API produces ordinary PUTs, flag zero and stamp zero before closing, or
+prepared PUTs, flag one and positive TXID passed as `txid-high`/`txid-low` u32.
+No contract-versioned PUT or new format introduced. Later WAL closing
+restamps only ordinary records with CSN; preserves prepared TXIDs.
 
-Il worker possiede il request fino a PREPARED, poi lo consegna con handoff sincronizzato
-al writer della Serie. Solo dopo l'analisi il runtime acquisisce la lease della coda
-canonica. Non si aggiungono scheduler, thread o code concorrenti interne al ponte.
+<a id="analisi-consegna-e-ammissione"></a>
 
-`prenota-put-full-text(pool, lease, request, generation)` adotta insieme i task;
-`passo-riserva-put-full-text(..., quantum)` ne copia i run posseduti, passando da
-`:reserving` a `:reserved`. Fino all'append il request non puo ripartire. La verifica
-dei budget precede gli effetti; un rifiuto mantiene PREPARED e consente retry con
-una capacita appropriata. Restano gli obblighi del runtime sulla canonicalita del
-pool, sulle configurazioni e sulla contabilita di tutte le viste trattenute.
+## Analysis, delivery, and admission
 
-## Append e riferimenti stabili
+`passo-put-full-text(request, generation, quantum)` advances to `:prepared`
+only when all tasks are DONE and worker has checked frame CRC and span.
+Private attestation includes current generation and is cleared at start,
+failure, or cancellation. Frame remains immutable until append:
+no public entry allows modification or replacement after attestation.
+Work is cumulative across all generations: three times frame
+size (encoding and attestation), control steps, and document work,
+with default limit 268435456 units. Quantum 1..65536 limits steps;
+copy and CRC may traverse an entire record and give no realtime guarantees.
+CBOR error or budget exhaustion invalidates result before admission.
+Start rejections instead preserve a previous still-valid result.
 
-`aggiungi-put-full-text(pool, lease, request, generation, batch)` richiede riserva
-pronta, attestazione corrente del worker, lotto segment aperto dello stesso formato
-e segmento, posto per un record e spazio finale per SEAL. Il writer verifica solo
-metadati, capacita e lifetime; il CRC del body e calcolato fuori dalla lease,
-come richiede [ADR-0039](../adr/0039-cornice-unica-dei-record.md).
-Questi preflight precedono
-il trasferimento irreversibile della riserva. Il writer copia poi esattamente la
-cornice privata nel buffer WAL, conserva delta/file/slot, restituisce staging e
-registra il legame nello slot stabile. Restituisce slot, token, start ed end.
-Il request diventa `:appended` e puo tornare al worker con handoff simmetrico.
-La successiva [cattura del riferimento fisico](full-text-riferimenti.md) collega
-lo slot al record del lotto sigillato e sopravvive al riuso del buffer WAL.
+Worker owns request through PREPARED, then hands it off with synchronization
+to Serie writer. Only after analysis does runtime acquire canonical
+queue lease. No schedulers, threads, or concurrent queues added inside bridge.
 
-`leggi-legame-put-full-text(pool, lease, slot, token)` restituisce sei valori:
-lotto, incarnazione, numero del record, start, end e row proposta. Il legame sopravvive
-al riuso del request. Il riuso del lotto incrementa l'incarnazione senza wrap;
-vecchi riferimenti sono rifiutati anche se il nuovo record occupa gli stessi byte.
-La saturazione dell'incarnazione e verificata anche dal preflight pubblico di riuso,
-prima degli effetti del controller di Serie. Il consumer deve catturare i dati
-necessari prima di consentire il riuso del buffer.
+`prenota-put-full-text(pool, lease, request, generation)` adopts tasks together;
+`passo-riserva-put-full-text(..., quantum)` copies their owned runs, going from
+`:reserving` to `:reserved`. Until append, request cannot restart. Budget
+verification precedes effects; rejection retains PREPARED and permits retry with
+appropriate capacity. Runtime obligations for pool canonicality,
+configurations, and accounting for all retained views remain.
 
-La row u32 proposta non e il numero del record nel lotto, un offset fisico, un
-ordinale hint, un CSN o una prova di commit. Il ponte non assegna tali identita.
-`wal:verifica-append-cornice` e `wal:aggiungi-cornice` sono primitive generiche
-di verifica completa per cornici non fidate: da sole verificano formato/CRC e capacita,
-non analisi o contratto documentale. Eseguono una scansione e non sono usate dal
-percorso writer del ponte, che riceve esclusivamente la cornice privata attestata.
+<a id="append-e-riferimenti-stabili"></a>
 
-## Cancellazione e guasti
+## Append and stable references
 
-`annulla-put-full-text` interrompe l'analisi prima della riserva;
-`annulla-riserva-put-full-text` restituisce costi e fonti prima dell'append.
-Nessuna delle due e l'abort di una transazione gia preparata. Gli handle trasferiti
-non sono cancellabili o riciclabili con questa API.
+`aggiungi-put-full-text(pool, lease, request, generation, batch)` requires ready
+reservation, current worker attestation, open segment batch of same format
+and segment, room for one record, and final space for SEAL. Writer checks only
+metadata, capacity, and lifetime; body CRC calculated outside lease,
+as [ADR-0039](../adr/0039-cornice-unica-dei-record.md) requires.
+These preflights precede
+irreversible reservation transfer. Writer then copies exactly the
+private frame into WAL buffer, retains delta/file/slot, returns staging, and
+records binding in stable slot. Returns slot, token, start, and end.
+Request becomes `:appended` and may return to worker with symmetric handoff.
+Later [physical-reference capture](full-text-riferimenti.md) connects
+slot to sealed-batch record and survives WAL-buffer reuse.
 
-Se l'uscita durante trasferimento/append e incompleta, request, pool e lotto diventano
-FAULTED; riferimenti, costi e byte eventualmente copiati restano conservati.
-Il confine del worker deve fermare la Serie e richiedere recovery. Non si tenta
-rollback di effetti incerti e non si produce ACK. Nessuna funzione del ponte esegue I/O.
+`leggi-legame-put-full-text(pool, lease, slot, token)` returns six values:
+batch, incarnation, record number, start, end, and proposed row. Binding survives
+request reuse. Batch reuse increments incarnation without wrapping;
+old references rejected even when new record occupies same bytes.
+Incarnation saturation also checked by public reuse preflight
+before Serie controller effects. Consumer must capture required
+data before allowing buffer reuse.
 
-## Verifica e limiti
+Proposed u32 row is not batch record number, physical offset,
+hint ordinal, CSN, or commit proof. Bridge does not assign those identities.
+`wal:verifica-append-cornice` and `wal:aggiungi-cornice` are generic complete-verification
+primitives for untrusted frames: alone they check format/CRC and capacity,
+not analysis or document contract. They scan and are not used by
+bridge writer path, which receives only attested private frame.
 
-I primi 18 test del ponte sono ora affiancati da nove prove dei riferimenti fisici:
-27 test del ponte, 102 full text complessivi. Fixture CBOR congelata, encoder
-record indipendente bitwise, input originari sovrascritti e confronto completo dei
-byte verificano l'ownership. Sono coperti v1/v2, ordinario/prepared, TXID massimo,
-sedici generazioni, limiti cumulativi, troncamenti/CRC, errori senza effetti,
-64 punti di cancellazione, riferimenti obsoleti e interruzioni prima/dopo la copia WAL.
-Quattro contesti indipendenti condividono solo configurazioni immutabili.
-Un probe sul CRC intercetta qualsiasi scansione oltre i 20 byte dell'header mentre
-il writer detiene la lease: verifica il rifiuto del vecchio percorso come controllo
-negativo e l'append corretto con padding 0/32768 byte. Verifica anche i calcoli CRC
-nel worker e il confronto completo del record. Header o chiave corrotti prima
-dell'attestazione falliscono nel worker; attestazioni assenti/stale non consentono append.
+<a id="cancellazione-e-guasti"></a>
 
-Il [metodo e la tabella delle decisioni](full-text-put-metodo.md) riportano le due
-letture dello stesso autore. I [registri originali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
-distinguono tentativi falliti, prove mirate, verifica completa e copertura diagnostica.
+## Cancellation and faults
 
-Restano da integrare validazione generale e autorita del catalogo di Serie,
-canonicalita del log runtime, pipeline durevole con pubblicazione documento/posting
-prima di H/ACK, esiti autorevoli 2PC, mappa fisica del delta, MVCC e ritiro dopo
-quiescenza. Non si dichiara il motore pronto al traffico NNTP, benchmark applicativi,
-qualifica C1, MC/DC o fault injection completa. I requisiti complessivi restano
-`:progettato`; nessun ADR o formato disco e modificato.
+`annulla-put-full-text` interrupts analysis before reservation;
+`annulla-riserva-put-full-text` returns costs and sources before append.
+Neither aborts an already prepared transaction. Transferred handles
+cannot be canceled or recycled through this API.
+
+If exit during transfer/append is incomplete, request, pool, and batch become
+FAULTED; references, costs, and any copied bytes remain preserved.
+Worker boundary must stop Serie and require recovery. No rollback
+of uncertain effects attempted and no ACK produced. No bridge function performs I/O.
+
+<a id="verifica-e-limiti"></a>
+
+## Verification and limits
+
+First 18 bridge tests now joined by nine physical-reference tests:
+27 bridge tests, 102 full-text tests total. Frozen CBOR fixture, independent
+bitwise record encoder, overwritten original inputs, and full byte
+comparison verify ownership. Covered: v1/v2, ordinary/prepared, maximum TXID,
+sixteen generations, cumulative limits, truncations/CRC, errors without effects,
+64 cancellation points, obsolete references, and interrupts before/after WAL copy.
+Four independent contexts share only immutable configurations.
+A CRC probe catches any scan beyond 20 header bytes while writer
+holds lease: verifies old-path rejection as negative control
+and correct append with 0/32768-byte padding. Also checks worker CRC
+calculations and full-record comparison. Header or key corruption before
+attestation fails in worker; absent/stale attestations do not permit append.
+
+The [method and decision table](full-text-put-metodo.md) report both
+readings by same author. [Original records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
+distinguish failed attempts, targeted tests, full verification, and diagnostic coverage.
+
+Still to integrate: general validation and Serie-catalog authority,
+runtime-log canonicality, durable pipeline with document/posting publication
+before H/ACK, authoritative 2PC outcomes, physical delta map, MVCC, and retirement after
+quiescence. Engine readiness for NNTP traffic, application benchmarks,
+C1 qualification, MC/DC, or complete fault injection not claimed. Overall requirements remain
+`:progettato`; no ADR or disk format changed.

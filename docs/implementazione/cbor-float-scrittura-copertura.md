@@ -1,89 +1,95 @@
-# Float CBOR — lettura dei dati di coverage e audit benchmark
+<a id="float-cbor--lettura-dei-dati-di-coverage-e-audit-benchmark"></a>
 
-Questa pagina pubblica la [lettura originale archiviata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-cbor-float-write/raw/readings/coverage-review-draft.md.txt),
-congelata con Git blob `7c8d22854d345aafae3c5fe6ba12977d5e0abb0f`.
-Il testo seguente è conservato integralmente, senza adattamenti dei percorsi
-o dei riferimenti storici. I [risultati finali](cbor-float-scrittura-risultati.md)
-presentano l'esito complessivo della campagna e la conservazione degli archivi.
+# CBOR floats — coverage-data reading and benchmark audit
+
+This page publishes the [archived original reading](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-cbor-float-write/raw/readings/coverage-review-draft.md.txt),
+frozen as Git blob `7c8d22854d345aafae3c5fe6ba12977d5e0abb0f`.
+The following text is preserved in full, without adaptations to paths
+or historical references. The [final results](cbor-float-scrittura-risultati.md)
+present the campaign's overall outcome and archive preservation.
 
 
-Lettura del 2026-10-13 su sorgenti congelati, senza LOAD di prodotto,
-driver, auditor o helper di dati. I rapporti, lo stato SB-COVER e i sorgenti
-sono stati letti come dati con READ-EVAL NIL, readtable standard,
-CL-USER ed EOF; i sorgenti non sono stati eseguiti. Per leggere i simboli
-qualificati delle condizioni è stato creato soltanto un package vuoto.
-L'helper della campagna precedente è stato studiato staticamente.
+Reading dated 2026-10-13 of frozen sources, without LOAD of product,
+driver, auditor, or data helper. Reports, SB-COVER state, and sources
+were read as data with READ-EVAL NIL, standard readtable,
+CL-USER, and EOF; sources were not executed. Only an empty package
+was created to read qualified condition symbols.
+The preceding campaign's helper was studied statically.
 
-Questa lettura ha autore distinto dal prodotto e dal corpus. Lo stesso
-autore ha però scritto `tools/cbor-float-write-audit.lisp`: la lettura
-del risultato di quel programma non è una revisione indipendente del
-proprio codice. Il coordinatore ha letto il codice C4 completo separatamente.
+This reading has an author distinct from product and corpus. The same
+author did, however, write `tools/cbor-float-write-audit.lisp`: reading
+that program's result is not independent review of their own
+code. The coordinator separately read the complete C4 code.
 
-## Identità e registri
+<a id="identità-e-registri"></a>
+
+## Identity and registers
 
 - Narrow: Git blob `cd5749edc0a757ee3a5b470eda566a6685d32fd8`.
 - Write: Git blob `03c6aed61e2c243d8b1a6c4332ce1837c4e9a77c`.
-- Auditor benchmark: Git blob `485544868eeadff247968b86c2d5da9b3b610295`.
-- Coverage: `spikes/out/4000905717-command-32850-0/report.lisp`, comando
+- Benchmark auditor: Git blob `485544868eeadff247968b86c2d5da9b3b610295`.
+- Coverage: `spikes/out/4000905717-command-32850-0/report.lisp`, command
   `foundation-coverage --report .../coverage/ cbor-float-write`.
-- Audit benchmark: `spikes/out/4000905717-command-32851-0/report.lisp`,
-  `--bench` sul record `4000905677-command-32530-0/report.lisp`, con
-  entrambi i Git blob del prodotto passati esplicitamente.
+- Benchmark audit: `spikes/out/4000905717-command-32851-0/report.lisp`,
+  `--bench` on record `4000905677-command-32530-0/report.lisp`, with
+  both product Git blobs passed explicitly.
 
-I due registri richiesti e il benchmark originale sono OK, exit 0,
-source-consistency STABLE; ciascuno dichiara 738 voci nello snapshot
-prima/dopo, confrontate uguali. Il benchmark interno dichiara 167 voci
-MD5 prima/dopo, uguali. Non si inferisce completezza di inventario o
-autenticità da questi metadata. I Git blob selezionati nel registro
-dell'audit corrispondono ai tre valori sopra.
+The two requested registers and original benchmark are OK, exit 0,
+source-consistency STABLE; each declares 738 entries in the
+before/after snapshot, compared equal. The internal benchmark declares 167
+before/after MD5 entries, equal. Inventory completeness or
+authenticity is not inferred from these metadata. Git blobs selected in the audit
+register match the three values above.
 
-## Conteggi di coverage
+<a id="conteggi-di-coverage"></a>
 
-Lo stato contiene 274 file salvati. Sono presenti esattamente una entry
-per ciascuno dei due nuovi percorsi assoluti. I vettori dei path e i
-bit-vector hanno la stessa lunghezza; i path espressione iniziano con
-numero, quelli dei rami con keyword, e i bit osservati sono 0/1.
+## Coverage counts
 
-| Sorgente | Espressioni coperte/totali | Esiti di ramo coperti/totali | Espressioni mancanti | Esiti mancanti |
+State contains 274 saved files. Exactly one entry
+is present for each of the two new absolute paths. Path vectors and
+bit-vectors have the same length; expression paths begin with a
+number, branch paths with a keyword, and observed bits are 0/1.
+
+| Source | Covered/total expressions | Covered/total branch outcomes | Missing expressions | Missing outcomes |
 |---|---:|---:|---:|---:|
 | cbor-float-narrow.lisp | 175/220 | 26/36 | 45 | 10 |
 | cbor-float-write.lisp | 190/220 | 35/40 | 30 | 5 |
-| Totale | 365/440 | 61/76 | 75 | 15 |
+| Total | 365/440 | 61/76 | 75 | 15 |
 
-I conteggi sono ricavati dai bit raw e coincidono sia con l'indice HTML
-sia con i due riepiloghi HTML dei sorgenti. L'inventario HTML è esattamente
-`cover-index.html`, `23a33ec5ac2b59d1b9d7819bf40c11d1.html` e
+Counts come from raw bits and match both the HTML index
+and the two source HTML summaries. The HTML inventory is exactly
+`cover-index.html`, `23a33ec5ac2b59d1b9d7819bf40c11d1.html`, and
 `8cf55e316599aaec35dd1fc1f1566797.html`.
-Il parser delle righe rispetta la chiusura implicita TR di SB-COVER:
-quando il TR successivo precede un tag di chiusura, chiude la riga
-precedente. Non fonde la riga intestazione con quella successiva.
+The row parser respects SB-COVER's implicit TR closure:
+when the next TR precedes a closing tag, it closes the previous
+row. It does not merge the header row with the next row.
 
-La classificazione associa sintatticamente i path raw alle forme lette,
-invertendo i path SB-COVER e togliendo THEN/ELSE per localizzare il
-predicato. Non dimostra irraggiungibilità o copertura delle condizioni.
+Classification syntactically maps raw paths to read forms,
+reversing SB-COVER paths and removing THEN/ELSE to locate the
+predicate. It does not demonstrate unreachability or condition coverage.
 
-| Categoria espressioni mancanti | Narrow | Write | Totale |
+| Missing-expression category | Narrow | Write | Total |
 |---|---:|---:|---:|
-| Dichiarazioni top-level | 5 | 6 | 11 |
-| Nodi delle forme ERROR interne | 40 | 24 | 64 |
-| Altre espressioni | 0 | 0 | 0 |
+| Top-level declarations | 5 | 6 | 11 |
+| Internal ERROR-form nodes | 40 | 24 | 64 |
+| Other expressions | 0 | 0 | 0 |
 
-I path dichiarazione raw sono `(0) (1) (2) (4) (6)` in narrow e
-`(0) (1) (2) (4) (6) (8)` in write. Ciascuna delle sedici forme ERROR
-interne sotto contribuisce quattro nodi espressione mancanti; nessuna
-forma viene sottratta dal denominatore.
+Raw declaration paths are `(0) (1) (2) (4) (6)` in narrow and
+`(0) (1) (2) (4) (6) (8)` in write. Each of the sixteen internal ERROR
+forms below contributes four missing expression nodes; no
+form is subtracted from the denominator.
 
-| File | Motivo della forma ERROR | Riga ERROR | Esiti mancanti associati direttamente |
+| File | ERROR-form reason | ERROR line | Directly associated missing outcomes |
 |---|---|---:|---:|
 | narrow | :cbor-float32-narrow-input | 15 | 1 |
-| narrow | :cbor-float32-narrow-exponent | 24 | 0, più fallback descritto sotto |
+| narrow | :cbor-float32-narrow-exponent | 24 | 0, plus fallback described below |
 | narrow | :cbor-float32-narrow-sign | 30 | 1 |
 | narrow | :cbor-float64-narrow-significand | 42 | 1 |
 | narrow | :cbor-float64-narrow-alignment | 44 | 1 |
 | narrow | :cbor-float64-narrow-high | 50 | 1 |
 | narrow | :cbor-float64-narrow-low | 54 | 1 |
 | narrow | :cbor-float64-narrow-input | 64 | 1 |
-| narrow | :cbor-float64-narrow-exponent | 75 | 0, più fallback descritto sotto |
+| narrow | :cbor-float64-narrow-exponent | 75 | 0, plus fallback described below |
 | narrow | :cbor-float64-narrow-sign | 80 | 1 |
 | write | :cbor-float-write-span | 21 | 1 |
 | write | :cbor-float-write-ai | 39 | 0 |
@@ -92,76 +98,82 @@ forma viene sottratta dal denominatore.
 | write | :cbor-float-write-target-span | 82 | 1 |
 | write | :cbor-float-write-progress | 89 | 1 |
 
-La ricerca legacy per sola sottostringa del REASON colloca erroneamente
-`:cbor-float64-narrow-sign` sulla prima occorrenza di `...-significand`.
-Il path esatto `(7 5 3 2)` delle forme forward e il sorgente letto
-identificano invece la riga 80. Conteggi e associazione alla forma ERROR
-non cambiano; la riga è stata corretta leggendo il sito esatto.
+Legacy search by REASON substring alone incorrectly places
+`:cbor-float64-narrow-sign` at the first occurrence of `...-significand`.
+The exact path `(7 5 3 2)` in forward forms and the read source
+instead identify line 80. Counts and association with the ERROR form
+do not change; the line was corrected by reading the exact site.
 
-Per i rami, l'associazione diretta dà otto guardie interne narrow e
-cinque write. I due restanti path raw narrow sono:
+For branches, direct mapping gives eight internal narrow guards and
+five write guards. The two remaining narrow raw paths are:
 
-- `(:ELSE 0 4 1 3 1 5 3)` → `(3 5 1 3 1 4 0)`, falso del predicato
-  finale `(<= 103 exponent 112)` alla riga 22, seguito dal fallback
-  `:cbor-float32-narrow-exponent` alla riga 24.
-- `(:ELSE 0 4 1 3 1 5 7)` → `(7 5 1 3 1 4 0)`, falso del predicato
-  finale `(<= 874 exponent 896)` alla riga 72, seguito dal fallback
-  `:cbor-float64-narrow-exponent` alla riga 75.
+- `(:ELSE 0 4 1 3 1 5 3)` → `(3 5 1 3 1 4 0)`, false outcome of the final
+  predicate `(<= 103 exponent 112)` at line 22, followed by fallback
+  `:cbor-float32-narrow-exponent` at line 24.
+- `(:ELSE 0 4 1 3 1 5 7)` → `(7 5 1 3 1 4 0)`, false outcome of the final
+  predicate `(<= 874 exponent 896)` at line 72, followed by fallback
+  `:cbor-float64-narrow-exponent` at line 75.
 
-Questi due esiti risultano `:other` per il matcher del prefisso del
-genitore ERROR: il predicato precedente non è figlio del ramo `t`.
-Il sito è identificato esplicitamente, senza reinterpretare i due
-esiti come coperti o eliminarli. In totale restano tredici esiti di
-guardia direttamente associati e due fallback numerici, quindici mancanti.
-Nessun claim MC/DC, gate C1 o dimostrazione di irraggiungibilità.
+These two outcomes are `:other` for the ERROR-parent prefix
+matcher: the preceding predicate is not a child of the `t` branch.
+The site is explicitly identified, without reinterpreting the two
+outcomes as covered or removing them. In total, thirteen directly associated guard
+outcomes and two numeric fallbacks remain, fifteen missing.
+No MC/DC claim, C1 gate, or unreachability demonstration.
 
-## Log della campagna di coverage
+<a id="log-della-campagna-di-coverage"></a>
 
-Il registro 32850 conserva stdout completo con 18 test riusciti, incluso:
-65.536 half e 131.072 espansioni, 196.608 successi e altrettanti rifiuti
-di capacità; fuzz 2.048 casi con 768 successi, 256 capacità, 128 AI,
-128 HIGH, 128 LOW, 256 parole e 384 range/destinazioni; due ondate
-di 16.384 item ciascuna su due worker riusati. Sink osservati per ondata
-2.115.584/2.148.352; overlap 2.733/2.719 tick con 1.000.000 tick/s.
-Questi intervalli non provano scaling o esecuzione simultanea sui core.
+## Coverage-campaign log
 
-## Risultato dell'audit benchmark
+Register 32850 preserves complete stdout with 18 successful tests, including:
+65,536 half values and 131,072 expansions, 196,608 successes and as many capacity
+rejections; fuzz 2,048 cases with 768 successes, 256 capacity, 128 AI,
+128 HIGH, 128 LOW, 256 words, and 384 ranges/destinations; two waves
+of 16,384 items each on two reused workers. Observed sinks per wave
+2,115,584/2,148,352; overlap 2,733/2,719 ticks with 1,000,000 ticks/s.
+These intervals do not prove scaling or simultaneous execution on cores.
 
-Il rapporto dati dell'auditor riporta OK e 55.824 controlli, sei fixture,
-trenta campioni con heap osservato zero e arità fredda uno. L'osservazione
-before/after del benchmark originale è uguale e coincide con byte/hash
-del file osservato in questa lettura: 198.507 byte, SHA256 `1154975a…`.
-Non è una firma o attestazione dell'esecuzione dichiarata.
+<a id="risultato-dellaudit-benchmark"></a>
 
-È stato letto anche il benchmark originale: sei fixture nell'ordine
-congelato, cinque repliche ciascuna, 4.096 chiamate e warmup 128,
-byte attesi e cold-values conformi ai vettori preregistrati.
+## Benchmark-audit result
+
+The auditor's data report states OK and 55,824 checks, six fixtures,
+thirty samples with zero observed heap allocation and cold arity one. The original
+benchmark's before/after observation is equal and matches bytes/hash
+of the file observed in this reading: 198,507 bytes, SHA256 `1154975a…`.
+It is not a signature or attestation of the declared execution.
+
+The original benchmark was also read: six fixtures in frozen
+order, five replicates each, 4,096 calls and warmup 128,
+expected bytes and cold-values consistent with preregistered vectors.
 
 | Fixture | NEXT | Token |
 |---|---:|---:|
-| half-identity | 5 | 6.445 |
-| double-to-half | 5 | 6.445 |
-| double-to-single | 7 | 8.421 |
-| double-only | 11 | 11.632 |
-| double-to-half-subnormal | 5 | 6.202 |
-| double-nan-payload | 11 | 12.440 |
+| half-identity | 5 | 6,445 |
+| double-to-half | 5 | 6,445 |
+| double-to-single | 7 | 8,421 |
+| double-only | 11 | 11,632 |
+| double-to-half-subnormal | 5 | 6,202 |
+| double-nan-payload | 11 | 12,440 |
 
-La somma dei secondi dei trenta campioni è 0,033414; il processo
-benchmark ha wall 1,416727 secondi. Il rapporto dell'auditor riporta
-0,000068 secondi per i due controlli, baseline heap zero e controllo
-positivo 16.777.472 byte. Non sono soglie di prestazione, prova assoluta
-di non allocazione, throughput del motore o misura di scaling.
-MD5 interni e Git blob esterni rimangono metadata dichiarati distinti,
-senza un legame autenticato fra loro. La verifica dei grafi dell'auditor
-attraversa cons, non vettori generali con ulteriori cons/cicli.
+The thirty sample times sum to 0.033414 seconds; the benchmark
+process has wall time 1.416727 seconds. The auditor's report states
+0.000068 seconds for the two checks, zero heap-allocation baseline, and positive
+control 16,777,472 bytes. These are not performance thresholds, absolute proof
+of nonallocation, engine throughput, or a scaling measurement.
+Internal MD5 and external Git blobs remain separate declared metadata,
+without an authenticated link between them. The auditor's graph check
+traverses conses, not general vectors with further conses/cycles.
 
-## Osservazioni dei byte prima/dopo
+<a id="osservazioni-dei-byte-primadopo"></a>
 
-Nove file sono stati osservati prima e dopo il confronto HTML/raw:
-nome, dimensione e SHA256 identici. I valori riguardano i byte fisici
-attuali, prima di eventuali successive compressioni lossless.
+## Before/after byte observations
 
-| File | Byte | SHA256 |
+Nine files were observed before and after the HTML/raw comparison:
+identical name, size, and SHA256. Values concern current physical
+bytes, before any later lossless compression.
+
+| File | Bytes | SHA256 |
 |---|---:|---|
 | 32850/report.lisp | 155106 | `183c3eb8273d8ad4f3348df9dfd3d6d09afeab74c7bc097e56119297c2d5ae24` |
 | 32851/report.lisp | 154777 | `a648824ca0f0ec2c3520cfa885dc6a9f6909f723fafc0e6e0b364b7a4d9cce61` |
@@ -173,19 +185,21 @@ attuali, prima di eventuali successive compressioni lossless.
 | cbor-float-narrow.lisp | 4546 | `479754d83cd9f11e53f7c1a4c81986a9be4327e3b1040dde0314ee29c2f87cbb` |
 | cbor-float-write.lisp | 5083 | `28ff27ac1f077477f92d5932ae3c76ab319356c3b4b070aee1cd168cbdce1442` |
 
-Prima/dopo non significa osservazione atomica dell'intero insieme.
-L'archivio chiuso e la relativa verifica restano attività del coordinatore.
+Before/after does not mean an atomic observation of the whole set.
+Sealing the archive and its verification remain coordinator activities.
 
-## Tentativi del lettore analitico
+<a id="tentativi-del-lettore-analitico"></a>
 
-Tre tentativi ad hoc del codice di lettura via stdin sono falliti:
-il primo aveva una parentesi mancante e un GETF usato con un posto
-SETF basato su IF; il secondo usava invertiti gli argomenti del
-predicato UIOP per i suffissi; un successivo controllo benchmark aveva
-una parentesi mancante. Sono stati corretti. La lettura dei path raw,
-il confronto completo HTML/raw con nove osservazioni immutate e
-la lettura del benchmark/audit sono poi terminati con exit 0.
-I messaggi sono osservazioni di questa sessione, non registri completi
-di comandi preservati, né risultati di campagne del prodotto. Le
-campagne qui lette rimangono OK/0/STABLE; nessun dato di input è stato
-riscritto e nessun file tracked è stato modificato per questa lettura.
+## Analytical-reader attempts
+
+Three ad hoc stdin reading-code attempts failed:
+the first had a missing parenthesis and GETF used with an IF-based
+SETF place; the second reversed arguments of the
+UIOP suffix predicate; a later benchmark check had
+a missing parenthesis. They were corrected. Reading raw paths,
+complete HTML/raw comparison with nine unchanged observations, and
+reading benchmark/audit then finished with exit 0.
+Messages are observations from this session, not complete preserved
+command registers or product-campaign results. Campaigns
+read here remain OK/0/STABLE; no input data was
+rewritten and no tracked file was changed for this reading.

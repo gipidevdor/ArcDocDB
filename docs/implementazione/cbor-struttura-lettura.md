@@ -1,68 +1,72 @@
-# Prima lettura della struttura CBOR
+<a id="prima-lettura-della-struttura-cbor"></a>
 
-Il coordinatore ha stabilito il contratto e collegato ASDF, senza scrivere
-il kernel o gli oracoli. La lettura statica riguarda i sei file dello scanner e si conclude sul kernel e sui tre file di test congelati il
-2026-10-09, prima di compilazione e campagne runtime. La seconda lettura è attribuita all’autore degli oracoli nel referto separato. Le letture locali non sono approvazioni umane.
+# First reading of CBOR structure
 
-Il preflight controlla tipi e span prima di accedere all'array privato; l'alias
-EQ viene rifiutato prima di qualsiasi reset. Le configurazioni e il budget
-byte precedono le scritture. Il reset elimina stato residuo e riferimenti
-attivi; la struttura non conserva il buffer e gli array hanno slot read-only.
-Il chiamante possiede entrambi e assegna uno spazio distinto a ogni worker.
+The coordinator established the contract and connected ASDF without writing
+the kernel or oracles. The static reading covers the six scanner files and concludes on the kernel and three test files frozen on
+2026-10-09, before compilation and runtime campaigns. The second reading is attributed to the oracle author in the separate report. Local readings are not human approvals.
 
-Il frame radice conta un figlio. Ogni item non-tag addebita il padre prima di
-aprire un eventuale contenitore; il tag mantiene soltanto pending e non
-consuma arità. Un figlio contenitore mantiene sullo stack il padre finché è
-completo. Una map indefinita cambia parità all'inizio del figlio completo,
-compresi key/value contenitori o taggati. Il break richiede un frame indefinito,
-assenza di tag pendente e parità pari della map. I chunk restano item contati,
-ma non addebitano il contenitore esterno già consumato dalla stringa.
+Preflight checks types and spans before accessing the private array; an EQ
+alias is rejected before any reset. Configurations and byte
+budget precede writes. Reset clears residual state and active
+references; the structure does not retain the buffer and arrays have read-only slots.
+The caller owns both and assigns separate space to each worker.
 
-Il drain collassa solo array/map definiti a zero. Il tetto di 102 iterazioni
-comprende la verifica finale della radice dopo 101 pop; una stringa indefinita
-non si annida in un'altra stringa indefinita. Array/map, anche vuoti, verificano
-il budget prima di essere empilati e contribuiscono al picco. Una catena di tag
-non usa frame e rimane limitata dai budget nodi/byte. Ogni passo consuma almeno
-un byte, payload compreso; il ciclo esterno ha tetto span e drain finale.
+The root frame counts one child. Every non-tag item charges its parent before
+opening any container; a tag retains only pending and does not
+consume arity. A container child keeps its parent on the stack until
+complete. An indefinite map changes parity at the complete child's start,
+including container or tagged keys/values. Break requires an indefinite frame,
+no pending tag, and even map parity. Chunks remain counted items,
+but do not charge the outer container already consumed by the string.
 
-High/low restano u32. Stringhe verificano high zero e low entro bytes rimasti
-prima della somma e del payload. Array confronta il minimo di un byte per
-figlio; map confronta coppie con floor(bytes/2) prima di moltiplicare per due.
-La guardia di profondità precede questi controlli. Il testo delega alla
-primitiva UTF-8 già verificata, mantenendo offset assoluti e controllandone
-il conteggio restituito. Il risultato pubblico esce solo dopo radice completa,
-cursore end, nessun frame/tag residuo e conteggi entro i budget.
+Drain collapses only definite arrays/maps at zero. The bound of 102 iterations
+includes final root verification after 101 pops; an indefinite string
+does not nest inside another indefinite string. Arrays/maps, even empty, check
+the budget before being pushed and contribute to peak. A tag chain
+uses no frames and remains bounded by node/byte budgets. Each step consumes at least
+one byte, including payload; the outer loop is bounded by span with final drain.
 
-Tutti gli helper hanno FTYPE, contratti e condizioni tipizzate; safety 3.
-Gli errori interni e i default impossibili sono espliciti e restano nel
-denominatore della copertura. Il sorgente non ha costruttori sul successo,
-ricorsione, I/O, attese o stato mutabile globale. La factory fredda alloca due
-array e la struttura: la campagna di heap riguarda le chiamate riuscite con
-scratch e input preallocati, non gli errori o la factory.
+High/low remain u32. Strings check high zero and low within remaining bytes
+before addition and payload. Arrays compare the minimum of one byte per
+child; maps compare pairs against floor(bytes/2) before multiplying by two.
+The depth guard precedes these checks. Text delegates to the
+already verified UTF-8 primitive, retaining absolute offsets and checking
+its returned count. The public result exits only after complete root,
+cursor end, no residual frames/tags, and counts within budgets.
 
-Il test concorrente usa due buffer/spazi distinti, confronta esattamente tre
-valori e verifica le copie integrali. Barriere e join hanno timeout e cleanup
-che controlla la cessazione; l'overlap è osservato fuori dalla barriera.
-È una verifica di isolamento del calcolo, non dello scaling del pool.
+All helpers have FTYPEs, contracts, and typed conditions; safety 3.
+Internal errors and impossible defaults are explicit and remain in the
+coverage denominator. The source has no constructors on success,
+recursion, I/O, waits, or global mutable state. The cold factory allocates two
+arrays and the structure: the heap campaign concerns successful calls with
+preallocated scratch and input, not errors or the factory.
 
-Nessun difetto funzionale aperto rilevato nella lettura statica. Build,
-copertura, mutazioni e misure sono pendenti a questa lettura; il blocco non
-attesta semantica dei tag, chiavi duplicate, rappresentazione deterministica,
-writer admission, fail-stop del runtime o gate di rilascio del motore.
+The concurrent test uses two distinct buffers/spaces, compares exactly three
+values, and verifies full copies. Barriers and joins have timeouts and cleanup
+checking termination; overlap is observed outside the barrier.
+This verifies computation isolation, not pool scaling.
 
-## Riscontro dei dodici punti C1
+No open functional defect detected in static reading. Build,
+coverage, mutations, and measurements are pending at this reading; the block does not
+establish tag semantics, duplicate keys, deterministic representation,
+writer admission, runtime fail-stop, or engine release gates.
 
-| Punto | Riscontro |
+<a id="riscontro-dei-dodici-punti-c1"></a>
+
+## Findings against the twelve C1 points
+
+| Point | Finding |
 |---|---|
-| 1. Requisiti | REQ-LIM-001/002 e AFF-004/008; ADR-0014/0048 limitati al contratto dello scanner. |
-| 2. Invarianti | Progresso, arità, parità, frame/depth, ownership e oracoli indipendenti; campagne pendenti. |
-| 3. Errori | Condizioni tipizzate, reason/offset e precedenze esplicite; il proprietario runtime resta futuro. |
-| 4. Limiti | Span passi, 102 pop, 16MiB/16Mi nodi/100 livelli; nessuna ricorsione o attesa. |
-| 5. Heap | Nessun costruttore sul successo; factory fredda separata, sensore positivo e misure pendenti. |
-| 6. Uscita | Tre valori dopo radice esatta e postcondizioni; nessun AST o interpretazione implicita. |
-| 7. Decisioni | Inventario separato, guardie interne mantenute; copertura grezza, nessuna qualifica MC/DC. |
-| 8. Dati | Buffer immutabile, scratch esclusivo senza buffer trattenuto; alias kinds rifiutato. |
-| 9. Integrazione | ASDF dopo header/UTF8; suite separata e scope cbor-structure esatto. |
-| 10. Codifica | FTYPE, safety3, contratti, helper brevi e default di invariante; controlli runtime pendenti. |
-| 11. Parallelismo | Due worker con spazi privati; attese limitate, tutti3 valori e input controllati. |
-| 12. Durabilità | Nessuna scrittura durevole o I/O in questo modulo. |
+| 1. Requirements | REQ-LIM-001/002 and AFF-004/008; ADR-0014/0048 limited to scanner contract. |
+| 2. Invariants | Progress, arity, parity, frame/depth, ownership, and independent oracles; campaigns pending. |
+| 3. Errors | Typed conditions, explicit reason/offset and precedence; runtime owner remains future work. |
+| 4. Bounds | Span steps, 102 pops, 16MiB/16Mi nodes/100 levels; no recursion or waits. |
+| 5. Heap | No constructor on success; separate cold factory, positive sensor and measurements pending. |
+| 6. Output | Three values after exact root and postconditions; no AST or implicit interpretation. |
+| 7. Decisions | Separate inventory, internal guards retained; raw coverage, no MC/DC qualification. |
+| 8. Data | Immutable buffer, exclusive scratch without retained buffer; kinds alias rejected. |
+| 9. Integration | ASDF after header/UTF8; separate suite and exact cbor-structure scope. |
+| 10. Coding | FTYPE, safety3, contracts, short helpers, and invariant defaults; runtime checks pending. |
+| 11. Parallelism | Two workers with private spaces; bounded waits, all3 values and inputs checked. |
+| 12. Durability | No durable write or I/O in this module. |

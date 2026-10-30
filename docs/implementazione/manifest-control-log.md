@@ -1,148 +1,158 @@
-# Manifest ricostruito dal control log
+<a id="manifest-ricostruito-dal-control-log"></a>
 
-Il modulo `arcdocdb.recovery.manifest` ripiega in memoria gli EDIT del
-prefisso verificato di `control.log`, secondo
-[ADR-0040](../adr/0040-manifest-a-record-unico.md). Prepara la fonte di
-verità per l'inventario di una Serie: ACTIVE, CLOSED con lunghezza valida
-ed esiti di chiusura, segmenti rimossi e limite degli identificativi.
+# Manifest rebuilt from the control log
 
-## Contratto
+Module `arcdocdb.recovery.manifest` folds EDITs from the
+verified `control.log` prefix in memory under
+[ADR-0040](../adr/0040-manifest-a-record-unico.md). It prepares the source of
+truth for a Serie's inventory: ACTIVE, CLOSED with valid lengths
+and closure outcomes, removed segments, and identifier limit.
 
-`ricostruisci-manifest` riceve buffer stabile, intervallo dei record,
-versione esplicita, `file-offset` e `file-size` autorevole. Identità della
-Serie e intestazione sono verificate dal chiamante. L'intervallo termina
-all'EOF fisico, secondo il contratto della [scansione](scansione-log.md).
-Restituisce manifest posseduto, fine del prefisso nel buffer e stato
-`:complete` oppure `:tail`.
+<a id="contratto"></a>
 
-Prima verifica l'intero log e cerca un eventuale testimone durevole oltre
-la coda. Poi verifica payload e budget degli EDIT nel prefisso e li
-applica in ordine fisico. Un errore non restituisce uno stato parziale.
-Un errore semantico dentro il prefisso con cornici e SEAL verificati non
-diventa una coda. Una cornice troppo corta resta soggetta alla
-classificazione dello scanner.
+## Contract
 
-Il primo EDIT deve essere completo, con ACTIVE nonzero e `next-id`
-nonzero superiore a tutti gli ID nominati. Un log vuoto o un primo lotto
-incompleto non fornisce un manifest utilizzabile. Gli EDIT successivi
-sono differenziali; `open = 0` conserva l'ACTIVE.
+`ricostruisci-manifest` receives a stable buffer, record range,
+explicit version, `file-offset`, and authoritative `file-size`. Serie identity
+and header are checked by caller. The range ends
+at physical EOF under the [scanner](scansione-log.md) contract.
+Returns owned manifest, prefix end in buffer, and state
+`:complete` or `:tail`.
 
-| Query | Risultato |
+First it checks the whole log and searches for any durable witness beyond
+the tail. Then it checks EDIT payloads and budgets in the prefix and
+applies them in physical order. An error returns no partial state.
+A semantic error inside a prefix with verified frames and SEALs does not
+become a tail. An undersized frame remains subject to
+scanner classification.
+
+First EDIT must be complete with nonzero ACTIVE and `next-id`
+nonzero and above every named ID. An empty log or incomplete first batch
+supplies no usable manifest. Subsequent EDITs
+are differential; `open = 0` retains ACTIVE.
+
+| Query | Result |
 |---|---|
-| `segmento-attivo(manifest)` | ID u64 dell'ACTIVE |
-| `prossimo-id-segmento(manifest)` | presenza esplicita e ID u64; `nil, 0` se lo spazio è esaurito |
-| `numero-segmenti-chiusi(manifest)` | numero di CLOSED distinti |
-| `numero-segmenti-rimossi(manifest)` | numero di rimossi distinti |
-| `trova-segmento(manifest, id)` | `:active`, `:closed`, `:removed` o `:unknown`; lunghezza valida e numero di esiti, entrambi zero fuori da CLOSED |
-| `trova-esito-chiusura(manifest, id, txid)` | presenza esplicita e CSN, incluso zero; `nil, 0` dopo la rimozione del segmento |
+| `segmento-attivo(manifest)` | ACTIVE u64 ID |
+| `prossimo-id-segmento(manifest)` | explicit presence and u64 ID; `nil, 0` if space exhausted |
+| `numero-segmenti-chiusi(manifest)` | distinct CLOSED count |
+| `numero-segmenti-rimossi(manifest)` | distinct removed count |
+| `trova-segmento(manifest, id)` | `:active`, `:closed`, `:removed` or `:unknown`; valid length and outcome count, both zero outside CLOSED |
+| `trova-esito-chiusura(manifest, id, txid)` | explicit presence and CSN, including zero; `nil, 0` after segment removal |
 
-Le query restituiscono soltanto scalari. Il risultato possiede i dati e
-non conserva span nel buffer; il chiamante può riusarlo dopo il ritorno.
-ACTIVE, CLOSED e rimossi sono disgiunti. Un ID sconosciuto resta diverso
-da un ID esplicitamente rimosso: l'assenza non è una prova di eliminazione.
+Queries return scalars only. Result owns its data and
+retains no buffer spans; caller may reuse the buffer after return.
+ACTIVE, CLOSED, and removed are disjoint. Unknown ID stays distinct
+from explicitly removed ID: absence is not proof of deletion.
 
-Argomenti fuori dai tipi dichiarati segnalano `TYPE-ERROR` con `safety 3`.
-Configurazioni, corruzione, risorse esaurite e incoerenze interne usano
-le condizioni tipizzate del modulo, con l'offset descritto dal contratto.
+Arguments outside declared types report `TYPE-ERROR` with `safety 3`.
+Configuration, corruption, exhausted resources, and internal inconsistencies use
+module typed conditions with contract-described offsets.
 
-## Applicabilità e duplicati
+<a id="applicabilità-e-duplicati"></a>
 
-> **Proposta — contratto applicativo locale.** I controlli seguenti rendono
-> esplicita l'interpretazione conservativa del ripiegamento; i codec
-> esistenti verificano la struttura, senza decidere queste transizioni.
+## Applicability and duplicates
 
-Le sezioni `open`, `closed` e `removed` di un EDIT sono disgiunte. Una
-rotazione chiude il vecchio ACTIVE e apre quello nuovo nello stesso
-EDIT. Chiudere l'ACTIVE senza sostituirlo, oppure sostituirlo senza
-chiuderlo, è un errore. Un nuovo CLOSED può essere un output di
-compaction precedentemente sconosciuto. Un CLOSED o un rimosso non può
-diventare nuovamente ACTIVE.
+> **Proposal — local application contract.** Following checks make
+> the conservative fold interpretation explicit; existing codecs
+> verify structure without deciding these transitions.
 
-Ripetizioni identiche sono idempotenti: CLOSED con stessa lunghezza e
-stesso insieme TXID/CSN; esito ripetuto con stesso CSN; rimozione già
-registrata; `open` che ripete l'ACTIVE corrente. Lunghezze o esiti
-discordanti sono corruzione. Rimuovere un ACTIVE o un ID sconosciuto è
-un errore. I duplicati consumano comunque i budget fisici.
+An EDIT's `open`, `closed`, and `removed` sections are disjoint. A
+rotation closes old ACTIVE and opens new ACTIVE in the same
+EDIT. Closing ACTIVE without replacing it, or replacing it without
+closing it, is an error. A new CLOSED may be previously unknown
+compaction output. A CLOSED or removed segment cannot
+become ACTIVE again.
 
-Gli EDIT nello stesso lotto possono condividere lo stamp. L'ordine di
-pubblicazione degli ID non deve essere crescente: un worker può
-prenotare l'ID di compaction e pubblicarne l'EDIT dopo una rotazione.
-Il limite è il massimo fra `next-id` del completo iniziale e uno più il
-massimo ID osservato; non diminuisce con le rimozioni. L'introduzione di
-u64 massimo esaurisce lo spazio, rappresentato soltanto in memoria dalla
-query senza prossimo ID. Il formato persistente non cambia.
+Identical repeats are idempotent: CLOSED with same length and
+same TXID/CSN set; repeated outcome with same CSN; already recorded
+removal; `open` repeating current ACTIVE. Mismatching lengths or outcomes
+are corruption. Removing ACTIVE or unknown ID is
+an error. Duplicates still consume physical budgets.
 
-Il manifest rileva il riuso degli ID ancora presenti fra CLOSED e
-rimossi. Non può distinguere una prenotazione legittima da un riuso
-storico di un ID ormai assente dal checkpoint: quella garanzia resta
-responsabilità dell'allocatore del writer. Il limite numerico da solo
-non dimostra il riuso.
+EDITs in the same batch may share a stamp. ID publication
+order need not increase: a worker may reserve a
+compaction ID and publish its EDIT after a rotation.
+Limit is the maximum of initial complete `next-id` and one plus the
+maximum observed ID; removals do not decrease it. Introducing
+maximum u64 exhausts space, represented only in memory by the
+query returning no next ID. Persistent format does not change.
 
-## Budget e parallelismo
+Manifest detects reuse of IDs still present in CLOSED or
+removed. It cannot distinguish a legitimate reservation from historical
+reuse of an ID now absent from checkpoint: that guarantee remains
+the writer allocator's responsibility. Numeric limit alone
+does not demonstrate reuse.
 
-> **Proposta — budget configurabili.** 65.536 EDIT, 65.536 menzioni di
-> segmenti e 65.536 esiti cumulativi; 65.536 CLOSED, rimossi ed esiti per
-> EDIT; 16 MiB per payload. I budget della scansione restano separati.
+<a id="budget-e-parallelismo"></a>
 
-Le menzioni comprendono ogni CLOSED, ogni rimosso e ogni `open` nonzero,
-prima della coalescenza. I controlli precedono la costruzione del
-risultato. Questo percorso di apertura può allocare; non promette zero
-heap. I cicli sono limitati da byte e conteggi verificati.
+## Budgets and parallelism
 
-Ogni chiamata possiede il proprio workspace. Le Serie possono costruire
-manifest indipendenti in parallelo, senza lock o scritture condivise;
-le query su un manifest pubblicato sono in sola lettura. Il modulo non
-crea thread e non introduce uno scheduler del motore. Le campagne di
-mutazione usano processi e cache separati; le misure di prestazione, se
-richieste, restano seriali.
+> **Proposal — configurable budgets.** 65,536 EDITs, 65,536 segment
+> mentions and 65,536 cumulative outcomes; 65,536 CLOSED, removed and outcomes per
+> EDIT; 16 MiB per payload. Scanner budgets remain separate.
 
-## Verifica e limiti
+Mentions include every CLOSED, every removed segment, and every nonzero `open`
+before coalescing. Checks precede result
+construction. This opening path may allocate; it promises no zero
+heap. Loops are bounded by verified bytes and counts.
 
-Il [metodo](manifest-control-log-metodo.md) distingue fixture indipendenti,
-oracle logico, prove reali parallele, mutazioni e copertura grezza. La
-[tabella delle decisioni](manifest-control-log-decisioni.md) registra i
-predicati composti e le guardie interne.
+Every call owns its workspace. Serie may construct
+independent manifests in parallel without locks or shared writes;
+queries on a published manifest are read-only. Module
+creates no threads or engine scheduler. Mutation
+campaigns use separate processes and caches; performance measurements, if
+requested, remain serial.
 
-La campagna del 2026-10-09 conserva i risultati nel
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-manifest/catalogo.lisp): 20 test
-dedicati, 64 test recovery nella fotografia iniziale, quattro thread con 32 ricostruzioni private e
-un manifest comune; otto mutanti manifest rilevati e sette mutanti
-DECISION rilevati per verificare la compatibilità del tool. La copertura
-grezza dei sei file manifest è 888/1067 forme e 114/146 rami; nessuna
-esclusione è approvata. Le query hanno 8/8 rami osservati. I dati HTML e
-lo stato originale `sb-cover` restano conservati insieme ai fallimenti
-preliminari e ai record dei comandi.
+<a id="verifica-e-limiti"></a>
 
-L'allineamento iniziale alle code writer e al selettore radix mantiene questi dati
-storici e aggiunge una verifica integrata distinta nel catalogo. Il copier
-delle campagne isolate include anche i componenti e i test `execution`;
-ogni mutante continua a partire dalla baseline verificata. La campagna
-DECISION della fotografia iniziale selezionava 25 test; dopo l'allineamento
-il runner seleziona anche i 18 test radix, per 43 test dedicati. La suite
-di quella fotografia comprende 82 test recovery e 17 test delle code writer.
+## Verification and limits
 
-Il successivo allineamento a UTF-8 e alla consegna dei tratti del writer
-include anche i sorgenti e i test `codec` nelle copie isolate. La suite
-comprende 82 test recovery, 34 test execution e 17 test UTF-8; il manifest
-mantiene i suoi 20 test dedicati. I record di questa integrazione sono
-distinti da quelli delle fotografie precedenti nel
-[catalogo d'integrazione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-manifest-integration/catalogo.lisp).
+The [method](manifest-control-log-metodo.md) distinguishes independent fixtures,
+logical oracle, real parallel tests, mutations, and raw coverage. The
+[decision table](manifest-control-log-decisioni.md) records
+compound predicates and internal guards.
 
-I runner radix, UTF-8 e handoff conservano exit code e segnale del processo: un'interruzione
-OS o un exit nonzero dopo il completamento dei test è un errore del worker,
-distinto da un mutante rilevato. Il self-test usa un processo figlio che
-stampa il marker di avvio e termina sé stesso con SIGKILL; runner, log e
-report originali sono conservati nel catalogo. Questa prova riguarda lo
-strumento, non un guasto del prodotto.
+The 2026-10-09 campaign preserves results in the
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-manifest/catalogo.lisp): 20 dedicated
+tests, 64 recovery tests in the initial snapshot, four threads with 32 private reconstructions and
+a common manifest; eight manifest mutants detected and seven DECISION
+mutants detected to check tool compatibility. Raw coverage
+across six manifest files is 888/1067 forms and 114/146 branches; no
+exclusion approved. Queries have 8/8 observed branches. HTML data and
+original `sb-cover` state remain preserved with preliminary
+failures and command records.
 
-Questo modulo non riconcilia file o directory, non rinomina o elimina,
-non legge i segmenti, non risolve i prepared e non scrive un nuovo control
-log. La ricostruzione in memoria non chiude il gate del recovery completo.
+Initial alignment with writer queues and radix selector preserves this historical
+data and adds a distinct integrated check in the catalog. The isolated-campaign
+copier also includes `execution` components and tests;
+every mutant still starts from verified baseline. The initial-snapshot
+DECISION campaign selected 25 tests; after alignment,
+runner also selects 18 radix tests, for 43 dedicated tests. That snapshot's
+suite includes 82 recovery tests and 17 writer-queue tests.
 
-Il [preparatore del checkpoint](checkpoint-control.md) riusa questo decoder
-per verificare uno stato completo in memoria prima di scrivere il nuovo
-`control.log.tmp`. Rinomina, inventario autorevole e adozione restano al controller.
+Subsequent alignment with UTF-8 and writer-slice handoff
+also includes `codec` sources and tests in isolated copies. Suite
+includes 82 recovery tests, 34 execution tests, and 17 UTF-8 tests; manifest
+retains its 20 dedicated tests. This integration's records are
+distinct from earlier snapshots in the
+[integration catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-manifest-integration/catalogo.lisp).
 
-Requisiti: REQ-WAL-001/005, REQ-REC-001/002/004, REQ-FOR-003,
+Radix, UTF-8, and handoff runners retain process exit code and signal: an OS interruption
+or nonzero exit after test completion is worker error,
+distinct from a detected mutant. Self-test uses a child process that
+prints the start marker and terminates itself with SIGKILL; original
+runner, logs, and reports are preserved in catalog. This test concerns
+the tool, not a product failure.
+
+This module neither reconciles files/directories, renames or deletes,
+reads segments, resolves prepared records, nor writes a new control
+log. In-memory reconstruction does not close the full recovery gate.
+
+The [checkpoint preparer](checkpoint-control.md) reuses this decoder
+to verify a complete in-memory state before writing new
+`control.log.tmp`. Rename, authoritative inventory, and adoption remain with controller.
+
+Requirements: REQ-WAL-001/005, REQ-REC-001/002/004, REQ-FOR-003,
 REQ-AFF-008/009/017/018/019, REQ-VAL-001.
-Invarianti: INV-S2/S4/S5/S7, INV-F1/F2/F3, INV-A7/A8/A9/A10/A11, INV-P6/X3.
+Invariants: INV-S2/S4/S5/S7, INV-F1/F2/F3, INV-A7/A8/A9/A10/A11, INV-P6/X3.

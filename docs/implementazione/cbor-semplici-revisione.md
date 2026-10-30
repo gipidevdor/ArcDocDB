@@ -1,89 +1,99 @@
-# Prima lettura C1 della scrittura dei valori semplici CBOR
+<a id="prima-lettura-c1-della-scrittura-dei-valori-semplici-cbor"></a>
 
-Lettura statica del 2026-10-11, **prima della compilazione e delle campagne**.
-Il revisore non ha scritto il prodotto né le prove e non ha letto il nuovo
-corpus cieco. Ha avviato prima del prodotto la preparazione dell'auditor
-C4 dei dati del benchmark, dal contratto e dal driver congelati; il freeze
-dell'auditor segue quello del prodotto. Non ha eseguito l'auditor.
-Questa è la prima lettura C1; non sostituisce la seconda lettura o le prove.
+# First C1 reading of CBOR simple-value writing
 
-Base Git: `d155db3f977677fa95280f59c23fbe46a5e116d2`.
-Sorgente letto: `src/codec/cbor-simple-write.lisp`, blob
+Static reading dated 2026-10-11, **before compilation and campaigns**.
+The reviewer wrote neither product nor tests and did not read the new
+blind corpus. Before the product, they began preparing the C4 benchmark-data
+auditor from the frozen contract and driver; auditor freeze
+follows product freeze. They did not run the auditor.
+This is the first C1 reading; it does not replace the second reading or tests.
+
+Git base: `d155db3f977677fa95280f59c23fbe46a5e116d2`.
+Source read: `src/codec/cbor-simple-write.lisp`, blob
 `58c7a3a040ec814fae2dfe636f569b5623cba8f0`.
-[Metodo preregistrato](cbor-semplici-metodo.md), blob
+[Preregistered method](cbor-semplici-metodo.md), blob
 `e8864f7c0124f86cebdcdbcb2449800e078e1cc8`.
 Export `0a75ef778c3d5ea490ec0a61f11bf6c65a3183ee`,
 ASDF `2a4f3cf6dd800e5e9c3d624c23971bec352d7988`,
-catalogo requisiti `19223d1767a6b7eebb9636d99cea7d898560cbd2`.
+requirements catalog `19223d1767a6b7eebb9636d99cea7d898560cbd2`.
 
-## Esito statico
+<a id="esito-statico"></a>
 
-Nessun difetto funzionale o correzione obbligatoria individuato sul blob
-letto. Il prodotto rispetta il contratto raw MT7: 0..23 usa E0+VALUE e
-32..255 usa F8 seguito da VALUE. Il LOGIOR alla riga 47 coincide con la
-somma nel dominio diretto, perché i bit del codice non intersecano E0.
-Il TYPEP alla riga 17 rifiuta i codici riservati 24..31 e ogni valore
-fuori dominio, compresi T/NIL, senza introdurre conversioni applicative.
-Undefined resta il codice wire 23; nessuna semantica viene assegnata ai
-codici non assegnati.
+## Static outcome
 
-Il helper verifica tipo e range prima di LENGTH e della sottrazione;
-verifica il codice prima del THE U8 nel percorso pubblico. La capacità
-viene controllata alla riga 41 prima di calcolare NEXT e CURSOR e prima
-di ogni AREF in scrittura. Da SIZE<=END-START segue START+SIZE<=END,
-quindi NEXT e CURSOR restano index. Lo span valido vuoto segnala capacità
-insufficiente soltanto dopo la verifica del codice.
+No functional defect or mandatory correction identified in the
+read blob. The product follows the raw MT7 contract: 0..23 uses E0+VALUE and
+32..255 uses F8 followed by VALUE. LOGIOR at line 47 equals
+addition in the direct domain because code bits do not intersect E0.
+TYPEP at line 17 rejects reserved codes 24..31 and every out-of-domain
+value, including T/NIL, without introducing application conversions.
+Undefined remains wire code 23; no semantics are assigned to
+unassigned codes.
 
-Le guardie di span, footprint e avanzamento restano attive. Le ultime due
-asserzioni pubbliche verificano NEXT crescente/entro END e CURSOR=NEXT.
-Il primo write è alla riga 47; il secondo, soltanto per SIZE2, alla 49.
-Tutti gli errori pubblici precedono entrambi. La guardia finale può fallire
-dopo una mutazione interna: il contratto conserva fail-stop senza rollback.
+The helper checks type and range before LENGTH and subtraction;
+checks code before THE U8 in the public path. Capacity
+is checked at line 41 before calculating NEXT and CURSOR and before
+every writing AREF. SIZE<=END-START implies START+SIZE<=END,
+so NEXT and CURSOR remain index. Valid empty span signals insufficient
+capacity only after code verification.
 
-## Dimensione e complessità
+Span, footprint, and progress guards remain active. The last two
+public assertions verify NEXT increasing/within END and CURSOR=NEXT.
+First write is at line 47; second, only for SIZE2, at 49.
+All public errors precede both. The final guard may fail
+after internal mutation: the contract retains fail-stop without rollback.
 
-Conteggio sintattico conservativo: un percorso iniziale, uno per controllo
-IF/WHEN/UNLESS e uno per ciascuna condizione AND aggiuntiva. Non comprende
-l'espansione di TYPEP, della sua unione di tipi o dei confronti primitivi.
-Le righe includono DEFUN e docstring.
+<a id="dimensione-e-complessità"></a>
 
-| Funzione | Righe | Percorsi |
+## Size and complexity
+
+Conservative syntactic count: one initial path, one per IF/WHEN/UNLESS
+check, and one per additional AND condition. It excludes
+TYPEP expansion, its type union, and primitive comparisons.
+Lines include DEFUN and docstrings.
+
+| Function | Lines | Paths |
 |---|---:|---:|
 | `check-input-simple-cbor-write` (10–23) | 14 | 7 |
 | `scrivi-semplice-cbor-minimo` (28–53) | 26 | 8 |
 
-Entrambe rispettano COD-12 e COD-13. Nessun ciclo o ricorsione: un item
-completo occupa uno o due byte e ogni chiamata modifica al massimo due
-posizioni. L'inventario delle decisioni composte è curato separatamente
-dall'autore; questa conta non attesta copertura o MC/DC.
+Both meet COD-12 and COD-13. No loop or recursion: a complete item
+occupies one or two bytes and each call modifies at most two
+positions. The compound-decision inventory is maintained separately
+by the author; this count attests neither coverage nor MC/DC.
 
-## Checklist C1
+<a id="checklist-c1"></a>
 
-| Voce | Prima lettura |
+## C1 checklist
+
+| Item | First reading |
 |---|---|
-| 1. Requisiti e ADR | REQ-CBR-003 e AFF-004/008 sono indicati; il dominio locale è coerente con RFC 8949 §3.3 e ADR-0014. ADR-0048 mantiene budget e profilo documentale superiori. |
-| 2. Invarianti | INV-F1/P6 nel requisito; destinazione esclusiva, capacità half-open, codice ben formato, byte esterni invariati e bound2 nel prodotto. Prove falsificanti pendenti. |
-| 3. Errori | Range → codice → capacità, come preregistrato. INVALID-ARGUMENT e RESOURCE-EXHAUSTED con offset NIL derivato dalla condizione base e senza mutazione. INVARIANT-VIOLATION interno propagato al proprietario, senza rollback. |
-| 4. Limiti | Nessun ciclo, ricorsione, attesa o thread creato; bound fisso di due byte. END è il limite effettivo; il suffisso fisico non aumenta la capacità. |
-| 5. Heap | Sul successo non compaiono costruttori, closure, AST, float o u64. Cursori index e codice u8; aritmetica limitata prima dell'uso. Nessuna allocazione prevista dal sorgente; heap zero richiede misura locale con sensori e non è attestato. |
-| 6. Dati verificati | Tutti gli ingressi freddi sono verificati prima dei THE e degli accessi. Il modulo restituisce un solo NEXT con VALUES e scrive il codice raw; non promette validazione semantica del documento. |
-| 7. Decisioni composte | AND del range e del footprint presenti; range concatenato e unione TYPEP distinti dalle decisioni AND/OR esplicite. Inventario, casi indipendenti e copertura restano da verificare separatamente. |
-| 8. Proprietario | OWNER/SHARED espliciti: destinazione del chiamante in esclusiva fino al ritorno, soli scalari locali. Il modulo non verifica l'esclusività né condivide stato per operazione. |
-| 9. Integrazione | Export alla riga 11 del package; componente ASDF seriale dopo le dipendenze; nuova suite registrata senza rimuovere le precedenti. Requisito nel catalogo; matrice, compilazione e MAKE CHECK pendenti. |
-| 10. Regole | FTYPE completi, safety3, docstring pre/post/errori, REQ per definizione, guardie senza effetti collaterali. Nessun gestore generico, costrutto vietato o deviazione statica individuato. Compilazione/lint non eseguiti. |
-| 11. Parallelismo | Nessun lock, attesa, I/O o scrittura condivisa tra Serie introdotto. Worker distinti possono usare destinazioni private e piani immutabili; concorrenza reale e scaling non sono dimostrati dalla lettura. |
-| 12. Durabilità | Nessuna pubblicazione, persistenza o eliminazione. Le due scritture non costituiscono pubblicazione atomica; il chiamante mantiene proprietà e confine fail-stop per eventuali guasti interni. |
+| 1. Requirements and ADRs | REQ-CBR-003 and AFF-004/008 are indicated; local domain consistent with RFC 8949 §3.3 and ADR-0014. ADR-0048 retains higher-level budgets and document profile. |
+| 2. Invariants | INV-F1/P6 in requirement; exclusive destination, half-open capacity, well-formed code, unchanged outside bytes, and bound2 in product. Falsifying tests pending. |
+| 3. Errors | Range → code → capacity, as preregistered. INVALID-ARGUMENT and RESOURCE-EXHAUSTED with offset NIL derived from base condition and without mutation. Internal INVARIANT-VIOLATION propagated to owner, without rollback. |
+| 4. Limits | No loop, recursion, wait, or thread created; fixed two-byte bound. END is actual limit; physical suffix does not increase capacity. |
+| 5. Heap | No constructors, closures, AST, floats, or u64 on success. Index cursors and u8 code; arithmetic bounded before use. No allocation expected from source; zero heap allocation requires local measurement with sensors and is not attested. |
+| 6. Verified data | All cold inputs verified before THE and access. Module returns one NEXT with VALUES and writes raw code; no promise of semantic document validation. |
+| 7. Compound decisions | Range and footprint ANDs present; chained range and TYPEP union distinct from explicit AND/OR decisions. Inventory, independent cases, and coverage remain to be checked separately. |
+| 8. Owner | Explicit OWNER/SHARED: caller's exclusive destination until return, only local scalars. Module does not verify exclusivity or share state per operation. |
+| 9. Integration | Export at package line 11; serial ASDF component after dependencies; new suite registered without removing previous ones. Requirement in catalog; matrix, compilation, and MAKE CHECK pending. |
+| 10. Rules | Complete FTYPEs, safety3, pre/post/error docstrings, REQ per definition, guards without side effects. No generic handler, prohibited construct, or static deviation identified. Compilation/lint not run. |
+| 11. Parallelism | No lock, wait, I/O, or shared write between Serie introduced. Separate workers may use private destinations and immutable plans; actual concurrency and scaling not demonstrated by reading. |
+| 12. Durability | No publication, persistence, or deletion. The two writes are not atomic publication; caller retains ownership and fail-stop boundary for possible internal faults. |
 
-## Verifiche ancora necessarie
+<a id="verifiche-ancora-necessarie"></a>
 
-Il diff dei kernel codec già presenti e delle fondazioni non mostra
-modifiche; nel package è aggiunto soltanto l'export della nuova primitiva.
-Questa lettura non rinnova la qualifica delle dipendenze e non ha
-consultato le prove cieche o eseguito compilazione, test, benchmark,
-coverage, mutazioni o self-test degli strumenti.
+## Verification still needed
 
-Restano seconda lettura C1, compilazione senza warning/style-warning,
-corpus e concorrenza, misure con sensori, mutazioni, coverage grezza e
-verifica delle decisioni composte, audit dei dati, matrice e MAKE CHECK.
-Non sono attestati MC/DC, 100% di copertura, heap zero, gate C1 chiuso o
-qualifica del documento completo e del motore.
+The diff of existing codec kernels and foundations shows
+no changes; only the new primitive's export is added to the package.
+This reading does not renew dependency qualification and did not
+consult blind tests or run compilation, tests, benchmark,
+coverage, mutations, or tool self-tests.
+
+Second C1 reading, compilation without warning/style-warning,
+corpus and concurrency, sensor measurements, mutations, raw coverage and
+compound-decision verification, data auditing, matrix, and MAKE CHECK remain.
+No attestation of MC/DC, 100% coverage, zero heap allocation, closed C1 gate, or
+qualification of the complete document and engine.

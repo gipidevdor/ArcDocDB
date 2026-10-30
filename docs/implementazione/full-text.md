@@ -1,140 +1,150 @@
-# Nucleo full text
+<a id="nucleo-full-text"></a>
 
-Implementazione autorizzata dall'autore il 16 ottobre 2026, secondo
-[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) e
+# Full-text core
+
+Implementation authorized by author on October 16, 2026, under
+[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) and
 [ADR-0054](../adr/0054-contratto-e-formato-full-text.md).
-Sono disponibili analizzatore Unicode, run invertito posizionale in memoria e
-cornice binaria dell'indice. Il successivo [codec completo](full-text-codec.md) aggiunge
-serializzazione delle sezioni e query su viste verificate. La ricerca su una Serie con commit, snapshot,
-catalogo delle generazioni e persistenza completa rimane da integrare.
-REQ-SEC-003…REQ-SEC-010 restano **progettati** nel loro perimetro complessivo.
+Unicode analyzer, in-memory positional inverted run, and binary index
+frame available. Later [complete codec](full-text-codec.md) adds
+section serialization and queries on verified views. Serie search with commits, snapshots,
+generation catalog, and full persistence remains to integrate.
+REQ-SEC-003…REQ-SEC-010 remain **designed** within their overall scope.
 
-| Componente di prodotto | Disponibile | Confine |
+| Product component | Available | Boundary |
 |---|---|---|
-| `arcdocdb.fulltext.analysis` | UTF-8 rigoroso, NFC, full case fold, NFC, Word_Break e filtro L/N | Un campo scalare alla volta; estrazione dei percorsi CBOR successiva |
-| `arcdocdb.fulltext.index` | Run ordinato per campo/termine/riga/posizione; `all`, `any`, frase | La riga identifica una versione locale, non certifica commit o visibilita MVCC |
-| `arcdocdb.fulltext.format` | Header, directory, padding, footer e CRC del `.idx` v2/type 5 | META, dizionario, posting, hint e copertura non sono validati da questa API |
-| `arcdocdb.fulltext.codec` | [Sei sezioni complete e vista di ricerca verificata](full-text-codec.md) | Autorita di hint/decisioni fornita dal chiamante; pubblicazione/MVCC ancora da integrare |
+| `arcdocdb.fulltext.analysis` | Strict UTF-8, NFC, full case fold, NFC, Word_Break, and L/N filter | One scalar field at a time; CBOR path extraction later |
+| `arcdocdb.fulltext.index` | Run ordered by field/term/row/position; `all`, `any`, phrase | Row identifies a local version, does not certify commit or MVCC visibility |
+| `arcdocdb.fulltext.format` | Header, directory, padding, footer, and CRC for `.idx` v2/type 5 | META, dictionary, postings, hints, and coverage not validated by this API |
+| `arcdocdb.fulltext.codec` | [Six complete sections and verified search view](full-text-codec.md) | Hint/decision authority supplied by caller; publication/MVCC still to integrate |
 
-Il server NNTP rimane un'applicazione futura. Il nucleo puo indicizzare separatamente
-oggetto e corpo degli articoli, senza conoscere MIME, gruppi o comandi NNTP.
+NNTP server remains a future application. Core can separately index
+article subject and body without knowledge of MIME, groups, or NNTP commands.
 
-## Analisi e proprieta dei buffer
+<a id="analisi-e-proprieta-dei-buffer"></a>
 
-`crea-spazio-full-text` alloca solo durante la configurazione del worker. I limiti
-`:max-scalars`, `:max-tokens`, `:token-bytes` determinano array specializzati privati;
-`:max-memory` verifica il loro payload piu 4096 byte conservativi di overhead.
-Non misura il consumo dell'intero processo o delle tabelle condivise.
+## Analysis and buffer ownership
 
-`inizia-analisi-full-text(space, input, start, end)` prende in prestito lo span UTF-8
-immutabile e invalida i risultati precedenti. I limiti per operazione sono
-`:max-term-bytes`, `:max-tokens`, `:max-work`; il limite dei token deve rientrare
-nello scratch. Le capacita non crescono automaticamente. Lo span e limitato a 16 MiB.
-Un nuovo avvio durante un'analisi attiva e rifiutato senza sovrascriverla.
+`crea-spazio-full-text` allocates only during worker configuration. Limits
+`:max-scalars`, `:max-tokens`, `:token-bytes` determine private specialized arrays;
+`:max-memory` checks their payload plus conservative 4096-byte overhead.
+It does not measure whole-process or shared-table consumption.
 
-`passo-analisi-full-text(space, quantum)` esegue al massimo 1…65536 passi e restituisce
-`:running` o `:done`. Il quantum conta passi di stato; lookup, espansioni e byte
-consumano anche il budget di lavoro. Il riordino dei segni combinanti fa al massimo
-uno scambio per passo, evitando un ciclo quadratico indivisibile. La decomposizione
-ha uno stack fisso di 64 scalari; Hangul usa la decomposizione/composizione algoritmica.
+`inizia-analisi-full-text(space, input, start, end)` borrows immutable UTF-8
+span and invalidates previous results. Per-operation limits are
+`:max-term-bytes`, `:max-tokens`, `:max-work`; token limit must fit
+scratch. Capacities do not grow automatically. Span limited to 16 MiB.
+A new start during active analysis is rejected without overwriting it.
 
-`risultati-analisi-full-text` restituisce cinque valori solo dopo `:done`:
-buffer dei termini UTF-8, array degli inizi, array delle fini, numero dei token,
-byte usati. La posizione e l'indice del token, da zero. Gli intervalli non includono
-separatori e rimangono validi fino al prossimo avvio sullo stesso spazio. Non sono
-stringhe Lisp allocate per parola. Input vuoto o privo di lettere/numeri produce zero token.
+`passo-analisi-full-text(space, quantum)` performs at most 1…65536 steps and returns
+`:running` or `:done`. Quantum counts state steps; lookups, expansions, and bytes
+also consume work budget. Combining-mark reordering makes at most
+one swap per step, avoiding an indivisible quadratic loop. Decomposition
+has a fixed 64-scalar stack; Hangul uses algorithmic decomposition/composition.
 
-Il profilo e esattamente `unicode-word-18.0.0-v1`; non dipende dalle tabelle di SBCL.
-I [dati UCD e le licenze](../../data/unicode/18.0.0/README.md) sono versionati con
-SHA256; il generatore Common Lisp e controllato per riproducibilita in `make check`.
-Un budget esaurito o un errore Unicode passa l'analisi a `:failed`, rilascia l'input
-e rende inaccessibili i risultati parziali. Una nuova analisi puo riutilizzare lo scratch.
+`risultati-analisi-full-text` returns five values only after `:done`:
+UTF-8 term buffer, start array, end array, token count,
+bytes used. Position is token index, from zero. Ranges exclude
+separators and remain valid until next start on same space. They are not
+Lisp strings allocated per word. Empty input or input without letters/numbers produces zero tokens.
 
-## Run invertito in memoria
+Profile is exactly `unicode-word-18.0.0-v1`; independent of SBCL tables.
+[UCD data and licenses](../../data/unicode/18.0.0/README.md) versioned with
+SHA256; Common Lisp generator checked for reproducibility in `make check`.
+Exhausted budget or Unicode error moves analysis to `:failed`, releases input,
+and makes partial results inaccessible. New analysis can reuse scratch.
 
-`crea-indice-posizionale` prealloca capacita per occorrenze, byte e campi presenti.
-Ogni occorrenza usa cinque `u32`: campo, riga, posizione, offset e lunghezza del termine.
-I termini sono in un buffer a byte; le lunghezze dei campi sono triple `u32` separate.
-Questo layout interno non e il layout serializzato DICT/POSTINGS/LENGTHS del `.idx`.
+<a id="run-invertito-in-memoria"></a>
 
-`inizia-campo-full-text(run, row, field, analysis)` accetta un'analisi `:done`,
-`row u32` e `field` da 1 a 65535. I campi devono arrivare in ordine stretto
-`(row, field)`: stessa riga/campo duplicata e ordine retrogrado sono errori.
-Capacita per tutti i token, i byte e la lunghezza del campo sono controllate
-prima della transizione `:copying`. Una stringa presente vuota registra lunghezza zero;
-per un campo assente non si chiama questa funzione.
+## In-memory inverted run
 
-Il chiamante mantiene lo spazio di analisi esclusivo fino al ritorno `:building`
-di `passo-indice-posizionale(run, quantum)`. La copia procede per byte e record;
-poi lo spazio puo essere riutilizzato per il campo successivo.
-`sigilla-indice-posizionale` avvia heapsort in-place, con lavoro massimo configurato
-comprensivo della copia. Un passo ripara un sottoalbero di profondita al massimo 32;
-ciascun confronto conta tutti i byte esaminati. Il costo del passo dipende anche dalla
-lunghezza dei termini, limitata in analisi. Un errore durante copia/ordinamento lascia
-il run `:failed` e rilascia il prestito dello scratch; quel run non e interrogabile.
+`crea-indice-posizionale` preallocates capacity for occurrences, bytes, and present fields.
+Each occurrence uses five `u32` words: field, row, position, term offset and length.
+Terms in byte buffer; field lengths in separate `u32` triples.
+This internal layout is not `.idx`'s serialized DICT/POSTINGS/LENGTHS layout.
 
-Dopo `:sealed`, il run e immutabile e puo essere letto da piu worker. Nessun lock,
-stato globale per documento o contatore condiviso viene aggiornato dai reader.
-Il proprietario mantiene vivo il run per tutta la lettura; il raccordo con EBR e
-le generazioni della Serie e un passo successivo.
+`inizia-campo-full-text(run, row, field, analysis)` accepts `:done` analysis,
+`row u32`, and `field` from 1 to 65535. Fields must arrive in strict
+`(row, field)` order: duplicate same row/field and backward order are errors.
+Capacity for all tokens, bytes, and field length checked
+before transition to `:copying`. Present empty string records length zero;
+for an absent field, this function is not called.
 
-`corrisponde-riga-full-text(run, row, field, query, mode)` accetta un'analisi completa
-con 1…256 token e `mode` uguale a `:all`, `:any` o `:phrase`. La ricerca usa limiti
-binari sulle occorrenze ordinate; una frase verifica posizioni consecutive nella stessa
-riga e nello stesso campo, anche con termini ripetuti. Il budget esclusivo di `query`
-include analisi e confronti su tutte le righe esaminate; la saturazione e un errore,
-mai un risultato negativo. Anche una ricerca su run vuoto consuma lavoro.
+Caller keeps analysis space exclusive until `passo-indice-posizionale(run, quantum)`
+returns `:building`. Copy proceeds by bytes and records;
+then space may be reused for next field.
+`sigilla-indice-posizionale` starts in-place heapsort, with configured maximum work
+including copying. One step repairs a subtree at most 32 deep;
+each comparison counts all examined bytes. Step cost also depends on term
+length, bounded during analysis. An error during copy/sort leaves
+run `:failed` and releases scratch loan; that run cannot be queried.
 
-Il predicato non enumera l'universo dei documenti: `not`, filtri strutturati,
-ordinamento per `_id`, top-N, deduplicazione e verifica della versione committed
-visibile spettano al Query Engine. Un risultato positivo di questo predicato non
-costituisce da solo una risposta completa alla query di una Serie.
+After `:sealed`, run immutable and readable by multiple workers. No lock,
+per-document global state, or shared counter updated by readers.
+Owner keeps run alive throughout read; connection to EBR and
+Serie generations is a later step.
 
-## Cornice binaria
+`corrisponde-riga-full-text(run, row, field, query, mode)` accepts complete analysis
+with 1…256 tokens and `mode` equal to `:all`, `:any`, or `:phrase`. Search uses binary
+bounds on ordered occurrences; phrase checks consecutive positions in same
+row and field, including repeated terms. Exclusive `query` budget
+includes analysis and comparisons across all examined rows; saturation is an error,
+never a negative result. Even searching an empty run consumes work.
 
-`scrivi-cornice-indice-full-text` riceve buffer, span, identita Serie, segment-id e
-le sei lunghezze. Scrive solo header, directory, padding e CRC dopo il preflight;
-payload e byte esterni restano intatti. Un rifiuto di preflight non cambia la destinazione.
-`verifica-cornice-indice-full-text` restituisce fine file e span META solo dopo
-CRC, identita, versione, campi riservati, dimensioni, allineamenti e contiguita.
-Le docstring indicano condizioni e motivi distinti; le incongruenze interne
-segnalano `invariant-violation` al futuro confine del worker.
+Predicate does not enumerate document universe: `not`, structured filters,
+ordering by `_id`, top-N, deduplication, and checking visible committed version
+belong to Query Engine. A positive predicate result alone is not
+a complete response to a Serie query.
 
-Il payload e deliberatamente opaco a queste due funzioni. Un CRC corretto su META
-o posting senza senso passa la verifica della cornice: un test dedicato impedisce
-di promuovere questa API a validatore semantico. Non viene aperto o pubblicato alcun
-file, e non esiste qui un punto di atomicita durevole.
+<a id="cornice-binaria"></a>
 
-## Verifica
+## Binary frame
 
-`make test` compila senza warning/style-warning e include i 24 test del primo nucleo,
-piu 15 test del [codec completo](full-text-codec.md#prove-e-confini-residui):
+`scrivi-cornice-indice-full-text` receives buffer, span, Serie identity, segment-id, and
+six lengths. Writes only header, directory, padding, and CRC after preflight;
+payload and external bytes remain intact. Preflight rejection does not change destination.
+`verifica-cornice-indice-full-text` returns file end and META span only after
+CRC, identity, version, reserved fields, sizes, alignments, and contiguity checks.
+Docstrings specify distinct conditions and reasons; internal inconsistencies
+signal `invariant-violation` to future worker boundary.
 
-- 20.171 righe NFC, 100.855 confronti; 1.944 righe Word_Break, 8.487 confini;
-  1.606 mapping C/F e lettura di tutti gli 1.112.064 scalari Unicode.
-- 115.200 confronti dei predicati posizionali con una scansione indipendente;
-  ripetizioni, campo assente/vuoto, righe/versioni distinte, quantum diversi e reader paralleli.
-- Fixture wire indipendente, tutti i 3.168 bit e tutti i troncamenti del file campione;
-  corruzione con CRC ricalcolato, riservati, offset, identita e limiti delle sezioni.
-- Saturazione di lavoro, scalari, byte, token e capacita del run; riuso dello scratch
-  dopo errore e immutabilita della destinazione sui rifiuti di preflight.
-- Dopo warm-up: zero byte consed per 1000 analisi con ricerca di frase e per
-  1000 scritture con verifica della cornice, su SBCL 2.6.9 arm64 con safety 3.
+Payload deliberately opaque to both functions. Correct CRC on meaningless META
+or postings passes frame verification: dedicated test prevents
+promoting this API to semantic validator. No file opened or published,
+and no durable atomicity point exists here.
 
-`make fulltext-check` verifica anche gli strumenti e introduce quattro mutanti
-semantici temporanei, in un processo di test: NFC senza composizione, confine ovunque,
-frase sempre accettata e header non verificato. Tutti devono essere rilevati; le funzioni
-originali sono ripristinate. Il codec aggiunge altri due mutanti e una prova di riapertura
-in processi separati. Non e una campagna di mutazione esaustiva.
-La [revisione delle decisioni](full-text-decisioni.md) registra le due letture del nucleo.
-Copertura diagnostica separata dalle misure di allocazione:
+<a id="verifica"></a>
+
+## Verification
+
+`make test` compiles without warnings/style-warnings and includes first core's 24 tests,
+plus 15 [complete-codec tests](full-text-codec.md#prove-e-confini-residui):
+
+- 20,171 NFC rows, 100,855 comparisons; 1,944 Word_Break rows, 8,487 boundaries;
+  1,606 C/F mappings and reading all 1,112,064 Unicode scalars.
+- 115,200 positional-predicate comparisons with independent scan;
+  repetitions, absent/empty field, distinct rows/versions, different quanta, and parallel readers.
+- Independent wire fixture, all 3,168 bits and every sample-file truncation;
+  corruption with recalculated CRC, reserved fields, offsets, identity, and section limits.
+- Saturation of work, scalars, bytes, tokens, and run capacity; scratch reuse
+  after error and destination immutability on preflight rejection.
+- After warmup: zero bytes consed for 1000 analyses with phrase search and
+  1000 writes with frame verification, on SBCL 2.6.9 arm64 with safety 3.
+
+`make fulltext-check` also verifies tools and introduces four temporary semantic
+mutants in a test process: NFC without composition, boundary everywhere,
+phrase always accepted, and unverified header. All must be detected; original
+functions restored. Codec adds two further mutants and a reopen test
+in separate processes. This is not an exhaustive mutation campaign.
+The [decision review](full-text-decisioni.md) records both core readings.
+Diagnostic coverage separate from allocation measurements:
 
 ```sh
 sbcl --script tools/fulltext-qualification.lisp --coverage spikes/out/fulltext-coverage-R1/
 make check
 ```
 
-Le prove qui descritte non qualificano ancora l'ammissione pre-SEAL/PREPARE,
-la pubblicazione prima di H/ACK, il build concorrente,
-il recovery delle generazioni o la ricerca con MVCC. Questi sono i successivi raccordi
-previsti dal [contratto full text](../full-text.md).
+Tests described here do not yet qualify pre-SEAL/PREPARE admission,
+publication before H/ACK, concurrent build,
+generation recovery, or MVCC search. These are later connections
+planned by the [full-text contract](../full-text.md).

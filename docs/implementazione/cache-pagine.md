@@ -1,73 +1,79 @@
-# Cache seriale delle pagine dell'indice
+<a id="cache-seriale-delle-pagine-dellindice"></a>
 
-Incremento preparatorio all'integrazione I3/I4 di ADR-0057 e ADR-0058,
-autorizzato dall'autore il 2026-10-24. REQ-IDX-009, REQ-LIM-003,
-INV-I8, INV-A2, INV-A8, INV-P6. Il motore M1 conserva il primario residente:
-questa cache collega il codec al modulo I/O, ma non realizza ancora il backend
-paginato, la directory multilivello o la migrazione automatica.
+# Serial index-page cache
 
-## Contratto e integrazione
+Preparatory increment for I3/I4 integration under ADR-0057 and ADR-0058,
+authorized by the author on 2026-10-24. REQ-IDX-009, REQ-LIM-003,
+INV-I8, INV-A2, INV-A8, INV-P6. The M1 engine retains the resident primary index:
+this cache connects the codec to the I/O module but does not yet implement the paged
+backend, multilevel directory, or automatic migration.
 
-`arcdocdb.index.page:crea-cache-pagine(size, frame-count, loader)` prepara
-frame fissi per pagine di 4096, 16384 o 65536 byte. Il payload massimo e'
-256 MiB; numero frame 1..65536. Ogni frame ha ora una copia posseduta
-dell'identita', preallocata: i cursori privati del
-[lettore paginato](lettura-indice-paginato.md) non vengono trattenuti. Il limite riguarda gli array dei byte:
-struttura, vettori di riferimenti e identita' sono metadati aggiuntivi, O(frame-count),
-e non costituiscono una misura RSS o la quota completa richiesta da ADR-0057.
-Il chiamante deve conteggiare anche metadati, target e sorgenti trattenute.
+<a id="contratto-e-integrazione"></a>
 
-`crea-cache-pagine-file(size, frame-count, file)` collega un file readonly
-immutabile prestato a `io:leggi-esatto`. Il controller mantiene il file aperto;
-la cache non lo chiude. Il miss e' sincrono e deve essere eseguito dall'attore
-I/O. Le letture parziali sono completate dal modulo I/O; EOF e guasti vengono
-propagati senza retry dell'errore. Non si usa mmap.
+## Contract and integration
 
-`copia-pagina-cache(cache, identity, target, :start 0)` restituisce fine e
-`:hit`/`:miss`. Cerca al massimo tutti i frame e usa sostituzione FIFO; un hit
-non cambia l'ordine. Serie, immagine, offset e generazione fanno parte della
-chiave completa. Ogni miss verifica l'intera pagina con il codec prima della
-pubblicazione nel frame e della copia nel target. Il target resta intatto se
-lettura o verifica falliscono. Lo slot vittima resta invalido in caso di errore
-o uscita non locale; un caricamento successivo non puo' usare una coda vecchia.
+`arcdocdb.index.page:crea-cache-pagine(size, frame-count, loader)` prepares
+fixed frames for 4096-, 16384-, or 65536-byte pages. Maximum payload is
+256 MiB; frame count 1..65536. Each frame now has a preallocated owned copy
+of identity: private cursors from the
+[paged reader](lettura-indice-paginato.md) are not retained. The limit concerns byte arrays:
+structure, reference vectors, and identities are additional metadata, O(frame-count),
+and do not constitute an RSS measurement or the complete quota required by ADR-0057.
+The caller must also account for metadata, targets, and retained sources.
 
-Il caricatore iniettabile riceve identita' e buffer esclusivo e restituisce
-esattamente SIZE. E' codice fidato: non trattiene ne' modifica successivamente
-il buffer. La cache invalida prima di caricare e azzera il frame. Il valore
-di ritorno da solo non prova che il caricatore abbia letto: CRC, identita' e
-forma vengono comunque verificati. Una cache corrotta in memoria dopo la
-verifica non e' rilevata da una nuova verifica su ogni hit.
+`crea-cache-pagine-file(size, frame-count, file)` connects a borrowed immutable
+read-only file to `io:leggi-esatto`. The controller keeps the file open;
+the cache does not close it. Misses are synchronous and must run on the
+I/O actor. Partial reads are completed by the I/O module; EOF and faults
+propagate without retrying the error. No mmap is used.
 
-Un solo thread possiede l'intera cache; i callback non possono rientrare.
-Nessun frame viene prestato al chiamante, solo copie in memoria privata.
-Non occorrono hazard per queste copie, che restano valide dopo il riuso.
-Questo contratto seriale non sostituisce la futura cache concorrente I3:
-non dimostra progresso lock-free, primitive/barriere SBCL o safety di borrower
-concorrenti. Nessun lock, contatore o scrittura e' condiviso tra Serie.
+`copia-pagina-cache(cache, identity, target, :start 0)` returns the end and
+`:hit`/`:miss`. It searches at most all frames and uses FIFO replacement; a hit
+does not change order. Serie, image, offset, and generation are part of the
+complete key. Every miss verifies the entire page with the codec before
+publishing it in the frame and copying it to the target. The target remains intact if
+reading or verification fails. The victim slot remains invalid on error
+or nonlocal exit; a later load cannot use a stale tail.
 
-## Verifica e letture C1
+The injectable loader receives identity and an exclusive buffer and returns
+exactly SIZE. It is trusted code: it neither retains nor later modifies
+the buffer. The cache invalidates before loading and zeroes the frame. The return
+value alone does not prove the loader read: CRC, identity, and
+shape are verified regardless. A cache corrupted in memory after
+verification is not detected by reverification on every hit.
 
-Metodo: fixture binarie indipendenti dal codec di prodotto; tre taglie,
-identita' completa, hit senza nuovo I/O, FIFO uno/due frame, copie private,
-short read, CRC errato, identita' errata, rientro, thread estraneo e uscita
-non locale. Il ponte I/O e' esercitato con quattro trasferimenti da 1024 byte,
-hit senza syscall e file chiuso prima di un miss. Le prove entrano nella suite
-pagine esistente e quindi nel percorso ASDF e CI ordinario.
+A single thread owns the entire cache; callbacks cannot reenter.
+No frame is lent to the caller, only copies in private memory.
+These copies need no hazards and remain valid after reuse.
+This serial contract does not replace the future I3 concurrent cache:
+it does not demonstrate lock-free progress, SBCL primitives/barriers, or concurrent
+borrower safety. No lock, counter, or write is shared between Serie.
 
-| Decisione composta | Condizioni e casi |
+<a id="verifica-e-letture-c1"></a>
+
+## Verification and C1 readings
+
+Method: binary fixtures independent of the product codec; three sizes,
+complete identity, hit without new I/O, one/two-frame FIFO, private copies,
+short read, bad CRC, wrong identity, reentry, foreign thread, and nonlocal
+exit. The I/O bridge is exercised with four 1024-byte transfers,
+hit without syscall, and a file closed before a miss. Tests enter the existing page
+suite and therefore the ordinary ASDF and CI path.
+
+| Compound decision | Conditions and cases |
 |---|---|
-| Factory | taglia valida, conteggio intero 1..65536, callback funzione; ogni dominio invalido separato |
-| Identita' hit | stessa immagine, offset, generazione e Serie; ciascuna diversa causa miss; offset diverso esercita FIFO |
-| Slot candidato | NIL e' invalido; identita' valida ed equivalente e' hit; diversa e' miss |
+| Factory | valid size, integer count 1..65536, function callback; each invalid domain separately |
+| Hit identity | same image, offset, generation, and Serie; each difference causes a miss; different offset exercises FIFO |
+| Candidate slot | NIL is invalid; valid equivalent identity is a hit; different is a miss |
 
-Prima lettura: dominio/geometria, identita' completa, integrita' prima della
-copia, nessun cambiamento durevole, cicli limitati ai frame, cleanup senza
-mascherare errori, ownership e rientro. Seconda lettura: ordine invalidazione/
-lettura/verifica/pubblicazione, errore dopo vittima invalidata, nonlocal exit,
-immutabilita' delle copie, lifetime del file prestato. Sono letture dello stesso
-autore, non revisione indipendente o qualifica MC/DC del motore completo.
+First reading: domain/geometry, complete identity, integrity before
+copy, no durable change, frame-bounded loops, cleanup without
+masking errors, ownership, and reentry. Second reading: invalidation/
+read/verification/publication order, error after victim invalidation, nonlocal exit,
+copy immutability, borrowed-file lifetime. These are readings by the same
+author, not independent review or full-engine MC/DC qualification.
 
-Il rollback rimuove questa cache derivata senza modificare log o dati utente.
-Non esiste un nuovo punto di commit: SEAL, EDIT e DECISION restano autorevoli.
-EOF/corruzione richiedono al futuro confine del motore la transizione FAULTED;
-la cache propaga la causa e non sceglie autonomamente il recupero del derivato.
+Rollback removes this derived cache without changing logs or user data.
+There is no new commit point: SEAL, EDIT, and DECISION remain authoritative.
+EOF/corruption require a FAULTED transition at the future engine boundary;
+the cache propagates the cause and does not independently choose derivative recovery.

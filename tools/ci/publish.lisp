@@ -177,11 +177,11 @@
                               (equal (getf old :attempt) (getf entry :attempt)))) (getf index :runs))))
     (ci-save index-path index :replace t)
     (with-open-file (out (merge-pathnames "README.md" store) :direction :output :if-exists :supersede)
-      (format out "# Risultati CI archiviati~%~%Ultima raccolta archiviata: [run ~A, attempt ~A](~Areport.md).~%~%"
+      (format out "<a id=\"risultati-ci-archiviati\"></a>~%# Archived CI results~%~%Latest archived collection: [run ~A, attempt ~A](~Areport.md).~%~%"
               (getf server :run-id) (getf server :attempt) (getf entry :path))
-      (format out "Codice provato: `~A`. Questo indice descrive l'ultima pubblicazione, e può riferirsi a codice precedente al main attuale.~%~%"
+      (format out "Tested code: `~A`. This index describes the latest publication and may refer to code preceding current main.~%~%"
               (getf summary :tested-sha))
-      (format out "Per conoscere lo stato dei sorgenti attuali: `make ci-status`.~%~%Prestazioni esplorative su runner GitHub; copertura di forme e rami, senza attestazione MC/DC.~%"))
+      (format out "To check current source status: `make ci-status`.~%~%Exploratory performance on GitHub runners; form and branch coverage, without MC/DC attestation.~%"))
     entry))
 
 (defun ci-git-fetch-main ()

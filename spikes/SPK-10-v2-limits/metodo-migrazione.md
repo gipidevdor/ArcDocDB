@@ -1,181 +1,196 @@
-# SPK-10 — Metodo per selezione del formato e modello di migrazione
+<a id="spk-10--metodo-per-selezione-del-formato-e-modello-di-migrazione"></a>
 
-> **Proposta** — Esperimento in `migrazione.lisp`, package
-> `arcdocdb.spk10.migrazione`. Questo metodo è registrato prima dell'esecuzione.
-> Non conclude il gate v2 e non implementa un convertitore su disco.
+# SPK-10 — Format selection method and migration model
 
-## Domanda e riferimenti
+> **Proposed** — Experiment in `migrazione.lisp`, package
+> `arcdocdb.spk10.migrazione`. This method is registered before execution.
+> It does not complete the v2 gate or implement an on-disk converter.
 
-Verificare che il fileheader scelga esplicitamente v1/v2 e rifiuti versioni ignote;
-esplorare un modello finito della conversione offline interrotta e rieseguita,
-con sorgenti immutabili, un solo EDIT di pubblicazione e reclaim subordinato ai pin.
-Requisiti: REQ-FOR-002, REQ-LIM-003, REQ-AFF-007, REQ-AFF-018, REQ-AFF-019.
-Fonti: ADR-0048; ADR-0036; ADR-0040; `docs/formati-su-disco.md`, intestazione
-del segmento e nomi temporanei; specifica, workflow CLEAN/MERGE e reader.
+<a id="domanda-e-riferimenti"></a>
 
-> **Deciso (versionamento → ADR-0048)** — Il layout si sceglie dalla versione
-> del file. Il solo magic documentato per il segmento è `ARCDSEG1`: il carattere
-> finale non sostituisce il campo u16 little-endian a offset 8. La tabella storica
-> indica versione 1; le fixture v2 usano quel medesimo magic e versione 2 secondo
-> ADR-0048. Non si introduce `ARCDSEG2` o un nuovo formato persistente.
+## Question and references
 
-## Metodo registrato
+Check that the fileheader explicitly selects v1/v2 and rejects unknown versions;
+explore a finite model of interrupted and rerun offline conversion, with
+immutable sources, a single publication EDIT, and reclamation subject to pins.
+Requirements: REQ-FOR-002, REQ-LIM-003, REQ-AFF-007, REQ-AFF-018, REQ-AFF-019.
+Sources: ADR-0048; ADR-0036; ADR-0040; `docs/formati-su-disco.md`, segment
+header and temporary names; specification, CLEAN/MERGE workflow, and readers.
 
-- Costruire fixture di soli 64 byte, con origine 1/2, id Serie di 16 byte,
-  segment-id e timestamp u64, riservati zero, CRC32C a offset 56 sui byte 0–55.
-  Riutilizzare il CRC reference di SPK-09, già caricato dal runner; nessuna
-  dipendenza dal codec v2, dagli indici o dal decoder CBOR degli altri moduli.
-- Validare tipo e bounds prima degli accessi, poi magic, CRC, origine e tutti i
-  riservati (11–15, 48–55, 60–63), poi versione 1/2. Versioni ignote rifiutate
-  prima di restituire o invocare un parser. Verificare fixture con CRC corretto
-  anche per campi semanticamente invalidi, tutti i troncamenti e tutti i bit flip.
-- Modello separato: un sorgente v1, un output v2, pin 0/1, presenza del `.tmp`
-  e del definitivo, validità, verifica, durabilità del file e della directory,
-  EDIT durevole e completamento. I contenuti sono simboli/booleani, non record
-  codificati; il modello non dimostra conversione dei byte o crash reali.
-- Fasi: prepara `.tmp`; scrivi v2 (anche prefissi parziali); verifica;
-  rendi durevole il file; rendi durevole la directory; pubblica EDIT;
-  completa la rinomina; reclaim solo senza pin. Prima dell'EDIT il manifest
-  seleziona v1 e la sorgente resta intatta; dopo seleziona v2 e la sorgente
-  resta intatta fino al reclaim autorizzato dal record di rimozione.
-  Sono dieci fasi distinte: preparazione, scrittura parziale, scrittura completa,
-  verifica, durabilità file, durabilità directory, EDIT, rename, durabilità
-  directory dopo rename, reclaim. Un rename interrotto lascia il nome precedente
-  oppure quello nuovo. Output mancante dopo EDIT significa che mancano **entrambi**
-  `.tmp` e definitivo; un `.tmp` nominato viene completato dal recovery.
-- Enumerare crash prima/dopo ciascuna fase, inclusi scrittura parziale,
-  output corrotto, verifica negativa e falsa verifica positiva. Esplorare
-  separatamente interruzioni del recovery e confrontare il risultato della
-  riesecuzione con quello senza interruzione. Un output nominato dall'EDIT ma
-  assente/corrotto produce un errore di integrità, conservando i sorgenti;
-  un definitivo sconosciuto resta presente ed è segnalato.
-- Oracle indipendente dalle transizioni: verifica selezione, integrità,
-  immutabilità, prova di rimozione, pin, numero di EDIT e punto di atomicità.
-  I mutanti `unlink-before-EDIT`, `skip-verification`, `reclaim-pinned` devono
-  essere rilevati con un controesempio deterministico.
-  La falsa verifica positiva è un responso deliberatamente scorretto rispetto
-  alla validità booleana nota all'oracle: viene rilevata dall'oracle e il caso
-  si ferma prima della pubblicazione. Non è una dimostrazione dell'infallibilità
-  di un verificatore reale. Una verifica negativa su output valido è un rifiuto.
-- Saturare budget di fasi e copie: rifiuto esplicito prima della fase che
-  supera il budget, nessun EDIT incompleto. Nessuna attesa dei pin: si rinvia
-  il reclaim e si riesegue dopo rilascio esplicito. Stato locale a un modello;
-  nessun lock, stato condiviso per Serie o I/O.
+> **Decided (versioning → ADR-0048)** — The layout is selected by file version.
+> The only documented segment magic is `ARCDSEG1`: its final character does not
+> replace the little-endian u16 field at offset 8. The historical table states
+> version 1; v2 fixtures use that same magic and version 2 under ADR-0048.
+> Neither `ARCDSEG2` nor a new persistent format is introduced.
 
-## Costi e limiti dichiarati
+<a id="metodo-registrato"></a>
 
-> **Proposta** — Limiti sperimentali, non prestazioni garantite: fileheader
-> esattamente 64 byte; CRC su 56 byte; confronti e riservati al più 64 byte;
-> scritture intere al più 8 byte, id Serie 16 byte. Tutte le fixture sono bounded.
-> Il modello usa un sorgente e un output, due stati di pin e un numero fisso di
-> fasi; scrittura e durabilità sono azioni simboliche finite. Ogni fase e ogni
-> passo del recovery consuma un'unità del budget; la scrittura parziale e completa
-> consuma anche unità di copia. I conteggi effettivi e i tetti controllati sono
-> restituiti da `check`. Le azioni atomiche astratte non modellano syscall,
-> fsync/rename reali, reorder del dispositivo, corruzioni non rilevate dai CRC,
-> sincronizzazione di reader concorrenti o conversione dei record. I pin del
-> modello sono conservativi anche nel recovery; dopo un riavvio reale non
-> sopravvivono i reader del vecchio processo (ADR-0040).
+## Registered method
 
-> **Proposta** — Tetti controllati: 32 passi per esecuzione del modello e 2
-> unità di copia per tentativo (4 includendo tentativo interrotto e rerun);
-> 10 fasi; 4 passi di recovery; 11 prefissi per scenario;
-> 4 scenari (sano, corrotto, verifica negativa, verifica falsa); pin 0/1;
-> 4 alternative di crash (nome e contenuto conservati/persi quando non durevoli).
-> Ogni recovery è interrotto dopo 0..4 passi e riceve a sua volta ciascuna
-> alternativa di crash. L'idempotenza confronta tutti i fatti logici e durevoli;
-> esclude soltanto budget e contatori del lavoro già svolto. Il sorgente è un
-> contenuto simbolico immutabile; il fileheader è invece verificato su byte reali.
+- Build fixtures of only 64 bytes, with origin 1/2, 16-byte Serie ID,
+  u64 segment-id and timestamp, zero reserved fields, CRC32C at offset 56 over
+  bytes 0–55. Reuse the SPK-09 reference CRC, already loaded by the runner;
+  no dependency on the v2 codec, indexes, or other modules' CBOR decoder.
+- Validate type and bounds before access, then magic, CRC, origin, and all
+  reserved fields (11–15, 48–55, 60–63), then version 1/2. Unknown versions
+  rejected before returning or invoking a parser. Check fixtures with correct
+  CRCs even for semantically invalid fields, all truncations, and all bit flips.
+- Separate model: one v1 source, one v2 output, pin 0/1, presence of `.tmp`
+  and final file, validity, verification, file and directory durability,
+  durable EDIT, and completion. Contents are symbols/booleans, rather than
+  encoded records; the model does not prove byte conversion or real crashes.
+- Phases: prepare `.tmp`; write v2 (including partial prefixes); verify;
+  make the file durable; make the directory durable; publish EDIT;
+  complete rename; reclaim only without pins. Before EDIT, the manifest
+  selects v1 and the source remains intact; afterward it selects v2 and
+  the source remains intact until reclamation authorized by the removal record.
+  There are ten distinct phases: preparation, partial write, complete write,
+  verification, file durability, directory durability, EDIT, rename, directory
+  durability after rename, reclamation. An interrupted rename leaves either
+  the old or new name. Missing output after EDIT means **both** `.tmp` and
+  the final file are absent; a named `.tmp` is completed by recovery.
+- Enumerate crashes before/after every phase, including partial writes,
+  corrupt output, negative verification, and false positive verification.
+  Explore recovery interruptions separately and compare rerun results with
+  uninterrupted results. An output named by EDIT but absent/corrupt produces
+  an integrity error, retaining sources; an unknown final file remains present
+  and is reported.
+- Oracle independent of transitions: checks selection, integrity, immutability,
+  removal evidence, pins, EDIT count, and atomicity point.
+  Mutants `unlink-before-EDIT`, `skip-verification`, `reclaim-pinned` must
+  be detected with deterministic counterexamples.
+  False positive verification is a deliberately incorrect response relative
+  to the boolean validity known to the oracle: the oracle detects it and the
+  case stops before publication. This does not prove a real verifier infallible.
+  Negative verification of valid output is a rejection.
+- Saturate phase and copy budgets: explicit rejection before the phase that
+  exceeds the budget, no incomplete EDIT. No waiting for pins: reclamation
+  is deferred and rerun after explicit release. State local to one model;
+  no locks, per-Serie shared state, or I/O.
 
-Ogni fase costa un passo simbolico, incluso il reclaim rinviato per un pin:
+<a id="costi-e-limiti-dichiarati"></a>
 
-| Fase | Effetto e costo di copia |
+## Declared costs and limits
+
+> **Proposed** — Experimental limits, rather than guaranteed performance:
+> fileheader exactly 64 bytes; CRC over 56 bytes; comparisons and reserved
+> fields at most 64 bytes; integer writes at most 8 bytes, Serie ID 16 bytes.
+> All fixtures are bounded. The model uses one source and one output, two pin
+> states, and a fixed number of phases; writes and durability are finite
+> symbolic actions. Each phase and each recovery step consumes one budget
+> unit; partial and complete writes also consume copy units. Actual counts
+> and checked ceilings are returned by `check`. Abstract atomic actions do not
+> model syscalls, real fsync/rename, device reordering, corruption undetected
+> by CRCs, concurrent reader synchronization, or record conversion. Model pins
+> are conservative even during recovery; readers of the old process do not
+> survive a real restart (ADR-0040).
+
+> **Proposed** — Checked ceilings: 32 steps per model execution and 2 copy
+> units per attempt (4 including interrupted attempt and rerun);
+> 10 phases; 4 recovery steps; 11 prefixes per scenario;
+> 4 scenarios (healthy, corrupt, negative verification, false verification);
+> pin 0/1; 4 crash alternatives (name and content retained/lost when not durable).
+> Each recovery is interrupted after 0..4 steps and in turn receives every
+> crash alternative. Idempotence compares all logical and durable facts;
+> only budgets and counters of work already performed are excluded. The
+> source is immutable symbolic content; the fileheader is checked on real bytes.
+
+Each phase costs one symbolic step, including reclamation deferred by a pin:
+
+| Phase | Effect and copy cost |
 |---|---|
-| `prepare.tmp` | Presenza del temporaneo; zero copie |
-| `write.partial` | Output parziale; una unità di copia |
-| `write.v2` | Output completo, validità fissata dallo scenario; una unità di copia |
-| `verify` | Responso del verificatore, distinto dalla verità dell'oracle; zero copie |
-| `durable.file` | Durabilità astratta del contenuto; zero copie |
-| `durable.directory` | Nome `.tmp` durevole; zero copie |
-| `publish.edit` | Unico EDIT durevole e prova di rimozione dei sorgenti; zero copie |
-| `complete.rename` | Rinomina dopo EDIT, ripetibile; zero copie |
-| `complete.directory` | Nome definitivo durevole; zero copie |
-| `reclaim` | Rimozione solo con prova, completamento e zero pin; zero copie |
+| `prepare.tmp` | Temporary file present; zero copies |
+| `write.partial` | Partial output; one copy unit |
+| `write.v2` | Complete output, validity fixed by scenario; one copy unit |
+| `verify` | Verifier response, distinct from oracle truth; zero copies |
+| `durable.file` | Abstract content durability; zero copies |
+| `durable.directory` | Durable `.tmp` name; zero copies |
+| `publish.edit` | Single durable EDIT and evidence for source removal; zero copies |
+| `complete.rename` | Repeatable rename after EDIT; zero copies |
+| `complete.directory` | Durable final name; zero copies |
+| `reclaim` | Removal only with evidence, completion, and zero pins; zero copies |
 
-Il recovery esegue al massimo due passi prima di EDIT (`discard.tmp`,
-`report.unknown`) o quattro dopo EDIT (`inspect.output`, rename, syncdir,
-reclaim). Anche scarto, segnalazione e ispezione consumano un passo, senza copie.
-Lo stato ha dimensione fissa: le copie di `stato` non dipendono dai byte del
-documento. Le unità di copia sono un costo **simbolico**, non byte o tempo di I/O.
-Le fasi sono seriali dentro questa singola migrazione; non c'è serializzazione
-fra Serie. I conteggi riguardano iniezioni eseguite: alternative con fatti già
-durevoli possono convergere al medesimo stato, senza essere contate come nuovi
-stati distinti.
+Recovery executes at most two steps before EDIT (`discard.tmp`,
+`report.unknown`) or four after EDIT (`inspect.output`, rename, syncdir,
+reclamation). Discarding, reporting, and inspection also consume one step,
+without copies. State has fixed size: copies of `stato` do not depend on
+document bytes. Copy units are a **symbolic** cost, rather than bytes or I/O
+time. Phases are serial within this one migration; there is no serialization
+between Serie. Counts concern executed injections: alternatives with facts
+already durable may converge to the same state, without being counted as new
+distinct states.
 
-## Ambiente e riproduzione
+<a id="ambiente-e-riproduzione"></a>
 
-Ambiente individuato prima dell'esecuzione: SBCL 2.6.9, Darwin arm64.
-Policy del modulo: `(safety 3)`. Nessuna dipendenza esterna oltre Common Lisp/SBCL;
-CRC reference dal modulo locale SPK-09. Il runner carica SPK-09 e i moduli
-nell'ordine codec, index, cbor, migrazione. Compilare con `warning` e
-`style-warning` fatali, controllare tutti i valori di `compile-file`, caricare
-il FASL e chiamare `arcdocdb.spk10.migrazione:check`. L'output è una plist con
-`:status :ok`, conteggi, limiti e i tre mutanti attesi. Nessun benchmark lungo;
-le misure aggregate si eseguono in serie nell'harness integrato.
-Ogni prova locale produce una plist schema 1 in `out/migrazione-check.lisp`,
-letta con `*read-eval* nil`, con comando, ambiente, blob dei sorgenti, stato
-compile, risultato, limiti, tempi, stdout/stderr ed eventuale fallimento.
-Il record conserva anche i tentativi precedenti se occorrono riparazioni.
+## Environment and reproduction
 
-## Risultati
+Environment identified before execution: SBCL 2.6.9, Darwin arm64.
+Module policy: `(safety 3)`. No external dependencies beyond Common Lisp/SBCL;
+reference CRC from the local SPK-09 module. The runner loads SPK-09 and modules
+in order codec, index, cbor, migration. Compile with fatal `warning` and
+`style-warning`, check all `compile-file` values, load the FASL, and call
+`arcdocdb.spk10.migrazione:check`. Output is a plist with `:status :ok`,
+counts, limits, and the three expected mutants. No long benchmark;
+aggregate measurements run sequentially in the integrated harness.
+Every local check produces a schema 1 plist in `out/migrazione-check.lisp`,
+read with `*read-eval* nil`, with command, environment, source blobs,
+compilation status, result, limits, times, stdout/stderr, and any failure.
+The record also retains previous attempts if repairs are needed.
 
-> **Proposta** — Evidenza locale per i soli fileheader e il modello finito;
-> non completa il gate v2 del motore. Prova del 2026-10-08 su SBCL 2.6.9,
-> Darwin 27.0.0 / ARM64, policy safety 3.
+<a id="risultati"></a>
 
-Compilazione strict: `:status :ok`, `warnings nil`, `failure nil`; caricamento
-del FASL e `check`: `:status :ok`. Stdout/stderr catturati vuoti, nessun warning
-o style-warning. Il risultato e i blob sono in
-[`v2-migrazione-check.lisp`](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-migrazione-check.lisp), una singola plist
-schema 1 leggibile con `*read-eval* nil`. Il sorgente verificato ha blob Git
-`cab850dc32ff9908b487b24edf3e1df2cc90008c`; il CRC reference SPK-09 ha blob
+## Results
+
+> **Proposed** — Local evidence for fileheaders and the finite model only;
+> it does not complete the engine's v2 gate. Check on 2026-10-08 with SBCL
+> 2.6.9, Darwin 27.0.0 / ARM64, safety 3 policy.
+
+Strict compilation: `:status :ok`, `warnings nil`, `failure nil`; FASL loading
+and `check`: `:status :ok`. Captured stdout/stderr empty, no warnings or
+style-warnings. Result and blobs are in
+[`v2-migrazione-check.lisp`](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-migrazione-check.lisp), one schema 1 plist
+readable with `*read-eval* nil`. The checked source has Git blob
+`cab850dc32ff9908b487b24edf3e1df2cc90008c`; the SPK-09 reference CRC has blob
 `80cdac4c0e52703618e1f274413b2ecbe00e6b14`.
 
-| Verifica | Conteggio effettivo |
+| Check | Actual count |
 |---|---:|
-| Fileheader validi, inclusi intervalli traslati | 8 |
-| Fileheader invalidi rifiutati prima del parser | 2.393 |
-| Bit flip / troncamenti / riservati con CRC valido | 2.048 / 256 / 68 |
-| Origini invalide / versioni ignote / bounds invalidi / magic alternativo | 12 / 4 / 4 / 1 |
-| Prefissi raggiungibili dei quattro scenari con pin 0/1 | 52 |
-| Crash di migrazione / rerun sani | 208 / 208 |
-| Interruzioni del recovery con nuovo crash e riesecuzione | 4.160 |
-| Verifiche negative / false verifiche rilevate dall'oracle | 4 / 2 |
-| Output committed assente o corrotto, errore di integrità | 2 |
-| `.tmp` nominato completato / definitivo sconosciuto conservato e segnalato | 1 / 1 |
-| Saturazioni del budget / trattenimento e rilascio pin | 13 / 2 |
-| Massimo lavoro osservato / tetto | 22 passi / 32 |
-| Massimo copie osservato / tetto, includendo tentativo interrotto e rerun | 4 / 4 |
+| Valid fileheaders, including shifted ranges | 8 |
+| Invalid fileheaders rejected before the parser | 2,393 |
+| Bit flips / truncations / reserved fields with valid CRC | 2,048 / 256 / 68 |
+| Invalid origins / unknown versions / invalid bounds / alternative magic | 12 / 4 / 4 / 1 |
+| Reachable prefixes of four scenarios with pin 0/1 | 52 |
+| Migration crashes / healthy reruns | 208 / 208 |
+| Recovery interruptions with another crash and rerun | 4,160 |
+| Negative verifications / false verifications detected by the oracle | 4 / 2 |
+| Missing or corrupt committed output, integrity error | 2 |
+| Named `.tmp` completed / unknown final file retained and reported | 1 / 1 |
+| Budget saturations / pin retention and release | 13 / 2 |
+| Maximum observed work / ceiling | 22 steps / 32 |
+| Maximum observed copies / ceiling, including interrupted attempt and rerun | 4 / 4 |
 
-Mutanti rilevati: `unlink-before-EDIT` alla preparazione, `skip-verification`
-alla pubblicazione EDIT, `reclaim-pinned` al reclaim. Tutti e tre producono
-controesempi dell'oracle. Prima e dopo EDIT il sorgente resta immutabile e
-presente finché il reclaim non è autorizzato e i pin sono zero.
+Detected mutants: `unlink-before-EDIT` at preparation, `skip-verification`
+at EDIT publication, `reclaim-pinned` at reclamation. All three produce
+oracle counterexamples. Before and after EDIT, the source remains immutable
+and present until reclamation is authorized and pins are zero.
 
-Tempi **misurati per questa sola esecuzione**, non benchmark o garanzie:
-compile 0,179701 s; check 0,007486 s; harness completo 0,651317 s. L'artefatto
-conserva quattro tentativi precedenti: tre fallimenti (parentesi in eccesso,
-budget di copia insufficiente per il rerun e relativa diagnosi) e un check
-riuscito prima di precisare il conteggio del massimo lavoro. Ogni tentativo
-ha comando, ambiente, blob, stato compile, risultato o fallimento, tempi e log.
+Times **measured for this run only**, rather than benchmarks or guarantees:
+compile 0.179701 s; check 0.007486 s; complete harness 0.651317 s. The artifact
+retains four earlier attempts: three failures (extra parenthesis, insufficient
+copy budget for rerun and its diagnosis) and one successful check before
+clarifying maximum-work counting. Every attempt has command, environment,
+blobs, compilation status, result or failure, times, and logs.
 
-## Limiti ancora aperti
+<a id="limiti-ancora-aperti"></a>
 
-> **Proposta** — Servono ancora convertitore offline reale v1/v2, verifica dei
-> byte dei record e della loro equivalenza, budget di byte/memoria/I/O, prove
-> con fsync e filesystem reali, crash dentro syscall/scritture e test dei reader
-> concorrenti. La durabilità e l'EDIT sono azioni atomiche astratte, i contenuti
-> dei segmenti sono booleani/simboli. La falsa verifica è riconosciuta perché
-> l'oracle conosce la validità del caso, non perché un verificatore reale sia
-> garantito infallibile. La dipendenza CRC è il modulo locale SPK-09, non il
-> codec v2; questo esperimento non certifica gli altri moduli né il gate v2.
+## Remaining open limits
+
+> **Proposed** — Still needed: a real offline v1/v2 converter, verification of
+> record bytes and their equivalence, byte/memory/I/O budgets, checks with
+> fsync and real filesystems, crashes inside syscalls/writes, and concurrent
+> reader tests. Durability and EDIT are abstract atomic actions; segment
+> contents are booleans/symbols. False verification is recognized because the
+> oracle knows the case's validity, rather than a real verifier being
+> guaranteed infallible. The CRC dependency is the local SPK-09 module, rather
+> than the v2 codec; this experiment certifies neither the other modules nor
+> the v2 gate.

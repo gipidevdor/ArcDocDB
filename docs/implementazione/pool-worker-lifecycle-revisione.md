@@ -1,31 +1,34 @@
-# Revisione indipendente dell'attuazione logica dei worker
+<a id="revisione-indipendente-dellattuazione-logica-dei-worker"></a>
 
-Lettura statica del 2026-10-13 sulla base
-`105ae0dd28a6ae3e7ee60ab1477815a49b1b350b`, eseguita da un agente diverso
-dall'autore dei sorgenti. Esito della lettura finale: **positivo per lo scope
-C3**, dopo le due correzioni descritte sotto. Questo esito non attesta build,
-test, copertura, misura heap o qualifica del motore.
+# Independent review of logical worker actuation
 
-Sono stati letti integralmente i cinque nuovi sorgenti lifecycle, package e
-integrazione ASDF, il [contratto](pool-worker-lifecycle.md) e il
-[metodo preregistrato](pool-worker-lifecycle-metodo.md). Sono stati riletti
-controllore, verificatore IDLE, claim/cessione del worker e bridge worker/Serie;
-ADR-0011/0031/0035/0045, invarianti e
-[standard di codifica](../affidabilita/standard-di-codifica.md) delimitano la
-valutazione. Il revisore non ha eseguito compilazione, test o benchmark e non
-ha modificato sorgenti, test, ASDF, contratto o Git.
+Static reading on 2026-10-13 against base
+`105ae0dd28a6ae3e7ee60ab1477815a49b1b350b`, performed by an agent other than
+the source author. Final reading outcome: **positive for the C3 scope**,
+after the two corrections described below. This outcome does not attest to a build,
+tests, coverage, heap measurement, or engine qualification.
 
-Prima del congelamento è stata riletta l'integrazione sulla base
-`c4bbb037b779d33ee9e8c01b4a33aac875ccf96f`, dopo l'inclusione dei float CBOR
-e delle evidenze precedenti. Sono stati riletti integralmente ASDF,
-README dell'implementazione e contratto corrente. L'ordine execution,
-controllore e lifecycle e la registrazione dei test scheduler sono
-preservati; la nuova voce README rimanda al contratto e al sorgente corretti.
-Il contratto mantiene invariato il proprio SHA. La tabella seguente riporta
-l'identità dell'ASDF integrato, senza attribuire a questa revisione la
-qualifica dei nuovi componenti codec.
+The five new lifecycle sources, package and ASDF integration, the
+[contract](pool-worker-lifecycle.md), and the
+[preregistered method](pool-worker-lifecycle-metodo.md) were read in full. The
+controller, IDLE checker, worker claim/handoff, and worker/Serie bridge were reread;
+ADR-0011/0031/0035/0045, invariants, and
+[coding standards](../affidabilita/standard-di-codifica.md) bound the
+assessment. The reviewer did not run compilation, tests, or benchmarks and did not
+modify sources, tests, ASDF, the contract, or Git.
 
-## Identità dei file della lettura finale
+Before freezing, the integration was reread against base
+`c4bbb037b779d33ee9e8c01b4a33aac875ccf96f`, after the inclusion of CBOR floats
+and previous evidence. ASDF, the implementation README, and the current contract
+were reread in full. The execution, controller, and lifecycle order and the scheduler
+test registration are preserved; the new README entry links to the correct contract
+and source. The contract retains its SHA unchanged. The following table records
+the identity of the integrated ASDF, without attributing qualification of the new
+codec components to this review.
+
+<a id="identità-dei-file-della-lettura-finale"></a>
+
+## File identities for the final reading
 
 | File | SHA-256 |
 |---|---|
@@ -40,109 +43,115 @@ qualifica dei nuovi componenti codec.
 | `docs/implementazione/pool-worker-lifecycle.md` | `39c95f21b87752208b77844bca26092a4cd9f4f45900a04ead6c3ed42b10dba4` |
 | `docs/implementazione/pool-worker-lifecycle-metodo.md` | `e529f3c3959b8143b099febef773ebc880aeae0424c01e3ddec89583d2d3615b` |
 
-## Rilievi corretti prima dell'esito positivo
+<a id="rilievi-corretti-prima-dellesito-positivo"></a>
 
-1. **Valore dei CAS non verificato, COD-23.** Nella prima versione i CAS di
-   request e ack ignoravano il valore restituito; un conflitto inatteso
-   poteva essere seguito da un falso successo. L'autore ha introdotto
-   `%pool-request-command` e `%pool-ack-command`: entrambi verificano il
-   valore atteso e segnalano `invariant-violation :pool-port-state`.
-   La rilettura conferma la correzione. Non è un retry: un conflitto rompe
-   l'esclusività e impone di interrompere l'uso del componente; un'ondata
-   parzialmente pubblicata non viene annullata. Nessun campo C1 è toccato.
-2. **Complessità della validazione startup, COD-13.** La prima
-   `%pool-validate-ports` raggiungeva complessità ciclomatica 11 contando
-   il ciclo e i cortocircuiti Boolean. L'autore ha estratto
-   `%pool-startup-owner`; forma/capacità e deduplicazione rimangono nel
-   validatore. Entrambi i corpi sono ora sotto il massimo di 10 percorsi
-   indipendenti. Il contratto startup e il binding dopo validazione
-   completa sono preservati.
+## Findings corrected before the positive outcome
 
-Le identità precedenti erano `ee00fa5436a02bd467368b7eb199f1e1364826c1f01257f731e323ccb4da051f`
-per lifecycle-worker, `ef52c911164e7dfe7f0ab0a8d90e5bfc9583a9725de5c546e01639ab76217bf9`
-per lifecycle-update e `5fec1f6e81fc7f1d87e15e4cdcf7904fb9bb75ecb08d92ccc5596e9181a35191`
-per lifecycle-build. Non sono le versioni approvate dalla lettura finale.
+1. **Unchecked CAS return value, COD-23.** In the first version, the request
+   and ack CAS operations ignored the returned value; an unexpected conflict
+   could be followed by false success. The author introduced
+   `%pool-request-command` and `%pool-ack-command`: both check the
+   expected value and signal `invariant-violation :pool-port-state`.
+   Rereading confirms the correction. This is not a retry: a conflict breaks
+   exclusivity and requires discontinuing use of the component; a partially
+   published wave is not rolled back. No C1 field is touched.
+2. **Startup validation complexity, COD-13.** The first
+   `%pool-validate-ports` reached cyclomatic complexity 11 when counting
+   the loop and Boolean short circuits. The author extracted
+   `%pool-startup-owner`; shape/capacity and deduplication remain in the
+   validator. Both bodies are now below the maximum of 10 independent paths.
+   The startup contract and binding after complete validation are preserved.
 
-## Classificazione e barriere
+The previous identities were `ee00fa5436a02bd467368b7eb199f1e1364826c1f01257f731e323ccb4da051f`
+for lifecycle-worker, `ef52c911164e7dfe7f0ab0a8d90e5bfc9583a9725de5c546e01639ab76217bf9`
+for lifecycle-update, and `5fec1f6e81fc7f1d87e15e4cdcf7904fb9bb75ecb08d92ccc5596e9181a35191`
+for lifecycle-build. They are not the versions approved by the final reading.
 
-Il componente resta C3 secondo ADR-0031: decide l'abilitazione logica e
-conta conferme, senza modificare dati, code ready, writer, lease, debiti,
-bridge o controller Serie. La barriera C1 esistente
-`execution::%richiedi-worker :idle` è chiamata soltanto in lettura prima
-di una conferma; non è sostituita da un predicato C3 più debole. L'ack
-packed è esso stesso lo stato active: non esiste una seconda copia da
-sincronizzare. La chiamata factory verifica IDLE prima della costruzione.
+<a id="classificazione-e-barriere"></a>
 
-Il dispatcher deve rispettare il Boolean confermato e non iniziare nuovi
-compiti su una porta inactive. Senza questa cooperazione le API execution
-restano utilizzabili: il nuovo componente non promette un pool esecutivo
-completo. Epoche o risorse esterne al contesto devono essere già rilasciate
-dal caller; il verificatore IDLE non può attestarle. Il bridge va usato
-senza bypass delle API sottostanti durante un tratto.
+## Classification and barriers
 
-## Lista di controllo
+The component remains C3 under ADR-0031: it decides logical enablement and
+counts acknowledgments, without modifying data, ready queues, writers, leases, debts,
+bridges, or Serie controllers. The existing C1 barrier
+`execution::%richiedi-worker :idle` is called only for reading before
+an acknowledgment; it is not replaced by a weaker C3 predicate. The packed ack
+is itself the active state: there is no second copy to synchronize. The factory
+call checks IDLE before construction.
 
-I dodici punti C1 sono impiegati come lista aggiuntiva; non cambiano la
-classe né trasformano questa lettura nella qualifica richiesta a C1.
+The dispatcher must honor the acknowledged Boolean and must not start new
+tasks on an inactive port. Without this cooperation, the execution APIs remain
+usable: the new component does not promise a complete execution pool. Epochs or
+resources outside the context must already have been released by the caller;
+the IDLE checker cannot attest to them. The bridge must be used without
+bypassing the underlying APIs during a segment.
 
-| Punto | Valutazione statica e limite |
+<a id="lista-di-controllo"></a>
+
+## Checklist
+
+The twelve C1 points serve as an additional checklist; they do not change the
+class or turn this reading into the qualification required for C1.
+
+| Point | Static assessment and limitation |
 |---|---|
-| 1. Requisiti e ADR | REQ-THR-001, REQ-CON-001/002/004/005, REQ-AFF-008/013 indicano adattamento, barriera del worker, parallelismo, limiti e ingressi iniettati. REQ-THR-001 resta progettato per il motore completo. |
-| 2. Invarianti | Owner/coordinatore immutabili; request e ack non negativi entro fixnum; una sola generazione pendente con bit diverso; capacità uguale al maximum; request a prefisso e minimo sempre attivo. Il conteggio usa ack, non invio del comando. |
-| 3. Errori | Ragioni tipizzate per owner, input, binding, parole, target e generazione. Rifiuti ordinari precedono binding o campione; conflitto CAS è un'invariante terminale. Nessun handler generico, rollback o errore occultato. |
-| 4. Limiti | Cicli bounded dal vettore di massimo 131072 porte, nessuna ricorsione, attesa, syscall, callback o retry CAS. Worker O(1) oltre al controllo C1 bounded; lettura/aggiornamento O(maximum). |
-| 5. Allocazione | Hash, copia e strutture solo in startup. Nei passi non compaiono liste, closure o strutture nuove; preflight mantiene l'aritmetica packed entro fixnum. Zero heap osservato resta da misurare, non è dedotto dalla lettura. |
-| 6. Risultati verificati | Getter e wrapper controllano owner, legame, parole, prefisso delle request e conteggio. `:unchanged` legge soltanto la conferma precedente: non attesta salute o IDLE. Nessun dato applicativo viene restituito. |
-| 7. Decisioni | Predicati composti circoscritti a parole, startup, legame e intervallo del conteggio; inventario sotto. Per C3 non è prescritto MC/DC. Copertura dei file completi e forme generate ancora da eseguire. |
-| 8. Proprietà | Request/binding del coordinatore, ack del worker; barriere read/write e CAS verificati. Accessi non rientranti, handshake startup esplicito, vettore privato dopo copia. Nessuno stato globale mutabile nuovo. |
-| 9. Tracciabilità e verifica | REQ su definizioni; ASDF carica lifecycle dopo execution e controllore e include il file test lifecycle. Test e campagne non eseguiti dal revisore; gate C3 almeno 95% di istruzioni/espressioni e rami resta pendente. |
-| 10. Standard | Safety 3, ftype completi per le 13 funzioni, slot typed/read-only dove immutabili, copier NIL, docstring, OWNER/SHARED. Funzioni entro 60 righe e complessità sotto 10 dopo estrazione. Lint e compilazione restano verifiche separate. |
-| 11. Parallelismo | Parole indipendenti per worker, scritture per campione/conferma fuori dal corpo delle operazioni della Serie. Nessun lock o contatore globale sul percorso di una richiesta. Non si misura qui scalabilità o equità. |
-| 12. Durabilità | Nessun file, cambiamento durevole, effetto sui payload, CSN o controller Serie. I CAS sono punti di pubblicazione in memoria, senza atomicità su disco da rivendicare. |
+| 1. Requirements and ADRs | REQ-THR-001, REQ-CON-001/002/004/005, REQ-AFF-008/013 specify adaptation, the worker barrier, parallelism, limits, and injected inputs. REQ-THR-001 remains designed for the complete engine. |
+| 2. Invariants | Immutable owner/coordinator; nonnegative request and ack within fixnum; only one pending generation with a different bit; capacity equal to maximum; prefix requests and minimum always active. The count uses ack, not command submission. |
+| 3. Errors | Typed reasons for owner, input, binding, words, target, and generation. Ordinary rejections precede binding or the sample; a CAS conflict is a terminal invariant. No generic handler, rollback, or hidden error. |
+| 4. Bounds | Loops bounded by the vector of at most 131072 ports, no recursion, waiting, syscall, callback, or CAS retry. Worker O(1) beyond the bounded C1 check; reading/updating O(maximum). |
+| 5. Allocation | Hash, copy, and structures only at startup. No new lists, closures, or structures appear in the steps; preflight keeps packed arithmetic within fixnum. Observed zero heap remains to be measured and is not inferred from the reading. |
+| 6. Checked results | Getter and wrapper check owner, binding, words, request prefix, and count. `:unchanged` only reads the previous acknowledgment: it does not attest to health or IDLE. No application data is returned. |
+| 7. Decisions | Compound predicates confined to words, startup, binding, and count range; inventory below. MC/DC is not prescribed for C3. Coverage of complete files and generated forms still needs to run. |
+| 8. Ownership | Coordinator owns request/binding, worker owns ack; read/write barriers and checked CAS operations. Nonreentrant access, explicit startup handshake, private vector after copying. No new mutable global state. |
+| 9. Traceability and verification | REQ on definitions; ASDF loads lifecycle after execution and controller and includes the lifecycle test file. Tests and campaigns were not run by the reviewer; the C3 gate of at least 95% of statements/expressions and branches remains pending. |
+| 10. Standards | Safety 3, complete ftypes for the 13 functions, typed/read-only slots where immutable, copier NIL, docstrings, OWNER/SHARED. Functions within 60 lines and complexity below 10 after extraction. Lint and compilation remain separate checks. |
+| 11. Parallelism | Independent words per worker, writes per sample/acknowledgment outside the body of Serie operations. No lock or global counter on a request path. Scalability or fairness is not measured here. |
+| 12. Durability | No files, durable change, or effect on payloads, CSN, or Serie controllers. CAS operations are in-memory publication points, with no claim of disk atomicity. |
 
-## Inventario del protocollo letto
+<a id="inventario-del-protocollo-letto"></a>
 
-| Confine | Decisioni ed effetto |
+## Inventory of the protocol read
+
+| Boundary | Decisions and effect |
 |---|---|
-| Parole | Uguali, oppure generation request=ack+1 con bit diverso; ogni altro caso è invariante. |
-| Porta startup | Coordinator thread valido, Boolean valido e contesto IDLE completo prima di costruire. |
-| Registro startup | Vettore semplice di capacità esatta; porta/coordinatore validi, bound falso, generation zero, request=ack, prefisso corretto e owner distinti prima del binding. |
-| Registro vivo | Owner corrente, controller/target/capacità coerenti, request a prefisso; actual da ack entro minimum..maximum e pending da ogni disuguaglianza. |
-| Applicazione | Owner prima di ogni accesso; nessun comando restituisce unchanged. Un comando su faulted/busy conserva entrambi i word; IDLE completo precede CAS ack e risultato activated/retired. |
-| Budget | Quando pending è falso, tutte le generation devono avere spazio prima del campione; esaurimento rifiutato anche per hold. Pending non crea un'altra ondata. |
-| Pubblicazione | Solo porte con bit da cambiare ricevono generation+1; CAS verificato, target locale aggiornato dopo la pubblicazione. Nessun comando identico sovrascrive un pending. |
-| Wrapper | Delega il campione al controllore esistente; target diverso pubblica una sola ondata e pending conservativo. Metriche e tick invalidi non pubblicano request. |
+| Words | Equal, or request generation=ack+1 with a different bit; every other case is an invariant. |
+| Startup port | Valid coordinator thread, valid Boolean, and complete IDLE context before construction. |
+| Startup registry | Simple vector of exact capacity; valid port/coordinator, false bound, generation zero, request=ack, correct prefix, and distinct owners before binding. |
+| Live registry | Current owner, consistent controller/target/capacity, prefix requests; actual from ack within minimum..maximum and pending from any inequality. |
+| Application | Owner before every access; no command returns unchanged. A command on faulted/busy preserves both words; complete IDLE precedes ack CAS and the activated/retired result. |
+| Budget | When pending is false, all generations must have room before the sample; exhaustion rejected even for hold. Pending does not create another wave. |
+| Publication | Only ports whose bit must change receive generation+1; checked CAS, local target updated after publication. No identical command overwrites a pending command. |
+| Wrapper | Delegates the sample to the existing controller; a different target publishes one wave and conservative pending. Invalid metrics and ticks do not publish requests. |
 
-Le letture request/ack non richiedono uno snapshot atomico di tutto il
-pool: nel coordinatore request resta stabile durante la scansione; nel
-worker ack ha un solo writer locale non rientrante. Un'ondata cambia tutti
-i bit nella stessa direzione, quindi gli ack possono arrivare fuori ordine
-e il conteggio osservato resta monotono. I buchi nel prefisso degli ack
-intermedi sono leciti. Se pending è falso, tutte le parole lette coincidono
-e actual=target; un pending già osservato può invece restare vero dopo una
-conferma sopraggiunta. Il wrapper non presenta actual come misura della
-salute dei worker o del numero di thread OS.
+Request/ack reads do not require an atomic snapshot of the entire pool:
+on the coordinator, request stays stable during the scan; on the worker,
+ack has only one nonreentrant local writer. A wave changes all bits in the
+same direction, so acks can arrive out of order and the observed count remains
+monotonic. Gaps in the prefix of intermediate acks are legal. If pending is false,
+all words read match and actual=target; an already observed pending can instead
+remain true after an acknowledgment arrives. The wrapper does not present actual
+as a measurement of worker health or OS thread count.
 
-## Obblighi residui e verifiche mancanti
+<a id="obblighi-residui-e-verifiche-mancanti"></a>
 
-Un controller appartiene a un solo registro; dopo il binding viene
-aggiornato esclusivamente tramite il wrapper. Una sola porta operativa
-per contesto, anche fra registri differenti, rimane obbligo del caller:
-bound impedisce il riuso della stessa porta, non individua nuove porte
-duplicate. Startup e vettore di input restano esclusivi fino alla factory;
-la pubblicazione fra owner richiede l'handshake documentato.
+## Remaining obligations and missing checks
 
-FAULTED conserva il comando e può bloccare l'ondata indefinitamente in
-tempo esterno; ogni API resta bounded. La risposta del coordinatore al
-guasto, il dispatcher, avvio/arresto fisico, park/wake, I/O, sensori reali
-e taratura non sono realizzati. Nessun timeout nativo o garanzia di
-progressione del motore è attestato da questa revisione.
+A controller belongs to only one registry; after binding, it is updated
+exclusively through the wrapper. Only one operational port per context, even
+across different registries, remains the caller's obligation: bound prevents
+reuse of the same port but does not detect duplicate new ports. Startup and
+the input vector remain exclusive until the factory; publication between
+owners requires the documented handshake.
 
-Prima della qualifica conservare risultati eseguibili per owner errato,
-startup invalido senza binding parziale, copia dell'input, stati execution
-non IDLE senza perdita di capacità, word incoerenti/esaurimento, conflitti
-dei due helper CAS, ack fuori ordine e campioni invalidi senza mutazione.
-Le prove concorrenti richiedono deadline nel solo harness. Build, lint,
-trace/check, copertura completa dello scope, self-test C4 e misura heap
-restano pendenti al termine di questa lettura: nessun loro risultato è
-stato assunto o promosso a PASS.
+FAULTED retains the command and can block the wave indefinitely in external
+time; every API remains bounded. The coordinator's fault response, dispatcher,
+physical startup/shutdown, park/wake, I/O, real sensors, and tuning are not
+implemented. This review attests to no native timeout or engine progress guarantee.
+
+Before qualification, retain executable results for wrong owner, invalid startup
+without partial binding, input copying, non-IDLE execution states without loss of
+capacity, inconsistent words/exhaustion, conflicts in both CAS helpers, out-of-order
+acks, and invalid samples without mutation. Concurrent tests require deadlines
+only in the harness. Build, lint, trace/check, complete scope coverage, C4
+self-tests, and heap measurement remain pending at the end of this reading:
+none of their results has been assumed or promoted to PASS.

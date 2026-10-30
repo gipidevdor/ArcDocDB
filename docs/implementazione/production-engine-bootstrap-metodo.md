@@ -1,90 +1,100 @@
-# Production Engine Bootstrap — metodo M1
+<a id="production-engine-bootstrap--metodo-m1"></a>
 
-Preregistrato il 2026-10-22 sulla base `eebd5685`. L'indicazione dell'autore
-concentra lo sviluppo sul ciclo startup → recovery → admission della Serie,
-riusando il percorso verticale esistente. Le nuove funzionalita', incluso
-ulteriore full text non necessario al bootstrap, sono sospese in questo lavoro.
+# Production Engine Bootstrap — M1 method
 
-## Perimetro
+Preregistered on 2026-10-22 on base `eebd5685`. Author's direction
+focuses development on Serie startup → recovery → admission cycle,
+reusing existing vertical path. New functionality, including
+further full text unnecessary for bootstrap, suspended in this work.
 
-Una Serie, un owner seriale nel processo I/O, append-only, formati canonici
-v1/v2, CRC32C, PUT/GET/tombstone, commit strong, reopen e due SIGKILL reali.
-Identita' Archivio/Serie configurate esplicitamente e verificate sugli header.
-Non viene inferita una nuova autorita' dal nome della directory. Catalogo
-multiserie, 2PC, compaction, MVCC storico e ottimizzazioni restano esclusi.
-Nessun formato alternativo, append sui vecchi segmenti o troncatura.
+<a id="perimetro"></a>
 
-L'ingresso di produzione possiede FD, set di recovery e writer fino a close.
-Acquisisce l'esclusione non bloccante sulla directory prima di osservare o
-modificare lo storage. Apertura e recovery mantengono admission chiusa;
-solo dopo CONTROL, fonti, nuovo ACTIVE durevole, gate CSN, indice e radice
-GET completi il motore passa a READY. I fallimenti propagano una condizione
-tipizzata e chiudono admission; non restituiscono una capacita' parzialmente pronta.
+## Scope
 
-## Ordine
+One Serie, one serial owner in I/O process, append-only, canonical
+v1/v2 formats, CRC32C, PUT/GET/tombstone, strong commit, reopen, two real SIGKILLs.
+Archivio/Serie identities explicitly configured and checked in headers.
+No new authority inferred from directory name. Multiseries
+catalog, 2PC, compaction, historical MVCC, optimizations excluded.
+No alternative format, append to old segments, or truncation.
 
-1. Rafforzare e qualificare la campagna verticale esistente, conservando
-   output anche su timeout ed errori. Attesi costanti, 18 scenari/71 processi,
-   26 SIGKILL e due controlli negativi; nessuna attribuzione alla qualifica C1.
-2. Trasferire il coordinamento nello strato di produzione: creazione esplicita
-   in directory vuota oppure apertura autorevole; gate canonici prima degli
-   effetti, scelta ID dall'inventario completo, checkpoint con publisher
-   esistente, vecchi segmenti readonly e nuove capacita' possedute.
-3. Ricostruire l'indice privato dai soli prefissi committed verificati;
-   tombstone considerate nel massimo CSN, stesso registro per writer e GET,
-   nessuna richiesta ammessa prima della radice completa.
-4. Usare le API di produzione nei processi di prova, senza bootstrap/replay
-   manuale nel test. Due crash, restart, nuove scritture e verifica da processo
-   distinto; oracoli indipendenti su dati, CSN e byte preesistenti.
-5. Collegare il client/server Unix esistente al medesimo ingresso, rispettando
-   ADR-0055/0056. Il trasporto non apre admission e non ricostruisce lo stato.
+Production entry owns FDs, recovery set, writer through close.
+Acquires nonblocking directory exclusion before observing or
+modifying storage. Opening/recovery keep admission closed;
+only after complete CONTROL, sources, durable new ACTIVE, CSN gate, index, and GET
+root does engine become READY. Failures propagate typed condition
+and close admission; no partially ready capability returned.
 
-## Decisioni e verifiche
+<a id="ordine"></a>
 
-| ID | Confine e oracolo |
+## Order
+
+1. Strengthen/qualify existing vertical campaign, preserving
+   output even on timeout/errors. Fixed expected values, 18 scenarios/71 processes,
+   26 SIGKILLs and two negative checks; no attribution to C1 qualification.
+2. Transfer coordination into production layer: explicit creation
+   in empty directory or authoritative opening; canonical gates before
+   effects, ID choice from complete inventory, checkpoint through existing
+   publisher, old read-only segments, newly owned capabilities.
+3. Rebuild private index from verified committed prefixes only;
+   tombstones considered in maximum CSN, same register for writer/GET,
+   no request admitted before complete root.
+4. Use production APIs in test processes without manual bootstrap/replay
+   in test. Two crashes, restart, new writes, separate-process
+   verification; independent oracles on data, CSNs, existing bytes.
+5. Connect existing Unix client/server to same entry, respecting
+   ADR-0055/0056. Transport neither opens admission nor rebuilds state.
+
+<a id="decisioni-e-verifiche"></a>
+
+## Decisions and verification
+
+| ID | Boundary and oracle |
 |---|---|
-| M1-D01 | Configurazione e identita' errate; nessun dato mutato |
-| M1-D02 | Secondo owner/processo rifiutato dal lock prima degli effetti |
-| M1-D03 | Init esplicito solo su storage vuoto, open non inizializza file mancanti |
-| M1-D04 | Recovery completo e CRC; coda non sigillata conservata, corruzione dichiarata |
-| M1-D05 | Nuovo ID fresco, checkpoint atomico esistente e nomi completati prima di READY |
-| M1-D06 | Massimo CSN comprende tombstone; ripresa strettamente successiva, nessun reset |
-| M1-D07 | Admission rifiutata in startup/recovery/fault/closed e da owner estraneo |
-| M1-D08 | Conferma solo dopo write+flush+pubblicazione indice/radice; errore senza conferma |
-| M1-D09 | Short I/O/errori: primitive canoniche, stato faulted, nessun retry o rollback implicito |
-| M1-D10 | Due SIGKILL e reopen da processi distinti; ogni strong confermato recuperabile |
-| M1-D11 | Cleanup tenta tutte le capacita', preserva causa primaria e guasti secondari |
-| M1-D12 | Interfaccia reale riusa il medesimo percorso, senza harness nel processo server |
+| M1-D01 | Wrong configuration/identity; no data mutated |
+| M1-D02 | Second owner/process rejected by lock before effects |
+| M1-D03 | Explicit init only on empty storage, open does not initialize missing files |
+| M1-D04 | Complete recovery and CRC; unsealed tail retained, corruption reported |
+| M1-D05 | Fresh new ID, existing atomic checkpoint, completed names before READY |
+| M1-D06 | Maximum CSN includes tombstones; strictly later restart, no reset |
+| M1-D07 | Admission rejected in startup/recovery/fault/closed and from foreign owner |
+| M1-D08 | Acknowledgment only after write+flush+index/root publication; error without acknowledgment |
+| M1-D09 | Short I/O/errors: canonical primitives, faulted state, no implicit retry/rollback |
+| M1-D10 | Two SIGKILLs and reopen from distinct processes; every acknowledged strong write recoverable |
+| M1-D11 | Cleanup attempts all capabilities, preserves primary cause and secondary faults |
+| M1-D12 | Real interface reuses same path, without harness in server process |
 
-Sorgenti committati/congelati, due letture e revisione indipendente prima
-delle esecuzioni. Test deterministici, negativi e FI autorizzati dall'autore;
-ogni comando passa dal recorder, fallimenti inclusi. Evidenze compatte
-lossless nel repository, hash dei sorgenti e collector comune con worker
-paralleli. Nessun benchmark in questa milestone e nessuna pretesa di qualifica
-power loss, filesystem guasto permanentemente, Linux non eseguito o MC/DC
-senza relative campagne. La milestone resta aperta finche' lo scenario reale
-e i suoi criteri non sono dimostrati; i controlli statici non la chiudono.
+Sources committed/frozen, two readings and independent review before
+executions. Deterministic tests, negatives, FI authorized by author;
+every command through recorder, failures included. Compact lossless
+evidence in repository, source hashes, common collector with parallel
+workers. No benchmark this milestone and no claim of power-loss,
+permanently failed file-system, unexecuted Linux, or MC/DC qualification
+without corresponding campaigns. Milestone remains open until real scenario
+and criteria demonstrated; static checks do not close it.
 
-## Integrazione preregistrata: capienza dell'indice
+<a id="integrazione-preregistrata-capienza-dellindice"></a>
 
-Dopo la verifica completa della variante `b5f09b96` viene chiuso un ulteriore
-confine di M1-D08/D09: load, arena chiavi, credito slot e revisione vanno
-verificati prima di CSN/append, con gli stessi controlli canonici dei mutatori.
-Nessuna prenotazione concorrente: l'owner M1 resta unico fino all'applicazione.
+## Preregistered integration: index capacity
 
-Le due regressioni, v1/v2, saturano rispettivamente il carico 28/32 e un'arena
-di 64 byte con quattro chiavi di 16 byte. La richiesta ulteriore deve produrre
-RESOURCE-EXHAUSTED lasciando READY, CSN e tutti i byte invariati. Si verificano
-update ammesso, DELETE, nuova apertura con gli stessi budget e arena non
-recuperata implicitamente dalla tombstone. Un processo negativo isolato carica
-il solo writer precedente, dal commit immutabile `b5f09b96`, e deve rilevare
-esattamente FAULTED al posto di READY. Nessun risultato del processo mutato
-qualifica il prodotto; sorgente sostituito e storage del negativo sono conservati.
+After full verification of variant `b5f09b96`, an additional
+M1-D08/D09 boundary closed: load, key arena, slot credit, and revision must
+be checked before CSN/append with same canonical mutator checks.
+No concurrent reservation: M1 owner remains sole owner through application.
 
-La verifica integrale finale puo' eseguire in parallelo i controlli indipendenti:
-test del prodotto; lint/trace e autocontrolli/esperimenti; conservazione storica.
-Il controllo dei link segue la chiusura di tutti i produttori e la raccolta.
-L'unione deve coprire esattamente i dodici target di `check-core`, senza benchmark;
-ogni gruppo ha un record originale e un esito terminale, senza dedurre un passaggio
-da un altro gruppo. Si conserva anche il `make check` seriale della variante
-precedente, distinguendone commit e perimetro dal controllo finale parallelo.
+Both v1/v2 regressions saturate load 28/32 and 64-byte arena
+with four 16-byte keys respectively. Additional request must produce
+RESOURCE-EXHAUSTED leaving READY, CSN, all bytes unchanged. Checks
+include allowed update, DELETE, reopening with same budgets, arena not
+implicitly reclaimed by tombstone. Isolated negative process loads
+only previous writer from immutable commit `b5f09b96` and must detect
+exactly FAULTED in place of READY. No mutated-process result
+qualifies product; replaced source and negative storage preserved.
+
+Final full verification may run independent checks in parallel:
+product tests; lint/trace and self-checks/experiments; historical preservation.
+Link check follows closure of all producers and collection.
+Union must cover exactly twelve `check-core` targets without benchmarks;
+each group has original record and terminal outcome, without inferring a pass
+from another group. Previous variant's serial `make check` also preserved,
+distinguishing commit/scope from final parallel check.

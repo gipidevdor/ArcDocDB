@@ -1,166 +1,166 @@
-# SPK-02 — GC di SBCL sotto carico
+<a id="spk-02--gc-di-sbcl-sotto-carico"></a>
 
-> **Proposta** — Esperimento di Fase 0, classe C4. Metodo sintetico per valutare
-> ADR-0024, ADR-0043 e ADR-0045; non costituisce codice di produzione o verifica
-> dei minimi di ADR-0028. L'autore ha confermato ADR-0028/0030.
+# SPK-02 — SBCL GC under load
 
-## Domanda
+> **Proposed** — Phase-0 experiment, class C4. Synthetic method to evaluate ADR-0024,
+> ADR-0043, and ADR-0045; neither production code nor verification of ADR-0028 minima.
+> The author confirmed ADR-0028/0030.
 
-Come variano i tempi di collection con memoria viva in un array specializzato
-grande, frammenti da 256 KiB, frammenti sostituiti e memoria foreign? Come incidono
-tasso di allocazione e numero di worker attivi oppure in attesa di semaforo?
+<a id="domanda"></a>
 
-## Metodo previsto prima dell'esecuzione
+## Question
 
-- Package `arcdocdb.spk02`, API `(check)` e `(benchmark &key ...)`, solo Common
-  Lisp e facility SBCL, `safety 3`, senza dipendenze esterne.
-- Payload vivo predefinito: 128 MiB, configurabile in byte. I quattro layout sono
-  `:heap-large`, `:heap-fragments`, `:heap-replacement` e `:foreign`. I primi tre
-  usano array `(unsigned-byte 8)`; il confronto foreign usa
-  `sb-alien:make-alien`/`free-alien`, sempre con `unwind-protect`. Le pagine sono
-  toccate prima della misura; l'ultimo frammento può essere più piccolo.
-- Un controller è il solo allocatore intenzionale: inietta payload transitori
-  da 64 KiB a tassi aggregati richiesti di 0, 4 MiB/s e 128 MiB/s. Riporta i byte
-  effettivamente prodotti e il tasso osservato, senza supporre che il tasso
-  richiesto sia stato raggiunto. Un anello limitato trattiene gli ultimi payload.
-  Nei casi di rimpiazzo il controller sostituisce un frammento per passo, con
-  limite dichiarato. I worker ripetono lavoro numerico su buffer privati oppure
-  attendono un semaforo: non sono il motore ArcDocDB e non accedono al payload.
-  Non si dichiara zero allocazione per i worker: si riporta l'allocazione
-  misurata del processo nella finestra, inclusa quella dello strumento. Il tasso
-  zero richiesto riguarda l'iniezione di payload; i rimpiazzi sono separati.
-- Campagna sequenziale con 1, 16 e 64 worker; 256 è opzionale. Il report include
-  anche il numero di thread del processo al completamento della barriera ready.
-  Per ogni layout:
-  tre tassi con worker attivi e tasso zero con worker in attesa. Le configurazioni
-  escluse sono dichiarate: non è una matrice fattoriale completa.
-- Avvio con stato protetto da mutex, semafori ready/start e conferma running;
-  arresto cooperativo, risveglio dei worker e join di tutti i thread anche nei
-  percorsi di errore. Gli errori dei worker sono conservati e propagati.
-- Dopo il riscaldamento si misurano separatamente collection richieste con
-  `(sb-ext:gc :gen 0)` e `(sb-ext:gc :full t)`, poi una finestra con GC automatico.
-  `:gen 0` può raccogliere anche generazioni più vecchie. Si conserva e ripristina
-  `sb-ext:bytes-consed-between-gcs`.
-- Campioni in vettori preallocati, nessuna lista di campioni nel percorso
-  misurato. P50/P99 usano nearest rank: elemento ordinato in posizione
-  `ceil(p * count)`, contando da 1. I vettori pieni riportano campioni scartati;
-  i quantili descrivono il prefisso conservato; il massimo include anche i
-  campioni scartati. I worker conservano 256 latenze/ritardi ciascuno: un buffer
-  saturo può dare quantili poco rappresentativi della fase finale. Nessun campione significa valori
-  `nil`, non zero. Nessuna stima di P99.9 da questa campagna breve.
+How do collection times vary with live memory in one large specialized array,
+256 KiB fragments, replaced fragments, and foreign memory? How do allocation
+rate and number of active or semaphore-waiting workers affect them?
 
-## Che cosa viene misurato
+<a id="metodo-previsto-prima-dellesecuzione"></a>
 
-`sb-ext:*gc-real-time*` è il tempo reale cumulativo di collection del runtime.
-Si misurano i delta, senza azzerare o legare dinamicamente il contatore. Le
-letture vengono ripetute se cambia l'epoca fra la prima e l'ultima lettura;
-32 tentativi senza un'istantanea coerente segnalano un errore. Il tempo
-wall intorno a `gc` include chiamata, coordinamento e altro lavoro del runtime;
-non è la durata dello stop di tutti i thread. Il codice SBCL 2.6.9 aggiorna il
-contatore nella fase di collection dopo l'arresto del mondo: i delta **non**
-misurano l'intero protocollo stop/resume. I report distinguono esplicitamente
-`:forced-gc` e `:automatic-gc`, con `:exact-stop-world-time nil`.
-[Manuale SBCL](https://www.sbcl.org/manual/#Introspection-and-Tuning),
-[implementazione SBCL 2.6.9](https://github.com/sbcl/sbcl/blob/sbcl-2.6.9/src/code/gc.lisp).
+## Method planned before execution
 
-Per rilevare anche collection con delta zero si cerca per introspezione
-`SB-KERNEL::*GC-EPOCH*`. È un'interfaccia interna: lo spike dichiara la capacità
-rilevata e rifiuta la misura se manca. Un cambio d'identità fra due osservazioni
-rileva **una o più** collection: non fornisce il loro numero esatto. I quantili
-automatici sono quindi **delta cumulativi per finestra con collection**, non
-una distribuzione garantita delle singole pause. Collection durante uscita dei
-thread e preparazione sono escluse dalle finestre della campagna.
+- Package `arcdocdb.spk02`, APIs `(check)` and `(benchmark &key ...)`, Common Lisp and
+  SBCL facilities only, `safety 3`, no external dependencies.
+- Default live payload: 128 MiB, configurable in bytes. Four layouts:
+  `:heap-large`, `:heap-fragments`, `:heap-replacement`, and `:foreign`. First three
+  use `(unsigned-byte 8)` arrays; foreign comparison uses
+  `sb-alien:make-alien`/`free-alien`, always with `unwind-protect`. Pages touched
+  before measurement; last fragment may be smaller.
+- A controller is the sole intentional allocator: injects 64 KiB transient payloads
+  at requested aggregate rates of 0, 4 MiB/s, and 128 MiB/s. Reports actual bytes
+  produced and observed rate, without assuming the requested rate was reached.
+  A bounded ring retains recent payloads. In replacement cases, the controller
+  replaces one fragment per step, with a declared bound. Workers repeat numerical
+  work on private buffers or await a semaphore: they are not the ArcDocDB engine
+  and do not access payload. No zero-allocation claim for workers: measured process
+  allocation in the window is reported, including instrumentation. Requested zero
+  rate concerns payload injection; replacements are separate.
+- Sequential campaign with 1, 16, and 64 workers; 256 optional. Report also includes
+  process thread count when the ready barrier completes. Per layout:
+  three rates with active workers and zero rate with waiting workers. Excluded
+  configurations are declared: this is not a full factorial matrix.
+- Startup with mutex-protected state, ready/start semaphores, and running confirmation;
+  cooperative stop, worker wakeup, and join of every thread including error paths.
+  Worker errors retained and propagated.
+- After warmup, separately measure requested collections with `(sb-ext:gc :gen 0)`
+  and `(sb-ext:gc :full t)`, then an automatic-GC window. `:gen 0` may collect older
+  generations too. Preserve and restore `sb-ext:bytes-consed-between-gcs`.
+- Samples in preallocated vectors, no sample lists on measured path. P50/P99 use
+  nearest rank: sorted element at `ceil(p * count)`, counting from 1. Full vectors
+  report discarded samples; quantiles describe retained prefix; maximum also
+  includes discarded samples. Workers retain 256 latencies/delays each: saturation
+  may yield quantiles unrepresentative of the final phase. No samples means `nil`,
+  not zero. No P99.9 estimate from this short campaign.
 
-I ritardi tra richieste dei worker e le loro latenze comprendono scheduling e
-contesa CPU; non si attribuiscono interamente al GC. Il costo dell'orologio,
-della lettura dei contatori e della registrazione è misurato separatamente come
-overhead del benchmark; non viene sottratto dai campioni di GC. Si riportano
-anche tempo totale di collection nella finestra e frequenza minima delle
-finestre osservate, senza inventare il numero di collection.
+<a id="che-cosa-viene-misurato"></a>
 
-## Limiti e risorse
+## What is measured
 
-> **Proposta** — Default: budget cooperativo di 12 secondi per la campagna,
-> finestre automatiche da 80 ms, tre campioni per ciascun GC forzato, nursery
-> richiesta da 4 MiB. Si mira a circa 15 secondi includendo preparazione/check,
-> con payload vivo inferiore a 1 GiB. Si interrompe l'avvio di nuovi casi al
-> budget; una collection o il join già iniziati possono superarlo. La durata
-> effettiva, i casi omessi e quelli troncati sono riportati, non garantiti dal tempo.
+`sb-ext:*gc-real-time*` is runtime cumulative collection wall time.
+Measure deltas, without resetting or dynamically binding the counter.
+Reads repeat if the epoch changes between first and final read; 32 attempts
+without a consistent snapshot signal an error. Wall time around `gc` includes
+call, coordination, and other runtime work; it is not the duration of all-thread
+stoppage. SBCL 2.6.9 updates the counter in the collection phase after stopping
+the world: deltas do **not** measure the complete stop/resume protocol.
+Reports explicitly distinguish `:forced-gc` and `:automatic-gc`, with
+`:exact-stop-world-time nil`.
+[SBCL manual](https://www.sbcl.org/manual/#Introspection-and-Tuning),
+[SBCL 2.6.9 implementation](https://github.com/sbcl/sbcl/blob/sbcl-2.6.9/src/code/gc.lisp).
 
-Il payload configurabile è limitato a 512 MiB. Campioni, anello transitorio e
-numero di rimpiazzi sono limitati. Questo è un limite dei dati dello spike,
-non una misura di RSS: runtime, stack, pagine del collector e allocator foreign
-richiedono memoria aggiuntiva. Il controller serializza l'iniezione del carico
-e la misura. Il mutex del gruppo serializza le transizioni di stato, la lettura
-degli errori e il polling stop dei worker fra batch: può influenzare i ritardi
-di scheduling e non è incluso interamente nella baseline del solo controller.
-Questo protocollo del harness non introduce lock fra Serie nel prodotto (INV-P6).
+To detect collections with zero delta too, introspect `SB-KERNEL::*GC-EPOCH*`.
+This is an internal interface: the spike declares detected capability and rejects
+measurement if absent. An identity change between observations detects **one or more**
+collections, not their exact count. Automatic quantiles are therefore **cumulative
+deltas per window with collection**, not a guaranteed distribution of individual
+pauses. Collections during thread exit and preparation are excluded from campaign windows.
 
-Le dimensioni ridotte non rappresentano gli heap da decine di GB previsti dal
-piano originale. Attendere un semaforo non riproduce ogni chiamata di I/O.
-Tre campioni forzati e finestre brevi servono a diagnosticare lo strumento;
-servono campagne dedicate per valutare le code della distribuzione. Su macOS
-nessuna conclusione è trasferita all'hardware Linux di riferimento.
+Worker inter-request delays and latencies include scheduling and CPU contention;
+they are not attributed entirely to GC. Clock, counter-read, and recording costs
+are measured separately as benchmark overhead, not subtracted from GC samples.
+Also report total collection time in window and minimum observed-window frequency,
+without inventing collection counts.
 
-## Ambiente e comandi
+<a id="limiti-e-risorse"></a>
 
-L'output registra versione SBCL, sistema operativo, macchina, feature del
-collector, risoluzione dell'orologio, spazio dinamico e nursery effettiva.
-Per riproducibilità si annotano anche hardware, RAM, carico esterno
-e comando; le misure si eseguono in serie.
+## Limits and resources
+
+> **Proposed** — Defaults: cooperative 12-second campaign budget, 80 ms automatic
+> windows, three samples per forced GC, requested 4 MiB nursery. Aim for roughly
+> 15 seconds including preparation/check, with live payload below 1 GiB.
+> Stop starting cases at budget; an ongoing collection or join may exceed it.
+> Actual duration, omitted cases, and truncated cases are reported, not time-guaranteed.
+
+Configurable payload is limited to 512 MiB. Samples, transient ring, and replacement
+count are bounded. This limits spike data, not RSS: runtime, stacks, collector pages,
+and foreign allocator need extra memory. Controller serializes load injection and
+measurement. Group mutex serializes state transitions, error reads, and worker stop
+polling between batches: it may affect scheduling delays and is not fully included
+in controller-only baseline. This harness protocol introduces no inter-Serie product
+locks (INV-P6).
+
+Small sizes do not represent the tens-of-GB heaps in the original plan.
+Semaphore waiting does not reproduce every I/O call. Three forced samples and short
+windows diagnose instrumentation; dedicated campaigns are needed for distribution
+tails. No macOS conclusion transfers to reference Linux hardware.
+
+<a id="ambiente-e-comandi"></a>
+
+## Environment and commands
+
+Output records SBCL version, operating system, machine, collector features,
+clock resolution, dynamic space, and actual nursery. For reproducibility,
+also record hardware, RAM, external load, and command; run measurements serially.
 
 ```sh
-# Solo verifica deterministica, piccola e rapida.
+# Only a small, fast deterministic check.
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-02-gc/run.lisp --check
 
-# Campagna predefinita: include check; da eseguire in serie.
+# Default campaign: includes check; run serially.
 sbcl --noinform --no-userinit --no-sysinit --dynamic-space-size 768 \
   --script spikes/SPK-02-gc/run.lisp --bench
 
-# Diagnostica breve, payload piccolo, un worker.
+# Short diagnostic, small payload, one worker.
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-02-gc/run.lisp \
   --bench --live-mib=2 --threads=1 --budget-ms=1000 --case-ms=10 --forced-samples=1
 
-# Esempio di personalizzazione Lisp dopo aver caricato core.fasl.
+# Example Lisp customization after loading core.fasl.
 # (arcdocdb.spk02:benchmark :live-bytes (* 256 1024 1024)
 #   :thread-counts '(1 16 64 256) :budget-seconds 12 :case-seconds 0.08d0)
 ```
 
-`run.lisp` risolve `core.lisp` rispetto a `*load-truename*`, compila
-`out/core.fasl` con warning/style-warning fatali e scrive una sola plist
-s-expression leggibile. Errori: plist `:status :error` e exit code non nullo.
-Gli artefatti locali in `out/` sono ignorati da Git.
+`run.lisp` resolves `core.lisp` relative to `*load-truename*`, compiles
+`out/core.fasl` with fatal warning/style-warning, and writes one readable
+s-expression plist. Errors: `:status :error` plist and nonzero exit code.
+Local `out/` artifacts are Git-ignored.
 
-## Risultato
+<a id="risultato"></a>
 
-README scritto prima dell'esecuzione. Il 2026-10-08, su SBCL 2.6.9,
-Darwin/ARM64, `--check` è passato con compilazione priva di warning e
-style-warning. Le fixture verificano quantili/overflow, contenuto e rimpiazzo
-degli array, conservazione attraverso GC, rilascio foreign su errore, barriere,
-arresto/join, propagazione degli errori worker e distinzione dei contatori.
-Il runner è stato eseguito anche da `/tmp` con percorso assoluto.
+## Result
 
-La sola diagnostica breve è stata eseguita con `--bench --live-mib=2
+README written before execution. On 2026-10-08, SBCL 2.6.9, Darwin/ARM64,
+`--check` passed with warning/style-warning-free compilation. Fixtures verify
+quantiles/overflow, array contents and replacement, retention across GC, foreign
+release on error, barriers, stop/join, worker-error propagation, and counter
+distinctions. Runner also executed from `/tmp` with absolute path.
+
+Only the short diagnostic ran with `--bench --live-mib=2
 --threads=1 --budget-ms=1000 --case-ms=10 --forced-samples=1`:
-16 casi completati sui quattro layout, tutti i worker joined, una sola plist
-leggibile su stdout. Il contatore interno `:actual-wall-ms` della campagna ha
-misurato **265.231 ms**; questa durata comprende preparazione e misura della
-campagna, esclude compilazione, check e stampa finale. Sono state osservate
-quattro finestre con GC automatico: non si deduce il numero esatto di collection.
-Output locale: `out/diagnostic.sexp`. Questo risultato verifica il percorso
-del harness con input piccoli; non è una misura sull'hardware di riferimento.
+16 completed cases across four layouts, every worker joined, one readable plist
+on stdout. Internal campaign counter `:actual-wall-ms` measured **265.231 ms**;
+this includes campaign preparation and measurement, excludes compilation,
+check, and final printing. Four automatic-GC windows were observed:
+exact collection count cannot be inferred. Local output: `out/diagnostic.sexp`.
+This verifies the harness path with small inputs, not reference-hardware performance.
 
-La campagna predefinita da 128 MiB, i profili con 16/64 worker e il profilo
-opzionale con 256 worker non sono stati misurati in questa diagnostica.
-Le misure si eseguono in serie. Durata e memoria effettive del default non sono
-quindi verificate; il budget e i limiti descritti sopra sono parametri.
+The default 128 MiB campaign, 16/64-worker profiles, and optional 256-worker profile
+were not measured in this diagnostic. Measurements run serially. Actual default
+duration and memory are therefore unverified; budgets and limits above are parameters.
 
-Non è stato dimostrato un bug architetturale. Resta un limite della verifica
-di ADR-0024/0045: i delta del contatore di collection e la durata di `:forced-gc`
-non bastano a certificare la pausa completa stop/resume né il criterio P99.9
-di ADR-0028. Occorrono ulteriori misure sull'ambiente previsto.
+No architectural bug was demonstrated. Verification of ADR-0024/0045 remains limited:
+collection-counter deltas and `:forced-gc` duration cannot certify full stop/resume
+pause or ADR-0028's P99.9 criterion. Further measurements in the intended environment
+are required.
 
-Requisiti collegati: REQ-SIM-001, REQ-SIM-002, REQ-OBS-001, REQ-BEN-001,
-REQ-BEN-002, REQ-AFF-003, REQ-AFF-008 e REQ-AFF-016. Nessuna modifica di
-requisito o di documenti in `docs/`; l'aggiornamento di tracciabilità e valutazione
-rientra nella fase di integrazione.
+Related requirements: REQ-SIM-001, REQ-SIM-002, REQ-OBS-001, REQ-BEN-001,
+REQ-BEN-002, REQ-AFF-003, REQ-AFF-008, and REQ-AFF-016. No requirement changes
+or changes to `docs/`; traceability and evaluation updates belong to integration.

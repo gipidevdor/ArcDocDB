@@ -1,232 +1,246 @@
-# SPK-10 — metodo CBOR
+<a id="spk-10--metodo-cbor"></a>
 
-Registrato prima della compilazione e dell'esecuzione del modulo `cbor.lisp`.
-Ambito: questo metodo e il modulo sperimentale, fuori da
-`src/`. Requisiti esercitati: REQ-LIM-002, REQ-AFF-008, REQ-SIM-002.
+# SPK-10 — CBOR method
 
-## Domanda e fonti
+Registered before compilation and execution of module `cbor.lisp`.
+Scope: this method and the experimental module, outside `src/`.
+Requirements exercised: REQ-LIM-002, REQ-AFF-008, REQ-SIM-002.
 
-Il validatore può applicare i limiti di ADR-0048 senza ricorsione sullo stack
-nativo, senza allocazioni proporzionali a lunghezze dichiarate nell'input e
-attraversando sia le chiavi sia i valori delle mappe?
+<a id="domanda-e-fonti"></a>
 
-Fonti del repository: [CONTRIBUTING.md](../../CONTRIBUTING.md), ADR-0014, ADR-0027, ADR-0048,
-`docs/invarianti.md`, `docs/affidabilita/standard-di-codifica.md` e registro
-dei requisiti. ADR-0014 richiede CBOR deterministico ma non sceglie esplicitamente
-fra i due ordinamenti descritti da RFC 8949.
+## Question and sources
 
-> **Proposta** — per questo esperimento si usa il profilo core deterministic di
+Can the validator enforce ADR-0048 limits without native stack recursion,
+without allocations proportional to lengths declared in the input, and while
+traversing both map keys and values?
+
+Repository sources: [CONTRIBUTING.md](../../CONTRIBUTING.md), ADR-0014, ADR-0027, ADR-0048,
+`docs/invarianti.md`, `docs/affidabilita/standard-di-codifica.md`, and the
+requirements register. ADR-0014 requires deterministic CBOR but does not
+explicitly choose between the two orderings described by RFC 8949.
+
+> **Proposed** — this experiment uses the core deterministic profile from
 > [RFC 8949 §4.2.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1):
-> argomenti minimi, lunghezze definite, chiavi in ordine lessicografico dei byte
-> della codifica. Non si usa l'ordinamento alternativo length-first (§4.2.3).
-> Le chiavi duplicate sono rifiutate (§5.6.1). Il confronto fra codifiche è
-> sufficiente nel sottoinsieme ammesso, in cui ogni valore ha una codifica unica;
-> sono ammesse anche chiavi array e mappa, validate prima del confronto.
+> minimal arguments, definite lengths, keys in lexicographic order of their
+> encoded bytes. The alternative length-first ordering (§4.2.3) is not used.
+> Duplicate keys are rejected (§5.6.1). Comparing encodings is sufficient in
+> the admitted subset, in which every value has a unique encoding; array and
+> map keys are also admitted, validated before comparison.
 
-> **Proposta** — il sottoinsieme comprende interi positivi e negativi fino ai
-> limiti dei major type 0/1, stringhe binarie, testo UTF-8, array, mappe,
-> booleani e null. Floating point, tutti i tag e altri simple value producono
-> `:unsupported`. Non si dichiara validazione completa del CBOR di ADR-0014.
-> Un tag consuma un nodo, non un livello di contenitore, prima del rifiuto;
-> non si attraversa il suo contenuto e non si deduce che la sua semantica sia valida.
+> **Proposed** — the subset includes positive and negative integers up to the
+> limits of major types 0/1, binary strings, UTF-8 text, arrays, maps, booleans,
+> and null. Floating point, all tags, and other simple values produce
+> `:unsupported`. Complete validation of ADR-0014 CBOR is not claimed.
+> A tag consumes one node, rather than a container level, before rejection;
+> its content is not traversed and its semantics are not inferred to be valid.
 
-## Algoritmo e risorse
+<a id="algoritmo-e-risorse"></a>
 
-Una macchina iterativa mantiene una pila locale di contenitori, con
-conteggi residui, offset della codifica e della chiave precedente. La mappa
-conta due figli per coppia. Un array/mappa radice è livello 1; scalari livello 0.
-Si completano gli antenati iterativamente quando si esauriscono i figli.
-Le stringhe non sono copiate né decodificate in oggetti Lisp. UTF-8 è controllato
-per byte, inclusi overlong, surrogate, continuazioni e limite U+10FFFF.
+## Algorithm and resources
 
-Prima di creare la pila o leggere l'input si controllano tipo, configurazione,
-dimensione effettiva del buffer, limite documentale e budget dei byte. Lunghezze
-e conteggi sono controllati rispetto ai byte residui e al budget dei nodi;
-non determinano allocazioni. L'header legge al massimo otto byte di argomento.
-La pila è O(limite-profondita), al massimo 100 frame. L'allocazione dei frame
-è pigra, come descritto nella revisione sotto. Nessuno stato condiviso,
-lock, I/O o scrittura durevole: la sola sequenza seriale è il percorso di un documento.
-Il chiamante deve mantenere immutabile il buffer durante la validazione.
+An iterative machine maintains a local container stack, with remaining counts,
+encoding offsets, and previous-key offsets. A map counts two children per
+pair. A root array/map is level 1; scalars are level 0. Ancestors are completed
+iteratively when their children are exhausted. Strings are neither copied nor
+decoded into Lisp objects. UTF-8 is checked bytewise, including overlong
+encodings, surrogates, continuations, and the U+10FFFF limit.
 
-Il budget byte è un limite sui byte codificati in input, distinto dal limite
-documentale e dal budget nodi. Il confronto delle chiavi può rileggere byte:
-il suo lavoro è limitato dalla dimensione dei due span, ripetuto al più per
-ogni coppia adiacente di chiavi e ogni contenitore (tetto profondità 100).
-Non è un budget sul numero totale di accessi alla memoria.
+Before creating the stack or reading input, the validator checks type,
+configuration, actual buffer size, document limit, and byte budget. Lengths
+and counts are checked against remaining bytes and the node budget; they do
+not determine allocations. The header reads at most eight argument bytes.
+The stack is O(limite-profondita), at most 100 frames. Frame allocation is
+lazy, as described in the revision below. No shared state, locks, I/O, or
+durable writes: the only serial sequence is the path through one document.
+The caller must keep the buffer immutable during validation.
 
-## API prevista
+The byte budget limits encoded input bytes, separately from the document
+limit and node budget. Key comparison may reread bytes: its work is bounded
+by the sizes of the two spans, repeated at most for every adjacent key pair
+and every container (depth ceiling 100). It is not a budget on total memory
+accesses.
 
-Package indipendente `arcdocdb.spk10.cbor`; dipendenze solo Common Lisp/SBCL.
-`valida-documento` riceve un `simple-array (unsigned-byte 8) (*)` e keyword
-`:limite-documento` (default 16.777.216), `:limite-profondita` (100),
-`:budget-nodi` (16.777.216), `:budget-byte` (16.777.216).
-I limiti possono essere ridotti; budget nulli rifiutano il lavoro pertinente,
-budget negativi/non interi sono errori di configurazione. Profondità zero
-ammette solo scalari. Si restituisce una plist con `:status :ok`, conteggi,
-limiti applicati e ambito `:partial`. Gli errori sono `errore-cbor`, con
-ragione keyword, posizione e contatori accessibili pubblicamente.
+<a id="api-prevista"></a>
 
-`check` restituisce una plist `:status :ok` con conteggi delle fixture, mutazioni
-e limiti effettivi. `benchmark` restituisce una plist; parametro `:seconds`,
-default 2,5 secondi, parametro ammesso 0–3 secondi, sei finestre e al massimo
-100.000 iterazioni per finestra. Le fixture sono costruite prima delle finestre;
-il clock si controlla prima di ogni chiamata, quindi una chiamata iniziata
-può completarsi oltre la scadenza. Il tempo non è una garanzia di correttezza.
-Il benchmark misura validazione, non decodifica in oggetti; il payload di una
-stringa binaria viene saltato dopo il controllo della lunghezza. Il throughput
-è calcolato sui byte della codifica, non sui byte di payload effettivamente letti.
-I sei casi sono binario 1 KiB, testo 1 KiB, binario 16 MiB, testo 64 KiB,
-100 livelli e un array con 4096 figli. Non è stato eseguito un benchmark locale.
+## Planned API
 
-La condizione pubblica è `errore-cbor`; gli accessor esportati sono `ragione`,
-`posizione`, `nodi`, `profondita`, `tag-letti`. Ragioni: `:invalid-buffer`,
+Independent package `arcdocdb.spk10.cbor`; Common Lisp/SBCL dependencies only.
+`valida-documento` receives a `simple-array (unsigned-byte 8) (*)` and keywords
+`:limite-documento` (default 16,777,216), `:limite-profondita` (100),
+`:budget-nodi` (16,777,216), `:budget-byte` (16,777,216).
+Limits may be reduced; zero budgets reject the relevant work, negative/
+noninteger budgets are configuration errors. Depth zero admits only scalars.
+The function returns a plist with `:status :ok`, counts, applied limits, and
+scope `:partial`. Errors are `errore-cbor`, with a keyword reason, position,
+and publicly accessible counters.
+
+`check` returns a plist with `:status :ok`, fixture and mutation counts, and
+actual limits. `benchmark` returns a plist; parameter `:seconds`, default
+2.5 seconds, allowed range 0–3 seconds, six windows, and at most 100,000
+iterations per window. Fixtures are built before the windows; the clock is
+checked before each call, so a call that has started may finish after the
+deadline. Time is not a correctness guarantee. The benchmark measures
+validation, rather than decoding into objects; binary string payload is
+skipped after checking length. Throughput is calculated over encoded bytes,
+rather than payload bytes actually read. The six cases are 1 KiB binary,
+1 KiB text, 16 MiB binary, 64 KiB text, 100 levels, and an array with 4096
+children. No local benchmark has been run.
+
+The public condition is `errore-cbor`; exported accessors are `ragione`,
+`posizione`, `nodi`, `profondita`, `tag-letti`. Reasons: `:invalid-buffer`,
 `:invalid-limit`, `:invalid-budget`, `:document-limit`, `:byte-budget`,
 `:node-budget`, `:depth-limit`, `:truncated`, `:trailing-data`, `:nonminimal`,
 `:indefinite`, `:reserved`, `:utf8`, `:duplicate-key`, `:key-order`,
-`:malformed-simple`, `:unsupported`, `:internal-invariant`. Il benchmark
-rifiuta parametri fuori contratto con `:invalid-benchmark-budget`.
-È dichiarato il primo difetto incontrato: un duplicato in una mappa già fuori
-ordine può produrre `:key-order`. Tutti i rifiuti precedenti alla lettura hanno
-posizione, nodi e profondità zero.
+`:malformed-simple`, `:unsupported`, `:internal-invariant`. The benchmark
+rejects parameters outside the contract with `:invalid-benchmark-budget`.
+The first defect encountered is reported: a duplicate in an already unordered
+map may produce `:key-order`. All rejections before reading have position,
+node count, and depth zero.
 
-## Controlli pianificati
+<a id="controlli-pianificati"></a>
 
-Compilazione isolata con `safety 3`, warning e style-warning fatali, controllo
-dei tre valori di `compile-file`, caricamento del FASL e chiamata a `check`.
-FASL temporaneo fuori dal repository. Nessun benchmark lungo: le misure
-comparative dei moduli sono eseguite dal runner integrato, che li carica nell'ordine
-codec, index, cbor, migration dopo il CRC di SPK-09.
+## Planned checks
 
-Fixture con aspettative indipendenti dal parser:
+Isolated compilation with `safety 3`, fatal warnings and style-warnings,
+checking the three `compile-file` values, loading the FASL, and calling `check`.
+Temporary FASL outside the repository. No long benchmark: comparative module
+measurements are run by the integrated runner, which loads them in order
+codec, index, cbor, migration after the SPK-09 CRC.
 
-- radice array/mappa, annidamento 100 accettato e 101 rifiutato, anche nelle
-  chiavi e nei valori delle mappe; completamento di fratelli e antenati;
-- codifica binaria di esattamente 16 MiB accettata e 16 MiB + 1 rifiutata
-  prima di attraversare l'input, verificabile dai contatori della condizione;
-- conteggi array/mappa e lunghezze enormi con buffer piccolo, troncamenti
-  degli header e payload, input vuoto, byte aggiuntivi, forme indefinite;
-- interi/lunghezze minimi, ordinamento core distinto da length-first,
-  duplicati scalari e composti, UTF-8 valido e invalido;
-- budget esatto, insufficiente, zero e negativo; parametri non validi;
-- mutazioni con semi fissi e numero finito: trasformazioni di fixture che
-  conservano validità o inseriscono un difetto noto, con esito atteso
-  dichiarato senza usare il parser come oracolo.
+Fixtures with expectations independent of the parser:
 
-Obiettivi locali: `check` entro 5 secondi e array vivi inferiori a 128 MiB.
-Questi sono budget dell'esperimento, non garanzie temporali del motore.
-La verifica non prova accettazione sicura di qualsiasi input e non completa
-il gate v2. I requisiti restano quelli citati nel perimetro dell'esperimento.
+- root array/map, nesting 100 accepted and 101 rejected, including in map
+  keys and values; completion of siblings and ancestors;
+- binary encoding of exactly 16 MiB accepted and 16 MiB + 1 rejected before
+  traversing input, observable through condition counters;
+- huge array/map counts and lengths with a small buffer, truncated headers
+  and payloads, empty input, extra bytes, indefinite forms;
+- minimal integers/lengths, core ordering distinguished from length-first,
+  scalar and compound duplicates, valid and invalid UTF-8;
+- exact, insufficient, zero, and negative budgets; invalid parameters;
+- fixed-seed, finite mutations: fixture transformations that preserve validity
+  or introduce a known defect, with expected outcome declared without using
+  the parser as oracle.
 
-## Ambiente e risultato
+Local targets: `check` within 5 seconds and live arrays below 128 MiB.
+These are experimental budgets, rather than engine timing guarantees.
+The check does not prove safe acceptance of arbitrary input and does not
+complete the v2 gate. Requirements remain those cited in the experiment scope.
 
-Ambiente di preparazione: SBCL 2.6.9, macOS, eseguibile
+<a id="ambiente-e-risultato"></a>
+
+## Environment and result
+
+Preparation environment: SBCL 2.6.9, macOS, executable
 `/opt/homebrew/bin/sbcl`.
 
-Compilazione stretta locale: `safety 3`, zero warning/style-warning,
-`compile-file` con valori avvisi/fallimento entrambi `nil`, FASL caricato.
-Solo le note di ottimizzazione di SBCL vengono silenziate: il loro conteggio
-è registrato nell'artefatto; warning e style-warning restano fatali.
+Local strict compilation: `safety 3`, zero warnings/style-warnings,
+`compile-file` warning/failure values both `nil`, FASL loaded.
+Only SBCL optimization notes are silenced: their count is recorded in the
+artifact; warnings and style-warnings remain fatal.
 
-`check` locale: **614 casi**, di cui 68 fixture esplicite (21 valide,
-47 rifiutate), 12 casi di profondità, 19 di budget/configurazione, 3 di
-dimensione e 512 mutazioni (128 valide, 384 rifiutate). Le catene di sole
-mappe controllano annidamento nelle chiavi e nei valori. Entrambi i buffer
-di confine sono stringhe binarie CBOR con lunghezza definita e testata minima:
-16.777.216 byte (payload 16.777.211) e 16.777.217 byte (payload 16.777.212).
-Il secondo viene rifiutato prima del parser con contatori zero.
-I due buffer grandi occupano insieme 33.554.433 byte di elementi; nessun
-altro array dell'esperimento supera 100 frame o pochi KiB durante `check`.
-Il tempo locale preliminare del controllo è stato circa 0,011 s; il valore
-esatto dell'esecuzione registrata e l'ambiente effettivo sono nell'artefatto.
+Local `check`: **614 cases**, including 68 explicit fixtures (21 valid,
+47 rejected), 12 depth cases, 19 budget/configuration cases, 3 size cases,
+and 512 mutations (128 valid, 384 rejected). Map-only chains check nesting in
+keys and values. Both boundary buffers are CBOR binary strings with definite
+lengths and minimal headers: 16,777,216 bytes (payload 16,777,211) and
+16,777,217 bytes (payload 16,777,212). The second is rejected before the parser,
+with zero counters. Together, the two large buffers occupy 33,554,433 bytes
+of elements; no other experimental array exceeds 100 frames or a few KiB
+during `check`. Preliminary local check time was about 0.011 s; the exact
+recorded run value and actual environment are in the artifact.
 
-La prova strutturata è [v2-cbor-check.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-cbor-check.lisp),
-copia invariata del report locale `out/cbor-check.lisp`. È una sola plist con schema 1,
-`:command` (argv e sorgente stdin), `:environment`, `:source-blobs`
-(blob Git del modulo e del metodo), `:compile-status`, `:result`, `:limits`,
-`:time`, `:stdout`, `:stderr` e `:failures`. Si registra anche un fallimento
-al confine del runner. Il runner verifica la rilettura con `*read-eval* nil`.
-Il comando completo riproducibile è conservato nell'artefatto; il FASL è in
-`/tmp/arcdocdb-spk10-cbor.fasl`. Le verifiche precedenti durante lo sviluppo
-non sono benchmark né evidenze di completamento del gate.
+The structured evidence is [v2-cbor-check.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-cbor-check.lisp),
+an unchanged copy of local report `out/cbor-check.lisp`. It is one schema 1
+plist, with `:command` (argv and stdin source), `:environment`, `:source-blobs`
+(module and method Git blobs), `:compile-status`, `:result`, `:limits`,
+`:time`, `:stdout`, `:stderr`, and `:failures`. A runner-boundary failure is
+also recorded. The runner checks rereading with `*read-eval* nil`.
+The full reproducible command is retained in the artifact; the FASL is at
+`/tmp/arcdocdb-spk10-cbor.fasl`. Earlier checks during development are neither
+benchmarks nor evidence of gate completion.
 
-Limiti ancora aperti: floating point, semantica/canonicalizzazione dei tag,
-eventuali equivalenze delle chiavi definite dall'applicazione e integrazione
-prima del writer. Il profilo core scelto qui è una proposta locale: il
-progetto deve confermarlo per il codec completo. Il check locale non chiude
-il gate v2 né promuove i requisiti del motore a verificati. L'evidenza integrata
-è versionata separatamente dal report locale.
+Remaining limits: floating point, tag semantics/canonicalization, any key
+equivalences defined by the application, and integration before the writer.
+The core profile selected here is a local proposal: the project must confirm
+it for the complete codec. The local check neither closes the v2 gate nor
+promotes engine requirements to verified. Integrated evidence is versioned
+separately from the local report.
 
-## Revisione delle allocazioni — metodo registrato prima dei controlli
+<a id="revisione-delle-allocazioni--metodo-registrato-prima-dei-controlli"></a>
 
-La campagna iniziale `spikes/out/4000475258-bench-54418-0/report.lisp`
-registra 774.262.736 byte allocati per 100.000 validazioni del binario da
-1 KiB: circa 7742,63 byte/chiamata. È una misura della prima variante e del
-runtime registrato; il report rimane la fonte della misura storica.
+## Allocation revision — method registered before checks
 
-> **Proposta** — sostituire la creazione iniziale di 100 strutture con una
-> pila vuota nello stato locale. Il primo contenitore **non vuoto**, dopo i
-> controlli di profondità, byte residui e nodi, crea il vettore di riferimenti
-> dimensionato dal limite configurato (al massimo 100), inizializzato a `nil`.
-> Ogni frame si crea soltanto la prima volta che occorre la sua posizione;
-> i contenitori fratelli riutilizzano il frame e ne reinizializzano tutti i
-> campi. Scalare o contenitore vuoto non crea né vettore né frame. Il vettore
-> nasce al massimo una volta per validazione; i frame sono al massimo la
-> profondità simultanea dei contenitori non vuoti, comunque non oltre 100.
+The initial campaign `spikes/out/4000475258-bench-54418-0/report.lisp` records
+774,262,736 bytes allocated for 100,000 validations of the 1 KiB binary:
+about 7742.63 bytes/call. This is a measurement of the first variant and the
+recorded runtime; the report remains the source for the historical measurement.
 
-La profondità documentale resta distinta dal numero di frame allocati: anche
-un contenitore vuoto conta un livello e viene rifiutato a livello 101. API,
-ragioni delle condizioni, precedenza dei controlli e budget configurati
-restano quelli descritti sopra; `:stack-frames` nei limiti indica il tetto,
-non il numero di strutture create. Nessuno stato globale o pool condiviso.
-Restano allocazioni dello stato, delle plist di risultato e di eventuali
-argomenti numerici: questa modifica non promette zero allocazioni.
+> **Proposed** — replace initial creation of 100 structures with an empty stack
+> in local state. The first **nonempty** container, after depth, remaining-byte,
+> and node checks, creates a reference vector sized by the configured limit
+> (at most 100), initialized to `nil`. Each frame is created only the first
+> time its position is needed; sibling containers reuse the frame and
+> reinitialize all its fields. A scalar or empty container creates neither
+> vector nor frame. The vector is created at most once per validation;
+> frames are bounded by the simultaneous depth of nonempty containers,
+> and never exceed 100.
 
-Controlli pianificati: preservare tutti i 614 casi dell'oracle precedente e
-aggiungere fixture deterministiche dello stato della pila per scalari,
-contenitori vuoti, profondità ridotte, fratelli con mappe/array, riutilizzo
-delle chiavi precedenti, profondità reale 100/101 e rifiuti prima della
-creazione dei frame. I controlli verificano oggetti e limiti, non sono
-misure di byte allocati o benchmark. Compilazione con `safety 3`, warning e
-style-warning fatali; `check` dopo il caricamento del FASL.
+Document depth remains distinct from the number of allocated frames: even an
+empty container counts as one level and is rejected at level 101. API,
+condition reasons, check precedence, and configured budgets remain as
+described above; `:stack-frames` in limits indicates the ceiling, rather than
+the number of structures created. No global state or shared pool.
+State, result plists, and any numeric arguments still allocate: this change
+does not promise zero allocations.
 
-Ogni tentativo di compilazione/check viene conservato in una singola plist
-schema 1 in `out/cbor-allocation-check.lisp`, nuovo artefatto esclusivo,
-con una lista cronologica `:attempts`. Ogni voce conserva comando/stdin,
-ambiente, blob dei sorgenti, stato della compilazione, risultato decodificato,
-limiti, tempi, stdout/stderr e fallimenti. Le voci precedenti, inclusi i
-fallimenti, non vengono sostituite. Lettura con `*read-eval* nil` e verifica
-della singola plist dopo la scrittura. Il benchmark della revisione viene
-eseguito dall'harness integrato; non si deduce una riduzione numerica dalla sola modifica.
+Planned checks: preserve all 614 cases of the previous oracle and add
+deterministic stack-state fixtures for scalars, empty containers, reduced
+depths, siblings with maps/arrays, previous-key reuse, actual depth 100/101,
+and rejections before frame creation. Checks examine objects and limits;
+they are neither allocated-byte measurements nor benchmarks. Compilation
+with `safety 3`, fatal warnings and style-warnings; `check` after FASL loading.
 
-Risultato della revisione: il tentativo 1 ha compilato e caricato il modulo con
-`safety 3`, zero warning/style-warning e valori avvisi/fallimento `nil`.
-`check` restituisce `:status :ok` per **629 casi**: tutti i 614 precedenti e
-15 fixture aggiuntive della pila. Il tempo locale del check registrato è
-0,005228 s. Le nuove fixture verificano zero frame e capacità zero per
-scalari/contenitori vuoti, un frame per un contenitore non vuoto poco
-profondo e due frame riutilizzati fra mappa, array e mappa. La catena con
-100 contenitori non vuoti crea 100 frame; una catena terminata da un
-contenitore vuoto resta a profondità 100 con 99 frame. Il livello 101
-continua a produrre `:depth-limit` prima di creare un frame oltre il tetto.
-Troncamenti e budget nodi insufficienti al primo contenitore non creano pila.
+Every compilation/check attempt is retained in one schema 1 plist in
+`out/cbor-allocation-check.lisp`, a new exclusive artifact, with a chronological
+`:attempts` list. Each entry preserves command/stdin, environment, source
+blobs, compilation status, decoded result, limits, times, stdout/stderr, and
+failures. Earlier entries, including failures, are not replaced. Read with
+`*read-eval* nil` and verify the single plist after writing. The revision's
+benchmark is run by the integrated harness; no numeric reduction is inferred
+from the change alone.
 
-Il record schema 1 in `out/cbor-allocation-check.lisp` conserva il metodo
-registrato prima dell'esecuzione, il blob del modulo verificato e stdout/stderr;
-la rilettura della singola plist con `*read-eval* nil` è passata. Nessun
-fallimento di compilazione/check nel primo tentativo. Il conteggio strutturale
-dimostra l'eliminazione dei frame inutilizzati, non una misura dei byte
-allocati dalla nuova variante. Il nuovo benchmark e l'evidenza integrata
-restano da eseguire nell'harness; il gate v2 e l'ambito parziale CBOR restano quelli sopra.
+Revision result: attempt 1 compiled and loaded the module with `safety 3`,
+zero warnings/style-warnings, and warning/failure values `nil`.
+`check` returns `:status :ok` for **629 cases**: all 614 earlier cases plus
+15 additional stack fixtures. Recorded local check time is 0.005228 s.
+New fixtures verify zero frames and zero capacity for scalars/empty containers,
+one frame for a shallow nonempty container, and two frames reused across a
+map, array, and map. The chain of 100 nonempty containers creates 100 frames;
+a chain ending with an empty container remains at depth 100 with 99 frames.
+Level 101 still produces `:depth-limit` before creating a frame beyond the
+ceiling. Truncations and insufficient node budgets at the first container
+create no stack.
 
-### Campagne successive del parent
+The schema 1 record in `out/cbor-allocation-check.lisp` retains the method
+registered before execution, the checked module blob, and stdout/stderr;
+rereading the single plist with `*read-eval* nil` passed. No compilation/check
+failure in the first attempt. The structural count proves removal of unused
+frames, rather than measuring bytes allocated by the new variant. The new
+benchmark and integrated evidence remain to be run in the harness; the v2
+gate and partial CBOR scope remain as described above.
 
-L'harness integrato ha eseguito in serie due campagne della pila su richiesta,
-compilando anche gli altri moduli e completando l'integrazione del documento
-massimo. I [risultati conservati](../../docs/valutazione/risultati-2026-10-08.md#cbor-con-pila-creata-su-richiesta)
-confrontano i dati iniziali e le due repliche, con sorgenti e output originali.
-Nel binario codificato 1 KiB, 100.000 chiamate: 774.262.736 byte allocati
-inizialmente, 52.852.304 in entrambe le repliche, circa 7.742,63 → 528,52 B/op.
-Su profondità 100 rimane il costo dei frame necessari. Le misure testuali
-oscillano, inclusa una replica più lenta; nessun aumento generale di throughput
-è dedotto con carico esterno non controllato. Nessuna scansione dei byte
-binari o verifica CRC viene misurata da questo validatore.
+<a id="campagne-successive-del-parent"></a>
+
+### Subsequent parent campaigns
+
+The integrated harness ran two on-demand-stack campaigns sequentially,
+also compiling the other modules and completing maximum-document integration.
+The [retained results](../../docs/valutazione/risultati-2026-10-08.md#cbor-con-pila-creata-su-richiesta)
+compare initial data and the two replicates, with original sources and output.
+For the encoded 1 KiB binary, 100,000 calls: 774,262,736 bytes initially
+allocated, 52,852,304 in both replicates, about 7,742.63 → 528.52 B/op.
+At depth 100, the cost of necessary frames remains. Text measurements vary,
+including one slower replicate; no general throughput increase is inferred
+with uncontrolled external load. This validator measures neither scanning
+binary bytes nor CRC verification.

@@ -1,49 +1,55 @@
-# ADR-0068 — Rinnovo seriale delle immagini e del delta M1
+<a id="adr-0068--rinnovo-seriale-delle-immagini-e-del-delta-m1"></a>
 
-- **Stato:** Accettata nell'integrazione incrementale autorizzata dall'autore il 2026-10-30
-- **Data:** 2026-10-30
-- **Riferimenti:** ADR-0065, ADR-0066, ADR-0067; REQ-IDX-009, REQ-IDX-010, INV-I8, INV-I1, INV-A8, INV-P6
-- **Rapporto con la specifica:** nessun formato autorevole o punto durevole nuovo; composizione seriale delle API precedenti
+# ADR-0068 — Serial renewal of M1 images and delta
 
-## Decisione
+- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-30
+- **Date:** 2026-10-30
+- **References:** ADR-0065, ADR-0066, ADR-0067; REQ-IDX-009, REQ-IDX-010, INV-I8, INV-I1, INV-A8, INV-P6
+- **Relationship to the specification:** no new authoritative format or durable point; serial composition of previous APIs
 
-`rinnova-indice-paginato-motore` costruisce una nuova immagine dalla fonte
-canonica corrente, la verifica e la attiva con un delta vuoto opzionale.
-Un'unica admission BUSY impedisce GET, scritture e rientri da callback fino
-alla conclusione. Non c'e' un intervallo READY fra produzione e attivazione.
-Le API separate di ADR-0065 e ADR-0066 mantengono i rispettivi contratti.
+<a id="decisione"></a>
 
-Il preflight verifica quote, nome nuovo e memoria dell'intera richiesta,
-prima di creare il file. La riserva somma il payload di costruzione, quello
-di attivazione comprensivo della vecchia cache e del vecchio delta, piu'
-il nuovo delta. Non si assume che il GC recuperi array fra le fasi.
-Oggetti, header, GC e RSS restano nella riserva separata del controllore.
+## Decision
 
-La fonte e la revisione del piano sono ricontrollate dopo la costruzione,
-anche dopo il callback `:image-renewal-built`, prima dell'apertura per
-attivazione. L'attivazione verifica nuovamente l'intero file sulla stessa
-fonte corrente e ricontrolla la fonte prima dello swap. Fino ad allora la
-vecchia vista e il delta restano posseduti. Lo swap privato sostituisce
-vista, file e delta insieme; chiude il vecchio FD secondo ADR-0066.
+`rinnova-indice-paginato-motore` builds a new image from the current canonical
+source, verifies it, and activates it with an optional empty delta.
+A single BUSY admission prevents GET, writes, and callback reentry until
+completion. There is no READY interval between production and activation.
+The separate ADR-0065 and ADR-0066 APIs retain their respective contracts.
 
-Dati, CSN e WAL non cambiano. Non esiste una decisione di catalogo:
-la pubblicazione e' volatile e al riavvio la selezione resta esplicita.
-Una nuova immagine completa, anche non pubblicata prima del crash, puo'
-essere usata soltanto dopo la normale verifica contro la fonte corrente.
-Un'immagine incompleta e' rifiutata; nessun file viene sovrascritto o eliminato.
+Preflight verifies quotas, new name, and memory for the entire request
+before creating the file. Reservation adds construction payload, activation
+payload including old cache and old delta, plus
+the new delta. It does not assume the GC reclaims arrays between phases.
+Objects, headers, GC, and RSS remain in the separate controller reservation.
 
-## Errori e limiti
+The plan's source and revision are rechecked after construction,
+including after the `:image-renewal-built` callback, before opening for
+activation. Activation rechecks the entire file against the same
+current source and rechecks the source before the swap. Until then, the
+old view and delta remain owned. The private swap replaces
+view, file, and delta together; it closes the old FD under ADR-0066.
 
-Quote invalide, quota insufficiente o nome gia' presente conservano READY
-e la vecchia vista senza consumare CSN o creare un nuovo file. Errori di
-namespace seguono il preflight del produttore. Dopo admission ogni errore
-o uscita non locale rende FAULTED preservando causa e cleanup: nessun
-rollback a un FD consumato. Una quota pagine esaurita tardi puo' lasciare
-un derivato incompleto. Dopo lo swap il nuovo FD appartiene al motore anche
-se il callback impedisce il ritorno normale.
+Data, CSN, and WAL do not change. There is no catalog decision:
+publication is volatile and selection remains explicit on restart.
+A complete new image, even if unpublished before the crash, can
+be used only after normal verification against the current source.
+An incomplete image is rejected; no file is overwritten or deleted.
 
-Il rinnovo libera la quota logica del delta per le scritture successive;
-il chiamante sceglie quando richiederlo e fornisce un nome fresco. Non e'
-un tentativo automatico nel PUT, non supera la capienza del residente e
-non promette quota RSS, selezione automatica, snapshot o catalogo durevole.
-[Contratto e verifica](../implementazione/rinnovo-indice-m1.md).
+<a id="errori-e-limiti"></a>
+
+## Errors and limits
+
+Invalid quotas, insufficient quota, or an existing name preserve READY
+and the old view without consuming a CSN or creating a new file. Namespace
+errors follow producer preflight. After admission, every error
+or nonlocal exit makes the engine FAULTED, preserving cause and cleanup: no
+rollback to a consumed FD. Late page-quota exhaustion may leave
+an incomplete derivative. After the swap, the new FD belongs to the engine even
+if the callback prevents normal return.
+
+Renewal releases the delta's logical quota for subsequent writes;
+the caller chooses when to request it and supplies a fresh name. It is not
+an automatic attempt in PUT, does not exceed resident capacity, and
+does not promise RSS quota, automatic selection, snapshots, or a durable catalog.
+[Contract and verification](../implementazione/rinnovo-indice-m1.md).

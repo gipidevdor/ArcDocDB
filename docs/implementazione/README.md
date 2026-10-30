@@ -1,44 +1,49 @@
-# Implementazione
+<a id="implementazione"></a>
 
-[Documentazione](../README.md) · [Roadmap](../roadmap.md) · [Codice](../../src/)
+# Implementation
 
-Il profilo eseguibile è **M1 — Single-Series Durable Core**. Un solo owner gestisce
-una Serie, dall'apertura e dal recovery fino alle richieste ammesse. Il servizio
-locale espone PING, PUT, GET e DELETE su socket Unix.
+[Documentation](../README.md) · [Roadmap](../roadmap.md) · [Code](../../src/)
 
-## Provare M1
+The executable profile is **M1 — Single-Series Durable Core**. One owner manages
+one Serie, from opening and recovery through admitted requests. The local
+service exposes PING, PUT, GET and DELETE over a Unix socket.
 
-1. [Compilare e verificare](../../CONTRIBUTING.md#verifica).
-2. [Avviare server e client](production-unix-m1.md#ingressi-eseguibili).
-3. Leggere i contratti di [startup e recovery](production-engine-bootstrap.md)
-   e del [servizio Unix](production-unix-m1.md).
+<a id="provare-m1"></a>
+## Try M1
 
-## Componenti
+1. [Build and verify](../../CONTRIBUTING.md#verifica).
+2. [Start the server and client](production-unix-m1.md#ingressi-eseguibili).
+3. Read the [startup and recovery](production-engine-bootstrap.md)
+   and [Unix service](production-unix-m1.md) contracts.
 
-| Area | Ingresso |
+<a id="componenti"></a>
+## Components
+
+| Area | Starting point |
 |---|---|
-| Motore e servizio locale | [Nucleo M1](production-engine-bootstrap.md), [socket Unix](production-unix-m1.md) |
-| Indice primario | [Residente](indice-primario.md), [selettore automatico](indice-automatico.md), [pagine nel GET M1](indice-paginato-m1.md) |
-| Immagini dell'indice | [Costruzione](costruzione-indice-m1.md), [attivazione](attivazione-indice-m1.md), [rinnovo](rinnovo-indice-m1.md), [manutenzione](manutenzione-indice-m1.md) |
-| Lettura e recovery | [GET](get-record.md), [recovery della Serie](recovery-serie.md), [recovery dell'Archivio](recovery-archivio.md) |
-| Concorrenza | [Catena pool e Serie](pool-catena-risultati.md), [snapshot](snapshot-csn.md), [epoche e reclaim](epoche-e-reclaim.md) |
-| Full text | [Analisi e query](full-text.md), [codec](full-text-codec.md), [legame PUT/WAL](full-text-put.md), [righe](full-text-righe.md) |
-| CRC32C | [Backend e piattaforme](crc32c-piattaforme.md), [misure e scelta del kernel](crc32c-unroll32.md) |
+| Engine and local service | [M1 core](production-engine-bootstrap.md), [Unix socket](production-unix-m1.md) |
+| Primary index | [Resident index](indice-primario.md), [automatic selector](indice-automatico.md), [pages in the M1 GET path](indice-paginato-m1.md) |
+| Index images | [Building](costruzione-indice-m1.md), [activation](attivazione-indice-m1.md), [renewal](rinnovo-indice-m1.md), [maintenance](manutenzione-indice-m1.md) |
+| Reads and recovery | [GET](get-record.md), [Serie recovery](recovery-serie.md), [Archivio recovery](recovery-archivio.md) |
+| Concurrency | [Pool/Serie chain](pool-catena-risultati.md), [snapshots](snapshot-csn.md), [epochs and reclamation](epoche-e-reclaim.md) |
+| Full text | [Analysis and queries](full-text.md), [codec](full-text-codec.md), [PUT/WAL binding](full-text-put.md), [rows](full-text-righe.md) |
+| CRC32C | [Backends and platforms](crc32c-piattaforme.md), [measurements and kernel selection](crc32c-unroll32.md) |
 
-Il [catalogo dei moduli](moduli.md) conserva tutti i contratti, i collegamenti al
-codice, i metodi e le verifiche di componente.
+The [module catalog](moduli.md) retains all component contracts, code links,
+methods and verification records.
 
-## Limiti attuali
+<a id="limiti-attuali"></a>
+## Current limits
 
-- M1 espone una sola Serie e un solo attore seriale. MVCC storico, transazioni
-  multiserie, compaction completa e rotazione a caldo restano fuori dal profilo.
-- Le pagine possono alimentare il GET M1 opzionale; l'indice residente è ancora
-  presente. Il passaggio automatico residente/paginato resta da completare;
-  la capacità oltre RAM resta da qualificare.
-- Il full text comprende analisi Unicode, codec, preparazione documentale e
-  collegamenti al writer. Pubblicazione durevole, MVCC e Query Engine restano da integrare.
-- Le campagne dichiarano piattaforma e perimetro. Le prove locali non qualificano
-  automaticamente Linux, perdita di alimentazione, C1/MC/DC o prestazioni del motore.
+- M1 exposes one Serie and one serial actor. Historical MVCC, multiseries
+  transactions, complete compaction and hot rotation remain outside this profile.
+- Pages can serve the optional M1 GET path; the resident index is still present.
+  Automatic switching between resident and paged modes remains incomplete;
+  capacity beyond RAM remains unqualified.
+- Full text includes Unicode analysis, a codec, document preparation and writer
+  bindings. Durable publication, MVCC and Query Engine integration remain open.
+- Each campaign states its platform and scope. Local tests do not automatically
+  qualify Linux, power loss, C1/MC/DC or whole-engine performance.
 
-La [valutazione](../valutazione/README.md) distingue le misure disponibili dai target;
-il [piano di verifica](../affidabilita/piano-di-verifica.md) definisce i gate ancora aperti.
+The [evaluation](../valutazione/README.md) distinguishes available measurements from
+targets; the [verification plan](../affidabilita/piano-di-verifica.md) defines the remaining gates.

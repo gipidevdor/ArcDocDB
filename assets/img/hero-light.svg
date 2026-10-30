@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 276" width="880" height="276" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif">
   <title id="t">The segments of a Serie</title>
-  <desc id="d">A stack of horizontal bars. The top one, ACTIVE, is the only one in colour and is partly filled: it is the only segment that changes. Below it, closed segments are solid and immutable; two short ones are what CLEAN left; a dashed outline is an obsolete segment waiting for its last reader.</desc>
+  <desc id="d">A stack of horizontal bars. The top one, ACTIVE, is the only one in color and is partly filled: it is the only segment that changes. Below it, closed segments are solid and immutable; two short ones are what CLEAN left; a dashed outline is an obsolete segment waiting for its last reader.</desc>
   <defs>
     <clipPath id="a"><rect x="56" y="58" width="380" height="14" rx="7.0"/></clipPath>
     <filter id="g" x="-20%" y="-300%" width="140%" height="700%"><feGaussianBlur stdDeviation="9"/></filter>

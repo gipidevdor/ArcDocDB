@@ -1,85 +1,93 @@
-# Primo item CBOR minimo — contratto e metodo
+<a id="primo-item-cbor-minimo--contratto-e-metodo"></a>
 
-Incremento C1 preregistrato il 2026-10-15, prima del nuovo corpus,
-del prodotto e delle campagne. REQ-CBR-008 deriva da ADR-0014 e
-ADR-0048: lettura strutturale bounded senza AST né copie.
-Riferimento: [RFC 8949 §3](https://www.rfc-editor.org/rfc/rfc8949.html#section-3).
+# First minimal CBOR item — contract and method
 
-## Contratto locale
+C1 increment preregistered on 2026-10-15, before the new corpus,
+product, and campaigns. REQ-CBR-008 derives from ADR-0014 and
+ADR-0048: bounded structural reading without AST or copies.
+Reference: [RFC 8949 §3](https://www.rfc-editor.org/rfc/rfc8949.html#section-3).
+
+<a id="contratto-locale"></a>
+
+## Local contract
 
 ```lisp
 (leggi-item-cbor-minimo buffer start end space
  :max-bytes 16777216 :max-nodes 16777216 :max-depth 100)
-;; => esattamente NODES, PEAK, NEXT
+;; => exactly NODES, PEAK, NEXT
 ```
 
-Verifica il primo item strutturale minimo nella finestra [START,END).
-NODES include tag e radice; PEAK conta soltanto array/map; NEXT è
-l'offset assoluto dopo l'item, START<NEXT<=END. La coda [NEXT,END)
-non viene letta, validata o inclusa nelle statistiche. Esempi:
+Verifies the first minimal structural item in window [START,END).
+NODES includes tags and root; PEAK counts only arrays/maps; NEXT is
+the absolute offset after the item, START<NEXT<=END. Tail [NEXT,END)
+is not read, validated, or included in statistics. Examples:
 00 FF → 1,0,1; 81 00 1C → 2,1,2; C0 81 00 FF → 3,1,3.
-Gli scanner esatti conservano l'obbligo di EOF e :cbor-trailing.
+Exact scanners retain the EOF and :cbor-trailing obligation.
 
-MAX-BYTES limita l'intera finestra autorizzata END-START, compresa
-la coda; non soltanto i byte del primo item. Una finestra più grande
-del budget è rifiutata anche se comincia con uno scalare valido.
-Limiti identici allo scanner: byte0..16MiB, nodi1..16MiB, depth0..100.
-Il chiamante restringe END al proprio budget prima della chiamata.
+MAX-BYTES limits the entire authorized window END-START, including
+the tail, not only the first item's bytes. A window larger
+than the budget is rejected even if it starts with a valid scalar.
+Limits identical to the scanner: bytes0..16MiB, nodes1..16MiB, depth0..100.
+The caller restricts END to its own budget before calling.
 
-BUFFER simple u8 resta immutabile ed è condivisibile in lettura;
-SPACE è privato della chiamata/worker, mai condiviso simultaneamente.
-Ordine del preflight invariato: range, workspace, alias KINDS, limiti
-byte/nodi/depth, byte-budget; offset NIL e scratch immutato.
-Reset soltanto dopo il preflight. Span vuoto e header/payload troncati
-producono :cbor-truncated all'END autorizzato. Header sintattico e
-minimalità precedono contesto e budget di nodi/depth; UTF8 restituisce
-gli offset assoluti esistenti. Dopo errore runtime lo scratch può essere
-sporco, ma è riusabile al reset successivo. Nessun risultato parziale.
+Simple u8 BUFFER remains immutable and can be shared for reading;
+SPACE is private to the call/worker, never shared simultaneously.
+Preflight order unchanged: range, workspace, KINDS alias, byte/node/depth
+limits, byte-budget; offset NIL and scratch unchanged.
+Reset only after preflight. Empty spans and truncated headers/payloads
+produce :cbor-truncated at the authorized END. Syntactic header and
+minimality precede context and node/depth budgets; UTF8 returns
+the existing absolute offsets. After a runtime error, scratch may be
+dirty but is reusable at the next reset. No partial result.
 
-Si riusano preflight, passo e stack fissi esistenti. Il drain riceve
-il cursore corrente per riconoscere la radice completata senza
-richiedere EOF dell'intera finestra. Il risultato verifica radice,
-conteggi e fine al cursore corrente. Al più SPAN passi, ciascuno con
-drain limitato a102frame; progresso verificato. Nessuna semantica tag,
-ordine/deduplica mappe, normalizzazione o profilo documentale
-deterministico; nessuna attesa, I/O, thread o stato globale nel prodotto.
+Existing preflight, step, and fixed stack are reused. Drain receives
+the current cursor to recognize the completed root without
+requiring EOF for the entire window. The result checks root,
+counts, and end at the current cursor. At most SPAN steps, each with
+drain bounded to102frames; verified progress. No tag semantics,
+map ordering/deduplication, normalization, or deterministic document
+profile; no waiting, I/O, threads, or global state in the product.
 
-## Corpus indipendente e letture
+<a id="corpus-indipendente-e-letture"></a>
 
-Un autore distinto congela test e oracoli prima del prodotto.
-Vettori letterali MT0..7 con coda valida/malformata/nonminima,
-tag, UTF8 e contenitori; scansione concatenata per ricavare frontiere.
-Precedenze complete, arità tre, buffer/scratch immutati nel preflight,
-riuso dopo errore, confini parole/lunghezze, byte16MiB/+1,
-nodi e depth0/100/101, catene di tag. Scanner esatto e roundtrip
-soltanto come controlli aggiuntivi; nessun writer come oracolo primario.
-Fuzz1024 con seme e distribuzione congelati nel piano del corpus.
+## Independent corpus and readings
 
-Due worker reali riusati, due ondate di2048 chiamate ciascuno:
-8192 letture con buffer condiviso read-only e scratch privati,
-READY/GO/DONE, sink, timeout e cleanup limitati. Nessuna inferenza
-di scaling o simultaneità sui core. Due letture C1 con checklist12
-punti e inventario delle decisioni precedono la prima compilazione.
+A separate author freezes tests and oracles before the product.
+Literal MT0..7 vectors with valid/malformed/nonminimal tails,
+tags, UTF8, and containers; concatenated scanning to derive boundaries.
+Full precedence, arity three, buffers/scratch unchanged in preflight,
+reuse after error, word/length boundaries, bytes16MiB/+1,
+nodes and depth0/100/101, tag chains. Exact scanner and roundtrip
+only as additional checks; no writer as the primary oracle.
+Fuzz1024 with seed and distribution frozen in the corpus plan.
 
-## Campagne e conservazione
+Two real workers reused, two waves of2048 calls each:
+8192 reads with a shared read-only buffer and private scratch,
+READY/GO/DONE, sink, bounded timeout and cleanup. No inference
+of scaling or simultaneous execution on cores. Two C1 readings with a 12-point
+checklist and decision inventory precede first compilation.
 
-Sei fixture benchmark fredde con coda non validata, cinque repliche
-da1024 chiamate e warmup64. Tutti i tre valori e il buffer/scratch
-nel controllo; baseline nulla e positivo16x1MiB. Criterio locale:
-zero heap osservato, nessuna soglia di velocità.
+<a id="campagne-e-conservazione"></a>
 
-Otto mutanti compilabili a sostituzione unica: scansione generica,
-drain su END fisico, NEXT=END, budget nodi ignorato, depth ignorata,
-byte-budget ignorato, START saltato e arità extra. Catalogo
-materializzato prima delle campagne, copie/cache private e baseline
-completa. Rilevamento solo con smoke esatto e test nominale congelato
-nella traccia, exit1 e segnale NIL. Warning, compilefail, helper,
-segnali o guasti dopo completamento non contano.
+## Campaigns and preservation
 
-Driver congelati, self-test, copertura grezza del solo nuovo sorgente
-senza esclusioni, letture DATA indipendenti e make check prima del
-push. Strumenti Common Lisp, READ-EVAL NIL/EOF; sorgenti/indice/HEAD
-stabili nei comandi registrati. Originali e preparazioni preservati;
-raccolta con quattro worker e inventario chiuso verificato.
-REQ-LIM-001/002 e qualifica C1/MC/DC restano aperti.
+Six cold benchmark fixtures with unvalidated tails, five replicates
+of1024 calls and warmup64. All three values and buffer/scratch
+in the check; zero baseline and positive16x1MiB. Local criterion:
+zero observed heap, no speed threshold.
+
+Eight compilable mutants with a single replacement: generic scanning,
+drain at physical END, NEXT=END, ignored node budget, ignored depth,
+ignored byte-budget, skipped START, and extra arity. Catalog
+materialized before campaigns, private copies/caches, and full
+baseline. Detection only with exact smoke and the frozen nominal test
+in the trace, exit1 and signal NIL. Warnings, compilefail, helpers,
+signals, or faults after completion do not count.
+
+Frozen drivers, self-tests, raw coverage of only the new source
+without exclusions, independent DATA readings, and make check before
+push. Common Lisp tools, READ-EVAL NIL/EOF; sources/index/HEAD
+stable in recorded commands. Originals and preparations preserved;
+collection with four workers and a verified closed inventory.
+REQ-LIM-001/002 and C1/MC/DC qualification remain open.
 

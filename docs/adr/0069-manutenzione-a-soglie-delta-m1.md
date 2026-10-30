@@ -1,43 +1,49 @@
-# ADR-0069 — Manutenzione a soglie del delta M1
+<a id="adr-0069--manutenzione-a-soglie-del-delta-m1"></a>
 
-- **Stato:** Accettata nell'integrazione incrementale autorizzata dall'autore il 2026-10-30
-- **Data:** 2026-10-30
-- **Riferimenti:** ADR-0067, ADR-0068; REQ-IDX-010, REQ-LIM-003, INV-I8, INV-I1, INV-A8, INV-P6
-- **Rapporto con la specifica:** nessun formato o punto durevole nuovo; policy locale per richiedere il rinnovo seriale
+# ADR-0069 — Threshold-based maintenance of the M1 delta
 
-## Decisione
+- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-30
+- **Date:** 2026-10-30
+- **References:** ADR-0067, ADR-0068; REQ-IDX-010, REQ-LIM-003, INV-I8, INV-I1, INV-A8, INV-P6
+- **Relationship to the specification:** no new format or durable point; local policy for requesting serial renewal
 
-Il controller puo' configurare una policy immutabile con soglia intera
-1..100 percento, default 75. Il rinnovo e' richiesto quando il numero di
-chiavi toccate oppure i byte occupati nel delta raggiungono la rispettiva
-soglia. Il confronto e' inclusivo ed esatto, con prodotti interi che
-restano fixnum SBCL64, senza arrotondamento in virgola mobile.
+<a id="decisione"></a>
 
-`rinnovo-indice-richiesto-p` restituisce la decisione sul motore READY con
-delta attivo; non alloca intenzionalmente, non accede ai file e non prenota
-spazio. Contatori fuori quota o incoerenti, oppure delta senza vista,
-rendono FAULTED; una richiesta su un modo legittimo senza delta e' invalida.
-La decisione non e' un'autorizzazione ad ammettere una scrittura futura.
+## Decision
 
-`mantieni-indice-paginato-motore` restituisce `:mantieni` sotto soglia,
-senza creare file o consumare il nome candidato. Alla soglia richiede un
-solo rinnovo di ADR-0068, con nome fornito dal controller e le stesse quote
-chiavi/byte del delta corrente; restituisce `:rinnovato` solo dopo il successo.
-La capienza del payload totale e la freschezza del nome sono verificate
-soltanto se serve il rinnovo. I domini delle opzioni sono sempre validati.
+The controller can configure an immutable policy with an integer threshold
+of 1..100 percent, default 75. Renewal is requested when either
+touched-key count or occupied delta bytes reaches its respective
+threshold. Comparison is inclusive and exact, with integer products that
+remain SBCL64 fixnums, without floating-point rounding.
 
-Non c'e' callback fra lettura dei contatori e avvio del rinnovo: l'owner
-seriale mantiene stabile la scelta. Il rinnovo esclude rientri con BUSY,
-ricontrolla la fonte e conserva ownership/errori secondo ADR-0068. Un
-preflight ordinario conserva READY e il delta precedente; un errore dopo
-admission rende FAULTED. Nessun retry, timer o schedulatore nuovo.
+`rinnovo-indice-richiesto-p` returns the decision on the READY engine with
+an active delta; it does not intentionally allocate, access files, or reserve
+space. Out-of-quota or inconsistent counters, or a delta without a view,
+make the engine FAULTED; a request in a legitimate mode without a delta is invalid.
+The decision does not authorize admission of a future write.
 
-## Limiti
+`mantieni-indice-paginato-motore` returns `:mantieni` below threshold,
+without creating files or consuming the candidate name. At threshold it requests
+one ADR-0068 renewal, with a controller-supplied name and the same
+key/byte quotas as the current delta; it returns `:rinnovato` only after success.
+Total payload capacity and name freshness are checked
+only if renewal is needed. Option domains are always validated.
 
-La policy puo' essere condivisa readonly fra motori; contatori e attuazione
-restano privati di ciascuna Serie. La chiamata e' richiesta dal controller,
-non inserita nel percorso PUT/GET. Non genera nomi, non libera vecchi file,
-non sceglie il modo residente/paginato e non riduce il residente in RAM.
-Una chiave nuova puo' ancora esaurire la quota prima del prossimo controllo.
-Catalogo durevole, writer paginato autonomo e selezione automatica di modo
-restano aperti. [Contratto e prove](../implementazione/manutenzione-indice-m1.md).
+There is no callback between reading counters and starting renewal: the serial
+owner keeps the choice stable. Renewal excludes reentry through BUSY,
+rechecks the source, and preserves ownership/errors under ADR-0068. Ordinary
+preflight preserves READY and the previous delta; an error after
+admission makes the engine FAULTED. No retry, timer, or new scheduler.
+
+<a id="limiti"></a>
+
+## Limits
+
+The policy can be shared read-only among engines; counters and actuation
+remain private to each Serie. The call is requested by the controller,
+not inserted in the PUT/GET path. It does not generate names, release old files,
+choose resident/paged mode, or reduce the resident in RAM.
+A new key may still exhaust quota before the next check.
+Durable catalog, autonomous paged writer, and automatic mode selection
+remain open. [Contract and tests](../implementazione/manutenzione-indice-m1.md).

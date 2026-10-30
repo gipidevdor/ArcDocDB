@@ -1,28 +1,30 @@
-# Decisioni del pianificatore di inventario
+<a id="decisioni-del-pianificatore-di-inventario"></a>
 
-Leggere con [contratto](inventario.md) e [metodo](inventario-metodo.md).
-Forme e rami mancanti, incluse guardie private, restano nel denominatore
-grezzo `sb-cover`. La tabella non dichiara MC/DC né eccezioni approvate.
+# Inventory-planner decisions
 
-| Funzione / controllo | Casi |
+Read with [contract](inventario.md) and [method](inventario-metodo.md).
+Missing forms and branches, including private guards, remain in the
+raw `sb-cover` denominator. The table claims neither MC/DC nor approved exceptions.
+
+| Function / check | Cases |
 |---|---|
-| `check-inventory-budgets`: ogni budget `index` | valido, zero, negativo, oltre fixnum, separatamente |
-| file fisici `> max-files` | uguale, superiore; precedenza su entry invalide/duplicati |
-| richiesti `1+CLOSED > max-segments` | uguale, superiore; CLOSED mancanti inclusi |
-| somma dei conteggi `index` | guardia aritmetica interna, nessuna esclusione |
-| `inventory-presence`: descrittore, forma, nome ripetuto | valido/invalido; tmp/final; duplicato uguale/due forme |
-| cardinalità presenza entro file fisici | guardia dopo coalescenza |
-| `inventory-ids`: ACTIVE positivo, CLOSED valido, bound, maschera | guardie private; union di live mancanti; ID0/high/max |
-| `single-file-action`: stato/nome | ACTIVE/CLOSED/REMOVED/UNKNOWN × temporary/final; next-id irrilevante |
-| `check-single-file-action`: delete ⇒ removed oppure unknown temporary; rename ⇒ live | i singoli stati nella matrice; guardie di prova, errori interni non esclusi |
-| `inventory-entry`: quattro maschere | assente solo live; tmp, final, entrambe; conflitto prevalente |
-| `inventory-entry`: ID, stato e forma dell'entry uguali agli input verificati | guardia di ownership/coerenza della decisione, nessuna esclusione |
-| `entry-severity`: missing oppure conflict, stato | ACTIVE2, CLOSED1, altri0; use/rename/delete/anomaly0 |
-| `entry-severity`: missing ⇒ live; severità positiva ⇒ missing/conflict | guardie di coerenza, nessuna esclusione |
-| `pianifica-riconciliazione`: massimo severità e consumo | FAULTED domina DEGRADED; tutte le permutazioni; guardia consumo |
-| `azione-riconciliazione`: intervallo0..count−1 | primo/ultimo validi, negativo e count invalidi |
+| `check-inventory-budgets`: each `index` budget | valid, zero, negative, beyond fixnum, separately |
+| physical files `> max-files` | equal, greater; precedence over invalid entries/duplicates |
+| required `1+CLOSED > max-segments` | equal, greater; missing CLOSED included |
+| sum of `index` counts | internal arithmetic guard, no exclusion |
+| `inventory-presence`: descriptor, form, repeated name | valid/invalid; tmp/final; equal duplicate/two forms |
+| presence cardinality within physical files | guard after coalescing |
+| `inventory-ids`: positive ACTIVE, valid CLOSED, bound, mask | private guards; union of missing live IDs; ID0/high/max |
+| `single-file-action`: state/name | ACTIVE/CLOSED/REMOVED/UNKNOWN × temporary/final; next-id irrelevant |
+| `check-single-file-action`: delete ⇒ removed or unknown temporary; rename ⇒ live | individual states in matrix; proof guards, internal errors not excluded |
+| `inventory-entry`: four masks | absent only live; tmp, final, both; conflict takes precedence |
+| `inventory-entry`: ID, state, and entry form equal verified inputs | decision ownership/consistency guard, no exclusion |
+| `entry-severity`: missing or conflict, state | ACTIVE2, CLOSED1, others0; use/rename/delete/anomaly0 |
+| `entry-severity`: missing ⇒ live; positive severity ⇒ missing/conflict | consistency guards, no exclusion |
+| `pianifica-riconciliazione`: maximum severity and consumption | FAULTED dominates DEGRADED; all permutations; consumption guard |
+| `azione-riconciliazione`: interval0..count−1 | valid first/last, invalid negative and count |
 
-Le condizioni di appartenenza `:active`/`:closed` e `:missing`/`:conflict`
-sono provate separatamente nella matrice. Le comparazioni concatenate
-verificano range e bound. Tipi di argomenti/slot sono pre/postcondizioni
-sempre attive; le guardie controllano relazioni fra cardinalità e passaggi.
+Membership conditions `:active`/`:closed` and `:missing`/`:conflict`
+are tested separately in the matrix. Chained comparisons
+check range and bound. Argument/slot types are always-active pre/postconditions;
+guards check relations among cardinalities and transitions.

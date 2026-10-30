@@ -1,65 +1,77 @@
-# ADR-0012 — SIMD solo dove i benchmark lo giustificano
+<a id="adr-0012--simd-solo-dove-i-benchmark-lo-giustificano"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Precisazione:** 2026-10-22, valutazione sistematica delle varianti SIMD utilizzabili in sicurezza.
-- **Rapporto con la specifica:** registra una decisione della specifica («SIMD e
-  ottimizzazioni native»), nel quadro di [ADR-0001](0001-common-lisp-sbcl.md)
-- **Riferimenti:** [15 Ottimizzazioni native](../15-ottimizzazioni-native.md), INV-X1
+# ADR-0012 — SIMD only where benchmarks justify it
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Clarification:** 2026-10-22, systematic evaluation of SIMD variants that can be used safely.
+- **Relationship to the specification:** records a specification decision (“SIMD and
+  native optimizations”), within [ADR-0001](0001-common-lisp-sbcl.md)
+- **References:** [15 Native optimizations](../15-ottimizzazioni-native.md), INV-X1
 
-Molte operazioni di un database si prestano al SIMD, ma il codice specializzato costa in
-portabilità e manutenzione, e ottimizzare prima di misurare porta spesso a ottimizzare il
-punto sbagliato.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-Le prescrizioni seguenti sono criteri obbligatori per introdurre un kernel nel motore.
-Gli spike esistenti non attestano dispatcher, ripiego o qualificazione del prodotto.
+Many database operations lend themselves to SIMD, but specialized code has portability
+and maintenance costs, and optimizing before measuring often means optimizing the
+wrong place.
 
-- Il sistema è progettato per essere SIMD-friendly: strutture compatte, typed arrays,
-  dichiarazioni di tipo, poche allocazioni, accessi sequenziali.
-- Per ogni hot path individuato dalla profilazione si valutano sistematicamente tutte le
-  varianti SIMD disponibili e utilizzabili in sicurezza sulle piattaforme concordate:
-  Linux x86-64 di riferimento e macOS ARM64 di sviluppo ([ADR-0017](0017-piattaforma-e-io.md)).
-  Si adotta la variante che i benchmark dimostrano utile per operazione e dimensione;
-  la larghezza vettoriale maggiore non è da sola un criterio di scelta.
-- Candidati: operazioni su bitmap, Bloom filter, scansioni, confronti, filtri, parsing,
-  hashing, compressione.
-- Per ora gli strumenti ammessi sono Common Lisp tipizzato e le operazioni specifiche di SBCL
+<a id="decisione"></a>
+
+## Decision
+
+The following requirements are mandatory criteria for introducing a kernel into the engine.
+Existing spikes do not establish product dispatch, fallback, or qualification.
+
+- The system is designed to be SIMD-friendly: compact structures, typed arrays,
+  type declarations, few allocations, sequential access.
+- For each hot path identified through profiling, systematically evaluate all SIMD
+  variants available and safe to use on the agreed platforms:
+  reference Linux x86-64 and development macOS ARM64 ([ADR-0017](0017-piattaforma-e-io.md)).
+  Adopt the variant that benchmarks show to be useful for the operation and size;
+  greater vector width alone is not a selection criterion.
+- Candidates: bitmap operations, Bloom filters, scans, comparisons, filters, parsing,
+  hashing, compression.
+- For now, the allowed tools are typed Common Lisp and SBCL-specific operations
   (ADR-0001).
-- La selezione verifica le funzionalità effettivamente utilizzabili da CPU, sistema operativo
-  e runtime SBCL prima di eseguire il kernel. Una variante assente o non qualificata usa il
-  riferimento scalare, sempre eseguibile e forzabile nei test; gli errori di dati o di
-  invarianti seguono la stessa semantica e non vengono nascosti dal ripiego.
-- Ogni variante mantiene i controlli di tipo e limiti, con `safety 3` predefinito e le sole
-  eccezioni già previste da [ADR-0034](0034-policy-di-compilazione-e-standard-di-codifica.md).
-  Nessun accesso vettoriale oltrepassa la finestra logica valida; code e allineamento hanno
-  percorsi definiti e verificati, senza leggere padding o byte estranei.
+- Selection checks the features actually usable by the CPU, operating system,
+  and SBCL runtime before executing the kernel. An unavailable or unqualified variant
+  uses the scalar reference, which is always executable and can be forced in tests;
+  data or invariant errors retain the same semantics and are not hidden by fallback.
+- Every variant retains type and bounds checks, with `safety 3` by default and only the
+  exceptions already allowed by [ADR-0034](0034-policy-di-compilazione-e-standard-di-codifica.md).
+  No vector access crosses the valid logical window; tails and alignment have defined
+  and verified paths, without reading padding or unrelated bytes.
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Il layout dei dati si decide subito in funzione di queste ottimizzazioni; le ottimizzazioni
-  stesse arrivano dopo.
-- Ogni primitiva ottimizzata ha una versione portabile di riferimento, usata anche per
-  verificarne la correttezza con un oracolo differenziale indipendente; test e benchmark
-  possono forzare ciascun backend e il percorso scalare.
-- Serve un'infrastruttura di benchmark prima di qualunque ottimizzazione.
-- Oracoli, dataset e metodo di confronto sono comuni alle due piattaforme; risultati,
-  disassemblati e costi di selezione devono essere raccolti separatamente per ciascuna
-  prima della promozione. Un backend
-  `unsupported` è distinto da una verifica riuscita e non qualifica la piattaforma.
+## Consequences
 
-## Alternative considerate
+- Data layout is decided immediately with these optimizations in mind; the optimizations
+  themselves come later.
+- Each optimized primitive has a portable reference version, also used to verify
+  correctness with an independent differential oracle; tests and benchmarks
+  can force each backend and the scalar path.
+- Benchmark infrastructure is required before any optimization.
+- Oracles, datasets, and comparison methods are shared by the two platforms; results,
+  disassembly, and selection costs must be collected separately for each before
+  promotion. An `unsupported` backend is distinct from successful verification and
+  does not qualify the platform.
 
-- *SIMD pervasivo fin dall'inizio:* scartato; contrario al principio di misura.
-- *Nessun SIMD:* rinuncia a guadagni noti su bitmap e scansioni.
+<a id="alternative-considerate"></a>
 
-## Valutazione
+## Alternatives considered
 
-- Rischi: RSK-11, RSK-16.
-- Verifica: SPK-08 (codice generato e strumenti disponibili per architettura).
-- Piattaforme decise da ADR-0017 (QA-19); la qualificazione dei backend resta subordinata
-  a prove reali su ciascuna piattaforma. Gli esperimenti SPK-08 non promuovono il motore
-  né altre estensioni SIMD non verificate.
+- *Pervasive SIMD from the start:* rejected; contrary to the measurement principle.
+- *No SIMD:* gives up known gains on bitmaps and scans.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-11, RSK-16.
+- Verification: SPK-08 (generated code and tools available per architecture).
+- Platforms decided by ADR-0017 (QA-19); backend qualification remains subject
+  to real tests on each platform. SPK-08 experiments do not promote the engine
+  or other unverified SIMD extensions.

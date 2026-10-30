@@ -167,20 +167,20 @@
 
 (defun ci-report-markdown (summary path)
   (with-open-file (out path :direction :output :if-exists :error :external-format :utf-8)
-    (format out "# Statistiche CI~%~%Codice provato: `~A`.~%~%Identità sorgenti: `~A`.~%~%"
+    (format out "<a id=\"statistiche-ci\"></a>~%# CI statistics~%~%Tested code: `~A`.~%~%Source identity: `~A`.~%~%"
             (ci-html-escape (getf summary :tested-sha)) (ci-html-escape (getf summary :source-id)))
-    (format out "Raccolta chiusa: ~A; metriche complete: ~A; verifiche superate: ~A.~%~%"
+    (format out "Collection closed: ~A; metrics complete: ~A; verification passed: ~A.~%~%"
             (getf summary :collection-closed) (getf summary :metrics-complete)
             (getf summary :verification-passed))
     (let ((proof (getf summary :source-attribution)))
       (when proof
         (if (eq :github-pr-merge-source-v1 (getf proof :method))
-            (format out "Sorgenti equivalenti al merge GitHub `~A` della PR ~A; SHA originale conservata sopra. Producer PR non fidato; nessuna attestazione dell'esecuzione.~%~%"
+            (format out "Sources equivalent to GitHub merge `~A` for PR ~A; original SHA retained above. Untrusted PR producer; no execution attestation.~%~%"
                     (ci-html-escape (getf proof :github-merge-sha))
                     (ci-html-escape (getf proof :pull-request)))
-            (format out "Commit confermato dai metadata GitHub del run.~%~%"))))
-    (format out "| Job | Esito | Metriche |~%|---|---|---|~%")
+            (format out "Commit confirmed by the run's GitHub metadata.~%~%"))))
+    (format out "| Job | Outcome | Metrics |~%|---|---|---|~%")
     (dolist (row (getf summary :jobs))
       (format out "| ~A | ~A | ~A |~%" (ci-html-escape (getf row :job))
               (getf row :status) (ci-html-escape (ci-wire-string (getf row :metrics)))))
-    (format out "~%Prestazioni esplorative su runner GitHub; forme/rami non sono MC/DC.~%")))
+    (format out "~%Exploratory performance on GitHub runners; forms/branches are not MC/DC.~%")))

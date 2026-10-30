@@ -1,71 +1,73 @@
-# Metodo preregistrato del routing worker/Serie
+<a id="metodo-preregistrato-del-routing-workerserie"></a>
 
-Base iniziale `92decf4265554cd4959e32a1c881cf00758bb6a1`.
-Metodo fissato prima delle campagne dedicate al routing nuovo.
-Ambito: estensione immutabile del writer programmabile, registro condiviso,
-tabella locale e lookup, dichiarazioni package/ASDF, test e C4 di misura.
-Il [contratto](routing-worker.md) mantiene espliciti i confini non integrati.
+# Preregistered worker/Serie routing method
 
-Verifiche previste:
+Initial base `92decf4265554cd4959e32a1c881cf00758bb6a1`.
+Method fixed before campaigns dedicated to the new routing.
+Scope: immutable programmable writer extension, shared registry,
+local table and lookup, package/ASDF declarations, tests, and measurement C4.
+The [contract](routing-worker.md) keeps unintegrated boundaries explicit.
 
-- Ordinale `NIL` compatibile con writer esistenti, 0 e 65535 validi;
-  valori fuori tipo/budget rifiutati all'avvio prima della pubblicazione.
-- Registro da 1 a 65536 slot, input di tipo/lunghezza coerenti,
-  ordinale esattamente uguale allo slot; controller duplicati EQ rifiutati.
-  Copie private: modificare entrambi gli input dopo la factory non cambia
-  il lookup. Registri indipendenti possono usare gli stessi numeri.
-- Tabella creata sul thread owner del contesto IDLE, collegamenti locali
-  preallocati, distinti fra worker e riferiti allo stesso registro.
-  Owner e fase errati non consumano obblighi o lease.
-- Catena reale accettazione, pubblicazione ready, claim, lookup, doppia lease,
-  FIFO, pop, ack, fine e ricircolo. Il ricircolo full deve cambiare writer e
-  quindi collegamento senza ripetere il tratto del precedente writer.
-- Lookup ripetuto su CLAIMED/IDLE restituisce lo stesso collegamento senza
-  mutare il grafo di stato; nessuna lease Serie è acquisita dal lookup.
-- Writer estraneo con ordinale valido, writer senza ordinale e indice oltre
-  la tabella diventano fault terminali del worker dopo claim. Stessa
-  condizione EQ conservata e propagata; writer/home/obbligo restano disponibili
-  alla diagnosi. Nessuna mutazione di alcun controller non acquisito.
-- FI quiescente della tabella privata: slot o binding incoerente, contesto
-  estraneo, collegamento non IDLE. Il rifiuto precede begin/pop e non libera
-  o marca una Serie di cui il routing non possiede la lease.
-- Due worker reali, due Serie e stesso registro: collegamenti locali distinti,
-  due Serie contemporaneamente ACTIVE. Semafori e deadline sono nel solo
-  harness. Si distingue il controllo d'identità dall'esclusione già provata
-  dal bridge; la fixture non misura throughput o equità del pool.
-- Serie FAULTED selezionabile per il drenaggio già previsto dal controller.
-  Nessun gate di salute aggiunto al lookup; nuova pubblicazione resta regolata
-  dal controller. Nessuna prova di arresto globale Archivio è dedotta.
-- Due letture C1 sui dodici punti, inventario di tutte le decisioni e dei
-  controlli delegati, comprese eventuali decisioni composte condizione per
-  condizione. Copertura nativa e HTML nello stesso processo che esegue le
-  suite Series ed execution: unione completa di 15 sorgenti Series e
-  11 sorgenti execution, package e helper inclusi. Il denominatore contiene
-  anche le forme preesistenti di handoff, macro worker e bridge; nessuna
-  decisione execution è attribuita al solo scope Series. Tutte le identità
-  dei percorsi mancanti restano nell'audit, senza esclusioni approvate.
-- Allocazione locale su ciclo completo con due writer, due controller,
-  un worker, ready con una partizione/capacità1 e tabella preallocati.
-  Ogni ciclo alterna il writer e compone enqueue, publish, claim, due lookup
-  EQ/indice atteso, begin/lease, pop/ack ed end idle. Due cicli di startup
-  popolano le identità fuori sensore. Warmup128, cinque campioni da4096 cicli,
-  GC/stampa fuori misura. Sink indipendente del driver:
+Planned checks:
+
+- `NIL` ordinal compatible with existing writers, 0 and 65535 valid;
+  values outside type/budget rejected at startup before publication.
+- Registry from 1 to 65536 slots, consistent input type/length,
+  ordinal exactly equal to slot; duplicate EQ controllers rejected.
+  Private copies: modifying both inputs after the factory does not change
+  lookup. Independent registries can use the same numbers.
+- Table created on the IDLE context's owner thread, preallocated local
+  links, distinct between workers and referring to the same registry.
+  Wrong owner and phase do not consume obligations or leases.
+- Real acceptance, ready publication, claim, lookup, double lease,
+  FIFO, pop, ack, end, and recycling chain. Full recycling must change writer
+  and therefore link without repeating the previous writer's segment.
+- Repeated lookup on CLAIMED/IDLE returns the same link without mutating
+  the state graph; no Serie lease is acquired by lookup.
+- Foreign writer with valid ordinal, writer without ordinal, and index beyond
+  the table become terminal worker faults after claim. Same EQ condition
+  retained and propagated; writer/home/obligation remain available for
+  diagnosis. No mutation of any unacquired controller.
+- Quiescent FI of the private table: inconsistent slot or binding, foreign
+  context, non-IDLE link. Rejection precedes begin/pop and does not release
+  or mark a Serie whose lease routing does not own.
+- Two real workers, two Serie, and the same registry: distinct local links,
+  two simultaneously ACTIVE Serie. Semaphores and deadlines are only in
+  the harness. Identity checking is distinguished from exclusion already
+  proven by the bridge; the fixture measures neither throughput nor pool fairness.
+- FAULTED Serie selectable for draining already provided by the controller.
+  No health gate added to lookup; new publication remains controlled by
+  the controller. No global Archivio shutdown proof is inferred.
+- Two C1 readings on the twelve points, inventory of all decisions and
+  delegated checks, including any compound decisions condition by condition.
+  Native and HTML coverage in the same process that runs Series and execution
+  suites: complete union of 15 Series sources and 11 execution sources,
+  packages and helpers included. The denominator also contains existing
+  handoff, worker macro, and bridge forms; no execution decision is attributed
+  only to Series scope. All missing path identities remain in the audit,
+  without approved exclusions.
+- Local allocation on a complete cycle with two writers, two controllers,
+  one worker, ready with one partition/capacity1, and a preallocated table.
+  Each cycle alternates the writer and composes enqueue, publish, claim,
+  two EQ/expected index lookups, begin/lease, pop/ack, and end idle. Two
+  startup cycles populate identities outside the sensor. Warmup128, five
+  samples of4096 cycles, GC/printing outside measurement. Independent driver sink:
   `12+17+19+13+11+13+3+25+7+23=143`,
-  campione `N*143+N*(N-1)/2`; token bridge e lease Serie monotoni per writer,
-  token batch monotono nel worker. Controlli baseline, heap positivo16×1MiB,
-  sink errato e clock sotto risoluzione dimostrano il rilevamento del C4.
-- C4 compilato integralmente con warning e style-warning fatali, self-test
-  del FASL, rilevamento heap/sink errato e CLI invalida. La sola eccezione
-  runtime ASDF è `sb-kernel:redefinition-warning`, già prevista dal build;
-  nessuna eccezione agli avvisi di compilazione del nuovo strumento.
-- Build e test mirati prima del controllo generale; `make check` una volta
-  sul codice finale congelato, salvo cambiamenti o failure reali.
+  sample `N*143+N*(N-1)/2`; monotonic bridge tokens and Serie leases per writer,
+  monotonic batch token in worker. Baseline, positive heap16×1MiB, wrong sink,
+  and below-resolution clock controls demonstrate C4 detection.
+- C4 fully compiled with fatal warning and style-warning, FASL self-test,
+  wrong heap/sink detection, and invalid CLI. The only ASDF runtime exception
+  is `sb-kernel:redefinition-warning`, already provided by the build;
+  no exceptions to compilation warnings for the new tool.
+- Build and targeted tests before the general check; `make check` once
+  on the final frozen code, unless changes or real failures occur.
 
-Ogni campagna usa `tools/record-command.lisp`, con stdout/stderr, argv,
-ambiente, snapshot iniziale/finale e tentativi falliti conservati. Le campagne
-usano copie congelate e cache separate. Dati grandi compressi senza perdita,
-catalogo e verifica dei byte conservati; nessun raw viene ricostruito.
+Each campaign uses `tools/record-command.lisp`, with stdout/stderr, argv,
+environment, initial/final snapshots, and failed attempts retained. Campaigns
+use frozen copies and separate caches. Large data compressed losslessly,
+catalog and byte verification retained; no raw data is reconstructed.
 
-Le misure locali distinguono startup e percorso normale. Non si deducono
-heap nullo universale, throughput, P99, fairness, scalabilità o chiusura dei
-gate della Fase0. Stati globali dei requisiti restano `progettato`.
+Local measurements distinguish startup and normal path. Universal zero heap,
+throughput, P99, fairness, scalability, or closure of Phase0 gates are not
+inferred. Global requirement statuses remain `progettato`.

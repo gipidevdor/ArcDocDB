@@ -1,121 +1,133 @@
-# 10 — Concorrenza e scheduling
+<a id="10--concorrenza-e-scheduling"></a>
 
-> **Fonte:** «Concorrenza», «Thread pool dinamico», «Compaction scheduler dinamico»,
-> «Parallelismo» della [specifica](specifica/specifica-originale.md).
-> **Moduli:** M13 Scheduler, M14 Dynamic Thread Pool.
-> **Decisioni:** [ADR-0017](adr/0017-piattaforma-e-io.md) (pool di calcolo e pool di I/O),
-> [ADR-0045](adr/0045-modello-di-esecuzione.md) (compiti a completamento, attese come
-> parcheggi, migrazione delle letture),
-> [ADR-0019](adr/0019-durability-e-group-commit-pipelined.md) (writer mai bloccato),
-> [ADR-0016](adr/0016-epoch-based-reclamation.md) (epoche), [ADR-0023](adr/0023-politiche-di-compaction.md)
-> (stato di carico).
+# 10 — Concurrency and scheduling
 
-## Modello
+> **Source:** ‘Concurrency’, ‘Dynamic thread pool’, ‘Dynamic compaction scheduler’, and
+> ‘Parallelism’ of the [specification](specifica/specifica-originale.md).
+> **Modules:** M13 Scheduler, M14 Dynamic Thread Pool.
+> **Decisions:** [ADR-0017](adr/0017-piattaforma-e-io.md) (compute and I/O pools),
+> [ADR-0045](adr/0045-modello-di-esecuzione.md) (run-to-completion tasks, waits as
+> parking, read migration),
+> [ADR-0019](adr/0019-durability-e-group-commit-pipelined.md) (writer never blocked),
+> [ADR-0016](adr/0016-epoch-based-reclamation.md) (epochs), [ADR-0023](adr/0023-politiche-di-compaction.md)
+> (load state).
+
+<a id="modello"></a>
+
+## Model
 
 ```
-1 writer logico per Serie  +  molti reader concorrenti
+1 logical writer per Serie  +  many concurrent readers
 ```
 
-NON usare:
+Do NOT use:
 
-- un thread permanente per ogni Serie;
-- un thread per ogni richiesta;
-- un global writer lock.
+- one permanent thread per Serie;
+- one thread per request;
+- a global writer lock.
 
-Serie indipendenti DEVONO poter scrivere in parallelo:
+Independent Serie MUST be able to write in parallel:
 
 ```
 client → queue Serie A → Writer A → WAL A
 client → queue Serie B → Writer B → WAL B
 ```
 
-Il writer serializza **solo ciò che deve essere serializzato** all'interno della singola Serie.
+The writer serializes **only what must be serialized** within a single Serie.
 
-> **Deciso ([architettura](architettura.md#thread-pool))** — «Writer logico» senza thread dedicato si realizza come **esecutore seriale**:
-> ogni Serie ha una coda di scrittura; quando la coda non è vuota, un worker del pool la prende
-> in carico e la svuota a lotti, e nessun altro worker può farlo contemporaneamente. La mutua
-> esclusione è sulla coda, non su un thread. Il lotto coincide naturalmente con il gruppo del
-> group commit ([04](04-wal-e-durability.md)).
+> **Decided ([architecture](architettura.md#thread-pool))** — A ‘logical writer’ without a dedicated thread is implemented as a **serial executor**:
+> each Serie has a write queue; when it is nonempty, a pool worker takes ownership
+> and drains it in batches, and no other worker can do so concurrently. Mutual exclusion
+> applies to the queue, not a thread. The batch naturally coincides with the group-commit
+> group ([04](04-wal-e-durability.md)).
 
-> **Deciso ([ADR-0019](adr/0019-durability-e-group-commit-pipelined.md), [architettura](architettura.md#percorso-di-scrittura))** — «Solo ciò che deve essere serializzato» suggerisce di tenere fuori dal writer
-> tutto il lavoro parallelizzabile: parsing, validazione rispetto allo schema, codifica del
-> record avvengono nel worker che riceve la richiesta; al writer restano controllo di versione,
-> assegnazione dell'ordine, append al WAL/segmento e aggiornamento dell'indice. Da questo
-> dipende il tetto di throughput per singola Serie (RSK-04, QA-26).
+> **Decided ([ADR-0019](adr/0019-durability-e-group-commit-pipelined.md), [architecture](architettura.md#percorso-di-scrittura))** — ‘Only what must be serialized’ suggests keeping all parallelizable work outside
+> the writer: parsing, schema validation, and record encoding happen in the worker receiving
+> the request; version checking, order assignment, WAL/segment append, and index updates
+> remain in the writer. This determines the throughput ceiling per Serie
+> (RSK-04, QA-26).
 
-> **Deciso ([ADR-0036](adr/0036-leggi-di-progetto.md))** — Il parallelismo è un **principio
-> fondante**, non un obiettivo di prestazione: tra Serie non c'è alcun lock né alcuna
-> scrittura condivisa per singola operazione, e ciò che è condiviso è l'elenco chiuso di
-> [architettura](architettura.md#archivio-coordinamento-minimo) (INV-P6). Ogni meccanismo
-> dichiara che cosa rende seriale.
+> **Decided ([ADR-0036](adr/0036-leggi-di-progetto.md))** — Parallelism is a **foundational
+> principle**, not a performance target: there are no locks or shared writes between Serie
+> per operation, and what is shared is the closed list in
+> [architecture](architettura.md#archivio-coordinamento-minimo) (INV-P6). Each mechanism
+> declares what it serializes.
 
-## Isolamento tra Serie
+<a id="isolamento-tra-serie"></a>
 
-La Serie è l'unità principale di isolamento del carico (INV-P3). Un burst di letture sulla
-Serie A non deve impedire:
+## Isolation between Serie
 
-- scritture sulla Serie B;
-- query sulla Serie C;
-- compaction controllata sulla Serie D.
+The Serie is the main unit of load isolation (INV-P3). A read burst on
+Serie A must not prevent:
 
-Le risorse effettivamente condivise, e quindi da governare, sono: i worker del pool, la cache
-(partizionabile, [09](09-cache.md)), il dispositivo NVMe, la memoria e — in SBCL — il garbage
-collector, che ferma tutti i thread (RSK-01).
+- writes on Serie B;
+- queries on Serie C;
+- controlled compaction on Serie D.
 
-## Thread pool dinamico
+Resources actually shared, and therefore needing control, are: pool workers, the cache
+(partitionable, [09](09-cache.md)), the NVMe device, memory, and — in SBCL — the garbage
+collector, which stops all threads (RSK-01).
 
-- Pool dinamico di worker thread, **riutilizzati**: non si creano e distruggono thread di
-  continuo.
-- Lo scheduler adatta il numero di worker in base a:
+<a id="thread-pool-dinamico"></a>
 
-| Area | Segnali |
+## Dynamic thread pool
+
+- A dynamic pool of **reused** worker threads: threads are not continuously created
+  and destroyed.
+- The scheduler adjusts worker count based on:
+
+| Area | Signals |
 |---|---|
-| Code | queue depth |
-| CPU | utilizzo |
-| Richieste | throughput, P50, P95, P99 |
-| Serie | numero di Serie attive, distribuzione del carico tra Serie |
-| I/O | utilizzo I/O, WAL throughput |
+| Queues | queue depth |
+| CPU | utilization |
+| Requests | throughput, P50, P95, P99 |
+| Serie | number of active Serie, load distribution between Serie |
+| I/O | I/O utilization, WAL throughput |
 | Compaction | backlog |
 
-Strategia di controllo: **EWMA** (smussare i segnali), **AIMD** (crescita additiva, riduzione
-moltiplicativa), **isteresi** (evitare oscillazioni).
+Control strategy: **EWMA** (smooth signals), **AIMD** (additive increase, multiplicative
+decrease), **hysteresis** (avoid oscillation).
 
-Regole indicative:
+Illustrative rules:
 
-| Osservazione | Azione |
+| Observation | Action |
 |---|---|
-| coda in crescita + CPU libera | aumentare i worker |
-| coda in crescita + CPU satura | non aumentare ciecamente |
-| P99 peggiora significativamente | fermare l'espansione o ridurre i worker |
-| coda vuota + CPU bassa | ridurre i worker |
+| growing queue + spare CPU | increase workers |
+| growing queue + saturated CPU | do not increase blindly |
+| P99 worsens significantly | stop expansion or reduce workers |
+| empty queue + low CPU | reduce workers |
 
-Lo stesso scheduler coordina il carico di query, writer, WAL e compaction.
+The same scheduler coordinates query, writer, WAL, and compaction load.
 
 ## Compaction Scheduler
 
-Ha limiti **indipendenti** dal request scheduler ([07](07-compaction.md#parallelismo-e-scheduling)).
-Ordine di priorità (INV-P4):
+It has **independent** limits from the request scheduler ([07](07-compaction.md#parallelismo-e-scheduling)).
+Priority order (INV-P4):
 
 ```
-traffico utente  >  WAL/durability  >  CLEAN necessario  >  MERGE opportunistico
+user traffic  >  WAL/durability  >  required CLEAN  >  opportunistic MERGE
 ```
 
-## Questioni decise e rischi
+<a id="questioni-decise-e-rischi"></a>
 
-- **QA-12** ([ADR-0023](adr/0023-politiche-di-compaction.md)) — Definizione operativa di basso/alto carico, condivisa tra scheduler e low-load
-  policy del MERGE.
-- **QA-16** ([ADR-0016](adr/0016-epoch-based-reclamation.md)) — Tracciamento dei reader attivi (necessario al reclaim) con costo trascurabile sul
-  percorso di lettura.
-- **QA-26** ([ADR-0028](adr/0028-target-e-obiettivi-di-latenza.md)) — I target di throughput sono per Serie o aggregati?
-- **RSK-04** — Tetto del writer singolo; **RSK-12** — stabilità del controllore (molti segnali,
-  rischio di oscillazione); **RSK-01** — pause del GC come fonte di contesa globale.
-- Le chiamate bloccanti (`write`, `fsync`, letture da NVMe) occupano un worker per la loro
-  durata: sono tutte compiti del **pool di I/O**; un worker di calcolo non si blocca mai
-  (INV-P5, [ADR-0045](adr/0045-modello-di-esecuzione.md)). Il tetto del pool di I/O limita la
-  concorrenza sul dispositivo e, poiché il collector ferma ogni thread, anche la pausa del GC
+## Decided questions and risks
+
+- **QA-12** ([ADR-0023](adr/0023-politiche-di-compaction.md)) — Operational definition of low/high load, shared by the scheduler and MERGE
+  low-load policy.
+- **QA-16** ([ADR-0016](adr/0016-epoch-based-reclamation.md)) — Active-reader tracking (required for reclaim) with negligible cost on the
+  read path.
+- **QA-26** ([ADR-0028](adr/0028-target-e-obiettivi-di-latenza.md)) — Are throughput targets per Serie or aggregate?
+- **RSK-04** — Single-writer ceiling; **RSK-12** — controller stability (many signals,
+  oscillation risk); **RSK-01** — GC pauses as a source of global contention.
+- Blocking calls (`write`, `fsync`, NVMe reads) occupy a worker for their duration:
+  they are all **I/O-pool** tasks; a compute worker never blocks
+  (INV-P5, [ADR-0045](adr/0045-modello-di-esecuzione.md)). The I/O-pool ceiling limits
+  device concurrency and, because the collector stops every thread, also the GC pause
   (SPK-02).
 
-## Metriche
+<a id="metriche"></a>
 
-Worker count, queue depth, utilizzo CPU e I/O, compaction concurrency
-([12 Osservabilità](12-osservabilita.md)).
+## Metrics
+
+Worker count, queue depth, CPU and I/O utilization, compaction concurrency
+([12 Observability](12-osservabilita.md)).

@@ -1,26 +1,28 @@
-# Raccolta degli archivi di comandi
+<a id="raccolta-degli-archivi-di-comandi"></a>
 
-Lo strumento C4 `tools/collect-command-archive.lisp` raccoglie record di
-comandi già conclusi in un archivio nuovo. Applica il registro delle prove
-di [ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) e i
-controlli COD-60/COD-61 dello [standard](../affidabilita/standard-di-codifica.md).
-Non interviene sul motore o sui suoi formati persistenti.
-Le [verifiche conservate](raccolta-comandi-risultati.md) riportano tentativi,
-risultati e limiti della prima campagna.
+# Collecting command archives
 
-La lista degli ingressi è esplicita. Il chiamante sceglie ogni file e ogni
-record; un file vicino al record non entra automaticamente nell'archivio.
-Descriptor e payload gzip vanno elencati entrambi. Questo consente di
-conservare sorgenti, output e fallimenti senza ripulirne o reinterpretarne
-il contenuto.
+C4 tool `tools/collect-command-archive.lisp` collects already-completed
+command records into a new archive. Applies evidence register
+under [ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md) and
+COD-60/COD-61 checks from [standard](../affidabilita/standard-di-codifica.md).
+Does not affect engine or persistent formats.
+[Preserved verification](raccolta-comandi-risultati.md) reports attempts,
+results, and limits of first campaign.
+
+Input list explicit. Caller selects every file and
+record; file next to record not automatically included in archive.
+Descriptor and gzip payload must both be listed. Allows
+preserving sources, outputs, and failures without cleaning or reinterpreting
+contents.
 
 ## Manifest
 
-Il manifest è una sola plist, letta come dati con READ-EVAL NIL ed EOF
-obbligatorio. I percorsi SOURCE relativi partono dalla directory del
-manifest. PATH e RECORD-PATH sono relativi alla nuova radice dell'archivio.
-Il campo DATE contiene la data della raccolta, senza date nel sorgente
-dello strumento.
+Manifest is one plist, read as data with READ-EVAL NIL and mandatory
+EOF. Relative SOURCE paths start from manifest
+directory. PATH and RECORD-PATH relative to new archive root.
+DATE field contains collection date, without dates in tool
+source.
 
 ```lisp
 (:schema-version 1 :kind :command-archive-manifest :date "2026-10-15"
@@ -32,21 +34,23 @@ dello strumento.
  :processes ((:label "build" :record-path "processes/build/report.lisp")))
 ```
 
-Il payload gzip si elenca soltanto quando il record ha effettivamente un
-descriptor di compressione. Ogni LABEL è un singolo segmento univoco;
-ogni RECORD-PATH deve comparire in FILES. I file
-`collection-manifest.lisp` e `collection-source.lisp` sono aggiunti dallo
-strumento. Questi nomi, `archive-index.lisp` e `catalogo.lisp` sono riservati.
-Sono rifiutati duplicati e collisioni fra un file e una directory.
+List gzip payload only when record actually has compression
+descriptor. Each LABEL one unique segment;
+every RECORD-PATH must appear in FILES. Files
+`collection-manifest.lisp` and `collection-source.lisp` added by
+tool. Those names, `archive-index.lisp`, and `catalogo.lisp` reserved.
+Duplicates and file/directory collisions rejected.
 
-I record devono avere schema 1, kind COMMAND-VERIFICATION, fine registrata
-e stato terminale. Restano distinti OK, FAILED e SOURCE-CHANGED. Anche un
-comando fallito può essere conservato: la riuscita della raccolta attesta
-la copia e la verifica dell'archivio, non la riuscita del comando copiato.
-COMMAND, STATUS, EXIT-CODE e SOURCE-CONSISTENCY devono essere presenti;
-un errore infrastrutturale può avere EXIT-CODE NIL.
+Records must have schema 1, kind COMMAND-VERIFICATION, recorded end,
+and terminal state. OK, FAILED, and SOURCE-CHANGED remain distinct. Failed
+command can be preserved too: collection success attests archive
+copying and verification, not success of copied command.
+COMMAND, STATUS, EXIT-CODE, and SOURCE-CONSISTENCY must be present;
+infrastructure error may have EXIT-CODE NIL.
 
-## Esecuzione
+<a id="esecuzione"></a>
+
+## Execution
 
 ```bash
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- \
@@ -57,52 +61,54 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
   --observations spikes/out/campagna/raccolta/ --jobs 4
 ```
 
-Destinazione e directory delle osservazioni devono essere nuove e
-separate, senza contenersi a vicenda. Le osservazioni rimangono esterne
-all'archivio: includerle nella stessa raccolta cambierebbe l'insieme appena
-verificato. Per conservare l'esito della raccolta si può usare il record
-del comando concluso come ingresso di un archivio successivo.
+Destination and observation directory must be new and
+separate, neither containing other. Observations remain external
+to archive: including them in same collection would change just-verified
+set. To preserve collection outcome, completed command
+record can be input to a later archive.
 
-L'API Common Lisp `collect-archive` accetta stringhe o pathname per
-manifest, destinazione e osservazioni. I percorsi contenuti nel manifest
-restano stringhe, come prescritto dallo schema.
+Common Lisp `collect-archive` API accepts strings or pathnames for
+manifest, destination, and observations. Paths inside manifest
+remain strings, as schema requires.
 
-Il preflight controlla manifest, percorsi, dimensioni e record prima di
-creare la destinazione. Le copie usano quattro worker, con una prima copia
-privata per worker quando ci sono almeno quattro file e una coda condivisa
-protetta da mutex. Ogni risultato
-ha un solo proprietario; indice e catalogo sono costruiti dopo i join.
-Gli hash SHA256 confrontano gli ingressi prima e dopo le copie e le
-destinazioni. I metadati dei record copiati sono riletti e confrontati con
-quelli degli originali; la verifica SHA256 copre l'intero contenuto.
+Preflight checks manifest, paths, sizes, and records before
+creating destination. Copies use four workers, with first private
+copy per worker when at least four files and shared queue
+protected by mutex. Every result
+has one owner; index and catalog built after joins.
+SHA256 hashes compare inputs before and after copies and
+destinations. Copied-record metadata reread and compared with
+originals; SHA256 verification covers entire contents.
 
-L'ultima verifica avvia `tools/check-command-archive.lisp` in un processo
-separato. Controlla l'inventario chiuso, gli hash e i metadati dei processi;
-il suo output rimane nella directory delle osservazioni. Nessun append
-segue questa verifica.
+Final verification starts `tools/check-command-archive.lisp` in separate
+process. Checks closed inventory, hashes, and process metadata;
+output remains in observation directory. No append
+follows verification.
 
-In caso di errore il comando termina con codice non nullo e un motivo.
-Le copie parziali e le osservazioni rimangono disponibili; non si cancellano
-o sovrascrivono archivi esistenti. Una nuova esecuzione richiede nomi nuovi.
+On error, command ends with nonzero code and reason.
+Partial copies and observations remain available; existing archives neither deleted
+nor overwritten. New run requires new names.
 
-## Verifica e limiti
+<a id="verifica-e-limiti"></a>
+
+## Verification and limits
 
 ```bash
 sbcl --noinform --no-userinit --no-sysinit \
   --script tools/collect-command-archive.lisp --self-test
 ```
 
-Il self-test usa fixture locali e rifiuti con motivi attesi, comprendendo
-copie concorrenti, record compressi, comandi falliti, percorsi invalidi,
-destinazioni esistenti e alterazione delle copie. Non esegue campagne del
-prodotto. Fa parte dei controlli della conservazione in `make check`.
+Self-test uses local fixtures and rejections with expected reasons, including
+concurrent copies, compressed records, failed commands, invalid paths,
+existing destinations, and altered copies. Runs no product
+campaigns. Part of preservation checks in `make check`.
 
-I limiti dei file pubblicati sono 1 MiB per file ordinario, 8 MiB per gzip
-e 128 MiB per record espanso. Il piano ha un numero massimo dichiarato di
-voci. L'osservazione resta locale e per file: non è una transazione del
-filesystem né una pubblicazione durevole atomica. Gli ingressi devono
-rimanere fermi durante la raccolta. I quattro worker non costituiscono
-una misura di scalabilità o prestazione del database.
+Published-file limits: 1 MiB per ordinary file, 8 MiB per gzip,
+128 MiB per expanded record. Plan has declared maximum entry
+count. Observation remains local and per file: neither filesystem
+transaction nor atomic durable publication. Inputs must
+stay fixed during collection. Four workers do not constitute
+database-scalability or performance measurement.
 
-La raccolta non promuove requisiti, risultati dei benchmark o gate di
-rilascio. La qualifica C1/MC/DC del motore resta distinta.
+Collection promotes neither requirements, benchmark results, nor release
+gates. Engine C1/MC/DC qualification remains separate.

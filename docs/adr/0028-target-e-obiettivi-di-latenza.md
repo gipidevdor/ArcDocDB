@@ -1,62 +1,72 @@
-# ADR-0028 — Target per Serie e aggregati; obiettivi numerici di latenza
+<a id="adr-0028--target-per-serie-e-aggregati-obiettivi-numerici-di-latenza"></a>
 
-- **Stato:** Accettata dall'autore il 2026-10-08, inclusi i minimi della revisione 2026-10-03.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-26; precisa «Target preliminari»
-- **Riferimenti:** [13 Benchmark](../13-benchmark.md), [stime](../valutazione/stime-ordine-di-grandezza.md)
+# ADR-0028 — Per-Serie and aggregate targets; numerical latency objectives
 
-## Decisione
+- **Status:** Accepted by the author on 2026-10-08, including the minimums in the 2026-10-03 revision.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-26; clarifies “Preliminary targets”
+- **References:** [13 Benchmarks](../13-benchmark.md), [estimates](../valutazione/stime-ordine-di-grandezza.md)
 
-1. I target di throughput della specifica si intendono **aggregati sull'intero server**, con
-   il carico distribuito su almeno 8 Serie. Target **per singola Serie**: almeno 1/4 del
-   target aggregato di fascia bassa (es. INSERT group commit ≥ 75k ops/s su una Serie).
-2. Obiettivi di latenza sull'hardware di riferimento, misurati lato server con carico al 70 %
-   del throughput di fascia bassa:
+<a id="decisione"></a>
 
-| Operazione | P99 | P99.9 |
+## Decision
+
+1. The specification's throughput targets are **aggregated across the entire server**, with
+   the workload distributed across at least 8 Serie. Targets **per individual Serie**: at least
+   1/4 of the lower-end aggregate target (e.g., INSERT group commit ≥ 75k ops/s on one Serie).
+2. Latency objectives on the reference hardware, measured server-side at a load of 70 %
+   of the lower-end throughput:
+
+| Operation | P99 | P99.9 |
 |---|---|---|
-| GET da cache/indice | ≤ 1 ms | ≤ 5 ms |
-| GET da NVMe | ≤ 2 ms | ≤ 10 ms |
-| Scrittura `:async` | ≤ 1 ms | ≤ 5 ms |
-| Scrittura `:group` | ≤ flush P99 + 2 ms | ≤ flush P99 + 10 ms |
-| Transazione multiserie `:group` | ≤ 2 × flush P99 + 3 ms | ≤ 2 × flush P99 + 15 ms |
+| GET from cache/index | ≤ 1 ms | ≤ 5 ms |
+| GET from NVMe | ≤ 2 ms | ≤ 10 ms |
+| `:async` write | ≤ 1 ms | ≤ 5 ms |
+| `:group` write | ≤ flush P99 + 2 ms | ≤ flush P99 + 10 ms |
+| `:group` multiseries transaction | ≤ 2 × flush P99 + 3 ms | ≤ 2 × flush P99 + 15 ms |
 
-3. **Pausa massima del GC** ammessa: 5 ms (P99.9 delle pause) — ne discende il criterio di
-   SPK-02.
-4. Gli obiettivi valgono **anche durante** CLEAN e con MERGE in corso: è il criterio con cui
-   si misura la low-load policy.
+3. Allowed **maximum GC pause**: 5 ms (P99.9 of pauses) — the SPK-02 criterion follows
+   from this.
+4. The objectives apply **during** CLEAN and while MERGE is in progress as well: this is the
+   criterion used to measure the low-load policy.
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Il controllore di carico ([ADR-0023](0023-politiche-di-compaction.md)) ha un riferimento
-  numerico per il P99.
-- Un risultato di SPK-02 oltre 5 ms di pausa è un segnale di revisione di ADR-0024/ADR-0001.
+## Consequences
 
-## Alternative considerate
+- The load controller ([ADR-0023](0023-politiche-di-compaction.md)) has a numerical
+  reference for P99.
+- An SPK-02 result exceeding a 5 ms pause signals a need to revisit ADR-0024/ADR-0001.
 
-- *Target per Serie uguali agli aggregati:* incompatibile con un writer per Serie
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Per-Serie targets equal to aggregate targets:* incompatible with one writer per Serie
   ([budget](../valutazione/stime-ordine-di-grandezza.md#budget-del-writer-logico)).
 
-## Revisione 2026-10-03: obiettivi e minimi vincolanti
+<a id="revisione-2026-10-03-obiettivi-e-minimi-vincolanti"></a>
 
-Con l'affidabilità come fine ultimo ([ADR-0031](0031-software-critico-criteri-e-priorita.md)) i
-target della specifica restano **obiettivi** e si aggiungono **minimi vincolanti**: valori
-ragionevoli, raggiungibili con tutti i controlli di affidabilità attivi
+## Revision 2026-10-03: objectives and binding minimums
+
+With reliability as the ultimate goal ([ADR-0031](0031-software-critico-criteri-e-priorita.md)),
+the specification's targets remain **objectives**, with added **binding minimums**: reasonable
+values achievable with all reliability checks enabled
 ([ADR-0033](0033-fail-stop-e-integrita-end-to-end.md), [ADR-0034](0034-policy-di-compilazione-e-standard-di-codifica.md)).
-Un minimo non raggiunto è un difetto; un obiettivo non raggiunto è un'informazione.
+Failure to meet a minimum is a defect; failure to meet an objective is information.
 
-| Operazione (hardware di riferimento) | Obiettivo (specifica) | **Minimo vincolante** |
+| Operation (reference hardware) | Objective (specification) | **Binding minimum** |
 |---|---|---|
-| GET `_id`, cache/indice, aggregato | 1–4 M ops/s | **300 k ops/s** |
-| GET `_id`, NVMe, aggregato | 150–600 k ops/s | **50 k ops/s** |
-| INSERT `:group`, aggregato (≥ 8 Serie) | 300 k–1 M ops/s | **100 k ops/s** (≥ 25 k per Serie) |
-| UPDATE / DELETE, aggregato | 400 k–1,5 M ops/s | **100 k ops/s** |
-| Query indicizzata semplice | 500 k–2 M ops/s | **50 k ops/s** |
-| Scansione sequenziale | 1–5+ GB/s | **500 MB/s** |
-| CLEAN | 0,5–3+ GB/s | **200 MB/s** |
-| Transazioni multiserie `:group` | decine–centinaia di migliaia/s | **10 k tx/s** |
-| P99 delle operazioni | tabella sopra | **3 × i valori della tabella sopra** |
-| Pausa massima del GC (P99.9) | 5 ms | **20 ms** |
+| GET `_id`, cache/index, aggregate | 1–4 M ops/s | **300 k ops/s** |
+| GET `_id`, NVMe, aggregate | 150–600 k ops/s | **50 k ops/s** |
+| INSERT `:group`, aggregate (≥ 8 Serie) | 300 k–1 M ops/s | **100 k ops/s** (≥ 25 k per Serie) |
+| UPDATE / DELETE, aggregate | 400 k–1.5 M ops/s | **100 k ops/s** |
+| Simple indexed query | 500 k–2 M ops/s | **50 k ops/s** |
+| Sequential scan | 1–5+ GB/s | **500 MB/s** |
+| CLEAN | 0.5–3+ GB/s | **200 MB/s** |
+| `:group` multiseries transactions | tens–hundreds of thousands/s | **10 k tx/s** |
+| Operation P99 | table above | **3 × the values in the table above** |
+| Maximum GC pause (P99.9) | 5 ms | **20 ms** |
 
-I minimi sono stati confermati dall'autore il 2026-10-08. Il costo dei controlli è misurato
-da SPK-09; i minimi si verificano con benchmark riproducibili (REQ-AFF-012).
+The author confirmed the minimums on 2026-10-08. SPK-09 measures the cost of checks;
+reproducible benchmarks verify the minimums (REQ-AFF-012).

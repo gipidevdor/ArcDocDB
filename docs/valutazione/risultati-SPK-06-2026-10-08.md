@@ -1,98 +1,108 @@
-# SPK-06 — prima campagna locale, 2026-10-08
+<a id="spk-06--prima-campagna-locale-2026-10-08"></a>
 
-[Valutazione](README.md) · [Metodo e codice](../../spikes/SPK-06-compaction-load/README.md)
+# SPK-06 — first local campaign, 2026-10-08
 
-> **Proposta** — Modello finito della policy di carico e confronto di copie
-> buffered concorrenti a letture. Le due prove sono separate; non attestano
-> compaction, durability o rispetto degli obiettivi P99 del database.
+[Evaluation](README.md) · [Method and code](../../spikes/SPK-06-compaction-load/README.md)
 
-## Ambiente ed evidenze
+> **Proposal** — Finite load policy model and comparison of buffered copies
+> concurrent with reads. The two tests are separate; they do not attest to
+> compaction, durability, or meeting database P99 objectives.
 
-SBCL 2.6.9, `safety 3`, heap dei processi 4 GiB, Apple M4 ARM64,
-16 GiB RAM, Darwin 27.0.0. Commit di riferimento `62267c9`, modifiche locali
-esplicite, carico esterno e page cache non controllati. I report identificano
-prima/dopo i cinque sorgenti dello spike, le due dipendenze pubbliche SPK-05
-e l'harness. Check e benchmark finali hanno esito positivo e sorgenti stabili.
+<a id="ambiente-ed-evidenze"></a>
 
-- [Controlli integrati](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-check.lisp).
-- [Benchmark e campioni grezzi](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-bench.lisp).
-- [Confronto derivato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-comparison.lisp):
-  minimo, mediana e massimo delle tre repliche, raggruppate per worker e modalità.
-- [Verifica completa](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-full-check.lisp):
-  `make check` riuscito, sorgenti stabili, nove spike, compilazione senza avvisi,
-  test delle fondazioni, storage e scansione recovery, linter e tracciabilità.
-- [Errore iniziale di compilazione I/O](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-io-compilation-failed.lisp)
-  e [compilazione corretta](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-io-compilation.lisp).
+## Environment and evidence
 
-Il primo errore era una parentesi mancante, rilevata come style-warning;
-resta conservato. Il runner finale compila e carica con tutti gli avvisi fatali.
-La compilazione intermedia precede l'ultima modifica del layout del report:
-sono i check integrati a identificare la variante finale.
+SBCL 2.6.9, `safety 3`, process heap 4 GiB, Apple M4 ARM64,
+16 GiB RAM, Darwin 27.0.0. Reference commit `62267c9`, explicit local changes,
+uncontrolled external load and page cache. Reports identify before/after
+the five spike sources, two public SPK-05 dependencies, and harness.
+Final check and benchmark have positive outcomes and stable sources.
 
-## Correttezza osservata
+- [Integrated checks](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-check.lisp).
+- [Benchmark and raw samples](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-bench.lisp).
+- [Derived comparison](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-comparison.lisp):
+  minimum, median, and maximum of three replicas, grouped by workers and mode.
+- [Complete check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-full-check.lisp):
+  successful `make check`, stable sources, nine spikes, warning-free compilation,
+  foundation, storage, and recovery scan tests, linter, and traceability.
+- [Initial I/O compilation error](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-io-compilation-failed.lisp)
+  and [corrected compilation](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk06-io-compilation.lisp).
 
-| Ambito | Controllo |
+The first error was a missing parenthesis, detected as a style-warning;
+it remains retained. The final runner compiles and loads with all warnings
+fatal. Intermediate compilation precedes the last report layout change:
+integrated checks identify the final variant.
+
+<a id="correttezza-osservata"></a>
+
+## Observed correctness
+
+| Scope | Check |
 |---|---|
-| Carico | Otto casi di soglia, EWMA razionale esatta, basso dopo 10 s continui, reset e ripartenza dei timer |
-| MERGE | Sospensione immediata in alto, abbandono a 30 s continui, ripresa in normale; condizioni congiunte e stabilità inclusiva di 50 s, anche dopo recovery |
-| CLEAN e quote | Priorità e selezione senza cambiare gli input, CLEAN urgente con un worker, cap del credito e conservazione aritmetica dei token |
-| Input invalidi | Dodici campioni invalidi, cinque rifiuti di traccia, limite inclusivo di 256 campioni; nessuna mutazione parziale osservata |
-| I/O reale | Quattro modalità su 12 record con due lettori e 96 letture aggregate per caso; CRC, chiave, stamp e consumo del valore verificati |
-| Guasti dei worker | Due errori iniettati, nel lettore e nella copia, propagati dopo join; sorgente verificata e risorse rilasciate |
-| Copie | Target riaperto dopo close, dimensione e ogni byte confrontati con la sorgente; sorgente verificata prima e dopo la matrice |
+| Load | Eight threshold cases, exact rational EWMA, low after 10 continuous s, timer reset and restart |
+| MERGE | Immediate suspension at high, abandonment after 30 continuous s, resumption at normal; joint conditions and inclusive 50 s stability, including after recovery |
+| CLEAN and quotas | Priority and selection without changing inputs, urgent CLEAN with one worker, credit cap, and arithmetic token conservation |
+| Invalid inputs | Twelve invalid samples, five trace rejections, inclusive 256-sample limit; no partial mutation observed |
+| Real I/O | Four modes over 12 records with two readers and 96 aggregate reads per case; CRC, key, stamp, and value consumption checked |
+| Worker failures | Two injected errors, in reader and copy, propagated after join; source verified and resources released |
+| Copies | Target reopened after close, size and every byte compared with source; source verified before and after matrix |
 
-Il modello usa campioni ogni 500 ms e EWMA `alpha=1/2`: sono parametri
-sperimentali, non una taratura di prodotto. Il clock è iniettato, senza attese
-reali o segnali del dispositivo. Le quote del modello e quelle del worker I/O
-sono prove distinte. Nessuna nuova scrittura condivisa per record: fd, buffer,
-piani e campioni appartengono al singolo worker; la porta comune è al confine
-del caso e il resoconto legge i campi solo dopo join.
+The model uses samples every 500 ms and EWMA `alpha=1/2`: experimental
+parameters, not product tuning. Clock is injected, without real waits or
+device signals. Model quotas and I/O worker quotas are distinct tests.
+No new shared write per record: fd, buffer, plans, and samples belong to
+the individual worker; the common gate is at the case boundary and the
+report reads fields only after join.
 
-## Confronto locale
+<a id="confronto-locale"></a>
 
-File sintetico immutabile da 16 MiB, 8192 record da 2048 byte; body senza CBOR.
-Tre repliche, 1/2 lettori, 32.768 letture casuali aggregate per caso, ordine
-alternato di quattro modalità. I **24 casi** completano **786.432 letture
-verificate** (1536 MiB) e **18 copie da 16 MiB** (288 MiB).
-Il processo dura **21,415561 s**, inclusi compilazione, check, preparazione,
-verifiche e serializzazione dei campioni.
+## Local comparison
 
-Ogni riga riporta la mediana delle tre repliche e, tra parentesi, minimo–massimo.
-Il P99 include pread, verifica del record e campionamento del clock; non è
-latenza client. Il rapporto usa la baseline della stessa replica e numero
-di lettori. La banda osservata comprende CRC e pacing ed è distinta dalla quota.
+Immutable synthetic 16 MiB file, 8192 records of 2048 bytes; body without
+CBOR. Three replicas, 1/2 readers, 32,768 aggregate random reads per case,
+alternating order of four modes. The **24 cases** complete **786,432 verified
+reads** (1536 MiB) and **18 copies of 16 MiB** (288 MiB).
+Process lasts **21.415561 s**, including compilation, checks, preparation,
+verification, and sample serialization.
 
-| Lettori | Copia | P99 durante sovrapposizione, µs | Rapporto P99/baseline | Copia osservata, MiB/s | Letture coperte, min–max |
+Each row reports the median of three replicas and, in parentheses,
+minimum–maximum. P99 includes pread, record verification, and clock sampling;
+it is not client latency. Ratio uses the same replica's baseline and reader
+count. Observed bandwidth includes CRC and pacing and is distinct from quota.
+
+| Readers | Copy | P99 during overlap, µs | P99/baseline ratio | Observed copy, MiB/s | Covered reads, min–max |
 |---|---|---:|---:|---:|---:|
-| 1 | libera | 14 (14–19) | 0,93 (0,88–1,19) | 158,30 (157,51–160,57) | 7696–7974 |
-| 1 | quota 16 MiB/s | 15 (15–18) | 1,00 (0,94–1,13) | 11,26 (11,11–11,43) | 32767–32768 |
-| 1 | quota 64 MiB/s | 16 (15–16) | 1,00 (0,94–1,07) | 49,16 (48,80–49,21) | 24350–25317 |
-| 2 | libera | 15 (14–16) | 1,00 (0,94–1,00) | 159,82 (152,10–161,39) | 15091–16146 |
-| 2 | quota 16 MiB/s | 16 (15–16) | 1,00 (1,00–1,07) | 11,41 (11,35–11,45) | 32766–32767 |
-| 2 | quota 64 MiB/s | 16 (16–19) | 1,00 (1,00–1,36) | 49,24 (49,22–49,29) | 32767–32768 |
+| 1 | unrestricted | 14 (14–19) | 0.93 (0.88–1.19) | 158.30 (157.51–160.57) | 7696–7974 |
+| 1 | quota 16 MiB/s | 15 (15–18) | 1.00 (0.94–1.13) | 11.26 (11.11–11.43) | 32767–32768 |
+| 1 | quota 64 MiB/s | 16 (15–16) | 1.00 (0.94–1.07) | 49.16 (48.80–49.21) | 24350–25317 |
+| 2 | unrestricted | 15 (14–16) | 1.00 (0.94–1.00) | 159.82 (152.10–161.39) | 15091–16146 |
+| 2 | quota 16 MiB/s | 16 (15–16) | 1.00 (1.00–1.07) | 11.41 (11.35–11.45) | 32766–32767 |
+| 2 | quota 64 MiB/s | 16 (16–19) | 1.00 (1.00–1.36) | 49.24 (49.22–49.29) | 32767–32768 |
 
-Il P99 della baseline è 16 µs mediano, 15–16 µs con un lettore e 14–16 µs
-con due. Tutti i 18 casi con copia hanno campioni nella sovrapposizione;
-la copia libera copre solo una parte delle letture. La finestra osservata
-comprende le attese del token bucket: non prova I/O attivo in ogni istante.
-I campioni grezzi conservano gli inizi e le latenze in tick; le fini si
-ricostruiscono come inizio più latenza, nell'ordine dei worker dichiarato.
+Baseline P99 is median 16 µs, 15–16 µs with one reader and 14–16 µs
+with two. All 18 copy cases have samples in the overlap; unrestricted copy
+covers only part of reads. The observed window includes token bucket waits:
+it does not prove active I/O at every instant. Raw samples retain starts
+and latencies in ticks; ends are reconstructed as start plus latency,
+in declared worker order.
 
-> **Proposta** — Questi campioni non giustificano un cambio di ADR-0023.
-> Rapporti sotto o sopra uno sono confronti locali con carico esterno non
-> controllato. Le quote rallentano la copia; non garantiscono un throughput
-> minimo né un limite alla latenza delle letture.
+> **Proposal** — These samples do not justify changing ADR-0023. Ratios
+> below or above one are local comparisons with uncontrolled external load.
+> Quotas slow copying; they guarantee neither minimum throughput nor a
+> bound on read latency.
 
-## Conseguenze e limiti
+<a id="conseguenze-e-limiti"></a>
 
-RSK-08 resta accettato: il MERGE può non partire sotto carico sostenuto e non
-si introduce una soglia di emergenza. RSK-12 riceve evidenza sui confini del
-modello, senza attestare stabilità del feedback reale o AIMD del pool.
+## Consequences and limits
 
-Il file è appena scritto, piccolo rispetto alla RAM e con cache non controllata.
-Mancano Linux x86-64/NVMe, dataset oltre RAM, WAL concorrente, cache fredda,
-selezione MVCC, rilocazioni, reclaim e CLEAN/MERGE durevoli. Nessun fsync:
-la copia buffered non misura la banda sostenuta del dispositivo. Le syscall
-sono bloccanti nei worker; i timeout sono diagnostici, superabili da una syscall
-bloccata. Un worker ancora vivo impedisce close e rimozione fino all'uscita.
-Le fixture dei casi completati sono state rimosse.
+RSK-08 remains accepted: MERGE may not start under sustained load and
+no emergency threshold is introduced. RSK-12 receives evidence on model
+boundaries, without attesting to real feedback stability or pool AIMD.
+
+The file was just written, is small relative to RAM, and has uncontrolled
+cache. Linux x86-64/NVMe, beyond-RAM dataset, concurrent WAL, cold cache,
+MVCC selection, relocations, reclaim, and durable CLEAN/MERGE are missing.
+No fsync: buffered copy does not measure sustained device bandwidth.
+Syscalls block in workers; timeouts are diagnostic and can be exceeded by
+a blocked syscall. A still-live worker prevents close and removal until
+exit. Fixtures from completed cases have been removed.

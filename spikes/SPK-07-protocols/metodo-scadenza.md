@@ -1,189 +1,207 @@
-# SPK-07 — Metodo preregistrato: scadenza, reader ed epoche
+<a id="spk-07--metodo-preregistrato-scadenza-reader-ed-epoche"></a>
 
-Metodo registrato il 2026-10-08 prima dell'implementazione e delle esecuzioni.
-Ambito: solo `scadenza.lisp`, questo metodo e nuovi artefatti esclusivi in
-`spikes/SPK-07-protocols/out/`. Common Lisp/SBCL, `safety 3`, nessun motore,
-benchmark, modifica delle decisioni o operazione Git.
+# SPK-07 — Preregistered method: expiration, readers, and epochs
 
-## Fonti e interpretazione
+Method registered on 2026-10-08 before implementation and execution.
+Scope: only `scadenza.lisp`, this method, and new exclusive artifacts in
+`spikes/SPK-07-protocols/out/`. Common Lisp/SBCL, `safety 3`, no engine,
+benchmark, decision changes, or Git operations.
 
-Letti ADR-0033 §§8–9 (errori definiti, limiti controllati), ADR-0038 §§3–4
-(registrazione, soglia, attesa `H >= s`, verifica dopo la ricerca), ADR-0020
-(durata massima e `snapshot-too-old`), ADR-0016 (EBR), architettura
-§§Reclaim/Snapshot e MVCC, `06-mvcc-e-snapshot.md`, INV-M1/M2/M4 e INV-R1.
-Si usa soltanto il significato di H: il vecchio anello di ADR-0038 §2 è già
-sostituito da ADR-0046, come indicano architettura e intestazione di ADR-0038.
+<a id="fonti-e-interpretazione"></a>
 
-Il pin snapshot rappresenta l'iscrizione del CSN nel registro, non un puntatore
-diretto al segmento. Scadenza, rimozione del pin, potatura, ritiro ed eliminazione
-sono passi distinti. Un reader entrato pubblica la propria epoca e la mantiene
-fino all'uscita, anche se nel frattempo lo snapshot scade. La risposta viene
-validata dopo la ricerca: una lettura già iniziata può accedere a bytes protetti,
-ma restituisce `snapshot-too-old` se lo snapshot è scaduto alla validazione.
-Validazione e fissazione della risposta sono un unico passo astratto.
+## Sources and interpretation
 
-## Modelli finiti e oracoli
+References read: ADR-0033 §§8–9 (defined errors, controlled limits), ADR-0038
+§§3–4 (registration, threshold, waiting for `H >= s`, checking after lookup),
+ADR-0020 (maximum duration and `snapshot-too-old`), ADR-0016 (EBR), architecture
+§§Reclamation/Snapshots and MVCC, `06-mvcc-e-snapshot.md`, INV-M1/M2/M4, and INV-R1.
+Only the meaning of H is used: the old ring in ADR-0038 §2 has already been
+superseded by ADR-0046, as the architecture and ADR-0038 header indicate.
 
-1. **Registrazione:** un documento, versioni immutabili 0/1, un writer con
-   assegnazione CSN, lettura della soglia, pubblicazione e avanzamento di H
-   separati; uno snapshot con annuncio conservativo `min(soglia,H)`, acquisizione
-   di s e nascita separati; due letture. Si enumerano gli interleaving, compresa
-   la soglia campionata prima dell'annuncio. Il valore atteso deriva dal CSN
-   dello snapshot e dalla storia logica fissa, indipendentemente dalle location
-   mantenute. Nascita e prima lettura richiedono H >= s; entrambe le letture
-   devono restituire il valore atteso.
-2. **Lifetime:** stato iniziale raggiungibile con snapshot S0 a s=0, S1 a s=1,
-   H=1, versione corrente 1 e versione 0 trattenuta. Una pubblicazione atomica
-   ulteriore porta a CSN/H=2. Due risorse esterne immutabili (versioni 0/1),
-   tre tentativi di lettura (due di S0, uno di S1), due campioni per lettura,
-   epoca globale 0..2, due ritiri e due reclaim al massimo. Ogni lettura separa
-   ammissione/pubblicazione epoca, ricerca location, due accessi, validazione
-   della risposta e rilascio dell'epoca. Una ricerca dopo potatura può fallire
-   solo per uno snapshot ormai scaduto, con risposta `snapshot-too-old`.
+The snapshot pin represents CSN registration, rather than a direct segment
+pointer. Expiration, pin removal, pruning, retirement, and deletion are separate
+steps. A reader that has entered publishes its epoch and retains it until exit,
+even if the snapshot expires in the meantime. The response is validated after
+lookup: a read already in progress may access protected bytes, but returns
+`snapshot-too-old` if the snapshot has expired at validation.
+Validation and fixing the response are a single abstract step.
 
-Tick globali 0..2; scadenza eleggibile a tick 1 per S0 e 2 per S1. Sono soltanto
-un ordine astratto per enumerare le corse: non modellano un orologio, la durata
-reale delle lease o una garanzia in secondi. L'evento di scadenza è il punto
-astratto di invalidazione. Non si inferisce una garanzia temporale da un tick.
+<a id="modelli-finiti-e-oracoli"></a>
 
-Oracoli: vista immutata per ogni accesso ammesso; nessun accesso a bytes
-eliminati; nessuna ammissione su snapshot scaduto; risposta positiva solo quando
-attivo al punto di validazione; soglia ricalcolata sul minimo dei pin rimasti
-dopo ogni rimozione; reclaim soltanto senza riferimenti logici e dopo tutte le
-epoche <= epoca di ritiro. Il confronto di epoche è stretto (`reader > r`).
+## Finite models and oracles
 
-Si controlla che da **ogni** stato lifetime raggiunto esista un percorso verso
-il terminale (pubblicazione, tick finali, scadenze, rilascio pin, completamento o
-rifiuto di tutti i reader, potatura, ritiro e reclaim). Si usa raggiungibilità
-inversa sul grafo completo; non basta osservare un solo terminale. Questo prova
-solo drenabilità con scheduling astratto che esegue i passi abilitati, senza
-garanzia di progresso per uno scheduler che non li esegue.
+1. **Registration:** one document, immutable versions 0/1, a writer with separate
+   CSN assignment, threshold read, publication, and H advancement; a snapshot
+   with a conservative `min(soglia,H)` announcement, separate acquisition of s
+   and creation; two reads. Interleavings include the threshold sampled before
+   the announcement. The expected value follows from the snapshot CSN and the
+   fixed logical history, independently of retained locations. Creation and
+   the first read require H >= s; both reads must return the expected value.
+2. **Lifetime:** a reachable initial state with snapshot S0 at s=0, S1 at s=1,
+   H=1, current version 1, and retained version 0. One further atomic publication
+   advances to CSN/H=2. Two immutable external resources (versions 0/1), three
+   read attempts (two by S0, one by S1), two samples per read, global epoch 0..2,
+   at most two retirements and two reclamations. Each read separates admission/
+   epoch publication, location lookup, two accesses, response validation, and
+   epoch release. A lookup after pruning may fail only for a snapshot that has
+   already expired, returning `snapshot-too-old`.
 
-## Controlli negativi e witness
+Global ticks 0..2; S0 is eligible for expiration at tick 1 and S1 at tick 2.
+These provide only an abstract ordering for enumerating races: they model
+neither a clock, actual lease duration, nor a guarantee in seconds. The
+expiration event is the abstract invalidation point. No timing guarantee is
+inferred from a tick.
 
-Mutanti obbligatori: `:expiry-ignores-readers` elimina una risorsa dopo la
-scadenza ignorando le epoche attive; `:admit-after-expiry` ammette nuovi reader;
-`:no-threshold-recount` lascia la vecchia soglia dopo rimozione del pin minimo.
-L'ultimo è un errore di riconta e sovratrattenimento, non una perdita di bytes:
-il witness deve rendere espliciti pin residui, soglia attesa ed effettiva.
-Controlli supplementari: annuncio della soglia omesso nella registrazione e
-nascita anticipata prima di H. Ogni mutante deve produrre la violazione
-specifica attesa e un percorso non vuoto, rieseguito e corredato di stati
-prima/dopo; un controesempio generico non basta.
+Oracles: unchanged view for every admitted access; no access to deleted bytes;
+no admission on an expired snapshot; a positive response only when active at
+the validation point; threshold recomputed as the minimum remaining pin after
+every removal; reclamation only without logical references and after all epochs
+<= the retirement epoch. Epoch comparison is strict (`reader > r`).
 
-I risultati positivi richiedono anche witness di copertura: writer che campiona
-la soglia prima/dopo l'annuncio, letture ripetute dello stesso snapshot,
-snapshot attivo che impedisce potatura, accesso in corso dopo scadenza e rilascio
-pin, rifiuto nuovo accesso, risposta scaduta dopo ricerca, reclaim vecchio con
-reader più nuovo ancora attivo, terminale. I conteggi sono misurati dal grafo.
+The check requires a path from **every** reachable lifetime state to the
+terminal state (publication, final ticks, expirations, pin releases, completion
+or rejection of all readers, pruning, retirement, and reclamation). It uses
+reverse reachability over the complete graph; observing a single terminal
+state is insufficient. This proves only drainability under abstract scheduling
+that executes enabled steps, with no progress guarantee for a scheduler that
+does not execute them.
 
-## Esecuzione e registrazione
+<a id="controlli-negativi-e-witness"></a>
 
-`CHECK` esportato da `arcdocdb.spk07.scadenza` restituisce una plist con
-`:status :ok`, rapporti positivi, controlli negativi, witness, conteggi e
-assunzioni. Usa l'esploratore e `require-outcome` del core esistente, caricato
-prima del modulo, aggiungendo il confronto esatto della violazione attesa.
-Limite iniziale: 500.000 stati per esplorazione; un limite esaurito è fallimento.
-Durante l'integrazione il limite è ridotto a 200.000; il grafo osservato
-resta di 67.507 stati. Il nuovo blob è verificato nella campagna integrata.
+## Negative checks and witnesses
 
-Ogni tentativo di compilazione/check ha un nuovo record leggibile come dati
-con `*read-eval* nil`, schema 1, in `out/scadenza-attempt-NNN.sexp`.
-Il record conserva argv, cwd e stdin esatto; ambiente SBCL/OS/macchina,
-contenuto integrale dei sorgenti (blob senza Git), risultati `compile-file`,
-conteggi warning/style-warning, risultato o condizione registrata, limiti e
-raw stdout/stderr. Un harness solo Common Lisp, fornito via stdin e conservato
-nel record, compila core e modulo in FASL nuovi in `out/`, controlla tutti i
-valori di `compile-file`, carica core prima del modulo e invoca un solo CHECK.
-Warning e style-warning sono fatali anche durante caricamento/check. Il
-confine harness registra condizioni e stato di fallimento, poi esce non zero.
+Required mutants: `:expiry-ignores-readers` deletes a resource after expiration
+while ignoring active epochs; `:admit-after-expiry` admits new readers;
+`:no-threshold-recount` leaves the old threshold after removing the minimum pin.
+The last is a recount and over-retention error, rather than byte loss: its
+witness must show remaining pins, expected threshold, and actual threshold.
+Additional checks: omitted threshold announcement during registration and early
+creation before H. Each mutant must produce the specific expected violation
+and a nonempty path, replayed with before/after states; a generic counterexample
+is insufficient.
 
-## Tentativi locali
+Positive results also require coverage witnesses: writer sampling the threshold
+before/after announcement, repeated reads of the same snapshot, an active
+snapshot preventing pruning, access in progress after expiration and pin release,
+rejection of new access, an expired response after lookup, reclamation of an old
+resource while a newer reader remains active, and a terminal state. Counts are
+measured from the graph.
 
-Il tentativo 001 è fallito in compilazione per una parentesi chiusa in eccesso
-in `run-model`; core compilato/caricato, CHECK non eseguito, zero warning e
-style-warning. Il record `out/scadenza-attempt-001.sexp` conserva l'errore e i
-blob precedenti alla correzione. Prima del tentativo successivo si corregge la
-parentesi e si rende la copertura delle corse dipendente dalla transizione
-effettiva: un accesso dopo scadenza e pin rimosso, e un reclaim mentre il reader
-più nuovo è già attivo. Ogni reclaim del grafo positivo è anche verificato
-indipendentemente dalla guardia delle transizioni contro riferimenti ed epoche.
+<a id="esecuzione-e-registrazione"></a>
 
-Il tentativo 002 ha compilato entrambi i file senza warning/style-warning e
-concluso CHECK con `:status :ok`: registrazione 51 stati/69 archi; lifetime
-67.507 stati/256.902 archi, 128 terminali e tutti gli stati drenabili; i cinque
-mutanti hanno prodotto le violazioni specifiche attese. Il record 002 contiene
-tutti i witness, ma il contatore di copertura è errato (2 anziché 12), perché
-calcolato dopo un `nreverse` senza conservarne la nuova testa. Prima del
-tentativo 003 si corregge il contatore e si richiedono altri due witness:
-rifiuto di una nuova lettura dopo reclaim già avvenuto, e lettura ammessa prima
-della scadenza che trova la location potata e risponde `snapshot-too-old`.
-Queste modifiche non estendono il grafo degli stati.
+## Execution and recording
 
-### Esito finale — tentativo 003
+`CHECK`, exported by `arcdocdb.spk07.scadenza`, returns a plist with
+`:status :ok`, positive reports, negative checks, witnesses, counts, and
+assumptions. It uses the existing core's explorer and `require-outcome`, loaded
+before the module, adding an exact comparison with the expected violation.
+Initial limit: 500,000 states per exploration; exhausting the limit is a failure.
+During integration the limit is reduced to 200,000; the observed graph remains
+67,507 states. The new blob is verified in the integrated campaign.
 
-Compilazione e caricamento strict di core e modulo riusciti, `warnings-p` e
-`failure-p` entrambi NIL, conteggi warning/style-warning entrambi zero. Una
-chiamata a CHECK, `:status :ok`. Record finale
-`out/scadenza-attempt-003.sexp`, riletto come dati con `*read-eval* nil` e
-confrontato integralmente con la plist salvata; raw stderr vuoto.
+Every compilation/check attempt has a new schema 1 record readable as data with
+`*read-eval* nil`, in `out/scadenza-attempt-NNN.sexp`.
+The record preserves argv, cwd, and exact stdin; SBCL/OS/machine environment;
+complete source contents (blobs without Git); `compile-file` results;
+warning/style-warning counts; recorded result or condition; limits; and raw
+stdout/stderr. A Common Lisp-only harness, supplied through stdin and retained
+in the record, compiles core and module into new FASLs in `out/`, checks all
+values from `compile-file`, loads the core before the module, and invokes one
+CHECK. Warnings and style-warnings are fatal during loading/checking as well.
+The harness boundary records conditions and failure status, then exits nonzero.
 
-| Modello corretto | Stati distinti | Archi | Witness di copertura |
+<a id="tentativi-locali"></a>
+
+## Local attempts
+
+Attempt 001 failed compilation because of an extra closing parenthesis in
+`run-model`; the core was compiled/loaded, CHECK was not run, and there were
+zero warnings and style-warnings. Record `out/scadenza-attempt-001.sexp`
+preserves the error and blobs preceding the fix. Before the next attempt, the
+parenthesis is fixed and race coverage is tied to the actual transition: an
+access after expiration and pin removal, and reclamation while the newer reader
+is already active. Every reclamation in the positive graph is also checked
+against references and epochs independently of the transition guard.
+
+Attempt 002 compiled both files without warnings/style-warnings and completed
+CHECK with `:status :ok`: registration 51 states/69 edges; lifetime 67,507
+states/256,902 edges, 128 terminal states, and every state drainable; the five
+mutants produced the specific expected violations. Record 002 contains all
+witnesses, but the coverage counter is wrong (2 instead of 12), because it was
+computed after an `nreverse` without retaining the new head. Before attempt 003,
+the counter is fixed and two further witnesses are required: rejection of a
+new read after reclamation has already occurred, and a read admitted before
+expiration that finds a pruned location and returns `snapshot-too-old`.
+These changes do not extend the state graph.
+
+<a id="esito-finale--tentativo-003"></a>
+
+### Final outcome — attempt 003
+
+Strict compilation and loading of core and module succeeded, `warnings-p` and
+`failure-p` both NIL, warning/style-warning counts both zero. One CHECK call,
+`:status :ok`. Final record `out/scadenza-attempt-003.sexp`, reread as data with
+`*read-eval* nil` and compared in full with the saved plist; raw stderr empty.
+
+| Correct model | Distinct states | Edges | Coverage witnesses |
 | --- | ---: | ---: | ---: |
-| Registrazione | 51 | 69 | 3 |
-| Lifetime | 67.507 | 256.902 | 11 |
-| Totale | 67.558 | 256.971 | 14 |
+| Registration | 51 | 69 | 3 |
+| Lifetime | 67,507 | 256,902 | 11 |
+| Total | 67,558 | 256,971 | 14 |
 
-Lifetime: 128 stati terminali; tutti i 67.507 stati raggiunti hanno un percorso
-verso un terminale. Verificati indipendentemente 3.430 archi di reclaim; in
-29.440 stati almeno un ritiro resta bloccato da un'epoca reader <= epoca di
-ritiro. Tutti i 14 witness positivi e i 5 negativi sono rieseguiti dalle
-transizioni pure; il record conserva azioni e stati completi prima/dopo.
+Lifetime: 128 terminal states; all 67,507 reachable states have a path to a
+terminal state. Independently checked 3,430 reclamation edges; in 29,440 states,
+at least one retirement remains blocked by a reader epoch <= the retirement
+epoch. All 14 positive and 5 negative witnesses are replayed from pure
+transitions; the record preserves actions and complete before/after states.
 
-| Mutante | Stati scoperti fino al controesempio | Archi generati | Violazione specifica |
+| Mutant | States discovered up to the counterexample | Edges generated | Specific violation |
 | --- | ---: | ---: | --- |
-| expiry ignora reader | 5.291 | 16.154 | accesso dopo reclaim |
-| ammissione dopo expiry | 108 | 192 | ammissione su snapshot scaduto |
-| riconta omessa | 104 | 186 | soglia effettiva 0, minimo residuo 1 |
-| annuncio soglia omesso | 35 | 49 | s=0 attende valore 100, location assente |
-| nascita prima di H | 28 | 33 | s=1 nasce con H=0 |
+| expiration ignores readers | 5,291 | 16,154 | access after reclamation |
+| admission after expiration | 108 | 192 | admission on an expired snapshot |
+| recount omitted | 104 | 186 | actual threshold 0, remaining minimum 1 |
+| threshold announcement omitted | 35 | 49 | s=0 expects value 100, location absent |
+| creation before H | 28 | 33 | s=1 created with H=0 |
 
-I conteggi negativi sono prefissi BFS arrestati sulla prima violazione, non
-esaurimenti del grafo mutante. Il witness del primo mutante mostra reader 0
-con epoca 0, scadenza di S0, rilascio del pin, potatura della versione 0,
-ritiro all'epoca 0, reclaim che ignora quello slot e accesso al dato eliminato.
-Il terzo mostra che, rimossa S0, S1 mantiene un pin a 1 ma la soglia resta 0:
-errore di riconta/sovratrattenimento, senza dichiarare perdita di bytes.
+Negative counts are BFS prefixes stopped at the first violation, rather than
+exhaustive mutant graphs. The first mutant's witness shows reader 0 with epoch
+0, expiration of S0, pin release, pruning of version 0, retirement at epoch 0,
+reclamation ignoring that slot, and access to the deleted data. The third shows
+that, after S0 is removed, S1 retains a pin at 1 but the threshold stays at 0:
+a recount/over-retention error, without claiming byte loss.
 
-File consegnati: `scadenza.lisp` e `metodo-scadenza.md`. Nuovi file locali in
-`out/`: record `scadenza-attempt-001.sexp`, `-002.sexp`, `-003.sexp`; FASL
+Delivered files: `scadenza.lisp` and `metodo-scadenza.md`. New local files in
+`out/`: records `scadenza-attempt-001.sexp`, `-002.sexp`, `-003.sexp`; FASLs
 `scadenza-attempt-001-core.fasl`, `-002-core.fasl`, `-002-scadenza.fasl`,
-`-003-core.fasl`, `-003-scadenza.fasl`. Il tentativo 001 fallito e il contatore
-errato del tentativo 002 restano nell'evidenza, senza sovrascritture.
-Il blob del metodo nel record 003 è quello precedente a questa annotazione dei
-risultati; il blob del modulo è quello finale compilato. Il gate resta aperto:
-questo risultato copre scadenza/reclaim nel dominio finito dichiarato, senza
-chiudere memoria debole o gli altri ambiti esclusi. Nessun benchmark o commit.
+`-003-core.fasl`, `-003-scadenza.fasl`. Failed attempt 001 and the incorrect
+counter in attempt 002 remain in the evidence, without overwriting.
+The method blob in record 003 precedes this results annotation; the module blob
+is the final compiled version. The gate remains open: this result covers
+expiration/reclamation in the declared finite domain, without closing weak
+memory or the other excluded areas. No benchmark or commit.
 
-I record [001](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-scadenza-001-failed.lisp),
-[002](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-scadenza-002.lisp) e
-[003](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-scadenza-003.lisp) sono conservati nel
-repository senza modificare i dati originali. Il limite ridotto e il
-marcatore REQ aggiunti durante l'integrazione sono verificati separatamente.
+Records [001](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-scadenza-001-failed.lisp),
+[002](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-scadenza-002.lisp), and
+[003](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-scadenza-003.lisp) are preserved
+in the repository without changing original data. The reduced limit and REQ
+marker added during integration are verified separately.
 
-## Limiti e conflitti
+<a id="limiti-e-conflitti"></a>
 
-Atomicità dei passi e memoria sequenzialmente consistente assunte; barriere,
-memoria debole, ARM64/SBCL macchina, filesystem, CRC, crash, I/O, cache,
-rilocazione/compaction concreta, wraparound CSN/epoche, transazioni, salute
-Serie/Archivio e carichi arbitrari sono fuori ambito. Le risorse rappresentano
-bytes/descrittori esterni; directory e frammenti heap restano sotto GC.
-Il lifetime parte da una registrazione già conclusa; la race di nascita è
-esaurita separatamente, non nel prodotto dei due modelli. L'aggancio fra
-controllo attività e pubblicazione epoca è un passo atomico assunto.
+## Limits and conflicts
 
-Nessuna decisione cambiata. ADR-0016 contiene una frase di ritardo massimo
-«millisecondi–secondi, mai di più» insieme alla possibilità che un worker
-bloccato trattenga il reclaim: il modello non può sostenere quel limite reale
-senza un'ipotesi sul completamento dei reader. Si segnala questa tensione e si
-verifica soltanto il progresso terminale sotto scheduling astratto.
+Atomic steps and sequentially consistent memory are assumed; barriers, weak
+memory, ARM64/SBCL machine execution, filesystem, CRC, crashes, I/O, cache,
+concrete relocation/compaction, CSN/epoch wraparound, transactions,
+Serie/Archivio health, and arbitrary workloads are out of scope. Resources
+represent external bytes/descriptors; directory and heap fragments remain
+under GC. Lifetime starts from an already completed registration; the creation
+race is exhausted separately, rather than in the product of the two models.
+The coupling between the activity check and epoch publication is one assumed
+atomic step.
+
+No decision changed. ADR-0016 states a maximum delay of “milliseconds–seconds,
+never longer” while also allowing a blocked worker to delay reclamation: the
+model cannot support that real bound without an assumption about reader
+completion. This tension is reported, and only terminal progress under abstract
+scheduling is checked.

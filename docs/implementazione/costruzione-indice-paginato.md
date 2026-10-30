@@ -1,127 +1,137 @@
-# Costruzione incrementale delle pagine dell'indice
+<a id="costruzione-incrementale-delle-pagine-dellindice"></a>
 
-Incremento autorizzato il 2026-10-28, ADR-0057/0058, REQ-IDX-001,
-REQ-IDX-009, REQ-LIM-003; INV-I8, INV-A2, INV-A8, INV-P6. Collega il codec
-al sink append e al [lettore paginato](lettura-indice-paginato.md).
-Il motore M1 resta sul residente: questo componente prepara un derivato;
-non pubblica una root e non cambia WAL, SEAL, EDIT o DECISION.
+# Incremental index-page construction
 
-## API e sorgenti
+Increment authorized on 2026-10-28, ADR-0057/0058, REQ-IDX-001,
+REQ-IDX-009, REQ-LIM-003; INV-I8, INV-A2, INV-A8, INV-P6. Connects codec
+to append sink and [paged reader](lettura-indice-paginato.md).
+M1 engine remains resident: component prepares a derivative;
+publishes no root and changes neither WAL, SEAL, EDIT, nor DECISION.
+
+<a id="api-e-sorgenti"></a>
+
+## API and sources
 
 `crea-costruttore-pagine(start, size, sink, seed-high, seed-low,
-:max-pages 65536, :preflight callback)` prepara due buffer e un piano della
-capacita' bucket. START e' l'identita' del primo offset libero, positivo e
-allineato, in un'immagine privata. Il chiamante possiede gia' l'eventuale
-prefisso. Non viene introdotto un formato container o un header implicito.
-Taglie 4/16/64 KiB; quota 1..65536 pagine per costruttore. Il dominio e il
-seme XXH64 vengono fissati prima degli effetti.
+:max-pages 65536, :preflight callback)` prepares two buffers and bucket-capacity
+plan. START is identity of first free offset, positive and
+aligned, in private image. Caller already owns any
+prefix. No container format or implicit header introduced.
+Sizes 4/16/64 KiB; quota 1..65536 pages per builder. Domain and
+XXH64 seed fixed before effects.
 
 `crea-costruttore-pagine-file(file, start, size, seed-high, seed-low, ...)`
-collega `io:append-esatto`, con verifica della posizione iniziale e corrente.
-Il preflight dell'intero lotto passa da `io:verifica-capienza-append`, prima
-della prima pagina. Il file append e' prestato, mantenuto dal chiamante:
-nessuna apertura, chiusura, rinomina o cancellazione nascosta. Il file
-preesistente non viene troncato. Il chiamante crea il temporaneo tramite le
-primitive I/O esistenti e conserva la relativa ownership.
+connects `io:append-esatto`, checking initial and current position.
+Whole-batch preflight goes through `io:verifica-capienza-append`, before
+first page. Append file borrowed, maintained by caller:
+no hidden open, close, rename, or deletion. Existing file
+not truncated. Caller creates temporary through existing
+I/O primitives and retains ownership.
 
-`crea-entry-costruzione(builder, key, words)` copia una chiave di 1..65535
-byte e un candidato ordinario in cinque parole compatibili con il residente.
-Verifica lunghezza/flag, CSN positivo, END zero e limiti record; calcola il
-digest col seme del costruttore. Le entry non hanno accessori/setter esportati.
-Una modifica successiva all'input caller non cambia la copia posseduta.
-La funzione non legge il documento e non ne prova commit, CRC o visibilita'.
-Prepared, history e tombstone non sono rappresentati da questa API.
+`crea-entry-costruzione(builder, key, words)` copies a 1..65535-byte
+key and ordinary candidate in five resident-compatible words.
+Checks length/flags, positive CSN, zero END, and record limits; calculates
+digest with builder seed. Entries have no exported accessors/setters.
+Later caller-input change does not change owned copy.
+Function reads no document and proves neither commit, CRC, nor visibility.
+Prepared, history, and tombstone not represented by this API.
 
-## Lotti e append
+<a id="lotti-e-append"></a>
 
-`costruisci-bucket-pagine(builder, entries, :next reference)` accetta al
-massimo 7/8 della capacita' della pagina e un overflow gia' costruito.
-Prepara una sonda flat canonica con gruppi da 16 e rifiuta duplicati locali,
-entry estranee, overflow di altro costruttore/tipo e quota insufficiente.
-Scorre poi gli slot in ordine fisico: le chiavi che entrano nell'arena sono
-inline; le altre hanno frammenti esterni. Pianifica il numero esatto di
-pagine prima di qualsiasi append del lotto.
+## Batches and append
 
-Le chiavi esterne vengono emesse dalla coda alla testa; poi viene scritto
-il bucket. Ogni figlio ha offset minore del genitore, generazione non futura
-e lo stesso dominio Serie/immagine. I controlli del bucket, i campi delle
-entry e l'arena sono compattati senza buchi. Ogni pagina passa sia dal writer
-sia dal verificatore del codec prima di essere prestata al sink.
+`costruisci-bucket-pagine(builder, entries, :next reference)` accepts at
+most 7/8 page capacity and already-built overflow.
+Prepares canonical flat probe with groups of 16 and rejects local duplicates,
+foreign entries, overflow from another builder/type, and insufficient quota.
+Then traverses slots in physical order: keys fitting arena
+inline; others have external fragments. Plans exact page
+count before any batch append.
 
-Il sink sincrono riceve `(buffer, offset)`, non trattiene il buffer e
-restituisce esattamente `offset + size`. E' codice fidato: il valore di
-ritorno da solo non prova una scrittura fisica. L'adattatore file usa
-l'append esatto del modulo I/O, con trasferimenti parziali completati e
-propagazione senza retry degli errori.
+External keys emitted tail to head; bucket then
+written. Each child has lower offset than parent, nonfuture generation,
+and same Serie/image domain. Bucket control bytes, entry
+fields, and arena packed without holes. Every page goes through both codec
+writer and verifier before being lent to sink.
 
-`costruisci-directory-pagine(builder, bits, shift, children)` accetta un
-fanout esatto di riferimenti gia' costruiti o NIL. Le prove portano una
-sintesi AND/OR dei digest e la frontiera radix dei figli. La directory
-verifica che tutti i digest di ciascun figlio seguano lo slot indicato,
-anche per un campo a cavallo dei due u32. L'intervallo radix del figlio deve
-essere sotto quello del padre; geometrie sovrapposte e instradamenti errati
-sono rifiutati prima di I/O. Non e' sufficiente che le pagine siano
-singolarmente valide.
+Synchronous sink receives `(buffer, offset)`, retains no buffer, and
+returns exactly `offset + size`. Trusted code: return value
+alone proves no physical write. File adapter uses
+I/O module's exact append, completing partial transfers and
+propagating errors without retry.
 
-Le operazioni restituiscono `riferimento-costruito`, soltanto dopo tutti
-gli append previsti. `identita-riferimento-costruito` ne restituisce una
-copia privata per il lettore. Le prove non conservano chiavi o riferimenti
-ai figli; non esiste un inventario residente di tutte le pagine costruite.
+`costruisci-directory-pagine(builder, bits, shift, children)` accepts exact
+fanout of already-built references or NIL. Proofs carry
+AND/OR digest summary and child radix frontier. Directory
+checks all digests of each child follow indicated slot,
+including a field crossing both u32s. Child radix range must
+be below parent's; overlapping geometry and incorrect routing
+rejected before I/O. Individually valid pages
+are insufficient.
 
-## Errori, risorse e autorita'
+Operations return `riferimento-costruito` only after every
+planned append. `identita-riferimento-costruito` returns a private
+copy for reader. Proofs retain neither keys nor child
+references; no resident inventory of all built pages.
 
-Un attore I/O possiede il costruttore; rientro e thread estranei sono
-rifiutati. Preflight errato non scrive e mantiene OPEN. Una volta ammesso
-un lotto, errore o uscita non locale lo rende FAULTED, anche se nessun byte
-e' stato confermato dal sink: nessun retry o riuso dell'offset ambiguo.
-La sola pulizia rilascia BUSY e i riferimenti del piano. Le pagine precedenti
-complete non vengono riscritte o cancellate. La fine positiva non e' un
-punto di atomicita' durevole e non implica flush.
+<a id="errori-risorse-e-autorita"></a>
 
-La memoria del costruttore e' O(page-size + capacity). Le copie delle entry
-del lotto appartengono al chiamante e vanno conteggiate separatamente:
-al massimo 448 chiavi da 65535 byte per lotto da 64 KiB. Il chiamante deve
-limitare quante entry e prove trattiene e includere i transitori/GC nella
-quota. Il codice e' manutenzione, con allocazioni limitate dal lotto;
-non dichiara zero allocazioni sul PUT caldo o un limite RSS misurato.
-Nessuna attesa, lock o scrittura condivisa fra Serie.
+## Errors, resources, and authority
 
-L'autorita' dei dati rimane nei segmenti e nelle decisioni esistenti. Il
-chiamante deve fornire un insieme logicamente unico, anche tra bucket e
-catene di overflow: il controllo dei duplicati e' locale al lotto. Le prove
-certificano origine, completamento e routing; non certificano completezza
-rispetto al WAL, unicita' globale o visibilita' MVCC. Il [container e il recupero readonly](immagini-indice-paginato.md) aggiungono ora
-completamento e verifica prima dell'adozione seriale. Partizionamento esterno,
-ricostruzione oltre RAM, identita' non riusabili tra riavvii e wiring della
-pubblicazione nello startup/writer del motore rimangono da integrare.
-Un'immagine incompleta non viene dichiarata utilizzabile dal motore.
-Il rollback dell'incremento rimuove un generatore di derivati senza migrare
-dati utente; nessun file viene eliminato senza le prove del modulo I/O.
+One I/O actor owns builder; reentry and foreign threads
+rejected. Incorrect preflight does not write and preserves OPEN. Once a batch
+is admitted, error or nonlocal exit makes it FAULTED even if sink
+confirmed no bytes: no retry or ambiguous-offset reuse.
+Only cleanup releases BUSY and plan references. Previous complete
+pages neither rewritten nor deleted. Positive completion is not
+durable atomicity point and implies no flush.
 
-## Verifica C1
+Builder memory O(page-size + capacity). Batch entry
+copies belong to caller and must be counted separately:
+at most 448 keys of 65535 bytes per 64 KiB batch. Caller must
+bound retained entries and proofs and include transients/GC in
+quota. Maintenance code, with batch-bounded allocations;
+declares neither zero hot-PUT allocations nor measured RSS limit.
+No wait, lock, or shared write between Serie.
 
-Fixture in memoria per tre taglie con verifica codec e lettura completa;
-chiavi massime, miste inline/esterne, overflow, bucket pieno con collisioni
-H2/gruppo, directory multilivello e campo a cavallo di u32. Test nativo:
-append a temporaneo, flush esplicito, chiusura e riapertura readonly con un
-frame di cache. Errori prima degli effetti: duplicati locali, capienza,
-quota pagine/file, fine identita' senza wrap, dominio/owner/tipo/routing dei
-figli, geometria, callback preflight. Interruzioni alle tre frontiere di una
-chiave da 5000 byte e bucket: nessuna prova restituita e FAULTED. Short
-write, errore I/O e uscita non locale verificati separatamente.
+Data authority remains in existing segments and decisions. Caller
+must supply logically unique set, including across buckets and
+overflow chains: duplicate check local to batch. Proofs
+certify origin, completion, and routing; not completeness
+relative to WAL, global uniqueness, or MVCC visibility. [Container and read-only recovery](immagini-indice-paginato.md) now add
+completion and verification before serial adoption. External partitioning,
+reconstruction beyond RAM, nonreused identities across restarts, and publication
+wiring into engine startup/writer remain to integrate.
+Incomplete image is not declared usable by engine.
+Increment rollback removes derivative generator without migrating
+user data; no file deleted without I/O-module proofs.
 
-| Decisione composta | Condizioni/casi |
+<a id="verifica-c1"></a>
+
+## C1 verification
+
+In-memory fixtures for three sizes with codec verification and complete reading;
+maximum keys, mixed inline/external, overflow, full bucket with H2/group
+collisions, multilevel directory, and field crossing u32. Native test:
+append to temporary, explicit flush, close, and read-only reopen with one
+cache frame. Pre-effect errors: local duplicates, capacity,
+page/file quota, identity exhaustion without wrap, child domain/owner/type/routing,
+geometry, preflight callback. Interruptions at three boundaries of a
+5000-byte key and bucket: no proof returned and FAULTED. Short
+write, I/O error, and nonlocal exit checked separately.
+
+| Compound decision | Conditions/cases |
 |---|---|
-| Configurazione | taglia, sink, preflight, quota intera 1..65536; rifiuti singoli per domini |
-| Entry | lunghezza 1..65535, END zero, metadati chiave, word lunghezza; candidato valido/errato e CSN zero |
-| Prova figlio | owner esatto, offset precedente, tipo richiesto o qualunque; estraneo/tipo errato rifiutati |
-| Duplicato | high e low uguali, byte uguali; digest diversi, collisioni H2, chiave ripetuta |
-| Quota | numero positivo, quota residua, fine offset rappresentabile; bucket, chiave esterna, esaurimento e frontiera senza wrap |
-| Directory | bits nel limite taglia, shift e somma <=64, fanout esatto; geometrie errate e multilivello valido |
-| Routing | campo AND e OR uguale allo slot, ordine dei bit; figlio nel ramo errato, campo sovrapposto, campo a cavallo u32 |
-| Confine lotto | effetti ammessi e non completato => FAULTED; preflight fallito OPEN, sink fallito FAULTED, completamento valido OPEN |
+| Configuration | size, sink, preflight, integer quota 1..65536; individual domain rejections |
+| Entry | length 1..65535, zero END, key metadata, length word; valid/incorrect candidate and zero CSN |
+| Child proof | exact owner, preceding offset, required or any type; foreign/wrong type rejected |
+| Duplicate | equal high and low, equal bytes; different digests, H2 collisions, repeated key |
+| Quota | positive number, remaining quota, representable ending offset; bucket, external key, exhaustion, and frontier without wrap |
+| Directory | bits within size limit, shift and sum <=64, exact fanout; incorrect geometry and valid multilevel |
+| Routing | AND and OR field equals slot, bit order; child in wrong branch, overlapping field, field crossing u32 |
+| Batch boundary | effects admitted and incomplete => FAULTED; failed preflight OPEN, failed sink FAULTED, valid completion OPEN |
 
-Due letture dello stesso autore: contratti/formati/quota prima; ownership,
-ordine figli/genitori, propagazione degli errori, lifetime delle prove e
-limiti dell'autorita' poi. Non sono revisione indipendente, MC/DC completo,
-qualifica oltre RAM o qualifica del motore completo.
+Two readings by same author: contracts/formats/quota first; ownership,
+child/parent order, error propagation, proof lifetime, and authority
+limits second. Neither independent review, full MC/DC,
+beyond-RAM qualification, nor complete-engine qualification.

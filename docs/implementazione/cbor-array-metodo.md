@@ -1,121 +1,131 @@
-# Composizione degli array CBOR — contratto e metodo
+<a id="composizione-degli-array-cbor--contratto-e-metodo"></a>
 
-Incremento C1 preregistrato il 2026-10-13, prima del nuovo corpus,
-del prodotto e delle campagne. REQ-CBR-005 deriva da ADR-0014;
-REQ-LIM-001/002 e ADR-0048 governano i budget del risultato completo.
+# CBOR array composition — contract and method
 
-## Contratto locale
+C1 increment preregistered on 2026-10-13, before the new corpus,
+product, and campaigns. REQ-CBR-005 derives from ADR-0014;
+REQ-LIM-001/002 and ADR-0048 govern complete-result budgets.
+
+<a id="contratto-locale"></a>
+
+## Local contract
 
 ```lisp
 (scrivi-array-cbor-minimo
  buffer start end source source-start source-end item-ends count space
  :max-bytes 16777216 :max-nodes 16777216 :max-depth 100)
-;; => esattamente NEXT
+;; => exactly NEXT
 ```
 
-BUFFER e SOURCE sono simple u8; START/END e SOURCE-START/SOURCE-END
-sono index e delimitano span half-open validi. Destinazione e SPACE
-esclusivi fino al ritorno; sorgente e tabella stabili, condivisibili in
-lettura. ITEM-ENDS e simple u32: solo le prime COUNT celle vengono lette.
-Contengono fini relative a SOURCE-START, strettamente crescenti, non
-maggiori di SPAN, ultima uguale a SPAN. Ogni segmento contiene un item
-minimo esatto. COUNT index non supera lunghezza tabella o SPAN;
-COUNT0 richiede SPAN0 e non legge entry.
+BUFFER and SOURCE are simple u8 arrays; START/END and SOURCE-START/SOURCE-END
+are index values delimiting valid half-open spans. Destination and SPACE
+are exclusive until return; source and table are stable and may be shared
+for reading. ITEM-ENDS is simple u32: only the first COUNT cells are read.
+They contain ends relative to SOURCE-START, strictly increasing, no
+greater than SPAN, with the last equal to SPAN. Each segment contains one exact
+minimal item. COUNT is an index not exceeding table length or SPAN;
+COUNT0 requires SPAN0 and reads no entry.
 
-Si emette una testata MT4 minima per COUNT, seguita dai byte esatti
-della sorgente. NEXT=START+HEADER-SIZE+SPAN; solo [START,NEXT) cambia.
-Tutti gli errori pubblici precedono la prima scrittura e preservano
-l'intera destinazione fisica, sorgente e tabella. Guasti d'invariante
-interni sono fail-stop, senza rollback. Nessuna pubblicazione durevole,
-AST, ordinamento/deduplica delle mappe o normalizzazione NaN: vale la
-preferenza locale dello [scanner minimo](cbor-minimo-struttura.md).
+Emit a minimal MT4 header for COUNT, followed by the source's exact
+bytes. NEXT=START+HEADER-SIZE+SPAN; only [START,NEXT) changes.
+All public errors precede the first write and preserve
+the entire physical destination, source, and table. Internal invariant
+failures are fail-stop, without rollback. No durable publication,
+AST, map sorting/deduplication, or NaN normalization: the
+[minimal scanner's](cbor-minimo-struttura.md) local preference applies.
 
-Si rifiuta BUFFER o SOURCE eq SPACE.KINDS, o ITEM-ENDS eq SPACE.REMAINING,
-anche per array vuoto: il reset dello scanner modifica tutto lo scratch.
-BUFFER=SOURCE e ammesso solo se la sorgente e disgiunta dal footprint
-completo, inclusa testata. Confini toccanti e sorgente vuota sono ammessi.
+BUFFER or SOURCE eq SPACE.KINDS, or ITEM-ENDS eq SPACE.REMAINING, is rejected,
+even for an empty array: scanner reset modifies the whole scratch area.
+BUFFER=SOURCE is allowed only if the source is disjoint from the complete
+footprint, including header. Touching boundaries and an empty source are allowed.
 
-MAX-BYTES index 0..16MiB include testata e payload; MAX-NODES index
-1..16MiB include la radice e tutti i nodi dei figli, compresi tag;
-MAX-DEPTH index 0..100 conta soltanto array/map, radice a livello1.
-Un array vuoto richiede un byte, un nodo e un livello. Figli scalari/tag
-sono ammessi con profondita1. Picco=1+max(picchi dei figli), nodi=1+somma.
-Ogni figlio usa lo scanner minimo con budget byte pari al proprio span,
-nodi residui e profondita MAX-DEPTH-1. Residuo nodi1 e valido; residuo0
-prima del prossimo reset genera RESOURCE-EXHAUSTED :cbor-array-node-budget,
-offset assoluto all'inizio del prossimo figlio. Gli errori dello scanner
-sono propagati invariati, con offset assoluto SOURCE.
+MAX-BYTES is an index 0..16MiB including header and payload; MAX-NODES is an index
+1..16MiB including the root and all child nodes, including tags;
+MAX-DEPTH is an index 0..100 counting only array/map, root at level1.
+An empty array requires one byte, one node, and one level. Scalar/tag children
+are allowed at depth1. Peak=1+max(child peaks), nodes=1+sum.
+Each child uses the minimal scanner with byte budget equal to its span,
+remaining nodes, and depth MAX-DEPTH-1. A remaining node budget of 1 is valid; 0
+before the next reset raises RESOURCE-EXHAUSTED :cbor-array-node-budget,
+absolute offset at the next child's start. Scanner errors
+propagate unchanged, with absolute SOURCE offsets.
 
-## Precedenza congelata
+<a id="precedenza-congelata"></a>
 
-Tutte le fasi seguenti precedono parsing/reset:
+## Frozen precedence
 
-1. Range destinazione: INVALID-ARGUMENT :cbor-range, offset NIL.
-2. Range sorgente: INVALID-ARGUMENT :cbor-array-source-range, NIL.
-3. Tipo tabella: :cbor-array-item-ends; tipo/range COUNT o COUNT0/SPAN0:
-   :cbor-array-count, entrambi INVALID-ARGUMENT, NIL.
-4. Tipo SPACE: :cbor-workspace; alias scratch:
+All following phases precede parsing/reset:
+
+1. Destination range: INVALID-ARGUMENT :cbor-range, offset NIL.
+2. Source range: INVALID-ARGUMENT :cbor-array-source-range, NIL.
+3. Table type: :cbor-array-item-ends; COUNT type/range or COUNT0/SPAN0:
+   :cbor-array-count, both INVALID-ARGUMENT, NIL.
+4. SPACE type: :cbor-workspace; scratch alias:
    :cbor-array-workspace-alias, INVALID-ARGUMENT, NIL.
-5. Limiti configurati: motivi esistenti :cbor-byte-limit,
+5. Configured limits: existing reasons :cbor-byte-limit,
    :cbor-node-limit, :cbor-depth-limit, INVALID-ARGUMENT, NIL.
-6. SPAN, poi dimensione completa contro MAX-BYTES:
+6. SPAN, then complete size against MAX-BYTES:
    RESOURCE-EXHAUSTED :cbor-array-byte-budget, NIL.
-7. Dimensione completa contro END-START:
+7. Complete size against END-START:
    RESOURCE-EXHAUSTED :cbor-array-capacity, NIL.
 8. Overlap: INVALID-ARGUMENT :cbor-array-overlap, NIL.
-9. Monotonia/bounds/ultima fine: INVALID-ARGUMENT :cbor-array-item-ends, NIL.
-10. Minimo nodi 1+COUNT, poi livello radice1:
+9. Monotonicity/bounds/final end: INVALID-ARGUMENT :cbor-array-item-ends, NIL.
+10. Minimum nodes 1+COUNT, then root level1:
     RESOURCE-EXHAUSTED :cbor-array-node-budget / :cbor-array-depth-budget, NIL.
-11. Scansione completa dei figli nell'ordine; poi scrittura.
+11. Full scan of children in order; then writing.
 
-Il check SPAN contro MAX-BYTES precede la somma della dimensione e il loop
-sulla tabella: COUNT<=SPAN<=16MiB limita lavoro e conversione u32.
-Capacita/overlap prevalgono sulle entry malformate. Preflight lascia lo
-scratch intatto; parsing fallito puo sporcarlo, il reset successivo lo
-riusa. Con COUNT0 resta intatto. A successo lo scratch descrive l'ultimo
-figlio, senza promettere statistiche aggregate.
+Checking SPAN against MAX-BYTES precedes the size addition and table loop:
+COUNT<=SPAN<=16MiB bounds work and u32 conversion.
+Capacity/overlap take precedence over malformed entries. Preflight leaves
+scratch intact; failed parsing may dirty it, and the next reset reuses
+it. With COUNT0 it stays intact. On success scratch describes the last
+child, without promising aggregate statistics.
 
-## Corpus e parallelismo
+<a id="corpus-e-parallelismo"></a>
 
-Autore distinto prepara e congela il corpus senza leggere i nuovi
-sorgenti; il prodotto viene scritto dopo il freeze. Oracolo freddo per
-testata e payload letterali; scanner usato solo come controllo aggiuntivo.
-Fixture: 80; 81 00; cinque figli 00/3818/6141/F5/F93E00 con fini
-1/3/5/6/9; COUNT23/24/255/256; figli tag/map/array, UTF8 e float minimi;
-item trailing 0000, nonminimo1800, troncamento e UTF8 invalido.
-Profondita figlio99 accettata al limite100, figlio100 rifiutato;
-byte string payload16777210 produce esattamente16MiB con radice,
-payload+1 rifiutato. Residuo nodi con 810000 e fini2/3: budget3
-rifiuta il secondo figlio, budget4 accetta. Tipi, range, tutte le fasi
-di precedenza, alias anche vuoto, overlap testata, confini toccanti,
-capacita esatta/-1, arita, sentinelle fisiche e riuso dopo errore.
-Fuzz1024 seed41525235 su casi validi e rifiuti, piano e conteggi congelati.
+## Corpus and parallelism
 
-Due worker reali riusati, due ondate di2048 chiamate per worker:
-8192 composizioni. Sorgente/tabella condivise immutabili, destinazioni
-e scratch privati, READY/GO/DONE per ondata, sink e buffer completi,
-timeout/join/cleanup limitati. Intervalli osservati senza inferire
-scaling, simultaneita sui core o prestazioni del motore.
+A separate author prepares and freezes the corpus without reading the new
+sources; the product is written after freeze. Cold oracle for literal
+header and payload; scanner used only as an additional check.
+Fixtures: 80; 81 00; five children 00/3818/6141/F5/F93E00 with ends
+1/3/5/6/9; COUNT23/24/255/256; tag/map/array children, UTF8 and minimal floats;
+trailing item 0000, nonminimal1800, truncation, and invalid UTF8.
+Child depth99 accepted at limit100, child100 rejected;
+byte string payload16777210 produces exactly16MiB with root,
+payload+1 rejected. Remaining nodes with 810000 and ends2/3: budget3
+rejects the second child, budget4 accepts. Types, ranges, all precedence
+phases, alias even empty, header overlap, touching boundaries,
+exact/-1 capacity, arity, physical sentinels, and reuse after error.
+Fuzz1024 seed41525235 on valid cases and rejections, plan and counts frozen.
 
-## Campagne e conservazione
+Two reused real workers, two waves of2048 calls per worker:
+8192 compositions. Shared immutable source/table, private destinations
+and scratch, READY/GO/DONE per wave, sink and complete buffers,
+bounded timeout/join/cleanup. Intervals observed without inferring
+scaling, simultaneous core execution, or engine performance.
 
-Benchmark seriale separato: sei fixture fredde congelate prima del
-prodotto (vuoto, scalare, cinque tipi,24 scalari,256 scalari,
-array/tag/testo). Cinque repliche x1024 chiamate, warmup64; NEXT e byte
-nel sink, arita fredda. Baseline nulla e controllo positivo16x1MiB;
-criterio locale heap osservato zero, senza soglia di velocita.
+<a id="campagne-e-conservazione"></a>
 
-Otto mutazioni compilabili uniche, catalogo prima della campagna:
-capacita fisica; major errato; COUNT errato; scansione omessa;
-overlap senza testata; tabella non verificata; radice esclusa dai nodi;
-arita extra. Copie/cache private, baseline completa, smoke/fine esatti.
-Errori di compilazione, segnali o worker non valgono come rilevamento.
+## Campaigns and preservation
 
-Due letture C1 con checklist12punti prima della prima compilazione;
-coverage grezza dei nuovi sorgenti e inventario di tutte le decisioni
-composte, senza esclusioni o attestazione MC/DC. Self-test dei driver,
-letture distinte dei dati, make check integrato prima del push.
-Strumenti Common Lisp (INV-X3), READ-EVAL NIL/EOF; sorgenti/indice/HEAD
-stabili nei comandi registrati. Conservazione con impronte, copie e
-verifica dell'inventario chiuso; fallimenti mantenuti. Nessuna chiusura
-del gate C1 o qualifica dell'intero motore dalle prove locali.
+Separate serial benchmark: six cold fixtures frozen before the
+product (empty, scalar, five types,24 scalars,256 scalars,
+array/tag/text). Five replicates x1024 calls, warmup64; NEXT and bytes
+in the sink, cold arity. Null baseline and positive control16x1MiB;
+local observed-zero-heap criterion, without a speed threshold.
+
+Eight unique compilable mutations, cataloged before the campaign:
+physical capacity; wrong major; wrong COUNT; omitted scan;
+overlap without header; unchecked table; root excluded from nodes;
+extra arity. Private copies/caches, full baseline, exact smoke/final runs.
+Compilation errors, signals, or worker failures do not count as detection.
+
+Two C1 readings with a12-point checklist before the first compilation;
+raw coverage of new sources and inventory of all compound decisions,
+without exclusions or MC/DC certification. Driver self-tests,
+separate data readings, integrated make check before push.
+Common Lisp tools (INV-X3), READ-EVAL NIL/EOF; sources/index/HEAD
+stable in recorded commands. Preservation with fingerprints, copies, and
+closed-inventory verification; failures retained. Local tests do not close
+the C1 gate or qualify the entire engine.

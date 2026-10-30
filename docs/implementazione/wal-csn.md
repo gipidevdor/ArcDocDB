@@ -1,84 +1,91 @@
-# Collegamento fra lotti WAL e registro CSN
+<a id="collegamento-fra-lotti-wal-e-registro-csn"></a>
 
-Il ponte `arcdocdb.wal` realizza la chiusura dei lotti di segmento prevista da
-[ADR-0037](../adr/0037-lotto-sigillato.md), conservando il token del
-[registro di Archivio](csn.md) secondo [ADR-0046](../adr/0046-orizzonte-con-registro-limitato.md).
-Il writer logico possiede il lotto; osserva gli esiti del compito I/O dopo un
-handoff sincronizzato. Il registro condiviso viene toccato due volte per lotto.
+# Connecting WAL batches and the CSN registry
 
-| Passaggio | API e risultato |
+The `arcdocdb.wal` bridge implements segment batch closure specified by
+[ADR-0037](../adr/0037-lotto-sigillato.md), retaining the
+[Archivio registry](csn.md) token under [ADR-0046](../adr/0046-orizzonte-con-registro-limitato.md).
+The logical writer owns the batch; it observes I/O task outcomes after a
+synchronized handoff. The shared registry is touched twice per batch.
+
+| Step | API and result |
 |---|---|
-| Preparazione | `aggiungi-record`: buffer privato, spazio SEAL riservato, nessun CSN. |
-| Chiusura | `sigilla-lotto-con-csn lotto registro log inizio durable`: verifica le precondizioni, prende il CSN, conserva registro/log/slot/parole nel lotto, prepara SEAL. Ritorna lunghezza, high, low. |
-| Scrittura e flush | API dei [gruppi WAL](wal.md): copertura dei byte, nessuna risoluzione automatica. |
-| Pubblicazione | Il controller pubblica atomicamente nell'indice e rispetta l'ordine della Serie. |
-| Risoluzione | `risolvi-lotto-pubblicato lotto registro slot high low livello`: verifica log sano e copertura, libera il token; ritorna H-high, H-low. |
-| Guasto | Dopo transizione della Serie in FAULTED e completamento/ritiro dei consumatori, `annulla-csn-lotto lotto registro slot high low` richiede anche il log FAULTED. Libera il token senza modificare file. |
-| Riuso | `riusa-gruppo`, poi `riusa-lotto`: richiedono durability, nessun consumatore e nessun CSN pendente. |
+| Preparation | `aggiungi-record`: private buffer, SEAL space reserved, no CSN. |
+| Closure | `sigilla-lotto-con-csn lotto registro log inizio durable`: checks preconditions, acquires CSN, retains registry/log/slot/words in batch, prepares SEAL. Returns length, high, low. |
+| Write and flush | [WAL group](wal.md) APIs: byte coverage, no automatic resolution. |
+| Publication | The controller publishes atomically in the index and honors Serie order. |
+| Resolution | `risolvi-lotto-pubblicato lotto registro slot high low livello`: checks healthy log and coverage, releases token; returns H-high, H-low. |
+| Fault | After Serie transition to FAULTED and consumer completion/retirement, `annulla-csn-lotto lotto registro slot high low` also requires FAULTED log. Releases token without modifying files. |
+| Reuse | `riusa-gruppo`, then `riusa-lotto`: require durability, no consumer, and no pending CSN. |
 
-## Identità e rifiuti
+<a id="identità-e-rifiuti"></a>
 
-Il token è conservato insieme al registro di provenienza e al log effettivo.
-`aggiungi-lotto` rifiuta il trasferimento verso un altro oggetto log, anche se
-file-id e versione coincidono. `leggi-csn-lotto` ritorna slot/high/low senza
-materializzare un u64; l'identità resta leggibile dopo la risoluzione e viene
-azzerata solo al riuso. Gli eventi conservano registro e slot/high/low catturati
-alla chiusura: le API di risoluzione confrontano l’identità attesa prima di
-liberare il credito, anche dopo il riuso o fra Archivi con valori numerici uguali.
-`stato-csn-lotto` distingue libero, pendente e risolto.
+## Identity and rejections
 
-Prima di prendere il CSN si verificano stato aperto, budget interni, offset,
-segmento non vuoto, identità/versione del log, salute e disponibilità del file append.
-Il budget di trasferimento e quello del file comprendono anche le chiusure
-pianificate prima del lotto corrente; un inizio precedente ai byte scritti
-è rifiutato. L’esecutore ripete i controlli prima delle syscall. La frontiera storica
-non può superare né l'inizio pianificato né la frontiera durevole osservata.
-Il log può avere altre chiusure pianificate: l'inizio non deve coincidere già
-con la posizione scritta; l'esecutore controlla la contiguità prima dell'append.
+The token is retained together with its originating registry and actual log.
+`aggiungi-lotto` rejects transfer to another log object, even if file-id and
+version match. `leggi-csn-lotto` returns slot/high/low without materializing
+a u64; identity remains readable after resolution and is reset only at reuse.
+Events retain registry and slot/high/low captured at closure: resolution APIs
+compare expected identity before releasing credit, even after reuse or between
+Archivi with equal numeric values. `stato-csn-lotto` distinguishes free,
+pending, and resolved.
 
-Registro pieno, occupato o esaurito lascia invariati lotto e registro. Un rifiuto
-successivo del gruppo conserva il token: il controller riprogramma il lavoro;
-non prende un secondo CSN. Un rifiuto busy alla risoluzione conserva l'obbligo.
-Una seconda risoluzione è rifiutata; un errore di identità del token è propagato.
-Non esistono attese, retry interni, callback o allocazioni di contesti per chiusura.
+Before acquiring CSN, open state, internal budgets, offsets, nonempty segment,
+log identity/version, health, and append file availability are checked.
+Transfer and file budgets also include closures planned before the current
+batch; a start before written bytes is rejected. The executor repeats checks
+before syscalls. The historical frontier cannot exceed either the planned
+start or observed durable frontier. The log can have other planned closures:
+start need not already equal the written position; the executor checks
+contiguity before append.
 
-## Copertura, pubblicazione e guasti
+A full, busy, or exhausted registry leaves batch and registry unchanged. A
+subsequent group rejection retains the token: the controller reschedules work;
+it does not acquire a second CSN. A busy rejection at resolution retains the
+obligation. A second resolution is rejected; a token identity error propagates.
+There are no waits, internal retries, callbacks, or context allocations per closure.
 
-Durability e H sono frontiere diverse. Un flush riuscito lascia il CSN pendente
-finché l'indice non è pubblicato. In async, il writer può risolvere dopo append
-e pubblicazione; il buffer resta protetto dal normale vincolo di durability
-fino al completamento del flush. Questo impedisce il riuso durante l'I/O.
+<a id="copertura-pubblicazione-e-guasti"></a>
 
-Il controller deve validare identità dell’evento, salute, copertura e ordine
-prima della pubblicazione esterna. Deve conservare l’esito già pubblicato
-se la sola risoluzione rifiuta busy, evitando di pubblicare due volte.
-La salute del log viene ricontrollata alla risoluzione: anche un vecchio lotto
-durevole non autorizza una nuova pubblicazione dopo un guasto successivo.
-L'annullamento richiede la transizione FAULTED della Serie applicata dal
-controller. Il ponte possiede solo il log: non può dimostrare autonomamente
-quella transizione, la pubblicazione dell'indice o l'assenza di consumatori.
-Queste sono precondizioni interne esplicite, non capability per input esterno.
+## Coverage, publication, and faults
 
-Un errore inatteso dopo l'assegnazione, oppure un'interruzione asincrona durante
-il passaggio fra registro e campi del lotto, richiede fail-stop dell'Archivio.
-Il ponte non promette rollback o retry in quella finestra. I normali rifiuti
-tipizzati prima dell'assegnazione e il busy del registro sono invece riprogrammabili.
+Durability and H are different frontiers. A successful flush leaves CSN
+pending until the index is published. In async, the writer can resolve after
+append and publication; the buffer remains protected by the ordinary durability
+constraint until flush completion. This prevents reuse during I/O.
 
-## Codifica e confini
+The controller must validate event identity, health, coverage, and order before
+external publication. It must retain an already published outcome if resolution
+alone rejects busy, avoiding publishing twice. Log health is rechecked at
+resolution: even an old durable batch does not authorize new publication after
+a subsequent fault. Cancellation requires the Serie FAULTED transition applied
+by the controller. The bridge owns only the log: it cannot independently prove
+that transition, index publication, or absence of consumers. These are explicit
+internal preconditions, not capabilities for external input.
 
-`scrivi-record-parole` è il codec comune con stamp high/low u32; la precedente
-`scrivi-record` delega allo stesso codec. Record ordinari e SEAL usano le parole
-direttamente; prepared e OUTCOME conservano il TXID. Il file-id del SEAL resta
-codificato una volta alla costruzione. Il buffer diventa immutabile alla chiusura.
-Il punto atomico è il SEAL persistito dalla scrittura; la chiusura lo prepara.
+An unexpected error after assignment, or an asynchronous interruption while
+passing between registry and batch fields, requires Archivio fail-stop.
+The bridge promises neither rollback nor retry in that window. Ordinary typed
+rejections before assignment and registry busy are instead reschedulable.
 
-Il ponte accetta solo segmenti non vuoti. Gli ordinali del control.log e il CSN
-della DECISION multiserie richiedono coordinatori distinti, ancora da collegare.
-Restano da realizzare indice, controller delle Serie, pubblicazione ordinata,
-conferme e registrazione/risveglio degli snapshot. Non viene dichiarata una
-transazione completa o una prestazione del database.
+<a id="codifica-e-confini"></a>
 
-Il [metodo di verifica](wal-csn-metodo.md), la
-[matrice delle decisioni](wal-csn-decisioni.md) e la
-[revisione C1](wal-csn-revisione.md) conservano gli argomenti verificabili. I [risultati locali](wal-csn-risultati.md)
-riportano prove, limiti e diagnostici della campagna.
+## Encoding and boundaries
+
+`scrivi-record-parole` is the common codec with high/low u32 stamp; the previous
+`scrivi-record` delegates to the same codec. Ordinary records and SEAL use words
+directly; prepared and OUTCOME retain TXID. SEAL file-id remains encoded once
+at construction. The buffer becomes immutable at closure. The atomic point is
+the SEAL persisted by writing; closure prepares it.
+
+The bridge accepts only nonempty segments. Control.log ordinals and multiserie
+DECISION CSN require distinct coordinators, still to be connected.
+Index, Serie controllers, ordered publication, acknowledgments, and snapshot
+registration/wakeup remain to be implemented. No complete transaction or
+database performance is claimed.
+
+The [verification method](wal-csn-metodo.md),
+[decision matrix](wal-csn-decisioni.md), and
+[C1 review](wal-csn-revisione.md) retain verifiable arguments. [Local results](wal-csn-risultati.md)
+report campaign tests, limits, and diagnostics.

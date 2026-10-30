@@ -1,47 +1,59 @@
-# ADR-0011 — Thread pool dinamico con EWMA/AIMD/isteresi
+<a id="adr-0011--thread-pool-dinamico-con-ewmaaimdisteresi"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («Thread pool
-  dinamico», «Compaction scheduler dinamico»)
-- **Riferimenti:** [10 Concorrenza e scheduling](../10-concorrenza-e-scheduling.md), INV-P2,
+# ADR-0011 — Dynamic thread pool with EWMA/AIMD/hysteresis
+
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision ("Dynamic thread
+  pool," "Dynamic compaction scheduler")
+- **References:** [10 Concurrency and scheduling](../10-concorrenza-e-scheduling.md), INV-P2,
   INV-P4
 
-## Contesto
+<a id="contesto"></a>
 
-Il carico varia per intensità e per distribuzione tra Serie. Un numero fisso di thread è
-sbagliato in entrambe le direzioni; creare thread a richiesta è costoso e imprevedibile.
+## Context
 
-## Decisione
+Load varies in intensity and in its distribution across Serie. A fixed thread count is
+wrong in both directions; creating threads on demand is costly and unpredictable.
 
-- Un pool dinamico di worker riutilizzati; nessun thread per richiesta né per Serie.
-- Lo scheduler adatta il numero di worker in base a: profondità delle code, CPU, throughput,
-  P50/P95/P99, numero di Serie attive e distribuzione del carico, I/O, throughput del WAL,
-  backlog di compaction.
-- Strategia: EWMA per i segnali, AIMD per la variazione, isteresi contro le oscillazioni.
-- Regole indicative: coda in crescita e CPU libera → più worker; coda in crescita e CPU satura
-  → non aumentare ciecamente; P99 in peggioramento → fermare l'espansione o ridurre; coda
-  vuota e CPU bassa → ridurre.
-- Lo stesso scheduler coordina query, writer, WAL e compaction.
-- Il Compaction Scheduler ha limiti indipendenti dal request scheduler.
+<a id="decisione"></a>
 
-## Conseguenze
+## Decision
 
-- Il sistema si adatta senza configurazione manuale del numero di thread.
-- Le metriche diventano parte del funzionamento, non solo della diagnosi: devono essere
-  economiche e sempre disponibili.
-- Un controllore è un componente da progettare, tarare e verificare a sé.
+- A dynamic pool of reused workers; no thread per request or per Serie.
+- The scheduler adapts worker count based on queue depth, CPU, throughput,
+  P50/P95/P99, number of active Serie and load distribution, I/O, WAL throughput,
+  and compaction backlog.
+- Strategy: EWMA for signals, AIMD for changes, hysteresis against oscillation.
+- Guiding rules: growing queue and available CPU → more workers; growing queue and saturated CPU
+  → do not increase blindly; worsening P99 → stop expanding or reduce; empty queue
+  and low CPU → reduce.
+- The same scheduler coordinates queries, writers, WAL, and compaction.
+- The Compaction Scheduler has limits independent of the request scheduler.
 
-## Alternative considerate
+<a id="conseguenze"></a>
 
-- *Pool fisso pari al numero di core:* semplice e prevedibile, ma inadatto quando molti worker
-  sono bloccati in I/O.
-- *Pool separati e fissi per tipo di lavoro:* isolamento netto, nessun adattamento.
+## Consequences
 
-## Valutazione
+- The system adapts without manual thread-count configuration.
+- Metrics become part of operation, as well as diagnostics: they must be
+  inexpensive and always available.
+- A controller is a component to design, tune, and verify on its own.
 
-- Rischi: RSK-12.
-- Verifica: SPK-04 (meccanismo), SPK-06 (controllore su tracce di carico).
-- Aperto: definizione degli stati di carico (QA-12); worker bloccati in I/O (QA-19).
-- Indicazione: iniziare con pochi segnali e regole semplici; aggiungere segnali solo quando
-  una misura mostra che servono.
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Fixed pool equal to the core count:* simple and predictable, but unsuitable when many workers
+  are blocked on I/O.
+- *Separate fixed pools by work type:* clear isolation, no adaptation.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-12.
+- Verification: SPK-04 (mechanism), SPK-06 (controller on load traces).
+- Open: definition of load states (QA-12); workers blocked on I/O (QA-19).
+- Guidance: start with a few signals and simple rules; add signals only when
+  measurement shows they are needed.

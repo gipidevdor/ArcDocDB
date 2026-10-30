@@ -1,71 +1,81 @@
-# Fondazioni binarie
+<a id="fondazioni-binarie"></a>
 
-Cornice dei record, CRC32C e verifica dei lotti. Codice Common Lisp, vettori specializzati,
-nessuna dipendenza esterna. Riferimenti: [formati su disco](../formati-su-disco.md),
+# Binary foundations
+
+Record framing, CRC32C, and batch verification. Common Lisp code, specialized vectors,
+no external dependency. References: [on-disk formats](../formati-su-disco.md),
 [ADR-0039](../adr/0039-cornice-unica-dei-record.md),
 [ADR-0048](../adr/0048-limiti-documentali-e-formato-v2.md),
-[standard di codifica](../affidabilita/standard-di-codifica.md).
+[coding standard](../affidabilita/standard-di-codifica.md).
 
-## Ambito
+<a id="ambito"></a>
 
-Sono implementate primitive in memoria. Il modulo prepara e verifica byte; il proprietario
-del segmento governa I/O, commit, visibilità e transizione a `FAULTED`. Nessuna scrittura su
-file, sincronizzazione, cancellazione, attesa o modifica dell'indice viene eseguita qui.
+## Scope
 
-Le strutture `EDIT` e `DECISION` sono verificate soltanto nella cornice e nella lunghezza
-minima. Il loro contenuto, il CBOR e la profondità del documento spettano ai decoder
-dedicati. Un record integro può essere non committed; un SEAL integro non attesta da solo
-che sia avvenuto un `fsync`.
+In-memory primitives are implemented. The module prepares and verifies bytes; the segment
+owner governs I/O, commit, visibility, and transition to `FAULTED`. No file writes,
+synchronization, deletion, waits, or index changes are performed here.
 
-## Contratti
+`EDIT` and `DECISION` structures are checked only for framing and minimum
+length. Their contents, CBOR, and document depth belong to dedicated
+decoders. An intact record may be uncommitted; an intact SEAL alone does not attest
+that an `fsync` occurred.
 
-Tutti i buffer sono `simple-array (unsigned-byte 8)`. Gli intervalli sono `[start,end)`;
-versione e origine del buffer sono esplicite. I tipi Lisp dichiarati sono precondizioni;
-con `safety 3` una violazione dei tipi è rilevata dal runtime. Gli errori di cornice e budget
-appartengono alla gerarchia `arcdocdb-error`.
+<a id="contratti"></a>
 
-| Operazione | Garantisce | Restituisce |
+## Contracts
+
+All buffers are `simple-array (unsigned-byte 8)`. Ranges are `[start,end)`;
+buffer version and origin are explicit. Declared Lisp types are preconditions;
+with `safety 3`, a type violation is detected by the runtime. Framing and budget errors
+belong to the `arcdocdb-error` hierarchy.
+
+| Operation | Guarantees | Returns |
 |---|---|---|
-| `crc32c` | CRC32C incrementale, senza copie | checksum finalizzato |
-| `scrivi-record` | controlli prima della prima mutazione; CRC header/body; cornice v1/v2 | fine del record |
-| `verifica-record` | header CRC prima delle lunghezze; limiti, tipo, flag e body CRC | fine, tipo, flag, stamp, range di chiave e valore |
-| `verifica-put` | verifiche della cornice e corrispondenza con chiave, CSN e flag dell'indice | range del valore |
-| `verifica-lotto` | record ammessi dal tipo di log, stamp applicabile, SEAL, file, offset, count, CRC del lotto e budget | fine, stamp del SEAL, frontiera dichiarata, count |
+| `crc32c` | Incremental CRC32C, without copies | finalized checksum |
+| `scrivi-record` | checks before first mutation; header/body CRC; v1/v2 frame | record end |
+| `verifica-record` | header CRC before lengths; bounds, type, flags, and body CRC | end, type, flags, stamp, key and value ranges |
+| `verifica-put` | frame checks and match against index key, CSN, and flags | value range |
+| `verifica-lotto` | records allowed by log type, applicable stamp, SEAL, file, offset, count, batch CRC, and budget | end, SEAL stamp, declared frontier, count |
 
-`scrivi-record` richiede un buffer esclusivo e input che non siano alias del buffer di
-destinazione. Un rifiuto di validazione lascia la destinazione invariata. I reader richiedono
-buffer stabili per tutta la chiamata **e per l'utilizzo dei range restituiti**: il proprietario
-mantiene il pin o il riferimento fino al termine della lettura.
+`scrivi-record` requires an exclusive buffer and inputs that do not alias the destination
+buffer. Validation rejection leaves the destination unchanged. Readers require
+stable buffers throughout the call **and while using returned ranges**: the owner
+retains the pin or reference until the read is complete.
 
-Per un PUT prepared, il resolver deve fornire un OUTCOME **nello stesso segmento e in un
-lotto committed**. Il codec verifica byte, TXID e CSN della prova; la provenienza e il commit
-restano precondizioni del resolver. Un numero passato come prova non è accettato.
+For a prepared PUT, the resolver must supply an OUTCOME **in the same segment and in a
+committed batch**. The codec checks proof bytes, TXID, and CSN; provenance and commit
+remain resolver preconditions. A number passed as proof is not accepted.
 
-Nel lotto, PUT e TOMBSTONE ordinari ed EDIT devono avere lo stamp del SEAL. PUT/TOMBSTONE
-prepared, OUTCOME e DECISION portano un TXID: non viene confrontato con il CSN del SEAL.
-Questa distinzione segue i campi dei [formati](../formati-su-disco.md).
+Within a batch, ordinary PUT and TOMBSTONE and EDIT must have the SEAL stamp. Prepared
+PUT/TOMBSTONE, OUTCOME, and DECISION carry a TXID: it is not compared with the SEAL CSN.
+This distinction follows the [format](../formati-su-disco.md) fields.
 
-## Memoria e parallelismo
+<a id="memoria-e-parallelismo"></a>
 
-Le tabelle CRC32C sono private: costruzione all'avvio, sole letture dopo la pubblicazione.
-Il [backend ARM64](crc32c-arm64.md), quando qualificato e disponibile,
-viene scelto all'avvio tramite il rilevamento CPU del modulo I/O. I kernel
-checksum restano in memoria; durante il servizio non eseguono probing OS.
-Gli altri dati appartengono al chiamante. Tra Serie non esistono lock, code, contatori o
-scritture condivise per operazione. Il modulo rende seriale soltanto l'accesso al buffer
-esclusivo affidato alla singola chiamata.
+## Memory and parallelism
 
-Il codec usa range sul buffer e valori multipli; non crea copie del documento né oggetti
-per entry. Tutte le scansioni sono limitate dalle dimensioni verificate. La verifica dei
-lotti ha budget separati di byte e record e controlla la dimensione prima di scandire il
-body successivo. Il superamento del budget è distinto dalla corruzione.
+CRC32C tables are private: built at startup, read-only after publication.
+The [ARM64 backend](crc32c-arm64.md), when qualified and available,
+is selected at startup through the I/O module's CPU detection. Checksum
+kernels remain in memory; they perform no OS probing during service.
+Other data belongs to the caller. There are no locks, queues, counters, or
+shared writes per operation between Serie. The module serializes only access to the
+exclusive buffer entrusted to an individual call.
 
-> **Proposta** — Il percorso GET confronta gli interi a 64 bit come due word a 32 bit,
-> dopo la verifica della cornice. Evita di materializzare un bignum, mantenendo il confronto
-> completo. L'API ispettiva `verifica-record` e la lettura di interi tramite `leggi-u64`
-> possono invece allocare per valori oltre il fixnum. Non sono dichiarate prive di allocazioni.
+The codec uses buffer ranges and multiple values; it creates no document copies or
+per-entry objects. All scans are bounded by verified sizes. Batch verification
+has separate byte and record budgets and checks size before scanning the
+next body. Exceeding budget is distinct from corruption.
 
-## Verifica riproducibile
+> **Proposal** — The GET path compares 64-bit integers as two 32-bit words,
+> after frame verification. It avoids materializing a bignum while retaining the full
+> comparison. The inspection API `verifica-record` and integer reads through `leggi-u64`
+> may instead allocate for values beyond fixnum. They are not declared allocation-free.
+
+<a id="verifica-riproducibile"></a>
+
+## Reproducible verification
 
 ```sh
 make test lint
@@ -77,70 +87,76 @@ sbcl --noinform --no-userinit --script tools/foundation-mutation.lisp --self-tes
 sbcl --noinform --no-userinit --script tools/foundation-mutation.lisp --run /tmp/foundation-mutants-new/
 ```
 
-La destinazione delle mutazioni deve essere nuova. Ogni mutante compila ed esegue i test
-in una copia separata; un fallimento precedente all'avvio dei test non vale come rilevamento.
-La copertura usa una cache ASDF distinta. I benchmark si eseguono dopo i controlli, in un
-processo senza strumentazione di copertura, senza altre campagne di misura concorrenti.
+The mutation destination must be new. Each mutant compiles and runs tests
+in a separate copy; a failure before tests start does not count as detection.
+Coverage uses a separate ASDF cache. Benchmarks run after checks, in a
+process without coverage instrumentation, with no other concurrent measurement campaigns.
 
-Le **26 prove** comprendono vettori CRC noti, oracolo CRC bitwise, confronto di oltre 2.000
-intervalli/allineamenti, packing indipendente, v1/v2, valori u64 estremi, documento da 16 MiB,
-chiave da 65.535 byte, ogni troncamento di fixture, bit flip in ogni byte, campi malformati con
-CRC validi, mismatch dell'indice, prova OUTCOME e budget del lotto. Le fixture non verificano
-la semantica del CBOR o dei protocolli durevoli.
+The **26 tests** include known CRC vectors, a bitwise CRC oracle, comparison of over 2,000
+ranges/alignments, independent packing, v1/v2, extreme u64 values, a 16 MiB document,
+a 65,535-byte key, every fixture truncation, a bit flip in every byte, malformed fields with
+valid CRCs, index mismatch, OUTCOME proof, and batch budget. Fixtures do not verify
+CBOR semantics or durable protocols.
 
-Le [nove mutazioni mirate](risultati/2026-10-08-mutazioni.lisp) verificano polinomio, confronti CRC, soglia della chiave, `and`/`or`
-dell'identità, flag prepared, checksum del SEAL, stamp e budget. Il risultato è relativo a
-questa famiglia dichiarata: **9/9 rilevate**, non una misura di tutti i mutanti possibili.
+The [nine targeted mutations](risultati/2026-10-08-mutazioni.lisp) check polynomial, CRC comparisons, key threshold, identity `and`/`or`,
+prepared flag, SEAL checksum, stamp, and budget. The result is relative to
+this declared family: **9/9 detected**, not a measure of all possible mutants.
 
-## Prestazioni
+<a id="prestazioni"></a>
 
-Le [misure grezze](risultati/2026-10-08-benchmark.lisp) registrano ambiente, impronte dei
-sorgenti, iterazioni, durata e byte heap per ciascuno dei cinque campioni. Sono microbenchmark
-seriali in memoria su Apple M4, ARM64, SBCL 2.6.9, `safety 3`, con buffer già allocati e cache
-calda. Non misurano NVMe, latenza di rete, `fsync`, concorrenza, P95/P99 delle richieste o
-throughput del database. Le impronte MD5 identificano i sorgenti; non ne attestano l'autenticità.
+## Performance
 
-Le campagne includono CSN ordinario e massimo u64, encoding con massimo u64 e verifica
-prepared con TXID e CSN alti. Il self-test del contatore verifica sia assenza di allocazioni
-nella fixture di controllo sia rilevamento di allocazioni deliberate. Zero byte rilevati
-vale per gli input e il percorso riuscito misurati; gli errori possono allocare condizioni.
+The [raw measurements](risultati/2026-10-08-benchmark.lisp) record environment, source
+fingerprints, iterations, duration, and heap bytes for each of the five samples. These are serial
+in-memory microbenchmarks on Apple M4, ARM64, SBCL 2.6.9, `safety 3`, with preallocated buffers and warm
+cache. They do not measure NVMe, network latency, `fsync`, concurrency, request P95/P99, or
+database throughput. MD5 fingerprints identify sources; they do not attest authenticity.
 
-Mediana dei cinque campioni, 2026-10-08:
+Campaigns include ordinary and maximum u64 CSN, encoding with maximum u64, and prepared
+verification with high TXID and CSN. The counter self-test checks both absence of allocations
+in the control fixture and detection of deliberate allocations. Zero detected bytes
+applies to the measured inputs and successful path; errors may allocate conditions.
 
-| Campagna | Operazioni/s | MiB/s | Byte heap rilevati in ciascun campione |
+Median of five samples, 2026-10-08:
+
+| Campaign | Operations/s | MiB/s | Heap bytes detected in each sample |
 |---|---:|---:|---:|
-| CRC32C, 2 KiB | 342.139 | 668,2 | 0 |
-| CRC32C, 16 MiB | 41,4 | 662,9 | 0 |
-| Verifica PUT, valore 2 KiB | 310.462 | 618,2 | 0 |
-| Encoding PUT, valore 2 KiB | 308.547 | 614,4 | 0 |
-| Verifica PUT, massimo u64 | 310.247 | 617,8 | 0 |
-| Encoding PUT, massimo u64 | 306.183 | 609,7 | 0 |
-| Verifica prepared, TXID/CSN alti | 290.175 | 586,7 | 0 |
+| CRC32C, 2 KiB | 342,139 | 668.2 | 0 |
+| CRC32C, 16 MiB | 41.4 | 662.9 | 0 |
+| PUT verification, 2 KiB value | 310,462 | 618.2 | 0 |
+| PUT encoding, 2 KiB value | 308,547 | 614.4 | 0 |
+| PUT verification, maximum u64 | 310,247 | 617.8 | 0 |
+| PUT encoding, maximum u64 | 306,183 | 609.7 | 0 |
+| Prepared verification, high TXID/CSN | 290,175 | 586.7 | 0 |
 
-Per CRC32C il conteggio dei byte è quello del buffer; per i record include chiave e header;
-per prepared include anche OUTCOME. Il documento da 2 KiB ha chiave da 16 byte.
+For CRC32C, byte count is the buffer's size; for records it includes key and header;
+for prepared it also includes OUTCOME. The 2 KiB document has a 16-byte key.
 
-## Decisioni e revisione
+<a id="decisioni-e-revisione"></a>
 
-La [tabella delle decisioni](fondazioni-decisioni.md) collega i predicati alle prove. Due
-letture hanno controllato formato e confini, poi proprietà dei buffer, budget, stamp e
-allocazioni. Build senza `warning` o `style-warning`; linter senza violazioni.
+## Decisions and review
 
-Requisiti collegati: REQ-FOR-002, REQ-FOR-003, REQ-FOR-004, REQ-LIM-001, REQ-LIM-003,
-REQ-AFF-002, REQ-AFF-004, REQ-VAL-001. Invarianti interessate: INV-A2, INV-A3, INV-A4,
-INV-A8, INV-P6 e INV-X3. Lo stato dei requisiti completi resta distinto dalle evidenze di
-queste primitive: nessun requisito del motore è promosso a verificato automaticamente.
+The [decision table](fondazioni-decisioni.md) connects predicates to tests. Two
+readings checked format and boundaries, then buffer ownership, budgets, stamps, and
+allocations. Build without `warning` or `style-warning`; linter without violations.
 
-### Criteri ancora da chiudere
+Linked requirements: REQ-FOR-002, REQ-FOR-003, REQ-FOR-004, REQ-LIM-001, REQ-LIM-003,
+REQ-AFF-002, REQ-AFF-004, REQ-VAL-001. Affected invariants: INV-A2, INV-A3, INV-A4,
+INV-A8, INV-P6, and INV-X3. Status of complete requirements remains distinct from evidence for
+these primitives: no engine requirement is automatically promoted to verified.
 
-I [dati grezzi di `sb-cover`](risultati/2026-10-08-copertura.lisp) non equivalgono a MC/DC.
-La copertura include forme di definizione e
-corpi delle funzioni inline; i dati grezzi vanno esaminati senza togliere dal denominatore
-forme non eseguite. La qualifica C1 richiede la chiusura della copertura e delle eccezioni
-secondo il [piano di verifica](../affidabilita/piano-di-verifica.md), revisione indipendente
-e successiva verifica del collegamento a I/O, resolver e transizioni `FAULTED`.
+<a id="criteri-ancora-da-chiudere"></a>
 
-I limiti residui includono collisioni CRC32C, mutazione concorrente del buffer se il
-proprietario viola il contratto, incompletezza dei decoder dei payload di controllo e
-assenza di prove di crash sul motore integrato. CRC32C non è autenticazione. Questo modulo
-non chiude i criteri di rilascio del database.
+### Criteria still to close
+
+The [raw `sb-cover` data](risultati/2026-10-08-copertura.lisp) does not equate to MC/DC.
+Coverage includes definition forms and
+inline function bodies; raw data must be examined without removing unexecuted
+forms from the denominator. C1 qualification requires closure of coverage and exceptions
+under the [verification plan](../affidabilita/piano-di-verifica.md), independent review,
+and subsequent verification of integration with I/O, resolver, and `FAULTED` transitions.
+
+Remaining limits include CRC32C collisions, concurrent buffer mutation if the
+owner violates the contract, incomplete control payload decoders, and
+absence of crash tests on the integrated engine. CRC32C is not authentication. This module
+does not close the database release criteria.

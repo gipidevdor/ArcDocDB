@@ -1,180 +1,194 @@
-# Verifica del registro snapshot e del collegamento CSN
+<a id="verifica-del-registro-snapshot-e-del-collegamento-csn"></a>
 
-## Ambito preregistrato
+# Snapshot-register and CSN-connection verification
 
-Questa campagna verifica le API già presenti in `arcdocdb.mvcc`, usando il
-registro canonico `arcdocdb.csn` dello stesso Archivio. La pianificazione è
-iniziata il 9 ottobre sul main `edb043b`; la ripresa dell’11 ottobre integra
-il main `5768e02`, senza cambiamenti a snapshot e CSN. Il
-[metodo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/metodo.lisp)
-è stato congelato prima delle esecuzioni registrate e rimane immutato:
-`:planned` e `:not-collected` descrivono quel momento, precedente alle prove.
-Gli esiti osservati l’11 ottobre sono riportati sotto e nelle
-[evidenze della campagna](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/README.md).
-Non cambia API, formato o protocollo di prodotto.
+<a id="ambito-preregistrato"></a>
 
-Il perimetro comprende registrazione, cattura delle frontiere, attivazione,
-verifica, terminazione, scadenza limitata e soglia di retention. Dipende dai
-contratti del [registro snapshot](registro-snapshot.md) e del
-[collegamento CSN](snapshot-csn.md). Le prove del registro CSN esistente
-non dimostrano da sole questo collegamento.
+## Preregistered scope
 
-I requisiti interessati sono REQ-MVC-003, REQ-MVC-004, REQ-MVC-005,
-REQ-MVC-007, REQ-CON-004, REQ-AFF-004 e REQ-AFF-008; gli invarianti sono
-INV-M1, INV-M2, INV-M4, INV-P5 e INV-A8. Il nuovo scope non dichiara tali
-requisiti verificati per il motore completo.
+Campaign checks existing `arcdocdb.mvcc` APIs using same
+Archivio's canonical `arcdocdb.csn` register. Planning began
+October 9 on main `edb043b`; October 11 resumption integrates
+main `5768e02` without snapshot/CSN changes.
+[Method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/metodo.lisp)
+frozen before recorded executions, unchanged:
+`:planned`/`:not-collected` describe that moment before tests.
+Observed October 11 outcomes below/in
+[campaign evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/README.md).
+No product API/format/protocol changes.
 
-## Decisioni e casi attesi
+Scope includes registration, frontier capture, activation,
+verification, termination, bounded expiration, retention threshold. Depends on
+[snapshot-register](registro-snapshot.md)/
+[CSN-connection](snapshot-csn.md) contracts. Existing CSN-register tests
+alone do not demonstrate connection.
 
-| Decisione | Distinzioni da esercitare |
+Affected requirements REQ-MVC-003, REQ-MVC-004, REQ-MVC-005,
+REQ-MVC-007, REQ-CON-004, REQ-AFF-004, REQ-AFF-008; invariants
+INV-M1, INV-M2, INV-M4, INV-P5, INV-A8. New scope does not declare
+requirements verified for whole engine.
+
+<a id="decisioni-e-casi-attesi"></a>
+
+## Decisions and expected cases
+
+| Decision | Distinctions to exercise |
 |---|---|
-| CSN-S01 | `H0 <= H1` e `H1 <= s` separatamente; frontiere coerenti, carry u32 e massimo u64. |
-| CSN-S02 | Cattura riuscita, `:csn-busy`, altra `resource-exhausted`, guasto CSN e uscita non locale. |
-| CSN-S03 | Annuncio con e senza pin precedenti; retention osservata dal writer; revoca senza consumo di identità o crediti. |
-| CSN-S04 | Corpo che restituisce `NIL`, contesa, ricorsione e rilascio del mutex dopo uscita non locale. |
-| CSN-S05 | Invalidazione terminale e ripetuta; guasto durante cattura/pubblicazione; rifiuto dei reader snapshot dopo guasto. |
-| Lifecycle | Archivio vuoto, snapshot subito attivo o in attesa, commit risolti fuori ordine, attivazione soltanto a `H >= s`. |
-| Risorse e tempo | Configurazione, capacità, generazioni/deadline u64, deadline esatta di attesa e durata, budget del timer. |
-| Identità e risultati | Riuso del contesto/slot, evento della vecchia generazione, buffer intatto sui rifiuti, terminazione idempotente. |
-| Retention | Minimo dei pin attivi e in attesa, ricalcolo dopo termine/scadenza, visita limitata e cursore del timer. |
+| CSN-S01 | `H0 <= H1` and `H1 <= s` separately; consistent frontiers, u32 carry, maximum u64. |
+| CSN-S02 | Successful capture, `:csn-busy`, other `resource-exhausted`, CSN fault, nonlocal exit. |
+| CSN-S03 | Announcement with/without previous pins; writer-observed retention; revocation without identity/credit consumption. |
+| CSN-S04 | Body returning `NIL`, contention, recursion, mutex release after nonlocal exit. |
+| CSN-S05 | Terminal/repeated invalidation; fault during capture/publication; snapshot-reader rejection after fault. |
+| Lifecycle | Empty Archivio, immediately active/waiting snapshot, commits resolved out of order, activation only at `H >= s`. |
+| Resources/time | Configuration, capacity, u64 generations/deadlines, exact waiting/duration deadlines, timer budget. |
+| Identity/results | Context/slot reuse, old-generation event, buffer intact on rejection, idempotent termination. |
+| Retention | Minimum active/waiting pin, recomputation after termination/expiry, bounded visit, timer cursor. |
 
-Un caso funzionale centrale conserva i token originali di due commit:
-il primo resta pendente, il secondo viene risolto. Lo snapshot cattura il
-CSN più recente ma attende l'orizzonte. Risolvere il primo permette
-l'attivazione; il pin trattiene la soglia finché termine o scadenza lo
-rimuovono. L'oracolo controlla valori e rifiuti pubblici, non replica il
-codice del prodotto.
+Core functional case preserves original tokens of two commits:
+first stays pending, second resolved. Snapshot captures
+latest CSN but waits for horizon. Resolving first allows
+activation; pin retains threshold until termination/expiry
+removes it. Oracle checks public values/rejections without replicating
+product code.
 
-Le fixture usano tempo esplicito e capacità piccole. Stati privati vengono
-preparati soltanto per confini non raggiungibili con una sequenza breve,
-come l'esaurimento della generazione u64, o per un guasto dichiarato.
-Il metodo congelato elenca i 28 casi lifecycle, i 15 casi di cattura e i 10
-mutanti mirati. Le esecuzioni finali hanno passato tutti i 43 casi dedicati
-e rilevato i 10 mutanti a runtime.
+Fixtures use explicit time/small capacities. Private states
+prepared only for boundaries unreachable through short sequence,
+such as u64 generation exhaustion, or declared fault.
+Frozen method lists 28 lifecycle cases, 15 capture cases, 10
+targeted mutants. Final executions passed all 43 dedicated cases,
+detected 10 mutants at runtime.
 
-Le suite sono `tests/mvcc/support.lisp`, `lifecycle.lisp` e `capture.lisp`:
-package `arcdocdb.mvcc.tests`, registro `*mvcc-tests*`, funzione `run`.
-Il runner `tools/snapshot-mutation.lisp` seleziona il test mirato con il
-nome esatto del registro, senza filtri sul prefisso dei requisiti.
+Suites `tests/mvcc/support.lisp`, `lifecycle.lisp`, `capture.lisp`:
+package `arcdocdb.mvcc.tests`, register `*mvcc-tests*`, function `run`.
+Runner `tools/snapshot-mutation.lisp` selects targeted test using exact
+registered name without requirement-prefix filters.
 
-## Errori da distinguere
+<a id="errori-da-distinguere"></a>
 
-| Condizione | Ragioni attese nel relativo percorso |
+## Errors to distinguish
+
+| Condition | Expected reasons on corresponding path |
 |---|---|
 | `invalid-argument` | `:snapshot-registry-configuration`, `:snapshot-context-pinned`, `:snapshot-not-ready`, `:snapshot-sweep-budget`, `:snapshot-result-range`, `:snapshot-commit-zero`. |
 | `resource-exhausted` | `:snapshot-capacity`, `:snapshot-generation-exhausted`, `:snapshot-deadline-overflow`, `:snapshot-wait-timeout`. |
-| Contesa recuperabile | `resource-exhausted` con `:snapshot-busy` o `:csn-busy`; nessuna attesa o retry interno. |
+| Recoverable contention | `resource-exhausted` with `:snapshot-busy`/`:csn-busy`; no internal wait/retry. |
 | `snapshot-too-old` | `:snapshot-stale-identity`, `:snapshot-age-expired`, `:snapshot-ended`. |
-| `invariant-violation` | Guasto terminale, frontiere discordanti o metadati corrotti; non convertire in normale contesa. |
+| `invariant-violation` | Terminal fault, inconsistent frontiers, corrupt metadata; do not convert to normal contention. |
 
-La contesa dopo l'annuncio ripristina soltanto la soglia provvisoria.
-Un'altra condizione o un'uscita non locale dopo l'annuncio rende il registro
-`FAULTED`. Terminazione occupata conserva pin e obbligo di riprogrammarla;
-timer occupato conserva il cursore. La verifica in buffer non pubblica un
-risultato su rifiuto.
+Contention after announcement restores provisional threshold only.
+Another condition/nonlocal exit after announcement makes register
+`FAULTED`. Busy termination preserves pin/rescheduling obligation;
+busy timer preserves cursor. Buffer verification publishes no
+result on rejection.
 
-## Metodo e due letture
+<a id="metodo-e-due-letture"></a>
 
-Le prove concorrenti coordinano i worker con semafori e deadline finite
-per attesa e join. Non usano `sleep` per presumere un ordine. Il cleanup
-è limitato: rilascia i semafori, raccoglie i worker oppure li termina su
-fallimento della fixture, e propaga gli errori. Nessun caso può lasciare
-un thread bloccato o nascondere un fallimento.
+## Method and two readings
 
-Le iniezioni alla cattura sono confinate al processo di test isolato.
-Ogni sostituzione temporanea dell'adattatore viene ripristinata tramite
-`unwind-protect`. Non si introduce una callback o una nuova API nel
-prodotto; le funzioni originali si conservano per i casi non iniettati.
+Concurrent tests coordinate workers through semaphores/finite
+wait/join deadlines. No `sleep` to assume order. Bounded
+cleanup releases semaphores, joins workers or terminates them on
+fixture failure, propagates errors. No case may leave
+blocked thread or hide failure.
 
-I mutanti alterano guardie o transizioni specifiche dello snapshot in
-copie isolate. La baseline deve prima completare la suite invariata,
-con fase strutturata `:complete` e lista esatta dei test passati.
-Errore di compilazione, segnale OS, mancato completamento della baseline
-o exit non nullo dopo completamento sono errori del worker, non mutanti
-rilevati. Il runner conserva exit, segnale, log e sorgenti generati;
-fixture e controllo CLI negativo verificano COD-60 e COD-61.
-Il target `snapshot-mutation-selftest` è incluso in `make check-core`,
-quindi anche nei job CI Linux e macOS. La campagna di mutazione rimane
-un'esecuzione locale esplicita;
-runner, log e report dei processi figli del self-test vengono conservati.
+Capture injections confined to isolated test process.
+Every temporary adapter replacement restored through
+`unwind-protect`. No callback/new API introduced in
+product; original functions retained for noninjected cases.
 
-La copertura parziale riusa `tools/foundation-coverage.lisp` con scope
-`mvcc`. Il driver strumenta i sorgenti di prodotto ma esegue soltanto la
-suite `arcdocdb.mvcc.tests:run`; il report seleziona gli otto file di
-`src/mvcc/`. Sono stati eseguiti il self-test e il report finale; stato
-SB-COVER e HTML sono conservati con denominatori e lacune. È un'osservazione parziale:
-non misura MC/DC e non chiude un gate di rilascio.
+Mutants alter specific snapshot guards/transitions in
+isolated copies. Baseline first must complete unchanged suite,
+structured `:complete` phase/exact passed-test list.
+Compilation error, OS signal, incomplete baseline,
+nonzero exit after completion are worker errors, not detected
+mutants. Runner retains exit/signal/log/generated sources;
+fixtures/negative CLI check verify COD-60/COD-61.
+Target `snapshot-mutation-selftest` included in `make check-core`,
+thus Linux/macOS CI jobs too. Mutation campaign remains
+explicit local execution;
+self-test child runners/logs/reports preserved.
 
-Prima delle esecuzioni sono state compiute le letture sui sorgenti effettivi,
-con autore, revisori indipendenti, hash, rilievi e lista C1 espliciti nel
-[record di revisione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/revisione.lisp).
-I registri dei comandi conservano argomenti,
-ambiente, output, exit e hash prima/dopo. Sorgenti, documenti e indice Git
-rimangono congelati durante ciascun comando registrato.
+Partial coverage reuses `tools/foundation-coverage.lisp`, scope
+`mvcc`. Driver instruments product sources but runs only
+`arcdocdb.mvcc.tests:run`; report selects eight
+`src/mvcc/` files. Self-test/final report run; SB-COVER
+state/HTML preserved with denominators/gaps. Partial observation:
+not MC/DC measurement or release-gate closure.
 
-## Esiti osservati l’11 ottobre 2026
+Before execution, readings on actual sources completed,
+authors/independent reviewers/hashes/findings/explicit C1 checklist in
+[review record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/revisione.lisp).
+Command records preserve arguments,
+environment, outputs, exits, before/after hashes. Sources/docs/Git index
+frozen during each recorded command.
 
-La verifica integrata locale sul commit `aa4f462` è riuscita:
+<a id="esiti-osservati-l11-ottobre-2026"></a>
+
+## Outcomes observed October 11, 2026
+
+Local integrated verification at commit `aa4f462` succeeded:
 [core-finale.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/core-finale.lisp)
-conserva `:status :ok`, exit 0 e sorgenti stabili. Sono passati 501 test
-dedicati dei moduli, inclusi i 43 nuovi casi MVCC e i 22 casi CBOR già
-integrati dal main, oltre allo smoke test. Compilazione senza warning,
-lint, self-test, tracciabilità, link, verifiche delle evidenze e i dieci
-spike sono riusciti.
+retains `:status :ok`, exit 0, stable sources. 501 dedicated
+module tests passed, including 43 new MVCC/22 CBOR cases already
+integrated from main, plus smoke test. Warning-free compilation,
+lint, self-tests, traceability, links, evidence verification, ten
+spikes succeeded.
 
-Il primo tentativo
+First attempt
 [core-iniziale.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/core-iniziale.lisp)
-rimane `:failed`, exit 2: COD-01 ha rifiutato una variabile `REGISTRY`
-inutilizzata nella fixture lifecycle. La
-[correzione registrata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/correzione-fixture.lisp)
-aggiunge un’asserzione sull’identità pubblica del registro nel contesto.
-Il blob della fixture passa da `4e9a15f` a `2cc481d`; conteggio dei test e
-sorgenti di prodotto restano invariati. Questa differenza rispetto al
-freeze originale è esplicita; il metodo e gli esiti iniziali sono conservati.
+remains `:failed`, exit 2: COD-01 rejected unused `REGISTRY`
+variable in lifecycle fixture.
+[Recorded correction](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/correzione-fixture.lisp)
+adds assertion on context's public register identity.
+Fixture blob `4e9a15f` → `2cc481d`; test counts/
+product sources unchanged. Difference from original
+freeze explicit; method/initial outcomes preserved.
 
-In [mutazioni-finale.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/mutazioni-finale.lisp)
-la baseline completa esattamente i 43 test previsti, fase `:complete`,
-exit 0. Tutti i dieci mutanti nominati falliscono il test mirato a runtime
-con exit 1, senza segnali o timeout; gli errori dei worker sono zero.
-Le fixture del runner hanno invece prodotto realmente SIGKILL 9 e un
-exit 7 dopo `:complete`: entrambi sono classificati `:worker-error`,
-come previsto, con log e runner conservati. Il controllo CLI negativo
-rimane `:failed`, exit 1, con il rifiuto COD-61 atteso.
+In [mutazioni-finale.lisp](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/mutazioni-finale.lisp),
+baseline completes exactly 43 expected tests, `:complete` phase,
+exit 0. All ten named mutants fail targeted runtime test,
+exit 1, no signals/timeouts; zero worker errors.
+Runner fixtures instead actually produce SIGKILL 9 and
+exit 7 after `:complete`: both classified `:worker-error`
+as intended, preserved logs/runners. Negative CLI check
+remains `:failed`, exit 1, expected COD-61 rejection.
 
-Il [comando di copertura finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/copertura-finale-comando.lisp)
-è riuscito. L’[indice HTML](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/raw/copertura-finale/cover-index.html)
-riporta 784/1084 espressioni (72,3247%) e 88/132 rami (66,6667%): restano
-300 espressioni e 44 rami senza conteggio. Per `snapshots-read.lisp` sono
-31/209 espressioni (14,8%) e 0/28 rami. Le suite esercitano le API reader;
-le espansioni `INLINE` limitano l’attribuzione dei contatori al file,
-quindi questi valori non dimostrano che i relativi percorsi non siano
-stati eseguiti. Una lettura indipendente ha ricostruito tutti gli otto
-HTML e verificato l’identità dei sorgenti annotati.
+[Final coverage command](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/copertura-finale-comando.lisp)
+succeeded. [HTML index](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/raw/copertura-finale/cover-index.html)
+reports 784/1084 expressions (72.3247%), 88/132 branches (66.6667%):
+300 expressions/44 branches uncounted. `snapshots-read.lisp`:
+31/209 expressions (14.8%), 0/28 branches. Suites exercise reader APIs;
+`INLINE` expansions limit counter attribution to file,
+so values do not demonstrate corresponding paths were
+unexecuted. Independent reading reconstructed all eight
+HTML files/checked annotated-source identity.
 
-Prima del push è stato integrato anche il main `f16e978`, che aggiunge
-la campagna degli indici senza modificare snapshot o CSN. La
-[verifica integrata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/integrazione.lisp)
-sul commit `ac52376` passa 620 test più smoke, inclusi 64 casi slot e 55
-casi indice primario. Il self-test del driver di copertura unito è
-riuscito; una revisione indipendente conferma entrambe le suite e gli
-scope `mvcc` e `index`. Le prove precedenti rimangono originali.
+Before push also integrated main `f16e978`, adding index
+campaign without snapshot/CSN changes.
+[Integrated verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/integrazione.lisp)
+at commit `ac52376` passes 620 tests plus smoke, including 64 slot/55
+primary-index cases. Unified coverage-driver self-test
+succeeded; independent review confirms both suites and
+`mvcc`/`index` scopes. Previous evidence original.
 
-## Criteri di chiusura e limiti
+<a id="criteri-di-chiusura-e-limiti"></a>
 
-La campagna si chiude quando il mapping concordato è esercitato dalla
-suite dedicata, il runner distingue i guasti nelle proprie fixture, i
-mutanti mirati sono rilevati o analizzati, le verifiche integrate passano
-e la CI riguarda l'esatto commit pubblicato. Alla pubblicazione di questi
-risultati la CI di tale commit è **in attesa**; gli esiti locali non ne
-anticipano il risultato. Il [catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/catalogo.lisp) conserva record
-schema 1 con nomi LEAF, byte originali e stati dei tentativi falliti.
-Gli eventuali casi non esercitati restano lacune esplicite.
+## Closure criteria and limits
 
-La preregistrazione rimane distinta da questi risultati. La misura di
-espressioni/rami conserva il denominatore e non misura MC/DC.
-Le sequenze coordinate non provano la memoria debole ARM64/x86-64 e non
-sono benchmark. Restano EBR/reclaim, primary index, versioni trattenute,
-GET, timer/scheduler del motore, durability e crash recovery. Non si
-dichiara zero heap, latency misurata, qualifica C1 completa o chiusura di
-una fase. Le evidenze runtime rimangono separate dalle precedenti
-ispezioni statiche.
+Campaign closes when agreed mapping exercised by
+dedicated suite, runner distinguishes fixture faults,
+target mutants detected/analyzed, integrated checks pass,
+CI concerns exact published commit. At publication of
+results, commit's CI **pending**; local outcomes do not
+anticipate result. [Catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot-verification/catalogo.lisp) preserves schema-1
+records with LEAF names, original bytes/failed-attempt states.
+Any unexercised cases explicit gaps.
+
+Preregistration separate from results. Expression/branch
+measurement retains denominator, does not measure MC/DC.
+Coordinated sequences prove neither ARM64/x86-64 weak memory nor
+benchmark performance. Remaining: EBR/reclaim, primary index, retained versions,
+GET, engine timer/scheduler, durability, crash recovery. No
+zero heap, measured latency, complete C1 qualification, phase
+closure claimed. Runtime evidence separate from previous
+static inspections.

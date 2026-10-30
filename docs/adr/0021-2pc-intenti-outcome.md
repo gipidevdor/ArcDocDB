@@ -1,73 +1,87 @@
-# ADR-0021 — 2PC con writer non bloccante: intenti no-wait, record OUTCOME, troncamento di `multiserie.log`
+<a id="adr-0021--2pc-con-writer-non-bloccante-intenti-no-wait-record-outcome-troncamento-di-multiserielog"></a>
 
-- **Stato:** Accettata; **sostituita in parte da [ADR-0041](0041-multiserie-segmenti-autosufficienti.md)**: nessun record PREPARE né esito ABORT, OUTCOME nello stesso segmento dei record prepared, conferma dopo l'applicazione, `multiserie.log` con il solo record DECISION. Restano: writer non bloccante, intenti senza attesa, *presumed abort*.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-07 e QA-08; realizza [ADR-0006](0006-transazioni-multiserie-2pc.md)
-- **Riferimenti:** [architettura](../architettura.md#transazioni-multiserie),
-  [formati su disco](../formati-su-disco.md#multiserielog), INV-T3, INV-T4, INV-P3
+# ADR-0021 — 2PC with a nonblocking writer: no-wait intents, OUTCOME records, truncation of `multiserie.log`
 
-## Decisione
+- **Status:** Accepted; **partially superseded by [ADR-0041](0041-multiserie-segmenti-autosufficienti.md)**: no PREPARE record or ABORT outcome, OUTCOME in the same segment as prepared records, acknowledgment after application, `multiserie.log` with only the DECISION record. These remain: nonblocking writer, no-wait intents, *presumed abort*.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-07 and QA-08; implements [ADR-0006](0006-transazioni-multiserie-2pc.md)
+- **References:** [architecture](../architettura.md#transazioni-multiserie),
+  [on-disk formats](../formati-su-disco.md#multiserielog), INV-T3, INV-T4, INV-P3
 
-### Protocollo
+<a id="decisione"></a>
 
-1. Il coordinatore (il worker che serve la richiesta) invia a ogni Serie partecipante
-   `PREPARE(T, operazioni)` tramite la coda del writer.
-2. Il writer, nel lotto: verifica expected-version e **intenti**; in caso di conflitto
-   risponde `abort`; altrimenti appende i record dati con flag *prepared* e CSN 0, poi un
-   record `PREPARE T`; registra gli intenti `chiave → T`; il lotto va a flush (`:group` o
-   più forte); al completamento risponde `prepared`. **Il writer non attende la decisione.**
-3. Il coordinatore, ricevuti tutti i `prepared`, appende la decisione a `multiserie.log` (group
-   commit). Quando è durevole: assegna il CSN, inserisce `T` nell'insieme «in applicazione»,
-   conferma il client (INV-T3), invia `OUTCOME(T, COMMIT, csn)` ai partecipanti.
-4. Il writer, all'`OUTCOME`: aggiorna l'indice (versione, CSN), rimuove gli intenti, appende
-   un record `OUTCOME T` nel segmento (flush con il lotto successivo), risponde.
-5. Quando tutti i partecipanti hanno reso durevole l'`OUTCOME`, il coordinatore rimuove `T`
-   da «in applicazione» e lo segna **dimenticabile**.
-6. Se un partecipante risponde `abort` o non risponde entro il timeout: decisione `ABORT`,
-   stesso percorso; gli intenti si rimuovono e i record restano morti nel segmento.
+## Decision
 
-### Stato PREPARED
+<a id="protocollo"></a>
 
-- **Reader (read committed e snapshot):** vedono la versione precedente. Un intento non è
-  mai visibile.
-- **Scritture concorrenti sullo stesso documento (single-Series o multiserie):** il writer
-  risponde subito `conflict` (**no-wait**). Nessuna attesa dentro il writer.
-- Un conflitto single-Series contro un intento è indistinguibile per il client da un
-  conflitto di versione: ritenta.
+### Protocol
+
+1. The coordinator (the worker serving the request) sends each participating Serie
+   `PREPARE(T, operazioni)` through the writer queue.
+2. The writer, within the batch, checks expected-version and **intents**; on conflict it
+   replies `abort`; otherwise it appends data records with the *prepared* flag and CSN 0, then a
+   `PREPARE T` record; records the intents `chiave → T`; the batch goes to flush (`:group` or
+   stronger); on completion it replies `prepared`. **The writer does not wait for the decision.**
+3. After receiving every `prepared`, the coordinator appends the decision to `multiserie.log` (group
+   commit). When it is durable: it assigns the CSN, inserts `T` into the "being applied" set,
+   acknowledges the client (INV-T3), and sends `OUTCOME(T, COMMIT, csn)` to the participants.
+4. On `OUTCOME`, the writer updates the index (version, CSN), removes the intents, appends
+   an `OUTCOME T` record to the segment (flushed with the next batch), and replies.
+5. When all participants have made the `OUTCOME` durable, the coordinator removes `T`
+   from "being applied" and marks it **forgettable**.
+6. If a participant replies `abort` or fails to reply before the timeout: an `ABORT` decision,
+   same path; intents are removed and the records remain dead in the segment.
+
+<a id="stato-prepared"></a>
+
+### PREPARED state
+
+- **Readers (read committed and snapshot):** see the previous version. An intent is
+  never visible.
+- **Concurrent writes to the same document (single-Serie or multiseries):** the writer
+  immediately replies `conflict` (**no-wait**). No waiting inside the writer.
+- A single-Serie conflict with an intent is indistinguishable to the client from a
+  version conflict: retry.
 
 ### Recovery
 
-- *Presumed abort.* Al riavvio il Recovery Manager carica le decisioni da `multiserie.log`.
-  Un `PREPARE T` senza `OUTCOME` nel segmento si risolve: COMMIT se la decisione COMMIT è
-  nel log, altrimenti ABORT. L'`OUTCOME` mancante viene appeso.
-- Il coordinatore non scrive nulla prima della decisione: senza decisione, nessun client ha
-  avuto conferma.
+- *Presumed abort.* On restart, the Recovery Manager loads decisions from `multiserie.log`.
+  A `PREPARE T` without an `OUTCOME` in the segment is resolved as COMMIT if a COMMIT decision is
+  in the log, otherwise ABORT. The missing `OUTCOME` is appended.
+- The coordinator writes nothing before the decision: without a decision, no client has
+  received an acknowledgment.
 
 ### `multiserie.log`
 
-- Record `{seq, tipo: COMMIT|ABORT|CHECKPOINT, txid, csn, partecipanti, CRC32C}`.
-- Troncamento: quando le decisioni dimenticabili superano una soglia, il coordinatore scrive
-  `multiserie.log.new` con un `CHECKPOINT` e le sole decisioni non dimenticabili, flush,
-  rinomina sopra l'originale, `fsync` della directory. Il file resta uno.
+- Records `{seq, tipo: COMMIT|ABORT|CHECKPOINT, txid, csn, partecipanti, CRC32C}`.
+- Truncation: when forgettable decisions exceed a threshold, the coordinator writes
+  `multiserie.log.new` with a `CHECKPOINT` and only the nonforgettable decisions, flushes it,
+  renames it over the original, and runs directory `fsync`. There is still only one file.
 
-Pattern: 2PC presumed-abort (Mohan et al.); intenti con no-wait (Percolator usa lock
-pendenti; qui senza attesa perché il writer è unico); log delle decisioni compattato per
-checkpoint.
+Patterns: presumed-abort 2PC (Mohan et al.); no-wait intents (Percolator uses pending
+locks; here there is no waiting because there is only one writer); decision log compacted through
+checkpoints.
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- La Serie non si ferma mai per una multiserie: costa due record nel lotto (PREPARE e
-  OUTCOME) e una voce di intento.
-- Latenza di commit: flush dei PREPARE + flush della decisione.
-- Record morti nei segmenti per le transazioni abortite (recuperati dal CLEAN).
+## Consequences
 
-## Alternative considerate
+- A Serie never stops for a multiseries transaction: it costs two records in the batch (PREPARE and
+  OUTCOME) and one intent entry.
+- Commit latency: PREPARE flush + decision flush.
+- Dead records in segments for aborted transactions (reclaimed by CLEAN).
 
-- *Attesa (wait) sugli intenti:* code di attesa dentro il writer e possibilità di deadlock tra
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Waiting on intents:* waiting queues inside the writer and possible deadlocks between
   Serie.
-- *Decisione scritta anche nel segmento di ogni partecipante prima della conferma:* un flush
-  in più per partecipante senza beneficio: la decisione nel log unico basta.
+- *Decision also written in every participant's segment before acknowledgment:* one more flush
+  per participant without benefit: the decision in the single log suffices.
 
-## Valutazione
+<a id="valutazione"></a>
 
-- Verifica: FI-03, FI-04, FI-05, FI-12; modello in SPK-07 con crash in ogni passo.
+## Assessment
+
+- Verification: FI-03, FI-04, FI-05, FI-12; model in SPK-07 with a crash at every step.

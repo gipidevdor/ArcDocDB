@@ -1,35 +1,39 @@
-# 04 — WAL e durability
+<a id="04--wal-e-durability"></a>
 
-> **Fonte:** «WAL» della [specifica](specifica/specifica-originale.md); riferimenti da «Transazioni
-> multiserie» e «Recovery».
-> **Moduli:** M02 WAL Manager.
-> **Decisioni:** [ADR-0013](adr/0013-log-structured-segmento-active-come-log.md) **emenda
-> questa sezione**: il log dei dati della Serie è il segmento ACTIVE; `wal/control.log` è il
-> WAL strutturale. [ADR-0019](adr/0019-durability-e-group-commit-pipelined.md) definisce i
-> livelli di durability; [ADR-0037](adr/0037-lotto-sigillato.md) la meccanica: lotti
-> sigillati, un compito di I/O alla volta per log, conferma dopo la pubblicazione, frontiera
-> durevole. Il testo sotto riporta la specifica originale; dove differisce, prevalgono gli
-> ADR.
+# 04 — WAL and durability
 
-## Un WAL per Serie
+> **Source:** ‘WAL’ of the [specification](specifica/specifica-originale.md); references from ‘Multiseries
+> transactions’ and ‘Recovery’.
+> **Modules:** M02 WAL Manager.
+> **Decisions:** [ADR-0013](adr/0013-log-structured-segmento-active-come-log.md) **amends
+> this section**: the Serie's data log is the ACTIVE segment; `wal/control.log` is the
+> structural WAL. [ADR-0019](adr/0019-durability-e-group-commit-pipelined.md) defines
+> durability levels; [ADR-0037](adr/0037-lotto-sigillato.md) defines the mechanics: sealed
+> batches, one I/O task at a time per log, acknowledgment after publication, and the durable
+> frontier. The text below reproduces the original specification; where it differs,
+> the ADRs take precedence.
 
-Ogni Serie possiede un WAL indipendente, in `Serie/wal/`. NON DEVE esistere un WAL dei dati
-globale (INV-W1).
+<a id="un-wal-per-serie"></a>
 
-Il WAL serve a:
+## One WAL per Serie
 
-- **durability** — ciò che è stato confermato sopravvive a un crash;
-- **recovery** — ripartenza dopo crash ([11 Recovery](11-recovery.md));
-- **ricostruzione dello stato** — indici e metadata sono derivabili;
-- **registrazione ordinata delle modifiche** — l'ordine nel WAL è l'ordine di commit nella Serie.
+Each Serie owns an independent WAL in `Serie/wal/`. There MUST NOT be a global
+data WAL (INV-W1).
 
-Poiché il WAL è scritto solo dal writer logico della Serie
-([10](10-concorrenza-e-scheduling.md)), l'append non richiede coordinamento con altre Serie.
+The WAL provides:
+
+- **durability** — acknowledged operations survive a crash;
+- **recovery** — restarting after a crash ([11 Recovery](11-recovery.md));
+- **state reconstruction** — indexes and metadata are derivable;
+- **ordered recording of changes** — WAL order is commit order within the Serie.
+
+Since only the Serie's logical writer writes the WAL
+([10](10-concorrenza-e-scheduling.md)), appending requires no coordination with other Serie.
 
 ## Group commit
 
-Il sistema DEVE privilegiare il group commit: molte transazioni condividono una singola
-operazione di flush.
+The system MUST favor group commit: many transactions share a single flush
+operation.
 
 ```
 TX101 ─┐
@@ -37,51 +41,59 @@ TX102 ─┼──> WAL append ──> fsync
 TX103 ─┘
 ```
 
-- Evitare un `fsync` per ogni singola operazione, **salvo** esplicita richiesta di durability
-  forte.
-- Anche `multiserie.log` DEVE usare group commit dove appropriato.
+- Avoid an `fsync` for every individual operation, **unless** strong durability is
+  explicitly requested.
+- `multiserie.log` MUST also use group commit where appropriate.
 
-## Livelli di durability
+<a id="livelli-di-durability"></a>
 
-La specifica presuppone più livelli, senza elencarli formalmente. Dal testo se ne ricavano tre:
+## Durability levels
 
-| Livello | Da dove emerge nella specifica | Comportamento atteso |
+The specification assumes several levels without formally listing them. Three can be inferred:
+
+| Level | Where it appears in the specification | Expected behavior |
 |---|---|---|
-| async | target «INSERT async durability» | conferma prima del flush; una finestra di scritture recenti può andare persa in caso di crash |
-| group commit | «privilegiare group commit», target «INSERT group commit» | conferma dopo un `fsync` condiviso con altre transazioni |
-| forte | «salvo esplicita richiesta di durability forte» | `fsync` dedicato all'operazione |
+| async | ‘INSERT async durability’ target | acknowledgment before flush; a window of recent writes may be lost on a crash |
+| group commit | ‘favor group commit’, ‘INSERT group commit’ target | acknowledgment after an `fsync` shared with other transactions |
+| strong | ‘unless strong durability is explicitly requested’ | `fsync` dedicated to the operation |
 
-> **Deciso (QA-05 → [ADR-0019](adr/0019-durability-e-group-commit-pipelined.md))** — Nomi, semantica esatta, livello di default e granularità (per Serie, per
-> richiesta, per transazione) vanno definiti. In particolare va precisato che cosa significa
-> «committed» ai fini di INV-D1 quando il livello è async.
+> **Decided (QA-05 → [ADR-0019](adr/0019-durability-e-group-commit-pipelined.md))** — Names, exact semantics, the default level, and granularity (per Serie,
+> request, or transaction) need definition. In particular, the meaning of ‘committed’
+> for INV-D1 at the async level must be specified.
 
-## Il WAL nelle transazioni multiserie
+<a id="il-wal-nelle-transazioni-multiserie"></a>
 
-In una transazione multiserie ogni Serie partecipante registra il proprio PREPARE nel proprio
-WAL, ed esegue flush/fsync secondo il livello di durability **prima** che la decisione venga
-scritta in `multiserie.log`. Il WAL della Serie contiene quindi anche record di protocollo
-(prepare, commit, abort) oltre alle modifiche. Vedi [05 Transazioni](05-transazioni.md).
+## The WAL in multiseries transactions
 
-## Metriche
+In a multiseries transaction, each participating Serie records its own PREPARE in its
+WAL and performs flush/fsync according to the durability level **before** the decision is
+written to `multiserie.log`. The Serie WAL therefore also contains protocol records
+(prepare, commit, abort) in addition to changes. See [05 Transactions](05-transazioni.md).
 
-Da esporre ([12 Osservabilità](12-osservabilita.md)): append throughput, latenza di `fsync`,
-dimensione del gruppo, profondità della coda del WAL. Latenza di `fsync` e throughput del WAL
-sono anche segnali di carico per la [low-load policy](07-compaction.md#low-load-policy) del
-MERGE e per lo [scheduler](10-concorrenza-e-scheduling.md).
+<a id="metriche"></a>
 
-## Questioni decise
+## Metrics
 
-- **QA-02** ([ADR-0013](adr/0013-log-structured-segmento-active-come-log.md)) — Rapporto WAL ↔ segmenti e politica di troncamento del WAL.
-- **QA-05** ([ADR-0019](adr/0019-durability-e-group-commit-pipelined.md)) — Livelli di durability.
-- **QA-19** ([ADR-0017](adr/0017-piattaforma-e-io.md)) — Primitive di I/O per piattaforma. Nota rilevante per lo sviluppo su macOS: lì
-  `fsync` non garantisce la persistenza su supporto fisico (serve `F_FULLFSYNC`); i test di
-  durability vanno quindi interpretati per piattaforma.
+To expose ([12 Observability](12-osservabilita.md)): append throughput, `fsync` latency,
+group size, and WAL queue depth. `fsync` latency and WAL throughput are also load signals
+for the MERGE [low-load policy](07-compaction.md#low-load-policy) and the
+[scheduler](10-concorrenza-e-scheduling.md).
 
-> **Deciso ([ADR-0039](adr/0039-cornice-unica-dei-record.md), [ADR-0037](adr/0037-lotto-sigillato.md))** —
-> Ogni record porta lunghezze e due CRC32C (intestazione e corpo); ogni lotto è chiuso da un
-> SEAL che ne fissa il contenuto e dichiara la frontiera durevole. Così il recovery distingue
-> un lotto completo da una coda (scenario FI-01) e una coda da una corruzione, senza dipendere
-> dall'ordine in cui il supporto ha reso persistenti le scritture (INV-F2, INV-F3). Nelle
-> transazioni multiserie non esiste un record PREPARE: i record prepared sono resi atomici dal
-> SEAL del loro lotto ([ADR-0041](adr/0041-multiserie-segmenti-autosufficienti.md)). Formato in
+<a id="questioni-decise"></a>
+
+## Decided questions
+
+- **QA-02** ([ADR-0013](adr/0013-log-structured-segmento-active-come-log.md)) — WAL ↔ segment relationship and WAL truncation policy.
+- **QA-05** ([ADR-0019](adr/0019-durability-e-group-commit-pipelined.md)) — Durability levels.
+- **QA-19** ([ADR-0017](adr/0017-piattaforma-e-io.md)) — Per-platform I/O primitives. Relevant to macOS development: `fsync` there
+  does not guarantee persistence on physical media (`F_FULLFSYNC` is needed); durability
+  tests must therefore be interpreted per platform.
+
+> **Decided ([ADR-0039](adr/0039-cornice-unica-dei-record.md), [ADR-0037](adr/0037-lotto-sigillato.md))** —
+> Every record carries lengths and two CRC32C checksums (header and body); every batch ends
+> with a SEAL fixing its contents and declaring the durable frontier. Recovery can thus
+> distinguish a complete batch from a tail (scenario FI-01), and a tail from corruption,
+> without depending on the order in which media persisted the writes (INV-F2, INV-F3).
+> In multiseries transactions there is no PREPARE record: prepared records are made atomic
+> by their batch's SEAL ([ADR-0041](adr/0041-multiserie-segmenti-autosufficienti.md)). Format in
 > [formati-su-disco.md](formati-su-disco.md#cornice-del-record).

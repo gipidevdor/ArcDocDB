@@ -1,66 +1,70 @@
-# SPK-08 — confronto delle bitmap
+<a id="spk-08--confronto-delle-bitmap"></a>
 
-> **Proposta** — Estensione preregistrata prima della compilazione e delle
-> misure del modulo `bitmap.lisp`. Nessuna modifica del motore o degli ADR.
+# SPK-08 — Bitmap comparison
 
-## Domanda e correttezza
+> **Proposed** — Extension preregistered before compilation and measurements of
+> `bitmap.lisp`. No engine or ADR changes.
 
-Quanto costa contare i bit comuni di due bitmap in array specializzati,
-per byte oppure per parole u64? Entrambi i kernel restituiscono lo stesso
-conteggio; non producono una bitmap e non rappresentano una query del database.
-Il layout u64 viene preparato fuori dalle misure, esplicitamente little endian.
-L'oracolo controlla ciascun bit separatamente, senza LOGAND/LOGCOUNT.
+<a id="domanda-e-correttezza"></a>
 
-Array semplici, lunghezze uguali, da zero a 65.536 byte e multipli di otto;
-word array equivalenti con al più 8192 elementi. Check di limiti, tipi,
-lunghezze e input immutati; fixture zero, tutti uno, alternate e miste
-deterministiche, anche con bit alto u64 acceso. Safety 3, warning e
-style-warning fatali. Il CHECK deve riuscire prima del benchmark.
+## Question and correctness
 
-## Misure preregistrate
+What does counting common bits in two bitmaps stored in specialized byte or u64
+arrays cost? Both kernels return the same count; they neither produce a bitmap
+nor represent a database query. U64 layout prepared outside measurements,
+explicitly little-endian. Oracle checks each bit separately, without LOGAND/LOGCOUNT.
 
-Tre dimensioni: 128, 8192 e 65.536 byte per bitmap. Tre dataset:
-`:mixed`, `:zero`, `:ones`. Due kernel, cinque repliche con ordine alternato:
-**90 campioni**. Ogni campione attraversa 16 MiB complessivi dei due input;
-passaggi = 16 MiB / (2 × byte per bitmap), da 128 a 65.536. Otto passaggi
-di warmup per kernel, fuori dalla misura. Nessuna scadenza usata come garanzia.
-Il lavoro è finito e i parametri fissi precedono l'esecuzione.
+Simple arrays, equal lengths, zero to 65,536 bytes in multiples of eight;
+equivalent word arrays with at most 8192 elements. Bounds/type/length checks,
+unchanged inputs; zero, all-one, alternating, deterministic mixed fixtures,
+including set u64 high bit. Safety 3, fatal warning/style-warning.
+CHECK must pass before benchmark.
 
-Preparazione, packing, oracoli e report sono esclusi. Ogni risultato alimenta
-un sink fixnum verificato rispetto al conteggio atteso × passaggi. Il tempo
-monotono e il delta `get-bytes-consed` delimitano solo il ciclo del controller;
-GC prima di ogni campione, nessun worker del carico. Si conserva il costo
-di una chiamata vuota con lo stesso ciclo, senza sottrarlo dai campioni.
-Un controllo positivo alloca un array e lo rende osservabile: un contatore
-che non lo rileva fa fallire la prova. Il delta nullo non è una garanzia.
+<a id="misure-preregistrate"></a>
 
-> **Proposta** — Revisione del controllo positivo dopo il primo tentativo
-> di benchmark, fermato prima dei campioni: l'array da 64 KiB non supera il
-> controllo del sensore. Prima della nuova esecuzione il payload del controllo
-> è fissato a 1 MiB e gli errori includono il delta osservato. I kernel e
-> la matrice restano gli stessi; il primo fallimento viene conservato.
+## Preregistered measurements
 
-Il disassemblato dei due kernel e del ciclo effettivo è registrato come
-testo nel report. Si distingue un'istruzione SIMD usata per una singola
-operazione LOGCOUNT da un ciclo che tratta più elementi simultaneamente.
-Le diagnostiche del contrib registrano disponibilità e API, senza dedurre
-supporto per operazioni non esportate o prestazioni su altre architetture.
+Three sizes: 128, 8192, 65,536 bytes per bitmap. Three datasets:
+`:mixed`, `:zero`, `:ones`. Two kernels, five replications alternating order:
+**90 samples**. Each sample traverses 16 MiB total over both inputs;
+passes = 16 MiB / (2 × bytes per bitmap), from 128 to 65,536.
+Eight warmup passes per kernel outside measurement. No deadline used as guarantee.
+Work is finite, fixed parameters precede execution.
 
-## Riproduzione e limiti
+Preparation, packing, oracles, reports excluded. Each result feeds a fixnum sink
+checked against expected count × passes. Monotonic time and `get-bytes-consed`
+delta delimit controller loop only; GC before every sample, no load workers.
+Retain empty-call cost with same loop, without subtracting from samples.
+Positive control allocates an array and makes it observable: a counter missing
+it fails test. Zero delta is no guarantee.
+
+> **Proposed** — Positive-control revision after first benchmark attempt, stopped
+> before samples: 64 KiB array fails sensor check. Before next run, control payload
+> fixed at 1 MiB, errors include observed delta. Kernels/matrix unchanged;
+> first failure retained.
+
+Disassembly of both kernels and actual loop recorded as report text.
+Distinguish SIMD instruction for one LOGCOUNT from a loop processing multiple
+elements simultaneously. Contrib diagnostics record availability/APIs without
+inferring support for unexported operations or other-architecture performance.
+
+<a id="riproduzione-e-limiti"></a>
+
+## Reproduction and limits
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-08-generated-code/run-bitmap.lisp --check
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-08-generated-code/run-bitmap.lisp --bench
 ```
 
-Runner e sorgenti sono distinti dai moduli impronte/SIMD già esistenti.
-FASL per processo sotto `out/`. Output: una plist di esito; il registro
-conserva comando, ambiente, sorgenti prima/dopo e stdout/stderr, inclusi
-fallimenti. I record citati vengono conservati in `spikes/results/`.
+Runner/sources separate from existing fingerprint/SIMD modules.
+Per-process FASLs under `out/`. Output: one outcome plist; recorder retains
+command, environment, before/after sources, stdout/stderr, including failures.
+Cited records retained in `spikes/results/`.
 
-Prima piattaforma locale: Apple M4 ARM64, SBCL 2.6.9; ambiente effettivo
-nel report. Array piccoli, residenti nello heap, cache e carico esterno non
-controllati. Nessuna misura x86-64, oltre RAM, I/O o concorrenza. Il packing
-è escluso: un vantaggio del layout u64 vale solo se quel layout è già disponibile.
-Nessuna promozione di codice sperimentale o ottimizzazione senza profiling
-del motore, secondo INV-X1 e ADR-0012.
+First local platform: Apple M4 ARM64, SBCL 2.6.9; actual environment in report.
+Small heap-resident arrays, uncontrolled cache/external load. No x86-64,
+beyond-RAM, I/O, or concurrency measurement. Packing excluded: u64-layout
+advantage applies only when layout already available.
+No experimental-code promotion or optimization without engine profiling,
+under INV-X1 and ADR-0012.

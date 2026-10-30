@@ -1,90 +1,98 @@
-# Rinomina atomica nella directory posseduta
+<a id="rinomina-atomica-nella-directory-posseduta"></a>
 
-`io:rinomina-nella-directory(directory, source, destination)` realizza il
-confine POSIX necessario ad [ADR-0040](../adr/0040-manifest-a-record-unico.md).
-La capacità parent è già aperta; entrambi i nomi sono relativi allo stesso FD,
-senza rileggere il percorso del parent o cambiare la directory corrente.
+# Atomic rename in an owned directory
 
-## Contratto
+`io:rinomina-nella-directory(directory, source, destination)` implements the
+POSIX boundary needed by [ADR-0040](../adr/0040-manifest-a-record-unico.md).
+Parent capability already open; both names relative to same FD,
+without rereading parent path or changing current directory.
 
-Il compito del pool I/O possiede la directory e il controller riserva i due
-nomi. Il caller garantisce la decisione autorevole, l'identità e il contenuto
-dei file e impedisce mutazioni/close concorrenti. I nomi Lisp sono presi in
-prestito e stabili fino al ritorno. Dopo la validazione, il modulo ne crea
-due copie simple-base-string private prima dell'effetto: anche stringhe
-displaced, adjustable o con fill pointer rispettano il contratto della FFI.
-Nessun lock o contatore tra Serie.
+<a id="contratto"></a>
 
-> **Proposta** — Questa API accetta i componenti ASCII dei nomi storage
-> canonici, da 1 a 255 byte: nessun NUL, slash, `.` o `..`; source e destination
-> sono diversi per contenuto. Non è un'interfaccia per percorsi arbitrari o
-> nomi Unicode. Il filesystem può imporre ulteriori restrizioni, segnalate da I/O.
+## Contract
 
-Una `renameat(parent, source, parent, destination)` riuscita è il punto
-atomico del cambiamento dei nomi. Il valore NIL restituito certifica solo
-l'esito POSIX zero e la capacità ancora aperta; il fsync del parent resta una
-chiamata separata a `durable-flush(directory)`. Le frontiere byte non avanzano.
-Per il recovery della Serie la rinomina del control log sarà il punto di
-atomicità previsto da ADR-0040; l'esecutore deve ancora collegare decisione,
-checkpoint verificato, namespace e completamento durevole.
+I/O-pool task owns directory and controller reserves both
+names. Caller guarantees authoritative decision, file identity and
+content, and prevents concurrent mutation/close. Lisp names borrowed
+and stable until return. After validation, module creates
+two private simple-base-string copies before effect: even displaced,
+adjustable, or fill-pointer strings meet FFI contract.
+No lock or counter between Serie.
 
-La primitiva non verifica l'inode associato ai nomi, il tipo/contenuto del
-file o l'assenza di hardlink. La semantica è quella POSIX: due nomi che già
-individuano lo stesso inode possono dare successo senza spostamento. I FD
-già aperti conservano la propria identità anche quando viene sostituito un
-nome. Non si deduce una decisione EDIT dal nome `.tmp`, né si offre unlink.
+> **Proposal** — API accepts canonical storage-name ASCII
+> components, 1 to 255 bytes: no NUL, slash, `.` or `..`; source and destination
+> differ by content. Not an interface for arbitrary paths or
+> Unicode names. Filesystem may impose further restrictions reported by I/O.
 
-La sostituzione verificata `sostituisci-temporaneo` mantiene i propri controlli
-di identità, `.tmp`/definitivo e assenza di alias. Normalizza le due foglie
-private e delega allo stesso effetto protetto, includendo la verifica del
-nome installato nella postcondizione. La rinomina ordinaria mantiene
-il wrapper nativo `native-replace`. La [pubblicazione esclusiva](io-pubblicazione.md)
-seleziona invece la primitiva nativa che rifiuta target esistenti,
-riusando lo stesso helper di effetto, postcondizione e fail-stop.
-Il default ordinario resta invariato.
+A successful `renameat(parent, source, parent, destination)` is
+atomic name-change point. Returned NIL certifies only
+POSIX zero outcome and still-open capability; parent fsync remains a
+separate `durable-flush(directory)` call. Byte frontiers do not advance.
+For Serie recovery, control-log rename will be atomicity
+point under ADR-0040; executor must still connect decision,
+verified checkpoint, namespace, and durable completion.
 
-## Guasti e backend
+Primitive checks neither inode associated with names, file type/content,
+nor absence of hardlinks. POSIX semantics: two names already
+identifying same inode may succeed without movement. Already-open FDs
+retain identity even when a name is replaced.
+No EDIT decision inferred from `.tmp` name, and no unlink offered.
 
-Preflight di capacità, nomi e callback prima della prima operazione. Rifiuti
-ordinari non mutano stato o namespace. Il backend aggiunge `:rename`, una
-funzione immutabile che riceve fd/source/destination e restituisce zero;
-callback assente significa `unsupported-format`, mai fallback nativo.
-Il backend e i callback sono fidati e non modificano capacità o nomi in uso.
+Verified replacement `sostituisci-temporaneo` retains identity,
+`.tmp`/final, and no-alias checks. Normalizes both private
+leaves and delegates to same protected effect, including installed-name
+verification in postcondition. Ordinary rename retains
+native wrapper `native-replace`. [Exclusive publication](io-pubblicazione.md)
+instead selects native primitive rejecting existing targets,
+reusing same effect, postcondition, and fail-stop helper.
+Ordinary default remains unchanged.
 
-Syscall fallita (compreso EINTR) o risultato diverso da zero portano la
-directory in FAULTED prima di `io-fault`. L'effetto incompleto, inclusa uscita
-non locale, guasta una capacità ancora aperta senza sostituire la causa
-originale. Le brevi transizioni di stato sono protette dalle interruzioni:
-nessuna syscall o attesa è dentro la sezione protetta. Il cleanup e gli errori
-POSIX/ritorno conservano una capacità già chiusa. Nessun retry,
-rollback, close, unlink o flush implicito. Il caller propaga il guasto a
-Serie/Archivio e riconcilia dal manifest prima di riaprire una capacità.
+<a id="guasti-e-backend"></a>
 
-| Rifiuto/guasto | Reason |
+## Faults and backend
+
+Capability, name, and callback preflight before first operation. Ordinary
+rejections mutate neither state nor namespace. Backend adds `:rename`, an
+immutable function receiving fd/source/destination and returning zero;
+missing callback means `unsupported-format`, never native fallback.
+Backend and callbacks trusted and do not modify capabilities or names in use.
+
+Failed syscall (including EINTR) or nonzero result puts
+directory into FAULTED before `io-fault`. Incomplete effect, including nonlocal
+exit, faults a still-open capability without replacing original
+cause. Brief state transitions protected from interruptions:
+no syscall or wait inside protected section. Cleanup and POSIX/
+return errors preserve an already-closed capability. No retry,
+rollback, close, unlink, or implicit flush. Caller propagates fault to
+Serie/Archivio and reconciles from manifest before reopening capability.
+
+| Rejection/fault | Reason |
 |---|---|
-| Nome fuori contratto | `:io-rename-name` |
-| Nomi uguali | `:io-rename-same-name` |
-| Backend senza callback | `:io-rename-unavailable` |
-| Modo/capacità non valida | `:io-mode` / `:io-unavailable` / `:io-descriptor` |
-| Ritorno callback diverso da zero | `:io-rename-result` |
-| Errore POSIX | `:io-syscall`, operation `:rename`, errno conservato |
+| Name outside contract | `:io-rename-name` |
+| Equal names | `:io-rename-same-name` |
+| Backend without callback | `:io-rename-unavailable` |
+| Invalid mode/capability | `:io-mode` / `:io-unavailable` / `:io-descriptor` |
+| Nonzero callback return | `:io-rename-result` |
+| POSIX error | `:io-syscall`, operation `:rename`, errno preserved |
 
-## Decisioni e prove previste
+<a id="decisioni-e-prove-previste"></a>
 
-| ID | Decisione | Casi |
+## Decisions and planned tests
+
+| ID | Decision | Cases |
 |---|---|---|
-| RIO-D01 | Lunghezza fra 1 e 255 | Vuoto, 1, 255, 256, ogni nome separato |
-| RIO-D02 | Nome diverso da dot/dotdot | Ciascun rifiuto e componente ordinario |
-| RIO-D03 | ASCII non NUL e non slash | NUL, non ASCII e slash isolati; byte ammessi ai limiti |
-| RIO-D04 | Source diverso da destination | Stringhe distinte uguali, nomi diversi |
-| RIO-D05 | Backend presente e callback assente | Backend mancante, callback mancante, callback presente |
-| RIO-D06 | Risultato zero | Zero, NIL, -1, +1, errore POSIX |
-| RIO-D07 | Effetto incompleto e capacità ancora aperta | Successo, errore tipizzato, uscita non locale, capacità già guasta/chiusa |
-| RIO-D08 | FD valido dopo il callback | Valido; invalidazione iniettata fuori contratto per il cleanup |
-| RIO-D09 | Postcondizione facoltativa presente e ritorno NIL | Assente, presente con successo, errore e ritorno impossibile iniettati |
+| RIO-D01 | Length between 1 and 255 | Empty, 1, 255, 256, each name separately |
+| RIO-D02 | Name other than dot/dotdot | Each rejection and ordinary component |
+| RIO-D03 | ASCII non-NUL and non-slash | NUL, non-ASCII, and slash separately; allowed boundary bytes |
+| RIO-D04 | Source differs from destination | Distinct equal strings, different names |
+| RIO-D05 | Backend present and callback absent | Missing backend, missing callback, present callback |
+| RIO-D06 | Zero result | Zero, NIL, -1, +1, POSIX error |
+| RIO-D07 | Incomplete effect and capability still open | Success, typed error, nonlocal exit, already-faulted/closed capability |
+| RIO-D08 | Valid FD after callback | Valid; out-of-contract injected invalidation for cleanup |
+| RIO-D09 | Optional postcondition present and NIL return | Absent, present successful, injected error and impossible return |
 
-Ciclo massimo di 255 caratteri per ciascun nome; una sola rinomina per
-chiamata e nessuna attesa aggiunta. È un percorso dei metadati, può allocare
-per la conversione delle stringhe nella FFI. Qualifica C1, test, mutazioni e
-benchmark locale sono registrati separatamente; questa primitiva non
-qualifica l'apertura/recovery completo del database o la resistenza a power loss.
+Maximum loop 255 characters per name; one rename per
+call and no added wait. Metadata path; may allocate
+for FFI string conversion. C1 qualification, tests, mutations, and
+local benchmark registered separately; primitive qualifies neither
+complete database opening/recovery nor power-loss resistance.

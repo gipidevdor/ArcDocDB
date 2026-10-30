@@ -1,109 +1,119 @@
-# Tabella delle decisioni multiserie
+<a id="tabella-delle-decisioni-multiserie"></a>
 
-Il modulo [`src/recovery/`](../../src/recovery/) ricostruisce in memoria
-TXID → CSN e insieme dei partecipanti dal prefisso verificato di
-`multiserie.log`, secondo [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md).
-È il risultato del passo 2 del recovery, da usare poi per interpretare
-i record prepared delle Serie.
+# Multiseries decision table
 
-## Contratto
+Module [`src/recovery/`](../../src/recovery/) rebuilds in-memory
+TXID → CSN and participant set from verified prefix of
+`multiserie.log`, under [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md).
+Result of recovery step 2, later used to interpret
+Serie prepared records.
 
-`arcdocdb.recovery.decisions:ricostruisci-decisioni` riceve un buffer stabile,
-`start`, `end`, versione esplicita e dimensione fisica autorevole. Restituisce
-una tabella posseduta, il confine del prefisso nel **buffer** e `:complete`
-o `:tail`. Gli argomenti `file-offset` e `file-size` hanno lo stesso contratto
-della [scansione dei log](scansione-log.md): l'intervallo arriva all'EOF fisico
-stabile; intestazione, versione e identità dell'Archivio sono verificate
-dal chiamante. Il file-id del log multiserie è zero.
+<a id="contratto"></a>
 
-Prima si verifica l'intero log e si cerca un eventuale SEAL successivo che
-testimoni corruzione. Poi si verificano i payload di tutte le DECISION nel
-prefisso, i conteggi e i budget. Solo dopo questi controlli si costruisce
-il risultato. Non viene restituita una tabella parziale in caso di errore.
+## Contract
 
-| Query | Risultato |
+`arcdocdb.recovery.decisions:ricostruisci-decisioni` receives stable buffer,
+`start`, `end`, explicit version, authoritative physical size. Returns
+owned table, prefix boundary within **buffer**, and `:complete`
+or `:tail`. Arguments `file-offset` and `file-size` have same contract
+as [log scanning](scansione-log.md): range reaches stable physical
+EOF; header, version, and Archivio identity verified
+by caller. Multiseries log file-id zero.
+
+First verify entire log and search for later SEAL witnessing
+corruption. Then verify all DECISION payloads in
+prefix, counts, and budgets. Result built only after
+checks. No partial table returned on error.
+
+| Query | Result |
 |---|---|
-| `numero-decisioni(tabella)` | numero di TXID distinti |
-| `trova-decisione(tabella, txid)` | presenza esplicita, CSN, numero di partecipanti |
-| `partecipante-decisione-p(tabella, txid, buffer, start, end)` | appartenenza dell'ID di Serie di 16 byte all'insieme |
+| `numero-decisioni(tabella)` | distinct TXID count |
+| `trova-decisione(tabella, txid)` | explicit presence, CSN, participant count |
+| `partecipante-decisione-p(tabella, txid, buffer, start, end)` | membership of 16-byte Serie ID in set |
 
-Una decisione assente restituisce `nil, 0, 0`. Una decisione presente con
-CSN zero restituisce `t, 0, count`: il chiamante usa la presenza, non il
-valore del CSN. Un TXID assente può essere interpretato come presumed abort
-solo dopo una costruzione riuscita della tabella. Un errore di scansione,
-corruzione o budget non diventa un esito ABORT.
-Il controller verifica anche che la Serie sia fra i partecipanti; la
-semplice presenza del TXID non autorizza l'applicazione su qualsiasi Serie.
+Absent decision returns `nil, 0, 0`. Present decision with
+zero CSN returns `t, 0, count`: caller uses presence, not
+CSN value. Absent TXID may be interpreted as presumed abort
+only after successful table construction. Scan error,
+corruption, or budget error does not become ABORT outcome.
+Controller also verifies Serie among participants;
+TXID presence alone does not authorize application to any Serie.
 
-## Identità, duplicati e ownership
+<a id="identità-duplicati-e-ownership"></a>
 
-I partecipanti di una singola DECISION devono essere almeno due e distinti.
-TXID e CSN restano interi u64 opachi, inclusi zero e il massimo; non si
-aggiungono vincoli di monotonia o unicità del CSN fra transazioni diverse.
-L'ordine delle DECISION e degli ID di Serie non cambia il risultato.
+## Identity, duplicates, and ownership
 
-Una ripetizione dello stesso TXID con CSN e insieme dei partecipanti uguali
-è idempotente. CSN o insiemi discordanti producono `corruption-detected`
-con motivo `:decision-conflict`. Un partecipante ripetuto nella stessa
-DECISION produce `:decision-duplicate-participant`. Questi errori semantici
-in un lotto sigillato non sono trattati come una coda incompleta.
+One DECISION's participants must be at least two and distinct.
+TXID and CSN remain opaque u64 integers, including zero/maximum; no
+CSN monotonicity or uniqueness constraints added across different transactions.
+Order of DECISIONs and Serie IDs does not change result.
 
-La lunghezza minima della cornice è verificata dallo scanner prima che un
-lotto entri nel prefisso. Una cornice DECISION troppo corta segue quindi
-la classificazione coda/testimone della [scansione](scansione-log.md), anche
-se la fixture contiene CRC e un SEAL integri. I controlli semantici di
-questa tabella si applicano soltanto al prefisso con cornici già verificate.
+Repeated same TXID with equal CSN and participant set
+is idempotent. Conflicting CSNs or sets produce `corruption-detected`
+with reason `:decision-conflict`. Repeated participant in same
+DECISION produces `:decision-duplicate-participant`. Such semantic errors
+in sealed batch not treated as incomplete tail.
 
-La tabella ordina i TXID e gli ID di Serie e possiede copie dei dati. Non
-restituisce i vettori interni e non conserva span nel buffer sorgente.
-Dopo la costruzione il chiamante può riusare il buffer senza cambiare
-le query. La tabella non contiene stato globale o scritture condivise
-fra Serie; le consultazioni sono in sola lettura.
+Scanner verifies minimum frame length before batch
+enters prefix. Thus undersized DECISION frame follows
+[scan](scansione-log.md) tail/witness classification even
+if fixture contains intact CRC and SEAL. This table's semantic
+checks apply only to prefix with already verified frames.
 
-Il recovery seleziona un ordinamento LSD radix stabile da 1.024 ID16 per
-decisione e da 256 DECISION fisiche; sotto soglia usa merge bottom-up.
-La [scelta misurata](decisioni-radix-risultati.md) mantiene l'ordine fisico
-dei TXID uguali necessario alla diagnostica dei conflitti. Le query sulla
-tabella immutabile sono verificate anche con sei lettori concorrenti.
+Table sorts TXIDs and Serie IDs and owns data copies. Does not
+return internal vectors or retain source-buffer spans.
+After construction caller may reuse buffer without changing
+queries. Table has no global state or shared writes
+between Serie; queries read-only.
 
-## Budget e confini
+Recovery selects stable LSD radix from 1,024 ID16 participants per
+decision and from 256 physical DECISIONs; below threshold uses bottom-up merge.
+[Measured choice](decisioni-radix-risultati.md) preserves physical order
+of equal TXIDs needed for conflict diagnostics. Immutable-table
+queries also checked with six concurrent readers.
 
-> **Proposta** — Budget della tabella: 65.536 DECISION fisiche, 65.536
-> partecipanti cumulativi, al massimo 65.535 partecipanti per decisione.
-> I budget della scansione restano configurabili separatamente.
+<a id="budget-e-confini"></a>
 
-I conteggi cumulativi includono i record duplicati prima di coalescerli.
-Un log vuoto è valido anche con budget zero; non si alloca memoria in
-proporzione a un budget inutilizzato. Tutti i cicli sono limitati dai byte,
-dai conteggi verificati o dalla profondità della ricerca binaria.
-Questo è un percorso di apertura/recovery: copie e ordinamento possono
-allocare, senza promessa di zero heap.
+## Budgets and boundaries
 
-I nuovi errori di conteggio, partecipanti duplicati e decisioni discordanti
-riportano offset assoluti nel file. Le condizioni dei codec mantengono
-gli offset nel buffer previsti dal loro contratto. Le query verificano
-range e lunghezza dell'ID anche per un TXID assente.
+> **Proposal** — Table budgets: 65,536 physical DECISIONs, 65,536
+> cumulative participants, at most 65,535 participants per decision.
+> Scan budgets remain separately configurable.
 
-## Verifica e limiti
+Cumulative counts include duplicate records before coalescing.
+Empty log valid even with zero budget; memory not allocated
+proportionally to unused budget. All loops bounded by bytes,
+verified counts, or binary-search depth.
+Opening/recovery path: copying and sorting may
+allocate, without zero-heap promise.
 
-[Metodo](decisioni-multiserie-metodo.md) e
-[tabella delle decisioni](decisioni-multiserie-decisioni.md).
-Le fixture bytewise e i CRC bitwise sono indipendenti dai codec del
-prodotto; l'oracolo interpreta storie logiche dichiarate come dati.
-Le prove coprono duplicati coerenti/discordanti, troncamenti e corruzioni,
-budget, valori estremi, identificativi quasi uguali e ownership.
-La suite comprende 43 prove dedicate (62 insieme allo scanner), tra cui
-identità su tutti i 128 bit degli ID16 e il limite valido di 65.535
-partecipanti nelle versioni v1 e v2.
-Le 18 prove aggiunte con radix comprendono oracoli indipendenti, guardie
-interne, confini delle due soglie pubbliche e lettori concorrenti.
+New count, duplicate-participant, and conflicting-decision errors
+report absolute file offsets. Codec conditions retain
+buffer offsets under their contracts. Queries check
+ID range/length even with absent TXID.
 
-I sei sorgenti `decisions-*` e i quattro file di fixture, test e seconda
-lettura sono componenti di `arcdocdb.asd`: `make test` e `make check`
-compilano il modulo senza avvisi e ne eseguono le prove insieme a quelle
-della scansione recovery. La campagna `decisions` di mutazione seleziona
-le definizioni dei test dedicati, verifica che siano effettivamente avviati
-e distingue un difetto rilevato da un errore precedente all'esecuzione.
+<a id="verifica-e-limiti"></a>
+
+## Verification and limits
+
+[Method](decisioni-multiserie-metodo.md) and
+[decision table](decisioni-multiserie-decisioni.md).
+Bytewise fixtures and bitwise CRCs independent of product
+codecs; oracle interprets declared logical histories as data.
+Tests cover consistent/conflicting duplicates, truncations and corruption,
+budgets, extreme values, nearly equal IDs, and ownership.
+Suite has 43 dedicated tests (62 with scanner), including
+identity across all 128 ID16 bits and valid 65,535-participant
+limit in v1/v2.
+18 radix-added tests include independent oracles, internal
+guards, both public-threshold boundaries, and concurrent readers.
+
+Six `decisions-*` sources and four fixture, test, and second-reading
+files are `arcdocdb.asd` components: `make test` and `make check`
+compile module without warnings and run tests alongside recovery
+scanning. Mutation campaign `decisions` selects dedicated-test
+definitions, checks they actually start,
+and distinguishes detected defects from pre-execution errors.
 
 ```sh
 make check
@@ -113,27 +123,27 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/foundation-coverage.li
 sbcl --noinform --no-userinit --no-sysinit --script tools/foundation-coverage.lisp --report spikes/out/decisions-coverage/ recovery
 ```
 
-La directory dei mutanti deve essere nuova. La copertura `recovery`
-comprende scanner e tabella; il rapporto separa i file e conserva il
-denominatore grezzo. Non equivale a copertura MC/DC o a qualifica del motore.
+Mutant directory must be new. `recovery` coverage
+includes scanner/table; report separates files and retains
+raw denominator. Does not equal MC/DC coverage or engine qualification.
 
-Le [evidenze del 2026-10-09](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-decisions-verifica/catalogo.lisp)
-conservano self-test, comandi, ambiente, hash prima/dopo, output delle
-mutazioni e stato grezzo di `sb-cover`. La campagna rileva sette mutanti
-su sette dopo l'avvio dei test dedicati, senza errori di compilazione o
-fallimenti precedenti ai test. Per i soli cinque file `decisions-*` di quella versione, la
-copertura grezza osservata è 935 forme su 1.121 e 82 rami su 122.
-Definizioni e guardie difensive restano nei totali; nessuna eccezione alla
-copertura viene approvata o sottratta in questa integrazione. Il catalogo
-comprende anche nove mutanti di regressione dello scanner e i fallimenti
-della fixture iniziale. Il [catalogo delle letture e prove di integrazione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-decisions/catalogo.lisp)
-conserva le varianti precedenti e il controllo completo della copia isolata.
-L'[inventario delle forme mancanti](../affidabilita/copertura-eccezioni.md)
-riporta le motivazioni e i limiti osservati.
+[Evidence of 2026-10-09](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-decisions-verifica/catalogo.lisp)
+preserves self-tests, commands, environment, hashes before/after, mutation
+output, and raw `sb-cover` state. Campaign detects seven mutants
+of seven after dedicated tests start, without compilation errors or
+pre-test failures. For only five `decisions-*` files of that version,
+raw observed coverage is 935 forms of 1,121 and 82 branches of 122.
+Definitions/defensive guards remain in totals; no coverage exception
+approved or subtracted by integration. Catalog
+also includes nine scanner-regression mutants and initial-fixture
+failures. [Reading and integration-test catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-decisions/catalogo.lisp)
+preserves earlier variants and full isolated-copy check.
+[Missing-form inventory](../affidabilita/copertura-eccezioni.md)
+reports observed reasons and limits.
 
-Requisiti: REQ-TXM-001/005, REQ-FOR-003, REQ-AFF-008/009/017, REQ-VAL-001.
-Invarianti interessati: INV-F1/F2/F3, INV-A7/A8/A9, INV-T4, INV-P6, INV-X3.
-Il modulo non verifica il catalogo, non applica i prepared, non scrive
-esiti nel manifest e non compatta `multiserie.log`. Non realizza il
-coordinatore 2PC né l'apertura completa del database; nessun gate del
-motore è chiuso sulla sola evidenza di questa tabella.
+Requirements: REQ-TXM-001/005, REQ-FOR-003, REQ-AFF-008/009/017, REQ-VAL-001.
+Affected invariants: INV-F1/F2/F3, INV-A7/A8/A9, INV-T4, INV-P6, INV-X3.
+Module neither verifies catalog, applies prepared records, writes
+manifest outcomes, nor compacts `multiserie.log`. Implements neither
+2PC coordinator nor full database opening; no engine gate
+closed by evidence from this table alone.

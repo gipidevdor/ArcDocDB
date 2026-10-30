@@ -1,9 +1,13 @@
+<a id="registro-delle-decisioni-architetturali-adr"></a>
+
 # Architecture decision record (ADR) register
 
 [Documentation](../README.md) · [Architecture](../architettura.md) · [Invariants](../invarianti.md)
 
 An ADR records **one** decision: context, choice, consequences, and how its soundness is
 evaluated. ADRs are the project's memory: they explain why the architecture has this form.
+
+<a id="regole"></a>
 
 ## Rules
 
@@ -16,6 +20,8 @@ evaluated. ADRs are the project's memory: they explain why the architecture has 
   “Relationship to the specification” field.
 - Every [open question](../questioni-aperte.md) is closed with an ADR.
 - Template: [0000-modello.md](0000-modello.md).
+
+<a id="decisioni-registrate"></a>
 
 ## Recorded decisions
 
@@ -30,13 +36,15 @@ part of the specification.
 | [0003](0003-wal-per-serie.md) | WAL per Serie, no global data WAL | Accepted |
 | [0004](0004-storage-append-only-un-solo-active.md) | Append-only storage with a single ACTIVE segment | Accepted |
 | [0005](0005-writer-logico-per-serie.md) | One logical writer per Serie with optimistic checking | Accepted |
-| [0006](0006-transazioni-multiserie-2pc.md) | 2PC-like multi-Serie transactions with a single `multiserie.log` | Accepted |
+| [0006](0006-transazioni-multiserie-2pc.md) | 2PC-like multiseries transactions with a single `multiserie.log` | Accepted |
 | [0007](0007-clean-e-merge-distinti.md) | Separate CLEAN and MERGE, copy-on-write | Accepted |
 | [0008](0008-merge-opportunistico.md) | Opportunistic MERGE: 50 s stability + low load | Accepted |
 | [0009](0009-indici-immutabili-atomic-swap.md) | Immutable indexes for readers, atomic swap | Accepted |
 | [0010](0010-cache-clock.md) | CLOCK cache, partitionable by Serie | Accepted |
 | [0011](0011-thread-pool-dinamico.md) | Dynamic thread pool with EWMA/AIMD/hysteresis | Accepted |
 | [0012](0012-simd-guidato-dai-benchmark.md) | SIMD only where benchmarks justify it | Accepted |
+
+<a id="software-critico-fase-0-2026-10-03"></a>
 
 ## Critical software (Phase 0, 2026-10-03)
 
@@ -52,6 +60,8 @@ Decisions made by applying the critical-software criteria requested by the autho
 | [0034](0034-policy-di-compilazione-e-standard-di-codifica.md) | `safety` ≥ 2, no warnings, prohibitions, linter | Accepted |
 | [0035](0035-strategia-di-verifica-e-tracciabilita.md) | Checked bidirectional traceability, deterministic simulator, verification levels, release criteria | Accepted |
 
+<a id="analisi-progettuale-fase-0-2026-10-03"></a>
+
 ## Design analysis (Phase 0, 2026-10-03)
 
 Decisions arising from the [design analysis](../analisi-progettuale.md): they close findings
@@ -65,11 +75,13 @@ superseded ADRs remain valid in all other respects and carry a note in their sta
 | [0038](0038-orizzonte-di-visibilita.md) | Visibility horizon; snapshot registry; the version is the CSN | AP-01, AP-02, AP-07, AP-15 | Accepted (amends the specification; pending registry: 0046) |
 | [0039](0039-cornice-unica-dei-record.md) | Single record frame: two CRCs, four types in segments, resolved hint with existence filter | AP-08, AP-11, AP-13 | Accepted |
 | [0040](0040-manifest-a-record-unico.md) | Single-record manifest (EDIT); the catalog decides, directories follow | AP-14 | Accepted |
-| [0041](0041-multiserie-segmenti-autosufficienti.md) | Multi-Serie: self-contained segments, abort without a trace, acknowledgment after publication | AP-05, AP-06, AP-08 | Accepted |
+| [0041](0041-multiserie-segmenti-autosufficienti.md) | Multiseries: self-contained segments, abort without a trace, acknowledgment after publication | AP-05, AP-06, AP-08 | Accepted |
 | [0042](0042-tombstone-e-indice-dei-vivi.md) | Tombstones: live-only index, rebuild by maximum CSN, discard by existence filter | AP-04, AP-11 | Accepted |
 | [0043](0043-primary-index-a-frammenti.md) | Fragmented primary index: extendible directory, four-word slots, local keys | AP-12, AP-16 | Accepted |
 | [0044](0044-cache-acceleratore-puro.md) | The cache is a pure accelerator | AP-09 | Accepted |
 | [0045](0045-modello-di-esecuzione.md) | Run-to-completion tasks, stateless migration, waits as parking | AP-10 | Accepted |
+
+<a id="decisioni-di-progetto-fase-0-2026-10-03"></a>
 
 ## Design decisions (Phase 0, 2026-10-03)
 
@@ -99,6 +111,8 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0029](0029-interfacce-protocollo-query-contratto.md) | CBOR frame protocol; queries as data; additive contract | QA-20, QA-21 | Accepted; primary transport superseded by 0055 |
 | [0030](0030-scope-v1.md) | v1 scope | QA-23 | Accepted by the author on 2026-10-08 |
 
+<a id="valutazione-sperimentale-2026-10-08"></a>
+
 ## Experimental evaluation (2026-10-08)
 
 | ADR | Decision | Evidence | Status |
@@ -106,6 +120,8 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0046](0046-orizzonte-con-registro-limitato.md) | Bounded registry of in-flight CSNs; indivisible assignment and registration; H derived from minimum pending | reproducible counterexample in SPK-07 | Accepted |
 | [0047](0047-verifica-csn-dei-record-prepared.md) | Prepared-record CSN verified through OUTCOME or authoritative outcome in manifest; flag alone is insufficient | record verification in SPK-09 | Accepted |
 | [0050](0050-pubblicazione-e-costi-della-directory.md) | Root rechecked even on miss; directory cost and transient memory separate from C slots | SPK-01 publication and counters | Accepted; scale and memory verification open |
+
+<a id="limiti-e-capacità-2026-10-08"></a>
 
 ## Limits and capacity (2026-10-08)
 
@@ -120,17 +136,23 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0061](0061-conservazione-esterna-delle-prove.md) | Verified external historical tests; recent summaries in checkout | Accepted |
 | [0062](0062-cronologia-git-due-commit.md) | Authorized reduction of history to the last two commits | Accepted |
 
+<a id="organizzazione-della-documentazione-2026-10-08"></a>
+
 ## Documentation organization (2026-10-08)
 
 | ADR | Decision | Status |
 |---|---|---|
 | [0051](0051-presentazione-della-documentazione.md) | Presentation of the specification, common guide, and preservation of original evidence | Accepted; requirements unchanged |
 
+<a id="completamento-dei-formati-2026-10-08"></a>
+
 ## Format completion (2026-10-08)
 
 | ADR | Decision | Status |
 |---|---|---|
-| [0052](0052-header-dei-log-di-controllo.md) | Offsets, identity and CRC of control and multi-Serie headers | Accepted; first codec |
+| [0052](0052-header-dei-log-di-controllo.md) | Offsets, identity and CRC of control and multiseries headers | Accepted; first codec |
+
+<a id="ricerca-testuale-2026-10-15"></a>
 
 ## Text search (2026-10-15)
 
@@ -139,12 +161,16 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0053](0053-ricerca-full-text-indici-invertiti.md) | Full-text search: per-segment inverted indexes, terms and positions, versioned analyzers, commit and snapshot consistency | Accepted for the design; implementation and qualification to be produced |
 | [0054](0054-contratto-e-formato-full-text.md) | Operational full-text contract: fixed Unicode profile, queries, interfaces, generations, budgets and `.idx` v2 format | Accepted for the design; implementation and qualification to be produced |
 
+<a id="interfaccia-locale-2026-10-16"></a>
+
 ## Local interface (2026-10-16)
 
 | ADR | Decision | Status |
 |---|---|---|
 | [0055](0055-interfaccia-locale-unix-socket.md) | Default local Unix socket with NNTP priority; optional TCP later; first M16 integration brought forward | Accepted at the author's direction; implementation and qualification to be produced |
 | [0056](0056-sessione-locale-m16.md) | Proposed M16 contract: framing, handshake, correlation, budgets and local deadlines | Proposed; SPK-11 investigation |
+
+<a id="immagini-primarie-derivate-2026-10-28"></a>
 
 ## Derived primary images (2026-10-28)
 

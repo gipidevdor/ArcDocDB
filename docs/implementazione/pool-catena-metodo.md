@@ -1,46 +1,52 @@
-# Verifica della catena pool, dispatcher e Serie
+<a id="verifica-della-catena-pool-dispatcher-e-serie"></a>
 
-Metodo C4 preregistrato il 2026-10-15 sulla base
-`a34cede6fbc9215908d50aa85311d5d703660040`, prima di eseguire le nuove prove.
-REQ-THR-001, REQ-CON-001/002/004/005 e REQ-AFF-008; ADR-0031/0034/0045.
-I sorgenti di prodotto restano invariati. Si verificano insieme il
-[passo dispatcher](pool-step.md), l'[avvio](pool-begin.md) e il
-[bridge Serie](worker-serie.md), usando API pubbliche e thread reali.
+# Verification of the pool, dispatcher, and Serie chain
 
-## Scenari e oracoli
+C4 method preregistered on 2026-10-15 on base
+`a34cede6fbc9215908d50aa85311d5d703660040`, before running new tests.
+REQ-THR-001, REQ-CON-001/002/004/005, and REQ-AFF-008; ADR-0031/0034/0045.
+Product sources unchanged. Tests combine
+[dispatcher step](pool-step.md), [starting](pool-begin.md), and
+[Serie bridge](worker-serie.md), using public APIs and real threads.
 
-1. Due worker con contesti, porte, tabelle e link creati sui rispettivi thread,
-   registro di routing immutabile e ready condivisa. Il primo mantiene la lease
-   della Serie A; il secondo completa **32 quantum** della Serie B prima che il
-   coordinatore liberi A. Ripetere con A in ACTIVE/RUNNING e con debito BATCH.
-   L'oracolo verifica payload FIFO, token, count, stato e tutti i cinque valori
-   del dispatcher. B termina ed è joined prima della release di A.
-2. Ritiro del secondo worker mentre deve ricircolare A dopo il primo quantum.
-   Il coordinatore accoda B e richiede il ritiro tramite il registro pubblico.
-   Ready a tre partizioni, home 0 e 2, capacità 1 e 2: quattro scenari.
-   Full scambia A con B, completa B e applica il ritiro soltanto al successivo
-   ingresso IDLE. Room pubblica A, termina il passo e ritira senza nuova presa.
-   Il primo worker prende e completa il lavoro rimasto; ogni payload atteso
-   compare una volta sola, in ordine. Il registro converge a un worker attivo.
+<a id="scenari-e-oracoli"></a>
 
-Le barriere C4 fissano l'ordine degli eventi, non sostituiscono i trasferimenti
-del prodotto. Nessuna FI sui valori, sulle funzioni o sulle parole lifecycle.
-Le semafore e i join hanno timeout di 15 secondi; i cicli hanno cardinalità
-nota (2 modalità, 32 quantum, 4 scenari). Gli errori dei thread vengono
-propagati al test. Nel cleanup si liberano le barriere, si terminano e si
-uniscono i thread della fixture prima di chiudere i backend in memoria.
+## Scenarios and oracles
 
-## Verifica e limiti
+1. Two workers with contexts, ports, tables, and links created on respective threads,
+   immutable routing register and shared ready queue. First retains Serie A
+   lease; second completes **32 quanta** of Serie B before
+   coordinator releases A. Repeat with A in ACTIVE/RUNNING and with BATCH debt.
+   Oracle checks FIFO payload, token, count, state, and all five dispatcher
+   values. B ends and is joined before A release.
+2. Second worker retirement while it must recycle A after first quantum.
+   Coordinator queues B and requests retirement through public register.
+   Three-partition ready queue, homes 0 and 2, capacities 1 and 2: four scenarios.
+   Full swaps A with B, completes B, and applies retirement only at next
+   IDLE entry. Room publishes A, ends step, and retires without new claim.
+   First worker claims and completes remaining work; every expected payload
+   appears exactly once, in order. Register converges to one active worker.
 
-Compilazione stretta senza warning/style-warning, suite scheduler e suite
-completa tramite `make check`; registri originali conservati, anche in caso
-di fallimento. Rilettura C4 della fixture e dei suoi oracoli prima della
-qualifica finale. Nessun nuovo codice caldo: le misure di allocazione e
-copertura precedenti non vengono reinterpretate come misure di queste prove.
+C4 barriers fix event order, not replace product transfers.
+No FI on values, functions, or lifecycle words.
+Semaphores and joins have 15-second timeouts; loops have known
+cardinality (2 modes, 32 quanta, 4 scenarios). Thread errors
+propagate to test. Cleanup releases barriers, terminates and
+joins fixture threads before closing in-memory backends.
 
-Le pause artificiali con lease/debito appartengono solo alla fixture di test:
-non sono un compito di prodotto che attende. Il risultato prova la possibilità
-di avanzare su due Serie distinte in questi ordini sincronizzati, non lo speedup
-su due core, fairness generale, assenza universale di race o memoria debole.
-Payload simbolici/interi verificati e confermati dal caller: nessuna applicazione
-di PUT, commit durevole, I/O reale, park/wake o loop server viene qualificata.
+<a id="verifica-e-limiti"></a>
+
+## Verification and limits
+
+Strict compilation without warnings/style-warnings, scheduler suite and full
+suite through `make check`; original records preserved, including
+failures. C4 rereading of fixture and oracles before final
+qualification. No new hot code: earlier allocation and
+coverage measurements are not reinterpreted as measurements of these tests.
+
+Artificial pauses with lease/debt belong only to test fixture:
+they are not a product task waiting. Result proves possibility
+of progress on two distinct Serie in these synchronized orders, not speedup
+on two cores, general fairness, universal race absence, or weak memory.
+Symbolic/integer payloads checked and acknowledged by caller: no PUT
+application, durable commit, real I/O, park/wake, or server loop qualified.

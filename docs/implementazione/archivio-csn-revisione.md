@@ -1,156 +1,170 @@
-# Revisione statica del piano CSN di Archivio
+<a id="revisione-statica-del-piano-csn-di-archivio"></a>
+
+# Static review of the Archivio CSN plan
 
 2026-10-16; worktree `archivio-csn-verifica/ArcDocDB`.
-Due letture dello stesso revisore, distinto dall'autore dell'incremento:
-P1 dalle strutture alle fonti; P2 dagli output ai prerequisiti e ai marker.
-Non sono due revisori indipendenti. Primo lotto significativo salvato prima
-che fossero completate le deleghe; posizioni riferite ai sorgenti letti.
-Nessun test, compilazione, diagnostica, benchmark o scansione security eseguito;
-nessun risultato runtime altrui usato. Nessuna qualifica C1 inferita.
+Two readings by the same reviewer, who did not author the increment:
+P1 from structures to sources; P2 from outputs to prerequisites and markers.
+These are not two independent reviewers. The first substantive batch was saved before
+the delegated work was complete; locations refer to the sources read.
+No tests, compilation, diagnostics, benchmarks, or security scans were run;
+no other party's runtime results were used. No C1 qualification is inferred.
 
-Regole lette: CONTRIBUTING, guida al repository, principi di ingegneria,
-standard di codifica e registro deviazioni. Checklist C1: standard, righe 89–108.
-Perimetro: tutti i sei file di `src/recovery-archive-csn/`; marker in
+Rules read: CONTRIBUTING, repository guide, engineering principles,
+coding standard, and deviation register. C1 checklist: standard, lines 89–108.
+Scope: all six files in `src/recovery-archive-csn/`; markers in
 `src/recovery/decisions-types.lisp`, `src/recovery-active/types.lisp`/`build.lisp`;
-query fonte DECISION/ACTIVE/CLOSED, gate CLOSED, risoluzione e replay rilevanti.
-Contratti `docs/implementazione/csn-archivio-recovery.md`, `recovery-csn.md`;
-ADR-0020/0038/0041/0046. Letti requisiti e registrazione ASDF di prodotto;
-nomi e casi REQ-* dei test in lavorazione sono materiale statico, senza esito attestato.
+relevant DECISION/ACTIVE/CLOSED source queries, CLOSED gates, resolution, and replay.
+Contracts: `docs/implementazione/csn-archivio-recovery.md`, `recovery-csn.md`;
+ADR-0020/0038/0041/0046. Requirements and product ASDF registration were read;
+REQ-* names and cases in tests under development are static material, with no attested outcome.
 
-Copertura prevista dal coordinatore, non misurata: nove file, cioè i cinque
-`types/series/preflight/build/query` del modulo, `recovery/decisions-types.lisp`,
-`recovery-active/types.lisp`, `recovery-active/build.lisp` e, dopo la patch R1,
-`recovery/decisions-query.lisp` come nono esplicito. `package.lisp` è stato letto
-per import/export; gli altri delegati letti non estendono questo denominatore.
+Coverage planned by the coordinator, not measured: nine files, namely the module's five
+`types/series/preflight/build/query` files, `recovery/decisions-types.lisp`,
+`recovery-active/types.lisp`, `recovery-active/build.lisp` and, after the R1 patch,
+`recovery/decisions-query.lisp` as the explicit ninth file. `package.lisp` was read
+for imports/exports; other delegates read do not expand this denominator.
 
-## Rilievo per il coordinatore
+<a id="rilievo-per-il-coordinatore"></a>
 
-**R1 — COD-24 nella query fonte DECISION, delegata preesistente.**
-Osservazione originale prima della patch; l'addendum aggiorna lo stato.
+## Finding for the coordinator
+
+**R1 — COD-24 in the existing delegated DECISION source query.**
+Original observation before the patch; the addendum updates its status.
 `src/recovery/decisions-query.lisp:14`–`:22`, `massimo-csn-decisioni`,
-attraversa tutte le entry e calcola il massimo senza asserzioni esplicite
-su forma/consumo e senza chiamare verificatori. Il piano vi arriva attraverso
-`src/recovery-archive/query.lisp:13`–`:14` e il proprio `build.lisp:19`.
-Il replay canonico e i tipi sostengono la precondizione sui dati; non costituiscono
-le due asserzioni significative richieste da COD-24 per una funzione C1 non banale.
-`docs/affidabilita/deviazioni.md:18` non riporta deroghe approvate.
+visits all entries and computes the maximum without explicit assertions
+about shape/consumption and without calling validators. The plan reaches it through
+`src/recovery-archive/query.lisp:13`–`:14` and its own `build.lisp:19`.
+Canonical replay and types support the data precondition; they do not constitute
+the two meaningful assertions required by COD-24 for a nontrivial C1 function.
+`docs/affidabilita/deviazioni.md:18` lists no approved exceptions.
 
-> **Proposta** — durante il fold chiamare `check-entry-shape` sulle entry
-> (`src/recovery/decisions-types.lisp:36`, controlli count/partecipanti),
-> salvare la cardinalità iniziale e verificare il numero visitato prima del ritorno.
-> Soli contatori scalari, nessun contenitore; `invariant-violation` per consumo incoerente.
+> **Proposal** — during the fold, call `check-entry-shape` on entries
+> (`src/recovery/decisions-types.lisp:36`, count/participant checks),
+> save the initial cardinality, and check the number visited before returning.
+> Scalar counters only, no container; use `invariant-violation` for inconsistent consumption.
 
-R1 è uno scostamento di standard nel delegato: nessun massimo errato dimostrato
-per input canonici. Nei sei nuovi file e nel collegamento del marker non è stato
-individuato un controesempio di correttezza sotto le precondizioni dichiarate.
-Questa conclusione non attesta gestione FAULTED, test, copertura o qualifica.
+R1 is a standards deviation in the delegate: no incorrect maximum was demonstrated
+for canonical inputs. No correctness counterexample was identified in the six new files
+or the marker connection under the declared preconditions.
+This conclusion does not attest to FAULTED handling, tests, coverage, or qualification.
 
-## Passaggio 1 — checklist C1, strutture e fonti
+<a id="passaggio-1--checklist-c1-strutture-e-fonti"></a>
 
-«Aperto» indica evidenza non acquisita, non esito positivo.
+## Pass 1 — C1 checklist, structures and sources
 
-| # | Punto C1 | Evidenza statica / limite |
+“Open” means evidence has not been acquired, not a positive outcome.
+
+| # | C1 item | Static evidence / limitation |
 |---|---|---|
-| 1 | REQ e ADR | REQ-REC-001/002, MVC-006, TXM-005/007, AFF-008 annotati; base e recovery coerenti con ADR-0020/0038/0041/0046. |
-| 2 | Invarianti/test | INV-M5/T2/S7/A8/P6 pertinenti; nomi REQ-* visibili nei test; efficacia e completezza aperte. |
-| 3 | Errori | Condizioni tipizzate e propagazione senza handler; nessun piano parziale consegnato. Gestione al controller aperta. |
-| 4 | Cicli/attese | Cicli su viste, segmenti e DECISION budgetati; nessuna ricorsione o attesa introdotta. |
-| 5 | Allocazioni | Copia del vettore e hash table UUID all'apertura; boxing/GC/RSS non misurati. |
-| 6 | Dati verificati | Scope/UUID/Registri, EQ Archivio/vista/marker, gate CLOSED; fonti canoniche come prerequisito. |
-| 7 | Decisioni | ACR-D01…11 elencate nel contratto; MC/DC non dimostrata. |
-| 8 | Ownership | OWNER/SHARED dichiarati; vettore copiato, viste e fonti immutabili per protocollo. |
-| 9 | Tracciabilità/check | REQ e ordine ASDF letti; rigenerazione matrice e `make check` non eseguiti. |
-| 10 | Standard/deviazioni | Safety 3, ftype e slot tipizzati/readonly; R1 sul fold fonte preesistente, nessuna deroga registrata. |
-| 11 | Parallelismo | Aggregazione locale al bootstrap; nessun nuovo lock o aggiornamento CSN fra Serie. |
-| 12 | Durabilità | Nessun cambiamento durevole, rename, cancellazione o nuova atomicità nel piano. |
+| 1 | REQ and ADR | REQ-REC-001/002, MVC-006, TXM-005/007, AFF-008 annotated; base and recovery consistent with ADR-0020/0038/0041/0046. |
+| 2 | Invariants/tests | INV-M5/T2/S7/A8/P6 relevant; REQ-* names visible in tests; effectiveness and completeness open. |
+| 3 | Errors | Typed conditions and propagation without handlers; no partial plan delivered. Controller handling open. |
+| 4 | Loops/waits | Loops over views, segments, and DECISION are budgeted; no recursion or waiting introduced. |
+| 5 | Allocations | Vector copy and UUID hash table at opening; boxing/GC/RSS not measured. |
+| 6 | Validated data | Scope/UUID/Registri, EQ Archivio/view/marker, CLOSED gates; canonical sources are prerequisites. |
+| 7 | Decisions | ACR-D01…11 listed in the contract; MC/DC not demonstrated. |
+| 8 | Ownership | OWNER/SHARED declared; vector copied, views and sources immutable by protocol. |
+| 9 | Traceability/checks | REQ and ASDF ordering read; matrix regeneration and `make check` not run. |
+| 10 | Standards/deviations | Safety 3, ftype and typed/read-only slots; R1 in the existing source fold, no recorded exception. |
+| 11 | Parallelism | Local bootstrap aggregation; no new lock or CSN update across Serie. |
+| 12 | Durability | No durable change, rename, deletion, or new atomicity in the plan. |
 
-## Passaggio 2 — checklist C1, output e prerequisiti
+<a id="passaggio-2--checklist-c1-output-e-prerequisiti"></a>
 
-| # | Punto C1 | Evidenza statica / limite |
+## Pass 2 — C1 checklist, outputs and prerequisites
+
+| # | C1 item | Static evidence / limitation |
 |---|---|---|
-| 1 | REQ e ADR | Base M, prima assegnazione M+1 esterna; ADR-0046 mantiene rifiuto dell'esaurimento senza wrap. |
-| 2 | Invarianti/test | Rilette provenienza, duplicati e fonti del massimo; nessuna prova di violazione/test efficace eseguita. |
-| 3 | Errori | Budget è rifiuto esplicito; wrong owner/view/marker precedono il gate della rispettiva Serie; lifetime delegato. |
-| 4 | Cicli/attese | N+SUM(CLOSED) preflight prima dei gate; consumo ricontrollato; tetti esatti inclusivi, zero CLOSED ammesso. |
-| 5 | Allocazioni | Piano: Archivio e quattro scalari; marker senza entry/FD; nessuna fonte pesante trattenuta dal piano. Nessuna misura. |
-| 6 | Dati verificati | Marker dalla tabella realmente risolutiva anche su ACTIVE vuoto; completo set CLOSED per lo stesso CONTROL. |
-| 7 | Decisioni | Rilette AND di count, OR di budget e consumo AND (presenza OR zero); corrispondenza ACR-D01/02/04/05/10. |
-| 8 | Ownership | FD/vettori/file/namespace stabili per l'intero piano sono precondizioni, non una fotografia atomica prodotta dai gate. |
-| 9 | Tracciabilità/check | Nomi test REQ-* letti, sorgenti ancora in lavorazione; nessuna evidenza build/lint/trace/copertura/check prodotta. |
-| 10 | Standard/deviazioni | R1 confermato: la query con fold non ha asserzioni; tipi/replay non sostituiscono COD-24. |
-| 11 | Parallelismo | Nessun thread, callback, timer o I/O nuovo; registri runtime e GET non aggiornati. |
-| 12 | Durabilità | Esiti scalari derivati; obblighi di pubblicazione/recovery e ammissione restano al coordinatore. |
+| 1 | REQ and ADR | Base M, first assignment M+1 external; ADR-0046 retains rejection on exhaustion without wraparound. |
+| 2 | Invariants/tests | Provenance, duplicates, and maximum sources reread; no violation proof or effective test run. |
+| 3 | Errors | Budget causes explicit rejection; wrong owner/view/marker precede the respective Serie's gate; lifetime delegated. |
+| 4 | Loops/waits | N+SUM(CLOSED) preflight before gates; consumption rechecked; exact inclusive limits, zero CLOSED allowed. |
+| 5 | Allocations | Plan: Archivio and four scalars; marker has no entries/FDs; plan retains no heavy source. No measurements. |
+| 6 | Validated data | Marker from the actual resolving table, even with empty ACTIVE; complete CLOSED set for the same CONTROL. |
+| 7 | Decisions | Count AND, budget OR, and consumption AND (presence OR zero) reread; correspondence to ACR-D01/02/04/05/10. |
+| 8 | Ownership | Stable FDs/vectors/files/namespace throughout the plan are preconditions, not an atomic snapshot produced by gates. |
+| 9 | Traceability/checks | REQ-* test names read, sources still under development; no build/lint/trace/coverage/check evidence produced. |
+| 10 | Standards/deviations | R1 confirmed: the folding query lacks assertions; types/replay do not replace COD-24. |
+| 11 | Parallelism | No new thread, callback, timer, or I/O; runtime registers and GET not updated. |
+| 12 | Durability | Derived scalar results; publication/recovery and admission obligations remain with the coordinator. |
 
-## Evidenze e limiti dei controlli
+<a id="evidenze-e-limiti-dei-controlli"></a>
 
-- **Elenco Serie.** `series.lisp:40`–`:44` rifiuta vuoto e budget prima di
-  copia/hash table; `:13` ricontrolla count/range, `:18` scope EQ, `:22` UUID
-  distinti per contenuto, `:25`/`:26` presenza EQ di Registri, `:27` cardinalità.
-  La copia conserva ordine e isola il vettore del caller; le viste non sono copiate.
-  Completezza del catalogo e ruolo reale di Registri sono attestazioni del controller
-  (`csn-archivio-recovery.md:21`): una Serie omessa inizialmente non è rilevabile qui.
-- **Origine.** `src/recovery/decisions-types.lisp:8` definisce un marker senza
-  slot; `:32` ne crea uno per nuova tabella. `src/recovery-active/build.lisp:55`
-  risolve usando `decisions`, poi `:63` conserva proprio `%table-origin` di quella
-  tabella nello slot readonly di `types.lisp:31`, anche senza prepared.
-  `preflight.lisp:13` richiede Archivio EQ; `:38` vista EQ; `:41` marker EQ.
-  Replay distinti di byte uguali restano distinti. Il marker non attesta il catalogo
-  e non protegge da accessi Lisp agli interni privati: nessuna garanzia ulteriore assunta.
-- **Copertura e budget.** `preflight.lisp:17` confronta entrambi i count con N;
-  `:19` include N ACTIVE, `:23` controlla ogni CLOSED rispetto a tetto Serie e residuo
-  globale prima dell'addizione. Budget riferimenti `8*N` esclude hash/oggetti/GC.
-  `build.lisp:24` verifica origine prima del gate della Serie; `:26` usa
-  `massimo-csn-serie-recuperata`, che in `src/recovery-closed/csn-serie.lisp:17`
-  verifica CLOSED completi: stesso CONTROL EQ, ID unici, stato CLOSED e P esatto.
-  Il limite per Serie riguarda i CLOSED; quello globale include gli ACTIVE.
-- **Lifetime.** La query `src/recovery-archive/query.lisp:13` verifica il FD
-  decisioni; `build.lisp:31` lo ricontrolla dopo l'aggregazione. La query Serie
-  verifica ACTIVE prima/dopo e CONTROL; il gate verifica i FD CLOSED.
-  Sono osservazioni locali, senza pin atomico di tutti i FD: apertura e stabilità
-  di file, manifest, vettori e namespace per tutta la chiamata spettano al coordinatore.
-  I getter del piano descrivono il calcolo concluso e funzionano senza rileggere fonti.
-- **Massimo e output.** `build.lisp:19` include tutte le DECISION, anche senza
-  prepared locali; `:26`–`:29` unisce tutte le Serie e controlla consumo/assenza-zero.
-  I delegati includono stamp ordinari, SEAL writer, payload OUTCOME ed EDIT;
-  stamp prepared/TXID, frontiere e code escluse non contribuiscono.
-  Presenza è distinta dal valore zero; `query.lisp:33`–`:34` separa high/low u32
-  senza incremento o perdita dei bit alti, incluso massimo u64.
-  `types.lisp:21`–`:25` conserva Archivio e quattro scalari, senza set, ACTIVE,
-  CLOSED, tabella decisioni, scratch o FD; nessun risultato prima di tutti i gate.
-- **Bootstrap e ammissione.** Il piano non aggiorna l'ambito GET di bootstrap;
-  catalogo, indici/radici, pubblicazioni e multiserie pendenti restano da completare.
-  La creazione del registro riceve M (`src/csn/registry.lisp:76`–`:88`);
-  esaurimento verificato prima dell'incremento (`:117`). Due piani non autorizzano
-  due allocatori. Il massimo osservato non è l'orizzonte H né prova traffico ammissibile.
+## Evidence and limitations of checks
 
-## Sintassi e consegna
+- **Serie list.** `series.lisp:40`–`:44` rejects empty input and budget violations before
+  copying/creating the hash table; `:13` rechecks count/range, `:18` EQ scope, `:22` UUIDs
+  distinct by content, `:25`/`:26` EQ presence of Registri, `:27` cardinality.
+  The copy preserves order and isolates the caller's vector; views are not copied.
+  Catalog completeness and the actual role of Registri are controller attestations
+  (`csn-archivio-recovery.md:21`): a Serie omitted initially cannot be detected here.
+- **Origin.** `src/recovery/decisions-types.lisp:8` defines a marker with no
+  slots; `:32` creates one for each new table. `src/recovery-active/build.lisp:55`
+  resolves using `decisions`, then `:63` retains that table's actual `%table-origin`
+  in the read-only slot in `types.lisp:31`, even without prepared records.
+  `preflight.lisp:13` requires EQ Archivio; `:38` EQ view; `:41` EQ marker.
+  Separate replays of equal bytes remain distinct. The marker does not attest to the catalog
+  or protect against Lisp access to private internals: no further guarantee is assumed.
+- **Coverage and budgets.** `preflight.lisp:17` compares both counts with N;
+  `:19` includes N ACTIVE, `:23` checks each CLOSED against the Serie limit and remaining
+  global budget before addition. The `8*N` reference budget excludes hashes/objects/GC.
+  `build.lisp:24` checks origin before the Serie gate; `:26` uses
+  `massimo-csn-serie-recuperata`, which in `src/recovery-closed/csn-serie.lisp:17`
+  checks complete CLOSED coverage: same EQ CONTROL, unique IDs, CLOSED state, and exact P.
+  The per-Serie limit applies to CLOSED; the global limit includes ACTIVE.
+- **Lifetime.** The `src/recovery-archive/query.lisp:13` query checks the
+  decisions FD; `build.lisp:31` rechecks it after aggregation. The Serie query
+  checks ACTIVE before/after and CONTROL; the gate checks CLOSED FDs.
+  These are local observations, without atomic pinning of all FDs: opening and stability
+  of files, manifests, vectors, and namespace throughout the call are the coordinator's responsibility.
+  Plan getters describe the completed computation and work without rereading sources.
+- **Maximum and output.** `build.lisp:19` includes all DECISION records, even without
+  local prepared records; `:26`–`:29` combines all Serie and checks consumption/absence-zero.
+  Delegates include ordinary stamps, writer SEAL, OUTCOME payloads, and EDIT;
+  prepared/TXID stamps, frontiers, and excluded tails do not contribute.
+  Presence is distinct from zero; `query.lisp:33`–`:34` separates high/low u32
+  without incrementing or losing high bits, including maximum u64.
+  `types.lisp:21`–`:25` retains Archivio and four scalars, without sets, ACTIVE,
+  CLOSED, decisions table, scratch, or FDs; no result is delivered before all gates pass.
+- **Bootstrap and admission.** The plan does not update the bootstrap GET scope;
+  catalog, indexes/roots, publications, and pending multiseries work remain to be completed.
+  Register creation receives M (`src/csn/registry.lisp:76`–`:88`);
+  exhaustion is checked before increment (`:117`). Two plans do not authorize
+  two allocators. The observed maximum is neither horizon H nor proof that traffic can be admitted.
 
-Riletti manualmente package/import/export, firme ftype, costruttori e nuovo
-argomento `decision-origin`: l'unico punto di costruzione ACTIVE trovato nel
-prodotto passa il marker; l'ordine ASDF carica decisioni prima di ACTIVE e il piano
-dopo CLOSED. Nessun errore sintattico individuato mediante lettura; compilabilità
-non attestata. Non si riusano istanze con il layout precedente, come da contratto.
+<a id="sintassi-e-consegna"></a>
 
-R1 originale e proposta conservati; correzione del coordinatore riletta sotto.
-Nessuna correzione di prodotto applicata dal revisore. Origine distinta, FD chiusi,
-budget esatto, zero/bit alti/massimo u64 e base M restano da verificare dopo freeze.
-FAULTED al confine, MC/DC, regressione e misure rimangono senza attestazione.
+## Syntax and handoff
 
-## Addendum — seconda lettura della patch R1, 2026-10-16
+Package/import/export, ftype signatures, constructors, and the new
+`decision-origin` argument were manually reread: the only ACTIVE construction site found in
+the product passes the marker; ASDF ordering loads decisions before ACTIVE and the plan
+after CLOSED. No syntax error was identified by reading; compilability
+is not attested. Instances with the previous layout are not reused, as required by the contract.
 
-Riletto `src/recovery/decisions-query.lisp:14`–`:27` dopo la modifica.
-`:22` chiama `check-entry-shape` prima del massimo: vengono controllati count
-partecipanti >=2 e lunghezza ID16 esatta, con le ragioni preesistenti
-`:decision-entry-count` / `:decision-entry-size`. `:24` incrementa `used`.
-`:25`–`:27` verifica `(= used count) AND ((plusp count) OR (zerop maximum))`,
-segnala `:decision-csn-result` e restituisce presenza ricavata da count.
-Il consumo esatto lega la presenza all'attraversamento; sul vuoto il massimo
-deve essere zero, mentre CSN zero in una tabella non vuota resta presente.
-Sono controlli di forma e postcondizione significativi per COD-24. Nessun nuovo
-contenitore/I/O o secondo attraversamento; rimane O(N), senza misura di allocazioni.
-R1 affrontato rispetto al rilievo di standard; nessun bug numerico riprodotto
-o dimostrato su input canonici, nessun nuovo problema individuato nella patch.
-Per COD-54, registrare la decisione composta della query separatamente dal
-controllo del piano ACR-D10. FI specifiche in `guards.lisp` restano al coordinatore;
-nessun relativo esito assunto qui. Precondizione di fonti congelate conservata.
-Seconda lettura conclusa per il freeze; nessuna esecuzione, commit o qualifica C1.
+The original R1 and proposal are preserved; the coordinator's correction is reread below.
+The reviewer applied no product correction. Distinct origins, closed FDs,
+exact budget, zero/high bits/maximum u64, and base M still require verification after freeze.
+FAULTED at the boundary, MC/DC, regression, and measurements remain unattested.
+
+<a id="addendum--seconda-lettura-della-patch-r1-2026-10-16"></a>
+
+## Addendum — second reading of the R1 patch, 2026-10-16
+
+`src/recovery/decisions-query.lisp:14`–`:27` was reread after the change.
+`:22` calls `check-entry-shape` before taking the maximum: participant
+count >=2 and exact ID16 length are checked, with the existing reasons
+`:decision-entry-count` / `:decision-entry-size`. `:24` increments `used`.
+`:25`–`:27` checks `(= used count) AND ((plusp count) OR (zerop maximum))`,
+signals `:decision-csn-result`, and returns presence derived from count.
+Exact consumption ties presence to traversal; on empty input the maximum
+must be zero, while CSN zero in a nonempty table remains present.
+These are meaningful shape and postcondition checks for COD-24. No new
+container/I/O or second traversal; it remains O(N), without allocation measurements.
+R1 is addressed with respect to the standards finding; no numeric bug was reproduced
+or demonstrated on canonical inputs, and no new issue was identified in the patch.
+For COD-54, record the query's compound decision separately from
+the ACR-D10 plan check. Specific FI cases in `guards.lisp` remain the coordinator's responsibility;
+no related outcome is assumed here. The frozen-source precondition is retained.
+Second reading completed for freeze; no execution, commit, or C1 qualification.

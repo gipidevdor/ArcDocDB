@@ -1,30 +1,34 @@
-# Documentazione
+<a id="documentazione"></a>
+
+# Documentation
 
 [ArcDocDB](../README.md)
 
-Il percorso eseguibile è M1: un nucleo durevole per una Serie e un servizio su
-socket Unix locale. Il motore completo resta in sviluppo.
+The executable profile is M1: a durable core for one Serie and a local Unix-socket
+service. The complete engine remains under development.
 
-## Da dove iniziare
+<a id="da-dove-iniziare"></a>
+## Where to start
 
-| Per | Leggere |
+| To | Read |
 |---|---|
-| Provare il servizio | [Server e client M1](implementazione/production-unix-m1.md#ingressi-eseguibili) |
-| Capire che cosa è implementato | [Implementazione e limiti](implementazione/README.md) |
-| Capire il progetto | [Architettura](architettura.md) e [formati su disco](formati-su-disco.md) |
-| Valutare le garanzie | [Affidabilita'](affidabilita/README.md) e [tracciabilità](tracciabilita/README.md) |
-| Leggere decisioni e prove | [ADR](adr/README.md) e [valutazione](valutazione/README.md) |
-| Contribuire | [Guida ai contributi](../CONTRIBUTING.md) |
+| Try the service | [M1 server and client](implementazione/production-unix-m1.md#ingressi-eseguibili) |
+| See what is implemented | [Implementation and limits](implementazione/README.md) |
+| Understand the design | [Architecture](architettura.md) and [on-disk formats](formati-su-disco.md) |
+| Assess the guarantees | [Reliability](affidabilita/README.md) and [traceability](tracciabilita/README.md) |
+| Read decisions and evidence | [ADRs](adr/README.md) and [evaluation](valutazione/README.md) |
+| Contribute | [Contribution guide](../CONTRIBUTING.md) |
 
-## Riferimenti
+<a id="riferimenti"></a>
+## References
 
-[Specifica originale](specifica/specifica-originale.md) ·
-[Invarianti](invarianti.md) · [Limiti](limiti.md) · [Glossario](glossario.md) ·
+[Original specification](specifica/specifica-originale.md) ·
+[Invariants](invarianti.md) · [Limits](limiti.md) · [Glossary](glossario.md) ·
 [Roadmap](roadmap.md)
 
-L'[indice completo](riferimenti.md) raccoglie i documenti tematici, le convenzioni
-normative e la gerarchia delle fonti. L'[analisi progettuale](analisi-progettuale.md)
-conserva il ragionamento che lega le decisioni.
+The [complete index](riferimenti.md) lists the subject guides, normative conventions
+and source hierarchy. The [design analysis](analisi-progettuale.md) records the
+reasoning behind the decisions.
 
-Implementazione, progetto e risultati sperimentali hanno perimetri distinti:
-i loro limiti sono dichiarati nelle rispettive pagine.
+Implementation, design and experimental results have distinct scopes.
+Their limits are stated in the corresponding documents.

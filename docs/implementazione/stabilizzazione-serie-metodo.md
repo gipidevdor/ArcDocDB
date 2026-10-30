@@ -1,93 +1,102 @@
-# Stabilizzazione dell'insieme Serie — metodo
+<a id="stabilizzazione-dellinsieme-serie--metodo"></a>
 
-> **Proposta di API** — Metodo preregistrato il 2026-10-22 sulla base
-> `3b874756`, prima del codice e delle diagnostiche. Realizza il completamento
-> dei nomi vivi di ADR-0040 §2–3; nessun nuovo formato o punto di commit.
+# Serie set stabilization — method
 
-## Contratto previsto
+> **API proposal** — Method preregistered on 2026-10-22 against base
+> `3b874756`, before code and diagnostics. Implements live name completion
+> from ADR-0040 §2–3; no new format or commit point.
+
+<a id="contratto-previsto"></a>
+
+## Planned contract
 
 `recovery.series:stabilizza-nomi-serie-recuperata(directory, sources,
-active, closed, :max-segmenti 65536)` riceve il set posseduto aperto e i
-due risultati di `leggi-serie-recuperata`. CLOSED è un simple-vector
-completo ordinato per ID u64; ACTIVE può comparire in qualunque posizione
-del set delle fonti. Il controller mantiene catalogo, CONTROL, namespace,
-set, vettore e capacità esclusivi/stabili nel pool I/O, prima del checkpoint
-e dell'ammissione. Il gate Archivio resta obbligo del coordinatore.
+active, closed, :max-segmenti 65536)` receives the open owned set and the
+two results of `leggi-serie-recuperata`. CLOSED is a complete simple-vector
+ordered by u64 ID; ACTIVE may appear anywhere in the source set. The
+controller keeps catalog, CONTROL, namespace, set, vector, and capabilities
+exclusive/stable in the I/O pool, before checkpoint and admission. The
+Archivio gate remains the coordinator's obligation.
 
-Tre fasi, tutte limitate dal numero delle fonti:
+Three phases, all bounded by the source count:
 
-1. Verifica metadata completa: count/budget prima delle scansioni, ID
-   strettamente crescenti, unico ACTIVE, allineamento con ogni token CLOSED,
-   stesso CONTROL per EQ, stessi FD, EOF ACTIVE e P CLOSED canonici.
-2. Preflight I/O di tutti i nomi: modi/backend, nome/FD, esattamente una
-   forma presente; capacità esclusiva soltanto per un temporaneo. Nessuna
-   rinomina o fsync prima del completamento di questa scansione.
-3. Completamento in ordine ID con la primitiva per fonte esistente:
-   pubblicazione esclusiva se temporaneo, postcondizione e fsync parent
-   anche se già definitivo. Due conteggi escono solo al successo completo:
-   rinominati e già definitivi, con somma uguale al numero delle fonti.
+1. Complete metadata check: count/budget before scans, strictly increasing
+   IDs, unique ACTIVE, alignment with every CLOSED token, same CONTROL by
+   EQ, same FDs, canonical ACTIVE EOF and CLOSED P.
+2. I/O preflight of all names: modes/backend, name/FD, exactly one form
+   present; exclusive capability only for a temporary. No rename or fsync
+   before this scan completes.
+3. Completion in ID order with the existing per-source primitive:
+   exclusive publication if temporary, postcondition, and parent fsync
+   even when already final. Two counts return only on complete success:
+   renamed and already final, with their sum equal to the source count.
 
-L'ordine stretto degli ID del set, la cardinalità esatta del manifest e
-l'appartenenza di ogni riga dimostrano completezza senza un'altra tabella
-seen. Ogni CLOSED consumato deve avere lo stesso ID della riga: duplicati,
-permutazioni e omissioni non sono accettati. Zero e bit alti u64 restano
-validi per CLOSED; NIL indica ACTIVE non ancora incontrato, anche se la
-sua posizione finale è zero. Si riusano le guardie semantiche per fonte.
+Strict set ID order, exact manifest cardinality, and membership of every
+row prove completeness without another seen table. Every consumed CLOSED
+must have the same ID as the row: duplicates, permutations, and omissions
+are not accepted. Zero and high u64 bits remain valid for CLOSED; NIL
+indicates ACTIVE not yet encountered, even if its final position is zero.
+Per-source semantic guards are reused.
 
-Il budget `max-segmenti` è un `index`, zero ammesso; include ACTIVE. Il
-superamento produce `resource-exhausted` prima delle scansioni. Nessun
-array, hash o piano per fonte aggiunto: soltanto cursor/count e nomi privati
-brevi delle primitive esistenti. Le copie e la FFI possono allocare sul
-percorso freddo; non è un budget RSS o una promessa di zero heap.
+The `max-segmenti` budget is an `index`, zero allowed; it includes ACTIVE.
+Exceeding it produces `resource-exhausted` before scans. No per-source
+array, hash, or plan added: only cursor/count and short private names
+from existing primitives. Copies and FFI may allocate on the cold path;
+this is neither an RSS budget nor a zero-heap promise.
 
-## Preflight I/O condiviso
+<a id="preflight-io-condiviso"></a>
 
-`io:verifica-stabilizzazione-temporaneo` esegue il medesimo preflight della
-primitiva di completamento e restituisce T per temporaneo o NIL per
-definitivo. Un helper privato possiede le due foglie e il ramo selezionato;
-sia il preflight pubblico sia il completamento lo riusano. Il risultato
-non è una lease o una prenotazione: il completamento ricontrolla prima
-degli effetti. Nessun nuovo backend o ripiego meno restrittivo.
+## Shared I/O preflight
 
-## Guasti e proprietà
+`io:verifica-stabilizzazione-temporaneo` performs the same preflight as
+the completion primitive and returns T for temporary or NIL for final.
+A private helper owns both leaves and the selected branch; both public
+preflight and completion reuse it. The result is neither a lease nor a
+reservation: completion rechecks before effects. No new backend or less
+restrictive fallback.
 
-Un errore nell'ultima riga o nell'ultimo preflight dei nomi precede tutti
-gli effetti. Durante la terza fase ogni fonte completata resta completata:
-il gruppo non è una transazione atomica. Un guasto della primitiva I/O
-mantiene il suo fail-stop del parent e la causa originale; il gruppo non
-chiude, annulla, ritenta o nasconde errori e non restituisce conteggi parziali.
-L'interruzione fra due chiamate completate non implica I/O pendente.
-Riacquisizione dopo capacità guasta e nuova osservazione dei nomi restano
-quelle del completamento idempotente esistente. L'ammissione resta chiusa
-finché il coordinatore non completa l'intero recovery.
+<a id="guasti-e-proprietà"></a>
 
-Nessun lock, thread, registro o scrittura condivisa fra Serie. La sequenza
-interna appartiene a una sola Serie; Serie distinte mantengono capacità e
-workspace separati. Rimozioni, nuovo ACTIVE, checkpoint CONTROL, indici,
-frontiera CSN e traffico non sono completati da questa API.
+## Failures and ownership
 
-## Decisioni C1 da qualificare
+An error in the last row or last name preflight precedes all effects.
+During the third phase, each completed source remains completed: the group
+is not an atomic transaction. An I/O primitive failure preserves its parent
+fail-stop and original cause; the group does not close, undo, retry, or hide
+errors and returns no partial counts. Interruption between two completed
+calls does not imply pending I/O. Reacquisition after a faulted capability
+and new name observation remain those of existing idempotent completion.
+Admission stays closed until the coordinator completes all recovery.
 
-| ID | Confine |
+No lock, thread, registry, or shared write between Serie. The internal
+sequence belongs to only one Serie; distinct Serie keep separate capabilities
+and workspaces. Removals, new ACTIVE, CONTROL checkpoint, indexes, CSN
+frontier, and traffic are not completed by this API.
+
+<a id="decisioni-c1-da-qualificare"></a>
+
+## C1 decisions to qualify
+
+| ID | Boundary |
 |---|---|
-| SGS-D01 | Budget valido/count ammesso; count set = 1 + CLOSED e CLOSED = manifest |
-| SGS-D02 | ID set strettamente crescenti; primo zero, duplicato e regressione |
-| SGS-D03 | Unico ACTIVE; posizione zero valida, token/EOF/FD/manifest esatti |
-| SGS-D04 | CLOSED successivo disponibile e tipizzato; ID/P/FD esatti, stesso CONTROL EQ |
-| SGS-D05 | Consumo intero CLOSED e presenza ACTIVE; nessuna omissione o permutazione |
-| SGS-D06 | Tutti i preflight dei nomi precedono gli effetti, inclusa l'ultima fonte |
-| SGS-D07 | Primo/ultimo temporaneo o definitivo; backend esclusivo richiesto solo quando serve |
-| SGS-D08 | Conteggi completi e somma esatta, FD/CONTROL/parent ancora aperti |
-| SGS-D09 | Errore/interruzione durante completamento; effetti precedenti conservati, nessun output parziale |
+| SGS-D01 | Valid budget/admitted count; set count = 1 + CLOSED and CLOSED = manifest |
+| SGS-D02 | Strictly increasing set IDs; initial zero, duplicate, and regression |
+| SGS-D03 | Unique ACTIVE; valid position zero, exact token/EOF/FD/manifest |
+| SGS-D04 | Next CLOSED available and typed; exact ID/P/FD, same CONTROL EQ |
+| SGS-D05 | Entire CLOSED consumption and ACTIVE presence; no omission or permutation |
+| SGS-D06 | All name preflights precede effects, including last source |
+| SGS-D07 | First/last temporary or final; exclusive backend required only when needed |
+| SGS-D08 | Complete counts and exact sum, FD/CONTROL/parent still open |
+| SGS-D09 | Error/interruption during completion; previous effects retained, no partial output |
 
-Prima dei processi: codice committed, due letture dell'autore, revisione
-indipendente statica e agenti chiusi. Compilazione forzata del solo prodotto
-con avvisi fatali e cache privata gerarchica; lint, trace, link e lettura
-del compilato. Tutte le diagnostiche, inclusi fallimenti, passano dal
-recorder; copie lossless, collector comune con quattro worker e inventario
-chiuso verificato. Rapporti preparatori usano suffisso `.source` anche in
-staging; i conteggi dei preparatori usano liste già riordinate e stabili.
+Before processes: committed code, two author readings, independent static
+review, and agents closed. Forced product-only compilation with fatal warnings
+and private hierarchical cache; lint, trace, links, and compiled-code reading.
+All diagnostics, including failures, go through the recorder; lossless copies,
+common collector with four workers, and verified closed inventory. Preparatory
+reports use the `.source` suffix even in staging; preparer counts use already
+ordered and stable lists.
 
-Non si aggiungono o eseguono test funzionali, FI, copertura, mutazioni o
-benchmark. SGS-D01…D09, MC/DC, qualifica C1, guasti del filesystem e recovery
-completo restano aperti. Compilazione e revisione statica non li sostituiscono.
+No functional tests, FI, coverage, mutations, or benchmarks are added or run.
+SGS-D01…D09, MC/DC, C1 qualification, filesystem failures, and complete recovery
+remain open. Compilation and static review do not replace them.

@@ -1,46 +1,58 @@
-# ADR-0009 — Indici immutabili per i reader, atomic swap
+<a id="adr-0009--indici-immutabili-per-i-reader-atomic-swap"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («Index», «Secondary
-  index», «Secondary index delta», «Index snapshot»)
-- **Riferimenti:** [08 Indici](../08-indici.md), INV-I1, INV-I2
+# ADR-0009 — Immutable indexes for readers, atomic swap
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision (“Index,” “Secondary
+  index,” “Secondary index delta,” “Index snapshot”)
+- **References:** [08 Indexes](../08-indici.md), INV-I1, INV-I2
 
-Letture e scritture devono procedere senza bloccarsi a vicenda, e la compaction deve poter
-sostituire segmenti senza fermare i reader.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-- Primary index `_id → location` (segment-id, offset, length, version), in RAM, ottimizzato
-  per lookup O(1) medio; struttura compatta (valutare una Swiss Table), senza un oggetto Lisp
-  per entry.
-- Indici secondari specializzati per tipo di query: ART per stringhe/prefix, B+ tree o
-  equivalente per intervalli, posting lists per categorie, bitmap per bassa cardinalità.
-- Bloom filter per segmento solo come test di assenza, mai come localizzazione definitiva.
-- Indici secondari con modifiche frequenti: base + delta immutabili, fusione asincrona.
-- Gli indici sono immutabili per i reader: una nuova versione diventa visibile con un atomic
-  swap; i reader già attivi completano sulla versione precedente.
+Reads and writes must proceed without blocking each other, and compaction must be able
+ to replace segments without stopping readers.
 
-## Conseguenze
+<a id="decisione"></a>
 
-- I reader non prendono lock sugli indici.
-- Le versioni vecchie di un indice vanno trattenute finché hanno reader: stesso problema di
-  reclaim dei segmenti.
-- Il primary index deve stare in RAM: limite di capacità e tempo di riavvio.
-- Per il primary index, aggiornato a ogni scrittura, il modello «nuova versione + swap» non è
-  applicabile alla lettera: va definito il meccanismo equivalente.
+## Decision
 
-## Alternative considerate
+- Primary index `_id → location` (segment-id, offset, length, version), in RAM, optimized
+  for average O(1) lookup; compact structure (consider a Swiss Table), without one Lisp
+  object per entry.
+- Secondary indexes specialized by query type: ART for strings/prefixes, B+ tree or
+  equivalent for ranges, posting lists for categories, bitmaps for low cardinality.
+- Per-segment Bloom filter used only to test absence, never as a definitive location lookup.
+- Secondary indexes with frequent changes: immutable base + delta, asynchronous merge.
+- Indexes are immutable for readers: a new version becomes visible through an atomic
+  swap; readers already active finish on the previous version.
 
-- *Indici mutabili protetti da lock in lettura/scrittura:* semplici, ma i reader contendono
-  con il writer e con la compaction.
-- *Primary index su disco:* nessun limite di RAM, ma almeno una lettura in più per GET.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-- Rischi: RSK-02, RSK-07, RSK-13.
-- Verifica: SPK-01 (prototipo del primary index), SPK-07 (modello dello swap); FI-06, FI-10.
-- Aperto: QA-24 (meccanismo per il primary index), QA-03 (persistenza), QA-25 (indici
-  secondari), QA-16 (tracciamento dei reader).
+- Readers do not acquire locks on indexes.
+- Old index versions must be retained while they have readers: the same reclamation
+  problem as segments.
+- The primary index must fit in RAM: a capacity and restart-time limit.
+- For the primary index, updated on every write, the “new version + swap” model cannot
+  be applied literally: an equivalent mechanism must be defined.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Mutable indexes protected by read/write locks:* simple, but readers contend with
+  the writer and compaction.
+- *Primary index on disk:* no RAM limit, but at least one additional read per GET.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-02, RSK-07, RSK-13.
+- Verification: SPK-01 (primary-index prototype), SPK-07 (swap model); FI-06, FI-10.
+- Open: QA-24 (primary-index mechanism), QA-03 (persistence), QA-25 (secondary
+  indexes), QA-16 (reader tracking).

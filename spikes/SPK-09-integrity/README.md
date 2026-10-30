@@ -1,82 +1,79 @@
-# SPK-09 — costo dei controlli di integrità
+<a id="spk-09--costo-dei-controlli-di-integrità"></a>
 
-> **Proposta** — esperimento di Fase 0, confinato a questa directory. Il codice
-> non è un codec di produzione. L'autore ha autorizzato lo sviluppo degli spike
-> e confermato ADR-0028/0030; i documenti del repository sono aggiornati
-> in fase di integrazione. Le misure estese sono previste in serie.
+# SPK-09 — Integrity-check cost
 
-Questo codec sperimentale usa **formato v1**. Non verifica il formato v2 e i
-limiti estesi di [ADR-0048](../../docs/adr/0048-limiti-documentali-e-formato-v2.md).
+> **Proposed** — Phase-0 experiment confined to this directory. Code is not a production
+> codec. Author authorized spike development and confirmed ADR-0028/0030;
+> repository documents updated during integration. Extended measurements planned serially.
 
-## Domanda
+This experimental codec uses **v1 format**. It verifies neither v2 nor extended
+limits from [ADR-0048](../../docs/adr/0048-limiti-documentali-e-formato-v2.md).
 
-Quanto costano CRC32C e verifica di un record in Common Lisp/SBCL, con
-`safety 2` e `safety 3`? Quali allocazioni si osservano, inclusi boxing e
-interi che sul runtime utilizzato possono essere bignum?
+<a id="domanda"></a>
 
-> **Deciso (cornice unica → ADR-0039)** — intestazione di 24 byte,
-> little-endian, `header-crc` a 0, `body-crc` a 4, tipo a 8, flag a 9,
-> `key-len` a 10, riservato a 11, `value-len` a 12, `stamp` a 16.
-> Il CRC dell'intestazione copre i byte 4–23; quello del corpo copre
-> chiave e valore. Prima si verifica l'intestazione, poi si usano le lunghezze.
+## Question
 
-Riferimenti: [ADR-0039](../../docs/adr/0039-cornice-unica-dei-record.md),
+What do CRC32C and record verification cost in Common Lisp/SBCL with `safety 2`
+and `safety 3`? What allocations are observed, including boxing and integers
+that may be bignums on this runtime?
+
+> **Decided (single frame → ADR-0039)** — 24-byte little-endian header,
+> `header-crc` at 0, `body-crc` at 4, type at 8, flags at 9,
+> `key-len` at 10, reserved at 11, `value-len` at 12, `stamp` at 16.
+> Header CRC covers bytes 4–23; body CRC covers key and value.
+> Verify header before using lengths.
+
+References: [ADR-0039](../../docs/adr/0039-cornice-unica-dei-record.md),
 [ADR-0034](../../docs/adr/0034-policy-di-compilazione-e-standard-di-codifica.md),
 [ADR-0047](../../docs/adr/0047-verifica-csn-dei-record-prepared.md),
-[formati](../../docs/formati-su-disco.md), [limiti](../../docs/limiti.md),
-[piano SPK-09](../../docs/valutazione/piano-spike.md).
-Requisiti esistenti: REQ-FOR-001, REQ-FOR-003, REQ-FOR-004, REQ-AFF-002, REQ-AFF-003,
-REQ-BEN-001, REQ-BEN-002, REQ-SIM-002. Nessun requisito viene modificato.
+[formats](../../docs/formati-su-disco.md), [limits](../../docs/limiti.md),
+[SPK-09 plan](../../docs/valutazione/piano-spike.md).
+Existing requirements: REQ-FOR-001, REQ-FOR-003, REQ-FOR-004, REQ-AFF-002, REQ-AFF-003,
+REQ-BEN-001, REQ-BEN-002, REQ-SIM-002. No requirement modified.
 
-## Metodo
+<a id="metodo"></a>
 
-> **Proposta (esperimento di ottimizzazione, 2026-10-08)** — dopo la campagna
-> seriale iniziale si confronta lo stesso benchmark con verificatore e
-> accumulatore inline. Lo scopo è evitare il boxing del CSN nel passaggio tra
-> funzioni, mantenendo i tipi, `safety 2/3` e ogni controllo. Gli stessi check
-> devono passare; il risultato con CSN massimo resta misurato separatamente.
+## Method
 
-> **Proposta** — package `arcdocdb.spk09`, senza dipendenze. Riferimento CRC
-> bit a bit (Castagnoli riflesso `#x82f63b78`, iniziale e XOR finale
-> `#xffffffff`), tabella per byte e slicing-by-8. Due funzioni distinte per
-> ogni kernel ottimizzato, generate dalla stessa macro e compilate con
-> `(speed 3) (safety 2)` e `(speed 3) (safety 3)`. I controlli di tipo e array
-> restano attivi. La tabella è costruita al caricamento e poi solo letta.
+> **Proposed (optimization experiment, 2026-10-08)** — after initial serial campaign,
+> compare same benchmark with inline verifier and accumulator. Aim: avoid CSN boxing
+> between functions while retaining types, `safety 2/3`, and every check. Same checks
+> must pass; maximum-CSN result remains separately measured.
 
-`(check)` esegue verifiche deterministiche: vettori vuoto e `123456789`
-(`0` e `#xe3069283`), confronto col riferimento su lunghezze 0–256,
-allineamenti e intervalli pseudocasuali riproducibili, ulteriori taglie,
-record validi, bit alterati in ogni byte dell'intestazione e del corpo,
-troncamenti, limiti, campi malformati con CRC ricalcolati, chiave/CSN/flag
-errati. Il verificatore restituisce gli offset del valore solo dopo la
-verifica. Le corruzioni segnalano la condizione `record-invalid` con motivo.
+> **Proposed** — package `arcdocdb.spk09`, no dependencies. Bitwise CRC reference
+> (reflected Castagnoli `#x82f63b78`, initial/final XOR `#xffffffff`), byte table,
+> slicing-by-8. Two distinct functions per optimized kernel, generated by same macro
+> and compiled with `(speed 3) (safety 2)` and `(speed 3) (safety 3)`.
+> Type/array checks remain active. Table built at load, then read-only.
 
-Il parser `verify-record` verifica tipo PUT, lunghezza totale della entry,
-entrambi i CRC e chiave; per un record ordinario confronta `stamp` col CSN,
-per uno prepared controlla il flag corrispondente nella entry. Non risolve
-OUTCOME, manifest o commit. Per un prepared è soltanto parsing della cornice;
-la verifica del CSN richiede l'API aggiuntiva descritta sotto (ADR-0047).
+`(check)` runs deterministic checks: empty and `123456789` vectors (`0` and
+`#xe3069283`), reference comparison over lengths 0–256, alignments and reproducible
+pseudorandom ranges, additional sizes, valid records, altered bits in every header/body
+byte, truncation, limits, malformed fields with recomputed CRCs, incorrect key/CSN/flags.
+Verifier returns value offsets only after verification.
+Corruption signals `record-invalid` with reason.
 
-**Controesempio della regola originale ADR-0039:** il solo parser non confronta
-il TXID effettivo con un TXID atteso nella entry. Una location corrotta in RAM
-può quindi puntare a un altro record prepared, con stessa chiave e lunghezza,
-entrambi i CRC validi, ma TXID e CSN dell'esito diversi. Il solo confronto del
-flag prepared non lo rileva. La suite costruisce due fixture con TXID 101 e
-202, valori diversi ma stessa lunghezza, e mostra che entrambe sono accettate
-per la medesima entry prepared con CSN 17. Il risultato riporta esplicitamente
-`:format-limitations`; `:status :ok` significa conformità ai controlli
-implementati. ADR-0047 richiede la prova indipendente per restituire un prepared;
-gli offset restituiti dal parser non autorizzano quella restituzione.
+`verify-record` parser checks PUT type, total entry length, both CRCs, and key;
+for ordinary record compares `stamp` with CSN, for prepared checks matching entry flag.
+Does not resolve OUTCOME, manifest, or commit. For prepared records, this is frame
+parsing only; CSN verification requires additional API below (ADR-0047).
 
-> **Deciso (verifica prepared → ADR-0047)** —
-> `verify-prepared-record` aggiunge una prova indipendente: un record OUTCOME
-> della cornice ADR-0039, tipo 4, flag/chiave/riservato zero, valore di 8 byte
-> con il CSN, `stamp` con il TXID, lunghezza totale 32 byte. Entrambi i CRC
-> dell'OUTCOME devono verificare; il suo TXID deve coincidere con quello del
-> prepared e il suo CSN con quello della entry. La prova assente è rifiutata.
-> La funzione restituisce inizio/fine del valore, CSN risolto e TXID.
+**Counterexample to original ADR-0039 rule:** parser alone does not compare actual
+TXID with expected entry TXID. An in-memory corrupt location may point to another
+prepared record with same key/length, both CRCs valid, but different TXID and outcome
+CSN. Prepared-flag comparison alone cannot detect this. Suite builds two fixtures
+with TXIDs 101 and 202, different values but same length, and shows both accepted
+for the same prepared entry with CSN 17. Result explicitly reports `:format-limitations`;
+`:status :ok` means conformity to implemented checks. ADR-0047 requires independent
+proof before returning prepared data; parser-returned offsets do not authorize return.
 
-Esempio dell'API aggiuntiva, con intervalli indipendenti nei due buffer:
+> **Decided (prepared verification → ADR-0047)** — `verify-prepared-record` adds
+> independent proof: ADR-0039-framed OUTCOME record, type 4, zero flags/key/reserved,
+> 8-byte CSN value, TXID in `stamp`, total length 32 bytes. Both OUTCOME CRCs must
+> verify; its TXID must match prepared record and CSN must match entry.
+> Missing proof rejected. Function returns value start/end, resolved CSN, and TXID.
+
+Additional API example, with independent ranges in both buffers:
 
 ```lisp
 (arcdocdb.spk09:verify-prepared-record
@@ -84,69 +81,59 @@ Esempio dell'API aggiuntiva, con intervalli indipendenti nei due buffer:
  :outcome-start outcome-inizio :outcome-end outcome-fine)
 ```
 
-I test comprendono OUTCOME con CSN o TXID sbagliato, prova mancante,
-troncamenti, campi OUTCOME malformati con CRC ricalcolati e alterazione di
-ogni bit di ogni byte della prova. Una fixture valida mostra il confronto
-dei CSN a 64 bit. La verifica separata del prepared conserva la lacuna
-documentata sopra; la nuova funzione rifiuta il cambio di location delle
-fixture quando è fornito l'OUTCOME della entry originale, oppure quando
-è fornito un OUTCOME del diverso prepared con CSN diverso.
+Tests include OUTCOME with incorrect CSN/TXID, missing proof, truncation, malformed
+OUTCOME fields with recomputed CRCs, and every bit altered in every proof byte.
+Valid fixture demonstrates 64-bit CSN comparison. Separate prepared verification
+retains the gap documented above; new function rejects fixture location switching
+when supplied original entry's OUTCOME, or another prepared record's OUTCOME with
+different CSN.
 
-Il chiamante fornisce la prova da una fonte indipendente: qui si verifica
-il record OUTCOME, non l'appartenenza al segmento né il SEAL del suo lotto.
-Il resolver di produzione dovrà verificare anche provenienza, visibilità
-e prove del manifest; questa parte è futura. Nessun formato persistente
-viene aggiunto o modificato. Il benchmark delle letture ordinarie resta
-dedicato alla verifica ADR-0039 originale.
+Caller supplies proof from an independent source: verifies OUTCOME record here,
+not segment membership or batch SEAL. Production resolver must also verify provenance,
+visibility, and manifest proofs; future work. No persistent format added or changed.
+Ordinary-read benchmark remains dedicated to original ADR-0039 verification.
 
-`(benchmark &key ...)` include `check`, warmup e misure su CRC di 20,
-128, 2048 e 16384 byte; 20 byte rappresentano la porzione coperta dal
-CRC di intestazione, le altre taglie sono byte coperti dal CRC del corpo.
-Il confronto di lettura usa corpi delle stesse taglie, inclusa la chiave;
-la dimensione totale di ciascun record è quindi 24 byte maggiore.
-Entrambe le letture attraversano lo stesso valore e calcolano lo stesso
-accumulatore; il percorso verificato aggiunge i controlli di integrità.
-Sono misurati sia CSN fixnum sia `#xffffffffffffffff` per esporre l'eventuale
-costo degli interi a 64 bit. L'ultimo risultato e un accumulatore sono
-restituiti come sink, impedendo di scartare il lavoro.
+`(benchmark &key ...)` includes `check`, warmup, and CRC measurements over 20,
+128, 2048, 16384 bytes; 20 bytes represent header-CRC-covered portion, other sizes
+are body-CRC-covered bytes. Read comparison uses bodies of the same sizes, including
+key; total record size is therefore 24 bytes larger. Both reads traverse the same
+value and calculate the same accumulator; verified path adds integrity checks.
+Measures fixnum CSN and `#xffffffffffffffff` to expose possible 64-bit integer cost.
+Last result and an accumulator returned as sink, preventing discarded work.
 
-Sono riportati durata, numero di operazioni, ns/op, byte/s e bytes-consed
-(totali e per operazione) tramite `sb-ext:get-bytes-consed`. Le misure sono
-a lotto, non percentili. La durata è tempo wall da `get-internal-real-time`,
-non tempo CPU; `:elapsed-seconds` include check, setup e warmup dell'API,
-mentre `:seconds` di ogni misura copre il ciclo e le letture dei contatori.
-Setup, warmup e costruzione del risultato di ogni misura sono
-fuori dall'intervallo misurato. Nessuna GC viene forzata durante le misure;
-eventuali GC del runtime contribuiscono al tempo trascorso. Le allocazioni
-sono del processo: usare un processo dedicato per interpretarle.
-Il contatore di allocazione e la risoluzione del clock limitano le conclusioni:
-una finestra con bytes-consed pari a zero non prova assenza di allocazioni.
-I rapporti di costo della verifica e di safety 3 rispetto a safety 2 sono
-calcolati esclusivamente dalle misure della stessa esecuzione. Finestre
-troppo brevi e l'ordine fisso dei casi possono distorcere i rapporti.
+Reports duration, operation count, ns/op, bytes/s, and bytes-consed (total and per
+operation) through `sb-ext:get-bytes-consed`. Batched measurements, not percentiles.
+Duration is wall time from `get-internal-real-time`, not CPU;
+`:elapsed-seconds` includes API check, setup, and warmup, while each measurement's
+`:seconds` covers loop and counter reads. Setup, warmup, and result construction
+are outside each measurement interval. No forced GC during measurements; runtime
+GC contributes to elapsed time. Allocations are process-wide: use dedicated process
+to interpret them. Allocation counter and clock resolution limit conclusions:
+a zero-bytes-consed window does not prove absence of allocations.
+Verification-cost and safety-3-versus-safety-2 ratios are calculated only from
+same-run measurements. Short windows and fixed case order can distort ratios.
 
-## Ambiente e comandi
+<a id="ambiente-e-comandi"></a>
 
-> **Proposta** — usare SBCL senza inizializzazione utente. Il risultato
-> registra versione Lisp, sistema, macchina, tick del clock, caratteristiche
-> del runtime, taglie e budget. Alle misure pubblicate si aggiungono il modello
-> hardware preciso e le condizioni di carico.
+## Environment and commands
 
-Dal repository:
+> **Proposed** — use SBCL without user initialization. Result records Lisp version,
+> system, machine, clock ticks, runtime features, sizes, and budgets.
+> Published measurements add exact hardware model and load conditions.
+
+From repository:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-09-integrity/run.lisp --check
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-09-integrity/run.lisp --bench
 ```
 
-È possibile eseguire lo script da un'altra directory tramite un percorso
-assoluto. `run.lisp` trova `core.lisp` rispetto a `*load-truename*`, compila
-sempre in `out/core.fasl` e trasforma warning e style-warning in errori.
-Standard output contiene una sola s-expression plist leggibile; gli errori
-terminano l'esecuzione. Senza argomento viene eseguito `--bench`.
+Script may run from another directory via absolute path. `run.lisp` finds
+`core.lisp` relative to `*load-truename*`, always compiles to `out/core.fasl`,
+and converts warnings/style-warnings to errors. Stdout contains one readable
+s-expression plist; errors terminate execution. No arguments runs `--bench`.
 
-Per una diagnostica breve o per un budget personalizzato, si può
-caricare il core compilato e invocare l'API:
+For short diagnostics or custom budgets, load compiled core and call API:
 
 ```lisp
 (arcdocdb.spk09:check)
@@ -156,55 +143,56 @@ caricare il core compilato e invocare l'API:
                          :warmup-iterations 8)
 ```
 
-> **Proposta** — il default assegna 6 secondi complessivi alle finestre
-> di misura, oltre a compilazione, check e warmup; obiettivo di durata
-> complessiva circa 15 secondi, dipendente dall'ambiente, non una garanzia
-> temporale. Ogni finestra ha anche un tetto di operazioni. Parametri e
-> dataset sono limitati esplicitamente per mantenere gli array vivi ben
-> sotto 1 GiB; niente dataset grande, thread o I/O nel ciclo misurato.
+> **Proposed** — default allocates 6 seconds total to measurement windows, beyond
+> compilation, check, and warmup; approximate 15-second overall goal, environment-dependent,
+> not a timing guarantee. Every window also has an operation ceiling.
+> Parameters/datasets explicitly bounded to keep live arrays well below 1 GiB;
+> no large dataset, threads, or I/O in measured loop.
 
-## Limiti e risultato
+<a id="limiti-e-risultato"></a>
 
-Le misure estese sono state eseguite in serie, insieme al confronto con
-verificatore e accumulatore inline. [Risultati e dati grezzi](../../docs/valutazione/risultati-2026-10-08.md):
-il kernel verificato a `safety 3` con corpo da 2.048 byte e CSN massimo passa da
-circa 5.103 a 4.947 ns/op e da 31,864 B/op a zero byte osservati nella finestra.
-I controlli restano identici. Questo non dimostra zero allocazioni per il parser
-pubblico o per altri workload, né verifica il formato v2.
+## Limits and result
 
-Verifica eseguita il 2026-10-08: SBCL 2.6.9, ARM64, Apple M4, Darwin 27.0.0
-(dati restituiti dal runtime). `--check` passa con compilazione stretta e senza
-warning/style-warning. Verificato anche il comando assoluto da `/tmp`.
+Extended measurements ran serially, including inline verifier/accumulator comparison.
+[Results and raw data](../../docs/valutazione/risultati-2026-10-08.md):
+verified `safety 3` kernel with 2,048-byte body and maximum CSN goes from roughly
+5,103 to 4,947 ns/op and 31.864 B/op to zero observed bytes in window.
+Checks remain identical. This proves neither zero allocation for public parser or
+other workloads, nor v2 format.
 
-| Verifica deterministica | Casi osservati |
+Verification on 2026-10-08: SBCL 2.6.9, ARM64, Apple M4, Darwin 27.0.0
+(runtime-returned data). `--check` passes strict compilation without warnings/
+style-warnings. Absolute command also verified from `/tmp`.
+
+| Deterministic check | Observed cases |
 |---|---:|
-| Vettori golden | 2 |
-| Intervalli CRC / confronti di kernel | 4672 / 23370 |
-| PUT validi, per policy | 84 |
-| Bit alterati nell'header / corpo, per policy | 192 / 1200 |
-| Troncamenti PUT, per policy | 348 |
-| Malformazioni / confronti entry, per policy | 27 / 13 |
-| Limiti espliciti / controlli runtime | 26 / 7 |
-| Equivalenza del calcolo delle letture | 24 |
-| Controesempio del parser prepared | 4 fixture accettate come previsto |
-| Prove OUTCOME valide / bit alterati / troncamenti / rifiuti | 4 / 256 / 64 / 29 |
+| Golden vectors | 2 |
+| CRC ranges / kernel comparisons | 4672 / 23370 |
+| Valid PUTs, per policy | 84 |
+| Altered header / body bits, per policy | 192 / 1200 |
+| PUT truncations, per policy | 348 |
+| Malformations / entry comparisons, per policy | 27 / 13 |
+| Explicit limits / runtime checks | 26 / 7 |
+| Read-computation equivalence | 24 |
+| Prepared-parser counterexample | 4 fixtures accepted as expected |
+| Valid OUTCOME proofs / altered bits / truncations / rejections | 4 / 256 / 64 / 29 |
 
-Diagnostica dell'harness delle misure: API con `:seconds 0.2d0`, tutte le
-quattro taglie, warmup 2. Il report contiene 52 campioni ed è stato riletto
-con `*read-eval* nil`, verificando una sola s-expression e EOF. Sono state
-osservate allocazioni non nulle nelle letture con CSN a 64 bit; le finestre
-brevi non permettono di classificare prestazioni o assenza di allocazioni.
-Output locali in `out/check.sexp` e `out/diagnostic.sexp`, ignorati da git.
-Le misure estese in serie e la valutazione dei minimi rientrano nella campagna completa.
+Measurement-harness diagnostic: API with `:seconds 0.2d0`, all four sizes, warmup 2.
+Report has 52 samples and was reread with `*read-eval* nil`, checking one s-expression
+and EOF. Nonzero allocations observed in reads with 64-bit CSNs; short windows do
+not classify performance or absence of allocations. Local `out/check.sexp` and
+`out/diagnostic.sexp` outputs Git-ignored. Extended serial measurements and minimum
+performance evaluation belong to full campaign.
 
-CRC32C rileva le alterazioni verificate da questa suite; non esclude collisioni
-e non autentica dati ostili. Una corruzione con CRC ricalcolati è rifiutata
-solo se viola un controllo semantico o la entry attesa. La suite deterministica
-non prova l'assenza di tutti i difetti, né l'affidabilità di SBCL. Non vengono
-misurati I/O, recovery, scrubbing completo, concorrenza o throughput di un
-database. Non si deduce il raggiungimento dei minimi ADR-0028 da questo
-microbenchmark e non si rivendica allocazione nulla senza misura.
+CRC32C detects alterations tested here; it neither excludes collisions nor authenticates
+hostile data. Corruption with recomputed CRCs is rejected only if it violates a semantic
+check or expected entry. Deterministic suite proves neither absence of every defect nor
+SBCL reliability. Does not measure I/O, recovery, full scrubbing, concurrency, or database
+throughput. ADR-0028 minima are not inferred from this microbenchmark; zero allocation
+is not claimed without measurement.
 
-## Ambito del formato
+<a id="ambito-del-formato"></a>
 
-Questo esperimento esercita la cornice v1. Chiavi u16, documenti da 16 MiB e profondità 100 del formato v2 (ADR-0048) sono progettati, ancora da verificare.
+## Format scope
+
+This experiment exercises v1 frame. V2 u16 keys, 16 MiB documents, and depth 100 (ADR-0048) are designed, still to verify.

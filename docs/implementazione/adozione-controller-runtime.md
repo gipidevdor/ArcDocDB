@@ -1,137 +1,149 @@
-# Adozione dell'ACTIVE nel runtime
+<a id="adozione-dellactive-nel-runtime"></a>
 
-Metodo preregistrato prima dei run. Il [bootstrap Archivio](runtime-archivio.md)
-fornisce la famiglia CSN/snapshot/EBR. Questo incremento collega il nuovo
-ACTIVE preparato al controller reale e rende verificabile l'obbligo già
-dichiarato di un solo controller per log.
+# Adopting ACTIVE into runtime
 
-## Contratto e proprietà
+Method preregistered before runs. [Archivio bootstrap](runtime-archivio.md)
+supplies CSN/snapshot/EBR family. Increment connects new
+prepared ACTIVE to real controller, makes previously declared
+one-controller-per-log obligation verifiable.
 
-`crea-controllore-serie` conserva radice, offset e capacità configurabili.
-Prima della pubblicazione verifica budget, log segmento sano e ring
-preallocato. Un CAS passa lo slot privato del log da NIL al controller.
-Un secondo costruttore, anche con registro diverso, segnala
-`invalid-argument :serie-log-bound`. Non esiste reset. Nessuna lease o
-assegnazione CSN viene acquisita dalla factory. Errori precedenti al CAS
-non pubblicano il candidato; un concorrente può avere pubblicato il proprio.
+<a id="contratto-e-proprietà"></a>
 
-`trova-controllore-serie(log)` carica una volta, acquisisce e restituisce
-NIL o il riferimento canonico. Controlla tipo e legame inverso al medesimo
-log; slot estraneo o controller di altro log segnalano
-`invariant-violation :serie-log-binding`. Il getter non campiona salute,
-ring o lease. Recupera il binding anche dopo interruzione del ritorno;
-quest'ultima proprietà resta un argomento statico, senza hook nel prodotto.
+## Contract and ownership
 
-Un'invariante del binding impone apertura fallita, arresto di bootstrap e
-adozione, nessuna ammissione. Il coordinatore isola mediante riferimenti
-autorevoli: il getter non può mutare un controller estraneo conservato in
-uno slot corrotto. Prima del CAS le postverifiche e il ring rendono FAULTED
-il candidato privato mediante `%serie-invariant`, senza alterare il log o
-un vincitore concorrente. La conformità complessiva COD-24 resta aperta
-finché il confine generale di arresto non è realizzato e verificato;
-nessuna deroga viene dedotta dalle API recovery esistenti.
+`crea-controllore-serie` retains configurable root/offset/capacity.
+Before publication checks budgets, healthy segment log, preallocated
+ring. CAS moves log's private slot NIL → controller.
+Second constructor, even with different register, signals
+`invalid-argument :serie-log-bound`. No reset. No lease or
+CSN allocation acquired by factory. Pre-CAS errors do not
+publish candidate; concurrent attempt may publish its own.
 
-Il binding riguarda **l'oggetto log canonico**, non ogni wrapper/apertura
-possibile sullo stesso file. Esclusione fisica e unicità del wrapper restano
-del proprietario. La rotazione crea un nuovo log e controller; il vecchio
-resta vivo fino al ritiro dei borrower. Lo slot opaco `t` evita un ciclo
-ASDF WAL/Serie; un solo writer produttivo CAS, nessun accesso per documento,
-lotto o GET. Il riferimento inverso è gestito dal GC; nessuna chiusura
-automatica dei FD. Cambia un layout privato: ricompilare senza vecchie istanze.
+`trova-controllore-serie(log)` loads once, acquires, returns
+NIL/canonical reference. Checks type/reverse binding to same
+log; foreign slot or another log's controller signals
+`invariant-violation :serie-log-binding`. Getter samples neither health,
+ring, nor lease. Recovers binding even after interrupted return;
+latter remains static argument without product hook.
 
-## Adozione verificata
+Binding invariant requires failed opening, stopped bootstrap/
+adoption, no admission. Coordinator isolates through authoritative
+references: getter cannot mutate foreign controller held in
+corrupt slot. Before CAS, postchecks/ring make private
+candidate FAULTED through `%serie-invariant`, without changing log or
+concurrent winner. Overall COD-24 conformance remains open
+until general stop boundary implemented/verified;
+no exception inferred from existing recovery APIs.
 
-`runtime:adotta-controllore-active(runtime, prepared, :capacity 64)` richiede:
+Binding concerns **canonical log object**, not every possible
+wrapper/opening of same file. Physical exclusion/wrapper uniqueness
+remain owner responsibilities. Rotation creates new log/controller; old
+stays alive until borrowers retire. Opaque `t` slot avoids
+WAL/Serie ASDF cycle; one productive CAS writer, no per-document/
+batch/GET access. Reverse reference GC-managed; no automatic
+FD closes. Private layout changes: rebuild without old instances.
 
-- vista del prepared nello **stesso ambito EQ** del runtime; uno scope clone
-  che riusa lo stesso registro snapshot/CSN viene rifiutato;
-- log segmento sano, ID completo e versione uguali alla capacità GET,
-  origine writer;
-- prova di associazione delle due capacità esatte, readonly e append,
-  ancora aperte;
-- frontiere append scritto e durevole entrambe pari a 64.
+<a id="adozione-verificata"></a>
 
-Tutto precede il binding. La factory reale riceve il CSN del runtime,
-radice NIL e next-offset 64; restituisce un ring vuoto senza lease.
-Rifiuti scope/start sono `invalid-argument :runtime-active-scope/started`;
-identità incoerente è `invariant-violation :runtime-active-identity`.
-Budget, log e capacità propagano le condizioni canoniche. Nessun I/O,
-clock, registro CSN modificato o nuovo protocollo di lock.
+## Verified adoption
 
-Il prepared prova preparazione fisica; **non prova la decisione EDIT del
-catalogo**. Il caller completa quella decisione prima di inizializzare e
-pubblicare le fonti o usare il controller. Lease, sorgente GET preparata e
-root seguono le API esistenti. Il binding è pubblicazione volatile, senza
-un nuovo punto di atomicità durevole. Il Recovery Manager e il gate di
-ammissione restano aperti, come la raccolta posseduta delle vecchie fonti.
+`runtime:adotta-controllore-active(runtime, prepared, :capacity 64)` requires:
 
-## Decisioni e prove previste
+- prepared view in **same EQ scope** as runtime; scope clone
+  reusing same snapshot/CSN register rejected;
+- healthy segment log, full ID/version matching GET capability,
+  writer origin;
+- association proof of exact, still-open read-only/append
+  capabilities;
+- append written/durable frontiers both 64.
 
-| ID | Obbligo |
+All before binding. Real factory receives runtime CSN,
+NIL root, next-offset 64; returns empty ring without lease.
+Scope/start rejections `invalid-argument :runtime-active-scope/started`;
+inconsistent identity `invariant-violation :runtime-active-identity`.
+Budgets/log/capabilities propagate canonical conditions. No I/O,
+clock, changed CSN register, new lock protocol.
+
+Prepared result proves physical preparation; **does not prove catalog
+EDIT decision**. Caller completes decision before initializing/
+publishing sources or using controller. Lease, prepared GET source,
+root follow existing APIs. Binding volatile publication, without
+new durable atomicity point. Recovery Manager/admission
+gate open, as is owned collection of old sources.
+
+<a id="decisioni-e-prove-previste"></a>
+
+## Decisions and planned tests
+
+| ID | Obligation |
 |---|---|
-| RCA-D01 | Budget capacità/offset, log sano, prima di costruire/pubblicare |
-| RCA-D02 | Binding NIL oppure controller del log esatto; FI tipo e legame |
-| RCA-D03 | Primo binding, doppio avvio e CAS perdente; worker 2/4 con join limitati |
-| RCA-D04 | Ambito EQ, anche contro clone con stesso CSN; nessun binding al rifiuto |
-| RCA-D05 | ID AND versione AND origine coerenti; FI separate |
-| RCA-D06 | Associazione esatta e capacità aperte; frontiere written AND durable 64 |
-| RCA-D07 | Un solo CSN per writer/snapshot; primo nuovo lotto M+1, riporto u32 |
-| RCA-D08 | Root e GET coerenti dopo pubblicazione; file precedenti e registri di bootstrap intatti |
-| RCA-D09 | Candidato: registro EQ AND log EQ prima del CAS; entrambe le condizioni difensive |
-| RCA-D10 | Candidato: vettore slot EQ AND offset esatto prima del CAS; entrambe le condizioni difensive |
+| RCA-D01 | Capacity/offset budgets, healthy log before construction/publication |
+| RCA-D02 | NIL binding or exact-log controller; type/binding FI |
+| RCA-D03 | First binding, double startup, losing CAS; 2/4 workers with bounded joins |
+| RCA-D04 | EQ scope, including clone with same CSN; no binding on rejection |
+| RCA-D05 | Consistent ID AND version AND origin; separate FI |
+| RCA-D06 | Exact association/open capabilities; written AND durable frontiers 64 |
+| RCA-D07 | One CSN for writer/snapshot; first new batch M+1, u32 carry |
+| RCA-D08 | Consistent root/GET after publication; previous files/bootstrap registers intact |
+| RCA-D09 | Candidate: EQ register AND EQ log before CAS; both defensive conditions |
+| RCA-D10 | Candidate: EQ slot vector AND exact offset before CAS; both defensive conditions |
 
-Test generici del binding in `tests/series/log-binding.lisp`; integrazione
-runtime in `tests/runtime/adoption.lisp`. I positivi costruiscono piani e
-ACTIVE tramite API pubbliche, v1/v2 e FD nativi. FI seriali dichiarate,
-senza modificare primitive CL; nessuna ammissione inferita dal successo.
-La vecchia fixture del default viene costruita direttamente senza capacità
-esplicita: ricreare due controller sullo stesso log violerebbe il contratto.
+Generic binding tests `tests/series/log-binding.lisp`; runtime
+integration `tests/runtime/adoption.lisp`. Positives build plans/
+ACTIVE through public APIs, v1/v2/native FDs. Declared serial FI,
+without changing CL primitives; no admission inferred from success.
+Old default fixture built directly without explicit capacity:
+recreating two controllers on same log would violate contract.
 
-Agenti con write set disgiunti; chiusura prima dei run, revisione committed
-e sorgenti congelati. Ogni diagnostica o controllo usa il recorder, anche
-in caso di errore. Copertura `runtime-active`: tre file esatti (nuovo
-`runtime/active`, `series/types`, `wal/types`), contatori azzerati dopo load,
-suite runtime e Serie. Gli scope storici restano invariati. Il self-test
-verifica inclusioni/esclusioni e il ramo mancante. Denominatori grezzi e
-codice generato restano visibili; SBCL forme/rami non sono MC/DC.
+Agents with disjoint write sets; closed before runs, committed revision,
+frozen sources. Every diagnostic/check uses recorder even
+on error. `runtime-active` coverage: three exact files (new
+`runtime/active`, `series/types`, `wal/types`), counters reset after load,
+runtime/Serie suites. Historical scopes unchanged. Self-test
+checks inclusion/exclusion/missing branch. Raw denominators/generated
+code visible; SBCL forms/branches not MC/DC.
 
-Due letture statiche indipendenti dall'autore del modulo runtime sono
-registrate separatamente dalla rilettura del coordinatore. Raccolta con
-il collector comune, hash e controllo indipendente chiuso. Restano esclusi
-cache e ingressi dei casi negativi C4 ricostruibili; i loro risultati
-strutturati rimangono nei report originali. Nessun benchmark nuovo: nessun
-percorso caldo nuovo, costi del bootstrap/GC e piattaforma di riferimento
-non misurati. Qualifica C1/MC/DC e obblighi del motore restano aperti.
+Two static readings independent of runtime-module author
+recorded separately from coordinator rereading. Common collector
+collection, hashes, independent closed-inventory check. Excluded:
+reconstructible caches/C4 negative-case inputs; structured
+results remain in original reports. No new benchmark: no
+new hot path, bootstrap/GC costs/reference platform
+unmeasured. C1/MC/DC qualification, engine obligations open.
 
-## Revisione statica prima dei run
+<a id="revisione-statica-prima-dei-run"></a>
 
-Due letture di Hume, revisore distinto dagli autori; riletture degli autori
-e del coordinatore separate. Nessuna esecuzione o modifica del revisore.
+## Static review before runs
 
-| Lista C1 | Esito delle due letture |
+Two readings by Hume, reviewer distinct from authors; author/
+coordinator rereadings separate. Reviewer executed/modified nothing.
+
+| C1 checklist | Outcome of both readings |
 |---|---|
-| 1–3: requisiti, invarianti, errori | Contratti e ragioni tipizzate censiti; FI locali previste |
-| 4: limiti | Factory limitata dalla capacità; adozione senza cicli o attese |
-| 5: allocazioni | Costruzione a bootstrap; nessuna misura del costo GC o RSS |
-| 6: confini | Controlli prima del binding; dopo CAS riuscito solo ritorno |
-| 7: decisioni | RCA-D01…D10; postverifiche difensive nel denominatore |
-| 8: proprietà | Un CAS per log, nessun reset; oggetti estranei non mutati |
-| 9: tracciabilità | Rigenerazione e controllo completo previsti dopo il freeze |
-| 10: standard | COD-24 complessivo e qualifica C1 aperti; nessuna deroga dichiarata |
-| 11: parallelismo | Slot per log; nessuna coordinazione aggiunta tra Serie per operazione |
-| 12: durevolezza | Nessun nuovo punto durevole; decisione catalogo esterna esplicita |
+| 1–3: requirements, invariants, errors | Contracts/typed reasons inventoried; local FI planned |
+| 4: bounds | Factory capacity-bounded; adoption without loops/waits |
+| 5: allocations | Bootstrap construction; no GC/RSS-cost measurement |
+| 6: boundaries | Checks before binding; only return after successful CAS |
+| 7: decisions | RCA-D01…D10; defensive postchecks in denominator |
+| 8: ownership | One CAS per log, no reset; foreign objects not mutated |
+| 9: traceability | Regeneration/full check planned after freeze |
+| 10: standard | Overall COD-24/C1 qualification open; no declared exception |
+| 11: parallelism | Per-log slot; no added per-operation coordination between Serie |
+| 12: durability | No new durable point; explicit external catalog decision |
 
-Rilievi recepiti prima del freeze: censimento delle due postverifiche
-composte; `%serie-invariant` sul candidato privato con `ftype` anticipato;
-obbligo del coordinatore di fermare bootstrap/adozione davanti a un binding
-corrotto. Rilettura finale delle tre modifiche: nessun nuovo rilievo.
-I test del binding sono otto; quelli dell'adozione undici, con 26 casi
-parametrizzati dichiarati dall'autore. Questi conteggi sono inventario,
-non esiti dei run.
+Findings incorporated before freeze: inventory of both compound
+postchecks; `%serie-invariant` on private candidate with early `ftype`;
+coordinator obligation to stop bootstrap/adoption on corrupt
+binding. Final rereading of all three changes: no new finding.
+Binding tests eight; adoption eleven, with 26 parameterized cases
+declared by author. Counts inventory,
+not run outcomes.
 
-## Risultati
+<a id="risultati"></a>
 
-La [campagna del 2026-10-16](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-runtime-active/report.md)
-conserva 19 nuove prove, 147 test runtime/Serie, copertura grezza e controllo
-completo locale. Conserva anche i due fallimenti iniziali e le tre varianti;
-confine generale COD-24, ammissione e C1/MC/DC restano aperti.
+## Results
+
+[Campaign of 2026-10-16](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-runtime-active/report.md)
+preserves 19 new tests, 147 runtime/Serie tests, raw coverage, full
+local check. Also preserves two initial failures/three variants;
+general COD-24 boundary, admission, C1/MC/DC open.

@@ -1,128 +1,136 @@
-# Controllore locale dei worker di calcolo
+<a id="controllore-locale-dei-worker-di-calcolo"></a>
 
-Il componente `arcdocdb.scheduler` realizza una parte di REQ-THR-001:
-propone un numero di worker usando EWMA, AIMD e isteresi. È governo delle
-risorse di classe C3 secondo [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md),
-con limiti espliciti e tempo iniettato, REQ-AFF-008/013 e REQ-CON-005.
-[ADR-0011](../adr/0011-thread-pool-dinamico.md) consente di partire con pochi
-segnali; [il metodo preregistrato](controllore-pool-metodo.md),
-[la lettura del codice](controllore-pool-revisione.md) e
-[i risultati](controllore-pool-risultati.md) delimitano le prove.
+# Local compute worker controller
 
-Il [registro di attuazione logica](pool-worker-lifecycle.md) è il componente
-successivo: collega questa politica alle conferme dei worker preesistenti.
-Il controller da solo conserva il contratto e lo scope descritti qui.
+The `arcdocdb.scheduler` component implements part of REQ-THR-001:
+it proposes a worker count using EWMA, AIMD, and hysteresis. It is class C3
+resource control under [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md),
+with explicit limits and injected time, REQ-AFF-008/013, and REQ-CON-005.
+[ADR-0011](../adr/0011-thread-pool-dinamico.md) allows starting with few
+signals; [the preregistered method](controllore-pool-metodo.md),
+[code reading](controllore-pool-revisione.md), and
+[results](controllore-pool-risultati.md) bound the evidence.
 
-Il controllore appartiene al thread che lo crea. Il solo scheduler legge e
-aggiorna il suo stato; i getter rispettano lo stesso proprietario. Campioni,
-worker effettivi e tick provengono dal caller. Non si legge il clock del
-processo, non si raccoglie CPU o latenza e non si accede a writer, lista pronta,
-Serie o richieste. Questa amministrazione è fuori dal percorso delle richieste,
-come previsto dall'[elenco dello stato condiviso](../architettura.md#archivio-coordinamento-minimo).
+The [logical actuation registry](pool-worker-lifecycle.md) is the next
+component: it connects this policy to acknowledgments from existing workers.
+The controller alone retains the contract and scope described here.
 
-| API | Contratto |
+The controller belongs to the thread creating it. Only the scheduler reads and
+updates its state; getters respect the same owner. Samples,
+actual workers, and ticks come from the caller. It does not read the process
+clock, collect CPU or latency, or access writers, ready list,
+Serie, or requests. This administration is outside the request path,
+as required by the [shared-state list](../architettura.md#archivio-coordinamento-minimo).
+
+| API | Contract |
 |---|---|
-| `crea-controllore-pool cores &key minimum maximum initial period dwell queue-high` | Avvio sul thread proprietario; valida tutta la configurazione prima di costruire lo stato. Il target iniziale è nel budget. |
-| `aggiorna-controllore-pool c tick queue cpu p99 actual` | Owner corrente; valida tutti gli input prima della mutazione. Restituisce target e `:hold`, `:pending`, `:grow` o `:shrink`. Ogni chiamata termina senza attese. |
-| `leggi-controllore-pool c` | Owner corrente; restituisce sette valori: target, EWMA coda/CPU/P99 scalate, ultimo tick oppure NIL, candidato `:hold`/`:grow`/`:shrink`, origine della permanenza oppure NIL. Nessuna copia del controllore. |
+| `crea-controllore-pool cores &key minimum maximum initial period dwell queue-high` | Startup on owner thread; validates all configuration before constructing state. Initial target is within budget. |
+| `aggiorna-controllore-pool c tick queue cpu p99 actual` | Current owner; validates all inputs before mutation. Returns target and `:hold`, `:pending`, `:grow`, or `:shrink`. Every call completes without waiting. |
+| `leggi-controllore-pool c` | Current owner; returns seven values: target, scaled queue/CPU/P99 EWMAs, last tick or NIL, candidate `:hold`/`:grow`/`:shrink`, dwell origin or NIL. No controller copy. |
 
-## Domini e avvio
+<a id="domini-e-avvio"></a>
 
-`cores` è un intero da 1 a 65536; `1 ≤ minimum ≤ maximum ≤ 2×cores`.
-Il default di minimum è 1, quello di maximum è 2×cores, quello di initial è
-minimum. Initial deve appartenere a minimum..maximum. Il tetto è quello del
-pool di calcolo di [architettura](../architettura.md#thread-pool), non una
-raccomandazione di usare sempre il massimo e non un tetto del pool di I/O.
+## Domains and startup
 
-Period è da 1 a 2^20, default 500; dwell è da period a 2^20, default 2000;
-queue-high è da 1 a 2^20, default 8. Il caller assegna un'unità coerente ai tick,
-a period e a dwell. I default non fissano millisecondi né una calibrazione.
+`cores` is an integer from 1 to 65536; `1 ≤ minimum ≤ maximum ≤ 2×cores`.
+Minimum defaults to 1, maximum to 2×cores, initial to
+minimum. Initial must belong to minimum..maximum. The ceiling is that of the
+compute pool in [architecture](../architettura.md#thread-pool), not a
+recommendation always to use the maximum or an I/O pool ceiling.
 
-Un campione contiene tick da 0 a 2^40−1, queue da 0 a 2^20, CPU da 0 a 1000
-permille, P99 da 0 a 10000 permille del target di latenza e actual da minimum
-a maximum. Il pool è quindi già avviato con un numero confermato di worker:
-actual=0 è rifiutato. P99=1000 significa raggiungere il target di latenza.
-La scelta del target, i sensori e l'aggregazione delle metriche restano al
-caller; il componente non realizza REQ-OBS-001/002.
+Period is from 1 to 2^20, default 500; dwell from period to 2^20, default 2000;
+queue-high from 1 to 2^20, default 8. The caller assigns consistent units to ticks,
+period, and dwell. Defaults fix neither milliseconds nor calibration.
 
-Dopo il primo campione il tempo deve avanzare almeno di period. Tick
-duplicati, regressivi o troppo ravvicinati sono rifiutati senza cambiare
-sensori, candidato o target. Tick non fa wrap; raggiungere il suo massimo
-non autorizza a riutilizzare zero sullo stesso controllore.
+A sample contains tick from 0 to 2^40−1, queue from 0 to 2^20, CPU from 0 to 1000
+per mille, P99 from 0 to 10000 per mille of latency target, and actual from minimum
+to maximum. The pool is therefore already running with an acknowledged worker count:
+actual=0 is rejected. P99=1000 means reaching the latency target.
+Target selection, sensors, and metric aggregation remain with the
+caller; the component does not implement REQ-OBS-001/002.
 
-## EWMA e decisione
+After the first sample, time must advance by at least period. Duplicate,
+regressive, or overly close ticks are rejected without changing
+sensors, candidate, or target. Tick does not wrap; reaching its maximum
+does not authorize reusing zero on the same controller.
 
-I tre sensori hanno scala 256. Il primo campione inizializza `E=256×x`;
-i successivi aggiornano `E=floor((7×E+256×x)/8)`. Alpha è 1/8 per campione,
-con arrotondamento verso il basso. Il numero di bit degli interi resta
-limitato dal dominio, senza crescita di denominatori razionali. Un salto
-di tempo maggiore di 2×period inizializza di nuovo i sensori dal campione
-corrente e azzera la permanenza: un intervallo senza campioni non attesta
-carico stabile. La soglia di 2×period è inclusiva per continuare la EWMA.
+<a id="ewma-e-decisione"></a>
 
-La riduzione ha precedenza sulla crescita. Le soglie si applicano alle EWMA
-scalate, non ai soli input istantanei:
+## EWMA and decision
 
-| Candidato | Condizioni |
+All three sensors have scale 256. The first sample initializes `E=256×x`;
+subsequent samples update `E=floor((7×E+256×x)/8)`. Alpha is 1/8 per sample,
+rounded down. Integer bit count remains
+bounded by domain without growing rational denominators. A time
+gap greater than 2×period reinitializes sensors from the current
+sample and resets dwell: an interval without samples does not certify
+stable load. The 2×period threshold is inclusive for continuing EWMA.
+
+Shrinking takes precedence over growth. Thresholds apply to scaled
+EWMAs, not just instantaneous inputs:
+
+| Candidate | Conditions |
 |---|---|
-| `:shrink` | P99≥1200×256, oppure coda<256 e CPU≤300×256. |
-| `:grow` | Coda≥queue-high×256, CPU<700×256 e P99≤1000×256. |
-| `:hold` | Altri casi. |
+| `:shrink` | P99≥1200×256, or queue<256 and CPU≤300×256. |
+| `:grow` | Queue≥queue-high×256, CPU<700×256, and P99≤1000×256. |
+| `:hold` | Other cases. |
 
-Il primo campione con un candidato registra il tick di inizio. Cambiare
-direzione o tornare hold azzera la permanenza. La stessa direzione deve
-durare almeno dwell: alla soglia inclusiva la crescita è target+1, limitata
-a maximum; la riduzione è floor(3×target/4), limitata a minimum. Dopo un
-cambiamento serve una nuova permanenza per agire ancora. Una direzione che
-non può cambiare il target perché è già al limite restituisce hold e non
-crea un comando senza effetto.
+The first sample with a candidate records the start tick. Changing
+direction or returning to hold resets dwell. The same direction must
+persist for at least dwell: at the inclusive threshold, growth is target+1, bounded
+by maximum; shrinking is floor(3×target/4), bounded by minimum. After a
+change, a new dwell is needed before acting again. A direction that
+cannot change target because it is already at the limit returns hold and
+creates no ineffective command.
 
-Se actual è diverso dal target, i sensori si aggiornano ma l'esito è
-`:pending`: il target resta identico e la permanenza viene azzerata. Quando
-actual raggiunge target, il candidato riparte dal nuovo campione; il tempo
-passato pending non contribuisce all'isteresi. Il caller conferma soltanto
-worker effettivamente attivi, senza assumere che un target sia già applicato.
+If actual differs from target, sensors update but the outcome is
+`:pending`: target stays identical and dwell resets. When
+actual reaches target, the candidate restarts from the new sample; time
+spent pending does not contribute to hysteresis. The caller acknowledges only
+actually active workers, without assuming a target has already been applied.
 
-## Errori e confini
+<a id="errori-e-confini"></a>
 
-Owner estraneo, configurazione errata o campione fuori dominio producono
-`invalid-argument` con le ragioni seguenti:
+## Errors and boundaries
 
-| Controllo | Ragione |
+A foreign owner, wrong configuration, or out-of-domain sample produces
+`invalid-argument` with these reasons:
+
+| Check | Reason |
 |---|---|
-| Thread estraneo, in getter e aggiornamento | `:pool-owner` |
+| Foreign thread, in getter and update | `:pool-owner` |
 | Factory: cores, minimum, maximum, initial | `:pool-cores`, `:pool-minimum`, `:pool-maximum`, `:pool-initial` |
 | Factory: period, dwell, queue-high | `:pool-period`, `:pool-dwell`, `:pool-queue-threshold` |
-| Campione: tick, queue, CPU, P99, actual | `:pool-tick`, `:pool-queue`, `:pool-cpu`, `:pool-p99`, `:pool-actual` |
-| Tick duplicato, regressivo o troppo ravvicinato | `:pool-sample-period` |
+| Sample: tick, queue, CPU, P99, actual | `:pool-tick`, `:pool-queue`, `:pool-cpu`, `:pool-p99`, `:pool-actual` |
+| Duplicate, regressive, or overly close tick | `:pool-sample-period` |
 
-Input e proprietario sono verificati prima delle scritture; un rifiuto
-ordinario non applica un prefisso dell'aggiornamento. Il verificatore privato
-controlla target fra minimum e maximum e origine della permanenza non
-successiva all'ultimo tick; incoerenze producono `invariant-violation`
-`:pool-state`. I domini degli altri slot sono protetti dai tipi e dalla
-factory. Non è promessa la rilevazione di ogni modifica arbitraria della
-rappresentazione privata, né una riparazione o un rollback al guasto.
-Il componente non registra un FAULTED della Serie perché non possiede né
-accede a una Serie.
+Input and owner are checked before writes; an ordinary
+rejection applies no update prefix. The private verifier
+checks target between minimum and maximum and dwell origin no
+later than last tick; inconsistencies produce `invariant-violation`
+`:pool-state`. Other slot domains are protected by types and
+factory. Detection of every arbitrary private-representation modification
+is not promised, nor repair or rollback on failure.
+The component records no Serie FAULTED because it neither owns nor
+accesses a Serie.
 
-Una crescita pending non viene revocata se la latenza peggiora. Non c'è un
-timeout dell'attuatore nel controllore: pending può durare per un numero
-arbitrario di chiamate brevi. Il caller deve diagnosticare un target non
-applicato e governare errore o scadenza dell'attuatore. Revoca, precedenza dei
-comandi e rifiuto di comandi obsoleti richiedono il futuro protocollo del pool.
+Pending growth is not revoked if latency worsens. There is no
+actuator timeout in the controller: pending may last for an arbitrary
+number of short calls. The caller must diagnose an unapplied target
+and manage actuator failure or expiration. Revocation, command precedence,
+and stale-command rejection require the future pool protocol.
 
-Il calcolo normale è O(1), con strutture allocate soltanto dalla factory,
-senza thread nuovi, attese, lock, I/O, callback o scritture condivise per
-richiesta. Controllore e getter non creano, parcheggiano, risvegliano o
-ritirano worker. Un target è una proposta: non trasferisce obblighi, lease
-o batch e non cambia dati o stato di una Serie.
+Normal computation is O(1), with structures allocated only by the factory,
+without new threads, waits, locks, I/O, callbacks, or shared per-request
+writes. Controller and getter do not create, park, wake, or
+retire workers. A target is a proposal: it transfers no obligations, leases,
+or batches and changes no Serie data or state.
 
-Pool vivo, wake senza notifiche perse, admission, retirement, shutdown,
-coordinatore Archivio, pool di I/O, compaction, metriche reali e calibrazione
-rimangono da integrare. EMPTY/BUSY della lista pronta non sono una prova di
-quiescenza per dormire o arrestarsi; i [contesti worker](writer-worker.md)
-rimangono sul thread creatore e conservano gli obblighi ancora posseduti.
-Questa policy non promette equità, P99, throughput, scalabilità o stabilità
-del feedback reale. RSK-12 e i gate del motore restano aperti; gli stati
-globali dei requisiti restano `progettato`.
+Live pool, wake without lost notifications, admission, retirement, shutdown,
+Archivio coordinator, I/O pool, compaction, real metrics, and calibration
+remain to be integrated. Ready-list EMPTY/BUSY is not proof of
+quiescence for sleeping or stopping; [worker contexts](writer-worker.md)
+remain on the creating thread and retain obligations still owned.
+This policy promises neither fairness, P99, throughput, scalability, nor stability
+of real feedback. RSK-12 and engine gates remain open; global
+requirement states remain `progettato`.

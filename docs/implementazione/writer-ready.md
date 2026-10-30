@@ -1,74 +1,79 @@
-# Lista dei writer pronti
+<a id="lista-dei-writer-pronti"></a>
 
-`lista-writer-pronti` trasporta gli obblighi `:schedule` prodotti dalla
-[consegna locale](writer-handoff.md). È una lista preallocata a partizioni
-indipendenti, ciascuna con ring FIFO e guard a tentativo singolo. Una
-partizione contesa non impedisce di prendere un tratto da un'altra.
+# Ready writer list
 
-| API | Contratto |
+`lista-writer-pronti` transports `:schedule` obligations produced by
+[local handoff](writer-handoff.md). It is a preallocated list with independent
+partitions, each with a FIFO ring and single-attempt guard. A contended
+partition does not prevent acquiring a segment from another.
+
+| API | Contract |
 |---|---|
-| `crea-lista-writer-pronti :shards :capacity` | Da 1 a 64 partizioni, default 4; da 1 a 65536 slot per partizione, default 1024. Costruzione prima del percorso caldo. |
-| `pubblica-writer-pronto lista shard writer` | Pubblica una sola volta un obbligo già ottenuto, restituendo il nuovo count della partizione. Il writer resta un riferimento, senza lettura del suo stato. |
-| `preleva-writer-pronto lista start` | Cerca in ordine circolare al più K partizioni. Restituisce riferimento, stato e cursore successivo. Nessun retry interno o attesa. |
+| `crea-lista-writer-pronti :shards :capacity` | From 1 to 64 partitions, default 4; from 1 to 65536 slots per partition, default 1024. Construction before hot path. |
+| `pubblica-writer-pronto lista shard writer` | Publishes an already obtained obligation only once, returning the partition's new count. Writer remains a reference, without reading its state. |
+| `preleva-writer-pronto lista start` | Searches at most K partitions in circular order. Returns reference, status, and next cursor. No internal retry or wait. |
 
-Il cursore restituito segue la partizione servita se lo stato è `:writer`;
-segue start negli altri esiti. `:busy` indica che nessun writer è stato preso
-e almeno una partizione era contesa. `:empty` indica che le K osservazioni
-locali erano vuote. Non è una prova di quiescenza: una pubblicazione può
-avvenire dopo un'osservazione, anche prima che termini la scansione.
-FIFO vale dentro ciascuna partizione; non esiste un ordine globale tra
-partizioni o una garanzia di starvation temporale.
+The returned cursor follows the served partition if status is `:writer`;
+it follows start for other outcomes. `:busy` means no writer was acquired
+and at least one partition was contended. `:empty` means the K local
+observations were empty. It is not proof of quiescence: publication can
+occur after an observation, even before the scan ends. FIFO applies within
+each partition; there is no global order between partitions or bounded-time
+starvation guarantee.
 
-## Trasferimento dell'obbligo
+<a id="trasferimento-dellobbligo"></a>
 
-1. `accoda-lavoro-writer` da idle, oppure `termina-tratto-writer` con backlog,
-   restituisce `:schedule`: il chiamante possiede un obbligo.
-2. `pubblica-writer-pronto` riuscita lo trasferisce al ring. Full/busy lo
-   conservano al chiamante: si ritenta la pubblicazione, senza ripetere
-   l'accettazione del payload. Un successo non viene pubblicato di nuovo.
-3. Un prelievo `:writer` trasferisce l'obbligo al worker. Se l'avvio del writer
-   segnala busy, il worker conserva il riferimento fino al retry riuscito.
-   Not-ready segnala un compito non eleggibile o duplicato; non è un retry cieco.
-4. Il worker elabora il tratto e lo termina. Un nuovo `:schedule` viene
-   pubblicato, anche tramite il [ricircolo atomico](writer-recycle.md) se il
-   worker può prendere una nuova testa a ring pieno; `:idle` non richiede
-   alcuna pulizia dello stato scheduler.
+## Obligation transfer
 
-La partizione di una Serie è una scelta del chiamante, fissata prima del
-percorso caldo. Indice, struttura e capacità sono privati della lista; i
-buffer dei messaggi restano privati del consumatore. Il componente non
-aggiunge membership o flag `scheduled`: non può cancellare una nuova ondata
-con il cleanup del tratto precedente. Non verifica duplicati, obblighi
-abbandonati o l'eleggibilità del writer, che appartengono al contratto del
-chiamante. Non si mescolano le primitive basse con gli oggetti privati.
+1. `accoda-lavoro-writer` from idle, or `termina-tratto-writer` with backlog,
+   returns `:schedule`: the caller owns an obligation.
+2. Successful `pubblica-writer-pronto` transfers it to the ring. Full/busy
+   retain it with the caller: retry publication without repeating payload
+   acceptance. A success is not published again.
+3. A `:writer` extraction transfers the obligation to the worker. If writer
+   begin signals busy, the worker retains the reference until successful retry.
+   Not-ready signals an ineligible or duplicate task; it is not a blind retry.
+4. The worker processes the segment and terminates it. A new `:schedule`
+   is published, including through [atomic recycling](writer-recycle.md)
+   if the worker can acquire a new head at a full ring; `:idle` requires
+   no scheduler-state cleanup.
 
-## Rifiuti e limiti
+A Serie's partition is the caller's choice, fixed before the hot path.
+Index, structure, and capacity are private to the list; message buffers
+remain private to the consumer. The component adds no membership or
+`scheduled` flag: it cannot cancel a new wave through previous-segment
+cleanup. It does not check duplicates, abandoned obligations, or writer
+eligibility, which belong to the caller contract. Low-level primitives
+are not mixed with private objects.
 
-| Risposta | Gestione |
+<a id="rifiuti-e-limiti"></a>
+
+## Rejections and limits
+
+| Response | Handling |
 |---|---|
-| `invalid-argument`, `:ready-configuration` | Budget fuori dai limiti; nessuna lista pubblicata. |
-| `invalid-argument`, `:ready-target` / `:ready-writer` | Indice o riferimento invalido; nessuna pubblicazione. |
-| `resource-exhausted`, `:ready-queue-full` / `:ready-queue-busy` | Obbligo ancora del chiamante; rifiuto prima della mutazione. |
-| `invariant-violation`, `:ready-queue-invariant` / `:ready-queue-guard` | Fail-stop del proprietario; nessun rollback promesso dopo un guasto interno. |
+| `invalid-argument`, `:ready-configuration` | Budgets outside limits; no list published. |
+| `invalid-argument`, `:ready-target` / `:ready-writer` | Invalid index or reference; no publication. |
+| `resource-exhausted`, `:ready-queue-full` / `:ready-queue-busy` | Obligation still caller-owned; rejection before mutation. |
+| `invariant-violation`, `:ready-queue-invariant` / `:ready-queue-guard` | Owner fail-stop; no rollback promised after internal failure. |
 
-Pubblicazione O(1), ricerca O(K), spazio O(K·capacity), con limiti statici.
-Ogni candidata richiede un tentativo CAS di acquisizione e, se riuscito,
-un CAS di rilascio: al più K acquisizioni e 2K CAS totali per scansione.
-La guard rende seriale solo la breve operazione sul proprio ring; non è un
-algoritmo lock-free. La lista condivisa viene toccata per tratto, come
-[ADR-0045 §8](../adr/0045-modello-di-esecuzione.md), senza scritture comuni
-per messaggio. Non introduce thread, callback, I/O, risvegli o stato globale.
-Un protocollo di parcheggio deve coordinare nuova pubblicazione e risveglio:
-il solo esito `:empty` non basta. Pool adattivo, arresto e controller restano
-componenti da integrare, senza qualificazione del motore completo.
+Publication O(1), search O(K), space O(K·capacity), with static bounds.
+Each candidate requires one acquisition CAS attempt and, if successful,
+one release CAS: at most K acquisitions and 2K CAS operations total per scan.
+The guard serializes only the short operation on its ring; it is not a
+lock-free algorithm. The shared list is touched per segment, as in
+[ADR-0045 §8](../adr/0045-modello-di-esecuzione.md), without common writes
+per message. It introduces no threads, callbacks, I/O, wakeups, or global
+state. A parking protocol must coordinate new publication and wakeup:
+`:empty` alone is insufficient. Adaptive pool, shutdown, and controller
+remain components to integrate, without complete engine qualification.
 
-Il [metodo preregistrato](writer-ready-metodo.md), l'
-[inventario](writer-ready-decisioni.md) e i [risultati](writer-ready-risultati.md)
-delimitano le prove di correttezza, contesa e allocazione osservata.
+The [preregistered method](writer-ready-metodo.md),
+[inventory](writer-ready-decisioni.md), and [results](writer-ready-risultati.md)
+bound correctness tests, contention tests, and observed allocation.
 
-Il [ricircolo atomico](writer-recycle.md) integra il trasporto degli obblighi
-per un consumer capace di prendere un altro writer. A ring pieno inserisce
-il nuovo riferimento e restituisce la vecchia testa nella stessa sezione,
-con count invariato. La pubblicazione semplice conserva il proprio
-contratto full/busy; un pool che ne ritenta soltanto l'inserimento da tutti
-i consumer deve gestire il rischio di blocco per saturazione.
+[Atomic recycling](writer-recycle.md) integrates obligation transport for a
+consumer able to acquire another writer. At a full ring it inserts the new
+reference and returns the old head in the same section, with unchanged count.
+Simple publication preserves its full/busy contract; a pool where all consumers
+retry only insertion must handle the risk of saturation deadlock.

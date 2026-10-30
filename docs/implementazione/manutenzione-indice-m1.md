@@ -1,6 +1,8 @@
-# Manutenzione a soglie dell'indice M1
+<a id="manutenzione-a-soglie-dellindice-m1"></a>
 
-> **Deciso (integrazione incrementale autorizzata → ADR-0069)** — C1,
+# Threshold maintenance of the M1 index
+
+> **Decided (authorized incremental integration → ADR-0069)** — C1,
 > REQ-IDX-010, REQ-LIM-003, INV-I8, INV-I1, INV-A8, INV-P6.
 
 ```lisp
@@ -11,57 +13,59 @@
   :max-maintenance-payload 67108864 :max-pages 65536)
 ```
 
-Configurazione immutabile, soglia intera 1..100, default 75. Serve una vista
-paginata con delta attivo, owner READY e controller sano. La decisione e'
-vera se `count*100 >= key-limit*percent` oppure
-`used*100 >= arena-bytes*percent`. I prodotti, anche dagli slot u32, restano
-nei fixnum SBCL64. Nessuna divisione, arrotondamento o accesso ai file.
-Con quota tre e soglia 75, due chiavi non bastano: la terza la raggiunge.
-Soglia 100 richiede che almeno una delle due quote sia piena.
+Immutable configuration, integer threshold 1..100, default 75. Requires a paged
+view with active delta, READY owner, and healthy controller. Decision is
+true if `count*100 >= key-limit*percent` or
+`used*100 >= arena-bytes*percent`. Products, even from u32 slots, remain
+within SBCL64 fixnums. No division, rounding, or file access.
+With quota three and threshold 75, two keys are insufficient: the third reaches it.
+Threshold 100 requires at least one quota full.
 
-La sonda e' readonly sul percorso valido; controlla capienza dei contatori,
-byte almeno pari alle chiavi (chiavi non vuote) e coerenza dello stato vuoto.
-Contatori corrotti o delta senza vista causano FAULTED. Un modo senza delta
-produce INVALID-ARGUMENT senza effetti. Non si consulta una stima di memoria
-OS e non si prenota la prossima chiave: il normale preflight PUT/DELETE resta
-obbligatorio e puo' ancora rifiutare una chiave troppo grande.
+Probe is read-only on valid path; it checks counters within capacity,
+bytes at least equal to keys (nonempty keys), and consistent empty state.
+Corrupt counters or delta without view cause FAULTED. A mode without delta
+produces INVALID-ARGUMENT without effects. It consults no OS memory
+estimate or reserves the next key: normal PUT/DELETE preflight remains
+mandatory and may still reject an oversized key.
 
-La manutenzione restituisce `:mantieni` sotto soglia. Non controlla il
-namespace, non consuma il nome e non modifica immagine, FD, delta o CSN.
-Il candidato puo' essere riproposto fino al primo rinnovo riuscito. I domini
-di budget (0..512 MiB) e pagine (1..65536) sono validati anche nel no-op.
-Quando serve, il [rinnovo seriale](rinnovo-indice-m1.md) verifica nome nuovo
-e payload complessivo, costruisce dal canonico corrente e pubblica un delta
-vuoto con gli stessi limiti di chiavi e byte. Il candidato e' allora consumato:
-il rinnovo successivo richiede un altro nome fresco. `:rinnovato` non e' una
-conferma di scrittura documentale e non avanza CSN.
+Maintenance returns `:mantieni` below threshold. It neither checks
+namespace, consumes name, nor modifies image, FD, delta, or CSN.
+The candidate may be proposed again until the first successful renewal. Budget
+domain (0..512 MiB) and pages (1..65536) are validated even for no-op.
+When needed, [serial renewal](rinnovo-indice-m1.md) checks fresh name
+and total payload, builds from current canonical source, and publishes an empty
+delta with the same key/byte limits. Candidate is then consumed:
+next renewal requires another fresh name. `:rinnovato` is not a document-write
+acknowledgment and does not advance CSN.
 
-Nessun callback fra decisione e delega; la serialita' M1 esclude mutazioni
-concorrenti. Dopo admission del rinnovo valgono BUSY, verifica della fonte,
-close e FAULTED di ADR-0068. La policy non aggiunge nuovi cicli, attese,
-risorse I/O o scritture condivise fra Serie. Non implementa timer, retry,
-startup automatico o scelta automatica del backend; il controller decide
-quando chiamarla e quale nome/configurazione offrire.
+No callback between decision and delegation; M1 serialization excludes concurrent
+mutations. After renewal admission, ADR-0068 BUSY, source verification,
+close, and FAULTED apply. Policy adds no new loops, waits,
+I/O resources, or shared writes across Serie. It implements neither timer, retries,
+automatic startup, nor automatic backend selection; controller decides
+when to call it and which name/configuration to offer.
 
-## Decisioni e revisione C1
+<a id="decisioni-e-revisione-c1"></a>
 
-| Decisione composta | Prove |
+## C1 decisions and review
+
+| Compound decision | Tests |
 |---|---|
-| Soglia fixnum e 1..100 | 0, 101, NIL, float, razionale; 1, 75, 99, 100 validi |
-| Contatori entro limiti: chiavi <= quota e chiavi <= byte <= arena | ogni confronto falsificato separatamente; stato vuoto incoerente |
-| Soglia chiavi oppure soglia byte | casi indipendenti sui motori reali; uguaglianza e byte adiacenti, quote massime |
-| Dominio budget e dominio pagine | singoli limiti e non interi; validazione anche nel no-op |
+| Fixnum threshold and 1..100 | 0, 101, NIL, float, rational; valid 1, 75, 99, 100 |
+| Counters within limits: keys <= quota and keys <= bytes <= arena | every comparison falsified separately; inconsistent empty state |
+| Key threshold or byte threshold | independent cases on real engines; equality and adjacent bytes, maximum quotas |
+| Budget domain and page domain | individual limits and nonintegers; validation even for no-op |
 
-Le restanti scelte sono rami singoli: presenza delta/vista, necessita' di
-rinnovo e confine errori. Sei casi dedicati includono entrambi i formati,
-tre taglie pagina, quota totale esatta/insufficiente, nome occupato,
-reentrata/uscita non locale prima e dopo lo swap, wrong owner e due motori
-che condividono la stessa policy senza mutazioni reciproche.
+Other choices are single branches: delta/view presence, need for
+renewal, and error boundary. Six dedicated cases include both formats,
+three page sizes, exact/insufficient total quota, occupied name,
+reentry/nonlocal exit before and after swap, wrong owner, and two engines
+sharing the same policy without mutual mutation.
 
-Due letture C1: soglie, indipendenza dei due contatori e fonte canonica;
-poi dominio numerico, no-op, ownership/errori delegati e isolamento fra Serie.
-Le decisioni interne del rinnovo conservano la relativa tabella e le prove
-SIGKILL esistenti. [Evidenze e limiti](../../spikes/results/2026-10-30-engine-image-maintenance/report.md).
+Two C1 readings: thresholds, independence of both counters, and canonical source;
+then numeric domain, no-op, delegated ownership/errors, and cross-Serie isolation.
+Internal renewal decisions retain their table and existing SIGKILL
+tests. [Evidence and limits](../../spikes/results/2026-10-30-engine-image-maintenance/report.md).
 
-Il residente resta completo; nessuna qualifica di memoria RSS, throughput,
-writer paginato autonomo, catalogo durevole o scheduler concorrente.
+Resident index remains complete; no qualification of RSS memory, throughput,
+independent paged writer, durable catalog, or concurrent scheduler.

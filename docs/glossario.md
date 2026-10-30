@@ -1,178 +1,190 @@
-# Glossario
+<a id="glossario"></a>
 
-## Convenzione linguistica
+# Glossary
 
-- I **termini di dominio** introdotti dalla specifica restano in italiano, anche nel codice:
+<a id="convenzione-linguistica"></a>
+## Language convention
+
+- Documentation is written in **American English**. Established **domain names** retain
+  their Italian spelling for continuity with the specification and code:
   `archivio`, `serie`, `documento`, `registri`, `multiserie`.
-- «Serie» è invariabile (una Serie, più Serie). Nel codice: `serie` al singolare e al plurale;
-  dove serve distinguere, usare un nome di collezione esplicito (es. `serie-table`).
-- I **termini tecnici consolidati** restano in inglese: WAL, segment, snapshot, commit, flush,
+- **Serie** is invariant: one Serie, several Serie. Code uses `serie` for both
+  singular and plural; use an explicit collection name such as `serie-table` when needed.
+- Established technical terms use English: WAL, segment, snapshot, commit, flush,
   group commit, compaction, reclaim, swap, writer, reader, worker.
-- I nomi di stato e di operazione della specifica si scrivono in maiuscolo: `ACTIVE`, `CLOSED`,
+- Specification state and operation names use uppercase: `ACTIVE`, `CLOSED`,
   `OBSOLETE`, `RECLAIMABLE`, `DELETED`; `LIVE`, `SNAPSHOT-LIVE`, `DEAD`; CLEAN, MERGE.
 
-## Modello logico
+<a id="modello-logico"></a>
+## Logical model
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Server** | Processo principale: connessioni, scheduler globale, thread pool, gestione degli Archivi. |
-| **Archivio** | Contenitore logico di più Serie; livello a cui si richiedono transazioni e snapshot multiserie. |
-| **Serie** | Namespace di documenti; unità primaria di storage e di parallelismo. Possiede WAL, segmenti e indici propri. |
-| **Documento** | Unità logica di dati, identificata da `_id` univoco nella Serie. |
-| **`_id`** | Identificatore del documento, univoco all'interno della Serie. |
-| **Registri** | Serie speciale obbligatoria di ogni Archivio: catalogo e `multiserie.log`. Non è il WAL dei dati. |
-| **Catalogo** | Metadatabase delle Serie, in `Registri/catalog/`. |
-| **Contratto** | Ciò che una Serie definisce sui propri documenti: schema, validazione, indici, configurazione storage. |
+| **Server** | Main process: connections, global scheduler, thread pool and Archivio management. |
+| **Archivio** | Logical container for several Serie; the level at which multiseries transactions and snapshots are requested. |
+| **Serie** | Document namespace; primary unit of storage and parallelism. Owns its WAL, segments and indexes. |
+| **Documento** | Logical data unit, identified by an `_id` unique within its Serie. |
+| **`_id`** | Document identifier, unique within the Serie. |
+| **Registri** | Required special Serie in every Archivio: catalog and `multiserie.log`. It is not the data WAL. |
+| **Catalog** | Serie metadata database, stored under `Registri/catalog/`. |
+| **Contract** | What a Serie defines for its documents: schema, validation, indexes and storage configuration. |
 
 ## Storage
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Append-only** | I record scritti non si modificano; ogni modifica è un nuovo record. |
-| **Segmento** | File di record di una Serie. Target ~256 MB se creato dal writer. |
-| **ACTIVE** | L'unico segmento scrivibile di una Serie. |
-| **CLOSED** | Segmento immutabile, in uso. |
-| **OBSOLETE** | Segmento sostituito dalla compaction, ancora leggibile da reader/snapshot già attivi. |
-| **RECLAIMABLE** | Segmento che nessuno usa più, eliminabile. |
-| **DELETED** | Segmento eliminato. |
-| **Segment metadata** | Contatori e tempi di un segmento; dati derivati, ricostruibili. |
-| **Tombstone** | Record che marca l'eliminazione di un documento. |
-| **Location** | Posizione di una versione: segment-id, offset, length, version. La versione è il CSN (ADR-0038). |
-| **LIVE** | Versione raggiungibile dall'indice corrente. |
-| **SNAPSHOT-LIVE** | Versione non più corrente ma necessaria a uno snapshot attivo. |
-| **DEAD** | Versione non raggiungibile né dall'indice corrente né da snapshot attivi. |
-| **Manifest** | Registrazione autorevole dell'insieme dei segmenti di una Serie: è il control log (ADR-0018, ADR-0040). |
+| **Append-only** | Written records are not modified; every change is a new record. |
+| **Segment** | File containing a Serie's records. Target size is about 256 MB when created by the writer. |
+| **ACTIVE** | The only writable segment of a Serie. |
+| **CLOSED** | Immutable segment in use. |
+| **OBSOLETE** | Segment replaced by compaction, still readable by readers and snapshots that were already active. |
+| **RECLAIMABLE** | Segment no longer used by anyone and eligible for deletion. |
+| **DELETED** | Deleted segment. |
+| **Segment metadata** | Segment counters and times; derived, reconstructible data. |
+| **Tombstone** | Record marking a document deletion. |
+| **Location** | Position of a version: segment-id, offset, length, version. The version is its CSN (ADR-0038). |
+| **LIVE** | Version reachable from the current index. |
+| **SNAPSHOT-LIVE** | Version no longer current but required by an active snapshot. |
+| **DEAD** | Version unreachable from both the current index and active snapshots. |
+| **Manifest** | Authoritative record of a Serie's segment set: its control log (ADR-0018, ADR-0040). |
 
 ## Compaction
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Compaction** | Termine generico per CLEAN e MERGE. |
-| **CLEAN** | 1 segmento → 1 nuovo segmento con i soli record necessari. Recupera spazio morto. |
-| **MERGE** | N segmenti piccoli → 1 nuovo segmento. Riduce la frammentazione. Opportunistico. |
-| **Copy-on-write** | Il risultato è un nuovo file; i sorgenti non vengono toccati. |
-| **Atomic swap** | Passaggio atomico dei reader dalla vecchia alla nuova versione di indice/segmento. |
-| **Reclaim** | Eliminazione di un segmento non più referenziato. |
-| **Stabilità** | Tempo trascorso dalla chiusura/stabilizzazione di un segmento; ≥ 50 s per il MERGE. |
-| **Basso carico** | Condizione del motore, valutata dal Compaction Scheduler, necessaria per avviare un MERGE. |
+| **Compaction** | General term covering CLEAN and MERGE. |
+| **CLEAN** | One source segment → one new segment containing only required records. Reclaims dead space. |
+| **MERGE** | N small segments → one new segment. Reduces fragmentation. Opportunistic. |
+| **Copy-on-write** | The result is a new file; source files are untouched. |
+| **Atomic swap** | Atomic transition of readers from the old index or segment version to the new one. |
+| **Reclaim** | Deletion of a segment that is no longer referenced. |
+| **Stability** | Time since a segment was closed or stabilized; at least 50 s for MERGE. |
+| **Low load** | Engine condition assessed by the Compaction Scheduler and required to start a MERGE. |
 
-## Log e transazioni
+<a id="log-e-transazioni"></a>
+## Logs and transactions
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **WAL** | Write-ahead log; uno per Serie. |
-| **Group commit** | Più transazioni condividono una singola operazione di flush. |
-| **Durability** | Garanzia che ciò che è confermato sopravviva a un crash; a più livelli (QA-05). |
-| **`multiserie.log`** | Transaction decision log dell'Archivio: decisioni COMMIT/ABORT delle transazioni multiserie. Non contiene dati. |
-| **Transazione single-Series** | Modifica documenti di una sola Serie; usa solo il WAL della Serie. |
-| **Transazione multiserie** | Modifica documenti di più Serie; protocollo 2PC-like. |
-| **TXID** | Identificatore di transazione; unico per tutte le modifiche di una transazione multiserie. |
-| **PREPARE** | Prima fase del 2PC: il partecipante registra in modo durevole di poter eseguire il commit. |
-| **Punto di commit** | Momento in cui la decisione COMMIT è durevole in `multiserie.log`. |
-| **Optimistic version checking (OCC)** | Al commit si verifica che la versione letta sia ancora quella corrente; altrimenti conflitto. |
-| **Expected-version** | La versione che la transazione si aspetta di trovare al commit: un CSN; zero = il documento non deve esistere (ADR-0038). |
+| **WAL** | Write-ahead log; one per Serie. |
+| **Group commit** | Several transactions share one flush operation. |
+| **Durability** | Guarantee that acknowledged data survives a crash; available at multiple levels (QA-05). |
+| **`multiserie.log`** | Archivio transaction decision log: COMMIT/ABORT decisions for multiseries transactions. Contains no document data. |
+| **Single-Serie transaction** | Changes documents in one Serie and uses only that Serie's WAL. |
+| **Multiseries transaction** | Changes documents in several Serie using a 2PC-like protocol. |
+| **TXID** | Transaction identifier, shared by all changes of one multiseries transaction. |
+| **PREPARE** | First 2PC phase: a participant durably records its ability to commit. |
+| **Commit point** | Point at which the COMMIT decision is durable in `multiserie.log`. |
+| **Optimistic version checking (OCC)** | At commit, verify that the version read is still current; otherwise report a conflict. |
+| **Expected-version** | Version expected by the transaction at commit: a CSN; zero means the document must not exist (ADR-0038). |
 
-## Concorrenza
+<a id="concorrenza"></a>
+## Concurrency
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Writer logico** | L'unico flusso di esecuzione che muta una Serie in un dato momento; non è un thread dedicato. |
-| **Reader** | Operazione di lettura in corso; può essere concorrente a writer e compaction. |
-| **Worker** | Thread del pool dinamico. |
-| **Snapshot** | Vista logica consistente a un punto/versione; non è una copia fisica. |
-| **MVCC** | Multi-version concurrency control: i reader vedono versioni, non lock. |
-| **EWMA / AIMD / isteresi** | Media mobile esponenziale / crescita additiva e riduzione moltiplicativa / soglie distinte in salita e discesa: gli strumenti del controllo dinamico. |
-| **Scan pollution** | Degrado della cache causato da scansioni che espellono dati frequentemente usati. |
+| **Logical writer** | The only execution flow mutating a Serie at a given time; it is not a dedicated thread. |
+| **Reader** | An ongoing read operation; it may run concurrently with a writer and compaction. |
+| **Worker** | Thread in the dynamic pool. |
+| **Snapshot** | Consistent logical view at a point or version; not a physical copy. |
+| **MVCC** | Multi-version concurrency control: readers observe versions rather than locks. |
+| **EWMA / AIMD / hysteresis** | Exponentially weighted moving average / additive increase and multiplicative decrease / separate rising and falling thresholds: dynamic control tools. |
+| **Scan pollution** | Cache degradation caused by scans evicting frequently used data. |
 
-## Termini introdotti dalle decisioni di progetto
+<a id="termini-introdotti-dalle-decisioni-di-progetto"></a>
+## Terms introduced by design decisions
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Control log** | `wal/control.log`: il manifest della Serie, una sequenza di record EDIT. ADR-0013, ADR-0018, ADR-0040. |
-| **CSN** | Commit Sequence Number: contatore di Archivio che ordina i commit e definisce la visibilità. ADR-0020. |
-| **File hint** | Indice primario di un segmento chiuso, da cui si ricostruisce l'indice in memoria. ADR-0015. |
-| **Key arena** | *(ritirato)* Area unica delle chiavi di una Serie (ADR-0015). Sostituita dall'area chiavi locale di ogni frammento (ADR-0043). |
-| **Versioni trattenute** | Tabella delle versioni non più correnti ancora visibili a uno snapshot. ADR-0015, ADR-0038. |
-| **Seqlock** | Contatore per slot che permette letture senza lock e rileva le scritture concorrenti. ADR-0032. |
-| **EBR** | Epoch-based reclamation: un segmento rimosso si elimina quando ogni reader ha superato l'epoca della rimozione. Governa solo descrittori e file. ADR-0016, ADR-0043. |
-| **Intento** | Modifica di una transazione multiserie preparata e non ancora decisa su un documento. ADR-0021. |
-| **OUTCOME** | Record che registra, nello stesso segmento dei record prepared, il COMMIT di una multiserie con il suo CSN. ADR-0021, ADR-0041. |
-| **Presumed abort** | Senza decisione COMMIT durevole la transazione è abortita; un abort non scrive alcun record. ADR-0021, ADR-0041. |
-| **Lineage** | *(ritirato)* Il più piccolo segment-id tra gli antenati di un segmento (ADR-0023). La regola che lo usava non era sicura: sostituita dal filtro di esistenza (ADR-0042). |
-| **Stato di carico** | `basso` / `normale` / `alto`: governa CLEAN e MERGE. ADR-0023. |
-| **Rilocazione condizionale** | Aggiornamento di una entry dell'indice dopo la compaction, applicato solo se punta ancora alla location sorgente. ADR-0015. |
+| **Control log** | `wal/control.log`: the Serie manifest, a sequence of EDIT records. ADR-0013, ADR-0018, ADR-0040. |
+| **CSN** | Commit Sequence Number: Archivio counter ordering commits and defining visibility. ADR-0020. |
+| **Hint file** | Primary index for a closed segment, used to rebuild the in-memory index. ADR-0015. |
+| **Key arena** | *(withdrawn)* One shared key area for a Serie (ADR-0015), replaced by each fragment's local key area (ADR-0043). |
+| **Retained versions** | Table of versions no longer current but still visible to a snapshot. ADR-0015, ADR-0038. |
+| **Seqlock** | Per-slot counter supporting reads without locks and detecting concurrent writes. ADR-0032. |
+| **EBR** | Epoch-based reclamation: delete a removed segment after every reader has passed its removal epoch. Governs descriptors and files only. ADR-0016, ADR-0043. |
+| **Intent** | Prepared, undecided change to a document in a multiseries transaction. ADR-0021. |
+| **OUTCOME** | Record storing a multiseries COMMIT and its CSN in the same segment as the prepared records. ADR-0021, ADR-0041. |
+| **Presumed abort** | Without a durable COMMIT decision, the transaction is aborted; an abort writes no record. ADR-0021, ADR-0041. |
+| **Lineage** | *(withdrawn)* Smallest segment-id among a segment's ancestors (ADR-0023). Its rule was unsafe and was replaced by the existence filter (ADR-0042). |
+| **Load state** | `basso` / `normale` / `alto`, meaning low / normal / high: governs CLEAN and MERGE. ADR-0023. |
+| **Conditional relocation** | Index entry update after compaction, applied only if the entry still points at the source location. ADR-0015. |
 
-## Ricerca full text
+<a id="ricerca-full-text"></a>
+## Full-text search
 
-Terminologia di [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md),
-requisito approvato per la v1 con implementazione futura nella fase 8.
+Terminology from [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md),
+an approved v1 requirement with implementation planned for phase 8.
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Full text** | Ricerca per parole e frasi su campi testuali dichiarati, combinata con filtri strutturati nella stessa vista snapshot. |
-| **Analizzatore / profilo di analisi** | Regole immutabili e versionate di normalizzazione, case folding e segmentazione; identiche per documento e query. |
-| **Indice invertito** | Dizionario per campo e termine, con posting list di righe, frequenze e posizioni; derivato dai documenti committed. |
-| **Posting** | Riferimento candidato a una riga dello stesso segmento; chiave, esito e versione visibile devono essere risolti prima di restituire il documento. |
-| **Posizione** | Ordinale del token nel campo; le posizioni consecutive consentono le frasi, senza attraversare campi diversi. |
-| **Generazione dell'indice** | Identità del build e del profilo fissata dalla query; un cambio di analizzatore costruisce una nuova generazione senza mescolarle. |
-| **Readiness / copertura** | Stato derivato che permette di usare un indice solo quando copre completamente la vista richiesta; incompletezza o corruzione non equivalgono a risultato vuoto. |
+| **Full text** | Word and phrase search over declared text fields, combined with structured filters in the same snapshot view. |
+| **Analyzer / analysis profile** | Immutable, versioned normalization, case-folding and segmentation rules, identical for documents and queries. |
+| **Inverted index** | Dictionary per field and term, with posting lists of rows, frequencies and positions; derived from committed documents. |
+| **Posting** | Candidate reference to a row in the same segment; resolve key, outcome and visible version before returning the document. |
+| **Position** | Token ordinal within a field; consecutive positions support phrases without crossing field boundaries. |
+| **Index generation** | Build and profile identity pinned by a query; an analyzer change builds a new generation without mixing generations. |
+| **Readiness / coverage** | Derived state allowing an index to be used only when it fully covers the requested view; incomplete or corrupt data does not mean an empty result. |
 
-## Termini introdotti dall'analisi progettuale
+<a id="termini-introdotti-dallanalisi-progettuale"></a>
+## Terms introduced by the design analysis
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Unità di parallelismo** | Ciò che procede senza attendere i propri pari: Archivio, Serie, reader, lotto, segmento, frammento. Il parallelismo è il principio fondante del progetto. ADR-0036. |
-| **Elenco chiuso** | Gli unici elementi che le Serie condividono, con costo e frequenza dichiarati; nessuno è pagato per singola operazione. ADR-0036. |
-| **Punto di atomicità** | L'unico record durevole che decide un'operazione: prima c'è preparazione scartabile, dopo completamento idempotente. ADR-0036. |
-| **Prepara, decidi, completa** | Ordine di ogni operazione durevole: oggetto `.tmp`, record nella fonte di verità, allineamento del file system. ADR-0036. |
-| **Lotto** | Unità di atomicità, durability e pubblicazione di un log: record seguiti da un SEAL. ADR-0037. |
-| **SEAL** | Record che chiude un lotto e ne fissa file, posizione, numero di record, contenuto, CSN e frontiera durevole. ADR-0037, ADR-0039. |
-| **Frontiera durevole** | Posizione fino alla quale un log era durevole quando un lotto è stato chiuso; scritta nel SEAL, distingue una coda da una corruzione. ADR-0037. |
-| **Lunghezza valida** | Estensione di un segmento chiuso registrata nel manifest; i byte oltre non ne fanno parte. ADR-0040. |
-| **Versioni in sospeso** | Versioni scritte ma non ancora pubblicate (lotti in attesa del flush, intenti delle multiserie); le vede solo il writer. ADR-0037. |
-| **Orizzonte di visibilità** | Il più grande CSN sotto il quale ogni commit è pubblicato; uno snapshot nasce quando l'orizzonte lo ha raggiunto. ADR-0038. |
-| **CSN in volo** | CSN già preso il cui commit non è ancora pubblicato. ADR-0038. |
-| **Registro dei CSN in volo** | Vettore a capacità fissa; assegnazione e registrazione sono indivisibili, H è il minimo pendente meno uno o l'ultimo CSN quando è vuoto. Sostituisce l'anello di ADR-0038. ADR-0046. |
-| **Soglia** | Minimo CSN tra gli snapshot attivi, pubblicato dal registro degli snapshot; il writer trattiene una versione se la soglia è inferiore al CSN nuovo. ADR-0038. |
-| **Cornice** | Intestazione di 24 byte comune a tutti i record di tutti i log, con CRC dell'intestazione e CRC del corpo. ADR-0039. |
-| **EDIT** | L'unico tipo di record del control log: apre, chiude, rimuove segmenti. ADR-0040. |
-| **DECISION** | L'unico tipo di record di `multiserie.log`: il COMMIT di una transazione, con CSN e partecipanti. ADR-0041. |
-| **Segmento autosufficiente** | Segmento chiuso che si interpreta da solo: l'esito di ogni suo record prepared è nel segmento o nel record che lo ha chiuso. ADR-0041. |
-| **Filtro di esistenza** | Sezione Bloom dell'hint sulle chiavi del segmento; decide quando un tombstone si può scartare. ADR-0039, ADR-0042. |
-| **Frammento** | Tabella Swiss a capacità fissa con le proprie chiavi; il primary index è una directory di frammenti. ADR-0043. |
-| **Compito** | Unità di lavoro eseguita da un worker dall'inizio alla fine senza sospendersi. ADR-0045. |
-| **Parcheggio** | Attesa realizzata registrando il contesto della richiesta in una lista limitata, senza occupare un worker. ADR-0045. |
-| **Migrazione** | Passaggio di una lettura dal pool di calcolo al pool di I/O, ripartendo dall'inizio. ADR-0045. |
+| **Unit of parallelism** | What progresses without waiting for its peers: Archivio, Serie, reader, batch, segment, fragment. Parallelism is the foundational design principle. ADR-0036. |
+| **Closed list** | The only elements shared by Serie, with stated cost and frequency; none is paid per operation. ADR-0036. |
+| **Atomicity point** | The single durable record deciding an operation: discardable preparation precedes it, idempotent completion follows it. ADR-0036. |
+| **Prepare, decide, complete** | Order of every durable operation: `.tmp` object, record in the source of truth, file-system alignment. ADR-0036. |
+| **Batch** | A log's unit of atomicity, durability and publication: records followed by a SEAL. ADR-0037. |
+| **SEAL** | Record closing a batch and fixing its file, position, record count, contents, CSN and durable frontier. ADR-0037, ADR-0039. |
+| **Durable frontier** | Position through which a log was durable when a batch closed; stored in the SEAL, distinguishing a tail from corruption. ADR-0037. |
+| **Valid length** | Closed segment extent recorded in the manifest; later bytes are not part of the segment. ADR-0040. |
+| **Pending versions** | Written but unpublished versions, including batches awaiting flush and multiseries intents; visible only to the writer. ADR-0037. |
+| **Visibility horizon** | Largest CSN below which every commit is published; a snapshot is born when the horizon reaches it. ADR-0038. |
+| **In-flight CSN** | A CSN already taken whose commit is not yet published. ADR-0038. |
+| **In-flight CSN register** | Fixed-capacity vector; allocation and registration are indivisible. H is the smallest pending CSN minus one, or the last CSN when empty. Replaces the ADR-0038 ring. ADR-0046. |
+| **Threshold** | Minimum CSN among active snapshots, published by the snapshot register; the writer retains a version if the threshold is below the new CSN. ADR-0038. |
+| **Frame** | Common 24-byte header for every record in every log, with header and body CRCs. ADR-0039. |
+| **EDIT** | The only control-log record type: opens, closes and removes segments. ADR-0040. |
+| **DECISION** | The only `multiserie.log` record type: a transaction COMMIT with its CSN and participants. ADR-0041. |
+| **Self-contained segment** | Closed segment interpretable on its own: each prepared record's outcome is in the segment or its closing record. ADR-0041. |
+| **Existence filter** | Bloom section in the hint file over segment keys; determines when a tombstone can be discarded. ADR-0039, ADR-0042. |
+| **Fragment** | Fixed-capacity Swiss table with its own keys; the primary index is a directory of fragments. ADR-0043. |
+| **Task** | Work unit executed by a worker from start to finish without suspension. ADR-0045. |
+| **Parking** | Wait implemented by recording a request context in a bounded list without occupying a worker. ADR-0045. |
+| **Migration** | Transfer of a read from the compute pool to the I/O pool, restarting from the beginning. ADR-0045. |
 
-## Affidabilità
+<a id="affidabilità"></a>
+## Reliability
 
-| Termine | Definizione |
+| Term | Definition |
 |---|---|
-| **Classe di integrità** | C1 percorso dei dati, C2 correttezza funzionale, C3 governo delle risorse, C4 strumenti. ADR-0031. |
-| **Fail-stop** | A fronte di un guasto non recuperabile il componente si ferma invece di proseguire con uno stato incerto. ADR-0033. |
-| **HEALTHY / DEGRADED / FAULTED** | Stati di salute di una Serie; `MULTI-DISABLED` per l'Archivio. ADR-0033. |
-| **Quarantena** | Stato di un segmento con dati non verificabili: non viene letto né compattato. ADR-0033. |
-| **Verifica in lettura** | Controllo dei CRC32C di intestazione e corpo, della chiave e del CSN prima di restituire un record. ADR-0033, ADR-0039. |
-| **Scrubbing** | Rilettura periodica dei segmenti chiusi per rilevare alterazioni latenti. ADR-0033. |
-| **Scansione di risincronizzazione** | Ricerca di SEAL validi dopo un'anomalia nel log: la frontiera durevole che dichiarano distingue una coda da una corruzione. ADR-0033, ADR-0037. |
-| **Verificatore offline** | `arcdocdb-verify`: controlla in sola lettura formati, CRC e coerenza di un Archivio. ADR-0033. |
-| **Simulatore deterministico** | Esecuzione del sistema con tempo, casualità, schedulazione e I/O simulati, riproducibile da seme. ADR-0035. |
-| **Test differenziale** | Stessa sequenza di operazioni sul motore e su un modello di riferimento; i risultati devono coincidere. ADR-0035. |
-| **Deviazione** | Scostamento registrato e approvato da una regola di codifica. |
+| **Integrity class** | C1 data path, C2 functional correctness, C3 resource control, C4 tools. ADR-0031. |
+| **Fail-stop** | On an unrecoverable fault, the component stops rather than continuing with uncertain state. ADR-0033. |
+| **HEALTHY / DEGRADED / FAULTED** | Serie health states; `MULTI-DISABLED` applies to the Archivio. ADR-0033. |
+| **Quarantine** | State of a segment whose data cannot be verified: neither read nor compacted. ADR-0033. |
+| **Verification on read** | Check header and body CRC32C, key and CSN before returning a record. ADR-0033, ADR-0039. |
+| **Scrubbing** | Periodic reread of closed segments to detect latent corruption. ADR-0033. |
+| **Resynchronization scan** | Search for valid SEAL records after a log anomaly; their durable frontier distinguishes a tail from corruption. ADR-0033, ADR-0037. |
+| **Offline verifier** | `arcdocdb-verify`: read-only verification of an Archivio's formats, CRCs and consistency. ADR-0033. |
+| **Deterministic simulator** | System execution with simulated time, randomness, scheduling and I/O, reproducible from a seed. ADR-0035. |
+| **Differential test** | Same operation sequence on the engine and a reference model; results must match. ADR-0035. |
+| **Deviation** | Recorded and approved departure from a coding rule. |
 
-## Identificativi della documentazione
+<a id="identificativi-della-documentazione"></a>
+## Documentation identifiers
 
-| Prefisso | Significato | Dove |
+| Prefix | Meaning | Location |
 |---|---|---|
-| `INV-` | Invariante | [invarianti.md](invarianti.md) |
-| `QA-` | Questione aperta | [questioni-aperte.md](questioni-aperte.md) |
-| `FI-` | Scenario di fault injection | [14-fault-injection.md](14-fault-injection.md) |
-| `M01…M18` | Modulo software | [16-moduli.md](16-moduli.md) |
-| `ADR-` | Decisione architetturale | [adr/](adr/README.md) |
-| `RSK-` | Rischio | [valutazione/registro-rischi.md](valutazione/registro-rischi.md) |
-| `SPK-` | Spike di valutazione | [valutazione/piano-spike.md](valutazione/piano-spike.md) |
-| `REQ-` | Requisito tracciato | [tracciabilita/requisiti.lisp](tracciabilita/requisiti.lisp) |
-| `FM-` | Modo di guasto | [affidabilita/analisi-dei-guasti.md](affidabilita/analisi-dei-guasti.md) |
-| `COD-` | Regola di codifica | [affidabilita/standard-di-codifica.md](affidabilita/standard-di-codifica.md) |
-| `DEV-` / `COV-` | Deviazione / eccezione di copertura | [affidabilita/deviazioni.md](affidabilita/deviazioni.md) |
-| `AP-` | Rilievo dell'analisi progettuale | [analisi-progettuale.md](analisi-progettuale.md) |
+| `INV-` | Invariant | [invarianti.md](invarianti.md) |
+| `QA-` | Open question | [questioni-aperte.md](questioni-aperte.md) |
+| `FI-` | Fault-injection scenario | [14-fault-injection.md](14-fault-injection.md) |
+| `M01…M18` | Software module | [16-moduli.md](16-moduli.md) |
+| `ADR-` | Architecture decision | [adr/](adr/README.md) |
+| `RSK-` | Risk | [valutazione/registro-rischi.md](valutazione/registro-rischi.md) |
+| `SPK-` | Evaluation spike | [valutazione/piano-spike.md](valutazione/piano-spike.md) |
+| `REQ-` | Traced requirement | [tracciabilita/requisiti.lisp](tracciabilita/requisiti.lisp) |
+| `FM-` | Failure mode | [affidabilita/analisi-dei-guasti.md](affidabilita/analisi-dei-guasti.md) |
+| `COD-` | Coding rule | [affidabilita/standard-di-codifica.md](affidabilita/standard-di-codifica.md) |
+| `DEV-` / `COV-` | Deviation / coverage exception | [affidabilita/deviazioni.md](affidabilita/deviazioni.md) |
+| `AP-` | Design-analysis finding | [analisi-progettuale.md](analisi-progettuale.md) |

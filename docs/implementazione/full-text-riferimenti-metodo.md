@@ -1,50 +1,54 @@
-# Riferimenti fisici full text — metodo preregistrato
+<a id="riferimenti-fisici-full-text--metodo-preregistrato"></a>
 
-17 ottobre 2026. REQ-SEC-004/006/010, REQ-WAL-005 e REQ-CON-002;
-ADR-0037/0039/0047/0054, INV-I5/I6 e INV-P6. Il prossimo elemento della mappa
-del delta e un riferimento preallocato per la riserva, catturato dal lotto
-sigillato con token CSN autorevole prima della consegna all'I/O.
+# Full-text physical references — preregistered method
 
-La cattura non pubblica, non prova durability e non risolve un prepared. Conserva
-row, segmento, offset assoluto, lunghezza, versione e stamp in due parole;
-lo stamp e CSN per un ordinario, TXID per un prepared. Il getter resta valido
-dopo il riuso del buffer; nessun riuso delle riserve trasferite e introdotto.
+October 17, 2026. REQ-SEC-004/006/010, REQ-WAL-005, and REQ-CON-002;
+ADR-0037/0039/0047/0054, INV-I5/I6, and INV-P6. The next delta-map element
+is a preallocated reservation reference, captured from the sealed
+batch with an authoritative CSN token before handoff to I/O.
 
-| Decisione | Verifiche previste |
+Capture does not publish, prove durability, or resolve a prepared record. It retains
+row, segment, absolute offset, length, version, and two-word stamp;
+stamp is CSN for an ordinary record, TXID for a prepared one. The getter remains valid
+after buffer reuse; no reuse of transferred reservations is introduced.
+
+| Decision | Planned verification |
 |---|---|
-| Ownership | lease e token canonici; solo riserva trasferita dal ponte PUT |
-| Lifetime | stessa incarnazione/intervallo; lotto SEALED e non consegnato al gruppo I/O |
-| Autorita | registro e log esatti del token WAL pendente; log segmento sano |
-| Header | CRC su soli 20 byte, span/tipo/flag e stamp coerenti; nessuna scansione del body |
-| Ordinario | stamp uguale al CSN catturato alla chiusura, mai uno stamp manuale non associato |
-| Prepared | TXID uguale al valore catturato all'append; mai sostituito dal CSN del lotto |
-| Cattura | campi gia preallocati, somma offset verificata prima degli effetti; nessun budget normale dopo SEAL |
-| Guasto | header incoerente o cattura interrotta => pool/lotto FAULTED, dati e costi conservati |
-| Getter | solo riferimento interamente catturato; nessuna dipendenza dal buffer riusato |
+| Ownership | canonical lease and token; only reservation transferred by PUT bridge |
+| Lifetime | same incarnation/range; SEALED batch not handed to I/O group |
+| Authority | exact registry and log of pending WAL token; healthy segment log |
+| Header | CRC over only 20 bytes, consistent span/type/flag and stamp; no body scan |
+| Ordinary | stamp equals CSN captured at closure, never an unbound manual stamp |
+| Prepared | TXID equals value captured at append; never replaced by batch CSN |
+| Capture | fields already preallocated, offset sum checked before effects; no ordinary budget failure after SEAL |
+| Failure | inconsistent header or interrupted capture => pool/batch FAULTED, data and costs retained |
+| Getter | only fully captured reference; no dependence on reused buffer |
 
-Oracoli: record indipendente bitwise v1/v2, posizione calcolata dal prefisso del
-file e dai record precedenti, stamp a bordi u32/u64; riuso reale dei lotti dopo
-write/flush e risoluzione del token nella fixture. Rifiuti conservativi prima degli
-effetti; header corrotti anche con CRC ricalcolato. Prova nativa su file completo,
-riaperto in sola lettura, confronto dei byte raggiunti dal riferimento.
+Oracles: independent bitwise v1/v2 record, position calculated from file
+prefix and previous records, stamp at u32/u64 boundaries; real batch reuse after
+write/flush and token resolution in the fixture. Conservative rejections before
+effects; corrupted headers even with recalculated CRC. Native test on a complete file,
+reopened read-only, comparing bytes reached by the reference.
 
-Heap: estendere la misura PUT gia esclusa dalla copertura strumentata con chiusura
-WAL, mille catture/getter su slot preallocati e ID 1/UINT64_MAX. Probe CRC dimostra
-che la cattura legge solo l'header; controllo negativo sul vecchio scanner completo.
-Conservare tutti i tentativi e i sorgenti effettivi. Due letture dello stesso autore;
-qualifica C1, MC/DC e verifica indipendente complessiva rimangono aperte.
+Heap: extend the PUT measurement already excluded from instrumented coverage with WAL
+closure, one thousand captures/getters on preallocated slots, and ID 1/UINT64_MAX. CRC probe
+shows capture reads only the header; negative control on the old full scanner.
+Preserve all attempts and actual sources. Two readings by the same author;
+C1 qualification, MC/DC, and overall independent verification remain open.
 
-## Due letture dello stesso autore
+<a id="due-letture-dello-stesso-autore"></a>
 
-Prima lettura: seguiti lease, generation della riserva e incarnazione del lotto;
-autorita del token richiesta prima di leggere lo stamp. Flag e TXID originali
-catturati all'append del frame privato; CSN ordinari verificati solo dopo chiusura.
-Offset e forma prima degli effetti, nessun rilascio o fallimento normale di capienza
-dopo SEAL. Getter senza riferimenti al buffer, senza claim di visibilita o durability.
+## Two readings by the same author
 
-Seconda lettura: seguiti errori di header, cattura incompleta e riuso reale del lotto.
-Effetto protetto fin dal suo avvio, stato SEALED fissato per ultimo, invarianti
-prima/dopo il setter interno; fault conserva costi e CSN. La quota metadata del
-pool rimane conservativa e le sei esclusioni di allocazione del catalogo CI sono
-invariate. Le due letture dello stesso autore non sono una revisione indipendente
-e non chiudono C1 o MC/DC.
+First reading: traced lease, reservation generation, and batch incarnation;
+token authority required before reading stamp. Original flags and TXID
+captured at private-frame append; ordinary CSNs checked only after closure.
+Offset and shape before effects, no release or ordinary capacity failure
+after SEAL. Getter without buffer references, without visibility or durability claims.
+
+Second reading: traced header errors, incomplete capture, and real batch reuse.
+Effect protected from its start, SEALED state set last, invariants
+before/after internal setter; fault retains costs and CSN. The pool's
+metadata quota remains conservative and the CI catalog's six allocation exclusions
+are unchanged. Two readings by the same author are not independent review
+and do not close C1 or MC/DC.

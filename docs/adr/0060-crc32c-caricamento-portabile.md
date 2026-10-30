@@ -1,47 +1,55 @@
-# ADR-0060 — Caricamento portabile del backend CRC32C
+<a id="adr-0060--caricamento-portabile-del-backend-crc32c"></a>
 
-- **Stato:** Accettata per l'integrazione autorizzata del 2026-10-23
-- **Data:** 2026-10-23
-- **Riferimenti:** REQ-FOR-003, REQ-AFF-004;
+# ADR-0060 — Portable loading of the CRC32C backend
+
+- **Status:** Accepted for the authorized integration of 2026-10-23
+- **Date:** 2026-10-23
+- **References:** REQ-FOR-003, REQ-AFF-004;
   [ADR-0017](0017-piattaforma-e-io.md), [ADR-0059](0059-crc32c-arm64-sbcl.md)
-- **Rapporto con le decisioni precedenti:** precisa il caricamento di ADR-0059;
-  algoritmo, formato e perimetro dell'accelerazione restano invariati.
+- **Relationship to previous decisions:** clarifies loading for ADR-0059;
+  algorithm, format, and acceleration scope remain unchanged.
 
-## Contesto
+<a id="contesto"></a>
 
-La selezione runtime del software non basta a garantire la portabilità:
-compilare VOP ARM su una piattaforma o versione SBCL non qualificata può
-fallire prima della selezione. Linux x86-64 resta la piattaforma di riferimento.
-Il guadagno misurato su macOS ARM64 non qualifica altre CPU o sistemi.
+## Context
 
-## Decisione
+Runtime software selection alone does not guarantee portability:
+compiling ARM VOPs on an unqualified platform or SBCL version can
+fail before selection. Linux x86-64 remains the reference platform.
+The gain measured on macOS ARM64 does not qualify other CPUs or systems.
 
-Un bootstrap Lisp comune ad ASDF e al loader di misura calcola una feature
-privata di compilazione. La abilita soltanto per SBCL 2.6.9, ARM64,
-macOS, 64 bit e little endian. Su ogni altra combinazione non richiede
-SB-SIMD e non legge le definizioni VOP o i riferimenti NEON. La feature
-descrive la compatibilità del compilatore, non la capacità della CPU.
-Il probing OS e NEON rimane necessario prima di scegliere il kernel.
+<a id="decisione"></a>
 
-La feature pubblica di avvio `:arcdocdb-crc32c-software`, impostata prima
-di caricare il sistema, forza il software anche sull'host qualificato.
-Serve per diagnosi, test differenziali e rollback; nessun cambio a caldo
-durante il servizio. Il bootstrap rimuove eventuali feature native obsolete.
+## Decision
 
-Le decisioni di compatibilità, validità della risposta OS e selezione del
-kernel sono funzioni pure con test per ciascuna condizione. Il percorso
-GET continua a leggere soltanto il kernel già scelto. Nessuna dipendenza
-checksum foreign e nessuna variazione dei dati persistenti.
+A Lisp bootstrap shared by ASDF and the measurement loader calculates a private
+compilation feature. It enables it only for SBCL 2.6.9, ARM64,
+macOS, 64-bit, and little-endian. On every other combination it does not require
+SB-SIMD or read VOP definitions or NEON references. The feature
+describes compiler compatibility, not CPU capability.
+OS and NEON probing remains necessary before selecting the kernel.
 
-## Verifica e limiti
+The public startup feature `:arcdocdb-crc32c-software`, set before
+loading the system, forces software even on the qualified host.
+It serves diagnostics, differential tests, and rollback; no hot switching
+during service. The bootstrap removes any obsolete native features.
 
-Build e suite complete in due processi freschi, normale e software forzato;
-test di isolamento del reader senza package SB-SIMD e matrice sintetica di
-OS, architettura e versione. Questi test locali non sostituiscono una run
-Linux. La CI esistente esegue il prodotto su Linux x86-64 e macOS ARM64;
-le prestazioni hardware pubblicate rimangono riferite all'M4 locale.
+Compatibility, OS-response validity, and kernel-selection decisions
+are pure functions with tests for each condition. The GET
+path continues to read only the already selected kernel. No foreign
+checksum dependency and no change to persistent data.
 
-Linux ARM64, macOS x86-64, altri SBCL e CPU senza CRC32C usano il software
-per il checksum; questo non estende a nuovi sistemi il supporto dell'intero
-motore. Windows non è una piattaforma del motore POSIX attuale. Un futuro
-backend SSE4.2 o Linux ARM richiederà prove e qualifica proprie.
+<a id="verifica-e-limiti"></a>
+
+## Verification and limits
+
+Full builds and suites in two fresh processes, normal and forced software;
+reader-isolation test without the SB-SIMD package and synthetic matrix of
+OS, architecture, and version. These local tests do not replace a Linux
+run. Existing CI runs the product on Linux x86-64 and macOS ARM64;
+published hardware performance remains specific to the local M4.
+
+Linux ARM64, macOS x86-64, other SBCL versions, and CPUs without CRC32C use software
+for the checksum; this does not extend whole-engine support to new
+systems. Windows is not a platform for the current POSIX engine. A future
+SSE4.2 or Linux ARM backend will require its own tests and qualification.

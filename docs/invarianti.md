@@ -1,3 +1,5 @@
+<a id="invarianti"></a>
+
 # Invariants
 
 Rules that no implementation, optimization, or later decision may violate without an
@@ -41,6 +43,8 @@ design review, or benchmarks.
 |---|---|---|---|
 | INV-R1 | A segment is deleted only when no current index, snapshot, active transaction, or reader references or uses it. | Index/Snapshot/Reclaim; Fault injection (3) | FI-09, FI-11 |
 
+<a id="wal-e-log"></a>
+
 ## WAL and logs
 
 | ID | Invariant | Source | Verification |
@@ -48,16 +52,20 @@ design review, or benchmarks.
 | INV-W1 | Each Serie has an independent WAL and is physically independent of others; there is no global data WAL. | WAL, Physical layout | review |
 | INV-W2 | There is one `Registri/multiserie.log` per Archivio; there is no per-transaction file. | Special Serie Registri | review |
 
+<a id="transazioni-e-durability"></a>
+
 ## Transactions and durability
 
 | ID | Invariant | Source | Verification |
 |---|---|---|---|
 | INV-D1 | No committed data are lost. | Fault injection (1) | FI-01, FI-02, FI-05, FI-06, FI-09, FI-10 |
-| INV-T1 | A single-Series transaction uses only the Serie WAL and does not write to `multiserie.log`. | Single-series transactions | test |
-| INV-T2 | Expected-version checking is atomic with respect to the Serie writer applying the change. | Single-series transactions | concurrency test |
+| INV-T1 | A single-Serie transaction uses only the Serie WAL and does not write to `multiserie.log`. | Single-Serie transactions | test |
+| INV-T2 | Expected-version checking is atomic with respect to the Serie writer applying the change. | Single-Serie transactions | concurrency test |
 | INV-T3 | A multiseries transaction is committed only when the `COMMIT` decision is durable in `multiserie.log`. | Multiseries transactions | FI-04, FI-05 |
 | INV-T4 | No multiseries transaction is partially committed. | Fault injection (2) | FI-03, FI-04, FI-05, FI-12 |
 | INV-T5 | All changes in a multiseries transaction share a single TXID. | Multiseries transactions | FI-12 |
+
+<a id="mvcc-e-snapshot"></a>
 
 ## MVCC and snapshots
 
@@ -66,6 +74,8 @@ design review, or benchmarks.
 | INV-M1 | No snapshot observes an inconsistent version: its view remains that of its creation point until it ends. | Snapshot/MVCC; Fault injection (4) | FI-11, concurrency test |
 | INV-M2 | A snapshot prevents compaction from deleting versions it needs. | Snapshot/MVCC | FI-11 |
 | INV-M3 | The cache is version/epoch-aware: it does not return a version incompatible with the reader's snapshot. | Cache and snapshots | concurrency test |
+
+<a id="indici"></a>
 
 ## Indexes
 
@@ -79,6 +89,8 @@ design review, or benchmarks.
 | INV-I7 | Index mode is selected automatically within the Serie quota; no switch admits new work beyond budget or publishes an incomplete view. Transient memory includes retained source, destination, delta, and metadata. Return to resident mode has hysteresis and changes neither commit decisions nor snapshots. | [ADR-0057](adr/0057-selezione-automatica-indice.md) | selector tests; migration, fault injection, and runtime qualification to implement |
 | INV-I8 | A derived page is used only after verifying identity, version, checksum, and local structure; PageRefs are null or point to earlier children in the same image. A bucket does not hide entries behind an EMPTY group; keys and metadata respect v2 limits. Local verification certifies neither committed coverage nor root durability. Adopting an image also requires a canonical source, entry uniqueness/coverage, and complete read-only verification under [ADR-0063](adr/0063-immagini-sigillate-indice-primario.md); the [M1 builder](adr/0065-costruzione-immagini-dal-motore.md) fully verifies the derivative before success; M1 integration retires the derivative before admitted writes except for the [explicit serial delta](adr/0067-delta-seriale-indice-m1.md), which routes every touched key to the canonical resident index ([ADR-0064](adr/0064-adozione-indice-paginato-m1.md)); [ADR-0066](adr/0066-attivazione-seriale-immagini-m1.md) allows verified serial activation and FD closure on retirement without concurrent borrowers; [ADR-0068](adr/0068-rinnovo-seriale-immagini-m1.md) combines construction and activation under one admission with source rechecking; [ADR-0070](adr/0070-scoperta-readonly-immagini-m1.md) allows bounded candidate discovery at startup, with mandatory full verification before READY. | [ADR-0058](adr/0058-pagine-indice-primario.md) | independent fixtures, alterations with valid CRC, collisions, truncation, graph coverage, and serial M1 integration; catalog and concurrent swap to implement |
 
+<a id="concorrenza-e-priorità"></a>
+
 ## Concurrency and priorities
 
 | ID | Invariant | Source | Verification |
@@ -88,11 +100,15 @@ design review, or benchmarks.
 | INV-P3 | Serie have load isolation: traffic on one Serie does not prevent writes, queries, or controlled compaction on others. | Parallelism | benchmark (burst) |
 | INV-P4 | Priorities: user traffic > WAL/durability > necessary CLEAN > opportunistic MERGE. | Dynamic compaction scheduler | benchmark, policy test |
 
+<a id="interfacce"></a>
+
 ## Interfaces
 
 | ID | Invariant | Source | Verification |
 |---|---|---|---|
 | INV-N1 | The default client interface is a local Unix stream socket; TCP requires explicit activation and is never an automatic fallback on local error. | [ADR-0055](adr/0055-interfaccia-locale-unix-socket.md) | default configuration, unavailable socket, no implicit TCP listener or attempt (tests to implement) |
+
+<a id="metodo"></a>
 
 ## Method
 
@@ -101,6 +117,8 @@ design review, or benchmarks.
 | INV-X1 | Every measured hot path evaluates all SIMD variants safely usable on the agreed platforms; only variants useful according to benchmarks are adopted, with CPU/OS/runtime selection, executable and forceable scalar reference, unchanged checks and semantics. | SIMD and native optimizations, [ADR-0012](adr/0012-simd-guidato-dai-benchmark.md) | review, differential tests and benchmarks per platform (qualification incomplete) |
 | INV-X2 | Performance targets remain hypotheses until verified by reproducible benchmarks; no superiority claims from heterogeneous benchmarks. | Preliminary targets, Comparison | review |
 | INV-X3 | Project code is Common Lisp only until an ADR reopens foreign-code use; this also applies to verification models and tools (no TLA+ or equivalent for now). | [ADR-0001](adr/0001-common-lisp-sbcl.md) (decision of 2026-10-01) | review |
+
+<a id="derivati-dalle-decisioni-di-progetto-adr-00130030"></a>
 
 ## Derived from design decisions (ADR 0013–0030)
 
@@ -111,6 +129,8 @@ design review, or benchmarks.
 | INV-V2 | A snapshot sees all or none of a multiseries transaction: its CSN stays outside the visibility horizon until applied on all participants, and a snapshot is created only when the horizon has reached it (INV-M4). | [ADR-0020](adr/0020-csn-snapshot-isolamento.md), [ADR-0038](adr/0038-orizzonte-di-visibilita.md), [ADR-0041](adr/0041-multiserie-segmenti-autosufficienti.md) | FI-12, SPK-07 model |
 | INV-V3 | Compaction relocation updates an index entry only if it still points to the source location; it never overwrites a newer version. | [ADR-0015](adr/0015-primary-index-swiss-table-swmr.md) | FI-06, concurrency test |
 | INV-V4 | Every change to a Serie's state (index, intents, retained versions, deltas, counters, control log) is applied by the Serie's logical writer. | [architecture](architettura.md#contratti) | review |
+
+<a id="affidabilità-adr-00310035"></a>
 
 ## Reliability (ADR-0031…0035)
 
@@ -125,13 +145,15 @@ design review, or benchmarks.
 | INV-A7 | Recovery is idempotent: interrupting it at any point and rerunning it produces the same final state. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md) | interruption at every point in the simulator |
 | INV-A8 | Every resource has a configured, enforced limit (queues, buffers, requests, connections, snapshots, attempts, recursion, memory); exceeding it produces an explicit rejection, never undefined degradation; no loop is unbounded. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md), [ADR-0032](adr/0032-seqlock-a-64-bit.md) | saturation test, review |
 
+<a id="derivati-dallanalisi-progettuale-adr-00360045"></a>
+
 ## Derived from the design analysis (ADR 0036–0045)
 
 | ID | Invariant | Source | Verification |
 |---|---|---|---|
 | INV-F2 | A batch is atomic: it is valid in full — its SEAL fixes file, position, record count, and contents — or does not exist; no record from an invalid batch is ever applied. A non-prepared record is committed if and only if it is in a valid batch. | [ADR-0037](adr/0037-lotto-sigillato.md), [ADR-0039](adr/0039-cornice-unica-dei-record.md) | FI-01, FI-02, fuzzing, deliberate corruption |
 | INV-F3 | Tail or corruption is decided from log contents: each SEAL carries the durable frontier known at batch closure; an anomaly below the frontier declared by a later valid SEAL is corruption (fail-stop, no writes), otherwise it is a tail. The decision does not depend on the order in which media persist unsynchronized writes. | [ADR-0037](adr/0037-lotto-sigillato.md) | FI-01, FI-02 with unordered persistence, SPK-07 model |
-| INV-V5 | A write is acknowledged only after publication and, with `:group` or `:strong`, only after becoming durable: every subsequent read sees it after acknowledgment. Applies to single-Series and multiseries transactions. | [ADR-0037](adr/0037-lotto-sigillato.md), [ADR-0041](adr/0041-multiserie-segmenti-autosufficienti.md) | differential test, FI-05, FI-12 |
+| INV-V5 | A write is acknowledged only after publication and, with `:group` or `:strong`, only after becoming durable: every subsequent read sees it after acknowledgment. Applies to single-Serie and multiseries transactions. | [ADR-0037](adr/0037-lotto-sigillato.md), [ADR-0041](adr/0041-multiserie-segmenti-autosufficienti.md) | differential test, FI-05, FI-12 |
 | INV-M4 | A snapshot with CSN `s` performs its first read only when the visibility horizon is ≥ `s`: every commit with CSN ≤ `s` has already been published or canceled, and none can appear later. | [ADR-0038](adr/0038-orizzonte-di-visibilita.md) | SPK-07 model, property tests in simulator, FI-11 |
 | INV-M5 | For each document, CSN order matches version order; the CSN identifies the version, is the expected-version value, and is never reused, even after document deletion. | [ADR-0038](adr/0038-orizzonte-di-visibilita.md) | SPK-07 model, differential test |
 | INV-M6 | Every assigned CSN not yet published or canceled occupies an exclusive slot in the bounded in-flight CSN registry; assignment and registration are indivisible with respect to H advancing. No slot is reused before its CSN completes. When the registry is empty, H reaches the latest assigned CSN, regardless of the distance from the first pending one. | [ADR-0046](adr/0046-orizzonte-con-registro-limitato.md) | ring counterexample and registry model in SPK-07 |
@@ -145,6 +167,8 @@ design review, or benchmarks.
 | INV-A11 | Every operation changing durable state has a single atomicity point, a durable record in its level's source of truth; before it there is only discardable preparation, afterward only idempotent completion. | [ADR-0036](adr/0036-leggi-di-progetto.md) | SPK-07 model with crashes before and after every point |
 | INV-A12 | The cache is a pure accelerator: the system is correct with the cache disabled and the cache appears in no protocol; a failed check on cached data discards it and rereads from the segment, without quarantining the segment. | [ADR-0044](adr/0044-cache-acceleratore-puro.md) | differential test with and without cache, bit flip in arena |
 
+<a id="corrispondenza-con-i-principi-della-specifica"></a>
+
 ## Mapping to specification principles
 
 All 33 ‘Fundamental architectural principles’ are covered: principles that are verifiable
@@ -152,6 +176,8 @@ constraints are invariants above; design directions (group commit, dynamic sched
 highly optimized primary index, specialized secondary indexes, anti-scan-pollution cache,
 dynamic thread pool, crash-safe recovery, fault injection, reproducible benchmarks) are
 requirements in the corresponding topic documents and ADRs.
+
+<a id="applicazione-dei-budget-ai-limiti-documentali"></a>
 
 ## Applying budgets to document limits
 

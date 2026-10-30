@@ -1,27 +1,29 @@
-# SPK-01 — metodo preregistrato del confronto lettura buffer
+<a id="spk-01--metodo-preregistrato-del-confronto-lettura-buffer"></a>
 
-> **Proposta** — confronto sperimentale Fase0; REQ-VAL-001, REQ-BEN-001.
+# SPK-01 — Preregistered buffer-read comparison method
 
-Registrato prima di qualsiasi compilazione il 2026-10-08. Fase0, Common
-Lisp/SBCL, safety 3. Proprietà esclusiva: questo metodo,
-`bench-lettura-buffer.lisp` e nuovi file sotto
-`out/bench-lettura-buffer-agent/`. Il checkout è esclusivamente
+> **Proposed** — Experimental Phase0 comparison; REQ-VAL-001, REQ-BEN-001.
+
+Recorded before any compilation on 2026-10-08. Phase0, Common Lisp/SBCL, safety 3.
+Exclusive ownership: this method, `bench-lettura-buffer.lisp`, and new files under
+`out/bench-lettura-buffer-agent/`. Exclusive checkout
 `/Users/gpicchiarelli/.codex/worktrees/indice-lettura/ArcDocDB`.
-Core, runner, tools, documenti condivisi e sorgenti degli altri agenti non
-sono modificati. Nessun commit/push. L'agente compila soltanto; **non esegue
-BENCH, warmup, CHECK o kernel di altri agenti**. Profilazione, integrazione e
-tutte le misure seriali sono del parent.
+Core, runner, tools, shared documents, other agents' sources unchanged.
+No commit/push. Agent only compiles; **does not run BENCH, warmup, CHECK, or other
+agents' kernels**. Profiling, integration, all serial measurements belong to parent.
 
-## Ipotesi e matrice fissa
+<a id="ipotesi-e-matrice-fissa"></a>
 
-Confrontare la baseline `ARCDOCDB.SPK01:LEGGI`, che restituisce quattro campi,
-stato e retry, con `ARCDOCDB.SPK01.LETTURA-BUFFER:LEGGI`, che restituisce stato
-e retry e pubblica quattro u64 nel buffer privato dopo seqlock e root validati.
-Una sola istanza immutabile dell'indice per cella serve entrambi i metodi.
-Nessun writer durante warmup/misure. Barriere, ricontrollo root e writer
-restano responsabilità dei moduli esistenti; il benchmark non li reimplementa.
+## Hypothesis and fixed matrix
 
-| Layout v1 | Profilo | Workload | Coppie | Campioni |
+Compare baseline `ARCDOCDB.SPK01:LEGGI`, returning four fields, status, retry,
+with `ARCDOCDB.SPK01.LETTURA-BUFFER:LEGGI`, returning status/retry and publishing
+four u64s into private buffer after validated seqlock/root.
+One immutable index instance per cell serves both methods. No writer during
+warmup/measurement. Barriers, root recheck, writer remain existing-module
+responsibilities; benchmark does not reimplement them.
+
+| V1 layout | Profile | Workload | Pairs | Samples |
 | --- | --- | --- | ---: | ---: |
 | words4 | fields-fixnum | hit-only | 5 | 10 |
 | words4 | fields-fixnum | mixed-hit-miss | 5 | 10 |
@@ -32,88 +34,84 @@ restano responsabilità dei moduli esistenti; il benchmark non li reimplementa.
 | words5-extra-end | u64-massimi | hit-only | 5 | 10 |
 | words5-extra-end | u64-massimi | mixed-hit-miss | 5 | 10 |
 
-Totale obbligatorio: 8 celle, 40 coppie, 80 campioni. A = baseline, B = buffer.
-Per cella e replica si alterna AB/BA secondo la parità di cella + replica:
-20 coppie AB e 20 BA nell'intera matrice. Cinque repliche esatte; nessun filtro
-di celle o interruzione con successo parziale. Le comparazioni paired
-conservano numeri di campione, ordine, delta e rapporti, senza proclamare
-superiorità statistica da cinque coppie.
+Mandatory total: 8 cells, 40 pairs, 80 samples. A = baseline, B = buffer.
+Alternate AB/BA per cell/replication by parity of cell + replication:
+20 AB pairs, 20 BA in whole matrix. Exactly five replications; no cell filtering
+or partial-success interruption. Paired comparisons retain sample numbers,
+order, deltas, ratios, without proclaiming statistical superiority from five pairs.
 
-## Dati e consumatore comune
+<a id="dati-e-consumatore-comune"></a>
 
-Default: 4096 documenti, C8192, 128000 lookup effettivi per campione
-(qui 128k significa 128000), 4096 lookup di warmup per metodo/cella.
-Si preparano fuori misura chiavi univoche di 16 byte per documenti e miss
-nuovi, due query array di lunghezza 2*documents, quattro campi indipendenti
-per documento/cella, oracle u64 e status byte preallocati per cella.
-Hit-only percorre due permutazioni della popolazione; mixed alterna hit e
-miss (50% su ogni periodo completo), cominciando da un hit. Il miss usa
-un ID distinto da ogni documento. Ordine deterministico con moltiplicatore
-104729, senza RNG o generazione chiavi nel ciclo.
+## Data and shared consumer
 
-Le tuple sono generate prima dell'inserimento e l'oracle è costruito dalle
-tuple, mai leggendo l'indice. CSN, location, length ed end-CSN hanno formule
-distinte. Nel profilo estremo CSN/location/end includono 2^64-1 e valori
-vicini; length include 2^24-1, il limite v1. words4 ha sempre end-CSN zero.
-La location viene scomposta in segmento/offset u32 solo per inserire.
-Non si usa il pattern correlato del core né il layout v2.
+Defaults: 4096 documents, C8192, 128000 actual lookups per sample
+(here 128k means 128000), 4096 warmup lookups per method/cell.
+Outside measurement, prepare unique 16-byte document/new-miss keys, two query
+arrays of length 2*documents, four independent fields per document/cell,
+preallocated u64 oracles/status bytes per cell. Hit-only traverses two population
+permutations; mixed alternates hit/miss (50% per full period), starting with hit.
+Miss uses ID distinct from every document. Deterministic order with multiplier
+104729, no RNG or key generation in loop.
 
-Due cicli compilati, generati da una macro comune, chiamano direttamente le
-API tipizzate: nessun FUNCALL di lookup. Il consumatore e il controllo
-dell'oracle sono la stessa espansione nei due cicli. Su hit si confrontano
-esattamente quattro u64. Su miss la baseline mantiene i quattro valori del
-precedente hit; la variante legge il buffer che deve mantenere quel payload.
-L'oracle del miss è il payload del precedente hit. Non si copia la baseline
-nel buffer per simulare l'altra API. I quattro valori restituiti dalla
-baseline su miss sono ignorati: non costituiscono un payload valido.
-Un retry-limit, uno stato inatteso, un retry in questo fixture immutabile,
-un campo diverso o un numero di operazioni insufficiente sono errori.
+Tuples generated before insertion; oracle built from tuples, never by reading
+index. CSN, location, length, end-CSN use separate formulas. Extreme profile's
+CSN/location/end include 2^64-1 and nearby values; length includes v1 limit
+2^24-1. words4 always has zero end-CSN. Location split into u32 segment/offset
+only for insertion. Neither core's correlated pattern nor v2 layout used.
 
-Il checksum resta un fixnum non negativo di 60 bit: per ogni u64 si uniscono
-parte bassa di 60 bit e parte alta di 4 bit dopo rotazione del checksum.
-Nessuna estrazione del sink u64 per stamparlo durante il ciclo. Il checksum
-non sostituisce il confronto integrale dei quattro campi. Sono inclusi anche
-stato e retry; entrambi i metodi devono avere checksum, hit, miss e retry
-uguali per ogni coppia. Nessun hash-table, cons esplicito, report, lista,
-generazione di chiave o costruzione di oracle nel ciclo. Le allocazioni delle
-API, compreso il boxing della baseline, sono precisamente ciò che si misura.
+Two compiled loops generated by common macro call typed APIs directly:
+no lookup FUNCALL. Consumer/oracle check are same expansion in both loops.
+On hit compare exactly four u64s. On miss, baseline retains four previous-hit
+values; variant reads buffer that must retain that payload. Miss oracle is
+previous-hit payload. Baseline is not copied into buffer to simulate other API.
+Four baseline-returned values on miss ignored: not valid payload.
+Retry-limit, unexpected state, retry in this immutable fixture, different field,
+or insufficient operation count are errors.
 
-## Finestra, GC e contatore positivo
+Checksum remains nonnegative 60-bit fixnum: for each u64, combine low 60 bits and
+high 4 bits after rotating checksum. No u64 sink extraction for printing in loop.
+Checksum does not replace full four-field comparison. Status/retry included;
+both methods must have equal checksum, hit, miss, retry per pair.
+No hash-table, explicit cons, report, list, key generation, or oracle construction
+in loop. API allocations, including baseline boxing, are exactly what is measured.
 
-Preparazione, inizializzazione del buffer, warmup, full GC e report sono
-fuori dalla finestra. Full GC precede ogni campione. La finestra comprende
-lookup, accessi alle query/oracle, verifica, checksum, conteggi e guardie
-cooperative ogni 256 operazioni. Il GC provocato dentro il ciclo è incluso.
-Wall ticks da GET-INTERNAL-REAL-TIME, ns/op esatto derivato da ticks e unità
-del timer, delta GET-BYTES-CONSED; tick zero o delta negativo sono errori.
-Il contatore consed è di processo: nessun altro benchmark o worker deve
-operare contemporaneamente. La destinazione è un simple-array u64 di
-lunghezza esatta 4, privata alla cella/chiamante; questo modulo non crea thread.
+<a id="finestra-gc-e-contatore-positivo"></a>
 
-Prima della preparazione/misura si esegue, fuori misura, un controllo positivo
-del contatore: full GC, before, allocazione di un vector u8 di 262144 byte
-pubblicato in un globale del modulo, after. Il globale resta vivo almeno fino
-al delta; solo dopo after si leggono il contenuto e
-SB-EXT:PRIMITIVE-OBJECT-SIZE dell'oggetto effettivo. Si riportano before,
-after, delta, elementi, payload, valore letto e dimensione reale. Un delta
-non positivo o più piccolo del payload è errore. Nessuna inferenza sul payload
-heap di array non escaped. La dimensione reale è diagnostica fuori misura;
-il tetto payload esclude header, mentre quello heap include l'uso dinamico
-osservato dal runtime.
+## Window, GC, and positive counter
 
-## API e budget
+Preparation, buffer initialization, warmup, full GC, report outside window.
+Full GC before each sample. Window includes lookup, query/oracle access,
+verification, checksum, counts, cooperative guards every 256 operations.
+GC triggered within loop included. Wall ticks from GET-INTERNAL-REAL-TIME,
+exact ns/op derived from ticks/timer units, GET-BYTES-CONSED delta;
+zero ticks or negative delta are errors. Consed counter process-wide:
+no other benchmark/worker may run concurrently. Destination is private exact-length-4
+u64 simple-array per cell/caller; module creates no threads.
 
-Package `ARCDOCDB.SPK01.BENCH-LETTURA-BUFFER`, unico export `BENCH`.
+Before preparation/measurement, run positive counter control outside measurement:
+full GC, before, allocate 262144-byte u8 vector published in module global, after.
+Global remains live at least until delta; only after after read contents and
+SB-EXT:PRIMITIVE-OBJECT-SIZE of actual object. Report before, after, delta,
+elements, payload, read value, actual size. Nonpositive/below-payload delta is error.
+No inference about heap payload of nonescaped arrays. Actual size is out-of-window
+diagnostic; payload ceiling excludes headers, heap ceiling includes runtime-observed
+dynamic usage.
 
-| Keyword | Default | Vincolo |
+<a id="api-e-budget"></a>
+
+## API and budgets
+
+Package `ARCDOCDB.SPK01.BENCH-LETTURA-BUFFER`, sole export `BENCH`.
+
+| Keyword | Default | Constraint |
 | --- | ---: | --- |
 | documents | 4096 | 1..max-documents; <=7*C/8 |
-| capacity | 8192 | potenza di due, 8..32768 |
+| capacity | 8192 | power of two, 8..32768 |
 | operations | 128000 | 1..max-operations |
-| replicas | 5 | esattamente 5 |
+| replicas | 5 | exactly 5 |
 | warmup | 4096 | 1..min(max-warmup,operations) |
-| time-limit-seconds | 120 | reale positivo <=max-time-limit-seconds |
-| memory-mib | 256 | heap dinamico, 1..1024 MiB |
+| time-limit-seconds | 120 | positive real <=max-time-limit-seconds |
+| memory-mib | 256 | dynamic heap, 1..1024 MiB |
 | attempts | 8 | 1..8 |
 | max-documents | 16384 | 1..28672 |
 | max-operations | 1000000 | 1..10000000 |
@@ -121,104 +119,101 @@ Package `ARCDOCDB.SPK01.BENCH-LETTURA-BUFFER`, unico export `BENCH`.
 | max-payload-bytes | 33554432 | 1..268435456 |
 | max-copy-bytes | 16777216 | 1..67108864 |
 | max-consed-bytes | 1073741824 | 1..4294967296 |
-| max-time-limit-seconds | 300 | reale positivo <=300 |
+| max-time-limit-seconds | 300 | positive real <=300 |
 
-Tutti i parametri, il carico senza split e le stime di payload/copie sono
-validati **prima di qualunque campione**. Payload preventivo conservativo:
-otto frammenti/directory v1, chiavi e query condivise, otto oracle/status/buffer,
-una tabella temporanea di tuple e vector del controllo positivo. Le copie
-contate sono le chiavi inserite (8*documents*16) e i campi copiati nell'oracle
-(8*2*documents*32). Nessuna manutenzione è ammessa; i contatori del core
-devono restare a zero per split/rebuild/copie di manutenzione.
+All parameters, split-free load, payload/copy estimates validated **before any sample**.
+Conservative preflight payload: eight v1 fragments/directories, shared keys/queries,
+eight oracle/status/buffers, temporary tuple table, positive-control vector.
+Counted copies are inserted keys (8*documents*16) and oracle fields
+(8*2*documents*32). No maintenance allowed; core counters must remain zero for
+splits/rebuilds/maintenance copies.
 
-Scadenza unica cooperativa per l'intera BENCH, default <=120 s, hard cap 300 s,
-controllata in preparazione, tra GC, warmup, campioni, report e ogni blocco
-di lookup. Controlli del tetto heap tramite SB-KERNEL:DYNAMIC-USAGE e del
-consed cumulativo dell'intera BENCH alle stesse guardie. Consed cumulativo
-include preparazione, controllo positivo, warmup e report; il delta del
-campione comprende solo la finestra dichiarata. GC/allocazioni/chiamate non
-sono interrotti asincronamente: l'overshoot cooperativo può essere osservato,
-ma dopo scadenza si segnala errore. Nessun budget esaurito restituisce :ok.
+One cooperative deadline for whole BENCH, default <=120 s, hard cap 300 s,
+checked during preparation, between GCs, warmups, samples, reporting, each lookup
+block. Heap ceiling through SB-KERNEL:DYNAMIC-USAGE and whole-BENCH cumulative
+consed checked at same guards. Cumulative consed includes preparation, positive
+control, warmup, report; sample delta covers declared window only.
+GC/allocations/calls not asynchronously interrupted: cooperative overshoot may
+be observed, but expiration signals error. No exhausted budget returns :ok.
 
-BENCH restituisce dati plain readable: liste di keyword/stringhe/numeri;
-tipi e nomi di funzioni come stringhe, niente simboli dei package dello spike,
-array, pathname o strutture nel risultato. :ok è costruito soltanto dopo
-80 campioni completi, 40 confronti paired e ultima guardia. Il parent registra
-anche gli errori nel proprio envelope schema1, senza promuovere prefissi
-di campioni a risultati completi.
+BENCH returns plain readable data: lists of keywords/strings/numbers;
+types/function names as strings, no spike-package symbols, arrays, pathnames,
+or structures in result. :ok built only after 80 complete samples, 40 paired
+comparisons, final guard. Parent also records errors in schema1 envelope,
+without promoting sample prefixes to complete results.
 
-## CLI pianificato e compilazione locale
+<a id="cli-pianificato-e-compilazione-locale"></a>
 
-CLI parent pianificato, non eseguito da questo agente:
+## Planned CLI and local compilation
+
+Planned parent CLI, not executed by this agent:
 
 ```sh
 sbcl --noinform --disable-debugger --script spikes/SPK-01-primary-index/run.lisp --bench --variant buffer --documents 4096 --capacity 8192 --operations 128000 --replicas 5 --warmup 4096 --time-limit-seconds 120 --memory-mib 256
-# harness integrato: --bench SPK-01 -- --variant buffer [stesse opzioni]
+# integrated harness: --bench SPK-01 -- --variant buffer [same options]
 ```
 
-Prima di ogni tentativo compile si aggiunge qui il piano e si crea un nuovo
-direttorio esclusivo `out/bench-lettura-buffer-agent/attempt-NNN/`. Il driver
-Common Lisp registra schema1 con argv e stdin esatti, ambiente, source-before
-e source-after (hash MD5 SBCL e contenuti integrali di core, modulo, metodo
-e driver), stdout/stderr originali, warning/style-warning come stringhe,
-tutti i valori compile-file normalizzati a keyword/stringhe e risultato.
-Il compilatore/core vengono caricati con warning e style-warning fatali.
-Per compilare il consumer senza eseguire codice dell'altro agente è sufficiente
-un package/proclamazione dell'API buffer; non si definisce alcun kernel stub.
-Si compilano e caricano core e benchmark; nessuna chiamata a BENCH o warmup.
-Se il reader reale è disponibile, si compila/carica anche quel file come
-dipendenza immutata, senza invocarne funzioni. La proclamazione dei valori
-del reader include `&optional`, identica al kernel, per evitare incompatibilità.
+Before each compile attempt, add plan here and create fresh exclusive
+`out/bench-lettura-buffer-agent/attempt-NNN/`. Common Lisp driver records schema1
+with exact argv/stdin, environment, source-before/after (SBCL MD5 and full contents
+of core, module, method, driver), original stdout/stderr, warnings/style-warnings
+as strings, every compile-file value normalized to keywords/strings, result.
+Compiler/core loaded with fatal warnings/style-warnings. Compiling consumer without
+running another agent's code requires only package/API proclamation; no kernel stub
+defined. Compile/load core and benchmark; no BENCH/warmup call. If real reader
+available, also compile/load unchanged dependency without invoking functions.
+Reader values proclamation includes `&optional`, identical to kernel, avoiding incompatibility.
 
-Un recorder separato lancia il driver con stdin conservato, cattura i due
-stream originali e il codice di uscita. Un **terzo processo SBCL senza alcun
-package dello spike** rilegge dati/envelope con *read-eval*=nil, controlla che
-ogni foglia sia keyword/stringa/numero, e salva la decodifica leggibile.
-Anche i fallimenti restano registrati; mai sovrascrivere un tentativo.
+Separate recorder launches driver with retained stdin, captures both original
+streams and exit code. **Third SBCL process without any spike package** rereads
+data/envelope with *read-eval*=nil, checks every leaf keyword/string/number,
+saves readable decoding. Failures recorded too; never overwrite an attempt.
 
-### Piano attempt-001
+<a id="piano-attempt-001"></a>
 
-Compilare strict core, reader reale ora disponibile e consumer; caricare
-tutti e tre senza invocazioni. Il reader resta immutato e viene incluso nei
-source-before/after. Nessun kernel stub. La proclamazione ftype coincide
-con quella del reader, incluso `(values keyword fixnum &optional)`.
-CLI locale previsto: `sbcl --noinform --disable-debugger --script
+### Plan attempt-001
+
+Strictly compile core, now-available real reader, consumer; load all three without
+invocations. Reader unchanged, included in source-before/after. No kernel stub.
+Ftype proclamation matches reader, including `(values keyword fixnum &optional)`.
+Planned local CLI: `sbcl --noinform --disable-debugger --script
 spikes/SPK-01-primary-index/out/bench-lettura-buffer-agent/recorder.lisp 001`.
-Accettazione: zero warning/style-warning, warnings-p/failure-p :no,
-FASL non nulli; dati rilette nel processo neutro. Non prova la correttezza
-del kernel, la riuscita del warmup o alcuna prestazione.
+Acceptance: zero warnings/style-warnings, warnings-p/failure-p :no, nonnull FASLs;
+neutral-process readback. Proves neither kernel correctness, successful warmup,
+nor performance.
 
-Il parent ha comunicato un precedente profilo lookup-fixed-key di
-47.96064 B/op e key/hash 0 B osservati: contesto esterno, non risultato di
-questa matrice e non prova di allocazione zero generale.
+Parent reported previous lookup-fixed-key profile of 47.96064 B/op and observed
+key/hash 0 B: external context, not this matrix's result or general zero-allocation proof.
 
-### Esito attempt-001 e piano attempt-002
+<a id="esito-attempt-001-e-piano-attempt-002"></a>
 
-001: core e reader compilati/caricati senza warning; consumer non compilato
-per EOF nella forma BENCH (binding list di deadline non chiusa). warnings-p
-e failure-p del consumer :yes, output :none; zero warning/style-warning
-segnalati, un errore del reader Lisp. Driver uscita 1, decoder neutro uscita 0.
-Record e decodifica conservati in `out/bench-lettura-buffer-agent/attempt-001/`.
-Nessuna invocazione di BENCH/warmup/CHECK/lookup.
+### Outcome attempt-001 and plan attempt-002
 
-002 preregistrato prima dell'esecuzione: chiudere la binding list della
-deadline, stesso strict compile/load di core, reader reale e consumer.
-Il writer dell'evidenza usa stringhe letterali comuni evitando la notazione
-SBCL #A per base-string; ogni foglia resta validata e i dati sono riletti con
-*read-eval*=nil nel decoder neutro. CLI identico con argomento `002`.
-Accettazione invariata, senza alcuna esecuzione di benchmark o warmup.
+001: core/reader compiled/loaded without warnings; consumer failed compilation
+with EOF in BENCH form (unclosed deadline binding list). Consumer warnings-p/
+failure-p :yes, output :none; zero signaled warnings/style-warnings, one Lisp-reader
+error. Driver exit 1, neutral decoder exit 0. Record/decoding retained in
+`out/bench-lettura-buffer-agent/attempt-001/`.
+No BENCH/warmup/CHECK/lookup invocation.
 
-### Esito attempt-002 e piano attempt-003
+002 preregistered before execution: close deadline binding list, same strict
+compile/load of core, real reader, consumer. Evidence writer uses ordinary literal
+strings, avoiding SBCL #A base-string notation; every leaf still validated,
+neutral decoder rereads with *read-eval*=nil. Same CLI ending `002`.
+Acceptance unchanged, without benchmark/warmup execution.
 
-002: compilazione dei tre file senza warning/style-warning e tutti i valori
-compile-file :no/:no. Il load del consumer segnala un solo style-warning
-REDEFINITION-WITH-DEFMACRO: COMPILE-FILE lascia definito il generatore
-globale %DEFINE-CONSUMER e il FASL lo ridefinisce. Il driver carica ciascun
-FASL una sola volta. L'avviso è fatale, non soppresso. Uscita driver 1,
-decoder neutro 0; stdout/stderr, condizioni e source-before/after conservati.
+<a id="esito-attempt-002-e-piano-attempt-003"></a>
 
-003 preregistrato: generatore locale MACROLET con le due espansioni nel suo
-corpo comune; nessuna definizione di macro persistente nel FASL o nel package.
-Strict compile/load di core, reader e consumer nel medesimo processo, stesso
-driver, CLI con argomento `003`. Zero warning/style-warning anche al load,
-rilettura neutra e zero invocazioni BENCH/warmup/CHECK/lookup richiesti.
+### Outcome attempt-002 and plan attempt-003
+
+002: three-file compilation without warnings/style-warnings, every compile-file
+value :no/:no. Consumer load signals one REDEFINITION-WITH-DEFMACRO style-warning:
+COMPILE-FILE leaves global %DEFINE-CONSUMER generator defined and FASL redefines it.
+Driver loads each FASL once. Warning fatal, not suppressed. Driver exit 1,
+neutral decoder 0; stdout/stderr, conditions, source-before/after retained.
+
+003 preregistered: local MACROLET generator with both expansions in common body;
+no persistent macro definition in FASL/package. Strict core/reader/consumer
+compile/load in same process, same driver, CLI ending `003`.
+Require zero warnings/style-warnings at load too, neutral readback, and zero
+BENCH/warmup/CHECK/lookup invocations.

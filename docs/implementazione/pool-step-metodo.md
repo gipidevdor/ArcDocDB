@@ -1,61 +1,67 @@
-# Metodo del passo pool/Serie
+<a id="metodo-del-passo-poolserie"></a>
 
-Preregistrazione del 2026-10-15, base
-`5be241d8f295e3c82df06e75c9b12e0bf75eb202`, prima delle campagne formali.
-Scope C3: tutti i sette file di `src/dispatch/`, inclusi `step.lisp` e i sei
-precedenti. Nessuna modifica C1. Il [contratto](pool-step.md) specifica
-origine, dettaglio e azione, con una sola operazione delegata per passo.
+# Pool/Serie step method
 
-## Prove funzionali e revisione
+Preregistration dated 2026-10-15, base
+`5be241d8f295e3c82df06e75c9b12e0bf75eb202`, before formal campaigns.
+C3 scope: all seven files in `src/dispatch/`, including `step.lisp` and six
+previous files. No C1 change. The [contract](pool-step.md) specifies
+origin, detail, and action, with one delegated operation per step.
 
-- IDLE con attivazione, inattività, empty e busy: cinque risultati, cursore
-  originale e azione lifecycle, un solo ingresso operativo.
-- CLAIMED da presa, adozione o full: current senza gate, comandi o ACK;
-  dettaglio e azione NIL, selezione del writer corrente senza begin.
-- RESCHEDULE room termina IDLE senza seconda presa; full avvia soltanto il
-  routing del nuovo CLAIMED. Count e cursore volutamente differenti.
-- Ritiro pendente: gli obblighi precedono l'ammissione; ACK soltanto al
-  successivo passo IDLE, mai dopo room nella stessa chiamata.
-- Guard ready realmente occupata: ritorno BUSY del claim distinto dalla
-  condizione busy del ricircolo; preimage e obbligo conservati.
-- Binding e owner prima della lettura fase e di ogni ingresso operativo.
-  RUNNING/BATCH/FINISHING/FAULTED rifiutati senza cambiare debiti o causa.
-- Routing fallito dopo scambio: causa EQ, effetti già riusciti conservati,
-  nessuna deduzione di rollback. Stato incoerente delegato alle barriere C1.
-- Getter interposto fuori ftype: rifiuto effettivo della fase inattesa;
-  FI quiescente ripristinata, distinta dal contratto nominale C1.
-- Una revisione indipendente C3 con lista di controllo; compilazione strict
-  safety 3, lint, tracciabilità e controllo completo con dieci spike.
+<a id="prove-funzionali-e-revisione"></a>
 
-Nessuna nuova prova positiva di concorrenza è richiesta dal passo owner-only.
-L'owner estraneo usa un thread distinto come prova negativa. Non si deduce
-overlap temporale o stress da una sola barriera di partenza.
+## Functional tests and review
 
-## Copertura, misure e conservazione
+- IDLE with activation, inactivity, empty, and busy: five results, original
+  cursor and lifecycle action, one operational entry only.
+- CLAIMED from claim, adoption, or full: current without gate, commands, or ACK;
+  detail and action NIL, current-writer selection without begin.
+- RESCHEDULE room ends IDLE without second claim; full starts only
+  routing of new CLAIMED. Count and cursor deliberately different.
+- Pending retirement: obligations precede admission; ACK only at
+  next IDLE step, never after room in same call.
+- Ready guard actually occupied: claim BUSY return distinct from
+  recirculation busy condition; preimage and obligation preserved.
+- Binding and owner before phase reading and every operational entry.
+  RUNNING/BATCH/FINISHING/FAULTED rejected without changing debts or cause.
+- Failed routing after exchange: EQ cause, already-successful effects preserved,
+  no rollback inference. Inconsistent state delegated to C1 barriers.
+- Interposed getter outside ftype: actual unexpected-phase rejection;
+  quiescent FI restored, distinct from nominal C1 contract.
+- One independent C3 review with checklist; strict safety 3
+  compilation, lint, traceability, and full check with ten spikes.
 
-Gate almeno 95% di espressioni e rami sull'intero package, senza esclusioni.
-Conservare nativo SB-COVER, otto HTML e audit native/HTML con tutti i missing.
-Il reader C4 verificato viene adattato allo scope esplicito di sette file;
-nessuna copertura C1 o equivalenza MC/DC viene ereditata.
+No new positive concurrency test required by owner-only step.
+Foreign owner uses separate thread as negative test. No temporal
+overlap or stress inferred from a startup barrier alone.
 
-Due campagne: EMPTY attivo su quattro shard vuoti, quattro passi per ciclo
-con rotazione del cursore; CURRENT su CLAIMED reale e porta inattiva,
-quattro lookup stabili per ciclo. Cinque repliche da 4096 cicli e 128
-warmup per campagna, fixture nuova per replica. Fixture, factory, claim
-iniziale, lookup API, GC e drain pubblico finale restano fuori clock.
-I cinque valori e le identità sono verificati nel clock; nessun reset
-privato, begin o applicazione di payload nel tratto misurato.
+<a id="copertura-misure-e-conservazione"></a>
 
-INACTIVE/IDLE e i cinque valori del rifiuto sono coperti dai self-test;
-RESCHEDULE, CLOSING e contese rimangono nelle prove funzionali, senza una
-misura di latenza dedicata. Conservare heap, tick, sink e cicli completati:
-heap zero osservato non dimostra non allocazione universale. Carico esterno
-incontrollato, nessuna soglia, taratura o attribuzione al solo adapter;
-i delegati C1 e gli oracoli scalari sono parte del costo.
+## Coverage, measurements, and preservation
 
-Self-test positivi e negativi per cinque risultati difformi, sink, clock
-sotto risoluzione, heap deliberato, CLI, destinazioni preesistenti e raw
-parziali. Campagne formali su copia congelata, cache dedicate e
-`record-command.lisp`: argv, output, exit e impronte iniziali/finali.
-Conservare fallimenti e sviluppo separati; copie byte per byte e manifesti
-nuovi esclusivi, senza riscrivere le prove originali.
+Gate at least 95% of expressions and branches over entire package, without exclusions.
+Preserve native SB-COVER, eight HTML files, and native/HTML audit with all missing entries.
+Verified C4 reader adapted to explicit seven-file scope;
+no C1 coverage or MC/DC equivalence inherited.
+
+Two campaigns: active EMPTY on four empty shards, four steps per cycle
+with cursor rotation; CURRENT on actual CLAIMED and inactive gate,
+four stable lookups per cycle. Five replicates of 4096 cycles and 128
+warmups per campaign, new fixture per replicate. Fixtures, factories, initial
+claim, API lookup, GC, and final public drain remain outside clock.
+Five values and identities verified inside clock; no private
+reset, begin, or payload application in measured slice.
+
+INACTIVE/IDLE and five rejection values covered by self-tests;
+RESCHEDULE, CLOSING, and contention remain in functional tests, without a
+dedicated latency measurement. Preserve heap allocation, ticks, sinks, and completed cycles:
+observed zero heap allocation does not prove universal nonallocation. Uncontrolled external
+load, no threshold, tuning, or attribution to adapter alone;
+C1 delegates and scalar oracles are part of cost.
+
+Positive and negative self-tests for five mismatched results, sink, clock
+below resolution, deliberate heap allocation, CLI, existing destinations, and partial
+raw data. Formal campaigns on frozen copy, dedicated caches, and
+`record-command.lisp`: argv, output, exit, and initial/final fingerprints.
+Preserve failures and development separately; byte-for-byte copies and new
+exclusive manifests, without rewriting original evidence.

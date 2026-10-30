@@ -1,47 +1,58 @@
-# ADR-0002 — La Serie come unità di storage e parallelismo
+<a id="adr-0002--la-serie-come-unità-di-storage-e-parallelismo"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («Architettura
-  logica», «Parallelismo»)
-- **Riferimenti:** [02 Modello logico](../02-modello-logico.md),
-  [10 Concorrenza](../10-concorrenza-e-scheduling.md), INV-W1, INV-P3
+# ADR-0002 — Serie as the unit of storage and parallelism
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision (“Logical
+  architecture,” “Parallelism”)
+- **References:** [02 Logical model](../02-modello-logico.md),
+  [10 Concurrency](../10-concorrenza-e-scheduling.md), INV-W1, INV-P3
 
-Gli obiettivi sono forte parallelismo, bassa latenza di coda e tenuta sotto burst. Serve
-un'unità chiara entro cui serializzare e tra cui parallelizzare.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-La Serie è l'unità primaria di storage e di parallelismo. Ogni Serie possiede WAL, segmenti e
-indici propri, è fisicamente indipendente e opera in parallelo alle altre. L'Archivio è il
-livello a cui si coordinano transazioni e snapshot multiserie.
+The goals are high parallelism, low tail latency, and resilience under bursts. A clear unit
+is needed within which to serialize operations and across which to parallelize them.
 
-## Conseguenze
+<a id="decisione"></a>
 
-- L'isolamento del carico è strutturale: nessun file condiviso sul percorso delle operazioni
-  single-Series.
-- Recovery e compaction si parallelizzano per Serie.
-- Il parallelismo in scrittura si ottiene *tra* Serie, non *dentro* una Serie
-  ([ADR-0005](0005-writer-logico-per-serie.md)): un carico concentrato su una sola Serie non
-  ne beneficia.
-- Le operazioni che attraversano più Serie richiedono un protocollo apposito
+## Decision
+
+The Serie is the primary unit of storage and parallelism. Each Serie owns its WAL, segments,
+and indexes, is physically independent, and operates in parallel with the others. The Archivio
+is the level at which multiseries transactions and snapshots are coordinated.
+
+<a id="conseguenze"></a>
+
+## Consequences
+
+- Workload isolation is structural: no shared files on the single-Serie operation path.
+- Recovery and compaction can run in parallel across Serie.
+- Write parallelism is achieved *across* Serie, not *within* a Serie
+  ([ADR-0005](0005-writer-logico-per-serie.md)): a workload concentrated on a single Serie
+  does not benefit from it.
+- Operations spanning several Serie require a dedicated protocol
   ([ADR-0006](0006-transazioni-multiserie-2pc.md)).
-- Restano condivise le risorse di calcolo, la cache, il dispositivo e il GC: vanno governate
-  dallo scheduler.
+- Compute resources, the cache, the device, and GC remain shared: the scheduler must manage
+  them.
 
-## Alternative considerate
+<a id="alternative-considerate"></a>
 
-- *Storage unico per Archivio con namespace logici:* un solo log e un solo indice sono punti
-  di contesa globali; contrario all'obiettivo di isolamento.
-- *Partizionamento automatico per hash dentro la Serie:* aumenterebbe il parallelismo in
-  scrittura ma renderebbe multi-partizione anche le transazioni locali. Non previsto.
+## Alternatives considered
 
-## Valutazione
+- *Single storage system per Archivio with logical namespaces:* one log and one index become
+  global contention points, contrary to the isolation goal.
+- *Automatic hash partitioning within a Serie:* would increase write parallelism but would
+  make even local transactions span multiple partitions. Not planned.
 
-- Rischi: RSK-04 (tetto per Serie), RSK-01 (il GC attraversa l'isolamento).
-- Verifica: SPK-04; benchmark di burst su una Serie con misura della latenza sulle altre
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Risks: RSK-04 (per-Serie ceiling), RSK-01 (GC crosses isolation boundaries).
+- Verification: SPK-04; burst benchmark on one Serie measuring latency on the others
   (INV-P3).
-- Punto di attenzione: molti WAL indipendenti eseguono flush concorrenti sullo stesso
-  dispositivo (SPK-03).
+- Point to watch: many independent WALs perform concurrent flushes on the same
+  device (SPK-03).

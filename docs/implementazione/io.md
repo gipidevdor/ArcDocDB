@@ -1,110 +1,120 @@
-# Confine I/O
+<a id="confine-io"></a>
 
-Primitive POSIX in Common Lisp/SBCL: creazione esclusiva, lettura posizionale,
-append, flush durevole e chiusura. Realizzano il confine richiesto da
-[ADR-0017](../adr/0017-piattaforma-e-io.md), con errori secondo
-[ADR-0033](../adr/0033-fail-stop-e-integrita-end-to-end.md). Il proprietario le
-esegue nei compiti del pool I/O ([ADR-0045](../adr/0045-modello-di-esecuzione.md)).
-Il pool e il motore delle transazioni restano moduli da integrare.
+# I/O boundary
 
-## Contratti
+POSIX primitives in Common Lisp/SBCL: exclusive creation, positional read,
+append, durable flush, and close. They implement the boundary required by
+[ADR-0017](../adr/0017-piattaforma-e-io.md), with errors under
+[ADR-0033](../adr/0033-fail-stop-e-integrita-end-to-end.md). The owner executes
+them in I/O pool tasks ([ADR-0045](../adr/0045-modello-di-esecuzione.md)).
+The pool and transaction engine remain modules to integrate.
 
-| API | Risultato |
+<a id="contratti"></a>
+
+## Contracts
+
+| API | Result |
 |---|---|
-| `apri-lettura` | capacità di file regolare readonly, pread concorrenti su buffer distinti |
-| `apri-lettura-nella-directory` | [capacità readonly e dimensione dallo stesso FD](io-apertura-relativa.md), ancorate alla directory posseduta |
-| `crea-temporaneo` | nuovo `.tmp` con O_EXCL, O_APPEND e permessi 0600; nessuna riapertura in scrittura |
-| `crea-temporaneo-nella-directory` | [nuovo `.tmp` relativo al FD del parent](io-creazione-relativa.md), regolare vuoto e identità verificata prima del ritorno |
-| `apri-directory` | capacità di directory per fsync |
-| `leggi-esatto` | riempie `[start,end)` da offset esplicito; restituisce end, senza modificare il cursore |
-| `append-esatto` | completa il range e restituisce posizione scritta; non attesta commit/durability |
-| `durable-flush` | file: fdatasync Linux, F_FULLFSYNC macOS; directory: fsync; avanza frontiera dopo successo |
-| `chiudi` | invalida la capacità prima di una sola close; chiamate successive sono no-op |
-| `stato-file` | open, faulted o closed |
-| `mode-file` | modo immutabile input, append o directory; nessun descrittore esposto |
-| `verifica-capienza-append` | verifica totale del gruppo e massimo chunk prima della prima write |
-| `verifica-capienza-lettura` | verifica modo/stato e numero di byte ammesso prima di effetti su altri file |
-| `associa-file`, `verifica-associazione-file` | [prova di identità fisica](associazione-file.md) readonly/append, creata nel pool I/O e verificata senza syscall |
-| `posizione-scritta`, `posizione-durevole` | frontiere del nuovo file, osservate dal proprietario |
+| `apri-lettura` | read-only regular-file capability, concurrent preads on separate buffers |
+| `apri-lettura-nella-directory` | [read-only capability and size from same FD](io-apertura-relativa.md), anchored to owned directory |
+| `crea-temporaneo` | new `.tmp` with O_EXCL, O_APPEND and 0600 permissions; no writable reopening |
+| `crea-temporaneo-nella-directory` | [new `.tmp` relative to parent FD](io-creazione-relativa.md), empty regular file and identity verified before return |
+| `apri-directory` | directory capability for fsync |
+| `leggi-esatto` | fills `[start,end)` from explicit offset; returns end without modifying cursor |
+| `append-esatto` | completes range and returns written position; certifies neither commit nor durability |
+| `durable-flush` | file: fdatasync Linux, F_FULLFSYNC macOS; directory: fsync; advances frontier after success |
+| `chiudi` | invalidates capability before one close; subsequent calls no-op |
+| `stato-file` | open, faulted or closed |
+| `mode-file` | immutable input, append or directory mode; no descriptor exposed |
+| `verifica-capienza-append` | checks group total and maximum chunk before first write |
+| `verifica-capienza-lettura` | checks mode/state and allowed byte count before effects on other files |
+| `associa-file`, `verifica-associazione-file` | read-only/append [physical identity proof](associazione-file.md), created in I/O pool and checked without syscall |
+| `posizione-scritta`, `posizione-durevole` | new-file frontiers observed by owner |
 
-`file-io` è una capacità con descrittore privato. Il chiamante possiede il
-namespace, impedisce modifiche esterne e mantiene vivo il descrittore fino al
-termine di tutti i reader. Append e flush dello stesso file hanno un solo compito
-proprietario. Non c'è un lock globale, un thread per Serie o stato mutabile tra
-file/Serie. Un reader riuscito o fallito non scrive nello stato della capacità.
-La chiusura richiede che i reader siano terminati: il protocollo dei riferimenti
-e la quarantena del segmento spettano al proprietario.
+`file-io` is a capability with a private descriptor. The caller owns
+namespace, prevents external modifications, and keeps descriptor live until
+all readers finish. Append and flush on the same file have one owning
+task. There is no global lock, thread per Serie, or mutable state across
+files/Serie. A successful or failed reader does not write capability state.
+Closing requires readers to have finished: reference protocol
+and segment quarantine belong to the owner.
 
-Le letture restituiscono byte al codec, che deve verificarne CRC e identità prima
-di una risposta al client. Queste API non pubblicano indici e non confermano lotti.
-La prova su due lotti SEAL dimostra il collegamento tra I/O e codec, non il commit
-integrato del motore. La [sostituzione del temporaneo](pubblicazione-control.md)
-aggiunge una rinomina relativa al FD del parent, con legame dei nomi ai file
-attesi. Cancellazione e troncamento restano privi di API di prodotto.
+Reads return bytes to the codec, which must verify CRC and identity before
+a client response. These APIs publish no indexes and acknowledge no batches.
+The two-SEAL-batch test demonstrates I/O/codec connection, not an integrated
+engine commit. [Temporary replacement](pubblicazione-control.md)
+adds rename relative to parent FD with names bound to expected
+files. Deletion and truncation still have no product API.
 
-## Guasti e frontiere
+<a id="guasti-e-frontiere"></a>
 
-Ogni syscall con progresso positivo avanza esattamente di quel numero di byte.
-Un ciclo ha al massimo una iterazione per byte richiesto. Completare short I/O è
-distinto dal ritentare un errore: **nessun errore viene ritentato**, neppure EINTR.
-Zero write, EOF e ritorni impossibili sono guasti espliciti.
+## Failures and frontiers
 
-Write/flush falliti marcano il file faulted prima di segnalare `io-fault`.
-Ogni append/flush futuro è rifiutato senza syscall; la frontiera durevole resta
-quella dell'ultimo flush riuscito. Il controller deve propagare l'evento allo
-stato e alle metriche della Serie/Archivio: quel collegamento resta da integrare.
-Non si ignora la condizione e non si conferma un lotto dopo l'errore.
+Every syscall with positive progress advances by exactly that byte count.
+A loop has at most one iteration per requested byte. Completing short I/O is
+distinct from retrying an error: **no error is retried**, including EINTR.
+Zero write, EOF, and impossible returns are explicit failures.
 
-La condizione espone operazione, errno e progresso noto. La chiusura non viene
-ritentata perché il numero del FD potrebbe essere già riutilizzato. Un fallimento
-di fstat durante l'apertura chiude una sola volta il descrittore non pubblicato;
-sono conservati sia l'errore primario sia un eventuale errno di cleanup.
+Failed writes/flushes mark file faulted before reporting `io-fault`.
+Every future append/flush is rejected without syscall; durable frontier remains
+that of the last successful flush. Controller must propagate the event to
+Serie/Archivio state and metrics: that connection remains to be integrated.
+The condition is not ignored and no batch is acknowledged after error.
 
-## Confini e risorse
+The condition exposes operation, errno, and known progress. Close is not
+retried because FD number may already have been reused. An fstat failure
+during opening closes the unpublished descriptor once;
+both primary error and any cleanup errno are preserved.
 
-I buffer sono octets specializzati. Sono esclusivi in lettura e stabili durante
-append. Range, budget e offset vengono controllati prima della prima syscall.
-Un rifiuto di configurazione/capienza non mette il file in guasto. Tutti i
-puntatori e i pin rimangono dentro `src/io/` e non sono esportati dalle API.
+<a id="confini-e-risorse"></a>
 
-> **Proposta** — Budget massimo per trasferimento 256 MiB, abbassabile per capacità;
-> capienza iniziale dei nuovi file 4 GiB−1, configurabile. Posizioni/capienze sono
-> fixnum non negativi, fino a `most-positive-fixnum`, e restano entro off_t a 64 bit.
-> È un limite dell'interfaccia in memoria, non una modifica dei formati persistenti.
-> Evita boxing/bignum nell'aritmetica del percorso caldo. I segmenti restano soggetti
-> al limite v2 di ADR-0048; la capienza del singolo log deve essere configurata dal
-> suo controller. Nessun rollover viene deciso da questo modulo.
+## Boundaries and resources
 
-O_NOFOLLOW rifiuta i symlink del componente finale e CLOEXEC impedisce l'eredità
-del descrittore. Per le directory si rimuove il separatore finale prima di open,
-così non aggira O_NOFOLLOW. Gli antenati del percorso devono essere controllati
-dal controller: non si introduce qui un protocollo openat per namespace ostili.
-Directory/FIFO non possono diventare segmenti readonly; O_NONBLOCK evita di
-bloccarsi su un FIFO prima che fstat lo rifiuti.
+Buffers are specialized octets. They are exclusive during reads and stable during
+append. Ranges, budgets, and offsets are checked before first syscall.
+Configuration/capacity rejection does not fault the file. All
+pointers and pins remain inside `src/io/` and are not exported through APIs.
 
-Il backend iniettabile è una tabella immutabile di sei funzioni: open, reader,
-writer, flush file, flush directory, close, con callback opzionale `:identity`
-per associare due capacità allo stesso file. `:entry-identity` e `:rename`
-sono opzionali per la [pubblicazione del control log](pubblicazione-control.md),
-con rifiuto della sostituzione quando mancano. `:open-relative` e
-`:file-metadata`, insieme a `:entry-identity`, sono necessarie soltanto
-per l'apertura readonly relativa. `:create-relative`, insieme a
-`:file-metadata` ed `:entry-identity`, è richiesto per la creazione relativa
-esclusiva di nuovi `.tmp`. Riceve vettori/intervalli, mai SAP.
-I callback sono codice fidato, segnalano syscall-error per errno e rispettano
-durata e proprietà dei buffer. `nil` seleziona il percorso nativo, con le due
-chiamate alien inline; nessun C/C++/Rust o libreria del progetto fuori da Lisp.
+> **Proposal** — Maximum transfer budget 256 MiB, lowerable per capability;
+> initial new-file capacity 4 GiB−1, configurable. Positions/capacities are
+> nonnegative fixnums through `most-positive-fixnum`, staying within 64-bit off_t.
+> This is an in-memory interface limit, not a persistent-format change.
+> It avoids boxing/bignums in hot-path arithmetic. Segments remain subject
+> to ADR-0048's v2 limit; individual log capacity must be configured by
+> its controller. This module decides no rollover.
 
-## Prove
+O_NOFOLLOW rejects final-component symlinks and CLOEXEC prevents descriptor
+inheritance. Directories have the trailing separator removed before open,
+so it cannot bypass O_NOFOLLOW. Path ancestors must be controlled
+by the controller: no openat protocol for hostile namespaces is introduced here.
+Directories/FIFOs cannot become read-only segments; O_NONBLOCK avoids
+blocking on a FIFO before fstat rejects it.
 
-[Metodo](io-metodo.md), [decisioni](io-decisioni.md) e
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-io/catalogo.lisp).
+The injectable backend is an immutable table of six functions: open, reader,
+writer, file flush, directory flush, close, with optional `:identity` callback
+to bind two capabilities to the same file. `:entry-identity` and `:rename`
+are optional for [control-log publication](pubblicazione-control.md),
+with replacement rejected if missing. `:open-relative` and
+`:file-metadata`, together with `:entry-identity`, are needed only
+for relative read-only opening. `:create-relative`, with
+`:file-metadata` and `:entry-identity`, is required for exclusive relative
+creation of new `.tmp` files. It receives vectors/ranges, never SAPs.
+Callbacks are trusted code, signal syscall-error for errno, and respect
+buffer lifetime and ownership. `nil` selects native path with two
+inline alien calls; no C/C++/Rust or project library outside Lisp.
 
-18 nuove prove comprendono short I/O, un byte per passo, EOF parziale, EIO,
-ENOSPC, EINTR, frontiere, budget, chiusura ambigua, errno del cleanup, tipi di file,
-symlink con separatore finale, CLOEXEC, pread concorrenti e due lotti SEAL v1/v2
-scritti con un solo flush. Le 10 mutazioni mirate sono rilevate; nessun warning
-o style warning nella compilazione del prodotto, lint senza violazioni.
+<a id="prove"></a>
+
+## Tests
+
+[Method](io-metodo.md), [decisions](io-decisioni.md), and
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-io/catalogo.lisp).
+
+18 new tests include short I/O, one byte per step, partial EOF, EIO,
+ENOSPC, EINTR, frontiers, budgets, ambiguous close, cleanup errno, file types,
+symlink with trailing separator, CLOEXEC, concurrent preads, and two v1/v2 SEAL batches
+written with one flush. All 10 targeted mutations detected; no warnings
+or style-warnings in product compilation, lint without violations.
 
 ```sh
 make test lint
@@ -115,41 +125,43 @@ sbcl --noinform --no-userinit --script tools/foundation-mutation.lisp --run /tmp
 make check
 ```
 
-Requisiti: REQ-STO-003, REQ-AFF-001/002/004/008, REQ-FOR-003 e REQ-VAL-001.
-Invarianti: INV-A1/A2/A3/A4/A8/A9, INV-P6, INV-X3. Il loro stato sul motore
-rimane distinto da queste prove locali; nessuna promozione automatica.
+Requirements: REQ-STO-003, REQ-AFF-001/002/004/008, REQ-FOR-003, REQ-VAL-001.
+Invariants: INV-A1/A2/A3/A4/A8/A9, INV-P6, INV-X3. Their engine-wide status
+remains distinct from these local tests; no automatic promotion.
 
-## Prestazioni e limiti delle evidenze
+<a id="prestazioni-e-limiti-delle-evidenze"></a>
 
-La [prima misura](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-io/benchmark-iniziale.lisp)
-ha rilevato heap sulle chiamate native. Le chiamate alien inline e l'aritmetica
-fixnum hanno eliminato quelle allocazioni senza ridurre safety o controlli.
-La [campagna senza allocazioni](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-io/benchmark-zero-heap.lisp)
-riporta zero byte heap in tutti i cinque campioni di ogni percorso scelto.
-I campioni originali restano conservati; `io-bench` stampa i risultati e fallisce
-se una campagna riuscita rileva heap.
+## Performance and evidence limits
 
-Misure locali Apple M4/ARM64, SBCL 2.6.9, safety 3, un worker, mediana di cinque
-campioni: pread 2 KiB con cache OS calda circa **1,34 M/s**; append 2 KiB senza
-flush per operazione circa **206 k/s**; append 64 KiB + flush forte circa **269
-gruppi/s**. Non sono prestazioni del database, I/O NVMe sostenuto o latenza delle
-richieste. Il costo di flush dipende da filesystem/dispositivo/carico locale;
-non si deduce P99 da questa campagna. Zero heap vale per i percorsi riusciti
-misurati, non per errori, apertura o inizializzazione.
+The [first measurement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-io/benchmark-iniziale.lisp)
+found heap in native calls. Inline alien calls and fixnum arithmetic
+removed those allocations without reducing safety or checks.
+The [zero-allocation campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-io/benchmark-zero-heap.lisp)
+reports zero heap bytes in all five samples of every selected path.
+Original samples remain preserved; `io-bench` prints results and fails
+if an otherwise successful campaign detects heap.
 
-Due letture hanno controllato ABI/formato/errno e poi durata dei buffer/FD,
-frontiere, bounded loops e assenza di stato tra Serie. Restano revisione
-indipendente, qualifica C1, prova nativa su Linux x86-64, fault injection del
-motore integrato e guasti reali del supporto. La copertura conserva definizioni,
-copie inline e guardie difensive nel denominatore; non equivale a MC/DC.
-Un flush riuscito richiede comunque che OS, filesystem e supporto rispettino
-la garanzia dichiarata: non è una prova contro un dispositivo che mente.
+Local Apple M4/ARM64 measurements, SBCL 2.6.9, safety 3, one worker, median of five
+samples: 2 KiB pread with warm OS cache about **1.34 M/s**; 2 KiB append without
+per-operation flush about **206 k/s**; 64 KiB append + strong flush about **269
+groups/s**. These are neither database performance, sustained NVMe I/O, nor request
+latency. Flush cost depends on filesystem/device/local load;
+P99 cannot be inferred from this campaign. Zero heap applies to measured successful
+paths, not errors, opening, or initialization.
 
-Costanti native confrontate con gli header installati e con le fonti primarie:
+Two readings checked ABI/format/errno, then buffer/FD lifetime,
+frontiers, bounded loops, and absence of cross-Serie state. Independent
+review, C1 qualification, native Linux x86-64 testing, integrated engine
+fault injection, and actual medium failures remain. Coverage retains definitions,
+inline copies, and defensive guards in denominator; it does not equal MC/DC.
+Successful flush still requires OS, filesystem, and medium to honor
+the declared guarantee: it is not proof against a lying device.
+
+Native constants compared with installed headers and primary sources:
 [Apple XNU fcntl.h](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/fcntl.h),
 [Linux UAPI fcntl.h](https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h).
 
-La [rinomina relativa al parent](io-rinomina.md) centralizza l’effetto POSIX e
-il fail-stop locale, usati anche dalla sostituzione verificata del temporaneo.
+[Parent-relative rename](io-rinomina.md) centralizes the POSIX effect and
+local fail-stop, also used by verified temporary replacement.
 
-Il [completamento I/O](io-completamento.md) definisce cleanup di append/flush, frontiera catturata e controllo delle capacità dopo ogni frammento. Questi controlli servono anche il percorso CONTROL; le prove non attestano da sole il recovery completo.
+[I/O completion](io-completamento.md) defines append/flush cleanup, captured frontier, and capability checks after every fragment. These checks also serve the CONTROL path; tests alone do not certify complete recovery.

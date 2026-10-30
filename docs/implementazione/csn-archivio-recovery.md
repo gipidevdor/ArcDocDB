@@ -1,134 +1,148 @@
-# Piano CSN dell'Archivio recuperato
+<a id="piano-csn-dellarchivio-recuperato"></a>
 
-`arcdocdb.recovery.archive.csn` aggrega i [massimi recuperati](recovery-csn.md)
-di un insieme completo di Serie e del decision log dell'Archivio. Realizza
-un passo della sequenza di [recovery](../architettura.md#recovery), senza
-cambiare ADR-0020, ADR-0038, ADR-0041 o ADR-0046.
+# CSN plan of the recovered Archivio
 
-Il piano prepara la base del futuro registro CSN. Non crea il registro,
-non ricostruisce gli indici e non autorizza l'ammissione del traffico.
-Il [bootstrap runtime](runtime-archivio.md) collega ora questa base alla
-famiglia unica dei registri; l'ammissione resta responsabilità del controller.
+`arcdocdb.recovery.archive.csn` aggregates [recovered maximums](recovery-csn.md)
+from a complete set of Serie and the Archivio decision log. It implements
+one step in the [recovery](../architettura.md#recovery) sequence without
+changing ADR-0020, ADR-0038, ADR-0041, or ADR-0046.
 
-## Insieme delle Serie
+The plan prepares the future CSN registry's base. It does not create the registry,
+rebuild indexes, or authorize traffic admission.
+[Runtime bootstrap](runtime-archivio.md) now connects this base to the
+single registry family; admission remains the controller's responsibility.
 
-Il controller consegna l'oggetto canonico `archivio-recovery`, la vista
-canonica di Registri e il vettore completo delle viste del catalogo.
-`crea-insieme-serie-recovery` copia il vettore e controlla stesso ambito
-GET, UUID distinti e presenza di Registri per identità `EQ`. Due viste
-differenti con lo stesso UUID sono rifiutate. Gli UUID delle viste sono
-già copie possedute, immutabili per protocollo; non vengono duplicati.
-Modificare poi il vettore del caller non modifica l'insieme.
+<a id="insieme-delle-serie"></a>
 
-**Completezza rispetto al catalogo persistente e ruolo di Registri sono
-precondizioni del controller.** L'API non legge il catalogo, non deduce
-ruoli dal nome e non può rilevare una Serie omessa dall'elenco iniziale.
-Il catalogo di prodotto resta da collegare.
+## Serie set
 
-## Provenienza delle decisioni
+The controller supplies the canonical `archivio-recovery` object, canonical
+Registri view, and complete vector of catalog views.
+`crea-insieme-serie-recovery` copies the vector and checks the same GET
+scope, distinct UUIDs, and Registri presence by `EQ` identity. Two different
+views with the same UUID are rejected. View UUIDs are
+already owned copies, immutable by protocol; they are not duplicated.
+Later modification of the caller vector does not modify the set.
 
-Ogni tabella del replay DECISION riceve un marker privato di identità,
-privo di campi e riferimenti a entry, buffer o FD. ACTIVE conserva il
-marker della tabella realmente usata nella risoluzione dei prepared.
-Il marker non trattiene la tabella delle decisioni.
+**Completeness against the persistent catalog and Registri's role are
+controller preconditions.** The API does not read the catalog, infer
+roles from names, or detect a Serie omitted from the initial list.
+The product catalog remains to be connected.
 
-Il piano richiede lo stesso oggetto Archivio per insieme e decision log,
-la stessa vista `EQ` per ogni ACTIVE, lo stesso marker del replay e il
-gate canonico di tutti i CLOSED del rispettivo CONTROL. Un replay distinto
-degli stessi byte riceve un marker diverso: non viene scambiato con la
-fonte usata per i presumed abort, anche per ACTIVE senza prepared.
+<a id="provenienza-delle-decisioni"></a>
 
-L'API ACTIVE di basso livello rimane disponibile: il piano accetta il suo
-risultato solo se ha usato proprio la tabella del decision log fornito.
-Il marker è un controllo interno, non una firma o un confine di sicurezza
-contro codice Lisp che accede agli interni privati. Nessun formato su
-disco o registro condiviso fra Serie cambia.
+## Decision provenance
 
-Cambiano i layout privati della tabella e del risultato ACTIVE: occorre
-ricompilare e ricaricare il sistema, senza riutilizzare vecchie istanze.
+Every DECISION replay table receives a private identity marker
+without fields or references to entries, buffers, or FDs. ACTIVE retains
+the marker of the table actually used to resolve prepared records.
+The marker does not retain the decision table.
 
-## API pubbliche
+The plan requires the same Archivio object for set and decision log,
+the same `EQ` view for every ACTIVE, the same replay marker, and the
+canonical gate for all CLOSED segments of the respective CONTROL. A separate replay
+of the same bytes receives a different marker: it is not interchangeable with the
+source used for presumed aborts, even for ACTIVE without prepared records.
 
-| API | Risultato |
+The low-level ACTIVE API remains available: the plan accepts its
+result only if it used exactly the supplied decision log's table.
+The marker is an internal check, not a signature or security boundary
+against Lisp code accessing private internals. No on-disk format
+or shared registry across Serie changes.
+
+Private table and ACTIVE-result layouts change: the system must be
+recompiled and reloaded without reusing old instances.
+
+<a id="api-pubbliche"></a>
+
+## Public APIs
+
+| API | Result |
 |---|---|
-| `crea-insieme-serie-recovery(archive, registri, views :max-series 65536 :budget-riferimenti 524288)` | Insieme posseduto, ordine del catalogo |
-| `numero-serie-recovery(set)` | Numero delle viste copiate |
-| `crea-piano-csn-archivio(set, decisions, active, closed :max-segmenti-serie 65536 :max-segmenti-totali 1048576)` | Piano dopo tutte le verifiche |
-| `massimo-csn-archivio(plan)` | Presenza e massimo u64; `NIL/0` distinto da `T/0` |
-| `statistiche-piano-csn-archivio(plan)` | Numero Serie e numero segmenti ACTIVE+CLOSED |
-| `parole-base-csn-archivio(plan)` | High/low u32 dell'ultimo CSN, senza incremento |
+| `crea-insieme-serie-recovery(archive, registri, views :max-series 65536 :budget-riferimenti 524288)` | Owned set, catalog order |
+| `numero-serie-recovery(set)` | Number of copied views |
+| `crea-piano-csn-archivio(set, decisions, active, closed :max-segmenti-serie 65536 :max-segmenti-totali 1048576)` | Plan after all checks |
+| `massimo-csn-archivio(plan)` | Presence and maximum u64; `NIL/0` distinct from `T/0` |
+| `statistiche-piano-csn-archivio(plan)` | Serie count and ACTIVE+CLOSED segment count |
+| `parole-base-csn-archivio(plan)` | Last CSN's high/low u32, without increment |
 
-`active` è un simple-vector dei risultati ACTIVE. `closed` è un
-simple-vector dei rispettivi simple-vector CLOSED. Count e ordine sono
-quelli dell'insieme posseduto. Registri può occupare qualsiasi posizione.
-I vettori del caller restano congelati fino al ritorno; non sono trattenuti.
+`active` is a simple-vector of ACTIVE results. `closed` is a
+simple-vector of corresponding CLOSED simple-vectors. Count and order are
+those of the owned set. Registri may occupy any position.
+Caller vectors stay frozen until return; they are not retained.
 
-Il massimo include tutte le DECISION, anche senza prepared nelle Serie,
-e tutte le fonti già descritte per ciascuna Serie. TXID, ordini dei log di
-controllo, frontiere e byte di coda non contribuiscono.
-Il piano conserva solo l'oggetto Archivio e quattro scalari. Non conserva
-insieme delle viste, risultati delle Serie, tabelle, decision log o FD.
-La salute delle fonti è controllata durante la costruzione, non certificata
-per il futuro. Un errore impedisce il risultato; nessun massimo parziale
-è pubblicato e nessun registro runtime viene modificato.
+The maximum includes all DECISIONs, even without prepared records in Serie,
+and all sources already described for each Serie. TXIDs, control-log
+orders, frontiers, and tail bytes do not contribute.
+The plan retains only the Archivio object and four scalars. It does not retain
+view set, Serie results, tables, decision log, or FDs.
+Source health is checked during construction, not certified
+for the future. An error prevents a result; no partial maximum
+is published and no runtime registry is modified.
 
-## Budget e costi
+<a id="budget-e-costi"></a>
 
-Numero Serie e `8*N` byte di riferimenti sono controllati prima di copia e
-tabella UUID. È il budget logico su SBCL a 64 bit: esclude hash table,
-header Lisp, viste già esistenti e GC; non è un tetto RSS.
-Il piano verifica cardinalità e somma `N + SUM(CLOSED_i)` prima dei gate
-che allocano le tabelle dei duplicati. Il tetto globale include gli ACTIVE.
-Le scansioni sono limitate a viste, CLOSED ed entry DECISION già verificate;
-i gate CLOSED mantengono i loro budget. Nessun nuovo I/O, thread, timer,
-callback o lock; nessuna modifica a GET o commit. Un marker per tabella e
-un riferimento per ACTIVE; costi di oggetti, boxing e GC da misurare.
+## Budgets and costs
 
-## Base e apertura del runtime
+Serie count and `8*N` reference bytes are checked before copying and
+UUID table allocation. This is the logical budget on 64-bit SBCL: it excludes hash tables,
+Lisp headers, existing views, and GC; it is not an RSS ceiling.
+The plan checks cardinality and sum `N + SUM(CLOSED_i)` before gates
+allocating duplicate tables. The global ceiling includes ACTIVE segments.
+Scans are bounded to already verified views, CLOSED segments, and DECISION entries;
+CLOSED gates retain their budgets. No new I/O, thread, timer,
+callback, or lock; no GET or commit change. One marker per table and
+one reference per ACTIVE; object, boxing, and GC costs remain to be measured.
 
-La base è **M**, ultimo CSN osservato, non M+1. Il registro esistente
-assegna M+1 alla prima richiesta. Il massimo u64 rimane rappresentabile;
-le assegnazioni successive sono rifiutate con `:csn-exhausted`, senza wrap.
+<a id="base-e-apertura-del-runtime"></a>
 
-L'ambito GET del recovery può essere un ambito di bootstrap. Il piano non
-riscrive il suo registro snapshot o il registro CSN già associato. Il
-bootstrap runtime costruisce la famiglia unica dei registri con la base
-validata. Il controller deve ancora associare scritture/snapshot/viste e
-completare gli obblighi di pubblicazione. Due piani non autorizzano due
-allocatori per lo stesso Archivio canonico.
+## Base and runtime opening
 
-Prima dell'ammissione restano catalogo/inventari autorevoli, riconciliazione
-fisica, indici e radici coerenti, chiusura/pubblicazione del vecchio ACTIVE,
-obblighi multiserie completati e uso dello stesso registro da tutti i controller.
+The base is **M**, last observed CSN, not M+1. The existing registry
+assigns M+1 on the first request. Maximum u64 remains representable;
+subsequent assignments are rejected with `:csn-exhausted`, without wrap.
 
-## Decisioni e qualifica
+Recovery GET scope may be a bootstrap scope. The plan does not
+rewrite its snapshot registry or already associated CSN registry.
+Runtime bootstrap builds the single registry family with the validated
+base. The controller must still bind writes/snapshots/views and
+complete publication obligations. Two plans do not authorize two
+allocators for the same canonical Archivio.
 
-Requisiti REQ-REC-001/002, REQ-MVC-006, REQ-TXM-005/007 e REQ-AFF-008;
-invarianti INV-M5, INV-T2, INV-S7, INV-A8 e INV-P6.
+Before admission, remaining work includes authoritative catalog/inventories, physical
+reconciliation, consistent indexes and roots, old ACTIVE closure/publication,
+completed multiseries obligations, and the same registry used by all controllers.
 
-| Caso | Decisione e obbligo dedicato |
+<a id="decisioni-e-qualifica"></a>
+
+## Decisions and qualification
+
+Requirements REQ-REC-001/002, REQ-MVC-006, REQ-TXM-005/007, and REQ-AFF-008;
+invariants INV-M5, INV-T2, INV-S7, INV-A8, and INV-P6.
+
+| Case | Decision and dedicated obligation |
 |---|---|
-| ACR-D01 | Stesso N, N positivo, `8*N <= budget` prima della copia; ogni condizione |
-| ACR-D02 | Vuoto, max Serie o budget riferimenti superati prima delle allocazioni |
-| ACR-D03 | Scope diverso, UUID duplicati con viste EQ/diverse, Registri assente/clone |
-| ACR-D04 | Stesso oggetto Archivio, count ACTIVE AND count CLOSED entrambi esatti |
-| ACR-D05 | Budget per Serie OR somma globale, ACTIVE inclusi, zero CLOSED valido |
-| ACR-D06 | Vista ACTIVE esatta e marker esatto, anche con CSN uguali |
-| ACR-D07 | Gate CLOSED: CONTROL/P diversi, duplicati, count e lifetime |
-| ACR-D08 | Massimo DECISION maggiore/minore/uguale alle Serie, ordine TXID diverso |
-| ACR-D09 | Nessun CSN, zero presente, bit alti, massimo u64; nessun incremento |
-| ACR-D10 | Consumo esatto AND (presenza OR massimo zero); ogni condizione |
-| ACR-D11 | Copia del vettore posseduta; nessun elenco o fonte pesante trattenuto nel piano |
-| ACR-D12 | Query DECISION: consumo esatto AND (count positivo OR massimo zero); forma entry verificata prima del massimo |
+| ACR-D01 | Same N, positive N, `8*N <= budget` before copy; every condition |
+| ACR-D02 | Empty, max Serie or reference budget exceeded before allocation |
+| ACR-D03 | Different scope, duplicate UUIDs with EQ/different views, Registri absent/clone |
+| ACR-D04 | Same Archivio object, ACTIVE count AND CLOSED count both exact |
+| ACR-D05 | Per-Serie budget OR global sum, ACTIVE included, zero CLOSED valid |
+| ACR-D06 | Exact ACTIVE view and exact marker, even with equal CSNs |
+| ACR-D07 | CLOSED gate: different CONTROL/P, duplicates, count and lifetime |
+| ACR-D08 | DECISION maximum greater/less/equal to Serie, different TXID order |
+| ACR-D09 | No CSN, present zero, high bits, maximum u64; no increment |
+| ACR-D10 | Exact consumption AND (presence OR maximum zero); every condition |
+| ACR-D11 | Owned vector copy; no list or heavy source retained in plan |
+| ACR-D12 | DECISION query: exact consumption AND (positive count OR maximum zero); entry shape checked before maximum |
 
-Le [prime evidenze](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archive-csn-plan/README.md)
-separavano build, statica e due letture dell'autore dalla qualifica.
-La [campagna dedicata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archivio-csn-verifica/report.md)
-conserva 54 test composti, prove native/FI, revisione indipendente e controllo
-completo locale. C1/MC/DC, allocazioni/prestazioni e integrazione nel controller
-restano aperte; quella campagna verificava il ponte al registro esistente
-soltanto nei test. Il bootstrap di prodotto ha un metodo dedicato.
-Il [metodo della verifica dedicata](archivio-csn-verifica.md) definisce le
-fixture pubbliche, il ponte di prova al registro e la conservazione dei run.
-La query fonte DECISION ricontrolla forma delle entry e consumo/normalizzazione
-prima del ritorno; nessun nuovo contenitore o secondo attraversamento.
+The [initial evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archive-csn-plan/README.md)
+separated build, static analysis, and two author readings from qualification.
+The [dedicated campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archivio-csn-verifica/report.md)
+preserves 54 compound tests, native/FI tests, independent review, and a full
+local check. C1/MC/DC, allocations/performance, and controller integration
+remain open; that campaign checked the bridge to the existing registry
+only in tests. Product bootstrap has a dedicated method.
+The [dedicated verification method](archivio-csn-verifica.md) defines
+public fixtures, test bridge to the registry, and run preservation.
+The DECISION source query rechecks entry shape and consumption/normalization
+before return; no new container or second traversal.

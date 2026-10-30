@@ -1,151 +1,163 @@
-# SPK-07 — Metodo compaction con writer ACTIVE
+<a id="spk-07--metodo-compaction-con-writer-active"></a>
 
-Metodo registrato prima della compilazione e del check, 2026-10-08.
-Ambito: solo modello logico Common Lisp/SBCL, `safety 3`, nel package
-`arcdocdb.spk07.compaction`, con `CHECK` esportato. Il core SPK-07 è caricato
-prima del modulo; si riusano soltanto `explore` e `require-outcome`.
+# SPK-07 — Compaction method with an ACTIVE writer
 
-## Domanda e criterio di esito
+Method registered before compilation and the check, 2026-10-08.
+Scope: a Common Lisp/SBCL logical model only, with `safety 3`, in package
+`arcdocdb.spk07.compaction`, exporting `CHECK`. The SPK-07 core is loaded
+before the module; only `explore` and `require-outcome` are reused.
 
-CLEAN e copia di sorgenti CLOSED non adiacenti conservano il valore al CSN
-dello snapshot e il latest committed mentre il writer committa in ACTIVE?
-Il controllo positivo deve esaurire ogni grafo finito senza violazioni né
-raggiungere il limite. Ciascuno dei quattro mutanti deve produrre la
-violazione attesa con un witness non vuoto: repoint incondizionato,
-tombstone eliminato, versione snapshot persa, reclaim pinned.
-`CHECK` restituisce una plist `:status :ok` solo dopo questi controlli,
-con conteggi effettivi, report positivi/negativi, assunzioni e limiti.
+<a id="domanda-e-criterio-di-esito"></a>
 
-## Modello e oracle
+## Question and outcome criteria
 
-Workload deterministici di una o due chiavi, quattro segmenti CLOSED,
-sorgenti CLEAN singole oppure coppia non adiacente, record esterni più
-vecchi, un ACTIVE distinto e uno snapshot già registrato. Si enumerano
-PUT/DELETE nei CLOSED, aggiornamenti/DELETE/ricreazioni ACTIVE e due modi
-di risolvere prepared committed: OUTCOME locale e esito nella chiusura
-del manifest (ADR-0041). Prepared abortiti e metadati SEAL/OUTCOME non
-devono finire nell'output; i committed sono copiati come ordinari.
+Do CLEAN and copying nonadjacent CLOSED sources preserve the value at the
+snapshot CSN and the latest committed value while the writer commits in ACTIVE?
+The positive check must exhaust every finite graph without violations or
+reaching the limit. Each of the four mutants must produce the expected
+violation with a nonempty witness: unconditional repoint, discarded tombstone,
+lost snapshot version, and reclamation while pinned.
+`CHECK` returns a plist with `:status :ok` only after these checks,
+including actual counts, positive/negative reports, assumptions, and limits.
 
-La copia avanza per record, il writer per commit atomico durevole e
-pubblicato. Le due sequenze intercalano con sync tmp, syncdir, EDIT,
-rename, repoint per chiave, rilascio del pin e reclaim. L'EDIT è un solo
-fatto durevole: prima si recuperano i sorgenti; dopo si completa l'output.
-I sorgenti sono immutabili; il reclaim elimina soltanto segmenti rimossi,
-dopo completamento e rilocazioni, con pin rilasciato. Il pin è un booleano
-di contratto, senza implementazione delle epoche o scadenza snapshot.
+<a id="modello-e-oracle"></a>
 
-Il repoint del writer cambia solo entry ancora sui sorgenti e con lo
-stesso CSN della copia; una entry ACTIVE più recente resta intatta.
-Le versioni trattenute per lo snapshot sono rilocate separatamente.
-Un tombstone viene conservato se versioni trattenute o record esterni
-più vecchi potrebbero riemergere; ACTIVE non giustifica lo scarto.
-Il filtro di esistenza è esatto oppure conservativamente «forse», mai
-con falsi negativi (ADR-0042).
+## Model and oracle
 
-L'oracle usa una storia committed immutabile e il prefisso dei commit
-ACTIVE, senza chiamare selezione, repoint o ricostruzione del modello.
-Confronta valori e CSN dopo ogni stato/interleaving. Da ogni stato si
-controlla anche il crash e la riconciliazione, ricostruendo dalle sole
-fonti ammesse dal manifest e dal prefisso ACTIVE durevole; si confrontano
-latest e valore storico al CSNsnapshot e si verifica l'idempotenza del
-recovery. Dopo un vero riavvio lo snapshot non sopravvive (ADR-0040): il
-valore storico resta una query dell'oracle sui record conservati, non
-una nuova decisione sulla persistenza degli snapshot.
+Deterministic workloads with one or two keys, four CLOSED segments,
+single CLEAN sources or a nonadjacent pair, older external records,
+a separate ACTIVE segment, and one already registered snapshot. The model
+enumerates PUT/DELETE in CLOSED, ACTIVE updates/DELETE/recreations, and two
+ways to resolve committed prepared records: local OUTCOME and an outcome in
+the manifest closure (ADR-0041). Aborted prepared records and SEAL/OUTCOME
+metadata must not enter the output; committed records are copied as ordinary records.
 
-## Confini e conflitti dichiarati
+Copying advances one record at a time; the writer advances through atomic
+durable, published commits. These two sequences interleave with tmp sync,
+syncdir, EDIT, rename, per-key repoint, pin release, and reclamation. EDIT is
+one durable fact: before it, recovery uses the sources; after it, recovery
+completes the output. Sources are immutable; reclamation deletes only removed
+segments, after completion and relocations, with the pin released. The pin is
+a contract boolean, without an implementation of epochs or snapshot expiration.
 
-Riferimenti letti: ADR-0040/0041/0042 e INV-C1…C11. La policy MERGE della
-specifica esclude segmenti necessari a snapshot attivi. La coppia non
-adiacente con snapshot qui richiesta verifica il protocollo di copia
-e la conservazione delle versioni, sotto ammissione astratta: **non**
-dimostra né modifica la policy MERGE, INV-C5/C6, stabilità o basso carico.
-Nessuna modifica alle decisioni o al gate globale SPK-07.
+The writer's repoint changes only entries still on the sources and with the
+same CSN as the copy; a newer ACTIVE entry remains intact.
+Versions retained for the snapshot are relocated separately.
+A tombstone is retained if retained versions or older external records could
+resurface; ACTIVE does not justify discarding it.
+The existence filter is exact or conservatively “maybe,” never producing
+false negatives (ADR-0042).
 
-Assunzioni: memoria sequenzialmente consistente; transizioni atomiche;
-CSN totali, un solo record per chiave e CSN; CLOSED autosufficienti e
-ACTIVE con CSN superiori ai CLOSED; commit ACTIVE durevole/pubblicato
-atomico; snapshot e scelta dei sorgenti fissati prima della copia;
-conservazione prudente delle versioni selezionate anche dopo rilascio.
-Si verifica safety e completabilità bounded, senza fairness o liveness
-del motore. Nessun filesystem reale, byte/CRC, errore I/O, memoria debole,
-decoder, benchmark, epoch internals o scadenza snapshot.
+The oracle uses an immutable committed history and the prefix of ACTIVE
+commits, without calling the model's selection, repoint, or rebuild routines.
+It compares values and CSNs after every state/interleaving. Crash and
+reconciliation are also checked from every state, rebuilding solely from
+sources permitted by the manifest and the durable ACTIVE prefix; latest and
+historical values at CSNsnapshot are compared, and recovery idempotence is
+checked. A snapshot does not survive a real restart (ADR-0040): the historical
+value remains an oracle query over retained records, rather than a new
+decision about snapshot persistence.
 
-## Esecuzione e registrazione
+<a id="confini-e-conflitti-dichiarati"></a>
 
-Ogni tentativo di compile/check produce un file nuovo sotto
-`spikes/SPK-07-protocols/out/`, senza sovrascrivere prove precedenti.
-Il record dati Common Lisp schema 1 conserva argv e stdin esatti,
-ambiente SBCL/OS/CPU/RAM/heap, tempi, blob di contenuto prima/dopo,
-esito/exit code, risultato, limiti, raw stdout/stderr e fallimenti.
-Nessun comando Git: i blob sono identificati da digest del contenuto e
-la storia Git non viene interrogata. Anche warning/style-warning,
-errori di compilazione, budget esauriti e output malformato fanno fallire
-il tentativo e vengono registrati. Compilati confinati nello stesso out.
+## Declared boundaries and conflicts
 
-Compilazione separata del core esistente e del modulo con ogni warning
-(incluso style-warning) fatale, più verifica dei valori warnings-p e
-failure-p di `compile-file`. Check breve con limite esplicito per grafo;
-nessun benchmark e nessun commit.
+References read: ADR-0040/0041/0042 and INV-C1…C11. The specification's MERGE
+policy excludes segments needed by active snapshots. The requested nonadjacent
+pair with a snapshot checks the copy protocol and version preservation under
+abstract admission: it does **not** prove or change the MERGE policy,
+INV-C5/C6, stability, or low load.
+No changes to decisions or the global SPK-07 gate.
 
-## Risultati osservati e consegna
+Assumptions: sequentially consistent memory; atomic transitions; totally
+ordered CSNs, one record per key and CSN; self-contained CLOSED segments and
+ACTIVE CSNs greater than CLOSED CSNs; atomic durable/published ACTIVE commits;
+snapshot and source selection fixed before copying; conservative retention of
+selected versions even after release. The check covers safety and bounded
+completability, without engine fairness or liveness. No real filesystem,
+bytes/CRC, I/O errors, weak memory, decoder, benchmark, epoch internals, or
+snapshot expiration.
 
-Check eseguito su SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, 16 GiB RAM;
-heap del processo 1.024 MiB. Compilazione strict e caricamento completati,
-stderr vuoto, `CHECK` restituisce `:status :ok`. Nessuna casualità.
+<a id="esecuzione-e-registrazione"></a>
 
-| Controllo positivo | Conteggio effettivo |
+## Execution and recording
+
+Every compile/check attempt produces a new file under
+`spikes/SPK-07-protocols/out/`, without overwriting earlier evidence.
+The schema 1 Common Lisp data record preserves exact argv and stdin,
+SBCL/OS/CPU/RAM/heap environment, timings, before/after content blobs,
+outcome/exit code, result, limits, raw stdout/stderr, and failures.
+No Git commands: blobs are identified by content digests, and Git history is
+not queried. Warnings/style-warnings, compilation errors, exhausted budgets,
+and malformed output also fail the attempt and are recorded. Compiled files
+are confined to the same out directory.
+
+Separate compilation of the existing core and module treats every warning
+(including style-warning) as fatal, and checks the warnings-p and failure-p
+values from `compile-file`. A short check uses an explicit per-graph limit;
+no benchmark or commit.
+
+<a id="risultati-osservati-e-consegna"></a>
+
+## Observed results and delivery
+
+Check run on SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, 16 GiB RAM;
+process heap 1,024 MiB. Strict compilation and loading completed,
+stderr empty, `CHECK` returned `:status :ok`. No randomness.
+
+| Positive check | Actual count |
 |---|---:|
-| Grafi esauriti senza violazioni | 98 |
-| Stati distinti visitati | 7.994 |
-| Transizioni esplorate | 16.952 |
-| Stati finali con tutti i commit e reclaim completati | 98 |
-| Massimo stati per grafo / limite | 140 / 10.000 |
-| Letture dall'indice corrente / snapshot con pin | 12.034 / 5.750 |
-| Proiezioni di crash | 11.592 |
-| Prefissi di recupero verificati anche dopo riavvio | 46.368 |
-| Ricostruzioni in ordine diretto/inverso | 92.736 |
-| Confronti dopo crash, latest / storico al CSNsnapshot | 139.584 / 139.584 |
+| Graphs exhausted without violations | 98 |
+| Distinct states visited | 7,994 |
+| Transitions explored | 16,952 |
+| Final states with all commits and reclamations completed | 98 |
+| Maximum states per graph / limit | 140 / 10,000 |
+| Reads from the current index / pinned snapshot | 12,034 / 5,750 |
+| Crash projections | 11,592 |
+| Recovery prefixes also checked after restart | 46,368 |
+| Forward/reverse rebuilds | 92,736 |
+| Post-crash comparisons, latest / historical at CSNsnapshot | 139,584 / 139,584 |
 
-I 98 grafi comprendono 64 configurazioni a una chiave, 32 a due chiavi
-complementari e due casi di scarto sicuro del tombstone isolato, con
-filtro esatto/«forse». Sono 16 combinazioni PUT/DELETE a una chiave e
-un campione dichiarato a due chiavi; risoluzione OUTCOME/manifest e
-filtro esatto/«forse» sono alternati nei carichi, senza esaurire il loro
-prodotto cartesiano. Le proiezioni di crash enumerano i nomi tmp/definitivo
-e la possibile persistenza dei sorgenti già eliminati; non sono crash
-del filesystem. Ogni proiezione ha quattro prefissi di recupero, inclusi
-inizio e fine, e due ordini di ricostruzione, non tutte le permutazioni.
+The 98 graphs comprise 64 one-key configurations, 32 complementary two-key
+configurations, and two cases of safely discarding an isolated tombstone,
+with an exact/“maybe” filter. They cover 16 one-key PUT/DELETE combinations
+and a declared two-key sample; OUTCOME/manifest resolution and exact/“maybe”
+filters alternate across workloads, without exhausting their Cartesian
+product. Crash projections enumerate tmp/final names and possible persistence
+of already deleted sources; they are not filesystem crashes. Every projection
+has four recovery prefixes, including start and end, and two rebuild orders,
+rather than all permutations.
 
-Controlli negativi: quattro mutanti per ciascuna cardinalità di chiavi,
-otto controesempi specifici con percorso non vuoto. Il BFS scopre 568
-stati e ne visita 510 prima delle violazioni (1.165 transizioni).
+Negative checks: four mutants for each key cardinality, yielding eight specific
+counterexamples with nonempty paths. BFS discovers 568 states and visits 510
+before the violations (1,165 transitions).
 
-| Mutante | Controesempio a una chiave |
+| Mutant | One-key counterexample |
 |---|---|
-| Repoint incondizionato | Il commit ACTIVE CSN 5 viene sovrascritto dalla copia CLOSED CSN 4. |
-| Tombstone eliminato | Dopo EDIT riappare il PUT esterno CSN 3, nascosto dal DELETE CSN 4. |
-| Versione snapshot persa | Dopo EDIT lo snapshot CSN 2 restituisce il PUT CSN 1 invece del CSN 2. |
-| Reclaim pinned | I sorgenti vengono eliminati con il riferimento ancora attivo, dopo completamento. |
+| Unconditional repoint | ACTIVE commit CSN 5 is overwritten by the CLOSED copy at CSN 4. |
+| Discarded tombstone | After EDIT, external PUT CSN 3 resurfaces, previously hidden by DELETE CSN 4. |
+| Lost snapshot version | After EDIT, snapshot CSN 2 returns PUT CSN 1 instead of CSN 2. |
+| Reclamation while pinned | Sources are deleted with the reference still active, after completion. |
 
-Tutti i tentativi sono raccolti anche nel record unico schema 1
+All attempts are also collected in the single schema 1 record
 [`spk07-compaction-campaign.lisp`](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-compaction-campaign.lisp),
-che incorpora integralmente i record individuali con comando/stdin,
-ambiente, contenuti e digest dei blob, risultato, limiti e output grezzo.
-I digest `:git-blob` sono SHA-1 di `blob <lunghezza> NUL <contenuto>`,
-calcolati senza invocare Git; si conserva anche SHA-256 del contenuto.
+which embeds the individual records in full, including command/stdin,
+environment, blob contents and digests, result, limits, and raw output.
+The `:git-blob` digests are SHA-1 of `blob <length> NUL <content>`,
+computed without invoking Git; the content SHA-256 is also retained.
 
-Sono conservati quattro fallimenti iniziali: uno del wrapper (simbolo
-UIOP inesistente, prima dell'avvio compile/check), tre di compilazione
-del modulo (parentesi mancante, clausola LOOP non ammessa, parentesi in
-eccesso). Il primo record è ricostruito dal log grezzo e dichiara
-`:source-blobs-before :not-captured`; non inventa la provenienza mancante.
-Seguono il check riuscito e la compilazione/check finale dopo la revisione
-in italiano dei commenti e delle docstring. Le fonti vengono confrontate
-prima/dopo ciascun tentativo gestito dal wrapper.
+Four initial failures are preserved: one wrapper failure (nonexistent UIOP
+symbol, before compile/check started), and three module compilation failures
+(missing parenthesis, unsupported LOOP clause, extra parenthesis). The first
+record is reconstructed from the raw log and declares
+`:source-blobs-before :not-captured`; it does not invent missing provenance.
+These are followed by the successful check and the final compilation/check
+after the Italian revision of comments and docstrings. Sources are compared
+before/after every attempt managed by the wrapper.
 
-La consegna riguarda `compaction.lisp`, questo metodo e i nuovi artefatti
-con prefisso `compaction-` sotto `out/`. `run-module.lisp` è destinato
-all'integrazione successiva e non è modificato né usato da queste prove.
-Il modulo è verificato caricando il core prima del suo FASL. Il gate
-globale resta aperto, con i limiti dichiarati sopra e il conflitto di
-ammissione MERGE esplicitato; nessuna decisione viene promossa o cambiata.
+The delivery covers `compaction.lisp`, this method, and new artifacts with
+the `compaction-` prefix under `out/`. `run-module.lisp` is intended for later
+integration and is neither modified nor used by these checks. The module is
+verified by loading the core before its FASL. The global gate remains open,
+with the limits declared above and the MERGE admission conflict made explicit;
+no decision is promoted or changed.

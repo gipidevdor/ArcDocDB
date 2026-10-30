@@ -1,62 +1,68 @@
-# Verifica funzionale delle prove OUTCOME del resolver CLOSED
+<a id="verifica-funzionale-delle-prove-outcome-del-resolver-closed"></a>
 
-La suite dedicata aggiunge **42 test**: 8 per ordinamento e ricerca delle
-prove, 13 per costruzione e 21 per lettura. Segue il
-[metodo preregistrato](get-resolver-metodo.md), senza modificare formati,
-requisiti o codice del resolver. Le
-[evidenze native](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-resolver-outcome/)
-conservano comandi, output e file grezzi completi, compresi i FASL come dati.
-La [raccolta complementare degli output degli spike](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-resolver-spikes-raw/)
-preserva anche i FASL generati fuori dalla directory generale delle prove.
+# Functional verification of CLOSED resolver OUTCOME proofs
 
-## Risultati locali
+Dedicated suite adds **42 tests**: 8 for proof sorting/search,
+13 for construction, 21 for reading. Follows
+[preregistered method](get-resolver-metodo.md) without changing formats,
+requirements, or resolver code.
+[Native evidence](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-resolver-outcome/)
+preserves commands, outputs, complete raw files, including FASLs as data.
+[Complementary spike-output collection](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-resolver-spikes-raw/)
+also preserves FASLs generated outside general evidence directory.
 
-Il freeze `e75caed6694e4a2c141b5ff155dfe0d418191c75` supera `make check`
-senza avvisi: 1.011 test di modulo e due smoke check.
-Passano regressione, controlli statici, tracciabilità,
-collegamenti, verifiche delle evidenze e controlli degli spike.
-La suite resolver passa anche nel processo separato di copertura.
-Entrambi i record riportano exit code 0, working tree iniziale pulito e
-gli stessi **731 path/blob** prima e dopo, verificati contro il freeze.
-I risultati appartengono a questo commit, precedente alla presente pagina.
+<a id="risultati-locali"></a>
 
-L'integrazione con `main` è verificata al freeze
-`15fc91c824b0c49ad91dfdfc9845d4e9e2148102`: `make check` R3 passa
-con 1.011 test di modulo e due smoke check, exit 0 e **735 path/blob**
-stabili, corrispondenti al commit. La copertura R2 ripete separatamente
-i 42 test e conserva gli stessi conteggi della tabella seguente.
-La [raccolta dell'integrazione](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-resolver-integration/)
-conserva integralmente anche il precedente `make check` R2, exit 2:
-i test erano passati, ma sette collegamenti di un README temporaneo
-di raccolta impedivano il controllo documentale. Quel modello è stato
-rinominato `.txt`; R3 verifica il controllo completo dopo la correzione.
-R2 non è qualificato come esito complessivo positivo.
+## Local results
 
-Le fixture writer CLOSED usano file reali readonly, header/SEAL/manifest
-v1 e v2 e encoding CRC indipendente. Gli attesi comprendono offset e valori
-letterali, TXID/CSN u64, OUTCOME fisicamente riordinati, prima prova dei
-duplicati e discordanza separata delle word alta/bassa. I limiti del payload
-passano esatti e falliscono un byte sotto, conservando la mappa precedente.
-Un buffer sorgente riusato non altera la mappa; la coda dopo `valid-bytes`
-rimane intatta e non viene letta dal costruttore.
+Freeze `e75caed6694e4a2c141b5ff155dfe0d418191c75` passes `make check`
+without warnings: 1,011 module tests, two smoke checks.
+Regression, static checks, traceability,
+links, evidence verification, spike checks pass.
+Resolver suite also passes separate coverage process.
+Both records report exit code 0, initially clean working tree, and
+same **731 path/blob** pairs before/after, checked against freeze.
+Results belong to this commit, preceding page.
 
-La cache prepared calda rilegge ancora OUTCOME dallo stesso FD. CRC, CSN o
-TXID discordanti impediscono la risposta anche con valore già in cache;
-una seconda prova identica non sostituisce una prima prova corrotta.
-Le FI persistenti ripristinano i byte della sola fixture. Errori, uscita
-non locale e scadenza dello snapshot dopo copia provvisoria liberano GET/EBR.
-Il caso prepared senza OUTCOME conserva CSN/prova zero: con candidato
-pubblico positivo fallisce prima con `:resolver-candidate-csn`; non è una
-prova autonoma del guard interno `:resolver-missing-outcome`.
+Integration with `main` verified at freeze
+`15fc91c824b0c49ad91dfdfc9845d4e9e2148102`: `make check` R3 passes
+with 1,011 module tests, two smoke checks, exit 0, **735 path/blob** pairs
+stable and matching commit. Coverage R2 separately repeats
+42 tests, same counts as table below.
+[Integration collection](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-resolver-integration/)
+fully preserves previous `make check` R2, exit 2:
+tests passed but seven links in temporary collection README
+prevented documentation check. Template
+renamed `.txt`; R3 verifies full check after correction.
+R2 not qualified as overall success.
 
-## Copertura diagnostica isolata
+CLOSED writer fixtures use real read-only files, v1/v2 header/SEAL/manifest,
+independent CRC encoding. Expected values include literal offsets/values,
+u64 TXID/CSN, physically reordered OUTCOMEs, first duplicate
+proof, separate high/low-word disagreement. Payload limits
+pass exactly, fail one byte below, preserving previous map.
+Reused source buffer does not alter map; tail after `valid-bytes`
+stays intact, not read by constructor.
 
-SB-COVER viene azzerato dopo caricamento e prima dei soli 42 test resolver.
-Il tool salva lo stato grezzo prima di validarlo e confronta i conteggi
-ricavati dai dati con quelli usati dall'HTML. Il rapporto contiene soltanto
-i sette file CLOSED; ACTIVE e le altre suite non entrano nei conteggi.
+Hot prepared cache still rereads OUTCOME from same FD. Conflicting CRC, CSN,
+or TXID prevents answer even with cached value;
+second identical proof does not replace corrupt first proof.
+Persistent FI restores only fixture bytes. Errors, nonlocal
+exit, and snapshot expiry after provisional copy release GET/EBR.
+Prepared-without-OUTCOME case retains zero CSN/proof: positive public
+candidate fails first with `:resolver-candidate-csn`; not independent
+proof of internal `:resolver-missing-outcome` guard.
 
-| File | Espressioni eseguite/totali | Rami eseguiti/totali |
+<a id="copertura-diagnostica-isolata"></a>
+
+## Isolated diagnostic coverage
+
+SB-COVER reset after loading, before only 42 resolver tests.
+Tool saves raw state before validating and compares data-derived
+counts with HTML counts. Report includes only
+seven CLOSED files; ACTIVE and other suites excluded from counts.
+
+| File | Executed/total expressions | Executed/total branches |
 |---|---:|---:|
 | package | 0/1 | 0/0 |
 | types | 6/29 | 0/0 |
@@ -65,23 +71,25 @@ i sette file CLOSED; ACTIVE e le altre suite non entrano nei conteggi.
 | rows | 147/167 | 12/16 |
 | build | 184/260 | 21/38 |
 | read | 227/265 | 27/40 |
-| **Totale** | **1156/1416 (81,64%)** | **131/184 (71,20%)** |
+| **Total** | **1156/1416 (81.64%)** | **131/184 (71.20%)** |
 
-Zero rami significa denominatore zero, senza percentuale inventata.
-La copertura è una diagnosi della suite, non una misura MC/DC. Non si
-attribuiscono velocità, allocazioni, RSS o risultati di mutazioni.
+Zero branches means zero denominator, no invented percentage.
+Coverage diagnoses suite, not MC/DC measurement. No speed,
+allocation, RSS, or mutation results attributed.
 
-## Revisione e limiti
+<a id="revisione-e-limiti"></a>
 
-Una lettura indipendente prima del freeze ha corretto due aspettative
-della fixture: vettore vuoto e budget byte compatibile con il budget lotto.
-La lettura successiva dei record verifica tutti i path/blob, i 42 nomi e
-l'ordine dei test, lo stato grezzo e i conteggi di ciascuna pagina HTML.
-Il prodotto non ha richiesto correzioni in questa campagna.
+## Review and limits
 
-Restano aperti qualifica C1, decisioni non esercitate e MC/DC. Questa suite
-non verifica ACTIVE, prove EDIT, storico, directory mista, rotazione/reclaim,
-pubblicazione concorrente o integrazione del server. Non promuove requisiti
-e non chiude la Fase 0. La CI della pull request ripete `make check` su Linux
-e macOS e controlla i documenti separatamente; i suoi esiti appartengono al
-commit effettivamente pubblicato, distinto dal freeze locale qui riportato.
+Independent pre-freeze reading corrected two fixture expectations:
+empty vector and byte budget compatible with batch budget.
+Subsequent record reading checks all path/blob pairs, 42 names and
+test order, raw state, each HTML page's counts.
+Product required no correction in campaign.
+
+C1 qualification, unexercised decisions, MC/DC remain open. Suite
+does not verify ACTIVE, EDIT proofs, history, mixed directory, rotation/reclaim,
+concurrent publication, or server integration. Promotes no requirement
+and does not close Phase 0. Pull-request CI repeats `make check` on Linux
+and macOS, checks documents separately; its outcomes belong to
+actually published commit, distinct from local freeze reported here.

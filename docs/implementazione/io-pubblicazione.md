@@ -1,15 +1,19 @@
-# Pubblicazione di temporanei senza sostituzione
+<a id="pubblicazione-di-temporanei-senza-sostituzione"></a>
 
-`arcdocdb.io:pubblica-temporaneo` fornisce il confine I/O per completare
-un segmento `.tmp` nominato da una decisione già durevole, secondo
+# Publishing temporary files without replacement
+
+`arcdocdb.io:pubblica-temporaneo` provides the I/O boundary for completing
+a `.tmp` segment named by an already durable decision under
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio).
-La [stabilizzazione della fonte recuperata](stabilizzazione-nomi-recovery.md)
-la collega ora al token semantico, al CONTROL e al flush parent per fonte.
-Il Recovery Manager deve ancora coordinare l'insieme completo e l'ammissione.
-Il [metodo e le decisioni](io-pubblicazione-metodo.md)
-precedono codice e diagnostiche.
+[Recovered-source stabilization](stabilizzazione-nomi-recovery.md)
+now connects it to the semantic token, CONTROL, and per-source parent flush.
+The Recovery Manager still needs to coordinate the full set and admission.
+The [method and decisions](io-pubblicazione-metodo.md)
+precede code and diagnostics.
 
-## Contratto
+<a id="contratto"></a>
+
+## Contract
 
 ```lisp
 (arcdocdb.io:pubblica-temporaneo
@@ -17,86 +21,90 @@ precedono codice e diagnostiche.
 (arcdocdb.io:durable-flush directory)
 ```
 
-Il compito I/O possiede il namespace esclusivo e mantiene aperte le
-capacità prestate. `directory` è un parent aperto; `source-readonly` è il
-file regolare readonly già verificato. Il caller garantisce contenuti,
-EDIT autorevole durevole e stabilità del sorgente; un nome `.tmp` non è
-una prova di appartenenza. La primitiva accetta foglie ASCII stampabili,
-1…255 byte, senza slash, backslash, NUL, `.` o `..`. Il nome sorgente è
-esattamente il target seguito da `.tmp`, rispettando anche il limite 255.
+The I/O task owns the exclusive namespace and keeps borrowed
+capabilities open. `directory` is an open parent; `source-readonly` is the
+already verified regular read-only file. Caller guarantees contents,
+authoritative durable EDIT, and source stability; a `.tmp` name does not
+prove membership. Primitive accepts printable ASCII leaves,
+1…255 bytes, without slash, backslash, NUL, `.` or `..`. Source name is
+exactly target followed by `.tmp`, also respecting the 255 limit.
 
-Prima degli effetti controlla capacità, nomi e backend; copia i nomi in
-stringhe private e confronta device/inode del FD con il sorgente relativo
-allo stesso parent, senza seguire symlink. La rinomina esclusiva rifiuta
-un target già presente nella syscall. Il nome finale viene verificato
-contro il FD prima del ritorno. Le primitive native sono specificate nel metodo.
+Before effects it checks capabilities, names, and backend; copies names into
+private strings and compares FD device/inode with source relative
+to the same parent, without following symlinks. Exclusive rename rejects
+an existing target in the syscall. Final name is checked
+against FD before return. Native primitives are specified in the method.
 
-Il risultato NIL attesta la rinomina e le postcondizioni del namespace.
-La decisione EDIT resta il punto atomico del database; la rinomina
-completa quella decisione. La durability del parent richiede il flush
-separato. Il FD readonly resta utilizzabile con la stessa identità; la
-primitiva non modifica i byte del segmento o le frontiere I/O.
+NIL result establishes rename and namespace postconditions.
+EDIT decision remains the database's atomic point; rename
+completes that decision. Parent durability requires a separate
+flush. Read-only FD remains usable with the same identity; primitive
+does not modify segment bytes or I/O frontiers.
 
-L'esclusione del target non protegge un sorgente sostituito fra controllo
-e syscall. L'esclusività del namespace rimane una precondizione, come
-per l'[apertura relativa](io-apertura-relativa.md) e l'inventario. Il
-coordinatore non riusa i nomi osservati nel vecchio set delle fonti dopo
-il completamento come se fossero ancora attuali. La stabilizzazione osserva
-invece entrambi i nomi canonici e può completare il ramo già definitivo;
-un esito incerto con capacità guasta richiede una nuova acquisizione.
+Target exclusion does not protect a source replaced between check
+and syscall. Namespace exclusivity remains a precondition, as
+for [relative opening](io-apertura-relativa.md) and inventory. The
+coordinator does not reuse names observed in the old source set after
+completion as though still current. Stabilization instead observes
+both canonical names and can complete the already final branch;
+an uncertain outcome with faulted capability requires reacquisition.
 
-## Backend, errori e costi
+<a id="backend-errori-e-costi"></a>
 
-Il backend fidato aggiunge `:rename-exclusive` con firma
-`(directory-fd source target) -> 0`. Sono obbligatorie anche `identity`
-e `entry-identity`, sullo stesso backend del parent e del file. Le
-callback esistenti di rinomina ordinaria non sono un fallback. Il nuovo
-slot richiede ricompilazione e nuove istanze del backend.
+## Backend, errors, and costs
 
-| Confine | Esito |
+Trusted backend adds `:rename-exclusive` with signature
+`(directory-fd source target) -> 0`. Also required: `identity`
+and `entry-identity`, on the same backend as parent and file. Existing
+ordinary-rename callbacks are not fallback. New
+slot requires rebuilding and new backend instances.
+
+| Boundary | Outcome |
 |---|---|
-| Modo, foglia o relazione `.tmp` errata | `invalid-argument`; nessun effetto |
-| Backend diversi | `invalid-argument`, `:io-identity-backend` |
-| Callback/simbolo non disponibile | `unsupported-format`, `:io-publish-unavailable` |
-| ABI o piattaforma non ammessa | `unsupported-format`, `:io-abi` o `:io-platform` |
-| Sorgente diverso dal FD prima della rinomina | `invalid-argument`, `:io-replacement-identity`; nessuna rinomina |
-| Identità illeggibile/non regolare | Condizione originale; nessuna rinomina se il preflight non termina |
-| Target occupato o errore della syscall | `io-fault`, operation `:rename`, errno originale |
-| Callback non zero | `io-fault`, `:io-rename-result` |
-| Postcondizione o uscita incompleta dall'effetto | Causa originale, parent ancora aperto portato a `:faulted` |
+| Wrong mode, leaf, or `.tmp` relation | `invalid-argument`; no effect |
+| Different backends | `invalid-argument`, `:io-identity-backend` |
+| Callback/symbol unavailable | `unsupported-format`, `:io-publish-unavailable` |
+| Disallowed ABI or platform | `unsupported-format`, `:io-abi` or `:io-platform` |
+| Source differs from FD before rename | `invalid-argument`, `:io-replacement-identity`; no rename |
+| Unreadable/nonregular identity | Original condition; no rename if preflight does not finish |
+| Occupied target or syscall error | `io-fault`, operation `:rename`, original errno |
+| Nonzero callback | `io-fault`, `:io-rename-result` |
+| Postcondition or incomplete exit from effect | Original cause, still-open parent moved to `:faulted` |
 
-Il cleanup è quello comune della [rinomina nella directory](io-rinomina.md).
-Non riapre una capacità chiusa o già faulted e non maschera la condizione.
-Nessun retry, rollback, close, unlink o flush implicito. Un target presente
-guasta conservativamente la capacità parent anche quando il kernel ha
-rifiutato l'effetto: il caller deve riconciliare prima di proseguire.
-Le condizioni di supporto del filesystem non producono un ripiego meno
-restrittivo. Non vengono cancellati temporanei orfani o segmenti rimossi.
+Cleanup is shared with [rename within directory](io-rinomina.md).
+It neither reopens a closed/already faulted capability nor masks the condition.
+No implicit retry, rollback, close, unlink, or flush. An existing target
+conservatively faults parent capability even when kernel rejected
+the effect: caller must reconcile before proceeding.
+File-system support conditions do not trigger a less restrictive
+fallback. Orphan temporary files and removed segments are not deleted.
 
-Due nomi bounded, un effetto di rinomina e verifiche di identità in numero
-costante. Copie, callback e FFI possono allocare sul percorso freddo.
-Nessun thread, lock o scrittura condivisa fra Serie, né modifica al
-percorso caldo delle richieste. Non sono state misurate prestazioni.
+Two bounded names, one rename effect, and a constant number of identity
+checks. Copies, callbacks, and FFI may allocate on the cold path.
+No threads, locks, or shared writes between Serie, nor changes to
+hot request path. Performance has not been measured.
 
-## Stato della verifica
+<a id="stato-della-verifica"></a>
 
-Il perimetro di questo incremento è compilazione senza avvisi e controlli
-statici registrati, con revisione indipendente del codice. Non sono
-aggiunti o eseguiti test funzionali, FI, copertura, mutazioni o benchmark.
-Le decisioni PIO-D01…D09 restano da qualificare. La presenza della primitiva
-non chiude il recovery fisico, l'ammissione o i gate C1/MC/DC.
+## Verification status
 
-La [campagna locale conservata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-io-publish-exclusive/report.md)
-comprende sei diagnostiche riuscite e il primo disassemblaggio fallito per
-una cache C4 piatta, poi corretto senza modifiche al prodotto. Compilazione
-forzata senza warning/style-warning; lint 351 file, tracciabilità e link
-senza errori. Il secondo disassemblaggio legge sette funzioni senza
-invocare la nuova API. Sorgenti, varianti dei metodi e originali sono
-raccolti con hash e inventario chiuso.
+This increment's scope is warning-free compilation and recorded
+static checks, with independent code review. No functional tests,
+FI, coverage, mutations, or benchmarks are added or run.
+Decisions PIO-D01…D09 remain to be qualified. Primitive presence
+does not close physical recovery, admission, or C1/MC/DC gates.
 
-La revisione indipendente è statica. Il supplemento conferma che sulle
-architetture di riferimento Linux x86-64 e Darwin ARM64 il linkage SBCL
-permette il rifiuto esplicito del simbolo assente nella preflight. Su altre
-architetture un warning del loader può precedere l'API; questo confine
-resta non qualificato. La campagna non ha eseguito la nuova syscall né
-verificato il supporto di filesystem o piattaforme diverse.
+The [preserved local campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-io-publish-exclusive/report.md)
+includes six successful diagnostics and first disassembly failed due to
+a flat C4 cache, later corrected without product changes. Forced compilation
+without warnings/style-warnings; lint 351 files, traceability and links
+without errors. Second disassembly reads seven functions without
+invoking new API. Sources, method variants, and originals are
+collected with hashes and closed inventory.
+
+Independent review is static. Supplement confirms that on reference
+architectures Linux x86-64 and Darwin ARM64, SBCL linkage
+allows explicit rejection of missing symbol in preflight. On other
+architectures a loader warning may precede API; this boundary
+remains unqualified. Campaign neither executed new syscall nor
+verified file-system support or other platforms.

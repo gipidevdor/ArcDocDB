@@ -1,95 +1,103 @@
-# Metodo della lista dei writer pronti
+<a id="metodo-della-lista-dei-writer-pronti"></a>
 
-Registrato il 2026-10-09 prima delle campagne, base `92d8b0e`.
-Componente C1: lista pronta preallocata a partizioni indipendenti, da
+# Ready writer list method
+
+Registered on 2026-10-09 before campaigns, base `92d8b0e`.
+C1 component: preallocated ready list with independent partitions, from
 [ADR-0045 §§6/8](../adr/0045-modello-di-esecuzione.md), REQ-CON-001/002/004/005
-e REQ-AFF-008; INV-P1/P2/P5/P6, INV-A8 e INV-V4.
+and REQ-AFF-008; INV-P1/P2/P5/P6, INV-A8, and INV-V4.
 
-## Contratto preregistrato
+<a id="contratto-preregistrato"></a>
 
-Ogni partizione è un ring FIFO con una guard locale acquisita con un solo
-CAS. Nessuno spin, callback, I/O, contatore globale o allocazione per compito.
-Il ring trasporta riferimenti ai writer, senza membership, generazioni o
-cleanup dello stato del writer. Il protocollo di
-[handoff](writer-handoff.md) resta invariato. La lista comune è toccata solo
-per pubblicare o prendere un tratto, non per ciascun messaggio.
+## Preregistered contract
 
-La costruzione accetta 1..64 partizioni, default 4, e 1..65536 slot per
-partizione, default 1024; massimo 4194304 riferimenti preallocati. La scelta
-della partizione di una Serie è un dato del chiamante, fissato prima del
-percorso caldo. Non viene introdotto un algoritmo di hashing del catalogo.
+Each partition is a FIFO ring with a local guard acquired by one CAS.
+No spin, callback, I/O, global counter, or per-task allocation. The ring
+transports writer references, without membership, generations, or writer
+state cleanup. The [handoff](writer-handoff.md) protocol remains unchanged.
+The common list is touched only to publish or acquire a segment, not for
+every message.
 
-`pubblica-writer-pronto(lista shard writer)` trasferisce un obbligo già
-prodotto da `:schedule` e restituisce il count locale. Full/busy rifiutano
-prima della mutazione: l'obbligo rimane al chiamante. Il retry riguarda
-questa pubblicazione, senza accettare nuovamente il payload nel writer.
-Un successo non si ritenta: l'API non deduplica pubblicazioni errate.
+Construction accepts 1..64 partitions, default 4, and 1..65536 slots per
+partition, default 1024; maximum 4194304 preallocated references. A Serie's
+partition is chosen by the caller before the hot path. No catalog hashing
+algorithm is introduced.
 
-`preleva-writer-pronto(lista start)` prova al più K partizioni in ordine
-circolare. Una guard contesa non impedisce di provarne un'altra. Restituisce
-writer, `:writer` e cursore successivo alla partizione servita; senza successo
-restituisce NIL, `:busy` se almeno una guard era contesa, altrimenti `:empty`,
-e cursore successivo a start. Empty significa solo che ciascuna osservazione
-locale era vuota: un producer concorrente può pubblicare subito dopo; non è
-una prova di quiescenza globale né autorizza un parcheggio senza protocollo.
-Ogni candidata ha un tentativo CAS di acquisizione; un'acquisizione riuscita
-richiede anche il CAS di rilascio. Sono al più K acquisizioni e 2K CAS totali.
+`pubblica-writer-pronto(lista shard writer)` transfers an obligation already
+produced by `:schedule` and returns local count. Full/busy reject before
+mutation: the obligation remains with the caller. Retry concerns this
+publication, without accepting payload again in the writer. Success is not
+retried: the API does not deduplicate erroneous publications.
 
-Il worker conserva il riferimento preso fino all'avvio riuscito del writer;
-busy non lo duplica né lo perde. Non c'è cleanup tardivo di un flag scheduler
-dopo `termina-tratto-writer`: una nuova ondata può già essere pubblicata.
-Pool, risvegli, shutdown, controller FAULTED e adattività richiedono ancora
-integrazione. Non si garantisce progresso se il chiamante abbandona un obbligo.
+`preleva-writer-pronto(lista start)` tries at most K partitions in circular
+order. A contended guard does not prevent trying another. It returns writer,
+`:writer`, and the cursor after the served partition; without success it
+returns NIL, `:busy` if at least one guard was contended, otherwise `:empty`,
+and cursor after start. Empty means only that each local observation was
+empty: a concurrent producer can publish immediately afterward; this is
+neither proof of global quiescence nor permission to park without a protocol.
+Each candidate has one acquisition CAS attempt; a successful acquisition
+also requires release CAS. At most K acquisitions and 2K CAS operations total.
 
-## Scelta e prove
+The worker retains the acquired reference until successful writer begin;
+busy neither duplicates nor loses it. There is no late cleanup of a scheduler
+flag after `termina-tratto-writer`: a new wave may already be published.
+Pool, wakeups, shutdown, FAULTED controller, and adaptation still require
+integration. Progress is not guaranteed if the caller abandons an obligation.
 
-Il ring con guard a tentativo singolo estende il protocollo già verificato
-delle code locali. La partizione riduce il dominio di contesa; la scansione
-circolare ha un limite statico e non introduce una ready queue globale per
-richiesta. Non è una struttura lock-free e non viene dichiarata la soluzione
-universalmente più veloce. I CAS seguono il
-[contratto SBCL](https://www.sbcl.org/manual/#Atomic-Operations) e servono
-anche da [barriere di memoria](https://www.sbcl.org/manual/#Barriers).
-L'alternativa MPMC con sequenza per slot richiederebbe un nuovo protocollo
-di pubblicazione, overflow e riuso; non viene selezionata senza prove proprie.
+<a id="scelta-e-prove"></a>
 
-- Oracolo indipendente con liste FIFO e cursore, sequenze finite con seme,
-  capacity 1 e altre cardinalità, wrap, pieno, vuoto e rotazione tra partizioni.
-- Limiti/default, input invalidi, rifiuti senza mutazione, cleanup dopo full,
-  guard posseduta da altro thread e FI privata sugli invarianti del ring.
-- Handoff integrato: obbligo conservato su pubblicazione full/busy e avvio
-  busy; entrambi gli ordini enqueue/fine vuota, nuova ondata e riaccodamento.
-- Worker reali riusati su ondate con producer vivi e più consumer; una
-  partizione occupata mentre l'altra avanza. Retry e join del solo harness
-  hanno limiti e gli errori dei worker sono rilanciati.
-- Due letture C1, inventario delle decisioni, copertura raw completa di tutti
-  i file execution. Nessuna forma sottratta, esclusione approvata o MC/DC
-  implicita. Build senza warning/style-warning, lint e `make check`.
-- Dodici mutanti semantici preregistrati nel runner prima della campagna:
-  ring, proprietà, capienza, scansione, busy, cursore e pubblicazione. Baseline
-  riuscita obbligatoria; compilation failure e before-tests non sono rilevamenti.
-- Allocazioni: due scenari preallocati con una e quattro partizioni, cinque
-  campioni di 4096 cicli ciascuno, warmup 128 e GC fuori dal contatore. Capacità 3 e due writer per partizione forzano wrap; ogni ciclo include
-  accettazione del payload preallocato, pubblicazione, prelievo e fine del
-  tratto. Si misura la composizione handoff/lista pronta. Identità,
-  count, status e cursore contribuiscono a un sink esatto; controllo positivo
-  heap, sink errato rifiutato e clock nullo distinto. Percorsi d'errore esclusi;
-  zero osservato non è una garanzia universale, né throughput o P99.
+## Choice and tests
 
-Tutti i tentativi sono registrati con `tools/record-command.lisp`, argv,
-ambiente, sorgenti stabili e output integrali. I C4 hanno self-test e rapporti
-parziali; le prove congelate vivono in una clone separata. Dati grandi vengono
-compressi senza perdita e verificati dal lettore delle evidenze. I gate del
-motore e i target integrati restano aperti.
+The ring with a single-attempt guard extends the already verified local
+queue protocol. Partitioning reduces the contention domain; circular scanning
+has a static bound and introduces no global ready queue per request.
+It is not a lock-free structure and is not claimed as universally fastest.
+CAS operations follow the [SBCL contract](https://www.sbcl.org/manual/#Atomic-Operations)
+and also act as [memory barriers](https://www.sbcl.org/manual/#Barriers).
+The MPMC alternative with per-slot sequence would require a new publication,
+overflow, and reuse protocol; it is not selected without its own tests.
 
-## Correzione del runner prima della campagna finale
+- Independent FIFO-list and cursor oracle, finite seeded sequences,
+  capacity 1 and other cardinalities, wrap, full, empty, and partition rotation.
+- Limits/defaults, invalid inputs, rejections without mutation, cleanup after
+  full, guard owned by another thread, and private FI on ring invariants.
+- Integrated handoff: obligation retained on full/busy publication and busy
+  begin; both enqueue/empty-end orders, new wave, and reenqueuing.
+- Real workers reused over waves with live producers and multiple consumers;
+  one busy partition while another advances. Harness-only retry and joins
+  have bounds and worker errors are rethrown.
+- Two C1 readings, decision inventory, complete raw coverage of all execution
+  files. No form subtracted, approved exclusion, or implicit MC/DC. Build
+  without warning/style-warning, lint, and `make check`.
+- Twelve semantic mutants preregistered in runner before campaign:
+  ring, ownership, capacity, scanning, busy, cursor, and publication. Successful
+  baseline mandatory; compilation failure and before-tests are not detections.
+- Allocations: two preallocated scenarios with one and four partitions,
+  five 4096-cycle samples each, warmup 128 and GC outside counter. Capacity 3
+  and two writers per partition force wrap; each cycle includes preallocated
+  payload acceptance, publication, extraction, and segment end. The handoff/ready
+  list composition is measured. Identity, count, status, and cursor contribute
+  to an exact sink; positive heap control, wrong sink rejected, and zero clock
+  distinguished. Error paths excluded; observed zero is not a universal guarantee,
+  throughput, or P99.
 
-Dopo l'integrazione di `fd96fb3`, il runner ready adotta la correzione della
-classificazione di processo: un segnale OS o un exit nonzero dopo il marcatore
-reale di completamento sono `:worker-error`, mai rilevamento. Exit e segnale
-restano distinti nei dati e nella baseline; il self-test termina un proprio
-child con SIGKILL e conserva runner, log e report. Il set dei dodici mutanti
-resta invariato. La campagna viene ripetuta integralmente in
-`ready-mutations-final`, conservando precedente driver e campagna; prodotto,
-test e benchmark restano invariati; le prove mirate di copertura e allocazione
-non richiedono ripetizione. La suite completa sarà rieseguita dal check integrato.
+All attempts are recorded with `tools/record-command.lisp`, argv, environment,
+stable sources, and complete outputs. C4 tools have self-tests and partial
+reports; frozen tests live in a separate clone. Large data are compressed
+losslessly and verified by the evidence reader. Engine gates and integrated
+targets remain open.
+
+<a id="correzione-del-runner-prima-della-campagna-finale"></a>
+
+## Runner correction before the final campaign
+
+After integration of `fd96fb3`, the ready runner adopts the process
+classification correction: an OS signal or nonzero exit after the real
+completion marker are `:worker-error`, never detection. Exit and signal
+remain distinct in data and baseline; the self-test terminates its own
+child with SIGKILL and retains runner, log, and report. The twelve-mutant
+set remains unchanged. The campaign is repeated in full in
+`ready-mutations-final`, retaining previous driver and campaign; product,
+tests, and benchmark remain unchanged; targeted coverage and allocation
+campaigns need no repetition. The complete suite will be rerun by integrated check.

@@ -1,165 +1,179 @@
-# Creazione relativa: metodo
+<a id="creazione-relativa-metodo"></a>
 
-Metodo registrato il 2026-10-17 prima di compilazione ed esecuzione.
-L'incremento completa il confine I/O relativo, secondo ADR-0017/0033 e
-COD-37, senza modificare formati o decisioni durevoli di ADR-0040.
+# Relative creation: method
 
-## Contratto e proprietà
+Method recorded on 2026-10-17 before compilation and execution.
+The increment completes the relative I/O boundary under ADR-0017/0033 and
+COD-37, without changing ADR-0040 formats or durable decisions.
 
-`crea-temporaneo-nella-directory` restituisce una sola capacità append
-per un nuovo `.tmp` regolare vuoto. Non apre file esistenti in scrittura.
-Budget positivi, foglia e disponibilità delle tre callback sono
-verificati prima degli effetti. Foglia privata e child sono allocati
-prima dell'apertura. La callback `create-relative(parent-fd, leaf, :append)`
-trasferisce ownership soltanto al ritorno di un FD valido distinto dal
-parent; fino ad allora possiede il proprio rollback. FD zero è valido.
+<a id="contratto-e-proprietà"></a>
 
-`file-metadata` attesta regolare, device, inode e dimensione zero;
-`entry-identity` deve attestare la stessa identità nofollow rispetto
-al parent. Componenti POSIX signed/unsigned a 64 bit restano esatti;
-la dimensione viene limitata prima del restringimento. Metadati fuori
-contratto, file non vuoto o identità discordante impediscono il ritorno.
-Parent e child devono restare disponibili fino alla pubblicazione.
+## Contract and ownership
 
-Il controller esclude mutazioni concorrenti di file/namespace e chiusure
-delle capacità; il confronto non sostituisce questa precondizione.
-Il parent è preso in prestito e non viene chiuso o messo in guasto
-dall'API. La creazione modifica il namespace ma non le sue frontiere.
-Il child riuscito parte con written/durable zero e passa al chiamante.
+`crea-temporaneo-nella-directory` returns one append capability
+for a new empty regular `.tmp`. It does not open existing files for writing.
+Positive budgets, leaf, and availability of all three callbacks are
+checked before effects. Private leaf and child are allocated
+before opening. Callback `create-relative(parent-fd, leaf, :append)`
+transfers ownership only when it returns a valid FD distinct from the
+parent; until then it owns its rollback. FD zero is valid.
 
-Il nativo usa `openat(parent-fd, leaf, flags, 0600)` con
-`O_WRONLY|O_CREAT|O_EXCL|O_APPEND|O_CLOEXEC|O_NOFOLLOW`. La dichiarazione
-alien deve marcare il quarto argomento come variadico: su Darwin ARM64
-la convenzione dei vararg differisce dagli argomenti fissi. `mode_t`
-subisce la promozione intera. La dichiarazione readonly a tre argomenti
-non viene usata con `O_CREAT`. La umask può solo restringere i permessi.
+`file-metadata` attests regular file, device, inode, and zero size;
+`entry-identity` must attest the same nofollow identity relative
+to the parent. POSIX signed/unsigned 64-bit components remain exact;
+size is bounded before narrowing. Out-of-contract metadata,
+nonempty file, or mismatched identity prevents return.
+Parent and child must remain available until publication.
 
-## Errori e risorse
+The controller excludes concurrent file/namespace mutations and capability
+closures; comparison does not replace this precondition.
+The parent is borrowed and is neither closed nor faulted
+by the API. Creation changes the namespace but not its frontiers.
+The successful child starts with written/durable zero and passes to the caller.
 
-Un FD valido acquisito e non pubblicato riceve una sola close dal backend
-che lo ha creato, con stato CLOSED prima della chiamata. Il cleanup viene
-tentato anche con parent invalidato, senza retry EINTR e senza toccare un
-FD alias del parent. Se riesce si propaga lo stesso oggetto di condizione
-tipizzata. Se fallisce si espongono reason/offset primari e cleanup-errno;
-una causa I/O conserva operazione, errno e progresso. Per una causa non
-I/O l'operazione del doppio guasto è `:create-relative`. Close nonzero
-è fallimento anche con errno NIL.
+The native backend uses `openat(parent-fd, leaf, flags, 0600)` with
+`O_WRONLY|O_CREAT|O_EXCL|O_APPEND|O_CLOEXEC|O_NOFOLLOW`. The alien
+declaration must mark the fourth argument as variadic: on Darwin ARM64
+the vararg convention differs from fixed arguments. `mode_t`
+undergoes integer promotion. The three-argument read-only declaration
+is not used with `O_CREAT`. The umask can only restrict permissions.
 
-Uscite non locali estranee tentano il cleanup senza allegare l'errno
-secondario. Condizioni estranee nel callback close restano fuori dal
-protocollo. Le finestre senza interrupt proteggono handoff e cleanup,
-senza introdurre cancellazione asincrona. Le syscall appartengono al pool
-I/O e possono bloccare; nessuna deadline wall è promessa dal prodotto.
+<a id="errori-e-risorse"></a>
 
-Non avvengono unlink, flush o rename impliciti. Dopo una creazione
-riuscita e un successivo rifiuto può restare un temporaneo orfano, anche
-quando close riesce. La riconciliazione fisica resta del controller.
-L'esclusività non attesta contenuto, decisione del manifest o durability.
+## Errors and resources
 
-## Decisioni e prove preregistrate
+A valid acquired, unpublished FD receives exactly one close from the backend
+that created it, with CLOSED state before the call. Cleanup is
+attempted even with an invalidated parent, without EINTR retry and without touching an
+FD alias of the parent. If successful, the same typed condition object
+is propagated. If it fails, primary reason/offset and cleanup-errno are exposed;
+an I/O cause retains operation, errno, and progress. For a non-I/O
+cause, the double fault's operation is `:create-relative`. Nonzero close
+is failure even with errno NIL.
 
-| ID | Confine | Casi |
+Foreign nonlocal exits attempt cleanup without attaching the secondary
+errno. Foreign conditions in the close callback remain outside the
+protocol. Interrupt-free windows protect handoff and cleanup,
+without introducing asynchronous cancellation. Syscalls belong to the I/O
+pool and may block; the product promises no wall-clock deadline.
+
+No implicit unlink, flush, or rename occurs. After successful
+creation and subsequent rejection, an orphan temporary may remain, even
+when close succeeds. Physical reconciliation remains the controller's responsibility.
+Exclusivity does not attest contents, manifest decision, or durability.
+
+<a id="decisioni-e-prove-preregistrate"></a>
+
+## Preregistered decisions and tests
+
+| ID | Boundary | Cases |
 |---|---|---|
-| CTR-D01 | Parent | directory aperta, altro modo, chiusa/faulted |
-| CTR-D02 | Budget | tipi/range, zero rifiutato, estremi positivi |
-| CTR-D03 | Foglia privata | ASCII, suffisso, separatori/NUL/dot, 255/256 byte, nome chiamante riusato |
-| CTR-D04 | Backend completo | ciascuna callback assente, nessun fallback |
-| CTR-D05 | Acquisizione e pubblicazione | FD zero, ordine callback, backend ereditato; guardia difensiva written=0 e durable=0 |
-| CTR-D06 | FD fuori contratto | invalido e alias del parent senza close |
-| CTR-D07 | Metadati | componenti esatte, forma invalida, regolare vuoto, EOF nonzero/eccessivo |
-| CTR-D08 | Legame alla foglia | device/inode concordi e ciascuno discordante, entry invalida |
-| CTR-D09 | Disponibilità | invalidazione parent da ogni callback, cleanup ancora tentato; child privato verificato prima del ritorno |
-| CTR-D10 | Causa primaria | errore prima/dopo handoff, syscall normalizzata, stesso oggetto dopo cleanup riuscito |
-| CTR-D11 | Doppio guasto | campi I/O/offset preservati, nonzero con errno NIL, una sola close |
-| CTR-D12 | Uscita non locale | nessuna pubblicazione, cleanup una volta |
-| CTR-D13 | Nuovo file nativo | append, identità readonly, contenuto, flags e permessi |
-| CTR-D14 | Collisioni native | file/FIFO/directory/symlink restano immutati |
-| CTR-D15 | Parent rinominato | creazione nel parent aperto, decoy al percorso precedente intatto |
-| CTR-D16 | Fine ownership | close ripetute, riuso FD senza close tardiva |
-| CTR-D17 | Effetto già avvenuto | rifiuto postcreazione con vero file, close del child e orfano conservato |
+| CTR-D01 | Parent | open directory, other mode, closed/faulted |
+| CTR-D02 | Budget | types/ranges, zero rejected, positive extremes |
+| CTR-D03 | Private leaf | ASCII, suffix, separators/NUL/dot, 255/256 bytes, caller name reused |
+| CTR-D04 | Complete backend | each callback absent, no fallback |
+| CTR-D05 | Acquisition and publication | FD zero, callback order, inherited backend; defensive written=0 and durable=0 guard |
+| CTR-D06 | Out-of-contract FD | invalid and parent alias without close |
+| CTR-D07 | Metadata | exact components, invalid shape, empty regular file, nonzero/excessive EOF |
+| CTR-D08 | Leaf binding | matching device/inode and each mismatched, invalid entry |
+| CTR-D09 | Availability | parent invalidation from each callback, cleanup still attempted; private child checked before return |
+| CTR-D10 | Primary cause | error before/after handoff, normalized syscall, same object after successful cleanup |
+| CTR-D11 | Double fault | I/O/offset fields preserved, nonzero with errno NIL, exactly one close |
+| CTR-D12 | Nonlocal exit | no publication, cleanup once |
+| CTR-D13 | New native file | append, read-only identity, contents, flags, and permissions |
+| CTR-D14 | Native collisions | file/FIFO/directory/symlink remain unchanged |
+| CTR-D15 | Renamed parent | creation in open parent, decoy at old path intact |
+| CTR-D16 | Ownership end | repeated closes, FD reuse without late close |
+| CTR-D17 | Effect already occurred | post-creation rejection with real file, child close, and orphan retained |
 
-Le fixture native usano namespace 0700 esclusivi, registri bounded di
-risorse, cleanup dei soli nomi posseduti e deadline cooperative finite.
-Oracoli POSIX C4 confrontano byte, identità e proprietà del FD; le prove
-iniettate osservano ordine, numero e argomenti delle callback. I guasti
-puri non attestano fault injection di syscall native. La fixture verticale
-esercita i propri casi v1/v2 e crash usando la nuova creazione relativa.
-Le callback non ricevono la capacità child privata: le guardie sul suo
-stato e sulle frontiere sono lette staticamente, senza pretendere che una
-fixture ne alteri direttamente gli slot prima della pubblicazione.
+Native fixtures use exclusive 0700 namespaces, bounded resource
+registries, cleanup of owned names only, and finite cooperative deadlines.
+C4 POSIX oracles compare bytes, identity, and FD properties; injected
+tests observe callback order, count, and arguments. Pure
+faults do not attest native syscall fault injection. The vertical fixture
+exercises its v1/v2 and crash cases using the new relative creation.
+Callbacks do not receive the private child capability: guards on its
+state and frontiers are read statically, without claiming that a
+fixture directly alters its slots before publication.
 
-Due letture statiche del codice finale precedono compilazione e prove.
-Commit congelato, cache ASDF nuova e `record-command` conservano ogni
-tentativo, compresi fallimenti. `make trace-write` aggiorna la matrice;
-`make check` resta richiesto. La raccolta usa il collector esistente,
-manifest esplicito, quattro worker e inventario chiuso. La CI Linux/macOS
-della versione integrata è un'osservazione distinta.
+Two static readings of final code precede compilation and tests.
+Frozen commit, new ASDF cache, and `record-command` retain every
+attempt, including failures. `make trace-write` updates the matrix;
+`make check` remains required. Collection uses the existing collector,
+explicit manifest, four workers, and closed inventory. Linux/macOS CI
+of the integrated version is a separate observation.
 
-Requisiti: REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018,
-REQ-FOR-001 e REQ-VAL-001. Invarianti: INV-A7/A9/A10/A11, INV-P6 e INV-X3.
-Restano aperti Recovery Manager, esecuzione della riconciliazione,
-ammissione, qualifica C1 completa, MC/DC, mutation testing dei nuovi
-percorsi e misure di prestazione.
+Requirements: REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018,
+REQ-FOR-001, and REQ-VAL-001. Invariants: INV-A7/A9/A10/A11, INV-P6, and INV-X3.
+Recovery Manager, reconciliation execution,
+admission, complete C1 qualification, MC/DC, mutation testing of new
+paths, and performance measurements remain open.
 
-## Integrazione con main — 2026-10-22
+<a id="integrazione-con-main--2026-10-22"></a>
 
-Il controllo completo R1 del 2026-10-17 appartiene al freeze
-`b5ad739ba1fc0252920c088e2442140e448451ad`. La ripresa del 2026-10-22
-integra main `56fc1c1a`, che aggiunge la stabilizzazione dei nomi recuperati
-e archivi CI. Le primitive di creazione, i relativi helper e i test
-restano identici a R1; package e ASD devono conservare entrambe le API
-e l'ordine dei moduli. Due letture statiche controllano questi raccordi.
+## Integration with main — 2026-10-22
 
-Dopo il nuovo freeze si esegue `make test lint trace links` con cache
-ASDF nuova e record distinto. Non si attribuisce il full R1 al merge;
-la CI del merge effettivamente provato resta una fotografia separata.
+The full R1 check of 2026-10-17 belongs to freeze
+`b5ad739ba1fc0252920c088e2442140e448451ad`. Resumption on 2026-10-22
+integrates main `56fc1c1a`, which adds recovered name stabilization
+and CI archives. Creation primitives, their helpers, and tests
+remain identical to R1; package and ASD must retain both APIs
+and module order. Two static readings check these connections.
 
-## Secondo raccordo con main — 2026-10-22
+After the new freeze, run `make test lint trace links` with a new
+ASDF cache and separate record. Full R1 is not attributed to the merge;
+CI of the actually tested merge remains a separate snapshot.
 
-Durante la CI di PR20, main avanza a `e75f9794` aggiungendo il selettore
-in memoria delle versioni recuperate. Il nuovo modulo non esegue I/O
-e non modifica namespace, callback o capacità. I sorgenti I/O, i tre
-test e la fixture verticale restano identici al raccordo precedente.
-ASD conserva il selettore dopo recovery-bootstrap, prima del runtime.
-Due letture statiche precedono il freeze di questo raccordo.
+<a id="secondo-raccordo-con-main--2026-10-22"></a>
 
-Si esegue R4 `make test lint trace links` con cache nuova e si conserva
-il record distinto. La CI già avviata sul merge `046c64cc` mantiene
-quella precisa attribuzione; il nuovo head richiede la propria CI.
+## Second integration with main — 2026-10-22
 
-## Raccordo dei report CI (C4) — 2026-10-22
+During PR20 CI, main advances to `e75f9794`, adding the in-memory
+recovered version selector. The new module performs no I/O
+and changes no namespace, callback, or capability. I/O sources, the three
+tests, and the vertical fixture remain identical to the previous integration.
+ASD retains the selector after recovery-bootstrap, before runtime.
+Two static readings precede this integration's freeze.
 
-Il run PR20 `39817860664`, sul merge `046c64cc`, conclude con successo
-Linux, macOS e audit. Anche `coverage-tests.lisp` è PASSED; il worker
-si ferma dopo i test e LCOV, leggendo il risultato della verifica normale:
-il vocabolario del consumer fresco non registra tutti i campi emessi
-dal producer. Coverage e seal sono quindi FAILED e restano conservati
-come tali. Nessun esito globale verde è attribuito a quel run.
+Run R4 `make test lint trace links` with a new cache and retain
+the separate record. CI already started on merge `046c64cc` retains
+that exact attribution; the new head requires its own CI.
 
-Prima delle nuove prove si registra la correzione C4 minima: dichiarare
-nel vocabolario trusted i campi del risultato normale già ammessi dallo
-schema producer, senza internare simboli dall'input o ampliare gli schemi.
-La regressione deve usare un SBCL fresco con i moduli del consumer:
-il processo completo del self-test carica già il producer e maschera
-il difetto. Un controllo sulla revisione precedente deve rilevarlo;
-i rifiuti di token sconosciuti e forme eseguibili restano richiesti.
+<a id="raccordo-dei-report-ci-c4--2026-10-22"></a>
 
-Si conservano separatamente tentativo fallito, regressione e controllo
-C4 successivo; la nuova CI verificherà il nuovo head. La correzione
-non cambia i sorgenti I/O, le decisioni CTR o i loro test.
+## CI report integration (C4) — 2026-10-22
 
-Il raccordo successivo integra main `c46bc4c1` (PR21), che contiene
-la stessa dichiarazione dei due campi, anche `:skipped` per il reader
-data-only, e mantiene compatto il riepilogo coverage conservando
-l'inventario originale. Restano entrambe le regressioni: reader data-only
-e consumer coverage completo, con producer assente nei rispettivi figli.
-I 328 controlli C4 della revisione `6c409f59` sono PASSED; il loro record
-resta distinto dal nuovo controllo completo C4 sul raccordo con PR21.
+PR20 run `39817860664`, on merge `046c64cc`, completes Linux,
+macOS, and audit successfully. `coverage-tests.lisp` is also PASSED; the worker
+stops after tests and LCOV, while reading the normal verification result:
+the fresh consumer vocabulary does not register all fields emitted
+by the producer. Coverage and seal are therefore FAILED and remain retained
+as such. No overall green outcome is attributed to that run.
 
-Il raccordo `fc0a34a9` conclude i 334 controlli C4 con PASSED:
-59 dati, 37 test registry, nove condizioni, 43 misure, 172 workflow e
-14 confini. I recorder prima della correzione (`92fbfbbc`, exit 1 atteso),
-dopo (`6c409f59`, exit 0), e dei due self-test completi riportano sorgenti
-STABLE e checkout puliti. R4, a `1ebf8e71`, conclude
-`make test lint trace links` con cache nuova ed exit 0/STABLE.
-Questi esiti locali non sostituiscono la CI sul nuovo merge effettivo.
+Before new tests, the minimal C4 correction is recorded: declare
+in the trusted vocabulary the normal-result fields already allowed by the
+producer schema, without interning input symbols or broadening schemas.
+The regression must use a fresh SBCL with consumer modules:
+the full self-test process already loads the producer and masks
+the defect. A check on the previous revision must detect it;
+rejections of unknown tokens and executable forms remain required.
+
+The failed attempt, regression, and subsequent C4 check are retained
+separately; new CI will check the new head. The correction
+does not change I/O sources, CTR decisions, or their tests.
+
+The next integration incorporates main `c46bc4c1` (PR21), which contains
+the same declaration of the two fields, also `:skipped` for the data-only
+reader, and keeps the coverage summary compact while retaining
+the original inventory. Both regressions remain: data-only reader
+and complete coverage consumer, with producer absent in their respective children.
+The 328 C4 checks at revision `6c409f59` are PASSED; their record
+remains distinct from the new full C4 check on the PR21 integration.
+
+Integration `fc0a34a9` completes 334 C4 checks with PASSED:
+59 data, 37 test registry, nine conditions, 43 measurements, 172 workflow, and
+14 boundaries. Recorders before the correction (`92fbfbbc`, expected exit 1),
+after (`6c409f59`, exit 0), and for both full self-tests report STABLE
+sources and clean checkouts. R4, at `1ebf8e71`, completes
+`make test lint trace links` with a new cache and exit 0/STABLE.
+These local outcomes do not replace CI on the actual new merge.

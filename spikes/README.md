@@ -1,42 +1,48 @@
-# Spike
+<a id="spike"></a>
 
-[Progetto](../README.md) · [Documentazione](../docs/README.md) · [Piano degli spike](../docs/valutazione/piano-spike.md)
+# Spikes
 
-Esperimenti della fase di valutazione. Il [piano](../docs/valutazione/piano-spike.md)
-definisce domande, metodi e criteri di esito; la [valutazione](../docs/valutazione/README.md)
-orienta fra campagne e risultati. I raw storici sono nell'[archivio esterno](evidence/README.md).
-I risultati v1 e v2 restano distinti.
+[Project](../README.md) · [Documentation](../docs/README.md) · [Spike plan](../docs/valutazione/piano-spike.md)
 
-## Regole
+Evaluation-phase experiments. The [plan](../docs/valutazione/piano-spike.md)
+defines questions, methods, and outcome criteria; the [evaluation](../docs/valutazione/README.md)
+guides readers through campaigns and results. Historical raw data are in the
+[external archive](evidence/README.md). V1 and v2 results remain separate.
 
-- Ogni prova e benchmark segue il [registro strutturato](../docs/valutazione/registro-delle-prove.md), compresi fallimenti e diagnostiche.
-- Codice **solo Common Lisp** su SBCL ([ADR-0001](../docs/adr/0001-common-lisp-sbcl.md)).
-- Uno spike è codice usa-e-getta: non viene promosso a codice di produzione; al più ne ispira
-  il progetto.
-- Una cartella per spike: `spikes/SPK-nn-nome/`, con:
-  - `README.md` — domanda, metodo, ambiente (hardware, sistema operativo, versione e parametri
-    di SBCL), comando esatto, risultati, raccomandazione;
-  - il codice e un modo per eseguirlo da riga di comando;
-  - dati e output generati in `data/` e `out/` (ignorati da git).
-- Al termine si aggiornano [registro dei rischi](../docs/valutazione/registro-rischi.md),
-  [stime](../docs/valutazione/stime-ordine-di-grandezza.md) e la questione aperta collegata.
+<a id="regole"></a>
 
-## Stato
+## Rules
 
-`make spikes-check` compila senza avvisi ed esegue la correttezza in processi isolati;
-`make spikes-bench` esegue le misure **in serie** e registra ambiente, comandi e output
-in `spikes/out/`. Gli esiti non promuovono automaticamente i requisiti del motore.
+- Every test and benchmark follows the [structured record](../docs/valutazione/registro-delle-prove.md), including failures and diagnostics.
+- **Common Lisp only** on SBCL ([ADR-0001](../docs/adr/0001-common-lisp-sbcl.md)).
+- A spike is disposable code: it is not promoted to production code; at most it informs
+  the design.
+- One directory per spike: `spikes/SPK-nn-nome/`, containing:
+  - `README.md` — question, method, environment (hardware, operating system, SBCL version
+    and parameters), exact command, results, recommendation;
+  - code and a way to run it from the command line;
+  - generated data and output in `data/` and `out/` (Git-ignored).
+- On completion, update the [risk register](../docs/valutazione/registro-rischi.md),
+  [estimates](../docs/valutazione/stime-ordine-di-grandezza.md), and related open question.
 
-| Spike | Stato |
+<a id="stato"></a>
+
+## Status
+
+`make spikes-check` compiles without warnings and checks correctness in isolated processes;
+`make spikes-bench` runs measurements **serially** and records environment, commands,
+and output in `spikes/out/`. Outcomes do not automatically promote engine requirements.
+
+| Spike | Status |
 |---|---|
-| [SPK-01 Primary index compatto](SPK-01-primary-index/README.md) | prototipo e verifica locale; scala 10⁷–10⁸ e piattaforma di riferimento da eseguire |
-| [SPK-02 GC di SBCL sotto carico](SPK-02-gc/README.md) | campagna locale; heap da decine di GB e piattaforma di riferimento da eseguire |
-| [SPK-03 WAL e group commit](SPK-03-group-commit/README.md) | append/flush reali e verifica locale; hardware di riferimento e power cut da eseguire |
-| [SPK-04 Writer logico su thread pool](SPK-04-writer-pool/README.md) | pool e modelli verificati localmente; 54 benchmark conservati, carico vivo e scheduler adattivo da verificare |
-| [SPK-05 Percorso di lettura dei segmenti](SPK-05-segment-read/README.md) | pread e mmap con file reali, controlli e confronto locale; dataset oltre RAM e piattaforma di riferimento da misurare |
-| [SPK-06 Interferenza della compaction e controllore](SPK-06-compaction-load/README.md) | modello finito del carico verificato e copie concorrenti a letture misurate localmente; compaction del motore, feedback reale e piattaforma di riferimento da verificare |
-| [SPK-07 Modelli dei protocolli](SPK-07-protocols/README.md) | prima suite finita, controesempio corretto da ADR-0046; lacune residue esplicite |
-| [SPK-08 SIMD e codice generato](SPK-08-generated-code/README.md) | impronte scalar/SWAR e NEON con 70 campioni; bitmap byte/u64 con altri 90 campioni a safety 3; x86-64 e motore concorrente da verificare |
-| [SPK-09 Costo dei controlli di affidabilità](SPK-09-integrity/README.md) | CRC/decoder verificati e benchmark locale; resolver del manifest e motore da implementare |
-| [SPK-10 Limiti v2](SPK-10-v2-limits/README.md) | quattro moduli e integrazione in memoria verificati; benchmark distinti, gate completo aperto |
-| [SPK-11 Socket Unix locale](SPK-11-unix-socket/README.md) | prova locale fra processi superata, originali e fallimenti conservati; contratto M16 proposto, qualifica del motore aperta |
+| [SPK-01 Compact primary index](SPK-01-primary-index/README.md) | prototype and local verification; 10⁷–10⁸ scale and reference platform pending |
+| [SPK-02 SBCL GC under load](SPK-02-gc/README.md) | local campaign; tens-of-GB heaps and reference platform pending |
+| [SPK-03 WAL and group commit](SPK-03-group-commit/README.md) | real append/flush and local verification; reference hardware and power-cut tests pending |
+| [SPK-04 Logical writer on thread pool](SPK-04-writer-pool/README.md) | pool and models locally verified; 54 benchmarks retained, live load and adaptive scheduler to verify |
+| [SPK-05 Segment read path](SPK-05-segment-read/README.md) | pread and mmap with real files, checks, and local comparison; beyond-RAM dataset and reference platform to measure |
+| [SPK-06 Compaction interference and controller](SPK-06-compaction-load/README.md) | finite load model verified, concurrent copies and reads locally measured; engine compaction, real feedback, and reference platform to verify |
+| [SPK-07 Protocol models](SPK-07-protocols/README.md) | initial finite suite, counterexample corrected by ADR-0046; explicit remaining gaps |
+| [SPK-08 SIMD and generated code](SPK-08-generated-code/README.md) | scalar/SWAR and NEON fingerprints with 70 samples; byte/u64 bitmap with another 90 samples at safety 3; x86-64 and concurrent engine to verify |
+| [SPK-09 Reliability-check cost](SPK-09-integrity/README.md) | CRC/decoder verified and local benchmark; manifest resolver and engine to implement |
+| [SPK-10 V2 limits](SPK-10-v2-limits/README.md) | four modules and in-memory integration verified; separate benchmarks, full gate open |
+| [SPK-11 Local Unix socket](SPK-11-unix-socket/README.md) | local interprocess test passed, originals and failures retained; M16 contract proposed, engine qualification open |

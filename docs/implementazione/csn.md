@@ -1,71 +1,79 @@
-# CSN di Archivio e orizzonte di visibilità
+<a id="csn-di-archivio-e-orizzonte-di-visibilità"></a>
 
-`arcdocdb.csn` realizza il registro limitato di
-[ADR-0046](../adr/0046-orizzonte-con-registro-limitato.md). Ogni Archivio possiede
-un registro; le Serie lo toccano alla chiusura e alla risoluzione di un lotto
-o di una decisione multiserie. Nessun accesso condiviso per documento.
+# Archivio CSN and visibility horizon
 
-| API | Contratto |
+`arcdocdb.csn` implements the bounded registry from
+[ADR-0046](../adr/0046-orizzonte-con-registro-limitato.md). Each Archivio owns
+one registry; Serie touch it at closure and resolution of a batch
+or multiseries decision. No shared access per document.
+
+| API | Contract |
 |---|---|
-| `crea-registro-csn :capacity :initial-high :initial-low` | Capacità 1..65536, default 256. Base validata dal recovery; nessun pendente, ultimo=H=base. |
-| `prendi-csn registro` | Ritorna `slot, high, low`: CSN nuovo positivo e già registrato. Conservare i tre valori insieme al registro. |
-| `risolvi-csn registro slot high low` | Dopo pubblicazione o annullamento validi, libera il credito. Ritorna `H-high, H-low`. |
-| `leggi-frontiere-csn registro` | Ritorna `ultimo-high, ultimo-low, H-high, H-low` da una sezione coerente. |
+| `crea-registro-csn :capacity :initial-high :initial-low` | Capacity 1..65536, default 256. Base validated by recovery; no pending CSNs, latest=H=base. |
+| `prendi-csn registro` | Returns `slot, high, low`: new positive CSN already registered. Retain all three values together with registry. |
+| `risolvi-csn registro slot high low` | After valid publication or cancellation, releases credit. Returns `H-high, H-low`. |
+| `leggi-frontiere-csn registro` | Returns `ultimo-high, ultimo-low, H-high, H-low` from a consistent section. |
 
-Un CSN è `high × 2^32 + low`; il prodotto conserva le parole separate e non
-costruisce bignum sul percorso caldo. Zero identifica uno slot libero. Il
-CSN massimo è assegnabile una sola volta; la richiesta successiva è rifiutata
-prima di qualsiasi modifica. I token sono numerici e appartengono al registro
-conservato dal chiamante: non sono capability per input esterno. Due Archivi
-possono assegnare la stessa coppia numerica; non scambiare i loro token.
+A CSN is `high × 2^32 + low`; product retains separate words and does
+not construct bignums on hot path. Zero identifies a free slot.
+Maximum CSN can be assigned once only; next request is rejected
+before any change. Tokens are numeric and belong to registry
+retained by caller: they are not capabilities for external input. Two Archivi
+may assign the same numeric pair; do not exchange their tokens.
 
-## Sincronizzazione e progresso
+<a id="sincronizzazione-e-progresso"></a>
 
-Tutti i campi sono privati e richiedono il mutex di Archivio. Ogni API tenta
-l'acquisizione una sola volta, senza attesa; `:csn-busy` richiede che il controller
-conservi e riprogrammi il compito. Non ritentare l'assegnazione già riuscita quando
-un passo successivo fallisce. Per `risolvi-csn` busy conserva il token e l'obbligo
-di risoluzione. Il modulo non crea worker, callback, timer o liste di parcheggio.
+## Synchronization and progress
 
-Una ricerca circolare visita al più K slot per assegnare; la risoluzione visita
-al più K slot per verificare il conteggio e calcolare `H=min(pendenti)-1`. Se non
-restano pendenti, `H=ultimo`. Le conclusioni fuori ordine restituiscono subito
-il credito e non aumentano H oltre il più vecchio pendente. La distanza numerica
-fra ultimo e H non consuma crediti.
+All fields are private and require Archivio mutex. Each API attempts
+acquisition once only, without waiting; `:csn-busy` requires controller to
+retain and reschedule task. Do not retry an already-successful assignment when
+a later step fails. For `risolvi-csn`, busy preserves token and resolution
+obligation. Module creates no workers, callbacks, timers, or parking lists.
 
-La lettura delle frontiere usa lo stesso tentativo di mutex: è coerente anche
-attraverso il carry fra le parole. I GET senza snapshot non la chiamano.
-Lettura atomica di H senza lock e risveglio degli snapshot non sono esposti da
-questo blocco. Il [registro snapshot](snapshot-csn.md) usa questa API pubblica
-per annunciare la soglia prima della cattura del CSN, senza un secondo allocatore.
-Il collegamento ha evidenze e qualifica separate da quelle del componente CSN.
+A circular search visits at most K slots for assignment; resolution visits
+at most K slots to check count and calculate `H=min(pendenti)-1`. If no
+pending CSNs remain, `H=ultimo`. Out-of-order completions immediately return
+credit and do not increase H past oldest pending CSN. Numeric distance
+between latest and H consumes no credit.
 
-## Condizioni e responsabilità
+Frontier reading uses the same mutex attempt: consistent even
+across word carry. GETs without snapshots do not call it.
+Atomic reading of H without locks and snapshot wakeup are not exposed by
+this block. The [snapshot registry](snapshot-csn.md) uses this public API
+to announce threshold before CSN capture, without a second allocator.
+Connection has evidence and qualification separate from CSN component.
 
-| Condizione/reason | Azione |
+<a id="condizioni-e-responsabilità"></a>
+
+## Conditions and responsibilities
+
+| Condition/reason | Action |
 |---|---|
-| `invalid-argument / :csn-config` | Configurazione o parole iniziali fuori dominio. |
-| `resource-exhausted / :csn-busy` | Nessuna modifica; conservare il compito per riprogrammarlo. |
-| `resource-exhausted / :csn-full` | Lotto ancora aperto; capacità dei veri pendenti esaurita. |
-| `resource-exhausted / :csn-exhausted` | Esaurimento permanente u64; mai wrap o azzeramento. |
-| `invalid-argument / :csn-token` | Tipo/range/zero, token vecchio o identità non corrente; nessun credito liberato. |
-| `invariant-violation` | Il controller deve applicare fail-stop all'Archivio. |
+| `invalid-argument / :csn-config` | Configuration or initial words outside domain. |
+| `resource-exhausted / :csn-busy` | No change; retain task for rescheduling. |
+| `resource-exhausted / :csn-full` | Batch still open; capacity for actual pending CSNs exhausted. |
+| `resource-exhausted / :csn-exhausted` | Permanent u64 exhaustion; never wrap or zero. |
+| `invalid-argument / :csn-token` | Type/range/zero, old token, or noncurrent identity; no credit released. |
+| `invariant-violation` | Controller must apply fail-stop to Archivio. |
 
-Un guasto di Serie con CSN in corso non permette di rimuoverlo automaticamente:
-la risoluzione richiede pubblicazione o annullamento corretti. H non è la frontiera
-dei byte durevoli. Il controller non deve confermare un commit dalla sola risoluzione.
+A Serie fault with a CSN in progress does not permit automatic removal:
+resolution requires correct publication or cancellation. H is not the durable-byte
+frontier. Controller must not acknowledge a commit from resolution alone.
 
-## Avvio e confini
+<a id="avvio-e-confini"></a>
 
-Il recovery deve raccogliere il massimo CSN validato dell'intero Archivio prima
-di costruire il registro e ammettere scritture. La base non si può cambiare dopo
-la costruzione. Le [query sui CSN recuperati](recovery-csn.md) forniscono i massimi
-di ACTIVE, CLOSED, Serie completa e decision log; l'aggregazione dell'intero
-Archivio e l'ammissione restano da collegare. Il [ponte WAL](wal-csn.md) conserva ora i token dei lotti di segmento.
-Apertura tardiva di Serie, controller e lifecycle richiedono integrazione;
-questa API non autorizza importazioni concorrenti con CSN superiori alla base.
+## Startup and boundaries
 
-Il [metodo preregistrato](csn-metodo.md) descrive oracoli, mutanti e misure.
-I [risultati locali](csn-risultati.md) e la [rilettura C1](csn-revisione.md)
-conservano evidenze e confini del componente.
-Il componente conserva solo stato volatile e non introduce atomicità durevole.
+Recovery must collect validated maximum CSN of entire Archivio before
+constructing registry and admitting writes. Base cannot change after
+construction. [Recovered-CSN queries](recovery-csn.md) provide maxima
+of ACTIVE, CLOSED, complete Serie, and decision log; aggregation of entire
+Archivio and admission remain to connect. The [WAL bridge](wal-csn.md) now retains segment-batch tokens.
+Late Serie opening, controller, and lifecycle require integration;
+this API does not authorize concurrent imports with CSNs above base.
+
+The [preregistered method](csn-metodo.md) describes oracles, mutants, and measurements.
+[Local results](csn-risultati.md) and [C1 rereading](csn-revisione.md)
+preserve component evidence and boundaries.
+Component retains volatile state only and introduces no durable atomicity.

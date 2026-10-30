@@ -1,25 +1,29 @@
-# Revisione indipendente della presa governata dal pool
+<a id="revisione-indipendente-della-presa-governata-dal-pool"></a>
 
-Lettura statica del 2026-10-13 sulla base
-`900fa93d9e14a252e6a2b5a009d19728b2de34af`, eseguita da un agente diverso
-dall'autore del nuovo gate. Esito finale: **positivo per lo scope C3**, dopo
-la precisazione documentale descritta sotto. Non sono stati modificati
-codice di prodotto o test dal revisore. Questa lettura non è una revisione
-umana e non attesta esiti di build, test, copertura o misure.
+# Independent review of pool-governed claim
 
-Sono stati letti il [contratto](pool-worker-claim.md), il
-[metodo preregistrato](pool-worker-claim-metodo.md), il gate, l'export,
-l'ordine ASDF e i dodici test nuovi. Il quadro applicato è
+Static reading on 2026-10-13 at base
+`900fa93d9e14a252e6a2b5a009d19728b2de34af`, performed by an agent other
+than the new gate's author. Final outcome: **positive for the C3 scope**, after
+the documentation clarification described below. The reviewer modified no
+product code or tests. This reading is not a human
+review and does not attest build, test, coverage, or measurement outcomes.
+
+Read: the [contract](pool-worker-claim.md),
+[preregistered method](pool-worker-claim-metodo.md), gate, export,
+ASDF order, and twelve new tests. The applied framework is
 [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md),
 [ADR-0034](../adr/0034-policy-di-compilazione-e-standard-di-codifica.md),
-[ADR-0045](../adr/0045-modello-di-esecuzione.md) e lo
-[standard di codifica](../affidabilita/standard-di-codifica.md).
+[ADR-0045](../adr/0045-modello-di-esecuzione.md), and the
+[coding standard](../affidabilita/standard-di-codifica.md).
 
-## Identità della lettura finale
+<a id="identità-della-lettura-finale"></a>
 
-Le identità SHA-256 seguenti si riferiscono ai file letti, prima delle
-campagne congelate. Gli eventuali risultati successivi devono dichiarare
-se hanno usato queste stesse versioni.
+## Final reading identity
+
+The following SHA-256 identities refer to files read before frozen
+campaigns. Any subsequent results must state
+whether they used these same versions.
 
 | File | SHA-256 |
 |---|---|
@@ -31,10 +35,10 @@ se hanno usato queste stesse versioni.
 | `docs/implementazione/pool-worker-claim.md` | `20240f3011569792d86d0369e374b3e6c43dcac48192ea34c0fd37b54f211ef7` |
 | `docs/implementazione/pool-worker-claim-metodo.md` | `aedfadbf875ef9b58ba54bc4b5269aba438983e53137c5c3eef645e1265f1e19` |
 
-Il coupling C1 e il protocollo lifecycle sono stati verificati su queste
-fonti preesistenti, senza modifiche nei relativi file:
+C1 coupling and lifecycle protocol were checked on these
+existing sources, without changes to their files:
 
-| Fonte | SHA-256 |
+| Source | SHA-256 |
 |---|---|
 | `src/execution/worker-types.lisp` | `62412828a90415bfef28c42f3e839c436c53652f86ffbf9a970d52682c769317` |
 | `src/execution/worker-boundary.lisp` | `4a01d44c33c4019f8d6e98e26d37d2b36c96f63370951859f8c3adfb5eddb39a` |
@@ -43,113 +47,123 @@ fonti preesistenti, senza modifiche nei relativi file:
 | `src/scheduler/lifecycle-worker.lisp` | `ec8b462ff3f5f7a6435f0f0c01b62034d8de2a784a9e354d469a0adfec9cf837` |
 | `src/scheduler/lifecycle-read.lisp` | `c60e1d5f67eeafb216b374fa001d27f87d1a734c5d066fc092902c0301069200` |
 
-## Rilievo corretto
+<a id="rilievo-corretto"></a>
 
-La prima formulazione diceva che un worker inattivo non consultava ready
-e che il ritiro precedeva ogni suo accesso. La funzione esegue invece
-sempre `%richiedi-worker :idle` prima del lifecycle. Il verificatore C1
-legge la dimensione del vettore delle partizioni, gli indici cursor/home
-e il tipo delle due partizioni riferite dal contesto. Non legge head,
-tail, count o slots del ring; non acquisisce una guardia e non cerca lavoro.
+## Corrected finding
 
-Il contratto e il metodo finali distinguono questa verifica della forma
-immutabile da polling, scansione e mutazione dei ring. La docstring ora
-promette la conservazione di ready/cursore. La rilettura conferma la
-correzione; il corpo eseguibile del gate è rimasto invariato.
+The first wording said that an inactive worker did not consult ready
+and retirement preceded every access to it. The function actually
+always executes `%richiedi-worker :idle` before lifecycle. The C1 verifier
+reads partition-vector size, cursor/home indices,
+and types of the two partitions referenced by the context. It does not read ring head,
+tail, count, or slots; it acquires no guard and searches for no work.
 
-La versione precedente del gate aveva SHA-256
+Final contract and method distinguish this immutable-shape check
+from ring polling, scanning, and mutation. The docstring now
+promises preservation of ready/cursor. Rereading confirms the
+correction; the executable gate body remained unchanged.
+
+The gate's previous version had SHA-256
 `37d8e2f60d7da8f5de1f5df6774bb2ac32e430771d370adc3689c25dd3222ddb`.
-Le prime versioni di contratto e metodo avevano rispettivamente
+The first contract and method versions had, respectively,
 `ee7cbc96be1e4a9895025ea4d9580dab034315c82786f27d8fe1015e4dbbec4e`
-e `af28052c22ebe07e4d26d93d8ff618d960ea5221a80190436a51e606c08ac1df`.
-Queste identità distinguono le formulazioni precedenti dalla lettura finale.
+and `af28052c22ebe07e4d26d93d8ff618d960ea5221a80190436a51e606c08ac1df`.
+These identities distinguish earlier wordings from the final reading.
 
-## Confine C3 e protocollo
+<a id="confine-c3-e-protocollo"></a>
 
-Il gate controlla quando delegare una nuova presa. La porta contiene il
-contesto immutabile, quindi il caller non può fornire separatamente un
-contesto diverso. L'owner della porta precede ogni accesso al contesto;
-il getter della fase verifica anche l'owner execution. Ogni fase non-IDLE,
-compresa FAULTED, è rifiutata senza leggere una lease live, applicare un
-comando o sostituire la prima causa del fault.
+## C3 boundary and protocol
 
-Sul contesto IDLE la barriera C1 completa precede il lifecycle anche quando
-la porta è inattiva o request=ack. Il valore `:unchanged` non viene quindi
-usato come prova di IDLE o salute. Dopo il gate, solo il ramo attivo chiama
-`execution:prendi-writer-worker`, che conserva verificatori, trasferimento
-dell'obbligo e confine di fault propri. Il nuovo file non scrive campi di
-integrità C1 e non racchiude gli errori del pool in `%passo-worker`.
+The gate controls when to delegate a new claim. The gate contains the
+immutable context, so caller cannot separately supply a
+different context. Gate owner precedes every context access;
+the phase getter also checks execution owner. Every non-IDLE phase,
+including FAULTED, is rejected without reading a live lease, applying a
+command, or replacing the first fault cause.
 
-Le dipendenze private sono `%richiedi-worker` e la lettura del cursore
-validato. Richiedono attenzione nelle future modifiche a execution: il
-gate deve conservare l'ordine owner/fase/forma e la lettura senza mutazione.
+On IDLE context, the full C1 barrier precedes lifecycle even when
+the gate is inactive or request=ack. The `:unchanged` value is therefore not
+used as proof of IDLE or health. After the gate, only the active branch calls
+`execution:prendi-writer-worker`, which retains its own checks, obligation
+transfer, and fault boundary. The new file does not write C1 integrity
+fields or wrap pool errors in `%passo-worker`.
 
-Un ritiro pubblicato dopo la lettura active può lasciare partire un singolo
-claim. Il comando resta pendente fino al ritorno a IDLE. Gli obblighi
-CLAIMED, batch, FINISHING e RESCHEDULE continuano a usare le API esistenti;
-un ring pieno può assegnare un nuovo writer e impedire ancora il ritiro.
-Il contratto non promette convergenza sotto saturazione perpetua.
+Private dependencies are `%richiedi-worker` and reading the validated
+cursor. They require attention in future execution changes: the
+gate must retain owner/phase/shape order and nonmutating reads.
 
-Il quarto valore conserva il dominio del lifecycle di base. Sul percorso
-normale, esclusivo e IDLE, sono attesi `:unchanged`, `:activated` e `:retired`;
-la dichiarazione ammette anche `:busy` e `:faulted` come l'API delegata.
-Non viene attribuita a questi due valori una raggiungibilità nuova.
+Retirement published after the active read may allow a single
+claim to start. The command remains pending until return to IDLE. CLAIMED,
+batch, FINISHING, and RESCHEDULE obligations continue using existing APIs;
+a full ring may assign a new writer and still prevent retirement.
+The contract does not promise convergence under perpetual saturation.
 
-## Lista di controllo
+The fourth value retains the base lifecycle domain. On the
+normal, exclusive IDLE path, `:unchanged`, `:activated`, and `:retired` are expected;
+the declaration also allows `:busy` and `:faulted`, like the delegated API.
+No new reachability is attributed to those two values.
 
-I dodici punti della lista C1 sono usati come controllo aggiuntivo. Non
-cambiano la classe C3 né costituiscono le due revisioni richieste a C1.
+<a id="lista-di-controllo"></a>
 
-| Punto | Valutazione statica e limite |
+## Checklist
+
+The twelve C1 checklist points are used as an additional check. They do not
+change class C3 or constitute the two reviews required for C1.
+
+| Point | Static assessment and limit |
 |---|---|
-| 1. Requisiti e ADR | REQ-THR-001, REQ-CON-001/002/004/005 e REQ-AFF-008 coerenti con governo delle nuove prese, proprietà e limiti. REQ-THR-001 resta aperto per il motore completo. |
-| 2. Invarianti | Owner prima dei campi, contesto associato alla porta, non-IDLE prima dell'ACK, IDLE C1 completo anche per porta inattiva, claim solo nel ramo active. Preservazione degli obblighi coperta nelle fixture lette. |
-| 3. Errori | Ragioni typed per owner e fase; invarianti delegate senza occultamento. I rifiuti del gate non fanno poisoning C1. Gli errori del claim mantengono il confine execution. Nessun rollback dell'ACK dopo un claim fallito. |
-| 4. Limiti | Nessun ciclo, ricorsione, attesa, syscall o retry nel gate. O(1) oltre ai verificatori C1; il solo ramo attivo delega la scansione bounded su al più 64 partizioni. |
-| 5. Allocazione | Nessuna lista, closure o struttura creata esplicitamente nel gate; valori multipli. L'assenza di heap resta da misurare e non viene attestata dalla lettura. |
-| 6. Risultati | Writer, esito e cursore del claim sono inoltrati senza reinterpretazione; inattivo restituisce NIL e cursore già validato. Quarto valore del lifecycle conservato; nessun valore d'errore ignorato. |
-| 7. Decisioni | Due `unless` semplici e un `if`; nessun nuovo predicato composto. Complessità ciclomatica 4. MC/DC non richiesto a C3; copertura di espressioni e rami resta separata. |
-| 8. Proprietà | Porta e contesto del worker non rientrante, ACK delegato al suo owner; request del coordinatore. Nessun nuovo stato globale o protocollo di sincronizzazione. |
-| 9. Tracciabilità | REQ sulla funzione e nei nomi dei dodici test. ASDF carica il gate dopo execution/lifecycle e registra i test. Build, lint, trace e controllo completo non eseguiti dal revisore. |
-| 10. Standard | Safety 3, ftype completo, docstring e commenti OWNER/SHARED; funzione di 18 righe. Nessun handler, cleanup, dichiarazione che rimuove controlli o deviazione individuata. |
-| 11. Parallelismo | Nessuna scrittura globale per messaggio. ACK per ondata e ready partizionata, toccata dalla sola presa C1 attiva. La revisione non misura scalabilità, equità o progressione sotto carico. |
-| 12. Durabilità | Nessun effetto su payload, CSN, file o controller Serie; nessun cambiamento durevole o eliminazione. Atomicità su disco non applicabile a questo gate. |
+| 1. Requirements and ADR | REQ-THR-001, REQ-CON-001/002/004/005, and REQ-AFF-008 consistent with governance of new claims, ownership, and bounds. REQ-THR-001 remains open for the whole engine. |
+| 2. Invariants | Owner before fields, context bound to gate, non-IDLE before ACK, complete C1 IDLE even for inactive gate, claim only in active branch. Obligation preservation covered in fixtures read. |
+| 3. Errors | Typed owner and phase reasons; delegated invariants without hiding. Gate rejections do not poison C1. Claim errors retain the execution boundary. No ACK rollback after failed claim. |
+| 4. Bounds | No loop, recursion, wait, syscall, or retry in gate. O(1) beyond C1 verifiers; only active branch delegates bounded scan over at most 64 partitions. |
+| 5. Allocation | No list, closure, or structure explicitly created in gate; multiple values. Absence of heap remains to be measured and is not attested by reading. |
+| 6. Results | Claim writer, outcome, and cursor forwarded without reinterpretation; inactive returns NIL and already validated cursor. Fourth lifecycle value retained; no error value ignored. |
+| 7. Decisions | Two simple `unless` and one `if`; no new compound predicate. Cyclomatic complexity 4. MC/DC not required for C3; expression and branch coverage remains separate. |
+| 8. Ownership | Gate and context of nonreentrant worker, ACK delegated to its owner; coordinator request. No new global state or synchronization protocol. |
+| 9. Traceability | REQ on function and in twelve test names. ASDF loads gate after execution/lifecycle and registers tests. Reviewer did not run build, lint, trace, or full check. |
+| 10. Standards | Safety 3, complete ftype, docstring, and OWNER/SHARED comments; 18-line function. No handler, cleanup, declaration removing checks, or deviation identified. |
+| 11. Parallelism | No global write per message. ACK per wave and partitioned ready, touched only by active C1 claim. Review does not measure scalability, fairness, or progress under load. |
+| 12. Durability | No effect on payload, CSN, files, or Serie controller; no durable change or deletion. Disk atomicity not applicable to this gate. |
 
-## Lettura delle prove nuove
+<a id="lettura-delle-prove-nuove"></a>
 
-Il file test contiene dodici prove nominate. Sono state lette come codice,
-senza eseguirle e senza attribuire alla revisione il PASS riportato da altri.
-Il caller usa writer e liste pronte reali; i claim riusciti sono verificati
-con identità del writer e completamento attraverso le API execution.
+## Reading of new tests
 
-| Gruppo di prove | Evidenza prevista dal codice e limite |
+The test file contains twelve named tests. They were read as code,
+without running them or attributing others' reported PASS to this review.
+Caller uses real writers and ready lists; successful claims are checked
+with writer identity and completion through execution APIs.
+
+| Test group | Expected code evidence and limit |
 |---|---|
-| Inattivo con lavoro pronto | Immagini di porta, contesto, ring e writer conservate; sentinella FI in `%prova-pronta` distingue nessuna scansione da scansione senza pop. |
-| Crescita e ritiro reali | Controller e registro reali con owner distinti; crescita porta al claim di un writer già accodato, ritiro lascia il writer nel ring. |
-| Owner e fasi | Owner estraneo prima di fase/parole corrotte; tutte le sei fasi non-IDLE conservano riferimenti, debito e prima causa, anche deliberatamente incoerenti. |
-| IDLE e protocollo corrotti | FI quiescenti su cursor/home/writer/lease/pending/fault, quattro configurazioni active/request/ack e parole invalide. Immagini preservate prima dell'ACK/pop; nessun fault C1 aggiunto dal pool. |
-| CAS della conferma | La fixture invoca il vero helper CAS con OLD errato; conta l'invocazione e verifica rifiuto senza pop, poi applica il comando originale. |
-| EMPTY e BUSY | Esiti e rotazione del cursore verificati su shard reali; guardia occupata impedisce il claim e conserva il lavoro. |
-| Comando tardivo | FI al confine dopo il vero campione active, prima del pop; un compito viene completato e il ritiro confermato alla presa successiva. L'interleaving è iniettato, non una gara casuale osservata. |
-| Bridge e ring pieno | Pop sotto le due lease, conferma, chiusura e trasferimento esplicito dell'obbligo; ricircolo pieno restituisce un nuovo writer e il routing seleziona la sua Serie. |
+| Inactive with ready work | Gate, context, ring, and writer images preserved; FI sentinel in `%prova-pronta` distinguishes no scan from scan without pop. |
+| Real growth and retirement | Real controller and registry with distinct owners; growth leads to claim of already queued writer, retirement leaves writer in ring. |
+| Owner and phases | Foreign owner before phase/corrupted words; all six non-IDLE phases retain references, debt, and first cause, even deliberately inconsistent ones. |
+| Corrupt IDLE and protocol | Quiescent FI on cursor/home/writer/lease/pending/fault, four active/request/ack configurations, and invalid words. Images preserved before ACK/pop; no C1 fault added by pool. |
+| Acknowledgment CAS | Fixture invokes real CAS helper with wrong OLD; counts invocation and checks rejection without pop, then applies original command. |
+| EMPTY and BUSY | Outcomes and cursor rotation checked on real shards; occupied guard prevents claim and retains work. |
+| Late command | Boundary FI after real active sample, before pop; one task completed and retirement acknowledged at next claim. Injected interleaving, not observed random race. |
+| Bridge and full ring | Pop under both leases, acknowledgment, closure, and explicit obligation transfer; full recycling returns a new writer and routing selects its Serie. |
 
-Le FI che sostituiscono temporaneamente funzioni ripristinano le definizioni
-con `unwind-protect` e dichiarano quiescenza. I bypass diretti di execution
-nelle prove sono esplicitamente setup, drenaggio o cleanup C4; non sono
-presentati come claim autorizzati da una porta inattiva. I payload sentinella
-sono controllati nel buffer; ciò non qualifica effetti durevoli di operazioni
-applicative. Il backend Serie in memoria non qualifica I/O nativo.
+FI that temporarily replaces functions restores definitions
+with `unwind-protect` and declares quiescence. Direct execution bypasses
+in tests are explicitly C4 setup, drain, or cleanup; they are not
+presented as claims authorized by an inactive gate. Sentinel payloads
+are checked in buffer; this does not qualify durable effects of application
+operations. The in-memory Serie backend does not qualify native I/O.
 
-## Limiti dell'esito
+<a id="limiti-dellesito"></a>
 
-La lettura non esegue build, lint, trace, test, self-test degli strumenti,
-campagne di copertura o benchmark. Il gate C3 di almeno 95% su espressioni
-e rami, la misura di heap e il controllo completo restano da attestare su
-fonti congelate e output originali. La dichiarazione che l'ACK resta valido
-se il claim successivo fallisce è verificata staticamente nell'ordine del
-codice; nelle dodici prove lette non c'è una FI dedicata a quel preciso caso.
+## Outcome limits
 
-Non sono attestati wake/park, avvio graduale, worker morti, sensori,
-coordinamento Archivio, admission dei messaggi, shutdown fisico o dispatcher
-completo. QA-12/19 e il requisito di thread del motore restano aperti.
-Nessun risultato di una revisione umana o qualifica formale è implicato.
+The reading runs no build, lint, trace, test, tool self-test,
+coverage campaign, or benchmark. The C3 gate of at least 95% of expressions
+and branches, heap measurement, and full check remain to be attested on
+frozen sources and original output. The statement that ACK remains valid
+if the subsequent claim fails is checked statically in code
+order; the twelve tests read contain no FI dedicated to that exact case.
+
+Wake/park, gradual startup, dead workers, sensors,
+Archivio coordination, message admission, physical shutdown, and complete
+dispatcher are not attested. QA-12/19 and the engine thread requirement remain open.
+No human review result or formal qualification is implied.

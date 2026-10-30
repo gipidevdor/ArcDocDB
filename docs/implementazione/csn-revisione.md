@@ -1,25 +1,27 @@
-# Seconda lettura C1 indipendente — registro CSN
+<a id="seconda-lettura-c1-indipendente--registro-csn"></a>
 
-**Stato corrente:** CSN-C1-01 risolto dalla rilettura della rifattorizzazione;
-nessun rilievo statico residuo nell'ambito letto. L'addendum finale aggiorna
-la prima lettura qui conservata, inclusi gli hash iniziali e i test allora assenti.
+# Independent C1 second reading — CSN register
 
-Revisione statica delimitata del 2026-10-09, indipendente dalla realizzazione,
-nel workspace `/Users/gpicchiarelli/.codex/worktrees/sequenze-commit/ArcDocDB`.
-Riferimento Git: `92d8b0ebf498800e4847bc4828560c6dac879c0e`; i file CSN
-letti sono modifiche del workspace, non una consegna congelata o un commit.
-Rilevazione degli hash: 2026-10-09T07:38:05+00:00.
+**Current status:** CSN-C1-01 resolved by rereading the refactoring;
+no remaining static findings within the scope read. The final addendum updates
+the first reading preserved here, including initial hashes and tests absent at that time.
 
-Sono stati letti il prodotto, il metodo preregistrato, la tabella delle decisioni,
-il contratto pubblico, ADR-0046/0038/0045 e lo standard C1. L'ispezione del supporto
-dei test e di sezioni del benchmark è statica. Nessuna compilazione, suite,
-misura, mutazione, copertura o strumento del progetto è stata eseguita.
-Le sole scritture del revisore sono questo documento e
-`/tmp/arcdocdb-csn-review.lisp`, record dati con `:schema-version 1`.
-Nessun commit. Questa lettura non conferisce approvazione C1, deroga o qualifica
-del motore.
+Bounded static review on 2026-10-09, independent of implementation,
+in workspace `/Users/gpicchiarelli/.codex/worktrees/sequenze-commit/ArcDocDB`.
+Git reference: `92d8b0ebf498800e4847bc4828560c6dac879c0e`; the CSN files
+read are workspace changes, not a frozen delivery or commit.
+Hash observation: 2026-10-09T07:38:05+00:00.
 
-| File letto | SHA-256 |
+The product, preregistered method, decision table,
+public contract, ADR-0046/0038/0045, and C1 standard were read. Inspection of test
+support and benchmark sections is static. No compilation, suite,
+measurement, mutation, coverage, or project tool was run.
+The reviewer's only writes are this document and
+`/tmp/arcdocdb-csn-review.lisp`, a data record with `:schema-version 1`.
+No commit. This reading grants no C1 approval, exception, or engine
+qualification.
+
+| File read | SHA-256 |
 |---|---|
 | `src/csn/package.lisp` | `b9fa9bac97e89dd43bd91e6050ac7f6bbba47109403350478b2df8ca851f01a0` |
 | `src/csn/registry.lisp` | `81fcc0181b883f299c6fe33b3b1bc05a8a6f0d756ef06717eaff1fdde73050a6` |
@@ -27,128 +29,138 @@ del motore.
 | `docs/implementazione/csn-metodo.md` | `f2b18cdf170478141c955c1d77f5393daf23c27888abd6e6dbd2f219a5de604c` |
 | `docs/implementazione/csn-decisioni.md` | `ade75b4b0bb050f79b2f8ded23b21745c9a939839b35d1e521c1632ba80aaab6` |
 
-Il record conserva anche gli hash degli altri riferimenti e dei file di
-supporto presenti. La conclusione riguarda questi contenuti; una modifica
-successiva del prodotto richiede una lettura del diff.
+The record also retains hashes of the other references and existing support
+files. The conclusion applies to these contents; a subsequent product
+change requires a diff review.
 
-## Rilievo da restituire al parent
+<a id="rilievo-da-restituire-al-parent"></a>
 
-**CSN-C1-01 — COD-13, complessità dei due helper (P2, aperto).**
-Lo [standard](../affidabilita/standard-di-codifica.md) impone al più dieci
-percorsi indipendenti per funzione. Contando i rami del cortocircuito
-`and`/`or`, oltre alle decisioni e ai cicli espliciti:
+## Finding to return to the parent
 
-| Funzione e righe | Conteggio manuale |
+**CSN-C1-01 — COD-13, complexity of two helpers (P2, open).**
+The [standard](../affidabilita/standard-di-codifica.md) requires at most ten
+independent paths per function. Counting short-circuit
+`and`/`or` branches in addition to explicit decisions and loops:
+
+| Function and lines | Manual count |
 |---|---|
-| `%check-token-csn`, `src/csn/registry.lisp:130–146` | Base 1 + tre `unless` + 4 rami del primo `and` + 1 dell'`or` annidato + 1 del secondo `and` + 2 del terzo `and` = **12**. |
-| `%frontiera-risolta-csn`, `src/csn/registry.lisp:150–171` | Base 1 + un `dotimes` + quattro `unless` + due `when` + un `if` + due rami dei due `and` = **11**. |
+| `%check-token-csn`, `src/csn/registry.lisp:130–146` | Base 1 + three `unless` + 4 branches in the first `and` + 1 in the nested `or` + 1 in the second `and` + 2 in the third `and` = **12**. |
+| `%frontiera-risolta-csn`, `src/csn/registry.lisp:150–171` | Base 1 + one `dotimes` + four `unless` + two `when` + one `if` + two branches in the two `and` forms = **11**. |
 
-È un conteggio statico del flusso scritto, non una misura di copertura né
-un conteggio dell'espansione di `with-mutex`. La tabella delle decisioni
-inventaria le condizioni ma non documenta il rispetto di COD-13;
-il registro delle deviazioni dichiara «Nessuna».
-Il parent deve ridurre la complessità, per esempio separando validazione
-della forma del token e controllo di un pendente residuo, oppure motivare
-esplicitamente un diverso criterio di conteggio. Questa revisione non
-approva una deroga. Nessun errore nel calcolo dei CSN o di H è stato individuato
-nelle transizioni sane esaminate.
+This is a static count of the written control flow, neither a coverage measurement nor
+a count of the `with-mutex` expansion. The decision table
+inventories conditions but does not document compliance with COD-13;
+the deviation register states “None.”
+The parent must reduce complexity, for example by separating token shape
+validation from checking a remaining pending item, or explicitly justify
+a different counting criterion. This review does not
+approve an exception. No error in CSN or H computation was identified
+in the healthy transitions examined.
 
-## Osservazioni proprie sul prodotto
+<a id="osservazioni-proprie-sul-prodotto"></a>
 
-- **Carry e borrow.** Le due parole restano u32; il confronto è lessicografico.
-  Da base `(0,#xfffffffe)`, due prelievi producono `(0,#xffffffff)` e
-  `(1,0)`. Risolvendo il primo, il minimo residuo `(1,0)` diventa
-  H=`(0,#xffffffff)`: il borrow è corretto. Il guard sul massimo precede
-  l'incremento, impedendo `high=2^32`. Sono passaggi dedotti dal sorgente,
-  non test eseguiti.
-- **Nessun CSN assegnato invisibile al registro nelle chiamate completate.**
-  Lo slot viene scelto e le due parole scritte prima di aggiornare ultimo,
-  cursore e conteggio; nessuna API pubblica può leggere o risolvere nel mezzo,
-  perché usa la stessa guardia. H viene calcolato escludendo solo lo slot
-  risolto e considerando tutti gli altri slot non zero, prima di mutare.
-- **Controesempio ADR-0046.** Con K=2, mantenendo 1 pendente e prendendo e
-  risolvendo 2, 3, 4, 5, resta riusabile il credito del secondo slot e H resta
-  0. Risolvendo infine 1, nessun pendente resta e H diventa 5.
-  Non c'è indicizzazione tramite `csn mod K`.
-- **Guardia senza attesa.** Il registro è valutato una volta; il controllo
-  dell'owner corrente evita un'acquisizione ricorsiva. Il tentativo effettivo
-  usa `sb-thread:with-mutex ... :wait-p nil`. Il flag `acquired` distingue
-  il mutex occupato da un corpo che ritorna NIL; `multiple-value-prog1`
-  conserva i valori multipli. Cleanup e gestione del mutex sono delegati
-  alla macro del runtime. L'ispezione non prova gli interleaving o la gestione
-  di un'interruzione asincrona durante gli store.
-- **Token e rifiuti.** Range e tipo precedono l'accesso allo slot; entrambe
-  le parole devono coincidere. Nessun wrap e nessuna modifica della base
-  permettono a un token risolto di tornare valido nel medesimo registro.
-  Un altro registro può emettere lo stesso `slot/high/low`: l'associazione
-  al registro è un obbligo del chiamante, dichiarato nel codice e nel
-  contratto. Non viene garantita l'identificazione dell'Archivio dal token.
-- **Priorità degli errori.** `:csn-full` precede `:csn-exhausted`.
-  Con K=1 e l'ultimo token uguale al massimo u64 ancora pendente, un nuovo
-  prelievo segnala full; dopo la risoluzione segnala exhausted. Entrambi i
-  rifiuti avvengono prima degli store. La suite finale deve conservare questa
-  priorità o documentarne la modifica.
-- **Limite delle difese.** `%check-registro-csn` verifica `used≤K`, non
-  l'uguaglianza fra used e gli slot occupati. La cardinalità esatta viene
-  verificata solo da `%frontiera-risolta-csn`. Per esempio, una FI che
-  porta used da 1 a 2 in un registro K=2 con un solo pendente passa il
-  controllo generale e può produrre full al prelievo; la risoluzione
-  rileva poi l'incoerenza prima di mutare. Non è una transizione raggiunta
-  da un uso sano dell'API. La docstring «conteggio ... coerenti» è più ampia
-  del controllo generale effettivo: il parent deve delimitare tale garanzia.
+## Original product observations
 
-## Checklist C1 compilata
+- **Carry and borrow.** The two words remain u32; comparison is lexicographic.
+  From base `(0,#xfffffffe)`, two allocations produce `(0,#xffffffff)` and
+  `(1,0)`. Resolving the first makes the remaining minimum `(1,0)` yield
+  H=`(0,#xffffffff)`: the borrow is correct. The maximum guard precedes
+  increment, preventing `high=2^32`. These steps are deduced from source,
+  not executed tests.
+- **No assigned CSN is invisible to the register in completed calls.**
+  The slot is selected and both words written before updating last,
+  cursor, and count; no public API can read or resolve midway,
+  because it uses the same guard. H is computed excluding only the resolved
+  slot and considering all other nonzero slots, before mutation.
+- **ADR-0046 counterexample.** With K=2, keeping 1 pending while allocating and
+  resolving 2, 3, 4, 5 leaves the second slot's credit reusable and H at
+  0. Finally resolving 1 leaves no pending items and H becomes 5.
+  There is no indexing by `csn mod K`.
+- **Nonwaiting guard.** The register is evaluated once; checking
+  the current owner prevents recursive acquisition. The actual attempt
+  uses `sb-thread:with-mutex ... :wait-p nil`. The `acquired` flag distinguishes
+  a busy mutex from a body returning NIL; `multiple-value-prog1`
+  preserves multiple values. Cleanup and mutex handling are delegated
+  to the runtime macro. Inspection does not prove interleavings or handling
+  of an asynchronous interruption during stores.
+- **Tokens and rejections.** Range and type precede slot access; both
+  words must match. The absence of wraparound and base changes
+  prevents a resolved token from becoming valid again in the same register.
+  Another register can issue the same `slot/high/low`: binding it
+  to the register is a caller obligation stated in code and the
+  contract. Identifying Archivio from the token is not guaranteed.
+- **Error priority.** `:csn-full` precedes `:csn-exhausted`.
+  With K=1 and the last token equal to maximum u64 still pending, a new
+  allocation signals full; after resolution it signals exhausted. Both
+  rejections occur before stores. The final suite must preserve this
+  priority or document its change.
+- **Defense limitations.** `%check-registro-csn` checks `used≤K`, not
+  equality between used and occupied slots. Exact cardinality is
+  checked only by `%frontiera-risolta-csn`. For example, an FI that
+  changes used from 1 to 2 in a K=2 register with one pending item passes
+  the general check and can produce full on allocation; resolution
+  then detects the inconsistency before mutation. Healthy API use does not
+  reach this transition. The docstring's “consistent ... count” guarantee is broader
+  than the actual general check: the parent must narrow that guarantee.
 
-La numerazione segue i dodici punti dello
-[standard di codifica](../affidabilita/standard-di-codifica.md);
-i criteri di evidenza seguono il
-[piano di verifica](../affidabilita/piano-di-verifica.md).
+<a id="checklist-c1-compilata"></a>
 
-| Punto | Riscontro e limite |
+## Completed C1 checklist
+
+Numbering follows the twelve items in the
+[coding standard](../affidabilita/standard-di-codifica.md);
+evidence criteria follow the
+[verification plan](../affidabilita/piano-di-verifica.md).
+
+| Item | Observation and limitation |
 |---|---|
-| 1. Requisiti e ADR | Annotazioni REQ-MVC-005/008 e REQ-AFF-008 presenti. ADR-0046 è realizzato dal registro dei soli pendenti. INV-M4/M6/A8 pertinenti; INV-P6 e ownership riguardano il coordinamento per lotto. REQ-MVC-005 resta un contributo locale: nessuno snapshot è implementato. |
-| 2. Invarianti e test | Assegnazione/registrazione indivisibili, slot esclusivo, H≤ultimo, H<pendenti e convergenza a vuoto analizzati. Il supporto presente usa interi matematici e lista dei token, senza riusare gli helper aritmetici del prodotto. Test sequenziali e thread dichiarati da ASDF assenti alla rilevazione: non attestata la loro copertura. |
-| 3. Errori e gestione | Config/token: `invalid-argument`; busy/full/exhausted: `resource-exhausted`; incoerenze: `invariant-violation`. I rifiuti ordinari precedono le modifiche. Risoluzione busy conserva token e obbligo; fail-stop dell'Archivio resta al controller. Suite per tutti gli errori e cleanup su errore non eseguita. |
-| 4. Cicli e attese | Due scansioni al più K≤65536, nessuna ricorsione, callback, I/O o retry nel prodotto. Un solo tentativo del mutex per chiamata. Il supporto dei test ha deadline, join finiti e controllo di cessazione nel cleanup; mancano le fixture effettive su thread. |
-| 5. Allocazione misurata | Array e mutex costruiti all'avvio. Successi usano parole u32 e valori multipli, senza costruire un u64/bignum o un token oggetto. Su SBCL a 64 bit le parole sono fixnum. Zero heap resta **da misurare** con controllo positivo, cinque campioni, basi alte e pendente più vecchio fisso. Presenza del benchmark non significa esecuzione riuscita. |
-| 6. Dati verificati | Il token è validato prima di indicizzare; base e capacità sono validate prima della costruzione. Il registro non verifica effetti pubblicati/annullati, identità del chiamante o massimo recuperato dai file: sono precondizioni. La lettura delle frontiere verifica i limiti generali, non tutta la cardinalità degli slot. |
-| 7. Decisioni composte | Configurazione, forma/frontiere, esaurimento, slot libero, forma/identità token, pendenti residui e confronto u64 sono nella tabella letta. Restano da collegare i casi effettivi alle singole condizioni, le coppie di indipendenza, copertura grezza e mutanti compilati. Nessuna attestazione MC/DC. |
-| 8. Proprietà e condivisione | OWNER/SHARED espliciti, un registro per Archivio, slot privati, nessun copier, campi immutabili read-only. Le API acquisiscono la stessa guardia; i token restano associati al registro dal chiamante. Gli array read-only come slot contengono elementi mutabili protetti dal mutex. |
-| 9. Trace e check | ASDF carica foundation prima di CSN e registra support/registry/threads per i test. Registry e threads dei test non sono presenti alla rilevazione. Requisiti e matrice restano `progettato`. Compilazione, lint, trace, link, copertura, mutanti e `make check` finali sono da acquisire dal parent su sorgenti fermi. |
-| 10. Regole e deviazioni | Safety 3, FTYPE delle funzioni, slot tipizzati, docstring, annotazioni REQ e funzioni sotto 60 righe presenti. **COD-13 aperto**, come sopra. Il test di espansione della macro richiesto da COD-53 non è presente nel supporto letto e va ispezionato nella suite finale. Nessuna deroga approvata. |
-| 11. Parallelismo fra Serie | Mutex e store condivisi sono dichiarati per assegnazione e risoluzione del lotto/decisione; la lettura è per coordinamento. Nessun accesso per documento o GET semplice richiesto dal contratto. Lo scheduler può riprogrammare busy/full; fairness, scalabilità e limiti dei parcheggi restano da implementare e misurare. |
-| 12. Atomicità e rimozioni | Solo stato volatile; nessun I/O, flush, eliminazione o punto di atomicità durevole. Il mutex rende coerente la transizione in memoria. H non è la frontiera dei byte durevoli e risolvere non costituisce conferma di commit. |
+| 1. Requirements and ADRs | REQ-MVC-005/008 and REQ-AFF-008 annotations present. ADR-0046 is implemented by the pending-only register. INV-M4/M6/A8 relevant; INV-P6 and ownership concern batch coordination. REQ-MVC-005 remains a local contribution: no snapshot is implemented. |
+| 2. Invariants and tests | Indivisible assignment/registration, exclusive slot, H≤last, H<pending, and convergence on empty state analyzed. Existing support uses mathematical integers and a token list without reusing product arithmetic helpers. Sequential and thread tests declared by ASDF were absent at observation: their coverage is not attested. |
+| 3. Errors and handling | Config/token: `invalid-argument`; busy/full/exhausted: `resource-exhausted`; inconsistencies: `invariant-violation`. Ordinary rejections precede changes. Busy resolution preserves the token and obligation; Archivio fail-stop remains with the controller. Suite for all errors and cleanup on error not run. |
+| 4. Loops and waits | Two scans of at most K≤65536, no recursion, callback, I/O, or retry in the product. One mutex attempt per call. Test support has deadlines, finite joins, and termination checks in cleanup; actual thread fixtures are missing. |
+| 5. Measured allocation | Arrays and mutex constructed at startup. Successful paths use u32 words and multiple values without constructing a u64/bignum or token object. On 64-bit SBCL, words are fixnums. Zero heap remains **to be measured** with a positive control, five samples, high bases, and a fixed oldest pending item. Benchmark presence does not mean successful execution. |
+| 6. Validated data | Token validated before indexing; base and capacity validated before construction. The register does not check published/aborted effects, caller identity, or maximum recovered from files: these are preconditions. Frontier reads check general bounds, not full slot cardinality. |
+| 7. Compound decisions | Configuration, shape/frontiers, exhaustion, free slot, token shape/identity, remaining pending items, and u64 comparison appear in the table read. Actual cases still need links to individual conditions, independence pairs, raw coverage, and compiled mutants. No MC/DC attestation. |
+| 8. Ownership and sharing | OWNER/SHARED explicit, one register per Archivio, private slots, no copier, immutable read-only fields. APIs acquire the same guard; callers retain token/register association. Arrays in read-only slots contain mutable elements protected by the mutex. |
+| 9. Trace and checks | ASDF loads foundation before CSN and registers support/registry/threads for tests. Test registry and threads files were absent at observation. Requirements and matrix remain `progettato`. Final compilation, lint, trace, links, coverage, mutants, and `make check` must be acquired by the parent on stable sources. |
+| 10. Rules and deviations | Safety 3, function FTYPEs, typed slots, docstrings, REQ annotations, and functions under 60 lines present. **COD-13 open**, as above. The macro expansion test required by COD-53 is absent from support read and must be inspected in the final suite. No approved exception. |
+| 11. Parallelism across Serie | Shared mutex and stores are declared for batch/decision assignment and resolution; reads serve coordination. The contract requires no per-document or simple GET access. The scheduler can reschedule busy/full; fairness, scalability, and parking limits remain to be implemented and measured. |
+| 12. Atomicity and removals | Volatile state only; no I/O, flush, deletion, or durable atomicity point. The mutex makes the in-memory transition consistent. H is not the durable byte frontier, and resolution is not a commit acknowledgment. |
 
-## Evidenze mancanti e integrazione successiva
+<a id="evidenze-mancanti-e-integrazione-successiva"></a>
 
-Alla rilevazione erano presenti `tests/csn/support.lisp` e
-`tools/csn-bench.lisp`; erano assenti `tests/csn/registry.lisp`,
-`tests/csn/threads.lisp` e `tools/csn-mutation.lisp`.
-Non sono stati letti risultati di campagne CSN. Il parent deve completare
-e congelare la suite, includendo carry, borrow, confine fixnum, massimo u64,
-token stale, rifiuti senza mutazione, contesa/ricorsione e valori/cleanup
-della macro. Deve poi collegare oracolo, esplorazione finita, thread reali,
-mutanti, sensore heap e check agli stessi hash del prodotto e rileggere
-eventuali modifiche.
+## Missing evidence and subsequent integration
 
-Il recovery deve determinare il massimo CSN validato dell'intero Archivio
-prima della costruzione e dell'ammissione delle scritture. Apertura tardiva
-di Serie con massimo superiore, WAL, pubblicazione dell'indice, fail-stop,
-annullamento corretto, shutdown, riprogrammazione e registrazione/risveglio
-degli snapshot sono integrazioni successive dichiarate. Un token perso o
-un controller che abbandona la risoluzione può trattenere credito e H;
-il registro non può liberarlo automaticamente. Nessuna prova di durability,
-recovery completo, P99 o prestazioni del motore è dedotta da questa lettura.
+At observation, `tests/csn/support.lisp` and
+`tools/csn-bench.lisp` were present; `tests/csn/registry.lisp`,
+`tests/csn/threads.lisp`, and `tools/csn-mutation.lisp` were absent.
+No CSN campaign results were read. The parent must complete
+and freeze the suite, including carry, borrow, fixnum boundary, maximum u64,
+stale tokens, rejection without mutation, contention/recursion, and macro
+values/cleanup. It must then tie oracle, finite exploration, real threads,
+mutants, heap sensor, and checks to the same product hashes and reread
+any changes.
 
-## Addendum — rilettura della rifattorizzazione e dei test presenti
+Recovery must determine the validated maximum CSN of the entire Archivio
+before construction and write admission. Late opening
+of Serie with a higher maximum, WAL, index publication, fail-stop,
+correct abort, shutdown, rescheduling, and snapshot registration/wakeup
+are declared subsequent integrations. A lost token or
+controller that abandons resolution can retain credit and H;
+the register cannot release it automatically. No proof of durability,
+complete recovery, P99, or engine performance is deduced from this reading.
 
-Rilettura statica conclusa a 2026-10-09T07:44:59+00:00, dopo la correzione
-del parent. **CSN-C1-01 risolto nell'ambito della lettura statica.**
-Il rilievo e gli hash iniziali sopra restano conservati. L'osservazione sulla
-docstring del controllo generale è anch'essa risolta: ora distingue limiti
-del conteggio e cardinalità esatta controllata alla risoluzione.
+<a id="addendum--rilettura-della-rifattorizzazione-e-dei-test-presenti"></a>
 
-| File riletto o comparso | SHA-256 della rilettura |
+## Addendum — rereading the refactoring and available tests
+
+Static rereading completed at 2026-10-09T07:44:59+00:00, after the parent's
+correction. **CSN-C1-01 resolved within the static review scope.**
+The original finding and hashes above remain preserved. The observation about
+the general check's docstring is also resolved: it now distinguishes count
+bounds from exact cardinality checked at resolution.
+
+| File reread or newly present | SHA-256 at rereading |
 |---|---|
 | `src/csn/registry.lisp` | `56262b96c0b3fdfc92289e37e80dadb17c49870c57c57e89ab7afba4bb74f14a` |
 | `src/csn/package.lisp` | `b9fa9bac97e89dd43bd91e6050ac7f6bbba47109403350478b2df8ca851f01a0` |
@@ -156,56 +168,60 @@ del conteggio e cardinalità esatta controllata alla risoluzione.
 | `tests/csn/registry.lisp` | `c4e24c711f0ac63e33149bc866d8a62c0eb6e92528b2710a09b74ffc4c78a950` |
 | `tests/csn/threads.lisp` | `0470dc35f8c5cd4ca294712fd439e7865e3702fe243a72b9f57194d099f2b5d2` |
 
-La tabella delle decisioni mantiene l'hash iniziale e le condizioni restano
-pertinenti. Il nuovo helper dei pendenti aggiunge nella scansione il controllo
-`used>0`, già stabilito sul token risolto prima della scansione sotto lo
-stesso mutex: è ridondante per questa chiamata e non modifica la transizione.
+The decision table retains its initial hash and conditions remain
+relevant. The new pending-item helper adds `used>0` to the scan,
+already established on the resolved token before the scan under the
+same mutex: it is redundant for this call and does not change the transition.
 
-### Conteggio indipendente della versione corretta
+<a id="conteggio-indipendente-della-versione-corretta"></a>
 
-Uso lo stesso criterio del rilievo: base 1, una decisione per
-`if/when/unless` e ciclo, più N−1 rami di cortocircuito per ogni
-`and/or` di N condizioni. Non conto le funzioni chiamate o l'espansione
-delle macro del runtime come rami della funzione chiamante.
+### Independent count of the corrected version
 
-| Funzione | Conteggio manuale |
+I use the same criterion as the finding: base 1, one decision per
+`if/when/unless` and loop, plus N−1 short-circuit branches for each
+`and/or` of N conditions. I do not count called functions or runtime
+macro expansions as branches of the calling function.
+
+| Function | Manual count |
 |---|---|
-| `%check-forma-token-csn`, riga 131 | 1 base + 1 unless + 4 and + 1 or = **7**. |
-| `%check-pendente-csn`, riga 141 | 1 base + 1 unless + 2 and = **4**. |
-| `%check-token-csn`, riga 154 | 1 base + 1 unless + 1 and = **3**. |
-| `%frontiera-risolta-csn`, riga 167 | 1 base + 1 dotimes + 3 unless + 2 when + 1 if + 1 and = **9**. |
-| `%check-registro-csn`, riga 53, flusso invariato | 1 base + 4 when/unless + 4 and + 1 or = **10**. |
+| `%check-forma-token-csn`, line 131 | 1 base + 1 unless + 4 and + 1 or = **7**. |
+| `%check-pendente-csn`, line 141 | 1 base + 1 unless + 2 and = **4**. |
+| `%check-token-csn`, line 154 | 1 base + 1 unless + 1 and = **3**. |
+| `%frontiera-risolta-csn`, line 167 | 1 base + 1 dotimes + 3 unless + 2 when + 1 if + 1 and = **9**. |
+| `%check-registro-csn`, line 53, unchanged flow | 1 base + 4 when/unless + 4 and + 1 or = **10**. |
 
-Tutte queste funzioni rispettano il limite di 10 con il criterio usato.
-I nuovi helper hanno FTYPE, docstring e annotazioni REQ; non scrivono
-il registro. Forma e range continuano a precedere gli accessi allo slot,
-l'identità precede il controllo delle frontiere, e la scansione continua
-a concludere controllo dei residui/conteggio prima degli store.
-Firma e valori delle API, mutex, carry/borrow, priorità degli errori,
-slot, token e aggiornamenti delle frontiere risultano invariati alla lettura.
-Nessun nuovo difetto funzionale individuato; nessuna esecuzione effettuata.
+All these functions meet the limit of 10 under the criterion used.
+The new helpers have FTYPEs, docstrings, and REQ annotations; they do not write
+the register. Shape and range still precede slot access,
+identity precedes frontier checks, and the scan still
+finishes checking remaining items/count before stores.
+API signatures and values, mutex, carry/borrow, error priority,
+slots, tokens, and frontier updates appear unchanged on reading.
+No new functional defect identified; no execution performed.
 
-### Aggiornamento dei punti della checklist
+<a id="aggiornamento-dei-punti-della-checklist"></a>
 
-| Punto iniziale | Aggiornamento della rilettura |
+### Checklist item updates
+
+| Initial item | Rereading update |
 |---|---|
-| 2. Invarianti/test | Registry e threads ora presenti e letti integralmente. Il modello usa interi/lista indipendenti; casi carry/borrow, confine fixnum, massimo u64, completamento inverso, credito, stale, controesempio fino a 65 e FI sono presenti. Esplorazione K=2/3 fino a sei commit e 10.000 azioni deterministiche sono codice di prova, non risultati ottenuti. |
-| 3. Errori | Suite presente per configurazione, token, full/exhausted, shape, frontiere e conteggio residuo; immagini private confrontate nelle FI. Conservazione dello stato e tipi sono asserzioni da eseguire, non attestazioni della revisione. |
-| 4. Cicli/attese | Fixture con mutex trattenuto esige il join del probe prima del rilascio: può rilevare un try-lock diventato bloccante. Quattro worker × 1.000 assegnazioni, K=3, due onde forzano full e riuso; deadline 20 s, cleanup con join limitato e controllo di cessazione. Nessuna esecuzione o prova esaustiva degli interleaving. |
-| 5. Allocazione | Nessun costruttore nei nuovi helper; zero heap resta da misurare sul nuovo hash. Le campagne precedenti o sul vecchio hash non si trasferiscono automaticamente alla versione corretta. |
-| 7. Decisioni | Le condizioni prima concentrate nel token sono distribuite nei due helper. La tabella resta applicabile; conteggio, copertura grezza, coppie di indipendenza e kill dei mutanti richiedono evidenze finali sul sorgente rifattorizzato. |
-| 9. Integrazione/check | I file test dichiarati da ASDF sono ora presenti. Anche `tools/csn-mutation.lisp` è comparso e ne sono state ispezionate sezioni; non è stato eseguito o qualificato dal revisore. Build/lint/trace/link/check restano da acquisire. |
-| 10. Standard | COD-13 chiuso con conteggi 7/4/3/9 e controllo generale 10. Il test della macro ora presente verifica valutazione singola, NIL, zero e più valori, errore, uscita non locale e ricorsione; il test su altro worker verifica busy con corpo non eseguito. Sono verifiche del comportamento dell'espansione da compilare/eseguire; nessuna macroespansione o suite eseguita qui. |
+| 2. Invariants/tests | Registry and threads now present and read in full. The model uses independent integers/list; cases for carry/borrow, fixnum boundary, maximum u64, reverse completion, credit, stale tokens, counterexample through 65, and FI are present. K=2/3 exploration through six commits and 10,000 deterministic actions are test code, not obtained results. |
+| 3. Errors | Suite present for configuration, token, full/exhausted, shape, frontiers, and remaining count; private images compared in FI. State preservation and types are assertions to execute, not review attestations. |
+| 4. Loops/waits | A fixture with a held mutex requires the probe to join before release: it can detect a try-lock becoming blocking. Four workers × 1,000 assignments, K=3, two waves force full and reuse; 20 s deadline, cleanup with bounded joins and termination check. No execution or exhaustive proof of interleavings. |
+| 5. Allocation | No constructor in new helpers; zero heap still requires measurement on the new hash. Prior campaigns or campaigns on the old hash do not automatically transfer to the corrected version. |
+| 7. Decisions | Conditions previously concentrated in the token are distributed across two helpers. The table remains applicable; counts, raw coverage, independence pairs, and mutant kills require final evidence on refactored source. |
+| 9. Integration/checks | Test files declared by ASDF are now present. `tools/csn-mutation.lisp` has also appeared and sections were inspected; the reviewer did not run or qualify it. Build/lint/trace/link/check evidence remains to be acquired. |
+| 10. Standard | COD-13 closed with counts 7/4/3/9 and general check 10. The macro test now present checks single evaluation, NIL, zero and multiple values, error, nonlocal exit, and recursion; the other-worker test checks busy with body not executed. These are checks of expansion behavior to compile/run; no macro expansion or suite was run here. |
 
-I punti 1, 6, 8, 11 e 12 conservano l'ambito della prima lettura.
-Al punto 6 la precisazione della docstring ora coincide con il limite osservato;
-restano obblighi del chiamante il legame token/registro e gli effetti pubblicati
-o validamente annullati. I limiti di lifecycle, recovery, snapshot, durata
-e parallelismo del motore già dichiarati restano aperti.
+Items 1, 6, 8, 11, and 12 retain the first reading's scope.
+In item 6, the clarified docstring now matches the observed limitation;
+token/register binding and published or validly aborted effects
+remain caller obligations. Previously declared engine lifecycle,
+recovery, snapshot, duration, and parallelism limits remain open.
 
-**Esito corrente:** nessun rilievo statico residuo nell'ambito letto.
-Le assenze iniziali sono una rilevazione storica, superata dalla presenza
-e lettura statica dei test nell'addendum. Il parent può congelare questo hash
-per le proprie campagne; la revisione non dichiara che il congelamento o le
-campagne siano già avvenuti. Nessuna approvazione C1 o deroga, nessun test,
-benchmark, strumento del progetto o commit eseguito dal revisore.
+**Current outcome:** no remaining static finding within the scope read.
+The initial absences are a historical observation superseded by the tests'
+presence and static reading in the addendum. The parent may freeze this hash
+for its campaigns; the review does not state that freezing or
+campaigns have already occurred. No C1 approval or exception, and no test,
+benchmark, project tool, or commit executed by the reviewer.

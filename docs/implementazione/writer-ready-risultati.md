@@ -1,39 +1,45 @@
-# Risultati della lista dei writer pronti
+<a id="risultati-della-lista-dei-writer-pronti"></a>
 
-Campagne locali 2026-10-09, base iniziale `92d8b0e`, macOS ARM64/Apple M4,
-SBCL 2.6.9, safety3. Le verifiche integrate usano prima `fd96fb3` (manifest),
-poi `201562d` (header CBOR) e `33aa224` (registro CSN), contributi delle altre chat.
-I due sorgenti ready, test e benchmark
-restano identici; ASDF integra i componenti e il runner di mutazione viene
-rafforzato. Ogni record conserva la propria versione; il carico esterno
-non è controllato.
-Il [contratto](writer-ready.md) conserva i confini del trasporto degli obblighi.
+# Ready-writer list results
 
-## Correttezza e fault injection
+Local campaigns 2026-10-09, initial base `92d8b0e`, macOS ARM64/Apple M4,
+SBCL 2.6.9, safety3. Integrated checks first use `fd96fb3` (manifest),
+then `201562d` (CBOR header), `33aa224` (CSN register), other-chat contributions.
+Both ready sources, tests, benchmark
+identical; ASDF integrates components, mutation runner
+strengthened. Every record retains own version; external load
+uncontrolled.
+[Contract](writer-ready.md) preserves obligation-transport boundaries.
 
-Sulla base iniziale, build forzata e suite completa senza warning/style-warning: 237 test dei
-sette moduli più smoke, con 51 execution (34 precedenti e 17 nuovi).
-L’oracolo a liste FIFO e cursori verifica 9000 passi su nove configurazioni,
-con undici writer riusati, obblighi pending su full e completamento prima
-del riuso. Il limite default usa 1025 writer distinti; il riferimento
-rifiutato viene conservato e pubblicato dopo il drain.
+<a id="correttezza-e-fault-injection"></a>
 
-Le prove coprono wrap, capacità e input, rotazione, 24 pattern busy/cursore,
-sette forme di ring incoerenti, array/slot/payload invalidi e helper chiamati
-senza guard o da altro thread. FI privata e fixture di ring opaco duplicato
-restano distinte dagli oracoli pubblici con obblighi legali.
+## Correctness and fault injection
 
-Quattro thread reali sono riusati su sei ondate e 36 payload: i producer
-restano vivi durante il consumo, un consumer completa i tratti mentre la
-partizione dell’altra Serie rimane occupata. Due ulteriori consumer
-contendenti sono riusati su otto ondate e prendono un solo riferimento per
-ondata. I controlli di payload/CRC avvengono fuori dalle guard della lista;
-semafori, retry e join appartengono al harness con limiti espliciti.
-Nessuna misura di throughput, speedup, P99 o fairness temporale.
+On initial base, forced build/full suite without warnings/style-warnings: 237 tests
+of seven modules plus smoke, 51 execution (34 previous, 17 new).
+FIFO-list/cursor oracle checks 9000 steps over nine configurations,
+eleven reused writers, pending obligations on full, completion before
+reuse. Default limit uses 1025 distinct writers; rejected
+reference retained/published after drain.
 
-## Copertura e mutazioni
+Tests cover wrap, capacity/input, rotation, 24 busy/cursor patterns,
+seven inconsistent ring shapes, invalid arrays/slots/payloads, helpers called
+without guard/by another thread. Private FI/opaque duplicate-ring fixture
+remain distinct from public oracles with legal obligations.
 
-| File execution | Espressioni raw | Esiti raw |
+Four real threads reused over six waves/36 payloads: producers
+remain alive during consumption, one consumer completes slices while
+other Serie's partition occupied. Two additional contending
+consumers reused over eight waves take one reference per
+wave. Payload/CRC checks outside list guards;
+semaphores/retries/joins belong to harness with explicit bounds.
+No throughput, speedup, P99, temporal fairness measurement.
+
+<a id="copertura-e-mutazioni"></a>
+
+## Coverage and mutations
+
+| Execution file | Raw expressions | Raw outcomes |
 |---|---:|---:|
 | package | 0/1 | 0/0 |
 | queue | 142/184 | 24/34 |
@@ -41,81 +47,87 @@ Nessuna misura di throughput, speedup, P99 o fairness temporale.
 | handoff | 173/190 | 16/16 |
 | ready-types | 170/187 | 30/30 |
 | ready | 173/194 | 20/22 |
-| Totale | 848/974 | 126/146 |
+| Total | 848/974 | 126/146 |
 
-Il ricalcolo indipendente dei vettori raw concorda con l’indice HTML.
-L’[inventario](writer-ready-decisioni.md) conserva dichiarazioni/default,
-due controlli CAS difensivi e otherwise, insieme alle lacune legacy.
-Nessuna forma sottratta, esclusione approvata o qualifica MC/DC completa.
+Independent raw-vector recalculation agrees with HTML index.
+[Inventory](writer-ready-decisioni.md) retains declarations/defaults,
+two defensive CAS checks, otherwise, legacy gaps.
+No subtracted form, approved exclusion, full MC/DC qualification.
 
-La campagna iniziale ha baseline execution 51 riuscita. Dodici mutanti compilano e sono rilevati;
-zero sopravvissuti, compilation failure o before-tests. Il set preregistrato
-verifica FIFO, wrap, pieno, count, slot liberato, rilascio, busy, ultima
-partizione e cursore; non rappresenta tutti i possibili difetti.
+Initial campaign has successful execution baseline 51. Twelve mutants compile/detected;
+zero survivors, compilation failure, before-tests. Preregistered set
+checks FIFO, wrap, full, count, freed slot, release, busy, last
+partition, cursor; not all possible defects.
 
-L’integrazione aggiunge la distinzione tra errore rilevato dai test e
-fallimento del processo: segnale OS o exit nonzero dopo completion reale
-sono `:worker-error`. Il self-test usa un proprio child terminato con
-SIGKILL, conservando exit, signal, log e rapporto. La precedente campagna
-e versione dello strumento rimangono preservate; i dodici mutanti non cambiano.
-La ripetizione su `fd96fb3` passa con baseline 51 e 12/12 rilevamenti,
-exit 1 e signal NIL per ogni mutante; zero worker error, sopravvissuti,
-compilation failure o before-tests. Tutti i tredici log sono conservati.
+Integration distinguishes test-detected error from process
+failure: OS signal or nonzero exit after real completion
+is `:worker-error`. Self-test uses own SIGKILLed child,
+preserving exit/signal/log/report. Previous campaign/tool
+version preserved; twelve mutants unchanged.
+Repeat on `fd96fb3` passes baseline 51 and 12/12 detections,
+exit 1/signal NIL per mutant; zero worker errors, survivors,
+compilation failure, before-tests. All thirteen logs preserved.
 
-## Allocazioni osservate
+<a id="allocazioni-osservate"></a>
 
-| Composizione preallocata | Campioni × cicli | Heap per campione | Sink esatto |
+## Observed allocations
+
+| Preallocated composition | Samples × cycles | Heap per sample | Exact sink |
 |---|---:|---:|---:|
-| Una partizione, due writer, capacità 3 | 5 × 4096 | 0 byte | 9.246.720 |
-| Quattro partizioni, otto writer, capacità 3 | 5 × 4096 | 0 byte | 12.797.952 |
+| One partition, two writers, capacity 3 | 5 × 4096 | 0 bytes | 9,246,720 |
+| Four partitions, eight writers, capacity 3 | 5 × 4096 | 0 bytes | 12,797,952 |
 
-Ogni ciclo comprende accettazione di payload preallocato, pubblicazione,
-prelievo, avvio, consumo e fine del writer; si misura la composizione
-handoff/lista pronta, senza attribuire il tempo alla sola lista.
-Warmup 128 e GC fuori dal contatore. Token indipendente
-`27K²+154K+29` (210/1077), 13/49 chiamate API per ciclo; identità, count,
-status, cursore e generazione vengono verificati. La somma attesa include
-anche gli indici delle 4096 iterazioni.
+Every cycle includes preallocated payload acceptance, publication,
+claim, start, consumption, writer finish; measures handoff/ready-list
+composition without attributing time to list alone.
+Warmup 128/GC outside counter. Independent token
+`27K²+154K+29` (210/1077), 13/49 API calls per cycle; identity/count/
+status/cursor/generation checked. Expected sum also includes
+4096 iteration indices.
 
-Il controllo positivo rileva 16.777.472 byte su 16 × 1 MiB allocati
-appositamente. Baseline del contatore zero; sink errato rifiutato, clock
-zero distinto e report parziali/destinazioni preesistenti conservati.
-Startup e condizioni d’errore sono esclusi; i campioni osservati non
-provano assenza universale di allocazioni né prestazioni del pool.
+Positive control detects 16,777,472 bytes in deliberately allocated
+16 × 1 MiB. Zero counter baseline; wrong sink rejected, zero clock
+distinct, partial reports/existing destinations preserved.
+Startup/error conditions excluded; observed samples prove neither
+universal nonallocation nor pool performance.
 
-## Verifiche integrate
+<a id="verifiche-integrate"></a>
 
-`make check` su `fd96fb3` passa con sorgenti stabili e exit 0:
-257 test dei sette moduli più smoke (26 foundation, 17 codec,
+## Integrated verification
+
+`make check` on `fd96fb3` passes stable sources/exit 0:
+257 tests of seven modules plus smoke (26 foundation, 17 codec,
 51 execution, 44 storage, 18 I/O, 82 recovery, 19 WAL).
-Compilazione forzata senza warning/style-warning, lint su 48 file con
-zero violazioni, trace, link, conservazione delle evidenze e relativi
-self-test, più tutti i dieci spike di correttezza. Il rapporto completo
-con output originali è [conservato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/check-integrato-processo.lisp)
-insieme al [master degli spike](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready-fd96-spikes/spikes.lisp),
-con payload compresso verificato senza perdita. Le aggiunte editoriali e
-la pubblicazione finale dei rapporti ricevono poi il controllo link/evidence.
-La verifica riguarda questa integrazione, senza promozione dei gate del motore.
+Forced compilation without warnings/style-warnings, lint 48 files,
+zero violations, trace, links, evidence preservation/self-tests,
+all ten correctness spikes. Full report
+with original output [preserved](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/check-integrato-processo.lisp)
+with [spike master](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready-fd96-spikes/spikes.lisp),
+compressed payload verified lossless. Editorial additions/final
+report publication later receive link/evidence checks.
+Verification concerns integration, without promoting engine gates.
 
-Dopo l'integrazione degli header CBOR, `make check` su `201562d` passa
-nuovamente, OK/STABLE/exit 0: 274 test degli otto moduli più smoke,
-con 17 test CBOR aggiuntivi; lint su 50 file senza violazioni e tutti gli
-altri controlli, inclusi i dieci spike, superati. Il
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/catalogo.lisp) conserva
-il processo finale e il master compresso degli spike insieme alla prima
-integrazione. Il codice, i test ready e i due strumenti rimangono identici
-alla versione verificata su `fd96fb3`; cambia ASDF per registrare CBOR.
-Copertura, mutazioni e allocazioni mantengono la propria base di misura.
+After CBOR-header integration, `make check` on `201562d` passes
+again, OK/STABLE/exit 0: 274 tests of eight modules plus smoke,
+17 additional CBOR tests; lint 50 files without violations, all
+other checks including ten spikes passed.
+[Catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/catalogo.lisp) preserves
+final process/compressed spike master alongside first
+integration. Code, ready tests, both tools identical
+to version checked on `fd96fb3`; ASDF changes to register CBOR.
+Coverage/mutations/allocations retain measurement base.
 
-L'integrazione conclusiva del registro CSN su `33aa224` passa con
-294 test dei nove moduli più smoke (20 CSN aggiuntivi), lint su 52 file
-senza violazioni e tutti i dieci spike. Il processo è
-OK/STABLE/exit 0; ASDF registra il nuovo modulo, mentre sorgenti ready,
-test e strumenti sono invariati. Il catalogo conserva anche questo check
-con il master degli spike; le due verifiche precedenti restano separate.
-Le sole chiusure editoriali successive ricevono il controllo link/evidence.
+Concluding CSN-register integration on `33aa224` passes
+294 tests of nine modules plus smoke (20 additional CSN), lint 52 files
+without violations, all ten spikes. Process
+OK/STABLE/exit 0; ASDF registers new module, ready sources/
+tests/tools unchanged. Catalog also preserves check
+and spike master; previous two checks separate.
+Only later editorial closure receives link/evidence checks.
 
-## Riproduzione e conservazione
+<a id="riproduzione-e-conservazione"></a>
+
+## Reproduction and preservation
 
 ```sh
 make test
@@ -127,11 +139,11 @@ sbcl --script tools/writer-ready-bench.lisp --bench ulteriore-directory-nuova/
 make check
 ```
 
-Per conservare comando, ambiente, sorgenti e output integrali, anteporre
-`sbcl --script tools/record-command.lisp --` al comando. Il
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/catalogo.lisp)
-conserva processi, copertura raw, baseline e tutti i log dei dodici mutanti,
-misure, adapter e probe ispettivi. I due C4 sono compilati integralmente con
-avvisi fatali e self-test dei FASL in processi/cache privati separati.
-La [revisione](writer-ready-revisione.md) distingue le due letture C1 e
-la successiva verifica integrata. I gate del motore restano aperti.
+To preserve command/environment/sources/full output, prefix command with
+`sbcl --script tools/record-command.lisp --`.
+[Catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/catalogo.lisp)
+preserves processes, raw coverage, baseline/all twelve mutant logs,
+measurements, adapters, inspection probes. Both C4 tools fully compiled with
+fatal warnings, FASL self-tests in separate private processes/caches.
+[Review](writer-ready-revisione.md) distinguishes two C1 readings
+and later integrated verification. Engine gates open.

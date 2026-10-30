@@ -1,42 +1,48 @@
-# Metodo di verifica dei metadati storage
+<a id="metodo-di-verifica-dei-metadati-storage"></a>
 
-Ambito: header dei segmenti, payload e record EDIT/DECISION. Non include I/O,
-applicazione al manifest, unicità degli ID, protocollo multiserie o durability.
+# Storage-metadata verification method
 
-## Correttezza
+Scope: segment headers, EDIT/DECISION payloads and records. Excludes I/O,
+manifest application, ID uniqueness, multiseries protocol, or durability.
 
-Gli oracoli costruiscono i byte con packing indipendente e CRC32C bitwise dei test
-delle fondazioni. Si confrontano tutti i byte, inclusi campi a 64 bit con bit alto
-impostato, versioni 1/2 e sentinelle prima/dopo l'output. Si controllano ogni punto
-di troncamento, alterazioni dei byte, campi invalidi con CRC ricalcolato, conteggi
-enormi in buffer piccoli, budget esatti e inferiori, esiti cumulativi, consumo
-esatto e rifiuti dell'encoder senza modifiche parziali.
+<a id="correttezza"></a>
 
-Comando: `make test lint`. Warning e style warning interrompono la compilazione.
-La copertura strumentata è raccolta in un processo/cache separati dalla misura.
-Le percentuali sono evidenza di esecuzione e non certificazione di correttezza.
+## Correctness
 
-## Prestazioni
+Oracles build bytes with independent packing and the foundation tests'
+bitwise CRC32C. All bytes compared, including 64-bit fields with high bit
+set, versions 1/2, and sentinels before/after output. Checks include every
+truncation point, byte alterations, invalid fields with recalculated CRCs, huge
+counts in small buffers, exact and lower budgets, cumulative outcomes, exact
+consumption, and encoder rejections without partial changes.
 
-Comandi: `sbcl --noinform --no-userinit --script tools/storage-bench.lisp --self-test`
-e lo stesso con `--bench`. Il registro `tools/record-command.lisp` conserva
-argomenti, ambiente, revisione, hash Git dei sorgenti, output grezzo ed esito.
+Command: `make test lint`. Warnings and style warnings stop compilation.
+Instrumented coverage collected in a process/cache separate from measurement.
+Percentages are execution evidence, not correctness certification.
 
-Cinque campioni per campagna, un worker, safety 3, fixture preallocate, warmup
-fino a 1.024 chiamate e GC completo prima di ogni campione. Si misurano tempo
-monotono e byte heap tramite SBCL; un self-test prova anche l'allocazione
-deliberata. Il risultato della chiamata alimenta un accumulatore osservabile.
+<a id="prestazioni"></a>
 
-Campagne: header 64 byte; EDIT con 2 o 1.024 chiusure e un esito per chiusura;
-DECISION con 2 o 65.535 partecipanti. I verificatori di record includono CRC
-sull'intero record. Gli encoder di payload includono preflight e copia, ma non
-CRC della cornice. Gli ID nei payload rimangono opachi: non si misura il controllo
-di duplicati o lo stato del catalogo. Gli u64 di stamp/CSN/segment-id sono alti.
+## Performance
 
-Criteri: nessun warning, tutte le asserzioni superate, zero byte heap misurati
-nei percorsi riusciti delle campagne. I tempi sono osservazioni locali, senza
-soglia di throughput promessa. Il carico esterno non è controllato; queste
-misure non sono prestazioni del database e non chiudono gli spike architetturali.
+Commands: `sbcl --noinform --no-userinit --script tools/storage-bench.lisp --self-test`
+and the same with `--bench`. Record tool `tools/record-command.lisp` preserves
+arguments, environment, revision, Git source hashes, raw output, and outcome.
 
-Il metodo è registrato prima della campagna prestazionale; i primi tentativi di
-compilazione dei test lo precedono. Gli esiti falliti si conservano come tali.
+Five samples per campaign, one worker, safety 3, preallocated fixtures, warmup
+up to 1,024 calls and full GC before each sample. Monotonic time
+and heap bytes measured through SBCL; a self-test also checks deliberate
+allocation. Call result feeds an observable accumulator.
+
+Campaigns: 64-byte header; EDIT with 2 or 1,024 closures and one outcome per closure;
+DECISION with 2 or 65,535 participants. Record verifiers include CRC
+over the entire record. Payload encoders include preflight and copying but no
+frame CRC. IDs in payloads remain opaque: duplicate checking
+or catalog state is not measured. Stamp/CSN/segment-id u64 values are high.
+
+Criteria: no warnings, all assertions passed, zero heap bytes measured
+in successful campaign paths. Timings are local observations, without a
+promised throughput threshold. External load uncontrolled; these
+measurements are not database performance and do not close architectural spikes.
+
+Method registered before the performance campaign; initial test-compilation
+attempts precede it. Failed outcomes are preserved as such.

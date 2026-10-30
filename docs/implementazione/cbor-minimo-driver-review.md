@@ -1,31 +1,33 @@
-# Testate CBOR minime — lettura dei driver C4
+<a id="testate-cbor-minime--lettura-dei-driver-c4"></a>
 
-Lettura del coordinatore sui due strumenti, indipendente dal loro autore.
-Il benchmark è congelato a otto fixture, cinque repliche di 4096 chiamate,
-warmup 128; il mutatore a otto bersagli unici, prima delle campagne.
+# Minimal CBOR headers — C4 driver reading
 
-Nel benchmark, caricamento e warmup precedono clock e contatore heap.
-I sei valori vengono confrontati con costanti indipendenti prima di
-alimentare il sink; quest'ultimo usa tutti i valori e l'indice di chiamata.
-Input e sentinelle sono preallocati e confrontati dopo la campagna.
-Baseline nulla e allocazione deliberata con oggetto vivo verificano il
-sensore. Un errore produce rapporto fallito ed exit nonzero. La misura
-seriale non attesta heap di rifiuto, scaling o throughput del database.
+Coordinator reading of the two tools, independent of their author.
+The benchmark is frozen at eight fixtures, five replicates of 4096 calls,
+warmup 128; the mutator at eight unique targets, before campaigns.
 
-Il mutatore copia ASDF, build, sorgenti e test in directory nuove e cache
-private. La sostituzione ha un bersaglio unico nel file congelato.
-La baseline richiede exit zero, marker smoke e completamento su righe
-esatte; un mutante con exit zero senza completamento è INVALID.
-Compilazione fallita, marker soltanto citati o errore prima dello smoke
-sono INVALID. Un errore runtime dopo smoke conta DETECTED; un completamento
-normale conta SURVIVED. I controlli negativi sono nel self-test.
+In the benchmark, loading and warmup precede clock and heap counter.
+The six values are compared with independent constants before
+feeding the sink; the sink uses all values and the call index.
+Inputs and sentinels are preallocated and compared after the campaign.
+Zero baseline and deliberate allocation with a live object verify the
+sensor. An error produces a failed report and nonzero exit. The serial
+measurement does not attest rejection-path heap allocation, scaling, or database throughput.
 
-Gli otto difetti interessano soglie 24/256/65536, parola alta u64,
-massimo normale binary16, allineamento del subnormale binary16,
-esponente speciale binary64 e minimo subnormale binary32. Non sono
-mutazioni esaustive di tutte le condizioni composte: nessuna pretesa MC/DC.
-Compilabilità e rilevamento effettivi vengono verificati nei log conservati,
-senza contarli dal solo risultato della lettura statica.
+The mutator copies ASDF, build, sources, and tests into new directories and private
+caches. Replacement has a unique target in the frozen file.
+Baseline requires zero exit, smoke marker, and completion on exact
+lines; a mutant with zero exit without completion is INVALID.
+Failed compilation, merely quoted markers, or error before smoke
+are INVALID. A runtime error after smoke counts as DETECTED; normal
+completion counts as SURVIVED. Negative checks are in the self-test.
 
-Nessun rilievo statico aperto nei driver. Lo scope di copertura e l'utilità
-di raccolta ricevono una [lettura distinta](cbor-minimo-strumenti-review.md).
+The eight defects concern thresholds 24/256/65536, u64 high word,
+binary16 normal maximum, binary16 subnormal alignment,
+binary64 special exponent, and binary32 subnormal minimum. They are not
+exhaustive mutations of every compound condition: no MC/DC claim.
+Actual compilability and detection are verified in preserved logs,
+without counting them from the static reading's result alone.
+
+No open static findings in the drivers. Coverage scope and collection
+utility receive a [separate reading](cbor-minimo-strumenti-review.md).

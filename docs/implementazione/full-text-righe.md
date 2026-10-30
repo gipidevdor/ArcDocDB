@@ -1,68 +1,76 @@
-# Directory delle righe full text
+<a id="directory-delle-righe-full-text"></a>
 
-La directory privata collega la row u32 dei posting alla riserva canonica del
-pool e al [riferimento fisico PUT](full-text-riferimenti.md). Per il primo impiego
-NNTP serve a risalire da un risultato full text al record dell'articolo, senza
-dipendere dall'incarnazione riusabile del buffer WAL. La row non e il numero di
-articolo di un newsgroup, un Message-ID o un ordinale dell'hint.
+# Full-text row directory
 
-## Proprietario e limiti
+The private directory connects posting row u32 to the pool's canonical reservation
+and the [physical PUT reference](full-text-riferimenti.md). For the first NNTP
+use, it traces a full-text result back to the article record without
+depending on the WAL buffer's reusable incarnation. Row is not a newsgroup
+article number, a Message-ID, or a hint ordinal.
 
-Ogni pool di un nuovo ACTIVE possiede due array u32 preallocati, ordinati per row:
-chiavi e posizioni degli slot. La stessa row e ammessa in pool distinti; tutte le
-generazioni degli indici di un documento condividono invece una sola entry locale.
-`0` e `UINT32_MAX` sono chiavi valide: l'occupazione e determinata dal contatore.
+<a id="proprietario-e-limiti"></a>
 
-La ricerca binaria esegue al piu 11 confronti di chiavi con capacita 1..1024.
-Inserimento e rimozione spostano al piu 1024 coppie di metadati sotto lease del
-writer, senza leggere il documento. Non e una misura di latenza del motore.
-Il limite conservativo C0 delle [riserve](full-text-riserve.md) cresce di 8 byte
-per slot; la base copre anche gli header dei due array. La capacita e del pool,
-non un limite complessivo agli articoli memorizzabili dal futuro database.
+## Owner and limits
 
-La directory sostituisce la scansione lineare dei duplicati e cambia solo dopo
-i preflight esistenti. La cancellazione pre-append rimuove l'entry prima di
-liberare fonti e costi; idempotenza e protezione dei token obsoleti restano valide.
-Un trasferimento trattiene entry, slot, run e costi. Il ritiro richiede ancora un
-protocollo dedicato con esito autorevole e quiescenza.
+Every pool for a new ACTIVE owns two preallocated u32 arrays sorted by row:
+keys and slot positions. The same row is allowed in separate pools; all index
+generations of a document instead share a single local entry.
+`0` and `UINT32_MAX` are valid keys: occupancy is determined by count.
 
-## Ricerca sotto lease
+Binary search performs at most 11 key comparisons with capacity 1..1024.
+Insertion and removal move at most 1024 metadata pairs under writer
+lease without reading the document. This is not engine-latency measurement.
+The conservative C0 [reservation](full-text-riserve.md) limit grows by 8 bytes
+per slot; the base also covers both array headers. Capacity belongs to the pool,
+not an overall limit on articles storable by the future database.
 
-`admission:trova-riga-trasferita-full-text(pool, lease, row)` restituisce:
+The directory replaces linear duplicate scanning and changes only after
+existing preflights. Pre-append cancellation removes the entry before
+releasing sources and costs; idempotence and stale-token protection remain valid.
+A transfer retains entry, slot, run, and costs. Retirement still requires a
+dedicated protocol with authoritative outcome and quiescence.
 
-| Stato | Slot e generazione |
+<a id="ricerca-sotto-lease"></a>
+
+## Lookup under lease
+
+`admission:trova-riga-trasferita-full-text(pool, lease, row)` returns:
+
+| State | Slot and generation |
 |---|---|
-| `:absent` | `nil`, `0`: nessuna entry nel pool corrente |
-| `:pending` | `nil`, `0`: COPYING/READY, senza esporre gli handle privati del ponte PUT |
-| `:transferred` | Slot canonico e sua generazione, senza attestazione di commit |
+| `:absent` | `nil`, `0`: no entry in current pool |
+| `:pending` | `nil`, `0`: COPYING/READY, without exposing private PUT bridge handles |
+| `:transferred` | Canonical slot and its generation, without commit certification |
 
-`put:leggi-riferimento-riga-full-text(pool, lease, row)` restituisce otto valori:
-stato, segmento, offset, size, formato, stamp-kind, high e low.
+`put:leggi-riferimento-riga-full-text(pool, lease, row)` returns eight values:
+state, segment, offset, size, format, stamp-kind, high, and low.
 
-| Stato | Altri valori |
+| State | Other values |
 |---|---|
 | `:absent` | `0 0 0 0 :none 0 0` |
-| `:pending` | `0 0 0 0 :none 0 0`: riserva privata oppure riferimento non ancora catturato |
-| `:sealed` | Posizione stabile verificata, v1/v2, `:csn` ordinario o `:txid` prepared |
+| `:pending` | `0 0 0 0 :none 0 0`: private reservation or reference not yet captured |
+| `:sealed` | Verified stable position, v1/v2, ordinary `:csn` or prepared `:txid` |
 
-Anche un trasferimento generico senza PUT resta `:pending`. La lettura sealed
-usa solo metadati della riserva e sopravvive al riuso del lotto; non consulta
-il WAL, H, il filesystem o l'esito 2PC. Lease estranee o row non u32 sono rifiutate
-senza effetti. Contatori, mapping canonico o fase fisica incoerenti causano
-FAULTED; una mutazione interrotta conserva slot, fonti e costi, senza rollback.
+Even a generic transfer without PUT stays `:pending`. Sealed reading
+uses only reservation metadata and survives batch reuse; it consults
+neither WAL, H, filesystem, nor 2PC outcome. Foreign leases or non-u32 rows are rejected
+without effects. Inconsistent counters, canonical mapping, or physical phase cause
+FAULTED; interrupted mutation retains slots, sources, and costs without rollback.
 
-Queste API appartengono al writer. Gli array vengono spostati e non possono
-essere condivisi con reader concorrenti. La mappa immutabile della vista delta,
-pubblicazione, snapshot/MVCC, risoluzione dei prepared, recovery della directory
-e collegamento alla query completa restano da implementare. Nessun requisito
-full text viene chiuso nel suo perimetro complessivo.
+These APIs belong to the writer. Arrays are shifted and cannot
+be shared with concurrent readers. The immutable delta-view map,
+publication, snapshots/MVCC, prepared-record resolution, directory recovery,
+and connection to the complete query remain to be implemented. No full-text
+requirement is closed across its overall scope.
 
-## Verifica
+<a id="verifica"></a>
 
-Il [metodo preregistrato](full-text-righe-metodo.md) usa un modello associativo
-indipendente, 64 sequenze di inserimento/cancellazione/trasferimento, estremi u32,
-capacita 1/1024, limiti memoria, rifiuti senza effetti e guasti iniettati. Le misure
-esistenti di riserva e PUT includono la ricerca; quattro contesti privati usano le
-stesse row. Un mutante che restituisce sempre assente deve essere rilevato.
-La copertura strumentata resta diagnostica e separata dalle misure di heap;
-revisione indipendente, MC/DC e qualifica C1 rimangono aperte.
+## Verification
+
+The [preregistered method](full-text-righe-metodo.md) uses an independent associative
+model, 64 insertion/cancellation/transfer sequences, u32 extremes,
+capacity 1/1024, memory limits, rejections without effects, and injected failures. Existing
+reservation and PUT measurements include lookup; four private contexts use the
+same rows. A mutant that always returns absent must be detected.
+Instrumented coverage remains diagnostic and separate from heap measurements;
+independent review, MC/DC, and C1 qualification remain open.

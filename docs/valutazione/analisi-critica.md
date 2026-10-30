@@ -1,138 +1,168 @@
-# Analisi critica
+<a id="analisi-critica"></a>
 
-> Valutazione preliminare. Vedi le [avvertenze](README.md).
+# Critical analysis
 
-## Punti di forza
+> Preliminary assessment. See the [caveats](README.md).
 
-| # | Scelta | Perché regge |
+<a id="punti-di-forza"></a>
+
+## Strengths
+
+| # | Choice | Why it holds up |
 |---|---|---|
-| F1 | Segmenti immutabili + compaction copy-on-write | La crash-safety della compaction è strutturale: fino allo swap il sistema non dipende dall'output, e i sorgenti non vengono mai toccati. Gli stati intermedi sono pochi e riconoscibili. |
-| F2 | Serie fisicamente indipendenti | Isolamento del carico, recovery parallelo per Serie, nessun log condiviso sul percorso delle scritture ordinarie. |
-| F3 | Un writer logico per Serie | Elimina i lock per documento: il controllo di versione e l'applicazione sono atomici per costruzione (INV-T2). La Serie ha un ordine totale delle modifiche. |
-| F4 | CLEAN e MERGE separati | Il recupero di spazio (necessario) non è accoppiato alla deframmentazione (facoltativa). Si evita la compaction a cascata tipica dei sistemi a livelli. |
-| F5 | MERGE opportunistico | La manutenzione strutturale non compete con il traffico: favorisce la prevedibilità del P99, che è un obiettivo dichiarato. |
-| F6 | Metadata derivati | Contatori errati non possono causare perdita di dati; un solo insieme di fonti di verità (WAL, dati, indice). |
-| F7 | Decision log separato dai dati | Le transazioni single-Series non pagano nulla per l'esistenza delle multiserie. |
-| F8 | Disciplina sui numeri | Target dichiarati come ipotesi, confronti solo a parità di condizioni, SIMD solo su misura: riduce il rischio di ottimizzare la cosa sbagliata. |
-| F9 | Fault injection come requisito | I protocolli nascono per essere interrotti in ogni punto. |
+| F1 | Immutable segments + copy-on-write compaction | Compaction crash safety is structural: until the swap, the system does not depend on output, and sources are never touched. Intermediate states are few and recognizable. |
+| F2 | Physically independent Serie | Workload isolation, parallel per-Serie recovery, no shared log on the ordinary write path. |
+| F3 | One logical writer per Serie | Eliminates per-document locks: version checking and application are atomic by construction (INV-T2). The Serie has a total order of changes. |
+| F4 | Separate CLEAN and MERGE | Space recovery (necessary) is not coupled to defragmentation (optional). Avoids cascading compaction typical of leveled systems. |
+| F5 | Opportunistic MERGE | Structural maintenance does not compete with traffic: it favors P99 predictability, a stated goal. |
+| F6 | Derived metadata | Incorrect counters cannot cause data loss; a single set of sources of truth (WAL, data, index). |
+| F7 | Decision log separate from data | Single-Serie transactions pay nothing for multiseries transactions' existence. |
+| F8 | Discipline about numbers | Targets declared as hypotheses, comparisons only under equal conditions, SIMD only when measured: reduces risk of optimizing the wrong thing. |
+| F9 | Fault injection as a requirement | Protocols are designed to be interrupted at every point. |
 
-## Tensioni interne alla specifica
+<a id="tensioni-interne-alla-specifica"></a>
 
-Punti in cui due requisiti, presi alla lettera, tirano in direzioni diverse. Non sono errori:
-sono i luoghi dove serve una decisione esplicita.
+## Internal tensions in the specification
 
-### T1 — Indice immutabile per i reader contro scritture continue
+Points where two requirements, taken literally, pull in different directions. These are not errors:
+they are places requiring an explicit decision.
 
-La sezione «Index snapshot» chiede indici immutabili con atomic swap (v17 → v18). Il primary
-index riceve una modifica a ogni scrittura, con target fino a milioni di operazioni al
-secondo, e deve essere una struttura compatta e contigua. Costruire una nuova versione a ogni
-commit è impraticabile; una struttura persistente con condivisione strutturale contraddice il
-requisito di compattezza e pesa sul GC.
+<a id="t1--indice-immutabile-per-i-reader-contro-scritture-continue"></a>
 
-*Lettura proposta:* il modello «versione + swap» si applica alla lettera agli indici secondari
-(base + delta) e alle sostituzioni in blocco; per il primary index il requisito diventa «un
-reader non osserva mai uno stato intermedio». → QA-24, RSK-02.
+### T1 — Immutable index for readers versus continuous writes
 
-### T2 — WAL e segmenti: due scritture per ogni record?
+The “Index snapshot” section calls for immutable indexes with atomic swap (v17 → v18). The primary
+index receives a change on every write, targeting up to millions of operations per
+second, and must be compact and contiguous. Building a new version at each
+commit is impractical; a persistent structure with structural sharing contradicts the
+compactness requirement and burdens GC.
 
-Ogni Serie ha un WAL *e* segmenti append-only. Se il record completo va in entrambi, ogni byte
-è scritto due volte, e la fascia alta dei target di INSERT supera la banda di un dispositivo
-([stime](stime-ordine-di-grandezza.md#banda-di-scrittura)). Se va in uno solo, cambia il ruolo
-dell'altro. → QA-02, RSK-03.
+*Proposed interpretation:* the “version + swap” model applies literally to secondary indexes
+(base + delta) and bulk replacements; for the primary index the requirement becomes “a
+reader never observes an intermediate state.” → QA-24, RSK-02.
 
-### T3 — «Atomic index swap» mentre il writer lavora
+<a id="t2--wal-e-segmenti-due-scritture-per-ogni-record"></a>
 
-Durante un CLEAN il writer della Serie continua a ricevere scritture. Un documento già copiato
-nel nuovo segmento può essere aggiornato prima dello swap: la copia è nata `LIVE` ed è
-diventata `DEAD`. Lo swap non può quindi essere una sostituzione cieca dell'indice.
+### T2 — WAL and segments: two writes per record?
 
-*Osservazione:* la copia è identica all'originale e l'originale resta leggibile finché
-`OBSOLETE`; per un reader le due location sono equivalenti. L'atomicità serve davvero in un
-punto solo — il cambio dell'insieme dei segmenti validi — mentre le entry dell'indice si
-possono aggiornare con sostituzioni condizionali. Questo semplifica molto il problema, ma va
-verificato su modello. → QA-04, QA-24.
+Every Serie has a WAL *and* append-only segments. If the complete record goes to both, every byte
+is written twice, and the high end of INSERT targets exceeds one device's bandwidth
+([estimates](stime-ordine-di-grandezza.md#banda-di-scrittura)). If it goes to only one, the other's role
+changes. → QA-02, RSK-03.
 
-### T4 — Writer che non si ferma contro 2PC che aspetta
+<a id="t3--atomic-index-swap-mentre-il-writer-lavora"></a>
 
-Nel 2PC un partecipante, dopo il PREPARE, attende la decisione. Ma il writer logico è l'unico
-flusso di scrittura della Serie: se attendesse, tutte le scritture della Serie si fermerebbero
-per la durata di un flush di `multiserie.log`, e una Serie coinvolta in molte multiserie
-diventerebbe un collo di bottiglia per le altre (contro INV-P3). Il writer deve proseguire,
-tenendo da parte le modifiche pendenti; questo introduce uno stato in più per documento. → QA-07.
+### T3 — “Atomic index swap” while the writer is working
 
-### T5 — Serie indipendenti contro snapshot coerente di Archivio
+During CLEAN, the Serie writer continues receiving writes. A document already copied
+to the new segment may be updated before swap: its copy started `LIVE` and has
+become `DEAD`. The swap therefore cannot be a blind index replacement.
 
-L'indipendenza delle Serie significa nessun ordine comune tra i loro commit. Uno snapshot
-multiserie coerente ne richiede uno, almeno per le transazioni multiserie, che devono apparire
-tutte o per niente. Qualsiasi soluzione introduce un elemento condiviso a livello di Archivio;
-la domanda è quanto leggero. Va inoltre deciso che cosa garantiscono due GET semplici
-successivi su Serie diverse durante l'applicazione di una multiserie. → QA-06, QA-09.
+*Observation:* the copy is identical to the original, and the original stays readable until
+`OBSOLETE`; to a reader the two locations are equivalent. Atomicity is truly needed at
+only one point — changing the valid segment set — while index entries
+can be updated with conditional replacements. This greatly simplifies the problem but must
+be verified in a model. → QA-04, QA-24.
 
-### T6 — MERGE vietato su segmenti necessari a uno snapshot
+<a id="t4--writer-che-non-si-ferma-contro-2pc-che-aspetta"></a>
 
-Il MERGE è copy-on-write e i sorgenti restano leggibili fino al reclaim: dal punto di vista
-della correttezza potrebbe procedere anche con snapshot attivi (come fa il CLEAN, che copia le
-versioni `SNAPSHOT-LIVE`). La specifica invece lo vieta. È una scelta prudente e coerente con
-la natura opportunistica del MERGE, ma ha una conseguenza: uno snapshot longevo sospende la
-deframmentazione oltre a trattenere spazio. → QA-14, RSK-09.
+### T4 — Nonstopping writer versus waiting 2PC
 
-### T7 — MERGE solo a basso carico contro carico sostenuto
+In 2PC, a participant waits for the decision after PREPARE. But the logical writer is the Serie's only
+write flow: if it waited, all Serie writes would stop
+for the duration of a `multiserie.log` flush, and a Serie involved in many multiseries transactions
+would become a bottleneck for others (contrary to INV-P3). The writer must continue,
+setting pending changes aside; this introduces one more per-document state. → QA-07.
 
-Se il motore non scende mai sotto la soglia di basso carico, il MERGE non parte mai e i
-segmenti piccoli si accumulano. La specifica lo accetta («può rimanere piccolo
-indefinitamente»), ma il costo di molti segmenti piccoli (file aperti, metadata, località)
-cresce senza un limite dichiarato. → QA-12, RSK-08.
+<a id="t5--serie-indipendenti-contro-snapshot-coerente-di-archivio"></a>
 
-### T8 — Metadata derivati contro regola dei 50 secondi
+### T5 — Independent Serie versus consistent Archivio snapshot
 
-Il close time è il riferimento per i 50 s, ma i metadata sono dati derivati e ricostruibili.
-Dopo una ricostruzione il close time originale può non essere noto. → QA-13.
+Serie independence means no common order among their commits. A consistent multiseries
+snapshot requires one, at least for multiseries transactions, which must appear
+in full or not at all. Any solution introduces a shared Archivio-level element;
+the question is how lightweight it is. What two successive simple GETs
+on different Serie guarantee while applying a multiseries transaction must also be decided. → QA-06, QA-09.
 
-### T9 — Registri è una Serie, ma descrive le Serie
+<a id="t6--merge-vietato-su-segmenti-necessari-a-uno-snapshot"></a>
 
-Se il catalogo vive in una Serie normale, aprirla richiede il catalogo. La circolarità si
-scioglie con una configurazione incorporata, ma va decisa. → QA-10, RSK-15.
+### T6 — MERGE prohibited on segments needed by a snapshot
 
-## Lacune di progetto
+MERGE is copy-on-write and sources stay readable until reclaim: from a correctness
+perspective it could proceed with active snapshots (as CLEAN does by copying
+`SNAPSHOT-LIVE` versions). The specification instead prohibits it. This is prudent and consistent with
+MERGE's opportunistic nature, but has a consequence: a long-lived snapshot suspends
+defragmentation as well as retaining space. → QA-14, RSK-09.
 
-Aspetti che la specifica non tratta e senza i quali l'architettura non è completa.
+<a id="t7--merge-solo-a-basso-carico-contro-carico-sostenuto"></a>
 
-| Lacuna | Questione |
+### T7 — MERGE only under low load versus sustained load
+
+If the engine never falls below the low-load threshold, MERGE never starts and small
+segments accumulate. The specification accepts this (“may remain small
+indefinitely”), but the cost of many small segments (open files, metadata, locality)
+grows without a declared bound. → QA-12, RSK-08.
+
+<a id="t8--metadata-derivati-contro-regola-dei-50-secondi"></a>
+
+### T8 — Derived metadata versus the 50-second rule
+
+Close time is the reference for 50 s, but metadata are derived and rebuildable.
+After rebuilding, the original close time may be unknown. → QA-13.
+
+<a id="t9--registri-è-una-serie-ma-descrive-le-serie"></a>
+
+### T9 — Registri is a Serie, but describes Serie
+
+If the catalog lives in an ordinary Serie, opening it requires the catalog. Embedded
+configuration resolves the circularity, but must be decided. → QA-10, RSK-15.
+
+<a id="lacune-di-progetto"></a>
+
+## Design gaps
+
+Aspects the specification does not address and without which the architecture is incomplete.
+
+| Gap | Question |
 |---|---|
-| Formato di record, documento e `_id` | QA-01 |
-| Persistenza dell'indice e tempo di riavvio | QA-03 |
-| Semantica dei livelli di durability | QA-05 |
-| Livello di isolamento | QA-09 |
-| Crescita di `multiserie.log` | QA-08 |
-| Vita dei tombstone | QA-15 |
-| Tracciamento dei reader | QA-16 |
-| Consistenza degli indici secondari | QA-25 |
-| Obiettivi numerici di latenza; target per Serie o aggregati | QA-26 |
-| Piattaforma di riferimento | QA-19 |
-| Protocollo, query, schema | QA-20, QA-21 |
-| Replica, backup, sicurezza | QA-23 |
+| Record, document, and `_id` format | QA-01 |
+| Index persistence and restart time | QA-03 |
+| Durability-level semantics | QA-05 |
+| Isolation level | QA-09 |
+| Growth of `multiserie.log` | QA-08 |
+| Tombstone lifetime | QA-15 |
+| Reader tracking | QA-16 |
+| Secondary-index consistency | QA-25 |
+| Numeric latency objectives; per-Serie or aggregate targets | QA-26 |
+| Reference platform | QA-19 |
+| Protocol, queries, schema | QA-20, QA-21 |
+| Replication, backup, security | QA-23 |
 
-## Confronto con architetture note
+<a id="confronto-con-architetture-note"></a>
 
-Utile per sapere quali problemi sono già stati incontrati da altri, non per stabilire
-classifiche.
+## Comparison with known architectures
 
-| Aspetto | ArcDocDB (specifica) | Modello di riferimento | Che cosa se ne ricava |
+Useful for knowing which problems others have already encountered, not for establishing
+rankings.
+
+| Aspect | ArcDocDB (specification) | Reference model | What it tells us |
 |---|---|---|---|
-| Log append-only + indice delle chiavi in RAM | sì | Bitcask | Limiti noti: l'indice deve stare in memoria; il riavvio richiede file di hint. → QA-03, RSK-07 |
-| Separazione tra log e valori | da decidere (QA-02) | WiscKey | Scrivere i valori una sola volta riduce l'amplificazione; costa in gestione dello spazio |
-| Insieme dei file come log di modifiche | da decidere (QA-04) | manifest degli LSM-tree | Meccanismo collaudato per rendere atomici i cambi di insieme dei file |
-| Compaction | CLEAN per segmento + MERGE opportunistico, senza ordinamento | LSM-tree a livelli | Qui non servono run ordinati (l'indice è in RAM): la compaction è molto più semplice e meno invasiva |
-| Commit atomico multi-partizione | 2PC con decision log unico | 2PC classico con coordinatore | Il blocco dei partecipanti in stato PREPARED è il problema noto. → QA-07 |
-| Un writer per partizione | sì | architetture a partizioni single-writer | Niente lock, ma il tetto per partizione è quello di un core. → RSK-04 |
+| Append-only log + in-memory key index | yes | Bitcask | Known limits: index must fit in memory; restart requires hint files. → QA-03, RSK-07 |
+| Separation of log and values | to decide (QA-02) | WiscKey | Writing values once reduces amplification; costs space management |
+| File set as change log | to decide (QA-04) | LSM-tree manifests | Established mechanism for atomic changes to file sets |
+| Compaction | Per-segment CLEAN + opportunistic MERGE, without sorting | Leveled LSM-tree | Sorted runs are unnecessary here (index is in RAM): compaction is much simpler and less invasive |
+| Atomic multi-partition commit | 2PC with single decision log | Classic 2PC with coordinator | Blocking of PREPARED participants is the known problem. → QA-07 |
+| One writer per partition | yes | Single-writer partitioned architectures | No locks, but per-partition ceiling is one core. → RSK-04 |
 
-## Che cosa cambierebbe il giudizio
+<a id="che-cosa-cambierebbe-il-giudizio"></a>
 
-L'architettura andrebbe rivista, e non solo rifinita, se:
+## What would change the assessment
 
-- le pause del GC di SBCL risultassero incompatibili con l'obiettivo di P99 anche tenendo
-  indici e cache fuori dallo heap gestito (SPK-02);
-- un primary index compatto con reader concorrenti non fosse realizzabile in solo Common Lisp
-  con prestazioni dell'ordine richiesto (SPK-01);
-- il modello dei protocolli mostrasse che visibilità atomica delle multiserie e writer non
-  bloccante sono incompatibili senza un coordinamento globale pesante (SPK-07).
+The architecture would need revision, not just refinement, if:
+
+- SBCL GC pauses proved incompatible with the P99 objective even with
+  indexes and caches outside the managed heap (SPK-02);
+- a compact primary index with concurrent readers could not be implemented in Common Lisp alone
+  with performance at the required scale (SPK-01);
+- protocol modeling showed atomic multiseries visibility and a nonblocking
+  writer to be incompatible without heavy global coordination (SPK-07).

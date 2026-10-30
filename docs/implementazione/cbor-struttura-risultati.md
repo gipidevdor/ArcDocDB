@@ -1,72 +1,76 @@
-# Risultati della scansione strutturale CBOR
+<a id="risultati-della-scansione-strutturale-cbor"></a>
 
-Campagne locali del 9 ottobre 2026 sul kernel congelato del
-[referto C1](cbor-struttura-revisione.md), con il supplemento allo stack
-dichiarato separatamente. Comandi, output e tentativi sono conservati nel
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-structure/catalogo.lisp).
-Le letture statiche sono locali e non costituiscono approvazione umana.
+# CBOR structural-scanning results
 
-| Verifica mirata | Esito osservato |
+Local campaigns of October 9, 2026 on the frozen kernel in the
+[C1 report](cbor-struttura-revisione.md), with the stack supplement
+declared separately. Commands, output, and attempts are preserved in the
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-structure/catalogo.lisp).
+Static readings are local and do not constitute human approval.
+
+| Targeted verification | Observed outcome |
 |---|---|
-| Build rigorosa, lint e tracciabilità | PASS; zero avvisi, 57 file di prodotto senza violazioni, zero errori di tracciabilità. |
-| Suite del nuovo scanner | 24 test nominali PASS, inclusi span da 16MiB e ultimo slot dello stack. |
-| Corpus AST | 256 item generati e 256 suffix trailing errati verificati. |
-| Tutti i lead su due span | 512 casi: 41 accettati e 471 rifiutati. |
-| Fuzz finito | Seed `49CBA017`, 4096 span da 1..64 byte: 30 accettati, 4066 rifiutati. |
-| Due worker privati | 48 scansioni, 2.359.344 nodi, 5.505.168 byte; sink 4.718.784 e 3.145.920; tutti e tre i valori e buffer integri. |
-| Heap sul successo | 6 fixture ×5 repliche ×32 chiamate, warmup 128: tutti e tre i0 campioni a zero byte osservati. |
-| Sensore heap | Baseline 0; controllo positivo 16×1MiB osserva 16.777.472 byte, sia nel self-test sia nella campagna. |
-| Mutazioni mirate | Baseline completa PASS, 10/10 mutanti compilabili DETECTED dopo smoke esatto; zero INVALID e zero SURVIVED. |
-| Copertura grezza focale | 742/956 espressioni e 144/200 esiti di ramo; nessuna esclusione dal denominatore. |
+| Strict build, lint, and traceability | PASS; zero warnings, 57 product files without violations, zero traceability errors. |
+| New scanner suite | 24 nominal tests PASS, including 16MiB spans and last stack slot. |
+| AST corpus | 256 generated items and 256 incorrect trailing suffixes verified. |
+| All leads on two spans | 512 cases: 41 accepted and 471 rejected. |
+| Finite fuzz | Seed `49CBA017`, 4096 spans of 1..64 bytes: 30 accepted, 4066 rejected. |
+| Two private workers | 48 scans, 2,359,344 nodes, 5,505,168 bytes; sinks 4,718,784 and 3,145,920; all three values and buffers intact. |
+| Heap on success | 6 fixtures ×5 replicates ×32 calls, warmup 128: all thirty samples at zero observed bytes. |
+| Heap sensor | Baseline 0; positive control 16×1MiB observes 16,777,472 bytes, in both self-test and campaign. |
+| Targeted mutations | Full baseline PASS, 10/10 compilable mutants DETECTED after exact smoke; zero INVALID and zero SURVIVED. |
+| Focal raw coverage | 742/956 expressions and 144/200 branch outcomes; no exclusion from denominator. |
 
-Lo stato SB-COVER completo contiene anche moduli e test fuori dallo scope;
-il report focale comprende soltanto i sei file package/spazio/scan.
-Le 214 espressioni non osservate sono associate a 33 forme dichiarative,
-8 forme negli slot di `defstruct`, 170 forme in 42 siti di errore interno e
-3 forme dei default. I 56 esiti di ramo mancanti sono associati a 10 forme
-dei slot e 46 guardie interne. L'audit confronta i percorsi dello stato grezzo
-con HTML e sorgenti; le precise cause strumentali per slot e default restano
-non stabilite. Questa associazione non prova irraggiungibilità o copertura
-completa e non concede esclusioni o una qualifica MC/DC.
+Complete SB-COVER state also contains modules and tests outside scope;
+the focal report includes only the six package/space/scan files.
+The 214 unobserved expressions are associated with 33 declarative forms,
+8 forms in `defstruct` slots, 170 forms in 42 internal-error sites, and
+3 default forms. The 56 missing branch outcomes are associated with 10 slot
+forms and 46 internal guards. The audit compares raw-state paths
+with HTML and sources; precise instrumentation causes for slots and defaults remain
+unestablished. This association proves neither unreachability nor full
+coverage and grants no exclusions or MC/DC qualification.
 
-L'overlap del lavoro è positivo dopo la barriera: 79.346 tick nella build
-preliminare e 212.802 tick nella copertura, su clock reale da 1.000.000 tick/s.
-Il dato non misura tempo CPU o esecuzione simultanea su core distinti e non
-attesta scaling del pool. I worker mantengono input e scratch esclusivi;
-il kernel non crea thread, usa lock, attese o I/O per operazione.
+Work overlap is positive after the barrier: 79,346 ticks in the preliminary
+build and 212,802 ticks in coverage, on a 1,000,000 ticks/s wall clock.
+This does not measure CPU time or simultaneous execution on distinct cores and does not
+establish pool scaling. Workers keep exclusive input and scratch;
+the kernel creates no threads and uses no locks, waits, or per-operation I/O.
 
-Il mutante `tag-child-consumption` cambia la partizione tag/non-tag; il suo
-primo fallimento osservato riguarda il valore semplice F4 che smette di
-consumare il figlio. Il log non viene presentato come kill di un vettore tag.
-La baseline completa include gli oracoli specifici delle catene di tag;
-la campagna di dieci mutanti rimane mirata, non esaustiva.
+Mutant `tag-child-consumption` changes the tag/non-tag partition; its
+first observed failure concerns simple value F4 ceasing to
+consume the child. The log is not presented as a kill of a tag vector.
+Full baseline includes tag-chain-specific oracles;
+the ten-mutant campaign remains targeted, not exhaustive.
 
-Le misure usano safety3, fixture e scratch preparati a freddo, tre risultati
-verificati e sink indipendente. Setup, warmup, GC e report sono fuori dai
-contatori. Il costo comprende i controlli del driver; il carico esterno è
-incontrollato. Zero heap osservato riguarda queste chiamate riuscite, non
-factory, errori o una prova assoluta di assenza di allocazione.
+Measurements use safety3, cold-prepared fixtures and scratch, three verified
+results, and an independent sink. Setup, warmup, GC, and reports are outside
+counters. Costs include driver checks; external load is
+uncontrolled. Zero observed heap concerns these successful calls, not
+factory, errors, or absolute proof of no allocation.
 
-Il blocco verifica struttura e UTF-8, senza attestare semantica dei tag,
-chiavi duplicate, rappresentazione deterministica, ammissione al writer,
-durabilità o motore completo. Il controllo complessivo `make check` è PASS: 320 test ASDF, inclusi due
-smoke, e tutti i 10 spike con exit 0. Snapshot prima/dopo identico e nove blob
-di prodotto/test coincidenti con il freeze. Il master compresso è riletto
-con verifica dei byte espansi; audit e originali sono conservati nel catalogo.
+The block checks structure and UTF-8 without establishing tag semantics,
+duplicate keys, deterministic representation, writer admission,
+durability, or the whole engine. Full `make check` is PASS: 320 ASDF tests, including two
+smoke tests, and all 10 spikes with exit 0. Identical before/after snapshot and nine product/test
+blobs matching freeze. The compressed master is reread
+with expanded-byte verification; audits and originals are preserved in the catalog.
 
 
-## Integrazione con il ricircolo dei writer
+<a id="integrazione-con-il-ricircolo-dei-writer"></a>
 
-Dopo le campagne, `main` è avanzato a `75ada9d` con il ricircolo dei writer
-pronti. Rebase senza conflitti; tutti i sei blob del kernel e i tre dei test
-CBOR restano identici. ASDF e indice dei moduli conservano entrambi i blocchi.
-Il nuovo `make check` è PASS: 335 test ASDF, compresi 24 del nuovo scanner,
-e tutti i dieci spike. Snapshot prima/dopo identico; audit separato, wrapper
-e master sono aggiunti al catalogo, senza riscrivere gli esiti precedenti.
+## Integration with writer recycling
 
-Il secondo master conserva descrittore e gzip originali nella sottocartella
-`writer-recycle-integration-master/`. Un descrittore derivato cambia soltanto
-il basename PAYLOAD per la copia alla radice, mantenendo bytes e checksum del
-gzip; questa derivazione evita la collisione con il primo `report.lisp.gz`.
-Le misure mirate precedenti restano relative al kernel invariato e al loro
-snapshot; l'integrazione non introduce nuovi claim di heap o scaling.
+After campaigns, `main` advanced to `75ada9d` with ready-writer
+recycling. Rebase without conflicts; all six kernel blobs and three CBOR test
+blobs remain identical. ASDF and module index retain both blocks.
+New `make check` is PASS: 335 ASDF tests, including 24 from the new scanner,
+and all ten spikes. Identical before/after snapshot; separate audit, wrapper,
+and master are added to the catalog without rewriting earlier outcomes.
+
+The second master retains original descriptor and gzip in subfolder
+`writer-recycle-integration-master/`. A derived descriptor changes only
+the PAYLOAD basename for the root copy, retaining gzip bytes and checksum;
+this derivation avoids collision with the first `report.lisp.gz`.
+Earlier targeted measurements remain relative to the unchanged kernel and their
+snapshot; integration introduces no new heap or scaling claims.

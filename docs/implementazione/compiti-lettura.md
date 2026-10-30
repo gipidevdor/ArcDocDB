@@ -1,157 +1,171 @@
-# Compiti di lettura: epoche, snapshot e cleanup
+<a id="compiti-di-lettura-epoche-snapshot-e-cleanup"></a>
 
-## Ambito
+# Read tasks: epochs, snapshots, and cleanup
 
-`arcdocdb.read` collega il [registro snapshot](registro-snapshot.md) al
-[dominio EBR](epoche-e-reclaim.md) per la durata di un compito. Realizza il
-confine previsto da [ADR-0045](../adr/0045-modello-di-esecuzione.md), senza
-cambiare il protocollo degli snapshot o dei segmenti.
+<a id="ambito"></a>
 
-Il modulo è incluso nel sistema di prodotto. Non consulta ancora un primary
-index, una cache o un segmento; non è un GET completo. La verifica dei byte
-rimane responsabilità di `arcdocdb.record:verifica-put`, inclusa la prova
-OUTCOME dei prepared secondo [ADR-0047](../adr/0047-verifica-csn-dei-record-prepared.md).
-Un contesto di lettura protegge l'accesso, non attesta il contenuto del record.
+## Scope
 
-Classe C1. Requisiti interessati: REQ-CON-004, REQ-CMP-005, REQ-CMP-007,
-REQ-MVC-004, REQ-MVC-005, REQ-AFF-004 e REQ-AFF-008. Restano `:progettato`.
-Invarianti: INV-P5, INV-A8, INV-C10, INV-R1, INV-M1 e INV-M4.
+`arcdocdb.read` connects the [snapshot registry](registro-snapshot.md) to the
+[EBR domain](epoche-e-reclaim.md) for a task's duration. Implements the
+boundary planned by [ADR-0045](../adr/0045-modello-di-esecuzione.md), without
+changing snapshot or segment protocol.
 
-## Proprietà e memoria
+Module is included in product system. It does not yet consult a primary
+index, cache, or segment; it is not a complete GET. Byte
+verification remains `arcdocdb.record:verifica-put`'s responsibility, including prepared
+OUTCOME proof under [ADR-0047](../adr/0047-verifica-csn-dei-record-prepared.md).
+A read context protects access; it does not attest record contents.
 
-Il controller crea **un solo contesto per slot worker dell'Archivio**, prima
-dell'avvio dei pool, passando il reader EBR canonico e il registro snapshot
-dello stesso Archivio. I due registri hanno identità indipendenti: il loro
-abbinamento è responsabilità del controller, non dedotto dai dati in lettura.
-Gli ID dei worker di calcolo e I/O devono essere distinti nel dominio EBR.
+Class C1. Affected requirements: REQ-CON-004, REQ-CMP-005, REQ-CMP-007,
+REQ-MVC-004, REQ-MVC-005, REQ-AFF-004, and REQ-AFF-008. Remain `:progettato`.
+Invariants: INV-P5, INV-A8, INV-C10, INV-R1, INV-M1, and INV-M4.
 
-Il contesto contiene legami immutabili, un riferimento temporaneo allo
-snapshot e quattro word u64 private: generazione attesa, CSN iniziale,
-tempo iniziale e CSN ricontrollato. Le word vengono azzerate al cleanup.
-Non conserva root, location, descrittori, buffer di dati o risultati.
+<a id="proprietà-e-memoria"></a>
 
-La capacità è quella dei worker del dominio, senza strutture per documento
-o richiesta. La sola scrittura condivisa è l'annuncio EBR del worker; le
-verifiche dello snapshot leggono il registro. Nessuna coda globale, mutex,
-timer, callback, creazione di thread o chiamata di sistema sul percorso
-riuscito. Il cleanup visita esattamente quattro word; l'ingresso EBR è un
-solo tentativo. I percorsi di errore dei registri possono prendere un mutex.
+## Ownership and memory
 
-I buffer e le funzioni di controllo del CSN sono specializzati e inline per
-evitare un ritorno u64 boxed sul percorso previsto. Questo è un vincolo di
-implementazione: l'assenza di allocazioni e il costo reale richiedono misure.
+Controller creates **one context per Archivio worker slot**, before
+pool startup, passing canonical EBR reader and snapshot registry
+of the same Archivio. Both registries have independent identities: pairing
+is controller responsibility, not inferred from read data.
+Compute and I/O worker IDs must be distinct in EBR domain.
+
+Context contains immutable bindings, a temporary snapshot
+reference, and four private u64 words: expected generation, initial CSN,
+initial time, and rechecked CSN. Words are zeroed at cleanup.
+It retains no roots, locations, descriptors, data buffers, or results.
+
+Capacity is that of domain workers, without per-document
+or per-request structures. Only shared write is worker's EBR announcement;
+snapshot checks read registry. No global queue, mutex,
+timer, callback, thread creation, or system call on successful
+path. Cleanup visits exactly four words; EBR entry is a
+single attempt. Registry error paths may take a mutex.
+
+Buffers and CSN-check functions are specialized and inline to
+avoid a boxed u64 return on intended path. This is an implementation
+constraint: nonallocation and actual cost require measurements.
 
 ## API
 
-| Funzione | Contratto |
+| Function | Contract |
 |---|---|
-| `crea-contesto-lettura(reader, snapshots)` | Preallocazione nel controller; reader già attivo rifiutato. |
-| `avvia-lettura(ctx, snapshot, generazione, now)` | `T`: epoca confermata e snapshot eventualmente verificato. `NIL`: epoca cambiata, nessun accesso ammesso; riaccodare con budget/deadline della richiesta. |
-| `copia-limite-lettura(ctx, buffer, indice)` | `T`: CSN snapshot copiato. `NIL`: GET corrente, buffer intatto. Il lookup deve controllare il booleano e scegliere la versione appropriata. |
-| `concludi-lettura(ctx, now)` | Dopo il lookup, **anche su miss**: ricontrolla snapshot e tempo, poi libera EBR. Solo il ritorno normale consente di consegnare il risultato privato. |
-| `abbandona-lettura(ctx)` | Cleanup senza autorizzare risultati; idempotente quando inattivo. Prima di migrare, scartare tutte le location. |
-| `stato-contesto-lettura(ctx)` | Diagnostica locale del proprietario; non sincronizza un controller con un worker vivo. |
+| `crea-contesto-lettura(reader, snapshots)` | Controller preallocation; already-active reader rejected. |
+| `avvia-lettura(ctx, snapshot, generazione, now)` | `T`: epoch confirmed and snapshot checked if applicable. `NIL`: epoch changed, no access allowed; requeue within request budget/deadline. |
+| `copia-limite-lettura(ctx, buffer, indice)` | `T`: snapshot CSN copied. `NIL`: current GET, buffer intact. Lookup must check boolean and select appropriate version. |
+| `concludi-lettura(ctx, now)` | After lookup, **including on miss**: rechecks snapshot and time, then releases EBR. Only normal return permits delivering private result. |
+| `abbandona-lettura(ctx)` | Cleanup without authorizing results; idempotent when inactive. Discard all locations before migration. |
+| `stato-contesto-lettura(ctx)` | Owner-local diagnostics; does not synchronize a controller with a live worker. |
 
-GET corrente: `snapshot=NIL`, `generazione=0`. Con snapshot: identità
-originale positiva e registro identico a quello del contesto. Uno snapshot
-di un altro Archivio è rifiutato prima dell'annuncio EBR. Generazione, stato,
-CSN e deadline vengono poi verificati dal registro, dentro l'epoca.
+Current GET: `snapshot=NIL`, `generazione=0`. With snapshot: original
+positive identity and registry identical to context's. A snapshot
+from another Archivio is rejected before EBR announcement. Generation, state,
+CSN, and deadline are then checked by registry inside epoch.
 
-`now` è fresco, monotono e nelle stesse unità dei registri snapshot.
-Il controllo finale rifiuta un valore inferiore a quello iniziale; non può
-rilevare che il chiamante abbia riutilizzato un timestamp vecchio. La fonte
-di tempo rimane iniettabile e responsabilità del chiamante.
+`now` is fresh, monotonic, and in snapshot-registry units.
+Final check rejects a value lower than initial; it cannot
+detect caller reuse of a stale timestamp. Time
+source remains injectable and caller responsibility.
 
-## Confine del compito
+<a id="confine-del-compito"></a>
 
-Il worker installa `unwind-protect` **prima di chiamare `avvia-lettura`** e
-chiama sempre `abbandona-lettura` nel cleanup. Questo copre anche l'uscita
-non locale dopo l'ammissione e prima del ritorno della funzione. Non basta
-installare la protezione soltanto dopo aver ricevuto `T`.
+## Task boundary
 
-1. Avviare senza avere letto indice, root, location o descrittore.
-2. Se `NIL`, terminare il compito e riaccodare la richiesta originale entro
-   il suo budget. Nessun retry interno al contesto.
-3. Se `T`, scegliere il CSN, consultare indice e versioni trattenute,
-   ricontrollare root/generazione anche su miss (ADR-0050), verificare i
-   byte e copiare l'eventuale risposta in memoria privata della richiesta.
-4. Chiamare `concludi-lettura` con tempo fresco. Se fallisce, scartare anche
-   il risultato negativo; nessuna risposta è ammessa.
-5. Dopo il ritorno normale, terminare il compito e consegnare la risposta
-   privata al livello di rete fuori dall'epoca.
+Worker installs `unwind-protect` **before calling `avvia-lettura`** and
+always calls `abbandona-lettura` in cleanup. This also covers nonlocal
+exit after admission and before function return. Installing
+protection only after receiving `T` is insufficient.
 
-Su cache miss nel pool di calcolo, abbandonare la sezione e scartare la
-location **prima** di accodare la richiesta al pool di I/O. Il contesto
-rimane nel worker; il nuovo compito entra nel proprio reader e riparte dal
-lookup. Nel pool di I/O è consentito `pread` nella sezione; non sono
-consentiti rete, parcheggi o attese di altri compiti.
+1. Start without having read index, root, location, or descriptor.
+2. If `NIL`, end task and requeue original request within
+   its budget. No internal context retry.
+3. If `T`, select CSN, consult index and retained versions,
+   recheck root/generation even on miss (ADR-0050), verify
+   bytes, and copy any response into request-private memory.
+4. Call `concludi-lettura` with fresh time. If it fails, discard even
+   negative result; no response allowed.
+5. After normal return, end task and deliver private
+   response to network layer outside epoch.
 
-Il contesto non fornisce un adattatore del pool o una continuazione e non
-può impedire a un chiamante di consegnare un risultato troppo presto. Il
-futuro confine eseguibile del motore deve rispettare questa sequenza.
+On cache miss in compute pool, leave section and discard
+location **before** queuing request to I/O pool. Context
+stays in worker; new task enters its own reader and restarts from
+lookup. I/O pool permits `pread` inside section; network,
+parking, or waiting for other tasks are not allowed.
 
-## Stati, errori e interruzioni
+Context provides neither pool adapter nor continuation and cannot
+prevent a caller from delivering a result too early. Future
+executable engine boundary must follow this sequence.
 
-| Stato | Transizione |
+<a id="stati-errori-e-interruzioni"></a>
+
+## States, errors, and interruptions
+
+| State | Transition |
 |---|---|
-| `:idle` | Input validato senza toccare EBR; ingresso → `:entering`. |
-| `:entering` | Conferma EBR e snapshot riuscite → `:active`; cambio epoca o errore recuperabile → cleanup e `:idle`. |
-| `:active` | Conclusione o abbandono → cleanup e `:idle`; errore di invariante → `:faulted`. |
-| `:faulted` | Cleanup consentito; il contesto resta inutilizzabile. Nessun reset automatico. |
+| `:idle` | Input validated without touching EBR; entry → `:entering`. |
+| `:entering` | Successful EBR and snapshot confirmation → `:active`; epoch change or recoverable error → cleanup and `:idle`. |
+| `:active` | Completion or abandonment → cleanup and `:idle`; invariant error → `:faulted`. |
+| `:faulted` | Cleanup permitted; context remains unusable. No automatic reset. |
 
-Il cleanup imposta prima `:faulted`, verifica l'annuncio del solo reader
-proprio, lo libera e azzera i dati. Ripristina `:idle` soltanto quando tutto
-è terminato e il contesto non era già guasto. Un'interruzione nel mezzo
-conserva `:faulted`; il controller può completare il cleanup solo dopo la
-fine del compito o il join del worker, mai cancellare un reader vivo.
+Cleanup first sets `:faulted`, checks only its own reader's
+announcement, releases it, and zeroes data. Restores `:idle` only when everything
+has finished and context was not already faulted. Interruption midway
+retains `:faulted`; controller may complete cleanup only after
+task completion or worker join, never clear a live reader.
 
-`epoca-attiva-p` serve al proprietario per il cleanup: osservare un annuncio
-non autorizza a dereferenziare una risorsa. Consente di liberare anche la
-finestra in cui `entra-epoca` ha confermato il pin ma non ha ancora restituito
-il booleano al contesto. L'ingresso rifiuta un reader già attivo prima di
-installare questo cleanup, evitando di liberare una sezione preesistente.
+`epoca-attiva-p` serves owner cleanup: observing an announcement
+does not authorize resource dereference. It also allows releasing the
+window where `entra-epoca` confirmed pin but has not yet returned
+boolean to context. Entry rejects an already-active reader before
+installing this cleanup, avoiding release of a preexisting section.
 
-Le condizioni del registro (`snapshot-too-old`, `resource-exhausted`,
-`invalid-argument`, `invariant-violation`) restano tipizzate e non sono
-catturate o nascoste. L'annidamento e l'uso fuori dallo stato ammesso sono
-rifiutati. Un'incoerenza interna rende il contesto `:faulted`; il futuro
-confine worker deve isolare la Serie o l'Archivio interessato e registrare
-il guasto. Tale propagazione non è ancora integrata.
+Registry conditions (`snapshot-too-old`, `resource-exhausted`,
+`invalid-argument`, `invariant-violation`) remain typed and are neither
+caught nor hidden. Nesting and use outside permitted state are
+rejected. Internal inconsistency makes context `:faulted`; future worker
+boundary must isolate affected Serie or Archivio and record
+fault. That propagation is not yet integrated.
 
-La scadenza logica dello snapshot non libera il pin EBR di un compito vivo.
-Il controllo finale rifiuta il risultato scaduto; il pin protegge l'accesso
-fisico fino all'ultimo uso. Terminare una lettura non termina lo snapshot,
-che può essere condiviso da più richieste dell'Archivio.
+Logical snapshot expiry does not release a live task's EBR pin.
+Final check rejects expired result; pin protects physical
+access until last use. Ending a read does not end snapshot,
+which may be shared by multiple Archivio requests.
 
-## Decisioni da coprire — COD-54
+<a id="decisioni-da-coprire--cod-54"></a>
 
-| ID | Decisione | Condizioni da distinguere |
+## Decisions to cover — COD-54
+
+| ID | Decision | Conditions to distinguish |
 |---|---|---|
-| READ-D01 | Inattivo senza residui | Riferimento snapshot nullo e ciascuna delle quattro word zero. |
-| READ-D02 | Identità snapshot di input | Generazione positiva; registro uguale. |
-| READ-D03 | Associazione snapshot attiva | Generazione positiva; registro uguale. |
-| READ-D04 | Modalità corrente attiva | Generazione zero; CSN iniziale zero. |
+| READ-D01 | Inactive without residues | Null snapshot reference and each of four words zero. |
+| READ-D02 | Input snapshot identity | Positive generation; equal registry. |
+| READ-D03 | Active snapshot association | Positive generation; equal registry. |
+| READ-D04 | Active current mode | Zero generation; zero initial CSN. |
 
-Le altre decisioni semplici da esercitare comprendono annidamento,
-annuncio già attivo, cambio di epoca, snapshot in attesa/terminato/scaduto,
-indice del buffer invalido, regressione del tempo, CSN finale discordante,
-interruzione in ingresso/conclusione/cleanup e migrazione tra worker.
-Per le decisioni dei registri valgono anche le loro tabelle dedicate.
+Other simple decisions to exercise include nesting,
+already-active announcement, epoch change, pending/ended/expired snapshot,
+invalid buffer index, time regression, mismatched final CSN,
+interruption during entry/completion/cleanup, and migration between workers.
+Dedicated registry decision tables also apply.
 
-## Evidenze e lavoro restante
+<a id="evidenze-e-lavoro-restante"></a>
 
-La campagna [2026-10-09](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-read-task/README.md)
-conserva compilazione del solo prodotto, controlli statici, tracciabilità,
-link, cataloghi e disassemblato ARM64. Nessuna funzione di lettura viene
-eseguita dalla campagna; non sono state aggiunte o eseguite prove funzionali,
-concorrenti, fault injection, benchmark o auto-verifiche degli strumenti.
+## Evidence and remaining work
 
-Restano da integrare primary index, versioni trattenute, cache, lettura dei
-record e confine dei pool. La qualifica richiede esercitare le decisioni,
-interruzioni e gare con scadenza/reclaim, verificare la migrazione su worker
-reali e misurare allocazioni/latency su ARM64 e x86-64. Compilazione e CI
-dei test già presenti non chiudono questi criteri.
+The [2026-10-09 campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-read-task/README.md)
+preserves product-only compilation, static checks, traceability,
+links, catalogs, and ARM64 disassembly. No read function is
+executed by campaign; no functional or concurrent tests,
+fault injection, benchmarks, or tool self-checks were added or run.
 
-La [campagna funzionale del 2026-10-11](lettura-verifica.md) aggiunge
-suite EBR e compiti di lettura, mutanti mirati e copertura parziale.
-Il metodo distingue la preregistrazione dai risultati delle esecuzioni.
+Primary index, retained versions, cache, record reading,
+and pool boundary remain to integrate. Qualification requires exercising decisions,
+interruptions, and expiry/reclaim races, verifying migration on real
+workers, and measuring allocation/latency on ARM64 and x86-64. Compilation and CI
+of existing tests do not close these criteria.
+
+The [functional campaign dated 2026-10-11](lettura-verifica.md) adds
+EBR and read-task suites, targeted mutants, and partial coverage.
+Method distinguishes preregistration from execution results.

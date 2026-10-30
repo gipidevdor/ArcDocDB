@@ -1,87 +1,95 @@
-# Metodo di verifica funzionale: resolver CLOSED e prove OUTCOME
+<a id="metodo-di-verifica-funzionale-resolver-closed-e-prove-outcome"></a>
 
-Questa campagna aggiunge una prima suite dedicata in
-[`tests/get-resolver/`](../../tests/get-resolver/). Il perimetro è costruzione
-della mappa CLOSED, ordinamento e ricerca delle prove OUTCOME, associazione
-ai PUT prepared e lettura mediante le API pubbliche del resolver. Il metodo
-è scritto prima delle esecuzioni. L'antenato di integrazione è `4344d9e`;
-i commit di congelamento e gli esiti saranno registrati nelle prove native.
+# Functional verification method: CLOSED resolver and OUTCOME proofs
 
-## Oracoli e casi fissati
+This campaign adds a first dedicated suite in
+[`tests/get-resolver/`](../../tests/get-resolver/). Scope covers CLOSED map construction,
+OUTCOME proof sorting and lookup, association with
+prepared PUTs, and reading through public resolver APIs. The method
+is written before execution. The integration ancestor is `4344d9e`;
+freeze commits and outcomes will be recorded in native evidence.
 
-La suite fissa 42 test nominati: 8 per ordinamento/ricerca, 13 per costruzione
-e 21 per lettura. Un test può attraversare più formati, word o API;
-queste iterazioni non aumentano il conteggio dei test nominati.
+<a id="oracoli-e-casi-fissati"></a>
 
-La fixture possiede un file reale, aperto readonly dal prodotto, una vista
-canonica, un indice, un contesto GET, output privato e registri snapshot/EBR.
-Header, cornici, SEAL e manifest sono codificati byte per byte con CRC32C
-bitwise indipendente. Gli encoder provengono dal supporto della directory,
-con attribuzione nel sorgente; non chiamano il writer o i codec del prodotto
-per generare i dati attesi. Il manifest è interpretato dall'API pubblica
-prima della costruzione della mappa. La fixture conserva offset, lunghezze,
-TXID, CSN e valori attesi separati dalle strutture costruite dal resolver.
+## Oracles and fixed cases
 
-I formati sono v1 e v2, con chiavi di 16 byte. TXID e CSN attraversano il
-confine `2^32` e raggiungono u64 massimo. L'ordine fisico degli OUTCOME può
-differire da quello dei TXID. I casi comprendono zero, una e più prove,
-duplicati identici stabili e CSN discordanti separatamente nella word alta
-e bassa. Un OUTCOME antecedente al PUT è corruzione; un prepared senza prova
-non autorizza una risposta. Byte invalidi dopo la frontiera CLOSED non
-vanno letti né interpretati.
+The suite fixes 42 named tests: 8 for sorting/lookup, 13 for construction,
+and 21 for reading. A test may exercise multiple formats, words, or APIs;
+these iterations do not increase named-test count.
 
-Il budget degli array è controllato al limite esatto e un byte sotto:
-`24P + 20O` per O ≤ 1, `24P + 40O + 1024` per O ≥ 2. Il payload permanente
-rimane `24P`. Riutilizzare il buffer sorgente dopo la costruzione non deve
-alterare la mappa. Questi numeri descrivono payload degli array, non RSS,
-allocazioni osservate o comportamento del GC.
+The fixture owns a real file, opened read-only by the product, a canonical
+view, index, GET context, private output, and snapshot/EBR registries.
+Header, frames, SEAL, and manifest are encoded byte for byte with independent
+bitwise CRC32C. Encoders come from directory support,
+with attribution in source; they do not call the product writer or codecs
+to generate expected data. The manifest is interpreted by the public API
+before map construction. The fixture retains offsets, lengths,
+TXIDs, CSNs, and expected values separately from resolver-built structures.
 
-Le prove seriali interne usano tuple esplicite (TXID, CSN, offset), senza
-ordinamento o lookup del prodotto nell'oracolo. Esercitano tutte le otto
-cifre radix, confini high/low, prima prova dei duplicati, miss ai bordi,
-ordine fisico e rifiuto della geometria errata prima degli effetti.
-Gli accessi interni sono dichiarati come verifiche di contratti locali;
-non sostituiscono i casi attraverso `crea-mappa-segmento-get`.
+Formats are v1 and v2, with 16-byte keys. TXIDs and CSNs cross the
+`2^32` boundary and reach maximum u64. Physical OUTCOME order may
+differ from TXID order. Cases include zero, one, and multiple proofs,
+stable identical duplicates, and mismatching CSNs separately in high
+and low words. An OUTCOME before the PUT is corruption; a prepared record without proof
+does not authorize a response. Invalid bytes after the CLOSED frontier
+must be neither read nor interpreted.
 
-Le letture usano `risolvi-candidato-get`, `sonda-cache-risolta-get` e
-`leggi-record-risolto-get` dopo `avvia-get`. L'osservatore I/O registra FD,
-offset e quantità: resolve/probe non leggono; prepared cold legge la prima
-prova poi il PUT; prepared caldo rilegge la prova anche sulla cache hit.
-Gli errori non autorizzano output. Copia provvisoria, conclusione con tempo
-fresco, sentinelle, pin GET e annuncio EBR sono verificati esplicitamente.
-Le fault injection riguardano soltanto risorse della fixture e sono
-documentate nei test; il cleanup deve precedere riuso e chiusura del file.
+Array budget is checked at exact limit and one byte below:
+`24P + 20O` for O ≤ 1, `24P + 40O + 1024` for O ≥ 2. Permanent payload
+remains `24P`. Reusing the source buffer after construction must not
+alter the map. These figures describe array payload, not RSS,
+observed allocations, or GC behavior.
 
-## Esecuzione e conservazione
+Internal serial tests use explicit tuples (TXID, CSN, offset), without
+product sorting or lookup in the oracle. They exercise all eight
+radix digits, high/low boundaries, first duplicate proof, boundary misses,
+physical order, and wrong-geometry rejection before effects.
+Internal access is declared as verification of local contracts;
+it does not replace cases through `crea-mappa-segmento-get`.
 
-Prima di ogni gruppo si committano sorgenti, test, strumenti e questo
-metodo. Nessuno di questi file cambia mentre il gruppo è in esecuzione.
-I comandi sono avvolti da `tools/record-command.lisp`: conservano argv,
-ambiente, commit, working tree, inventario/hash prima e dopo, stdout,
-stderr ed exit code anche su errore. Un gruppo con sorgenti cambiati non
-è accettato. Una correzione richiede un nuovo freeze; le prove precedenti
-rimangono conservate e attribuite al proprio commit.
+Reads use `risolvi-candidato-get`, `sonda-cache-risolta-get`, and
+`leggi-record-risolto-get` after `avvia-get`. The I/O observer records FD,
+offset, and quantity: resolve/probe do not read; cold prepared reads the first
+proof then PUT; warm prepared rereads proof even on cache hit.
+Errors authorize no output. Provisional copy, completion with fresh time,
+sentinels, GET pins, and EBR announcement are explicitly verified.
+Fault injections concern only fixture resources and are
+documented in tests; cleanup must precede file reuse and closure.
 
-La verifica locale completa è `make check`. La copertura separata usa
+<a id="esecuzione-e-conservazione"></a>
+
+## Execution and preservation
+
+Before each group, commit sources, tests, tools, and this
+method. None of these files changes while the group runs.
+Commands are wrapped by `tools/record-command.lisp`: they preserve argv,
+environment, commit, working tree, inventory/hashes before and after, stdout,
+stderr, and exit code even on error. A group with changed sources is not
+accepted. A correction requires a new freeze; previous tests
+remain preserved and attributed to their commit.
+
+Full local verification is `make check`. Separate coverage uses
 [`get-resolver-coverage.lisp`](../../tools/get-resolver-coverage.lisp),
-carica il sistema dei test senza invocarne `test-op` ed esegue soltanto
-questa suite. Riporta i sette file CLOSED (package, types, scan, sort,
-rows, build, read), con conteggi per file, stato grezzo e HTML. I sei file
-ACTIVE sono esclusi dal rapporto locale. Espressioni e rami SB-COVER sono
-diagnostici; non costituiscono prove MC/DC.
+loads the test system without invoking its `test-op`, and runs only
+this suite. It reports the seven CLOSED files (package, types, scan, sort,
+rows, build, read), with per-file counts, raw state, and HTML. The six
+ACTIVE files are excluded from the local report. SB-COVER expressions and branches are
+diagnostic; they are not MC/DC evidence.
 
-Prima della pull request devono passare compilazione senza avvisi,
-regressione completa, controlli statici, tracciabilità, collegamenti e
-verifica delle evidenze. La CI ripete i controlli su Linux e macOS, conserva
-gli artefatti e controlla i documenti separatamente. I record si leggono
-come dati tramite `tools/evidence-storage.lisp`; non si caricano report,
-stato di copertura o FASL come codice. La pubblicazione conserva gruppi
-completi, raw, errori e cataloghi LEAF originali, inclusi i FASL grezzi.
+Before the pull request, warning-free compilation, full regression,
+static checks, traceability, links, and evidence verification must pass.
+CI repeats checks on Linux and macOS, retains artifacts,
+and checks documents separately. Records are read as data
+through `tools/evidence-storage.lisp`; reports, coverage state,
+and FASLs are not loaded as code. Publication retains complete
+groups, raw outputs, errors, and original LEAF catalogs, including raw FASLs.
 
-## Limiti delle conclusioni
+<a id="limiti-delle-conclusioni"></a>
 
-Non si misurano prestazioni né allocazioni e non si eseguono mutanti in
-questa campagna. La revisione indipendente comprende fixture, oracoli,
-diff e risultati, distinta dall'autore. La suite non chiude qualifica C1,
-MC/DC, requisito o Fase 0. Restano fuori ACTIVE, prove EDIT, storico,
-directory mista, rotazione/reclaim, scheduler e integrazione del server.
+## Limits of conclusions
+
+No performance or allocation measurements and no mutants in
+this campaign. Independent review includes fixtures, oracles,
+diff, and results, separate from the author. The suite does not close C1 qualification,
+MC/DC, requirements, or Phase 0. ACTIVE, EDIT proofs, history,
+mixed directory, rotation/reclamation, scheduler, and server integration remain outside scope.

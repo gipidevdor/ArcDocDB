@@ -1,145 +1,157 @@
-# Pubblicazione del checkpoint del control log
+<a id="pubblicazione-del-checkpoint-del-control-log"></a>
 
-`pubblica-control-recuperato` completa la preparazione del
-[checkpoint](checkpoint-control.md) tramite la rinomina prevista da
+# Control log checkpoint publication
+
+`pubblica-control-recuperato` completes preparation of the
+[checkpoint](checkpoint-control.md) through the rename specified by
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio).
-Il punto di atomicità è la sostituzione di `control.log` con il temporaneo
-durevole; il risultato è consegnato soltanto dopo fsync della directory.
+The atomicity point is replacement of `control.log` with the durable temporary;
+the result is delivered only after directory fsync.
 
-## Contratto e dipendenze
+<a id="contratto-e-dipendenze"></a>
 
-| API | Risultato |
+## Contract and dependencies
+
+| API | Result |
 |---|---|
-| `pubblica-control-recuperato(prepared, previous)` | risultato completo dopo rinomina verificata e fsync parent |
-| `stato-pubblicazione-control(prepared)` | stato e successo della rinomina osservato al confine del publisher |
-| `log-control-pubblicato(result)` | log canonico del nuovo control log |
-| `manifest-control-pubblicato(result)` | manifest posseduto del checkpoint installato |
-| `active-control-pubblicato(result)` | nuovo ACTIVE preparato, nominato dal manifest |
+| `pubblica-control-recuperato(prepared, previous)` | Complete result after verified rename and parent fsync |
+| `stato-pubblicazione-control(prepared)` | State and rename success observed at the publisher boundary |
+| `log-control-pubblicato(result)` | Canonical log of the new control log |
+| `manifest-control-pubblicato(result)` | Owned manifest of the installed checkpoint |
+| `active-control-pubblicato(result)` | New prepared ACTIVE named by the manifest |
 
-Il chiamante esegue **recovery esclusivo della Serie** nel pool I/O. Ha già
-verificato il vecchio control log, il suo manifest, l'inventario necessario e
-le decisioni delle transazioni. `previous` è la capacità readonly di quel
-file autorevole, mantenuta aperta fino alla fine del compito. Il publisher
-non deduce questa autorità dalla sola esistenza di un nome o di un FD.
+The caller performs **exclusive Serie recovery** in the I/O pool. It has already
+verified the old control log, its manifest, the required inventory, and transaction
+decisions. `previous` is the read-only capability of that authoritative file,
+kept open until the task ends. The publisher does not infer this authority from
+merely the existence of a name or an FD.
 
-Il risultato preparato conserva ora **directory canonica e lunghezza attesa**.
-Il nuovo control log deve essere ancora fermo alla frontiera preparata,
-scritta e durevole, con log sano e associazione readonly/append valida.
-Il nuovo ACTIVE deve essere ancora al solo header durevole. La directory
-deve essere esattamente quella sincronizzata durante la preparazione.
+The prepared result now retains the **canonical directory and expected length**.
+The new control log must still be stopped at the prepared, written, and durable
+frontier, with a healthy log and valid read-only/append association. The new
+ACTIVE must still contain only the durable header. The directory must be
+exactly the one synchronized during preparation.
 
-Il namespace è posseduto dal controller per l'intera chiamata: nessuna
-rinomina, mutazione esterna, chiusura o sostituzione di FD concorrente.
-I controlli di inode non sono un lock contro altri processi: tra verifica
-e `renameat` questa esclusività rimane una precondizione del motore.
+The controller owns the namespace throughout the call: no concurrent rename,
+external mutation, close, or FD replacement. Inode checks are not a lock against
+other processes: between checking and `renameat`, this exclusivity remains an
+engine precondition.
 
-## Ordine degli effetti
+<a id="ordine-degli-effetti"></a>
 
-1. Preflight senza I/O: gettone libero, capacità aperte, log e frontiere
-   invariati, dipendenza ACTIVE, backend e callback richiesti.
-2. Allocare il wrapper di risultato **prima** della rinomina e reclamare
-   il gettone locale con CAS sul suo identificativo univoco.
-3. Nella directory già aperta, confrontare device/inode delle capacità con
-   quelli delle foglie `control.log.tmp` e `control.log`. Entrambe devono
-   essere file regolari, senza seguire symlink, e fisicamente distinte.
-4. Eseguire **una sola `renameat`**, usando lo stesso FD di directory per
-   sorgente e destinazione. Nessun pathname di antenati viene risolto di nuovo.
-5. Verificare che `control.log` individui il file nuovo, confrontandolo con
-   la capacità readonly preparata. I FD vecchi restano aperti e del caller.
-6. Registrare il successo osservato al confine I/O e sincronizzare la directory.
-7. Ricontrollare capacità, frontiera del checkpoint e nuovo ACTIVE. Segnare
-   `:published` e consegnare il wrapper completo.
+## Order of effects
 
-Il publisher non riscrive il file, prende CSN, chiude FD, elimina segmenti,
-pubblica indici o ammette traffico. Il risultato collega manifest, log e
-ACTIVE preparato; il controller deve ancora completare il gate del recovery.
+1. Preflight without I/O: free token, open capabilities, unchanged log and
+   frontiers, ACTIVE dependency, required backend and callbacks.
+2. Allocate the result wrapper **before** renaming and claim the local token
+   with CAS on its unique identifier.
+3. In the already open directory, compare capability device/inode with those
+   of the `control.log.tmp` and `control.log` leaves. Both must be regular files,
+   without following symlinks, and physically distinct.
+4. Perform **only one `renameat`**, using the same directory FD for source and
+   destination. No ancestor pathname is resolved again.
+5. Verify that `control.log` identifies the new file by comparing it with the
+   prepared read-only capability. Old FDs remain open and owned by the caller.
+6. Record success observed at the I/O boundary and synchronize the directory.
+7. Recheck capabilities, checkpoint frontier, and new ACTIVE. Mark
+   `:published` and deliver the complete wrapper.
 
-## Gettone, rientri ed errori
+The publisher does not rewrite the file, acquire a CSN, close FDs, delete segments,
+publish indexes, or admit traffic. The result links manifest, log, and prepared
+ACTIVE; the controller must still complete the recovery gate.
 
-Il gettone è locale al risultato preparato; non introduce lock tra Serie.
-Il cleanup è installato **prima del CAS**. Identifica il proprietario tramite
-il wrapper privato, anche se un'uscita non locale avviene immediatamente dopo
-il CAS e prima dell'aggiornamento dello stato. Un tentativo perdente non può
-invalidare il gettone del vincitore. Il risultato non è riutilizzabile.
+<a id="gettone-rientri-ed-errori"></a>
 
-| Stato | Significato |
+## Token, reentry, and errors
+
+The token is local to the prepared result; it introduces no lock between Serie.
+Cleanup is installed **before CAS**. It identifies the owner through the private
+wrapper, even if a nonlocal exit occurs immediately after CAS and before the
+state update. A losing attempt cannot invalidate the winner's token.
+The result is not reusable.
+
+| State | Meaning |
 |---|---|
-| `:prepared` | preflight e presa possibili, purché il gettone sia ancora libero |
-| `:publishing` | un solo proprietario può eseguire verifica/rinomina/fsync |
-| `:published` | rinomina verificata, directory sincronizzata e postcondizioni concluse |
-| `:faulted` | uscita incompleta dopo la presa; richiede nuova riconciliazione autorevole |
+| `:prepared` | Preflight and acquisition possible, provided the token is still free |
+| `:publishing` | Only one owner can perform verification/rename/fsync |
+| `:published` | Rename verified, directory synchronized, and postconditions completed |
+| `:faulted` | Incomplete exit after acquisition; requires new authoritative reconciliation |
 
-Le osservazioni dello stato sono per il proprietario o il controller dopo
-consegna/join: non sono una fotografia concorrente dei campi o un permesso a
-chiudere/eliminare/ritentare. Il booleano `rename-observed = nil` **non prova
-che i nomi siano invariati**: un errore può avvenire durante la syscall o nella
-verifica successiva. Se è vero e il fsync fallisce, la rinomina è stata
-osservata ma la pubblicazione non è confermata durevole.
+State observations are for the owner or controller after delivery/join: they
+are not a concurrent snapshot of fields or permission to close/delete/retry.
+The Boolean `rename-observed = nil` **does not prove names are unchanged**:
+an error can occur during the syscall or subsequent verification. If true and
+fsync fails, the rename was observed but publication is not confirmed durable.
 
-Qualsiasi errore dopo la presa, compreso un rientro non gestito dal callback,
-un guasto di verifica o un'uscita non locale, lascia `:faulted`. La condizione
-originale propaga; nessun handler generico, retry, rollback, close o cleanup
-del namespace è eseguito. Il controller applica fail-stop della Serie e
-ricostruisce la decisione dal disco. Prima della presa, un rifiuto della
-preflight lascia il risultato preparato.
+Any error after acquisition, including reentry not handled by the callback,
+a verification failure, or a nonlocal exit, leaves `:faulted`. The original
+condition propagates; no generic handler, retry, rollback, close, or namespace
+cleanup is performed. The controller applies Serie fail-stop and reconstructs
+the decision from disk. Before acquisition, a preflight rejection leaves the
+result prepared.
 
-## Confine I/O e piattaforme
+<a id="confine-io-e-piattaforme"></a>
 
-`verifica-capacita-sostituzione` controlla capacità, nomi foglia ASCII,
-relazione `.tmp`/definitivo e backend prima delle syscall.
-`sostituisci-temporaneo` confronta i nomi con i FD, rifiuta un alias fisico,
-esegue la rinomina e verifica il nome installato. Il caller fornisce lo stato
-completo durevole e il target autorevole: la primitiva I/O non interpreta EDIT.
+## I/O boundary and platforms
 
-Il backend mantiene i sei argomenti posizionali e `:identity` già esistenti;
-aggiunge due callback opzionali:
+`verifica-capacita-sostituzione` checks capabilities, ASCII leaf names,
+the `.tmp`/final relationship, and backend before syscalls.
+`sostituisci-temporaneo` compares names with FDs, rejects a physical alias,
+performs the rename, and checks the installed name. The caller provides the
+complete durable state and authoritative target: the I/O primitive does not
+interpret EDIT.
 
-- `:entry-identity(directory-fd, leaf)` → device/inode di un regolare,
-  senza seguire symlink;
-- `:rename(directory-fd, source-leaf, target-leaf)` → zero per successo.
+The backend retains the existing six positional arguments and `:identity`;
+it adds two optional callbacks:
 
-Un backend incompleto è rifiutato prima della presa: nessun fallback nativo.
-I callback sono fidati e non mutano nomi, FD o capacità fuori dal contratto.
-Le foglie vengono copiate in stringhe private prima delle osservazioni I/O.
-La rinomina e le sue postcondizioni delegano al
-[confine comune](io-rinomina.md), con copie simple-base-string e limite di
-255 byte per foglia. Il cleanup locale protetto conserva una capacità già
-chiusa e guasta una capacità aperta anche su uscita incompleta o guasto della
-verifica dopo la rinomina.
+- `:entry-identity(directory-fd, leaf)` → device/inode of a regular file,
+  without following symlinks;
+- `:rename(directory-fd, source-leaf, target-leaf)` → zero on success.
 
-Nel percorso nativo, `fstatat` usa lo `struct stat` grovelled di SB-POSIX,
-con lo stesso selettore `INODE64` delle sue funzioni stat: nessun offset di
-struct è duplicato nel prodotto. Il flag `AT_SYMLINK_NOFOLLOW` è 0x100
-nell'[header Linux](https://raw.githubusercontent.com/torvalds/linux/master/include/uapi/linux/fcntl.h)
-e 0x20 in `sys/fcntl.h` del SDK macOS. ABI e piattaforme restano quelle del
-[confine I/O](io.md); la qualifica dinamica di queste nuove chiamate è aperta.
+An incomplete backend is rejected before acquisition: no native fallback.
+Callbacks are trusted and do not mutate names, FDs, or capabilities outside
+the contract. Leaves are copied into private strings before I/O observations.
+Rename and its postconditions delegate to the
+[common boundary](io-rinomina.md), with simple-base-string copies and a
+255-byte limit per leaf. Protected local cleanup preserves an already closed
+capability and faults an open capability even on incomplete exit or verification
+failure after rename.
 
-## Costi e decisioni da qualificare
+On the native path, `fstatat` uses SB-POSIX's grovelled `struct stat`,
+with the same `INODE64` selector as its stat functions: no struct offset
+is duplicated in the product. The `AT_SYMLINK_NOFOLLOW` flag is 0x100
+in the [Linux header](https://raw.githubusercontent.com/torvalds/linux/master/include/uapi/linux/fcntl.h)
+and 0x20 in the macOS SDK's `sys/fcntl.h`. ABI and platforms remain those of
+the [I/O boundary](io.md); dynamic qualification of these new calls is open.
 
-Al massimo sei osservazioni d'identità: due fstat e due fstatat prima della
-rinomina, una fstat e una fstatat dopo. Seguono una renameat e un fsync del
-parent. Nessun nuovo FD è aperto. Sono creati un wrapper e due stringhe private;
-le osservazioni native usano inoltre istanze `stat` del runtime e possono
-richiedere boxing degli interi POSIX. Nessun buffer dati o lotto nuovo. Sono costi statici,
-non misure di latenza, heap, throughput o contesa.
+<a id="costi-e-decisioni-da-qualificare"></a>
 
-| ID | Decisione | Casi da qualificare |
+## Costs and decisions to qualify
+
+At most six identity observations: two fstats and two fstatats before the
+rename, one fstat and one fstatat after. One renameat and one parent fsync
+follow. No new FD is opened. One wrapper and two private strings are created;
+native observations also use runtime `stat` instances and may require boxing
+POSIX integers. No new data buffer or batch. These are static costs,
+not latency, heap, throughput, or contention measurements.
+
+| ID | Decision | Cases to qualify |
 |---|---|---|
-| CPU-D01 | stato preparato e gettone libero | ogni condizione falsa, entrambe vere, due contendenti |
-| CPU-D02 | frontiere scritta/durevole uguali alla preparata | ciascuna frontiera diversa, entrambe esatte |
-| CPU-D03 | nomi foglia ammessi | vuoto, dot/dotdot, ogni separatore, NUL/non ASCII, valido |
-| CPU-D04 | relazione temporaneo/definitivo | lunghezza, prefisso e suffisso separatamente errati |
-| CPU-D05 | directory/source/target nello stesso backend | ogni associazione diversa, tutte uguali |
-| CPU-D06 | tre callback presenti | ogni callback mancante, tutte presenti, nativo |
-| CPU-D07 | device/inode dei nomi uguali ai FD | ciascuna componente diversa, entrambe uguali, symlink/non regolare |
-| CPU-D08 | sorgente e target distinti | stesso device/altro inode, altro device/stesso inode, entrambi uguali |
-| CPU-D09 | proprietà del cleanup e uscita incompleta | CAS vinto/perso, uscita subito dopo CAS, successo/errore |
-| CPU-D10 | entry identity di tipo ammesso | ciascun componente invalido, entrambi validi |
+| CPU-D01 | Prepared state and free token | Each condition false, both true, two contenders |
+| CPU-D02 | Written/durable frontiers equal the prepared frontier | Each frontier different, both exact |
+| CPU-D03 | Allowed leaf names | Empty, dot/dotdot, each separator, NUL/non-ASCII, valid |
+| CPU-D04 | Temporary/final relationship | Length, prefix, and suffix independently wrong |
+| CPU-D05 | Directory/source/target in the same backend | Each association different, all equal |
+| CPU-D06 | Three callbacks present | Each callback missing, all present, native |
+| CPU-D07 | Name device/inode equal to FDs | Each component different, both equal, symlink/nonregular |
+| CPU-D08 | Source and target distinct | Same device/other inode, other device/same inode, both equal |
+| CPU-D09 | Cleanup ownership and incomplete exit | CAS won/lost, exit immediately after CAS, success/error |
+| CPU-D10 | Entry identity of allowed type | Each component invalid, both valid |
 
-Qualifica C1, casi funzionali, fault injection in ogni passo e misure restano
-aperti. Le letture statiche dell'autore non sono revisione indipendente.
-Questo percorso sostituisce un vecchio control log già autorevole; creazione
-iniziale della Serie, pubblicazione senza target, rotazione online e recovery
-completo restano da integrare.
+C1 qualification, functional cases, fault injection at every step, and measurements
+remain open. The author's static readings are not independent review.
+This path replaces an old, already authoritative control log; initial Serie
+creation, publication without a target, online rotation, and complete recovery
+remain to be integrated.
 
-Il [completamento I/O](io-completamento.md) impedisce il riuso delle capacità append/flush dopo uscite incomplete, mantenendo CLOSED terminale. Le sonde funzionali del percorso completo e il benchmark preregistrato sono descritti nel [metodo](control-verifica-metodo.md); gli esiti vengono conservati separatamente dal metodo.
+[I/O completion](io-completamento.md) prevents reuse of append/flush capabilities after incomplete exits, keeping CLOSED terminal. Functional probes of the complete path and the preregistered benchmark are described in the [method](control-verifica-metodo.md); outcomes are retained separately from the method.

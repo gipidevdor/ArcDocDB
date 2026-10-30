@@ -1,220 +1,234 @@
-# CONTROL: metodo preregistrato della verifica di transizione C4
+<a id="control-metodo-preregistrato-della-verifica-di-transizione-c4"></a>
 
-Stesura per il freeze del 2026-10-14. Questo documento registra il metodo,
-senza risultati. Il sottoincarico scrive esclusivamente questo file e
-`tools/control-transition-bench.lisp` nel worktree
+# CONTROL: preregistered method for C4 transition verification
+
+Draft for the 2026-10-14 freeze. This document records the method,
+without results. The subtask writes only this file and
+`tools/control-transition-bench.lisp` in worktree
 `/Users/gpicchiarelli/.codex/worktrees/control-transizione/ArcDocDB`.
-Compilazione, self-test e benchmark spettano al coordinatore dopo il freeze,
-in processi registrati da `tools/record-command.lisp`. Il primo errore,
-stdout/stderr e l'actual exit vanno conservati anche per tentativi falliti.
+Compilation, self-test, and benchmark belong to the coordinator after freeze,
+in processes recorded by `tools/record-command.lisp`. The first error,
+stdout/stderr, and actual exit must be preserved even for failed attempts.
 
-## Domanda e campione fissato
+<a id="domanda-e-campione-fissato"></a>
 
-Si misura `arcdocdb.recovery.manifest:verifica-transizione-recovery` su coppie
-valide di manifest completi, immutabili e posseduti dal singolo worker.
-Le dimensioni del manifest precedente sono CLOSED C = 0, 16, 256 ed esiti
-per CLOSED O = 0, 4. REMOVED R è deterministico: 0 se C=0, 4 altrimenti.
-I regimi sono `:fixnum` e `:high-u64`; versioni di decodifica 1 e 2;
-worker W = 1, 2, 4; tre repliche per cella.
+## Question and fixed sample
 
-La matrice è quindi `2 × 3 × 2 × 2 × 3 × 3 = 216` finestre, con 504
-record di worker complessivi. L'ordine è versione, CLOSED, esiti, REMOVED
-derivato, regime, worker, replica. Le finestre sono seriali tra loro.
-C=0 rende O ininfluente alla traversata: le due celle restano nel campione
-fissato. Nessuna calibrazione o selezione di finestre in base ai risultati.
+Measure `arcdocdb.recovery.manifest:verifica-transizione-recovery` on valid
+pairs of complete, immutable manifests owned by a single worker.
+Previous-manifest sizes are CLOSED C = 0, 16, 256 and outcomes
+per CLOSED O = 0, 4. REMOVED R is deterministic: 0 if C=0, 4 otherwise.
+Regimes are `:fixnum` and `:high-u64`; decoding versions 1 and 2;
+workers W = 1, 2, 4; three replicates per cell.
 
-## Manifest reali e oracoli indipendenti
+The matrix is thus `2 × 3 × 2 × 2 × 3 × 3 = 216` windows, with 504
+worker records overall. Order is version, CLOSED, outcomes, derived
+REMOVED, regime, workers, replicate. Windows run serially.
+C=0 makes O irrelevant to traversal: both cells remain in the fixed
+sample. No calibration or window selection based on results.
 
-Il caricamento iniziale usa ASDF `load-system "arcdocdb/tests" :force t`, con
-cache FASL privata sotto la root nuova. Registra le definizioni dei test e
-le fixture; non invoca `test-op` o alcun `run`. L'unico helper dei test
-richiamato dal driver è `manifest-log-fixture`, da
-`tests/recovery/manifest-support.lisp`, soltanto durante il build, prima del
-clock. Il suo packing bytewise e CRC bitwise costruiscono EDIT completo e
-SEAL in memoria. La ricostruzione chiama direttamente l'API pubblica
-`ricostruisci-manifest`, con versione, EOF e budget espliciti: richiede
-prefisso consumato esattamente e stato `:complete`. Non costruisce strutture
-private del prodotto o mock del guard.
+<a id="manifest-reali-e-oracoli-indipendenti"></a>
 
-I fatti dell'oracolo sono liste dichiarate dal driver, senza query usate per
-dedurre i valori attesi. Per ogni identità logica Serie S, unica tra tutte
-le finestre e i worker, `base = 1024*S`, aggiungendo `2^63` nel regime alto.
-CLOSED ha ID `base+1 … base+C`, valid-bytes ciclici 64/128/192/256;
-REMOVED, quando presente, ha ID `base+513 … base+516`. Il precedente ACTIVE
-è `base+768`, next-id ACTIVE+1. Il nuovo ACTIVE è esattamente il vecchio+1;
-il nuovo next-id è ACTIVE precedente+2. Tutti i CLOSED e REMOVED precedenti
-sono conservati e il vecchio ACTIVE diventa CLOSED con 64 byte e quattro
-esiti dichiarati. Le sezioni sono disgiunte, senza riuso di ID.
+## Real manifests and independent oracles
 
-Gli esiti piccoli sono `(0,0), (1,17), (2,0), (3,23)`. Nel regime alto sono
-`(0,0), (2^64-1,2^64-1), (2^63,0), (1,2^63)`. TXID/CSN zero e l'intera
-parola u64 sono quindi espliciti. Con O=0 gli esiti dei CLOSED precedenti
-sono vuoti; quelli del vecchio ACTIVE appena chiuso restano quattro e sono
-verificati dall'oracolo, ma non traversati dal guard di conservazione.
-Il regime piccolo usa soltanto interi fixnum sul runtime SBCL a 64 bit;
-quello alto esercita ID ed esiti bignum. I valid-bytes restano piccoli.
+Initial loading uses ASDF `load-system "arcdocdb/tests" :force t`, with
+private FASL cache under the new root. It registers test definitions and
+fixtures; it invokes neither `test-op` nor any `run`. The only test helper
+called by the driver is `manifest-log-fixture`, from
+`tests/recovery/manifest-support.lisp`, only during build, before the
+clock. Its bytewise packing and bitwise CRC build complete EDIT and
+SEAL in memory. Reconstruction directly calls public API
+`ricostruisci-manifest`, with explicit version, EOF, and budgets: it requires
+exact prefix consumption and `:complete` state. It constructs neither private
+product structures nor guard mocks.
 
-Ogni coppia viene decodificata separatamente; gli oggetti non sono condivisi
-tra worker, repliche o finestre. Serie significa qui contesto logico di
-ownership identificato da S: il guard non riceve un oggetto controller Serie.
-Non si avviano worker del prodotto. Il main costruisce e riscalda gli input,
-poi li trasferisce per sole letture al worker; riprende ownership dei raw
-solo dopo quiescenza. Nessun contatore condiviso tra worker.
+Oracle facts are lists declared by the driver, without queries used to
+derive expected values. For each logical Serie identity S, unique across all
+windows and workers, `base = 1024*S`, adding `2^63` in the high regime.
+CLOSED IDs are `base+1 … base+C`, valid-bytes cycling 64/128/192/256;
+REMOVED, when present, has IDs `base+513 … base+516`. Previous ACTIVE
+is `base+768`, next-id ACTIVE+1. New ACTIVE is exactly old+1;
+new next-id is previous ACTIVE+2. All previous CLOSED and REMOVED segments
+are retained, and old ACTIVE becomes CLOSED with 64 bytes and four
+declared outcomes. Sections are disjoint, without ID reuse.
 
-Prima e dopo la misura, query pubbliche confrontano ACTIVE, next-id, conteggi,
-stati e tutti gli esiti con le liste dichiarate. Si verifica anche assenza
-TXID 42, distinguendola dal CSN zero presente, e il segmento sconosciuto 0.
-L'oracolo a liste verifica cardinalità, conservazione e ACTIVE+1. Il payload
-massimo del nuovo snapshot è 21.644 byte; con EDIT e SEAL la fixture è
-21.724 byte, entro il budget di 65.536. Le fixture restano in memoria.
+Small outcomes are `(0,0), (1,17), (2,0), (3,23)`. In the high regime they are
+`(0,0), (2^64-1,2^64-1), (2^63,0), (1,2^63)`. TXID/CSN zero and the full
+u64 word are therefore explicit. With O=0, previous CLOSED outcomes
+are empty; those of the newly closed old ACTIVE remain four and are
+checked by the oracle but not traversed by the preservation guard.
+The small regime uses only fixnum integers on the 64-bit SBCL runtime;
+the high regime exercises bignum IDs and outcomes. Valid-bytes remain small.
 
-## Conteggi e formule preregistrate
+Each pair is decoded separately; objects are not shared
+across workers, replicates, or windows. Serie here means a logical ownership
+context identified by S: the guard receives no Serie controller object.
+No product workers are started. Main builds and warms inputs,
+then transfers them read-only to the worker; it resumes raw-data ownership
+only after quiescence. No shared counter across workers.
 
-Per una chiamata valida, la versione congelata del guard esegue due
-verifiche di forma, ciascuna con un lookup del vecchio ACTIVE; visita C
-CLOSED, C*O esiti e R REMOVED. Le unità di lookup logico pubblico sono:
+Before and after measurement, public queries compare ACTIVE, next-id, counts,
+states, and every outcome with declared lists. Also check absent
+TXID 42, distinguishing it from present CSN zero, and unknown segment 0.
+The list oracle checks cardinality, preservation, and ACTIVE+1. The new snapshot's
+maximum payload is 21,644 bytes; with EDIT and SEAL the fixture is
+21,724 bytes, within the 65,536 budget. Fixtures remain in memory.
+
+<a id="conteggi-e-formule-preregistrate"></a>
+
+## Preregistered counts and formulas
+
+For a valid call, the frozen guard version performs two
+shape checks, each with an old ACTIVE lookup; it visits C
+CLOSED, C*O outcomes, and R REMOVED. Public logical lookup units are:
 
 ```text
 L = 2 + C*(1+O) + R
-n = ceil(10000 / (W*L))                 ripetizioni per worker
-N = W*n                               guard richiesti nella finestra
+n = ceil(10000 / (W*L))                 repetitions per worker
+N = W*n                               guards required in the window
 10000 <= N*L < 10000 + W*L
 ```
 
-Il numero massimo di ripetizioni per worker è 5.000. Non si adatta n alla
-durata osservata. `attempted` cresce appena prima della chiamata;
-`completed` soltanto dopo il ritorno. `verify0` conta ritorni NIL,
-`nonempty` ritorni diversi da NIL. Il sink somma gli ordinali delle chiamate
-completate: con K ritorni vale `K*(K+1)/2`, positivo per K>0.
+Maximum repetitions per worker is 5,000. n is not adapted to
+observed duration. `attempted` increases immediately before the call;
+`completed` only after return. `verify0` counts NIL returns,
+`nonempty` non-NIL returns. The sink sums completed-call ordinals:
+with K returns it is `K*(K+1)/2`, positive for K>0.
 
-Per ogni finestra i conteggi derivano dai cicli effettivamente completati,
-con `K = sum(completed dei worker)`: guard K, verifiche forma 2K,
-CLOSED C*K, REMOVED R*K, lookup segmento `(2+C+R)*K`, lookup esiti `C*O*K`,
-lookup logici totali L*K. Non sono contatori strumentati di GETHASH interni.
-I tentativi che lanciano un errore possono aver eseguito un prefisso della
-traversata: quel lavoro non viene imputato alle unità dei ritorni completati.
-Un errore, un ritorno non NIL o un oracolo discordante invalida la finestra.
+For every window, counts derive from actually completed loops,
+with `K = sum(completed over workers)`: guard K, shape checks 2K,
+CLOSED C*K, REMOVED R*K, segment lookups `(2+C+R)*K`, outcome lookups `C*O*K`,
+total logical lookups L*K. These are not instrumented counters of internal GETHASHes.
+Attempts raising an error may have executed a traversal prefix:
+that work is not charged to completed-return units.
+An error, non-NIL return, or mismatching oracle invalidates the window.
 
-Per finestre valide, throughput aggregato guard = K/(wall-ns/1e9), e
-throughput delle unità logiche = K*L/(wall-ns/1e9). Costo interno del worker
-i = cpu-ns_i/completed_i oppure wall-ns_i/completed_i. Le tre repliche
-restano raw: eventuali riepiloghi devono mantenere distinta ciascuna cella.
+For valid windows, aggregate guard throughput = K/(wall-ns/1e9), and
+logical-unit throughput = K*L/(wall-ns/1e9). Internal cost of worker
+i = cpu-ns_i/completed_i or wall-ns_i/completed_i. The three replicates
+remain raw: any summaries must keep each cell distinct.
 
-## Clock, scope e budget
+<a id="clock-scope-e-budget"></a>
 
-Ogni worker ha 32 chiamate di warmup sul main prima della misura, senza
-includerle in attempted/completed. Un GC completo precede ogni finestra.
-Build, decodifica, warmup, GC, oracoli, hash e persistenza sono esclusi dal
-clock misurato. Dentro il ciclo: solo guard, contatori, sink e controlli
-cooperativi ogni 32 passi, più il controllo finale della deadline.
+## Clocks, scope, and budgets
 
-`clock_gettime(CLOCK_MONOTONIC)` fornisce nanosecondi wall; il ciclo del
-worker usa separatamente `CLOCK_THREAD_CPUTIME_ID`. Il driver dichiara ABI
-timespec a 64 bit e ID clock Darwin 6/16, Linux 1/3; altri runtime sono
-rifiutati. La finestra interna include overhead del ciclo e dei controlli.
-La CPU è del thread corrente, non del processo intero, e le CPU dei worker
-non vanno sommate come durata wall. Le due versioni di record influenzano
-soltanto la decodifica esclusa dal clock: il guard non riceve una versione.
+Each worker has 32 warmup calls on main before measurement,
+excluded from attempted/completed. A full GC precedes each window.
+Build, decoding, warmup, GC, oracles, hashes, and persistence are excluded from
+the measured clock. Inside the loop: only guard, counters, sink, and cooperative
+checks every 32 steps, plus the final deadline check.
 
-Con W=1 il main esegue direttamente il worker. Con W>1 il wall aggregato
-include creazione dei thread, gate ready/start, chiamate e join. Gate,
-semafori stop ed entry point sono preparati prima del clock; la misura
-interna del worker esclude avvio e join. `sb-ext:get-bytes-consed` registra
-la differenza dell'intero processo nella finestra aggregata, compresi
-coordinamento ed eventuali errori. Non è heap vivo, RSS o allocazione per
-thread. Nessuna conclusione zero allocazioni o allocazioni garantite.
+`clock_gettime(CLOCK_MONOTONIC)` supplies wall nanoseconds; the worker
+loop separately uses `CLOCK_THREAD_CPUTIME_ID`. The driver declares a
+64-bit timespec ABI and Darwin clock IDs 6/16, Linux 1/3; other runtimes are
+rejected. The internal window includes loop and check overhead.
+CPU is that of the current thread, not the entire process, and worker CPUs
+must not be summed as wall duration. The two record versions affect
+only decoding excluded from the clock: the guard receives no version.
 
-La deadline cooperativa è 30 secondi per finestra, a partire dal setup,
-limitata dalla deadline di campagna di 180 secondi. Quest'ultima include
-caricamento, build, warmup, oracoli, hash, join e finalizzazione. Le attese
-dei gate e join usano il tempo residuo della medesima deadline; nessuna
-estensione per cleanup. Un fallimento interrompe la campagna e conserva il
-prefisso completato. Non si usa terminate-thread, timeout asincrono o retry
-del carico. Letture, compilatore e processi SHA possono bloccare oltre un
-checkpoint: il coordinatore deve supervisionare esternamente il processo;
-il budget cooperativo non è un limite duro OS.
+With W=1, main executes the worker directly. With W>1, aggregate wall time
+includes thread creation, ready/start gate, calls, and joins. Gates,
+stop semaphores, and entry points are prepared before the clock; the worker's
+internal measurement excludes startup and join. `sb-ext:get-bytes-consed` records
+the whole-process difference in the aggregate window, including
+coordination and any errors. It is not live heap, RSS, or per-thread
+allocation. No conclusion of zero allocation or guaranteed allocation.
 
-Se tutti i thread sono quiescenti, il main può leggere i raw e finalizzare
-il report. Altrimenti conserva soltanto osservazioni già proprie, senza
-leggere raw vivi o rilasciare fixture. Emette su stdout stato e diagnostiche
-del main, con contatori `:unavailable`, senza persistere una fotografia
-concorrente. Un errore già osservato dal main conserva `:failed` e exit 1;
-un timeout senza errore noto conserva `:incomplete` e exit 2. L'evidenza
-rimane nel recorder esterno. In un gruppo quiescente anche un errore del
-worker prevale sui timeout. Soltanto una campagna completa e coerente ha
-stato `:ok` ed exit 0.
+The cooperative deadline is 30 seconds per window from setup,
+bounded by the 180-second campaign deadline. The latter includes
+loading, build, warmup, oracles, hashes, joins, and finalization. Gate
+waits and joins use remaining time on the same deadline; no
+cleanup extension. A failure stops the campaign and preserves the
+completed prefix. No terminate-thread, asynchronous timeout, or workload
+retry. Reads, compiler, and SHA processes may block beyond a
+checkpoint: the coordinator must supervise the process externally;
+the cooperative budget is not a hard OS limit.
 
-## Evidenza, helper congelato e dimensione
+If all threads are quiescent, main may read raw data and finalize
+the report. Otherwise it preserves only observations it already owns, without
+reading live raw data or releasing fixtures. It emits main status and diagnostics
+on stdout, with `:unavailable` counters, without persisting a concurrent
+snapshot. An error already observed by main retains `:failed` and exit 1;
+a timeout without known error retains `:incomplete` and exit 2. Evidence
+remains in the external recorder. In a quiescent group, a worker error also
+takes precedence over timeouts. Only a complete, consistent campaign has
+`:ok` status and exit 0.
 
-La CLI accetta esattamente `--self-test`, oppure
-`--bench --output spikes/out/control-transition-bench-X/`, con X di 1…64
-caratteri ASCII alfanumerici, trattino o underscore. Il checkout deriva
-dalla posizione del driver, senza cwd ereditato. LSTAT verifica gli antenati;
-mkdir 0700 della root è esclusivo, EEXIST fallisce. Nessuna cancellazione
-automatica. L'ownership del namespace richiede assenza di sostituzioni
-esterne degli antenati durante il run.
+<a id="evidenza-helper-congelato-e-dimensione"></a>
 
-Prima di compilare l'helper, il driver copia i byte di
-`tools/evidence-storage.lisp` in `evidence-storage-source.lisp` nella root
-privata, con EOF e dimensione verificati. Carica esclusivamente questa copia una sola volta sotto handler: SBCL
-compila le definizioni durante LOAD. Questo evita la doppia definizione delle
-macro causata da COMPILE-FILE seguito da LOAD nello stesso processo; i FASL
-del prodotto restano nella cache privata. Dopo il caricamento usa il medesimo
-`arcdocdb.evidence:file-sha256` canonico per attestare SHA della copia uguale
-allo SHA dell'originale nello snapshot prima del load ASDF. Dopo la campagna
-confronta ancora copia e originale nello snapshot finale, e SHA della copia
-prima/dopo. Nessun nuovo algoritmo o lettore di hash. Il primo snapshot
-dell'helper è dunque la copia fatta prima della compilazione; la sua
-identificazione SHA avviene dopo il caricamento. Il normale snapshot blob
-del recorder esterno precede l'intero comando, inclusa questa copia e il
-load del driver. I due livelli hanno scope diversi e dichiarati.
+## Evidence, frozen helper, and size
 
-Gli snapshot canonici comprendono tutti i `.lisp` di src e tests, ASDF,
-driver, metodo e helper. Il walk cold rifiuta profondità oltre 32, oltre
-4.096 file (inclusi i quattro espliciti e gli eventuali file non Lisp
-incontrati) o oltre 4.096 directory. Gli SHA non sorvegliano continuamente le letture.
-Il bootstrap rilegge il driver una sola volta sotto handler (massimo due
-LOAD totali), così anche gli avvisi delle definizioni compilate dal loader
-sono fatali prima di MAIN. Il polling dello stop usa TRY-SEMAPHORE, senza
-un timeout zero non ammesso dal contratto SBCL. Warning e style-warning sono fatali; l'unica eccezione durante il load ASDF
-è `SB-KERNEL:REDEFINITION-WARNING`, registrata con conteggio totale e prime
-16 diagnostiche nel report, tutte su stderr. L'helper non ha tale eccezione.
-Non si aggiungono dipendenze Lisp esterne; il lettore canonico esistente
-invoca `shasum` fuori clock, conservando i suoi limiti operativi.
+The CLI accepts exactly `--self-test`, or
+`--bench --output spikes/out/control-transition-bench-X/`, with X of 1…64
+ASCII alphanumeric, hyphen, or underscore characters. Checkout is derived
+from driver location, without inherited cwd. LSTAT verifies ancestors;
+root mkdir 0700 is exclusive, EEXIST fails. No automatic
+deletion. Namespace ownership requires no external replacement
+of ancestors during the run.
 
-`report.lisp` è una PLIST schema 1 di soli dati, scritta senza pretty print,
-con massimo 1.048.576 byte UTF-8, rinominata e riletta dal lettore comune
-con read-eval disabilitato. `report.sha256` identifica il file canonico.
-Ogni finestra conserva cella, ripetizioni, clock, bytes-consed, operation
-counts, stato, oracolo e riepiloghi dei worker; nessun elenco per chiamata,
-payload o dataset di fixture sul filesystem. I raw parziali non sono misure
-valide di una finestra completa. Se l'helper non è stato attestato o la
-persistenza fallisce, stderr/stdout e actual exit del recorder sono
-necessari. Un superamento tardivo del budget invalida anche un report appena
-scritto come `:ok`; il file e il digest vengono aggiornati a `:incomplete`.
+Before compiling the helper, the driver copies bytes of
+`tools/evidence-storage.lisp` to `evidence-storage-source.lisp` in the private
+root, with verified EOF and size. It loads only this copy once under a handler: SBCL
+compiles definitions during LOAD. This avoids double macro definitions
+caused by COMPILE-FILE followed by LOAD in the same process; product FASLs
+remain in private cache. After loading, it uses the same canonical
+`arcdocdb.evidence:file-sha256` to certify the copy SHA equals
+the original SHA in the snapshot before ASDF load. After the campaign,
+it again compares copy and original in the final snapshot, and copy SHA
+before/after. No new hash algorithm or reader. The helper's first snapshot
+is thus the copy made before compilation; its SHA
+identification occurs after loading. The external recorder's normal blob
+snapshot precedes the entire command, including this copy and
+driver load. The two levels have different, declared scopes.
 
-La valutazione statica sul checkout durante la stesura conta 360 path Lisp
-src/tests e 10.345 byte nel loro elenco con newline, più quattro file
-espliciti. Per la matrice ridotta si riservano 640 byte per ciascuno dei
-504 record worker senza diagnostica, 512 byte per ciascuna delle 216
-finestre oltre ai worker, 96 KiB ai due snapshot sorgente, 40 KiB ai warning,
-16 KiB alle diagnostiche del singolo tentativo terminale e 8 KiB alla
-radice: complessivamente meno di 608 KiB. Le diagnostiche sono limitate a
-512 caratteri; la riserva considera escaping e UTF-8 fino a quattro byte
-per carattere. È un dimensionamento statico, non una serializzazione
-eseguita; il controllo reale del limite resta vincolante dopo freeze.
+Canonical snapshots include all `.lisp` files in src and tests, ASDF,
+driver, method, and helper. The cold walk rejects depth beyond 32, more than
+4,096 files (including four explicit ones and any non-Lisp files
+encountered), or more than 4,096 directories. SHAs do not continuously monitor reads.
+Bootstrap rereads the driver once under a handler (at most two
+LOADs total), so warnings from definitions compiled by the loader
+are also fatal before MAIN. Stop polling uses TRY-SEMAPHORE without
+a zero timeout disallowed by SBCL's contract. Warnings and style-warnings are fatal; the sole exception during ASDF load
+is `SB-KERNEL:REDEFINITION-WARNING`, recorded with total count and first
+16 diagnostics in the report, all on stderr. The helper has no such exception.
+No external Lisp dependencies are added; the existing canonical reader
+invokes `shasum` outside the clock, retaining its operational limits.
 
-## Suite pura e invocazioni dopo freeze
+`report.lisp` is a schema 1 PLIST of data only, written without pretty printing,
+with at most 1,048,576 UTF-8 bytes, renamed and reread by the common reader
+with read-eval disabled. `report.sha256` identifies the canonical file.
+Each window retains cell, repetitions, clocks, bytes-consed, operation
+counts, status, oracle, and worker summaries; no per-call list,
+payload, or fixture dataset on the filesystem. Partial raw data are not valid measurements
+of a complete window. If the helper is uncertified or persistence
+fails, the recorder's stderr/stdout and actual exit are
+necessary. Late budget exhaustion invalidates even a report just
+written as `:ok`; file and digest are updated to `:incomplete`.
 
-`--self-test` non carica prodotto, ASDF/tests o helper, non crea worker,
-fixture filesystem o benchmark. Usa solamente dati propri per matrice
-esatta 216, target e formule, oracolo a liste, mutazioni di CSN zero e
-REMOVED, contatori/sink, campioni parziali, errori prima dei timeout,
-nonquiescenza con errore noto del main, worker/Serie duplicati, campi mancanti,
-argv e namespace letterale, e roundtrip PLIST in memoria. Emette una sola
-PLIST su stdout. SB-POSIX è un modulo del runtime, non il prodotto.
+Static checkout evaluation during drafting counts 360 src/tests Lisp paths
+and 10,345 bytes in their newline-separated list, plus four explicit
+files. For the reduced matrix, reserve 640 bytes for each of
+504 worker records without diagnostics, 512 bytes for each of 216
+windows beyond workers, 96 KiB for two source snapshots, 40 KiB for warnings,
+16 KiB for diagnostics of the single terminal attempt, and 8 KiB for the
+root: less than 608 KiB overall. Diagnostics are bounded to
+512 characters; reservation considers escaping and UTF-8 up to four bytes
+per character. This is static sizing, not executed
+serialization; actual limit checking remains binding after freeze.
 
-Comandi previsti dal checkout congelato, ciascuno in un processo distinto:
+<a id="suite-pura-e-invocazioni-dopo-freeze"></a>
+
+## Pure suite and invocations after freeze
+
+`--self-test` loads neither product, ASDF/tests, nor helper, creates no workers,
+filesystem fixtures, or benchmark. It uses only its own data for exact
+matrix 216, target and formulas, list oracle, mutations of CSN zero and
+REMOVED, counters/sinks, partial samples, errors before timeouts,
+nonquiescence with known main error, duplicate workers/Serie, missing fields,
+argv and literal namespace, and in-memory PLIST roundtrip. It emits one
+PLIST on stdout. SB-POSIX is a runtime module, not the product.
+
+Planned commands from the frozen checkout, each in a separate process:
 
 ```sh
 sbcl --no-userinit --no-sysinit --script tools/record-command.lisp -- \
@@ -224,12 +238,12 @@ sbcl --no-userinit --no-sysinit --script tools/record-command.lisp -- \
   --bench --output spikes/out/control-transition-bench-FROZEN-A/
 ```
 
-Non sono state eseguite compilazioni, Lisp, self-test o benchmark durante
-la stesura. Restano alla qualifica centrale il primo eventuale errore del
-compilatore, arità/load delle fixture, disponibilità dei clock nativi e del
-lettore SHA, dimensione serializzata e completamento entro i budget.
-Il campione non copre REMOVED=4 con CLOSED=0 o REMOVED=0 con CLOSED>0,
-transizioni invalide/esaurimento ID, manifest concorrenti mutabili, più di
-quattro worker, distribuzioni di latenza, p99, storage pipeline o recovery
-da crash. Cache e carico esterno non sono controllati. Nessuna soglia
-prestazionale e nessuna promozione dei prefissi parziali a campagna completa.
+No compilations, Lisp, self-tests, or benchmarks were run during
+drafting. Central qualification still owns any first compiler
+error, fixture arity/load, native clock and SHA reader availability,
+serialized size, and completion within budgets.
+The sample does not cover REMOVED=4 with CLOSED=0 or REMOVED=0 with CLOSED>0,
+invalid transitions/ID exhaustion, mutable concurrent manifests, more than
+four workers, latency distributions, p99, storage pipeline, or crash
+recovery. Cache and external load are uncontrolled. No performance
+threshold and no promotion of partial prefixes to complete campaigns.

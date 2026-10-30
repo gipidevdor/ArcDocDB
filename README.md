@@ -12,7 +12,7 @@ The first intended application is an NNTP server, connected through a local Unix
 
 ## Status
 
-**In development.** M1 provides a durable, single-Series core with startup, recovery,
+**In development.** M1 provides a durable, single-Serie core with startup, recovery,
 PUT, GET and DELETE over a Unix socket.
 [Capabilities and limits](docs/implementazione/README.md).
 
@@ -34,6 +34,6 @@ To run the local service, follow the [M1 server and client guide](docs/implement
 
 - [Implementation](docs/implementazione/README.md) — what works and what remains.
 - [Architecture](docs/architettura.md) — the design and its contracts.
-- [Documentation](docs/README.md) — specifications, decisions and verification, in Italian.
+- [Documentation](docs/README.md) — specifications, decisions and verification, in English.
 
 [BSD 2-Clause](LICENSE) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [CI](https://github.com/gipidevdor/ArcDocDB/actions/workflows/ci.yml) · [Changes](CHANGELOG.md)

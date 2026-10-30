@@ -1,154 +1,153 @@
-# SPK-03 — Append e flush a lotti
+<a id="spk-03--append-e-flush-a-lotti"></a>
 
-> **Proposta** — Esperimento di Fase 0, limitato al costo di append e flush e alla
-> verifica degli octet. Questo spike non è il WAL di produzione.
+# SPK-03 — Batched append and flush
 
-## Domanda
+> **Proposed** — Phase-0 experiment limited to append/flush cost and octet verification.
+> This spike is not the production WAL.
 
-Quanto costa `write` seguito da flush, per lotti di 1, 32 o 128 record di 2 KiB
-e per 1, 4 o 16 file indipendenti sullo stesso dispositivo? Quale differenza si
-misura fra `fsync` e la primitiva richiesta da
-[ADR-0017](../../docs/adr/0017-piattaforma-e-io.md) (`F_FULLFSYNC` su macOS,
-`fdatasync` su Linux), con un solo append e flush alla volta per file
+<a id="domanda"></a>
+
+## Question
+
+What does `write` followed by flush cost for batches of 1, 32, or 128 records of
+2 KiB and 1, 4, or 16 independent files on the same device? What difference is
+measured between `fsync` and the primitive required by
+[ADR-0017](../../docs/adr/0017-piattaforma-e-io.md) (`F_FULLFSYNC` on macOS,
+`fdatasync` on Linux), with one append/flush at a time per file
 ([ADR-0037](../../docs/adr/0037-lotto-sigillato.md))?
 
-## Metodo
+<a id="metodo"></a>
 
-Il codice usa soltanto Common Lisp, SBCL e il contrib `sb-posix`, senza dipendenze.
-Il package è `arcdocdb.spk03`, con le API `(check)` e `(benchmark &key ...)`.
-Politica di compilazione: `safety 3`, nessun `warning` né `style-warning` ammesso.
+## Method
 
-Un worker possiede il suo file, descrittore, buffer specializzato di octet e
-campioni. I file sono aperti con `O_CREAT | O_EXCL | O_APPEND`, permessi `0600`.
-`write` passa per `SB-ALIEN`, con il buffer pinned per la durata della chiamata.
-Il codice completa le scritture parziali, ripete soltanto `EINTR` e rifiuta errori,
-ritorni nulli e progressioni incoerenti. Il numero di interruzioni consecutive
-è limitato. I descrittori vengono chiusi anche in caso di errore. Nessun flush
-fallito produce fallback o retry. Una primitiva assente o esplicitamente
-rifiutata come non supportata produce `:unsupported`, con il motivo;
-gli altri errori fanno fallire l'esecuzione.
+Code uses only Common Lisp, SBCL, and `sb-posix` contrib, without dependencies.
+Package `arcdocdb.spk03`, APIs `(check)` and `(benchmark &key ...)`.
+Compilation policy: `safety 3`, no `warning` or `style-warning` allowed.
 
-Ogni record contiene il numero del file e il numero assoluto del record, ciascuno
-su 64 bit, poi un motivo dipendente da questi due numeri e dalla posizione.
-Prima della partenza comune ogni worker esegue un lotto di warmup con la stessa
-primitiva sul proprio file; questo lotto resta nel file e viene verificato,
-ma non entra nei campioni o nel throughput. Tutti i payload del caso sono
-preparati prima del warmup. Il sink è la verifica integrale dopo la chiusura.
-Dopo la chiusura del descrittore di scrittura, il file viene riaperto in lettura:
-si controllano lunghezza esatta, numero di record e ogni octet. Preparazione dei
-buffer e rilettura sono escluse dai tempi di `write` e flush; il throughput si
-calcola sull'intervallo reale comune dei worker. I worker partono da una porta
-comune, usata una volta per caso, poi non condividono contatori o lock per append
-o flush. I casi della matrice si eseguono in successione; soltanto i file dello
-stesso caso lavorano in parallelo. Append e flush di un file restano seriali,
-secondo REQ-WAL-002; REQ-CON-003 e REQ-CON-005 guidano la proprietà indipendente;
-REQ-AFF-001 guida gli errori espliciti.
+Each worker owns its file, descriptor, specialized octet buffer, and samples.
+Files opened with `O_CREAT | O_EXCL | O_APPEND`, permissions `0600`.
+`write` uses `SB-ALIEN`, with buffer pinned for the call duration.
+Code completes partial writes, retries only `EINTR`, and rejects errors, zero
+returns, and inconsistent advancement. Consecutive interruptions are bounded.
+Descriptors close on errors too. Failed flush never falls back or retries.
+An absent primitive or one explicitly rejected as unsupported produces
+`:unsupported` with reason; other errors fail execution.
 
-Le misure restituiscono una plist con parametri, ambiente, conteggi effettivi,
-octet verificati, tempi grezzi per worker, distribuzione minimo/mediana/P95/P99/
-massimo e throughput. I percentili usano il rango superiore (`ceiling(p*n)`);
-16 campioni non caratterizzano una coda P99. Il tasso di record sincronizzati
-è indicato come throughput durevole soltanto per la primitiva richiesta da
-ADR-0017, con i limiti dichiarati sotto.
-`io-wall-seconds` è l'intervallo dal primo avvio I/O all'ultima conclusione;
-`workers-wall-seconds` include avvio thread, apertura, warmup, porta e close;
-`preparation-wall-seconds` e `verification-wall-seconds` sono separati;
-`case-wall-seconds` include anche resoconto e pulizia, e
-`matrix-wall-seconds` misura l'intera matrice, dopo il check.
+Every record contains file number and absolute record number, each 64 bits,
+then a pattern depending on both numbers and position. Before common start,
+each worker performs one warmup batch with the same primitive on its file;
+that batch remains in file and is verified but excluded from samples and
+throughput. All case payloads are prepared before warmup. Sink is full verification
+after closure. After write-descriptor closure, reopen file read-only: check exact
+length, record count, and every octet. Buffer preparation and reread are excluded
+from `write`/flush timings; throughput uses workers' actual common interval.
+Workers start from one gate, used once per case, then share no counters or locks
+per append/flush. Matrix cases run sequentially; only files in the same case work
+in parallel. One file's append/flush remain serial under REQ-WAL-002;
+REQ-CON-003 and REQ-CON-005 guide independent ownership; REQ-AFF-001 guides explicit errors.
 
-Le directory nascono esclusivamente sotto `out/data/`, ignorato da Git, con
-nome unico ottenuto da `mkdtemp`. Ogni file creato è registrato dal proprietario;
-la pulizia elimina soltanto questi file e la loro directory esatta, senza
-percorsi ricorsivi né rimozione di file preesistenti.
+Measurements return a plist with parameters, environment, actual counts, verified
+octets, raw per-worker timings, minimum/median/P95/P99/maximum, and throughput.
+Percentiles use upper rank (`ceiling(p*n)`); 16 samples do not characterize a P99 tail.
+Synchronized-record rate is called durable throughput only for the ADR-0017-required
+primitive, within limits below.
+`io-wall-seconds` spans first I/O start to last completion;
+`workers-wall-seconds` includes thread startup, open, warmup, gate, and close;
+`preparation-wall-seconds` and `verification-wall-seconds` are separate;
+`case-wall-seconds` also includes reporting and cleanup, and
+`matrix-wall-seconds` measures the whole matrix after check.
 
-## Ambiente e primitiva macOS
+Directories are created only under Git-ignored `out/data/`, with unique names
+from `mkdtemp`. Every created file is registered by its owner; cleanup deletes
+only those files and their exact directory, without recursive paths or removal
+of preexisting files.
 
-Ambiente preparato: macOS 27.0.1 (26A434), ARM64, Mac16,3, 10 CPU logiche,
-16 GiB RAM, SBCL 2.6.9. Il risultato riporta le informazioni esposte da SBCL.
-Durante le misure si annotano supporto, filesystem e carico.
-La piattaforma di riferimento resta Linux x86-64 (ADR-0017).
+<a id="ambiente-e-primitiva-macos"></a>
 
-`F_FULLFSYNC = 51` è stato verificato prima dell'esecuzione nel header Apple del SDK:
+## Environment and macOS primitive
+
+Prepared environment: macOS 27.0.1 (26A434), ARM64, Mac16,3, 10 logical CPUs,
+16 GiB RAM, SBCL 2.6.9. Result reports information exposed by SBCL.
+Record media, filesystem, and load during measurements.
+Reference platform remains Linux x86-64 (ADR-0017).
+
+`F_FULLFSYNC = 51` was checked before execution in Apple's SDK header:
 `/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/fcntl.h`,
-riga 260, commento « fsync + ask the drive to flush to the media ».
-Il contrib non esporta `ENOTSUP` su questo SBCL: la classificazione usa anche
-il valore Darwin 45 verificato nel medesimo SDK, `sys/errno.h`, riga 144;
-`EOPNOTSUPP` può avere valore diverso con UNIX03. Non si presume che i due
-simboli siano sinonimi su macOS.
-Il codice usa `sb-posix:fcntl` soltanto su Darwin. FFI e pinning seguono il
-[manuale ufficiale SBCL](https://www.sbcl.org/manual/#Foreign-Function-Interface).
+line 260, comment ‘ fsync + ask the drive to flush to the media ’.
+The contrib does not export `ENOTSUP` on this SBCL: classification also uses
+Darwin value 45 verified in the same SDK, `sys/errno.h`, line 144;
+`EOPNOTSUPP` may differ with UNIX03. The symbols are not assumed synonymous on macOS.
+Code uses `sb-posix:fcntl` only on Darwin. FFI and pinning follow the
+[official SBCL manual](https://www.sbcl.org/manual/#Foreign-Function-Interface).
 
-## Comandi
+<a id="comandi"></a>
 
-Dalla radice del repository, soltanto verifica rapida:
+## Commands
+
+From repository root, quick verification only:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-03-group-commit/run.lisp --check
 ```
 
-Il runner trova `core.lisp` relativamente a `*load-truename*`, compila in
-`out/core.fasl`, converte i warning in errori ed emette una sola s-expression
-plist leggibile. Un errore produce uno stato esplicito e un exit code non nullo.
-Le opzioni numeriche vengono analizzate senza il reader Lisp.
+Runner finds `core.lisp` relative to `*load-truename*`, compiles to
+`out/core.fasl`, turns warnings into errors, and emits one readable s-expression
+plist. Errors produce explicit status and nonzero exit code.
+Numeric options are parsed without the Lisp reader.
 
-Misure da eseguire **in serie con gli altri spike**:
+Measurements to run **serially with other spikes**:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-03-group-commit/run.lisp --bench
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-03-group-commit/run.lisp --bench --files 1,4,16 --batches 1,32,128 --samples 32 --seconds 15
 ```
 
-Default: `--files 1,4`, `--batches 1,32,128`, `--samples 16`,
-`--record-bytes 2048`, `--seconds 15`. `--bench` è il default e include `check`.
-`--flush fsync,fullfsync` su macOS o `--flush fsync,fdatasync` su Linux seleziona
-le primitive. La memoria esplicita di buffer e campioni è limitata; parametri
-oltre 256 MiB di memoria esplicita per caso sono rifiutati. Nessuna proprietà
-di zero allocazioni viene dichiarata o misurata da questo esperimento.
-Il budget temporale viene controllato fra operazioni e casi:
-una syscall bloccata non viene interrotta e verifica/pulizia
-possono superare il budget. È un budget di lavoro previsto, non una garanzia
-di tempo reale.
+Defaults: `--files 1,4`, `--batches 1,32,128`, `--samples 16`,
+`--record-bytes 2048`, `--seconds 15`. `--bench` is default and includes `check`.
+`--flush fsync,fullfsync` on macOS or `--flush fsync,fdatasync` on Linux selects
+primitives. Explicit buffer/sample memory is bounded; parameters exceeding
+256 MiB of explicit memory per case are rejected. No zero-allocation property
+is claimed or measured. Time budget is checked between operations and cases:
+a stalled syscall is not interrupted and verification/cleanup may exceed budget.
+This is an intended work budget, not a real-time guarantee.
 
-## Limiti e risultato
+<a id="limiti-e-risultato"></a>
 
-**Verifiche eseguite il 2026-10-08:** `--check` completato con exit 0 e
-`:status :ok`, compilazione senza warning/style-warning. Verificati short write
-e offset, `EINTR` e suo limite, write nullo/sovradimensionato, errore EIO,
-flush fallito senza fallback, stato `:unsupported`, close dopo errori write e
-flush, open esclusiva fallita senza eliminare il file preesistente, rilevamento
-di lunghezza e payload alterati (identificativo del file e del record inclusi).
-La prova reale frammentata verifica 3 record, 6144 byte; la prova con
-`F_FULLFSYNC` verifica altri 18432 byte, incluso un lotto di warmup.
-Il comando assoluto funziona anche da `/tmp`, sempre con dati sotto questo spike.
+## Limits and result
 
-È stata eseguita soltanto questa diagnostica breve della matrice, con un budget
-di un secondo e due campioni per file, senza usare il benchmark predefinito:
+**Checks run on 2026-10-08:** `--check` completed with exit 0 and `:status :ok`,
+warning/style-warning-free compilation. Verified short writes and offsets,
+`EINTR` and its limit, zero/oversized writes, EIO, failed flush without fallback,
+`:unsupported` state, close after write/flush errors, failed exclusive open without
+deleting preexisting file, detection of altered length/payload (including file
+and record IDs). Real fragmented test verifies 3 records, 6144 bytes;
+`F_FULLFSYNC` test verifies another 18432 bytes including a warmup batch.
+Absolute command also works from `/tmp`, always with data under this spike.
+
+Only this short matrix diagnostic ran, with one-second budget and two samples
+per file, without using default benchmark:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-03-group-commit/run.lisp --bench --files 4 --batches 1 --samples 2 --seconds 1 --flush fsync,fullfsync
 ```
 
-Entrambi i casi restituiscono `:ok`: 8 flush misurati, 4 warmup e 24576 byte
-verificati per caso. Il risultato è conservato localmente in
-`out/diagnostica.lisp`, ignorato da Git. Una verifica del risultato ha confermato
-una sola plist leggibile, conteggi coerenti, campioni della lunghezza attesa e
-intervalli wall coerenti. `out/data/` è vuoto dopo il termine. Questi pochi
-campioni servono a verificare il meccanismo, non a valutare i target di prodotto.
-Le misure complete e i percentili rappresentativi restano da eseguire.
-La selezione di `fdatasync` su Darwin è stata controllata con un solo caso:
-stato `:unsupported`, motivo `:platform`, exit 2. Un valore `--samples 0`
-produce `:error` ed exit 1 prima di eseguire I/O.
+Both cases return `:ok`: 8 measured flushes, 4 warmups, and 24576 verified bytes
+per case. Result retained locally in Git-ignored `out/diagnostica.lisp`.
+Result verification confirmed one readable plist, consistent counts, expected
+sample lengths, and consistent wall intervals. `out/data/` is empty afterward.
+These few samples verify mechanics, not product targets. Full measurements and
+representative percentiles remain pending.
+Selecting `fdatasync` on Darwin was checked with one case: `:unsupported`,
+reason `:platform`, exit 2. `--samples 0` produces `:error` and exit 1 before I/O.
 
-La rilettura passa per filesystem/page cache; non prova la persistenza dopo
-perdita di alimentazione. Non sono modellati powercut, crash del sistema,
-recovery, formato SEAL/CRC, indice, CSN, rotazione, sincronizzazione delle
-directory, doppia scrittura, formazione dei lotti durante il flush e latenza
-client. Lo spike copre la primitiva I/O e la sua disciplina. Le misure non
-stabiliscono i minimi di ADR-0028; vanno ripetute sulla piattaforma di riferimento
-con carico controllato. I check con iniezioni limitate coprono soltanto i rami
-esercitati, non tutti gli errori di sistema o tutti gli interleaving.
-Il solo completamento della syscall non verifica il comportamento del supporto
-(FM-03). Il costo di flush e la coda sul dispositivo condiviso restano limiti
-architetturali da misurare; questo spike non introduce serializzazione fra
-Serie oltre la preparazione/partenza/aggregazione del singolo caso sperimentale.
-Non emerge da queste prove un nuovo difetto architetturale dimostrato.
+Reread passes through filesystem/page cache; it does not prove power-loss
+persistence. Power cuts, system crashes, recovery, SEAL/CRC format, index,
+CSN, rotation, directory synchronization, double writing, batch formation during
+flush, and client latency are not modeled. The spike covers the I/O primitive
+and its discipline. Measurements do not establish ADR-0028 minima; repeat on
+reference platform under controlled load. Bounded-injection checks cover only
+exercised branches, not all system errors or interleavings.
+Syscall completion alone does not verify media behavior (FM-03).
+Flush cost and queuing on the shared device remain architectural limits to measure;
+this spike adds no serialization between Serie beyond the individual experiment
+case's preparation/start/aggregation. No new architectural defect is demonstrated.

@@ -1,43 +1,49 @@
-# Registro strutturato di prove e benchmark
+<a id="registro-strutturato-di-prove-e-benchmark"></a>
 
-> **Deciso (richiesta dell'autore, 2026-10-08)** — ogni prova, diagnostica e
-> benchmark è registrato in forma strutturata, compresi fallimenti, campagne
-> parziali e ipotesi di ottimizzazione smentite. Realizza REQ-VAL-001 e INV-X2.
+# Structured test and benchmark record
 
-## Record della campagna
+> **Decided (author request, 2026-10-08)** — every test, diagnostic, and
+> benchmark is recorded in structured form, including failures, partial
+> campaigns, and disproven optimization hypotheses. Implements REQ-VAL-001 and INV-X2.
 
-`tools/run-spikes.lisp` conserva una plist Common Lisp con `:schema-version 1`.
-Si legge con `*read-eval* nil`, senza caricare o eseguire il file. Il report
-comprende:
+<a id="record-della-campagna"></a>
 
-- modalità `--check`, `--bench` o `--profile`, stato della campagna;
-- ambiente SBCL/OS/CPU/RAM, heap dei processi, data in universal time;
-- commit Git, stato dell'albero e blob Git dei sorgenti effettivi;
-- per ogni processo: argv esatto, inizio/fine, tempo wall, exit code ed esito;
-- `:result` decodificato come dati, con parametri, quantità, unità, risultati,
-  sink, limiti e parti omesse restituiti dal singolo esperimento;
-- stdout/stderr originali, diagnostica del fallimento e percorsi dei record.
+## Campaign record
 
-Ogni processo registra i blob dei soli sorgenti che carica, prima e dopo
-l'esecuzione. Se cambiano, l'harness conserva il record con `:source-changed`
-e fallisce: quella misura non è attribuibile a una variante stabile. Il commit
-identifica la storia; i blob identificano anche le modifiche non committed.
-`:stable` confronta due snapshot; non sorveglia ogni apertura dei file.
-I sorgenti selezionati devono restare immutati durante la prova.
+`tools/run-spikes.lisp` retains a Common Lisp plist with `:schema-version 1`.
+Read it with `*read-eval* nil`, without loading or executing the file.
+The report includes:
 
-La campagna scrive il proprio stato prima di partire e dopo ogni processo.
-Il record del processo è salvato **prima** di validarne l'output. Un errore di
-compilazione o di parsing resta una prova fallita, conservata; non scompare
-dal registro. `:complete` significa che tutti i processi selezionati sono
-terminati; eventuali `:unsupported` o budget esauriti restano esiti distinti.
-Nessuna prova di prodotto è promossa dal solo successo degli esperimenti.
+- `--check`, `--bench`, or `--profile` mode, campaign status;
+- SBCL/OS/CPU/RAM environment, process heaps, universal-time date;
+- Git commit, tree state, and Git blobs of actual sources;
+- per process: exact argv, start/end, wall time, exit code, and outcome;
+- `:result` decoded as data, with parameters, quantities, units, results,
+  sink, limits, and omitted parts returned by the individual experiment;
+- original stdout/stderr, failure diagnostics, and record paths.
 
-Il direttorio nasce con `mkdir` esclusivo e tentativi limitati: un run non
-sovrascrive quello precedente, anche se parte nello stesso secondo. Compilazione
-e controlli non sono esclusi dal tempo del processo; i microbenchmark espongono
-separatamente le finestre effettivamente misurate. Le misure si eseguono in serie.
+Each process records blobs only for the sources it loads, before and after
+execution. If they change, the harness retains the record with `:source-changed`
+and fails: that measurement cannot be attributed to a stable variant.
+Commit identifies history; blobs also identify uncommitted changes.
+`:stable` compares two snapshots; it does not monitor every file opening.
+Selected sources must remain unchanged during the test.
 
-## Comandi
+The campaign writes its state before starting and after every process.
+The process record is saved **before** validating its output. A compilation
+or parsing error remains a retained failed test; it does not disappear
+from the record. `:complete` means all selected processes have ended;
+any `:unsupported` or exhausted budgets remain distinct outcomes.
+No product test is promoted solely by experiment success.
+
+The directory is created with exclusive `mkdir` and bounded attempts:
+a run does not overwrite its predecessor, even if it starts in the same
+second. Compilation and checks are included in process time; microbenchmarks
+separately expose actual measured windows. Measurements run serially.
+
+<a id="comandi"></a>
+
+## Commands
 
 ```sh
 make spikes-check
@@ -49,47 +55,49 @@ sbcl --script tools/run-spikes.lisp --bench SPK-01 -- --documents 10000000 --sec
 sbcl --script tools/run-spikes.lisp --profile SPK-01
 ```
 
-L'harness imposta heap 4 GiB e disabilita inizializzazioni utente/sistema nei
-figli. Le opzioni dopo `--` sono ammesse solo per un benchmark selezionato;
-sono argomenti del processo, mai codice shell. SPK-07 esegue il proprio modello
-anche in modalità benchmark, senza inventare throughput del motore.
+The harness sets 4 GiB heaps and disables user/system initializations in
+children. Options after `--` are allowed only for one selected benchmark;
+they are process arguments, never shell code. SPK-07 runs its model even
+in benchmark mode, without inventing engine throughput.
 
-`make check` esegue `make check-core` tramite `tools/record-command.lisp`:
-un record schema 1 di tipo `:command-verification` conserva argv, ambiente,
-blob prima/dopo, exit code e stdout/stderr dell'intera verifica. Il testo
-dei controlli resta output grezzo, senza dedurne conteggi o promuovere requisiti.
-Il wrapper può registrare anche altri comandi con `-- argv...`, sempre senza
-shell. I singoli spike producono inoltre i propri risultati decodificati.
-La CI conserva `spikes/out/` come artefatto anche quando un controllo fallisce;
-la sua esecuzione su Linux/macOS resta distinta dalla verifica locale.
+`make check` runs `make check-core` through `tools/record-command.lisp`:
+a schema 1 record of type `:command-verification` retains argv, environment,
+blobs before/after, exit code, and stdout/stderr of the entire check.
+Check text remains raw output, without inferring counts or promoting
+requirements. The wrapper can also record other commands with `-- argv...`,
+always without a shell. Individual spikes also produce their decoded results.
+CI retains `spikes/out/` as an artifact even when a check fails;
+its Linux/macOS execution remains distinct from local verification.
 
-## Conservazione e interpretazione
+<a id="conservazione-e-interpretazione"></a>
 
-I run locali restano in `spikes/out/`. Ogni numero pubblicato nei documenti
-rimanda a dati conservati in `spikes/results/<data>/`: output originali e
-record strutturati, con provenance e versione del formato. Un record importato
-non inventa metadata assenti; i campi mancanti sono dichiarati.
-Il [catalogo delle evidenze](../../spikes/results/README.md) tiene distinti controlli,
-benchmark, profili, fallimenti e varianti; ambiente e comandi restano nei singoli
-record originali.
+## Retention and interpretation
 
-La [raccolta degli archivi di comandi](../implementazione/raccolta-comandi.md)
-usa un manifest con file e record espliciti, copie verificate su quattro
-worker e controllo indipendente dell'inventario chiuso. Conserva anche i
-record dei comandi falliti, con i loro esiti originali. Il rapporto della
-raccolta rimane esterno all'archivio appena verificato.
+Local runs remain in `spikes/out/`. Every number published in documents
+links to data retained in `spikes/results/<data>/`: original output and
+structured records, with provenance and format version. An imported record
+does not invent absent metadata; missing fields are declared.
+The [evidence catalog](../../spikes/results/README.md) keeps checks, benchmarks,
+profiles, failures, and variants distinct; environment and commands remain
+in individual original records.
 
-I registri superiori a 1 MiB vengono conservati senza perdita secondo il
-[metodo di conservazione compatta](conservazione-compatta.md): il percorso
-originale contiene un descriptor e il payload gzip è accanto. Dimensioni e
-SHA-256 permettono di verificare i byte originali. `tools/read-evidence.lisp`
-risolve il descriptor senza eseguire il record. `make compact-evidence`
-registra la compattazione, con quattro worker indipendenti; `make evidence`
-controlla integrità e limiti di dimensione, anche per file non catalogati.
+[Command archive collection](../implementazione/raccolta-comandi.md) uses a
+manifest with explicit files and records, verified copies on four workers,
+and independent checking of the closed inventory. It also retains failed
+command records, with their original outcomes. The collection report remains
+outside the archive just verified.
 
-I metodi si registrano prima dell'esecuzione. Si indicano campione, clock,
-allocazioni misurate e loro scope; la memoria degli array non è RSS. Non si
-stima P99.9 da pochi campioni e un contatore pari a zero non dimostra assenza
-universale di allocazioni. Carico esterno non controllato e sorgenti modificati
-durante un run devono essere dichiarati. Il blob identifica il contenuto
-registrato, non una prova di affidabilità del compilatore o del supporto.
+Records over 1 MiB are retained losslessly under the
+[compact retention method](conservazione-compatta.md): the original path
+contains a descriptor and the gzip payload is beside it. Sizes and SHA-256
+allow original-byte verification. `tools/read-evidence.lisp` resolves the
+descriptor without executing the record. `make compact-evidence` records
+compaction, with four independent workers; `make evidence` checks integrity
+and size limits, including uncataloged files.
+
+Methods are registered before execution. Sample, clock, measured allocations,
+and scope are stated; array memory is not RSS. P99.9 is not estimated from
+few samples and a zero counter does not demonstrate universal allocation
+absence. Uncontrolled external load and source changes during a run must
+be declared. A blob identifies recorded content, not proof of compiler
+or medium reliability.

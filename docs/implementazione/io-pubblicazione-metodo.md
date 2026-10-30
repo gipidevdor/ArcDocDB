@@ -1,87 +1,97 @@
-# Pubblicazione esclusiva di un temporaneo — metodo
+<a id="pubblicazione-esclusiva-di-un-temporaneo--metodo"></a>
 
-> **Proposta di API** — Completamento di ADR-0040 e INV-A9/A10/A11,
-> preregistrato il 2026-10-17 prima dell'implementazione e delle esecuzioni.
-> Nessun nuovo formato o punto di commit del database.
+# Exclusive publication of a temporary file — method
 
-## Incremento e responsabilità
+> **API proposal** — Completion of ADR-0040 and INV-A9/A10/A11,
+> preregistered on 2026-10-17 before implementation and runs.
+> No new database format or commit point.
+
+<a id="incremento-e-responsabilità"></a>
+
+## Increment and responsibilities
 
 `io:pubblica-temporaneo(directory, source, source-name, target-name)`
-riceve una capacità readonly del file già verificato. Il coordinatore
-garantisce la decisione autorevole durevole che nomina quel segmento,
-l'integrità dei contenuti e il namespace esclusivo e stabile. Il suffisso
-`.tmp` da solo non prova questi fatti. I nomi sono componenti ASCII e
-`source-name` è esattamente `target-name` seguito da `.tmp`.
+receives a read-only capability for an already-verified file. Coordinator
+guarantees authoritative durable decision naming that segment,
+content integrity, and exclusive stable namespace. Suffix
+`.tmp` alone proves none of these facts. Names are ASCII components and
+`source-name` is exactly `target-name` followed by `.tmp`.
 
-La primitiva verifica identità del FD e del nome sorgente, esegue una
-rinomina esclusiva relativa allo stesso parent e verifica il nome finale
-contro il FD ancora aperto. Un target già presente, anche un symlink o
-un alias, deve impedire la sostituzione nella syscall. Non basta una
-verifica di assenza seguita dalla normale `renameat`.
+Primitive verifies FD and source-name identity, performs an
+exclusive rename relative to same parent, and verifies final name
+against still-open FD. Existing target, including symlink or
+alias, must prevent replacement within syscall. Absence
+check followed by ordinary `renameat` is insufficient.
 
-Linux usa `renameat2` con `RENAME_NOREPLACE` (1); Darwin usa `renameatx_np`
-con `RENAME_EXCL` (4). Nessun ripiego su rename ordinaria, link/unlink o
-cancellazione preventiva. Simbolo nativo assente, ABI/piattaforma non
-ammessa e callback mancante sono rifiuti espliciti. Un filesystem che
-rifiuta la primitiva produce il guasto POSIX originale, senza retry.
+Linux uses `renameat2` with `RENAME_NOREPLACE` (1); Darwin uses `renameatx_np`
+with `RENAME_EXCL` (4). No fallback to ordinary rename, link/unlink, or
+prior deletion. Absent native symbol, disallowed ABI/platform,
+and missing callback are explicit rejections. Filesystem rejecting
+primitive produces original POSIX fault, without retry.
 
-Il backend aggiunge soltanto la keyword opzionale `:rename-exclusive`,
-con argomenti parent-fd/source/target e risultato zero. Richiede anche
-`identity` e `entry-identity`. I backend esistenti conservano il layout
-di chiamata del costruttore; le istanze vanno ricompilate dopo il nuovo slot.
+Backend adds only optional keyword `:rename-exclusive`,
+with parent-fd/source/target arguments and zero result. Also requires
+`identity` and `entry-identity`. Existing backends retain constructor
+call layout; instances must be recompiled after new slot.
 
-## Effetti e guasti
+<a id="effetti-e-guasti"></a>
 
-La rinomina è il punto atomico del namespace e completa una decisione
-già presa. Non è una nuova decisione EDIT. Il caller esegue separatamente
-`durable-flush(directory)` prima di ammettere traffico. Nessuna apertura,
-scrittura dei segmenti, troncamento, close o flush implicito.
+## Effects and faults
 
-Preflight e prima verifica di identità non cambiano la capacità. Entrati
-nel confine dell'effetto, syscall fallita, callback con risultato diverso
-da zero, postcondizione fallita o uscita incompleta guastano una directory
-ancora aperta, preservando la causa. Si riusa il cleanup della rinomina
-esistente, senza duplicarlo. Non si ritenta o annulla un esito incerto.
-Se il ritorno viene perso dopo il successo, il coordinatore ricostruisce
-l'inventario dal manifest: la stessa chiamata non è un protocollo di retry.
+Rename is namespace atomicity point and completes an already-made
+decision. Not a new EDIT decision. Caller separately executes
+`durable-flush(directory)` before admitting traffic. No implicit open,
+segment write, truncation, close, or flush.
 
-Le capacità sono prestate; restano aperte sul successo. Il compito I/O
-impedisce close/riuso del FD e sostituzioni del sorgente per tutta la
-chiamata. L'esclusività del target non rende atomico il controllo
-d'identità del sorgente e non autorizza un namespace concorrente.
-La fonte posseduta del recovery mantiene i fatti del nome osservato:
-il coordinatore non riusa tali nomi iniziali dopo il completamento.
+Preflight and first identity check do not change capability. Once inside
+effect boundary, failed syscall, nonzero callback result,
+failed postcondition, or incomplete exit fault a still-open
+directory while preserving cause. Existing rename cleanup
+reused, without duplication. Uncertain outcome neither retried nor undone.
+If return lost after success, coordinator reconstructs inventory
+from manifest: same call is not a retry protocol.
 
-## Decisioni C1 e verifica prevista
+Capabilities borrowed; remain open on success. I/O task
+prevents FD close/reuse and source replacement throughout
+call. Target exclusivity does not make source-identity
+check atomic or authorize concurrent namespace.
+Owned recovery source retains facts of observed name:
+coordinator does not reuse those initial names after completion.
 
-| ID | Decisione / obbligo | Casi da qualificare |
+<a id="decisioni-c1-e-verifica-prevista"></a>
+
+## C1 decisions and planned verification
+
+| ID | Decision / obligation | Cases to qualify |
 |---|---|---|
-| PIO-D01 | Directory aperta e source readonly aperto | Modi diversi, chiuso, faulted, FD invalido |
-| PIO-D02 | Due foglie valide e relazione `.tmp` esatta | Limiti, separatori, case, suffisso/target diversi |
-| PIO-D03 | Backend identico e callback complete | Backend misti; ogni callback assente separatamente |
-| PIO-D04 | Nativo 64 bit, piattaforma e simbolo presenti | ABI/piattaforma/simbolo non supportati |
-| PIO-D05 | Device e inode del nome sorgente uguali al FD | Ciascuna disuguaglianza, file non regolare e symlink |
-| PIO-D06 | Selettore ordinario/esclusivo nel helper comune | Rinomina precedente invariata; nuovo callback/nativo |
-| PIO-D07 | Effetto esclusivo zero | Target assente, presente, symlink, hardlink; errno, ritorno impossibile |
-| PIO-D08 | Postcondizione nome finale/FD e capacità aperte | Identità cambiata, guasto post-effetto, invalidazione FI |
-| PIO-D09 | Uscita incompleta e directory ancora aperta | Errore, uscita non locale, directory già chiusa/faulted |
+| PIO-D01 | Open directory and open read-only source | Different modes, closed, faulted, invalid FD |
+| PIO-D02 | Two valid leaves and exact `.tmp` relation | Limits, separators, case, different suffix/target |
+| PIO-D03 | Identical backend and complete callbacks | Mixed backends; each missing callback separately |
+| PIO-D04 | Native 64-bit, platform and symbol present | Unsupported ABI/platform/symbol |
+| PIO-D05 | Source-name device and inode equal FD | Each inequality, nonregular file, and symlink |
+| PIO-D06 | Ordinary/exclusive selector in common helper | Previous rename unchanged; new callback/native |
+| PIO-D07 | Exclusive effect zero | Target absent, present, symlink, hardlink; errno, impossible return |
+| PIO-D08 | Final-name/FD postcondition and open capabilities | Changed identity, post-effect fault, FI invalidation |
+| PIO-D09 | Incomplete exit and directory still open | Error, nonlocal exit, directory already closed/faulted |
 
-In questo incremento si eseguono compilazione del solo prodotto senza
-avvisi, lint, tracciabilità, link e lettura del disassemblato. Le diagnostiche
-e i loro eventuali fallimenti passano dal recorder comune e sono conservati
-con revisione, hash, ambiente e output originali. Prima dei run gli autori
-sono chiusi e il codice è committed. Due letture statiche C1 distinguono
-contratto e guasti; una revisione indipendente resta esplicitamente statica.
+This increment performs warning-free product-only
+compilation, lint, traceability, links, and disassembly reading. Diagnostics
+and any failures go through common recorder and are preserved
+with revision, hashes, environment, and original output. Authors closed
+and code committed before runs. Two static C1 readings distinguish
+contract and faults; independent review remains explicitly static.
 
-Non sono previsti nuovi test funzionali, FI, mutazioni, copertura o
-benchmark in questo incremento. PIO-D01…D09, MC/DC, esecuzione Linux/macOS,
-crash/power loss, integrazione del Recovery Manager e ammissione rimangono
-da qualificare. Nessun numero di throughput o promessa di zero allocazioni:
-copie dei nomi e FFI appartengono al percorso freddo dei metadati.
+No new functional tests, FI, mutations, coverage, or
+benchmarks planned in this increment. PIO-D01…D09, MC/DC, Linux/macOS execution,
+crashes/power loss, Recovery Manager integration, and admission remain
+to qualify. No throughput figure or zero-allocation promise:
+name copies and FFI belong to cold metadata path.
 
-## Fonti delle primitive
+<a id="fonti-delle-primitive"></a>
 
-- [Linux man-pages: renameat2 e RENAME_NOREPLACE](https://man7.org/linux/man-pages/man2/rename.2.html).
-- [Apple XNU: ABI renameatx_np e RENAME_EXCL](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/stdio.h).
-- [Apple: supporto del volume alla rinomina esclusiva](https://developer.apple.com/documentation/foundation/urlresourcevalues/volumesupportsexclusiverenaming).
-- [SBCL: verifica senza effetti della disponibilità dei simboli esterni](https://sbcl.org/sbcl-internals/Linkage_002dtable.html).
+## Primitive sources
+
+- [Linux man-pages: renameat2 and RENAME_NOREPLACE](https://man7.org/linux/man-pages/man2/rename.2.html).
+- [Apple XNU: renameatx_np ABI and RENAME_EXCL](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/sys/stdio.h).
+- [Apple: volume support for exclusive renaming](https://developer.apple.com/documentation/foundation/urlresourcevalues/volumesupportsexclusiverenaming).
+- [SBCL: checking external-symbol availability without effects](https://sbcl.org/sbcl-internals/Linkage_002dtable.html).

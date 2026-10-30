@@ -1,91 +1,101 @@
-# SPK-04 — prima campagna locale, 2026-10-08
+<a id="spk-04--prima-campagna-locale-2026-10-08"></a>
 
-[Valutazione](README.md) · [Metodo e codice](../../spikes/SPK-04-writer-pool/README.md)
+# SPK-04 — first local campaign, 2026-10-08
 
-> **Proposta** — Evidenza sperimentale del writer e dei modelli di attesa,
-> con `safety 3`. Non verifica il motore né i target di ADR-0028.
+[Evaluation](README.md) · [Method and code](../../spikes/SPK-04-writer-pool/README.md)
 
-## Ambiente e prove conservate
+> **Proposal** — Experimental evidence for writer and waiting models,
+> with `safety 3`. Does not verify the engine or ADR-0028 targets.
 
-SBCL 2.6.9 su macOS ARM64; heap dei processi 4 GiB. Ambiente hardware,
-carico esterno non controllato, comando e blob dei sorgenti sono conservati
-nei report. Il commit di riferimento è `6913318`, con modifiche locali
-esplicite. I quattro sorgenti dello spike e l'harness sono identificati
-prima/dopo: entrambi i run riusciti riportano `:source-consistency :stable`.
+<a id="ambiente-e-prove-conservate"></a>
 
-- [Controlli](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check.lisp).
+## Environment and retained tests
+
+SBCL 2.6.9 on macOS ARM64; process heap 4 GiB. Hardware environment,
+uncontrolled external load, command, and source blobs are retained in
+reports. Reference commit is `6913318`, with explicit local changes.
+The four spike sources and harness are identified before/after: both
+successful runs report `:source-consistency :stable`.
+
+- [Checks](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check.lisp).
 - [Benchmark](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-bench.lisp).
-- [Verifica completa del repository](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-full-check.lisp):
-  `make check` riuscito, sette spike, tracciabilità e collegamenti validi.
-- [Primo tentativo fallito](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-initial-failed.lisp)
-  e [diagnostica](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-initial-failed-process.lisp).
-- [Secondo tentativo fallito](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-parking-failed.lisp)
-  e [diagnostica](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-parking-failed-process.lisp).
+- [Complete repository check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-full-check.lisp):
+  successful `make check`, seven spikes, valid traceability and links.
+- [First failed attempt](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-initial-failed.lisp)
+  and [diagnostics](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-initial-failed-process.lisp).
+- [Second failed attempt](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-parking-failed.lisp)
+  and [diagnostics](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk04-check-parking-failed-process.lisp).
 
-Il primo tentativo rileva un avviso sulla ridefinizione della macro al
-caricamento: la macro locale ora è definita nella fase di compilazione,
-mentre il FASL contiene le sue espansioni. Il secondo rileva una parentesi
-di chiusura in eccesso nel modello dei parcheggi. Le correzioni non
-cancellano i fallimenti. Compilazione e caricamento finali senza avvisi.
+The first attempt detects a macro redefinition warning at load: the local
+macro is now defined during compilation, while the FASL contains its
+expansions. The second detects an extra closing parenthesis in the parking
+model. Corrections do not erase failures. Final compilation and loading
+without warnings.
 
-## Correttezza osservata
+<a id="correttezza-osservata"></a>
 
-| Ambito | Controllo ed esito |
+## Observed correctness
+
+| Scope | Check and outcome |
 |---|---|
-| Ring della Serie | Capacità 2, rifiuto senza mutazione e wrap-around FIFO |
-| Produttori e writer reali | 8 produttori, 4 Serie, 4 worker, 256 richieste; 40 tratti e 44 accessi alla lista pronta; nessuna richiesta persa o duplicata |
-| Passaggio di consegna | Una Serie, quattro thread successivi; sequenza di worker 0/1/0/1 |
-| Burst deterministico | Serie calda con 64 richieste, tre fredde con 4 ciascuna; tutte le fredde completate entro il quarto tratto con un worker |
-| Errore worker | Errore iniettato propagato e quattro thread terminati |
-| Parcheggi | 15 fixture su client di lotto, snapshot e coordinatori; saturazione, scadenza inclusiva, FIFO, riuso e notifiche obsolete |
-| Ripartenza lettura | 9 combinazioni e 54 asserzioni sul modello; nessuna location o epoca nel contesto migrato |
+| Serie ring | Capacity 2, rejection without mutation, and FIFO wrap-around |
+| Real producers and writers | 8 producers, 4 Serie, 4 workers, 256 requests; 40 segments and 44 ready list accesses; no lost or duplicated request |
+| Handoff | One Serie, four successive threads; worker sequence 0/1/0/1 |
+| Deterministic burst | Hot Serie with 64 requests, three cold with 4 each; all cold Serie completed by fourth segment with one worker |
+| Worker error | Injected error propagated and four threads terminated |
+| Parking | 15 fixtures on batch clients, snapshots, and coordinators; saturation, inclusive expiration, FIFO, reuse, and stale notifications |
+| Read restart | 9 combinations and 54 model assertions; no location or epoch in migrated context |
 
-L'equità del caso burst è un risultato in **tratti**, non una promessa di
-latenza. I produttori terminano prima del drain; non è esercitato l'arrivo
-di nuove richieste mentre i writer lavorano. Parcheggi e letture sono
-modelli finiti, distinti dal pool con thread reali.
+Burst-case fairness is a result in **segments**, not a latency promise.
+Producers terminate before drain; new requests arriving while writers work
+are not exercised. Parking and reads are finite models, distinct from the
+real-thread pool.
 
-## Benchmark diagnostico
+<a id="benchmark-diagnostico"></a>
 
-54 casi: carico uniforme/sbilanciato, 1/4/16 Serie, 1/2/4 worker,
-tratti di 1/8/64 richieste, 4.096 richieste per caso e 32 passi sintetici.
-Totale: **221.184 operazioni**. Il processo dura **0,968645 s**, compresi
-compilazione, controlli e misure; non è una singola finestra di throughput.
+## Diagnostic benchmark
 
-Esempio con 16 Serie e tratti da 64 richieste:
+54 cases: uniform/skewed load, 1/4/16 Serie, 1/2/4 workers,
+segments of 1/8/64 requests, 4,096 requests per case and 32 synthetic steps.
+Total: **221,184 operations**. Process lasts **0.968645 s**, including
+compilation, checks, and measurements; this is not a single throughput window.
 
-| Carico | Worker | Tempo wall, ms | Tratti | Accessi lista pronta | Byte allocati nel processo |
+Example with 16 Serie and 64-request segments:
+
+| Load | Workers | Wall time, ms | Segments | Ready list accesses | Process allocated bytes |
 |---|---:|---:|---:|---:|---:|
-| Uniforme | 1 | 0,937 | 64 | 65 | 65.520 |
-| Uniforme | 2 | 0,727 | 64 | 66 | 131.040 |
-| Uniforme | 4 | 0,737 | 64 | 68 | 262.080 |
-| Sbilanciato | 1 | 0,983 | 78 | 79 | 65.520 |
-| Sbilanciato | 2 | 0,959 | 78 | 80 | 131.040 |
-| Sbilanciato | 4 | 1,167 | 78 | 82 | 262.080 |
+| Uniform | 1 | 0.937 | 64 | 65 | 65,520 |
+| Uniform | 2 | 0.727 | 64 | 66 | 131,040 |
+| Uniform | 4 | 0.737 | 64 | 68 | 262,080 |
+| Skewed | 1 | 0.983 | 78 | 79 | 65,520 |
+| Skewed | 2 | 0.959 | 78 | 80 | 131,040 |
+| Skewed | 4 | 1.167 | 78 | 82 | 262,080 |
 
-Il contatore della lista pronta è pari ai tratti più i ritiri dei worker,
-senza aggiornamenti globali da ogni richiesta. Con tratti di una richiesta
-il costo comune è per operazione: quel caso è soltanto diagnostico.
+The ready list counter equals segments plus worker retirements, without
+global updates from each request. With one-request segments, common cost
+is per operation: that case is diagnostic only.
 
-Le finestre della tabella sono inferiori a 2 ms e hanno un solo campione:
-**non permettono una conclusione sulla scalabilità**. Comprendono avvio
-sequenziale dei thread, join, controlli FIFO/bitmap e clock per richiesta;
-escludono preallocazione e generatore. Le allocazioni comprendono harness e
-thread del processo, con la granularità del contatore SBCL. Non sono RSS
-né una misura isolata del kernel. I tempi per Serie nel report misurano
-l'intervallo dall'avvio comune al completamento, incluso il servizio.
+Table windows are below 2 ms and have only one sample:
+**they permit no scalability conclusion**. They include sequential thread
+startup, join, FIFO/bitmap checks, and per-request clock; they exclude
+preallocation and generator. Allocations include process harness and
+threads, at SBCL counter granularity. They are neither RSS nor an isolated
+kernel measurement. Per-Serie times in the report measure the interval
+from common start to completion, including service.
 
-## Conseguenze e limiti residui
+<a id="conseguenze-e-limiti-residui"></a>
 
-> **Proposta** — Il pool e i modelli danno una prima evidenza eseguibile di
-> ADR-0045. RSK-04 resta quantitativamente aperto: servono pool già avviato,
-> finestre lunghe, repliche, produttori durante il drain, messaggi del writer,
-> adattamento dinamico e piattaforma Linux di riferimento. CSN, orizzonte,
-> epoche, I/O e commit durevole non sono implementati dallo spike.
+## Consequences and remaining limits
 
-L'acquisizione dei mutex usa tentativi non bloccanti con tetto 100.000;
-il corpo sintetico non fa I/O. Il tentativo può cedere lo scheduling:
-non dimostra esecuzione senza sospensioni del runtime. Il controller ha
-join con timeout diagnostico e un solo secondo tentativo dopo lo stop;
-un thread ancora vivo produce `cleanup-incomplete`, mai un esito riuscito.
-Nessun budget di tentativi o tempo viene presentato come garanzia.
+> **Proposal** — The pool and models provide initial executable evidence
+> for ADR-0045. RSK-04 remains quantitatively open: an already started pool,
+> long windows, replicas, producers during drain, writer messages, dynamic
+> adaptation, and the reference Linux platform are needed. CSN, horizon,
+> epochs, I/O, and durable commit are not implemented by the spike.
+
+Mutex acquisition uses nonblocking attempts capped at 100,000;
+the synthetic body performs no I/O. An attempt may yield scheduling:
+it does not demonstrate execution without runtime suspension. The controller
+has joins with diagnostic timeout and only one second attempt after stop;
+a still-live thread produces `cleanup-incomplete`, never success.
+No attempt or time budget is presented as a guarantee.

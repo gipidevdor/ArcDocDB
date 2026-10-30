@@ -1,10 +1,12 @@
-# Lettura del primo item CBOR minimo
+<a id="lettura-del-primo-item-cbor-minimo"></a>
 
-`arcdocdb.cbor:leggi-item-cbor-minimo` verifica il primo item nella
-finestra autorizzata e restituisce tre valori: numero di nodi,
-picco dei livelli array/map e frontiera assoluta NEXT.
-Il [metodo preregistrato](cbor-item-metodo.md) fissa precedenze e prove;
-le [verifiche](cbor-item-risultati.md) conservano risultati e limiti.
+# Reading the first minimal CBOR item
+
+`arcdocdb.cbor:leggi-item-cbor-minimo` verifies the first item in the
+authorized window and returns three values: node count,
+peak array/map levels, and absolute frontier NEXT.
+The [preregistered method](cbor-item-metodo.md) fixes precedence and tests;
+the [verification](cbor-item-risultati.md) preserves results and limits.
 
 ```lisp
 (leggi-item-cbor-minimo buffer start end space
@@ -12,28 +14,28 @@ le [verifiche](cbor-item-risultati.md) conservano risultati e limiti.
 ;; => NODES, PEAK, NEXT
 ```
 
-Per i byte `C0 81 00 FF`, START=0 ed END=4, il risultato è
-3, 1, 3. Il tag conta come nodo e non aggiunge profondità.
-Il byte FF della coda non viene letto né verificato. Per verificare
-l'intero span resta disponibile
-`verifica-struttura-cbor-minima`, che rifiuta la coda con
+For bytes `C0 81 00 FF`, START=0 and END=4, the result is
+3, 1, 3. The tag counts as a node and adds no depth.
+The tail's FF byte is neither read nor verified. To verify
+the entire span, use
+`verifica-struttura-cbor-minima`, which rejects the tail with
 `:cbor-trailing`.
 
-MAX-BYTES limita **l'intera finestra END-START**, compresa la coda,
-prima del reset o della lettura. Non è un budget dei soli byte consumati.
-I massimi restano 16 MiB, 16 Mi nodi e 100 livelli array/map.
-Il chiamante sceglie END in base alla finestra che autorizza.
-Ogni successo ha START<NEXT<=END; la chiamata successiva può usare
-NEXT come START per ricavare le frontiere degli item concatenati.
+MAX-BYTES bounds **the entire END-START window**, including the tail,
+before reset or reading. It is not a budget only for consumed bytes.
+Maximums remain 16 MiB, 16 Mi nodes, and 100 array/map levels.
+The caller chooses END according to the window it authorizes.
+Every success has START<NEXT<=END; the next call may use
+NEXT as START to derive concatenated-item boundaries.
 
-BUFFER simple u8 resta immutabile ed è condivisibile in lettura.
-Ogni worker usa uno SPACE esclusivo preallocato, riusabile anche
-dopo un errore di parsing. Il preflight rifiutato conserva lo scratch;
-dopo successo i conteggi descrivono soltanto il primo item.
+The simple u8 BUFFER remains immutable and shareable for reading.
+Each worker uses an exclusive preallocated SPACE, reusable even
+after a parsing error. Rejected preflight preserves scratch;
+after success counts describe only the first item.
 
-Sono richiesti header minimi e UTF-8 valido per il testo, con offset
-assoluti nei rifiuti. La primitiva non costruisce AST, non interpreta
-tag applicativi e non impone ordine/unicità delle chiavi. Nessuna
-attesa, I/O o gestione dei thread nel prodotto. Profilo documentale
-deterministico e qualifica C1/MC/DC restano aperti.
+Minimal headers and valid UTF-8 text are required, with absolute
+offsets in rejections. The primitive does not build ASTs, interpret
+application tags, or impose key order/uniqueness. No
+waits, I/O, or thread management in the product. The deterministic
+document profile and C1/MC/DC qualification remain open.
 

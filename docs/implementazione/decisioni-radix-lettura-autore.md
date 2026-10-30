@@ -1,16 +1,20 @@
-# Prima lettura C1 dell'autore sul diff integrato
+<a id="prima-lettura-c1-dellautore-sul-diff-integrato"></a>
 
-Lettura del 2026-10-09 dell'agente `/root/segment_header_code`, autore
-dell'algoritmo radix. Esito dell'ispezione: nessun difetto funzionale
-individuato nell'integrazione delimitata qui. Questo addendum completa la
-[prima lettura del candidato](decisioni-radix-revisione.md#prima-lettura-c1-dellautore-sul-candidato-preliminare)
-senza sostituire la seconda lettura indipendente o attestare una qualifica
-del motore completo.
+# Author's first C1 reading of the integrated diff
 
-## Contenuti riletti e confini
+Reading on 2026-10-09 by agent `/root/segment_header_code`, author
+of the radix algorithm. Inspection outcome: no functional defect
+identified in the integration bounded here. This addendum completes the
+[first candidate reading](decisioni-radix-revisione.md#prima-lettura-c1-dellautore-sul-candidato-preliminare)
+without replacing the second independent reading or attesting qualification
+of the whole engine.
 
-Gli hash SHA256 seguenti sono stati ricontrollati dopo il congelamento
-dei 18 test. Identificano contenuti, non commit Git.
+<a id="contenuti-riletti-e-confini"></a>
+
+## Reread contents and boundaries
+
+The following SHA256 hashes were rechecked after freezing
+the 18 tests. They identify contents, not Git commits.
 
 | File | SHA256 |
 |---|---|
@@ -18,87 +22,93 @@ dei 18 test. Identificano contenuti, non commit Git.
 | [`src/recovery/decisions-build.lisp`](../../src/recovery/decisions-build.lisp) | `be292ec655087a229a1630179876da9e302a6121985ec3141a5e35226885a115` |
 | [`tests/recovery/decisions-radix.lisp`](../../tests/recovery/decisions-radix.lisp) | `75296b2de5620afd4f67117445197cb227adb4b9f65203e299ef6a4ee79518c0` |
 
-Il confronto con il candidato congelato
+Comparison with frozen candidate
 `5093e1dda2876d3b31fd5a6e9196dc76bec04aa8a61ce933c63de59f73f36505`
-mostra soltanto il commento iniziale aggiornato, due costanti e due
-wrapper aggiunti: gli otto corpi dell'algoritmo restano invariati.
-Il builder differisce dalla baseline solo nelle due chiamate ai sorter;
-la firma pubblica di `ricostruisci-decisioni` e i suoi valori restituiti
-restano invariati. Le registrazioni recovery osservate in
-[`arcdocdb.asd`](../../arcdocdb.asd) rispettano l'ordine
-`decisions-sort` → `decisions-radix` → `decisions-build`, con
-`decisions-radix` fra i test recovery. La lettura riguarda queste
-registrazioni, non le altre modifiche concorrenti all'ASD o ai moduli.
+shows only the updated opening comment, two constants, and two
+added wrappers: the algorithm's eight bodies remain unchanged.
+The builder differs from baseline only in the two sorter calls;
+the public signature of `ricostruisci-decisioni` and its returned values
+remain unchanged. Recovery registrations observed in
+[`arcdocdb.asd`](../../arcdocdb.asd) follow the order
+`decisions-sort` → `decisions-radix` → `decisions-build`, with
+`decisions-radix` among recovery tests. This reading concerns these
+registrations, not other concurrent changes to ASD or modules.
 
-`sort-recovery-participants` sceglie merge per `count < 1024` e radix
-per `count >= 1024`: il conteggio è quello dei partecipanti del singolo
-record, non il totale del log. `sort-recovery-entries` sceglie merge
-per meno di 256 entry e radix da 256 incluse. Questa cardinalità conta
-le DECISION fisiche, inclusi i duplicati, prima di `collapse-decisions`;
-non conta i soli TXID unici. Entrambi i wrapper mantengono i tipi
-completi e delegano le precondizioni e i controlli finali ai sorter.
+`sort-recovery-participants` chooses merge for `count < 1024` and radix
+for `count >= 1024`: count is the participant count of an individual
+record, not the log total. `sort-recovery-entries` chooses merge
+for fewer than 256 entries and radix from 256 inclusive. This cardinality counts
+physical DECISIONs, including duplicates, before `collapse-decisions`;
+it does not count only unique TXIDs. Both wrappers retain full
+types and delegate preconditions and final checks to sorters.
 
-## Scelta misurata e rilettura dei dati
+<a id="scelta-misurata-e-rilettura-dei-dati"></a>
 
-Il [metodo](decisioni-radix-metodo.md) e i
-[risultati](decisioni-radix-risultati.md) separano le soglie ID16/TXID e
-richiedono rapporto delle mediane radix/merge al massimo 0,90 in tutti
-gli scenari misurati con `N >= soglia`. L'autore ha riletto i plists
-conservati della matrice a 100 ms con `*read-eval* = nil`, senza `load`
-dei dati o nuove misure, e ricalcolato le mediane dai campioni grezzi.
+## Measured choice and data rereading
 
-Sono presenti 63 campagne e 63 scenari di selezione. Nei suffissi
-adottati, tutte le calibrazioni raggiungono 100 ms e tutti i tre
-campioni per algoritmo raggiungono almeno 50 ms con flag di usabilità:
-16 scenari ID16 da 1.024 elementi hanno rapporti
-`0,131160..0,857956`; 25 scenari TXID da 256 entry hanno rapporti
-`0,143755..0,759877`. I rapporti ricalcolati coincidono con la selezione
-conservata entro `1e-12`; il processo registrato termina con codice zero
-e consistenza delle sorgenti stabile. La prima matrice insufficiente
-resta distinta e conservata. Questi riscontri riguardano solo il costo
-locale dell'ordinamento, con allocazioni e GC inclusi, sul sistema
-misurato: non qualificano P99, zero heap, Linux/x86-64 o il motore.
+The [method](decisioni-radix-metodo.md) and
+[results](decisioni-radix-risultati.md) separate ID16/TXID thresholds and
+require a radix/merge median ratio of at most 0.90 in all
+measured scenarios with `N >= soglia`. The author reread retained plists
+from the 100 ms matrix with `*read-eval* = nil`, without `load`
+of data or new measurements, and recalculated medians from raw samples.
 
-## Lista di controllo C1 sul percorso adottato
+There are 63 campaigns and 63 selection scenarios. In adopted
+suffixes, all calibrations reach 100 ms and all three
+samples per algorithm reach at least 50 ms with usability flags:
+16 ID16 scenarios from 1,024 elements have ratios
+`0,131160..0,857956`; 25 TXID scenarios from 256 entries have ratios
+`0,143755..0,759877`. Recalculated ratios match retained
+selection within `1e-12`; the recorded process exits zero
+with stable source consistency. The insufficient first matrix
+remains distinct and retained. These findings concern only local
+sorting cost, with allocations and GC included, on the measured
+system: they do not qualify P99, zero heap, Linux/x86-64, or the engine.
 
-La lista segue i dodici punti dello
-[standard di codifica](../affidabilita/standard-di-codifica.md).
-L'[inventario](decisioni-radix-decisioni.md) e la
-[seconda lettura](decisioni-radix-revisione.md) restano documenti
-separati; la presente lettura non anticipa gli esiti delle campagne
-finali di copertura e mutazione.
+<a id="lista-di-controllo-c1-sul-percorso-adottato"></a>
 
-| Punto C1 | Riscontro dell'autore sull'integrazione e limite |
+## C1 checklist on the adopted path
+
+The checklist follows the twelve points of the
+[coding standard](../affidabilita/standard-di-codifica.md).
+The [inventory](decisioni-radix-decisioni.md) and
+[second reading](decisioni-radix-revisione.md) remain separate
+documents; this reading does not anticipate outcomes of final
+coverage and mutation campaigns.
+
+| C1 point | Author's integration finding and limit |
 |---|---|
-| 1. Requisiti e ADR | I wrapper riportano REQ-TXM-005, REQ-AFF-008 e REQ-VAL-001; quello delle entry anche REQ-TXM-001. Le costanti richiamano REQ-BEN-001. La scelta segue il metodo misurato e preserva il contratto DECISION, in coerenza locale con ADR-0034/0035. Nessun nuovo vincolo su TXID/CSN o formato persistente. |
-| 2. Invarianti e test | I controlli di somma, prefisso, posizione, consumo e ordine del radix sono invariati. I test pubblici `public-participant-sort-threshold-boundaries` e `public-entry-sort-threshold-boundaries` esercitano entrambi i lati e l'uguaglianza delle soglie; il test `public-radix-first-physical-conflict-across-groups` verifica l'offset fisico globale, anche se il gruppo numericamente minore viene visitato prima. |
-| 3. Errori e gestione | I wrapper non intercettano né trasformano gli errori. Misure/count incoerenti, duplicati di partecipante e conflitti mantengono i controlli delegati; sei test negativi chiamano inoltre le guardie interne per istogramma, oggetto, cifra, array e cursori. Errori di tipo/allocazione del runtime e transizione della Serie a FAULTED restano esterni al sorter. |
-| 4. Cicli e attese | Il dispatch aggiunge solo due confronti e chiamate. Restano i limiti di 16/8 passate, 256 classi e N elementi effettivi; nessun ciclo o attesa nuovi. Le attese finite dei sei lettori appartengono alla fixture e non al worker del prodotto. |
-| 5. Allocazioni e percorso caldo | Il wrapper non prepara altro workspace; il sorter scelto alloca sul percorso di costruzione/apertura. Scratch e istogramma dipendono dai dati effettivi, non dai budget inutilizzati; anche count 0/1 privati possono allocare. Nessuna promessa o misura zero heap per query o runtime. |
-| 6. Dati verificati | Il budget del numero di DECISION precede l'allocazione delle entry; il preflight dei payload e del totale partecipanti precede le copie. `decode-decisions` passa al wrapper una copia ID16 e l'offset assoluto; il wrapper delle entry riceve il vettore privato completo prima del controllo conflitti e della tabella. Nessun risultato parziale viene pubblicato e il buffer del log resta invariato. |
-| 7. Decisioni composte | Il diff aggiunge due `if` semplici sui conteggi, senza nuovi predicati booleani composti. I confini sono 1023/1024/1025 e 255/256/257; la soglia stessa percorre radix. Le guardie composte dell'algoritmo restano quelle inventariate. Copertura grezza e criteri C1 finali richiedono i rapporti sul diff adottato. |
-| 8. Proprietario e condivisione | I wrapper mantengono l'ownership della costruzione e non esportano vettori. I sorter riordinano soltanto copie private; le entry e la tabella pubblica conservano campi read-only. I test ai confini confrontano anche il log prima/dopo; quello concorrente consulta una tabella già completa dopo la sovrascrittura del log originale. |
-| 9. Trace, compilazione, lint e check | I due nuovi wrapper hanno `ftype`, docstring pre/post/errori, REQ e `safety 3` del file; sono entro 60 righe. È stato riletto il log della baseline isolata del revisore: marker `decision-tests-complete 43` con gli ultimi tre test pubblici verdi; il revisore riferisce compilazione rigorosa senza warning. L'autore non ha rieseguito processi pesanti. Trace, lint, `make check`, copertura e mutanti finali sono evidenze distinte da questa lettura. |
-| 10. Deviazioni | Nessuna deroga individuata nel diff delimitato. Le soglie sono scelte locali misurate, non limiti di formato; i budget esistenti e le guardie restano attivi. Non viene approvata alcuna esclusione di copertura o estensione delle misure ad altri sistemi. |
-| 11. Parallelismo fra Serie | Nessun nuovo lock, parcheggio, pool o store condiviso per operazione della Serie: il lavoro aggiunto riguarda il workspace posseduto del recovery. Le query pubbliche restano scalari e prive di scritture nella tabella. Sei lettori reali verificano risposte/ownership, non isolamento, scheduler o scalabilità del motore rispetto a INV-P6. |
-| 12. Atomicità e rimozioni | Il diff non introduce I/O, flush, pubblicazione, applicazione di prepared, eliminazioni o punti di atomicità durevoli. Scanner e protocollo di durability mantengono il proprio contratto, senza essere riqualificati dall'ordinamento adattivo. |
+| 1. Requirements and ADR | Wrappers cite REQ-TXM-005, REQ-AFF-008, and REQ-VAL-001; the entry wrapper also REQ-TXM-001. Constants cite REQ-BEN-001. Selection follows the measured method and preserves the DECISION contract, locally consistent with ADR-0034/0035. No new TXID/CSN or persistent format constraint. |
+| 2. Invariants and tests | Radix sum, prefix, position, consumption, and order checks unchanged. Public tests `public-participant-sort-threshold-boundaries` and `public-entry-sort-threshold-boundaries` exercise both sides and equality of thresholds; test `public-radix-first-physical-conflict-across-groups` checks global physical offset, even if the numerically smaller group is visited first. |
+| 3. Errors and handling | Wrappers do not intercept or transform errors. Inconsistent measurements/counts, duplicate participants, and conflicts retain delegated checks; six negative tests also call internal guards for histogram, object, digit, array, and cursors. Runtime type/allocation errors and Serie transition to FAULTED remain external to the sorter. |
+| 4. Loops and waits | Dispatch adds only two comparisons and calls. Bounds of 16/8 passes, 256 classes, and N actual elements remain; no new loop or wait. The six readers' finite waits belong to the fixture, not the product worker. |
+| 5. Allocations and hot path | Wrapper prepares no additional workspace; selected sorter allocates on the build/open path. Scratch and histogram depend on actual data, not unused budgets; even private count 0/1 may allocate. No zero-heap promise or measurement for queries or runtime. |
+| 6. Verified data | DECISION count budget precedes entry allocation; payload and total participant preflight precedes copies. `decode-decisions` passes the wrapper an ID16 copy and absolute offset; the entry wrapper receives the complete private vector before conflict checks and table construction. No partial result published and log buffer unchanged. |
+| 7. Compound decisions | Diff adds two simple count `if` forms, without new compound Boolean predicates. Boundaries are 1023/1024/1025 and 255/256/257; the threshold itself uses radix. Algorithm compound guards remain those inventoried. Raw coverage and final C1 criteria require reports on the adopted diff. |
+| 8. Owner and sharing | Wrappers retain construction ownership and export no vectors. Sorters reorder private copies only; entries and public table retain read-only fields. Boundary tests also compare log before/after; concurrent test queries an already complete table after overwriting the original log. |
+| 9. Trace, compilation, lint, and check | Both new wrappers have `ftype`, pre/post/error docstrings, REQ, and file `safety 3`; within 60 lines. Reviewer's isolated baseline log reread: marker `decision-tests-complete 43` with the last three public tests green; reviewer reports strict compilation without warnings. Author did not rerun heavy processes. Trace, lint, `make check`, final coverage, and mutants are evidence distinct from this reading. |
+| 10. Deviations | No waiver identified in the bounded diff. Thresholds are measured local choices, not format limits; existing budgets and guards remain active. No coverage exclusion or extension of measurements to other systems approved. |
+| 11. Parallelism between Serie | No new lock, parking, pool, or shared store per Serie operation: added work concerns owned recovery workspace. Public queries remain scalar with no table writes. Six real readers check responses/ownership, not engine isolation, scheduler, or scalability against INV-P6. |
+| 12. Atomicity and removals | Diff introduces no I/O, flush, publication, prepared application, deletion, or durable atomicity point. Scanner and durability protocol retain their contracts without requalification by adaptive sorting. |
 
-## Regressioni pubbliche e limiti della lettura
+<a id="regressioni-pubbliche-e-limiti-della-lettura"></a>
 
-I test congelati coprono versione 1 e 2, offset assoluti oltre u32 e
-nessuna modifica del log. Per 1023/1024/1025 partecipanti confrontano
-DECISION duplicate con lo stesso insieme in ordine inverso, su tre
-pattern; per 255/256/257 entry usano TXID distinti e N record duplicati
-che producono un solo TXID. Il conflitto globale usa 258 record in tre
-lotti, con primo record discordante nel gruppo TXID massimo e un
-conflitto successivo nel gruppo zero; l'errore viene verificato due
-volte sullo stesso buffer stabile. Gli oracoli privati rimangono
-indipendenti dal merge e dal radix e confrontano byte completi e
-identità delle entry.
+## Public regressions and reading limits
 
-Questa lettura non approva modifiche degli altri moduli o qualificazioni
-di rilascio. Le prove finali di integrazione, le metriche grezze di
-copertura e mutazione e i relativi tentativi falliti devono essere
-conservati sugli stessi hash. Non si promuovono gli spike a runtime e
-non si attribuisce a questo lavoro la completa applicazione del
-recovery, l'implementazione del pool o la scalabilità fra Serie.
+Frozen tests cover versions 1 and 2, absolute offsets beyond u32, and
+no log modification. For 1023/1024/1025 participants, they compare
+duplicate DECISIONs with the same set in reverse order, over three
+patterns; for 255/256/257 entries they use distinct TXIDs and N duplicate records
+producing one TXID. The global conflict uses 258 records in three
+batches, with the first conflicting record in the maximum TXID group and a
+later conflict in group zero; the error is checked twice
+on the same stable buffer. Private oracles remain
+independent of merge and radix and compare complete bytes and
+entry identities.
+
+This reading approves no other module changes or release
+qualifications. Final integration tests, raw coverage and mutation
+metrics, and their failed attempts must be
+retained on the same hashes. Spikes are not promoted to runtime, and
+complete recovery application, pool implementation, or scalability
+between Serie is not attributed to this work.

@@ -1,80 +1,88 @@
-# Metodo del ricircolo pool/Serie
+<a id="metodo-del-ricircolo-poolserie"></a>
 
-Preregistrazione del 2026-10-14 sulla base
-`a5715a1aa0b2571d650d1b794e9bb7b7324e951e`, prima delle campagne formali.
-Il [contratto](pool-recycle.md) definisce una sola operazione ready per passo.
-Scope C3 completo del dispatcher esteso: `src/dispatch/package.lisp`,
-`types.lisp`, `build.lisp`, `claim.lisp` e nuovo `recycle.lisp`.
-Nessun sorgente C1 è modificato; ricircolo, worker, routing e bridge sono delegati.
+# Pool/Serie recycling method
 
-## Prove e revisione
+Preregistration on 2026-10-14 against base
+`a5715a1aa0b2571d650d1b794e9bb7b7324e951e`, before formal campaigns.
+The [contract](pool-recycle.md) defines one ready operation per step.
+Complete C3 scope of extended dispatcher: `src/dispatch/package.lisp`,
+`types.lisp`, `build.lisp`, `claim.lisp`, and new `recycle.lisp`.
+No C1 source modified; recycling, worker, routing, and bridge delegated.
 
-- Room: pubblicazione FIFO dell'obbligo, NIL/status/count esatti e IDLE.
-  Nessun routing, seconda presa o conferma del ritiro; distinguere count da cursore.
-- Full: scambio reale A→B, A in coda, count invariato e link corrente B IDLE,
-  senza begin. Home e cursore conservati.
-- Porta inattiva, ritiro pendente e parole lifecycle incoerenti: ricircolo
-  indipendente dal pool. Completamento del nuovo CLAIMED, ritorno a IDLE e
-  ritiro confermato soltanto dalla successiva presa esplicita.
-- Guard ready realmente occupata: errore busy e preimage di ring, contesto,
-  writer, collegamenti, controller e parole pool; retry solo esplicito.
-- Owner estraneo e binding fra contesti diversi: rifiuto prima del trasferimento.
-- Tutte le fasi coerenti diverse da RESCHEDULE, FAULTED compresa: rifiuti
-  delegati e diagnosi/debito/lease conservati, prima causa EQ.
-- Writer sconosciuto o link invalido dopo full: trasferimento già avvenuto,
-  vecchio obbligo in ready e nuovo riferimento conservato in FAULTED, controller
-  e lease Serie intatti. Nessun rollback dedotto da un'eccezione.
-- FI quiescenti e ripristinate per writer/status contraddittori e sentinelle
-  che distinguono assenza di gate/routing da un semplice risultato NIL.
-  Uno status fuori ftype è un guasto di contratto, non un ritorno nominale:
-  la guardia separata NOTINLINE deve rifiutarlo prima del routing, preservando
-  contesto, ring e prima causa. La FI non qualifica un ritorno C1 reale.
-- Lettura indipendente C3 del componente esteso e dei test, con lista di
-  controllo, compilazione strict, safety 3, lint e tracciabilità.
+<a id="prove-e-revisione"></a>
 
-## Copertura
+## Tests and review
 
-Almeno 95% di espressioni e rami sull'intero componente di cinque file,
-senza esclusioni manuali. Pubblicare anche tutti i conteggi per file e i
-missing, compresi i rami difensivi fuori dominio del delegato se SBCL li
-mantiene. Denominatore zero significa solo nessuna sonda nativa di quel tipo,
-non assenza di decisioni nel sorgente. Nessuna inferenza MC/DC o copertura
-dei delegati C1 nel denominatore C3.
+- Room: FIFO obligation publication, exact NIL/status/count and IDLE.
+  No routing, second acquisition, or retirement acknowledgment; distinguish count from cursor.
+- Full: actual A→B exchange, A queued, unchanged count and current B link IDLE,
+  without begin. Home and cursor retained.
+- Inactive port, pending retirement, inconsistent lifecycle words: recycling
+  independent of pool. Complete new CLAIMED, return to IDLE, and
+  retirement acknowledged only by next explicit acquisition.
+- Actually held ready guard: busy error and preimage of ring, context,
+  writer, links, controller, and pool words; explicit retry only.
+- Foreign owner and binding between different contexts: rejection before transfer.
+- All consistent phases other than RESCHEDULE, including FAULTED: delegated
+  rejections and diagnosis/debt/lease retained, first cause EQ.
+- Unknown writer or invalid link after full: transfer already occurred,
+  old obligation in ready and new reference retained in FAULTED, controller
+  and Serie lease intact. No rollback inferred from an exception.
+- Quiescent restored FI for contradictory writer/status and sentinels
+  distinguishing no gate/routing from a merely NIL result.
+  Status outside ftype is contract failure, not nominal return:
+  separate NOTINLINE guard must reject before routing, preserving
+  context, ring, and first cause. FI does not qualify an actual C1 return.
+- Independent C3 reading of extended component and tests, with checklist,
+  strict compilation, safety 3, lint, and traceability.
 
-Conservare SB-COVER nativo, HTML originali e audit esatto native/HTML.
-Riutilizzare il reader verificato con adattatore esplicito allo scope esteso,
-test negativi su file, shape, duplicati, denominatori e missing paths.
+<a id="copertura"></a>
 
-## Memoria e misura locale
+## Coverage
 
-Sensore C4 con campionamento già verificato, self-test dedicati e due
-campagne reali. Ogni replica ha una fixture nuova: cinque repliche da
-4096 cicli, 128 warmup, queue preallocate con abbastanza payload simbolici
-immutabili e quantum uno. Factory, API lookup, GC e drain finale sono fuori
-clock; nessun reset di stati o generazioni privati.
+At least 95% expressions/branches across entire five-file component,
+without manual exclusions. Publish all per-file counts and
+missing entries too, including defensive branches outside delegate domain if SBCL
+retains them. Zero denominator means only no native probe of that type,
+not no source decisions. No MC/DC inference or
+C1 delegate coverage in C3 denominator.
 
-| Campagna | Ciclo misurato |
+Preserve native SB-COVER, original HTML, and exact native/HTML audit.
+Reuse verified reader with explicit extended-scope adapter,
+negative tests on files, shapes, duplicates, denominators, and missing paths.
+
+<a id="memoria-e-misura-locale"></a>
+
+## Memory and local measurement
+
+C4 sensor with verified sampling, dedicated self-tests, and two
+actual campaigns. Every replicate has a fresh fixture: five replicates of
+4096 cycles, 128 warmup, preallocated queues with enough immutable
+symbolic payloads and quantum one. Factory, API lookup, GC, and final drain are outside
+clock; no private state/generation resets.
+
+| Campaign | Measured cycle |
 |---|---|
-| ROOM | Ricircolo pubblicato, nuova presa esplicita, begin execution, pop di un payload, ack e fine in RESCHEDULE; link IDLE. |
-| FULL | Ricircolo su ring pieno, link alternato del nuovo CLAIMED, begin execution, pop di un payload, ack e fine in RESCHEDULE; link IDLE. |
+| ROOM | Published recycling, fresh explicit acquisition, execution begin, one payload pop, ack and end in RESCHEDULE; IDLE link. |
+| FULL | Recycling on full ring, alternating link of new CLAIMED, execution begin, one payload pop, ack and end in RESCHEDULE; IDLE link. |
 
-Sono cicli integrati: comprendono il protocollo C1 execution e gli oracoli scalari,
-senza attribuire il tempo al solo adapter. La nuova presa ROOM appartiene
-alla fixture esplicita, non è una chiamata nascosta nel ricircolo.
-Il bridge Serie non viene iniziato nel clock e nessuna lease Serie viene
-acquisita dalla misura; le prove funzionali verificano separatamente il bridge.
-Count, status e identità del link contribuiscono all'oracolo.
-Cleanup pubblico bounded risolve tutti gli obblighi della fixture prima
-di chiudere i backend I/O; nessun abbandono è qualificato come arresto valido.
+These are integrated cycles: they include C1 execution protocol and scalar oracles
+without attributing time to adapter alone. Fresh ROOM acquisition belongs
+to explicit fixture, not a hidden recycling call.
+Serie bridge is not started in clock and measurement acquires
+no Serie lease; functional tests verify bridge separately.
+Count, status, and link identity contribute to oracle.
+Bounded public cleanup resolves all fixture obligations before
+closing I/O backends; no abandonment is qualified as valid shutdown.
 
-Conservare tick, heap, sink e cicli completati. Il sensore deve rilevare
-allocazione positiva deliberata, ritorni difformi, sink errato, clock sotto
-risoluzione, CLI invalida, raw parziali e destinazioni preesistenti.
-Carico esterno incontrollato, nessuna taratura, soglia o conclusione sul
-throughput del motore. Heap zero osservato non prova assenza universale di
-allocazione né correttezza di un coordinatore concorrente.
+Preserve ticks, heap, sink, and completed cycles. Sensor must detect
+deliberate positive allocation, differing returns, wrong sink, below-resolution
+clock, invalid CLI, partial raw data, and existing destinations.
+External load uncontrolled; no tuning, threshold, or engine-throughput
+conclusion. Observed zero heap proves neither universal nonallocation
+nor correctness of a concurrent coordinator.
 
-Qualifica in copia congelata con `record-command.lisp`, cache dedicate,
-argv/output/exit e impronte iniziali/finali. Fallimenti e versioni preliminari
-restano distinti dagli originali congelati. Conservazione byte per byte,
-nuovi manifesti esclusivi e controllo completo con i dieci spike esistenti.
+Qualification in frozen copy with `record-command.lisp`, dedicated caches,
+argv/output/exit, and initial/final fingerprints. Failures/preliminary versions
+stay distinct from frozen originals. Bytewise preservation,
+new exclusive manifests, and full check with ten existing spikes.

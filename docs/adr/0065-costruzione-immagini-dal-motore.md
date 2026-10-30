@@ -1,77 +1,85 @@
-# ADR-0065 — Costruzione delle immagini primarie dal motore M1
+<a id="adr-0065--costruzione-delle-immagini-primarie-dal-motore-m1"></a>
 
-- **Stato:** Accettata nell'integrazione incrementale autorizzata dall'autore il 2026-10-29
-- **Data:** 2026-10-29
-- **Riferimenti:** ADR-0058, ADR-0063, ADR-0064; REQ-IDX-009, REQ-IDX-010, INV-I8, INV-A8, INV-P6
-- **Rapporto con la specifica:** concretizza il produttore dei derivati M1, senza nuovi formati autorevoli
+# ADR-0065 — Building primary images from the M1 engine
 
-## Decisione
+- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-29
+- **Date:** 2026-10-29
+- **References:** ADR-0058, ADR-0063, ADR-0064; REQ-IDX-009, REQ-IDX-010, INV-I8, INV-A8, INV-P6
+- **Relationship to the specification:** makes the M1 derivative producer concrete, without new authoritative formats
 
-L'attore seriale M1 puo' preparare un'immagine del proprio indice canonico
-mediante `costruisci-indice-paginato-motore`. La richiesta esclude rientri e
-scritture fino al completamento; il residente resta invariato e presente.
-La fonte e' quella definita da ADR-0064, recuperata dal motore e non fornita
-dal chiamante. Il derivato rimane privato, selezionabile allo startup.
+<a id="decisione"></a>
 
-Il piano conserva ID di slot e digest high/low, senza duplicare tutte le
-chiavi. Una scansione bounded del frammento acquisisce i candidati; otto
-passaggi radix stabili ordinano i soli metadati per digest unsigned a 64 bit.
-L'emissione postorder produce bucket al massimo 7/8 pieni e directory con
-fanout adattivo, fino a sette bit per nodo. Gli estremi del sottoinsieme
-ordinato determinano i prefissi comuni da saltare. I figli consumano almeno
-un bit: profondita' massima di 65 chiamate, inclusa la foglia finale.
-Digest completamente identici producono una catena di bucket overflow.
-La correttezza non dipende dalla distribuzione probabilistica degli hash.
+## Decision
 
-Le chiavi sono copiate soltanto per il lotto corrente; il builder riceve
-uno span dell'arena residente e ne possiede una sola copia. Routing,
-packing, quote per lotto e vincoli dei PageRef restano verificati dalle
-primitive di ADR-0058. Il conteggio del frammento deve rispettare il carico
-massimo prima di allocare il piano e coincidere con la scansione effettiva.
+The serial M1 actor can prepare an image of its canonical index
+through `costruisci-indice-paginato-motore`. The request excludes reentry and
+writes until completion; the resident remains unchanged and present.
+The source is the one defined by ADR-0064, recovered by the engine rather than supplied
+by the caller. The derivative remains private, selectable at startup.
 
-Il nome nuovo `primary-<16 hex>.idx.tmp` proviene dall'opzione gia' valida
-per ADR-0064. Per la costruzione l'ID deve stare in 1..2^60-1 e diventa l'ID
-dell'immagine; la generazione iniziale e' uno. Il nome esistente e' respinto,
-la creazione usa O_EXCL. Nessuna estrazione dell'autorita' dal nome: UUID,
-fonte e candidati sono sempre verificati separatamente. Il namespace
-privato e l'assenza di riuso dei nomi restano precondizioni del controller.
+The plan retains slot IDs and high/low digests, without duplicating all
+keys. A bounded fragment scan acquires candidates; eight
+stable radix passes sort only metadata by unsigned 64-bit digest.
+Postorder emission produces buckets at most 7/8 full and directories with
+adaptive fanout, up to seven bits per node. The endpoints of the sorted
+subset determine common prefixes to skip. Children consume at least
+one bit: maximum depth of 65 calls, including the final leaf.
+Completely identical digests produce an overflow-bucket chain.
+Correctness does not depend on the probabilistic distribution of hashes.
 
-Dopo prefisso e pagine, il motore ricontrolla fonte e revisione, sigilla il
-file con ARCIRF01 e flush, sincronizza la directory e chiude l'append. Apre
-poi lo stesso nome readonly con EOF verificato e rilegge l'intera immagine
-contro il residente. Solo dopo questa verifica, un nuovo controllo della
-fonte e la chiusura di tutti i FD locali restituisce l'opzione al chiamante.
-Al massimo due capacita' locali, nessuna accumulata nell'handle del motore.
+Keys are copied only for the current batch; the builder receives
+a span of the resident arena and owns only one copy. Routing,
+packing, per-batch quotas, and PageRef constraints remain checked by
+ADR-0058 primitives. The fragment count must meet maximum
+load before allocating the plan and match the actual scan.
 
-L'operazione prepara un derivato: non assegna CSN, non modifica WAL o
-CONTROL, non adotta una nuova root e non pubblica/rinomina nel catalogo.
-Il flush della directory riguarda solo la creazione del temporaneo.
-La scrittura dati successiva rende obsoleta l'immagine appena costruita.
+The new name `primary-<16 hex>.idx.tmp` comes from the option already valid
+under ADR-0064. For construction, the ID must be in 1..2^60-1 and becomes the image
+ID; initial generation is one. An existing name is rejected;
+creation uses O_EXCL. No authority is extracted from the name: UUID,
+source, and candidates are always verified separately. The private
+namespace and absence of name reuse remain controller preconditions.
 
-## Budget ed errori
+After prefix and pages, the engine rechecks source and revision, seals the
+file with ARCIRF01 and flush, synchronizes the directory, and closes append access. It
+then opens the same name read-only with verified EOF and rereads the entire image
+against the resident. Only after this verification, another source check,
+and closing every local FD does it return the option to the caller.
+At most two local capabilities, none accumulated in the engine handle.
 
-Il limite del payload di costruzione e' esplicito e verificato prima degli
-array grandi e del nuovo file. Comprende gli array del piano, il lotto
-massimo di chiavi, builder, stack radix e verifica readonly. E' un limite
-di payload applicativo, non RSS: header, oggetti, GC e transitori del runtime
-restano nella riserva del controller, separata e non qualificata qui.
-La qualifica della quota complessiva per migrazione oltre RAM resta aperta.
+The operation prepares a derivative: it does not assign a CSN, modify WAL or
+CONTROL, adopt a new root, or publish/rename in the catalog.
+Directory flush concerns only creation of the temporary file.
+The next data write makes the newly built image obsolete.
 
-La quota delle pagine e quella dei byte del file sono finite e controllate
-per ogni lotto; il budget cumulativo della verifica deriva dall'opzione.
-Il preflight non promette una prenotazione dell'intera immagine: una quota
-esaurita dopo la creazione lascia un preparato incompleto e rende M1
-FAULTED. Lo stesso vale per guasti, errori o uscite non locali dopo admission.
-I FD sono tutti tentati, la causa primaria conservata e i guasti cleanup
-aggregati. Nessuna cancellazione automatica o sostituzione di un file.
-Preflight ordinari di configurazione, memoria e nome occupato conservano
-il motore READY. Guasti del namespace chiudono invece admission.
+<a id="budget-ed-errori"></a>
 
-## Seguito e rollback
+## Budgets and errors
 
-Il percorso completo produttore → sigillo → verifica → riavvio → GET paginato
-e' disponibile senza fixture che costruiscano i file al posto del prodotto.
-Selezione automatica, delta writer, catalogo durevole, snapshot e dataset
-oltre la capienza del residente restano separati. Per tornare al residente
-si apre senza l'opzione del derivato; i dati canonici non sono migrati.
-Contratto e prove in [costruzione M1](../implementazione/costruzione-indice-m1.md).
+The construction-payload limit is explicit and checked before large
+arrays and the new file. It includes plan arrays, the maximum key
+batch, builder, radix stack, and read-only verification. It is an application-payload
+limit, not RSS: headers, objects, GC, and runtime transients
+remain in the controller reservation, separate and unqualified here.
+Qualification of the overall quota for migration beyond RAM remains open.
+
+Page and file-byte quotas are finite and checked
+for every batch; the cumulative verification budget comes from the option.
+Preflight does not promise reservation of the entire image: a quota
+exhausted after creation leaves an incomplete prepared file and makes M1
+FAULTED. The same applies to faults, errors, or nonlocal exits after admission.
+All FD cleanup is attempted, the primary cause preserved, and cleanup faults
+aggregated. No automatic deletion or replacement of a file.
+Ordinary configuration, memory, and occupied-name preflight failures keep
+the engine READY. Namespace faults instead close admission.
+
+<a id="seguito-e-rollback"></a>
+
+## Follow-up and rollback
+
+The complete producer → seal → verify → restart → paged GET path
+is available without fixtures constructing files in place of the product.
+Automatic selection, writer delta, durable catalog, snapshots, and datasets
+beyond resident capacity remain separate. To return to the resident,
+open without the derivative option; canonical data is not migrated.
+Contract and tests in [M1 construction](../implementazione/costruzione-indice-m1.md).

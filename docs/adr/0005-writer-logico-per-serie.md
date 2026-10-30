@@ -1,47 +1,59 @@
-# ADR-0005 — Un writer logico per Serie con controllo ottimistico
+<a id="adr-0005--un-writer-logico-per-serie-con-controllo-ottimistico"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («Concorrenza»,
-  «Transazioni single-series»)
-- **Riferimenti:** [10 Concorrenza](../10-concorrenza-e-scheduling.md),
-  [05 Transazioni](../05-transazioni.md), INV-P1, INV-P2, INV-T1, INV-T2
+# ADR-0005 — One logical writer per Serie with optimistic checking
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision (“Concurrency,”
+  “Single-Serie transactions”)
+- **References:** [10 Concurrency](../10-concorrenza-e-scheduling.md),
+  [05 Transactions](../05-transazioni.md), INV-P1, INV-P2, INV-T1, INV-T2
 
-Le scritture su una Serie devono essere ordinate (WAL, versioni) e i conflitti sullo stesso
-documento rilevati, senza lock globali e senza un thread per Serie o per richiesta.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-- Ogni Serie ha un solo writer logico e molti reader concorrenti.
-- Il writer non è un thread dedicato: è un ruolo eseguito da worker del pool.
-- Il writer serializza solo ciò che deve essere serializzato nella Serie.
-- Le transazioni single-Series usano solo il WAL della Serie e rilevano i conflitti con
-  optimistic version checking; il controllo della versione attesa è atomico rispetto
-  all'applicazione della modifica.
-- Nessun global writer lock.
+Writes to a Serie must be ordered (WAL, versions) and conflicts on the same document
+must be detected, without global locks or a thread per Serie or request.
 
-## Conseguenze
+<a id="decisione"></a>
 
-- Nessun lock per documento: «verifica e applica» nel writer è atomico per costruzione.
-- La Serie ha un ordine totale delle modifiche, che coincide con l'ordine del WAL.
-- Il throughput di scrittura di una Serie è limitato dalla parte seriale: tutto il lavoro
-  parallelizzabile deve restare fuori dal writer.
-- I conflitti si pagano con abort/retry: carichi con forte contesa sullo stesso documento
-  sprecano lavoro.
-- Il writer non può attendere eventi esterni senza fermare la Serie (rilevante per il 2PC,
+## Decision
+
+- Each Serie has one logical writer and many concurrent readers.
+- The writer is not a dedicated thread: it is a role performed by pool workers.
+- The writer serializes only what must be serialized within the Serie.
+- Single-Serie transactions use only the Serie's WAL and detect conflicts through
+  optimistic version checking; checking the expected version is atomic with respect
+  to applying the change.
+- No global writer lock.
+
+<a id="conseguenze"></a>
+
+## Consequences
+
+- No per-document lock: “check and apply” in the writer is atomic by construction.
+- The Serie has a total order of changes, matching WAL order.
+- A Serie's write throughput is limited by the serial portion: all work that can run
+  in parallel must remain outside the writer.
+- Conflicts incur abort/retry costs: workloads with heavy contention on the same document
+  waste work.
+- The writer cannot wait for external events without stopping the Serie (relevant to 2PC,
   QA-07).
 
-## Alternative considerate
+<a id="alternative-considerate"></a>
 
-- *Più writer con lock per documento:* maggiore parallelismo dentro la Serie, al costo di
-  lock, deadlock e ordine del WAL da coordinare.
-- *Thread dedicato per Serie:* semplice, ma escluso dalla specifica (non scala con il numero
-  di Serie).
+## Alternatives considered
 
-## Valutazione
+- *Multiple writers with per-document locks:* more parallelism within the Serie, at the cost
+  of locks, deadlocks, and coordination of WAL order.
+- *Dedicated thread per Serie:* simple, but excluded by the specification (does not scale
+  with the number of Serie).
 
-- Rischi: RSK-04.
-- Verifica: SPK-04; [budget](../valutazione/stime-ordine-di-grandezza.md#budget-del-writer-logico).
-- Aperto: livello di isolamento (QA-09); target per Serie o aggregati (QA-26).
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-04.
+- Verification: SPK-04; [budget](../valutazione/stime-ordine-di-grandezza.md#budget-del-writer-logico).
+- Open: isolation level (QA-09); per-Serie or aggregate targets (QA-26).

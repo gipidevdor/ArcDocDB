@@ -1,62 +1,64 @@
-# Routing preallocato dal writer alla Serie
+<a id="routing-preallocato-dal-writer-alla-serie"></a>
 
-Fondazione C1 per REQ-CON-001/002/004/005 e REQ-AFF-008;
-ADR-0005, ADR-0033 e ADR-0045. Il routing connette il writer già
-preso dalla lista pronta al suo [collegamento worker/Serie](worker-serie.md).
-Il [metodo preregistrato](routing-worker-metodo.md), [le decisioni](routing-worker-decisioni.md),
-[la revisione](routing-worker-revisione.md) e [i risultati](routing-worker-risultati.md) delimitano le prove.
+# Preallocated routing from writer to Serie
 
-Il caller assegna all'avvio un `routing-index` immutabile al writer.
-L'indice è locale al registro, da 0 a 65535; `NIL` conserva il contratto
-dei writer esistenti che non usano questo routing. Non esiste un contatore
-globale per attribuire gli indici. Un registro ha da 1 a 65536 associazioni
-dense: il writer nello slot i deve avere indice i. I controller del registro
-sono distinti per identità EQ, così due writer non rappresentano la stessa
-Serie nel medesimo registro. Una sola associazione logica per Serie fra
-registri diversi resta una precondizione di configurazione del caller.
+C1 foundation for REQ-CON-001/002/004/005 and REQ-AFF-008;
+ADR-0005, ADR-0033, and ADR-0045. Routing connects writer already
+claimed from ready list to its [worker/Serie connection](worker-serie.md).
+[Preregistered method](routing-worker-metodo.md), [decisions](routing-worker-decisioni.md),
+[review](routing-worker-revisione.md), and [results](routing-worker-risultati.md) delimit tests.
 
-| API | Contratto |
+Caller assigns immutable `routing-index` to writer at startup.
+Index local to registry, 0 to 65535; `NIL` preserves contract
+of existing writers not using routing. No global counter
+assigns indexes. Registry has 1 to 65536 dense
+associations: writer in slot i must have index i. Registry controllers
+distinct by EQ identity, so two writers do not represent same
+Serie in same registry. One logical association per Serie across
+different registries remains caller configuration precondition.
+
+| API | Contract |
 |---|---|
-| `crea-writer-programmabile :routing-index` | Costruzione all'avvio; indice `NIL` oppure intero nel budget dichiarato. Nessuna attribuzione implicita. |
-| `indice-routing-writer writer` | Legge l'ordinale immutabile, senza assumere obblighi o lease. |
-| `crea-registro-worker-serie writers controllers` | Copia i vettori del caller, valida tipo, lunghezza, ordinali e unicità dei controller; produce un registro condivisibile immutabile. Nessun claim. |
-| `crea-tabella-worker-serie context registro` | Owner corrente, worker IDLE; prealloca un collegamento locale per ogni associazione. Non acquisisce writer o Serie. |
-| `collega-writer-worker-serie tabella` | Worker CLAIMED; seleziona lo slot dell'ordinale corrente, controlla identità writer/contesto e collegamento IDLE, restituisce il collegamento. Nessun begin o pop. |
+| `crea-writer-programmabile :routing-index` | Startup construction; index `NIL` or integer within declared budget. No implicit assignment. |
+| `indice-routing-writer writer` | Reads immutable ordinal, without assuming obligations or lease. |
+| `crea-registro-worker-serie writers controllers` | Copies caller vectors, validates type, length, ordinals, and controller uniqueness; produces immutable shareable registry. No claim. |
+| `crea-tabella-worker-serie context registro` | Current owner, IDLE worker; preallocates local connection per association. Acquires neither writer nor Serie. |
+| `collega-writer-worker-serie tabella` | CLAIMED worker; selects current ordinal's slot, checks writer/context identity and IDLE connection, returns connection. No begin or pop. |
 
-Il registro copia i vettori e mantiene privata la loro rappresentazione:
-modificare gli input dopo la factory non cambia le associazioni. Il registro
-può essere letto da più worker; ciascuno possiede la propria tabella e i propri
-collegamenti sul thread che ha creato il contesto. Nessun collegamento migra
-fra thread. La tabella contiene O(N) collegamenti per worker e deve essere
-contabilizzata nel budget di memoria all'avvio: il limite massimo ammesso
-non è una raccomandazione di dimensionamento.
+Registry copies vectors and keeps representation private:
+changing inputs after factory does not change associations. Registry
+may be read by multiple workers; each owns its own table and
+connections on thread that created context. No connection migrates
+between threads. Table contains O(N) connections per worker and must be
+counted in startup memory budget: allowed maximum
+is not sizing recommendation.
 
-La selezione usa l'ordinale del writer CLAIMED e un solo accesso indicizzato.
-Verifica anche EQ del writer: un writer estraneo con lo stesso numero non
-può selezionare una Serie valida per caso. Dopo un ricircolo a ring pieno il
-worker può avere un altro writer; il caller ripete la selezione sul nuovo
-CLAIMED, senza conservare come corrente il collegamento del tratto precedente.
-Ripetere la selezione finché il collegamento è IDLE restituisce lo stesso
-oggetto e non crea un nuovo obbligo o una seconda capacità.
+Selection uses CLAIMED writer's ordinal and one indexed access.
+Also checks writer EQ: a foreign writer with same number cannot
+accidentally select valid Serie. After full-ring recirculation,
+worker may have another writer; caller repeats selection on new
+CLAIMED, without retaining previous slice's connection as current.
+Repeating selection while connection is IDLE returns same
+object and creates neither new obligation nor second capability.
 
-La selezione riuscita precede `inizia-worker-serie`; pop, ack, chiusura e
-ricircolo usano i contratti già esistenti. Il routing non consulta la salute
-del controller, così resta possibile il drenaggio I/O già consentito su una
-Serie FAULTED. Non trasferisce una lease e non applica i payload.
+Successful selection precedes `inizia-worker-serie`; pop, ack, closure, and
+recirculation use existing contracts. Routing does not consult controller
+health, preserving already-permitted I/O draining on
+FAULTED Serie. Transfers no lease and applies no payload.
 
-Owner estraneo è rifiutato prima del confine, senza avvelenare gli oggetti.
-Fase worker errata resta un rifiuto ordinario. Un ordinale assente o fuori
-tabella, un writer estraneo, una tabella privata incoerente o un collegamento
-già impegnato sono invece difetti della configurazione/protocollo dopo claim:
-il worker diventa FAULTED e conserva writer, home e obbligo, insieme alla
-condizione originale. Nessun controller viene marcato senza una sua lease;
-fermare e coordinare l'Archivio sulla diagnosi resta compito del caller.
-Non sono promessi rollback, pubblicazione, cessione o riuso automatici.
+Foreign owner rejected before boundary, without poisoning objects.
+Incorrect worker phase remains ordinary rejection. Absent or out-of-table
+ordinal, foreign writer, inconsistent private table, or already-engaged
+connection are instead post-claim configuration/protocol defects:
+worker becomes FAULTED and retains writer, home, and obligation with
+original condition. No controller marked without its lease;
+stopping and coordinating Archivio from diagnosis remains caller task.
+No automatic rollback, publication, handoff, or reuse promised.
 
-Il lookup normale è O(1), senza scansioni, hash, allocazioni, scritture
-condivise, thread, attese, callback o I/O. La costruzione è separata dal
-percorso caldo e può usare un hash EQ per verificare i controller distinti.
-La scansione bounded della lista pronta resta O(K), al più 64 partizioni,
-ed è già implementata dal worker. Questo componente non realizza il pool,
-wake/park, admission, adattamento EWMA/AIMD, retirement o shutdown.
-Non introduce cambiamenti durevoli né qualifica il motore completo.
+Normal lookup O(1), without scans, hashing, allocations, shared
+writes, threads, waits, callbacks, or I/O. Construction separate from
+hot path and may use EQ hash to check distinct controllers.
+Bounded ready-list scan remains O(K), at most 64 partitions,
+already implemented by worker. Component implements neither pool,
+wake/park, admission, EWMA/AIMD adaptation, retirement, nor shutdown.
+Introduces no durable changes and does not qualify complete engine.

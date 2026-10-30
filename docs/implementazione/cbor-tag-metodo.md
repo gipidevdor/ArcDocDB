@@ -1,122 +1,132 @@
-# Composizione dei tag CBOR — contratto e metodo
+<a id="composizione-dei-tag-cbor--contratto-e-metodo"></a>
 
-Incremento C1 preregistrato il 2026-10-14, prima del nuovo corpus,
-del prodotto e delle campagne. REQ-CBR-007 deriva da ADR-0014.
-Il tag MT6 contiene un singolo item; il numero wire è unsigned64,
-rappresentato in due parole u32. Riferimento:
+# Composing CBOR tags — contract and method
+
+C1 increment preregistered on 2026-10-14, before the new corpus,
+product, and campaigns. REQ-CBR-007 derives from ADR-0014.
+An MT6 tag contains one item; its wire number is unsigned64,
+represented in two u32 words. Reference:
 [RFC 8949 §3.4](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.4).
 
-## Contratto locale
+<a id="contratto-locale"></a>
+
+## Local contract
 
 ```lisp
 (scrivi-tag-cbor-minimo
  buffer start end source source-start source-end high low space
  :max-bytes 16777216 :max-nodes 16777216 :max-depth 100)
-;; => esattamente NEXT
+;; => exactly NEXT
 ```
 
-BUFFER e SOURCE sono simple u8 con span half-open validi. SOURCE
-contiene esattamente un item strutturale minimo completo ed è non vuoto.
-HIGH e LOW sono parole u32: nessun intero u64 viene ricostruito.
-Si emette la testata MT6 minima (1/2/3/5/9 byte), poi i byte esatti
-del contenuto. Esempio: HIGH0, LOW55799, SOURCE=A0 produce D9 D9 F7 A0.
+BUFFER and SOURCE are simple u8 arrays with valid half-open spans. SOURCE
+contains exactly one complete minimal structural item and is nonempty.
+HIGH and LOW are u32 words: no u64 integer is reconstructed.
+The minimal MT6 header (1/2/3/5/9 bytes) is emitted, then the exact content
+bytes. Example: HIGH0, LOW55799, SOURCE=A0 produces D9 D9 F7 A0.
 
-La primitiva verifica il solo profilo strutturale minimo dello scanner,
-senza interpretare tag applicativi, date, bignum, registro IANA, ordine
-delle chiavi o equivalenza dei valori. Tutti i numeri wire sono ammessi,
-compresi quelli riservati a sentinelle: l'ammissione semantica resta al
-profilo documentale. Non si promette una codifica documentale deterministica.
+The primitive checks only the scanner's minimal structural profile,
+without interpreting application tags, dates, bignums, the IANA registry, key
+order, or value equivalence. All wire numbers are allowed,
+including those reserved for sentinels: semantic admission remains with the
+document profile. Deterministic document encoding is not promised.
 
-BUFFER e SPACE sono esclusivi del chiamante; SOURCE resta stabile ed
-è condivisibile in lettura fra worker con destinazioni e scratch privati.
-BUFFER/SOURCE eq SPACE.KINDS vengono rifiutati. BUFFER=SOURCE è ammesso
-solo se lo span sorgente è disgiunto dal footprint completo [START,NEXT),
-testata inclusa; confini toccanti sono ammessi.
+BUFFER and SPACE are exclusive to the caller; SOURCE remains stable and
+can be shared for reading among workers with private destinations and scratch.
+BUFFER/SOURCE eq SPACE.KINDS are rejected. BUFFER=SOURCE is allowed
+only if the source span is disjoint from the complete footprint [START,NEXT),
+including the header; touching boundaries are allowed.
 
-MAX-BYTES index 0..16 MiB include testata e contenuto; MAX-NODES index
-1..16 MiB include il tag radice e tutti i nodi del contenuto. Il minimo
-è due nodi. MAX-DEPTH index 0..100 conta solo array/map: un tag non
-aggiunge un livello. Si passa MAX-DEPTH invariato allo scanner e
-MAX-NODES-1 come residuo. Un tag su scalare è ammesso a profondità0,
-un tag su array vuoto richiede profondità1. Il picco finale coincide
-con quello del contenuto. I tag dello scanner non aggiungono frame.
+MAX-BYTES index 0..16 MiB includes header and contents; MAX-NODES index
+1..16 MiB includes the root tag and all content nodes. The minimum
+is two nodes. MAX-DEPTH index 0..100 counts only arrays/maps: a tag
+adds no level. MAX-DEPTH is passed unchanged to the scanner, and
+MAX-NODES-1 as the remainder. A tag on a scalar is allowed at depth0;
+a tag on an empty array requires depth1. Final peak matches
+the contents' peak. Scanner tags do not add frames.
 
-Ogni errore pubblico precede la prima scrittura e conserva l'intera
-destinazione fisica e SOURCE. Il preflight conserva lo scratch;
-il parsing fallito può sporcarlo ed è riusabile alla chiamata successiva.
-Dopo successo SPACE descrive il contenuto, senza includere il tag
-emesso nelle proprie statistiche. Solo [START,NEXT) cambia; capacità
-fisica oltre END inutilizzabile. Invariante interno: fail-stop senza rollback.
-Nessun AST, thread, attesa, I/O, pubblicazione durevole o stato globale.
+Every public error precedes the first write and preserves the entire
+physical destination and SOURCE. Preflight preserves scratch;
+failed parsing can dirty it, and it is reusable at the next call.
+After success, SPACE describes the contents, without including the emitted
+tag in its statistics. Only [START,NEXT) changes; physical capacity
+beyond END is unusable. Internal invariant: fail-stop without rollback.
+No AST, threads, waits, I/O, durable publication, or global state.
 
-## Precedenza congelata
+<a id="precedenza-congelata"></a>
 
-Prima di parsing e reset:
+## Frozen precedence
 
-1. Destinazione: INVALID-ARGUMENT :cbor-range, offset NIL.
-2. Sorgente: INVALID-ARGUMENT :cbor-tag-source-range, NIL;
-   span vuoto: INVALID-ARGUMENT :cbor-tag-source-empty, NIL.
-3. HIGH, poi LOW: INVALID-ARGUMENT :cbor-write-high / :cbor-write-low, NIL,
-   riusando la verifica delle parole del writer di testate MT6.
-4. SPACE: INVALID-ARGUMENT :cbor-workspace, poi alias
+Before parsing and reset:
+
+1. Destination: INVALID-ARGUMENT :cbor-range, offset NIL.
+2. Source: INVALID-ARGUMENT :cbor-tag-source-range, NIL;
+   empty span: INVALID-ARGUMENT :cbor-tag-source-empty, NIL.
+3. HIGH, then LOW: INVALID-ARGUMENT :cbor-write-high / :cbor-write-low, NIL,
+   reusing MT6 header-writer word verification.
+4. SPACE: INVALID-ARGUMENT :cbor-workspace, then alias
    INVALID-ARGUMENT :cbor-tag-workspace-alias, NIL.
-5. Limiti: INVALID-ARGUMENT :cbor-byte-limit, :cbor-node-limit,
+5. Limits: INVALID-ARGUMENT :cbor-byte-limit, :cbor-node-limit,
    :cbor-depth-limit, NIL.
-6. SPAN, poi dimensione completa contro MAX-BYTES:
+6. SPAN, then complete size against MAX-BYTES:
    RESOURCE-EXHAUSTED :cbor-tag-byte-budget, NIL.
-7. Dimensione completa contro END-START:
+7. Complete size against END-START:
    RESOURCE-EXHAUSTED :cbor-tag-capacity, NIL.
 8. Overlap: INVALID-ARGUMENT :cbor-tag-overlap, NIL.
-9. Minimo due nodi: RESOURCE-EXHAUSTED :cbor-tag-node-budget, NIL.
-10. Scansione minima completa del contenuto: errori propagati invariati,
-    con offset assoluti SOURCE. Poi testata e copia.
+9. Minimum two nodes: RESOURCE-EXHAUSTED :cbor-tag-node-budget, NIL.
+10. Complete minimal scan of contents: errors propagated unchanged,
+    with absolute SOURCE offsets. Then header and copy.
 
-SPAN<=MAX-BYTES<=16 MiB viene verificato prima della somma o scansione.
-Il lavoro è limitato da SPAN, nodi e stack fisso102 dello scanner.
-Due letture C1 con checklist12 punti e inventario di tutte le decisioni
-precedono la prima compilazione. Nessuna esclusione di copertura.
+SPAN<=MAX-BYTES<=16 MiB is checked before addition or scanning.
+Work is bounded by SPAN, nodes, and the scanner's fixed102 stack.
+Two C1 readings with a 12-point checklist and an inventory of all decisions
+precede first compilation. No coverage exclusion.
 
-## Corpus indipendente
+<a id="corpus-indipendente"></a>
 
-Un autore distinto congela fixture e test prima dei nuovi sorgenti.
-Oracoli freddi per testata MT6, contenuto e interi buffer; scanner
-solo come controllo aggiuntivo. Confini parole/tag0/1/23/24/255/256/
-65535/65536/FFFFFFFF/100000000/FFFFFFFFFFFFFFFF e sentinelle,
-header1/2/3/5/9, source nonzero, float raw minimo, UTF8 e contenitori.
+## Independent corpus
 
-Tipi/range, span vuoto, parole u32, SPACE e alias, tutti i limiti e
-precedenze, capacità esatta/-1, overlap anche solo testata e confini
-toccanti, arità e statistiche scratch. Troncamenti, trailing, UTF8,
-header/float non minimi, tag senza contenuto; catene di tag e residuo
-nodi. Profondità0 su scalare/tag, profondità100/101 di array senza
-addebito del tag. Limite completo16 MiB e superamenti.
-Fuzz1024 con seme54414737, piano freddo fissato dal corpus.
+A separate author freezes fixtures and tests before new sources.
+Cold oracles for MT6 header, contents, and full buffers; scanner
+only as an additional check. Word/tag boundaries0/1/23/24/255/256/
+65535/65536/FFFFFFFF/100000000/FFFFFFFFFFFFFFFF and sentinels,
+header1/2/3/5/9, nonzero source offset, minimal raw floats, UTF8, and containers.
 
-Due worker reali riusati per due ondate di2048 chiamate ciascuno:
-8192 composizioni, SOURCE read-only condiviso, destinazioni/scratch
-privati, READY/GO/DONE, sink, timeout e cleanup limitati.
-Nessuna inferenza di scaling o simultaneità sui core.
+Types/ranges, empty span, u32 words, SPACE and aliases, all limits and
+precedence, exact/-1 capacity, header-only overlap and touching
+boundaries, arity, and scratch statistics. Truncations, trailing data, UTF8,
+nonminimal headers/floats, tags without content; tag chains and remaining
+nodes. Depth0 on scalar/tag, array depth100/101 without
+charging the tag. Complete16 MiB limit and overruns.
+Fuzz1024 with seed54414737, cold plan fixed by the corpus.
 
-## Campagne e conservazione
+Two real workers reused for two waves of2048 calls each:
+8192 compositions, shared read-only SOURCE, private destinations/scratch,
+READY/GO/DONE, sink, bounded timeouts and cleanup.
+No inference of scaling or simultaneous execution on cores.
 
-Sei fixture benchmark fredde: scalare/tag corto, tag24+testo, tag55799+
-mappa vuota, tag65536+array, parola HIGH nonzero+bytes, catena tag+
-contenitore/testo. Cinque repliche x1024 chiamate, warmup64,
-NEXT/interi buffer nel sink. Baseline nulla e controllo positivo16x1MiB;
-criterio locale zero heap osservato, senza soglia di velocità.
+<a id="campagne-e-conservazione"></a>
 
-Otto mutanti compilabili unici: capacità fisica, MT5, parole scambiate,
-scansione omessa, overlap senza testata, radice esclusa dai nodi,
-tag addebitato alla profondità, arità extra. Catalogo prima dell'esecuzione,
-copie/cache private, baseline completa, rilevamento soltanto con smoke
-esatto e funzione nominale del corpus congelato nella traccia, exit1
-e segnale NIL. Warning, compilazioni fallite, guasti helper, segnali
-e fallimenti dopo completamento non valgono come rilevamento.
+## Campaigns and preservation
 
-Driver e fixture congelati con self-test; copertura grezza dei soli
-nuovi sorgenti e decisioni composte, senza attestazione MC/DC.
-Letture indipendenti dei dati e make check integrato prima del push.
-Strumenti Common Lisp (INV-X3), READ-EVAL NIL/EOF, sorgenti/indice/HEAD
-stabili nei comandi registrati. Originali e tentativi preparatori
-preservati; raccolta con quattro worker e inventario chiuso verificato.
-REQ-LIM-001/002 e qualifica C1/MC/DC restano aperti.
+Six cold benchmark fixtures: scalar/short tag, tag24+text, tag55799+
+empty map, tag65536+array, nonzero HIGH word+bytes, tag chain+
+container/text. Five replicates x1024 calls, warmup64,
+NEXT/full buffers in sink. Zero baseline and positive control16x1MiB;
+local criterion of zero observed heap, without a speed threshold.
+
+Eight unique compilable mutants: physical capacity, MT5, swapped words,
+omitted scan, overlap without header, root excluded from nodes,
+tag charged to depth, extra arity. Catalog before execution,
+private copies/caches, full baseline, detection only with exact smoke
+and the frozen corpus's nominal function in the trace, exit1
+and signal NIL. Warnings, failed builds, helper faults, signals,
+and failures after completion do not count as detection.
+
+Drivers and fixtures frozen with self-tests; raw coverage of only
+new sources and compound decisions, without MC/DC attestation.
+Independent data readings and integrated make check before push.
+Common Lisp tools (INV-X3), READ-EVAL NIL/EOF, sources/index/HEAD
+stable in recorded commands. Originals and preparatory attempts
+preserved; collection with four workers and verified closed inventory.
+REQ-LIM-001/002 and C1/MC/DC qualification remain open.

@@ -1,12 +1,14 @@
-# Apertura relativa: letture C1
+<a id="apertura-relativa-letture-c1"></a>
 
-Due letture statiche precedono compilazione ed esecuzione: root e revisore
-distinto sul prodotto; root e autore dei test sul collegamento e sulle
-asserzioni C4. Il [metodo preregistrato](io-apertura-relativa-metodo.md)
-definisce OR-D01…D10 prima delle prove. Nessun rilievo di flusso rimane
-aperto; la rilettura ha completato le condizioni dichiarate nelle docstring.
+# Relative opening: C1 readings
 
-Fonti finali del prodotto, SHA-256:
+Two static readings precede compilation and execution: root and a distinct
+reviewer on product; root and test author on connection and C4
+assertions. The [preregistered method](io-apertura-relativa-metodo.md)
+defines OR-D01…D10 before tests. No flow finding remains
+open; rereading completed conditions declared in docstrings.
+
+Final product sources, SHA-256:
 
 | File in `src/io/` | SHA-256 |
 |---|---|
@@ -15,34 +17,34 @@ Fonti finali del prodotto, SHA-256:
 | `types.lisp` | `a934f29924bd798ebb0aeb3ba7e75c23abc188820c8e78b3a35a6ed8796423d5` |
 | `package.lisp` | `758e9ea9d232d5d3f56d9b1e4aa9ea3d6044dbaa5b6af06c8f4506542ad83bca` |
 
-| Punto della checklist C1 | Lettura statica |
+| C1 checklist item | Static reading |
 |---|---|
-| 1. Requisiti e ADR | REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018, REQ-FOR-001; ADR-0017/0033/0035/0040 e COD-37 coerenti |
-| 2. Invarianti | INV-A7/A9/A10, INV-P6/X3; casi su parent, byte, identità, frontiere e cleanup |
-| 3. Errori | Tipi e provenienza espliciti; test di condizione originaria, syscall e doppio guasto; close nonzero anche con errno NIL |
-| 4. Cicli e attese | Nessun ciclo di prodotto nuovo; nome limitato a 255 byte; syscall nel pool I/O senza deadline wall |
-| 5. Heap | Apertura con allocazioni ammesse e foglia limitata; nessuna misura del percorso caldo o RSS dichiarata |
-| 6. Confini | FD e tuple validati prima della pubblicazione; FD 0 ammesso, alias parent rifiutato; EOF non ristretto prima del budget |
-| 7. Decisioni | OR-D01…D10; copertura dinamica e MC/DC restano distinte dalla lettura |
-| 8. Ownership | Parent borrowed; copia e child privati prima di openat; handoff protetto; un solo cleanup del child anche con parent invalidato |
-| 9. Tracciabilità e check | Riferimenti presenti; rigenerazione matrice e `make check` richiesti sul commit congelato, esiti registrati separatamente |
-| 10. Regole | ftype, safety 3, docstring e funzioni sotto 60 righe; nessun handler generico di prodotto o dipendenza nuova |
-| 11. Parallelismo | Nessun lock, attesa o scrittura condivisa fra Serie; controller proprietario del namespace e delle capacità |
-| 12. Durability | Nessuna modifica durevole o eliminazione; EOF osservato distinto dalle frontiere valide/committed/durable |
+| 1. Requirements and ADRs | REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018, REQ-FOR-001; ADR-0017/0033/0035/0040 and COD-37 consistent |
+| 2. Invariants | INV-A7/A9/A10, INV-P6/X3; cases on parent, bytes, identity, frontiers, and cleanup |
+| 3. Errors | Explicit types and provenance; tests of original condition, syscall, and double failure; nonzero close even with errno NIL |
+| 4. Loops and waits | No new product loop; name bounded to 255 bytes; syscalls in I/O pool without wall deadline |
+| 5. Heap | Opening allows allocations and bounded leaf; no hot-path or RSS measurement claimed |
+| 6. Boundaries | FD and tuples validated before publication; FD 0 allowed, parent alias rejected; EOF not narrowed before budget |
+| 7. Decisions | OR-D01…D10; dynamic coverage and MC/DC remain distinct from reading |
+| 8. Ownership | Borrowed parent; private copy and child before openat; protected handoff; one child cleanup even with invalidated parent |
+| 9. Traceability and checks | References present; matrix regeneration and `make check` required on frozen commit, outcomes recorded separately |
+| 10. Rules | ftype, safety 3, docstrings, and functions under 60 lines; no generic product handler or new dependency |
+| 11. Parallelism | No lock, wait, or shared write between Serie; controller owns namespace and capabilities |
+| 12. Durability | No durable change or deletion; observed EOF distinct from valid/committed/durable frontiers |
 
-Il confronto di device/inode conserva componenti signed e unsigned a 64 bit.
-L'EOF può essere zero o un intero grande: valori negativi/non interi sono
-rifiutati, quelli eccessivi producono un errore di risorsa prima di ogni
-restringimento. Callback mancanti non attivano un fallback nativo.
+Device/inode comparison preserves signed and unsigned 64-bit components.
+EOF may be zero or a large integer: negative/noninteger values are
+rejected; excessive values produce a resource error before any
+narrowing. Missing callbacks do not enable native fallback.
 
-Le callback sono fidate. Il controller impedisce mutazioni del namespace,
-modifiche del file e chiusure concorrenti. Le finestre senza interrupt
-proteggono handoff e cleanup; non definiscono cancellazione asincrona.
-Uscite non locali estranee tentano cleanup una volta, senza allegare alla
-causa l'errno secondario; errori estranei nella callback di close restano
-fuori protocollo. Le deadline C4 sono cooperative.
+Callbacks are trusted. The controller prevents namespace mutation,
+file modification, and concurrent closes. Interrupt-free windows
+protect handoff and cleanup; they do not define asynchronous cancellation.
+Unrelated nonlocal exits attempt cleanup once, without attaching
+secondary errno to the cause; unrelated errors in the close callback remain
+outside protocol. C4 deadlines are cooperative.
 
-La fixture verticale passa EOF e capacità della stessa apertura ai reader
-CONTROL, decision log e ACTIVE; bootstrap, output e coordinamento restano
-C4. Questa lettura non attesta qualifica C1 completa, MC/DC, mutation
-testing dei nuovi percorsi, prestazioni o un Recovery Manager completo.
+The vertical fixture passes EOF and capability from the same opening to
+CONTROL, decision-log, and ACTIVE readers; bootstrap, output, and coordination remain
+C4. This reading does not establish full C1 qualification, MC/DC, mutation
+testing of new paths, performance, or a complete Recovery Manager.

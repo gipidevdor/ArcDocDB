@@ -1,35 +1,41 @@
-# Orizzonte dei commit: integrazione del registro unico
+<a id="orizzonte-dei-commit-integrazione-del-registro-unico"></a>
 
-L'implementazione attiva del registro CSN è
-[`arcdocdb.csn`](../../src/csn/registry.lisp), descritta nel
-[contratto canonico](csn.md). Il [collegamento snapshot](snapshot-csn.md)
-usa quell'unico registro dell'Archivio. Gli snapshot e i writer non possono
-assegnare versioni attraverso due sequenze indipendenti.
+# Commit horizon: single-registry integration
 
-La prima implementazione di questo ramo in `arcdocdb.mvcc` è stata rimossa
-prima del rilascio. Il modulo MVCC contiene ora solo snapshot, i loro budget
-ed il collegamento all'API pubblica CSN. Nessun formato o ADR cambia.
+Active CSN-registry implementation is
+[`arcdocdb.csn`](../../src/csn/registry.lisp), described in the
+[canonical contract](csn.md). The [snapshot connection](snapshot-csn.md)
+uses that single Archivio registry. Snapshots and writers cannot
+assign versions through two independent sequences.
 
-## Adeguamento delle chiamate
+This branch's first implementation in `arcdocdb.mvcc` was removed
+before release. MVCC module now contains only snapshots, their budgets,
+and connection to public CSN API. No format or ADR changes.
 
-| Prima implementazione del ramo | Interfaccia attiva |
+<a id="adeguamento-delle-chiamate"></a>
+
+## Updating calls
+
+| First branch implementation | Active interface |
 |---|---|
-| `mvcc:crea-registro-csn` con capacità/base | `csn:crea-registro-csn :capacity :initial-high :initial-low`; base validata dal recovery. |
-| Prenotazione e `mvcc:riserva-csn` | `csn:prendi-csn` restituisce slot/high/low; il contesto di commit conserva questi valori insieme al registro. |
-| `mvcc:concludi-csn` | `csn:risolvi-csn` riceve il token originale dopo pubblicazione o annullamento corretti. |
-| `mvcc:leggi-orizzonte` | `csn:leggi-frontiere-csn`: ultimo-high/low e H-high/low nello stesso campione. |
-| `mvcc:orizzonte-raggiunto-p` | Gli snapshot usano il collegamento al campione canonico, senza accedere ai campi privati CSN. |
-| Salute del vecchio registro | Il confine dell'Archivio gestisce il guasto CSN, invalida gli snapshot e isola il dominio. |
+| `mvcc:crea-registro-csn` with capacity/base | `csn:crea-registro-csn :capacity :initial-high :initial-low`; recovery-validated base. |
+| Reservation and `mvcc:riserva-csn` | `csn:prendi-csn` returns slot/high/low; commit context retains these values together with registry. |
+| `mvcc:concludi-csn` | `csn:risolvi-csn` receives original token after correct publication or cancellation. |
+| `mvcc:leggi-orizzonte` | `csn:leggi-frontiere-csn`: ultimo-high/low and H-high/low in same sample. |
+| `mvcc:orizzonte-raggiunto-p` | Snapshots use connection to canonical sample, without accessing private CSN fields. |
+| Old registry health | Archivio boundary handles CSN fault, invalidates snapshots, and isolates domain. |
 
-Non esistono alias che permettano di costruire il vecchio registro.
-Le API numeriche high/low non sono capability per input esterno; il token
-resta legato al registro dell'Archivio. Un GET corrente non consulta CSN.
+No aliases permit constructing old registry.
+Numeric high/low APIs are not capabilities for external input; token
+remains bound to Archivio registry. A current GET does not consult CSN.
 
-## Conservazione delle evidenze
+<a id="conservazione-delle-evidenze"></a>
 
-La campagna iniziale di sola compilazione e controlli statici resta integra
-nel [catalogo storico](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-csn-origine/catalogo.lisp).
-I report sono stati spostati senza cambiarne i byte, distinguendoli dalla
-[campagna del registro canonico](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-csn/catalogo.lisp).
-Le implementazioni precedenti restano nella cronologia Git. La conservazione
-non promuove i vecchi controlli statici a qualifica concorrente.
+## Evidence preservation
+
+Initial compilation-only and static-check campaign remains intact
+in the [historical catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-csn-origine/catalogo.lisp).
+Reports were moved without changing bytes, distinguishing them from the
+[canonical-registry campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-csn/catalogo.lisp).
+Previous implementations remain in Git history. Preservation
+does not promote old static checks to concurrent qualification.

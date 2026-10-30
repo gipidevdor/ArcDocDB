@@ -1,142 +1,164 @@
-# ADR-0043 — Primary index a frammenti: directory estendibile, slot a quattro parole, chiavi locali
+<a id="adr-0043--primary-index-a-frammenti-directory-estendibile-slot-a-quattro-parole-chiavi-locali"></a>
 
-> **Revisione:** [ADR-0048](0048-limiti-documentali-e-formato-v2.md) sostituisce i limiti documentali e il layout v2 pertinenti. Il testo seguente conserva la decisione storica v1.
+# ADR-0043 — Fragmented primary index: extensible directory, four-word slots, local keys
 
-- **Stato:** Accettata (capacità del frammento tarabile da SPK-01;
-  pubblicazione e costi della directory precisati da [ADR-0050](0050-pubblicazione-e-costi-della-directory.md))
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda; realizza «Index» (Swiss Table, strutture
-  compatte, nessun oggetto per entry). **Sostituisce in parte**
-  [ADR-0015](0015-primary-index-swiss-table-swmr.md) (tabella unica, key arena,
-  ridimensionamento), [ADR-0032](0032-seqlock-a-64-bit.md) punto 2 (layout dello slot),
-  [ADR-0016](0016-epoch-based-reclamation.md) (ambito dell'EBR) e
-  [ADR-0024](0024-memoria-e-gc.md) punto 3 (crescita per sostituzione dell'intera struttura).
-  Restano: un writer e reader senza lock, seqlock a 64 bit con tentativi limitati e ripiego
-  sul writer, versioni trattenute, rilocazione condizionale, indice come dato derivato.
-- **Riferimenti:** [analisi progettuale](../analisi-progettuale.md) AP-12, AP-16;
-  [architettura](../architettura.md#primary-index); [limiti](../limiti.md); INV-I1, INV-I3,
+> **Revision:** [ADR-0048](0048-limiti-documentali-e-formato-v2.md) supersedes the relevant document limits and v2 layout. The text below preserves the historical v1 decision.
+
+- **Status:** Accepted (fragment capacity tunable through SPK-01;
+  directory publication and costs clarified by [ADR-0050](0050-pubblicazione-e-costi-della-directory.md))
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment; implements "Index" (Swiss Table, compact
+  structures, no object per entry). **Partially supersedes**
+  [ADR-0015](0015-primary-index-swiss-table-swmr.md) (single table, key arena,
+  resizing), [ADR-0032](0032-seqlock-a-64-bit.md) item 2 (slot layout),
+  [ADR-0016](0016-epoch-based-reclamation.md) (EBR scope), and
+  [ADR-0024](0024-memoria-e-gc.md) item 3 (growth by replacing the entire structure).
+  These remain: one writer and readers without locks, 64-bit seqlock with bounded attempts and fallback
+  to the writer, retained versions, conditional relocation, index as derived data.
+- **References:** [design analysis](../analisi-progettuale.md) AP-12, AP-16;
+  [architecture](../architettura.md#primary-index); [limits](../limiti.md); INV-I1, INV-I3,
   INV-A8
 
-## Contesto
+<a id="contesto"></a>
 
-Una tabella unica che cresce per raddoppio ha tre difetti che l'analisi rende espliciti
-(AP-12): durante la copia servono vecchia e nuova tabella insieme, cioè il **triplo** della
-vecchia; il writer della Serie resta fermo per tutta la copia; lo spazio degli slot e delle
-chiavi eliminate non si recupera mai, perché la key arena è solo in aggiunta. Su una Serie
-grande il primo difetto rende il raddoppio impossibile entro la RAM, il secondo ferma le
-scritture per secondi, il terzo viola INV-A8.
+## Context
 
-## Decisione
+A single table that grows by doubling has three defects made explicit by the analysis
+(AP-12): copying requires the old and new tables together, **three times** the size of the
+old one; the Serie writer stops for the entire copy; space for deleted slots and
+keys is never reclaimed because the key arena is append-only. For a large Serie,
+the first defect makes doubling impossible within RAM, the second stops
+writes for seconds, and the third violates INV-A8.
 
-### 1. Struttura
+<a id="decisione"></a>
+
+## Decision
+
+<a id="1-struttura"></a>
+
+### 1. Structure
 
 ```
-Serie ──▶ directory (vettore di 2^G riferimenti) ──▶ frammento
-                                                      ├─ ctrl   : byte di controllo (uno per slot)
-                                                      ├─ slots  : 4 parole da 64 bit per slot, contigue
-                                                      └─ chiavi : byte delle chiavi, in aggiunta
+Serie ──▶ directory (vector of 2^G references) ──▶ fragment
+                                                      ├─ ctrl   : control bytes (one per slot)
+                                                      ├─ slots  : 4 contiguous 64-bit words per slot
+                                                      └─ keys   : additional key bytes
 ```
 
-- **Hashing estendibile.** I `G` bit alti dell'hash a 64 bit scelgono la voce della
-  directory; più voci possono indicare lo stesso frammento (profondità locale ≤ `G`).
-- **Frammento**: tabella Swiss di capacità fissa `C` slot (default **8.192**: l'array degli
-  slot supera la soglia degli oggetti grandi del collector, che quindi non lo copia), con un
-  byte di controllo per slot e sondaggio per gruppi. Fattore di carico massimo 7/8.
-- **Slot: 4 parole contigue** nello stesso array (32 byte: due slot per linea di cache).
+- **Extendible hashing.** The top `G` bits of the 64-bit hash select the
+  directory entry; multiple entries may point to the same fragment (local depth ≤ `G`).
+- **Fragment**: Swiss Table with a fixed capacity of `C` slots (default **8.192**: the slot
+  array exceeds the collector's large-object threshold, so it is not copied), with one
+  control byte per slot and group probing. Maximum load factor 7/8.
+- **Slot: 4 contiguous words** in the same array (32 bytes: two slots per cache line).
 
-  | Parola | Contenuto |
+  | Word | Contents |
   |---|---|
-  | 0 | CSN della versione corrente (è la versione, [ADR-0038](0038-orizzonte-di-visibilita.md)) |
+  | 0 | CSN of the current version (it is the version, [ADR-0038](0038-orizzonte-di-visibilita.md)) |
   | 1 | segment-id (32) · offset (32) |
-  | 2 | key-off (24) · key-len (8) · lunghezza del record (24) · flag (8) |
-  | 3 | contatore seqlock (64) |
+  | 2 | key-off (24) · key-len (8) · record length (24) · flags (8) |
+  | 3 | seqlock counter (64) |
 
-  L'hash non sta nello slot: i 7 bit del byte di controllo filtrano, il confronto della chiave
-  decide, e alla divisione l'hash si ricalcola dalle chiavi.
-- **Chiavi locali**: ogni frammento ha la propria area di chiavi, in aggiunta, immutabile dopo
-  la pubblicazione dello slot che vi punta; cresce per sostituzione dell'array.
+  The hash is not in the slot: the control byte's 7 bits filter, key comparison
+  decides, and splitting recalculates hashes from keys.
+- **Local keys**: each fragment has its own append-only key area, immutable after
+  publication of the slot pointing to it; it grows by array replacement.
 
-### 2. Crescita e pulizia: una divisione alla volta (INV-I3)
+<a id="2-crescita-e-pulizia-una-divisione-alla-volta-inv-i3"></a>
 
-Quando un frammento raggiunge il fattore di carico massimo, il writer ne costruisce **due**
-nuovi ridistribuendo le entry vive sul bit successivo dell'hash, e pubblica i riferimenti
-nella directory. Se la profondità locale è già `G`, prima raddoppia la directory (copia di
-riferimenti). La divisione copia solo entry vive: slot eliminati e chiavi non più
-referenziate **non sopravvivono**. Un frammento con molti slot eliminati o con l'area chiavi
-piena di chiavi morte, o il cui contatore seqlock più alto si avvicina alla soglia di
-[ADR-0032](0032-seqlock-a-64-bit.md), viene **ricostruito** allo stesso modo senza dividersi:
-il fail-stop per il contatore diventa una ricostruzione.
+### 2. Growth and cleanup: one split at a time (INV-I3)
 
-Costo massimo di una qualsiasi manutenzione dell'indice: la copia di `C` slot. Memoria
-transitoria: due frammenti. Profondità massima della directory dichiarata; oltre, rifiuto
-esplicito (INV-A8).
+When a fragment reaches its maximum load factor, the writer builds **two**
+new fragments, redistributing live entries on the next hash bit, and publishes their references
+in the directory. If local depth is already `G`, it first doubles the directory (copying
+references). A split copies only live entries: deleted slots and keys no longer
+referenced **do not survive**. A fragment with many deleted slots or a key area
+full of dead keys, or whose highest seqlock counter approaches the threshold in
+[ADR-0032](0032-seqlock-a-64-bit.md), is **rebuilt** in the same way without splitting:
+counter fail-stop becomes a rebuild.
 
-### 3. Concorrenza
+Maximum cost of any index maintenance: copying `C` slots. Transient
+memory: two fragments. Directory maximum depth is declared; beyond it, explicit rejection
+(INV-A8).
 
-- **Reader**: legge il riferimento alla directory, poi al frammento, poi sonda i gruppi; ogni
-  slot è letto con il protocollo seqlock di ADR-0032 (lettura del contatore, dei campi, di
-  nuovo del contatore). Un reader che ha già preso il riferimento a un frammento poi
-  sostituito legge uno stato **congelato e coerente**: il writer non modifica più un
-  frammento dopo averlo sostituito. La lettura è linearizzabile nell'istante in cui il
-  riferimento è stato letto.
-- **Byte di controllo**: passano da vuoto a occupato, da occupato a eliminato, da eliminato a
-  occupato; **mai di nuovo a vuoto** dentro la vita di un frammento. Così un sondaggio non si
-  ferma mai prima di uno slot che esisteva quando è partito.
-- **Writer**: scrive la chiave nell'area chiavi; poi lo slot (contatore dispari, campi,
-  contatore pari); poi il byte di controllo. All'eliminazione: slot marcato libero (flag)
-  sotto seqlock, poi byte di controllo.
-- **Area chiavi**: il reader ne legge il riferimento **dopo** aver letto lo slot; poiché il
-  writer pubblica un'area più grande prima di scrivere lo slot che vi punta, l'area letta
-  contiene sempre la chiave.
+<a id="3-concorrenza"></a>
 
-### 4. Una struttura, tre usi
+### 3. Concurrency
 
-La stessa tabella a frammenti, con larghezza dello slot parametrica, realizza:
+- **Reader**: reads the directory reference, then the fragment reference, then probes groups; each
+  slot is read with ADR-0032's seqlock protocol (read counter, fields,
+  counter again). A reader that already obtained a reference to a fragment subsequently
+  replaced reads a **frozen, consistent** state: the writer no longer modifies a
+  fragment after replacing it. The read is linearizable at the instant the
+  reference was read.
+- **Control bytes**: transition from empty to occupied, occupied to deleted, deleted to
+  occupied; **never back to empty** within a fragment's lifetime. A probe therefore never
+  stops before a slot that existed when it began.
+- **Writer**: writes the key into the key area; then the slot (odd counter, fields,
+  even counter); then the control byte. On deletion: slot marked free (flag)
+  under seqlock, then control byte.
+- **Key area**: the reader reads its reference **after** reading the slot; since the
+  writer publishes a larger area before writing the slot pointing to it, the area read
+  always contains the key.
 
-| Uso | Slot | Letta da |
+<a id="4-una-struttura-tre-usi"></a>
+
+### 4. One structure, three uses
+
+The same fragmented table, with parameterized slot width, implements:
+
+| Use | Slot | Read by |
 |---|---|---|
-| indice primario | 4 parole | tutti i reader |
-| versioni trattenute (più entry per chiave; in più: CSN di fine validità) | 5 parole | reader con snapshot |
-| versioni in sospeso: lotti non pubblicati e intenti ([ADR-0037](0037-lotto-sigillato.md), [ADR-0041](0041-multiserie-segmenti-autosufficienti.md)) | 4 parole | solo il writer |
+| primary index | 4 words | all readers |
+| retained versions (multiple entries per key; additionally: validity-end CSN) | 5 words | snapshot readers |
+| pending versions: unpublished batches and intents ([ADR-0037](0037-lotto-sigillato.md), [ADR-0041](0041-multiserie-segmenti-autosufficienti.md)) | 4 words | writer only |
 
-Una sola struttura concorrente di classe C1 da modellare, provare e sottoporre a mutazione.
+A single C1 concurrent structure to model, test, and mutation-test.
 
-### 5. Chi ritira che cosa
+<a id="5-chi-ritira-che-cosa"></a>
 
-Directory e frammenti sostituiti sono oggetti dello heap: restano vivi finché un reader li
-referenzia e poi li recupera il **garbage collector**. L'epoch-based reclamation di ADR-0016
-governa solo le **risorse esterne**: descrittori e file dei segmenti rimossi.
+### 5. Who retires what
 
-Pattern: tabella Swiss (Abseil) dentro una directory a hashing estendibile con divisione di
-una tabella alla volta (mappe di Go dalla versione 1.24; Fagin et al. 1979); seqlock (kernel
-Linux).
+Replaced directories and fragments are heap objects: they remain live while a reader
+references them, then the **garbage collector** reclaims them. ADR-0016's epoch-based reclamation
+governs only **external resources**: descriptors and removed-segment files.
 
-## Conseguenze
+Patterns: Swiss Table (Abseil) within an extendible-hashing directory with one-table-at-a-time
+splitting (Go maps from version 1.24; Fagin et al. 1979); seqlock (Linux
+kernel).
 
-- Nessuna pausa del writer proporzionale alla dimensione della Serie; nessun picco di memoria.
-- Memoria: 33 byte per slot. A riempimento massimo ~38 byte per documento più la chiave;
-  subito dopo una divisione il doppio. La media attesa è nell'ordine di **75–80 byte per
-  documento** con `_id` da 16 byte: è una **stima**, da misurare (SPK-01). La cifra «56 byte»
-  dei documenti precedenti valeva solo nell'istante prima di un raddoppio.
-- Un salto di riferimento in più per lookup (directory → frammento), su strutture piccole e
-  calde.
-- I frammenti sono allocazioni del writer: rare, grandi, non sul percorso dei reader. Il
-  tasso di allocazione dovuto alle divisioni entra nelle misure di SPK-02.
+<a id="conseguenze"></a>
 
-## Alternative considerate
+## Consequences
 
-- *Tabella unica con raddoppio (ADR-0015):* picco di memoria e fermo del writer.
-- *Raddoppio incrementale con due tabelle vive:* ogni lookup può dover guardare due tabelle;
-  resta un'unica allocazione enorme.
-- *Slot a 8 parole con la chiave in linea:* una linea di cache per lookup con gli `_id`
-  generati, ma due rappresentazioni della chiave da verificare.
-- *EBR anche per i frammenti:* un secondo meccanismo per ciò che il collector fa già.
+- No writer pause proportional to Serie size; no memory spike.
+- Memory: 33 bytes per slot. At maximum occupancy, ~38 bytes per document plus the key;
+  immediately after a split, twice that. The expected average is around **75–80 bytes per
+  document** with 16-byte `_id`: this is an **estimate**, to be measured (SPK-01). The "56 bytes" figure
+  in earlier documents applied only at the instant before doubling.
+- One extra reference hop per lookup (directory → fragment), through small, hot
+  structures.
+- Fragments are writer allocations: rare, large, outside the reader path. The
+  allocation rate due to splits is included in SPK-02 measurements.
 
-## Valutazione
+<a id="alternative-considerate"></a>
 
-- Rischi: RSK-02, RSK-07.
-- Verifica: SPK-01 (lookup e inserimenti al secondo, byte per documento misurati, durata
-  della divisione, correttezza sotto stress con divisioni continue); modello del seqlock e
-  della divisione in SPK-07; test differenziale contro una tabella di riferimento.
-- Rivedere se: la durata di una divisione o il costo del salto in più portano il lookup sotto
-  i minimi di [ADR-0028](0028-target-e-obiettivi-di-latenza.md).
+## Alternatives considered
+
+- *Single table with doubling (ADR-0015):* memory spike and writer pause.
+- *Incremental doubling with two live tables:* each lookup may need to inspect two tables;
+  a single huge allocation remains.
+- *8-word slots with inline key:* one cache line per lookup with generated `_id`,
+  but two key representations to verify.
+- *EBR for fragments too:* a second mechanism for what the collector already does.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-02, RSK-07.
+- Verification: SPK-01 (lookups and inserts per second, measured bytes per document, split
+  duration, correctness under stress with continuous splitting); seqlock and
+  split model in SPK-07; differential test against a reference table.
+- Reconsider if: split duration or the extra-hop cost brings lookup below
+  the minimums in [ADR-0028](0028-target-e-obiettivi-di-latenza.md).

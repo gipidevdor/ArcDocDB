@@ -1,94 +1,104 @@
-# Presa dei lavori governata dal pool
+<a id="presa-dei-lavori-governata-dal-pool"></a>
 
-`arcdocdb.scheduler:prendi-writer-pool` collega l'attivazione logica del
-[pool](pool-worker-lifecycle.md) alla presa di un writer dalla lista pronta.
-È un incremento C3 di REQ-THR-001, REQ-CON-001/002/004/005 e REQ-AFF-008:
-governa quando chiamare la barriera C1 esistente, senza sostituirla.
-Il [metodo preregistrato](pool-worker-claim-metodo.md) delimita le prove.
+# Pool-governed work acquisition
 
-## API e proprietà
+`arcdocdb.scheduler:prendi-writer-pool` connects logical activation of the
+[pool](pool-worker-lifecycle.md) to writer acquisition from the ready list.
+C3 increment for REQ-THR-001, REQ-CON-001/002/004/005, and REQ-AFF-008:
+it governs when to call existing C1 barrier without replacing it.
+The [preregistered method](pool-worker-claim-metodo.md) bounds tests.
 
-La funzione riceve soltanto la `porta-worker-pool`: usa il contesto immutabile
-associato alla porta, evitando una coppia porta/contesto estranea. La chiamata
-appartiene al proprietario del worker, non è rientrante e avviene tra compiti
-a completamento, senza epoca di lettura o risorse esterne ancora acquisite.
-Il contesto deve essere IDLE e completamente libero.
+<a id="api-e-proprietà"></a>
 
-Restituisce quattro valori:
+## API and ownership
 
-| Valore | Significato |
+Function receives only `porta-worker-pool`: it uses the port's immutable
+associated context, avoiding a foreign port/context pair. Call
+belongs to worker owner, is non-reentrant, and occurs between run-to-completion
+tasks, without read epoch or external resources still acquired.
+Context must be IDLE and completely free.
+
+Returns four values:
+
+| Value | Meaning |
 |---|---|
-| writer oppure NIL | Obbligo assunto soltanto con `:claimed`. |
-| `:claimed`, `:empty`, `:busy`, `:inactive` | Esito della presa; i primi tre sono quelli dell'API execution. |
-| cursore | Cursore restituito da execution se attivo; cursore conservato se inattivo. |
-| azione lifecycle | Conferma applicata o `:unchanged`; il dominio dichiarato conserva quello di `applica-stato-worker-pool`. |
+| writer or NIL | Obligation assumed only with `:claimed`. |
+| `:claimed`, `:empty`, `:busy`, `:inactive` | Acquisition outcome; first three from execution API. |
+| cursor | Execution-returned cursor when active; retained cursor when inactive. |
+| lifecycle action | Applied acknowledgment or `:unchanged`; declared domain retains that of `applica-stato-worker-pool`. |
 
-Il chiamante usa questa API per ogni nuova presa dal pool. Le API execution
-dirette restano disponibili per i loro contratti; non consultano una porta.
-Il nuovo gate non può impedire a un caller che lo aggira di prendere lavoro.
-Il [dispatcher pool/Serie](pool-dispatch.md) lega questa porta alla tabella
-del medesimo contesto e restituisce il collegamento del writer appena preso.
+Caller uses this API for every new pool acquisition. Direct execution
+APIs stay available under their contracts; they consult no port.
+New gate cannot prevent a bypassing caller from taking work.
+[Pool/Serie dispatcher](pool-dispatch.md) binds this port to the same
+context's table and returns just-acquired writer's link.
 
-## Ordine del passo
+<a id="ordine-del-passo"></a>
 
-1. Verifica il proprietario della porta.
-2. Legge la fase execution e rifiuta ogni fase diversa da IDLE, compreso
-   FAULTED, prima di leggere le lease di un compito in corso.
-3. Esegue in sola lettura il verificatore C1 completo `%richiedi-worker :idle`.
-   Un esito lifecycle `:unchanged` da solo non prova IDLE né salute.
-4. Applica l'eventuale comando di attivazione o ritiro sull'owner reale.
-5. Se attivo, delega un solo `execution:prendi-writer-worker`. Se inattivo,
-   restituisce NIL, `:inactive` e il cursore corrente, senza interrogare
-   i ring, acquisire guardie, scansionare o modificare la lista pronta.
+## Step order
 
-La barriera C1 del punto 3 legge comunque la forma immutabile di ready e
-verifica i riferimenti alle partizioni del contesto. Non legge head, tail,
-count o slots del ring, non acquisisce una guardia e non cerca lavoro.
+1. Check port owner.
+2. Read execution phase and reject every non-IDLE phase, including
+   FAULTED, before reading an ongoing task's leases.
+3. Run complete C1 verifier `%richiedi-worker :idle` read-only.
+   Lifecycle `:unchanged` alone proves neither IDLE nor health.
+4. Apply any activation/retirement command on actual owner.
+5. If active, delegate one `execution:prendi-writer-worker`. If inactive,
+   return NIL, `:inactive`, and current cursor without querying
+   rings, acquiring guards, scanning, or modifying ready list.
 
-Il solo trasferimento di un obbligo rimane nell'API C1. Nessun campo writer,
-lease, batch, Serie o ready viene scritto direttamente dal nuovo componente.
-I controlli C3 restano fuori dal confine `%passo-worker`: un difetto della
-porta non introduce una nuova scrittura di fault nel contesto C1.
-La presa delegata conserva invece il suo confine e la diagnosi originaria.
+C1 barrier in item 3 still reads immutable ready shape and
+checks context partition references. It reads no ring head, tail,
+count, or slots, acquires no guard, and searches no work.
 
-## Ritiro e compiti in corso
+Only obligation transfer remains in C1 API. New component directly
+writes no writer, lease, batch, Serie, or ready field.
+C3 checks stay outside `%passo-worker`: a port defect
+introduces no new fault write in C1 context.
+Delegated acquisition retains its boundary and original diagnosis.
 
-Una richiesta di ritiro osservata al passo IDLE viene confermata prima del
-polling di ready: anche con lavoro pronto il worker non assume un nuovo obbligo.
-Una richiesta arrivata dopo la lettura active può lasciare partire quel singolo
-claim. Rimane pendente finché il worker completa il compito e torna a IDLE;
-la conferma non è anticipata né revocata.
+<a id="ritiro-e-compiti-in-corso"></a>
 
-Pop, conferma dei payload, chiusura del bridge Serie, ricircolo, cessione e
-adozione mantengono i contratti esistenti e non sono sottoposti a questo gate.
-Un RESCHEDULE deve pubblicare o trasferire l'obbligo unico prima del ritiro.
-Il ricircolo a ring pieno può assegnare subito un altro writer CLAIMED: il
-worker completa anche quell'obbligo, selezionando di nuovo il routing. Non
-si promette convergenza del ritiro sotto saturazione perpetua del ring.
-EMPTY e BUSY sono osservazioni locali, senza prova di quiescenza globale.
+## Retirement and ongoing tasks
 
-La conferma di un comando lifecycle resta valida se la successiva presa
-delegata fallisce. Non si fa rollback dell'ACK, non si azzerano generazioni
-e il conteggio active continua a rappresentare attivazioni logiche, non salute.
-Il coordinatore deve gestire la diagnosi del worker e l'Archivio.
+Retirement request observed at IDLE step is acknowledged before ready
+polling: even with ready work, worker assumes no new obligation.
+A request arriving after active read may allow that single
+claim to start. It stays pending until worker completes task and returns IDLE;
+acknowledgment is neither premature nor revoked.
 
-## Rifiuti e costo
+Pop, payload acknowledgment, Serie bridge closure, recycling, handoff,
+and adoption retain existing contracts and are not subject to this gate.
+RESCHEDULE must publish or transfer its single obligation before retirement.
+Full-ring recycling may immediately assign another CLAIMED writer:
+worker completes that obligation too, reselecting routing. Retirement
+convergence under perpetual ring saturation is not promised.
+EMPTY/BUSY are local observations without global quiescence proof.
 
-Owner della porta estraneo: `invalid-argument :pool-worker-owner`.
-Fase diversa da IDLE: `resource-exhausted :worker-state`, conservando fase,
-prima causa, riferimenti, lease, batch, cursore e parole del pool.
-Un IDLE incoerente fallisce nella barriera C1 prima di qualunque ACK o pop.
-Parole o CAS del pool incoerenti propagano il rifiuto del lifecycle prima
-della presa. Le condizioni della presa delegata restano quelle di execution.
-Non ci sono retry, cleanup o handler che nascondano un errore.
+Lifecycle-command acknowledgment remains valid if subsequent delegated
+acquisition fails. ACK is not rolled back, generations not cleared,
+and active count still represents logical activations, not health.
+Coordinator must handle worker diagnosis and Archivio.
 
-Il gate è O(1), oltre ai verificatori C1 bounded. Solo il ramo attivo aggiunge
-la scansione ready esistente O(K), con K massimo 64. Non introduce hash,
-allocazioni intenzionali, callback, thread, attese o contatori globali.
-Le conferme condivise avvengono per ondata, e ready usa le proprie partizioni.
-Il passo non sospende un compito, secondo ADR-0045.
+<a id="rifiuti-e-costo"></a>
 
-Il componente integra la presa logica, non il dispatcher completo del server.
-Avvio graduale, park/wake persistente, sensori, coordinamento Archivio,
-admission dei messaggi, worker morti e arresto fisico restano da realizzare.
-REQ-THR-001 e QA-12/19 restano aperti a livello del motore completo.
+## Rejections and cost
+
+Foreign port owner: `invalid-argument :pool-worker-owner`.
+Non-IDLE phase: `resource-exhausted :worker-state`, preserving phase,
+first cause, references, lease, batch, cursor, and pool words.
+Inconsistent IDLE fails in C1 barrier before any ACK or pop.
+Inconsistent pool words/CAS propagate lifecycle rejection before
+acquisition. Delegated acquisition conditions remain execution's.
+No retries, cleanup, or error-hiding handlers.
+
+Gate is O(1) beyond bounded C1 verifiers. Only active branch adds
+existing O(K) ready scan, K maximum 64. It introduces no hash,
+intentional allocations, callbacks, threads, waits, or global counters.
+Shared acknowledgments occur per wave; ready uses its partitions.
+Step does not suspend a task, under ADR-0045.
+
+Component integrates logical acquisition, not complete server dispatcher.
+Gradual startup, persistent park/wake, sensors, Archivio coordination,
+message admission, dead workers, and physical shutdown remain to implement.
+REQ-THR-001 and QA-12/19 remain open for complete engine.

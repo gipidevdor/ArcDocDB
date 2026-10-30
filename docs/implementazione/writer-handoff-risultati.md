@@ -1,66 +1,76 @@
-# Risultati della consegna locale dei writer
+<a id="risultati-della-consegna-locale-dei-writer"></a>
 
-Campagna locale 2026-10-09, macOS ARM64/Apple M4, SBCL 2.6.9, safety 3.
-Base delle prove mirate `85a4e05`; verifica integrata sulla base aggiornata
-`4215fca`, che aggiunge la conservazione compatta delle evidenze senza
-modificare il codice execution. Sorgenti e test coincidono byte per byte
-tra workspace e copia verificata. Il carico esterno non è controllato.
+# Local writer handoff results
 
-## Correttezza e fault injection
+Local campaign on 2026-10-09, macOS ARM64/Apple M4, SBCL 2.6.9, safety 3.
+Targeted test base `85a4e05`; integrated verification on updated base
+`4215fca`, which adds compact evidence retention without
+changing execution code. Sources and tests match byte for byte
+between workspace and verified copy. External load is uncontrolled.
 
-Le 17 prove nuove, insieme alle 17 precedenti delle code, superano la
-compilazione forzata senza warning/style-warning. L'oracolo a liste FIFO
-verifica 7200 operazioni su nove configurazioni finite; controlla ogni count,
-payload, span, quota ed obbligo di scheduling senza leggere il ring.
+<a id="correttezza-e-fault-injection"></a>
 
-Le fixture esercitano entrambi gli ordini dell'accettazione rispetto al
-termine vuoto, conclusione anticipata, backlog, quota cumulativa e nuova
-ondata. Full/busy, gettoni vecchi/estranei, target invalidi e generazione
-esaurita conservano le proprietà dichiarate. Sette stati incoerenti e i
-tre helper senza guard/guard estranea sono provati tramite FI privata.
+## Correctness and fault injection
 
-Quattro thread reali sono riusati su sei ondate, 36 messaggi e due Serie,
-con producer ancora aperti durante il consumo. B termina tratti mentre A
-mantiene guard e lease. Due ulteriori worker si passano otto tratti su
-quattro ondate. Le attese appartengono alle fixture, con timeout e rilancio
-degli errori. Non viene introdotto o qualificato un pool del prodotto.
+The 17 new tests, together with the 17 previous queue tests, pass
+forced compilation without warning/style-warning. The FIFO list oracle
+checks 7200 operations over nine finite configurations; it checks every count,
+payload, span, quantum, and scheduling obligation without reading the ring.
 
-## Copertura e mutazioni
+Fixtures exercise both acceptance orderings relative to
+empty end, early completion, backlog, cumulative quantum, and a new
+wave. Full/busy, old/foreign tokens, invalid targets, and exhausted
+generation preserve the stated properties. Seven inconsistent states and
+the three helpers without a guard/with a foreign guard are tested through private FI.
 
-| File execution | Espressioni raw | Esiti di ramo raw |
+Four real threads are reused over six waves, 36 messages, and two Serie,
+with producers still open during consumption. B completes slices while A
+holds guard and lease. Two additional workers hand off eight slices over
+four waves. Waits belong to the fixtures, with timeouts and rethrowing
+errors. No product pool is introduced or qualified.
+
+<a id="copertura-e-mutazioni"></a>
+
+## Coverage and mutations
+
+| Execution file | Raw expressions | Raw branch outcomes |
 |---|---:|---:|
 | package | 0/1 | 0/0 |
 | queue | 142/184 | 24/34 |
 | writer | 190/218 | 36/44 |
 | handoff | 173/190 | 16/16 |
-| Totale | 505/593 | 76/94 |
+| Total | 505/593 | 76/94 |
 
-Le 17 espressioni non marcate del nuovo modulo comprendono dichiarazioni,
-default e quattro forme del ramo otherwise difensivo; tutti i 16 esiti
-strumentati sono marcati. L'[inventario](writer-handoff-decisioni.md#copertura-raw-osservata)
-conserva anche le lacune legacy. Nessuna esclusione approvata o MC/DC completa.
-Il ricalcolo indipendente dei vettori raw coincide con l'indice HTML.
+The new module's 17 unmarked expressions include declarations,
+defaults, and four forms in the defensive otherwise branch; all 16
+instrumented outcomes are marked. The [inventory](writer-handoff-decisioni.md#copertura-raw-osservata)
+also retains the legacy gaps. No approved exclusions or complete MC/DC.
+Independent recalculation of the raw vectors matches the HTML index.
 
-La baseline di mutazione compila e supera tutti i 34 test execution.
-Sedici mutanti compilano e sono rilevati: otto del protocollo di consegna,
-otto delle primitive delegate e del refactor. Zero sopravvissuti, zero
-compilation-failure, zero guasti prima dei test. Il punteggio riguarda
-il set preregistrato, non tutti i possibili difetti.
+The mutation baseline compiles and passes all 34 execution tests.
+Sixteen mutants compile and are detected: eight in the handoff protocol,
+eight in delegated primitives and the refactor. Zero survivors, zero
+compilation-failure, zero failures before tests. The score concerns
+the preregistered set, not all possible defects.
 
-## Allocazioni osservate
+<a id="allocazioni-osservate"></a>
 
-| Percorso preallocato | Campioni × cicli | Heap osservato | Sink per campione |
+## Observed allocations
+
+| Preallocated path | Samples × cycles | Observed heap | Sink per sample |
 |---|---:|---:|---:|
-| Capacity 1, quantum 2, termine vuoto | 5 × 4096 | 0 byte in ciascuno | 8.669.184 |
-| Capacity 32, quantum 16, backlog e riaccodamento | 5 × 4096 | 0 byte in ciascuno | 23.246.848 |
+| Capacity 1, quantum 2, empty end | 5 × 4096 | 0 bytes in each | 8,669,184 |
+| Capacity 32, quantum 16, backlog and requeue | 5 × 4096 | 0 bytes in each | 23,246,848 |
 
-Warmup di 128 cicli e GC fuori dal contatore. Fixture, parsing, compilazione
-e report sono esclusi; controlli e risposte delle API sono inclusi.
-Il controllo positivo rileva 16.777.472 byte su 16 MiB deliberatamente
-allocati. Nessuna misura di speedup, throughput, P99 o garanzia universale
-di assenza di allocazioni; errori e integrazione dello scheduler non misurati.
+Warmup of 128 cycles and GC outside the counter. Fixtures, parsing, compilation,
+and reports are excluded; API checks and responses are included.
+The positive control detects 16,777,472 bytes from 16 MiB deliberately
+allocated. No measurement of speedup, throughput, P99, or universal guarantee
+of no allocations; errors and scheduler integration not measured.
 
-## Riproduzione ed evidenze
+<a id="riproduzione-ed-evidenze"></a>
+
+## Reproduction and evidence
 
 ```sh
 make test
@@ -72,32 +82,32 @@ sbcl --script tools/writer-handoff-bench.lisp --bench altra-directory-nuova/
 make check
 ```
 
-Per conservare provenance e output, usare `tools/record-command.lisp --`
-prima del comando. Il [catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/catalogo.lisp)
-comprende record dei processi, raw della copertura, log baseline/mutanti,
-misure, self-test, tentativi falliti e sorgenti degli adattatori temporanei.
-La [revisione](writer-handoff-revisione.md) conserva le due letture C1.
-Il [contratto](writer-handoff.md) delimita l'obbligo locale: scheduling,
-risvegli, shutdown e controller adattivo richiedono ancora integrazione.
+To retain provenance and output, use `tools/record-command.lisp --`
+before the command. The [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/catalogo.lisp)
+includes process records, raw coverage, baseline/mutant logs,
+measurements, self-tests, failed attempts, and sources of temporary adapters.
+The [review](writer-handoff-revisione.md) retains both C1 readings.
+The [contract](writer-handoff.md) bounds the local obligation: scheduling,
+wakeups, shutdown, and adaptive controller still require integration.
 
-La verifica integrata `make check` supera 203 test dei sei moduli più lo
-smoke, linter (38 file, zero violazioni), tracciabilità (114 requisiti,
-65 invarianti, 13 FI e 52 ADR), link, evidenze e dieci spike. Il record
-[check integrato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/check-integrato.lisp)
-è `:ok`, exit 0 e sorgenti `:stable`; la
-[campagna spike](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/spikes-integrati.lisp)
-conserva tutti i figli nel solo master, compresso senza perdita, senza
-duplicarne i report. Le aggiunte editoriali successive sono verificate
-con link e cataloghi; codice e test restano quelli della verifica completa.
+Integrated `make check` passes 203 tests across six modules plus
+smoke, linter (38 files, zero violations), traceability (114 requirements,
+65 invariants, 13 FI, and 52 ADR), links, evidence, and ten spikes. The
+[integrated check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/check-integrato.lisp)
+record is `:ok`, exit 0, and sources `:stable`; the
+[spike campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff/spikes-integrati.lisp)
+retains all children only in the master, compressed losslessly, without
+duplicating their reports. Subsequent editorial additions are checked
+with links and catalogs; code and tests remain those of the full verification.
 
 
-La successiva integrazione con `7f8ca93` conserva anche il nuovo codec UTF-8.
-La [verifica finale su main](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/check-integrato.lisp)
-passa con 220 test dei sette moduli più smoke (26 foundation, 17 codec,
-34 execution, 44 storage, 18 I/O, 62 recovery, 19 WAL), zero avvisi,
-40 file nel linter senza violazioni e la stessa tracciabilità. I dieci spike
-sono conservati nel [master finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/spikes-integrati.lisp)
-con payload compresso e hash verificati. Questo secondo
-[catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/catalogo.lisp)
-conserva il wrapper, il check completo e l’appendice di integrazione;
-i raw della campagna mirata e della precedente verifica restano intatti.
+The subsequent integration with `7f8ca93` also retains the new UTF-8 codec.
+The [final check on main](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/check-integrato.lisp)
+passes with 220 tests across seven modules plus smoke (26 foundation, 17 codec,
+34 execution, 44 storage, 18 I/O, 62 recovery, 19 WAL), zero warnings,
+40 files in the linter without violations, and the same traceability. The ten spikes
+are retained in the [final master](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/spikes-integrati.lisp)
+with compressed payload and verified hashes. This second
+[catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-handoff-main/catalogo.lisp)
+retains the wrapper, full check, and integration appendix;
+raw data from the targeted campaign and previous verification remain intact.

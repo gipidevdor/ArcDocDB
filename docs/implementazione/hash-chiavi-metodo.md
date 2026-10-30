@@ -1,200 +1,212 @@
-# Hash delle chiavi: contratto e metodo C4
+<a id="hash-delle-chiavi-contratto-e-metodo-c4"></a>
 
-Preregistrazione del 2026-10-11 per
-[key-hash-bench.lisp](../../tools/key-hash-bench.lisp), secondo COD-60/61
-degli [standard di codifica](../affidabilita/standard-di-codifica.md).
-Questo documento fissa prove da eseguire soltanto su istruzione del parent,
-dopo il freeze dei sorgenti. L'implementazione del driver e la sua compilazione
-non costituiscono risultati di performance. Il parent possiede `src/hash` e
-l'integrazione ASDF; questo lavoro interessa soltanto il driver e il metodo.
+# Key hashing: contract and C4 method
 
-## Algoritmo e API fissata
+Preregistration on 2026-10-11 for
+[key-hash-bench.lisp](../../tools/key-hash-bench.lisp), under COD-60/61
+of the [coding standards](../affidabilita/standard-di-codifica.md).
+This document fixes tests to run only on the parent's instruction,
+after source freeze. Driver implementation and compilation
+are not performance results. The parent owns `src/hash` and
+ASDF integration; this work concerns only the driver and method.
 
-La fonte normativa è la sezione **XXH64 Algorithm Description** della
-[specifica ufficiale xxHash v0.8.3](https://raw.githubusercontent.com/Cyan4973/xxHash/v0.8.3/doc/xxhash_spec.md).
-Si usa XXH64 originale: aritmetica modulo 2^64, lane little-endian,
-stripe di 32 byte con quattro accumulatori, convergenza, aggiunta della
-lunghezza, code da 8/4/1 byte e avalanche finale. Il valore canonico completo
-ha ordine big-endian; la API restituisce separatamente le due parole.
+<a id="algoritmo-e-api-fissata"></a>
+
+## Algorithm and fixed API
+
+The normative source is **XXH64 Algorithm Description** in the
+[official xxHash v0.8.3 specification](https://raw.githubusercontent.com/Cyan4973/xxHash/v0.8.3/doc/xxhash_spec.md).
+Use original XXH64: arithmetic modulo 2^64, little-endian lanes,
+32-byte stripes with four accumulators, convergence, length
+addition, 8/4/1-byte tails, and final avalanche. The complete canonical
+value is big-endian; the API returns the two words separately.
 
 ```lisp
 (arcdocdb.hash64:xxh64 buffer start end seed-high seed-low)
-;; => ESATTAMENTE due valori: high u32, low u32
+;; => EXACTLY two values: high u32, low u32
 (ftype (function (t t t t t)
                  (values (unsigned-byte 32) (unsigned-byte 32) &optional))
        arcdocdb.hash64:xxh64)
 ```
 
-`buffer` è un vettore semplice specializzato u8. `start` ed `end` sono
-interi fixnum non negativi. Lo span è `[start,end)`, di **0..65535 byte**,
-inclusi i due estremi: il vuoto è ammesso dalla primitiva hash. I seed
-sono due u32 espliciti; matematicamente `seed = seed-high × 2^32 + seed-low`.
-Analogamente il digest è `high × 2^32 + low`. Tutti gli u32 restituiti sono
-fixnum immediati su SBCL64. Non si restituiscono un u64 boxed, una lista,
-un oggetto risultato o valori aggiuntivi, neppure NIL.
+`buffer` is a simple specialized u8 vector. `start` and `end` are
+nonnegative fixnum integers. Span is `[start,end)`, **0..65535 bytes**,
+both extremes included: the hash primitive permits empty input. Seeds
+are two explicit u32s; mathematically `seed = seed-high × 2^32 + seed-low`.
+Likewise digest is `high × 2^32 + low`. All returned u32s are
+immediate fixnums on SBCL64. No boxed u64, list,
+result object, or additional values are returned, even NIL.
 
-Il percorso di successo non conserva stato e non modifica alcun byte del
-buffer. Heap previsto nella finestra seriale: **zero**, senza sottrarre una
-baseline. I rifiuti precedono il kernel, nell'ordine seguente:
+The success path retains no state and modifies no buffer
+byte. Expected heap inside serial windows: **zero**, without subtracting a
+baseline. Rejections precede the kernel in this order:
 
-| Controllo | Condizione e reason |
+| Check | Condition and reason |
 |---|---|
-| Tipo del buffer, tipo/segno/fixnum degli indici, seed u32 | `INVALID-ARGUMENT :hash-arguments` |
+| Buffer type, index type/sign/fixnum, u32 seeds | `INVALID-ARGUMENT :hash-arguments` |
 | `check-range`: `0 <= start <= end <= length(buffer)` | `INVALID-ARGUMENT :buffer-range` |
-| `end - start > 65535`, dopo un range valido | `INVALID-ARGUMENT :hash-span-limit` |
+| `end - start > 65535`, after valid range | `INVALID-ARGUMENT :hash-span-limit` |
 
-L'FTYPE pubblico accetta cinque `t`: gli argomenti errati raggiungono i
-controlli espliciti e la condizione prevista. Il driver verifica l'FTYPE
-registrato da SBCL dopo ASDF e usa chiamate generiche nelle fixture negative.
+Public FTYPE accepts five `t` arguments: wrong arguments reach
+explicit checks and the expected condition. The driver checks FTYPE
+registered by SBCL after ASDF and uses generic calls in negative fixtures.
 
-XXH64 è [non crittografico](https://raw.githubusercontent.com/Cyan4973/xxHash/v0.8.3/doc/xxhash_spec.md):
-non promette protezione da collisioni intenzionali o input ostili. Il seed
-esplicito consente ripetibilità e isolamento del chiamante; generazione,
-persistenza, distribuzione e rotazione dei seed del database restano lavoro
-futuro. Queste prove non qualificano l'integrazione nel database, il confronto
-di chiavi dopo collisioni, throughput DB o prestazioni di storage/NVMe.
+XXH64 is [noncryptographic](https://raw.githubusercontent.com/Cyan4973/xxHash/v0.8.3/doc/xxhash_spec.md):
+it promises no protection against intentional collisions or hostile inputs. Explicit
+seed allows repeatability and caller isolation; generation,
+persistence, distribution, and rotation of database seeds remain future
+work. These tests do not qualify database integration, key comparison
+after collisions, DB throughput, or storage/NVMe performance.
 
-## Caricamento, CLI e budget finiti
+<a id="caricamento-cli-e-budget-finiti"></a>
 
-Prima di **qualsiasi clock**, compresi quelli del sensore, il driver carica
-il sistema RUN `arcdocdb` con `asdf:load-asd` e `asdf:load-system :force t`.
-Avvisi e fallimenti di compilazione del prodotto causano un errore. Il
-processo deve essere SBCL64 senza SB-COVER; la raccolta coverage è disabilitata.
-I simboli del prodotto sono risolti con `find-symbol` soltanto dopo il load.
-Non viene caricata la suite di test ASDF.
+## Loading, CLI, and finite budgets
 
-| Invocazione | Lavoro |
+Before **any clock**, including sensor clocks, the driver loads
+RUN system `arcdocdb` with `asdf:load-asd` and `asdf:load-system :force t`.
+Product compilation warnings and failures cause an error. The
+process must be SBCL64 without SB-COVER; coverage collection is disabled.
+Product symbols are resolved with `find-symbol` only after load.
+The ASDF test suite is not loaded.
+
+| Invocation | Work |
 |---|---|
-| `--self-test DIR/` | Sensore, metriche negative, alias/freeze/rilettura e fixture funzionali cold |
-| `--negative-fixture DIR/` | Metrica senza `:completed`; report `:failed`, uscita **1** |
-| `--bench DIR/ [--parallel] [count]` | Autoverifica e matrice seriale; con flag anche matrice 1/2/4 worker |
+| `--self-test DIR/` | Sensor, negative metrics, alias/freeze/rereading and cold functional fixtures |
+| `--negative-fixture DIR/` | Metric without `:completed`; `:failed` report, exit **1** |
+| `--bench DIR/ [--parallel] [count]` | Self-verification and serial matrix; with flag, 1/2/4-worker matrix too |
 
-`DIR/` è obbligatoria e deve terminare con `/`. Un percorso relativo è
-risolto dalla radice del worktree del driver. `mkdir` crea una directory
-esclusiva 0700; un percorso esistente, anche vuoto, viene rifiutato.
-`count` è un intero decimale **20000..100000**, default **20000**.
-I due argomenti facoltativi del benchmark possono apparire in qualunque
-ordine, una sola volta. Nessuna campagna parte senza un modo CLI.
+`DIR/` is mandatory and must end in `/`. A relative path is
+resolved from the driver's worktree root. `mkdir` creates an exclusive
+0700 directory; an existing path, even empty, is rejected.
+`count` is a decimal integer **20000..100000**, default **20000**.
+The two optional benchmark arguments may appear in either
+order, once only. No campaign starts without a CLI mode.
 
-La matrice comprende **0, 1, 7, 8, 16, 31, 32, 33, 64, 256, 1024, 65535**
-byte, con seed zero e massimo u64 (`#xffffffff`, `#xffffffff`). Ogni
-configurazione ha cinque repliche. I conteggi sono determinati dalla
-lunghezza, mai dai tempi osservati:
+The matrix includes **0, 1, 7, 8, 16, 31, 32, 33, 64, 256, 1024, 65535**
+bytes, with zero seed and maximum u64 seed (`#xffffffff`, `#xffffffff`). Every
+configuration has five replicates. Counts are determined by
+length, never observed times:
 
-| Lunghezze | Divisore | Iterazioni con count=20000 | maxIters con count=100000 |
+| Lengths | Divisor | Iterations with count=20000 | maxIters with count=100000 |
 |---|---:|---:|---:|
-| 0..64 della matrice | 1 | 20000 | 100000 |
+| 0..64 in matrix | 1 | 20000 | 100000 |
 | 256 | 4 | 5000 | 25000 |
 | 1024 | 16 | 1250 | 6250 |
 | 65535 | 1024 | 20 | 98 |
 
-Formula: `ceiling(count/divisore)`; warmup per replica e worker:
-`min(256, iterazioni)`. Il report conserva questi conteggi e i massimi
-preregistrati. Il benchmark seriale produce **120** metriche; il parallelo
-aggiunge **360** metriche di gruppo, con **840** risultati worker annidati.
-Non si aumentano automaticamente le iterazioni quando il clock è poco risoluto.
+Formula: `ceiling(count/divisore)`; warmup per replicate and worker:
+`min(256, iterazioni)`. The report retains these counts and preregistered
+maximums. Serial benchmark produces **120** metrics; parallel
+adds **360** group metrics with **840** nested worker results.
+Iterations are not automatically increased when clock resolution is low.
 
-## Fixture, oracolo e finestre seriali
+<a id="fixture-oracolo-e-finestre-seriali"></a>
 
-Ogni replica prepara un buffer semplice lungo `lunghezza+8`, con tre byte
-di prefisso e cinque di suffisso: lo span principale parte da offset 3.
-Il byte all'indice `i` vale `(131*i + floor(i/251) + 17*worker) mod 256`.
-Si conserva una copia dell'intero buffer, incluso il padding.
+## Fixtures, oracle, and serial windows
 
-L'oracolo cold è una traduzione indipendente della specifica in interi CL
-generici, con maschere modulo 2^64. Non usa helper né risultati del prodotto.
-Può allocare bignum **fuori misura**. Tre anchor statici con seed zero
-controllano anche l'oracolo: vuoto `EF46DB3751D8E999`, `a`
+Every replicate prepares a simple buffer of length `lunghezza+8`, with three
+prefix bytes and five suffix bytes: the main span starts at offset 3.
+Byte at index `i` is `(131*i + floor(i/251) + 17*worker) mod 256`.
+A copy of the entire buffer, including padding, is retained.
+
+The cold oracle is an independent specification translation using generic
+CL integers with modulo 2^64 masks. It uses neither product helpers nor results.
+It may allocate bignums **outside measurement**. Three static zero-seed anchors
+also check the oracle: empty `EF46DB3751D8E999`, `a`
 `D24EC4F1A98C6E5B`, `abc` `44BC2CF5AD770999`.
 
-L'autoverifica controlla 24 fixture principali, le riprova in ordine
-inverso per rilevare stato residuo, esercita 24 span con offset 0/1/8 sulle
-lunghezze 0/32/33/65535 e due vettori realmente vuoti. Verifica l'esatto
-numero dei valori restituiti con `multiple-value-call`, senza MV-LIST.
-Le 26 fixture di rifiuto coprono buffer non semplici/non u8, indici
-negativi/frazionari/float/bignum, seed invalidi, range invertiti o fuori
-buffer, limite di span e precedenza fra controlli.
+Self-verification checks 24 main fixtures, retries them in reverse
+order to detect residual state, exercises 24 spans with offsets 0/1/8 on
+lengths 0/32/33/65535, and two truly empty vectors. It checks exact
+return-value count with `multiple-value-call`, without MV-LIST.
+The 26 rejection fixtures cover non-simple/non-u8 buffers,
+negative/fractional/float/bignum indices, invalid seeds, reversed or out-of-buffer
+ranges, span limit, and check precedence.
 
-Per ogni replica il driver verifica la fixture, esegue warmup, ricontrolla
-digest e buffer, effettua GC completo, poi apre la finestra. Una hash reale
-per iterazione restituisce due u32, confrontati con le parole attese e
-conservati nei sink; il completamento è aggiornato con contatori fixnum.
-Il tempo include chiamata, validazione dell'API, confronto e aggiornamento
-dei contatori. Nel clock non si creano liste di valori multipli, digest u64
-boxed, fixture o rapporti; non si esegue l'oracolo né GC esplicito.
+For every replicate the driver verifies the fixture, runs warmup, rechecks
+digest and buffer, performs full GC, then opens the window. One actual hash
+per iteration returns two u32s, compared with expected words and
+retained in sinks; completion updates with fixnum counters.
+Time includes call, API validation, comparison, and counter
+updates. No multiple-value lists, boxed u64 digests,
+fixtures, or reports are created inside the clock; neither oracle nor explicit GC runs.
 
-Dopo il clock, il driver ricalcola il digest indipendente sulla copia,
-ricontrolla la chiamata e confronta tutti i byte. Il gate seriale esige
-heap dell'intero processo **esattamente zero** in tutte le 120 finestre.
-Ogni ritorno nel kernel è confrontato: gli errori non possono cancellarsi
-in un sink XOR su un numero pari di iterazioni.
+After the clock, the driver recalculates the independent digest on the copy,
+rechecks the call, and compares every byte. Serial gate requires
+whole-process heap **exactly zero** in all 120 windows.
+Every kernel return is compared: errors cannot cancel out
+in an XOR sink over an even iteration count.
 
-## Parallelismo e metriche
+<a id="parallelismo-e-metriche"></a>
 
-Ogni worker possiede buffer, copia, seed, raw e sink distinti. Per il
-worker `w`, a partire dalla parola base zero o `#xffffffff`, i seed sono:
-`high = base XOR ((w * #x9e3779b1) mod 2^32)` e
-`low = base XOR ((w * #x85ebca77) mod 2^32)`. Il worker zero coincide
-con la fixture seriale; gli altri hanno byte e seed diversi.
+## Parallelism and metrics
 
-Il main verifica le fixture prima di creare i thread. Ciascun worker
-esegue warmup e verifica cold, segnala ready e attende start per al massimo
-30 secondi. Un'unica deadline assoluta di 30 secondi limita ready/join
-della replica. Un solo GC precede l'apertura del gate. Il cleanup termina
-soltanto i thread del driver ancora vivi e limita ogni join a due secondi
-(al massimo quattro thread). Errori, readiness e join sono catturati nel
-report; il main legge raw soltanto dopo quiescenza. Un timeout rimane un
-fallimento anche se il cleanup riesce.
+Each worker owns separate buffer, copy, seed, raw data, and sinks. For
+worker `w`, starting from base word zero or `#xffffffff`, seeds are:
+`high = base XOR ((w * #x9e3779b1) mod 2^32)` and
+`low = base XOR ((w * #x85ebca77) mod 2^32)`. Worker zero matches
+the serial fixture; others have different bytes and seeds.
 
-Il contatore `get-bytes-consed` è **globale del processo**. Nel parallelo
-lo legge soltanto il main, da prima dello start a dopo i join: include
-l'orchestrazione. Nessuna misura heap per worker viene sommata. I tick
-locali worker sono diagnostici; le rate di gruppo usano tempo globale,
-somma delle chiamate completate e somma dei byte hashati. Il parallelo
-non riceve il gate seriale zero heap.
+Main verifies fixtures before creating threads. Every worker
+runs warmup and cold verification, signals ready, and waits for start for at most
+30 seconds. One absolute 30-second deadline bounds ready/join
+for the replicate. Only one GC precedes gate opening. Cleanup terminates
+only still-live driver threads and limits every join to two seconds
+(at most four threads). Errors, readiness, and joins are captured in the
+report; main reads raw data only after quiescence. Timeout remains a
+failure even if cleanup succeeds.
 
-Le metriche schema 1 conservano kind, workload, status, lunghezza, seed,
-replica, worker, iterazioni richieste/completate, byte, heap, tick originali,
-secondi, qualità temporale, sink/attesi, immutabilità e diagnostica.
+Counter `get-bytes-consed` is **process-global**. In parallel,
+only main reads it, from before start until after joins: it includes
+orchestration. No per-worker heap measurements are summed. Local worker
+ticks are diagnostic; group rates use global time,
+sum of completed calls, and sum of bytes hashed. Parallel work
+does not receive the serial zero-heap gate.
+
+Schema 1 metrics retain kind, workload, status, length, seed,
+replicate, worker, requested/completed iterations, bytes, heap, original ticks,
+seconds, time quality, sinks/expected values, immutability, and diagnostics.
 `ns/call = secondi * 1e9 / chiamate`; `byte/sec = byte / secondi`.
-Per span vuoto i byte sono zero. Con zero tick: `:below-resolution`,
-secondi zero e **entrambe le rate NIL**, presenti nello schema.
-Non si inventano velocità, non si sottrae la baseline e non si fissano
-soglie di prestazione, scaling o p99. Il carico esterno resta incontrollato.
+For an empty span bytes are zero. With zero ticks: `:below-resolution`,
+zero seconds, and **both rates NIL**, present in schema.
+No invented speed, baseline subtraction, or performance,
+scaling, or p99 thresholds. External load remains uncontrolled.
 
-## Sensore, freeze e persistenza
+<a id="sensore-freeze-e-persistenza"></a>
 
-Il sensore impone zero heap su 20000 cicli vuoti. Il controllo positivo
-alloca **quattro vettori u8 da 1 MiB**, li trattiene fino alla verifica e
-richiede almeno 4194304 byte osservati. Nessun dato del sensore è una
-prestazione della hash. Le fixture dello strumento rimuovono ogni campo
-obbligatorio, iniettano 12 metriche negative, rifiutano heap positivo al
-gate zero e verificano stato fallito/codice 1 su completamento mancante.
+## Sensor, freeze, and persistence
 
-`:metrics` esiste dall'inizio. La pubblicazione copia cons e stringhe:
-gli alias alla testa del report vedono i nuovi record, ma le modifiche
-successive del produttore a sottoliste/stringhe non alterano le copie.
-Il report di successo deve avere tutte le identità delle repliche in
-ordine, nessun duplicato e conteggi esatti. Un run fallito conserva le
-metriche raccolte, anche la metrica deliberatamente incompleta.
+The sensor requires zero heap on 20000 empty cycles. Positive control
+allocates **four 1 MiB u8 vectors**, retains them until verification, and
+requires at least 4194304 observed bytes. No sensor data is hash
+performance. Tool fixtures remove every mandatory
+field, inject 12 negative metrics, reject positive heap at the zero
+gate, and check failed status/code 1 for missing completion.
 
-Prima della compilazione RUN, il driver fotografa SHA-256 dei sorgenti
-ASDF, dell'ASD, del driver, del lettore evidence e di questo metodo; verifica
-la stessa fotografia dopo il load e alla fine del run. La fotografia è
-nel report. Il parent congela questi sorgenti prima della campagna e
-registra i comandi tramite [record-command.lisp](../../tools/record-command.lisp).
+`:metrics` exists from the start. Publication copies conses and strings:
+aliases to the report head see new records, but subsequent producer
+changes to sublists/strings do not alter copies.
+A successful report must have all replicate identities in
+order, no duplicates, and exact counts. A failed run retains
+collected metrics, including the deliberately incomplete metric.
 
-`self-test-sensor.lisp` e `report.lisp` sono snapshot scritti **una sola
-volta**, con `:if-exists :error`, nella directory esclusiva. Entrambi sono
-riletti con [evidence-storage.lisp](../../tools/evidence-storage.lisp),
-senza valutare Lisp dai dati, confrontati integralmente e validati di nuovo.
-Ogni errore dà una diagnostica con file/regola e uscita non nulla;
-un errore di persistenza/rilettura resta un fallimento del processo.
-Un'interruzione improvvisa può lasciare una directory senza report finale:
-la sua sola esistenza non prova successo.
+Before RUN compilation, the driver snapshots SHA-256 of ASDF sources,
+ASD, driver, evidence reader, and this method; it checks
+the same snapshot after load and at run end. The snapshot is
+in the report. The parent freezes these sources before the campaign and
+records commands through [record-command.lisp](../../tools/record-command.lisp).
 
-Comandi preregistrati, **da eseguire soltanto su istruzione del parent**,
-dalla radice del worktree, ciascuno con directory nuova:
+`self-test-sensor.lisp` and `report.lisp` are snapshots written **once
+only**, with `:if-exists :error`, in the exclusive directory. Both are
+reread through [evidence-storage.lisp](../../tools/evidence-storage.lisp),
+without evaluating Lisp from data, compared in full, and validated again.
+Every error gives a file/rule diagnostic and nonzero exit;
+a persistence/rereading error remains process failure.
+Abrupt interruption may leave a directory without a final report:
+existence alone does not prove success.
+
+Preregistered commands, **to run only on the parent's instruction**,
+from the worktree root, each with a new directory:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/key-hash-bench.lisp --self-test spikes/out/key-hash-self-test/

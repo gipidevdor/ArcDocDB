@@ -1,60 +1,64 @@
-# PUT full text — metodo di verifica e decisioni
+<a id="put-full-text--metodo-di-verifica-e-decisioni"></a>
 
-Metodo del 17 ottobre 2026, prima delle prove: ADR-0054, REQ-SEC-003/006/010,
-REQ-WAL-005 e REQ-CON-002. Una cornice privata posseduta, creata dal codec esistente,
-fornisce il valore a tutti i task e gli stessi byte all'append del lotto.
+# Full-text PUT — verification method and decisions
 
-Fixture: Message-ID NNTP come chiave opaca, CBOR subject/body di 25 byte congelati,
-confronto completo del record con encoder indipendente, prefissi/suffissi sentinella.
-Mutare key/value del caller dopo l'avvio deve lasciare invariati run e WAL.
-Versioni v1/v2, ordinario/prepared e TXID u64 massimo in due parole; SEAL successivo
-deve ristampare solo gli ordinari. Bordi di memoria/lavoro/formato/capacita batch,
-rifiuti senza costi trasferiti, cancellazione prima dell'append, token stale e incarnazioni.
+Method dated October 17, 2026, before tests: ADR-0054, REQ-SEC-003/006/010,
+REQ-WAL-005, and REQ-CON-002. A private owned frame, created by existing codec,
+supplies value to all tasks and the same bytes to batch append.
 
-Heap: 100 warm-up con preparazione/prenotazione/copia/cancellazione, GC completa,
-poi 1000 preparazioni/prenotazioni/copie/append/query su lotti preallocati;
-misure distinte dalla copertura strumentata.
-Quattro contesti privati possono condividere solo configurazioni readonly; attese finite.
-Conservare comandi, sorgenti effettivi, output originali e ogni fallimento.
+Fixture: NNTP Message-ID as opaque key, frozen 25-byte subject/body CBOR,
+complete-record comparison with independent encoder, sentinel prefixes/suffixes.
+Mutating caller key/value after start must leave run and WAL unchanged.
+Versions v1/v2, ordinary/prepared, and maximum u64 TXID in two words; later SEAL
+must restamp only ordinary records. Memory/work/format/batch-capacity boundaries,
+rejections without transferred costs, cancellation before append, stale tokens, and incarnations.
 
-| Decisione composta | Condizioni |
+Heap allocation: 100 warmups with preparation/reservation/copy/cancellation, full GC,
+then 1000 preparations/reservations/copies/appends/queries on preallocated batches;
+measurements separate from instrumented coverage.
+Four private contexts may share only read-only configurations; finite waits.
+Preserve commands, actual sources, original output, and every failure.
+
+| Compound decision | Conditions |
 |---|---|
-| Costruzione | configurazioni canoniche ordinate, tutte le capacita e costo cumulativo prima delle allocazioni |
-| Avvio | token/stato, input u8 non alias, row u32, prepared e TXID coerenti, generazione senza wrap |
-| Frame | limiti v1/v2, copia chiave/valore e CRC prima dell'analisi; nessuna sorgente esterna trattenuta |
-| Analisi | stesso span privato per tutti, lavoro cumulativo, tutti DONE e attestazione CRC/spans corrente nel worker |
-| Riserva | lease canonica, task privati, configurazioni correnti; handle non esportati durante copia/cancellazione |
-| Append | attestazione posseduta corrente, formato/segmento e batch aperto, spazio SEAL; solo metadati e copia sotto lease |
-| Legame | slot trasferito, batch/incarnazione/ordinale/intervallo catturati; vecchi batch riusati rifiutati |
-| Guasto | interruzione dopo trasferimento => request, pool e lotto FAULTED; riserva conservata, nessun rollback o ACK |
+| Construction | Ordered canonical configurations, all capacities and cumulative cost before allocations |
+| Start | Token/state, nonalias u8 input, u32 row, consistent prepared and TXID, generation without wrap |
+| Frame | v1/v2 limits, key/value copy and CRC before analysis; no retained external source |
+| Analysis | Same private span for all, cumulative work, all DONE and current worker CRC/span attestation |
+| Reservation | Canonical lease, private tasks, current configurations; handles not exported during copy/cancellation |
+| Append | Current owned attestation, format/segment and open batch, SEAL space; only metadata and copy under lease |
+| Binding | Transferred slot, captured batch/incarnation/ordinal/range; old reused batches rejected |
+| Fault | Interruption after transfer => request, pool, and batch FAULTED; reservation preserved, no rollback or ACK |
 
-Questo metodo non chiude la qualifica C1 o MC/DC. Restano contratto documentale generale,
-canonicalita runtime/pool/log, pubblicazione prima di H/ACK, esiti prepared, mappa del
-delta, MVCC e ritiro dopo quiescenza. La row proposta non e l'ordinale di un hint.
-PUT contract-versioned non introdotti: l'API produce solo i flag 0 o prepared gia supportati.
+This method closes neither C1 qualification nor MC/DC. General document contract,
+runtime/pool/log canonical identity, publication before H/ACK, prepared outcomes, delta
+map, MVCC, and retirement after quiescence remain. Proposed row is not hint ordinal.
+Contract-versioned PUTs not introduced: API produces only already-supported flags 0 or prepared.
 
-## Due letture dello stesso autore
+<a id="due-letture-dello-stesso-autore"></a>
 
-Prima lettura: seguiti frame, span CBOR e tutte le generazioni fino alla copia WAL;
-nessun input esterno trattenuto e nessun handle delle riserve esposto prima dell'append.
-Controllati limiti e rifiuti prima degli effetti, saturazione dei token, due parole TXID,
-distinzione fra row proposta, record nel lotto e future identita fisiche.
+## Two readings by the same author
 
-Seconda lettura, dopo le prove mirate: seguiti cancellazione e uscita non locale,
-costi conservati, ritorno del request al worker e riuso del batch. Il controllo di
-saturazione dell'incarnazione e stato spostato nel preflight pubblico `verifica-riuso-lotto`,
-cosi il controller di Serie lo vede prima della propria mutazione. Rinforzati i
-limiti dell'intervallo catturato e incluso il nuovo gruppo nel catalogo CI centrale.
-Queste due letture non costituiscono una revisione indipendente.
+First reading: followed frame, CBOR span, and every generation through WAL copy;
+no retained external input or reservation handle exposed before append.
+Checked limits and rejections before effects, token saturation, two TXID words,
+distinction between proposed row, batch record, and future physical identities.
 
-La rilettura di integrazione ha individuato un calcolo body-CRC nel preflight del
-writer, contrario ad ADR-0039. L'attestazione completa e spostata nel worker dopo
-l'analisi; generation privata, stato e ownership del frame ne garantiscono il lifetime.
-Il writer controlla attestazione corrente, formato/segmento, stato e capacita senza
-scansioni del body. Due nuove prove coprono corruzioni prima dell'attestazione e
-un probe CRC con controllo negativo del vecchio percorso, su due dimensioni.
-Un tredicesimo mutante verifica che l'attestazione non possa essere ignorata.
-Il percorso legacy `aggiungi-record` resta fuori da questo incremento.
+Second reading, after targeted tests: followed cancellation and nonlocal exit,
+retained costs, request return to worker, and batch reuse. Incarnation-saturation
+check moved into public `verifica-riuso-lotto` preflight,
+so Serie controller sees it before its own mutation. Captured-range
+limits strengthened and new group included in central CI catalog.
+These readings are not independent review.
 
-Le [evidenze](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
-conservano anche i due arresti di compilazione e separano le verifiche finali.
+Integration rereading identified body-CRC calculation in writer preflight,
+contrary to ADR-0039. Complete attestation moved into worker after
+analysis; private generation, state, and frame ownership guarantee lifetime.
+Writer checks current attestation, format/segment, state, and capacity without
+body scans. Two new tests cover corruption before attestation and
+a CRC probe with negative control of old path, over two sizes.
+A thirteenth mutant verifies attestation cannot be ignored.
+Legacy `aggiungi-record` path remains outside this increment.
+
+The [evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
+also preserves both compilation stops and separates final verification.

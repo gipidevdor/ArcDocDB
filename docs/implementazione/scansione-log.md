@@ -1,107 +1,113 @@
-# Scansione dei log
+<a id="scansione-dei-log"></a>
 
-Scansione in memoria dei lotti sigillati di segmento writer, control log e
-`multiserie.log`, secondo [ADR-0037](../adr/0037-lotto-sigillato.md).
-Il modulo [`src/recovery/`](../../src/recovery/) verifica il prefisso utilizzabile
-e distingue una coda incompleta da una corruzione testimoniata da un SEAL successivo.
+# Log scanning
 
-## Contratto e responsabilità
+In-memory scanning of sealed batches from writer segments, control logs,
+and `multiserie.log`, under [ADR-0037](../adr/0037-lotto-sigillato.md).
+The [`src/recovery/`](../../src/recovery/) module verifies the usable prefix
+and distinguishes an incomplete tail from corruption witnessed by a later SEAL.
 
-`arcdocdb.recovery.scan:scansiona-log` riceve un vettore di byte stabile,
-un intervallo `[start,end)`, l'identificativo del file e la versione già verificata
-dall'intestazione. `start` identifica il primo lotto dopo l'header o un confine
-autorevole già verificato; `file-offset` è la posizione nel file di `buffer[0]`.
-Per control log e multiserie, il file-id è zero.
+<a id="contratto-e-responsabilità"></a>
 
-Il chiamante fornisce `file-size` da una fonte autorevole e garantisce che il
-buffer arrivi all'EOF fisico stabile: `file-offset + end = file-size`.
-Una finestra parziale non autorizza una classificazione finale della coda.
-Una lunghezza dichiarata nei dati non sostituisce la dimensione fisica del file.
-Questa prima API non è una scansione streaming.
+## Contract and responsibilities
 
-| Esito | Risultato |
+`arcdocdb.recovery.scan:scansiona-log` receives a stable byte vector,
+a `[start,end)` interval, the file identifier, and the version already verified
+from the header. `start` identifies the first batch after the header or an
+already verified authoritative boundary; `file-offset` is the file position
+of `buffer[0]`. For control log and multiserie, file-id is zero.
+
+The caller supplies `file-size` from an authoritative source and guarantees
+that the buffer reaches stable physical EOF: `file-offset + end = file-size`.
+A partial window does not authorize final tail classification.
+A length declared in data does not substitute for physical file size.
+This first API is not a streaming scan.
+
+| Outcome | Result |
 |---|---|
-| Tutti i lotti verificano cornice e SEAL | fine del prefisso, `:complete`, conteggi di lotti e record |
-| Primo lotto invalido senza testimone durevole successivo | inizio di quel lotto, `:tail`, soli conteggi del prefisso |
-| SEAL successivo con frontiera durevole oltre l'inizio del lotto invalido | condizione `log-corruption`, senza prefisso applicato |
-| Input, formato o budget invalidi/esauriti | errore tipizzato; nessuna classificazione della coda |
+| All batches pass frame and SEAL verification | End of prefix, `:complete`, batch and record counts |
+| First invalid batch without a later durable witness | Start of that batch, `:tail`, prefix counts only |
+| Later SEAL with durable frontier beyond the invalid batch's start | `log-corruption` condition, without applying a prefix |
+| Invalid/exhausted input, format, or budget | Typed error; no tail classification |
 
-Il confine restituito è un offset nel **buffer**. La condizione di corruzione
-riporta anche gli offset assoluti del primo lotto invalido e del SEAL testimone,
-la sua frontiera e il motivo del primo errore. Il modulo non applica record,
-non pubblica dati, non apre file e non modifica il buffer.
-La transizione a `FAULTED`, la registrazione dell'evento e l'eventuale chiusura
-del vecchio ACTIVE restano al proprietario del log. Nessuna troncatura.
+The returned boundary is a **buffer** offset. The corruption condition
+also reports absolute offsets of the first invalid batch and witness SEAL,
+its frontier, and the reason for the first error. The module does not apply
+records, publish data, open files, or modify the buffer.
+Transition to `FAULTED`, event recording, and any closing of the old ACTIVE
+remain the log owner's responsibility. No truncation.
 
-## Prefisso e risincronizzazione
+<a id="prefisso-e-risincronizzazione"></a>
 
-Il prefisso contiguo usa il verificatore di lotto delle
-[fondazioni binarie](fondazioni-binarie.md). Un lotto è utilizzabile solo per
-intero: il punto `P` è il suo **inizio**, anche se l'errore riguarda un record
-interno. Il semplice ritrovamento di un record valido non basta a dichiarare
-corruzione.
+## Prefix and resynchronization
 
-Il prefisso verifica cornici, tipi ammessi, CRC, stamp e SEAL. La verifica
-completa dei payload EDIT/DECISION e la loro applicazione appartengono ai
-livelli successivi: `:complete` non certifica la semantica di quei metadati.
+The contiguous prefix uses the batch checker from the
+[binary foundations](fondazioni-binarie.md). A batch is usable only in its
+entirety: point `P` is its **start**, even if the error concerns an internal
+record. Simply finding a valid record is insufficient to declare corruption.
 
-Da `P` la ricerca avanza di un byte, senza salti basati su lunghezze corrotte.
-Ogni candidato SEAL ha dimensione fissa di 56 byte; il codec verifica CRC di
-header e corpo, tipo, flag, chiave e lunghezza. Si controllano inoltre file-id,
-inizio del lotto nell'area dei record e non oltre la posizione del SEAL,
-e frontiera durevole non oltre l'inizio dichiarato del lotto.
-Un testimone con `D > P` segnala corruzione; con `D = P` si continua.
-Anche dopo un candidato integro si avanza di un solo byte.
+The prefix verifies frames, allowed types, CRC, stamp, and SEAL. Complete
+EDIT/DECISION payload verification and application belong to subsequent
+layers: `:complete` does not certify those metadata semantics.
 
-> **Proposta** — Dopo un danno non sempre è ricostruibile l'effettivo confine
-> del lotto dichiarato da un SEAL. La risincronizzazione usa quindi una
-> testimonianza conservativa di CRC, identità e posizioni plausibili. Non
-> richiede che il lotto del testimone sia integro: il suo corpo potrebbe
-> essere danneggiato insieme al primo lotto. Un falso SEAL può rifiutare
-> l'apertura, come previsto da ADR-0037; non autorizza mai il replay dei record
-> oltre `P` o una loro eliminazione.
+From `P`, the search advances one byte at a time, without jumps based on
+corrupt lengths. Every SEAL candidate has a fixed size of 56 bytes; the codec
+checks header and body CRC, type, flags, key, and length. It also checks
+file-id, batch start within the record area and no later than the SEAL
+position, and durable frontier no later than the declared batch start.
+A witness with `D > P` signals corruption; with `D = P`, search continues.
+Even after an intact candidate, it advances only one byte.
 
-## Budget e parallelismo
+> **Proposal** — After damage, the actual batch boundary declared by a SEAL
+> cannot always be reconstructed. Resynchronization therefore uses conservative
+> evidence from CRC, identity, and plausible positions. It does not require
+> the witness batch to be intact: its body could be damaged along with the
+> first batch. A false SEAL can reject opening, as specified by ADR-0037;
+> it never authorizes replay of records beyond `P` or their deletion.
 
-> **Proposta** — I default sono 64 MiB per intervallo e per lotto, 65.536
-> lotti, 65.536 record per lotto e 64 MiB di posizioni di risincronizzazione.
-> Sono budget operativi configurabili, distinti dai limiti persistenti dei file.
+<a id="budget-e-parallelismo"></a>
 
-L'esaurimento della ricerca non viene convertito in coda. Il budget di ricerca
-conta le possibili posizioni iniziali dei candidati; una coda più corta di
-56 byte non contiene un SEAL completo. Le somme degli offset sono verificate
-nel dominio u64 prima di iniziare. Il lavoro è limitato dall'intervallo,
-dai budget dei lotti e dalle posizioni effettivamente esaminate.
+## Budgets and parallelism
 
-La scansione appartiene all'apertura/recovery, non al percorso GET.
-Non promette assenza di allocazioni: gli errori creano condizioni e la lettura
-ispettiva di interi u64 può materializzare bignum. Non introduce stato mutabile,
-lock, attese o contatori condivisi fra Serie. Ogni scansione legge il proprio
-buffer; il chiamante ne mantiene la stabilità.
+> **Proposal** — Defaults are 64 MiB per interval and per batch, 65,536
+> batches, 65,536 records per batch, and 64 MiB of resynchronization positions.
+> These are configurable operating budgets, distinct from persistent file limits.
 
-## Verifica e limiti
+Search exhaustion is not converted into a tail. The search budget counts
+possible candidate starting positions; a tail shorter than 56 bytes cannot
+contain a complete SEAL. Offset sums are checked in the u64 domain before
+starting. Work is bounded by the interval, batch budgets, and positions
+actually examined.
 
-Le prove in [`tests/recovery/`](../../tests/recovery/) esercitano entrambe le
-versioni e i tre tipi di log, troncamenti, corruzioni, frontiere prima/uguali/dopo
-`P`, identità e offset, budget, input incompleti e immutabilità del buffer.
-La [tabella delle decisioni](scansione-log-decisioni.md) collega i controlli
-ai casi di regressione.
+Scanning belongs to opening/recovery, not the GET path.
+It does not promise absence of allocation: errors create conditions and
+inspection of u64 integers may materialize bignums. It introduces no mutable
+state, lock, wait, or shared counter between Serie. Each scan reads its
+own buffer; the caller keeps it stable.
 
-Due prove aggiuntive alterano un bit alla volta in ogni byte di tre lotti,
-per i tre tipi di log e le due versioni: 13.504 casi prima di un testimone
-successivo e 6.752 nel lotto finale, 20.256 complessivi. Le fixture usano
-packing bytewise e CRC bitwise indipendenti dal prodotto; controllano
-classificazione, confine, conteggi e immutabilità del buffer.
-Un ulteriore caso costruisce due SEAL integri sovrapposti: un candidato
-non conclusivo non deve far saltare quello successivo. Le prove recovery
-sono complessivamente 19.
+<a id="verifica-e-limiti"></a>
 
-I [record delle verifiche](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-recovery/catalogo.lisp)
-conservano comandi, ambiente, hash dei sorgenti, output e tentativi falliti.
-Le campagne mirate introducono nove difetti nei confini, nell'identità del
-testimone, nelle posizioni, nell'EOF e nei budget. La misura `sb-cover`
-conserva anche il denominatore grezzo e non equivale a copertura MC/DC.
-I controlli sono riproducibili da una copia stabile del repository:
+## Verification and limits
+
+Tests in [`tests/recovery/`](../../tests/recovery/) exercise both versions
+and all three log types, truncations, corruption, frontiers before/equal to/after
+`P`, identities and offsets, budgets, incomplete inputs, and buffer immutability.
+The [decision table](scansione-log-decisioni.md) links checks to regression cases.
+
+Two additional tests alter one bit at a time in every byte of three batches,
+for all three log types and both versions: 13,504 cases before a subsequent
+witness and 6,752 in the final batch, 20,256 total. Fixtures use bytewise
+packing and bitwise CRC independent of the product; they check classification,
+boundary, counts, and buffer immutability. One further case constructs two
+intact overlapping SEALs: an inconclusive candidate must not skip the next
+one. There are 19 recovery tests in total.
+
+The [verification records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-recovery/catalogo.lisp)
+retain commands, environment, source hashes, output, and failed attempts.
+Targeted campaigns introduce nine defects in boundaries, witness identity,
+positions, EOF, and budgets. The `sb-cover` measurement also retains the raw
+denominator and is not equivalent to MC/DC coverage. Checks are reproducible
+from a stable repository copy:
 
 ```sh
 make check
@@ -111,15 +117,15 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/foundation-coverage.li
 sbcl --noinform --no-userinit --no-sysinit --script tools/foundation-coverage.lisp --report spikes/out/recovery-coverage/ recovery
 ```
 
-La directory dei mutanti deve essere nuova. Copertura e mutazioni vengono
-eseguite separatamente, senza modificare i sorgenti del prodotto.
+The mutant directory must be new. Coverage and mutations run separately,
+without modifying product sources.
 
-Requisiti: REQ-FOR-001/003, REQ-AFF-008/009/017. Invarianti interessati:
-INV-F1/F2/F3, INV-A4/A8/A9, INV-P6 e INV-X3. Nessun requisito del motore è
-promosso a verificato sulla sola evidenza di questa scansione.
+Requirements: REQ-FOR-001/003, REQ-AFF-008/009/017. Affected invariants:
+INV-F1/F2/F3, INV-A4/A8/A9, INV-P6, and INV-X3. No engine requirement is
+promoted to verified solely on the evidence of this scan.
 
-Resta il limite dichiarato in ADR-0037: un danno nell'ultimo flush, senza un
-SEAL successivo che lo testimoni, può essere indistinguibile dalla coda.
-CRC32C ha collisioni e non autentica i dati. Le prove in memoria non verificano
-I/O, recovery completo, semantica dei payload, manifest, decisioni multiserie
-o transizioni di salute. Nessun gate di rilascio viene chiuso qui.
+The limitation stated in ADR-0037 remains: damage in the last flush,
+without a later SEAL witnessing it, may be indistinguishable from a tail.
+CRC32C has collisions and does not authenticate data. In-memory tests do
+not verify I/O, complete recovery, payload semantics, manifest, multiserie
+decisions, or health transitions. No release gate is closed here.

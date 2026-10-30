@@ -1,9 +1,13 @@
-# 02 — Modello logico
+<a id="02--modello-logico"></a>
 
-> **Fonte:** «Architettura logica», «Serie speciale Registri», «Catalogo», «Layout fisico» della
-> [specifica](specifica/specifica-originale.md).
+# 02 — Logical model
 
-## Gerarchia
+> **Source:** ‘Logical architecture’, ‘Special Serie Registri’, ‘Catalog’, and ‘Physical layout’ of the
+> [specification](specifica/specifica-originale.md).
+
+<a id="gerarchia"></a>
+
+## Hierarchy
 
 ```
 Server
@@ -14,91 +18,95 @@ Server
 
 ### Server
 
-Il processo principale. È responsabile di:
+The main process. It is responsible for:
 
-- gestione delle connessioni;
-- scheduler globale;
-- thread pool dinamico;
-- gestione degli Archivi.
+- connection management;
+- the global scheduler;
+- the dynamic thread pool;
+- managing Archivio instances.
 
 ### Archivio
 
-Contenitore logico (domain) che raggruppa più Serie. È il **livello al quale si richiedono
-transazioni e snapshot multiserie**. Ogni Archivio DEVE contenere la Serie speciale
-[Registri](#registri).
+A logical container (domain) grouping multiple Serie. It is the **level at which multiseries
+transactions and snapshots are requested**. Every Archivio MUST contain the special
+[Registri](#registri) Serie.
 
 ### Serie
 
-Il namespace dei documenti e, soprattutto, **l'unità primaria di storage e di parallelismo**.
-Una Serie:
+The document namespace and, above all, **the primary unit of storage and parallelism**.
+A Serie:
 
-- definisce il paradigma/contratto dei propri documenti: struttura/schema, validazione, indici,
-  configurazione dello storage;
-- possiede il proprio WAL, i propri segmenti, i propri indici;
-- DEVE poter operare in parallelo e indipendentemente dalle altre Serie.
+- defines the paradigm/contract of its documents: structure/schema, validation, indexes,
+  and storage configuration;
+- owns its WAL, segments, and indexes;
+- MUST be able to operate in parallel and independently of other Serie.
 
-Tutto ciò che è fisicamente condiviso tra Serie è un potenziale punto di contesa: la specifica
-lo riduce al solo `multiserie.log` (e alle risorse di calcolo governate dallo scheduler).
+Everything physically shared between Serie is a potential point of contention: the specification
+limits this to `multiserie.log` (and the computing resources controlled by the scheduler).
 
-> **Deciso (QA-21 → [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md))** — La specifica non definisce il linguaggio dello schema/contratto né le
-> regole di evoluzione dello schema.
+> **Decided (QA-21 → [ADR-0029](adr/0029-interfacce-protocollo-query-contratto.md))** — The specification does not define the schema/contract language or
+> schema evolution rules.
 
-Il contratto può dichiarare indici **full text** con nome, campi testuali
-scalari e profilo di analisi immutabile e versionato
-([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)). Documento e
-query usano lo stesso profilo. Il testo originale resta nel documento;
-un cambio di analizzatore costruisce una nuova generazione dell'indice.
+The contract may declare **full-text** indexes with a name, scalar text fields,
+and an immutable, versioned analysis profile
+([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)). Documents and
+queries use the same profile. Original text remains in the document;
+changing the analyzer builds a new index generation.
 
 ### Documento
 
-L'unità logica di dati. Ha un `_id` univoco **all'interno della Serie** e può avere versioni
-storiche, conservate dallo storage append-only e governate da MVCC.
+The logical data unit. It has an `_id` unique **within the Serie** and may have historical
+versions, retained by append-only storage and governed by MVCC.
 
-> **Deciso (QA-01 → [ADR-0014](adr/0014-formato-record-documento-id.md))** — Formato del documento, tipo di `_id` e codifica dei record su disco non
-> sono specificati.
+> **Decided (QA-01 → [ADR-0014](adr/0014-formato-record-documento-id.md))** — The document format, `_id` type, and on-disk record encoding are
+> not specified.
 
 ## Registri
 
-Registri è una Serie speciale, obbligatoria in ogni Archivio. **Non è il WAL dei dati.**
-Contiene:
+Registri is a special Serie, mandatory in every Archivio. **It is not the data WAL.**
+It contains:
 
-- il catalogo (metadatabase) delle Serie;
-- i metadati di configurazione delle Serie;
-- le informazioni necessarie al recovery del catalogo;
-- un singolo file persistente `multiserie.log`.
+- the Serie catalog (metadatabase);
+- Serie configuration metadata;
+- the information required for catalog recovery;
+- a single persistent `multiserie.log` file.
 
-`multiserie.log` è il *transaction decision log* delle transazioni che coinvolgono più Serie
-(vedi [05 Transazioni](05-transazioni.md)). Ne esiste **uno solo per Archivio**: NON DEVE
-esistere un file separato per ogni transazione.
+`multiserie.log` is the *transaction decision log* for transactions involving multiple Serie
+(see [05 Transactions](05-transazioni.md)). There is **exactly one per Archivio**: there MUST NOT
+be a separate file for each transaction.
 
-> **Deciso (QA-10 → [ADR-0022](adr/0022-registri-come-serie-catalogo.md))** — Registri è definita «Serie speciale», ma il layout indicativo mostra solo
-> `catalog/` e `multiserie.log`. Resta da decidere se il catalogo è memorizzato con il normale
-> meccanismo di una Serie (WAL + segmenti propri) o con un formato dedicato, e come avviene il
-> bootstrap (per aprire le Serie serve il catalogo, che a sua volta va recuperato per primo).
+> **Decided (QA-10 → [ADR-0022](adr/0022-registri-come-serie-catalogo.md))** — Registri is defined as a ‘special Serie’, but the illustrative layout shows only
+> `catalog/` and `multiserie.log`. It remains to be decided whether the catalog is stored using the
+> normal Serie mechanism (its own WAL + segments) or a dedicated format, and how bootstrap works
+> (opening the Serie requires the catalog, which itself must be recovered first).
 
-## Catalogo
+<a id="catalogo"></a>
 
-`Registri/catalog/` contiene il catalogo delle Serie. Per ogni Serie memorizza almeno:
+## Catalog
 
-| Campo | Note |
+`Registri/catalog/` contains the Serie catalog. For each Serie it stores at least:
+
+| Field | Notes |
 |---|---|
-| nome | identifica la Serie nell'Archivio |
-| configurazione | parametri generali |
-| schema/contratto | struttura e validazione dei documenti |
-| configurazione degli indici | nomi, tipi e campi; per il full text anche il profilo di analisi versionato ([08](08-indici.md)) |
-| segment configuration | es. dimensione target del segmento (default ~256 MB) |
-| stato | stato della Serie |
-| metadata per il recovery | quanto serve al [Recovery Manager](11-recovery.md) |
+| name | identifies the Serie within the Archivio |
+| configuration | general parameters |
+| schema/contract | document structure and validation |
+| index configuration | names, types, and fields; for full text, also the versioned analysis profile ([08](08-indici.md)) |
+| segment configuration | e.g., target segment size (default ~256 MB) |
+| state | Serie state |
+| recovery metadata | what the [Recovery Manager](11-recovery.md) needs |
 
-Il catalogo DEVE essere modificabile in modo **transazionale e crash-safe**: creare, modificare
-o eliminare una Serie non può lasciare il catalogo in uno stato intermedio dopo un crash.
-Per il full text il contratto nel catalogo è autorevole; file, delta e
-readiness sono derivati ricostruibili. Una generazione viene resa
-interrogabile soltanto quando copre completamente la vista richiesta.
+The catalog MUST support **transactional, crash-safe** modifications: creating, changing,
+or deleting a Serie cannot leave the catalog in an intermediate state after a crash.
+For full text, the catalog contract is authoritative; files, deltas, and
+readiness are rebuildable derivatives. A generation becomes queryable
+only when it completely covers the requested view.
 
-## Layout fisico
+<a id="layout-fisico"></a>
 
-Struttura indicativa su disco:
+## Physical layout
+
+Illustrative on-disk structure:
 
 ```
 Archivio/
@@ -119,22 +127,24 @@ Archivio/
 └── ...
 ```
 
-Regole:
+Rules:
 
-- ogni Serie rimane **fisicamente indipendente** (INV-W1);
-- NON DEVE esistere un global data WAL (INV-W1);
-- l'unico log condiviso a livello di Archivio è `Registri/multiserie.log` (INV-W2).
+- each Serie remains **physically independent** (INV-W1);
+- there MUST NOT be a global data WAL (INV-W1);
+- the only shared log at Archivio level is `Registri/multiserie.log` (INV-W2).
 
-> **Deciso ([ADR-0022](adr/0022-registri-come-serie-catalogo.md))** — Poiché le directory delle Serie sono sorelle di `Registri/`, il nome
-> `Registri` va riservato: nessuna Serie utente può chiamarsi così. Conviene inoltre che il nome
-> della directory sia un identificatore interno stabile e non il nome logico della Serie, così
-> una rinomina è una modifica del solo catalogo.
+> **Decided ([ADR-0022](adr/0022-registri-come-serie-catalogo.md))** — Because the Serie directories are siblings of `Registri/`, the name
+> `Registri` must be reserved: no user Serie may have that name. It is also advisable for the
+> directory name to be a stable internal identifier rather than the logical Serie name, so
+> renaming changes only the catalog.
 
-## Parallelismo gerarchico
+<a id="parallelismo-gerarchico"></a>
+
+## Hierarchical parallelism
 
 ```
 Server → Archivio → Serie → writer/readers → WAL → compaction → query/index operations
 ```
 
-La Serie è l'unità principale di **isolamento del carico**: una Serie molto trafficata non deve
-bloccare le altre (INV-P3). Dettagli in [10 Concorrenza e scheduling](10-concorrenza-e-scheduling.md).
+The Serie is the main unit of **load isolation**: a heavily used Serie must not
+block others (INV-P3). Details in [10 Concurrency and scheduling](10-concorrenza-e-scheduling.md).

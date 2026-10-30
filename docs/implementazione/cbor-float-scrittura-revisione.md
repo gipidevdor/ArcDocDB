@@ -1,41 +1,47 @@
-# Scrittura dei float CBOR — prima lettura C1
+<a id="scrittura-dei-float-cbor--prima-lettura-c1"></a>
 
-Lettura statica del 2026-10-13, prima della compilazione dei nuovi sorgenti
-e delle campagne. Il corpus è stato congelato prima della loro scrittura.
-Riferimenti: [metodo preregistrato](cbor-float-scrittura-metodo.md),
-[contratto](cbor-float-scrittura.md),
-[standard di codifica](../affidabilita/standard-di-codifica.md),
-ADR-0014/0024/0033/0035/0048. Questa lettura non è una prova runtime,
-di allocazione, copertura o MC/DC.
+# Writing CBOR floats — first C1 reading
 
-## Sorgenti letti e rilievo risolto
+Static reading on 2026-10-13, before compiling the new sources
+and running campaigns. The corpus was frozen before they were written.
+References: [preregistered method](cbor-float-scrittura-metodo.md),
+[contract](cbor-float-scrittura.md),
+[coding standard](../affidabilita/standard-di-codifica.md),
+ADR-0014/0024/0033/0035/0048. This reading is not a runtime,
+allocation, coverage, or MC/DC test.
 
-| Sorgente | Git blob letto |
+<a id="sorgenti-letti-e-rilievo-risolto"></a>
+
+## Sources read and resolved finding
+
+| Source | Git blob read |
 |---|---|
 | `src/codec/cbor-float-narrow.lisp` | `cd5749edc0a757ee3a5b470eda566a6685d32fd8` |
 | `src/codec/cbor-float-write.lisp` | `03c6aed61e2c243d8b1a6c4332ce1837c4e9a77c` |
-| Metodo | `755b13a91ab72f54383d96faee5780da36e750d6` |
+| Method | `755b13a91ab72f54383d96faee5780da36e750d6` |
 
-Letti anche gli helper esistenti `cbor-float-minimal.lisp` e
-`scrivi-parola-header-cbor`, export, ordine ASDF, ambito del driver di
-coverage, requisito e matrice, oltre al corpus freddo e ai worker.
+Also read: existing helpers `cbor-float-minimal.lisp` and
+`scrivi-parola-header-cbor`, exports, ASDF order, coverage driver
+scope, requirement and matrix, as well as the cold corpus and workers.
 
-La prima versione di `riduci-significando64-cbor`, blob
-`31a61d565e17607fd9498b0a423923a28b6e0159`, aveva una post-guardia
-`RESULT <= #x7fffff` dopo la dichiarazione `RESULT u23`: non controllava
-una proprietà distinta dal tipo. Il rilievo COD-24 è stato corretto prima
-di compilare o misurare. Le righe 49–54 della versione letta verificano
-la ricostruzione separata delle due parole di ingresso, senza unirle in
-u64. L'originale e la revisione restano conservati nelle prove preparatorie.
+The first version of `riduci-significando64-cbor`, blob
+`31a61d565e17607fd9498b0a423923a28b6e0159`, had a post-guard
+`RESULT <= #x7fffff` after declaring `RESULT u23`: it did not check
+a property distinct from the type. The COD-24 finding was corrected before
+compilation or measurement. Lines 49–54 of the version read verify
+separate reconstruction of the two input words, without combining them into
+u64. The original and revision remain preserved in preparatory evidence.
 
-## Dimensioni e percorsi
+<a id="dimensioni-e-percorsi"></a>
 
-Conteggio dalla `defun` alla sua chiusura, incluse docstring e dichiarazioni.
-Percorsi conservativi: base uno, un incremento per scelta, guardia e
-ramo corto addizionale di AND/OR; `case` a quattro esiti vale tre scelte.
-I confronti concatenati sono predicati Lisp, non cicli aggiunti dal modulo.
+## Sizes and paths
 
-| Funzione | File | Righe | Percorsi |
+Counted from `defun` to its end, including docstring and declarations.
+Conservative paths: base one, one increment per choice, guard, and
+additional short-circuit branch of AND/OR; a four-outcome `case` counts as three choices.
+Chained comparisons are Lisp predicates, not loops added by the module.
+
+| Function | File | Lines | Paths |
 |---|---|---:|---:|
 | `riduci-binary32-cbor` | narrow | 10–31: 22 | 7 |
 | `riduci-significando64-cbor` | narrow | 37–55: 19 | 7 |
@@ -45,101 +51,107 @@ I confronti concatenati sono predicati Lisp, non cicli aggiunti dal modulo.
 | `seleziona-float-cbor` | write | 47–61: 15 | 9 |
 | `scrivi-float-cbor-minimo` | write | 65–90: 26 | 6 |
 
-Tutte restano entro COD-12/COD-13. Ogni funzione ha FTYPE completo,
-docstring con pre/post/errori e riferimenti REQ. `safety 3` è esplicito.
-I due `cond` numerici terminano in `t` con `invariant-violation`;
-il `case` delle parole termina in `otherwise` con la stessa condizione.
+All remain within COD-12/COD-13. Every function has a complete FTYPE,
+a docstring with preconditions/postconditions/errors, and REQ references. `safety 3` is explicit.
+The two numeric `cond` forms end in `t` with `invariant-violation`;
+the word `case` ends in `otherwise` with the same condition.
 
-## Inventario delle decisioni composte
+<a id="inventario-delle-decisioni-composte"></a>
 
-Sono sei AND/OR nuovi. Le post-guardie del quoziente corrette usano due
-confronti distinti e un IF, senza aggiungere un AND/OR. La tabella elenca
-le condizioni; non afferma che ciascuna sia già stata mostrata decisiva
-indipendentemente. I rami delle guardie interne restano nel denominatore
-della futura coverage.
+## Compound decision inventory
 
-| Posizione nel file write | Forma e condizioni | Verifica da eseguire |
+There are six new AND/OR forms. Corrected quotient post-guards use two
+separate comparisons and an IF, adding no AND/OR. The table lists
+the conditions; it does not claim that each has already been shown independently
+decisive. Internal guard branches remain in the denominator of
+future coverage.
+
+| Position in write file | Form and conditions | Verification to perform |
 |---|---|---|
-| 13–14, range | AND: buffer octets; START index; END index; `START <= END <= LENGTH` | Destinazioni non simple/displaced, tipi/range e precedenza; guardie interne separate |
-| 36, parole AI25 | AND: HIGH zero; LOW <= u16 massimo | Parole incoerenti e precedenza LOW/coerenza/capacità |
-| 51, selezione ingresso | OR: AI27; HIGH zero | Ingressi pubblici validati; guardia interna inventariata |
-| 55, riduzione64 | AND: AI27; esattamente accorciabile in32 | 64 mantenuto/ridotto, soglie e payload NaN |
-| 57, riduzione32 | AND: AI26; esattamente accorciabile in16 | 32 mantenuto/ridotto, espansioni half e subnormali |
-| 59, selezione uscita | OR: AI27 scelto; HIGH zero | Forme scelte e guardia interna inventariata |
+| 13–14, range | AND: octet buffer; START index; END index; `START <= END <= LENGTH` | Non-simple/displaced destinations, types/ranges and precedence; separate internal guards |
+| 36, AI25 words | AND: HIGH zero; LOW <= u16 maximum | Inconsistent words and LOW/consistency/capacity precedence |
+| 51, input selection | OR: AI27; HIGH zero | Validated public inputs; internal guard inventoried |
+| 55, reduction64 | AND: AI27; exactly narrowable to32 | 64 retained/reduced, thresholds and NaN payloads |
+| 57, reduction32 | AND: AI26; exactly narrowable to16 | 32 retained/reduced, half expansions and subnormals |
+| 59, output selection | OR: AI27 selected; HIGH zero | Selected forms and internal guard inventoried |
 
-## Controlli e ragionamento aritmetico
+<a id="controlli-e-ragionamento-aritmetico"></a>
 
-Per binary32, esponenti 113–142 producono i normali half con bias
-sottratto 112; esponenti 103–112 producono subnormali tramite significando
-implicito e shift `126 - exponent`. Il predicato esistente richiede
-allineamento esatto prima della riduzione. Zero e speciali hanno rami
-separati; la frazione NaN viene spostata di 13 bit e il segno viene
-confrontato con quello di ingresso.
+## Checks and arithmetic reasoning
 
-Per binary64, esponenti 897–1150 producono normali binary32 con bias
-sottratto 896 e frazione ricavata dalle parole separate; esponenti
-874–896 producono subnormali con shift `926 - exponent`, compreso 32.
-Il quoziente usa al massimo HIGH21 e LOW32. La ricostruzione verifica
-HIGH tramite `ASH RESULT (SHIFT - 32)`; sotto 32 ricava LOW dai soli
-uno/due bit bassi, altrimenti richiede LOW zero. Gli shift intermedi
-ricostruiscono parole u32, senza materializzare l'intero binary64.
-Infiniti e NaN mantengono segno e significando zero-padded, incluso il
-bit signaling/quiet. La selezione tenta 64→32 e poi 32→16.
+For binary32, exponents 113–142 produce normal half values with bias
+reduced by 112; exponents 103–112 produce subnormals through the implicit
+significand and shift `126 - exponent`. The existing predicate requires
+exact alignment before reduction. Zero and special values have separate
+branches; the NaN fraction shifts by 13 bits, and the sign is
+compared with the input sign.
 
-Il writer esegue range/AI, tipi HIGH/LOW e coerenza prima della selezione;
-poi verifica la capacità della forma scelta, usando END. Solo dopo
-costruisce NEXT e scrive il lead. Il percorso a nove byte scrive HIGH4
-e LOW4; le altre forme scrivono LOW2 o LOW4. La guardia finale confronta
-il cursore con NEXT; il ritorno è `(values next)`.
+For binary64, exponents 897–1150 produce normal binary32 values with bias
+reduced by 896 and fraction derived from separate words; exponents
+874–896 produce subnormals with shift `926 - exponent`, including 32.
+The quotient uses at most HIGH21 and LOW32. Reconstruction verifies
+HIGH via `ASH RESULT (SHIFT - 32)`; below 32 it derives LOW from only
+the bottom one/two bits, otherwise requiring LOW zero. Intermediate shifts
+reconstruct u32 words without materializing the entire binary64.
+Infinities and NaNs retain sign and zero-padded significand, including the
+signaling/quiet bit. Selection attempts 64→32 and then 32→16.
 
-COD-24: riduzioni32/64 verificano accorciabilità in ingresso e segno in
-uscita; il quoziente verifica larghezza/allineamento e ricostruzione delle
-parole; il range verifica input e identità dello span; le parole verificano
-i tipi esterni e la coerenza della forma restituita; la selezione verifica
-la relazione AI/HIGH prima e dopo; il writer verifica span e progresso.
-Le guardie non modificano dati. Gli errori interni sono `invariant-violation`
-e devono raggiungere il confine fail-stop del proprietario.
+The writer checks range/AI, HIGH/LOW types, and consistency before selection;
+then it verifies capacity for the selected form, using END. Only then
+does it construct NEXT and write the lead. The nine-byte path writes HIGH4
+and LOW4; the other forms write LOW2 or LOW4. The final guard compares
+the cursor with NEXT; return is `(values next)`.
 
-## Checklist C1 a dodici punti
+COD-24: reductions32/64 check input narrowability and output sign;
+the quotient checks width/alignment and word reconstruction;
+the range checks input and span identity; words check
+external types and returned-form consistency; selection checks
+the AI/HIGH relationship before and after; the writer checks span and progress.
+Guards do not modify data. Internal errors are `invariant-violation`
+and must reach the owner's fail-stop boundary.
 
-1. **Requisiti e ADR.** REQ-CBR-004 realizza la scrittura raw minima locale;
-   REQ-AFF-004/008 coprono invarianti e limiti. ADR-0014 è coerente;
-   il budget documentale ADR-0048 resta superiore.
-2. **Invarianti.** INV-F1 riguarda byte/formato verificati prima di restituire
-   NEXT; INV-P6 riguarda buffer esclusivi e assenza di scritture condivise.
-   Il corpus contiene confronti freddi dell'intero array, errori senza
-   mutazione, arità, sentinelle e worker su destinazioni private.
-3. **Errori.** INVALID-ARGUMENT distingue range, AI, HIGH, LOW e parole;
-   RESOURCE-EXHAUSTED distingue la capacità. Ordine, offset NIL e array
-   intatto sono verificati dal corpus. Le guardie interne hanno motivi
-   distinti per input/campi, esponente, segno, allineamento, ricostruzione,
-   AI, selezione, span e progresso; il writer non intercetta gli errori.
-4. **Limiti.** Nessun nuovo ciclo o ricorsione. L'helper BE esistente fa
-   al massimo quattro passi; al massimo due parole e nove byte per chiamata.
-   Nessuna attesa nel prodotto; i worker di prova hanno timeout e cleanup.
-5. **Allocazioni.** Nessuna misura ancora eseguita: COD-30 rimane da
-   verificare con benchmark, baseline e controllo positivo preregistrati.
-   La sola forma statica non costituisce prova di heap zero.
-6. **Confine del modulo.** Le parole esterne vengono validate prima delle
-   dichiarazioni restrittive e della scrittura. Il risultato pubblico è
-   NEXT; non escono float nativi, AST o riferimenti condivisi.
-7. **Decisioni composte.** Inventario completo sopra; coverage grezza e
-   dimostrazioni condizione per condizione restano da produrre. Nessuna
-   attestazione MC/DC o esclusione automatica di guardie.
-8. **Proprietà.** OWNER/SHARED dichiarano destinazione esclusiva e parole
-   locali. Nessun globale mutabile, arena, lock o scratch nuovo nel prodotto.
-9. **Tracciabilità e check.** Requisito e matrice sono aggiornati staticamente;
-   export, ASDF e ambito esatto dei due file nel driver coverage sono coerenti.
-   `make check` e i self-test degli strumenti devono ancora essere eseguiti.
-10. **Regole e deviazioni.** Nessuna deviazione statica richiesta per la
-    versione letta; il rilievo COD-24 precedente è risolto. Compilazione
-    senza avvisi, misure e coverage non sono anticipate da questa lettura.
-11. **Parallelismo.** Nessuna chiamata su buffer privato tocca uno stato di
-    altra Serie o introduce lock/attesa/scrittura condivisa. Il prodotto
-    consente chiamate indipendenti; le prove future non implicano scaling.
-12. **Durabilità.** Nessun cambiamento durevole, punto di pubblicazione,
-    rimozione o rollback introdotto. Docstring e contratto dichiarano
-    esplicitamente questo confine e il fail-stop su errori interni.
+<a id="checklist-c1-a-dodici-punti"></a>
 
-Esito: nessun ulteriore difetto statico rilevato nella versione identificata.
-La seconda lettura indipendente, le campagne e il gate C1 restano necessari.
+## Twelve-point C1 checklist
+
+1. **Requirements and ADRs.** REQ-CBR-004 implements local minimal raw writing;
+   REQ-AFF-004/008 cover invariants and limits. ADR-0014 is consistent;
+   the ADR-0048 document budget remains at a higher level.
+2. **Invariants.** INV-F1 concerns bytes/format verified before returning
+   NEXT; INV-P6 concerns exclusive buffers and no shared writes.
+   The corpus contains cold comparisons of the entire array, errors without
+   mutation, arity, sentinels, and workers on private destinations.
+3. **Errors.** INVALID-ARGUMENT distinguishes range, AI, HIGH, LOW, and words;
+   RESOURCE-EXHAUSTED distinguishes capacity. The corpus checks order, NIL offsets,
+   and intact arrays. Internal guards have distinct reasons
+   for input/fields, exponent, sign, alignment, reconstruction,
+   AI, selection, span, and progress; the writer does not intercept errors.
+4. **Limits.** No new loop or recursion. The existing BE helper takes
+   at most four steps; at most two words and nine bytes per call.
+   No waits in the product; test workers have timeouts and cleanup.
+5. **Allocations.** No measurement performed yet: COD-30 remains to be
+   verified with preregistered benchmark, baseline, and positive control.
+   Static form alone is not proof of zero heap.
+6. **Module boundary.** External words are validated before restrictive
+   declarations and writing. The public result is
+   NEXT; no native floats, ASTs, or shared references escape.
+7. **Compound decisions.** Complete inventory above; raw coverage and
+   demonstrations condition by condition remain to be produced. No
+   MC/DC certification or automatic exclusion of guards.
+8. **Ownership.** OWNER/SHARED declare exclusive destination and local
+   words. No mutable global, arena, lock, or new scratch area in the product.
+9. **Traceability and checks.** Requirement and matrix are statically updated;
+   exports, ASDF, and exact two-file scope in the coverage driver are consistent.
+   `make check` and tool self-tests remain to be run.
+10. **Rules and deviations.** No static deviation requested for the
+    version read; the earlier COD-24 finding is resolved. Warning-free
+    compilation, measurements, and coverage are not anticipated by this reading.
+11. **Parallelism.** No call on a private buffer touches another Serie's
+    state or introduces a lock/wait/shared write. The product
+    allows independent calls; future tests do not imply scaling.
+12. **Durability.** No durable change, publication point,
+    removal, or rollback introduced. Docstrings and contract explicitly
+    declare this boundary and fail-stop on internal errors.
+
+Outcome: no further static defect found in the identified version.
+The second independent reading, campaigns, and C1 gate remain necessary.

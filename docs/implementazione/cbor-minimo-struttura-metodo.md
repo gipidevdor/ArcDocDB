@@ -1,62 +1,68 @@
-# Item CBOR con testate minime — contratto e metodo
+<a id="item-cbor-con-testate-minime--contratto-e-metodo"></a>
 
-Incremento C1 fissato prima delle campagne, sui requisiti REQ-LIM-001,
-REQ-LIM-002, REQ-AFF-004 e REQ-AFF-008. Integra il lettore di testate minime
-con lo scanner bounded di ADR-0048; il controllo documentale di ADR-0014
-richiede ancora ordinamento/equivalenza delle chiavi e semantica dei tag.
+# CBOR items with minimal headers — contract and method
 
-## Contratto congelato
+C1 increment fixed before campaigns, under requirements REQ-LIM-001,
+REQ-LIM-002, REQ-AFF-004, and REQ-AFF-008. Integrates the minimal header reader
+with ADR-0048's bounded scanner; ADR-0014 document checks
+still require key ordering/equivalence and tag semantics.
 
-`arcdocdb.cbor:verifica-struttura-cbor-minima` accetta buffer simple u8
-immutabile, span half-open, `spazio-cbor` esclusivo e gli stessi tre budget
-del verificatore generico. Restituisce esattamente nodi, picco di profondità
-degli array/map e END per un solo item completo. Lo spazio preallocato viene
-riusato; non trattiene il buffer e non viene condiviso fra chiamate attive.
+<a id="contratto-congelato"></a>
 
-Preflight, reset, attraversamento, UTF-8 e conteggi sono comuni alle due API.
-Il lettore minimo viene usato per ogni header: radice, figli, chiavi, valori
-e tag. I payload delle stringhe di byte non sono interpretati come header.
-Il controllo lavora su parole e cursori, senza AST, copie, materializzazione
-dei float/u64, attese, I/O o stato globale mutabile. Il ciclo è limitato allo
-span, lo stack fisso a 102 celle e il drain a 102 passi.
+## Frozen contract
 
-Ordine degli errori: preflight prima dei byte e del reset; sintassi completa
-dell'header prima della minimalità; minimalità prima di contesto, nodi,
-profondità e payload. Indefiniti e break, compreso un break dopo tag,
-segnalano `:cbor-nonminimal` sul lead. Il drain conserva `:cbor-trailing`
-prima di leggere la coda di una radice completa. Span vuoto e figlio/tag
-incompleto mantengono `:cbor-truncated` a END. Preflight fallito lascia lo
-scratch invariato; errore runtime consente il reset alla chiamata seguente.
+`arcdocdb.cbor:verifica-struttura-cbor-minima` accepts an immutable simple u8
+buffer, half-open span, exclusive `spazio-cbor`, and the same three budgets
+as the generic verifier. It returns exactly nodes, peak array/map
+depth, and END for a single complete item. Preallocated space is
+reused; it does not retain the buffer and is not shared across active calls.
 
-Lo scanner generico conserva la propria API e le proprie precedenze.
-L'API nuova usa un booleano interno fissato a T, il wrapper generico a NIL;
-nessun nuovo parametro di modalità viene esposto sull'API generica.
+Preflight, reset, traversal, UTF-8, and counts are common to both APIs.
+The minimal reader is used for every header: root, children, keys, values,
+and tags. Byte-string payloads are not interpreted as headers.
+Checks operate on words and cursors, without ASTs, copies, float/u64
+materialization, waits, I/O, or mutable global state. The loop is bounded by the
+span, the fixed stack by 102 cells, and drain by 102 steps.
 
-## Verifiche fissate
+Error order: preflight before bytes and reset; complete header
+syntax before minimality; minimality before context, nodes,
+depth, and payload. Indefinite forms and break, including a break after a tag,
+report `:cbor-nonminimal` at the lead. Drain preserves `:cbor-trailing`
+before reading a complete root's tail. Empty spans and incomplete children/tags
+retain `:cbor-truncated` at END. Failed preflight leaves
+scratch unchanged; runtime errors permit reset on the next call.
 
-Corpus cieco congelato prima della compilazione: major 0–7, soglie di
-larghezza e high u64, float/NaN raw, annidamento, chiavi e tag; payload
-opachi, UTF-8, troncature, tutti i lead e precedenze concorrenti. Generazione
-e fuzz finiti con seme/conteggi registrati; budget byte/nodi/profondità,
-16 MiB esatti e oltre, profondità 100/101, sentinelle, alias e riuso.
-Due worker reali con buffer e scratch privati, timeout e sink controllati;
-i tempi di sovrapposizione non dimostrano scaling o simultaneità sui core.
+The generic scanner retains its API and precedence.
+The new API uses an internal Boolean fixed to T, the generic wrapper to NIL;
+no new mode parameter is exposed on the generic API.
 
-Due letture C1 con checklist e inventario delle decisioni, regressioni
-dello scanner generico e copertura grezza dei due file dello scanner.
-Il report dedicato esegue entrambe le suite; stato completo e HTML
-conservati, senza esclusioni o attestazioni MC/DC.
+<a id="verifiche-fissate"></a>
 
-Driver di misura: otto fixture, cinque repliche da 4096 scansioni, warmup
-128, tre valori e sink verificati, input/scratch preparati fuori misura.
-Baseline nulla e allocazione deliberata verificano il contatore. Heap
-osservato zero è un criterio locale, senza soglie di velocità o scaling.
-Mutazioni: otto difetti compilabili fissati prima della campagna, baseline
-completa, marker esatti smoke/fine; compilazione INVALID e infrastruttura,
-segnali OS o guasti dopo completamento WORKER-ERROR, mai rilevamenti.
-Obiettivo locale: tutti rilevati, sopravvissuti analizzati.
+## Fixed verification
 
-Build senza avvisi, lint, tracciabilità e `make check` completo prima del
-push. Strumenti e audit in Common Lisp (INV-X3), record letti come dati con
-read-eval NIL ed EOF. Sorgenti, log, errori e risultati originali conservati;
-le copie complete/FASL delle mutazioni restano anche nel backup locale.
+Blind corpus frozen before compilation: majors 0–7, width thresholds
+and high u64, raw floats/NaNs, nesting, keys, and tags; opaque payloads,
+UTF-8, truncations, all leads, and competing precedence. Finite generation
+and fuzz with registered seed/counts; byte/node/depth budgets,
+exact 16 MiB and beyond, depth 100/101, sentinels, aliases, and reuse.
+Two real workers with private buffers and scratch, timeouts, and checked sinks;
+overlap timings do not demonstrate scaling or simultaneous core execution.
+
+Two C1 readings with checklist and decision inventory, generic scanner
+regressions, and raw coverage of the scanner's two files.
+The dedicated report runs both suites; complete state and HTML
+preserved, without exclusions or MC/DC certification.
+
+Measurement driver: eight fixtures, five replicates of 4096 scans, warmup
+128, three values and sink checked, input/scratch prepared outside measurement.
+Null baseline and deliberate allocation verify the counter. Observed
+zero heap is a local criterion, without speed or scaling thresholds.
+Mutations: eight compilable defects fixed before the campaign, complete
+baseline, exact smoke/end markers; compilation INVALID and infrastructure,
+OS signals, or post-completion failures WORKER-ERROR, never detections.
+Local goal: all detected, survivors analyzed.
+
+Warning-free build, lint, traceability, and full `make check` before
+push. Common Lisp tools and audits (INV-X3), records read as data with
+read-eval NIL and EOF. Original sources, logs, errors, and results preserved;
+complete mutation copies/FASLs also remain in local backup.

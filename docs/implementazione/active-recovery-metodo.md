@@ -1,96 +1,104 @@
-# Recupero del vecchio ACTIVE: metodo delle prove funzionali
+<a id="recupero-del-vecchio-active-metodo-delle-prove-funzionali"></a>
 
-Metodo registrato prima delle esecuzioni per il modulo
-[`src/recovery-active/`](../../src/recovery-active/), già descritto in
-[active-recuperato.md](active-recuperato.md). L'incremento aggiunge una suite
-dedicata; usa lettori, decoder e publisher esistenti.
+# Recovery of the old ACTIVE: functional-test method
 
-La suite corrente è in `tests/recovery-active-checkpoint/`, nel package
-`arcdocdb.recovery.active.checkpoint.tests`. Il primo congelamento
-`b92c1a25619279f1d4e1244fc970b3829c0ecca4` e le relative prove conservate
-usavano `tests/recovery-active/` e `arcdocdb.recovery.active.tests`.
-La successiva integrazione di una campagna distinta su `main` ha richiesto
-di isolare questa suite: restano invariati i 27 nomi e i corpi dei test.
-La CI del nuovo commit verifica insieme entrambe le suite.
+Method registered before runs for the
+[`src/recovery-active/`](../../src/recovery-active/) module, already described in
+[active-recuperato.md](active-recuperato.md). The increment adds a dedicated
+suite; it uses existing readers, decoders, and publishers.
 
-## Autorità e risorse
+The current suite is in `tests/recovery-active-checkpoint/`, in package
+`arcdocdb.recovery.active.checkpoint.tests`. The first freeze,
+`b92c1a25619279f1d4e1244fc970b3829c0ecca4`, and its preserved tests
+used `tests/recovery-active/` and `arcdocdb.recovery.active.tests`.
+Later integration of a separate campaign on `main` required
+isolating this suite: the 27 test names and bodies remain unchanged.
+CI for the new commit verifies both suites together.
 
-Ogni fixture possiede un namespace temporaneo esclusivo, file nativi,
-capacità, backend osservato e scratch privati. Il vecchio `control.log` è
-letto attraverso `leggi-control-recuperato`; il suo manifest identifica il
-vecchio ACTIVE. Il segmento è letto dal proprio FD readonly distinto dal
-control log. EOF e identità fisica provengono dal FD mantenuto stabile.
+<a id="autorità-e-risorse"></a>
 
-La tabella DECISION è ricostruita dal decoder pubblico su un log completo
-dichiarato dalla fixture, con partecipanti e risultati noti prima della
-codifica. Non si usa una tabella privata costruita a mano o NIL come
-scorciatoia per l'assenza di decisioni. Completezza e appartenenza allo
-stesso Archivio restano precondizioni del controller: la prova non realizza
-il lettore del log dell'Archivio né l'esclusione di altri processi.
+## Authority and resources
 
-La campagna esercita l'ingresso `leggi-active-recuperato` con tabella nuda.
-L'ingresso `leggi-active-con-decisioni`, introdotto successivamente nel
-[lettore dell'Archivio](decisioni-recuperate.md), mantiene una qualifica
-dedicata distinta da questi casi.
+Every fixture owns an exclusive temporary namespace, native files,
+capabilities, observed backend, and private scratch. The old `control.log` is
+read through `leggi-control-recuperato`; its manifest identifies the
+old ACTIVE. The segment is read through its own read-only FD, separate from the
+control log. EOF and physical identity come from the FD held stable.
 
-Packing little-endian, CRC bitwise, record e SEAL delle fixture sono
-indipendenti dagli encoder di prodotto. Offset, prefisso atteso, conteggi
-e coppie TXID/CSN sono fatti dichiarati della fixture. Le factory reali
-costruiscono i wrapper di prodotto; nessun risultato viene forgiato.
+The DECISION table is rebuilt by the public decoder from a complete log
+declared by the fixture, with participants and results known before
+encoding. No manually constructed private table or NIL shortcut
+for absence of decisions is used. Completeness and membership in the
+same Archivio remain controller preconditions: the test does not implement
+the Archivio log reader or exclusion of other processes.
 
-## Casi e oracoli
+The campaign exercises the `leggi-active-recuperato` entry point with a bare table.
+The `leggi-active-con-decisioni` entry point, introduced later in the
+[Archivio reader](decisioni-recuperate.md), retains its own dedicated qualification
+separate from these cases.
 
-Ogni caso funzionale esercita separatamente v1 e v2:
+Little-endian packing, bitwise CRC, fixture records, and SEALs are
+independent of product encoders. Offsets, expected prefix, counts,
+and TXID/CSN pairs are declared fixture facts. Real factories
+construct product wrappers; no result is forged.
 
-- header-only e lotti ordinari PUT/tombstone;
-- prepared con OUTCOME locale, DECISION concordante o assente; DECISION
-  senza OUTCOME; assenza di entrambe e presumed abort;
-- CSN zero presente, TXID/CSN u64 alti, duplicati OUTCOME identici e
-  OUTCOME senza prepared nel segmento;
-- contraddizioni tra partecipanti, CSN, duplicati e lotti; prepared dopo
-  OUTCOME; budget esatti e insufficienti;
-- prefisso completo, coda non sigillata conservata e corruzione attestata
-  da un SEAL durevole successivo;
-- query pubbliche e serializer CLOSED: solo esiti derivati, TXID ordinati,
-  dimensione `20 + 16 × E`, offset e sentinelle attorno al range;
-- chiusura verso un checkpoint completo, pubblicazione attraverso il
-  publisher unico e riapertura del nuovo control log; rifiuti di P/esiti
-  e capacità chiusa prima del claim.
+<a id="casi-e-oracoli"></a>
 
-`esito-chiusura-active = NIL/0` indica assenza di un esito **derivato da
-conservare**; un OUTCOME già locale può avere la stessa risposta. Le
-statistiche verificano `prepared = locali + derivati + abort`, distinguendo
-i record fisici dagli identificativi di transazione distinti.
+## Cases and oracles
 
-Durante la lettura non devono avvenire append, flush, rename o chiusure.
-Le osservazioni prima/dopo comprendono byte, EOF, inode, offset e frontiere
-delle capacità. Dopo il risultato lo scratch può essere sovrascritto per
-verificare che query e serializer non lo prendano in prestito. Le risorse
-native restano aperte fino al cleanup esclusivo della fixture.
+Every functional case separately exercises v1 and v2:
 
-Il nuovo controllo della pubblicazione precede il claim: un rifiuto lascia
-il publisher preparato e il nome autorevole invariato. Il successo segue
-la rinomina atomica e il fsync del parent; la riapertura verifica il
-manifest effettivamente nominato. Le prove del publisher generico restano
-distinte dalle nuove prove del collegamento ACTIVE.
+- header-only and ordinary PUT/tombstone batches;
+- prepared with local OUTCOME, matching or absent DECISION; DECISION
+  without OUTCOME; absence of both and presumed abort;
+- present zero CSN, high u64 TXID/CSN, identical duplicate OUTCOMEs, and
+  OUTCOME without prepared in the segment;
+- contradictions between participants, CSNs, duplicates, and batches; prepared after
+  OUTCOME; exact and insufficient budgets;
+- complete prefix, preserved unsealed tail, and corruption attested
+  by a later durable SEAL;
+- public queries and CLOSED serializer: derived outcomes only, ordered TXIDs,
+  size `20 + 16 × E`, offsets, and sentinels around the range;
+- closure into a complete checkpoint, publication through the single
+  publisher, and reopening the new control log; P/outcome rejections
+  and capability closed before claim.
 
-## Esecuzione e conservazione
+`esito-chiusura-active = NIL/0` indicates absence of a **derived outcome to
+preserve**; an already-local OUTCOME may yield the same answer. Statistics
+verify `prepared = locali + derivati + abort`, distinguishing
+physical records from distinct transaction identifiers.
 
-Gli autori lavorano su file distinti e rileggono il codice prima delle
-esecuzioni. Sorgenti e metodo vengono congelati in un commit. La verifica
-completa usa `make check`, che conserva ambiente, comando, sorgenti prima
-e dopo, esito e output originali anche quando fallisce. I sorgenti restano
-immutati durante il processo. La CI ripete la verifica su Linux e macOS.
-Ogni correzione successiva appartiene a un nuovo commit e conserva il
-tentativo precedente.
+No append, flush, rename, or close may occur during reading.
+Before/after observations include bytes, EOF, inode, offsets, and capability
+frontiers. After the result, scratch may be overwritten to
+verify that queries and serializer do not borrow it. Native resources
+remain open until exclusive fixture cleanup.
 
-Le evidenze citate vengono conservate nel catalogo con i registri originali;
-si leggono come dati, con `*read-eval* NIL`, senza caricare report o FASL.
-La copia e la conservazione precedono la pulizia del worktree.
+The new publication check precedes claim: rejection leaves
+the publisher prepared and the authoritative name unchanged. Success follows
+atomic rename and parent fsync; reopening verifies the
+manifest actually named. Generic publisher tests remain
+separate from the new ACTIVE connection tests.
 
-Requisiti interessati: REQ-REC-001, REQ-REC-002, REQ-STO-003, REQ-TXM-005,
+<a id="esecuzione-e-conservazione"></a>
+
+## Execution and preservation
+
+Authors work on separate files and reread code before
+runs. Sources and method are frozen in a commit. Full verification
+uses `make check`, which preserves environment, command, sources before
+and after, outcome, and original output even on failure. Sources remain
+unchanged during the process. CI repeats verification on Linux and macOS.
+Every subsequent correction belongs to a new commit and preserves the
+previous attempt.
+
+Cited evidence is preserved in the catalog with original registers;
+it is read as data, with `*read-eval* NIL`, without loading reports or FASLs.
+Copying and preservation precede worktree cleanup.
+
+Affected requirements: REQ-REC-001, REQ-REC-002, REQ-STO-003, REQ-TXM-005,
 REQ-TXM-007, REQ-FOR-001, REQ-FOR-003, REQ-AFF-001, REQ-AFF-002,
-REQ-AFF-008, REQ-AFF-009, REQ-AFF-018 e REQ-VAL-001. Le decisioni locali
-ARV-D01…D14 sono un riferimento per i casi; questa campagna funzionale non
-attesta MC/DC o qualifica C1 completa. Non misura prestazioni o heap e non
-ricostruisce primary, orizzonte CSN, inventario o gate di ammissione.
+REQ-AFF-008, REQ-AFF-009, REQ-AFF-018, and REQ-VAL-001. Local decisions
+ARV-D01…D14 are a reference for cases; this functional campaign does not
+attest MC/DC or full C1 qualification. It measures no performance or heap allocation and does not
+rebuild the primary index, CSN horizon, inventory, or admission gate.

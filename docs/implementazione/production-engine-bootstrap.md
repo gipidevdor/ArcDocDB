@@ -1,51 +1,55 @@
 # M1 — Single-Series Durable Core
 
 Milestone [Production Engine Bootstrap](https://github.com/gpicchiarelli/ArcDocDB/milestone/1).
-Il [metodo preregistrato](production-engine-bootstrap-metodo.md) concentra il lavoro
-sul percorso esistente, senza nuove funzionalita' full text o una roadmap parallela.
+The [preregistered method](production-engine-bootstrap-metodo.md) focuses work
+on the existing path, without new full text functionality or a parallel roadmap.
 
-## Ingresso di produzione
+<a id="ingresso-di-produzione"></a>
+
+## Production entry point
 
 ```lisp
 (arcdocdb.engine:apri-motore directory archive-uuid series-uuid
  :create t :clock #'get-internal-real-time)
-;; Restituisce soltanto un motore READY, altrimenti segnala una condizione.
+;; Returns only a READY engine; otherwise signals a condition.
 ```
 
-La directory privata deve esistere. `:create t` e' un'inizializzazione
-esplicita, ammessa solo se vuota; l'apertura normale non crea file mancanti
-o sovrascrive uno storage esistente. I due UUID sono octets di sedici byte,
-copiati e confrontati con gli header canonici. Un solo attore I/O seriale
-possiede l'handle e tutti i FD: nessuna chiamata da altro thread o reentrata
-durante una richiesta, neppure dai callback d'osservazione.
+The private directory must exist. `:create t` is explicit initialization,
+allowed only when empty; normal opening does not create missing files
+or overwrite existing storage. The two UUIDs are sixteen-byte octets,
+copied and compared with the canonical headers. Only one serial I/O actor
+owns the handle and all FDs: no calls from another thread or reentry
+during a request, including from observation callbacks.
 
-L'esclusione advisory non bloccante e' acquisita sul FD della directory,
-prima di osservare o mutare lo storage, e dura fino al suo close. Tutti gli
-scrittori M1 devono usarla; non protegge da processi ostili che ignorano flock
-o dalla sostituzione esterna degli antenati del path. La directory privata
-e l'assenza di mutatori esterni restano precondizioni.
+Nonblocking advisory exclusion is acquired on the directory FD before
+observing or mutating storage, and lasts until its close. All M1 writers
+must use it; it does not protect against hostile processes that ignore flock
+or external replacement of path ancestors. The private directory and
+absence of external mutators remain preconditions.
 
-`apri-motore` possiede l'intero ciclo:
+`apri-motore` owns the entire cycle:
 
-1. Configurazione, risorse private, apertura parent e lock esclusivo.
-2. Eventuale init con i preparatori ACTIVE/CONTROL e header decision log canonici.
-3. CONTROL e inventario completi, fonti readonly possedute, reader semantici
-   e gate Archivio/CSN prima degli effetti.
-4. Completamento dei nomi gia' decisi, ID fresco dal planner e nuovo ACTIVE
-   durevole. Il publisher esistente rinomina CONTROL e sincronizza il parent:
-   questo resta il punto di atomicita' del recovery della Serie.
-5. Nuova lettura canonica, massimo CSN invariato, tutti i nomi completati.
-6. Runtime canonico a M, mappe CLOSED dello stesso FD, replay dell'indice
-   privato, adozione del nuovo ACTIVE e radice GET completa.
-7. Solo infine READY: nessun gate simulato nel test o nel futuro trasporto.
+1. Configuration, private resources, parent opening, and exclusive lock.
+2. Optional initialization with ACTIVE/CONTROL preparers and canonical decision log headers.
+3. Complete CONTROL and inventory, owned read-only sources, semantic readers,
+   and Archivio/CSN gates before effects.
+4. Completion of names already decided, fresh ID from the planner, and a new
+   durable ACTIVE. The existing publisher renames CONTROL and synchronizes the
+   parent: this remains the atomicity point of Serie recovery.
+5. New canonical reading, unchanged maximum CSN, all names completed.
+6. Canonical runtime at M, CLOSED maps of the same FD, replay of the private
+   index, adoption of the new ACTIVE, and complete GET root.
+7. Only then READY: no gate simulated in the test or future transport.
 
-Il nuovo ACTIVE viene preparato nella vista del recovery, richiesto dal
-publisher CONTROL. Dopo la decisione il wrapper del runtime rilegge il
-medesimo header/FD, conserva log e associazione fisica e usa il registro
-canonico del nuovo ambito. Nessun file viene preparato due volte o riaperto
-in scrittura. Le fonti e i FD pregressi restano posseduti fino al close.
+The new ACTIVE is prepared in the recovery view, requested by the CONTROL
+publisher. After the decision, the runtime wrapper rereads the same header/FD,
+retains the log and physical association, and uses the canonical registry of
+the new scope. No file is prepared twice or reopened for writing. Previous
+sources and FDs remain owned until close.
 
-## Richieste e conferma
+<a id="richieste-e-conferma"></a>
+
+## Requests and acknowledgment
 
 ```lisp
 (arcdocdb.engine:scrivi-documento engine key encoded-value) ; CSN u64 strong
@@ -54,94 +58,101 @@ in scrittura. Le fonti e i FD pregressi restano posseduti fino al close.
 (arcdocdb.engine:chiudi-motore engine)
 ```
 
-Le chiavi e i valori sono byte delle cornici canoniche. Il nucleo di
-persistenza M1 non aggiunge Query Engine, estrazione CBOR o validazione del
-documento applicativo. La sessione Unix dovra' applicare il suo contratto
-documentale prima dell'ammissione. Nessun decoder o formato alternativo.
+Keys and values are bytes of canonical frames. The M1 persistence core
+adds no Query Engine, CBOR extraction, or application document validation.
+The Unix session must apply its document contract before admission.
+No alternative decoder or format.
 
-Il writer riusa lotto, gruppo e scratch. Preflight di formato/capienza prima
-del CSN, inclusi load, arena chiavi, credito slot e revisione dell'indice.
-Il preflight canonico non muta l'indice e non prenota risorse concorrenti:
-vale per l'unico owner M1, senza altro mutatore fino all'applicazione.
-Un limite prevedibile dell'indice lascia READY, CSN e file invariati;
-update e tombstone ammissibili restano utilizzabili, anche dopo reopen
-con gli stessi budget. DELETE non recupera byte dell'arena append-only.
-Una salute/invariante dell'indice guasta chiude invece admission anche se
-rilevata nel preflight, conservando la causa e senza append o consumo CSN.
-Seguono SEAL, write, flush, pubblicazione canonica della radice e
-risoluzione del CSN, indice e ritiro dei riferimenti. La conferma esce solo
-alla fine. Radice prima dell'indice e' corretta solo con l'attore M1 seriale:
-GET concorrenti e MVCC storico non sono esposti. Una perdita della risposta
-puo' lasciare un esito ignoto; non si ritenta automaticamente.
+The writer reuses batch, group, and scratch. Format/capacity preflight precedes
+the CSN, including load, key arena, slot credit, and index revision.
+Canonical preflight does not mutate the index or reserve concurrent resources:
+it applies to the sole M1 owner, without another mutator until application.
+A predictable index limit leaves READY, CSN, and files unchanged;
+admissible updates and tombstones remain usable, including after reopen
+with the same budgets. DELETE does not reclaim bytes from the append-only arena.
+Failed index health/an invariance failure instead closes admission even when
+detected in preflight, preserving the cause and without append or CSN consumption.
+SEAL, write, flush, canonical root publication and CSN resolution, index, and
+reference retirement follow. Acknowledgment is issued only at the end.
+Root before index is correct only with the serial M1 actor: concurrent GETs
+and historical MVCC are not exposed. Losing the response can leave an unknown
+outcome; there is no automatic retry.
 
-Il replay attraversa solo prefissi CLOSED verificati dalle API esistenti,
-richiede CSN ordinari strettamente crescenti e considera anche le tombstone.
-Un conflitto o un dato corrotto chiude il bootstrap. Il massimo non deriva
-da ID segmento, offset o stamp CONTROL. Il contesto CSN zero dell'ispezione
-non ha writer: il solo registro operativo e' quello creato dal piano finale.
+Replay traverses only CLOSED prefixes verified by the existing APIs,
+requires strictly increasing ordinary CSNs, and includes tombstones.
+A conflict or corrupt data closes bootstrap. The maximum does not derive
+from segment IDs, offsets, or CONTROL stamps. The inspection's zero CSN
+context has no writer: the only operational registry is the one created by
+the final plan.
 
-## Errori, risorse e limiti M1
+<a id="errori-risorse-e-limiti-m1"></a>
 
-Startup, recovering, faulted e closed rifiutano richieste. Una richiesta
-ammessa incompleta rende FAULTED e conserva la causa, senza conferma,
-rollback o riuso dei buffer incerti. Il close chiude admission prima delle
-risorse; tutti i set e FD ricevono un tentativo, parent ultimo. Gli errori
-secondari sono conservati, il fallimento startup aggrega eventuali cleanup
-senza perdere la primaria. Il thread owner non viene cancellato asincronamente;
-SIGKILL termina il processo e il kernel rilascia i descrittori/lock.
+## Errors, resources, and M1 limits
 
-I segmenti preesistenti sono sempre readonly. Code senza SEAL, temporanei
-orfani e CONTROL non pubblicati sono conservati; gli ID osservati non sono
-riusati. `control.log.tmp` pregresso viene spostato sotto nome distinto senza
-sostituire un target presente, poi fsync parent. Un definitivo inatteso e'
-un'anomalia bloccante: non viene eliminato. Non si implementa garbage collection
-degli orfani; budget esaurito richiede un intervento esplicito, senza perdita silenziosa.
+Startup, recovering, faulted, and closed reject requests. An incomplete admitted
+request makes the engine FAULTED and retains the cause, without acknowledgment,
+rollback, or reuse of uncertain buffers. Close shuts admission before resources;
+all sets and FDs receive one attempt, parent last. Secondary errors are
+retained; startup failure aggregates any cleanup without losing the primary
+error. The owner thread is not canceled asynchronously; SIGKILL terminates
+the process and the kernel releases descriptors/locks.
 
-M1 configura esattamente una Serie e decision log senza DECISION; non scopre
-il catalogo multiserie. Prepared, compaction/REMOVED e location oltre u32
-sono rifiutati. Il formato resta v1/v2; questa e' una restrizione dell'ingresso,
-non una modifica dei tipi storage u64. Ogni reopen prepara un nuovo ACTIVE.
-La rotazione a caldo non e' esposta: al limite il nucleo rifiuta nuove scritture.
+Existing segments are always read-only. Tails without SEAL, orphan temporaries,
+and unpublished CONTROL files are retained; observed IDs are not reused.
+An existing `control.log.tmp` is moved to a distinct name without replacing
+an existing target, then the parent is fsynced. An unexpected final file is a
+blocking anomaly: it is not deleted. Orphan garbage collection is not
+implemented; exhausted budget requires explicit intervention, without silent loss.
 
-Default: file 16 MiB, cornice 64 KiB, 64 segmenti, 65.536 record per file,
-indice di capacita' 4096 e arena chiavi 1 MiB. Budget configurabili e
-controllati, senza clamping. Non sono limiti del formato definitivo ne'
-misure di prestazione. Startup, indice, radici e runtime possono allocare;
-ottimizzazioni, budget heap/GC e qualifica COD-30 completa restano fuori M1.
+M1 configures exactly one Serie and a decision log without DECISION; it does
+not discover the multiserie catalog. Prepared, compaction/REMOVED, and locations
+beyond u32 are rejected. The format remains v1/v2; this is an entry point
+restriction, not a change to the u64 storage types. Each reopen prepares a new
+ACTIVE. Live rotation is not exposed: at the limit, the core rejects new writes.
 
-## Verifica del percorso reale
+Defaults: 16 MiB file, 64 KiB frame, 64 segments, 65,536 records per file,
+index capacity 4096, and 1 MiB key arena. Configurable, checked budgets,
+without clamping. They are neither final format limits nor performance
+measurements. Startup, index, roots, and runtime may allocate; optimizations,
+heap/GC budgets, and complete COD-30 qualification remain outside M1.
 
-La campagna preesistente resta distinta dalla nuova suite di produzione:
+<a id="verifica-del-percorso-reale"></a>
 
-- `tools/vertical-crash.lisp --self-test`: 18 scenari, 71 processi,
-  26 SIGKILL intenzionali e due negativi, con sintesi derivata dagli eventi.
-- `tools/engine-crash.lisp --self-test`: usa soltanto apertura e richieste
-  del motore nei figli; nessun checkpoint, replay, scelta ID o reset CSN nel
-  test. Due SIGKILL e riavvio per v1/v2, piu' crash durante recovery,
-  coda incompleta, errori dichiarati, admission e oracolo negativo.
+## Verification of the real path
 
-I comandi passano dal recorder. Test e diagnosi sono distinti da benchmark,
-qualifica C1/MC/DC, power loss, Linux non eseguito e guasti permanenti del
-disco. P3 usa ora il [servizio Unix di produzione](production-unix-m1.md)
-su questo ciclo qualificato; il modello PING di SPK-11 resta un esperimento.
+The existing campaign remains separate from the new production suite:
 
-## Evidenze del nucleo
+- `tools/vertical-crash.lisp --self-test`: 18 scenarios, 71 processes,
+  26 intentional SIGKILLs and two negatives, with a summary derived from events.
+- `tools/engine-crash.lisp --self-test`: uses only engine opening and requests
+  in children; no checkpoint, replay, ID selection, or CSN reset in the test.
+  Two SIGKILLs and restart for v1/v2, plus crashes during recovery,
+  incomplete tail, declared errors, admission, and a negative oracle.
 
-Il [rapporto con originali e sintesi strutturate](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-production-engine-bootstrap/report.md)
-lega le prove al sorgente `73436eac`: 2164/2164 casi in 51 suite senza
-esclusioni, 15 test engine, 80 dell'indice primario e due negativi sul writer
-precedente. La campagna engine dedicata osserva 31 processi e 22 SIGKILL;
-quella verticale preesistente 71 processi e 26 SIGKILL. Le ripetizioni nel
-catalogo completo non sono sommate a questi conteggi.
+Commands go through the recorder. Tests and diagnostics are separate from
+benchmarks, C1/MC/DC qualification, power loss, unexecuted Linux, and permanent
+disk failures. P3 now uses the [production Unix service](production-unix-m1.md)
+on this qualified cycle; the SPK-11 PING model remains an experiment.
 
-P0 e il nucleo P1–P2 sono verificati nel modello dichiarato. Il
-[rapporto P3](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md)
-verifica ora il percorso Unix reale su `11d2e95a`: 2215/2215 test, 74 processi
-locali, quattro SIGKILL e perdita dell'ACK dopo commit strong. Il validatore
-opzionale dei record applicativi rifiuta dati incompatibili prima del checkpoint.
-La matrice FI completa e il gate di fase restano aperti. Nessun benchmark o
-qualifica C1/MC/DC/power loss e' dedotto dai passaggi funzionali.
+<a id="evidenze-del-nucleo"></a>
 
-Il [collegamento del primario paginato](indice-paginato-m1.md) aggiunge un
-candidato readonly esplicito allo startup e il suo uso nel GET corrente. Il
-residente resta presente; prima di ogni scrittura ammessa il derivato viene ritirato.
+## Core evidence
+
+The [report with originals and structured summaries](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-production-engine-bootstrap/report.md)
+links tests to source `73436eac`: 2164/2164 cases in 51 suites without
+exclusions, 15 engine tests, 80 primary index tests, and two negatives on the
+previous writer. The dedicated engine campaign observes 31 processes and 22
+SIGKILLs; the existing vertical campaign, 71 processes and 26 SIGKILLs.
+Repetitions in the complete catalog are not added to these counts.
+
+P0 and the P1–P2 core are verified within the stated model. The
+[P3 report](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md)
+now verifies the real Unix path on `11d2e95a`: 2215/2215 tests, 74 local processes,
+four SIGKILLs, and ACK loss after strong commit. The optional application record
+validator rejects incompatible data before the checkpoint. The complete FI
+matrix and phase gate remain open. No benchmark or C1/MC/DC/power loss
+qualification is inferred from functional passes.
+
+The [paged primary integration](indice-paginato-m1.md) adds an explicit read-only
+candidate at startup and its use in current GET. The resident index remains
+present; before each admitted write, the derivative is retired.

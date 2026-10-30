@@ -1,183 +1,203 @@
-# Revisione del routing worker/Serie
+<a id="revisione-del-routing-workerserie"></a>
 
-Due letture C1 del 2026-10-11: contratto, sorgenti di prodotto e
-dipendenze esecuzione/Serie. Prima lettura: agente `next_execution_audit`;
-seconda lettura indipendente: agente `routing_measure`, dopo RW-REV-01.
-La seconda lettura ha confrontato anche le fixture, prima delle campagne.
-Il root ha poi eseguito le campagne e `next_execution_audit` ne ha letto
-i raw dedicati v2: target, copertura, audit nativo/HTML, misure e strict C4.
-Il controllo generale sul congelamento integrato passa: 835 test,
-2 smoke, 21 suite e dieci spike con sorgenti stabili. Anche questi raw
-sono stati letti da `next_execution_audit`. Sono letture di agenti,
-non attestazioni umane; i gate globali di qualificazione restano aperti.
-Base iniziale `92decf4265554cd4959e32a1c881cf00758bb6a1`.
+# Worker/Serie routing review
 
-| Punto C1 | Prima lettura | Seconda lettura / evidenza |
+Two C1 readings on 2026-10-11: contract, product sources, and
+execution/Serie dependencies. First reading: agent `next_execution_audit`;
+second independent reading: agent `routing_measure`, after RW-REV-01.
+The second reading also compared fixtures before campaigns.
+Root then ran campaigns and `next_execution_audit` read their
+dedicated v2 raw data: target, coverage, native/HTML audit, measurements, and strict C4.
+The general check on integrated freeze passes: 835 tests,
+2 smoke tests, 21 suites, and ten spikes with stable sources. These raw data
+were also read by `next_execution_audit`. These are agent readings,
+not human attestations; global qualification gates remain open.
+Initial base `92decf4265554cd4959e32a1c881cf00758bb6a1`.
+
+| C1 point | First reading | Second reading / evidence |
 |---|---|---|
-| 1. REQ e ADR | REQ-CON-001/002/004/005 e REQ-AFF-008; ADR-0005/0033/0045. Routing del writer già CLAIMED al binding locale, senza scheduler implicito. | Confermati nel delta writer, tre routing, package e ASDF. Nessun cambio del modello a compiti espliciti. |
-| 2. Invarianti sensibili ai test | Ordinal immutabile e locale, registro denso 1..65536, controller distinti EQ, input copiati, owner worker, CLAIMED, writer EQ, link del contesto/coppia e IDLE. | Le 18 fixture v2 passano: copie, alias controller, ricircolo full, FI link, owner, fase, RW-REV-01, Serie FAULTED e shape privata. Confrontano identità e immagini prima/dopo; il limite 65536 è provato nella shape, senza costruire 65536 controller reali. |
-| 3. Errori tipizzati | Configurazione invalida prima della pubblicazione; fase/owner ordinari; errore routing dopo claim rende FAULTED il worker e conserva l'obbligo. Segnalato RW-REV-01 sul confine delle ragioni recuperabili. | RW-REV-01 chiuso nel sorgente e nella campagna v2: FI su entrambi i helper con ragione `:worker-state`, condizione EQ, writer/home conservati e controller intatti. Nessun errore del lookup diventa recuperabile attraverso l'allowlist esterna. |
-| 4. Cicli e attese | Due cicli di costruzione, ciascuno limitato dalla dimensione verificata N≤65536. Nessun ciclo nel lookup, nessuna attesa/ricorsione/thread/callback. | Confermato sui sorgenti finali; semafori/deadline soltanto nel harness concorrente, nessun retry nascosto. |
-| 5. Allocazione calda | Slot e riferimenti immutabili, tabella locale preallocata, handler worker `dynamic-extent`. Hash EQ soltanto startup. Lettura statica non attesta heap nullo. | Cinque campioni v2 da 4096 cicli dopo warmup 128: heap `[0,0,0,0,0]`, sink 8972288 ciascuno. Controllo positivo 16777472 byte, sink errato rifiutato e clock nullo sotto risoluzione. Solo successo seriale locale preallocato, non heap zero universale. |
-| 6. Dati verificati all'uscita | Range prima di `svref`; EQ prima di restituire link; owner/fase e shape verificati dai helper. Getter ordinale non attribuisce membership o lease. | Confermato ordine range, writer EQ, context/writer/controller EQ, IDLE e forma link. Nessun acquire, pop o accesso allo stato vivo della Serie dalla selezione. |
-| 7. Decisioni composte | Una nuova decisione composta nella factory writer: `or` tra NIL e tipo integer0..65535. Altre decisioni scalari, cicli e boundary elencati nell'inventario. | Input NIL,0,invalido coprono VF/FV/FF, con cortocircuito dichiarato. Audit nativo/HTML dei 26 file PASS: 3250/3766 espressioni, 436/526 rami; tre routing 267/291 e 40/42. Tutte le 516 espressioni e 90 rami missing conservati; nessun MC/DC inferito. |
-| 8. Proprietà condivisa | Registro privato dopo copie, condiviso in sola lettura. Contesto/tabella/link locali al thread. Lookup non legge salute, owner o ring del controller. | Confermati copie e slot read-only, assenza di scritture condivise calde e owner prima dei handler. Nessun poisoning su wrong-thread e nessun fault marking su controller senza lease. |
-| 9. Tracciabilità e check | REQ sulle nuove definizioni; package/ASDF caricano routing dopo il bridge. Requisiti globali restano `progettato`. | Confermata sequenza di caricamento senza dipendenze invertite. Tracciabilità e check completo PASS sul congelamento integrato: 835 test, 2 smoke, 21 suite e dieci spike stabili. Nessuna promozione dei requisiti globali. |
-| 10. Regole e deviazioni | Safety3, slot typed/read-only, ftype/docstring, pre/post, corpi≤60righe, complessità locale≤10. Nessuna syscall o deviazione nuova individuata. | Nessun nuovo difetto statico o deviazione individuato. Strict compile completo C4 e self-test FASL PASS in v1, prodotto/C4 invariati in v2; reader audit strict compile/FASL e self-test PASS in v2, entrambi stderr vuoti. Fullcheck integrato PASS, compilazione senza warning; 370114 byte di note compilatore conservati nello stderr. |
-| 11. Serializzazione e INV-P6 | Nessun lock, wait, hash o scrittura globale nel lookup per tratto. O(1); coda pronta e lease restano nei protocolli già esistenti. | Fixture v2 PASS: due tabelle locali sullo stesso registro read-only, due Serie ACTIVE prima delle release. La correttezza di questo interleaving finito non è una misura di scalabilità o fairness. |
-| 12. Atomicità durevole | Cambia soltanto configurazione in memoria e selezione di un oggetto. Non scrive WAL, non elimina dati, non conferma effetti. Nessun nuovo punto durevole. | Confermato: nessun I/O, record durevole, eliminazione, rollback o cleanup. Recovery/shutdown globale non sono qualificati. |
+| 1. REQ and ADR | REQ-CON-001/002/004/005 and REQ-AFF-008; ADR-0005/0033/0045. Routing of already CLAIMED writer to local binding, without implicit scheduler. | Confirmed in writer delta, three routing sources, package, and ASDF. No change to explicit-task model. |
+| 2. Test-sensitive invariants | Immutable local ordinal, dense registry 1..65536, EQ-distinct controllers, copied inputs, worker owner, CLAIMED, EQ writer, context/pair link, and IDLE. | The 18 v2 fixtures pass: copies, controller alias, full recycling, link FI, owner, phase, RW-REV-01, FAULTED Serie, and private shape. Compare identities and before/after images; 65536 limit tested in shape without constructing 65536 real controllers. |
+| 3. Typed errors | Invalid configuration before publication; ordinary phase/owner; routing error after claim makes worker FAULTED and retains obligation. RW-REV-01 reported on recoverable-reason boundary. | RW-REV-01 closed in source and v2 campaign: FI on both helpers with reason `:worker-state`, EQ condition, writer/home retained, and controllers intact. No lookup error becomes recoverable through outer allowlist. |
+| 4. Loops and waits | Two construction loops, each bounded by checked size N≤65536. No lookup loop, no wait/recursion/thread/callback. | Confirmed on final sources; semaphores/deadlines only in concurrent harness, no hidden retry. |
+| 5. Hot allocation | Immutable slots and references, preallocated local table, `dynamic-extent` worker handler. EQ hash only at startup. Static reading does not attest zero heap. | Five v2 samples of 4096 cycles after warmup 128: heap `[0,0,0,0,0]`, sink 8972288 each. Positive control 16777472 bytes, wrong sink rejected, and zero clock below resolution. Only local preallocated serial success, not universal zero heap. |
+| 6. Data verified on exit | Range before `svref`; EQ before returning link; owner/phase and shape checked by helpers. Ordinal getter grants no membership or lease. | Confirmed range, writer EQ, context/writer/controller EQ, IDLE, and link shape order. No acquire, pop, or access to live Serie state from selection. |
+| 7. Compound decisions | One new compound decision in writer factory: `or` between NIL and integer0..65535 type. Other scalar decisions, loops, and boundaries listed in inventory. | NIL,0,invalid inputs cover TF/FT/FF, with declared short-circuiting. Native/HTML audit of 26 files PASS: 3250/3766 expressions, 436/526 branches; three routing sources 267/291 and 40/42. All 516 missing expressions and 90 missing branches retained; no MC/DC inferred. |
+| 8. Shared ownership | Private registry after copies, shared read-only. Context/table/link local to thread. Lookup does not read controller health, owner, or ring. | Copies and read-only slots confirmed, no hot shared writes, and owner before handlers. No poisoning on wrong-thread and no controller fault marking without lease. |
+| 9. Traceability and check | REQ on new definitions; package/ASDF load routing after bridge. Global requirements remain `progettato`. | Loading sequence confirmed without inverted dependencies. Traceability and full check PASS on integrated freeze: 835 tests, 2 smoke tests, 21 suites, and ten stable spikes. No global requirement promotion. |
+| 10. Rules and deviations | Safety 3, typed/read-only slots, ftypes/docstrings, pre/post, bodies≤60 lines, local complexity≤10. No new syscall or deviation identified. | No new static defect or deviation identified. Full strict C4 compile and FASL self-test PASS in v1, product/C4 unchanged in v2; strict compile/FASL reader audit and self-test PASS in v2, both with empty stderr. Integrated fullcheck PASS, compilation without warnings; 370114 bytes of compiler notes retained in stderr. |
+| 11. Serialization and INV-P6 | No lock, wait, hash, or global write in per-slice lookup. O(1); ready queue and leases remain in existing protocols. | v2 fixture PASS: two local tables on same read-only registry, two Serie ACTIVE before releases. Correctness of this finite interleaving is not a scalability or fairness measurement. |
+| 12. Durable atomicity | Changes only in-memory configuration and object selection. Does not write WAL, delete data, or acknowledge effects. No new durable point. | Confirmed: no I/O, durable record, deletion, rollback, or cleanup. Global recovery/shutdown not qualified. |
 
-## Osservazioni della prima lettura
+<a id="osservazioni-della-prima-lettura"></a>
 
-| ID | Osservazione | Stato |
+## First reading observations
+
+| ID | Observation | Status |
 |---|---|---|
-| RW-REV-01 / P2 | L'allowlist `:worker-state` dell'API selezione racchiudeva anche i helper di lookup. Un errore `resource-exhausted :worker-state` inatteso proveniente dal lookup poteva restare recuperabile per coincidenza di ragione con il rifiuto di fase. La prima lettura non ha individuato un ramo naturale attuale che lo producesse; il rischio riguarda contenimento di guasto e coupling futuro. | Boundary lookup interno con allowlist vuote dopo il controllo CLAIMED, in `routing-select.lisp:55`, riletto da entrambi gli agenti. La regressione `test-REQ-AFF-008-routing-lookup-reason-cannot-bypass-terminal-boundary` inietta entrambi i helper e passa nel target v2. |
+| RW-REV-01 / P2 | Selection API `:worker-state` allowlist also enclosed lookup helpers. An unexpected `resource-exhausted :worker-state` error from lookup could remain recoverable because its reason coincided with phase rejection. First reading found no current natural branch producing it; risk concerns fault containment and future coupling. | Internal lookup boundary with empty allowlists after CLAIMED check, in `routing-select.lisp:55`, reread by both agents. Regression `test-REQ-AFF-008-routing-lookup-reason-cannot-bypass-terminal-boundary` injects both helpers and passes in v2 target. |
 
-Il routing non possiede una lease Serie quando fallisce: non marca un
-controller che potrebbe appartenere a un altro worker. La diagnosi e il
-writer/home/obbligo conservati devono essere presi in carico dal futuro
-coordinatore Archivio. Il fail-stop locale non dimostra arresto globale,
-quiescenza, pool, shutdown o riuso sicuro dopo un errore.
+Routing owns no Serie lease when it fails: it does not mark a
+controller that might belong to another worker. Diagnosis and retained
+writer/home/obligation must be handled by the future
+Archivio coordinator. Local fail-stop does not prove global stop,
+quiescence, pool, shutdown, or safe reuse after error.
 
-## Tentativi preliminari
+<a id="tentativi-preliminari"></a>
 
-Il primo congelamento v1 ha compilato il prodotto senza avvisi, ma il
-test dei budget massimi ha esaurito lo stack del comparatore ricorsivo
-dell'immagine della fixture su vettori da65537 elementi. Il record originale
-`4000711896-command-71058-0` resta un fallimento conservato, non viene
-promosso a PASS. Il comparatore del solo test viene corretto prima della
-campagna v2; sorgenti del prodotto e distinzione fra le campagne restano
-espliciti. Il target v2 passa dopo questa correzione del solo harness.
+## Preliminary attempts
 
-## Gate dedicati letti
+The first v1 freeze compiled product without warnings, but the
+maximum-budget test exhausted the stack of the fixture image's recursive
+comparator on 65537-element vectors. Original record
+`4000711896-command-71058-0` remains a retained failure and is not
+promoted to PASS. The test-only comparator is corrected before the
+v2 campaign; product sources and distinction between campaigns remain
+explicit. The v2 target passes after this harness-only correction.
 
-I quattro record di processo dedicati e il record dell'audit sono stati
-letti con `:STATUS :OK`, `:SOURCE-CONSISTENCY :STABLE` ed exit0. Le copie
-canoniche e il controllo generale sono descritti nei risultati.
+<a id="gate-dedicati-letti"></a>
 
-| Gate | Record originale | Esito e ambito |
+## Dedicated gates read
+
+The four dedicated process records and the audit record were
+read with `:STATUS :OK`, `:SOURCE-CONSISTENCY :STABLE`, and exit 0. Canonical
+copies and the general check are described in results.
+
+| Gate | Original record | Outcome and scope |
 |---|---|---|
-| Target v2 | `4000712082-command-76603-0` | 18 test routing PASS; include FI shape, Serie FAULTED e RW-REV-01. |
-| Suite e copertura v2 | `4000712082-command-76602-0` | 88 test Serie e 89 execution PASS nello stesso processo; unione nativa/HTML dei 26 file completi. |
-| Audit copertura v2 | `4000712247-command-79840-0` | Strict COMPILE-FILE completo reader, FASL, self-test e concordanza nativo/HTML PASS; stderr vuoto. 26 righe, 3250/3766 espressioni e 436/526 rami; 24 espressioni e 2 rami missing nei tre routing, tutte le identità preservate. |
-| Strict C4 v1 | `4000711978-command-74703-0` | COMPILE-FILE completo e self-test FASL PASS, warning/style-warning fatali, stderr vuoto. C4 SHA invariato in v2. |
-| Misura v2 | `4000712105-command-77187-0` | Cinque campioni da 4096 cicli: heap0, sink8972288, ticks6792/6802/6814/6820/6815. Controllo positivo 16777472 byte; badsink3 atteso1 rifiutato, clock0 sotto risoluzione, raw parziale e CLI verificati. |
+| v2 target | `4000712082-command-76603-0` | 18 routing tests PASS; includes shape FI, FAULTED Serie, and RW-REV-01. |
+| v2 suite and coverage | `4000712082-command-76602-0` | 88 Serie and 89 execution tests PASS in same process; native/HTML union of all 26 files. |
+| v2 coverage audit | `4000712247-command-79840-0` | Full strict reader COMPILE-FILE, FASL, self-test, and native/HTML agreement PASS; empty stderr. 26 rows, 3250/3766 expressions, and 436/526 branches; 24 expressions and 2 branches missing in three routing sources, all identities preserved. |
+| Strict C4 v1 | `4000711978-command-74703-0` | Full COMPILE-FILE and FASL self-test PASS, fatal warning/style-warning, empty stderr. C4 SHA unchanged in v2. |
+| v2 measurement | `4000712105-command-77187-0` | Five samples of 4096 cycles: heap 0, sink 8972288, ticks 6792/6802/6814/6820/6815. Positive control 16777472 bytes; badsink3 expected1 rejected, clock0 below resolution, partial raw data and CLI checked. |
 
-Il report C4 originale `routing-bench-01/report.lisp` contiene 53759 byte,
+Original C4 report `routing-bench-01/report.lisp` contains 53759 bytes,
 SHA-256 `9f8fb919d590c230ce75063ca754782537759779048cddfb2490fea97bf58b93`.
-I ticks sono in unità 1e6/s della piattaforma locale e non sono throughput,
-P99 o confronto parallelo. Startup/compilazione/GC/stampa restano fuori
-sensore; il ciclo è seriale, con due Serie alternate e I/O mock della fixture.
+Ticks are in local platform units of 1e6/s and are not throughput,
+P99, or parallel comparison. Startup/compilation/GC/printing remain outside
+the sensor; the cycle is serial, with two alternating Serie and fixture mock I/O.
 
-## Controllo generale finale
+<a id="controllo-generale-finale"></a>
 
-Il record `4000712542-command-86913-0` del congelamento integrato d155db3
-con il delta routing passa con `:OK/:STABLE`, exit0 e 673 source blob.
-Il processo esegue `make check-core`, nucleo richiamato da `make check`,
-con cache ASDF privata: 835 test nominati, 2 smoke e 21 suite in
-182.076021 secondi. Lo stderr originale contiene 370114 byte di note
-del compilatore, senza warning o condizioni non gestite.
+## Final general check
 
-Il master `4000712691-check-90489-0` è `:COMPLETE`: tutti i dieci spike
-hanno sorgenti stabili, exit0 e stderr vuoto; SPK-007 è PASS, gli altri OK.
-La proiezione compatta `4000712744-routing-fullcheck-projection-92144`
-è stata confrontata con i record originali. Le prove ausiliarie conservano
-14 file originali e 2 file di orchestrazione; i fallimenti intenzionali
-dei self-test sono distinti dal successo della campagna e non sono nuovi
-gate C4.
+Record `4000712542-command-86913-0` of integrated freeze d155db3
+with routing delta passes with `:OK/:STABLE`, exit 0, and 673 source blobs.
+The process runs `make check-core`, the core invoked by `make check`,
+with private ASDF cache: 835 named tests, 2 smoke tests, and 21 suites in
+182.076021 seconds. Original stderr contains 370114 bytes of compiler
+notes, without warnings or unhandled conditions.
 
-La pubblicazione conserva questi dati nei file canonici
-`full-check.lisp`, `fullcheck-summary.lisp` e `fullcheck-selftests.lisp`,
-con provenienza e verifica dei byte dichiarate nei risultati. La copertura
-rimane parziale, nessun MC/DC è inferito e la qualificazione generale del
-motore e il gate F0 restano aperti. I sorgenti routing, le fixture e il C4
-qualificati in questo congelamento restano invariati.
+Master `4000712691-check-90489-0` is `:COMPLETE`: all ten spikes
+have stable sources, exit 0, and empty stderr; SPK-007 is PASS, others OK.
+Compact projection `4000712744-routing-fullcheck-projection-92144`
+was compared with original records. Auxiliary tests retain
+14 original files and 2 orchestration files; intentional self-test
+failures are distinct from campaign success and are not new
+C4 gates.
 
-## Integrazione con main avanzato
+Publication retains these data in canonical files
+`full-check.lisp`, `fullcheck-summary.lisp`, and `fullcheck-selftests.lisp`,
+with provenance and byte verification declared in results. Coverage
+remains partial, no MC/DC is inferred, and general engine
+qualification and gate F0 remain open. Routing sources, fixtures, and C4
+qualified in this freeze remain unchanged.
 
-La qualificazione dedicata rimane sul congelamento v2 della base92decf4.
-Il congelamento generale integra
+<a id="integrazione-con-main-avanzato"></a>
+
+## Integration with advanced main
+
+Dedicated qualification remains on the v2 freeze of base 92decf4.
+General freeze integrates
 `d155db3f977677fa95280f59c23fbe46a5e116d2`:
-aggiunge scrittura di stringhe CBOR e resolver GET, senza modificare
-execution/Series o foundation/hash/io/wal/csn. Il delta ASDF aggiunge le
-nuove unità e la suite CBOR; il delta `foundation-coverage.lisp` aggiunge
-lo scope CBORstring-write e non cambia i predicate Series/execution.
+adds CBOR string writing and GET resolver without changing
+execution/Series or foundation/hash/io/wal/csn. ASDF delta adds
+new units and CBOR suite; `foundation-coverage.lisp` delta adds
+CBORstring-write scope and does not change Series/execution predicates.
 
-L'avanzamento remoto successivo a
-`8fb30517a72c5a7bf51f0f5746c6d04a0a8c3486` aggiunge soltanto artefatti:
-il diff da d155db3 non cambia sorgenti, strumenti, documenti o ASDF.
-Questa distinzione conserva la base effettiva nei record del congelamento.
+Subsequent remote advancement to
+`8fb30517a72c5a7bf51f0f5746c6d04a0a8c3486` adds only artifacts:
+diff from d155db3 changes no sources, tools, documents, or ASDF.
+This distinction retains the actual base in freeze records.
 
-Questi delta non cambiano i tre routing, il bridge, la modifica writer,
-le fixture routing o il C4. I raw dedicati mantengono base, fonti e scope
-originari: non sono presentati come nuove misure sulla base integrata.
-ASDF, indice implementazione e changelog vengono composti conservando
-entrambe le aggiunte. Il controllo generale sul pacchetto integrato passa
-nel record `4000712542-command-86913-0`, con dieci spike nel relativo
-master: questo esito viene dai raw finali, senza dedurlo dai gate dedicati.
+These deltas do not change the three routing sources, bridge, writer change,
+routing fixtures, or C4. Dedicated raw data retains original base, sources, and scope:
+it is not presented as new measurements on the integrated base.
+ASDF, implementation index, and changelog are composed retaining
+both additions. General check on the integrated package passes
+in record `4000712542-command-86913-0`, with ten spikes in the corresponding
+master: this outcome comes from final raw data, not inferred from dedicated gates.
 
-## Pubblicazione e conservazione dei byte
+<a id="pubblicazione-e-conservazione-dei-byte"></a>
 
-Il wrapper di pubblicazione `4000712318-command-81618-0` ha exit0,
-ma stato `:SOURCE-CHANGED` e source consistency `:CHANGED`: non è un
-test PASS. La proiezione dei blob prima/dopo mostra 672→673 file e due
-delta documentali concorrenti: creazione di `routing-worker-risultati.md`
-e aggiornamento dei link di `routing-worker.md`. Gli altri blob rimangono
-identici, compresi tutti i sorgenti di prodotto, test e strumenti.
-Il record originale conserva questo stato senza normalizzarlo.
+## Publication and byte retention
 
-La copia dei raw e la costruzione del catalogo sono state completate con
-verifica dei byte originali ed espansi. Il successivo controllo separato
-`4000712554-command-87125-0`, letto dopo che i documenti erano stabili,
-rilegge tutti i byte raw/espansi del catalogo e passa con `:OK/:STABLE`,
-exit0 e stderr vuoto. Questo gate attesta la conservazione degli artefatti;
-non trasforma il wrapper precedente in PASS e non sostituisce `make check`
-sul codice finale.
+Publication wrapper `4000712318-command-81618-0` has exit 0,
+but status `:SOURCE-CHANGED` and source consistency `:CHANGED`: it is not a
+PASS test. Before/after blob projection shows 672→673 files and two
+concurrent documentation deltas: creation of `routing-worker-risultati.md`
+and link updates in `routing-worker.md`. Other blobs remain
+identical, including all product, test, and tool sources.
+The original record retains this status without normalization.
 
-## Ultima integrazione prima del push
+Raw copying and catalog construction completed with
+verification of original and expanded bytes. The subsequent separate check
+`4000712554-command-87125-0`, read after documents stabilized,
+rereads all raw/expanded catalog bytes and passes with `:OK/:STABLE`,
+exit 0, and empty stderr. This gate attests artifact retention;
+it does not transform the previous wrapper into PASS or replace `make check`
+on final code.
 
-Una lettura separata del delta d155→6eeb501 conferma che non modifica
-execution/Series/routing o relativi contratti. Cache/read salta posti
-disabilitati/rifiutati entro gli otto way prima del tag; la copia ricontrolla
-ancora disponibilità e sequenza. La nuova suite GET e i tre strumenti
-associati non invocano API routing. ASDF conserva entrambe le aggiunte e
-`foundation-coverage.lisp` mantiene identici i predicati Series/execution.
+<a id="ultima-integrazione-prima-del-push"></a>
 
-Il nuovo snapshot683 sorgenti/documenti su
-`6eeb501d2eace49fad8e2ec333ed0c6c1386dd6c` è verificato dal processo
-`4000713646-command-11645-0`: OK/STABLE/exit0,854 test più2smoke,
-22suite, nessun warning/style-warning. Dieci esperimenti aggiuntivi sono
-riusciti nel master `4000713800-check-18712-0`, tutti stabili.
-I raw835+2 precedenti rimangono storici; non sono reinterpretati come
-prova della nuova base. Le due letture C1, le misure e il denominatore
-dedicati mantengono fonte e scope originari. Il nuovo controllo generale
-non chiude Fase0 o la qualifica del motore.
+## Final integration before push
 
-## Composizione finale con resolver ACTIVE
+A separate reading of delta d155→6eeb501 confirms it does not modify
+execution/Series/routing or their contracts. Cache/read skips
+disabled/rejected slots within eight ways before tag; copy still rechecks
+availability and sequence. The new GET suite and three associated
+tools do not invoke routing APIs. ASDF retains both additions and
+`foundation-coverage.lisp` keeps Series/execution predicates identical.
 
-Il delta6eeb501→be9d2dd non modifica execution/Series/routing o loro
-contratti. Sei unità ACTIVE sono caricate dopo il resolver CLOSED,
-senza cicli o riordino del routing. Le nuove API leggono la radice della
-Serie, non agganciano automaticamente il bridge o il lookup routing e
-non ridefiniscono le loro funzioni. L'allocazione dei metadati ACTIVE per
-lotto rimane fuori dallo scope delle misure seriali routing.
+The new 683-source/document snapshot at
+`6eeb501d2eace49fad8e2ec333ed0c6c1386dd6c` is checked by process
+`4000713646-command-11645-0`: OK/STABLE/exit0, 854 tests plus 2 smoke tests,
+22 suites, no warning/style-warning. Ten additional experiments
+succeeded in master `4000713800-check-18712-0`, all stable.
+Previous 835+2 raw data remains historical; it is not reinterpreted as
+proof of the new base. Both C1 readings, measurements, and dedicated
+denominator retain original source and scope. The new general check
+does not close Phase 0 or engine qualification.
 
-Il build della tree combinata, record `4000714586-command-55084-0`,
-è OK/STABLE/exit0 con690 sorgenti/documenti e854 test più2smoke,
-senza avvisi. I test esistenti non esercitano le nuove API ACTIVE: questo
-PASS non ne attesta C1/C4. I congelamenti F0/copertura/misura precedenti
-mantengono fonte e scope. Preimage di ASDF, indice e changelog sono
-conservate; entrambe le aggiunte rimangono nella tree finale.
+<a id="composizione-finale-con-resolver-active"></a>
 
-## Integrazione della suite GET finale
+## Final composition with ACTIVE resolver
 
-La PR9 porta main a `644e53f176d0dce2c5ac5870659e7d89c0c9df3e`:
-aggiunge70 test GET, caricamento della suite, scope GET di copertura e
-documentazione. Non modifica sorgenti di prodotto o i predicati di
-copertura Series/execution. L'integrazione conserva i precedenti delta.
+Delta 6eeb501→be9d2dd does not modify execution/Series/routing or their
+contracts. Six ACTIVE units load after the CLOSED resolver,
+without cycles or routing reordering. New APIs read the Serie
+root, do not automatically attach bridge or routing lookup, and
+do not redefine their functions. ACTIVE metadata allocation per
+batch remains outside serial routing measurement scope.
 
-Il build combinato `4000715110-command-98694-0` è OK/STABLE/exit0,
-con694 sorgenti/documenti,924 test nominati e2smoke, senza avvisi;
-cache FASL privata, circa22,71s. Questo controllo ripete la suite con i
-nuovi test; F0, copertura e misure routing mantengono le basi originali.
-Non è una nuova qualifica delle API ACTIVE, del pool o del motore.
+Combined-tree build, record `4000714586-command-55084-0`,
+is OK/STABLE/exit0 with 690 sources/documents and 854 tests plus 2 smoke tests,
+without warnings. Existing tests do not exercise new ACTIVE APIs: this
+PASS does not attest their C1/C4. Previous F0/coverage/measurement freezes
+retain source and scope. ASDF, index, and changelog preimages are
+retained; both additions remain in the final tree.
+
+<a id="integrazione-della-suite-get-finale"></a>
+
+## Final GET suite integration
+
+PR9 brings main to `644e53f176d0dce2c5ac5870659e7d89c0c9df3e`:
+adds 70 GET tests, suite loading, GET coverage scope, and
+documentation. It changes no product source or Series/execution coverage
+predicates. Integration retains previous deltas.
+
+Combined build `4000715110-command-98694-0` is OK/STABLE/exit0,
+with 694 sources/documents, 924 named tests, and 2 smoke tests, without warnings;
+private FASL cache, about 22.71 s. This check reruns the suite with
+new tests; F0, coverage, and routing measurements retain original bases.
+It is not new qualification of ACTIVE APIs, pool, or engine.

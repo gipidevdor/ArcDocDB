@@ -1,13 +1,17 @@
-# Adozione dei CLOSED nel runtime
+<a id="adozione-dei-closed-nel-runtime"></a>
 
-`runtime:adotta-directory-closed` collega le mappe GET già costruite e i
-[risultati CLOSED](closed-recuperato.md) al nuovo ambito del
-[runtime Archivio](runtime-archivio.md). Il costo dipende dal numero di
-segmenti, senza ricopiare le righe dei PUT o rileggere header e dati.
-Realizza i contratti esistenti di recovery, identità e durata sotto EBR;
-non introduce formati persistenti o sezioni critiche per documento.
+# Adopting CLOSED segments in the runtime
 
-## Contratto
+`runtime:adotta-directory-closed` connects the already built GET maps and
+[CLOSED results](closed-recuperato.md) to the new scope of the
+[Archivio runtime](runtime-archivio.md). Cost depends on the number of
+segments, without recopying PUT rows or rereading headers and data.
+It implements existing recovery, identity, and EBR lifetime contracts;
+it introduces no persistent formats or per-document critical sections.
+
+<a id="contratto"></a>
+
+## Contract
 
 ```lisp
 (arcdocdb.runtime:adotta-directory-closed
@@ -15,95 +19,101 @@ non introduce formati persistenti o sezioni critiche per documento.
  :max-segmenti 65536 :budget-payload 1310720)
 ```
 
-`archive` è l'oggetto canonico già legato al runtime. `control` è il
-risultato autorevole della Serie nell'ambito di bootstrap di quell'Archivio.
-`target-view` appartiene per EQ al nuovo ambito runtime e ha lo stesso UUID
-di sedici byte. Un clone dello scope con gli stessi registri non è ammesso.
-La verifica non ricostruisce il catalogo e non certifica l'unicità fisica
-dell'oggetto Archivio o la validità temporale del piano CSN.
+`archive` is the canonical object already bound to the runtime. `control` is the
+Serie's authoritative result in that Archivio's bootstrap scope.
+`target-view` belongs by EQ to the new runtime scope and has the same sixteen-byte
+UUID. A clone of the scope with the same registries is not allowed.
+Verification does not rebuild the catalog or certify the Archivio object's physical
+uniqueness or the CSN plan's temporal validity.
 
-I due simple-vector sono paralleli, stabili per tutta la chiamata e
-ordinati per ID crescente. Devono contenere tutti e soli i CLOSED del
-medesimo CONTROL. Il gate canonico verifica count, ID unici, appartenenza,
-prefissi e capacità aperte. Per ciascuna coppia vengono poi confrontati:
+The two simple-vectors are parallel, stable throughout the call, and
+sorted by increasing ID. They must contain all and only the CLOSED segments of
+the same CONTROL. The canonical gate checks count, unique IDs, membership,
+prefixes, and open capabilities. Each pair is then compared for:
 
-- vista bootstrap esatta della mappa;
-- stessa capacità `file-io` per EQ del risultato CLOSED, non solo nome o inode;
-- ID, frontiera P, versione e origine writer/compaction;
-- ordine stretto, FD readonly aperto e ID compatibile con la directory GET.
+- the map's exact bootstrap view;
+- the same `file-io` capability by EQ as the CLOSED result, not merely name or inode;
+- ID, frontier P, version, and writer/compaction origin;
+- strict order, open read-only FD, and ID compatible with the GET directory.
 
-L'insieme vuoto è valido solo se il manifest non contiene CLOSED. Un insieme
-parziale, una mappa di un altro FD o una frontiera diversa sono rifiutati
-prima di costruire i wrapper. I limiti esistenti del resolver restano:
-ID 1..2^32-1, nessun supporto nuovo agli esiti EDIT nella mappa GET.
-Il recovery storage continua ad accettare ID u64, incluso zero; qui i valori
-non rappresentabili vengono rifiutati, mai troncati.
+The empty set is valid only if the manifest contains no CLOSED segments. A partial
+set, a map from another FD, or a different frontier is rejected
+before constructing wrappers. Existing resolver limits remain:
+ID 1..2^32-1, no new support for EDIT outcomes in the GET map.
+Storage recovery still accepts u64 IDs, including zero; here unrepresentable
+values are rejected, never truncated.
 
-## Proprietà, lifetime e pubblicazione
+<a id="proprietà-lifetime-e-pubblicazione"></a>
 
-Ogni mappa riceve nuovi wrapper `segmento-get`/`mappa-segmento-get`.
-Conserva FD, ID, versione, origine, frontiera e lo stesso array readonly
-delle righe. La directory canonica copia il vettore dei riferimenti e
-costruisce gli ID ordinati. I vettori del caller possono essere riusati
-dopo il ritorno; non vengono trattenuti CONTROL, risultati CLOSED, vecchie
-mappe o viste bootstrap. Nessun array interno viene esportato.
+## Ownership, lifetime, and publication
 
-La condivisione riguarda esclusivamente righe immutabili e capacità readonly.
-Non trasferisce la proprietà fisica dei FD: il proprietario già esistente
-deve mantenerli aperti fino al termine di tutti i borrower di bootstrap e
-runtime, poi al reclaim autorizzato da EBR. Nessuna nuova apertura o close,
-nessun doppio cleanup implicito. Un errore lascia candidati privati al GC e
-propaga la condizione originale; non chiude risorse del caller.
+Each map receives new `segmento-get`/`mappa-segmento-get` wrappers.
+It retains the FD, ID, version, origin, frontier, and the same read-only
+row array. The canonical directory copies the reference vector and
+builds sorted IDs. Caller vectors may be reused
+after return; CONTROL, CLOSED results, old maps,
+and bootstrap views are not retained. No internal array is exported.
 
-Il coordinatore congela file, namespace e ingressi per l'intera operazione.
-I controlli di lifetime non sono una lease o una certificazione futura.
-Accessi Lisp agli interni privati sono fuori dal contratto pubblico.
+Sharing covers only immutable rows and read-only capabilities.
+It does not transfer physical FD ownership: the existing owner
+must keep them open until all bootstrap and runtime borrowers finish,
+then until EBR-authorized reclamation. No new open or close,
+no implicit double cleanup. An error leaves private candidates to GC and
+propagates the original condition; it does not close caller resources.
 
-La directory restituita non è pubblicata. La vista target deve ricevere
-un primary coerente, e le fonti vanno pubblicate prima delle location.
-L'ACTIVE recuperato non viene implicitamente chiuso o incluso: se CONTROL
-lo considera ancora ACTIVE, resta fuori da questa directory. Checkpoint,
-nuovo CONTROL e nuovo insieme CLOSED devono essere coordinati esplicitamente;
-non si accettano token di CONTROL differenti per evitare una nuova lettura.
-Nessuna autorizzazione al traffico è dedotta dall'adozione.
+The coordinator freezes files, namespace, and inputs for the entire operation.
+Lifetime checks are not a lease or a certification of future validity.
+Lisp access to private internals is outside the public contract.
 
-## Budget e costo
+The returned directory is unpublished. The target view must receive
+a consistent primary index, and sources must be published before locations.
+The recovered ACTIVE is not implicitly closed or included: if CONTROL
+still considers it ACTIVE, it stays outside this directory. Checkpoint,
+new CONTROL, and new CLOSED set must be explicitly coordinated;
+different CONTROL tokens are not accepted to avoid a new read.
+Adoption implies no traffic authorization.
 
-`max-segmenti` è un intero 1..65536; `budget-payload` un `index` non negativo.
-Forma, count e budget sono verificati prima del gate che alloca la tabella
-dei duplicati e prima dei nuovi wrapper. Su SBCL 64 bit il picco degli array
-nuovi è 20*N: vettore temporaneo 8*N, riferimenti della directory 8*N e ID
-u32 4*N. Il payload finale nuovo è 12*N; le righe esistenti non sono copiate.
-La configurazione di default copre 65536 segmenti. Sono esclusi hash del
-gate, wrapper, header, capacità, righe condivise e GC: non è un limite RSS.
+<a id="budget-e-costo"></a>
 
-Le scansioni sono limitate da N. Il gate usa una tabella hash privata per
-la completezza; la directory non ordina implicitamente gli ingressi.
-Non vengono introdotte allocazioni o verifiche nel percorso GET già
-esistente. Costo del bootstrap, GC, memoria e throughput restano da misurare.
+## Budget and cost
 
-## Decisioni e qualifica aperta
+`max-segmenti` is an integer 1..65536; `budget-payload` a nonnegative `index`.
+Shape, count, and budget are checked before the gate that allocates the duplicate
+table and before new wrappers. On 64-bit SBCL the new array
+peak is 20*N: temporary vector 8*N, directory references 8*N, and
+u32 IDs 4*N. Final new payload is 12*N; existing rows are not copied.
+The default configuration covers 65536 segments. Gate hashes,
+wrappers, headers, capabilities, shared rows, and GC are excluded: this is not an RSS limit.
 
-| ID | Casi da verificare |
+Scans are bounded by N. The gate uses a private hash table for
+completeness; the directory does not implicitly sort inputs.
+No allocations or checks are introduced into the existing GET path.
+Bootstrap cost, GC, memory, and throughput remain to be measured.
+
+<a id="decisioni-e-qualifica-aperta"></a>
+
+## Decisions and open qualification
+
+| ID | Cases to verify |
 |---|---|
-| RCL-D01 | Entrambi simple-vector; entrambi i tipi errati separatamente |
-| RCL-D02 | Tipo e limiti max; tipo budget; zero e 20*N esatto/meno uno |
-| RCL-D03 | Count paralleli; completo/vuoto/mancante/duplicato; gate CONTROL canonico |
-| RCL-D04 | Runtime presente; scope origine e destinazione EQ; clone con medesimi registri |
-| RCL-D05 | UUID Serie uguale/diverso, compresa verifica difensiva durante il trasferimento |
-| RCL-D06 | Mappe della vista esatta; FD EQ, anche contro una seconda apertura dello stesso file |
-| RCL-D07 | ID AND P AND versione AND origine: ogni disaccordo separato |
-| RCL-D08 | Ordine, duplicati, ID zero/u64 fuori range, capacità chiusa/faulted/append |
-| RCL-D09 | Nuovo owner AND righe EQ AND FD EQ; FI di ogni postcondizione difensiva |
-| RCL-D10 | Directory finale completa, input riusabili, vecchie viste non trattenute |
+| RCL-D01 | Both simple-vectors; both wrong types separately |
+| RCL-D02 | Max type and bounds; budget type; zero and exact 20*N/minus one |
+| RCL-D03 | Parallel counts; complete/empty/missing/duplicate; canonical CONTROL gate |
+| RCL-D04 | Runtime present; source and destination scope EQ; clone with the same registries |
+| RCL-D05 | Same/different Serie UUID, including defensive check during transfer |
+| RCL-D06 | Maps of the exact view; FD EQ, including against a second open of the same file |
+| RCL-D07 | ID AND P AND version AND origin: each mismatch separately |
+| RCL-D08 | Order, duplicates, zero/out-of-range u64 ID, closed/faulted/append capability |
+| RCL-D09 | New owner AND rows EQ AND FD EQ; FI of every defensive postcondition |
+| RCL-D10 | Complete final directory, reusable inputs, old views not retained |
 
-Questo incremento prevede compilazione del solo prodotto senza avvisi,
-controlli statici, tracciabilità, link e conservazione dei record originali.
-Non aggiunge o esegue test funzionali, FI, copertura, modelli o benchmark.
-Due riletture dell'autore non costituiscono revisione indipendente.
-RCL-D01…D10, MC/DC, confine generale COD-24, misure e qualifica C1 rimangono
-aperti. Anche la CI generale non sostituisce una suite dedicata all'adattatore.
+This increment provides for warning-free compilation of the product only,
+static checks, traceability, links, and preservation of original records.
+It does not add or run functional tests, FI, coverage, models, or benchmarks.
+Two author rereadings do not constitute independent review.
+RCL-D01…D10, MC/DC, the general COD-24 boundary, measurements, and C1 qualification remain
+open. General CI also does not replace a dedicated adapter suite.
 
-I [record locali e le due riletture dell'autore](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-runtime-closed/README.md)
-conservano compilazione, controlli statici e disassemblaggio della revisione
-congelata, senza promuoverli a qualifica funzionale.
+The [local records and two author rereadings](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-runtime-closed/README.md)
+preserve compilation, static checks, and disassembly of the frozen
+revision, without promoting them to functional qualification.

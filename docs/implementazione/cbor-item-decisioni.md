@@ -1,71 +1,79 @@
-# Primo item CBOR minimo — decisioni del nuovo sorgente
+<a id="primo-item-cbor-minimo--decisioni-del-nuovo-sorgente"></a>
 
-Inventario statico del 2026-10-15 prima della prima compilazione del
-prodotto. Sorgente [cbor-item-read.lisp](../../src/codec/cbor-item-read.lisp),
+# First minimal CBOR item — new source decisions
+
+Static inventory on 2026-10-15 before the first product
+compilation. Source [cbor-item-read.lisp](../../src/codec/cbor-item-read.lisp),
 blob `b9099dc8a8c96281063811e686deb4dcb2b1d39b`.
-Il [metodo](cbor-item-metodo.md) e la [revisione](cbor-item-revisione.md)
-distinguono inventario, obblighi statici e misure ancora da eseguire.
+The [method](cbor-item-metodo.md) and [review](cbor-item-revisione.md)
+distinguish inventory, static obligations, and measurements still to be run.
 
-## Denominatore completo del sorgente
+<a id="denominatore-completo-del-sorgente"></a>
 
-Una funzione, righe10–43 inclusive: **34 righe**. Percorsi sintattici:
-base1 +5UNLESS +1WHEN +1LOOP = **8**. Sono inclusi i predicati interni
-impediti dal preflight o da callee corretti; nessun sito è escluso.
-Il numero non è il denominatore strumentato di SB-COVER né MC/DC.
+## Complete source denominator
 
-**Sei predicati espliciti di controllo**, un ciclo bounded, cinque siti
-ERROR; **zero AND/OR**, zero operandi AND/OR, quattro confronti numerici
-binari e zero catene numeriche. Le tre inizializzazioni keyword default
-di MAX-BYTES/MAX-NODES/MAX-DEPTH, righe11–12, sono dichiarate e non
-escluse dall'eventuale copertura strumentata.
+One function, lines10–43 inclusive: **34 lines**. Syntactic paths:
+base1 +5UNLESS +1WHEN +1LOOP = **8**. Internal predicates
+prevented by preflight or correct callees are included; no site is excluded.
+The count is neither the SB-COVER instrumented denominator nor MC/DC.
 
-| ID | Riga | Predicato | Esito statico o coppia nominale prevista |
+**Six explicit control predicates**, one bounded loop, five
+ERROR sites; **zero AND/OR**, zero AND/OR operands, four binary numeric
+comparisons, and zero numeric chains. The three default keyword
+initializations for MAX-BYTES/MAX-NODES/MAX-DEPTH, lines11–12, are declared
+and not excluded from any instrumented coverage.
+
+| ID | Line | Predicate | Static outcome or planned nominal pair |
 | --- | ---: | --- | --- |
-| D1 |22| `SPAN <= +CBOR-SCAN-MAX-BYTES+` | Vero dopo il preflight. Falso implica violazione del contratto del callee: nessuna coppia pubblica dichiarata. |
-| D2 |30| drain al cursore corrente, dentro LOOP | Falso prima del primo item; vero dopo item completo se esiste un'altra iterazione, per esempio `00 FF`. È il punto che termina senza leggere FF. |
-| D3 |32| drain al cursore corrente, dopo LOOP | Vero nei successi, compreso `00` con un solo passo; falso nella finestra vuota e nella catena di soli tag troncata. |
-| D4 |33| `CURSOR = LIMIT` | Vero nella finestra vuota e dopo esaurimento dei byte di una catena di tag. Falso impedito da progresso del passo e limite del ciclo: obbligo statico interno, non coppia eseguita. |
-| D5 |39| `BEGIN < NEXT` | Vero nei successi. Falso impedito dal consumo di almeno un byte e dalla radice completata: obbligo statico interno. |
-| D6 |41| `NEXT <= LIMIT` | Vero nei successi. Falso impedito dalle guardie del passo e dai lettori bounded: obbligo statico interno. |
+| D1 |22| `SPAN <= +CBOR-SCAN-MAX-BYTES+` | True after preflight. False implies a callee contract violation: no public pair claimed. |
+| D2 |30| drain at current cursor, inside LOOP | False before first item; true after a complete item if another iteration exists, e.g., `00 FF`. This is the point that terminates without reading FF. |
+| D3 |32| drain at current cursor, after LOOP | True on success, including `00` with one step; false for an empty window and truncated tag-only chain. |
+| D4 |33| `CURSOR = LIMIT` | True in an empty window and after a tag chain exhausts bytes. False prevented by step progress and loop limit: internal static obligation, not an executed pair. |
+| D5 |39| `BEGIN < NEXT` | True on success. False prevented by consuming at least one byte and a completed root: internal static obligation. |
+| D6 |41| `NEXT <= LIMIT` | True on success. False prevented by step guards and bounded readers: internal static obligation. |
 
-I siti D2 e D3 chiamano lo stesso drain ma restano siti distinti del
-denominatore. Non c'è decisione composta nuova per cui dichiarare
-indipendenza delle condizioni; ciò non chiude MC/DC delle dipendenze
-né la qualifica C1.
+Sites D2 and D3 call the same drain but remain separate sites in the
+denominator. There is no new compound decision for which to claim
+condition independence; this does not close dependency MC/DC
+or C1 qualification.
 
-## Errori espliciti e ciclo
+<a id="errori-espliciti-e-ciclo"></a>
 
-| Sito | Riga | Motivo INVARIANT-VIOLATION | Condizione e raggiungibilità nominale |
+## Explicit errors and loop
+
+| Site | Line | INVARIANT-VIOLATION reason | Condition and nominal reachability |
 | --- | ---: | --- | --- |
-| E1 |23| `:cbor-item-loop-span` | D1 falso, bloccato dal preflight corretto. |
-| E2 |34| `:cbor-item-loop-bound` | D3 falso e D4 falso, bloccato da avanzamento/limiti corretti. |
-| E3 |36| `:cbor-item-empty-header` | Solo se il lettore preesistente restituisse normalmente sullo span `[LIMIT,LIMIT)`. Il lettore deve invece lanciare `:cbor-truncated` a LIMIT. |
-| E4 |40| `:cbor-item-read-progress` | D5 falso, bloccato da passo/root corretti. |
-| E5 |42| `:cbor-item-read-range` | D6 falso, bloccato dai limiti del passo. |
+| E1 |23| `:cbor-item-loop-span` | D1 false, blocked by correct preflight. |
+| E2 |34| `:cbor-item-loop-bound` | D3 false and D4 false, blocked by correct progress/limits. |
+| E3 |36| `:cbor-item-empty-header` | Only if the existing reader returned normally on span `[LIMIT,LIMIT)`. The reader must instead raise `:cbor-truncated` at LIMIT. |
+| E4 |40| `:cbor-item-read-progress` | D5 false, blocked by correct step/root. |
+| E5 |42| `:cbor-item-read-range` | D6 false, blocked by step limits. |
 
-`LOOP REPEAT SPAN`, riga29, ammette zero iterazioni per finestra vuota,
-una per scalare senza coda e fino a SPAN passi che avanzano almeno un
-byte. D2 può interrompere prima del passo successivo. Ogni drain ha
-limite preesistente102; il passo riceve l'END originario e MINIMAL=T.
-Il corpus prevede span0/1, tag concatenati, payload grandi e coda non
-letta, senza inferire che il massimo teorico di iterazioni sia stato
-eseguito da una fixture con payload che avanza in un solo passo.
+`LOOP REPEAT SPAN`, line29, allows zero iterations for an empty window,
+one for a scalar without a tail, and up to SPAN steps advancing at least one
+byte. D2 may stop before the next step. Each drain has the existing
+limit102; the step receives the original END and MINIMAL=T.
+The corpus includes span0/1, chained tags, large payloads, and an unread
+tail, without inferring that the theoretical maximum iteration count was
+executed by a fixture whose payload advances in a single step.
 
-I rifiuti pubblici range/workspace/alias/limiti/byte-budget e quelli
-header/UTF8/nodi/depth sono propagati da funzioni preesistenti, senza
-nuovi predicati in questo file. Restano nel contratto e nel corpus;
-la copertura locale del nuovo file non misura i loro siti dipendenti.
+Public range/workspace/alias/limits/byte-budget rejections and
+header/UTF8/nodes/depth rejections propagate from existing functions, without
+new predicates in this file. They remain in the contract and corpus;
+local coverage of the new file does not measure their dependency sites.
 
-## Lettura meccanica e stato
+<a id="lettura-meccanica-e-stato"></a>
 
-Il lettore C4 `review/read-product-decisions-v2.lisp`, conservato nel
-supporto ignored dell'incremento, legge quattro forme DATA con
-READ-EVAL NIL fino a EOF e conferma i conteggi sopra; stdout conservato,
-stderr vuoto, exit0. Non carica, valuta o compila le forme del prodotto.
-La prima variante aveva una parentesi mancante nel lettore stesso:
-sorgente e stdout/stderr sono conservati separatamente e non contano
-come test del prodotto. La misura in righe è un conteggio manuale.
+## Mechanical reading and status
 
-I risultati runtime, tutti i denominatori grezzi, le eventuali forme
-strumentate mancanti, heap e otto mutazioni restano da misurare.
-Nessuna esclusione e nessuna attestazione C1/MC/DC da questa tabella.
+The C4 reader `review/read-product-decisions-v2.lisp`, preserved in the
+increment's ignored support area, reads four DATA forms with
+READ-EVAL NIL to EOF and confirms the counts above; stdout preserved,
+stderr empty, exit0. It does not load, evaluate, or compile product forms.
+The first variant had a missing parenthesis in the reader itself:
+source and stdout/stderr are preserved separately and do not count
+as product tests. Line measurement is a manual count.
+
+Runtime results, all raw denominators, any missing instrumented
+forms, heap, and eight mutations remain to be measured.
+No exclusion and no C1/MC/DC certification follows from this table.

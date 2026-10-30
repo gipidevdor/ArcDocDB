@@ -1,123 +1,133 @@
-# Inizializzazione di un nuovo segmento writer
+<a id="inizializzazione-di-un-nuovo-segmento-writer"></a>
 
-`arcdocdb.active` prepara l'header di un nuovo `.seg.tmp` e collega il risultato
-al [resolver ACTIVE](get-active.md). Esegue la preparazione del file prevista da
+# Initializing a new writer segment
+
+`arcdocdb.active` prepares a new `.seg.tmp` header and binds result
+to [ACTIVE resolver](get-active.md). Performs file preparation under
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#2-prepara-decidi-completa): header,
-flush del file e sincronizzazione della directory. L'**EDIT durevole** rimane
-la decisione che apre il segmento nel manifest; questo modulo non lo scrive.
+file flush, and directory synchronization. **Durable EDIT** remains
+manifest's segment-opening decision; this module does not write it.
 
-## API e responsabilità
+<a id="api-e-responsabilità"></a>
 
-| API | Risultato |
+## API and responsibilities
+
+| API | Result |
 |---|---|
-| `prepara-segmento-attivo(view, input, append, directory, id, created-at, header, scratch, :version)` | log, capacità GET e prova di identità, dopo flush e rilettura |
-| `log-segmento-attivo-preparato(prepared)` | log canonico per costruire un solo controller della Serie |
-| `crea-sorgente-get-preparata(controller, lease, prepared, :limiti…)` | sorgente ACTIVE con associazione fisica obbligatoria, senza I/O |
-| `verifica-capienza-lettura(file, count)` | preflight del budget readonly, senza buffer, offset o syscall |
+| `prepara-segmento-attivo(view, input, append, directory, id, created-at, header, scratch, :version)` | log, GET capability, and identity proof after flush and reread |
+| `log-segmento-attivo-preparato(prepared)` | canonical log for constructing one Serie controller |
+| `crea-sorgente-get-preparata(controller, lease, prepared, :limiti…)` | ACTIVE source with mandatory physical association, without I/O |
+| `verifica-capienza-lettura(file, count)` | read-only budget preflight without buffer, offset, or syscall |
 
-Il controller riserva il namespace e l'identificativo, crea il nuovo append con
-`crea-temporaneo` (**O_EXCL**, mai riapertura di un segmento esistente), apre la
-capacità readonly e la directory parent autorevole. Le capacità e i due buffer
-sono esclusivi fino al ritorno della preparazione, eseguita nel pool I/O.
-`created-at` è fornito dal chiamante come u64; il modulo non legge un orologio.
+Controller reserves namespace and identifier, creates new append with
+`crea-temporaneo` (**O_EXCL**, never reopening an existing segment), opens
+read-only capability and authoritative parent directory. Capabilities and both
+buffers exclusive until preparation returns, performed in I/O pool.
+`created-at` supplied by caller as u64; module reads no clock.
 
-L'associazione dei due file è [verificata tramite device/inode](associazione-file.md).
-La directory deve essere il parent effettivo del nome riservato: è una
-precondizione del controller, non deducibile dai due inode. I tre file devono
-usare la medesima istanza di backend, compreso `nil` per il percorso nativo.
-I callback restano fidati e rispettano ownership e stabilità dei buffer.
+Both files' association [verified through device/inode](associazione-file.md).
+Directory must be actual parent of reserved name: a controller
+precondition not derivable from two inodes. All three files must
+use same backend instance, including `nil` for native path.
+Callbacks remain trusted and honor buffer ownership/stability.
 
-## Ordine degli effetti
+<a id="ordine-degli-effetti"></a>
 
-1. Verificare formato v1/v2, ID positivo u32, due range di almeno 64 byte,
-   assenza di alias, capacità aperte, budget di lettura/append e frontiere
-   append scritta/durevole entrambe zero. Nessun effetto I/O o sui buffer.
-2. Verificare l'identità fisica readonly/append e creare il log privato.
-   Un callback `identity` assente o un'identità diversa impedisce la scrittura.
-3. Preparare l'header canonico **writer**, con Serie, ID, versione, timestamp,
-   riservati zero e CRC. Scrivere esattamente 64 byte nel nuovo append.
-4. Sincronizzare il file; verificare il ritorno a 64.
-5. Rileggere con `crea-segmento-get` attraverso la capacità readonly associata:
-   verificare header/CRC/Serie/ID/formato. Confrontare tutti i 64 byte con quelli
-   scritti, inclusi timestamp, origine e riservati.
-6. Sincronizzare la directory parent. Ricontrollare apertura delle capacità
-   e frontiere del file entrambe a 64, prima di restituire il risultato.
-7. Il writer esegue la decisione EDIT e il completamento previsti da ADR-0040.
-   Solo dopo questa decisione ammette traffico sul nuovo ACTIVE.
+## Effect order
 
-Il controller usa il log restituito, root iniziale `nil` e `next-offset = 64`.
-Con la sua lease, `crea-sorgente-get-preparata` confronta il log effettivo e il
-registro CSN dell'Archivio con quello degli snapshot nella vista GET; richiede
-il file ancora fermo al solo header. La factory ACTIVE esistente riceve sempre
-la prova di identità, senza syscall, mutex o letture di H.
+1. Check v1/v2 format, positive u32 ID, two ranges of at least 64 bytes,
+   no aliases, open capabilities, read/append budgets, and append written/
+   durable frontiers both zero. No I/O or buffer effects.
+2. Verify read-only/append physical identity and create private log.
+   Missing `identity` callback or different identity prevents writing.
+3. Prepare canonical **writer** header with Serie, ID, version, timestamp,
+   zero reserved fields, and CRC. Write exactly 64 bytes to new append.
+4. Synchronize file; verify return to 64.
+5. Reread with `crea-segmento-get` through associated read-only capability:
+   verify header/CRC/Serie/ID/format. Compare all 64 bytes with written bytes,
+   including timestamp, origin, and reserved fields.
+6. Synchronize parent directory. Recheck open capabilities
+   and file frontiers both at 64 before returning result.
+7. Writer performs EDIT decision and completion under ADR-0040.
+   Only after this decision admits traffic on new ACTIVE.
 
-Il caller costruisce **un solo controller per log** e impedisce altri writer,
-close/dup2 concorrenti e modifiche esterne. Il risultato non è un token di
-unicità del catalogo. Gli header non sono record WAL, non ricevono CSN e non
-attestano il commit di un documento. La durabilità del file e della directory
-non sostituisce la decisione di apertura dell'EDIT.
+Controller uses returned log, initial root `nil`, and `next-offset = 64`.
+With its lease, `crea-sorgente-get-preparata` compares actual log and
+Archivio CSN register with snapshot register in GET view; requires
+file still at header only. Existing ACTIVE factory always receives
+identity proof, without syscalls, mutexes, or H reads.
 
-## Guasti e cleanup
+Caller builds **one controller per log** and prevents other writers,
+concurrent close/dup2, and external changes. Result is not catalog
+uniqueness token. Headers are not WAL records, receive no CSN, and do not
+establish document commit. File/directory durability
+does not replace EDIT opening decision.
 
-Configurazione, range, alias, capienza e file già iniziato sono rifiutati
-prima di fstat/write/flush. I buffer troppo piccoli non producono header
-parziali. Con formati validi, fstat fallita o backend non verificabile precede
-la preparazione dell'header.
+<a id="guasti-e-cleanup"></a>
 
-Append e flush falliti applicano il normale stato `FAULTED` del
-[confine I/O](io.md). Read/CRC/rilettura discordante o fsync della directory
-falliti impediscono il ritorno del risultato. Le condizioni originali propagano:
-nessun handler generico, retry degli errori, troncamento o rollback.
+## Faults and cleanup
 
-Il caller conserva la proprietà delle capacità su ogni uscita. Gestisce
-quarantena e cleanup al proprio confine, senza ignorare l'errore o aprire il
-segmento nel catalogo. Dopo progresso positivo, ripetere la preparazione sullo
-stesso file viene rifiutato perché la posizione non è più zero; write/flush
-guasti sono inoltre terminali. Un crash lascia un temporaneo da riconciliare
-secondo [manifest e inventario](inventario.md), non autorizza a eliminarlo senza
-la prova richiesta. Il modulo non elimina, rinomina o chiude file.
+Configuration, ranges, aliases, capacity, and already started file rejected
+before fstat/write/flush. Undersized buffers produce no partial
+header. With valid formats, failed fstat or unverifiable backend precedes
+header preparation.
 
-| Rifiuto locale | Condizione / reason |
+Failed append/flush applies normal `FAULTED` state of
+[I/O boundary](io.md). Failed read/CRC/mismatched reread or directory fsync
+prevents result return. Original conditions propagate:
+no generic handler, error retries, truncation, or rollback.
+
+Caller retains capability ownership on every exit. Handles
+quarantine and cleanup at its own boundary, without ignoring error or opening
+segment in catalog. After positive progress, repeating preparation on
+same file rejected because position no longer zero; failed write/flush
+also terminal. Crash leaves temporary file to reconcile under
+[manifest and inventory](inventario.md), not authority to delete it without
+required proof. Module neither deletes, renames, nor closes files.
+
+| Local rejection | Condition / reason |
 |---|---|
-| ID non rappresentabile dal percorso ACTIVE | `invalid-argument / :active-initialization-id` |
+| ID not representable by ACTIVE path | `invalid-argument / :active-initialization-id` |
 | buffer alias | `invalid-argument / :active-initialization-alias` |
-| backend diversi | `invalid-argument / :active-initialization-backend` |
-| append non vuoto o avanzato dopo preparazione | `invalid-argument / :active-initialization-started` |
-| controller usa altro log | `invalid-argument / :active-initialization-log` |
-| registro CSN diverso | `invalid-argument / :active-initialization-csn` |
-| header riletto diverso | `corruption-detected / :active-initialization-readback` |
-| ritorni/frontiere interni impossibili | `invariant-violation / :active-initialization-*` |
+| different backends | `invalid-argument / :active-initialization-backend` |
+| nonempty append or advanced after preparation | `invalid-argument / :active-initialization-started` |
+| controller uses another log | `invalid-argument / :active-initialization-log` |
+| different CSN register | `invalid-argument / :active-initialization-csn` |
+| different reread header | `corruption-detected / :active-initialization-readback` |
+| impossible internal returns/frontiers | `invariant-violation / :active-initialization-*` |
 
-## Costi e decisioni da qualificare
+<a id="costi-e-decisioni-da-qualificare"></a>
 
-Al massimo due fstat, due flush e un range write/read di 64 byte ciascuno.
-Short I/O positivo usa al massimo 64 passi per range; gli errori non vengono
-ritentati. Il confronto ha 64 iterazioni massime. Due buffer del caller,
-almeno 128 byte totali, e pochi oggetti di apertura; il risultato non trattiene
-buffer o liste di record. GET e commit dei documenti non aggiungono operazioni
-per questa preparazione. Non sono misure di latenza o allocazione.
+## Costs and decisions to qualify
 
-| ID | Decisione | Casi da verificare |
+At most two fstat calls, two flushes, and one 64-byte write/read range each.
+Positive short I/O uses at most 64 steps per range; errors not
+retried. Comparison has at most 64 iterations. Two caller buffers,
+at least 128 total bytes, and few opening objects; result retains no
+buffers or record lists. Document GET and commit add no operations
+for this preparation. Not latency or allocation measurements.
+
+| ID | Decision | Cases to verify |
 |---|---|---|
-| AIN-D01 | header/scratch/identità non alias | ogni alias separato; buffer distinti |
-| AIN-D02 | backend readonly = append = directory | ogni associazione diversa; nativo; backend identico |
-| AIN-D03 | append scritto = 0 e durevole = 0 | ciascuna frontiera non zero; entrambe zero |
-| AIN-D04 | post-I/O scritto = 64 e durevole = 64 | ciascuna frontiera diversa; entrambe esatte |
-| AIN-D05 | uguaglianza dei 64 byte riletti | primo/centrale/ultimo byte, timestamp, CRC, origine, riservati |
-| AIN-D06 | frontiere ancora a 64 all'adozione | append avanzato, frontiera durevole diversa, capacità invariata |
-| AIN-D07 | log del controller identico al preparato | altro oggetto log con stessi numeri; log canonico |
-| AIN-D08 | registro CSN della Serie identico a quello della vista | altro Archivio; registro canonico |
+| AIN-D01 | header/scratch/identity not aliased | each alias separately; distinct buffers |
+| AIN-D02 | read-only backend = append = directory | each different association; native; identical backend |
+| AIN-D03 | append written = 0 and durable = 0 | each frontier nonzero; both zero |
+| AIN-D04 | post-I/O written = 64 and durable = 64 | each frontier different; both exact |
+| AIN-D05 | equality of 64 reread bytes | first/middle/last byte, timestamp, CRC, origin, reserved fields |
+| AIN-D06 | frontiers still at 64 on adoption | advanced append, different durable frontier, unchanged capability |
+| AIN-D07 | controller log identical to prepared log | another log object with same numbers; canonical log |
+| AIN-D08 | Serie CSN register identical to view's | another Archivio; canonical register |
 
-Qualifica C1, casi funzionali, fault injection in ciascun passo, stress concorrente
-e misure dinamiche restano aperti. Le letture statiche dell'autore non sono
-revisione indipendente e non promuovono i requisiti del motore.
-[Catalogo locale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-active-init/catalogo.lisp).
+C1 qualification, functional cases, per-step fault injection, concurrent stress,
+and dynamic measurements remain open. Author's static readings are not
+independent review and do not promote engine requirements.
+[Local catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-active-init/catalogo.lisp).
 
-Resta da collegare il preparatore all'esecutore di apertura/rotazione e alla
-decisione EDIT del catalogo. I limiti prepared/OUTCOME del resolver ACTIVE
-ordinario e la pubblicazione dell'indice concreto restano quelli documentati.
+Preparer still needs connection to opening/rotation executor and
+catalog EDIT decision. Ordinary ACTIVE resolver's prepared/OUTCOME limits
+and concrete index publication remain as documented.
 
-Il [checkpoint del control log](checkpoint-control.md) può ora usare questo
-risultato per preparare header, EDIT completo e SEAL, verificando lo stesso
-ACTIVE e mantenendo il control log fisicamente distinto. La decisione
-autorevole del recovery resta la rinomina prevista da ADR-0040.
+[Control-log checkpoint](checkpoint-control.md) can now use this
+result to prepare header, complete EDIT, and SEAL, verifying same
+ACTIVE and keeping control log physically distinct. Authoritative
+recovery decision remains rename under ADR-0040.

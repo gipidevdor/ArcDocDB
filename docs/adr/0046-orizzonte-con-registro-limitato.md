@@ -1,59 +1,69 @@
-# ADR-0046 — Orizzonte con registro limitato dei CSN in volo
+<a id="adr-0046--orizzonte-con-registro-limitato-dei-csn-in-volo"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-08
-- **Rapporto con la specifica:** nessuna emenda; corregge il punto 2 di
-  [ADR-0038](0038-orizzonte-di-visibilita.md). Snapshot, ordine delle versioni e CSN restano.
-- **Riferimenti:** [SPK-07](../../spikes/SPK-07-protocols/README.md), INV-M4, INV-M6,
+# ADR-0046 — Horizon with a bounded registry of in-flight CSNs
+
+- **Status:** Accepted
+- **Date:** 2026-10-08
+- **Relationship to the specification:** no amendment; corrects item 2 of
+  [ADR-0038](0038-orizzonte-di-visibilita.md). Snapshots, version ordering, and CSNs remain.
+- **References:** [SPK-07](../../spikes/SPK-07-protocols/README.md), INV-M4, INV-M6,
   REQ-MVC-008, RSK-05
 
-## Controesempio eseguibile
+<a id="controesempio-eseguibile"></a>
 
-Il credito sui soli commit pendenti non limita la distanza tra ultimo CSN e orizzonte.
-Con anello di quattro parole e al massimo due pendenti:
+## Executable counterexample
+
+Credit based only on pending commits does not bound the distance between the latest CSN and the horizon.
+With a four-word ring and at most two pending commits:
 
 ```text
-prendi 1, prendi 2, pubblica 2,
-prendi 3, pubblica 3, prendi 4, pubblica 4,
-prendi 5, pubblica 5, pubblica 1
+acquire 1, acquire 2, publish 2,
+acquire 3, publish 3, acquire 4, publish 4,
+acquire 5, publish 5, publish 1
 ```
 
-La pubblicazione di 5 usa la posizione che poi contiene 1. Alla fine non esistono pendenti,
-ma `H=4` e `ultimo-CSN=5`: gli snapshot non possono nascere. L'esploratore trova il percorso
-in dieci transizioni; il limite dei pendenti è rispettato in ogni stato.
+Publishing 5 uses the position that later contains 1. In the end there are no pending commits,
+but `H=4` and `ultimo-CSN=5`: snapshots cannot be created. The explorer finds the path
+in ten transitions; the pending-commit limit is respected in every state.
 
-## Decisione
+<a id="decisione"></a>
 
-1. **Registro preallocato dei soli CSN in volo**, capacità configurata `K`, default proposto
-   256. Zero indica slot libero. Ogni lotto o decisione conserva il proprio indice di slot.
-   Non si indicizza più un array tramite `csn mod N`.
-2. **Assegnazione e registrazione indivisibili**, sotto il mutex dell'orizzonte: si riserva
-   uno slot libero, si incrementa l'ultimo CSN e lo si registra prima di rilasciare il mutex.
-   Nessuna pubblicazione può far avanzare `H` oltre un CSN assegnato ma non registrato.
-3. **Pubblicazione o annullamento**: sotto lo stesso mutex, si verifica l'identità del CSN,
-   si libera il suo slot e si pone `H=min(CSN in volo)-1`; se il registro è vuoto,
-   `H=ultimo-CSN`. La ricerca del minimo visita al massimo `K` parole. `H` non diminuisce.
-4. **Capacità esaurita**: il lotto resta aperto o la richiesta è parcheggiata secondo
-   [ADR-0045](0045-modello-di-esecuzione.md), con byte e tempo limitati. Il credito ritorna
-   quando quel commit è pubblicato o annullato; la distanza da `H` non consuma crediti.
-5. **Esaurimento dei 64 bit**: rifiuto esplicito prima dell'incremento, mai wrap. Il valore
-   di `K` e il costo delle due sezioni critiche per lotto sono da misurare in SPK-04.
+## Decision
 
-Il coordinamento resta per lotto, decisione o snapshot. I reader senza snapshot leggono
-senza prendere il mutex. Il registro è una voce dell'elenco già condiviso nell'Archivio;
-la frequenza passa da una a due sezioni critiche per lotto.
+1. **Preallocated registry of in-flight CSNs only**, configured capacity `K`, proposed default
+   256. Zero indicates a free slot. Each batch or decision retains its slot index.
+   An array is no longer indexed by `csn mod N`.
+2. **Indivisible assignment and registration**, under the horizon mutex: reserve
+   a free slot, increment the latest CSN, and register it before releasing the mutex.
+   No publication can advance `H` past an assigned but unregistered CSN.
+3. **Publication or cancellation**: under the same mutex, verify CSN identity,
+   free its slot, and set `H=min(CSN in volo)-1`; if the registry is empty,
+   `H=ultimo-CSN`. Finding the minimum visits at most `K` words. `H` does not decrease.
+4. **Capacity exhausted**: the batch stays open or the request is parked according to
+   [ADR-0045](0045-modello-di-esecuzione.md), with bounded bytes and time. Credit returns
+   when that commit is published or canceled; distance from `H` does not consume credit.
+5. **64-bit exhaustion**: explicit rejection before incrementing, never wraparound. The value
+   of `K` and the cost of two critical sections per batch are to be measured in SPK-04.
 
-## Alternative
+Coordination remains per batch, decision, or snapshot. Readers without snapshots read
+without taking the mutex. The registry is an entry in the Archivio's already-shared list;
+frequency rises from one to two critical sections per batch.
 
-- Anello con credito basato su `ultimo-CSN-H`: corretto nel piccolo modello, ma un commit
-  lento consuma la finestra anche dopo che gli altri hanno finito. Il registro conserva il
-  limite sui veri pendenti.
-- Heap dei CSN in volo: ricerca del minimo più economica, con più strutture da mantenere.
-  Si introduce solo se SPK-04 misura il registro come limite di scalabilità.
+<a id="alternative"></a>
 
-## Verifica e limiti
+## Alternatives
 
-SPK-07 esplora fino a sei CSN con capacità due: il registro non salta commit pendenti e,
-quando tutti sono conclusi, raggiunge l'ultimo CSN. La variante originale deve fallire.
-Questa è verifica di un modello finito con memoria sequenzialmente consistente; le barriere
-e la sincronizzazione dell'implementazione restano da provare sui thread reali.
+- Ring with credit based on `ultimo-CSN-H`: correct in the small model, but a slow commit
+  consumes the window even after the others finish. The registry retains the
+  limit on genuinely pending commits.
+- Heap of in-flight CSNs: cheaper minimum lookup, with more structures to maintain.
+  Introduce it only if SPK-04 measures the registry as a scalability limit.
+
+<a id="verifica-e-limiti"></a>
+
+## Verification and limits
+
+SPK-07 explores up to six CSNs with capacity two: the registry does not skip pending commits and,
+when all finish, reaches the latest CSN. The original variant must fail.
+This is verification of a finite model with sequentially consistent memory; implementation barriers
+and synchronization remain to be tested on real threads.

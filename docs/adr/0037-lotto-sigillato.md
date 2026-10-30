@@ -1,138 +1,162 @@
-# ADR-0037 — Il lotto sigillato: un solo percorso di scrittura, un flush alla volta, frontiera durevole
+<a id="adr-0037--il-lotto-sigillato-un-solo-percorso-di-scrittura-un-flush-alla-volta-frontiera-durevole"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda; precisa «WAL» (group commit) e «Recovery».
-  **Sostituisce in parte** [ADR-0019](0019-durability-e-group-commit-pipelined.md) (meccanica
-  del group commit; i livelli restano), [ADR-0033](0033-fail-stop-e-integrita-end-to-end.md)
-  §4 (coda troncata) e [ADR-0013](0013-log-structured-segmento-active-come-log.md) punto 4
-  (quando un record è committed)
-- **Riferimenti:** [analisi progettuale](../analisi-progettuale.md) AP-02, AP-03, AP-08;
-  [architettura](../architettura.md#percorso-di-scrittura);
-  [formati](../formati-su-disco.md#lotto-e-seal); INV-F2, INV-F3, INV-V5, INV-A9
+# ADR-0037 — The sealed batch: a single write path, one flush at a time, durable frontier
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment; clarifies “WAL” (group commit) and “Recovery.”
+  **Partially supersedes** [ADR-0019](0019-durability-e-group-commit-pipelined.md) (group commit
+  mechanics; levels remain), [ADR-0033](0033-fail-stop-e-integrita-end-to-end.md)
+  §4 (truncated tail), and [ADR-0013](0013-log-structured-segmento-active-come-log.md) item 4
+  (when a record is committed)
+- **References:** [design analysis](../analisi-progettuale.md) AP-02, AP-03, AP-08;
+  [architecture](../architettura.md#percorso-di-scrittura);
+  [formats](../formati-su-disco.md#lotto-e-seal); INV-F2, INV-F3, INV-V5, INV-A9
 
-ADR-0019 ammetteva più lotti in volo sullo stesso file e ADR-0033 classificava come corruzione
-ogni record valido che seguisse un'anomalia: insieme, trasformano una perdita di alimentazione
-ordinaria in un guasto della Serie (AP-03). Il CSN era preso prima che il contenuto del lotto
-fosse fissato (AP-02). I log di controllo non avevano una regola per la propria coda (AP-08).
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-### 1. Il lotto
+ADR-0019 allowed several batches in flight on the same file, and ADR-0033 classified every
+valid record following an anomaly as corruption: together, they turn an ordinary power loss
+into a Serie failure (AP-03). The CSN was acquired before the batch contents were fixed
+(AP-02). Control logs had no rule for their own tail (AP-08).
 
-Il **lotto** è l'unità di atomicità, di durability e di pubblicazione di un log. È una
-sequenza di record seguita da un record **SEAL** che ne fissa: file, posizione di inizio,
-numero di record, contenuto (CRC dei CRC dei record), CSN, e la **frontiera durevole** nota
-al momento della chiusura. Un lotto è valido per intero o non esiste (INV-F2): nessun suo
-record è applicato se il SEAL manca o non corrisponde.
+<a id="decisione"></a>
 
-Un record non prepared è committed **se e solo se sta in un lotto valido**. Non esistono
-elenchi di TXID: l'appartenenza è per posizione.
+## Decision
 
-### 2. Il percorso, uguale per ogni log
+<a id="1-il-lotto"></a>
+
+### 1. The batch
+
+The **batch** is a log's unit of atomicity, durability, and publication. It is a sequence
+of records followed by a **SEAL** record that fixes its file, start position, record
+count, contents (CRC of the record CRCs), CSN, and the **durable frontier** known
+at closure. A batch is valid in its entirety or does not exist (INV-F2): none of its
+records are applied if the SEAL is missing or does not match.
+
+A non-prepared record is committed **if and only if it is in a valid batch**. There are no
+TXID lists: membership is positional.
+
+<a id="2-il-percorso-uguale-per-ogni-log"></a>
+
+### 2. The path, identical for every log
 
 ```
-in sospeso ──chiusura──▶ scritto ──flush──▶ durevole ──▶ pubblicato ──▶ confermato
+pending ──closure──▶ written ──flush──▶ durable ──▶ published ──▶ acknowledged
 ```
 
-1. Il writer valida ogni operazione e ne **mette in sospeso** l'effetto: record nel buffer
-   del lotto aperto, voce nella tabella delle versioni in sospeso della Serie.
-2. **Chiusura**: quando la coda è vuota o il lotto ha raggiunto il limite (byte, operazioni).
-   Alla chiusura il writer prende il **CSN** (un incremento atomico), lo scrive nei record,
-   calcola i CRC delle intestazioni e appende il SEAL. Il lotto chiuso è immutabile.
-3. **Un compito di I/O alla volta** per log, eseguito dal pool di I/O: scrive (`write`) tutti
-   i lotti chiusi e non ancora scritti, poi esegue il flush durevole. Al termine, se nel
-   frattempo sono stati chiusi altri lotti, parte il successivo. Il writer non esegue
-   chiamate bloccanti e non attende: continua a formare lotti
+1. The writer validates each operation and **holds its effect pending**: a record in the open
+   batch buffer, an entry in the Serie's pending-version table.
+2. **Closure**: when the queue is empty or the batch has reached the limit (bytes, operations).
+   At closure the writer acquires the **CSN** (one atomic increment), writes it into the records,
+   computes the header CRCs, and appends the SEAL. The closed batch is immutable.
+3. **One I/O task at a time** per log, executed by the I/O pool: it writes (`write`) all
+   closed batches not yet written, then performs the durable flush. On completion, if
+   other batches have closed in the meantime, the next task starts. The writer makes no
+   blocking calls and does not wait: it keeps forming batches
    ([ADR-0045](0045-modello-di-esecuzione.md)).
-4. **Pubblicazione** in ordine di lotto, quando un flush completato copre il lotto: le
-   versioni passano dalla tabella in sospeso all'indice.
-5. **Conferma** al client dopo la pubblicazione (INV-V5).
+4. **Publication** in batch order, when a completed flush covers the batch: the
+   versions move from the pending table to the index.
+5. Client **acknowledgment** after publication (INV-V5).
 
-Il livello di durability cambia **solo il momento** di pubblicazione e conferma:
+The durability level changes **only the timing** of publication and acknowledgment:
 
-| Livello | Pubblicazione e conferma |
+| Level | Publication and acknowledgment |
 |---|---|
-| `:group` (default), `:strong` | dopo il flush che copre il lotto |
-| `:async` | a `write` completata, prima del flush |
+| `:group` (default), `:strong` | after the flush covering the batch |
+| `:async` | on `write` completion, before the flush |
 
-`:strong` e `:group` danno la stessa garanzia; `:strong` chiude il lotto subito, senza
-l'eventuale attesa di formazione. Con `:async` i dati sono nella page cache alla conferma:
-sopravvivono all'arresto del processo, non a quello della macchina. Le restrizioni di
-ADR-0033 §10 restano.
+`:strong` and `:group` provide the same guarantee; `:strong` closes the batch immediately,
+without any formation wait. With `:async`, data is in the page cache at acknowledgment:
+it survives process termination, but not machine shutdown. The restrictions in
+ADR-0033 §10 remain.
 
-I lotti chiusi e non ancora durevoli sono limitati in byte per Serie; oltre il limite il
-writer non svuota la coda, che è a sua volta limitata (`resource-exhausted`, INV-A8).
+Closed batches that are not yet durable are bounded in bytes per Serie; beyond the limit,
+the writer stops draining the queue, which is itself bounded (`resource-exhausted`, INV-A8).
 
-### 3. Coda troncata o corruzione: decidibile dal contenuto (INV-F3)
+<a id="3-coda-troncata-o-corruzione-decidibile-dal-contenuto-inv-f3"></a>
 
-Sia `P` la posizione del primo lotto non valido di un log. Si cercano, da `P` in poi, record
-SEAL validi **di quel file** (identificativo e posizione dichiarati coincidono con quelli
-reali). Sia `D` la massima frontiera durevole che dichiarano.
+### 3. Truncated tail or corruption: decidable from the contents (INV-F3)
 
-- `D > P` → quando quel lotto successivo fu chiuso, i byte in `P` erano già durevoli: sono
-  stati alterati. **Corruzione**: `FAULTED`, nessuna scrittura, decisione dell'operatore.
-- altrimenti (nessun SEAL, o `D ≤ P`) → i lotti da `P` in poi non erano coperti da un flush
-  completato: **coda**. La lunghezza valida del log è `P`.
+Let `P` be the position of a log's first invalid batch. From `P` onward, search for valid
+SEAL records **of that file** (the declared identifier and position match the actual
+ones). Let `D` be the maximum durable frontier they declare.
 
-La regola non dipende dall'ordine in cui il supporto rende persistenti le scritture non
-sincronizzate. Un falso SEAL trovato per caso produce un rifiuto di apertura, mai una perdita
-silenziosa.
+- `D > P` → when that later batch was closed, the bytes at `P` were already durable: they
+  have been altered. **Corruption**: `FAULTED`, no writes, operator decision.
+- otherwise (no SEAL, or `D ≤ P`) → batches from `P` onward were not covered by a completed
+  flush: **tail**. The log's valid length is `P`.
 
-### 4. Il recovery non tronca (INV-A9)
+The rule does not depend on the order in which the medium persists unsynchronized writes.
+A false SEAL found by chance causes opening to be refused, never silent
+loss.
 
-La coda non viene rimossa. Il recovery **chiude** l'`ACTIVE` trovato con un record del
-manifest che ne fissa la lunghezza valida `P` e apre un nuovo `ACTIVE`
-([ADR-0040](0040-manifest-a-record-unico.md)). Un segmento `ACTIVE` vive quindi in un solo
-processo; i byte oltre `P` sono ignorati da ogni lettore e spariscono con il CLEAN.
+<a id="4-il-recovery-non-tronca-inv-a9"></a>
 
-### 5. Tre log, un meccanismo
+### 4. Recovery does not truncate (INV-A9)
 
-Il segmento `ACTIVE`, `wal/control.log` e `multiserie.log` sono **log di lotti sigillati**:
-stessa cornice di record ([ADR-0039](0039-cornice-unica-dei-record.md)), stesso SEAL, stesso
-flush singolo, stessa regola della coda. Cambia solo il tipo dei record contenuti. Per i due
-log di controllo, che non si chiudono mai, la coda `P` si ignora in lettura e il primo lotto
-dopo il riavvio viene scritto in un file compattato (rinomina atomica).
+The tail is not removed. Recovery **closes** the `ACTIVE` it found with a manifest record
+that fixes its valid length `P`, and opens a new `ACTIVE`
+([ADR-0040](0040-manifest-a-record-unico.md)). An `ACTIVE` segment therefore lives in a single
+process; bytes beyond `P` are ignored by every reader and disappear through CLEAN.
 
-Pattern: group commit con un flush alla volta e conferma per copertura (PostgreSQL: scrittura
-del WAL, flush di gruppo, attesa che il flush raggiunga il proprio LSN; `synchronous_commit`
-per `:async`); intestazione e corpo verificati separatamente con il lotto come unità
-(TigerBeetle); file attivo nuovo a ogni apertura (Bitcask).
+<a id="5-tre-log-un-meccanismo"></a>
 
-## Conseguenze
+### 5. Three logs, one mechanism
 
-- Un solo percorso di scrittura da verificare, per tre log e tre livelli.
-- Stato del writer limitato: il lotto aperto, i lotti chiusi e non pubblicati, un compito di
-  I/O.
-- Dopo ogni riavvio resta un segmento chiuso in più, anche piccolo: è un candidato al MERGE.
-- Latenza di `:group`: tra uno e due flush sotto carico (quello in corso e il proprio).
+The `ACTIVE` segment, `wal/control.log`, and `multiserie.log` are **logs of sealed batches**:
+the same record frame ([ADR-0039](0039-cornice-unica-dei-record.md)), the same SEAL, the same
+single flush, the same tail rule. Only the type of contained records differs. For the two
+control logs, which never close, tail `P` is ignored on reads and the first batch
+after restart is written in a compacted file (atomic rename).
 
-## Limite dichiarato
+Pattern: group commit with one flush at a time and acknowledgment by coverage (PostgreSQL:
+WAL writes, group flush, waiting for the flush to reach one's LSN; `synchronous_commit`
+for `:async`); separately verified header and body with the batch as the unit
+(TigerBeetle); a new active file on every open (Bitcask).
 
-Un danno che colpisca, **a riposo**, i soli lotti resi durevoli dall'ultimo flush prima di un
-arresto improvviso — e non ancora testimoniati dal SEAL di un lotto successivo — è
-indistinguibile da una coda. È il confine di ciò che un log può sapere di sé; coincide con la
-classe dei guasti non tollerati (flush non durevole, FM-03) ed è registrato come
-[RES-05](../affidabilita/analisi-dei-guasti.md#rischi-residui-accettati). Un arresto ordinato
-chiude il segmento: nessuna finestra.
+<a id="conseguenze"></a>
 
-## Alternative considerate
+## Consequences
 
-- *Più flush in volo sullo stesso file (ADR-0019):* nessun guadagno di throughput (un flush
-  sincronizza comunque tutto il file) e stato del writer non limitato a priori.
-- *Un solo lotto non sincronizzato per volta, accumulando in memoria:* regola della coda più
-  semplice, ma con `:async` i dati confermati starebbero solo nella memoria del processo.
-- *Troncare la coda in recovery:* è una scrittura distruttiva guidata da una classificazione;
-  un errore di classificazione diventerebbe una perdita.
+- A single write path to verify, for three logs and three levels.
+- Bounded writer state: the open batch, closed unpublished batches, one I/O
+  task.
+- Every restart leaves one additional closed segment, even a small one: it is a MERGE candidate.
+- `:group` latency: between one and two flushes under load (the current one and its own).
 
-## Valutazione
+<a id="limite-dichiarato"></a>
 
-- Rischi: chiude la parte di correttezza di RSK-03; RES-05 dichiarato.
-- Verifica: FI-01, FI-02 con persistenza non ordinata dei lotti non sincronizzati
-  ([FM-25](../affidabilita/analisi-dei-guasti.md#fmea)); modello in SPK-07 (ogni sottoinsieme
-  dei lotti non sincronizzati può andare perso o risultare parziale); SPK-03 misura latenza e
-  throughput con un flush alla volta.
-- Rivedere se: SPK-03 mostra che un flush alla volta non raggiunge i minimi di
+## Declared limit
+
+Damage affecting, **at rest**, only the batches made durable by the last flush before an
+abrupt shutdown — and not yet witnessed by the SEAL of a later batch — is
+indistinguishable from a tail. This is the boundary of what a log can know about itself; it
+coincides with the class of failures not tolerated (non-durable flush, FM-03) and is recorded
+as [RES-05](../affidabilita/analisi-dei-guasti.md#rischi-residui-accettati). An orderly shutdown
+closes the segment: no window.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Multiple flushes in flight on the same file (ADR-0019):* no throughput gain (a flush
+  synchronizes the entire file anyway) and writer state not bounded in advance.
+- *Only one unsynchronized batch at a time, accumulating in memory:* simpler tail rule,
+  but with `:async`, acknowledged data would reside only in process memory.
+- *Truncating the tail during recovery:* a destructive write driven by a classification;
+  a classification error would become a loss.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Risks: closes the correctness portion of RSK-03; RES-05 declared.
+- Verification: FI-01, FI-02 with unordered persistence of unsynchronized batches
+  ([FM-25](../affidabilita/analisi-dei-guasti.md#fmea)); model in SPK-07 (any subset
+  of unsynchronized batches may be lost or partial); SPK-03 measures latency and
+  throughput with one flush at a time.
+- Revisit if: SPK-03 shows that one flush at a time cannot reach the minimums in
   [ADR-0028](0028-target-e-obiettivi-di-latenza.md).

@@ -1,89 +1,97 @@
-# Item CBOR con testate minime — risultati del 2026-10-09
+<a id="item-cbor-con-testate-minime--risultati-del-2026-10-09"></a>
 
-La [nuova API](cbor-minimo-struttura.md) verifica un item completo, UTF-8,
-testate minime e budget in un solo attraversamento, con scratch privato
-per ogni worker. Le campagne locali del [metodo](cbor-minimo-struttura-metodo.md)
-passano; ordine/equivalenza delle chiavi e semantica dei tag restano fuori
-dal contratto. Non si qualifica il profilo documentale completo o il motore.
+# CBOR items with minimal headers — results dated 2026-10-09
 
-## Correttezza e concorrenza
+The [new API](cbor-minimo-struttura.md) verifies a complete item, UTF-8,
+minimal headers, and budgets in a single traversal, with private scratch
+for each worker. Local campaigns under the [method](cbor-minimo-struttura-metodo.md)
+pass; key order/equivalence and tag semantics remain outside
+the contract. The full document profile and engine are not qualified.
 
-I 22 test nominali ciechi restano identici ai tre blob congelati nella
-[seconda lettura C1](cbor-minimo-struttura-revisione.md), senza supplementi
-o aggiustamenti dell'oracolo. Build preliminare: 458 test e due smoke,
-**460 esiti**, senza avvisi; lint e tracciabilità passano.
-Tutti i 768 casi lead sono verificati: 84 accettati e 684 rifiutati.
-I 512 AST e il fuzz finito di 4096 span, seme `53434d31`, concordano con
-l'oracolo: 41 validi e 4055 rifiutati nel fuzz. I casi nominali includono
-16 MiB esatti/oltre, profondità 100/101, budget, preflight invariato,
-immutabilità e riuso dopo errore, non solo il percorso positivo.
+<a id="correttezza-e-concorrenza"></a>
 
-Due worker reali, ciascuno con buffer e scratch privati, completano
-24 scansioni per worker; sink indipendenti 4718784 e 9437376.
-La preliminare osserva sovrapposizione di 100317 tick su 1000000 tick/s:
-tempo reale, senza inferenza su core, tempo CPU o scaling.
-L'audit dei dati dei test passa 53 controlli, confermando anche i sei blob
-del prodotto/corpus e gli snapshot completi before/after del record.
+## Correctness and concurrency
 
-## Heap, mutazioni e copertura
+The 22 blind named tests remain identical to the three blobs frozen in the
+[second C1 reading](cbor-minimo-struttura-revisione.md), without supplements
+or oracle adjustments. Preliminary build: 458 tests and two smoke tests,
+**460 outcomes**, without warnings; lint and traceability pass.
+All 768 lead cases are verified: 84 accepted and 684 rejected.
+The 512 ASTs and finite fuzz of 4096 spans, seed `53434d31`, agree with
+the oracle: 41 valid and 4055 rejected in fuzz. Named cases include
+exact/beyond 16 MiB, depth 100/101, budgets, unchanged preflight,
+immutability, and reuse after error, not just the positive path.
 
-Benchmark seriale su SBCL 2.6.9, ARM64/Darwin, safety 3: otto fixture,
-cinque repliche da 4096 scansioni, warmup 128. Tutti i **40 campioni hanno
-heap osservato zero**, baseline zero e controllo positivo 16777472 byte.
-Arity fredda esattamente tre, valori, token, sink e input immutabili sono
-verificati. Nessuna soglia di velocità o prova assoluta di nonallocazione.
+Two real workers, each with private buffer and scratch, complete
+24 scans per worker; independent sinks 4718784 and 9437376.
+The preliminary run observes overlap of 100317 ticks at 1000000 ticks/s:
+wall time, without inference about cores, CPU time, or scaling.
+Test-data auditing passes 53 checks, also confirming six product/corpus
+blobs and complete before/after record snapshots.
 
-Baseline completa e tutti gli **otto mutanti DETECTED**, senza SURVIVED,
-INVALID o WORKER-ERROR. Nove copie private conformi; ogni mutante modifica
-soltanto il file bersaglio e con la sostituzione preregistrata. Compilazione
-fallita, segnali OS e guasti dopo completamento non sono rilevamenti.
-Quando l'inlining omette il nome del test nella prima backtrace, il referto
-conserva helper, condizione e ultimo PASS osservati senza inventare il nome.
+<a id="heap-mutazioni-e-copertura"></a>
 
-| File focale | Forme osservate/totali | Esiti di ramo osservati/totali |
+## Heap allocation, mutations, and coverage
+
+Serial benchmark on SBCL 2.6.9, ARM64/Darwin, safety 3: eight fixtures,
+five replicates of 4096 scans, warmup 128. All **40 samples have
+zero observed heap allocation**, zero baseline, and positive control 16777472 bytes.
+Cold arity exactly three, values, tokens, sinks, and immutable inputs are
+verified. No speed threshold or absolute proof of nonallocation.
+
+Full baseline and all **eight mutants DETECTED**, without SURVIVED,
+INVALID, or WORKER-ERROR. Nine conforming private copies; each mutant changes
+only the target file and with the preregistered replacement. Failed compilation,
+OS signals, and faults after completion are not detections.
+When inlining omits the test name in the first backtrace, the report
+preserves observed helper, condition, and last PASS without inventing the name.
+
+| Focal file | Observed/total forms | Observed/total branch outcomes |
 |---|---:|---:|
 | `cbor-scan.lisp` | 160/207 | 20/32 |
 | `cbor-scan-minimal.lisp` | 10/16 | 0/0 |
-| Totale grezzo | 170/223 | 20/32 |
+| Raw total | 170/223 | 20/32 |
 
-Le 53 forme mancanti sono attribuite a nove forme dichiarative, 38 forme
-associate a errori interni e sei default keyword; i dodici esiti mancanti
-appartengono a guardie interne. Stato integrale e tre HTML concordano.
-Nessuna esclusione dal denominatore, attestazione MC/DC o prova di
-irraggiungibilità. L'audit indipendente delle tre campagne passa **1895
-controlli**, senza finding. La verifica bytewise conferma che il gzip
-ricostruisce gli originali 1113055 byte dello stato di copertura.
+The 53 missing forms are attributed to nine declaration forms, 38 forms
+associated with internal errors, and six keyword defaults; twelve missing outcomes
+belong to internal guards. Complete state and three HTML files agree.
+No denominator exclusion, MC/DC attestation, or unreachability
+proof. Independent auditing of the three campaigns passes **1895
+checks**, without findings. Bytewise verification confirms that gzip
+reconstructs the original 1113055-byte coverage state.
 
-## Verifica e conservazione
+<a id="verifica-e-conservazione"></a>
 
-`make check` passa: 460 esiti della build, quattro marker di lint-selftest
-distinti dai test, lint, tracciabilità, link, conservazione e dieci spike.
-Il record originale ha exit zero e snapshot stabile. La successiva
-integrazione di `edb043b` importa Makefile, documentazione e prove,
-senza modificare sorgenti, test, strumenti o ASDF; il controllo conclusivo
-di link e conservazione usa il budget di memoria aggiornato.
+## Verification and preservation
 
-L'[archivio delle campagne](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-minimal-scan/archive-index.lisp)
-mantiene immutati 165 file indicizzati e dieci processi, con bytes/SHA256 e
-metadata letti dai record. Il
-[secondo archivio](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-minimal-scan-final/archive-index.lisp)
-conserva raccolta, controllo completo, spike, audit e tentativi dei lettori.
-Le copie complete/FASL, lo stato plain originale e tutte le fixture negative
-del checker, compresi symlink e file oltre budget, restano nel backup locale
-`spikes/out/cbor-minimal-scan-isolated-20261009/`. Il subset pubblicato delle
-mutazioni comprende bersagli, runner, report e log; non sostituisce le copie.
+`make check` passes: 460 build outcomes, four lint-selftest markers
+distinct from tests, lint, traceability, links, preservation, and ten spikes.
+The original record has zero exit and stable snapshot. Subsequent
+integration of `edb043b` imports Makefile, documentation, and tests,
+without modifying sources, tests, tools, or ASDF; final
+link and preservation checking uses the updated memory budget.
 
-Il checker Common Lisp passa 24 fixture e verifica inventario chiuso,
-dimensioni/SHA e i quattro metadata di processo; limiti ed enumerazione
-non preventiva sono espliciti nella [lettura C4](archivi-comandi-lettura.md).
-Passano anche le nuove verifiche CL dei due archivi CBOR precedenti,
-1313/87 file e otto/sei processi, con i loro indici originali invariati.
+The [campaign archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-minimal-scan/archive-index.lisp)
+keeps 165 indexed files and ten processes unchanged, with bytes/SHA256 and
+metadata read from records. The
+[second archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-cbor-minimal-scan-final/archive-index.lisp)
+preserves collection, full check, spikes, audits, and reader attempts.
+Complete copies/FASLs, original plain state, and all checker negative
+fixtures, including symlinks and over-budget files, remain in the local backup
+`spikes/out/cbor-minimal-scan-isolated-20261009/`. The published mutation
+subset includes targets, runner, reports, and logs; it does not replace copies.
 
-Sono conservati i tentativi falliti dei soli helper: directory relativa
-del lettore dei test, setup dei reader, preambolo stdout del mutatore e
-prima TR HTML senza chiusura esplicita. Le correzioni riguardano i lettori;
-le campagne originali non vengono ripetute o riscritte. Il generatore del
-manifest stampava un conteggio uno dopo NREVERSE, pur salvando la lista
-completa: originale e correzione della sola diagnostica sono conservati.
-Le osservazioni restano locali/per file, senza snapshot atomico,
-confronto di prestazioni della piattaforma o promozione di gate.
+The Common Lisp checker passes 24 fixtures and verifies closed inventory,
+sizes/SHAs, and four process metadata; limits and nonpreventive
+enumeration are explicit in the [C4 reading](archivi-comandi-lettura.md).
+New CL checks of both preceding CBOR archives also pass,
+1313/87 files and eight/six processes, with their original indexes unchanged.
+
+Failed attempts of helpers alone are preserved: test-reader relative
+directory, reader setup, mutator stdout preamble, and
+first HTML TR without explicit closure. Corrections concern readers;
+original campaigns are neither repeated nor rewritten. The manifest
+generator printed a count of one after NREVERSE while saving the complete
+list: original and diagnostic-only correction are preserved.
+Observations remain local/per file, without atomic snapshot,
+platform performance comparison, or gate promotion.

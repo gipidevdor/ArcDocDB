@@ -1,102 +1,112 @@
-# Associazione fisica dei file
+<a id="associazione-fisica-dei-file"></a>
 
-`arcdocdb.io` associa una capacità readonly e una append allo **stesso file
-regolare aperto**, tramite device e inode restituiti da `fstat`. È una prova
-locale di identità per il [resolver ACTIVE](get-active.md), distinta da header,
-CRC, frontiera WAL, commit e durability. Le decisioni architetturali restano
-quelle di [ADR-0017](../adr/0017-piattaforma-e-io.md) e del
-[confine I/O](io.md).
+# Physical file association
 
-## Contratti
+`arcdocdb.io` associates read-only and append capabilities with the **same open
+regular file**, through device and inode returned by `fstat`. This is local
+identity evidence for the [ACTIVE resolver](get-active.md), distinct from headers,
+CRCs, WAL frontier, commit, and durability. Architectural decisions remain
+those of [ADR-0017](../adr/0017-piattaforma-e-io.md) and the
+[I/O boundary](io.md).
 
-| API | Precondizione | Risultato |
+<a id="contratti"></a>
+
+## Contracts
+
+| API | Precondition | Result |
 |---|---|---|
-| `associa-file input append` | controller esclusivo nel pool I/O; capacità aperte, dello stesso backend; nessuna close concorrente | associazione immutabile, restituita solo dopo confronto esatto device/inode |
-| `verifica-associazione-file prova input append` | stessa ownership e durata delle capacità | verifica O(1) dei riferimenti e degli stati, senza I/O |
-| `verifica-file-distinti left right` | due capacità readonly stabili del medesimo backend, nel pool I/O | due fstat/callback; rifiuta lo stesso device/inode, senza mutazioni o retry |
-| `make-backend … :identity callback` | callback fidato e stabile, dello stesso dominio degli altri callback | estensione opzionale; le sei posizioni precedenti restano compatibili |
-| `crea-sorgente-get-attiva … :associazione-file prova` | prova ottenuta nel pool I/O | verifica readonly della sorgente e append effettivo del log del controller prima di costruire la sorgente |
+| `associa-file input append` | exclusive controller in I/O pool; open capabilities, same backend; no concurrent close | immutable association, returned only after exact device/inode comparison |
+| `verifica-associazione-file prova input append` | same ownership and capability lifetime | O(1) reference and state checks, without I/O |
+| `verifica-file-distinti left right` | two stable read-only capabilities of the same backend, in I/O pool | two fstat/callbacks; rejects same device/inode, without mutation or retry |
+| `make-backend … :identity callback` | trusted stable callback, same domain as other callbacks | optional extension; six previous positions remain compatible |
+| `crea-sorgente-get-attiva … :associazione-file prova` | proof obtained in I/O pool | read-only verification of source and controller log's actual append capability before source construction |
 
-Il callback `identity` riceve il FD privato e restituisce due valori interi:
-`st_dev` e `st_ino` di un file regolare. Deve segnalare `syscall-error` per errno,
-mai usare un numero sentinella come identità. Un backend senza callback può
-continuare a eseguire le altre operazioni; l'associazione viene rifiutata prima
-di qualsiasi chiamata. Non si passa un FD simulato al sistema operativo.
+The `identity` callback receives private FD and returns two integer values:
+`st_dev` and `st_ino` of a regular file. It must signal `syscall-error` for errno,
+never use a sentinel number as identity. A backend without callback can
+continue other operations; association is rejected before
+any call. No simulated FD is passed to the operating system.
 
-Il dominio è l'istanza **esatta** del backend: `nil` per entrambi seleziona POSIX;
-due istanze distinte sono rifiutate, anche se contengono le stesse funzioni.
-L'identità è confrontata come due interi completi, senza hash, troncamento,
-conversione a fixnum o normalizzazione del segno. Sono rappresentabili valori
-firmati e non firmati a 64 bit; l'ABI di `stat` è gestita da SB-POSIX.
+Domain is the **exact** backend instance: `nil` for both selects POSIX;
+two distinct instances are rejected even if containing the same functions.
+Identity is compared as two complete integers, without hashing, truncation,
+fixnum conversion, or sign normalization. Signed and unsigned
+64-bit values are representable; SB-POSIX handles `stat` ABI.
 
-## Sequenza e ownership
+<a id="sequenza-e-ownership"></a>
 
-1. Aprire il nuovo append `.tmp` e la capacità readonly dello stesso file.
-2. Nel pool I/O, chiamare `associa-file`; verificare l'header attraverso il
-   normale costruttore `segmento-get`.
-3. Nel compito proprietario della Serie, passare la prova a
-   `crea-sorgente-get-attiva`. Questa chiamata non esegue syscall.
-4. Conservare le due capacità fino alla quiescenza dei loro consumatori.
-   Il [protocollo EBR](epoche-e-reclaim.md) e il controller autorizzano il reclaim.
+## Sequence and ownership
 
-Si eseguono al massimo **due fstat**, una per capacità, senza retry. Il confronto
-e la verifica finale degli stati precedono l'unica nuova associazione. Non si
-consultano nomi, dimensione, timestamp, numero del FD o contenuti dell'header per
-stabilire l'identità. Un hard link allo stesso inode è accettabile; lo stesso
-nome che ora indica un altro file non fornisce una prova.
+1. Open new append `.tmp` and read-only capability for same file.
+2. In I/O pool, call `associa-file`; check header through
+   normal `segmento-get` constructor.
+3. In the Serie-owning task, pass proof to
+   `crea-sorgente-get-attiva`. This call performs no syscall.
+4. Keep both capabilities alive until their consumers are quiescent.
+   [EBR protocol](epoche-e-reclaim.md) and controller authorize reclamation.
 
-L'associazione conserva soltanto i due riferimenti immutabili. Dopo una close
-la vecchia capacità resta chiusa: il riuso del numero FD non riabilita la prova.
-Una nuova capacità, anche per lo stesso inode, richiede una nuova associazione.
-Il controller impedisce close concorrenti, sostituzione dei FD tramite `dup2`
-e modifica esterna del namespace/file. Questa API non introduce sincronizzazione
-né rinnova tali precondizioni con una fstat su ogni lettura.
+At most **two fstat calls**, one per capability, without retry. Comparison
+and final state checks precede the sole new association. Names, size,
+timestamps, FD numbers, or header contents are not consulted to
+establish identity. A hard link to the same inode is acceptable; the same
+name now pointing to another file provides no proof.
 
-## Errori e compatibilità
+Association retains only two immutable references. After close,
+old capability stays closed: reusing the FD number does not reactivate proof.
+A new capability, even for the same inode, requires a new association.
+Controller prevents concurrent closes, FD replacement through `dup2`,
+and external namespace/file modifications. This API introduces no synchronization
+or renewal of those preconditions through fstat on every read.
 
-| Caso | Condizione / reason | Effetto |
+<a id="errori-e-compatibilità"></a>
+
+## Errors and compatibility
+
+| Case | Condition / reason | Effect |
 |---|---|---|
-| modo errato | `invalid-argument / :io-mode` | nessuna syscall |
-| capacità chiusa/faulted | `io-fault / :io-unavailable` | nessuna prova restituita |
-| backend diversi | `invalid-argument / :io-identity-backend` | nessun callback |
-| callback assente | `unsupported-format / :io-identity-unavailable` | nessun fallback |
-| device o inode diversi | `invalid-argument / :io-file-mismatch` | nessuna associazione |
-| risultato fuori tipo | `invariant-violation / :io-identity-result` | nessuna associazione |
-| fstat fallita | `io-fault / :io-syscall`, operazione `:identity`, errno preservato | nessun retry |
-| file non regolare | `io-fault / :io-file-kind` | nessuna associazione |
-| prova usata con altra capacità | `invalid-argument / :io-association-capability` | nessuna syscall |
+| wrong mode | `invalid-argument / :io-mode` | no syscall |
+| closed/faulted capability | `io-fault / :io-unavailable` | no proof returned |
+| different backends | `invalid-argument / :io-identity-backend` | no callback |
+| missing callback | `unsupported-format / :io-identity-unavailable` | no fallback |
+| different device or inode | `invalid-argument / :io-file-mismatch` | no association |
+| wrong-type result | `invariant-violation / :io-identity-result` | no association |
+| failed fstat | `io-fault / :io-syscall`, operation `:identity`, errno preserved | no retry |
+| nonregular file | `io-fault / :io-file-kind` | no association |
+| proof used with another capability | `invalid-argument / :io-association-capability` | no syscall |
 
-Rifiuti e guasti non mutano stato/frontiere, non chiudono file e non adottano
-lotti. Il controller conserva la responsabilità del cleanup e della quarantena.
-Gli errori tipizzati del callback sono propagati; non c'è un gestore generico
-che li assorbe. Si ricontrollano entrambi gli stati dopo i callback.
+Rejections and faults do not mutate state/frontiers, close files, or adopt
+batches. Controller retains cleanup and quarantine responsibility.
+Typed callback errors propagate; no generic handler
+absorbs them. Both states are rechecked after callbacks.
 
-Per compatibilità, omettere `:associazione-file` mantiene la precondizione
-originaria del costruttore ACTIVE: il chiamante deve provare l'identità fisica.
-Il nuovo percorso esplicito la verifica nel prodotto. La registrazione concreta
-di apertura/rotazione del server deve ancora adottarlo; il costruttore non apre
-automaticamente file e non rende sicuro un percorso che ignori questa prova.
+For compatibility, omitting `:associazione-file` retains the ACTIVE
+constructor's original precondition: caller must prove physical identity.
+The new explicit path verifies it in product. Concrete server
+opening/rotation registration still needs to adopt it; constructor does not
+open files automatically or make a path ignoring this proof safe.
 
-Il [preparatore del nuovo segmento writer](inizializzazione-active.md) richiede
-la prova prima della prima write e nell'adozione della sorgente ACTIVE,
-insieme a flush, rilettura dell'header e fsync del parent.
+The [new writer-segment preparer](inizializzazione-active.md) requires
+proof before first write and on ACTIVE-source adoption,
+alongside flush, header reread, and parent fsync.
 
-## Decisioni e stato delle evidenze
+<a id="decisioni-e-stato-delle-evidenze"></a>
 
-| ID | Decisione composta | Esiti da coprire separatamente |
+## Decisions and evidence status
+
+| ID | Compound decision | Outcomes to cover separately |
 |---|---|---|
-| FID-D01 | device e inode nei tipi ammessi | entrambi validi; ciascun risultato invalido/mancante |
-| FID-D02 | backend presente e callback assente | nativo; iniettato con callback; iniettato senza callback |
-| FID-D03 | device uguale e inode uguale | entrambi uguali; ciascun componente diverso; entrambi diversi |
-| FID-D04 | readonly e append identici ai riferimenti della prova | entrambi esatti; ciascuna capacità sostituita |
+| FID-D01 | device and inode in allowed types | both valid; each invalid/missing result |
+| FID-D02 | backend present and callback absent | native; injected with callback; injected without callback |
+| FID-D03 | device equal and inode equal | both equal; each component different; both different |
+| FID-D04 | read-only and append identical to proof references | both exact; each capability replaced |
 
-Restano da eseguire casi funzionali, fault injection, prove di riuso FD e
-concorrenza, copertura delle condizioni e revisione indipendente C1. Le letture
-statiche dell'autore non chiudono queste attività. I requisiti REQ-AFF-001/004/008
-e REQ-FOR-001 non cambiano stato per questa sola implementazione.
+Functional cases, fault injection, FD reuse and concurrency tests,
+condition coverage, and independent C1 review remain to be run. Author's
+static readings do not close these activities. Requirements REQ-AFF-001/004/008
+and REQ-FOR-001 do not change status through this implementation alone.
 
-[Catalogo locale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-file-identity/catalogo.lisp):
-compilazione del prodotto, controlli statici e disassemblato. Non sono benchmark
-né prove di affidabilità del database completo. Il percorso GET non è modificato;
-la creazione della prova alloca e può rappresentare gli interi POSIX come bignum,
-soltanto durante l'associazione nel pool I/O.
+[Local catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-file-identity/catalogo.lisp):
+product compilation, static checks, and disassembly. These are neither benchmarks
+nor whole-database reliability tests. GET path unchanged;
+proof creation allocates and may represent POSIX integers as bignums,
+only during association in I/O pool.

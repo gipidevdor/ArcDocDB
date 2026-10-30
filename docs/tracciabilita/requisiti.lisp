@@ -136,13 +136,13 @@
   :inv ("INV-V5" "INV-V1") :adr ("ADR-0037") :ver (:test :diff :fi) :fi ("FI-01" "FI-02"))
 
  ;; ---- Transactions -----------------------------------------------------------
- (:id "REQ-TXS-001" :src "Single-series transactions" :cls "C1" :stato :progettato
+ (:id "REQ-TXS-001" :src "Single-Serie transactions" :cls "C1" :stato :progettato
   :txt "A single-Serie transaction uses only the Serie log and does not write to multiserie.log."
   :inv ("INV-T1") :adr ("ADR-0005") :ver (:test) :fi ())
- (:id "REQ-TXS-002" :src "Single-series transactions" :cls "C1" :stato :progettato
-  :txt "A single-Series transaction is serialized by the logical writer and detects conflicts with optimistic version checking; version checking is atomic with respect to application."
+ (:id "REQ-TXS-002" :src "Single-Serie transactions" :cls "C1" :stato :progettato
+  :txt "A single-Serie transaction is serialized by the logical writer and detects conflicts with optimistic version checking; version checking is atomic with respect to application."
   :inv ("INV-T2" "INV-P1") :adr ("ADR-0005") :ver (:test :diff :model) :fi ())
- (:id "REQ-TXS-003" :src "Single-series transactions" :cls "C1" :stato :progettato
+ (:id "REQ-TXS-003" :src "Single-Serie transactions" :cls "C1" :stato :progettato
   :txt "When two transactions read the same version, the second to commit fails with a conflict and may retry."
   :inv ("INV-T2") :adr ("ADR-0005") :ver (:test :diff) :fi ())
  (:id "REQ-TXM-001" :src "Multiseries transactions" :cls "C1" :stato :progettato

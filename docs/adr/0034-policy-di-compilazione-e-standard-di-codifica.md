@@ -1,72 +1,84 @@
-# ADR-0034 — Politica di compilazione e standard di codifica
+<a id="adr-0034--politica-di-compilazione-e-standard-di-codifica"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda; precisa «SIMD e ottimizzazioni native» punti
-  2–4 (dichiarazioni di tipo, minimizzare boxing) nel quadro di [ADR-0031](0031-software-critico-criteri-e-priorita.md)
-- **Riferimenti:** [standard di codifica](../affidabilita/standard-di-codifica.md), INV-A3,
+# ADR-0034 — Compilation policy and coding standard
+
+- **Status:** Accepted
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment; clarifies "SIMD and native optimizations" items
+  2–4 (type declarations, minimizing boxing) within the framework of [ADR-0031](0031-software-critico-criteri-e-priorita.md)
+- **References:** [coding standard](../affidabilita/standard-di-codifica.md), INV-A3,
   INV-A4, INV-A8
 
-## Contesto
+<a id="contesto"></a>
 
-Common Lisp con `(safety 0)` o con `truly-the` rimuove i controlli che trasformano un difetto
-in un errore segnalato: uno scrittura fuori limiti diventa corruzione di memoria silenziosa.
-In un sistema critico un difetto deve essere **rilevato**, non propagato.
+## Context
 
-## Decisione
+Common Lisp with `(safety 0)` or `truly-the` removes the checks that turn a defect
+into a signaled error: an out-of-bounds write becomes silent memory corruption.
+In a critical system, a defect must be **detected**, not propagated.
 
-1. **Safety.** Nessun codice di prodotto è compilato con `safety` inferiore a 2. Con `safety 2`
-   (o 3) SBCL mantiene i controlli completi di tipo e di limiti degli array
-   (verificato: un accesso fuori limiti in una funzione `(safety 2) (speed 3)` segnala
-   `invalid-array-index-error`). Politica predefinita: `(safety 3)`. I percorsi caldi inseriti
-   nel registro delle eccezioni possono usare `(safety 2) (speed 3)`; **mai** `(safety 0)`,
-   `(safety 1)` con `speed` maggiore (che indebolisce i controlli di tipo), `truly-the`,
+<a id="decisione"></a>
+
+## Decision
+
+1. **Safety.** No product code is compiled with `safety` below 2. With `safety 2`
+   (or 3), SBCL retains full type and array-bounds checks
+   (verified: out-of-bounds access in a `(safety 2) (speed 3)` function signals
+   `invalid-array-index-error`). Default policy: `(safety 3)`. Hot paths entered
+   in the exception register may use `(safety 2) (speed 3)`; **never** `(safety 0)`,
+   `(safety 1)` with higher `speed` (which weakens type checks), `truly-the`,
    `(optimize (sb-c::insert-array-bounds-checks 0))`.
-2. **Compilazione senza avvisi.** Il build fallisce su qualunque `warning` o `style-warning`
-   (funzione o variabile non definita, tipo incoerente, variabile non usata).
-3. **Dichiarazioni.** Ogni funzione C1 e C2 ha una dichiarazione `ftype` completa; ogni slot
-   di struttura ha un tipo; le strutture C1 sono `defstruct` con slot tipizzati e, dove
-   possibile, `:read-only`. Le costanti di formato (offset, dimensioni) sono definite una sola
-   volta in un modulo di formati e usate da tutti.
-4. **Divieti** (verificati da `tools/lint.lisp`): `eval`, `compile`, `load` e `intern`
-   su dati esterni; `read` di dati non fidati (e `*read-eval*` sempre `nil`);
-   `ignore-errors`; `truly-the`; `safety 0`; funzioni più lunghe di 60 righe; funzioni di
-   prodotto senza docstring.
-5. **Regole di struttura** (adattate da «Power of 10», in dettaglio nello
-   [standard](../affidabilita/standard-di-codifica.md)): cicli con limite superiore dimostrato
-   o dichiarato; ricorsione ammessa solo con profondità limitata e dichiarata; ambito minimo
-   delle variabili; controllo esplicito di ogni valore di ritorno che può indicare un errore;
-   macro ristrette e documentate; nessuno stato globale mutabile senza proprietario dichiarato
+2. **Warning-free compilation.** The build fails on any `warning` or `style-warning`
+   (undefined function or variable, inconsistent type, unused variable).
+3. **Declarations.** Every C1 and C2 function has a complete `ftype` declaration; every structure
+   slot has a type; C1 structures are `defstruct` with typed slots and, where
+   possible, `:read-only`. Format constants (offsets, sizes) are defined once
+   in a formats module and used by everyone.
+4. **Prohibitions** (checked by `tools/lint.lisp`): `eval`, `compile`, `load`, and `intern`
+   on external data; `read` of untrusted data (and `*read-eval*` always `nil`);
+   `ignore-errors`; `truly-the`; `safety 0`; functions longer than 60 lines; product
+   functions without docstrings.
+5. **Structural rules** (adapted from "Power of 10," detailed in the
+   [standard](../affidabilita/standard-di-codifica.md)): loops with a proven
+   or declared upper bound; recursion allowed only with bounded and declared depth; minimum variable
+   scope; explicit checking of every return value that may indicate an error;
+   restricted, documented macros; no mutable global state without a declared owner
    (INV-V4).
-6. **Concorrenza.** Solo `sb-thread`, `sb-ext:compare-and-swap` e `sb-thread:barrier`; ogni
-   struttura condivisa ha un proprietario unico dichiarato e un protocollo descritto;
-   proibito `without-interrupts` e `without-gcing` fuori dal modulo `io` (se mai necessari,
-   come deviazione registrata).
-7. **Registro delle eccezioni per i percorsi caldi** (`docs/affidabilita/deviazioni.md`,
-   sezione «Hot path»): una funzione vi entra solo con una misura (SPK) che mostra che
-   `(safety 3)` non raggiunge i [minimi di prestazione](0028-target-e-obiettivi-di-latenza.md),
-   e mantiene tutti i controlli di `(safety 2)`.
-8. **Strumenti.** `tools/lint.lisp` (divieti, lunghezza, docstring); la compilazione senza
-   avvisi nel `make`; entrambi eseguiti dalla CI. Lo strumento è esso stesso verificato da
-   fixture di codice scorretto (`--self-test`).
+6. **Concurrency.** Only `sb-thread`, `sb-ext:compare-and-swap`, and `sb-thread:barrier`; every
+   shared structure has a single declared owner and a documented protocol;
+   `without-interrupts` and `without-gcing` prohibited outside the `io` module (if ever necessary,
+   as a registered deviation).
+7. **Hot-path exception register** (`docs/affidabilita/deviazioni.md`,
+   "Hot path" section): a function is entered only with a measurement (SPK) showing that
+   `(safety 3)` does not meet the [performance minimums](0028-target-e-obiettivi-di-latenza.md),
+   and it retains all `(safety 2)` checks.
+8. **Tools.** `tools/lint.lisp` (prohibitions, length, docstrings); warning-free
+   compilation in `make`; both run by CI. The tool itself is verified by
+   invalid-code fixtures (`--self-test`).
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Un difetto di indicizzazione o di tipo diventa un errore segnalato (→ `invariant-violation`,
-  Serie `FAULTED`, [ADR-0033](0033-fail-stop-e-integrita-end-to-end.md)), non corruzione.
-- Costo di prestazioni dei controlli: stimato nell'ordine del 10–30 % sui cicli più stretti;
-  misurato da SPK-09. Se i minimi non sono raggiunti, si interviene sugli algoritmi.
-- Il codice è uniforme e verificabile da strumenti.
+## Consequences
 
-## Alternative considerate
+- An indexing or type defect becomes a signaled error (→ `invariant-violation`,
+  Serie `FAULTED`, [ADR-0033](0033-fail-stop-e-integrita-end-to-end.md)), not corruption.
+- Performance cost of checks: estimated around 10–30 % in the tightest loops;
+  measured by SPK-09. If minimums are not met, algorithms are improved.
+- Code is uniform and tool-verifiable.
 
-- *`(safety 0)` sui percorsi caldi con test estesi:* scartata: un difetto non rilevato dai test
-  diventa corruzione silenziosa.
-- *Un linter esterno:* nessuna dipendenza esterna ([ADR-0027](0027-dipendenze-e-test.md)); le
-  regole sono poche e specifiche del progetto.
+<a id="alternative-considerate"></a>
 
-## Valutazione
+## Alternatives considered
 
-- Rischi: RSK-19.
-- Verifica: `make lint` e la compilazione senza avvisi nella CI; test di non regressione del
-  linter; SPK-09 misura il costo.
+- *`(safety 0)` on hot paths with extensive testing:* rejected: a defect missed by tests
+  becomes silent corruption.
+- *An external linter:* no external dependencies ([ADR-0027](0027-dipendenze-e-test.md));
+  there are few rules and they are project-specific.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-19.
+- Verification: `make lint` and warning-free compilation in CI; linter
+  regression tests; SPK-09 measures the cost.

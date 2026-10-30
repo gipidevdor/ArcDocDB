@@ -1,9 +1,13 @@
+<a id="adr-0070--scoperta-readonly-delle-immagini-m1-allo-startup"></a>
+
 # ADR-0070 — Read-only discovery of M1 images at startup
 
 - **Status:** Accepted in the incremental integration authorized by the author on 2026-10-30
 - **Date:** 2026-10-30
 - **References:** ADR-0063, ADR-0064, ADR-0068, ADR-0069; REQ-IDX-010, REQ-REC-001, INV-I8, INV-A8, INV-P6
 - **Relationship to the specification:** extends ADR-0064's explicit selection; no new authoritative format or durable decision
+
+<a id="decisione"></a>
 
 ## Decision
 
@@ -38,6 +42,8 @@ With no eligible footers, the already rebuilt canonical resident index remains a
 Explicit selection retains its strict contract: an invalid explicit
 candidate is not ignored. Discovery neither precedes nor bypasses
 canonical recovery; an error in recovery precedes any search for derivatives.
+
+<a id="limiti-e-conseguenze"></a>
 
 ## Limits and consequences
 

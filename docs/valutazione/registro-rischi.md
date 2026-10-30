@@ -1,366 +1,396 @@
-# Registro dei rischi
+<a id="registro-dei-rischi"></a>
 
-> Valutazione preliminare. Vedi le [avvertenze](README.md). Probabilità e impatto sono giudizi
-> qualitativi (B bassa, M media, A alta) da rivedere dopo ogni spike.
+# Risk register
 
-## Prima evidenza SPK-04 (2026-10-08)
+> Preliminary assessment. See [caveats](README.md). Probability and impact are
+> qualitative judgments (L low, M medium, H high), to revisit after every spike.
 
-> **Proposta** — La [campagna SPK-04](risultati-SPK-04-2026-10-08.md)
-> verifica localmente FIFO, esclusività del writer, code limitate e modelli
-> di parcheggio/ripartenza. RSK-04 resta aperto sulle prestazioni: finestre
-> brevi, pool creato per caso e carico preaccodato non confermano i target.
-> In SPK-04 lo scheduler adattivo e i controllori di RSK-12 non sono esercitati.
+<a id="prima-evidenza-spk-04-2026-10-08"></a>
 
-## Prima evidenza SPK-06 (2026-10-08)
+## First SPK-04 evidence (2026-10-08)
 
-> **Proposta** — La [campagna SPK-06](risultati-SPK-06-2026-10-08.md)
-> verifica confini, timer continui e quote nel modello finito del carico;
-> misura separatamente interferenza locale di copie buffered con letture.
-> RSK-12 resta aperto sul feedback reale, sulla calibrazione e sull'AIMD del
-> pool. La starvation di RSK-08 resta accettata: nessuna soglia di emergenza
-> è introdotta. Le misure non verificano una compaction del motore.
+> **Proposal** — The [SPK-04 campaign](risultati-SPK-04-2026-10-08.md)
+> locally verifies FIFO, writer exclusivity, bounded queues, and park/restart
+> models. RSK-04 remains open on performance: short windows, a pool created
+> per case, and prequeued load do not confirm targets. SPK-04 does not exercise
+> the adaptive scheduler or RSK-12 controllers.
 
-## Quadro
+<a id="prima-evidenza-spk-06-2026-10-08"></a>
 
-> **Deciso (prime prove SPK-07 → ADR-0046, 2026-10-08)** — RSK-05 è nuovamente aperto
-> sulla verifica: l'anello dell'orizzonte perde un completamento con un commit lento anche
-> rispettando i crediti. Il registro limitato dei pendenti corregge il controesempio nel
-> piccolo modello. Restano memoria debole, scadenza snapshot, interleaving di compaction e
-> writer e fault injection sul futuro motore. Le mitigazioni di progetto non sono prove di
-> correttezza dell'implementazione.
+## First SPK-06 evidence (2026-10-08)
 
-| ID | Rischio | Prob. | Impatto | Verifica | Questioni |
+> **Proposal** — The [SPK-06 campaign](risultati-SPK-06-2026-10-08.md)
+> verifies boundaries, continuous timers, and quotas in the finite load model;
+> separately measures local interference between buffered copies and reads.
+> RSK-12 remains open on real feedback, calibration, and pool AIMD. RSK-08
+> starvation remains accepted: no emergency threshold is introduced.
+> Measurements do not verify an engine compaction.
+
+<a id="quadro"></a>
+
+## Overview
+
+> **Decided (initial SPK-07 tests → ADR-0046, 2026-10-08)** — RSK-05 is reopened
+> for verification: the horizon ring loses a completion with a slow commit even
+> when credits are respected. The bounded pending registry corrects the
+> counterexample in the small model. Weak memory, snapshot expiration,
+> compaction/writer interleavings, and fault injection on the future engine
+> remain. Design mitigations are not implementation correctness proofs.
+
+| ID | Risk | Prob. | Impact | Verification | Questions |
 |---|---|---|---|---|---|
-| [RSK-01](#rsk-01) | Pause del GC di SBCL incompatibili con il P99 | M | A | SPK-02 | QA-18 |
-| [RSK-02](#rsk-02) | Primary index: progetto non ancora definito su concorrenza, snapshot, rilocazione | M | A | SPK-01, SPK-07 | QA-24, QA-04 |
-| [RSK-03](#rsk-03) | Amplificazione di scrittura oltre la banda del dispositivo | M | A | SPK-03 | QA-02 |
-| [RSK-04](#rsk-04) | Tetto del writer singolo per Serie sotto i target | M | M | SPK-04 | QA-26, QA-25 |
-| [RSK-05](#rsk-05) | Transazioni multiserie: visibilità atomica e stato PREPARED | M | A | SPK-07 | QA-06, QA-07, QA-09 |
-| [RSK-06](#rsk-06) | `multiserie.log` come punto di contesa dell'Archivio | B | M | SPK-03 | QA-08 |
-| [RSK-07](#rsk-07) | Memoria dell'indice e tempo di riavvio | M | M | SPK-01 | QA-03 |
-| [RSK-08](#rsk-08) | MERGE mai eseguito sotto carico sostenuto | M | M | SPK-06 | QA-12 |
-| [RSK-09](#rsk-09) | Spazio trattenuto da snapshot longevi | M | M | — | QA-14 |
-| [RSK-10](#rsk-10) | Cache: doppia memorizzazione e raffreddamento dopo la compaction | M | B | SPK-05 | QA-17 |
-| [RSK-11](#rsk-11) | Divergenza tra piattaforma di sviluppo e di riferimento | A | M | SPK-03, SPK-08 | QA-19 |
-| [RSK-12](#rsk-12) | Instabilità dei controllori dinamici | M | M | SPK-06 | QA-12 |
-| [RSK-13](#rsk-13) | Costo e consistenza degli indici secondari | M | M | — | QA-25 |
-| [RSK-14](#rsk-14) | Ampiezza del progetto | A | M | — | QA-23 |
-| [RSK-15](#rsk-15) | Bootstrap di Registri e del catalogo | B | M | — | QA-10 |
-| [RSK-16](#rsk-16) | Vincolo «solo Common Lisp» sulle primitive di I/O e SIMD | M | M | SPK-03, SPK-05, SPK-08 | QA-19, QA-22 |
-| [RSK-17](#rsk-17) | Copia unica dei dati: perdita del supporto = perdita dei dati | M | A | backup (ADR-0030), verificatore | — |
-| [RSK-18](#rsk-18) | Difetti nella base di fiducia: SBCL (compilatore, GC, runtime), sistema operativo, firmware | B | A | CI su due piattaforme, soak, controlli end-to-end | — |
-| [RSK-19](#rsk-19) | Il costo dei controlli di affidabilità (CRC in lettura, safety ≥ 2, scrubbing) supera il budget di prestazione | M | M | SPK-09 | — |
-| [RSK-20](#rsk-20) | Indipendenza della verifica limitata: autore unico | A | M | strumenti, liste di controllo, revisione su dati | — |
+| [RSK-01](#rsk-01) | SBCL GC pauses incompatible with P99 | M | H | SPK-02 | QA-18 |
+| [RSK-02](#rsk-02) | Primary index: design not yet defined for concurrency, snapshots, relocation | M | H | SPK-01, SPK-07 | QA-24, QA-04 |
+| [RSK-03](#rsk-03) | Write amplification beyond device bandwidth | M | H | SPK-03 | QA-02 |
+| [RSK-04](#rsk-04) | Single writer per Serie ceiling below targets | M | M | SPK-04 | QA-26, QA-25 |
+| [RSK-05](#rsk-05) | Multiserie transactions: atomic visibility and PREPARED state | M | H | SPK-07 | QA-06, QA-07, QA-09 |
+| [RSK-06](#rsk-06) | `multiserie.log` as Archivio contention point | L | M | SPK-03 | QA-08 |
+| [RSK-07](#rsk-07) | Index memory and restart time | M | M | SPK-01 | QA-03 |
+| [RSK-08](#rsk-08) | MERGE never runs under sustained load | M | M | SPK-06 | QA-12 |
+| [RSK-09](#rsk-09) | Space retained by long-lived snapshots | M | M | — | QA-14 |
+| [RSK-10](#rsk-10) | Cache: double storage and cooling after compaction | M | L | SPK-05 | QA-17 |
+| [RSK-11](#rsk-11) | Divergence between development and reference platforms | H | M | SPK-03, SPK-08 | QA-19 |
+| [RSK-12](#rsk-12) | Dynamic controller instability | M | M | SPK-06 | QA-12 |
+| [RSK-13](#rsk-13) | Secondary index cost and consistency | M | M | — | QA-25 |
+| [RSK-14](#rsk-14) | Project breadth | H | M | — | QA-23 |
+| [RSK-15](#rsk-15) | Registri and catalog bootstrap | L | M | — | QA-10 |
+| [RSK-16](#rsk-16) | “Common Lisp only” constraint on I/O and SIMD primitives | M | M | SPK-03, SPK-05, SPK-08 | QA-19, QA-22 |
+| [RSK-17](#rsk-17) | Single data copy: loss of medium = loss of data | M | H | backup (ADR-0030), checker | — |
+| [RSK-18](#rsk-18) | Defects in trusted base: SBCL (compiler, GC, runtime), operating system, firmware | L | H | CI on two platforms, soak, end-to-end checks | — |
+| [RSK-19](#rsk-19) | Reliability check cost (read CRC, safety ≥ 2, scrubbing) exceeds performance budget | M | M | SPK-09 | — |
+| [RSK-20](#rsk-20) | Limited verification independence: sole author | H | M | tools, checklists, data-based review | — |
 
-## Stato dopo gli ADR (2026-10-03)
+<a id="stato-dopo-gli-adr-2026-10-03"></a>
 
-| ID | Stato | Effetto delle decisioni |
+## Status after ADRs (2026-10-03)
+
+| ID | Status | Effect of decisions |
 |---|---|---|
-| RSK-01 | **aperto (quantitativo)** | ADR-0024 minimizza il lavoro del GC; ADR-0028 fissa il criterio (pausa ≤ 5 ms); decide SPK-02 |
-| RSK-02 | mitigato sul progetto; **aperto sulle prestazioni** | ADR-0015/0016/0018 definiscono struttura, concorrenza, rilocazione; SPK-01 e SPK-07 verificano |
-| RSK-03 | mitigato | ADR-0013: 1× scrittura; residuo: flush concorrenti di molte Serie (SPK-03) |
-| RSK-04 | mitigato | ADR-0019: writer mai bloccato; ADR-0028: target per Serie = 1/4 dell'aggregato |
-| RSK-05 | mitigato sul progetto | ADR-0020/0021: CSN dopo decisione, attesa delle multiserie in applicazione, intenti no-wait; modello SPK-07 |
-| RSK-06 | mitigato | ADR-0021: group commit e troncamento per checkpoint |
-| RSK-07 | accettato, quantificato | ~56 B/entry (ADR-0032); riavvio dagli hint (ADR-0015) |
-| RSK-08 | accettato esplicitamente | ADR-0023: metrica e allarme, nessuna soglia di emergenza |
-| RSK-09 | mitigato | ADR-0020: durata massima degli snapshot |
-| RSK-10 | mitigato | ADR-0025: ri-etichettatura delle entry alla rilocazione |
-| RSK-11 | mitigato | ADR-0017: piattaforma di riferimento fissata; `durable-flush` per piattaforma |
-| RSK-12 | mitigato | ADR-0023: due segnali, isteresi, stati espliciti |
-| RSK-13 | mitigato | ADR-0026: indici per segmento, costruiti alla chiusura, nessuna fusione separata |
-| RSK-14 | mitigato | ADR-0030: scope v1; roadmap a fette verticali |
-| RSK-15 | mitigato | ADR-0022: configurazione incorporata, macchina a stati DDL |
-| RSK-16 | mitigato | ADR-0017/0027: chiamate di sistema via contrib; primitive proprie |
-| RSK-17 | **aperto** | ADR-0030 (proposta): backup consistente e verificatore offline nella v1; mirroring in v1.1 |
-| RSK-18 | residuo dichiarato | ADR-0033/0034: verifica end-to-end, controlli sempre attivi; versione di SBCL fissata; CI su Linux e macOS |
-| RSK-19 | **aperto (quantitativo)** | ADR-0031 §5: i minimi di prestazione sono ragionevoli; SPK-09 misura il costo |
-| RSK-20 | residuo dichiarato | ADR-0031: strumenti automatici, lista di controllo, rilettura su dati |
-| RSK-02 (aggiornamento) | mitigato più a fondo | ADR-0032: seqlock a 64 bit, nessun argomento temporale |
+| RSK-01 | **open (quantitative)** | ADR-0024 minimizes GC work; ADR-0028 sets criterion (pause ≤ 5 ms); SPK-02 decides |
+| RSK-02 | mitigated in design; **open on performance** | ADR-0015/0016/0018 define structure, concurrency, relocation; SPK-01 and SPK-07 verify |
+| RSK-03 | mitigated | ADR-0013: 1× writing; residual: concurrent flushes from many Serie (SPK-03) |
+| RSK-04 | mitigated | ADR-0019: writer never blocked; ADR-0028: per-Serie target = 1/4 of aggregate |
+| RSK-05 | mitigated in design | ADR-0020/0021: CSN after decision, wait for multiserie transactions being applied, no-wait intents; SPK-07 model |
+| RSK-06 | mitigated | ADR-0021: group commit and checkpoint truncation |
+| RSK-07 | accepted, quantified | ~56 B/entry (ADR-0032); restart from hints (ADR-0015) |
+| RSK-08 | explicitly accepted | ADR-0023: metric and alarm, no emergency threshold |
+| RSK-09 | mitigated | ADR-0020: maximum snapshot lifetime |
+| RSK-10 | mitigated | ADR-0025: entry relabeling at relocation |
+| RSK-11 | mitigated | ADR-0017: reference platform fixed; per-platform `durable-flush` |
+| RSK-12 | mitigated | ADR-0023: two signals, hysteresis, explicit states |
+| RSK-13 | mitigated | ADR-0026: per-segment indexes, built at closure, no separate merge |
+| RSK-14 | mitigated | ADR-0030: v1 scope; vertical-slice roadmap |
+| RSK-15 | mitigated | ADR-0022: built-in configuration, DDL state machine |
+| RSK-16 | mitigated | ADR-0017/0027: syscalls through contrib; own primitives |
+| RSK-17 | **open** | ADR-0030 (proposal): consistent backup and offline checker in v1; mirroring in v1.1 |
+| RSK-18 | declared residual | ADR-0033/0034: end-to-end verification, always-active checks; pinned SBCL version; Linux and macOS CI |
+| RSK-19 | **open (quantitative)** | ADR-0031 §5: performance minimums are reasonable; SPK-09 measures cost |
+| RSK-20 | declared residual | ADR-0031: automatic tools, checklist, data-based rereading |
+| RSK-02 (update) | further mitigated | ADR-0032: 64-bit seqlock, no timing argument |
 
-## Stato dopo l'analisi progettuale (2026-10-03)
+<a id="stato-dopo-lanalisi-progettuale-2026-10-03"></a>
 
-L'[analisi progettuale](../analisi-progettuale.md) ha trovato difetti in mitigazioni date per
-acquisite; le decisioni 0036–0045 li chiudono sul progetto. Restano da verificare su modello
-(SPK-07) e con misure.
+## Status after design analysis (2026-10-03)
 
-| ID | Stato | Effetto delle decisioni |
+[Design analysis](../analisi-progettuale.md) found defects in mitigations taken
+for granted; decisions 0036–0045 close them in design. They remain to be
+verified in a model (SPK-07) and through measurements.
+
+| ID | Status | Effect of decisions |
 |---|---|---|
-| RSK-02 | mitigato sul progetto; **aperto sulle prestazioni** | ADR-0043: frammenti; nessun fermo del writer né picco di memoria alla crescita; slot a 4 parole. SPK-01 misura |
-| RSK-03 | mitigato; residuo dichiarato | ADR-0037: un crash ordinario non è più classificato come corruzione; resta RES-05 (danno a riposo dell'ultimo flush) |
-| RSK-04 | mitigato più a fondo | ADR-0039: nessun lavoro per byte nel writer oltre alla copia; nessun TXID per operazione |
-| RSK-05 | mitigato più a fondo | ADR-0038: l'orizzonte copre anche i lotti in volo (prima uno snapshot poteva cambiare vista); ADR-0041: l'esito non può essere separato dai record che risolve |
-| RSK-07 | accettato, **stima corretta** | ~75–80 B per documento in media, ~650 milioni di documenti per 64 GB (prima: 56 B, valore valido solo al riempimento massimo) |
-| RSK-10 | accettato, da misurare | ADR-0044: nessuna ri-etichettatura; la perdita di calore dopo la compaction si misura (SPK-05) prima di aggiungere un meccanismo |
-| RSK-13 | **aperto (quantitativo)** | il costo di una query cresce con il numero di segmenti: limite dichiarato in [limiti.md](../limiti.md); filtri sui valori nei file indice |
-| RSK-15 | mitigato più a fondo | ADR-0040: creazione con directory `.tmp`, nessuno stato `creating`, nessuna eliminazione per assenza |
-| RSK-01 | **aperto (quantitativo)** | in più: pausa in funzione del numero di thread e dei frammenti sostituiti (SPK-02) |
-| RSK-18, RSK-20 | residuo dichiarato, ridotto | ADR-0036: un difetto nel calcolo di manifest o catalogo lascia un oggetto sconosciuto segnalato, non una perdita; il recovery non scrive nei segmenti |
+| RSK-02 | mitigated in design; **open on performance** | ADR-0043: fragments; no writer stop or memory peak during growth; 4-word slots. SPK-01 measures |
+| RSK-03 | mitigated; declared residual | ADR-0037: an ordinary crash is no longer classified as corruption; RES-05 remains (at-rest damage in last flush) |
+| RSK-04 | further mitigated | ADR-0039: no per-byte work in writer beyond copying; no per-operation TXID |
+| RSK-05 | further mitigated | ADR-0038: horizon also covers in-flight batches (previously a snapshot could change view); ADR-0041: outcome cannot be separated from records it resolves |
+| RSK-07 | accepted, **corrected estimate** | ~75–80 B per document on average, ~650 million documents per 64 GB (previously 56 B, valid only at maximum occupancy) |
+| RSK-10 | accepted, to measure | ADR-0044: no relabeling; cooling after compaction measured (SPK-05) before adding a mechanism |
+| RSK-13 | **open (quantitative)** | Query cost grows with segment count: limit declared in [limiti.md](../limiti.md); value filters in index files |
+| RSK-15 | further mitigated | ADR-0040: creation with `.tmp` directory, no `creating` state, no deletion due to absence |
+| RSK-01 | **open (quantitative)** | Additionally: pause versus thread count and replaced fragments (SPK-02) |
+| RSK-18, RSK-20 | declared residual, reduced | ADR-0036: a manifest or catalog calculation defect leaves a reported unknown object, not loss; recovery does not write segments |
 
 ---
 
-## Stato dopo la prima campagna locale (2026-10-08)
+<a id="stato-dopo-la-prima-campagna-locale-2026-10-08"></a>
 
-Fonte: [misure e dati grezzi](risultati-2026-10-08.md). Nessun rischio è chiuso
-dai soli microbenchmark. Le evidenze v1 e v2 sono distinte e parziali.
+## Status after first local campaign (2026-10-08)
 
-| Rischio | Evidenza | Azione restante |
+Source: [measurements and raw data](risultati-2026-10-08.md). No risk is closed
+by microbenchmarks alone. v1 and v2 evidence is distinct and partial.
+
+| Risk | Evidence | Remaining action |
 |---|---|---|
-| RSK-01 | 48 casi a 128 MiB; chiamate GC con 64 worker attivi possono durare decine di ms o più; non è tempo STW esatto | pool reale, worker parcheggiati/I/O, heap grandi e Linux |
-| RSK-02, RSK-07 | v1 a 10 milioni: 82,21 B/doc e split massimo 98,827 ms; v2: 664 confronti con oracle e sette rifiuti senza modifica dello stato; costo O(2^G) della directory precisato da ADR-0050 | scala superiore, churn lungo, directory/split v2, memoria debole e RSS |
-| RSK-03, RSK-11 | F_FULLFSYNC circa 4 ms con un file; mediana circa 12 ms con quattro file | pipeline reale, numero di Serie, campagna Linux e fault injection |
-| RSK-05 | anello dell'orizzonte corretto; prova del CSN prepared aggiunta con ADR-0047 | resolver autorevole, interleaving mancanti e crash reali |
-| RSK-19 | slicing-by-8 circa 0,7 GB/s sui corpi v1; inline evita boxing osservato del CSN; codec v2: 416 casi e record massimo verificato | I/O, prepared e percorso completo v2, disassemblato x86-64 |
+| RSK-01 | 48 cases at 128 MiB; GC calls with 64 active workers can last tens of ms or more; not exact STW time | Real pool, parked/I/O workers, large heaps, and Linux |
+| RSK-02, RSK-07 | v1 at 10 million: 82.21 B/doc and maximum split 98.827 ms; v2: 664 oracle comparisons and seven rejections without state change; O(2^G) directory cost clarified by ADR-0050 | Higher scale, long churn, v2 directory/splits, weak memory, and RSS |
+| RSK-03, RSK-11 | F_FULLFSYNC about 4 ms with one file; median about 12 ms with four files | Real pipeline, Serie count, Linux campaign, and fault injection |
+| RSK-05 | Horizon ring corrected; prepared CSN proof added with ADR-0047 | Authoritative resolver, missing interleavings, and real crashes |
+| RSK-19 | Slicing-by-8 about 0.7 GB/s on v1 bodies; inline avoids observed CSN boxing; v2 codec: 416 cases and maximum record verified | I/O, prepared and complete v2 path, x86-64 disassembly |
 
-Le vecchie righe sul costo C della manutenzione e sull'assenza di picchi sono
-storiche: slot, chiavi, directory, oggetti trattenuti e collector hanno costi
-distinti. La correzione non aggiunge coordinamento fra Serie.
+Old rows on maintenance cost C and absence of peaks are historical: slots,
+keys, directory, retained objects, and collector have distinct costs.
+The correction adds no coordination between Serie.
 
-> **Proposta** — L'[avanzamento SPK-07/08](risultati-SPK-07-08-2026-10-08.md)
-> aggiunge evidenze per RSK-02 (due reader/due slot in SC), RSK-05/RSK-19
-> (49.120 casi sui byte e ultimo flush non testimoniato) e RSK-11/RSK-16
-> (NEON e SWAR in Common Lisp a safety 3). I rischi restano aperti: memoria
-> debole completa, prova esterna della frontiera, filesystem reale,
-> integrazione dell'indice e piattaforma x86-64 non sono qualificati.
+> **Proposal** — [SPK-07/08 progress](risultati-SPK-07-08-2026-10-08.md)
+> adds evidence for RSK-02 (two readers/two slots in SC), RSK-05/RSK-19
+> (49,120 byte cases and unwitnessed last flush), and RSK-11/RSK-16
+> (NEON and SWAR in Common Lisp at safety 3). Risks remain open: complete
+> weak memory, external frontier proof, real filesystem, index integration,
+> and x86-64 platform are not qualified.
 
 ---
 
 ### RSK-01
 
 
-**Pause del GC di SBCL.** Il collector di SBCL ferma tutti i thread durante una collezione:
-è una contesa *globale*, che attraversa l'isolamento tra Serie. Con heap grandi e alta
-allocazione le pause possono dominare il P99.
+**SBCL GC pauses.** The SBCL collector stops all threads during collection:
+this is *global* contention, crossing isolation between Serie. With large
+heaps and high allocation, pauses can dominate P99.
 
-- *Mitigazioni:* nessuna allocazione sul hot path; indici e cache in array specializzati senza
-  puntatori o fuori dallo heap gestito; regolazione del collector; valutazione delle varianti
-  di collector disponibili in SBCL.
-- *Segnale di allarme:* pause superiori all'obiettivo di P99 con il solo carico di lettura.
-- *Nota:* la specifica prevede già le metriche GC e le strutture compatte; non prevede un
-  obiettivo numerico di pausa (QA-26).
+- *Mitigations:* no hot-path allocation; indexes and cache in pointer-free
+  specialized arrays or outside managed heap; collector tuning; evaluation
+  of collector variants available in SBCL.
+- *Warning sign:* pauses above the P99 target with read-only load.
+- *Note:* the specification already includes GC metrics and compact structures;
+  it does not include a numeric pause target (QA-26).
 
 ### RSK-02
 
-**Primary index.** Vedi tensioni T1 e T3 nell'[analisi critica](analisi-critica.md). La
-struttura più sollecitata del sistema ha tre requisiti in conflitto apparente e nessun
-meccanismo specificato.
+**Primary index.** See tensions T1 and T3 in the [critical analysis](analisi-critica.md).
+The system's most stressed structure has three apparently conflicting
+requirements and no specified mechanism.
 
-- *Mitigazioni:* decidere QA-24 con un ADR sostenuto da un prototipo (SPK-01) e da un modello
-  dello swap (SPK-07) prima di qualsiasi altro lavoro sullo storage.
+- *Mitigations:* decide QA-24 with an ADR supported by a prototype (SPK-01)
+  and swap model (SPK-07) before any other storage work.
 
 ### RSK-03
 
-**Amplificazione di scrittura.** Vedi [stime](stime-ordine-di-grandezza.md#banda-di-scrittura).
+**Write amplification.** See [estimates](stime-ordine-di-grandezza.md#banda-di-scrittura).
 
-- *Mitigazioni:* scelta di QA-02 che scriva i dati una sola volta; compressione; limitazione
-  della banda di CLEAN/MERGE; revisione della fascia alta dei target.
+- *Mitigations:* choose a QA-02 option writing data only once; compression;
+  limit CLEAN/MERGE bandwidth; revise upper target range.
 
 ### RSK-04
 
-**Tetto del writer singolo.** Tutto ciò che entra nella parte seriale riduce il throughput
-massimo di una Serie.
+**Single writer ceiling.** Everything entering the serial part reduces
+a Serie's maximum throughput.
 
-- *Mitigazioni:* lavoro parallelizzabile fuori dal writer; elaborazione a lotti; indici
-  secondari aggiornati fuori dal percorso critico; chiarire QA-26. Per carichi che superano
-  una Serie, il modello prevede già di distribuire su più Serie.
+- *Mitigations:* parallelizable work outside writer; batching; secondary indexes
+  updated outside critical path; clarify QA-26. For loads beyond one Serie,
+  the model already provides distribution over multiple Serie.
 
 ### RSK-05
 
-**Transazioni multiserie.** Vedi tensioni T4 e T5. I rischi sono di correttezza (uno snapshot
-che vede metà transazione) e di prestazioni (documenti bloccati in PREPARED, writer in
-attesa).
+**Multiserie transactions.** See tensions T4 and T5. Risks concern correctness
+(a snapshot seeing half a transaction) and performance (documents stuck in
+PREPARED, waiting writers).
 
-- *Mitigazioni:* modello del protocollo esplorato esaustivamente con i crash FI-03, FI-04,
-  FI-05, FI-12 prima dell'implementazione (SPK-07); regola di recovery esplicita.
+- *Mitigations:* exhaustive protocol model exploration with crashes FI-03,
+  FI-04, FI-05, FI-12 before implementation (SPK-07); explicit recovery rule.
 
 ### RSK-06
 
-**`multiserie.log` condiviso.** È l'unico log attraversato da tutte le transazioni multiserie
-di un Archivio. Con group commit il rischio è contenuto, ma un flush lento su questo file
-rallenta tutte le multiserie. Inoltre è un file unico che cresce.
+**Shared `multiserie.log`.** This is the only log traversed by every multiserie
+transaction in an Archivio. Group commit contains the risk, but a slow flush
+on this file slows all multiserie transactions. It is also a single growing file.
 
-- *Mitigazioni:* group commit; politica di troncamento (QA-08); metrica dedicata.
+- *Mitigations:* group commit; truncation policy (QA-08); dedicated metric.
 
 ### RSK-07
 
-**Memoria e riavvio.** Vedi [stime](stime-ordine-di-grandezza.md#memoria-del-primary-index).
+**Memory and restart.** See [estimates](stime-ordine-di-grandezza.md#memoria-del-primary-index).
 
-- *Mitigazioni:* entry compatte; file di hint o checkpoint (QA-03); recovery parallelo per
-  Serie; documentare il limite di capacità per server.
+- *Mitigations:* compact entries; hint or checkpoint files (QA-03); parallel
+  recovery per Serie; document capacity limit per server.
 
 ### RSK-08
 
-**MERGE mai eseguito.** Vedi tensione T7.
+**MERGE never runs.** See tension T7.
 
-- *Mitigazioni:* metrica e allarme sul numero di segmenti piccoli; strutture che tollerano
-  migliaia di segmenti; decisione esplicita sull'eventuale soglia di emergenza (QA-12).
+- *Mitigations:* metric and alarm on small-segment count; structures tolerating
+  thousands of segments; explicit decision on any emergency threshold (QA-12).
 
-> **Deciso (QA-12 → ADR-0023)** — La starvation del MERGE è accettata con
-> metrica e allarme; non è prevista una soglia di emergenza. SPK-06 verifica
-> la policy su tracce finite e non dimostra progresso sotto carico sostenuto.
+> **Decided (QA-12 → ADR-0023)** — MERGE starvation is accepted with a
+> metric and alarm; no emergency threshold is planned. SPK-06 verifies
+> policy on finite traces and does not demonstrate progress under sustained load.
 
 ### RSK-09
 
-**Snapshot longevi.** Trattengono versioni e segmenti; con molte scritture lo spazio occupato
-cresce senza limite per la durata dello snapshot.
+**Long-lived snapshots.** They retain versions and segments; with many writes,
+occupied space grows without bound for the snapshot's lifetime.
 
-- *Mitigazioni:* metrica sull'età del più vecchio snapshot; durata massima configurabile
+- *Mitigations:* metric on oldest snapshot age; configurable maximum lifetime
   (QA-14).
 
 ### RSK-10
 
-**Cache.** Se i segmenti si leggono attraverso la page cache del sistema operativo, i dati
-stanno in memoria due volte. Inoltre la rilocazione di CLEAN/MERGE cambia le location: una
-cache indicizzata per location perde il calore dei record spostati.
+**Cache.** If segments are read through the operating system's page cache,
+data resides in memory twice. CLEAN/MERGE relocation also changes locations:
+a location-indexed cache loses the warmth of moved records.
 
-- *Mitigazioni:* decidere la modalità di lettura (QA-19); valutare il trasferimento delle
-  entry calde durante la compaction; misurare prima di complicare.
+- *Mitigations:* decide read mode (QA-19); assess transfer of hot entries during
+  compaction; measure before complicating.
 
-> **Proposta** — La [campagna SPK-05](risultati-SPK-05-2026-10-08.md)
-> confronta pread e mapping su file da 16 MiB. Non esercita cache propria,
-> rilocazioni o dataset oltre RAM: RSK-10 rimane quantitativamente aperto.
+> **Proposal** — The [SPK-05 campaign](risultati-SPK-05-2026-10-08.md)
+> compares pread and mapping on 16 MiB files. It exercises no own cache,
+> relocation, or beyond-RAM dataset: RSK-10 remains quantitatively open.
 
 ### RSK-11
 
-**Piattaforme.** Sviluppo su macOS/ARM64; l'hardware di riferimento (16–32 core, NVMe PCIe
-4/5) fa pensare a server x86-64 con Linux, ma non è deciso. Differiscono la semantica del
-flush, le primitive di I/O, il supporto SIMD in SBCL e il comportamento del GC.
+**Platforms.** Development on macOS/ARM64; reference hardware (16–32 cores,
+PCIe 4/5 NVMe) suggests x86-64 Linux servers, but this is undecided.
+Flush semantics, I/O primitives, SIMD support in SBCL, and GC behavior differ.
 
-- *Mitigazioni:* decidere QA-19 subito; eseguire gli spike di I/O sulla piattaforma di
-  riferimento; trattare le misure sulla macchina di sviluppo come indicative.
+- *Mitigations:* decide QA-19 immediately; run I/O spikes on the reference
+  platform; treat development-machine measurements as indicative.
 
 ### RSK-12
 
-**Controllori dinamici.** La low-load policy usa due segnali smussati secondo ADR-0023;
-il thread pool considera anche code, CPU e backlog secondo ADR-0011. Un controllore
-mal tarato oscilla o reagisce in ritardo, e i suoi difetti possono emergere sotto
-carico reale.
+**Dynamic controllers.** Low-load policy uses two smoothed signals under
+ADR-0023; the thread pool also considers queues, CPU, and backlog under
+ADR-0011. A poorly tuned controller oscillates or reacts late, and its
+defects can emerge under real load.
 
-- *Mitigazioni:* partire da pochi segnali e regole semplici con isteresi; simulare il
-  controllore su tracce di carico; rendere osservabile ogni decisione dello scheduler.
+- *Mitigations:* start with few signals and simple rules with hysteresis;
+  simulate controller on load traces; make every scheduler decision observable.
 
-> **Proposta** — SPK-06 verifica soglie e transizioni nel modello finito.
-> Feedback sul dispositivo, EWMA da metriche reali e AIMD del pool restano
-> da verificare; la campagna I/O è indipendente dal modello del controllore.
+> **Proposal** — SPK-06 verifies thresholds and transitions in the finite
+> model. Device feedback, EWMA from real metrics, and pool AIMD remain to
+> be verified; the I/O campaign is independent of the controller model.
 
 ### RSK-13
 
-**Indici secondari.** Quattro strutture diverse più Bloom filter, ciascuna con modello a
-delta, da tenere coerenti con commit, snapshot e recovery. Se aggiornati dal writer logico,
-ne consumano il budget.
+**Secondary indexes.** Four different structures plus Bloom filters, each
+with a delta model, must remain consistent with commit, snapshots, and
+recovery. If updated by the logical writer, they consume its budget.
 
-- *Mitigazioni:* rinviare a dopo lo storage di base; decidere QA-25; introdurre un tipo di
-  indice alla volta.
+- *Mitigations:* defer until after basic storage; decide QA-25; introduce
+  one index type at a time.
 
-**Aggiornamento 2026-10-15 — full text approvato.**
-[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) aggiunge
-analizzatori versionati, dizionario, posting e posizioni, delta ACTIVE e
-cambio generazione. Aumentano CPU, RAM, I/O di build/rebuild e lavoro da
-completare prima della conferma del commit. I rischi comprendono risultati
-incompleti, versioni mescolate e interferenza con GET e altre Serie.
+**Update 2026-10-15 — full text approved.**
+[ADR-0053](../adr/0053-ricerca-full-text-indici-invertiti.md) adds versioned
+analyzers, dictionary, postings and positions, ACTIVE delta, and generation
+change. CPU, RAM, build/rebuild I/O, and work to complete before commit
+acknowledgment increase. Risks include incomplete results, mixed versions,
+and interference with GET and other Serie.
 
-- *Mitigazioni definite:* budget verificati prima della decisione durevole;
-  copertura completa e generazione fissata per query; visibilità della stessa
-  versione per testo e filtri; errori espliciti per derivati non disponibili;
-  nessun nuovo coordinamento globale per documento.
-- *Verifiche ancora da produrre:* oracolo a scansione, Unicode, update/delete,
-  snapshot, abort, cambio generazione, crash/restore, corruzione e saturazione;
-  [misure dedicate](../13-benchmark.md#ricerca-full-text) di memoria, spazio,
-  latenza del commit, P99, scalabilità e isolamento. Gli spike del primary
-  index e delle bitmap non chiudono questo rischio per il full text.
+- *Defined mitigations:* budgets checked before durable decision; complete
+  coverage and fixed generation per query; visibility of the same version
+  for text and filters; explicit errors for unavailable derivatives;
+  no new global coordination per document.
+- *Verification still to produce:* scan oracle, Unicode, update/delete,
+  snapshot, abort, generation change, crash/restore, corruption, and saturation;
+  [dedicated measurements](../13-benchmark.md#ricerca-full-text) of memory,
+  space, commit latency, P99, scalability, and isolation. Primary index
+  and bitmap spikes do not close this risk for full text.
 
 ### RSK-14
 
-**Ampiezza.** Diciotto moduli, tra cui un motore di query, un protocollo di rete e un
-controllore adattivo, sono un impegno considerevole.
+**Breadth.** Eighteen modules, including a query engine, network protocol,
+and adaptive controller, represent considerable work.
 
-L'estensione v1 full text di ADR-0053 aggiunge lavoro a M06/M15 nella fase 8.
-La sua approvazione non ne completa implementazione o qualifica, e non
-sposta le priorità immediate di storage/recovery. Ranking, fuzzy search e
-sinonimi non entrano implicitamente nel perimetro approvato.
+The ADR-0053 v1 full text extension adds work to M06/M15 in phase 8.
+Its approval does not complete implementation or qualification, and does
+not shift immediate storage/recovery priorities. Ranking, fuzzy search,
+and synonyms do not implicitly enter approved scope.
 
-- *Mitigazioni:* fetta verticale minima (una Serie, GET/PUT, WAL, recovery) prima di ogni
-  altra cosa; funzioni fuori scope dichiarate (QA-23); fasi con criteri di uscita
-  ([roadmap](../roadmap.md)).
+- *Mitigations:* minimal vertical slice (one Serie, GET/PUT, WAL, recovery)
+  before everything else; declared out-of-scope functionality (QA-23);
+  phases with exit criteria ([roadmap](../roadmap.md)).
 
 ### RSK-15
 
-**Bootstrap.** Vedi tensione T9.
+**Bootstrap.** See tension T9.
 
-- *Mitigazioni:* configurazione di Registri incorporata nel codice; recovery di Registri come
-  primo passo, separato da quello delle altre Serie.
+- *Mitigations:* Registri configuration built into code; Registri recovery
+  as first step, separate from other Serie recovery.
 
 ### RSK-16
 
-**Solo Common Lisp.** Il vincolo esclude librerie C per I/O asincrono, compressione, hashing
-e SIMD. Tutto deve essere ottenuto con SBCL, i suoi contrib ed eventuali librerie Common Lisp.
+**Common Lisp only.** The constraint excludes C libraries for asynchronous
+I/O, compression, hashing, and SIMD. Everything must be obtained with SBCL,
+its contribs, and any Common Lisp libraries.
 
-- *Mitigazioni:* verificare negli spike che flush, letture posizionali e operazioni atomiche
-  siano disponibili senza allocazione; scrivere in Common Lisp le poche primitive necessarie
-  (checksum, hash); riaprire il vincolo con un ADR solo davanti a una misura.
+- *Mitigations:* verify in spikes that flush, positional reads, and atomic
+  operations are available without allocation; write the few required
+  primitives (checksum, hash) in Common Lisp; reopen the constraint with
+  an ADR only in response to a measurement.
 
-> **Proposta** — [SPK-05](risultati-SPK-05-2026-10-08.md) esegue pread,
-> mmap e verifica CRC in Common Lisp/SBCL su macOS ARM64. Il ciclo isolato
-> finale non mostra allocazioni nel campione; Linux e le altre primitive
-> rimangono da verificare. La disponibilità locale non chiude RSK-16.
+> **Proposal** — [SPK-05](risultati-SPK-05-2026-10-08.md) performs pread,
+> mmap, and CRC verification in Common Lisp/SBCL on macOS ARM64. The final
+> isolated cycle shows no allocation in the sample; Linux and other
+> primitives remain to be verified. Local availability does not close RSK-16.
 
-> **Proposta** — L'[estensione bitmap SPK-08](risultati-SPK-08-bitmap-2026-10-08.md)
-> verifica due kernel Common Lisp e il loro codice generato su ARM64.
-> Il popcount scalare usa istruzioni NEON interne al compilatore, anche senza
-> un'API popcount del contrib. Packing, x86-64 e hot path del motore restano
-> da misurare; nessuna nuova dipendenza di prodotto viene introdotta.
+> **Proposal** — The [SPK-08 bitmap extension](risultati-SPK-08-bitmap-2026-10-08.md)
+> verifies two Common Lisp kernels and their generated code on ARM64.
+> Scalar popcount uses compiler-internal NEON instructions, even without
+> a contrib popcount API. Packing, x86-64, and engine hot path remain
+> to be measured; no new product dependency is introduced.
 
-- *Lato positivo:* un solo linguaggio, un solo modello di memoria da capire, nessun confine
-  foreign da attraversare sul hot path.
+- *Benefit:* one language, one memory model to understand, no foreign boundary
+  to cross on the hot path.
 
 ### RSK-17
 
-**Copia unica dei dati.** Un solo dispositivo nella v1: la perdita del supporto è perdita dei
-dati, qualunque sia la qualità del software. Con l'affidabilità come fine ultimo è il rischio
-residuo più grande ([analisi dei guasti](../affidabilita/analisi-dei-guasti.md), RES-03).
+**Single data copy.** Only one device in v1: losing the medium means losing
+data, regardless of software quality. With reliability as the ultimate
+goal, this is the largest residual risk
+([failure analysis](../affidabilita/analisi-dei-guasti.md), RES-03).
 
-- *Mitigazioni:* backup consistente (segmenti chiusi, control log, hint a un CSN) verificabile
-  dal verificatore offline; i segmenti immutabili rendono il backup incrementale e poco
-  costoso; mirroring dei segmenti su un secondo percorso come estensione prevista.
-- *Decisione richiesta all'autore:* [ADR-0030](../adr/0030-scope-v1.md) (backup e verificatore
-  nella v1).
+- *Mitigations:* consistent backup (closed segments, control log, hints at
+  one CSN) verifiable by the offline checker; immutable segments make backup
+  incremental and inexpensive; segment mirroring to a second path as a
+  planned extension.
+- *Author decision required:* [ADR-0030](../adr/0030-scope-v1.md) (backup
+  and checker in v1).
 
 ### RSK-18
 
-**Base di fiducia.** Compilatore, GC e runtime di SBCL, kernel e firmware non sono qualificati.
+**Trusted base.** SBCL compiler, GC, and runtime, kernel, and firmware are
+not qualified.
 
-- *Mitigazioni:* verifica end-to-end (CRC e confronto con l'indice a ogni lettura); controlli
-  di tipo e limiti sempre attivi; versione di SBCL fissata; CI su Linux e macOS; soak test.
-- *Limite:* un difetto che produce un dato sbagliato **con CRC valido** non è rilevabile da
-  dentro.
+- *Mitigations:* end-to-end verification (CRC and index comparison on every
+  read); always-active type and bounds checks; pinned SBCL version; Linux
+  and macOS CI; soak tests.
+- *Limit:* a defect producing wrong data **with a valid CRC** cannot be
+  detected from within.
 
 ### RSK-19
 
-**Costo dei controlli.** CRC32C in Common Lisp tipizzato, `safety` ≥ 2, scrubbing in
-background: tutti consumano CPU e banda.
+**Check cost.** CRC32C in typed Common Lisp, `safety` ≥ 2, background
+scrubbing: all consume CPU and bandwidth.
 
-- *Mitigazioni:* i minimi di prestazione di [ADR-0028](../adr/0028-target-e-obiettivi-di-latenza.md)
-  sono ragionevoli per costruzione; SPK-09 misura throughput del CRC (anche a tabelle) e
-  overhead; se un minimo non è raggiunto si interviene su algoritmi, non sui controlli.
+- *Mitigations:* [ADR-0028](../adr/0028-target-e-obiettivi-di-latenza.md)
+  performance minimums are reasonable by construction; SPK-09 measures CRC
+  throughput (including tables) and overhead; if a minimum is missed,
+  change algorithms, not checks.
 
 ### RSK-20
 
-**Indipendenza limitata.** Chi scrive è anche chi verifica.
+**Limited independence.** The author is also the verifier.
 
-- *Mitigazioni:* strumenti che non dipendono dall'autore (linter, tracciabilità, simulatore,
-  modelli, fuzzing, mutation testing); lista di controllo di revisione; rilettura da un secondo
-  revisore su dati verificabili ([piano di verifica](../affidabilita/piano-di-verifica.md)).
+- *Mitigations:* tools independent of the author (linter, traceability,
+  simulator, models, fuzzing, mutation testing); review checklist; rereading
+  by a second reviewer using verifiable data
+  ([verification plan](../affidabilita/piano-di-verifica.md)).
 
-## Impatto dei limiti v2
+<a id="impatto-dei-limiti-v2"></a>
 
-ADR-0048 amplia chiavi e slot: aumenta RSK-07 (memoria) e il costo di split, hashing e verifica. Le evidenze SPK-01/SPK-09 v1 non chiudono questi rischi per v2. Richieste massime e profondità richiedono budget di decoder e protocollo. ADR-0049 resta una proposta: lookup freddi, write amplification e crash del nuovo indice richiedono evidenze prima dell’adozione.
+## Impact of v2 limits
 
-## Trasporto locale (2026-10-17)
+ADR-0048 expands keys and slots: it increases RSK-07 (memory) and split,
+hashing, and verification cost. SPK-01/SPK-09 v1 evidence does not close
+these risks for v2. Maximum requests and depth require decoder and protocol
+budgets. ADR-0049 remains a proposal: cold lookups, write amplification,
+and new-index crashes require evidence before adoption.
 
-[SPK-11](../../spikes/SPK-11-unix-socket/README.md) aggiunge prove del trasporto
-SBCL fra processi a RSK-14/RSK-16, senza chiuderli. Il bind grezzo su macOS
-può seguire un link pendente: il preflight del nome occupato nella directory
-posseduta è obbligatorio prima di chiamarlo. `socket-receive` del contrib
-alloca un buffer alien per chiamata; il futuro adattatore di prodotto deve
-usare buffer preallocati, con I/O iniettabile e scadenze. Restano ammissione,
-commit, isolamento e piattaforma di riferimento; nessun target di latenza dimostrato.
+<a id="trasporto-locale-2026-10-17"></a>
+
+## Local transport (2026-10-17)
+
+[SPK-11](../../spikes/SPK-11-unix-socket/README.md) adds SBCL interprocess
+transport tests to RSK-14/RSK-16 without closing them. Raw bind on macOS
+can follow a dangling link: occupied-name preflight in the owned directory
+is mandatory before calling it. Contrib `socket-receive` allocates an
+alien buffer per call; the future product adapter must use preallocated
+buffers, injectable I/O, and deadlines. Admission, commit, isolation,
+and reference platform remain open; no latency target demonstrated.

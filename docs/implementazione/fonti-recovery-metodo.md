@@ -1,68 +1,72 @@
-# Acquisizione posseduta dei segmenti per il recovery
+<a id="acquisizione-posseduta-dei-segmenti-per-il-recovery"></a>
 
-Metodo preregistrato il 2026-10-17, prima del codice e delle prove.
-Incremento C1 su ADR-0040 e COD-37; nessun nuovo formato persistente.
+# Owned segment acquisition for recovery
 
-`apri-fonti-recovery(manifest, directory, …)` raccoglie una sola volta il
-namespace completo con il planner directory e acquisisce in sola lettura
-**tutti e soli ACTIVE/CLOSED**, in ordine crescente u64. Richiede piano
-`:ready`: DEGRADED/FAULTED sono rifiutati prima della prima apertura. Il
-risultato possiede i child; parent, manifest e namespace restano del controller.
-Il namespace deve restare esclusivo e stabile dall'inventario al termine
-dell'acquisizione; niente cancellazione asincrona nella finestra di ownership.
-Le forme temporanee vive sono lette con il loro nome `.seg.tmp`, senza rinomina.
-Le anomalie, REMOVED e temporanei orfani restano soltanto nel piano restituito.
+Method preregistered on 2026-10-17 before code and tests.
+C1 increment under ADR-0040 and COD-37; no new persistent format.
 
-Le query restituiscono ID, stato ACTIVE/CLOSED, forma, capacità readonly
-prestata e dimensione osservata dal suo stesso FD. Il chiamante non chiude i
-child separatamente e termina tutti i reader prima di `chiudi-fonti-recovery`.
-La chiusura è idempotente, invalida prima il set e tenta ogni child una sola
-volta anche dopo guasto. Un errore aggregato conserva la condizione primaria
-originale (oppure NIL), la prima condizione di close e il numero di close
-fallite. Nessun errore restituisce un set parziale; cleanup riuscito propaga
-la condizione primaria per EQ. Uscite estranee al contratto tentano cleanup,
-senza sostituire la causa originale. Nessun retry dopo EINTR.
+`apri-fonti-recovery(manifest, directory, …)` collects complete namespace
+once through directory planner and acquires read-only
+**all and only ACTIVE/CLOSED**, in ascending u64 order. Requires
+`:ready` plan: DEGRADED/FAULTED rejected before first open. Result
+owns children; parent, manifest, and namespace remain controller-owned.
+Namespace must stay exclusive and stable from inventory through acquisition
+completion; no asynchronous deletion in ownership window.
+Live temporary forms read under their `.seg.tmp` name, without rename.
+Anomalies, REMOVED, and orphan temporary files remain only in returned plan.
 
-Cinque budget dell'inventario mantengono default e semantica; `max-transfer`
-e `max-file-bytes` mantengono quelli I/O. `max-total-file-bytes` (default
-4 GiB−1, intero `index`, zero ammesso) limita la somma degli EOF vivi:
-uguaglianza valida, sottrazione prima dell'addizione, nessun wrap. Ogni
-configurazione e callback necessaria è verificata prima dell'enumerazione.
-Il child che supera il totale entra prima nel set privato per essere chiuso.
-Header, CRC, prefisso valido, radici/CSN, riconciliazione fisica e ammissione
-restano responsabilità successive. Nessuna scrittura, eliminazione, flush,
-prenotazione ID, lock fra Serie o creazione di worker. Percorso freddo con
-allocazioni; O(N) aperture sequenziali limitate dal numero di segmenti vivi.
+Queries return ID, ACTIVE/CLOSED state, form, borrowed read-only
+capability, and size observed from its own FD. Caller does not close
+children separately and ends every reader before `chiudi-fonti-recovery`.
+Close is idempotent, invalidates set first, and attempts each child once
+even after fault. Aggregate error preserves original primary
+condition (or NIL), first close condition, and failed-close
+count. No error returns partial set; successful cleanup propagates
+primary condition by EQ. Out-of-contract exits attempt cleanup,
+without replacing original cause. No retry after EINTR.
 
-## Decisioni e prove previste
+Five inventory budgets retain defaults and semantics; `max-transfer`
+and `max-file-bytes` retain I/O defaults and semantics. `max-total-file-bytes` (default
+4 GiB−1, integer `index`, zero allowed) bounds sum of live EOFs:
+equality valid, subtraction before addition, no wrap. Every required
+configuration and callback checked before enumeration.
+Child exceeding total enters private set first so it can be closed.
+Header, CRC, valid prefix, roots/CSNs, physical reconciliation, and admission
+remain subsequent responsibilities. No write, deletion, flush,
+ID reservation, lock between Serie, or worker creation. Cold path with
+allocations; O(N) sequential opens bounded by live-segment count.
 
-| ID | Decisione / casi di indipendenza |
+<a id="decisioni-e-prove-previste"></a>
+
+## Decisions and planned tests
+
+| ID | Decision / independence cases |
 |---|---|
-| FRS-D01 | `:ready` oppure rifiuto DEGRADED/FAULTED prima di open |
-| FRS-D02 | Stato ACTIVE/CLOSED ammesso; REMOVED/UNKNOWN mai aperto |
-| FRS-D03 | Forma FINAL/TEMPORARY coerente con USE/RENAME; FI di ogni incoerenza |
-| FRS-D04 | Totale EOF <= budget, esatto/uno sotto/zero, high bits e niente wrap |
-| FRS-D05 | Child presente durante cleanup; primo errore conservato, tutti tentati |
-| FRS-D06 | Primaria presente o assente e close fallita o riuscita; quattro combinazioni |
-| FRS-D07 | Set aperto/chiuso; query indice 0/ultimo/fuori range |
+| FRS-D01 | `:ready` or DEGRADED/FAULTED rejection before open |
+| FRS-D02 | ACTIVE/CLOSED state admitted; REMOVED/UNKNOWN never opened |
+| FRS-D03 | FINAL/TEMPORARY form consistent with USE/RENAME; FI of each inconsistency |
+| FRS-D04 | Total EOF <= budget, exact/one below/zero, high bits, and no wrap |
+| FRS-D05 | Child present during cleanup; first error preserved, all attempted |
+| FRS-D06 | Primary present or absent and close failed or succeeded; four combinations |
+| FRS-D07 | Set open/closed; query index 0/last/out of range |
 
-Suite dedicata: fixture EDIT v1/v2, oracolo dichiarato dei soli file vivi,
-ID zero/bit63/max-u64, ordine fisico permutato, input riusati e alias vietati;
-contatori esatti di enumerazione/aperture/close. Saturazione di tutti gli
-otto budget, callback mancanti e EOF incompleto. Guasto in ogni posizione
-di open/metadata/identità, close singola/multipla e parent invalidato;
-condizioni originali e cleanup verificati. File nativi byte per byte,
-parent rinominato e sostituito, symlink rifiutato e descrittori riutilizzabili.
-Quattro thread con backend privati, gate e join limitati, nessun override globale.
-Copertura nativa grezza e mutanti compilabili delle decisioni/budget/cleanup;
-nessuna esclusione approvata o attribuzione ai moduli dipendenti.
+Dedicated suite: EDIT v1/v2 fixtures, declared live-files-only oracle,
+ID zero/bit63/max-u64, permuted physical order, reused inputs, and forbidden aliases;
+exact enumeration/open/close counters. Saturation of all
+eight budgets, missing callbacks, and incomplete EOF. Fault at every position
+of open/metadata/identity, single/multiple close, and invalidated parent;
+original conditions and cleanup verified. Native files byte for byte,
+renamed and replaced parent, rejected symlink, and reusable descriptors.
+Four threads with private backends, bounded gates and joins, no global override.
+Raw native coverage and compilable decision/budget/cleanup mutants;
+no approved exclusion or attribution to dependent modules.
 
-Due letture dell'autore con lista C1, registrate separatamente dai test;
-non sostituiscono il secondo revisore indipendente. Sorgenti congelati e
-committed prima dei run registrati, compilazione rigorosa e `make check`.
-Ogni fallimento e variante resta nelle evidenze originali; conservazione
-con collector comune e inventario chiuso. Qualifica C1/MC/DC complessiva,
-recovery completo e prestazioni restano aperti.
+Two author readings with C1 checklist, recorded separately from tests;
+do not replace second independent reviewer. Sources frozen and
+committed before recorded runs, strict compilation, and `make check`.
+Every failure and variant remains in original evidence; preservation
+with common collector and closed inventory. Overall C1/MC/DC qualification,
+complete recovery, and performance remain open.
 
 REQ-REC-001/002/004, REQ-AFF-001/004/008/017/018, REQ-VAL-001.
 INV-A7/A8/A9/A10/A11, INV-P6.

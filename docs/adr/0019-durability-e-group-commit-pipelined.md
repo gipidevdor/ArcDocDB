@@ -1,58 +1,72 @@
-# ADR-0019 — Livelli di durability e group commit pipelined
+<a id="adr-0019--livelli-di-durability-e-group-commit-pipelined"></a>
 
-- **Stato:** Accettata; **sostituita in parte da [ADR-0037](0037-lotto-sigillato.md)**: un compito di I/O alla volta per log (non più lotti in volo sullo stesso file), CSN alla chiusura del lotto, conferma dopo la pubblicazione. I livelli restano.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-05; precisa «WAL» (group commit)
-- **Riferimenti:** [architettura](../architettura.md#percorso-di-scrittura), INV-D1, INV-V1
+# ADR-0019 — Durability levels and pipelined group commit
 
-## Decisione
+- **Status:** Accepted; **partially superseded by [ADR-0037](0037-lotto-sigillato.md)**: one I/O task at a time per log (no longer multiple batches in flight on the same file), CSN at batch closure, acknowledgment after publication. The levels remain.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-05; clarifies “WAL” (group commit)
+- **References:** [architecture](../architettura.md#percorso-di-scrittura), INV-D1, INV-V1
 
-### Livelli
+<a id="decisione"></a>
 
-| Livello | Conferma al client | Visibilità ai reader | Uso |
+## Decision
+
+<a id="livelli"></a>
+
+### Levels
+
+| Level | Client acknowledgment | Reader visibility | Use |
 |---|---|---|---|
-| `:strong` | dopo il flush del gruppo, avviato **subito** | dopo il flush | operazioni critiche |
-| `:group` (**default**) | dopo il flush del gruppo, avviato alla chiusura del lotto | dopo il flush | uso generale |
-| `:async` | all'applicazione in memoria | immediata | ingestione massiva |
+| `:strong` | after the group flush, started **immediately** | after the flush | critical operations |
+| `:group` (**default**) | after the group flush, started at batch closure | after the flush | general use |
+| `:async` | on in-memory application | immediate | bulk ingestion |
 
-- Il livello è configurato **per Serie**; una singola operazione può chiederne uno più forte,
-  mai più debole.
-- **«Committed» per INV-D1** = confermato a un livello `:group` o `:strong`. Con `:async` il
-  contratto è: le operazioni confermate e non ancora flushate possono andare perse in un
-  crash; l'ordine delle sopravvissute è rispettato (prefisso del log).
-- Una transazione multiserie usa almeno `:group` su tutti i partecipanti.
-- INV-V1: con `:group` e `:strong` un reader non vede mai una versione non ancora durevole.
+- The level is configured **per Serie**; an individual operation may request a stronger one,
+  never a weaker one.
+- **“Committed” for INV-D1** = acknowledged at `:group` or `:strong` level. With `:async`,
+  the contract is: acknowledged operations that have not yet been flushed may be lost in a
+  crash; the order of surviving operations is preserved (log prefix).
+- A multiseries transaction uses at least `:group` on all participants.
+- INV-V1: with `:group` and `:strong`, a reader never sees a version that is not yet durable.
 
-### Group commit pipelined
+<a id="group-commit-pipelined"></a>
 
-Il writer logico forma un lotto, lo codifica nel buffer del segmento `ACTIVE`, esegue
-`write` e **consegna il flush al pool di I/O**, poi passa subito al lotto successivo. Al
-completamento del flush, il callback (eseguito dal writer stesso, in coda alle operazioni)
-pubblica gli aggiornamenti dell'indice e conferma i client del lotto. Possono esserci più
-lotti in volo; le pubblicazioni avvengono in ordine di lotto.
+### Pipelined group commit
 
-Parametri per Serie: dimensione massima del lotto (byte e operazioni) e attesa massima di
-formazione (default 0: il lotto si chiude quando il writer ha svuotato la coda o raggiunto la
-dimensione, cioè si adatta al carico senza timer).
+The logical writer forms a batch, encodes it in the `ACTIVE` segment buffer, performs
+`write`, and **hands the flush to the I/O pool**, then immediately moves on to the next batch.
+On flush completion, the callback (executed by the writer itself, queued after operations)
+publishes index updates and acknowledges the batch's clients. Several batches may be in
+flight; publications occur in batch order.
 
-Pattern: group commit pipelined (MySQL binlog group commit; PostgreSQL WAL writer); livelli
-di sincronizzazione configurabili (PostgreSQL `synchronous_commit`).
+Per-Serie parameters: maximum batch size (bytes and operations) and maximum formation wait
+(default 0: the batch closes when the writer has drained the queue or reached the size,
+i.e., it adapts to load without a timer).
 
-> **Revisione 2026-10-03 ([ADR-0033](0033-fail-stop-e-integrita-end-to-end.md) §10):** `:async` non è mai il default, richiede una scelta esplicita per Serie, è vietato per Registri e per i partecipanti a transazioni multiserie.
+Pattern: pipelined group commit (MySQL binlog group commit; PostgreSQL WAL writer);
+configurable synchronization levels (PostgreSQL `synchronous_commit`).
 
-## Conseguenze
+> **Revision 2026-10-03 ([ADR-0033](0033-fail-stop-e-integrita-end-to-end.md) §10):** `:async` is never the default, requires an explicit per-Serie choice, and is forbidden for Registri and for participants in multiseries transactions.
 
-- Il writer non si blocca mai su I/O: il tetto per Serie è dettato dalla CPU, non dal flush.
-- La latenza di `:group` è ≈ un flush + attesa del lotto; `:strong` elimina l'attesa del lotto
-  ma non il flush.
-- Il modulo `io` deve offrire flush asincrono con completamento in coda al writer.
+<a id="conseguenze"></a>
 
-## Alternative considerate
+## Consequences
 
-- *Timer di formazione del lotto:* aggiunge latenza a basso carico; il lotto adattivo è
-  sufficiente.
-- *Writer che attende il flush:* semplice, ma dimezza il throughput per Serie.
+- The writer never blocks on I/O: the per-Serie ceiling is determined by CPU, not flushes.
+- Latency for `:group` is ≈ one flush + batch wait; `:strong` removes the batch wait
+  but not the flush.
+- The `io` module must provide asynchronous flush with completion queued to the writer.
 
-## Valutazione
+<a id="alternative-considerate"></a>
 
-- Verifica: SPK-03 (flush), FI-01, FI-02; test di ordine di pubblicazione dei lotti.
+## Alternatives considered
+
+- *Batch formation timer:* adds latency at low load; the adaptive batch is
+  sufficient.
+- *Writer waiting for the flush:* simple, but halves per-Serie throughput.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Verification: SPK-03 (flush), FI-01, FI-02; batch publication order tests.

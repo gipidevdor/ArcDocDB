@@ -1,269 +1,282 @@
-# Piano degli spike
+<a id="piano-degli-spike"></a>
 
-Uno **spike** è un esperimento piccolo e mirato che risponde a una domanda di valutazione. Non
-è codice di produzione: vive in [`spikes/`](../../spikes/README.md), si può buttare, e il suo
-prodotto è una **misura con una raccomandazione**.
+# Spike plan
 
-## Regole
+A **spike** is a small, focused experiment answering an evaluation question.
+It is not production code: it lives in [`spikes/`](../../spikes/README.md), is
+disposable, and its product is a **measurement with a recommendation**.
 
-- Solo Common Lisp su SBCL ([ADR-0001](../adr/0001-common-lisp-sbcl.md)).
-- Ogni spike dichiara *prima* di essere eseguito: domanda, metodo, criterio di esito.
-- Ogni risultato riporta hardware, sistema operativo, versione e parametri di SBCL, comando
-  esatto ([riproducibilità](../13-benchmark.md#riproducibilità)).
-- Le misure sulla macchina di sviluppo sono indicative; quelle che dipendono da I/O e numero
-  di core vanno ripetute sulla piattaforma di riferimento (QA-19).
-- Al termine si aggiornano [registro dei rischi](registro-rischi.md),
-  [stime](stime-ordine-di-grandezza.md) e la questione aperta collegata.
+<a id="regole"></a>
 
-## Quadro
+## Rules
 
-| ID | Spike | Risponde a | Rischi | Ordine |
+- Common Lisp on SBCL only ([ADR-0001](../adr/0001-common-lisp-sbcl.md)).
+- Every spike declares its question, method, and outcome criterion *before* running.
+- Every result reports hardware, operating system, SBCL version and parameters,
+  and exact command ([reproducibility](../13-benchmark.md#riproducibilità)).
+- Development-machine measurements are indicative; those depending on I/O and
+  core count must be repeated on the reference platform (QA-19).
+- At completion, update the [risk register](registro-rischi.md),
+  [estimates](stime-ordine-di-grandezza.md), and linked open question.
+
+<a id="quadro"></a>
+
+## Overview
+
+| ID | Spike | Answers | Risks | Order |
 |---|---|---|---|---|
-| [SPK-01](#spk-01) | Primary index compatto | QA-24, QA-03, QA-16 | RSK-02, RSK-07 | 1 |
-| [SPK-02](#spk-02) | GC di SBCL sotto carico | QA-18 | RSK-01 | 1 |
-| [SPK-03](#spk-03) | WAL e group commit | QA-02, QA-05, QA-19 | RSK-03, RSK-06, RSK-11 | 2 |
-| [SPK-04](#spk-04) | Writer logico su thread pool | QA-26 | RSK-04 | 4 |
-| [SPK-05](#spk-05) | Percorso di lettura dei segmenti | QA-17, QA-19 | RSK-10, RSK-16 | 4 |
-| [SPK-06](#spk-06) | Interferenza della compaction e controllore di carico | QA-11, QA-12 | RSK-08, RSK-12 | 5 |
-| [SPK-07](#spk-07) | Modelli dei protocolli | QA-04, QA-06, QA-07, QA-09, QA-24 | RSK-02, RSK-05 | 3 |
-| [SPK-08](#spk-08) | SIMD e codice generato | QA-19 | RSK-11, RSK-16 | 5 |
-| [SPK-09](#spk-09) | Costo dei controlli di affidabilità | ADR-0033, ADR-0034 | RSK-19 | 1 |
-| [SPK-10](#spk-10) | Limiti, formati e migrazione v2 | ADR-0048 | RSK-02, RSK-07, RSK-19 | 1, prima del motore |
-| [SPK-11](#spk-11) | Socket Unix fra due processi | ADR-0055, proposta ADR-0056 | RSK-14, RSK-16 | 1, contratto prima di M16 |
+| [SPK-01](#spk-01) | Compact primary index | QA-24, QA-03, QA-16 | RSK-02, RSK-07 | 1 |
+| [SPK-02](#spk-02) | SBCL GC under load | QA-18 | RSK-01 | 1 |
+| [SPK-03](#spk-03) | WAL and group commit | QA-02, QA-05, QA-19 | RSK-03, RSK-06, RSK-11 | 2 |
+| [SPK-04](#spk-04) | Logical writer on thread pool | QA-26 | RSK-04 | 4 |
+| [SPK-05](#spk-05) | Segment read path | QA-17, QA-19 | RSK-10, RSK-16 | 4 |
+| [SPK-06](#spk-06) | Compaction interference and load controller | QA-11, QA-12 | RSK-08, RSK-12 | 5 |
+| [SPK-07](#spk-07) | Protocol models | QA-04, QA-06, QA-07, QA-09, QA-24 | RSK-02, RSK-05 | 3 |
+| [SPK-08](#spk-08) | SIMD and generated code | QA-19 | RSK-11, RSK-16 | 5 |
+| [SPK-09](#spk-09) | Reliability check cost | ADR-0033, ADR-0034 | RSK-19 | 1 |
+| [SPK-10](#spk-10) | Limits, formats, and v2 migration | ADR-0048 | RSK-02, RSK-07, RSK-19 | 1, before engine |
+| [SPK-11](#spk-11) | Unix socket between two processes | ADR-0055, proposed ADR-0056 | RSK-14, RSK-16 | 1, contract before M16 |
 
 ---
 
 ### SPK-11
 
-**Trasporto locale prioritario.** Il [metodo preregistrato](../../spikes/SPK-11-unix-socket/README.md)
-verifica framing bounded, due processi SBCL, documento/chiave massimi, nomi
-occupati e rilascio del nodo. Nessun benchmark o qualifica del motore;
-accesso con identità distinte e Linux/macOS restano prove separate.
+**Priority local transport.** The [preregistered method](../../spikes/SPK-11-unix-socket/README.md)
+checks bounded framing, two SBCL processes, maximum document/key, occupied
+names, and node release. No benchmark or engine qualification; access with
+distinct identities and Linux/macOS remain separate tests.
 
 ### SPK-01
 
-**Primary index compatto.**
+**Compact primary index.**
 
-- *Domanda:* una tabella hash compatta, in array specializzati, con un writer e molti reader
-  senza lock, è realizzabile in solo Common Lisp con prestazioni dell'ordine richiesto?
-- *Metodo:* prototipo della tabella a frammenti di
-  [ADR-0043](../adr/0043-primary-index-a-frammenti.md) (directory estendibile, frammenti Swiss
-  a capacità fissa, slot a 4 parole, chiavi locali) su array specializzati; carico con
-  10⁷–10⁸ entry; un thread scrive, N leggono; divisioni continue sotto carico; inserimenti ed
-  eliminazioni ripetuti a popolazione costante; variante a 5 parole per le versioni
-  trattenute. Verifica sul codice generato che ogni parola sia letta e scritta con una sola
-  istruzione sulle due piattaforme.
-- *Misure:* lookup/s per core e aggregati; inserimenti/s; **byte per documento** (media e
-  intervallo); durata di una divisione; memoria a popolazione costante con ricambio di chiavi
-  (deve restare limitata); effetto sulle pause del GC; correttezza delle letture concorrenti;
-  frequenza del ripiego del seqlock.
-- *Esito:* ordine di grandezza dei lookup compatibile con il target dei GET; memoria per entry
-  entro la [stima](stime-ordine-di-grandezza.md#memoria-del-primary-index); nessuna lettura
-  incoerente.
+- *Question:* can a compact hash table in specialized arrays, with one writer
+  and many readers without locks, be implemented entirely in Common Lisp with
+  performance in the required order of magnitude?
+- *Method:* prototype of the fragmented table from
+  [ADR-0043](../adr/0043-primary-index-a-frammenti.md) (extendible directory,
+  fixed-capacity Swiss fragments, 4-word slots, local keys) on specialized arrays;
+  load with 10⁷–10⁸ entries; one thread writes, N read; continuous splits under
+  load; repeated insertions and deletions at constant population; 5-word variant
+  for retained versions. Verify in generated code that every word is read and
+  written with a single instruction on both platforms.
+- *Measurements:* lookup/s per core and aggregate; insertions/s; **bytes per document**
+  (mean and range); split duration; memory at constant population with key turnover
+  (must remain bounded); effect on GC pauses; concurrent-read correctness;
+  seqlock fallback frequency.
+- *Outcome:* lookup order of magnitude compatible with GET target; per-entry memory
+  within the [estimate](stime-ordine-di-grandezza.md#memoria-del-primary-index);
+  no inconsistent read.
 
 ### SPK-02
 
-**GC di SBCL sotto carico.**
+**SBCL GC under load.**
 
-- *Domanda:* quali pause produce il collector con heap delle dimensioni previste, e quanto
-  dipendono da dove vivono indice e cache?
-- *Metodo:* processo con (a) decine di GB in array specializzati nello heap, (b) la stessa
-  memoria fuori dallo heap gestito; carico sintetico multi-thread con tasso di allocazione
-  variabile per richiesta (zero, basso, alto); confronto tra configurazioni del collector.
-  In più ([ADR-0043](../adr/0043-primary-index-a-frammenti.md), [ADR-0045](../adr/0045-modello-di-esecuzione.md)):
-  la stessa memoria in decine di migliaia di frammenti da ~256 KiB anziché in pochi array
-  enormi, con sostituzione continua di frammenti; numero di thread crescente (16, 64, 256),
-  con thread fermi in chiamate di sistema.
-- *Misure:* distribuzione delle pause (P50, P99, massimo); frequenza; tempo totale in GC;
-  latenza delle richieste sintetiche; **pausa in funzione del numero di thread** (fissa il
-  tetto del pool di I/O).
-- *Esito:* pause entro l'obiettivo numerico di P99 (da fissare con QA-26) nella configurazione
-  migliore. In caso contrario: quantificare lo scarto e rivalutare ADR-0001.
+- *Question:* what pauses does the collector produce with heaps of the expected
+  sizes, and how much do they depend on where index and cache live?
+- *Method:* process with (a) tens of GB in specialized arrays on heap, (b) the same
+  memory outside managed heap; synthetic multithreaded load with variable allocation
+  per request (zero, low, high); comparison of collector configurations.
+  Additionally ([ADR-0043](../adr/0043-primary-index-a-frammenti.md), [ADR-0045](../adr/0045-modello-di-esecuzione.md)):
+  the same memory in tens of thousands of ~256 KiB fragments rather than a few
+  huge arrays, with continuous fragment replacement; increasing thread counts
+  (16, 64, 256), with threads stopped in system calls.
+- *Measurements:* pause distribution (P50, P99, maximum); frequency; total GC time;
+  synthetic request latency; **pause versus thread count** (sets the I/O pool cap).
+- *Outcome:* pauses within the numeric P99 target (to be set with QA-26) in the
+  best configuration. Otherwise, quantify the gap and reassess ADR-0001.
 
 ### SPK-03
 
-**WAL e group commit.**
+**WAL and group commit.**
 
-- *Domanda:* quanto costa un flush, come scala il group commit, e che cosa succede con molti
-  WAL che eseguono flush in parallelo sullo stesso dispositivo?
-- *Metodo:* append + flush a lotti su un file; variare dimensione del gruppo e del record;
-  ripetere con 1, 4, 16, 64 file concorrenti; confrontare le primitive di flush disponibili;
-  confrontare singola e doppia scrittura del record (opzioni di QA-02). Disciplina di
-  [ADR-0037](../adr/0037-lotto-sigillato.md): un compito di I/O alla volta per file (scrive i
-  lotti chiusi, poi flush), con i lotti che si formano durante il flush.
-- *Misure:* durata del flush (distribuzione); operazioni/s durevoli; banda; scalabilità con
-  il numero di file.
-- *Esito:* dati per decidere QA-02 e QA-05 e per confermare o rivedere il target «INSERT group
-  commit». Verifica che flush e scritture siano raggiungibili da Common Lisp senza allocazione.
-- *Attenzione:* su macOS il flush ordinario non garantisce la persistenza; le misure di
-  durability vanno fatte con la primitiva corretta e ripetute sulla piattaforma di riferimento.
+- *Question:* what does a flush cost, how does group commit scale, and what happens
+  with many WALs flushing in parallel on the same device?
+- *Method:* batched append + flush on one file; vary group and record size; repeat
+  with 1, 4, 16, 64 concurrent files; compare available flush primitives; compare
+  single and double record writing (QA-02 options). Discipline from
+  [ADR-0037](../adr/0037-lotto-sigillato.md): one I/O task at a time per file
+  (writes closed batches, then flush), with batches forming during flush.
+- *Measurements:* flush duration (distribution); durable operations/s; bandwidth;
+  scalability with file count.
+- *Outcome:* data to decide QA-02 and QA-05 and confirm or revise the “INSERT group
+  commit” target. Verify flush and writes are reachable from Common Lisp without allocation.
+- *Caution:* on macOS, ordinary flush does not guarantee persistence; durability
+  measurements must use the correct primitive and be repeated on the reference platform.
 
 ### SPK-04
 
-**Writer logico su thread pool.**
+**Logical writer on a thread pool.**
 
-> **Proposta** — [esperimento eseguibile](../../spikes/SPK-04-writer-pool/README.md)
-> verificato nella [campagna locale](risultati-SPK-04-2026-10-08.md): code limitate,
-> tratti del writer, parcheggi e ripartenza delle letture. Prove reali e modelli
-> finiti restano distinti; nessun target del motore è confermato.
+> **Proposal** — [Executable experiment](../../spikes/SPK-04-writer-pool/README.md)
+> verified in the [local campaign](risultati-SPK-04-2026-10-08.md): bounded queues,
+> writer segments, parking, and read restart. Real tests and finite models
+> remain distinct; no engine target is confirmed.
 
-- *Domanda:* qual è il tetto di throughput di un esecutore seriale per Serie su un pool
-  condiviso, e come scala con il numero di Serie?
-- *Metodo:* code per Serie svuotate a lotti da worker del pool; lavoro seriale sintetico di
-  durata controllata; 1…N Serie; carico uniforme e sbilanciato. Secondo
-  [ADR-0045](../adr/0045-modello-di-esecuzione.md): tratti del writer a lunghezza limitata,
-  lista delle Serie pronte toccata una volta per tratto, letture eseguite dal worker che le
-  riceve, parcheggio e ripresa dei client di un lotto; e, per il parallelismo come principio
-  fondante ([ADR-0036](../adr/0036-leggi-di-progetto.md), INV-P6), gli elementi dell'elenco
-  chiuso (CSN, orizzonte, soglia, epoca) esercitati alla frequenza prevista.
-- *Misure:* operazioni/s per Serie e aggregate; costo del passaggio di consegna; latenza in
-  coda; equità tra Serie; **throughput aggregato in funzione del numero di Serie e di core**;
-  tempo speso su ciascun elemento condiviso; effetto di un burst su una Serie sulle altre.
-- *Esito:* conferma che il costo del meccanismo è piccolo rispetto al
-  [budget](stime-ordine-di-grandezza.md#budget-del-writer-logico); scalabilità quasi lineare
-  con le Serie finché ci sono core; nessun elemento dell'elenco chiuso diventa il collo di
-  bottiglia. In caso contrario il risultato indica quale voce rivedere.
+- *Question:* what is the throughput ceiling of a serial executor per Serie on a
+  shared pool, and how does it scale with Serie count?
+- *Method:* per-Serie queues drained in batches by pool workers; synthetic serial
+  work of controlled duration; 1…N Serie; uniform and skewed load. Under
+  [ADR-0045](../adr/0045-modello-di-esecuzione.md): bounded-length writer segments,
+  ready Serie list touched once per segment, reads performed by the receiving
+  worker, parking and resumption of a batch's clients; and, for parallelism as
+  a founding principle ([ADR-0036](../adr/0036-leggi-di-progetto.md), INV-P6),
+  closed-inventory elements (CSN, horizon, threshold, epoch) exercised at expected frequency.
+- *Measurements:* per-Serie and aggregate operations/s; handoff cost; queue latency;
+  fairness between Serie; **aggregate throughput versus Serie and core count**;
+  time spent on each shared element; effect of a burst on one Serie on others.
+- *Outcome:* confirm mechanism cost is small relative to the
+  [budget](stime-ordine-di-grandezza.md#budget-del-writer-logico); nearly linear
+  scaling with Serie while cores remain available; no closed-inventory element
+  becomes the bottleneck. Otherwise, the result identifies which item to revise.
 
 ### SPK-05
 
-**Percorso di lettura dei segmenti.**
+**Segment read path.**
 
-> **Proposta** — [Esperimento eseguibile](../../spikes/SPK-05-segment-read/README.md)
-> su file immutabili da 16 MiB: confronto pread/mmap con lo stesso verificatore,
-> accessi casuali e scansioni, 1/2/4 worker e tre repliche. Il metodo dichiara
-> page cache non controllata, payload sintetico e profilo di allocazione separato;
-> dataset oltre RAM, cache propria e piattaforma di riferimento restano da misurare.
+> **Proposal** — [Executable experiment](../../spikes/SPK-05-segment-read/README.md)
+> on immutable 16 MiB files: pread/mmap comparison with the same checker,
+> random access and scans, 1/2/4 workers and three replicas. The method declares
+> uncontrolled page cache, synthetic payload, and separate allocation profile;
+> beyond-RAM dataset, own cache, and reference platform remain to be measured.
 
-- *Domanda:* come si legge un record da un segmento immutabile senza copiare né allocare, e
-  con quale concorrenza di I/O?
-- *Metodo:* confronto tra letture posizionali in buffer riutilizzati e mappatura in memoria;
-  letture casuali con concorrenza crescente; scansione sequenziale.
-- *Misure:* letture/s; latenza; GB/s in scansione; allocazione per lettura; comportamento con
-  dataset più grande della RAM.
-- *Esito:* scelta della modalità di lettura (QA-19) e della granularità della cache (QA-17);
-  conferma o revisione dei target «GET NVMe» e «sequential scan».
+- *Question:* how can a record be read from an immutable segment without copying
+  or allocation, and with what I/O concurrency?
+- *Method:* compare positional reads into reused buffers with memory mapping;
+  random reads with increasing concurrency; sequential scan.
+- *Measurements:* reads/s; latency; scan GB/s; allocation per read; behavior with
+  a dataset larger than RAM.
+- *Outcome:* read mode (QA-19) and cache granularity (QA-17) choice; confirmation
+  or revision of “GET NVMe” and “sequential scan” targets.
 
 ### SPK-06
 
-**Interferenza della compaction e controllore di carico.**
+**Compaction interference and load controller.**
 
-- *Domanda:* quanto peggiora la latenza delle richieste mentre un CLEAN o un MERGE è in corso,
-  e un controllore semplice basta a contenerla?
-- *Metodo:* carico di lettura/scrittura sintetico più copia sequenziale di segmenti a banda
-  limitata variabile; simulazione del controllore (stati di carico con isteresi) su tracce.
-- *Misure:* P99 con e senza compaction; banda di compaction ottenuta; stabilità del
-  controllore.
-- *Esito:* valori iniziali per le soglie (QA-11, QA-12); evidenza che il MERGE opportunistico
-  non altera il P99.
+- *Question:* how much does request latency worsen while CLEAN or MERGE is running,
+  and can a simple controller contain it?
+- *Method:* synthetic read/write load plus sequential segment copying at variable
+  bounded bandwidth; controller simulation (load states with hysteresis) on traces.
+- *Measurements:* P99 with and without compaction; achieved compaction bandwidth;
+  controller stability.
+- *Outcome:* initial threshold values (QA-11, QA-12); evidence that opportunistic
+  MERGE does not alter P99.
 
-> **Proposta** — La [prima campagna locale](risultati-SPK-06-2026-10-08.md)
-> verifica un modello deterministico con EWMA esatta, soglie e timer di ADR-0023,
-> e misura copie buffered a banda limitata concorrenti a letture su file sintetici.
-> La sovrapposizione è osservata dai tempi dei worker e dei singoli campioni,
-> senza dedurla dalla sola porta di partenza. Il controllore non riceve i segnali
-> delle misure I/O: calibrazione delle soglie e prova della low-load policy sul
-> motore restano aperte.
+> **Proposal** — The [first local campaign](risultati-SPK-06-2026-10-08.md)
+> verifies a deterministic model with exact EWMA, thresholds, and timers from
+> ADR-0023, and measures bounded-bandwidth buffered copies concurrent with
+> reads on synthetic files. Overlap is observed from worker and individual
+> sample times, without inferring it solely from the start gate. The controller
+> does not receive signals from I/O measurements: threshold calibration and
+> low-load policy testing on the engine remain open.
 
 ### SPK-07
 
-**Modelli dei protocolli.**
+**Protocol models.**
 
-- *Domanda:* i protocolli rispettano gli invarianti in ogni interleaving e con un crash in
-  ogni punto?
-- *Metodo:* descrivere come macchine a stati, ed esplorare esaustivamente su configurazioni
-  piccole: (1) 2PC con writer non bloccante, `multiserie.log`, recovery; (2) CLEAN/MERGE con
-  writer concorrente, swap, reader, snapshot, reclaim. L'esploratore è un programma Common
-  Lisp: nessun linguaggio di specifica o strumento di verifica esterno (decisione dell'autore,
-  2026-10-03; [ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md)).
-- *Modelli aggiuntivi (ADR-0032, ADR-0033):* (3) il protocollo del seqlock a 64 bit con 1
-  writer, 2 reader, 2 slot, ogni interleaving e ogni sospensione, compreso il ripiego sul
-  writer; (4) l'**idempotenza del recovery**: interruzione del recovery in ogni passo e
-  riesecuzione.
-- *Modelli dell'analisi progettuale (ADR 0036–0043):* (5) **lotto e frontiera durevole**: più
-  lotti chiusi e non sincronizzati, ogni sottoinsieme perso o parziale, e in alternativa un
-  danno sotto la frontiera — il recovery conclude «coda» nel primo caso e «corruzione» nel
-  secondo, senza mai scrivere nei segmenti; (6) **orizzonte di visibilità**: due Serie, un
-  lotto in volo, una multiserie, uno snapshot creato in ogni punto, registrazione dello
-  snapshot in gara con una pubblicazione, una Serie che va in `FAULTED` con un CSN in volo;
-  (7) **segmenti autosufficienti**: rotazione, CLEAN e rigenerazione dell'hint in ogni punto
-  di una multiserie; (8) **tombstone**: eliminazioni, ricreazioni, CLEAN, MERGE di segmenti
-  non adiacenti, snapshot, riavvio in ogni punto; (9) divisione di un frammento con reader
-  concorrenti; (10) un crash prima e dopo **ogni punto di atomicità** della
-  [tabella](../analisi-progettuale.md#punti-di-atomicità).
-- *Verifica:* INV-D1, INV-T3, INV-T4, INV-M1, INV-M2, INV-R1, INV-C7, INV-C8, INV-C9, INV-I1,
-  INV-A7 negli scenari FI-01…FI-13; in più INV-F2, INV-F3, INV-V5, INV-M4, INV-M5, INV-S7,
-  INV-C11, INV-A9, INV-A10, INV-A11.
-- *Esito:* nessuna violazione; in caso contrario il controesempio guida la decisione su QA-04,
-  QA-06, QA-07, QA-24. I modelli restano come riferimento per i test di fault injection.
+- *Question:* do protocols preserve invariants under every interleaving and a crash
+  at every point?
+- *Method:* describe as state machines and explore exhaustively over small
+  configurations: (1) 2PC with nonblocking writer, `multiserie.log`, recovery;
+  (2) CLEAN/MERGE with concurrent writer, swap, reader, snapshot, reclaim.
+  The explorer is a Common Lisp program: no specification language or external
+  verification tool (author decision, 2026-10-03;
+  [ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md)).
+- *Additional models (ADR-0032, ADR-0033):* (3) the 64-bit seqlock protocol with
+  1 writer, 2 readers, 2 slots, every interleaving and suspension, including
+  writer fallback; (4) **recovery idempotence**: recovery interruption at every
+  step and reexecution.
+- *Design analysis models (ADRs 0036–0043):* (5) **batch and durable frontier**:
+  multiple closed unsynchronized batches, every lost or partial subset, and
+  alternatively damage below the frontier — recovery concludes “tail” in the
+  first case and “corruption” in the second, without ever writing segments;
+  (6) **visibility horizon**: two Serie, one in-flight batch, one multiserie
+  transaction, a snapshot created at every point, snapshot registration racing
+  publication, a Serie entering `FAULTED` with an in-flight CSN;
+  (7) **self-sufficient segments**: rotation, CLEAN, and hint regeneration at
+  every point of a multiserie transaction; (8) **tombstones**: deletions,
+  recreations, CLEAN, MERGE of nonadjacent segments, snapshots, restart at every
+  point; (9) fragment split with concurrent readers; (10) crash before and after
+  **every atomicity point** in the [table](../analisi-progettuale.md#punti-di-atomicità).
+- *Verification:* INV-D1, INV-T3, INV-T4, INV-M1, INV-M2, INV-R1, INV-C7, INV-C8,
+  INV-C9, INV-I1, INV-A7 in scenarios FI-01…FI-13; additionally INV-F2, INV-F3,
+  INV-V5, INV-M4, INV-M5, INV-S7, INV-C11, INV-A9, INV-A10, INV-A11.
+- *Outcome:* no violation; otherwise the counterexample guides the decision on
+  QA-04, QA-06, QA-07, QA-24. Models remain a reference for fault injection tests.
 
-> **Deciso (SPK-07 → ADR-0046)** — La prima suite finita è eseguibile in
-> [SPK-07-protocols](../../spikes/SPK-07-protocols/README.md). Ha trovato il blocco
-> dell'anello dell'orizzonte e verifica il registro limitato che lo sostituisce. Le lacune
-> residue sono dichiarate nell'output; SPK-07 non è ancora completo ai fini del gate.
+> **Decided (SPK-07 → ADR-0046)** — The first finite suite is executable in
+> [SPK-07-protocols](../../spikes/SPK-07-protocols/README.md). It found horizon-ring
+> blocking and verifies the bounded registry replacing it. Remaining gaps are
+> declared in output; SPK-07 is not yet complete for the gate.
 
-> **Proposta** — L'estensione locale del 2026-10-08 aggiunge modelli finiti
-> di pubblicazione, scadenza, compaction con writer ACTIVE e osservazione delle
-> barriere. I [metodi preregistrati e risultati](../../spikes/SPK-07-protocols/README.md)
-> distinguono domini, assunzioni e controlli negativi. Memoria architetturale
-> completa con più reader/slot e crash sui file reali restano nel gate.
-> L'[avanzamento successivo](risultati-SPK-07-08-2026-10-08.md) aggiunge
-> due lettori/due slot in SC e 49.120 casi sui byte; la frontiera confermata
-> è un fatto esterno e la copertura completa del recovery resta aperta.
+> **Proposal** — The local extension of 2026-10-08 adds finite models of
+> publication, expiration, compaction with ACTIVE writer, and barrier observation.
+> [Preregistered methods and results](../../spikes/SPK-07-protocols/README.md)
+> distinguish domains, assumptions, and negative controls. Complete architectural
+> memory with multiple readers/slots and crashes on real files remain in the gate.
+> [Subsequent progress](risultati-SPK-07-08-2026-10-08.md) adds two readers/two
+> slots in SC and 49,120 byte cases; confirmed frontier is an external fact
+> and complete recovery coverage remains open.
 
 ### SPK-08
 
-**SIMD e codice generato.**
+**SIMD and generated code.**
 
-- *Domanda:* che cosa produce SBCL per i cicli tipici (operazioni su bitmap, confronto di
-  impronte, checksum) sulle architetture di interesse, e quali strumenti SIMD espliciti sono
-  disponibili su ciascuna?
-- *Metodo:* microbenchmark dei cicli candidati; ispezione del codice generato; verifica del
-  supporto SIMD esplicito su x86-64 e ARM64.
-- *Esito:* elenco dei cicli dove il codice tipizzato basta e di quelli dove servirebbe un
-  intervento; nessuna ottimizzazione viene introdotta in questa fase (INV-X1).
+- *Question:* what does SBCL generate for typical loops (bitmap operations,
+  fingerprint comparison, checksum) on the target architectures, and what
+  explicit SIMD tools are available on each?
+- *Method:* candidate-loop microbenchmarks; generated-code inspection; verification
+  of explicit SIMD support on x86-64 and ARM64.
+- *Outcome:* inventory of loops where typed code suffices and those needing
+  intervention; no optimization introduced in this phase (INV-X1).
 
-> **Proposta** — [SPK-08](../../spikes/SPK-08-generated-code/README.md) è ora
-> eseguibile: maschere scalar/SWAR esatte, kernel NEON/SSE2 con controlli
-> safety 3, disassemblato e 70 campioni seriali locali su ARM64. L'esecuzione
-> x86-64, bitmap, checksum e indice reale restano da valutare. Le misure non
-> promuovono un'ottimizzazione nel motore.
+> **Proposal** — [SPK-08](../../spikes/SPK-08-generated-code/README.md) is now
+> executable: exact scalar/SWAR masks, NEON/SSE2 kernels with safety 3 checks,
+> disassembly, and 70 local serial samples on ARM64. x86-64 execution, bitmap,
+> checksum, and real index remain to be assessed. Measurements do not promote
+> an optimization into the engine.
 
 ### SPK-09
 
-**Costo dei controlli di affidabilità.**
+**Reliability check cost.**
 
-- *Domanda:* quanto costano, in Common Lisp tipizzato, i controlli che il progetto rende
-  obbligatori — CRC32C a ogni lettura, `safety` 2/3, scrubbing — e i minimi di prestazione di
-  [ADR-0028](../adr/0028-target-e-obiettivi-di-latenza.md) restano raggiungibili?
-- *Metodo:* (a) CRC32C in Lisp: bit a bit, a tabella (byte), *slicing-by-8*, con e senza
-  `(safety 3)`, separatamente per l'intestazione (20 byte) e per il corpo; (b) ciclo di
-  lettura di un record da 2 KB con verifica dei due CRC, della chiave e del CSN, contro la
-  stessa lettura senza verifica; (c) lo stesso ciclo compilato con `safety` 3,
-  `safety` 2 con `speed` 3 e (solo come riferimento, mai adottabile) `safety` 0, per
-  quantificare il prezzo dei controlli.
-- *Misure:* byte/s del CRC per core; ns per record; overhead percentuale per verifica e per
-  `safety`; allocazione per operazione (obiettivo: 0).
-- *Esito:* i minimi di throughput sono raggiungibili con **tutti** i controlli attivi e
-  `safety` ≥ 2. Se non lo sono: si cambia algoritmo (ad esempio slicing-by-8, verifica a
-  blocchi) e si registra in un ADR; **non** si rimuove un controllo (ADR-0031 §5).
+- *Question:* what do mandatory design checks cost in typed Common Lisp — CRC32C
+  on every read, `safety` 2/3, scrubbing — and do the minimum performance levels
+  of [ADR-0028](../adr/0028-target-e-obiettivi-di-latenza.md) remain reachable?
+- *Method:* (a) CRC32C in Lisp: bitwise, byte-table, *slicing-by-8*, with and
+  without `(safety 3)`, separately for header (20 bytes) and body; (b) read loop
+  for a 2 KB record checking both CRCs, key, and CSN, versus the same read without
+  checking; (c) same loop compiled with `safety` 3, `safety` 2 with `speed` 3,
+  and (for reference only, never adoptable) `safety` 0, to quantify check cost.
+- *Measurements:* CRC bytes/s per core; ns per record; percentage overhead for
+  verification and `safety`; allocation per operation (target: 0).
+- *Outcome:* minimum throughput reachable with **all** checks active and
+  `safety` ≥ 2. Otherwise change the algorithm (for example slicing-by-8,
+  block verification) and record it in an ADR; **do not** remove a check (ADR-0031 §5).
 
-## Estensione v2 da eseguire
+<a id="estensione-v2-da-eseguire"></a>
 
-SPK-01: slot a 5 parole, chiavi fino a 65.535 byte, budget delle arene e split. SPK-09: lunghezze v2, documento 16 MiB/16 MiB+1, chiavi ai confini, profondità 100/101, fuzzing e conversione interrotta. Le misure v1 rimangono valide solo per v1. ADR-0049 richiede inoltre un esperimento oltre RAM con indice maggiore della cache.
+## v2 extension to execute
+
+SPK-01: 5-word slots, keys up to 65,535 bytes, arena budgets and splits.
+SPK-09: v2 lengths, document 16 MiB/16 MiB+1, boundary keys, depth 100/101,
+fuzzing, and interrupted conversion. v1 measurements remain valid only for v1.
+ADR-0049 also requires a beyond-RAM experiment with an index larger than cache.
 
 ### SPK-10
 
-**Limiti, formati e migrazione v2.**
+**Limits, formats, and v2 migration.**
 
-- *Domanda:* il contratto di ADR-0048 è rappresentabile e controllato nei confini
-  senza interpretare v1 come v2, allocare da lunghezze non verificate o perdere sorgenti?
-- *Metodo:* [quattro moduli](../../spikes/SPK-10-v2-limits/README.md) in parallelo:
-  codec e hint con versioni esplicite, frammento con slot v2 e arene limitate,
-  validatore CBOR iterativo e modello finito della conversione. Check indipendenti,
-  compilazione stretta e integrazione nell'harness; benchmark in serie.
-- *Misure:* throughput e allocazioni di verifica e lookup per chiavi di diverse
-  lunghezze, byte dell'arena e picco transitorio; stati e controesempi di migrazione.
-- *Esito:* fixture ai confini, rifiuti espliciti su overflow, troncamenti e budget;
-  mutanti di pubblicazione non verificata o reclaim precoce rilevati. Subset CBOR,
-  directory, memoria debole e filesystem reale non coperti sono dichiarati, non
-  assunti verificati. Il gate del motore resta distinto dal successo dello spike.
+- *Question:* can the ADR-0048 contract be represented and checked at boundaries
+  without interpreting v1 as v2, allocating from unchecked lengths, or losing sources?
+- *Method:* [four modules](../../spikes/SPK-10-v2-limits/README.md) in parallel:
+  codec and hint with explicit versions, fragment with v2 slots and bounded
+  arenas, iterative CBOR validator, and finite conversion model. Independent
+  checks, strict compilation, and harness integration; serial benchmarks.
+- *Measurements:* verification and lookup throughput and allocations for keys
+  of different lengths, arena bytes and transient peak; migration states
+  and counterexamples.
+- *Outcome:* boundary fixtures, explicit overflow, truncation, and budget
+  rejections; unverified-publication or early-reclaim mutants detected.
+  Uncovered CBOR subset, directory, weak memory, and real filesystem are
+  declared, not assumed verified. Engine gate remains distinct from spike success.

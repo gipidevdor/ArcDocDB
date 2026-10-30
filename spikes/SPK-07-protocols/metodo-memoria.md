@@ -1,48 +1,52 @@
-# SPK-07 — ordini di osservazione e barriere
+<a id="spk-07--ordini-di-osservazione-e-barriere"></a>
 
-> **Proposta** — modello Common Lisp registrato prima dell'esecuzione,
-> `safety 3`. Riferimenti: REQ-IDX-003, REQ-AFF-017,
+# SPK-07 — Observation orders and barriers
+
+> **Proposed** — Common Lisp model recorded before execution, `safety 3`.
+> References: REQ-IDX-003, REQ-AFF-017,
 > [ADR-0032](../../docs/adr/0032-seqlock-a-64-bit.md).
 
-## Domanda e metodo
+<a id="domanda-e-metodo"></a>
 
-Le due barriere writer e le due barriere reader del seqlock impediscono di
-accettare campi appartenenti a una generazione diversa dal contatore letto?
+## Question and method
 
-Un writer, un reader, un contatore senza wrap e due campi. Si enumerano ordini
-di otto eventi: quattro scritture **osservate dal reader**, quattro letture.
-Le letture vedono l'ultima scrittura osservata di quella posizione; contatore
-odd precede contatore even. Le barriere aggiungono archi di precedenza:
-odd → campi → even; prima lettura del contatore → campi → seconda lettura.
-I campi fra loro possono essere osservati in entrambi gli ordini.
+Do two writer barriers and two reader barriers in seqlock prevent accepting fields
+from a generation different from the counter read?
 
-Il modello ammette riordini quando si rimuove uno degli archi: quattro mutanti,
-uno per ciascuna barriera. L'oracle confronta **entrambi i campi con la
-generazione del contatore accettato**, non soltanto la coerenza fra campi.
-Ogni mutante deve produrre un ordine testimone; il modello completo deve
-avere zero violazioni. Il tetto è 8! ordini per configurazione, 5 configurazioni.
-Il risultato conserva quantità e testimoni deterministici.
+One writer, one reader, nonwrapping counter, two fields. Enumerate orders of eight
+events: four writes **observed by reader**, four reads. Reads see last observed
+write at that position; odd counter precedes even counter. Barriers add precedence
+edges: odd → fields → even; first counter read → fields → second read.
+Fields may be observed in either order relative to each other.
 
-Il contratto delle barriere e il fatto che le forme nel corpo precedano la
-barriera provengono dal [manuale SBCL 2.6.9, §13.7](https://www.sbcl.org/manual/#Barriers),
-consultato il 2026-10-08. Il modello è una **astrazione** di quel contratto,
-non un'implementazione del modello di memoria completo di ARM64 o x86-64.
+Model admits reordering when one edge removed: four mutants, one per barrier.
+Oracle compares **both fields with accepted counter's generation**, not merely
+field-to-field consistency. Every mutant must produce witness order; complete
+model must have zero violations. Ceiling 8! orders per configuration, 5 configurations.
+Result retains counts and deterministic witnesses.
 
-## Controllo del compilatore e limiti
+Barrier contract and forms in body preceding barrier come from
+[SBCL 2.6.9 manual, §13.7](https://www.sbcl.org/manual/#Barriers), consulted 2026-10-08.
+Model is an **abstraction** of that contract, not full ARM64/x86-64 memory-model implementation.
 
-Due piccoli kernel sugli array u64, a `safety 3`, usano le primitive reali.
-Il check confronta la risposta e conserva il disassemblato del runtime locale,
-senza dedurre la correttezza hardware dalla sola presenza di istruzioni.
+<a id="controllo-del-compilatore-e-limiti"></a>
 
-Restano esclusi: due reader/due slot, tearing, riuso della memoria, effetti del
-GC, compilatori diversi, più osservatori e propagazione non atomica fra loro,
-semantiche architetturali complete, test su Linux x86-64. Nessun throughput e
-nessuna garanzia dipendente dalla durata dei thread. La copertura hardware
-richiesta dal gate resta aperta.
+## Compiler check and limits
 
-## Risultato locale del 2026-10-08
+Two small `safety 3` u64-array kernels use real primitives. Check compares response,
+retains local-runtime disassembly, without inferring hardware correctness from
+instruction presence alone.
 
-Apple M4, macOS ARM64, SBCL 2.6.9. Comando registrato:
+Excluded: two readers/two slots, tearing, memory reuse, GC effects, other compilers,
+multiple observers and nonatomic propagation between them, complete architectural
+semantics, Linux x86-64 tests. No throughput or thread-duration-dependent guarantee.
+Gate's required hardware coverage remains open.
+
+<a id="risultato-locale-del-2026-10-08"></a>
+
+## Local result of 2026-10-08
+
+Apple M4, macOS ARM64, SBCL 2.6.9. Recorded command:
 
 ```bash
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- \
@@ -50,17 +54,16 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
   spikes/SPK-07-protocols/run-module.lisp memoria
 ```
 
-| Variante | Ordini completi | Letture accettate | Violazioni |
+| Variant | Complete orders | Accepted reads | Violations |
 |---|---:|---:|---:|
-| Quattro barriere | 280 | 8 | 0 |
-| Senza barriera writer iniziale | 840 | 96 | 54 |
-| Senza barriera writer finale | 840 | 96 | 54 |
-| Senza barriera reader iniziale | 840 | 96 | 54 |
-| Senza barriera reader finale | 840 | 96 | 54 |
+| Four barriers | 280 | 8 | 0 |
+| Without initial writer barrier | 840 | 96 | 54 |
+| Without final writer barrier | 840 | 96 | 54 |
+| Without initial reader barrier | 840 | 96 | 54 |
+| Without final reader barrier | 840 | 96 | 54 |
 
-Il [record strutturato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-memoria-check.lisp)
-conserva comando, hash dei sorgenti, ambiente, stdout originale e testimoni.
-Le barriere dei kernel risultano compilate in `DMB ISHST` per le scritture e
-`DMB ISHLD` per le letture nel disassemblato conservato. Il risultato non
-dimostra la correttezza di un motore concorrente né l'assenza di riordini
-esclusi da questo modello.
+The [structured record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-memoria-check.lisp)
+retains command, source hashes, environment, original stdout, witnesses.
+Retained disassembly compiles kernel barriers to `DMB ISHST` for writes and
+`DMB ISHLD` for reads. Result proves neither concurrent-engine correctness nor
+absence of reorderings excluded by model.

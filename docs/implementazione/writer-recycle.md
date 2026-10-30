@@ -1,68 +1,74 @@
-# Ricircolo atomico dei writer pronti
+<a id="ricircolo-atomico-dei-writer-pronti"></a>
 
-`ricircola-writer-pronto(lista, shard, writer)` integra la
-[lista pronta](writer-ready.md) con uno scambio FIFO quando il ring è pieno.
-Il chiamante possiede un obbligo unico `:schedule` ottenuto dalla
-[consegna locale](writer-handoff.md) e deve poter prendere un altro writer.
-La primitiva trasporta riferimenti senza leggere lo stato dei writer.
+# Atomic recycling of ready writers
 
-| Spazio nel ring | Valori restituiti | Proprietà dopo il successo |
+`ricircola-writer-pronto(lista, shard, writer)` integrates
+[ready list](writer-ready.md) with FIFO exchange when ring full.
+Caller owns unique `:schedule` obligation obtained through
+[local handoff](writer-handoff.md) and must be able to take another writer.
+Primitive transports references without reading writer state.
+
+| Ring space | Returned values | Ownership after success |
 |---|---|---|
-| Disponibile | NIL, `:published`, nuovo count | Il nuovo obbligo appartiene al ring. |
-| Esaurito | Vecchia testa, `:writer`, capacity | Il nuovo obbligo appartiene al ring; la testa appartiene al chiamante. |
+| Available | NIL, `:published`, new count | New obligation belongs to ring. |
+| Exhausted | Old head, `:writer`, capacity | New obligation belongs to ring; head belongs to caller. |
 
-Nel caso pieno `[C,B,…,Z]` diventa `[B,…,Z,A]`: un solo slot viene sostituito,
-head e tail avanzano di uno modulo capacity e count resta invariato.
-Capacity 1 è `[C]`→`[A]`. Le verifiche della forma garantiscono head=tail
-quando count=capacity. La guard rende indivisibile il trasferimento rispetto
-agli altri producer e consumer; un pop e una pubblicazione separati non
-soddisfano lo stesso contratto.
+Full `[C,B,…,Z]` becomes `[B,…,Z,A]`: one slot replaced,
+head/tail advance one modulo capacity, count unchanged.
+Capacity 1: `[C]`→`[A]`. Shape checks guarantee head=tail
+when count=capacity. Guard makes transfer indivisible relative
+to other producers/consumers; separate pop/publication does not
+satisfy same contract.
 
-Un successo non si ritenta. Con `:writer`, il chiamante prende il riferimento
-restituito e conserva la sua proprietà durante un eventuale busy di avvio.
-Il writer appena inserito resta nel ring. Il consumo e la fine del tratto
-avvengono fuori dalla guard della lista. Dopo una fine `:idle` non esiste
-cleanup dello scheduler: una nuova ondata può essere già pubblicata.
+Success not retried. With `:writer`, caller takes returned
+reference and retains ownership during any start busy.
+Newly inserted writer stays in ring. Consumption/slice completion
+occur outside list guard. After `:idle` finish, no scheduler
+cleanup: new wave may already be published.
 
-## Saturazione e parallelismo
+<a id="saturazione-e-parallelismo"></a>
 
-Se tutti i consumer terminano con backlog mentre i producer hanno riempito
-i ring, la sola pubblicazione può lasciare ogni consumer impegnato a
-ritentare l'inserimento, senza più consumare. Il ricircolo permette invece
-al consumer di pubblicare il proprio obbligo e prendere la testa nella
-stessa operazione, senza una coda aggiuntiva o capacità crescente.
-La regressione conserva questo controesempio con due consumer e due
-riferimenti di refill.
+## Saturation and parallelism
 
-Il costo è O(1): un tentativo CAS di acquisizione e, se riuscito, un CAS di
-rilascio; nessun retry, attesa, scansione o stato globale nel nuovo codice.
-Le guard restano indipendenti per shard e vengono toccate per tratto,
-come [ADR-0045 §8](../adr/0045-modello-di-esecuzione.md).
-Non vi sono scritture comuni per messaggio, thread di prodotto, I/O o callback.
-Factory e sorgenti queue/writer/handoff/ready rimangono invariati.
+If all consumers finish with backlog while producers filled
+rings, publication alone can leave every consumer busy retrying
+insertion with nobody consuming. Recycling instead allows
+consumer to publish own obligation and take head in same
+operation without extra queue or growing capacity.
+Regression preserves counterexample with two consumers/two
+refill references.
 
-## Rifiuti e responsabilità
+Cost O(1): one acquire CAS attempt and, if successful, one release
+CAS; no retry, wait, scan, global state in new code.
+Guards remain independent per shard, touched per slice,
+as [ADR-0045 §8](../adr/0045-modello-di-esecuzione.md).
+No shared per-message writes, product threads, I/O, callbacks.
+Factory and queue/writer/handoff/ready sources unchanged.
 
-| Condizione | Effetto e gestione |
+<a id="rifiuti-e-responsabilità"></a>
+
+## Rejections and responsibilities
+
+| Condition | Effect and handling |
 |---|---|
-| `invalid-argument :ready-target` / `:ready-writer` | Indice o riferimento errato, prima della guard e della mutazione. |
-| `resource-exhausted :ready-queue-busy` | Nessun trasferimento; il chiamante conserva il proprio obbligo e governa il retry. |
-| `invariant-violation :ready-queue-invariant` / `:ready-queue-guard` | Forma, payload o proprietà incoerenti: fail-stop del proprietario, senza rollback promesso dopo un guasto interno. |
-| `invariant-violation :ready-recycle-full` | Il helper privato di scambio è stato chiamato fuori dalla sua precondizione full; non è un rifiuto ordinario della API pubblica. |
+| `invalid-argument :ready-target` / `:ready-writer` | Wrong index/reference before guard and mutation. |
+| `resource-exhausted :ready-queue-busy` | No transfer; caller retains obligation and controls retry. |
+| `invariant-violation :ready-queue-invariant` / `:ready-queue-guard` | Inconsistent shape, payload, ownership: owner fail-stop without promised rollback after internal fault. |
+| `invariant-violation :ready-recycle-full` | Private exchange helper called outside full precondition; not ordinary public-API rejection. |
 
-La capienza piena non è un rifiuto di questa API. L'obbligo unico e la capacità
-del chiamante di assumere un altro writer sono precondizioni: non esiste
-deduplicazione o verifica dell'eleggibilità. Per un producer che non può
-consumare resta disponibile `pubblica-writer-pronto`, con conservazione
-dell'obbligo su full/busy e politica bounded definita dal controller.
+Full capacity is not rejection in this API. Unique obligation and caller's
+ability to assume another writer are preconditions: no
+deduplication or eligibility check. Producer unable to
+consume can still use `pubblica-writer-pronto`, retaining
+obligation on full/busy under controller-defined bounded policy.
 
-Lo scambio risolve il blocco dovuto alla sola capacità nel protocollo
-modellato. Una catena full resta sul proprio shard e non dimostra equità,
-assenza di starvation o progresso con guard perpetuamente contese, obblighi
-abbandonati/duplicati o Serie guaste. Empty è un'osservazione locale e non
-prova quiescenza per parcheggio o arresto. Pool, risvegli, controller FAULTED,
-admission e shutdown richiedono ancora integrazione.
+Exchange resolves capacity-only blocking in modeled
+protocol. A full chain stays on its shard and proves neither fairness,
+no starvation, nor progress with perpetually contended guards, abandoned/
+duplicated obligations, faulted Serie. Empty is local observation, not
+quiescence proof for parking/shutdown. Pool, wakeups, FAULTED controller,
+admission, shutdown still need integration.
 
-Il [metodo](writer-recycle-metodo.md), l'[inventario](writer-recycle-decisioni.md),
-i [risultati](writer-recycle-risultati.md) e la [revisione](writer-recycle-revisione.md)
-conservano l'ambito e i limiti delle verifiche locali.
+[Method](writer-recycle-metodo.md), [inventory](writer-recycle-decisioni.md),
+[results](writer-recycle-risultati.md), [review](writer-recycle-revisione.md)
+preserve local-verification scope/limits.

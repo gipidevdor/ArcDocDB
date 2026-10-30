@@ -1,79 +1,84 @@
-# Analisi dei guasti
+<a id="analisi-dei-guasti"></a>
 
-Modello dei guasti e FMEA. Per ogni guasto: che cosa succede, come lo si **rileva**, come si
-**risponde**, quale requisito o invariante lo governa, come si **verifica**. Un guasto senza
-risposta definita e verifica è un difetto di progetto.
+# Failure analysis
 
-## Modello dei guasti
+Failure model and FMEA. For each failure: what happens, how it is **detected**, how the
+system **responds**, which requirement or invariant governs it, and how it is **verified**.
+A failure without a defined response and verification is a design defect.
 
-**Tollerati (con risposta definita):**
+<a id="modello-dei-guasti"></a>
 
-1. arresto improvviso del processo o della macchina in qualsiasi istruzione (crash, `kill -9`,
-   perdita di alimentazione);
-2. scritture parziali o non ordinate non ancora sincronizzate (coda troncata, settore
-   incompleto);
-3. errori restituiti dal sistema operativo (`EIO`, `ENOSPC`, `EMFILE`, errore di `fsync`);
-4. alterazione dei dati a riposo (bit-rot, blocco azzerato, blocco duplicato, troncamento);
-5. alterazione dei dati in memoria (bit flip nell'indice o nella cache);
-6. esaurimento di risorse (memoria, descrittori, spazio, code);
-7. input malformato o ostile al protocollo e ai decoder;
-8. difetti del software (violazione di invarianti interni);
-9. errore dell'operatore (doppia apertura, file rimossi).
+## Failure model
 
-**Non tollerati (dichiarati, resi rilevabili dove possibile):**
+**Tolerated (with a defined response):**
 
-10. flush dichiarato riuscito ma non durevole (cache di scrittura del supporto senza barriere,
-    firmware difettoso);
-11. perdita simultanea di tutti i supporti;
-12. difetti del compilatore, del GC, del runtime di SBCL, del kernel;
-13. comportamento bizantino o avversario.
+1. abrupt process or machine termination at any instruction (crash, `kill -9`,
+   power loss);
+2. partial or unordered writes not yet synchronized (truncated tail, incomplete sector);
+3. errors returned by the operating system (`EIO`, `ENOSPC`, `EMFILE`, `fsync` error);
+4. alteration of data at rest (bit rot, zeroed block, duplicated block, truncation);
+5. alteration of in-memory data (bit flip in index or cache);
+6. resource exhaustion (memory, descriptors, space, queues);
+7. malformed or hostile protocol and decoder input;
+8. software defects (internal invariant violations);
+9. operator error (double open, removed files).
+
+**Not tolerated (declared, made detectable where possible):**
+
+10. flush reported successful but not durable (unbarriered media write cache,
+    defective firmware);
+11. simultaneous loss of all media;
+12. defects in the compiler, GC, SBCL runtime, or kernel;
+13. Byzantine or adversarial behavior.
 
 ## FMEA
 
-| ID | Guasto | Effetto | Rilevazione | Risposta | Governo | Verifica |
+| ID | Failure | Effect | Detection | Response | Governing rule | Verification |
 |---|---|---|---|---|---|---|
-| FM-01 | Perdita di alimentazione o crash durante append | ultimi lotti del log parziali o assenti | lotto non valido (CRC, SEAL mancante o non corrispondente) | **coda** se nessun SEAL successivo dichiara una frontiera durevole oltre l'anomalia: la lunghezza valida è l'inizio del primo lotto non valido; nulla viene troncato, il segmento è chiuso a quella lunghezza ([ADR-0037](../adr/0037-lotto-sigillato.md) §3–4) | INV-F1, INV-F2, INV-F3, INV-D1, INV-A9 | FI-01, FI-02; simulatore |
-| FM-02 | `fsync`/`rename`/`write` restituisce errore | stato delle pagine indefinito | codice di ritorno | **nessun retry**; Serie/Archivio `FAULTED`; nessuna conferma del lotto | INV-A1 | simulatore con errori di I/O |
-| <a id="fm-03"></a>FM-03 | Flush riuscito ma non durevole (supporto o firmware) | perdita di dati confermati | non rilevabile a runtime; rilevabile dalla verifica a posteriori | `F_FULLFSYNC` su macOS, `fdatasync` su Linux; **rischio residuo dichiarato** | — | prova con interruzione di alimentazione fuori dalla CI |
-| FM-04 | Alterazione di un segmento chiuso | dato sbagliato | CRC alla lettura; scrubbing | segmento in quarantena (`DEGRADED`); errore `corruption-detected`; ripristino da backup | INV-A2, INV-A6 | corruzione deliberata di ogni file; scrubbing |
-| FM-05 | Scrittura persa o indirizzata male (supporto la conferma, i dati non ci sono) | record mancante o altrui | CRC e confronto chiave/versione alla lettura; scrubbing e confronto hint ↔ segmento ↔ control log | quarantena; `FAULTED` se riguarda log di controllo | INV-A2, INV-A6, INV-F1 | scenari di scrittura persa nel simulatore |
-| FM-06 | Alterazione di dati già durevoli nel segmento `ACTIVE` o in un log di controllo | rischio di scartare dati committed | un SEAL valido successivo dichiara una frontiera durevole oltre l'anomalia | `FAULTED`; nessuna scrittura; decisione dell'operatore | INV-A1, INV-F3 | FI-01 con danno sotto la frontiera |
-| FM-07 | Spazio disco esaurito | scritture impossibili | spazio libero sotto riserva; `ENOSPC` | rifiuto controllato `resource-exhausted` prima dell'esaurimento; `ENOSPC` in scrittura = errore di scrittura (FM-02) | INV-A8, INV-A1 | simulatore con disco pieno |
-| FM-08 | Errore di lettura (`EIO`) | dato non disponibile | codice di ritorno | errore `io-fault` per quella lettura; ripetuti → quarantena del segmento; **mai** un dato non verificato | INV-A2 | simulatore con errori di lettura |
-| FM-09 | Descrittori di file esauriti | impossibile aprire segmenti | `EMFILE` | rifiuto controllato; limite di segmenti aperti e cache dei descrittori limitata | INV-A8 | test di saturazione |
-| FM-10 | Esaurimento dello heap | possibile uscita fatale del runtime | bilancio di memoria; soglie interne | rifiuto ben prima del limite (backpressure); heap dimensionato esplicitamente all'avvio; bilancio verificato all'avvio | INV-A8 | test di saturazione; SPK-02 |
-| FM-11 | Bit flip nell'indice o nella cache | location o dato sbagliato | confronto chiave/CSN con il record; CRC di intestazione e corpo | in cache: la entry è scartata e si rilegge dal segmento, senza quarantena; nell'indice: errore `corruption-detected`, indice ricostruibile dagli hint | INV-A2, INV-A12 | iniezione di bit flip in memoria nel simulatore |
-| <a id="fm-12"></a>FM-12 | Difetto del compilatore, GC o runtime | corruzione arbitraria | controlli end-to-end; asserzioni | versione fissata e provata su due piattaforme; **rischio residuo dichiarato** | INV-A2, INV-A3 | CI su Linux e macOS; soak test |
-| FM-13 | `kill -9` del processo | arresto improvviso | al riavvio | recovery ([architettura](../architettura.md#recovery)) | INV-D1, INV-A7 | crash reali ripetuti + verificatore |
-| FM-14 | Crash durante il recovery | recovery incompleto | al riavvio successivo | **recovery idempotente e non distruttivo**: fino alla rinomina del control log compattato nulla è cambiato; si riesegue | INV-A7, INV-A9 | interruzione del recovery in ogni punto nel simulatore |
-| FM-15 | Salto dell'orologio di sistema | durate sbagliate | — | si usa solo l'orologio **monotono** per le durate; l'orologio reale è solo informativo | — | simulatore con orologio manipolato |
-| FM-16 | File o directory rimossi o rinominati dall'esterno | struttura incoerente | confronto control log ↔ directory all'avvio e in scrubbing | file mancante di un segmento → quarantena; di un log → `FAULTED` | INV-A6 | test del verificatore |
-| FM-17 | Doppia apertura dello stesso Archivio | due scrittori sullo stesso log | lock esclusivo su `LOCK` | la seconda apertura fallisce subito | REQ-AFF-011 | test di doppia apertura |
-| FM-18 | Violazione di un invariante interno (difetto) | stato non valido | asserzioni sempre attive | `invariant-violation`; Serie `FAULTED` | INV-A3, INV-A4 | iniezione di difetti (mutation testing) |
-| FM-19 | Richiesta malformata o ostile | rischio di crash o di lettura fuori limiti | validazione di ogni campo; limiti di dimensione | `invalid-request`; mai effetti sullo stato | INV-A8 | fuzzing del protocollo |
-| FM-20 | Crash del coordinatore tra decisione e OUTCOME | transazione multiserie a metà | `multiserie.log` e `PREPARE` senza `OUTCOME` | recovery completa COMMIT o ABORT (presumed abort) | INV-T4 | FI-03, FI-04, FI-05, FI-12 |
-| FM-21 | Crash durante la creazione o l'eliminazione di una Serie | catalogo e directory incoerenti | directory `.tmp`; stato `dropping` nel catalogo | `.tmp` senza documento: eliminata; `.tmp` con documento: rinominata; `dropping`: rimozione completata ([ADR-0040](../adr/0040-manifest-a-record-unico.md) §5) | INV-A7, INV-A11 | FI-13 |
-| FM-22 | Backup alterato o incompleto | restore non valido | verificatore offline sul backup | il restore rifiuta un backup che non verifica | REQ-AFF-014 | test di backup/restore |
-| FM-23 | Snapshot che non termina | spazio trattenuto senza limite | età dello snapshot | terminazione dopo la durata massima (`snapshot-too-old`) | INV-A8 | test di snapshot longevo |
-| FM-24 | Contatore seqlock che torna indietro (wrap) | lettura incoerente non rilevata | soglia 2⁶² controllata | ricostruzione del frammento, che azzera i contatori ([ADR-0043](../adr/0043-primary-index-a-frammenti.md)) | INV-A8, [ADR-0032](../adr/0032-seqlock-a-64-bit.md) | test con contatore iniziale alto |
-| FM-25 | Persistenza non ordinata delle scritture non sincronizzate (un lotto successivo è su disco, uno precedente no) | lotto valido dopo un lotto mancante | frontiera durevole dei SEAL | è una coda: i lotti oltre il primo non valido non erano confermati e sono ignorati; **non** è un guasto | INV-F3 | FI-01, FI-02 con sottoinsiemi arbitrari dei lotti non sincronizzati |
-| FM-26 | File o directory con nome definitivo che nessuna fonte di verità conosce | possibile difetto del manifest o intervento esterno | riconciliazione al riavvio; verificatore | **non si elimina**: evento registrato, oggetto lasciato intatto | INV-A10 | test del verificatore; FI-09, FI-13 |
-| FM-27 | Un commit resta in volo a lungo (flush lento o bloccato di una Serie) | gli snapshot dell'Archivio non nascono | distanza tra CSN e orizzonte; tempo di attesa | attesa con tempo massimo, poi `resource-exhausted`; letture e scritture senza snapshot non sono toccate; una Serie `FAULTED` libera l'orizzonte | INV-M4, INV-A8, INV-P3 | simulatore con flush ritardato |
+| FM-01 | Power loss or crash during append | last log batches partial or absent | invalid batch (CRC, missing or mismatched SEAL) | **tail** if no later SEAL declares a durable frontier beyond the anomaly: valid length is the start of the first invalid batch; nothing is truncated, the segment is closed at that length ([ADR-0037](../adr/0037-lotto-sigillato.md) §3–4) | INV-F1, INV-F2, INV-F3, INV-D1, INV-A9 | FI-01, FI-02; simulator |
+| FM-02 | `fsync`/`rename`/`write` returns an error | undefined page state | return code | **no retry**; Serie/Archivio `FAULTED`; no batch acknowledgment | INV-A1 | simulator with I/O errors |
+| <a id="fm-03"></a>FM-03 | Successful but nondurable flush (media or firmware) | loss of acknowledged data | undetectable at runtime; detectable by subsequent verification | `F_FULLFSYNC` on macOS, `fdatasync` on Linux; **declared residual risk** | — | power-interruption test outside CI |
+| FM-04 | Alteration of a closed segment | incorrect data | read-time CRC; scrubbing | segment quarantined (`DEGRADED`); `corruption-detected` error; restore from backup | INV-A2, INV-A6 | deliberate corruption of every file; scrubbing |
+| FM-05 | Lost or misdirected write (media acknowledges it, data absent) | missing or unrelated record | CRC and key/version comparison on read; scrubbing and hint ↔ segment ↔ control-log comparison | quarantine; `FAULTED` if control logs are affected | INV-A2, INV-A6, INV-F1 | lost-write scenarios in simulator |
+| FM-06 | Alteration of already durable data in the `ACTIVE` segment or a control log | risk of discarding committed data | a later valid SEAL declares a durable frontier beyond the anomaly | `FAULTED`; no writes; operator decision | INV-A1, INV-F3 | FI-01 with damage below frontier |
+| FM-07 | Disk space exhausted | writes impossible | free space below reserve; `ENOSPC` | controlled `resource-exhausted` rejection before exhaustion; `ENOSPC` during write = write error (FM-02) | INV-A8, INV-A1 | simulator with full disk |
+| FM-08 | Read error (`EIO`) | data unavailable | return code | `io-fault` error for that read; repeated errors → segment quarantine; **never** unverified data | INV-A2 | simulator with read errors |
+| FM-09 | File descriptors exhausted | cannot open segments | `EMFILE` | controlled rejection; open-segment limit and bounded descriptor cache | INV-A8 | saturation test |
+| FM-10 | Heap exhaustion | possible fatal runtime exit | memory accounting; internal thresholds | rejection well before the limit (backpressure); heap explicitly sized at startup; accounting verified at startup | INV-A8 | saturation test; SPK-02 |
+| FM-11 | Bit flip in index or cache | incorrect location or data | key/CSN comparison with record; header and body CRC | in cache: discard entry and reread from segment, without quarantine; in index: `corruption-detected` error, index rebuildable from hints | INV-A2, INV-A12 | in-memory bit-flip injection in simulator |
+| <a id="fm-12"></a>FM-12 | Compiler, GC, or runtime defect | arbitrary corruption | end-to-end checks; assertions | pinned version tested on two platforms; **declared residual risk** | INV-A2, INV-A3 | CI on Linux and macOS; soak test |
+| FM-13 | Process `kill -9` | abrupt termination | on restart | recovery ([architecture](../architettura.md#recovery)) | INV-D1, INV-A7 | repeated real crashes + verifier |
+| FM-14 | Crash during recovery | incomplete recovery | on next restart | **idempotent, nondestructive recovery**: nothing has changed before renaming the compacted control log; rerun | INV-A7, INV-A9 | recovery interruption at every point in simulator |
+| FM-15 | System-clock jump | incorrect durations | — | use only the **monotonic** clock for durations; wall clock is informational only | — | simulator with manipulated clock |
+| FM-16 | Files or directories removed or renamed externally | inconsistent structure | control-log ↔ directory comparison at startup and during scrubbing | missing segment file → quarantine; missing log → `FAULTED` | INV-A6 | verifier test |
+| FM-17 | Double open of the same Archivio | two writers on the same log | exclusive lock on `LOCK` | second open fails immediately | REQ-AFF-011 | double-open test |
+| FM-18 | Internal invariant violation (defect) | invalid state | always-active assertions | `invariant-violation`; Serie `FAULTED` | INV-A3, INV-A4 | defect injection (mutation testing) |
+| FM-19 | Malformed or hostile request | risk of crash or out-of-bounds read | validation of every field; size limits | `invalid-request`; never state effects | INV-A8 | protocol fuzzing |
+| FM-20 | Coordinator crash between decision and OUTCOME | partial multiseries transaction | `multiserie.log` and `PREPARE` without `OUTCOME` | recovery completes COMMIT or ABORT (presumed abort) | INV-T4 | FI-03, FI-04, FI-05, FI-12 |
+| FM-21 | Crash during Serie creation or deletion | inconsistent catalog and directory | `.tmp` directory; `dropping` catalog state | `.tmp` without document: deleted; `.tmp` with document: renamed; `dropping`: removal completed ([ADR-0040](../adr/0040-manifest-a-record-unico.md) §5) | INV-A7, INV-A11 | FI-13 |
+| FM-22 | Altered or incomplete backup | invalid restore | offline verifier on backup | restore rejects a backup that fails verification | REQ-AFF-014 | backup/restore test |
+| FM-23 | Snapshot that never ends | unbounded retained space | snapshot age | termination after maximum duration (`snapshot-too-old`) | INV-A8 | long-lived snapshot test |
+| FM-24 | Seqlock counter wraps | undetected inconsistent read | enforced 2⁶² threshold | fragment rebuild, resetting counters ([ADR-0043](../adr/0043-primary-index-a-frammenti.md)) | INV-A8, [ADR-0032](../adr/0032-seqlock-a-64-bit.md) | test with high initial counter |
+| FM-25 | Unordered persistence of unsynchronized writes (later batch on disk, earlier one absent) | valid batch after missing batch | SEAL durable frontier | it is a tail: batches beyond the first invalid one were unacknowledged and are ignored; **not** a failure | INV-F3 | FI-01, FI-02 with arbitrary subsets of unsynchronized batches |
+| FM-26 | File or directory with a definitive name unknown to every source of truth | possible manifest defect or external intervention | restart reconciliation; verifier | **do not delete**: log event, leave object intact | INV-A10 | verifier test; FI-09, FI-13 |
+| FM-27 | Commit remains in flight for a long time (slow or stalled Serie flush) | Archivio snapshots cannot be created | CSN-to-horizon distance; wait time | bounded wait, then `resource-exhausted`; reads and writes without snapshots unaffected; a `FAULTED` Serie releases the horizon | INV-M4, INV-A8, INV-P3 | simulator with delayed flush |
 
-## Rischi residui accettati
+<a id="rischi-residui-accettati"></a>
 
-> **Deciso (verifica prepared → ADR-0047)** — In FM-11, per un record prepared il confronto
-> di flag e chiave non basta: TXID e CSN si verificano contro l'OUTCOME del segmento o
-> l'esito dell'EDIT di chiusura. La prova è a sua volta verificata; una location sbagliata
-> verso un prepared della stessa chiave deve essere rifiutata
+## Accepted residual risks
+
+> **Decided (prepared verification → ADR-0047)** — In FM-11, flag and key comparison
+> is insufficient for a prepared record: TXID and CSN are checked against the segment's
+> OUTCOME or the closure EDIT outcome. The proof is itself verified; an incorrect
+> location pointing to a prepared record with the same key must be rejected
 > ([ADR-0047](../adr/0047-verifica-csn-dei-record-prepared.md)).
 
-| ID | Rischio | Perché accettato | Mitigazione |
+| ID | Risk | Why accepted | Mitigation |
 |---|---|---|---|
-| RES-01 | FM-03: flush non durevole | fuori dal controllo del software | primitive di flush corrette; documentare i requisiti dell'hardware; backup |
-| RES-02 | FM-12: difetti del runtime | SBCL non è qualificato | verifica end-to-end; due piattaforme; versione fissata |
-| RES-03 | Perdita di tutti i supporti | un solo dispositivo nella v1 | backup consistente e verificabile ([ADR-0030](../adr/0030-scope-v1.md)); replica in una fase successiva |
-| RES-04 | Indipendenza della verifica limitata | autore unico | strumenti automatici, liste di controllo, revisione su dati ([ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md)) |
-| RES-05 | Danno a riposo ai soli lotti resi durevoli dall'ultimo flush prima di un arresto improvviso, non ancora testimoniati dal SEAL di un lotto successivo: è indistinguibile da una coda | è il confine di ciò che un log può sapere di sé; richiede la coincidenza di un arresto improvviso e di un danno in quei pochi lotti | un arresto ordinato chiude il segmento (nessuna finestra); scrubbing; backup ([ADR-0037](../adr/0037-lotto-sigillato.md)) |
+| RES-01 | FM-03: nondurable flush | outside software control | correct flush primitives; document hardware requirements; backup |
+| RES-02 | FM-12: runtime defects | SBCL is not qualified | end-to-end verification; two platforms; pinned version |
+| RES-03 | Loss of all media | one device in v1 | consistent, verifiable backup ([ADR-0030](../adr/0030-scope-v1.md)); replication in a later phase |
+| RES-04 | Limited verification independence | single author | automatic tools, checklists, evidence-based review ([ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md)) |
+| RES-05 | At-rest damage affecting only batches made durable by the final flush before abrupt termination, not yet witnessed by a later batch's SEAL: indistinguishable from a tail | the boundary of what a log can know about itself; requires abrupt termination coinciding with damage in those few batches | orderly shutdown closes the segment (no window); scrubbing; backup ([ADR-0037](../adr/0037-lotto-sigillato.md)) |
 
-Ogni voce è anche nel [registro dei rischi](../valutazione/registro-rischi.md).
+Each entry is also in the [risk register](../valutazione/registro-rischi.md).

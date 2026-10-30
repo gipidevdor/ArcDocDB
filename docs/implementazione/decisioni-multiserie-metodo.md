@@ -1,69 +1,77 @@
-# Metodo di verifica della tabella delle decisioni
+<a id="metodo-di-verifica-della-tabella-delle-decisioni"></a>
 
-Ambito registrato prima delle campagne: ricostruire in memoria la tabella
-TXID → CSN e insieme dei partecipanti dal prefisso verificato di
-`multiserie.log`, secondo [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md).
-Il modulo non applica record, non modifica log e non decide lo stato del catalogo.
+# Decision-table verification method
 
-## Contratti da verificare
+Scope registered before campaigns: rebuild in memory the table
+TXID → CSN and participant set from verified prefix of
+`multiserie.log`, under [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md).
+Module does not apply records, modify logs, or decide catalog state.
 
-- Il verificatore dei lotti e la ricerca di corruzione terminano prima di
-  restituire qualsiasi tabella. Solo una tabella costruita con successo
-  permette di interpretare un TXID assente come presumed abort.
-- Il prefisso contiene solo lotti completi; una coda incompleta non aggiunge
-  decisioni. Un payload DECISION malformato nel prefisso che ha superato la
-  verifica delle cornici e dei SEAL è corruzione semantica, non una nuova
-  coda da ignorare. Una cornice sotto la lunghezza minima è invece un errore
-  dello scanner: coda senza testimone successivo, corruzione con un SEAL
-  successivo la cui frontiera durevole copre l'inizio del lotto invalido.
-- Ogni decisione contiene almeno due partecipanti distinti. Ripetere uno
-  stesso TXID con CSN e insieme dei partecipanti identici è idempotente;
-  cambiamenti di CSN o insieme sono un conflitto dichiarato. L'ordine dei
-  partecipanti non cambia il significato della decisione.
-- TXID e CSN sono u64 opachi: non si impongono ordine del log, positività
-  o unicità del CSN fra TXID diversi. Gli identificativi di Serie sono
-  confrontati su tutti i 16 byte.
-- La tabella possiede i dati copiati. Modificare il buffer sorgente dopo
-  la costruzione non cambia le consultazioni; nessun vettore interno è
-  restituito al chiamante.
-- I budget contano i record e i partecipanti letti prima di coalescere i
-  duplicati. Limiti esatti accettati; superamenti o input invalidi producono
-  errori tipizzati e nessun risultato parziale, anche per un log vuoto.
-- Le query verificano il range e la lunghezza dell'ID di Serie anche quando
-  il TXID cercato non esiste. Gli esiti includono una presenza esplicita,
-  così CSN zero e decisione assente rimangono distinguibili.
+<a id="contratti-da-verificare"></a>
 
-## Prove e oracoli
+## Contracts to verify
 
-Fixture di cornici, payload e SEAL con packing bytewise e CRC bitwise
-indipendenti dai codec del prodotto. Storie dichiarate come dati alimentano
-un oracolo a liste e insiemi; confronto con le consultazioni della tabella
-per entrambe le versioni del formato, ordine arbitrario e offset non nulli.
-Il seme delle storie generate è fisso e riportato nel test.
+- Batch verifier and corruption search finish before
+  returning any table. Only a successfully constructed table
+  permits interpreting an absent TXID as presumed abort.
+- Prefix contains only complete batches; incomplete tail adds no
+  decisions. Malformed DECISION payload in prefix that passed frame
+  and SEAL verification is semantic corruption, not a new
+  tail to ignore. A frame below minimum length is instead a scanner
+  error: tail without later witness, corruption with a later SEAL
+  whose durable frontier covers invalid batch start.
+- Each decision contains at least two distinct participants. Repeating the
+  same TXID with identical CSN and participant set is idempotent;
+  CSN or set changes are a declared conflict. Participant
+  order does not change decision meaning.
+- TXID and CSN are opaque u64s: no log order, positivity,
+  or CSN uniqueness across different TXIDs imposed. Serie identifiers are
+  compared across all 16 bytes.
+- Table owns copied data. Changing source buffer after
+  construction does not change queries; no internal vector
+  is returned to caller.
+- Budgets count records and participants read before coalescing
+  duplicates. Exact limits accepted; overruns or invalid input produce
+  typed errors and no partial result, even for an empty log.
+- Queries check Serie ID range and length even when
+  sought TXID does not exist. Outcomes include explicit presence,
+  so zero CSN and absent decision remain distinguishable.
 
-Troncamento a ogni byte dei lotti, corruzione prima di un SEAL testimone,
-budget di ricerca insufficiente, payload semanticamente invalido con CRC
-e SEAL corretti, duplicati permutati e discordanti, identificativi con bit
-alti o differenze nell'ultimo byte, valori u64 estremi, budget zero/esatti
-e superati, immutabilità del sorgente e ownership del risultato.
+<a id="prove-e-oracoli"></a>
 
-Compilazione senza avvisi, lint, tracciabilità e `make check`. Campagne di
-copertura e mutazione separate dai test ordinari; self-test degli strumenti.
-I record conservano comandi, ambiente, hash prima/dopo, output e tentativi
-falliti. Due letture C1 controllano i contratti e la tabella delle decisioni.
+## Tests and oracles
 
-La campagna mirata deve rilevare ogni mutante compilabile selezionato:
-limiti di record/partecipanti, uguaglianza del CSN e dell'intero ID16,
-partecipanti duplicati e presenza esplicita nella query. Un errore prima
-dell'avvio dei test non conta come rilevamento; mutanti non compilabili
-vengono corretti conservando il tentativo iniziale.
+Frame, payload, and SEAL fixtures with bytewise packing and bitwise CRC
+independent of product codecs. Histories declared as data feed
+a list-and-set oracle; comparison with table queries
+for both format versions, arbitrary order, and nonzero offsets.
+Generated-history seed is fixed and reported in test.
 
-## Limiti
+Truncation at every batch byte, corruption before witness SEAL,
+insufficient search budget, semantically invalid payload with correct CRC
+and SEAL, permuted and mismatching duplicates, identifiers with high
+bits or last-byte differences, u64 endpoints, zero/exact and
+exceeded budgets, source immutability, and result ownership.
 
-Percorso di apertura/recovery: copie, ordinamento e condizioni possono
-allocare. Nessuna promessa di zero heap o prestazioni del database;
-nessun benchmark di I/O viene dedotto da queste prove in memoria.
-Il chiamante verifica l'intestazione e la dimensione fisica stabile del log.
-Catalogo, manifest, risoluzione/applicazione dei prepared, compattazione,
-flush e punto di atomicità del recovery restano moduli separati.
-Le prove locali non chiudono un gate di qualifica del motore o MC/DC.
+Warning-free compilation, lint, traceability, and `make check`. Coverage
+and mutation campaigns separate from ordinary tests; tool self-tests.
+Records preserve commands, environment, before/after hashes, output, and failed
+attempts. Two C1 readings check contracts and decision table.
+
+Targeted campaign must detect every selected compilable mutant:
+record/participant limits, CSN and whole-ID16 equality,
+duplicate participants, and explicit query presence. Error before
+test startup does not count as detection; noncompilable mutants
+are corrected while preserving initial attempt.
+
+<a id="limiti"></a>
+
+## Limits
+
+Open/recovery path: copies, sorting, and conditions may
+allocate. No promise of zero heap allocation or database performance;
+no I/O benchmark inferred from these in-memory tests.
+Caller verifies log header and stable physical size.
+Catalog, manifest, prepared resolution/application, compaction,
+flush, and recovery atomicity point remain separate modules.
+Local tests close neither an engine-qualification gate nor MC/DC.

@@ -1,135 +1,143 @@
-# Metodo preregistrato del controllore di calcolo
+<a id="metodo-preregistrato-del-controllore-di-calcolo"></a>
 
-Preregistrazione del 2026-10-13, prima delle campagne del componente, sulla
-base `4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`. Scope: nuovo package
-`arcdocdb.scheduler`, configurazione e stato owner-only, EWMA fixed-point,
-policy bounded e getter, integrazione ASDF, test, documentazione e misure
-locali. Il [contratto](controllore-pool.md) fissa API, domini e limiti.
+# Preregistered compute-controller method
 
-Il componente è C3: [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md)
-richiede lo standard integrale, una revisione e copertura di istruzioni e
-rami almeno 95%. La lettura ulteriore sui dodici punti C1 è un rafforzamento
-della verifica; non cambia classe né qualifica il percorso dei dati.
-REQ-THR-001 è soddisfatto soltanto nella parte di controllo; REQ-AFF-008/013
-e REQ-CON-005 delimitano budget, tempo iniettato e separazione dal percorso
-delle richieste. REQ-OBS-001/002 e un pool operativo restano fuori scope.
+Preregistration of 2026-10-13 before component campaigns, on
+base `4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`. Scope: new package
+`arcdocdb.scheduler`, owner-only configuration/state, fixed-point EWMA,
+bounded policy/getters, ASDF integration, tests, documentation, local
+measurements. [Contract](controllore-pool.md) fixes APIs/domains/limits.
 
-## Controlli previsti
+Component C3: [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md)
+requires full standard, one review, statement/branch coverage
+at least 95%. Additional twelve-point C1 reading strengthens
+verification; changes neither class nor data-path qualification.
+REQ-THR-001 satisfied only in control portion; REQ-AFF-008/013
+and REQ-CON-005 bound budgets, injected time, separation from request
+path. REQ-OBS-001/002 and operational pool outside scope.
 
-- Configurazione default ed esplicita, limiti cores 1/65536 e maximum 2×cores,
-  minimum/maximum/initial coerenti. Valori negativi, zero dove vietato,
-  valori oltre budget, float, simboli, stringhe e NIL fuori contratto sono
-  rifiutati prima della pubblicazione dell'istanza.
-- Period 1..2^20, dwell da period a 2^20 e queue-high1..2^20: soglie esatte,
-  interval mismatch e budget sbagliati sono rifiutati. Nessun default è
-  presentato come risultato di calibrazione o come unità temporale implicita.
-- Domini completi dei campioni; actual è minimum..maximum, compreso il
-  rifiuto di zero prima dell'avvio confermato. Snapshot pubblico dei sette
-  valori invariato dopo ogni input rifiutato, anche con sensori già
-  inizializzati e target pending; configurazione immutabile e validazione
-  completa prima delle scritture verificate in lettura del sorgente.
-- Tick iniziale zero, massimo 2^40−1, duplicati, regressioni, delta sotto
-  period, delta uguale a period e a 2×period. Un gap maggiore di 2×period
-  resetta EWMA e permanenza; non conta tempo di cui manca l'osservazione.
-  Nessun wrap; la sottrazione esatta resta entro fixnum, anche quando il
-  delta negativo serve a rifiutare una regressione prima della mutazione.
-- EWMA iniziale esatta e successive floor((7E+256x)/8), incluse frazioni
-  perse, sequenze alternate, tutti i segnali al massimo, ritorno verso zero
-  e intervalli validi diversi. L'oracolo usa aritmetica razionale nel solo
-  harness per confrontare i valori interi e l'arrotondamento del prodotto.
-- Soglie composte, ciascun operando decisivo nei casi di test: coda<1 e
-  CPU≤300 per riduzione idle; P99≥1200 che prevale anche con coda alta;
-  coda≥queue-high, CPU<700 e P99≤1000 per crescita. Input ed EWMA scalate
-  non si confondono. Provare i valori appena sotto, uguali e appena sopra.
-- Permanenza inclusiva dwell; primo candidato, ripetizione, cambio di
-  direzione, hold intermedio, gap e pending azzerano la continuità. Dopo un
-  comando serve una nuova permanenza. Nessuna azione implicita al primo
-  campione se manca una permanenza già osservata.
-- AIMD: +1 e floor(3×target/4), inclusi arrotondamento, saturazione al massimo
-  e clamp al minimo. Ai limiti, risultato hold senza falso comando grow/shrink.
-  Il target non esce mai dall'intervallo configurato.
-- Actual diverso dal target: EWMA aggiornate, target identico e pending,
-  anche con molti campioni o pressione invertita. Conferma successiva del
-  target riparte con una nuova permanenza. Una crescita pending con P99
-  degradato resta pending: la fixture deve mostrare esplicitamente questo
-  limite, senza dichiarare una revoca assente.
-- Getter con sette valori prima e dopo campioni, rifiuti e comandi; nessun
-  accesso owner estraneo. Secondo thread reale per il rifiuto del proprietario
-  su aggiornamento e getter; deadline e sincronizzazione appartengono al
-  solo harness. Controllori su thread diversi non condividono stato locale.
-- Tracce finite con inversione brusca di carico, oscillazioni attorno alle
-  soglie, assenza prolungata di campioni e attuazione ritardata. Oracolo
-  indipendente per target, esito, sensori, candidato e permanenza. Non si
-  deduce stabilità di un sistema reale da tracce sintetiche.
-- Invarianti verificati della rappresentazione privata: target fuori
-  minimum..maximum e origine della permanenza oltre l'ultimo tick; iniezioni
-  a quiescenza conservate senza riparazione. Direzione privata inattesa
-  rifiutata dal helper AIMD. I domini degli slot sono protetti dai tipi e
-  dalla factory, senza promettere rilevamento di ogni corruzione arbitraria.
-  Diagnosi typed e rifiuti ordinari distinguibili; ogni ramo nuovo resta nel
-  denominatore della copertura.
+<a id="controlli-previsti"></a>
 
-## Analisi, copertura e misura
+## Planned checks
 
-Compilazione senza warning/style-warning, safety 3, dichiarazioni di tipi,
-slot read-only dove appropriato, docstring e commenti REQ/OWNER/SHARED.
-Verificare funzioni entro 60 righe, complessità contenuta, nessun ciclo o
-attesa nascosti, nessuna sorgente temporale letta dal componente e nessun
-aggiornamento condiviso per richiesta. La policy opera solo dentro barriere
-che non cambiano dati, obblighi o lease di C1/C2.
+- Default/explicit configuration, cores 1/65536, maximum 2×cores,
+  coherent minimum/maximum/initial. Negative values, prohibited zero,
+  over-budget values, floats, symbols, strings, NIL outside contract
+  rejected before instance publication.
+- Period 1..2^20, dwell period through 2^20, queue-high1..2^20: exact
+  thresholds, interval mismatch, wrong budgets rejected. No default
+  presented as calibration result or implicit time unit.
+- Complete sample domains; actual minimum..maximum, including
+  zero rejection before confirmed startup. Public seven-value snapshot
+  unchanged after every rejected input, even initialized
+  sensors/pending target; immutable configuration and complete validation
+  before writes verified in source reading.
+- Initial tick zero, maximum 2^40−1, duplicates, regressions, delta below
+  period, equal to period/2×period. Gap greater than 2×period
+  resets EWMA/dwell; unobserved time not counted.
+  No wrapping; exact subtraction remains fixnum even when negative
+  delta rejects regression before mutation.
+- Exact initial EWMA, later floor((7E+256x)/8), including lost
+  fractions, alternating sequences, all signals maximum, return toward zero,
+  different valid intervals. Oracle uses rational arithmetic in harness
+  only to compare product integer values/rounding.
+- Compound thresholds, each operand decisive in tests: queue<1,
+  CPU≤300 for idle shrink; P99≥1200 overriding even high queue;
+  queue≥queue-high, CPU<700, P99≤1000 for growth. Input/scaled EWMAs
+  not confused. Test immediately below/equal/immediately above values.
+- Inclusive dwell; first candidate, repetition, direction
+  change, intermediate hold, gap, pending reset continuity. After
+  command, new dwell required. No implicit action at first
+  sample without already observed dwell.
+- AIMD: +1, floor(3×target/4), including rounding, maximum saturation,
+  minimum clamp. At bounds, hold result without false grow/shrink command.
+  Target never outside configured range.
+- Actual differs from target: EWMAs updated, target unchanged/pending,
+  even with many samples/reversed pressure. Later target
+  acknowledgment restarts dwell. Pending growth with degraded P99
+  stays pending: fixture explicitly shows limit,
+  without claiming absent revocation.
+- Seven-value getter before/after samples, rejections, commands; no
+  foreign-owner access. Second real thread for owner rejection
+  on update/getter; deadlines/synchronization harness
+  only. Controllers on different threads share no local state.
+- Finite traces with abrupt load reversal, oscillation around
+  thresholds, prolonged missing samples, delayed actuation. Independent
+  oracle for target, outcome, sensors, candidate, dwell. Real-system
+  stability not inferred from synthetic traces.
+- Checked private-representation invariants: target outside
+  minimum..maximum, dwell origin beyond last tick; quiescent
+  injections preserved without repair. Unexpected private direction
+  rejected by AIMD helper. Slot domains protected by types/
+  factory, without promising every arbitrary-corruption detection.
+  Typed diagnostics/ordinary rejections distinguishable; every new branch in
+  coverage denominator.
 
-Una prima e una seconda lettura della modifica confrontano sorgenti e
-contratto; l'inventario conserva predicati scalari, decisioni composte,
-precondizioni, postcondizioni ed eventuali macro/delegati. Le due letture
-sono agenti automatici, non una certificazione o indipendenza umana.
+<a id="analisi-copertura-e-misura"></a>
 
-La copertura include tutti i file del package, compresi package e helper,
-senza attribuire al nuovo componente rami dei vecchi worker. Conservare
-rapporti nativi e HTML, denominatori e identità di tutti i percorsi mancanti,
-senza esclusioni implicite. Confrontare la misura con il minimo C3 del 95%
-per istruzioni e rami; `sb-cover` non attesta MC/DC. Un'eventuale lacuna
-resta dichiarata, non eliminata dal denominatore.
+## Analysis, coverage, measurement
 
-La misura locale del percorso normale esclude factory, startup e GC e
-usa controllore, input, target ed oracolo preallocati. Warmup e cinque
-campioni bounded conservano heap, tick grezzi e risultato osservato;
-coprire aggiornamento inizializzato, hold, pending e azioni applicate dal
-solo harness. Lo strumento C4 deve rilevare heap positivo e risultato errato
-e indicare un clock sotto risoluzione; compilazione e self-test sono conservati.
-Le misure riguardano questo calcolo, non un pool reale o i target del motore.
+Compilation without warnings/style-warnings, safety 3, type declarations,
+read-only slots where appropriate, docstrings, REQ/OWNER/SHARED comments.
+Check functions within 60 lines, bounded complexity, no hidden loops/
+waits, no time source read by component, no shared
+per-request update. Policy operates only within barriers
+that change no C1/C2 data, obligations, leases.
 
-Il driver `tools/pool-controller-bench.lisp` fissa warmup 128 e cinque
-campioni da 4096 cicli. Ogni ciclo contiene 160 update/getter del controllore
-principale, con 80 input di coda alta e 80 di coda vuota, più un update/getter
-pending e uno hold su due controllori privati distinti: 162 passi per ciclo.
-CPU e P99 sono costanti nella trace principale; l'oracolo startup calcola
-EWMA, target, candidato e origine della permanenza. I casi P99 e le soglie
-restano anche nei vettori attesi dei test, senza inferire esplorazione
-esaustiva della macchina a stati.
+First/second change readings compare sources/contract;
+inventory retains scalar predicates, compound decisions,
+preconditions, postconditions, any macros/delegates. Both readings
+are automated agents, not certification or human independence.
 
-Build e test mirati precedono il controllo generale sul codice congelato.
-Ogni campagna usa `tools/record-command.lisp` con argv, ambiente, output,
-errori e snapshot iniziale/finale; i tentativi falliti sono conservati.
-Cache e copie congelate separano i test dagli altri lavori nel repository.
-Byte originali e SHA degli artefatti pubblicati sono verificati; nessun
-output mancante è ricostruito come se provenisse dal processo iniziale.
+Coverage includes every package file, including package/helpers,
+without attributing old-worker branches to new component. Preserve
+native/HTML reports, denominators, identities of all missing paths,
+without implicit exclusions. Compare with C3 minimum 95%
+statements/branches; `sb-cover` does not establish MC/DC. Any gap
+remains declared, not removed from denominator.
 
-I [risultati](controllore-pool-risultati.md) devono distinguere prove eseguite,
-limiti e lavoro residuo. La [lettura del codice](controllore-pool-revisione.md)
-rimane distinta dai record dei processi e dalle misure.
-RSK-12 resta aperto su sensori, feedback reale, ritardo dell'attuatore,
-stabilità e taratura. Pool vivo, park/wake, admission, retirement, shutdown,
-I/O, compaction e coordinatore Archivio non sono inclusi; né i gate delle
-fasi né gli stati `progettato` dei requisiti vengono chiusi dalla campagna.
+Local normal-path measurement excludes factory/startup/GC,
+uses preallocated controller, inputs, targets, oracle. Warmup/five
+bounded samples preserve heap, raw ticks, observed result;
+cover initialized updates, hold, pending, actions applied by harness
+only. C4 tool must detect positive heap/wrong result,
+report below-resolution clock; compilation/self-tests preserved.
+Measurements concern calculation, not real pool/engine targets.
 
-## Chiusura del metodo prima della campagna congelata
+Driver `tools/pool-controller-bench.lisp` fixes warmup 128, five
+samples of 4096 cycles. Each cycle contains 160 main-controller update/getter
+pairs, 80 high-queue inputs/80 empty-queue inputs, plus one pending update/getter
+and one hold on two separate private controllers: 162 steps per cycle.
+CPU/P99 constant in main trace; startup oracle calculates
+EWMA, target, candidate, dwell origin. P99 cases/thresholds
+also in test expected vectors without inferring exhaustive
+state-machine exploration.
 
-I tentativi preliminari hanno richiesto checkpoint SAVE-COVERAGE dopo
-ciascun caricamento per conservare anche le esecuzioni di startup, prima
-che i componenti temporanei siano recuperati dal GC. Il conteggio finale
-include ancora tutti i record nativi, senza esclusioni né modifiche dei
-segni. Il confronto EQUALP generato è nel denominatore: due controllori
-identici e differenze isolate in period, dwell, queue-high, CPU e P99
-esercitano entrambi gli esiti dei suoi confronti. La suite finale ha
-23 prove; le fixture da 20 prove lette nella prima revisione sono
-conservate come preimmagine. I sei sorgenti di prodotto sono invariati.
+Build/targeted tests precede global frozen-code check.
+Each campaign uses `tools/record-command.lisp` with argv, environment, outputs,
+errors, initial/final snapshots; failed attempts preserved.
+Caches/frozen copies separate tests from other repository work.
+Original bytes/SHAs of published artifacts verified; no missing
+output reconstructed as original process output.
+
+[Results](controllore-pool-risultati.md) must distinguish executed tests,
+limits, remaining work. [Code reading](controllore-pool-revisione.md)
+separate from process records/measurements.
+RSK-12 open for sensors, real feedback, actuator delay,
+stability/tuning. Live pool, park/wake, admission, retirement, shutdown,
+I/O, compaction, Archivio coordinator excluded; neither phase
+gates nor requirement `progettato` states closed by campaign.
+
+<a id="chiusura-del-metodo-prima-della-campagna-congelata"></a>
+
+## Method closure before frozen campaign
+
+Preliminary attempts required SAVE-COVERAGE checkpoints after
+each load to preserve startup executions too, before temporary
+components collected by GC. Final count
+still includes all native records without exclusions/mark
+changes. Generated EQUALP comparison in denominator: two identical
+controllers and isolated differences in period, dwell, queue-high, CPU, P99
+exercise both comparison outcomes. Final suite
+23 tests; 20-test fixtures read in first review
+preserved as preimage. Six product sources unchanged.

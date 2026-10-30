@@ -1,153 +1,165 @@
-# ID del nuovo segmento dall'inventario della directory
+<a id="id-del-nuovo-segmento-dallinventario-della-directory"></a>
 
-> Metodo preregistrato il 2026-10-16, prima dell'implementazione.
-> Incremento C1 di composizione; nessuna chiusura del Recovery Manager.
+# New-segment ID from directory inventory
 
-## Contratto
+> Method preregistered on 2026-10-16 before implementation.
+> C1 composition increment; no Recovery Manager closure.
 
-`scegli-id-segmento-recovery-directory(manifest, directory, …)` restituisce
-tre valori: proposta ID u64, high-water successivo u64 e piano posseduto.
-Una sola chiamata a `pianifica-riconciliazione-directory` raccoglie tutti i
-nomi fino a EOF, verifica nomi canonici e identità e costruisce il piano.
-La scelta riusa quel piano; non enumera nuovamente il namespace e non
-ricostruisce descrittori fisici a partire dalle azioni di riconciliazione.
+<a id="contratto"></a>
 
-La selezione dal piano viene estratta in un helper privato comune anche
-all'API con inventario logico. Restano invariati high-water, esclusione di
-ogni ID osservato, controlli u64 e condizioni documentate nel
-[contratto della proposta ID](id-segmento-recovery.md).
+## Contract
 
-I cinque budget mantengono nomi, default e semantica dell'adattatore:
+`scegli-id-segmento-recovery-directory(manifest, directory, …)` returns
+three values: proposed u64 ID, next u64 high-water, owned plan.
+One `pianifica-riconciliazione-directory` call collects all
+names through EOF, checks canonical names/identities, builds plan.
+Choice reuses plan; neither reenumerates namespace nor
+reconstructs physical descriptors from reconciliation actions.
+
+Plan selection extracted into private helper also shared
+with logical-inventory API. High-water, exclusion of
+every observed ID, u64 checks, conditions documented in
+[ID-proposal contract](id-segmento-recovery.md) unchanged.
+
+Five budgets retain adapter names/defaults/semantics:
 `max-files`, `max-segmenti`, `max-names`, `max-total-name-bytes`,
-`max-name-bytes`. Anche i nomi ignorati consumano budget I/O. Configurazione,
-capacità, inventario, nomi e identità vengono verificati prima della scelta;
-un errore originale si propaga senza ID o piano parziali.
+`max-name-bytes`. Even ignored names consume I/O budget. Configuration,
+capabilities, inventory, names, identities checked before choice;
+original error propagates without partial ID/plan.
 
-Il controller possiede manifest e namespace esclusivi/stabili fino alla
-creazione esclusiva del nuovo temporaneo. La directory è presa in prestito:
-nessuna chiusura del parent, scrittura, rinomina, rimozione, lettura dei
-segmenti o prenotazione. `:ready` resta disponibilità dei nomi, non ammissione
-del traffico o verifica di header/CRC. Stessi input possono riproporre lo
-stesso ID. Nessun nuovo lock, thread o stato condiviso fra Serie.
+Controller owns exclusive/stable manifest/namespace until
+exclusive new-temporary creation. Directory borrowed:
+no parent close, write, rename, removal, segment read,
+or reservation. `:ready` remains name availability, not traffic
+admission/header/CRC verification. Same inputs may propose
+same ID. No new locks/threads/shared state between Serie.
 
-Costo: una enumerazione e il planner esistente, poi selezione O(1)
-dall'ultima entry ordinata. Allocazioni nel percorso freddo di apertura;
-nessuna misura di RSS, throughput o scalabilità prevista.
+Cost: one enumeration/existing planner, then O(1) selection
+from final sorted entry. Cold opening-path allocation;
+no RSS/throughput/scaling measurement planned.
 
-## Verifica preregistrata
+<a id="verifica-preregistrata"></a>
 
-- 1.024 inventari piccoli, tre ordini e v1/v2, confrontati con l'oracolo
-  indipendente a ricerca finita: 6.144 proposte, un'enumerazione per chiamata.
-- High-water con buchi, temporanei orfani, definitivi sconosciuti, ID zero,
-  bit 63 e frontiere u64; piano e salute identici al modello canonico.
-- Cinque budget esatti e insufficienti; argomenti errati prima dell'I/O,
-  EOF incompleto, nomi malformati, alias, errori originali e parent chiuso.
-- Ownership dei nomi/piani, riuso della directory e quattro Serie private
-  concorrenti con gate e attese finite nel test.
-- File nativi byte per byte immutati dopo successo e rifiuto; directory
-  aperta riutilizzabile, ancoraggio al FD anche dopo rinomina del parent.
-- Copertura nativa di helper e nuova API, denominatore grezzo conservato;
-  nessuna esclusione o estensione del risultato al planner/dipendenze.
-- Mutazioni isolate: undici operatori della selezione già esistenti,
-  perdita di ciascuno dei cinque budget e seconda enumerazione. Soglia:
-  tutti i mutanti compilabili rilevati; errori di compilazione non sono kill.
-- Due letture dell'autore con lista C1, indipendenza dichiarata; compilazione
-  rigorosa, prova verticale e `make check` registrati con tutti i tentativi.
+## Preregistered verification
 
-## Decisioni e prova verticale
+- 1,024 small inventories, three orders/v1/v2, compared with independent
+  finite-search oracle: 6,144 proposals, one enumeration per call.
+- High-water gaps, orphan temporary files, unknown finals, zero ID,
+  bit 63/u64 frontiers; plan/health identical to canonical model.
+- Five exact/insufficient budgets; wrong arguments before I/O,
+  incomplete EOF, malformed names, aliases, original errors, closed parent.
+- Name/plan ownership, directory reuse, four concurrent private Serie
+  with gates/finite test waits.
+- Native files bytewise unchanged after success/rejection; open directory
+  reusable, FD anchoring even after parent rename.
+- Native helper/new-API coverage, raw denominator preserved;
+  no exclusion or result extension to planner/dependencies.
+- Isolated mutations: eleven existing selection operators,
+  loss of each of five budgets, second enumeration. Threshold:
+  all compilable mutants detected; compilation errors not kills.
+- Two author C1-checklist readings, independence declared; strict
+  compilation, vertical test, `make check` recorded with every attempt.
 
-RID-D01/D02 e RID-G01/G02/G03 conservano le coppie di indipendenza del
-contratto ID. La nuova API delega le decisioni IND-D01…IND-D10 al
-[contratto dell'inventario directory](inventario-directory-metodo.md), senza
-nuovi predicati composti o reinterpretazioni degli errori.
+<a id="decisioni-e-prova-verticale"></a>
 
-La fixture verticale adotta nomi canonici a sedici cifre esadecimali con
-`.seg`/`.seg.tmp` e usa direttamente la nuova API. Il limite di otto ID
-resta un budget della fixture, mentre la raccolta dei nomi passa al prodotto.
-Si conservano 16 scenari positivi, due negativi, 71 processi e 26 SIGKILL,
-gli attesi costanti di dati/CSN e il confronto dei segmenti originali.
-Il caso del checkpoint preparato conserva un temporaneo orfano che deve
-essere saltato. Replay dell'indice, ordine del recovery e base CSN della
-fixture restano C4; non vengono qualificati dal collegamento dell'inventario.
+## Decisions and vertical test
 
-Requisiti: REQ-REC-001/002, REQ-FOR-003, REQ-AFF-001/004/008/018,
-REQ-VAL-001. Invarianti coinvolti: INV-A7/A8/A9/A10/A11 e INV-P6.
+RID-D01/D02, RID-G01/G02/G03 retain ID-contract
+independence pairs. New API delegates IND-D01…IND-D10 decisions to
+[directory-inventory contract](inventario-directory-metodo.md), without
+new compound predicates/error reinterpretation.
 
-## Due letture C1 prima delle esecuzioni
+Vertical fixture adopts canonical sixteen-hex-digit names,
+`.seg`/`.seg.tmp`, uses new API directly. Eight-ID limit
+remains fixture budget; name collection moves into product.
+Preserve 16 positive scenarios, two negatives, 71 processes, 26 SIGKILLs,
+fixed data/CSN expected values, original-segment comparison.
+Prepared-checkpoint case retains orphan temporary file to
+skip. Fixture index replay, recovery order, CSN base
+remain C4; inventory connection does not qualify them.
 
-Lettura 1 dell'autore: contratto, responsabilità delle dipendenze, frontiere
-u64 e propagazione dei cinque budget. Lettura 2 dell'autore: diff, oracoli,
-FI/callback, limite delle attese e ownership. Non sono letture indipendenti;
-la revisione indipendente e la qualifica complessiva restano aperte.
+Requirements: REQ-REC-001/002, REQ-FOR-003, REQ-AFF-001/004/008/018,
+REQ-VAL-001. Invariants: INV-A7/A8/A9/A10/A11, INV-P6.
 
-| Lista C1 | Esito delle letture del sorgente |
+<a id="due-letture-c1-prima-delle-esecuzioni"></a>
+
+## Two C1 readings before execution
+
+Author reading 1: contract, dependency responsibilities, u64
+frontiers, propagation of five budgets. Author reading 2: diff, oracles,
+FI/callbacks, wait bounds, ownership. Not independent readings;
+independent review/overall qualification remain open.
+
+| C1 checklist | Source-reading outcome |
 |---|---|
-| 1. Requisiti e ADR | Commenti tracciati, ADR-0040; metodo nel commit preregistrato |
-| 2. Invarianti | Selezione identica, piani privati, nessuna prenotazione o mutazione |
-| 3. Errori | Condizioni originali delegate; nessuna traduzione o risultato parziale |
-| 4. Limiti | Un inventario limitato da cinque budget; scelta senza ciclo aggiuntivo |
-| 5. Allocazioni | Percorso freddo; nessun nuovo hot path o pretesa prestazionale |
-| 6. Uscita | Tre valori; guardie comuni per high-water, freschezza e successore |
-| 7. Decisioni | RID e IND riusate; nessuna nuova decisione composta |
-| 8. Proprietà | Parent prestato e controller esclusivo; piani e fixture privati |
-| 9. Tracciabilità/check | Requisiti esistenti; controllo completo e integrazioni registrati nei risultati sotto |
-| 10. Deviazioni | Nessuna esclusione prevista; denominatore nativo conservato |
-| 11. Fra Serie | Nessun nuovo lock, thread, contatore o coordinamento condiviso |
-| 12. Atomicità | Nessun nuovo effetto durevole; creazione esclusiva/EDIT restano al caller |
+| 1. Requirements and ADRs | Traced comments, ADR-0040; method in preregistered commit |
+| 2. Invariants | Identical selection, private plans, no reservation/mutation |
+| 3. Errors | Delegated original conditions; no translation/partial result |
+| 4. Bounds | Inventory bounded by five budgets; choice without extra loop |
+| 5. Allocations | Cold path; no new hot path/performance claim |
+| 6. Output | Three values; shared high-water/freshness/successor guards |
+| 7. Decisions | RID/IND reused; no new compound decision |
+| 8. Ownership | Borrowed parent/exclusive controller; private plans/fixtures |
+| 9. Traceability/checks | Existing requirements; full check/integrations in results below |
+| 10. Deviations | No exclusion planned; native denominator preserved |
+| 11. Between Serie | No new shared lock/thread/counter/coordination |
+| 12. Atomicity | No new durable effect; exclusive creation/EDIT caller's responsibility |
 
-## Risultati del 2026-10-16
+<a id="risultati-del-2026-10-16"></a>
 
-La [raccolta originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-recovery-directory-id/README.md)
-conserva metodo preregistrato, varianti, nove registri di comando, copertura,
-log dei mutanti e originali degli spike. Il primo tentativo è fallito in
-compilazione per una parentesi in eccesso nel nuovo test high-water, corretta
-nel commit successivo; non ha prodotto una misura di copertura valida.
+## Results of 2026-10-16
 
-La suite recovery passa con **154 test**, dieci dei quali nuovi. L'oracolo
-indipendente confronta 6.144 proposte e tutti i piani, contando una sola
-enumerazione per chiamata. Sono esercitati u64, cinque budget, input errati,
-errori originali, ownership e 64 chiamate su quattro backend iniettati privati.
-Le prove native mantengono byte e capacità, riusano la directory e distinguono
-il FD originale da un namespace sostitutivo dopo la rinomina del parent.
+[Original collection](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-recovery-directory-id/README.md)
+preserves preregistered method, variants, nine command records, coverage,
+mutant logs, original spikes. First attempt failed compilation
+from extra parenthesis in new high-water test, corrected
+in next commit; produced no valid coverage measurement.
 
-La campagna di mutazione ha baseline riuscita e **17/17 mutanti rilevati**,
-nessun errore di compilazione, sopravvissuto o guasto worker. Gli ultimi sei
-mutanti alterano ciascuno dei cinque budget o aggiungono una enumerazione;
-falliscono nei test dedicati di budget o nel modello a enumerazione unica.
-Quattro processi isolati al massimo, con copie e cache private.
+Recovery suite passes **154 tests**, ten new. Independent
+oracle compares 6,144 proposals/all plans, counts one
+enumeration per call. Exercises u64, five budgets, wrong inputs,
+original errors, ownership, 64 calls across four private injected backends.
+Native tests preserve bytes/capabilities, reuse directory, distinguish
+original FD from replacement namespace after parent rename.
 
-Copertura nativa: `inventory-id.lisp` **74/81 forme e 10/10 rami**;
-`inventory-directory-id.lisp` **18/26 forme e 0/0 rami**. Totale **92/107
-forme e 10/10 alternative**, senza esclusioni. Otto forme di package/declaim
-e sette inizializzatori keyword restano non marcati, anche quando i default
-sono esercitati dalle chiamate senza opzioni. Il lettore C4 con self-test
-confronta dati nativi e HTML; il denominatore grezzo resta conservato.
-La misura non viene estesa al planner o alle dipendenze I/O.
+Mutation campaign successful baseline, **17/17 mutants detected**,
+no compilation errors, survivors, worker faults. Final six
+mutants change each of five budgets or add enumeration;
+fail dedicated budget tests/single-enumeration model.
+At most four isolated processes, private copies/caches.
 
-La prova verticale con nomi canonici passa: 16 scenari positivi, due negativi,
-71 processi e 26 SIGKILL. Il checkpoint preparato conserva il temporaneo
-orfano e la nuova API ne supera l'ID; i segmenti originali restano immutati.
+Native coverage: `inventory-id.lisp` **74/81 forms, 10/10 branches**;
+`inventory-directory-id.lisp` **18/26 forms, 0/0 branches**. Total **92/107
+forms, 10/10 alternatives**, no exclusions. Eight package/declaim forms
+and seven keyword initializers unmarked even when defaults
+exercised by optionless calls. C4 reader with self-test
+compares native data/HTML; raw denominator preserved.
+Measurement not extended to planner/I/O dependencies.
 
-`make check` passa sul commit `4ebde6fc9ad1395b94e614049593ad4821079319`:
-1.780 test nominati, due smoke, controlli statici/documentali, conservazione
-e dieci spike. Dopo l'integrazione del piano CSN dell'Archivio, l'intera suite
-e i controlli sorgenti/documentali passano nuovamente su `4031944b`, con 1.780
-test e 260 file di prodotto senza violazioni; anche il controllo degli
-archivi aggiornati è riuscito. I file di questa selezione e i suoi test
-restano identici alla versione misurata.
+Canonical-name vertical test passes: 16 positive scenarios, two negatives,
+71 processes, 26 SIGKILLs. Prepared checkpoint retains orphan
+temporary, new API skips its ID; original segments unchanged.
 
-L'ulteriore correzione CI del clock nella fixture CBOR non cambia codice di
-prodotto: compilazione rigorosa, suite CBOR interessata e controlli
-documentali sono ripetuti su `4c7a0ca7`. I registri restano distinti, tutti
-STABLE; gli aggiornamenti finali dei risultati non cambiano codice o test.
-Queste prove non chiudono la qualifica indipendente, il Recovery Manager o
-le verifiche dedicate dei calcoli CSN dell'Archivio.
+`make check` passes commit `4ebde6fc9ad1395b94e614049593ad4821079319`:
+1,780 named tests, two smoke tests, static/documentation checks, preservation,
+ten spikes. After Archivio CSN-plan integration, entire suite/
+source/documentation checks pass again on `4031944b`, 1,780
+tests, 260 violation-free product files; updated-archive
+check also successful. Selection files/tests
+identical to measured version.
 
-Il push successivo ha trovato nuove modifiche CLOSED su `main`, integrate
-in `94e2abd6`. La [verifica aggiuntiva](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-recovery-directory-id-closed/README.md)
-registra nuovamente l'intera suite e i controlli sorgenti/documentali:
-**1.849 test nominati**, 260 file di prodotto senza violazioni, tracciabilità
-e link riusciti. Passa anche il self-test dello strumento di copertura
-aggiornato per CLOSED. I file della selezione ID e i suoi test restano quelli
-misurati nel commit `4ebde6fc`; nessuna copertura viene trasferita ai nuovi
-percorsi CLOSED da questo risultato.
+Further CI-clock correction in CBOR fixture changes no product
+code: strict compilation, affected CBOR suite, documentation
+checks repeated on `4c7a0ca7`. Records distinct, all
+STABLE; final result updates change no code/tests.
+Tests do not close independent qualification, Recovery Manager,
+or dedicated Archivio CSN-calculation verification.
+
+Later push found new CLOSED changes on `main`, integrated
+in `94e2abd6`. [Additional verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-recovery-directory-id-closed/README.md)
+records full suite/source/documentation checks again:
+**1,849 named tests**, 260 violation-free product files, successful traceability/
+links. Updated CLOSED coverage-tool self-test also passes.
+ID-selection files/tests remain those measured at
+`4ebde6fc`; result transfers no coverage to new
+CLOSED paths.

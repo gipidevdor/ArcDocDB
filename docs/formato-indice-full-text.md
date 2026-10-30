@@ -1,182 +1,194 @@
-# Formato binario dell'indice full text
+<a id="formato-binario-dellindice-full-text"></a>
 
-> **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Formato di progetto
-> `.idx` versione 2, tipo full text 5. Disponibile il [codec di prodotto](implementazione/full-text-codec.md)
-> per le sei sezioni e la verifica locale rispetto al descrittore; pubblicazione durevole
-> e qualifica del motore restano da completare.
-> Completa la famiglia descritta in [formati-su-disco.md](formati-su-disco.md#file-indice).
+# Full-text index binary format
 
-Gli interi a larghezza fissa sono unsigned little-endian. Intervalli di byte e array
-sono semiaperti; le somme si verificano prima dell'uso. Gli offset sono assoluti nel file,
-eccetto quelli esplicitamente relativi a una sezione. I record documentali mantengono
-il loro formato v1/v2: la versione del file indice è indipendente.
+> **Decided ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Design format
+> `.idx` version 2, full-text type 5. The [product codec](implementazione/full-text-codec.md)
+> is available for the six sections and local verification against the descriptor;
+> durable publication and engine qualification remain incomplete.
+> Completes the family described in [formati-su-disco.md](formati-su-disco.md#file-indice).
 
-## Header e directory
+Fixed-width integers are unsigned little-endian. Byte and array ranges are half-open;
+sums are checked before use. Offsets are absolute within the file except where explicitly
+section-relative. Document records retain their v1/v2 format: index-file versioning
+is independent.
 
-| Offset | Tipo | Campo e vincolo |
+<a id="header-e-directory"></a>
+
+## Header and directory
+
+| Offset | Type | Field and constraint |
 |---|---|---|
-| 0 | `char[8]` | magic ASCII `ARCDIDX1` |
-| 8 | `u16` | versione del file indice: 2 |
-| 10 | `u16` | tipo: 5, riservato al full text |
-| 12 | `u16` | numero di sezioni: 6 |
-| 14 | `u16` | flag: zero |
-| 16 | `byte[16]` | identità autorevole della Serie |
-| 32 | `u64` | segment-id, confrontato con manifest e hint |
-| 40 | `u64` | lunghezza esatta del file, compreso footer |
-| 48 | `u64` | offset della directory: 64 |
-| 56 | `u32` | CRC32C dei byte `[0,56)` |
-| 60 | `u32` | riservato zero, verificato separatamente |
+| 0 | `char[8]` | ASCII magic `ARCDIDX1` |
+| 8 | `u16` | index-file version: 2 |
+| 10 | `u16` | type: 5, reserved for full text |
+| 12 | `u16` | section count: 6 |
+| 14 | `u16` | flags: zero |
+| 16 | `byte[16]` | authoritative Serie identity |
+| 32 | `u64` | segment-id, compared with manifest and hint |
+| 40 | `u64` | exact file length, including footer |
+| 48 | `u64` | directory offset: 64 |
+| 56 | `u32` | CRC32C of bytes `[0,56)` |
+| 60 | `u32` | reserved zero, checked separately |
 
-La directory occupa `[64,208)`: sei entry da 24 byte, ordinate per tipo di sezione.
-Ogni entry contiene `u16 tipo`, `u16 flag=0`, `u32 riservato=0`, `u64 offset`,
-`u64 lunghezza`. Non esistono sezioni opzionali nella versione 2/type 5.
+The directory occupies `[64,208)`: six 24-byte entries ordered by section type.
+Each entry contains `u16 tipo`, `u16 flag=0`, `u32 riservato=0`, `u64 offset`,
+`u64 lunghezza`. There are no optional sections in version 2/type 5.
 
-| Tipo | Sezione | Struttura |
+| Type | Section | Structure |
 |---|---|---|
-| 1 | META | un solo array CBOR, descritto sotto |
-| 2 | DICT | entry da 32 byte, una per coppia distinta campo/termine |
-| 3 | TERMS | byte UTF-8 dei termini, senza terminatore |
-| 4 | POSTINGS | entry da 16 byte |
-| 5 | POSITIONS | array di `u32` |
-| 6 | LENGTHS | entry da 16 byte per riga/campo presente |
+| 1 | META | a single CBOR array, described below |
+| 2 | DICT | 32-byte entries, one per distinct field/term pair |
+| 3 | TERMS | UTF-8 term bytes, without terminator |
+| 4 | POSTINGS | 16-byte entries |
+| 5 | POSITIONS | `u32` array |
+| 6 | LENGTHS | 16-byte entry per present row/field |
 
-Le sezioni sono in quell'ordine. Il primo offset è 208; ogni offset successivo è
-`align8(fine della sezione precedente)`. Padding zero, massimo sette byte fra sezioni.
-Una sezione vuota ha lunghezza zero e può condividere l'offset con quella successiva.
-Non sono ammessi buchi ulteriori, sovrapposizioni o byte finali sconosciuti.
+Sections occur in that order. The first offset is 208; each subsequent offset is
+`align8(end of previous section)`. Zero padding, at most seven bytes between sections.
+An empty section has zero length and may share its offset with the next.
+No additional gaps, overlaps, or unknown trailing bytes are allowed.
 
-Il footer è un `u32 CRC32C` immediatamente dopo LENGTHS, senza padding finale: copre
-tutti i byte `[64,file-length-4)`, directory e padding inclusi. Il file minimo contiene
-comunque META, directory e footer; un indice privo di termini è valido se la copertura
-del segmento e i conteggi sono validi. Il limite effettivo del file è configurato,
-default 16 GiB, sempre entro l'intervallo positivo di `off_t` della piattaforma.
+The footer is a `u32 CRC32C` immediately after LENGTHS, without final padding: it covers
+all bytes `[64,file-length-4)`, including directory and padding. Even the minimum file
+contains META, directory, and footer; a term-free index is valid if segment coverage
+and counts are valid. The effective file limit is configured, default 16 GiB,
+always within the platform's positive `off_t` range.
 
 ## META
 
-Un array CBOR definito, di esattamente 12 elementi. Array e stringhe hanno lunghezza
-definita; interi e testate sono minimi; niente mappe, tag, float o elementi aggiuntivi.
-Il decoder applica anche il budget di 64 KiB della sezione prima di allocare.
+One definite-length CBOR array of exactly 12 elements. Arrays and strings have definite
+lengths; integers and headers are minimal; no maps, tags, floats, or extra elements.
+The decoder also applies the section's 64 KiB budget before allocation.
 
-| Indice | Elemento |
+| Index | Element |
 |---|---|
-| 0 | `index-id`, intero positivo entro `u64` |
-| 1 | `generation-id`, intero positivo entro `u64` |
-| 2 | `contract-version`, intero positivo entro `u64` |
-| 3 | lunghezza valida del segmento sorgente, entro `u64` |
-| 4 | lunghezza esatta in byte dell'hint associato, entro `u64` |
-| 5 | CRC32C di **tutti** i byte dell'hint associato, entro `u32` |
-| 6 | numero di righe dell'hint, entro `2^32` |
-| 7 | stringa di profilo: `unicode-word-18.0.0-v1` |
-| 8 | revisione del profilo: intero 1 |
-| 9 | array dei campi: ciascuno è `[field-id, alias, [chiavi del percorso]]`, ordinato per field-id |
-| 10 | limiti di analisi: `[input-bytes, term-bytes, tokens-per-document, prepared-bytes, analysis-work]`, cinque interi positivi entro `u64` |
-| 11 | numero di record PUT committed nel prefisso del segmento, entro il numero di righe |
+| 0 | `index-id`, positive integer within `u64` |
+| 1 | `generation-id`, positive integer within `u64` |
+| 2 | `contract-version`, positive integer within `u64` |
+| 3 | source segment valid length, within `u64` |
+| 4 | associated hint's exact byte length, within `u64` |
+| 5 | CRC32C of **all** associated hint bytes, within `u32` |
+| 6 | hint row count, within `2^32` |
+| 7 | profile string: `unicode-word-18.0.0-v1` |
+| 8 | profile revision: integer 1 |
+| 9 | field array: each is `[field-id, alias, [chiavi del percorso]]`, ordered by field-id |
+| 10 | analysis limits: `[input-bytes, term-bytes, tokens-per-document, prepared-bytes, analysis-work]`, five positive integers within `u64` |
+| 11 | committed PUT record count in the segment prefix, within row count |
 
-ID, configurazione dei campi, profilo e limiti si confrontano integralmente con il
-descrittore della generazione attesa. Non basta un hash della configurazione.
-Lunghezza valida e righe devono coincidere con manifest/hint verificati. Il CRC
-dell'hint lega l'ordinale ai byte esatti di quella mappa: un hint ricostruito con ordine
-diverso richiede la ricostruzione dell'indice full text. La verifica dell'hint stesso
-e dei documenti resta obbligatoria; il suo CRC non certifica il contenuto testuale.
+IDs, field configuration, profile, and limits are compared in full with the expected
+generation descriptor. A configuration hash is insufficient.
+Valid length and rows must match verified manifest/hint. The hint CRC binds ordinals
+to the exact bytes of that map: rebuilding a hint with a different order requires
+rebuilding the full-text index. Verification of the hint itself and documents remains
+mandatory; its CRC does not certify text contents.
 
-Il build considera ogni PUT committed nel prefisso, anche storico; non indicizza
-tombstone, OUTCOME o prepared abortiti. Un prepared committed usa il CSN autorevole
-risolto secondo il contratto del segmento. Campi assenti non hanno entry LENGTHS;
-campi presenti ma vuoti hanno entry con zero token. Nessun termine è comunque un
-caso diverso da copertura sconosciuta o build incompleto.
+Build considers every committed PUT in the prefix, including historical ones;
+it does not index tombstones, OUTCOME, or aborted prepared records. A committed prepared
+record uses the authoritative CSN resolved under the segment contract. Missing fields
+have no LENGTHS entry; present but empty fields have a zero-token entry.
+No terms is still distinct from unknown coverage or an incomplete build.
 
-## Dizionario e posting
+<a id="dizionario-e-posting"></a>
 
-Entry DICT da 32 byte:
+## Dictionary and postings
 
-| Offset relativo | Tipo | Campo |
+32-byte DICT entry:
+
+| Relative offset | Type | Field |
 |---|---|---|
-| 0 | `u16` | field-id dichiarato |
-| 2 | `u16` | riservato zero |
-| 4 | `u32` | lunghezza del termine in byte, positiva ed entro il limite dichiarato |
-| 8 | `u64` | offset del termine relativo all'inizio di TERMS |
-| 16 | `u64` | indice della prima entry in POSTINGS |
-| 24 | `u64` | numero positivo di posting |
+| 0 | `u16` | declared field-id |
+| 2 | `u16` | reserved zero |
+| 4 | `u32` | term byte length, positive and within declared limit |
+| 8 | `u64` | term offset relative to TERMS start |
+| 16 | `u64` | first entry index in POSTINGS |
+| 24 | `u64` | positive posting count |
 
-DICT è strettamente ordinato per field-id e byte UTF-8 del termine, senza locale.
-TERMS contiene le stringhe in quello stesso ordine, contigue e senza condivisione
-di intervalli. Il primo offset è zero; la somma delle lunghezze è la lunghezza di TERMS.
-Ogni termine è UTF-8 valido e deve già essere l'output del profilo dichiarato.
+DICT is strictly ordered by field-id and UTF-8 term bytes, without locale.
+TERMS contains strings in that same order, contiguous and without shared ranges.
+The first offset is zero; the sum of lengths is the TERMS length.
+Every term is valid UTF-8 and must already be output of the declared profile.
 
-Entry POSTINGS da 16 byte: `u32 row`, `u32 frequency`, `u64 first-position`.
-`row` è un ordinale zero-based nell'hint; `frequency` è positiva; `first-position`
-è un indice nell'array POSITIONS, non un offset in byte. Ogni lista ha righe strettamente
-crescenti, senza duplicati. Le liste seguono l'ordine DICT, sono contigue e partizionano
-l'intera sezione POSTINGS. `frequency` indica quante entry POSITIONS appartengono al
-posting; le relative liste seguono lo stesso ordine e partizionano POSITIONS.
+16-byte POSTINGS entry: `u32 row`, `u32 frequency`, `u64 first-position`.
+`row` is a zero-based hint ordinal; `frequency` is positive; `first-position`
+is an index into the POSITIONS array, not a byte offset. Each list has strictly
+increasing rows without duplicates. Lists follow DICT order, are contiguous, and
+partition the whole POSTINGS section. `frequency` gives the number of POSITIONS entries
+belonging to the posting; their lists follow the same order and partition POSITIONS.
 
-Entry LENGTHS da 16 byte: `u32 row`, `u16 field-id`, `u16 riservato=0`,
-`u32 token-count`, `u32 riservato=0`. Ordine stretto per `(row, field-id)`, senza
-duplicati. Ogni posting trova l'entry della propria riga/campo; ogni posizione è minore
-di `token-count` e le posizioni nel posting sono strettamente crescenti. La frequenza
-coincide con la lunghezza della lista di posizioni. Per riga/campo la somma delle
-frequenze coincide con `token-count`; la verifica completa controlla anche che l'unione
-delle posizioni sia esattamente `[0,token-count)`, senza duplicati fra termini diversi.
+16-byte LENGTHS entry: `u32 row`, `u16 field-id`, `u16 riservato=0`,
+`u32 token-count`, `u32 riservato=0`. Strict `(row, field-id)` order, without
+duplicates. Every posting finds its row/field entry; every position is below
+`token-count` and positions within a posting strictly increase. Frequency matches
+the position-list length. Per row/field, summed frequencies match `token-count`;
+full verification also checks that the union of positions is exactly `[0,token-count)`,
+without duplicates across different terms.
 
-Nella versione iniziale non si usano delta encoding, varint, front-coding, Bloom o
-skip block. DICT e posting ordinati consentono ricerca binaria e intersezione degli
-intervalli; un'altra rappresentazione richiede una versione del formato esplicita.
+The initial version uses no delta encoding, varints, front coding, Bloom filters, or
+skip blocks. Sorted DICT and postings permit binary search and range intersection;
+another representation requires an explicit format version.
 
-## Validazione e ammissione
+<a id="validazione-e-ammissione"></a>
 
-Prima di esporre il file come copertura utilizzabile, il checker verifica lunghezze,
-CRC, identità, tipi/versioni, riservati, padding, sezioni esatte e conteggi. Verifica
-ordini, unicità, confini di ogni stringa/lista e legame con l'hint, inclusi row, CSN
-ed esiti committed. Questi controlli valgono anche se tutti i CRC sono corretti.
-Le lunghezze di DICT, POSTINGS, POSITIONS e LENGTHS devono essere rispettivamente
-multiple di 32, 16, 4 e 16; l'array META deve consumare l'intera propria sezione.
-La correttezza dei termini rispetto ai documenti richiede la verifica completa con
-rianalisi indipendente: un controllo del solo file non la dimostra.
+## Validation and admission
 
-Il lavoro è diviso in compiti e buffer limitati, senza allocazione per entry e senza
-I/O dal writer. Il budget viene verificato prima di acquisire memoria; se non basta,
-il file non è dichiarato pronto. Un file con CRC valido ma versione ignota produce
-`unsupported-format`; un'incoerenza riconosciuta produce `index-corrupt`.
+Before exposing the file as usable coverage, the checker verifies lengths, CRC,
+identity, types/versions, reserved fields, padding, exact sections, and counts.
+It verifies ordering, uniqueness, every string/list boundary, and hint binding,
+including rows, CSNs, and committed outcomes. These checks apply even if all CRCs are
+correct. DICT, POSTINGS, POSITIONS, and LENGTHS lengths must be multiples of
+32, 16, 4, and 16 respectively; META must consume its entire section.
+Correctness of terms relative to documents requires full verification with independent
+reanalysis: a file-only check does not establish it.
 
-I seguenti vincoli sono hard per questo formato: row entro `u32`, field-id entro `u16`,
-frequenze/token-count entro `u32`, sezioni entro `u64` e limiti I/O della piattaforma.
-La somma dei token per documento/indice è al massimo `2^32-1`, anche se si alzano i default.
-Nessuna moltiplicazione dei conteggi può traboccare prima del confronto con la sezione.
+Work is divided into bounded tasks and buffers, without per-entry allocation or writer
+I/O. Budget is checked before acquiring memory; if insufficient, the file is not
+declared ready. A valid-CRC file with an unknown version produces `unsupported-format`;
+a recognized inconsistency produces `index-corrupt`.
 
-## Limite superiore e rotazione
+These are hard format constraints: row within `u32`, field-id within `u16`,
+frequencies/token-count within `u32`, sections within `u64` and platform I/O limits.
+Summed tokens per document/index are at most `2^32-1`, even if defaults are raised.
+No count multiplication may overflow before comparison with its section.
 
-Per ogni documento e indice, l'analisi restituisce un limite superiore:
+<a id="limite-superiore-e-rotazione"></a>
+
+## Upper bound and rotation
+
+For every document and index, analysis returns an upper bound:
 
 ```
-U(documento) = 16 × campi presenti
-             + somma, per ogni (campo, termine) distinto nel documento,
-                 di (32 + byte UTF-8 del termine + 16)
-             + 4 × numero totale di token
+U(documento) = 16 × present fields
+             + sum, for every distinct (field, term) in the document,
+                 of (32 + term UTF-8 bytes + 16)
+             + 4 × total token count
 ```
 
-La somma di questi contributi, aggiunta a header/directory (208 byte), limite META,
-al massimo 35 byte di padding e footer (4 byte), è un limite superiore del file.
-La somma sovrastima il dizionario quando un termine compare in più documenti e quindi
-rimane conservativa. Input vuoti, PUT prepared e documenti poi aggiornati non autorizzano
-a ridurre la riserva senza una prova sull'esito: un abort risolto può liberarla, mentre
-le versioni committed ancora fisicamente presenti contano fino alla compaction.
+The sum of these contributions, plus header/directory (208 bytes), META limit,
+at most 35 padding bytes, and footer (4 bytes), is a file upper bound.
+The sum overestimates the dictionary when a term occurs in multiple documents and
+therefore remains conservative. Empty inputs, prepared PUTs, and subsequently updated
+documents do not authorize reducing the reservation without outcome proof: a resolved
+abort may release it, while committed versions still physically present count until compaction.
 
-M01 prenota questo costo per tutti gli indici prima dell'append/prepare. Un superamento
-del budget del segmento richiede rotazione prima dell'ammissione; se la richiesta
-non entra in un segmento vuoto viene rifiutata. Il budget di spazio temporaneo viene
-prenotato prima del build. La stima non è una misura di spazio o prestazione: evita di
-scoprire a posteriori che il formato ammesso non può rappresentare i documenti committed.
+M01 reserves this cost for every index before append/prepare. Exceeding the segment
+budget requires rotation before admission; a request that cannot fit an empty segment
+is rejected. Temporary-space budget is reserved before build. The estimate is not a
+space or performance measurement: it avoids discovering afterward that the admitted
+format cannot represent committed documents.
 
-## Fixture binaria minima indipendente
+<a id="fixture-binaria-minima-indipendente"></a>
 
-Una fixture indipendente usa un campo con due righe: riga 0 `alpha beta alpha`, riga 1
-`beta`. DICT contiene `alpha`, `beta`; TERMS è la concatenazione dei due UTF-8.
-POSTINGS contiene le righe `[0]` per `alpha` e `[0,1]` per `beta`, con frequenze `[2]`
-e `[1,1]`. POSITIONS segue l'ordine dei posting: `[0,2,1,0]`. LENGTHS contiene
-`(0,campo,3)` e `(1,campo,1)`. Si verificano frase `alpha beta`, frase `beta alpha`,
-duplicazione di row, scambio dell'hint, offset fuori sezione e posizioni alterate con
-CRC ricalcolato. I [468 byte completi](../tests/fulltext/minimum-v2.hex) e i CRC attesi
-sono calcolati da un [oracolo indipendente](../tools/fulltext-codec-fixture.lisp), senza
-caricare il prodotto, e congelati prima della prima esecuzione dell'encoder.
-Il [metodo implementativo](implementazione/full-text-codec.md) distingue questa prova
-dalla verifica dell'hint e dalla rianalisi dei documenti.
+## Independent minimal binary fixture
+
+An independent fixture uses one field with two rows: row 0 `alpha beta alpha`, row 1
+`beta`. DICT contains `alpha`, `beta`; TERMS concatenates their UTF-8 bytes.
+POSTINGS contains rows `[0]` for `alpha` and `[0,1]` for `beta`, with frequencies `[2]`
+and `[1,1]`. POSITIONS follows posting order: `[0,2,1,0]`. LENGTHS contains
+`(0,campo,3)` and `(1,campo,1)`. Tests cover phrase `alpha beta`, phrase `beta alpha`,
+duplicate rows, swapped hint, out-of-section offset, and altered positions with
+recomputed CRC. The [complete 468 bytes](../tests/fulltext/minimum-v2.hex) and expected
+CRCs are computed by an [independent oracle](../tools/fulltext-codec-fixture.lisp), without
+loading the product, and frozen before the encoder's first execution.
+The [implementation method](implementazione/full-text-codec.md) distinguishes this test
+from hint verification and document reanalysis.

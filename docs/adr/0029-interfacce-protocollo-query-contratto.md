@@ -1,66 +1,82 @@
-# ADR-0029 — Interfacce: protocollo a frame CBOR, query come dati, contratto della Serie
+<a id="adr-0029--interfacce-protocollo-a-frame-cbor-query-come-dati-contratto-della-serie"></a>
 
-- **Stato:** Accettata; scelta TCP primaria sostituita da [ADR-0055](0055-interfaccia-locale-unix-socket.md). Query, contratto e framing restano validi; prima integrazione locale anticipata nella roadmap.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-20 e QA-21
-- **Riferimenti:** [architettura](../architettura.md#interfacce), [ADR-0014](0014-formato-record-documento-id.md)
+# ADR-0029 — Interfaces: CBOR frame protocol, queries as data, Serie contract
 
-## Decisione
+- **Status:** Accepted; primary TCP choice superseded by [ADR-0055](0055-interfaccia-locale-unix-socket.md). Queries, contract, and framing remain valid; initial local integration moved earlier in the roadmap.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-20 and QA-21
+- **References:** [architecture](../architettura.md#interfacce), [ADR-0014](0014-formato-record-documento-id.md)
 
-### Protocollo di rete
+<a id="decisione"></a>
 
-- TCP, **frame binari a lunghezza prefissata** (`u32 len` + corpo CBOR), richieste con
-  identificativo per il multiplexing sulla stessa connessione, risposte in qualsiasi ordine.
-- Lo stesso vocabolario CBOR serve per documenti, richieste e risposte: un solo codec.
-- Nessuna compatibilità con protocolli di altri database.
-- Autenticazione e cifratura: fuori scope v1 ([ADR-0030](0030-scope-v1.md)); il protocollo
-  prevede un campo di versione e un handshake estendibile.
+## Decision
 
-### Query
+<a id="protocollo-di-rete"></a>
 
-- Le query sono **dati** (una struttura CBOR, in Lisp una s-expression): predicati su campi
-  (`=`, `<`, `prefix`, `in`, `and/or/not`), ordinamento, limite, proiezione, uso esplicito
-  o automatico degli indici. Nessun linguaggio testuale nella v1: un parser testuale può
-  essere aggiunto sopra senza toccare il motore.
-- Il Query Engine compila la query in una pipeline di iteratori su indici di segmento
-  ([ADR-0026](0026-indici-secondari-segmentati.md)) con filtro di visibilità e fetch dei
-  documenti.
+### Network protocol
 
-### Contratto della Serie
+- TCP, **length-prefixed binary frames** (`u32 len` + CBOR body), requests with
+  an identifier for multiplexing on the same connection, responses in any order.
+- The same CBOR vocabulary serves documents, requests, and responses: one codec.
+- No compatibility with other databases' protocols.
+- Authentication and encryption: outside v1 scope ([ADR-0030](0030-scope-v1.md)); the protocol
+  provides a version field and an extensible handshake.
 
-- Il contratto è un documento CBOR nel catalogo: campi dichiarati con tipo, obbligatorietà e
-  vincoli semplici; indici con tipo e campo; politica per i campi non dichiarati (ammessi o
-  rifiutati).
-- Validazione al momento della scrittura, nel worker che riceve la richiesta (fuori dal
+<a id="query"></a>
+
+### Queries
+
+- Queries are **data** (a CBOR structure, an s-expression in Lisp): field predicates
+  (`=`, `<`, `prefix`, `in`, `and/or/not`), ordering, limit, projection, explicit
+  or automatic index use. No textual language in v1: a text parser can be
+  added on top without changing the engine.
+- The Query Engine compiles the query into an iterator pipeline over segment indexes
+  ([ADR-0026](0026-indici-secondari-segmentati.md)) with a visibility filter and document
+  fetches.
+
+<a id="contratto-della-serie"></a>
+
+### Serie contract
+
+- The contract is a CBOR document in the catalog: declared fields with type, requiredness,
+  and simple constraints; indexes with type and field; a policy for undeclared fields
+  (allowed or rejected).
+- Validation at write time, in the worker receiving the request (outside the
   writer).
-- **Evoluzione additiva**: aggiungere campi opzionali e indici è sempre ammesso; rimuovere o
-  cambiare tipo richiede una nuova versione del contratto e i documenti esistenti restano
-  validi rispetto alla versione con cui furono scritti (il record porta la versione del
-  contratto nell'intestazione CBOR del documento).
+- **Additive evolution**: adding optional fields and indexes is always allowed; removing
+  fields or changing their types requires a new contract version, and existing documents
+  remain valid against the version under which they were written (the record carries
+  the contract version in the document's CBOR header).
 
-Pattern: protocolli a frame length-prefixed con multiplexing (Redis RESP3, PostgreSQL wire);
-query come AST dati (MongoDB, Datalog); evoluzione additiva degli schemi (Protocol Buffers).
+Pattern: length-prefixed frame protocols with multiplexing (Redis RESP3, PostgreSQL wire);
+queries as AST data (MongoDB, Datalog); additive schema evolution (Protocol Buffers).
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Un solo codec e un solo formato dati da un capo all'altro.
-- Il motore è indipendente dalla sintassi: linguaggi testuali e driver sono livelli sopra.
+## Consequences
 
-## Contratto documentale v2
+- One codec and one data format end to end.
+- The engine is syntax-independent: textual languages and drivers are layers above it.
 
-[ADR-0048](0048-limiti-documentali-e-formato-v2.md) definisce documenti CBOR fino a 16 MiB e 100 livelli. Il budget di frame è distinto dal documento: deve ammettere un documento massimo più chiave e envelope della richiesta, con un limite esplicito e verifica della lunghezza prima di allocare. I batch hanno budget separati e non sono ammessi senza limite.
+<a id="contratto-documentale-v2"></a>
 
-## Estensione full text (2026-10-15)
+## Document contract v2
 
-[ADR-0053](0053-ricerca-full-text-indici-invertiti.md) aggiunge all'AST i
-predicati logici `text-match(campo, testo, all/any)` e
-`text-phrase(campo, testo)`, combinabili con i filtri strutturati nella
-stessa vista MVCC. Il testo è un valore da analizzare secondo il profilo
-versionato dell'indice, senza introdurre un linguaggio testuale di query.
-Nomi e codifica wire dei nodi si fissano nelle fasi 8–9.
+[ADR-0048](0048-limiti-documentali-e-formato-v2.md) defines CBOR documents up to 16 MiB and 100 levels. The frame budget is separate from the document: it must allow a maximum-size document plus the request key and envelope, with an explicit limit and a length check before allocation. Batches have separate budgets and are not allowed without a limit.
 
-Il contratto dichiara campi scalari e profilo immutabile; il cambio di
-analizzatore crea una nuova generazione. Le query mantengono generazione
-e profilo per tutta la durata; indice non pronto e budget esaurito
-producono errori espliciti. La semantica approvata non implica che API,
-parser o indici full text siano già implementati.
+<a id="estensione-full-text-2026-10-15"></a>
+
+## Full-text extension (2026-10-15)
+
+[ADR-0053](0053-ricerca-full-text-indici-invertiti.md) adds the logical
+predicates `text-match(campo, testo, all/any)` and
+`text-phrase(campo, testo)` to the AST, combinable with structured filters in the
+same MVCC view. Text is a value to analyze according to the index's versioned
+profile, without introducing a textual query language.
+Node names and wire encoding are fixed in phases 8–9.
+
+The contract declares scalar fields and an immutable profile; changing the
+analyzer creates a new generation. Queries retain the generation and
+profile for their entire duration; an unready index and an exhausted budget
+produce explicit errors. The approved semantics do not imply that APIs,
+parsers, or full-text indexes are already implemented.

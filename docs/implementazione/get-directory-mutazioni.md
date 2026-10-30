@@ -1,178 +1,192 @@
-# Mutazioni della directory GET CLOSED
+<a id="mutazioni-della-directory-get-closed"></a>
+
+# CLOSED GET directory mutations
 
 <!-- REQ: REQ-IDX-001 REQ-CMP-007 REQ-AFF-002 REQ-AFF-008 REQ-VAL-001 -->
 
-Il driver [get-directory-mutation.lisp](../../tools/get-directory-mutation.lisp)
-preregistra cinque mutanti semantici della costruzione e selezione della directory.
-La preparazione è stata esclusivamente statica: nessuna compilazione, caricamento
-del prodotto, esecuzione della suite, self-test o campagna è stata effettuata
-dall'autore di questi due file. Il padre congela i sorgenti e registra ogni
-esecuzione successiva. Questa pagina descrive metodo e risultati richiesti;
-non attesta risultati già ottenuti.
+Driver [get-directory-mutation.lisp](../../tools/get-directory-mutation.lisp)
+preregisters five semantic mutants of directory construction and selection.
+Preparation was exclusively static: no compilation, product load,
+suite execution, self-test, or campaign was performed
+by the author of these two files. The parent freezes sources and records every
+subsequent execution. This page describes the method and required results;
+it certifies no results already obtained.
 
-## Scope e contratto
+<a id="scope-e-contratto"></a>
 
-Si possono modificare nelle copie private soltanto
-`src/get-directory/build.lisp` e `src/get-directory/read.lisp`. Il resolver CLOSED
-e il nucleo GET preesistenti sono dipendenze compilate, senza mutazioni.
-Non si include il resolver ACTIVE, né si aggiungono pubblicazione, celle condivise
-o CAS. La directory deve essere acquisita dal controller dopo `avvia-get`,
-nella stessa epoca EBR del candidato; pubblicazione, FD e reclaim rimangono al
-controller. Il contratto completo è in [get-directory.md](get-directory.md).
+## Scope and contract
 
-La suite usa il package `arcdocdb.get.directory.tests` e il registro
-`*get-directory-tests*`. Si compila e si esegue soltanto la suite directory:
-`support.lisp`, `construction.lisp`, `read.lisp`, `threads.lisp`. Prima si
-compila `tests/foundation/support.lisp`, per importare gli oracoli di asserzione;
-non si eseguono test delle fondazioni. `arcdocdb/tests` non viene caricato e
-le altre suite non vengono copiate. Tutti i sorgenti del prodotto e
-`arcdocdb.asd` sono invece copiati; ASDF carica il solo sistema `arcdocdb` con
-compilazione forzata. Il metodo non è una misura del solo prodotto.
+Only `src/get-directory/build.lisp` and `src/get-directory/read.lisp`
+may be modified in private copies. The existing CLOSED resolver
+and GET core are compiled dependencies without mutations.
+The ACTIVE resolver is not included, and no publication, shared cells,
+or CAS is added. The controller must acquire the directory after `avvia-get`,
+in the candidate's same EBR epoch; publication, FDs, and reclamation remain with the
+controller. The complete contract is in [get-directory.md](get-directory.md).
 
-Il dominio della directory rimane 0–65.536 segmenti, ID positivi u32 ordinati,
-al massimo 17 passi di ricerca e payload degli array di `12*N` byte su SBCL64.
-Header, mappe e FD non entrano in quel payload. La campagna non misura memoria,
-latenza o throughput; i limiti geometrici sono osservazioni dei test.
+The suite uses package `arcdocdb.get.directory.tests` and registry
+`*get-directory-tests*`. Only the directory suite is compiled and run:
+`support.lisp`, `construction.lisp`, `read.lisp`, `threads.lisp`. First,
+`tests/foundation/support.lisp` is compiled to import assertion oracles;
+foundation tests are not run. `arcdocdb/tests` is not loaded and
+other suites are not copied. All product sources and
+`arcdocdb.asd` are copied instead; ASDF loads only system `arcdocdb` with
+forced compilation. The method is not a product-only measurement.
 
-## Mutanti preregistrati
+The directory domain remains 0–65,536 segments, sorted positive u32 IDs,
+at most 17 search steps, and `12*N` bytes of array payload on SBCL64.
+Headers, maps, and FDs are outside that payload. The campaign measures neither memory,
+latency, nor throughput; geometric limits are test observations.
 
-Ogni mutante sostituisce una sola occorrenza letterale di un anchor. Anchor
-assente, duplicato o test nominato assente impediscono l'avvio della baseline.
-Le stringhe multilinea contengono newline reali. Nessun anchor viene cercato
-per somiglianza, né aggiornato automaticamente dopo il freeze.
+<a id="mutanti-preregistrati"></a>
 
-| Mutante | Bersaglio | Test esatto | Difetto e osservazione attesa |
+## Preregistered mutants
+
+Every mutant replaces one literal occurrence of an anchor. A missing or
+duplicate anchor or missing named test prevents baseline startup.
+Multiline strings contain actual newlines. No anchor is matched
+by similarity or updated automatically after freeze.
+
+| Mutant | Target | Exact test | Defect and expected observation |
 | --- | --- | --- | --- |
-| `omit-directory-owner` | `src/get-directory/build.lisp` | `TEST-REQ-CMP-007-DIRECTORY-CANONICAL-OWNER-AND-FOREIGN-OWNER` | La guardia `(unless (eq view (segmento-get-owner segment))` diventa `(unless (or (eq view (segmento-get-owner segment)) view)`. La vista canonica, sempre vera come oggetto, fa accettare una vista estranea: l'asserzione sul rifiuto `invalid-argument :directory-source-owner` deve fallire. Il riferimento a `view` è conservato. |
-| `missing-location-first-map` | `src/get-directory/read.lisp` | `TEST-REQ-IDX-001-DIRECTORY-MISSING-PUBLISHED-CANDIDATE-FAILSTOP` | A intervallo esaurito, una directory non vuota restituisce la prima mappa. La directory vuota conserva il guasto originario, così il test raggiunge anche il candidato pubblicato nel gap. Deve fallire l'asserzione sul guasto `:directory-location-absent`; nessuna falsa assenza è ammessa. |
-| `alias-input-maps` | `src/get-directory/build.lisp` | `TEST-REQ-IDX-001-DIRECTORY-INPUT-ARRAY-COPIED` | `(owned (copy-seq maps))` diventa `(owned maps)`. Dopo `fill` dell'input a `nil`, la directory perde le mappe. Il successo atteso dal test è sostituito da `invariant-violation :directory-shape`, con GET FAULTED. |
-| `truncate-directory-id` | `src/get-directory/read.lisp` | `TEST-REQ-IDX-001-DIRECTORY-NATIVE-READ-V1-V2-VALUES-AND-MAXID` | `(ldb (byte 32 32) location)` diventa `(ldb (byte 31 32) location)`. Il candidato con ID `#xffffffff` viene cercato come `#x7fffffff` e rifiutato, invece di selezionare e leggere il segmento esatto. |
-| `bypass-closed-resolver` | `src/get-directory/read.lisp` | `TEST-REQ-IDX-001-DIRECTORY-CANDIDATE-SIZE-AND-HIGHBITS` | `risolvi-candidato-directory-get` seleziona la mappa e restituisce segmento, frontiera, `0`, `nil` direttamente. Deve fallire l'asserzione sul controllo CLOSED della size del candidato. L'anchor interessa soltanto questo wrapper della directory. |
+| `omit-directory-owner` | `src/get-directory/build.lisp` | `TEST-REQ-CMP-007-DIRECTORY-CANONICAL-OWNER-AND-FOREIGN-OWNER` | Guard `(unless (eq view (segmento-get-owner segment))` becomes `(unless (or (eq view (segmento-get-owner segment)) view)`. The canonical view, always true as an object, makes a foreign view accepted: the assertion for rejection `invalid-argument :directory-source-owner` must fail. The `view` reference is retained. |
+| `missing-location-first-map` | `src/get-directory/read.lisp` | `TEST-REQ-IDX-001-DIRECTORY-MISSING-PUBLISHED-CANDIDATE-FAILSTOP` | When the interval is exhausted, a nonempty directory returns its first map. The empty directory retains its original failure, so the test also reaches the published candidate in the gap. The assertion for failure `:directory-location-absent` must fail; no false absence is allowed. |
+| `alias-input-maps` | `src/get-directory/build.lisp` | `TEST-REQ-IDX-001-DIRECTORY-INPUT-ARRAY-COPIED` | `(owned (copy-seq maps))` becomes `(owned maps)`. After `fill` of input with `nil`, the directory loses its maps. Expected test success is replaced by `invariant-violation :directory-shape`, with GET FAULTED. |
+| `truncate-directory-id` | `src/get-directory/read.lisp` | `TEST-REQ-IDX-001-DIRECTORY-NATIVE-READ-V1-V2-VALUES-AND-MAXID` | `(ldb (byte 32 32) location)` becomes `(ldb (byte 31 32) location)`. The candidate with ID `#xffffffff` is searched as `#x7fffffff` and rejected rather than selecting and reading the exact segment. |
+| `bypass-closed-resolver` | `src/get-directory/read.lisp` | `TEST-REQ-IDX-001-DIRECTORY-CANDIDATE-SIZE-AND-HIGHBITS` | `risolvi-candidato-directory-get` selects the map and directly returns segment, frontier, `0`, `nil`. The assertion for the CLOSED candidate-size check must fail. The anchor affects only this directory wrapper. |
 
-Il mutante alias dipende dalla guardia di tipo della mappa selezionata, introdotta
-dal padre in `cerca-mappa-directory-get`: una voce diversa da
-`mappa-segmento-get` deve chiamare `guasto-get :directory-shape` prima del
-ritorno. Senza quella guardia, il test potrebbe generare un `TYPE-ERROR` CL:
-il classificatore lo tratta come infrastruttura e **non** come kill. Il
-preflight non certifica questa guardia tramite un anchor aggiuntivo; la sua
-presenza deve essere confermata staticamente prima del freeze.
+The alias mutant depends on the selected-map type guard introduced
+by the parent in `cerca-mappa-directory-get`: an entry other than
+`mappa-segmento-get` must call `guasto-get :directory-shape` before
+return. Without that guard, the test could raise a CL `TYPE-ERROR`:
+the classifier treats it as infrastructure, **not** a kill. Preflight
+does not certify this guard through an additional anchor; its
+presence must be confirmed statically before freeze.
 
-Il mutante di delega elimina anche i controlli CSN, FD e prova dal wrapper
-`risolvi-candidato-directory-get`, ma il test preregistrato testimonia il
-controllo size, a partire dal primo caso errato. Non si rivendica un kill
-indipendente per ogni altro controllo, né per i wrapper cache/lettura che
-continuano a delegare al resolver originale. La baseline include comunque i
-test dedicati a CSN basso/alto, FD, prepared e cleanup.
+The delegation mutant also removes CSN, FD, and proof checks from wrapper
+`risolvi-candidato-directory-get`, but the preregistered test witnesses the
+size check starting with the first wrong case. No independent kill
+is claimed for every other check or for cache/read wrappers that
+continue delegating to the original resolver. The baseline still includes
+dedicated tests for low/high CSN, FDs, prepared records, and cleanup.
 
-## Isolamento e attestazioni
+<a id="isolamento-e-attestazioni"></a>
 
-`--check` richiede una directory di output nuova e acquisita esclusivamente.
-La baseline riceve copie dei byte dei sorgenti congelati. Prima e dopo la copia
-si confrontano le impronte originali; tutte le altre copie derivano dalla
-baseline verificata. Un mutante deve cambiare esattamente il file preregistrato,
-mentre ogni altro sorgente e ogni file della suite devono rimanere identici.
+## Isolation and attestations
 
-Ogni copia viene eseguita in un processo SBCL nuovo, senza init utente o
-di sistema, con source registry ASDF locale e output translations private
-sotto `fasl/`. I file di suite hanno anch'essi output espliciti privati. Una
-compilazione con warning, salvo redefinition warning, o con indicatore di
-fallimento non è una compilazione utile alla campagna.
+`--check` requires a new, exclusively acquired output directory.
+The baseline receives copies of frozen source bytes. Original fingerprints
+are compared before and after copying; all other copies derive from the
+verified baseline. A mutant must change exactly the preregistered file,
+while every other source and every suite file remain identical.
 
-Il child attesta il manifest completo dei sorgenti con MD5, i FASL di ogni
-sorgente prodotto, i cinque FASL della suite/supporto e il bersaglio compilato.
-Ogni voce contiene ruolo, percorso sorgente, MD5 sorgente, percorso assoluto
-FASL e MD5 FASL. Le liste devono corrispondere esattamente al manifest previsto:
-mancanze, duplicati, ordine diverso, output fuori dalla directory privata e
-digest diversi invalidano il risultato. Non basta attestare il solo bersaglio.
+Each copy runs in a new SBCL process without user or system init,
+with local ASDF source registry and private output translations
+under `fasl/`. Suite files also have explicit private outputs. A
+compilation with warnings, except redefinition warnings, or a failure
+indicator is not a useful compilation for the campaign.
 
-Il supervisor ricalcola dopo il child i digest dei sorgenti, del runner generato
-e dei FASL su disco e controlla i loro percorsi reali. Il registro dei test deve
-corrispondere esattamente ai `deftest` letterali congelati e ogni nome deve
-contenere `REQ-`. MD5 è usato per attestare identità dei byte nel metodo locale
-ereditato da `get-performance-mutation.lisp`; non è un'attestazione crittografica
-contro un child ostile o contro alterazioni coordinate di sorgenti e rapporti.
+The child attests the complete source manifest with MD5, FASLs of every product
+source, the five suite/support FASLs, and the compiled target.
+Every entry contains role, source path, source MD5, absolute FASL
+path, and FASL MD5. Lists must match the expected manifest exactly:
+missing entries, duplicates, different order, output outside the private directory,
+or different digests invalidate the result. Attesting only the target is insufficient.
 
-Prima dei mutanti, la baseline deve compilare prodotto e suite e completare
-tutti i test directory nell'ordine congelato. In caso contrario non viene
-lanciato alcun mutante e rimangono registrati gli esiti `:not-run`. Ogni
-mutante esegue soltanto il test nominato, in una nuova copia con fixture proprie;
-non eredita cache, FD, snapshot, pin o risultati dalla baseline.
+After the child, the supervisor recalculates digests of sources, generated
+runner, and on-disk FASLs and checks their real paths. The test registry must
+match frozen literal `deftest` forms exactly, and every name must
+contain `REQ-`. MD5 attests byte identity in the local method
+inherited from `get-performance-mutation.lisp`; it is not cryptographic attestation
+against a hostile child or coordinated alteration of sources and reports.
 
-## Classificazione C4 e self-test
+Before mutants, the baseline must compile product and suite and complete
+all directory tests in frozen order. Otherwise no
+mutant is launched and `:not-run` outcomes remain recorded. Each
+mutant runs only its named test in a new copy with its own fixtures;
+it inherits no cache, FDs, snapshots, pins, or results from baseline.
 
-Il rapporto principale e quelli delle copie sono plist con `:schema-version 1`,
-`:kind` e `:status`. Il parser del rapporto child accetta una sola plist, con
-chiavi keyword uniche, marker al primo livello ed EOF dopo i dati. Disabilita
-read-eval, reader label, feature conditional, costruzione di array/strutture e
-gli altri dispatch incompatibili con i dati del rapporto. Il testo è limitato
-a 16 Mi caratteri; log o marker citati non sono rapporti.
+<a id="classificazione-c4-e-self-test"></a>
 
-Un kill (`:detected`) richiede insieme attestazioni valide, exit code 1,
-fase `:tests`, stato `:failed`, nessun altro test superato e nome del test
-fallito esattamente uguale a quello preregistrato. Il tipo del fallimento rimane
-distinto: `:assertion` riconosce il formato dell'oracolo `is`, mentre
-`:product-condition` riconosce le condizioni `arcdocdb-error`, escluso `io-fault`.
-La reason effettiva e il tipo della condizione sono conservati nella diagnostica;
-`:expected-failure` descrive il difetto atteso, senza effettuare matching sul log.
+## C4 classification and self-test
 
-Timeout, crash/segnali, errori I/O, fixture, errori CL generici e child
-illeggibili sono `:infrastructure-error`. Gli errori in `:compile-product` o
-`:compile-suite` sono `:compilation-error`. Attestazioni insufficienti,
-test diverso, dati malformati o combinazioni incoerenti sono `:invalid`.
-Un successo del test nominato è `:survived`. Nessuna di queste categorie conta
-come kill. La baseline distingue `:baseline-passed` e `:baseline-failed`.
+The main report and copy reports are plists with `:schema-version 1`,
+`:kind`, and `:status`. The child-report parser accepts one plist with
+unique keyword keys, top-level markers, and EOF after data. It disables
+read-eval, reader labels, feature conditionals, array/structure construction,
+and other dispatch forms incompatible with report data. Text is bounded
+to 16 Mi characters; quoted logs or markers are not reports.
 
-`--self-test` esamina soltanto dati sintetici e non carica prodotto o suite,
-non compila e non avvia processi. Copre sostituzione unica e anchor negativi,
-parser positivo/negativo, asserzione e condizione prodotto, baseline, sopravvivenza,
-compilazione, timeout, segnali, fixture/infrastruttura, test sbagliato, digest
-sbagliati, FASL fuori copia, coverage incompleta di prodotto o suite e campi
-malformati. I contatori sono verificati sia con gli esiti del classificatore,
-sia con una fixture di tutte le categorie, inclusi `:pending` e `:not-run`.
-Questo self-test prepara controlli del sensore; non testimonia compilabilità
-o correttezza dei cinque mutanti reali.
+A kill (`:detected`) requires valid attestations, exit code 1,
+phase `:tests`, status `:failed`, no other passed test, and failed-test
+name exactly equal to preregistration. Failure type remains
+distinct: `:assertion` recognizes the `is` oracle format, while
+`:product-condition` recognizes `arcdocdb-error` conditions excluding `io-fault`.
+Actual reason and condition type are retained in diagnostics;
+`:expected-failure` describes the expected defect without log matching.
 
-## Budget e registri parziali
+Timeouts, crashes/signals, I/O errors, fixtures, generic CL errors, and unreadable
+children are `:infrastructure-error`. Errors in `:compile-product` or
+`:compile-suite` are `:compilation-error`. Insufficient attestations,
+a different test, malformed data, or inconsistent combinations are `:invalid`.
+A successful named test is `:survived`. None of these categories counts
+as a kill. Baseline distinguishes `:baseline-passed` and `:baseline-failed`.
 
-Il budget operativo totale è 900 secondi dall'avvio del driver, comprendendo
-preflight, copie, compilazioni e test. Ogni processo ha al massimo 120 secondi,
-ridotti dal budget residuo, con due secondi riservati al cleanup. Il child
-ancora vivo viene terminato; il supervisor attende la morte con polling
-bounded per al massimo due secondi. Chiama `wait-process` soltanto dopo aver
-osservato la morte. Cleanup non riuscito o processo non recuperato non possono
-produrre un kill e impediscono l'avvio dei mutanti successivi. La persistenza conclusiva e il confronto delle impronte
-avvengono anche dopo un timeout, fuori dalla finestra operativa. Il rapporto
-misura anche il tempo conclusivo: un totale oltre 900 secondi rende comunque
-la campagna fallita, anche se tutti i mutanti sono stati rilevati.
+`--self-test` examines only synthetic data, loads neither product nor suite,
+does not compile, and starts no processes. It covers single substitution and negative anchors,
+positive/negative parser, assertion and product condition, baseline, survival,
+compilation, timeout, signals, fixtures/infrastructure, wrong test, wrong
+digests, FASL outside copy, incomplete product or suite coverage, and malformed
+fields. Counters are checked both against classifier outcomes
+and with a fixture of every category, including `:pending` and `:not-run`.
+This self-test prepares sensor checks; it witnesses neither compilability
+nor correctness of the five actual mutants.
 
-Il driver salva il rapporto iniziale, il piano completo, ciascuna copia prima
-di copiarne i sorgenti, le attestazioni prima del lancio, lo stato del processo,
-il cleanup e ogni risultato. Aggiorna `report.lisp` tramite un file pending
-e rename. Se viene interrotto, rimangono i checkpoint più recenti, i file pending
-e i log già scritti. Errori gestibili producono sempre un rapporto finale anche
-su stdout; un errore del filesystem o l'impossibilità di acquisire la directory
-nuova può impedire la copia su disco, ed è diagnosticato su stdout. Non si
-promette un rapporto finale dopo SIGKILL del supervisor o perdita del sistema.
+<a id="budget-e-registri-parziali"></a>
 
-Sotto `raw/isolatedtests/` si conservano rapporti, `stdout.log`, `stderr.log`,
-runner generato e, per ogni mutante, `original-source.lisp`,
-`mutated-source.lisp`, `mutation.patch`, sorgenti e FASL. Il collector C4 del
-padre deve trattare runner e patch/sorgenti conservati come raw e non come
-rapporti; deve escludere le sottodirectory `src`, `tests`, `fasl` dalla scansione
-dei rapporti, come nel pattern performance. I record del piano espongono
-`:directory` e `:file` anche se una copia fallisce prima del child.
+## Budgets and partial records
 
-Il rapporto conclusivo conserva le impronte della workspace prima/dopo,
-contatori separati e risultati mancanti. Per exit code 0 occorrono baseline
-superata, cinque kill e sorgenti stabili. Ogni compilazione/infrastruttura
-fallita, esito invalido, sopravvissuto o sorgente modificato dà exit code 1.
-Non si cancellano copie, log o fallimenti parziali; i sorgenti della workspace
-e la cache ASDF condivisa non vengono modificati dal driver.
+Total operational budget is 900 seconds from driver startup, including
+preflight, copies, compilations, and tests. Each process gets at most 120 seconds,
+reduced by remaining budget, with two seconds reserved for cleanup. A child
+still alive is terminated; the supervisor waits for death with bounded
+polling for at most two seconds. It calls `wait-process` only after observing
+death. Failed cleanup or an unreaped process cannot produce
+a kill and prevents subsequent mutants from starting. Final persistence and fingerprint comparison
+also occur after timeout, outside the operational window. The report
+also measures finalization time: a total beyond 900 seconds still makes
+the campaign fail even if all mutants were detected.
 
-## Esecuzioni riservate al padre
+The driver saves the initial report, complete plan, every copy before
+copying its sources, attestations before launch, process status,
+cleanup, and every result. It updates `report.lisp` through a pending file
+and rename. If interrupted, the latest checkpoints, pending
+files, and already written logs remain. Manageable errors always produce a final report
+on stdout too; a filesystem error or inability to acquire the new
+directory may prevent the on-disk copy and is diagnosed on stdout. No final
+report is promised after supervisor SIGKILL or system loss.
 
-Questi comandi sono istruzioni per la fase successiva al freeze e **non sono
-stati eseguiti** durante la preparazione:
+Under `raw/isolatedtests/`, preserve reports, `stdout.log`, `stderr.log`,
+generated runner, and for every mutant `original-source.lisp`,
+`mutated-source.lisp`, `mutation.patch`, sources, and FASLs. The parent's C4
+collector must treat retained runners and patches/sources as raw data, not
+reports; it must exclude subdirectories `src`, `tests`, `fasl` from report
+scanning, as in the performance pattern. Plan records expose
+`:directory` and `:file` even if a copy fails before the child.
+
+The final report retains workspace fingerprints before/after,
+separate counters, and missing results. Exit code 0 requires passed
+baseline, five kills, and stable sources. Every compilation/infrastructure
+failure, invalid result, survivor, or modified source gives exit code 1.
+Copies, logs, and partial failures are not deleted; workspace sources
+and shared ASDF cache are not modified by the driver.
+
+<a id="esecuzioni-riservate-al-padre"></a>
+
+## Executions reserved for the parent
+
+These commands are instructions for the post-freeze phase and **were not
+run** during preparation:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- \
@@ -183,8 +197,8 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
   --check spikes/out/get-directory-mutations-frozen/
 ```
 
-Prima del freeze vanno concordati la presenza della guardia `:directory-shape`,
-i cinque nomi di test qui elencati, l'ASDF con i quattro componenti prodotto
-directory e i file suite definitivi. Se l'implementazione evolve, si correggono
-solo questi due file, poi il padre congela nuovamente. Nessun risultato di una
-campagna precedente può qualificare una versione successiva dei sorgenti.
+Before freeze, agree on presence of the `:directory-shape` guard,
+the five test names listed here, ASDF with four directory product
+components, and final suite files. If implementation evolves, correct
+only these two files, then the parent freezes again. No previous
+campaign result can qualify a later source version.

@@ -1,59 +1,67 @@
-# Primo incremento dell'indice automatico — Risultati
+<a id="primo-incremento-dellindice-automatico--risultati"></a>
 
-Data: 2026-10-22. Contratto e limiti in [indice automatico](indice-automatico.md).
-SBCL 2.6.9 su macOS ARM64. Il carico esterno non e' controllato; nessun
-benchmark di prestazione del motore viene eseguito o dedotto da questi dati.
+# First automatic-index increment — Results
 
-L'[archivio chiuso](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-index-auto-targeted/catalogo.lisp)
-conserva le sorgenti dell'incremento, il driver della suite e i record dei
-due processi, entrambi con stato OK, uscita 0 e sorgenti stabili prima/dopo.
-La base Git e l'intero inventario degli hash sono nei record originali.
+Date: 2026-10-22. Contract and limits in [automatic index](indice-automatico.md).
+SBCL 2.6.9 on macOS ARM64. External load is uncontrolled; no
+engine performance benchmark is run or inferred from these data.
 
-## Selettore C1
+The [closed archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-index-auto-targeted/catalogo.lisp)
+preserves increment sources, suite driver, and records of
+two processes, both with OK status, exit 0, and stable sources before/after.
+Git base and complete hash inventory are in original records.
 
-Compilazione rigorosa del sistema e delle definizioni dei test, seguita dalla
-sola nuova suite: 8 test superati. Verificati avvio residente alla quota esatta,
-crescita che richiede il paginato, transitorio capiente/insufficiente, rientro
-con isteresi, variazione delle quote, indipendenza delle Serie, domini e
-arrotondamento al limite intero. La finestra seriale di 10.000 decisioni
-osserva zero byte Lisp allocati con sink atteso 3994.
+<a id="selettore-c1"></a>
 
-Questo risultato non dimostra la capienza delle stime future del runtime:
-il selettore riceve campioni fidati, non misura RSS o GC. Backend persistente
-e migrazione non sono presenti; il requisito complessivo rimane progettato.
+## C1 selector
 
-## Lifetime C4
+Strict compilation of system and test definitions, followed by
+only the new suite: 8 tests passed. Checks cover resident startup at exact quota,
+growth requiring paging, sufficient/insufficient transient capacity, return
+with hysteresis, changing quotas, Serie independence, domains, and
+integer-boundary rounding. The serial 10,000-decision window
+observes zero Lisp bytes allocated with expected sink 3994.
 
-Il [metodo preregistrato](../../spikes/SPK-07-protocols/metodo-page-lifetime.md)
-e il modello sono conservati nell'archivio con i controesempi completi.
+This result does not establish sufficiency of future runtime estimates:
+the selector receives trusted samples, not RSS or GC measurements. Persistent backend
+and migration are absent; the overall requirement remains designed.
 
-| Reader | Riusi | Stati visitati | Archi | Violazioni |
+<a id="lifetime-c4"></a>
+
+## C4 lifetime
+
+The [preregistered method](../../spikes/SPK-07-protocols/metodo-page-lifetime.md)
+and model are preserved in the archive with complete counterexamples.
+
+| Readers | Reuses | States visited | Edges | Violations |
 |---:|---:|---:|---:|---:|
 | 1 | 1 | 65 | 95 | 0 |
 | 1 | 2 | 153 | 233 | 0 |
 | 2 | 1 | 745 | 1574 | 0 |
 | 2 | 2 | 2316 | 4984 | 0 |
 
-Totale calcolato: 3279 stati e 6886 archi nelle quattro configurazioni corrette.
-Ogni configurazione raggiunge successo, copia durante RETIRING, riuso fermato
-da protezione e annuncio tardivo. Il limite duro di 200.000 stati non viene raggiunto.
+Calculated total: 3279 states and 6886 edges across four correct configurations.
+Every configuration reaches success, copying during RETIRING, reuse blocked
+by protection, and late announcement. The hard 200,000-state limit is not reached.
 
-| Controllo negativo | Esito atteso e osservato |
+| Negative control | Expected and observed outcome |
 |---|---|
-| Senza riconferma READY/token | Copia di un'incarnazione diversa; controesempio conservato. |
-| Rilascio fra le due copie | Secondo campo riusato; controesempio conservato. |
-| Reclaimer ignora hazard | Frame sovrascritto durante la protezione; controesempio conservato. |
-| Token riciclato dopo due riusi | ABA accettato dal confronto, rifiutato dall'oracolo delle incarnazioni. |
+| Without READY/token revalidation | Copy of a different incarnation; counterexample preserved. |
+| Release between two copies | Second field reused; counterexample preserved. |
+| Reclaimer ignores hazard | Frame overwritten during protection; counterexample preserved. |
+| Token recycled after two reuses | ABA accepted by comparison, rejected by incarnation oracle. |
 
-Sono enumerazioni finite sotto SC e primitive astratte terminanti. La safety
-del modello e il limite di sei passi propri per tentativo non sono una prova
-di lock-freedom del lookup completo o del GET. CPU reale, atomiche SBCL,
-directory, snapshot, cache finita e miss I/O restano gate aperti.
+These are finite enumerations under SC and terminating abstract primitives. Model
+safety and the six-own-step bound per attempt are not proof
+of lock-freedom for complete lookup or GET. Real CPU, SBCL atomics,
+directory, snapshots, finite cache, and I/O misses remain open gates.
 
-## Revisione e integrazione
+<a id="revisione-e-integrazione"></a>
 
-La lettura del contratto e la lettura degli interleaving verificano perimetro,
-budget, validazione e ABA; sono revisioni dello stesso autore, non una revisione
-indipendente C1. La suite e il modello sono registrati rispettivamente nel
-catalogo CI e in SPK-07. I controlli globali del repository restano una verifica
-distinta dalle due esecuzioni iniziali conservate qui.
+## Review and integration
+
+Contract and interleaving readings check scope,
+budgets, validation, and ABA; they are reviews by the same author, not independent
+C1 review. Suite and model are registered in the CI catalog
+and SPK-07 respectively. Global repository checks remain verification
+separate from the two initial executions preserved here.

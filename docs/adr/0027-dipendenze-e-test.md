@@ -1,33 +1,41 @@
-# ADR-0027 — Nessuna dipendenza esterna; harness di test proprio
+<a id="adr-0027--nessuna-dipendenza-esterna-harness-di-test-proprio"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-22; applica [ADR-0001](0001-common-lisp-sbcl.md)
-- **Riferimenti:** [principi di ingegneria](../principi-di-ingegneria.md)
+# ADR-0027 — No external dependencies; custom test harness
 
-## Decisione
+- **Status:** Accepted
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-22; applies [ADR-0001](0001-common-lisp-sbcl.md)
+- **References:** [engineering principles](../principi-di-ingegneria.md)
 
-1. Il sistema `arcdocdb` dipende solo da SBCL e dai suoi contrib (`sb-thread`, `sb-posix`,
-   `sb-unix`, `sb-concurrency` dove utile, `sb-simd` con i backend disponibili su x86-64 e
-   ARM64, incluso NEON, secondo [ADR-0012](0012-simd-guidato-dai-benchmark.md)). Ogni backend
-   richiede rilevamento del supporto e qualificazione sulla piattaforma; l'ammissione del
-   contrib non ne attesta la disponibilità. Nessuna libreria di terze parti, nemmeno per
-   CBOR, CRC, hash o CLI.
-2. I test usano un **harness proprio** (`arcdocdb/tests`): registrazione di test per modulo,
-   asserzioni, esecuzione in parallelo dove possibile, e il **runner di fault injection**
-   (crash in punti nominati, I/O simulato, oracolo). Un framework esterno non offrirebbe
-   quest'ultimo, che è la parte che conta.
-3. Gli spike seguono la stessa regola.
-4. Strumenti di sviluppo (CI, controllo dei link) sono script Common Lisp eseguiti con
+<a id="decisione"></a>
+
+## Decision
+
+1. The `arcdocdb` system depends only on SBCL and its contrib modules (`sb-thread`, `sb-posix`,
+   `sb-unix`, `sb-concurrency` where useful, `sb-simd` with the backends available on x86-64 and
+   ARM64, including NEON, under [ADR-0012](0012-simd-guidato-dai-benchmark.md)). Each backend
+   requires support detection and platform qualification; allowing the contrib module
+   does not establish its availability. No third-party libraries, even for
+   CBOR, CRC, hashing, or the CLI.
+2. Tests use a **custom harness** (`arcdocdb/tests`): per-module test registration,
+   assertions, parallel execution where possible, and the **fault-injection runner**
+   (crashes at named points, simulated I/O, oracle). An external framework would not
+   provide the latter, which is the part that matters.
+3. Spikes follow the same rule.
+4. Development tools (CI, link checking) are Common Lisp scripts run with
    `sbcl --script`.
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Controllo totale sul codice che sta sui percorsi caldi e nel recovery.
-- Più codice da scrivere (CBOR, CRC32C, hash, istogrammi): tutto piccolo e tabellare.
-- Nessun gestore di pacchetti richiesto per compilare: `sbcl` e ASDF bastano.
+## Consequences
 
-## Alternative considerate
+- Full control over code on hot paths and in recovery.
+- More code to write (CBOR, CRC32C, hashing, histograms): all small and table-driven.
+- No package manager required to build: `sbcl` and ASDF suffice.
 
-- *Quicklisp con poche librerie consolidate:* comodo, ma introduce codice non tipizzato per i
-  nostri scopi sui percorsi caldi e un confine di qualità non controllato.
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Quicklisp with a few established libraries:* convenient, but introduces code not typed
+  for our purposes on hot paths and an uncontrolled quality boundary.

@@ -1,11 +1,13 @@
-# Unicode 18.0.0 — provenienza
+<a id="unicode-1800--provenienza"></a>
 
-Dati originali Unicode, acquisiti il 16 ottobre 2026 dall'archivio ufficiale
-[UCD.zip](https://www.unicode.org/Public/18.0.0/ucd/UCD.zip).
-I percorsi nella tabella sono relativi a
+# Unicode 18.0.0 — provenance
+
+Original Unicode data, acquired on October 16, 2026 from the official
+[UCD.zip](https://www.unicode.org/Public/18.0.0/ucd/UCD.zip) archive.
+Paths in the table are relative to
 [`https://www.unicode.org/Public/18.0.0/ucd/`](https://www.unicode.org/Public/18.0.0/ucd/).
-`LICENSE.txt` proviene da [Unicode License V3](https://www.unicode.org/license.txt).
-I file originali mantengono contenuto e avvisi di copyright; non sono dati applicativi.
+`LICENSE.txt` comes from [Unicode License V3](https://www.unicode.org/license.txt).
+Original files retain their contents and copyright notices; they are not application data.
 
 | File | SHA256 |
 |---|---|
@@ -19,16 +21,16 @@ I file originali mantengono contenuto e avvisi di copyright; non sono dati appli
 | `emoji/emoji-data.txt` | `80d00f8e616a0ef27fd6b8de3b758c06383b5d917e2977709578e68baf733bf1` |
 | `LICENSE.txt` | `e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96` |
 
-Il generatore Common Lisp [fulltext-unicode-tables.lisp](../../../tools/fulltext-unicode-tables.lisp)
-produce [unicode-tables.lisp](../../../src/fulltext/unicode-tables.lisp), SHA256
+The Common Lisp generator [fulltext-unicode-tables.lisp](../../../tools/fulltext-unicode-tables.lisp)
+produces [unicode-tables.lisp](../../../src/fulltext/unicode-tables.lisp), SHA256
 `334d8f05af5ebdd5bbcfddc96af61af95e02208b23eeebf381269a9e4cbe14a9`.
-Il comando seguente verifica la riproducibilita senza cambiare il sorgente:
+This command verifies reproducibility without changing source:
 
 ```sh
 sbcl --script tools/fulltext-unicode-tables.lisp --check data/unicode/18.0.0/ src/fulltext/unicode-tables.lisp
 ```
 
-Le tabelle includono categorie L/N, classi combinanti, decomposizioni canoniche,
-esclusioni di composizione, case folding C/F, Word_Break ed Extended_Pictographic.
-Hangul usa l'algoritmo della norma. I corpus di normalizzazione e Word_Break sono
-letti dai test ASDF; non occorre scaricare dati o accedere alla rete per eseguirli.
+Tables include L/N categories, combining classes, canonical decompositions,
+composition exclusions, C/F case folding, Word_Break, and Extended_Pictographic.
+Hangul uses the standard's algorithm. Normalization and Word_Break corpora are read
+by ASDF tests; running them requires neither downloading data nor network access.

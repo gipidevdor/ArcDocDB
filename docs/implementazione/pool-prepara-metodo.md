@@ -1,52 +1,58 @@
-# Preparazione bounded di un tratto pool/Serie: metodo
+<a id="preparazione-bounded-di-un-tratto-poolserie-metodo"></a>
 
-Preregistrazione C3/C4 del 2026-10-15, base
-`7f1cc54477483039bd98bd8c3f6508416f5c0ced`, prima del codice e delle prove.
+# Bounded preparation of a pool/Serie execution slice: method
+
+C3/C4 preregistration dated 2026-10-15, base
+`7f1cc54477483039bd98bd8c3f6508416f5c0ced`, before code and tests.
 REQ-THR-001, REQ-CON-001/002/004/005, REQ-AFF-008; ADR-0031/0034/0045.
 
-## Contratto fissato
+<a id="contratto-fissato"></a>
 
-`prepara-tratto-pool dispatcher` esegue un solo
-[passo di selezione](pool-step.md). Soltanto con CLAIMED avvia direttamente
-il bridge del link restituito: owner non rientrante e nessun altro passo
-interposto rendono inutile un secondo routing. Al più un trasferimento
-ready e un begin; nessun pop, ACK batch, end, retry o cleanup implicito.
+## Fixed contract
 
-Sette valori: **link, token, stato, ragione, origine, dettaglio, azione**.
-I primi quattro conservano la forma dell'[avvio](pool-begin.md): ACTIVE o
-CLOSING con token positivo e ragione originale. EMPTY, BUSY, INACTIVE e
-PUBLISHED restituiscono NIL/0/stato/NIL senza begin; gli ultimi tre valori
-provengono dal passo, distinguendo cursore, count e assenza di trasferimento.
-Una pubblicazione termina subito; il ritiro rimane al successivo ingresso IDLE.
+`prepara-tratto-pool dispatcher` performs one
+[selection step](pool-step.md). Only with CLAIMED does it directly start
+the returned link's bridge: nonreentrant owner and no intervening
+step make a second routing unnecessary. At most one ready
+transfer and one begin; no pop, batch ACK, end, retry, or implicit cleanup.
 
-Fasi già attive, owner/binding invalidi e guasti dei delegati mantengono le
-condizioni originali. Writer busy conserva CLAIMED/link IDLE; Serie busy o
-generazione esaurita restituiscono CLOSING da terminare esplicitamente.
-Errori dopo un trasferimento non lo annullano e non autorizzano replay.
-Un helper NOTINLINE con link/status T conserva i controlli della coppia:
-CLAIMED richiede un link, gli esiti senza lavoro richiedono NIL; status
-inattesi segnalano `invariant-violation :pool-dispatcher-state`.
+Seven values: **link, token, status, reason, origin, detail, action**.
+First four retain [startup](pool-begin.md) form: ACTIVE or
+CLOSING with positive token and original reason. EMPTY, BUSY, INACTIVE, and
+PUBLISHED return NIL/0/status/NIL without begin; last three values
+come from step, distinguishing cursor, count, and no transfer.
+Publication ends immediately; retirement remains for next IDLE entry.
 
-## Qualifica prevista
+Already-active phases, invalid owner/binding, and delegate faults retain
+original conditions. Busy writer preserves CLAIMED/link IDLE; busy Serie or
+generation exhaustion returns CLOSING to end explicitly.
+Errors after transfer do not undo it or authorize replay.
+A NOTINLINE helper with link/status T retains pair checks:
+CLAIMED requires a link, no-work outcomes require NIL; unexpected
+statuses signal `invariant-violation :pool-dispatcher-state`.
 
-- Test della nuova presa con attivazione, CLAIMED corrente con pool inattivo,
-  ricircolo full/room, ritiro pendente, tutti i sette valori e FIFO reale.
-- Conteggio delle chiamate: un solo passo, un begin solo con CLAIMED; nessun
-  secondo routing o avvio del bridge, pop, ACK, end o nuova presa dopo published.
-- Rifiuti owner/binding/fase prima degli effetti; BUSY della coda ready e del
-  writer, Serie busy e limiti di generazione; causa EQ e capacità conservate.
-- FI fuori contratto della coppia link/status e status inattesi, distinguendole
-  dalle prove nominali dei delegati C1. Cleanup delle sole risorse di fixture.
-- Compilazione stretta, suite completa, lint/tracciabilità/link; copertura
-  nativa dell'intero `src/dispatch/`, soglia C3 ≥95%, senza escludere missing.
-- Sensore C4 con fixture e cleanup fuori clock: EMPTY e ciclo ACTIVE reale
-  con payload, pop/ACK/end fuori dal solo ingresso ma inclusi nel ciclo
-  misurato. Cinque fixture fresche per campagna, 4096 cicli e 128 warmup.
-  Self-test di oracoli, rilevamento heap/sink/clock e conservazione dei guasti.
-- Rilettura C3/C4 con checklist e identità dei file; registri e tentativi
-  originali conservati. Nessuna modifica ai sorgenti C1.
+<a id="qualifica-prevista"></a>
 
-Le misure includono controlli e delegati e non isolano il costo dell'adapter.
-Non si promettono speedup, nuova concorrenza positiva, fairness o loop server.
-Restano applicazione payload del motore, I/O durevole, park/wake e governo
-dell'Archivio; nessun gate del motore completo viene chiuso.
+## Planned qualification
+
+- Tests of new claim with activation, current CLAIMED with inactive pool,
+  full/room recirculation, pending retirement, all seven values, and real FIFO.
+- Call counting: one step, one begin only with CLAIMED; no
+  second routing or bridge startup, pop, ACK, end, or new claim after published.
+- Owner/binding/phase rejections before effects; ready-queue and writer
+  BUSY, busy Serie, and generation limits; EQ cause and capacities preserved.
+- FI outside link/status pair contract and unexpected statuses, distinguishing them
+  from C1 delegate named tests. Cleanup only of fixture resources.
+- Strict compilation, complete suite, lint/traceability/links; native
+  coverage of entire `src/dispatch/`, C3 threshold ≥95%, without excluding missing entries.
+- C4 sensor with fixtures and cleanup outside clock: EMPTY and real ACTIVE cycle
+  with payload, pop/ACK/end outside entry alone but included in measured
+  cycle. Five fresh fixtures per campaign, 4096 cycles and 128 warmups.
+  Oracle self-tests, heap/sink/clock detection, and fault preservation.
+- C3/C4 rereading with checklist and file identities; original registers and
+  attempts preserved. No C1 source changes.
+
+Measurements include checks and delegates and do not isolate adapter cost.
+No promise of speedup, new positive concurrency evidence, fairness, or server loop.
+Engine payload application, durable I/O, park/wake, and Archivio
+control remain; no complete-engine gate is closed.

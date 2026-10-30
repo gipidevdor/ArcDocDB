@@ -1,43 +1,54 @@
-# ADR-0010 — Cache CLOCK, partizionabile per Serie
+<a id="adr-0010--cache-clock-partizionabile-per-serie"></a>
 
-- **Stato:** Accettata
-- **Data:** 2026-10-01
-- **Rapporto con la specifica:** registra una decisione della specifica («Cache», «Cache e
-  snapshot»)
-- **Riferimenti:** [09 Cache](../09-cache.md), INV-M3
+# ADR-0010 — CLOCK cache, partitionable by Serie
 
-## Contesto
+- **Status:** Accepted
+- **Date:** 2026-10-01
+- **Relationship to the specification:** records a specification decision (“Cache,” “Cache and
+  snapshots”)
+- **References:** [09 Cache](../09-cache.md), INV-M3
 
-La cache sta sul percorso di ogni lettura; deve costare poco in concorrenza e non farsi
-svuotare da scansioni o da burst su una singola Serie.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-- La cache iniziale usa CLOCK.
-- 2Q si valuta solo se i benchmark mostrano scan pollution significativa.
-- La cache può essere partizionata per Serie.
-- La cache è consapevole della versione/epoch: non restituisce a un reader una versione
-  incompatibile con il suo snapshot.
+The cache is on every read path; its concurrency cost must be low, and scans or bursts
+on a single Serie must not empty it.
+
+<a id="decisione"></a>
+
+## Decision
+
+- The initial cache uses CLOCK.
+- 2Q is evaluated only if benchmarks show significant scan pollution.
+- The cache can be partitioned by Serie.
+- The cache is version/epoch aware: it does not return a reader a version incompatible
+  with that reader's snapshot.
 - Read path: request → Serie → snapshot/index → cache → segment.
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- CLOCK aggiorna un bit in lettura: poco costoso e poco conteso.
-- Il partizionamento protegge le Serie tra loro, ma richiede una politica di ripartizione del
-  budget.
-- La scelta di una politica più sofisticata è rinviata a una misura, che richiede una metrica
-  di scan pollution definita.
+## Consequences
 
-## Alternative considerate
+- CLOCK updates one bit on a read: low cost and low contention.
+- Partitioning protects Serie from one another, but requires a budget allocation policy.
+- Choosing a more sophisticated policy is deferred until measurements are available,
+  which requires a defined scan-pollution metric.
 
-- *LRU:* aggiornamento della lista a ogni lettura, conteso tra thread.
-- *2Q o simili fin dall'inizio:* più resistenti alle scansioni, ma complessità non ancora
-  giustificata da misure.
+<a id="alternative-considerate"></a>
 
-## Valutazione
+## Alternatives considered
 
-- Rischi: RSK-10.
-- Verifica: SPK-05; benchmark con scansioni concorrenti alle letture puntuali.
-- Aperto: granularità, chiave e budget (QA-17); memoria fuori dallo heap gestito (QA-18).
-- Proposta collegata: chiave per location, che rende INV-M3 vero per costruzione
+- *LRU:* list update on every read, contended among threads.
+- *2Q or similar from the start:* more resistant to scans, but the complexity is not yet
+  justified by measurements.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-10.
+- Verification: SPK-05; benchmarks with scans concurrent with point reads.
+- Open: granularity, key, and budget (QA-17); memory outside the managed heap (QA-18).
+- Related proposal: location-based key, making INV-M3 true by construction
   ([09](../09-cache.md#cache-e-snapshot)).

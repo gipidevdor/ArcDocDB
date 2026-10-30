@@ -1,127 +1,139 @@
-# Metodo di verifica funzionale: GET ACTIVE ordinario
+<a id="metodo-di-verifica-funzionale-get-active-ordinario"></a>
 
-Questa campagna aggiunge una prima suite dedicata in
-[`tests/get-active/`](../../tests/get-active/). Il perimetro è la sorgente
-ACTIVE di una Serie, preflight OPEN, costruzione delle pagine immutabili,
-acquisizione della radice effettivamente pubblicata e lettura ordinaria.
-L'antenato di integrazione è `105ae0dd28a6ae3e7ee60ab1477815a49b1b350b`.
-Il metodo precede le esecuzioni; freeze ed esiti saranno registrati nelle
-prove native. Non si modifica il codice di prodotto.
-Prima del freeze si integra anche `c4bbb037b779d33ee9e8c01b4a33aac875ccf96f`,
-che comprende le prove del writer float aggiunte da un'altra campagna.
+# Functional verification method: ordinary GET ACTIVE
 
-## Oracoli e casi fissati
+Campaign adds first dedicated suite in
+[`tests/get-active/`](../../tests/get-active/). Scope: Serie ACTIVE
+source, OPEN preflight, immutable page construction,
+acquisition of actually published root, ordinary reading.
+Integration ancestor `105ae0dd28a6ae3e7ee60ab1477815a49b1b350b`.
+Method precedes execution; freeze/outcomes will be recorded in
+native evidence. No product-code changes.
+Before freeze also integrate `c4bbb037b779d33ee9e8c01b4a33aac875ccf96f`,
+including float-writer tests added by another campaign.
 
-Si fissano 28 test nominati: 12 costruzione/preflight, quattro geometria
-della directory e 12 lettura. Iterazioni sui formati o sui confini non
-aumentano il numero dei test nominati. Gli accessi interni verificano
-contratti locali dichiarati; gli ingressi pubblici rimangono distinti.
+<a id="oracoli-e-casi-fissati"></a>
 
-La fixture autonoma possiede un file reale con capacità append e readonly
-associate, header letterale e controller iniziale con radice NIL e offset
-64. Usa il protocollo pubblico preflight, sigillatura CSN, adozione, WAL
-e pubblicazione; controller e worker non sono oggetto di nuovi test.
-Header, cornici e CRC bitwise attesi sono indipendenti dagli encoder del
-prodotto. Offset e frontiere provengono dal piano: header 64, record
-`24 + K + V`, SEAL 56. Il CSN atteso proviene dal valore iniziale noto del
-registro, senza leggere la mappa costruita per ricavare l'oracolo.
+## Oracles and fixed cases
 
-I casi di costruzione comprendono v1/v2, PUT e tombstone, pagina senza PUT,
-identità e capacità del file, preflight senza assegnazione CSN o I/O,
-budget di pagine, PUT, record, byte e payload. Un primo PUT richiede 536
-byte di payload al picco; il secondo append richiede 1072 al picco e
-mantiene 560 byte nella radice risultante. Si provano limite esatto e uno
-sotto. PREPARED e OUTCOME validi sono rifiutati prima del CSN; lotto,
-radice e registro rimangono invariati. Il riuso legittimo del lotto non
-altera una radice precedente. Un CRC corrotto nel lotto SEALED provoca
-il guasto di Archivio previsto, con causa originale preservata.
+Fix 28 named tests: 12 construction/preflight, four directory
+geometry, 12 reading. Format/boundary iterations do not
+increase named-test count. Internal access checks declared
+local contracts; public entries remain distinct.
 
-La geometria attraversa i rank 15/16, 255/256 e 4095/4096 e la vista
-sintetica massima di 65.536 pagine. Quest'ultima è un contratto locale di
-ricerca e convergenza, costruito con un oracolo diretto indipendente;
-non rappresenta 65.536 lotti nativi. Nodo assente, larghezza o foglia
-errata e append su foglia occupata verificano i guard e la persistenza
-del grafo precedente, rispettando i tipi dichiarati.
+Standalone fixture owns real file with associated append/read-only
+capabilities, literal header, initial controller with NIL root and offset
+64. Uses public preflight, CSN sealing, adoption, WAL,
+publication protocol; controller/worker not subject to new tests.
+Expected headers, frames, bitwise CRC independent of product
+encoders. Offsets/frontiers derive from plan: header 64, record
+`24 + K + V`, SEAL 56. Expected CSN derives from known initial
+register value, without reading built map to derive oracle.
 
-Le letture entrano tramite AVVIA-GET con snapshot ed EBR reali e chiamano
-le tre API ACTIVE. Si confrontano byte, sentinelle e tutti i cinque esiti
-di lettura, cache fredda/calda, formati v1/v2, flag ordinari 0/4 e CSN oltre
-la word bassa. La radice soltanto pianificata non autorizza il candidato;
-un PUT precedente conserva la propria frontiera di pagina dopo append.
-Location in header, SEAL, tombstone, fuori frontiera o senza riga, CSN
-discordante nelle due word, dimensione errata e FD chiuso sono guasti.
-Si verificano proprietario errato, buffer piccolo e nuovo ingresso GET,
-scadenza dopo copia provvisoria e uscita non locale durante pread.
-L'osservatore registra FD, offset e quantità; resolve/probe non leggono.
-Cleanup GET/EBR deve essere verificato prima del cleanup esterno.
+Construction cases include v1/v2, PUT/tombstone, page without PUT,
+file identity/capacity, preflight without CSN allocation or I/O,
+page/PUT/record/byte/payload budgets. First PUT requires 536
+peak payload bytes; second append requires 1072 peak and
+retains 560 bytes in resulting root. Exact and one-below
+limits tested. Valid PREPARED/OUTCOME rejected before CSN; batch,
+root, register unchanged. Legitimate batch reuse does not
+alter previous root. Corrupt CRC in SEALED batch causes
+specified Archivio fault with original cause preserved.
 
-## Esecuzione e conservazione
+Geometry crosses ranks 15/16, 255/256, 4095/4096, and synthetic
+maximum view of 65,536 pages. Latter is local search/convergence
+contract built with independent direct oracle;
+does not represent 65,536 native batches. Absent node, wrong width/leaf,
+append to occupied leaf check guards and persistence
+of previous graph, respecting declared types.
 
-Prima dei gruppi si committano sorgenti, test, strumenti e metodo. Nessuno
-di questi cambia durante l'esecuzione. `tools/record-command.lisp`
-conserva argv, ambiente, commit, working tree, inventari/hash prima e dopo,
-stdout, stderr ed exit code anche in caso di errore. Correzioni richiedono
-un nuovo freeze; le prove precedenti rimangono attribuite al loro commit.
+Reads enter through AVVIA-GET with real snapshots/EBR and call
+three ACTIVE APIs. Compare bytes, sentinels, all five read
+outcomes, cold/hot cache, v1/v2 formats, ordinary flags 0/4, CSN beyond
+low word. Merely planned root does not authorize candidate;
+earlier PUT retains page frontier after append.
+Locations in header, SEAL, tombstone, outside frontier, or without row,
+CSN disagreement in either word, wrong size, closed FD are faults.
+Check wrong owner, small buffer, new GET entry,
+expiry after provisional copy, nonlocal exit during pread.
+Observer records FD/offset/amount; resolve/probe read nothing.
+GET/EBR cleanup must be checked before external cleanup.
 
-La verifica locale completa è `make check`. La copertura isolata usa
+<a id="esecuzione-e-conservazione"></a>
+
+## Execution and preservation
+
+Before groups, commit sources, tests, tools, method. None
+changes during execution. `tools/record-command.lisp`
+preserves argv, environment, commit, working tree, inventories/hashes before/after,
+stdout/stderr, exit code even on error. Corrections require
+new freeze; previous evidence remains attributed to its commit.
+
+Full local verification `make check`. Isolated coverage uses
 [`get-resolver-coverage.lisp`](../../tools/get-resolver-coverage.lisp)
-con `--suite active`: carica i test senza invocare test-op, azzera SB-COVER
-ed esegue soltanto la nuova suite. Il perimetro comprende package, types,
-rows, read e i sei file active-* del resolver: dieci sorgenti, undici HTML
-con l'indice. Lo stato grezzo viene salvato prima della validazione e i
-conteggi sono confrontati con quelli usati dall'HTML. Il profilo CLOSED
-preesistente conserva default, perimetro e comportamento.
-Un processo positivo separato verifica il default CLOSED; tre fixture
-negative verificano suite ignota, suite duplicata e report duplicato.
-Devono uscire con errore di uso prima della creazione della directory.
+with `--suite active`: loads tests without test-op, resets SB-COVER,
+runs new suite only. Scope includes package, types,
+rows, read, six resolver active-* files: ten sources, eleven HTML files
+including index. Raw state saved before validation and
+counts compared with HTML. Existing CLOSED
+profile retains defaults, scope, behavior.
+Separate positive process checks CLOSED default; three negative
+fixtures check unknown suite, duplicate suite, duplicate report.
+Must exit usage error before directory creation.
 
-### Ripetizione dopo l'integrazione delle fonti della Serie
+<a id="ripetizione-dopo-lintegrazione-delle-fonti-della-serie"></a>
 
-Il primo freeze è `42dcad77530c09784f9d77fabb92ff4477927983`.
-Prima della ripetizione si integra il main esatto
-`64a5ef06987af61c36ce9818eb24ca8f0a0eb7f4`: aggiunge 27 test delle fonti
-ACTIVE/CLOSED e modifica il wrapper ACTIVE perché deleghi al resolver
-della radice catturata. Il totale atteso diventa 1.107 test di modulo in
-29 suite, più due smoke check; il verificatore lo ricava comunque dai
-sorgenti Git congelati. I nostri 28 test mantengono il perimetro ordinario;
-non qualificano autonomamente la nuova API della radice catturata.
+### Repeat after Serie-source integration
 
-Si ripetono `make check`, copertura ACTIVE e compatibilità CLOSED sul
-nuovo freeze, in processi e cache private separati. La fixture CLI
-`--suite active --suite active`, con quattro argomenti e nessun `--report`,
-deve raggiungere il guard specifico del duplicato. La precedente fixture
-con sei argomenti raggiunge soltanto il guard di cardinalità; le sue prove
-restano attribuite al primo freeze. La seconda copia di lavoro mantiene
-immutati i gruppi originali mentre il loro audit finale procede in parallelo.
+First freeze `42dcad77530c09784f9d77fabb92ff4477927983`.
+Before repetition integrate exact main
+`64a5ef06987af61c36ce9818eb24ca8f0a0eb7f4`: adds 27 ACTIVE/CLOSED
+source tests and changes ACTIVE wrapper to delegate to captured-root
+resolver. Expected total becomes 1,107 module tests in
+29 suites plus two smoke checks; verifier nevertheless derives it from
+frozen Git sources. Our 28 tests retain ordinary scope;
+do not independently qualify new captured-root API.
 
-### Ultima integrazione prima della pull request
+Repeat `make check`, ACTIVE coverage, CLOSED compatibility on
+new freeze in separate processes/private caches. CLI fixture
+`--suite active --suite active`, four arguments and no `--report`,
+must reach specific duplicate guard. Previous six-argument
+fixture reaches cardinality guard only; its evidence
+remains attributed to first freeze. Second working copy keeps
+original groups unchanged while final audit proceeds in parallel.
 
-Si integra poi il main esatto
-`061e638200f0d97fc2443c7dec38d4362ef274e1`, che aggiunge il lifecycle del
-pool e la preparazione del checkpoint CONTROL. Le 18 nuove prove del
-pool portano il totale atteso a 1.125 test in 29 suite, più due smoke
-check; il conteggio finale viene ricavato dai sorgenti Git congelati.
-Il codice e i test della nostra suite ACTIVE restano invariati.
+<a id="ultima-integrazione-prima-della-pull-request"></a>
 
-Si committano integrazione e documenti e si esegue una verifica completa
-in una terza copia separata, con cache FASL privata. Non si riscrivono
-i gruppi di spike già congelati nelle prime due copie. Le coperture
-rimangono attribuite ai loro due freeze; non si ripetono perché i dieci
-file del loro perimetro sono invariati nell'ultima integrazione.
-L'audit finale locale ricava inventario, nomi, ordine e conteggi dal nuovo
-freeze, conservando tutti i gruppi e le fixture del controllo completo.
+### Final integration before pull request
 
-Prima della pull request passano compilazione senza avvisi, regressione,
-controlli statici, tracciabilità, collegamenti e conservazione. La CI
-ripete i controlli su Linux/macOS e i documenti separatamente. Le prove
-sono lette come dati tramite `tools/evidence-storage.lisp`, mai caricate
-come codice; si conservano gruppi completi, output grezzi, fallimenti e
-FASL originali. Revisione indipendente di fixture, oracoli e risultati.
+Then integrate exact main
+`061e638200f0d97fc2443c7dec38d4362ef274e1`, adding pool
+lifecycle and CONTROL checkpoint preparation. 18 new pool
+tests bring expected total to 1,125 tests in 29 suites plus two smoke
+checks; final count derived from frozen Git sources.
+Our ACTIVE suite code/tests unchanged.
 
-## Limiti delle conclusioni
+Commit integration/documents, run full verification
+in third separate copy with private FASL cache. Do not rewrite
+spike groups already frozen in first two copies. Coverage
+retains both freezes; not rerun because all ten scoped
+files unchanged in final integration.
+Final local audit derives inventory, names, order, counts from new
+freeze, preserving all full-check groups and fixtures.
 
-Non si misurano prestazioni, RSS o allocazioni; i payload sono calcoli di
-geometria. SB-COVER non dimostra MC/DC. Restano aperti qualifica C1,
-decisioni non esercitate, requisiti e Fase 0. Sono esclusi prepared/OUTCOME
-in ACTIVE come funzionalità, EDIT, indice concreto atomico, directory
-mista, rotazione/reclaim, multiserie, stress, scheduler e server.
+Before pull request, warning-free compilation, regression,
+static checks, traceability, links, preservation pass. CI
+repeats checks on Linux/macOS, documents separately. Evidence
+read as data through `tools/evidence-storage.lisp`, never loaded
+as code; full groups, raw outputs, failures, original FASLs preserved.
+Independent fixture/oracle/result review.
+
+<a id="limiti-delle-conclusioni"></a>
+
+## Limits of conclusions
+
+No performance, RSS, allocation measurement; payloads are geometry
+calculations. SB-COVER does not demonstrate MC/DC. C1 qualification,
+unexercised decisions, requirements, Phase 0 remain open. Excluded:
+prepared/OUTCOME ACTIVE functionality, EDIT, atomic concrete index, mixed
+directory, rotation/reclaim, multiseries, stress, scheduler, server.

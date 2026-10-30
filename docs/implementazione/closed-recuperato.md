@@ -1,158 +1,170 @@
-# Recovery readonly dei CLOSED
+<a id="recovery-readonly-dei-closed"></a>
 
-`arcdocdb.recovery.closed` verifica i segmenti CLOSED nominati dal
-[CONTROL recuperato](control-recuperato.md), secondo
+# Read-only recovery of CLOSED segments
+
+`arcdocdb.recovery.closed` verifies CLOSED segments named by
+[recovered CONTROL](control-recuperato.md), under
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio)
-e [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md#3-segmenti-autosufficienti-inv-s7).
-Non cambia formati, politica CLEAN/MERGE o publisher canonico.
+and [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md#3-segmenti-autosufficienti-inv-s7).
+Does not change formats, CLEAN/MERGE policy, or canonical publisher.
 
 ## API
 
-| API | Contratto |
+| API | Contract |
 |---|---|
-| `leggi-closed-recuperato(control, input, id, scratch, …)` | header e prefisso dal medesimo FD readonly, prepared risolti localmente |
-| `frontiere-closed-recuperato(result)` | ID u64, P dal manifest, versione 1/2 e origine writer=1/compaction=2 |
-| `statistiche-closed-recuperato(result)` | lotti, record esclusi SEAL, TXID prepared distinti, commit locali, commit solo EDIT, abort |
-| `massimo-csn-closed-recuperato(result)` | presenza e massimo locale, includendo EDIT orfani; NIL/0 distinto da T/0 |
-| `massimo-csn-serie-recuperata(active, vector, :max-segmenti)` | massimo ACTIVE + insieme completo dei CLOSED; fonti ancora aperte |
-| `verifica-closed-completi(control, vector, :max-segmenti)` | tutti e soli i vecchi CLOSED, una volta per ID, con stesso CONTROL, P e file aperti |
-| `pubblica-control-con-closed(prepared, active, vector, :max-segmenti)` | verifica l'insieme prima del claim, poi delega a `pubblica-control-da-active` |
+| `leggi-closed-recuperato(control, input, id, scratch, …)` | header and prefix from same read-only FD, locally resolved prepared records |
+| `frontiere-closed-recuperato(result)` | u64 ID, manifest P, version 1/2, origin writer=1/compaction=2 |
+| `statistiche-closed-recuperato(result)` | batches, records excluding SEAL, distinct prepared TXIDs, local commits, EDIT-only commits, aborts |
+| `massimo-csn-closed-recuperato(result)` | presence and local maximum including orphan EDITs; NIL/0 distinct from T/0 |
+| `massimo-csn-serie-recuperata(active, vector, :max-segmenti)` | maximum ACTIVE + complete CLOSED set; sources still open |
+| `verifica-closed-completi(control, vector, :max-segmenti)` | all and only old CLOSED, once per ID, same CONTROL, P, open files |
+| `pubblica-control-con-closed(prepared, active, vector, :max-segmenti)` | checks set before claim, delegates to `pubblica-control-da-active` |
 
-Il risultato trattiene CONTROL, capacità readonly e scalari, senza scratch,
-workspace, array o FD numerico esportato. Gli ID del formato sono u64 completi,
-anche zero: il lettore non costruisce una capacità GET e non applica i limiti
-dell'attuale indice primario. Non costruisce mappe GET o indici.
+Result retains CONTROL, read-only capability, and scalars without scratch,
+workspace, arrays, or numeric FD exported. Format IDs are full u64,
+including zero: reader neither builds GET capability nor applies current
+primary-index limits. Builds no GET maps or indexes.
 
-## Autorità, lettura e frontiera
+<a id="autorità-lettura-e-frontiera"></a>
 
-Il controller garantisce un recovery esclusivo della Serie e l'associazione
-dal catalogo fra CONTROL, input e nomi dei file. File, FD e namespace restano
-autorevoli, congelati e aperti fino alla pubblicazione; scratch esclusivo
-per tutta la lettura. Readonly non impedisce mutazioni esterne. Backend
-CONTROL e segmento devono coincidere, incluso `nil` per il percorso nativo.
+## Authority, reading, and frontier
 
-1. Senza syscall: verificare capacità, alias con UUID della Serie, budget,
-   backend e stato CLOSED dell'ID. Prendere P dal manifest; verificare range
-   e capacità di trasferimento prima di leggere.
-2. Leggere l'header dal FD dato e verificare CRC, Serie, tutti i bit dell'ID,
-   riservati, versione effettiva e origine prima del corpo.
-3. Leggere il corpo in chunk fino a **P esatto**, senza rileggere l'header.
-4. Verificare l'intero prefisso in memoria, poi applicare la semantica locale.
-   Consegnare il risultato solo con CONTROL e input ancora aperti.
+Controller guarantees exclusive Serie recovery and catalog
+association of CONTROL, input, and file names. Files, FDs, and namespace remain
+authoritative, frozen, and open until publication; scratch exclusive
+throughout reading. Read-only does not prevent external mutation. CONTROL
+and segment backends must match, including `nil` for native path.
 
-P non è una misura dell'EOF fisico. Il lettore non usa lo scanner TAIL a EOF,
-non legge né interpreta byte oltre P e non tronca file. Un lotto rotto prima
-di P è un errore, non una coda da ignorare. Un file più corto di P causa
-l'errore I/O originale. Il manifest non sostituisce header, CRC o dati.
-Non vengono confrontati numeri FD o inode: l'autorità dei nomi e la stabilità
-restano del controller; l'header verifica identità logica sullo stesso FD.
+1. Without syscall: check capabilities, alias with Serie UUID, budgets,
+   backend, and ID's CLOSED state. Obtain P from manifest; check range
+   and transfer capability before reading.
+2. Read header from supplied FD, check CRC, Serie, all ID bits,
+   reserved fields, actual version, and origin before body.
+3. Read body in chunks through **exact P**, without rereading header.
+4. Verify complete in-memory prefix, then apply local semantics.
+   Deliver result only while CONTROL and input still open.
 
-## Origine e prepared
+P is not physical EOF measurement. Reader does not use EOF TAIL scanner,
+read/interpret bytes beyond P, or truncate files. Broken batch before
+P is error, not ignorable tail. File shorter than P causes
+original I/O error. Manifest does not replace headers, CRCs, or data.
+FD numbers or inodes are not compared: name authority and stability
+remain controller obligations; header checks logical identity on same FD.
 
-Per origine writer si verificano lotti interi con il verificatore canonico:
-cornici, CRC, SEAL, ID u64 e frontiere. P deve coincidere con la fine di un
-lotto completo. Solo dopo tutti i CRC si riusa l'attraversamento semantico
-ACTIVE su un workspace privato: un TXID prepared in un solo lotto, OUTCOME
-successivi, duplicati identici ammessi e CSN discordi rifiutati. Il secondo
-passaggio ricontrolla gli header senza ricalcolare i CRC dei documenti.
+<a id="origine-e-prepared"></a>
 
-| OUTCOME locale | Esito EDIT per il TXID | Risoluzione del prepared |
+## Origin and prepared records
+
+Writer origin: complete batches verified with canonical verifier:
+frames, CRCs, SEAL, u64 ID, frontiers. P must match complete
+batch end. Only after all CRCs, ACTIVE semantic traversal reused
+on private workspace: prepared TXID in one batch, later OUTCOMEs,
+identical duplicates allowed, conflicting CSNs rejected. Second
+pass rechecks headers without recalculating document CRCs.
+
+| Local OUTCOME | EDIT outcome for TXID | Prepared resolution |
 |---|---|---|
-| presente | assente | commit locale |
-| presente | presente, stesso CSN | commit locale, una sola classificazione |
-| assente | presente | commit da chiusura |
-| assente | assente | abort nel CLOSED autosufficiente |
-| presente | presente, CSN diverso | corruzione |
+| present | absent | local commit |
+| present | present, same CSN | local commit, one classification |
+| absent | present | commit from closing |
+| absent | absent | abort in self-contained CLOSED |
+| present | present, different CSN | corruption |
 
-Nessun accesso a `multiserie.log`. Zero presente è distinto dall'assenza;
-nessun troncamento dei bit alti. Ogni TXID prepared è classificato una volta:
-`prepared = locali + solo-EDIT + abort`. OUTCOME o esiti EDIT senza prepared
-nel prefisso non creano versioni o nuovi commit. Tutti gli OUTCOME, anche
-orfani, sono confrontati con l'eventuale EDIT omonimo: prove discordanti
-impediscono il risultato e il massimo CSN. I metadati del manifest
-restano intatti e non vengono scartati.
+No `multiserie.log` access. Present zero distinct from absence;
+no high-bit truncation. Each prepared TXID classified once:
+`prepared = locali + solo-EDIT + abort`. OUTCOMEs or EDIT outcomes without prepared
+records in prefix create no versions or new commits. All OUTCOMEs, including
+orphans, compared against any same-name EDIT: conflicting proofs
+prevent result and maximum CSN. Manifest metadata
+remains intact and is not discarded.
 
-Per origine compaction si riusa il verificatore integrale esistente: solo
-PUT/TOMBSTONE ordinari fino a P, senza prepared, OUTCOME o SEAL. L'header
-viene riverificato in memoria dal codec, senza seconda lettura del file.
-Le statistiche hanno zero lotti/prepared/esiti e count PUT+TOMBSTONE. Eventuali
-metadati di chiusura senza prepared non autorizzano modifiche agli stamp.
+Compaction origin: existing full verifier reused: ordinary
+PUT/TOMBSTONE only through P, no prepared, OUTCOME, or SEAL. Header
+reverified in memory by codec, without second file read.
+Statistics have zero batches/prepared/outcomes and PUT+TOMBSTONE count. Closing
+metadata without prepared records does not authorize stamp modification.
 
-## Insieme completo e pubblicazione
+<a id="insieme-completo-e-pubblicazione"></a>
 
-Il vettore dell'insieme deve restare completo e stabile durante la chiamata.
-Il budget precede la tabella `seen`, dimensionata sul numero di risultati.
-Ogni risultato deve provenire dallo **stesso oggetto CONTROL recuperato**,
-nominare un CLOSED con P identico, avere input aperto ed essere unico per ID.
-Appartenenza, unicità e cardinalità uguale al manifest dimostrano la copertura
-dei vecchi CLOSED. Il vettore può essere vuoto solo se non vi sono CLOSED.
+## Complete set and publication
 
-L'ingresso di pubblicazione esegue il controllo prima di qualsiasi claim e
-delega al publisher ACTIVE, che verifica chiusura del vecchio ACTIVE,
-transizione conservativa e nuovo ACTIVE. Il punto atomico resta la rinomina
-CONTROL, con conferma dopo fsync del parent e gli stessi stati terminali.
-Non c'è un nuovo gettone, seconda rinomina o rilettura dei segmenti.
+Set vector must remain complete and stable during call.
+Budget precedes `seen` table sized by result count.
+Every result must come from **same recovered CONTROL object**,
+name CLOSED with identical P, have open input, and be unique by ID.
+Membership, uniqueness, and cardinality equal to manifest prove coverage
+of old CLOSED entries. Vector may be empty only if no CLOSED entries exist.
 
-Questo non esegue riconciliazione fisica dei nomi, rimozioni o verifica di
-un inventario directory. Non autorizza dimenticanza delle decisioni globali,
-ricostruzione indici/CSN o riapertura del traffico: resta il gate del Recovery
-Manager. Le API di pubblicazione precedenti mantengono i loro contratti.
+Publication entry performs check before any claim and
+delegates to ACTIVE publisher, which checks old ACTIVE closing,
+conservative transition, and new ACTIVE. Atomic point remains CONTROL
+rename with acknowledgment after parent fsync and same terminal states.
+No new token, second rename, or segment reread.
 
-## Budget e costi
+Does not reconcile physical names, remove files, or verify
+directory inventory. Authorizes neither forgetting global decisions,
+index/CSN rebuild, nor reopening traffic: Recovery Manager gate
+remains. Previous publication APIs retain contracts.
 
-| Budget di apertura | Default |
+<a id="budget-e-costi"></a>
+
+## Budgets and costs
+
+| Opening budget | Default |
 |---|---:|
-| prefisso/scratch | 256 MiB, configurabile; resta il massimo del formato segmento |
-| chunk del corpo | 64 KiB |
-| lotti / record per lotto | 65.536 / 65.536 |
-| byte per lotto | 64 MiB |
-| record totali, esclusi SEAL | 1.048.576 |
-| TXID prepared distinti / OUTCOME fisici | 65.536 / 65.536 |
-| `max-esiti-chiusura` | 65.536 esiti unici già ripiegati nel manifest |
-| insieme `max-segmenti` | 65.536 CLOSED, escluso ACTIVE |
+| prefix/scratch | 256 MiB, configurable; segment-format maximum remains |
+| body chunk | 64 KiB |
+| batches / records per batch | 65,536 / 65,536 |
+| bytes per batch | 64 MiB |
+| total records excluding SEAL | 1,048,576 |
+| distinct prepared TXIDs / physical OUTCOMEs | 65,536 / 65,536 |
+| `max-esiti-chiusura` | 65,536 unique outcomes already folded into manifest |
+| set `max-segmenti` | 65,536 CLOSED, excluding ACTIVE |
 
-Sono budget del compito, non nuovi limiti del database. Esaurimento non
-significa assenza o abort. Zero record/prepared/outcome/esiti è ammesso
-quando il prefisso non li contiene; chunk, lotti e record per lotto sono
-positivi anche sul vuoto. `max-bytes` è fra header e massimo del formato,
-controllato prima di leggere per entrambe le origini. L'OUTCOME budget conta duplicati fisici; gli esiti
-EDIT sono già canonici dal replay CONTROL.
+Task budgets, not new database limits. Exhaustion does not
+mean absence or abort. Zero records/prepared/outcomes/closing outcomes allowed
+when prefix contains none; chunk, batches, and records per batch are
+positive even for empty input. `max-bytes` between header and format maximum,
+checked before reading for both origins. OUTCOME budget counts physical duplicates; EDIT
+outcomes already canonical from CONTROL replay.
 
-La capacità I/O ammette `max(64, min(P-64, chunk))` byte per trasferimento.
-Header e `ceiling((P-64)/chunk)` trasferimenti esatti; ogni byte letto una
-volta. Writer: verifica CRC integrale, poi visita limitata a lotti+record
-e query EDIT per OUTCOME distinti prima della classificazione dei prepared.
-Il fold EDIT verifica valori u64 e cardinalità attraversata. Compaction:
-codec integrale delle cornici.
-Workspace semantico con hash table del parser canonico, limitato da
-prepared/OUTCOME; non viene trattenuto dal risultato. Il controllo insieme
-usa una tabella privata e lavoro medio O(N). Nessuna misura di heap zero,
-RSS, latenza o throughput. Nessun nuovo lock o scrittura condivisa tra Serie.
+I/O capability allows `max(64, min(P-64, chunk))` bytes per transfer.
+Header and `ceiling((P-64)/chunk)` exact transfers; each byte read
+once. Writer: full CRC verification then traversal bounded by batches+records
+and EDIT queries for distinct OUTCOMEs before prepared classification.
+EDIT fold checks u64 values and traversed cardinality. Compaction:
+full frame codec.
+Semantic workspace with canonical parser hash tables bounded by
+prepared/OUTCOME; not retained in result. Set check
+uses private table and average O(N) work. No zero-heap,
+RSS, latency, or throughput measurement. No new lock or shared write between Serie.
 
-## Decisioni e qualifica
+<a id="decisioni-e-qualifica"></a>
 
-| ID | Decisione composta / confine | Casi richiesti, aperti |
+## Decisions and qualification
+
+| ID | Compound decision / boundary | Required cases, open |
 |---|---|---|
-| CDR-D01 | cinque condizioni della configurazione | ciascuna falsa, tutte vere; byte sotto header/sopra formato; header-only writer/compaction |
-| CDR-D02 | fine header e offset created nel range | ciascuna falsa, entrambe vere; versioni 1/2 |
-| CDR-D03 | chunk positivo e P almeno header nel lettore corpo | ciascuna falsa, entrambe vere; chunk corto/esatto |
-| CDR-D04 | progresso/fine/stamp/durable del lotto | ciascun risultato impossibile, tutti coerenti; budget al limite |
-| CDR-D05 | fine/versione/count/budget compaction | ogni discordanza separata; prepared/OUTCOME/SEAL rifiutati |
-| CDR-D06 | EDIT presente e CSN diverso per ogni OUTCOME; poi presenza locale/EDIT per prepared | ogni combinazione, anche OUTCOME orfani, zero e bit alti |
-| CDR-D07 | stato CLOSED e P uguale nell'insieme | ciascuna falsa, entrambe vere |
-| CDR-G01 | preflight e identità prima del corpo | alias, scratch, backend, stato e budget; UUID/ID/CRC/riservati/origine |
-| CDR-G02 | prefisso esatto | metà lotto, corruzione prima di P, file corto, coda dopo P intatta/non letta |
-| CDR-G03 | semantica e conteggi | prepared fra lotti, OUTCOME antecedenti/duplicati, tutte le risoluzioni, esiti orfani |
-| CDR-G04 | copertura del manifest | mancante/extra/duplicato, altro CONTROL, FD chiuso, vettore vuoto, ID zero/u64 alto |
-| CDR-G05 | ingresso publisher | rifiuti prima del claim senza effetti, stesso gettone e guasti canonici dopo il claim |
+| CDR-D01 | five configuration conditions | each false, all true; bytes below header/above format; header-only writer/compaction |
+| CDR-D02 | header end and created offset in range | each false, both true; versions 1/2 |
+| CDR-D03 | positive chunk and P at least header in body reader | each false, both true; short/exact chunk |
+| CDR-D04 | batch progress/end/stamp/durable | each impossible result, all coherent; boundary budget |
+| CDR-D05 | compaction end/version/count/budget | each mismatch separately; prepared/OUTCOME/SEAL rejected |
+| CDR-D06 | EDIT present and different CSN for every OUTCOME; then local/EDIT presence for prepared | every combination, including orphan OUTCOMEs, zero, high bits |
+| CDR-D07 | CLOSED state and equal P in set | each false, both true |
+| CDR-G01 | preflight and identity before body | aliases, scratch, backend, state, budgets; UUID/ID/CRC/reserved fields/origin |
+| CDR-G02 | exact prefix | half batch, corruption before P, short file, tail after P intact/unread |
+| CDR-G03 | semantics and counts | prepared across batches, earlier/duplicate OUTCOMEs, all resolutions, orphan outcomes |
+| CDR-G04 | manifest coverage | missing/extra/duplicate, another CONTROL, closed FD, empty vector, zero/high-u64 ID |
+| CDR-G05 | publisher entry | rejections before claim without effects, same token and canonical faults after claim |
 
-Le [prime evidenze locali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-closed-recovery/README.md)
-riguardano compilazione e controlli statici. La
-[campagna dedicata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-closed-verifica/report.md)
-conserva 69 test composti, FI, prove native e revisione statica.
-Qualifica C1/MC/DC e misure dei nuovi ingressi restano aperte.
-Le prove dei parser preesistenti non qualificano automaticamente il nuovo
-binding CLOSED/CONTROL, la risoluzione EDIT o il controllo dell'insieme.
-Il [metodo della verifica dedicata](closed-recuperato-verifica.md) definisce
-oracoli, matrici funzionali, prove native, copertura e conservazione della
-campagna successiva, mantenendo distinti esiti eseguiti e requisiti aperti.
+[Initial local evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-closed-recovery/README.md)
+concerns compilation and static checks. The
+[dedicated campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-closed-verifica/report.md)
+preserves 69 composite tests, FI, native tests, and static review.
+C1/MC/DC qualification and measurements of new entries remain open.
+Tests of existing parsers do not automatically qualify new
+CLOSED/CONTROL binding, EDIT resolution, or set check.
+The [dedicated-verification method](closed-recuperato-verifica.md) defines
+oracles, functional matrices, native tests, coverage, and preservation of
+later campaign, separating executed outcomes and open requirements.

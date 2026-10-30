@@ -1,28 +1,30 @@
-# Decisioni della scrittura dei valori semplici CBOR
+<a id="decisioni-della-scrittura-dei-valori-semplici-cbor"></a>
 
-Inventario statico prima della compilazione e delle campagne; le
-dipendenze esistenti non sono riscritte. Nessuna esclusione dal
-denominatore di coverage, attestazione MC/DC o copertura completa.
+# Decisions in writing CBOR simple values
 
-| Funzione / forma | Condizioni, da sinistra | Testimoni previsti |
+Static inventory before compilation and campaigns; existing
+dependencies are not rewritten. No exclusion from the coverage
+denominator, MC/DC attestation, or full coverage.
+
+| Function / form | Conditions, from left | Planned witnesses |
 |---|---|---|
-| `check-input-simple-cbor-write` / `unless and` | BUFFER octets; START index; END index; range ordinato entro lunghezza | array/tipo START/tipo END errati, START>END, END>lunghezza; valido e vuoto |
-| `scrivi-semplice-cbor-minimo` / `unless and` | BEGIN<NEXT; NEXT≤LIMIT | footprint positivo e contenuto sul successo; guardia interna conservata |
+| `check-input-simple-cbor-write` / `unless and` | BUFFER octets; START index; END index; ordered range within length | wrong array/START type/END type, START>END, END>length; valid and empty |
+| `scrivi-semplice-cbor-minimo` / `unless and` | BEGIN<NEXT; NEXT≤LIMIT | positive, bounded footprint on success; internal guard retained |
 
-La relazione concatenata `START≤END≤length(BUFFER)` contiene due confronti:
-ordine dello span e limite fisico. Il TYPEP di VALUE usa l'unione
-`(or (integer 0 23) (integer 32 255))`: entrambi gli intervalli, estremi,
-gap 24..31, -1 e 256, interi grandi e tipi diversi sono nel corpus.
-Questo OR appartiene al descrittore di tipo, senza cortocircuito scritto
-come forma di controllo; non viene omesso dall'inventario semantico.
+The chained relation `START≤END≤length(BUFFER)` contains two comparisons:
+span order and physical bound. VALUE's TYPEP uses the union
+`(or (integer 0 23) (integer 32 255))`: both ranges, endpoints,
+gap 24..31, -1 and 256, large integers, and other types are in the corpus.
+This OR belongs to the type descriptor, without short-circuiting written
+as a control form; it is not omitted from the semantic inventory.
 
-Le decisioni semplici comprendono span coerente, selezione a 23/32,
-capacità END−START, scelta del lead, secondo byte e cursore finale.
-Tutte le capacità insufficienti e lo spazio fisico oltre END sono
-falsificati nel corpus. Le guardie interne rimangono nei rapporti grezzi.
+Simple decisions include coherent span, selection at 23/32,
+END−START capacity, lead choice, second byte, and final cursor.
+All insufficient capacities and physical space beyond END are
+challenged in the corpus. Internal guards remain in raw reports.
 
-Conteggio sintattico dei percorsi: 7 per il preflight, 8 per la funzione
-pubblica, includendo AND/OR di controllo ma non espansioni TYPEP o
-confronti primitivi. La coppia di condizioni del footprint e la guardia
-di span richiedono verifica separata; il successo dei test non ne prova
-l'indipendenza. Il gate C1 di ADR-0035 rimane aperto.
+Syntactic path count: 7 for preflight, 8 for the public
+function, including control AND/OR but not TYPEP expansions or
+primitive comparisons. The footprint condition pair and span
+guard require separate verification; passing tests does not prove their
+independence. The ADR-0035 C1 gate remains open.

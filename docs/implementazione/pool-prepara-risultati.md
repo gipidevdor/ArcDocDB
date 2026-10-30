@@ -1,51 +1,57 @@
-# Preparazione del tratto pool/Serie: risultati locali
+<a id="preparazione-del-tratto-poolserie-risultati-locali"></a>
 
-Incremento C3/C4 sulla base `7f1cc54477483039bd98bd8c3f6508416f5c0ced`;
-[contratto](pool-prepara.md), [metodo preregistrato](pool-prepara-metodo.md)
-e [rilettura con identità dei file](pool-prepara-revisione.md).
-Implementazione `fa2a483778a9a56ddcb2f12c7700e3f16ff489cc`.
-La qualifica usa 18 file congelati; nessuna modifica ai sorgenti C1
-appartiene a questo incremento. Sono aggiunti 17 test, 129 nel package scheduler.
+# Preparing the pool/Serie segment: local results
 
-## Processi originali
+C3/C4 increment on base `7f1cc54477483039bd98bd8c3f6508416f5c0ced`;
+[contract](pool-prepara.md), [preregistered method](pool-prepara-metodo.md),
+and [rereading with file identities](pool-prepara-revisione.md).
+Implementation `fa2a483778a9a56ddcb2f12c7700e3f16ff489cc`.
+Qualification uses 18 frozen files; no C1 source changes
+belong to this increment. It adds 17 tests, bringing the scheduler package to 129.
 
-Tutti i processi sotto sono OK/STABLE/exit 0. I riferimenti puntano alle
-copie originali, compresi conservazione e payload gzip, senza promozione degli esiti.
+<a id="processi-originali"></a>
 
-| Processo | Wall s | Sorgenti | Esito osservato |
+## Original processes
+
+All processes below are OK/STABLE/exit 0. References point to the
+original copies, including preservation and gzip payloads, without promoting outcomes.
+
+| Process | Wall s | Sources | Observed outcome |
 |---|---:|---:|---|
-| [Sviluppo 01](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-01/report.lisp) | 27,950115 | 972 | 127 test scheduler; 15 nuovi |
-| [Sensore in sviluppo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/sensor-development/report.lisp) | 25,095753 | 973 | Self-test positivo, sette oracoli negativi e controlli heap/sink/clock |
-| [Reader copertura](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/reader-development/report.lisp) | 1,121031 | 973 | Self-test indipendente su otto identità, native/HTML e rifiuti |
-| [Sviluppo 02](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-02/report.lisp) | 23,054720 | 973 | 129 test scheduler; 17 nuovi, incluso errore dopo presa e ACK |
-| [Controllo completo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/check-core/report.lisp) | 300,887805 | 975 | 1.668 test nominati, 2 smoke, 4 fixture lint, tutti i 10 spike |
-| [Copertura](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/coverage/report.lisp) | 30,474354 | 975 | 129 test scheduler, 8 file, gate C3 superato |
-| [Misure](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/benchmark/report.lisp) | 38,320366 | 975 | 10 campioni completi, heap osservato zero |
-| [Build integrata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/integrated/report.lisp) | 46,588497 | 983 | 1.722 test nominati e 2 smoke; lint e tracciabilità senza errori |
+| [Development 01](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-01/report.lisp) | 27,950115 | 972 | 127 scheduler tests; 15 new |
+| [Sensor in development](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/sensor-development/report.lisp) | 25,095753 | 973 | Positive self-test, seven negative oracles, and heap/sink/clock checks |
+| [Coverage reader](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/reader-development/report.lisp) | 1,121031 | 973 | Independent self-test on eight identities, native/HTML, and rejections |
+| [Development 02](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-02/report.lisp) | 23,054720 | 973 | 129 scheduler tests; 17 new, including error after claim and ACK |
+| [Full check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/check-core/report.lisp) | 300,887805 | 975 | 1.668 named tests, 2 smoke tests, 4 lint fixtures, all 10 spikes |
+| [Coverage](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/coverage/report.lisp) | 30,474354 | 975 | 129 scheduler tests, 8 files, C3 gate passed |
+| [Measurements](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/benchmark/report.lisp) | 38,320366 | 975 | 10 complete samples, zero observed heap |
+| [Integrated build](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/integrated/report.lisp) | 46,588497 | 983 | 1.722 named tests and 2 smoke tests; lint and traceability without errors |
 
-La prima versione dei test è conservata per intero e confrontata con il Git
-blob del suo record. La seconda aggiunge il drenaggio finale della fixture
-inattiva e due scenari dopo il trasferimento riuscito, senza cambiare il
-prodotto. Il sensore e il reader non sono stati modificati dopo i rispettivi
-self-test. Nessun processo fallito è stato scartato: gli otto sono passati.
+The first test version is preserved in full and compared with the Git
+blob in its record. The second adds the inactive fixture's final drain
+and two scenarios after successful transfer, without changing the
+product. The sensor and reader were not modified after their respective
+self-tests. No failed process was discarded: all eight passed.
 
-Compilazione stretta senza warning/style-warning. Il controllo completo e la
-build integrata conservano note del compilatore in stderr: rispettivamente
-1.248.815 e 1.379.752 byte UTF-8; non sono presentati come stderr vuoti.
-Gli altri sei processi hanno stderr vuoto.
+Strict compilation without warning/style-warning. The full check and
+integrated build retain compiler notes in stderr: respectively
+1.248.815 and 1.379.752 UTF-8 bytes; they are not presented as empty stderr.
+The other six processes have empty stderr.
 
-Il controllo completo include link, tracciabilità, fixture degli strumenti e
-archivio; la sua fotografia precedente alla nuova pubblicazione conta 123
-cataloghi, 3.565 riferimenti, 42.702 file e 1.138.547.016 byte. Tutti i file
-originali della campagna dei 10 spike sono conservati separatamente.
+The full check includes links, traceability, tool fixtures, and
+archive; its snapshot before the new publication counts 123
+catalogs, 3.565 references, 42.702 files, and 1.138.547.016 bytes. All
+original files from the 10-spike campaign are preserved separately.
 
-## Copertura senza esclusioni
+<a id="copertura-senza-esclusioni"></a>
 
-[Audit specifico](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/data/coverage/coverage-dispatch-audit.lisp):
-**281/289 forme, 97,231834%; 14/14 rami nativi**. Intero `src/dispatch/`,
-nessuna esclusione; non viene inferita MC/DC.
+## Coverage without exclusions
 
-| File | Forme | Rami |
+[Specific audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/data/coverage/coverage-dispatch-audit.lisp):
+**281/289 forms, 97,231834%; 14/14 native branches**. All of `src/dispatch/`,
+without exclusions; MC/DC is not inferred.
+
+| File | Forms | Branches |
 |---|---:|---:|
 | package | 1/1 | 0/0 |
 | types | 40/40 | 8/8 |
@@ -56,100 +62,108 @@ nessuna esclusione; non viene inferita MC/DC.
 | step | 51/51 | 0/0 |
 | start | **54/54** | **4/4** |
 
-Le otto forme mancanti sono quelle preesistenti, conservate nel denominatore:
-claim, indici nativi 31–34, path `(1 4 3 3 4 3)` e prefissi 1/2/3;
-recycle, indici 39–42, path `(1 4 2 3 3 4 6)` e prefissi 1/2/3.
-L'audit riporta tutti i path esatti, senza attribuirli a rami nuovi.
-Il nativo originale di 3.217.144 byte, nove file HTML e i due audit sono
-conservati come testo UTF-8 lossless nei bundle di sviluppo. Solo i FASL
-sono intermedi esclusi. Nessun bit di copertura è riscritto.
+The eight missing forms are preexisting and retained in the denominator:
+claim, native indices 31–34, path `(1 4 3 3 4 3)` and prefixes 1/2/3;
+recycle, indices 39–42, path `(1 4 2 3 3 4 6)` and prefixes 1/2/3.
+The audit reports all exact paths without attributing them to new branches.
+The 3.217.144-byte native original, nine HTML files, and two audits are
+preserved as lossless UTF-8 text in development bundles. Only FASLs
+are excluded intermediates. No coverage bit is rewritten.
 
-## Allocazione e tempi grezzi
+<a id="allocazione-e-tempi-grezzi"></a>
 
-[Rapporto originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/data/benchmark/report.lisp).
-SBCL 2.6.9 ARM64, Darwin 27, safety 3, clock 1.000.000 tick/s.
-Cinque fixture fresche per campagna, 4096 cicli e 128 warmup per replica,
-quattro chiamate alla nuova API per ciclo. I controlli scalari restano nel clock.
+## Allocation and raw timings
 
-| Campagna | Tick delle cinque repliche | Heap byte | Sink per replica |
+[Original report](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/data/benchmark/report.lisp).
+SBCL 2.6.9 ARM64, Darwin 27, safety 3, clock 1.000.000 ticks/s.
+Five fresh fixtures per campaign, 4096 cycles and 128 warmup cycles per replica,
+four calls to the new API per cycle. Scalar checks remain inside the clock.
+
+| Campaign | Ticks for the five replicas | Heap bytes | Sink per replica |
 |---|---|---:|---:|
-| EMPTY | 7507 / 7070 / 8177 / 7960 / 7980 | 0 in tutte | 8435712 |
-| ACTIVE completo | 33711 / 36596 / 33516 / 76109 / 36643 | 0 in tutte | 8501248 |
+| EMPTY | 7507 / 7070 / 8177 / 7960 / 7980 | 0 in all | 8435712 |
+| Full ACTIVE | 33711 / 36596 / 33516 / 76109 / 36643 | 0 in all | 8501248 |
 
-40.960 cicli misurati e 163.840 preparazioni totali; ACTIVE elabora 81.920
-payload sentinel nei soli campioni, con enqueue, pubblicazione ready,
-preparazione, pop, ACK e end inclusi. Factory, lookup API, GC e chiusura del
-backend sono esclusi. Tutti i campioni completano 4096 iterazioni.
-Il controllo positivo rileva 16.777.472 byte; sink errato, clock zero,
-CLI, destinazione esistente e raw parziale sono verificati dal self-test.
+40.960 measured cycles and 163.840 total preparations; ACTIVE processes 81.920
+sentinel payloads in the samples alone, including enqueue, ready publication,
+preparation, pop, ACK, and end. Factory, API lookup, GC, and backend
+closure are excluded. All samples complete 4096 iterations.
+The positive control detects 16.777.472 bytes; wrong sink, zero clock,
+CLI, existing destination, and partial raw output are checked by the self-test.
 
-Il picco di 76109 tick è conservato. Le campagne sono seriali nel loro
-processo, mentre altre verifiche locali possono essere in esecuzione:
-carico esterno non controllato. Non si isola il costo dell'adapter e non si
-confrontano questi due percorsi diversi come speedup o regressione.
-Il contatore zero non è una prova assoluta di non allocazione per ogni ingresso.
-Current/recycle, rifiuti e coordinatore concorrente non sono misurati qui.
+The 76109-tick peak is retained. Campaigns are serial within their
+process, while other local checks may be running:
+external load is uncontrolled. The adapter's cost is not isolated, and these two
+different paths are not compared as a speedup or regression.
+A zero counter is not absolute proof of no allocation for every input.
+Current/recycle, rejections, and a concurrent coordinator are not measured here.
 
-## Integrazione e confini
+<a id="integrazione-e-confini"></a>
 
-È stato integrato il parent `b2536f616f34f297aec7ba67b77096cd556271cc`,
-qualifica del recovery Archivio, con merge
-`680f675237585e9d99a91a440c0f675817c892ea`. I 17 file frozen diversi da ASDF
-restano identici; ASDF comprende anche la suite Archivio aggiunta dal parent.
-Il controllo integrato esegue l'intera suite: 238 file lint/0 violazioni;
-122 requisiti, 65 invarianti, 13 FI, 52 ADR/0 errori.
+## Integration and boundaries
 
-Il [manifesto](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/manifesto.lisp)
-e il [catalogo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/catalogo.lisp)
-collegano sorgenti finali, tutte le copie frozen con suffisso `.txt`, processi
-e sviluppo. I writer C4 verificati sono riusati invariati; le loro famiglie
-generiche sono dichiarate e non ampliano lo scope della qualifica.
+Parent `b2536f616f34f297aec7ba67b77096cd556271cc`,
+Archivio recovery qualification, was integrated with merge
+`680f675237585e9d99a91a440c0f675817c892ea`. The 17 frozen files other than ASDF
+remain identical; ASDF also includes the Archivio suite added by the parent.
+The integrated check runs the entire suite: 238 lint files/0 violations;
+122 requirements, 65 invariants, 13 FI, 52 ADRs/0 errors.
 
-Nessun nuovo test di concorrenza positiva, loop server, applicazione payload
-del database o I/O durevole è qualificato da questa campagna. CLOSING e
-guasti terminali restano responsabilità esplicite del caller e dell'Archivio.
+The [manifest](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/manifesto.lisp)
+and [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/catalogo.lisp)
+link final sources, all frozen copies with `.txt` suffixes, processes,
+and development. Verified C4 writers are reused unchanged; their generic
+families are declared and do not expand the qualification scope.
 
-## Controllo finale e conservazione conclusiva
+No new positive concurrency test, server loop, database payload
+application, or durable I/O is qualified by this campaign. CLOSING and
+terminal faults remain explicit caller and Archivio responsibilities.
 
-La [pubblicazione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/publication/report.lisp)
-è OK/STABLE/exit 0, 295,396073 s, 984 sorgenti e stderr vuoto.
-Sono preservati tutti i 49 file UTF-8 dello sviluppo: un controllo aggiuntivo
-confronta i byte originali con il testo estratto dai bundle, inclusi i nove
-HTML e il nativo. I 18 file dei primi otto processi sono inoltre confrontati
-byte per byte con gli originali; nessun descriptor viene riscritto.
+<a id="controllo-finale-e-conservazione-conclusiva"></a>
 
-Dopo questa pubblicazione è stato integrato il componente CLOSED, parent
-`31c3776ff8304d04aed314f60c2ad66435b8654a`, con merge
-`81c0e57dc9a9b79e27967832fbc524e9109c2027`. L'unico conflitto era nel
-changelog e sono conservate entrambe le voci. I 17 file frozen diversi da
-ASDF rimangono identici; nessuna nuova misura è attribuita al codice CLOSED.
+## Final check and concluding preservation
 
-Il [controllo finale integrato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/final-verification/report.lisp)
-esegue test, lint, tracciabilità, link ed evidenze: OK/STABLE/exit 0,
-239,448811 s, 992 sorgenti. Superati 1.722 test nominati e 2 smoke;
-245 file lint/0 violazioni; 122 requisiti/65 invarianti/13 FI/52 ADR/0 errori;
-483 Markdown/3.256 link/0 rotti. Archivio: 127 cataloghi, 3.686 riferimenti,
-42.949 file e 1.154.887.206 byte. Compilazione stretta senza avvisi;
-le note in stderr sono conservate integralmente (1.401.121 byte UTF-8).
-Questi conteggi precedono le copie di chiusura e i tre collegamenti aggiunti qui.
+[Publication](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/publication/report.lisp)
+is OK/STABLE/exit 0, 295,396073 s, 984 sources, and empty stderr.
+All 49 UTF-8 development files are preserved: an additional check
+compares original bytes with text extracted from bundles, including the nine
+HTML files and native output. The 18 files from the first eight processes are also compared
+byte for byte with originals; no descriptor is rewritten.
 
-Il [manifesto conclusivo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/chiusura-01.lisp)
-conserva i due registri originali e le loro capacità di lettura compressa,
-insieme alle sorgenti finali e agli script della chiusura. Non riscrive né
-promuove gli esiti delle campagne precedenti.
+After this publication, the CLOSED component, parent
+`31c3776ff8304d04aed314f60c2ad66435b8654a`, was integrated with merge
+`81c0e57dc9a9b79e27967832fbc524e9109c2027`. The only conflict was in the
+changelog, and both entries are retained. The 17 frozen files other than
+ASDF remain identical; no new measurement is attributed to CLOSED code.
 
-## Integrazione finale degli strumenti C4
+The [final integrated check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/final-verification/report.lisp)
+runs tests, lint, traceability, links, and evidence: OK/STABLE/exit 0,
+239,448811 s, 992 sources. Passed 1.722 named tests and 2 smoke tests;
+245 lint files/0 violations; 122 requirements/65 invariants/13 FI/52 ADRs/0 errors;
+483 Markdown files/3.256 links/0 broken. Archive: 127 catalogs, 3.686 references,
+42.949 files, and 1.154.887.206 bytes. Strict compilation without warnings;
+stderr notes are preserved in full (1.401.121 UTF-8 bytes).
+These counts precede the closing copies and three links added here.
 
-È stato poi integrato il collector del parent
-`7c7255fad65336f7a7fff361ba569ad12fec1537`. Prodotto, test, ASDF e CI sono
-identici al controllo finale già riportato; gli strumenti precedenti non
-sono modificati. Makefile aggiunge il self-test del nuovo collector.
-Il [record aggiuntivo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara-integrazione/processes/collector-self-test/report.lisp)
-è OK/STABLE/exit 0, 159,863601 s, 996 sorgenti e stderr vuoto:
-59 casi, 2.807 controlli, fixture conservate. Nessuna campagna del prodotto
-viene promossa da questa verifica C4.
-Il [supplemento chiuso](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara-integrazione/archive-index.lisp)
-conserva il record originale e le sorgenti finali selezionate tramite manifest
-esplicito; la raccolta usa quattro worker e un checker indipendente.
-Le copie dei documenti mantengono i byte originali con suffisso `.md.txt`,
-così i collegamenti relativi restano riferiti alla documentazione originale.
+The [closing manifest](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/chiusura-01.lisp)
+retains the two original records and their compressed-reading capabilities,
+along with final sources and closing scripts. It does not rewrite or
+promote outcomes from earlier campaigns.
+
+<a id="integrazione-finale-degli-strumenti-c4"></a>
+
+## Final C4 tool integration
+
+The collector from parent
+`7c7255fad65336f7a7fff361ba569ad12fec1537` was then integrated. Product, tests, ASDF, and CI are
+identical to the final check already reported; previous tools are
+unchanged. Makefile adds the new collector's self-test.
+The [additional record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara-integrazione/processes/collector-self-test/report.lisp)
+is OK/STABLE/exit 0, 159,863601 s, 996 sources, and empty stderr:
+59 cases, 2.807 checks, fixtures preserved. No product campaign
+is promoted by this C4 verification.
+The [closed supplement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara-integrazione/archive-index.lisp)
+retains the original record and final sources selected through an
+explicit manifest; collection uses four workers and an independent checker.
+Document copies retain original bytes with `.md.txt` suffixes,
+so relative links still refer to original documentation.

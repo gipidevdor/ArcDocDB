@@ -1,147 +1,171 @@
-# ADR-0036 — Leggi di progetto: il parallelismo è fondante; un punto di atomicità per operazione; prepara, decidi, completa; nulla si distrugge per assenza
+<a id="adr-0036--leggi-di-progetto-il-parallelismo-è-fondante-un-punto-di-atomicità-per-operazione-prepara-decidi-completa-nulla-si-distrugge-per-assenza"></a>
 
-- **Stato:** Accettata (il parallelismo come principio fondante è una decisione dell'autore,
+# ADR-0036 — Design laws: parallelism is foundational; one atomicity point per operation; prepare, decide, complete; nothing is destroyed because it is absent
+
+- **Status:** Accepted (parallelism as a foundational principle is the author's decision,
   2026-10-03)
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda; rende normative, in forma generale, regole che
-  la specifica enuncia come obiettivo («forte parallelismo tra Serie indipendenti»,
-  «Parallelismo») o applica caso per caso («Workflow Clean/Merge», «Recovery», «Catalogo»)
-- **Riferimenti:** [analisi progettuale](../analisi-progettuale.md#le-leggi),
-  [architettura](../architettura.md#leggi), INV-P6, INV-A9, INV-A10, INV-A11
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment; makes normative, in general form, rules
+  that the specification states as a goal (“high parallelism across independent Serie,”
+  “Parallelism”) or applies case by case (“Clean/Merge workflow,” “Recovery,” “Catalog”)
+- **References:** [design analysis](../analisi-progettuale.md#le-leggi),
+  [architecture](../architettura.md#leggi), INV-P6, INV-A9, INV-A10, INV-A11
 
-## Contesto
+<a id="contesto"></a>
 
-Gli ADR 0013–0035 definiscono un meccanismo per ogni problema. L'[analisi progettuale](../analisi-progettuale.md)
-ha mostrato che i difetti trovati nascono tutti dove un meccanismo aveva una regola *propria*
-invece di applicarne una generale: la compaction decideva con un record, il catalogo con una
-macchina a stati, il recovery con la troncatura, la pulizia con «ciò che non è menzionato».
-Un sistema critico si verifica meglio se i casi particolari discendono da poche leggi.
+## Context
 
-Il parallelismo, che la specifica pone nell'obiettivo del progetto, era presente come insieme
-di invarianti (INV-P1…P4, INV-W1) ma non come **criterio**: nessuna regola diceva che un
-meccanismo nuovo va giudicato da ciò che rende seriale. Un contatore di Archivio toccato a
-ogni operazione (AP-13) è potuto entrare nel progetto senza che nulla lo segnalasse.
+ADRs 0013–0035 define a mechanism for each problem. The [design analysis](../analisi-progettuale.md)
+showed that every defect found arose where a mechanism had its *own* rule
+instead of applying a general one: compaction decided with a record, the catalog with a
+state machine, recovery with truncation, cleanup with “what is not mentioned.”
+A critical system is easier to verify when special cases follow from a few laws.
 
-## Decisione
+Parallelism, which the specification places among the project's goals, existed as a set
+of invariants (INV-P1…P4, INV-W1), but not as a **criterion**: no rule said that a
+new mechanism must be judged by what it serializes. An Archivio counter touched on
+every operation (AP-13) could enter the design without anything flagging it.
 
-Le dieci leggi dell'[analisi](../analisi-progettuale.md#le-leggi) sono **normative**: un
-meccanismo che non discende da una di esse richiede un ADR che lo giustifichi. Quattro non
-erano finora invarianti e lo diventano.
+<a id="decisione"></a>
 
-### 1. Il parallelismo è fondante (INV-P6)
+## Decision
 
-Il parallelismo non è un'ottimizzazione che si aggiunge: è **la forma in cui lo stato è
-diviso**. È la prima legge perché decide la struttura prima di ogni altra scelta.
+The ten laws in the [analysis](../analisi-progettuale.md#le-leggi) are **normative**: a
+mechanism that does not follow from one of them requires an ADR justifying it. Four were
+not previously invariants and now become invariants.
 
-- **Unità.** Ogni lavoro appartiene a un'unità di parallelismo e procede senza attendere le
-  altre unità dello stesso livello: Archivi; Serie di un Archivio; reader di una Serie, tra
-  loro e rispetto al writer; lotti di log diversi; segmenti, per compaction, recovery e
-  query; frammenti dell'indice. La gerarchia è in
-  [architettura](../architettura.md#parallelismo).
-- **Elenco chiuso di ciò che è condiviso.** Tra Serie non esiste alcun lock e alcuna
-  scrittura condivisa sul percorso di una singola operazione. Gli elementi condivisi sono
-  soltanto quelli elencati in [architettura](../architettura.md#archivio-coordinamento-minimo),
-  ciascuno con un costo **limitato** e pagato al più una volta **per lotto, per transazione
-  multiserie o per snapshot** — mai per operazione. Aggiungere una voce all'elenco richiede un
+<a id="1-il-parallelismo-è-fondante-inv-p6"></a>
+
+### 1. Parallelism is foundational (INV-P6)
+
+Parallelism is not an optimization added later: it is **the way state is
+partitioned**. It is the first law because it determines structure before any other choice.
+
+- **Units.** Every piece of work belongs to a unit of parallelism and proceeds without waiting
+  for other units at the same level: Archivi; Serie within an Archivio; readers within a Serie,
+  relative to one another and to the writer; batches in different logs; segments, for compaction,
+  recovery, and queries; index fragments. The hierarchy is in
+  [architecture](../architettura.md#parallelismo).
+- **Closed list of shared elements.** Across Serie there is no lock and no
+  shared write on the path of an individual operation. The shared elements are
+  only those listed in [architecture](../architettura.md#archivio-coordinamento-minimo),
+  each with a **bounded** cost paid at most once **per batch, per multiseries
+  transaction, or per snapshot** — never per operation. Adding an entry to the list requires an
   ADR.
-- **Criterio di progetto.** Ogni meccanismo dichiara che cosa rende seriale e a quale livello.
-  A parità di garanzie vince la soluzione che serializza meno e più in basso nella gerarchia.
-- **Rapporto con le priorità.** La legge non modifica la gerarchia di
-  [ADR-0031](0031-software-critico-criteri-e-priorita.md): l'integrità resta sopra tutto. Ma
-  parallelismo e correttezza qui non sono in concorrenza, perché hanno la stessa origine:
-  l'unità di parallelismo coincide con l'unità di proprietà dello stato (un solo scrittore per
-  Serie). Dove una garanzia superiore richiede un punto condiviso — l'orizzonte di visibilità
-  per INV-M1 — quel punto va dichiarato, limitato, collocato dove pesa meno e approvato con un
-  ADR ([ADR-0038](0038-orizzonte-di-visibilita.md) ne è l'esempio: l'attesa è alla nascita
-  dello snapshot, non alla conferma delle scritture).
+- **Design criterion.** Every mechanism declares what it serializes and at what level.
+  With equivalent guarantees, the solution that serializes less and lower in the hierarchy wins.
+- **Relationship to priorities.** The law does not change the hierarchy in
+  [ADR-0031](0031-software-critico-criteri-e-priorita.md): integrity remains above everything. But
+  parallelism and correctness do not compete here because they have the same origin:
+  the unit of parallelism coincides with the unit of state ownership (a single writer per
+  Serie). Where a higher guarantee requires a shared point — the visibility horizon
+  for INV-M1 — that point must be declared, bounded, placed where it costs least, and approved
+  through an ADR ([ADR-0038](0038-orizzonte-di-visibilita.md) is the example: the wait occurs
+  at snapshot creation, not at write acknowledgment).
 
-### 2. Un punto di atomicità per operazione (INV-A11)
+<a id="2-un-punto-di-atomicità-per-operazione-inv-a11"></a>
 
-Ogni operazione che cambia lo stato durevole è decisa da **un solo record durevole** nella
-fonte di verità del suo livello:
+### 2. One atomicity point per operation (INV-A11)
 
-| Livello | Fonte di verità | Record |
+Every operation that changes durable state is decided by **a single durable record** in the
+source of truth at its level:
+
+| Level | Source of truth | Record |
 |---|---|---|
-| dati della Serie | segmento `ACTIVE` | SEAL del lotto ([ADR-0037](0037-lotto-sigillato.md)) |
-| struttura della Serie | `wal/control.log` | EDIT ([ADR-0040](0040-manifest-a-record-unico.md)) |
-| transazione multiserie | `Registri/multiserie.log` | DECISION ([ADR-0041](0041-multiserie-segmenti-autosufficienti.md)) |
-| Serie dell'Archivio | catalogo (Serie Registri) | documento della Serie |
+| Serie data | `ACTIVE` segment | batch SEAL ([ADR-0037](0037-lotto-sigillato.md)) |
+| Serie structure | `wal/control.log` | EDIT ([ADR-0040](0040-manifest-a-record-unico.md)) |
+| multiseries transaction | `Registri/multiserie.log` | DECISION ([ADR-0041](0041-multiserie-segmenti-autosufficienti.md)) |
+| Serie in the Archivio | catalog (Registri Serie) | Serie document |
 
-Tutto ciò che precede il record è **preparazione**: non ha effetti visibili e si può scartare.
-Tutto ciò che lo segue è **completamento**: è determinato dal record, è idempotente, e il
-recovery lo ripete. Non esiste un'operazione con due punti di atomicità.
+Everything before the record is **preparation**: it has no visible effects and can be discarded.
+Everything after it is **completion**: it is determined by the record, is idempotent, and
+recovery repeats it. There is no operation with two atomicity points.
 
-### 3. Prepara, decidi, completa
+<a id="3-prepara-decidi-completa"></a>
 
-- Ciò che si prepara su disco nasce con suffisso **`.tmp`** (file o directory), è reso
-  durevole, e resta `.tmp` fino alla decisione.
-- La **decisione** è il record della sezione 2.
-- Il **completamento** allinea il file system (rinomina da `.tmp`, eliminazione dei rimossi) e
-  le strutture in memoria.
+### 3. Prepare, decide, complete
 
-Al riavvio: un `.tmp` che la fonte di verità non nomina si elimina; un `.tmp` che la fonte di
-verità nomina si rinomina; un oggetto rimosso dalla fonte di verità e ancora presente si
-elimina.
+- Anything prepared on disk is created with a **`.tmp`** suffix (file or directory), is made
+  durable, and remains `.tmp` until the decision.
+- The **decision** is the record in section 2.
+- **Completion** brings the file system (rename from `.tmp`, deletion of removed objects) and
+  in-memory structures into agreement.
 
-### 4. Nulla si distrugge per assenza (INV-A10)
+On restart: a `.tmp` not named by the source of truth is deleted; a `.tmp` named by the source
+of truth is renamed; an object removed from the source of truth but still present is
+deleted.
 
-Un file o una directory si elimina **solo** se:
+<a id="4-nulla-si-distrugge-per-assenza-inv-a10"></a>
 
-- ha suffisso `.tmp` e la fonte di verità non lo nomina (non è mai stato deciso), oppure
-- la fonte di verità ne **registra la rimozione** (elenco dei rimossi di un EDIT, stato
-  `dropping` nel catalogo).
+### 4. Nothing is destroyed because it is absent (INV-A10)
 
-Un oggetto con nome definitivo che la fonte di verità non conosce è un'**anomalia**: non si
-tocca, si registra l'evento, il verificatore offline lo riporta. Un oggetto che la fonte di
-verità nomina e che manca è un guasto (FM-16): quarantena o `FAULTED`.
+A file or directory is deleted **only** if:
 
-### 5. Il recovery non distrugge (INV-A9)
+- it has a `.tmp` suffix and the source of truth does not name it (it was never decided), or
+- the source of truth **records its removal** (an EDIT's removed list, state
+  `dropping` in the catalog).
 
-Il recovery non modifica e non tronca alcun file di dati esistente. I suoi soli effetti
-durevoli sono record nelle fonti di verità (sezione 2) e completamenti (sezione 3). Un
-`ACTIVE` trovato al riavvio viene chiuso con la sua lunghezza valida e sostituito da uno nuovo
+An object with a final name that the source of truth does not know is an **anomaly**: it is
+left untouched, the event is recorded, and the offline verifier reports it. An object named by
+the source of truth but missing is a failure (FM-16): quarantine or `FAULTED`.
+
+<a id="5-il-recovery-non-distrugge-inv-a9"></a>
+
+### 5. Recovery does not destroy (INV-A9)
+
+Recovery neither modifies nor truncates any existing data file. Its only durable effects
+are records in the sources of truth (section 2) and completions (section 3). An
+`ACTIVE` found on restart is closed with its valid length and replaced by a new one
 ([ADR-0037](0037-lotto-sigillato.md)).
 
-Pattern: stato partizionato con un solo scrittore per partizione e nessuna condivisione sul
-percorso delle operazioni (architetture *shared-nothing*; Seastar/ScyllaDB; partizioni di
-Kafka); commit point unico e redo idempotente (ARIES, per il principio); MANIFEST come unica
-fonte dell'insieme dei file (LevelDB/RocksDB); file attivo nuovo a ogni apertura (Bitcask).
+Pattern: partitioned state with one writer per partition and no sharing on the operation
+path (*shared-nothing* architectures; Seastar/ScyllaDB; Kafka partitions); a single commit
+point and idempotent redo (ARIES, for the principle); MANIFEST as the sole source of the
+file set (LevelDB/RocksDB); a new active file on every open (Bitcask).
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Ogni ADR futuro compila, oltre al punto di atomicità, la riga «che cosa rende seriale».
-- La scalabilità con il numero di Serie e di core diventa una proprietà verificabile: l'elenco
-  di ciò che è condiviso è chiuso e ogni voce ha un costo misurabile.
-- Il recovery non ha logica propria: per ogni fonte di verità scarta ciò che precede l'ultimo
-  record valido e completa ciò che lo segue; procede in parallelo per Serie e per segmento.
-  L'idempotenza (INV-A7) è una conseguenza, non una proprietà da dimostrare caso per caso.
-- Un difetto nel calcolo dell'insieme dei segmenti o del catalogo non può più distruggere
-  dati: al peggio lascia un oggetto sconosciuto, che viene segnalato.
-- Ogni nuova operazione durevole si progetta compilando una riga della
-  [tabella dei punti di atomicità](../analisi-progettuale.md#punti-di-atomicità).
+## Consequences
 
-## Limite dichiarato
+- Every future ADR fills in “what it serializes” as well as the atomicity point.
+- Scaling with the number of Serie and cores becomes a verifiable property: the list
+  of shared elements is closed and every entry has a measurable cost.
+- Recovery has no logic of its own: for every source of truth, it discards what precedes the
+  last valid record and completes what follows it; it proceeds in parallel by Serie and segment.
+  Idempotence (INV-A7) is a consequence, not a property to demonstrate case by case.
+- A defect in computing the segment set or catalog can no longer destroy
+  data: at worst it leaves an unknown object, which is reported.
+- Every new durable operation is designed by filling in a row of the
+  [atomicity points table](../analisi-progettuale.md#punti-di-atomicità).
 
-Tre cose restano condivise da tutto il processo e non sono eliminabili dal progetto: il
-**dispositivo**, i **worker** e il **garbage collector** di SBCL, che ferma ogni thread a ogni
-collezione (RSK-01). Il progetto le governa — priorità di I/O, pool dimensionati, nessuna
-allocazione sui percorsi caldi — ma non le rende parallele.
+<a id="limite-dichiarato"></a>
 
-## Alternative considerate
+## Declared limit
 
-- *Parallelismo come obiettivo di prestazione, da ottenere con ottimizzazioni:* in fondo alla
-  gerarchia delle priorità verrebbe sacrificato a ogni scelta comoda; e un punto seriale
-  introdotto nella struttura non si toglie dopo con una misura.
-- *Regole per meccanismo, come finora:* ogni regola va verificata da sola; i difetti AP-03,
-  AP-05 e AP-14 sono nati così.
-- *Eliminare gli orfani «non menzionati»:* più semplice, ma trasforma un difetto del manifest in
-  una perdita di dati.
+Three things remain shared by the entire process and cannot be eliminated by the design: the
+**device**, the **workers**, and SBCL's **garbage collector**, which stops every thread on each
+collection (RSK-01). The design manages them — I/O priorities, sized pools, no
+allocation on hot paths — but does not make them parallel.
 
-## Valutazione
+<a id="alternative-considerate"></a>
 
-- Rischi: riduce RSK-18 e RSK-20 (un errore è rilevato invece di propagarsi); RSK-04 e RSK-12
-  (ciò che è condiviso è enumerato).
-- Verifica: revisione dell'elenco chiuso a ogni ADR; benchmark di scalabilità con il numero di
-  Serie e di core e benchmark di isolamento (burst su una Serie, [13](../13-benchmark.md));
-  SPK-04; modello del recovery in SPK-07 con un crash prima e dopo ogni punto di atomicità;
-  test del verificatore su oggetti sconosciuti e mancanti.
+## Alternatives considered
+
+- *Parallelism as a performance goal achieved through optimizations:* at the bottom of the
+  priority hierarchy, it would be sacrificed for every convenient choice; a serial point
+  introduced into the structure cannot later be removed through a measurement.
+- *Per-mechanism rules, as before:* each rule must be verified on its own; defects AP-03,
+  AP-05, and AP-14 arose this way.
+- *Deleting “unmentioned” orphans:* simpler, but turns a manifest defect into
+  data loss.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Risks: reduces RSK-18 and RSK-20 (an error is detected rather than propagated); RSK-04 and RSK-12
+  (shared elements are enumerated).
+- Verification: review of the closed list at every ADR; scaling benchmarks with the number of
+  Serie and cores and isolation benchmarks (burst on one Serie, [13](../13-benchmark.md));
+  SPK-04; recovery model in SPK-07 with a crash before and after every atomicity point;
+  verifier tests on unknown and missing objects.

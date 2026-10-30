@@ -1,74 +1,80 @@
-# Directory delle righe full text — metodo preregistrato
+<a id="directory-delle-righe-full-text--metodo-preregistrato"></a>
 
-22 ottobre 2026, REQ-SEC-003/004/006/010 e REQ-CON-002, ADR-0054 e INV-I5/I6.
-La directory locale del pool collega una row u32 univoca alla riserva canonica;
-il ponte PUT ne risolve il riferimento fisico senza dipendere dal buffer WAL.
-Non introduce pubblicazione, reader concorrenti, esiti prepared o reclaim.
+# Full-text row directory — preregistered method
 
-Due array u32 preallocati, ordinati per row, contengono chiave e posizione dello
-slot. Ricerca binaria limitata a 11 passi per capacita massima 1024; inserimento
-e cancellazione spostano al piu 1024 coppie di metadati sotto la lease del writer.
-Nessuna scansione del documento, allocazione calda, lock o stato tra Serie.
-La directory sostituisce il precedente controllo lineare dei duplicati.
+October 22, 2026, REQ-SEC-003/004/006/010 and REQ-CON-002, ADR-0054 and INV-I5/I6.
+Pool-local directory links a unique u32 row to canonical reservation;
+PUT bridge resolves its physical reference without depending on WAL buffer.
+Introduces no publication, concurrent readers, prepared outcomes, or reclamation.
 
-| Decisione | Verifiche previste |
+Two preallocated u32 arrays, ordered by row, contain key and slot
+position. Binary search bounded to 11 steps at maximum capacity 1024; insertion
+and deletion move at most 1024 metadata pairs under writer lease.
+No document scan, hot allocation, lock, or state between Serie.
+Directory replaces previous linear duplicate check.
+
+| Decision | Planned verification |
 |---|---|
-| Costruzione | capacita invariata, 8 byte per slot aggiunti al limite memoria prima dell'allocazione |
-| Ricerca | 0 e UINT32_MAX validi; assenza distinta da riga presente ma incompleta |
-| Prenotazione | tutte le verifiche e duplicato prima degli effetti; stesso errore pubblico esistente |
-| Adozione | slot/generation/row canonici; ordinamento stretto e count uguale agli occupati |
-| Cancellazione | rimuove solo COPYING/READY, prima dell'append; idempotenza e token vecchio preservati |
-| Trasferimento | entry trattenuta senza riuso o cancellazione, come costi e run |
-| Esposizione | COPYING/READY => pending senza handle; solo TRANSFERRED espone slot/generation al ponte |
-| Risoluzione | absent/pending senza metadati; sealed conserva offset, formato e :CSN/:TXID verificati |
-| Guasto | incoerenza o mutazione interrotta => pool FAULTED e dati/costi conservati, nessun rollback |
+| Construction | Unchanged capacity, 8 bytes per slot added to memory limit before allocation |
+| Lookup | 0 and UINT32_MAX valid; absence distinct from present but incomplete row |
+| Reservation | All checks and duplicate before effects; same existing public error |
+| Adoption | Canonical slot/generation/row; strict order and count equal occupied slots |
+| Cancellation | Removes only COPYING/READY, before append; idempotence and old token preserved |
+| Transfer | Entry retained without reuse or deletion, as are costs and run |
+| Exposure | COPYING/READY => pending without handle; only TRANSFERRED exposes slot/generation to bridge |
+| Resolution | absent/pending without metadata; sealed preserves verified offset, format, and :CSN/:TXID |
+| Fault | Inconsistency or interrupted mutation => pool FAULTED and data/costs preserved, no rollback |
 
-Oracolo C4 con lista associativa indipendente: sequenze finite di inserimenti in
-ordine diverso, cancellazioni e trasferimenti; confronto di tutte le row dopo
-ogni operazione. Capacita minima/massima, bordi, richieste estranee/stale, rifiuti
-senza effetti e interruzioni durante adozione/rimozione. Fixture NNTP e file/record
-gia verificati; ricerca dopo il riuso del lotto e distinzione TXID/CSN.
+C4 oracle with independent association list: finite sequences of insertions in
+different orders, cancellations, and transfers; comparison of all rows after
+each operation. Minimum/maximum capacity, boundaries, foreign/stale requests, rejections
+without effects, and interruptions during adoption/removal. Already-verified NNTP fixtures
+and files/records; lookup after batch reuse and TXID/CSN distinction.
 
-Estendere le misure gia presenti di riserva e PUT, lasciando sei esclusioni CI:
-100 warm-up, GC, mille operazioni e lookup senza heap. Quattro writer privati
-con gli stessi numeri di riga, attese finite. Mutante semantico sulla ricerca
-pubblica che restituisce sempre assente, per dimostrare la sensibilita dell'oracolo. Conservare output originali,
-sorgenti effettivi e tutti i fallimenti. Due letture dello stesso autore; C1 e MC/DC aperti.
+Extend existing reservation and PUT measurements, retaining six CI exclusions:
+100 warmups, GC, one thousand operations and lookups without heap allocation. Four private writers
+with same row numbers, finite waits. Semantic mutant on public
+lookup always returning absent, demonstrating oracle sensitivity. Preserve original outputs,
+actual sources, and all failures. Two readings by same author; C1 and MC/DC open.
 
-## Decisioni composte introdotte o estese
+<a id="decisioni-composte-introdotte-o-estese"></a>
 
-| Funzione | Condizioni della decisione |
+## Introduced or extended compound decisions
+
+| Function | Decision conditions |
 |---|---|
-| `verifica-writer-riserve` | count entro slot; row-count uguale a count; tre capacita uguali; staging/delta/file entro i limiti gia presenti |
-| `posizione-riga-riserve` | row-count entro array e massimo 1024; 0 <= low <= high <= count; convergenza low=high |
-| `slot-riga-riserve` | posizione nel prefisso e chiave uguale; mapping entro slot; tipo, posizione, pool, row, generazione positiva e stato vivo canonici |
-| `trova-riga-trasferita-full-text` | posizione nel prefisso e chiave uguale; solo transferred espone lo slot, gli altri stati vivi restituiscono pending |
-| `preflight-riserva` | posizione nel prefisso e chiave uguale: verifica slot canonico e rifiuta duplicato prima di mutare |
-| `verifica-posizione-inserimento-riga` | posizione <= count e spazio; bordo sinistro oppure vicino inferiore, bordo destro oppure vicino superiore |
-| `inserisci-riga-riserva` | effetto attivo, pool dello slot uguale, stato copying; postcondizione di mapping allo stesso slot |
-| `rimuovi-riga-riserva` | effetto attivo e stato copying/ready; stessa entry canonica, post count diminuito di uno |
-| `prenota-full-text` | count=row-count dopo l'inserimento e budget delta/staging rispettati |
-| `annulla-riserva-full-text` | rimozione soltanto pre-append secondo le guardie gia presenti, post count=row-count |
-| `leggi-riferimento-riga-full-text` | absent/pending senza scalari; transferred con fisico absent resta pending, sealed verifica row, altro stato causa fault |
+| `verifica-writer-riserve` | count within slots; row-count equals count; three capacities equal; staging/delta/file within existing limits |
+| `posizione-riga-riserve` | row-count within arrays and maximum 1024; 0 <= low <= high <= count; low=high convergence |
+| `slot-riga-riserve` | position in prefix and equal key; mapping within slots; canonical type, position, pool, row, positive generation, and live state |
+| `trova-riga-trasferita-full-text` | position in prefix and equal key; only transferred exposes slot, other live states return pending |
+| `preflight-riserva` | position in prefix and equal key: checks canonical slot and rejects duplicate before mutation |
+| `verifica-posizione-inserimento-riga` | position <= count and space; left boundary or lower neighbor, right boundary or upper neighbor |
+| `inserisci-riga-riserva` | active effect, equal slot pool, copying state; mapping-to-same-slot postcondition |
+| `rimuovi-riga-riserva` | active effect and copying/ready state; same canonical entry, post-count decreased by one |
+| `prenota-full-text` | count=row-count after insertion and delta/staging budgets respected |
+| `annulla-riserva-full-text` | removal only pre-append under existing guards, post count=row-count |
+| `leggi-riferimento-riga-full-text` | absent/pending without scalars; transferred with absent physical reference remains pending, sealed checks row, other state causes fault |
 
-I test coprono il contratto pubblico e corruzioni selezionate, non dimostrano ancora
-l'indipendenza di ogni condizione delle guardie interne. Il conteggio MC/DC non e
-dedotto da SB-COVER o dai quindici mutanti dell'intera suite.
+Tests cover public contract and selected corruptions, do not yet demonstrate
+independence of every internal-guard condition. MC/DC count is not
+inferred from SB-COVER or fifteen mutants of whole suite.
 
-## Due letture del medesimo autore — 22 ottobre 2026
+<a id="due-letture-del-medesimo-autore--22-ottobre-2026"></a>
 
-Prima lettura: verificati requisito/ADR, proprietario writer, chiavi senza sentinelle,
-univocita per pool, limiti di ricerca/spostamento e ordine preflight/effetti.
-Gli effetti di adozione e cancellazione iniziano dentro `unwind-protect`; un'uscita
-incompleta lascia il pool faulted anche fra aggiornamento della directory e contatori.
-Costi e prestiti non sono restituiti per simulare un rollback.
+## Two readings by the same author — October 22, 2026
 
-Seconda lettura: verificati array tipizzati e readonly nei riferimenti, assenza di
-stato globale o I/O, contratti degli otto valori, nessun handle copying/ready,
-distinzione CSN/TXID e nessuna dipendenza dal buffer WAL riusato. Separata la
-verifica di posizione/vicini per contenere la complessita delle funzioni; uno slot
-mancante viene riconosciuto come invariante prima di leggerne i campi. Ricontrollati
-oracolo associativo, mutante semantico e limiti delle affermazioni documentate.
-Nessuna modifica durevole o di formato, nessun ritiro di dati. Tracciabilita e
-verifica completa devono essere registrate sui sorgenti congelati; questa e una
-autolettura, non revisione indipendente ne qualifica C1.
+First reading: verified requirement/ADR, writer owner, keys without sentinels,
+per-pool uniqueness, search/movement limits, and preflight/effect order.
+Adoption and cancellation effects begin inside `unwind-protect`; incomplete
+exit leaves pool faulted even between directory and counter updates.
+Costs and loans are not returned to simulate rollback.
+
+Second reading: verified typed arrays with read-only references, absence of
+global state or I/O, eight-value contracts, no copying/ready handle,
+CSN/TXID distinction, and no dependence on reused WAL buffer. Position/
+neighbor check separated to contain function complexity; a missing slot
+is recognized as invariant before reading fields. Association-list
+oracle, semantic mutant, and limits of documented claims rechecked.
+No durable or format change, no data retirement. Traceability and
+full verification must be recorded on frozen sources; this is self-reading,
+not independent review or C1 qualification.

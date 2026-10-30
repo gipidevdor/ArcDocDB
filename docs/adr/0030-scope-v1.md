@@ -1,47 +1,53 @@
-# ADR-0030 — Scope della v1
+<a id="adr-0030--scope-della-v1"></a>
 
-- **Stato:** Accettata dall'autore il 2026-10-08, inclusi backup, restore verificato, verificatore offline e scrubbing della revisione 2026-10-03.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-23
-- **Riferimenti:** RSK-14
+# ADR-0030 — v1 scope
 
-> **Estensione approvata il 2026-10-15:** [ADR-0053](0053-ricerca-full-text-indici-invertiti.md)
-> aggiunge la ricerca full text al perimetro della v1. La decisione iniziale
-> resta datata 2026-10-03; l'estensione è progettata, da implementare e qualificare nella fase 8.
+- **Status:** Accepted by the author on 2026-10-08, including backup, verified restore, offline verifier, and scrubbing from the 2026-10-03 revision.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-23
+- **References:** RSK-14
 
-## Decisione
+> **Extension approved on 2026-10-15:** [ADR-0053](0053-ricerca-full-text-indici-invertiti.md)
+> adds full-text search to the v1 scope. The initial decision
+> remains dated 2026-10-03; the extension is designed, to be implemented and qualified in phase 8.
 
-**Dentro la v1:** tutto ciò che la specifica descrive — un processo, un dispositivo, più
-Archivi, Serie, transazioni locali e multiserie, snapshot, compaction, indici, cache,
-scheduler dinamico, recovery, osservabilità, benchmark, fault injection, protocollo e query —
-più, per l'affidabilità ([ADR-0031](0031-software-critico-criteri-e-priorita.md)):
+<a id="decisione"></a>
 
-- **backup consistente e restore verificato** (copia dei segmenti chiusi, control log e hint a
-  un CSN; i segmenti immutabili lo rendono incrementale);
-- **verificatore offline** `arcdocdb-verify` ([ADR-0033](0033-fail-stop-e-integrita-end-to-end.md) §7);
-- **scrubbing** continuo dei segmenti chiusi.
+## Decision
 
-Il perimetro aggiornato comprende inoltre **ricerca full text** con indici
-invertiti dedicati per segmento, parole e frasi, analizzatori versionati e
-filtri strutturati nella stessa vista snapshot (ADR-0053). Il server NNTP
-è un'applicazione futura di riferimento e non un nuovo modulo del motore.
+**In v1:** everything the specification describes — one process, one device, multiple
+Archivi, Serie, local and multiseries transactions, snapshots, compaction, indexes, cache,
+dynamic scheduler, recovery, observability, benchmarks, fault injection, protocol, and queries —
+plus, for reliability ([ADR-0031](0031-software-critico-criteri-e-priorita.md)):
 
-Senza una seconda copia dei dati la perdita del supporto è la perdita dei dati (RSK-17): il
-backup è la risposta minima.
+- **consistent backup and verified restore** (copying closed segments, control log, and hints at
+  a CSN; immutable segments make it incremental);
+- **offline verifier** `arcdocdb-verify` ([ADR-0033](0033-fail-stop-e-integrita-end-to-end.md) §7);
+- continuous **scrubbing** of closed segments.
 
-**Fuori dalla v1**, senza precluderlo nei formati:
+The updated scope also includes **full-text search** with dedicated inverted indexes
+per segment, words and phrases, versioned analyzers, and structured filters in the same
+snapshot view (ADR-0053). The NNTP server is a future reference application rather than a
+new engine module.
 
-| Funzione | Perché rinviata | Che cosa resta predisposto |
+Without a second copy of the data, losing the medium means losing the data (RSK-17):
+backup is the minimum response.
+
+**Outside v1**, without precluding it in the formats:
+
+| Feature | Why deferred | What remains prepared |
 |---|---|---|
-| Mirroring dei segmenti su un secondo percorso (v1.1) | secondo livello di difesa contro RSK-17; non richiede consenso | i segmenti immutabili e il control log sono già l'unità di copia |
-| Replica tra server e alta disponibilità | richiede un log di replica e consenso | segmenti immutabili e CSN sono una base naturale per lo shipping dei segmenti |
-| Autenticazione e autorizzazione | — | handshake versionato nel protocollo |
-| Cifratura in transito e a riposo | — | il modulo `io` è l'unico punto di scrittura |
-| Compressione dei record | va misurata | flag riservato nell'intestazione del record |
-| Più dispositivi per server | — | il percorso di una Serie è configurabile nel catalogo |
+| Segment mirroring to a second path (v1.1) | second defense against RSK-17; requires no consensus | immutable segments and the control log are already the copy unit |
+| Replication between servers and high availability | requires a replication log and consensus | immutable segments and CSN are a natural basis for segment shipping |
+| Authentication and authorization | — | versioned handshake in the protocol |
+| Encryption in transit and at rest | — | the `io` module is the only write point |
+| Record compression | must be measured | reserved flag in the record header |
+| Multiple devices per server | — | a Serie's path is configurable in the catalog |
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- L'ampiezza (RSK-14) è contenuta alla specifica e alle estensioni esplicitamente
-  approvate, inclusa la ricerca full text; i relativi costi e gate restano da verificare.
-- Le funzioni rinviate hanno un punto di innesto dichiarato: nessun formato va riscritto.
+## Consequences
+
+- Breadth (RSK-14) is limited to the specification and explicitly approved
+  extensions, including full-text search; their costs and gates remain to be verified.
+- Deferred features have a declared integration point: no format needs to be rewritten.

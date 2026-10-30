@@ -1,78 +1,88 @@
-# Completamento dei nomi dell'Archivio — metodo
+<a id="completamento-dei-nomi-dellarchivio--metodo"></a>
 
-Metodo preregistrato il 2026-10-22 sulla base `f17535d1`, prima del codice
-e delle diagnostiche. Compone il gate Archivio e il completamento Serie
-gia' esistenti; realizza ADR-0040 §2–3 senza nuovi formati o punti durevoli.
+# Completing Archivio names — method
 
-## Ingresso e autorita'
+Method preregistered on 2026-10-22 on base `f17535d1`, before code
+and diagnostics. Composes existing Archivio gate and Serie completion;
+implements ADR-0040 §2–3 without new formats or durable points.
+
+<a id="ingresso-e-autorita"></a>
+
+## Input and authority
 
 `recovery.bootstrap:stabilizza-nomi-archivio-recuperato(set, decisions,
 directories, sources, active, closed, :max-segmenti-serie 65536,
-:max-segmenti-totali 1048576)` riceve il set canonico completo del catalogo,
-lo stesso replay decisioni e quattro simple-vector paralleli alle viste.
-ACTIVE/CLOSED sono i risultati dei reader canonici; ogni directory e set
-rimane posseduto dal caller. Namespace, FD, vettori, CONTROL e replay sono
-esclusivi/stabili nel pool I/O; traffico non ammesso e nessun close concorrente.
+:max-segmenti-totali 1048576)` receives complete canonical catalog set,
+same decision replay, and four simple-vectors parallel to views.
+ACTIVE/CLOSED are canonical-reader results; every directory and set
+remains caller-owned. Namespace, FDs, vectors, CONTROL, and replay
+exclusive/stable in I/O pool; traffic not admitted, no concurrent close.
 
-Non si accetta il solo piano CSN precedente come prova dei vettori attuali:
-quel piano e' scalare e non trattiene fonti/token. Il gate completo viene
-ricreato dai risultati realmente usati, prima degli effetti. Stesso Archivio,
-vista esatta e origine del replay restano confronti per EQ.
+Prior CSN plan alone is not accepted as proof of current vectors:
+plan is scalar and retains no sources/tokens. Full gate
+recreated from results actually used, before effects. Same Archivio,
+exact view, and replay origin remain EQ comparisons.
 
-## Ordine dei passaggi
+<a id="ordine-dei-passaggi"></a>
 
-1. Autorita', forma/lunghezze dei quattro vettori e tipi delle righe;
-   count ACTIVE minimo nel budget. Cardinalita' per Serie e somma dei
-   segmenti prima delle scansioni delle fonti, senza nuovi contenitori.
-2. Tutti i metadata per Serie, riusando le guardie esistenti su ordine u64,
-   ACTIVE, consumo CLOSED, CONTROL, ID/FD/EOF/P. Il gate canonico Archivio
-   riconferma viste, replay e insieme completo CLOSED; piano solo privato.
-3. Preflight I/O dei nomi di tutte le Serie, nell'ordine del catalogo.
-   Nessuna rinomina o fsync prima dell'ultimo preflight riuscito.
-4. Completamento per Serie riusando l'API esistente; conteggi aggregati,
-   somma uguale ai segmenti ammessi e decision log ancora aperto.
-   Soltanto al successo escono piano, rinominati e gia' definitivi.
+## Step order
 
-Budget `index`, zero valido come limite che rifiuta l'Archivio non vuoto.
-Il limite per Serie comprende ACTIVE, quello totale tutte le Serie.
-Il gate CSN conta il proprio limite locale sui CLOSED; il controllo locale
-che include ACTIVE e' piu' stretto e precede il gate. Nessuna scansione dei
-byte o riapertura; l'osservazione dei nomi e la guardia scalare sono ripetute
-prima dell'uso. Un preflight non e' una prenotazione del namespace.
+1. Authority, shape/lengths of four vectors, and row types;
+   minimum ACTIVE count within budget. Per-Serie cardinality and segment
+   sum before source scans, without new containers.
+2. All per-Serie metadata, reusing existing guards on u64 order,
+   ACTIVE, CLOSED consumption, CONTROL, ID/FD/EOF/P. Canonical Archivio gate
+   reconfirms views, replay, and complete CLOSED set; private plan only.
+3. Name I/O preflight of every Serie, in catalog order.
+   No rename or fsync before last successful preflight.
+4. Per-Serie completion reusing existing API; aggregate counts,
+   sum equal to admitted segments, and decision log still open.
+   Only success returns plan, renamed count, and already-final count.
 
-## Guasti, costo e limiti
+`index` budgets, zero valid as a limit rejecting nonempty Archivio.
+Per-Serie limit includes ACTIVE, total includes all Serie.
+CSN gate counts its own local CLOSED limit; local check
+including ACTIVE is stricter and precedes gate. No byte scan or
+reopening; name observation and scalar guard repeated
+before use. Preflight is not namespace reservation.
 
-Il gruppo non e' atomico. Un errore durante il completamento conserva tutte
-le fonti gia' completate, anche di Serie precedenti, e propaga la condizione
-originale senza risultato parziale, rollback, retry o close. Il parent della
-primitiva I/O conserva il suo fail-stop. Il coordinatore mantiene chiusa
-l'ammissione fino all'intero recovery; COD-24 generale resta aperto.
+<a id="guasti-costo-e-limiti"></a>
 
-I nuovi cicli sono limitati da count e budget. Nessun array/hash/piano per
-fonte aggiunto: cursori e conteggi privati, piano scalare e gate canonici
-esistenti. Nomi, runtime e gate esistenti possono allocare; nessuna promessa
-RSS o zero heap. Sequenza di bootstrap, nessun lock/thread/stato condiviso
-nuovo fra Serie. Rimozioni, nuovo ACTIVE, checkpoint, indici, binding runtime,
-CSN operativo e ammissione non sono completati da questa API.
+## Faults, cost, and limits
 
-## Decisioni da qualificare
+Group is not atomic. Error during completion preserves all
+already completed sources, including earlier Serie, and propagates original
+condition without partial result, rollback, retry, or close. I/O primitive's
+parent retains fail-stop. Coordinator keeps admission
+closed until full recovery; general COD-24 remains open.
 
-| ID | Confine |
+New loops bounded by count and budgets. No per-source array/hash/plan
+added: private cursors and counts, existing scalar plan and canonical
+gates. Names, runtime, and existing gates may allocate; no RSS
+or zero-heap promise. Bootstrap sequence, no new locks/threads/shared
+state between Serie. Removals, new ACTIVE, checkpoint, indexes, runtime binding,
+operational CSN, and admission not completed by this API.
+
+<a id="decisioni-da-qualificare"></a>
+
+## Decisions to qualify
+
+| ID | Boundary |
 |---|---|
-| SGA-D01 | Stesso Archivio EQ, quattro vettori semplici, lunghezze e tipi riga |
-| SGA-D02 | Budget minimo e per Serie/totale, zero, uguaglianza e meno uno |
-| SGA-D03 | Count e somma prima dei metadata; ultima riga invalida senza effetti |
-| SGA-D04 | Token e fonti allineati, vista canonica, replay esatto, gate CLOSED completo |
-| SGA-D05 | Tutti i preflight dei nomi prima della prima rinomina/fsync |
-| SGA-D06 | Ordine del catalogo, mix temporaneo/definitivo, fsync per fonte |
-| SGA-D07 | Piano/count completi; somma conteggi, FD decisioni ancora aperto |
-| SGA-D08 | Guasto/interruzione, effetti precedenti conservati e causa originale |
+| SGA-D01 | Same EQ Archivio, four simple vectors, lengths, and row types |
+| SGA-D02 | Minimum and per-Serie/total budgets, zero, equality, and minus one |
+| SGA-D03 | Count and sum before metadata; invalid final row without effects |
+| SGA-D04 | Aligned tokens and sources, canonical view, exact replay, full CLOSED gate |
+| SGA-D05 | All name preflights before first rename/fsync |
+| SGA-D06 | Catalog order, temporary/final mix, per-source fsync |
+| SGA-D07 | Complete plan/count; summed counts, decisions FD still open |
+| SGA-D08 | Fault/interruption, earlier effects preserved, original cause |
 
-Codice committato e sorgenti congelati prima dei processi; due letture
-dell'autore e revisione indipendente, agente chiuso. Compilazione forzata
-del solo prodotto con avvisi fatali e cache gerarchica privata, lint, trace,
-link e lettura del compilato. Diagnostiche registrate incluse quelle fallite;
-copie lossless compatte e raccolta comune con quattro worker, inventario
-chiuso verificato. Rapporti di staging con suffisso `.source`.
-Non si aggiungono o eseguono test funzionali, FI, copertura, mutazioni o
-benchmark. SGA-D01…D08, C1/MC/DC e filesystem/crash restano da qualificare.
+Code committed and sources frozen before processes; two author readings
+and independent review, agent closed. Forced compilation
+of product only with fatal warnings and private hierarchical cache, lint, trace,
+links, and compiled-code reading. Recorded diagnostics including failures;
+compact lossless copies and common collection with four workers, verified
+closed inventory. Staging reports with `.source` suffix.
+No functional tests, FI, coverage, mutations, or benchmarks added
+or run. SGA-D01…D08, C1/MC/DC, and file-system/crash behavior remain to qualify.

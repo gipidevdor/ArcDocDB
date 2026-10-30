@@ -1,49 +1,56 @@
-# Affidabilità
+<a id="affidabilità"></a>
 
-[Documentazione](../README.md) · [Tracciabilità](../tracciabilita/README.md) · [Valutazione](../valutazione/README.md)
+# Reliability
 
-ArcDocDB è progettato come **software critico**
-([ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md)): il fine ultimo è
-l'affidabilità, le prestazioni sono ragionevoli e subordinate.
+[Documentation](../README.md) · [Traceability](../tracciabilita/README.md) · [Evaluation](../valutazione/README.md)
 
-## Documenti
+ArcDocDB is designed as **critical software**
+([ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md)): reliability is the
+ultimate goal; performance is reasonable and subordinate.
 
-| Documento | Contenuto |
+<a id="documenti"></a>
+
+## Documents
+
+| Document | Contents |
 |---|---|
-| [Analisi dei guasti](analisi-dei-guasti.md) | Modello dei guasti, FMEA (`FM-…`), rischi residui |
-| [Standard di codifica](standard-di-codifica.md) | Regole `COD-…` per tutto il codice di prodotto, con il modo in cui ciascuna è verificata |
-| [Piano di verifica](piano-di-verifica.md) | Livelli di verifica, copertura, revisione, criteri di rilascio |
-| [Deviazioni](deviazioni.md) | Registro delle deviazioni dallo standard (`DEV-…`) |
-| [Tracciabilità](../tracciabilita/README.md) | Requisiti `REQ-…`, matrice generata, controllo automatico |
+| [Failure analysis](analisi-dei-guasti.md) | Failure model, FMEA (`FM-…`), residual risks |
+| [Coding standard](standard-di-codifica.md) | `COD-…` rules for all product code, with how each is verified |
+| [Verification plan](piano-di-verifica.md) | Verification levels, coverage, review, release criteria |
+| [Deviations](deviazioni.md) | Register of deviations from the standard (`DEV-…`) |
+| [Traceability](../tracciabilita/README.md) | `REQ-…` requirements, generated matrix, automatic check |
 
-## Il caso di affidabilità
+<a id="il-caso-di-affidabilità"></a>
 
-Struttura dell'argomentazione: un'affermazione di vertice, sotto-affermazioni, e per ciascuna le
-evidenze (documenti, test, modelli) che la sostengono. Le evidenze marcate «da produrre»
-diventano verdi con il progredire delle fasi; un'affermazione senza evidenza verde non è
-dichiarata.
+## The reliability case
 
-**A0 — Nessun dato committed è perso o corrotto senza che il sistema lo rilevi e lo
-dichiari** (ADR-0031 §2a).
+Argument structure: a top-level claim, subclaims, and for each the supporting
+evidence (documents, tests, models). Evidence marked ‘to produce’ becomes passing
+as phases progress; a claim without passing evidence is not asserted.
 
-| Sotto-affermazione | Argomento | Evidenza |
+**A0 — No committed data are lost or corrupted without the system detecting and
+reporting it** (ADR-0031 §2a).
+
+| Subclaim | Argument | Evidence |
 |---|---|---|
-| A1 — Un dato confermato come committed è durevole | scrittura una volta, flush prima della conferma, fail-stop sugli errori | INV-D1, INV-A1, INV-V1; FI-01, FI-02, FI-05; modello SPK-07 *(da produrre)* |
-| A2 — Un crash in qualsiasi punto non perde dati e non lascia stati ambigui | lotti sigillati, un punto di atomicità per operazione, coda o corruzione decidibili dal contenuto, recovery idempotente che non tronca e non elimina per assenza | INV-F1…F3, INV-C7…C9, INV-A7, INV-A9…A11; FI-01…FI-13; simulatore *(da produrre)* |
-| A3 — Una transazione multiserie è atomica anche con crash | decisione durevole unica, presumed abort, esito nel segmento stesso dei record prepared | INV-T3, INV-T4, INV-V2, INV-S7; FI-03…FI-05, FI-12; modello SPK-07 *(da produrre)* |
-| A4 — Un dato rovinato dopo la scrittura viene rilevato prima di essere usato | verifica in lettura, scrubbing, quarantena | INV-A2, INV-A6; corruzione deliberata, fuzzing *(da produrre)* |
-| A5 — Nessuna risposta errata silenziosa | verifica end-to-end, controlli di tipo e limiti sempre attivi, errori tipizzati | INV-A2…A4; compilazione senza avvisi, linter *(attivi)* |
-| A6 — Letture e scritture concorrenti non osservano stati intermedi | seqlock a 64 bit su una sola tabella concorrente, EBR, writer unico, orizzonte di visibilità per gli snapshot | INV-I1, INV-V3…V5, INV-M1…M5; modello e stress con thread reali *(da produrre)* |
-| A9 — Un documento eliminato non riappare e uno vivo non scompare | indice dei soli vivi, ricostruzione per CSN massimo, tombstone scartati solo con il filtro di esistenza | INV-C11; test di proprietà con riavvii e MERGE non adiacenti *(da produrre)* |
-| A7 — Ogni requisito è verificato | tracciabilità bidirezionale controllata | INV-A5; `make trace` *(attivo)* |
-| A8 — Le risorse non si esauriscono in modo non definito | limiti su tutto, backpressure, attese come parcheggi limitati, indice che cresce un frammento alla volta | INV-A8, INV-P5, INV-I3; test di saturazione *(da produrre)* |
+| A1 — Data acknowledged as committed are durable | write once, flush before acknowledgment, fail-stop on errors | INV-D1, INV-A1, INV-V1; FI-01, FI-02, FI-05; SPK-07 model *(to produce)* |
+| A2 — A crash at any point neither loses data nor leaves ambiguous states | sealed batches, one atomicity point per operation, tail or corruption decidable from contents, idempotent recovery that neither truncates nor deletes due to absence | INV-F1…F3, INV-C7…C9, INV-A7, INV-A9…A11; FI-01…FI-13; simulator *(to produce)* |
+| A3 — A multiseries transaction is atomic even with crashes | single durable decision, presumed abort, outcome in the same segment as prepared records | INV-T3, INV-T4, INV-V2, INV-S7; FI-03…FI-05, FI-12; SPK-07 model *(to produce)* |
+| A4 — Data damaged after writing are detected before use | read-time verification, scrubbing, quarantine | INV-A2, INV-A6; deliberate corruption, fuzzing *(to produce)* |
+| A5 — No silent incorrect answers | end-to-end verification, always-active type and bounds checks, typed errors | INV-A2…A4; warning-free compilation, linter *(active)* |
+| A6 — Concurrent reads and writes observe no intermediate states | 64-bit seqlock on a single concurrent table, EBR, single writer, visibility horizon for snapshots | INV-I1, INV-V3…V5, INV-M1…M5; model and real-thread stress *(to produce)* |
+| A9 — A deleted document never reappears and a live one never disappears | live-only index, maximum-CSN rebuild, tombstones discarded only with the existence filter | INV-C11; property tests with restarts and nonadjacent MERGEs *(to produce)* |
+| A7 — Every requirement is verified | checked bidirectional traceability | INV-A5; `make trace` *(active)* |
+| A8 — Resources do not become exhausted in an undefined way | limits on everything, backpressure, waits as bounded parking, index growing one fragment at a time | INV-A8, INV-P5, INV-I3; saturation tests *(to produce)* |
 
-## Che cosa il sistema non promette
+<a id="che-cosa-il-sistema-non-promette"></a>
 
-- Sopravvivenza alla perdita simultanea di tutti i supporti (serve il backup,
+## What the system does not promise
+
+- Survival of simultaneous loss of all media (backup is required,
   [ADR-0030](../adr/0030-scope-v1.md)).
-- Correttezza se il sistema operativo o il firmware mentono su un flush riuscito
+- Correctness if the operating system or firmware lies about a successful flush
   ([FM-03](analisi-dei-guasti.md#fm-03)).
-- Assenza di difetti nel compilatore, nel GC o nel runtime di SBCL: i difetti vengono resi
-  *rilevabili* dalla verifica end-to-end ([FM-12](analisi-dei-guasti.md#fm-12)).
-- Protezione da un avversario (sicurezza informatica: fuori dallo scope v1).
+- Absence of defects in SBCL's compiler, GC, or runtime: end-to-end verification makes
+  defects *detectable* ([FM-12](analisi-dei-guasti.md#fm-12)).
+- Protection against an adversary (information security: outside v1 scope).

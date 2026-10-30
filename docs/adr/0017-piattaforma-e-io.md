@@ -1,52 +1,64 @@
-# ADR-0017 — Piattaforma di riferimento e primitive di I/O
+<a id="adr-0017--piattaforma-di-riferimento-e-primitive-di-io"></a>
 
-- **Stato:** Accettata; **punto 5 precisato da [ADR-0045](0045-modello-di-esecuzione.md)**: ogni chiamata bloccante (scritture nei log comprese) è un compito del pool di I/O; una lettura che manca la cache migra ripartendo dall'inizio.
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-19
-- **Riferimenti:** [architettura](../architettura.md#thread-pool), RSK-11, RSK-16
+# ADR-0017 — Reference platform and I/O primitives
 
-## Contesto
+- **Status:** Accepted; **item 5 clarified by [ADR-0045](0045-modello-di-esecuzione.md)**: every blocking call (including log writes) is an I/O pool task; a read that misses the cache migrates by restarting from the beginning.
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-19
+- **References:** [architecture](../architettura.md#thread-pool), RSK-11, RSK-16
 
-La specifica fissa l'hardware ma non il sistema operativo; lo sviluppo avviene su macOS/ARM64;
-il vincolo «solo Common Lisp» esclude librerie C per l'I/O.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-1. **Piattaforma di riferimento:** Linux x86-64. I benchmark e i criteri di uscita si misurano
-   lì. macOS/ARM64 è piattaforma di sviluppo supportata; le misure di I/O su macOS sono
+The specification fixes the hardware but not the operating system; development takes place
+on macOS/ARM64; the “Common Lisp only” constraint excludes C libraries for I/O.
+
+<a id="decisione"></a>
+
+## Decision
+
+1. **Reference platform:** Linux x86-64. Benchmarks and exit criteria are measured
+   there. macOS/ARM64 is a supported development platform; I/O measurements on macOS are
    indicative.
-2. **Chiamate di sistema** tramite i contrib di SBCL (`sb-posix`, `sb-unix`) e `sb-alien` verso
-   la libc del sistema: è Common Lisp che invoca il sistema operativo, non codice foreign del
-   progetto. Nessuna libreria C esterna.
-3. **Flush durevole:** `fdatasync` su Linux; `fcntl(F_FULLFSYNC)` su macOS. Un'unica funzione
-   `durable-flush` nel modulo `io` nasconde la differenza; le directory si sincronizzano con
-   `fsync` dopo creazione/rinomina di file.
-4. **Letture:** `pread` posizionali in buffer riutilizzati dell'arena di cache; nessuna
-   mappatura in memoria (evita il doppio conteggio imprevedibile e le page fault nei reader).
-5. **Modello di I/O:** bloccante, eseguito da un **pool di I/O** separato dal pool di calcolo
-   ([ADR-0011](0011-thread-pool-dinamico.md)): i worker di I/O possono essere molti più dei
-   core, perché passano il tempo in attesa. I/O asincrono (io_uring) non è adottato: con il
-   vincolo di solo Common Lisp costerebbe un'interfaccia complessa senza che la fascia alta
-   dei target lo richieda ([stime](../valutazione/stime-ordine-di-grandezza.md#letture-puntuali)).
-6. **Fault injection:** tutte le scritture, letture e flush passano dal modulo `io`, che in
-   test è sostituibile con un'implementazione che simula crash e scritture parziali.
+2. **System calls** through SBCL contribs (`sb-posix`, `sb-unix`) and `sb-alien` into
+   the system libc: this is Common Lisp invoking the operating system, not foreign code in
+   the project. No external C library.
+3. **Durable flush:** `fdatasync` on Linux; `fcntl(F_FULLFSYNC)` on macOS. A single
+   `durable-flush` function in the `io` module hides the difference; directories are synchronized
+   with `fsync` after file creation/rename.
+4. **Reads:** positional `pread` into reused buffers from the cache arena; no
+   memory mapping (avoids unpredictable double accounting and page faults in readers).
+5. **I/O model:** blocking, executed by an **I/O pool** separate from the compute pool
+   ([ADR-0011](0011-thread-pool-dinamico.md)): there may be many more I/O workers than
+   cores because they spend their time waiting. Asynchronous I/O (io_uring) is not adopted: under
+   the Common Lisp only constraint, it would require a complex interface without the upper end
+   of the targets requiring it ([estimates](../valutazione/stime-ordine-di-grandezza.md#letture-puntuali)).
+6. **Fault injection:** all writes, reads, and flushes go through the `io` module, which
+   tests can replace with an implementation that simulates crashes and partial writes.
 
-Pattern: thread pool di I/O bloccante con pread/fdatasync (RocksDB, PostgreSQL).
+Pattern: blocking I/O thread pool with pread/fdatasync (RocksDB, PostgreSQL).
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- Un solo modulo conosce il sistema operativo.
-- La correttezza della durability su macOS dipende da `F_FULLFSYNC`: i test la usano.
-- Il numero di worker di I/O è un parametro del controllore, non del codice.
+## Consequences
 
-## Alternative considerate
+- Only one module knows the operating system.
+- Correct durability on macOS depends on `F_FULLFSYNC`: tests use it.
+- The number of I/O workers is a controller parameter, not a code parameter.
 
-- *mmap dei segmenti:* letture senza copia, ma page fault dentro sezioni di lettura (trattengono
-  l'epoca), doppio conteggio della memoria e comportamento diverso per piattaforma.
-- *io_uring:* massima concorrenza di I/O; rinviato finché una misura non lo richieda; un
-  eventuale ADR futuro lo aggiungerebbe dentro il modulo `io` senza toccare il resto.
+<a id="alternative-considerate"></a>
 
-## Valutazione
+## Alternatives considered
 
-- Verifica: SPK-03 (flush), SPK-05 (pread concorrenti, GB/s in scansione).
-- Rivedere se: il target «GET NVMe» di fascia alta non è raggiungibile con il pool di I/O.
+- *mmap of segments:* reads without copying, but page faults inside read sections (holding
+  the epoch), double accounting of memory, and behavior that differs by platform.
+- *io_uring:* maximum I/O concurrency; deferred until a measurement calls for it; a
+  future ADR could add it inside the `io` module without changing the rest.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Verification: SPK-03 (flush), SPK-05 (concurrent pread, scan GB/s).
+- Revisit if: the upper-end “GET NVMe” target cannot be reached with the I/O pool.

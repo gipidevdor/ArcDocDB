@@ -1,126 +1,138 @@
-# Scrittura, crash e riapertura di una Serie
+<a id="scrittura-crash-e-riapertura-di-una-serie"></a>
 
-> **Proposta** — Prova C4 di integrazione dei componenti esistenti, con
-> orchestrazione seriale esplicita nella fixture. Non è un'API del server.
+# Writing, crashing, and reopening a Serie
 
-La [suite](../../tests/vertical/scenarios.lisp) collega preparazione ACTIVE,
-WAL/CSN, controller, indice primario e GET. Esegue inserimenti, aggiornamento,
-tombstone e letture prima dell'arresto, usando file nativi. Il writer si
-arresta con SIGKILL: niente shutdown o cleanup Lisp. Un nuovo processo legge
-CONTROL e il decision log completo dell'Archivio, recupera ACTIVE tramite
-il lettore autorevole, costruisce e pubblica il checkpoint e rilegge i dati.
-Un terzo processo ricostruisce nuovamente indice e letture dai file pubblicati.
+> **Proposal** — C4 integration test of existing components, with
+> explicit serial orchestration in the fixture. This is not a server API.
 
-Le capacità readonly sono aperte dall'API di prodotto
-`io:apri-lettura-nella-directory`, relativa al FD della directory posseduta.
-Le letture di recovery di CONTROL, decision log e ACTIVE usano l'EOF
-restituito insieme alla rispettiva capacità, rilevato sullo stesso FD.
-Le immagini indipendenti della fixture restano disponibili per confrontare
-i byte; non forniscono la dimensione di queste tre letture canoniche.
+The [suite](../../tests/vertical/scenarios.lisp) connects ACTIVE preparation,
+WAL/CSN, controller, primary index, and GET. It performs inserts, an update,
+tombstones, and reads before stopping, using native files. The writer
+stops with SIGKILL: no Lisp shutdown or cleanup. A new process reads
+CONTROL and the Archivio's complete decision log, recovers ACTIVE through
+the authoritative reader, builds and publishes the checkpoint, and rereads the data.
+A third process rebuilds the index and reads again from the published files.
 
-Dal 2026-10-17 anche i nuovi output `.tmp` usano la
-[creazione esclusiva relativa di prodotto](io-creazione-relativa.md), tramite
-`io:crea-temporaneo-nella-directory` sullo stesso parent posseduto. La fixture
-registra subito la capacità append, con budget di trasferimento e dimensione
-di 8 KiB; scelta dei nomi e ordine della preparazione restano C4.
+Read-only capabilities are opened by the product API
+`io:apri-lettura-nella-directory`, relative to the owned directory's FD.
+Recovery reads of CONTROL, decision log, and ACTIVE use the EOF
+returned with each capability, obtained on the same FD.
+The fixture's independent images remain available for byte
+comparisons; they do not supply the size for these three canonical reads.
 
-| Punto di arresto, in entrambi i formati | Verifica dopo riapertura |
+Since 2026-10-17, new `.tmp` outputs also use
+[product relative exclusive creation](io-creazione-relativa.md), through
+`io:crea-temporaneo-nella-directory` on the same owned parent. The fixture
+immediately registers the append capability, with a transfer budget and size
+of 8 KiB; name selection and preparation order remain C4.
+
+| Stop point, in both formats | Check after reopening |
 |---|---|
-| Cinque commit durevoli | Ultimo valore aggiornato di A, C presente, B cancellato |
-| Frammento di 13 byte senza SEAL | Stesso stato committed; coda conservata fisicamente |
-| Checkpoint preparato, prima della pubblicazione | CONTROL precedente autorevole; temporaneo conservato; ID preparato non riusato |
-| Checkpoint pubblicato e rotazione, poi tre nuovi commit | Letture fra due CLOSED; aggiornamento e tombstone nel secondo segmento prevalgono sul primo |
+| Five durable commits | Latest updated value of A, C present, B deleted |
+| 13-byte fragment without SEAL | Same committed state; tail physically retained |
+| Checkpoint prepared, before publication | Previous CONTROL authoritative; temporary retained; prepared ID not reused |
+| Checkpoint published and rotation, then three new commits | Reads across two CLOSED; update and tombstone in the second segment override the first |
 
-Gli attesi sono costanti indipendenti dalle risposte del prodotto. Il test
-confronta tutti i byte dei segmenti preesistenti dopo il recovery, controlla
-segnale 9 e marker del punto di arresto, frontiere, numero di record e valori
-letti. Il controllo negativo cambia il valore atteso e richiede l'errore
-specifico dell'oracolo, oltre all'uscita non nulla del verificatore.
+Expected values are constants independent of product responses. The test
+compares all bytes of preexisting segments after recovery, checks
+signal 9 and stop-point markers, frontiers, record count, and values
+read. The negative control changes the expected value and requires the
+specific oracle error, in addition to the verifier's nonzero exit.
 
-## Riproduzione
+<a id="riproduzione"></a>
+
+## Reproduction
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- sbcl --noinform --no-userinit --no-sysinit --script tools/vertical-crash.lisp --self-test
 make check
 ```
 
-Il [metodo preregistrato](../../tests/vertical/method.md) definisce budget,
-workload e limiti. I [risultati conservati](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-crash/README.md)
-distinguono sviluppo e controllo completo finale, senza attribuire prove
-precedenti a sorgenti modificati successivamente.
+The [preregistered method](../../tests/vertical/method.md) defines budgets,
+workload, and limits. The [retained results](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-crash/README.md)
+distinguish development from the final full check, without attributing earlier
+tests to subsequently modified sources.
 
-## Ripresa delle scritture e secondo crash
+<a id="ripresa-delle-scritture-e-secondo-crash"></a>
 
-La [nuova fixture](../../tests/vertical/resume.lisp) estende ciascuno degli
-otto scenari: un processo nuovo verifica tutti i prefissi CLOSED e ACTIVE
-vuoto, ricava il massimo CSN anche dalle tombstone e costruisce un ambiente
-distinto con registro, snapshot e controller sulla stessa base. Dopo un
-checkpoint esegue quattro nuovi commit e verifica subito i GET e H.
-Segue un secondo SIGKILL; due processi nuovi recuperano e rileggono gli
-effetti. Il CSN massimo finale appartiene a una chiave cancellata.
+## Resuming writes and a second crash
 
-La suite esegue 16 scenari positivi e due controlli negativi: 71 processi,
-26 SIGKILL intenzionali, attesi costanti e conservazione dei segmenti.
-Il nuovo negativo reinizializza il registro a zero: deve rilevare il riuso
-del CSN prima dell'append e lasciare il nuovo ACTIVE di soli 64 byte.
-Le [evidenze della ripresa](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-resume/README.md)
-conservano anche i tentativi falliti della fixture.
-La [verifica completa finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-resume-verifica/README.md)
-conserva `make check`, le sorgenti verificate e i risultati dei dieci spike.
-La successiva [integrazione documentale del full text](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-resume-integrazione/README.md)
-verifica la tracciabilità aggiornata, mantenendo distinti i nuovi requisiti progettati.
+The [new fixture](../../tests/vertical/resume.lisp) extends each of the
+eight scenarios: a new process checks all CLOSED prefixes and empty ACTIVE,
+derives the maximum CSN including tombstones, and builds a
+separate environment with registry, snapshot, and controller on the same base. After a
+checkpoint it performs four new commits and immediately checks GETs and H.
+A second SIGKILL follows; two new processes recover and reread the
+effects. The final maximum CSN belongs to a deleted key.
 
-## Confine rispetto al prodotto
+The suite runs 16 positive scenarios and two negative controls: 71 processes,
+26 intentional SIGKILLs, constant expectations, and segment retention.
+The new negative resets the registry to zero: it must detect CSN
+reuse before append and leave the new ACTIVE at only 64 bytes.
+The [resume evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-resume/README.md)
+also retains failed fixture attempts.
+The [final full verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-resume-verifica/README.md)
+retains `make check`, the verified sources, and the ten spike results.
+The subsequent [full-text documentation integration](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-vertical-resume-integrazione/README.md)
+checks updated traceability, keeping the new designed requirements distinct.
 
-Bootstrap, budget di otto ID proposti, scelta dei nomi, ordine
-del recovery e replay dell'indice sono codice di test. Il replay accetta
-solo record ordinari, dopo verifica di tutti i prefissi CLOSED; rifiuta
-prepared/OUTCOME. La pubblicazione seriale dei candidati segue la radice
-del controller: non dimostra l'atomicità fra indice e radice sotto concorrenza.
-UUID e completezza del namespace sono fatti della fixture.
-Anche con aperture, EOF e creazione esclusiva dei temporanei di prodotto, bootstrap,
-selezione tramite probe fra nome temporaneo e definitivo e coordinamento
-restano C4. La fixture
-registra le capacità restituite e ne mantiene l'ownership fino al cleanup;
-non viene introdotta una raccolta di capacità gestita dal motore.
+<a id="confine-rispetto-al-prodotto"></a>
 
-Dal 2026-10-16 la scelta del nuovo ID usa l'[ingresso di prodotto dalla directory](id-directory-recovery.md)
-sul manifest autorevole e sul parent posseduto: nomi canonici e una sola
-enumerazione attestata, senza costruire un inventario C4 di otto ID.
-La fixture controlla separatamente il proprio limite di otto ID e lo stato
-`:ready`; non esegue le azioni di rimozione del piano. La scansione dei nomi
-è di prodotto; ordine del recovery e replay restano C4.
+## Product boundary
 
-La ripresa ricostruisce H/CSN nel solo caso della fixture e verifica GET
-correnti; non implementa il gate di ammissione del motore o snapshot storici
-dopo il crash. Il decision log è vuoto: l'ingresso autorevole viene
-esercitato, la semantica multiserie
-completa resta nelle campagne dedicate. I file sono piccoli e in cache;
-nessuna misura di prestazione, power loss o qualifica C1/MC/DC.
+Bootstrap, the budget of eight proposed IDs, name selection, recovery
+order, and index replay are test code. Replay accepts
+only ordinary records, after checking all CLOSED prefixes; it rejects
+prepared/OUTCOME. Serial candidate publication follows the controller
+root: it does not demonstrate atomicity between index and root under concurrency.
+UUID and namespace completeness are fixture facts.
+Even with product opens, EOF, and exclusive temporary creation, bootstrap,
+probe-based selection between temporary and final names, and coordination
+remain C4. The fixture
+registers returned capabilities and retains ownership until cleanup;
+no engine-managed collection of capabilities is introduced.
 
-La prova rende concreta la composizione di una Serie e il suo recovery.
-Resta da trasferire il coordinamento nel motore con contratti, errori e
-verifiche propri, integrare MVCC e multiserie, e qualificare carichi prolungati,
-GC, piattaforma di riferimento e funzionalità successive della roadmap.
+Since 2026-10-16, new ID selection uses the [product directory entry point](id-directory-recovery.md)
+on the authoritative manifest and owned parent: canonical names and a single
+attested enumeration, without building a C4 inventory of eight IDs.
+The fixture separately checks its eight-ID limit and the
+`:ready` state; it does not execute the plan's removal actions. Name scanning
+is product code; recovery order and replay remain C4.
 
-## Revisione dell'estensione C4
+Resume reconstructs H/CSN only for the fixture case and checks current
+GETs; it does not implement the engine admission gate or historical snapshots
+after the crash. The decision log is empty: the authoritative entry point is
+exercised, while complete multiseries semantics
+remain in dedicated campaigns. Files are small and cached;
+no performance measurement, power loss, or C1/MC/DC qualification.
 
-Una lettura con lista di controllo verifica: budget di file/processi/cicli;
-verifica di tutti i CLOSED prima del replay; ACTIVE vuoto prima del rebasing;
-ambiente nuovo senza riuso delle capacità dell'ispezione; un registro comune
-a WAL/controller/snapshot; oracoli costanti per dati e CSN; errore tipizzato
-prima dell'append nel negativo; byte originali immutati dopo entrambi i crash.
-La cancellazione di una chiave già assente è ammessa solo se il GET ne
-conferma l'assenza. Quella estensione non modificava sorgenti C1. Il successivo
-collegamento alla scelta ID di prodotto ha contratto e verifiche dedicati;
-questa lettura C4 non è una revisione indipendente o una qualifica C1 del
+The test makes the composition of a Serie and its recovery concrete.
+Coordination still needs to move into the engine with its own contracts, errors,
+and checks; MVCC and multiseries need integration; and sustained loads,
+GC, the reference platform, and later roadmap features need qualification.
+
+<a id="revisione-dellestensione-c4"></a>
+
+## C4 extension review
+
+A checklist reading checks: file/process/cycle budgets;
+all CLOSED verified before replay; empty ACTIVE before rebasing;
+new environment without reusing inspection capabilities; one registry shared
+by WAL/controller/snapshot; constant data and CSN oracles; typed error
+before append in the negative case; original bytes unchanged after both crashes.
+Deleting an already absent key is allowed only if GET
+confirms its absence. That extension did not modify C1 sources. The subsequent
+connection to product ID selection has a dedicated contract and checks;
+this C4 reading is not an independent review or C1 qualification of the
 Recovery Manager.
 
-### Acquisizione delle fonti — 2026-10-17
+<a id="acquisizione-delle-fonti--2026-10-17"></a>
 
-ACTIVE e CLOSED vengono ora aperti tramite il [set posseduto di prodotto](fonti-recovery.md),
-una volta per manifest canonico della fixture. Il test usa le capacità prestate,
-termina i reader e chiude i set prima del parent; non scansiona più gli ID
-CLOSED da uno a otto. Otto resta il budget C4, senza restringere ID o inventario
-nel prodotto. La campagna mantiene i 16 scenari positivi e i due controlli
-negativi; replay e coordinamento complessivo restano nel test.
+### Source acquisition — 2026-10-17
+
+ACTIVE and CLOSED are now opened through the [product owned set](fonti-recovery.md),
+once per canonical fixture manifest. The test uses borrowed capabilities,
+terminates readers, and closes sets before the parent; it no longer scans CLOSED
+IDs from one to eight. Eight remains the C4 budget, without restricting IDs or inventory
+in the product. The campaign retains 16 positive scenarios and two negative
+controls; replay and overall coordination remain in the test.

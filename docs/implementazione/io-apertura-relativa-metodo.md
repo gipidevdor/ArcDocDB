@@ -1,98 +1,106 @@
-# Apertura readonly relativa: metodo
+<a id="apertura-readonly-relativa-metodo"></a>
 
-Metodo registrato prima delle esecuzioni. L'incremento collega il
-namespace già posseduto ai reader, secondo ADR-0017, ADR-0033 e COD-37.
-Non modifica formati, decisioni durevoli o la tabella di ADR-0040.
+# Relative read-only opening: method
 
-## Contratto e ownership
+Method registered before execution. The increment connects an already owned
+namespace to readers under ADR-0017, ADR-0033, and COD-37.
+It changes neither formats, durable decisions, nor the ADR-0040 table.
 
-`apri-lettura-nella-directory(directory, nome, …)` restituisce una nuova
-capacità readonly e la dimensione osservata tramite lo stesso FD.
-Il parent resta preso in prestito, aperto e riutilizzabile. Il controller
-impedisce mutazioni del namespace e del file durante la chiamata e
-chiusure concorrenti delle capacità. Il proprietario mantiene poi vivo
-il child fino alla quiescenza dei suoi reader.
+<a id="contratto-e-ownership"></a>
 
-Il nome è una foglia ASCII stampabile, da 1 a 255 byte, esclusi `.`, `..`,
-NUL e separatori. La copia privata e la capacità sono preparate prima
-dell'apertura. Il modo nativo usa `openat` sul parent, readonly,
-`O_CLOEXEC`, `O_NOFOLLOW`, `O_NONBLOCK`; `fstat` deve attestare un regolare.
-Device/inode completi vengono confrontati con l'entry relativa nofollow
-dello stesso parent prima della pubblicazione. Nessun percorso del parent
-viene riaperto. Il nome non è un'attestazione di header o appartenenza
-al manifest: quelle verifiche rimangono ai reader e al controller.
+## Contract and ownership
 
-Il backend è ereditato dal parent. Le estensioni opzionali sono
-`open-relative(fd-parent, nome, :input) → fd-child` e
-`file-metadata(fd-child) → device, inode, dimensione`; è inoltre richiesta
-`entry-identity`. Le callback verificano il tipo regolare e rispettano
-ownership e nomi immutabili. Fino al ritorno di un FD valido il callback
-di apertura possiede il proprio rollback; dopo il ritorno il prodotto
-possiede il child. Un FD uguale al parent è rifiutato senza chiuderlo.
-Callback mancanti non ricadono sulle primitive native.
+`apri-lettura-nella-directory(directory, nome, …)` returns a new
+read-only capability and size observed through the same FD.
+Parent stays borrowed, open, and reusable. The controller
+prevents namespace/file mutations during the call and
+concurrent capability closes. The owner then keeps the
+child live until its readers become quiescent.
 
-Budget proposti: trasferimento da 1 a 256 MiB e dimensione massima da
-zero a `most-positive-fixnum`, predefinita 4 GiB−1. Zero ammette soltanto
-un file vuoto. La dimensione è una fotografia di apertura: non è una
-frontiera validata, committed o durevole, né un limite RSS. Le frontiere
-`written` e `durable` della capacità readonly restano zero.
+Name is a printable ASCII leaf of 1 to 255 bytes, excluding `.`, `..`,
+NUL, and separators. Private copy and capability are prepared before
+opening. Native mode uses `openat` on parent, read-only,
+`O_CLOEXEC`, `O_NOFOLLOW`, `O_NONBLOCK`; `fstat` must certify a regular file.
+Complete device/inode are compared with the same parent's relative nofollow
+entry before publication. No parent path is
+reopened. Name certifies neither header nor manifest
+membership: those checks remain with readers and controller.
 
-## Guasti e cleanup
+Backend is inherited from parent. Optional extensions are
+`open-relative(fd-parent, nome, :input) → fd-child` and
+`file-metadata(fd-child) → device, inode, dimensione`; `entry-identity`
+is also required. Callbacks check regular type and respect
+ownership and immutable names. Until a valid FD is returned, the opening
+callback owns its rollback; after return the product
+owns the child. An FD equal to parent is rejected without closing it.
+Missing callbacks do not fall back to native primitives.
 
-Ogni FD valido acquisito ma non pubblicato riceve una sola richiesta di
-chiusura, attraverso il backend che lo ha aperto. La capacità privata
-diventa `:closed` prima della richiesta; non si ritenta EINTR. Questo
-cleanup viene tentato anche se una callback ha invalidato il parent.
-Nessun rifiuto chiude il parent o una capacità già posseduta dal chiamante.
+Proposed budgets: transfer from 1 to 256 MiB and maximum size from
+zero to `most-positive-fixnum`, default 4 GiB−1. Zero permits only
+an empty file. Size is an opening snapshot: neither a validated,
+committed, or durable frontier nor an RSS limit. The read-only capability's
+`written` and `durable` frontiers remain zero.
 
-Se la chiusura riesce, la condizione tipizzata originaria viene propagata
-come stesso oggetto. Se fallisce anche il cleanup, `io-fault` conserva
-reason e offset primari e cleanup-errno; per una causa I/O conserva anche
-operazione, errno e progresso. Il cambio di classe per una causa primaria
-non I/O è esplicito e segue la politica budget+cleanup dell'inventario.
-Un ritorno nonzero del close è fallimento anche senza errno disponibile.
-Il valore errno NIL non attesta quindi la riuscita di una chiusura.
+<a id="guasti-e-cleanup"></a>
 
-Un'uscita non locale estranea ai normali errori tipizzati tenta il
-cleanup, senza allegare alla causa l'eventuale errno secondario.
-Le callback di close devono rispettare il contratto degli errori I/O;
-errori estranei nel cleanup restano fuori da questo protocollo.
-Le finestre senza interrupt proteggono l'handoff del FD e la chiusura;
-non introducono un protocollo di cancellazione asincrona. Le syscall
-possono bloccare: il percorso appartiene al pool I/O e non promette
-una deadline wall.
+## Failures and cleanup
 
-## Decisioni e prove preregistrate
+Every valid acquired but unpublished FD receives one close request
+through the backend that opened it. The private capability
+becomes `:closed` before the request; EINTR is not retried. This
+cleanup is attempted even if a callback invalidated parent.
+No rejection closes parent or an already caller-owned capability.
 
-| ID | Decisione / confine | Casi |
+If close succeeds, the original typed condition propagates
+as the same object. If cleanup fails too, `io-fault` retains
+primary reason and offset and cleanup-errno; for an I/O cause it also retains
+operation, errno, and progress. Class change for a primary non-I/O
+cause is explicit and follows inventory's budget+cleanup policy.
+A nonzero close return is failure even without available errno.
+NIL errno therefore does not certify successful closure.
+
+A nonlocal exit outside ordinary typed errors attempts
+cleanup without attaching any secondary errno to the cause.
+Close callbacks must respect the I/O-error contract;
+unrelated cleanup errors remain outside this protocol.
+Without-interrupt windows protect FD handoff and closure;
+they introduce no asynchronous cancellation protocol. Syscalls
+may block: this path belongs to the I/O pool and promises no
+wall-time deadline.
+
+<a id="decisioni-e-prove-preregistrate"></a>
+
+## Decisions and preregistered tests
+
+| ID | Decision / boundary | Cases |
 |---|---|---|
-| OR-D01 | parent e configurazione validi | modi, chiuso/faulted, budget fuori range, zero/esatto |
-| OR-D02 | nome foglia valido e privato | vuoto, dot path, separatori, NUL, non ASCII, 255/256 byte, riuso del nome chiamante |
-| OR-D03 | capacità del backend | nativo, tre callback presenti, ciascuna assente, nessun fallback |
-| OR-D04 | acquisizione FD | valido, risultato invalido, alias del parent, errore prima del trasferimento |
-| OR-D05 | metadati regolari e limitati | componenti intere complete, ciascuna invalida, dimensione zero/esatta/eccessiva |
-| OR-D06 | FD e nome legati | stesso device/inode, ciascun componente diverso, guasto del controllo |
-| OR-D07 | parent ancora aperto | invalidazione da ciascuna callback prima di altre operazioni |
-| OR-D08 | cleanup senza pubblicazione | una close, nessun retry, backend corretto, errno primario/secondario, nonzero |
-| OR-D09 | nativo readonly ancorato | byte, EOF, flags, symlink/FIFO/directory, assente e parent rinominato con decoy |
-| OR-D10 | uso nei reader verticali | CONTROL, decision log e ACTIVE con EOF della stessa capacità; v1/v2 e crash già previsti |
+| OR-D01 | valid parent and configuration | modes, closed/faulted, out-of-range budget, zero/exact |
+| OR-D02 | valid private leaf name | empty, dot path, separators, NUL, non-ASCII, 255/256 bytes, caller-name reuse |
+| OR-D03 | backend capabilities | native, three callbacks present, each absent, no fallback |
+| OR-D04 | FD acquisition | valid, invalid result, parent alias, error before transfer |
+| OR-D05 | regular bounded metadata | complete integer components, each invalid, zero/exact/excessive size |
+| OR-D06 | bound FD and name | same device/inode, each component different, check failure |
+| OR-D07 | parent still open | invalidation by every callback before further operations |
+| OR-D08 | cleanup without publication | one close, no retry, correct backend, primary/secondary errno, nonzero |
+| OR-D09 | anchored native read-only | bytes, EOF, flags, symlink/FIFO/directory, absent and renamed parent with decoy |
+| OR-D10 | vertical-reader use | CONTROL, decision log and ACTIVE with same-capability EOF; existing v1/v2 and crash cases |
 
-Le fixture native riusano registri bounded di risorse, namespace esclusivi
-0700, deadline cooperative finite e cleanup dei soli nomi creati dal test.
-I controlli fra operazioni non interrompono una syscall bloccata. Confrontano
-byte, identità, stato/frontiere e proprietà del FD con oracoli POSIX C4.
-I test iniettati osservano anche l'ordine e il numero delle callback.
-Le prove pure sugli errori non attestano fault injection di syscall native.
+Native fixtures reuse bounded resource registries, exclusive
+0700 namespaces, finite cooperative deadlines, and cleanup only of test-created names.
+Interoperation checks do not interrupt a blocked syscall. They compare
+bytes, identity, state/frontiers, and FD ownership with C4 POSIX oracles.
+Injected tests also observe callback order and count.
+Pure error tests do not certify native syscall fault injection.
 
-Due letture statiche precedono compilazione ed esecuzione. I sorgenti
-vengono congelati in un commit; il controllo completo è registrato con
-`record-command` e cache ASDF nuova. Ogni tentativo resta distinto,
-compresi fallimenti e correzioni. La CI Linux/macOS della versione
-integrata è una fotografia separata. Le evidenze citate saranno raccolte
-con il collector esistente, manifest esplicito e inventario chiuso.
+Two static readings precede compilation and execution. Sources
+are frozen in a commit; the complete check is recorded through
+`record-command` and a new ASDF cache. Every attempt remains distinct,
+including failures and corrections. Linux/macOS CI of the integrated
+version is a separate snapshot. Cited evidence will be collected
+with the existing collector, explicit manifest, and closed inventory.
 
-Requisiti: REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018,
-REQ-FOR-001 e REQ-VAL-001. Invarianti: INV-A7/A9/A10, INV-P6 e INV-X3.
-Restano aperti raccolta posseduta di tutti i segmenti vivi, esecuzione
-della riconciliazione, Recovery Manager, ammissione, C1 completo, MC/DC,
-mutation testing dei nuovi percorsi e misure di prestazione.
+Requirements: REQ-STO-003, REQ-REC-001, REQ-AFF-001/004/008/018,
+REQ-FOR-001, and REQ-VAL-001. Invariants: INV-A7/A9/A10, INV-P6, INV-X3.
+Owned collection of all live segments, reconciliation execution,
+Recovery Manager, admission, complete C1, MC/DC,
+mutation testing of new paths, and performance measurements remain open.

@@ -1,79 +1,87 @@
-# Contesto worker dei writer
+<a id="contesto-worker-dei-writer"></a>
 
-Il contesto preallocato integra [handoff](writer-handoff.md),
-[lista pronta](writer-ready.md) e [ricircolo](writer-recycle.md) sul thread
-worker che lo crea. Conserva obblighi, lease, cursore, shard e debito del
-batch; nessuna coda globale, thread o callback applicativa nel componente.
-Un contesto ha un solo proprietario e non è rientrante né migrabile.
+# Writer worker context
 
-| API | Precondizione ed effetto |
+The preallocated context integrates [handoff](writer-handoff.md),
+the [ready list](writer-ready.md), and [recycling](writer-recycle.md) on the
+worker thread that creates it. It retains obligations, lease, cursor, shard,
+and batch debt; the component has no global queue, threads, or application callbacks.
+A context has a single owner and is neither reentrant nor migratable.
+
+| API | Precondition and effect |
 |---|---|
-| `crea-contesto-worker-writer ready :start` | Una volta all'avvio del worker corrente; parte idle, cursor default0. |
-| `prendi-writer-worker ctx` | Idle; scansione bounded restituisce writer/claimed/cursor, oppure NIL/empty o busy/cursor. |
-| `inizia-tratto-worker ctx` | Claimed; acquisisce la lease e passa running. Begin separato dal pop dei payload. |
-| `preleva-lavori-worker ctx target start end` | Running; restituisce count/status/token. Messages crea batch; empty/yield lascia token0 e running. |
-| `conferma-lavori-worker ctx token` | Batch completamente elaborato dal caller; ack corrente torna running, stesso tratto/quota/lease. |
-| `termina-tratto-worker ctx` | Running dopo ack, oppure finishing; fissa finishing prima dell'end, poi idle o reschedule. |
-| `ricircola-worker ctx` | Reschedule; room→NIL/published/count e idle, full→testa/claimed/count invariato. |
-| `adotta-writer-worker ctx writer home` | Idle; riceve dal caller un unico obbligo non già nel ring, home stabile. |
-| `cede-writer-worker ctx` | Claimed/reschedule; restituisce writer/home al caller e libera idle. Non cede lease attive. |
-| `stato-worker-writer`, `writer-worker-writer`, `errore-worker-writer` | Getter owner-only per diagnosi; non trasferiscono proprietà. |
+| `crea-contesto-worker-writer ready :start` | Once at startup of the current worker; starts idle, default cursor 0. |
+| `prendi-writer-worker ctx` | Idle; bounded scan returns writer/claimed/cursor, or NIL/empty or busy/cursor. |
+| `inizia-tratto-worker ctx` | Claimed; acquires the lease and enters running. Begin is separate from popping payloads. |
+| `preleva-lavori-worker ctx target start end` | Running; returns count/status/token. Messages creates batch; empty/yield leaves token 0 and running. |
+| `conferma-lavori-worker ctx token` | Batch fully processed by the caller; current ack returns to running, with the same slice/quantum/lease. |
+| `termina-tratto-worker ctx` | Running after ack, or finishing; latches finishing before end, then idle or reschedule. |
+| `ricircola-worker ctx` | Reschedule; room→NIL/published/count and idle, full→head/claimed/unchanged count. |
+| `adotta-writer-worker ctx writer home` | Idle; receives a single obligation from the caller that is not already in the ring, with stable home. |
+| `cede-writer-worker ctx` | Claimed/reschedule; returns writer/home to the caller and releases to idle. Does not yield active leases. |
+| `stato-worker-writer`, `writer-worker-writer`, `errore-worker-writer` | Owner-only getters for diagnostics; they do not transfer ownership. |
 
-## Proprietà e retry
+<a id="proprietà-e-retry"></a>
 
-La testa tolta al ring resta nel contesto durante begin busy. La home viene
-derivata dal predecessore modulo K del cursore restituito dalla lista pronta,
-senza cercare il writer. Anche empty/busy ruotano cursor: sono osservazioni
-locali, non una prova di quiescenza per parcheggio o shutdown.
+## Ownership and retries
 
-Un pop messages produce un debito esplicito: nessun nuovo pop o end prima
-dell'ack. Il token locale cresce una volta per batch, non su empty/yield,
-non si resetta su idle/cessione e non fa wrap. È legato alla coppia
-contesto/token; non è unico tra contesti. Ack attesta il caller: il componente
-non può verificare effetti esterni, WAL o risposte senza integrare il motore.
+The head removed from the ring remains in the context during begin busy. Home is
+derived from the predecessor modulo K of the cursor returned by the ready list,
+without searching for the writer. Empty/busy also rotate cursor: they are local
+observations, not proof of quiescence for parking or shutdown.
 
-Busy del primo end lascia finishing, con lease/riferimento conservati;
-solo il retry dell'end è ammesso. Dopo schedule la lease è già rilasciata:
-recycle busy conserva l'obbligo senza ripetere end. Full passa una nuova
-testa al contesto senza aumentare la capacità; il precedente riferimento
-appartiene ora al ring. Nessun cleanup sul writer può cancellare una nuova
-ondata dopo una fine idle.
+A messages pop produces explicit debt: no new pop or end before
+ack. The local token increases once per batch, not on empty/yield,
+does not reset on idle/yield, and does not wrap. It is tied to the
+context/token pair; it is not unique across contexts. Ack attests the caller's work:
+the component cannot verify external effects, WAL, or responses without integrating the engine.
 
-Cessione/adozione trasferiscono soltanto obblighi senza lease. Non verificano
-dedup o eleggibilità: il caller mantiene la proprietà unica. Non abbandonare
-un riferimento ceduto, non ripubblicare quello già trasferito al ring.
-Il contesto può essere ritirato dopo cessione, con generation conservata;
-questo non implementa il protocollo di retirement di un pool.
+Busy on the first end leaves finishing, with lease/reference retained;
+only retrying end is allowed. After schedule, the lease has already been released:
+recycle busy retains the obligation without repeating end. Full passes a new
+head to the context without increasing capacity; the previous reference
+now belongs to the ring. No cleanup on the writer can erase a new
+wave after an idle end.
 
-## Errori e confine locale
+Yield/adopt transfer only obligations without a lease. They do not check
+deduplication or eligibility: the caller maintains unique ownership. Do not abandon
+a yielded reference or republish one already transferred to the ring.
+The context may be retired after yielding, with generation retained;
+this does not implement a pool retirement protocol.
 
-| Errore | Gestione |
+<a id="errori-e-confine-locale"></a>
+
+## Errors and local boundary
+
+| Error | Handling |
 |---|---|
-| Owner diverso, `invalid-argument :worker-owner` | Rifiutato prima del handler e della mutazione, anche nei getter. |
-| Fase errata, `resource-exhausted :worker-state` | Nessuna transizione; contesto faulted rifiuta tutti i passi successivi. |
-| Token errato/stale, `:worker-batch`; target/span/alias, `:writer-target`; adozione, `:worker-writer` / `:ready-target` | Input rifiutato prima delle scritture, stessa fase. |
-| Busy atteso di queue/ready | Solo il motivo previsto per quel passo è recuperabile; campi conservati, salvo il primo latch finishing. |
-| `resource-exhausted :worker-generation` | Budget locale esaurito prima del pop dopo preflight target; anche empty/yield è rifiutato. End e cessione restano disponibili, nessun reset/wrap. |
-| Altri errori, inclusi not-ready, writer-generation, lease privata e invarianti | Condizione originale registrata e propagata, fase faulted persistente e campi conservati; nessun rollback o riuso. |
+| Different owner, `invalid-argument :worker-owner` | Rejected before the handler and mutation, including in getters. |
+| Wrong phase, `resource-exhausted :worker-state` | No transition; a faulted context rejects all subsequent steps. |
+| Wrong/stale token, `:worker-batch`; target/span/alias, `:writer-target`; adoption, `:worker-writer` / `:ready-target` | Input rejected before writes, same phase. |
+| Expected queue/ready busy | Only the reason expected for that step is recoverable; fields retained, except for the first finishing latch. |
+| `resource-exhausted :worker-generation` | Local budget exhausted before pop after target preflight; even empty/yield is rejected. End and yield remain available, no reset/wrap. |
+| Other errors, including not-ready, writer-generation, private lease, and invariants | Original condition recorded and propagated, persistent faulted phase and fields retained; no rollback or reuse. |
 
-Il confine usa un handler interno dynamic-extent: preserva la stessa
-condizione e non la nasconde. Ragioni recuperabili distinte per tipo e API;
-i controlli degli indici privati producono invarianti, così un home invalido
-del caller non maschera un contesto corrotto. Un faulted non può cedere o
-adottare: diagnostica e controllo esterno della Serie devono governare il guasto.
-Il controller FAULTED della Serie e il rilascio controllato delle risorse
-in questo caso restano da integrare; fault locale non qualifica l'intero motore.
+The boundary uses an internal dynamic-extent handler: it preserves the same
+condition and does not hide it. Recoverable reasons are distinguished by type and API;
+private index checks produce invariants, so an invalid caller home
+does not mask a corrupted context. A faulted context cannot yield or
+adopt: diagnostics and external control of the Serie must govern the fault.
+The Serie's FAULTED controller and controlled resource release
+in this case remain to be integrated; a local fault does not qualify the whole engine.
 
-## Costo e confini
+<a id="costo-e-confini"></a>
 
-I campi locali non sono condivisi fra worker. La lista condivisa viene
-toccata per tratto, non per messaggio. Take delega la scansione esistente
-≤64 shard/128 CAS; gli altri passaggi sono O(1), oltre alla copia bounded
-del batch. Consumo e ack fuori dalle guard ready, zero attese/retry interni.
-Factory all'avvio, input/target preallocati nel percorso normale.
+## Cost and boundaries
 
-Una catena full resta sullo stesso shard: quote del pool, equità globale,
-admission, wake/park, shutdown, controller e applicazione degli effetti
-richiedono integrazione. Il [metodo](writer-worker-metodo.md),
-[decisioni](writer-worker-decisioni.md), [risultati](writer-worker-risultati.md)
-e [revisione](writer-worker-revisione.md) delimitano la verifica locale.
+Local fields are not shared across workers. The shared list is
+touched per slice, not per message. Take delegates the existing scan of
+≤64 shards/128 CAS; the other steps are O(1), in addition to the bounded batch
+copy. Consumption and ack occur outside ready guards, with zero internal waits/retries.
+Factory at startup, preallocated inputs/targets on the normal path.
+
+A full chain stays on the same shard: pool quotas, global fairness,
+admission, wake/park, shutdown, controller, and effect application
+require integration. The [method](writer-worker-metodo.md),
+[decisions](writer-worker-decisioni.md), [results](writer-worker-risultati.md),
+and [review](writer-worker-revisione.md) bound the local verification.

@@ -1,24 +1,30 @@
-# SPK-01 — metodo preregistrato: lettura in buffer
+<a id="spk-01--metodo-preregistrato-lettura-in-buffer"></a>
 
-> **Proposta** — Variante sperimentale di Fase 0, preregistrata prima delle prove.
+# SPK-01 — Preregistered method: buffer reads
 
-Registrazione del 2026-10-08, Fase 0. Solo Common Lisp/SBCL, `safety 3`,
-`speed 3`, `debug 1`; zero warning e style-warning. Nessun `eval`,
-`ignore-errors` o `truly-the`. La compilazione non sostituisce CHECK.
+> **Proposed** — Experimental Phase-0 variant, preregistered before tests.
 
-## Ownership e dipendenza
+Recorded 2026-10-08, Phase 0. Common Lisp/SBCL only, `safety 3`, `speed 3`,
+`debug 1`; zero warnings/style-warnings. No `eval`, `ignore-errors`, or `truly-the`.
+Compilation does not replace CHECK.
 
-Checkout esclusivo di lavoro:
+<a id="ownership-e-dipendenza"></a>
+
+## Ownership and dependency
+
+Exclusive working checkout:
 `/Users/gpicchiarelli/.codex/worktrees/indice-lettura/ArcDocDB`.
-Questo agente possiede soltanto `lettura-buffer.lisp`, questo metodo e nuovi
-direttori `spikes/SPK-01-primary-index/out/lettura-buffer-*`. Core e runner
-esistenti, `tools/`, documenti condivisi e `src/` restano fuori dalla proprietà.
-Nessun commit o push. Driver e diagnostica nuovi risiedono nei miei out.
-Il modulo richiede il core caricato; importa internals senza ridefinirli.
+This agent owns only `lettura-buffer.lisp`, this method, and new
+`spikes/SPK-01-primary-index/out/lettura-buffer-*` directories.
+Existing core/runner, `tools/`, shared documents, `src/` outside ownership.
+No commit/push. New drivers/diagnostics in this agent's out directories.
+Module requires loaded core; imports internals without redefining them.
 
-## API e condizioni
+<a id="api-e-condizioni"></a>
 
-Package `ARCDOCDB.SPK01.LETTURA-BUFFER`, unico export `LEGGI`:
+## API and conditions
+
+Package `ARCDOCDB.SPK01.LETTURA-BUFFER`, sole export `LEGGI`:
 
 ```lisp
 (leggi indice chiave destinazione
@@ -26,131 +32,128 @@ Package `ARCDOCDB.SPK01.LETTURA-BUFFER`, unico export `LEGGI`:
 ;; => (values status-keyword retry-fixnum)
 ```
 
-`indice` è un indice del core; `chiave` è un simple-array di 16 u8.
-`destinazione` è esattamente `(simple-array (unsigned-byte 64) (4))`, privata
-al chiamante: `[CSN, location, length, end-CSN]`. Tipi, callback e lunghezza
-della chiave sono validati, e `attempts` deve essere intero 1..8, prima di hash,
-accessi all'indice e scritture. Tipi errati producono `type-error`; chiave con
-lunghezza diversa produce `limite-indice` con motivo `:chiave-16-byte`.
-Callback accettati: NIL o oggetto funzione, non designatori simbolici.
+`indice` is a core index; `chiave` a 16-u8 simple-array.
+`destinazione` is exactly `(simple-array (unsigned-byte 64) (4))`, private to
+caller: `[CSN, location, length, end-CSN]`. Types, callbacks, and key length
+validated; `attempts` must be integer 1..8 before hashing, index access, or writes.
+Incorrect types produce `type-error`; wrong key length produces `limite-indice`
+with reason `:chiave-16-byte`. Accepted callbacks: NIL or function object,
+not symbolic function designators.
 
-Esiti: `:hit` e `:miss` con numero di tentativi scartati 0..7;
-`:retry-limit` con esattamente `attempts` tentativi scartati. Quest'ultimo è
-un esito di esaurimento esplicito, mai una lettura riuscita o parziale.
-La destinazione viene scritta interamente soltanto su `:hit`, dopo tutte le
-validazioni. Miss, esaurimento ed errori sincroni lasciano le quattro parole
-immutate. Nessuna lettura di payload viene restituita come valore Lisp.
+Outcomes: `:hit` and `:miss` with 0..7 discarded attempts;
+`:retry-limit` with exactly `attempts` discarded attempts. Latter is explicit
+exhaustion, never successful or partial read. Destination fully written only on
+`:hit`, after every validation. Miss, exhaustion, synchronous errors leave all
+four words unchanged. No payload read returned as Lisp value.
 
-Il chiamante mantiene chiave e destinazione stabili e private durante la
-chiamata, inclusi i callback. I callback di fixture non modificano questi
-buffer e mantengono gli invarianti del core; `after-fragment` riceve il
-frammento e `after-fields` riceve frammento e slot. Errori dei callback sono
-propagati prima di qualsiasi scrittura. Le quattro scritture non costituiscono
-una pubblicazione atomica a osservatori concorrenti della destinazione.
+Caller keeps key/destination stable and private during call, including callbacks.
+Fixture callbacks modify neither buffer and retain core invariants;
+`after-fragment` receives fragment, `after-fields` fragment and slot.
+Callback errors propagated before any write. Four writes do not constitute
+atomic publication to concurrent destination observers.
 
-## Algoritmo, ordine e linearizzazione
+<a id="algoritmo-ordine-e-linearizzazione"></a>
 
-La fonte è `LEGGI`/`SONDA-READER`/`LEGGI-SLOT` del core. Una sola macro locale
-espande lo stesso algoritmo nei cammini diretto e strumentato. Il primo
-esclude chiamate ai callback; il secondo inserisce soltanto i due punti di
-iniezione. Payload e hash sono locali typed u64: nessun trasporto di payload
-tra funzioni o valori multipli. Gli helper hash/sondaggio già inline del core
-rimangono le dipendenze. Nessun abbassamento di safety.
+## Algorithm, ordering, and linearization
 
-Ordine conservato: acquisizione root/generazione; barriera read; selezione
-frammento e callback; sondaggio nei gruppi di otto del core; sequenza iniziale
-pari; barriera read; campi, ctrl, arena e confronto chiave; callback;
-barriera read; uguaglianza sequenza; barriera read; rilettura root e generazione.
-Una sequenza dispari o cambiata scarta l'intero tentativo. Una root diversa
-scarta hit e miss. Skip prosegue il sondaggio, ctrl vuoto lo conclude con miss.
-Nessun writer, lock, CAS o cambio dell'ordine delle barriere nel modulo.
+Source is core `LEGGI`/`SONDA-READER`/`LEGGI-SLOT`. One local macro expands same
+algorithm in direct/instrumented paths. First excludes callback calls; second
+inserts only two injection points. Payload/hash are local typed u64s: no payload
+transport between functions or multiple values. Existing inline core hash/probe
+helpers remain dependencies. No lowering of safety.
 
-Per hit il candidato è coerente nell'intervallo seqlock stabile e viene
-accettato solo dopo il ricontrollo root/generazione. Quel controllo è il punto
-di accettazione, non l'affermazione che il payload rappresenti lo stato
-all'istante della rilettura root: un writer può aggiornare lo stesso slot dopo
-la seconda lettura della sequenza. Miss conserva il criterio del core, anche
-per root ritirata. Non si fissa la linearizzazione all'acquisizione della root;
-valgono le qualificazioni del prototipo v1 e il vincolo di un singolo writer.
+Preserved order: root/generation acquisition; read barrier; fragment selection
+and callback; core eight-byte-group probing; initially even sequence; read barrier;
+fields, control, arena, key comparison; callback; read barrier; sequence equality;
+read barrier; root/generation reread. Odd/changed sequence discards whole attempt.
+Changed root discards hit and miss. Skip continues probe, empty control ends with
+miss. No writer, lock, CAS, or barrier-order change in module.
 
-Layout: words4 v1 (end-CSN zero) e words5-extra-end v1 (quinta parola end-CSN),
-non v2. CSN, location ed end-CSN u64 alti devono conservarsi esattamente.
-Il limite per tentativo è C slot, con C limitata dal costruttore del core;
-al massimo otto tentativi. Nessuna garanzia temporale per callback arbitrari.
+For hit, candidate is consistent during stable seqlock interval and accepted only
+after root/generation recheck. That check is acceptance point, not a claim that
+payload represents state at root-reread instant: writer may update same slot after
+second sequence read. Miss preserves core criterion, including retired root.
+Linearization is not fixed at root acquisition; v1 prototype qualifications and
+single-writer constraint apply.
 
-## Campagna consentita e preregistrazione delle esecuzioni
+Layout: words4 v1 (zero end-CSN) and words5-extra-end v1 (fifth end-CSN word),
+not v2. High u64 CSN, location, end-CSN must be retained exactly.
+Per-attempt limit C slots, C bounded by core constructor; at most eight attempts.
+No timing guarantee for arbitrary callbacks.
 
-Budget: massimo quattro revisioni compilate, 90 secondi per processo figlio,
-120 secondi nel registratore e 5 secondi per cleanup, heap 1024 MiB.
-Un driver nuovo Common Lisp in out avvia processi SBCL senza
-init utente e senza shell. Preregistra prima del lancio argv, stdin vuoto,
-operazione, budget, snapshot integrali e hash Git blob di core, modulo, metodo
-e driver. Snapshot before/after diversi, esaurimento, condizioni o ritorni
-compile-file warning/failure sono fallimenti; nessun successo parziale.
+<a id="campagna-consentita-e-preregistrazione-delle-esecuzioni"></a>
 
-Ogni compilazione ha un nuovo out esclusivo e record schema 1, con
+## Allowed campaign and execution preregistration
+
+Budget: at most four compiled revisions, 90 seconds per child, 120 seconds in
+recorder, 5 seconds cleanup, heap 1024 MiB. New Common Lisp out driver launches
+SBCL processes without user init or shell. Before launch, preregisters argv,
+empty stdin, operation, budget, full snapshots, Git blob hashes of core, module,
+method, driver. Different before/after snapshots, exhaustion, conditions, or
+compile-file warning/failure returns are failures; no partial success.
+
+Each compilation has a fresh exclusive out and schema-1 record with
 `:schema-version 1`, `:argv`, `:stdin`, `:source-before`, `:source-after`,
-stdout/stderr originali, exit code e `:decoded`. Anche gli insuccessi sono
-conservati. I dati usano liste, keyword, stringhe e numeri; tipi e funzioni
-figurano come stringhe, assenza come keyword. La decodifica con `*read-eval*`
-NIL avviene nel processo registratore che non carica package dello spike.
-Il driver promuove warning/style-warning a errori, verifica gli indicatori di
-compile-file e carica il FASL solo se compilato senza avvisi. Non chiama LEGGI.
+original stdout/stderr, exit code, `:decoded`. Failures retained too.
+Data use lists, keywords, strings, numbers; types/functions represented as strings,
+absence as keyword. Decoding with `*read-eval*` NIL happens in recorder process
+without loading spike packages. Driver promotes warnings/style-warnings to errors,
+checks compile-file indicators, loads FASL only after warning-free compilation.
+Does not call LEGGI.
 
-Esecuzione C1 preregistrata: compilare core e modulo, caricare i FASL,
-disassemblare LEGGI, conservare diagnostica e sorgenti stabili. Scopo della
-diagnostica: cercare boxing dei payload e chiamate u64 nel cammino diretto;
-barriere e bounds check devono essere presenti. Nessuna misura di prestazioni,
-allocazioni o throughput. Il disassemblato vale solo per il runtime osservato.
-Eventuali revisioni avranno una motivazione e nuova preregistrazione qui,
-prima della loro compilazione, senza sovrascrivere i record precedenti.
+Preregistered C1 execution: compile core/module, load FASLs, disassemble LEGGI,
+retain diagnostics and stable sources. Diagnostic purpose: find payload boxing
+and u64 calls in direct path; barriers/bounds checks must remain.
+No performance, allocation, throughput measurement. Disassembly applies only to
+observed runtime. Any revision gets rationale and new preregistration here before
+compilation, without overwriting previous records.
 
-Driver della campagna: `out/lettura-buffer-campagna-20261008-01/driver-campagna.lisp`
-e `driver-compila.lisp` nello stesso direttorio. Comando C1, dalla radice del
-checkout isolato:
+Campaign driver: `out/lettura-buffer-campagna-20261008-01/driver-campagna.lisp`
+and `driver-compila.lisp` in same directory. C1 command from isolated checkout root:
 
 ```sh
 /opt/homebrew/bin/sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-01-primary-index/out/lettura-buffer-campagna-20261008-01/driver-campagna.lisp c1
 ```
 
-La preregistrazione schema 1 viene salvata in `c1/record.sexp` prima di avviare
-il processo figlio; stdin, stdout, stderr, FASL e disassemblato sono in `c1/`.
+Schema-1 preregistration saved to `c1/record.sexp` before child launch;
+stdin, stdout, stderr, FASL, disassembly in `c1/`.
 
-### C1 fallito e C2 preregistrato
+<a id="c1-fallito-e-c2-preregistrato"></a>
 
-C1: il runtime ha rifiutato argv prima di leggere il driver figlio, perché
-`--dynamic-space-size` seguiva le opzioni Lisp; exit 1, sorgenti stabili,
-stdout vuoto, stderr originale nel record. Nessuna compilazione eseguita.
-C2 preregistrato: stesso compile/load/disassemble, opzione heap spostata prima
-delle opzioni Lisp. Il registratore stampa stringhe ordinarie con escape,
-verifica la rilettura e conserva una diagnosi decodificata anche in assenza
-di output strutturato. Comando identico a C1 salvo argomento finale `c2`;
-nuovo direttorio `c2/`, stessi budget. Core e algoritmo invariati.
+### Failed C1 and preregistered C2
 
-### C2 riuscito e C3 preregistrato
+C1: runtime rejected argv before reading child driver because `--dynamic-space-size`
+followed Lisp options; exit 1, stable sources, empty stdout, original stderr in
+record. No compilation. C2 preregistered: same compile/load/disassemble, heap option
+moved before Lisp options. Recorder prints escaped ordinary strings, verifies
+readback, retains decoded diagnosis even without structured output.
+Same C1 command except final `c2`; new `c2/`, same budgets. Core/algorithm unchanged.
 
-C2: exit 0, core e variante compilati/caricati senza warning/style-warning;
-stderr vuoto, sorgenti before/after stabili, disassemblato LEGGI conservato.
-Nessun CHECK o BENCH eseguito. Il parent ha richiesto prima del CHECK di B
-la riga `;;; REQ: REQ-IDX-001 REQ-IDX-007 REQ-VAL-001` nel kernel e il blocco
-`> **Proposta** —` nel metodo. Sono modifiche solo documentali: algoritmo,
-API, dichiarazioni e barriere invariati.
-C3 preregistrato: nuova compilazione rigorosa core/variante e disassemblato,
-stessi driver e budget, nuovo direttorio `c3/`; comando della campagna con
-argomento finale `c3`. Il segnale condiviso `kernel-pronto-B.sexp` indica
-aggiornamento documentale finché non vengono pubblicati hash finali e READY.
+<a id="c2-riuscito-e-c3-preregistrato"></a>
 
-Gli agenti non eseguono BENCH; le misure, la profilazione iniziale e
-l'integrazione competono al parent e vengono serializzate da lui. Questo
-agente non esegue CHECK del modulo: è proprietà dell'altro agente. La
-serializzazione dei writer del core resta responsabilità dell'harness parent.
+### Passed C2 and preregistered C3
 
-## Controlli richiesti all'agente CHECK e al parent
+C2: exit 0, core/variant compiled/loaded without warnings/style-warnings;
+empty stderr, stable before/after sources, LEGGI disassembly retained.
+No CHECK/BENCH. Before B's CHECK, parent requested kernel line
+`;;; REQ: REQ-IDX-001 REQ-IDX-007 REQ-VAL-001` and method block `> **Proposta** —`.
+Documentation-only changes: algorithm, API, declarations, barriers unchanged.
+C3 preregistered: new strict core/variant compilation/disassembly, same drivers
+and budgets, new `c3/`; campaign command ends with `c3`.
+Shared `kernel-pronto-B.sexp` signal indicates documentation update until final
+hashes and READY published.
 
-Confronto con il core per hit, miss, collisioni e skip, parole 4/5, u64 zero,
-massimi e oltre fixnum, lunghezza massima a 24 bit. Sentinel completa invariata
-su miss, retry-limit, ingressi invalidi ed errori callback. Witness deterministici
-root hit/miss ritirata, sequence odd e changing, contatore retry esatto;
-attempts 1 e 8, valori invalidi, array non semplici o di lunghezza diversa,
-callback errati. Verificare i due percorsi con lo stesso oracolo e gli invarianti
-single writer; nessun BENCH prima della validazione del parent.
+Agents run no BENCH; measurements, initial profiling, integration belong to parent,
+serialized by parent. This agent does not run module CHECK: another agent owns it.
+Core-writer serialization remains parent harness responsibility.
+
+<a id="controlli-richiesti-allagente-check-e-al-parent"></a>
+
+## Checks required from CHECK agent and parent
+
+Compare with core for hit, miss, collisions, skip, words 4/5, zero/maximum/
+beyond-fixnum u64, maximum 24-bit length. Complete sentinel unchanged on miss,
+retry-limit, invalid inputs, callback errors. Deterministic retired-root hit/miss,
+sequence odd/changing witnesses, exact retry count; attempts 1/8, invalid values,
+nonsimple/wrong-length arrays, incorrect callbacks. Verify both paths with same
+oracle and single-writer invariants; no BENCH before parent validation.

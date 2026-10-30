@@ -1,792 +1,804 @@
 # Changelog
 
-Formato basato su [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/). Il progetto
-non ha ancora rilasci del prodotto; le versioni seguiranno la [roadmap](docs/roadmap.md).
+Format based on [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/). The project
+has no product releases yet; versions will follow the [roadmap](docs/roadmap.md).
 
-## [Non rilasciato]
+<a id="non-rilasciato"></a>
 
-### Aggiunto
+## [Unreleased]
 
-- [Scoperta readonly delle immagini M1](docs/implementazione/scoperta-indice-m1.md)
-  allo startup: inventario/candidati bounded, filtro sulla fonte canonica,
-  priorita' deterministica e verifica integrale obbligatoria (ADR-0070).
+<a id="aggiunto"></a>
 
-- [Manutenzione a soglie del delta M1](docs/implementazione/manutenzione-indice-m1.md):
-  policy immutabile su chiavi/byte, sonda readonly e rinnovo verificato solo
-  quando necessario; quote preservate e no-op senza I/O (ADR-0069).
+### Added
 
-- [Rinnovo seriale delle immagini M1](docs/implementazione/rinnovo-indice-m1.md):
-  costruzione, verifica e attivazione sotto BUSY continuo, quota totale prima
-  della creazione e delta vuoto per nuove scritture (ADR-0068).
+- [Read-only discovery of M1 images](docs/implementazione/scoperta-indice-m1.md)
+  at startup: bounded inventory/candidates, canonical-source filtering,
+  deterministic priority, and mandatory full verification (ADR-0070).
 
-- [Delta seriale M1](docs/implementazione/delta-indice-m1.md) opzionale: PUT/DELETE
-  conservano l’immagine; membership esatta preallocata, quote prima del CSN/WAL
-  e letture delle chiavi toccate dal residente canonico (ADR-0067).
+- [Threshold-based M1 delta maintenance](docs/implementazione/manutenzione-indice-m1.md):
+  immutable key/byte policy, read-only probe, and verified renewal only
+  when needed; quotas preserved and no-op without I/O (ADR-0069).
 
-- Attivazione a caldo delle immagini primarie M1 ([ADR-0066](docs/adr/0066-attivazione-seriale-immagini-m1.md)):
-  verifica completa prima dello swap privato, quota comprensiva della vecchia cache,
-  chiusura del file precedente e ritiro prima di qualsiasi effetto WAL.
-  [Contratto e limiti](docs/implementazione/attivazione-indice-m1.md).
+- [Serial M1 image renewal](docs/implementazione/rinnovo-indice-m1.md):
+  construction, verification, and activation under continuous BUSY, total quota before
+  creation, and empty delta for new writes (ADR-0068).
 
-- Produzione delle immagini paginate dal motore M1 ([ADR-0065](docs/adr/0065-costruzione-immagini-dal-motore.md)):
-  snapshot degli slot canonici senza copia globale delle chiavi, radix adattivo,
-  sigillo e verifica readonly prima del successo; file locali chiusi su ogni uscita.
-  [Contratto e limiti](docs/implementazione/costruzione-indice-m1.md).
+- Optional [serial M1 delta](docs/implementazione/delta-indice-m1.md): PUT/DELETE
+  retain image; exact preallocated membership, quotas before CSN/WAL,
+  and reads of touched keys from canonical resident (ADR-0067).
 
-- Collegamento seriale dell’indice paginato al motore M1 ([ADR-0064](docs/adr/0064-adozione-indice-paginato-m1.md)):
-  fonte dal replay canonico, verifica readonly del candidato selezionato prima di READY,
-  GET sul derivato e ritiro prima della prima scrittura ammessa. Residente e catalogo durevole
-  restano distinti; [contratto e limiti](docs/implementazione/indice-paginato-m1.md).
+- Hot activation of M1 primary images ([ADR-0066](docs/adr/0066-attivazione-seriale-immagini-m1.md)):
+  full verification before private swap, quota including old cache,
+  previous file closure, and retirement before any WAL effect.
+  [Contract and limits](docs/implementazione/attivazione-indice-m1.md).
 
-- Immagini primarie sigillate ARCIRF01 ([ADR-0063](docs/adr/0063-immagini-sigillate-indice-primario.md)):
-  fonte canonica, verifica readonly di tutte le entry e adozione seriale della root;
-  duplicati/entry irraggiungibili respinti, budget cumulativo e prove SIGKILL.
-  [Contratto e limiti](docs/implementazione/immagini-indice-paginato.md).
+- Paged image production from M1 engine ([ADR-0065](docs/adr/0065-costruzione-immagini-dal-motore.md)):
+  canonical slot snapshot without global key copy, adaptive radix,
+  seal, and read-only verification before success; local files closed on every exit.
+  [Contract and limits](docs/implementazione/costruzione-indice-m1.md).
 
-- Costruzione incrementale delle pagine indice: chiavi esterne dalla coda,
-  bucket flat e directory con routing verificato; preflight dell’intero lotto,
-  append esatto e fail-stop senza riuso degli offset.
-  [Contratto e limiti](docs/implementazione/costruzione-indice-paginato.md).
+- Serial paged-index integration with M1 engine ([ADR-0064](docs/adr/0064-adozione-indice-paginato-m1.md)):
+  source from canonical replay, read-only verification of selected candidate before READY,
+  GET on derivative, and retirement before first admitted write. Resident and durable catalog
+  remain distinct; [contract and limits](docs/implementazione/indice-paginato-m1.md).
 
-- Lettore seriale dell’indice paginato: directory radix multilivello, bucket
-  flat, overflow e confronto completo delle chiavi esterne; budget cumulativi
-  e candidati compatibili con il primario residente.
-  [Contratto](docs/implementazione/lettura-indice-paginato.md).
+- Sealed ARCIRF01 primary images ([ADR-0063](docs/adr/0063-immagini-sigillate-indice-primario.md)):
+  canonical source, read-only verification of all entries, and serial root adoption;
+  duplicates/unreachable entries rejected, cumulative budget, and SIGKILL tests.
+  [Contract and limits](docs/implementazione/immagini-indice-paginato.md).
 
-- Primo collegamento fra codec delle pagine indice e I/O readonly: cache seriale
-  a frame fissi, copie private, FIFO e verifica completa prima della copia.
-  [Contratto e limiti](docs/implementazione/cache-pagine.md). Il backend paginato
-  e la sua adozione nel motore restano da integrare.
+- Incremental index page construction: external keys from tail,
+  flat buckets and directory with verified routing; whole-batch preflight,
+  exact append, and fail-stop without offset reuse.
+  [Contract and limits](docs/implementazione/costruzione-indice-paginato.md).
 
-### Verificato
+- Serial paged index reader: multilevel radix directory, flat
+  buckets, overflow, and complete external-key comparison; cumulative budgets
+  and candidates compatible with resident primary.
+  [Contract](docs/implementazione/lettura-indice-paginato.md).
 
-- Cronologia Git ridotta agli ultimi due commit su richiesta dell'autore
-  ([ADR-0062](docs/adr/0062-cronologia-git-due-commit.md)). Albero del primo
-  commit conservato integralmente, codice del secondo invariato; aggiornati
-  i collegamenti alle prove per i nuovi hash. Cronologia precedente conservata
-  in un bundle esterno verificato prima del push protetto da lease.
-- Conservazione: snapshot esterno verificato di 52.277 file storici, con
-  inventario SHA-256 e rilettura da GitHub. Nel checkout rimangono i riferimenti
-  alle otto campagne recenti rilevanti e le tre pubblicazioni CI più recenti;
-  citazioni precedenti ancorate ai contenuti originali. Migrazione iniziale
-  senza riscrittura Git; successiva riduzione della cronologia descritta sopra.
-- CI: compressione lossless dei raw oltre 4 KiB, mantenendo i budget aggregati
-  esistenti e verificando il recupero dei byte nei test di confine.
-- CRC32C: confronto preregistrato 16/32 B, misure a 64/256 B, vettore
-  `123456789`, fallback e GET completo. Mantenuto il kernel 16 B:
-  0,739 µs per corpo da 4112 B; GET caldo da 4 KiB 9,813 µs con oracolo
-  e 1,647 µs nel driver throughput. [Risultati e limiti](docs/implementazione/crc32c-unroll32.md).
+- First integration between index page codec and read-only I/O: serial cache
+  with fixed frames, private copies, FIFO, and full verification before copy.
+  [Contract and limits](docs/implementazione/cache-pagine.md). Paged backend
+  and its engine adoption remain to be integrated.
 
-### Corretto
+<a id="verificato"></a>
 
-- CRC32C: bootstrap comune e componenti ASDF condizionali isolano VOP e
-  dipendenze ARM sulle altre piattaforme/versioni, anche con FASL già in cache.
-  Fallback forzabile all'avvio; decisioni OS/compilatore/kernel testate
+### Verified
+
+- Git history reduced to last two commits at author's request
+  ([ADR-0062](docs/adr/0062-cronologia-git-due-commit.md)). First commit tree
+  retained in full, second commit code unchanged; evidence links
+  updated for new hashes. Previous history retained
+  in an external bundle verified before lease-protected push.
+- Retention: verified external snapshot of 52,277 historical files, with
+  SHA-256 inventory and rereading from GitHub. Checkout retains references
+  to eight relevant recent campaigns and three latest CI publications;
+  previous citations anchored to original contents. Initial migration
+  without Git rewrite; subsequent history reduction described above.
+- CI: lossless compression of raw data over 4 KiB, retaining existing aggregate
+  budgets and verifying byte recovery in boundary tests.
+- CRC32C: preregistered 16/32 B comparison, measurements at 64/256 B, vector
+  `123456789`, fallback, and complete GET. 16 B kernel retained:
+  0.739 µs per 4112 B body; 4 KiB hot GET 9.813 µs with oracle
+  and 1.647 µs in throughput driver. [Results and limits](docs/implementazione/crc32c-unroll32.md).
+
+<a id="corretto"></a>
+
+### Fixed
+
+- CRC32C: common bootstrap and conditional ASDF components isolate VOP and
+  ARM dependencies on other platforms/versions, even with cached FASLs.
+  Fallback forceable at startup; OS/compiler/kernel decisions tested
   ([ADR-0060](docs/adr/0060-crc32c-caricamento-portabile.md)).
 
-- M1: capienza, arena, credito slot e revisione dell'indice verificati prima
-  di CSN e append durevole. Il rifiuto ordinario lascia READY e file invariati;
-  un'invariante rilevata nel preflight chiude admission e conserva la causa.
-  Riapertura con gli stessi budget, v1/v2, e due oracoli contro il writer
-  precedente. Presenza Engine esplicita nel catalogo CI; l'integrazione con
-  sessione Unix e codec delle pagine porta il catalogo a 57 suite.
-
-- Pubblicatore C4 delle PR: merge sintetico firmato da GitHub legato all'head
-  del run e inventari equivalenti al merge associato alla PR. SHA originale,
-  ancora e metodo sono conservati; il producer PR resta non fidato. Prima
-  ricevuta del riconciliatore salvata anche quando manca la directory `runs/`.
-
-- Lettura dei risultati CI nel processo isolato di copertura: vocabolario
-  trusted completo per SKIPPED, METRICS-STATUS ed EXECUTION, senza dipendere
-  dal caricamento del prodotto. Regressioni in nuovi processi e rifiuto dei
-  token sconosciuti; raccolte incomplete continuano a restituire errore.
-  Riepilogo di copertura entro il budget: conteggio dei file nel risultato
-  compatto, inventario completo negli allegati originali verificati.
-  Conteggio assente distinto da inventario misurato vuoto.
-
-- Fixture concorrente della lettura stringhe CBOR: durata e overlap WALL
-  possono essere zero quando l'ondata cade nello stesso tick. Preservati
-  rendezvous, risultati esatti, conteggi, immutabilità e limiti delle attese;
-  nessuna attesa artificiale o modifica al decoder.
-
-### Aggiunto
-
-- CRC32C ARM64 scritto in Lisp/SBCL, con load controllati a safety 3,
-  rilevamento CPU all'avvio e fallback slicing-by-8. GET cache hit da 4 KiB
-  misurato a 1,68 microsecondi, con oracolo indipendente fuori dal timing;
-  percorso di integrità originale, formati e semantiche di commit invariati.
-
-- Diagnosi C4 del GET: CRC, verifica PUT, copie e oracolo misurati separatamente;
-  lookup dell'indice reale fino a 4,19 milioni di chiavi, confronto caldo/uniforme,
-  hash, budget e RSS distinti. Metodo preregistrato, cinque repliche e sorgenti
-  stabili; nessuna modifica al percorso di prodotto o alla sua concorrenza.
-
-- Codec C1 delle pagine derivate dell'indice primario: 4/16/64 KiB,
-  identita' e CRC32C, bucket flat, directory radix e chiavi esterne fino a
-  65535 byte. Preflight prima delle scritture, fixture indipendenti e
-  corruzioni strutturali con CRC validi; backend e migrazione restano aperti.
-
-- Primo selettore automatico dell'indice per Serie: residente se capiente,
-  rientro con isteresi e preflight del picco di migrazione. ADR-0057, test
-  delle soglie e modello C4 del lifetime con hazard e controlli negativi.
-  Backend paginato, migrazione e collegamento al runtime restano aperti.
-
-- M1 Single-Series Durable Core: ingresso di produzione per startup, recovery
-  automatico e admission, riusando preparatori, gate, publisher, runtime e
-  GET esistenti. Esclusione fisica del parent, un attore seriale, PUT/GET e
-  tombstone strong; campagna dedicata di due SIGKILL. Nuove feature sospese
-  nel lavoro M1; milestone Production Engine Bootstrap aperta.
-  [Evidenze](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-production-engine-bootstrap/report.md):
-  2164/2164 casi, 15 test engine, 80 primary, campagne dedicate e originali
-  falliti conservati lossless. La successiva
-  [qualifica Unix M1](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md)
-  aggiunge il profilo locale; il gate completo resta aperto.
-
-- Completamento dei nomi dell'intero Archivio: capienza globale, metadata e
-  gate canonico riconfermati prima dei preflight di tutti i nomi; effetti
-  per Serie e conteggi completi. Causa originale e completamenti precedenti
-  conservati; qualifica funzionale e Recovery Manager completo restano aperti.
-
-- Completamento dei nomi dell'intera Serie recuperata: preflight completo
-  dei token e di tutti i nomi prima degli effetti, poi rinomina esclusiva e
-  fsync per fonte. Conteggi solo completi, nessun nuovo array/hash, rollback
-  o stato condiviso fra Serie; qualifica funzionale e Recovery Manager aperti.
-
-- Collegamento della stabilizzazione dei nomi recuperati alla pubblicazione
-  esclusiva: nessuna sostituzione del target, callback richiesta solo al ramo
-  temporaneo e fsync parent conservata nel ramo già definitivo. Qualifica
-  funzionale e coordinamento completo del Recovery Manager restano aperti.
-
-- Pubblicazione esclusiva di un temporaneo già deciso: rinomina relativa
-  senza sostituzione del target, identità nome/FD prima e dopo, backend
-  iniettabile e fail-stop comune. Compilazione e controlli statici distinti
-  dalla qualifica funzionale e dall'integrazione del Recovery Manager.
-
-- Variante C4 di SPK-11 con recv/send diretti su buffer posseduti: offset,
-  backend iniettabile, short I/O, attese senza retry interno e deadline.
-  Confronto fra trasporto precedente e nativo, saturazione ed EOF parziale;
-  osservazioni Lisp separate dalla qualifica dell'allocatore nativo e del pool.
-
-- Visita sincrona dei record CLOSED recuperati: stesso FD readonly,
-  prefisso e risoluzione OUTCOME/EDIT verificati prima della consegna,
-  PUT/TOMBSTONE committed e conteggio dei record prepared abortiti.
-  Workspace canonico riusato senza esporlo nell'API pubblica del reader;
-  replay ACTIVE, raggruppamento, pubblicazione e qualifica dedicata aperti.
-
-- Confronto SPK-08 di scalare, SWAR con packing e SIMD su stessi byte e query
-  variabili, con controlli dei limiti e oracolo indipendente. Valutazione
-  sistematica delle SIMD sicure sui target Linux x86-64 e macOS ARM64,
-  selezione delle funzionalità disponibili e ripiego scalare obbligatorio;
-  integrazione nel prodotto e qualifica multipiattaforma restano aperte.
-
-- Materializzazione della chiave recuperata nel primary privato: PUT
-  inserito o identico, TOMBSTONE/NONE come assenza verificata; nessuna
-  sovrascrittura o rimozione di una voce diversa. Budget writer canonici,
-  scratch riusato e rifiuto delle location non rappresentabili. Qualifica
-  dedicata, replay completo e pubblicazione delle radici ancora aperti.
-
-- Creazione esclusiva dei `.tmp` relativa alla directory posseduta: nuovo
-  regolare vuoto, identità verificata, append e cleanup del solo child.
-  Collegata agli output della prova verticale; nessun unlink, flush o rename implicito.
-
-- Selettore riusabile delle versioni recuperate per chiave (ADR-0042):
-  massimo CSN, spareggio per offset nello stesso segmento e tombstone
-  provvisorio. CRC completi, CSN prepared esplicito e ambiguità bloccante;
-  nessun array per candidato. Qualifica dedicata e pubblicazione dell'indice aperte.
-
-- Stabilizzazione del nome di una fonte recuperata: token ACTIVE/CLOSED,
-  FD e ID esatti prima del completamento, collisioni preservate e fsync
-  parent anche nel ramo già definitivo. Nessuna riapertura in scrittura;
-  orchestrazione completa e qualifica funzionale dedicata ancora aperte.
-
-- Directory privata delle righe full text: ricerca binaria sotto lease dal posting
-  al riferimento PUT, stati assente/in preparazione/sigillato distinti e chiavi u32
-  senza sentinelle. Cancellazione pre-append, riuso protetto e entry trasferite
-  trattenute; mappa pubblicata del delta, MVCC e reclaim ancora aperti.
-
-- Riferimenti fisici dei PUT full text: cattura preallocata da un lotto sigillato
-  con token WAL autorevole, header verificato senza scansioni del body e posizione
-  stabile dopo il riuso del buffer. CSN ordinari e TXID prepared restano distinti;
-  nessuna pubblicazione o risoluzione 2PC anticipata.
-
-- Estensione C4 di SPK-11 alla sessione locale proposta: HELLO/WELCOME,
-  negoziazione, PING correlati e risposte invertite fra due processi.
-  Fixture per mappe duplicate, limiti prima del corpo, ID u64, credito
-  trattenuto e deadline assolute; gate simulato e integrazione M16 ancora aperta.
-
-- Legame full text agli esatti byte PUT: cornice privata per tutte le generazioni,
-  riserva collettiva e append nel lotto WAL dopo i preflight. Formati v1/v2,
-  ordinari/prepared, riferimenti protetti dal riuso del lotto e fail-stop dopo
-  trasferimento incompleto. CRC/spans attestati nel worker, controlli costanti e
-  sola copia del body sotto lease writer. Pubblicazione durevole, esiti 2PC, MVCC e ritiro aperti.
-
-- Lettura coordinata dell'Archivio: preflight di tutte le Serie e budget
-  aggregati prima dei dati; scratch riusato e piano CSN completo solo dopo
-  i reader canonici. Budget byte esplicito, nessun binding o risultato parziale;
-  qualifica funzionale dedicata ancora aperta.
-
-- Recovery semantico dell'intera Serie dalle fonti readonly possedute:
-  preflight completo e budget cumulativo prima dei dati, ACTIVE con replay
-  decisioni canonico, tutti i CLOSED con scratch riusato e gate finale.
-  Nessuna pubblicazione parziale o gestione implicita dei FD; qualifica dedicata aperta.
-
-- Proposta del contratto di sessione M16 (ADR-0056) e SPK-11 su socket Unix:
-  due processi reali, frame parziali/accorpati, documento e chiave massimi,
-  rifiuti prima dell'allocazione e nomi occupati preservati. Il listener di
-  prodotto resta subordinato ad avvio, recovery e ammissione del motore.
-
-- Acquisizione readonly posseduta di tutti i segmenti ACTIVE/CLOSED da un solo
-  inventario directory, budget cumulativo degli EOF e cleanup completo anche
-  con più errori di close. Collegamento alla fixture verticale; riconciliazione
-  fisica e ammissione restano da implementare.
-
-- Prove della cache con quattro worker che inseriscono e leggono record
-  concorrenti nello stesso insieme, oltre a casi deterministici per contesa,
-  sequenza dispari, credito esaurito e posti disabilitati. Confronto completo
-  con record indipendenti nei formati v1/v2; qualifica C1 ancora aperta.
-
-- Riserve full text locali sotto lease del writer: budget di tutte le generazioni
-  verificati prima degli effetti, copia riprendibile in run posseduti e task protetti
-  dal riuso. Cancellazione pre-append e trasferimento con costi trattenuti;
-  il ponte PUT/WAL e aggiunto nell'incremento successivo; pubblicazione e ritiro aperti.
-
-- Adozione delle mappe CLOSED recuperate nello scope runtime: insieme completo,
-  autorità e FD esatti verificati, wrapper nuovi e righe immutabili condivise.
-  Budget prima delle allocazioni; nessuna rilettura dei segmenti o pubblicazione
-  del primary. Qualifica funzionale e ammissione restano aperte.
-
-- Preparazione full text direttamente dai documenti CBOR: percorsi annidati,
-  tipi e duplicati selezionati verificati, analisi riprendibile e run sigillato.
-  Budget cumulativi e limite superiore del file prima del futuro aggancio al writer;
-  fixture NNTP, scansione indipendente e cancellazione nei diversi stadi.
-
-- Interfaccia locale prioritaria per il primo impiego NNTP (ADR-0055): socket
-  Unix stream predefinito fra demone e database, TCP opzionale successivo e
-  disabilitato per default. Anticipata la prima integrazione M16 dopo avvio,
-  recovery e ammissione; tracciati requisiti, limiti, ciclo di vita e prove.
-  Decisione progettuale; listener e client restano da implementare.
-
-- Codec completo `.idx` full text v2/type 5: descriptor META canonico copiato,
-  legame ai byte hint e mappa PUT fornita, serializzazione senza allocazioni per entry,
-  verifica di termini/posting/posizioni e vista immutabile per all/any/frasi sul file.
-  Fixture wire indipendente, fuzz con CRC corretto e riapertura in child SBCL su campi
-  subject/body NNTP. I/O e pubblicazione durevole delle generazioni restano da integrare.
-
-- Primo nucleo full text: analizzatore riprendibile Unicode 18.0.0 con dati e licenze
-  versionati, run invertiti posizionali in memoria e ricerca all/any/frase per riga/campo,
-  cornice `.idx` v2/type 5 con CRC e preflight. Corpus ufficiali, scansione indipendente,
-  saturazione, concorrenza, allocazioni e controlli negativi in `make check`.
-  Persistenza completa, writer, snapshot e Query Engine restano da integrare.
-
-- Adozione dell'ACTIVE preparato nel runtime Archivio con ambito esatto e
-  registro CSN comune. Binding unico del controller sul log canonico,
-  recuperabile dopo interruzione senza reset o nuovo costo per operazione.
-
-- Bootstrap del runtime dall'intero piano CSN dell'Archivio: famiglia unica
-  CSN/snapshot/epoche e nuovo ambito GET, pubblicazione atomica senza reset
-  e recupero del binding dopo interruzione. Nessun nuovo I/O o lock sul
-  percorso delle Serie; gate del traffico e qualifica C1 ancora aperti.
-
-- Verifica dei cataloghi delle evidenze con fino a quattro processi isolati,
-  heap e tempo per catalogo configurabili, errori ridotti nell'ordine seriale
-  e log dei worker conservati. Percorso seriale disponibile per confronto.
-
-- Suite dedicata del piano CSN dell'Archivio: insieme completo delle Serie,
-  Registri, provenienza del replay, gate CLOSED e base u64 senza incremento.
-  Matrici v1/v2, catena nativa e collegamento di prova al registro esistente;
-  risultati e limiti separati dalla qualifica C1 e dall'ammissione del traffico.
-
-- Scelta dell'ID recovery direttamente dalla directory posseduta: una sola
-  enumerazione attestata, cinque budget conservati, selezione comune dal
-  piano canonico e nessuna prenotazione. La prova verticale usa nomi canonici
-  e questo ingresso di prodotto al posto dell'inventario costruito nel test.
-
-- Suite dedicata del recovery CLOSED: lettura fino al P del CONTROL,
-  risoluzione OUTCOME/EDIT, origini writer/compaction, massimo CSN e gate
-  dell'insieme. Oracoli indipendenti, matrice v1/v2 e pubblicazione nativa;
-  copertura e risultati conservati separatamente dalla qualifica C1 completa.
-
-- Piano CSN dell'Archivio: elenco Serie posseduto con Registri inclusa,
-  UUID unici, stessa autorità delle decisioni e gate CLOSED per ogni Serie.
-  Massimo completo rispetto all'elenco canonico fornito e parole della base
-  senza incremento; marker di replay leggero nel risultato ACTIVE.
-  Nessun nuovo I/O o allocatore; catalogo persistente, ammissione e qualifica
-  dedicata restano da collegare.
-
-- Lettura diretta delle stringhe CBOR MT2/3: tipo e intervallo assoluto
-  del payload senza copie, UTF-8 verificato per il testo, coda ignorata
-  e budget dell'intera finestra. Buffer condivisibile in sola lettura;
-  qualifica C1 dedicata ancora aperta.
-
-- Proposta dell'ID del nuovo segmento dopo recovery, oltre il high-water del
-  manifest e ogni nome dell'inventario, inclusi i temporanei orfani. Piano
-  posseduto, limiti u64 e budget espliciti; collegamento alla prova verticale.
-  Nessuna prenotazione, modifica di file o ammissione del traffico.
-
-- Completamento progettuale full text (ADR-0054): profilo Unicode 18.0.0,
-  foglie query, contratti dei moduli, generazioni e ritiro, riserve prima del
-  commit e default di ammissione. Definito il formato `.idx` v2/type 5 con
-  sei sezioni e legame all'hint; quattro nuovi requisiti e due invarianti.
-  Corpus e criteri di accettazione restano da realizzare nella fase 8;
-  nessun codice full text introdotto.
-
-- Massimo CSN osservato dai reader ACTIVE/CLOSED e dal decision log, con
-  aggregazione di tutti i segmenti della stessa Serie dopo il gate canonico.
-  Distinti zero e assenza; inclusi CSN dei SEAL writer, OUTCOME ed esiti EDIT,
-  esclusi TXID e code non valide. Nessuna assegnazione CSN o ammissione del
-  traffico; qualifica funzionale, fault injection e prestazioni ancora aperte.
-
-- Documentazione full text riallineata fra scope v1, contratto/catalogo,
-  interfacce query, roadmap, glossario, valutazione, costi, rischi e piano
-  di verifica. ADR-0053 resta la decisione di riferimento; implementazione,
-  formato binario e qualifica rimangono nella fase 8.
-
-- Ripresa delle scritture nella prova verticale v1/v2: ricostruzione della
-  base CSN, nuovo ambiente coerente, quattro commit e secondo SIGKILL con
-  recupero indipendente. Oracolo negativo del riuso CSN prima dell'append;
-  coordinamento ancora C4, con priorità di sviluppo aggiornate nella roadmap.
-
-- Ricerca full text nel progetto della v1 (ADR-0053): indici invertiti dedicati
-  per segmento, parole e frasi, analizzatori versionati, filtri strutturati e
-  coerenza con commit/snapshot. Documentati rebuild, corruzione, budget e caso
-  NNTP; quattro requisiti progettati e INV-I4. Implementazione e qualifica
-  previste nella fase 8, senza codice full text introdotto.
-
-- Obiettivo applicativo confermato: ArcDocDB come database di un futuro
-  server NNTP in Common Lisp. Documentati lookup degli articoli, overview
-  ordinate, cross-posting, retention, integrazione e criteri di valutazione;
-  il motore resta general-purpose, con sviluppo NNTP futuro.
-
-- Prova verticale di una Serie nei formati v1/v2: scrittura durevole,
-  aggiornamenti, tombstone e GET, SIGKILL reale, recovery e checkpoint in
-  un processo nuovo, seconda riapertura indipendente. Include coda senza
-  SEAL, checkpoint non pubblicato, rotazione con nuovi commit, confronto
-  dei segmenti originali e controllo negativo dell'oracolo. Coordinamento
-  e replay dell'indice sono C4; nessuna promozione del motore completo.
-
-- Preparazione bounded di un tratto pool/Serie: selezione e un solo begin
-  sul link corrente, senza secondo routing. Sette valori conservano token,
-  stato, ragione e metadati originali; pubblicazione senza seconda presa,
-  CLOSING e guasti restano espliciti al caller.
-
-- Strumento riusabile di raccolta delle prove: manifest esplicito, copie con
-  quattro worker, record conclusi anche falliti e controllo indipendente
-  dell'inventario chiuso prima dell'esito positivo.
-
-- Recovery readonly dei CLOSED dal CONTROL autorevole: lettura solo fino a P,
-  verifica writer/compaction e prepared risolti da OUTCOME o chiusura EDIT,
-  senza decision log globale. Controllo dell'insieme completo prima del
-  publisher canonico, ID u64 senza troncamento; qualifica C1 dedicata aperta.
-
-- Verifica dedicata del decision log dell'Archivio: preflight, identità,
-  query, ownership e collegamento al recovery ACTIVE, con catena nativa
-  fino alla pubblicazione CONTROL nei formati v1/v2. Copertura separata
-  del modulo e registrazione di ogni tentativo nella campagna dedicata.
-
-- Verifica integrata pool/dispatcher/Serie con due worker reali: 32 quantum
-  su una Serie mentre l'altra mantiene lease o debito batch, più ritiro con
-  ring pieno/libero e trasferimento del lavoro residuo a un altro worker.
-  Sei scenari sincronizzati; nessuna misura di speedup o modifica ai protocolli.
-
-- Suite nativa indipendente del checkpoint dal vecchio ACTIVE: file v1/v2,
-  risoluzione OUTCOME/DECISION, prefisso e coda, budget, chiusura CLOSED
-  e collegamento al publisher del control log con oracoli indipendenti.
-
-- Lettura del primo item CBOR minimo con frontiera assoluta: coda non
-  letta, budget della finestra autorizzata e scratch privato per worker.
-  Consente di ricavare le frontiere degli item concatenati; qualifica C1
-  e profilo documentale restano aperti.
-
-- Builder del checkpoint dal recovery ACTIVE: deriva lo stato completo
-  dal CONTROL autorevole, conserva CLOSED/REMOVED/esiti, chiude il vecchio
-  ACTIVE a P e collega il nuovo ID verificato. Budget prima degli array e
-  verifica della transizione in memoria; preparatore e publisher canonici
-  invariati, qualifica C1 dedicata aperta.
-
-- Prove dedicate del recovery ACTIVE: lettura readonly, risoluzione dei
-  prepared, chiusura deterministica e pubblicazione su file reali v1/v2.
-  Oracoli indipendenti, fault injection, copertura e misure separate
-  conservati nella campagna `2026-10-15-active-verifica`.
-
-- Passo bounded del dispatcher pool/Serie: sceglie una sola operazione fra
-  nuova presa IDLE, collegamento del CLAIMED e ricircolo RESCHEDULE.
-  Origine esplicita distingue cursore, count e assenza di trasferimento;
-  gli obblighi esistenti non consultano il pool. Nessun secondo claim,
-  begin o retry implicito; fasi attive e prima causa restano conservate.
-
-- Lettura readonly di `Registri/multiserie.log`: header UUID/CRC/formato
-  verificato prima del corpo, replay completo fino all'EOF attestato e
-  decisioni possedute. Nuovo ingresso ACTIVE vincolato allo stesso ambito
-  canonico dell'Archivio; formati invariati, qualifica C1 dedicata aperta.
-
-- Rendezvous delle fixture concorrenti residue CBOR, UTF-8 e due Serie:
-  checkpoint dopo il primo lavoro effettivo, mantenendo conteggi, sink e
-  oracoli. Diagnostica prima delle asserzioni temporali; intervalli WALL
-  della fixture, comprensivi delle attese e dei controlli.
-
-- Verifica integrata del lifetime delle fonti GET: lettori su FD CLOSED reali,
-  pubblicazione ACTIVE con superset e riduzione controllata, ritiro EBR e
-  chiusura dopo quiescenza. Include errore tipizzato e uscita non locale;
-  decisione durabile del catalogo e rotazione completa restano da integrare.
-
-- Rendezvous dopo il primo elemento realmente codificato nei test concorrenti
-  CBOR float/tag, per imporre l'interleaving senza dipendere dall'avvio dello
-  scheduler. Intervalli e checkpoint stampati prima delle asserzioni; metriche
-  della fixture distinte dalla latenza del solo encoder.
-
-- Prove dedicate della lettura CONTROL, transizione conservativa e
-  pubblicazione validata: 84 nuovi test v1/v2, matrice finita e file reali
-  con quattro Serie. Copertura, 216 finestre di confronto, sorgenti dei
-  tentativi falliti e output originali conservati nella campagna
-  `2026-10-14-control-transizione`; nessuna promozione del motore completo.
-
-- Composizione di tag CBOR da contenuti già codificati: verifica completa
-  prima della scrittura, testata MT6 minima e budget comprensivi del tag
-  senza aggiungere profondità ai contenitori. Sorgenti condivisibili in
-  lettura con scratch privati; semantica applicativa e qualifica C1 aperte.
-
-- Recovery readonly del vecchio ACTIVE nominato dal control log: header
-  e prefisso verificati fino a EOF, prepared risolti da OUTCOME/DECISION,
-  esiti derivati in array u64 ordinati e serializer della chiusura CLOSED.
-  La pubblicazione verifica P ed esiti prima del publisher unico; nessuna
-  troncatura, modifica del formato o nuovo CSN. Qualifica C1 e gate del
-  Recovery Manager restano aperti.
-
-- Avvio esplicito dell'obbligo pool già acquisito: selezione del writer
-  corrente e un solo begin del bridge, con restituzione del link e dei tre
-  risultati originali. Writer-busy conserva CLAIMED; Serie-busy mantiene
-  token e chiusura esplicita. Nessun nuovo gate, retry o cleanup implicito.
-
-- Casi dedicati ai rifiuti del preflight GET ACTIVE prima del CSN: identità,
-  stato OPEN/SEALED, ordine, capacità e guasti degli header, con witness
-  indipendenti di byte, token, radici, frontiere e assenza di I/O.
-  Suite ACTIVE a 42 test e quattro mutanti preflight rilevati; conservati
-  copertura, regressione bootstrap e audit indipendenti delle prove complete.
-
-- Composizione di mappe CBOR da chiavi e valori già codificati: verifica
-  completa prima della scrittura, testata MT5 basata sulle coppie e budget
-  comprensivi della radice. Sorgenti condivisibili in lettura con scratch
-  privati; ordinamento delle chiavi e qualifica C1 restano aperti.
-
-- Ricircolo esplicito dal dispatcher alla Serie: pubblica l'obbligo e termina
-  IDLE se c'è spazio; a ring pieno restituisce il link del nuovo writer
-  CLAIMED dopo un solo scambio FIFO. Nessun gate del pool, ritiro o nuova
-  presa impliciti; busy e guasti conservano i confini execution esistenti.
-
-- Lettura readonly del control log autorevole, con header verificato e replay
-  fino all'EOF attestato. Risultato senza buffer, legato alla vista canonica;
-  pubblicazione subordinata alla conservazione di CLOSED, esiti e REMOVED,
-  chiusura del vecchio ACTIVE e apertura di un ID nuovo. Nessuna modifica
-  al formato o agli ADR; recovery completo e qualifica C1 restano aperti.
-
-- Composizione di array CBOR da elementi già codificati: verifica completa
-  prima della scrittura, testata minima e budget comprensivi della radice.
-  Sorgente e indice condivisibili in lettura, destinazione e scratch privati
-  per worker. Profilo documentale e qualifica C1 restano aperti.
-
-- Dispatcher logico dal pool al collegamento della Serie: binding preallocato
-  sul medesimo contesto, routing solo dopo una presa autorizzata e ingresso
-  distinto per completare gli obblighi già CLAIMED. Nessun begin, pop o retry
-  implicito; ritiro e diagnosi conservano i confini C1 esistenti.
-
-- Pubblicazione del checkpoint recuperato: rinomina ancorata alla directory
-  preparata, verifica delle foglie contro i FD del nuovo e vecchio control log,
-  controllo del nome installato e fsync del parent. Gettone locale unico con
-  cleanup prima del CAS; errori terminali senza retry, rollback o risultati
-  parziali. Recovery completo e qualifica delle nuove chiamate restano aperti.
-
-- Suite funzionale dedicata al GET ACTIVE ordinario: 28 test con file reali,
-  formati v1/v2, oracoli wire indipendenti, confini di payload e directory,
-  cache, guasti e cleanup snapshot/EBR. Copertura isolata e compatibilità
-  CLOSED conservate con prove grezze e audit indipendenti; qualifica C1 e
-  MC/DC restano aperti.
-
-- Presa dei writer governata dallo stato del pool: conferma il comando solo
-  dopo la barriera IDLE, delega il claim C1 quando attivo e lascia ready e
-  cursore intatti quando inattivo. Compiti e ricircoli già acquisiti completano
-  i propri obblighi prima del ritiro; nessuna attesa o gestione fisica dei thread.
-
-- Preparazione del checkpoint `control.log.tmp`: header della Serie, EDIT
-  completo e SEAL costruiti senza I/O, manifest verificato contro il nuovo
-  ACTIVE, file fisicamente distinto, trasferimenti a blocchi, rilettura esatta
-  e fsync del parent. Nessun CSN o rinomina implicita; integrazione del recovery
-  e qualifica C1 restano aperte.
-
-- Attuazione logica del controllore pool su worker preesistenti: richieste
-  persistenti e conteggio delle sole conferme, ritiro soltanto a contesto IDLE
-  senza abbandonare lease o batch, riattivazione degli stessi contesti.
-  Include 18 prove con worker reali, copertura C3 senza esclusioni e misure
-  senza allocazioni dopo l'avvio. Dispatcher, risveglio e avvio fisico restano aperti.
-
-- Preparazione del nuovo segmento writer: preflight senza effetti, identità
-  readonly/append prima della write, header canonico durevole, rilettura esatta
-  e fsync del parent. Adattatore ACTIVE con prova obbligatoria e verifica del
-  registro CSN della vista; errori senza retry o risultati parziali. Decisione
-  EDIT, apertura/rotazione del server e qualifica C1 restano da integrare.
-
-- Ponte fonti GET della Serie: directory CLOSED nel contenuto della radice
-  ACTIVE, acquisizione unica dal controller sotto EBR, risoluzione dalla
-  stessa radice catturata e rifiuto di owner/ID duplicati prima dell'adozione.
-  Mantiene il protocollo WAL e i cinque esiti del nucleo GET; rotazione e
-  reclaim completo restano distinti.
-
-- Scrittura dei float CBOR da parole IEEE: riduzione esatta della larghezza,
-  preservazione di segno e payload NaN, preflight prima della mutazione
-  e destinazioni private per i worker. Qualifica C1 e profilo documentale
-  restano aperti.
-
-- Controllore locale del numero di worker di calcolo: EWMA intere,
-  crescita additiva, riduzione moltiplicativa e permanenza delle condizioni.
-  Campioni e tempo iniettati, target distinto dai worker effettivi,
-  aggiornamento limitato senza allocazioni dopo l’avvio. Avvio, risveglio
-  e ritiro dei thread restano il prossimo componente del pool.
-
-- Associazione fisica readonly/append: confronto esatto device/inode nel pool
-  I/O, prova immutabile legata alle capacità e verifica senza syscall nel
-  costruttore ACTIVE. Backend iniettabile esteso con identity opzionale;
-  rifiuti senza fallback, retry o mutazioni. Percorso GET invariato;
-  adozione nel server e qualifica C1 restano aperte.
-
-- Directory GET dei segmenti CLOSED: ID u32 compatti e riferimenti privati
-  immutabili, controllo di Serie/ordine/budget prima delle copie, ricerca
-  limitata a diciassette passi e collegamento al resolver/cache/I/O.
-  Una location pubblicata senza segmento è un guasto, mai un miss.
-  Pubblicazione, ACTIVE, rotazione e reclaim restano integrazioni distinte.
-  Corretto il confronto del ritorno di lettura nel resolver CLOSED: l'API
-  restituisce END nel buffer, anche quando la regione comincia a 64.
-
-- Scrittura minima dei valori semplici CBOR MT7: codici wire 0..23 e
-  32..255, preflight di range/codice/capacità e destinazione esclusiva.
-  Include confronto su tutti i codici, fuzz e due worker riusati;
-  profilo applicativo, composizione e qualifica C1 restano aperti.
-
-- Routing preallocato dei writer pronti alla Serie: ordinali immutabili,
-  registro con associazioni verificate e tabella privata per worker.
-  Selezione diretta in tempo costante, anche dopo ricircolo a coda piena,
-  senza scritture condivise per messaggio. Include18 nuove regressioni,
-  due letture C1, audit completo della copertura e cinque misure locali;
-  pool e coordinatore restano aperti.
-
-- Resolver GET ACTIVE per lotti ordinari: radice acquisita dalla pubblicazione
-  della Serie, pagine immutabili e directory persistente con quattro piccoli
-  vettori per append. Preflight prima del CSN, verifica del solo lotto nuovo e riuso cache/lettura GET;
-  budget, fail-stop e confini documentati. Prepared/OUTCOME ACTIVE, indice
-  concreto, rotazione/reclaim e qualifica C1 restano aperti.
-
-- Collegamento preallocato worker/Serie: doppia lease, token monotoni, debito
-  batch e rilascio Serie prima del worker, con retry limitato alla fine e
-  conservazione dei guasti originali. Include 26 prove, due letture C1,
-  copertura completa nel denominatore e cinque misure locali del percorso
-  seriale; pool e coordinatore Archivio restano da integrare.
-
-- Resolver GET dei segmenti CLOSED: frontiera dal manifest, prefisso writer
-  sigillato o compaction verificato, righe u32 immutabili e prove OUTCOME
-  risolte senza I/O nel lookup. Connessione a cache e lettura GET, budget
-  espliciti e controlli di posizione/CSN; ACTIVE, prove EDIT, directory e
-  qualifica C1 restano aperti.
-
-- Hash delle chiavi XXH64 tipizzato: ritorno in due u32, seme esplicito
-  immutabile nell'indice, mappe verificate degli slot fisici per rebuild/split,
-  propagazione dei guasti interni. Include 46 nuove regressioni, mutazioni,
-  misure seriali/parallele e registri strutturati; lifecycle del seme e GET
-  integrato ancora aperti.
-
-- Nucleo GET con contesto preallocato per worker: hash col seme dell'indice e lookup sotto EBR,
-  capacità segmento con header verificato, cache e I/O readonly, prova
-  OUTCOME letta dallo stesso file e risposta privata fino alla conferma
-  snapshot. Ricerca storica richiesta esplicitamente sui casi non risolvibili
-  dall'indice corrente; resolver, pool, protocollo e qualifica C1 aperti.
-
-- Cache dei record per Serie: classi preallocate, insiemi di otto posti,
-  CLOCK limitato, ricerca senza lock e inserimento opportunistico. Ogni hit
-  verifica CRC, chiave, CSN e prova prepared; corruzione della cache distinta
-  dall’input del segmento. Verificatore comune con CSN in due u32,
-  budget e contratti documentati; GET integrato e qualifica C1 aperti.
-
-- Indice primario v2 in memoria: controlli Swiss a gruppi di 16, chiavi binarie
-  in arena, lookup con budget comune e conferma root anche sul miss, upsert e
-  cancellazione/rilocazione condizionale nel writer, crescita arena e piani monouso di pubblicazione
-  directory, con hash delle chiavi e costruttore verificato split/rebuild.
-  Lifecycle del seme e GET integrato ancora aperti;
-  include contratti, tracciabilità ed evidenze statiche, qualifica C1 aperta.
-
-- Banco di slot v2 dell'indice: parole u64 contigue, lettura in buffer privato
-  con otto tentativi, pubblicazione e rimozione sotto seqlock, rilocazione
-  condizionale, credito di scrittura e congelamento permanente. Include
-  contratti, decisioni da coprire ed evidenze statiche; qualifica C1 aperta.
-
-- Contesto di lettura preallocato per worker: ingresso EBR a tentativo singolo,
-  snapshot controllato prima e dopo il lookup, anche sul miss, e cleanup del
-  pin prima della migrazione. Collegato ai registri CSN/snapshot/epoche;
-  indice, cache e pool restano da integrare, qualifica concorrente aperta.
-
-- Dominio EBR per Archivio: annunci dei worker distanti 128 byte, ingresso
-  senza mutex a tentativo singolo, ticket preallocati e crediti di epoca prima
-  dello swap. Frontiera condivisa da più ritiri e claim esclusivo del reclaim;
-  integrazione con segmenti/pool e qualifica concorrente restano aperte.
-
-- Registro snapshot per Archivio: soglia annunciata prima della cattura del CSN,
-  contesti preallocati con generazione, controlli di lettura senza mutex,
-  deadline e scadenze con budget. Interfaccia in buffer per i reader;
-  qualifica concorrente, controller ed EBR restano da integrare.
-
-- Registro CSN per Archivio con orizzonte monotono e budget finito;
-  l’implementazione attiva è `arcdocdb.csn`, con token slot/high/low.
-- Ricostruzione in memoria del manifest dal prefisso sigillato di `control.log`:
-  ACTIVE, CLOSED con esiti, rimozioni esplicite e limite degli ID. Workspace
-  indipendenti per Serie; nessuna riconciliazione o scrittura dei file.
-
-- Validazione UTF-8 pura su span immutabili, con budget massimo di 16 MiB,
-  conteggio dei valori scalari ed errori tipizzati con offset. Utilizzabile
-  in parallelo dai worker prima del writer; il parser CBOR resta da integrare.
-  Diciassette test, nove mutanti rilevati e zero heap nei 25 campioni locali;
-  prove concorrenti ed evidenze grezze conservate.
-
-- Code MPSC locali preallocate e gettone del writer con quota cumulativa:
-  contesa e saturazione distinte, FIFO e rifiuto dei gettoni vecchi.
-  Diciassette test, inclusi producer/consumer su thread reali e calcolo
-  sovrapposto tra Serie; otto mutanti rilevati e zero heap nelle misure locali.
-
-- Verifica in memoria dei segmenti compattati CLOSED v1/v2: identità, CRC,
-  soli PUT/TOMBSTONE ordinari, limite valido autorevole e budget byte/record.
-  Conteggi fisici restituiti dopo il controllo integrale; 15 test indipendenti,
-  otto mutanti rilevati e misure locali delle allocazioni conservate.
-
-- Tabella delle decisioni multiserie inclusa nella compilazione e nei test ordinari:
-  ricostruzione dal prefisso sigillato, duplicati idempotenti o discordanti,
-  budget finiti, query scalari e copie possedute dei partecipanti. Non applica
-  i prepared e non realizza il recovery completo del database.
-
-- SPK-08 bitmap: kernel scalari byte/u64 equivalenti, oracoli indipendenti,
-  90 campioni locali e disassemblati conservati. Packing escluso e nessuna
-  promozione a ottimizzazione del motore.
-
-- SPK-07: due reader/due slot in SC, 28 mutanti rilevati; crash sui byte
-  v1/v2, 49.120 casi e 303.432 interruzioni/ripartenze equivalenti. Frontiera
-  esterna e limiti del modello dichiarati; tutti i tentativi conservati.
-
-- SPK-08: maschere scalar/SWAR esatte e kernel NEON/SSE2 a safety 3;
-  70 campioni seriali su Apple M4, zero byte consed osservati nei cicli.
-  SSE2 e indice concorrente restano da verificare; report leggibili senza
-  caricare i package sperimentali, originali integralmente conservati.
-
-- Scansione recovery in memoria dei log v1/v2: prefisso verificato, coda e
-  corruzione testimoniata da SEAL successivo, EOF esplicito e budget distinti
-  dagli errori dei dati; 19 test, inclusi 20.256 casi di alterazione dei bit.
-
-- SPK-06: modello finito del controllore di carico, quote e timer; 24 confronti
-  locali tra letture e copie concorrenti, con verifica integrale, intervalli
-  di sovrapposizione e campioni grezzi conservati. Compaction del motore e
-  feedback reale restano da verificare.
-
-- SPK-05: letture pread e mmap di file immutabili, CRC/chiave/stamp verificati,
-  errori I/O e worker espliciti; 36 confronti locali per variante e profilo
-  senza allocazioni osservate nel ciclo finale. Varianti e fallimenti conservati.
-
-- SPK-04: writer sperimentale su pool, code limitate, modelli di parcheggio
-  e ripartenza delle letture; controlli e 54 benchmark diagnostici conservati,
-  con limiti e tentativi falliti espliciti.
-
-- SPK-10: quattro moduli sperimentali Common Lisp per codec v1/v2, indice a
-  cinque parole, CBOR iterativo e modello di migrazione; integrazione in memoria
-  dei limiti massimi. Nessun codice di produzione, gate v2 ancora aperto.
-- Registro strutturato di prove e benchmark, inclusi fallimenti e diagnostiche;
-  blob dei sorgenti prima/dopo, risultati decodificati e output originali.
-  `make check` registra l'intera verifica; la CI conserva gli artefatti.
-- Campagne locali conservate: indice v1 fino a 10 milioni di documenti,
-  profiling di allocazione e controlli/benchmark v2 separati.
-
-- ADR-0050: root dell'indice ricontrollata anche su miss, costi e budget della
-  directory separati dagli slot; nessuna promessa di pausa indipendente dalla Serie.
-- ADR-0048: documenti da 16 MiB effettivi, profondità 100, chiavi fino a 65.535 byte e layout v2; tre requisiti progettati, gate di verifica e migrazione. ADR-0049 propone il percorso oltre RAM senza dichiararlo disponibile.
-
-- Suite eseguibile della Fase 0 per SPK-01, SPK-02, SPK-03, SPK-07 e SPK-09; harness
-  `tools/run-spikes.lisp`, compilazione senza avvisi, processi isolati, comandi e output
-  grezzo; `make spikes-check` in CI e `make spikes-bench` per misure locali in serie.
-- ADR-0046 e INV-M6: SPK-07 trova un controesempio nell'anello dell'orizzonte; il registro
-  preallocato dei veri CSN pendenti lo sostituisce. I requisiti del motore restano progettati.
-- ADR-0047: lettura dei prepared con prova autorevole del CSN (OUTCOME o manifest), oltre a
-  CRC, chiave e flag. Una location verso un'altra versione della stessa chiave è rifiutata.
-
-- Specifica originale, documentazione tematica (16 documenti), invarianti (`INV-…`),
-  glossario.
-- Valutazione architetturale: analisi critica, stime, registro dei rischi, piano degli spike.
-- Progetto consolidato: [architettura](docs/architettura.md),
-  [formati su disco](docs/formati-su-disco.md), [limiti dimensionali](docs/limiti.md).
-- 30 ADR (0001–0030): le 26 questioni aperte sono chiuse; ADR-0028 e ADR-0030 attendono la
-  conferma dell'autore.
-- Sistema ASDF minimo, smoke test, `tools/check-links.lisp`, CI.
-- Licenza BSD-2-Clause.
-- **Software critico (ADR-0031…0035):** gerarchia delle priorità con l'affidabilità sopra le
-  prestazioni; otto nuovi invarianti (INV-A1…A8); analisi dei guasti con 24 modi di guasto;
-  standard di codifica (regole `COD-…`); piano di verifica; registro delle deviazioni.
-- **Tracciabilità controllata da strumento:** 90 requisiti in `requisiti.lisp`, matrice generata,
+- M1: capacity, arena, slot credit, and index revision checked before
+  CSN and durable append. Ordinary rejection leaves READY and files unchanged;
+  an invariant found during preflight closes admission and retains cause.
+  Reopening with same budgets, v1/v2, and two oracles against previous
+  writer. Explicit Engine presence in CI catalog; integration with
+  Unix session and page codec brings catalog to 57 suites.
+
+- C4 PR publisher: GitHub-signed synthetic merge bound to run head
+  and inventories equivalent to PR-associated merge. Original SHA,
+  anchor, and method retained; PR producer remains untrusted. First
+  reconciler receipt saved even when `runs/` directory is absent.
+
+- CI result reading in isolated coverage process: complete trusted
+  vocabulary for SKIPPED, METRICS-STATUS, and EXECUTION, without depending
+  on product loading. Regressions in new processes and unknown-token
+  rejection; incomplete collections still return errors.
+  Coverage summary within budget: file count in compact
+  result, full inventory in verified original attachments.
+  Missing count distinct from measured empty inventory.
+
+- Concurrent CBOR string-reading fixture: WALL duration and overlap
+  may be zero when a wave falls within the same tick. Rendezvous,
+  exact results, counts, immutability, and wait bounds preserved;
+  no artificial wait or decoder change.
+
+<a id="aggiunto-1"></a>
+
+### Added
+
+- ARM64 CRC32C written in Lisp/SBCL, with checked loads at safety 3,
+  startup CPU detection, and slicing-by-8 fallback. 4 KiB GET cache hit
+  measured at 1.68 microseconds, with independent oracle outside timing;
+  original integrity path, formats, and commit semantics unchanged.
+
+- C4 GET diagnostics: CRC, PUT verification, copies, and oracle measured separately;
+  real index lookup up to 4.19 million keys, hot/uniform comparison,
+  hash, budgets, and RSS distinct. Preregistered method, five replicates, and stable
+  sources; no product-path or concurrency changes.
+
+- C1 codec for derived primary index pages: 4/16/64 KiB,
+  identity and CRC32C, flat buckets, radix directory, and external keys up to
+  65535 bytes. Preflight before writes, independent fixtures, and
+  structural corruption with valid CRCs; backend and migration remain open.
+
+- First automatic index selector per Serie: resident if capacity permits,
+  hysteretic return and migration peak preflight. ADR-0057, threshold tests,
+  and C4 lifetime model with hazards and negative controls.
+  Paged backend, migration, and runtime binding remain open.
+
+- M1 Single-Series Durable Core: production entry point for startup, automatic
+  recovery, and admission, reusing existing preparers, gates, publisher, runtime,
+  and GET. Physical parent exclusion, one serial actor, strong PUT/GET and
+  tombstones; dedicated campaign of two SIGKILLs. New features suspended
+  in M1 work; Production Engine Bootstrap milestone open.
+  [Evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-production-engine-bootstrap/report.md):
+  2164/2164 cases, 15 engine tests, 80 primary tests, dedicated campaigns, and failed
+  originals retained losslessly. Subsequent
+  [M1 Unix qualification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-23-production-unix-m1/report.md)
+  adds local profile; complete gate remains open.
+
+- Whole-Archivio name completion: global capacity, metadata, and canonical
+  gate reconfirmed before all name preflights; per-Serie
+  effects and complete counts. Original cause and previous completions
+  retained; functional qualification and complete Recovery Manager remain open.
+
+- Whole recovered Serie name completion: complete preflight
+  of tokens and all names before effects, then exclusive rename and
+  fsync per source. Complete counts only, no new array/hash, rollback,
+  or state shared between Serie; functional qualification and Recovery Manager open.
+
+- Recovered name stabilization bound to exclusive
+  publication: no target replacement, callback required only for temporary
+  branch, and parent fsync retained in already-final branch. Functional
+  qualification and complete Recovery Manager coordination remain open.
+
+- Exclusive publication of an already decided temporary: relative rename
+  without target replacement, name/FD identity before and after, injectable
+  backend, and common fail-stop. Compilation and static checks distinct
+  from functional qualification and Recovery Manager integration.
+
+- C4 SPK-11 variant with direct recv/send on owned buffers: offsets,
+  injectable backend, short I/O, waits without internal retry, and deadlines.
+  Comparison of previous and native transport, saturation, and partial EOF;
+  Lisp observations separate from native allocator and pool qualification.
+
+- Synchronous visit of recovered CLOSED records: same read-only FD,
+  prefix and OUTCOME/EDIT resolution verified before delivery,
+  committed PUT/TOMBSTONE, and count of aborted prepared records.
+  Canonical workspace reused without exposing it in public reader API;
+  ACTIVE replay, grouping, publication, and dedicated qualification open.
+
+- SPK-08 comparison of scalar, SWAR with packing, and SIMD on same bytes and variable
+  queries, with bounds checks and independent oracle. Systematic
+  assessment of safe SIMD on Linux x86-64 and macOS ARM64 targets,
+  selection of available features, and mandatory scalar fallback;
+  product integration and multiplatform qualification remain open.
+
+- Recovered key materialization in private primary: PUT
+  inserted or identical, TOMBSTONE/NONE as verified absence; no
+  overwrite or removal of a different entry. Canonical writer budgets,
+  reused scratch, and rejection of unrepresentable locations. Dedicated
+  qualification, complete replay, and root publication still open.
+
+- Exclusive `.tmp` creation relative to owned directory: new
+  empty regular file, verified identity, append, and child-only cleanup.
+  Connected to vertical test outputs; no implicit unlink, flush, or rename.
+
+- Reusable per-key recovered version selector (ADR-0042):
+  maximum CSN, same-segment offset tie-break, and provisional
+  tombstone. Full CRCs, explicit prepared CSN, and blocking ambiguity;
+  no per-candidate array. Dedicated qualification and index publication open.
+
+- Name stabilization of a recovered source: exact ACTIVE/CLOSED token,
+  FD, and ID before completion, collisions preserved, and parent
+  fsync even in already-final branch. No reopening for writes;
+  complete orchestration and dedicated functional qualification still open.
+
+- Private full-text row directory: binary search under lease from posting
+  to PUT reference, absent/preparing/sealed states distinct, and u32 keys
+  without sentinels. Pre-append cancellation, protected reuse, and transferred entries
+  retained; published delta map, MVCC, and reclaim still open.
+
+- Full-text PUT physical references: preallocated capture from sealed batch
+  with authoritative WAL token, header checked without body scans, and stable
+  position after buffer reuse. Ordinary CSNs and prepared TXIDs remain distinct;
+  no early publication or 2PC resolution.
+
+- C4 SPK-11 extension to proposed local session: HELLO/WELCOME,
+  negotiation, correlated PINGs, and reversed responses between two processes.
+  Fixtures for duplicate maps, limits before body, u64 IDs, retained
+  credit, and absolute deadlines; simulated gate and M16 integration still open.
+
+- Full-text binding to exact PUT bytes: private frame for all generations,
+  collective reservation, and WAL batch append after preflights. v1/v2 formats,
+  ordinary/prepared, references protected from batch reuse, and fail-stop after
+  incomplete transfer. CRC/spans attested in worker, constant checks, and
+  body copy only under writer lease. Durable publication, 2PC outcomes, MVCC, and retirement open.
+
+- Coordinated Archivio read: all Serie preflights and aggregate
+  budgets before data; reused scratch and complete CSN plan only after
+  canonical readers. Explicit byte budget, no binding or partial result;
+  dedicated functional qualification still open.
+
+- Whole-Serie semantic recovery from owned read-only sources:
+  full preflight and cumulative budget before data, ACTIVE with canonical decision
+  replay, all CLOSED with reused scratch, and final gate.
+  No partial publication or implicit FD management; dedicated qualification open.
+
+- Proposed M16 session contract (ADR-0056) and SPK-11 on Unix sockets:
+  two real processes, partial/coalesced frames, maximum document and key,
+  rejections before allocation, and occupied names preserved. Product
+  listener remains subject to engine startup, recovery, and admission.
+
+- Owned read-only acquisition of all ACTIVE/CLOSED segments from a single
+  directory inventory, cumulative EOF budget, and full cleanup even
+  with multiple close errors. Connected to vertical fixture; physical
+  reconciliation and admission remain to be implemented.
+
+- Cache tests with four workers inserting and reading concurrent
+  records in the same set, plus deterministic cases for contention,
+  odd sequence, exhausted credit, and disabled slots. Full comparison
+  with independent v1/v2 records; C1 qualification still open.
+
+- Local full-text reservations under writer lease: budgets of all generations
+  checked before effects, resumable copying into owned runs, and tasks protected
+  from reuse. Pre-append cancellation and transfer with retained costs;
+  PUT/WAL bridge added in next increment; publication and retirement open.
+
+- Recovered CLOSED map adoption into runtime scope: complete set,
+  authority, and exact FDs checked, new wrappers, and shared immutable rows.
+  Budgets before allocation; no segment rereads or primary
+  publication. Functional qualification and admission remain open.
+
+- Full-text preparation directly from CBOR documents: nested paths,
+  selected types and duplicates checked, resumable analysis, and sealed run.
+  Cumulative budgets and upper file-size bound before future writer binding;
+  NNTP fixtures, independent scan, and cancellation at different stages.
+
+- Priority local interface for first NNTP use (ADR-0055): default Unix
+  stream socket between daemon and database, later optional TCP
+  disabled by default. First M16 integration moved forward after startup,
+  recovery, and admission; requirements, bounds, lifecycle, and tests traced.
+  Design decision; listener and client remain to be implemented.
+
+- Complete full-text `.idx` v2/type 5 codec: copied canonical META descriptor,
+  binding to hint bytes and supplied PUT map, serialization without per-entry allocations,
+  term/posting/position verification, and immutable view for all/any/phrases on file.
+  Independent wire fixture, fuzz with correct CRC, and reopening in SBCL child on NNTP
+  subject/body fields. I/O and durable generation publication remain to be integrated.
+
+- First full-text core: resumable Unicode 18.0.0 analyzer with versioned data and licenses,
+  in-memory positional inverted runs and all/any/phrase search per row/field,
+  `.idx` v2/type 5 frame with CRC and preflight. Official corpora, independent scan,
+  saturation, concurrency, allocations, and negative controls in `make check`.
+  Complete persistence, writer, snapshots, and Query Engine remain to be integrated.
+
+- Prepared ACTIVE adoption into Archivio runtime with exact scope and
+  common CSN registry. Unique controller binding on canonical log,
+  recoverable after interruption without reset or new per-operation cost.
+
+- Runtime bootstrap from complete Archivio CSN plan: single
+  CSN/snapshot/epoch family and new GET scope, atomic publication without reset
+  and binding recovery after interruption. No new I/O or lock on
+  Serie paths; traffic gate and C1 qualification still open.
+
+- Evidence catalog verification with up to four isolated processes,
+  configurable heap and time per catalog, errors reduced in serial order,
+  and retained worker logs. Serial path available for comparison.
+
+- Dedicated Archivio CSN plan suite: complete Serie set,
+  Registri, replay provenance, CLOSED gate, and u64 base without increment.
+  v1/v2 matrices, native chain, and test binding to existing registry;
+  results and limits separate from C1 qualification and traffic admission.
+
+- Recovery ID selection directly from owned directory: one
+  attested enumeration, five budgets retained, shared selection from
+  canonical plan, and no reservation. Vertical test uses canonical names
+  and this product entry point instead of test-built inventory.
+
+- Dedicated CLOSED recovery suite: reads up to CONTROL P,
+  OUTCOME/EDIT resolution, writer/compaction origins, maximum CSN, and set
+  gate. Independent oracles, v1/v2 matrix, and native publication;
+  coverage and results retained separately from full C1 qualification.
+
+- Archivio CSN plan: owned Serie list including Registri,
+  unique UUIDs, same decision authority, and CLOSED gate for every Serie.
+  Complete maximum relative to supplied canonical list and base words
+  without increment; lightweight replay marker in ACTIVE result.
+  No new I/O or allocator; persistent catalog, admission, and dedicated
+  qualification remain to be connected.
+
+- Direct CBOR MT2/3 string reading: type and absolute payload
+  range without copies, UTF-8 checked for text, ignored tail,
+  and full-window budget. Buffer shareable read-only;
+  dedicated C1 qualification still open.
+
+- Proposed new segment ID after recovery, above manifest high-water
+  and every inventory name, including orphan temporaries. Owned
+  plan, u64 bounds, and explicit budgets; connected to vertical test.
+  No reservation, file change, or traffic admission.
+
+- Full-text design completion (ADR-0054): Unicode 18.0.0 profile,
+  query leaves, module contracts, generations and retirement, reservations before
+  commit, and admission defaults. `.idx` v2/type 5 format defined with
+  six sections and hint binding; four new requirements and two invariants.
+  Corpus and acceptance criteria remain to be implemented in phase 8;
+  no full-text code introduced.
+
+- Maximum CSN observed by ACTIVE/CLOSED readers and decision log, with
+  aggregation of all segments of the same Serie after canonical gate.
+  Zero and absence distinct; writer SEAL, OUTCOME, and EDIT outcome CSNs included,
+  TXIDs and invalid tails excluded. No CSN assignment or traffic
+  admission; functional qualification, fault injection, and performance still open.
+
+- Full-text documentation aligned across v1 scope, contract/catalog,
+  query interfaces, roadmap, glossary, evaluation, costs, risks, and verification
+  plan. ADR-0053 remains reference decision; implementation,
+  binary format, and qualification remain in phase 8.
+
+- Write resumption in v1/v2 vertical test: CSN base reconstruction,
+  new consistent environment, four commits, and second SIGKILL with
+  independent recovery. Negative CSN-reuse oracle before append;
+  coordination still C4, development priorities updated in roadmap.
+
+- Full-text search in v1 design (ADR-0053): dedicated inverted indexes
+  per segment, words and phrases, versioned analyzers, structured filters, and
+  commit/snapshot consistency. Rebuild, corruption, budgets, and NNTP case
+  documented; four designed requirements and INV-I4. Implementation and qualification
+  planned in phase 8, no full-text code introduced.
+
+- Application objective confirmed: ArcDocDB as database for a future
+  Common Lisp NNTP server. Article lookup, ordered overviews,
+  cross-posting, retention, integration, and evaluation criteria documented;
+  engine remains general-purpose, with future NNTP development.
+
+- Vertical Serie test in v1/v2 formats: durable writes,
+  updates, tombstones, and GET, real SIGKILL, recovery and checkpoint in
+  a new process, second independent reopening. Includes tail without
+  SEAL, unpublished checkpoint, rotation with new commits, original
+  segment comparison, and negative oracle control. Coordination
+  and index replay are C4; no whole-engine promotion.
+
+- Bounded pool/Serie slice preparation: selection and one begin
+  on current link, without second routing. Seven values retain original token,
+  state, reason, and metadata; publication without second claim,
+  CLOSING, and faults remain explicit to caller.
+
+- Reusable evidence collection tool: explicit manifest, copies with
+  four workers, completed records including failures, and independent
+  closed-inventory check before positive outcome.
+
+- Read-only CLOSED recovery from authoritative CONTROL: reads only up to P,
+  checks writer/compaction and prepared resolved by OUTCOME or EDIT closure,
+  without global decision log. Complete-set check before canonical
+  publisher, u64 IDs without truncation; dedicated C1 qualification open.
+
+- Dedicated Archivio decision log verification: preflight, identity,
+  queries, ownership, and ACTIVE recovery binding, with native chain
+  through CONTROL publication in v1/v2 formats. Separate module
+  coverage and every attempt recorded in dedicated campaign.
+
+- Integrated pool/dispatcher/Serie verification with two real workers: 32 quanta
+  on one Serie while the other holds lease or batch debt, plus retirement with
+  full/available ring and transfer of remaining work to another worker.
+  Six synchronized scenarios; no speedup measurement or protocol change.
+
+- Independent native checkpoint suite from old ACTIVE: v1/v2 files,
+  OUTCOME/DECISION resolution, prefix and tail, budgets, CLOSED closure,
+  and control log publisher binding with independent oracles.
+
+- First minimal CBOR item reading with absolute frontier: unread
+  tail, authorized-window budget, and private per-worker scratch.
+  Allows deriving boundaries of concatenated items; C1 qualification
+  and document profile remain open.
+
+- Checkpoint builder from ACTIVE recovery: derives complete state
+  from authoritative CONTROL, retains CLOSED/REMOVED/outcomes, closes old
+  ACTIVE at P, and connects new verified ID. Budgets before arrays and
+  in-memory transition verification; canonical preparer and publisher
+  unchanged, dedicated C1 qualification open.
+
+- Dedicated ACTIVE recovery tests: read-only reads, prepared
+  resolution, deterministic closure, and publication on real v1/v2 files.
+  Independent oracles, fault injection, coverage, and separate measurements
+  retained in campaign `2026-10-15-active-verifica`.
+
+- Bounded pool/Serie dispatcher step: selects one operation from
+  new IDLE claim, CLAIMED binding, and RESCHEDULE recycling.
+  Explicit origin distinguishes cursor, count, and absence of transfer;
+  existing obligations do not consult pool. No implicit second claim,
+  begin, or retry; active phases and first cause remain retained.
+
+- Read-only `Registri/multiserie.log` reading: UUID/CRC/format header
+  checked before body, complete replay through attested EOF, and
+  owned decisions. New ACTIVE entry point bound to same canonical
+  Archivio scope; formats unchanged, dedicated C1 qualification open.
+
+- Rendezvous in remaining concurrent CBOR, UTF-8, and two-Serie fixtures:
+  checkpoint after first actual work, retaining counts, sinks, and
+  oracles. Diagnostics before timing assertions; fixture WALL intervals,
+  including waits and checks.
+
+- Integrated GET source lifetime verification: readers on real CLOSED FDs,
+  ACTIVE publication with superset and controlled reduction, EBR retirement, and
+  closure after quiescence. Includes typed error and nonlocal exit;
+  durable catalog decision and complete rotation remain to be integrated.
+
+- Rendezvous after first actually encoded item in concurrent
+  CBOR float/tag tests, imposing interleaving without depending on scheduler
+  startup. Intervals and checkpoints printed before assertions; fixture
+  metrics distinct from encoder-only latency.
+
+- Dedicated CONTROL reading, conservative transition, and validated
+  publication tests: 84 new v1/v2 tests, finite matrix, and real files
+  with four Serie. Coverage, 216 comparison windows, failed-attempt
+  sources, and original outputs retained in campaign
+  `2026-10-14-control-transizione`; no whole-engine promotion.
+
+- CBOR tag composition from preencoded contents: full verification
+  before writing, minimal MT6 header, and budgets including tag
+  without adding container depth. Sources shareable for
+  reads with private scratch; application semantics and C1 qualification open.
+
+- Read-only recovery of old ACTIVE named by control log: header
+  and prefix verified through EOF, prepared resolved by OUTCOME/DECISION,
+  outcomes derived into sorted u64 arrays, and CLOSED closure serializer.
+  Publication checks P and outcomes before unique publisher; no
+  truncation, format change, or new CSN. C1 qualification and Recovery
+  Manager gate remain open.
+
+- Explicit start of already acquired pool obligation: current writer
+  selection and one bridge begin, returning link and three
+  original results. Writer-busy retains CLAIMED; Serie-busy retains
+  token and explicit closure. No new gate, retry, or implicit cleanup.
+
+- Dedicated GET ACTIVE preflight rejection cases before CSN: identity,
+  OPEN/SEALED state, order, capacity, and header faults, with independent
+  witnesses of bytes, tokens, roots, frontiers, and absence of I/O.
+  ACTIVE suite at 42 tests and four preflight mutants detected; coverage,
+  bootstrap regression, and independent full-test audits retained.
+
+- CBOR map composition from preencoded keys and values: full
+  verification before writing, pair-based MT5 header, and budgets
+  including root. Sources shareable for reads with private
+  scratch; key ordering and C1 qualification remain open.
+
+- Explicit recycling from dispatcher to Serie: publishes obligation and ends
+  IDLE if room; on full ring returns new CLAIMED writer's link
+  after one FIFO swap. No implicit pool gate, retirement, or new
+  claim; busy and faults retain existing execution boundaries.
+
+- Read-only reading of authoritative control log, with verified header and replay
+  through attested EOF. Buffer-free result bound to canonical view;
+  publication subject to retaining CLOSED, outcomes, and REMOVED,
+  closing old ACTIVE, and opening a new ID. No format
+  or ADR change; full recovery and C1 qualification remain open.
+
+- CBOR array composition from preencoded items: full verification
+  before writing, minimal header, and budgets including root.
+  Source and index shareable for reads, destination and scratch private
+  per worker. Document profile and C1 qualification remain open.
+
+- Logical dispatcher from pool to Serie binding: preallocated binding
+  on same context, routing only after authorized claim, and separate entry
+  point to complete already CLAIMED obligations. No implicit begin, pop, or
+  retry; retirement and diagnosis retain existing C1 boundaries.
+
+- Recovered checkpoint publication: rename anchored to prepared
+  directory, leaf verification against new and old control-log FDs,
+  installed-name check, and parent fsync. Unique local token with
+  cleanup before CAS; terminal errors without retry, rollback, or partial
+  results. Full recovery and new-call qualification remain open.
+
+- Dedicated ordinary ACTIVE GET functional suite: 28 tests with real files,
+  v1/v2 formats, independent wire oracles, payload and directory boundaries,
+  cache, faults, and snapshot/EBR cleanup. Isolated coverage and CLOSED
+  compatibility retained with raw evidence and independent audits; C1 qualification and
+  MC/DC remain open.
+
+- Writer claim governed by pool state: acknowledges command only
+  after IDLE barrier, delegates C1 claim when active, and leaves ready and
+  cursor intact when inactive. Already acquired tasks and recycles complete
+  their obligations before retirement; no wait or physical thread management.
+
+- `control.log.tmp` checkpoint preparation: Serie header, complete
+  EDIT, and SEAL built without I/O, manifest checked against new
+  ACTIVE, physically distinct file, block transfers, exact reread,
+  and parent fsync. No CSN or implicit rename; recovery integration
+  and C1 qualification remain open.
+
+- Logical pool-controller actuation on existing workers: persistent
+  requests and acknowledgment-only counting, retirement only in IDLE context
+  without abandoning lease or batch, reactivation of same contexts.
+  Includes 18 tests with real workers, C3 coverage without exclusions, and measurements
+  without allocations after startup. Dispatcher, wakeup, and physical startup remain open.
+
+- New writer segment preparation: effect-free preflight, read-only/append
+  identity before write, durable canonical header, exact reread,
+  and parent fsync. ACTIVE adapter with mandatory proof and check of
+  view's CSN registry; errors without retry or partial results. EDIT
+  decision, server open/rotation, and C1 qualification remain to be integrated.
+
+- Serie GET source bridge: CLOSED directory in ACTIVE root
+  contents, single controller acquisition under EBR, resolution from
+  same captured root, and owner/duplicate-ID rejection before adoption.
+  Retains WAL protocol and GET core's five outcomes; rotation and
+  complete reclaim remain distinct.
+
+- CBOR float writing from IEEE words: exact width reduction,
+  sign and NaN payload preservation, preflight before mutation,
+  and private worker destinations. C1 qualification and document profile
+  remain open.
+
+- Local compute-worker count controller: integer EWMAs,
+  additive increase, multiplicative decrease, and persistent conditions.
+  Injected samples and time, target distinct from actual workers,
+  bounded update without allocations after startup. Thread startup, wakeup,
+  and retirement remain the next pool component.
+
+- Physical read-only/append association: exact device/inode comparison in I/O
+  pool, immutable capability-bound proof, and verification without syscalls in
+  ACTIVE constructor. Injectable backend extended with optional identity;
+  rejections without fallback, retry, or mutation. GET path unchanged;
+  server adoption and C1 qualification remain open.
+
+- CLOSED segment GET directory: compact u32 IDs and immutable private
+  references, Serie/order/budget check before copies, search
+  bounded to seventeen steps, and resolver/cache/I/O binding.
+  Published location without segment is a fault, never a miss.
+  Publication, ACTIVE, rotation, and reclaim remain separate integrations.
+  Fixed read-return comparison in CLOSED resolver: API
+  returns END in buffer, even when region starts at 64.
+
+- Minimal CBOR MT7 simple value writing: wire codes 0..23 and
+  32..255, range/code/capacity preflight, and exclusive destination.
+  Includes comparison over all codes, fuzz, and two reused workers;
+  application profile, composition, and C1 qualification remain open.
+
+- Preallocated routing of ready writers to Serie: immutable ordinals,
+  registry with verified associations, and private per-worker table.
+  Direct constant-time selection, even after full-queue recycling,
+  without shared per-message writes. Includes 18 new regressions,
+  two C1 readings, full coverage audit, and five local measurements;
+  pool and coordinator remain open.
+
+- ACTIVE GET resolver for ordinary batches: root acquired from Serie
+  publication, immutable pages, and persistent directory with four small
+  vectors per append. Preflight before CSN, verification of new batch only, and GET cache/read reuse;
+  budgets, fail-stop, and boundaries documented. ACTIVE prepared/OUTCOME, concrete
+  index, rotation/reclaim, and C1 qualification remain open.
+
+- Preallocated worker/Serie binding: dual lease, monotonic tokens, batch
+  debt, and Serie release before worker, with retry limited to end and
+  original fault retention. Includes 26 tests, two C1 readings,
+  full coverage denominator, and five local serial-path
+  measurements; pool and Archivio coordinator remain to be integrated.
+
+- CLOSED segment GET resolver: manifest frontier, sealed writer
+  prefix or verified compaction, immutable u32 rows, and OUTCOME proofs
+  resolved without lookup I/O. Cache and GET read binding, explicit
+  budgets, and position/CSN checks; ACTIVE, EDIT proofs, directory, and
+  C1 qualification remain open.
+
+- Typed XXH64 key hashing: return in two u32s, explicit immutable
+  index seed, verified physical slot maps for rebuild/split,
+  internal fault propagation. Includes 46 new regressions, mutations,
+  serial/parallel measurements, and structured records; seed lifecycle and integrated
+  GET still open.
+
+- GET core with preallocated per-worker context: hash with index seed and lookup under EBR,
+  segment capability with verified header, cache and read-only I/O, OUTCOME
+  proof read from same file, and private response until snapshot
+  confirmation. Historical lookup explicitly requested for cases not resolvable
+  by current index; resolver, pool, protocol, and C1 qualification open.
+
+- Per-Serie record cache: preallocated classes, eight-way sets,
+  bounded CLOCK, lookup without locks, and opportunistic insertion. Every hit
+  checks CRC, key, CSN, and prepared proof; cache corruption distinct
+  from segment input. Shared verifier with CSN in two u32s,
+  budgets and contracts documented; integrated GET and C1 qualification open.
+
+- In-memory v2 primary index: 16-wide Swiss control groups, binary keys
+  in arena, lookup with common budget and root confirmation even on miss, upsert and
+  conditional deletion/relocation in writer, arena growth, and single-use directory
+  publication plans, with key hashing and verified split/rebuild builder.
+  Seed lifecycle and integrated GET still open;
+  includes contracts, traceability, and static evidence, C1 qualification open.
+
+- v2 index slot bank: contiguous u64 words, private-buffer reading
+  with eight attempts, publication and removal under seqlock, conditional
+  relocation, write credit, and permanent freezing. Includes
+  contracts, decisions to cover, and static evidence; C1 qualification open.
+
+- Preallocated per-worker read context: single-attempt EBR entry,
+  snapshot checked before and after lookup, even on miss, and pin cleanup
+  before migration. Connected to CSN/snapshot/epoch registries;
+  index, cache, and pool remain to be integrated, concurrent qualification open.
+
+- EBR domain per Archivio: worker announcements spaced 128 bytes apart, single-attempt
+  entry without mutex, preallocated tickets, and epoch credits before
+  swap. Frontier shared by multiple retirements and exclusive reclaim claim;
+  segment/pool integration and concurrent qualification remain open.
+
+- Snapshot registry per Archivio: threshold announced before CSN capture,
+  preallocated contexts with generation, read checks without mutex,
+  deadlines, and budgeted expiration. Buffer interface for readers;
+  concurrent qualification, controller, and EBR remain to be integrated.
+
+- CSN registry per Archivio with monotonic horizon and finite budget;
+  active implementation is `arcdocdb.csn`, with slot/high/low tokens.
+- In-memory manifest reconstruction from sealed `control.log` prefix:
+  ACTIVE, CLOSED with outcomes, explicit removals, and ID limit. Independent
+  workspaces per Serie; no file reconciliation or writes.
+
+- Pure UTF-8 validation on immutable spans, with maximum 16 MiB budget,
+  scalar-value count, and typed errors with offsets. Usable in
+  parallel by workers before writer; CBOR parser remains to be integrated.
+  Seventeen tests, nine mutants detected, and zero heap in 25 local samples;
+  concurrent tests and raw evidence retained.
+
+- Preallocated local MPSC queues and writer token with cumulative quantum:
+  contention and saturation distinct, FIFO, and stale-token rejection.
+  Seventeen tests, including real-thread producers/consumers and overlapping
+  computation between Serie; eight mutants detected and zero heap in local measurements.
+
+- In-memory verification of v1/v2 compacted CLOSED segments: identity, CRC,
+  ordinary PUT/TOMBSTONE only, authoritative valid limit, and byte/record budgets.
+  Physical counts returned after full check; 15 independent tests,
+  eight mutants detected, and local allocation measurements retained.
+
+- Multiseries decision table included in ordinary compilation and tests:
+  reconstruction from sealed prefix, idempotent or conflicting duplicates,
+  finite budgets, scalar queries, and owned participant copies. Does not apply
+  prepared records or implement full database recovery.
+
+- SPK-08 bitmap: equivalent byte/u64 scalar kernels, independent oracles,
+  90 local samples, and retained disassemblies. Packing excluded and no
+  promotion to engine optimization.
+
+- SPK-07: two readers/two slots under SC, 28 mutants detected; byte-level v1/v2
+  crashes, 49,120 cases, and 303,432 equivalent interruptions/restarts. External
+  frontier and model limits declared; all attempts retained.
+
+- SPK-08: exact scalar/SWAR masks and NEON/SSE2 kernels at safety 3;
+  70 serial samples on Apple M4, zero observed bytes consed in cycles.
+  SSE2 and concurrent index remain to be checked; reports readable without
+  loading experimental packages, originals retained in full.
+
+- In-memory v1/v2 log recovery scanning: verified prefix, tail, and
+  corruption witnessed by later SEAL, explicit EOF, and budgets distinct
+  from data errors; 19 tests, including 20,256 bit-alteration cases.
+
+- SPK-06: finite load-controller, quota, and timer model; 24 local
+  comparisons between concurrent reads and copies, with full verification, overlap
+  intervals, and raw samples retained. Engine compaction and real
+  feedback remain to be verified.
+
+- SPK-05: pread and mmap reads of immutable files, CRC/key/stamp checked,
+  explicit I/O and worker errors; 36 local comparisons per variant and profile
+  without observed allocations in final cycle. Variants and failures retained.
+
+- SPK-04: experimental pooled writer, bounded queues, read parking
+  and restart models; checks and 54 diagnostic benchmarks retained,
+  with explicit limits and failed attempts.
+
+- SPK-10: four experimental Common Lisp modules for v1/v2 codec, five-word
+  index, iterative CBOR, and migration model; in-memory integration
+  of maximum limits. No production code, v2 gate still open.
+- Structured test and benchmark registry, including failures and diagnostics;
+  before/after source blobs, decoded results, and original outputs.
+  `make check` records full verification; CI retains artifacts.
+- Local campaigns retained: v1 index up to 10 million documents,
+  allocation profiling, and separate v2 checks/benchmarks.
+
+- ADR-0050: index root rechecked even on miss, directory costs and budgets
+  separate from slots; no promise of pause independent of Serie.
+- ADR-0048: actual 16 MiB documents, depth 100, keys up to 65,535 bytes, and v2 layout; three designed requirements, verification gate, and migration. ADR-0049 proposes beyond-RAM path without claiming availability.
+
+- Executable Phase 0 suite for SPK-01, SPK-02, SPK-03, SPK-07, and SPK-09; harness
+  `tools/run-spikes.lisp`, warning-free compilation, isolated processes, commands and raw
+  output; `make spikes-check` in CI and `make spikes-bench` for serial local measurements.
+- ADR-0046 and INV-M6: SPK-07 finds counterexample in horizon ring; preallocated
+  registry of actual pending CSNs replaces it. Engine requirements remain designed.
+- ADR-0047: prepared reads with authoritative CSN proof (OUTCOME or manifest), besides
+  CRC, key, and flags. A location pointing to another version of same key is rejected.
+
+- Original specification, thematic documentation (16 documents), invariants (`INV-…`),
+  glossary.
+- Architectural evaluation: critical analysis, estimates, risk register, spike plan.
+- Consolidated design: [architecture](docs/architettura.md),
+  [on-disk formats](docs/formati-su-disco.md), [size limits](docs/limiti.md).
+- 30 ADRs (0001–0030): 26 open questions closed; ADR-0028 and ADR-0030 await
+  author confirmation.
+- Minimal ASDF system, smoke test, `tools/check-links.lisp`, CI.
+- BSD-2-Clause license.
+- **Critical software (ADR-0031…0035):** priority hierarchy with reliability above
+  performance; eight new invariants (INV-A1…A8); fault analysis with 24 failure modes;
+  coding standard (`COD-…` rules); verification plan; deviation register.
+- **Tool-checked traceability:** 90 requirements in `requisiti.lisp`, generated matrix,
   `make trace`.
-- Strumenti in Common Lisp: build senza avvisi (`tools/build.lisp`), linter con auto-verifica
-  (`tools/lint.lisp`), controllo della tracciabilità (`tools/check-trace.lisp`).
-- SPK-09 (costo dei controlli di affidabilità).
+- Common Lisp tools: warning-free build (`tools/build.lisp`), linter with self-test
+  (`tools/lint.lisp`), traceability check (`tools/check-trace.lisp`).
+- SPK-09 (reliability check cost).
 
-- **Analisi progettuale** ([docs/analisi-progettuale.md](docs/analisi-progettuale.md)) e ADR
-  0036–0045: dieci leggi di progetto — la prima: **il parallelismo è un principio fondante**,
-  con l'elenco chiuso di ciò che le Serie condividono — tabella dei punti di atomicità, sedici
-  rilievi `AP-…`; quattordici nuovi invarianti (INV-F2, F3, V5, M4, M5, S7, C11, I3, P5, P6,
-  A9…A12), 107 requisiti, 27 modi di guasto, rischio residuo RES-05.
+- **Design analysis** ([docs/analisi-progettuale.md](docs/analisi-progettuale.md)) and ADR
+  0036–0045: ten design laws — first: **parallelism is a founding principle**,
+  with closed list of what Serie share — atomicity point table, sixteen
+  `AP-…` findings; fourteen new invariants (INV-F2, F3, V5, M4, M5, S7, C11, I3, P5, P6,
+  A9…A12), 107 requirements, 27 failure modes, residual risk RES-05.
 
-- Inventario dei segmenti dalla directory posseduta dalla Serie: cursore
-  readonly indipendente e limitato, nomi canonici u64 e identità senza
-  symlink verificati prima del piano di riconciliazione. Nessun elenco
-  parziale su EOF mancante, budget esaurito o guasto di cleanup.
+- Segment inventory from Serie-owned directory: independent bounded
+  read-only cursor, canonical u64 names, and identities without
+  symlinks checked before reconciliation plan. No partial list
+  on missing EOF, exhausted budget, or cleanup fault.
 
-- Apertura readonly relativa alla capacità directory, con dimensione
-  dello stesso FD, verifica del legame device/inode e cleanup del child
-  non pubblicato. CONTROL, decision log e ACTIVE della prova verticale
-  usano capacità e dimensione della stessa apertura; i file esistenti
-  restano in sola lettura.
+- Read-only opening relative to directory capability, with size
+  from same FD, device/inode binding verification, and unpublished child
+  cleanup. CONTROL, decision log, and ACTIVE in vertical test
+  use capabilities and size from same open; existing files
+  remain read-only.
 
-### Cambiato
+<a id="cambiato"></a>
 
-- I test con worker riusati delle stringhe CBOR usano segnali distinti
-  per ondata, evitando che un worker consumi il permesso dell'altro
-  nell'ondata successiva.
+### Changed
 
-- Snapshot collegati all'unico registro `arcdocdb.csn` dell'Archivio; rimosso
-  l'allocatore CSN duplicato del ramo. Coordinamento snapshot senza attese,
-  revoca della soglia provvisoria su `:csn-busy` e invalidazione terminale
-  al guasto. API del registro canonico e sue evidenze conservate.
+- Reused-worker CBOR string tests use distinct signals
+  per wave, preventing one worker from consuming the other's permit
+  in the next wave.
 
-- Guide del repository consolidate, note degli esperimenti uniformate al metodo
-  tecnico e specifica originale rinominata; requisiti ed evidenze conservati (ADR-0051).
+- Snapshots connected to Archivio's single `arcdocdb.csn` registry; duplicate
+  branch CSN allocator removed. Snapshot coordination without waits,
+  provisional threshold revocation on `:csn-busy`, and terminal invalidation
+  on fault. Canonical registry API and evidence retained.
 
-- ADR-0028 e ADR-0030 confermati dall'autore il 2026-10-08, incluse le revisioni su minimi
-  di prestazione, backup, restore verificato, verificatore offline e scrubbing.
+- Repository guides consolidated, experiment notes standardized to technical
+  method, and original specification renamed; requirements and evidence retained (ADR-0051).
 
-- **Correzioni di progetto dall'analisi (nessun codice toccato, formati mai implementati):**
-  - uno snapshot nasce quando l'orizzonte di visibilità lo ha raggiunto: prima poteva vedere
-    comparire un lotto in volo (ADR-0038);
-  - coda o corruzione di un log si decidono con la frontiera durevole dei SEAL: prima un crash
-    ordinario con più lotti in volo portava la Serie in `FAULTED`; il recovery non tronca più
+- ADR-0028 and ADR-0030 confirmed by author on 2026-10-08, including revisions on minimum
+  performance, backup, verified restore, offline verifier, and scrubbing.
+
+- **Design corrections from analysis (no code touched, formats never implemented):**
+  - a snapshot is born when visibility horizon reaches it: previously it could see
+    an in-flight batch appear (ADR-0038);
+  - log tail or corruption decided using SEAL durable frontier: previously an ordinary
+    crash with multiple batches in flight made Serie `FAULTED`; recovery no longer truncates
     (ADR-0037);
-  - tombstone scartati con il filtro di esistenza: la regola per lineage faceva riapparire
-    documenti eliminati dopo un MERGE di segmenti non adiacenti (ADR-0042);
-  - l'esito di una multiserie sta nello stesso segmento dei record che risolve: prima un CLEAN
-    poteva perderlo (ADR-0041);
-  - primary index a frammenti: nessun raddoppio che triplica la memoria e ferma il writer; slot
-    a 4 parole; stima corretta a ~75–80 byte per documento (ADR-0043).
-- **Semplificazioni:** la versione di un documento è il CSN; una sola cornice di record con due
-  CRC (24 byte); quattro tipi di record nei segmenti; control log con il solo record EDIT;
-  `multiserie.log` con il solo record DECISION; nessun file `.bloom`, nessun lineage, nessuno
-  stato `creating`; cache senza ri-etichettatura; EBR solo per i file (ADR 0038–0044).
-- **Modello di esecuzione:** compiti a completamento, attese come parcheggi, ogni chiamata
-  bloccante nel pool di I/O (ADR-0045).
+  - tombstones discarded with existence filter: lineage rule resurrected
+    deleted documents after MERGE of nonadjacent segments (ADR-0042);
+  - multiseries outcome in same segment as records it resolves: previously CLEAN
+    could lose it (ADR-0041);
+  - fragmented primary index: no doubling that triples memory and stops writer; 4-word
+    slots; estimate corrected to ~75–80 bytes per document (ADR-0043).
+- **Simplifications:** document version is CSN; one record frame with two
+  CRCs (24 bytes); four segment record types; control log with EDIT only;
+  `multiserie.log` with DECISION only; no `.bloom` file, no lineage, no
+  `creating` state; cache without retagging; EBR only for files (ADR 0038–0044).
+- **Execution model:** run-to-completion tasks, waits as parking, every blocking
+  call in I/O pool (ADR-0045).
 
-- **Linguaggio visivo rifatto** ([assets/README.md](assets/README.md)): identità monocroma con un
-  solo colore, l'ambra, riservato a ciò che può cambiare; nuovo marchio; illustrazione dei
-  segmenti e diagramma del percorso di scrittura e lettura in vettoriale, chiaro e scuro; README
-  riscritto; anteprima per i social. Il controllo dei link verifica anche i percorsi delle
-  immagini.
+- **Visual language redesigned** ([assets/README.md](assets/README.md)): monochrome identity with
+  one color, amber, reserved for what can change; new logo; vector illustrations of
+  segments and write/read path diagram, light and dark; README
+  rewritten; social preview. Link checking also verifies image
+  paths.
 
-- ADR-0032 sostituisce in parte ADR-0015: il contatore seqlock passa da 8 a 64 bit, con tentativi
-  limitati e ripiego sul writer, perché l'argomento a 8 bit si reggeva sui tempi e non era una
-  garanzia per costruzione. Costo: +8 byte per entry (56 B).
-- ADR-0028 (proposta) distingue obiettivi e minimi vincolanti di prestazione; ADR-0030
-  (proposta) porta backup e verificatore offline nella v1.
+- ADR-0032 partly supersedes ADR-0015: seqlock counter increases from 8 to 64 bits, with bounded
+  attempts and writer fallback, because the 8-bit argument relied on timing rather than a
+  guarantee by construction. Cost: +8 bytes per entry (56 B).
+- ADR-0028 (proposal) distinguishes performance objectives and binding minima; ADR-0030
+  (proposal) brings backup and offline verifier into v1.

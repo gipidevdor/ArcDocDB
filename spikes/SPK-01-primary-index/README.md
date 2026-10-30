@@ -1,135 +1,139 @@
-# SPK-01 — indice primario a frammenti
+<a id="spk-01--indice-primario-a-frammenti"></a>
 
-> **Proposta** — Esperimento di Fase 0, autorizzato dall'autore; non è codice di
-> produzione. Domanda, metodo e limiti sono registrati prima dell'esecuzione.
+# SPK-01 — fragmented primary index
 
-**Ambito: layout v1 di ADR-0043.** Questo spike non implementa e non verifica
-il formato v2 adottato da [ADR-0048](../../docs/adr/0048-limiti-documentali-e-formato-v2.md).
-La variante a cinque parole qui aggiunge un CSN finale: non è lo slot primario
-v2 a cinque parole, che ha un'altra distribuzione dei campi. Chiavi da 16 byte
-e length a 24 bit non verificano i limiti documentali v2. `check` e `benchmark`
-dichiarano `:layout :adr-0043-v1 :verifies-format-v2 nil`.
+> **Proposed** — Phase-0 experiment, authorized by the author; not production code.
+> Question, method, and limits are recorded before execution.
 
-## Domanda e criterio
+**Scope: ADR-0043 v1 layout.** This spike neither implements nor verifies
+the v2 format adopted by [ADR-0048](../../docs/adr/0048-limiti-documentali-e-formato-v2.md).
+The five-word variant here adds an end CSN: it is not the five-word v2 primary
+slot, which distributes fields differently. Sixteen-byte keys and 24-bit lengths
+do not verify v2 document limits. `check` and `benchmark` declare
+`:layout :adr-0043-v1 :verifies-format-v2 nil`.
 
-La directory estendibile di ADR-0043, con frammenti a capacità fissa, ctrl byte,
-slot da quattro parole u64 e chiavi locali da 16 byte, permette lookup concorrenti
-coerenti e recupera spazio durante split e ricambio di chiavi? Si misurano memoria,
-insert/get, allocazione, durata degli split e retry; i target ADR-0028 confermati
-dall'autore restano da valutare su hardware di riferimento. La verifica locale
-richiede confronti differenziali e nessuna incoerenza negli scenari eseguiti.
+<a id="domanda-e-criterio"></a>
 
-Riferimenti: ADR-0001, 0028, 0030, 0031, 0032, 0036, 0043, 0050; REQ-IDX-001,
-REQ-IDX-003, REQ-IDX-005, REQ-IDX-007, REQ-BEN-001. Lo spike non modifica
-i requisiti o i documenti condivisi.
+## Question and criterion
 
-## Lettura nel buffer del chiamante
+Does ADR-0043's extendible directory, with fixed-capacity fragments, control bytes,
+four-u64-word slots, and local 16-byte keys, allow consistent concurrent lookups
+and reclaim space during splits and key churn? Measure memory, insert/get,
+allocation, split duration, and retries; author-confirmed ADR-0028 targets remain
+to be evaluated on reference hardware. Local verification requires differential
+comparisons and no inconsistencies in executed scenarios.
 
-> **Proposta** — Variante sperimentale v1. Il
-> [metodo di integrazione](metodo-integrazione-lettura-buffer.md) registra
-> ordine, criteri e limiti prima delle misure.
+References: ADR-0001, 0028, 0030, 0031, 0032, 0036, 0043, 0050; REQ-IDX-001,
+REQ-IDX-003, REQ-IDX-005, REQ-IDX-007, REQ-BEN-001. The spike changes neither
+requirements nor shared documents.
 
-`arcdocdb.spk01.lettura-buffer:leggi` usa un simple-array u64 privato di quattro
-parole, `[CSN, location, length, end-CSN]`, e restituisce soltanto stato e numero
-di tentativi scartati. Scrive dopo il seqlock e il ricontrollo della root;
-miss, retry-limit e gli errori sincroni conservano l'output. Il percorso diretto
-e quello con callback derivano dalla stessa macro locale, con `safety 3`.
-La destinazione non è una pubblicazione atomica a lettori concorrenti.
+<a id="lettura-nel-buffer-del-chiamante"></a>
 
-Il CHECK del launcher comprende la
-[storia indipendente](metodo-check-lettura-buffer.md), i confronti con il core,
-i confini u64, le collisioni, split/rebuild, i witness root/seqlock e i
-mutanti. La [matrice a coppie](metodo-bench-lettura-buffer.md) si esegue
-esplicitamente; il benchmark originale resta disponibile come `baseline`:
+## Reading into the caller's buffer
+
+> **Proposed** — Experimental v1 variant. The
+> [integration method](metodo-integrazione-lettura-buffer.md) records order,
+> criteria, and limits before measurements.
+
+`arcdocdb.spk01.lettura-buffer:leggi` uses a private four-word u64 simple-array,
+`[CSN, location, length, end-CSN]`, and returns only status and discarded-attempt count.
+It writes after seqlock and root recheck; misses, retry-limit, and synchronous errors
+preserve output. Direct and callback paths derive from the same local macro, with
+`safety 3`. The destination is not atomic publication to concurrent readers.
+
+Launcher CHECK includes the [independent history](metodo-check-lettura-buffer.md),
+core comparisons, u64 boundaries, collisions, split/rebuild, root/seqlock witnesses,
+and mutants. The [paired matrix](metodo-bench-lettura-buffer.md) runs explicitly;
+the original benchmark remains available as `baseline`:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --check SPK-01
 sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --bench SPK-01 -- --variant buffer
 ```
 
-Entrambe le larghezze restano ADR-0043 v1; cinque parole aggiungono il CSN
-finale e non verificano v2. Non sono modificati il core o i requisiti del
-motore. Tutte le prove sono conservate nel
-[catalogo della lettura](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/catalogo.lisp).
-La [campagna finale](../../docs/valutazione/risultati-SPK-01-lettura-2026-10-08.md)
-completa 80 campioni e osserva zero byte consed nei 40 del buffer, includendo
-u64 massimi. Il residuo del validatore generico è misurato separatamente e
-rimosso nel buffer con il tipo letterale `(integer 1 8)`, conservando i rifiuti.
-Misure locali v1, senza qualificazione dei target del motore.
+Both widths remain ADR-0043 v1; five words add end CSN and do not verify v2.
+Neither engine core nor requirements are changed. All tests are retained in the
+[read catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/catalogo.lisp).
+The [final campaign](../../docs/valutazione/risultati-SPK-01-lettura-2026-10-08.md)
+completes 80 samples and observes zero bytes consed in the buffer's 40, including
+maximum u64 values. Generic-validator residual is measured separately and removed
+from the buffer using literal type `(integer 1 8)`, retaining rejections.
+Local v1 measurements, without qualifying engine targets.
 
-## Metodo
+<a id="metodo"></a>
 
-- Package `arcdocdb.spk01`; API `(check)` e `(benchmark &key ...)`, entrambe
-  restituiscono plist. Solo Common Lisp/SBCL, `safety 3`, nessuna dipendenza.
-- Directory e generazione immutabili, pubblicate con CAS; i bit alti dell'hash
-  scelgono il frammento. Sondaggio scalare per gruppi di otto ctrl byte, nessun
-  SIMD. Quattro parole: CSN, segment/offset, key-off/key-len/length/flag, seqlock.
-  La variante a cinque parole aggiunge un CSN finale, con lo stesso seqlock.
-- Un writer per indice. Ogni manutenzione legge al massimo C slot di un solo
-  frammento; gli split creano due frammenti, i rebuild uno. La copia della
-  directory costa separatamente O(2^G), anche per rebuild e split senza
-  raddoppio: ogni pubblicazione copia l'intero vettore immutabile. Il report
-  conta i riferimenti copiati e distingue tempo di directory, copia del
-  frammento e manutenzione totale. `payload-indice` è O(1), usando contatori
-  del writer; `indice-statistiche` scandisce la directory fuori dalle fasi
-  misurate. Il costo totale della manutenzione non è limitato da C. La profondità è
-  configurata e controllata; saturazione e collisioni estreme danno errore.
-- Arena locale fissa C×16 byte in questo prototipo: append-only fino al limite,
-  poi rebuild delle sole chiavi vive. Non è implementata la crescita separata
-  dell'arena prevista da ADR-0043. Ctrl: vuoto → occupato → eliminato → occupato;
-  nessun ritorno a vuoto sullo stesso frammento. Nessun merge di frammenti.
-- Reader: otto tentativi al massimo, barriere e seqlock. `leggi` restituisce
-  `:retry-limit` senza bloccare. Il solo harness usa un mutex per serializzare
-  writer e ripiego; nessun mutex nel reader fast path. Non simula la coda del
-  writer logico di produzione. Contatori retry locali a ciascun reader.
-- Chiavi e golden hash deterministici, maschere a 64 bit esplicite. Il mixing
-  moltiplicativo viene compilato inline con intermedi u64; la funzione autonoma
-  e il trasporto dei risultati u64 tra funzioni possono richiedere boxing.
-  Nessuna promessa di allocazione zero. Le
-  misure separano allocazione di processo e payload strutturale dell'indice.
-- Verifica: golden hash/output, collisioni, split, deletion/reinsertion, reclaim,
-  limiti, sequenze seeded contro `hash-table`, ricontrollo della root con
-  interleaving iniettato, aggiornamento durante seqlock e reader concorrenti con
-  writer. Errori dei worker restituiti e risollevati dal coordinatore dopo join;
-  cleanup dei thread anche in caso di errore.
+## Method
 
-> **Deciso (2026-10-08 → ADR-0050)** — Il solo stato
-> congelato del frammento ritirato non giustifica il punto di linearizzazione
-> dichiarato all'istante di lettura del riferimento. Il prototipo rilegge root/generazione dopo il
-> sondaggio (anche su miss), scarta il risultato se sono cambiate e riprova.
-> Questa verifica sperimentale non sostituisce il modello SPK-07 né una prova
-> del modello di memoria sulle due architetture.
+- Package `arcdocdb.spk01`; APIs `(check)` and `(benchmark &key ...)`, both returning
+  plists. Common Lisp/SBCL only, `safety 3`, no dependencies.
+- Immutable directory and generation, CAS-published; high hash bits select fragment.
+  Scalar probing in groups of eight control bytes, no SIMD. Four words: CSN,
+  segment/offset, key-off/key-len/length/flag, seqlock. Five-word variant adds end CSN
+  with the same seqlock.
+- One writer per index. Each maintenance pass reads at most C slots from one fragment;
+  splits create two fragments, rebuilds one. Directory copying separately costs
+  O(2^G), including rebuilds and splits without doubling: every publication copies
+  the entire immutable vector. Report counts copied references and distinguishes
+  directory time, fragment copying, and total maintenance. `payload-indice` is O(1),
+  using writer counters; `indice-statistiche` scans the directory outside measured
+  phases. Total maintenance cost is not bounded by C. Depth is configured and checked;
+  saturation and extreme collisions cause errors.
+- Fixed local C×16-byte arena in this prototype: append-only to limit, then rebuild
+  only live keys. ADR-0043's separate arena growth is not implemented. Control:
+  empty → occupied → deleted → occupied; no return to empty in the same fragment.
+  No fragment merging.
+- Reader: at most eight attempts, barriers, and seqlock. `leggi` returns `:retry-limit`
+  without blocking. Only the harness uses a mutex to serialize writer and fallback;
+  no mutex in reader fast path. Does not simulate the production logical-writer queue.
+  Retry counters local to each reader.
+- Deterministic keys and golden hashes, explicit 64-bit masks. Multiplicative mixing
+  compiles inline with u64 intermediates; standalone function and u64 result transport
+  between functions may need boxing. No zero-allocation promise. Measurements separate
+  process allocation from structural index payload.
+- Verification: golden hash/output, collisions, split, deletion/reinsertion, reclaim,
+  limits, seeded sequences against `hash-table`, root recheck with injected interleaving,
+  update during seqlock, and concurrent readers with writer. Worker errors returned and
+  reraised by coordinator after join; thread cleanup also on error.
 
-### Witness deterministico per ADR-0043 §3
+> **Decided (2026-10-08 → ADR-0050)** — A retired fragment's frozen state alone does not
+> justify the linearization point claimed at reference-read time. The prototype rereads
+> root/generation after probing (including misses), discards a result if changed,
+> and retries. This experiment replaces neither SPK-07's model nor a memory-model proof
+> on both architectures.
 
-`check` restituisce il witness in `:retired-root`; la fixture usa il callback
-`leggi :after-fragment` senza dipendere dallo scheduler:
+<a id="witness-deterministico-per-adr-0043-3"></a>
 
-1. Writer: chiave K presente con CSN 1; reader: acquisisce root R e frammento F.
-2. Writer: aggiorna K a CSN 2 nello stesso F ancora attivo.
-3. Writer: split di F, copia CSN 2 nei figli e pubblica R′ con CAS. F è ritirato.
-4. Writer: aggiorna K a CSN 3 nel figlio corrente.
-5. Reader: sonda F ritirato e legge un hit coerente con CSN 2. Senza ricontrollo
-   restituirebbe 2; il controllo di R/generazione scarta il tentativo, rilegge
-   R′ e restituisce 3 con un retry. La fixture legge anche F direttamente e
-   verifica che il risultato senza ricontrollo sia proprio 2.
+### Deterministic witness for ADR-0043 §3
 
-L'hit 2 è errato rispetto al **punto dichiarato** di acquisizione di R, dove K
-valeva 1. Questo witness falsifica quel punto di linearizzazione; non dimostra
-un errore generale di linearizzabilità, poiché 2 è esistito durante l'operazione.
-L'output rende esplicito `:general-linearizability-counterexample nil`.
-Una seconda sequenza verifica che anche un miss su F ritirato venga scartato
-dopo swap e inserimento nel frammento corrente. Il punto di linearizzazione
-e il costo O(2^G) sono qualificati in
-[ADR-0050](../../docs/adr/0050-pubblicazione-e-costi-della-directory.md),
-REQ-IDX-007; resta da modellare swap/reader in SPK-07. La sola coerenza del
-frammento congelato non fissa il punto prima dichiarato da ADR-0043.
+`check` returns the witness in `:retired-root`; the fixture uses callback
+`leggi :after-fragment` independently of the scheduler:
 
-## Comandi
+1. Writer: key K present with CSN 1; reader: acquires root R and fragment F.
+2. Writer: updates K to CSN 2 in the same still-active F.
+3. Writer: splits F, copies CSN 2 into children, CAS-publishes R′. F is retired.
+4. Writer: updates K to CSN 3 in current child.
+5. Reader: probes retired F and reads a consistent hit with CSN 2. Without recheck
+   it would return 2; R/generation check discards the attempt, rereads R′, and returns
+   3 with one retry. The fixture also reads F directly and verifies that the
+   unrechecked result is exactly 2.
 
-Da qualsiasi directory, `run.lisp` risolve `core.lisp` rispetto a
-`*load-truename*`, compila in `out/core.fasl` e promuove warning e style-warning a
-errori. Stampa una sola s-expression plist; fallimento con exit code non nullo.
+Hit 2 is incorrect relative to the **declared point** of acquiring R, where K was 1.
+This witness falsifies that linearization point; it does not demonstrate a general
+linearizability error, since 2 existed during the operation.
+Output explicitly states `:general-linearizability-counterexample nil`.
+A second sequence verifies that a miss on retired F is also discarded after swap
+and insertion into current fragment. Linearization point and O(2^G) cost are qualified
+in [ADR-0050](../../docs/adr/0050-pubblicazione-e-costi-della-directory.md), REQ-IDX-007;
+swap/reader modeling in SPK-07 remains pending. Frozen-fragment consistency alone
+does not fix ADR-0043's previously declared point.
+
+<a id="comandi"></a>
+
+## Commands
+
+From any directory, `run.lisp` resolves `core.lisp` relative to `*load-truename*`,
+compiles to `out/core.fasl`, and promotes warnings and style-warnings to errors.
+Prints one s-expression plist; failure has nonzero exit status.
 
 ```sh
 sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-index/run.lisp --check
@@ -138,136 +142,137 @@ sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-inde
 sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-index/run.lisp --bench --words 5
 ```
 
-Il default usa 100.000 documenti, capacità 8.192, quattro parole, due reader,
-budget di 12 secondi per le fasi misurate: obiettivo circa 15 secondi complessivi,
-non garanzia temporale. Il tempo viene controllato a blocchi; quantità effettive,
-fase incompleta e durata reale sono sempre riportate. Budget strutturale di
-512 MiB (default); il limite di heap del runtime si imposta separatamente.
-Per la campagna seriale:
+Default uses 100,000 documents, capacity 8,192, four words, two readers, and a
+12-second budget for measured phases: approximately 15 seconds total as a goal,
+not a timing guarantee. Time is checked in blocks; actual counts, incomplete phase,
+and actual duration are always reported. Structural budget 512 MiB (default);
+runtime heap limit is set separately. For the serial campaign:
 
 ```sh
 sbcl --dynamic-space-size 1024 --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-index/run.lisp --bench --documents 1000000 --seconds 12
 ```
 
-La scala 10^7 è opzionale, richiede budget e heap espliciti più grandi e tempo
-sufficiente: `--documents 10000000 --seconds 120 --memory-mib 2048`, con
-`--dynamic-space-size 4096` prima di `--script`. La campagna si esegue in serie.
-Il controllo della memoria riguarda strutture correnti e
-allocazioni transitorie previste, non RSS, garbage non ancora raccolto o oggetti
-trattenuti da reader sospesi. Non si afferma un limite assoluto di RSS.
+10^7 scale is optional, requiring explicit larger budgets and heap and enough time:
+`--documents 10000000 --seconds 120 --memory-mib 2048`, with
+`--dynamic-space-size 4096` before `--script`. Run campaigns serially.
+Memory checking covers current structures and expected transient allocations,
+not RSS, uncollected garbage, or objects retained by suspended readers.
+No absolute RSS limit is claimed.
 
-## Ambiente, misure e limiti
+<a id="ambiente-misure-e-limiti"></a>
 
-L'output registra implementazione/versione, macchina, sistema operativo,
-parametri, seed, unità e conteggi effettivi. `byte/doc` è il payload esatto
-degli array vivi più riferimenti della directory, senza header, strutture Lisp,
-heap del runtime o frammenti ritirati. L'allocazione è quella rilevata da
-`sb-ext:get-bytes-consed`, cumulativa di processo, inclusi bignum e harness;
-non è una misura di RSS. Throughput include hash e generazione della chiave in
-buffer riutilizzato. Durata split include copia di directory e allocazione;
-durata rebuild è distinta. Un campione temporale di risoluzione insufficiente
-produce `nil` per i rapporti non calcolabili.
+## Environment, measurements, and limits
 
-Warmup separato (256 insert e 1.024 get), escluso dai tempi delle fasi. Ogni
-fase porta un sink restituito nel report e verifica il pattern dei dati letti.
-I secondi sono wall (`get-internal-real-time`), non CPU. L'allocazione della
-fase concorrente include sia reader sia writer del harness: il rapporto per
-lookup descrive il costo dell'intero carico, non una sola funzione reader.
-Riferimento runtime: [manuale SBCL, barriere e CAS](https://www.sbcl.org/manual/#Memory-Barriers).
+Output records implementation/version, machine, operating system, parameters,
+seed, units, and actual counts. `byte/doc` is exact live-array payload plus directory
+references, excluding headers, Lisp structures, runtime heap, or retired fragments.
+Allocation comes from `sb-ext:get-bytes-consed`, cumulative for the process,
+including bignums and harness; it is not RSS. Throughput includes hashing and key
+generation in reused buffer. Split duration includes directory copy and allocation;
+rebuild duration is separate. Insufficient timing resolution produces `nil` for
+ratios that cannot be calculated.
 
-La variante a cinque parole verifica layout e trasporto del CSN finale, non
-implementa versioni multiple per chiave o selezione snapshot. Non sono coperti
-WAL, persistenza, MVCC, compaction, queue del writer, pause GC, né verifica del
-codice macchina per accessi atomici agli slot su entrambe le architetture.
-Il disassemblato del solo kernel hash ARM64 è descritto sotto. Stress concorrente e test seeded sono evidenza degli scenari
-eseguiti, non dimostrazione universale di linearizzabilità.
+Separate warmup (256 inserts and 1,024 gets), excluded from phase timings. Each phase
+has a sink returned in the report and verifies the read-data pattern.
+Seconds are wall time (`get-internal-real-time`), not CPU. Concurrent-phase allocation
+includes harness readers and writer: allocation per lookup describes the whole load,
+not just a reader function.
+Runtime reference: [SBCL manual, barriers and CAS](https://www.sbcl.org/manual/#Memory-Barriers).
 
-## Risultato
+The five-word variant checks end-CSN layout and transport, not multiple versions per
+key or snapshot selection. WAL, persistence, MVCC, compaction, writer queue, GC pauses,
+and machine-code verification of atomic slot access on both architectures are not
+covered. Disassembly of the ARM64 hash kernel alone is described below.
+Concurrent stress and seeded tests are evidence for executed scenarios, not a
+universal linearizability proof.
 
-Verifica `--check` riuscita su SBCL 2.6.9, ARM64 Apple M4, Darwin 27.0.0:
-golden output, 3.000 operazioni seeded per larghezza 4/5, collisioni con rifiuto
-esplicito al limite, reclaim, witness root, seqlock e fallback forzato, limiti,
-propagazione errori dei worker e cleanup; due reader × 1.200 operazioni con
-writer × 600 iterazioni, per entrambe le larghezze. Compilazione senza warning
-o style-warning tramite il launcher. I conteggi retry dello stress variano
-con lo scheduler, mentre gli assert e il witness sono deterministici.
+<a id="risultato"></a>
 
-Diagnostica breve, eseguita dalla cwd `/tmp` il 2026-10-08:
+## Result
+
+`--check` passed on SBCL 2.6.9, ARM64 Apple M4, Darwin 27.0.0:
+golden output, 3,000 seeded operations per width 4/5, collisions with explicit
+limit rejection, reclaim, root witness, seqlock and forced fallback, limits,
+worker-error propagation, and cleanup; two readers × 1,200 operations with
+writer × 600 iterations, for both widths. Warning/style-warning-free compilation
+through launcher. Stress retry counts vary with scheduler, while assertions
+and witness are deterministic.
+
+Short diagnostic, run from cwd `/tmp` on 2026-10-08:
 
 ```sh
 sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-index/run.lisp --bench --documents 1000 --seconds 1 --capacity 64 --readers 2 --words 5
 ```
 
-Report locale in `out/diagnostic-5.sexp` (ignorato da Git). Nel campione:
-1.000 documenti effettivi; payload 106.048 byte prima e 116.992 byte dopo il
-churn; 31 split e 35 rebuild dopo churn. GET: 1.179.552 byte allocati su 8.000
-operazioni, cioè 147,444 byte/operazione del carico misurato. Il risultato
-esclude qualunque dichiarazione di allocazione zero; l'attribuzione a bignum,
-boxing e altre fonti richiede profiling. Questi dati diagnostici non chiudono
-i target o il gate 10^7–10^8: i throughput del report non sono una campagna
-rappresentativa. Nessun benchmark lungo eseguito in questa diagnostica;
-le misure complete si eseguono in serie. La crescita della directory e l'assenza
-di merge richiedono misure di churn più lunghe; il limite esplicito di memoria non implica un costo
-di manutenzione indipendente dalla dimensione della Serie.
+Local report in `out/diagnostic-5.sexp` (Git-ignored). In this sample:
+1,000 actual documents; payload 106,048 bytes before and 116,992 after churn;
+31 splits and 35 rebuilds after churn. GET: 1,179,552 bytes allocated over 8,000
+operations, or 147.444 bytes/operation for measured load. The result rules out
+any zero-allocation claim; attribution to bignums, boxing, and other sources
+requires profiling. These diagnostics close neither targets nor the 10^7–10^8
+gate: report throughputs are not a representative campaign. No long benchmark
+ran in this diagnostic; full measurements run serially. Directory growth and
+lack of merging require longer churn measurements; an explicit memory limit
+implies no maintenance cost independent of Serie size.
 
-### Esperimento successivo: kernel hash senza boxing evitabile
+<a id="esperimento-successivo-kernel-hash-senza-boxing-evitabile"></a>
 
-> **Proposta** — Registrato prima dell'esecuzione: mantenere identici SplitMix64,
-> chiavi, golden e seed; aggiungere INLINE a `mix64`, `parola-chiave` e
-> `hash-chiave`, con tipi espliciti su argomenti e intermedi u64, `safety 3`.
-> Ipotesi da misurare: diminuire il boxing alle chiamate interne del kernel
-> hash, senza VOP interni o cambio di algoritmo. Nessuna promessa di allocazione
-> zero: payload u64 restituiti dall'API possono ancora richiedere boxing.
+### Next experiment: hash kernel without avoidable boxing
 
-Il baseline locale è stato misurato a 100.000 documenti (report in
-`spikes/out/4000472823-bench/`): GET 2,915 M/s e 151,95 byte/op;
-INSERT 1,657 M/s e 551,75 byte/op. Confronto diagnostico singolo dopo warmup,
-stessa scala e parametri predefiniti salvo budget breve `--seconds 1`:
+> **Proposed** — Recorded before execution: keep SplitMix64, keys, golden values,
+> and seed identical; add INLINE to `mix64`, `parola-chiave`, and `hash-chiave`,
+> with explicit types on u64 arguments and intermediates, `safety 3`.
+> Hypothesis to measure: reduce boxing at internal hash-kernel calls, without
+> internal VOPs or algorithm changes. No zero-allocation promise: u64 payloads
+> returned by the API may still require boxing.
+
+Local baseline measured at 100,000 documents (report in `spikes/out/4000472823-bench/`):
+GET 2.915 M/s and 151.95 bytes/op; INSERT 1.657 M/s and 551.75 bytes/op.
+Single diagnostic comparison after warmup, same scale and default parameters
+except short `--seconds 1` budget:
 
 ```sh
 sbcl --script /Users/gpicchiarelli/Documents/ArcDocDB/spikes/SPK-01-primary-index/run.lisp --bench --documents 100000 --seconds 1
 ```
 
-Si confrontano soprattutto byte/op; durata, conteggi effettivi e sink restano
-nel report. Il budget diverso limita la comparabilità dei throughput. Prima
-e dopo: golden/seed e check; ispezione del disassemblato di wrapper compilati
-che leggono/scrivono array u64 per distinguere il kernel dal boxing di ritorno
-di una funzione Lisp. La verifica delle location e dei CSN alti copre anche
-u64 superiori a `most-positive-fixnum`.
+Compare primarily bytes/op; duration, actual counts, and sink remain in the
+report. Different budgets limit throughput comparability. Before and after:
+golden/seed and check; inspect disassembly of compiled wrappers reading/writing
+u64 arrays to distinguish kernel from Lisp-return boxing. Verification of high
+locations and CSNs also covers u64 above `most-positive-fixnum`.
 
-**Esito diagnostico misurato** — singola esecuzione, 100.000 insert e 800.000
-get completati, `out/inline-hash-100k.sexp`; nessun warning/style-warning.
+**Measured diagnostic outcome** — single execution, 100,000 inserts and 800,000
+gets completed, `out/inline-hash-100k.sexp`; no warning/style-warning.
 
-| Misura | Baseline locale | INLINE, diagnostica singola |
+| Measurement | Local baseline | INLINE, single diagnostic |
 |---|---:|---:|
-| GET byte allocati/op | 151,94986 | 71,94406 |
-| INSERT byte allocati/op | 551,74592 | 219,95536 |
-| GET operazioni/s | 2.915.048 | 3.328.355 |
-| INSERT operazioni/s | 1.657.275 | 1.714.296 |
-| Wall massimo split, ms | 1,613 | 17,171 |
+| GET allocated bytes/op | 151.94986 | 71.94406 |
+| INSERT allocated bytes/op | 551.74592 | 219.95536 |
+| GET operations/s | 2,915,048 | 3,328,355 |
+| INSERT operations/s | 1,657,275 | 1,714,296 |
+| Maximum split wall time, ms | 1.613 | 17.171 |
 
-L'allocazione osservata diminuisce; i throughput sono indicativi di questo
-campione. La durata massima dello split è aumentata nel campione: la causa
-non è profilata, e resta evidenza da conservare nelle repliche.
-Il baseline è stato lanciato con heap 4.096 MiB, mentre la diagnostica usa il
-default del runtime e un budget temporale diverso; questo limita il confronto
-di GC e latenze. Non si conclude un miglioramento del costo massimo.
-Payload vivo prima e dopo il churn: 6.422.656 byte, 64,22656 byte/doc esclusi
-header; 15 split, 16 rebuild, 426 riferimenti di directory copiati complessivi.
+Observed allocation decreases; throughputs describe this sample only.
+Maximum split duration increased in the sample: the cause is unprofiled and
+remains evidence to retain in replications.
+Baseline ran with 4,096 MiB heap, while diagnostic uses runtime default and a
+different time budget; this limits GC and latency comparison. No improvement
+in maximum cost is concluded.
+Live payload before and after churn: 6,422,656 bytes, 64.22656 bytes/doc excluding
+headers; 15 splits, 16 rebuilds, 426 directory references copied overall.
 
-Golden hash fissati dal FASL precedente all'ottimizzazione per ID 0, 1,
-424.242 e 2^64−1; stessi valori dopo INLINE. `check` verifica inoltre CSN,
-location e CSN finale pari a 2^64−1, length a 2^24−1 e la variante 5 parole.
+Golden hashes fixed by preoptimization FASL for IDs 0, 1, 424,242, and 2^64−1;
+same values after INLINE. `check` also verifies CSN, location, and end CSN of
+2^64−1, length 2^24−1, and the five-word variant.
 
-Disassemblato locale: `out/hash-kernel-disassembly.txt`, generato da
-`out/disassemble-kernel.lisp` e `out/kernel-probe.lisp`. I wrapper con
-`safety 3` leggono/scrivono array u64 e restituiscono NIL, così il kernel non
-include boxing del ritorno Lisp. Nelle due funzioni osservate: `LDR`/`STR`
-a 64 bit, `ADD`, `MUL`, `LSR`, `EOR`; nessuna chiamata ad aritmetica generica
-o allocazione sul percorso normale del codice mostrato, controlli dei limiti
-degli array presenti. Questa ispezione è limitata a SBCL 2.6.9 ARM64; non
-dimostra allocazione zero del GET o atomicità dell'intero protocollo.
-Wrapper riproducibili, da compilare dopo aver caricato `out/core.fasl`:
+Local disassembly: `out/hash-kernel-disassembly.txt`, generated by
+`out/disassemble-kernel.lisp` and `out/kernel-probe.lisp`. With `safety 3`, wrappers
+read/write u64 arrays and return NIL, excluding Lisp-return boxing from kernel.
+In both observed functions: 64-bit `LDR`/`STR`, `ADD`, `MUL`, `LSR`, `EOR`;
+no generic-arithmetic call or allocation on the shown code's normal path,
+array bounds checks present. Inspection is limited to SBCL 2.6.9 ARM64;
+it proves neither zero GET allocation nor whole-protocol atomicity.
+Reproducible wrappers, to compile after loading `out/core.fasl`:
 
 ```lisp
 (in-package #:arcdocdb.spk01)
@@ -282,56 +287,61 @@ Wrapper riproducibili, da compilare dopo aver caricato `out/core.fasl`:
   nil)
 ```
 
-Confronto e repliche si eseguono in serie. Restano aperti il gate
-10^7–10^8, il costo O(2^G) della pubblicazione e il profiling dell'allocazione
-residua nell'API; nessun cambiamento a trie o al formato dell'indice.
+Comparisons and replications run serially. The 10^7–10^8 gate, O(2^G)
+publication cost, and profiling of residual API allocation remain open;
+no trie or index-format change.
 
-### Microfix successivo: trasporto degli helper
+<a id="microfix-successivo-trasporto-degli-helper"></a>
 
-> **Proposta** — Registrato prima della verifica: INLINE di `scegli-frammento`,
-> `sonda-reader`, `leggi-slot`, `posizione-sonda`, `impronta` e `scrivi-chiave`,
-> con tipi espliciti degli argomenti e dei locali u64; `alto` della generazione
-> chiave dichiarato u64. Ipotesi: eliminare ulteriore boxing del trasporto hash
-> e della chiave. API `leggi` autonoma, stesso layout v1 e `safety 3`.
+### Subsequent microfix: helper transport
 
-Verifica prevista: `--check` e disassemblato ARM64; nessun ulteriore benchmark
-in questa diagnostica. I numeri di `inline-hash-100k.sexp` descrivono il kernel
-hash precedente a questo microfix. Le repliche si eseguono con heap 4 GiB
-a 100.000 e 10^7 documenti, riportando allocazione residua effettiva.
+> **Proposed** — Recorded before verification: INLINE `scegli-frammento`,
+> `sonda-reader`, `leggi-slot`, `posizione-sonda`, `impronta`, and `scrivi-chiave`,
+> with explicit types on u64 arguments and locals; key-generation `alto` declared
+> u64. Hypothesis: eliminate further boxing in hash/key transport.
+> Standalone `leggi` API, same v1 layout and `safety 3`.
 
-**Esito della verifica** — `--check` passato con compilazione senza warning
-o style-warning, incluse larghezze 4/5, golden del FASL precedente, CSN/location
-u64 alti, root hit/miss, fallback forzato e thread con cleanup. Disassemblato
-in `out/reader-after-microfix-disassembly.txt`: `leggi` resta autonoma; kernel
-hash e helper elencati sono incorporati, senza chiamate alle funzioni ponte.
-Aritmetica e accessi u64 sono visibili; restano tre rami di boxing da 32 byte
-per CSN/location/CSN finale quando non rappresentabili come fixnum, al confine
-dei valori restituiti. Le barriere ARM64 e i controlli degli array restano nel
-codice. Nessuna misura di allocazione dopo questo microfix è stata eseguita
-in questa diagnostica.
+Planned verification: `--check` and ARM64 disassembly; no further benchmark in
+this diagnostic. `inline-hash-100k.sexp` numbers describe the hash kernel before
+this microfix. Replications use 4 GiB heap at 100,000 and 10^7 documents,
+reporting actual residual allocation.
 
-Il disassemblato precedente di `scrivi-chiave`, conservato in
-`out/key-before-microfix-disassembly.txt`, già mostrava XOR e scrittura byte
-senza allocazione sul percorso valido; non si attribuisce quindi un risparmio
-di 32 byte/op alla sola dichiarazione di `alto`. L'effetto degli INLINE sulle
-allocazioni del reader va misurato nelle repliche.
+**Verification outcome** — `--check` passed with warning/style-warning-free
+compilation, including widths 4/5, previous-FASL golden values, high u64
+CSN/locations, root hit/miss, forced fallback, and threads with cleanup.
+Disassembly in `out/reader-after-microfix-disassembly.txt`: `leggi` remains
+standalone; hash kernel and listed helpers are incorporated without bridge
+function calls. u64 arithmetic and access are visible; three 32-byte boxing
+branches remain for CSN/location/end-CSN when not representable as fixnums,
+at the returned-value boundary. ARM64 barriers and array checks remain.
+No post-microfix allocation measurement ran in this diagnostic.
 
-## Ambito del formato
+Previous `scrivi-chiave` disassembly, retained in
+`out/key-before-microfix-disassembly.txt`, already showed XOR and byte stores
+without valid-path allocation; therefore no 32-byte/op saving is attributed
+solely to the `alto` declaration. INLINE's effect on reader allocations must
+be measured in replications.
 
-### Repliche con heap 4 GiB
+<a id="ambito-del-formato"></a>
 
-> **Proposta (profilazione successiva)** — isolare generazione della chiave,
-> hash con risultato in array u64 e API `leggi` su chiave fissa. Dopo warmup,
-> un milione di chiamate per caso, processo dedicato: clock e byte allocati
-> del processo. Confrontare `speed 2` e `speed 3` nel reader mantenendo
-> `safety 3`; nessun cambio del formato o dei controlli. Questa diagnostica
-> serve ad attribuire il residuo, non misura il database.
+## Format scope
 
-La [campagna pubblicata](../../docs/valutazione/risultati-2026-10-08.md) conserva
-anche i risultati dopo il microfix completo: GET 3,557 M/s e 47,99 B/op a
-100.000 documenti; 2,098 M/s e 48,00 B/op a 10 milioni, con 75.400.960 GET
-effettivi. Alla scala maggiore: 82,21 B/doc di payload e massimo split
-98,827 ms, causa non profilata. Nessuna garanzia di allocazione nulla o pausa
-indipendente dalla dimensione. I dati grezzi identificano sorgenti e comandi.
+<a id="repliche-con-heap-4-gib"></a>
 
-Questo esperimento esercita il layout v1. Il layout v2 a 5 parole e le chiavi estese di ADR-0048 richiedono una campagna distinta: i risultati qui non lo verificano.
+### Replications with 4 GiB heap
+
+> **Proposed (subsequent profiling)** — isolate key generation, hash returning
+> into u64 array, and `leggi` API on fixed key. After warmup, one million calls
+> per case, dedicated process: process clock and allocated bytes.
+> Compare `speed 2` and `speed 3` in reader, retaining `safety 3`; no format or
+> check changes. This diagnostic attributes residual cost; it does not measure
+> the database.
+
+The [published campaign](../../docs/valutazione/risultati-2026-10-08.md) also retains
+results after the complete microfix: GET 3.557 M/s and 47.99 B/op at 100,000
+documents; 2.098 M/s and 48.00 B/op at 10 million, with 75,400,960 actual GETs.
+At larger scale: 82.21 B/doc payload and maximum split 98.827 ms, cause unprofiled.
+No zero-allocation or size-independent pause guarantee. Raw data identify
+sources and commands.
+
+This experiment exercises v1 layout. ADR-0048's five-word v2 layout and extended keys require a separate campaign: these results do not verify them.

@@ -1,124 +1,134 @@
-# Verifiche della scrittura delle stringhe CBOR
+<a id="verifiche-della-scrittura-delle-stringhe-cbor"></a>
 
-Campagne del 2026-10-11 sul [metodo preregistrato](cbor-stringhe-metodo.md),
-blob `56342dae95caf8705e0b28b3c0ea7ac86fdd8fa0`. Prodotto congelato
-`a2c5c77dd51bff760bff4508e998d94370921eda`; le dipendenze header writer,
-UTF-8 e limiti non sono state modificate. L'incremento riguarda un item
-MT2/3 minimo, senza composizione documentale o pubblicazione durevole.
+# Verification of CBOR string writing
 
-Il titolo «Prove congelate prima del prodotto» del metodo descrive il piano
-preregistrato. La cronologia effettiva è quella delle due letture: prodotto
-e corpus sono stati sviluppati in parallelo; l'autore delle prove ha letto
-il prodotto soltanto dopo il congelamento del corpus, prima della seconda
-lettura e di ogni compilazione o campagna. Il metodo originale resta
-conservato, senza attribuire al corpus un congelamento precedente al prodotto.
+Campaigns on 2026-10-11 under the [preregistered method](cbor-stringhe-metodo.md),
+blob `56342dae95caf8705e0b28b3c0ea7ac86fdd8fa0`. Frozen product
+`a2c5c77dd51bff760bff4508e998d94370921eda`; header writer,
+UTF-8, and limit dependencies were not modified. The increment concerns one
+minimal MT2/3 item, without document composition or durable publication.
 
-## Corpus e concorrenza
+The method's “Tests frozen before the product” heading describes the preregistered
+plan. The actual chronology is that of the two readings: product
+and corpus were developed in parallel; the test author read
+the product only after corpus freeze, before the second
+reading and any compilation or campaign. The original method remains
+preserved without attributing a pre-product freeze to the corpus.
 
-21 nuovi test: 20 seriali e uno con worker reali riusati. Il preliminare
-`make test lint trace` passa in 13,692469 s: 681 test nominali e due smoke,
-senza warning o style-warning, lint su 125 file senza violazioni,
-116 requisiti/65 invarianti/13 scenari FI/52 ADR senza errori.
-Il corpus cieco conserva i tre blob `e45437a5…`, `ed0f6a67…`, `33c7e6a9…`;
-le [due](cbor-stringhe-revisione.md) [letture C1](cbor-stringhe-lettura.md)
-non hanno rilievi statici aperti.
-La [revisione dei dati](cbor-stringhe-dati.md) verifica i record completi,
-anche l'origine e l'ordine dei fallimenti nei log mutati.
+<a id="corpus-e-concorrenza"></a>
 
-8.194 confronti freddi sulle lunghezze 0..4096 per entrambi i major,
-1.138 capacità insufficienti e 2.048 casi differenziali seed53574342:
-1.546 accettati e 502 UTF-8 rifiutati. Sono verificati soglie di larghezza,
-item massimo 16 MiB e massimo+1, byte arbitrari, multibyte, NUL/BOM e
-noncaratteri, offset assoluti e precedenze degli errori, alias disgiunti,
-overlap della testata, arità esatta e interi array invariati sui rifiuti.
-Lo scanner minimo è soltanto una verifica supplementare dopo gli attesi
-freddi dei byte.
+## Corpus and concurrency
 
-Due worker, due ondate, 8.192 item ciascuno per ondata: 32.768 scritture
-e 32 MiB di payload da sorgente immutabile condivisa verso destinazioni
-private. Sink 9.707.520/9.969.664 per ondata e array completi verificati.
-Overlap osservato 47.821/47.752 tick a 1.000.000 tick/s nel preliminare;
-semafori, join e cleanup limitati. Questo verifica concorrenza funzionale,
-senza attestare simultaneità sui core, scaling o throughput del pool.
+21 new tests: 20 serial and one with reused real workers. Preliminary
+`make test lint trace` passes in 13.692469 s: 681 nominal tests and two smokes,
+without warnings or style-warnings, lint on 125 files without violations,
+116 requirements/65 invariants/13 FI scenarios/52 ADRs without errors.
+The blind corpus retains the three blobs `e45437a5…`, `ed0f6a67…`, `33c7e6a9…`;
+the [two](cbor-stringhe-revisione.md) [C1 readings](cbor-stringhe-lettura.md)
+have no open static findings.
+The [data review](cbor-stringhe-dati.md) checks complete records,
+including origin and order of failures in mutated logs.
 
-## Heap e mutazioni
+8,194 cold comparisons on lengths 0..4096 for both majors,
+1,138 insufficient capacities, and 2,048 differential cases seed53574342:
+1,546 accepted and 502 UTF-8 rejected. Checks cover width thresholds,
+maximum 16 MiB item and maximum+1, arbitrary bytes, multibyte, NUL/BOM and
+noncharacters, absolute offsets and error precedence, disjoint aliases,
+header overlap, exact arity, and whole arrays unchanged on rejection.
+The minimal scanner is only supplementary verification after cold
+expected bytes.
 
-Nove fixture indipendenti, cinque repliche di 4.096 chiamate con warmup
-128: 45 campioni con heap osservato zero. Baseline nulla e sensore positivo
-16×1 MiB, 16.777.472 byte osservati. NEXT, tutti i byte e le sentinelle
-alimentano token e sink ricalcolati dall'audit indipendente. Misura seriale
-83,243866 s, inclusi controlli dell'output, senza soglia di velocità;
-il contatore locale non costituisce prova assoluta di non allocazione.
+Two workers, two waves, 8,192 items each per wave: 32,768 writes
+and 32 MiB payload from shared immutable source to private
+destinations. Sinks 9,707,520/9,969,664 per wave and complete arrays checked.
+Observed overlap 47,821/47,752 ticks at 1,000,000 ticks/s in the preliminary run;
+bounded semaphores, joins, and cleanup. This verifies functional concurrency
+without certifying simultaneous core execution, scaling, or pool throughput.
 
-Otto mutazioni congelate: 8 DETECTED, zero SURVIVED/INVALID/WORKER-ERROR.
-Baseline completa riuscita, copie e cache private; 210 file per ciascuna
-delle nove copie nell'inventario dichiarato. L'audit confronta la baseline,
-la sostituzione unica e i log runtime: 11.828 controlli riusciti.
-Compilazione fallita, segnale OS o guasto dopo completamento non contano
-come rilevamento; i self-test esercitano anche questi casi con processi
-reali. L'overlap mutato ignora precisamente il byte iniziale della testata.
+<a id="heap-e-mutazioni"></a>
 
-## Copertura e verificatori
+## Heap and mutations
 
-Coverage del solo nuovo file: **256/308 espressioni, 39/52 rami**.
-Restano 52 espressioni e 13 esiti di ramo nel denominatore: sette
-dichiarazioni, 44 forme di errore interno e il default MAX-BYTES nella
-lambda-list, riga 99, percorso grezzo `(8 2 11)`, senza deduzioni di
-irraggiungibilità. I 13 esiti mancanti sono associati sintatticamente a guardie interne.
-Stato grezzo e due HTML concordano, verificati con 74 controlli.
-L'[inventario](cbor-stringhe-decisioni.md) conserva cinque AND e sei
-relazioni concatenate, senza esclusioni o attestazioni MC/DC/100%.
-Il gate C1 di ADR-0035 rimane aperto; il motore non è qualificato da questi dati.
+Nine independent fixtures, five replicates of 4,096 calls with warmup
+128: 45 samples with observed zero heap. Null baseline and positive sensor
+16×1 MiB, 16,777,472 bytes observed. NEXT, all bytes, and sentinels
+feed tokens and sinks recalculated by the independent audit. Serial measurement
+83.243866 s, including output checks, without a speed threshold;
+the local counter is not absolute proof of nonallocation.
 
-Il primo autotest del verificatore indipendente del benchmark fallisce
-con exit 1: mancavano i setter degli accessori delle fixture sintetiche.
-Il sorgente originale `1e0fe5b8…`, il processo fallito e il diff sono
-conservati. Il fix `ae591bf0…` aggiunge soltanto due setter: retry riuscito
-con quattro fixture positive e 54 negative, 37.424 controlli. Prodotto,
-driver di misura e corpus restano invariati. Il reader preserva T/NIL,
-blocca READ-EVAL e richiede EOF; il clock ammette l'ordine effettivo di
-raccolta dei metadati. Anche l'helper di coverage/mutazioni passa i propri
-self-test, derivati dal verificatore precedente preservato.
+Eight frozen mutations: 8 DETECTED, zero SURVIVED/INVALID/WORKER-ERROR.
+Complete baseline succeeds, private copies and caches; 210 files for each
+of nine copies in the declared inventory. The audit compares baseline,
+single substitution, and runtime logs: 11,828 successful checks.
+Failed compilation, OS signal, or post-completion failure does not count
+as detection; self-tests exercise these cases with real
+processes too. Mutated overlap ignores precisely the header's initial byte.
 
-Questi audit controllano coerenza dei dati e stabilità dei byte, senza
-autenticare l'esecuzione. L'inventario delle copie riguarda le impronte
-dichiarate; non attesta automaticamente la chiusura degli alberi privati.
-Le associazioni dei gap sono sintattiche e non dimostrano irraggiungibilità.
+<a id="copertura-e-verificatori"></a>
 
-## Conservazione e integrazione
+## Coverage and verifiers
 
-[Archivio originale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-string-write/archive-index.lisp)
-con processi, tentativo fallito, sorgenti congelati, helper, stato/HTML,
-copie e log. La compressione gzip preserva e verifica i byte ricostruiti;
-non riscrive campagne precedenti o deduce qualifiche dai loro esiti.
-L'audit chiuso verifica 2.026 file indicizzati e i due metadati dell'archivio,
-compresi i file nascosti: impronte e inventario completi, 15 processi.
+Coverage of only the new file: **256/308 expressions, 39/52 branches**.
+52 expressions and 13 branch outcomes remain in the denominator: seven
+declarations, 44 internal-error forms, and default MAX-BYTES in the
+lambda-list, line 99, raw path `(8 2 11)`, without unreachability
+deductions. The 13 missing outcomes are syntactically associated with internal guards.
+Raw state and two HTML files agree, verified with 74 checks.
+The [inventory](cbor-stringhe-decisioni.md) retains five AND forms and six
+chained relations, without exclusions or MC/DC/100% certification.
+ADR-0035's C1 gate remains open; these data do not qualify the engine.
 
-Integrazione su `ceac2dedfcfd6af05f2331282645bebf4b5be442`, conservando
-hash/key-hash, GET e suite EBR/read. `make check` passa in 172,707537 s,
-con sorgenti STABLE: 791 test nominali e due smoke, 793 nomi OK distinti,
-138 file prodotto senza violazioni, tracciabilità senza errori e dieci
-spike completati. I 643 elementi sorgente coincidono prima/dopo;
-compilazione senza avvisi, corpus e prodotto congelati invariati.
-Le due ondate del writer conservano i sink precedenti, con overlap
-49.011/47.867 tick a 1.000.000 tick/s. Il self-test dei selettori di coverage
-integrati passa separatamente. Blob ASD `4a4734596cada6eac70dda6709b4804a25acb9de`,
+The first self-test of the benchmark's independent verifier fails
+with exit 1: synthetic fixture accessor setters were missing.
+Original source `1e0fe5b8…`, failed process, and diff are
+preserved. Fix `ae591bf0…` adds only two setters: successful retry
+with four positive and 54 negative fixtures, 37,424 checks. Product,
+measurement driver, and corpus remain unchanged. The reader preserves T/NIL,
+blocks READ-EVAL, and requires EOF; the clock allows the actual
+metadata collection order. The coverage/mutation helper also passes its
+self-tests, derived from the preserved previous verifier.
+
+These audits check data consistency and byte stability without
+authenticating execution. Copy inventory concerns declared
+fingerprints; it does not automatically certify closure of private trees.
+Gap associations are syntactic and do not establish unreachability.
+
+<a id="conservazione-e-integrazione"></a>
+
+## Preservation and integration
+
+[Original archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-string-write/archive-index.lisp)
+with processes, failed attempt, frozen sources, helpers, state/HTML,
+copies, and logs. Gzip compression preserves and verifies reconstructed bytes;
+it neither rewrites earlier campaigns nor infers qualifications from their outcomes.
+The closed audit verifies 2,026 indexed files and the two archive metadata files,
+including hidden files: complete fingerprints and inventory, 15 processes.
+
+Integration on `ceac2dedfcfd6af05f2331282645bebf4b5be442`, retaining
+hash/key-hash, GET, and EBR/read suites. `make check` passes in 172.707537 s,
+with STABLE sources: 791 nominal tests and two smokes, 793 distinct OK names,
+138 product files without violations, traceability without errors, and ten
+completed spikes. The 643 source items match before/after;
+warning-free compilation, frozen corpus and product unchanged.
+The writer's two waves retain previous sinks, with overlap
+49,011/47,867 ticks at 1,000,000 ticks/s. Integrated coverage selector
+self-test passes separately. ASD blob `4a4734596cada6eac70dda6709b4804a25acb9de`,
 coverage `3a4af4b1efe2a2c37599ec804f6ed06c80733491`.
 
-L'[archivio finale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-string-write-final/archive-index.lisp)
-conserva raccolta, audit chiuso originale, controllo integrato, self-test,
-risultati dei dieci spike e copie dei due file di integrazione.
-Il passaggio dei controlli non chiude i gap C1/MC/DC descritti sopra.
+The [final archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-string-write-final/archive-index.lisp)
+preserves collection, original closed audit, integrated check, self-tests,
+results of ten spikes, and copies of the two integration files.
+Passing checks does not close the C1/MC/DC gaps described above.
 
-L'ulteriore aggiornamento di main `92decf4` aggiunge il collegamento
-worker/Serie; è unito nel commit `997f5e6505cdcf4554d5f99ede7d5743ce4be7bd`.
-Un secondo `make check` passa in 177,072076 s: 817 test nominali e due
-smoke, 819 nomi OK distinti, compilazione senza avvisi, lint su 142 file
-senza violazioni, tracciabilità senza errori e dieci spike completati.
-I 655 elementi sorgente restano STABLE; prodotto e corpus del writer
-sono invariati. Overlap delle due ondate 47.829/47.750 tick, sink invariati.
-L'ASD integrato ha blob `3b163722ff7b49e6ada85e37e21a7665cc7ce28f`;
-il driver coverage conserva il blob `3a4af4b1…`.
-Il [supplemento worker/Serie](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-string-write-worker-integration/archive-index.lisp)
-conserva il nuovo controllo completo, i suoi spike e i file integrati,
-senza riscrivere le campagne precedenti.
+The further main update `92decf4` adds the worker/Serie connection;
+it is merged in commit `997f5e6505cdcf4554d5f99ede7d5743ce4be7bd`.
+A second `make check` passes in 177.072076 s: 817 nominal tests and two
+smokes, 819 distinct OK names, warning-free compilation, lint on 142 files
+without violations, traceability without errors, and ten completed spikes.
+The 655 source items remain STABLE; writer product and corpus
+are unchanged. Overlap of both waves 47,829/47,750 ticks, sinks unchanged.
+Integrated ASD has blob `3b163722ff7b49e6ada85e37e21a7665cc7ce28f`;
+coverage driver retains blob `3a4af4b1…`.
+The [worker/Serie supplement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-string-write-worker-integration/archive-index.lisp)
+preserves the new full check, its spikes, and integrated files,
+without rewriting previous campaigns.

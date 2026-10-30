@@ -1,54 +1,56 @@
-# Decisioni della scansione strutturale CBOR
+<a id="decisioni-della-scansione-strutturale-cbor"></a>
 
-Inventario statico sul kernel congelato prima delle campagne. Le 20 decisioni
-composte nuove sono elencate sotto; header CBOR e UTF-8 invariati conservano
-gli inventari propri. Le righe si riferiscono allo snapshot della
-[seconda lettura](cbor-struttura-revisione.md). Nessuna guardia viene tolta dal
-denominatore della copertura. Le fixture indicano intenzioni di verifica;
-gli esiti di condizioni e rami devono ancora essere acquisiti. Non è una
-qualifica MC/DC e non sono approvate esclusioni.
+# CBOR structural-scanning decisions
 
-Le fixture sono in `tests/codec/cbor-structure.lisp`; il prefisso dei nomi è
-`test-REQ-AFF-004-cbor-structure-` oppure `test-REQ-AFF-008-cbor-structure-`.
-«Difesa interna» indica uno stato che non deve essere prodotto dal percorso
-pubblico rispettando tipi, ownership e helper; la classificazione non prova
-irraggiungibilità e non sostituisce la copertura grezza.
+Static inventory on kernel frozen before campaigns. The 20 new compound
+decisions are listed below; unchanged CBOR headers and UTF-8 retain
+their own inventories. Lines refer to the snapshot from the
+[second reading](cbor-struttura-revisione.md). No guard is removed from the
+coverage denominator. Fixtures indicate verification intent;
+condition and branch outcomes remain to be acquired. This is not
+MC/DC qualification and no exclusions are approved.
 
-| ID | File, funzione e riga | Condizioni della decisione | Fixture o limite |
+Fixtures are in `tests/codec/cbor-structure.lisp`; name prefix is
+`test-REQ-AFF-004-cbor-structure-` or `test-REQ-AFF-008-cbor-structure-`.
+"Internal defense" indicates a state that must not be produced by the public
+path when respecting types, ownership, and helpers; this classification does not prove
+unreachability or replace raw coverage.
+
+| ID | File, function, and line | Decision conditions | Fixture or limit |
 |---|---|---|---|
-| D01 | `cbor-space.lisp`, `crea-spazio-cbor`, 40 | kinds lungo 102; remaining lungo 102 | Factory esercitata da ogni fixture; esito capacity errato è difesa interna, ancora nel denominatore. |
-| D02 | stesso file/funzione, 43 | top zero; depth zero; array distinti | Factory e workspace privati; stato iniziale errato è difesa interna. |
-| D03 | `cbor-scan-input.lisp`, `check-limiti-struttura-cbor`, 11 | max-bytes index; max-bytes entro 16 MiB | `limit-configuration-and-order`, `byte-budget-and-exact-16-mib`: tipo, negativo, massimo e massimo+1. |
-| D04 | stessa funzione, 13 | max-nodes index; 1 <= max-nodes <= 16 MiB | `limit-configuration-and-order`, `node-boundaries-chunks-and-breaks`: tipo, zero, massimo e massimo+1. |
-| D05 | stessa funzione, 15 | max-depth index; max-depth <= 100 | `limit-configuration-and-order`, `depth-100-and-map-keys`: tipo, negativo, zero, 100/101. |
-| D06 | `check-input-struttura-cbor`, 26 | buffer octets semplice; start index; end index; start <= end <= length | `invalid-range-and-type-priority`: buffer generico, signed, adjusted, fill-pointer, displaced; ogni estremo invalido, range invertito, offset zero e span vuoto. |
-| D07 | `cbor-scan-stack.lisp`, `tipo-frame-cbor`, 13 | kind <= 6; kind zero se e solo se top zero | Corpus con tutti i frame; kind/posizione incompatibili sono difesa interna. |
-| D08 | `depila-frame-cbor`, 25 | kind array/map 1..4; depth zero | Chiusure di array/map e stringhe, profondità 100 e supplemento stringa nello slot 101; depth incoerente è difesa interna. |
-| D09 | `empila-frame-cbor`, 39 | kind <= 4; depth >= massimo fisso 100 | `depth-100-and-map-keys`; la guardia pubblica precede il push, esito di invariante è difesa interna. |
-| D10 | `inizia-figlio-cbor`, 60 | kind radice/definito <= 2; remaining zero | `tags-charge-parent-once`, array/map definite e indefinite; consumo oltre arità è difesa interna. |
-| D11 | `svuota-frame-cbor`, 102 | kind definito <= 2; remaining zero | Contenitori vuoti/non vuoti e radice, indefiniti chiusi con break; `rfc-definite-vectors`, `rfc-indefinite-vectors`. |
-| D12 | `cbor-scan-items.lisp`, `check-contesto-cbor`, 15 | form break; major diverso da 7 | Break e item ordinari; combinazione header incoerente è difesa interna del contratto header. |
-| D13 | stessa funzione, 18 | frame stringa indefinita kind >= 5; form non break | `chunks-same-type-and-header-first`, `node-boundaries-chunks-and-breaks`: chunk e break in stringhe; item fuori dalle stringhe. |
-| D14 | stessa funzione, 19 | form argument; major uguale a kind-3 | Chunk definiti bytes/testo validi, major errato e stringa indefinita annidata; `chunks-same-type-and-header-first`. |
-| D15 | `chiudi-break-cbor`, 36 | kind mappa indefinita; remaining positivo | `break-context-and-tag-priority`: map pari/dispari, array/stringhe; tag pendente rifiutato prima. |
-| D16 | `apri-contenitore-cbor`, 77 | high zero; low <= minimo byte rimasti (array: room, map: floor(room/2)) | `container-minimum-remaining-bytes`, `payload-width-and-huge-unsigned-lengths`: arità esatta, mancante e high nonzero. Profondità verificata prima. |
-| D17 | `verifica-stringa-cbor`, 100 | high zero; low <= end-next | Stringhe vuote/piene, payload troncato e parole u64 enormi; `valid-unicode-and-chunk-locality`, `payload-width-and-huge-unsigned-lengths`. |
-| D18 | `cbor-scan.lisp`, `passo-struttura-cbor`, 26 | lead < cursore dopo passo; cursore <= end | Tutte le fixture pubbliche, troncature, fuzz e corpus; violazioni sono difesa interna. |
-| D19 | `risultato-struttura-cbor`, 38 | 1 <= nodes <= max-nodes; peak-depth <= max-depth | `node-boundaries-chunks-and-breaks`, `depth-100-and-map-keys`, scalar depth zero; risultato oltre budget è difesa interna. |
-| D20 | stessa funzione, 41 | top zero; depth zero; nessun tag pendente | Item conclusi e tag/chunk/container misti; stato residuo su successo è difesa interna. |
+| D01 | `cbor-space.lisp`, `crea-spazio-cbor`, 40 | kinds length 102; remaining length 102 | Factory exercised by every fixture; incorrect capacity outcome is internal defense, still in denominator. |
+| D02 | same file/function, 43 | top zero; depth zero; distinct arrays | Factory and private workspaces; incorrect initial state is internal defense. |
+| D03 | `cbor-scan-input.lisp`, `check-limiti-struttura-cbor`, 11 | max-bytes index; max-bytes within 16 MiB | `limit-configuration-and-order`, `byte-budget-and-exact-16-mib`: type, negative, maximum, and maximum+1. |
+| D04 | same function, 13 | max-nodes index; 1 <= max-nodes <= 16 MiB | `limit-configuration-and-order`, `node-boundaries-chunks-and-breaks`: type, zero, maximum, and maximum+1. |
+| D05 | same function, 15 | max-depth index; max-depth <= 100 | `limit-configuration-and-order`, `depth-100-and-map-keys`: type, negative, zero, 100/101. |
+| D06 | `check-input-struttura-cbor`, 26 | simple octets buffer; start index; end index; start <= end <= length | `invalid-range-and-type-priority`: generic, signed, adjusted, fill-pointer, displaced buffer; every invalid endpoint, reversed range, zero offset, and empty span. |
+| D07 | `cbor-scan-stack.lisp`, `tipo-frame-cbor`, 13 | kind <= 6; kind zero iff top zero | Corpus with all frames; incompatible kind/position is internal defense. |
+| D08 | `depila-frame-cbor`, 25 | array/map kind 1..4; depth zero | Array/map and string closure, depth 100, and string supplement in slot 101; inconsistent depth is internal defense. |
+| D09 | `empila-frame-cbor`, 39 | kind <= 4; depth >= fixed maximum 100 | `depth-100-and-map-keys`; public guard precedes push, invariant outcome is internal defense. |
+| D10 | `inizia-figlio-cbor`, 60 | root/definite kind <= 2; remaining zero | `tags-charge-parent-once`, definite and indefinite arrays/maps; consumption beyond arity is internal defense. |
+| D11 | `svuota-frame-cbor`, 102 | definite kind <= 2; remaining zero | Empty/nonempty containers and root, indefinite forms closed with break; `rfc-definite-vectors`, `rfc-indefinite-vectors`. |
+| D12 | `cbor-scan-items.lisp`, `check-contesto-cbor`, 15 | form break; major other than 7 | Break and ordinary items; inconsistent header combination is internal defense of header contract. |
+| D13 | same function, 18 | indefinite-string frame kind >= 5; non-break form | `chunks-same-type-and-header-first`, `node-boundaries-chunks-and-breaks`: chunks and breaks in strings; items outside strings. |
+| D14 | same function, 19 | form argument; major equals kind-3 | Valid definite bytes/text chunks, wrong major, and nested indefinite string; `chunks-same-type-and-header-first`. |
+| D15 | `chiudi-break-cbor`, 36 | indefinite-map kind; positive remaining | `break-context-and-tag-priority`: even/odd maps, arrays/strings; pending tag rejected first. |
+| D16 | `apri-contenitore-cbor`, 77 | high zero; low <= minimum remaining bytes (array: room, map: floor(room/2)) | `container-minimum-remaining-bytes`, `payload-width-and-huge-unsigned-lengths`: exact arity, missing, and nonzero high. Depth checked first. |
+| D17 | `verifica-stringa-cbor`, 100 | high zero; low <= end-next | Empty/full strings, truncated payload, and huge u64 words; `valid-unicode-and-chunk-locality`, `payload-width-and-huge-unsigned-lengths`. |
+| D18 | `cbor-scan.lisp`, `passo-struttura-cbor`, 26 | lead < cursor after step; cursor <= end | All public fixtures, truncations, fuzz, and corpus; violations are internal defense. |
+| D19 | `risultato-struttura-cbor`, 38 | 1 <= nodes <= max-nodes; peak-depth <= max-depth | `node-boundaries-chunks-and-breaks`, `depth-100-and-map-keys`, depth-zero scalar; over-budget result is internal defense. |
+| D20 | same function, 41 | top zero; depth zero; no pending tag | Completed items and mixed tags/chunks/containers; residual state on success is internal defense. |
 
-Le selezioni semplici preservano anche le precedenze contrattuali:
+Simple selections also preserve contractual precedence:
 
-| Sequenza | Ordine osservabile da verificare |
+| Sequence | Observable order to verify |
 |---|---|
-| Preflight | range → workspace → alias EQ kinds → byte-limit → node-limit → depth-limit → byte-budget; prima di reset, anche su span vuoto. |
-| Item | header → contesto del chunk → break oppure node-budget → consumo del figlio → payload/contenitore. |
-| Break | tag pendente → frame non indefinito → map con valore mancante → chiusura di un frame. Break non conta come nodo. |
-| Contenitore | node-budget già verificato → depth-budget → high/low/arità minima → push. Per map la moltiplicazione 2N segue il confronto con floor(room/2). |
-| Testo | payload intero disponibile → UTF-8 per singolo chunk → avanzamento. Header e UTF-8 propagano reason/offset della primitiva. |
-| Radice | drain dei frame definiti → controllo trailing senza leggere il byte seguente → tre valori dopo le postcondizioni. |
-| Tag | nodo contato e pending; nessun frame o figlio addebitato finché comincia il terminale non-tag. |
+| Preflight | range → workspace → alias EQ kinds → byte-limit → node-limit → depth-limit → byte-budget; before reset, even on empty span. |
+| Item | header → chunk context → break or node-budget → child consumption → payload/container. |
+| Break | pending tag → non-indefinite frame → map with missing value → close one frame. Break does not count as node. |
+| Container | node-budget already checked → depth-budget → high/low/minimum arity → push. For map, multiplication 2N follows comparison with floor(room/2). |
+| Text | complete payload available → UTF-8 per chunk → advancement. Header and UTF-8 propagate primitive reason/offset. |
+| Root | drain definite frames → trailing check without reading next byte → three values after postconditions. |
+| Tag | node counted and pending; no frame or child charged until non-tag terminal begins. |
 
-Restano nel sorgente e nel denominatore anche guardie semplici, `otherwise`
-di `case`, fallback del ciclo e condizioni di capacità/progresso. L'inventario
-non restringe la futura copertura ai soli errori pubblici o alle 20 decisioni.
+Simple guards, `otherwise` in `case`, loop fallback, and capacity/progress
+conditions also remain in source and denominator. Inventory
+does not restrict future coverage to public errors or the 20 decisions.

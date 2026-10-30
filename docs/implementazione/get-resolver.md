@@ -1,167 +1,177 @@
-# Resolver GET dei segmenti CLOSED
+<a id="resolver-get-dei-segmenti-closed"></a>
 
-Il modulo [`arcdocdb.get.resolver`](../../src/get-resolver/) collega il
-[nucleo GET](get-record.md) ai segmenti CLOSED nominati dal
-[manifest](manifest-control-log.md). Risolve posizione, flag storage, CSN e
-offset della prova OUTCOME mediante una mappa immutabile verificata.
+# GET resolver for CLOSED segments
 
-È un componente del percorso di lettura, con **qualifica C1 aperta**.
-Il [percorso ACTIVE ordinario](get-active.md) ha un ponte dedicato alla radice
-del controller. Le prove ACTIVE multiserie, la directory delle capacità, le prove EDIT e il server
-restano da integrare. Non modifica le decisioni architetturali o i formati.
-Riferimenti: [ADR-0037](../adr/0037-lotto-sigillato.md),
+The [`arcdocdb.get.resolver`](../../src/get-resolver/) module connects
+[GET core](get-record.md) to CLOSED segments named by
+[manifest](manifest-control-log.md). Resolves position, storage flags, CSN, and
+OUTCOME-proof offset through a verified immutable map.
+
+A read-path component, with **C1 qualification open**.
+The [ordinary ACTIVE path](get-active.md) has a dedicated bridge to controller
+root. ACTIVE multiseries proofs, capability directory, EDIT proofs, and server
+remain to integrate. Does not change architecture decisions or formats.
+References: [ADR-0037](../adr/0037-lotto-sigillato.md),
 [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md),
 [ADR-0044](../adr/0044-cache-acceleratore-puro.md),
 [ADR-0047](../adr/0047-verifica-csn-dei-record-prepared.md).
 
-## Costruzione e autorità
+<a id="costruzione-e-autorità"></a>
 
-`crea-mappa-segmento-get(view, file, manifest, id, buffer, …)` si esegue nel
-pool I/O, fuori dai GET. Il controller associa manifest e vista della stessa
-Serie; il manifest attuale non porta un'identità Serie verificabile dal
-resolver. Il file è readonly e il segmento rimane immutabile.
+## Construction and authority
 
-1. Verifica budget, ID positivo u32 e stato CLOSED nel manifest. ACTIVE,
-   REMOVED e UNKNOWN sono rifiutati. Un ID u64 oltre u32 richiede un futuro
-   layout dell'indice: non viene troncato.
-2. Prende `valid-bytes` dalla chiusura del manifest. Un limite impossibile è
-   corruzione; buffer o budget insufficienti sono `resource-exhausted`.
-   La dimensione fisica del file non sostituisce questa frontiera.
-3. Costruisce la capacità GET leggendo e verificando l'header dal file dato.
-   Legge il resto **dallo stesso FD**, soltanto fino a `valid-bytes`.
-4. Per origine writer verifica tutti i lotti, i SEAL, il file-id, i confini,
-   il checksum del lotto e i CRC dei record. La frontiera deve terminare
-   esattamente dopo un lotto completo. Per origine compaction riusa il
-   verificatore CLOSED: solo PUT/TOMBSTONE ordinari.
-5. Conta PUT e OUTCOME, autorizza il picco del payload, copia le prove in
-   array u32 e le ordina stabilmente per TXID con otto passate radix limitate.
-   Duplicati con lo stesso CSN sono ammessi; CSN discordi producono corruzione.
-6. Costruisce una riga compatta per ogni PUT, in ordine fisico. Un prepared
-   risolto conserva CSN e offset dell'OUTCOME successivo al PUT. Un prepared
-   senza esito conserva prova zero; non può essere restituito da un GET.
+`crea-mappa-segmento-get(view, file, manifest, id, buffer, …)` runs in
+I/O pool outside GETs. Controller associates manifest and view of same
+Serie; current manifest carries no Serie identity verifiable by
+resolver. File is read-only and segment remains immutable.
 
-Il buffer deve restare esclusivo e stabile dall'I/O al ritorno. La verifica
-integrale del body avviene nel passo 4. Gli attraversamenti successivi
-ricontrollano CRC e forma delle intestazioni, senza scandire di nuovo i body;
-la copia degli OUTCOME verifica nuovamente anche il loro body. Le passate
-interne non sono parser autonomi e non sono esportate.
-Senza OUTCOME si evita l'attraversamento dedicato alla copia delle prove.
+1. Checks budgets, positive u32 ID, and CLOSED state in manifest. ACTIVE,
+   REMOVED, and UNKNOWN rejected. A u64 ID beyond u32 requires future
+   index layout: it is not truncated.
+2. Takes `valid-bytes` from manifest closure. Impossible limit is
+   corruption; insufficient buffer or budget is `resource-exhausted`.
+   Physical file size does not replace this frontier.
+3. Builds GET capability by reading and verifying header from supplied file.
+   Reads remainder **from same FD**, only through `valid-bytes`.
+4. For writer origin, verifies all batches, SEALs, file-id, boundaries,
+   batch checksum, and record CRCs. Frontier must end
+   exactly after a complete batch. For compaction origin, reuses CLOSED
+   verifier: ordinary PUT/TOMBSTONE only.
+5. Counts PUTs and OUTCOMEs, authorizes payload peak, copies proofs into
+   u32 arrays, and stably sorts by TXID through eight bounded radix passes.
+   Duplicates with same CSN allowed; mismatched CSNs produce corruption.
+6. Builds a compact row for each PUT in physical order. A resolved prepared
+   retains CSN and offset of OUTCOME following PUT. A prepared record
+   without outcome retains zero proof; cannot be returned by GET.
 
-Non si usa il classificatore TAIL: qui si verifica un prefisso fissato dal
-manifest, senza affermare che coincida con l'EOF fisico. Eventuali byte oltre
-la frontiera rimangono intatti e non vengono letti.
+Buffer must stay exclusive and stable from I/O until return. Full
+body verification occurs in step 4. Later traversals
+recheck header CRCs and shape without rescanning bodies;
+OUTCOME copying reverifies their bodies too. Internal
+passes are not standalone parsers and are not exported.
+Without OUTCOME, dedicated proof-copy traversal is avoided.
 
-La chiusura che contiene esiti aggiuntivi nell'EDIT è rifiutata con
-`invalid-argument / :resolver-edit-proof-unsupported` prima dell'I/O. È un
-caso valido del formato ancora da implementare, senza interpretazioni
-approssimative dei metadati come prova durevole.
+TAIL classifier not used: a manifest-fixed prefix is verified here,
+without claiming it matches physical EOF. Any bytes beyond
+frontier remain intact and unread.
 
-## Memoria e lavoro limitato
+Closure containing additional outcomes in EDIT is rejected with
+`invalid-argument / :resolver-edit-proof-unsupported` before I/O. A
+valid format case still to implement, without approximate
+interpretation of metadata as durable proof.
 
-| Struttura | Payload |
+<a id="memoria-e-lavoro-limitato"></a>
+
+## Memory and bounded work
+
+| Structure | Payload |
 |---|---|
-| Mappa permanente | `24 × P` byte, P = numero di PUT nel prefisso |
-| Prove temporanee | `20 × O` byte, O = numero di OUTCOME, inclusi duplicati |
-| Scratch radix, se O ≥ 2 | altri `20 × O + 1024` byte |
-| Buffer sorgente | del caller, capacità almeno `valid-bytes` |
+| Permanent map | `24 × P` bytes, P = PUT count in prefix |
+| Temporary proofs | `20 × O` bytes, O = OUTCOME count, including duplicates |
+| Radix scratch, if O ≥ 2 | additional `20 × O + 1024` bytes |
+| Source buffer | caller's, capacity at least `valid-bytes` |
 
-Il picco degli array creati è quindi `24P + 20O`, oppure
-`24P + 40O + 1024` per O ≥ 2. `budget-payload` lo controlla **prima** degli
-array. `payload-mappa-segmento-get` riporta soltanto `24P` dopo la costruzione.
-Questi valori escludono oggetti/header Lisp, FD, buffer del caller e GC;
-non sono un limite dell'RSS. Il garbage collector può trattenere lo scratch
-anche dopo il ritorno. Nessun oggetto Lisp viene creato per singola riga.
+Created-array peak is therefore `24P + 20O`, or
+`24P + 40O + 1024` for O ≥ 2. `budget-payload` checks it **before**
+arrays. `payload-mappa-segmento-get` reports only `24P` after construction.
+Values exclude Lisp objects/headers, FDs, caller buffer, and GC;
+not an RSS bound. Garbage collector may retain scratch
+after return too. No Lisp object created per row.
 
-I default sono 256 MiB di prefisso, 1.048.576 record non-SEAL, 65.536 lotti,
-65.536 record per lotto, 64 MiB per lotto e 64 MiB di payload allocato.
-Sono budget di questa costruzione, configurabili entro i formati esistenti;
-non restringono i limiti documentali. Il caller deve già possedere il buffer
-sorgente e il controller deve contabilizzare anche i costruttori simultanei.
+Defaults are 256 MiB prefix, 1,048,576 non-SEAL records, 65,536 batches,
+65,536 records per batch, 64 MiB per batch, and 64 MiB allocated payload.
+Construction budgets configurable within existing formats;
+do not restrict document limits. Caller must already own source
+buffer, and controller must account for concurrent constructors too.
 
-Ogni attraversamento è limitato dai byte disponibili; count e budget sono
-controllati. Ordinamento `O(8 × (O + 256))`, risoluzione delle righe prepared
-`O(P × log(O + 1))`, ricerca GET `O(log(P + 1))`, al massimo 33 passi.
-La costruzione è un percorso freddo: I/O, scansione integrale e allocazioni
-sono ammessi, il loro costo deve ancora essere misurato.
+Each traversal bounded by available bytes; counts and budgets
+checked. Sorting `O(8 × (O + 256))`, prepared-row resolution
+`O(P × log(O + 1))`, GET lookup `O(log(P + 1))`, at most 33 steps.
+Construction is cold path: I/O, full scanning, and allocations
+permitted; costs still to measure.
 
-## Lettura, lifetime e risposta
+<a id="lettura-lifetime-e-risposta"></a>
 
-Il controller pubblica la mappa **prima** che un reader possa osservare una
-location dell'indice che la richiede. Conserva capacità e FD fino al reclaim
-autorizzato EBR. La mappa non pubblica radici, non gestisce il manifest e non
-chiude file. Una capacità Lisp non sostituisce l'autorizzazione EBR.
+## Reading, lifetime, and response
 
-Il driver installa il cleanup GET prima di `avvia-get`. Dopo `:candidate`
-acquisisce la mappa dalla directory del controller nella stessa epoca:
+Controller publishes map **before** a reader can observe an
+index location requiring it. Retains capabilities and FDs until EBR-authorized
+reclamation. Map neither publishes roots, manages manifest, nor
+closes files. A Lisp capability does not replace EBR authorization.
 
-| API | Esito e responsabilità |
+Driver installs GET cleanup before `avvia-get`. After `:candidate`,
+acquires map from controller directory in same epoch:
+
+| API | Outcome and responsibility |
 |---|---|
-| `risolvi-candidato-get(context, map)` | capacità, frontiera, flag storage e offset OUTCOME/NIL |
-| `sonda-cache-risolta-get(context, map)` | esiti del probe GET, senza I/O; prepared → `:proof-required` |
-| `leggi-record-risolto-get(context, map)` | esiti della lettura GET, soltanto nel pool I/O |
+| `risolvi-candidato-get(context, map)` | capability, frontier, storage flags, and OUTCOME offset/NIL |
+| `sonda-cache-risolta-get(context, map)` | GET probe outcomes, without I/O; prepared → `:proof-required` |
+| `leggi-record-risolto-get(context, map)` | GET read outcomes, only in I/O pool |
 
-La risoluzione verifica vista, segment-id, FD ancora aperto, offset esatto,
-lunghezza e CSN del candidato, flag e posizione della prova. Un miss della
-mappa per una location già pubblicata è un guasto di integrità: **non**
-diventa un documento assente. Il flag LIVE dell'indice non è PREPARED.
-Il resolver non modifica array, indice, cache, registri o contatori condivisi.
+Resolution checks view, segment-id, still-open FD, exact offset,
+candidate length and CSN, flags, and proof position. Map miss
+for an already-published location is an integrity fault: does **not**
+become an absent document. Index LIVE flag is not PREPARED.
+Resolver modifies no arrays, index, cache, registries, or shared counters.
 
-Per i prepared la mappa è un acceleratore derivato: il nucleo GET rilegge
-l'OUTCOME dallo stesso FD, ne verifica CRC, TXID e CSN anche prima di una
-cache hit. Per ogni valore restano i controlli CRC, chiave e versione del GET.
-La mappa non autorizza da sola una risposta.
+For prepared records, map is a derived accelerator: GET core rereads
+OUTCOME from same FD, verifies CRC, TXID, and CSN even before
+cache hit. GET CRC, key, and version checks remain for every value.
+Map alone does not authorize response.
 
-`copia-valore-get` produce output provvisorio; `concludi-get`, con tempo fresco
-dopo copia/ultimo accesso, verifica lo snapshot e rilascia EBR prima di
-autorizzare il valore. Su errore o uscita non locale si scarta il risultato.
-Gli invarianti del resolver rendono il contesto FAULTED; il confine worker
-deve isolare Serie/Archivio secondo la causa. Errori della sorgente propagano.
-Un ordine d'API errato è rifiutato prima di assumere un nuovo cleanup.
+`copia-valore-get` produces provisional output; `concludi-get`, with fresh time
+after copy/last access, checks snapshot and releases EBR before
+authorizing value. Error or nonlocal exit discards result.
+Resolver invariants make context FAULTED; worker boundary
+must isolate Serie/Archivio according to cause. Source errors propagate.
+Incorrect API order rejected before assuming new cleanup.
 
-Prima della migrazione si abbandona GET e si scartano mappa, capacità,
-location e prova. Il nuovo worker ricomincia da richiesta e indice sotto una
-nuova epoca. Il modulo conserva la semantica `:history-required`: non cerca
-le versioni storiche e non inventa l'assenza per uno snapshot.
+Before migration, abandon GET and discard map, capability,
+location, and proof. New worker restarts from request and index under
+new epoch. Module retains `:history-required` semantics: does not search
+historical versions or invent absence for a snapshot.
 
-## Decisioni composte e qualifica
+<a id="decisioni-composte-e-qualifica"></a>
 
-I requisiti interessati restano **progettati**: REQ-IDX-001, REQ-FOR-001/003/004,
+## Compound decisions and qualification
+
+Affected requirements remain **designed**: REQ-IDX-001, REQ-FOR-001/003/004,
 REQ-STO-006, REQ-CCH-002, REQ-CMP-007, REQ-CON-004, REQ-AFF-002/008.
-Invarianti toccati: INV-A2, INV-F2, INV-S7 e protezione EBR del reclaim.
+Affected invariants: INV-A2, INV-F2, INV-S7, and EBR reclamation protection.
 
-| ID | Decisione composta | Copertura richiesta |
+| ID | Compound decision | Required coverage |
 |---|---|---|
-| RSG-D01 | configurazione: byte, count, batch e payload | ogni limite/zero, prima degli effetti |
-| RSG-D02 | capacità sorgente: budget byte oppure buffer | ognuna insufficiente, entrambe sufficienti |
-| RSG-D03 | risultato lotto: progresso, fine, stamp, frontiera | ogni risultato impossibile separato |
-| RSG-D04 | compaction: fine/versione/count/budget | ogni discordanza separata |
-| RSG-D05 | copia prova: fine/tipo/flag/key/value | ogni discordanza separata |
-| RSG-D06 | radix: source/target/alias/istogramma | ogni violazione prima della distribuzione |
-| RSG-D07 | ordine TXID: high crescente oppure high uguale e low crescente | confini u32 e inversioni |
-| RSG-D08 | duplicato TXID e uguaglianza CSN high/low | entrambe le word divergenti, duplicati identici |
-| RSG-D09 | prima prova: indice presente e TXID high/low | miss ai bordi e high/low diversi |
-| RSG-D10 | binary TXID: high minore oppure uguale e low minore | entrambe le direzioni, duplicati |
-| RSG-D11 | riga: progresso e capacità residua | ciascun confine |
-| RSG-D12 | candidato: size, word riservata, CSN low/high | ogni word discordante, u64 alto |
-| RSG-D13 | flag: u8 e maschera PUT | word eccedente e bit non ammessi |
-| RSG-D14 | identità segmento: high zero e low uguale | high nonzero e segmento diverso |
-| RSG-D15 | lifetime FD: readonly e open | modo errato e chiusura anticipata |
+| RSG-D01 | configuration: bytes, count, batches, and payload | every limit/zero, before effects |
+| RSG-D02 | source capacity: byte budget or buffer | each insufficient, both sufficient |
+| RSG-D03 | batch result: progress, end, stamp, frontier | each impossible result separately |
+| RSG-D04 | compaction: end/version/count/budget | each mismatch separately |
+| RSG-D05 | proof copy: end/type/flags/key/value | each mismatch separately |
+| RSG-D06 | radix: source/target/alias/histogram | each violation before distribution |
+| RSG-D07 | TXID order: increasing high or equal high and increasing low | u32 boundaries and inversions |
+| RSG-D08 | duplicate TXID and CSN high/low equality | both words diverging, identical duplicates |
+| RSG-D09 | first proof: present index and TXID high/low | boundary misses and different high/low |
+| RSG-D10 | binary TXID: lower high or equal high and lower low | both directions, duplicates |
+| RSG-D11 | row: progress and remaining capacity | each boundary |
+| RSG-D12 | candidate: size, reserved word, CSN low/high | each mismatched word, high u64 |
+| RSG-D13 | flags: u8 and PUT mask | excess word and prohibited bits |
+| RSG-D14 | segment identity: zero high and equal low | nonzero high and different segment |
+| RSG-D15 | FD lifetime: read-only and open | wrong mode and early close |
 
-Restano da verificare anche i rami semplici: segmento vuoto, tombstone,
-frontiera nel mezzo di un lotto, tail oltre la frontiera, prepared abortito,
-OUTCOME antecedente, duplicati discordi, saturazione, interruzione della
-costruzione, cleanup/reentry/migrazione e corruzione di sorgente/mappa.
-I controlli di API/EBR/copia del nucleo GET restano nel suo contratto.
+Simple branches also remain to verify: empty segment, tombstone,
+frontier mid-batch, tail beyond frontier, aborted prepared,
+preceding OUTCOME, mismatched duplicates, saturation, construction interruption,
+cleanup/reentry/migration, and source/map corruption.
+GET core API/EBR/copy checks remain in its contract.
 
-La [campagna conservata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-resolver/README.md)
-contiene compilazione, controlli statici e due letture locali dell'autore.
-Non aggiunge né esegue localmente test, modelli, fault injection o benchmark.
-Allocazioni reali del GET, latenza, costo di costruzione e concorrenza restano
-da misurare; revisione indipendente e qualifica C1 non sono dichiarate concluse.
+The [preserved campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-resolver/README.md)
+contains compilation, static checks, and two local author readings.
+Adds and locally runs no tests, models, fault injection, or benchmarks.
+Actual GET allocations, latency, construction cost, and concurrency remain
+to measure; independent review and C1 qualification not declared complete.
 
-La [suite funzionale dedicata alle prove OUTCOME](get-resolver-verifica.md)
-aggiunge 42 test di costruzione, ordinamento/ricerca e lettura, con file
-readonly v1/v2 e oracoli wire indipendenti. Conserva il
-[metodo preregistrato](get-resolver-metodo.md) e risultati attribuiti al freeze
-locale. La lettura indipendente e la copertura diagnostica di questa suite
-non chiudono qualifica C1 o MC/DC dell'intero componente.
+The [functional suite dedicated to OUTCOME proofs](get-resolver-verifica.md)
+adds 42 construction, sorting/lookup, and reading tests, with v1/v2 read-only
+files and independent wire oracles. Preserves
+[preregistered method](get-resolver-metodo.md) and results attributed to local
+freeze. Independent reading and diagnostic coverage of this suite
+close neither C1 qualification nor whole-component MC/DC.

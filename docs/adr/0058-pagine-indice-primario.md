@@ -1,70 +1,78 @@
-# ADR-0058 — Pagine derivate dell'indice primario
+<a id="adr-0058--pagine-derivate-dellindice-primario"></a>
 
-- **Stato:** Accettata nell'implementazione incrementale autorizzata dall'autore
-- **Data:** 2026-10-22
-- **Rapporto con la specifica:** concretizza il formato di pagina di ADR-0049 e
-  l'incremento I2 di ADR-0057; non sostituisce il primario residente, i log o il commit
-- **Riferimenti:** REQ-IDX-009, INV-I8, INV-A2, INV-A8, INV-P6;
-  [formato e verifica](../implementazione/pagine-indice.md)
+# ADR-0058 — Derived primary-index pages
 
-## Decisione
+- **Status:** Accepted in the incremental implementation authorized by the author
+- **Date:** 2026-10-22
+- **Relationship to the specification:** makes ADR-0049's page format and
+  ADR-0057 increment I2 concrete; does not replace the resident primary index, logs, or commit
+- **References:** REQ-IDX-009, INV-I8, INV-A2, INV-A8, INV-P6;
+  [format and verification](../implementazione/pagine-indice.md)
 
-Il formato ARCIPG01, versione 1, usa pagine little-endian di 4096, 16384 o
-65536 byte. La dimensione sara' uniforme in un'immagine dell'indice e non
-cambiera' in-place. L'header di 96 byte contiene identita' della Serie,
-immagine, offset fisico, generazione, geometria e due CRC32C distinti.
-Il codec opera soltanto su buffer posseduti; non scrive file o root.
+<a id="decisione"></a>
 
-Tre tipi: bucket flat con controlli a sette bit e gruppi da 16, directory
-radix con PageRef da 16 byte, frammento di chiave. Il bucket conserva digest,
-CSN, location e lunghezza v2; nessun albero ordinato sostituisce la ricerca
-flat. Non si serializzano seqlock o oggetti Lisp. Un bucket immutabile usa
-solo EMPTY e fingerprint vivi, senza tombstone; DELETE e history restano
-responsabilita' del futuro backend e dei protocolli MVCC esistenti.
+## Decision
 
-PageRef = (offset, generazione), nel dominio (Serie, immagine, dimensione).
-Zero/zero e' assenza. Gli offset positivi sono allineati, sotto 2^60 e mai
-riutilizzati nella stessa immagine. Ogni riferimento punta a offset minore
-del genitore e generazione non maggiore: si costruiscono figli prima dei
-genitori, inclusi overflow e frammenti di chiave dal fondo. I grafi locali
-non possono formare cicli; raggiungibilita', copertura e durabilita' complete
-sono ancora obblighi dell'integrazione. Nessun wrap o riciclo di identita'.
+The ARCIPG01 format, version 1, uses little-endian pages of 4096, 16384, or
+65536 bytes. Size will be uniform within an index image and will not
+change in place. The 96-byte header contains Serie and image identity,
+physical offset, generation, geometry, and two separate CRC32Cs.
+The codec operates only on owned buffers; it does not write files or roots.
 
-Le chiavi inline sono impacchettate in ordine fisico degli slot, senza
-sovrapposizioni o buchi. Le chiavi esterne, fino a 65535 byte, usano frammenti
-con totale e posizione verificabili. Catene e hash identici non si considerano
-risolti dal digest: il futuro lookup confronta i byte completi con budget
-esplicito. Il codec controlla forma e sondaggio locale, non ricalcola l'hash
-senza il seme autorevole e non certifica unicita' o visibilita' committed.
+Three types: flat bucket with seven-bit controls and groups of 16, radix
+directory with 16-byte PageRefs, key fragment. The bucket retains digest,
+CSN, location, and v2 length; no ordered tree replaces flat
+lookup. Seqlocks and Lisp objects are not serialized. An immutable bucket uses
+only EMPTY and live fingerprints, without tombstones; DELETE and history remain
+the responsibility of the future backend and existing MVCC protocols.
 
-## Fondamento e alternative
+PageRef = (offset, generation), in the domain (Serie, image, size).
+Zero/zero means absence. Positive offsets are aligned, below 2^60, and never
+reused within the same image. Each reference points to a lower offset
+and a generation no greater than its parent's: children are built before
+parents, including overflow and key fragments from the end. Local graphs
+cannot form cycles; full reachability, coverage, and durability
+remain integration obligations. No wrapping or recycling of identities.
 
-- [Swiss tables](https://abseil.io/about/design/swisstables): controlli compatti
-  e fingerprint; coerenti con ADR-0015/0043 e il codice residente.
+Inline keys are packed in physical slot order, without
+overlaps or gaps. External keys, up to 65535 bytes, use fragments
+with verifiable total and position. Chains and identical hashes are not
+resolved by the digest: future lookup compares all bytes with an explicit
+budget. The codec checks form and local probing; it does not recalculate the hash
+without the authoritative seed or certify uniqueness or committed visibility.
+
+<a id="fondamento-e-alternative"></a>
+
+## Rationale and alternatives
+
+- [Swiss tables](https://abseil.io/about/design/swisstables): compact controls
+  and fingerprints; consistent with ADR-0015/0043 and the resident code.
 - [PostgreSQL hash](https://www.postgresql.org/docs/13/hash-implementation.html):
-  bucket e pagine di overflow sono un pattern persistente consolidato.
+  buckets and overflow pages are an established persistent pattern.
 - [SQLite](https://www.sqlite.org/fileformat.html#cell_payload_overflow_pages):
-  pagine dedicate ai payload lunghi evitano un limite implicito pari alla pagina.
-- [CouchDB](https://docs.couchdb.org/en/stable/intro/overview.html): strutture
-  derivate append-only; la topologia con figli precedenti e' una scelta specifica
-  verificabile di ArcDocDB, non una garanzia ereditata da CouchDB.
+  dedicated long-payload pages avoid an implicit page-size limit.
+- [CouchDB](https://docs.couchdb.org/en/stable/intro/overview.html):
+  derived append-only structures; the topology with earlier children is a specific,
+  verifiable ArcDocDB choice, not a guarantee inherited from CouchDB.
 
-Un B-tree cambierebbe algoritmo e carico senza evidenza necessaria. Una sola
-directory residente riprodurrebbe il limite RAM. mmap non rende esplicito
-il budget dei frame. Si supportano tutte e tre le taglie; una preferenza
-prestazionale richiede benchmark e non si deduce dal codec.
+A B-tree would change the algorithm and workload without the necessary evidence. A single
+resident directory would reproduce the RAM limit. mmap does not make
+frame budgets explicit. All three sizes are supported; a performance
+preference requires benchmarks and cannot be inferred from the codec.
 
-## Atomicita', rollback e limiti
+<a id="atomicita-rollback-e-limiti"></a>
 
-Serializzare e verificare una pagina prepara soltanto un derivato in RAM.
-Il formato non contiene un nuovo commit marker; SEAL/EDIT/DECISION mantengono
-autorita'. File container, assegnazione delle identita', pubblicazione delle
-root, flush, snapshot, cache, reclamation e recovery oltre RAM saranno integrati
-separatamente prima dell'uso nel motore. Un'immagine incompleta non e' pronta.
-Il rollback corrente rimuove il codec non collegato, senza migrare dati utente.
+## Atomicity, rollback, and limits
 
-I2 qualifica la rappresentazione locale, non il grafo completo, lo storage
-oltre RAM, il progresso lock-free o le prestazioni. Le verifiche includono
-fixture indipendenti per tre taglie/tipi, chiavi massime, collisioni, overflow,
-pagina piena, directory da split, troncamenti, CRC, identita' e alterazioni con
-CRC ricalcolati. Nessuna modifica agli ADR gia' accettati e agli archivi chiusi.
+Serializing and verifying a page only prepares a derived object in RAM.
+The format contains no new commit marker; SEAL/EDIT/DECISION retain
+authority. File container, identity allocation, root publication,
+flush, snapshots, cache, reclamation, and recovery beyond RAM will be integrated
+separately before use in the engine. An incomplete image is not ready.
+Current rollback removes the unconnected codec without migrating user data.
+
+I2 qualifies the local representation, not the complete graph, storage
+beyond RAM, lock-free progress, or performance. Checks include
+independent fixtures for three sizes/types, maximum keys, collisions, overflow,
+full pages, directories from splits, truncations, CRCs, identities, and alterations with
+recalculated CRCs. No changes to already accepted ADRs or closed archives.

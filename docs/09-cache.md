@@ -1,18 +1,20 @@
 # 09 — Cache
 
-> **Fonte:** «Cache», «Cache e snapshot» della [specifica](specifica/specifica-originale.md).
-> **Moduli:** M07 Cache Manager.
-> **Decisioni:** [ADR-0025](adr/0025-cache-per-location.md) (chiave per location, CLOCK per
-> partizione), [ADR-0044](adr/0044-cache-acceleratore-puro.md) (acceleratore puro: insiemi
-> associativi, nessuna ri-etichettatura, sistema corretto anche senza cache).
+> **Source:** ‘Cache’ and ‘Cache and snapshots’ of the [specification](specifica/specifica-originale.md).
+> **Modules:** M07 Cache Manager.
+> **Decisions:** [ADR-0025](adr/0025-cache-per-location.md) (location key, CLOCK per
+> partition), [ADR-0044](adr/0044-cache-acceleratore-puro.md) (pure accelerator: associative
+> sets, no relabeling, system correct even without the cache).
 
-## Politica
+<a id="politica"></a>
 
-- La cache iniziale usa **CLOCK**.
-- Se i benchmark mostrano *scan pollution* significativa, valutare **2Q**. Il passaggio è
-  quindi subordinato a una misura, non anticipato.
-- La cache PUÒ essere **partizionata per Serie**, per impedire che un burst su una singola
-  Serie monopolizzi tutta la cache.
+## Policy
+
+- The initial cache uses **CLOCK**.
+- If benchmarks show significant *scan pollution*, evaluate **2Q**. This switch is
+  conditional on a measurement, not made in advance.
+- The cache MAY be **partitioned by Serie** to prevent a burst on one Serie from
+  monopolizing the entire cache.
 
 ## Read path
 
@@ -20,35 +22,41 @@
 request → Serie → snapshot/index → cache → segment
 ```
 
-L'indice viene consultato **prima** della cache: la cache è interrogata conoscendo già quale
-versione serve.
+The index is consulted **before** the cache: the cache is queried with the required
+version already known.
 
-## Cache e snapshot
+<a id="cache-e-snapshot"></a>
 
-La cache DEVE essere consapevole della versione/epoch del dato; un reader non deve ottenere
-una versione incompatibile con il proprio snapshot (INV-M3).
+## Cache and snapshots
 
-> **Deciso ([ADR-0025](adr/0025-cache-per-location.md))** — Indicizzare la cache per **location** (`segment-id`, `offset`) invece che per
-> `_id`. Poiché i segmenti chiusi sono immutabili, il contenuto di una location non cambia mai:
-> una entry non può diventare «vecchia», non serve invalidazione sugli update e la
-> compatibilità con gli snapshot è garantita per costruzione, perché ogni reader arriva alla
-> cache con la location della versione che il suo snapshot deve vedere. La rilocazione fatta da
-> CLEAN/MERGE cambia le location: i record rilocati rientrano in cache alla prima lettura
-> ([ADR-0044](adr/0044-cache-acceleratore-puro.md)); la perdita di calore è misurata, non
-> compensata con un meccanismo (RSK-10). La cache non partecipa ad alcun protocollo e il
-> sistema dà le stesse risposte con la cache disattivata (INV-A12).
+The cache MUST be aware of the data's version/epoch; a reader must not obtain a
+version incompatible with its snapshot (INV-M3).
 
-## Questioni decise e rischi
+> **Decided ([ADR-0025](adr/0025-cache-per-location.md))** — Key the cache by **location** (`segment-id`, `offset`) rather than
+> `_id`. Because closed segments are immutable, a location's contents never change:
+> an entry cannot become ‘stale’, updates need no invalidation, and snapshot compatibility
+> is guaranteed by construction, because every reader reaches the cache with the location
+> of the version its snapshot must see. CLEAN/MERGE relocation changes locations:
+> relocated records reenter the cache on the first read
+> ([ADR-0044](adr/0044-cache-acceleratore-puro.md)); loss of warmth is measured, rather than
+> offset by a mechanism (RSK-10). The cache participates in no protocol and the
+> system gives the same answers with the cache disabled (INV-A12).
 
-- **QA-17** ([ADR-0025](adr/0025-cache-per-location.md)) — Granularità (documento o blocco), chiave, budget per Serie e criteri di
-  ripartizione tra Serie.
-- **RSK-10** — Doppia cache con la page cache del sistema operativo, se i segmenti sono letti
-  con I/O bufferizzato o `mmap`; perdita di calore dopo la compaction.
-- La memoria della cache è soggetta alle stesse considerazioni sul GC degli indici: i payload
-  non devono vivere come oggetti gestiti dal collector (QA-18).
+<a id="questioni-decise-e-rischi"></a>
 
-## Metriche
+## Decided questions and risks
 
-Hit/miss, eviction, occupazione per Serie, scan pollution
-([12 Osservabilità](12-osservabilita.md)). La metrica di scan pollution è quella che decide
-l'eventuale passaggio a 2Q: va definita prima dei benchmark.
+- **QA-17** ([ADR-0025](adr/0025-cache-per-location.md)) — Granularity (document or block), key, per-Serie budget, and criteria for
+  allocation between Serie.
+- **RSK-10** — Double caching with the operating system's page cache if segments are read
+  through buffered I/O or `mmap`; loss of warmth after compaction.
+- Cache memory is subject to the same GC considerations as indexes: payloads must not
+  live as collector-managed objects (QA-18).
+
+<a id="metriche"></a>
+
+## Metrics
+
+Hit/miss, eviction, per-Serie occupancy, scan pollution
+([12 Observability](12-osservabilita.md)). The scan-pollution metric determines whether
+to switch to 2Q: it must be defined before benchmarking.

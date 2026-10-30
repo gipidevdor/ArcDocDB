@@ -1,16 +1,18 @@
-# 08 — Indici
+<a id="08--indici"></a>
 
-> **Fonte:** «Index», «Secondary index», «Secondary index delta», «Index snapshot» della
-> [specifica](specifica/specifica-originale.md).
-> **Moduli:** M05 Primary Index Manager, M06 Secondary Index Manager.
-> **Decisioni:** [ADR-0015](adr/0015-primary-index-swiss-table-swmr.md) e
-> [ADR-0043](adr/0043-primary-index-a-frammenti.md) (primary index Swiss SWMR a frammenti),
-> [ADR-0039](adr/0039-cornice-unica-dei-record.md) (hint per segmento),
-> [ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md) (solo documenti vivi, ricostruzione per
-> CSN massimo), [ADR-0026](adr/0026-indici-secondari-segmentati.md) (indici
-> secondari **per segmento**, a formato fisso, con delta in memoria per l'ACTIVE),
-> [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) (ricerca full text con indici
-> invertiti dedicati; nucleo disponibile, integrazione da completare). Formati in
+# 08 — Indexes
+
+> **Source:** ‘Index’, ‘Secondary index’, ‘Secondary index delta’, and ‘Index snapshot’ of the
+> [specification](specifica/specifica-originale.md).
+> **Modules:** M05 Primary Index Manager, M06 Secondary Index Manager.
+> **Decisions:** [ADR-0015](adr/0015-primary-index-swiss-table-swmr.md) and
+> [ADR-0043](adr/0043-primary-index-a-frammenti.md) (fragmented Swiss SWMR primary index),
+> [ADR-0039](adr/0039-cornice-unica-dei-record.md) (per-segment hint),
+> [ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md) (live documents only, reconstruction by
+> maximum CSN), [ADR-0026](adr/0026-indici-secondari-segmentati.md) (**per-segment**
+> secondary indexes, fixed format, with an in-memory delta for ACTIVE),
+> [ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md) (full-text search with dedicated
+> inverted indexes; core available, integration incomplete). Formats in
 > [formati-su-disco.md](formati-su-disco.md#file-indice).
 
 ## Primary index
@@ -19,156 +21,166 @@
 _id → location
 ```
 
-La `location` contiene almeno:
+The `location` contains at least:
 
-| Campo | Significato |
+| Field | Meaning |
 |---|---|
-| `segment-id` | segmento che contiene il record |
-| `offset` | posizione nel segmento |
-| `length` | lunghezza del record |
-| `version` | versione del documento (usata dall'optimistic version checking, [05](05-transazioni.md)): è il CSN del commit ([ADR-0038](adr/0038-orizzonte-di-visibilita.md)) |
+| `segment-id` | segment containing the record |
+| `offset` | position within the segment |
+| `length` | record length |
+| `version` | document version (used by optimistic version checking, [05](05-transazioni.md)): the commit CSN ([ADR-0038](adr/0038-orizzonte-di-visibilita.md)) |
 
-Requisiti:
+Requirements:
 
-- lookup **O(1) medio**, altamente ottimizzato;
-- valutare una struttura tipo **Swiss Table**;
-- evitare milioni di oggetti Lisp separati (uno per entry);
-- preferire packed arrays, vectors, strutture compatte, metadata binari, memoria contigua.
+- highly optimized **average O(1)** lookup;
+- evaluate a **Swiss Table**-style structure;
+- avoid millions of separate Lisp objects (one per entry);
+- prefer packed arrays, vectors, compact structures, binary metadata, contiguous memory.
 
-La specifica colloca il primary index **in RAM** (sezione sul confronto con altri sistemi).
-Il vincolo sugli oggetti Lisp non è solo una questione di velocità: milioni di oggetti con
-puntatori sono lavoro per il garbage collector, mentre array specializzati non contengono
-puntatori da tracciare ([15](15-ottimizzazioni-native.md)).
+The specification places the primary index **in RAM** (section comparing other systems).
+The constraint on Lisp objects is not just about speed: millions of objects with pointers
+create garbage-collector work, whereas specialized arrays contain no pointers to trace
+([15](15-ottimizzazioni-native.md)).
 
-> **Deciso (QA-03 → [ADR-0015](adr/0015-primary-index-swiss-table-swmr.md))** — Persistenza dell'indice: la directory `index/` della Serie esiste nel
-> layout, ma la specifica non dice se contiene un checkpoint del primary index o solo indici
-> secondari. La scelta determina il tempo di riavvio.
+> **Decided (QA-03 → [ADR-0015](adr/0015-primary-index-swiss-table-swmr.md))** — Index persistence: the Serie's `index/` directory exists in the layout,
+> but the specification does not say whether it contains a primary-index checkpoint or only
+> secondary indexes. The choice determines restart time.
 
-> **Deciso (QA-01 → [ADR-0014](adr/0014-formato-record-documento-id.md))** — Tipo e lunghezza di `_id` condizionano il formato della tabella (chiavi
-> a lunghezza fissa inline oppure hash + verifica).
+> **Decided (QA-01 → [ADR-0014](adr/0014-formato-record-documento-id.md))** — The type and length of `_id` affect table format (inline fixed-length
+> keys or hash + verification).
 
-## Indici secondari
+<a id="indici-secondari"></a>
 
-Strutture diverse per tipo di query:
+## Secondary indexes
 
-| Tipo di dato / query | Struttura |
+Different structures for different query types:
+
+| Data / query type | Structure |
 |---|---|
-| Stringhe, prefix | ART (Adaptive Radix Tree) |
-| Numeri, date, range | B+ tree o struttura ordinata equivalente |
-| Categorie | posting lists |
-| Boolean, bassa cardinalità | bitmap |
-| Testo, parole e frasi | indice invertito dedicato: dizionario, posting list e posizioni ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) |
+| Strings, prefix | ART (Adaptive Radix Tree) |
+| Numbers, dates, range | B+ tree or equivalent ordered structure |
+| Categories | posting lists |
+| Boolean, low cardinality | bitmap |
+| Text, words, and phrases | dedicated inverted index: dictionary, posting lists, and positions ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md)) |
 
-**Bloom filter per segmento.** Serve solo a stabilire che un valore è *sicuramente assente*
-oppure *potenzialmente presente*. NON DEVE essere usato come struttura di localizzazione
-definitiva (INV-I2).
+**Per-segment Bloom filter.** It only establishes that a value is *definitely absent*
+or *possibly present*. It MUST NOT be used as a definitive location structure
+(INV-I2).
 
-> **Deciso ([ADR-0039](adr/0039-cornice-unica-dei-record.md), [ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md))** —
-> I filtri sui **valori** sono una sezione dei file di indice del segmento e permettono a una
-> query di uguaglianza di saltare il segmento. Il filtro sulle **chiavi** `_id` è una sezione
-> dell'hint e serve a una cosa sola: decidere quando un tombstone si può scartare.
+> **Decided ([ADR-0039](adr/0039-cornice-unica-dei-record.md), [ADR-0042](adr/0042-tombstone-e-indice-dei-vivi.md))** —
+> Filters on **values** are a section of segment index files and let an equality query skip
+> the segment. The filter on `_id` **keys** is a section of the hint and serves just one
+> purpose: deciding when a tombstone can be discarded.
 
-### Modello a delta
+<a id="modello-a-delta"></a>
 
-Per gli indici secondari soggetti a modifiche frequenti, un modello LSM-like:
+### Delta model
+
+For secondary indexes subject to frequent changes, an LSM-like model:
 
 ```
-base index + immutable delta(s)  →  merge asincrono  →  nuova base index
+base index + immutable delta(s)  →  asynchronous merge  →  new base index
 ```
 
-Un aggiornamento che sposta il documento 42 da `category="tech"` a `category="sport"` produce:
+An update moving document 42 from `category="tech"` to `category="sport"` produces:
 
 ```
 category="tech"  → REMOVE 42
 category="sport" → ADD 42
 ```
 
-La nuova base viene costruita **senza bloccare globalmente i reader**.
+The new base is built **without globally blocking readers**.
 
-### Ricerca full text
+<a id="ricerca-full-text"></a>
 
-> **Deciso ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — La ricerca full text
-> entra nel progetto della v1 con indici appositi. Il primo [nucleo](implementazione/full-text.md)
-> implementa analisi, run posizionali, codec completo e viste verificate;
-> integrazione e qualifica restano nella fase 8,
-> anche in vista del [server NNTP](valutazione/caso-duso-nntp.md).
+### Full-text search
 
-Il contratto della Serie dichiara i campi testuali e un analizzatore versionato, comune
-a indicizzazione e query. Il profilo base normalizza Unicode e maiuscole/minuscole,
-conserva gli accenti e non elimina parole o applica stemming implicitamente. Il documento
-originale è conservato integralmente. Ogni indice ha questa struttura logica:
+> **Decided ([ADR-0053](adr/0053-ricerca-full-text-indici-invertiti.md))** — Full-text search
+> enters the v1 design with dedicated indexes. The first [core](implementazione/full-text.md)
+> implements analysis, positional runs, a complete codec, and verified views;
+> integration and qualification remain in phase 8,
+> including for the [NNTP server](valutazione/caso-duso-nntp.md).
+
+The Serie contract declares text fields and a versioned analyzer shared by
+indexing and queries. The base profile normalizes Unicode and case,
+preserves accents, and does not implicitly remove words or apply stemming. The
+original document is retained in full. Each index has this logical structure:
 
 ```
-(campo, termine) → posting list di righe → frequenze e posizioni nel campo
+(field, term) → posting list of rows → frequencies and positions in the field
                          │
-                         └→ hint del segmento → chiave e CSN → versione visibile
+                         └→ segment hint → key and CSN → visible version
 ```
 
-Un file `.idx` immutabile per segmento `CLOSED` contiene dizionario, posting e posizioni;
-il delta dell'`ACTIVE` include i nuovi documenti prima della loro pubblicazione.
-Tokenizzazione e preparazione avvengono fuori dal writer; l'applicazione del delta resta
-seriale nella Serie. Non si aggiungono un WAL o uno scheduler dedicati al full text.
+An immutable `.idx` file per `CLOSED` segment contains the dictionary, postings, and positions;
+the `ACTIVE` delta includes new documents before they are published.
+Tokenization and preparation happen outside the writer; delta application remains
+serial within the Serie. Full text adds neither a dedicated WAL nor a dedicated scheduler.
 
-Sono previsti predicati strutturati per tutti/almeno uno dei termini e per frasi con
-posizioni consecutive nello stesso campo. Si combinano con `and/or/not`, filtri per data,
-uguaglianza e intervallo. `not` usa i documenti vivi dello stesso snapshot; testo di query
-senza termini produce un rifiuto esplicito. Ordinamento e spareggio per `_id` sono
-deterministici; ranking per rilevanza e ricerche fuzzy restano decisioni successive.
+Structured predicates are planned for all/any terms and for phrases with consecutive
+positions in the same field. These combine with `and/or/not`, date filters,
+equality, and ranges. `not` uses live documents from the same snapshot; query text
+with no terms is explicitly rejected. Ordering and `_id` tie-breaking are
+deterministic; relevance ranking and fuzzy search remain later decisions.
 
-Update, delete e abort non devono lasciare corrispondenze di versioni invisibili:
-ogni candidato è verificato contro la versione committed dello snapshot, comprese le
-versioni trattenute, prima di applicare insieme testo e filtri. CLEAN/MERGE ricostruiscono
-i posting con le nuove righe. Gli indici sono derivati ricostruibili dai documenti;
-file mancante o corrotto e generazione incompleta producono un errore esplicito.
-Una nuova generazione di analizzatore diventa utilizzabile soltanto con copertura
-completa, senza mescolare profili nella stessa query (INV-I4).
+Updates, deletes, and aborts must not leave matches from invisible versions:
+every candidate is checked against the snapshot's committed version, including
+retained versions, before applying text and filters together. CLEAN/MERGE rebuild
+postings with new rows. Indexes are derivatives rebuildable from documents;
+a missing or corrupt file, or incomplete generation, produces an explicit error.
+A new analyzer generation becomes usable only with complete coverage,
+without mixing profiles within one query (INV-I4).
 
-Byte analizzati, termini, posizioni, memoria del delta e lavoro della query hanno budget
-finiti; nessun troncamento silenzioso in scrittura o risultato parziale dichiarato
-completo. Semantica e protocollo di pubblicazione sono nell'ADR; sezioni logiche su
-disco in [formati](formati-su-disco.md#indice-full-text) e prove future in
-[benchmark](13-benchmark.md#ricerca-full-text).
+Analyzed bytes, terms, positions, delta memory, and query work have finite
+budgets; no silent truncation on writes or partial result declared complete.
+Semantics and publication protocol are in the ADR; logical on-disk sections in
+[formats](formati-su-disco.md#indice-full-text), and future tests in
+[benchmarks](13-benchmark.md#ricerca-full-text).
 
-> **Deciso ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — Il
-> [contratto operativo](full-text.md) completa profilo Unicode, foglie AST, ownership,
-> generazioni, budget e criteri di accettazione. Il
-> [formato `.idx` v2/type 5](formato-indice-full-text.md) fissa header, sezioni e array,
-> con legame all'hint e riserva conservativa dei byte prima del commit. Questa versione
-> iniziale usa array a larghezza fissa; le ottimizzazioni del codec richiedono una nuova
-> versione e misure dedicate. Il [codec implementato](implementazione/full-text-codec.md)
-> verifica sezioni e legame al descrittore/hint fornito; la verifica dell'hint stesso,
-> dei documenti e della copertura della generazione rimane da integrare.
+> **Decided ([ADR-0054](adr/0054-contratto-e-formato-full-text.md))** — The
+> [operational contract](full-text.md) completes the Unicode profile, AST leaves, ownership,
+> generations, budgets, and acceptance criteria. The
+> [`.idx` v2/type 5 format](formato-indice-full-text.md) fixes the header, sections, and arrays,
+> with hint binding and conservative byte reservation before commit. This initial
+> version uses fixed-width arrays; codec optimizations require a new version and
+> dedicated measurements. The [implemented codec](implementazione/full-text-codec.md)
+> verifies sections and binding to the supplied descriptor/hint; verification of the hint
+> itself, documents, and generation coverage remains to be integrated.
 
 ## Index snapshot
 
-Gli indici DEVONO essere immutabili per i reader (INV-I1):
+Indexes MUST be immutable for readers (INV-I1):
 
 ```
 Reader → Index v17
 
-Writer: costruisce Index v18, atomic swap
+Writer: builds Index v18, atomic swap
 
-nuovi reader      → Index v18
-reader precedenti → completano su v17
+new readers      → Index v18
+previous readers → finish on v17
 ```
 
-## Questioni decise e rischi
+<a id="questioni-decise-e-rischi"></a>
 
-- **QA-24** ([ADR-0015](adr/0015-primary-index-swiss-table-swmr.md)) — Il modello «versione immutabile + swap» è naturale per gli indici secondari
-  (base + delta) e per la rilocazione in blocco fatta dalla compaction. Per il **primary
-  index**, che riceve una modifica per ogni scrittura, costruire una nuova versione completa a
-  ogni commit non è praticabile: va definito come si concilia l'immutabilità per i reader con
-  aggiornamenti continui del writer (RSK-02).
-  Risolto con il seqlock per slot ([ADR-0032](adr/0032-seqlock-a-64-bit.md)) e la
-  sostituzione atomica di un frammento alla volta
+## Decided questions and risks
+
+- **QA-24** ([ADR-0015](adr/0015-primary-index-swiss-table-swmr.md)) — The ‘immutable version + swap’ model is natural for secondary indexes
+  (base + delta) and bulk relocation by compaction. For the **primary index**, which
+  receives a change on every write, building a complete new version at every commit is
+  impractical: how reader immutability coexists with continuous writer updates needs
+  definition (RSK-02).
+  Resolved with per-slot seqlocks ([ADR-0032](adr/0032-seqlock-a-64-bit.md)) and atomic
+  replacement of one fragment at a time
   ([ADR-0043](adr/0043-primary-index-a-frammenti.md)).
-- **QA-25** ([ADR-0026](adr/0026-indici-secondari-segmentati.md)) — Indici secondari: aggiornati in modo sincrono con il commit o in ritardo? Che
-  cosa vede uno snapshot? Sono persistiti o ricostruiti al riavvio?
-- **QA-03** ([ADR-0015](adr/0015-primary-index-swiss-table-swmr.md)) — Persistenza e tempo di ricostruzione del primary index (RSK-07).
+- **QA-25** ([ADR-0026](adr/0026-indici-secondari-segmentati.md)) — Secondary indexes: updated synchronously with commit or with delay? What
+  does a snapshot see? Are they persisted or rebuilt on restart?
+- **QA-03** ([ADR-0015](adr/0015-primary-index-swiss-table-swmr.md)) — Primary-index persistence and rebuild time (RSK-07).
 
-## Metriche
+<a id="metriche"></a>
 
-Hit rate, latenza di lookup, tempo di rebuild ([12 Osservabilità](12-osservabilita.md)).
-Per il full text: byte di dizionario/posting/posizioni, memoria del delta, costo di
-analisi e commit, posting visitati, candidati scartati per visibilità, latenza e
-copertura della generazione. Sono misure da produrre, senza riusare i target del GET.
+## Metrics
+
+Hit rate, lookup latency, rebuild time ([12 Observability](12-osservabilita.md)).
+For full text: dictionary/posting/position bytes, delta memory, analysis and commit
+cost, postings visited, candidates discarded for visibility, latency, and generation
+coverage. These measurements remain to be produced, without reusing GET targets.

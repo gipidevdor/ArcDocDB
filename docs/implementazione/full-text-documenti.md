@@ -1,148 +1,158 @@
-# Preparazione full text dai documenti CBOR
+<a id="preparazione-full-text-dai-documenti-cbor"></a>
 
-`arcdocdb.fulltext.document` collega i [documenti CBOR](../adr/0014-formato-record-documento-id.md)
-all'[analizzatore](full-text.md) e al [codec degli indici](full-text-codec.md).
-Esegue la preparazione nel worker, prima dell'ammissione del writer secondo
-[ADR-0054](../adr/0054-contratto-e-formato-full-text.md). Produce un run sigillato
-e il limite superiore da riservare per il futuro file. Non assegna CSN o ID,
-non scrive WAL, non prenota il delta della Serie e non pubblica commit o READY.
+# Full-text preparation from CBOR documents
 
-Il primo impiego rimane un server NNTP Usenet in Common Lisp: `subject`, `body`
-o `headers.subject` sono percorsi configurabili. L'applicazione interpreta NNTP/MIME
-e fornisce testo UTF-8 decodificato; puo conservare l'articolo originale in un campo
-binario non indicizzato. Message-ID, chiavi e documento originale non vengono modificati.
+`arcdocdb.fulltext.document` connects [CBOR documents](../adr/0014-formato-record-documento-id.md)
+to the [analyzer](full-text.md) and [index codec](full-text-codec.md).
+It performs preparation in the worker before writer admission under
+[ADR-0054](../adr/0054-contratto-e-formato-full-text.md). It produces a sealed run
+and the upper bound to reserve for the future file. It assigns neither CSNs nor IDs,
+writes no WAL, reserves no Serie delta, and publishes neither commits nor READY.
 
-## Configurazione posseduta
+The first use remains a Usenet NNTP server in Common Lisp: `subject`, `body`,
+or `headers.subject` are configurable paths. The application interprets NNTP/MIME
+and supplies decoded UTF-8 text; it may preserve the original article in an unindexed
+binary field. Message-ID, keys, and original document are not modified.
+
+<a id="configurazione-posseduta"></a>
+
+## Owned configuration
 
 `crea-configurazione-full-text(fields, index-id, generation-id, contract-version)`
-riceve ID u64 positivi gia assegnati dal chiamante. Non e l'allocatore del catalogo.
-Il formato dei dati Lisp dell'API, senza lettura o valutazione di codice, e:
+receives positive u64 IDs already assigned by the caller. It is not the catalog allocator.
+The API's Lisp data format, without reading or evaluating code, is:
 
 ```lisp
-;; Ogni testo e un simple-array u8 UTF-8; i vettori esterni sono simple-vector.
+;; Each text is a UTF-8 u8 simple-array; outer vectors are simple-vectors.
 (vector (vector 1 subject-alias (vector headers-key subject-key))
         (vector 7 body-alias    (vector body-key)))
 ```
 
-Le variabili dell'esempio contengono gia gli array di byte UTF-8.
-Sono ammessi 1…16 campi ordinati per ID u16 positivo, alias di 1…64 byte e percorsi
-di 1…100 chiavi UTF-8, anche vuote. Alias e percorsi devono essere unici byte per byte;
-non viene normalizzato il nome di un campo. Ogni buffer e vettore viene copiato.
-Il solo profilo ammesso e `unicode-word-18.0.0-v1`.
+Example variables already contain UTF-8 byte arrays.
+Allowed: 1…16 fields sorted by positive u16 ID, aliases of 1…64 bytes, and paths
+of 1…100 UTF-8 keys, including empty keys. Aliases and paths must be bytewise unique;
+field names are not normalized. Every buffer and vector is copied.
+The only allowed profile is `unicode-word-18.0.0-v1`.
 
-`:limits` e un simple-vector di cinque u64 positivi nello stesso ordine del META:
-input testuale complessivo, byte per termine, token complessivi, payload preparato,
-lavoro. Default: 16 MiB, 1024, 1048576, 64 MiB, 268435456.
-Il limite token e comunque entro u32. I valori dichiarati sono conservati integralmente;
-il percorso caldo usa limiti effettivi entro fixnum. Gli ID sono codificati una volta
-in 24 byte, senza letture di slot raw u64 durante la preparazione.
+`:limits` is a simple-vector of five positive u64s in META order:
+total text input, bytes per term, total tokens, prepared payload,
+work. Defaults: 16 MiB, 1024, 1048576, 64 MiB, 268435456.
+Token limit is still within u32. Declared values are retained in full;
+the hot path uses effective limits within fixnum. IDs are encoded once
+in 24 bytes, without raw u64 slot reads during preparation.
 
-Prima delle copie il costruttore controlla memoria e limite META di 64 KiB.
-Usa il bound conservativo `256 + 32*campi + 9*chiavi + byte(alias e chiavi)`:
-copre le testate CBOR e i valori massimi dei metadati fisici ancora sconosciuti.
-Una dichiarazione che non entra viene rifiutata prima del build o del commit.
-Il budget di memoria fredda include copie, vettori, oggetti e overhead conservativo;
-non misura RSS o tabelle Unicode condivise.
+Before copies, the constructor checks memory and the 64 KiB META limit.
+It uses conservative bound `256 + 32*campi + 9*chiavi + byte(alias e chiavi)`:
+this covers CBOR headers and maximum physical-metadata values still unknown.
+A declaration that does not fit is rejected before build or commit.
+The cold-memory budget includes copies, vectors, objects, and conservative overhead;
+it does not measure RSS or shared Unicode tables.
 
-## Scansione ed esecuzione
+<a id="scansione-ed-esecuzione"></a>
 
-`crea-preparazione-full-text(config)` prealloca un contesto privato con scanner CBOR,
-maschere di percorso, analisi Unicode e run. Default: 65536 scalari, 65536 token,
-4194304 byte per ciascuno dei due buffer analisi/run, 64 MiB di memoria complessiva.
-Le capacita si configurano con `:max-scalars`, `:max-tokens`, `:token-bytes`, `:max-memory`.
-Un documento valido puo richiedere piu scratch: il rifiuto e di risorse.
+## Scanning and execution
 
-`inizia-preparazione-full-text(task, input, start, end, row)` prende in prestito
-il documento immutabile, lungo al massimo 16 MiB. ROW e l'ordinale u32 proposto,
-non una prova di appartenenza a un hint o di commit. I controlli su argomenti,
-stato e alias precedono l'invalidazione del risultato precedente.
+`crea-preparazione-full-text(config)` preallocates a private context with CBOR scanner,
+path masks, Unicode analysis, and run. Defaults: 65536 scalars, 65536 tokens,
+4194304 bytes for each of two analysis/run buffers, 64 MiB total memory.
+Capacities are configured with `:max-scalars`, `:max-tokens`, `:token-bytes`, `:max-memory`.
+A valid document may require more scratch: rejection is for resources.
 
-`passo-preparazione-full-text(task, quantum)` restituisce `:running` o `:done`:
+`inizia-preparazione-full-text(task, input, start, end, row)` borrows
+the immutable document, at most 16 MiB long. ROW is the proposed u32 ordinal,
+not proof of hint membership or commit. Argument,
+state, and alias checks precede invalidating the previous result.
 
-1. Scansione completa con il kernel CBOR minimo esistente, senza AST o copie del documento.
-   Una maschera fino a 16 percorsi accompagna ogni frame; le sotto-mappe non vengono
-   rianalizzate separatamente per ciascun campo. Si verifica anche l'UTF-8 non indicizzato.
-2. Analisi dei campi presenti in ordine di field-id, con NFC/folding/NFC e Word_Break
-   gia implementati; copia nel run privato. Assenti e presenti vuoti restano distinti.
-3. Ordinamento riprendibile del run, conteggio dei termini distinti e misura finale.
-   Nessun risultato parziale viene restituito prima di tutti i controlli.
+`passo-preparazione-full-text(task, quantum)` returns `:running` or `:done`:
 
-Il documento radice deve essere una mappa. I percorsi attraversano sole mappe e
-selezionano chiavi testuali semplici: tag e chiavi complesse non sono alias delle
-stesse chiavi testuali. Un antenato presente non mappa o una foglia presente non
-stringa sono errori; `null` e array non vengono saltati silenziosamente. Le chiavi
-selezionate duplicate, anche negli antenati, sono rifiutate.
+1. Full scan with the existing minimal CBOR kernel, without ASTs or document copies.
+   A mask of up to 16 paths accompanies each frame; submaps are not
+   reanalyzed separately for every field. Unindexed UTF-8 is checked too.
+2. Analysis of present fields in field-id order, using already implemented NFC/folding/NFC
+   and Word_Break; copy into the private run. Missing and present-empty remain distinct.
+3. Resumable run sorting, distinct-term counting, and final measurement.
+   No partial result returned before all checks complete.
 
-Questo modulo verifica struttura minima, UTF-8 e percorsi interessati. Non verifica
-l'ordine deterministico di tutte le mappe, l'unicita delle chiavi estranee ai percorsi,
-la semantica dei tag o il contratto generale della Serie: questi controlli restano
-al validatore documentale. Non sostituisce la verifica di record/hint o la rianalisi
-indipendente dei dati di un segmento.
+The root document must be a map. Paths traverse only maps and
+select simple text keys: tags and complex keys are not aliases for
+the same text keys. A present non-map ancestor or present non-string
+leaf is an error; `null` and arrays are not silently skipped. Duplicate
+selected keys, including ancestors, are rejected.
 
-Il quantum vale 1…65536 passi. Normalizzazione, copia, sort e misura sono riprendibili.
-Il kernel CBOR puo verificare una stringa intera in un passo, entro lo span di 16 MiB:
-il quantum non e un limite di byte o una garanzia realtime. Il lavoro addebita nodi,
-payload, confronti, analisi e operazioni sul run; `:max-work` puo abbassare il limite
-della dichiarazione. `:max-nodes` limita il CBOR; `:max-file-bytes` il bound finale.
-Il chiamante controlla la deadline ai confini e puo cancellare il task.
+This module verifies minimal structure, UTF-8, and relevant paths. It does not verify
+deterministic ordering of all maps, uniqueness of keys outside the paths,
+tag semantics, or the general Serie contract: these checks remain
+with the document validator. It does not replace record/hint verification or independent
+reanalysis of a segment's data.
 
-Input testuale, token e staging vengono sommati su tutti i campi dell'indice.
-Il payload preparato usato e `20*token + byte(termini ripetuti) + 12*campi presenti`:
-il limite e distinto dalla memoria fisica preallocata del worker, conteggiata dal
-costruttore. Non si promette di raggiungere insieme tutti i massimi configurati.
+Quantum is 1…65536 steps. Normalization, copying, sorting, and measurement are resumable.
+The CBOR kernel may verify an entire string in one step within the 16 MiB span:
+quantum is not a byte limit or real-time guarantee. Work charges nodes,
+payload, comparisons, analysis, and run operations; `:max-work` may lower the declaration's
+limit. `:max-nodes` bounds CBOR; `:max-file-bytes` the final bound.
+The caller checks deadline at boundaries and may cancel the task.
 
-## Risultato, riserva e ownership
+Text input, tokens, and staging are summed over all index fields.
+Used prepared payload is `20*token + byte(termini ripetuti) + 12*campi presenti`:
+this limit is distinct from the worker's preallocated physical memory, accounted for by the
+constructor. Reaching all configured maximums together is not promised.
 
-`risultati-preparazione-full-text(task)` richiede DONE e restituisce cinque valori:
-run SEALED, `U(documento)`, bound del file per quel solo documento, payload preparato
-usato e byte di testo di input. Il run e preso in prestito fino al prossimo avvio:
-prima di riusare il task il proprietario deve aver terminato l'uso o copiato i dati
-nelle riserve possedute dal writer. La configurazione resta immutabile e condivisibile.
+<a id="risultato-riserva-e-ownership"></a>
 
-Il bound usa la [formula normativa](../formato-indice-full-text.md#limite-superiore-e-rotazione):
+## Result, reservation, and ownership
+
+`risultati-preparazione-full-text(task)` requires DONE and returns five values:
+SEALED run, `U(documento)`, file bound for that document alone, used prepared
+payload, and input text bytes. The run is borrowed until the next start:
+before reusing the task, the owner must finish using it or copy data
+into writer-owned reservations. Configuration remains immutable and shareable.
+
+The bound uses the [normative formula](../formato-indice-full-text.md#limite-superiore-e-rotazione):
 
 ```
-U = 16*campi-presenti + somma_distinti(32 + byte-termine + 16) + 4*token
-file <= limite-fisso-indice-full-text(config) + somma_documenti U
+U = 16*present-fields + sum_distinct(32 + term-bytes + 16) + 4*token
+file <= limite-fisso-indice-full-text(config) + sum_documents U
 ```
 
-Il costo fisso comprende header/directory, bound META della dichiarazione,
-35 byte di padding e footer; si riserva una volta per segmento. Le versioni fisiche
-committed contano anche se storiche. La misura non sottrae spazio sulla base della
-visibilita di una query. Un budget file insufficiente impedisce DONE.
+Fixed cost includes header/directory, declaration META bound,
+35 padding bytes, and footer; it is reserved once per segment. Physical committed
+versions count even if historical. Measurement does not subtract space based on
+query visibility. An insufficient file budget prevents DONE.
 
-`annulla-preparazione-full-text` e idempotente sui task attivi/cancellati e rilascia
-input e analisi. Gli errori di dominio propagati da `passo` rendono il task FAILED;
-run parziali non sono accessibili. Un nuovo avvio puo riusare lo scratch. Gli errori
-interni richiedono fail-stop al confine del worker; non diventano retry di un commit.
-`stato-preparazione-full-text` espone solo IDLE/RUNNING/DONE/FAILED/CANCELLED.
+`annulla-preparazione-full-text` is idempotent on active/canceled tasks and releases
+input and analysis. Domain errors propagated by `passo` make the task FAILED;
+partial runs are inaccessible. A new start may reuse scratch. Internal
+errors require fail-stop at the worker boundary; they do not become commit retries.
+`stato-preparazione-full-text` exposes only IDLE/RUNNING/DONE/FAILED/CANCELLED.
 
-Le [riserve del writer](full-text-riserve.md) possono ora prendere in prestito il run
-DONE durante la copia posseduta. Il task resta DONE ma un nuovo avvio rifiuta con
-`:fulltext-document-borrowed` fino alla fine della copia o alla cancellazione della riserva.
-Il risultato preso in prestito dal caller non autorizza a bypassare questa ownership.
+[Writer reservations](full-text-riserve.md) may now borrow the DONE
+run during owned copying. The task stays DONE but a new start rejects with
+`:fulltext-document-borrowed` until copying finishes or the reservation is canceled.
+The caller-borrowed result does not authorize bypassing this ownership.
 
-## Verifica e limiti
+<a id="verifica-e-limiti"></a>
 
-I 17 test documentali si aggiungono ai 39 precedenti. Una fixture CBOR di 25 byte
-e attesi manuali fissano i due campi NNTP: U=145, staging=73, testo=9 byte.
-Si verificano 32 prefissi, 25 troncamenti, tipi errati, duplicati dei percorsi,
-budget cumulativi e rifiuto del file a bound meno uno. Cancellazione in sette fasi,
-riuso, 100 livelli, 16 campi con ID fino a 65535 e ID/generazioni u64 massimi.
+## Verification and limits
 
-Su 128 documenti generati, la scansione di liste di parole costruite indipendentemente
-confronta 115200 risposte su run e file, e verifica 128 bound contro i file serializzati.
-Quattro worker hanno contesti distinti e un rendezvous limitato. Dopo warm-up,
-1000 preparazioni con ricerca non allocano byte sullo heap misurato su SBCL 2.6.9 arm64,
-anche con ID/limiti u64 massimi. Due nuovi mutanti semantici riguardano selezione
-delle chiavi e deduplica del costo; la copertura strumentata esclude le allocazioni.
+The 17 document tests add to the previous 39. A 25-byte CBOR fixture
+and manual expected values fix the two NNTP fields: U=145, staging=73, text=9 bytes.
+Checks cover 32 prefixes, 25 truncations, wrong types, duplicate paths,
+cumulative budgets, and file rejection at bound minus one. Cancellation in seven phases,
+reuse, 100 levels, 16 fields with IDs through 65535, and maximum u64 IDs/generations.
 
-La [revisione delle decisioni](full-text-documenti-decisioni.md) esplicita il perimetro.
-I [registri e tentativi originali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-fulltext-document-dev-targeted/README.md)
-conservano sorgenti, comandi, risultati e limiti.
-Sono disponibili prenotazione locale e copie possedute nelle riserve del writer.
-Il [ponte PUT/WAL](full-text-put.md) possiede gli stessi byte per analisi e append.
-Restano il gate completo, il trasferimento nella vista pubblicata del delta,
-la pubblicazione prima di H/ACK, il catalogo delle
-generazioni, I/O durevole, MVCC e Query Engine. I requisiti complessivi restano progettati;
-questa preparazione non rende il database pronto per il traffico NNTP.
+On 128 generated documents, scanning independently built word lists
+compares 115200 answers on runs and files, and checks 128 bounds against serialized files.
+Four workers have separate contexts and a bounded rendezvous. After warmup,
+1000 preparations with lookup allocate no bytes on measured heap on SBCL 2.6.9 arm64,
+even with maximum u64 IDs/limits. Two new semantic mutants concern key
+selection and cost deduplication; instrumented coverage excludes allocation measurements.
+
+The [decision review](full-text-documenti-decisioni.md) makes scope explicit.
+The [original records and attempts](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-fulltext-document-dev-targeted/README.md)
+preserve sources, commands, results, and limits.
+Local reservation and owned copies in writer reservations are available.
+The [PUT/WAL bridge](full-text-put.md) owns the same bytes for analysis and append.
+Remaining work includes the complete gate, transfer into the published delta view,
+publication before H/ACK, generation catalog,
+durable I/O, MVCC, and Query Engine. Overall requirements remain designed;
+this preparation does not make the database ready for NNTP traffic.

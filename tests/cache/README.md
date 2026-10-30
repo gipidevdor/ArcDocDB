@@ -1,75 +1,72 @@
-# Pubblicazione e sostituzione della cache
+<a id="pubblicazione-e-sostituzione-della-cache"></a>
 
-Questa suite C4 completa le letture concorrenti della
-[fixture GET](../get-performance/README.md) con inserimenti e sostituzioni
-nella stessa partizione. Il prodotto in `src/cache/` resta il riferimento
-da verificare. Requisiti: REQ-CCH-001/002/004, REQ-AFF-002/008 e REQ-CON-004.
+# Cache publication and replacement
 
-## Metodo fissato prima dell'esecuzione
+This C4 suite extends concurrent reads in the [GET fixture](../get-performance/README.md)
+with insertions and replacements in the same partition. Product `src/cache/` remains
+reference to verify. Requirements: REQ-CCH-001/002/004, REQ-AFF-002/008, REQ-CON-004.
 
-Una classe da 8192 byte, un insieme di otto posti e almeno 32 record distinti
-forzano la sostituzione senza dipendere dalla funzione di hash. Le cornici
-v1/v2 e le CRC sono costruite con l'oracolo indipendente già usato dalla
-fixture GET. Chiavi, valori, CSN e location sono distinti; le parole alte
-non sono sempre zero. I valori hanno 16 oppure 4096 byte.
+<a id="metodo-fissato-prima-dellesecuzione"></a>
 
-Ogni worker possiede il proprio buffer di destinazione. Record e attese
-sono preparati prima del lancio; gli input condivisi restano immutabili.
-Ogni HIT deve coincidere con **l'intero record atteso** e il valore,
-con sentinelle prima e dopo il range autorizzato. MISS restituisce due
-frontiere zero; VERIFY-FAILED con soli record validi fallisce la prova.
-Gli esiti di inserimento BUSY e UNAVAILABLE sono leciti, ma non provano
-che una pubblicazione sia riuscita.
+## Method fixed before execution
 
-I casi deterministici verificano sequenza dispari, credito esaurito e
-posto disabilitato. Una copia corrotta deve essere scartata; un input
-corrotto deve propagare l'errore prima di mutare qualsiasi array della cache.
-La prova di contesa tiene il mutex della striscia
-da un altro thread con rendezvous limitati: l'inserimento deve restituire
-BUSY prima del rilascio. Le prove con quattro worker mescolano inserimenti
-e ricerche su più record dei posti disponibili. HIT ed espulsioni devono
-essere osservati esplicitamente; un test costituito soltanto da MISS/BUSY
-non è sufficiente.
+One 8192-byte class, one eight-slot set, and at least 32 distinct records force
+replacement independently of hash function. V1/v2 frames and CRCs are built with
+the independent oracle already used by GET fixture. Keys, values, CSNs, and locations
+differ; high words are not always zero. Values have 16 or 4096 bytes.
 
-Tutte le attese e i join hanno un limite. Ogni condizione seria del worker
-torna al controller come errore della prova; il cleanup termina e attende
-i worker ancora vivi prima di accedere ai risultati. Gli input vengono
-ricontrollati dopo tutti i join.
+Each worker owns its destination buffer. Records and waits prepared before launch;
+shared inputs remain immutable. Every HIT must match **the entire expected record**
+and value, with sentinels before/after authorized range. MISS returns two zero
+frontiers; VERIFY-FAILED with only valid records fails test.
+BUSY and UNAVAILABLE insertion outcomes are legal but do not prove successful publication.
 
-## Ambito delle conclusioni
+Deterministic cases check odd sequence, exhausted credit, and disabled slot.
+Corrupt copy must be discarded; corrupt input must propagate error before mutating
+any cache array. Contention test holds stripe mutex from another thread with bounded
+rendezvous: insertion must return BUSY before release. Four-worker tests mix inserts
+and lookups over more records than available slots. HITs and evictions must be
+explicitly observed; a test consisting only of MISS/BUSY is insufficient.
 
-Le prove deterministiche verificano gli stati dichiarati, mentre lo stress
-esercita interleaving scelti dallo scheduler. Il solo avvio con rendezvous
-non prova esecuzione simultanea sui core né ogni finestra interna del
-seqlock. Questa suite non misura velocità, allocazioni o MC/DC e non chiude
-la qualifica C1, la memoria debole o i gate del motore.
+Every wait/join is bounded. Every serious worker condition returns to controller as
+test error; cleanup terminates/joins still-live workers before accessing results.
+Inputs rechecked after all joins.
 
-## Risultato locale del 2026-10-17
+<a id="ambito-delle-conclusioni"></a>
 
-Superati **14 casi**: otto deterministici, quattro scenari con quattro
-worker e due prove di contesa controllata. La verifica integrata ha
-compilato senza warning e superato tutti i test di prodotto, lint,
-tracciabilità e collegamenti: esito OK/exit0, sorgenti STABLE,
-106,660 secondi per l'intero comando, senza attribuire quel tempo alla cache.
+## Scope of conclusions
 
-La tabella conta soltanto il carico misto dei worker; ogni scenario
-aggiunge separatamente il controllo iniziale del worker zero.
+Deterministic tests verify declared states; stress exercises scheduler-selected
+interleavings. Rendezvous start alone proves neither simultaneous execution on cores
+nor every internal seqlock window. Suite measures neither speed, allocation, nor
+MC/DC, and closes neither C1 qualification, weak memory, nor engine gates.
 
-| Formato / valore | Tentativi | INSERTED | PRESENT | BUSY | HIT | MISS | Espulsioni |
+<a id="risultato-locale-del-2026-10-17"></a>
+
+## Local result of 2026-10-17
+
+**14 cases** passed: eight deterministic, four four-worker scenarios, two controlled
+contention tests. Integrated verification compiled without warnings and passed all
+product tests, lint, traceability, and links: OK/exit0, STABLE sources,
+106.660 seconds for whole command, without attributing that time to cache.
+
+Table counts only mixed worker load; each scenario separately adds worker-zero
+initial check.
+
+| Format / value | Attempts | INSERTED | PRESENT | BUSY | HIT | MISS | Evictions |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| v1 / 16 byte | 2048 | 1398 | 430 | 220 | 2109 | 1987 | 1398 |
-| v2 / 16 byte | 2048 | 1498 | 325 | 225 | 2138 | 1958 | 1498 |
-| v1 / 4096 byte | 2048 | 1606 | 424 | 18 | 2152 | 1944 | 1606 |
-| v2 / 4096 byte | 2048 | 1466 | 546 | 36 | 2219 | 1877 | 1466 |
+| v1 / 16 bytes | 2048 | 1398 | 430 | 220 | 2109 | 1987 | 1398 |
+| v2 / 16 bytes | 2048 | 1498 | 325 | 225 | 2138 | 1958 | 1498 |
+| v1 / 4096 bytes | 2048 | 1606 | 424 | 18 | 2152 | 1944 | 1606 |
+| v2 / 4096 bytes | 2048 | 1466 | 546 | 36 | 2219 | 1877 | 1466 |
 
-UNAVAILABLE non è stato osservato nello stress; i casi deterministici
-lo richiedono per posti tutti disabilitati o senza credito. VERIFY-FAILED
-compare soltanto nella fault injection della copia corrotta, come atteso.
-Nei due formati la prova del mutex ha restituito BUSY prima del rilascio,
-seguito da INSERTED e HIT dello stesso worker. Input immutati e destinazioni
-disgiunte sono verificati dopo tutti i join.
+UNAVAILABLE was not observed in stress; deterministic cases require it for entirely
+disabled slots or no credit. VERIFY-FAILED occurs only in corrupt-copy fault injection,
+as expected. In both formats, mutex test returned BUSY before release, followed by
+INSERTED and HIT from same worker. Unchanged inputs and disjoint destinations verified
+after all joins.
 
-Il [catalogo delle prove](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-cache-concurrency/catalogo.lisp)
-conserva comando, ambiente, impronte dei sorgenti, log e copie dei tre
-file della suite. La raccolta verifica l'inventario chiuso e le copie
-dei record compressi senza alterare gli originali.
+The [test catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-cache-concurrency/catalogo.lisp)
+retains command, environment, source fingerprints, logs, and copies of suite's three
+files. Collection verifies closed inventory and compressed-record copies without
+altering originals.

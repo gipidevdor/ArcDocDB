@@ -1,17 +1,21 @@
-# Metodo C4: recovery readonly del vecchio ACTIVE
+<a id="metodo-c4-recovery-readonly-del-vecchio-active"></a>
 
-Il driver `tools/recovery-active-bench.lisp` prepara un benchmark piccolo del
-percorso pubblico `leggi-active-recuperato`, usando il backend in memoria di
-`tests/recovery-active/support.lisp`. Misura aperture logiche/recovery con
-allocazioni: ogni chiamata ricrea capacità del segmento, workspace, hash table
-e array degli esiti. I byte e le decisioni della fixture sono già residenti.
-Non è una misura del throughput DB, di I/O disco, di heap zero, P99 o una
-conclusione sulla scalabilità. La qualifica resta COD-60; questo metodo non
-attesta esecuzioni, compilazioni o risultati numerici.
+# C4 method: read-only recovery of the old ACTIVE
 
-## Invocazioni dopo il freeze del coordinatore
+The `tools/recovery-active-bench.lisp` driver prepares a small benchmark of
+the public `leggi-active-recuperato` path, using the in-memory backend in
+`tests/recovery-active/support.lisp`. It measures logical opens/recovery with
+allocations: every call recreates segment capabilities, workspace, hash table,
+and outcome arrays. Fixture bytes and decisions are already resident.
+This is not a measurement of DB throughput, disk I/O, zero heap allocation, P99, or a
+conclusion about scalability. Qualification remains COD-60; this method does not
+attest runs, compilations, or numerical results.
 
-Dal checkout congelato, con SBCL senza init utente/sistema:
+<a id="invocazioni-dopo-il-freeze-del-coordinatore"></a>
+
+## Invocations after the coordinator's freeze
+
+From the frozen checkout, with SBCL without user/system initialization:
 
 ```sh
 sbcl --noinform --disable-debugger --no-sysinit --no-userinit \
@@ -21,139 +25,145 @@ sbcl --noinform --disable-debugger --no-sysinit --no-userinit \
   --output spikes/out/active-verifica-bench-R1/
 ```
 
-La directory finale deve essere nuova: `mkdir` esclusivo, nessun riuso o
-sovrascrittura di un tentativo precedente. Sono ammessi suffissi di 1–64
-lettere ASCII, cifre, trattini e underscore, con slash finale. Il main ricava
-la radice dalla posizione del driver. Il coordinatore esegue il comando
-attraverso `tools/record-command.lisp` per argv, ambiente, output, exit effettivo
-e snapshot globali dei sorgenti; il capture wrapper esistente
-`tools/get-series-capture.lisp`, con `--raw-root`, lega anche gli helper
-esplicitamente invocati. Il driver non introduce un hash reader o un helper
-evidence alternativo. Gli output sono sotto `spikes/out/`, escluso dallo snapshot dei sorgenti;
-la stabilità va letta nel record del produttore concluso. Capture e recorder non forniscono un timeout di processo.
+The final directory must be new: exclusive `mkdir`, no reuse or
+overwrite of a previous attempt. Suffixes of 1–64 ASCII
+letters, digits, hyphens, and underscores are allowed, with a trailing slash. Main derives
+the root from the driver's location. The coordinator runs the command
+through `tools/record-command.lisp` for argv, environment, output, actual exit,
+and global source snapshots; the existing capture wrapper,
+`tools/get-series-capture.lisp`, with `--raw-root`, also binds explicitly
+invoked helpers. The driver introduces no alternative hash reader or
+evidence helper. Outputs are under `spikes/out/`, excluded from the source snapshot;
+stability must be read in the completed producer's record. Capture and recorder provide no process timeout.
 
-`--self-test` usa soltanto helper puri: parser CLI, matrice, aritmetica dei
-conteggi, formulazione dell'oracolo, sink e classificazione con casi negativi.
-Non carica ASDF, prodotto o supporto test; non crea file, fixture o worker e
-non misura prestazioni. Il bootstrap riprende quello di
-`tools/control-transition-bench.lisp`: un secondo LOAD sotto handler rende
-fatali anche warning/style-warning nelle definizioni del driver. Il percorso
-benchmark carica ASD e `arcdocdb/tests` una volta, senza `test-op` né `run`.
-Le output translations ASDF sono private, sotto `<output>/fasl/`, ignorando
-la configurazione ereditata. Nel solo caricamento ASDF, gli avvisi
-`redefinition-warning` sono registrati con conteggio e fino a 16 messaggi,
-poi muffled: compilare e caricare una macro nello stesso processo può
-ridefinirla. Tutti gli altri warning restano fatali. La policy ha casi
-negativi nei self-test; gli avvisi effettivi restano anche nello stderr.
+`--self-test` uses only pure helpers: CLI parser, matrix, count
+arithmetic, oracle formulation, sink, and classification with negative cases.
+It does not load ASDF, product, or test support; create files, fixtures, or workers; or
+measure performance. Bootstrap follows
+`tools/control-transition-bench.lisp`: a second LOAD under a handler also makes
+warning/style-warning in driver definitions fatal. The benchmark
+path loads ASD and `arcdocdb/tests` once, without `test-op` or `run`.
+ASDF output translations are private, under `<output>/fasl/`, ignoring
+inherited configuration. During ASDF loading only,
+`redefinition-warning` warnings are recorded with a count and up to 16 messages,
+then muffled: compiling and loading a macro in the same process can
+redefine it. All other warnings remain fatal. The policy has negative
+cases in self-tests; actual warnings also remain in stderr.
 
-## Caso fisso e oracolo
+<a id="caso-fisso-e-oracolo"></a>
 
-Si scelgono **24 record**, tutti in un lotto sigillato, anziché 32/36:
+## Fixed case and oracle
 
-| Classe | Record | TXID distinti | Fonte dell'esito |
+**24 records**, all in one sealed batch, are chosen instead of 32/36:
+
+| Class | Records | Distinct TXIDs | Outcome source |
 |---|---:|---:|---|
-| PUT ordinary | 8 | — | stamp CSN 17, nessun prepared |
-| PUT prepared locali | 4 | 4 | OUTCOME nel segmento |
-| OUTCOME | 4 | gli stessi 4 locali | CSN esplicito |
-| PUT prepared derivati | 4 | 4 | DECISION autorevole |
-| PUT prepared presumed abort | 4 | 4 | assenza nella tabella completa della fixture |
+| Ordinary PUT | 8 | — | stamp CSN 17, no prepared |
+| Local prepared PUT | 4 | 4 | OUTCOME in segment |
+| OUTCOME | 4 | the same 4 local TXIDs | explicit CSN |
+| Derived prepared PUT | 4 | 4 | authoritative DECISION |
+| Presumed-abort prepared PUT | 4 | 4 | absence from the fixture's complete table |
 
-Le PUT hanno chiave di 1 byte e valore di 1 byte; ogni cornice PUT occupa
-26 byte, ogni OUTCOME 32. Il file è esattamente
-`64 + 20×26 + 4×32 + 56 = 768` byte, sotto il limite 4096.
-Header e SEAL sono esclusi dai 24 record. L'origine è writer, l'ID ACTIVE è
-9, non ci sono coda, corruzione o short read. I formati v1 e v2 hanno lo
-stesso caso logico e la stessa dimensione. Non si varia la dimensione dei dati.
+PUTs have a 1-byte key and 1-byte value; each PUT frame occupies
+26 bytes, each OUTCOME 32. The file is exactly
+`64 + 20×26 + 4×32 + 56 = 768` bytes, below the 4096 limit.
+Header and SEAL are excluded from the 24 records. Origin is writer, ACTIVE ID is
+9, and there are no tails, corruption, or short reads. Formats v1 and v2 have the
+same logical case and size. Data size does not vary.
 
-Locali: TXID `0`, `1`, `#x8000000000000000`, `#xffffffffffffffff`.
-Derivati: `2`, `3`, `#x8000000000000001`, `#xfffffffffffffffe`.
+Local: TXID `0`, `1`, `#x8000000000000000`, `#xffffffffffffffff`.
+Derived: `2`, `3`, `#x8000000000000001`, `#xfffffffffffffffe`.
 Abort: `4`, `5`, `#x8000000000000002`, `#xfffffffffffffffd`.
-I quattro CSN, sia locali sia derivati, sono `0`, `7`,
-`#x8000000000000000`, `#xffffffffffffffff`. Le decisioni contengono soltanto
-i quattro derivati e nominano la Serie e un secondo partecipante: è la
-tabella completa dell'Archivio sintetico dichiarato, non un'autorizzazione
-generale a dedurre abort da una tabella parziale reale.
+The four CSNs, both local and derived, are `0`, `7`,
+`#x8000000000000000`, `#xffffffffffffffff`. Decisions contain only
+the four derived transactions and name the Serie and a second participant: this is the
+complete table of the declared synthetic Archivio, not general authorization
+to infer abort from a real partial table.
 
-Ogni chiamata verifica con query pubbliche frontiere
-`(768 768 :complete versione)` e statistiche `(1 24 12 4 4 4)`:
-lotti, record, prepared, locali, derivati, abort. Esegue poi **13 query** di
-chiusura: i quattro derivati presenti con CSN esatto; i quattro locali,
-i quattro abort e TXID 42 assenti con `nil/0`. Presenza con CSN zero resta
-distinta dall'assenza. Gli attesi provengono dai fatti dichiarati, mai dal
-decoder o dal risultato del prodotto. Il token consuma frontiere,
-statistiche e CSN restituiti; il sink atteso è `completed × token(versione)`.
-Il confronto completo precede l'accumulo: il sink non sostituisce l'oracolo.
+Every call verifies, through public queries, frontiers
+`(768 768 :complete versione)` and statistics `(1 24 12 4 4 4)`:
+batches, records, prepared, local, derived, abort. It then executes **13 closure
+queries**: the four derived transactions present with exact CSNs; the four local,
+four abort, and TXID 42 absent with `nil/0`. Presence with zero CSN remains
+distinct from absence. Expectations come from declared facts, never from the
+decoder or product result. The token consumes returned frontiers,
+statistics, and CSNs; the expected sink is `completed × token(versione)`.
+Full comparison precedes accumulation: the sink does not replace the oracle.
 
-Il supporto controlla immutabilità dei byte, identità, FD ancora readonly e
-aperti, assenza di scritture/flush/rename/close. Il driver verifica anche due
-letture per recovery (header e corpo). Svuota il recorder eventi prima di
-ogni chiamata, mantenendo il suo consumo bounded. Questi controlli e le
-allocazioni dell'harness sono inclusi in tempo e heap della finestra.
+Support checks byte immutability, identity, FDs still read-only and
+open, absence of writes/flushes/renames/closes. The driver also verifies two
+reads per recovery (header and body). It empties the event recorder before
+every call, keeping its consumption bounded. These checks and harness
+allocations are included in window time and heap allocation.
 
-## Matrice e confini della misura
+<a id="matrice-e-confini-della-misura"></a>
 
-La matrice ordinata è **v1/v2 × 1/2/4 worker × 3 repliche = 18 finestre**.
-Ogni worker esegue esattamente **200 chiamate verificate**, compresa la prima
-che precede il gate; sono 8400 recovery e 201600 record nella campagna
-completa. Prima della misura, il main prepara una fixture distinta per
-worker e vi esegue **8 warmup verificati**, esclusi dai contatori misurati.
-Sono esclusi costruzione dei byte, CONTROL recuperato, ricostruzione della
-tabella decisioni, fixture, warmup, caricamento ASDF e persistenza del report.
+## Matrix and measurement boundaries
 
-Ogni fixture possiede backend, sorgenti, CONTROL, decisioni immutabili,
-scratch e capacità/FD. I numeri virtuali 301/302 ricorrono solo dentro backend
-distinti: non designano un FD condiviso. Nessuna sostituzione globale di
-funzioni. I worker condividono soltanto codice, gate e canale delle condizioni.
+The ordered matrix is **v1/v2 × 1/2/4 workers × 3 replicates = 18 windows**.
+Each worker performs exactly **200 verified calls**, including the first
+before the gate; this is 8400 recoveries and 201600 records in the complete
+campaign. Before measurement, main prepares a distinct fixture per
+worker and performs **8 verified warmups** on it, excluded from measured counts.
+Byte construction, recovered CONTROL, decision-table reconstruction,
+fixtures, warmup, ASDF loading, and report persistence are excluded.
 
-Anche la cella a un worker crea un thread. Il wall aggregato comincia prima
-di avvio dei thread e gestione del gate, finisce dopo i join e include
-controlli, scheduling e sincronizzazione. Usa `get-internal-real-time`;
-il report conserva tick e `internal-time-units-per-second`, senza imporre
-una risoluzione in nanosecondi. L'heap è la differenza di
-`sb-ext:get-bytes-consed` sull'intero processo nella stessa finestra, non un
-contatore per worker né memoria residente. Non viene raccolta CPU worker.
-Non sono calcolati percentili, speedup o throughput DB.
+Each fixture owns backend, sources, CONTROL, immutable decisions,
+scratch, and capabilities/FDs. Virtual numbers 301/302 recur only inside separate
+backends: they do not designate a shared FD. No global function
+replacement. Workers share only code, gate, and condition channel.
 
-READY è segnalato da ciascun worker **dopo il primo recovery verificato**;
-il main attende tutti i READY prima di aprire GO per i restanti 199. È un
-rendezvous bounded, senza sleep o prova di concorrenza dedotta dai tempi.
-Non dimostra esecuzione parallela su core distinti. I contatori includono
-soltanto i recovery che hanno completato l'intero oracolo; attempted può
-superare completed di uno per worker in un tentativo fallito.
+Even the one-worker cell creates a thread. Aggregate wall time starts before
+thread startup and gate management, ends after joins, and includes
+checks, scheduling, and synchronization. It uses `get-internal-real-time`;
+the report retains ticks and `internal-time-units-per-second`, without imposing
+nanosecond resolution. Heap allocation is the difference in
+`sb-ext:get-bytes-consed` for the entire process in the same window, not a
+per-worker counter or resident memory. Worker CPU is not collected.
+No percentiles, speedup, or DB throughput are calculated.
 
-## Errori, quiescenza e report
+Each worker signals READY **after its first verified recovery**;
+main waits for all READY signals before opening GO for the remaining 199. This is a
+bounded rendezvous, without sleep or concurrency inferred from timing.
+It does not demonstrate parallel execution on distinct cores. Counts include
+only recoveries that completed the entire oracle; attempted may
+exceed completed by one per worker in a failed attempt.
 
-Ogni finestra ha una deadline cooperativa di **5 secondi**, controllata a
-ogni iterazione e sulle attese al gate; i join hanno un unico termine
-comune di ulteriori **30 secondi**, non 30 per worker. Un'operazione già
-iniziata non viene interrotta. Non si usa `terminate-thread`. Il coordinatore
-deve supervisionare il processo esternamente se serve un limite assoluto,
-anche per bootstrap, setup, warmup e salvataggio fuori finestra.
+<a id="errori-quiescenza-e-report"></a>
 
-Un canale mutex comunica la prima condizione originale e il primo errore
-non-deadline senza consultare RAW concorrenti. Un errore noto prevale su
-`:incomplete`; timeout e join successivi non rimpiazzano la causa d'errore.
-Solo dopo tutti i join e il controllo di quiescenza si leggono i contatori.
-La chiusura delle fixture avviene tornando dai wrapper del supporto dopo
-questa barriera. Se qualche worker resta vivo, il main salva soltanto dati
-propri e condizioni comunicate, marca counts/sink `:unavailable` ed esce
-con `sb-ext:exit :abort t`, senza svolgere gli unwind-protect delle fixture.
-L'eventuale supervisore conserva stdout/stderr e l'exit effettivo. Una
-finestra fallita interrompe la campagna: non si promuovono campioni parziali.
+## Errors, quiescence, and report
 
-`report.lisp` è una PLIST leggibile, `:schema-version 1`,
-`:kind :recovery-active-benchmark`, scritta inizialmente come incomplete,
-dopo ogni finestra e in caso di errore gestito. Comprende parametri, limiti,
-clock, scope heap, finestre, contatori per worker, counts aggregati,
-sink, wall, heap, stato e causa/first-condition. Il file temporaneo viene
-rinominato nella directory esclusiva. Exit 0 indica campagna completa,
-1 errore, 2 incomplete. Errori prima dell'acquisizione dell'output, nel
-bootstrap o nella persistenza richiedono l'evidenza del recorder esterno;
-non possono garantire un report locale finale. Nessun report è prova del
-freeze: il coordinatore lega helper e sorgenti tramite recorder/capture.
+Every window has a cooperative **5-second** deadline, checked at
+every iteration and gate wait; joins have one additional common
+deadline of **30 seconds**, not 30 per worker. An operation already
+started is not interrupted. `terminate-thread` is not used. The coordinator
+must supervise the process externally if an absolute limit is needed,
+including for bootstrap, setup, warmup, and saving outside the window.
 
-Questo C4 copre un singolo file sintetico piccolo e sano. Non copre code,
-corruzioni, fault I/O, persistenza, pubblicazione del checkpoint, traffico
-DB, cache disco, documenti realistici o crescita del dataset. I tre tentativi
-per cella e il wall con harness non autorizzano conclusioni generali sulla
-latenza o sulla scalabilità. Tutta l'esecuzione resta successiva al freeze.
+A mutex channel communicates the first original condition and first non-deadline
+error without consulting concurrent RAW data. A known error takes precedence over
+`:incomplete`; later timeouts and joins do not replace the error cause.
+Counters are read only after all joins and the quiescence check.
+Fixtures close when returning from support wrappers after
+this barrier. If a worker remains alive, main saves only its own
+data and communicated conditions, marks counts/sink `:unavailable`, and exits
+with `sb-ext:exit :abort t`, without running fixture unwind-protect cleanup.
+Any supervisor preserves stdout/stderr and the actual exit. A
+failed window stops the campaign: partial samples are not promoted.
+
+`report.lisp` is a readable PLIST, `:schema-version 1`,
+`:kind :recovery-active-benchmark`, written initially as incomplete,
+after every window, and on handled error. It includes parameters, limits,
+clock, heap scope, windows, per-worker counters, aggregate counts,
+sink, wall time, heap allocation, status, and cause/first-condition. The temporary file is
+renamed in the exclusive directory. Exit 0 indicates a complete campaign,
+1 error, 2 incomplete. Errors before acquiring output, in
+bootstrap, or in persistence require evidence from the external recorder;
+they cannot guarantee a final local report. No report proves
+the freeze: the coordinator binds helpers and sources through recorder/capture.
+
+This C4 covers one small, healthy synthetic file. It does not cover tails,
+corruption, I/O faults, persistence, checkpoint publication, DB
+traffic, disk cache, realistic documents, or dataset growth. Three attempts
+per cell and wall time with harness do not authorize general conclusions about
+latency or scalability. All execution remains subsequent to the freeze.

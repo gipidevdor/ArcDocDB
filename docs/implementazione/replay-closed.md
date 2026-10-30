@@ -1,15 +1,19 @@
-# Visita dei record CLOSED recuperati
+<a id="visita-dei-record-closed-recuperati"></a>
 
-> **Deciso (ADR-0042, ADR-0047, ADR-0036)** — la ricostruzione considera
-> i record committed di tutti i segmenti, conserva i tombstone fino alla
-> selezione definitiva e risolve i prepared senza usare il TXID come CSN.
+# Visiting recovered CLOSED records
 
-`arcdocdb.recovery.replay` collega il [reader CLOSED](closed-recuperato.md)
-ai consumatori privati del bootstrap. Requisiti REQ-REC-001, REQ-STO-006,
-REQ-TXM-007, REQ-IDX-006, REQ-AFF-002 e REQ-AFF-008; invarianti INV-D1,
-INV-C11, INV-I2 e INV-A9. Nessun formato persistente o ADR modificato.
+> **Decided (ADR-0042, ADR-0047, ADR-0036)** — reconstruction considers
+> committed records from all segments, retains tombstones until final
+> selection, and resolves prepared records without using TXID as CSN.
 
-## Contratto
+`arcdocdb.recovery.replay` connects the [CLOSED reader](closed-recuperato.md)
+to private bootstrap consumers. Requirements REQ-REC-001, REQ-STO-006,
+REQ-TXM-007, REQ-IDX-006, REQ-AFF-002, and REQ-AFF-008; invariants INV-D1,
+INV-C11, INV-I2, and INV-A9. No persistent format or ADR changed.
+
+<a id="contratto"></a>
+
+## Contract
 
 ```lisp
 (arcdocdb.recovery.replay:visita-record-closed-recuperato
@@ -17,121 +21,128 @@ INV-C11, INV-I2 e INV-A9. Nessun formato persistente o ADR modificato.
 ;; => delivered-records, aborted-records
 ```
 
-`recovered` è la prova canonica di un CLOSED writer o compaction.
-`limits` è la configurazione readonly `limiti-recovery-serie` già usata
-dal coordinatore. Lo scratch deve contenere il prefisso P intero.
-Il compito appartiene al pool I/O della Serie: mantiene CONTROL, FD,
-file e namespace congelati, con ammissione ancora chiusa. Le destinazioni
-del visitor sono candidate private del bootstrap.
+`recovered` is canonical proof of a writer or compaction CLOSED.
+`limits` is the read-only `limiti-recovery-serie` configuration already
+used by the coordinator. Scratch must hold the entire P prefix.
+The task belongs to the Serie I/O pool: it keeps CONTROL, FDs, files,
+and namespace frozen, with admission still closed. Visitor destinations
+are private bootstrap candidates.
 
-La funzione rilegge **lo stesso FD readonly**, fino al P autorevole del
-manifest; non usa EOF come frontiera, non legge la coda e non riapre file.
-Il reader canonico verifica alias, backend, capacità, budget, header,
-CRC, lotti/SEAL e risoluzione OUTCOME/EDIT prima di qualunque callback.
-La nuova prova deve coincidere con quella ricevuta per autorità,
-geometria, conteggi, presenza e massimo CSN. Il confronto non dimostra
-uguaglianza dei body: l'immutabilità delle fonti resta una precondizione.
+The function rereads **the same read-only FD**, up to the manifest's
+authoritative P; it does not use EOF as the frontier, read the tail, or
+reopen files. The canonical reader checks alias, backend, capability,
+budget, header, CRC, batches/SEAL, and OUTCOME/EDIT resolution before any
+callback. The new proof must match the received proof in authority,
+geometry, counts, presence, and maximum CSN. Comparison does not prove
+body equality: source immutability remains a precondition.
 
-Il reader con workspace è un ingresso **interno** condiviso: restituisce
-al visitor lo stesso workspace semantico appena verificato, senza
-ricostruire una seconda tabella. L'API pubblica `leggi-closed-recuperato`
-continua a consegnare un solo risultato, privo di workspace e buffer.
+The reader with workspace is a shared **internal** entry point: it gives
+the visitor the same semantic workspace just verified, without rebuilding
+a second table. The public `leggi-closed-recuperato` API continues to
+deliver only one result, without workspace or buffer.
 
-## Callback e prepared
+<a id="callback-e-prepared"></a>
+
+## Callback and prepared records
 
 ```lisp
 (visitor buffer start end segment-id file-offset version prepared-csn)
 ;; => NIL
 ```
 
-Vengono consegnati soltanto PUT e TOMBSTONE committed, in ordine fisico
-nel segmento. OUTCOME e SEAL non entrano nel visitor. I byte sono prestati,
-readonly e validi durante la chiamata sincrona: niente modifica, riuso,
-reentrata sullo scratch o conservazione di un riferimento ai documenti.
-Un consumatore che deve conservare dati ne copia esplicitamente soltanto
-la parte prevista dal proprio contratto.
+Only committed PUT and TOMBSTONE records are delivered, in physical order
+within the segment. OUTCOME and SEAL do not enter the visitor. Bytes are
+borrowed, read-only, and valid during the synchronous call: no modification,
+reuse, scratch reentry, or retention of document references. A consumer
+that needs to retain data explicitly copies only the part specified by
+its own contract.
 
-| Record | Consegna | `prepared-csn` |
+| Record | Delivery | `prepared-csn` |
 |---|---|---|
-| PUT/TOMBSTONE ordinario in prefisso verificato | Sì | NIL; CSN nello stamp |
-| Prepared con OUTCOME locale | Sì | CSN dell'OUTCOME |
-| Prepared senza OUTCOME, con esito EDIT | Sì | CSN dell'EDIT |
-| Prepared senza entrambe le prove | No, conteggiato abortito | Nessuna callback |
-| OUTCOME o SEAL | No | Nessuna callback |
+| Ordinary PUT/TOMBSTONE in a verified prefix | Yes | NIL; CSN in stamp |
+| Prepared with local OUTCOME | Yes | OUTCOME CSN |
+| Prepared without OUTCOME, with EDIT outcome | Yes | EDIT CSN |
+| Prepared without either proof | No, counted as aborted | No callback |
+| OUTCOME or SEAL | No | No callback |
 
-Contraddizioni fra OUTCOME e EDIT sono rifiutate dal reader **prima**
-della visita. Il CLOSED non consulta `multiserie.log`; un esito da
-DECISION deve essere già conservato nell'EDIT canonico. Un CSN zero è
-presente e viene passato come intero zero, distinto da NIL. ID segmento,
-TXID e CSN conservano tutti i bit u64, senza introdurre i vincoli u32
-del destinatario primary/GET.
+Contradictions between OUTCOME and EDIT are rejected by the reader **before**
+the visit. CLOSED does not consult `multiserie.log`; an outcome from
+DECISION must already be retained in canonical EDIT. CSN zero is present
+and passed as integer zero, distinct from NIL. Segment ID, TXID, and CSN
+retain all u64 bits, without introducing the u32 constraints of the
+primary/GET recipient.
 
-Lo span completo e la versione possono alimentare
-`considera-record-recuperato` del [selettore](selezione-versioni-recovery.md),
-con `prepared-csn` esplicito soltanto per i prepared. La visita non
-raggruppa le chiavi: il consumatore deve raccogliere tutti i candidati
-della stessa chiave da **tutti** i segmenti prima della
-[materializzazione nell'indice](indice-da-recovery.md). Non è previsto
-un replay completo ottenuto riscansionando ogni segmento per ogni chiave.
+The complete span and version can feed
+`considera-record-recuperato` of the [selector](selezione-versioni-recovery.md),
+with explicit `prepared-csn` only for prepared records. The visit does not
+group keys: the consumer must collect all candidates for the same key
+from **all** segments before [index materialization](indice-da-recovery.md).
+A complete replay obtained by rescanning every segment for every key is
+not intended.
 
-`file-offset` è assoluto nel file. Qui coincide con `start` perché il
-buffer contiene il prefisso a partire dall'header; i due argomenti restano
-distinti nel contratto del consumatore.
+`file-offset` is absolute in the file. Here it equals `start` because the
+buffer contains the prefix starting at the header; the two arguments remain
+distinct in the consumer contract.
 
-## Risultato, errori e durata
+<a id="risultato-errori-e-durata"></a>
 
-I due contatori riguardano **record**, non TXID: un prepared con più
-modifiche abortite incrementa il secondo contatore per ogni modifica.
-I conteggi del reader conservano il significato originario. Il ciclo ha
-esattamente BATCHES + RECORDS passi e deve terminare esattamente a P,
-con conteggi di cornici e lotti identici a quelli verificati.
+## Result, errors, and lifetime
 
-Il visitor deve controllare gli esiti del proprio lavoro e restituire
-NIL. Un altro valore produce INVALID-ARGUMENT dopo i suoi eventuali
-effetti. Condizioni e uscite non locali propagano senza retry, rollback
-o close implicita. Un errore dopo alcune callback lascia un candidato
-privato incompleto: il coordinatore deve scartarlo o invalidarlo e
-mantenere l'ammissione chiusa. Il confine FAULTED della Serie resta da
-collegare; questa API non introduce un nuovo controller.
+The two counters concern **records**, not TXIDs: a prepared transaction
+with multiple aborted modifications increments the second counter for each
+modification. Reader counts retain their original meaning. The loop has
+exactly BATCHES + RECORDS steps and must end exactly at P, with frame and
+batch counts identical to those verified.
 
-Prima del primo callback ogni errore del reader lascia il consumatore
-intatto. Questo vale per il singolo segmento, non per l'intero Archivio.
-Dopo l'ultima callback si verificano ancora capacità aperte e consumo.
-Un risultato riuscito non pubblica indici, radici GET o visibilità dei
-commit e non trasferisce la proprietà dei FD.
+The visitor must check the outcomes of its own work and return NIL.
+Another value produces INVALID-ARGUMENT after any effects it has made.
+Conditions and nonlocal exits propagate without retry, rollback, or
+implicit close. An error after some callbacks leaves an incomplete private
+candidate: the coordinator must discard or invalidate it and keep admission
+closed. The Serie FAULTED boundary remains to be connected; this API does
+not introduce a new controller.
 
-## Lavoro e memoria
+Before the first callback, any reader error leaves the consumer intact.
+This applies to the individual segment, not the entire Archivio.
+After the last callback, open capabilities and consumption are checked again.
+A successful result does not publish indexes, GET roots, or commit visibility,
+and does not transfer FD ownership.
 
-Una rilettura sequenziale del prefisso, controlli integrali canonici e
-un attraversamento aggiuntivo dei soli header per la consegna. I body
-non sono copiati dal visitatore; il consumatore può ricontrollarli.
-Il workspace delle prove resta limitato dai budget prepared/outcome
-del reader e viene rilasciato dopo la visita. Nessuna nuova tabella o
-entry Lisp viene creata esplicitamente per record dalla consegna.
+<a id="lavoro-e-memoria"></a>
 
-Lo scratch di P byte, gli oggetti del reader e le sue tabelle sono
-allocazioni del percorso a freddo, non una stima RSS. Il lavoro del
-visitor, lookup EDIT, boxing, GC e latenza non sono misurati qui. Nessun
-lavoro aggiunto al percorso ordinario GET/PUT e nessuna nuova scrittura
-o attesa condivisa fra Serie. ACTIVE, raggruppamento delle chiavi e gate
-complessivo rimangono incrementi separati.
+## Work and memory
 
-## Decisioni e qualifica aperta
+One sequential rereading of the prefix, complete canonical checks, and
+an additional traversal of headers only for delivery. Bodies are not
+copied by the visitor; the consumer can recheck them. The proof workspace
+remains bounded by the reader's prepared/outcome budgets and is released
+after the visit. Delivery explicitly creates no new table or Lisp entry
+per record.
 
-| ID | Decisione da qualificare | Stato |
+P-byte scratch, reader objects, and its tables are cold-path allocations,
+not an RSS estimate. Visitor work, EDIT lookup, boxing, GC, and latency
+are not measured here. No work added to the ordinary GET/PUT path and no
+new shared write or wait between Serie. ACTIVE, key grouping, and the
+overall gate remain separate increments.
+
+<a id="decisioni-e-qualifica-aperta"></a>
+
+## Decisions and open qualification
+
+| ID | Decision to qualify | Status |
 |---|---|---|
-| RCR-D01 | Reader interno con workspace; API pubblica con un solo valore | Aperta |
-| RCR-D02 | Budget/alias/frontiera e verifiche complete prima del visitor | Aperta |
-| RCR-D03 | Stessa autorità, geometria, conteggi e massimo CSN | Aperta |
-| RCR-D04 | Ordinario, OUTCOME locale, EDIT o prepared abortito | Aperta |
-| RCR-D05 | CSN zero presente, u64 alti e assenza distinta da zero | Aperta |
-| RCR-D06 | Soli PUT/TOMBSTONE; esclusione OUTCOME/SEAL | Aperta |
-| RCR-D07 | Visitor sincrono, NIL obbligatorio e propagazione delle uscite | Aperta |
-| RCR-D08 | Ciclo limitato, conteggi per record e consumo esatto fino a P | Aperta |
-| RCR-D09 | Compaction ordinaria, vuoto e workspace NIL | Aperta |
-| RCR-D10 | Fonti aperte fino alla consegna; nessuna pubblicazione parziale | Aperta |
+| RCR-D01 | Internal reader with workspace; public API with only one value | Open |
+| RCR-D02 | Budget/alias/frontier and complete checks before visitor | Open |
+| RCR-D03 | Same authority, geometry, counts, and maximum CSN | Open |
+| RCR-D04 | Ordinary, local OUTCOME, EDIT, or aborted prepared | Open |
+| RCR-D05 | Present CSN zero, high u64 values, and absence distinct from zero | Open |
+| RCR-D06 | PUT/TOMBSTONE only; OUTCOME/SEAL exclusion | Open |
+| RCR-D07 | Synchronous visitor, mandatory NIL, and exit propagation | Open |
+| RCR-D08 | Bounded loop, per-record counts, and exact consumption to P | Open |
+| RCR-D09 | Ordinary compaction, empty, and NIL workspace | Open |
+| RCR-D10 | Sources open until delivery; no partial publication | Open |
 
-[Metodo preregistrato e risultati locali](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-closed-replay/README.md).
-Test funzionali dedicati, compatibilità del reader pubblico, FI, MC/DC,
-copertura, revisione indipendente, misure di prestazione e qualifica C1
-rimangono aperti. I controlli statici non chiudono queste voci.
+[Preregistered method and local results](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-closed-replay/README.md).
+Dedicated functional tests, public reader compatibility, FI, MC/DC,
+coverage, independent review, performance measurements, and C1 qualification
+remain open. Static checks do not close these items.

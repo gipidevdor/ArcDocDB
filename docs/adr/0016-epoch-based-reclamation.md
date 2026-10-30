@@ -1,51 +1,62 @@
-# ADR-0016 — Epoch-based reclamation per segmenti, tabelle e indici ritirati
+<a id="adr-0016--epoch-based-reclamation-per-segmenti-tabelle-e-indici-ritirati"></a>
 
-- **Stato:** Accettata; **precisata da [ADR-0043](0043-primary-index-a-frammenti.md)** (l'EBR governa solo descrittori e file dei segmenti; directory e frammenti li ritira il collector) e da [ADR-0045](0045-modello-di-esecuzione.md) (una sezione di lettura è un compito).
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-16; realizza INV-R1 e INV-C10
-- **Riferimenti:** [architettura](../architettura.md#reclaim), INV-R1
+# ADR-0016 — Epoch-based reclamation for retired segments, tables, and indexes
 
-## Contesto
+- **Status:** Accepted; **clarified by [ADR-0043](0043-primary-index-a-frammenti.md)** (EBR governs only segment descriptors and files; the collector retires directories and fragments) and by [ADR-0045](0045-modello-di-esecuzione.md) (a read section is a task).
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-16; implements INV-R1 and INV-C10
+- **References:** [architecture](../architettura.md#reclaim), INV-R1
 
-Il reclaim di un segmento `OBSOLETE`, di una tabella dell'indice sostituita o di una base di
-indice secondario richiede di sapere quando nessun reader li usa più, senza costo apprezzabile
-sul percorso di lettura e senza contatori condivisi.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-**Epoch-based reclamation (EBR)** a livello di Archivio:
+Reclaiming an `OBSOLETE` segment, a replaced index table, or a secondary index base requires
+knowing when no reader uses it anymore, with negligible cost on the read path and without
+shared counters.
 
-- Un contatore di epoca globale `E` (64 bit).
-- Ogni worker ha uno slot proprio (riga di cache separata) in cui pubblica l'epoca corrente
-  quando entra in una sezione di lettura e un valore «inattivo» quando esce. Entrare costa una
-  lettura di `E` e una scrittura locale.
-- Chi ritira un oggetto (segmento, tabella, base di indice) lo accoda con l'epoca di ritiro
-  `r` e incrementa `E`.
-- Un oggetto ritirato è **reclamabile** quando ogni worker è inattivo o ha pubblicato un'epoca
-  `> r`. Il controllo avviene periodicamente dal Compaction Scheduler.
+<a id="decisione"></a>
 
-Gli snapshot non detengono riferimenti ai segmenti: detengono un CSN, e le location arrivano
-da indice e versioni trattenute ([ADR-0015](0015-primary-index-swiss-table-swmr.md)). Le
-transazioni detengono (chiave, versione), non location. Quindi, dopo la rilocazione
-condizionale, le quattro condizioni di INV-R1 si riducono a: *nessun riferimento residuo da
-indice e versioni trattenute* (garantito dalla rilocazione completata) **e** *epoca
-superata*.
+## Decision
 
-Pattern: EBR (Fraser 2004; Crossbeam; RCU nel kernel Linux).
+**Epoch-based reclamation (EBR)** at Archivio level:
 
-## Conseguenze
+- A global epoch counter `E` (64 bits).
+- Each worker has its own slot (separate cache line) in which it publishes the current epoch
+  when entering a read section and an “inactive” value when leaving. Entry costs one
+  read of `E` and one local write.
+- Whoever retires an object (segment, table, index base) queues it with retirement epoch
+  `r` and increments `E`.
+- A retired object is **reclaimable** when every worker is inactive or has published an epoch
+  `> r`. The Compaction Scheduler checks this periodically.
 
-- Reader attesa-liberi e senza scritture condivise.
-- Un worker bloccato dentro una sezione di lettura trattiene il reclaim: le sezioni di lettura
-  sono brevi per costruzione (non includono I/O di rete né attese).
-- Il reclaim è differito di qualche epoca: spazio su disco liberato con ritardo di
-  millisecondi–secondi, mai di più.
+Snapshots do not hold segment references: they hold a CSN, and locations come from the index
+and retained versions ([ADR-0015](0015-primary-index-swiss-table-swmr.md)). Transactions hold
+(key, version), not locations. Therefore, after conditional relocation, the four conditions
+of INV-R1 reduce to: *no remaining reference from the index or retained versions* (guaranteed
+by completed relocation) **and** *the epoch has been passed*.
 
-## Alternative considerate
+Pattern: EBR (Fraser 2004; Crossbeam; RCU in the Linux kernel).
 
-- *Contatore di riferimenti per segmento:* una scrittura atomica condivisa per ogni lettura.
-- *Hazard pointer:* più complessi per oggetti grandi e numerosi come i segmenti.
+<a id="conseguenze"></a>
 
-## Valutazione
+## Consequences
 
-- Verifica: FI-09, FI-11; modello in SPK-07; stress test di lettura durante compaction.
+- Wait-free readers with no shared writes.
+- A worker blocked inside a read section holds up reclamation: read sections
+  are short by construction (they include neither network I/O nor waits).
+- Reclamation is deferred by a few epochs: disk space is freed after a delay of
+  milliseconds–seconds, never longer.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Reference count per segment:* one shared atomic write per read.
+- *Hazard pointers:* more complex for objects as large and numerous as segments.
+
+<a id="valutazione"></a>
+
+## Evaluation
+
+- Verification: FI-09, FI-11; model in SPK-07; read stress test during compaction.

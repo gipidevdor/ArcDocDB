@@ -1,63 +1,73 @@
-# Metodo preregistrato — CSN e orizzonte
+<a id="metodo-preregistrato--csn-e-orizzonte"></a>
 
-Metodo definito prima dell'esecuzione, 2026-10-09. Classe C1,
-REQ-MVC-005, REQ-MVC-008, REQ-AFF-008; realizza il registro di
+# Preregistered method — CSN and horizon
+
+Method defined before execution, 2026-10-09. Class C1,
+REQ-MVC-005, REQ-MVC-008, REQ-AFF-008; implements the register from
 [ADR-0046](../adr/0046-orizzonte-con-registro-limitato.md).
 
-## Ipotesi e oracoli
+<a id="ipotesi-e-oracoli"></a>
 
-1. Un solo registro per Archivio. Due parole u32 rappresentano tutti i 64 bit;
-   assegnazione positiva e strettamente crescente, nessun wrap.
-2. Assegnazione e registrazione indivisibili. `H` non supera alcun pendente;
-   una lista indipendente di interi Lisp calcola `min(pendenti)-1`, oppure
-   l'ultimo CSN quando è vuota. Gli oracoli possono allocare.
-3. I crediti limitano i veri pendenti: il più vecchio può restare aperto mentre
-   l'altro slot viene riusato molte volte. Riprodurre il controesempio di ADR-0046.
-4. I rifiuti di capacità, esaurimento, token e contesa preservano lo stato.
-   Un token risolto non può consumare un credito di una successiva ondata.
-5. Il mutex non attende. La ripetizione appartiene allo scheduler; fixture e
-   strumenti hanno deadline e cleanup dei thread, nessun retry senza limite.
+## Assumptions and oracles
 
-## Prove previste
+1. One register per Archivio. Two u32 words represent all 64 bits;
+   positive, strictly increasing allocation, no wrapping.
+2. Allocation and registration indivisible. `H` does not pass any pending value;
+   an independent list of Lisp integers calculates `min(pendenti)-1`, or
+   last CSN when empty. Oracles may allocate.
+3. Credits limit actual pending values: the oldest can remain open while
+   the other slot is reused many times. Reproduce the ADR-0046 counterexample.
+4. Capacity, exhaustion, token, and contention rejections preserve state.
+   A resolved token cannot consume credit from a later wave.
+5. Mutex does not wait. Repetition belongs to scheduler; fixtures and
+   tools have deadlines and thread cleanup, no unbounded retry.
 
-Test sequenziali, completamenti invertiti, oracolo pseudocasuale deterministico,
-esplorazione di azioni con capacità piccola e profondità finita, carry a 2^32,
-confine fixnum, massimo u64 e rifiuto successivo. Test con mutex deliberatamente
-occupato e quattro worker reali verificano identità uniche e convergenza di H.
-Le letture C1 del realizzatore e del revisore sono registrate con i limiti.
-La copertura tramite `sb-cover` usa una cache separata e conserva stato grezzo
-e rapporto HTML; l'autoverifica deve rilevare un ramo deliberatamente mancante.
-Copertura strumentale e tabella delle decisioni sono letture complementari.
+<a id="prove-previste"></a>
 
-Mutanti isolati devono passare la compilazione e fallire un'asserzione pertinente:
-registro omesso, H anticipato, carry omesso, token stale accettato. Baseline e
-autoverifica C4 precedono i mutanti; un errore di compilazione non conta come kill.
-Una mancata rilevazione viene conservata, analizzata e risolta prima della consegna.
+## Planned tests
 
-## Misure
+Sequential tests, reversed completions, deterministic pseudorandom oracle,
+action exploration with small capacity and finite depth, carry at 2^32,
+fixnum boundary, maximum u64, and subsequent rejection. Tests with deliberately
+occupied mutex and four real workers check unique identities and H convergence.
+Implementer and reviewer C1 readings are recorded with limits.
+Coverage through `sb-cover` uses a separate cache and preserves raw state
+and HTML report; self-check must detect a deliberately missing branch.
+Instrumented coverage and decision table are complementary readings.
 
-Cinque campioni sequenziali di assegnazione/risoluzione, capacità 1, 16, 256,
-1024, base piccola e base oltre fixnum; caso con il pendente più vecchio fisso.
-Buffer e registro precedono la misura; warmup e GC precedono ciascun campione.
-Il sensore verifica una baseline senza allocazione e un'allocazione deliberata.
-Ogni finestra ha durata positiva e risoluzione dichiarata; finestre troppo brevi
-richiedono aumento limitato del lavoro. Accettazione: zero byte di heap nei
-successi sequenziali, compresi CSN alti, e correttezza degli esiti.
+Isolated mutants must compile and fail a relevant assertion:
+omitted register, advanced H, omitted carry, accepted stale token. Baseline and
+C4 self-check precede mutants; compilation error does not count as a kill.
+A missed detection is preserved, analyzed, and resolved before delivery.
 
-Campagne con 1, 2, 4 worker: Archivio condiviso e Archivi indipendenti. Riusare
-worker precreati; riportare quantità di lavoro, tempo, retry busy/full e H finale.
-Le condizioni di contesa possono allocare: nessuna pretesa di zero heap del
-percorso di errore. Le campagne sono eseguite una alla volta. Il carico esterno
-non è controllato; nessun target di throughput del database viene dedotto.
+<a id="misure"></a>
 
-## Conservazione
+## Measurements
 
-Ogni invocazione tramite `record-command.lisp` conserva argv, ambiente, commit,
-hash dei sorgenti prima/dopo, stdout/stderr, durata, exit code ed esito. Conservare
-anche tentativi falliti, campagne grezze e registri di compattazione automatica.
-La verifica finale avviene con sorgenti fermi; i risultati pubblicati seguono
-il limite di dimensione e la compressione integra già prevista dal progetto.
+Five sequential allocation/resolution samples, capacities 1, 16, 256,
+1024, small base and beyond-fixnum base; case with oldest pending value fixed.
+Buffer and register precede measurement; warmup and GC precede each sample.
+Sensor checks a nonallocating baseline and deliberate allocation.
+Each window has positive duration and stated resolution; overly short windows
+require a bounded increase in work. Acceptance: zero heap bytes in sequential
+successes, including high CSNs, and correct outcomes.
 
-Il componente non rende dati durevoli, non pubblica l'indice e non crea snapshot.
-Integrazione WAL, recovery del massimo globale, parcheggi e lifecycle dell'Archivio
-restano passi distinti; nessun requisito del motore completo viene promosso.
+Campaigns with 1, 2, 4 workers: shared Archivio and independent Archivi. Reuse
+precreated workers; report work quantity, time, busy/full retries, and final H.
+Contention conditions may allocate: no claim of zero heap on the
+error path. Campaigns run one at a time. External load
+is uncontrolled; no database throughput target is inferred.
+
+<a id="conservazione"></a>
+
+## Preservation
+
+Every invocation through `record-command.lisp` preserves argv, environment, commit,
+source hashes before/after, stdout/stderr, duration, exit code, and outcome. Preserve
+failed attempts, raw campaigns, and automatic-compaction records too.
+Final verification takes place with sources stationary; published results follow
+the project's existing size limit and lossless compression.
+
+The component neither makes data durable, publishes the index, nor creates snapshots.
+WAL integration, global maximum recovery, parking, and Archivio lifecycle
+remain distinct steps; no whole-engine requirement is promoted.

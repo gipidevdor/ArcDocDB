@@ -1,51 +1,53 @@
-# Scansione della struttura CBOR
+<a id="scansione-della-struttura-cbor"></a>
 
-Il codec attraversa un item completo con stack preallocato e verifica
-struttura, UTF-8 e budget, senza creare un documento decodificato.
-L'API prepara una base per la validazione sui worker prevista da ADR-0029;
-il collegamento all'ammissione delle operazioni resta successivo.
+# Scanning CBOR structure
+
+The codec traverses a complete item with a preallocated stack and verifies
+structure, UTF-8, and budgets without creating a decoded document.
+The API prepares a foundation for worker validation planned by ADR-0029;
+connection to operation admission remains subsequent work.
 
 ```lisp
-(let ((spazio (arcdocdb.cbor:crea-spazio-cbor))) ; prima del percorso caldo
+(let ((spazio (arcdocdb.cbor:crea-spazio-cbor))) ; before the hot path
   (arcdocdb.cbor:verifica-struttura-cbor
    buffer start end spazio
    :max-bytes 16777216 :max-nodes 16777216 :max-depth 100))
-;; => nodi, profondità massima di array/map, end
+;; => nodes, maximum array/map depth, end
 ```
 
-Lo span `[start,end)` appartiene al chiamante e rimane immutabile.
-Ogni worker possiede uno spazio distinto, usato da una sola chiamata alla
-volta e riusabile dopo errore. La factory crea una struttura e due array
-fissi di 102 celle; lo spazio non trattiene il buffer. Sono disponibili
-budget inferiori ai default, compresa profondità zero per scalari/stringhe.
+Span `[start,end)` belongs to the caller and remains immutable.
+Each worker owns a separate workspace, used by only one call at a
+time and reusable after error. The factory creates a structure and two fixed
+102-cell arrays; the workspace does not retain the buffer. Budgets below
+defaults are available, including zero depth for scalars/strings.
 
-Ogni header item, compresi tag e chunk vuoti, conta un nodo; il break non
-conta. Solo array/map aumentano la profondità, inclusi contenitori vuoti,
-chiavi e valori. Un tag non consuma un figlio del padre prima dell'item
-seguente. I chunk di stringhe indefinite sono definiti e dello stesso tipo;
-ciascun chunk di testo deve contenere sequenze UTF-8 complete. Il successo
-richiede la fine esatta dello span, senza un secondo item o byte residui.
+Each item header, including tags and empty chunks, counts as a node; break does
+not count. Only arrays/maps increase depth, including empty containers,
+keys, and values. A tag does not consume a child of its parent before the following
+item. Indefinite-string chunks are definite and of the same type;
+each text chunk must contain complete UTF-8 sequences. Success
+requires the exact span end, without a second item or remaining bytes.
 
-Range, spazio, alias con l'array privato dei kind e configurazioni invalidi
-sono `invalid-argument`. Lo span oltre budget, i nodi o la profondità sono
-`resource-exhausted`. Sintassi, troncatura, break/chunk e UTF-8 errati sono
-`corruption-detected`; motivi e offset assoluti distinguono il punto di
-rifiuto. Le precedenze complete sono registrate nel
-[metodo](cbor-struttura-metodo.md). Un preflight rifiutato lascia lo spazio
-invariato; gli errori runtime consentono il reset alla chiamata successiva.
+Invalid ranges, workspaces, aliases with the private kind array, and configurations
+are `invalid-argument`. Spans over budget, nodes, or depth are
+`resource-exhausted`. Incorrect syntax, truncation, break/chunks, and UTF-8 are
+`corruption-detected`; reasons and absolute offsets distinguish the rejection
+point. Complete precedence is recorded in the
+[method](cbor-struttura-metodo.md). Rejected preflight leaves the workspace
+unchanged; runtime errors permit reset on the next call.
 
-Il controllo del profilo documentale di ADR-0014 resta da implementare:
-semantica dei tag, duplicati e ordinamento delle chiavi, rappresentazioni
-minime e regole dei float. Lo scanner accetta questi casi come struttura
-generica. Il risultato non attesta validità semantica completa o codifica
-deterministica.
+ADR-0014 document-profile checks remain to be implemented:
+tag semantics, duplicate keys and key ordering, minimal representations,
+and float rules. The scanner accepts these cases as generic
+structure. The result certifies neither full semantic validity nor deterministic
+encoding.
 
-Le verifiche comprendono oracoli indipendenti, corpus generato, fuzz finito,
-confini di 16MiB e 100 livelli e due thread con buffer/spazi privati.
-[Prima lettura](cbor-struttura-lettura.md),
-[seconda lettura](cbor-struttura-revisione.md),
-[inventario delle decisioni](cbor-struttura-decisioni.md) e
-[lettura dei driver](cbor-struttura-driver-review.md) distinguono riscontri
-statici e campagne runtime. [Risultati e dati grezzi](cbor-struttura-risultati.md).
-Le prove del modulo non qualificano il motore,
-la durabilità o lo scaling del pool.
+Verification includes independent oracles, generated corpus, finite fuzz,
+16MiB and 100-level boundaries, and two threads with private buffers/workspaces.
+[First reading](cbor-struttura-lettura.md),
+[second reading](cbor-struttura-revisione.md),
+[decision inventory](cbor-struttura-decisioni.md), and
+[driver reading](cbor-struttura-driver-review.md) distinguish static
+findings from runtime campaigns. [Results and raw data](cbor-struttura-risultati.md).
+Module tests do not qualify the engine,
+durability, or pool scaling.

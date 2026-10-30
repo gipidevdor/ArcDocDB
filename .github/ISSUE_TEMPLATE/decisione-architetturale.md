@@ -1,17 +1,17 @@
 ---
-name: Decisione architetturale
-about: Proponi o metti in discussione una decisione (da cui nascerà un ADR)
+name: Architectural decision
+about: Propose or challenge a decision (leading to an ADR)
 labels: adr
 ---
 
-**Decisione o questione**
+**Decision or question**
 
-**Contesto e vincoli** (invarianti coinvolti, `INV-…`; rischi, `RSK-…`)
+**Context and constraints** (affected invariants, `INV-…`; risks, `RSK-…`)
 
-**Opzioni valutate** (criteri in [principi di ingegneria](../../docs/principi-di-ingegneria.md))
+**Options evaluated** (criteria in [engineering principles](../../docs/principi-di-ingegneria.md))
 
-**Raccomandazione**
+**Recommendation**
 
-**Che cosa rende seriale, e qual è il punto di atomicità** ([leggi di progetto](../../docs/adr/0036-leggi-di-progetto.md))
+**What it serializes, and the atomicity point** ([design laws](../../docs/adr/0036-leggi-di-progetto.md))
 
-**Come si verifica** (spike, modello, benchmark)
+**How it is verified** (spike, model, benchmark)

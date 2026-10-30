@@ -1,77 +1,87 @@
-# Metodo: ordinamento delle decisioni e consultazioni parallele
+<a id="metodo-ordinamento-delle-decisioni-e-consultazioni-parallele"></a>
 
-Registrato prima delle misure del 2026-10-09. Ambito: ordinamento in
-memoria del recovery, senza I/O, applicazione dei prepared o modifica del
-formato persistente. La tabella pubblica resta posseduta e immutabile.
+# Method: decision sorting and parallel queries
 
-## Candidati e criterio
+Registered before measurements of 2026-10-09. Scope: in-memory
+recovery sorting without I/O, prepared application, or persistent-format
+changes. Public table remains owned/immutable.
 
-Baseline: merge bottom-up stabile già verificato. Candidato: LSD radix
-stabile a base 256, otto cifre per TXID u64 e sedici per ID16. Le passate
-con una sola classe occupata non cambiano l'ordine e possono essere saltate.
-Il workspace resta limitato ai dati effettivi più 256 contatori, senza
-allocazione in proporzione ai budget inutilizzati.
+<a id="candidati-e-criterio"></a>
 
-Per una larghezza fissa `w`, radix richiede `O(w × (N + 256))` lavoro;
-merge richiede `O(N log N)` confronti. La distribuzione stabile di ogni
-cifra conserva l'ordine fisico dei TXID uguali e quindi la provenienza del
-primo conflitto. Riferimento primario: [Sedgewick e Wayne, LSD](https://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/LSD.java.html).
-L'adattamento usa interi **unsigned** u64, senza il riordino del segno
-necessario agli interi Java del riferimento.
+## Candidates and criterion
 
-Nessuna adozione sulla sola complessità asintotica. Si misurano cardinalità
-piccole, medie e grandi, ID16 a prefisso comune e con tutti i byte variabili
-(le due metà sono correlate), TXID ordinati, inversi, dispersi, duplicati
-e uniformi. Si scelgono soglie separate per ID16 e TXID. Per ogni scenario
-con `N >= soglia`, mediana radix deve essere al massimo il 90% della mediana
-merge. La soglia stessa deve essere una cardinalità misurata. In caso di risultati discordanti si
-mantiene merge nel relativo percorso; il candidato non viene lasciato
-come codice di prodotto inutilizzato.
+Baseline: already verified stable bottom-up merge. Candidate: stable
+base-256 LSD radix, eight digits per u64 TXID and sixteen per ID16. Passes
+with only one occupied class preserve order and may be skipped.
+Workspace remains bounded by actual data plus 256 counters, without
+allocation proportional to unused budgets.
 
-## Correttezza e concorrenza
+For fixed width `w`, radix requires `O(w × (N + 256))` work;
+merge requires `O(N log N)` comparisons. Stable distribution of each
+digit preserves physical order of equal TXIDs and hence first-conflict
+provenance. Primary reference: [Sedgewick and Wayne, LSD](https://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/LSD.java.html).
+Adaptation uses **unsigned** u64 integers, without sign reordering
+required by reference Java integers.
 
-Oracolo indipendente a `stable-sort` nei test, confrontando tutti i byte
-e l'identità delle entry, compresi i duplicati. Valori estremi u64,
-cardinalità dispari e confini delle cifre; passate uniformi, input già
-ordinato e inverso, ID differenti in ciascuno dei 128 bit.
-Si ripetono i contratti pubblici: duplicati idempotenti o discordanti,
-primo conflitto fisico, budget e ownership, senza risultati parziali.
+No adoption on asymptotic complexity alone. Measure small,
+medium, large cardinalities, ID16 with common prefix and all bytes variable
+(both halves correlated), ordered, reversed, scattered, duplicate,
+and uniform TXIDs. Choose separate ID16/TXID thresholds. For every scenario
+with `N >= soglia`, radix median must be at most 90% of merge
+median. Threshold itself must be measured cardinality. With conflicting results,
+retain merge on respective path; candidate not left
+as unused product code.
 
-Worker reali consultano in parallelo la stessa tabella pubblicata prima
-dello start: ogni worker possiede input, output e stato d'errore. Nessuna
-scrittura nella tabella, contatore globale o lock nel percorso della
-query. Il test confronta gli output con un oracolo seriale e attende i
-thread con timeout. Questi worker appartengono all'harness; non introducono
-thread per richiesta nel motore o un nuovo pool globale.
+<a id="correttezza-e-concorrenza"></a>
 
-## Misure e conservazione
+## Correctness and concurrency
 
-Solo ordinamento nelle finestre misurate; fixture, copie da ripristinare,
-compilazione, warmup e confronto con l'oracolo sono fuori dalla finestra.
-Le allocazioni interne dell'algoritmo e gli eventuali GC restano inclusi.
-Repliche alternate tra merge/radix, seme fisso, contatori heap e tick grezzi,
-risoluzione e durata effettiva conservati. Tre repliche per algoritmo,
-con iterazioni calibrate separatamente, alternano l'ordine di esecuzione.
-Campioni sotto la risoluzione o più brevi del target di 50 ms, anche dopo
-raggiungimento del tetto, rendono inconcludente la scelta per quel suffisso
-di cardinalità: non producono rapporti utilizzabili per l'adozione.
-La calibrazione ha un numero massimo di tentativi, iterazioni e byte delle
-copie. Il limite di 64 MiB riguarda il payload delle copie (otto byte per
-riferimento a entry); non comprende header, output, oracolo e scratch.
+Independent `stable-sort` oracle in tests comparing all bytes
+and entry identities, including duplicates. Extreme u64 values,
+odd cardinalities and digit boundaries; uniform passes, already
+sorted/reversed input, IDs differing in each of 128 bits.
+Repeat public contracts: idempotent/conflicting duplicates,
+first physical conflict, budgets, ownership, no partial results.
 
-Self-test del driver: fixture/oracolo deterministici, algoritmo errato
-rilevato e corretta classificazione del tempo nullo. Due letture, lint,
-mutanti mirati, copertura grezza e `make check`; comandi, hash e tentativi
-falliti vengono conservati nel catalogo. La misura locale macOS/ARM64
-non qualifica prestazioni Linux/x86-64, P99, zero heap o il motore completo.
+Real workers query same table published before
+start in parallel: each owns inputs, outputs, error state. No
+table write, global counter, or query-path lock.
+Test compares outputs with serial oracle and waits for
+threads with timeout. Workers belong to harness; do not introduce
+per-request engine threads or new global pool.
 
-## Ripetizione per durata insufficiente
+<a id="misure-e-conservazione"></a>
 
-La prima matrice completa ha conservato campioni sotto il minimo di 50 ms,
-anche dopo una calibrazione inizialmente sufficiente. Non autorizza una
-soglia TXID; resta conservata integralmente. Prima della seconda matrice,
-il target di calibrazione sale a 100 ms per lasciare margine alla variazione
-fra finestre. Il minimo di ogni campione resta 50 ms e il criterio del 10%
-non cambia. Si ripete l'intera matrice con lo stesso seme, senza selezionare
-soltanto i casi favorevoli. Una calibrazione che raggiunge il tetto prima
-dei 100 ms resta insufficiente, anche con campioni successivi più lunghi.
+## Measurements and preservation
+
+Sorting only inside measurement windows; fixtures, copies to restore,
+compilation, warmup, oracle comparison outside window.
+Internal algorithm allocations and any GC remain included.
+Alternating merge/radix replicates, fixed seed, raw heap/tick counters,
+resolution and actual duration preserved. Three replicates per algorithm,
+separately calibrated iterations, alternating execution order.
+Samples below resolution or shorter than 50 ms target, even after
+reaching cap, make selection inconclusive for that cardinality
+suffix: no ratios usable for adoption.
+Calibration bounded in attempts, iterations, copy bytes.
+64 MiB limit concerns copy payload (eight bytes per
+entry reference); excludes headers, outputs, oracle, scratch.
+
+Driver self-test: deterministic fixture/oracle, wrong algorithm
+detected, correct zero-time classification. Two readings, lint,
+targeted mutants, raw coverage, `make check`; commands, hashes, failed
+attempts preserved in catalog. Local macOS/ARM64 measurement
+qualifies neither Linux/x86-64 performance, P99, zero heap, nor whole engine.
+
+<a id="ripetizione-per-durata-insufficiente"></a>
+
+## Repeat for insufficient duration
+
+First full matrix retained samples below 50 ms minimum,
+even after initially sufficient calibration. Does not authorize
+TXID threshold; preserved in full. Before second matrix,
+calibration target raised to 100 ms to leave margin for variation
+between windows. Minimum each sample still 50 ms; 10%
+criterion unchanged. Entire matrix repeated with same seed, without selecting
+favorable cases alone. Calibration reaching cap before
+100 ms remains insufficient, even with longer later samples.

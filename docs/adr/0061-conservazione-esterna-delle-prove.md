@@ -1,44 +1,52 @@
-# ADR-0061 — Conservazione esterna delle prove storiche
+<a id="adr-0061--conservazione-esterna-delle-prove-storiche"></a>
 
-- **Stato:** Accettata per la pulizia autorizzata del 2026-10-23
-- **Data:** 2026-10-23
-- **Riferimenti:** REQ-VAL-001, REQ-AFF-012, INV-X2, INV-X3;
-  [registro delle prove](../valutazione/registro-delle-prove.md).
-- **Rapporto con la specifica:** nessun cambio al motore o ai formati documentali;
-  precisa la conservazione C4 e sostituisce la residenza locale di tutte le prove storiche.
+# ADR-0061 — External preservation of historical evidence
 
-## Contesto
+- **Status:** Accepted for the cleanup authorized on 2026-10-23
+- **Date:** 2026-10-23
+- **References:** REQ-VAL-001, REQ-AFF-012, INV-X2, INV-X3;
+  [evidence register](../valutazione/registro-delle-prove.md).
+- **Relationship to the specification:** no change to the engine or document formats;
+  clarifies C4 preservation and supersedes local residency of all historical evidence.
 
-I risultati pubblicati comprendono 52.277 file: copie sorgenti, compilati SBCL,
-fixture, log e registri strutturati. Compattare ogni registro singolarmente conserva
-il numero elevato di file. Eliminare elementi degli archivi chiusi ne romperebbe
-l'inventario; l'autore richiede di mantenere localmente solo i risultati recenti rilevanti.
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-1. Prima della rimozione, creare uno snapshot completo dei byte pubblicati, un
-   inventario SHA-256 per file e un asset esterno compresso. Estrarlo in una
-   directory indipendente e confrontare inventario e contenuti con gli originali.
-2. Pubblicare archivio e inventario nella release del repository, rileggerli e
-   confrontarne gli hash. Registrare nel checkout revisione, hash e istruzioni
-   di recupero. Gli originali degli archivi chiusi restano immutati nell'asset.
-3. Conservare localmente una sintesi delle campagne recenti rilevanti e le tre
-   pubblicazioni CI più recenti. Reindirizzare le citazioni precedenti alla
-   revisione Git originale. Nessun force-push o riscrittura della cronologia.
-4. `make evidence` verifica i dati e i cataloghi locali; non certifica nuovamente
-   i raw esterni. L'audit integrale si esegue esplicitamente dopo il recupero
-   verificato. Un riferimento esterno non rappresenta una nuova esecuzione.
-5. Compilati, temporanei e copie di lavoro non appartengono alle nuove pubblicazioni.
-   I log CI oltre 4 KiB vengono compressi senza perdita; i budget aggregati restano invariati.
+Published results comprise 52,277 files: source copies, SBCL compiled files,
+fixtures, logs, and structured registers. Compressing each register individually retains
+the high file count. Deleting items from sealed archives would break
+their inventory; the author requires keeping only relevant recent results locally.
 
-## Verifica, conseguenze e rollback
+<a id="decisione"></a>
 
-La migrazione conserva 52.277 byte stream originali, compresi fallimenti e fixture.
-Gli hash del TAR ricostruito da gzip e zstd coincidono; l'asset scaricato da GitHub
-coincide con il locale. Il checkout e la CI ordinaria evitano il ripristino massivo.
+## Decision
 
-La disponibilità del servizio esterno è necessaria per recuperare i raw se manca
-una copia offline. La cronologia Git mantiene gli oggetti precedenti: il risparmio
-sul checkout non equivale a una riduzione della storia o del download di un clone
-completo. Il rollback ripristina le directory dal commit originale o dall'asset
-verificato, senza reinterpretare risultati e senza modificare il prodotto.
+1. Before removal, create a complete snapshot of the published bytes, a
+   per-file SHA-256 inventory, and a compressed external asset. Extract it into an
+   independent directory and compare inventory and contents with the originals.
+2. Publish archive and inventory in the repository release, reread them, and
+   compare hashes. Record revision, hash, and recovery instructions
+   in the checkout. Sealed-archive originals remain unchanged in the asset.
+3. Keep a summary of relevant recent campaigns and the three most recent
+   CI publications locally. Redirect earlier citations to the
+   original Git revision. No force-push or history rewrite.
+4. `make evidence` verifies local data and catalogs; it does not recertify
+   external raw data. Full auditing is performed explicitly after verified
+   retrieval. An external reference does not represent a new run.
+5. Compiled files, temporary files, and working copies do not belong in new publications.
+   CI logs over 4 KiB are losslessly compressed; aggregate budgets remain unchanged.
+
+<a id="verifica-conseguenze-e-rollback"></a>
+
+## Verification, consequences, and rollback
+
+The migration preserves 52,277 original byte streams, including failures and fixtures.
+Hashes of the TAR reconstructed from gzip and zstd match; the asset downloaded from GitHub
+matches the local one. Checkout and ordinary CI avoid bulk restoration.
+
+External-service availability is necessary to retrieve raw data if no offline
+copy exists. Git history retains previous objects: savings
+in the checkout do not amount to a reduction in history or in the download of a full
+clone. Rollback restores directories from the original commit or the verified
+asset, without reinterpreting results or changing the product.

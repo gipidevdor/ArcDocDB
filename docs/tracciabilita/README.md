@@ -1,70 +1,84 @@
-# Tracciabilità
+<a id="tracciabilità"></a>
 
-[Documentazione](../README.md) · [Affidabilità](../affidabilita/README.md) · [Decisioni](../adr/README.md)
+# Traceability
 
-La tracciabilità è **bidirezionale e controllata da uno strumento**
+[Documentation](../README.md) · [Reliability](../affidabilita/README.md) · [Decisions](../adr/README.md)
+
+Traceability is **bidirectional and checked by a tool**
 ([ADR-0035](../adr/0035-strategia-di-verifica-e-tracciabilita.md), INV-A5).
 
 ```
-specifica / ADR  →  REQ-…  →  invarianti, ADR, classe  →  codice (;;; REQ:) → test → esito
+specification / ADR  →  REQ-…  →  invariants, ADR, class  →  code (;;; REQ:) → test → outcome
                       ▲                                                          │
-                      └──────────────  matrice generata, `make trace`  ◀─────────┘
+                      └──────────────  generated matrix, `make trace`  ◀─────────┘
 ```
 
-## File
+<a id="file"></a>
 
-| File | Contenuto |
+## Files
+
+| File | Contents |
 |---|---|
-| [requisiti.lisp](requisiti.lisp) | i requisiti, come dati: fonte, enunciato, classe, invarianti, ADR, metodi di verifica, scenari FI, stato |
-| [matrice.md](matrice.md) | la matrice **generata**: requisiti, copertura degli invarianti e degli scenari FI, ADR → requisiti |
-| [`tools/check-trace.lisp`](../../tools/check-trace.lisp) | validazione e generazione |
+| [requisiti.lisp](requisiti.lisp) | requirements as data: source, statement, class, invariants, ADRs, verification methods, FI scenarios, state |
+| [matrice.md](matrice.md) | the **generated** matrix: requirements, invariant and FI-scenario coverage, ADR → requirements |
+| [`tools/check-trace.lisp`](../../tools/check-trace.lisp) | validation and generation |
 
-## Comandi
+<a id="comandi"></a>
+
+## Commands
 
 ```bash
-make trace          # verifica; fallisce se qualcosa è incoerente
-make trace-write    # rigenera matrice.md dopo aver modificato requisiti.lisp
+make trace          # checks; fails if anything is inconsistent
+make trace-write    # regenerates matrice.md after changing requisiti.lisp
 ```
 
-## Che cosa viene controllato
+<a id="che-cosa-viene-controllato"></a>
 
-1. Ogni requisito ha identificativo `REQ-<AREA>-<nnn>`, fonte, enunciato, classe di integrità
-   (C1…C4), stato e almeno un metodo di verifica; gli identificativi sono unici.
-2. Ogni `INV-`, `ADR-` e `FI-` citato **esiste** nella documentazione.
-3. **Ogni invariante** di [invarianti.md](../invarianti.md) è coperto da almeno un requisito.
-4. **Ogni scenario** di [fault injection](../14-fault-injection.md) è coperto da almeno un
-   requisito; un requisito verificato con `:fi` indica gli scenari.
-5. Ogni riferimento `REQ-…` in `src/`, `tests/`, `tools/` e `spikes/` indica un requisito esistente.
-6. Un requisito `:implementato` o `:verificato` è citato nel codice (`src/` o `tools/`) e,
-   se non è di classe C4, nei test.
-7. La matrice committata è esattamente quella generata.
+## What is checked
 
-Il controllo del codice esclude `spikes/out/` e `spikes/results/`: contengono dati
-di esito e diagnostiche, verificati separatamente da `make evidence`. La selezione
-ha un'autoverifica dei confini; i sorgenti degli spike e le fixture restano inclusi.
+1. Every requirement has a `REQ-<AREA>-<nnn>` identifier, source, statement, integrity class
+   (C1…C4), state, and at least one verification method; identifiers are unique.
+2. Every cited `INV-`, `ADR-`, and `FI-` **exists** in the documentation.
+3. **Every invariant** in [invarianti.md](../invarianti.md) is covered by at least one requirement.
+4. **Every [fault-injection](../14-fault-injection.md) scenario** is covered by at least one
+   requirement; a requirement verified using `:fi` lists the scenarios.
+5. Every `REQ-…` reference in `src/`, `tests/`, `tools/`, and `spikes/` names an existing requirement.
+6. A requirement in `:implementato` or `:verificato` state is cited in code (`src/` or `tools/`)
+   and, unless it is class C4, in tests.
+7. The committed matrix exactly matches generated output.
 
-## Stati di un requisito
+Code scanning excludes `spikes/out/` and `spikes/results/`: they contain outcome data
+and diagnostics, verified separately by `make evidence`. Selection has a boundary
+self-test; spike sources and fixtures remain included.
 
-| Stato | Significato |
+<a id="stati-di-un-requisito"></a>
+
+## Requirement states
+
+| State | Meaning |
 |---|---|
-| `:specificato` | enunciato definito, senza progetto |
-| `:progettato` | realizzato da ADR e documenti; nessun codice |
-| `:implementato` | codice presente e tracciato (`;;; REQ: REQ-…`) |
-| `:verificato` | tutte le verifiche dell'elenco `:ver` eseguite e verdi |
+| `:specificato` | statement defined, without a design |
+| `:progettato` | realized by ADRs and documents; no code |
+| `:implementato` | code present and traced (`;;; REQ: REQ-…`) |
+| `:verificato` | all checks in the `:ver` list executed and passing |
 
-## Come si aggiunge o si cambia un requisito
+<a id="come-si-aggiunge-o-si-cambia-un-requisito"></a>
 
-1. Modificare [requisiti.lisp](requisiti.lisp): un requisito si **ritira** (stato e nota), non si
-   rinumera né si riusa l'identificativo.
-2. `make trace-write`, poi `make trace`.
-3. Citare gli ID nei commit (`Refs: REQ-…`) e, quando c'è codice, in `;;; REQ:` e nel nome del
-   test.
+## Adding or changing a requirement
 
-## Limiti dichiarati
+1. Edit [requisiti.lisp](requisiti.lisp): a requirement is **retired** (state and note),
+   never renumbered, and its identifier is never reused.
+2. Run `make trace-write`, then `make trace`.
+3. Cite IDs in commits (`Refs: REQ-…`) and, where there is code, in `;;; REQ:` and the test
+   name.
 
-- Lo strumento controlla l'**esistenza** e la **completezza** dei collegamenti, non la loro
-  **correttezza semantica**: che un requisito sia davvero realizzato da quell'ADR lo stabilisce
-  la revisione ([lista di controllo](../affidabilita/standard-di-codifica.md#lista-di-controllo-di-revisione-c1)).
-- Fino alla Fase 1 non c'è codice di prodotto: gli esperimenti citano i requisiti che
-  studiano, ma non li promuovono a `implementato` o `verificato`. Solo il requisito C4
-  dell'harness ha codice di strumento; le prove finite non sono prove del futuro motore.
+<a id="limiti-dichiarati"></a>
+
+## Declared limitations
+
+- The tool checks the **existence** and **completeness** of links, not their **semantic
+  correctness**: whether an ADR actually realizes a requirement is established by review
+  ([checklist](../affidabilita/standard-di-codifica.md#lista-di-controllo-di-revisione-c1)).
+- Until Phase 1, there is no product code: experiments cite the requirements they study
+  but do not promote them to `implementato` or `verificato`. Only the C4 harness requirement
+  has tooling code; completed tests are not tests of the future engine.

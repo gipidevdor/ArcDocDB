@@ -1,60 +1,62 @@
-# Metodo preregistrato del collegamento worker/Serie
+<a id="metodo-preregistrato-del-collegamento-workerserie"></a>
 
-Base iniziale `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`.
-La qualificazione finale incorpora `main` fino a
-`8101eb856cbe9d7540682babb53afb00fde30f70`, inclusa la fondazione hash:
-le due prove preliminari sul primo scope rimangono distinte dalla verifica integrata.
-Metodo fissato prima delle campagne e delle misure del nuovo collegamento.
-Ambito: quattro sorgenti late in `src/series/worker-*.lisp`, ASDF, test della
-suite Serie e strumento C4 `tools/worker-series-bench.lisp`.
-Contratto e limiti nel [documento del modulo](worker-serie.md).
+# Preregistered worker/Serie connection method
 
-Verifiche previste, con input e oggetti preallocati:
+Initial base `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`.
+Final qualification incorporates `main` through
+`8101eb856cbe9d7540682babb53afb00fde30f70`, including hash foundation:
+two preliminary tests on first scope remain separate from integrated verification.
+Method fixed before new-connection campaigns and measurements.
+Scope: four late sources in `src/series/worker-*.lisp`, ASDF, Serie-suite
+tests, and C4 tool `tools/worker-series-bench.lisp`.
+Contract and limits in [module document](worker-serie.md).
 
-- Tratto completo, ordine FIFO e identità dei payload, buffer con sentinelle,
-  token/lease monotoni su ondate successive e ack prima della fine.
-- Busy writer prima di acquisire Serie; busy della seconda lease e generation
-  Serie esaurita, distinti nei tre valori del begin. Nessun pop e obbligo
-  schedule conservato fino a ricircolo e nuovo tratto.
-- Fine busy dopo release Serie: CLOSING/FINISHING, sola fine ritentabile,
-  controller subito acquisibile e nessuna seconda release sul retry.
-- Binding, fase, owner, token e generazioni invalidi prima delle mutazioni;
-  batch debt, ack stale, alias/span e wrong-thread senza poisoning.
-- Fault durante release Serie: stessa condizione, riferimento e lease
-  conservati, worker non concluso; fault dopo release senza scrivere sul
-  controller consegnato. Bypass delle lease catturate rifiutato prima del pop.
-- Decisione composta del fault marking: tre condizioni scalari, ciascuna
-  falsa indipendentemente con le altre vere, e tutte vere. Copertura manuale
-  per le condizioni, senza dedurre MC/DC da sb-cover.
-- Competizione sulla stessa Serie e due Serie contemporaneamente attive con
-  thread reali, semafori e deadline del solo harness; nessun thread nel prodotto.
-  Acquisizione di Serie FAULTED consentita per drenaggio già previsto dal controller.
-- Macro boundary: espansione, valutazione singola, valori multipli, errore EQ
-  e gate owner/faulted prima del handler. Allowlist esatte per tipo e ragione.
-  Sottopassi di acquisizione e rilascio Serie isolati con allowlist vuote:
-  una ragione ammessa soltanto dal writer non nasconde un errore della Serie,
-  e il fault del worker sottostante non torna recuperabile nel bridge.
-- Due letture C1 con dodici punti e inventario di tutte le decisioni; raw
-  sb-cover e HTML per l'intero scope Series, file late inclusi, denominatore
-  completo e lacune conservate. Nessuna esclusione approvata.
-- Allocazione locale: warmup128, cinque campioni da4096 cicli completi su
-  collegamento/worker/controller/target preallocati; GC e stampa fuori misura.
-  Ogni ciclo accoda un payload, adotta obbligo, begin, legge lease, pop, ack,
-  end idle e controlla identità/esiti/generazioni. Sink indipendente fisso
-  per ciclo nel driver, non ricavato dalle funzioni di prodotto:
-  `12+7+11+13+3+25+7+23=101`, sink campione `4096*101+4096*4095/2=8800256`.
-  Controlli
-  positivi dell'heap e sink errato dimostrano il rilevamento del C4.
-- Strict COMPILE-FILE completo dello strumento e self-test del FASL con warning
-  e style-warning fatali; il caricamento ASDF applica la sola eccezione per
-  `sb-kernel:redefinition-warning` già dichiarata da `tools/build.lisp` per
-  riletture/ridefinizioni del caricatore. Nessuna esclusione di avvisi di
-  compilazione del C4. Build e test mirati prima del controllo completo.
-  `make check` una volta sul codice finale congelato, salvo cambiamenti o failure.
+Planned verification, with preallocated inputs and objects:
 
-Ogni campagna viene registrata con `tools/record-command.lisp`, conservando
-stdout/stderr, argv, ambiente, report originali, snapshot iniziale/finale e
-tentativi falliti. Le campagne usano copie congelate e cache distinte. I dati
-grandi vengono compressi senza perdita con catalogo conservativo.
-Non si deducono throughput, P99, fairness, scalabilità o heap zero universale
-da questi campioni. Nessun gate della Fase0 viene chiuso per questa fondazione.
+- Complete slice, FIFO order and payload identity, sentinel buffers,
+  monotonic tokens/leases over successive waves, and ack before end.
+- Busy writer before acquiring Serie; busy second lease and exhausted
+  Serie generation, distinct in three begin values. No pop, and schedule
+  obligation preserved until recirculation and new slice.
+- Busy end after Serie release: CLOSING/FINISHING, only end retryable,
+  controller immediately acquirable, and no second release on retry.
+- Invalid binding, phase, owner, token, and generations before mutations;
+  batch debt, stale ack, alias/span, and wrong-thread without poisoning.
+- Fault during Serie release: same condition, reference and lease
+  preserved, worker not ended; fault after release without writing to handed-off
+  controller. Bypass of captured leases rejected before pop.
+- Compound fault-marking decision: three scalar conditions, each
+  independently false with others true, and all true. Manual condition
+  coverage, without inferring MC/DC from sb-cover.
+- Competition on same Serie and two simultaneously active Serie with
+  real threads, semaphores, and harness-only deadlines; no product thread.
+  FAULTED-Serie acquisition permitted for draining already planned by controller.
+- Macro boundary: expansion, single evaluation, multiple values, EQ error,
+  and owner/faulted gate before handler. Exact type and reason allowlists.
+  Serie acquisition and release substeps isolated with empty allowlists:
+  a reason allowed only by writer does not hide a Serie error,
+  and underlying worker fault does not become recoverable in bridge.
+- Two C1 readings with twelve points and inventory of all decisions; raw
+  sb-cover and HTML for entire Series scope, late files included, full
+  denominator and gaps preserved. No approved exclusion.
+- Local allocation: warmup128, five samples of4096 complete cycles on
+  preallocated connection/worker/controller/target; GC and printing outside measurement.
+  Every cycle enqueues a payload, adopts obligation, begins, reads lease, pops, acks,
+  ends idle, and checks identities/outcomes/generations. Independent fixed sink
+  per cycle in driver, not derived from product functions:
+  `12+7+11+13+3+25+7+23=101`, sample sink `4096*101+4096*4095/2=8800256`.
+  Positive
+  heap and incorrect-sink checks demonstrate C4 detection.
+- Full strict COMPILE-FILE of tool and FASL self-test with fatal warnings
+  and style-warnings; ASDF loading applies only the exception for
+  `sb-kernel:redefinition-warning` already declared by `tools/build.lisp` for
+  loader rereads/redefinitions. No exclusion of C4 compilation
+  warnings. Build and targeted tests before full check.
+  `make check` once on final frozen code, unless changes or failure.
+
+Every campaign recorded with `tools/record-command.lisp`, preserving
+stdout/stderr, argv, environment, original reports, initial/final snapshot, and
+failed attempts. Campaigns use frozen copies and separate caches. Large
+data losslessly compressed with conservative catalog.
+No throughput, P99, fairness, scalability, or universal zero heap allocation inferred
+from these samples. No Phase0 gate closed by this foundation.

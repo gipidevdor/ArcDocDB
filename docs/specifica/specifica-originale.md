@@ -1,36 +1,39 @@
-# Specifica originale (v1)
+<a id="specifica-originale-v1"></a>
 
-> Questo file è la **fonte di verità** del progetto: contiene la specifica iniziale,
-> con la formattazione Markdown ripristinata (titoli, elenchi, blocchi di codice, alberi).
-> Il corpo della specifica è conservato integralmente.
+# Original specification (v1)
+
+> This file is the project's **source of truth**: it contains the initial specification,
+> with Markdown formatting restored (headings, lists, code blocks, trees).
+> The specification body is retained in full, translated into English without changing requirements.
 >
-> Note di trascrizione:
-> - la regola «50 secondi di stabilità + basso carico» si applica solo al MERGE,
->   non al CLEAN;
-> - nella «Priorità concettuale» sono stati ripristinati i separatori `>`.
+> Transcription notes:
+> - ‘50 seconds of stability + low load’ applies only to MERGE, not CLEAN;
+> - the `>` separators in ‘Conceptual priority’ were restored.
 >
-> **Deciso (2026-10-08 → ADR-0051)** — nome del documento e nota introduttiva
-> uniformati alla documentazione tecnica; requisiti invariati.
+> **Decided (2026-10-08 → ADR-0051)** — document name and introduction
+> aligned with technical documentation; requirements unchanged.
 >
-> Ogni modifica a questo file è un cambio di specifica: va accompagnata da un ADR in
-> [`../adr/`](../adr/README.md) e dall'aggiornamento dei documenti derivati.
+> Every change to this file is a specification change: it must have an accompanying ADR in
+> [`../adr/`](../adr/README.md) and updates to derived documents.
 
 ---
 
-Progetta un database server general-purpose document-oriented scritto principalmente in Common
-Lisp, con SBCL come implementazione di riferimento.
+Design a general-purpose document-oriented database server written primarily in Common
+Lisp, with SBCL as the reference implementation.
 
-L'obiettivo principale è ottenere elevata velocità sulle operazioni fondamentali, forte
-parallelismo tra Serie indipendenti, bassa latenza P95/P99, buona scalabilità su CPU multicore e
-NVMe, WAL affidabile, transazioni locali e multiserie, MVCC/snapshot, compaction concorrente e
-capacità di mantenere buone prestazioni anche durante improvvisi burst di letture.
+The main goal is high speed for fundamental operations, strong parallelism between
+independent Serie, low P95/P99 latency, good scalability on multicore CPUs and NVMe,
+reliable WAL, local and multiseries transactions, MVCC/snapshots, concurrent compaction,
+and the ability to maintain good performance during sudden read bursts.
 
-Il database NON deve essere progettato specificamente per blogging o CMS: deve essere un motore
-documentale general-purpose.
+The database MUST NOT be designed specifically for blogging or CMS: it must be a
+general-purpose document engine.
 
-## ARCHITETTURA LOGICA
+<a id="architettura-logica"></a>
 
-La gerarchia logica è:
+## LOGICAL ARCHITECTURE
+
+The logical hierarchy is:
 
 ```
 Server
@@ -41,138 +44,143 @@ Server
 
 Server:
 
-* processo/server principale;
-* gestione connessioni;
-* scheduler globale;
-* thread pool dinamico;
-* gestione degli Archivi.
+* main process/server;
+* connection management;
+* global scheduler;
+* dynamic thread pool;
+* Archivio management.
 
 Archivio:
 
-* contenitore logico/domain;
-* contiene più Serie;
-* rappresenta il livello al quale possono essere richieste transazioni e snapshot multiserie;
-* contiene obbligatoriamente una Serie speciale chiamata Registri.
+* logical container/domain;
+* contains multiple Serie;
+* represents the level at which multiseries transactions and snapshots may be requested;
+* must contain a special Serie named Registri.
 
 Serie:
 
-* namespace dei documenti;
-* definisce il paradigma/contratto dei documenti;
-* definisce struttura/schema, validazione, indici e configurazione storage;
-* è l'unità primaria di storage;
-* è l'unità primaria di parallelismo;
-* possiede il proprio WAL;
-* possiede i propri segmenti;
-* possiede i propri indici;
-* deve poter operare in parallelo e indipendentemente dalle altre Serie.
+* document namespace;
+* defines the document paradigm/contract;
+* defines structure/schema, validation, indexes, and storage configuration;
+* is the primary unit of storage;
+* is the primary unit of parallelism;
+* owns its WAL;
+* owns its segments;
+* owns its indexes;
+* must operate in parallel and independently of other Serie.
 
 Documento:
 
-* unità logica di dati;
-* possiede un `_id` univoco all'interno della Serie;
-* può avere versioni storiche gestite tramite append-only storage e MVCC.
+* logical data unit;
+* has an `_id` unique within the Serie;
+* may have historical versions managed through append-only storage and MVCC.
 
-## SERIE SPECIALE Registri
+<a id="serie-speciale-registri"></a>
 
-Ogni Archivio deve contenere obbligatoriamente:
+## SPECIAL SERIE Registri
+
+Every Archivio must contain:
 
 ```
 Registri
 ```
 
-Registri NON è il WAL dei dati.
+Registri is NOT the data WAL.
 
-Registri contiene:
+Registri contains:
 
-* catalogo/metadatabase delle Serie;
-* metadati della configurazione delle Serie;
-* informazioni necessarie al recovery del catalogo;
-* un singolo file persistente `multiserie.log`.
+* Serie catalog/metadatabase;
+* Serie configuration metadata;
+* information required for catalog recovery;
+* a single persistent `multiserie.log` file.
 
-`multiserie.log` è il transaction decision log per le transazioni che coinvolgono più Serie.
+`multiserie.log` is the transaction decision log for transactions involving multiple Serie.
 
-Non deve esistere un file globale separato per ogni transazione.
+There must not be a separate global file per transaction.
 
-## TRANSAZIONI SINGLE-SERIES
+<a id="transazioni-single-series"></a>
 
-Una transazione che coinvolge una sola Serie:
+## SINGLE-SERIE TRANSACTIONS
 
-* usa esclusivamente il WAL della Serie;
-* non scrive su `multiserie.log`;
-* viene serializzata dal logical writer della Serie;
-* utilizza optimistic version checking per rilevare conflitti sullo stesso documento.
+A transaction involving only one Serie:
 
-Esempio:
+* uses only the Serie WAL;
+* does not write to `multiserie.log`;
+* is serialized by the Serie's logical writer;
+* uses optimistic version checking to detect conflicts on the same document.
+
+Example:
 
 ```
 doc42 = version 18
-TX101 legge v18
-TX102 legge v18
+TX101 reads v18
+TX102 reads v18
 TX101 commit → v19
-TX102 verifica expected-version = 18 → conflitto → abort/retry
+TX102 checks expected-version = 18 → conflict → abort/retry
 ```
 
-Il controllo della versione deve essere atomico rispetto all'applicazione della modifica da parte
-del writer della Serie.
+Version checking must be atomic with respect to the Serie writer applying the change.
 
-## TRANSAZIONI MULTISERIE
+<a id="transazioni-multiserie"></a>
 
-Se una transazione modifica documenti appartenenti a più Serie, deve essere trattata come
-transazione multiserie.
+## MULTISERIES TRANSACTIONS
 
-Esempio:
+If a transaction modifies documents belonging to multiple Serie, it must be treated
+as a multiseries transaction.
+
+Example:
 
 ```
 TX300:
-  * modifica A.doc42;
-  * modifica B.doc87.
+  * modifies A.doc42;
+  * modifies B.doc87.
 ```
 
-La transazione usa:
+The transaction uses:
 
-* WAL della Serie A;
-* WAL della Serie B;
+* Serie A WAL;
+* Serie B WAL;
 * `Registri/multiserie.log`.
 
-Tutte le modifiche della stessa transazione condividono un unico TXID.
+All changes in the same transaction share one TXID.
 
-Utilizzare un protocollo equivalente a 2PC:
+Use a 2PC-equivalent protocol:
 
 1. BEGIN
-2. PREPARE sui partecipanti
-3. flush/fsync dei WAL partecipanti secondo il livello di durability
-4. registrazione durevole della decisione nel `multiserie.log`
-5. COMMIT oppure ABORT
-6. applicazione/visibilità della decisione sui partecipanti.
+2. PREPARE on participants
+3. flush/fsync participating WALs according to durability level
+4. durable decision recording in `multiserie.log`
+5. COMMIT or ABORT
+6. application/visibility of decision on participants.
 
-La decisione COMMIT deve essere durable in `multiserie.log` prima che la transazione sia
-considerata definitivamente committed.
+The COMMIT decision must be durable in `multiserie.log` before the transaction is
+considered definitively committed.
 
-Dopo un crash:
+After a crash:
 
-* il Recovery Manager legge `multiserie.log`;
-* identifica le transazioni preparate/incomplete;
-* determina la decisione definitiva;
-* completa il COMMIT o l'ABORT sui WAL delle Serie partecipanti.
+* the Recovery Manager reads `multiserie.log`;
+* identifies prepared/incomplete transactions;
+* determines the definitive decision;
+* completes COMMIT or ABORT on participating Serie WALs.
 
-Non deve esistere un global data WAL.
+There must not be a global data WAL.
 
-Esiste solamente il transaction decision log globale `multiserie.log`.
+Only the global transaction decision log `multiserie.log` exists.
 
 ## WAL
 
-Ogni Serie possiede un WAL indipendente.
+Each Serie owns an independent WAL.
 
-Il WAL serve per:
+The WAL provides:
 
 * durability;
 * recovery;
-* ricostruzione dello stato;
-* registrazione ordinata delle modifiche.
+* state reconstruction;
+* ordered recording of changes.
 
-Il sistema deve privilegiare group commit.
+The system must favor group commit.
 
-Esempio:
+Example:
 
 ```
 TX101 ─┐
@@ -180,48 +188,50 @@ TX102 ─┼──> WAL append ──> fsync
 TX103 ─┘
 ```
 
-Evitare fsync per ogni singola operazione salvo esplicita richiesta di durability forte.
+Avoid fsync per operation unless strong durability is explicitly requested.
 
-Il group commit deve permettere a molte transazioni di condividere una singola operazione di
-flush.
+Group commit must allow many transactions to share one flush operation.
 
-Anche `multiserie.log` deve utilizzare group commit dove appropriato.
+`multiserie.log` must also use group commit where appropriate.
 
-## STORAGE APPEND-ONLY
+<a id="storage-append-only"></a>
 
-Lo storage delle Serie è append-only.
+## APPEND-ONLY STORAGE
 
-Non modificare in-place i record già scritti nei segmenti.
+Serie storage is append-only.
 
-Esiste esattamente un solo segmento `ACTIVE` scrivibile per ogni Serie.
+Do not modify records already written to segments in place.
 
-Regola fondamentale:
+There is exactly one writable `ACTIVE` segment per Serie.
+
+Fundamental rule:
 
 ```
-ACTIVE = unico segmento mutabile.
+ACTIVE = only mutable segment.
 ```
 
-Quando un segmento smette di essere ACTIVE:
+When a segment ceases to be ACTIVE:
 
-* diventa immutabile;
-* non può più essere riaperto in scrittura;
-* non può più ricevere nuovi record.
+* it becomes immutable;
+* it can no longer be reopened for writing;
+* it can no longer receive new records.
 
-Le nuove scritture vanno sempre in un nuovo segmento ACTIVE.
+New writes always go to a new ACTIVE segment.
 
-## SEGMENTI
+<a id="segmenti"></a>
 
-Target/massimo normale per un segmento creato dal writer:
+## SEGMENTS
 
-* circa 256 MB;
-* configurabile per Serie.
+Normal target/maximum for a segment created by the writer:
 
-I 256 MB sono un target/limite operativo per la normale creazione dei segmenti da parte del
-writer.
+* approximately 256 MB;
+* configurable per Serie.
 
-NON è un requisito che i segmenti prodotti dalla compaction abbiano 256 MB.
+256 MB is an operational target/limit for normal segment creation by the writer.
 
-Esempio:
+Compaction-produced segments are NOT required to be 256 MB.
+
+Example:
 
 ```
 S017 = 256 MB
@@ -229,35 +239,35 @@ live = 20 MB
 dead = 236 MB
 ```
 
-CLEAN può produrre:
+CLEAN may produce:
 
 ```
 S042 = 20 MB
 ```
 
-S042 è immutabile.
+S042 is immutable.
 
-Le nuove scritture NON devono essere aggiunte a S042 per portarlo a 256 MB.
+New writes MUST NOT be appended to S042 to bring it to 256 MB.
 
-Devono invece andare in:
+They must instead go to:
 
 ```
 S043 = ACTIVE
 ```
 
-Quindi:
+Therefore:
 
 ```
 S017
  ↓ CLEAN
 S042 = 20 MB immutable
 
-nuove scritture
+new writes
  ↓
 S043 = ACTIVE
 ```
 
-Stati possibili:
+Possible states:
 
 ```
 ACTIVE
@@ -267,13 +277,13 @@ RECLAIMABLE
 DELETED
 ```
 
-Solo ACTIVE è scrivibile.
+Only ACTIVE is writable.
 
-CLOSED, OBSOLETE e RECLAIMABLE sono sempre immutabili.
+CLOSED, OBSOLETE, and RECLAIMABLE are always immutable.
 
 ## SEGMENT METADATA
 
-Ogni segmento deve avere metadata almeno per:
+Every segment must have metadata for at least:
 
 * segment-id;
 * record-count;
@@ -282,58 +292,60 @@ Ogni segmento deve avere metadata almeno per:
 * total-bytes;
 * live-bytes;
 * dead-bytes;
-* stato;
+* state;
 * creation time;
 * close time;
-* eventuale versione/epoch;
-* riferimenti necessari al recovery e alla gestione degli snapshot.
+* version/epoch if applicable;
+* references required for recovery and snapshot management.
 
-Questi metadata sono dati derivati/cache e NON devono essere considerati l'unica fonte di verità.
+These metadata are derived data/cache and MUST NOT be considered the sole source of truth.
 
-Devono poter essere:
+They must be:
 
-* ricostruiti;
-* verificati;
-* corretti tramite WAL/data/index.
+* rebuildable;
+* verifiable;
+* correctable through WAL/data/index.
 
-## VERSIONI DEI RECORD
+<a id="versioni-dei-record"></a>
 
-Ogni versione può essere classificata come:
+## RECORD VERSIONS
+
+Every version can be classified as:
 
 LIVE
 
-* versione attualmente raggiungibile dall'indice corrente.
+* version currently reachable from the current index.
 
 SNAPSHOT-LIVE
 
-* versione non più corrente ma ancora necessaria a uno snapshot attivo.
+* version no longer current but still required by an active snapshot.
 
 DEAD
 
-* nessun indice corrente e nessuno snapshot attivo può raggiungerla.
+* no current index or active snapshot can reach it.
 
-Un record DEAD può essere reclamato solo quando non esistono più riferimenti da:
+A DEAD record can be reclaimed only when there are no remaining references from:
 
-* indice corrente;
-* snapshot attivi;
-* transazioni che necessitano quella versione.
+* current index;
+* active snapshots;
+* transactions requiring that version.
 
 ## CLEAN
 
-CLEAN opera su un singolo segmento.
+CLEAN operates on one segment.
 
-Regola:
+Rule:
 
 ```
-1 segmento sorgente
-→ 1 nuovo segmento immutabile contenente solamente i record live/necessari.
+1 source segment
+→ 1 new immutable segment containing only live/required records.
 ```
 
-Esempio:
+Example:
 
 ```
 S017:
-  256 MB totali
+  256 MB total
   20 MB live
   236 MB dead
 
@@ -341,142 +353,147 @@ CLEAN:
   S017 → S042
 ```
 
-S042 contiene solo i 20 MB necessari.
+S042 contains only the required 20 MB.
 
-Il segmento originale S017:
+Original segment S017:
 
-* non viene modificato;
-* diventa OBSOLETE dopo lo swap;
-* resta leggibile finché necessario;
-* viene eliminato solo quando nessun reader/snapshot lo utilizza.
+* is not modified;
+* becomes OBSOLETE after swap;
+* remains readable as long as needed;
+* is deleted only when no reader/snapshot uses it.
 
-CLEAN deve essere copy-on-write.
+CLEAN must be copy-on-write.
 
-Non modificare mai il segmento sorgente in-place.
+Never modify the source segment in place.
 
 ## MERGE
 
-MERGE è distinto da CLEAN.
+MERGE is distinct from CLEAN.
 
-MERGE serve a ridurre l'eccessivo numero di segmenti piccoli.
+MERGE reduces an excessive number of small segments.
 
-Regola:
-
-```
-N segmenti piccoli
-→ 1 nuovo segmento immutabile.
-```
-
-I segmenti sorgenti restano immutabili.
-
-Non eseguire automaticamente un MERGE dopo ogni CLEAN.
-
-Un segmento pulito può rimanere piccolo indefinitamente.
-
-## CONDIZIONI OBBLIGATORIE PER MERGE
-
-Un segmento può essere candidato a MERGE solamente se:
-
-* è CLOSED;
-* è immutabile;
-* non è ACTIVE;
-* è fermo da almeno 50 secondi;
-* non è necessario a uno snapshot attivo;
-* appartiene a un gruppo che supera le soglie di segmentazione/numero di piccoli segmenti;
-* il motore è in una condizione di basso carico.
-
-La soglia minima di stabilità è:
+Rule:
 
 ```
-segment age >= 50 secondi
+N small segments
+→ 1 new immutable segment.
 ```
 
-Il timestamp di riferimento deve essere quello di chiusura/stabilizzazione del segmento.
+Source segments remain immutable.
 
-Lo scopo è evitare di compattare immediatamente segmenti appena chiusi.
+Do not automatically perform MERGE after every CLEAN.
 
-Il MERGE è un'operazione di ottimizzazione strutturale e NON deve competere con il traffico
-utente.
+A cleaned segment may remain small indefinitely.
+
+<a id="condizioni-obbligatorie-per-merge"></a>
+
+## MANDATORY CONDITIONS FOR MERGE
+
+A segment can be a MERGE candidate only if:
+
+* it is CLOSED;
+* it is immutable;
+* it is not ACTIVE;
+* it has been stable for at least 50 seconds;
+* it is not required by an active snapshot;
+* it belongs to a group exceeding segmentation/small-segment-count thresholds;
+* the engine is under low load.
+
+The minimum stability threshold is:
+
+```
+segment age >= 50 seconds
+```
+
+The reference timestamp must be the segment's closure/stabilization time.
+
+The purpose is to avoid immediately compacting newly closed segments.
+
+MERGE is a structural optimization and MUST NOT compete with user traffic.
 
 ## LOW-LOAD MERGE POLICY
 
-Prima di avviare un MERGE, il Compaction Scheduler deve verificare il carico del motore.
+Before starting MERGE, the Compaction Scheduler must check engine load.
 
-Considerare almeno:
+Consider at least:
 
 * CPU utilization;
 * P95 request latency;
 * P99 request latency;
-* profondità delle code;
-* throughput delle richieste;
+* queue depth;
+* request throughput;
 * WAL throughput;
-* latenza WAL/fsync;
-* utilizzo NVMe;
+* WAL/fsync latency;
+* NVMe utilization;
 * I/O queue depth;
-* backlog di compaction;
-* numero di worker attivi.
+* compaction backlog;
+* active worker count.
 
-Se il carico è alto:
+If load is high:
 
-* non avviare nuovi MERGE;
-* ridurre la concorrenza dei MERGE;
-* dare priorità alle richieste utente e al WAL.
+* do not start new MERGEs;
+* reduce MERGE concurrency;
+* prioritize user requests and WAL.
 
-Se durante un MERGE il carico aumenta significativamente:
+If load increases significantly during MERGE:
 
-* non avviare nuovi merge;
-* ridurre la concorrenza futura;
-* eventualmente mettere in pausa o rallentare il lavoro non critico.
+* do not start new merges;
+* reduce future concurrency;
+* if appropriate, pause or slow noncritical work.
 
-Il MERGE non deve monopolizzare:
+MERGE must not monopolize:
 
 * CPU;
 * NVMe;
-* memoria;
+* memory;
 * cache;
 * memory bandwidth.
 
-## POLITICA GENERALE DI COMPACTION
+<a id="politica-generale-di-compaction"></a>
 
-La politica è:
+## GENERAL COMPACTION POLICY
+
+The policy is:
 
 ```
 live = 0
-→ DELETE direttamente se nessuno snapshot/reference lo utilizza.
+→ DELETE directly if no snapshot/reference uses it.
 
 0 < live < total
-→ CLEAN → nuovo segmento contenente solo live/needed records.
+→ CLEAN → new segment containing only live/needed records.
 
 live ≈ total
-→ nessuna compaction necessaria.
+→ no compaction needed.
 
-troppi segmenti piccoli
-→ MERGE, ma solamente se:
-  * i segmenti candidati hanno almeno 50 secondi di stabilità;
-  * il carico del motore è basso.
+too many small segments
+→ MERGE, but only if:
+  * candidate segments have at least 50 seconds of stability;
+  * engine load is low.
 ```
 
-Quindi CLEAN e MERGE hanno finalità diverse.
+CLEAN and MERGE therefore have different purposes.
 
 CLEAN:
 
-* recupero dello spazio morto;
-* rimozione delle versioni inutili.
+* reclaim dead space;
+* remove unnecessary versions.
 
 MERGE:
 
-* riduzione della frammentazione;
-* riduzione del numero di segmenti;
-* miglioramento della località di lettura.
+* reduce fragmentation;
+* reduce segment count;
+* improve read locality.
 
-## COMPACTION PARALLELA
+<a id="compaction-parallela"></a>
 
-La compaction deve essere parallelizzabile per:
+## PARALLEL COMPACTION
 
-* segmento;
+Compaction must be parallelizable per:
+
+* segment;
 * Serie.
 
-Esempio:
+Example:
 
 ```
 Compaction Scheduler
@@ -487,46 +504,49 @@ Compaction Scheduler
 └── Worker 4 → S020 → S104
 ```
 
-Non imporre un singolo compaction worker globale.
+Do not impose one global compaction worker.
 
-Il scheduler deve distribuire dinamicamente il lavoro.
+The scheduler must distribute work dynamically.
 
-## WORKFLOW CLEAN/MERGE
+<a id="workflow-cleanmerge"></a>
 
-Workflow generale:
+## CLEAN/MERGE WORKFLOW
 
-1. selezionare segmento candidato;
-2. verificare stato;
-3. verificare snapshot/reference;
-4. leggere sequenzialmente il segmento;
-5. copiare solamente record necessari;
-6. creare nuovo segmento;
-7. fsync del nuovo segmento;
-8. preparare metadata;
-9. eseguire atomic index swap;
-10. segnare il segmento sorgente OBSOLETE;
-11. attendere che nessun reader/snapshot lo utilizzi;
-12. segnare RECLAIMABLE;
-13. eliminare.
+General workflow:
 
-Per MERGE:
+1. select candidate segment;
+2. check state;
+3. check snapshots/references;
+4. read segment sequentially;
+5. copy only required records;
+6. create new segment;
+7. fsync new segment;
+8. prepare metadata;
+9. perform atomic index swap;
+10. mark source segment OBSOLETE;
+11. wait until no reader/snapshot uses it;
+12. mark RECLAIMABLE;
+13. delete.
 
-* leggere più segmenti;
-* produrre un nuovo segmento;
-* eseguire lo stesso meccanismo copy-on-write;
-* mantenere i sorgenti immutabili fino al reclaim.
+For MERGE:
 
-## READERS DURANTE COMPACTION
+* read multiple segments;
+* produce one new segment;
+* use the same copy-on-write mechanism;
+* keep sources immutable until reclaim.
 
-I reader devono poter continuare a leggere i segmenti vecchi mentre la compaction produce i nuovi
-segmenti.
+<a id="readers-durante-compaction"></a>
 
-La compaction non deve bloccare globalmente le letture.
+## READERS DURING COMPACTION
 
-Dopo l'atomic swap:
+Readers must be able to continue reading old segments while compaction produces new ones.
 
-* i nuovi reader usano il nuovo indice/segmento;
-* i reader già attivi possono terminare usando il vecchio segmento.
+Compaction must not globally block reads.
+
+After atomic swap:
+
+* new readers use the new index/segment;
+* already active readers can finish using the old segment.
 
 ## INDEX
 
@@ -536,40 +556,40 @@ Primary index:
 _id → location
 ```
 
-La location deve contenere almeno:
+Location must contain at least:
 
 * segment-id;
 * offset;
 * length;
 * version.
 
-L'indice `_id` deve essere altamente ottimizzato per lookup O(1) medio.
+The `_id` index must be highly optimized for average O(1) lookup.
 
-Valutare una struttura tipo Swiss Table.
+Evaluate a Swiss Table-style structure.
 
-Evitare milioni di oggetti Lisp separati per ogni entry.
+Avoid millions of separate Lisp objects for entries.
 
-Preferire:
+Prefer:
 
 * packed arrays;
 * vectors;
-* strutture compatte;
-* metadata binari;
-* memoria contigua.
+* compact structures;
+* binary metadata;
+* contiguous memory.
 
 ## SECONDARY INDEX
 
-Utilizzare strutture differenti in base al tipo di query:
+Use different structures according to query type:
 
-Stringhe/prefix:
+Strings/prefix:
 
 * ART.
 
-Numeri/date/range:
+Numbers/dates/ranges:
 
-* B+ tree o struttura equivalente ordinata.
+* B+ tree or equivalent ordered structure.
 
-Categorie:
+Categories:
 
 * posting lists.
 
@@ -577,25 +597,24 @@ Boolean/low cardinality:
 
 * bitmap.
 
-Bloom filter per segmento:
+Per-segment Bloom filter:
 
-* utilizzarlo solamente per stabilire che un valore è sicuramente assente oppure potenzialmente
-  presente;
-* non usarlo come struttura di localizzazione definitiva.
+* use only to establish a value is definitely absent or possibly present;
+* do not use as a definitive location structure.
 
 ## SECONDARY INDEX DELTA
 
-Per indici secondari soggetti a frequenti modifiche usare un modello LSM-like:
+For frequently modified secondary indexes, use an LSM-like model:
 
 ```
 base index
 +
 immutable delta(s)
-→ merge asincrono
-→ nuova base index
+→ asynchronous merge
+→ new base index
 ```
 
-Esempio:
+Example:
 
 ```
 category="tech"
@@ -605,33 +624,33 @@ category="sport"
 → ADD 42
 ```
 
-La nuova base index viene costruita senza bloccare globalmente i reader.
+The new base index is built without globally blocking readers.
 
 ## INDEX SNAPSHOT
 
-Gli indici devono essere immutabili per i reader.
+Indexes must be immutable for readers.
 
-Esempio:
+Example:
 
 ```
 Reader → Index v17
 
 Writer:
-  costruisce Index v18
+  builds Index v18
   atomic swap
 
-nuovi reader → Index v18
-reader precedenti → completano su v17.
+new readers → Index v18
+previous readers → finish on v17.
 ```
 
 ## CACHE
 
-La cache iniziale utilizza CLOCK.
+The initial cache uses CLOCK.
 
-Se i benchmark mostrano scan pollution significativa, valutare 2Q.
+If benchmarks show significant scan pollution, evaluate 2Q.
 
-La cache può essere partizionata per Serie per impedire che un burst su una singola Serie
-monopolizzi tutta la cache.
+The cache may be partitioned by Serie to prevent a burst on one Serie from
+monopolizing the entire cache.
 
 Read path:
 
@@ -643,25 +662,27 @@ request
 → segment
 ```
 
-## CONCORRENZA
+<a id="concorrenza"></a>
 
-Preferire:
+## CONCURRENCY
+
+Prefer:
 
 ```
 1 logical writer per Serie
 +
-molti reader concorrenti.
+many concurrent readers.
 ```
 
-Non utilizzare:
+Do not use:
 
-* un thread permanente per ogni Serie;
-* un thread per ogni richiesta;
-* un global writer lock.
+* a permanent thread per Serie;
+* a thread per request;
+* a global writer lock.
 
-Serie indipendenti devono poter scrivere in parallelo.
+Independent Serie must be able to write in parallel.
 
-Esempio:
+Example:
 
 ```
 client
@@ -675,17 +696,19 @@ client
 → WAL B
 ```
 
-Il writer serializza solamente ciò che deve essere serializzato all'interno della singola Serie.
+The writer serializes only what must be serialized within a single Serie.
 
-## THREAD POOL DINAMICO
+<a id="thread-pool-dinamico"></a>
 
-Usare un pool dinamico di worker thread.
+## DYNAMIC THREAD POOL
 
-Non creare/distruggere continuamente thread.
+Use a dynamic pool of worker threads.
 
-Riutilizzare i worker.
+Do not continuously create/destroy threads.
 
-Lo scheduler deve adattare dinamicamente il numero di worker in base a:
+Reuse workers.
+
+The scheduler must dynamically adjust worker count based on:
 
 * queue depth;
 * CPU utilization;
@@ -693,160 +716,168 @@ Lo scheduler deve adattare dinamicamente il numero di worker in base a:
 * P50;
 * P95;
 * P99;
-* numero di Serie attive;
-* distribuzione del carico tra Serie;
+* active Serie count;
+* load distribution between Serie;
 * I/O utilization;
 * WAL throughput;
 * compaction backlog.
 
-Usare una strategia tipo:
+Use a strategy such as:
 
 * EWMA;
 * AIMD;
 * hysteresis.
 
-Regole indicative:
+Illustrative rules:
 
 ```
-queue cresce + CPU libera
-→ aumentare worker.
+queue grows + CPU available
+→ increase workers.
 
-queue cresce + CPU satura
-→ non aumentare ciecamente.
+queue grows + CPU saturated
+→ do not increase blindly.
 
-P99 peggiora significativamente
-→ fermare l'espansione o ridurre worker.
+P99 worsens significantly
+→ stop expansion or reduce workers.
 
-queue vuota + CPU bassa
-→ ridurre worker.
+queue empty + CPU low
+→ reduce workers.
 ```
 
-Lo stesso scheduler deve coordinare il carico di:
+The same scheduler must coordinate load from:
 
-* query;
-* writer;
+* queries;
+* writers;
 * WAL;
 * compaction.
 
-## COMPACTION SCHEDULER DINAMICO
+<a id="compaction-scheduler-dinamico"></a>
 
-Il Compaction Scheduler deve avere limiti indipendenti dal normale request scheduler.
+## DYNAMIC COMPACTION SCHEDULER
 
-Deve poter:
+The Compaction Scheduler must have limits independent of the normal request scheduler.
 
-* aumentare worker CLEAN quando il sistema è scarico;
-* ridurli quando aumenta il traffico;
-* impedire MERGE durante carico elevato;
-* preferire CLEAN urgente rispetto a MERGE;
-* evitare starvation delle richieste utente.
+It must be able to:
 
-Priorità concettuale:
+* increase CLEAN workers when the system is idle;
+* reduce them as traffic increases;
+* prevent MERGE under high load;
+* prefer urgent CLEAN over MERGE;
+* prevent user-request starvation.
+
+Conceptual priority:
 
 ```
 user traffic
 >
 WAL/durability
 >
-CLEAN necessario
+required CLEAN
 >
-MERGE opportunistico
+opportunistic MERGE
 ```
 
-Il MERGE è quindi deliberatamente opportunistico.
+MERGE is therefore deliberately opportunistic.
 
-## SNAPSHOT / MVCC
+<a id="snapshot--mvcc"></a>
 
-Uno snapshot è una vista logica consistente a un determinato punto/versione.
+## SNAPSHOTS / MVCC
 
-Non è una copia fisica dell'intero database.
+A snapshot is a consistent logical view at a given point/version.
 
-Un normale GET non necessita di uno snapshot globale:
+It is not a physical copy of the whole database.
 
-* legge la versione corrente committed.
+An ordinary GET needs no global snapshot:
 
-Una transazione locale può utilizzare uno snapshot della Serie.
+* it reads the current committed version.
 
-Una transazione multiserie può utilizzare uno snapshot coerente a livello di Archivio.
+A local transaction may use a Serie snapshot.
 
-La natura append-only dello storage conserva naturalmente versioni storiche fino al reclaim.
+A multiseries transaction may use an Archivio-wide consistent snapshot.
 
-Uno snapshot deve impedire alla compaction di eliminare le versioni che esso necessita.
+Append-only storage naturally retains historical versions until reclaim.
 
-Esempio:
+A snapshot must prevent compaction from deleting versions it needs.
+
+Example:
 
 ```
-Snapshot S vede:
+Snapshot S sees:
   A = 100
   B = 200
 
-Un'altra transazione aggiorna entrambi.
+Another transaction updates both.
 
-Lo snapshot continua a vedere:
+The snapshot continues to see:
   A = 100
   B = 200
 
-fino alla sua conclusione.
+until it ends.
 ```
 
 ## INDEX/SNAPSHOT/RECLAIM
 
-Il reclaim di un segmento deve avvenire solamente quando:
+A segment must be reclaimed only when:
 
-* nessun indice corrente lo referenzia;
-* nessuno snapshot lo referenzia;
-* nessuna transazione attiva lo necessita;
-* nessun reader sta ancora utilizzando il segmento.
+* no current index references it;
+* no snapshot references it;
+* no active transaction needs it;
+* no reader is still using the segment.
 
-## CACHE E SNAPSHOT
+<a id="cache-e-snapshot"></a>
 
-La cache deve essere consapevole della versione/epoch del dato.
+## CACHE AND SNAPSHOTS
 
-Evitare che un reader ottenga una versione incompatibile con il proprio snapshot.
+The cache must be aware of the data's version/epoch.
 
-## SIMD E OTTIMIZZAZIONI NATIVE
+Prevent a reader from obtaining a version incompatible with its snapshot.
 
-Il database deve essere progettato per essere SIMD-friendly.
+<a id="simd-e-ottimizzazioni-native"></a>
+
+## SIMD AND NATIVE OPTIMIZATIONS
+
+The database must be designed to be SIMD-friendly.
 
 In Common Lisp/SBCL:
 
-1. utilizzare strutture dati compatte;
+1. use compact data structures;
 2. typed arrays;
 3. type declarations;
-4. minimizzare boxing e allocazioni;
-5. favorire accessi sequenziali;
-6. profilare;
-7. introdurre SIMD solamente sui veri hot path.
+4. minimize boxing and allocations;
+5. favor sequential access;
+6. profile;
+7. introduce SIMD only on actual hot paths.
 
-SBCL può generare SIMD automaticamente in alcuni casi numerici opportunamente tipizzati.
+SBCL can generate SIMD automatically in some appropriately typed numerical cases.
 
-Per hot path estremi è possibile utilizzare:
+For extreme hot paths, it is possible to use:
 
 * SBCL-specific operations;
 * foreign functions;
 * C/C++;
 * Rust.
 
-Preferire comunque Common Lisp per la logica generale del database.
+Still prefer Common Lisp for general database logic.
 
-Candidati SIMD:
+SIMD candidates:
 
 * bitmap AND/OR/XOR;
 * Bloom filters;
 * scans;
-* confronti;
-* filtri;
+* comparisons;
+* filters;
 * parsing;
 * hashing;
-* compressione/decompressione.
+* compression/decompression.
 
-La struttura append-only con segmenti immutabili e scansioni sequenziali deve favorire tali
-ottimizzazioni.
+Append-only structure with immutable segments and sequential scans must favor these
+optimizations.
 
 ## RECOVERY
 
-Il Recovery Manager deve essere in grado di ricostruire il sistema dopo crash.
+The Recovery Manager must be able to rebuild the system after crashes.
 
-Deve verificare:
+It must verify:
 
 * WAL;
 * segment metadata;
@@ -856,41 +887,44 @@ Deve verificare:
 * transaction state;
 * `multiserie.log`.
 
-Dopo crash:
+After a crash:
 
-* recuperare i WAL delle singole Serie;
-* ricostruire o verificare gli indici;
-* identificare segmenti ACTIVE/CLOSED/OBSOLETE;
-* completare o annullare operazioni di compaction incomplete;
-* processare `multiserie.log`;
-* completare transazioni multiserie preparate.
+* recover individual Serie WALs;
+* rebuild or verify indexes;
+* identify ACTIVE/CLOSED/OBSOLETE segments;
+* complete or roll back incomplete compaction operations;
+* process `multiserie.log`;
+* complete prepared multiseries transactions.
 
-Le operazioni di compaction devono essere crash-safe.
+Compaction operations must be crash-safe.
 
-Un segmento nuovo non deve diventare visibile come definitivo prima che i suoi dati siano
-durable.
+A new segment must not become visible as definitive before its data are durable.
 
-Un atomic swap incompleto deve poter essere determinato durante recovery.
+An incomplete atomic swap must be identifiable during recovery.
 
-## CATALOGO
+<a id="catalogo"></a>
 
-`Registri/catalog/` contiene il catalogo delle Serie.
+## CATALOG
 
-Per ogni Serie memorizzare almeno:
+`Registri/catalog/` contains the Serie catalog.
 
-* nome;
-* configurazione;
-* schema/contratto;
-* configurazione degli indici;
+For every Serie, store at least:
+
+* name;
+* configuration;
+* schema/contract;
+* index configuration;
 * segment configuration;
-* stato;
-* metadata necessari al recovery.
+* state;
+* recovery metadata.
 
-Il catalogo deve essere modificabile in modo transazionale e crash-safe.
+The catalog must support transactional, crash-safe modification.
 
-## LAYOUT FISICO
+<a id="layout-fisico"></a>
 
-Struttura indicativa:
+## PHYSICAL LAYOUT
+
+Illustrative structure:
 
 ```
 Archivio/
@@ -911,13 +945,15 @@ Archivio/
 └── ...
 ```
 
-Non creare un global data WAL.
+Do not create a global data WAL.
 
-Ogni Serie rimane fisicamente indipendente.
+Every Serie remains physically independent.
 
-## PARALLELISMO
+<a id="parallelismo"></a>
 
-Il parallelismo deve essere gerarchico:
+## PARALLELISM
+
+Parallelism must be hierarchical:
 
 ```
 Server
@@ -929,19 +965,21 @@ Server
 → query/index operations
 ```
 
-La Serie è l'unità principale di isolamento del carico.
+The Serie is the main unit of load isolation.
 
-L'obiettivo è evitare che una Serie molto trafficata blocchi le altre.
+The goal is to prevent a heavily used Serie from blocking others.
 
-Un burst di letture su Serie A non deve impedire:
+A read burst on Serie A must not prevent:
 
-* scritture su Serie B;
-* query su Serie C;
-* compaction controllata su Serie D.
+* writes on Serie B;
+* queries on Serie C;
+* controlled compaction on Serie D.
 
-## OSSERVABILITÀ
+<a id="osservabilità"></a>
 
-Implementare metriche dettagliate almeno per:
+## OBSERVABILITY
+
+Implement detailed metrics for at least:
 
 Request:
 
@@ -995,25 +1033,25 @@ GC/SBCL:
 * GC pause;
 * heap usage.
 
-## BENCHMARK
+<a id="benchmark"></a>
 
-I benchmark devono essere eseguiti su hardware identico quando si confronta il database con altri
-sistemi.
+## BENCHMARKS
 
-Hardware di riferimento:
+Benchmarks must run on identical hardware when comparing the database with other systems.
 
-* 16–32 core;
+Reference hardware:
+
+* 16–32 cores;
 * 64–128 GB RAM;
 * NVMe PCIe 4/5;
-* dataset sufficientemente grande da evitare benchmark puramente cache-only quando si misura
-  storage;
-* documenti indicativamente 1–4 KB.
+* dataset large enough to avoid purely cache-only benchmarks when measuring storage;
+* documents approximately 1–4 KB.
 
-Workload da misurare:
+Workloads to measure:
 
 * GET `_id`;
-* GET `_id` con cache hit;
-* GET `_id` con accesso NVMe;
+* GET `_id` with cache hit;
+* GET `_id` with NVMe access;
 * INSERT;
 * UPDATE;
 * DELETE/tombstone;
@@ -1022,12 +1060,12 @@ Workload da misurare:
 * CLEAN;
 * MERGE;
 * mixed read/write;
-* burst di sole letture;
-* burst di scritture;
-* transazioni single-Series;
-* transazioni multiserie.
+* read-only bursts;
+* write bursts;
+* single-Serie transactions;
+* multiseries transactions.
 
-Misurare sempre:
+Always measure:
 
 * throughput;
 * P50;
@@ -1041,15 +1079,17 @@ Misurare sempre:
 * NVMe bandwidth;
 * queue depth;
 * compaction throughput;
-* numero worker;
+* worker count;
 * contention;
 * SBCL GC.
 
-## TARGET PRELIMINARI
+<a id="target-preliminari"></a>
 
-Questi valori sono target architetturali indicativi, NON benchmark già dimostrati.
+## PRELIMINARY TARGETS
 
-Su hardware adeguato:
+These values are illustrative architectural targets, NOT already demonstrated benchmarks.
+
+On suitable hardware:
 
 GET `_id`, cache/index:
 ~1–4 M ops/s aggregate.
@@ -1079,82 +1119,86 @@ CLEAN:
 ~0.5–3+ GB/s.
 
 MERGE:
-dipendente da numero di segmenti, dimensioni, layout, I/O e carico disponibile.
+depends on segment count, sizes, layout, I/O, and available load capacity.
 
 Multiseries transactions:
-ordine di grandezza da decine a centinaia di migliaia di transazioni/s, fortemente dipendente dal
-numero di Serie coinvolte e dal costo del commit durevole.
+order of magnitude from tens to hundreds of thousands of transactions/s, strongly
+dependent on participating Serie count and durable-commit cost.
 
-Questi numeri devono essere verificati tramite benchmark reali.
+These numbers must be verified through real benchmarks.
 
-## CONFRONTO CON ORACLE, MYSQL E MONGODB
+<a id="confronto-con-oracle-mysql-e-mongodb"></a>
 
-Non utilizzare benchmark eterogenei per dichiarare superiorità diretta.
+## COMPARISON WITH ORACLE, MYSQL, AND MONGODB
 
-Oracle, MySQL/InnoDB e MongoDB hanno:
+Do not use heterogeneous benchmarks to claim direct superiority.
 
-* architetture differenti;
-* semantiche differenti;
-* livelli di durability differenti;
-* workload differenti;
-* configurazioni differenti.
+Oracle, MySQL/InnoDB, and MongoDB have:
 
-Il database proposto può avere un percorso particolarmente corto per operazioni document/KV
-semplici grazie a:
+* different architectures;
+* different semantics;
+* different durability levels;
+* different workloads;
+* different configurations.
 
-* Serie indipendenti;
-* un writer logico per Serie;
+The proposed database may have a particularly short path for simple document/KV
+operations thanks to:
+
+* independent Serie;
+* one logical writer per Serie;
 * primary index in RAM;
 * append-only storage;
-* WAL per Serie;
+* per-Serie WAL;
 * group commit;
-* segmenti immutabili;
+* immutable segments;
 * cache;
-* parallelismo orizzontale tra Serie.
+* horizontal parallelism between Serie.
 
-Questo deve essere trattato come ipotesi architetturale da verificare sperimentalmente, non come
-risultato già dimostrato.
+This must be treated as an architectural hypothesis to verify experimentally, not an
+already demonstrated result.
 
-Per un confronto corretto usare:
+For a fair comparison use:
 
-* stesso hardware;
-* stesso dataset;
-* stessa dimensione documento;
-* stessi indici;
-* stesso livello di durability;
-* stessa concorrenza;
-* workload equivalente;
-* stessa semantica della transazione.
+* same hardware;
+* same dataset;
+* same document size;
+* same indexes;
+* same durability level;
+* same concurrency;
+* equivalent workload;
+* same transaction semantics.
 
 ## FAULT INJECTION
 
-Implementare test di fault injection almeno per:
+Implement fault-injection tests for at least:
 
-* crash durante WAL append;
-* crash durante fsync;
-* crash dopo prepare;
-* crash prima del commit decision;
-* crash dopo commit decision;
-* crash durante atomic index swap;
-* crash durante CLEAN;
-* crash durante MERGE;
-* crash durante reclaim;
-* crash durante rebuild index;
-* crash con snapshot attivi;
-* crash durante transazione multiserie.
+* crash during WAL append;
+* crash during fsync;
+* crash after prepare;
+* crash before commit decision;
+* crash after commit decision;
+* crash during atomic index swap;
+* crash during CLEAN;
+* crash during MERGE;
+* crash during reclaim;
+* crash during index rebuild;
+* crash with active snapshots;
+* crash during multiseries transaction.
 
-Verificare invarianti:
+Verify invariants:
 
-1. nessun dato committed deve andare perso;
-2. nessuna transazione multiserie deve risultare parzialmente committed;
-3. nessun segmento ancora referenziato deve essere eliminato;
-4. nessuno snapshot deve osservare una versione non coerente;
-5. un segmento sorgente deve rimanere recuperabile fino al completamento dello swap;
-6. compaction interrotta deve essere ripetibile o completabile durante recovery.
+1. no committed data may be lost;
+2. no multiseries transaction may be partially committed;
+3. no still-referenced segment may be deleted;
+4. no snapshot may observe an inconsistent version;
+5. a source segment must remain recoverable until swap completion;
+6. interrupted compaction must be repeatable or completable during recovery.
 
-## MODULI SOFTWARE
+<a id="moduli-software"></a>
 
-Organizzare il sistema almeno nei seguenti moduli:
+## SOFTWARE MODULES
+
+Organize the system into at least these modules:
 
 1. Storage Engine
 2. WAL Manager
@@ -1175,45 +1219,47 @@ Organizzare il sistema almeno nei seguenti moduli:
 17. Archivio/Serie/Documento Catalog Manager
 18. SIMD/Hot Path Optimization Layer
 
-## PRINCIPI ARCHITETTURALI FONDAMENTALI
+<a id="principi-architetturali-fondamentali"></a>
 
-Il progetto deve rispettare questi principi:
+## FUNDAMENTAL ARCHITECTURAL PRINCIPLES
+
+The design must respect these principles:
 
 * append-only;
-* un solo ACTIVE segment per Serie;
-* solo ACTIVE è scrivibile;
-* segmenti CLOSED/OBSOLETE/RECLAIMABLE sempre immutabili;
-* nuove scritture sempre su un nuovo ACTIVE;
-* CLEAN produce un nuovo segmento immutabile;
-* MERGE produce un nuovo segmento immutabile;
-* CLEAN e MERGE non modificano mai i sorgenti;
-* CLEAN può produrre segmenti molto più piccoli di 256 MB;
-* MERGE non è obbligatorio dopo CLEAN;
-* MERGE solamente su segmenti stabili da almeno 50 secondi;
-* MERGE solamente quando il carico del motore è basso;
-* MERGE è opportunistico e non deve penalizzare il traffico utente;
-* compaction parallelizzabile;
-* scheduler dinamico;
-* WAL per Serie;
+* one ACTIVE segment per Serie;
+* only ACTIVE is writable;
+* CLOSED/OBSOLETE/RECLAIMABLE segments always immutable;
+* new writes always to a new ACTIVE;
+* CLEAN produces a new immutable segment;
+* MERGE produces a new immutable segment;
+* CLEAN and MERGE never modify sources;
+* CLEAN may produce segments much smaller than 256 MB;
+* MERGE is not mandatory after CLEAN;
+* MERGE only on segments stable for at least 50 seconds;
+* MERGE only when engine load is low;
+* MERGE is opportunistic and must not penalize user traffic;
+* parallelizable compaction;
+* dynamic scheduler;
+* per-Serie WAL;
 * group commit;
-* nessun global data WAL;
-* un unico `Registri/multiserie.log`;
-* 2PC-like per transazioni multiserie;
-* MVCC/snapshot logici;
-* reclaim solo quando non esistono più riferimenti;
-* primary index altamente ottimizzato;
-* secondary indexes specializzati;
-* cache anti-scan-pollution;
-* parallelismo tra Serie;
-* un logical writer per Serie;
-* molti reader concorrenti;
-* thread pool dinamico;
-* SIMD solamente dove dimostrato utile dai benchmark;
-* recovery crash-safe;
+* no global data WAL;
+* a single `Registri/multiserie.log`;
+* 2PC-like multiseries transactions;
+* logical MVCC/snapshots;
+* reclaim only when no references remain;
+* highly optimized primary index;
+* specialized secondary indexes;
+* anti-scan-pollution cache;
+* parallelism between Serie;
+* one logical writer per Serie;
+* many concurrent readers;
+* dynamic thread pool;
+* SIMD only where benchmarks demonstrate usefulness;
+* crash-safe recovery;
 * fault injection;
-* benchmark riproducibili.
+* reproducible benchmarks.
 
-Obiettivo finale: costruire un database documentale general-purpose in Common Lisp/SBCL con un
-hot path molto efficiente per le operazioni comuni, forte parallelismo tra Serie, storage
-append-only crash-safe, compaction copy-on-write e adattiva, transazioni locali e multiserie
-robuste, e comportamento prevedibile sotto carichi misti e improvvisi burst di lettura.
+Final goal: build a general-purpose Common Lisp/SBCL document database with a highly
+efficient hot path for common operations, strong parallelism between Serie, crash-safe
+append-only storage, adaptive copy-on-write compaction, robust local and multiseries
+transactions, and predictable behavior under mixed workloads and sudden read bursts.

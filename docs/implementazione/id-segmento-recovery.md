@@ -1,140 +1,150 @@
-# ID del nuovo segmento dopo il recovery
+<a id="id-del-nuovo-segmento-dopo-il-recovery"></a>
 
-> **Incremento C1, metodo preregistrato il 2026-10-15.**
-> Parte della pianificazione di apertura, non un Recovery Manager completo.
+# New segment ID after recovery
+
+> **C1 increment, method preregistered on 2026-10-15.**
+> Part of open planning, not complete Recovery Manager.
 
 `arcdocdb.recovery.manifest:scegli-id-segmento-recovery(manifest, files, …)`
-restituisce tre valori: ID proposto, high-water successivo e piano di
-riconciliazione. Usa una sola chiamata al planner canonico con gli stessi
-budget `max-files` e `max-segmenti`; nessun file o manifest è modificato.
+returns three values: proposed ID, next high-water, and reconciliation
+plan. Uses one canonical-planner call with same
+`max-files` and `max-segmenti` budgets; no file or manifest modified.
 
-## Contratto
+<a id="contratto"></a>
 
-Dal 2026-10-16 l'[ingresso dalla directory](id-directory-recovery.md)
-compone inventario nativo e selezione ID con un'unica enumerazione.
-Le due API riusano l'helper privato di selezione dal piano canonico.
-Le misure del 2026-10-15 sotto restano riferite alla versione allora verificata;
-la composizione e il refactoring hanno metodo e risultati separati.
+## Contract
 
-Il manifest è completo e autorevole; l'inventario contiene tutti i nomi
-fisici `.seg`/`.seg.tmp`, è stabile e appartiene al controller esclusivo.
-Il planner valida descrittori, duplicati e budget e possiede il piano.
-Il massimo ID si legge dall'ultima entry del piano, ordinato unsigned u64;
-include nomi sconosciuti, temporanei, rimossi e referenze vive mancanti.
-Il high-water del manifest protegge anche gli ID storici non più presenti.
+Since 2026-10-16, [directory entry point](id-directory-recovery.md)
+composes native inventory and ID selection with one enumeration.
+Both APIs reuse private selection helper from canonical plan.
+2026-10-15 measurements below remain attributed to then-verified version;
+composition and refactoring have separate method and results.
 
-La proposta è il minimo ID almeno pari al high-water e maggiore di ogni
-ID del piano. Anche il high-water successivo deve essere rappresentabile
-su u64: nessun wrap, riuso di un buco o sentinel nuovo su disco.
-`resource-exhausted :recovery-segment-id-exhausted` non restituisce valori
-parziali. Errori del planner sono propagati senza reinterpretazione;
-incoerenze private segnalano `invariant-violation`.
+Manifest complete and authoritative; inventory contains all physical
+`.seg`/`.seg.tmp` names, stable and owned by exclusive controller.
+Planner validates descriptors, duplicates, and budgets, and owns plan.
+Maximum ID read from last plan entry, unsigned-u64 ordered;
+includes unknown names, temporary files, removed entries, and missing live references.
+Manifest high-water also protects historical IDs no longer present.
 
-La scelta non riserva l'ID. Namespace e inventario restano esclusivi fino
-alla creazione del nuovo temporaneo; l'EDIT è pubblicato dal protocollo
-canonico. Ripetere gli stessi input può restituire la stessa proposta.
-Lo stato del piano resta esplicito: un ID proposto non autorizza traffico,
-non attesta header/CRC, non risolve anomalie e non elimina file.
+Proposal minimum ID at least high-water and greater than every
+plan ID. Next high-water must also be representable
+as u64: no wrap, gap reuse, or new on-disk sentinel.
+`resource-exhausted :recovery-segment-id-exhausted` returns no partial
+values. Planner errors propagated without reinterpretation;
+private inconsistencies signal `invariant-violation`.
 
-Costi: quelli del planner esistente, poi scelta O(1) dal piano ordinato.
-È un percorso di apertura con allocazioni, fuori dagli hot path; nessun
-nuovo thread, lock o accesso condiviso in scrittura fra Serie.
+Selection does not reserve ID. Namespace and inventory remain exclusive until
+new temporary created; EDIT published by canonical
+protocol. Repeating same inputs may return same proposal.
+Plan state explicit: proposed ID does not authorize traffic,
+attest header/CRC, resolve anomalies, or delete files.
 
-## Verifica prevista prima dell'implementazione
+Costs: existing planner's, then O(1) selection from ordered plan.
+Open path with allocations, outside hot paths; no
+new thread, lock, or shared write access between Serie.
 
-- Oracolo indipendente a ricerca finita: minimo candidato che supera tutti
-  gli ID dichiarati; 1.024 inventari, tre ordini e formati v1/v2.
-- High-water con buchi e ID rimossi, temporanei non pubblicati e definitivi
-  sconosciuti; disponibilità ready/degraded/faulted conservata nel piano.
-- ID zero, bit 63, estremi u64, ID/high-water successivo non rappresentabili;
-  input e manifest invariati dopo successo o rifiuto.
-- Budget esatti/insufficienti, duplicati, tipi e condizioni originali;
-  quattro Serie concorrenti con piani privati e attese limitate nel test.
-- Guardie private e coppie di indipendenza delle condizioni; copertura
-  nativa del nuovo file senza trasferire il risultato all'intero planner.
-- Mutazioni isolate degli operatori di selezione, frontiera e guardie:
-  obiettivo tutti i mutanti non equivalenti rilevati, con baseline riuscita.
-- Due letture C1 con lista di controllo; indipendenza e limiti dichiarati.
-- Prova verticale esistente collegata alla nuova API, poi `make check`.
+<a id="verifica-prevista-prima-dellimplementazione"></a>
 
-| Decisione | Condizioni / esiti da coprire |
+## Planned verification before implementation
+
+- Independent finite-search oracle: minimum candidate exceeding all
+  declared IDs; 1,024 inventories, three orders, v1/v2 formats.
+- High-water with gaps and removed IDs, unpublished temporary and unknown
+  final files; ready/degraded/faulted availability retained in plan.
+- Zero ID, bit 63, u64 endpoints, unrepresentable ID/next-high-water;
+  input and manifest unchanged after success or rejection.
+- Exact/insufficient budgets, duplicates, types, and original conditions;
+  four concurrent Serie with private plans and bounded test waits.
+- Private guards and condition-independence pairs; native
+  coverage of new file without attributing result to whole planner.
+- Isolated selection-operator, frontier, and guard mutations:
+  goal all nonequivalent mutants detected, with successful baseline.
+- Two C1 checklist readings; independence and limits declared.
+- Existing vertical test connected to new API, then `make check`.
+
+| Decision | Conditions / outcomes to cover |
 |---|---|
-| RID-D01 | high-water positivo, candidato almeno al high-water, candidato oltre il massimo: ciascuna condizione falsa da sola |
-| RID-D02 | high-water successivo = candidato + 1: uguale / discordante |
-| RID-G01 | high-water disponibile / esaurito |
-| RID-G02 | piano canonico con entry / vuoto per fault injection |
-| RID-G03 | high-water successivo u64 / fuori range |
+| RID-D01 | positive high-water, candidate at least high-water, candidate beyond maximum: each condition false alone |
+| RID-D02 | next high-water = candidate + 1: equal / mismatched |
+| RID-G01 | available / exhausted high-water |
+| RID-G02 | canonical plan with entries / empty through fault injection |
+| RID-G03 | next high-water u64 / out of range |
 
-Requisiti: REQ-REC-001/002, REQ-FOR-003, REQ-AFF-008/018.
-Invarianti: INV-A7/A8/A9/A10/A11, INV-P6.
-Il perimetro full text di ADR-0053 resta nella fase 8: questa funzione non
-costruisce indici né ne attesta la copertura.
+Requirements: REQ-REC-001/002, REQ-FOR-003, REQ-AFF-008/018.
+Invariants: INV-A7/A8/A9/A10/A11, INV-P6.
+ADR-0053 full-text scope remains phase 8: function constructs
+no indexes or attests their coverage.
 
-## Esiti locali del 2026-10-15
+<a id="esiti-locali-del-2026-10-15"></a>
 
-La [raccolta delle prove](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-segment-id/README.md)
-conserva registri originali, sorgenti, varianti, log e dati nativi.
-Otto nuovi test nella suite recovery: 125 test superati, inclusi i 6.144
-confronti con l'oracolo indipendente e 64 chiamate su quattro Serie private.
-High-water con buchi, rimozioni storiche, temporanei orfani, nomi sconosciuti,
-tipi e budget sono verificati senza modificare manifest o inventario.
+## Local outcomes dated 2026-10-15
 
-La copertura del solo nuovo file è **71/77 forme, 10/10 alternative di ramo**.
-Le sei forme non marcate sono quattro dichiarazioni e due default keyword
-esercitati dalle chiamate senza opzioni: nessuna esclusione, nessuna ricarica
-per cambiare i bit. Dati nativi e HTML sono concordanti tramite un lettore C4
-con self-test. L'[inventario delle forme non marcate](../affidabilita/copertura-eccezioni.md#proposta-id-dopo-recovery--2026-10-15)
-conserva il denominatore grezzo; il risultato non si estende agli altri file.
+[Evidence collection](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-segment-id/README.md)
+preserves original registers, sources, variants, logs, and native data.
+Eight new recovery-suite tests: 125 tests passed, including 6,144
+independent-oracle comparisons and 64 calls on four private Serie.
+High-water with gaps, historical removals, orphan temporaries, unknown names,
+types, and budgets verified without modifying manifest or inventory.
 
-RID-D01 usa le tuple `(minimum maximum candidate next)`:
-`(10 9 10 11)` passa; `(0 9 10 11)`, `(10 8 9 10)` e `(10 10 10 11)`
-rendono falsa, da sola, ciascuna delle tre condizioni. RID-D02 confronta la
-prima tupla con `(10 9 10 12)`. RID-G01/G03 usano manifest e inventari u64
-reali; RID-G02 inietta un piano privato vuoto, ripristinando sempre il planner.
+New-file-only coverage **71/77 forms, 10/10 branch alternatives**.
+Six unmarked forms: four declarations and two keyword defaults
+exercised by calls without options: no exclusion, no reload
+to change bits. Native data and HTML agree through self-tested C4
+reader. [Unmarked-form inventory](../affidabilita/copertura-eccezioni.md#proposta-id-dopo-recovery--2026-10-15)
+retains raw denominator; result does not extend to other files.
 
-La campagna finale ha baseline riuscita e **11/11 mutanti rilevati dai test**,
-con quattro processi isolati alla volta, nessun sopravvissuto, errore di
-compilazione o guasto worker. Il primo tentativo aveva scoperto un copier
-obsoleto dello strumento: ora deriva i sorgenti dai due sistemi ASDF e il
-self-test ne controlla completezza e omissioni. Una campagna intermedia
-aveva 10 rilevamenti e un mutante respinto dal compilatore: quest'ultimo non
-è contato come kill. Il bersaglio è stato sostituito con il controllo errato
-del candidato anziché del successore, che compila ed è rilevato sui limiti u64.
-Tutti i tentativi e le rispettive varianti sono conservati.
+RID-D01 uses tuples `(minimum maximum candidate next)`:
+`(10 9 10 11)` passes; `(0 9 10 11)`, `(10 8 9 10)`, and `(10 10 10 11)`
+each make one of three conditions false alone. RID-D02 compares
+first tuple with `(10 9 10 12)`. RID-G01/G03 use real u64 manifests
+and inventories; RID-G02 injects private empty plan, always restoring planner.
 
-La fixture verticale usa l'API con tutti i propri nomi e verifica 16 scenari
-positivi e due negativi, 71 processi e 26 SIGKILL intenzionali. I byte dei
-segmenti preesistenti restano immutati dopo entrambi i crash; nessuna azione
-di rimozione è eseguita da questa nuova funzione.
+Final campaign successful baseline and **11/11 mutants detected by tests**,
+four isolated processes at a time, no survivors, compilation
+errors, or worker faults. First attempt discovered obsolete tool
+copier: now derives sources from both ASDF systems and self-test
+checks completeness and omissions. Intermediate campaign
+had 10 detections and one compiler-rejected mutant: latter not
+counted as kill. Target replaced with incorrect checking
+of candidate instead of successor, which compiles and is detected at u64 limits.
+All attempts and respective variants preserved.
 
-La [verifica completa della versione integrata](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-segment-id-verifica/README.md)
-è `OK / exit 0 / STABLE`, 484,751351 s su 1.012 sorgenti, al commit
-`c8a1adab7da1adf171e1beaf41cc71ac2e801601`, comprendente anche il recupero CSN
-pubblicato nel frattempo. Passano 1.734 test nominati, due smoke test,
-249 file di prodotto senza violazioni, tracciabilità, link, controlli delle
-evidenze e dieci spike. Il tentativo precedente, interrotto per integrare
-il recupero CSN, resta conservato come `FAILED / exit 143`, non come test
-riuscito. La raccolta finale conserva entrambi i registri e gli originali
-degli spike; i successivi aggiornamenti dei risultati non cambiano codice,
-test o strumenti verificati. Nessuna promozione della qualifica C1 del motore.
+Vertical fixture uses API with all own names and verifies 16 positive
+and two negative scenarios, 71 processes, and 26 intentional SIGKILLs. Preexisting
+segment bytes unchanged after both crashes; new function performs
+no removal action.
 
-## Due letture con lista C1
+[Full integrated-version verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-segment-id-verifica/README.md)
+`OK / exit 0 / STABLE`, 484.751351 s over 1,012 sources, at commit
+`c8a1adab7da1adf171e1beaf41cc71ac2e801601`, also including meanwhile-published
+CSN recovery. Passes 1,734 named tests, two smoke tests,
+249 product files without violations, traceability, links, evidence
+checks, and ten spikes. Previous attempt interrupted to integrate
+CSN recovery remains preserved as `FAILED / exit 143`, not successful
+test. Final collection retains both registers and spike
+originals; later result updates change no verified code,
+tests, or tools. No engine C1-qualification promotion.
 
-Le due letture dell'autore riguardano prima contratto/algoritmo, poi diff,
-oracoli, log, mutanti e copertura grezza. **Non sono una revisione indipendente**:
-quel controllo e la qualifica C1 complessiva restano aperti.
+<a id="due-letture-con-lista-c1"></a>
 
-| Punto della lista C1 | Prima lettura | Seconda lettura |
+## Two C1 checklist readings
+
+Two author readings address contract/algorithm first, then diff,
+oracles, logs, mutants, and raw coverage. **Not independent review**:
+that check and overall C1 qualification remain open.
+
+| C1 checklist item | First reading | Second reading |
 |---|---|---|
-| 1. Requisiti e ADR | REQ sopra e ADR-0040 coerenti con high-water e non riuso | Commenti delle due funzioni e tracciabilità controllati |
-| 2. Invarianti | Idempotenza della proposta, nessuna mutazione/distruzione | Modello, ownership e prove verticali |
-| 3. Errori tipizzati | Condizioni originali, esaurimento e incoerenza privata | Budget, duplicati, tipi, u64 e fault injection |
-| 4. Cicli/attese | Solo planner limitato; selezione senza ciclo | Worker del test con deadline e cleanup |
-| 5. Allocazioni | Percorso freddo, piano privato; nessun hot path nuovo | Nessuna pretesa di zero allocazioni o prestazione |
-| 6. Dati in uscita | Due u64 e piano validato | Tre valori esatti, frontiera e successore controllati |
-| 7. Decisioni composte | RID-D01/D02 esplicite | Coppie di indipendenza e mutazioni degli operatori |
-| 8. Proprietà | Manifest/inventario stabili, controller esclusivo | Piani distinti, input riutilizzabili, quattro Serie private |
-| 9. Tracciabilità/check | Requisiti esistenti, nessuna promozione di stato | Controllo completo finale registrato separatamente |
-| 10. Deviazioni | Nessuna esclusione di copertura | Sei forme non marcate e indipendenza aperta dichiarate |
-| 11. Fra Serie | Nessun nuovo lock, thread o contatore condiviso | Chiamate private concorrenti, nessuna misura di scalabilità |
-| 12. Atomicità | Nessun effetto durevole o prenotazione | EDIT e creazione esclusiva restano al protocollo canonico |
+| 1. Requirements and ADRs | Above REQs and ADR-0040 consistent with high-water and nonreuse | Both-function comments and traceability checked |
+| 2. Invariants | Proposal idempotence, no mutation/destruction | Model, ownership, and vertical tests |
+| 3. Typed errors | Original conditions, exhaustion, private inconsistency | Budgets, duplicates, types, u64, and fault injection |
+| 4. Loops/waits | Only bounded planner; loop-free selection | Test workers with deadlines and cleanup |
+| 5. Allocations | Cold path, private plan; no new hot path | No nonallocation or performance claim |
+| 6. Output data | Two u64s and validated plan | Three exact values, frontier and successor checked |
+| 7. Compound decisions | Explicit RID-D01/D02 | Independence pairs and operator mutations |
+| 8. Ownership | Stable manifest/inventory, exclusive controller | Separate plans, reusable inputs, four private Serie |
+| 9. Traceability/check | Existing requirements, no state promotion | Final full check recorded separately |
+| 10. Deviations | No coverage exclusion | Six unmarked forms and open independence declared |
+| 11. Across Serie | No new lock, thread, or shared counter | Concurrent private calls, no scalability measurement |
+| 12. Atomicity | No durable effect or reservation | EDIT and exclusive creation remain canonical protocol's |

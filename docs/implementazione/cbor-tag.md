@@ -1,50 +1,52 @@
-# Composizione dei tag CBOR
+<a id="composizione-dei-tag-cbor"></a>
 
-`arcdocdb.cbor:scrivi-tag-cbor-minimo` compone una testata MT6 e un
-singolo contenuto già codificato, verificandolo prima della scrittura.
-Il [metodo preregistrato](cbor-tag-metodo.md) definisce REQ-CBR-007,
-precedenze e campagne; le [verifiche](cbor-tag-risultati.md) conservano
-risultati e limiti della qualifica.
+# Composing CBOR tags
+
+`arcdocdb.cbor:scrivi-tag-cbor-minimo` composes an MT6 header and
+one already encoded content item, verifying it before writing.
+The [preregistered method](cbor-tag-metodo.md) defines REQ-CBR-007,
+precedence, and campaigns; the [verification](cbor-tag-risultati.md) preserves
+results and qualification limits.
 
 ```lisp
 (scrivi-tag-cbor-minimo
  buffer start end source source-start source-end high low space
  :max-bytes 16777216 :max-nodes 16777216 :max-depth 100)
-;; => NEXT, un solo valore
+;; => NEXT, only one value
 ```
 
-HIGH/LOW sono parole u32 del numero wire del tag, senza ricostruire
-un intero u64. La testata minima occupa 1/2/3/5/9 byte; il contenuto
-resta identico. HIGH=0, LOW=55799 e SOURCE=`A0` producono `D9 D9 F7 A0`.
-SOURCE è un simple u8 non vuoto con esattamente un item strutturale
-minimo completo: trailing, troncamenti, UTF-8 invalido e forme non minime
-vengono rifiutati con offset assoluti nella sorgente.
+HIGH/LOW are u32 words of the tag's wire number, without reconstructing
+a u64 integer. The minimal header occupies 1/2/3/5/9 bytes; contents
+remain identical. HIGH=0, LOW=55799, and SOURCE=`A0` produce `D9 D9 F7 A0`.
+SOURCE is a nonempty simple u8 array with exactly one complete minimal
+structural item: trailing data, truncations, invalid UTF-8, and nonminimal forms
+are rejected with absolute source offsets.
 
-MAX-BYTES comprende testata e contenuto. MAX-NODES include un nodo tag
-più i nodi del contenuto: minimo due. MAX-DEPTH conta soltanto array/map;
-il tag non aggiunge livelli. Un tag su scalare è ammesso a profondità0,
-un tag su array vuoto richiede profondità1. I massimi sono 16 MiB,
-16 Mi nodi e 100 livelli. Anche lunghe catene di tag consumano nodi,
-senza aggiungere frame allo scanner.
+MAX-BYTES includes header and contents. MAX-NODES includes one tag node
+plus content nodes: minimum two. MAX-DEPTH counts only arrays/maps;
+the tag adds no levels. A tag on a scalar is allowed at depth0;
+a tag on an empty array requires depth1. Maximums are 16 MiB,
+16 Mi nodes, and 100 levels. Even long tag chains consume nodes
+without adding scanner frames.
 
-BUFFER e SPACE sono esclusivi durante la chiamata; SOURCE resta stabile
-e può essere condiviso in lettura tra worker con destinazioni e scratch
-distinti. L'array interno KINDS dello scratch non può essere
-sorgente o destinazione. BUFFER=SOURCE è ammesso soltanto con span
-sorgente disgiunto dal footprint completo [START,NEXT), testata inclusa;
-confini toccanti sono ammessi.
+BUFFER and SPACE are exclusive during the call; SOURCE remains stable
+and can be shared for reading among workers with separate destinations and
+scratch. Scratch's internal KINDS array cannot be
+source or destination. BUFFER=SOURCE is allowed only when the source
+span is disjoint from the complete footprint [START,NEXT), including the header;
+touching boundaries are allowed.
 
-Range, sorgente non vuota, parole, scratch/alias, limiti, byte, capacità,
-overlap e minimo nodi vengono verificati prima del parsing o reset.
-Tutti gli errori pubblici conservano l'intera destinazione fisica e
-sorgente. Il preflight conserva anche lo scratch; un parsing fallito
-può sporcarlo, riusabile alla chiamata successiva. Dopo successo le sue
-statistiche descrivono il contenuto, senza il tag emesso. Solo il
-footprint destinazione cambia; la coda fisica oltre END non offre capacità.
-Gli invarianti interni sono fail-stop, senza rollback.
+Range, nonempty source, words, scratch/aliases, limits, bytes, capacity,
+overlap, and minimum nodes are checked before parsing or reset.
+All public errors preserve the entire physical destination and
+source. Preflight also preserves scratch; failed parsing
+can dirty it, reusable on the next call. After success, its
+statistics describe the contents without the emitted tag. Only the
+destination footprint changes; the physical tail beyond END offers no capacity.
+Internal invariants are fail-stop, without rollback.
 
-Questa primitiva è strutturale: non interpreta date, bignum, altri tag
-applicativi o sentinelle IANA, e non impone ordine/unicità delle chiavi.
-Il profilo documentale deterministico e l'ammissione semantica restano
-ai livelli superiori. Nessun AST, thread, attesa, I/O o pubblicazione
-durevole nel prodotto; qualifica C1/MC/DC ancora aperta.
+This primitive is structural: it does not interpret dates, bignums, other
+application tags or IANA sentinels, and imposes no key ordering/uniqueness.
+The deterministic document profile and semantic admission remain
+at higher levels. No AST, threads, waits, I/O, or durable
+publication in the product; C1/MC/DC qualification still open.

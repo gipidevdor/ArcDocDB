@@ -1,67 +1,75 @@
-# Metodo preregistrato della presa governata dal pool
+<a id="metodo-preregistrato-della-presa-governata-dal-pool"></a>
 
-Preregistrazione del 2026-10-13 sulla base
-`900fa93d9e14a252e6a2b5a009d19728b2de34af`, prima delle campagne congelate.
-Il nuovo componente C3 è `src/scheduler/pool-claim.lisp`, con export nel
-package e registrazione ASDF. Non si modificano sorgenti C1; le loro API
-e verifiche vengono delegate senza indebolire proprietà o barriere.
-Il [contratto](pool-worker-claim.md) fissa l'ordine dei controlli.
+# Preregistered method for pool-governed acquisition
 
-## Prove e revisione
+Preregistration on 2026-10-13 against base
+`900fa93d9e14a252e6a2b5a009d19728b2de34af`, before frozen campaigns.
+New C3 component is `src/scheduler/pool-claim.lisp`, with package
+export and ASDF registration. No C1 sources changed; their APIs
+and checks are delegated without weakening ownership or barriers.
+The [contract](pool-worker-claim.md) fixes check order.
 
-- Porta inattiva con writer realmente pronto: nessun pop, rotazione del
-  cursore, perdita o duplicazione di obblighi; ready e contesto conservati.
-- Crescita e riduzione richieste dal controllore su owner reali distinti:
-  l'attivazione precede il claim, il ritiro precede il polling di ready.
-  La forma immutabile di ready viene comunque letta dalla barriera C1.
-- Owner estraneo, tutte le fasi non-IDLE compresa FAULTED e IDLE incoerente:
-  rifiuto prima di ACK/pop, con prima causa, riferimenti, lease e debito intatti.
-  Le fault injection private dichiarate avvengono a quiescenza della fixture.
-- Parole del pool incoerenti e conflitto di conferma: nessun claim riportato
-  riuscito, nessuna nuova scrittura C3 nei campi d'integrità C1.
-- EMPTY e BUSY conservano i risultati e la rotazione prevista da execution;
-  INACTIVE restituisce il cursore originario senza scansione ready.
-- Ritiro pendente dopo claim: completamento del bridge, conferma dei payload,
-  rilascio Serie prima del writer e drenaggio dell'obbligo RESCHEDULE.
-  Ring pieno: il writer successivo resta CLAIMED e riceve il proprio routing.
-- Una lettura indipendente C3 di ordine dei controlli, owner, coupling privato,
-  preservazione degli errori e costi bounded. Safety 3, compilazione senza
-  warning/style-warning, lint e tracciabilità devono passare.
+<a id="prove-e-revisione"></a>
 
-## Copertura
+## Tests and review
 
-Scope completo: nuovo file `pool-claim.lisp` e `src/scheduler/package.lisp`,
-senza esclusioni. Gate C3 almeno 95% di espressioni e rami, confronto esatto
-su interi e denominatori non nulli. Confrontare dato nativo SB-COVER e HTML,
-conservando tutti gli originali, inventario e percorsi mancanti. Il lettore
-esistente resta invariato: un adattatore dichiara lo scope nuovo e passa i
-self-test del lettore. Non si attribuisce la copertura C1 ereditata al gate
-e non si deduce MC/DC dai conteggi.
+- Inactive port with actually ready writer: no pop, cursor rotation,
+  lost/duplicated obligations; ready and context retained.
+- Controller-requested growth/shrink on actual distinct owners:
+  activation before claim, retirement before ready polling.
+  Immutable ready shape still read by C1 barrier.
+- Foreign owner, every non-IDLE phase including FAULTED, and inconsistent IDLE:
+  rejection before ACK/pop, with first cause, references, lease, and debt intact.
+  Declared private fault injections occur at fixture quiescence.
+- Inconsistent pool words and acknowledgment conflict: no claim reported
+  successful, no new C3 write to C1 integrity fields.
+- EMPTY/BUSY retain execution results and expected rotation;
+  INACTIVE returns original cursor without ready scan.
+- Pending retirement after claim: bridge completion, payload acknowledgment,
+  Serie release before writer, and RESCHEDULE obligation drain.
+  Full ring: next writer remains CLAIMED and receives its routing.
+- Independent C3 reading of check order, owner, private coupling,
+  error preservation, and bounded costs. Safety 3, warning/style-warning-free
+  compilation, lint, and traceability must pass.
 
-## Misura locale
+<a id="copertura"></a>
 
-Il sensore C4 riusa quello lifecycle già verificato. Cinque repliche da
-4096 cicli per campagna, 128 cicli di warmup e GC completa prima del clock.
-Factory, API lookup, oracoli e setup sono fuori dal tratto misurato.
-Tutti i quattro valori di ogni passo contribuiscono alla verifica del ciclo.
+## Coverage
 
-| Campagna | Ciclo e oracolo |
+Complete scope: new `pool-claim.lisp` file and `src/scheduler/package.lisp`,
+without exclusions. C3 gate at least 95% expressions and branches, exact comparison
+of integers and nonzero denominators. Compare native SB-COVER data and HTML,
+preserving all originals, inventory, and missing paths. Existing reader
+stays unchanged: adapter declares new scope and passes reader
+self-tests. Inherited C1 coverage is not attributed to gate,
+and MC/DC is not inferred from counts.
+
+<a id="misura-locale"></a>
+
+## Local measurement
+
+C4 sensor reuses verified lifecycle sensor. Five replicates of
+4096 cycles per campaign, 128 warmup cycles, and full GC before clock.
+Factory, API lookup, oracles, and setup are outside measured section.
+All four values of every step contribute to cycle verification.
+
+| Campaign | Cycle and oracle |
 |---|---|
-| EMPTY | Porta attiva, quattro shard vuoti; quattro prese, cursori 1/2/3/0 e azione `:unchanged`. |
-| INACTIVE | Porta inattiva, quattro shard, cursore 2; quattro prese senza rotazione, azione `:unchanged`. |
-| SWITCH | Richiesta privata di ritiro, due prese inattive; richiesta di attivazione, quattro prese EMPTY con cursori 1/2/3/0. Sei chiamate e due generazioni monotone per ciclo. |
+| EMPTY | Active port, four empty shards; four acquisitions, cursors 1/2/3/0 and `:unchanged` action. |
+| INACTIVE | Inactive port, four shards, cursor 2; four acquisitions without rotation, `:unchanged` action. |
+| SWITCH | Private retirement request, two inactive acquisitions; activation request, four EMPTY acquisitions with cursors 1/2/3/0. Six calls and two monotonic generations per cycle. |
 
-SWITCH serializza i ruoli owner/coordinatore in una fixture C4 quiescente;
-non qualifica conferme concorrenti né reimposta contesti o generazioni.
-Le prove con lavoro vero e controllore concorrente appartengono ai test.
-Conservare tick grezzi, heap, sink e numero di cicli completati. Clock nullo
-significa sotto risoluzione; non si stabilisce una soglia di tempo né una
-taratura. Zero heap osservato non è prova universale di non allocazione.
+SWITCH serializes owner/coordinator roles in a quiescent C4 fixture;
+it qualifies neither concurrent acknowledgments nor resets of contexts/generations.
+Tests own cases with actual work and concurrent controller.
+Preserve raw ticks, heap, sink, and completed-cycle count. Zero clock
+means below resolution; no timing threshold or tuning.
+Observed zero heap is not universal nonallocation proof.
 
-Prima delle misure, il sensore deve rilevare allocazione deliberata, sink
-errato e ciascuno dei quattro risultati difformi, clock sotto risoluzione,
-CLI invalida, destinazione preesistente e raw parziali dopo errore.
-Ogni qualifica congelata usa `tools/record-command.lisp`, cache dedicate,
-argv/output/esiti originali e identità sorgenti iniziale/finale. Fallimenti
-rimangono fallimenti; copie e payload compressi sono verificati byte per byte.
-Il controllo completo del repository include i dieci spike esistenti.
+Before measurements, sensor must detect deliberate allocation, wrong
+sink, each of four differing results, below-resolution clock,
+invalid CLI, existing destination, and partial raw data after error.
+Every frozen qualification uses `tools/record-command.lisp`, dedicated caches,
+original argv/output/outcomes, and initial/final source identity. Failures
+remain failures; copies and compressed payloads checked byte for byte.
+Full repository check includes ten existing spikes.

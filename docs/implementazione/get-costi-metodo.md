@@ -1,102 +1,112 @@
-# GET: isolamento dei costi e crescita dell'insieme di lavoro
+<a id="get-isolamento-dei-costi-e-crescita-dellinsieme-di-lavoro"></a>
 
-Preregistrazione C4 del 2026-10-23, prima delle misure con
-[get-cost-bench.lisp](../../tools/get-cost-bench.lisp). Si affianca al
-[benchmark GET corrente](get-performance-metodo.md), che comprende oracolo,
-sentinelle e cleanup nel tempo misurato. Non modifica codice di prodotto,
-formati, CRC, contratto di concorrenza o criteri di qualificazione.
+# GET: isolating costs and growing the working set
 
-## Domande e perimetro
+C4 preregistration of 2026-10-23, before measurements with
+[get-cost-bench.lisp](../../tools/get-cost-bench.lisp). Complements
+[current GET benchmark](get-performance-metodo.md), which includes oracle,
+sentinels, cleanup in measured time. Changes neither product code,
+formats, CRCs, concurrency contract, nor qualification criteria.
 
-1. Quanto costano CRC, verifica PUT, due copie e oracolo separatamente?
-2. Quanto cambia la lookup reale passando da otto chiavi calde a una
-   distribuzione sull'intero indice, mantenendo invariata la cardinalità?
-3. Quanto aggiunge il calcolo XXH64 rispetto ai digest precalcolati?
+<a id="domande-e-perimetro"></a>
 
-Il CRC di prodotto è già slicing-by-8; le copie sono `replace` su array
-specializzati u8. Non si assume che il CRC sia il collo di bottiglia.
-Scalabilità fra reader senza writer non dimostra lock-freedom, assenza di
-contesa, prestazioni sotto mutazione o limiti di latenza. Nessun confronto
-con throughput teorici di memcpy o CRC hardware viene usato come misura.
+## Questions and scope
 
-## Campagna dei byte
+1. What do CRC, PUT verification, two copies, and oracle cost separately?
+2. How much does real lookup change from eight hot keys to a
+   whole-index distribution, with cardinality unchanged?
+3. How much does XXH64 calculation add over precalculated digests?
 
-Valori di 16, 256, 4096 B, chiavi di 16 B, PUT v2 non prepared, CSN 7.
-Per ogni dimensione: cinque repliche, 1024 warmup, 65.536 operazioni.
-Ordine fisso per dimensione, caso e replica; nessuna replica scartata.
+Product CRC already slicing-by-8; copies use `replace` on specialized
+u8 arrays. CRC not assumed bottleneck.
+Reader scaling without writer demonstrates neither lock-freedom, no
+contention, performance under mutation, nor latency bounds. No comparison
+with theoretical memcpy/hardware CRC throughput used as measurement.
 
-| Caso | Lavoro nella finestra |
+<a id="campagna-dei-byte"></a>
+
+## Byte campaign
+
+Values 16, 256, 4096 B, keys 16 B, nonprepared v2 PUT, CSN 7.
+Per size: five replicates, 1024 warmup, 65,536 operations.
+Fixed order by size, case, replicate; no discarded replicate.
+
+| Case | Work inside window |
 |---|---|
-| `:crc-body` | CRC32C di chiave + valore; controllo del checksum atteso |
-| `:record-verify` | `verifica-put-parole`, compresi CRC header/body, cornice, chiave e CSN |
-| `:two-copies` | Record → scratch, valore → output, tramite `replace` |
-| `:oracle` | Fill sentinelle, output corretto già presente, confronto di tutti i byte e somma |
-| `:copy-verify-copy` | Copie precedenti con verifica PUT fra le due |
-| `:copy-verify-copy-oracle` | Fill, pipeline precedente e confronto/somma dell'output |
+| `:crc-body` | Key + value CRC32C; expected-checksum check |
+| `:record-verify` | `verifica-put-parole`, including header/body CRCs, frame, key, CSN |
+| `:two-copies` | Record → scratch, value → output, via `replace` |
+| `:oracle` | Fill sentinels, correct output already present, compare all bytes and sum |
+| `:copy-verify-copy` | Previous copies with PUT verification between them |
+| `:copy-verify-copy-oracle` | Fill, previous pipeline, output comparison/sum |
 
-Nel caso `:oracle` il fill riguarda un buffer separato: isola lo stesso
-volume di scrittura delle sentinelle senza distruggere l'output da verificare.
-Le pipeline sono microbenchmark in memoria, non GET completi: non includono
-indice, EBR, resolver, cache seqlock, clock per GET, syscall o cleanup GET.
-I buffer sono caldi e riusati; non rappresentano banda DRAM sostenuta.
-Non si sommano o sottraggono tempi per attribuire causalmente costi del GET.
-Byte/s è espresso rispetto ai byte del valore, non al traffico fisico totale.
+In `:oracle`, fill concerns separate buffer: isolates same
+sentinel-write volume without destroying output to verify.
+Pipelines are in-memory microbenchmarks, not full GETs: exclude
+index, EBR, resolver, cache seqlock, per-GET clock, syscalls, GET cleanup.
+Buffers hot/reused; do not represent sustained DRAM bandwidth.
+Times not summed/subtracted for causal attribution of GET costs.
+Bytes/s expressed in value bytes, not total physical traffic.
 
-## Campagna dell'indice
+<a id="campagna-dellindice"></a>
 
-Cardinalità fissate: 1.024, 65.536, 1.048.576, 4.194.304. Capacità per
-frammento `min(8192, 2N)`, directory completa con frammenti distinti e carico
-medio 50%. Split vuoti pubblicati attraverso le API reali prima degli insert;
-non si misura la politica dinamica di split. Nessun writer durante le letture.
-Chiavi binarie di 16 B: ID univoco nei primi otto, dominio presente/assente
-negli ultimi otto. Digest XXH64 reali, seme fisso high `#x01234567`, low
-`#x89abcdef`. Chiavi e digest risiedono in array contigui specializzati.
+## Index campaign
 
-Ogni dimensione ha cinque repliche per quattro casi:
+Fixed cardinalities: 1,024, 65,536, 1,048,576, 4,194,304. Per-fragment
+capacity `min(8192, 2N)`, full directory with distinct fragments and average
+50% load. Empty splits published through real APIs before inserts;
+dynamic split policy not measured. No writer during reads.
+16 B binary keys: unique ID in first eight, present/absent domain
+in final eight. Real XXH64 digests, fixed seed high `#x01234567`, low
+`#x89abcdef`. Keys/digests in contiguous specialized arrays.
 
-- `:hot-eight`: soltanto otto chiavi presenti, nell'indice completo.
-- `:uniform-hit`: presenti sull'intero corpus, digest precalcolati.
-- `:uniform-miss`: assenti sull'intero corpus, digest precalcolati.
-- `:hash-uniform-hit`: come uniform-hit, includendo XXH64 della chiave.
+Each size has five replicates for four cases:
 
-Ogni replica: 4096 warmup e `max(262144, N)` tentativi misurati. Il cursore
-LCG modulo N (`1664525*x + 1013904223`, seme 17) ha periodo N per queste
-potenze di due. Il percorso uniforme visita quindi ogni chiave almeno una
-volta per finestra; non è una sequenza IID né una distribuzione Zipf.
-Non si svuotano le cache CPU: si misura un insieme riusato la cui dimensione
-cambia. Non si attribuisce ogni accesso a DRAM senza contatori hardware.
+- `:hot-eight`: only eight present keys, in full index.
+- `:uniform-hit`: present across full corpus, precalculated digests.
+- `:uniform-miss`: absent across full corpus, precalculated digests.
+- `:hash-uniform-hit`: like uniform-hit, including key XXH64.
 
-Ogni tentativo controlla lo stato e, sugli hit riusciti, CSN e location
-indipendenti dall'indice. `:retry-limit` non viene ritentato né confuso con
-un successo: il rapporto conserva il numero separato. Prima e dopo le
-finestre si verificano tutte le chiavi presenti e i cinque campi restituiti,
-confrontando inoltre la chiave nell'arena tramite la lookup reale.
+Each replicate: 4096 warmup, `max(262144, N)` measured attempts. Modulo-N
+LCG cursor (`1664525*x + 1013904223`, seed 17) has period N for these
+powers of two. Uniform path thus visits every key at least once
+per window; neither IID sequence nor Zipf distribution.
+CPU caches not cleared: measures reused working set of changing
+size. No attribution of every access to DRAM without hardware counters.
 
-Payload indice calcolato: `F * (41*C + 16*C) + 8*F`; corpus e quattro
-array digest aggiungono `48*N` B. È una contabilità degli array, non RSS:
-esclude header, strutture, vecchie root/garbage, runtime e compilatore.
-Il driver rifiuta fixture oltre 1 GiB prima di costruirle. Il comando usa
-dynamic space 4096 MiB su host con 16 GiB fisici. `/usr/bin/time -l` registra
-il picco RSS dell'intero processo, distinto dalle finestre e dai payload.
-Non si prova una cardinalità di 100 milioni né un indice oltre RAM.
+Every attempt checks state and, on successful hits, index-independent
+CSN/location. `:retry-limit` neither retried nor confused with
+success: report retains separate count. Before/after windows,
+all present keys and five returned fields checked,
+including arena-key comparison through real lookup.
 
-## Integrità della misura
+Calculated index payload: `F * (41*C + 16*C) + 8*F`; corpus and four
+digest arrays add `48*N` B. Array accounting, not RSS:
+excludes headers, structures, old roots/garbage, runtime, compiler.
+Driver rejects fixtures exceeding 1 GiB before building. Command uses
+4096 MiB dynamic space on host with 16 GiB physical RAM. `/usr/bin/time -l` records
+whole-process peak RSS, distinct from windows/payloads.
+Neither 100-million cardinality nor beyond-RAM index tested.
 
-Un solo thread principale; safety 3, speed 2 (speed 3 per il contatore del
-ciclo). GC completo prima del warmup, fuori misura. Tick monotoni SBCL e
-`get-bytes-consed` globale prima/dopo; completamenti e sink preallocati.
-Nessuna soglia di prestazione, nessuna sottrazione di baseline. Zero tick
-produce rate NIL. Autoverifica: vettore CRC standard e oracolo bitwise
-indipendente, tutte le componenti, hit/miss/hash e payload, rilevamento di
-CRC corrotto e di risultato alterato, sensore positivo con array vivo da
-4 MiB e controllo nullo. Le finestre, anche incomplete, vengono persistite
-prima di propagare un fallimento. Rapporto scritto/riletto con READ-EVAL NIL.
+<a id="integrità-della-misura"></a>
 
-CLI `--self-test`, `--bytes`, `--index`, `--negative-fixture`, più directory
-nuova obbligatoria. Timeout complessivo 900 s, finestra 60 s. Un errore
-produce rapporto failed, messaggio con file e COD-61, exit 1; l'opzione
-negativa altera appositamente l'atteso CRC ed è tenuta distinta dai risultati.
-I due comandi prestazionali eseguono prima l'autoverifica bounded.
+## Measurement integrity
+
+One main thread; safety 3, speed 2 (speed 3 for loop
+counter). Full GC before warmup, outside measurement. SBCL monotonic ticks and
+global `get-bytes-consed` before/after; preallocated completions/sinks.
+No performance threshold or baseline subtraction. Zero ticks
+produces NIL rate. Self-check: standard CRC vector and independent bitwise
+oracle, all components, hit/miss/hash/payload, corrupt-CRC and
+altered-result detection, positive sensor with live 4 MiB
+array and zero control. Windows, including incomplete, persisted
+before propagating failure. Report written/reread with READ-EVAL NIL.
+
+CLI `--self-test`, `--bytes`, `--index`, `--negative-fixture`, plus required
+new directory. Overall timeout 900 s, window 60 s. Error
+produces failed report, message with file and COD-61, exit 1; negative
+option intentionally changes expected CRC, separate from results.
+Both performance commands first run bounded self-check.
 
 ```sh
 sbcl --script tools/record-command.lisp -- sbcl --dynamic-space-size 4096 --noinform --no-userinit --no-sysinit --script tools/get-cost-bench.lisp --self-test spikes/out/get-cost-self-test-01/
@@ -105,7 +115,7 @@ sbcl --script tools/record-command.lisp -- /usr/bin/time -l sbcl --dynamic-space
 sbcl --script tools/record-command.lisp -- /usr/bin/time -l sbcl --dynamic-space-size 4096 --noinform --no-userinit --no-sysinit --script tools/get-cost-bench.lisp --index spikes/out/get-cost-index-01/
 ```
 
-I sorgenti devono essere stabili nel registro esterno. Eventuali fallimenti
-e versioni corrette rimangono conservati. Le due letture dell'autore non
-sono una revisione indipendente. Il prossimo passo di prodotto dipende dai
-risultati, senza disabilitare controlli o cambiare garanzie implicitamente.
+Sources must be stable in external record. Failures and corrected
+versions remain preserved. Author's two readings are not
+independent review. Next product step depends on results,
+without disabling checks or implicitly changing guarantees.

@@ -1,37 +1,39 @@
-# Item CBOR con testate minime
+<a id="item-cbor-con-testate-minime"></a>
 
-Il codec verifica un item completo, applicando il controllo delle
-[testate minime](cbor-minimo.md) durante lo stesso attraversamento che
-controlla struttura, UTF-8 e budget. Ogni worker usa uno scratch privato.
+# CBOR items with minimal headers
+
+The codec verifies a complete item, applying the
+[minimal-header](cbor-minimo.md) check during the same traversal that
+checks structure, UTF-8, and budgets. Each worker uses private scratch.
 
 ```lisp
-(let ((spazio (arcdocdb.cbor:crea-spazio-cbor))) ; preparazione fuori percorso caldo
+(let ((spazio (arcdocdb.cbor:crea-spazio-cbor))) ; preparation outside the hot path
   (arcdocdb.cbor:verifica-struttura-cbor-minima
    buffer start end spazio
    :max-bytes 16777216 :max-nodes 16777216 :max-depth 100))
-;; => nodi, picco di profondità degli array/map, end
+;; => nodes, peak array/map depth, end
 ```
 
-Il buffer resta immutabile. Lo scratch preallocato di 102 celle è
-riusabile, anche dopo errore, e appartiene a una sola chiamata attiva.
-Radice, figli, chiavi, valori e tag passano dal lettore minimo; i payload
-binari restano opachi. Il controllo non costruisce AST, float o interi
-u64, non copia il documento e non introduce lock, attese o I/O.
+The buffer remains immutable. Preallocated 102-cell scratch is
+reusable, including after error, and belongs to only one active call.
+Root, children, keys, values, and tags go through the minimal reader; binary
+payloads remain opaque. The check constructs no AST, float, or u64
+integer, copies no document, and introduces no lock, wait, or I/O.
 
-Gli errori di sintassi delle testate precedono quelli di minimalità.
-Una testata completa accorciabile, indefinita o break segnala
-`corruption-detected :cbor-nonminimal` sul lead, prima di nodi,
-profondità e payload. La coda dopo una radice completa resta
-`:cbor-trailing`; un figlio incompleto resta `:cbor-truncated` a END.
-Range, alias e limiti configurati sono controllati prima del reset.
+Header syntax errors precede minimality errors.
+A complete shortenable, indefinite, or break header signals
+`corruption-detected :cbor-nonminimal` at the lead, before nodes,
+depth, and payload. The tail after a complete root remains
+`:cbor-trailing`; an incomplete child remains `:cbor-truncated` at END.
+Range, aliases, and configured limits are checked before reset.
 
-Lo scanner generico conserva firma e comportamento. Ordine/equivalenza
-delle chiavi e semantica dei tag richiedono il successivo profilo
-documentale: il risultato di questa API attesta struttura, UTF-8,
-budget e preferenza locale delle testate.
+The generic scanner retains signature and behavior. Key order/equivalence
+and tag semantics require the later document
+profile: this API's result attests structure, UTF-8,
+budget, and local header preference.
 
-[Contratto e metodo](cbor-minimo-struttura-metodo.md),
-[prima lettura](cbor-minimo-struttura-lettura.md) e
-[inventario delle decisioni](cbor-minimo-struttura-decisioni.md).
+[Contract and method](cbor-minimo-struttura-metodo.md),
+[first reading](cbor-minimo-struttura-lettura.md), and
+[decision inventory](cbor-minimo-struttura-decisioni.md).
 
-[Risultati, copertura e archivi originali](cbor-minimo-struttura-risultati.md).
+[Results, coverage, and original archives](cbor-minimo-struttura-risultati.md).

@@ -1,118 +1,128 @@
-# Metodo del contesto worker dei writer
+<a id="metodo-del-contesto-worker-dei-writer"></a>
 
-Preregistrazione del 2026-10-09 sulla base `cf60913`, prima delle campagne
-congelate di correttezza, mutazione e allocazione. Il primo probe di sviluppo
-`4000545928-command-51771-0` compila i primi tre sorgenti, prima dell'aggiunta
-delle API di adozione/cessione: non viene attribuito al codice finale.
-REQ-CON-001/002/004/005 e REQ-AFF-008; INV-P1/P2/P5/P6, INV-A8 e INV-V4;
-ADR-0005 e ADR-0045 §§6/8. Codice C1, strumenti C4.
+# Writer worker context method
 
-## Contratto e stati
+Preregistration on 2026-10-09 at base `cf60913`, before the frozen
+correctness, mutation, and allocation campaigns. The first development probe,
+`4000545928-command-51771-0`, compiles the first three sources, before the
+adopt/yield APIs were added: it is not attributed to the final code.
+REQ-CON-001/002/004/005 and REQ-AFF-008; INV-P1/P2/P5/P6, INV-A8 and INV-V4;
+ADR-0005 and ADR-0045 §§6/8. C1 code, C4 tools.
 
-Contesto preallocato una volta sul thread worker che ne rimane proprietario,
-non rientrante. Ready/owner read-only; cursor/home/ref/lease/pending e
-batch-generation locali, nessun contatore globale. Sei fasi operative e una terminale:
+<a id="contratto-e-stati"></a>
 
-- idle: nessun riferimento, lease o batch; take bounded aggiorna cursor anche
-  dopo empty/busy. Una testa restituita diventa claimed, home è il predecessore
-  modulo K del cursore restituito da ready, senza ricercare il writer.
-- claimed: riferimento posseduto, begin separato acquisisce lease e passa running.
-  Busy conserva il riferimento. Not-ready e generation esaurita non sono retry ciechi.
-- running: pop con target/span/alias verificati prima dell'overflow locale.
-  Messaggi creano batch con count positivo e token locale nuovo; empty/yield
-  mantengono running con token0 e non incrementano generation. Busy non muta il contesto.
-- batch: debito esplicito; vietati nuovo pop e termine. Ack valido attesta che
-  il caller ha elaborato tutto il batch, elimina pending e torna running.
-  Token monotono legato alla coppia contesto/token, non unico tra contesti.
-- finishing: end viene latched prima della chiamata handoff; busy conserva
-  lease e riferimento e consente solo il retry del termine. Nessuna rielaborazione.
-- reschedule: end ha già rilasciato lease, riferimento conserva un obbligo.
-  Recycle room pubblica e libera idle; full trasferisce la testa al contesto
-  claimed conservando home e count. Busy conserva l'obbligo, senza ripetere end.
+## Contract and states
 
-Adotta da idle un obbligo unico non nel ring; cede da claimed/reschedule al
-caller la coppia writer/home e libera idle, senza azzerare batch-generation.
-Nessuna cessione di lease/batch attivi. Permette restituzione esplicita degli
-obblighi prima del ritiro o esaurimento del contesto, senza promettere un pool.
-A overflow batch-generation, pop rifiuta anche se sarebbe empty/yield; end
-rimane disponibile, seguito da cessione e adozione in altro contesto.
+Context preallocated once on the worker thread that remains its owner,
+non-reentrant. Ready/owner read-only; cursor/home/ref/lease/pending and
+batch-generation local, no global counter. Six operational phases and one terminal phase:
 
-## Confini
+- idle: no reference, lease, or batch; bounded take updates cursor even
+  after empty/busy. A returned head becomes claimed, home is the predecessor
+  modulo K of the cursor returned by ready, without searching for the writer.
+- claimed: owned reference; separate begin acquires lease and enters running.
+  Busy retains the reference. Not-ready and exhausted generation are not blind retries.
+- running: pop with target/span/alias checked before local overflow.
+  Messages create batch with positive count and new local token; empty/yield
+  keep running with token 0 and do not increment generation. Busy does not mutate the context.
+- batch: explicit debt; new pop and end prohibited. Valid ack attests that
+  the caller processed the whole batch, clears pending, and returns to running.
+  Monotonic token tied to the context/token pair, not unique across contexts.
+- finishing: end is latched before calling handoff; busy retains
+  lease and reference and allows only retrying end. No reprocessing.
+- reschedule: end has already released lease; reference retains an obligation.
+  Recycle room publishes and releases to idle; full transfers the head to the
+  claimed context, retaining home and count. Busy retains the obligation without repeating end.
 
-Fase errata è resource-exhausted :worker-state, owner/ack/adozione invalidi
-sono invalid-argument; overflow è resource-exhausted :worker-generation.
-Busy di begin/pop/recycle conserva tutti i campi. Il primo end busy cambia
-solo running→finishing, latch intenzionale; retry successivi conservano tutto.
-Il confine di ciascun passo registra la condizione originale e passa a faulted
-su errori inattesi/permanenti (not-ready, writer generation, lease privata,
-invarianti o errori runtime); propaga la stessa condizione, conserva i campi e
-blocca tutti i passi successivi, inclusa cessione. Solo ragioni recuperabili
-esplicite per tipo/operazione conservano la fase. Wrong-thread e contesto già
-faulted sono rifiutati fuori dal handler, senza alterare la diagnosi originale.
-Nessun reset o rollback dopo mutazione; handler interno dynamic-extent.
-Getter owner-only consentono diagnosi del riferimento e condizione anche a fault; non
-trasferiscono proprietà o autorizzano doppia pubblicazione.
+Adopts from idle a unique obligation not in the ring; yields from claimed/reschedule
+the writer/home pair to the caller and releases to idle, without resetting batch-generation.
+No yielding active leases/batches. Allows explicit return of
+obligations before context retirement or exhaustion, without promising a pool.
+On batch-generation overflow, pop rejects even if it would be empty/yield; end
+remains available, followed by yield and adoption in another context.
 
-Non vi sono thread, callback, I/O, timer, retry o attese nel prodotto.
-Take usa la scansione esistente ≤64 shard/128 CAS; gli altri passaggi sono
-O(1), oltre alla copia batch già bounded dal writer. Work e ack fuori dalle
-guard ready. Empty non autorizza park/shutdown. Catene full locali, quote,
-admission, wake/park, controller FAULTED, adattamento del pool e applicazione
-WAL restano da integrare. Ack non verifica effetti esterni del caller.
+<a id="confini"></a>
 
-## Verifiche preregistrate
+## Boundaries
 
-- Oracolo indipendente a liste: 8 configurazioni K1/4, readycapacity1/2,
-  quantum1/2, 13 writer e 1000 passi ciascuna, payload unici e drain finale.
-- Tutte le fasi, quota cumulativa, buffer privati/sentinelle, alias/span,
-  ack stale nel batch successivo, ordine preflight, overflow senza wrap,
-  cessione/adozione e impossibilità di cedere un batch/lease attivi.
-- Busy di begin/pop/finish/recycle con snapshot; home corretto su scansioni
-  ruotate, regressione ring full per tutti i consumer, nuova ondata senza cleanup.
-- Thread reali riusati e producer vivi, shard indipendente che progredisce
-  durante guard occupata, wrong-thread rifiutato prima di mutare.
-- Due letture C1 con dodici punti, inventario di ogni decisione e raw coverage
-  di tutti gli undici file execution, senza esclusioni o MC/DC dedotta da sb-cover.
-- Dodici mutanti semantici dei soli nuovi worker files, sostituzioni uniche
-  preregistrate nel driver prima delle campagne. Baseline execution completa;
-  segnali OS/late failure sono worker-error, non detection. Raw baseline+12log.
-- Composizione handoff/ready/worker: K1/4 × C1/3, cinque campioni ×4096cicli,
-  warmup128 e GC fuori misura. Full backlog→recycle→nuova testa e room→publish;
-  idle, batch ack, identità/count/status/cursor, lease e token crescenti verificati.
-  Writer C+1 per shard distinti; ruolo iniziale ruotato; generazioni reali non
-  azzerate per rendere costante il sink. Derivazione indipendente in appendice.
-- Heap positivo, sink errato, clockzero distinto, reporter parziali e directory
-  preesistente, strict COMPILE-FILE completo e self-test FASL dei C4 con avvisi fatali.
-- Make check completo una volta sul codice finale; altre chat integrate prima
-  del congelamento. Si ripete solo se cambia codice/base rilevante o un gate fallisce.
+Wrong phase is resource-exhausted :worker-state, invalid owner/ack/adoption
+are invalid-argument; overflow is resource-exhausted :worker-generation.
+Begin/pop/recycle busy retains all fields. The first end busy changes
+only running→finishing, an intentional latch; subsequent retries retain everything.
+Each step's boundary records the original condition and enters faulted
+on unexpected/permanent errors (not-ready, writer generation, private lease,
+invariants, or runtime errors); it propagates the same condition, retains fields, and
+blocks all subsequent steps, including yield. Only explicit recoverable reasons
+by type/operation preserve the phase. Wrong-thread and an already faulted context
+are rejected outside the handler, without altering the original diagnosis.
+No reset or rollback after mutation; internal dynamic-extent handler.
+Owner-only getters allow diagnosis of the reference and condition even on fault; they do not
+transfer ownership or authorize double publication.
 
-Ogni tentativo è registrato con record-command; dati raw/output/argv/ambiente
-conservati, source snapshot prima/dopo stabili. Cache/processi separati su copia
-congelata; grandi dati compressi senza perdita. I risultati osservati non
-qualificano zero heap universale, throughput, P99, fairness o l'intero motore.
+There are no threads, callbacks, I/O, timers, retries, or waits in the product.
+Take uses the existing scan of ≤64 shards/128 CAS; the other steps are
+O(1), in addition to the batch copy already bounded by the writer. Work and ack outside
+ready guards. Empty does not authorize park/shutdown. Local full chains, quotas,
+admission, wake/park, FAULTED controller, pool adaptation, and WAL application
+remain to be integrated. Ack does not verify the caller's external effects.
 
-## Oracolo composto e mutanti esatti
+<a id="verifiche-preregistrate"></a>
 
-Il driver fissa dodici sostituzioni uniche: owner-check-ignored, claim-cursor-stays,
+## Preregistered checks
+
+- Independent list oracle: 8 configurations K1/4, ready capacity 1/2,
+  quantum 1/2, 13 writers, and 1000 steps each, unique payloads and final drain.
+- All phases, cumulative quantum, private buffers/sentinels, alias/span,
+  stale ack in the next batch, preflight order, overflow without wrap,
+  yield/adopt, and inability to yield an active batch/lease.
+- Begin/pop/finish/recycle busy with snapshots; correct home on rotated
+  scans, ring full regression for all consumers, new wave without cleanup.
+- Reused real threads and live producers, independent shard progressing
+  while a guard is occupied, wrong-thread rejected before mutation.
+- Two C1 readings with twelve points, inventory of every decision and raw coverage
+  of all eleven execution files, without exclusions or MC/DC inferred from sb-cover.
+- Twelve semantic mutants of only the new worker files, unique substitutions
+  preregistered in the driver before the campaigns. Full execution baseline;
+  OS signals/late failures are worker-error, not detection. Raw baseline+12 logs.
+- Handoff/ready/worker composition: K1/4 × C1/3, five samples ×4096 cycles,
+  warmup 128 and GC outside measurement. Full backlog→recycle→new head and room→publish;
+  idle, batch ack, identity/count/status/cursor, lease, and increasing tokens checked.
+  C+1 distinct writers per shard; initial role rotated; real generations not
+  reset to make the sink constant. Independent derivation in the appendix.
+- Positive heap, wrong sink, distinct clockzero, partial reporters, and preexisting
+  directory, full strict COMPILE-FILE, and FASL self-test of C4 tools with fatal warnings.
+- Full Make check once on final code; other chats integrated before
+  freezing. Repeated only if relevant code/base changes or a gate fails.
+
+Every attempt is recorded with record-command; raw data/output/argv/environment
+retained, stable source snapshots before/after. Separate caches/processes on a
+frozen copy; large data compressed losslessly. Observed results do not
+qualify universal zero heap, throughput, P99, fairness, or the whole engine.
+
+<a id="oracolo-composto-e-mutanti-esatti"></a>
+
+## Composed oracle and exact mutants
+
+The driver fixes twelve unique substitutions: owner-check-ignored, claim-cursor-stays,
 claim-home-is-next, start-keeps-claimed, batch-generation-stays,
 ack-stale-token-accepted, ack-keeps-pending, end-skips-finishing-latch,
 end-keeps-lease, schedule-goes-idle, recycle-room-keeps-writer,
-recycle-full-keeps-old-writer. I bersagli before/after sono letterali in
+recycle-full-keeps-old-writer. The before/after targets are literals in
 [`writer-worker-mutation.lisp`](../../tools/writer-worker-mutation.lisp),
-verificati prima di ogni copia; non si mutano queue, writer, handoff o ready.
-I difetti di forma e quelli con forma ancora valida sono entrambi inclusi.
+checked before each copy; queue, writer, handoff, and ready are not mutated.
+Both malformed defects and defects whose form remains valid are included.
 
-Benchmark: in ogni shard A ha due payload e produce backlog, altri C writer
-riempiono il ring prima del ricircolo full; il caller completa la testa, i
-riferimenti residui e A. Un secondo ciclo room sullo stesso A ricircola
-sul ring vuoto e completa il residuo. Ruolo di A ruota tra C+1 identità.
-Lo score esclude i contatori assoluti di lease/batch, che vengono verificati
-separatamente e persistono tra warmup, cicli e repliche.
+Benchmark: in each shard A has two payloads and produces backlog; C other writers
+fill the ring before full recycling; the caller completes the head, the
+remaining references, and A. A second room cycle on the same A recycles
+into the empty ring and completes the remainder. A's role rotates among C+1 identities.
+The score excludes absolute lease/batch counters, which are checked
+separately and persist across warmup, cycles, and replicates.
 
-Per M=K(C+1), derivazione del token fissata prima dell'esecuzione:
+For M=K(C+1), token derivation fixed before execution:
 `T=K[416+115C+3C(C+1)/2]+7(C+3)K(K−1)/2+5M(M+1)/2+29+7(1 mod K)`.
-Per (K,C)=(1,1)/(1,3)/(4,1)/(4,3): 578/858/2520/4084.
-Le chiamate per ciclo sono `K(7C+27)+1`: 35/49/137/193.
-Sink dei4096cicli, inclusi gli indici i: 10754048/11900928/18708480/25114624.
-Il ricalcolo dell'autore e la lettura indipendente controlleranno la
-formula contro le operazioni effettive, prima della misura congelata.
+For (K,C)=(1,1)/(1,3)/(4,1)/(4,3): 578/858/2520/4084.
+Calls per cycle are `K(7C+27)+1`: 35/49/137/193.
+Sink for the 4096 cycles, including indices i: 10754048/11900928/18708480/25114624.
+The author's recalculation and the independent reading will check the
+formula against the actual operations before the frozen measurement.

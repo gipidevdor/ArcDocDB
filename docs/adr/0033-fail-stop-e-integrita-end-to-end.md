@@ -1,152 +1,184 @@
-# ADR-0033 — Fail-stop, integrità end-to-end, politica degli errori
+<a id="adr-0033--fail-stop-integrità-end-to-end-politica-degli-errori"></a>
 
-- **Stato:** Accettata; **§4 sostituito da [ADR-0037](0037-lotto-sigillato.md)** (coda o corruzione si decidono con la frontiera durevole dei SEAL; il recovery non tronca; anche i log di controllo hanno una coda legittima); verifica in lettura precisata da [ADR-0039](0039-cornice-unica-dei-record.md) §4 e, per la cache, da [ADR-0044](0044-cache-acceleratore-puro.md).
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** nessuna emenda; specifica **come** si realizzano «recovery
-  crash-safe» e «nessun dato committed deve andare perso» in presenza di guasti; precisa
-  [ADR-0019](0019-durability-e-group-commit-pipelined.md) per il livello `:async`.
-- **Riferimenti:** [analisi dei guasti](../affidabilita/analisi-dei-guasti.md), INV-A1…INV-A8,
+# ADR-0033 — Fail-stop, end-to-end integrity, error policy
+
+- **Status:** Accepted; **§4 superseded by [ADR-0037](0037-lotto-sigillato.md)** (tail or corruption is determined by the durable frontier of SEALs; recovery does not truncate; control logs also have a legitimate tail); read verification clarified by [ADR-0039](0039-cornice-unica-dei-record.md) §4 and, for the cache, by [ADR-0044](0044-cache-acceleratore-puro.md).
+- **Date:** 2026-10-03
+- **Relationship to the specification:** no amendment; specifies **how** "crash-safe
+  recovery" and "no committed data may be lost" are implemented in the presence of faults; clarifies
+  [ADR-0019](0019-durability-e-group-commit-pipelined.md) for the `:async` level.
+- **References:** [fault analysis](../affidabilita/analisi-dei-guasti.md), INV-A1…INV-A8,
   INV-F1
 
-## Contesto
+<a id="contesto"></a>
 
-La specifica descrive il comportamento corretto e il recovery dopo un crash; non descrive
-come il sistema reagisce a guasti che **non** sono un arresto pulito: errori di I/O, bit-rot,
-scritture parziali, esaurimento di risorse, difetti interni. Un sistema critico deve avere per
-ciascuno una risposta definita (ADR-0031).
+## Context
 
-## Decisione
+The specification describes correct behavior and recovery after a crash; it does not describe
+how the system responds to faults that **are not** a clean shutdown: I/O errors, bit rot,
+partial writes, resource exhaustion, internal defects. A critical system must have a
+defined response for each (ADR-0031).
 
-### 1. Stati di salute
+<a id="decisione"></a>
 
-| Livello | Stati |
+## Decision
+
+<a id="1-stati-di-salute"></a>
+
+### 1. Health states
+
+| Level | States |
 |---|---|
-| Serie | `HEALTHY` · `DEGRADED` (uno o più segmenti in quarantena) · `FAULTED` |
-| Archivio | `HEALTHY` · `MULTI-DISABLED` (`multiserie.log` in guasto) · `FAULTED` (Registri in guasto) |
+| Serie | `HEALTHY` · `DEGRADED` (one or more quarantined segments) · `FAULTED` |
+| Archivio | `HEALTHY` · `MULTI-DISABLED` (`multiserie.log` faulted) · `FAULTED` (Registri faulted) |
 
-- `FAULTED`: la Serie non accetta né conferma alcuna operazione; si riparte solo con il
-  recovery (o con la verifica offline). Lo stato su disco non viene toccato (append-only).
-- `DEGRADED`: le letture dei documenti nei segmenti in quarantena rispondono
-  `corruption-detected`; il resto della Serie funziona; il CLEAN e il MERGE saltano i segmenti
-  in quarantena.
-- Ogni transizione è un evento registrato e una metrica.
+- `FAULTED`: the Serie neither accepts nor acknowledges any operation; it can restart only with
+  recovery (or offline verification). On-disk state is not touched (append-only).
+- `DEGRADED`: reads of documents in quarantined segments return
+  `corruption-detected`; the rest of the Serie works; CLEAN and MERGE skip quarantined
+  segments.
+- Every transition is a recorded event and a metric.
 
-### 2. Errori di scrittura e di flush: fail-stop, mai ritentati (INV-A1)
+<a id="2-errori-di-scrittura-e-di-flush-fail-stop-mai-ritentati-inv-a1"></a>
 
-Un errore di `write`, `fdatasync`/`F_FULLFSYNC`, `rename` o sincronizzazione della directory
-porta la Serie (o l'Archivio per `multiserie.log` e Registri) in `FAULTED`. **Non si ritenta
-e non si ignora.** Motivo: dopo un fallimento di `fsync` lo stato delle pagine nella cache del
-sistema operativo non è definito; un nuovo `fsync` può riuscire senza che i dati siano
-durevoli (difetto di PostgreSQL scoperto nel 2018). Nessuna conferma è mai data per un lotto
-il cui flush non è riuscito.
+### 2. Write and flush errors: fail-stop, never retried (INV-A1)
 
-`ENOSPC`: si previene con una **riserva di spazio** — sotto la soglia configurata di spazio
-libero il sistema rifiuta le nuove scritture con `resource-exhausted` (backpressure), così lo
-spazio per compaction e recovery resta garantito. Un `ENOSPC` che si verifica comunque su una
-scrittura è trattato come errore di scrittura (`FAULTED`).
+An error from `write`, `fdatasync`/`F_FULLFSYNC`, `rename`, or directory synchronization
+puts the Serie (or the Archivio for `multiserie.log` and Registri) into `FAULTED`. **Do not retry
+or ignore it.** Reason: after an `fsync` failure, the state of pages in the operating
+system cache is undefined; another `fsync` may succeed without the data being
+durable (PostgreSQL defect discovered in 2018). A batch whose flush failed is
+never acknowledged.
 
-### 3. Verifica in lettura (INV-A2)
+`ENOSPC`: prevented with a **space reservation** — below the configured free-space
+threshold, the system rejects new writes with `resource-exhausted` (backpressure), ensuring
+space for compaction and recovery. An `ENOSPC` that nevertheless occurs on a
+write is treated as a write error (`FAULTED`).
 
-Ogni record letto — da disco **e dalla cache** — è verificato prima di essere restituito:
-CRC32C del record, corrispondenza di chiave, versione e CSN con la entry dell'indice che lo ha
-indicato. Una verifica fallita non restituisce mai il dato: `corruption-detected`, il segmento
-va in quarantena (`DEGRADED`), l'evento è registrato. Il costo (CRC32C in Common Lisp tipizzato)
-è accettato (ADR-0031 §5) e misurato da SPK-09.
+<a id="3-verifica-in-lettura-inv-a2"></a>
 
-### 4. Recovery: coda troncata o corruzione a metà log
+### 3. Read verification (INV-A2)
 
-Alla lettura del segmento `ACTIVE`, il primo record con lunghezza incoerente o CRC errato
-fissa un **punto di arresto**. Poi il recovery esegue una **scansione di risincronizzazione**
-nel resto del segmento, byte per byte, cercando un record valido (intestazione plausibile,
-CRC corretto) con CSN maggiore dell'ultimo noto:
+Every record read — from disk **and from cache** — is verified before being returned:
+record CRC32C, matching key, version, and CSN against the index entry that
+pointed to it. Failed verification never returns the data: `corruption-detected`, the segment
+is quarantined (`DEGRADED`), and the event is recorded. The cost (CRC32C in typed Common Lisp)
+is accepted (ADR-0031 §5) and measured by SPK-09.
 
-- nessun record valido dopo il punto di arresto → **coda troncata** da un crash: si tronca e
-  si prosegue;
-- un record valido dopo il punto di arresto → **corruzione a metà log**: i dati committed
-  potrebbero essere dopo; la Serie va in `FAULTED` e non si tronca nulla. Serve la decisione
-  dell'operatore (verifica offline, restore).
+<a id="4-recovery-coda-troncata-o-corruzione-a-metà-log"></a>
 
-L'errore possibile della scansione è nella direzione sicura: un falso positivo (record «valido»
-trovato per caso, probabilità ≈ 2⁻³² per posizione) produce un rifiuto di apertura, mai una
-perdita silenziosa. Un record non valido in un segmento **CLOSED** o in `control.log`,
-`multiserie.log` è sempre corruzione (non c'è una coda da troncare): quarantena del segmento
-(`DEGRADED`) o `FAULTED` per i log di controllo.
+### 4. Recovery: truncated tail or mid-log corruption
 
-### 5. Recovery idempotente (INV-A7)
+While reading the `ACTIVE` segment, the first record with an inconsistent length or incorrect CRC
+sets a **stop point**. Recovery then performs a **resynchronization scan**
+through the rest of the segment, byte by byte, looking for a valid record (plausible header,
+correct CRC) with a CSN higher than the last known one:
 
-Il recovery può essere interrotto e rieseguito in qualsiasi punto: lo stato finale è lo
-stesso. Ne consegue che ogni passo del recovery è descritto da record durevoli del control log
-o da file con rinomina atomica, mai da stato in memoria.
+- no valid record after the stop point → **tail truncated** by a crash: truncate and
+  continue;
+- a valid record after the stop point → **mid-log corruption**: committed data
+  may follow; the Serie enters `FAULTED` and nothing is truncated. An operator decision is
+  required (offline verification, restore).
+
+The scan's possible error is in the safe direction: a false positive (a "valid" record
+found by chance, probability ≈ 2⁻³² per position) causes refusal to open, never
+silent loss. An invalid record in a **CLOSED** segment or in `control.log`,
+`multiserie.log` is always corruption (there is no tail to truncate): segment quarantine
+(`DEGRADED`) or `FAULTED` for control logs.
+
+<a id="5-recovery-idempotente-inv-a7"></a>
+
+### 5. Idempotent recovery (INV-A7)
+
+Recovery can be interrupted and rerun at any point: the final state is the
+same. Every recovery step is therefore described by durable control-log records
+or files with atomic rename, never by in-memory state.
 
 ### 6. Scrubbing (INV-A6)
 
-Un processo in background, a banda limitata e a priorità inferiore al CLEAN, rilegge i segmenti
-chiusi: CRC di ogni record, coerenza di hint, indici e Bloom con il segmento, presenza dei file
-elencati dal control log. Un ciclo completo è obiettivo **entro 7 giorni**; lo scarto è una
-metrica con allarme. Un errore rilevato porta il segmento in quarantena **prima** che una
-lettura ne abbia bisogno.
+A background process, with limited bandwidth and lower priority than CLEAN, rereads closed
+segments: CRC of every record, consistency of hints, indexes, and Bloom with the segment, presence of files
+listed by the control log. The target is a full cycle **within 7 days**; deviation is a
+metric with an alarm. A detected error quarantines the segment **before** a
+read needs it.
 
-### 7. Verificatore offline `arcdocdb-verify`
+<a id="7-verificatore-offline-arcdocdb-verify"></a>
 
-Strumento in Common Lisp che apre un Archivio **in sola lettura** e verifica tutto ciò che è
-verificabile offline: formati e CRC, coerenza di control log, segmenti, hint, indici,
-`multiserie.log`, catalogo e directory. Esce con codice non nullo e un rapporto dettagliato.
-Serve all'operatore, al backup e ai test (oracolo dopo ogni crash simulato).
+### 7. Offline verifier `arcdocdb-verify`
 
-### 8. Condizioni ed errori (INV-A4)
+A Common Lisp tool that opens an Archivio **read-only** and verifies everything that can be
+verified offline: formats and CRCs, consistency of control log, segments, hints, indexes,
+`multiserie.log`, catalog, and directories. It exits with a nonzero code and a detailed report.
+It serves the operator, backup, and tests (an oracle after every simulated crash).
 
-- Gerarchia di condizioni: `arcdocdb-error` ← `corruption-detected`, `io-fault`,
+<a id="8-condizioni-ed-errori-inv-a4"></a>
+
+### 8. Conditions and errors (INV-A4)
+
+- Condition hierarchy: `arcdocdb-error` ← `corruption-detected`, `io-fault`,
   `resource-exhausted`, `conflict`, `invalid-request`, `snapshot-too-old`,
   `serie-faulted`, `invariant-violation`.
-- Vietati `ignore-errors` e i gestori che catturano `error`/`serious-condition` senza
-  rilanciare o registrare e portare in uno stato definito. Un gestore generico ammesso solo ai
-  confini (richiesta, worker) con registrazione e transizione di stato.
-- **Le asserzioni sugli invarianti interni restano sempre attive in produzione.** Una
-  violazione in codice C1 porta la Serie in `FAULTED` (`invariant-violation`), non nel
-  proseguire. Un crash del processo è riservato all'esaurimento dello heap o a un errore fatale
-  del runtime.
+- `ignore-errors` and handlers that catch `error`/`serious-condition` without
+  re-signaling or recording and transitioning to a defined state are prohibited. A generic handler is allowed only at
+  boundaries (request, worker), with recording and state transition.
+- **Internal invariant assertions remain enabled in production at all times.** A
+  violation in C1 code puts the Serie into `FAULTED` (`invariant-violation`), rather than
+  continuing. A process crash is reserved for heap exhaustion or a fatal runtime
+  error.
 
-### 9. Limiti di risorse (INV-A8)
+<a id="9-limiti-di-risorse-inv-a8"></a>
 
-Ogni risorsa è limitata da un valore configurato **e controllato**: lunghezza di ogni coda,
-dimensione di ogni buffer, richiesta massima, numero di connessioni, numero e durata degli
-snapshot, tentativi di ogni ciclo, profondità di ogni ricorsione, memoria dello heap. Il
-superamento produce un rifiuto esplicito (`resource-exhausted`), mai un degrado non definito.
-L'esaurimento dello heap si previene con un bilancio di memoria all'avvio e con soglie di
-rifiuto ben sotto il limite.
+### 9. Resource limits (INV-A8)
 
-### 10. Livello `:async`
+Every resource is bounded by a configured **and enforced** value: length of every queue,
+size of every buffer, maximum request, connection count, snapshot count and duration,
+attempts in every loop, depth of every recursion, heap memory. Exceeding a
+limit causes explicit rejection (`resource-exhausted`), never undefined degradation.
+Heap exhaustion is prevented by a startup memory budget and rejection thresholds
+well below the limit.
 
-`:async` **non è mai il default**, richiede una scelta esplicita per Serie registrata nel
-catalogo, è **vietato per Registri e per i partecipanti a transazioni multiserie**, è escluso
-da INV-D1 (già in ADR-0019) ed è una metrica di sistema («Serie in `:async`»).
+<a id="10-livello-async"></a>
 
-### 11. Lock dell'Archivio
+### 10. `:async` level
 
-All'apertura il processo acquisisce un **lock esclusivo** sul file `LOCK` dell'Archivio e lo
-tiene fino alla chiusura: una seconda istanza che apra lo stesso Archivio fallisce
-immediatamente.
+`:async` **is never the default**, requires an explicit per-Serie choice recorded in the
+catalog, is **prohibited for Registri and participants in multiseries transactions**, is excluded
+from INV-D1 (already in ADR-0019), and is a system metric ("Serie in `:async`").
 
-Pattern: fail-stop (Gray, 1985), checksum end-to-end (ZFS, RocksDB, TigerBeetle), scrubbing
-(ZFS), asserzioni sempre attive e recovery deterministico (TigerBeetle), `fsync` fatale
+<a id="11-lock-dellarchivio"></a>
+
+### 11. Archivio lock
+
+On opening, the process acquires an **exclusive lock** on the Archivio's `LOCK` file and
+holds it until close: a second instance opening the same Archivio fails
+immediately.
+
+Patterns: fail-stop (Gray, 1985), end-to-end checksums (ZFS, RocksDB, TigerBeetle), scrubbing
+(ZFS), always-enabled assertions and deterministic recovery (TigerBeetle), fatal `fsync`
 (PostgreSQL post-2018).
 
-## Conseguenze
+<a id="conseguenze"></a>
 
-- La Serie si ferma più spesso (fail-stop) di quanto un sistema orientato alla disponibilità
-  farebbe: è voluto (ADR-0031 §1).
-- Costo in prestazioni di CRC in lettura e scrubbing: misurato (SPK-09), accettato.
-- Ogni stato di errore è un elemento della macchina a stati da verificare (FI, modello).
+## Consequences
 
-## Alternative considerate
+- The Serie stops more often (fail-stop) than an availability-oriented system
+  would: this is intentional (ADR-0031 §1).
+- Performance cost of read CRC and scrubbing: measured (SPK-09), accepted.
+- Every error state is a state-machine element to verify (FI, model).
 
-- *Ritentare `fsync` con backoff:* scartata (difetto noto).
-- *Troncare sempre alla prima anomalia:* scartata: perderebbe in silenzio dati committed in
-  caso di corruzione a metà log.
-- *Restituire il dato anche se il CRC fallisce, con avviso:* scartata (priorità 2).
+<a id="alternative-considerate"></a>
 
-## Valutazione
+## Alternatives considered
 
-- Rischi: RSK-18, RSK-19.
-- Verifica: [analisi dei guasti](../affidabilita/analisi-dei-guasti.md) (ogni guasto → test);
-  FI-01, FI-02, FI-10; fuzzing dei decoder; test di corruzione deliberata di ogni file.
+- *Retry `fsync` with backoff:* rejected (known defect).
+- *Always truncate at the first anomaly:* rejected: it would silently lose committed data in
+  cases of mid-log corruption.
+- *Return data even if CRC fails, with a warning:* rejected (priority 2).
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-18, RSK-19.
+- Verification: [fault analysis](../affidabilita/analisi-dei-guasti.md) (every fault → test);
+  FI-01, FI-02, FI-10; decoder fuzzing; deliberate corruption tests for every file.

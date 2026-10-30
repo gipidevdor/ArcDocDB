@@ -1,26 +1,32 @@
-# Registro delle deviazioni
+<a id="registro-delle-deviazioni"></a>
 
-Una deviazione è uno scostamento approvato dallo [standard di codifica](standard-di-codifica.md)
-o da un ADR. Ammesse solo con tutti i campi compilati e l'approvazione dell'autore.
+# Deviation register
 
-| Campo | Contenuto |
+A deviation is an approved departure from the [coding standard](standard-di-codifica.md)
+or an ADR. Allowed only with all fields completed and the author's approval.
+
+| Field | Contents |
 |---|---|
-| ID | `DEV-nnn`, stabile |
-| Regola | ID della regola derogata |
-| Dove | modulo e funzione |
-| Perché | giustificazione, con misura se di prestazioni |
-| Rischio | che cosa potrebbe andare storto |
-| Compensazione | controllo o verifica aggiuntiva |
-| Approvazione | data e persona |
+| ID | `DEV-nnn`, stable |
+| Rule | ID of the waived rule |
+| Where | module and function |
+| Why | justification, with measurement if performance-related |
+| Risk | what could go wrong |
+| Compensation | additional check or verification |
+| Approval | date and person |
 
-## Deviazioni approvate
+<a id="deviazioni-approvate"></a>
 
-Nessuna.
+## Approved deviations
 
-## Registro dei percorsi caldi con `(safety 2) (speed 3)`
+None.
 
-Una funzione entra qui solo con una misura (SPK) che mostri che `(safety 3)` non raggiunge i
-minimi di prestazione di [ADR-0028](../adr/0028-target-e-obiettivi-di-latenza.md); mantiene
-tutti i controlli di tipo e di limiti.
+<a id="registro-dei-percorsi-caldi-con-safety-2-speed-3"></a>
 
-Nessuna funzione registrata.
+## Hot-path register for `(safety 2) (speed 3)`
+
+A function enters this register only with a measurement (SPK) showing that `(safety 3)`
+fails to meet the minimum performance of [ADR-0028](../adr/0028-target-e-obiettivi-di-latenza.md);
+it retains all type and bounds checks.
+
+No functions registered.

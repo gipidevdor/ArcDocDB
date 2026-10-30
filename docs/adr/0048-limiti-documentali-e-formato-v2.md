@@ -1,29 +1,39 @@
-# ADR-0048 — Limiti documentali e formato v2
+<a id="adr-0048--limiti-documentali-e-formato-v2"></a>
 
-- **Stato:** Accettata per il progetto; implementazione e verifica da produrre.
-- **Data:** 2026-10-08
-- **Rapporto con la specifica:** precisa il contratto documentale; sostituisce in parte ADR-0014 (limiti), ADR-0039 (key-len), ADR-0043 (slot). Non cambia atomicità, parallelismo o reclaim.
-- **Riferimenti:** INV-F1, INV-A8, REQ-LIM-001…003.
+# ADR-0048 — Document limits and v2 format
 
-## Decisione
+- **Status:** Accepted for the design; implementation and verification remain to be produced.
+- **Date:** 2026-10-08
+- **Relationship to the specification:** clarifies the document contract; partly supersedes ADR-0014 (limits), ADR-0039 (key-len), ADR-0043 (slots). Does not change atomicity, parallelism, or reclamation.
+- **References:** INV-F1, INV-A8, REQ-LIM-001…003.
 
-1. Un documento CBOR deterministico occupa al massimo **16 MiB esatti (16.777.216 byte)**, inclusa la sua codifica CBOR, esclusi chiave e header dello storage. Questo è anche il default; una Serie può configurare un massimo inferiore. Il limite si applica ai byte non compressi.
-2. Un documento ammette **100 livelli di contenitori**: una mappa o un array radice conta come livello 1; ogni mappa o array annidato aggiunge 1. Chiavi e valori della mappa sono attraversati. Il decoder mantiene contatori e budget espliciti; non dipende dallo stack nativo. Nodi, byte, richieste e risposte hanno budget distinti. Il documento viene validato prima di essere ammesso al writer.
-3. `_id` resta una sequenza binaria confrontata byte per byte, lunga **1–65.535 byte**. Il default ammette l'intero intervallo; limiti inferiori sono configurabili per Serie. Gli identificatori generati restano di 16 byte. Non si introduce la semantica dei tipi BSON; l'estensione a 65.535 byte è una scelta ArcDocDB, non un limite copiato da MongoDB.
-4. Record e hint adottano **versione di formato 2**. La cornice resta di 24 byte: offset 10 è `u16 key-len`, senza byte riservato a 11; CRC header e body invariati. Lunghezza massima PUT: **16.842.775 byte** (24 + 65.535 + 16.777.216). Le entry hint restano di 24 byte: `u32 offset`, `u32 len`, `u64 csn`, `u32 key-off`, `u16 key-len`, `u8 tipo`, `u8 flag`.
-5. Slot primario: **5 parole u64**, più controllo (41 byte/slot): CSN; location; `key-off(32) · key-len(16) · flag(8) · riservato(8)`; seqlock; `record-len(32) · riservato(32)`. Versioni trattenute aggiungono una parola. I frammenti restano limitati in slot; la copia delle chiavi ha anche un budget di byte, tempo e memoria. Non si prealloca l'arena per tutte le chiavi massime. L'esaurimento del budget rifiuta l'operazione prima del commit, senza conferme parziali.
-6. I segmenti mantengono target 256 MiB e limite 4 GiB − 1. Nessun limite fisso alla dimensione totale della Serie, oltre a identificativi, risorse e filesystem. Il record e il suo SEAL devono rientrare nel segmento: si ruota prima dell'append se necessario.
+<a id="decisione"></a>
 
-## Versionamento e migrazione
+## Decision
 
-I decoder scelgono il layout dalla versione del file; non interpretano v1 come v2. Gli spike esistenti restano esperimenti v1 e le loro misure non verificano v2. Un convertitore offline legge v1, scrive e verifica v2 in nuovi file, pubblica il nuovo manifest con EDIT e conserva i sorgenti fino al reclaim. Mai aggiornamenti in-place. Tale convertitore è progettato, non implementato.
+1. A deterministic CBOR document occupies at most **exactly 16 MiB (16,777,216 bytes)**, including its CBOR encoding, excluding the key and storage header. This is also the default; a Serie can configure a lower maximum. The limit applies to uncompressed bytes.
+2. A document allows **100 container levels**: a root map or array counts as level 1; each nested map or array adds 1. Map keys and values are traversed. The decoder maintains explicit counters and budgets; it does not depend on the native stack. Nodes, bytes, requests, and responses have separate budgets. The document is validated before admission to the writer.
+3. `_id` remains a binary sequence compared byte by byte, **1–65,535 bytes** long. The default allows the full range; lower limits are configurable per Serie. Generated identifiers remain 16 bytes. BSON type semantics are not introduced; extending to 65,535 bytes is an ArcDocDB choice, not a limit copied from MongoDB.
+4. Records and hints adopt **format version 2**. The frame remains 24 bytes: offset 10 is `u16 key-len`, without a reserved byte at 11; header and body CRCs are unchanged. Maximum PUT length: **16,842,775 bytes** (24 + 65,535 + 16,777,216). Hint entries remain 24 bytes: `u32 offset`, `u32 len`, `u64 csn`, `u32 key-off`, `u16 key-len`, `u8 tipo`, `u8 flag`.
+5. Primary slot: **five u64 words**, plus control (41 bytes/slot): CSN; location; `key-off(32) · key-len(16) · flag(8) · riservato(8)`; seqlock; `record-len(32) · riservato(32)`. Retained versions add one word. Fragments remain bounded by slot count; key copying also has byte, time, and memory budgets. The arena is not preallocated for all maximum-size keys. Budget exhaustion rejects the operation before commit, without partial acknowledgments.
+6. Segments retain the 256 MiB target and 4 GiB − 1 limit. There is no fixed limit on total Serie size beyond identifiers, resources, and the file system. The record and its SEAL must fit in the segment: rotate before append if necessary.
 
-## Costi e verifica
+<a id="versionamento-e-migrazione"></a>
 
-+8 byte per slot rispetto ad ADR-0043; chiavi lunghe aumentano hashing, confronto, memoria e costo di split. Le stime precedenti non sono capacità garantite del nuovo layout.
+## Versioning and migration
 
-Verifiche richieste: documenti di 16 MiB accettati e 16 MiB + 1 rifiutati; profondità 100/101; chiavi 1/255/256/65.535/65.536; entrambe le versioni e versioni sconosciute; lunghezze corrotte, troncamenti, saturazione dei budget; crash durante conversione. Il gate v2 precede l'implementazione del motore.
+Decoders select the layout from the file version; they do not interpret v1 as v2. Existing spikes remain v1 experiments and their measurements do not verify v2. An offline converter reads v1, writes and verifies v2 in new files, publishes the new manifest with EDIT, and retains sources until reclamation. Never in-place updates. This converter is designed, not implemented.
 
-## Riferimento esterno
+<a id="costi-e-verifica"></a>
 
-MongoDB limita il documento BSON a 16 MiB e l'annidamento a 100 livelli. Le dimensioni complessive di collection/database dipendono da risorse e filesystem. Questi sono riferimenti di prodotto, non equivalenza di formati o prestazioni: [limiti ufficiali](https://www.mongodb.com/docs/manual/reference/limits/) (consultati il 2026-10-08).
+## Costs and verification
+
++8 bytes per slot compared with ADR-0043; long keys increase hashing, comparison, memory, and split costs. Earlier estimates are not guaranteed capacities of the new layout.
+
+Required checks: 16 MiB documents accepted and 16 MiB + 1 rejected; depths 100/101; keys 1/255/256/65,535/65,536; both versions and unknown versions; corrupt lengths, truncations, budget saturation; crashes during conversion. The v2 gate precedes engine implementation.
+
+<a id="riferimento-esterno"></a>
+
+## External reference
+
+MongoDB limits BSON documents to 16 MiB and nesting to 100 levels. Total collection/database sizes depend on resources and the file system. These are product references, not equivalence of formats or performance: [official limits](https://www.mongodb.com/docs/manual/reference/limits/) (accessed 2026-10-08).

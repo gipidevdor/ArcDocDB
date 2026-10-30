@@ -1,107 +1,117 @@
-# Metodo del ricircolo dei writer pronti
+<a id="metodo-del-ricircolo-dei-writer-pronti"></a>
 
-Registrato il 2026-10-09 prima delle campagne, base `673987a`.
-Il componente C1 integra la [lista pronta](writer-ready.md) con il
-trasferimento di obblighi del [writer](writer-handoff.md), senza creare
-thread o implementare un pool. REQ-CON-001/002/004/005 e REQ-AFF-008;
-INV-P1/P2/P5/P6, INV-A8 e INV-V4; ADR-0005 e ADR-0045 §§6/8.
+# Ready-writer recycling method
 
-## Contratto
+Registered on 2026-10-09 before campaigns, base `673987a`.
+C1 component integrates [ready list](writer-ready.md) with
+[writer](writer-handoff.md) obligation transfer without creating
+threads or pool. REQ-CON-001/002/004/005, REQ-AFF-008;
+INV-P1/P2/P5/P6, INV-A8, INV-V4; ADR-0005 and ADR-0045 §§6/8.
 
-`ricircola-writer-pronto(ready, shard, writer)` riceve un obbligo unico
-`:schedule` che appartiene al chiamante. Richiede che il chiamante possa
-prendere in carico un altro writer. Non legge lo stato dei writer e non
-rileva deduplicazione o eleggibilità: valgono le precondizioni già adottate.
-Una sola acquisizione CAS della guard locale, nessuna attesa o retry.
+<a id="contratto"></a>
 
-- Se il ring ha spazio, pubblica il riferimento in FIFO e restituisce
-  NIL, `:published`, nuovo count: l'obbligo passa al ring.
-- Se il ring è pieno, trasferisce al chiamante il riferimento in testa e
-  inserisce il nuovo in coda nella medesima sezione: restituisce il writer
-  estratto, `:writer`, capacity. Head e tail avanzano di uno modulo capacity;
-  count resta invariato. In full head=tail, quindi basta sostituire uno slot.
-- Busy è `resource-exhausted :ready-queue-busy` prima della mutazione;
-  l'obbligo originario resta al chiamante. Indice/riferimento errati sono
-  `invalid-argument`; guasti di forma/proprietà/payload sono invarianti
-  fail-stop, senza rollback promesso dopo un guasto interno.
+## Contract
 
-Full `[C,B,...,Z]` diventa `[B,...,Z,A]`: A passa al ring e C al chiamante
-insieme. Capacity 1 è `[C]`→`[A]`. Un ritorno `:writer` non autorizza a
-pubblicare di nuovo A. Il chiamante conserva C durante busy di avvio.
-La guard rende lo scambio atomico rispetto a producer e consumer sul ring.
-Un pop e una pubblicazione separati non realizzano questo contratto.
+`ricircola-writer-pronto(ready, shard, writer)` receives caller-owned unique
+`:schedule` obligation. Requires caller able to take
+another writer. Reads no writer state, detects neither duplicates
+nor eligibility: existing preconditions apply.
+One local-guard CAS acquisition, no wait or retry.
 
-## Problema e confini
+- If ring has room, publishes reference FIFO and returns
+  NIL, `:published`, new count: obligation passes to ring.
+- If full, transfers head reference to caller and
+  inserts new reference at tail in same section: returns extracted
+  writer, `:writer`, capacity. Head/tail advance one modulo capacity;
+  count unchanged. In full head=tail, so replacing one slot suffices.
+- Busy is `resource-exhausted :ready-queue-busy` before mutation;
+  original obligation stays caller's. Wrong index/reference
+  `invalid-argument`; shape/ownership/payload faults are fail-stop
+  invariants without promised rollback after internal fault.
 
-Con la sola pubblicazione, tutti i consumer possono terminare un tratto
-con backlog mentre i ring sono già pieni e restare impegnati a ritentare:
-nessuno consuma i riferimenti già pronti. Il modello conserva il
-controesempio. Il ricircolo consegna invece una nuova testa direttamente
-al consumer, senza una seconda coda o una capacità variabile.
+Full `[C,B,...,Z]` becomes `[B,...,Z,A]`: A passes to ring, C to caller
+together. Capacity 1: `[C]`→`[A]`. `:writer` return does not authorize
+publishing A again. Caller keeps C during start busy.
+Guard makes exchange atomic relative to ring producers/consumers.
+Separate pop/publication does not implement contract.
 
-Questo risolve il blocco dovuto alla sola capienza dei ring nel protocollo
-modellato. Non qualifica la liveness generale del pool: guard perpetuamente
-contese, obblighi abbandonati o duplicati, fault di Serie e admission richiedono
-un controller. Una catena full resta sullo stesso shard; non dimostra equità
-fra partizioni o assenza di starvation per nuovi producer. Il caller deve
-governare le quote e gli altri compiti. Empty resta un'osservazione locale,
-mai una prova per parcheggio, arresto o ritiro del worker. Nessun cleanup
-sul writer dopo end: una nuova ondata può essere già pubblicata.
+<a id="problema-e-confini"></a>
 
-Costo O(1), un'acquisizione e un rilascio CAS, nessuno stato globale nuovo
-né scrittura comune per messaggio. Factory, ready e handoff restano invariati.
+## Problem and boundaries
 
-## Prove preregistrate
+With publication alone, every consumer may finish slice
+with backlog while rings already full and keep retrying:
+nobody consumes ready references. Model preserves
+counterexample. Recycling instead directly hands new head
+to consumer without second queue or variable capacity.
 
-- Oracolo FIFO indipendente con seme, 8 configurazioni (capacity 1/2/3/9 e
-  1/4 shard), writer distinti, obblighi legali, wrap e riuso dopo completamento.
-- Modello/fixture con ring riempiti durante tratti in corso: controesempio
-  alla sola pubblicazione e avanzamento bounded con ricircolo; proprietà
-  unica dell'obbligo, lease singola e elaborazione unica dei payload.
-- Full/room, input invalidi, rifiuto busy senza effetti, FI private su forma,
-  tipo del riferimento e proprietà; due consumer riusati, producer vivo,
-  avanzamento di altra partizione mentre una guard resta occupata.
-- Due letture C1, inventario completo delle decisioni e copertura raw dei
-  file execution. Nessuna forma sottratta o esclusione approvata; sb-cover
-  non prova MC/DC. Compilazione senza warning/style-warning e make check.
-- Undici mutanti del nuovo sorgente: fifo-next-slot, head-wrap-two,
+Resolves ring-capacity-only blocking in modeled
+protocol. Does not qualify general pool liveness: perpetually contended
+guards, abandoned/duplicate obligations, Serie faults, admission require
+controller. Full chain stays same shard; proves neither partition
+fairness nor no starvation for new producers. Caller must
+control quotas/other tasks. Empty remains local observation,
+never parking, shutdown, worker-retirement proof. No writer cleanup
+after end: new wave may already be published.
+
+Cost O(1), one acquire/release CAS, no new global state
+or shared per-message write. Factory, ready, handoff unchanged.
+
+<a id="prove-preregistrate"></a>
+
+## Preregistered tests
+
+- Independent seeded FIFO oracle, 8 configurations (capacity 1/2/3/9,
+  1/4 shards), distinct writers, legal obligations, wrap/reuse after completion.
+- Model/fixture with rings filled during active slices: counterexample
+  to publication alone and bounded progress with recycling; unique
+  obligation ownership, single lease, exactly-once payload processing.
+- Full/room, invalid inputs, busy rejection without effects, private FI on shape,
+  reference type/ownership; two reused consumers, live producer,
+  progress on another partition while one guard occupied.
+- Two C1 readings, full decision inventory, execution-file raw coverage.
+  No subtracted forms/approved exclusions; sb-cover
+  does not prove MC/DC. Compilation without warnings/style-warnings, make check.
+- Eleven mutants of new source: fifo-next-slot, head-wrap-two,
   tail-wrap-two, full-count-decrement, full-keeps-old-slot, full-boundary,
   full-returns-new-writer, room-returns-writer, full-status-published,
-  release-skipped, full-no-rotation. Baseline completa obbligatoria;
-  compilation failure, before-tests e worker-error (segnali OS o guasti dopo
-  completion autentica) non contano come rilevamento.
-- Misura composta handoff/ready/ricircolo: shard 1/4 × capacity 1/3,
-  cinque campioni da 4096 cicli, warmup 128 e GC fuori dal contatore.
-  C+1 writer distinti per shard, ruolo iniziale ruotato a ogni ciclo;
-  pubblicazione room, scambio full e drain di C riferimenti restanti.
-  Identità, count, status, payload e generation controllati; sink esatto
-  ricalcolato indipendentemente, controllo heap positivo, sink errato
-  rifiutato, clock zero distinto e report parziali preservati.
-  I campioni non provano zero allocazioni universale, speedup, throughput
-  del pool o P99. Startup e condizioni d'errore sono fuori dalla finestra.
+  release-skipped, full-no-rotation. Full baseline mandatory;
+  compilation failure, before-tests, worker-error (OS signals or failures after
+  authentic completion) do not count as detection.
+- Composite handoff/ready/recycling measurement: shards 1/4 × capacity 1/3,
+  five samples of 4096 cycles, warmup 128, GC outside counter.
+  C+1 distinct writers per shard, initial role rotated each cycle;
+  room publication, full exchange, drain C remaining references.
+  Identity, count, status, payload, generation checked; exact sink
+  independently recalculated, positive heap control, wrong sink
+  rejected, zero clock distinct, partial reports preserved.
+  Samples prove neither universal zero allocation, speedup, pool
+  throughput, nor P99. Startup/error conditions outside window.
 
-Ogni tentativo di verifica usa record-command, con argv, ambiente, sorgenti
-stabili e output integrali. I C4 sono compilati interamente e i FASL eseguono
-self-test in processi/cache separati. Campagne su copia congelata; dati grandi
-compressi senza perdita, validati dal lettore delle evidenze.
+Every verification attempt uses record-command with argv, environment, stable
+sources, full outputs. C4 tools fully compiled, FASLs run
+self-tests in separate processes/caches. Campaigns on frozen copy; large data
+losslessly compressed, validated by evidence reader.
 
-## Oracoli e modifiche esatte preregistrati
+<a id="oracoli-e-modifiche-esatte-preregistrati"></a>
 
-Le undici sostituzioni uniche sono fissate in
+## Preregistered oracles and exact changes
+
+Eleven unique replacements fixed in
 [`tools/writer-recycle-mutation.lisp`](../../tools/writer-recycle-mutation.lisp)
-prima dell'esecuzione. FIFO legge lo slot successivo; head e tail avanzano di
-due separatamente; count full decrementa; lo slot conserva OLD usando
-`(if (eq writer old) writer old)` per evitare warning estranei; la soglia
-full usa `>`; il riferimento restituito diventa WRITER; room restituisce
-WRITER invece di NIL; status full diventa `:published`, anche nella ftype;
-il cleanup diventa NIL; NEXT diventa HEAD conservando la forma full ma
-violando la rotazione FIFO. Ciascun mutante cambia solo il nuovo sorgente.
+before execution. FIFO reads next slot; head/tail separately advance
+by two; full count decrements; slot retains OLD using
+`(if (eq writer old) writer old)` to avoid unrelated warnings; full
+threshold uses `>`; returned reference becomes WRITER; room returns
+WRITER instead of NIL; full status becomes `:published`, also in ftype;
+cleanup becomes NIL; NEXT becomes HEAD retaining full shape but
+violating FIFO rotation. Each mutant changes new source only.
 
-Derivazione indipendente del benchmark: M=K(C+1), enqueue contribuisce 12M,
-consume 45M+5Σid e il trasferimento delle identità 17M+5Σid, con id da 1 a M.
-Room aggiunge K(31C+3C(C+1)/2), full K(13+3C); i cursori del drain aggiungono
-7CK(K−1)/2 e empty 29. Il token fisso è quindi
+Independent benchmark derivation: M=K(C+1), enqueue contributes 12M,
+consume 45M+5Σid, identity transfer 17M+5Σid, IDs 1 through M.
+Room adds K(31C+3C(C+1)/2), full K(13+3C); drain cursors add
+7CK(K−1)/2, empty 29. Fixed token thus
 `74M+5M(M+1)+K(31C+3C(C+1)/2+13+3C)+7CK(K−1)/2+29`.
-Per (K,C)=(1,1)/(1,3)/(4,1)/(4,3): 257/558/1223/3231.
-Il sink dei 4096 cicli include Σi: 9439232/10672128/13395968/21620736.
-Le chiamate per ciclo sono `K(6C+5)+1`: 12/24/45/93.
+For (K,C)=(1,1)/(1,3)/(4,1)/(4,3): 257/558/1223/3231.
+4096-cycle sink includes Σi: 9439232/10672128/13395968/21620736.
+Calls per cycle `K(6C+5)+1`: 12/24/45/93.

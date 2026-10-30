@@ -1,100 +1,122 @@
-# ADR-0015 — Primary index: tabella Swiss single-writer/multi-reader, seqlock per slot, versioni trattenute
+<a id="adr-0015--primary-index-tabella-swiss-single-writermulti-reader-seqlock-per-slot-versioni-trattenute"></a>
 
-- **Stato:** Accettata (precisa l'interpretazione di INV-I1 per il primary index); **sostituita in parte da [ADR-0032](0032-seqlock-a-64-bit.md)**: seqlock a 64 bit con tentativi limitati e layout dello slot a 6 parole (56 B per entry). Dove questo ADR dice 8 bit e 48 byte, vale ADR-0032. **Sostituita in parte anche da [ADR-0043](0043-primary-index-a-frammenti.md)** (directory di frammenti al posto della tabella unica e della key arena; slot a 4 parole), da [ADR-0039](0039-cornice-unica-dei-record.md) (hint) e da [ADR-0042](0042-tombstone-e-indice-dei-vivi.md) (ricostruzione per CSN massimo, non per lineage).
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** chiude QA-24 e QA-03; precisa «Index snapshot» per il
+# ADR-0015 — Primary index: single-writer/multi-reader Swiss Table, per-slot seqlock, retained versions
+
+- **Status:** Accepted (clarifies the interpretation of INV-I1 for the primary index); **partially superseded by [ADR-0032](0032-seqlock-a-64-bit.md)**: 64-bit seqlock with bounded attempts and a 6-word slot layout (56 B per entry). Where this ADR says 8 bits and 48 bytes, ADR-0032 applies. **Also partially superseded by [ADR-0043](0043-primary-index-a-frammenti.md)** (fragment directory in place of the single table and key arena; 4-word slots), by [ADR-0039](0039-cornice-unica-dei-record.md) (hints), and by [ADR-0042](0042-tombstone-e-indice-dei-vivi.md) (reconstruction by maximum CSN, not lineage).
+- **Date:** 2026-10-03
+- **Relationship to the specification:** closes QA-24 and QA-03; clarifies "Index snapshot" for the
   primary index
-- **Riferimenti:** [architettura](../architettura.md#primary-index),
-  [formati su disco](../formati-su-disco.md#file-hint), INV-I1, INV-V3
+- **References:** [architecture](../architettura.md#primary-index),
+  [on-disk formats](../formati-su-disco.md#file-hint), INV-I1, INV-V3
 
-## Contesto
+<a id="contesto"></a>
 
-Il primary index riceve una modifica per ogni scrittura, serve lookup O(1) a milioni di
-operazioni al secondo da molti reader, deve far trovare agli snapshot le versioni non più
-correnti, e viene rilocato in blocco dalla compaction mentre il writer lavora (tensioni T1 e
-T3 dell'[analisi critica](../valutazione/analisi-critica.md)).
+## Context
 
-## Decisione
+The primary index receives a change for every write, serves O(1) lookups at millions of
+operations per second from many readers, must let snapshots find versions that are no longer
+current, and is relocated in bulk by compaction while the writer is working (tensions T1 and
+T3 in the [critical analysis](../valutazione/analisi-critica.md)).
 
-### Struttura
+<a id="decisione"></a>
 
-Tabella hash a **indirizzamento aperto con metadati di controllo separati** (layout Swiss
-Table: un byte di controllo per slot con 7 bit di hash secondario, sondaggio per gruppi di 16
-slot), con gli slot in **array specializzati paralleli** `(unsigned-byte 64)`: hash a 64 bit;
-riferimento alla chiave nella key arena; location (segment-id, offset); lunghezza e versione;
-CSN e contatore seqlock. Nessun oggetto Lisp per entry. ~48 byte per entry a fattore di
-carico 7/8.
+## Decision
 
-**Key arena:** array di byte append-only per Serie che contiene le chiavi; l'indice vi punta.
-La verifica della chiave avviene in memoria.
+<a id="struttura"></a>
 
-### Concorrenza
+### Structure
 
-- **Un writer** (il writer logico della Serie) muta la tabella.
-- **Reader senza lock**: ogni slot ha un contatore **seqlock** a 8 bit; il writer lo
-  incrementa a dispari prima di modificare lo slot e a pari dopo (con barriere di memoria); il
-  reader legge il contatore, i campi, di nuovo il contatore, e riprova se dispari o cambiato.
-  La lettura di uno slot è attesa-libera per il writer e priva di contesa tra reader. Otto bit
-  bastano: un falso «uguale» richiederebbe 256 scritture sullo stesso slot durante una lettura
-  di ~100 ns, mentre il writer non supera qualche milione di operazioni al secondo in totale.
-- **Ridimensionamento**: il writer costruisce una nuova tabella e la pubblica con uno scambio
-  atomico del riferimento; la vecchia è ritirata con epoch-based reclamation
-  ([ADR-0016](0016-epoch-based-reclamation.md)). È l'«atomic swap» della specifica, applicato
-  al livello della tabella.
+Hash table with **open addressing and separate control metadata** (Swiss
+Table layout: one control byte per slot with 7 bits of secondary hash, probing in groups of 16
+slots), with slots in **parallel specialized arrays** of `(unsigned-byte 64)`: 64-bit hash;
+key reference in the key arena; location (segment-id, offset); length and version;
+CSN and seqlock counter. No Lisp object per entry. ~48 bytes per entry at a
+7/8 load factor.
 
-INV-I1 per il primary index va letto così: *un reader non osserva mai uno stato intermedio di
-una entry né di una tabella*; il meccanismo è il seqlock per slot più lo scambio della
-tabella.
+**Key arena:** append-only byte array per Serie containing keys; the index points into it.
+Key verification takes place in memory.
 
-### Versioni trattenute (MVCC)
+<a id="concorrenza"></a>
 
-La entry contiene solo la versione **corrente**. Quando il writer sovrascrive un documento e
-esiste almeno uno snapshot con CSN inferiore al CSN della nuova versione, registra la versione
-precedente nella **tabella delle versioni trattenute** della Serie (hash map compatta
-`chiave → elenco di (csn-da, csn-a, location, versione)`). Un reader con snapshot `s` usa la
-entry corrente se `csn(corrente) ≤ s`, altrimenti cerca nelle versioni trattenute. Le voci si
-eliminano quando nessuno snapshot attivo ha CSN inferiore a `csn-a`. Senza snapshot attivi il
-costo è zero.
+### Concurrency
 
-### Rilocazione da compaction
+- **One writer** (the Serie's logical writer) mutates the table.
+- **Readers without locks**: each slot has an 8-bit **seqlock** counter; the writer
+  increments it to odd before changing the slot and to even afterward (with memory barriers); the
+  reader reads the counter, the fields, and the counter again, retrying if it is odd or changed.
+  Reading a slot is wait-free for the writer and has no contention between readers. Eight bits
+  suffice: a false "equal" would require 256 writes to the same slot during a
+  ~100 ns read, while the writer does not exceed a few million operations per second in total.
+- **Resizing**: the writer builds a new table and publishes it with an atomic
+  reference swap; the old table is retired using epoch-based reclamation
+  ([ADR-0016](0016-epoch-based-reclamation.md)). This is the specification's "atomic swap," applied
+  at the table level.
 
-La compaction non sostituisce la tabella: emette al writer un lotto di **rilocazioni
-condizionali** `(chiave, location-vecchia → location-nuova)`; il writer applica ciascuna solo
-se la entry (o la versione trattenuta) punta ancora alla location vecchia (INV-V3). Poiché la
-copia è identica all'originale e l'originale resta leggibile finché `OBSOLETE`, un reader è
-corretto con entrambe le location durante la finestra.
+INV-I1 for the primary index is to be read as follows: *a reader never observes an intermediate state of
+an entry or a table*; the mechanism is a per-slot seqlock plus table
+swapping.
 
-### Persistenza
+<a id="versioni-trattenute-mvcc"></a>
 
-L'indice è un dato derivato. Ogni segmento chiuso ha un **file hint** (`<id>.hint`) con
-chiave, versione, CSN, offset, lunghezza e tipo di ogni record, scritto alla chiusura o alla
-produzione da compaction. Al riavvio l'indice si ricostruisce leggendo gli hint dei segmenti
-`CLOSED` in ordine di lineage e scansionando il segmento `ACTIVE`; i segmenti privi di hint si
-scansionano per intero.
+### Retained versions (MVCC)
 
-Pattern: Swiss Table (Abseil); seqlock (kernel Linux); RCU/EBR per la sostituzione delle
-strutture; hint file (Bitcask).
+The entry contains only the **current** version. When the writer overwrites a document and
+at least one snapshot exists with a CSN lower than the new version's CSN, it records the
+previous version in the Serie's **retained-version table** (compact hash map
+`chiave → elenco di (csn-da, csn-a, location, versione)`). A reader with snapshot `s` uses the
+current entry if `csn(current) ≤ s`; otherwise it searches the retained versions. Entries are
+removed when no active snapshot has a CSN lower than `csn-a`. Without active snapshots, the
+cost is zero.
 
-## Conseguenze
+<a id="rilocazione-da-compaction"></a>
 
-- Lookup senza lock e senza allocazione; costo di scrittura una manciata di store per slot.
-- Memoria ~48 B/entry + chiavi: 1 miliardo di documenti ≈ 48 GB + arena. Limite di capacità
-  per server da documentare; oltre, si scala con più server (fuori scope v1).
-- Il riavvio è proporzionale al numero di documenti (lettura degli hint), non ai dati.
-- Il writer logico è l'unico punto che tocca indice, versioni trattenute e rilocazioni: nessun
-  protocollo tra più scrittori.
+### Compaction relocation
 
-## Alternative considerate
+Compaction does not replace the table: it sends the writer a batch of **conditional
+relocations** `(chiave, location-vecchia → location-nuova)`; the writer applies each one only
+if the entry (or retained version) still points to the old location (INV-V3). Since the
+copy is identical to the original and the original remains readable while `OBSOLETE`, a reader is
+correct with either location during the window.
 
-- *Struttura persistente con condivisione strutturale:* snapshot O(1) ma oggetti con puntatori,
-  lookup più lento, GC; contraria al requisito di compattezza.
-- *Catena di versioni su disco:* I/O per le versioni vecchie e puntatori invalidati dalla
-  rilocazione.
-- *Lock in lettura/scrittura sulla tabella:* contesa tra reader e writer.
+<a id="persistenza"></a>
 
-## Valutazione
+### Persistence
 
-- Rischi: RSK-02 chiuso sul progetto; residuo prestazionale verificato da SPK-01 (lookup/s,
-  byte/entry, correttezza concorrente sotto stress); modello della rilocazione in SPK-07.
-- Porterebbe a rivedere: throughput di lookup inferiore di un ordine di grandezza al target
-  o errori di coerenza nel test concorrente.
+The index is derived data. Each closed segment has a **hint file** (`<id>.hint`) with
+the key, version, CSN, offset, length, and type of each record, written at close or when
+produced by compaction. On restart, the index is rebuilt by reading the hints for
+`CLOSED` segments in lineage order and scanning the `ACTIVE` segment; segments without hints are
+scanned in full.
+
+Patterns: Swiss Table (Abseil); seqlock (Linux kernel); RCU/EBR for replacing
+structures; hint files (Bitcask).
+
+<a id="conseguenze"></a>
+
+## Consequences
+
+- Lookups without locks or allocation; write cost is a handful of stores per slot.
+- Memory ~48 B/entry + keys: 1 billion documents ≈ 48 GB + arena. Server capacity
+  limit to be documented; beyond that, scale with multiple servers (outside v1 scope).
+- Restart is proportional to document count (reading hints), not data volume.
+- The logical writer is the only place that touches the index, retained versions, and relocations: no
+  protocol between multiple writers.
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Persistent structure with structural sharing:* O(1) snapshots but objects with pointers,
+  slower lookup, GC; contrary to the compactness requirement.
+- *On-disk version chain:* I/O for old versions and pointers invalidated by
+  relocation.
+- *Read/write lock on the table:* contention between readers and writer.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-02 closed at the design level; residual performance risk verified by SPK-01 (lookups/s,
+  bytes/entry, concurrent correctness under stress); relocation model in SPK-07.
+- Would prompt reconsideration: lookup throughput an order of magnitude below the target
+  or consistency errors in the concurrent test.

@@ -1,143 +1,155 @@
-# Lettura del control log e transizione di recovery
+<a id="lettura-del-control-log-e-transizione-di-recovery"></a>
 
-Il percorso collega il [manifest](manifest-control-log.md) alla
-[pubblicazione del checkpoint](pubblicazione-control.md), secondo
+# Reading the control log and recovery transition
+
+Path connects [manifest](manifest-control-log.md) to
+[checkpoint publication](pubblicazione-control.md), under
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio).
-Il vecchio file viene letto dalla stessa capacità readonly poi consegnata
-alla rinomina. Il nuovo checkpoint conserva lo stato precedente e chiude
-il vecchio ACTIVE prima di aprirne uno nuovo.
+Old file read through same read-only capability later handed
+to rename. New checkpoint preserves previous state and closes
+old ACTIVE before opening a new one.
 
 ## API
 
-| API | Contratto |
+| API | Contract |
 |---|---|
-| `leggi-control-recuperato(view, input, size, scratch, …)` | lettura fino all'EOF attestato, header verificato e replay del prefisso; risultato posseduto senza buffer |
-| `frontiere-control-recuperato(result)` | EOF attestato, fine assoluta del prefisso, `:complete`/`:tail`, versione 1/2 |
-| `manifest-control-recuperato(result)` | manifest immutabile consultabile con le query scalari esistenti |
-| `verifica-transizione-recovery(previous, current)` | verifica pura della chiusura conservativa di ACTIVE; nessun I/O |
-| `pubblica-control-validato(prepared, recovered)` | verifica vista canonica e transizione, poi delega al publisher con il vecchio file esatto |
+| `leggi-control-recuperato(view, input, size, scratch, …)` | read through attested EOF, verified header and prefix replay; owned result without buffer |
+| `frontiere-control-recuperato(result)` | attested EOF, absolute prefix end, `:complete`/`:tail`, version 1/2 |
+| `manifest-control-recuperato(result)` | immutable manifest queryable through existing scalar queries |
+| `verifica-transizione-recovery(previous, current)` | pure verification of conservative ACTIVE closing; no I/O |
+| `pubblica-control-validato(prepared, recovered)` | verifies canonical view and transition, then delegates to publisher with exact old file |
 
-`control-recuperato` ha un costruttore privato e nessun copier. Conserva
-vista canonica, capacità readonly, manifest posseduto e quattro scalari.
-Non conserva scratch, byte del log o un secondo FD. Il manifest non contiene
-alias ai byte letti; lo scratch può essere riutilizzato dopo il ritorno.
+`control-recuperato` has private constructor and no copier. Retains
+canonical view, read-only capability, owned manifest, and four scalars.
+Does not retain scratch, log bytes, or second FD. Manifest has no
+aliases to read bytes; scratch reusable after return.
 
-## Autorità e stabilità
+<a id="autorità-e-stabilità"></a>
 
-Il controller mantiene il recovery **esclusivo della Serie**, nel pool I/O.
-Dal catalogo provengono la vista canonica e l'autorità del vecchio
-`control.log`. Il chiamante attesta `size` come EOF fisico stabile: questa
-API non misura la dimensione del file. Un limite scelto dal chiamante o la
-lunghezza di un buffer non possono sostituire quell'attestazione.
+## Authority and stability
 
-File, FD e namespace rimangono congelati dalla lettura fino alla conclusione
-della pubblicazione. Readonly descrive la capacità; non impedisce una scrittura
-esterna sullo stesso inode. Il risultato non è un certificato contro modifiche
-esterne, né un permesso autonomo a sostituire il catalogo o avviare il traffico.
-La rinomina esistente controlla ancora entrambe le foglie contro le capacità.
+Controller maintains recovery **exclusive to Serie**, in I/O pool.
+Catalog supplies canonical view and old `control.log`
+authority. Caller attests `size` as stable physical EOF: this
+API does not measure file size. Caller-chosen limit or
+buffer length cannot replace attestation.
 
-La pubblicazione richiede **la stessa vista per identità di oggetto**, oltre
-all'identità di Serie verificata nell'header. Una vista diversa con UUID uguale
-è rifiutata: indice e ambito dell'Archivio non vengono ricollegati implicitamente.
+File, FD, and namespace remain frozen from reading until publication
+completion. Read-only describes capability; does not prevent external writing
+to same inode. Result is neither certificate against external
+changes nor independent permission to replace catalog or start traffic.
+Existing rename still checks both leaves against capabilities.
 
-## Lettura e budget
+Publication requires **same view by object identity**, in addition
+to Serie identity checked in header. Different view with same UUID
+rejected: index and Archivio scope not implicitly rebound.
 
-1. Verificare input aperto, scratch distinto dall'identità della vista,
-   dimensione e budget, prima di leggere o modificare lo scratch.
-2. Leggere esattamente `size` byte dallo stesso FD in trasferimenti limitati.
-3. Verificare magic, CRC, riservati, identità della Serie e versione dell'header.
-4. Passare **tutto il file fino a EOF** allo scanner e al replay esistenti.
-   Una coda è ammessa soltanto dopo la ricerca completa dei testimoni durevoli.
-5. Verificare frontiere e capacità ancora aperta, poi consegnare il risultato.
+<a id="lettura-e-budget"></a>
 
-Lo scratch contiene tutto il file e deve avere almeno `size` byte. Il default
-è un budget di apertura di **64 MiB**, modificabile con `:max-bytes`; non è
-un nuovo limite persistente del database. `:chunk-bytes` vale 64 KiB; il
-massimo trasferimento dell'input deve permettere `min(size, chunk-bytes)`.
-Il numero di iterazioni è `ceiling(size/chunk-bytes)`; gli short read hanno
-il limite finito già definito nel modulo I/O.
+## Reading and budgets
 
-`:max-batches`, `:max-batch-records`, `:max-edits`, `:max-segmenti` e
-`:max-esiti` valgono inizialmente 65.536. Segmenti/esiti limitano sia le
-occorrenze cumulative sia quelle per EDIT, comprese eventuali ripetizioni.
-Il budget byte limita anche il lotto e la ricerca di testimoni. Restano
-invariati i limiti del codec dei payload. Un budget esaurito è un errore;
-non viene convertito in una coda utilizzabile.
+1. Verify open input, scratch distinct from view identity,
+   size and budgets before reading or modifying scratch.
+2. Read exactly `size` bytes from same FD in bounded transfers.
+3. Verify magic, CRC, reserved fields, Serie identity, and header version.
+4. Pass **entire file through EOF** to existing scanner and replay.
+   Tail allowed only after full durable-witness search.
+5. Verify frontiers and still-open capability, then deliver result.
 
-Header mancante/invalido, EOF incompleto, corruzione durevole, EDIT non
-applicabile o budget esaurito non producono un risultato parziale. Le
-condizioni originali propagano al controller per quarantena/fail-stop.
-La lettura non apre, chiude, scrive, sincronizza o tronca il file.
+Scratch contains full file and must hold at least `size` bytes. Default
+is opening budget **64 MiB**, configurable with `:max-bytes`; not
+a new persistent database limit. `:chunk-bytes` is 64 KiB; input's
+maximum transfer must allow `min(size, chunk-bytes)`.
+Iteration count is `ceiling(size/chunk-bytes)`; short reads have
+finite bound already defined by I/O module.
 
-## Transizione conservativa
+`:max-batches`, `:max-batch-records`, `:max-edits`, `:max-segmenti`, and
+`:max-esiti` initially 65,536. Segments/outcomes bound both cumulative
+and per-EDIT occurrences, including repetitions.
+Byte budget also bounds batch and witness search. Payload-codec
+limits unchanged. Exhausted budget is an error;
+not converted into usable tail.
 
-Il confronto è dedicato alla chiusura dopo un crash, prima di CLEAN, MERGE
-o reclaim. Richiede:
+Missing/invalid header, incomplete EOF, durable corruption, inapplicable
+EDIT, or exhausted budget produces no partial result. Original
+conditions propagate to controller for quarantine/fail-stop.
+Reading does not open, close, write, synchronize, or truncate file.
 
-- nuovo ACTIVE con ID almeno pari al vecchio high-water; spazio ID esaurito
-  produce `resource-exhausted`;
-- vecchio ACTIVE presente come CLOSED nel nuovo manifest;
-- tutti i precedenti CLOSED con identici ID, lunghezza valida ed esiti;
-- tutti i precedenti REMOVED conservati, anche se i relativi file sono già assenti;
-- esattamente un CLOSED aggiunto e nessun REMOVED aggiunto o omesso.
+<a id="transizione-conservativa"></a>
 
-La presenza di un esito è verificata separatamente dal CSN: zero non significa
-assenza. I confronti usano gli interi u64 completi. Cardinalità e inclusione
-insieme escludono l'aggiunta o sostituzione silenziosa di altri segmenti.
-I rimossi possono essere omessi da una successiva compattazione autorevole
-del control log; questo ingresso conserva deliberatamente tutti quelli letti.
-Il confronto non è un guard generico per la rotazione online o la compaction.
+## Conservative transition
 
-**Restano precondizioni** la validazione dell'inventario, la scansione del
-vecchio ACTIVE e la correttezza della lunghezza/esiti usati per chiuderlo.
-Il confronto dei due manifest non può provare i byte di un segmento che non
-ha letto. Non risolve transazioni multiserie o autorizza eliminazioni.
+Comparison dedicated to closing after crash, before CLEAN, MERGE,
+or reclamation. Requires:
 
-Il [lettore del vecchio ACTIVE](active-recuperato.md) collega ora quella
-precondizione allo scanner readonly e alla tabella delle decisioni. Il suo
-ingresso di pubblicazione richiede P ed esiti derivati esattamente uguali
-nella chiusura, prima di delegare alla transizione conservativa qui descritta.
+- new ACTIVE ID at least old high-water; exhausted ID space
+  produces `resource-exhausted`;
+- old ACTIVE present as CLOSED in new manifest;
+- all previous CLOSED entries with identical IDs, valid lengths, and outcomes;
+- all previous REMOVED entries preserved, even if files already absent;
+- exactly one added CLOSED and no added or omitted REMOVED.
 
-## Pubblicazione ed errori
+Outcome presence checked separately from CSN: zero does not mean
+absence. Comparisons use full u64 integers. Cardinality and inclusion
+together exclude silent addition or replacement of other segments.
+Removed entries may be omitted by later authoritative control-log
+compaction; this entry deliberately retains all read entries.
+Comparison is not generic guard for online rotation or compaction.
 
-`pubblica-control-validato` rifiuta vista diversa, capacità chiusa e transizione
-invalida prima di reclamare il gettone o effettuare I/O. Delega quindi a
-`pubblica-control-recuperato`: stesso CAS, stesso punto di atomicità nella
-rinomina, stesso fsync della directory prima della conferma, stessi errori
-terminali dopo la presa. Nessuna seconda macchina a stati o logica di retry.
+**Preconditions remain:** inventory validation, old ACTIVE scan,
+and correct length/outcomes used to close it.
+Comparing two manifests cannot prove bytes of an unread segment.
+Does not resolve multiseries transactions or authorize deletion.
 
-L'ingresso esistente resta disponibile per i chiamanti che attestano
-direttamente l'autorità e la validazione del vecchio log. La creazione iniziale
-della Serie, l'adozione degli indici e il gate del Recovery Manager restano
-da integrare.
+The [old ACTIVE reader](active-recuperato.md) now connects that
+precondition to read-only scanner and decision table. Its publication
+entry requires exactly equal P and derived outcomes
+in closing before delegating to conservative transition described here.
 
-## Decisioni e costi
+<a id="pubblicazione-ed-errori"></a>
 
-| ID | Decisione | Casi da qualificare |
+## Publication and errors
+
+`pubblica-control-validato` rejects different view, closed capability, and invalid
+transition before claiming token or performing I/O. Then delegates to
+`pubblica-control-recuperato`: same CAS, same rename atomicity
+point, same directory fsync before acknowledgment, same terminal
+errors after claim. No second state machine or retry logic.
+
+Existing entry remains available to callers directly attesting
+old-log authority and validation. Initial Serie creation,
+index adoption, and Recovery Manager gate remain
+to integrate.
+
+<a id="decisioni-e-costi"></a>
+
+## Decisions and costs
+
+| ID | Decision | Cases to qualify |
 |---|---|---|
-| CRV-D01 | chunk positivo, EOF e budget almeno un header | ciascuna falsa, tutte vere, EOF esatto |
-| CRV-D02 | prefisso entro range e COMPLETE equivalente a EOF | frontiere errate, COMPLETE/TAIL coerenti e incoerenti |
-| CRV-D03 | CLOSED conserva stato, lunghezza e numero esiti | ogni condizione falsa separatamente, tutte vere |
-| CRV-D04 | esito presente e CSN identico | assente, CSN diverso, zero presente, u64 con parte alta |
-| CRV-D05 | cardinalità CLOSED precedente più uno e REMOVED invariata | ciascuna falsa, entrambe vere, sostituzione con stesso conteggio |
-| CRV-D06 | nuovo ACTIVE oltre high-water e vecchio ACTIVE chiuso | riuso, spazio esaurito, vecchio ACTIVE omesso/rimosso, transizione valida |
-| CRV-D07 | stessa vista canonica e vecchio input ancora aperto | altra vista con UUID uguale/diverso, CLOSED/FAULTED, valida |
+| CRV-D01 | positive chunk, EOF and budget at least one header | each false, all true, exact EOF |
+| CRV-D02 | prefix within range and COMPLETE equivalent to EOF | wrong frontiers, consistent/inconsistent COMPLETE/TAIL |
+| CRV-D03 | CLOSED preserves state, length, and outcome count | each condition false separately, all true |
+| CRV-D04 | outcome present and identical CSN | absent, different CSN, present zero, u64 with high part |
+| CRV-D05 | previous CLOSED cardinality plus one and unchanged REMOVED | each false, both true, replacement with same count |
+| CRV-D06 | new ACTIVE beyond high-water and old ACTIVE closed | reuse, exhausted space, omitted/removed old ACTIVE, valid transition |
+| CRV-D07 | same canonical view and old input still open | another view with equal/different UUID, CLOSED/FAULTED, valid |
 
-Lettura sequenziale O(byte), oltre al costo dello scanner/replay esistente.
-Il confronto visita O(CLOSED + REMOVED + esiti) con lookup medi O(1); non
-espone hash table. Nessun lock tra Serie, clock, attesa o contatore condiviso.
-Sono percorsi di apertura con allocazioni: scratch del caller, workspace e
-manifest del decoder, wrapper del risultato. Non ci sono nuove copie complete
-del file o delle tabelle nel bridge di pubblicazione.
+Sequential O(bytes) read plus existing scanner/replay cost.
+Comparison visits O(CLOSED + REMOVED + outcomes) with average O(1) lookup; exposes
+no hash table. No lock between Serie, clock, wait, or shared counter.
+Opening paths with allocations: caller scratch, decoder workspace and
+manifest, result wrapper. No new full-file or full-table
+copies in publication bridge.
 
-Costi statici, non benchmark. Compilazione, lint, tracciabilità, collegamenti
-e conservazione delle prove vengono registrati nella
-[campagna](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-control-recovery/README.md).
-La successiva [campagna di modulo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-control-transizione/report.md)
-conserva 84 nuovi test passati, revisione indipendente, copertura dei quattro
-file e 216 finestre di misura. I limiti e le forme non raggiunte rimangono
-espliciti; questi esiti non chiudono il gate C1 o la Fase 0. Il
-[metodo delle misure](control-transizione-metodo.md) distingue il confronto
-puro dalla decodifica e dalla pubblicazione su disco. Esiti e limiti vengono
-conservati insieme ai produttori; la qualifica del Recovery Manager completo
-resta aperta.
+Static costs, not benchmarks. Compilation, lint, traceability, links,
+and evidence preservation recorded in
+[campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-control-recovery/README.md).
+Later [module campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-control-transizione/report.md)
+preserves 84 new passing tests, independent review, four-file
+coverage, and 216 measurement windows. Limits and unreached forms remain
+explicit; these outcomes close neither C1 gate nor Phase 0. The
+[measurement method](control-transizione-metodo.md) distinguishes pure
+comparison from decoding and disk publication. Outcomes and limits
+preserved with producers; full Recovery Manager qualification
+remains open.

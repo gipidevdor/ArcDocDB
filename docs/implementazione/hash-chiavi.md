@@ -1,93 +1,103 @@
-# Hash delle chiavi e seme dell'indice
+<a id="hash-delle-chiavi-e-seme-dellindice"></a>
 
-## Contratto
+# Key hashing and index seed
 
-ADR-0014 richiede un hash non crittografico a 64 bit con seme per Serie.
-Il kernel implementa XXH64 della
-[specifica ufficiale in xxHash v0.8.3](https://github.com/Cyan4973/xxHash/blob/v0.8.3/doc/xxhash_spec.md).
-Non introduce dipendenze di prodotto oltre SBCL/ASDF. Riferimenti:
-REQ-IDX-001, REQ-IDX-003, REQ-IDX-005, REQ-LIM-003, REQ-AFF-004 e REQ-AFF-008;
-invarianti INV-I3 e INV-P6.
+<a id="contratto"></a>
+
+## Contract
+
+ADR-0014 requires a noncryptographic 64-bit hash with a per-Serie seed.
+Kernel implements XXH64 from the
+[official xxHash v0.8.3 specification](https://github.com/Cyan4973/xxHash/blob/v0.8.3/doc/xxhash_spec.md).
+No product dependencies beyond SBCL/ASDF introduced. References:
+REQ-IDX-001, REQ-IDX-003, REQ-IDX-005, REQ-LIM-003, REQ-AFF-004, and REQ-AFF-008;
+invariants INV-I3 and INV-P6.
 
 ```lisp
 (arcdocdb.hash64:xxh64 octets start end seed-high seed-low)
-;; => high, low: esattamente due u32
+;; => high, low: exactly two u32s
 ```
 
-Span half-open, da zero a 65.535 byte, vettore simple u8. Un hash di span
-vuoto e ammesso; il writer mantiene separatamente il vincolo di almeno un
-byte della chiave. I due u32 sono fixnum su SBCL a 64 bit. Nessun u64
-attraversa il confine pubblico: operazioni modulari e helper inline conservano
-le parole native. Safety 3 e controlli di tipo/range restano attivi.
-Il chiamante mantiene buffer e seme immutati per tutta la chiamata.
+Half-open span, zero to 65,535 bytes, simple u8 vector. Empty-span hash
+is allowed; writer separately retains the minimum one-byte
+key constraint. Both u32 words are fixnums on 64-bit SBCL. No u64
+crosses the public boundary: modular operations and inline helpers retain
+native words. Safety 3 and type/range checks stay active.
+Caller keeps buffer and seed unchanged throughout call.
 
-La validazione rifiuta tipi/semi non conformi con INVALID-ARGUMENT
-`:hash-arguments`, span fuori buffer con `:buffer-range`, lunghezza oltre
-limite con `:hash-span-limit`. Input immutato anche sul rifiuto.
-Il kernel non possiede stato, lock, scratch, I/O o fonti casuali.
+Validation rejects nonconforming types/seeds with INVALID-ARGUMENT
+`:hash-arguments`, out-of-buffer span with `:buffer-range`, length beyond
+limit with `:hash-span-limit`. Input unchanged even on rejection.
+Kernel owns no state, locks, scratch, I/O, or random sources.
 
-## Seme posseduto dalla Serie
+<a id="seme-posseduto-dalla-serie"></a>
 
-`crea-indice-primario` accetta `:hash-seed-high` e `:hash-seed-low`:
-entrambi u32 espliciti oppure entrambi NIL. La coppia incompleta/non conforme
-e rifiutata con `:primary-hash-seed-configuration` prima degli array.
-Il seme configurato e read-only per tutta la vita dell'indice.
-`digest-chiave-indice` verifica salute/configurazione e usa questa coppia.
-L'indice senza seme conserva la API di basso livello a digest fidati;
-le nuove API hash lo rifiutano con `:primary-hash-unconfigured`.
-Una coppia interna incoerente rende terminale l'indice con
+## Serie-owned seed
+
+`crea-indice-primario` accepts `:hash-seed-high` and `:hash-seed-low`:
+both explicit u32 or both NIL. Incomplete/nonconforming pair
+rejected with `:primary-hash-seed-configuration` before arrays.
+Configured seed is read-only for index lifetime.
+`digest-chiave-indice` checks health/configuration and uses this pair.
+Index without seed retains low-level API with trusted digests;
+new hash APIs reject it with `:primary-hash-unconfigured`.
+An inconsistent internal pair makes index terminal with
 `:primary-hash-seed-corrupt`.
 
-Generazione, entropia iniettabile, ricostruzione al riavvio e scelta del seme
-appartengono al controller. Non e introdotto un valore casuale implicito,
-ne e consentito cambiare il seme di una root gia popolata. Le API a digest
-precalcolati rimangono interfacce fidate del sottosistema; il confine esterno
-deve calcolare lo stesso digest posseduto dall'indice.
+Generation, injectable entropy, restart rebuilding, and seed choice
+belong to controller. No implicit random value introduced,
+nor is changing a populated root's seed allowed. Precalculated-digest
+APIs remain trusted subsystem interfaces; external boundary
+must calculate the same index-owned digest.
 
-## Digest per la ricostruzione
+<a id="digest-per-la-ricostruzione"></a>
+
+## Digests for rebuilding
 
 ```lisp
 (arcdocdb.index.primary:calcola-digests-frammento
  index source highs lows seed-high seed-low)
-;; => C, slot-vivi, byte-chiavi-hashati
+;; => C, live-slots, hashed-key-bytes
 ```
 
-Solo writer con gettone esclusivo. Il sorgente deve essere canonico,
-corrente, pubblicato e scrivibile. Due array simple u32 distinti di C elementi,
-privati e gia prenotati. Preflight dei tipi, lunghezze, alias e seme
-completo uguale alla coppia dell'indice, prima di allocazioni e scritture.
-Il controllo di entrambi i u32 non dipende dai pochi bit osservabili
-nel fingerprint o nel prefisso del frammento.
+Writer only with exclusive token. Source must be canonical,
+current, published, and writable. Two distinct simple u32 arrays of C elements,
+private and already reserved. Preflight of types, lengths, aliases, and complete
+seed matching index pair, before allocations or writes.
+Checking both u32 words does not depend on the few bits observable
+in fingerprint or fragment prefix.
 
-Una scansione di C slot campiona il payload, calcola XXH64 sui byte vivi
-e verifica fingerprint, prefisso e lookup allo slot fisico originale.
-Scrive solo le celle vive; EMPTY/DELETED conservano le sentinelle.
-Il risultato alimenta il [costruttore verificato](indice-ricostruzione.md).
-Root, banco, arena, salute sana e revisione non vengono modificati.
-Un errore di dominio/corruzione segue il fail-stop esistente; mappe private
-parziali su errore durante la scansione si scartano, senza rollback dell'indice.
-Root assente: `:primary-index-missing-root`. Discordanza del digest
-ricalcolato internamente: `:primary-hash-source-digest`, sempre FAULTED.
-I digest esterni fidati del rebuild conservano il contratto dei rifiuti.
+A C-slot scan samples payload, computes XXH64 over live bytes,
+and verifies fingerprint, prefix, and lookup to original physical slot.
+Writes live cells only; EMPTY/DELETED retain sentinels.
+Result feeds the [verified builder](indice-ricostruzione.md).
+Root, bank, arena, healthy state, and revision are not modified.
+Domain/corruption error follows existing fail-stop; partial private maps
+on scan error are discarded, without index rollback.
+Missing root: `:primary-index-missing-root`. Internally recalculated
+digest mismatch: `:primary-hash-source-digest`, always FAULTED.
+Trusted external rebuild digests retain rejection contract.
 
-Budget separato: mappe 8*C byte e due scratch fissi da cinque u64,
-80 byte di payload oltre header/runtime. Non sono parte del budget di
-copia del rebuild. Costo: O(C + byte-chiavi-vive) per scansione/hash,
-oltre ai probe originali limitati da C per chiave; caso ostile O(C²*K).
-Nessuna pretesa di pausa costante o P99. La manutenzione alloca fuori
-dal percorso caldo.
+Separate budget: maps 8*C bytes and two fixed scratch areas of five u64 words,
+80 payload bytes beyond headers/runtime. Not part of rebuild copy
+budget. Cost: O(C + live-key-bytes) for scan/hash,
+plus original probes bounded by C per key; hostile case O(C²*K).
+No constant-pause or P99 claim. Maintenance allocates outside
+hot path.
 
-## Verifica
+<a id="verifica"></a>
 
-[Campagna e metodo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-key-hash/README.md).
-[Revisioni e correzioni](hash-chiavi-revisione.md).
-[Prove e misure conservate](hash-chiavi-risultati.md).
-Oracolo freddo indipendente, vettori upstream, ogni residuo e allineamento,
-semi oltre fixnum, immutabilita e worker reali. Prove della mappa con
-lookup/rebuild/split, predicati e mutanti nominati; misure seriali e
-parallele separate dopo i controlli.
+## Verification
 
-Hash e fingerprint sono acceleratori: la ricerca decide sempre con
-confronto bytewise della chiave. Non si usa il digest per autenticare
-input o dati persistenti. Restano controller/seed lifecycle, GET completo,
-misure del motore, P99 e qualifica della piattaforma di riferimento.
+[Campaign and method](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-key-hash/README.md).
+[Reviews and corrections](hash-chiavi-revisione.md).
+[Preserved tests and measurements](hash-chiavi-risultati.md).
+Independent cold oracle, upstream vectors, every remainder and alignment,
+beyond-fixnum seeds, immutability, and real workers. Map tests with
+lookup/rebuild/split, named predicates and mutants; serial and
+parallel measurements separate after checks.
+
+Hash and fingerprint are accelerators: lookup always decides with
+bytewise key comparison. Digest is not used to authenticate
+input or persistent data. Remaining: controller/seed lifecycle, full GET,
+engine measurements, P99, and reference-platform qualification.

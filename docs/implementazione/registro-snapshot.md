@@ -1,182 +1,196 @@
-# Registro degli snapshot
+<a id="registro-degli-snapshot"></a>
 
-Il registro in [`src/mvcc/`](../../src/mvcc/) realizza registrazione, attivazione,
-validazione e scadenza dei contesti di snapshot secondo
+# Snapshot registry
+
+The registry in [`src/mvcc/`](../../src/mvcc/) implements registration, activation,
+validation, and expiration of snapshot contexts according to
 [ADR-0038](../adr/0038-orizzonte-di-visibilita.md),
-[ADR-0020](../adr/0020-csn-snapshot-isolamento.md) e
+[ADR-0020](../adr/0020-csn-snapshot-isolamento.md), and
 [ADR-0045](../adr/0045-modello-di-esecuzione.md).
-Usa il [registro CSN canonico](csn.md) del proprio Archivio attraverso il
-[collegamento pubblico](snapshot-csn.md). Non assegna altri CSN.
+It uses its Archivio's [canonical CSN registry](csn.md) through the
+[public binding](snapshot-csn.md). It assigns no other CSNs.
 
-## Ambito e risorse
+<a id="ambito-e-risorse"></a>
 
-Un registro per Archivio; array specializzati di capacità `K` fissa, con
-`1 <= K <= 65.536`. I contesti delle richieste sono preallocati e riutilizzabili.
-Il registro conserva CSN, generazione, scadenza, limite dell'attesa e stato per
-slot. Non copia documenti e non detiene riferimenti fisici ai segmenti.
+## Scope and resources
 
-`crea-registro-snapshot(csns, K, lifetime-ticks, wait-ticks)` richiede durate
-esplicite, positive, con `wait-ticks <= lifetime-ticks`; `csns` è il medesimo
-`arcdocdb.csn:registro-csn` usato dai writer dell'Archivio. Il controller traduce
-la configurazione in queste unità; il default architetturale della durata resta
-un'ora. Tutti i valori `now` provengono dalla **stessa base di tempo monotona**
-dell'ambiente, sono `u64` e devono essere campionati nuovamente per ciascuna
-operazione. Nessun clock globale, thread, callback o timer autonomo è creato
-dal registro. I campioni di thread diversi possono arrivare in ordine diverso;
-il registro non li interpreta come una regressione del clock.
+One registry per Archivio; specialized arrays with fixed capacity `K`, with
+`1 <= K <= 65.536`. Request contexts are preallocated and reusable.
+The registry retains CSN, generation, deadline, wait limit, and state per
+slot. It does not copy documents or hold physical segment references.
 
-I quattro array `u64` e l'array di stati `u8` occupano `33K` byte di payload,
-più due parole comuni, oggetti, header e mutex. Il contesto possiede due parole
-per generazione e copia del CSN. L'esaurimento di `K` rifiuta una registrazione
-prima di abbassare la soglia. Il superamento di `now + lifetime-ticks` o della
-generazione `u64` è un rifiuto esplicito, senza wrap.
+`crea-registro-snapshot(csns, K, lifetime-ticks, wait-ticks)` requires explicit,
+positive durations with `wait-ticks <= lifetime-ticks`; `csns` is the same
+`arcdocdb.csn:registro-csn` used by Archivio writers. The controller translates
+configuration into these units; the architectural default lifetime remains
+one hour. All `now` values come from the environment's **same monotonic time base**,
+are `u64`, and must be sampled anew for each
+operation. No global clock, thread, callback, or autonomous timer is created
+by the registry. Samples from different threads may arrive out of order;
+the registry does not interpret them as clock regression.
 
-## Interfacce
+The four `u64` arrays and the `u8` state array occupy `33K` bytes of payload,
+plus two shared words, objects, headers, and mutex. The context owns two words
+for generation and a CSN copy. Exhaustion of `K` rejects registration
+before lowering the threshold. Overflow of `now + lifetime-ticks` or
+`u64` generation is an explicit rejection, without wrap.
 
-| Interfaccia | Contratto |
+<a id="interfacce"></a>
+
+## Interfaces
+
+| Interface | Contract |
 |---|---|
-| `crea-contesto-snapshot` | Prealloca il contesto associato al registro; nessun pin acquisito. |
-| `registra-snapshot(context, now)` | Restituisce generazione, CSN `s` e flag di attività. Se non pronto, il proprietario parcheggia il contesto. |
-| `attiva-snapshot(context, generation, now)` | Restituisce `T` solo con `H >= s` e deadline valida, oppure `NIL` se ancora in attesa. Non blocca in attesa del commit. |
-| `verifica-snapshot(context, generation, now)` | Restituisce il CSN solo per identità attiva e non scaduta; nessun mutex sul percorso riuscito. |
-| `verifica-snapshot-in-buffer` | Stesse guardie; scrive il CSN in una word del buffer privato del worker. Il buffer resta intatto su rifiuto. |
-| `termina-snapshot(context, generation)` | Rimuove il pin. Idempotente per la stessa identità già terminata/scaduta; una vecchia identità non termina una nuova registrazione. |
-| `scadi-snapshot(registry, now, max-slots)` | Visita al più il budget configurato, restituisce visite e scadenze e avanza un cursore circolare. |
-| `soglia-snapshot`, `deve-trattenere-p` | Letture acquire senza mutex per retention e potatura logica delle versioni. |
-| `leggi-registro-snapshot` | Contatori coerenti sotto mutex, per osservabilità. |
-| `invalida-registro-snapshot` | Stato terminale `FAULTED`, senza attesa; il confine dell'Archivio lo usa dopo guasti CSN. Non libera pin o reader. |
+| `crea-contesto-snapshot` | Preallocates the context associated with the registry; no pin acquired. |
+| `registra-snapshot(context, now)` | Returns generation, CSN `s`, and activity flag. If not ready, the owner parks the context. |
+| `attiva-snapshot(context, generation, now)` | Returns `T` only with `H >= s` and valid deadline, or `NIL` if still waiting. Does not block waiting for commit. |
+| `verifica-snapshot(context, generation, now)` | Returns CSN only for an active, unexpired identity; no mutex on the successful path. |
+| `verifica-snapshot-in-buffer` | Same guards; writes CSN into one word of the worker's private buffer. Buffer remains intact on rejection. |
+| `termina-snapshot(context, generation)` | Removes the pin. Idempotent for the same already ended/expired identity; an old identity does not end a new registration. |
+| `scadi-snapshot(registry, now, max-slots)` | Visits at most the configured budget, returns visits and expirations, and advances a circular cursor. |
+| `soglia-snapshot`, `deve-trattenere-p` | Mutex-free acquire reads for retention and logical version pruning. |
+| `leggi-registro-snapshot` | Consistent counters under mutex, for observability. |
+| `invalida-registro-snapshot` | Terminal `FAULTED` state, without waiting; the Archivio boundary uses it after CSN faults. Does not release pins or readers. |
 
-Le API di coordinamento tentano il mutex snapshot una volta con `:wait-p nil`.
-`:snapshot-busy` e `:csn-busy` richiedono di conservare il compito e riprogrammarlo
-entro i suoi budget, con tempo nuovo. La terminazione occupata conserva il pin
-e l'obbligo di terminarlo; un timer occupato non avanza il cursore. Le verifiche
-dei reader non acquisiscono alcun mutex.
+Coordination APIs attempt the snapshot mutex once with `:wait-p nil`.
+`:snapshot-busy` and `:csn-busy` require retaining the task and rescheduling it
+within its budgets, with fresh time. Busy termination retains the pin
+and the obligation to terminate it; a busy timer does not advance the cursor. Reader
+checks acquire no mutex.
 
-Una **generazione** è l'identità del contesto; il **CSN** è l'identità della
-vista. Due snapshot possono avere lo stesso CSN, incluso zero su Archivio vuoto.
-La generazione cresce senza riuso nel registro; non è una seconda versione del
-documento. Ogni evento e reader conserva la generazione originale.
+A **generation** is the context's identity; the **CSN** is the view's
+identity. Two snapshots may have the same CSN, including zero on an empty Archivio.
+Generation increases without reuse in the registry; it is not a second document
+version. Every event and reader retains the original generation.
 
-## Registrazione e visibilità
+<a id="registrazione-e-visibilità"></a>
 
-Ordine delle operazioni, sotto il mutex degli snapshot:
+## Registration and visibility
 
-1. Verificare contesto, capacità, generazione e deadline, senza mutazioni.
-2. Campionare `H` dal registro CSN.
-3. Pubblicare `soglia = min(soglia, H)`; **barriera completa**.
-4. Campionare `s = ultimo CSN assegnato` e il nuovo `H` nello stesso campione coerente.
-   Su `:csn-busy` ripristinare la sola soglia precedente: nessun pin o identità
-   è stato modificato e nessuna generazione è stata consumata.
-5. Invalidare con generazione zero il contesto e lo slot da riusare; barriera completa.
-6. Scrivere metadati e stato; pubblicare prima la generazione dello slot e poi
-   quella del contesto, con barriere di scrittura.
+Operation order, under the snapshot mutex:
 
-Lo snapshot è immediatamente attivo se il secondo campione soddisfa `H >= s`;
-altrimenti resta in attesa. La soglia è già annunciata durante l'attesa: i writer
-possono trattenere le versioni necessarie prima della prima lettura.
+1. Check context, capacity, generation, and deadline, without mutations.
+2. Sample `H` from the CSN registry.
+3. Publish `soglia = min(soglia, H)`; **full barrier**.
+4. Sample `s = ultimo CSN assegnato` and the new `H` in the same consistent sample.
+   On `:csn-busy`, restore only the previous threshold: no pin or identity
+   has changed and no generation has been consumed.
+5. Invalidate the context and slot to reuse with generation zero; full barrier.
+6. Write metadata and state; publish the slot generation first and then
+   the context generation, with write barriers.
 
-Il controller accoda un nuovo compito quando l'orizzonte avanza e richiama
-`attiva-snapshot`. Non mantiene un worker occupato, non fa polling illimitato e
-non risveglia i contesti mentre possiede il mutex CSN. Le liste di parcheggio,
-le notifiche e l'ammissione delle richieste rimangono responsabilità dello
-scheduler; questo modulo espone la macchina a stati e i suoi limiti.
+The snapshot is immediately active if the second sample satisfies `H >= s`;
+otherwise it waits. The threshold is already announced during the wait: writers
+can retain required versions before the first read.
 
-## Letture, riuso e barriere
+The controller queues a new task when the horizon advances and calls
+`attiva-snapshot`. It does not keep a worker occupied, poll without bounds, or
+wake contexts while holding the CSN mutex. Parking lists,
+notifications, and request admission remain scheduler
+responsibilities; this module exposes the state machine and its bounds.
 
-Una lettura con snapshot conserva la generazione originale ed entra nell'epoca
-del worker. Poi:
+<a id="letture-riuso-e-barriere"></a>
+
+## Reads, reuse, and barriers
+
+A snapshot read retains the original generation and enters the worker's
+epoch. Then:
 
 ```text
-verifica snapshot → ricerca indice/cache/segmento → verifica snapshot → risposta
-       └──────────────── stessa epoca del reader ──────────────────┘
+check snapshot → search index/cache/segment → check snapshot → respond
+       └──────────────── same reader epoch ──────────────────┘
 ```
 
-La verifica finale si esegue **anche sul miss**. Una vista scaduta non può
-trasformarsi in un falso «non trovato». I campioni di tempo iniziale e finale
-sono distinti; riusare il primo potrebbe nascondere la scadenza durante la ricerca.
+The final check runs **even on a miss**. An expired view cannot
+become a false “not found.” Initial and final time samples
+are distinct; reusing the first could hide expiration during lookup.
 
-La validazione legge la generazione del contesto, quella dello slot e i metadati;
-una barriera di lettura precede la seconda verifica di entrambe le generazioni.
-Il CSN dello slot è confrontato con la copia posseduta dal contesto. Qualsiasi
-riuso che attraversi la lettura invalida la generazione prima di cambiare i campi:
-il reader rifiuta la risposta, senza retry o accesso alla nuova incarnazione.
+Validation reads the context generation, slot generation, and metadata;
+a read barrier precedes the second check of both generations.
+The slot CSN is compared with the context's owned copy. Any
+reuse spanning the read invalidates generation before changing fields:
+the reader rejects the response without retrying or accessing the new incarnation.
 
-I reader non prendono mutex, anche quando scoprono metadati interni incoerenti:
-pubblicano solo lo stato terminale `FAULTED` e propagano l'errore. La lettura della
-soglia può essere conservativa e trattenere più versioni; non introduce per
-questo un risultato scorretto.
+Readers take no mutex, even when they discover inconsistent internal metadata:
+they publish only terminal `FAULTED` state and propagate the error. The threshold
+read may be conservative and retain more versions; this does not introduce
+an incorrect result.
 
-Queste primitive usano accessi word/u8 di SBCL sulle piattaforme a 64 bit
-di [ADR-0017](../adr/0017-piattaforma-e-io.md), con barriere esplicite
-([manuale SBCL](https://www.sbcl.org/manual/#Barriers)). Non si estende il
-contratto a runtime o architetture diverse. Il disassemblato locale ARM64
-conserva i carichi word, le barriere `DMB ISHLD` e la scrittura del risultato;
-è un'ispezione statica del codice generato, senza eseguire i percorsi.
+These primitives use SBCL word/u8 accesses on the 64-bit platforms
+in [ADR-0017](../adr/0017-piattaforma-e-io.md), with explicit barriers
+([SBCL manual](https://www.sbcl.org/manual/#Barriers)). The contract is not extended
+to other runtimes or architectures. Local ARM64 disassembly
+retains word loads, `DMB ISHLD` barriers, and result writes;
+it is static inspection of generated code, without executing the paths.
 
-## Retention, scadenza e reclaim
+<a id="retention-scadenza-e-reclaim"></a>
 
-Prima di aggiornare lo slot dell'indice con un commit `c`, il writer usa
-`deve-trattenere-p(registry, c)`: se `soglia < c`, deve conservare la versione
-sostituita **prima** della pubblicazione. La soglia iniziale può restare più
-bassa del minimo dei CSN registrati; viene ricalcolata quando si rimuovono pin.
-Una versione con fine validità `a` può essere rimossa dalle versioni trattenute
-quando `soglia >= a`, rispettando ancora le epoche dei reader.
+## Retention, expiration, and reclaim
 
-`MAX-U64` è la soglia senza pin. Lo stesso valore può essere un CSN di snapshot
-valido: al limite u64 nessun nuovo commit può superarlo; i confronti restano
-corretti. Il conteggio distingue presenza e assenza dei pin per le metriche.
+Before updating the index slot with commit `c`, the writer uses
+`deve-trattenere-p(registry, c)`: if `soglia < c`, it must retain the replaced
+version **before** publication. The initial threshold may remain
+below the minimum registered CSN; it is recalculated when pins are removed.
+A version with validity end `a` may be removed from retained versions
+when `soglia >= a`, still respecting reader epochs.
 
-La durata massima parte dalla registrazione, **includendo l'attesa iniziale**.
-A `now >= deadline` lo snapshot è scaduto. Un'attesa che raggiunge la propria
-deadline produce `resource-exhausted` all'attivazione; uno snapshot attivo
-scaduto produce `snapshot-too-old`. Il timer rimuove i pin scaduti anche senza
-ulteriori richieste, con una scansione circolare limitata. Una sola scansione
-di `K` slot ricalcola la soglia dopo il gruppo di scadenze: non una scansione
-per ogni snapshot. La cadenza del timer è una responsabilità del controller.
+`MAX-U64` is the threshold without pins. The same value may be a valid snapshot
+CSN: at the u64 limit no new commit can exceed it; comparisons remain
+correct. The count distinguishes pin presence and absence for metrics.
 
-La validazione rifiuta un contesto scaduto per tempo anche se il timer non lo ha
-ancora visitato; fino a quella visita il pin è conservativo. Terminazione e
-scadenza **non liberano i riferimenti fisici** dei reader già ammessi:
-[EBR](../adr/0016-epoch-based-reclamation.md) deve proteggerli fino al termine
-del compito: le [primitive di epoca](epoche-e-reclaim.md) espongono ingresso,
-uscita e frontiera per i segmenti; il [contesto di lettura](compiti-lettura.md)
-collega ingresso, controlli snapshot e cleanup. Indice/cache e confine dei pool
-restano da integrare. Il contesto si riusa solo quando tutti i vecchi consumatori sono
-terminati. Questo modulo non elimina segmenti o strutture dell'indice.
+Maximum lifetime starts at registration, **including the initial wait**.
+At `now >= deadline`, the snapshot is expired. A wait reaching its own
+deadline produces `resource-exhausted` on activation; an expired active
+snapshot produces `snapshot-too-old`. The timer removes expired pins even without
+further requests, with a bounded circular scan. A single scan
+of `K` slots recalculates the threshold after the group of expirations: not one scan
+per snapshot. Timer cadence is the controller's responsibility.
 
-## Guasti e stato della qualifica
+Validation rejects a time-expired context even if the timer has not
+visited it yet; until that visit the pin is conservative. Termination and
+expiration **do not release physical references** of already admitted readers:
+[EBR](../adr/0016-epoch-based-reclamation.md) must protect them until the task
+ends: [epoch primitives](epoche-e-reclaim.md) expose entry,
+exit, and frontier for segments; the [read context](compiti-lettura.md)
+connects entry, snapshot checks, and cleanup. Index/cache and pool boundaries
+remain to be integrated. The context is reused only when all old consumers have
+finished. This module does not delete segments or index structures.
 
-Le transizioni composte usano cleanup fail-stop: un'uscita non locale dopo
-l'inizio della mutazione marca il registro `FAULTED`; non si tenta un rollback
-parziale dei metadati. La revoca della soglia provvisoria su normale `:csn-busy`
-avviene prima di modificare identità, slot o conteggio. Un'incoerenza di conteggio,
-soglia, stato o copia del CSN produce un errore tipizzato. I guasti CSN osservati
-dall'adattatore invalidano gli snapshot; quelli osservati dal writer/coordinatore
-devono chiamare `invalida-registro-snapshot` al confine dell'Archivio. Il proprietario
-isola l'Archivio e ripete il recovery; gli snapshot
-volatili non sopravvivono al riavvio.
+<a id="guasti-e-stato-della-qualifica"></a>
 
-| Requisito | Realizzazione introdotta | Qualifica ancora necessaria |
+## Faults and qualification status
+
+Compound transitions use fail-stop cleanup: a nonlocal exit after
+mutation begins marks the registry `FAULTED`; no partial metadata rollback
+is attempted. Revocation of the provisional threshold on normal `:csn-busy`
+occurs before changing identity, slot, or count. Inconsistency in count,
+threshold, state, or CSN copy produces a typed error. CSN faults observed
+by the adapter invalidate snapshots; those observed by the writer/coordinator
+must call `invalida-registro-snapshot` at the Archivio boundary. The owner
+isolates the Archivio and repeats recovery; volatile
+snapshots do not survive restart.
+
+| Requirement | Implementation introduced | Qualification still needed |
 |---|---|---|
-| REQ-MVC-004 | Deadline, errore `snapshot-too-old`, timer con budget. | Confini del tempo, scadenza durante il lookup, controller e timer reali. |
-| REQ-MVC-005 | Annuncio, cattura di `s`, attivazione solo con `H >= s`. | Writer/index/versioni trattenute integrati, FI-11/FI-12. |
-| REQ-MVC-007 | Soglia annunciata prima della cattura, ricalcolo e guardie di riuso. | Ordini concorrenti reali x86-64/ARM64, saturazione e generazioni u64. |
-| REQ-MVC-003, REQ-CMP-007 | Pin logici distinti dalle epoche dei reader. | EBR, potatura, compaction e reclaim integrati. |
-| REQ-AFF-008 | `K`, deadline, generazioni e passi del timer limitati. | Carico, cadenza del timer e costi sotto mutex. |
+| REQ-MVC-004 | Deadline, `snapshot-too-old` error, budgeted timer. | Time boundaries, expiration during lookup, real controller and timer. |
+| REQ-MVC-005 | Announcement, capture of `s`, activation only with `H >= s`. | Integrated writer/index/retained versions, FI-11/FI-12. |
+| REQ-MVC-007 | Threshold announced before capture, recalculation, and reuse guards. | Real x86-64/ARM64 concurrent orderings, saturation, and u64 generations. |
+| REQ-MVC-003, REQ-CMP-007 | Logical pins distinct from reader epochs. | Integrated EBR, pruning, compaction, and reclaim. |
+| REQ-AFF-008 | Bounded `K`, deadlines, generations, and timer steps. | Load, timer cadence, and costs under mutex. |
 
-Il [catalogo delle evidenze](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot/catalogo.lisp)
-conserva compilazione del solo prodotto, controlli statici e disassemblato,
-compreso il primo rifiuto del linter: scambiava l'opzione `(:read)` della
-barriera per una chiamata a `CL:READ`. Il riconoscimento esclude ora i keyword;
-le chiamate reali a `READ` restano vietate. Nei comandi locali non sono stati aggiunti o eseguiti
-test funzionali, auto-test del linter, prove concorrenti o benchmark.
+The [evidence catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-snapshot/catalogo.lisp)
+retains product-only compilation, static checks, and disassembly,
+including the first linter rejection: it mistook the barrier's `(:read)` option
+for a `CL:READ` call. Recognition now excludes keywords;
+actual `READ` calls remain prohibited. Local commands added or ran no
+functional tests, linter self-tests, concurrent tests, or benchmarks.
 
-I requisiti restano **progettati**. Non si dichiara qualifica C1, copertura,
-assenza di allocazioni misurata o completamento di MVCC. L'interfaccia in buffer
-evita il ritorno di un intero Lisp per il CSN sul percorso previsto del reader;
-scalabilità, costo delle barriere e allocazioni vanno ancora misurati.
-L'integrazione con il registro unico ha [evidenze separate](snapshot-csn.md#evidenze-e-qualifica).
+Requirements remain **designed**. No C1 qualification, coverage,
+measured absence of allocations, or MVCC completion is claimed. The buffer interface
+avoids returning a Lisp integer for CSN on the intended reader path;
+scalability, barrier cost, and allocations still need measurement.
+Integration with the single registry has [separate evidence](snapshot-csn.md#evidenze-e-qualifica).
 
-La [campagna di verifica snapshot e CSN](snapshot-verifica.md) preregistra
-prove funzionali, contesa controllata e mutazioni mirate. I suoi risultati
-verranno conservati separatamente da queste evidenze statiche.
+The [snapshot and CSN verification campaign](snapshot-verifica.md) preregisters
+functional tests, controlled contention, and targeted mutations. Its results
+will be retained separately from this static evidence.

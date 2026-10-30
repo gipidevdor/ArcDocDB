@@ -1,184 +1,194 @@
-# Risultati del contesto worker dei writer
+<a id="risultati-del-contesto-worker-dei-writer"></a>
 
-Campagne del 2026-10-09 sulla base `cf60913`, con sorgenti congelati dopo
-la prima lettura C1. Contratto in [writer-worker](writer-worker.md),
-[metodo preregistrato](writer-worker-metodo.md),
-[inventario completo](writer-worker-decisioni.md) e
-[catalogo dei dati conservati](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/catalogo.lisp).
-Le qualificazioni riguardano questa composizione locale, non il pool completo.
+# Writer worker context results
 
-## Correttezza e integrazione
+Campaigns on 2026-10-09 against base `cf60913`, with sources frozen after
+the first C1 reading. Contract in [writer-worker](writer-worker.md),
+[preregistered method](writer-worker-metodo.md),
+[complete inventory](writer-worker-decisioni.md), and
+[retained data catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/catalogo.lisp).
+Qualifications concern this local composition, not the complete pool.
 
-Il processo `4000547204-command-93189-0` termina OK/STABLE/exit0:
-387 test più smoke, compilazione senza warning o style-warning, lint su
-63 file con zero violazioni, tracciabilità di 114 requisiti/65 invarianti/
-13 scenari FI/52 ADR senza errori, 221 documenti e 2007 link senza rotture,
-self-test della conservazione, verifica delle evidenze e dieci spike.
-Il [record completo](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/check-finale-processo.lisp)
-conserva anche i rifiuti intenzionali delle fixture negative dei tool.
+<a id="correttezza-e-integrazione"></a>
 
-I test execution sono 89, di cui 23 nuovi. L'oracolo a liste indipendenti
-esegue 8000 passi su otto combinazioni K1/4, capacità ready1/2 e quantum1/2,
-13 writer, drain finale e uguaglianza payload accettati/consegnati.
-Le fixture verificano quote cumulative, FIFO, buffer/sentinelle, home/cursor,
-ack stale, busy con snapshot, latch finishing, ricircolo room/full,
-adozione/cessione senza lease attive, overflow senza wrap e fault persistenti.
-La regressione not-ready conserva la condizione originale e impedisce al
-vecchio contesto di consumare una nuova ondata.
+## Correctness and integration
 
-Una prova riusa quattro thread su sei ondate, con produttori vivi e 36
-payload controllati mediante CRC, verificando progresso su uno shard mentre
-un altro è occupato. Un'altra riusa due contesti proprietari concorrenti
-su otto ondate, con un solo vincitore per obbligo. Queste prove non attestano
-fairness, wake/park, shutdown o migrazione delle lease tra thread.
+Process `4000547204-command-93189-0` ends OK/STABLE/exit0:
+387 tests plus smoke, compilation without warning or style-warning, lint
+on 63 files with zero violations, traceability of 114 requirements/65
+invariants/13 FI scenarios/52 ADRs without errors, 221 documents and 2007
+links without breaks, retention self-tests, evidence verification, and ten
+spikes. The [complete record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/check-finale-processo.lisp)
+also retains intentional rejections from negative tool fixtures.
 
-## Integrazione della base aggiornata
+There are 89 execution tests, 23 new. The independent list oracle runs
+8000 steps over eight combinations K1/4, ready capacity1/2, and quantum1/2,
+13 writers, final drain, and accepted/delivered payload equality.
+Fixtures check cumulative quotas, FIFO, buffers/sentinels, home/cursor,
+stale ack, busy with snapshot, finishing latch, room/full recycling,
+adoption/handoff without active leases, overflow without wrap, and persistent
+faults. The not-ready regression retains the original condition and prevents
+the old context from consuming a new wave.
 
-Dopo queste campagne la primaria integra l’inventario recovery in `e2f7a75`.
-Il controllo distinto `4000548048-command-40192-0` è OK/STABLE/exit0:
-400 test più smoke (execution89, recovery95), lint66/zero, tracciabilità
-114/65/13/52 senza errori, 224 documenti/2017 link senza rotture e dieci spike.
-Il [record integrato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/check-integrazione-processo.lisp)
-e il [catalogo dei suoi spike](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-integration/catalogo.lisp)
-conservano il nuovo gate. Lo scope `4000548017-command-37007-0` confronta
-i byte execution, test e tool worker con la copia qualificata: invariati;
-ASDF e indice incorporano anche l’inventario. Le campagne worker già concluse
-non sono rieseguite per cambiamenti della recovery indipendente. I due
-master conservano i rispettivi descriptor/payload originali in directory
-distinte, evitando collisioni dei nomi gzip. I documenti conclusivi sono
-controllati separatamente dalla compilazione dei sorgenti congelati.
+One test reuses four threads over six waves, with live producers and 36
+CRC-checked payloads, verifying progress on one shard while another is busy.
+Another reuses two competing owner contexts over eight waves, with only
+one winner per obligation. These tests do not attest to fairness, wake/park,
+shutdown, or lease migration between threads.
 
-## Mutazioni e qualità degli strumenti
+<a id="integrazione-della-base-aggiornata"></a>
 
-I due C4 sono compilati integralmente con COMPILE-FILE e self-test eseguiti
-dai FASL, con avvisi fatali: `4000547221-command-94073-0` e
-`4000547221-command-94074-0`, entrambi OK/STABLE/exit0. L'adapter conservato
-ha un marker finale editoriale ereditato `RECYCLE-TOOL-STRICT-SELF-TEST-PASS`;
-argv, sorgente compilata e risultati identificano esplicitamente worker.
+## Updated base integration
 
-La [campagna di mutazione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/mutazioni-dati.lisp)
-`4000547268-command-97067-0` completa la baseline di 89 test e rileva
-12/12 mutanti preregistrati. Ogni mutante ha exit1, segnale NIL e un vero
-marker di avvio dei test; zero survived, compilation-failure, before-tests
-o worker-error. Tutti i tredici log sono conservati con i bersagli esatti.
+After these campaigns, the primary integrates recovery inventory in `e2f7a75`.
+Separate check `4000548048-command-40192-0` is OK/STABLE/exit0:
+400 tests plus smoke (execution89, recovery95), lint66/zero, traceability
+114/65/13/52 without errors, 224 documents/2017 links without breaks, and
+ten spikes. The [integrated record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/check-integrazione-processo.lisp)
+and [its spike catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-integration/catalogo.lisp)
+retain the new gate. Scope `4000548017-command-37007-0` compares execution,
+test, and worker tool bytes with the qualified copy: unchanged; ASDF and
+index also incorporate inventory. Completed worker campaigns are not rerun
+for changes in independent recovery. Both masters retain their original
+descriptors/payloads in distinct directories, avoiding gzip name collisions.
+Final documents are checked separately from frozen-source compilation.
 
-Il [catalogo del probe di revisione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-review/catalogo.lisp)
-conserva separatamente il grande record processuale originale, con il
-payload gzip originale. L’audit integrale e la sua proiezione compatta
-sono entrambi conservati; il fallimento iniziale dell’adapter di proiezione
-è dichiarato nell’inventario e non attribuito al prodotto.
+<a id="mutazioni-e-qualità-degli-strumenti"></a>
 
-La fixture OS separata usa SIGKILL reale: segnale9/exit137, classificazione
-worker-error e detected0. Completamento autentico seguito da exit nonzero,
-marker citati, warning/compilation failure, report parziali e destinazioni
-preesistenti sono controllati dai self-test e non promossi a detection.
+## Mutations and tool quality
 
-## Allocazione del percorso composto
+Both C4 tools are compiled in full with COMPILE-FILE and self-tests run
+from FASLs, with fatal warnings: `4000547221-command-94073-0` and
+`4000547221-command-94074-0`, both OK/STABLE/exit0. The retained adapter
+has an inherited editorial final marker `RECYCLE-TOOL-STRICT-SELF-TEST-PASS`;
+argv, compiled source, and results explicitly identify worker.
 
-La [campagna di allocazione](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/allocazioni-dati.lisp)
-`4000547268-command-97066-0` è OK/STABLE/exit0. Un contesto creato sul thread
-proprietario, writer, ready ring e buffer sono preallocati. Ogni ciclo
-compone enqueue, publish, claim, begin, pop/ack, end e recycle full/room;
-identità dei writer, count/status/cursor e generazioni persistenti sono
-verificati. Ruota il ruolo iniziale fra C+1 writer distinti per shard.
+The [mutation campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/mutazioni-dati.lisp)
+`4000547268-command-97067-0` completes the 89-test baseline and detects
+12/12 preregistered mutants. Every mutant has exit1, NIL signal, and a real
+test start marker; zero survived, compilation-failure, before-tests, or
+worker-error. All thirteen logs are retained with exact targets.
 
-| Shard K | Capacità C | Chiamate/ciclo | Token | Sink per replica | Campioni completi | Heap osservato |
+The [review probe catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-review/catalogo.lisp)
+separately retains the large original process record, with original gzip
+payload. Complete audit and compact projection are both retained; initial
+projection adapter failure is declared in the inventory and not attributed
+to the product.
+
+The separate OS fixture uses real SIGKILL: signal9/exit137, worker-error
+classification, and detected0. Authentic completion followed by nonzero exit,
+quoted markers, warning/compilation failure, partial reports, and preexisting
+destinations are checked by self-tests and not promoted to detection.
+
+<a id="allocazione-del-percorso-composto"></a>
+
+## Composed path allocation
+
+The [allocation campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/allocazioni-dati.lisp)
+`4000547268-command-97066-0` is OK/STABLE/exit0. A context created on the
+owner thread, writers, ready ring, and buffers are preallocated. Each cycle
+composes enqueue, publish, claim, begin, pop/ack, end, and full/room recycle;
+writer identities, count/status/cursor, and persistent generations are
+checked. Initial role rotates among C+1 distinct writers per shard.
+
+| Shards K | Capacity C | Calls/cycle | Token | Sink per replica | Complete samples | Observed heap |
 |---|---|---|---|---|---|---|
-| 1 | 1 | 35 | 578 | 10754048 | 5 × 4096 cicli | 0 byte |
-| 1 | 3 | 49 | 858 | 11900928 | 5 × 4096 cicli | 0 byte |
-| 4 | 1 | 137 | 2520 | 18708480 | 5 × 4096 cicli | 0 byte |
-| 4 | 3 | 193 | 4084 | 25114624 | 5 × 4096 cicli | 0 byte |
+| 1 | 1 | 35 | 578 | 10754048 | 5 × 4096 cycles | 0 bytes |
+| 1 | 3 | 49 | 858 | 11900928 | 5 × 4096 cycles | 0 bytes |
+| 4 | 1 | 137 | 2520 | 18708480 | 5 × 4096 cycles | 0 bytes |
+| 4 | 3 | 193 | 4084 | 25114624 | 5 × 4096 cycles | 0 bytes |
 
-Warmup128 e GC fuori misura; controllo positivo 16777472 byte allocati,
-baseline contatore zero, sink errato respinto e clockzero distinto da una
-durata valida. La formula del metodo è ricalcolata rispetto alle operazioni
-del driver. Tutti i tempi e campioni raw restano nei dati; carico esterno
-non controllato, nessuna promessa di speedup, throughput, P99 o heapzero
-universale. Startup ed errori sono fuori dal percorso normale misurato.
-Il benchmark composto usa un worker; il parallelismo funzionale è verificato
-dalle fixture con thread reali, non da una misura di scalabilità.
+Warmup128 and GC outside measurement; positive control 16777472 allocated
+bytes, zero counter baseline, wrong sink rejected, and clockzero distinguished
+from valid duration. The method formula is recalculated against driver
+operations. All raw times and samples remain in data; uncontrolled external
+load, no promise of speedup, throughput, P99, or universal heapzero.
+Startup and errors are outside the measured normal path. The composed
+benchmark uses one worker; functional parallelism is verified by real-thread
+fixtures, not a scalability measurement.
 
-## Copertura e limiti
+<a id="copertura-e-limiti"></a>
 
-Copertura `4000547204-command-93188-0`, export
-`4000547249-command-95826-0`, audit indipendente native/HTML/export
-`4000547296-command-98426-0`: 1427/1660 espressioni e 199/230 esiti
-su tutti gli undici file execution. I quattro nuovi file hanno 498/600
-espressioni e 65/76 esiti. Le 233 espressioni e 31 alternative non marcate,
-comprese quelle legacy, restano nel denominatore e nell'inventario.
-Nessuna esclusione approvata o MC/DC dedotta da sb-cover; il gate C1 del
-motore rimane aperto.
+## Coverage and limits
 
-Il confine locale faulted è terminale e diagnostico: non realizza ancora
-il controller FAULTED della Serie o il rilascio delle risorse dopo un fault.
-Ack attesta il caller, senza verificare effetti WAL esterni. Catene full
-rimangono sullo stesso shard; quote globali, admission, pool adattivo,
-wakeup/park/shutdown e integrazione durevole restano lavoro successivo.
-Empty è soltanto un'osservazione locale. Il probe iniziale
-`4000545928-command-51771-0` è conservato come sviluppo precedente al codice
-finale e non viene usato per qualificarlo.
+Coverage `4000547204-command-93188-0`, export
+`4000547249-command-95826-0`, independent native/HTML/export audit
+`4000547296-command-98426-0`: 1427/1660 expressions and 199/230 outcomes
+across all eleven execution files. Four new files have 498/600 expressions
+and 65/76 outcomes. The 233 unmarked expressions and 31 alternatives,
+including legacy ones, remain in denominator and inventory. No approved
+exclusion or MC/DC inferred from sb-cover; engine C1 gate remains open.
 
-## Conservazione finale delle evidenze
+Local faulted boundary is terminal and diagnostic: it does not yet implement
+the Serie FAULTED controller or resource release after fault. Ack attests to
+the caller, without checking external WAL effects. Full chains remain on
+the same shard; global quotas, admission, adaptive pool, wakeup/park/shutdown,
+and durable integration remain subsequent work. Empty is only a local
+observation. Initial probe `4000545928-command-51771-0` is retained as
+development before final code and is not used to qualify it.
 
-Il primo adapter di pubblicazione (`4000548817-command-74667-0`) ha respinto
-una copia identica: confrontava con EQUALP oggetti riletti che contengono
-simboli non internati. Il confronto corretto verifica byte originali e
-decompressi, SHA256 e Git blob, con lettura validata e senza overwrite.
-L’audit distinto `4000549512-command-14958-0` conserva quattordici fixture
-positive/negative e il confronto di 46 copie canoniche, tutti passati.
-Il marker finale dell’audit stampa un conteggio cosmetico errato; il report
-contiene quindici risultati, verificati da `4000549715-command-34672-0`.
-È conservato anche il tentativo iniziale dell’audit
-`4000549424-command-9085-0`, fermato dal percorso relativo del payload
-nella preparazione della fixture, senza coinvolgere il codice worker.
+<a id="conservazione-finale-delle-evidenze"></a>
 
-La ripresa `4000549781-command-39344-0` completa 69 coppie e cinque bundle,
-poi esaurisce il limite heap predefinito del reader durante il catalogo
-integrato. Le copie già valide rimangono originali. La sola chiusura usa
-un limite heap di 4096 MiB e verifica nuovamente i file esistenti.
-Questi tentativi riguardano la conservazione; i loro report e adapter
-restano nei cataloghi e non qualificano la correttezza del prodotto.
+## Final evidence retention
 
-## Verifica della consegna con il codec aggiornato
+The first publication adapter (`4000548817-command-74667-0`) rejected an
+identical copy: it compared reread objects containing uninterned symbols
+with EQUALP. Corrected comparison checks original and decompressed bytes,
+SHA256, and Git blob, with validated reading and without overwrite.
+Separate audit `4000549512-command-14958-0` retains fourteen positive/negative
+fixtures and comparison of 46 canonical copies, all passed. Audit final
+marker prints an incorrect cosmetic count; report contains fifteen results,
+verified by `4000549715-command-34672-0`. Initial audit attempt
+`4000549424-command-9085-0` is also retained, stopped by the relative payload
+path during fixture preparation, without involving worker code.
 
-La base finale `e07d772` incorpora il controllo delle testate CBOR minime
-pubblicato da un’altra chat. L’integrazione congelata esegue un solo nuovo
-controllo completo, `4000550386-command-90070-0`: OK/STABLE/exit0, 415 test
-più smoke su undici suite, nessun warning/style-warning, lint68/zero,
-tracciabilità114/65/13/52 senza errori, 232 documenti/2044 link senza rotture,
-self-test delle evidenze e dieci spike. I byte di execution, test e strumenti
-worker rimangono quelli delle campagne qualificate; ASDF e indice conservano
-sia i worker sia le aggiunte recovery e CBOR della primaria.
+Resumption `4000549781-command-39344-0` completes 69 pairs and five bundles,
+then exhausts the reader's default heap limit during the integrated catalog.
+Already valid copies remain original. Only closure uses a 4096 MiB heap
+limit and rechecks existing files. These attempts concern retention; their
+reports and adapters remain in catalogs and do not qualify product correctness.
 
-Il [record finale integrato](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/check-consegna-processo.lisp)
-e il [catalogo dei suoi spike](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-final-integration/catalogo.lisp)
-conservano gli originali. Cache di compilazione privata e limite heap
-4096 MiB sono espliciti nell’argv; questo limite riguarda i processi di
-verifica/conservazione. Il nuovo gate non estende le promesse delle misure
-worker a throughput, latenza o scalabilità. La consegna mantiene tutte le
-campagne precedenti e chiude separatamente i link e i cataloghi conclusivi.
+<a id="verifica-della-consegna-con-il-codec-aggiornato"></a>
 
-La proiezione readonly finale conserva il tentativo
-`4000550586-command-9874-0`, respinto da un’asserzione dell’adapter che
-accettava soltanto il marker OK. SPK-07 usa il marker PASS, con exit0 e
-sorgenti stabili. La proiezione corretta `4000550696-command-14941-0`
-verifica i risultati effettivi e termina OK/STABLE/exit0; il controllo
-completo non è stato ripetuto e nessun sorgente del prodotto è cambiato.
+## Delivery verification with updated codec
 
-L’addendum C1 `4000550907-command-25363-0` è OK/STABLE/exit0:
-venti file execution/test/tool identici, 3517 blob upstream conservati,
-ASDF e indice con i soli inserimenti worker, 101 copie storiche integre.
-I tre reader precedenti sono conservati: alias macOS var/private-var,
-documento WT avanzato rispetto alla copia storica e differenza tra argv
-make check e il reale env/make check-core. Le correzioni riguardano il reader;
-non sono nuove prove del prodotto e non alterano i dati originari.
-La consegna è sul ramo `codex/writer-worker` con base qualificata `e07d772`;
-la primaria continua indipendentemente con le modifiche delle altre chat.
-La successiva [integrazione nella base comune](writer-worker-integrazione.md)
-conserva il controllo completo su `edb043b` e mantiene distinti gli ambiti
-delle campagne originali e dell'assemblaggio aggiornato.
+Final base `e07d772` incorporates minimal CBOR header checking published by
+another chat. Frozen integration runs only one new full check,
+`4000550386-command-90070-0`: OK/STABLE/exit0, 415 tests plus smoke across
+eleven suites, no warning/style-warning, lint68/zero, traceability114/65/13/52
+without errors, 232 documents/2044 links without breaks, evidence self-tests,
+and ten spikes. Execution, test, and worker tool bytes remain those of
+qualified campaigns; ASDF and index retain both workers and the primary's
+recovery and CBOR additions.
 
-Il tentativo finale di conservazione `4000551045-command-31231-0` è
-preservato: un helper del driver non era stato caricato. La ripresa definisce
-il solo risolutore dei nomi flat e verifica le copie già presenti senza
-sovrascriverle; non modifica il codice worker o i risultati delle campagne.
+The [final integrated record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/check-consegna-processo.lisp)
+and [its spike catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-final-integration/catalogo.lisp)
+retain originals. Private compilation cache and 4096 MiB heap limit are
+explicit in argv; this limit concerns verification/retention processes.
+The new gate does not extend worker measurement promises to throughput,
+latency, or scalability. Delivery retains all previous campaigns and
+separately closes final links and catalogs.
+
+Final read-only projection retains attempt
+`4000550586-command-9874-0`, rejected by an adapter assertion accepting only
+OK marker. SPK-07 uses PASS marker, with exit0 and stable sources. Corrected
+projection `4000550696-command-14941-0` verifies actual results and ends
+OK/STABLE/exit0; full check was not repeated and no product source changed.
+
+C1 addendum `4000550907-command-25363-0` is OK/STABLE/exit0:
+twenty execution/test/tool files identical, 3517 upstream blobs retained,
+ASDF and index with worker insertions only, 101 historical copies intact.
+The three previous readers are retained: macOS var/private-var alias,
+WT document advanced relative to historical copy, and difference between
+argv make check and actual env/make check-core. Corrections concern the
+reader; they are not new product tests and do not alter original data.
+Delivery is on branch `codex/writer-worker` with qualified base `e07d772`;
+the primary continues independently with other chats' changes.
+Subsequent [common base integration](writer-worker-integrazione.md)
+retains full check on `edb043b` and keeps original campaign and updated
+assembly scopes distinct.
+
+Final retention attempt `4000551045-command-31231-0` is preserved:
+a driver helper had not been loaded. Resumption defines only the flat-name
+resolver and verifies existing copies without overwriting them; it modifies
+neither worker code nor campaign results.

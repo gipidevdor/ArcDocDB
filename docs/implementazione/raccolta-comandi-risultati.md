@@ -1,107 +1,117 @@
-# Verifica della raccolta degli archivi di comandi
+<a id="verifica-della-raccolta-degli-archivi-di-comandi"></a>
 
-Il collector C4 usa un manifest esplicito, quattro worker e il checker
-indipendente dell'inventario chiuso. Il [contratto](raccolta-comandi.md)
-descrive ingressi, output e limiti; questa campagna verifica lo strumento,
-senza qualificare il motore.
+# Command-archive collection verification
 
-## Versioni e tentativi conservati
+C4 collector uses explicit manifest, four workers, and independent
+closed-inventory checker. [Contract](raccolta-comandi.md)
+describes inputs, outputs, and limits; campaign verifies tool,
+without qualifying engine.
 
-La prima esecuzione su `82100f5a` ha trovato un difetto nell'API:
-i test passavano pathname validi, mentre l'ingresso richiedeva stringhe.
-Self-test e controllo completo sono terminati FAILED, con exit 1 e 2.
-Entrambi hanno conservato 59 casi, 984 controlli e 48 casi falliti;
-le copie del collector non erano ancora iniziate.
+<a id="versioni-e-tentativi-conservati"></a>
 
-La correzione su `6d47d2df` normalizza soltanto manifest, destinazione e
-osservazioni all'ingresso dell'API. I campi del manifest restano stringhe.
-Il corpus dei 59 casi è rimasto invariato. La ripetizione esplicita e quella
-in `make check-core` hanno superato tutti i casi, con 2.807 controlli ciascuna.
+## Versions and preserved attempts
 
-| File | Blob Git |
+First run on `82100f5a` found API defect:
+tests passed valid pathnames while entry required strings.
+Self-test and full check ended FAILED, with exits 1 and 2.
+Both preserved 59 cases, 984 checks, and 48 failed cases;
+collector copies had not begun.
+
+Correction on `6d47d2df` normalizes only manifest, destination, and
+observations at API entry. Manifest fields remain strings.
+59-case corpus unchanged. Explicit rerun and run within
+`make check-core` passed every case, with 2,807 checks each.
+
+| File | Git blob |
 |---|---|
-| Collector iniziale | `48c4e1a23390a43767a3630d66514d9c03a79159` |
-| Collector corretto | `d2eb1bd8a62b0fd98ec023243b2a768c19988dc7` |
-| Self-test invariato | `49da390b7e170acc9ffdafa78285f215aec75f44` |
+| Initial collector | `48c4e1a23390a43767a3630d66514d9c03a79159` |
+| Corrected collector | `d2eb1bd8a62b0fd98ec023243b2a768c19988dc7` |
+| Unchanged self-test | `49da390b7e170acc9ffdafa78285f215aec75f44` |
 
-Le letture statiche hanno corretto la diagnosi della label vuota, il
-collegamento dei payload accessori e il template della directory del
-self-test. Le preparazioni sintattiche fallite sono conservate; le note
-distinguono i diagnostici rimasti nella conversazione dai log fisici.
+Static readings corrected empty-label diagnosis, accessory-payload
+binding, and self-test directory template.
+Failed syntactic preparations preserved; notes
+distinguish diagnostics remaining in conversation from physical logs.
 
-## Esiti dello strumento
+<a id="esiti-dello-strumento"></a>
 
-Il caso principale conserva quattro processi storici distinti: OK,
-FAILED con exit NIL, SOURCE-CHANGED e FAILED con exit 7. Il risultato
-contiene nove file indicizzati e undici file effettivi, inclusi indice
-e catalogo. Quattro thread distinti eseguono copie; i conteggi osservati
-sono 3, 2, 2, 2. Il chiamante non esegue le copie.
+## Tool outcomes
 
-Il secondo caso compresso mantiene il descriptor come accessorio, senza
-inserirlo tra i processi: nove file, tre processi e conteggi 3, 2, 3, 1.
-Sono stati confrontati integralmente i byte di diciotto copie dei due
-casi, oltre alle due destinazioni ai limiti esatti di dimensione.
-Le fixture verificano immutabilità degli ingressi, copie binarie e nomi
-nascosti, metadati originali e assenza di inclusioni implicite.
+Main case preserves four distinct historical processes: OK,
+FAILED with exit NIL, SOURCE-CHANGED, and FAILED with exit 7. Result
+contains nine indexed files and eleven actual files, including index
+and catalog. Four distinct threads perform copies; observed counts
+3, 2, 2, 2. Caller does not perform copies.
 
-I rifiuti comprendono manifest malformati, chiavi duplicate, percorsi
-non relativi, nomi riservati, collisioni file/directory, record incompleti,
-metadati incoerenti, symlink finali, destinazioni esistenti, output
-sovrapposti, payload mancanti o spostati, hash errati e budget superati.
-READ-EVAL resta NIL ed è richiesta una sola forma fino all'EOF.
+Second compressed case retains descriptor as accessory without
+listing among processes: nine files, three processes, counts 3, 2, 3, 1.
+Bytes of eighteen copies across both cases compared in full,
+alongside two destinations at exact size limits.
+Fixtures verify immutable inputs, binary copies and hidden
+names, original metadata, and no implicit inclusions.
 
-L'alterazione di una copia viene rilevata come COPIED-BYTES e il cambio
-della fonte come SOURCE-CHANGED. Un file nascosto aggiunto nella radice
-provoca CLOSED-CHECK: il checker figlio rileva INVENTORY. Log e rapporto
-fallito restano esterni, con copie parziali conservate.
+Rejections include malformed manifests, duplicate keys, nonrelative
+paths, reserved names, file/directory collisions, incomplete records,
+inconsistent metadata, final symlinks, existing destinations, overlapping
+outputs, missing or moved payloads, incorrect hashes, and exceeded budgets.
+READ-EVAL remains NIL and one form through EOF required.
 
-## Integrazione e lettura indipendente
+Copy alteration detected as COPIED-BYTES and source change
+as SOURCE-CHANGED. Hidden file added at root
+causes CLOSED-CHECK: child checker detects INVENTORY. Logs and failed
+report stay external, partial copies preserved.
 
-Su `6d47d2df`, `make check-core` ha superato 1.651 test nominati,
-due smoke, quattro fixture del linter e i 59 casi del collector.
-Sono distinti i test del prodotto dai controlli C4 del linter.
+<a id="integrazione-e-lettura-indipendente"></a>
 
-Lint: 237 file e zero violazioni. Tracciabilità: 122 requisiti, 65
-invarianti, 13 scenari FI e 52 ADR, senza errori. Link: 476 file,
-3.199 collegamenti e zero rotti. Le evidenze comprendono 123 cataloghi,
-3.565 riferimenti e 42.702 file conservati. I dieci spike sono stati
-eseguiti soltanto in modalità `--check`.
+## Integration and independent reading
 
-La lettura DATA indipendente ha superato 1.694 verifiche su 251 file
-fisici, con hash e metadati prima/dopo stabili. Verifica i due wrapper
-riusciti, i due falliti, le copie, i quattro worker, i metadati storici e
-il checker finale. I wrapper hanno osservato 972 sorgenti stabili.
-Il primo lettore non riconosceva i nomi dei test nel formato stampato;
-il tentativo fallito e la variante corretta sono conservati.
+On `6d47d2df`, `make check-core` passed 1,651 named tests,
+two smoke tests, four linter fixtures, and 59 collector cases.
+Product tests distinct from linter C4 checks.
 
-## Conservazione
+Lint: 237 files and zero violations. Traceability: 122 requirements, 65
+invariants, 13 FI scenarios, and 52 ADRs without errors. Links: 476 files,
+3,199 links, zero broken. Evidence includes 123 catalogs,
+3,565 references, and 42,702 preserved files. Ten spikes run
+only in `--check` mode.
 
-L'[archivio principale](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-command-archive-collector/archive-index.lisp)
-contiene 454 file elencati dal manifest e le due copie automatiche del
-manifest e del collector: 456 file indicizzati, 458 effettivi, 2.189.674
-byte indicizzati e sei processi, tre OK e tre FAILED. Il checker finale
-ha verificato l'inventario chiuso dopo la scrittura dell'indice e del
-catalogo.
+Independent DATA reading passed 1,694 checks over 251 physical
+files, with stable before/after hashes and metadata. Verifies two successful
+wrappers, two failed, copies, four workers, historical metadata,
+and final checker. Wrappers observed 972 stable sources.
+First reader did not recognize test names in printed format;
+failed attempt and corrected variant preserved.
 
-Il [supplemento](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-command-archive-collector-final/archive-index.lisp)
-conserva i record conclusi della preparazione e della raccolta principale,
-compreso il risultato del checker: due processi, 53 file indicizzati e
-55 effettivi. Anche il supplemento ha superato il checker finale.
-Nessun append modifica i due archivi dopo la rispettiva verifica.
+<a id="conservazione"></a>
 
-Il riepilogo del preparatore iniziale riportava 46 file perché SORT
-riordinava la lista e il conteggio successivo partiva dal vecchio head.
-Il manifest serializzato conteneva tutti i 454 file: il piano del collector
-e l'inventario ne confermano la presenza. Il preparatore usato per il
-supplemento ordina una copia della lista; sorgente e rapporto iniziali
-rimangono conservati senza modifiche.
+## Preservation
 
-Le fixture complete, incluse quelle deliberatamente oltre budget, restano
-nel backup locale delle prove. L'archivio pubblicato seleziona rapporti e
-log dei casi: non contiene tutte le directory di input e gli archivi
-parziali. Il manifest esplicita ogni file selezionato.
+[Main archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-command-archive-collector/archive-index.lisp)
+contains 454 manifest-listed files and two automatic manifest/collector
+copies: 456 indexed files, 458 actual, 2,189,674 indexed
+bytes, and six processes, three OK and three FAILED. Final checker
+verified closed inventory after index and catalog
+writing.
 
-La riuscita della raccolta attesta copie e inventario, non promuove i
-comandi falliti. Nessuna misura di throughput, speedup, atomicità durevole
-o qualifica C1/MC/DC è derivata da questa campagna.
+[Supplement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-command-archive-collector-final/archive-index.lisp)
+preserves completed preparation and main-collection records,
+including checker result: two processes, 53 indexed files, and
+55 actual. Supplement also passed final checker.
+No append changes either archive after respective verification.
+
+Initial preparer summary reported 46 files because SORT
+reordered list and subsequent count began at old head.
+Serialized manifest contained all 454 files: collector plan
+and inventory confirm presence. Supplement preparer
+sorts list copy; initial source and report
+remain preserved unchanged.
+
+Complete fixtures, including deliberately over-budget ones, remain
+in local evidence backup. Published archive selects case
+reports and logs: does not contain every input directory or partial
+archive. Manifest makes each selected file explicit.
+
+Collection success attests copies and inventory, does not promote failed
+commands. No throughput, speedup, durable atomicity,
+or C1/MC/DC qualification derived from campaign.
 

@@ -1,33 +1,35 @@
-# Decisioni C1 — registro CSN
+<a id="decisioni-c1--registro-csn"></a>
 
-Lettura del realizzatore prima dell'esecuzione. Invarianti INV-M4, INV-M6, INV-A8;
-REQ-MVC-005, REQ-MVC-008, REQ-AFF-008. I test successivi devono esercitare ogni
-condizione modificabile singolarmente, con rifiuto e conservazione dello stato.
-Questa tabella non dichiara copertura strumentale né qualifica del motore.
+# C1 decisions — CSN register
 
-| Decisione | Condizioni | Casi richiesti |
+Implementer's reading before execution. Invariants INV-M4, INV-M6, INV-A8;
+REQ-MVC-005, REQ-MVC-008, REQ-AFF-008. Subsequent tests must exercise every
+individually changeable condition, with rejection and state preservation.
+This table claims neither instrumented coverage nor engine qualification.
+
+| Decision | Conditions | Required cases |
 |---|---|---|
-| Configurazione | capacità nel dominio; high u32; low u32 | capacità 0/65537/tipo errato; high/low negativi, 2^32, non interi; confini validi |
-| Guardia | owner corrente; tentativo riuscito | chiamata ricorsiva, altro thread proprietario, acquisizione libera |
-| Forma del registro | lunghezza high=K; low=K; used≤K; cursor<K | FI per ogni campo incoerente; registro valido |
-| Frontiere | ultimo<H; used=0 con H≠ultimo | FI ordine high, ordine low a high uguale, differenza di ciascuna parola |
-| Credito | used=K | capacità piena, rifiuto senza avanzare ultimo, risoluzione e nuovo credito |
-| Esaurimento | high=2^32−1 e low=2^32−1 | entrambe vere; high massimo/low inferiore; low massimo/high inferiore |
-| Slot libero | high=0 e low=0 | libero, CSN basso con solo low, carry con solo high, entrambi non zero |
-| Incremento | low massimo | incremento normale, carry, passaggio oltre fixnum, massimo u64 |
-| Forma del token | slot index e slot<K; high/low u32; almeno una parola positiva | singoli tipi/range errati; zero/zero; ciascuna parola sola positiva |
-| Identità del token | high e low coincidono con slot | ciascuna parola differente, stale dopo risoluzione e dopo riuso |
-| Token e frontiere | used>0; H<token; token≤ultimo | FI ciascuna incoerenza, token corrente valido |
-| Minimo residuo | slot≠risolto; coppia non zero; H<slot≤ultimo | risolto escluso, libero, pendente più vecchio/più nuovo, FI frontiere |
-| Conteggio residuo | count=used−1 | vuoto, uno/molti pendenti, conteggio incoerente |
-| Decremento del minimo | count>0; low=0 | nessun pendente, borrow high→low massimo, minimo con low positivo |
-| Ordine u64 | high minore; high uguale e low minore | high minore con low maggiore; high maggiore; high uguale/low minore/uguale/maggiore |
+| Configuration | capacity in domain; high u32; low u32 | capacity 0/65537/wrong type; negative high/low, 2^32, nonintegers; valid boundaries |
+| Guard | current owner; successful attempt | recursive call, another owning thread, free acquisition |
+| Register shape | high length=K; low=K; used≤K; cursor<K | FI for every inconsistent field; valid register |
+| Frontiers | last<H; used=0 with H≠last | FI high order, low order at equal high, each-word difference |
+| Credit | used=K | full capacity, rejection without advancing last, resolution and new credit |
+| Exhaustion | high=2^32−1 and low=2^32−1 | both true; maximum high/lower low; maximum low/lower high |
+| Free slot | high=0 and low=0 | free, low CSN with low only, carry with high only, both nonzero |
+| Increment | low maximum | normal increment, carry, beyond-fixnum transition, maximum u64 |
+| Token shape | slot index and slot<K; high/low u32; at least one positive word | individually wrong types/ranges; zero/zero; each word positive alone |
+| Token identity | high and low match slot | each word different, stale after resolution and reuse |
+| Token and frontiers | used>0; H<token; token≤last | FI for each inconsistency, valid current token |
+| Remaining minimum | slot≠resolved; nonzero pair; H<slot≤last | resolved excluded, free, older/newer pending, FI frontiers |
+| Remaining count | count=used−1 | empty, one/many pending, inconsistent count |
+| Minimum decrement | count>0; low=0 | no pending, borrow high→maximum low, minimum with positive low |
+| u64 order | high lower; high equal and low lower | lower high with greater low; greater high; equal high/lower/equal/greater low |
 
-I valori iniziali derivano dal massimo recuperato; nessun setter pubblico modifica
-la base in esercizio. Il controller è proprietario degli obblighi di risoluzione
-e del fail-stop: il registro non sa se gli effetti sono stati pubblicati.
+Initial values derive from the recovered maximum; no public setter changes
+the base during operation. The controller owns resolution obligations
+and fail-stop: the register does not know whether effects have been published.
 
-Ogni scansione è limitata a K≤65536; nessun callback o I/O dentro il mutex.
-Le parole u32 rimangono fixnum su SBCL a 64 bit. Le condizioni d'errore possono
-allocare, i successi sono oggetto di misura. L'API accetta token numerici legati
-dal chiamante al registro: non rileva lo scambio fra Archivi con token identici.
+Every scan is bounded by K≤65536; no callbacks or I/O inside the mutex.
+u32 words remain fixnums on 64-bit SBCL. Error conditions may
+allocate; successes are measured. The API accepts numeric tokens bound
+to the register by the caller: it does not detect exchanges between Archivi with identical tokens.

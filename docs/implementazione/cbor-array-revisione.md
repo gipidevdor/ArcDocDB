@@ -1,14 +1,18 @@
-# Composizione degli array CBOR — prima lettura C1
+<a id="composizione-degli-array-cbor--prima-lettura-c1"></a>
 
-Lettura statica del 2026-10-13, prima della compilazione dei nuovi sorgenti
-e delle campagne. Il corpus è stato congelato prima della scrittura del
-prodotto. Riferimenti: [metodo preregistrato](cbor-array-metodo.md),
-[contratto](cbor-array.md), [inventario delle decisioni](cbor-array-decisioni.md),
-[standard di codifica](../affidabilita/standard-di-codifica.md) e
-ADR-0014/0024/0033/0035/0048. Questa lettura non misura allocazioni,
-copertura, prestazioni o MC/DC e non chiude il gate C1.
+# Composing CBOR arrays — first C1 reading
 
-## Versioni lette
+Static reading of 2026-10-13, before compiling the new sources
+and running campaigns. The corpus was frozen before writing the
+product. References: [preregistered method](cbor-array-metodo.md),
+[contract](cbor-array.md), [decision inventory](cbor-array-decisioni.md),
+[coding standard](../affidabilita/standard-di-codifica.md), and
+ADR-0014/0024/0033/0035/0048. This reading does not measure allocations,
+coverage, performance, or MC/DC and does not close the C1 gate.
+
+<a id="versioni-lette"></a>
+
+## Versions read
 
 | File | Git blob |
 |---|---|
@@ -19,9 +23,9 @@ copertura, prestazioni o MC/DC e non chiude il gate C1.
 | `tests/codec/cbor-array-write.lisp` | `b13f58264f3cd97e1947ee52936732a7fcebe672` |
 | `tests/codec/cbor-array-write-threads.lisp` | `5720110265b67019937f08cbd949b4469a04b867` |
 
-Letti anche gli helper di span/copia, testata, scratch, preflight e scanner
-minimo esistenti, oltre a export, ordine ASDF, ambito coverage, requisito
-e matrice. Le impronte delle dipendenze rilevanti sono:
+Existing span/copy, header, scratch, preflight, and minimal-scanner helpers
+were also read, along with exports, ASDF order, coverage scope, requirement,
+and matrix. Relevant dependency hashes are:
 
 | File in `src/codec/` | Git blob |
 |---|---|
@@ -32,24 +36,26 @@ e matrice. Le impronte delle dipendenze rilevanti sono:
 | `cbor-scan.lisp` | `e3d7d77407046338d23e26eb0b8a2e8fdc3d699d` |
 | `cbor-scan-minimal.lisp` | `f1afe79c7a4d49abd6a6e5f6975dec830ef7b1f6` |
 
-L'autore del prodotto aveva già corretto, prima delle campagne, la guardia
-`COUNT <= LENGTH(ITEM-ENDS) <= 16MiB`: limitava erroneamente anche la
-coda ignorata della tabella. Le righe 46–49 di `cbor-array-write.lisp`
-verificano separatamente COUNT contro la lunghezza e contro il limite;
-nessun limite nuovo viene imposto alla coda. L'originale, blob
-`b3135c8768199c23d58721ba528154461fdbda1e`, e la nota del rilievo restano
-nelle prove preparatorie `spikes/out/cbor-array-write-20261013/precompile/`.
-La presente lettura riguarda la versione corretta identificata sopra.
+The product author had already corrected, before campaigns, guard
+`COUNT <= LENGTH(ITEM-ENDS) <= 16MiB`: it incorrectly also limited the
+table's ignored tail. Lines 46–49 of `cbor-array-write.lisp`
+check COUNT separately against length and limit;
+no new limit is imposed on the tail. The original, blob
+`b3135c8768199c23d58721ba528154461fdbda1e`, and finding note remain
+in preparatory evidence `spikes/out/cbor-array-write-20261013/precompile/`.
+This reading concerns the corrected version identified above.
 
-## Dimensioni, percorsi e guardie
+<a id="dimensioni-percorsi-e-guardie"></a>
 
-Righe dalla DEFUN alla chiusura inclusa, con docstring e dichiarazioni.
-Conteggio dei percorsi: base uno; un incremento per WHEN/UNLESS e LOOP;
-un incremento per ogni operando AND/OR successivo al primo. I confronti
-numerici concatenati sono predicati Lisp e vengono inventariati
-separatamente. Il conteggio non è una misura della coverage SB-COVER.
+## Sizes, paths, and guards
 
-| Funzione | File | Righe | Percorsi |
+Lines from DEFUN through closing form inclusive, with docstrings and declarations.
+Path count: base one; one increment per WHEN/UNLESS and LOOP;
+one increment per AND/OR operand after the first. Chained numeric
+comparisons are Lisp predicates and inventoried
+separately. The count is not an SB-COVER coverage measurement.
+
+| Function | File | Lines | Paths |
 |---|---|---:|---:|
 | `check-tabella-array-cbor` | input | 9–19: 11 | 7 |
 | `check-spazio-array-cbor` | input | 24–34: 11 | 5 |
@@ -62,104 +68,108 @@ separatamente. Il conteggio non è una misura della coverage SB-COVER.
 | `verifica-figli-array-cbor` | write | 38–64: 27 | 8 |
 | `scrivi-array-cbor-minimo` | write | 70–105: 36 | 6 |
 
-Tutte le funzioni restano entro COD-12/COD-13, hanno FTYPE completo,
-docstring pre/post/errori e riferimenti REQ. Entrambi i file dichiarano
-`safety 3`. Non ci sono COND/CASE nuovi cui applicare COD-15.
-L'inventario contiene 36 siti WHEN/UNLESS, due LOOP, cinque AND/OR
-con 14 operandi e otto confronti concatenati; nessun AND/OR è annidato.
+All functions remain within COD-12/COD-13, have complete FTYPEs,
+pre/post/error docstrings, and REQ references. Both files declare
+`safety 3`. There are no new COND/CASE forms to which COD-15 applies.
+The inventory contains 36 WHEN/UNLESS sites, two LOOPs, five AND/OR forms
+with 14 operands, and eight chained comparisons; no AND/OR is nested.
 
-COD-24: i validatori di tabella, spazio, dimensioni e radice hanno almeno
-due controlli significativi di dominio; l'uscita normale attesta quelle
-proprietà, senza produrre dati derivati non verificati. Questi controlli
-segnalano errori pubblici e non sono tutti `invariant-violation`.
-Overlap e fini aggiungono guardie interne su limiti fisici e budget;
-il preflight confronta span e capacità restituiti dagli helper. La
-scansione verifica intervalli, progresso, nodi e profondità effettivi;
-il writer confronta risultati aggregati, cursore dopo la testata,
-lunghezza da copiare e cursore finale. Sono relazioni fra valori e
-confini, ulteriori rispetto al solo tipo INDEX/U32. Le guardie sono
-sempre attive e non modificano dati; gli errori interni devono raggiungere
-il confine fail-stop del proprietario della Serie.
+COD-24: table, space, size, and root validators have at least
+two meaningful domain checks; normal exit establishes those
+properties without producing unverified derived data. These checks
+signal public errors and are not all `invariant-violation`.
+Overlap and ends add internal guards on physical bounds and budgets;
+preflight compares spans and capacities returned by helpers. Scanning
+checks actual ranges, progress, nodes, and depth;
+the writer compares aggregate results, cursor after header,
+copy length, and final cursor. These are relations among values and
+boundaries beyond INDEX/U32 types alone. Guards are
+always active and do not modify data; internal errors must reach
+the Serie owner's fail-stop boundary.
 
-## Ragionamento sul contratto
+<a id="ragionamento-sul-contratto"></a>
 
-La sequenza del preflight alle righe 116–126 di input rispetta le undici
-fasi preregistrate. Solo le prime COUNT entry vengono lette, alla fase 9;
-nessun byte del payload viene parsato e lo scratch resta intatto fino
-alla scansione. SPAN è verificato contro MAX-BYTES prima della somma e
-del cast U32; COUNT è già limitato da SPAN. La capacità usa END-START,
-non la lunghezza fisica della destinazione. L'overlap usa l'intero
-`[START,NEXT)`, compresa la testata, prima di leggere le entry.
+## Contract reasoning
 
-La tabella forma una partizione strettamente crescente che termina a
-SPAN. Quindi `SOURCE-START + ITEM-ENDS[i]` non supera SOURCE-END e ogni
-segmento è non vuoto. Il minimo `1+COUNT` precede il parsing. Nodi e picco
-partono da uno per la radice; il residuo nodi viene controllato prima del
-reset successivo. Residuo uno è passato allo scanner, residuo zero genera
-`:cbor-array-node-budget` all'inizio assoluto del prossimo figlio.
-MAX-DEPTH è almeno uno prima della sottrazione; lo scanner conta soltanto
-array/map e il writer aggiunge il livello della radice. I tag aggiungono
-nodi, senza aggiungere livelli di contenitore.
+The preflight sequence at input lines 116–126 follows all eleven
+preregistered phases. Only the first COUNT entries are read, at phase 9;
+no payload byte is parsed and scratch remains intact until
+scanning. SPAN is checked against MAX-BYTES before addition and
+U32 cast; COUNT is already bounded by SPAN. Capacity uses END-START,
+not physical destination length. Overlap uses the complete
+`[START,NEXT)`, including header, before reading entries.
 
-Tutti i figli sono verificati prima della prima emissione, riga 96 di
-write. Testata MT4 e copia condivisa conservano i byte wire esatti:
-non aggiungono ordinamento delle mappe, deduplica, semantica dei tag o
-politiche NaN. La copia in avanti esistente è utilizzabile perché il
-preflight ha provato la disgiunzione anche della testata; i suoi motivi
-interni `:cbor-string-copy-*` restano applicabili. Con COUNT zero entrambi
-i LOOP vengono saltati, lo scanner non viene chiamato e tutto lo scratch
-resta intatto. A successo non vuoto lo scratch descrive l'ultimo figlio,
-mentre le somme aggregate rimangono locali.
+The table forms a strictly increasing partition ending at
+SPAN. Thus `SOURCE-START + ITEM-ENDS[i]` does not exceed SOURCE-END and every
+segment is nonempty. Minimum `1+COUNT` precedes parsing. Nodes and peak
+start at one for the root; remaining nodes are checked before the
+next reset. Remainder one is passed to the scanner; remainder zero generates
+`:cbor-array-node-budget` at the next child's absolute start.
+MAX-DEPTH is at least one before subtraction; the scanner counts only
+arrays/maps and the writer adds the root level. Tags add
+nodes without adding container levels.
 
-## Checklist C1 a dodici punti
+All children are verified before first emission, write line 96.
+MT4 header and shared copy preserve exact wire bytes:
+they add no map ordering, deduplication, tag semantics, or
+NaN policies. Existing forward copy is usable because
+preflight proved disjointness including the header; its internal
+`:cbor-string-copy-*` reasons remain applicable. With zero COUNT both
+LOOPs are skipped, the scanner is not called, and all scratch
+remains intact. On nonempty success, scratch describes the last child,
+while aggregate sums remain local.
 
-1. **Requisiti e ADR.** REQ-CBR-005, REQ-LIM-001/002 e REQ-AFF-004/008
-   sono indicati e coerenti con ADR-0014/0033/0035/0048. Il profilo locale
-   minimo resta distinto dalle regole documentali superiori.
-2. **Invarianti e test previsti.** INV-F1: testata fredda, payload letterale,
-   un solo NEXT, array completi e sentinelle. INV-A8: limiti esatti byte,
-   radice/nodi/tag e profondità 99/100 dei figli. INV-P6: sorgente/tabella
-   stabili e destinazioni/scratch privati nei due worker riusati. I test
-   di rifiuto confrontano tutti gli array; il preflight confronta anche
-   lo scratch già sporco. La presenza dei test non equivale al loro PASS.
-3. **Errori.** Tipi e motivi pubblici sono distinti e propagati senza
-   catture: INVALID-ARGUMENT, RESOURCE-EXHAUSTED e CORRUPTION-DETECTED
-   dello scanner. Il corpus contiene precedenze, offset NIL/assoluti,
-   trailing, nonminimo, troncamento, UTF-8 e riuso dopo errore. I motivi
-   interni sono elencati nell'inventario; non si presume un test runtime
-   negativo per ogni guardia resa irraggiungibile dal dominio pubblico.
-4. **Cicli e attese.** Due LOOP nuovi limitati da COUNT<=SPAN<=16MiB;
-   copia limitata da SPAN, scanner e scratch fissi da 102 frame. Nessuna
-   ricorsione, attesa, I/O o thread nuovo. Costo dichiarato
-   `O(SPAN + COUNT*102)`, senza un conteggio esatto delle operazioni.
-5. **Allocazioni.** La misura COD-30 rimane da eseguire con le sei fixture,
-   baseline nulla e controllo positivo preregistrati. La lettura delle
-   forme e dei tipi non dimostra heap zero, nemmeno nei casi limite.
-6. **Dati verificati.** I valori esterni vengono validati prima dei cast,
-   degli accessi alla tabella, del reset e della scrittura. Nessun AST o
-   riferimento a buffer esce dal modulo: il risultato pubblico è NEXT.
-7. **Decisioni composte.** L'inventario collega tutte le condizioni ai
-   testimoni previsti e include guardie e relazioni concatenate. Coverage
-   grezza e verifica condizione per condizione restano da produrre;
-   nessuna esclusione dal denominatore o attestazione MC/DC.
-8. **Proprietà.** OWNER/SHARED dichiarano destinazione e scratch esclusivi,
-   sorgente e tabella stabili. I tre alias dello scratch sono rifiutati
-   anche per array vuoto. Nessuno stato globale mutabile nuovo.
-9. **Tracciabilità e check.** Export, ordine ASDF prodotto/corpus, RUN,
-   requisito e matrice aggiornati sono coerenti staticamente. Lo scope
-   coverage identifica esattamente i due nuovi file e il gruppo codec
-   include il RUN array. `make check` e i self-test restano da eseguire.
-10. **Regole e deviazioni.** Nessuna ulteriore deviazione statica richiesta
-    per i blob letti; la guardia sul COUNT è stata corretta prima delle
-    campagne. Compilazione, misure e copertura non sono anticipate.
-11. **Parallelismo.** Il prodotto non introduce lock, attese o scritture
-    condivise per operazione. Le prove preregistrate hanno due worker
-    reali, due ondate e 8192 composizioni su risorse private; i risultati
-    futuri non dimostreranno scaling o simultaneità sui core.
-12. **Durabilità.** Nessuna pubblicazione, modifica durevole o eliminazione.
-    Gli errori pubblici precedono la scrittura; guasti interni dopo
-    l'emissione sono fail-stop senza rollback, come dichiarato.
+<a id="checklist-c1-a-dodici-punti"></a>
 
-Esito della prima lettura: nessun ulteriore difetto statico rilevato nei
-due blob identificati. Rimangono necessarie la seconda lettura distinta,
-le campagne preregistrate e le verifiche richieste dal gate C1.
+## Twelve-point C1 checklist
+
+1. **Requirements and ADRs.** REQ-CBR-005, REQ-LIM-001/002, and REQ-AFF-004/008
+   are listed and consistent with ADR-0014/0033/0035/0048. The minimal local
+   profile remains distinct from higher document rules.
+2. **Invariants and planned tests.** INV-F1: cold header, literal payload,
+   one NEXT, full arrays, and sentinels. INV-A8: exact byte limits,
+   root/nodes/tags, and child depth 99/100. INV-P6: stable source/table
+   and private destinations/scratch in two reused workers. Rejection
+   tests compare all arrays; preflight also compares
+   already dirty scratch. Test presence does not equal PASS.
+3. **Errors.** Public types and reasons are distinct and propagated without
+   catches: INVALID-ARGUMENT, RESOURCE-EXHAUSTED, and scanner
+   CORRUPTION-DETECTED. Corpus contains precedence, NIL/absolute offsets,
+   trailing data, nonminimal forms, truncation, UTF-8, and reuse after error. Internal
+   reasons are inventoried; no negative runtime test is assumed
+   for every guard made unreachable by the public domain.
+4. **Loops and waits.** Two new LOOPs bounded by COUNT<=SPAN<=16MiB;
+   copy bounded by SPAN, scanner and scratch fixed at 102 frames. No
+   recursion, waits, I/O, or new threads. Declared cost
+   `O(SPAN + COUNT*102)`, without an exact operation count.
+5. **Allocations.** COD-30 measurement remains to be run with the six fixtures,
+   zero baseline, and preregistered positive control. Reading
+   forms and types does not demonstrate zero heap, even at boundaries.
+6. **Verified data.** External values are validated before casts,
+   table access, reset, and writing. No AST or
+   buffer reference leaves the module: the public result is NEXT.
+7. **Compound decisions.** The inventory connects all conditions to
+   planned witnesses and includes guards and chained relations. Raw coverage
+   and condition-by-condition verification remain to be produced;
+   no denominator exclusion or MC/DC attestation.
+8. **Ownership.** OWNER/SHARED declare exclusive destination and scratch,
+   stable source and table. All three scratch aliases are rejected
+   even for an empty array. No new mutable global state.
+9. **Traceability and checks.** Export, product/corpus ASDF order, RUN,
+   requirement, and updated matrix are statically consistent. Coverage
+   scope identifies exactly the two new files and the codec group
+   includes array RUN. `make check` and self-tests remain to be run.
+10. **Rules and deviations.** No further static deviation required
+    for the blobs read; the COUNT guard was corrected before
+    campaigns. Compilation, measurements, and coverage are not anticipated.
+11. **Parallelism.** Product introduces no locks, waits, or shared
+    per-operation writes. Preregistered tests use two real
+    workers, two waves, and 8192 compositions on private resources; future
+    results will not demonstrate scaling or simultaneous execution on cores.
+12. **Durability.** No publication, durable change, or deletion.
+    Public errors precede writing; internal faults after
+    emission are fail-stop without rollback, as declared.
+
+First-reading outcome: no further static defect detected in the
+two identified blobs. A distinct second reading,
+preregistered campaigns, and checks required by the C1 gate remain necessary.

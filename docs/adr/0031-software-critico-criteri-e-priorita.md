@@ -1,149 +1,177 @@
-# ADR-0031 — ArcDocDB è software critico: priorità, classi di integrità, regole
+<a id="adr-0031--arcdocdb-è-software-critico-priorità-classi-di-integrità-regole"></a>
 
-- **Stato:** Accettata (decisione dell'autore, 2026-10-03)
-- **Data:** 2026-10-03
-- **Rapporto con la specifica:** **emenda** la specifica nell'ordine delle priorità: gli
-  obiettivi di prestazione della specifica diventano subordinati all'affidabilità. Nessun
-  requisito funzionale della specifica viene rimosso.
-- **Riferimenti:** [affidabilità](../affidabilita/README.md),
-  [analisi dei guasti](../affidabilita/analisi-dei-guasti.md),
-  [standard di codifica](../affidabilita/standard-di-codifica.md),
-  [piano di verifica](../affidabilita/piano-di-verifica.md),
-  [tracciabilità](../tracciabilita/README.md)
+# ADR-0031 — ArcDocDB is critical software: priorities, integrity classes, rules
 
-## Contesto
+- **Status:** Accepted (author's decision, 2026-10-03)
+- **Date:** 2026-10-03
+- **Relationship to the specification:** **amends** the specification's priority order:
+  its performance objectives become subordinate to reliability. No functional
+  requirement of the specification is removed.
+- **References:** [reliability](../affidabilita/README.md),
+  [failure analysis](../affidabilita/analisi-dei-guasti.md),
+  [coding standard](../affidabilita/standard-di-codifica.md),
+  [verification plan](../affidabilita/piano-di-verifica.md),
+  [traceability](../tracciabilita/README.md)
 
-L'autore ha richiesto di adottare i criteri tipici del software critico: codice perfetto,
-funzionalità perfetta, tracciabilità; fine ultimo l'affidabilità totale ed estrema; vincoli di
-prestazione «ragionevolissimi». Il progetto era stato impostato con le prestazioni come
-motivazione principale (la specifica parla di «elevata velocità» come obiettivo principale).
+<a id="contesto"></a>
 
-## Decisione
+## Context
 
-### 1. Gerarchia delle priorità
+The author requested the criteria typical of critical software: perfect code,
+perfect functionality, traceability; the ultimate aim is total, extreme reliability;
+“very reasonable” performance constraints. The project had been set up with performance
+as its main motivation (the specification names “high speed” as the main objective).
 
-In ordine decrescente:
+<a id="decisione"></a>
 
-1. **Integrità dei dati committed.**
-2. **Correttezza funzionale** rispetto alla specifica.
-3. **Comportamento definito in presenza di guasti:** fail-stop o degrado controllato, mai
-   dati sbagliati.
-4. **Verificabilità e tracciabilità.**
-5. **Disponibilità.**
-6. **Prestazioni.**
+## Decision
 
-Regola: **una scelta di livello inferiore non può indebolire una garanzia di livello
-superiore.** Ogni compromesso a favore delle prestazioni richiede un ADR, una misura, e la
-dimostrazione che i livelli superiori non sono toccati.
+<a id="1-gerarchia-delle-priorità"></a>
 
-### 2. Che cosa significa «affidabilità totale»
+### 1. Priority hierarchy
 
-Non è l'assenza di guasti, che nessun software può garantire. È l'insieme delle quattro
-proprietà seguenti, ciascuna verificabile:
+In descending order:
 
-- (a) **nessun dato committed è perso o corrotto senza che il sistema lo rilevi e lo
-  dichiari**;
-- (b) **nessuna risposta errata è data in silenzio**: un dato non verificato non viene mai
-  restituito;
-- (c) **ogni guasto del [modello dei guasti](../affidabilita/analisi-dei-guasti.md) ha una
-  risposta definita e verificata** (rilevazione, contenimento, recupero);
-- (d) **ogni requisito è tracciato** dalla specifica fino alla verifica, e la tracciabilità è
-  controllata da uno strumento.
+1. **Integrity of committed data.**
+2. **Functional correctness** against the specification.
+3. **Defined behavior in the presence of faults:** fail-stop or controlled degradation,
+   never incorrect data.
+4. **Verifiability and traceability.**
+5. **Availability.**
+6. **Performance.**
 
-I guasti **fuori** dal modello (perdita simultanea di tutti i supporti, un sistema operativo
-o un firmware che mentono su un flush, difetti del compilatore) non si possono escludere:
-vengono resi rilevabili dove possibile e dichiarati nel
-[registro dei rischi](../valutazione/registro-rischi.md) come rischi residui.
+Rule: **a lower-priority choice cannot weaken a higher-priority guarantee.** Every
+tradeoff favoring performance requires an ADR, a measurement, and a demonstration
+that higher priorities are unaffected.
 
-### 3. Classi di integrità del software
+<a id="2-che-cosa-significa-affidabilità-totale"></a>
 
-| Classe | Contenuto | Effetto di un difetto |
+### 2. What “total reliability” means
+
+It does not mean the absence of faults, which no software can guarantee. It means the
+following four properties, each verifiable:
+
+- (a) **no committed data is lost or corrupted without the system detecting and
+  reporting it**;
+- (b) **no incorrect answer is silently returned**: unverified data is never
+  returned;
+- (c) **every fault in the [fault model](../affidabilita/analisi-dei-guasti.md) has a
+  defined, verified response** (detection, containment, recovery);
+- (d) **every requirement is traced** from specification through verification,
+  and traceability is checked by a tool.
+
+Faults **outside** the model (simultaneous loss of all storage media, an operating system
+or firmware that lies about a flush, compiler defects) cannot be ruled out:
+they are made detectable where possible and declared as residual risks in the
+[risk register](../valutazione/registro-rischi.md).
+
+<a id="3-classi-di-integrità-del-software"></a>
+
+### 3. Software integrity classes
+
+| Class | Contents | Effect of a defect |
 |---|---|---|
-| **C1** — percorso dei dati | codec di record e file, segmenti, control log, `multiserie.log`, recovery, indice primario, MVCC e CSN, transazioni, compaction (swap, reclaim), modulo `io`, catalogo, verifica in lettura, cache (percorso dei dati) | perdita o corruzione di dati |
-| **C2** — correttezza funzionale senza effetti persistenti | Query Engine, protocollo, validazione del contratto, indici secondari (interrogazione) | risposta errata |
-| **C3** — governo delle risorse | scheduler, thread pool, politica di sostituzione della cache, metriche, compaction scheduler | degrado di prestazioni o disponibilità; **non** deve poter violare C1/C2 |
-| **C4** — strumenti | linter, controllo di tracciabilità, harness di test, benchmark | falsa fiducia (si verificano comunque) |
+| **C1** — data path | record and file codecs, segments, control log, `multiserie.log`, recovery, primary index, MVCC and CSN, transactions, compaction (swap, reclaim), `io` module, catalog, verification on read, cache (data path) | data loss or corruption |
+| **C2** — functional correctness without persistent effects | Query Engine, protocol, contract validation, secondary indexes (querying) | incorrect answer |
+| **C3** — resource control | scheduler, thread pool, cache replacement policy, metrics, compaction scheduler | degraded performance or availability; **must not** be able to violate C1/C2 |
+| **C4** — tools | linter, traceability checker, test harness, benchmarks | false confidence (they are verified too) |
 
-Un modulo ha la classe del suo componente più critico. Il codice C3 opera dentro **barriere
-di protezione** verificate: un errore dello scheduler può rallentare o rifiutare lavoro, mai
-cambiare dati.
+A module takes the class of its most critical component. C3 code operates within verified
+**protective barriers**: a scheduler error can slow or reject work, never
+change data.
 
-### 4. Rigore per classe
+<a id="4-rigore-per-classe"></a>
 
-| Attività | C1 | C2 | C3 | C4 |
+### 4. Rigor by class
+
+| Activity | C1 | C2 | C3 | C4 |
 |---|---|---|---|---|
-| Requisito tracciato fino a test | obbligatorio | obbligatorio | obbligatorio | — |
-| Standard di codifica ([ADR-0034](0034-policy-di-compilazione-e-standard-di-codifica.md)) | integrale | integrale | integrale | parziale |
-| Revisione | due passaggi con lista di controllo | due passaggi | uno | uno |
-| Copertura di istruzioni e rami | 100 %, eccezioni elencate e motivate | 100 % | ≥ 95 % | — |
-| Copertura delle condizioni nelle decisioni composte | 100 % (equivalente di MC/DC) | sulle decisioni segnalate | — | — |
-| Modello del protocollo, esplorato | sì, per i protocolli | — | — | — |
-| Fault injection | sì (FI-01…FI-13) | — | inversione di carico | — |
-| Test differenziale contro il modello di riferimento | sì | sì | — | — |
-| Fuzzing dei decoder | sì | sì | — | — |
-| Mutation testing | sì | — | — | — |
-| Soak test con crash ripetuti | sì | — | — | — |
+| Requirement traced through tests | mandatory | mandatory | mandatory | — |
+| Coding standard ([ADR-0034](0034-policy-di-compilazione-e-standard-di-codifica.md)) | full | full | full | partial |
+| Review | two passes with checklist | two passes | one | one |
+| Statement and branch coverage | 100 %, exceptions listed and justified | 100 % | ≥ 95 % | — |
+| Condition coverage in compound decisions | 100 % (MC/DC equivalent) | for flagged decisions | — | — |
+| Explored protocol model | yes, for protocols | — | — | — |
+| Fault injection | yes (FI-01…FI-13) | — | load reversal | — |
+| Differential test against the reference model | yes | yes | — | — |
+| Decoder fuzzing | yes | yes | — | — |
+| Mutation testing | yes | — | — | — |
+| Soak test with repeated crashes | yes | — | — | — |
 
-Strategia completa in [ADR-0035](0035-strategia-di-verifica-e-tracciabilita.md) e nel
-[piano di verifica](../affidabilita/piano-di-verifica.md).
+Full strategy in [ADR-0035](0035-strategia-di-verifica-e-tracciabilita.md) and the
+[verification plan](../affidabilita/piano-di-verifica.md).
 
-### 5. Prestazioni
+<a id="5-prestazioni"></a>
 
-- Gli obiettivi della specifica restano **obiettivi**. I requisiti **vincolanti** sono i
-  minimi di [ADR-0028](0028-target-e-obiettivi-di-latenza.md), ragionevoli per costruzione.
-- Il costo dei controlli di affidabilità (verifica in lettura, controlli di limiti e di tipo,
-  scrubbing) è **accettato** e non è un motivo per rimuoverli: se un minimo non è raggiunto,
-  si interviene su algoritmi e strutture, non sui controlli.
-- Nessuna ottimizzazione senza misura riproducibile (INV-X2) e senza che la suite di verifica
-  della classe interessata resti verde.
+### 5. Performance
 
-### 6. Deviazioni
+- The specification's objectives remain **objectives**. The **binding** requirements
+  are the minimums in [ADR-0028](0028-target-e-obiettivi-di-latenza.md), reasonable by construction.
+- The cost of reliability checks (verification on read, bounds and type checks,
+  scrubbing) is **accepted** and is no reason to remove them: if a minimum is not met,
+  algorithms and structures are changed, not checks.
+- No optimization without a reproducible measurement (INV-X2) and without the relevant
+  class's verification suite remaining green.
 
-Le regole valgono per tutto il codice di prodotto. Uno scostamento è ammesso solo come
-**deviazione registrata** (`DEV-nnn`) in
-[deviazioni.md](../affidabilita/deviazioni.md): giustificazione, rischio, misura
-compensativa, approvazione dell'autore.
+<a id="6-deviazioni"></a>
 
-## Basi di riferimento
+### 6. Deviations
 
-Criteri adattati, non certificati. Fonti: DO-178C e DO-333 (obiettivi di verifica,
-tracciabilità bidirezionale, copertura strutturale, metodi formali); IEC 61508-3 (tecniche
-raccomandate: programmazione difensiva, fault injection, test basati su modello); le regole
-«Power of 10» di G. Holzmann (JPL) per la codifica; la pratica dei database affidabili:
-SQLite (copertura dei rami, fault injection su I/O e memoria), FoundationDB e TigerBeetle
-(simulazione deterministica, asserzioni sempre attive), PostgreSQL (fallimento di `fsync`
-trattato come fatale dopo il difetto noto del 2018).
+The rules apply to all product code. A departure is allowed only as a
+**recorded deviation** (`DEV-nnn`) in
+[deviazioni.md](../affidabilita/deviazioni.md): justification, risk, compensating
+measure, author's approval.
 
-## Limiti dichiarati
+<a id="basi-di-riferimento"></a>
 
-- **Nessuna certificazione formale** è rivendicata; si adottano le tecniche, non il
-  processo di un ente.
-- **Indipendenza della verifica limitata**: l'autore è uno; la mitigazione sono gli strumenti
-  automatici, la revisione con liste di controllo e la rilettura da parte di un secondo
-  revisore indipendente (anche automatico) *su dati, non su conclusioni* (RSK-20).
-- **SBCL non è qualificato**: compilatore, GC e runtime fanno parte della base di fiducia
-  (RSK-18); le difese sono i controlli end-to-end, le versioni fissate e il test su più
-  piattaforme.
+## Reference basis
 
-## Conseguenze
+Adapted criteria, not certification. Sources: DO-178C and DO-333 (verification objectives,
+bidirectional traceability, structural coverage, formal methods); IEC 61508-3 (recommended
+techniques: defensive programming, fault injection, model-based testing); G. Holzmann's
+“Power of 10” rules (JPL) for coding; reliable database practice:
+SQLite (branch coverage, I/O and memory fault injection), FoundationDB and TigerBeetle
+(deterministic simulation, always-on assertions), PostgreSQL (`fsync` failure
+treated as fatal after the known 2018 defect).
 
-- Tre nuovi insiemi di artefatti: analisi dei guasti, requisiti tracciati, standard e piano
-  di verifica.
-- Otto nuovi invarianti (INV-A1…INV-A8).
-- Alcune scelte precedenti vanno riviste con questo criterio: ADR-0015 (seqlock,
-  → [ADR-0032](0032-seqlock-a-64-bit.md)), ADR-0019 (`:async`), ADR-0028 (obiettivi),
-  ADR-0030 (scope: copia unica dei dati).
+<a id="limiti-dichiarati"></a>
 
-## Alternative considerate
+## Declared limits
 
-- *Mantenere la priorità alle prestazioni con una buona suite di test:* incompatibile con la
-  richiesta dell'autore.
-- *Adottare formalmente uno standard (DO-178C, IEC 61508) con livello di integrità
-  dichiarato:* richiede processi e valutazioni di un ente che non sono nello scopo; si
-  adottano le tecniche con una tracciabilità propria.
+- **No formal certification** is claimed; the techniques are adopted, not an
+  organization's process.
+- **Limited verification independence**: there is one author; mitigation comes from
+  automated tools, checklist reviews, and rereading by a second independent
+  reviewer (including an automated one) *of data, not conclusions* (RSK-20).
+- **SBCL is not qualified**: compiler, GC, and runtime are part of the trusted base
+  (RSK-18); defenses are end-to-end checks, pinned versions, and testing on multiple
+  platforms.
 
-## Valutazione
+<a id="conseguenze"></a>
 
-- Rischi: RSK-17…RSK-20 (nuovi).
-- Verifica: la [matrice di tracciabilità](../tracciabilita/matrice.md) è controllata da
-  `make trace`; ogni invariante e ogni scenario FI è coperto da almeno un requisito.
+## Consequences
+
+- Three new artifact sets: failure analysis, traced requirements, standards and
+  verification plan.
+- Eight new invariants (INV-A1…INV-A8).
+- Some earlier choices need review under these criteria: ADR-0015 (seqlock,
+  → [ADR-0032](0032-seqlock-a-64-bit.md)), ADR-0019 (`:async`), ADR-0028 (objectives),
+  ADR-0030 (scope: a single data copy).
+
+<a id="alternative-considerate"></a>
+
+## Alternatives considered
+
+- *Keep performance as the priority with a good test suite:* incompatible with the
+  author's request.
+- *Formally adopt a standard (DO-178C, IEC 61508) with a declared integrity level:*
+  requires organizational processes and assessments outside the scope; the
+  techniques are adopted with custom traceability.
+
+<a id="valutazione"></a>
+
+## Assessment
+
+- Risks: RSK-17…RSK-20 (new).
+- Verification: the [traceability matrix](../tracciabilita/matrice.md) is checked by
+  `make trace`; every invariant and FI scenario is covered by at least one requirement.

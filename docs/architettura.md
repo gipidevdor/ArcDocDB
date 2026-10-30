@@ -469,7 +469,7 @@ indicano per ciascuno il meccanismo. Package: `arcdocdb.<modulo>`; moduli di sup
 ## Che cosa resta da misurare
 
 Le decisioni sono prese; cinque ipotesi quantitative restano da verificare con gli spike prima
-della Fase 1 ([valutazione](valutazione/README.md#rivalutazione-2026-10-03)):
+della Fase 1 ([valutazione](valutazione/cronologia.md#rivalutazione-2026-10-03)):
 
 1. pause del GC con heap grande, allocazione nulla e numero di thread crescente (SPK-02,
    criterio ≤ 5 ms);

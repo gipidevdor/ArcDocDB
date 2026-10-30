@@ -5,10 +5,9 @@
 
 Lo snapshot alla revisione `fea3c113514c804a0daf13251a146c687cc3953c` conserva
 **52.277 file originali**, inclusi i sottoprodotti inclusi negli inventari chiusi.
-I byte non sono stati riscritti. Nel checkout corrente restano le sintesi recenti;
-le citazioni storiche puntano all'identico albero conservato nel nuovo commit radice
-`13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78`. La prima migrazione non ha riscritto
-la storia; la successiva manutenzione autorizzata mantiene due commit e un backup esterno.
+I byte non sono stati riscritti. Nel checkout restano sintesi e riferimenti;
+gli originali si recuperano dagli asset verificati. Gli hash dei commit nei
+metadati identificano le esecuzioni storiche anche quando la cronologia Git è stata ridotta.
 
 [Release con archivio e inventario SHA-256](https://github.com/gpicchiarelli/ArcDocDB/releases/tag/evidence-2026-10-23-fea3c113).
 Il [manifesto locale](snapshot.lisp) registra identità, dimensioni e hash.
@@ -63,10 +62,11 @@ per la pubblicazione avviene dopo la verifica, senza cambiarne gli originali.
 
 ## Cronologia Git precedente
 
-Il [manifesto della manutenzione](history.lisp) registra il collegamento fra
-vecchia e nuova radice. L'albero della radice è identico; i metadati delle prove
-conservano le SHA delle esecuzioni originali. Il tag della release punta alla
-nuova radice e i nomi degli asset continuano a identificare lo snapshot originario.
+Il [manifesto della manutenzione](history.lisp) registra la precedente riduzione
+a due commit. Un intervento successivo ha conservato il solo ultimo stato,
+senza cambiare i suoi file; le [note della release](https://github.com/gpicchiarelli/ArcDocDB/releases/tag/evidence-2026-10-23-fea3c113)
+documentano i payload necessari al recupero dei commit intermedi.
+I metadati delle prove conservano le SHA delle esecuzioni originali.
 
 La cronologia precedente completa è nell'asset `history-before-e97b823d.bundle`,
 225.295.869 byte, SHA-256
@@ -82,6 +82,6 @@ shasum -a 256 -c history-before-e97b823d.bundle.sha256
 git clone --branch main history-before-e97b823d.bundle restored
 ```
 
-Il backup esterno permette il recupero; non mantiene i vecchi commit raggiungibili
-nelle ref correnti del repository. Il primo dei due stati conservati contiene
-ancora i raw storici, quindi la sola riduzione della cronologia non li elimina dagli oggetti Git.
+Il backup esterno permette il recupero anche quando i vecchi commit non sono
+raggiungibili nelle ref correnti. I nomi e gli hash degli asset identificano
+lo snapshot archiviato, indipendentemente dal commit a cui punta il tag della release.

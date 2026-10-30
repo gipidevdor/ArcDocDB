@@ -2,15 +2,10 @@
 
 [Progetto](../README.md) · [Documentazione](../docs/README.md) · [Piano degli spike](../docs/valutazione/piano-spike.md)
 
-Esperimenti della fase di valutazione. Il piano, con domande, metodi e criteri di esito, è in
-[docs/valutazione/piano-spike.md](../docs/valutazione/piano-spike.md).
-
-La [campagna locale 2026-10-08](../docs/valutazione/risultati-2026-10-08.md)
-conserva misure e [dati grezzi](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/baseline.lisp) nel repository.
-SPK-01 e SPK-09 usano il formato v1; i risultati v2 sono raccolti separatamente.
-
-I limiti aggiornati hanno un esperimento distinto:
-[SPK-10 — limiti, formati e migrazione v2](SPK-10-v2-limits/README.md).
+Esperimenti della fase di valutazione. Il [piano](../docs/valutazione/piano-spike.md)
+definisce domande, metodi e criteri di esito; la [valutazione](../docs/valutazione/README.md)
+orienta fra campagne e risultati. I raw storici sono nell'[archivio esterno](evidence/README.md).
+I risultati v1 e v2 restano distinti.
 
 ## Regole
 
@@ -28,7 +23,6 @@ I limiti aggiornati hanno un esperimento distinto:
 
 ## Stato
 
-Dal 2026-10-08 sono disponibili esperimenti eseguibili per i cinque spike prioritari.
 `make spikes-check` compila senza avvisi ed esegue la correttezza in processi isolati;
 `make spikes-bench` esegue le misure **in serie** e registra ambiente, comandi e output
 in `spikes/out/`. Gli esiti non promuovono automaticamente i requisiti del motore.

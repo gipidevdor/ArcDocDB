@@ -73,18 +73,16 @@ vede.
 L'anteprima per i social non si imposta da riga di comando: si carica `img/social.png` in
 *Settings → General → Social preview*.
 
-## Badge
+## Pagine di ingresso
 
-Una sola riga, cinque al massimo, tutti dello stesso stile:
-`style=flat-square`, etichetta `#3a3a3c`, valore `#8e8e93`. Solo il badge della fase usa l'ambra
-`#c9892f`. Dicono che cosa è il progetto (licenza, linguaggio, runtime, dipendenze, fase); non
-contano cose. Il badge della CI, che ha i colori di GitHub, sta nella sezione *Status*.
+Il README usa un marchio piccolo, il nome come testo, una frase sul prodotto e
+lo stato attuale. Seguono il comando per iniziare e pochi collegamenti utili.
+Niente riga di badge, schede, navigazione duplicata o illustrazioni introduttive.
 
-## La pagina iniziale
-
-Nell'ordine: marchio, nome, una frase, i badge, la navigazione, l'illustrazione. Poi le
-sezioni, ciascuna con un'idea sola. Frasi brevi. Tabelle senza intestazione quando le colonne
-si spiegano da sole. Nessuna emoji.
+Gli indici delle sezioni iniziano direttamente dal titolo. Una pagina ha un
+compito: orientare, descrivere un contratto o conservare una prova. I cataloghi
+completi e la cronologia restano accessibili un livello sotto gli ingressi.
+La gerarchia e lo spazio rendono leggibile il contenuto.
 
 ## Che cosa non si fa
 

@@ -1,7 +1,7 @@
 # Risultati attuali
 
-Nel checkout restano i [riferimenti alle otto campagne recenti rilevanti](2026-10-23-attuali/README.md)
-e le tre pubblicazioni CI più recenti. I raw, i compilati e i temporanei delle
+La [selezione delle campagne](2026-10-23-attuali/README.md) raccoglie sintesi e hash.
+I risultati CI sono indicizzati in [ci/](ci/README.md). I raw, i compilati e i temporanei delle
 campagne precedenti sono conservati nell'[archivio storico esterno](../evidence/README.md).
 
 `make evidence` controlla i cataloghi e i dati presenti nel checkout. Non scarica

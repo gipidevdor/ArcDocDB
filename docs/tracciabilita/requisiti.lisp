@@ -228,11 +228,11 @@
   :inv ("INV-I7" "INV-A8" "INV-P6") :adr ("ADR-0057" "ADR-0049" "ADR-0050") :ver (:test :model :bench :fi :rev) :fi ("FI-06" "FI-10" "FI-11"))
  (:id "REQ-IDX-009" :src "ADR-0058" :cls "C1" :stato :progettato
   :txt "Le pagine derivate dell'indice primario hanno identita' Serie/immagine/offset/generazione, versione e CRC32C; bucket flat, directory radix e frammenti di chiave sono verificati prima dell'uso. Riferimenti precedenti, packing canonico, geometria e limiti v2 impediscono alias strutturali e falsi miss locali; il codec non introduce un commit indipendente."
-  :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0058" "ADR-0065" "ADR-0057" "ADR-0043") :ver (:test :diff :corr :rev) :fi ())
+  :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0068" "ADR-0058" "ADR-0065" "ADR-0057" "ADR-0043") :ver (:test :diff :corr :rev) :fi ())
 
  (:id "REQ-IDX-010" :src "ADR-0063" :cls "C1" :stato :progettato
   :txt "Una root paginata e' adottata soltanto da un'immagine completa verificata readonly contro fonte canonica, seme, conteggio e candidati autorevoli; completamento derivato distinto dal commit dati, budget cumulativi e rifiuto di duplicati/entry irraggiungibili."
-  :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0063" "ADR-0064" "ADR-0065" "ADR-0066" "ADR-0067" "ADR-0058" "ADR-0057") :ver (:test :diff :corr :fi :rev) :fi ("FI-06" "FI-10"))
+  :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0063" "ADR-0064" "ADR-0065" "ADR-0066" "ADR-0067" "ADR-0068" "ADR-0058" "ADR-0057") :ver (:test :diff :corr :fi :rev) :fi ("FI-06" "FI-10"))
 
  ;; ---- Cache -------------------------------------------------------------------
  (:id "REQ-CCH-001" :src "Cache" :cls "C3" :stato :progettato

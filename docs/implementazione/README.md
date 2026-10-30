@@ -27,6 +27,7 @@ non chiude ancora i requisiti nel loro perimetro complessivo.
 
 | Modulo | Contratto e verifica | Codice |
 |---|---|---|
+| Rinnovo immagini M1 | [Costruzione e attivazione sotto una admission, quota totale e delta vuoto](rinnovo-indice-m1.md) | [`src/engine/image-renewal.lisp`](../../src/engine/image-renewal.lisp) |
 | Delta immagini M1 | [Membership esatta bounded per PUT/DELETE](delta-indice-m1.md); residente ancora completo | [`src/engine/delta.lisp`](../../src/engine/delta.lisp) |
 | Attivazione immagini M1 | [Pubblicazione a caldo e chiusura dei file al ritiro](attivazione-indice-m1.md); scelta del controller, senza catalogo durevole | [`src/engine/image-activation.lisp`](../../src/engine/image-activation.lisp) |
 | Costruzione immagini M1 | [Piano da slot canonici, radix adattivo e verifica completa](costruzione-indice-m1.md); senza attivazione automatica | [`src/engine/image-build.lisp`](../../src/engine/image-build.lisp) |

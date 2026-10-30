@@ -7,6 +7,10 @@ non ha ancora rilasci del prodotto; le versioni seguiranno la [roadmap](docs/roa
 
 ### Aggiunto
 
+- [Rinnovo seriale delle immagini M1](docs/implementazione/rinnovo-indice-m1.md):
+  costruzione, verifica e attivazione sotto BUSY continuo, quota totale prima
+  della creazione e delta vuoto per nuove scritture (ADR-0068).
+
 - [Delta seriale M1](docs/implementazione/delta-indice-m1.md) opzionale: PUT/DELETE
   conservano l’immagine; membership esatta preallocata, quote prima del CSN/WAL
   e letture delle chiavi toccate dal residente canonico (ADR-0067).

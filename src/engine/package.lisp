@@ -16,5 +16,5 @@
   (:export #:motore #:apri-motore #:chiudi-motore #:stato-motore
            #:scrivi-documento #:cancella-documento #:leggi-documento #:frontiere-motore
            #:opzione-indice-paginato #:crea-opzione-indice-paginato #:fonte-indice-motore #:modo-indice-motore
-           #:costruisci-indice-paginato-motore #:attiva-indice-paginato-motore
+           #:costruisci-indice-paginato-motore #:attiva-indice-paginato-motore #:rinnova-indice-paginato-motore
            #:errore-cleanup-motore #:causa-cleanup-motore #:errori-cleanup-motore))

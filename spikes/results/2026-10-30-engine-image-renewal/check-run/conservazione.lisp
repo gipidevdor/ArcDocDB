@@ -1,0 +1,31 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4002319748 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((78) BASE-CHAR
+    . \"/Users/gpicchiarelli/Documents/ArcDocDB/spikes/out/4002319116-command-61305-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 1 :WALL-SECONDS 1.004157d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 3313305 :STORED-BYTES 320464
+ :RESULTS
+ ((:PATH
+   #A((89) BASE-CHAR
+      . \"/Users/gpicchiarelli/Documents/ArcDocDB/spikes/out/4002319116-command-61305-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 3313305 :STORED-BYTES 320464 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 3313305 :UNCOMPRESSED-SHA256
+    \"c01c7d77f4707a6977e22829911733e236e68eec6a298e0382861c46c4fedf5a\"
+    :COMPRESSED-BYTES 320147 :COMPRESSED-SHA256
+    \"cbe58ab396c25953f4c686ce597b457de083aa97b7b49b49bd8c8bba44b56de0\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((48) BASE-CHAR . "/opt/homebrew/Cellar/sbcl/2.6.9/libexec/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((67) BASE-CHAR
+     . "/Users/gpicchiarelli/Documents/ArcDocDB/tools/compact-evidence.lisp")
+  "--root"
+  #A((78) BASE-CHAR
+     . "/Users/gpicchiarelli/Documents/ArcDocDB/spikes/out/4002319116-command-61305-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "61305"))
+ :STARTED-AT-UNIVERSAL-TIME 4002319746)

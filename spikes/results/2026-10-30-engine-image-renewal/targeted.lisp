@@ -1,0 +1,15 @@
+;;;; C4: attivazione seriale M1, ogni warning e' errore.
+(require :asdf)
+(setf asdf:*compile-file-warnings-behaviour* :error asdf:*compile-file-failure-behaviour* :error)
+(handler-bind ((warning (lambda (condition)
+                         (unless (typep condition 'sb-kernel:redefinition-warning) (error condition)))))
+  (asdf:load-asd (truename "arcdocdb.asd"))
+  (asdf:load-system "arcdocdb/tests"))
+(in-package #:arcdocdb.engine.tests)
+(let ((count 0))
+  (dolist (test (reverse *tests*))
+    (when (search "TEST-REQ-IDX-010-RENEW-" (symbol-name test))
+      (funcall test) (incf count) (format t "~&ok ~A~%" test)))
+  (assert (= count 10))
+  (format t "~&~S~%" (list :kind :engine-image-renewal :status :passed :tests count
+                          :sigkill-cases 6 :power-loss-qualification nil)))

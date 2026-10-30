@@ -2,9 +2,9 @@
 
 Primo incremento autorizzato il 2026-10-22: [ADR-0057](../adr/0057-selezione-automatica-indice.md),
 REQ-IDX-008, INV-I7, INV-A8, INV-P6. Classe C1 per il selettore, C4 per il modello.
-Il requisito complessivo resta progettato: l'indice usato dal motore e' ancora
-il [primario residente](indice-primario.md). Non esiste ancora un backend
-primario paginato o un attuatore di migrazione nel runtime.
+Il requisito complessivo resta progettato: M1 conserva il [primario residente](indice-primario.md)
+e integra GET paginato, delta limitato e [rinnovo seriale](rinnovo-indice-m1.md).
+Non esiste ancora un attuatore automatico che riduca la memoria del residente.
 
 ## API e stime
 
@@ -137,7 +137,7 @@ Nessuna reclamation del contenuto degli snapshot e' autorizzata da questo modell
 | I1, introdotto | `index.mode`, contratto puro; M0 C4 separato | Test e modello riproducibili, integrazione CI, tracciabilita'; attuatore ancora assente. |
 | I2, corrente | [ADR-0058](../adr/0058-pagine-indice-primario.md), [codec C1 delle pagine](pagine-indice.md), PageRef, checksum | Fixture indipendenti 4/16/64 KiB, collisioni e chiavi lunghe, pagine piene, corruzioni e immagine da split; nessun cambio dei log. |
 | I3, avviato | [Cache seriale con copie e PREAD verificato](cache-pagine.md); restano protocollo concorrente acquisizione/rilascio e budget completo | Prova di safety/progresso con primitive SBCL; fault injection, sospensione dei reader, saturazione, ABA; miss separato e bloccante dichiarato. |
-| I4, avviato | [Lettore seriale di directory multilivello e bucket](lettura-indice-paginato.md); [costruzione incrementale delle pagine](costruzione-indice-paginato.md); [immagini sigillate e adozione readonly seriale](immagini-indice-paginato.md); [startup/GET M1 e ritiro prima della scrittura](indice-paginato-m1.md); [produttore M1 con partizionamento radix](costruzione-indice-m1.md); [attivazione seriale sul motore aperto](attivazione-indice-m1.md); [delta seriale limitato sul residente](delta-indice-m1.md); restano writer autonomo paginato, catalogo e selezione automatica | Confronti differenziali col residente per PUT/GET/DELETE, snapshot, prepared/outcome, riavvio e crash a ogni frontiera; indice maggiore della RAM senza swap. |
+| I4, avviato | [Lettore seriale di directory multilivello e bucket](lettura-indice-paginato.md); [costruzione incrementale delle pagine](costruzione-indice-paginato.md); [immagini sigillate e adozione readonly seriale](immagini-indice-paginato.md); [startup/GET M1 e ritiro prima della scrittura](indice-paginato-m1.md); [produttore M1 con partizionamento radix](costruzione-indice-m1.md); [attivazione seriale sul motore aperto](attivazione-indice-m1.md); [delta seriale limitato sul residente](delta-indice-m1.md); [rinnovo con admission unica](rinnovo-indice-m1.md); restano writer autonomo paginato, catalogo e selezione automatica | Confronti differenziali col residente per PUT/GET/DELETE, snapshot, prepared/outcome, riavvio e crash a ogni frontiera; indice maggiore della RAM senza swap. |
 | I5 | Controllore/attuatore per Serie e misuratore iniettabile | Avvio e cambi automatici in entrambe le direzioni, limiti RSS/picchi, delta senza buchi, swap coerente, writer e snapshot concorrenti. |
 | I6 | Migrazione operativa e qualifica | Failpoint prima/dopo ogni swap, rientro controllato, benchmark caldo/freddo e write amplification; gate Linux x86-64 e macOS ARM64. |
 

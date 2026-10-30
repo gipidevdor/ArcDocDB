@@ -1,0 +1,247 @@
+;;; OWNER: runner C4 seriale; API reali per costruzione, swap e recovery.
+;;; REQ: REQ-IDX-010 REQ-IDX-009 REQ-LIM-003 REQ-AFF-008
+(in-package #:arcdocdb.engine.tests)
+
+(defun renew-image (engine option &key (keys 1) (bytes 16) (pages 65536))
+  (e:rinnova-indice-paginato-motore engine option :delta-keys keys :delta-key-bytes bytes :max-pages pages))
+
+(deftest test-REQ-IDX-010-renew-v1-v2-tre-taglie-fonte-delta-e-restart
+  (dolist (version '(1 2))
+    (dolist (size '(4096 16384 65536))
+      (with-root (root)
+        (let ((first (build-option 1 :page-size size)) (second (build-option 2 :page-size size)))
+          (with-engine (engine (open-build-engine root :create t :version version))
+            (initial-workload engine)
+            (is (eq first (renew-image engine first))) (check-initial engine)
+            (e:cancella-documento engine (key 1)) (check-get engine 1 nil)
+            (signals arcdocdb.conditions:resource-exhausted (e:scrivi-documento engine (key 3) (value 9)))
+            (let ((old (check-active-file engine)) (before (images root))
+                  (source (e:fonte-indice-motore engine)))
+              (is (eq second (renew-image engine second)))
+              (check-images root before) (check-frontier engine 6)
+              (is (same-engine-source source (e:fonte-indice-motore engine)))
+              (is (eq :closed (arcdocdb.io:stato-file old))) (check-active-file engine)
+              (is (zerop (e::delta-indice-motore-count (e::motore-delta engine))))
+              (check-get engine 1 nil) (check-get engine 3 (value 4))))
+          (with-engine (engine (open-build-engine root :version version :option second))
+            (check-frontier engine 6) (check-get engine 1 nil) (check-get engine 3 (value 4))
+            (is (eq :paged (e:modo-indice-motore engine)))))))))
+
+(deftest test-REQ-IDX-010-renew-cicli-quota-e-disabilitazione
+  (with-root (root)
+    (with-engine (engine (open-build-engine root :create t))
+      (initial-workload engine)
+      (renew-image engine (build-option 1))
+      (dotimes (i 6)
+        (let ((old (check-active-file engine)))
+          (e:scrivi-documento engine (key 1) (value 9))
+          (is (= 1 (e::delta-indice-motore-count (e::motore-delta engine))))
+          (renew-image engine (build-option (+ 2 i)))
+          (is (eq :closed (arcdocdb.io:stato-file old)))
+          (is (zerop (e::delta-indice-motore-used (e::motore-delta engine))))
+          (e:cancella-documento engine (key 3)) (check-get engine 3 nil)
+          (signals arcdocdb.conditions:resource-exhausted (e:cancella-documento engine (key 1)))
+          ;; Un altro rinnovo libera nuovamente la singola entry.
+          (renew-image engine (build-option (+ 20 i)))
+          (check-get engine 1 (value 9))))
+      (let ((option (build-option 100)))
+        (is (eq option (e:rinnova-indice-paginato-motore engine option)))
+        (is (null (e::motore-delta engine)))
+        (let ((file (check-active-file engine)))
+          (e:scrivi-documento engine (key 3) (value 8))
+          (is (eq :closed (arcdocdb.io:stato-file file)))
+          (is (eq :resident (e:modo-indice-motore engine))) (check-get engine 3 (value 8)))))))
+
+(deftest test-REQ-IDX-010-renew-preflight-intero-picco-nome-e-owner
+  (with-root (root)
+    (with-engine (engine (open-build-engine root :create t))
+      (initial-workload engine)
+      (let ((first (build-option 1)) (second (build-option 2)))
+        (signals arcdocdb.conditions:invariant-violation (e::esegui-rinnovo-immagine engine second 1 nil))
+        (signals arcdocdb.conditions:invalid-argument (renew-image engine (build-option 0)))
+        (renew-image engine first)
+        (e:cancella-documento engine (key 1))
+        (let ((before (images root)) (old (e::motore-delta engine)) (file (check-active-file engine))
+              (quota (e::payload-rinnovo-immagine engine second 1 16)))
+          (signals arcdocdb.conditions:resource-exhausted
+                   (e:rinnova-indice-paginato-motore engine second :delta-keys 1 :delta-key-bytes 16
+                     :max-maintenance-payload (1- quota)))
+          (signals arcdocdb.conditions:resource-exhausted
+                   (e:rinnova-indice-paginato-motore engine second
+                     :max-maintenance-payload (e::payload-costruzione-immagine engine second)))
+          (dolist (args '((:max-maintenance-payload -1) (:max-maintenance-payload 536870913)
+                          (:max-maintenance-payload nil) (:max-pages 0) (:max-pages 65537)
+                          (:max-pages 1.5) (:delta-keys 1) (:delta-key-bytes 16)
+                          (:delta-keys 65537 :delta-key-bytes 16) (:delta-keys 1 :delta-key-bytes 16777217)))
+            (signals arcdocdb.conditions:invalid-argument
+                     (apply #'e:rinnova-indice-paginato-motore engine second args)))
+          (signals arcdocdb.conditions:invalid-argument (renew-image engine first))
+          (is (eq :wrong-owner
+                  (sb-thread:join-thread
+                   (sb-thread:make-thread
+                    (lambda () (handler-case (renew-image engine second)
+                                 (arcdocdb.conditions:invalid-argument () :wrong-owner)))))))
+          (check-images root before) (is (not (probe-file (build-path root second))))
+          (is (eq :ready (e:stato-motore engine))) (check-frontier engine 6)
+          (is (eq old (e::motore-delta engine))) (is (eq file (check-active-file engine)))
+          (e:rinnova-indice-paginato-motore engine second :delta-keys 1 :delta-key-bytes 16
+            :max-maintenance-payload quota)
+          (check-frontier engine 6) (check-get engine 1 nil))))))
+
+(deftest test-REQ-IDX-010-renew-BUSY-continuo-e-callback-non-rientranti
+  (with-root (root)
+    (let ((armed nil) (seen nil))
+      (with-engine (engine (open-build-engine root :create t
+                             :observer (lambda (engine phase)
+                                         (when armed
+                                           (push phase seen) (is (e::motore-busy engine))
+                                           (signals arcdocdb.conditions:invalid-argument (e:leggi-documento engine (key 1) (bytes 64)))
+                                           (signals arcdocdb.conditions:invalid-argument (e:scrivi-documento engine (key 1) (value 8)))
+                                           (signals arcdocdb.conditions:invalid-argument (e:cancella-documento engine (key 1)))
+                                           (signals arcdocdb.conditions:invalid-argument (renew-image engine (build-option 9)))
+                                           (signals arcdocdb.conditions:invalid-argument (e:costruisci-indice-paginato-motore engine (build-option 9)))
+                                           (signals arcdocdb.conditions:invalid-argument (e:attiva-indice-paginato-motore engine (build-option 9)))
+                                           (signals arcdocdb.conditions:invalid-argument (e:chiudi-motore engine))) nil)))
+        (initial-workload engine) (setf armed t)
+        (renew-image engine (build-option 1)) (setf armed nil)
+        (is (= 12 (length seen)))
+        (dolist (phase '(:image-build-planned :image-build-created :image-build-pages :image-build-before-footer
+                         :image-build-after-footer :image-build-after-flush :image-build-verified :image-renewal-built
+                         :before-image-activation :image-activation-verified :before-image-publication :image-published))
+          (is (= 1 (count phase seen))))
+        (is (not (e::motore-busy engine))) (check-initial engine)))))
+
+(deftest test-REQ-IDX-010-renew-uscite-incomplete-ownership-prima-e-dopo-swap
+  (dolist (phase '(:image-build-created :image-renewal-built :before-image-publication :image-published))
+    (with-root (root)
+      (let ((armed nil))
+        (with-engine (engine (open-build-engine root :create t
+                               :observer (lambda (engine step)
+                                           (declare (ignore engine))
+                                           (when (and armed (eq phase step)) (throw 'stop :stopped)) nil)))
+          (initial-workload engine) (renew-image engine (build-option 1))
+          (e:cancella-documento engine (key 1))
+          (let ((file (check-active-file engine)) (delta (e::motore-delta engine)) (before (images root)))
+            (setf armed t)
+            (is (eq :stopped (catch 'stop (renew-image engine (build-option 2)))))
+            (is (eq :faulted (e:stato-motore engine))) (is (not (e::motore-busy engine)))
+            (check-images root before)
+            (if (eq phase :image-published)
+                (progn (is (eq :closed (arcdocdb.io:stato-file file)))
+                       (is (not (eq delta (e::motore-delta engine))))
+                       (is (zerop (e::delta-indice-motore-count (e::motore-delta engine)))))
+                (progn (is (eq file (check-active-file engine))) (is (eq delta (e::motore-delta engine)))))
+            (check-active-file engine)))))))
+
+(deftest test-REQ-IDX-010-renew-fonte-e-revisione-ricontrollate-tra-le-fasi
+  (dolist (change '(:revision :source))
+    (with-root (root)
+      (let ((armed nil) (activation nil))
+        (with-engine (engine (open-build-engine root :create t
+                               :observer (lambda (engine phase)
+                                           (when armed
+                                             (when (eq phase :before-image-activation) (setf activation t))
+                                             (when (eq phase :image-renewal-built)
+                                               (ecase change
+                                                 (:revision (incf (arcdocdb.index.primary::indice-primario-revision (e::motore-index engine))))
+                                                 (:source (incf (e::motore-source-csn engine)))))) nil)))
+          (initial-workload engine) (renew-image engine (build-option 1))
+          (let ((file (check-active-file engine)) (delta (e::motore-delta engine)))
+            (setf armed t)
+            (signals arcdocdb.conditions:invariant-violation (renew-image engine (build-option 2)))
+            (is (not activation)) (is (eq :faulted (e:stato-motore engine)))
+            (is (eq file (check-active-file engine))) (is (eq delta (e::motore-delta engine)))))))))
+
+(deftest test-REQ-IDX-010-renew-quota-pagine-tardiva-e-postcondizioni
+  (with-root (root)
+    (with-engine (engine (open-build-engine root :create t))
+      (dotimes (id 40) (e:scrivi-documento engine (build-key id) (value 1)))
+      (renew-image engine (build-option 1))
+      (let ((before (images root)) (file (check-active-file engine)))
+        (signals arcdocdb.conditions:resource-exhausted (renew-image engine (build-option 2) :pages 1))
+        (is (eq :faulted (e:stato-motore engine))) (check-images root before)
+        (is (eq file (check-active-file engine))) (is (probe-file (build-path root (build-option 2)))))))
+  (dolist (change '(:busy :state :health))
+    (with-root (root)
+      (let ((armed nil))
+        (with-engine (engine (open-build-engine root :create t
+                               :observer (lambda (engine phase)
+                                           (when (and armed (eq phase :image-published))
+                                             (ecase change
+                                               (:busy (setf (e::motore-busy engine) nil))
+                                               (:state (setf (e::motore-state engine) :starting))
+                                               (:health (arcdocdb.series:fault-controllore-serie
+                                                         (e::motore-controller engine) (e::motore-lease engine))))) nil)))
+          (initial-workload engine) (setf armed t)
+          (signals arcdocdb.conditions:invariant-violation (renew-image engine (build-option 1)))
+          (is (eq :faulted (e:stato-motore engine))) (is (not (e::motore-busy engine)))
+          (check-active-file engine))))))
+
+(defun renewal-child-main (arguments)
+  (destructuring-bind (mode path format stage) arguments
+    (let* ((root (uiop:ensure-directory-pathname path)) (version (parse-integer format))
+           (first (build-option 1)) (second (build-option 2)) (armed nil))
+      (with-engine (engine (open-build-engine root :create (string= mode "renew-write") :version version
+                            :observer (lambda (engine phase)
+                                        (when (and armed (string-equal stage (symbol-name phase)))
+                                          (check-active-file engine) (crash phase)) nil)))
+        (cond ((string= mode "renew-write")
+               (initial-workload engine) (renew-image engine first :keys 2 :bytes 32)
+               (e:scrivi-documento engine (key 1) (value 9)) (e:cancella-documento engine (key 3))
+               (setf armed t) (renew-image engine second) (error "Crash mancante."))
+              ((string= mode "renew-verify")
+               (check-frontier engine 7) (check-get engine 1 (value 9)) (check-get engine 3 nil))
+              (t (error "Mode sconosciuto."))))
+      (when (string= mode "renew-verify")
+        (if (string= stage "image-build-created")
+            (signals arcdocdb.conditions:arcdocdb-error (open-build-engine root :version version :option second))
+            (with-engine (engine (open-build-engine root :version version :option second))
+              (is (eq :paged (e:modo-indice-motore engine)))
+              (check-frontier engine 7) (check-get engine 1 (value 9)) (check-get engine 3 nil))))
+      (format t "~&RENEWAL-VERIFIED v~D ~A~%" version stage))))
+
+(deftest test-REQ-IDX-010-renew-SIGKILL-prima-e-dopo-pubblicazione-v1-v2
+  (dolist (version '(1 2))
+    (dolist (stage '("image-build-created" "image-renewal-built" "image-published"))
+      (with-root (root)
+        (child root version "renew-write" stage :signaled sb-posix:sigkill)
+        (let* ((storage (merge-pathnames "storage/" root))
+               (before (mapcar (lambda (option) (cons (build-path storage option) (image (build-path storage option))))
+                               (list (build-option 1) (build-option 2)))))
+          (child root version "renew-verify" stage :exited 0)
+          (dolist (pair before) (is (equalp (cdr pair) (image (car pair))))))))))
+
+(deftest test-REQ-IDX-010-renew-chiavi-lunghe-prefisso-comune-v1-v2
+  (dolist (version '(1 2))
+    (with-root (root)
+      (with-engine (engine (open-build-engine root :create t :version version))
+        (let* ((size (if (= version 1) 255 65535))
+               (first (bytes size 17)) (second (bytes size 17)))
+          (setf (aref second (1- size)) 18)
+          (e:scrivi-documento engine first (value 1)) (e:scrivi-documento engine second (value 2))
+          (renew-image engine (build-option 1) :keys 2 :bytes (* 2 size))
+          (e:cancella-documento engine first) (e:scrivi-documento engine second (value 9))
+          (renew-image engine (build-option 2) :keys 2 :bytes (* 2 size))
+          (check-build-get engine first nil) (check-build-get engine second (value 9))
+          (is (zerop (e::delta-indice-motore-count (e::motore-delta engine)))))))))
+
+(deftest test-REQ-IDX-010-renew-condizione-originale-conservata
+  (dolist (phase '(:image-renewal-built :image-published))
+    (with-root (root)
+      (let ((armed nil) (cause (make-condition 'arcdocdb.conditions:io-fault :reason :renewal-injected :operation :test)))
+        (with-engine (engine (open-build-engine root :create t
+                               :observer (lambda (engine step)
+                                           (declare (ignore engine))
+                                           (when (and armed (eq phase step)) (error cause)) nil)))
+          (initial-workload engine) (renew-image engine (build-option 1))
+          (let ((old (check-active-file engine)) (caught nil) (before (images root)))
+            (setf armed t)
+            (handler-case (renew-image engine (build-option 2))
+              (arcdocdb.conditions:io-fault (condition) (setf caught condition)))
+            (is (eq cause caught)) (is (eq cause (e::motore-failure engine)))
+            (is (eq :faulted (e:stato-motore engine))) (is (not (e::motore-busy engine)))
+            (check-images root before)
+            (if (eq phase :image-published)
+                (is (eq :closed (arcdocdb.io:stato-file old)))
+                (is (eq old (check-active-file engine))))
+            (check-active-file engine)))))))

@@ -1,0 +1,31 @@
+(:FINISHED-AT-UNIVERSAL-TIME 4002376272 :STATUS :OK :STDERR "" :STDOUT
+ "(:SCHEMA-VERSION 1 :KIND :EVIDENCE-COMPACTION :STATUS :OK :ROOT
+ #A((78) BASE-CHAR
+    . \"/Users/gpicchiarelli/Documents/ArcDocDB/spikes/out/4002375509-command-12607-0/\")
+ :JOBS 4 :MINIMUM-AGE-SECONDS 0 :FILES 1 :WALL-SECONDS 1.026384d0
+ :CLOCK-UNITS-PER-SECOND 1000000 :ORIGINAL-BYTES 3178649 :STORED-BYTES 316074
+ :RESULTS
+ ((:PATH
+   #A((89) BASE-CHAR
+      . \"/Users/gpicchiarelli/Documents/ArcDocDB/spikes/out/4002375509-command-12607-0/report.lisp\")
+   :STATUS :OK :ORIGINAL-BYTES 3178649 :STORED-BYTES 316074 :DESCRIPTOR
+   (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+    \"report.lisp.gz\" :UNCOMPRESSED-BYTES 3178649 :UNCOMPRESSED-SHA256
+    \"caaa03265e34c4f0e5ee774b622ebebb4753ba6a024a579cd60e779c62130a5a\"
+    :COMPRESSED-BYTES 315757 :COMPRESSED-SHA256
+    \"1b793eaa6dbdfe586e27881cdd19277c9f0d67403ee8aad19e93ffcf186bc319\")))
+ :LIMITS
+ (:LOSSLESS-BYTE-VERIFICATION :NO-GIT-HISTORY-REWRITE
+  :REQUIRES-IMMUTABLE-INPUT-FILES :NO-POWER-LOSS-DURABILITY-CLAIM))
+"
+ :EXIT-CODE 0 :SCHEMA-VERSION 1 :KIND :EVIDENCE-FINALIZATION :COMMAND
+ (#A((36) BASE-CHAR . "/Users/gpicchiarelli/.local/bin/sbcl")
+  "--dynamic-space-size" "2048" "--noinform" "--no-userinit" "--no-sysinit"
+  "--script"
+  #A((67) BASE-CHAR
+     . "/Users/gpicchiarelli/Documents/ArcDocDB/tools/compact-evidence.lisp")
+  "--root"
+  #A((78) BASE-CHAR
+     . "/Users/gpicchiarelli/Documents/ArcDocDB/spikes/out/4002375509-command-12607-0/")
+  "--jobs" "4" "--finished-owner-pid" #A((5) BASE-CHAR . "12607"))
+ :STARTED-AT-UNIVERSAL-TIME 4002376270)

@@ -159,3 +159,5 @@ risultato consolidato è in [architettura.md](../architettura.md) e
 | [0066](0066-attivazione-seriale-immagini-m1.md) | Attivazione privata a caldo, ownership limitata e chiusura al ritiro dell’immagine M1 | Accettata nell’integrazione incrementale; selezione automatica e catalogo durevole separati |
 
 | [0067](0067-delta-seriale-indice-m1.md) | Membership esatta e bounded per PUT/DELETE senza ritiro dell’immagine M1 | Accettata nell’integrazione incrementale; residente ancora completo |
+
+| [0068](0068-rinnovo-seriale-immagini-m1.md) | Costruzione e attivazione in una richiesta seriale, quota totale e delta rinnovato | Accettata nell’integrazione incrementale; catalogo e policy automatica separati |

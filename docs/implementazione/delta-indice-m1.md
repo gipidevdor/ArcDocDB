@@ -59,3 +59,9 @@ Nessuna modifica dei formati canonici o nuovo punto durevole. La membership
 non risolve la capienza del residente e non costituisce un backend writer
 paginato autonomo. Prove riproducibili e limiti nel
 [registro](../../spikes/results/2026-10-29-engine-image-delta/report.md).
+
+## Rinnovo della quota
+
+La [richiesta unica di rinnovo](rinnovo-indice-m1.md), introdotta da ADR-0068,
+costruisce e attiva una nuova immagine con delta vuoto sotto BUSY continuo.
+Il preflight riserva il payload di tutte le fasi prima di creare il file.

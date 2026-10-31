@@ -14,7 +14,7 @@
 ;;; REQ: REQ-CMP-001 REQ-AFF-001
 (declaim (ftype (function (motore compaction-plan) null) compaction-finish-output))
 (defun compaction-finish-output (engine plan)
-  "Pre: complete output's ordinary frames. Post: full output durable before metadata is recorded."
+  "Pre: all ordinary frames for the output complete. Post: full output durable before metadata is recorded."
   (when (compaction-plan-append plan)
     (compaction-flush-buffer plan)
     (unless (= (compaction-plan-current-end plan) (io:durable-flush (compaction-plan-append plan)))
@@ -43,7 +43,7 @@ No canonical EDIT or index mutation; partial files remain undecided on failure."
 ;;; REQ: REQ-CMP-001 REQ-LIM-003
 (declaim (ftype (function (motore compaction-plan octets index index) null) compaction-copy-record))
 (defun compaction-copy-record (engine plan buffer start end)
-  "Pre: selected verified frame, caller span borrowed. Post: identical frame staged in ordered bounded output."
+  "Pre: selected verified frame, caller span borrowed. Post: identical frame staged in ordered, bounded output."
   (let ((bytes (- end start)))
     (when (or (null (compaction-plan-append plan))
               (> (+ (compaction-plan-current-end plan) bytes) (motore-max-file-bytes engine))

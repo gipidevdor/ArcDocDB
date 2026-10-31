@@ -262,5 +262,5 @@ automatic live switching still require subsequent increments.
 > targets remain open.
 
 Current-only serial M1 now includes [canonical full-prefix compaction](adr/0078-compattazione-prefix-m1.md)
-with automatic physical reclamation and crash completion. Concurrent/background
+with automatic physical reclamation and completion after a crash. Concurrent/background
 CLEAN/MERGE, historical MVCC and multiseries remain separate milestones.

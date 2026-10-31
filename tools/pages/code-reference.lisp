@@ -12,9 +12,20 @@
   (concatenate 'string "api/" (subseq file 4 (- (length file) 5)) ".html"))
 
 (defun code-package-route (name) (format nil "api/packages/~A.html" name))
+(defun code-anchor-component (text)
+  (with-output-to-string (out)
+    (loop for char across text do
+      (if (or (find char "abcdefghijklmnopqrstuvwxyz0123456789-")
+              (find char "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+          (write-char (char-downcase char) out)
+          (write-string (string-downcase (format nil "_~X_" (char-code char))) out)))))
+
 (defun code-entry-anchor (entry)
-  (format nil "definition-~D-~A" (code-entry-line entry)
-          (slug (format nil "~A-~A" (code-entry-kind entry) (code-entry-name entry)))))
+  (format nil "definition-~A-~A-~A~{_if_~A~}"
+          (code-anchor-component (code-entry-package entry))
+          (code-anchor-component (code-entry-kind entry))
+          (code-anchor-component (code-entry-name entry))
+          (mapcar #'code-anchor-component (code-entry-condition entry))))
 (defun code-entry-url (entry)
   (format nil "~A#~A" (code-file-route (code-entry-file entry)) (code-entry-anchor entry)))
 (defun code-source-link (entry)

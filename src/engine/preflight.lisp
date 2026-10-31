@@ -44,14 +44,16 @@ Post: strict order without wrap/duplicates, zero distinct from absence; corrupti
   csn)
 
 ;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-AFF-002 REQ-AFF-008
-(declaim (ftype (function (motore ra:active-recuperato (or null u64)) (or null u64))
+(declaim (ftype (function (motore ra:active-recuperato (or null u64) &optional (or null function)) (or null u64))
                 verifica-ordine-active-motore))
-(defun verifica-ordine-active-motore (engine active previous)
-  "Pre: canonical reader has just verified the entire ACTIVE in borrowed scratch, stable namespace.
-Post: each ordinary datum before P follows its predecessor; SEAL excluded, tail not interpreted.
-Loop bounded by bytes/headers; rejects other types before effects, no callback or copy."
+(defun verifica-ordine-active-motore (engine active previous &optional visitor)
+  "Pre: the canonical reader has just verified the entire ACTIVE in borrowed scratch; stable namespace.
+Post: each ordinary record before P follows its predecessor; SEALs excluded, tail not interpreted.
+Bounded by bytes/headers; an optional read-only visitor sees only ordinary frames after all checks."
   (let* ((prefix (nth-value 1 (ra:frontiere-active-recuperato active))) (position f:+segment-header-bytes+)
-         (version (nth-value 3 (ra:frontiere-active-recuperato active))) (buffer (motore-scratch engine)))
+         (version (nth-value 3 (ra:frontiere-active-recuperato active))) (buffer (motore-scratch engine))
+         (segment (ra:segmento-active-recuperato active))
+         (id (logior (ash (g::segmento-get-high segment) 32) (g::segmento-get-low segment))))
     (loop repeat (floor (- prefix position) arcdocdb.record:+header-bytes+) while (< position prefix) do
       (multiple-value-bind (next kind flags) (arcdocdb.record:verifica-cornice buffer position prefix :version version)
         (unless (and (> next position) (zerop flags))
@@ -59,7 +61,10 @@ Loop bounded by bytes/headers; rejects other types before effects, no callback o
         (case kind
           ((1 2) (setf previous (verifica-csn-ordinario-motore previous
                                  (b:leggi-u64 buffer (+ position arcdocdb.record::+stamp-offset+))))
-                 (verifica-record-applicativo-motore engine buffer position next version))
+                 (verifica-record-applicativo-motore engine buffer position next version)
+                 (when visitor
+                   (unless (null (funcall visitor buffer position next id position version))
+                     (error 'invariant-violation :reason :engine-order-visitor-result))))
           (3 nil)
           (otherwise (error 'unsupported-format :reason :engine-record-outside-m1)))
         (setf position next)))
@@ -67,11 +72,11 @@ Loop bounded by bytes/headers; rejects other types before effects, no callback o
     previous))
 
 ;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-AFF-002 REQ-AFF-008
-(declaim (ftype (function (motore c:control-recuperato mf::recovery-sources dar:decisioni-recuperate simple-vector)
-                         null) verifica-ordine-fonti-motore))
-(defun verifica-ordine-fonti-motore (engine control sources decisions closed)
+(declaim (ftype (function (motore c:control-recuperato mf::recovery-sources dar:decisioni-recuperate simple-vector
+                          &optional (or null function)) null) verifica-ordine-fonti-motore))
+(defun verifica-ordine-fonti-motore (engine control sources decisions closed &optional visitor)
   "Pre: all canonical M1 tokens and stable files; admission closed. Post: CSN order across CLOSED and ACTIVE.
-Each prefix is reverified before use; no publication, index, or file mutation."
+Each prefix is reverified; an optional read-only visitor observes verified ordinary frames, with no file effects."
   (let ((previous nil) (cursor 0) (limits (limiti-motore engine)))
     (dotimes (i (mf:numero-fonti-recovery sources))
       (case (nth-value 1 (mf:fonte-recovery sources i))
@@ -80,16 +85,18 @@ Each prefix is reverified before use; no publication, index, or file mutation."
            (incf cursor)
            (arcdocdb.recovery.replay:visita-record-closed-recuperato token (motore-scratch engine) limits
             (lambda (buffer start end segment offset version prepared-csn)
-              (declare (ignore segment offset)) ; fatti gia' verificati, non esiti d'errore.
               (when prepared-csn (error 'unsupported-format :reason :engine-prepared-outside-m1))
               (unless (zerop (aref buffer (+ start arcdocdb.record::+flags-offset+)))
                 (error 'unsupported-format :reason :engine-record-flags-outside-m1))
               (setf previous (verifica-csn-ordinario-motore previous
                                (b:leggi-u64 buffer (+ start arcdocdb.record::+stamp-offset+))))
-              (verifica-record-applicativo-motore engine buffer start end version) nil))))
+              (verifica-record-applicativo-motore engine buffer start end version)
+              (when visitor
+                (unless (null (funcall visitor buffer start end segment offset version))
+                  (error 'invariant-violation :reason :engine-order-visitor-result))) nil))))
         (:active
          (let ((active (rs::recupera-active-serie control sources i decisions (motore-scratch engine) limits)))
-           (setf previous (verifica-ordine-active-motore engine active previous))))
+           (setf previous (verifica-ordine-active-motore engine active previous visitor))))
         (otherwise (error 'invariant-violation :reason :engine-source-state))))
     (unless (= cursor (length closed)) (error 'invariant-violation :reason :engine-closed-consumption)))
   nil)

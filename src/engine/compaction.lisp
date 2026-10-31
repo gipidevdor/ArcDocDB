@@ -5,7 +5,7 @@
 ;;; REQ: REQ-CMP-001 REQ-LIM-003
 (declaim (ftype (function (motore boolean) list) compaction-run))
 (defun compaction-run (engine force)
-  "Pre: BUSY ready owner. Post: skipped without canonical effects or a fully installed smaller prefix.
+  "Pre: BUSY ready owner. Post: either skipped without canonical effects or a fully installed smaller prefix.
 A spare segment is reserved for the next recovery; output ID arithmetic is checked before creating files."
   (let* ((old-files (motore-fds engine)) (old-sets (motore-recovery-sets engine))
          (archive (dar:crea-archivio-recovery (motore-scope engine) (motore-archive-id engine)))
@@ -18,8 +18,7 @@ A spare segment is reserved for the next recovery; output ID arithmetic is check
       (compaction-release-probe engine old-files old-sets)
       (return-from compaction-run (list :status :skipped :reason :insufficient-gain-or-capacity)))
     (let ((first (verifica-inventario-motore engine (compaction-plan-control plan))))
-      (unless (<= (+ first (compaction-plan-output-count plan)) #xffffffff)
-        (error 'resource-exhausted :reason :engine-segment-id-range))
+      (compaction-reserve-recovery engine plan first)
       (setf (compaction-plan-first-id plan) first))
     (osserva-motore engine :compaction-planned)
     (compaction-produce engine plan) (osserva-motore engine :compaction-produced)
@@ -58,7 +57,7 @@ RAM/paged choice stays internal. Failure faults admission without ACK, rollback 
 ;;; REQ: REQ-CMP-001 REQ-CMP-007 REQ-LIM-003
 (declaim (ftype (function (motore) list) statistiche-compattazione-motore))
 (defun statistiche-compattazione-motore (engine)
-  "Pre: READY owner. Post: copied scalar maintenance counters, not a process-RSS or throughput claim."
+  "Pre: READY owner. Post: copied scalar maintenance counters, not a claim about process RSS or throughput."
   (esigi-motore-pronto engine)
   (list :compactions (motore-compactions engine) :reclaimed-bytes (motore-compaction-reclaimed engine)
         :canonical-records (motore-history-records engine) :live-records (compaction-live-count engine)))

@@ -8,8 +8,8 @@ assembles both forms of documentation into the same published edition.
 
 | Material | Review performed |
 |---|---|
-| 545 existing published Markdown documents | Complete reading for grammar, syntax, idiom, cohesion, clarity and consistent American English terminology |
-| 1,773 existing source docstrings, including the root package | Translation or close review, with preconditions, postconditions, ownership, errors, numbers and literal identifiers preserved |
+| 546 existing published Markdown documents | Complete reading for grammar, syntax, idiom, cohesion, clarity and consistent American English terminology |
+| 1,811 existing source docstrings, including the root package | Translation or close review, with preconditions, postconditions, ownership, errors, numbers and literal identifiers preserved |
 | Three public local-service conditions without docstrings | Source-based descriptions added for rejection, unknown outcome and cleanup failures |
 | Generated reference and new guides | Editorial review of navigation, labels, scope statements and code-reference explanations |
 
@@ -35,14 +35,17 @@ its preserved original explicitly; raw archives were not rewritten.
 The existing docstring replacements were checked byte for byte against their
 source offsets: bytes outside those documentation tokens remained unchanged.
 The three added condition descriptions change documentation metadata only.
-Signatures, executable bodies, declared types and persistent formats are preserved.
+A separate comparison of all 494 Lisp source files with the integrated upstream
+revision removes only documentation metadata and requires identical executable
+forms. Signatures, executable bodies, declared types and persistent formats are
+preserved.
 
 ## Verification
 
 Publication checks cover Markdown and code inventories, source hashes, package
 export resolution, definition anchors, direct symbol search and local links.
-Separate runtime checks compare 53 loaded package interfaces, 670 exported
-bindings and 613 exported prose contracts with the generated reference.
+Separate runtime checks compare 53 loaded package interfaces, 676 exported
+bindings and 618 exported prose contracts with the generated reference.
 The [executable public example](lisp-api.md) checks the Unix-socket client through
 PUT, GET, a clean service restart, DELETE and an absent result.
 The product also passes its strict compilation and regression test suite on

@@ -14,17 +14,23 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   in new distribution directories and reject missing, changed or stale copies.
   Legal applicability, ownership and artifact-specific dependencies remain scoped.
 
+- Refine canonical compaction: reserve recovery segment IDs and CONTROL revisions
+  before creating outputs, preserve restart headroom on writes, reject startup
+  for insufficient capacity before checkpoint effects, and remove a redundant full planning scan.
+  [Regression and measurement evidence](spikes/results/2026-10-31-compaction-review/report.md).
+
 - [Serial M1 canonical compaction](docs/adr/0078-compattazione-prefix-m1.md):
   automatic full-prefix reclamation at rotation boundaries, exact live values
-  and unchanged CSN high-water, coherent RAM/paged location relocation, two
-  durable CONTROL decisions and positive inode-bound removal. Recovery completes
+  and an unchanged CSN high-water mark, coherent RAM/paged location relocation, two
+  durable CONTROL decisions and explicitly authorized inode-bound removal. Recovery completes
   interrupted reclamation; concurrent/background compaction remains separate.
 
 - [Live M1 segment rotation](docs/adr/0076-rotazione-live-m1.md) before byte or
   record saturation: canonical CONTROL checkpoint, fresh ACTIVE and complete
   CLOSED lookup publication while retaining the runtime CSN family and index.
   Retired capabilities are closed after serial quiescence; total segment capacity
-  remains bounded with automatic compaction at capacity. Real SIGKILL and Unix service cases cover v1/v2.
+  remains bounded with automatic compaction at capacity. Real SIGKILL and Unix
+  service cases cover v1/v2.
 
 - [Automatic primary storage in M1](docs/implementazione/indice-automatico-operativo.md):
   flat resident growth while the quota permits it, bounded disk writes/replay,
@@ -123,12 +129,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 - CRC32C: common bootstrap and conditional ASDF components isolate VOP and
   ARM dependencies on other platforms/versions, even with cached FASLs.
-  Fallback forceable at startup; OS/compiler/kernel decisions tested
+  Fallback can be forced at startup; OS/compiler/kernel decisions tested
   ([ADR-0060](docs/adr/0060-crc32c-caricamento-portabile.md)).
 
 - M1: capacity, arena, slot credit, and index revision checked before
   CSN and durable append. Ordinary rejection leaves READY and files unchanged;
-  an invariant found during preflight closes admission and retains cause.
+  an invariant violation found during preflight closes admission and retains the cause.
   Reopening with same budgets, v1/v2, and two oracles against previous
   writer. Explicit Engine presence in CI catalog; integration with
   Unix session and page codec brings catalog to 57 suites.
@@ -191,7 +197,7 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   effects and complete counts. Original cause and previous completions
   retained; functional qualification and complete Recovery Manager remain open.
 
-- Whole recovered Serie name completion: complete preflight
+- Name completion for an entire recovered Serie: complete preflight
   of tokens and all names before effects, then exclusive rename and
   fsync per source. Complete counts only, no new array/hash, rollback,
   or state shared between Serie; functional qualification and Recovery Manager open.

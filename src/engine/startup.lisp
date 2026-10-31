@@ -17,6 +17,8 @@ Gate before effects, checkpoint and names before index/runtime/root; errors hand
     (multiple-value-bind (control sources active closed previous)
         (recupera-fonti-motore engine decisions set)
       (verifica-ordine-fonti-motore engine control sources decisions closed)
+      (when (>= (1+ (length closed)) (motore-max-segments engine))
+        (error 'resource-exhausted :reason :engine-recovery-segment-reserve))
       (compaction-reclaim-removed engine control)
       (let ((id (verifica-inventario-motore engine control)))
         (osserva-motore engine :recovered)

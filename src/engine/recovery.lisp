@@ -6,8 +6,8 @@
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (motore dar:archivio-recovery) dar:decisioni-recuperate) leggi-decisioni-motore))
 (defun leggi-decisioni-motore (engine archive)
-  "Pre: Archivio M1 configurato, namespace esclusivo. Post: replay canonico completo e vuoto.
-2PC non ammesso in M1: UNSUPPORTED-FORMAT prima di qualsiasi effetto di recovery."
+  "Pre: configured M1 Archivio, exclusive namespace. Post: complete empty canonical replay.
+2PC not admitted in M1: UNSUPPORTED-FORMAT before any recovery effect."
   (multiple-value-bind (file size) (input-motore engine "multiserie.log")
     (let ((decisions (dar:leggi-decisioni-recuperate archive file size (motore-scratch engine)
                       :max-bytes (motore-max-file-bytes engine))))
@@ -18,7 +18,7 @@
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-AFF-008
 (declaim (ftype (function (motore) rs:limiti-recovery-serie) limiti-motore))
 (defun limiti-motore (engine)
-  "Pre: configurazione validata. Post: limiti readonly per reader canonici; nessun budget clamped.
+  "Pre: validated configuration. Post: readonly limits for canonical readers; no budget clamping.
 M1 rejects prepared/outcome; ordinary compaction uses the existing canonical format."
   (rs:crea-limiti-recovery-serie :max-segmenti (motore-max-segments engine)
      :budget-riferimenti (* 8 (motore-max-segments engine))
@@ -32,8 +32,8 @@ M1 rejects prepared/outcome; ordinary compaction uses the existing canonical for
                          (values c:control-recuperato mf::recovery-sources ra:active-recuperato simple-vector
                                  ac:piano-csn-archivio &optional)) recupera-fonti-motore))
 (defun recupera-fonti-motore (engine decisions set)
-  "Pre: lock e decision log canonici, admission chiusa. Post: tutta la Serie e gate CSN verificati.
-M1 accepts ordinary full-prefix compaction and positive REMOVED authority; fonti possedute e vecchi segmenti readonly, nessun effetto."
+  "Pre: canonical lock and decision log, admission closed. Post: entire Serie and CSN gate verified.
+M1 accepts ordinary full-prefix compaction and positive REMOVED authority; owned sources and readonly old segments, no effects."
   (let* ((control (leggi-control-motore engine))
          (sources (fonti-motore engine control)))
     (unless (= (nth-value 3 (c:frontiere-control-recuperato control)) (motore-version engine))
@@ -52,8 +52,8 @@ M1 accepts ordinary full-prefix compaction and positive REMOVED authority; fonti
 (declaim (ftype (function (motore ra:active-recuperato u64) a:segmento-attivo-preparato)
                 checkpoint-motore))
 (defun checkpoint-motore (engine recovered id)
-  "Pre: gate completo riuscito, namespace esclusivo. Post: vecchio ACTIVE chiuso, nuovo ID fresco deciso.
-Punto atomico: publisher CONTROL esistente; ritorno dopo fsync parent. Nessuna troncatura o retry."
+  "Pre: complete gate succeeded, exclusive namespace. Post: old ACTIVE closed, fresh new ID decided.
+Atomic point: existing CONTROL publisher; returns after parent fsync. No truncation or retry."
   (leggi-control-motore engine) ; reader canonico completo lascia nello scratch solo byte verificati.
   (let ((stamp (b:leggi-u64 (motore-scratch engine)
                            (+ f:+log-header-bytes+ arcdocdb.record::+stamp-offset+))))

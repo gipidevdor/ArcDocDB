@@ -22,7 +22,7 @@ docs-setup:  ## install only the hash-locked documentation dependencies
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/pages/bootstrap.lisp --self-test
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/pages/bootstrap.lisp
 
-docs-build:  ## generate the complete manual with Common Lisp Codex
+docs-build:  ## generate the complete manual with CommonDoc Codex
 	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/build.lisp
 
 docs-check: legal-check  ## build, test rendering and verify coverage, links and source hashes

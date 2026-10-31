@@ -15,7 +15,8 @@ reference to the same CommonDoc assembly and HTML template as the prose manual.
 
 ## What comes from the code
 
-Each definition has a stable location within its edition, a link to the source
+Each definition has an anchor based on its package, kind, symbol and reader
+conditional, independent of source line numbers, plus a link to the source
 line, its definition kind and export status. Explicit argument lists, declared
 function types, source docstrings, type expansions and structure or condition
 slot declarations are taken from the source. Large constant initializers remain

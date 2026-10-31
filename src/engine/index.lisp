@@ -6,10 +6,10 @@
 ;;; REQ: REQ-IDX-001 REQ-IDX-005 REQ-LIM-003 REQ-AFF-008 REQ-IDX-010
 (declaim (ftype (function (motore (member 1 2) octets) null) verifica-capienza-indice-motore))
 (defun verifica-capienza-indice-motore (engine kind key)
-  "Pre: owner seriale READY, chiave validata; nessun altro mutatore fino al commit.
-Post: rifiuto ordinario di capienza senza cambiare indice, CSN o file; motore resta READY.
-Invariante/errore interno chiude admission e conserva la primaria. Il fault-marker e'
-tentato anche qui; i suoi errori secondari non mascherano la causa. Nessuna prenotazione."
+  "Pre: serial READY owner, validated key; no other mutator until commit.
+Post: ordinary capacity rejection without changing index, CSN, or files; engine remains READY.
+Invariant/internal error closes admission and retains the primary condition. The fault-marker is
+attempted here too; its secondary errors do not mask the cause. No reservation."
   (when (motore-automatic-index engine) (return-from verifica-capienza-indice-motore nil))
   (handler-case
       (let ((index (motore-index engine)))
@@ -26,9 +26,9 @@ tentato anche qui; i suoi errori secondari non mascherano la causa. Nessuna pren
 ;;; REQ: REQ-IDX-001 REQ-IDX-006 REQ-IDX-011 REQ-REC-001 REQ-AFF-008
 (declaim (ftype (function (motore (member 1 2) octets u64 u64 index index) null) pubblica-location-motore))
 (defun pubblica-location-motore (engine kind key csn segment offset bytes)
-  "Pre: dato committed verificato o lotto strong gia' pubblicato; un owner, nessun GET concorrente.
-Post: candidato PUT aggiornato o chiave tombstone assente; slot u32 verificati prima del packing.
-Errori canonici senza conferma al client; replay resta privato fino a READY."
+  "Pre: verified committed datum or strong batch already published; one owner, no concurrent GET.
+Post: PUT candidate updated or tombstone key absent; u32 slots verified before packing.
+Canonical errors without client confirmation; replay remains private until READY."
   (when (motore-automatic-index engine)
     (return-from pubblica-location-motore (publish-automatic-index engine kind key 0 (length key) csn segment offset bytes)))
   (unless (and (<= 1 segment #xffffffff) (<= offset #xffffffff) (<= bytes #xffffffff))
@@ -54,9 +54,9 @@ Errori canonici senza conferma al client; replay resta privato fino a READY."
 ;;; REQ: REQ-REC-001 REQ-IDX-001 REQ-IDX-006 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (motore simple-vector rs:limiti-recovery-serie) null) ricostruisci-indice-motore))
 (defun ricostruisci-indice-motore (engine closed limits)
-  "Pre: tutte le prove CLOSED verificate, indice privato vuoto e admission chiusa.
-Post: ultime versioni ordinarie e tombstone in ordine CSN stretto, su tutti i prefissi canonici.
-Rifiuta prepared fuori M1 e dati ambigui; nessun byte preesistente modificato."
+  "Pre: all CLOSED proofs verified, empty private index, and admission closed.
+Post: latest ordinary versions and tombstones in strict CSN order, across all canonical prefixes.
+Rejects prepared data as outside M1, and rejects ambiguous data; no preexisting byte modified."
   (let ((previous nil))
     (loop for recovered across closed do
       (arcdocdb.recovery.replay:visita-record-closed-recuperato recovered (motore-scratch engine) limits

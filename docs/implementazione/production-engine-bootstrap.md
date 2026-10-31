@@ -4,7 +4,7 @@
 
 Milestone [Production Engine Bootstrap](https://github.com/gpicchiarelli/ArcDocDB/milestone/1).
 The [preregistered method](production-engine-bootstrap-metodo.md) focuses work
-on the existing path, without new full text functionality or a parallel roadmap.
+on the existing path, without new full-text functionality or a parallel roadmap.
 
 <a id="ingresso-di-produzione"></a>
 
@@ -18,13 +18,13 @@ on the existing path, without new full text functionality or a parallel roadmap.
 
 The private directory must exist. `:create t` is explicit initialization,
 allowed only when empty; normal opening does not create missing files
-or overwrite existing storage. The two UUIDs are sixteen-byte octets,
-copied and compared with the canonical headers. Only one serial I/O actor
+or overwrite existing storage. Each of the two UUIDs consists of sixteen octets,
+which are copied and compared with the canonical headers. Only one serial I/O actor
 owns the handle and all FDs: no calls from another thread or reentry
 during a request, including from observation callbacks.
 
 Nonblocking advisory exclusion is acquired on the directory FD before
-observing or mutating storage, and lasts until its close. All M1 writers
+observing or mutating storage and lasts until the FD is closed. All M1 writers
 must use it; it does not protect against hostile processes that ignore flock
 or external replacement of path ancestors. The private directory and
 absence of external mutators remain preconditions.
@@ -63,7 +63,7 @@ sources and FDs remain owned until close.
 Keys and values are bytes of canonical frames. The M1 persistence core
 adds no Query Engine, CBOR extraction, or application document validation.
 The Unix session must apply its document contract before admission.
-No alternative decoder or format.
+The core introduces no alternative decoder or format.
 
 The writer reuses batch, group, and scratch. Format/capacity preflight precedes
 the CSN, including load, key arena, slot credit, and index revision.
@@ -72,12 +72,12 @@ it applies to the sole M1 owner, without another mutator until application.
 A predictable index limit leaves READY, CSN, and files unchanged;
 admissible updates and tombstones remain usable, including after reopen
 with the same budgets. DELETE does not reclaim bytes from the append-only arena.
-Failed index health/an invariant violation instead closes admission even when
-detected in preflight, preserving the cause and without append or CSN consumption.
+An index health failure or invariant violation instead closes admission even when
+detected in preflight; the cause is preserved, with no append or CSN consumption.
 SEAL, write, flush, canonical root publication and CSN resolution, index, and
 reference retirement follow. Acknowledgment is issued only at the end.
-Root before index is correct only with the serial M1 actor: concurrent GETs
-and historical MVCC are not exposed. Losing the response can leave an unknown
+Publishing the root before updating the index is correct only with the serial M1
+actor: concurrent GETs and historical MVCC are not exposed. Losing the response can leave an unknown
 outcome; there is no automatic retry.
 
 Replay traverses only CLOSED prefixes verified by the existing APIs,
@@ -91,11 +91,11 @@ the final plan.
 
 ## Errors, resources, and M1 limits
 
-Startup, recovering, faulted, and closed reject requests. An incomplete admitted
-request makes the engine FAULTED and retains the cause, without acknowledgment,
-rollback, or reuse of uncertain buffers. Close shuts admission before resources;
-all sets and FDs receive one attempt, parent last. Secondary errors are
-retained; startup failure aggregates any cleanup without losing the primary
+The engine rejects requests during startup and recovery and while faulted or
+closed. An incomplete admitted request makes the engine FAULTED and retains the cause, without acknowledgment,
+rollback, or reuse of uncertain buffers. Close shuts admission before releasing resources;
+cleanup attempts each set and FD once, with the parent last. Secondary errors are
+retained; startup failure aggregates any cleanup errors without losing the primary
 error. The owner thread is not canceled asynchronously; SIGKILL terminates
 the process and the kernel releases descriptors/locks.
 
@@ -104,11 +104,12 @@ and unpublished CONTROL files are retained; observed IDs are not reused.
 An existing `control.log.tmp` is moved to a distinct name without replacing
 an existing target, then the parent is fsynced. An unexpected final file is a
 blocking anomaly: it is not deleted. Orphan garbage collection is not
-implemented; exhausted budget requires explicit intervention, without silent loss.
+implemented; an exhausted budget requires explicit intervention, without silent loss.
 
 M1 configures exactly one Serie and a decision log without DECISION; it does
-not discover the multiseries catalog. Prepared records and locations beyond u32 are rejected. Canonical compaction
-outputs and REMOVED are verified and completed at startup. The format remains v1/v2; this is an entry point
+not discover the multiseries catalog. Prepared records and locations beyond u32
+are rejected. Canonical compaction outputs and REMOVED are verified and completed
+at startup. The format remains v1/v2; this is an entry point
 restriction, not a change to the u64 storage types. Each reopen prepares a new
 ACTIVE. [Live rotation](../adr/0076-rotazione-live-m1.md) connects canonical
 checkpoint publication to normal PUT/DELETE before the next data CSN. Byte or
@@ -118,7 +119,7 @@ current-only compaction reclaims obsolete bytes; concurrent snapshot reclamation
 remains separate work.
 
 Defaults: 16 MiB file, 64 KiB frame, 64 segments, 65,536 records per file,
-index capacity 4096, and 1 MiB key arena. Configurable, checked budgets,
+index capacity 4096, and 1 MiB key arena. These budgets are configurable and checked
 without clamping. They are neither final format limits nor performance
 measurements. Startup, index, roots, and runtime may allocate; optimizations,
 heap/GC budgets, and complete COD-30 qualification remain outside M1.
@@ -160,9 +161,11 @@ validator rejects incompatible data before the checkpoint. The complete FI
 matrix and phase gate remain open. No benchmark or C1/MC/DC/power loss
 qualification is inferred from functional passes.
 
-The [paged primary integration](indice-paginato-m1.md) adds an explicit read-only
-candidate at startup and its use in current GET. The resident index remains
-present; before each admitted write, the derivative is retired.
+The initial [paged primary integration](indice-paginato-m1.md) added an explicit
+read-only candidate at startup and used it for current GET. In that increment,
+the resident index remained present, and each admitted write retired the derivative.
+The current default [automatic profile](indice-automatico-operativo.md) supports
+resident and paged writes; a paged handle retains no complete resident index.
 
 ## Canonical compaction
 
@@ -170,15 +173,25 @@ present; before each admitted write, the derivative is retired.
 compaction. `arcdocdb.engine:compatta-motore` selects current live records through
 the existing RAM/paged index and preserves the maximum-CSN witness, including a
 last tombstone. `:force t` bypasses only the default 25% gain threshold. Automatic
-maintenance probes at rotation boundaries with four CLOSED segments and history
-above twice the live count, or at total segment capacity. A spare segment remains
-reserved for recovery. `statistiche-compattazione-motore` returns per-handle scalar
+maintenance probes at rotation boundaries when there are at least four CLOSED
+segments and the historical record count exceeds twice the live count, or when rotation would
+consume recovery headroom. A spare segment, an unused u32 ID and sufficient
+CONTROL revisions remain reserved for recovery.
+`statistiche-compattazione-motore` returns per-handle scalar
 counters and canonical/live counts.
 
 Outputs are durable and independently verified before CONTROL replacement. Old
-sources are positively REMOVED, readers retired, locations relocated, and only
-then inode/header-bound deletion and parent synchronization precede metadata
-pruning. Startup completes interrupted reclamation. Active snapshots/readers
-refuse before effects; other maintenance failures fault admission without a data
+sources are explicitly marked REMOVED, their readers are retired, and locations
+are relocated. Only then are the old files deleted with inode/header checks and
+the parent synchronized, before metadata is pruned. Startup completes interrupted
+reclamation. Maintenance is rejected before effects if snapshots or readers are
+active; other maintenance failures fault admission without a data
 CSN or ACK. No wire operation or alternative RAM/paged semantics are introduced.
 See [qualification and timing](../../spikes/results/2026-10-31-engine-compaction/report.md).
+
+A review regression covers capacity refusal before startup effects: recovery
+requires room for its mandatory fresh ACTIVE and leaves all canonical files
+unchanged if the configured segment budget is exhausted. Increasing the budget
+permits the same data to be reopened. Repeated read-only openings consume structural
+capacity; ordinary writes compact before consuming recovery headroom. Planning
+shares the strict canonical order scan; output verification remains independent.

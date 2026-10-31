@@ -65,3 +65,10 @@ reverse; the complete before/after comparison files were byte-identical. No
 product source or benchmark sample changed, and the corrected final ranges use
 all 36 pairs. The archive helper had the analogous printed-count issue; its full
 copy manifest remains authoritative and is independently checked during retention.
+
+A cleanup invocation initially supplied the unsupported `--minimum-age` spelling;
+its rejected command is retained as `development-compaction-option`. The correct
+CLI and exact-root lossless compaction then passed. No evidence was changed by
+the rejected invocation. Final merge/retention checks independently verify all
+1,602 source byte identities and all 66 initial archive copies; later final-check
+records are additionally retained through verified lossless descriptors.

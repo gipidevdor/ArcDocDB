@@ -71,7 +71,7 @@ These are API counters, not physical-device traffic.
 
 The 4 MiB grant reserves 4,168,172 bytes of accounted cache payload, excluding
 Lisp headers/mutexes. Retained cache data are verified again on every hit;
-large-value copying/checksum cost explains why the 60 KB case gains less.
+the observed gain falls for large values, whose copies and checksums are still required.
 The single cached CLOSED row map is still reverified on a map miss; random
 cross-segment thrashing and cache scan pollution remain unmeasured here.
 
@@ -116,3 +116,12 @@ The next write-performance integration boundary is
 [bounded group admission](next-integration.md), including cumulative index
 reservations and FIFO publication after a shared durable flush. It is not part
 of this completed cache increment, and no group-commit speedup is claimed.
+
+[Final integration proof](final-integration.lisp) confirms all 1,602 qualified
+source files still match exactly after merging `f3b2079`, and verifies 66 original
+archive copies through lossless storage. The
+[merged-tree checks](final-merged-checks/report.lisp) pass lint, trace, links and
+evidence validation. [Cleanup](cleanup.lisp) removes 206,251,575 logical bytes of
+regenerable build, spike-output and exact-worktree compiler-cache files. This is
+logical size, not a measured count of physical blocks released. Qualified records
+remain archived; the primary checkout and other chats' files are untouched.

@@ -1,0 +1,31 @@
+(:KIND :CACHE-FINAL-INTEGRATION :STATUS :PASSED :QUALIFIED-SOURCE-FILES 1602
+ :PRESERVED-ARCHIVE-COPIES 66 :MERGE-ONLY-PATHS
+ ("spikes/core-code-review.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/archive-index.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/catalogo.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/collection-manifest.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/collection-source.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/diagnostics/process-sample.txt"
+  "spikes/results/2026-10-31-core-code-review-originals/method/archive-helper.lisp.txt"
+  "spikes/results/2026-10-31-core-code-review-originals/method/qualified-driver.lisp.txt"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/full-check/conservazione.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/full-check/report.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/full-check/report.lisp.gz"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/initial/conservazione.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/initial/report.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/process-sample/conservazione.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/process-sample/report.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/qualified/conservazione.lisp"
+  "spikes/results/2026-10-31-core-code-review-originals/processes/qualified/report.lisp"
+  "spikes/results/2026-10-31-core-code-review/README.md"
+  "spikes/results/2026-10-31-core-code-review/catalogo.lisp"
+  "spikes/results/2026-10-31-core-code-review/closed-check.lisp"
+  "spikes/results/2026-10-31-core-code-review/collection-process-retention.lisp"
+  "spikes/results/2026-10-31-core-code-review/collection-process.lisp"
+  "spikes/results/2026-10-31-core-code-review/collection-report.lisp"
+  "spikes/results/2026-10-31-core-code-review/final-metadata-process.lisp"
+  "spikes/results/2026-10-31-core-code-review/final-metadata-retention.lisp"
+  "spikes/results/2026-10-31-core-code-review/final-retention-audit.lisp"
+  "spikes/results/2026-10-31-core-code-review/retention-audit.lisp")
+ :RUNTIME-TEST-BUILD-AND-DOC-TOOL-BYTES :UNCHANGED :HEAD
+ "85afb0d5c28595565538f154449d87c87531e722")

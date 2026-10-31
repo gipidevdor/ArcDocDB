@@ -151,7 +151,7 @@ one of the main topics of the [evaluation](valutazione/analisi-critica.md).
 
 - **QA-06** ([ADR-0020](adr/0020-csn-snapshot-isolamento.md)) — Who assigns the TXID and how to obtain an Archivio-wide commit order,
   required for a consistent multiseries snapshot.
-- **QA-07** ([ADR-0021](adr/0021-2pc-intenti-outcome.md)) — What concurrent readers and writers see on a document in PREPARED state,
+- **QA-07** ([ADR-0021](adr/0021-2pc-intenti-outcome.md)) — What concurrent readers and writers see when accessing a document in PREPARED state,
   between prepare and the decision. The Serie writer cannot stop and wait for the
   decision, otherwise the entire Serie stalls (contrary to INV-P3).
 - **QA-08** ([ADR-0021](adr/0021-2pc-intenti-outcome.md)) — When a decision may be forgotten and how `multiserie.log` is truncated.

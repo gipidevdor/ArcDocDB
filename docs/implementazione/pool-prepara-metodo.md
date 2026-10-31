@@ -17,11 +17,11 @@ step make a second routing unnecessary. At most one ready
 transfer and one begin; no pop, batch ACK, end, retry, or implicit cleanup.
 
 Seven values: **link, token, status, reason, origin, detail, action**.
-First four retain [startup](pool-begin.md) form: ACTIVE or
+The first four retain [startup](pool-begin.md) form: ACTIVE or
 CLOSING with positive token and original reason. EMPTY, BUSY, INACTIVE, and
-PUBLISHED return NIL/0/status/NIL without begin; last three values
+PUBLISHED return NIL/0/status/NIL without begin; the last three values
 come from step, distinguishing cursor, count, and no transfer.
-Publication ends immediately; retirement remains for next IDLE entry.
+Publication ends immediately; retirement remains for the next IDLE entry.
 
 Already-active phases, invalid owner/binding, and delegate faults retain
 original conditions. Busy writer preserves CLAIMED/link IDLE; busy Serie or

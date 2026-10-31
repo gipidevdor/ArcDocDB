@@ -2,7 +2,7 @@
 
 # Writer-queue verification method
 
-Scope registered before campaigns: bounded MPSC queue, private to a
+The scope was registered before the campaigns: bounded MPSC queue, private to a
 Serie, and writer token on reusable workers. Contract from
 [ADR-0045, items 6 and 8](../adr/0045-modello-di-esecuzione.md),
 [concurrency](../10-concorrenza-e-scheduling.md), and
@@ -12,13 +12,13 @@ Serie, and writer token on reusable workers. Contract from
 
 ## Contract and oracles
 
-Preallocated ring; capacity and messages extractable per execution slice bounded.
+The ring is preallocated; its capacity and the number of messages extractable per execution slice are bounded.
 Each operation tries the local guard once through CAS: no
 spin, wait, callback, or I/O. Full queue and contention signal distinct
-`resource-exhausted` reasons without accepting message. FIFO means acceptance
+`resource-exhausted` reasons without accepting the message. FIFO means acceptance
 order, not concurrent-producer invocation order.
 
-Only one worker holds the Serie token. Returned token includes
+Only one worker holds the Serie token. The returned token includes
 a monotonic fixnum generation: extraction and release also check current
 thread, and an old token remains invalid after a new acquisition
 by the same thread. Generation does not wrap. Extraction fills a
@@ -39,14 +39,14 @@ to check overflow rejection without billions of acquisitions.
 
 ## Real threads and limits
 
-Producers and consumers actually overlapping on a small queue: every
+Producers and consumers actually overlap on a small queue: every
 accepted message must be delivered once, maintaining each
-producer's order. Rejections transfer no ownership. Workers created
-once per campaign and reused over multiple messages, private buffers, and real
-compute work outside guard. One Serie must progress while another's guard
+producer's order. Rejections transfer no ownership. Workers are created
+once per campaign and reused over multiple messages. They use private buffers and perform real
+compute work outside the guard. One Serie must progress while another's guard
 and token are occupied. Semaphores make adverse tests
 deterministic; harness-only retries and joins have explicit caps. No
-success inferred from a delay or a merely prefilled queue.
+success is inferred from a delay or a merely prefilled queue.
 
 Strict build, lint, traceability, links, and integrated check; two C1
 readings and decision table. Separate instrumented coverage, with self-test and
@@ -59,9 +59,9 @@ Successful-path allocations: five replicates of 4,096 cycles with preallocated q
 messages, and targets, warmup 128 and GC outside measurement. Fixtures with
 capacity 1 and batches of 32 messages; every cycle acquires, enqueues, extracts, and
 releases, and verifies an expected observable result. Counter self-test
-with baseline and positive control 16 × 1 MiB. Zero measured heap allocation required,
+with baseline and positive control 16 × 1 MiB. Zero measured heap allocation is required,
 no throughput threshold or engine-scalability promise.
 
-This block does not implement ready-Serie list, wakeups, adaptive pool,
+This block does not implement the ready-Serie list, wakeups, adaptive pool,
 controller, publication, acknowledgments, or Serie FAULTED handling. It does not close
 the lost-wakeup protocol or complete-engine requirements.

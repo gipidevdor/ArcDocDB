@@ -9,10 +9,10 @@
                 crea-piano-csn-archivio))
 (defun crea-piano-csn-archivio (set decisions active closed
                               &key (max-segmenti-serie 65536) (max-segmenti-totali 1048576))
-  "Pre: catalogo completo, recovery esclusivo di tutte le Serie concluso; fonti e vettori congelati.
-ACTIVE e vettore CLOSED per ogni vista, nel medesimo ordine dell'insieme canonico.
-Post: massimo di tutte le Serie e di tutte le DECISION, dopo autorità, budget e insieme CLOSED verificati.
-Propaga condizioni tipizzate senza retry; nessun risultato parziale, I/O, registro o ammissione."
+  "Pre: complete catalog, exclusive recovery of all Serie finished; sources and vectors frozen.
+ACTIVE and CLOSED vector for each view, in the same order as the canonical set.
+Post: maximum across all Serie and all DECISION, after authority, budgets, and CLOSED set verified.
+Propagates typed conditions without retry; no partial result, I/O, registry, or admission."
   (let ((segments (verifica-piano-csn-preflight set decisions active closed
                                                max-segmenti-serie max-segmenti-totali))
         (views (insieme-serie-recovery-views set)))

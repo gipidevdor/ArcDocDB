@@ -6,8 +6,8 @@
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008 REQ-AFF-013
 (declaim (ftype (function (controllore-pool) null) %check-pool))
 (defun %check-pool (controller)
-  "Pre: oggetto locale. Post: owner, target e clock coerenti senza mutazione.
-INVALID-ARGUMENT :POOL-OWNER; INVARIANT-VIOLATION :POOL-STATE per stato interno."
+  "Pre: local object. Post: consistent owner, target, and clock without mutation.
+INVALID-ARGUMENT :POOL-OWNER; INVARIANT-VIOLATION :POOL-STATE for internal state."
   (unless (eq (controllore-pool-owner controller) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :pool-owner))
   (unless (<= (controllore-pool-minimum controller) (controllore-pool-target controller)
@@ -23,9 +23,9 @@ INVALID-ARGUMENT :POOL-OWNER; INVARIANT-VIOLATION :POOL-STATE per stato interno.
                                  (or null pool-tick) pool-direction (or null pool-tick)
                                  &optional)) leggi-controllore-pool))
 (defun leggi-controllore-pool (controller)
-  "Pre: owner esclusivo. Post: target, EWMA queue/CPU/P99 scala 256, last, candidate, since.
-Clock NIL prima del primo campione; nessuna allocazione di snapshot o mutazione.
-Propaga controllo tipizzato dell'owner e delle invarianti."
+  "Pre: exclusive owner. Post: target, queue/CPU/P99 EWMAs scaled by 256, last, candidate, since.
+Clock NIL before the first sample; no snapshot allocation or mutation.
+Propagates typed owner and invariant checks."
   (%check-pool controller)
   (values (controllore-pool-target controller) (controllore-pool-queue controller)
           (controllore-pool-cpu controller) (controllore-pool-p99 controller)

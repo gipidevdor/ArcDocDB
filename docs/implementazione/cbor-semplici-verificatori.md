@@ -43,7 +43,7 @@ The author of this reading also authored the benchmark auditor: no independence 
 3. **Helper negatives:** lines 380–381 accept any ERROR in negative fixtures. PASS therefore does not prove every rejection comes from the expected guard and reason: a programming error could also satisfy it. The benchmark auditor instead requires its own audit-rejection condition and expected reason. That guarantee is not extended to the helper.
 4. **Authenticity and stability:** expected CLI fingerprints and declared snapshots require trust in recorder and caller. Equality of local observations is not a signature, proof of OS isolation, or atomic proof against intermediate changes and restorations. MD5 checks on copies are not all included in final SHA256 observations.
 
-No mandatory defect preventing reading of current data emerged. The weaknesses above prevent claims stronger than those declared; they do not require changing frozen sources during collection.
+No defect requiring correction before reading the current data emerged. The weaknesses above prevent claims stronger than those declared; they do not require changing frozen sources during collection.
 
 <a id="record-effettivamente-letti"></a>
 
@@ -74,7 +74,7 @@ The first wrapper invokes `tools/cbor-simple-write-audit.lisp --bench` on record
 
 ### Coverage
 
-`audit-coverage.lisp` read in full: STATUS OK, 1178 checks, and five identical before/after input observations. Saved state includes 248 files, but HTML scope is exactly one source and two HTML files: `cover-index.html` and `9ae2ab0021850480ee0bbfa07aef40ba.html`. Raw/index/source counts agree: **95/111 expressions, 20/24 branch outcomes**. 16 expressions are missing, associated with four declarations and twelve nodes of the three internal error branches; four internal-guard outcomes are missing. Other categories: zero. Reasons and lines are `cbor-simple-span` line 22, `cbor-simple-target-span` line 46, and `cbor-simple-progress` line 52. All raw paths remain in report and denominator.
+`audit-coverage.lisp` read in full: STATUS OK, 1178 checks, and five identical before/after input observations. Saved state includes 248 files, but HTML scope is exactly one source and two HTML files: `cover-index.html` and `9ae2ab0021850480ee0bbfa07aef40ba.html`. Raw/index/source counts agree: **95/111 expressions, 20/24 branch outcomes**. 16 expressions are missing, associated with four declarations and twelve nodes of the three internal error branches; four internal-guard outcomes are missing. Other categories: zero. Reasons and lines are `cbor-simple-span` line 22, `cbor-simple-target-span` line 46, and `cbor-simple-progress` line 52. All raw paths remain in the report and denominator.
 
 The helper's raw-state observation reports 1762263 bytes and SHA256 `370f3694f1361132877df4dca8140e24160f338318d69dc108783f76585da6c8`. Later compression of ignored outputs occurs after audits and must be preserved through evidence-storage without changing these values observed on decoded bytes. This document does not requalify MC/DC, full coverage, a gate, or release.
 

@@ -7,9 +7,9 @@
 ;;; REQ: REQ-CBR-005 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t index) (values null &optional)) check-tabella-array-cbor))
 (defun check-tabella-array-cbor (item-ends count span)
-  "Pre: SPAN verificato, tabella e COUNT esterni. Post: prefisso attivo limitato.
-INVALID-ARGUMENT :cbor-array-item-ends per tipo tabella, :cbor-array-count
-per COUNT o sorgente non vuota con COUNT0. Offset NIL; nessuna entry letta."
+  "Pre: verified SPAN, external table and COUNT. Post: bounded active prefix.
+INVALID-ARGUMENT :cbor-array-item-ends for table type, :cbor-array-count
+for COUNT or nonempty source with COUNT0. NIL offset; no entry read."
   (unless (typep item-ends '(simple-array (unsigned-byte 32) (*)))
     (error 'invalid-argument :reason :cbor-array-item-ends))
   (unless (and (typep count 'index) (<= count (length item-ends)) (<= count span))
@@ -22,9 +22,9 @@ per COUNT o sorgente non vuota con COUNT0. Offset NIL; nessuna entry letta."
 (declaim (ftype (function (octets octets (simple-array (unsigned-byte 32) (*)) t)
                          (values null &optional)) check-spazio-array-cbor))
 (defun check-spazio-array-cbor (buffer source item-ends space)
-  "Pre: tipi array verificati, SPACE esterno. Post: scratch separato dai dati.
-INVALID-ARGUMENT :cbor-workspace o :cbor-array-workspace-alias, offset NIL.
-Alias rifiutati anche per span vuoti; nessuna lettura di byte o reset."
+  "Pre: verified array types, external SPACE. Post: scratch separate from data.
+INVALID-ARGUMENT :cbor-workspace or :cbor-array-workspace-alias, NIL offset.
+Aliases rejected even for empty spans; no byte read or reset."
   (unless (typep space 'spazio-cbor)
     (error 'invalid-argument :reason :cbor-workspace))
   (when (or (eq buffer (spazio-cbor-kinds space))
@@ -37,10 +37,10 @@ Alias rifiutati anche per span vuoti; nessuna lettura di byte o reset."
 (declaim (ftype (function (index index index index index)
                          (values (member 1 2 3 5) index &optional)) dimensioni-array-cbor))
 (defun dimensioni-array-cbor (start end span count max-bytes)
-  "Pre: range, COUNT<=SPAN e configurazione validi. Post: dimensione completa.
-Verifica SPAN prima della somma e del cast u32; testata inclusa nel budget.
-RESOURCE-EXHAUSTED :cbor-array-byte-budget o :cbor-array-capacity, offset NIL;
-nessuna entry/byte letta, nessun reset o write."
+  "Pre: valid ranges, COUNT<=SPAN, and configuration. Post: complete size.
+Checks SPAN before addition and u32 cast; header included in budget.
+RESOURCE-EXHAUSTED :cbor-array-byte-budget or :cbor-array-capacity, NIL offset;
+no entry/byte read, reset, or write."
   (when (> span max-bytes)
     (error 'arcdocdb.conditions:resource-exhausted :reason :cbor-array-byte-budget))
   (let* ((header-size (the (member 1 2 3 5)
@@ -57,9 +57,9 @@ nessuna entry/byte letta, nessun reset o write."
 (declaim (ftype (function (octets index index octets index index)
                          (values null &optional)) check-overlap-array-cbor))
 (defun check-overlap-array-cbor (buffer start next source source-start source-end)
-  "Pre: span verificati, NEXT comprende testata. Post: footprint disgiunto.
-INVALID-ARGUMENT :cbor-array-overlap, offset NIL; confini toccanti/vuoti ammessi.
-INVARIANT-VIOLATION per range interni; nessun byte letto/scritto."
+  "Pre: verified spans, NEXT includes header. Post: disjoint footprint.
+INVALID-ARGUMENT :cbor-array-overlap, NIL offset; touching/empty boundaries allowed.
+INVARIANT-VIOLATION for internal ranges; no byte read/written."
   (unless (<= start next (length buffer))
     (error 'invariant-violation :reason :cbor-array-target-span))
   (unless (<= source-start source-end (length source))
@@ -73,10 +73,10 @@ INVARIANT-VIOLATION per range interni; nessun byte letto/scritto."
 (declaim (ftype (function ((simple-array (unsigned-byte 32) (*)) u32 index)
                          (values null &optional)) check-fini-array-cbor))
 (defun check-fini-array-cbor (item-ends count span)
-  "Pre: tipi/COUNT/budget verificati, tabella stabile. Post: partizione completa.
-Solo COUNT entry lette; fini relative crescenti e ultima uguale a SPAN.
-INVALID-ARGUMENT :cbor-array-item-ends, offset NIL; INVARIANT-VIOLATION
-per limiti interni. COUNT0 non legge entry; scratch e byte intatti."
+  "Pre: verified types/COUNT/budgets, stable table. Post: complete partition.
+Only COUNT entries read; increasing relative ends, with the last equal to SPAN.
+INVALID-ARGUMENT :cbor-array-item-ends, NIL offset; INVARIANT-VIOLATION
+for internal limits. COUNT0 reads no entries; scratch and bytes intact."
   (unless (<= count (length item-ends))
     (error 'invariant-violation :reason :cbor-array-table-bound))
   (unless (<= count span +cbor-scan-max-bytes+)
@@ -95,9 +95,9 @@ per limiti interni. COUNT0 non legge entry; scratch e byte intatti."
 ;;; REQ: REQ-CBR-005 REQ-LIM-001 REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (u32 index index) (values null &optional)) check-radice-array-cbor))
 (defun check-radice-array-cbor (count max-nodes max-depth)
-  "Pre: configurazione valida, COUNT limitato. Post: radice e minimo figli ammessi.
-RESOURCE-EXHAUSTED :cbor-array-node-budget prima di :cbor-array-depth-budget,
-offset NIL. Nessuna lettura di byte, reset o write."
+  "Pre: valid configuration, bounded COUNT. Post: root and minimum children admitted.
+RESOURCE-EXHAUSTED :cbor-array-node-budget before :cbor-array-depth-budget,
+NIL offset. No byte read, reset, or write."
   (when (> count (1- max-nodes))
     (error 'arcdocdb.conditions:resource-exhausted :reason :cbor-array-node-budget))
   (when (zerop max-depth)
@@ -109,10 +109,10 @@ offset NIL. Nessuna lettura di byte, reset o write."
                          (values index (member 1 2 3 5) index &optional)) check-input-array-cbor))
 (defun check-input-array-cbor (buffer start end source source-start source-end item-ends count space
                              max-bytes max-nodes max-depth)
-  "Pre: argomenti esterni. Post: span, testata e dimensione pronti alla scansione.
-Precedenza range/source/tabella-count/space-alias/limiti/byte/capacita/overlap/
-entry/nodi/depth. Errori tipizzati con offset NIL, dati e scratch intatti.
-INVARIANT-VIOLATION per contratto interno incoerente; nessun byte parsato."
+  "Pre: external arguments. Post: span, header, and size ready for scanning.
+Precedence: range/source/table-count/space-alias/limits/bytes/capacity/overlap/
+entries/nodes/depth. Typed errors with NIL offset, data and scratch intact.
+INVARIANT-VIOLATION for inconsistent internal contract; no bytes parsed."
   (check-span-string-cbor-write buffer start end :cbor-range)
   (let ((span (check-span-string-cbor-write source source-start source-end :cbor-array-source-range)))
     (declare (type index span))

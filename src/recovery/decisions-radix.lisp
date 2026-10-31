@@ -5,7 +5,7 @@
 (declaim (optimize (safety 3) (debug 2)))
 
 ;;; REQ: REQ-TXM-005 REQ-AFF-008
-(defconstant +decision-radix-buckets+ 256 "Numero di classi dell'algoritmo per un ottetto.")
+(defconstant +decision-radix-buckets+ 256 "Number of algorithm classes for one octet.")
 ;;; REQ: REQ-TXM-005 REQ-AFF-008
 (deftype radix-histogram () '(simple-array (unsigned-byte 64) (256)))
 
@@ -13,9 +13,9 @@
 (declaim (ftype (function (radix-histogram index) (values boolean &optional))
                 radix-prefix-starts))
 (defun radix-prefix-starts (histogram count)
-  "Pre: conteggi privati di 256 classi. Post: somme verificate, prefissi se necessari.
-Restituisce NIL per zero o una classe occupata: la passata non serve.
-INVARIANT-VIOLATION per conteggi incompatibili; due cicli limitati a 256."
+  "Pre: private counts for 256 classes. Post: verified sums, prefixes if needed.
+Returns NIL for zero or one occupied class: the pass is unnecessary.
+INVARIANT-VIOLATION for incompatible counts; two loops bounded to 256."
   (let ((total 0) (occupied 0))
     (declare (type index total occupied))
     (dotimes (digit +decision-radix-buckets+)
@@ -39,9 +39,9 @@ INVARIANT-VIOLATION per conteggi incompatibili; due cicli limitati a 256."
 (declaim (ftype (function (octets u16 index radix-histogram)
                          (values boolean &optional)) radix-id-starts))
 (defun radix-id-starts (source count digit histogram)
-  "Pre: copia privata di COUNT ID16, DIGIT byte dell'ID. Post: histogram verificato.
-Restituisce se occorre distribuire; INVARIANT-VIOLATION per misura o byte incoerente.
-SOURCE invariato; conteggio limitato a COUNT, prefissi a 256 classi."
+  "Pre: private copy of COUNT ID16s; DIGIT is an ID byte. Post: verified histogram.
+Returns whether distribution is needed; INVARIANT-VIOLATION for inconsistent size or byte.
+SOURCE unchanged; counting bounded to COUNT, prefixes to 256 classes."
   (unless (= (length source) (* count +participant-id-bytes+))
     (error 'invariant-violation :reason :decision-participant-size))
   (unless (< digit +participant-id-bytes+)
@@ -55,9 +55,9 @@ SOURCE invariato; conteggio limitato a COUNT, prefissi a 256 classi."
 (declaim (ftype (function (simple-vector index radix-histogram)
                          (values boolean &optional)) radix-entry-starts))
 (defun radix-entry-starts (source digit histogram)
-  "Pre: entry private verificate, DIGIT ottetto del TXID u64. Post: conteggi verificati.
-Restituisce se occorre distribuire; INVARIANT-VIOLATION per ottetto incoerente.
-SOURCE invariato; conteggio limitato alla lunghezza, prefissi a 256 classi."
+  "Pre: verified private entries; DIGIT is a u64 TXID octet. Post: verified counts.
+Returns whether distribution is needed; INVARIANT-VIOLATION for an inconsistent octet.
+SOURCE unchanged; counting bounded to length, prefixes to 256 classes."
   (unless (< digit 8)
     (error 'invariant-violation :reason :decision-radix-digit))
   (unless (typep (length source) 'u64)
@@ -71,9 +71,9 @@ SOURCE invariato; conteggio limitato alla lunghezza, prefissi a 256 classi."
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (radix-histogram index) null) radix-check-cursors))
 (defun radix-check-cursors (histogram count)
-  "Pre: cursori dopo distribuzione stabile. Post: estremi crescenti entro COUNT.
-Ultima classe termina esattamente a COUNT; INVARIANT-VIOLATION altrimenti.
-Nessuna modifica, ciclo limitato a 256 classi."
+  "Pre: cursors after stable distribution. Post: increasing endpoints within COUNT.
+The last class ends exactly at COUNT; INVARIANT-VIOLATION otherwise.
+No modification; loop bounded to 256 classes."
   (let ((previous 0))
     (declare (type index previous))
     (dotimes (digit +decision-radix-buckets+)
@@ -89,9 +89,9 @@ Nessuna modifica, ciclo limitato a 256 classi."
 (declaim (ftype (function (octets octets u16 index radix-histogram) null)
                 radix-scatter-ids))
 (defun radix-scatter-ids (source target count digit histogram)
-  "Pre: copie private distinte, prefissi della passata corrente. Post: ID distribuiti.
-Stabile nell'ordine della sorgente, nessuna modifica a SOURCE; cursori consumati.
-INVARIANT-VIOLATION per misure, byte o posizione; ciclo limitato a COUNT."
+  "Pre: distinct private copies, prefixes for the current pass. Post: distributed IDs.
+Stable in source order, no change to SOURCE; cursors consumed.
+INVARIANT-VIOLATION for sizes, byte, or position; loop bounded to COUNT."
   (unless (and (= (length source) (* count +participant-id-bytes+))
                (= (length target) (length source)) (not (eq source target)))
     (error 'invariant-violation :reason :decision-radix-arrays))
@@ -110,9 +110,9 @@ INVARIANT-VIOLATION per misure, byte o posizione; ciclo limitato a COUNT."
 (declaim (ftype (function (simple-vector simple-vector index radix-histogram) null)
                 radix-scatter-entries))
 (defun radix-scatter-entries (source target digit histogram)
-  "Pre: vettori privati distinti, entry verificate e prefissi correnti. Post: run stabile.
-TXID uguali conservano l'ordine fisico; SOURCE invariato, cursori consumati.
-INVARIANT-VIOLATION per misure, ottetto o posizione; ciclo limitato alla lunghezza."
+  "Pre: distinct private vectors, verified entries, and current prefixes. Post: stable run.
+Equal TXIDs preserve physical order; SOURCE unchanged, cursors consumed.
+INVARIANT-VIOLATION for sizes, octet, or position; loop bounded to length."
   (unless (and (= (length source) (length target)) (not (eq source target)))
     (error 'invariant-violation :reason :decision-radix-arrays))
   (unless (< digit 8)
@@ -131,10 +131,10 @@ INVARIANT-VIOLATION per misure, ottetto o posizione; ciclo limitato alla lunghez
 (declaim (ftype (function (octets u16 u64) (values octets &optional))
                 radix-sort-participants))
 (defun radix-sort-participants (participants count source-offset)
-  "Pre: copia privata di COUNT ID16. Post: risultato posseduto, ordinato e distinto.
-Propaga duplicati tipizzati; INVARIANT-VIOLATION per misura interna incoerente.
-LSD stabile: al più 16 passate, uniformi saltate; input privato può essere riordinato.
-Scratch sulla misura effettiva; percorso di apertura, nessuna promessa zero heap."
+  "Pre: private copy of COUNT ID16s. Post: owned, sorted, distinct result.
+Propagates typed duplicate errors; INVARIANT-VIOLATION for inconsistent internal size.
+Stable LSD: at most 16 passes, uniform passes skipped; private input may be reordered.
+Scratch sized to actual data; opening path, no zero-heap promise."
   (unless (= (length participants) (* count +participant-id-bytes+))
     (error 'invariant-violation :reason :decision-participant-size))
   (let ((source participants)
@@ -153,10 +153,10 @@ Scratch sulla misura effettiva; percorso di apertura, nessuna promessa zero heap
 (declaim (ftype (function (simple-vector) (values simple-vector &optional))
                 radix-sort-entries))
 (defun radix-sort-entries (entries)
-  "Pre: vettore privato di entry possedute. Post: ordine TXID non decrescente e stabile.
-INVARIANT-VIOLATION per entry o ordine incoerente; nessun I/O o stato condiviso.
-Al più otto passate LSD, uniformi saltate; input privato può essere riordinato.
-Scratch sulla lunghezza effettiva; allocazioni ammesse sul percorso di apertura."
+  "Pre: private vector of owned entries. Post: stable nondecreasing TXID order.
+INVARIANT-VIOLATION for inconsistent entries or order; no I/O or shared state.
+At most eight LSD passes, uniform passes skipped; private input may be reordered.
+Scratch sized to actual length; allocations allowed on the opening path."
   (dotimes (i (length entries))
     (unless (typep (aref entries i) 'decision-entry)
       (error 'invariant-violation :reason :decision-entry-shape))
@@ -176,19 +176,19 @@ Scratch sulla lunghezza effettiva; allocazioni ammesse sul percorso di apertura.
 
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-BEN-001 REQ-VAL-001
 (defconstant +radix-participant-threshold+ 1024
-  "Proposta misurata 2026-10-09: LSD per almeno 1024 ID16, merge sotto soglia.")
+  "Proposal measured on 2026-10-09: LSD for at least 1024 ID16s, merge below the threshold.")
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-BEN-001 REQ-VAL-001
 (defconstant +radix-entry-threshold+ 256
-  "Proposta misurata 2026-10-09: LSD per almeno 256 TXID, merge sotto soglia.")
+  "Proposal measured on 2026-10-09: LSD for at least 256 TXIDs, merge below the threshold.")
 
 ;;; REQ: REQ-TXM-005 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (octets u16 u64) (values octets &optional))
                 sort-recovery-participants))
 (defun sort-recovery-participants (participants count source-offset)
-  "Pre: copia privata di COUNT ID16. Post: ID ordinati e distinti, dati posseduti.
-Selezione per cardinalità; entrambi i sorter verificano misura e ordine finale.
-Propaga corruzione tipizzata dei duplicati e invarianti interni; nessun I/O.
-Workspace sulla misura effettiva, allocazioni ammesse durante il recovery."
+  "Pre: private copy of COUNT ID16s. Post: sorted, distinct IDs; owned data.
+Selection by cardinality; both sorters verify size and final order.
+Propagates typed corruption for duplicates and internal invariants; no I/O.
+Workspace sized to actual data; allocations allowed during recovery."
   (if (< count +radix-participant-threshold+)
       (sort-participants participants count source-offset)
       (radix-sort-participants participants count source-offset)))
@@ -197,10 +197,10 @@ Workspace sulla misura effettiva, allocazioni ammesse durante il recovery."
 (declaim (ftype (function (simple-vector) (values simple-vector &optional))
                 sort-recovery-entries))
 (defun sort-recovery-entries (entries)
-  "Pre: entry private possedute. Post: TXID ordinati stabilmente, senza alias esterni.
-Selezione per cardinalità; entrambi i sorter verificano forma e ordine finale.
-Propaga INVARIANT-VIOLATION per dati interni incoerenti, senza risultati parziali.
-Nessuno stato condiviso o I/O; scratch sulla lunghezza effettiva."
+  "Pre: private owned entries. Post: stably sorted TXIDs, without external aliases.
+Selection by cardinality; both sorters verify shape and final order.
+Propagates INVARIANT-VIOLATION for inconsistent internal data, without partial results.
+No shared state or I/O; scratch sized to actual length."
   (if (< (length entries) +radix-entry-threshold+)
       (sort-entries entries)
       (radix-sort-entries entries)))

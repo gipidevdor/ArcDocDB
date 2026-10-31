@@ -16,8 +16,8 @@
             (:constructor %make-registro-snapshot
                 (csns lifetime wait csns-array generations deadlines wait-deadlines states words mutex))
             (:copier nil))
-  "Pre: array privati preallocati. Post: registro vuoto, soglia=MAX-U64.
-WORDS[0]=ultima generazione, WORDS[1]=soglia. Generazione zero indica mutazione/non assegnato."
+  "Pre: private preallocated arrays. Post: empty registry, threshold=MAX-U64.
+WORDS[0]=last generation, WORDS[1]=threshold. Generation zero indicates mutation/unassigned."
   (csns nil :type registro-csn :read-only t)
   (lifetime 1 :type u64 :read-only t) (wait 1 :type u64 :read-only t)
   (csns-array #() :type csn-words :read-only t)
@@ -33,8 +33,8 @@ WORDS[0]=ultima generazione, WORDS[1]=soglia. Generazione zero indica mutazione/
 
 ;;; REQ: REQ-MVC-004 REQ-MVC-007
 (defstruct (contesto-snapshot (:constructor %make-contesto-snapshot (registry word)) (:copier nil))
-  "Pre: contesto riutilizzabile, legato a un solo Archivio. Post: identità non assegnata.
-WORD[0]=generazione, WORD[1]=CSN. Il consumatore conserva l'identità originale prima del riuso."
+  "Pre: reusable context, bound to one Archivio only. Post: unassigned identity.
+WORD[0]=generation, WORD[1]=CSN. The consumer retains the original identity before reuse."
   (registry nil :type registro-snapshot :read-only t)
   (word #() :type csn-words :read-only t)
   (slot 0 :type csn-slot))
@@ -43,9 +43,9 @@ WORD[0]=generazione, WORD[1]=CSN. Il consumatore conserva l'identità originale 
 (declaim (ftype (function (registro-csn integer integer integer) registro-snapshot)
                 crea-registro-snapshot))
 (defun crea-registro-snapshot (csns capacity lifetime-ticks wait-ticks)
-  "Pre: una base monotona di tempo per tutte le chiamate; durate nelle stesse unità.
-Post: K slot fissi, zero snapshot. INVALID-ARGUMENT prima di allocare per budget/intervalli.
-Nessun clock globale o thread; il chiamante fornisce NOW dall'ambiente iniettabile."
+  "Pre: one monotonic time base for all calls; durations in the same units.
+Post: K fixed slots, zero snapshots. INVALID-ARGUMENT before allocation for budgets/intervals.
+No global clock or thread; the caller supplies NOW from the injectable environment."
   (unless (and (<= 1 capacity +max-csn-slots+)
                (<= 1 wait-ticks lifetime-ticks +max-csn+))
     (error 'invalid-argument :reason :snapshot-registry-configuration))
@@ -63,7 +63,7 @@ Nessun clock globale o thread; il chiamante fornisce NOW dall'ambiente iniettabi
 ;;; REQ: REQ-MVC-007 REQ-AFF-008
 (declaim (ftype (function (registro-snapshot) contesto-snapshot) crea-contesto-snapshot))
 (defun crea-contesto-snapshot (registry)
-  "Pre: registro dell'Archivio. Post: contesto preallocato, senza slot o pin riservato.
-La salute si verifica alla registrazione; nessun array viene esportato."
+  "Pre: Archivio registry. Post: preallocated context, without a reserved slot or pin.
+Health checked at registration; no array exported."
   (%make-contesto-snapshot registry
                           (make-array 2 :element-type '(unsigned-byte 64) :initial-element 0)))

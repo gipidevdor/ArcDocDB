@@ -15,7 +15,7 @@ backend, multilevel directory, or automatic migration.
 `arcdocdb.index.page:crea-cache-pagine(size, frame-count, loader)` prepares
 fixed frames for 4096-, 16384-, or 65536-byte pages. Maximum payload is
 256 MiB; frame count 1..65536. Each frame now has a preallocated owned copy
-of identity: private cursors from the
+of the identity: private cursors from the
 [paged reader](lettura-indice-paginato.md) are not retained. The limit concerns byte arrays:
 structure, reference vectors, and identities are additional metadata, O(frame-count),
 and do not constitute an RSS measurement or the complete quota required by ADR-0057.
@@ -39,8 +39,8 @@ The injectable loader receives identity and an exclusive buffer and returns
 exactly SIZE. It is trusted code: it neither retains nor later modifies
 the buffer. The cache invalidates before loading and zeroes the frame. The return
 value alone does not prove the loader read: CRC, identity, and
-shape are verified regardless. A cache corrupted in memory after
-verification is not detected by reverification on every hit.
+shape are verified regardless. Hits do not reverify the frame. Corruption introduced in RAM after load-time
+verification is therefore not detected by this cache on a hit.
 
 A single thread owns the entire cache; callbacks cannot reenter.
 No frame is lent to the caller, only copies in private memory.

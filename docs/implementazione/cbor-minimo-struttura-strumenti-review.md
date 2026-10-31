@@ -39,7 +39,7 @@ presence in CLI whitelist, usage, and diagnostics. Both
 
 ## Importing the mutation engine
 
-Resolution fully imports the upstream engine from the same main:
+The resolution fully imports the upstream engine from the same main:
 real transport with exit/signal, distinct `:worker-error` classification
 for signals and failures after the final marker, counters, logs, and self-tests
 of SIGKILL/exit7 children and baseline copy/transport rejections. Group
@@ -82,7 +82,7 @@ suites, self-tests, numerators, and raw state remain pending.
 | `tools/cbor-minimal-mutation.lisp`, after integration | `60b1ac184498623d1364df66e1d95f93165af159` |
 
 Files were read as forms with `*read-eval* NIL`, through EOF, without
-loading or executing them. No open finding in the scope change or
+loading or executing them. No open finding was found in the scope change or
 static engine import. Benchmark and evidence collection
 are outside this reading;
 runtime coverage verification must be recorded separately.

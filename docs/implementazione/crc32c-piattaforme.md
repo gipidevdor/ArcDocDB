@@ -22,9 +22,9 @@ Performance results are medians of hot-data windows, not P99.
 ## Bootstrap and rollback
 
 ASDF and CI measurement loader share `src/io/cpu-build.lisp`.
-Only the exact qualified combinations (2.6.9 and 2.6.10 on macOS ARM64) require SB-SIMD and reads VOP
+Only the exact qualified combinations (2.6.9 and 2.6.10 on macOS ARM64) require SB-SIMD and read VOP
 definitions or NEON references. Subsequent kernel choice requires
-OS/CPU confirmation. Public function `backend-crc32c` reports outcome.
+OS/CPU confirmation. The public function `backend-crc32c` reports the outcome.
 Both native ASDF components also have `:if-feature`: fallback does not
 load old cached ARM FASLs. Comparing three fresh processes
 without `:force` checks native → software → native on the same
@@ -36,7 +36,7 @@ To force software, before loading ASDF/product in a fresh process:
 (pushnew :arcdocdb-crc32c-software *features*)
 ```
 
-Feature changes neither format, data, nor API. Avoid reloading during
+The feature changes neither format, data, nor API. Avoid reloading during
 service: selection and compilation features belong to startup.
 
 <a id="metodo-di-verifica-prima-delle-prove"></a>
@@ -58,7 +58,7 @@ not be defined, nor SB-SIMD required by ArcDocDB. A separate reader test
 loads foundations without SIMD packages on synthetic feature combinations:
 checks dependency isolation, not equivalent to executing Linux/x86.
 Full `make check` remains mandatory. Earlier benchmarks retain
-their sources; regression checked with unchanged A/B driver.
+their sources; regression is checked with the unchanged A/B driver.
 
 Two author readings: dependencies/features and fallback, then ABI/decisions,
 seed/range/incremental contracts and immutable kernel during service.

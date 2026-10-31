@@ -23,9 +23,9 @@
 
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CMP-007 REQ-AFF-008
 (defstruct (mappa-segmento-get (:constructor %make-mappa-segmento-get (segment end rows &optional (count (floor (length rows) 6)))) (:copier nil))
-  "Pre: CLOSED attestato dal manifest oppure pagina di lotto ACTIVE verificato prima dell'adozione.
-Post: tabella posseduta di soli PUT, ordinata per offset, immutabile e senza buffer sorgente.
-Il controller pubblica prima delle location corrispondenti e protegge il FD con EBR."
+  "Pre: CLOSED attested by the manifest or verified ACTIVE batch page before adoption.
+Post: owned table of PUTs only, sorted by offset, immutable and without source buffer.
+The controller publishes before corresponding locations and protects the FD with EBR."
   (segment nil :type segmento-get :read-only t)
   (end 0 :type u32 :read-only t)
   (rows #() :type resolver-words :read-only t)
@@ -34,6 +34,6 @@ Il controller pubblica prima delle location corrispondenti e protegge il FD con 
 ;;; REQ: REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (mappa-segmento-get) index) payload-mappa-segmento-get))
 (defun payload-mappa-segmento-get (map)
-  "Pre: mappa completata. Post: payload degli array permanenti, 24 byte per PUT.
-Esclude oggetti/header Lisp, capacità/FD e buffer del costruttore; non misura RSS."
+  "Pre: completed map. Post: permanent array payload, 24 bytes per PUT.
+Excludes Lisp objects/headers, capabilities/FDs, and builder buffers; does not measure RSS."
   (* 4 (length (mappa-segmento-get-rows map))))

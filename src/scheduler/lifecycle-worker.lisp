@@ -6,8 +6,8 @@
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (porta-worker-pool pool-command pool-command) null) %pool-ack-command))
 (defun %pool-ack-command (port old word)
-  "Pre: worker owner verificato, barriera IDLE passata, OLD letto acquire. Post: ACK pubblicato.
-INVARIANT-VIOLATION :POOL-PORT-STATE su conflitto; nessun falso successo."
+  "Pre: worker owner verified, IDLE barrier passed, OLD read with acquire. Post: ACK published.
+INVARIANT-VIOLATION :POOL-PORT-STATE on conflict; no false success."
   (sb-thread:barrier (:write))
   (unless (= old (sb-ext:compare-and-swap (porta-worker-pool-ack port) old word))
     (error 'invariant-violation :reason :pool-port-state))
@@ -18,10 +18,10 @@ INVARIANT-VIOLATION :POOL-PORT-STATE su conflitto; nessun falso successo."
                          (values boolean (member :unchanged :activated :retired :busy :faulted)
                                  &optional)) applica-stato-worker-pool))
 (defun applica-stato-worker-pool (port)
-  "Pre: owner corrente non rientrante; chiamare tra compiti, senza epoca/risorse esterne.
-Post: bit actual e stato; conferma soltanto dopo barriera C1 IDLE completa.
-BUSY/FAULTED conservano comando e obblighi; nessuna revoca, release, reset o attesa.
-INVALID-ARGUMENT owner; invarianti della porta/contesto propagate senza occultarle."
+  "Pre: nonreentrant current owner; call between tasks, without epoch/external resources.
+Post: actual bit and state; confirms only after the complete C1 IDLE barrier.
+BUSY/FAULTED retain command and obligations; no revocation, release, reset, or waiting.
+INVALID-ARGUMENT for owner; port/context invariants propagated without concealment."
   (unless (eq (porta-worker-pool-owner port) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :pool-worker-owner))
   (multiple-value-bind (request ack) (%pool-port-words port)

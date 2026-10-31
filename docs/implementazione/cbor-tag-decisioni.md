@@ -9,7 +9,7 @@ write blob `16b91fc27eabafd7ff12bfb0a56ed34208c2bd4b`:
 [write](../../src/codec/cbor-tag-write.lisp),
 [method](cbor-tag-metodo.md), [second reading](cbor-tag-lettura.md).
 
-Abbreviated names below identify `test-REQ-CBR-007-tag-*` in frozen
+Abbreviated names below identify `test-REQ-CBR-007-tag-*` in the frozen
 corpus `tests/codec/cbor-tag-write.lisp`, blob
 `df97950ec8d24157bb6566c7995262f7beea7742`. Witnesses are planned
 cases, not execution results. T/F are logical condition
@@ -19,7 +19,7 @@ truth values; they do not attest dynamic MC/DC.
 
 All sites, including declarations, internal guards, ERROR forms, and
 relations prevented by the valid public API, remain in future raw
-observation denominators. No exclusion or C1 qualification.
+observation denominators. No exclusion or C1 qualification is claimed.
 
 <a id="cinque-decisioni-andor-undici-operandi"></a>
 
@@ -33,9 +33,9 @@ observation denominators. No exclusion or C1 qualification.
 | D4 input:53, check-overlap-tag-cbor | AND A=BUFFER EQ SOURCE; B=START<SOURCE-END; C=SOURCE-START<NEXT | TTT: same array, SS16/SE17, START8/NEXT18. FTT: distinct arrays, SS7/SE8, START7/NEXT9 in tag0 probe. TFT: same array, SS16/SE17, START17/NEXT27. TTF: same array, SS16/SE17, START6/NEXT16. Three pairs against TTT make A/B/C separately decisive; `overlap-including-only-header-and-touching-boundaries` and `u32-word-width-boundaries-and-all-wire-sentinels`. |
 | D5 write:15, verifica-contenuto-tag-cbor | AND A=START<END; B=END<=LENGTH(SOURCE) | `(START,END,LENGTH)=(7,8,13)` TT; `(8,8,13)` FT; `(7,14,13)` TF. Internal false outcomes prevented by preflight and results passed. Source type/range/empty corpus verifies public rejections before scanner; internal errors remain to be observed, without exclusion. |
 
-No nested AND/OR, no new LOOP. For D2/D3/D5 numeric
+No nested AND/OR, no new LOOP. For D2/D3/D5, the numeric
 pairs are meaningful static obligations, not existing helper invocations
-with violated preconditions. A campaign only on valid API
+with violated preconditions. A campaign using only the valid API
 may leave those false outcomes uncovered: complete raw data will be retained.
 
 <a id="relazioni-numeriche-concatenate"></a>
@@ -43,7 +43,7 @@ may leave those false outcomes uncovered: complete raw data will be retained.
 ## Chained numeric relations
 
 Two predicates with two relations each: four relations. They are not
-AND/OR written in source; inventory separate from syntactic paths.
+AND/OR forms written in the source; their inventory is separate from syntactic paths.
 
 | Site | Ordered relations | Static pairs and witness limits |
 |---|---|---|
@@ -52,7 +52,7 @@ AND/OR written in source; inventory separate from syntactic paths.
 
 The other twenty-one relational predicates are binary: input:27/31/36/38,
 49x2/51x2/53x2,77/79/81; write:15x2/17/24/28/61/63/66.
-Total23 `<`/`<=`/`=`/`>` forms with25 elementary relations including
+There are a total of 23 `<`/`<=`/`=`/`>` forms with 25 elementary relations including
 both chains. `PLUSP SPAN` input:29 and `ZEROP SPAN` input:69 are
 two other numeric predicates, inventoried in guards below.
 
@@ -60,10 +60,10 @@ two other numeric predicates, inventoried in guards below.
 
 ## All guards and error forms
 
-23 WHEN/UNLESS sites,23 ERROR forms: input14, write9. IA=INVALID-ARGUMENT,
+There are 23 WHEN/UNLESS sites and 23 ERROR forms: 14 in input and 9 in write. IA=INVALID-ARGUMENT,
 RE=RESOURCE-EXHAUSTED, IV=INVARIANT-VIOLATION. All new local
 errors omit OFFSET, therefore NIL; scanner errors retain absolute
-SOURCE offset. API does not intercept parser conditions.
+SOURCE offset. The API does not intercept parser conditions.
 
 | Function | Site: condition and reason | Witness/property |
 |---|---|---|
@@ -81,8 +81,8 @@ Preflight phases and parser errors are witnessed separately:
 `all-preflight-phase-precedences`, `parser-failures-absolute-offset-and-complete-single-item`,
 `every-truncation-nonzero-source-start-and-exact-end`,
 `scratch-reuse-after-parser-and-preflight-errors`, and
-`fixed-seed-1024-fuzz-and-frozen-class-counts`. Content scratch
-does not include emitted root tag. Every success checks one NEXT.
+`fixed-seed-1024-fuzz-and-frozen-class-counts`. The content scratch
+does not include the emitted root tag. Every success checks one NEXT.
 
 <a id="righe-e-percorsi-sintattici"></a>
 
@@ -101,8 +101,8 @@ separately inventoried; no new IF/COND/CASE/LOOP.
 | verifica-contenuto-tag-cbor | write:10–30 |21|6|8|
 | scrivi-tag-cbor-minimo | write:36–68 |33|3|4|
 
-Maximum33 lines and8 paths, within COD-12/13 under stated convention.
-Six functions,23 guards/ERRORs,5 AND/OR11 operands,2 chains4 relations, and0 loops
-also confirmed by reading forms as DATA, READ-EVAL NIL
-and EOF, without compiling or executing product. No guard removed
-because internal, redundant with public path, or linked to ERROR.
+The maxima are 33 lines and 8 paths, within COD-12/13 under the stated convention.
+Six functions, 23 guards/ERRORs, 5 AND/OR forms with 11 operands, 2 chains with 4 relations, and 0 loops
+were also confirmed by reading forms as DATA, with READ-EVAL NIL
+and EOF, without compiling or executing the product. No guard was removed
+because it was internal, redundant with the public path, or linked to ERROR.

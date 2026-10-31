@@ -40,8 +40,8 @@
 ;;; REQ: REQ-FOR-002 REQ-LIM-001
 (declaim (ftype (function (integer) (values u16 u32 &optional)) format-limits))
 (defun format-limits (version)
-  "Pre: versione esplicita dal file. Post: limite chiave e record del layout.
-Segnala UNSUPPORTED-FORMAT per versione sconosciuta; nessun autodetect."
+  "Pre: explicit version from the file. Post: layout key and record limits.
+Signals UNSUPPORTED-FORMAT for an unknown version; no autodetection."
   (case version
     (1 (values 255 +max-v1-record-bytes+))
     (2 (values +max-key-bytes+ +max-record-bytes+))
@@ -50,8 +50,8 @@ Segnala UNSUPPORTED-FORMAT per versione sconosciuta; nessun autodetect."
 ;;; REQ: REQ-FOR-003
 (declaim (ftype (function (u8) (values u8 &optional)) allowed-flags))
 (defun allowed-flags (kind)
-  "Pre: KIND u8. Post: maschera dei soli flag implementati per quel tipo.
-Segnala CORRUPTION-DETECTED per un tipo sconosciuto; compressione non supportata."
+  "Pre: KIND u8. Post: mask of only the flags implemented for that type.
+Signals CORRUPTION-DETECTED for an unknown type; compression is unsupported."
   (case kind
     (1 (logior +prepared+ +contract-versioned+))
     (2 +prepared+)
@@ -62,8 +62,8 @@ Segnala CORRUPTION-DETECTED per un tipo sconosciuto; compressione non supportata
 ;;; REQ: REQ-FOR-003 REQ-LIM-001 REQ-LIM-003
 (declaim (ftype (function (u8 u8 u16 index) null) check-key-shape))
 (defun check-key-shape (kind flags key-length start)
-  "Pre: campi numerici già verificati. Post: cornice compatibile con il tipo.
-Segnala CORRUPTION-DETECTED per flag, chiave o lunghezza incoerenti."
+  "Pre: numeric fields already verified. Post: frame compatible with the type.
+Signals CORRUPTION-DETECTED for inconsistent flags, key, or length."
   (unless (zerop (logand flags (logxor 255 (allowed-flags kind))))
       (error 'corruption-detected :reason :record-flags :offset start))
   (case kind
@@ -78,8 +78,8 @@ Segnala CORRUPTION-DETECTED per flag, chiave o lunghezza incoerenti."
 ;;; REQ: REQ-FOR-003 REQ-LIM-001
 (declaim (ftype (function (u8 u32 index) null) check-value-shape))
 (defun check-value-shape (kind value-length start)
-  "Pre: tipo noto e campi numerici verificati. Post: lunghezza coerente con il tipo.
-Segnala CORRUPTION-DETECTED per body vuoto, eccedente o controllo malformato."
+  "Pre: known type and verified numeric fields. Post: length consistent with the type.
+Signals CORRUPTION-DETECTED for an empty or oversized body or malformed control record."
   (case kind
     (1 (unless (<= 1 value-length +max-document-bytes+)
          (error 'corruption-detected :reason :document-length :offset start)))
@@ -99,8 +99,8 @@ Segnala CORRUPTION-DETECTED per body vuoto, eccedente o controllo malformato."
 ;;; REQ: REQ-FOR-003 REQ-LIM-001 REQ-LIM-003
 (declaim (ftype (function (u8 u8 u16 u32 index) null) check-shape))
 (defun check-shape (kind flags key-length value-length start)
-  "Pre: campi numerici verificati. Post: tipo, flag, chiave e valore coerenti.
-Propaga errori tipizzati; nessuna modifica, lettura di body o allocazione."
+  "Pre: verified numeric fields. Post: consistent type, flags, key, and value.
+Propagates typed errors; no modification, body reading, or allocation."
   (check-key-shape kind flags key-length start)
   (check-value-shape kind value-length start)
   nil)
@@ -109,8 +109,8 @@ Propaga errori tipizzati; nessuna modifica, lettura di body o allocazione."
 (declaim (ftype (function (octets index u8 u8 octets octets integer index)
                          (values index &optional)) encoding-size))
 (defun encoding-size (buffer start kind flags key value version document-limit)
-  "Pre: input tipizzati. Post: tutte le precondizioni controllate prima di scrivere.
-Segnala INVALID-ARGUMENT per alias, RESOURCE-EXHAUSTED per budget; errori di cornice tipizzati."
+  "Pre: typed inputs. Post: all preconditions checked before writing.
+Signals INVALID-ARGUMENT for aliasing, RESOURCE-EXHAUSTED for budgets; typed frame errors."
   (when (or (eq buffer key) (eq buffer value))
     (error 'invalid-argument :reason :input-alias :offset start))
   (unless (<= 1 document-limit +max-document-bytes+)
@@ -137,8 +137,8 @@ Segnala INVALID-ARGUMENT per alias, RESOURCE-EXHAUSTED per budget; errori di cor
 (defun scrivi-record (buffer start kind stamp key value
                      &key (version 2) (flags 0)
                           (document-limit +max-document-bytes+))
-  "Pre: buffer esclusivo e stamp u64; key/value stabili. Post: cornice e CRC completi.
-Propaga la validazione di scrivi-record-parole prima della prima modifica; nessun I/O."
+  "Pre: exclusive buffer and u64 stamp; stable key/value. Post: complete frame and CRCs.
+Propagates scrivi-record-parole validation before the first modification; no I/O."
   (scrivi-record-parole buffer start kind (ldb (byte 32 32) stamp) (ldb (byte 32 0) stamp)
                        key value :version version :flags flags :document-limit document-limit))
 
@@ -150,9 +150,9 @@ Propaga la validazione di scrivi-record-parole prima della prima modifica; nessu
 (defun scrivi-record-parole (buffer start kind stamp-high stamp-low key value
                             &key (version 2) (flags 0)
                                  (document-limit +max-document-bytes+))
-  "Pre: buffer esclusivo; stamp in due u32; KEY/VALUE non alias di BUFFER.
-Post: cornice LE in [START,risultato), CRC completi, resto invariato; nessun bignum.
-La validazione segnala condizioni tipizzate prima di scrivere. Prepara byte, nessun I/O."
+  "Pre: exclusive buffer; stamp as two u32s; KEY/VALUE do not alias BUFFER.
+Post: LE frame in [START,result), complete CRCs, remainder unchanged; no bignum.
+Validation signals typed conditions before writing. Prepares bytes, with no I/O."
   (let* ((size (encoding-size buffer start kind flags key value version document-limit))
          (body (+ start +header-bytes+)) (value-start (+ body (length key)))
          (end (+ start size)))
@@ -172,8 +172,8 @@ La validazione segnala condizioni tipizzate prima di scrivere. Prepara byte, nes
 (declaim (ftype (function (octets index index integer index)
                          (values index u8 u8 u16 u32 &optional)) checked-header))
 (defun checked-header (buffer start end version document-limit)
-  "Pre: range valido. Post: header CRC controllato prima delle lunghezze, range completo.
-Segnala corruzione, versione sconosciuta o budget; nessun buffer modificato."
+  "Pre: valid range. Post: header CRC checked before lengths; complete range.
+Signals corruption, unknown version, or budget errors; no buffer is modified."
   (multiple-value-bind (key-limit record-limit) (format-limits version)
     (when (< (- end start) +header-bytes+)
       (error 'corruption-detected :reason :truncated-header :offset start))
@@ -203,10 +203,10 @@ Segnala corruzione, versione sconosciuta o budget; nessun buffer modificato."
                 verifica-cornice))
 (defun verifica-cornice (buffer start end &key (version 2)
                                             (document-limit +max-document-bytes+))
-  "Pre: buffer stabile, [START,END) disponibile, versione dal file.
-Post: CRC header/body e cornice verificati; restituisce fine, tipo, flag,
-range chiave e range valore. Non attesta commit né validità CBOR; nessuna copia.
-Segnala errori tipizzati; non restituisce range non verificati."
+  "Pre: stable buffer, [START,END) available, version from the file.
+Post: header/body CRCs and frame verified; returns end, type, flags,
+key range, and value range. Attests to neither commit nor CBOR validity; no copy.
+Signals typed errors; does not return unverified ranges."
   (check-range buffer start end)
   (unless (<= 1 document-limit +max-document-bytes+)
     (error 'invalid-argument :reason :document-budget :offset start))
@@ -227,10 +227,10 @@ Segnala errori tipizzati; non restituisce range non verificati."
                 verifica-record))
 (defun verifica-record (buffer start end &key (version 2)
                                             (document-limit +max-document-bytes+))
-  "Pre: buffer stabile, range disponibile, versione dal file e budget positivo.
-Post: fine, tipo, flag, stamp, range chiave e valore dopo verifica completa.
-Propaga condizioni tipizzate. Questa API ispettiva può boxare uno stamp u64 alto;
-il percorso GET usa verifica-put e confronta lo stamp senza materializzarlo."
+  "Pre: stable buffer, available range, version from the file, and positive budget.
+Post: end, type, flags, stamp, key and value ranges after complete verification.
+Propagates typed conditions. This inspection API may box a high u64 stamp;
+the GET path uses verifica-put and compares the stamp without materializing it."
   (multiple-value-bind (next kind flags ks ke vs ve)
       (verifica-cornice buffer start end :version version :document-limit document-limit)
     (values next kind flags (leggi-u64 buffer (+ start +stamp-offset+)) ks ke vs ve)))
@@ -238,8 +238,8 @@ il percorso GET usa verifica-put e confronta lo stamp senza materializzarlo."
 ;;; REQ: REQ-FOR-004 REQ-AFF-002
 (declaim (ftype (function (octets index u64) boolean) u64-equal-p))
 (defun u64-equal-p (buffer start expected)
-  "Pre: range di otto byte verificato; EXPECTED u64. Post: uguaglianza delle due word.
-Nessun boxing del valore sul disco; INVALID-ARGUMENT per intervallo errato."
+  "Pre: verified eight-byte range; EXPECTED u64. Post: equality of both words.
+No boxing of the on-disk value; INVALID-ARGUMENT for an incorrect range."
   (check-range buffer start (+ start 8))
   (and (= (leggi-u32 buffer start) (ldb (byte 32 0) expected))
        (= (leggi-u32 buffer (+ start 4)) (ldb (byte 32 32) expected))))
@@ -247,8 +247,8 @@ Nessun boxing del valore sul disco; INVALID-ARGUMENT per intervallo errato."
 ;;; REQ: REQ-AFF-002 REQ-FOR-004
 (declaim (ftype (function (octets index index octets) boolean) key-equal-p))
 (defun key-equal-p (buffer start end key)
-  "Pre: range verificato. Post: confronto completo bytewise, nessuna copia.
-Segnala INVALID-ARGUMENT per range errato; non modifica gli input."
+  "Pre: verified range. Post: complete bytewise comparison, no copy.
+Signals INVALID-ARGUMENT for an incorrect range; does not modify inputs."
   (check-range buffer start end)
   (and (= (- end start) (length key))
        (loop for i from start below end for j from 0
@@ -257,9 +257,9 @@ Segnala INVALID-ARGUMENT per range errato; non modifica gli input."
 ;;; REQ: REQ-FOR-004
 (declaim (ftype (function (octets index index integer octets index u64) null) check-outcome))
 (defun check-outcome (buffer start end version put-buffer put-start csn)
-  "Pre: prova proveniente dallo stesso segmento secondo il resolver proprietario.
-Post: OUTCOME integro, TXID e CSN coincidenti. Segnala CORRUPTION-DETECTED altrimenti.
-Non prova da solo la presenza in un lotto committed: compito del resolver."
+  "Pre: proof from the same segment according to the owning resolver.
+Post: intact OUTCOME, matching TXID and CSN. Signals CORRUPTION-DETECTED otherwise.
+Does not independently prove membership in a committed batch: that is the resolver's responsibility."
   (check-outcome-parole buffer start end version put-buffer put-start
                         (ldb (byte 32 32) csn) (ldb (byte 32 0) csn)))
 
@@ -267,9 +267,9 @@ Non prova da solo la presenza in un lotto committed: compito del resolver."
 (declaim (ftype (function (octets index index integer octets index u32 u32) null)
                 check-outcome-parole))
 (defun check-outcome-parole (buffer start end version put-buffer put-start csn-high csn-low)
-  "Pre: prova autorevole dello stesso segmento; PUT header già verificato.
-Post: OUTCOME integro con TXID e due parole CSN coincidenti, senza materializzare u64.
-CORRUPTION-DETECTED per discordanza; non attesta da sola il commit."
+  "Pre: authoritative proof from the same segment; PUT header already verified.
+Post: intact OUTCOME with matching TXID and both CSN words, without materializing u64.
+CORRUPTION-DETECTED on mismatch; does not independently attest to commit."
   (multiple-value-bind (next kind flags ks ke vs ve)
       (verifica-cornice buffer start end :version version)
     (declare (ignore flags ks ke ve)) ; cornice e lunghezza già provate da verifica-cornice
@@ -290,10 +290,10 @@ CORRUPTION-DETECTED per discordanza; non attesta da sola il commit."
                          (values index index &optional)) verifica-put))
 (defun verifica-put (buffer start end key csn flags
                      &key (version 2) proof-buffer (proof-start 0) (proof-end 0))
-  "Pre: END da location; KEY/CSN/FLAGS dall'indice committed; buffer stabili.
-Per prepared, resolver fornisce OUTCOME dello stesso segmento in lotto committed.
-Post: restituisce solo range del valore dopo CRC, chiave, tipo, stamp e prova.
-Segnala CORRUPTION-DETECTED se incoerente o prova assente. Non decide visibilità."
+  "Pre: END from location; KEY/CSN/FLAGS from the committed index; stable buffers.
+For prepared records, the resolver supplies OUTCOME from the same segment in a committed batch.
+Post: returns only the value range after CRC, key, type, stamp, and proof checks.
+Signals CORRUPTION-DETECTED for inconsistency or missing proof. Does not decide visibility."
   (verifica-put-parole buffer start end key (ldb (byte 32 32) csn) (ldb (byte 32 0) csn)
                        flags :version version :proof-buffer proof-buffer
                        :proof-start proof-start :proof-end proof-end))
@@ -305,9 +305,9 @@ Segnala CORRUPTION-DETECTED se incoerente o prova assente. Non decide visibilit�
                          (values index index &optional)) verifica-put-parole))
 (defun verifica-put-parole (buffer start end key csn-high csn-low flags
                             &key (version 2) proof-buffer (proof-start 0) (proof-end 0))
-  "Pre: KEY, CSN in due u32 e FLAGS dall'indice committed; range e prova stabili.
-Post: solo range valore dopo CRC, cornice, chiave, tipo, stamp e prova prepared.
-Propaga condizioni tipizzate; nessun u64 restituito o costruito, nessuna decisione MVCC."
+  "Pre: KEY, CSN as two u32s, and FLAGS from the committed index; stable range and proof.
+Post: only the value range after CRC, frame, key, type, stamp, and prepared-proof checks.
+Propagates typed conditions; no u64 returned or constructed, no MVCC decision."
   (multiple-value-bind (next kind actual-flags ks ke vs ve)
       (verifica-cornice buffer start end :version version)
     (unless (and (= next end) (= kind +put+) (= actual-flags flags)

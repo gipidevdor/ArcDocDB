@@ -10,7 +10,7 @@ configuration, rotation, cancellation during every small-copy unit,
 stale generation/lease, sixteen generations, and four independent writers.
 
 Heap allocation: 100 warmups, full GC, 1000 reservations/copies/queries/cancellations; IDs 1 and
-UINT64_MAX. No latency, RSS, or realtime-duration assertion. Measurement separate
+UINT64_MAX. No latency, RSS, or realtime-duration assertion. Measurement is separate
 from diagnostic coverage, which excludes allocation tests. Preserve original
 outputs and failures; `make check` also verifies integration, tools, and spikes.
 
@@ -44,6 +44,6 @@ by tokens or bound. Copy widths use existing-run constants.
 Reading 2, ownership and faults: reread borrowers, single-task release on copy
 completion, captured generation and lease, cancellation before transfer, and permanent
 costs afterward. Incomplete exits preserve partial effects and require fail-stop.
-Not independent review: PUT binding, WAL pipeline, prepared, publication, and
-quiescence remain to connect. Factory requires authoritative pool and new ACTIVE;
+These are not independent reviews: PUT binding, the WAL pipeline, prepared transactions, publication, and
+quiescence remain to be connected. Factory requires authoritative pool and new ACTIVE;
 it does not prove canonical identity or erase costs of other pools or frozen views.

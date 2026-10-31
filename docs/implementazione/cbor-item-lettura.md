@@ -37,8 +37,8 @@ audit, or mutation drivers under preparation were not read.
 REQ-CBR-008 (`docs/tracciabilita/requisiti.lisp:321–324`) and
 [ADR-0014](../adr/0014-formato-record-documento-id.md), clarified by
 [ADR-0048](../adr/0048-limiti-documentali-e-formato-v2.md), support
-the structural primitive. A deterministic document
-profile, tag semantics, or map uniqueness/order does not follow.
+the structural primitive. These properties do not establish a deterministic document
+profile, tag semantics, or map uniqueness/order.
 REQ-LIM-001/002 remain designed for the overall document
 contract; the kernel's local limits do not qualify them fully.
 
@@ -58,7 +58,7 @@ step is present even when LOOP exhausts SPAN.
 
 If the root remains incomplete, lines33–36 require cursor=END and
 invoke the empty header for the same :cbor-truncated at END, without
-returning partial values. After positive drain, NEXT is checked
+returning partial values. After the drain confirms completion, NEXT is checked
 for increase and window bounds; `risultato-struttura-cbor` receives NEXT,
 checks counts and inactive state (`cbor-scan.lisp:36–47`), and returns
 exactly three values. The tail is not read or included in counts.
@@ -73,7 +73,7 @@ Exact scanners retain drains at physical END and :cbor-trailing.
 One DEFUN, lines 10–43 inclusive: 34 physical lines, including docstring and
 declarations; complete FTYPE at lines8–9; safety3 at line5.
 Conservative count: base 1 + 6 explicit predicates + 1 LOOP = 8
-independent paths, within60 lines/10 paths. Existing callees'
+independent paths, within the 60-line/10-path limits. Existing callees'
 decisions are not expanded into the new wrapper count.
 
 | Decision | Line | Condition and two outcomes |
@@ -105,7 +105,7 @@ in conditions:
 | `:cbor-item-read-range` | 42 | defends NEXT within original END |
 
 The first two and last two check callee contracts; the
-third is fallback for the callee that must signal truncation. With
+third is a fallback for the callee that must signal truncation. With
 correct callees, their ERROR arms are not expected to be reached from
 external inputs passing valid preflight. This static argument is not
 a coverage exclusion: all remain in raw denominators;
@@ -124,7 +124,7 @@ rejection reason or precedence inversion. The invariant
 condition remains intended for the Serie owner's fail-stop boundary;
 there is no Serie-state integration here yet.
 
-The corpus contains16 serial tests and1 worker test, not run
+The corpus contains 16 serial tests and 1 worker test, not run
 by this reviewer. `cir-accept` checks arity3, values, entire buffer,
 cursor, and scratch state; `cir-cold-reject` also preserves dirty scratch
 (`cbor-item-read-support.lisp:43–78`). Serial tests cover MT0..7
@@ -145,7 +145,7 @@ The five internal errors are not declared exercised by tests here.
 | 1 | REQ-CBR-008 and ADR0014/0048 consistent with scope and API; REQ annotations present. |
 | 2 | INV-A5: traceability; INV-A8: budgets/bounds; INV-P6: private ownership. Cold rejection and immutability tests and two workers are present; outcomes still to be acquired. INV-A3/A4 remain respected through safety3 and typed conditions. |
 | 3 | All five direct guards inventoried; propagated families and precedence above. No error ignored or converted into success; coverage/detector-effectiveness measurement pending. |
-| 4 | LOOP at most SPAN<=16777216 steps. Every step consumes at least one byte; each drain bounded to102 frames, reset to102 slots, no new recursion/wait. |
+| 4 | LOOP at most SPAN<=16777216 steps. Every step consumes at least one byte; each drain bounded to 102 frames, reset to 102 slots, no new recursion/wait. |
 | 5 | No AST construction, copy, cons, array, or closure in the new hot path. Zero heap requires benchmark with baseline and positive control: not measured here. |
 | 6 | Result only after complete root, progress/range and full result verification; no decoded payload or partial result exported. |
 | 7 | Inventory above:6 predicates,1 LOOP,0 AND/OR,4 binary comparisons,0 chains. Coverage without exclusions still to be collected. |

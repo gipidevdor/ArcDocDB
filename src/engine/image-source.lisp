@@ -6,10 +6,10 @@
 ;;; REQ: REQ-IDX-010 REQ-REC-001 REQ-AFF-008
 (declaim (ftype (function (motore u64 u64 index index) null) registra-fonte-indice-motore))
 (defun registra-fonte-indice-motore (engine csn segment offset bytes)
-  "Pre: record M1 committed pubblicato nell'indice privato, ordine CSN stretto, nessuna compaction.
-Post: token esatto di 32 byte (versione, segmento, offset, lunghezza), ultimo CSN separato.
-I segmenti non si riscrivono e gli ID non si riusano; il prefisso immutabile identifica la fonte M1.
-Prima del primo record il token contiene solo la versione; le tombstone avanzano la fonte."
+  "Pre: committed M1 record published in the private index, strict CSN order, no compaction.
+Post: exact 32-byte token (version, segment, offset, length), last CSN separate.
+Segments are not rewritten and IDs are not reused; the immutable prefix identifies the M1 source.
+Before the first record the token contains only the version; tombstones advance the source."
   (unless (and (plusp segment) (plusp bytes)
                (or (zerop (b:leggi-u64 (motore-source-token engine) 8)) (> csn (motore-source-csn engine))))
     (error 'invariant-violation :reason :engine-image-source-order))
@@ -23,9 +23,9 @@ Prima del primo record il token contiene solo la versione; le tombstone avanzano
 ;;; REQ: REQ-IDX-010 REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (motore) arcdocdb.index.page:fonte-indice) fonte-canonica-indice-motore))
 (defun fonte-canonica-indice-motore (engine)
-  "Pre: replay canonico completato, owner esclusivo; root M1 senza split.
-Post: copie possedute del token e cardinalita' esatta del frammento autorevole.
-Un futuro backend split/compaction richiede un nuovo legame di fonte, non riusa questo contratto."
+  "Pre: canonical replay completed, exclusive owner; M1 root without split.
+Post: owned token copies and exact cardinality of the authoritative fragment.
+A future split/compaction backend requires a new source binding and does not reuse this contract."
   (when (motore-automatic-index engine)
     (return-from fonte-canonica-indice-motore
       (arcdocdb.index.page:crea-fonte-indice (motore-archive-id engine) (motore-series-id engine)
@@ -42,15 +42,15 @@ Un futuro backend split/compaction richiede un nuovo legame di fonte, non riusa 
 ;;; REQ: REQ-IDX-010 REQ-CON-002
 (declaim (ftype (function (motore) arcdocdb.index.page:fonte-indice) fonte-indice-motore))
 (defun fonte-indice-motore (engine)
-  "Pre: owner e motore READY senza richiesta in volo. Post: snapshot copiato della fonte corrente.
-Non presta indice o FD; diventa obsoleto al commit seguente, nessuna prenotazione o I/O."
+  "Pre: owner and READY engine without a request in flight. Post: copied snapshot of the current source.
+Does not lend the index or FD; becomes stale at the next commit, no reservation or I/O."
   (esigi-motore-pronto engine)
   (fonte-canonica-indice-motore engine))
 
 ;;; REQ: REQ-IDX-010 REQ-CON-002
 (declaim (ftype (function (motore) (member :resident :paged)) modo-indice-motore))
 (defun modo-indice-motore (engine)
-  "Pre: owner READY seriale. Post: backend del prossimo GET, nessun effetto o garanzia di migrazione."
+  "Pre: serial READY owner. Post: backend for the next GET, no effect or migration guarantee."
   (esigi-motore-pronto engine)
   (if (if (motore-automatic-index engine) (automatic-index-controller-disk (motore-automatic-index engine))
           (motore-paged engine)) :paged :resident))
@@ -60,8 +60,8 @@ Non presta indice o FD; diventa obsoleto al commit seguente, nessuna prenotazion
                                 (simple-array (unsigned-byte 64) (5)))
                          (member :live :absent :retry-limit)) sonda-indice-motore))
 (defun sonda-indice-motore (engine key start end probe destination)
-  "Pre: GET ammesso nel contesto dell'attore M1, indice corrente stabile, scratch privati.
-Post: location/tombstone dal delta, altrimenti immagine se attiva; errori propagati senza ripiego. Nessuna allocazione intenzionale."
+  "Pre: GET admitted in the M1 actor context, stable current index, private scratch.
+Post: location/tombstone from delta, otherwise image if active; errors propagated without fallback. No intended allocation."
   (esigi-owner-motore engine)
   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-image-lookup-admission))
   (when (motore-automatic-index engine)

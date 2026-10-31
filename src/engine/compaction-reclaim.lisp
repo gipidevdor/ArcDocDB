@@ -11,7 +11,7 @@
 ;;; REQ: REQ-CMP-007 REQ-AFF-018 REQ-AFF-002
 (declaim (ftype (function (motore c:control-recuperato) null) compaction-reclaim-removed))
 (defun compaction-reclaim-removed (engine control)
-  "Pre: durable CONTROL, serial no-reader point/bootstrap and exclusive parent. Post: only positively REMOVED leaves reclaimed.
+  "Pre: durable CONTROL, serial no-reader point/bootstrap, and exclusive parent. Post: only leaves explicitly marked REMOVED reclaimed.
 Header UUID/ID and inode binding verified per leaf, no pathname-only unlink; absence never authorizes a live deletion."
   (let* ((manifest (c:manifest-control-recuperato control))
          (ids (compaction-table-ids (mf::%manifest-removed manifest) (* 2 (motore-max-segments engine))))

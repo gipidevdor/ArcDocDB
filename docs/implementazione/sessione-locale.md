@@ -110,7 +110,7 @@ No deadline is renewed by partial transfer. Time is
 monotonic and injectable. The pool includes buffers retained by requests,
 results, prefixes, and pending I/O; ownership movement does not release
 budget. Contexts, codec scratch, and metadata have fixed size,
-preallocated by capacity: they must be accounted separately from the byte
+preallocated by capacity: they must be accounted for separately from the byte
 pool before starting service. These limits are not an RSS budget.
 
 Connections have an immutable owner; the overall limit is the

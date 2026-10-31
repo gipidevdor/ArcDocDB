@@ -34,8 +34,8 @@ in order:
 7. systematically evaluate SIMD variants that can be used safely **on each measured
    hot path**, adopting those with demonstrated benefits (INV-X1).
 
-The first five points are *data-layout* choices, to make during architecture:
-they cannot be recovered later. The last two are measurement-driven activities.
+The first five points are *data-layout* choices to make during architectural design:
+they cannot be retrofitted later. The last two are measurement-driven activities.
 
 SBCL can generate SIMD code automatically in some appropriately typed numerical cases.
 
@@ -67,8 +67,8 @@ a benefit. Untested extensions remain unqualified.
 
 Before executing a kernel, selection must verify actual CPU, operating-system,
 and SBCL runtime support. The declared architecture alone is insufficient.
-The scalar reference path always remains executable and forceable, as does every available
-backend in tests; it is used if a variant is absent, unqualified, or unsuitable for that
+The scalar reference path always remains executable and can be explicitly selected, as can every available
+backend in tests; the scalar path is used if a variant is absent, unqualified, or unsuitable for that
 workload. A data or invariant error retains its semantics and does not trigger a fallback
 that conceals it.
 

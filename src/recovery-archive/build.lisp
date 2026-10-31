@@ -14,11 +14,11 @@
                                       (max-batch-records 65536) (max-batch-bytes 67108864)
                                       (max-decisions 65536) (max-participants 65536)
                                       (max-participants-per-decision 65535))
-  "Pre: Archivio canonico dal catalogo, EOF fisico SIZE completo e attestato, compito I/O esclusivo.
-File/FD/namespace congelati fino al termine del recovery delle Serie; scratch privato fino al ritorno.
-Post: header verificato sullo stesso FD, scansione a EOF e tabella completa posseduta del prefisso sigillato.
-TAIL richiede ricerca completa dei testimoni; duplicati/conflitti/budget dal replay canonico.
-Propaga condizioni originali; nessun append, fsync, troncatura, rename, CSN o ammissione traffico."
+  "Pre: canonical Archivio from the catalog, complete attested physical EOF SIZE, exclusive I/O task.
+File/FD/namespace frozen until Serie recovery finishes; private scratch until return.
+Post: header verified on the same FD, scan at EOF, and complete owned table of the sealed prefix.
+TAIL requires a complete witness search; duplicates/conflicts/budgets from canonical replay.
+Propagates original conditions; no append, fsync, truncation, rename, CSN, or traffic admission."
   (verifica-lettura-decisioni archive input size scratch chunk-bytes max-bytes max-batches
                             max-batch-records max-batch-bytes max-decisions
                             max-participants max-participants-per-decision)

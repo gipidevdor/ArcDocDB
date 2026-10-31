@@ -25,7 +25,7 @@ are two needs with different degrees of urgency.
   after the swap and are deleted only when no one uses them.
 - A segment with `live = 0` is deleted directly; one with `live ≈ total` is left untouched.
 - No automatic MERGE after a CLEAN; a cleaned segment may remain small.
-- Produced segments have no size requirements and never receive new writes.
+- The resulting segments have no size requirements and never receive new writes.
 - Compaction can run in parallel by segment and by Serie; no single global worker.
 - The new segment becomes visible only after it is durable; readers are not blocked
   globally.

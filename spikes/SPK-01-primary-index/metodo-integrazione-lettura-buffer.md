@@ -34,11 +34,11 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --benc
 
 [Kernel](metodo-lettura-buffer.md), [test](metodo-check-lettura-buffer.md), and
 [matrix](metodo-bench-lettura-buffer.md) methods precede respective experiments.
-Measurements serial; preparation/warmup excluded. External load uncontrolled:
-every value remains local measurement. No assumed zero allocation or universal
+Measurements are serial; preparation/warmup are excluded. External load is uncontrolled:
+every value remains a local measurement. No assumed zero allocation or universal
 compiler improvement. Comparison concerns full variant: buffer, typed intermediates,
 and probing expansion with `speed 3`; core retains `speed 2`.
-Does not isolate API-change effect alone. Both retain `safety 3`.
+It does not isolate the API-change effect alone. Both retain `safety 3`.
 
 Also record CLI rejections (unknown variant, duplicate option, unrelated matrix
 options) and rejection of zero-operation benchmark. Expected rejection is a
@@ -58,7 +58,7 @@ and integrated verification.
 References: REQ-VAL-001, REQ-AFF-012, REQ-IDX-001, REQ-IDX-007, REQ-BEN-001.
 No requirement changes state based on spike. No new shared lock/state between Serie:
 one index writer serializes updates; each reader owns output. Weak memory on both
-CPUs, MVCC, persistence, P99, and beyond-cache scale not tested.
+CPUs, MVCC, persistence, P99, and beyond-cache scale are not tested.
 
 <a id="revisione-preregistrata-dopo-la-prima-matrice"></a>
 

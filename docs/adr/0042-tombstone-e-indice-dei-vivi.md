@@ -1,6 +1,8 @@
 <a id="adr-0042--tombstone-lindice-contiene-solo-documenti-vivi-scarto-per-filtro-di-esistenza"></a>
 
-# ADR-0042 — Tombstones: the index contains only live documents; disposal through an existence filter
+<a id="adr-0042--tombstones-the-index-contains-only-live-documents-disposal-through-an-existence-filter"></a>
+
+# ADR-0042 — Tombstones: the index contains only live documents; discarding based on an existence filter
 
 - **Status:** Accepted
 - **Date:** 2026-10-03
@@ -52,7 +54,7 @@ occupy temporary entries, removed at the end.
 ### 3. When a tombstone is discarded
 
 Let `t` be a tombstone for key `k` with CSN `c`, encountered by compaction with sources
-`I`. `t` **is not copied** if either holds:
+`I`. `t` **is not copied** if either condition holds:
 
 - **(a) superseded**: the index has an entry for `k` with CSN `> c` whose record is in a
   `CLOSED` segment and therefore durable (the document was recreated: that record, or the
@@ -91,7 +93,7 @@ Cassandra); in-memory index of live documents only, with tombstones only on disk
 - On-disk tombstones are bounded by dead records not yet reclaimed: every retained tombstone
   corresponds to at least one older record of the same key still present
   (or a filter false positive, ~1 %).
-- Index memory proportional to live documents.
+- Index memory is proportional to live documents.
 - `lineage-min` disappears from the segment header and manifest.
 - Cost: for each candidate tombstone, one Bloom test for every older segment. This is
   compaction work, outside the request path; filters are read on demand

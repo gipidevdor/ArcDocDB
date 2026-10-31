@@ -8,7 +8,7 @@ MC/DC coverage nor full-recovery qualification.
 
 | Function and decision | Conditions and cases |
 |---|---|
-| `check-scan-arguments`: log type and file-id | segment with opaque ID; control/multiserie with zero; other type and nonzero ID rejected, even with empty log |
+| `check-scan-arguments`: log type and file-id | segment with opaque ID; control/multiseries with zero; other type and nonzero ID rejected, even with empty log |
 | `check-scan-arguments`: budget types, minimums, and sums | valid budget; each prohibited negative or null parameter; batch-records beyond u32; batch below 56 bytes; file-offset + end overflow |
 | `check-scan-arguments`: physical EOF | u64 file-size equal absolute end; missing or invalid value; window not reaching EOF |
 | `check-scan-arguments`: log bytes | range exactly at budget accepted; one byte over rejected |
@@ -40,7 +40,7 @@ must not hide later `D > P` witness.
 `checked-batch` checks `verifica-lotto` postconditions: progress,
 ranges, and counts. `seal-witness` rechecks shape returned by codec.
 Failing these checks cannot result from external bytes after correct
-lower-level verification; it signals internal defect.
+lower-level verification; it signals an internal defect.
 `scan-prefix` also checks record count is compatible
 with actual bytes consumed.
 
@@ -51,8 +51,8 @@ The [evidence catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a
 preserves raw report, nine-mutant campaign, and two independent
 module readings. Second reading added a batch budget beyond
 `most-positive-fixnum` to invalid-configuration case;
-type check therefore exercised separately from 56-byte
-minimum. Defensive branches listed above not subtracted from totals.
+the type check is therefore exercised separately from 56-byte
+minimum. The defensive branches listed above are not subtracted from totals.
 Final report measures 416/480 expressions (86.7%) and 52/66 branches (78.8%)
 in `scan.lisp`. The 14 untaken branches are five `checked-batch`
 postconditions/preconditions, six in `seal-witness`, initial search
@@ -61,4 +61,4 @@ violation or defective codec. `package.lisp` also remains in report with
 one unexecuted definition and no branch. Results do not close
 coverage or engine-qualification gate.
 In-memory corruption tests simulate neither persistence, flush, nor
-`FAULTED` transitions; verify scan result on supplied bytes.
+`FAULTED` transitions; they verify the scan result on supplied bytes.

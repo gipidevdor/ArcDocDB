@@ -37,7 +37,7 @@ The [contract](pool-worker-claim.md) fixes check order.
 ## Coverage
 
 Complete scope: new `pool-claim.lisp` file and `src/scheduler/package.lisp`,
-without exclusions. C3 gate at least 95% expressions and branches, exact comparison
+without exclusions. The C3 gate requires at least 95% of expressions and branches, exact comparison
 of integers and nonzero denominators. Compare native SB-COVER data and HTML,
 preserving all originals, inventory, and missing paths. Existing reader
 stays unchanged: adapter declares new scope and passes reader
@@ -71,5 +71,5 @@ sink, each of four differing results, below-resolution clock,
 invalid CLI, existing destination, and partial raw data after error.
 Every frozen qualification uses `tools/record-command.lisp`, dedicated caches,
 original argv/output/outcomes, and initial/final source identity. Failures
-remain failures; copies and compressed payloads checked byte for byte.
-Full repository check includes ten existing spikes.
+remain failures; copies and compressed payloads are checked byte for byte.
+The full repository check includes ten existing spikes.

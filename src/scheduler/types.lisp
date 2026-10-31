@@ -13,9 +13,9 @@
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008 REQ-AFF-013
 (defstruct (controllore-pool (:constructor %make-controllore-pool)
                            (:copier nil))
-  "Pre: configurazione verificata e thread proprietario. Post: target iniziale fisso.
-Gli ingressi sono aggregati esternamente; nessuna coda, thread, attesa o I/O.
-Nessuna condizione della costruzione privata oltre ai tipi degli slot."
+  "Pre: verified configuration and owning thread. Post: fixed initial target.
+Inputs aggregated externally; no queue, thread, waiting, or I/O.
+No private-construction condition beyond slot types."
   (owner sb-thread:*current-thread* :type sb-thread:thread :read-only t)
   (minimum 1 :type pool-workers :read-only t)
   (maximum 1 :type pool-workers :read-only t)

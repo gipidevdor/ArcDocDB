@@ -9,7 +9,7 @@ batch with an authoritative CSN token before handoff to I/O.
 
 Capture does not publish, prove durability, or resolve a prepared record. It retains
 row, segment, absolute offset, length, version, and two-word stamp;
-stamp is CSN for an ordinary record, TXID for a prepared one. The getter remains valid
+the stamp is a CSN for an ordinary record and a TXID for a prepared one. The getter remains valid
 after buffer reuse; no reuse of transferred reservations is introduced.
 
 | Decision | Planned verification |
@@ -41,14 +41,14 @@ C1 qualification, MC/DC, and overall independent verification remain open.
 ## Two readings by the same author
 
 First reading: traced lease, reservation generation, and batch incarnation;
-token authority required before reading stamp. Original flags and TXID
-captured at private-frame append; ordinary CSNs checked only after closure.
+token authority was required before reading the stamp. Original flags and TXID were
+captured at private-frame append; ordinary CSNs were checked only after closure.
 Offset and shape before effects, no release or ordinary capacity failure
 after SEAL. Getter without buffer references, without visibility or durability claims.
 
 Second reading: traced header errors, incomplete capture, and real batch reuse.
-Effect protected from its start, SEALED state set last, invariants
-before/after internal setter; fault retains costs and CSN. The pool's
+The effect is protected from its start, SEALED state is set last, and invariants are checked
+before/after the internal setter; a fault retains costs and CSN. The pool's
 metadata quota remains conservative and the CI catalog's six allocation exclusions
 are unchanged. Two readings by the same author are not independent review
 and do not close C1 or MC/DC.

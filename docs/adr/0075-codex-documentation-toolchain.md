@@ -1,8 +1,13 @@
-# ADR-0075 — Codex toolchain for the documentation edition
+<a id="adr-0075--codex-toolchain-for-the-documentation-edition"></a>
+
+# ADR-0075 — CommonDoc Codex toolchain for the documentation edition
 
 - **Status:** Accepted for the documentation workflow requested on 2026-10-31
 - **Scope:** Documentation generation and GitHub Pages; no product behavior change
 - **References:** ADR-0001, ADR-0027, ADR-0051
+
+The source-derived code reference is added by [ADR-0077](0077-source-derived-code-reference.md).
+This decision's dependency and rendering scope remains in force.
 
 ## Context
 
@@ -52,7 +57,7 @@ and must not be claimed from static checks alone.
 
 ## Consequences and alternatives
 
-Codex is archived upstream. Fixed dependencies and a local extension make its
+CommonDoc Codex is archived upstream. Fixed dependencies and a local extension make its
 maintenance scope visible, but upstream compiler warnings and future toolchain
 compatibility remain documentation concerns. They are not silently granted an
 exception in a product build. Product builds do not load this toolchain.

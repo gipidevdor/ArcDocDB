@@ -9,12 +9,12 @@
                          (values pubblicazione-indice fixnum fixnum fixnum fixnum &optional))
                 ricostruisci-frammento-indice))
 (defun ricostruisci-frammento-indice (index source highs lows transient-budget-bytes &key (split-p nil))
-  "Pre: writer; HIGH/LOW di C u32, stesso hash/seed fidato della Serie per ogni slot vivo originale.
-Prenotazioni di memoria/tempo, lotti pendenti e root pregresse gestite dal controller prima della chiamata.
-Post: piano verificato monouso NON pubblicato, C slot sorgente, byte chiavi copiati, riferimenti directory,
-payload transitorio. Rebuild compatta l'arena; split divide secondo il bit alto successivo del digest.
-Rifiuti di input/budget prima dei candidati; copie errate => FAULTED. Interruzioni delle mutazioni
-seguono il fail-stop del writer; fuori dalle mutazioni i candidati privati sono scartabili dal GC."
+  "Pre: writer; C u32 HIGH/LOW words, same trusted Serie hash/seed for every original live slot.
+Controller handles memory/time reservations, pending batches, and previous roots before call.
+Post: verified single-use UNPUBLISHED plan, C source slots, copied key bytes, directory references,
+transient payload. Rebuild compacts arena; split partitions by next high bit of digest.
+Input/budget rejections before candidates; incorrect copies => FAULTED. Mutation interruptions
+follow writer fail-stop; outside mutations, private candidates are discardable by GC."
   (let* ((root (esigi-ricostruzione index source highs lows split-p transient-budget-bytes))
          (words (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0))
          (work (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0))

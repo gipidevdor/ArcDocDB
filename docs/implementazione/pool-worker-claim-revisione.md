@@ -75,13 +75,13 @@ These identities distinguish earlier wordings from the final reading.
 ## C3 boundary and protocol
 
 The gate controls when to delegate a new claim. The gate contains the
-immutable context, so caller cannot separately supply a
+immutable context, so the caller cannot separately supply a
 different context. Gate owner precedes every context access;
 the phase getter also checks execution owner. Every non-IDLE phase,
 including FAULTED, is rejected without reading a live lease, applying a
 command, or replacing the first fault cause.
 
-On IDLE context, the full C1 barrier precedes lifecycle even when
+On an IDLE context, the full C1 barrier precedes lifecycle even when
 the gate is inactive or request=ack. The `:unchanged` value is therefore not
 used as proof of IDLE or health. After the gate, only the active branch calls
 `execution:prendi-writer-worker`, which retains its own checks, obligation
@@ -131,7 +131,7 @@ change class C3 or constitute the two reviews required for C1.
 
 The test file contains twelve named tests. They were read as code,
 without running them or attributing others' reported PASS to this review.
-Caller uses real writers and ready lists; successful claims are checked
+The caller uses real writers and ready lists; successful claims are checked
 with writer identity and completion through execution APIs.
 
 | Test group | Expected code evidence and limit |

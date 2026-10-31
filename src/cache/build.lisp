@@ -6,22 +6,22 @@
 ;;; REQ: REQ-CCH-001 REQ-AFF-008
 (declaim (ftype (function (integer) boolean) potenza-due-cache-p))
 (defun potenza-due-cache-p (number)
-  "Pre: intero. Post: T solo per potenza di due positiva; nessuna mutazione o errore."
+  "Pre: integer. Post: T only for a positive power of two; no mutation or error."
   (and (plusp number) (zerop (logand number (1- number)))))
 
 ;;; REQ: REQ-CCH-001 REQ-AFF-008
 (declaim (ftype (function (integer integer integer) integer) payload-classe-cache))
 (defun payload-classe-cache (size sets stripes)
-  "Pre: configurazione verificata, sets positivo. Post: payload arena, metadata, mani e lock-vector.
-Calcolo cold con interi esatti; esclude header Lisp, oggetti mutex e allineamento del runtime."
+  "Pre: verified configuration, positive sets. Post: arena, metadata, hands, and lock-vector payload.
+Cold calculation with exact integers; excludes Lisp headers, mutex objects, and runtime alignment."
   (+ (* sets +cache-ways+ (+ size 29)) sets (* 8 (min sets stripes))))
 
 ;;; REQ: REQ-CCH-001 REQ-CCH-004 REQ-AFF-008
 (declaim (ftype (function (cache-u32s cache-u32s integer integer)
                          (values index index &optional)) preflight-cache))
 (defun preflight-cache (sizes counts budget stripes)
-  "Pre: configurazioni stabili del controller. Post: payload e numero classi attive prima di allocare.
-INVALID-ARGUMENT per ordine/potenze/limiti; RESOURCE-EXHAUSTED per budget o indice non rappresentabile."
+  "Pre: stable controller configurations. Post: payload and active class count before allocation.
+INVALID-ARGUMENT for order/powers/limits; RESOURCE-EXHAUSTED for budget or unrepresentable index."
   (unless (and (= (length sizes) (length counts))
                (<= (length sizes) +cache-max-classes+) (<= 0 budget most-positive-fixnum)
                (<= 1 stripes 256) (potenza-due-cache-p stripes))
@@ -45,8 +45,8 @@ INVALID-ARGUMENT per ordine/potenze/limiti; RESOURCE-EXHAUSTED per budget o indi
 (declaim (ftype (function ((integer 1024 33554432) (integer 1 65536) (integer 1 256))
                          classe-cache) alloca-classe-cache))
 (defun alloca-classe-cache (size sets stripes)
-  "Pre: preflight completo, controller esclusivo. Post: tutti gli array azzerati e mutex privati.
-Alloca solo in costruzione; un errore lascia oggetti non pubblicati e scartabili dal GC."
+  "Pre: complete preflight, exclusive controller. Post: all arrays zeroed and private mutexes.
+Allocates only during construction; an error leaves unpublished objects discardable by GC."
   (let* ((slots (* sets +cache-ways+)) (locks (make-array (min sets stripes))))
     (dotimes (i (length locks)) (setf (aref locks i) (sb-thread:make-mutex :name "cache-stripe")))
     (%make-classe-cache
@@ -64,9 +64,9 @@ Alloca solo in costruzione; un errore lascia oggetti non pubblicati e scartabili
 (declaim (ftype (function (cache-u32s cache-u32s integer &key (:stripes integer)) cache-serie)
                 crea-cache-serie))
 (defun crea-cache-serie (sizes counts budget &key (stripes 16))
-  "Pre: vettori u32 di classi crescenti e quantità di insiemi, stabili durante la chiamata.
-Post: partizione fissa senza trattenere i vettori input; counts tutti zero consente budget zero.
-Propaga preflight tipizzato prima delle allocazioni; non ridimensiona partizioni pubblicate."
+  "Pre: u32 vectors of increasing classes and set counts, stable during the call.
+Post: fixed partition without retaining input vectors; all zero counts allow zero budget.
+Propagates typed preflight errors before allocations; does not resize published partitions."
   (multiple-value-bind (payload active) (preflight-cache sizes counts budget stripes)
     (let ((classes (make-array active)) (position 0))
       (dotimes (i (length sizes))
@@ -79,6 +79,6 @@ Propaga preflight tipizzato prima delle allocazioni; non ridimensiona partizioni
 ;;; REQ: REQ-CCH-001 REQ-OBS-002
 (declaim (ftype (function (cache-serie) index) payload-cache-serie))
 (defun payload-cache-serie (cache)
-  "Pre: partizione pubblicata. Post: payload fisso riservato; nessuna scansione, lock o scrittura.
-Non rappresenta RSS, header del runtime o budget dello scheduler."
+  "Pre: published partition. Post: fixed reserved payload; no scan, lock, or write.
+Does not represent RSS, runtime headers, or scheduler budget."
   (cache-serie-payload cache))

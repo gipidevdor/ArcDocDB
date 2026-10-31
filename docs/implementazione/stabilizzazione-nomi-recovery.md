@@ -2,7 +2,7 @@
 
 # Recovered name stabilization
 
-Implements live segment name completion in ADR-0040 §2–3,
+This implements live segment name completion in ADR-0040 §2–3,
 without changing accepted decisions. Requirements REQ-REC-001,
 REQ-REC-004, REQ-STO-003, REQ-STO-006, REQ-AFF-001, REQ-AFF-004,
 REQ-AFF-008, REQ-AFF-018; invariants INV-A9, INV-A10, INV-A11.
@@ -143,6 +143,6 @@ retains five OK/STABLE diagnostics on product `e2cb7194`: forced
 compilation without warnings, lint on 355 files, traceability, links, and reading of
 eight compiled functions. An independent static review found no
 defects in the change. Records are retained with lossless gzip,
-hashes, and closed inventory; no functional test, FI, or benchmark run.
+hashes, and closed inventory; no functional test, FI, or benchmark was run.
 This outcome adds the integration's independent reading without
 qualifying dynamic SNE/SNR/PIO cases or complete recovery.

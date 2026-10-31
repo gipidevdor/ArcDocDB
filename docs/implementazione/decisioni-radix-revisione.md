@@ -25,7 +25,7 @@ Hashes are SHA256 of content read, not Git identifiers.
 Table types, builder, and fixtures were also consulted to
 check ownership, offset provenance, and count bounds.
 This reading includes the builder connection; it does not requalify
-all recovery. The diff from preliminary candidate SHA256
+the entire recovery process. The diff from preliminary candidate SHA256
 `5093e1dda2876d3b31fd5a6e9196dc76bec04aa8a61ce933c63de59f73f36505`
 changes the header and adds two constants and two `if` wrappers at the end
 of the file; sorting bodies match exactly. Restoring
@@ -128,7 +128,7 @@ shared per-operation writes.
 
 The isolated strict baseline from agent `/root/review_changes`
 reported exit 0 and no warnings, with 43 selected DECISION tests
-(25 existing plus the 18 above). The end of log
+(25 existing plus the 18 above). The end of the log
 `arcdocdb-radix-test-corrected-kbi2xy7r/baseline/test.log` was read; it contains
 `decision-tests-complete 43`. This reading does not repeat the build.
 
@@ -169,7 +169,7 @@ cardinalities, Linux/x86-64, engine throughput, or P99.
 
 Raw coverage state
 `spikes/out/decisions-radix-coverage-final/` in the final copy was read as data.
-Counts recalculated and compared with inventory are:
+The counts, recalculated and compared with the inventory, are:
 
 | Scope | Observed/total expressions | Observed/total branch alternatives |
 |---|---|---|
@@ -189,7 +189,7 @@ forms are absent in measurement, without an additional
 missing branch alternative associated with `loop`.
 
 Private tests instead exercise prefix, digit, array,
-entry-type, and cursor negations, as recorded in inventory. Remaining forms
+entry-type, and cursor negations, as recorded in the inventory. Remaining forms
 stay in the raw denominator. No approved exclusion
 or MC/DC attestation follows from these numbers. This inventory concerns
 the new radix source. Rationales for residual gaps in the other five
@@ -266,8 +266,8 @@ above. Reread source has SHA256
 `5093e1dda2876d3b31fd5a6e9196dc76bec04aa8a61ce933c63de59f73f36505`;
 reread tests have SHA256
 `81d22bb4c5ac5375cf0daaa7443011b15a9563007151dd29d91dbfbbdfe9b915`.
-Both hashes were rechecked on preliminary-version files. Outcome:
-no functional defect identified within the private candidate's scope.
+Both hashes were rechecked on the preliminary-version files. Outcome:
+no functional defect was identified within the private candidate's scope.
 
 The list follows the twelve items in the
 [coding standard](../affidabilita/standard-di-codifica.md).

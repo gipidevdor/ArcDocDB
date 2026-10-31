@@ -7,15 +7,15 @@
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets index index) boolean) byte-zero-full-text-p))
 (defun byte-zero-full-text-p (buffer start end)
-  "Pre: range gia verificato. Post: T se tutti i byte sono zero; nessuna modifica."
+  "Pre: range already verified. Post: T if all bytes are zero; no modification."
   (loop for position from start below end always (zerop (aref buffer position))))
 
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets index index octets u64) null) verifica-header-full-text))
 (defun verifica-header-full-text (buffer start size identity segment-id)
-  "Pre: header interamente presente, identita autorevole. Post: header v2/type 5 valido.
-CORRUPTION-DETECTED per contenuto/CRC/identita; UNSUPPORTED-FORMAT per versione ignota.
-Non ricompone l'ID u64 letto; nessuna modifica."
+  "Pre: entire header present, authoritative identity. Post: valid v2/type 5 header.
+CORRUPTION-DETECTED for content/CRC/identity; UNSUPPORTED-FORMAT for unknown version.
+Does not reassemble the u64 ID read; no modification."
   (unless (and (<= (+ start +header-bytes+) (length buffer)) (= (length identity) +identity-bytes+))
     (error 'invariant-violation :reason :fulltext-header-read-range))
   (unless (= (leggi-u32 buffer (+ start +header-crc-offset+))
@@ -47,8 +47,8 @@ Non ricompone l'ID u64 letto; nessuna modifica."
 (declaim (ftype (function (octets index (integer 0 5) index index)
                          (values index &optional)) verifica-entry-full-text))
 (defun verifica-entry-full-text (buffer start section cursor limit)
-  "Pre: directory presente, cursore relativo entro LIMIT. Post: fine sezione nel payload.
-CORRUPTION-DETECTED per ID, riservati, offset, dimensione o larghezza incoerenti."
+  "Pre: directory present, relative cursor within LIMIT. Post: section end in the payload.
+CORRUPTION-DETECTED for inconsistent ID, reserved fields, offset, size, or width."
   (unless (and (<= cursor limit) (<= (+ start +sections-offset+) (length buffer)))
     (error 'invariant-violation :reason :fulltext-entry-read-range))
   (let* ((entry (+ start +header-bytes+ (* section +directory-entry-bytes+)))
@@ -72,8 +72,8 @@ CORRUPTION-DETECTED per ID, riservati, offset, dimensione o larghezza incoerenti
 (declaim (ftype (function (octets index index) (values index index &optional))
                 verifica-directory-full-text))
 (defun verifica-directory-full-text (buffer start size)
-  "Pre: cornice presente. Post: span assoluto META, sezioni contigue, padding zero.
-CORRUPTION-DETECTED per qualsiasi sezione, padding o lunghezza finale incoerente."
+  "Pre: frame present. Post: absolute META span, contiguous sections, zero padding.
+CORRUPTION-DETECTED for any inconsistent section, padding, or final length."
   (unless (and (<= (+ +sections-offset+ +footer-bytes+) size) (<= (+ start size) (length buffer)))
     (error 'invariant-violation :reason :fulltext-directory-read-range))
   (let ((cursor +sections-offset+) (limit (- size +footer-bytes+)) (meta-end 0))
@@ -97,12 +97,12 @@ CORRUPTION-DETECTED per qualsiasi sezione, padding o lunghezza finale incoerente
                          (values index index index &optional)) verifica-cornice-indice-full-text))
 (defun verifica-cornice-indice-full-text (buffer start end identity segment-id
                                         &key (max-bytes +default-file-budget+))
-  "Pre: span simple u8 e identita/segment-id autorevoli, stabili durante la chiamata.
-Post: tre valori END, META-START, META-END solo dopo verifica integrale della cornice.
-INVALID-ARGUMENT per ingressi; RESOURCE-EXHAUSTED per budget; CORRUPTION-DETECTED
-per troncamento/CRC/layout/identita; UNSUPPORTED-FORMAT per versione ignota con CRC valido.
-Non valida il contenuto delle sezioni, gli hint, i documenti o la readiness del motore.
-Nessuna modifica, oggetto trattenuto, I/O o coordinamento tra Serie."
+  "Pre: simple u8 span and authoritative identity/segment-id, stable during the call.
+Post: three values END, META-START, META-END only after complete frame verification.
+INVALID-ARGUMENT for inputs; RESOURCE-EXHAUSTED for budgets; CORRUPTION-DETECTED
+for truncation/CRC/layout/identity; UNSUPPORTED-FORMAT for unknown version with valid CRC.
+Does not validate section content, hints, documents, or engine readiness.
+No modification, retained object, I/O, or coordination between Serie."
   (let ((size (controlla-input-cornice buffer start end identity segment-id max-bytes)))
     (when (> size max-bytes)
       (error 'resource-exhausted :reason :fulltext-file-budget))

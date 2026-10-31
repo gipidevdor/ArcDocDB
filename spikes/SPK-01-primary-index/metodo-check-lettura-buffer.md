@@ -23,7 +23,7 @@ destination words. Callbacks follow core: after-fragment on every attempt,
 after-fields for every control candidate with initially even sequence, even
 if key does not match.
 
-Model is EQUAL map of 16-octet lists, with independent PUT/DELETE journal and
+The model is an EQUAL map of 16-octet lists, with independent PUT/DELETE journal and
 final replay. Key generation, tuples, location arithmetic in CHECK, without
 using core patterns/LEGGI for expectations. Every ordinary read compares kernel,
 model, baseline; baseline adapted into destination only after returning HIT.
@@ -66,7 +66,7 @@ as mutant rejection. Not a universal memory/hardware-model proof. No threaded
 stress: witnesses are synchronous interleavings with one writer.
 
 CHECK has finite 200000-assert budget, finite searches, separate campaign counts/
-categories. `:status :ok` constructed only after every test and final assertion.
+categories. `:status :ok` is constructed only after every test and final assertion.
 Output uses lists, keywords, strings, numbers; types/functions/conditions described
 as strings.
 
@@ -79,7 +79,7 @@ argv/stdin and reference to this method. SBCL driver separate from existing runn
 source-before/after snapshots (contents and declared MD5 for core, kernel, CHECK,
 method, driver); original stdout/stderr files, exit code, decoded result in schema1
 record. Driver promotes warnings/style-warnings to errors, checks compile-file.
-Errors/failures retained, never overwritten. Every method revision precedes its execution.
+Errors/failures are retained and never overwritten. Every method revision precedes its execution.
 
 Second SBCL process, without spike packages, reads result/record with
 `*read-eval* = nil`, rejects nonkeyword symbols/disallowed objects, saves readable
@@ -116,7 +116,7 @@ retaining it in plan/record; parent requested REQ comments before C3.
 
 K1 completed first attempt: compile/load core, C3 kernel, CHECK without warnings/
 style-warnings; empty stderr, exit 0, CHECK `:status :ok`.
-Before/after snapshots identical for every recorded source. Schema1 record:
+Before/after snapshots are identical for every recorded source. Schema 1 record:
 `out/check-lettura-buffer-campagna-20261008-01/k1/record.sexp`; readable data
 in `decoded.sexp`, original stdout/stderr in `stdout.raw` and `stderr.raw`.
 Independent readback exit 0 / status ok, read-eval false, spike packages absent;

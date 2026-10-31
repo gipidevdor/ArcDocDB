@@ -18,7 +18,7 @@ each with its own budget and verification. If a write intervenes,
 the stale candidate is rejected against the new source.
 
 Activation excludes GET and writes through BUSY and again verifies
-the entire image read-only against the canonical resident. Before
+the entire image read-only against the canonical resident index. Before
 publication it rechecks revision and source. GETs continue using the
 selector already installed in the immutable view; no result is
 produced from a partial candidate or an error fallback.
@@ -52,7 +52,7 @@ the file opened by incomplete startup.
 
 Insufficient initial configuration or quota preserves READY and the root.
 As with other admitted M1 requests, any later error or nonlocal
-exit makes the engine FAULTED, preserving primary cause and cleanup faults.
+exit makes the engine FAULTED, preserving the primary cause and cleanup faults.
 Before the swap, the old root and its FD remain intact, while the
 local candidate is closed; continued service is not promised
 after rejecting a corrupt candidate. After the swap, the new FD belongs

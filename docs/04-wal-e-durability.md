@@ -2,7 +2,7 @@
 
 # 04 — WAL and durability
 
-> **Source:** ‘WAL’ of the [specification](specifica/specifica-originale.md); references from ‘Multiseries
+> **Source:** The ‘WAL’ section of the [specification](specifica/specifica-originale.md); references from ‘Multiseries
 > transactions’ and ‘Recovery’.
 > **Modules:** M02 WAL Manager.
 > **Decisions:** [ADR-0013](adr/0013-log-structured-segmento-active-come-log.md) **amends
@@ -23,7 +23,7 @@ data WAL (INV-W1).
 The WAL provides:
 
 - **durability** — acknowledged operations survive a crash;
-- **recovery** — restarting after a crash ([11 Recovery](11-recovery.md));
+- **recovery** — restart after a crash ([11 Recovery](11-recovery.md));
 - **state reconstruction** — indexes and metadata are derivable;
 - **ordered recording of changes** — WAL order is commit order within the Serie.
 
@@ -74,7 +74,7 @@ written to `multiserie.log`. The Serie WAL therefore also contains protocol reco
 
 ## Metrics
 
-To expose ([12 Observability](12-osservabilita.md)): append throughput, `fsync` latency,
+Metrics to expose ([12 Observability](12-osservabilita.md)): append throughput, `fsync` latency,
 group size, and WAL queue depth. `fsync` latency and WAL throughput are also load signals
 for the MERGE [low-load policy](07-compaction.md#low-load-policy) and the
 [scheduler](10-concorrenza-e-scheduling.md).

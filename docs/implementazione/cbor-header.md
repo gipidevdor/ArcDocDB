@@ -5,9 +5,9 @@
 `arcdocdb.cbor:leggi-header-cbor(buffer,start,end)` reads only the header
 in the `[start,end)` span of an immutable simple u8 array. It returns six
 values: major type, additional information (AI), high u32, low u32, next
-offset, form. For AI 0..23, high is zero and low contains AI; AI 24..27
+offset, form. For AI 0..23, high is zero and low contains AI; for AI 24..27, it
 reads 1/2/4/8 unsigned big-endian bytes, respectively. A complete read
-consumes at most nine bytes. For eight bytes, the first four compose high.
+consumes at most nine bytes. For eight bytes, the first four form high.
 
 | Case | Result or condition |
 |---|---|
@@ -20,7 +20,7 @@ consumes at most nine bytes. For eight bytes, the first four compose high.
 | F8 followed by a value below 32 | `corruption-detected :cbor-simple`, offset `start+1` |
 | Other complete headers | Form `:argument`, words and AI preserved |
 
-Range, lead availability, and reserved AI precede argument bytes.
+Checks for range, lead availability, and reserved AI precede reading the argument bytes.
 The full width is checked before reading it: a physical suffix beyond
 `end` does not complete a truncated header. The F8 check follows availability
 of its second byte. Offsets are absolute within the buffer.
@@ -35,7 +35,7 @@ does not establish that the entire item is valid.
 The caller keeps the buffer immutable until return. Cursors and words
 are local: different workers can read headers in parallel before the
 Serie's writer queue. The module creates no threads, does not wait, and
-performs no I/O. It supports REQ-AFF-004/008 and an initial step of REQ-LIM-002,
+performs no I/O. It supports REQ-AFF-004/008 and an initial step toward REQ-LIM-002,
 without promoting the complete-decoder requirement.
 
 The [method](cbor-header-metodo.md) records oracles, mutations, and measurements before
@@ -47,7 +47,7 @@ distinguishes input rejections from internal guards.
 ## Local verification of October 9, 2026
 
 The first strict build, on base `92d8b0e`, passes with 237 total tests,
-including 17 nominal CBOR tests.
+including 17 named CBOR tests.
 The corpus checks all 256 complete and one-byte leads, the 256 F8 second
 bytes, 65,536 two-byte arguments, and 152 truncations. Fuzz `8949A11F`
 compares 4096 spans: 3437 accepted and 659 rejected with exact reasons/offsets.
@@ -85,7 +85,7 @@ The complete parser and runtime connection remain later developments.
 ## Recovery-manifest integration
 
 Base `fd96fb3` incorporates the manifest during development of this block.
-Alignment keeps identical the five CBOR product and test blobs
+Alignment preserves the five CBOR product and test blobs unchanged
 reported in the [second reading](cbor-header-revisione.md). ASDF and the index
 retain both modules. Earlier results remain attributed to their
 original base; the catalog separately collects full integration

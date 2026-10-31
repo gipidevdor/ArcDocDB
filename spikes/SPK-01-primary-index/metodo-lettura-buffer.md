@@ -16,9 +16,9 @@ Exclusive working checkout:
 `/Users/gpicchiarelli/.codex/worktrees/indice-lettura/ArcDocDB`.
 This agent owns only `lettura-buffer.lisp`, this method, and new
 `spikes/SPK-01-primary-index/out/lettura-buffer-*` directories.
-Existing core/runner, `tools/`, shared documents, `src/` outside ownership.
+Existing core/runner, `tools/`, shared documents, `src/` are outside this agent's ownership.
 No commit/push. New drivers/diagnostics in this agent's out directories.
-Module requires loaded core; imports internals without redefining them.
+The module requires a loaded core; it imports internals without redefining them.
 
 <a id="api-e-condizioni"></a>
 
@@ -34,7 +34,7 @@ Package `ARCDOCDB.SPK01.LETTURA-BUFFER`, sole export `LEGGI`:
 
 `indice` is a core index; `chiave` a 16-u8 simple-array.
 `destinazione` is exactly `(simple-array (unsigned-byte 64) (4))`, private to
-caller: `[CSN, location, length, end-CSN]`. Types, callbacks, and key length
+caller: `[CSN, location, length, end-CSN]`. Types, callbacks, and key length are
 validated; `attempts` must be integer 1..8 before hashing, index access, or writes.
 Incorrect types produce `type-error`; wrong key length produces `limite-indice`
 with reason `:chiave-16-byte`. Accepted callbacks: NIL or function object,
@@ -46,10 +46,10 @@ exhaustion, never successful or partial read. Destination fully written only on
 `:hit`, after every validation. Miss, exhaustion, synchronous errors leave all
 four words unchanged. No payload read returned as Lisp value.
 
-Caller keeps key/destination stable and private during call, including callbacks.
+The caller keeps key/destination stable and private during the call, including callbacks.
 Fixture callbacks modify neither buffer and retain core invariants;
 `after-fragment` receives fragment, `after-fields` fragment and slot.
-Callback errors propagated before any write. Four writes do not constitute
+Callback errors are propagated before any write. Four writes do not constitute
 atomic publication to concurrent destination observers.
 
 <a id="algoritmo-ordine-e-linearizzazione"></a>
@@ -57,7 +57,7 @@ atomic publication to concurrent destination observers.
 ## Algorithm, ordering, and linearization
 
 Source is core `LEGGI`/`SONDA-READER`/`LEGGI-SLOT`. One local macro expands same
-algorithm in direct/instrumented paths. First excludes callback calls; second
+algorithm in direct/instrumented paths. The first excludes callback calls; the second
 inserts only two injection points. Payload/hash are local typed u64s: no payload
 transport between functions or multiple values. Existing inline core hash/probe
 helpers remain dependencies. No lowering of safety.
@@ -94,12 +94,12 @@ compile-file warning/failure returns are failures; no partial success.
 
 Each compilation has a fresh exclusive out and schema-1 record with
 `:schema-version 1`, `:argv`, `:stdin`, `:source-before`, `:source-after`,
-original stdout/stderr, exit code, `:decoded`. Failures retained too.
+original stdout/stderr, exit code, `:decoded`. Failures are retained too.
 Data use lists, keywords, strings, numbers; types/functions represented as strings,
 absence as keyword. Decoding with `*read-eval*` NIL happens in recorder process
 without loading spike packages. Driver promotes warnings/style-warnings to errors,
 checks compile-file indicators, loads FASL only after warning-free compilation.
-Does not call LEGGI.
+It does not call LEGGI.
 
 Preregistered C1 execution: compile core/module, load FASLs, disassemble LEGGI,
 retain diagnostics and stable sources. Diagnostic purpose: find payload boxing
@@ -144,7 +144,7 @@ Shared `kernel-pronto-B.sexp` signal indicates documentation update until final
 hashes and READY published.
 
 Agents run no BENCH; measurements, initial profiling, integration belong to parent,
-serialized by parent. This agent does not run module CHECK: another agent owns it.
+serialized by the parent. This agent does not run module CHECK: another agent owns it.
 Core-writer serialization remains parent harness responsibility.
 
 <a id="controlli-richiesti-allagente-check-e-al-parent"></a>

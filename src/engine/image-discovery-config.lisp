@@ -5,7 +5,7 @@
 
 ;;; REQ: REQ-IDX-010 REQ-LIM-003
 (defstruct (opzione-scoperta-indice (:constructor %make-opzione-scoperta-indice (template names candidates payload)) (:copier nil))
-  "Pre: factory validante. Post: profilo e limiti readonly, nessuna scelta di file o prova di commit."
+  "Pre: validating factory. Post: read-only profile and limits, no file choice or commit proof."
   (template nil :type opzione-indice-paginato :read-only t)
   (names 4096 :type (integer 1 65536) :read-only t)
   (candidates 64 :type (integer 1 1024) :read-only t)
@@ -15,8 +15,8 @@
 (declaim (ftype (function (opzione-indice-paginato (integer 1 65536) (integer 1 1024)) index)
                 payload-scoperta-indice))
 (defun payload-scoperta-indice (template names candidates)
-  "Pre: profilo valido e limiti verificati. Post: riserva conservativa di payload, non RSS.
-Include due inventari con caratteri fino a 4 byte, candidati/transitori, footer e verifica; oggetti/header/GC separati."
+  "Pre: valid profile and verified limits. Post: conservative payload reservation, not RSS.
+Includes two inventories with characters up to 4 bytes, candidates/transients, footer, and verification; objects/headers/GC separate."
   (unless (<= candidates names) (error 'invalid-argument :reason :engine-image-discovery-limits))
   (+ (* names 2 (+ (* 4 255) 16)) (* candidates 1024) 65536 arcdocdb.record:+max-key-bytes+
      (* (opzione-indice-paginato-size template) (+ 6 (opzione-indice-paginato-frames template)))))
@@ -28,9 +28,9 @@ Include due inventari con caratteri fino a 4 byte, candidati/transitori, footer 
 (defun crea-opzione-scoperta-indice (&key (page-size 4096) (frames 2) (max-visits 16777216)
                                         (max-bytes 268435456) (max-names 4096) (max-candidates 64)
                                         (max-discovery-payload 16777216))
-  "Pre: configurazione non fidata, prima dello startup. Post: policy bounded, profilo validato e quota verificata.
-INVALID-ARGUMENT per domini, RESOURCE-EXHAUSTED per payload insufficiente; nessun I/O o grande allocazione.
-La quota non prenota RAM: residente, metadati e GC restano nella riserva del controller."
+  "Pre: untrusted configuration, before startup. Post: bounded policy, validated profile, verified quota.
+INVALID-ARGUMENT for domains, RESOURCE-EXHAUSTED for insufficient payload; no I/O or large allocation.
+Quota does not reserve RAM: resident data, metadata, and GC remain in controller reservation."
   (unless (and (typep max-names '(integer 1 65536)) (typep max-candidates '(integer 1 1024))
                (typep max-discovery-payload '(integer 0 536870912)))
     (error 'invalid-argument :reason :engine-image-discovery-configuration))

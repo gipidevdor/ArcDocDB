@@ -9,8 +9,8 @@
 (defconstant +max-writer-quantum+ 65536)
 (defstruct (coda-writer (:constructor %make-coda-writer (slots capacity quantum))
                        (:copier nil))
-  "Pre: slots privati preallocati e budget finiti. Post: ring vuoto, nessuna lease.
-Guard e owner hanno CAS distinti; generation non viene mai riciclata."
+  "Pre: preallocated private slots and finite budgets. Post: empty ring, no lease.
+Guard and owner have separate CAS operations; generation is never recycled."
   (slots #() :type simple-vector :read-only t)
   (capacity 1024 :type index :read-only t)
   (quantum 64 :type index :read-only t)
@@ -22,8 +22,8 @@ Guard e owner hanno CAS distinti; generation non viene mai riciclata."
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (coda-writer) null) %check-queue))
 (defun %check-queue (queue)
-  "Pre: guard posseduta, oppure coda appena costruita e non pubblicata.
-Post: indici bounded e relazione FIFO coerente; INVARIANT-VIOLATION al guasto."
+  "Pre: owned guard, or newly constructed unpublished queue.
+Post: bounded indices and consistent FIFO relation; INVARIANT-VIOLATION on failure."
   (let ((capacity (coda-writer-capacity queue)) (head (coda-writer-head queue))
         (tail (coda-writer-tail queue)) (count (coda-writer-count queue)))
     (unless (and (<= 1 capacity +max-writer-capacity+)
@@ -37,8 +37,8 @@ Post: indici bounded e relazione FIFO coerente; INVARIANT-VIOLATION al guasto."
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (coda-writer) sb-thread:thread) %acquisisci-guard))
 (defun %acquisisci-guard (queue)
-  "Pre: operazione breve sul ring. Post: guard locale del thread corrente.
-Un solo CAS, senza attesa; RESOURCE-EXHAUSTED se busy, INVARIANT-VIOLATION al guasto."
+  "Pre: short ring operation. Post: local guard of current thread.
+One CAS, without waiting; RESOURCE-EXHAUSTED if busy, INVARIANT-VIOLATION on failure."
   (let ((thread sb-thread:*current-thread*))
     (unless (null (sb-ext:compare-and-swap (coda-writer-guard queue) nil thread))
       (error 'resource-exhausted :reason :writer-queue-busy))
@@ -49,8 +49,8 @@ Un solo CAS, senza attesa; RESOURCE-EXHAUSTED se busy, INVARIANT-VIOLATION al gu
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (coda-writer sb-thread:thread) null) %rilascia-guard))
 (defun %rilascia-guard (queue thread)
-  "Pre: guard acquisita da THREAD. Post: guard libera tramite un solo CAS.
-INVARIANT-VIOLATION per proprietario diverso; nessuna attesa o recupero implicito."
+  "Pre: guard acquired by THREAD. Post: guard freed through one CAS.
+INVARIANT-VIOLATION for a different owner; no waiting or implicit recovery."
   (unless (eq (coda-writer-guard queue) thread)
     (error 'invariant-violation :reason :writer-guard))
   (unless (eq (sb-ext:compare-and-swap (coda-writer-guard queue) thread nil) thread)
@@ -60,8 +60,8 @@ INVARIANT-VIOLATION per proprietario diverso; nessuna attesa o recupero implicit
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (&key (:capacity t) (:quantum t)) coda-writer) crea-coda-writer))
 (defun crea-coda-writer (&key (capacity 1024) (quantum 64))
-  "Pre: capacity e quantum interi tra 1 e 65536, indipendenti.
-Post: ring SIMPLE-VECTOR privato allocato una volta; INVALID-ARGUMENT al rifiuto."
+  "Pre: independent integer capacity and quantum between 1 and 65536.
+Post: private SIMPLE-VECTOR ring allocated once; INVALID-ARGUMENT on rejection."
   (unless (and (typep capacity 'index) (<= 1 capacity +max-writer-capacity+))
     (error 'invalid-argument :reason :writer-configuration))
   (unless (and (typep quantum 'index) (<= 1 quantum +max-writer-quantum+))
@@ -73,9 +73,9 @@ Post: ring SIMPLE-VECTOR privato allocato una volta; INVALID-ARGUMENT al rifiuto
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (coda-writer t) index) %accoda-sotto-guard))
 (defun %accoda-sotto-guard (queue message)
-  "Pre: guard locale posseduta dal thread corrente, payload del produttore.
-Post: una sola accettazione FIFO e count aggiornato; RESOURCE-EXHAUSTED se full
-senza mutazioni, INVARIANT-VIOLATION per guard o indici incoerenti."
+  "Pre: local guard owned by current thread, producer's payload.
+Post: one FIFO acceptance and updated count; RESOURCE-EXHAUSTED if full
+without mutations, INVARIANT-VIOLATION for inconsistent guard or indices."
   (unless (eq (coda-writer-guard queue) sb-thread:*current-thread*)
     (error 'invariant-violation :reason :writer-guard))
   (%check-queue queue)
@@ -91,9 +91,9 @@ senza mutazioni, INVARIANT-VIOLATION per guard o indici incoerenti."
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (coda-writer t) index) accoda-messaggio))
 (defun accoda-messaggio (queue message)
-  "Pre: payload opaco posseduto dal chiamante, compreso NIL. Post: accettato in FIFO,
-ownership alla coda, restituisce il count dopo l'accettazione. RESOURCE-EXHAUSTED
-per full/busy senza mutare ring o payload; nessun callback, attesa o wakeup."
+  "Pre: opaque caller-owned payload, including NIL. Post: accepted in FIFO,
+ownership transferred to queue, returns count after acceptance. RESOURCE-EXHAUSTED
+for full/busy without mutating ring or payload; no callback, wait, or wakeup."
   (let ((thread (%acquisisci-guard queue)))
     (unwind-protect (%accoda-sotto-guard queue message)
       (%rilascia-guard queue thread))))

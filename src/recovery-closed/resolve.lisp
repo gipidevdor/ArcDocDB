@@ -7,10 +7,10 @@
 (declaim (ftype (function (workspace-active manifest u64) (values index index index index &optional))
                 risolvi-prepared-closed))
 (defun risolvi-prepared-closed (workspace manifest id)
-  "Pre: prefisso interamente verificato, semantica dei prepared/OUTCOME raccolta, manifest dello stesso CLOSED.
-Post: TXID prepared = commit locali + commit solo EDIT + abort, senza decision log globale.
-Tutti gli OUTCOME, anche orfani, devono concordare con l'EDIT omonimo; zero e bit alti sono significativi.
-CORRUPTION-DETECTED per contraddizione, INVARIANT-VIOLATION per conteggi; nessun workspace esportato."
+  "Pre: entire prefix verified, prepared/OUTCOME semantics collected, manifest of the same CLOSED.
+Post: prepared TXIDs = local commits + EDIT-only commits + aborts, without the global decision log.
+All OUTCOMEs, including orphan ones, must agree with the corresponding EDIT; zero and high bits are significant.
+CORRUPTION-DETECTED for contradiction, INVARIANT-VIOLATION for counts; no workspace exported."
   (unless (eq (nth-value 0 (trova-segmento manifest id)) :closed)
     (error 'invariant-violation :reason :closed-recovery-resolution-state))
   (let ((prepared (workspace-active-prepared workspace)) (outcomes (workspace-active-outcomes workspace))

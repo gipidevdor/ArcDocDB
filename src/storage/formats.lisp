@@ -62,8 +62,8 @@
 ;;; REQ: REQ-FOR-002
 (declaim (ftype (function (integer index) (values u16 &optional)) versione-supportata))
 (defun versione-supportata (version offset)
-  "Pre: VERSION intero. Post: layout 1 o 2 esplicitamente riconosciuto.
-UNSUPPORTED-FORMAT per altro valore; nessuna interpretazione per tentativi."
+  "Pre: integer VERSION. Post: explicitly recognized layout 1 or 2.
+UNSUPPORTED-FORMAT for any other value; no trial interpretation."
   (unless (member version '(1 2))
     (error 'unsupported-format :reason :file-version :offset offset))
   version)
@@ -71,8 +71,8 @@ UNSUPPORTED-FORMAT per altro valore; nessuna interpretazione per tentativi."
 ;;; REQ: REQ-AFF-008 REQ-FOR-003
 (declaim (ftype (function (index index index index) (values index &optional)) spazio-ripetuto))
 (defun spazio-ripetuto (start end count width)
-  "Pre: range valido e WIDTH positivo. Post: fine dei COUNT campi interamente presenti.
-CORRUPTION-DETECTED se il conteggio eccede i byte; controllo prima della moltiplicazione."
+  "Pre: valid range and positive WIDTH. Post: end of COUNT fields present in full.
+CORRUPTION-DETECTED if count exceeds bytes; check before multiplication."
   (unless (and (plusp width) (<= start end))
     (error 'invariant-violation :reason :metadata-range :offset start))
   (when (> count (floor (- end start) width))
@@ -82,8 +82,8 @@ CORRUPTION-DETECTED se il conteggio eccede i byte; controllo prima della moltipl
 ;;; REQ: REQ-AFF-008
 (declaim (ftype (function (index index index) null) esigi-budget))
 (defun esigi-budget (actual budget offset)
-  "Pre: grandezze non negative. Post: lavoro entro il budget dichiarato.
-RESOURCE-EXHAUSTED prima della scansione se ACTUAL supera BUDGET."
+  "Pre: nonnegative quantities. Post: work within the declared budget.
+RESOURCE-EXHAUSTED before scanning if ACTUAL exceeds BUDGET."
   (when (> actual budget)
     (error 'resource-exhausted :reason :metadata-budget :offset offset))
   nil)

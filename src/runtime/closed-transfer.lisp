@@ -7,9 +7,9 @@
 (declaim (ftype (function (arcdocdb.get:vista-get-serie arcdocdb.get.resolver:mappa-segmento-get)
                          arcdocdb.get.resolver:mappa-segmento-get) trasferisci-mappa-closed-runtime))
 (defun trasferisci-mappa-closed-runtime (view map)
-  "Pre: mappa canonica già verificata, righe immutabili e FD readonly mantenuto aperto.
-Post: nuovi wrapper della vista runtime, medesime righe EQ/FD e frontiera; nessun owner fisico trasferito.
-INVALID-ARGUMENT per UUID; INVARIANT-VIOLATION per risultato interno incoerente. Nessun I/O o pubblicazione."
+  "Pre: canonical map already verified, immutable rows, and readonly FD kept open.
+Post: new runtime-view wrappers, same EQ rows/FD and frontier; no physical owner transferred.
+INVALID-ARGUMENT for UUID; INVARIANT-VIOLATION for inconsistent internal result. No I/O or publication."
   (let* ((old (arcdocdb.get.resolver::mappa-segmento-get-segment map))
          (rows (arcdocdb.get.resolver::mappa-segmento-get-rows map)))
     (unless (equalp (arcdocdb.get::vista-get-serie-identity view)

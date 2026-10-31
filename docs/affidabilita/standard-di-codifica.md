@@ -63,9 +63,9 @@ for critical systems. A deviation is allowed only if recorded in
 | COD-33 | `defstruct` with `:read-only` slots where the value does not change after construction. | rev |
 | COD-34 | `eval`, `compile`, `load`, and `intern` on external data are prohibited; `*read-eval*` always `nil`; no `read` on untrusted data. | lint |
 | COD-35 | No `sb-sys:with-pinned-objects` or system calls outside the `io` module. | lint, rev |
-| COD-36 | A file or directory is deleted only through the `io` module function receiving removal proof: a `.tmp` name not named by the source of truth, or the record recording removal (INV-A10, [ADR-0036](../adr/0036-leggi-di-progetto.md)). | rev, test |
+| COD-36 | A file or directory is deleted only through the `io` module function receiving removal proof: a `.tmp` name not named by the source of truth, or the record authorizing removal (INV-A10, [ADR-0036](../adr/0036-leggi-di-progetto.md)). | rev, test |
 | COD-37 | Recovery opens existing segments read-only; no function truncates a segment (INV-A9). | rev, test |
-| COD-38 | Every function making a change durable states the operation's **atomicity point** in its docstring and whether it is before it (preparation) or after it (idempotent completion) (INV-A11). | rev |
+| COD-38 | Every function making a change durable states the operation's **atomicity point** in its docstring and whether the function operates before that point (preparation) or after it (idempotent completion) (INV-A11). | rev |
 
 <a id="concorrenza"></a>
 

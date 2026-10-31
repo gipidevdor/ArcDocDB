@@ -48,7 +48,7 @@ are insufficient.
 |---|---|---|
 | low | up to `clean-workers-max` | allowed, up to `merge-workers-max` |
 | normal | up to `clean-workers-normal` | no new MERGE; ongoing ones continue with reduced bandwidth |
-| high | urgent CLEAN only (`dead-ratio ≥ 0,8`), 1 worker | no new MERGE; ongoing ones are suspended, and abandoned if the state remains `alto` for 30 s |
+| high | urgent CLEAN only (`dead-ratio ≥ 0.8`), 1 worker | no new MERGE; ongoing ones are suspended, and abandoned if the state remains `alto` for 30 s |
 
 Each compaction worker has a **bandwidth limiter** (token bucket in bytes/s), set
 by the scheduler according to the state. An abandoned MERGE leaves no effects (sources

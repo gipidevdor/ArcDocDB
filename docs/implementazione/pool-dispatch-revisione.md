@@ -65,8 +65,8 @@ Ready-list equality is not a substitute for context identity.
 
 `prendi-collegamento-pool` delegates exactly one new acquisition to gate
 `prendi-writer-pool`. Only `:claimed` selects the preallocated link on the bound
-context; other three outcomes retain NIL, cursor, and gate action.
-No begin, pop, bridge token, or second lease introduced. If
+context; the other three outcomes retain NIL, cursor, and gate action.
+No begin, pop, bridge token, or second lease is introduced. If
 routing fails after actual claim, execution retains its fault boundary,
 writer, home, and obligation. An already successful ACK remains valid. New
 code neither clears diagnosis nor rolls back, hands off, or publishes.
@@ -112,7 +112,7 @@ C1 delegates or replacing their reviews and verification.
 
 ## Reading the new tests
 
-Reviewer read fourteen named tests in the version identified
+The reviewer read fourteen named tests in the version identified
 above without running them. Tests distinguish actual API execution,
 contention on actual guard, and deliberate protocol/shape FI.
 
@@ -150,7 +150,7 @@ outcome while staying in declared types. A foreign status instead violates
 the delegate's ftype contract.
 
 Function-replacement FI must be quiescent and
-restore original. Coverage campaign must retain native
+restore the original. The coverage campaign must retain the native
 denominator, declare which defensive branches compiler preserves, and
 distinguish these tests from nominal results. Reading excludes no branches
 from denominator, certifies no C3 threshold, and infers no PASS merely because

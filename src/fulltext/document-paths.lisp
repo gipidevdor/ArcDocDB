@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text index index octets) boolean) chiave-documento-p))
 (defun chiave-documento-p (task start end key)
-  "Pre: payload UTF-8 verificato nel documento; chiave posseduta dalla configurazione.
-Post: confronto esatto, budget per byte; nessuna normalizzazione delle chiavi."
+  "Pre: verified UTF-8 payload within document; key owned by configuration.
+Post: exact comparison, per-byte budget; no key normalization."
   (lavoro-documento task)
   (unless (= (- end start) (length key)) (return-from chiave-documento-p nil))
   (loop for i below (length key) always
@@ -14,9 +14,9 @@ Post: confronto esatto, budget per byte; nessuna normalizzazione delle chiavi."
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text index index index boolean) null) seleziona-chiave-documento))
 (defun seleziona-chiave-documento (task top start end tagged)
-  "Pre: chiave testuale completata; TOP e il frame mappa prima dello step CBOR.
-Post: mask dei percorsi corrispondenti, duplicati della chiave selezionata rifiutati.
-Chiavi con tag non corrispondono a chiavi testuali semplici."
+  "Pre: complete text key; TOP is map frame before CBOR step.
+Post: matching-path mask, duplicate selected key rejected.
+Tagged keys do not match simple text keys."
   (let ((mask 0) (active (aref (preparazione-full-text-masks task) top))
         (level (aref (preparazione-full-text-levels task) top))
         (fields (configurazione-full-text-fields (preparazione-full-text-config task))))
@@ -36,8 +36,8 @@ Chiavi con tag non corrispondono a chiavi testuali semplici."
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text index index index) null) conserva-campo-documento))
 (defun conserva-campo-documento (task field start end)
-  "Pre: foglia MT3 verificata. Post: span relativo e somma input entro limite dichiarato.
-INVALID-ARGUMENT per doppia assegnazione; RESOURCE-EXHAUSTED prima di oltrepassare input."
+  "Pre: verified MT3 leaf. Post: relative span and summed input within declared limit.
+INVALID-ARGUMENT for double assignment; RESOURCE-EXHAUSTED before exceeding input limit."
   (unless (<= (preparazione-full-text-start task) start end (preparazione-full-text-end task))
     (error 'invariant-violation :reason :fulltext-document-field-span))
   (when (= 1 (sbit (preparazione-full-text-present task) field))
@@ -55,8 +55,8 @@ INVALID-ARGUMENT per doppia assegnazione; RESOURCE-EXHAUSTED prima di oltrepassa
 (declaim (ftype (function (preparazione-full-text index (unsigned-byte 3) index index boolean) null)
                 seleziona-valore-documento))
 (defun seleziona-valore-documento (task top major start end tagged)
-  "Pre: valore completato o contenitore aperto dal kernel CBOR. Post: foglie conservate
-o mask trasferita alla mappa figlia. Un antenato presente non mappa e un errore di tipo."
+  "Pre: value completed or container opened by CBOR kernel. Post: retained leaves
+or mask transferred to child map. A present non-map ancestor is a type error."
   (let ((active (aref (preparazione-full-text-pending task) top)) (children 0)
         (level (aref (preparazione-full-text-levels task) top))
         (fields (configurazione-full-text-fields (preparazione-full-text-config task))))

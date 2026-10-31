@@ -2,9 +2,9 @@
 
 # GET source lifetime: integrated-verification method
 
-This method precedes increment runs. Verifies
+This method precedes increment runs. It verifies
 [Serie source](get-fonti-serie.md) bridge with existing GET, WAL, primary, and EBR
-APIs, native FDs, and separate workers. Introduces no product code,
+APIs, native FDs, and separate workers. It introduces no product code,
 formats, or compaction/rotation executor.
 
 <a id="autorità-e-perimetro"></a>
@@ -12,24 +12,24 @@ formats, or compaction/rotation executor.
 ## Authority and scope
 
 Each case uses one initial CLOSED key, an ordinary ACTIVE
-controller, private contexts, and no registered snapshot. New roots
+controller, private contexts, and no registered snapshot. New roots are
 published by real batches through `pubblica-commit-serie`; current
-locations change through primary's public API.
-A new PUT of same key has a new CSN: replacement of
+locations change through the primary index's public API.
+A new PUT of the same key has a new CSN: replacement of
 current version, not physical relocation of unchanged version.
 
-Fixture keeps native maps valid until close. Durable catalog
+The fixture keeps native maps valid until close. Durable catalog
 decision and MVCC retention are caller preconditions,
-not test conclusions. Temporary files removed only
+not test conclusions. Temporary files are removed only
 in final exclusive cleanup; observed reclamation closes FD and releases
 ticket, without attesting durable segment removal.
 
 Obligation `L ⊆ S(R)` holds on every acquisition: first update
 retains CLOSED and ACTIVE together. Directory reduction occurs
 only when old location is no longer in current primary and
-sole old reader has already acquired capability in same read
+the sole old reader has already acquired the capability in the same read
 task. No new lookup can then copy that location.
-EBR protects captured capability, without making a map
+EBR protects the captured capability, without making a map
 removed before acquisition resolvable.
 
 <a id="casi-e-oracoli-preregistrati"></a>
@@ -58,10 +58,10 @@ use I/O worker separate from writer:
 
 Oracles compare independent inputs, candidate CSN/location,
 buffer sentinels, I/O events, FD state, ticket, pin, and EBR credits.
-Actual closes observed in fixture backend under
-mutex. No global function replacement with workers in flight.
+Actual closes are observed in the fixture backend under
+a mutex. No global function replacement with workers in flight.
 Gates and timeouts are C4 tools imposing interleaving, not waits
-added to product; I/O worker retains pin during syscall.
+added to product; the I/O worker retains the pin during syscall.
 All workers must terminate before controller mutates contexts or closes
 FDs. Timeout or missing join fails case.
 
@@ -69,19 +69,19 @@ FDs. Timeout or missing join fails case.
 
 ## Runs and preservation
 
-Sources, ASDF registration, and method frozen in commit before
+Sources, ASDF registration, and method are frozen in a commit before
 campaigns. Warning-free compilation, full suite, and repository
 checks through `tools/record-command.lisp`/`make check`.
-Existing ACTIVE selection remains unchanged; increment does not
+Existing ACTIVE selection remains unchanged; the increment does not
 require repeating its mutation campaign without product
 or driver changes. Independent reading verifies protocol and
 raw outcomes; CI also verifies Linux.
 
-Original output, any observed errors, configurations, and private FASLs
+Original output, any observed errors, configurations, and private FASLs are
 preserved before cleanup. Reports and evidence are data:
-reading with `*read-eval* NIL` and EOF, never `LOAD`. Evidence copy
+reading with `*read-eval* NIL` and EOF, never `LOAD`. The evidence copy is
 verified in full before publication. Outcomes and run identities
-will be reported in campaign catalog after verification.
+will be reported in the campaign catalog after verification.
 
 Requirements: REQ-IDX-001, REQ-WAL-006, REQ-CMP-007, REQ-AFF-001,
 REQ-AFF-008, and REQ-VAL-001. This functional verification qualifies neither

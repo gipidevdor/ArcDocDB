@@ -13,7 +13,7 @@ ADR-0005 and ADR-0045 §§6/8. C1 code, C4 tools.
 
 ## Contract and states
 
-Context preallocated once on the worker thread that remains its owner,
+The context is preallocated once on the worker thread that remains its owner,
 non-reentrant. Ready/owner read-only; cursor/home/ref/lease/pending and
 batch-generation local, no global counter. Six operational phases and one terminal phase:
 
@@ -61,7 +61,7 @@ transfer ownership or authorize double publication.
 
 There are no threads, callbacks, I/O, timers, retries, or waits in the product.
 Take uses the existing scan of ≤64 shards/128 CAS; the other steps are
-O(1), in addition to the batch copy already bounded by the writer. Work and ack outside
+O(1), in addition to the batch copy already bounded by the writer. Work and ack occur outside
 ready guards. Empty does not authorize park/shutdown. Local full chains, quotas,
 admission, wake/park, FAULTED controller, pool adaptation, and WAL application
 remain to be integrated. Ack does not verify the caller's external effects.
@@ -89,14 +89,14 @@ remain to be integrated. Ack does not verify the caller's external effects.
   idle, batch ack, identity/count/status/cursor, lease, and increasing tokens checked.
   C+1 distinct writers per shard; initial role rotated; real generations not
   reset to make the sink constant. Independent derivation in the appendix.
-- Positive heap, wrong sink, distinct clockzero, partial reporters, and preexisting
+- Positive heap, wrong sink, distinct clock zero, partial reporters, and preexisting
   directory, full strict COMPILE-FILE, and FASL self-test of C4 tools with fatal warnings.
 - Full Make check once on final code; other chats integrated before
   freezing. Repeated only if relevant code/base changes or a gate fails.
 
-Every attempt is recorded with record-command; raw data/output/argv/environment
+Every attempt is recorded with record-command; raw data/output/argv/environment are
 retained, stable source snapshots before/after. Separate caches/processes on a
-frozen copy; large data compressed losslessly. Observed results do not
+frozen copy; large data are compressed losslessly. Observed results do not
 qualify universal zero heap, throughput, P99, fairness, or the whole engine.
 
 <a id="oracolo-composto-e-mutanti-esatti"></a>

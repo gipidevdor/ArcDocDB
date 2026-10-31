@@ -7,17 +7,17 @@
 ;;; REQ: REQ-THR-001 REQ-CON-002 REQ-CON-005 REQ-AFF-008
 (defstruct (dispatcher-writer-pool
              (:constructor %make-dispatcher-writer-pool (port table)) (:copier nil))
-  "Pre: porta e tabella sul medesimo contesto IDLE, owner corrente verificato.
-Post: binding preallocato immutabile; nessun claim, lease o comando applicato."
+  "Pre: port and table on the same IDLE context, current owner verified.
+Post: immutable preallocated binding; no claim, lease, or applied command."
   (port nil :type arcdocdb.scheduler:porta-worker-pool :read-only t)
   (table nil :type arcdocdb.execution.series:tabella-worker-serie :read-only t))
 
 ;;; REQ: REQ-THR-001 REQ-CON-002 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (t t) null) %check-dispatcher-binding))
 (defun %check-dispatcher-binding (port table)
-  "Pre: factory o dispatcher privato. Post: owner e identità del contesto validi.
-INVALID-ARGUMENT configuration/owner/binding prima di ACK, claim o routing.
-Nessuna lettura di fase, parole pool, ready, lease o controller vivo."
+  "Pre: factory or private dispatcher. Post: valid owner and context identity.
+INVALID-ARGUMENT for configuration/owner/binding before ACK, claim, or routing.
+No read of phase, pool words, ready, lease, or live controller."
   (unless (typep port 'arcdocdb.scheduler:porta-worker-pool)
     (error 'invalid-argument :reason :pool-dispatcher-configuration))
   (unless (eq (arcdocdb.scheduler::porta-worker-pool-owner port) sb-thread:*current-thread*)

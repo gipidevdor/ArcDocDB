@@ -7,8 +7,8 @@
 (defstruct (riserve-full-text
              (:constructor %riserve-full-text (queue configs slots rows row-slots fixed used file-limits delta-limit staging-limit segment))
              (:copier nil))
-  "Pool preallocato per un ACTIVE nuovo; solo il writer muta contatori e prestiti.
-Costi trasferiti restano posseduti: nessun reclaim per assenza o riduzione delle versioni storiche."
+  "Preallocated pool for a new ACTIVE; only writer mutates counters and loans.
+Transferred costs remain owned: no reclamation based on absence or reduction of historical versions."
   (queue nil :type ex:coda-writer :read-only t)
   (configs #() :type simple-vector :read-only t) (slots #() :type simple-vector :read-only t)
   (rows #() :type (simple-array (unsigned-byte 32) (*)) :read-only t)
@@ -25,8 +25,8 @@ Costi trasferiti restano posseduti: nessun reclaim per assenza o riduzione delle
 
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (defstruct (riserva-full-text (:constructor %riserva-full-text (pool position runs sources costs)) (:copier nil))
-  "Slot stabile con generation senza wrap; run privati fino a READY, immutabili dopo trasferimento.
-SOURCES e i borrower impediscono il riuso dei task durante la copia riprendibile."
+  "Stable slot with nonwrapping generation; private runs until READY, immutable after transfer.
+SOURCES and borrowers prevent task reuse during resumable copying."
   (pool nil :type riserve-full-text :read-only t) (position 0 :type index :read-only t)
   (runs #() :type simple-vector :read-only t) (sources #() :type simple-vector :read-only t)
   (costs (make-array 0 :element-type 'fixnum) :type contatori-full-text :read-only t)

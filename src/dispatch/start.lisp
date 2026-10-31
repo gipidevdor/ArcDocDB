@@ -15,10 +15,10 @@
                                  (member nil :unchanged :activated :retired :busy :faulted) &optional))
                 %prepara-tratto-esito))
 (defun %prepara-tratto-esito (link status origin detail action)
-  "Pre: un solo passo concluso dall'owner non rientrante, metadati originali.
-Post: CLAIMED avviato una volta; altri esiti senza token o lavoro implicito.
-Link/status T e NOTINLINE mantengono la difesa operativa fuori ftype.
-INVARIANT-VIOLATION coppia/status; guasti C1 propagati senza rollback o cleanup."
+  "Pre: one step completed by non-reentrant owner, original metadata.
+Post: CLAIMED started once; other outcomes without token or implicit work.
+Link/status T and NOTINLINE retain out-of-ftype operational defense.
+INVARIANT-VIOLATION for pair/status; C1 failures propagated without rollback or cleanup."
   (case status
     (:claimed
      (unless (typep link 'arcdocdb.execution.series:collegamento-worker-serie)
@@ -40,9 +40,9 @@ INVARIANT-VIOLATION coppia/status; guasti C1 propagati senza rollback o cleanup.
                                  (member nil :unchanged :activated :retired :busy :faulted) &optional))
                 prepara-tratto-pool))
 (defun prepara-tratto-pool (dispatcher)
-  "Pre: owner non rientrante, IDLE/CLAIMED/RESCHEDULE e bridge precedente chiuso.
-Post: selezione e al piu un begin, sette valori con token/fase/ragione originali.
-Una pubblicazione termina subito. Nessun secondo routing, pop, ACK, end o retry.
-Binding/fasi/guasti delegati; CLOSING e capacita dopo errore restano al caller."
+  "Pre: non-reentrant owner, IDLE/CLAIMED/RESCHEDULE, previous bridge closed.
+Post: selection and at most one begin, seven values with original token/phase/reason.
+Publication ends immediately. No second routing, pop, ACK, end, or retry.
+Binding/phases/faults delegated; CLOSING and capabilities after error remain with caller."
   (multiple-value-bind (link status origin detail action) (passo-dispatcher-pool dispatcher)
     (%prepara-tratto-esito link status origin detail action)))

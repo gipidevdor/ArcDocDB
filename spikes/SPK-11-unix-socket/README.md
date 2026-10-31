@@ -80,7 +80,7 @@ Session peer uses previous transport with identical HELLO/WELCOME/PING golden by
 
 A local pair tests empty receive, saturation without reader, and send to closed
 peer without SIGPIPE. Lisp-counter windows exclude construction, waits, codec,
-and report; disassembly retained. Result measures neither transient malloc,
+and report; disassembly is retained. Result measures neither transient malloc,
 kernel memory, nor RSS. C4 frames/session still allocate; this is not product I/O pool.
 
 ```sh
@@ -89,7 +89,7 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --chec
 
 Runner compiles without warnings/style-warnings and retains child argv/output in
 result. `--bench` returns `:unsupported`: no benchmark defined. Environment,
-version, commit, and blobs recorded by shared harness. Every failure remains in
+version, commit, and blobs are recorded by shared harness. Every failure remains in
 original records, including variants corrected later.
 
 <a id="limiti"></a>
@@ -98,7 +98,7 @@ original records, including variants corrected later.
 
 Not tests of product listener/dispatcher, engine APIs, recovery/admission,
 commit/durability, lost response, EBR, pool saturation, access denial with another
-UID, or Linux/macOS qualification. No per-connection thread proposed for product.
+UID, or Linux/macOS qualification. No per-connection thread is proposed for the product.
 Reversed responses are transport fixtures, not query results.
 Test closes neither RSK-14 nor RSK-16 and promotes none of REQ-IPC-001…REQ-IPC-004.
 Model allocates/accounts only REQUEST results; real I/O-owner pool, scratch/handshake,

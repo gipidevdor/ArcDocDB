@@ -9,8 +9,8 @@
                          (values (integer 0 27) (member 1 2 3 5 9) &optional))
                 seleziona-header-cbor))
 (defun seleziona-header-cbor (high low)
-  "Pre: argomento wire in parole u32. Post: AI e dimensione minima totale.
-INVARIANT-VIOLATION per parole/larghezza incoerenti; nessun u64 ricomposto."
+  "Pre: wire argument in u32 words. Post: AI and minimum total size.
+INVARIANT-VIOLATION for inconsistent words/width; no u64 reassembled."
   (multiple-value-bind (ai size)
       (cond ((not (zerop high)) (values 27 9))
             ((< low 24) (values low 1))
@@ -27,9 +27,9 @@ INVARIANT-VIOLATION per parole/larghezza incoerenti; nessun u64 ricomposto."
 (declaim (ftype (function (octets index index u32 (member 1 2 4))
                          (values index &optional)) scrivi-parola-header-cbor))
 (defun scrivi-parola-header-cbor (buffer start end word width)
-  "Pre: parola u32 e WIDTH 1/2/4 che la contiene; spazio gia verificato.
-Post: WIDTH byte BE in [START,NEXT), NEXT crescente entro END.
-INVARIANT-VIOLATION per confini, parola troppo larga o progresso; massimo quattro passi."
+  "Pre: u32 word and WIDTH 1/2/4 that contains it; space already verified.
+Post: WIDTH BE bytes in [START,NEXT), NEXT increasing within END.
+INVARIANT-VIOLATION for boundaries, an oversized word, or progress; maximum four steps."
   (unless (<= start end (length buffer))
     (error 'invariant-violation :reason :cbor-write-word-range))
   (unless (and (<= width (- end start))
@@ -47,9 +47,9 @@ INVARIANT-VIOLATION per confini, parola troppo larga o progresso; massimo quattr
 (declaim (ftype (function (t t t t t t) (values index &optional))
                 check-input-header-cbor-write))
 (defun check-input-header-cbor-write (buffer start end major high low)
-  "Pre: argomenti esterni non verificati. Post: END index, simple u8, MT0..6, u32.
+  "Pre: unverified external arguments. Post: END index, simple u8, MT0..6, u32.
 INVALID-ARGUMENT :cbor-range/:cbor-write-major/:cbor-write-high/:cbor-write-low
-nell'ordine indicato, offset NIL; nessun byte letto o scritto."
+in the indicated order, offset NIL; no byte read or written."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason :cbor-range))
@@ -65,14 +65,14 @@ nell'ordine indicato, offset NIL; nessun byte letto o scritto."
 (declaim (ftype (function (t t t t t t) (values index &optional))
                 scrivi-header-cbor-minimo))
 (defun scrivi-header-cbor-minimo (buffer start end major high low)
-  "Pre: destinazione simple u8 esclusiva, span half-open, MT0..6 e parole u32.
-Post: esattamente NEXT, testata minima BE in [START,NEXT); resto immutato.
-MT1 riceve l'argomento wire non negativo -1-n; nessun payload o limite documentale.
-Preflight range/major/high/low/capacita prima di scrivere: INVALID-ARGUMENT
-:cbor-range/:cbor-write-major/:cbor-write-high/:cbor-write-low oppure
-RESOURCE-EXHAUSTED :cbor-write-capacity, tutti offset NIL e buffer invariato.
-INVARIANT-VIOLATION interno senza rollback; nessuna pubblicazione durevole/atomica,
-allocazione prevista, attesa, I/O o stato condiviso; al massimo nove byte."
+  "Pre: exclusive simple u8 destination, half-open span, MT0..6 and u32 words.
+Post: exactly NEXT, minimal BE header in [START,NEXT); remainder unchanged.
+MT1 receives the nonnegative wire argument -1-n; no payload or document limit.
+Preflight range/major/high/low/capacity before writing: INVALID-ARGUMENT
+:cbor-range/:cbor-write-major/:cbor-write-high/:cbor-write-low or
+RESOURCE-EXHAUSTED :cbor-write-capacity, all with offset NIL and buffer unchanged.
+Internal INVARIANT-VIOLATION without rollback; no durable/atomic publication,
+intended allocation, waiting, I/O, or shared state; at most nine bytes."
   (check-input-header-cbor-write buffer start end major high low)
   (let ((bytes (the octets buffer)) (begin (the index start)) (limit (the index end))
         (mt (the (integer 0 6) major)) (hi (the u32 high)) (lo (the u32 low)))

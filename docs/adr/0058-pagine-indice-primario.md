@@ -30,7 +30,7 @@ PageRef = (offset, generation), in the domain (Serie, image, size).
 Zero/zero means absence. Positive offsets are aligned, below 2^60, and never
 reused within the same image. Each reference points to a lower offset
 and a generation no greater than its parent's: children are built before
-parents, including overflow and key fragments from the end. Local graphs
+parents, including overflow chains and key-fragment chains, which are built tail first. Local graphs
 cannot form cycles; full reachability, coverage, and durability
 remain integration obligations. No wrapping or recycling of identities.
 

@@ -27,7 +27,7 @@ listener cannot certify engine recovery, admission, commit, or isolation.
 The 2026-10-22 direction to proceed with startup → recovery → admission → PUT/GET
 authorizes the [M1 profile](../implementazione/production-unix-m1.md),
 which fixes the four commands' payloads, smaller limits,
-one owner, and one in-flight request before the code. The profile reuses this ADR's frames, correlation,
+one owner, and one in-flight request before implementation. The profile reuses this ADR's frames, correlation,
 errors, and durable boundaries. It does not adopt the extended contract's concurrency
 defaults; their proposal and related gates remain open.
 
@@ -43,9 +43,9 @@ path before appearing among advertised capabilities. No application
 operation, including PING, is admitted before the engine recovery gate.
 
 The only new serialization is the connection stream. Owner assignment
-happens at opening, not per document or Serie. The transport
+happens when the connection opens, not per document or Serie. The transport
 has no durable atomicity point: those of the respective commands remain.
-No implicit retry or deduplication across reconnections.
+There is no implicit retry or deduplication across reconnections.
 
 <a id="conseguenze"></a>
 
@@ -70,7 +70,7 @@ The values are proposed policies, not performance results.
 The correlation and versioning pattern is published in the
 [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification), without adopting its format;
 the binary vocabulary remains that of [RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html).
-Local implementability uses the
+Local implementation uses the
 [SBCL sb-bsd-sockets](https://www.sbcl.org/manual/index.html#Local-Domain-Sockets) contrib.
 These references justify the mechanisms, not the proposed defaults.
 

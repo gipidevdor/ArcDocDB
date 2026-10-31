@@ -2,8 +2,8 @@
 
 # CBOR string writing — data review
 
-Reading on 2026-10-11, frozen in spikes/out during the recorded
-campaigns; no trackable file or frozen test is modified by the reading.
+This review was conducted on 2026-10-11 and frozen in spikes/out during the recorded
+campaigns; it modifies no tracked file or frozen test.
 The reading starts no build, test, benchmark, coverage, or mutation run.
 Final review of the listed records; the draft and any helpers for
 this reading are frozen before collection. Links still show
@@ -18,13 +18,13 @@ which maps each source path to its published copy.
 Record read in full as data through
 `arcdocdb.evidence:read-evidence` in `tools/evidence-storage.lisp`:
 `spikes/out/4000708581-command-2575-0/report.lisp`.
-The reader returns schema1, kind COMMAND-VERIFICATION, command
-`make test lint trace`, STATUS OK, EXIT-CODE0, SOURCE-CONSISTENCY STABLE,
-and WALL-SECONDS13.692469d0. The 606 SOURCE-BLOBS-BEFORE and AFTER elements
+The reader returns schema 1, kind COMMAND-VERIFICATION, command
+`make test lint trace`, STATUS OK, EXIT-CODE 0, SOURCE-CONSISTENCY STABLE,
+and WALL-SECONDS 13.692469d0. The 606 SOURCE-BLOBS-BEFORE and AFTER elements
 are equal, including frozen product and corpus.
 
-Declared environment: SBCL2.6.9, Darwin27.0.0 ARM64, AppleM4, ten logical
-CPUs, 16GiB RAM; external load UNCONTROLLED. Git base
+Declared environment: SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, ten logical
+CPUs, 16 GiB RAM; external load UNCONTROLLED. Git base
 `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`, working tree recorded.
 Time includes the entire command and does not measure a single operation.
 
@@ -72,7 +72,7 @@ sum to 681:
 
 All twenty-one REQ-CBR-002 names in the frozen corpus appear once,
 including the parallel test. The log records 8,194 length comparisons
-and fuzz2048, seed53574342, with 1,546 accepted and 502 UTF-8 rejections:
+and fuzz 2048, seed 53574342, with 1,546 accepted and 502 UTF-8 rejections:
 the sum matches the plan. Other corpus quantities are
 deduced from frozen asserts and fixtures, without a new independent
 counter in the log.
@@ -84,7 +84,7 @@ warning/style-warning or Unhandled; the final marker appears:
 STDERR retains compilation notes: 158 for the product and 198 for
 tests, without observed warnings. Lint records 125 files, zero violations;
 trace records 116 requirements, 65 invariants, 13 FI scenarios, 52 ADRs, and zero
-errors. EXIT-CODE0 and STATUS OK are consistent with these markers.
+errors. EXIT-CODE 0 and STATUS OK are consistent with these markers.
 
 <a id="dati-dei-worker"></a>
 
@@ -97,10 +97,10 @@ NEXT and the entire destination; after join it checks the complete source
 and buffers. Waits, join, and cleanup have bounds and check
 termination. The named test passes in the preliminary record.
 
-Cold sink recalculation: payload1024 requires header3; START3 implies
-NEXT1030. Initial header bytes are MT2=#x59=89 and MT3=#x79=121;
+Cold sink recalculation: a payload of 1024 bytes requires a 3-byte header; START 3 implies
+NEXT 1030. Initial header bytes are MT2=#x59=89 and MT3=#x79=121;
 the final payload byte is #x42=66. Token per item: 1030+89+66=1185 and
-1030+121+66=1217. Multiplying by8192 gives exactly
+1030+121+66=1217. Multiplying by 8192 gives exactly
 9707520/9969664, both sinks observed in both waves.
 
 | Wave | Total items | MT2/MT3 sink | Overlap at 1,000,000 ticks/s |
@@ -108,7 +108,7 @@ the final payload byte is #x42=66. Token per item: 1030+89+66=1185 and
 | 0 | 16,384 | 9,707,520 / 9,969,664 | 47,821 ticks = 47.821 ms |
 | 1 | 16,384 | 9,707,520 / 9,969,664 | 47,752 ticks = 47.752 ms |
 
-Total32.768 items and 33,554,432 copied payload bytes. Actual intervals
+The totals are 32,768 items and 33,554,432 copied payload bytes. Actual intervals
 overlap and sinks depend on observed values/bytes. The record
 supports functional concurrency on a shared source and private
 destinations; it does not establish simultaneity across cores or scaling. Cold
@@ -121,12 +121,12 @@ check overhead remains in command and test timing.
 Record `spikes/out/4000708804-command-7496-0/report.lisp`, read as data
 through evidence-storage: wrapper OK/exit0/STABLE, 83.243866 seconds,
 606 equal before/after blobs. Internal CBOR-STRING-WRITE-BENCHMARK report
-OK, sources STABLE with 127 equal fingerprints, one worker, safety3,
-clock1.000.000 ticks/s. Empty STDERR.
+OK, sources STABLE with 127 equal fingerprints, one worker, safety 3, and a
+clock rate of 1,000,000 ticks/s. STDERR is empty.
 
 Nine fixtures have five samples each, 4,096 measured calls and
-warmup128 per sample: 45 samples, 184,320 measured calls. Every
-sample observes heap0. A separate recalculation, without loading product or
+a warmup of 128 calls per sample: 45 samples, 184,320 measured calls. Every
+sample observes a heap delta of 0. A separate recalculation, without loading product or
 driver, reconstructs the arithmetic header, payload, and entire buffer with two
 initial and four final sentinels. All expected-full-buffer values,
 NEXT, tokens, and cold-values match; each cold arity is one.
@@ -147,10 +147,10 @@ and complete-output-checked-per-call observations are true for every fixture.
 | MT3 ASCII, 65,536 bytes | 65,543 | 208,396,917,735 | 65,547 | 9.293614–9.424335 |
 | MT3 Unicode, 16 bytes | 19 | 49,192 | 23 | 0.002944–0.002979 |
 
-Checks recorded in the same benchmark observe baselineheap0,
-sink8.386.560 for4096 null calls, and positiveheap16.777.472 bytes for
-16 deliberate 1MiB arrays, sink16.777.336. The output check
-reports token3529, altered NEXT rejected, and three
+Checks recorded in the same benchmark observe a baseline heap delta of 0,
+a sink of 8,386,560 for 4096 null calls, and a positive-control heap delta of 16,777,472 bytes for
+16 deliberate 1 MiB arrays, with a sink of 16,777,336. The output check
+reports token 3529, altered NEXT rejected, and three
 prefix/payload/suffix alterations rejected; the arity check accepts a single
 value and rejects four arity/NEXT fixtures.
 
@@ -176,9 +176,9 @@ The audit of real data is read in record
 1.895363 seconds, empty STDERR, 19,170 checks. Before/after, the benchmark
 wrapper retains 654,034 bytes and SHA256
 `9fb205681abf9b324bf392eb56348c4484941a849035b18d827994f7c60dde59`.
-The audit confirms nine cells, 45 samples, heap0, coldarity1, 127 fingerprints,
-baseline0, and positive16.777.472 bytes. Sample times sum to
-79.272522 seconds, within the83,243866 of the complete command. The auditor
+The audit confirms nine cells, 45 samples, a heap delta of 0, a cold arity of 1, 127 fingerprints,
+a baseline of 0, and a positive control of 16,777,472 bytes. Sample times sum to
+79.272522 seconds, within the 83.243866 seconds of the complete command. The auditor
 retains its limits concerning data consistency, declared inventory, before/after
 observations, and absence of proof of authenticity or execution.
 
@@ -188,30 +188,30 @@ observations, and absence of proof of authenticity or execution.
 
 Record `spikes/out/4000708897-command-8699-0/report.lisp`:
 OK/exit0/STABLE, 11.407834 seconds, empty STDERR. The coverage command
-uses scope `cbor-string-write`, private cache, and all21 suite tests.
-The same fuzz counts and sinks appear in the instrumented record; worker overlap
+uses scope `cbor-string-write`, private cache, and all 21 suite tests.
+The same fuzz counts and sinks appear in the instrumented record; worker overlap is
 56,188/55,237 ticks. Instrumented times remain diagnostic.
 
 Raw outputs preserved in `spikes/out/cbor-string-write-coverage-20261011/`:
 coverage-state.lisp, cover-index.html, and the sole source HTML
-`de5dd74a96006e359337b0ce64959b64.html`. Raw state saves204 files,
+`de5dd74a96006e359337b0ce64959b64.html`. Raw state saves 204 files,
 while the HTML scope contains only the new product. Independent
 reading of raw vectors through call-with-evidence-bytes and READ
-with READ-EVAL NIL confirms256/308 expressions and39/52 branch outcomes;
-both HTML tables agree, respectively83,1% and75,0%.
+with READ-EVAL NIL confirms 256/308 expressions and 39/52 branch outcomes;
+both HTML tables agree, respectively 83.1% and 75.0%.
 
 Coverage audit: record
 `spikes/out/4000708950-command-9144-0/report.lisp`, OK/exit0/STABLE,
 2.236314 seconds, 74 checks; result taskroot/audit-coverage.lisp.
-Five before/after file observations match. The52 uncovered expressions
-are syntactically associated with7 declarations,44 internal-error forms,
-and one OTHER; the13 uncovered branch outcomes are associated
+Five before/after file observations match. The 52 uncovered expressions
+are syntactically associated with 7 declarations, 44 internal-error forms,
+and one OTHER; the 13 uncovered branch outcomes are associated
 with internal guards, with zero OTHER branches. All
 denominators and internal-error forms are retained.
 
 The single OTHER has raw-path `(8 2 11)` and forward-path `(11 2 8)`:
 it is `(max-bytes +cbor-scan-max-bytes+)`, a keyword argument with default
-in the public function's lambda-list, line99. The path was
+in the public function's lambda-list, line 99. The path was
 resolved directly in source forms read as data; source
 HTML marks exactly that form with state-2. It remains OTHER and in the
 denominator. Calls without the keyword in the corpus do not
@@ -230,12 +230,12 @@ stable fingerprints, baseline OK/exit0/signalNIL, and eight mutants detected,
 zero survivors, invalids, or worker-errors. The exact preamble identifies
 the worker self-test, with preserved report
 `spikes/out/4000708899-cbor-string-write-worker-self-test-8780/report.lisp`.
-Self-test data record dispatcher2valid/6negative, unique replacement,
+Self-test data record dispatcher: 2 valid/6 negative, unique replacement,
 exact smoke marker, invalid compilation, signal, and post-completion fault
 distinct from detections, eight applicable targets.
 
 Reading all nine complete logs through evidence-storage: baseline has
-683 ok lines, smoke at line2, build-end at743, and no Unhandled.
+683 ok lines, smoke at line 2, build-end at 743, and no Unhandled.
 Each mutant has exit1, signalNIL, smoke before the first Unhandled,
 no build-end, and a recognizable path in the new suite. Both
 COPY-PROGRESS guards are runtime errors in the mutated product. The other
@@ -257,7 +257,7 @@ without constituting an additional detection.
 Mutation audit: record
 `spikes/out/4000709011-command-9525-0/report.lisp`, OK/exit0/STABLE,
 9.133384 seconds, empty STDERR, 11,828 checks; taskroot/audit-mutations.lisp.
-The36 before/after file observations match. Nine copies of210 files
+The 36 before/after file observations match. Nine copies of 210 files
 in the declared inventory are compared: baseline identical; each
 mutant changes only the expected product, with a unique replacement
 matching the catalog. Private runners and caches are present.
@@ -282,17 +282,17 @@ fragment. These are distinct from runtime campaigns, product, and recorded
 validators. Available fragments and diagnostics are preserved in
 [original excerpts](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-string-write/raw/cbor-string-write-20261011/reading-data-reader-attempts.md.txt), without reconstructing missing output.
 The corrected retry decodes raw state with call-with-evidence-bytes,
-READ-EVAL NIL, and reads all logs separately; no trackable file,
+READ-EVAL NIL, and reads all logs separately; no tracked file,
 test, or product code was executed or modified by the review.
 
 <a id="esito-preliminare-e-parti-pendenti"></a>
 
 ## Preliminary outcome and pending work
 
-Preliminary PASS confirmed for compilation, corpus, regressions present
+Preliminary PASS is confirmed for compilation, corpus, regressions present
 in the runner, lint, traceability, and source stability. Benchmark and its
 sensors are consistent with the local zero observed heap criterion;
-benchmark auditor self-test examined with failed attempt
+the benchmark auditor self-test was examined, with the failed attempt
 preserved. Audits of actual benchmark/coverage/mutation data are
 consistent; all coverage gaps and validator limitations
 remain explicit. At this reading's freeze, full MAKE CHECK
@@ -306,7 +306,7 @@ or frozen tests are necessary based on the records examined.
 
 The coordinator adds metadata from final verification, after the
 frozen reading: commit `ceac2dedfcfd6af05f2331282645bebf4b5be442`,
-`make check` PASS, EXIT-CODE0, STABLE, 172.707537d0. Record
+`make check` PASS, EXIT-CODE 0, STABLE, 172.707537d0. Record
 `spikes/out/4000710709-command-45721-0/report.lisp` retains 791 named tests
 and two smoke tests, 793 OK names without duplicates, lint on 138 files without
 violations, traceability without errors, and ten completed spikes.
@@ -322,7 +322,7 @@ main dependencies or promote gates or qualifications.
 After the worker/Serie connection arrived on main `92decf4`, merge
 `997f5e6505cdcf4554d5f99ede7d5743ce4be7bd` again passes `make check`:
 record `spikes/out/4000711291-command-57732-0/report.lisp`, 177.072076d0,
-EXIT-CODE0, STABLE, 655 source elements. Results are 817 named tests
+EXIT-CODE 0, STABLE, 655 source elements. Results are 817 named tests
 and two smoke tests, 819 OK names without duplicates, lint on 142 files without violations,
 traceability without errors, and ten completed spikes. Writer product and corpus
 remain frozen. The

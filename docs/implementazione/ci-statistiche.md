@@ -7,15 +7,15 @@
 > runners only and results in a folder on `main`, with automatic commits.
 > Hosted-runner performance remains exploratory measurement.
 
-Contract is simple: **every number identifies exactly the code,
-method, and environment that produced it**. Missing metric
-exposes a state, never zero or a previous result.
+The contract is simple: **every number identifies exactly the code,
+method, and environment that produced it**. A missing metric
+has an explicit state, never zero or a previous result.
 
 References: [evidence register](../valutazione/registro-delle-prove.md),
 [benchmarks](../13-benchmark.md), [C4 collection](raccolta-comandi.md),
 [ADR-0027](../adr/0027-dipendenze-e-test.md), REQ-VAL-001,
-REQ-AFF-005, and REQ-AFF-012. Design concerns C4 tools;
-changes neither database formats nor requirement states.
+REQ-AFF-005, and REQ-AFF-012. The design concerns C4 tools;
+it changes neither database formats nor requirement states.
 
 <a id="1-punto-di-partenza"></a>
 
@@ -27,14 +27,14 @@ Local-code survey `8ebca63f8649908e1a23b758928fa9c5c4274b00`:
 |---|---|
 | `.github/workflows/ci.yml`: Linux/macOS `make check`, plus documentation job | Retain product verification on both systems; eliminate duplicate platform-independent checks |
 | Local SBCL 2.6.9 action, Linux with checksum; macOS through updated Homebrew | Same declared version does not mean identical installation; pin distribution, digest, and recipe on macOS too |
-| `record-command.lisp`: environment, argv, before/after blobs, output, outcome | Reuse original register; add explicit output path and CI metadata |
+| `record-command.lisp`: environment, argv, before/after blobs, output, outcome | Reuse the original record; add explicit output path and CI metadata |
 | ASDF lists suites, each owning its runner and registration | Introduce one catalog and per-test result protocol; no counts from `ok` lines |
 | `run-spikes.lisp`: ten experiments, structured results and failures | Reuse experiments; distinguish verification, measurement, model, and unsupported functionality |
 | `foundation-coverage.lisp`: selected scopes and HTML | Add complete campaign on current code and numeric output; overlapping scopes must not be summed |
 | `get-resolver-coverage.lisp`: numerators/denominators and mark checks | Reuse uniqueness and reconciliation checks in general adapter; retain internal format bound to toolchain |
 | Existing compression, hashes, and C4 collector | Compose these tools; exclude caches and rebuildable views from persistent archive |
 
-Old campaigns in `spikes/results/` are historical evidence. Not
+Old campaigns in `spikes/results/` are historical evidence. They are not
 a database from which to extract current-version numbers.
 
 <a id="2-identità-della-versione"></a>
@@ -52,21 +52,21 @@ Each campaign preserves these identities without conflating them:
 | `publisher_sha`, `publication_parent` | Only in publication receipt: publisher code and results-commit parent; not part of measurement identity |
 
 `source_id` inventory contains paths, Git modes, and blobs, sorted by
-path bytes; UTF-8 encoding and NUL framing fixed by schema
-version, object-ID format declared. Includes tests, corpus, Unicode,
+path bytes; UTF-8 encoding and NUL framing are fixed by the schema
+version, and the object-ID format is declared. The inventory includes tests, corpus, Unicode,
 ASDF, tools, workflows, documentation, and historical fixtures used by
-checks. Preserve inventory as well as digest. New or deleted file
-changes identity; symlinks and submodules require explicit policy.
+checks. Preserve the inventory as well as the digest. A new or deleted file
+changes the identity; symlinks and submodules require explicit policy.
 
-Producer checks identity and tree before and after test; dirty
-or changed checkout makes result unattributable. No download or
+The producer checks the identity and tree before and after testing; a dirty
+or changed checkout makes the result unattributable. No download or
 generation changes inputs: outputs live under `spikes/out/`
 or runner temporary directory.
 
 In PRs also preserve `head_sha` and `base_sha`: for
-`pull_request` event, default checkout tests synthetic merge. Do not
+the `pull_request` event, the default checkout tests a synthetic merge. Do not
 label measurements as testing PR head alone.
-`tested_sha` checked on checkout, not inferred from branch name
+`tested_sha` is checked on checkout, not inferred from branch name
 or `head_sha` field of later event.
 ([GitHub event semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request).)
 
@@ -75,15 +75,15 @@ or `head_sha` field of later event.
 ### Automatic results commits
 
 If `A` contains measured code and `B` adds only results,
-`A` and `B` have same `source_id`; record retains `tested_sha=A`.
-View for `B` says "sources identical to those tested in A," without
-inventing compilation of `B`. Change outside excluded prefix
-requires new measurements, even documentation-only: conservative choice.
+`A` and `B` have the same `source_id`; the record retains `tested_sha=A`.
+The view for `B` says "sources identical to those tested in A," without
+inventing compilation of `B`. A change outside the excluded prefix
+requires new measurements, even if it affects only documentation: a conservative choice.
 
-Excluded prefix is data only. No ASDF file, script, or
-configuration may be loaded from it as code. CI-archive checking
-separate from historical-fixture checking: new archive verified
-in full by publisher before publication, without
+The excluded prefix contains data only. No ASDF file, script, or
+configuration may be loaded from it as code. CI-archive checking is
+separate from historical-fixture checking: the new archive is verified
+in full by the publisher before publication, without
 reexamining every preceding run at every product commit.
 
 <a id="3-due-workflow-un-solo-catalogo"></a>
@@ -103,11 +103,11 @@ flowchart TD
     S --> W[Trusted publisher: validates data and updates main]
 ```
 
-`ci.yml` produces evidence with `contents: read`. Catalog is sole source
+`ci.yml` produces evidence with `contents: read`. The catalog is the sole source
 for suites, profiles, platforms, metrics, units, methods, and expected jobs.
-ASDF and local CLI consume same catalog; a check rejects
+ASDF and local CLI consume the same catalog; a check rejects
 missing, unknown, or duplicate suites. Even smoke tests without
-registry have explicit ID and adapter.
+a registry have an explicit ID and adapter.
 
 | Job | Frequency | Responsibility | Proposed initial timeout |
 |---|---|---|---:|
@@ -118,23 +118,23 @@ registry have explicit ID and adapter.
 | `bench` Linux | Every code push to main; PR/manual on request | Bounded serial quantitative profile, without coverage instrumentation | 20 min |
 | `seal` | Always, including after producer errors | Expected/observed comparison, completeness, manifest, and upload | 10 min |
 
-Design budgets, to validate on first runs. Child timeout
-lower than job timeout, with margin for termination, record closure,
+These are design budgets, to be validated on the first runs. The child timeout is
+lower than the job timeout, with margin for termination, record closure,
 and upload. No unbounded wait or enumeration.
 
-`make check` remains full local verification; CI subsets
-must have same union of obligations. Separation eliminates no
+`make check` remains the full local verification; CI subsets
+must have the same union of obligations. Separation eliminates no
 currently-required check. Operating-system-dependent product tests
 remain on both platforms; initial quantitative coverage and
-exploratory measurements explicitly Linux.
+exploratory measurements are explicitly limited to Linux.
 
-Independent jobs parallel; benchmarks in fresh processes and serial within
+Independent jobs run in parallel; benchmarks run in fresh processes and serially within
 their own VM. No performance measurement concurrent with build, hashing,
-coverage, or compression in same VM. No automatic retries to
-turn an intermittent test green: rerun preserves new attempt.
+coverage, or compression in the same VM. No automatic retries to
+turn an intermittent test green: a rerun preserves a new attempt.
 
-Updated PR may cancel previous run; reconciler
-preserves canceled state. Pushes to main not canceled to
+An updated PR may cancel the previous run; the reconciler
+preserves the canceled state. Pushes to main are not canceled to
 make room for new SHA. Do not use publisher-global concurrency
 as reliable queue: default rules may replace
 pending runs. ([GitHub concurrency](https://docs.github.com/en/actions/concepts/workflows-and-actions/concurrency).)
@@ -143,9 +143,9 @@ pending runs. ([GitHub concurrency](https://docs.github.com/en/actions/concepts/
 
 ## 4. Which statistics
 
-Catalog assigns each metric stable ID, domain, unit, method,
+The catalog assigns each metric a stable ID, domain, unit, method,
 origin, availability, and mandatory profile. "All" means every
-entry has attributable value or explicit absence reason.
+entry has an attributable value or an explicit reason for absence.
 
 | Family | Recorded data | Authoritative source |
 |---|---|---|
@@ -163,15 +163,15 @@ entry has attributable value or explicit absence reason.
 | CI | Durations, timeouts, cancellations, infrastructure failures, toolchain/image/CPU, attempts | Local records plus GitHub run metadata |
 | Preservation | Original/compressed/new bytes, hashes, files, CI-prefix and object-store growth | Manifest and Git/filesystem measurements |
 
-Physical lines do not become cyclomatic complexity. Requirement with
-citation does not become "verified." A compound function is one test;
+Physical lines do not become cyclomatic complexity. A requirement with
+a citation does not become "verified." A compound function is one test;
 parameterized cases and samples are separate counters declared by
-producer. Test run on two OSes remains a distinct ID per environment,
-without doubling project's unique-test count.
+the producer. A test run on two OSes remains a distinct ID per environment,
+without doubling the project's unique-test count.
 
-Qualified ID and definition provenance checked during
-registration: final registry alone insufficient, because `pushnew` or
-redefinition may have hidden duplicate. Explicit adapters
+The qualified ID and definition provenance are checked during
+registration: the final registry alone is insufficient, because `pushnew` or
+redefinition may have hidden a duplicate. Explicit adapters
 for symbol lists, alists, smoke, and vertical tests; separate case/scenario
 counts. Qualification or mutation samples add no
 unique tests. Unselected extended campaigns remain `not-run`.
@@ -186,32 +186,32 @@ Unknown denominator = incomplete data: do not publish complete global
 percentage using only files with known denominators.
 
 Unimplemented engine metrics, such as full compaction
-or missing end-to-end workloads, visible as `not-implemented`.
+or missing end-to-end workloads, remain visible as `not-implemented`.
 Spike results retain scope: SPK-07 does not become database
-throughput and buffer counter does not become RSS.
+throughput and a buffer counter does not become RSS.
 
 <a id="eventi-dei-test"></a>
 
 ### Test events
 
-Expected suite list saved before compilation. After
-loading, actual registered-ID inventory saved; each
-execution writes `started` and then one terminal outcome. Compilation
+The expected suite list is saved before compilation. After
+loading, the actual registered-ID inventory is saved; each
+execution writes `started` and then one terminal outcome. A compilation
 error leaves subsequent suites `not-run`, with test count
 unknown if not yet authoritatively derived.
 
-Progressive writing and flush, suite/process boundary; after global
-FI or runner damage, terminate that process. No generic
-recovery continuing inside compromised Lisp image to inflate
-test count. Distinguish errors expected by test from test failure.
-If only `started` remains, preserve event and add
-external interruption observation, separate from test outcome.
-Cause unknown unless proven: SIGKILL alone does not demonstrate OOM.
+Write and flush progressively at the suite/process boundary; after global
+FI or runner damage, terminate that process. Do not use generic
+recovery to continue inside a compromised Lisp image and inflate
+the test count. Distinguish errors expected by a test from test failure.
+If only `started` remains, preserve the event and add
+an external interruption observation, separate from the test outcome.
+The cause remains unknown unless proven: SIGKILL alone does not demonstrate OOM.
 
 Stdout containing complete structured protocol, such as spike
-output, may remain transport in unprivileged producer;
-count never derives from human logs. A spike leaf also embedded
-in parent is same execution, not two measurements. Migrate mutation-child
+output, may remain the transport in an unprivileged producer;
+the count never derives from human logs. A spike leaf also embedded
+in a parent is the same execution, not two measurements. Migrate mutation-child
 text markers to structured outcomes before counting them.
 
 <a id="copertura"></a>
@@ -219,47 +219,47 @@ text markers to structured outcomes before counting them.
 ### Coverage
 
 One complete session per selected platform, after counter
-reset following load. File paths normalized relative to root,
+reset following load. File paths are normalized relative to the root,
 with tested SHA's blob. No summing historical-scope percentages
-or Linux/macOS numerators. Weighted totals by summing counters
+or Linux/macOS numerators. Calculate weighted totals by summing counters
 over disjoint sets; any union requires identical point
 IDs and compatibility of all inputs.
 
 SBCL 2.6.9 exports `sb-cover:lcov-report`: use for machine-readable
-record, preserving actual `DA`/`BA` dialect. LCOV parser
-expecting only `BRDA` would give incorrect data. Raw SBCL forms through
-small versioned C4 adapter bound to toolchain; fail explicitly
+record, preserving actual `DA`/`BA` dialect. An LCOV parser
+expecting only `BRDA` would give incorrect data. Expose raw SBCL forms through
+a small, versioned C4 adapter bound to the toolchain; fail explicitly
 if expected format changes, without interpreting opaque saved state.
-Preserve original LCOV and numerators/denominators; HTML is rebuildable
+Preserve original LCOV and numerators/denominators; HTML is a rebuildable
 view. ([SBCL 2.6.9 source](https://github.com/sbcl/sbcl/blob/sbcl-2.6.9/contrib/sb-cover/cover.lisp).)
 
 Every expected product file appears even if unloaded or
 uninstrumented: missing does not remove it from declared inventory.
 Unknown file denominator makes global coverage
-incomplete too; known-counter-only report labeled partial.
-Uninstrumentable forms listed separately, without inventing
+incomplete too; a report limited to known counters is labeled partial.
+Uninstrumentable forms are listed separately, without inventing
 execution counts. Tests incompatible with instrumentation and
 uninstrumented children have explicit state and reason; partial coverage
 stays partial. SBCL forms/branches and LCOV lines are not MC/DC or C1 qualification.
 
-Fulltext qualification currently excludes allocation tests from instrumented
-path. Catalog must list their IDs and verify normal execution
-of same source-id; separation does not remove them
+Fulltext qualification currently excludes allocation tests from the instrumented
+path. The catalog must list their IDs and verify normal execution
+of the same source-id; separation does not remove them
 from product inventory.
 
 <a id="prestazioni-sui-runner-github"></a>
 
 ### Performance on GitHub runners
 
-Brief profile for every new main `source_id`: supported workloads
-selected by catalog, fixed seed/dataset and budgets, declared warmup, repetitions,
-and clock. Extended profile only on request, always for explicit
+Run a brief profile for every new main `source_id`: supported workloads
+selected by the catalog, fixed seed/dataset and budgets, declared warmup, repetitions,
+and clock. Run an extended profile only on request, always for an explicit
 SHA. Yesterday's extended measurement does not fill today's cell.
 
 Publish samples and dispersion alongside summary; do not derive P99.9
-from few samples. Descriptive comparisons only with same method,
+from a few samples. Descriptive comparisons only with the same method,
 workload, format, budget, toolchain, architecture, and runner type.
-Even serial base/head comparison in same VM remains exploratory.
+Even serial base/head comparison in the same VM remains exploratory.
 No regression gate based on time percentages from these runners.
 Workload errors, invalid output, or missing measurement remain collection-process
 failures independent of performance value.
@@ -269,17 +269,17 @@ failures independent of performance value.
 ## 5. Toolchain and cache
 
 Initial explicit labels: `ubuntu-24.04` x86-64 and `macos-15` arm64.
-Not immutable images: also record image release, architecture,
+These are not immutable images: also record image release, architecture,
 CPU, observed RAM, kernel, SBCL/ASDF, distribution digest and recipe,
 compilation flags, heap, and contribs. Do not use only string `SBCL 2.6.9`
-as compatibility key. Updates through deliberate lock
-change and new campaign. ([GitHub runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).)
+as compatibility key. Make updates through a deliberate lock
+change and a new campaign. ([GitHub runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).)
 
-Single setup for jobs. Verified distribution or source build with
-fixed digest, bootstrap, and options on macOS too; no reliance on current
-Homebrew formula. Cache permitted only for verified toolchain,
+Use a single setup for jobs. Use a verified distribution or source build with
+a fixed digest, bootstrap, and options on macOS too; do not rely on the current
+Homebrew formula. A cache is permitted only for the verified toolchain,
 with complete OS/architecture/image/recipe/digest key and separate
-trust levels. Producers always recompile product; separate FASL
+trust levels. Producers always recompile the product; separate FASL
 cache per profile, never shared across coverage, verify, and benchmark.
 No cache skips a test or supplies current statistics.
 
@@ -302,47 +302,47 @@ spikes/results/ci/
 ```
 
 Path IDs derive from fields with strict grammar, not PR
-titles or test names. Each run/attempt immutable. New attempt = new
+titles or test names. Each run/attempt is immutable. New attempt = new
 path; same delivery and hash = no-op; same identity with different
-bytes = rejection. Do not select report by mtime or "latest" name.
+bytes = rejection. Do not select a report by mtime or "latest" name.
 
-Incomplete collection does not occupy run path forever:
+An incomplete collection does not occupy the run path forever:
 recovery adds missing payloads and a **new collection** within
-same attempt. Collection-id depends on canonical set of evidence
+the same attempt. Collection-id depends on the canonical set of evidence
 and observed states; old collections remain immutable. Attempt
 selection advances with new validated evidence, without regressing to
-incomplete subset arriving late. Different reruns not implicitly
-mixed. Publication receipt external to measured
-package: retries and duplicate deliveries do not change digest.
+incomplete subset arriving late. Different reruns are not implicitly
+mixed. The publication receipt is external to the measured
+package: retries and duplicate deliveries do not change its digest.
 
-Proposed `make ci-status` command recalculates `HEAD` identity, searches
+The proposed `make ci-status` command recalculates `HEAD` identity, searches
 only compatible results, and prints completeness and limits. New
-code without report returns `pending`/`missing`; no fallback to previous
+code without a report returns `pending`/`missing`; no fallback to previous
 green. Latest attempt, even failed, remains distinct from latest successful one.
 
-Static Markdown cannot know branch has since advanced.
-Index therefore says **latest archived version**, with SHA/source-id and
-date; "current code" view calculated by `ci-status` and CI run
-associated with new SHA. Distinction prevents false "all green."
+Static Markdown cannot know that the branch has since advanced.
+The index therefore says **latest archived version**, with SHA/source-id and
+date; "current code" view is calculated by `ci-status` and CI run
+associated with the new SHA. This distinction prevents false "all green."
 
 <a id="completezza"></a>
 
 ### Completeness
 
 Three independent fields: `collection_closed` means every expected entry has
-terminal state, even missing; `metrics_complete` means all mandatory
-measurements valid; `verification_passed` means mandatory
-checks passed. Closed archive may contain missing
+a terminal state, even missing; `metrics_complete` means all mandatory
+measurements are valid; `verification_passed` means mandatory
+checks passed. A closed archive may contain missing
 measurements and failed tests.
-Without plan, expected set unknown: do not close collection
-by treating set as empty or certify completeness.
-Plan establishes expected jobs, profiles, and metrics; aggregator compares
-observations, rejects duplicates and differing versions, does not complete by
-inference. Missing job, failed upload, interrupted setup, or expired
-artifact produces explicit missing row.
+Without a plan, the expected set is unknown: do not close the collection
+by treating the set as empty or certify completeness.
+The plan establishes expected jobs, profiles, and metrics; the aggregator compares
+observations and rejects duplicates and differing versions. It does not infer
+completeness. A missing job, failed upload, interrupted setup, or expired
+artifact produces an explicit missing row.
 
-Passed run without required output is not complete collection. Out-of-profile
-benchmark is not correctness failure but remains
+A passed run without required output is not a complete collection. An out-of-profile
+benchmark is not a correctness failure but remains
 `not-run` in quantitative matrix. Cancellation/OOM may prevent
 `always()`: external run metadata and later recovery fill only
 **missing state**, without inventing nonexistent output.
@@ -352,98 +352,98 @@ benchmark is not correctness failure but remains
 ## 7. Trusted publisher and automatic commits
 
 `ci-results.yml` uses `workflow_run: completed` for CI workflow only;
-also has manual entry and periodic reconciliation of terminal runs.
-Runs C4 code from pinned trusted-main SHA, never code downloaded
-from producers. Records `publisher_sha` separately from tested code.
-Publisher has only `actions: read` and `contents: write`;
+it also has a manual entry and periodic reconciliation of terminal runs.
+It runs C4 code from a pinned trusted-main SHA, never code downloaded
+from producers. It records `publisher_sha` separately from tested code.
+The publisher has only `actions: read` and `contents: write`;
 producers receive neither write tokens nor secrets.
 
-`workflow_run` is privileged boundary: verify repository, workflow
+`workflow_run` is a privileged boundary: verify repository, workflow
 ID, run/attempt, event, artifacts, and expected matrix against GitHub metadata.
 Do not trust SHA or success declared only in payload.
-PR results archived as such, not promoted to main results;
+PR results are archived as such, not promoted to main results;
 GitHub conclusions remain distinct from producer declarations.
 Hashes and schema attest byte integrity and verifiable consistency;
-do not prove false but consistently serialized numbers are correct
+they do not prove false but consistently serialized numbers are correct
 measurements. Methods, oracles, producer code, and its review
 remain part of campaign reliability.
 ([workflow_run boundary](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_run).)
 
-Transport is small canonical manifest: lists, allowed keywords,
+The transport is a small canonical manifest: lists, allowed keywords,
 bounded strings and integers; noninteger quantities as ratios or decimals
-with explicit units. Dedicated C4 parser with byte, depth,
+with explicit units. Use a dedicated C4 parser with byte, depth,
 element, and unique-key limits; no `#` reader dispatch, external package,
-constructor, evaluation, or code. Original Lisp records, even compressed,
-preserved as opaque bytes; not loaded by publisher.
-`*read-eval* NIL` alone is insufficient contract for this boundary.
-Existing collector remains in unprivileged producer; reusing
+constructor, evaluation, or code. Original Lisp records, even compressed, are
+preserved as opaque bytes; they are not loaded by the publisher.
+`*read-eval* NIL` alone is an insufficient contract for this boundary.
+The existing collector remains in the unprivileged producer; reusing
 hashing/compression does not authorize its reader on a PR.
 
-Download into temporary root separate from checkout, explicit manifest,
+Download into a temporary root separate from the checkout, with an explicit manifest,
 regular files only, permitted relative paths, no symlinks, hardlinks, or
 arbitrary-archive extraction. Files, bytes, hashes, and expansion limit
-checked before commit; summaries regenerated with field escaping.
-Executable permissions forbidden. External actions pinned to verified full
-commits of official repository.
+are checked before commit; summaries are regenerated with field escaping.
+Executable permissions are forbidden. External actions are pinned to verified full
+commits of the official repository.
 ([Action pinning](https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions).)
 
 <a id="pubblicazione-ottimistica-cinque-tentativi"></a>
 
 ### Optimistic publication, five attempts
 
-1. Read current main and construct new private Git worktree from
-   that commit. No PR-source checkout in privileged job.
+1. Read current main and construct a new private Git worktree from
+   that commit. Do not check out PR sources in the privileged job.
 2. Validate package, add immutable path, and recalculate
    index against `source_id` of just-read main.
-3. Late result from A while code is B adds A's history.
-   Does not replace B's state. Explicit run and attempt
+3. A late result from A while the code is B adds A's history.
+   It does not replace B's state. Explicit run and attempt
    ordering, without preferring old success over recent failure.
 4. Ensure diff touches only `spikes/results/ci/`, with regular
    files, budgets respected, and no deletion or rewriting of
-   existing run. Index is only view updated in place.
+   existing run. The index is the only view updated in place.
 5. Independently verify new-package inventory and hashes;
-   add external receipt, create commit whose parent is read main,
-   and push normally. Resulting commit identified by ref
+   add external receipt, create commit whose parent is the main commit just read,
+   and push normally. The resulting commit is identified by ref
    and GitHub metadata, without self-referential hash in contents.
-6. If push non-fast-forward, restart from new main and regenerate
-   only derived metadata; package unchanged. After five conflicts,
+6. If the push is non-fast-forward, restart from the new main and regenerate
+   only derived metadata; the package remains unchanged. After five conflicts,
    preserve `publication-pending` state; no force-push.
 
 Git-ref update atomically publishes data and index. No durable
-runner-filesystem transaction promised.
-Commit produced with `GITHUB_TOKEN`: its push events do not start
+runner-filesystem transaction is promised.
+For a commit produced with `GITHUB_TOKEN`, its push events do not start
 new CI. No PAT, `[skip ci]` commit message, or status-check copying
-from one SHA to another to simulate test.
+from one SHA to another to simulate a test.
 ([GITHUB_TOKEN semantics](https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs).)
 
-On 2026-10-16 repository APIs returned unprotected main and no
-applicable rule. Observation does not authorize future bypass:
-if policy prevents push, publisher fails explicitly and
-leaves package recoverable. Activation must also verify actual
+On 2026-10-16 repository APIs returned an unprotected main and no
+applicable rule. This observation does not authorize future bypass:
+if policy prevents push, the publisher fails explicitly and
+leaves the package recoverable. Activation must also verify actual
 Actions permissions; do not silently change protections.
 
 <a id="recupero"></a>
 
 ### Recovery
 
-Same ingestion logic receives explicit runs or enumerates terminal
+The same ingestion logic receives explicit runs or enumerates terminal
 runs and still-incomplete attempts, with pagination and budgets.
-Progress and recoverability per `(run_id, run_attempt)`, not run
+Progress and recoverability are tracked per `(run_id, run_attempt)`, not per run
 alone. Initial proposal: reconciliation every six hours, 14-day
 window, maximum 100 attempts per invocation, persisted cursor.
-Incomplete window, gap outside window, or exhausted budget visible.
+An incomplete window, a gap outside the window, or an exhausted budget is visible.
 No dependence on `workflow_run` arrival order.
-Reread metadata for requested attempt; do not collect wrong
-rerun's data. Absent/expired artifact remains `missing` with run URL.
+Reread metadata for requested attempt; do not collect the wrong
+rerun's data. An absent/expired artifact remains `missing` with run URL.
 
 GitHub artifact names include SHA/run/attempt/job, uploads even
-on recoverable failures, and initial 30-day retention. They are
-transport and recovery; published result resides in main.
+on recoverable failures, and initial 30-day retention. They serve
+transport and recovery; the published result resides in main.
 Verify actual retention: must exceed window, scan interval,
 and maximum permitted delay, initially seven days. If policies
-reduce it, configuration incompatible; do not ignore
-expiry. Outage beyond margin requires explicit backfill or missing.
-v4 artifacts immutable: each attempt has own identity.
+reduce it, the configuration is incompatible; do not ignore
+expiry. An outage beyond the margin requires explicit backfill or a missing state.
+v4 artifacts are immutable: each attempt has its own identity.
 ([Artifacts and retention](https://docs.github.com/en/actions/tutorials/store-and-share-data).)
 
 <a id="8-spazio-sotto-controllo"></a>
@@ -453,8 +453,8 @@ v4 artifacts immutable: each attempt has own identity.
 Only results, originals, and nonrebuildable inputs; no checkout,
 FASL, core, regenerable dataset, opaque SBCL state, or HTML per file.
 Instead retain LCOV and counters, seeds, methods, and blobs needed to
-rebuild views. Lossless compression before commit, original size
-and SHA-256 recorded; canonical-data parser does not interpret raw data.
+rebuild views. Apply lossless compression before commit, recording the original size
+and SHA-256; canonical-data parser does not interpret raw data.
 
 Proposed initial budgets, to validate on first full campaign:
 
@@ -470,14 +470,14 @@ Proposed initial budgets, to validate on first full campaign:
 Overrun = preservation failure, with small marker and run link;
 do not truncate output to fit budget or declare collection
 complete. Identical data has content identity and must not be recopied
-into multiple views. Register also contains automatic-commit costs.
+into multiple views. The record also contains automatic-commit costs.
 
-Git history grows retaining results. Deleting folder
+Git history grows as it retains results. Deleting a folder
 from latest commit does not free historical objects. Compression and limits
 contain growth; do not guarantee constant space with
 perpetual retention. No automatic history rewrite or
 silent evidence deletion. Thresholds require explicit decision
-before further growth; even markers have aggregate budget.
+before further growth; even markers have an aggregate budget.
 
 <a id="9-realizzazione-e-criteri-di-accettazione"></a>
 
@@ -485,9 +485,9 @@ before further growth; even markers have aggregate budget.
 
 A Common Lisp entry point `tools/ci.lisp`, with subcommands `plan`, `run`,
 `seal`, `ingest`, `status`, `reconcile`; small internal catalog,
-record, coverage, and publication modules. YAML limited to triggers, dependencies,
+record, coverage, and publication modules. YAML is limited to triggers, dependencies,
 permissions, runners, and invocations. No second statistics-scripting
-stack; APIs and shell are transport, not count source.
+stack; APIs and shell are transport, not the source of counts.
 
 Delivery order:
 
@@ -495,7 +495,7 @@ Delivery order:
    offline `ci-status`, with fixtures for every missing/failed state.
 2. Verify/audit/coverage producers and bounded benchmarks; test actual
    budgets on both systems, recover setup/OOM/timeout errors.
-3. Publisher initially in dry-run mode: first closed reviewed
+3. Publisher initially in dry-run mode: first a closed, reviewed
    campaign, then automatic commits within authorized prefix only.
 4. Reconciliation, Git-race tests, and complete-cycle verification:
    code → CI → results commit → correct resolution on new HEAD.
@@ -520,9 +520,9 @@ Delivery order:
 | Payload altered relative to manifest or mismatched raw data | Hash/schema rejected; CI conclusion not replaced by payload |
 
 Before activation: structured C4 self-tests including rejections,
-dry-run on test repository, independent review, and GitHub
-runner test. Local checks of this document verify only
-links and traceability; not an executed CI campaign.
+a dry-run on a test repository, independent review, and GitHub
+a runner test. Local checks of this document verify only
+links and traceability; they do not constitute an executed CI campaign.
 
 <a id="10-revisione-di-questo-progetto"></a>
 
@@ -530,24 +530,24 @@ links and traceability; not an executed CI campaign.
 
 Arendt examined sources, registers, and denominators; Planck examined
 publication and recovery. Both worked read-only.
-Seven findings incorporated: unknown denominator, interruptions without producer
+Seven findings were incorporated: unknown denominator, interruptions without producer
 outcome, hash limits, new collections for recovery, receipt external
 to measurement, per-attempt cursor with retention margin, and aggregate
-expansion budget. Coordinator reread corrections;
-no evidence of activated pipeline inferred from review.
+expansion budget. The coordinator reread the corrections;
+no evidence of an activated pipeline is inferred from the review.
 
 <a id="11-implementazione-e-verifica-locale--2026-10-17"></a>
 
 ## 11. Implementation and local verification — 2026-10-17
 
 Available: `tools/ci.lisp`, shared product-suite catalog, two
-workflows, and pinned toolchain. Publisher validates inert data, combines
+workflows, and pinned toolchain. The publisher validates inert data, combines
 same-attempt payloads, and publishes with normal pushes and retries. Recovery
-maintains run/attempt cursor. 2 MiB limit includes attempt's payloads,
-collections, and receipts; 2 MiB of 256 MiB store reserved
-for recovery metadata. Overrun remains declared error.
+maintains a run/attempt cursor. The 2 MiB limit includes the attempt's payloads,
+collections, and receipts; 2 MiB of 256 MiB store is reserved
+for recovery metadata. An overrun remains a declared error.
 
-CI-branch baseline, before integration of new cache and
+The CI-branch baseline, before integration of new cache and
 full-text-reservation suites, preserves these
 [local reports and originals](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-ci-implementazione/report.md):
 
@@ -558,70 +558,70 @@ full-text-reservation suites, preserves these
 - five serial CRC32C/UTF-8 profile replicates completed; measurement
   budget uses identity supplied and verified by coordinator before/after job;
 - seven publisher checks on private bare Git remote, plus one
-  injected conflict: retry succeeds and concurrent source preserved.
+  injected conflict: the retry succeeds and concurrent source is preserved.
 
 Every result retains its SHA and method; these outcomes are not
-measurements of future merge. Inventory physical lines include
-documents, data, and historical evidence, even binary: not executable
+measurements of a future merge. The inventory's physical-line counts include
+documents, data, and historical evidence, even binary content; they are not executable
 LOC. `src/*` modules remain distinct. Only for untracked files,
-`spikes/SPK-*/out/` caches enumerated by code also permitted, including SPK-11;
-every other tracked file still verified byte for byte.
+`spikes/SPK-*/out/` caches enumerated by the code are also permitted, including SPK-11;
+every other tracked file is still verified byte for byte.
 
 Remaining verification on GitHub runners: pinned installation, Linux
 coverage, artifact transport, and publication with workflow token.
 Local Git fixtures certify neither GitHub repository permissions nor
-protections. In accordance with coordinator request, work
-left committed in worktree; integration and push belong to coordinator.
+protections. In accordance with the coordinator's request, work
+was left committed in the worktree; integration and push belong to coordinator.
 
-Local collection uses common collector and four workers: 19 command
+The local collection uses the common collector and four workers: 19 command
 registers, 136 indexed files, and closed inventory of 138 files, with independent
 check. [Collection observations](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-ci-implementazione-raccolta/collection/report.lisp)
 and [authoritative counts](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-ci-implementazione-raccolta/counts.lisp)
-preserved separately, without append to sealed archive. Also records
-preparer display-only error; complete manifest and
+are preserved separately, without appending to the sealed archive. The collection also records
+a preparer display-only error; complete manifest and
 collector inventories were not truncated.
 
-Composite on `main` managed by coordinator includes other suites and SPK-11:
-local tests cited here remain those of respective SHAs. Catalog,
+The composite on `main` managed by the coordinator includes other suites and SPK-11:
+local tests cited here remain those of their respective SHAs. Catalog,
 self-test numeric expectations, and cache list must be aligned
 and reverified on composite, without reattributing these
-results to integrated version.
+results to the integrated version.
 
 <a id="12-attribuzione-degli-esiti-anche-sui-timeout"></a>
 
 ## 12. Outcome attribution even on timeouts
 
-Catalog initializes `:source` and `:condition` in case rows before
-updating them. Adding absent key with `SETF GETF` only to loop-local
-binding lost provenance or diagnosis in final snapshot.
+The catalog initializes `:source` and `:condition` in case rows before
+updating them. Adding an absent key with `SETF GETF` only to a loop-local
+binding lost provenance or diagnosis in the final snapshot.
 Case, suite, and CI-child boundaries now intercept
 `SERIOUS-CONDITION`: `SB-EXT:TIMEOUT` is not an `ERROR` and previously
-escaped recording, leaving report in `:running` state.
+escaped recording, leaving the report in `:running` state.
 
-Case timeout produces `:failed` row and event; suite stops
+A case timeout produces `:failed` row and event; suite stops
 and later cases retain `:not-run` with reason `:runner-stopped`.
-Timeout before entering a case fails suite without inventing
-executed case. Without report destination, ASDF still receives
-error. Child boundary preserves failed fallback when result
-missing, with exit 1 and diagnosis. Introduces no test retries.
+Timeout before entering a case fails the suite without inventing
+an executed case. Without report destination, ASDF still receives
+an error. The child boundary preserves a failed fallback when the result is
+missing, with exit 1 and diagnosis. This introduces no test retries.
 
 Nine C4 regressions in `tools/ci/conditions-self-test.lisp` inject
 `SB-EXT:TIMEOUT` objects, without sleep or scheduler dependency. Six
-cases negative. Verify counts, provenance, diagnosis, events,
-persisted snapshots, stopping later bodies, and restoration of fixture
-child delegate. Do not measure real-deadline precision.
+cases are negative. They verify counts, provenance, diagnosis, events,
+persisted snapshots, stopping later bodies, and restoration of the fixture
+child delegate. They do not measure real-deadline precision.
 
-On base `a91896bd`, first fixture stopped before cases due to local
-name colliding with `CL:DIRECTORY`; original and register
+On base `a91896bd`, the first fixture stopped before the cases due to a local
+name colliding with `CL:DIRECTORY`; the original and record are
 preserved. After fixture correction, previous code passes
 2 cases and fails 7. Provenance repair alone gives
-3 passed and 6 failed, isolating diagnosis loss. Complete
+3 passed and 6 failed, isolating diagnosis loss. The complete
 correction passes 9/9; CI self-check passes 327/327 across six modules.
 Counts belong to verified local branch before further
 coordinator full-text/recovery merges.
 
 The [register and original catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-ci-serious-conditions/catalogo.lisp)
-also preserves failed attempts. Code committed in `c7caed5f`;
+also preserves failed attempts. The code was committed in `c7caed5f`;
 full-composition verification, integration, and push remain with
 closure coordinator.
 
@@ -631,19 +631,19 @@ closure coordinator.
 
 [PR-merge provenance](ci-provenienza-pr.md) distinguishes checkout SHA,
 head exposed by GitHub, and content equivalence with PR-associated
-merge. Proof preserved without promoting producer level.
+merge. The proof is preserved without promoting the producer level.
 
-[Isolated wire regression](ci-wire-processi.md) verifies ordinary producer
-report readable by loading only DATA module,
-without keywords made incidentally known by other modules or product.
-Seal outcome remains distinct: preserves incomplete collections and returns
+[Isolated wire regression](ci-wire-processi.md) verifies that an ordinary producer
+report is readable by loading only the DATA module,
+without keywords made incidentally known by other modules or the product.
+The seal outcome remains distinct: it preserves incomplete collections and returns
 failure when a check is missing or failed.
 
-Compact coverage result exposes EXPECTED-FILES as count;
+The compact coverage result exposes EXPECTED-FILES as a count;
 TOTALS retains denominators. Rows with path and blob remain in
-plan and raw report, included in verified package. Avoids
-sealed duplicating inventory beyond 64 KiB limit. Ordinary tests,
+plan and raw report, included in verified package. This avoids
+duplicating the inventory in the seal beyond the 64 KiB limit. Ordinary tests,
 missing files, and test states remain in full in compact result.
-Count derives from TOTALS: absent report retains NIL, measured
+The count derives from TOTALS: an absent report retains NIL, while a measured
 empty inventory retains zero. Compaction does not derive
-zero from absent list.
+zero from an absent list.

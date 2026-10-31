@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006
 (declaim (ftype (function (riserve-full-text riserva-full-text index) d:preparazione-full-text) sorgente-viva-riserva))
 (defun sorgente-viva-riserva (pool slot i)
-  "Pre: indice attivo della copia. Post: prestito ancora esclusivo e task/run non riusati.
-Una perdita del prestito e un'invariante: conserva pool e fonti per fail-stop."
+  "Pre: active copy index. Post: borrow still exclusive and task/run not reused.
+A lost borrow is an invariant violation: retain pool and sources for fail-stop."
   (let ((source (svref (riserva-full-text-sources slot) i)))
     (unless (and (typep source 'd:preparazione-full-text) (eq slot (d::preparazione-full-text-borrower source))
                  (eq :done (d::preparazione-full-text-phase source))
@@ -17,8 +17,8 @@ Una perdita del prestito e un'invariante: conserva pool e fonti per fail-stop."
 (declaim (ftype (function (riserve-full-text riserva-full-text d:preparazione-full-text r:indice-posizionale) null)
                 completa-run-riserva))
 (defun completa-run-riserva (pool slot source target)
-  "Pre: tutti i byte e parole copiati nel run privato. Post: run SEALED, task riutilizzabile.
-Il risultato complessivo non e accessibile finche non sono completi tutti gli indici."
+  "Pre: all bytes and words copied into the private run. Post: run SEALED, task reusable.
+The overall result is inaccessible until all indexes are complete."
   (let* ((i (riserva-full-text-config-index slot)) (run (d::preparazione-full-text-run source)))
     (setf (r::indice-posizionale-count target) (r::indice-posizionale-count run)
           (r::indice-posizionale-byte-count target) (r::indice-posizionale-byte-count run)
@@ -34,8 +34,8 @@ Il risultato complessivo non e accessibile finche non sono completi tutti gli in
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text riserva-full-text) null) copia-unita-riserva))
 (defun copia-unita-riserva (pool slot)
-  "Pre: COPYING esclusivo e capacita prenotate. Post: un byte/parola o transizione di parte.
-Ogni unita e finita; nessun cons, ordinamento, scansione di testo o I/O nel writer."
+  "Pre: exclusive COPYING and reserved capacities. Post: one byte/word or part transition.
+Each unit is finite; no cons, sorting, text scanning, or I/O in the writer."
   (let* ((i (riserva-full-text-config-index slot)) (source (sorgente-viva-riserva pool slot i))
          (run (d::preparazione-full-text-run source)) (target (svref (riserva-full-text-runs slot) i))
          (cursor (riserva-full-text-cursor slot)) (part (riserva-full-text-part slot)))
@@ -56,8 +56,8 @@ Ogni unita e finita; nessun cons, ordinamento, scansione di testo o I/O nel writ
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-CON-002
 (declaim (ftype (function (t t t t t) keyword) passo-riserva-full-text))
 (defun passo-riserva-full-text (pool lease slot generation quantum)
-  "Pre: token catturato e lease corrente, quantum 1..65536. Post: COPYING o READY.
-Uscita incompleta rende FAULTED; non libera riserve sotto un futuro commit deciso."
+  "Pre: captured token and current lease, quantum 1..65536. Post: COPYING or READY.
+Incomplete exit sets FAULTED; does not release reservations underlying a future decided commit."
   (verifica-writer-riserve pool lease) (verifica-token-riserva pool slot generation)
   (unless (and (typep quantum '(integer 1 65536)) (member (riserva-full-text-state slot) '(:copying :ready)))
     (error 'invalid-argument :reason :fulltext-reservation-copy-state))

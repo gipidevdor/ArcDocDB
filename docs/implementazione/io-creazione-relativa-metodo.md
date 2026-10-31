@@ -13,12 +13,12 @@ COD-37, without changing ADR-0040 formats or durable decisions.
 `crea-temporaneo-nella-directory` returns one append capability
 for a new empty regular `.tmp`. It does not open existing files for writing.
 Positive budgets, leaf, and availability of all three callbacks are
-checked before effects. Private leaf and child are allocated
-before opening. Callback `create-relative(parent-fd, leaf, :append)`
+checked before effects. The private leaf and child are allocated
+before opening. The callback `create-relative(parent-fd, leaf, :append)`
 transfers ownership only when it returns a valid FD distinct from the
 parent; until then it owns its rollback. FD zero is valid.
 
-`file-metadata` attests regular file, device, inode, and zero size;
+`file-metadata` attests a regular file, device, inode, and zero size;
 `entry-identity` must attest the same nofollow identity relative
 to the parent. POSIX signed/unsigned 64-bit components remain exact;
 size is bounded before narrowing. Out-of-contract metadata,
@@ -96,7 +96,7 @@ Callbacks do not receive the private child capability: guards on its
 state and frontiers are read statically, without claiming that a
 fixture directly alters its slots before publication.
 
-Two static readings of final code precede compilation and tests.
+Two static readings of the final code precede compilation and tests.
 Frozen commit, new ASDF cache, and `record-command` retain every
 attempt, including failures. `make trace-write` updates the matrix;
 `make check` remains required. Collection uses the existing collector,
@@ -150,7 +150,7 @@ the fresh consumer vocabulary does not register all fields emitted
 by the producer. Coverage and seal are therefore FAILED and remain retained
 as such. No overall green outcome is attributed to that run.
 
-Before new tests, the minimal C4 correction is recorded: declare
+Before the new tests, the minimal C4 correction is recorded: declare
 in the trusted vocabulary the normal-result fields already allowed by the
 producer schema, without interning input symbols or broadening schemas.
 The regression must use a fresh SBCL with consumer modules:

@@ -10,33 +10,33 @@ the run in memory. APIs are in `arcdocdb.fulltext.codec`, code in
 
 First use remains the database for a Usenet NNTP server in Common Lisp.
 The reopen test uses fields `subject` and `body`; protocol and MIME decoding
-remain application responsibility. No NNTP daemon is introduced.
+remain the application's responsibility. No NNTP daemon is introduced.
 
 <a id="descrittore-e-autorita"></a>
 
 ## Descriptor and authority
 
 `crea-descrittore-full-text(meta, identity, segment, source-bytes, hint, hint-start,
-hint-end, rows)` is a cold constructor. Receives authoritative META declaration in
+hint-end, rows)` is a cold constructor. It receives the authoritative META declaration in
 CBOR, Serie identity, segment and prefix length, exact hint bytes, and
 bitmap with one bit per ordinal: set only for resolved committed PUTs, including historical ones.
-Caller must have verified hint, prefix, and decisions before supplying these data.
+The caller must have verified hint, prefix, and decisions before supplying these data.
 Creating this object does not replace that verification.
 
-Constructor checks definite/minimal CBOR arrays, three positive u64 IDs, lengths,
+The constructor checks definite/minimal CBOR arrays, three positive u64 IDs, lengths,
 whole-hint-span CRC32C, row and PUT counts, Unicode 18.0.0/revision 1 profile,
 ordered fields, unique aliases and paths, UTF-8, and positive limits. Token limit is within
-u32. Produces private copies of META, identity, fields, and bitmap; does not retain hint.
+u32. It produces private copies of META, identity, fields, and bitmap; it does not retain the hint.
 Paths have 1…100 text keys; current constructor allows up to 16 fields,
-beyond which signals `resource-exhausted`. META is at most 64 KiB. `:max-memory` is
+beyond which it signals `resource-exhausted`. META is at most 64 KiB. `:max-memory` is
 checked conservatively before copies and temporary tables.
 Segment ID is retained already boxed in a private cell created at open:
 repeated reading of a raw u64 slot allocated on SBCL x86-64 for IDs beyond fixnum.
-Cell is immutable after construction and included in descriptor overhead.
+The cell is immutable after construction and included in descriptor overhead.
 
 A file must match this canonical META byte for byte: a configuration hash
 alone is insufficient. A hint rebuilt with different bytes or order requires a new
-binding and new index. CRC identifies bytes under format's integrity
+binding and new index. CRC identifies bytes under the format's integrity
 model; it neither authenticates data nor proves document correctness.
 
 <a id="scratch-e-scrittura"></a>
@@ -46,24 +46,24 @@ model; it neither authenticates data nor proves document correctness.
 `crea-spazio-codec-full-text` preallocates LENGTHS prefixes, position bitmap,
 six offsets/lengths, and private analysis workspace. Configurable capacities:
 `:max-lengths` (default 65536), `:max-positions` (1048576), `:max-term-bytes` (1024),
-`:max-memory` (64 MiB). Conservative count includes payload and 8192 bytes overhead;
-does not measure whole-process memory, source files, or shared Unicode tables.
+`:max-memory` (64 MiB). The conservative count includes payload and 8192 bytes of overhead;
+it does not measure whole-process memory, source files, or shared Unicode tables.
 A valid file may require more scratch: rejection is resource exhaustion, not corruption.
 
 `dimensione-indice-full-text(run, descriptor, space)` requires a sealed run.
-Calculates exact size, checking permitted rows, fields, tokens per document,
-terms, ordering, and position coverage. It is not writer's pre-SEAL/PREPARE reservation.
+It calculates the exact size, checking permitted rows, fields, tokens per document,
+terms, ordering, and position coverage. It is not the writer's pre-SEAL/PREPARE reservation.
 `scrivi-indice-full-text(run, descriptor, space, buffer, start, end)` repeats preflight,
 checks aliases/capacity, and reserves completion work before mutating buffer.
-Returns actual file end; destination prefix and tail remain unchanged.
+It returns the actual file end; destination prefix and tail remain unchanged.
 Preflight rejection leaves destination intact. Internal error offers no rollback:
-owner discards that buffer and applies fail-stop at worker boundary.
+the owner discards that buffer and applies fail-stop at worker boundary.
 
 Writing groups occurrences into dictionary, unique strings, postings/frequencies,
 and positions; also retains lengths of present empty fields. Header, reserved areas,
 padding, and CRC are those already defined by ADR-0054. Format offsets have one
 source in `format-constants.lisp`. No I/O, rename, flush, or durable atomicity
-point is introduced by codec.
+point is introduced by the codec.
 
 <a id="lettura-e-ricerca"></a>
 
@@ -82,19 +82,19 @@ only after frame, expected META, and all local checks:
 - No residual byte or element in partitions. These checks apply even with
   correctly recalculated CRCs.
 
-Codec CPU APIs are synchronous with finite work budget, default
-268435456 units. Count CRC, comparisons, analysis, entries, and bitmaps; scratch is
+The codec's CPU APIs are synchronous with a finite work budget, default
+268435456 units. The count includes CRC, comparisons, analysis, entries, and bitmaps; scratch is
 reusable after error. Build-task orchestration, I/O, and deadlines belong
-to later M06 connection. No per-entry allocations on measured path.
+to later M06 connection. No per-entry allocations on the measured path.
 
-`crea-vista-indice-full-text` verifies file and, on cold open path,
-allocates view and copies of only six spans. Retains immutable buffer, not scratch.
-Owner must keep it alive until reader quiescence and cannot rewrite it.
+`crea-vista-indice-full-text` verifies the file and, on the cold open path,
+allocates view and copies of only six spans. It retains the immutable buffer, not scratch.
+The owner must keep it alive until reader quiescence and cannot rewrite it.
 `corrisponde-riga-indice-full-text(view, row, field, query, mode)` supports `:all`,
 `:any`, `:phrase`, with 1…256 tokens. Binary search in DICT, POSTINGS, and POSITIONS;
 phrase repetitions require consecutive positions in same row/field.
 Each reader uses its own query workspace and cumulative budget; no write to file
-or shared view. Predicate concerns physical version, without resolving MVCC.
+or shared view. The predicate concerns a physical version, without resolving MVCC.
 
 <a id="prove-e-confini-residui"></a>
 
@@ -103,16 +103,16 @@ or shared view. Predicate concerns physical version, without resolving MVCC.
 Independent fixture [minimum-v2.hex](../../tests/fulltext/minimum-v2.hex) contains
 468 bytes: row 0 `alpha beta alpha`, row 1 `beta`. Hex-file SHA256:
 `d94f6144c7533cc273784446b803a5d872ba44a8d2833ef0c4d8f317ca699f80`.
-The [C4 oracle](../../tools/fulltext-codec-fixture.lisp) does not load product; generates
+The [C4 oracle](../../tools/fulltext-codec-fixture.lisp) does not load the product; it generates
 CBOR, little-endian, and CRC with a separate algorithm. Bytes were frozen
 before first encoder execution and are regenerated/compared in `make check`.
 
-Fifteen codec tests join core's 24: byte-for-byte identity on
+Fifteen codec tests join the core's 24: byte-for-byte identity on
 32 prefixes, 3744 single alterations, 468 truncations, 26 semantic corruptions with
 correct CRC, incorrect META/hint/configurations, budgets, empty fields, four readers,
 43200 comparisons with independent scanning, and fuzz of 1024 variants with correct CRC.
 Fuzz distinguishes 1020 typed rejections and four structurally valid variants;
-does not compare source document. After warmup, 1000 writes/verifications/searches
+it does not compare the source document. After warmup, 1000 writes/verifications/searches
 allocate no measured heap bytes, including maximum u64 ID, on SBCL 2.6.9 arm64.
 Core semantic negative checks increase from four to six.
 

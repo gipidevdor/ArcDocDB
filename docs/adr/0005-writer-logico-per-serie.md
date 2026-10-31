@@ -26,13 +26,13 @@ must be detected, without global locks or a thread per Serie or request.
 - Single-Serie transactions use only the Serie's WAL and detect conflicts through
   optimistic version checking; checking the expected version is atomic with respect
   to applying the change.
-- No global writer lock.
+- There is no global writer lock.
 
 <a id="conseguenze"></a>
 
 ## Consequences
 
-- No per-document lock: “check and apply” in the writer is atomic by construction.
+- No per-document lock is needed: “check and apply” in the writer is atomic by construction.
 - The Serie has a total order of changes, matching WAL order.
 - A Serie's write throughput is limited by the serial portion: all work that can run
   in parallel must remain outside the writer.

@@ -7,10 +7,10 @@
 (declaim (ftype (function (runtime-archivio arcdocdb.active:segmento-attivo-preparato)
                          arcdocdb.wal:log-io) verifica-adozione-active))
 (defun verifica-adozione-active (runtime prepared)
-  "Pre: ACTIVE preparato e capacità congelate, namespace posseduto; nessuna lease o traffico.
-Post: ambito runtime esatto, identità writer coerente e due capacità associate aperte a frontiera 64.
-INVALID-ARGUMENT scope/start; IO-FAULT capacità; INVARIANT-VIOLATION identità, prima del binding.
-Nessun I/O, CSN, root o attestazione della decisione durevole del catalogo."
+  "Pre: prepared ACTIVE and frozen capabilities, owned namespace; no lease or traffic.
+Post: exact runtime scope, consistent writer identity, and two open associated capabilities at frontier 64.
+INVALID-ARGUMENT for scope/start; IO-FAULT for capability; INVARIANT-VIOLATION for identity, before binding.
+No I/O, CSN, root, or attestation of durable catalog decision."
   (let* ((segment (arcdocdb.active::segmento-attivo-preparato-segment prepared))
          (view (arcdocdb.get::segmento-get-owner segment))
          (log (arcdocdb.active:log-segmento-attivo-preparato prepared))
@@ -36,11 +36,11 @@ Nessun I/O, CSN, root o attestazione della decisione durevole del catalogo."
 (declaim (ftype (function (runtime-archivio arcdocdb.active:segmento-attivo-preparato
                           &key (:capacity t)) arcdocdb.series:controllore-serie) adotta-controllore-active))
 (defun adotta-controllore-active (runtime prepared &key (capacity 64))
-  "Pre: nuovo ACTIVE completo nel medesimo ambito runtime, un solo log canonico per file.
-Il caller completa la decisione del catalogo prima di pubblicare le fonti e ammettere richieste.
-Post: unico controller del log, CSN runtime, ring vuoto, root NIL e next-offset 64; nessuna lease.
-Propaga rifiuti del preflight/factory; :SERIE-LOG-BOUND per seconda adozione, nessun reset.
-Il binding è volatile e non decide il catalogo. Dopo interruzione, TROVA-CONTROLLORE-SERIE ritrova il risultato."
+  "Pre: complete new ACTIVE in the same runtime scope, one canonical log per file.
+Caller completes catalog decision before publishing sources and admitting requests.
+Post: unique log controller, runtime CSN, empty ring, NIL root, next-offset 64; no lease.
+Propagates preflight/factory rejections; :SERIE-LOG-BOUND for second adoption, no reset.
+Binding is volatile and does not decide catalog. After interruption, TROVA-CONTROLLORE-SERIE recovers result."
   (let ((log (verifica-adozione-active runtime prepared)))
     (arcdocdb.series:crea-controllore-serie
      (csn-runtime-archivio runtime) log :capacity capacity :root nil

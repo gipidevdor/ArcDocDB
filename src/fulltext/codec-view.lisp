@@ -5,7 +5,7 @@
 
 ;;; REQ: REQ-SEC-008
 (defstruct (vista-indice-full-text (:constructor %vista-indice-full-text (buffer starts sizes descriptor)) (:copier nil))
-  "Vista immutabile creata solo dopo verifica completa rispetto al descrittore fornito."
+  "Immutable view created only after complete verification against the supplied descriptor."
   (buffer (make-array 0 :element-type '(unsigned-byte 8)) :type octets :read-only t)
   (starts (make-array 6 :element-type 'u64) :type (simple-array (unsigned-byte 64) (6)) :read-only t)
   (sizes (make-array 6 :element-type 'u64) :type (simple-array (unsigned-byte 64) (6)) :read-only t)
@@ -16,9 +16,9 @@
                 crea-vista-indice-full-text))
 (defun crea-vista-indice-full-text (buffer start end descriptor space
                                   &key (max-bytes f::+default-file-budget+) (max-work 268435456))
-  "Pre: apertura fredda, buffer immutabile fino al ritiro della vista. Post: vista posseduta
-dopo verifica; copie dei soli sei span, scratch riusabile. Propaga errori del checker.
-Non prende ownership I/O e non pubblica generazioni o certifica documenti/MVCC."
+  "Pre: cold opening, buffer immutable until view retirement. Post: owned view
+after verification; only six spans copied, scratch reusable. Propagates checker errors.
+Does not take I/O ownership, publish generations, or certify documents/MVCC."
   (let ((next (verifica-indice-full-text buffer start end descriptor space :max-bytes max-bytes :max-work max-work)))
     (unless (= next end) (error 'invariant-violation :reason :fulltext-view-end))
     (%vista-indice-full-text buffer (copy-seq (spazio-codec-full-text-starts space))
@@ -28,7 +28,7 @@ Non prende ownership I/O e non pubblica generazioni o certifica documenti/MVCC."
 (declaim (ftype (function (vista-indice-full-text index u16 a:spazio-full-text index) (member -1 0 1))
                 confronta-termine-vista))
 (defun confronta-termine-vista (view item field query term)
-  "Pre: vista verificata e query DONE. Post: confronto DICT con campo/token; budget esclusivo."
+  "Pre: verified view and DONE query. Post: DICT comparison with field/token; exclusive budget."
   (a::consuma-lavoro-full-text query)
   (let* ((buffer (vista-indice-full-text-buffer view))
          (p (+ (aref (vista-indice-full-text-starts view) 1) (* item +dict-width+)))
@@ -42,7 +42,7 @@ Non prende ownership I/O e non pubblica generazioni o certifica documenti/MVCC."
 ;;; REQ: REQ-SEC-004 REQ-SEC-008
 (declaim (ftype (function (vista-indice-full-text u16 a:spazio-full-text index) fixnum) cerca-termine-vista))
 (defun cerca-termine-vista (view field query term)
-  "Pre: vista verificata. Post: indice DICT oppure -1; ricerca binaria con budget query."
+  "Pre: verified view. Post: DICT index or -1; binary search with query budget."
   (let ((low 0) (high (floor (aref (vista-indice-full-text-sizes view) 1) +dict-width+)))
     (loop repeat (1+ high) while (< low high) do
       (let* ((mid (floor (+ low high) 2)) (order (confronta-termine-vista view mid field query term)))
@@ -53,7 +53,7 @@ Non prende ownership I/O e non pubblica generazioni o certifica documenti/MVCC."
 ;;; REQ: REQ-SEC-004 REQ-SEC-008
 (declaim (ftype (function (vista-indice-full-text index u32 a:spazio-full-text) fixnum) cerca-posting-vista))
 (defun cerca-posting-vista (view dictionary row query)
-  "Pre: indice DICT valido. Post: offset assoluto del posting per riga, oppure -1."
+  "Pre: valid DICT index. Post: absolute posting offset for the row, or -1."
   (let* ((buffer (vista-indice-full-text-buffer view))
          (d (+ (aref (vista-indice-full-text-starts view) 1) (* dictionary +dict-width+)))
          (low (leggi-u64 buffer (+ d +dict-first-posting+)))

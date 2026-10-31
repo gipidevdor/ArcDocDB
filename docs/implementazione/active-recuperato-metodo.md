@@ -7,8 +7,8 @@ the public `leggi-active-recuperato` path, using the in-memory backend in
 `tests/recovery-active/support.lisp`. It measures logical opens/recovery with
 allocations: every call recreates segment capabilities, workspace, hash table,
 and outcome arrays. Fixture bytes and decisions are already resident.
-This is not a measurement of DB throughput, disk I/O, zero heap allocation, P99, or a
-conclusion about scalability. Qualification remains COD-60; this method does not
+This measures neither DB throughput, disk I/O, heap-free execution, nor P99, and it supports no
+conclusion about scalability. Qualification remains governed by COD-60; this method does not
 attest runs, compilations, or numerical results.
 
 <a id="invocazioni-dopo-il-freeze-del-coordinatore"></a>
@@ -27,7 +27,7 @@ sbcl --noinform --disable-debugger --no-sysinit --no-userinit \
 
 The final directory must be new: exclusive `mkdir`, no reuse or
 overwrite of a previous attempt. Suffixes of 1–64 ASCII
-letters, digits, hyphens, and underscores are allowed, with a trailing slash. Main derives
+letters, digits, hyphens, and underscores are allowed, with a trailing slash. The main routine derives
 the root from the driver's location. The coordinator runs the command
 through `tools/record-command.lisp` for argv, environment, output, actual exit,
 and global source snapshots; the existing capture wrapper,
@@ -123,11 +123,11 @@ per-worker counter or resident memory. Worker CPU is not collected.
 No percentiles, speedup, or DB throughput are calculated.
 
 Each worker signals READY **after its first verified recovery**;
-main waits for all READY signals before opening GO for the remaining 199. This is a
+the main routine waits for all READY signals before opening GO for the remaining 199. This is a
 bounded rendezvous, without sleep or concurrency inferred from timing.
 It does not demonstrate parallel execution on distinct cores. Counts include
-only recoveries that completed the entire oracle; attempted may
-exceed completed by one per worker in a failed attempt.
+only recoveries that completed the entire oracle; the attempted count may
+exceed the completed count by one per worker in a failed attempt.
 
 <a id="errori-quiescenza-e-report"></a>
 
@@ -145,7 +145,7 @@ error without consulting concurrent RAW data. A known error takes precedence ove
 `:incomplete`; later timeouts and joins do not replace the error cause.
 Counters are read only after all joins and the quiescence check.
 Fixtures close when returning from support wrappers after
-this barrier. If a worker remains alive, main saves only its own
+this barrier. If a worker remains alive, the main routine saves only its own
 data and communicated conditions, marks counts/sink `:unavailable`, and exits
 with `sb-ext:exit :abort t`, without running fixture unwind-protect cleanup.
 Any supervisor preserves stdout/stderr and the actual exit. A

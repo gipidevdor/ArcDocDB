@@ -8,8 +8,8 @@
                          (values index u8 u8 u64 index index index index &optional))
                 verifica-record-selezione))
 (defun verifica-record-selezione (selector buffer start end version)
-  "Pre: span stabile del chiamante. Post: ritorni originali del codec dopo CRC e forma completi.
-INVARIANT-VIOLATION del codec guasta il selettore e conserva la causa; rifiuti esterni propagati."
+  "Pre: stable caller span. Post: original codec returns after complete CRC and shape verification.
+Codec INVARIANT-VIOLATION faults selector and preserves cause; external rejections propagated."
   (handler-case (verifica-record buffer start end :version version)
     (invariant-violation (condition)
       (setf (selection-state selector) :faulted)
@@ -18,9 +18,9 @@ INVARIANT-VIOLATION del codec guasta il selettore e conserva la causa; rifiuti e
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-AFF-008
 (declaim (ftype (function (u8 u64 (or null u64)) u64) csn-candidato-recuperato))
 (defun csn-candidato-recuperato (flags stamp prepared-csn)
-  "Pre: flag/header verificati, record gia ammesso come committed dal recovery canonico.
-Post: stamp ordinario oppure CSN prepared esplicito, incluso zero; TXID mai interpretato come CSN.
-INVALID-ARGUMENT per prova prepared assente o fornita a un record ordinario; nessuna decisione 2PC qui."
+  "Pre: verified flags/header, record already admitted as committed by canonical recovery.
+Post: ordinary stamp or explicit prepared CSN, including zero; TXID never interpreted as CSN.
+INVALID-ARGUMENT for missing prepared proof or proof supplied for ordinary record; no 2PC decision here."
   (if (logtest flags +prepared+)
       (progn
         (unless prepared-csn (error 'invalid-argument :reason :recovery-selection-prepared-csn-required))
@@ -33,10 +33,10 @@ INVALID-ARGUMENT per prova prepared assente o fornita a un record ordinario; nes
 (declaim (ftype (function (selettore-versione-recuperata octets index index u64 index integer (or null u64)) null)
                 prepara-candidato-recuperato))
 (defun prepara-candidato-recuperato (selector buffer start end segment offset version prepared-csn)
-  "Pre: chiave inizializzata; buffer stabile dal segmento/prefisso autorevole, offset fisico assoluto.
-Post: CRC completi, chiave/tipo/offset e CSN verificati prima di scrivere lo scratch candidato.
-Solo PUT/TOMBSTONE; propaga condizioni del codec, rifiuti senza modificare il vincitore o lo stato.
-Non prova SEAL, appartenenza al manifest, identita FD o commit: obblighi del reader chiamante."
+  "Pre: initialized key; stable buffer from authoritative segment/prefix, absolute physical offset.
+Post: complete CRCs, key/type/offset and CSN verified before writing candidate scratch.
+PUT/TOMBSTONE only; propagates codec conditions, rejections without modifying winner or state.
+Does not prove SEAL, manifest membership, FD identity, or commit: caller reader obligations."
   (esigi-selettore-pronto selector)
   (multiple-value-bind (next kind flags stamp ks ke vs ve)
       (verifica-record-selezione selector buffer start end version)

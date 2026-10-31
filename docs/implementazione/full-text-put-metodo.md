@@ -3,8 +3,8 @@
 # Full-text PUT — verification method and decisions
 
 Method dated October 17, 2026, before tests: ADR-0054, REQ-SEC-003/006/010,
-REQ-WAL-005, and REQ-CON-002. A private owned frame, created by existing codec,
-supplies value to all tasks and the same bytes to batch append.
+REQ-WAL-005, and REQ-CON-002. A private owned frame, created by the existing codec,
+supplies the value to all tasks and the same bytes to batch append.
 
 Fixture: NNTP Message-ID as opaque key, frozen 25-byte subject/body CBOR,
 complete-record comparison with independent encoder, sentinel prefixes/suffixes.
@@ -32,8 +32,8 @@ Preserve commands, actual sources, original output, and every failure.
 
 This method closes neither C1 qualification nor MC/DC. General document contract,
 runtime/pool/log canonical identity, publication before H/ACK, prepared outcomes, delta
-map, MVCC, and retirement after quiescence remain. Proposed row is not hint ordinal.
-Contract-versioned PUTs not introduced: API produces only already-supported flags 0 or prepared.
+map, MVCC, and retirement after quiescence remain. The proposed row is not a hint ordinal.
+Contract-versioned PUTs are not introduced: API produces only already-supported flags 0 or prepared.
 
 <a id="due-letture-dello-stesso-autore"></a>
 
@@ -46,19 +46,19 @@ distinction between proposed row, batch record, and future physical identities.
 
 Second reading, after targeted tests: followed cancellation and nonlocal exit,
 retained costs, request return to worker, and batch reuse. Incarnation-saturation
-check moved into public `verifica-riuso-lotto` preflight,
-so Serie controller sees it before its own mutation. Captured-range
-limits strengthened and new group included in central CI catalog.
+check was moved into the public `verifica-riuso-lotto` preflight,
+so the Serie controller sees it before its own mutation. Captured-range
+limits were strengthened and the new group was included in central CI catalog.
 These readings are not independent review.
 
 Integration rereading identified body-CRC calculation in writer preflight,
-contrary to ADR-0039. Complete attestation moved into worker after
+contrary to ADR-0039. Complete attestation was moved into the worker after
 analysis; private generation, state, and frame ownership guarantee lifetime.
-Writer checks current attestation, format/segment, state, and capacity without
+The writer checks the current attestation, format/segment, state, and capacity without
 body scans. Two new tests cover corruption before attestation and
-a CRC probe with negative control of old path, over two sizes.
-A thirteenth mutant verifies attestation cannot be ignored.
-Legacy `aggiungi-record` path remains outside this increment.
+a CRC probe with a negative control of the old path, over two sizes.
+A thirteenth mutant verifies that attestation cannot be ignored.
+The legacy `aggiungi-record` path remains outside this increment.
 
 The [evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
 also preserves both compilation stops and separates final verification.

@@ -75,7 +75,7 @@ The maximum includes all DECISIONs, even without prepared records in Serie,
 and all sources already described for each Serie. TXIDs, control-log
 orders, frontiers, and tail bytes do not contribute.
 The plan retains only the Archivio object and four scalars. It does not retain
-view set, Serie results, tables, decision log, or FDs.
+the view set, Serie results, tables, decision log, or FDs.
 Source health is checked during construction, not certified
 for the future. An error prevents a result; no partial maximum
 is published and no runtime registry is modified.
@@ -90,8 +90,8 @@ Lisp headers, existing views, and GC; it is not an RSS ceiling.
 The plan checks cardinality and sum `N + SUM(CLOSED_i)` before gates
 allocating duplicate tables. The global ceiling includes ACTIVE segments.
 Scans are bounded to already verified views, CLOSED segments, and DECISION entries;
-CLOSED gates retain their budgets. No new I/O, thread, timer,
-callback, or lock; no GET or commit change. One marker per table and
+CLOSED gates retain their budgets. There is no new I/O, thread, timer,
+callback, or lock and no GET or commit change. One marker per table and
 one reference per ACTIVE; object, boxing, and GC costs remain to be measured.
 
 <a id="base-e-apertura-del-runtime"></a>
@@ -145,4 +145,4 @@ only in tests. Product bootstrap has a dedicated method.
 The [dedicated verification method](archivio-csn-verifica.md) defines
 public fixtures, test bridge to the registry, and run preservation.
 The DECISION source query rechecks entry shape and consumption/normalization
-before return; no new container or second traversal.
+before return; there is no new container or second traversal.

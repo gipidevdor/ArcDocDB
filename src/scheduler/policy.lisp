@@ -6,15 +6,15 @@
 ;;; REQ: REQ-THR-001 REQ-AFF-008
 (declaim (ftype (function (pool-signal (integer 0 1048576) boolean) pool-signal) %pool-ewma))
 (defun %pool-ewma (previous sample reset)
-  "Pre: segnali limitati. Post: scala256, alpha1/8, floor; reset usa solo il campione.
-Nessun razionale crescente, loop, I/O o condizione con gli ingressi verificati."
+  "Pre: bounded signals. Post: scale256, alpha1/8, floor; reset uses only the sample.
+No growing rational, loop, I/O, or condition with verified inputs."
   (if reset (* sample 256) (floor (+ (* 7 previous) (* sample 256)) 8)))
 
 ;;; REQ: REQ-THR-001 REQ-AFF-008
 (declaim (ftype (function (controllore-pool) pool-direction) %pool-direction))
 (defun %pool-direction (controller)
-  "Pre: EWMA aggiornate. Post: direzione pura con soglie esplicite e deadband P99.
-SHRINK ha precedenza; nessun errore, target non modificato."
+  "Pre: updated EWMAs. Post: pure direction with explicit thresholds and P99 deadband.
+SHRINK takes precedence; no error, target unchanged."
   (cond
     ((or (>= (controllore-pool-p99 controller) 307200)
          (and (< (controllore-pool-queue controller) 256)
@@ -29,9 +29,9 @@ SHRINK ha precedenza; nessun errore, target non modificato."
 (declaim (ftype (function (controllore-pool pool-tick symbol) pool-direction)
                 %pool-apply))
 (defun %pool-apply (controller tick direction)
-  "Pre: owner e tempo verificati. Post: variazione solo dopo permanenza continua.
-Crescita +1, riduzione floor(3*target/4), clamp; nessuna variazione ai limiti.
-INVARIANT-VIOLATION per direzione privata inattesa; nessuna attesa o thread ritirato."
+  "Pre: owner and time verified. Post: change only after continuous dwell.
+Growth +1, reduction floor(3*target/4), clamp; no change at limits.
+INVARIANT-VIOLATION for unexpected private direction; no waiting or thread retirement."
   (let* ((target (controllore-pool-target controller))
          (next (case direction
                  (:grow (min (controllore-pool-maximum controller) (1+ target)))

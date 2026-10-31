@@ -7,8 +7,8 @@
 (defstruct (spazio-full-text
              (:constructor %crea-spazio-full-text (a b previous next ri stack begins ends bytes))
              (:copier nil))
-  "Scratch esclusivo; input preso in prestito fino a completamento/errore.
-Array creati solo nel costruttore; risultati utilizzabili solo dopo :DONE."
+  "Exclusive scratch; input borrowed until completion/error.
+Arrays created only by constructor; results usable only after :DONE."
   (a (make-array 0 :element-type 'u32) :type vettore-u32 :read-only t)
   (b (make-array 0 :element-type 'u32) :type vettore-u32 :read-only t)
   (previous (make-array 0 :element-type 'u32) :type vettore-u32 :read-only t)
@@ -36,7 +36,7 @@ Array creati solo nel costruttore; risultati utilizzabili solo dopo :DONE."
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (index) vettore-u32) crea-array-full-text))
 (defun crea-array-full-text (length)
-  "Pre: lunghezza gia ammessa dal costruttore. Post: nuovo array u32 esclusivo."
+  "Pre: length already admitted by constructor. Post: new exclusive u32 array."
   (make-array length :element-type 'u32 :initial-element 0))
 
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
@@ -44,9 +44,9 @@ Array creati solo nel costruttore; risultati utilizzabili solo dopo :DONE."
                          spazio-full-text) crea-spazio-full-text))
 (defun crea-spazio-full-text (&key (max-scalars 1048576) (max-tokens 1048576)
                                  (token-bytes 4194304) (max-memory 67108864))
-  "Pre: configurazione del worker, percorso freddo. Post: scratch senza condivisioni.
-INVALID-ARGUMENT per capacita non valide, RESOURCE-EXHAUSTED prima delle allocazioni
-se payload degli array piu 4096 byte di overhead conservativo supera MAX-MEMORY."
+  "Pre: worker configuration, cold path. Post: scratch without sharing.
+INVALID-ARGUMENT for invalid capacities, RESOURCE-EXHAUSTED before allocations
+if array payload plus 4096 bytes of conservative overhead exceeds MAX-MEMORY."
   (unless (and (typep max-scalars '(integer 1 4294967295))
                (typep max-tokens '(integer 1 4294967295)) (typep token-bytes 'index)
                (typep max-memory 'index) (plusp token-bytes))
@@ -63,8 +63,8 @@ se payload degli array piu 4096 byte di overhead conservativo supera MAX-MEMORY.
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (spazio-full-text &optional index) null) consuma-lavoro-full-text))
 (defun consuma-lavoro-full-text (space &optional (units 1))
-  "Pre: spazio esclusivo. Post: lavoro incrementato entro budget; nessun overflow.
-RESOURCE-EXHAUSTED prima del superamento del budget."
+  "Pre: exclusive space. Post: work incremented within budget; no overflow.
+RESOURCE-EXHAUSTED before exceeding budget."
   (when (> units (- (spazio-full-text-work-limit space) (spazio-full-text-work space)))
     (error 'resource-exhausted :reason :fulltext-analysis-work))
   (incf (spazio-full-text-work space) units)
@@ -73,8 +73,8 @@ RESOURCE-EXHAUSTED prima del superamento del budget."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text vettore-u32 index scalare) index) aggiungi-scalare))
 (defun aggiungi-scalare (space buffer count scalar)
-  "Pre: spazio esclusivo e scalare Unicode. Post: un valore aggiunto, nuova lunghezza.
-RESOURCE-EXHAUSTED prima di scrivere oltre la capacita; conteggio del lavoro esplicito."
+  "Pre: exclusive space and Unicode scalar. Post: one value added, new length.
+RESOURCE-EXHAUSTED before writing beyond capacity; explicit work accounting."
   (when (= count (length buffer)) (error 'resource-exhausted :reason :fulltext-scalar-capacity))
   (consuma-lavoro-full-text space)
   (setf (aref buffer count) scalar)

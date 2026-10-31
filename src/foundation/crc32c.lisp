@@ -10,8 +10,8 @@
 ;;; REQ: REQ-FOR-003
 (declaim (ftype (function () (simple-array u32 (8 256))) make-crc32c-tables))
 (defun make-crc32c-tables ()
-  "Pre: nessuna. Post: otto tabelle private coerenti col polinomio CRC32C.
-Allocazione solo all'avvio; nessun dato esterno, nessun errore recuperabile."
+  "Pre: none. Post: eight private tables consistent with CRC32C polynomial.
+Startup-only allocation; no external data or recoverable error."
   (let ((tables (make-array '(8 256) :element-type 'u32 :initial-element 0)))
     (dotimes (i 256)
       (let ((crc i))
@@ -36,9 +36,9 @@ Allocazione solo all'avvio; nessun dato esterno, nessun errore recuperabile."
 (declaim (ftype (function (octets index index &optional u32) (values u32 &optional))
                 crc32c-lisp))
 (defun crc32c-lisp (buffer start end &optional (seed 0))
-  "Pre: [START,END) valido; SEED checksum finalizzato (zero per primo blocco).
-Post: CRC32C finalizzato; concatenazione incrementale equivalente alla sequenza unica.
-Segnala INVALID-ARGUMENT sul range; nessuna copia, allocazione o modifica del buffer."
+  "Pre: valid [START,END); SEED is finalized checksum (zero for first block).
+Post: finalized CRC32C; incremental concatenation equivalent to one sequence.
+Signals INVALID-ARGUMENT for range; no buffer copy, allocation, or modification."
   (declare (type octets buffer) (type index start end) (type u32 seed)
            (optimize (speed 3) (safety 3)))
   (check-range buffer start end)
@@ -79,20 +79,20 @@ Segnala INVALID-ARGUMENT sul range; nessuna copia, allocazione o modifica del bu
 (declaim (ftype (function (boolean boolean boolean) (member :lisp :arm64-crc32c))
                 scegli-backend-crc32c))
 (defun scegli-backend-crc32c (compiler-p cpu-p simd-p)
-  "Pre: esiti cold di compatibilità compilatore, CRC della CPU e NEON. Post: backend ammesso.
-Funzione pura: qualsiasi requisito mancante seleziona il software; nessun errore o probing."
+  "Pre: cold compiler-compatibility, CPU CRC, and NEON results. Post: admitted backend.
+Pure function: any missing requirement selects software; no error or probing."
   (if (and compiler-p cpu-p simd-p) :arm64-crc32c :lisp))
 
 ;;; REQ: REQ-FOR-003 REQ-AFF-002
 (declaim (ftype (function (octets index index &optional u32) (values u32 &optional)) crc32c))
 (defun crc32c (buffer start end &optional (seed 0))
-  "Pre: span valido, SEED checksum finalizzato. Post: checksum CRC32C compatibile e incrementale.
-Il kernel scelto all'avvio controlla i range e non modifica BUFFER; INVALID-ARGUMENT sui range.
-Nessun probing OS, allocazione o scrittura condivisa per richiesta."
+  "Pre: valid span, finalized checksum SEED. Post: compatible incremental CRC32C checksum.
+Kernel selected at startup checks ranges and does not modify BUFFER; INVALID-ARGUMENT for ranges.
+No per-request OS probing, allocation, or shared write."
   (funcall +crc32c-kernel+ buffer start end seed))
 
 ;;; REQ: REQ-FOR-003
 (declaim (ftype (function () (member :lisp :arm64-crc32c)) backend-crc32c))
 (defun backend-crc32c ()
-  "Pre: sistema caricato. Post: backend selezionato cold, solo diagnostica; nessuna modifica o errore."
+  "Pre: system loaded. Post: backend selected on cold path, diagnostics only; no modification or error."
   +crc32c-backend+)

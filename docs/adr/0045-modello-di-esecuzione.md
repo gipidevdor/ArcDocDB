@@ -33,8 +33,8 @@ only if no operation suspends halfway through.
    **task** that a worker executes from beginning to end without suspending or waiting for
    another task.
 2. **A wait is parking.** A task that needs a future event registers the
-   **request context** (preallocated, fixed-size) in the list of whoever will produce
-   the event, and ends. The event queues a new task that resumes from that context. There
+   **request context** (preallocated, fixed-size) in the event producer's list,
+   and ends. The event queues a new task that resumes from that context. There
    are three parking lists: clients of a batch (waiting for publication), snapshots
    (waiting for the horizon), coordinators (waiting for participants). Each has a
    **maximum length** and a **maximum time**; exceeding either yields `resource-exhausted`

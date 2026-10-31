@@ -5,7 +5,7 @@
 (declaim (ftype (function (r:indice-posizionale index index spazio-codec-full-text) (member -1 0 1))
                 confronta-termini-run))
 (defun confronta-termini-run (run first second space)
-  "Pre: occorrenze valide del run. Post: ordine (campo,termine), senza mutare il run."
+  "Pre: valid run occurrences. Post: order (field, term), without mutating the run."
   (let* ((data (r::indice-posizionale-tokens run)) (x (* first r::+token-width+))
          (y (* second r::+token-width+)) (a (aref data (+ x r::+field+))) (b (aref data (+ y r::+field+))))
     (lavoro-codec space)
@@ -18,7 +18,7 @@
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (r:indice-posizionale u32 u16 spazio-codec-full-text) index) cerca-lunghezza-run))
 (defun cerca-lunghezza-run (run row field space)
-  "Pre: LENGTHS del run ordinate. Post: indice esatto o corruzione; ricerca binaria bounded."
+  "Pre: run LENGTHS sorted. Post: exact index or corruption; bounded binary search."
   (let ((low 0) (high (r::indice-posizionale-field-count run)) (data (r::indice-posizionale-lengths run)))
     (loop repeat (1+ high) while (< low high) do
       (lavoro-codec space)
@@ -32,8 +32,8 @@
 (declaim (ftype (function (r:indice-posizionale descrittore-full-text spazio-codec-full-text) null)
                 controlla-lunghezze-run))
 (defun controlla-lunghezze-run (run descriptor space)
-  "Pre: run SEALED, scratch riservato. Post: LENGTHS ordinate e prefissi entro COUNT.
-Limite token per documento su tutti i campi; presenti vuoti conservati."
+  "Pre: SEALED run, reserved scratch. Post: sorted LENGTHS and prefixes within COUNT.
+Per-document token limit across all fields; present empty fields retained."
   (let ((data (r::indice-posizionale-lengths run)) (total 0) (prior-row -1) (prior-field 0) (row-tokens 0))
     (dotimes (i (r::indice-posizionale-field-count run))
       (lavoro-codec space)
@@ -56,7 +56,7 @@ Limite token per documento su tutti i campi; presenti vuoti conservati."
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (r:indice-posizionale index spazio-codec-full-text) null) controlla-posizione-run))
 (defun controlla-posizione-run (run token space)
-  "Pre: token del run. Post: posizione entro il campo e non condivisa con altre occorrenze."
+  "Pre: run token. Post: position within the field and not shared with other occurrences."
   (let* ((data (r::indice-posizionale-tokens run)) (p (* token r::+token-width+))
          (i (cerca-lunghezza-run run (aref data (+ p r::+row+)) (aref data (+ p r::+field+)) space))
          (count (aref (r::indice-posizionale-lengths run) (+ (* i r::+length-width+) 2))))

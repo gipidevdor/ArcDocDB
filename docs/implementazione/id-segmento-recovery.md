@@ -3,12 +3,12 @@
 # New segment ID after recovery
 
 > **C1 increment, method preregistered on 2026-10-15.**
-> Part of open planning, not complete Recovery Manager.
+> Part of open planning, not a complete Recovery Manager.
 
 `arcdocdb.recovery.manifest:scegli-id-segmento-recovery(manifest, files, …)`
 returns three values: proposed ID, next high-water, and reconciliation
-plan. Uses one canonical-planner call with same
-`max-files` and `max-segmenti` budgets; no file or manifest modified.
+plan. It uses one canonical-planner call with the same
+`max-files` and `max-segmenti` budgets; no file or manifest is modified.
 
 <a id="contratto"></a>
 
@@ -16,28 +16,28 @@ plan. Uses one canonical-planner call with same
 
 Since 2026-10-16, [directory entry point](id-directory-recovery.md)
 composes native inventory and ID selection with one enumeration.
-Both APIs reuse private selection helper from canonical plan.
+Both APIs reuse the private selection helper from the canonical plan.
 2026-10-15 measurements below remain attributed to then-verified version;
 composition and refactoring have separate method and results.
 
-Manifest complete and authoritative; inventory contains all physical
+The manifest is complete and authoritative; inventory contains all physical
 `.seg`/`.seg.tmp` names, stable and owned by exclusive controller.
 Planner validates descriptors, duplicates, and budgets, and owns plan.
-Maximum ID read from last plan entry, unsigned-u64 ordered;
-includes unknown names, temporary files, removed entries, and missing live references.
+The maximum ID is read from the last plan entry, ordered as unsigned u64;
+it includes unknown names, temporary files, removed entries, and missing live references.
 Manifest high-water also protects historical IDs no longer present.
 
-Proposal minimum ID at least high-water and greater than every
+The proposed minimum ID is at least the high-water and greater than every
 plan ID. Next high-water must also be representable
 as u64: no wrap, gap reuse, or new on-disk sentinel.
 `resource-exhausted :recovery-segment-id-exhausted` returns no partial
-values. Planner errors propagated without reinterpretation;
+values. Planner errors are propagated without reinterpretation;
 private inconsistencies signal `invariant-violation`.
 
-Selection does not reserve ID. Namespace and inventory remain exclusive until
-new temporary created; EDIT published by canonical
+Selection does not reserve an ID. Namespace and inventory remain exclusive until
+a new temporary file is created; EDIT is published by canonical
 protocol. Repeating same inputs may return same proposal.
-Plan state explicit: proposed ID does not authorize traffic,
+The plan state is explicit: proposed ID does not authorize traffic,
 attest header/CRC, resolve anomalies, or delete files.
 
 Costs: existing planner's, then O(1) selection from ordered plan.
@@ -73,8 +73,8 @@ new thread, lock, or shared write access between Serie.
 
 Requirements: REQ-REC-001/002, REQ-FOR-003, REQ-AFF-008/018.
 Invariants: INV-A7/A8/A9/A10/A11, INV-P6.
-ADR-0053 full-text scope remains phase 8: function constructs
-no indexes or attests their coverage.
+ADR-0053 full-text scope remains phase 8: the function constructs
+no indexes and does not attest to their coverage.
 
 <a id="esiti-locali-del-2026-10-15"></a>
 
@@ -100,7 +100,7 @@ each make one of three conditions false alone. RID-D02 compares
 first tuple with `(10 9 10 12)`. RID-G01/G03 use real u64 manifests
 and inventories; RID-G02 injects private empty plan, always restoring planner.
 
-Final campaign successful baseline and **11/11 mutants detected by tests**,
+The final campaign has a successful baseline and **11/11 mutants detected by tests**,
 four isolated processes at a time, no survivors, compilation
 errors, or worker faults. First attempt discovered obsolete tool
 copier: now derives sources from both ASDF systems and self-test
@@ -108,11 +108,11 @@ checks completeness and omissions. Intermediate campaign
 had 10 detections and one compiler-rejected mutant: latter not
 counted as kill. Target replaced with incorrect checking
 of candidate instead of successor, which compiles and is detected at u64 limits.
-All attempts and respective variants preserved.
+All attempts and their respective variants are preserved.
 
 Vertical fixture uses API with all own names and verifies 16 positive
 and two negative scenarios, 71 processes, and 26 intentional SIGKILLs. Preexisting
-segment bytes unchanged after both crashes; new function performs
+segment bytes are unchanged after both crashes; new function performs
 no removal action.
 
 [Full integrated-version verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-recovery-segment-id-verifica/README.md)

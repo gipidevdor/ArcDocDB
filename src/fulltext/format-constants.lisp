@@ -45,8 +45,8 @@
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (index) (values index &optional)) allinea-indice-full-text))
 (defun allinea-indice-full-text (offset)
-  "Pre: OFFSET index con spazio per sette byte. Post: prossimo multiplo di otto.
-INVALID-ARGUMENT per overflow; nessuna mutazione o allocazione prevista."
+  "Pre: OFFSET index with room for seven bytes. Post: next multiple of eight.
+INVALID-ARGUMENT for overflow; no mutation or intended allocation."
   (when (> offset (- most-positive-fixnum 7))
     (error 'invalid-argument :reason :fulltext-offset-overflow))
   (logand (+ offset 7) -8))
@@ -55,6 +55,6 @@ INVALID-ARGUMENT per overflow; nessuna mutazione o allocazione prevista."
 (declaim (ftype (function ((integer 0 5)) (values (member 1 4 16 32) &optional))
                 larghezza-sezione-full-text))
 (defun larghezza-sezione-full-text (section)
-  "Pre: ordinale di sezione 0..5. Post: divisore della lunghezza della sezione.
-Nessuna modifica; tipi controllati, META e TERMS hanno byte come unita."
+  "Pre: section ordinal 0..5. Post: divisor of section length.
+No modification; types checked, META and TERMS use bytes as their unit."
   (case section (1 +dict-width+) (3 +posting-width+) (5 +length-width+) (4 +position-width+) (otherwise 1)))

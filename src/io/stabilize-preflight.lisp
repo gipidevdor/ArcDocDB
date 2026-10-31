@@ -8,9 +8,9 @@
                          (values boolean identity-component identity-component &optional))
                 identita-entry-presente))
 (defun identita-entry-presente (directory name)
-  "Pre: callback e nome privato verificati, namespace esclusivo. Post: presenza e identità esatta.
-Solo ENOENT dell'operazione ENTRY-IDENTITY diventa NIL/0/0; ogni altra condizione è propagata.
-Una osservazione nofollow; symlink, tipo errato e guasti non diventano assenza."
+  "Pre: verified callback and private name, exclusive namespace. Post: presence and exact identity.
+Only ENOENT from operation ENTRY-IDENTITY becomes NIL/0/0; every other condition propagates.
+One nofollow observation; symlinks, incorrect types, and faults do not become absence."
   (handler-case
       (multiple-value-bind (device inode) (leggi-identita-entry directory name)
         (values t device inode))
@@ -23,8 +23,8 @@ Una osservazione nofollow; symlink, tipo errato e guasti non diventano assenza."
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (file-io file-io string string) null) verifica-capacita-stabilizzazione))
 (defun verifica-capacita-stabilizzazione (directory file temporary final)
-  "Pre: capacità del controller e nomi stabili. Post: input/parent aperti, identità e coppia .tmp ammessi.
-INVALID-ARGUMENT o UNSUPPORTED-FORMAT prima di osservazioni/effetti; nessun fallback nativo."
+  "Pre: controller capabilities and stable names. Post: open input/parent, identities and .tmp pair admitted.
+INVALID-ARGUMENT or UNSUPPORTED-FORMAT before observations/effects; no native fallback."
   (esigi-aperto directory :directory) (esigi-aperto file :input)
   (esigi-nome-foglia temporary) (esigi-nome-foglia final)
   (unless (and (= (length temporary) (+ 4 (length final)))
@@ -43,9 +43,9 @@ INVALID-ARGUMENT o UNSUPPORTED-FORMAT prima di osservazioni/effetti; nessun fall
 (declaim (ftype (function (file-io file-io simple-base-string simple-base-string) boolean)
                 verifica-nomi-stabilizzazione))
 (defun verifica-nomi-stabilizzazione (directory file temporary final)
-  "Pre: capacità verificate e nomi privati, namespace esclusivo. Post: T rinomina, NIL già definitivo.
-Deve esistere esattamente un nome, legato al medesimo FD regolare; entrambi rifiutati anche se alias.
-INVALID-ARGUMENT prima dell'effetto per collisione/assenza/identità; guasti originali propagati."
+  "Pre: verified capabilities and private names, exclusive namespace. Post: T rename, NIL already final.
+Exactly one name must exist, bound to the same regular FD; both rejected even if aliases.
+INVALID-ARGUMENT before the effect for collision/absence/identity; original faults propagate."
   (multiple-value-bind (has-temporary temporary-device temporary-inode)
       (identita-entry-presente directory temporary)
     (multiple-value-bind (has-final final-device final-inode) (identita-entry-presente directory final)
@@ -63,9 +63,9 @@ INVALID-ARGUMENT prima dell'effetto per collisione/assenza/identità; guasti ori
                          (values simple-base-string simple-base-string boolean &optional))
                 prepara-stabilizzazione-temporaneo))
 (defun prepara-stabilizzazione-temporaneo (directory file temporary final)
-  "Pre: capacita' e nomi stabili del controller. Post: foglie private e ramo verificato senza effetti.
-Identita' nofollow di entrambi i nomi e FD; esclusivita' richiesta solo per il temporaneo.
-Condizioni originali prima di rinomina/flush; nessuna prenotazione o garanzia contro mutatori esterni."
+  "Pre: controller's stable capabilities and names. Post: private leaves and branch verified without effects.
+Nofollow identity of both names and FD; exclusivity required only for the temporary file.
+Original conditions before rename/flush; no reservation or guarantee against external mutators."
   (verifica-capacita-stabilizzazione directory file temporary final)
   (let* ((source (map 'simple-base-string #'identity temporary))
          (target (map 'simple-base-string #'identity final))
@@ -76,9 +76,9 @@ Condizioni originali prima di rinomina/flush; nessuna prenotazione o garanzia co
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (file-io file-io string string) boolean) verifica-stabilizzazione-temporaneo))
 (defun verifica-stabilizzazione-temporaneo (directory file temporary final)
-  "Pre: namespace esclusivo/stabile e FILE readonly verificato, stessa autorita' del completamento.
-Post: T temporaneo o NIL definitivo, nomi/FD/callback verificati; nessuna rinomina, fsync o close.
-Condizioni originali senza mutazioni; il booleano non e' una lease e non autorizza traffico."
+  "Pre: exclusive/stable namespace and verified read-only FILE, same authority as completion.
+Post: T temporary or NIL final, names/FD/callbacks verified; no rename, fsync, or close.
+Original conditions without mutations; the boolean is not a lease and does not authorize traffic."
   (multiple-value-bind (source target rename) (prepara-stabilizzazione-temporaneo directory file temporary final)
     (declare (ignore source target)) ; foglie private verificate, non esiti d'errore.
     rename))

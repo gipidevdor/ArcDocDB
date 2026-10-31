@@ -26,7 +26,7 @@ Existing resident CAS relocation and paged path-copy relocation preserve key cou
 ;;; REQ: REQ-CMP-001 REQ-CMP-009 REQ-IDX-010 REQ-MVC-006
 (declaim (ftype (function (motore compaction-plan) null) compaction-relocate-index))
 (defun compaction-relocate-index (engine plan)
-  "Pre: new canon verified and durable, no GET borrower. Post: old image retired, every live descriptor relocated.
+  "Pre: new canonical state verified and durable, no GET borrower. Post: old image retired, every live descriptor relocated.
 Logical source identity is rebound to the preserved maximum record's new physical frame, invalidating old images."
   (ritira-indice-paginato-motore engine)
   (let ((buffer (motore-scratch engine)) (token (motore-source-token engine)) (live 0) (replacement (make-array 5 :element-type '(unsigned-byte 64))))

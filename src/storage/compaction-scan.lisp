@@ -8,9 +8,9 @@
 (declaim (ftype (function (octets integer octets integer integer) (values index &optional))
                 check-compaction-arguments))
 (defun check-compaction-arguments (buffer valid-bytes id-serie max-bytes max-records)
-  "Pre: argomenti tipizzati. Post: limite autorevole e budget finiti validati anche sul vuoto.
-INVALID-ARGUMENT per configurazione; RESOURCE-EXHAUSTED per byte oltre budget,
-prima di verificare l'header. Nessun byte letto o modificato."
+  "Pre: typed arguments. Post: authoritative limit and finite budgets validated even when empty.
+INVALID-ARGUMENT for configuration; RESOURCE-EXHAUSTED for bytes beyond budget,
+before header verification. No byte read or modified."
   (unless (and (typep valid-bytes 'index)
                (<= +segment-header-bytes+ valid-bytes +segment-max-bytes+)
                (<= valid-bytes (length buffer))
@@ -26,9 +26,9 @@ prima di verificare l'header. Nessun byte letto o modificato."
 (declaim (ftype (function (octets index index u16) (values index u8 &optional))
                 verifica-record-compattato))
 (defun verifica-record-compattato (buffer pos end version)
-  "Pre: range stabile e versione dall'header. Post: cornice ordinaria PUT/TOMBSTONE,
-fine crescente e tipo; non materializza lo stamp u64. Propaga errori del codec,
-CORRUPTION-DETECTED per tipo/prepared, INVARIANT-VIOLATION per progresso impossibile."
+  "Pre: stable range and version from header. Post: ordinary PUT/TOMBSTONE frame,
+increasing end and type; does not materialize u64 stamp. Propagates codec errors,
+CORRUPTION-DETECTED for type/prepared, INVARIANT-VIOLATION for impossible progress."
   (multiple-value-bind (next kind flags ks ke vs ve)
       (verifica-cornice buffer pos end :version version)
     (declare (ignore ks ke vs ve))
@@ -44,9 +44,9 @@ CORRUPTION-DETECTED per tipo/prepared, INVARIANT-VIOLATION per progresso impossi
 (declaim (ftype (function (octets index index u16 index)
                          (values index index index index &optional)) scansiona-compattato))
 (defun scansiona-compattato (buffer start end version max-records)
-  "Pre: header verificato, confini autorevoli e budget validi. Post: fine esatta e conteggi,
-solo dopo cornici contigue complete; coda oltre END ignorata. RESOURCE-EXHAUSTED
-prima del record oltre budget; INVARIANT-VIOLATION per conteggi o limite interno."
+  "Pre: verified header, authoritative boundaries, and valid budgets. Post: exact end and counts,
+only after complete contiguous frames; tail beyond END ignored. RESOURCE-EXHAUSTED
+before the record exceeding budget; INVARIANT-VIOLATION for counts or internal bound."
   (check-range buffer start end)
   (let ((pos start) (count 0) (puts 0) (tombstones 0))
     (declare (type index pos count puts tombstones))
@@ -71,11 +71,11 @@ prima del record oltre budget; INVARIANT-VIOLATION per conteggi o limite interno
                 verifica-segmento-compattato))
 (defun verifica-segmento-compattato (buffer valid-bytes id-serie segment-id
                                    &key (max-bytes 67108864) (max-records 65536))
-  "Pre: BUFFER stabile dal byte zero, identità autorevoli, VALID-BYTES nel buffer.
-Post: VALID-BYTES, versione, count totale/PUT/TOMBSTONE dopo verifica integrale;
-solo origine compaction, CSN opachi, nessuna lettura della coda fisica o mutazione.
-INVALID-ARGUMENT per configurazione/origine writer; errori tipizzati di header,
-cornice, prepared e budget propagati. Nessuna semantica CBOR, visibilità o durability."
+  "Pre: stable BUFFER from byte zero, authoritative identities, VALID-BYTES within buffer.
+Post: VALID-BYTES, version, total/PUT/TOMBSTONE count after complete verification;
+compaction origin only, opaque CSNs, no physical-tail read or mutation.
+INVALID-ARGUMENT for configuration/writer origin; typed header,
+frame, prepared, and budget errors propagated. No CBOR semantics, visibility, or durability."
   (let ((end (check-compaction-arguments buffer valid-bytes id-serie max-bytes max-records)))
     (multiple-value-bind (start version origine created-at)
         (verifica-header-segmento buffer 0 end id-serie segment-id)

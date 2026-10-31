@@ -56,8 +56,8 @@ and commit order separate from NNTP numbering.
 
 ## Application model to assess
 
-> **Proposal** — Separate content and memberships: `Message-ID → articolo`
-> and `(gruppo, numero) → Message-ID + overview`. Group metadata and retention
+> **Proposal** — Separate content and memberships: `Message-ID → article`
+> and `(group, number) → Message-ID + overview`. Group metadata and retention
 > policies have separate responsibilities. The concrete schema and partitioning
 > remain to be decided with available engine contracts.
 
@@ -93,7 +93,7 @@ One article copy can be indexed once and linked to its memberships.
 A group-restricted search combines text results with memberships and retention
 visible in the same snapshot, even across Serie; it must not find an
 article through an expired membership. Application results are deduplicated
-by Message-ID. Partitioning and combination cost remain to assess.
+by Message-ID. Partitioning and combination cost remain to be assessed.
 
 `ARTICLE` continues to require point lookup and `OVER` ordered ranges: the full-text
 index adds to these paths. Exposing search to clients will require
@@ -114,7 +114,7 @@ two processes on the same machine and CBOR frames with request IDs;
 socket path, directory, and local access are configured per instance.
 TCP listener is disabled by default and a local error does not activate it.
 Embedding remains possible for the engine, but NNTP integration
-is now fixed on the Unix socket. Listener and client remain to implement.
+is now fixed on the Unix socket. The listener and client remain to be implemented.
 
 First local integration follows engine startup, recovery, and admission,
 without waiting for completion of Query Engine or TCP. NNTP commands and

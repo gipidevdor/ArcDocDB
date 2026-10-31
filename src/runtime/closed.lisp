@@ -10,11 +10,11 @@
                          arcdocdb.get.directory:directory-get-serie) adotta-directory-closed))
 (defun adotta-directory-closed (archive view control closed maps
                                &key (max-segmenti 65536) (budget-payload 1310720))
-  "Pre: bootstrap esclusivo, catalogo/fonti autorevoli e congelati; runtime già canonico.
-CLOSED e MAPS paralleli, completi per CONTROL, ordinati per ID; owner fisico mantiene tutti i FD.
-Post: directory nel nuovo scope, wrapper propri e righe readonly condivise; input non trattenuti.
-Budget/autorità/insieme/metadati verificati prima dei wrapper. Errori tipizzati senza risultati parziali.
-Nessun I/O, close, CSN o punto durevole: pubblicazione, primary e ammissione restano al coordinatore."
+  "Pre: exclusive bootstrap, authoritative frozen catalog/sources; runtime already canonical.
+Parallel CLOSED and MAPS, complete for CONTROL, ordered by ID; physical owner keeps all FDs open.
+Post: directory in new scope, owned wrappers and shared read-only rows; inputs not retained.
+Budgets/authority/set/metadata verified before wrappers. Typed errors without partial results.
+No I/O, close, CSN, or durable point: publication, primary, and admission remain with coordinator."
   (let* ((count (verifica-budget-closed-runtime closed maps max-segmenti budget-payload))
          (old (verifica-autorita-closed-runtime archive view control))
          (previous 0))

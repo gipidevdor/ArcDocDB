@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (arcdocdb.io:file-io t t t t t) null) preflight-recovery-immagine))
 (defun preflight-recovery-immagine (file eof size validator frames visits)
-  "Pre: EOF esatto osservato dal controller, namespace stabile, sola lettura. Post: limiti prima di I/O/allocazioni.
-INVALID-ARGUMENT per domini, RESOURCE-EXHAUSTED per budget iniziale; nessun risultato parziale."
+  "Pre: exact EOF observed by the controller, stable namespace, read-only. Post: limits before I/O/allocations.
+INVALID-ARGUMENT for domains, RESOURCE-EXHAUSTED for initial budget; no partial result."
   (unless (and (member size '(4096 16384 65536)) (typep eof 'index) (functionp validator)
                (typep frames '(integer 1 64)) (typep visits '(integer 1 #.+page-id-max+)))
     (error 'invalid-argument :reason :index-image-recovery-configuration))
@@ -20,8 +20,8 @@ INVALID-ARGUMENT per domini, RESOURCE-EXHAUSTED per budget iniziale; nessun risu
 (declaim (ftype (function (arcdocdb.io:file-io sigillo-immagine function index index) ispezione-immagine)
                 prepara-ispezione-immagine))
 (defun prepara-ispezione-immagine (file seal validator frames visits)
-  "Pre: footer/fonte/prefisso verificati. Post: memoria O(frame*size + size + 65535), nessuna bitmap dataset.
-Il controller include anche metadati e transitori/GC nella propria riserva; non si misura RSS."
+  "Pre: footer/source/prefix verified. Post: O(frame*size + size + 65535) memory, no dataset bitmap.
+The controller also includes metadata and transients/GC in its reservation; RSS is not measured."
   (let* ((size (sigillo-immagine-size seal)) (root (sigillo-immagine-root seal))
          (cache (crea-cache-pagine-file size frames file))
          (reader (crea-lettore-indice-pagine cache root :max-pages (sigillo-immagine-pages seal)
@@ -40,10 +40,10 @@ Il controller include anche metadati e transitori/GC nella propria riserva; non 
 (declaim (ftype (function (arcdocdb.io:file-io t t fonte-indice u32 u32 t
                          &key (:frames t) (:max-visits t)) immagine-indice-verificata) recupera-immagine-pagine))
 (defun recupera-immagine-pagine (file eof size source seed-high seed-low validator &key (frames 2) (max-visits 16777216))
-  "Pre: file readonly immutabile prestato, EOF esatto dal gate I/O, fonte canonica e validatore non rientrante.
-Post: prova adottabile soltanto dopo tutti i controlli; nessun append, fallback o mutazione della fonte.
-Validator(key,start,end,words) attesta appartenenza esatta alla fonte e non modifica/trattiene gli scratch.
-Errori del derivato propagati al controller, che decide esplicitamente ricostruzione o errore."
+  "Pre: borrowed immutable readonly file, exact EOF from I/O gate, canonical source, and nonreentrant validator.
+Post: adoptable proof only after all checks; no append, fallback, or source mutation.
+Validator(key,start,end,words) attests to exact source membership and does not modify/retain scratch.
+Derived-data errors propagated to the controller, which explicitly decides on reconstruction or error."
   (preflight-recovery-immagine file eof size validator frames max-visits)
   (let ((buffer (make-array size :element-type '(unsigned-byte 8) :initial-element 0)))
     (unless (= (arcdocdb.io:leggi-esatto file buffer 0 size (- eof size)) size)

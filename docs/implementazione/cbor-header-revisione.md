@@ -3,9 +3,9 @@
 # Second reading of CBOR headers
 
 Independent static reading on 2026-10-09, after test freeze.
-No functional defect found against the contract recorded in the
+No functional defect was found against the contract recorded in the
 [method](cbor-header-metodo.md). Compilation, execution, coverage,
-mutations, and allocations are **still to be acquired** as of this reading;
+mutations, and allocation measurements are **still to be acquired** as of this reading;
 the reviewer ran no campaigns.
 
 <a id="provenienza-e-indipendenza"></a>
@@ -67,7 +67,7 @@ the future parser's responsibility.
 | 2. Invariants and tests | Ranges, rejection order, words, progress, and immutability have independent oracles. Internal guards remain active; conforming public inputs do not make their postconditions false. Coverage and mutations pending. |
 | 3. Typed errors | `invalid-argument`, `corruption-detected`, and `invariant-violation`; reasons and offsets are declared. No product handler hides an error. The kernel owns no Serie: the `FAULTED` transition belongs to the future owner. |
 | 4. Bounded work | One lead and at most eight additional bytes; no recursion, waits, or loop dependent on declared payload length. Tests have iteration ceilings, semaphore waits within 15 seconds, joins within 20, and termination checks in cleanup. |
-| 5. Allocations | No constructor on the success path in source; index/u8/u32 locals and no u64/float materialization. Zero heap requires the registered campaign with a positive sensor: result pending. |
+| 5. Allocations | No constructor on the success path in source; index/u8/u32 locals and no u64/float materialization. Zero heap allocation requires the registered campaign with a positive control: result pending. |
 | 6. Verified output | The six values exit after local syntax and head-boundary verification. No decoded document, payload, or implicit full-item validation exits. |
 | 7. Compound decisions | The [table](cbor-header-decisioni.md) includes the five `and` forms: public range, argument progress, marker range, F8 rejection, and public progress. There are no `or` forms in the product. Guards and the `otherwise` branch remain in the denominator; no MC/DC qualification claimed. |
 | 8. Data ownership | OWNER/SHARED comments declare caller-owned immutable buffer and local cursors/words. No global mutable state or buffer writes. |

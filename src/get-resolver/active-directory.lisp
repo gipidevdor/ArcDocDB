@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-001 REQ-AFF-008 REQ-AFF-002
 (declaim (ftype (function ((or null simple-vector)) null) verifica-nodo-attivo))
 (defun verifica-nodo-attivo (node)
-  "Pre: nodo NIL o vettore interno. Post: geometria di sedici figli validata prima dell'accesso.
-INVARIANT-VIOLATION per forma impossibile; nessuna mutazione o attesa."
+  "Pre: NIL node or internal vector. Post: sixteen-child geometry validated before access.
+INVARIANT-VIOLATION for impossible shape; no mutation or waiting."
   (unless (or (null node) (= (length node) +active-directory-width+))
     (error 'invariant-violation :reason :active-directory-shape))
   nil)
@@ -17,10 +17,10 @@ INVARIANT-VIOLATION per forma impossibile; nessuna mutazione o attesa."
                           (member 0 4 8 12)) (values simple-vector index &optional))
                 appendi-pagina-attiva))
 (defun appendi-pagina-attiva (node rank page shift)
-  "Pre: rank libero, shift 12/8/4/0 e nodo immutabile. Post: nuovo cammino, vecchio intatto.
-Ricorsione ESATTAMENTE quattro livelli al massimo; sedici copie/level, nessuna scansione storica.
-Secondo valore: nuovi nodi nella vista, esclude copie che sostituiscono nodi già esistenti.
-INVARIANT-VIOLATION per foglia occupata/geometria; array privati non esposti su errore."
+  "Pre: free rank, shift 12/8/4/0, immutable node. Post: new path, old path intact.
+Maximum recursion depth: EXACTLY four levels; sixteen copies/level, no historical scan.
+Second value: new nodes in view, excluding copies replacing existing nodes.
+INVARIANT-VIOLATION for occupied leaf/geometry; private arrays not exposed on error."
   (verifica-nodo-attivo node)
   (let* ((slot (ldb (byte 4 shift) rank))
          (copy (if node (copy-seq node) (make-array +active-directory-width+ :initial-element nil)))
@@ -41,8 +41,8 @@ INVARIANT-VIOLATION per foglia occupata/geometria; array privati non esposti su 
 (declaim (ftype (function (contesto-get radice-get-attiva (integer 0 65535)) mappa-segmento-get)
                 pagina-attiva))
 (defun pagina-attiva (context root rank)
-  "Pre: CANDIDATE, root acquisita sotto EBR, rank nella vista. Post: pagina esatta in quattro accessi.
-Forma/figlio/foglia impossibili rendono GET FAULTED; nessun I/O, allocazione esplicita o retry."
+  "Pre: CANDIDATE, root acquired under EBR, rank within view. Post: exact page in four accesses.
+Impossible shape/child/leaf makes GET FAULTED; no I/O, explicit allocation, or retry."
   (unless (< rank (radice-get-attiva-count root)) (guasto-get context :active-page-rank))
   (let ((node (radice-get-attiva-directory root)))
     (declare (type t node))
@@ -56,9 +56,9 @@ Forma/figlio/foglia impossibili rendono GET FAULTED; nessun I/O, allocazione esp
 ;;; REQ: REQ-IDX-001 REQ-CMP-007 REQ-AFF-002
 (declaim (ftype (function (contesto-get radice-get-attiva u32) mappa-segmento-get) trova-pagina-attiva))
 (defun trova-pagina-attiva (context root offset)
-  "Pre: root pubblicata sotto EBR. Post: prima pagina con fine maggiore dell'offset.
-Al più diciassette confronti, ciascuno con quattro accessi; poi lookup PUT separato.
-Location oltre frontiera/mancante è un guasto, mai assenza del documento."
+  "Pre: root published under EBR. Post: first page whose end exceeds offset.
+At most seventeen comparisons, each with four accesses; then separate PUT lookup.
+Location beyond frontier/missing is a fault, never document absence."
   (unless (<= +segment-header-bytes+ offset (1- (radice-get-attiva-end root)))
     (guasto-get context :active-location-frontier))
   (let ((left 0) (right (radice-get-attiva-count root)))

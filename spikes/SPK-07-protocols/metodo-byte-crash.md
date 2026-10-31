@@ -122,8 +122,7 @@ complete relevant source contents before/after, decoded result, full
 stdout/stderr, exit code, limits, and failures. Only the necessary foundations
 are compiled manually, in order, into new FASLs in out/: foundation package,
 conditions, binary, crc32c, record, batch; then the new module. The first three
-attempts also loaded the root package; it is not a module dependency. Fatal
-warnings and fatal warnings/failure values in every compilation. Child phases
+attempts also loaded the root package; it is not a module dependency. Warnings and warnings/failure values are fatal in every compilation. Child phases
 are also saved in a schema 1 data report, including the failure point. The
 recorder does not read other agents' working files; no Git commit is captured.
 Recorder bootstrap is infrastructure, rather than an additional CHECK.

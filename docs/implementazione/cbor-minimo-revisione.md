@@ -3,12 +3,12 @@
 # Second reading of minimal CBOR headers
 
 C1 reading on 2026-10-09, completed after freezing the three oracle files and
-before campaigns. The reader wrote the new tests without reading
+before the campaigns. The reader wrote the new tests without reading
 `cbor-minimal.lisp` or `cbor-float-minimal.lisp`; they are the historical author
 of header/structure primitives, but not the new filter. No test, build, or
 measurement was performed during this reading. This is not human approval.
 
-No open static defect in the new kernel. MT0..6 thresholds match
+No open static defect was found in the new kernel. MT0..6 thresholds match
 minimal widths; floats are treated as IEEE fields and separate
 words, without native conversion. Normal/subnormal boundaries and
 alignments exactly represent binary16/binary32 units. Sign
@@ -28,12 +28,12 @@ the preference in §4.1 alone does not prohibit every indefinite form.
 | 2. Invariants | Fields, words, alignment, and progress checked; blind corpus and supplement described below. Internal guards remain in the denominator. |
 | 3. Errors | Range/reserved/truncated/indefinite/simple propagated; nonminimal at lead; typed defenses. The kernel does not own the Serie or decide FAULTED. Runtime pending. |
 | 4. Limits | No new loop or recursion; base bounded to nine bytes, filter to comparisons/masks. No waits. |
-| 5. Heap | No constructor or u64 union in new success path; maximum shift 32, immediate words on the 64-bit target. Heap measurement and positive sensor pending. |
+| 5. Heap | No constructor or u64 union in new success path; maximum shift 32, immediate words on the 64-bit target. Heap measurement and a positive control are pending. |
 | 6. Output data | Six original values only after syntax and filtering; payload, tags, and containers are not interpreted. |
 | 7. Decisions | D01…D10 in the table match code. D03/D06 have the declared public supplement; coverage and MC/DC not certified. |
 | 8. Ownership | Caller-owned immutable buffer, locals only; no scratch or mutable global. |
 | 9. Integration | Export and ASDF order present; strict compilation, trace, and snapshot `make check` still to be acquired. |
-| 10. Standard | Six functions with FTYPE/docstrings and at least two guards, safety3, within 60 lines/10 paths at reading. No static deviation found; build/lint pending. |
+| 10. Standard | Six functions with FTYPE/docstrings and at least two guards, safety 3, within 60 lines/10 paths at reading. No static deviation found; build/lint pending. |
 | 11. Parallelism | No lock, wait, or shared write per operation. Two private workers planned; real intervals do not prove separate cores or scaling. |
 | 12. Durability | No write, publication, or deletion; atomicity point not applicable. |
 
@@ -43,7 +43,7 @@ the preference in §4.1 alone does not prohibit every indefinite form.
 
 The blind corpus contains 14 tests: all 65536 half values and 131072 expansions,
 IEEE vectors and adjacent values, lead/simple, integer thresholds, 152 truncations,
-precedence, immutability, fuzz of 12288 cases seed `4D494E43`, and two workers.
+precedence, immutability, 12288 fuzz cases with seed `4D494E43`, and two workers.
 The three blobs frozen before reading remain unchanged:
 
 | File | Git blob |
@@ -56,7 +56,7 @@ After reading, with coordinator authorization, only
 `tests/codec/cbor-minimal-edges.lisp` was added, blob
 `c6f891dff335a37689ddbfabccf793d2e9f2f143`. The test uses the general rational
 oracle, not product helpers: HIGH/LOW pairs for subnormals with
-shift32/33/52 and the HIGH-only binary64 subnormal. There are 13 values with two signs,
+shifts 32/33/52 and the HIGH-only binary64 subnormal. There are 13 values with two signs,
 26 public calls. The supplement derives from reading D03/D06 and
 is not presented as part of the original blind corpus. Total: 15 tests.
 

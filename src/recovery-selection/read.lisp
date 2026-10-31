@@ -8,10 +8,10 @@
                          (values (member :none :put :tombstone) u64 u64 index index (member 1 2) u8 &optional))
                 leggi-versione-selezionata))
 (defun leggi-versione-selezionata (selector)
-  "Pre: chiave inizializzata, worker esclusivo; completezza dei candidati attestata fuori dal selettore.
-Post: tipo, CSN effettivo, segment-id, offset fisico, lunghezza, versione e flag; NONE/0/0/0/0/2/0 se vuoto.
-AMBIGUOUS rifiutato, FAULTED mai riaperto; scalari non sono un pin o prova di ammissione del traffico.
-TOMBSTONE deve sopprimere la chiave solo alla fine; nessun array, body o riferimento al buffer esportato."
+  "Pre: key initialized, exclusive worker; candidate completeness attested outside the selector.
+Post: type, effective CSN, segment-id, physical offset, length, version, and flags; NONE/0/0/0/0/2/0 if empty.
+AMBIGUOUS rejected, FAULTED never reopened; scalars are not a pin or proof of traffic admission.
+TOMBSTONE must suppress the key only at the end; no array, body, or buffer reference exported."
   (esigi-selettore-pronto selector)
   (when (eq (selection-state selector) :ambiguous)
     (error 'invalid-argument :reason :recovery-selection-ambiguous))

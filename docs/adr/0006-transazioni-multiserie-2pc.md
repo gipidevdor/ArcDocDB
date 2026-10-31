@@ -20,8 +20,8 @@ modifies multiple Serie must still be atomic, including across a crash.
 ## Decision
 
 - A transaction that modifies multiple Serie follows a protocol equivalent to two-phase commit:
-  BEGIN, PREPARE on the participants, flush their WALs, durable decision, COMMIT or ABORT,
-  apply to the participants.
+  BEGIN, PREPARE on the participants, flush their WALs, record a durable decision, COMMIT or ABORT,
+  and apply the outcome to the participants.
 - All changes share a single TXID.
 - The decision is recorded in `Registri/multiserie.log`: one file per Archivio, no
   per-transaction file, and group commit where appropriate.

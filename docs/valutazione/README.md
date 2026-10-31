@@ -23,7 +23,7 @@ A microbenchmark or component test does not qualify the complete engine.
 
 M1 composes startup, recovery and the Unix service. Its tests and limits are
 described in the [implementation guide](../implementazione/README.md).
-Whole-engine performance, sustained load, scales beyond RAM and release gates
+Whole-engine performance, sustained load, operation at scales beyond RAM, and release gates
 require their respective campaigns.
 
 The [benchmark rules](../13-benchmark.md) distinguish measurements, targets and estimates.

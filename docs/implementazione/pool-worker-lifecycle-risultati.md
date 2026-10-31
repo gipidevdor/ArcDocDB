@@ -28,7 +28,7 @@ controller and 18 new logical actuation tests. C4 self-tests detect
 distinguish a below-resolution clock, and preserve partial raw output
 and preexisting destinations. The full check passes 1076 named tests,
 smoke tests, lint, traceability, links, tool self-tests, evidence
-preservation, and the ten spikes. Execution takes 201,656 seconds.
+preservation, and the ten spikes. Execution takes 201.656 seconds.
 
 Two preliminary attempts at the full check remain failed and preserved:
 [shell options](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-lifecycle/processes/check-core-attempt-1/report.lisp)
@@ -40,7 +40,7 @@ Both end before product tests; their outcomes are not promoted.
 ## Coverage
 
 Native SB-COVER and HTML index agree on the five new lifecycle files
-and package: **414/415 expressions (99,759%), 60/60 branches (100%)**.
+and package: **414/415 expressions (99.759%), 60/60 branches (100%)**.
 The C3 minimum of 95% is exceeded without file or path exclusions.
 Old controller and worker sources do not contribute to these
 denominators; generated paths in new sources remain included.
@@ -104,7 +104,7 @@ additional modules; the changelog retains both concurrent additions.
 
 The [integrated check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-lifecycle/processes/integrated-build/report.lisp)
 `4000911049-command-19367-0` passes 1099 named tests and smoke tests,
-strict compilation, lint, and traceability: OK, STABLE, exit 0, 30,059868 seconds.
+strict compilation, lint, and traceability: OK, STABLE, exit 0, 30.059868 seconds.
 The full campaign and ten spikes remain those of the frozen base;
 that process is not retroactively attributed to the merge. Evidence separately preserves
 qualified sources and final sources, including added documents.
@@ -129,7 +129,7 @@ are preserved with their distinct outcome.
 `4000911736-command-27429-0` ends OK, STABLE, exit 0, after checking
 originals and copies. The [final check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-lifecycle/processes/final-verification/report.lisp)
 `4000911991-command-38401-0` passes links and preservation: OK, STABLE, exit 0,
-154,602746 seconds, 370 Markdown files and 2748 links without breakage;
+154.602746 seconds, 370 Markdown files and 2748 links without breakage;
 84 catalogs, 18868 preserved files, 535386346 bytes. These counts
 belong to the process before its closing copies were added.
 A new manifest preserves those records and this document's concluding version

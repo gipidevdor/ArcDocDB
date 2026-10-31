@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-001 REQ-IDX-005 REQ-LIM-003 REQ-AFF-004
 (declaim (ftype (function (fixnum t t t t) null) esigi-mappe-hash))
 (defun esigi-mappe-hash (capacity highs lows seed-high seed-low)
-  "Pre: capacita della Serie. Post: mappe u32 distinte di C elementi e seme in due u32.
-INVALID-ARGUMENT prima di ogni allocazione/scrittura: :primary-hash-arrays o :primary-hash-seed."
+  "Pre: Serie capability. Post: distinct C-element u32 maps and seed in two u32s.
+INVALID-ARGUMENT before any allocation/write: :primary-hash-arrays or :primary-hash-seed."
   (unless (and (typep highs 'digests-frammento) (typep lows 'digests-frammento)
                (= capacity (length highs)) (= capacity (length lows)) (not (eq highs lows)))
     (error 'invalid-argument :reason :primary-hash-arrays))
@@ -19,12 +19,12 @@ INVALID-ARGUMENT prima di ogni allocazione/scrittura: :primary-hash-arrays o :pr
 (declaim (ftype (function (indice-primario frammento-indice t t t t)
                          (values fixnum fixnum fixnum &optional)) calcola-digests-frammento))
 (defun calcola-digests-frammento (index source highs lows seed-high seed-low)
-  "Pre: writer esclusivo, sorgente pubblicato corrente, mappe u32 private e seme della Serie.
-Post: digest XXH64 agli slot fisici vivi, altri elementi invariati; tre valori C, vivi, byte chiave.
-I due u32 del seme devono uguagliare la configurazione immutabile dell'indice, prima delle mappe.
-Root, banco, arena e revisione invariati. Alloca due scratch fissi di cinque u64: manutenzione.
-Rifiuti preflight senza scritture; seed incoerente => INVALID-ARGUMENT, corruzione => FAULTED.
-Su rifiuto durante la scansione scartare le mappe parziali private; nessun rollback dell'indice."
+  "Pre: exclusive writer, current published source, private u32 maps and Serie seed.
+Post: XXH64 digests at live physical slots, other elements unchanged; three values C, live count, key bytes.
+Both u32 seed words must match immutable index configuration, before map access.
+Root, bank, arena, and revision unchanged. Allocates two fixed five-u64 scratch buffers: maintenance.
+Preflight rejections without writes; inconsistent seed => INVALID-ARGUMENT, corruption => FAULTED.
+On rejection during scanning, discard partial private maps; no index rollback."
   (esigi-indice-sano index)
   (esigi-sorgente-directory index (acquisisci-root index) source)
   (let ((capacity (indice-primario-capacity index)))

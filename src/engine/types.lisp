@@ -7,16 +7,16 @@
 (define-condition errore-cleanup-motore (arcdocdb.conditions:arcdocdb-error)
   ((primary :initarg :primary :reader causa-cleanup-motore :type (or null condition))
    (errors :initarg :errors :reader errori-cleanup-motore :type list))
-  (:documentation "Causa primaria intatta e lista completa dei guasti cleanup, aggregati inclusi.")
+  (:documentation "Intact primary cause and complete cleanup-failure list, including aggregates.")
   (:report (lambda (condition stream)
              (format stream "ArcDocDB cleanup: primaria ~A; guasti ~S"
                      (causa-cleanup-motore condition) (errori-cleanup-motore condition)))))
 
 ;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-LIM-003 REQ-IDX-012
 (defstruct (motore (:constructor %make-motore) (:copier nil))
-  "Pre: configurazione validata prima dell'I/O; un attore e una Serie per handle.
-Post: admission chiusa fino a READY; risorse possedute fino a close, nessun buffer caller trattenuto.
-Nessun accessore pubblico sui FD o sulle radici; la capacita' non e' trasferibile fra thread."
+  "Pre: configuration validated before I/O; one actor and one Serie per handle.
+Post: admission closed until READY; resources owned until close, no caller buffer retained.
+No public accessor for FDs or roots; capability not transferable across threads."
   (owner sb-thread:*current-thread* :type sb-thread:thread :read-only t)
   (state :starting :type (member :starting :recovering :ready :faulted :closed))
   (busy nil :type boolean)

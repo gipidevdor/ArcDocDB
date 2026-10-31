@@ -79,7 +79,7 @@ blocking fallback (Linux `seqlock_t` SeqLock, Folly SeqLock).
 - *8- or 16-bit counter:* probabilistic correctness; rejected.
 - *Reader/writer lock per slot or table:* contention between readers and writers on the
   hot path.
-- *A new entry copy on every change (RCU per entry):* one object per entry, against
+- *A new entry copy on every change (RCU per entry):* one object per entry, contrary to
   ADR-0024.
 
 <a id="valutazione"></a>

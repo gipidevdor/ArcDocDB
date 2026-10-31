@@ -8,8 +8,8 @@
 (declaim (ftype (function (integer integer integer integer integer integer integer)
                          (values manifest-limits &optional)) checked-manifest-limits))
 (defun checked-manifest-limits (edits segments outcomes closed removed per-edit bytes)
-  "Pre: budget interi del chiamante. Post: conteggi cumulativi index, per EDIT u32, byte entro16MiB.
-INVALID-ARGUMENT per configurazione invalida; zero è ammesso per tutti i budget."
+  "Pre: caller's integer budgets. Post: cumulative index counts, per-EDIT u32 counts, bytes within 16MiB.
+INVALID-ARGUMENT for invalid configuration; zero allowed for all budgets."
   (unless (and (typep edits 'index) (typep segments 'index) (typep outcomes 'index))
     (error 'invalid-argument :reason :manifest-arguments))
   (unless (and (typep closed 'u32) (typep removed 'u32) (typep per-edit 'u32))
@@ -22,8 +22,8 @@ INVALID-ARGUMENT per configurazione invalida; zero è ammesso per tutti i budget
 (declaim (ftype (function (octets index index integer manifest-limits)
                          (values index (or null manifest-edit) &optional)) manifest-frame))
 (defun manifest-frame (buffer pos end version limits)
-  "Pre: record in prefisso sigillato e stabile. Post: fine e vista EDIT verificata, NIL per SEAL.
-Propaga errori codec relativi al buffer; payload nel prefisso non diventa una nuova coda."
+  "Pre: record in a sealed, stable prefix. Post: end and verified EDIT view, NIL for SEAL.
+Propagates buffer-relative codec errors; payload within the prefix does not become a new tail."
   (check-range buffer pos end)
   (unless (< pos end)
     (error 'invariant-violation :reason :manifest-frame-range :offset pos))
@@ -53,10 +53,10 @@ Propaga errori codec relativi al buffer; payload nel prefisso non diventa una nu
 (declaim (ftype (function (octets index index integer index index manifest-limits u64)
                          (values index index &optional)) preflight-manifest))
 (defun preflight-manifest (buffer start end version frames edits limits file-offset)
-  "Pre: prefisso e contatori autorevoli dello scanner. Post: payload validi e budget cumulativi.
-Conta occorrenze fisiche: CLOSED+REMOVED+OPEN nonzero, e tutti gli esiti, anche duplicati.
-RESOURCE-EXHAUSTED all'EDIT assoluto; errori codec conservano offset relativi al buffer.
-Ciclo di FRAMES passi; nessuna entry CLOSED o copia esiti allocata in questo passaggio."
+  "Pre: scanner's authoritative prefix and counters. Post: valid payloads and cumulative budgets.
+Counts physical occurrences: CLOSED+REMOVED+nonzero OPEN, and all outcomes, including duplicates.
+RESOURCE-EXHAUSTED at the absolute EDIT offset; codec errors retain buffer-relative offsets.
+Loop of FRAMES steps; no CLOSED entry or outcome copy allocated during this pass."
   (check-range buffer start end)
   (unless (<= edits frames (floor (- end start) +header-bytes+))
     (error 'invariant-violation :reason :manifest-frame-count :offset start))
@@ -85,9 +85,9 @@ Ciclo di FRAMES passi; nessuna entry CLOSED o copia esiti allocata in questo pas
 (declaim (ftype (function (octets index index integer index index manifest-limits u64 index index)
                          (values manifest &optional)) decode-manifest))
 (defun decode-manifest (buffer start end version frames edits limits file-offset segments outcomes)
-  "Pre: intero prefisso strutturale e budget già verificati, buffer stabile.
-Post: fold completo posseduto; nessun alias all'input né risultato parziale esportato.
-CORRUPTION-DETECTED per applicabilità; INVARIANT-VIOLATION per consumo incoerente."
+  "Pre: entire structural prefix and budgets already verified, stable buffer.
+Post: complete owned fold; no alias to input or partial result exported.
+CORRUPTION-DETECTED for applicability; INVARIANT-VIOLATION for inconsistent consumption."
   (check-range buffer start end)
   (unless (<= edits frames (floor (- end start) +header-bytes+))
     (error 'invariant-violation :reason :manifest-frame-count :offset start))
@@ -131,12 +131,12 @@ CORRUPTION-DETECTED per applicabilità; INVARIANT-VIOLATION per consumo incoeren
                                   (max-segmenti 65536) (max-esiti 65536)
                                   (max-chiusi-per-edit 65536) (max-rimossi-per-edit 65536)
                                   (max-esiti-per-edit 65536) (max-metadata-bytes 16777216))
-  "Pre: control log stabile fino a EOF attestato da FILE-SIZE, VERSION esplicita;
-START dopo header verificato. Primo EDIT completo obbligatorio, poi solo delta.
-Post: manifest posseduto, prefisso nel buffer, COMPLETE/TAIL; nessun I/O o buffer modificato.
-Scanner dell'intera finestra prima di semantica e budget EDIT; poi preflight e fold tutto-o-niente.
-Propaga errori tipizzati: applicabilità/cumulativi usano offset assoluti, codec offset nel buffer.
-Percorso di apertura con allocazioni; stamp non ordinati, TXID/CSN u64 opachi."
+  "Pre: control log stable through EOF attested by FILE-SIZE, explicit VERSION;
+START after a verified header. Complete first EDIT mandatory, then deltas only.
+Post: owned manifest, prefix in the buffer, COMPLETE/TAIL; no I/O or buffer modification.
+Scan the entire window before EDIT semantics and budgets; then preflight and all-or-nothing fold.
+Propagates typed errors: applicability/cumulative budgets use absolute offsets, codec uses buffer offsets.
+Opening path with allocations; stamps unordered, TXID/CSN opaque u64 values."
   (let ((limits (checked-manifest-limits max-edits max-segmenti max-esiti max-chiusi-per-edit
                                        max-rimossi-per-edit max-esiti-per-edit max-metadata-bytes)))
     (multiple-value-bind (prefix status batches count)

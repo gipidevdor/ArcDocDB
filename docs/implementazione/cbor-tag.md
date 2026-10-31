@@ -24,8 +24,8 @@ are rejected with absolute source offsets.
 
 MAX-BYTES includes header and contents. MAX-NODES includes one tag node
 plus content nodes: minimum two. MAX-DEPTH counts only arrays/maps;
-the tag adds no levels. A tag on a scalar is allowed at depth0;
-a tag on an empty array requires depth1. Maximums are 16 MiB,
+the tag adds no levels. A tag on a scalar is allowed at depth 0;
+a tag on an empty array requires depth 1. Maximums are 16 MiB,
 16 Mi nodes, and 100 levels. Even long tag chains consume nodes
 without adding scanner frames.
 
@@ -40,7 +40,7 @@ Range, nonempty source, words, scratch/aliases, limits, bytes, capacity,
 overlap, and minimum nodes are checked before parsing or reset.
 All public errors preserve the entire physical destination and
 source. Preflight also preserves scratch; failed parsing
-can dirty it, reusable on the next call. After success, its
+can dirty it; it can be reused on the next call. After success, its
 statistics describe the contents without the emitted tag. Only the
 destination footprint changes; the physical tail beyond END offers no capacity.
 Internal invariants are fail-stop, without rollback.

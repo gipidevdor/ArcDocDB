@@ -6,9 +6,9 @@
 ;;; REQ: REQ-WAL-005 REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (sorgente-get-attiva lotto) u32) conta-put-aperti-attivi))
 (defun conta-put-aperti-attivi (source batch)
-  "Pre: OPEN esclusivo senza token, count/byte entro budget. Post: header/forma ordinari e count esatti.
-Al più count header, nessuna verifica body o attestazione di commit; CSN verrà fissato dal SEAL.
-Prepared/OUTCOME validi rifiutati prima del CSN; integrità completa ripetuta solo dopo la chiusura."
+  "Pre: exclusive OPEN without token, count/bytes within budget. Post: exact ordinary headers/shape and count.
+At most count headers, no body verification or commit attestation; CSN will be fixed by SEAL.
+Valid Prepared/OUTCOME rejected before CSN; complete integrity repeated only after closure."
   (let ((pos 0) (puts 0) (buffer (arcdocdb.wal::lotto-buffer batch))
         (end (lunghezza-lotto batch)) (version (segmento-get-version (sorgente-get-attiva-segment source))))
     (declare (type u32 pos puts))
@@ -29,8 +29,8 @@ Prepared/OUTCOME validi rifiutati prima del CSN; integrità completa ripetuta so
 ;;; REQ: REQ-WAL-005 REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (sorgente-get-attiva lotto index) null) verifica-misure-aperte-attive))
 (defun verifica-misure-aperte-attive (source batch start)
-  "Pre: OPEN senza token. Post: ID/versione, count, byte compreso SEAL e spazio segmento ammessi.
-Rifiuti prima del CSN; nessun buffer/evento/indice mutato, nessun I/O o allocazione di array."
+  "Pre: OPEN without token. Post: ID/version, count, bytes including SEAL, and segment space admitted.
+Rejections before CSN; no buffer/event/index mutated, no I/O or array allocation."
   (let* ((segment (sorgente-get-attiva-segment source))
          (size (+ (lunghezza-lotto batch) arcdocdb.wal::+seal-total+)))
     (unless (and (= (arcdocdb.wal::lotto-file-id batch) (segmento-get-low segment))
@@ -49,10 +49,10 @@ Rifiuti prima del CSN; nessun buffer/evento/indice mutato, nessun I/O o allocazi
 (declaim (ftype (function (sorgente-get-attiva t lotto (or null radice-get-attiva)) u32)
                 verifica-capienza-get-attiva))
 (defun verifica-capienza-get-attiva (source lease batch previous)
-  "Pre: lease esclusiva, lotto OPEN senza token; chiamare PRIMA di sigilla-lotto-con-csn.
-Post: ring, forma supportata, contiguità e picco ammessi; ritorna numero PUT, niente prenotazione.
-Mantenere lease, contenuto e previous stabili fino a sigillatura/adozione, che ricontrolla tutto.
-Rifiuti senza CSN/evento; integrità/invarianti interne => FAULTED Archivio, causa originale propagata."
+  "Pre: exclusive lease, OPEN batch without token; call BEFORE sigilla-lotto-con-csn.
+Post: ring, supported shape, contiguity, and peak admitted; returns PUT count, no reservation.
+Keep lease, content, and previous stable until sealing/adoption, which rechecks everything.
+Rejections without CSN/event; internal integrity/invariants => Archivio FAULTED, original cause propagated."
   (let ((controller (sorgente-get-attiva-controller source)))
     (arcdocdb.series::%check-owner controller lease) (arcdocdb.series::%require-healthy controller)
     (handler-case

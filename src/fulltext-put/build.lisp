@@ -8,9 +8,9 @@
 (defun crea-preparazione-put-full-text (configs &key (version 2) (document-bytes 16777216) (key-bytes 65535)
                                                (max-scalars 65536) (max-tokens 4096) (term-bytes 262144)
                                                (max-memory 67108864))
-  "Pre: configurazioni canoniche ordinate, capacita fredde finite. Post: frame e task privati.
-Budget dell'intero cohort prima delle allocazioni; non conta configurazioni, pool delta o RSS.
-Propaga INVALID-ARGUMENT/UNSUPPORTED-FORMAT; RESOURCE-EXHAUSTED oltre memoria."
+  "Pre: ordered canonical configurations, finite cold capacities. Post: private frame and tasks.
+Whole-cohort budget before allocations; excludes configurations, delta pool, and RSS.
+Propagates INVALID-ARGUMENT/UNSUPPORTED-FORMAT; RESOURCE-EXHAUSTED beyond memory budget."
   (unless (and (typep configs 'simple-vector) (<= 1 (length configs) 16)
                (integerp version) (typep document-bytes '(integer 1 16777216))
                (typep key-bytes '(integer 1 65535)) (typep max-scalars '(integer 1 4294967295))

@@ -7,9 +7,9 @@
 (declaim (ftype (function (insieme-serie-recovery decisioni-recuperate t t t index index) index)
                 verifica-ingressi-bootstrap))
 (defun verifica-ingressi-bootstrap (set decisions controls sources limits max-segments references)
-  "Pre: set completo autorevole del catalogo, fonti e vettori congelati. Post: count e budget vettori esterni.
-Stesso oggetto Archivio delle decisioni, tre simple-vector paralleli alle viste; nessuna copia o I/O.
-INVALID-ARGUMENT per autorità/forma/count; RESOURCE-EXHAUSTED prima di scansioni o array risultato."
+  "Pre: complete authoritative catalog set, frozen sources and vectors. Post: count and external vector budgets.
+Same Archivio object as decisions, three simple-vectors parallel to views; no copy or I/O.
+INVALID-ARGUMENT for authority/shape/count; RESOURCE-EXHAUSTED before scans or result arrays."
   (unless (eq (arcdocdb.recovery.archive.csn::insieme-serie-recovery-archive set)
               (arcdocdb.recovery.archive::decisioni-recuperate-archive decisions))
     (error 'invalid-argument :reason :archive-bootstrap-decision-owner))

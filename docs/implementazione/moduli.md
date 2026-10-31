@@ -36,7 +36,7 @@ Each method and result retains its own scope.
 | Relative temporary creation | [New exclusive file from owned parent](io-creazione-relativa.md), [method](io-creazione-relativa-metodo.md) | [`src/io/create-relative.lisp`](../../src/io/create-relative.lisp) |
 | Binary foundations | [v1/v2 records, CRC32C, and SEAL batches](fondazioni-binarie.md) | [`src/foundation/`](../../src/foundation/) |
 | ARM64 CRC32C | [Lisp/SBCL backend and GET results](crc32c-arm64.md); [method](crc32c-arm64-metodo.md) | [`crc32c-native.lisp`](../../src/foundation/crc32c-native.lisp) |
-| 16/32 B CRC32C | [Comparison, small records, and full GET](crc32c-unroll32.md); 16 B kernel retained | [`spike e metodo`](../../spikes/SPK-08-generated-code/metodo-crc32c-unroll32.md) |
+| 16/32 B CRC32C | [Comparison, small records, and full GET](crc32c-unroll32.md); 16 B kernel retained | [`spike and method`](../../spikes/SPK-08-generated-code/metodo-crc32c-unroll32.md) |
 | UTF-8 text | [Bounded, pure, parallel validation](utf8.md) | [`src/codec/utf8.lisp`](../../src/codec/utf8.lisp) |
 | CBOR headers | [Pure read in six values](cbor-header.md) | [`src/codec/cbor-header.lisp`](../../src/codec/cbor-header.lisp) |
 | Minimal CBOR headers | [Argument and float widths, without decoding](cbor-minimo.md) | [`src/codec/cbor-minimal.lisp`](../../src/codec/cbor-minimal.lisp) |
@@ -134,8 +134,8 @@ plan to the single CSN/snapshot/epoch family and the new GET scope. The binding
 does not yet authorize traffic.
 
 [Serie semantic recovery](recovery-serie.md) connects owned read-only
-sources to ACTIVE/CLOSED readers: set and budgets checked
-before data, scratch reused, and two results only after the complete gate.
+sources to ACTIVE/CLOSED readers: the set and budgets are checked
+before data, scratch is reused, and both results are returned only after the complete gate.
 
 The [coordinated Archivio read](recovery-archivio.md) first applies
 all Serie preflights and global budgets, then returns complete

@@ -45,8 +45,8 @@ and actually marked branches must be attested by raw evidence.
 | `%check-programmabile`: `case` | `:idle`, `:ready`, `:running`; `otherwise` signals `:writer-scheduling`. | Three states traversed by API. `otherwise` is defensive and not constructed by bypassing slot type; remains in raw denominator. |
 | Idle state: count | `count = 0` or `:writer-scheduling`. | Factory and empty completion; `idle-count` FI with consistent ring. |
 | Ready state: count | `count > 0` or `:writer-scheduling`. | First enqueue and requeue; `ready-count` FI with consistent ring. |
-| Running state: owner | Owner present or `:writer-scheduling`. | Active segments; `running-owner` FI after legal begin. |
-| `accoda-lavoro-writer`: `schedule` | State before acceptance equals idle; false for ready and running. | `single-obligation-and-duplicate-begin`, race before/after empty completion, producer on active segment. |
+| Running state: owner | Owner present or `:writer-scheduling`. | Active slices; `running-owner` FI after legal begin. |
+| `accoda-lavoro-writer`: `schedule` | State before acceptance equals idle; false for ready and running. | `single-obligation-and-duplicate-begin`, race before/after empty completion, producer on an active slice. |
 | `accoda-lavoro-writer`: `when schedule` | Only first message from idle sets ready. | Same fixtures; full and busy produce no transition. |
 | `accoda-lavoro-writer`: `if schedule` | `:schedule` or `:queued`; both with acceptance count. | Obligation count and FIFO in independent oracle; failed notification retried without repeating enqueue. |
 | `inizia-tratto-writer`: ready | Ready acquires lease and becomes running; idle/running signal `:writer-not-ready`. | `single-obligation-and-duplicate-begin`, finite oracle, and foreign-thread test. Not-ready does not authorize blind retries. |
@@ -54,7 +54,7 @@ and actually marked branches must be attested by raw evidence.
 | `termina-tratto-writer`: lease | Delegated checks before guard acquisition; valid token or `:writer-lease`. | `lease-validation-and-stale-generation`, `foreign-thread-cannot-use-lease`; double completion rejected. |
 | `termina-tratto-writer`: pending | `count > 0` or zero, under same guard as enqueue. | Backlog, early completion, cumulative quota, and empty; both race orders. |
 | `termina-tratto-writer`: state `if` | Pending sets ready; no pending sets idle. | `early-release-conserves-entire-backlog`, `cumulative-quantum-and-successive-slices`, `enqueue-before-and-after-empty-release`. |
-| `termina-tratto-writer`: result `if` | Pending returns `:schedule`; otherwise `:idle`. | Notification oracle and new wave after idle; different workers on successive segments. |
+| `termina-tratto-writer`: result `if` | Pending returns `:schedule`; otherwise `:idle`. | Notification oracle and new wave after idle; different workers on successive slices. |
 
 <a id="primitive-delegate-e-cleanup"></a>
 

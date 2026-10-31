@@ -6,9 +6,9 @@
 ;;; REQ: REQ-REC-001 REQ-IDX-001 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (t t t t) arcdocdb.binary:index) verifica-budget-closed-runtime))
 (defun verifica-budget-closed-runtime (closed maps maximum budget)
-  "Pre: ingressi stabili del coordinatore. Post: forma, cardinalità e budget prima di scansioni/array.
-INVALID-ARGUMENT per forma/configurazione/count; RESOURCE-EXHAUSTED per capacità/payload.
-Picco array nuovi: 20*N byte su SBCL 64 bit; esclude wrapper, hash del gate, array condivisi e GC."
+  "Pre: coordinator's stable inputs. Post: shape, cardinality, and budgets before scans/arrays.
+INVALID-ARGUMENT for shape/configuration/count; RESOURCE-EXHAUSTED for capacity/payload.
+New-array peak: 20*N bytes on 64-bit SBCL; excludes wrappers, gate hash tables, shared arrays, and GC."
   (unless (and (typep closed 'simple-vector) (typep maps 'simple-vector))
     (error 'invalid-argument :reason :runtime-closed-vectors))
   (unless (and (typep maximum 'arcdocdb.binary:index) (<= 1 maximum 65536)
@@ -27,10 +27,10 @@ Picco array nuovi: 20*N byte su SBCL 64 bit; esclude wrapper, hash del gate, arr
                           arcdocdb.control:control-recuperato) arcdocdb.get:vista-get-serie)
                 verifica-autorita-closed-runtime))
 (defun verifica-autorita-closed-runtime (archive view control)
-  "Pre: Archivio canonico e CONTROL autorevole della Serie, bootstrap esclusivo senza reader.
-Post: vecchia vista dello scope Archivio, nuova vista dello scope runtime canonico, stesso UUID.
-INVALID-ARGUMENT per runtime assente/scope/identità; binding corrotto propaga INVARIANT-VIOLATION.
-Non certifica il catalogo, ricostruisce il primary o copia cache/pin dal bootstrap."
+  "Pre: canonical Archivio and authoritative Serie CONTROL, exclusive bootstrap without readers.
+Post: old view in Archivio scope, new view in canonical runtime scope, same UUID.
+INVALID-ARGUMENT for absent runtime/scope/identity; corrupt binding propagates INVARIANT-VIOLATION.
+Does not certify the catalog, rebuild the primary index, or copy cache/pins from bootstrap."
   (let ((runtime (trova-runtime-archivio archive))
         (old (arcdocdb.control::control-recuperato-view control)))
     (unless runtime (error 'invalid-argument :reason :runtime-closed-unbound))
@@ -47,9 +47,9 @@ Non certifica il catalogo, ricostruisce il primary o copia cache/pin dal bootstr
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-FOR-004 REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (arcdocdb.get:vista-get-serie t t u32) u32) verifica-mappa-closed-runtime))
 (defun verifica-mappa-closed-runtime (old recovered map previous)
-  "Pre: insieme CLOSED completo già verificato, vettori paralleli stabili; PREVIOUS è l'ID precedente.
-Post: mappa canonica della vista bootstrap, stesso FD EQ, ID, P, versione e origine del risultato.
-INVALID-ARGUMENT per tipi, ordine, lifetime o disaccordo; nessun I/O o troncamento ID storage u64."
+  "Pre: complete CLOSED set already verified, stable parallel vectors; PREVIOUS is the preceding ID.
+Post: canonical bootstrap-view map, same EQ FD, ID, P, version, and result origin.
+INVALID-ARGUMENT for types, order, lifetime, or disagreement; no I/O or u64 storage-ID truncation."
   (unless (typep recovered 'arcdocdb.recovery.closed:closed-recuperato)
     (error 'invalid-argument :reason :runtime-closed-result))
   (let* ((id (arcdocdb.get.directory::verifica-mappa-directory-get old map previous))

@@ -72,8 +72,8 @@ unchanged; generic catalog family `writer-worker` is declared
 in the manifest and does not broaden test scope.
 
 
-First development did not print six descriptive lines for individual scenarios.
-Initial variant is preserved in the source bundle and its Git blob was
+The first development run did not print six descriptive lines for individual scenarios.
+The initial variant is preserved in the source bundle and its Git blob was
 compared with original record (`d7ad221b3e665eca54e9d532b54f04d4e53c301c`).
 The only later test change is printing those lines; complete
 qualification uses the frozen version identified above. No failed
@@ -86,7 +86,7 @@ references in the isolated method copy. This is not a suite failure.
 Only the local copy was renamed from `.md` to `.md.txt`, with SHA-256
 identity verified before and after; the publication bundle preserves
 both filename and bytes in full as they were when copied.
-Failed record and its preservation remain original.
+The failed record and its preservation remain original.
 
 <a id="ambito-del-risultato"></a>
 

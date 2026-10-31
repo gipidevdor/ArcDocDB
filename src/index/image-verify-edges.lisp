@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine index index) null) verifica-figlio-directory-immagine))
 (defun verifica-figlio-directory-immagine (work ref shift)
-  "Pre: PageRef locale verificato. Post: figlio bucket/directory con intervalli radix ordinati.
-Il controllo serve anche per una fonte vuota, dove nessuna entry attiva il lookup."
+  "Pre: verified local PageRef. Post: bucket/directory child with ordered radix ranges.
+The check also applies to an empty source, where no entry triggers lookup."
   (let* ((parent (ispezione-immagine-scan work)) (page (leggi-u64 parent ref))
          (generation (leggi-u64 parent (+ ref +reference-generation+))) (child (ispezione-immagine-fragment work)))
     (when (plusp page)
@@ -23,8 +23,8 @@ Il controllo serve anche per una fonte vuota, dove nessuna entry attiva il looku
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine) null) verifica-archi-immagine))
 (defun verifica-archi-immagine (work)
-  "Pre: pagina corrente verificata localmente. Post: tipi e continuita' dei figli verificati anche se inutilizzati.
-Budget per ogni visita, nessuna ricorsione, fanout limitato dalla taglia della pagina."
+  "Pre: current page locally verified. Post: child types and continuity verified even if unused.
+Budget for every visit, no recursion, fanout bounded by page size."
   (let* ((buffer (ispezione-immagine-scan work)) (kind (aref buffer +off-kind+))
          (next (leggi-u64 buffer +off-next+)) (child (ispezione-immagine-fragment work)))
     (case kind

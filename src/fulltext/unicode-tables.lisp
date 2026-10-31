@@ -153,7 +153,7 @@
       124143 124143 230 124398 124398 230 124399 124399 220 124643 124643 230
       124646 124646 230 124654 124655 230 124661 124661 230 125136 125142 220
       125252 125257 230 125258 125258 7))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +ccc-ranges+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -360,7 +360,7 @@
       131072 173791 1 173824 178206 1 178208 183981 1 183984 191456 1
       191472 192093 1 194560 195101 1 196608 201546 1 201552 210041 1
       249856 261183 1))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +letter-ranges+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -648,7 +648,7 @@
       126635 126651 10 127280 127305 10 127312 127337 10 127344 127369 10
       127462 127487 6 127995 127999 4 130032 130041 16 917505 917505 7
       917536 917631 4 917760 917999 4))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +word-ranges+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -696,7 +696,7 @@
       129114 129119 1 129160 129167 1 129198 129199 1 129212 129215 1
       129218 129231 1 129241 129279 1 129292 129338 1 129340 129349 1
       129351 129535 1 129624 129631 1 129646 129791 1 130048 131069 1))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +pict-ranges+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -1226,7 +1226,7 @@
       195093 3118 1 195094 3119 1 195095 3120 1 195096 3121 1
       195097 3122 1 195098 3123 1 195099 3124 1 195100 3125 1
       195101 3126 1))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +decomp-records+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -1496,7 +1496,7 @@
       38923 38953 169398 39138 19251 39209 39335 39362 39422 19406 170800 39698
       40000 40189 19662 19693 40295 172238 19704 172293 172558 172689 40635 19798
       40697 40702 40709 40719 40726 40763 173568))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +decomp-data+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -1907,7 +1907,7 @@
       125208 1717 1 125209 1718 1 125210 1719 1 125211 1720 1
       125212 1721 1 125213 1722 1 125214 1723 1 125215 1724 1
       125216 1725 1 125217 1726 1))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +fold-records+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -2060,7 +2060,7 @@
       115 125218 125219 125220 125221 125222 125223 125224 125225 125226 125227 125228
       125229 125230 125231 125232 125233 125234 125235 125236 125237 125238 125239 125240
       125241 125242 125243 125244 125245 125246 125247 125248 125249 125250 125251))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 32) (*)) +fold-data+))
 
 ;;; OWNER: caricamento del modulo; tabella privata immutabile.
@@ -2230,5 +2230,5 @@
       149101286831 71099 150971947312 71992 189578436894 90401 189578436895 90403 189578436896 90405 189578436905 90402
       189584728351 90406 189584728352 90408 189586825503 90407 189601505567 90404 196165594471 93545 196173983079 93544
       196178177383 93546))
-  "Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.")
+  "Generated Unicode 18.0.0 table; immutable after loading.")
 (declaim (type (simple-array (unsigned-byte 64) (*)) +compose-pairs+))

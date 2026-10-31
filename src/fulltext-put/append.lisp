@@ -4,9 +4,9 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-WAL-005 REQ-CON-002
 (declaim (ftype (function (f:riserve-full-text preparazione-put-full-text t) null) preflight-append-put))
 (defun preflight-append-put (pool request batch)
-  "Pre: lease e request riservato. Post: attestazione corrente, stesso formato/segmento e spazio SEAL.
-Il file-id viene letto dai byte preallocati per evitare boxing u64 nel writer.
-CRC e cornice attestati dal worker, nessuna scansione body sotto lease; solo copia nell'append."
+  "Pre: lease and reserved request. Post: current attestation, same format/segment, and SEAL space.
+File-id read from preallocated bytes to avoid u64 boxing in writer.
+CRC and frame attested by worker, no body scan under lease; copying only during append."
   (esigi-cornice-put-validata request)
   (unless (and (typep batch 'w:lotto) (eq :reserved (preparazione-put-full-text-state request))
                (eq :segment (w::lotto-kind batch)) (= (w::lotto-version batch) (preparazione-put-full-text-version request)))
@@ -23,10 +23,10 @@ CRC e cornice attestati dal worker, nessuna scansione body sotto lease; solo cop
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-WAL-005 REQ-AFF-008 REQ-CON-002
 (declaim (ftype (function (t t t t t) (values f:riserva-full-text index index index &optional)) aggiungi-put-full-text))
 (defun aggiungi-put-full-text (pool lease request generation batch)
-  "Pre: tutte le riserve pronte, stesso batch aperto/segmento. Post: copia esatta del PUT analizzato,
-riserva trasferita con legame batch/incarnation/ordinale/intervallo; request riutilizzabile dopo handoff.
-Prepara memoria prima del SEAL durevole; non assegna CSN, pubblica H/ACK o risolve prepared.
-Rifiuti prima degli effetti; uscita incompleta dopo trasferimento => tutti FAULTED, nessun rollback."
+  "Pre: all reservations ready, same open batch/segment. Post: exact copy of analyzed PUT,
+reservation transferred with batch/incarnation/ordinal/interval binding; request reusable after handoff.
+Prepares memory before durable SEAL; neither assigns CSN, publishes H/ACK, nor resolves prepared records.
+Rejections before effects; incomplete exit after transfer => all FAULTED, no rollback."
   (verifica-riserva-put pool lease request generation) (preflight-append-put pool request batch)
   (let* ((slot (preparazione-put-full-text-slot request)) (token (preparazione-put-full-text-slot-generation request))
          (start (w::lotto-used batch)) (number (w::lotto-count batch)) (complete nil))

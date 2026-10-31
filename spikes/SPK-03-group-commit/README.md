@@ -25,20 +25,20 @@ Package `arcdocdb.spk03`, APIs `(check)` and `(benchmark &key ...)`.
 Compilation policy: `safety 3`, no `warning` or `style-warning` allowed.
 
 Each worker owns its file, descriptor, specialized octet buffer, and samples.
-Files opened with `O_CREAT | O_EXCL | O_APPEND`, permissions `0600`.
+Files are opened with `O_CREAT | O_EXCL | O_APPEND`, permissions `0600`.
 `write` uses `SB-ALIEN`, with buffer pinned for the call duration.
 Code completes partial writes, retries only `EINTR`, and rejects errors, zero
 returns, and inconsistent advancement. Consecutive interruptions are bounded.
-Descriptors close on errors too. Failed flush never falls back or retries.
+Descriptors close on errors too. A failed flush never falls back or retries.
 An absent primitive or one explicitly rejected as unsupported produces
 `:unsupported` with reason; other errors fail execution.
 
 Every record contains file number and absolute record number, each 64 bits,
-then a pattern depending on both numbers and position. Before common start,
+then a pattern depending on both numbers and position. Before the common start,
 each worker performs one warmup batch with the same primitive on its file;
-that batch remains in file and is verified but excluded from samples and
-throughput. All case payloads are prepared before warmup. Sink is full verification
-after closure. After write-descriptor closure, reopen file read-only: check exact
+that batch remains in the file and is verified but excluded from samples and
+throughput. All case payloads are prepared before warmup. The sink is full verification
+after closure. After write-descriptor closure, reopen the file read-only: check exact
 length, record count, and every octet. Buffer preparation and reread are excluded
 from `write`/flush timings; throughput uses workers' actual common interval.
 Workers start from one gate, used once per case, then share no counters or locks
@@ -67,7 +67,7 @@ of preexisting files.
 ## Environment and macOS primitive
 
 Prepared environment: macOS 27.0.1 (26A434), ARM64, Mac16,3, 10 logical CPUs,
-16 GiB RAM, SBCL 2.6.9. Result reports information exposed by SBCL.
+16 GiB RAM, SBCL 2.6.9. The result reports information exposed by SBCL.
 Record media, filesystem, and load during measurements.
 Reference platform remains Linux x86-64 (ADR-0017).
 
@@ -84,13 +84,13 @@ Code uses `sb-posix:fcntl` only on Darwin. FFI and pinning follow the
 
 ## Commands
 
-From repository root, quick verification only:
+From the repository root, quick verification only:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-03-group-commit/run.lisp --check
 ```
 
-Runner finds `core.lisp` relative to `*load-truename*`, compiles to
+The runner finds `core.lisp` relative to `*load-truename*`, compiles to
 `out/core.fasl`, turns warnings into errors, and emits one readable s-expression
 plist. Errors produce explicit status and nonzero exit code.
 Numeric options are parsed without the Lisp reader.
@@ -125,14 +125,14 @@ and record IDs). Real fragmented test verifies 3 records, 6144 bytes;
 Absolute command also works from `/tmp`, always with data under this spike.
 
 Only this short matrix diagnostic ran, with one-second budget and two samples
-per file, without using default benchmark:
+per file, without using the default benchmark:
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script spikes/SPK-03-group-commit/run.lisp --bench --files 4 --batches 1 --samples 2 --seconds 1 --flush fsync,fullfsync
 ```
 
 Both cases return `:ok`: 8 measured flushes, 4 warmups, and 24576 verified bytes
-per case. Result retained locally in Git-ignored `out/diagnostica.lisp`.
+per case. The result is retained locally in Git-ignored `out/diagnostica.lisp`.
 Result verification confirmed one readable plist, consistent counts, expected
 sample lengths, and consistent wall intervals. `out/data/` is empty afterward.
 These few samples verify mechanics, not product targets. Full measurements and
@@ -145,7 +145,7 @@ persistence. Power cuts, system crashes, recovery, SEAL/CRC format, index,
 CSN, rotation, directory synchronization, double writing, batch formation during
 flush, and client latency are not modeled. The spike covers the I/O primitive
 and its discipline. Measurements do not establish ADR-0028 minima; repeat on
-reference platform under controlled load. Bounded-injection checks cover only
+the reference platform under controlled load. Bounded-injection checks cover only
 exercised branches, not all system errors or interleavings.
 Syscall completion alone does not verify media behavior (FM-03).
 Flush cost and queuing on the shared device remain architectural limits to measure;

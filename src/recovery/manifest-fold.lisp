@@ -7,8 +7,8 @@
 ;;; REQ: REQ-REC-001 REQ-FOR-003 REQ-STO-006 REQ-AFF-018
 (declaim (ftype (function (u64 hash-table hash-table u64) null) check-edit-sections))
 (defun check-edit-sections (open closed removed offset)
-  "Pre: liste possedute canoniche. Post: OPEN, CLOSED e REMOVED disgiunti nell'EDIT.
-CORRUPTION-DETECTED con offset assoluto; iterazione limitata al numero noto di CLOSED."
+  "Pre: canonical owned lists. Post: OPEN, CLOSED, and REMOVED disjoint within the EDIT.
+CORRUPTION-DETECTED with absolute offset; iteration bounded by the known CLOSED count."
   (when (and (not (zerop open)) (or (gethash open closed) (gethash open removed)))
     (error 'corruption-detected :reason :manifest-section-conflict :offset offset))
   (loop for id being the hash-keys of closed
@@ -20,8 +20,8 @@ CORRUPTION-DETECTED con offset assoluto; iterazione limitata al numero noto di C
 (declaim (ftype (function (manifest-edit hash-table hash-table u64 u64)
                          (values manifest-state &optional)) initial-manifest-state))
 (defun initial-manifest-state (edit closed removed maximum offset)
-  "Pre: primo EDIT con sezioni disgiunte. Post: snapshot completo, ACTIVE nonzero e high-water.
-CORRUPTION-DETECTED per snapshot assente, ACTIVE zero o NEXT-ID non maggiore di ogni ID."
+  "Pre: first EDIT with disjoint sections. Post: complete snapshot, nonzero ACTIVE, and high-water mark.
+CORRUPTION-DETECTED for a missing snapshot, zero ACTIVE, or NEXT-ID not greater than every ID."
   (unless (= (%edit-flags edit) +edit-complete+)
     (error 'corruption-detected :reason :manifest-missing-snapshot :offset offset))
   (when (zerop (%edit-open-id edit))
@@ -33,9 +33,9 @@ CORRUPTION-DETECTED per snapshot assente, ACTIVE zero o NEXT-ID non maggiore di 
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-AFF-017 REQ-AFF-018
 (declaim (ftype (function (manifest-state u64 hash-table u64) null) check-active-rotation))
 (defun check-active-rotation (state open closed offset)
-  "Pre: delta con sezioni disgiunte. Post: nuovo ACTIVE e chiusura del precedente coincidono.
-OPEN zero o uguale al corrente è invariato; riapertura di CLOSED/REMOVED vietata.
-CORRUPTION-DETECTED con offset assoluto; nessun vincolo OPEN rispetto al high-water."
+  "Pre: delta with disjoint sections. Post: new ACTIVE and closure of the previous ACTIVE agree.
+OPEN zero or equal to the current value means no change; reopening CLOSED/REMOVED is forbidden.
+CORRUPTION-DETECTED with absolute offset; no constraint on OPEN relative to the high-water mark."
   (let ((changed (and (not (zerop open)) (/= open (%state-active state))))
         (closing (not (null (gethash (%state-active state) closed)))))
     (unless (eq changed closing)
@@ -48,9 +48,9 @@ CORRUPTION-DETECTED con offset assoluto; nessun vincolo OPEN rispetto al high-wa
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-TXM-007 REQ-AFF-018
 (declaim (ftype (function (manifest-state hash-table u64) null) check-closed-additions))
 (defun check-closed-additions (state closed offset)
-  "Pre: delta disgiunto; CLOSED canonici. Post: nuovi output ammessi, CLOSED noti solo identici.
-CORRUPTION-DETECTED per riattivazione REMOVED o lunghezza/insieme esiti discordante.
-L'iterazione è limitata al numero noto di CLOSED nel delta."
+  "Pre: disjoint delta; canonical CLOSED entries. Post: new outputs admitted, known CLOSED entries only if identical.
+CORRUPTION-DETECTED for REMOVED reactivation or a mismatched length/outcome set.
+Iteration is bounded by the known CLOSED count in the delta."
   (loop for id being the hash-keys of closed using (hash-value entry)
         do (when (gethash id (%state-removed state))
              (error 'corruption-detected :reason :manifest-reopen :offset offset))
@@ -62,9 +62,9 @@ L'iterazione è limitata al numero noto di CLOSED nel delta."
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-AFF-018
 (declaim (ftype (function (manifest-state hash-table u64) null) check-removed-additions))
 (defun check-removed-additions (state removed offset)
-  "Pre: delta disgiunto; REMOVED canonici. Post: nessuna rimozione ACTIVE o sconosciuta.
-Rimozioni già registrate idempotenti; CORRUPTION-DETECTED con offset assoluto.
-L'iterazione è limitata al numero noto di REMOVED nel delta."
+  "Pre: disjoint delta; canonical REMOVED entries. Post: no removal of ACTIVE or unknown entries.
+Previously recorded removals are idempotent; CORRUPTION-DETECTED with absolute offset.
+Iteration is bounded by the known REMOVED count in the delta."
   (loop for id being the hash-keys of removed
         do (when (= id (%state-active state))
              (error 'corruption-detected :reason :manifest-remove-active :offset offset))
@@ -75,9 +75,9 @@ L'iterazione è limitata al numero noto di REMOVED nel delta."
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-TXM-007 REQ-AFF-018
 (declaim (ftype (function (manifest-state u64 hash-table hash-table u64) null) apply-manifest-delta))
 (defun apply-manifest-delta (state open closed removed maximum)
-  "Pre: intero delta applicabile verificato; tabelle del delta distinte da quelle dello stato.
-Post: solo workspace locale aggiornato; high-water non decresce, 2^64 significa esaurimento.
-INVARIANT-VIOLATION per workspace incoerente; cicli limitati ai conteggi delle liste."
+  "Pre: entire applicable delta verified; delta tables distinct from state tables.
+Post: only local workspace updated; high-water mark does not decrease, 2^64 means exhaustion.
+INVARIANT-VIOLATION for inconsistent workspace; loops bounded by list counts."
   (when (or (eq closed (%state-closed state)) (eq removed (%state-removed state)))
     (error 'invariant-violation :reason :manifest-workspace-alias))
   (let ((previous-next (%state-next-id state)))
@@ -96,9 +96,9 @@ INVARIANT-VIOLATION per workspace incoerente; cicli limitati ai conteggi delle l
 (declaim (ftype (function ((or null manifest-state) manifest-edit hash-table hash-table u64 u64)
                          (values manifest-state &optional)) fold-manifest-edit))
 (defun fold-manifest-edit (state edit closed removed maximum offset)
-  "Pre: payload e budget del prefisso verificati, liste possedute e canoniche.
-Post: stato iniziale o delta applicato interamente; nessun risultato parziale esportato.
-CORRUPTION-DETECTED per applicabilità; prima il primo/unico snapshot, poi transizioni."
+  "Pre: prefix payload and budgets verified, owned canonical lists.
+Post: initial state or delta applied in full; no partial result exported.
+CORRUPTION-DETECTED for applicability; first the first/only snapshot, then transitions."
   (check-edit-sections (%edit-open-id edit) closed removed offset)
   (if (null state)
       (initial-manifest-state edit closed removed maximum offset)

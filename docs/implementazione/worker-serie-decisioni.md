@@ -41,7 +41,7 @@ the only valid association between that logical writer and that Serie and
 preallocates links needed by workers. The factory does not check membership
 or global uniqueness and does not create a pool. Each link belongs to its
 context's creator thread, without reentrancy. Raw worker/Serie APIs are not
-used to change the capabilities of an active segment; captured lease checks
+used to change the capabilities of an active execution slice; captured lease checks
 detect the bypasses described in fixtures without turning them into an
 authorized transfer.
 
@@ -52,7 +52,7 @@ authorized transfer.
 | `:closing` | Current generation and writer lease; no new acquire/pop/ack. Serie lease can be zero after rejection or already completed release. | `:running` or `:finishing`. |
 | `:faulted` | Terminal state and bridge condition retained; no implicit repair, handoff, or release. | Terminal worker; any preexisting terminal diagnosis is retained. |
 
-The token identifies only the link/segment pair. The controller lease
+The token identifies only the link/slice pair. The controller lease
 identifies the controller/generation pair and thread; the batch token
 identifies the worker context/batch pair. These are three distinct
 capabilities, even when their integers match.
@@ -132,7 +132,7 @@ In `%fault-serie-posseduta`:
 The written test `TEST-REQ-AFF-004-WORKER-SERIE-OWNED-FAULT-THREE-INDEPENDENT-TRUTH-PAIRS`,
 in [`worker-bridge.lisp`](../../tests/series/worker-bridge.lisp), declares
 four independent scenarios. The table is a manual reading of assignments
-and the required result, not an instrumental result.
+and the required result, not an instrumented result.
 
 | Fixture scenario | A | B | C | Required decision | Contrast |
 |---|---|---|---|---|---|
@@ -231,7 +231,7 @@ system: every owner/generation/lease/check/classifier change requires
 integration review. The bridge does not read Serie in closing after release,
 even if another worker has already acquired it. A fault after release can
 make only bridge and worker terminal; the caller must stop the Archivio
-when the outcome requires it. Marking a controller from a subsequent segment
+when the outcome requires it. Marking a controller from a subsequent execution slice
 using a stale lease is unsafe.
 
 <a id="limiti-asserzioni-e-macro"></a>
@@ -280,7 +280,7 @@ absence of heap still requires measurement on source after WS-REV-03/04.
 
 A nonlocal exit that signals no `error` is not caught: there is no automatic
 cleanup releasing, canceling, or reusing capabilities. Integration does not
-permit nonlocal abandonment of a segment and requires a coordinator boundary
+permit nonlocal abandonment of a slice and requires a coordinator boundary
 for uncertain outcomes. The bridge does not apply payloads, acknowledge
 clients, prove I/O END from `:written`, reuse buffers, or implement pool
 shutdown or fairness.

@@ -5,7 +5,7 @@
 > **These are not measurements.** They are desk calculations to check whether
 > [preliminary targets](../13-benchmark.md#target-preliminari) are compatible with the physical
 > limits of the [reference hardware](../13-benchmark.md#hardware-di-riferimento). Hardware
-> figures are indicative typical values, to replace with measurements on the actual
+> figures are indicative typical values, to be replaced with measurements on the actual
 > machine (SPK-03, SPK-05). They help identify *where* the limit lies, not predict a result.
 
 <a id="banda-di-scrittura"></a>
@@ -111,7 +111,7 @@ Actual average occupancy is one of SPK-01's measurements.
 
 → Full reconstruction is acceptable as a safety net (the index is derived
 data), not as the normal restart path. Parallel recovery per Serie reduces
-time only if data is distributed across multiple Serie.
+time only if data are distributed across multiple Serie.
 
 <a id="budget-del-writer-logico"></a>
 
@@ -256,7 +256,7 @@ it does not yet attribute throughput, latency, or advantages over TCP to the eng
 | Full text: words, phrases, and filters | unquantified; semantics approved, implementation and binary format to produce | ADR-0053, corpus, and dedicated campaign |
 | Sequential scan, CLEAN | plausible: sequential work bounded by device | I/O priority |
 | Multiseries transactions | plausible if group commit forms large groups | QA-06, QA-07 |
-| Low P95/P99 latency | objectives defined by ADR-0028; compliance during compaction still to measure | SPK-02, SPK-06, engine |
+| Low P95/P99 latency | objectives defined by ADR-0028; compliance during compaction still to be measured | SPK-02, SPK-06, engine |
 
 <a id="revisione-v2-adr-0048"></a>
 

@@ -8,10 +8,10 @@
 (declaim (ftype (function (octets index index spazio-cbor index index (integer 0 100))
                          (values null &optional)) verifica-contenuto-tag-cbor))
 (defun verifica-contenuto-tag-cbor (source start end space span max-nodes max-depth)
-  "Pre: contenuto non vuoto, scratch esclusivo, budget validi inclusa radice.
-Post: un item esatto/minimo, nodi figli <= MAX-NODES-1 e picco <= MAX-DEPTH.
-Il tag non aggiunge profondita o frame. Propaga errori scanner con offset SOURCE;
-dati intatti, scratch riusabile. INVARIANT-VIOLATION per contratto interno."
+  "Pre: nonempty content, exclusive scratch, valid budgets including root.
+Post: one exact/minimal item, child nodes <= MAX-NODES-1 and peak <= MAX-DEPTH.
+The tag adds no depth or frame. Propagates scanner errors with SOURCE offset;
+data intact, scratch reusable. INVARIANT-VIOLATION for the internal contract."
   (unless (and (< start end) (<= end (length source)))
     (error 'invariant-violation :reason :cbor-tag-child-range))
   (unless (= span (- end start))
@@ -36,17 +36,17 @@ dati intatti, scratch riusabile. INVARIANT-VIOLATION per contratto interno."
 (defun scrivi-tag-cbor-minimo (buffer start end source source-start source-end high low space
                               &key (max-bytes +cbor-scan-max-bytes+)
                                 (max-nodes +cbor-scan-max-bytes+) (max-depth +cbor-scan-max-depth+))
-  "Pre: simple u8, span half-open, contenuto non vuoto/minimo, parole u32 stabili;
-destinazione/scratch esclusivi. Post: header MT6 minimo e contenuto esatto,
-un solo NEXT, solo [START,NEXT) cambia. Budget byte/nodi includono il tag;
-MAX-DEPTH conta solo array/map e rimane invariato per il contenuto.
-Tutti gli errori pubblici precedono la scrittura e preservano gli interi array;
-offset NIL nel preflight o assoluto SOURCE nello scanner. Preflight conserva
-SPACE; parsing fallito lo puo sporcare, riusabile dopo reset. A successo
-descrive il contenuto, senza il nodo tag aggiunto. BUFFER=SOURCE solo disgiunto
-dal footprint completo, alias scratch rifiutati. Nessuna semantica dei tag.
-INVARIANT-VIOLATION interno senza rollback, anche dalla copia MT2/3.
-Lavoro limitato a SPAN*102; nessun AST, thread, attesa, I/O o pubblicazione."
+  "Pre: simple u8, half-open spans, nonempty/minimal content, stable u32 words;
+exclusive destination/scratch. Post: minimal MT6 header and exact content,
+one NEXT only, only [START,NEXT) changes. Byte/node budgets include the tag;
+MAX-DEPTH counts only arrays/maps and remains unchanged for the content.
+All public errors precede writing and preserve entire arrays;
+offset NIL in preflight or absolute SOURCE in the scanner. Preflight preserves
+SPACE; failed parsing may dirty it, reusable after reset. On success,
+describes the content without the added tag node. BUFFER=SOURCE only disjoint
+from the complete footprint; scratch aliases rejected. No tag semantics.
+Internal INVARIANT-VIOLATION without rollback, including from the MT2/3 copy.
+Work bounded to SPAN*102; no AST, thread, waiting, I/O, or publication."
   (multiple-value-bind (span header-size item-size)
       (check-input-tag-cbor buffer start end source source-start source-end high low space
                             max-bytes max-nodes max-depth)

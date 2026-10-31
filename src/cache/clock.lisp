@@ -6,9 +6,9 @@
 ;;; REQ: REQ-CCH-001 REQ-CCH-004
 (declaim (ftype (function (classe-cache cache-set u32 u32 u32 u32) boolean) gia-in-cache-p))
 (defun gia-in-cache-p (class set high low offset size)
-  "Pre: mutex della striscia detenuto; input verificato separatamente.
-Post: presenza di un posto leggibile per la stessa location, al massimo otto tag.
-Nessuna prova dell'integrità dei byte in cache: ogni lettura li verifica di nuovo."
+  "Pre: stripe mutex held; input verified separately.
+Post: presence of a readable slot for the same location, at most eight tags.
+No proof of cached byte integrity: every read verifies them again."
   (let ((base (* set +cache-ways+)))
     (dotimes (way +cache-ways+ nil)
       (let* ((slot (+ base way)) (sequence (aref (classe-cache-sequences class) slot)))
@@ -22,8 +22,8 @@ Nessuna prova dell'integrità dei byte in cache: ogni lettura li verifica di nuo
 ;;; REQ: REQ-CCH-001 REQ-CCH-004 REQ-AFF-008
 (declaim (ftype (function (classe-cache cache-slot) boolean) credito-posto-cache-p))
 (defun credito-posto-cache-p (class slot)
-  "Pre: mutex della striscia detenuto. Post: T se una nuova pubblicazione pari è possibile.
-Sequenza dispari/esaurita o disable preesistente => posto disabilitato, senza wrap né errore del DB."
+  "Pre: stripe mutex held. Post: T if a new even publication is possible.
+Odd/exhausted sequence or preexisting disable => slot disabled, without wrap or DB error."
   (let ((sequence (aref (classe-cache-sequences class) slot)))
     (declare (type u64 sequence))
     (when (or (plusp (aref (classe-cache-disabled class) slot))
@@ -35,8 +35,8 @@ Sequenza dispari/esaurita o disable preesistente => posto disabilitato, senza wr
 ;;; REQ: REQ-CCH-001 REQ-CCH-004
 (declaim (ftype (function (classe-cache cache-set) (or null cache-slot)) scegli-vittima-cache))
 (defun scegli-vittima-cache (class set)
-  "Pre: mutex della striscia detenuto. Post: posto con credito, preferendo vuoto/rifiutato/freddo.
-Al massimo due giri di otto posti; i reader possono riaccendere tutti i bit => NIL, mai attesa."
+  "Pre: stripe mutex held. Post: slot with credit, preferring empty/rejected/cold.
+At most two passes over eight slots; readers may set all bits again => NIL, never waiting."
   (let ((base (* set +cache-ways+)) (hands (classe-cache-hands class)))
     (dotimes (visit (* 2 +cache-ways+) nil)
       (let* ((hand (logand (aref hands set) (1- +cache-ways+))) (slot (+ base hand)))

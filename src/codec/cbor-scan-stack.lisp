@@ -5,8 +5,8 @@
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (spazio-cbor) (values (integer 0 6) &optional)) tipo-frame-cbor))
 (defun tipo-frame-cbor (space)
-  "Pre: scratch esclusivo attivo. Post: kind 0..6 del frame corrente.
-INVARIANT-VIOLATION per top/kind incoerente; nessuna mutazione."
+  "Pre: active exclusive scratch. Post: kind 0..6 of the current frame.
+INVARIANT-VIOLATION for inconsistent top/kind; no mutation."
   (unless (< (spazio-cbor-top space) +cbor-scan-frames+)
     (error 'invariant-violation :reason :cbor-stack-top))
   (let ((kind (aref (spazio-cbor-kinds space) (spazio-cbor-top space))))
@@ -17,8 +17,8 @@ INVARIANT-VIOLATION per top/kind incoerente; nessuna mutazione."
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (spazio-cbor) (values null &optional)) depila-frame-cbor))
 (defun depila-frame-cbor (space)
-  "Pre: frame non radice completato. Post: top diminuito, depth solo per array/map.
-INVARIANT-VIOLATION per root o conteggio profondita incoerente."
+  "Pre: nonroot frame completed. Post: top decreased, depth only for array/map.
+INVARIANT-VIOLATION for root or inconsistent depth count."
   (let ((kind (tipo-frame-cbor space)))
     (when (zerop (spazio-cbor-top space))
       (error 'invariant-violation :reason :cbor-pop-root))
@@ -32,8 +32,8 @@ INVARIANT-VIOLATION per root o conteggio profondita incoerente."
 (declaim (ftype (function (spazio-cbor (integer 1 6) (integer 0 16777216))
                          (values null &optional)) empila-frame-cbor))
 (defun empila-frame-cbor (space kind remaining)
-  "Pre: arita verificata e profondita ammessa. Post: un frame aggiunto, picco aggiornato.
-INVARIANT-VIOLATION su capacita o depth; 102 slot includono root e stringa indefinita."
+  "Pre: arity verified and depth admitted. Post: one frame added, peak updated.
+INVARIANT-VIOLATION for capacity or depth; 102 slots include root and indefinite string."
   (unless (< (spazio-cbor-top space) (1- +cbor-scan-frames+))
     (error 'invariant-violation :reason :cbor-stack-capacity))
   (when (and (<= kind 4) (>= (spazio-cbor-depth space) +cbor-scan-max-depth+))
@@ -50,8 +50,8 @@ INVARIANT-VIOLATION su capacita o depth; 102 slot includono root e stringa indef
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (spazio-cbor) (values null &optional)) inizia-figlio-cbor))
 (defun inizia-figlio-cbor (space)
-  "Pre: item terminale non-tag ammesso dal contesto. Post: un solo figlio consumato.
-I chunk non consumano figli del contenitore esterno; INVARIANT-VIOLATION su arita/fase."
+  "Pre: terminal non-tag item admitted by the context. Post: exactly one child consumed.
+Chunks do not consume children of the outer container; INVARIANT-VIOLATION for arity/phase."
   (let* ((kind (tipo-frame-cbor space)) (top (spazio-cbor-top space))
          (remaining (aref (spazio-cbor-remaining space) top)))
     (declare (type (integer 0 6) kind) (type (integer 0 101) top) (type u32 remaining))
@@ -71,8 +71,8 @@ I chunk non consumano figli del contenitore esterno; INVARIANT-VIOLATION su arit
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (spazio-cbor index u32) (values boolean &optional)) esito-radice-cbor))
 (defun esito-radice-cbor (space end remaining)
-  "Pre: frame root e cursore entro END. Post: T solo per root esatta completata.
-CORRUPTION-DETECTED :cbor-trailing prima dei byte residui; invarianti su arita/depth/tag."
+  "Pre: root frame and cursor within END. Post: T only for an exact completed root.
+CORRUPTION-DETECTED :cbor-trailing before remaining bytes; invariants on arity/depth/tag."
   (unless (<= remaining 1)
     (error 'invariant-violation :reason :cbor-root-state))
   (unless (zerop (spazio-cbor-depth space))
@@ -87,9 +87,9 @@ CORRUPTION-DETECTED :cbor-trailing prima dei byte residui; invarianti su arita/d
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (spazio-cbor index) (values boolean &optional)) svuota-frame-cbor))
 (defun svuota-frame-cbor (space end)
-  "Pre: cursore entro END. Post: al piu 102 pop, T solo per root completata a END.
-CORRUPTION-DETECTED :cbor-trailing al cursore prima di leggere la coda;
-INVARIANT-VIOLATION per range, root/fase o drain incoerente."
+  "Pre: cursor within END. Post: at most 102 pops, T only for root completed at END.
+CORRUPTION-DETECTED :cbor-trailing at the cursor before reading the tail;
+INVARIANT-VIOLATION for inconsistent range, root/phase, or drain."
   (unless (<= (spazio-cbor-cursor space) end)
     (error 'invariant-violation :reason :cbor-stack-range))
   (loop repeat +cbor-scan-frames+

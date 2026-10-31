@@ -12,15 +12,15 @@
 
 ;;; REQ: REQ-IDX-008 REQ-AFF-008
 (defstruct (politica-indice (:constructor %make-politica-indice (rientro)) (:copier nil))
-  "Pre: percentuale 1..99 verificata. Post: politica automatica immutabile.
-Nessuna condizione oltre ai tipi del costruttore privato; nessuna risorsa acquisita."
+  "Pre: percentage 1..99 verified. Post: immutable automatic policy.
+No condition beyond private constructor types; no resource acquired."
   (rientro 75 :type (integer 1 99) :read-only t))
 
 ;;; REQ: REQ-IDX-008 REQ-AFF-008
 (declaim (ftype (function (&key (:rientro-percentuale t)) politica-indice) crea-politica-indice))
 (defun crea-politica-indice (&key (rientro-percentuale 75))
-  "Pre: configurazione fuori dal lookup. Post: politica automatica con deadband.
-INVALID-ARGUMENT per percentuale non intera o fuori 1..99; alloca solo la configurazione."
+  "Pre: configuration outside lookup. Post: automatic policy with deadband.
+INVALID-ARGUMENT for a noninteger percentage or one outside 1..99; allocates only configuration."
   (unless (and (typep rientro-percentuale 'fixnum) (<= 1 rientro-percentuale 99))
     (error 'invalid-argument :reason :index-mode-return-percent))
   (%make-politica-indice rientro-percentuale))

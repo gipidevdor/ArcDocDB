@@ -7,8 +7,8 @@
 (declaim (ftype (function (active-recuperato arcdocdb.io:file-io u64 keyword index) control-recuperato)
                 verifica-active-stabilizzabile))
 (defun verifica-active-stabilizzabile (recovered file id state size)
-  "Pre: riga del set aperto, token ACTIVE canonico. Post: stesso FD, ID, EOF e CONTROL ancora aperto.
-INVALID-ARGUMENT per fonte diversa, IO-FAULT per lifetime; nessun nome letto o modificato."
+  "Pre: open-set row, canonical ACTIVE token. Post: same FD, ID, EOF, and still-open CONTROL.
+INVALID-ARGUMENT for different source, IO-FAULT for lifetime; no name read or modified."
   (let ((segment (arcdocdb.recovery.active::active-recuperato-segment recovered))
         (control (arcdocdb.recovery.active::active-recuperato-control recovered)))
     (unless (and (eq state :active) (= id (arcdocdb.recovery.active::id-active-recuperato recovered))
@@ -24,8 +24,8 @@ INVALID-ARGUMENT per fonte diversa, IO-FAULT per lifetime; nessun nome letto o m
 (declaim (ftype (function (arcdocdb.recovery.closed:closed-recuperato arcdocdb.io:file-io u64 keyword index)
                          control-recuperato) verifica-closed-stabilizzabile))
 (defun verifica-closed-stabilizzabile (recovered file id state size)
-  "Pre: riga del set aperto, token CLOSED canonico. Post: stesso FD/ID e P del CONTROL, P entro EOF.
-INVALID-ARGUMENT per fonte diversa; IO-FAULT per lifetime; ID u64 incluso zero senza restringimenti."
+  "Pre: open-set row, canonical CLOSED token. Post: same FD/ID and CONTROL P, P within EOF.
+INVALID-ARGUMENT for different source; IO-FAULT for lifetime; unrestricted u64 ID including zero."
   (let ((control (arcdocdb.recovery.closed::closed-recuperato-control recovered)))
     (unless (and (eq state :closed) (= id (arcdocdb.recovery.closed::closed-recuperato-id recovered))
                  (eq file (arcdocdb.recovery.closed::closed-recuperato-input recovered))

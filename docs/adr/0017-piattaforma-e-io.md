@@ -32,8 +32,8 @@ on macOS/ARM64; the “Common Lisp only” constraint excludes C libraries for I
 5. **I/O model:** blocking, executed by an **I/O pool** separate from the compute pool
    ([ADR-0011](0011-thread-pool-dinamico.md)): there may be many more I/O workers than
    cores because they spend their time waiting. Asynchronous I/O (io_uring) is not adopted: under
-   the Common Lisp only constraint, it would require a complex interface without the upper end
-   of the targets requiring it ([estimates](../valutazione/stime-ordine-di-grandezza.md#letture-puntuali)).
+   the Common Lisp only constraint, it would require a complex interface even though the upper end
+   of the targets does not require it ([estimates](../valutazione/stime-ordine-di-grandezza.md#letture-puntuali)).
 6. **Fault injection:** all writes, reads, and flushes go through the `io` module, which
    tests can replace with an implementation that simulates crashes and partial writes.
 

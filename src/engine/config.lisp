@@ -6,8 +6,8 @@
 ;;; REQ: REQ-REC-001 REQ-LIM-003 REQ-AFF-008 REQ-IDX-010
 (declaim (ftype (function (octets octets t t t t t t t) null) verifica-configurazione-motore))
 (defun verifica-configurazione-motore (archive-id series-id version clock observer bytes records segments frame)
-  "Pre: configurazione caller prima dell'I/O. Post: UUID e budget finiti coerenti, clock iniettabile.
-INVALID-ARGUMENT prima di risorse/effetti; M1 usa lo stesso formato canonico v1/v2."
+  "Pre: caller configuration before I/O. Post: consistent UUIDs and finite budgets, injectable clock.
+INVALID-ARGUMENT before resources/effects; M1 uses the same canonical v1/v2 format."
   (unless (and (= (length archive-id) 16) (= (length series-id) 16) (member version '(1 2))
                (functionp clock) (typep observer '(or null function)))
     (error 'invalid-argument :reason :engine-configuration))
@@ -20,9 +20,9 @@ INVALID-ARGUMENT prima di risorse/effetti; M1 usa lo stesso formato canonico v1/
 ;;; REQ: REQ-REC-001 REQ-IDX-001 REQ-MVC-008 REQ-AFF-008
 (declaim (ftype (function (motore index index u32 u32) null) prepara-ispezione-motore))
 (defun prepara-ispezione-motore (engine capacity arena seed-high seed-low)
-  "Pre: configurazione valida, nessun I/O. Post: indice candidato e vista readonly per recovery, nessun writer.
-CSN zero del solo contesto d'ispezione non e' operativo; quello finale deriva dal gate completo.
-Errori delle factory prima dell'apertura; nessuna admission o seed derivato da input non verificato."
+  "Pre: valid configuration, no I/O. Post: candidate index and read-only recovery view, no writer.
+Zero CSN in the inspection-only context is not operational; the final one derives from the complete gate.
+Factory errors before opening; no admission or seed derived from unverified input."
   (b:scrivi-u64 (motore-source-token engine) 0 (motore-version engine))
   (let* ((registry (arcdocdb.csn:crea-registro-csn :capacity 16))
          (snapshots (arcdocdb.mvcc:crea-registro-snapshot registry 4 1000000000 1000000))

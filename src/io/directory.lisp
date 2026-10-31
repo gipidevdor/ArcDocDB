@@ -6,7 +6,7 @@
 ;;; REQ: REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (t t t) null) verifica-budget-directory))
 (defun verifica-budget-directory (max-names max-total-name-bytes max-name-bytes)
-  "Pre: budget del chiamante. Post: limiti interi finiti e nome di 1..255 byte, senza I/O."
+  "Pre: caller's budgets. Post: finite integer limits and 1..255-byte name, without I/O."
   (unless (and (typep max-names 'index) (typep max-total-name-bytes 'index)
                (typep max-name-bytes '(integer 1 255)))
     (error 'invalid-argument :reason :io-directory-budget))
@@ -15,8 +15,8 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (t t index index index) simple-vector) copia-nomi-directory))
 (defun copia-nomi-directory (names complete max-names max-total-name-bytes max-name-bytes)
-  "Pre: callback terminato, risultato preso in prestito. Post: vettore/nomi privati byte per byte.
-Rifiuta risultato incompleto o fuori contratto; budget applicati anche ai nomi estranei allo storage."
+  "Pre: callback finished, borrowed result. Post: private vector/names copied byte for byte.
+Rejects incomplete results or results outside the contract; budgets also applied to names unrelated to storage."
   (unless (and (eq complete t) (simple-vector-p names))
     (error 'invariant-violation :reason :io-directory-result))
   (when (> (length names) max-names)
@@ -42,10 +42,10 @@ Rifiuta risultato incompleto o fuori contratto; budget applicati anche ai nomi e
                           (values simple-vector (eql t) &optional)) elenca-directory))
 (defun elenca-directory (directory &key (max-names 65536) (max-total-name-bytes 16777216)
                                       (max-name-bytes 255))
-  "Pre: parent aperto, namespace esclusivo/stabile e nessuna close concorrente.
-Post: tutti i nomi esclusi . e .. in vettore privato, T solo dopo EOF e cleanup riuscito.
-Nomi Latin1 preservano byte, nessuna identita'/CRC/durability implicita; parent/frontiere intatti.
-INVALID-ARGUMENT, RESOURCE-EXHAUSTED, IO-FAULT o callback assente UNSUPPORTED senza fallback."
+  "Pre: open parent, exclusive/stable namespace, and no concurrent close.
+Post: all names except . and .. in a private vector, T only after EOF and successful cleanup.
+Latin1 names preserve bytes, no implicit identity/CRC/durability; parent/frontiers intact.
+INVALID-ARGUMENT, RESOURCE-EXHAUSTED, IO-FAULT, or UNSUPPORTED for absent callback without fallback."
   (verifica-budget-directory max-names max-total-name-bytes max-name-bytes)
   (esigi-aperto directory :directory)
   (let* ((backend (file-backend directory))

@@ -5,8 +5,8 @@
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (motore opzione-indice-paginato t t) null) preflight-costruzione-immagine))
 (defun preflight-costruzione-immagine (engine option budget pages)
-  "Pre: owner READY, opzione validata dalla factory. Post: payload finito e nome libero, nessun file creato.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED ordinari preservano admission; IO-FAULT del namespace rende FAULTED."
+  "Pre: READY owner, option validated by factory. Post: finite payload and free name, no file created.
+Ordinary INVALID-ARGUMENT/RESOURCE-EXHAUSTED preserve admission; namespace IO-FAULT causes FAULTED."
   (unless (and (typep budget '(integer 0 536870912)) (typep pages '(integer 1 65536)))
     (error 'invalid-argument :reason :engine-image-build-configuration))
   (id-immagine-costruzione option)
@@ -23,11 +23,11 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED ordinari preservano admission; IO-FAULT del 
 (declaim (ftype (function (motore opzione-indice-paginato &key (:max-build-payload t) (:max-pages t))
                          opzione-indice-paginato) costruisci-indice-paginato-motore))
 (defun costruisci-indice-paginato-motore (engine option &key (max-build-payload 67108864) (max-pages 65536))
-  "Pre: owner READY seriale, nome derivato nuovo; budget payload distinto da metadati/GC e file.
-Post: stesso OPTION riutilizzabile allo startup dopo sigillo/flush/verifica, FD locali chiusi.
-Backend corrente e dati restano invariati; la prossima scrittura rende obsoleta l'immagine.
-Preflight ordinario senza effetti; errore/nonlocal exit dopo ammissione => FAULTED, causa preservata.
-Nessun retry, cancellazione o nuova decisione durevole: questa API prepara un derivato privato."
+  "Pre: serial READY owner, new derivative name; payload budget distinct from metadata/GC and file.
+Post: same OPTION reusable at startup after seal/flush/verification, local FDs closed.
+Current backend and data unchanged; next write makes image obsolete.
+Ordinary preflight without effects; error/nonlocal exit after admission => FAULTED, cause preserved.
+No retry, cancellation, or new durable decision: this API prepares a private derivative."
   (esigi-motore-pronto engine)
   (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (preflight-costruzione-immagine engine option max-build-payload max-pages)

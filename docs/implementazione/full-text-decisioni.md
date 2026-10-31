@@ -11,7 +11,7 @@ not independent review or complete-engine qualification.
 
 ## C1 frame compound decisions
 
-Internal assertions are always active; when core is connected to a worker,
+Internal assertions are always active; when the core is connected to a worker,
 that boundary must convert `invariant-violation` into Serie fail-stop.
 Public-rejection tests check condition, reason, and byte preservation.
 
@@ -47,8 +47,8 @@ only after comparing with remainder; padding calculated within capacity; u64
 identifiers without lossy conversion. Writer preflight before destination mutation.
 Oracle fixture and CRC constructed separately from product.
 
-Layout check does not yet establish INV-I5: META, comparison with
-authoritative descriptor and hint, dictionary/position/length validation missing.
+The layout check does not yet establish INV-I5: META, comparison with
+authoritative descriptor and hint, dictionary/position/length validation are missing.
 Test `REQ-SEC-008-NO-SEMANTIC-PROMOTION` makes this limit observable.
 
 <a id="lettura-2--ownership-lavoro-e-risultati"></a>
@@ -57,15 +57,15 @@ Test `REQ-SEC-008-NO-SEMANTIC-PROMOTION` makes this limit observable.
 
 Transitions reread: analysis `idle/done/failed -> decode -> … -> done/failed`;
 run `building -> copying -> building -> heap-build -> heap-sort -> sealed/failed`.
-Partial analysis result inaccessible; unsealed run unsearchable.
-Query changes only its own work counter. Unicode tables and sealed runs
-shared read-only; no write between Serie per operation.
+A partial analysis result is inaccessible; an unsealed run is unsearchable.
+A query changes only its own work counter. Unicode tables and sealed runs
+are shared read-only; no write between Serie per operation.
 
 Memory limits precede constructor allocations. Run limits
 precede scratch acquisition; analysis, comparison, copy, and sort limits
 produce explicit errors. Phrases check positions and repetitions within same
-row/field; component does not merge versions or check visibility by itself.
-No I/O, commit, or durable cleanup introduced here; INV-I4/I6 still require
+row/field; the component does not merge versions or check visibility by itself.
+No I/O, commit, or durable cleanup is introduced here; INV-I4/I6 still require
 connection with writer and Query Engine. Allocation measurements and parallel tests
-separate from instrumented coverage. Full repository check
+are separate from instrumented coverage. The full repository check is
 recorded with source hashes, environment, stdout, stderr, and exit code.

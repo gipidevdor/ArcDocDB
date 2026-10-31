@@ -1,6 +1,8 @@
 <a id="adr-0052--header-di-controllog-e-multiserielog"></a>
 
-# ADR-0052 — Headers of control.log and multiserie.log
+<a id="adr-0052--headers-of-controllog-and-multiserielog"></a>
+
+# ADR-0052 — Headers for control.log and multiserie.log
 
 - **Status:** Accepted; format completion before the first codec
 - **Date:** 2026-10-08
@@ -14,10 +16,10 @@
 
 ## Context
 
-Both logs provide for a 64-byte header with magic, version, identity, and CRC.
+Both log formats specify a 64-byte header with magic, version, identity, and CRC.
 The offset table was defined only for segments. A codec requires
- a complete layout and comparison with the authoritative identity before passing
- the version to the record decoder.
+a complete layout and comparison with the authoritative identity before passing
+the version to the record decoder.
 
 <a id="decisione"></a>
 
@@ -27,17 +29,17 @@ Both logs use this header in versions 1 and 2:
 
 | Offset | Type | Field |
 |---|---|---|
-| 0 | `char[8]` | `ARCDCTL1` for control; `ARCDMSL1` for multiseries |
+| 0 | `char[8]` | `ARCDCTL1` for control; `ARCDMSL1` for multiseries transactions |
 | 8 | `u16` | record format version, little-endian |
 | 10 | `byte[6]` | reserved, zero |
-| 16 | `byte[16]` | Serie identity for control; Archivio identity for multiseries |
+| 16 | `byte[16]` | Serie identity for control; Archivio identity for multiseries transactions |
 | 32 | `byte[24]` | reserved, zero |
 | 56 | `u32` | CRC32C of bytes 0–55 |
 | 60 | `byte[4]` | reserved, zero, checked separately from the CRC |
 
 The Archivio identity is fixed at 16 opaque bytes, with exact comparison;
 this completes a previously undefined detail. The codec does not generate identities.
-The magic remains unchanged between v1 and v2; the version field decides. Origin,
+The magic remains unchanged between v1 and v2; the version field identifies the format. Origin,
 segment-id, and timestamp are not fields in these headers. The zero identifier
 of log SEALs remains in the SEAL and does not replace the header identity.
 

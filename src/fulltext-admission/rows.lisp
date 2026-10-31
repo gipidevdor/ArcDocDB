@@ -6,9 +6,9 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text u32) index) posizione-riga-riserve))
 (defun posizione-riga-riserve (pool row)
-  "Pre: pool verificato, directory ordinata privata, capacita <=1024.
-Post: lower-bound in 0..count con al piu 11 confronti; non legge slot o body.
-INVARIANT-VIOLATION => pool FAULTED se contatori o convergenza incoerenti."
+  "Pre: verified pool, private sorted directory, capacity <=1024.
+Post: lower-bound in 0..count with at most 11 comparisons; does not read slots or body.
+INVARIANT-VIOLATION => pool FAULTED if counters or convergence are inconsistent."
   (let ((low 0) (high (riserve-full-text-row-count pool)) (rows (riserve-full-text-rows pool)))
     (unless (<= high (length rows) 1024) (errore-interno-riserve pool :fulltext-row-count))
     (dotimes (i 11)
@@ -23,8 +23,8 @@ INVARIANT-VIOLATION => pool FAULTED se contatori o convergenza incoerenti."
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-CON-002
 (declaim (ftype (function (riserve-full-text index u32) riserva-full-text) slot-riga-riserve))
 (defun slot-riga-riserve (pool position row)
-  "Pre: lower-bound corrispondente a ROW. Post: slot vivo canonico e stessa row/generation.
-Non espone dati; mapping perso o slot cancellato => pool FAULTED prima del ritorno."
+  "Pre: lower-bound matching ROW. Post: canonical live slot and same row/generation.
+Does not expose data; lost mapping or canceled slot => pool FAULTED before return."
   (unless (and (< position (riserve-full-text-row-count pool))
                (= row (aref (riserve-full-text-rows pool) position)))
     (errore-interno-riserve pool :fulltext-row-entry))
@@ -42,9 +42,9 @@ Non espone dati; mapping perso o slot cancellato => pool FAULTED prima del ritor
 (declaim (ftype (function (t t t) (values (member :absent :pending :transferred) (or null riserva-full-text) index &optional))
                 trova-riga-trasferita-full-text))
 (defun trova-riga-trasferita-full-text (pool lease row)
-  "Pre: lease del writer e row u32. Post: stato, slot trasferito/generation oppure NIL/0.
-COPYING/READY restituiscono PENDING senza handle: il ponte PUT conserva ownership privata.
-ABSENT non certifica uno snapshot. Nessuna allocazione, attesa, I/O o visibilita MVCC."
+  "Pre: writer lease and u32 row. Post: state, transferred slot/generation, or NIL/0.
+COPYING/READY return PENDING without a handle: the PUT bridge retains private ownership.
+ABSENT does not certify a snapshot. No allocation, waiting, I/O, or MVCC visibility."
   (verifica-writer-riserve pool lease)
   (unless (typep row 'u32) (error 'invalid-argument :reason :fulltext-row-input))
   (let ((position (posizione-riga-riserve pool row)))

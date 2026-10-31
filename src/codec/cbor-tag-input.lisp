@@ -7,9 +7,9 @@
 ;;; REQ: REQ-CBR-007 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (octets octets t) (values null &optional)) check-spazio-tag-cbor))
 (defun check-spazio-tag-cbor (buffer source space)
-  "Pre: array verificati, SPACE esterno. Post: scratch separato dai dati.
-INVALID-ARGUMENT :cbor-workspace o :cbor-tag-workspace-alias, offset NIL.
-Nessuna lettura di contenuto, reset o mutazione degli array."
+  "Pre: arrays verified, external SPACE. Post: scratch separate from data.
+INVALID-ARGUMENT :cbor-workspace or :cbor-tag-workspace-alias, offset NIL.
+No content read, reset, or array mutation."
   (unless (typep space 'spazio-cbor)
     (error 'invalid-argument :reason :cbor-workspace))
   (when (or (eq buffer (spazio-cbor-kinds space)) (eq source (spazio-cbor-kinds space)))
@@ -20,10 +20,10 @@ Nessuna lettura di contenuto, reset o mutazione degli array."
 (declaim (ftype (function (index index index u32 u32 index)
                          (values (member 1 2 3 5 9) index &optional)) dimensioni-tag-cbor))
 (defun dimensioni-tag-cbor (start end span high low max-bytes)
-  "Pre: range, contenuto non vuoto, parole e limite verificati. Post: dimensioni MT6.
-SPAN verificato prima della somma; nessun numero u64 ricomposto.
-RESOURCE-EXHAUSTED :cbor-tag-byte-budget o :cbor-tag-capacity, offset NIL;
-INVARIANT-VIOLATION per precondizioni interne; nessun byte letto o scritto."
+  "Pre: range, nonempty content, words, and limit verified. Post: MT6 sizes.
+SPAN verified before addition; no u64 number reassembled.
+RESOURCE-EXHAUSTED :cbor-tag-byte-budget or :cbor-tag-capacity, offset NIL;
+INVARIANT-VIOLATION for internal preconditions; no byte read or written."
   (unless (<= start end)
     (error 'invariant-violation :reason :cbor-tag-dimension-range))
   (unless (plusp span)
@@ -43,9 +43,9 @@ INVARIANT-VIOLATION per precondizioni interne; nessun byte letto o scritto."
 (declaim (ftype (function (octets index index octets index index)
                          (values null &optional)) check-overlap-tag-cbor))
 (defun check-overlap-tag-cbor (buffer start next source source-start source-end)
-  "Pre: footprint completo e contenuto verificati. Post: span disgiunti.
-INVALID-ARGUMENT :cbor-tag-overlap, offset NIL; confini toccanti ammessi.
-INVARIANT-VIOLATION per range interni; nessun byte letto o scritto."
+  "Pre: complete footprint and content verified. Post: disjoint spans.
+INVALID-ARGUMENT :cbor-tag-overlap, offset NIL; touching boundaries allowed.
+INVARIANT-VIOLATION for internal ranges; no byte read or written."
   (unless (and (< start next) (<= next (length buffer)))
     (error 'invariant-violation :reason :cbor-tag-target-span))
   (unless (and (< source-start source-end) (<= source-end (length source)))
@@ -59,10 +59,10 @@ INVARIANT-VIOLATION per range interni; nessun byte letto o scritto."
                          (values index (member 1 2 3 5 9) index &optional)) check-input-tag-cbor))
 (defun check-input-tag-cbor (buffer start end source source-start source-end high low space
                             max-bytes max-nodes max-depth)
-  "Pre: argomenti esterni. Post: span/testata/dimensione pronti alla scansione.
-Precedenza range/source-vuoto/parole/space-alias/limiti/byte/capacita/overlap/nodi.
-INVALID-ARGUMENT o RESOURCE-EXHAUSTED typed, offset NIL, dati e scratch intatti.
-INVARIANT-VIOLATION per risultati interni incoerenti; nessun parsing o reset."
+  "Pre: external arguments. Post: span/header/size ready for scanning.
+Precedence: range/empty-source/words/space-alias/limits/bytes/capacity/overlap/nodes.
+Typed INVALID-ARGUMENT or RESOURCE-EXHAUSTED, offset NIL, data and scratch intact.
+INVARIANT-VIOLATION for inconsistent internal results; no parsing or reset."
   (check-span-string-cbor-write buffer start end :cbor-range)
   (let ((span (check-span-string-cbor-write source source-start source-end :cbor-tag-source-range)))
     (declare (type index span))

@@ -9,21 +9,23 @@ or historical references. The [final results](cbor-float-scrittura-risultati.md)
 present the campaign's overall outcome and archive preservation.
 
 
-Reading dated 2026-10-13 of frozen sources, without LOAD of product,
+This reading, dated 2026-10-13, examines frozen sources without loading the product,
 driver, auditor, or data helper. Reports, SB-COVER state, and sources
 were read as data with READ-EVAL NIL, standard readtable,
 CL-USER, and EOF; sources were not executed. Only an empty package
 was created to read qualified condition symbols.
 The preceding campaign's helper was studied statically.
 
-This reading has an author distinct from product and corpus. The same
+This reading's author is distinct from the product and corpus authors. The same
 author did, however, write `tools/cbor-float-write-audit.lisp`: reading
 that program's result is not independent review of their own
 code. The coordinator separately read the complete C4 code.
 
 <a id="identità-e-registri"></a>
 
-## Identity and registers
+<a id="identity-and-registers"></a>
+
+## Identity and records
 
 - Narrow: Git blob `cd5749edc0a757ee3a5b470eda566a6685d32fd8`.
 - Write: Git blob `03c6aed61e2c243d8b1a6c4332ce1837c4e9a77c`.
@@ -34,18 +36,18 @@ code. The coordinator separately read the complete C4 code.
   `--bench` on record `4000905677-command-32530-0/report.lisp`, with
   both product Git blobs passed explicitly.
 
-The two requested registers and original benchmark are OK, exit 0,
+The two requested records and original benchmark are OK, exit 0,
 source-consistency STABLE; each declares 738 entries in the
 before/after snapshot, compared equal. The internal benchmark declares 167
 before/after MD5 entries, equal. Inventory completeness or
 authenticity is not inferred from these metadata. Git blobs selected in the audit
-register match the three values above.
+record match the three values above.
 
 <a id="conteggi-di-coverage"></a>
 
 ## Coverage counts
 
-State contains 274 saved files. Exactly one entry
+The coverage state contains 274 saved files. Exactly one entry
 is present for each of the two new absolute paths. Path vectors and
 bit-vectors have the same length; expression paths begin with a
 number, branch paths with a keyword, and observed bits are 0/1.
@@ -64,7 +66,7 @@ The row parser respects SB-COVER's implicit TR closure:
 when the next TR precedes a closing tag, it closes the previous
 row. It does not merge the header row with the next row.
 
-Classification syntactically maps raw paths to read forms,
+Classification syntactically maps raw paths to source forms read as data,
 reversing SB-COVER paths and removing THEN/ELSE to locate the
 predicate. It does not demonstrate unreachability or condition coverage.
 
@@ -119,17 +121,17 @@ matcher: the preceding predicate is not a child of the `t` branch.
 The site is explicitly identified, without reinterpreting the two
 outcomes as covered or removing them. In total, thirteen directly associated guard
 outcomes and two numeric fallbacks remain, fifteen missing.
-No MC/DC claim, C1 gate, or unreachability demonstration.
+These results make no MC/DC claim, close no C1 gate, and do not demonstrate unreachability.
 
 <a id="log-della-campagna-di-coverage"></a>
 
 ## Coverage-campaign log
 
-Register 32850 preserves complete stdout with 18 successful tests, including:
+Record 32850 preserves complete stdout with 18 successful tests, including:
 65,536 half values and 131,072 expansions, 196,608 successes and as many capacity
 rejections; fuzz 2,048 cases with 768 successes, 256 capacity, 128 AI,
 128 HIGH, 128 LOW, 256 words, and 384 ranges/destinations; two waves
-of 16,384 items each on two reused workers. Observed sinks per wave
+of 16,384 items each on two reused workers. Observed sinks per wave are
 2,115,584/2,148,352; overlap 2,733/2,719 ticks with 1,000,000 ticks/s.
 These intervals do not prove scaling or simultaneous execution on cores.
 
@@ -139,7 +141,7 @@ These intervals do not prove scaling or simultaneous execution on cores.
 
 The auditor's data report states OK and 55,824 checks, six fixtures,
 thirty samples with zero observed heap allocation and cold arity one. The original
-benchmark's before/after observation is equal and matches bytes/hash
+benchmark's before/after observations match each other and the byte count/hash
 of the file observed in this reading: 198,507 bytes, SHA256 `1154975a…`.
 It is not a signature or attestation of the declared execution.
 
@@ -200,6 +202,6 @@ a missing parenthesis. They were corrected. Reading raw paths,
 complete HTML/raw comparison with nine unchanged observations, and
 reading benchmark/audit then finished with exit 0.
 Messages are observations from this session, not complete preserved
-command registers or product-campaign results. Campaigns
+command records or product-campaign results. Campaigns
 read here remain OK/0/STABLE; no input data was
 rewritten and no tracked file was changed for this reading.

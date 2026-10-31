@@ -41,7 +41,7 @@ footprint, including header. Touching boundaries and an empty source are allowed
 
 MAX-BYTES is an index 0..16MiB including header and payload; MAX-NODES is an index
 1..16MiB including the root and all child nodes, including tags;
-MAX-DEPTH is an index 0..100 counting only array/map, root at level1.
+MAX-DEPTH is an index 0..100 counting only arrays/maps, with the root at level 1.
 An empty array requires one byte, one node, and one level. Scalar/tag children
 are allowed at depth1. Peak=1+max(child peaks), nodes=1+sum.
 Each child uses the minimal scanner with byte budget equal to its span,
@@ -99,7 +99,7 @@ phases, alias even empty, header overlap, touching boundaries,
 exact/-1 capacity, arity, physical sentinels, and reuse after error.
 Fuzz1024 seed41525235 on valid cases and rejections, plan and counts frozen.
 
-Two reused real workers, two waves of2048 calls per worker:
+Two reused real workers, two waves of 2048 calls per worker:
 8192 compositions. Shared immutable source/table, private destinations
 and scratch, READY/GO/DONE per wave, sink and complete buffers,
 bounded timeout/join/cleanup. Intervals observed without inferring
@@ -110,9 +110,9 @@ scaling, simultaneous core execution, or engine performance.
 ## Campaigns and preservation
 
 Separate serial benchmark: six cold fixtures frozen before the
-product (empty, scalar, five types,24 scalars,256 scalars,
-array/tag/text). Five replicates x1024 calls, warmup64; NEXT and bytes
-in the sink, cold arity. Null baseline and positive control16x1MiB;
+product (empty, scalar, five types, 24 scalars, 256 scalars,
+array/tag/text). Five replicates of 1024 calls, 64 warmup calls; NEXT and bytes
+in the sink, cold arity. Null baseline and positive control of 16 × 1 MiB;
 local observed-zero-heap criterion, without a speed threshold.
 
 Eight unique compilable mutations, cataloged before the campaign:
@@ -121,7 +121,7 @@ overlap without header; unchecked table; root excluded from nodes;
 extra arity. Private copies/caches, full baseline, exact smoke/final runs.
 Compilation errors, signals, or worker failures do not count as detection.
 
-Two C1 readings with a12-point checklist before the first compilation;
+Two C1 readings with a 12-point checklist before the first compilation;
 raw coverage of new sources and inventory of all compound decisions,
 without exclusions or MC/DC certification. Driver self-tests,
 separate data readings, integrated make check before push.

@@ -13,10 +13,10 @@ REQ-AFF-008; [preregistered method](pool-prepara-metodo.md),
 ## Seven values, one step
 
 Current non-reentrant owner, consistent binding, previous bridge closed.
-Step selects claim, current, or recycle from context phase.
-With CLAIMED, returned link is already current: start directly
-without second routing. First value group follows explicit startup;
-second retains selection metadata without reinterpretation.
+The step selects claim, current, or recycle from context phase.
+With CLAIMED, the returned link is already current: start directly
+without a second routing. The first value group follows explicit startup;
+the second retains selection metadata without reinterpretation.
 
 | State | Link | Token | Reason | Origin/detail/action |
 |---|---|---|---|---|
@@ -28,19 +28,19 @@ second retains selection metadata without reinterpretation.
 Order: **link, token, state, reason, origin, detail, action**.
 For existing CLAIMED: origin `:current`, detail/action NIL.
 For full: origin `:recycle`, count, and NIL action. NIL action does not prove
-pool command unchanged: in these two cases pool is not consulted.
+that the pool command is unchanged: in these two cases the pool is not consulted.
 Pending retirement does not prevent completing current obligation.
 
 Every call performs at most **one ready transfer and one begin attempt**.
 Publication ends immediately: no second acquisition or retirement acknowledgment.
 EMPTY/BUSY/INACTIVE prove no quiescence and authorize neither parking nor shutdown.
-No pop, payload application, batch ACK, or bridge end performed.
+No pop, payload application, batch ACK, or bridge end is performed.
 
 <a id="rifiuti-e-guasti"></a>
 
 ## Rejections and failures
 
-With ACTIVE, caller uses link/token to retrieve, apply, acknowledge, and
+With ACTIVE, the caller uses link/token to retrieve, apply, acknowledge, and
 end explicitly. With CLOSING, it closes the slice before recycling;
 it does not retry Serie acquisition. Exhausted generation
 requires resource handling, not indefinite rescheduling.
@@ -49,19 +49,19 @@ Gate-returned BUSY starts nothing. Condition
 `resource-exhausted :writer-queue-busy` during begin instead retains CLAIMED
 and IDLE link without consuming a bridge token. If acquisition and activation
 ACK already succeeded, they remain valid. Ready busy during recycle
-retains RESCHEDULE and obligation. Caller decides any later attempts.
+retains RESCHEDULE and obligation. The caller decides any later attempts.
 
-Owner, binding, and active phases are checked by step before new actions.
+Owner, binding, and active phases are checked by the step before new actions.
 Inconsistent link/status pair or unexpected status reports
 `invariant-violation :pool-dispatcher-state` before begin. NOTINLINE checks
 with T arguments remain active even in out-of-contract FI.
 
 Unexpected delegate failures propagate the same condition. Seven values
-are not returned when begin fails: caller retains dispatcher,
+are not returned when begin fails: the caller retains dispatcher,
 context, table, and configured-resource references in advance. Leases,
 link, and diagnosis remain in C1 structures even terminally; no new
 post-FAULTED capability-recovery API is promised. Archivio
-coordination remains necessary. No C3 handler, rollback, or cleanup added.
+coordination remains necessary. No C3 handler, rollback, or cleanup is added.
 
 <a id="costo-e-confini"></a>
 
@@ -73,4 +73,4 @@ thread, callback, I/O, wait, or cross-Serie shared write per message.
 No new intentional allocation: measurements include C1 checks
 and actual fixture cycle without isolating adapter cost alone.
 Engine payload application, park/wake, real sensors, physical lifecycle,
-and Archivio coordination remain open; complete engine is not qualified.
+and Archivio coordination remain open; the complete engine is not qualified.

@@ -17,7 +17,7 @@ Contract: [method](cbor-stringhe-metodo.md), blob
 
 ## Static outcome
 
-No functional defect or mandatory correction identified in the
+No functional defect or mandatory correction was identified in the
 read blob. The source can be frozen for preregistered tests; this
 outcome does not establish warning-free compilation, zero heap, corpus success,
 coverage, MC/DC, or gate completion.
@@ -48,7 +48,7 @@ on already verified data, with external fail-stop and no rollback.
 ## Length and complexity
 
 Syntactic count of independent paths: one initially, one increment
-for each flow control, each additional AND/OR, and the LOOP.
+for each flow-control construct, each additional AND/OR, and the LOOP.
 It does not include expansion of type checks or primitive comparisons.
 The decision inventory is a separate artifact maintained by the author.
 
@@ -90,7 +90,7 @@ final cursor returned by copying.
 
 ## Boundaries and checks still needed
 
-No differences found in already integrated kernels `cbor-write.lisp`,
+No differences were found in the already integrated kernels `cbor-write.lisp`,
 `utf8.lisp`, and `cbor-scan-input.lisp` against the base. The first reading
 does not renew full qualification of those dependencies. Their coverage
 limits and historical gates remain those preserved in their campaigns.

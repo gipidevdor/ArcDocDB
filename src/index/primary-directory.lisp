@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-005 REQ-IDX-007 REQ-AFF-004
 (declaim (ftype (function (indice-primario root-indice frammento-indice) null) esigi-sorgente-directory))
 (defun esigi-sorgente-directory (index root source)
-  "Pre: writer, root corrente acquisita. Post: SOURCE è un frammento pubblicato della root.
-Riferimento vecchio/estraneo rifiutato prima della costruzione o del congelamento."
+  "Pre: writer, current root acquired. Post: SOURCE is a published fragment of the root.
+Old/unrelated reference rejected before construction or freezing."
   (esigi-frammento-sano index source)
   (unless (and (eq (frammento-indice-exposure source) :published)
                (<= (frammento-indice-depth source) (root-indice-depth root))
@@ -21,8 +21,8 @@ Riferimento vecchio/estraneo rifiutato prima della costruzione o del congelament
 ;;; REQ: REQ-IDX-005 REQ-IDX-007 REQ-AFF-008
 (declaim (ftype (function (indice-primario frammento-indice integer integer) null) esigi-nuovo-frammento))
 (defun esigi-nuovo-frammento (index fragment depth prefix)
-  "Pre: writer, candidato costruito fuori dalla root. Post: BUILDING della geometria richiesta.
-Identità/arena/banco non cambiano dopo la preparazione; il piano rileva ogni mutazione via REVISION."
+  "Pre: writer, candidate built outside the root. Post: BUILDING with the required geometry.
+Identity/arena/bank do not change after preparation; the plan detects every mutation through REVISION."
   (esigi-frammento-sano index fragment)
   (unless (and (eq (frammento-indice-exposure fragment) :building)
                (= depth (frammento-indice-depth fragment)) (= prefix (frammento-indice-prefix fragment)))
@@ -34,8 +34,8 @@ Identità/arena/banco non cambiano dopo la preparazione; il piano rileva ogni mu
 (declaim (ftype (function (indice-primario root-indice frammento-indice frammento-indice
                                          (or null frammento-indice) integer) fixnum) verifica-piano-directory))
 (defun verifica-piano-directory (index old source first second transient-budget)
-  "Pre: writer; copie complete già verificate dal costruttore. Post: nuova profondità e budget validi.
-Il conteggio vivo uguale è necessario, non dimostra uguaglianza di chiavi/dati o correttezza dell'hash."
+  "Pre: writer; complete copies already verified by the builder. Post: valid new depth and budgets.
+Equal live counts are necessary but do not prove equal keys/data or hash correctness."
   (esigi-sorgente-directory index old source)
   (let* ((depth (+ (frammento-indice-depth source) (if second 1 0)))
          (prefix (* (frammento-indice-prefix source) (if second 2 1)))
@@ -64,8 +64,8 @@ Il conteggio vivo uguale è necessario, non dimostra uguaglianza di chiavi/dati 
 (declaim (ftype (function (root-indice frammento-indice frammento-indice (or null frammento-indice)
                                       fixnum) simple-vector) costruisci-directory))
 (defun costruisci-directory (old source first second depth)
-  "Pre: geometria/budget verificati. Post: nuova directory intera, nessun array corrente modificato.
-Costo O(2^G nuovo), anche senza raddoppio; il solo frammento SOURCE viene sostituito."
+  "Pre: geometry/budgets verified. Post: entire new directory, no current array modified.
+Cost O(2^G) with the new G, even without doubling; only the SOURCE fragment is replaced."
   (let* ((previous (root-indice-directory old)) (size (ash 1 depth))
          (directory (make-array size)) (expanded (> depth (root-indice-depth old))))
     (dotimes (i size)
@@ -81,10 +81,10 @@ Costo O(2^G nuovo), anche senza raddoppio; il solo frammento SOURCE viene sostit
                                          &optional (or null frammento-indice)) pubblicazione-indice)
                 prepara-directory-indice))
 (defun prepara-directory-indice (index source first transient-budget-bytes &optional second)
-  "Pre: writer, copie esatte vive del sorgente già costruite/verificate con lo stesso hash della Serie.
-FIRST stesso prefisso per rebuild; FIRST/SECOND figli ordinati per split. Nessuna modifica tra fasi.
-Post: piano privato monouso, directory pronta; budget corrente + candidati + nuova directory.
-La prenotazione prima di costruire i candidati e le altre root trattenute restano al controller."
+  "Pre: writer, exact live copies of the source already built/verified with the same hash as the Serie.
+FIRST has the same prefix for rebuild; FIRST/SECOND are ordered children for split. No modification between phases.
+Post: private single-use plan, directory ready; budget for current + candidates + new directory.
+Reservation before building candidates and other retained roots remain the controller's responsibility."
   (esigi-indice-sano index)
   (let* ((old (acquisisci-root index))
          (depth (verifica-piano-directory index old source first second transient-budget-bytes))
@@ -95,9 +95,9 @@ La prenotazione prima di costruire i candidati e le altre root trattenute restan
 ;;; REQ: REQ-IDX-005 REQ-IDX-007 REQ-AFF-004
 (declaim (ftype (function (pubblicazione-indice) null) pubblica-directory-indice))
 (defun pubblica-directory-indice (plan)
-  "Pre: stesso gettone writer; piano valido, copie verificate e immutate. Post: nuova root via CAS.
-Congela SOURCE prima dello swap, mai riaperto; piani vecchi/riusati rifiutati senza congelare.
-Interruzione dopo l'avvio => indice/piano FAULTED, nessun rollback della root o I/O."
+  "Pre: same writer token; valid plan, verified unchanged copies. Post: new root via CAS.
+Freezes SOURCE before the swap, never reopened; old/reused plans rejected without freezing.
+Interruption after starting => index/plan FAULTED, no root rollback or I/O."
   (let* ((index (pubblicazione-indice-owner plan)) (source (pubblicazione-indice-source plan))
          (first (pubblicazione-indice-first plan)) (second (pubblicazione-indice-second plan))
          (old (pubblicazione-indice-expected plan)) (new (pubblicazione-indice-replacement plan))

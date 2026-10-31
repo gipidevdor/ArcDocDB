@@ -4,7 +4,7 @@
 
 Method registered before campaigns. The block traverses one complete item
 with a preallocated iterative stack and verifies structure, UTF-8 text, and budgets.
-ADR-0014's deterministic profile and tag semantics remain subsequent:
+ADR-0014's deterministic profile and tag semantics remain for later stages:
 duplicate or unordered keys, nonminimal integers, and all float bits
 are accepted by scanning alone. No document is materialized.
 
@@ -12,7 +12,7 @@ are accepted by scanning alone. No document is materialized.
 
 ## Frozen contract
 
-`crea-spazio-cbor()` cold-creates a caller-exclusive `spazio-cbor`.
+`crea-spazio-cbor()` creates a caller-exclusive `spazio-cbor` during initialization.
 `verifica-struttura-cbor(buffer,start,end,spazio,&key max-bytes,max-nodes,max-depth)`
 returns exactly three values: item-header count, maximum array/map
 depth, and offset `end`. Span is `[start,end)` in a simple u8 array
@@ -20,7 +20,7 @@ immutable during the call. Defaults: 16 MiB, 16 Mi headers, 100 levels.
 Node cap is an API choice derived from maximum header count
 in that span; ADR-0048 requires the budget but does not set its value.
 
-Nodes include tags, containers, and definite chunks, including empty ones; exclude
+Nodes include tags, containers, and definite chunks, including empty ones, but exclude
 break. Only arrays and maps increment depth, including empty ones;
 root container has level 1. Zero cap permits scalars, tags, and strings.
 A tag chain uses no frame and charges a single child to its parent when
@@ -40,13 +40,13 @@ Initial errors are `invalid-argument`, reasons `:cbor-range`, `:cbor-workspace`,
 `:cbor-alias`, `:cbor-byte-limit`, `:cbor-node-limit`, `:cbor-depth-limit`;
 excessive span is `resource-exhausted :cbor-byte-budget`. All without offset.
 Invalid preflight does not modify workspace; a valid scan resets it.
-An error during scanning may dirty workspace, reusable on the next
+An error during scanning may dirty the workspace, which can be reused on the next
 call. Buffer is never modified or retained in workspace.
 
 Scanner reads header first, preserving reasons and offsets of the
 already-verified primitive. Incorrect chunk type precedes node budget.
-A break follows order pending tag, non-indefinite context, map with key
-without value. Reasons: `:cbor-tag-break`, `:cbor-break`, `:cbor-map-value`.
+For a break, checks proceed in this order: pending tag, non-indefinite context, map key
+without a value. Reasons: `:cbor-tag-break`, `:cbor-break`, `:cbor-map-value`.
 For an item, node budget is checked before incrementing; for a
 container, depth before arity and payload. Node/depth budgets are
 `resource-exhausted`, lead offset. Impossible length or arity is
@@ -59,12 +59,12 @@ first remaining byte. UTF-8 errors retain reasons and absolute offsets.
 
 ## Oracles and readings
 
-Three independent test files are frozen before their author reads new
-product. Known fixtures and cold recursive model
+Three independent test files are frozen before their author reads the new
+product code. Known fixtures and cold recursive model
 separate from iterative scanning; the model may use boxed integers, with
 explicit input and recursion caps. Finite differential fuzz: 4096 spans
 up to 64 bytes. Expected nodes, depth, and end are derived without
-calling new product. Range, budget, arity, truncation, tag,
+calling the new product code. Range, budget, arity, truncation, tag,
 chunk, and UTF-8 boundaries; containers at levels 100/101, exact 16 MiB document,
 sentinels beyond span, immutability, and reuse after error. After static
 reading, a targeted fixture is added and declared separately: 100
@@ -109,6 +109,6 @@ DETECTED, a complete zero-exit run is SURVIVED. All logs, including invalid
 attempts, remain preserved with before/after source identity.
 
 Commands and campaigns record whole snapshot, stdout, stderr, exit, and stable
-state. Catalog is closed with actual results and reading
+state. The catalog is closed with actual results and reading
 references. Any necessary compression is lossless and retains
 original bytes, checksum, descriptor, and rereading proof.

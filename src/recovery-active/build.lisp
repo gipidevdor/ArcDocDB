@@ -8,9 +8,9 @@
                          (values index (member :complete :tail) index index &optional))
                 verifica-prefisso-active))
 (defun verifica-prefisso-active (buffer size segment id bytes batches batch-records batch-bytes records)
-  "Pre: header canonico e corpo fino a EOF attestato, capacità readonly. Post: prefisso e conteggi autorevoli.
-ACTIVE deve avere origine writer; coda classificata solo dopo ricerca completa dei testimoni.
-CORRUPTION-DETECTED/LOG-CORRUPTION o budget propagati; nessun replay o effetto durevole."
+  "Pre: canonical header and body through attested EOF, readonly capability. Post: authoritative prefix and counts.
+ACTIVE must have writer origin; tail classified only after a complete witness search.
+CORRUPTION-DETECTED/LOG-CORRUPTION or budget errors propagated; no replay or durable effect."
   (unless (= (arcdocdb.get::segmento-get-origin segment) arcdocdb.storage.format::+writer-origin+)
     (error 'corruption-detected :reason :active-recovery-origin))
   (multiple-value-bind (prefix status actual-batches count)
@@ -33,11 +33,11 @@ CORRUPTION-DETECTED/LOG-CORRUPTION o budget propagati; nessun replay o effetto d
                               &key (chunk-bytes 65536) (max-bytes 268435456) (max-batches 65536)
                                    (max-batch-records 65536) (max-batch-bytes 67108864) (max-records 1048576)
                                    (max-prepared 65536) (max-outcomes 65536))
-  "Pre: recovery esclusivo, CONTROL dal catalogo, EOF SIZE attestato, tabella decisioni completa dell'Archivio.
-File/FD/namespace e scratch congelati; assenza in una tabella parziale NON autorizza presumed abort.
-Post: vecchio ACTIVE readonly da ID del manifest, header writer verificato, scanner a EOF, esiti risolti.
-Solo esiti da DECISION senza OUTCOME sono copiati; risultato completo senza scratch o workspace.
-Errori tipizzati originali propagati; nessun append, fsync, troncatura, rename, CSN o ammissione traffico."
+  "Pre: exclusive recovery, CONTROL from the catalog, attested EOF SIZE, complete Archivio decision table.
+File/FD/namespace and scratch frozen; absence in a partial table does NOT authorize presumed abort.
+Post: readonly old ACTIVE from manifest ID, writer header verified, scanner at EOF, outcomes resolved.
+Only DECISION outcomes without OUTCOME are copied; complete result without scratch or workspace.
+Original typed errors propagated; no append, fsync, truncation, rename, CSN, or traffic admission."
   (verifica-lettura-active control input size scratch chunk-bytes max-bytes max-batches
                            max-batch-records max-batch-bytes)
   (verifica-file-distinti input (arcdocdb.control::control-recuperato-input control))

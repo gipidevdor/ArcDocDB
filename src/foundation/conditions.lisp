@@ -7,30 +7,30 @@
   ((reason :initarg :reason :reader error-reason :type keyword)
    (offset :initarg :offset :initform nil :reader error-offset
            :type (or null (integer 0 *))))
-  (:documentation "Errore tipizzato; reason non contiene dati del documento.")
+  (:documentation "Typed error; reason contains no document data.")
   (:report (lambda (condition stream)
              (format stream "ArcDocDB: ~A~@[ all'offset ~D~]"
                      (error-reason condition) (error-offset condition)))))
 
 ;;; REQ: REQ-AFF-004
 (define-condition invalid-argument (arcdocdb-error) ()
-  (:documentation "Argomento o intervallo non valido; nessuna scrittura eseguita."))
+  (:documentation "Invalid argument or range; no write performed."))
 ;;; REQ: REQ-AFF-004 REQ-AFF-002
 (define-condition corruption-detected (arcdocdb-error) ()
-  (:documentation "Record o prova incoerenti; nessun dato verificato restituito."))
+  (:documentation "Inconsistent record or proof; no verified data returned."))
 ;;; REQ: REQ-FOR-002
 (define-condition unsupported-format (arcdocdb-error) ()
-  (:documentation "Versione sconosciuta; nessuna interpretazione per tentativi."))
+  (:documentation "Unknown version; no trial interpretation."))
 ;;; REQ: REQ-LIM-001 REQ-LIM-003
 (define-condition resource-exhausted (arcdocdb-error) ()
-  (:documentation "Budget configurato esaurito; rifiuto precedente alla scrittura."))
+  (:documentation "Configured budget exhausted; rejection before writing."))
 ;;; REQ: REQ-AFF-004
 (define-condition invariant-violation (arcdocdb-error) ()
-  (:documentation "Invariante interna violata; il proprietario applica fail-stop."))
+  (:documentation "Internal invariant violated; the owner applies fail-stop."))
 
 ;;; REQ: REQ-MVC-004 REQ-AFF-004
 (define-condition snapshot-too-old (arcdocdb-error) ()
-  (:documentation "Snapshot scaduto, terminato o identità riusata; nessun risultato restituito."))
+  (:documentation "Expired or ended snapshot, or reused identity; no result returned."))
 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
 (define-condition io-fault (arcdocdb-error)
@@ -40,4 +40,4 @@
                   :type (or null fixnum))
    (transferred :initarg :transferred :initform 0 :reader error-transferred
                 :type (integer 0 *)))
-  (:documentation "Guasto I/O dichiarato, con errno e progresso noto; nessun retry."))
+  (:documentation "Declared I/O fault, with errno and known progress; no retry."))

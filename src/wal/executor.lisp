@@ -6,17 +6,17 @@
 ;;; REQ: REQ-AFF-001 REQ-WAL-006
 (declaim (ftype (function (log-io) null) marca-log-faulted))
 (defun marca-log-faulted (log)
-  "Pre: controller ha ritirato/completato tutti i compiti I/O del log, oppure
-il compito proprietario segnala il proprio guasto. Post: log terminale FAULTED.
-Non libera active né buffer, non riapre file, non esegue I/O o risolve CSN."
+  "Pre: controller has retired/completed all I/O tasks for the log, or
+the owning task reports its own fault. Post: log terminally FAULTED.
+Does not release active or buffers, reopen files, perform I/O, or resolve CSNs."
   (setf (log-io-state log) :faulted)
   nil)
 
 ;;; REQ: REQ-WAL-002 REQ-AFF-001
 (declaim (ftype (function (gruppo) null) acquisisci-gruppo))
 (defun acquisisci-gruppo (group)
-  "Pre: gruppo pronto e buffer esclusivi. Post: solo questo gruppo possiede il log.
-RESOURCE-EXHAUSTED se occupato; INVALID-ARGUMENT per offset/frontiera prima di scrivere."
+  "Pre: ready group and exclusive buffers. Post: only this group owns the log.
+RESOURCE-EXHAUSTED if busy; INVALID-ARGUMENT for offset/frontier before writing."
   (esigi-gruppo group :ready)
   (let* ((log (gruppo-log group)) (file (log-io-file log)))
     (unless (null (sb-ext:compare-and-swap (log-io-active log) nil group))
@@ -51,8 +51,8 @@ RESOURCE-EXHAUSTED se occupato; INVALID-ARGUMENT per offset/frontiera prima di s
 ;;; REQ: REQ-AFF-001 REQ-WAL-006
 (declaim (ftype (function (gruppo) null) fault-gruppo))
 (defun fault-gruppo (group)
-  "Pre: guasto in volo. Post: log/gruppo/lotti FAULTED, proprietà non rilasciata.
-Nessun retry, nessuna ulteriore copertura; il worker propaga l'evento alla Serie/Archivio."
+  "Pre: fault in flight. Post: log/group/batches FAULTED, ownership not released.
+No retry, no further coverage; the worker propagates the event to the Serie/Archivio."
   (marca-log-faulted (gruppo-log group))
   (setf (gruppo-state group) :faulted)
   (dotimes (i (gruppo-count group))
@@ -62,9 +62,9 @@ Nessun retry, nessuna ulteriore copertura; il worker propaga l'evento alla Serie
 ;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-AFF-001
 (declaim (ftype (function (gruppo) file-offset) scrivi-gruppo))
 (defun scrivi-gruppo (group)
-  "Pre: compito I/O, gruppo pronto; nessuna mutazione/riuso dei buffer in volo.
-Post: tutti i lotti scritti, ancora non durevoli; proprietà resta al gruppo fino al flush.
-Punti SEAL preparati sono appesi; IO-FAULT/INVARIANT-VIOLATION => fail-stop, nessuna conferma."
+  "Pre: I/O task, ready group; no mutation/reuse of buffers in flight.
+Post: all batches written, not yet durable; ownership remains with the group until flush.
+Prepared SEAL points are appended; IO-FAULT/INVARIANT-VIOLATION => fail-stop, no confirmation."
   (acquisisci-gruppo group)
   (handler-case
       (let ((file (log-io-file (gruppo-log group))))
@@ -82,9 +82,9 @@ Punti SEAL preparati sono appesi; IO-FAULT/INVARIANT-VIOLATION => fail-stop, nes
 ;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-AFF-001
 (declaim (ftype (function (gruppo) file-offset) sincronizza-gruppo))
 (defun sincronizza-gruppo (group)
-  "Pre: compito I/O, write completata e proprietà mantenuta. Post: un solo flush copre il gruppo.
-Il SEAL è il punto atomico; questo completa durability, non pubblica né conferma.
-IO-FAULT/INVARIANT-VIOLATION => FAULTED; un secondo flush dello stesso gruppo è rifiutato."
+  "Pre: I/O task, write completed and ownership retained. Post: exactly one flush covers the group.
+SEAL is the atomic point; this completes durability but does not publish or confirm.
+IO-FAULT/INVARIANT-VIOLATION => FAULTED; a second flush of the same group is rejected."
   (esigi-gruppo group :written)
   (let ((log (gruppo-log group)))
     (unless (eq :written (sb-ext:compare-and-swap (gruppo-state group) :written :flushing))
@@ -108,7 +108,7 @@ IO-FAULT/INVARIANT-VIOLATION => FAULTED; un secondo flush dello stesso gruppo è
 ;;; REQ: REQ-WAL-002
 (declaim (ftype (function (gruppo) file-offset) esegui-gruppo))
 (defun esegui-gruppo (group)
-  "Pre: compito I/O, gruppo pronto. Post: write di N lotti e un flush; errori fail-stop.
-Preparazione del SEAL già conclusa; completa durability, mai pubblicazione/conferma."
+  "Pre: I/O task, ready group. Post: N batches written and one flush; fail-stop on errors.
+SEAL preparation already complete; completes durability, never publication/confirmation."
   (scrivi-gruppo group)
   (sincronizza-gruppo group))

@@ -7,8 +7,8 @@
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets index octets u64 index) null) scrivi-header-full-text))
 (defun scrivi-header-full-text (buffer start identity segment-id size)
-  "Pre: span e identita verificati, buffer esclusivo senza alias con ID.
-Post: header v2/type 5 canonico e CRC; nessuna scrittura fuori dai 64 byte."
+  "Pre: span and identity verified, exclusive buffer without ID alias.
+Post: canonical v2/type 5 header and CRC; no writes outside the 64 bytes."
   (unless (and (<= (+ start +header-bytes+) (length buffer)) (= (length identity) +identity-bytes+))
     (error 'invariant-violation :reason :fulltext-header-write-range))
   (fill buffer 0 :start start :end (+ start +header-bytes+))
@@ -32,8 +32,8 @@ Post: header v2/type 5 canonico e CRC; nessuna scrittura fuori dai 64 byte."
 (declaim (ftype (function (octets index (simple-array (unsigned-byte 64) (6))) null)
                 scrivi-directory-full-text))
 (defun scrivi-directory-full-text (buffer start lengths)
-  "Pre: layout completamente verificato. Post: directory canonica e padding zero.
-Payload preservati; nessuna allocazione prevista, sei iterazioni."
+  "Pre: layout fully verified. Post: canonical directory and zero padding.
+Payloads preserved; no intended allocation, six iterations."
   (unless (<= (+ start +sections-offset+) (length buffer))
     (error 'invariant-violation :reason :fulltext-directory-write-range))
   (let ((cursor +sections-offset+))
@@ -58,11 +58,11 @@ Payload preservati; nessuna allocazione prevista, sei iterazioni."
                          (values index &optional)) scrivi-cornice-indice-full-text))
 (defun scrivi-cornice-indice-full-text (buffer start end identity segment-id lengths
                                       &key (max-bytes +default-file-budget+))
-  "Pre: destinazione esclusiva simple u8, payload gia collocati; sei lunghezze u64.
-Post: header, directory, padding e footer canonici; payload e byte esterni invariati.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED di preflight non modificano alcun byte.
-Non valida META o posting e non certifica readiness. Prepara byte in memoria,
-senza atomicita durevole, I/O o pubblicazione; l'allocazione e verificata separatamente."
+  "Pre: exclusive simple u8 destination, payloads already placed; six u64 lengths.
+Post: canonical header, directory, padding, and footer; payloads and external bytes unchanged.
+Preflight INVALID-ARGUMENT/RESOURCE-EXHAUSTED do not modify any byte.
+Does not validate META or postings or certify readiness. Prepares bytes in memory,
+without durable atomicity, I/O, or publication; allocation verified separately."
   (let ((size (controlla-input-cornice buffer start end identity segment-id max-bytes)))
     (when (eq buffer identity)
       (error 'invalid-argument :reason :fulltext-input-alias))

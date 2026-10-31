@@ -7,10 +7,10 @@
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer t t t) (values index (member :messages :empty :yield) index &optional)) preleva-lavori-worker))
 (defun preleva-lavori-worker (context target start end)
-  "Pre: RUNNING senza batch; target privato, span valido. Post: BATCH con token
-locale nuovo se messaggi, RUNNING/token0 se empty/yield. Busy/target invalido non
-estraggono; RESOURCE-EXHAUSTED generation prima del pop, anche empty/yield.
-Token non globale: ack usa la coppia contesto/token; condizioni writer delegate."
+  "Pre: RUNNING without a batch; private target, valid span. Post: BATCH with new
+local token if messages, RUNNING/token0 if empty/yield. Busy/invalid target do not
+pop; RESOURCE-EXHAUSTED generation before pop, even for empty/yield.
+Token is not global: ack uses the context/token pair; writer conditions delegated."
   (%passo-worker (context (:worker-state :worker-generation :writer-queue-busy) (:writer-target))
   (%richiedi-worker context :running)
   (%check-target (writer-programmabile-queue (contesto-worker-writer-writer context))
@@ -35,9 +35,9 @@ Token non globale: ack usa la coppia contesto/token; condizioni writer delegate.
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer t) null) conferma-lavori-worker))
 (defun conferma-lavori-worker (context token)
-  "Pre: BATCH elaborato completamente dal caller, token corrente locale.
-Post: RUNNING senza debito; INVALID-ARGUMENT token errato/stale prima delle
-scritture, fase/owner/verificatori typed. Attesta il caller, non effetti esterni."
+  "Pre: BATCH fully processed by the caller, current local token.
+Post: RUNNING without debt; INVALID-ARGUMENT for incorrect/stale token before
+writes, typed phase/owner/verifiers. The caller attests to work, not external effects."
   (%passo-worker (context (:worker-state) (:worker-batch))
   (%richiedi-worker context :batch)
   (unless (typep token 'index) (error 'invalid-argument :reason :worker-batch))
@@ -52,8 +52,8 @@ scritture, fase/owner/verificatori typed. Attesta il caller, non effetti esterni
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer (member :idle :schedule)) null) %concludi-worker))
 (defun %concludi-worker (context action)
-  "Pre: handoff terminato, contesto FINISHING senza debito. Post: IDLE libero
-o RESCHEDULE con obbligo; INVARIANT-VIOLATION fase/debito/esito incoerenti."
+  "Pre: handoff complete, FINISHING context without debt. Post: free IDLE
+or RESCHEDULE with obligation; INVARIANT-VIOLATION for inconsistent phase/debt/outcome."
   (%check-owner-worker context)
   (unless (eq (contesto-worker-writer-state context) :finishing)
     (error 'invariant-violation :reason :worker-state))
@@ -71,10 +71,10 @@ o RESCHEDULE con obbligo; INVARIANT-VIOLATION fase/debito/esito incoerenti."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) (member :idle :schedule)) termina-tratto-worker))
 (defun termina-tratto-worker (context)
-  "Pre: RUNNING dopo ack oppure FINISHING da ritentare. Post: IDLE/RESCHEDULE.
-Prima della chiamata fissa FINISHING: busy conserva lease/riferimento e impedisce
-nuovi pop/ack. Solo retry del termine; condizioni handoff/verificatori typed.
-Nessun cleanup sul writer dopo end, nessun cambiamento durevole o callback."
+  "Pre: RUNNING after ack or FINISHING to retry. Post: IDLE/RESCHEDULE.
+Latches FINISHING before the call: busy retains lease/reference and prevents
+new pop/ack. Only completion is retried; typed handoff conditions/verifiers.
+No writer cleanup after end, no durable change or callback."
   (%passo-worker (context (:worker-state :writer-queue-busy) ())
   (%check-worker context)
   (case (contesto-worker-writer-state context)

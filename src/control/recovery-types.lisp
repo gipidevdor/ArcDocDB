@@ -6,9 +6,9 @@
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-FOR-003 REQ-AFF-008
 (defstruct (control-recuperato
              (:constructor %make-control-recuperato (view input manifest size prefix status version)) (:copier nil))
-  "Pre: file readonly letto fino all'EOF attestato dal caller; header e prefisso EDIT verificati.
-Post: legami canonici e manifest posseduto, senza alias al buffer di lettura.
-Non attesta il catalogo, la misura fisica di EOF, l'inventario o il prefisso dei segmenti."
+  "Pre: read-only file read through caller-attested EOF; header and EDIT prefix verified.
+Post: canonical bindings and owned manifest, without aliases to read buffer.
+Does not attest to catalog, physical EOF measurement, inventory, or segment prefixes."
   (view nil :type arcdocdb.get:vista-get-serie :read-only t)
   (input nil :type file-io :read-only t)
   (manifest nil :type arcdocdb.recovery.manifest::manifest :read-only t)
@@ -22,8 +22,8 @@ Non attesta il catalogo, la misura fisica di EOF, l'inventario o il prefisso dei
                          (values index index (member :complete :tail) (member 1 2) &optional))
                 frontiere-control-recuperato))
 (defun frontiere-control-recuperato (recovered)
-  "Pre: risultato completo. Post: EOF attestato, prefisso assoluto, stato e formato del file letto.
-Nessun buffer, FD numerico o prova di salute corrente; TYPE-ERROR per tipi invalidi."
+  "Pre: complete result. Post: attested EOF, absolute prefix, state, and format of file read.
+No buffer, numeric FD, or proof of current health; TYPE-ERROR for invalid types."
   (values (control-recuperato-size recovered) (control-recuperato-prefix recovered)
           (control-recuperato-status recovered) (control-recuperato-version recovered)))
 
@@ -31,6 +31,6 @@ Nessun buffer, FD numerico o prova di salute corrente; TYPE-ERROR per tipi inval
 (declaim (ftype (function (control-recuperato) arcdocdb.recovery.manifest::manifest)
                 manifest-control-recuperato))
 (defun manifest-control-recuperato (recovered)
-  "Pre: risultato completo. Post: manifest posseduto del prefisso sigillato, da consultare tramite query.
-Nessuna tabella esposta o conferma di presenza/integrità dei segmenti nominati."
+  "Pre: complete result. Post: owned sealed-prefix manifest, accessed through queries.
+No table exposed or confirmation of named segments' presence/integrity."
   (control-recuperato-manifest recovered))

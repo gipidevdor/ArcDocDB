@@ -8,11 +8,11 @@
                           limiti-recovery-serie) (values active-recuperato simple-vector &optional))
                 leggi-serie-recuperata))
 (defun leggi-serie-recuperata (control sources decisions scratch limits)
-  "Pre: catalogo e CONTROL autorevoli, set posseduto/aperto e namespace congelato nel compito I/O.
-Post: ACTIVE più vettore nuovo completo dei CLOSED in ordine u64; stesso CONTROL e decision replay canonici.
-Tutti i preflight prima dei dati; risultato solo dopo gate CLOSED, capacità e decisioni ancora aperte.
-Errori originali senza risultati parziali; scratch modificabile, FD/set sempre del caller anche su errore.
-Nessuna close, rinomina, ricostruzione indice, CSN, punto durevole o ammissione del traffico."
+  "Pre: authoritative catalog and CONTROL, owned open set, namespace frozen in I/O task.
+Post: ACTIVE plus complete new CLOSED vector in u64 order; same canonical CONTROL and decision replay.
+All preflights before data; result only after CLOSED gate, with capabilities and decisions still open.
+Original errors without partial results; scratch mutable, FD/set always caller-owned even on error.
+No close, rename, index rebuild, CSN, durable point, or traffic admission."
   (multiple-value-bind (position count) (verifica-fonti-serie control sources decisions scratch limits)
     (let ((active (recupera-active-serie control sources position decisions scratch limits))
           (closed (make-array count :initial-element nil)) (next 0))

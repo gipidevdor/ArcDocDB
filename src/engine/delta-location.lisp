@@ -7,7 +7,7 @@
 (declaim (ftype (function (motore (integer 0 65536) (integer 0 16777216)) (or null delta-indice-motore))
                 crea-delta-configurato-motore))
 (defun crea-delta-configurato-motore (engine keys bytes)
-  "Pre: owner BUSY, canonical healthy resident and reserved quota. Post: empty overlay with its own seed.
+  "Pre: BUSY owner, healthy canonical resident, and reserved quota. Post: empty overlay with its own seed.
 An invalid seed or admission is an error; no shared index reference is retained by the overlay."
   (esigi-owner-motore engine)
   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-delta-admission))

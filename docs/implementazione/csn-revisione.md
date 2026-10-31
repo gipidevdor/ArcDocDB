@@ -197,7 +197,7 @@ identity precedes frontier checks, and the scan still
 finishes checking remaining items/count before stores.
 API signatures and values, mutex, carry/borrow, error priority,
 slots, tokens, and frontier updates appear unchanged on reading.
-No new functional defect identified; no execution performed.
+No new functional defect was identified; no execution was performed.
 
 <a id="aggiornamento-dei-punti-della-checklist"></a>
 

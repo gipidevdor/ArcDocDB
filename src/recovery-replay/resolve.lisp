@@ -7,9 +7,9 @@
 (declaim (ftype (function (closed-recuperato (or null workspace-active) u8 u64)
                          (values boolean (or null u64) &optional)) risolvi-record-closed-per-visita))
 (defun risolvi-record-closed-per-visita (recovered workspace flags stamp)
-  "Pre: PUT/TOMBSTONE da prefisso interamente verificato, semantica OUTCOME/EDIT già risolta.
-Post: ordinario T/NIL; prepared committed T/CSN esplicito incluso zero, abortito NIL/NIL.
-NIL non è un CSN; workspace mancante o valore interno fuori u64 => INVARIANT-VIOLATION."
+  "Pre: PUT/TOMBSTONE from a fully verified prefix, OUTCOME/EDIT semantics already resolved.
+Post: ordinary T/NIL; committed prepared T/explicit CSN including zero, aborted NIL/NIL.
+NIL is not a CSN; missing workspace or internal value outside u64 => INVARIANT-VIOLATION."
   (unless (logtest flags +prepared+)
     (return-from risolvi-record-closed-per-visita (values t nil)))
   (unless workspace (error 'invariant-violation :reason :recovery-replay-prepared-workspace))
@@ -31,10 +31,10 @@ NIL non è un CSN; workspace mancante o valore interno fuori u64 => INVARIANT-VI
 (declaim (ftype (function (closed-recuperato (or null workspace-active) octets index index u8 function)
                          (values index index &optional)) visita-dato-closed))
 (defun visita-dato-closed (recovered workspace buffer pos next flags visitor)
-  "Pre: dato verificato, buffer prestato readonly fino al ritorno del visitor; destinazioni private.
-Post: una chiamata solo se committed, ritorna contatori delivered/aborted per record, non per TXID.
-Visitor (buffer start end segment-id file-offset version prepared-csn) deve restituire NIL.
-Uscite/errori originali propagati; esito diverso da NIL => INVALID-ARGUMENT dopo gli effetti del visitor."
+  "Pre: verified datum, buffer borrowed readonly until visitor return; private destinations.
+Post: one call only if committed, returns delivered/aborted counters per record, not per TXID.
+Visitor (buffer start end segment-id file-offset version prepared-csn) must return NIL.
+Original exits/errors propagated; result other than NIL => INVALID-ARGUMENT after visitor effects."
   (unless (and (<= +segment-header-bytes+ pos) (< pos next (1+ (closed-recuperato-prefix recovered))))
     (error 'invariant-violation :reason :recovery-replay-record-range))
   (multiple-value-bind (committed csn)

@@ -5,7 +5,7 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function ((or indice-posizionale a:spazio-full-text)) null) lavoro-confronto))
 (defun lavoro-confronto (owner)
-  "Pre: budget esclusivo del builder o della query. Post: una unita consumata."
+  "Pre: budget exclusive to the builder or query. Post: one unit consumed."
   (etypecase owner
     (indice-posizionale (consuma-lavoro-indice owner))
     (a:spazio-full-text (a::consuma-lavoro-full-text owner))))
@@ -14,8 +14,8 @@
 (declaim (ftype (function (octets index index octets index index
                                  (or indice-posizionale a:spazio-full-text)) (member -1 0 1)) confronta-termini))
 (defun confronta-termini (a start-a size-a b start-b size-b owner)
-  "Pre: span di termini validati. Post: confronto lessicografico UTF-8, senza locale.
-Ogni byte confrontato consuma lavoro; RESOURCE-EXHAUSTED al limite."
+  "Pre: validated term spans. Post: lexicographic UTF-8 comparison, without locale.
+Each compared byte consumes work; RESOURCE-EXHAUSTED at the limit."
   (loop for i below (min size-a size-b) do
     (lavoro-confronto owner)
     (let ((x (aref a (+ start-a i))) (y (aref b (+ start-b i))))
@@ -27,8 +27,8 @@ Ogni byte confrontato consuma lavoro; RESOURCE-EXHAUSTED al limite."
 ;;; REQ: REQ-SEC-003 REQ-SEC-004
 (declaim (ftype (function (indice-posizionale index index) boolean) token-minore-p))
 (defun token-minore-p (run first second)
-  "Pre: due occorrenze entro COUNT. Post: ordine stretto (field,termine,riga,posizione).
-Nessun oggetto per token; il confronto non cambia il contenuto."
+  "Pre: two occurrences within COUNT. Post: strict order (field, term, row, position).
+No object per token; comparison does not change content."
   (consuma-lavoro-indice run)
   (let* ((data (indice-posizionale-tokens run)) (x (* first +token-width+)) (y (* second +token-width+))
          (fx (aref data (+ x +field+))) (fy (aref data (+ y +field+))))
@@ -43,7 +43,7 @@ Nessun oggetto per token; il confronto non cambia il contenuto."
 ;;; REQ: REQ-SEC-003 REQ-SEC-004
 (declaim (ftype (function (indice-posizionale index index) null) scambia-token))
 (defun scambia-token (run first second)
-  "Pre: indici di token ammessi. Post: cinque parole scambiate, payload invariato."
+  "Pre: admitted token indices. Post: five words swapped, payload unchanged."
   (consuma-lavoro-indice run +token-width+)
   (let ((data (indice-posizionale-tokens run)) (x (* first +token-width+)) (y (* second +token-width+)))
     (dotimes (i +token-width+) (rotatef (aref data (+ x i)) (aref data (+ y i)))))
@@ -52,8 +52,8 @@ Nessun oggetto per token; il confronto non cambia il contenuto."
 ;;; REQ: REQ-SEC-003 REQ-SEC-004 REQ-SEC-010
 (declaim (ftype (function (indice-posizionale index index) null) ripara-heap-token))
 (defun ripara-heap-token (run root end)
-  "Pre: sottoalberi gia heap, END esclusivo. Post: sottoalbero riparato entro 32 livelli.
-RESOURCE-EXHAUSTED lascia run non leggibile; nessuna pubblicazione intermedia."
+  "Pre: subtrees already heaps, exclusive END. Post: subtree repaired within 32 levels.
+RESOURCE-EXHAUSTED leaves the run unreadable; no intermediate publication."
   (loop repeat 32 do
     (let ((child (1+ (* 2 root))))
       (when (>= child end) (return-from ripara-heap-token nil))
@@ -65,8 +65,8 @@ RESOURCE-EXHAUSTED lascia run non leggibile; nessuna pubblicazione intermedia."
 ;;; REQ: REQ-SEC-003 REQ-SEC-004
 (declaim (ftype (function (indice-posizionale) null) ordina-passo-full-text))
 (defun ordina-passo-full-text (run)
-  "Pre: fase heap BUILD/SORT. Post: un sottoalbero riparato o un massimo estratto.
-La transizione SEALED avviene solo dopo l'ultimo elemento."
+  "Pre: heap phase BUILD/SORT. Post: one subtree repaired or one maximum extracted.
+The SEALED transition occurs only after the last element."
   (if (eq :heap-build (indice-posizionale-state run))
       (if (zerop (indice-posizionale-heap run)) (setf (indice-posizionale-state run) :heap-sort)
           (ripara-heap-token run (decf (indice-posizionale-heap run)) (indice-posizionale-count run)))

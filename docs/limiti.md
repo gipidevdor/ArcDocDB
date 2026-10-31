@@ -66,7 +66,7 @@ A hard limit is extended with a new format version number and migration
 (32 bits in v2) and segment size (32 bits): both live in the index slot, and extending
 both costs 8 bytes per slot.
 
-Limits the system **also** enforces as a reliability requirement (INV-A8): every queue,
+The system **also** enforces resource limits as a reliability requirement (INV-A8): every queue,
 buffer, request, connection, snapshot, parking list, and attempt has a configured
 maximum; exceeding it produces an explicit rejection.
 

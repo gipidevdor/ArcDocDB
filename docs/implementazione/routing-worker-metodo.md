@@ -47,14 +47,14 @@ Planned checks:
   only to Series scope. All missing path identities remain in the audit,
   without approved exclusions.
 - Local allocation on a complete cycle with two writers, two controllers,
-  one worker, ready with one partition/capacity1, and a preallocated table.
+  one worker, ready with one partition/capacity 1, and a preallocated table.
   Each cycle alternates the writer and composes enqueue, publish, claim,
   two EQ/expected index lookups, begin/lease, pop/ack, and end idle. Two
-  startup cycles populate identities outside the sensor. Warmup128, five
-  samples of4096 cycles, GC/printing outside measurement. Independent driver sink:
+  startup cycles populate identities outside the sensor. Warmup 128, five
+  samples of 4096 cycles, GC/printing outside measurement. Independent driver sink:
   `12+17+19+13+11+13+3+25+7+23=143`,
   sample `N*143+N*(N-1)/2`; monotonic bridge tokens and Serie leases per writer,
-  monotonic batch token in worker. Baseline, positive heap16×1MiB, wrong sink,
+  monotonic batch token in worker. Baseline, positive heap control of 16×1 MiB, wrong sink,
   and below-resolution clock controls demonstrate C4 detection.
 - C4 fully compiled with fatal warning and style-warning, FASL self-test,
   wrong heap/sink detection, and invalid CLI. The only ASDF runtime exception
@@ -65,9 +65,9 @@ Planned checks:
 
 Each campaign uses `tools/record-command.lisp`, with stdout/stderr, argv,
 environment, initial/final snapshots, and failed attempts retained. Campaigns
-use frozen copies and separate caches. Large data compressed losslessly,
-catalog and byte verification retained; no raw data is reconstructed.
+use frozen copies and separate caches. Large data are compressed losslessly,
+and catalog and byte verification are retained; no raw data is reconstructed.
 
 Local measurements distinguish startup and normal path. Universal zero heap,
-throughput, P99, fairness, scalability, or closure of Phase0 gates are not
+throughput, P99, fairness, scalability, or closure of Phase 0 gates are not
 inferred. Global requirement statuses remain `progettato`.

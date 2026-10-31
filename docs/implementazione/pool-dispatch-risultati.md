@@ -6,7 +6,7 @@ Qualification follows the [contract](pool-dispatch.md),
 [preregistered method](pool-dispatch-metodo.md), and
 [independent C3 reading](pool-dispatch-revisione.md).
 Frozen base `14fd7738c216e3a0bd3ce9612576b9b57d648f74`, thirteen
-increment sources and fourteen helpers copied byte for byte.
+increment sources and fourteen helpers were copied byte for byte.
 Originals are in the [campaign catalog](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-dispatch/).
 The namespace date follows preregistration; records retain their original
 times and are not backdated.
@@ -55,7 +55,7 @@ compiler notes, retained in the original.
 Native SB-COVER data and five original HTML pages agree on the entire
 scope, **110/114 expressions (96.49%) and 10/10 native branches (100%)**.
 The preregistered 95% C3 gate is passed, with **no manual exclusions**.
-Original native data occupies 2306672 bytes; the [library audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-dispatch/data/coverage-audit/coverage-audit.lisp)
+The original native data occupies 2306672 bytes; the [library audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-dispatch/data/coverage-audit/coverage-audit.lisp)
 and [dispatch audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-dispatch/data/dispatch-coverage-audit/coverage-dispatch-audit.lisp)
 retain counts and missing paths.
 
@@ -96,7 +96,7 @@ drain are outside timing, no begin, lease, or pop in measurement.
 | 4 | 7346 | 1377 | 2175 | 0 |
 
 SBCL 2.6.9, ARM64, Apple M4, Darwin 27.0.0, safety 3, clock 1000000
-units/s. Each sample completes 4096 cycles, observed zero heap, and exact
+units/s. Each sample completes 4096 cycles with zero observed heap and an exact
 sink: 8435712 EMPTY, 8468480 INACTIVE, 8501248 ROUTE-CURRENT.
 Positive control detects 16777472 deliberate bytes; self-tests
 detect wrong sinks, all mismatched returns, sub-resolution clock,

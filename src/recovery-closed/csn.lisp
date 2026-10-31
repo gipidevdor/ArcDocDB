@@ -6,9 +6,9 @@
 ;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-TXM-007 REQ-AFF-008
 (declaim (ftype (function (manifest u64 boolean u64) (values boolean u64 &optional)) massimo-csn-chiusura))
 (defun massimo-csn-chiusura (manifest id present maximum)
-  "Pre: CLOSED canonico con budget esiti già verificato; risoluzione dei prepared terminata.
-Post: ogni CSN nell'EDIT contribuisce al massimo, anche senza prepared nel prefisso.
-INVARIANT-VIOLATION per stato, CSN fuori u64 o attraversamento incompleto; nessun TXID contribuisce al massimo."
+  "Pre: canonical CLOSED with outcome budget already verified; prepared resolution finished.
+Post: every CSN in EDIT contributes to the maximum, even without prepared data in the prefix.
+INVARIANT-VIOLATION for state, CSN outside u64, or incomplete traversal; no TXID contributes to the maximum."
   (let ((entry (gethash id (arcdocdb.recovery.manifest::%manifest-closed manifest))))
     (unless entry (error 'invariant-violation :reason :closed-recovery-csn-state))
     (let* ((outcomes (arcdocdb.recovery.manifest::%closed-outcomes entry))
@@ -26,10 +26,10 @@ INVARIANT-VIOLATION per stato, CSN fuori u64 o attraversamento incompleto; nessu
 (declaim (ftype (function (octets index (member 1 2) index) (values boolean u64 &optional))
                 massimo-csn-compattato))
 (defun massimo-csn-compattato (buffer prefix version count)
-  "Pre: intero CLOSED compattato verificato, COUNT autorevole; scratch esclusivo stabile.
-Post: massimo dei soli stamp ordinari PUT/TOMBSTONE; nessun I/O o nuovo CRC dei body.
-Header/progresso ricontrollati; INVARIANT-VIOLATION per forma, count o consumo discordanti.
-Ciclo esatto COUNT, già limitato dal verificatore; nessun array aggiuntivo."
+  "Pre: entire compacted CLOSED verified, authoritative COUNT; stable exclusive scratch.
+Post: maximum of ordinary PUT/TOMBSTONE stamps only; no I/O or new body CRCs.
+Headers/progress rechecked; INVARIANT-VIOLATION for mismatched shape, count, or consumption.
+Exact COUNT loop, already bounded by the verifier; no additional array."
   (check-range buffer arcdocdb.storage.format:+segment-header-bytes+ prefix)
   (unless (<= count (floor (- prefix +segment-header-bytes+) +header-bytes+))
     (error 'invariant-violation :reason :closed-recovery-csn-count))
@@ -51,7 +51,7 @@ Ciclo esatto COUNT, già limitato dal verificatore; nessun array aggiuntivo."
 (declaim (ftype (function (closed-recuperato) (values boolean u64 &optional))
                 massimo-csn-closed-recuperato))
 (defun massimo-csn-closed-recuperato (recovered)
-  "Pre: risultato completo immutabile. Post: presenza e massimo osservato, NIL/0 se privo di CSN.
-Include esiti EDIT e OUTCOME anche senza prepared; nessun dato oltre il P canonico contribuisce.
-TYPE-ERROR per tipi invalidi; nessuna prova di salute futura o ammissione del traffico."
+  "Pre: complete immutable result. Post: presence and observed maximum, NIL/0 if no CSN.
+Includes EDIT and OUTCOME outcomes even without prepared data; no data beyond canonical P contributes.
+TYPE-ERROR for invalid types; no proof of future health or traffic admission."
   (values (closed-recuperato-csn-present recovered) (closed-recuperato-max-csn recovered)))

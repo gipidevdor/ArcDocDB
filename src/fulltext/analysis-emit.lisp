@@ -5,8 +5,8 @@
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (spazio-full-text scalare) null) emetti-scalare-full-text))
 (defun emetti-scalare-full-text (space cp)
-  "Pre: scalare normalizzato. Post: UTF-8 aggiunto entro budget prima della scrittura.
-RESOURCE-EXHAUSTED per termine o buffer insufficienti; nessuna troncatura."
+  "Pre: normalized scalar. Post: UTF-8 appended within budget checked before writing.
+RESOURCE-EXHAUSTED for insufficient term or buffer capacity; no truncation."
   (let* ((width (cond ((< cp #x80) 1) ((< cp #x800) 2) ((< cp #x10000) 3) (t 4)))
          (start (spazio-full-text-byte-count space)) (end (+ start width))
          (buffer (spazio-full-text-bytes space)))
@@ -26,12 +26,12 @@ RESOURCE-EXHAUSTED per termine o buffer insufficienti; nessuna troncatura."
 (declaim (ftype (function (spazio-full-text) null) termina-analisi-full-text passo-emissione-full-text
                 passo-confini-full-text))
 (defun termina-analisi-full-text (space)
-  "Pre: analisi conclusa. Post: DONE e rilascio del prestito input; nessuna pubblicazione."
+  "Pre: analysis complete. Post: DONE and input loan released; no publication."
   (setf (spazio-full-text-phase space) :done (spazio-full-text-input space) nil)
   nil)
 (defun passo-emissione-full-text (space)
-  "Pre: fase EMIT. Post: uno scalare o chiusura del token con posizione consecutiva.
-Gli offset rimangono privati fino al completamento di tutti i token."
+  "Pre: EMIT phase. Post: one scalar or token closure with consecutive position.
+Offsets remain private until all tokens are complete."
   (if (< (spazio-full-text-emit-pos space) (spazio-full-text-emit-end space))
       (progn (emetti-scalare-full-text space (aref (spazio-full-text-b space) (spazio-full-text-emit-pos space)))
              (incf (spazio-full-text-emit-pos space)))
@@ -43,8 +43,8 @@ Gli offset rimangono privati fino al completamento di tutti i token."
               (spazio-full-text-boundary space) (1+ end) (spazio-full-text-has-letter space) nil)))
   nil)
 (defun passo-confini-full-text (space)
-  "Pre: contesti costruiti. Post: un confine esaminato o avvio emissione.
-RESOURCE-EXHAUSTED prima del token oltre limite; stringa vuota produce zero token."
+  "Pre: contexts built. Post: one boundary examined or emission started.
+RESOURCE-EXHAUSTED before a token beyond the limit; empty string produces zero tokens."
   (let ((i (spazio-full-text-boundary space)) (n (spazio-full-text-b-count space)))
     (when (> i n) (termina-analisi-full-text space) (return-from passo-confini-full-text nil))
     (when (plusp (proprieta-unicode space +letter-ranges+ (aref (spazio-full-text-b space) (1- i))))

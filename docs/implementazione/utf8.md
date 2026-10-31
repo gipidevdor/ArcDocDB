@@ -4,7 +4,7 @@
 
 `arcdocdb.utf8:verifica-utf8` fully verifies a span `[start,end)` of
 an immutable `arcdocdb.binary:octets` and returns Unicode scalar-value
-count. Buffer must be simple byte array. Parameter
+count. The buffer must be a simple byte array. Parameter
 `:max-bytes` defaults to 16 MiB and accepts integers from 0 to 16 MiB.
 Empty span returns zero, including with zero budget.
 
@@ -19,17 +19,17 @@ Empty span returns zero, including with zero budget.
 | Overlong, surrogate, or value beyond U+10FFFF | `corruption-detected`, `:utf8-scalar`, second-byte offset. |
 | Inconsistency between helpers | `invariant-violation`; future worker boundary applies fail-stop. |
 
-Offsets are absolute within buffer. Range checked first, then
-budget; after recognizing lead, whole-sequence availability
+Offsets are absolute within buffer. The range is checked first, then
+budget; after recognizing lead, whole-sequence availability is
 checked, then all continuations, finally scalar restrictions. Valid
 bytes outside span do not complete a truncated sequence.
 
-NUL, BOM, and noncharacters allowed. Count concerns scalar values,
-not graphemes: a letter followed by combining accent counts two. Module
+NUL, BOM, and noncharacters are allowed. Count concerns scalar values,
+not graphemes: a letter followed by combining accent counts two. The module
 produces no strings, normalizes nothing, and replaces no invalid sequences.
 Checks [RFC 3629](https://www.rfc-editor.org/rfc/rfc3629) grammar
 used for [CBOR](https://www.rfc-editor.org/rfc/rfc8949#section-3.1) text.
-Does not interpret CBOR structure, chunks, or depth.
+It does not interpret CBOR structure, chunks, or depth.
 
 Caller keeps buffer immutable until return. Each call
 uses only local cursor and count; writes no shared state, creates no
@@ -40,7 +40,7 @@ connection will be a subsequent component.
 The [registered method](utf8-metodo.md) and
 [decision table](utf8-decisioni.md) distinguish malformed inputs
 from internal guards. This kernel supports REQ-LIM-001/002 and REQ-AFF-004/008;
-no complete-decoder or engine requirement promoted.
+no complete-decoder or engine requirement is promoted.
 
 <a id="verifica-locale-del-9-ottobre-2026"></a>
 
@@ -71,11 +71,11 @@ are detected after smoke. Five allocation fixtures have
 five replicates of 64 calls each, warmup 128, and exact counts/sinks:
 zero observed heap bytes in all 25 samples. Sensor records
 zero baseline and positive control of 16,777,472 bytes. No timing
-threshold or absolute proof of nonallocation inferred from these data.
+threshold or absolute proof of nonallocation is inferred from these data.
 
 The [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-utf8/catalogo.lisp) preserves
 before/after sources, full output, coverage state/HTML, baseline and mutant
-logs, C1 readings, and tool checks. Also preserves first
-benchmark self-test failed due to typo in hash FORMAT string
+logs, C1 readings, and tool checks. It also preserves the first
+benchmark self-test, which failed due to a typo in hash FORMAT string
 and successful test after correction. Automated readings
 do not replace human approval or engine release gates.

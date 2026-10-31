@@ -10,7 +10,7 @@
 
 ## Question and references
 
-Check that the fileheader explicitly selects v1/v2 and rejects unknown versions;
+Check that the file header explicitly selects v1/v2 and rejects unknown versions;
 explore a finite model of interrupted and rerun offline conversion, with
 immutable sources, a single publication EDIT, and reclamation subject to pins.
 Requirements: REQ-FOR-002, REQ-LIM-003, REQ-AFF-007, REQ-AFF-018, REQ-AFF-019.
@@ -32,7 +32,7 @@ header and temporary names; specification, CLEAN/MERGE workflow, and readers.
   bytes 0–55. Reuse the SPK-09 reference CRC, already loaded by the runner;
   no dependency on the v2 codec, indexes, or other modules' CBOR decoder.
 - Validate type and bounds before access, then magic, CRC, origin, and all
-  reserved fields (11–15, 48–55, 60–63), then version 1/2. Unknown versions
+  reserved fields (11–15, 48–55, 60–63), then version 1/2. Unknown versions are
   rejected before returning or invoking a parser. Check fixtures with correct
   CRCs even for semantically invalid fields, all truncations, and all bit flips.
 - Separate model: one v1 source, one v2 output, pin 0/1, presence of `.tmp`
@@ -65,7 +65,7 @@ header and temporary names; specification, CLEAN/MERGE workflow, and readers.
   Negative verification of valid output is a rejection.
 - Saturate phase and copy budgets: explicit rejection before the phase that
   exceeds the budget, no incomplete EDIT. No waiting for pins: reclamation
-  is deferred and rerun after explicit release. State local to one model;
+  is deferred and rerun after explicit release. State is local to one model;
   no locks, per-Serie shared state, or I/O.
 
 <a id="costi-e-limiti-dichiarati"></a>
@@ -73,7 +73,7 @@ header and temporary names; specification, CLEAN/MERGE workflow, and readers.
 ## Declared costs and limits
 
 > **Proposed** — Experimental limits, rather than guaranteed performance:
-> fileheader exactly 64 bytes; CRC over 56 bytes; comparisons and reserved
+> file header exactly 64 bytes; CRC over 56 bytes; comparisons and reserved
 > fields at most 64 bytes; integer writes at most 8 bytes, Serie ID 16 bytes.
 > All fixtures are bounded. The model uses one source and one output, two pin
 > states, and a fixed number of phases; writes and durability are finite
@@ -93,7 +93,7 @@ header and temporary names; specification, CLEAN/MERGE workflow, and readers.
 > Each recovery is interrupted after 0..4 steps and in turn receives every
 > crash alternative. Idempotence compares all logical and durable facts;
 > only budgets and counters of work already performed are excluded. The
-> source is immutable symbolic content; the fileheader is checked on real bytes.
+> source is immutable symbolic content; the file header is checked on real bytes.
 
 Each phase costs one symbolic step, including reclamation deferred by a pin:
 
@@ -124,7 +124,7 @@ distinct states.
 
 ## Environment and reproduction
 
-Environment identified before execution: SBCL 2.6.9, Darwin arm64.
+The environment was identified before execution: SBCL 2.6.9, Darwin arm64.
 Module policy: `(safety 3)`. No external dependencies beyond Common Lisp/SBCL;
 reference CRC from the local SPK-09 module. The runner loads SPK-09 and modules
 in order codec, index, cbor, migration. Compile with fatal `warning` and
@@ -141,12 +141,12 @@ The record also retains previous attempts if repairs are needed.
 
 ## Results
 
-> **Proposed** — Local evidence for fileheaders and the finite model only;
+> **Proposed** — Local evidence for file headers and the finite model only;
 > it does not complete the engine's v2 gate. Check on 2026-10-08 with SBCL
 > 2.6.9, Darwin 27.0.0 / ARM64, safety 3 policy.
 
 Strict compilation: `:status :ok`, `warnings nil`, `failure nil`; FASL loading
-and `check`: `:status :ok`. Captured stdout/stderr empty, no warnings or
+and `check`: `:status :ok`. Captured stdout/stderr are empty, no warnings or
 style-warnings. Result and blobs are in
 [`v2-migrazione-check.lisp`](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-migrazione-check.lisp), one schema 1 plist
 readable with `*read-eval* nil`. The checked source has Git blob
@@ -155,8 +155,8 @@ readable with `*read-eval* nil`. The checked source has Git blob
 
 | Check | Actual count |
 |---|---:|
-| Valid fileheaders, including shifted ranges | 8 |
-| Invalid fileheaders rejected before the parser | 2,393 |
+| Valid file headers, including shifted ranges | 8 |
+| Invalid file headers rejected before the parser | 2,393 |
 | Bit flips / truncations / reserved fields with valid CRC | 2,048 / 256 / 68 |
 | Invalid origins / unknown versions / invalid bounds / alternative magic | 12 / 4 / 4 / 1 |
 | Reachable prefixes of four scenarios with pin 0/1 | 52 |

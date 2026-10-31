@@ -5,8 +5,8 @@
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-LIM-003
 (declaim (ftype (function (arcdocdb.index.page:fonte-indice index) index) conta-chiavi-costruzione))
 (defun conta-chiavi-costruzione (source capacity)
-  "Pre: cardinalita' della fonte privata M1. Post: numero entro il carico massimo, prima degli array.
-INVARIANT-VIOLATION per conteggio fuori geometria: metadati corrotti non ampliano la riserva."
+  "Pre: private M1 source cardinality. Post: count within maximum load, before arrays.
+INVARIANT-VIOLATION for count outside geometry: corrupt metadata do not expand the reservation."
   (let ((count (arcdocdb.index.page::fonte-indice-count source)))
     (unless (<= count (floor (* 7 capacity) 8))
       (error 'invariant-violation :reason :engine-image-build-count-range))
@@ -15,8 +15,8 @@ INVARIANT-VIOLATION per conteggio fuori geometria: metadati corrotti non amplian
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-LIM-003
 (declaim (ftype (function (piano-immagine-motore fixnum) null) ordina-byte-costruzione))
 (defun ordina-byte-costruzione (plan shift)
-  "Pre: piano completo, SHIFT uno degli otto byte del digest. Post: ordinamento stabile del byte.
-Tre scansioni limitate a N e 256 contatori, nessuna copia di chiavi o modifica alla fonte."
+  "Pre: complete plan, SHIFT is one of the eight digest bytes. Post: stable byte sort.
+Three scans bounded to N and 256 counters, no key copy or source modification."
   (let ((counts (piano-immagine-motore-counts plan)) (order (piano-immagine-motore-order plan))
         (aux (piano-immagine-motore-aux plan)) (cursor 0))
     (fill counts 0)
@@ -33,8 +33,8 @@ Tre scansioni limitate a N e 256 contatori, nessuna copia di chiavi o modifica a
 ;;; REQ: REQ-IDX-009 REQ-IDX-010 REQ-AFF-008
 (declaim (ftype (function (motore) piano-immagine-motore) prepara-piano-immagine-motore))
 (defun prepara-piano-immagine-motore (engine)
-  "Pre: motore BUSY esclusivo, quota payload gia' controllata. Post: snapshot metadati ordinati per digest.
-Fonte canonica senza split; errori di salute, conteggio e controlli prima di creare il derivato."
+  "Pre: exclusive BUSY engine, payload quota already checked. Post: metadata snapshot sorted by digest.
+Canonical source without splits; health, count, and control checks before creating the derivative."
   (let* ((source (fonte-canonica-indice-motore engine)) (index (motore-index engine))
          (fragment (svref (p::root-indice-directory (p::acquisisci-root index)) 0))
          (capacity (p::indice-primario-capacity index)) (count (conta-chiavi-costruzione source capacity))

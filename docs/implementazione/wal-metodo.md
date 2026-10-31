@@ -37,7 +37,7 @@ limit, nonzero physical offset, historical frontier, and group writes. Injected
 backend for EIO/ENOSPC/EINTR, short write, crash at every prefix, failed flush,
 repeated operations, premature reuse, and concurrent groups on the same log.
 
-Measurements separate from tests: preallocated buffers, warmup, full GC,
+Measurements are separate from tests: preallocated buffers, warmup, full GC,
 five samples, safety 3, heap, and time. Measure formation/sealing and simulated
 I/O without generalizing to database latency or throughput. Retain command,
 environment, hashes, output, and failures with `tools/record-command.lisp`;

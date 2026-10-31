@@ -8,9 +8,9 @@
 (declaim (ftype (function (t t t keyword) (values index &optional))
                 check-span-string-cbor-write))
 (defun check-span-string-cbor-write (buffer start end reason)
-  "Pre: array e confini esterni; REASON identifica il range. Post: span index.
-INVALID-ARGUMENT per tipo/range, offset NIL, prima di leggere byte.
-INVARIANT-VIOLATION per lunghezza incoerente; span anche vuoto, nessuna mutazione."
+  "Pre: array and external bounds; REASON identifies the range. Post: index span.
+INVALID-ARGUMENT for type/range, offset NIL, before reading bytes.
+INVARIANT-VIOLATION for inconsistent length; span may be empty, no mutation."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason reason))
@@ -25,10 +25,10 @@ INVARIANT-VIOLATION per lunghezza incoerente; span anche vuoto, nessuna mutazion
                          (values index (member 1 2 3 5) index &optional))
                 check-input-string-cbor-write))
 (defun check-input-string-cbor-write (buffer start end major source source-start source-end max-bytes)
-  "Pre: argomenti esterni. Post: span sorgente, header-size e item-size limitati.
-Ordine: range destinazione, major, range sorgente, budget, capacita.
-INVALID-ARGUMENT o RESOURCE-EXHAUSTED con offset NIL, prima di byte letti/scritti;
-INVARIANT-VIOLATION per selezione interna incoerente. Budget include la testata."
+  "Pre: external arguments. Post: bounded source span, header-size, and item-size.
+Order: destination range, major, source range, budget, capacity.
+INVALID-ARGUMENT or RESOURCE-EXHAUSTED with offset NIL, before reading/writing bytes;
+INVARIANT-VIOLATION for inconsistent internal selection. Budget includes the header."
   (check-span-string-cbor-write buffer start end :cbor-range)
   (unless (typep major '(integer 2 3))
     (error 'invalid-argument :reason :cbor-string-major))
@@ -56,10 +56,10 @@ INVARIANT-VIOLATION per selezione interna incoerente. Budget include la testata.
 (declaim (ftype (function (octets index index octets index index)
                          (values null &optional)) check-overlap-string-cbor-write))
 (defun check-overlap-string-cbor-write (buffer start next source source-start source-end)
-  "Pre: span verificati, NEXT include testata e payload. Post: nessun overlap.
-Stesso array disgiunto, confini toccanti e sorgente vuota ammessi.
+  "Pre: verified spans; NEXT includes header and payload. Post: no overlap.
+Disjoint spans in the same array, touching boundaries, and an empty source are allowed.
 INVALID-ARGUMENT :cbor-string-overlap, offset NIL; INVARIANT-VIOLATION
-per confini interni. Nessun byte letto o scritto."
+for internal bounds. No bytes read or written."
   (unless (<= start next (length buffer))
     (error 'invariant-violation :reason :cbor-string-target-span))
   (unless (<= source-start source-end (length source))
@@ -73,10 +73,10 @@ per confini interni. Nessun byte letto o scritto."
 (declaim (ftype (function (octets index index octets index index)
                          (values index &optional)) copia-stringa-cbor-write))
 (defun copia-stringa-cbor-write (buffer target end source start stop)
-  "Pre: sorgente stabile e disgiunta dal footprint di scrittura gia verificato.
-Post: copia esatta in [TARGET,END), restituisce END; resto e span sorgente non toccati.
-INVARIANT-VIOLATION per confini, lunghezza o progresso; al piu 16 MiB di passi.
-Nessun rollback per guasti interni, attesa, I/O o allocazione prevista."
+  "Pre: stable source disjoint from the already verified write footprint.
+Post: exact copy into [TARGET,END), returns END; remainder and source span untouched.
+INVARIANT-VIOLATION for bounds, length, or progress; at most 16 MiB steps.
+No rollback for internal faults; no waiting, I/O, or intended allocation."
   (unless (<= target end (length buffer))
     (error 'invariant-violation :reason :cbor-string-copy-target))
   (unless (<= start stop (length source))
@@ -97,14 +97,14 @@ Nessun rollback per guasti interni, attesa, I/O o allocazione prevista."
                          (values index &optional)) scrivi-stringa-cbor-minima))
 (defun scrivi-stringa-cbor-minima (buffer start end major source source-start source-end
                                  &key (max-bytes +cbor-scan-max-bytes+))
-  "Pre: destinazione esclusiva, sorgente stabile simple u8, span half-open, MT2/3.
-Post: un solo NEXT, testata minima e payload esatto; byte esterni invariati.
-MAX-BYTES 0..16 MiB include testata e payload. Preflight range/major/source/budget,
-capacita/overlap/UTF8 prima di scrivere; INVALID-ARGUMENT o RESOURCE-EXHAUSTED
-con offset NIL, errori UTF8 propagati con offset assoluto nella sorgente.
-Stesso array ammesso solo disgiunto dal footprint; testo contato in byte.
-INVARIANT-VIOLATION interno senza rollback. Nessuna pubblicazione atomica/durevole,
-allocazione prevista, attesa, I/O, AST o stato condiviso tra Serie."
+  "Pre: exclusive destination, stable simple u8 source, half-open spans, MT2/3.
+Post: one NEXT only, minimal header and exact payload; external bytes unchanged.
+MAX-BYTES 0..16 MiB includes header and payload. Range/major/source/budget,
+capacity/overlap/UTF8 preflight before writing; INVALID-ARGUMENT or RESOURCE-EXHAUSTED
+with offset NIL, UTF8 errors propagated with absolute source offset.
+The same array is allowed only disjoint from the footprint; text counted in bytes.
+Internal INVARIANT-VIOLATION without rollback. No atomic/durable publication,
+intended allocation, waiting, I/O, AST, or shared state between Serie."
   (multiple-value-bind (span header-size item-size)
       (check-input-string-cbor-write buffer start end major source source-start source-end max-bytes)
     (let ((bytes (the octets buffer)) (begin (the index start))

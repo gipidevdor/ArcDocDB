@@ -8,10 +8,10 @@
                          (values (member :absent :pending :sealed) u32 index index (integer 0 2)
                                  (member :none :csn :txid) u32 u32 &optional)) leggi-riferimento-riga-full-text))
 (defun leggi-riferimento-riga-full-text (pool lease row)
-  "Pre: pool canonico, lease writer e row u32. Post: stato, segmento, offset, size, formato,
-stamp-kind, high,low. ABSENT/PENDING restituiscono 0 e :NONE, senza handle o parziali.
-SEALED conserva CSN/TXID distinti e sopravvive al riuso WAL; non prova commit o MVCC.
-INVALID-ARGUMENT per lease/row; mapping incoerente => pool FAULTED, nessun I/O o heap."
+  "Pre: canonical pool, writer lease, and u32 row. Post: state, segment, offset, size, format,
+stamp-kind, high,low. ABSENT/PENDING return 0 and :NONE, without handle or partial results.
+SEALED retains distinct CSN/TXID and survives WAL reuse; does not prove commit or MVCC.
+INVALID-ARGUMENT for lease/row; inconsistent mapping => pool FAULTED, no I/O or heap."
   (multiple-value-bind (status slot generation) (f:trova-riga-trasferita-full-text pool lease row)
     (case status
       (:absent (values :absent 0 0 0 0 :none 0 0))

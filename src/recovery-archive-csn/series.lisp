@@ -7,9 +7,9 @@
 (declaim (ftype (function (archivio-recovery vista-get-serie simple-vector index index)
                          insieme-serie-recovery) copia-serie-recovery))
 (defun copia-serie-recovery (archive registri views count budget)
-  "Pre: count positivo entro budget prima dell'allocazione, elenco stabile e autorevole del catalogo.
-Post: copia completa, stesso ambito, UUID unici e Registri presente per EQ esattamente una volta.
-INVALID-ARGUMENT per ambito/UUID/Registri, INVARIANT-VIOLATION per cardinalità; nessun I/O."
+  "Pre: positive count within budget before allocation, stable authoritative catalog list.
+Post: complete copy, same scope, unique UUIDs, and Registri present by EQ exactly once.
+INVALID-ARGUMENT for scope/UUID/Registri, INVARIANT-VIOLATION for cardinality; no I/O."
   (unless (and (= count (length views)) (plusp count) (<= (* 8 count) budget))
     (error 'invariant-violation :reason :archive-csn-series-preflight))
   (let ((owned (copy-seq views)) (seen (make-hash-table :test 'equalp :size count)) (found nil))
@@ -33,10 +33,10 @@ INVALID-ARGUMENT per ambito/UUID/Registri, INVARIANT-VIOLATION per cardinalità;
                           &key (:max-series index) (:budget-riferimenti index)) insieme-serie-recovery)
                 crea-insieme-serie-recovery))
 (defun crea-insieme-serie-recovery (archive registri views &key (max-series 65536) (budget-riferimenti 524288))
-  "Pre: bootstrap canonico, tutte le Serie del catalogo incluse, ruolo Registri attestato dal controller.
-Post: copia immutabile per il calcolo del CSN; ordine del catalogo conservato, nessun vettore esportato.
-INVALID-ARGUMENT sul vuoto; RESOURCE-EXHAUSTED prima di copia/tabella. Budget 8*N byte di riferimenti,
-esclude hash table, header Lisp, viste già esistenti e GC; non è un tetto RSS."
+  "Pre: canonical bootstrap, all catalog Serie included, Registri role attested by controller.
+Post: immutable copy for CSN calculation; catalog order retained, no vector exported.
+INVALID-ARGUMENT when empty; RESOURCE-EXHAUSTED before copy/table. Budget: 8*N bytes of references,
+excluding hash table, Lisp headers, existing views, and GC; not an RSS ceiling."
   (let ((count (length views)))
     (when (zerop count) (error 'invalid-argument :reason :archive-csn-series-empty))
     (when (or (> count max-series) (> (* 8 count) budget-riferimenti))

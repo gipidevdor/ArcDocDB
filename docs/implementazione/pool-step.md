@@ -13,8 +13,8 @@ The [preregistered method](pool-step-metodo.md) bounds qualification.
 ## Contract and results
 
 Current owner, no reentrancy, previous bridge closed, consistent
-context. Port/table binding and owner checked before phase.
-Public context getter determines one operational entry:
+context. Port/table binding and owner are checked before phase.
+The public context getter determines one operational entry:
 
 | Input phase | Operation | Origin | Detail | Lifecycle action |
 |---|---|---|---|---|
@@ -27,7 +27,7 @@ Status is `:claimed`, `:empty`, `:busy`, `:inactive`, or `:published`,
 original from selected entry; current returns `:claimed`.
 NIL in current's last two values means no transfer and
 no lifecycle observation. NIL recycle action does not mean unchanged
-command: pool was not consulted.
+command: the pool was not consulted.
 
 Every call performs **one operational entry and at most one ready
 transfer**. Binding, getter, and read-only routing are not transfers.
@@ -38,13 +38,13 @@ They prove neither global quiescence, parking, nor safe shutdown.
 CLAIMED performs no new acquisition, recycling, or pool ACK: it selects current
 IDLE link and retains obligation even with inactive pool, pending retirement,
 or inconsistent commands. Repeated current alone makes no progress.
-Caller separately uses [explicit startup](pool-begin.md), then bridge
+The caller separately uses [explicit startup](pool-begin.md), then bridge
 APIs for pop, acknowledgment, and end.
 
 RESCHEDULE reuses [recycling](pool-recycle.md): room publishes and ends
 immediately IDLE without falling into second acquisition. Full returns
-new CLAIMED and its link, never previous link. It neither reads lifecycle nor
-acknowledges retirement: that belongs to next IDLE call.
+new CLAIMED and its link, never the previous link. It neither reads lifecycle nor
+acknowledges retirement: that belongs to the next IDLE call.
 Retirement convergence under permanent saturation is not promised.
 
 <a id="rifiuti-e-guasti"></a>
@@ -65,7 +65,7 @@ boundary test with a nominal C1 return.
 New-acquisition BUSY returns claim origin and cursor.
 Recycling's `resource-exhausted :ready-queue-busy` instead remains original
 condition with RESCHEDULE/obligation retained. No retry,
-handler, cleanup, or rollback added. Failed routing after full
+handler, cleanup, or rollback is added. Failed routing after full
 cannot undo successful exchange: new writer reference/home
 remain in FAULTED context with original cause; old writer is already
 in ring. Caller retains references and coordinates Archivio diagnosis.
@@ -77,9 +77,9 @@ in ring. Caller retains references and coordinates Archivio diagnosis.
 O(1) phase selection; O(1) current lookup and home recycling. Only claim
 may perform O(K) ready scan, K maximum 64. No new loop,
 intentional allocation, callback, thread, wait, I/O, or cross-Serie shared
-write per message. C1 delegate cost included.
+write per message. C1 delegate cost is included.
 
-Step neither starts/ends bridge nor applies payload and is not the
+The step neither starts/ends the bridge nor applies payload and is not the
 server loop. Message admission, sensors, park/wake, physical startup/shutdown,
 and Archivio coordination remain open. No durable protocol changes
 or complete-engine gate closure.

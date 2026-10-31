@@ -6,9 +6,9 @@
 ;;; REQ: REQ-FOR-003 REQ-REC-001 REQ-AFF-008
 (defstruct (checkpoint-control
              (:constructor %make-checkpoint-control (active bytes identity manifest version)) (:copier nil))
-  "Pre: header, EDIT completo e SEAL verificati; manifest riferisce ACTIVE preparato.
-Post: piano posseduto immutabile, senza I/O; nessuna API esporta il buffer.
-Non attesta l'inventario CLOSED, l'allocatore degli ID o la decisione del catalogo."
+  "Pre: header, complete EDIT, and SEAL verified; manifest references prepared ACTIVE.
+Post: immutable owned plan, without I/O; no API exports the buffer.
+Does not attest to the CLOSED inventory, ID allocator, or catalog decision."
   (active nil :type segmento-attivo-preparato :read-only t)
   (bytes #() :type octets :read-only t)
   (identity #() :type (simple-array (unsigned-byte 8) (#.+log-identity-bytes+)) :read-only t)
@@ -18,9 +18,9 @@ Non attesta l'inventario CLOSED, l'allocatore degli ID o la decisione del catalo
 ;;; REQ: REQ-AFF-001 REQ-REC-001 REQ-FOR-003
 (defstruct (control-preparato
              (:constructor %make-control-preparato (log manifest active association directory end)) (:copier nil))
-  "Pre: checkpoint scritto, sincronizzato, riletto uguale; parent sincronizzato.
-Post: log/manifest, directory canonica e frontiera attesa, senza buffer del piano/scratch.
-Il caller mantiene capacità e dipendenze fino al punto di atomicità previsto dal catalogo."
+  "Pre: checkpoint written, synchronized, reread equal; parent synchronized.
+Post: log/manifest, canonical directory, and expected frontier, without plan buffer/scratch.
+The caller retains capabilities and dependencies until the atomicity point required by the catalog."
   (log nil :type log-io :read-only t)
   (manifest nil :type arcdocdb.recovery.manifest::manifest :read-only t)
   (active nil :type segmento-attivo-preparato :read-only t)
@@ -33,36 +33,36 @@ Il caller mantiene capacità e dipendenze fino al punto di atomicità previsto d
 
 ;;; REQ: REQ-REC-001 REQ-AFF-001
 (defstruct (control-pubblicato (:constructor %make-control-pubblicato (prepared)) (:copier nil))
-  "Pre: wrapper privato prima dell'I/O, consegnato solo dopo rinomina verificata e fsync del parent.
-Post: capacità di pubblicazione riuscita, senza vecchio FD o buffer; non chiude il recovery completo.
-Nessuna API costruisce questo risultato da un nome o da un manifest non preparato."
+  "Pre: private wrapper before I/O, delivered only after verified rename and parent fsync.
+Post: successful publication capability, without old FD or buffer; does not complete full recovery.
+No API constructs this result from a name or an unprepared manifest."
   (prepared nil :type control-preparato :read-only t))
 
 ;;; REQ: REQ-AFF-008
 (declaim (ftype (function (checkpoint-control) index) lunghezza-checkpoint-control))
 (defun lunghezza-checkpoint-control (plan)
-  "Pre: piano completo. Post: byte esatti di header/EDIT/SEAL, senza I/O o mutazione."
+  "Pre: complete plan. Post: exact header/EDIT/SEAL bytes, without I/O or mutation."
   (length (checkpoint-control-bytes plan)))
 
 ;;; REQ: REQ-REC-001
 (declaim (ftype (function (checkpoint-control) arcdocdb.recovery.manifest::manifest)
                 manifest-checkpoint-control))
 (defun manifest-checkpoint-control (plan)
-  "Pre: piano completo. Post: manifest posseduto da consultare tramite query scalari.
-Nessuna esposizione di buffer o prova di durability del control log."
+  "Pre: complete plan. Post: owned manifest accessible through scalar queries.
+No buffer exposure or proof of control log durability."
   (checkpoint-control-manifest plan))
 
 ;;; REQ: REQ-WAL-002 REQ-AFF-001
 (declaim (ftype (function (control-preparato) log-io) log-control-preparato))
 (defun log-control-preparato (prepared)
-  "Pre: risultato completo e capacità ancora possedute. Post: unico log canonico CONTROL.
-Non certifica salute corrente, rinomina o adozione nel server."
+  "Pre: complete result and capabilities still owned. Post: unique canonical CONTROL log.
+Does not certify current health, rename, or adoption by the server."
   (control-preparato-log prepared))
 
 ;;; REQ: REQ-REC-001
 (declaim (ftype (function (control-preparato) arcdocdb.recovery.manifest::manifest)
                 manifest-control-preparato))
 (defun manifest-control-preparato (prepared)
-  "Pre: risultato completo. Post: manifest validato del checkpoint riletto uguale.
-Query in sola lettura; non verifica presenza o prefisso dei file CLOSED nominati."
+  "Pre: complete result. Post: validated manifest from the checkpoint reread equal.
+Read-only query; does not verify the presence or prefix of named CLOSED files."
   (control-preparato-manifest prepared))

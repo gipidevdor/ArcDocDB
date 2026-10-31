@@ -2,7 +2,7 @@
 
 # M16 session — preregistered method
 
-SPK-11 variant, October 17, 2026. Preparatory verification of contract proposed in
+SPK-11 variant, October 17, 2026. Preparatory verification of the contract proposed in
 [ADR-0056](../../docs/adr/0056-sessione-locale-m16.md), before product M16 code.
 REQ-IPC-002/004 and REQ-VAL-001. Code remains C4.
 
@@ -12,10 +12,10 @@ REQ-IPC-002/004 and REQ-VAL-001. Code remains C4.
 
 1. HELLO/WELCOME: independent binary fixtures, exactly five elements,
    version/kind/ID/code, maps with exact ordered keys, minimum/maximum capacities.
-   Negotiation is minimum of limits, without amplification.
+   Negotiation uses the minimum of the limits, without amplification.
 2. Validation: product minimal codec for syntax/UTF-8; separate pass for lexicographic
    key-byte order, including nested maps. No Lisp reader on external input.
-   Checked profile uses control messages within 4096 bytes; defines no data command.
+   The checked profile uses control messages within 4096 bytes; it defines no data command.
 3. Session: no request before WELCOME sent; positive strictly increasing u64 IDs,
    including after completion. Reversed responses, one terminal response, credit
    retained until complete send. Maximum ID permits only draining before reconnection.
@@ -32,19 +32,19 @@ REQ-IPC-002/004 and REQ-VAL-001. Code remains C4.
 
 ## Negative controls and preservation
 
-Every rejection family requires expected reason. Known mutations must show oracle
+Every rejection family requires the expected reason. Known mutations must show oracle
 sensitivity to announced capacities, response ID, credit released before send,
 and renewed deadline. Retain compilations and failed attempts with actual sources.
-Results separate from previously closed campaign.
+Results are separate from the previously closed campaign.
 
 <a id="confini"></a>
 
 ## Boundaries
 
-Test concerns session control, without document AST or GET/PUT commands, publication,
+The test concerns session control, without document AST or GET/PUT commands, publication,
 commit, EBR retirement, or product dispatcher. Map pass checks order and duplicates
-of encoded bytes; no application key/tag semantics inferred.
-Maximum depth 8 concerns arrays/maps; tag sequences traversed iteratively.
+of encoded bytes; no application key/tag semantics are inferred.
+Maximum depth 8 concerns arrays/maps; tag sequences are traversed iteratively.
 No native-heap, RSS, latency, or throughput measurement. ADR-0056 acceptance,
 preallocated I/O adapter, real engine gate, distinct-UID access, and Linux qualification
 remain pending. IPC requirements remain designed.

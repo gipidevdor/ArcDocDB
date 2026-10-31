@@ -8,12 +8,12 @@
                           arcdocdb.index.primary:contesto-indice contenuto-slot)
                          (member :inserted :present :absent)) materializza-chiave-recuperata))
 (defun materializza-chiave-recuperata (selector index context source)
-  "Pre: tutti i candidati committed della chiave considerati; indice privato della stessa Serie, ammissione chiusa.
-Writer esclusivo; SOURCE e CONTEXT preallocati, non alias; nessuna chiave/record modificati durante la chiamata.
-Post: PUT inserito o identico; TOMBSTONE/NONE soltanto assenza verificata. Nessuna voce viva sovrascritta/rimossa.
-Ambiguita, seme, alias, incompatibilita e budget rifiutati senza mutazioni dell'indice; scratch privato modificabile.
-Invarianti guastano anche il selettore; source non e prova di commit. Nessun I/O, root pubblica o ammissione.
-Capacita esaurita: manutenzione del candidato e nuova chiamata, mai perdita di un risultato precedente."
+  "Pre: all committed candidates for the key considered; private index of the same Serie, admission closed.
+Exclusive writer; SOURCE and CONTEXT preallocated, nonaliasing; no key/record modified during the call.
+Post: PUT inserted or identical; TOMBSTONE/NONE only verified absence. No live entry overwritten/removed.
+Ambiguity, seed, aliasing, incompatibility, and budgets rejected without index mutations; private scratch may change.
+Invariants also fault the selector; source is not commit proof. No I/O, public root, or admission.
+Capacity exhausted: maintain the candidate and call again, never lose a previous result."
   (arcdocdb.index.primary::esigi-contesto-libero context)
   (when (eq source (arcdocdb.index.primary::contesto-indice-words context))
     (error 'invalid-argument :reason :recovery-index-source-alias))

@@ -32,7 +32,7 @@ from `e2f7a75`, passes **394 build outcomes**: 392 tests and two smoke tests.
 The two additional lint-selftest markers bring the full-command total
 of `ok` lines to 396; they are distinct from build tests. Lint,
 traceability, links, preservation, and all ten spikes pass; the record
-has exit zero and stable snapshot. Earlier frozen campaigns retain
+has exit zero and a stable snapshot. Earlier frozen campaigns retain
 their original bases and counts.
 
 Verified: all 65536 binary16 values and 131072 exact binary32/64
@@ -127,7 +127,7 @@ and extra form. The wrapper remains stable.
 The independent measurement and mutation audit passes 586 reading checks.
 Its two failed reader attempts are also preserved: incomplete
 Lisp structure and wrong relative base. These errors belong
-to the audit utility; original campaign data remains unchanged.
+to the audit utility; original campaign data remain unchanged.
 The coverage audit preserves code and output of all three successful attempts.
 
 Product campaigns precede this collection utility and have

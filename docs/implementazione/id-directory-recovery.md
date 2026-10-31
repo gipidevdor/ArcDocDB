@@ -12,11 +12,11 @@
 `scegli-id-segmento-recovery-directory(manifest, directory, …)` returns
 three values: proposed u64 ID, next u64 high-water, owned plan.
 One `pianifica-riconciliazione-directory` call collects all
-names through EOF, checks canonical names/identities, builds plan.
-Choice reuses plan; neither reenumerates namespace nor
+names through EOF, checks canonical names/identities, and builds a plan.
+The choice reuses the plan; it neither reenumerates the namespace nor
 reconstructs physical descriptors from reconciliation actions.
 
-Plan selection extracted into private helper also shared
+Plan selection is extracted into a private helper also shared
 with logical-inventory API. High-water, exclusion of
 every observed ID, u64 checks, conditions documented in
 [ID-proposal contract](id-segmento-recovery.md) unchanged.
@@ -24,11 +24,11 @@ every observed ID, u64 checks, conditions documented in
 Five budgets retain adapter names/defaults/semantics:
 `max-files`, `max-segmenti`, `max-names`, `max-total-name-bytes`,
 `max-name-bytes`. Even ignored names consume I/O budget. Configuration,
-capabilities, inventory, names, identities checked before choice;
+capabilities, inventory, names, and identities are checked before choice;
 original error propagates without partial ID/plan.
 
 Controller owns exclusive/stable manifest/namespace until
-exclusive new-temporary creation. Directory borrowed:
+exclusive new-temporary creation. The directory is borrowed:
 no parent close, write, rename, removal, segment read,
 or reservation. `:ready` remains name availability, not traffic
 admission/header/CRC verification. Same inputs may propose
@@ -69,8 +69,8 @@ independence pairs. New API delegates IND-D01…IND-D10 decisions to
 [directory-inventory contract](inventario-directory-metodo.md), without
 new compound predicates/error reinterpretation.
 
-Vertical fixture adopts canonical sixteen-hex-digit names,
-`.seg`/`.seg.tmp`, uses new API directly. Eight-ID limit
+The vertical fixture adopts canonical sixteen-hex-digit names,
+`.seg`/`.seg.tmp`, and uses the new API directly. Eight-ID limit
 remains fixture budget; name collection moves into product.
 Preserve 16 positive scenarios, two negatives, 71 processes, 26 SIGKILLs,
 fixed data/CSN expected values, original-segment comparison.
@@ -111,18 +111,18 @@ independent review/overall qualification remain open.
 
 [Original collection](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-recovery-directory-id/README.md)
 preserves preregistered method, variants, nine command records, coverage,
-mutant logs, original spikes. First attempt failed compilation
-from extra parenthesis in new high-water test, corrected
-in next commit; produced no valid coverage measurement.
+mutant logs, original spikes. The first attempt failed compilation
+because of an extra parenthesis in new high-water test, corrected
+in the next commit; it produced no valid coverage measurement.
 
 Recovery suite passes **154 tests**, ten new. Independent
 oracle compares 6,144 proposals/all plans, counts one
-enumeration per call. Exercises u64, five budgets, wrong inputs,
+enumeration per call. It exercises u64, five budgets, wrong inputs,
 original errors, ownership, 64 calls across four private injected backends.
 Native tests preserve bytes/capabilities, reuse directory, distinguish
 original FD from replacement namespace after parent rename.
 
-Mutation campaign successful baseline, **17/17 mutants detected**,
+The mutation campaign has a successful baseline and **17/17 mutants detected**,
 no compilation errors, survivors, worker faults. Final six
 mutants change each of five budgets or add enumeration;
 fail dedicated budget tests/single-enumeration model.
@@ -145,12 +145,12 @@ temporary, new API skips its ID; original segments unchanged.
 ten spikes. After Archivio CSN-plan integration, entire suite/
 source/documentation checks pass again on `4031944b`, 1,780
 tests, 260 violation-free product files; updated-archive
-check also successful. Selection files/tests
+check also successful. Selection files/tests are
 identical to measured version.
 
 Further CI-clock correction in CBOR fixture changes no product
 code: strict compilation, affected CBOR suite, documentation
-checks repeated on `4c7a0ca7`. Records distinct, all
+checks repeated on `4c7a0ca7`. The records are distinct, all
 STABLE; final result updates change no code/tests.
 Tests do not close independent qualification, Recovery Manager,
 or dedicated Archivio CSN-calculation verification.

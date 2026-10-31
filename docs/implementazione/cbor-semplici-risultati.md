@@ -50,10 +50,10 @@ of the protocol, without attributing false PASS results to earlier campaigns.
 ## Measurements and mutations
 
 Six fixtures 0/20/22/23/32/255, five replicates of 4,096 calls with
-warmup128: 30 samples with zero observed heap. Zero baseline and positive
+128 warmup calls: 30 samples with zero observed heap. Zero baseline and positive
 sensor 16×1 MiB, 16,777,472 bytes observed. Bytes, full arrays, NEXT,
 tokens, and sinks are recalculated by the independent audit: 20,409 checks.
-The bench process takes 1.2138 s; measured samples sum to 0.02209 s,
+The benchmark process takes 1.2138 s; measured samples sum to 0.02209 s,
 including output checks. The local counter does not prove absolute
 absence of allocation; there is no speed threshold. Arity is checked
 cold in all six fixtures and every corpus call; the hot measurement
@@ -112,7 +112,7 @@ the actual chronology without changing logic or expected values.
 
 The [campaign archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-simple-write/archive-index.lisp)
 preserves processes, frozen sources, tool revisions, coverage state and
-HTML, copies, and logs. gzip compression with reconstructed-byte
+HTML, copies, and logs. It uses gzip compression with reconstructed-byte
 verification, without rewriting earlier campaigns or promoting qualifications.
 It has 2,439 indexed files and 15 processes; the closed-inventory verifier counts
 2,441 actual files, including index and catalog, and verifies all published

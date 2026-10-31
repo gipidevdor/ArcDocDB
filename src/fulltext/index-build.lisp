@@ -6,10 +6,10 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (t t t t) keyword) inizia-campo-full-text))
 (defun inizia-campo-full-text (run row field source)
-  "Pre: run BUILDING, campi aggiunti in ordine stretto (riga,field-id), analisi DONE.
-Post: COPYING, tutte le capacita riservate; nessun riferimento al testo originale.
-Il chiamante non riusa SOURCE fino a BUILDING. Campo vuoto presente e conservato.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED prima di cambiare il run."
+  "Pre: BUILDING run, fields added in strict (row,field-id) order, DONE analysis.
+Post: COPYING, all capacities reserved; no reference to original text.
+The caller does not reuse SOURCE until BUILDING. A present empty field is retained.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED before changing the run."
   (unless (and (typep run 'indice-posizionale) (eq :building (indice-posizionale-state run))
                (typep row 'u32) (typep field '(integer 1 65535)) (typep source 'a:spazio-full-text)
                (eq :done (a::spazio-full-text-phase source)))
@@ -34,8 +34,8 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED prima di cambiare il run."
 ;;; REQ: REQ-SEC-003 REQ-SEC-007
 (declaim (ftype (function (indice-posizionale a:spazio-full-text) null) termina-campo-full-text))
 (defun termina-campo-full-text (run source)
-  "Pre: tutti i token copiati. Post: lunghezza per campo, rilascio SOURCE, BUILDING.
-Il builder puo essere sigillato solo dopo questa transizione."
+  "Pre: all tokens copied. Post: field length, SOURCE release, BUILDING.
+The builder may be sealed only after this transition."
   (let ((i (* (indice-posizionale-field-count run) +length-width+)) (data (indice-posizionale-lengths run)))
     (setf (aref data i) (indice-posizionale-pending-row run)
           (aref data (1+ i)) (indice-posizionale-pending-field run)
@@ -46,8 +46,8 @@ Il builder puo essere sigillato solo dopo questa transizione."
 ;;; REQ: REQ-SEC-003 REQ-SEC-007
 (declaim (ftype (function (indice-posizionale) null) copia-passo-full-text))
 (defun copia-passo-full-text (run)
-  "Pre: capacita riservata; source ancora DONE e posseduto dal builder.
-Post: un byte o un record di occorrenza copiato, oppure completamento campo."
+  "Pre: reserved capacity; source still DONE and owned by the builder.
+Post: one byte or occurrence record copied, or field completion."
   (let* ((source (indice-posizionale-source run)) (token (indice-posizionale-source-token run)))
     (unless (and source (eq :done (a::spazio-full-text-phase source)))
       (error 'invariant-violation :reason :fulltext-source-reused))

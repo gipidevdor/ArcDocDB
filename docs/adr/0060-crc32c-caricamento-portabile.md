@@ -13,7 +13,7 @@
 
 ## Context
 
-Runtime software selection alone does not guarantee portability:
+Runtime backend selection alone does not guarantee portability:
 compiling ARM VOPs on an unqualified platform or SBCL version can
 fail before selection. Linux x86-64 remains the reference platform.
 The gain measured on macOS ARM64 does not qualify other CPUs or systems.
@@ -31,13 +31,13 @@ OS and NEON probing remains necessary before selecting the kernel.
 
 The public startup feature `:arcdocdb-crc32c-software`, set before
 loading the system, forces software even on the qualified host.
-It serves diagnostics, differential tests, and rollback; no hot switching
-during service. The bootstrap removes any obsolete native features.
+It serves diagnostics, differential tests, and rollback; backend switching
+during service is not allowed. The bootstrap removes any obsolete native features.
 
 Compatibility, OS-response validity, and kernel-selection decisions
 are pure functions with tests for each condition. The GET
 path continues to read only the already selected kernel. No foreign
-checksum dependency and no change to persistent data.
+checksum dependency is introduced, and persistent data remain unchanged.
 
 <a id="verifica-e-limiti"></a>
 

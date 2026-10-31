@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (octets index index descrittore-pagina index) null) scrivi-header-pagina))
 (defun scrivi-header-pagina (buffer start size descriptor used)
-  "Pre: preflight completo, destinazione azzerata. Post: header canonico con CRC dei metadati.
-Nessuna condizione recuperabile dopo l'avvio; nessuna pubblicazione o I/O."
+  "Pre: complete preflight, zeroed destination. Post: canonical header with metadata CRC.
+No recoverable condition after start; no publication or I/O."
   (unless (and (<= (+ start size) (length buffer))
                (<= used (- size +page-header+)))
     (error 'invariant-violation :reason :index-page-header-write-range))
@@ -37,10 +37,10 @@ Nessuna condizione recuperabile dopo l'avvio; nessuna pubblicazione o I/O."
 (declaim (ftype (function (octets integer integer descrittore-pagina octets integer integer)
                          index) scrivi-pagina-indice))
 (defun scrivi-pagina-indice (buffer start end descriptor body from to)
-  "Pre: buffer esclusivo, corpo canonico gia' preparato e stabile, descrittore fidato.
-Post: pagina completa verificabile, guardie e sorgente invariati; restituisce END.
-INVALID-ARGUMENT su range, alias, geometria o corpo prima di ogni modifica.
-Solo preparazione in memoria, senza commit/flush/root o promessa sul lookup caldo."
+  "Pre: exclusive buffer, canonical body already prepared and stable, trusted descriptor.
+Post: complete verifiable page, guards and source unchanged; returns END.
+INVALID-ARGUMENT for range, aliasing, geometry, or body before any modification.
+In-memory preparation only, without commit/flush/root or hot-lookup promise."
   (check-range buffer start end) (check-range body from to)
   (let ((size (- end start)) (used (- to from)))
     (esigi-pagina (plusp (nth-value 0 (geometria-pagina size)))

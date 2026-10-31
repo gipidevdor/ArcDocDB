@@ -30,12 +30,12 @@ from the complete-file coverage denominator.
 
 | ID / location | Decision | Outcomes and obligation |
 |---|---|---|
-| H01 / handoff:71–72 | Writer factory, `unless (or A B)` | A: NIL index; B: index of type integer0..65535. At least one true accepts; both false produce `invalid-argument :writer-configuration` before the queue. |
+| H01 / handoff:71–72 | Writer factory, `unless (or A B)` | A: NIL index; B: index of type integer 0..65535. At least one true accepts; both false produce `invalid-argument :writer-configuration` before the queue. |
 | T01 / types:33 | `%routing-size`, `unless (<= 1 size 65536)` | Within budget continues; outside produces `invariant-violation :worker-serie-routing`. No scan. |
 | T02 / types:35 | Same helper, equal writers/controllers lengths | Equal returns size; different signals invariant before using elements. |
 | I01 / build:12 | `%routing-input-size`, writers simple-vector | Accepted type continues; other produces `invalid-argument :worker-serie-routing-configuration`. |
 | I02 / build:14 | Same helper, controllers simple-vector | Accepted type continues; other produces same rejection, before copies. |
-| I03 / build:17 | Same helper, size1..65536 | Accepted budget continues; empty/excessive produces same rejection. |
+| I03 / build:17 | Same helper, size 1..65536 | Accepted budget continues; empty/excessive produces same rejection. |
 | I04 / build:19 | Same helper, equal lengths | Equal returns size; different produces same rejection. |
 | E01 / build:28 | `%routing-input-entry`, writer type | Valid writer continues; other produces `invalid-argument :worker-serie-routing-binding`. |
 | E02 / build:30 | Same helper, writer index EQL ordinal | Exact ordinal continues; NIL, different ordinal, or duplicate writer in a different slot produces same rejection. |
@@ -54,7 +54,7 @@ from the complete-file coverage denominator.
 | L05 / select:40 | Same helper, link phase IDLE | IDLE delegates local shape/lease to `%check-worker-serie` and returns link; other signals invariant, no cleanup. |
 | C01 / select:53 | Outer `%passo-worker` FAULTED gate | Terminal rejects before handler, preserving first diagnosis; operational performs CLAIMED preflight. Owner checked before gate. |
 | C02 / select:55 | Inner `%passo-worker` FAULTED gate | Terminal rejects before handler; operational protects only lookup helpers with empty allowlists. RW-REV-01. |
-| Q01 / build:48 | Registry factory `dotimes` | Exactly N iterations, N validated1..65536; no retry and no loop in lookup. |
+| Q01 / build:48 | Registry factory `dotimes` | Exactly N iterations, N validated 1..65536; no retry and no loop in lookup. |
 | Q02 / build:64 | Table factory `dotimes` | Exactly N preallocated bindings; bound from registry T01/T02 before array. |
 
 The `indice-routing-writer` getter, structures, and packages add no
@@ -75,7 +75,7 @@ the acceptance decision:
 |---|---|---|---|---|
 | Foreign symbol | F | F | Rejects configuration. | Common base. |
 | `NIL` | T | F | Accepts compatible writer without routing. | Only A changes from base. |
-| `0` | F | T | Accepts ordinal0. | Only B changes from base. |
+| `0` | F | T | Accepts ordinal 0. | Only B changes from base. |
 | `65535` | F | T | Accepts upper limit. | Additional budget check. |
 | `65536`, `-1`, float or string | F | F | Rejects configuration. | Additional type/range check. |
 
@@ -122,10 +122,10 @@ its lease: fault coordination remains open.
 Local complexity is counted as a base plus each `when`/`unless`, one
 additional entry for the second operand of `or`, and one entry for each
 `dotimes`; delegate checks remain in their helpers. The maximum in the
-three new files is6 in `%routing-link`; `%routing-input-size`,
-`%routing-input-entry`, and `%routing-ordinal` are5, `%routing-size` is3,
-and the two factories are3. Public selection is3 including both macro
-expansion gates; the modified writer factory is3. Bodies within60lines,
+three new files is 6 in `%routing-link`; `%routing-input-size`,
+`%routing-input-entry`, and `%routing-ordinal` are 5, `%routing-size` is 3,
+and the two factories are 3. Public selection is 3 including both macro
+expansion gates; the modified writer factory is 3. Bodies are within 60 lines;
 no new recursion, wait, callback, retry, thread, or syscall.
 
 Every hot access is O(1). The registry factory occupies O(N) space and uses
@@ -143,8 +143,8 @@ The passed test count does not attest to total coverage, all interleavings,
 universal zero heap, or engine qualification.
 
 The SHA table above identifies the scope of dedicated v2 campaigns
-on base92decf4. The general freeze integrates d155db3, which changes
-ASDF for CBORstring-write and GETresolver without changing execution/Series;
+on base 92decf4. The general freeze integrates d155db3, which changes
+ASDF for CBOR string-write and GET resolver without changing execution/Series;
 8fb3051 then adds only artifacts, without changing sources, tools, or docs.
 The [review](routing-worker-revisione.md#integrazione-con-main-avanzato)
 keeps dedicated qualification and the integrated general check distinct.

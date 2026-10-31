@@ -32,7 +32,7 @@ the same CONTROL. The canonical gate checks count, unique IDs, membership,
 prefixes, and open capabilities. Each pair is then compared for:
 
 - the map's exact bootstrap view;
-- the same `file-io` capability by EQ as the CLOSED result, not merely name or inode;
+- the same `file-io` capability by EQ as the CLOSED result, not merely the same name or inode;
 - ID, frontier P, version, and writer/compaction origin;
 - strict order, open read-only FD, and ID compatible with the GET directory.
 
@@ -48,7 +48,7 @@ values are rejected, never truncated.
 ## Ownership, lifetime, and publication
 
 Each map receives new `segmento-get`/`mappa-segmento-get` wrappers.
-It retains the FD, ID, version, origin, frontier, and the same read-only
+The wrappers retain the FD, ID, version, origin, frontier, and the same read-only
 row array. The canonical directory copies the reference vector and
 builds sorted IDs. Caller vectors may be reused
 after return; CONTROL, CLOSED results, old maps,
@@ -56,9 +56,9 @@ and bootstrap views are not retained. No internal array is exported.
 
 Sharing covers only immutable rows and read-only capabilities.
 It does not transfer physical FD ownership: the existing owner
-must keep them open until all bootstrap and runtime borrowers finish,
-then until EBR-authorized reclamation. No new open or close,
-no implicit double cleanup. An error leaves private candidates to GC and
+must keep them open until all bootstrap and runtime borrowers have finished
+and EBR has authorized reclamation. No new open or close is performed,
+and there is no implicit double cleanup. An error leaves private candidates to GC and
 propagates the original condition; it does not close caller resources.
 
 The coordinator freezes files, namespace, and inputs for the entire operation.
@@ -77,12 +77,12 @@ Adoption implies no traffic authorization.
 
 ## Budget and cost
 
-`max-segmenti` is an integer 1..65536; `budget-payload` a nonnegative `index`.
+`max-segmenti` is an integer 1..65536; `budget-payload` is a nonnegative `index`.
 Shape, count, and budget are checked before the gate that allocates the duplicate
-table and before new wrappers. On 64-bit SBCL the new array
+table and before allocating new wrappers. On 64-bit SBCL the new array
 peak is 20*N: temporary vector 8*N, directory references 8*N, and
 u32 IDs 4*N. Final new payload is 12*N; existing rows are not copied.
-The default configuration covers 65536 segments. Gate hashes,
+The default configuration covers 65536 segments. The gate's hash tables,
 wrappers, headers, capabilities, shared rows, and GC are excluded: this is not an RSS limit.
 
 Scans are bounded by N. The gate uses a private hash table for

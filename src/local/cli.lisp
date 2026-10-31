@@ -5,7 +5,7 @@
 
 ;;; REQ: REQ-IPC-001 REQ-AFF-008
 (defun local-unhex (text maximum &optional exact)
-  "Pre: argomento CLI non fidato. Post: ottetti finiti; nessun reader o codice esterno."
+  "Pre: untrusted CLI argument. Post: finite octets; no reader or external code."
   (unless (and (stringp text) (evenp (length text)) (<= 2 (length text) (* 2 maximum))
                (or (null exact) (= (length text) (* 2 exact))))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-cli-hex-length))
@@ -19,7 +19,7 @@
 
 ;;; REQ: REQ-IPC-001 REQ-AFF-008
 (defun local-hex (bytes)
-  "Pre: risultato octets autorizzato. Post: rappresentazione hex senza contenuto Lisp."
+  "Pre: authorized octets result. Post: hex representation without Lisp content."
   (let ((result (make-string (* 2 (length bytes)))) (digits "0123456789ABCDEF"))
     (dotimes (i (length bytes) result)
       (let ((byte (aref bytes i)))
@@ -37,7 +37,7 @@
 
 ;;; REQ: REQ-IPC-001 REQ-REC-001 REQ-IDX-013
 (defun server-cli-options (args)
-  "Pre: opzioni residue CLI. Post: init/version and optional index quota validated without duplicate options."
+  "Pre: remaining CLI options. Post: init/version and optional index quota validated without duplicate options."
   (let ((create nil) (version 2) (seen-version nil) (discover nil) (policy nil))
     (loop while args do
       (let ((option (pop args)))
@@ -58,8 +58,8 @@
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002 REQ-REC-001
 (defun server-cli-main (args)
-  "Pre: processo dedicato, DATA SOCKET ARCHIVE32 SERIES32 [--create] [--version 1|2] [--discover-index | --index-budget BYTES].
-Post: servizio reale fino a SIGTERM/SIGINT, poi cleanup; stampa READY solo dopo listen."
+  "Pre: dedicated process, DATA SOCKET ARCHIVE32 SERIES32 [--create] [--version 1|2] [--discover-index | --index-budget BYTES].
+Post: real service until SIGTERM/SIGINT, then cleanup; prints READY only after listen."
   (unless (<= 4 (length args) 10)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-server-cli-arguments))
   (multiple-value-bind (create version discovery policy) (server-cli-options (nthcdr 4 args))
@@ -77,7 +77,7 @@ Post: servizio reale fino a SIGTERM/SIGINT, poi cleanup; stampa READY solo dopo 
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002
 (defun client-cli-command (client operation args)
-  "Pre: connessione negoziata e numero argomenti verificato. Post: risultato del comando reale."
+  "Pre: negotiated connection and verified argument count. Post: real command result."
   (cond
     ((string= operation "ping") (client-ping client) (list :operation :ping :result nil))
     ((string= operation "put")
@@ -90,8 +90,8 @@ Post: servizio reale fino a SIGTERM/SIGINT, poi cleanup; stampa READY solo dopo 
 
 ;;; REQ: REQ-IPC-001 REQ-AFF-008
 (defun client-cli-main (args)
-  "Pre: SOCKET ping|get KEY|delete KEY|put KEY DOCUMENT, ottetti hex. Post: una risposta verificata.
-Nessun retry; un errore dopo l'invio di una mutazione resta OUTCOME-UNKNOWN."
+  "Pre: SOCKET ping|get KEY|delete KEY|put KEY DOCUMENT, hex octets. Post: one verified response.
+No retry; an error after sending a mutation remains OUTCOME-UNKNOWN."
   (unless (and (<= 2 (length args) 4)
                (= (length args) (cond ((string= (second args) "ping") 2)
                                      ((string= (second args) "put") 4)

@@ -47,7 +47,7 @@ index roots, or references to other Serie.
 ```
 
 `sizes` and `counts` are simple u32 arrays, stable during construction,
-not retained by the result. At most sixteen classes in ascending order;
+not retained by the result. There are at most sixteen classes in ascending order;
 sizes are powers of two between 1 KiB and 32 MiB. Sets per class
 are zero or a power of two up to 65,536; zero omits that class.
 The selected class is the first active one large enough for **the entire
@@ -60,7 +60,7 @@ Stripe count is a power of two between 1 and 256, reduced to the number
 of sets in each class. The controller checks every class
 and the entire budget before the first arena allocation.
 
-No public invalidation, relabeling, clearing,
+There is no public invalidation, relabeling, clearing,
 or resizing operation. Nonreused segment-ids prevent confusing an
 old location with a new file. Compaction warms new locations
 through ordinary reads. Reclamation does not consult the cache.
@@ -105,7 +105,7 @@ This scheduler connection is not yet implemented.
 4. Verifies the private copy with `arcdocdb.record:verifica-put-parole`:
    header/body CRC, frame and exact length, PUT, flags, complete key,
    CSN or TXID and authoritative OUTCOME proof for a prepared record.
-5. Only after verification returns `:hit` and the value range. Updates
+5. Only after verification does the cache return `:hit` and the value range. It updates
    CLOCK and reread bytes: their values do not determine consistency or visibility.
 
 `destination` is worker-exclusive scratch. It must hold the complete
@@ -163,7 +163,7 @@ The hand is masked to three bits, so it cannot leave the set.
 A reread can set all references during both
 passes: insertion gives up rather than waiting for a victim.
 
-64-bit sequences bounded below `2^62`, no wraparound. A way with an unexpected
+64-bit sequences are bounded below `2^62`, without wraparound. A way with an unexpected
 odd sequence, exhausted credit, or interrupted mutation is disabled
 for the partition's entire lifetime. Cleanup disables it before releasing
 the mutex and propagates the original error. Remaining availability may fall
@@ -178,7 +178,7 @@ Enums distinguish hit, miss, verification error, contention, bypass, and
 unavailability; the two insertion booleans describe eviction and scan
 origin without observed reread. The caller counts them in worker
 counters, aggregated outside the request path. No
-central counter or write between Serie.
+central counter or shared write between Serie is introduced.
 
 Heat and reread observation are approximate: a conservative write
 by an earlier reader can affect the next victim.

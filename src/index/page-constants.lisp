@@ -51,7 +51,7 @@
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (index) (values fixnum fixnum fixnum &optional)) geometria-pagina))
 (defun geometria-pagina (size)
-  "Pre: dimensione intera. Post: codice, capacita' bucket, massimo radix; zero se ignota.
-Nessuna mutazione, allocazione o errore; nessuna taglia preferita implicitamente."
+  "Pre: integer size. Post: code, bucket capacity, radix maximum; zero if unknown.
+No mutation, allocation, or error; no implicitly preferred size."
   (case size (4096 (values 12 32 7)) (16384 (values 14 128 9))
         (65536 (values 16 512 11)) (otherwise (values 0 0 0))))

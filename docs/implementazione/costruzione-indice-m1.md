@@ -13,21 +13,21 @@
     :max-build-payload 67108864 :max-pages 65536))
 ```
 
-Engine must be READY, called by its own actor, with no requests
-in flight. Option specifies a new name in already exclusive directory;
-its hexadecimal ID must be in 1..2^60-1. Return is same `option`
-object: can pass it to `apri-motore :index-image` after closing
+The engine must be READY, called by its own actor, with no requests
+in flight. The option specifies a new name in an already exclusive directory;
+its hexadecimal ID must be in 1..2^60-1. The return value is the same `option`
+object: the caller can pass it to `apri-motore :index-image` after closing
 current handle, or to later [hot activator](attivazione-indice-m1.md)
 on same handle with a distinct request. Success does not change current backend or
-retain image FDs. Subsequent write makes file obsolete;
+retain image FDs. A subsequent write makes the file obsolete;
 startup will continue rejecting it if it no longer matches source.
 
 <a id="piano-e-costruzione"></a>
 
 ## Plan and construction
 
-Plan acquires canonical fragment, source token,
-revision, and live count from depth=0 M1 root. Before arrays it checks
+The plan acquires the canonical fragment, source token,
+revision, and live count from depth=0 M1 root. Before allocating arrays, it checks
 maximum load; then visits at most C slots, checking controls,
 seqlock payload, and arena ranges. Every LIVE must contribute exactly
 once; fingerprints must match recalculated digest.
@@ -35,7 +35,7 @@ once; fingerprints must match recalculated digest.
 Two C-sized u32 arrays retain high/low digests; two N-sized u32 arrays retain slot
 IDs and scratch. Eight stable eight-bit radix passes sort only
 IDs. The 256 counters are reused. Keys are neither sorted nor duplicated in
-plan and source index is not modified.
+the plan, and the source index is not modified.
 
 Producer chooses bit count from required bucket count,
 limited to seven per directory. For a sorted span, first and last
@@ -43,49 +43,49 @@ digests identify common prefix: that prefix is skipped.
 Child's remaining bit field is strictly smaller; recursion has at
 most 65 calls. All identical digests end in overflow bounded
 by count N. A bucket holds at most 28, 112, or 448 entries at
-three sizes; a directory at most 128 references. References
+three sizes; a directory at most 128 references. References are
 checked and written postorder, root last.
 
-`crea-entry-costruzione` now accepts `:start` and `:end`: checks range,
-key-len and metadata, computes digest on span, and makes one owned
+`crea-entry-costruzione` now accepts `:start` and `:end`: it checks the range,
+key-len and metadata, computes the digest on the span, and makes one owned
 copy. Previous calls without keywords retain contract.
 
 <a id="limiti-risorse-e-guasti"></a>
 
 ## Limits, resources, and faults
 
-`:max-build-payload` accepts 0..512 MiB, default 64 MiB. Conservative
-reservation calculated by `payload-costruzione-immagine` before
+`:max-build-payload` accepts 0..512 MiB, default 64 MiB. A conservative
+reservation is calculated by `payload-costruzione-immagine` before
 arrays/files: 16*C for digests/IDs, counters and words, stack of 65*128
 references, maximum key batch, builder and verifier buffers,
-plus 256 KiB for small identity/proof/cache arrays. Does not measure
+plus 256 KiB for small identity/proof/cache arrays. It does not measure
 Lisp headers, objects, garbage, GC, or RSS; total controller reservation
-not qualified by this test. N and C limits still those
-of M1 resident, at most C=65536 and N=57344.
+not qualified by this test. N and C limits are still those
+of the M1 resident index, at most C=65536 and N=57344.
 
 `:max-pages` accepts 1..65536. Maximum file bytes, size, cache
 frames, and verification visits come from existing option. Every batch checks
 quota before writing: entire image is not reserved upfront.
-A late failure leaves prepared file and makes engine FAULTED.
+A late failure leaves the prepared file and makes the engine FAULTED.
 Canonical inventory neither selects nor deletes that prepared file.
 
 Occupied name and invalid initial configurations/quotas are ordinary
-rejections before admission. Namespace errors make FAULTED.
-During work API prevents reentry with BUSY, without changing existing GET
+rejections before admission. Namespace errors make the engine FAULTED.
+During work, the API prevents reentry with BUSY, without changing existing GET
 root. Allowed errors/nonlocal exits close admission; cleanup
-attempts both FDs and preserves primary cause. Does not accumulate FDs
-in engine list, even on failure. Does not delete file or
+attempts both FDs and preserves primary cause. It does not accumulate FDs
+in the engine list, even on failure. It does not delete the file or
 reuse a name or incomplete builder.
 
 Observable phases are `:image-build-planned`, `:image-build-created`,
 `:image-build-pages`, `:image-build-before-footer`, `:image-build-after-footer`,
-`:image-build-after-flush`, and `:image-build-verified`. Trusted observer
-returns NIL; does not modify private data, retain buffers, or reenter.
+`:image-build-after-flush`, and `:image-build-verified`. The trusted observer
+returns NIL; it does not modify private data, retain buffers, or reenter.
 
 Completion seals/flushes file, fsyncs directory, closes
 append, and opens read-only with exact EOF. Existing verifier rereads
 all pages, uniqueness, routing, and candidates against resident. Source
-and revision rechecked before footer and after verification.
+and revision are rechecked before footer and after verification.
 No new data commit point or catalog publication.
 
 <a id="verifica-e-decisioni-c1"></a>
@@ -100,9 +100,9 @@ nonlocal exits, preserved IO cause, both closes attempted. Six
 SIGKILL and independent-restart cases cover creation, pages without footer, and
 completion after flush. Local process tests, not power loss.
 
-Overflow branch with complete collision exercised by forcing only
+The overflow branch with a complete collision is exercised by forcing only
 digests in private C4 plan: builder recalculates actual key digests.
-No real XXH64 collision claimed. Sorting comparison uses
+No real XXH64 collision is claimed. Sorting comparison uses
 separate u64 oracle and also checks slot permutation.
 
 | Compound decision (COD-54) | Coverage |

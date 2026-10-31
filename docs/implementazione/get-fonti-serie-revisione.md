@@ -2,7 +2,7 @@
 
 # Static C1 review of Serie GET sources
 
-Reviewer distinct from product author, 2026-10-13, in worktree
+Reviewer distinct from the product author, 2026-10-13, in worktree
 `get-controller/ArcDocDB`, base `4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`.
 Exclusive write scope: this document and
 [get-fonti-serie.md](get-fonti-serie.md). C1 scope read:
@@ -19,7 +19,7 @@ the checklist updated without executions.
 These are two readings by the same reviewer independent of the author,
 not two distinct reviewers.
 
-No compilation, test, benchmark, mutation, or qualification command
+No compilation, test, benchmark, mutation, or qualification command was
 run by this reviewer. Future runs after freeze belong to
 the integrator through `tools/record-command.lisp`; their plan is in the
 [preregistered README](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-get-fonti-serie/README.md).
@@ -30,8 +30,8 @@ or passed `make check`.
 
 ## Reread source identities
 
-Final Git blob inventory identical in consecutive readings after the last
-delta declared by author, without committing or writing sources:
+The final Git blob inventory is identical in consecutive readings after the last
+delta declared by the author, without committing or writing sources:
 
 | File | Previous blob from second reading | Final blob after GFS-REV-02 delta |
 |---|---|---|
@@ -59,7 +59,7 @@ FD retention (`src/get-directory/types.lisp:15–20`).
 
 The new container has two read-only references without copying opaque
 contents (`sources-types.lisp:7–27`). Registration: EQ owner and duplicate
-search precede delegation (`sources-types.lisp:63–71`), so wrapper
+search precede delegation (`sources-types.lisp:63–71`), so the wrapper
 does not adopt batch/token on those rejections. Contents pass without replacement
 to the root built by ACTIVE (`src/get-resolver/active-build.lisp:94–110`).
 
@@ -68,13 +68,13 @@ from the same variable (`sources-read.lisp:14–16`). Dispatch passes
 `active` to the explicit resolver (`sources-read.lisp:48–52`), which searches for
 the page only within `root` (`active-read.lisp:18–25`). No read
 of `planned-root`, second CAS, lifetime registry, or FD closure appears
-in this path. Controller retains acquire and health check
+in this path. The controller retains acquire and health check
 (`src/series/query.lisp:28–38`); publication remains the existing CAS
 (`src/series/publication.lisp:29–45`).
 
 The first reading found **GFS-REV-01**, blocking cache probe:
-call with a keyword not supported by the GET core. Reported immediately
-to integrator before waiting for runs.
+call with a keyword not supported by the GET core. It was reported immediately
+to the integrator before waiting for runs.
 
 <a id="findings-e-rischi-registrati"></a>
 
@@ -102,7 +102,7 @@ not an error outcome (COD-06). Record read instead retains
 `:outcome-offset proof` because `leggi-record-get` declares that keyword
 (`src/get/segment.lisp:90–99`), and prepared reads OUTCOME before cache
 (`src/get/segment.lisp:108–116`). The five results are neither aggregated
-nor discarded by wrapper (`sources-read.lisp:78–79`).
+nor discarded by the wrapper (`sources-read.lisp:78–79`).
 
 Guards: `risolvi-candidato-serie-get` requires CANDIDATE before
 acquisition/cleanup (`sources-read.lisp:43–46`).
@@ -132,22 +132,22 @@ adds no scans, allocations, I/O, or waits.
 In the reader, the handler catches only search `invariant-violation`
 and passes `error-reason` to `guasto-get` (`sources-read.lisp:29–30`): it preserves
 reason, creates the terminal GET condition, and leaves pin release to outer
-resolver cleanup. Accessor is imported by package
+resolver cleanup. The accessor is imported by the package
 (`src/get-directory/package.lisp:7`) and returns a keyword
 (`src/foundation/conditions.lisp:6–8`). Condition object
-identity is not retained in reader; the reason cause is retained.
+identity is not retained in the reader; the reason cause is retained.
 
 In the writer, `controller` derives from `source`, so `%check-owner` and
 `%require-healthy` precede owner/search and the effectful handler
 (`sources-types.lisp:58–65`). Lease check rejects foreign generation,
 type, or thread before ring checking
-(`src/series/ownership.lisp:73–80`). Handler marks that controller
+(`src/series/ownership.lisp:73–80`). The handler marks that controller
 `:archive-faulted` and rethrows the same condition object
 (`sources-types.lisp:68–70`; `src/series/ownership.lisp:8–18`). An ordinary duplicate
 remains `invalid-argument` and is not caught as an invariant.
 Delegation rechecks lease/health and occurs after guards (`:71`).
 Fault branches do not adopt or cancel the token;
-no new CAS is introduced by delta.
+no new CAS is introduced by the delta.
 
 | C1 checklist point | First reading | Second reading and static outcome |
 |---|---|---|

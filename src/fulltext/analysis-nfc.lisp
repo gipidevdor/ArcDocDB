@@ -7,8 +7,8 @@
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (spazio-full-text scalare) null) push-scalare-nfc))
 (defun push-scalare-nfc (space scalar)
-  "Pre: stack esclusivo. Post: scalare aggiunto entro la profondita fissata.
-RESOURCE-EXHAUSTED se la decomposizione richiede piu di 64 elementi pendenti."
+  "Pre: exclusive stack. Post: scalar added within fixed depth.
+RESOURCE-EXHAUSTED if decomposition requires more than 64 pending elements."
   (let ((top (spazio-full-text-stack-top space)))
     (when (= top +stack-capacity+) (error 'resource-exhausted :reason :fulltext-decomposition-stack))
     (consuma-lavoro-full-text space)
@@ -19,8 +19,8 @@ RESOURCE-EXHAUSTED se la decomposizione richiede piu di 64 elementi pendenti."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text scalare) boolean) espandi-scalare-nfc))
 (defun espandi-scalare-nfc (space cp)
-  "Pre: scalare estratto dallo stack. Post: T se espanso in ordine inverso nello stack.
-Hangul algoritmico, altrimenti soli mapping canonici; lavoro e stack limitati."
+  "Pre: scalar popped from the stack. Post: T if expanded in reverse order onto the stack.
+Algorithmic Hangul, otherwise canonical mappings only; bounded work and stack."
   (cond ((<= #xac00 cp #xd7a3)
          (let* ((s (- cp #xac00)) (tail (mod s 28)))
            (unless (zerop tail) (push-scalare-nfc space (+ #x11a7 tail)))
@@ -36,8 +36,8 @@ Hangul algoritmico, altrimenti soli mapping canonici; lavoro e stack limitati."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text) null) passo-decomposizione-nfc))
 (defun passo-decomposizione-nfc (space)
-  "Pre: fase DECOMPOSE, A sorgente stabile. Post: un'espansione o scalare in B.
-Capacita e lavoro controllati; nessuna ricorsione o lista sul percorso caldo."
+  "Pre: DECOMPOSE phase, stable source A. Post: one expansion or scalar in B.
+Capacity and work checked; no recursion or list on the hot path."
   (when (zerop (spazio-full-text-stack-top space))
     (when (= (spazio-full-text-cursor space) (spazio-full-text-a-count space))
       (setf (spazio-full-text-phase space) :reorder (spazio-full-text-cursor space) 1
@@ -55,8 +55,8 @@ Capacita e lavoro controllati; nessuna ricorsione o lista sul percorso caldo."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text) null) prepara-composizione-nfc))
 (defun prepara-composizione-nfc (space)
-  "Pre: B decomposto e riordinato. Post: cursori iniziali della composizione.
-Caso vuoto esplicito; nessuna lettura fuori dalla lunghezza corrente."
+  "Pre: B decomposed and reordered. Post: initial composition cursors.
+Explicit empty case; no read outside the current length."
   (setf (spazio-full-text-phase space) :compose (spazio-full-text-cursor space) 1
         (spazio-full-text-write space) (min 1 (spazio-full-text-b-count space)))
   (let ((ccc (if (zerop (spazio-full-text-b-count space)) 0
@@ -68,8 +68,8 @@ Caso vuoto esplicito; nessuna lettura fuori dalla lunghezza corrente."
 ;;; REQ: REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (spazio-full-text) null) passo-riordino-nfc))
 (defun passo-riordino-nfc (space)
-  "Pre: B decomposto. Post: al massimo uno scambio adiacente del riordino stabile.
-Anche sequenze combinanti lunghe cedono il compito fra due confronti."
+  "Pre: B decomposed. Post: at most one adjacent swap of the stable reorder.
+Even long combining sequences yield the task between two comparisons."
   (when (>= (spazio-full-text-cursor space) (spazio-full-text-b-count space))
     (prepara-composizione-nfc space) (return-from passo-riordino-nfc nil))
   (let* ((j (spazio-full-text-order-pos space)) (buffer (spazio-full-text-b space))
@@ -84,7 +84,7 @@ Anche sequenze combinanti lunghe cedono il compito fra due confronti."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text) null) termina-composizione-nfc))
 (defun termina-composizione-nfc (space)
-  "Pre: composizione conclusa. Post: lunghezza compatta e fase successiva esplicita."
+  "Pre: composition complete. Post: compact length and explicit next phase."
   (setf (spazio-full-text-b-count space) (spazio-full-text-write space)
         (spazio-full-text-cursor space) 0)
   (cond ((spazio-full-text-nfc-only space) (setf (spazio-full-text-phase space) :done))
@@ -97,8 +97,8 @@ Anche sequenze combinanti lunghe cedono il compito fra due confronti."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text) null) passo-composizione-nfc))
 (defun passo-composizione-nfc (space)
-  "Pre: B riordinato, cursori validi. Post: una composizione o copia, anche Hangul.
-Si conserva il blocco CCC della norma; nessun dato viene pubblicato."
+  "Pre: B reordered, valid cursors. Post: one composition or copy, including Hangul.
+Preserves the standard's CCC blocking; no data published."
   (when (>= (spazio-full-text-cursor space) (spazio-full-text-b-count space))
     (termina-composizione-nfc space) (return-from passo-composizione-nfc nil))
   (let* ((source-position (spazio-full-text-cursor space)) (buffer (spazio-full-text-b space))
@@ -119,8 +119,8 @@ Si conserva il blocco CCC della norma; nessun dato viene pubblicato."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text) null) passo-case-folding))
 (defun passo-case-folding (space)
-  "Pre: B in NFC. Post: un mapping completo C/F in A, oppure avvio della seconda NFC.
-Nessuna locale o mapping turco; array e lavoro limitati."
+  "Pre: B in NFC. Post: one complete C/F mapping in A, or start of the second NFC.
+No locale or Turkish mapping; bounded arrays and work."
   (when (= (spazio-full-text-cursor space) (spazio-full-text-b-count space))
     (setf (spazio-full-text-phase space) :decompose (spazio-full-text-pass space) 2
           (spazio-full-text-cursor space) 0 (spazio-full-text-b-count space) 0)

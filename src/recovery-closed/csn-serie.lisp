@@ -7,10 +7,10 @@
 (declaim (ftype (function (active-recuperato simple-vector &key (:max-segmenti index))
                          (values boolean u64 &optional)) massimo-csn-serie-recuperata))
 (defun massimo-csn-serie-recuperata (active closed &key (max-segmenti 65536))
-  "Pre: recovery esclusivo; ACTIVE e tutti i CLOSED dello stesso CONTROL, fonti e vettore stabili.
-Post: massimo osservato completo per questi segmenti, dopo il gate canonico dell'insieme.
-Budget/count/autorità/duplicati/lifetime verificati; condizioni originali propagate.
-Non include altre Serie o DECISION senza prepared locale, né assegna CSN o ammette traffico."
+  "Pre: exclusive recovery; ACTIVE and all CLOSED from the same CONTROL, stable sources and vector.
+Post: complete observed maximum for these segments, after the canonical set gate.
+Budget/count/authority/duplicates/lifetime verified; original conditions propagate.
+Includes no other Serie or DECISION without local prepared records, assigns no CSN, and admits no traffic."
   (let ((control (arcdocdb.recovery.active::active-recuperato-control active))
         (input (arcdocdb.get::segmento-get-file (arcdocdb.recovery.active:segmento-active-recuperato active))))
     (arcdocdb.io::esigi-aperto input :input)

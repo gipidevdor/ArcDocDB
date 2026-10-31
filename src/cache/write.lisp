@@ -7,9 +7,9 @@
 (declaim (ftype (function (classe-cache cache-slot u32 u32 u32 u32 octets index boolean)
                          (values boolean boolean &optional)) scrivi-posto-cache))
 (defun scrivi-posto-cache (class slot high low offset size source start scan-p)
-  "Pre: mutex locale, slot con credito, source privata verificata e range non alias dell'arena.
-Post: copia/tag pubblicati prima della nuova sequenza pari; restituisce espulsione e scan senza rilettura.
-Un'uscita non locale disabilita il posto prima del rilascio mutex; nessun rollback o errore nascosto."
+  "Pre: local mutex, slot with credit, verified private source, and range not aliasing the arena.
+Post: copy/tag published before the new even sequence; returns eviction and scan without rereading.
+A nonlocal exit disables the slot before mutex release; no rollback or hidden error."
   (let* ((tags (classe-cache-tags class)) (base (* slot +cache-tag-words+))
          (sequences (classe-cache-sequences class)) (sequence (aref sequences slot))
          (evicted (plusp (aref tags (+ base 3))))
@@ -41,9 +41,9 @@ Un'uscita non locale disabilita il posto prima del rilascio mutex; nessun rollba
                          (values (member :inserted :present :busy :unavailable)
                                  boolean boolean &optional)) prova-inserimento-cache))
 (defun prova-inserimento-cache (class high low offset size source start scan-p)
-  "Pre: input e copia già verificati; source stabile. Post: un solo tentativo di mutex locale.
-BUSY/PRESENT/UNAVAILABLE non copiano dati; INSERTED restituisce eventi per le metriche del worker.
-La mano CLOCK può avanzare su UNAVAILABLE; interruzioni propagano con cleanup del posto."
+  "Pre: input and copy already verified; stable source. Post: exactly one local mutex attempt.
+BUSY/PRESENT/UNAVAILABLE do not copy data; INSERTED returns events for worker metrics.
+The CLOCK hand may advance on UNAVAILABLE; interruptions propagate with slot cleanup."
   (let* ((set (insieme-cache class high low offset))
          (locks (classe-cache-locks class)) (lock (aref locks (logand set (1- (length locks))))))
     (sb-thread:with-mutex (lock :wait-p nil)
@@ -65,10 +65,10 @@ La mano CLOCK può avanzare su UNAVAILABLE; interruzioni propagano con cleanup d
 (defun inserisci-record-cache (cache segment-high segment-low offset size key csn-high csn-low flags
                               source start &key (version 2) proof-buffer
                                                 (proof-start 0) (proof-end 0) (scan-p nil))
-  "Pre: source privata dalla lettura del segmento, location/CSN committed e prova autorevole.
-Post: input verificato prima dell'inserimento; classe assente => BYPASSED, senza effetto sul risultato GET.
-CORRUPTION-DETECTED sull'input propaga al caller del segmento: non è corruzione della cache.
-Nessuna attesa/retry/I/O; eventi di espulsione/scan restituiti, nessun contatore globale."
+  "Pre: private source from segment read, committed location/CSN, and authoritative proof.
+Post: input verified before insertion; absent class => BYPASSED, without affecting the GET result.
+CORRUPTION-DETECTED on input propagates to the segment caller: it is not cache corruption.
+No waiting/retry/I/O; eviction/scan events returned, no global counter."
   (check-cache-request segment-high segment-low offset size key csn-high csn-low flags version)
   (let ((class (scegli-classe-cache cache size)))
     (unless class (return-from inserisci-record-cache (values :bypassed nil nil)))

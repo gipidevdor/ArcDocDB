@@ -13,7 +13,7 @@
 ## Context
 
 Reads and writes must proceed without blocking each other, and compaction must be able
- to replace segments without stopping readers.
+to replace segments without stopping readers.
 
 <a id="decisione"></a>
 
@@ -34,7 +34,7 @@ Reads and writes must proceed without blocking each other, and compaction must b
 ## Consequences
 
 - Readers do not acquire locks on indexes.
-- Old index versions must be retained while they have readers: the same reclamation
+- Old index versions must be retained while readers are using them: the same reclamation
   problem as segments.
 - The primary index must fit in RAM: a capacity and restart-time limit.
 - For the primary index, updated on every write, the “new version + swap” model cannot

@@ -5,8 +5,8 @@
 (declaim (ftype (function (r:indice-posizionale descrittore-full-text spazio-codec-full-text)
                          (values index index index &optional)) conta-run))
 (defun conta-run (run descriptor space)
-  "Pre: run sigillato, LENGTHS verificate. Post: termini, byte unici e posting; ordini esatti.
-Posizioni e righe validate prima di ammettere qualunque byte della destinazione."
+  "Pre: sealed run, verified LENGTHS. Post: terms, unique bytes, and postings; exact order.
+Positions and rows validated before admitting any destination byte."
   (let ((dict 0) (bytes 0) (postings 0) (data (r::indice-posizionale-tokens run)))
     (dotimes (i (r::indice-posizionale-count run))
       (lavoro-codec space)
@@ -29,8 +29,8 @@ Posizioni e righe validate prima di ammettere qualunque byte della destinazione.
 ;;; REQ: REQ-SEC-008 REQ-SEC-010
 (declaim (ftype (function (spazio-codec-full-text index) index) pianifica-sezioni))
 (defun pianifica-sezioni (space max-bytes)
-  "Pre: sei lunghezze calcolate da dati bounded. Post: offset relativi e dimensione file.
-RESOURCE-EXHAUSTED prima della somma che supererebbe MAX-BYTES; nessuna scrittura esterna."
+  "Pre: six lengths calculated from bounded data. Post: relative offsets and file size.
+RESOURCE-EXHAUSTED before an addition would exceed MAX-BYTES; no external write."
   (let ((cursor f::+sections-offset+))
     (dotimes (i 6)
       (lavoro-codec space)
@@ -48,9 +48,9 @@ RESOURCE-EXHAUSTED prima della somma che supererebbe MAX-BYTES; nessuna scrittur
 (declaim (ftype (function (t t t &key (:max-bytes t) (:max-work t)) index) dimensione-indice-full-text))
 (defun dimensione-indice-full-text (run descriptor space &key (max-bytes f::+default-file-budget+)
                                                            (max-work 268435456))
-  "Pre: run SEALED immutabile e descrittore autorevole. Post: dimensione esatta e piano privato.
-Verifica contratto locale, righe e copertura posizionale prima della serializzazione.
-Nessuna destinazione modificata; errori di dominio espliciti, nessuna riserva nel writer."
+  "Pre: immutable SEALED run and authoritative descriptor. Post: exact size and private plan.
+Verifies local contract, rows, and positional coverage before serialization.
+No destination modified; explicit domain errors, no writer reservation."
   (prepara-codec descriptor space max-work max-bytes)
   (unless (and (typep run 'r:indice-posizionale) (eq :sealed (r::indice-posizionale-state run)))
     (error 'invalid-argument :reason :fulltext-codec-run))

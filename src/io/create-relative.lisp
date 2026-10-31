@@ -6,9 +6,9 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-STO-003 REQ-REC-001
 (declaim (ftype (function (file-io t t t) null) verifica-creazione-relativa))
 (defun verifica-creazione-relativa (directory name max-transfer max-file-bytes)
-  "Pre: capacita' e configurazione del controller. Post: parent, foglia .tmp, budget e callback ammessi.
-IO-FAULT per parent non disponibile; INVALID-ARGUMENT per modo/nome/budget prima di I/O.
-UNSUPPORTED-FORMAT senza create-relative, file-metadata ed entry-identity; nessun fallback."
+  "Pre: controller capabilities and configuration. Post: parent, .tmp leaf, budgets, and callbacks admitted.
+IO-FAULT for an unavailable parent; INVALID-ARGUMENT for mode/name/budget before I/O.
+UNSUPPORTED-FORMAT without create-relative, file-metadata, and entry-identity; no fallback."
   (esigi-aperto directory :directory)
   (unless (and (typep max-transfer 'index) (<= 1 max-transfer +max-transfer+)
                (typep max-file-bytes 'file-offset) (plusp max-file-bytes))
@@ -27,10 +27,10 @@ UNSUPPORTED-FORMAT senza create-relative, file-metadata ed entry-identity; nessu
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-STO-003 REQ-REC-001
 (declaim (ftype (function (file-io file-io simple-base-string) null) esegui-creazione-relativa))
 (defun esegui-creazione-relativa (directory file leaf)
-  "Pre: child/foglia preallocati e callback ammessi. Post: child possiede un nuovo FD valido.
-FD zero valido; INVARIANT-VIOLATION per risultato invalido/alias parent senza ownership o close.
-IO-FAULT per parent indisponibile o syscall normalizzata; handoff protetto dalle interruzioni.
-La syscall/callback puo' bloccare nel pool I/O; nessun retry, unlink o flush."
+  "Pre: preallocated child/leaf and admitted callbacks. Post: child owns a new valid FD.
+FD zero is valid; INVARIANT-VIOLATION for an invalid result/parent alias without ownership or close.
+IO-FAULT for an unavailable parent or normalized syscall; handoff protected from interruptions.
+The syscall/callback may block in the I/O pool; no retry, unlink, or flush."
   (esigi-aperto directory :directory)
   (handler-case
       (sb-sys:without-interrupts
@@ -54,15 +54,15 @@ La syscall/callback puo' bloccare nel pool I/O; nessun retry, unlink o flush."
                 crea-temporaneo-nella-directory))
 (defun crea-temporaneo-nella-directory (directory name &key (max-transfer +max-transfer+)
                                                          (max-file-bytes +default-file-limit+))
-  "Pre: pool I/O, parent e namespace esclusivi/stabili; nessuna cancellazione asincrona.
-Post: un solo child append nuovo, regolare/vuoto, nome legato allo stesso FD; frontiere scritta/durevole zero.
-Capacita'/frontiere del parent borrowed invariate, nomi privati e backend ereditato; nessun FD parziale.
-INVALID-ARGUMENT/UNSUPPORTED-FORMAT/RESOURCE-EXHAUSTED/IO-FAULT ai rifiuti previsti;
-INVARIANT-VIOLATION per risultato FD/metadati impossibile, alias parent, file non vuoto o frontiere incoerenti.
-Primaria tipizzata EQ dopo cleanup riuscito; close fallita conserva causa e cleanup-errno come IO-FAULT.
-Uscite nonlocali estranee tentano una close senza allegare errno; nessun retry o timeout wall.
-Preparazione prima dell'EDIT, senza punto durevole di decisione, flush, rename o unlink:
-se la creazione riesce prima di un errore, il .tmp resta da riconciliare dalla fonte autorevole."
+  "Pre: I/O pool, exclusive/stable parent and namespace; no asynchronous cancellation.
+Post: exactly one new append child, regular/empty, name bound to the same FD; written/durable frontiers zero.
+Borrowed parent capabilities/frontiers unchanged, private names and inherited backend; no partial FD.
+INVALID-ARGUMENT/UNSUPPORTED-FORMAT/RESOURCE-EXHAUSTED/IO-FAULT for expected rejections;
+INVARIANT-VIOLATION for an impossible FD/metadata result, parent alias, nonempty file, or inconsistent frontiers.
+Typed primary condition remains EQ after successful cleanup; failed close retains cause and cleanup-errno as IO-FAULT.
+Unrelated nonlocal exits attempt one close without attaching errno; no retry or wall-clock timeout.
+Preparation before EDIT, without a durable decision point, flush, rename, or unlink:
+if creation succeeds before an error, the .tmp remains to be reconciled against the authoritative source."
   (verifica-creazione-relativa directory name max-transfer max-file-bytes)
   (let* ((leaf (map 'simple-base-string #'identity name))
          (file (%make-file :append (file-backend directory) max-transfer max-file-bytes))

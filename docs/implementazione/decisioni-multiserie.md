@@ -2,28 +2,28 @@
 
 # Multiseries decision table
 
-Module [`src/recovery/`](../../src/recovery/) rebuilds in-memory
-TXID → CSN and participant set from verified prefix of
+The module in [`src/recovery/`](../../src/recovery/) rebuilds in-memory
+TXID → CSN and participant set from a verified prefix of
 `multiserie.log`, under [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md).
-Result of recovery step 2, later used to interpret
+This is the result of recovery step 2, later used to interpret
 Serie prepared records.
 
 <a id="contratto"></a>
 
 ## Contract
 
-`arcdocdb.recovery.decisions:ricostruisci-decisioni` receives stable buffer,
-`start`, `end`, explicit version, authoritative physical size. Returns
-owned table, prefix boundary within **buffer**, and `:complete`
+`arcdocdb.recovery.decisions:ricostruisci-decisioni` receives a stable buffer,
+`start`, `end`, explicit version, and an authoritative physical size. It returns
+an owned table, prefix boundary within **buffer**, and `:complete`
 or `:tail`. Arguments `file-offset` and `file-size` have same contract
 as [log scanning](scansione-log.md): range reaches stable physical
 EOF; header, version, and Archivio identity verified
-by caller. Multiseries log file-id zero.
+by caller. The multiseries log file-id is zero.
 
 First verify entire log and search for later SEAL witnessing
 corruption. Then verify all DECISION payloads in
-prefix, counts, and budgets. Result built only after
-checks. No partial table returned on error.
+prefix, counts, and budgets. The result is built only after
+these checks. No partial table is returned on error.
 
 | Query | Result |
 |---|---|
@@ -36,7 +36,7 @@ zero CSN returns `t, 0, count`: caller uses presence, not
 CSN value. Absent TXID may be interpreted as presumed abort
 only after successful table construction. Scan error,
 corruption, or budget error does not become ABORT outcome.
-Controller also verifies Serie among participants;
+The controller also verifies that the Serie is among the participants;
 TXID presence alone does not authorize application to any Serie.
 
 <a id="identità-duplicati-e-ownership"></a>
@@ -45,14 +45,14 @@ TXID presence alone does not authorize application to any Serie.
 
 One DECISION's participants must be at least two and distinct.
 TXID and CSN remain opaque u64 integers, including zero/maximum; no
-CSN monotonicity or uniqueness constraints added across different transactions.
+CSN monotonicity or uniqueness constraints are added across different transactions.
 Order of DECISIONs and Serie IDs does not change result.
 
 Repeated same TXID with equal CSN and participant set
 is idempotent. Conflicting CSNs or sets produce `corruption-detected`
 with reason `:decision-conflict`. Repeated participant in same
 DECISION produces `:decision-duplicate-participant`. Such semantic errors
-in sealed batch not treated as incomplete tail.
+in a sealed batch are not treated as an incomplete tail.
 
 Scanner verifies minimum frame length before batch
 enters prefix. Thus undersized DECISION frame follows
@@ -60,17 +60,17 @@ enters prefix. Thus undersized DECISION frame follows
 if fixture contains intact CRC and SEAL. This table's semantic
 checks apply only to prefix with already verified frames.
 
-Table sorts TXIDs and Serie IDs and owns data copies. Does not
+The table sorts TXIDs and Serie IDs and owns data copies. It does not
 return internal vectors or retain source-buffer spans.
 After construction caller may reuse buffer without changing
 queries. Table has no global state or shared writes
-between Serie; queries read-only.
+between Serie; queries are read-only.
 
 Recovery selects stable LSD radix from 1,024 ID16 participants per
 decision and from 256 physical DECISIONs; below threshold uses bottom-up merge.
 [Measured choice](decisioni-radix-risultati.md) preserves physical order
 of equal TXIDs needed for conflict diagnostics. Immutable-table
-queries also checked with six concurrent readers.
+queries are also checked with six concurrent readers.
 
 <a id="budget-e-confini"></a>
 
@@ -81,8 +81,8 @@ queries also checked with six concurrent readers.
 > Scan budgets remain separately configurable.
 
 Cumulative counts include duplicate records before coalescing.
-Empty log valid even with zero budget; memory not allocated
-proportionally to unused budget. All loops bounded by bytes,
+An empty log is valid even with zero budget; memory is not allocated
+proportionally to unused budget. All loops are bounded by bytes,
 verified counts, or binary-search depth.
 Opening/recovery path: copying and sorting may
 allocate, without zero-heap promise.
@@ -98,7 +98,7 @@ ID range/length even with absent TXID.
 
 [Method](decisioni-multiserie-metodo.md) and
 [decision table](decisioni-multiserie-decisioni.md).
-Bytewise fixtures and bitwise CRCs independent of product
+Bytewise fixtures and bitwise CRCs are independent of product
 codecs; oracle interprets declared logical histories as data.
 Tests cover consistent/conflicting duplicates, truncations and corruption,
 budgets, extreme values, nearly equal IDs, and ownership.
@@ -133,7 +133,7 @@ output, and raw `sb-cover` state. Campaign detects seven mutants
 of seven after dedicated tests start, without compilation errors or
 pre-test failures. For only five `decisions-*` files of that version,
 raw observed coverage is 935 forms of 1,121 and 82 branches of 122.
-Definitions/defensive guards remain in totals; no coverage exception
+Definitions/defensive guards remain in totals; no coverage exception is
 approved or subtracted by integration. Catalog
 also includes nine scanner-regression mutants and initial-fixture
 failures. [Reading and integration-test catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-decisions/catalogo.lisp)
@@ -143,7 +143,7 @@ reports observed reasons and limits.
 
 Requirements: REQ-TXM-001/005, REQ-FOR-003, REQ-AFF-008/009/017, REQ-VAL-001.
 Affected invariants: INV-F1/F2/F3, INV-A7/A8/A9, INV-T4, INV-P6, INV-X3.
-Module neither verifies catalog, applies prepared records, writes
-manifest outcomes, nor compacts `multiserie.log`. Implements neither
-2PC coordinator nor full database opening; no engine gate
+The module neither verifies the catalog, applies prepared records, writes
+manifest outcomes, nor compacts `multiserie.log`. It implements neither
+a 2PC coordinator nor full database opening; no engine gate is
 closed by evidence from this table alone.

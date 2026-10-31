@@ -7,9 +7,9 @@
 (declaim (ftype (function (insieme-serie-recovery decisioni-recuperate simple-vector simple-vector index index)
                          index) verifica-piano-csn-preflight))
 (defun verifica-piano-csn-preflight (set decisions active closed per-series total)
-  "Pre: token canonici e vettori stabili. Post: count esatti e somma ACTIVE+CLOSED entro budget prima dei gate.
-Richiede proprio lo stesso contesto Archivio del decision log, non solo UUID uguale.
-INVALID-ARGUMENT per autorità/count; RESOURCE-EXHAUSTED per segmenti; nessuna allocazione di contenitori."
+  "Pre: canonical tokens and stable vectors. Post: exact counts and ACTIVE+CLOSED sum within budget before gates.
+Requires the very same Archivio context as the decision log, not merely an equal UUID.
+INVALID-ARGUMENT for authority/count; RESOURCE-EXHAUSTED for segments; no container allocation."
   (unless (eq (insieme-serie-recovery-archive set)
               (arcdocdb.recovery.archive::decisioni-recuperate-archive decisions))
     (error 'invalid-argument :reason :archive-csn-decision-owner))
@@ -31,10 +31,10 @@ INVALID-ARGUMENT per autorità/count; RESOURCE-EXHAUSTED per segmenti; nessuna a
 (declaim (ftype (function (vista-get-serie decisioni-recuperate active-recuperato) null)
                 verifica-origine-active-csn))
 (defun verifica-origine-active-csn (view decisions active)
-  "Pre: risultato ACTIVE canonico e decision log dell'Archivio dell'insieme.
-Post: stessa vista per EQ e stessa origine del replay usato realmente per risolvere i prepared.
-Un secondo replay degli stessi byte non è la stessa autorità; INVALID-ARGUMENT prima del gate CLOSED.
-Il marker privato non trattiene entry, FD o tabella decisioni nel risultato ACTIVE."
+  "Pre: canonical ACTIVE result and decision log from the set's Archivio.
+Post: same view by EQ and same replay origin actually used to resolve prepared data.
+A second replay of the same bytes is not the same authority; INVALID-ARGUMENT before the CLOSED gate.
+The private marker does not retain entries, FDs, or the decision table in the ACTIVE result."
   (unless (eq view (arcdocdb.control::control-recuperato-view
                    (arcdocdb.recovery.active::active-recuperato-control active)))
     (error 'invalid-argument :reason :archive-csn-active-view))

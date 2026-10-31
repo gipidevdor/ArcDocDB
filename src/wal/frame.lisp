@@ -6,8 +6,8 @@
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto index) null) verifica-capacita-cornice))
 (defun verifica-capacita-cornice (lotto size)
-  "Pre: dimensione attestata dal worker, writer esclusivo. Post: capienza e lifetime validi.
-Solo metadati costanti; nessun accesso ai byte o CRC del body. Rifiuti prima degli effetti."
+  "Pre: size attested by the worker, exclusive writer. Post: valid capacity and lifetime.
+Constant metadata only; no byte access or body CRC. Rejections before effects."
   (esigi-lotto lotto :open)
   (when (lotto-csn-registry lotto) (error 'invalid-argument :reason :lotto-csn-bound))
   (unless (<= (lotto-count lotto) (length (lotto-offsets lotto)))
@@ -20,9 +20,9 @@ Solo metadati costanti; nessun accesso ai byte o CRC del body. Rifiuti prima deg
 ;;; REQ: REQ-WAL-005 REQ-AFF-008 REQ-FOR-003
 (declaim (ftype (function (t t t t) index) verifica-append-cornice))
 (defun verifica-append-cornice (lotto buffer start end)
-  "Pre: writer esclusivo, input immutabile. Post: una cornice completa del formato del lotto,
-CRC/tipo validi, spazio per record e SEAL. Rifiuti tipizzati prima di qualsiasi effetto.
-Non attesta CBOR, contratto o commit; scansione limitata a un record del formato."
+  "Pre: exclusive writer, immutable input. Post: one complete frame in the batch format,
+valid CRC/type, space for record and SEAL. Typed rejections before any effect.
+Attests to neither CBOR, contract, nor commit; scan bounded to one format record."
   (unless (and (typep lotto 'lotto) (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)) (not (eq buffer (lotto-buffer lotto))))
     (error 'invalid-argument :reason :lotto-frame-input))
@@ -42,9 +42,9 @@ Non attesta CBOR, contratto o commit; scansione limitata a un record del formato
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto octets index index) index) append-cornice-verificata))
 (defun append-cornice-verificata (lotto buffer start end)
-  "Pre: preflight completo sullo stesso lotto/sorgente immutabili, ownership esclusiva.
-Post: cornice esatta aggiunta, ordinali/used aggiornati, spazio SEAL conservato.
-Ingresso interno del ponte full text; errore/interruzione dopo avvio richiede fail-stop."
+  "Pre: complete preflight on the same immutable batch/source, exclusive ownership.
+Post: exact frame appended, ordinals/used updated, SEAL space retained.
+Internal full-text bridge entry point; error/interruption after start requires fail-stop."
   (unless (and (eq :open (lotto-state lotto)) (< (lotto-count lotto) (length (lotto-offsets lotto)))
                (<= (+ (- end start) +seal-total+) (- (length (lotto-buffer lotto)) (lotto-used lotto))))
     (error 'invariant-violation :reason :lotto-frame-preflight))
@@ -59,8 +59,8 @@ Ingresso interno del ponte full text; errore/interruzione dopo avvio richiede fa
 ;;; REQ: REQ-WAL-005 REQ-AFF-008 REQ-FOR-003
 (declaim (ftype (function (t t t t) index) aggiungi-cornice))
 (defun aggiungi-cornice (lotto buffer start end)
-  "Pre: cornice immutabile, writer esclusivo. Post: append di un record con CRC verificati.
-Prepara solo memoria; il punto durevole rimane il successivo SEAL scritto/sincronizzato.
-Rifiuti ordinari prima della copia; non e una verifica di validita documentale."
+  "Pre: immutable frame, exclusive writer. Post: one record appended with verified CRCs.
+Prepares memory only; the durable point remains the subsequent written/synchronized SEAL.
+Ordinary rejections before copying; not document-validity verification."
   (verifica-append-cornice lotto buffer start end)
   (append-cornice-verificata lotto buffer start end))

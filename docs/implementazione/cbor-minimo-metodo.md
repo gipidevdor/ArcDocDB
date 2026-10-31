@@ -15,7 +15,7 @@ exactly the syntactic reader's six values: major, AI, high u32, low u32,
 next, `:argument`. The simple u8 buffer remains immutable; span is half-open.
 It reads neither payload nor children. u64 arguments and floats remain words, without
 materializing u64 integers, floats, AST, or copies. No state, scratch, lock,
-wait, or I/O; independent calls usable by compute workers.
+wait, or I/O; independent calls can be used by compute workers.
 
 `leggi-header-cbor` runs first: range, reserved values, truncation, illegal
 simple values, and illegal AI31 retain type, reason, offset, and precedence.
@@ -65,6 +65,6 @@ zero baseline and positive control 16 × 1 MiB. Zero observed heap allocation is
 local criterion, without speed threshold or absolute proof of nonallocation.
 Full `make check` required before integration and push.
 
-Registers, stdout/stderr, tool code, mutation copies, and raw
+Records, stdout/stderr, tool code, mutation copies, and raw
 data are preserved even on error. Tools and readers
 treat reports as data with read-eval NIL, without external load/eval.

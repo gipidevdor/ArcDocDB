@@ -104,10 +104,10 @@ make check
 truncations, byte alterations, invalid fields with correct CRCs, different identity,
 high integers, valid-bytes 64 and 4 GiB−1, cumulative/exact budgets, huge counts,
 65,535 participants and rejection of 65,536, no partial encoder writes.
-Build without warning/style warning and lint without violations.
+The build had no warnings/style-warnings, and lint found no violations.
 
 [10 targeted mutations](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-storage/mutazioni-finali.lisp)
-detected on CRC, magic, identity, reserved fields, budget, bounds, and exact consumption.
+were detected on CRC, magic, identity, reserved fields, budget, bounds, and exact consumption.
 The [9 foundation mutations](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-storage/mutazioni-fondazioni.lisp)
 remain detected after module integration. An initial campaign included
 a comparison equivalent to the original under the decoder preconditions: its

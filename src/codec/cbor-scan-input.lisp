@@ -5,9 +5,9 @@
 ;;; REQ: REQ-LIM-001 REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (t t t) (values null &optional)) check-limiti-struttura-cbor))
 (defun check-limiti-struttura-cbor (max-bytes max-nodes max-depth)
-  "Pre: budget esterni. Post: byte 0..16 MiB, nodi 1..16 MiB, profondita 0..100.
-INVALID-ARGUMENT nell'ordine byte-limit, node-limit, depth-limit; offset NIL.
-Il default numerico dei nodi e una configurazione del kernel, non un profilo CBOR."
+  "Pre: external budgets. Post: bytes 0..16 MiB, nodes 1..16 MiB, depth 0..100.
+INVALID-ARGUMENT in order byte-limit, node-limit, depth-limit; NIL offset.
+Numeric node default is a kernel configuration, not a CBOR profile."
   (unless (and (typep max-bytes 'index) (<= max-bytes +cbor-scan-max-bytes+))
     (error 'invalid-argument :reason :cbor-byte-limit))
   (unless (and (typep max-nodes 'index) (<= 1 max-nodes +cbor-scan-max-bytes+))
@@ -20,9 +20,9 @@ Il default numerico dei nodi e una configurazione del kernel, non un profilo CBO
 (declaim (ftype (function (t t t t t t t) (values index &optional))
                 check-input-struttura-cbor))
 (defun check-input-struttura-cbor (buffer start end space max-bytes max-nodes max-depth)
-  "Pre: input freddo non verificato. Post: span index entro budget, anche vuoto.
-Ordine: range, workspace, alias, limiti, byte-budget. INVALID-ARGUMENT o
-RESOURCE-EXHAUSTED con offset NIL; prima di byte letti o scritture nello spazio."
+  "Pre: unverified cold input. Post: index span within budget, even if empty.
+Order: range, workspace, alias, limits, byte-budget. INVALID-ARGUMENT or
+RESOURCE-EXHAUSTED with NIL offset, before byte reads or workspace writes."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason :cbor-range))

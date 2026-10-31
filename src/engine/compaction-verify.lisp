@@ -36,8 +36,8 @@ Sequential original records share one read; window never escapes maintenance or 
 ;;; REQ: REQ-CMP-001 REQ-AFF-002 REQ-CMP-009
 (declaim (ftype (function (motore compaction-plan octets index index compaction-verifier) boolean) compaction-verify-record))
 (defun compaction-verify-record (engine plan buffer start end verifier)
-  "Pre: complete output frame. Post: latest live descriptor or maximum tombstone, raw bytes equal original canon.
-Returns live membership, independently verifies payload bytes; CRC alone cannot attest semantic equality."
+  "Pre: complete output frame. Post: latest live descriptor or tombstone preserving the maximum CSN, raw bytes equal to those in the original canonical source.
+Returns live membership, independently verifies payload bytes; CRC alone cannot attest to semantic equality."
   (multiple-value-bind (next kind flags ks ke) (arcdocdb.record:verifica-cornice buffer start end :version (motore-version engine))
     (declare (ignore next))
     (unless (zerop flags) (error 'invariant-violation :reason :engine-compaction-output-flags))

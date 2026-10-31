@@ -6,9 +6,9 @@
 ;;; REQ: REQ-FOR-003 REQ-FOR-004 REQ-AFF-008
 (declaim (ftype (function (octets u32 (member 1 2) u32) u32) conta-put-attivi))
 (defun conta-put-attivi (buffer end version records)
-  "Pre: lotto interamente verificato/stabile, count SEAL noto. Post: numero PUT ordinari.
-Prepared/OUTCOME validi sono rifiutati esplicitamente come integrazione non ancora supportata.
-Al più records+1 header; RESOURCE/INVALID/INVARIANT propagati, nessuna copia del valore."
+  "Pre: fully verified/stable batch, known SEAL count. Post: ordinary PUT count.
+Valid Prepared/OUTCOME explicitly rejected as an integration not yet supported.
+At most records+1 headers; RESOURCE/INVALID/INVARIANT propagated, no value copy."
   (let ((pos 0) (puts 0))
     (declare (type u32 pos puts))
     (dotimes (i (1+ records))
@@ -29,9 +29,9 @@ Al più records+1 header; RESOURCE/INVALID/INVARIANT propagati, nessuna copia de
 ;;; REQ: REQ-WAL-005 REQ-FOR-003 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (sorgente-get-attiva lotto) u32) verifica-lotto-attivo))
 (defun verifica-lotto-attivo (source batch)
-  "Pre: lease e token già controllati, lotto sealed esclusivo. Post: CRC/SEAL/CSN esatti e PUT contati.
-Legge soltanto il nuovo lotto: non rilegge l'ACTIVE e non assume EOF o durability.
-Errori tipizzati prima dell'adozione; i byte non vengono trattenuti nel risultato."
+  "Pre: lease and token already checked, exclusive sealed batch. Post: exact CRC/SEAL/CSN and PUTs counted.
+Reads only the new batch: does not reread ACTIVE or assume EOF or durability.
+Typed errors before adoption; bytes not retained in the result."
   (verifica-ritiro-lotto batch)
   (let* ((segment (sorgente-get-attiva-segment source)) (size (lunghezza-lotto batch))
          (start (inizio-lotto batch)) (buffer (arcdocdb.wal::lotto-buffer batch)))
@@ -57,9 +57,9 @@ Errori tipizzati prima dell'adozione; i byte non vengono trattenuti nel risultat
 ;;; REQ: REQ-IDX-001 REQ-FOR-003 REQ-AFF-008
 (declaim (ftype (function (sorgente-get-attiva lotto resolver-words) null) copia-put-attivi))
 (defun copia-put-attivi (source batch rows)
-  "Pre: lotto ordinario già verificato, buffer stabile, righe private esattamente dimensionate.
-Post: offset assoluti/size/flag/CSN copiati, proof zero; nessun riferimento a byte/evento riusabili.
-Al più count+1 header; INVARIANT-VIOLATION per count/range, nessuna pubblicazione parziale."
+  "Pre: ordinary batch already verified, stable buffer, private rows sized exactly.
+Post: absolute offsets/size/flags/CSN copied, proof zero; no reference to reusable bytes/event.
+At most count+1 headers; INVARIANT-VIOLATION for count/range, no partial publication."
   (unless (zerop (mod (length rows) +row-words+))
     (error 'invariant-violation :reason :active-row-shape))
   (let ((pos 0) (used 0) (buffer (arcdocdb.wal::lotto-buffer batch))

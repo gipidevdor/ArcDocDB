@@ -23,7 +23,7 @@ remain active and in the denominator.
 ## Count and prefix invariants
 
 For one pass, `N` is the actual element count and `F[k]` is
-the frequency of digit `k`, for `0 <= k < 256`. Histogram is zeroed
+the frequency of digit `k`, for `0 <= k < 256`. The histogram is zeroed
 and counts all current source elements, without sampling.
 Cells have type u64; total, positions, and cardinality use `index`.
 Entry cardinality is not limited to the participants' u16 count.
@@ -37,16 +37,16 @@ within `0..N`; cursor may reach `N` after the last write.
 
 With zero or one occupied class, distribution is unnecessary. For `N > 0`, a
 single occupied class contains all elements, because the sum has already
-been checked. The pass is therefore the stable identity. Caller
+been checked. The pass is therefore the stable identity. The caller
 skips both scatter and `rotatef`; possibly unwritten scratch
-does not become source. If all passes are uniform, result is
+does not become source. If all passes are uniform, the result is
 the initial source. Sampling cannot justify this skip.
 
 <a id="decisioni-composte"></a>
 
 ## Compound decisions
 
-Radix source has two explicit compound Boolean predicates.
+The radix source has two explicit compound Boolean predicates.
 Chained comparisons and simple decisions are inventoried below.
 Test names are abbreviated by omitting the `test-REQ-…` prefix.
 Cited cases are present in the examined version; they do not constitute
@@ -89,7 +89,7 @@ the existing module contract and are not recounted as new sites.
 | RAD-G17, `radix-sort-entries`, 171–174 | nondecreasing adjacent TXIDs; otherwise `decision-entry-order` | Ordering postcondition. Identity and stability compared separately with `CL:STABLE-SORT`, including repeated TXIDs. |
 
 Negations of histogram, digit, alias, and cursor guards are not
-public builder inputs: sorter produces those structures after
+public builder inputs: the sorter produces those structures after
 preflight and private copies. Tests deliberately call them through
 private boundaries without weakening product types. RAD-G06 depends
 on runtime representable limits; RAD-G17 remains a postcondition
@@ -174,7 +174,7 @@ joins are fixture barriers: they are not engine tasks
 and do not demonstrate a new parking protocol. Real threads
 exercise concurrent readers; they do not exhaustively explore
 interleavings or qualify scalability, zero heap, or deterministic
-scheduling. Table is built before `make-thread` and passed
+scheduling. The table is built before `make-thread` and passed
 in closures; the test does not prove publication through a future
 global runtime catalog.
 

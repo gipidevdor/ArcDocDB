@@ -17,7 +17,7 @@
 The experiment uses an immutable root, published through CAS. Each split or rebuild
 produces a new directory. Copying at most C fragment slots does not bound
 this directory's cost: **2^G references** are copied, even when it does not
- double. The earlier claim of maximum cost C and no pause proportional to
+double. The earlier claim of maximum cost C and no pause proportional to
 Serie size omitted this work and key copying.
 
 Reading a retired fragment can still be linearizable during the operation.

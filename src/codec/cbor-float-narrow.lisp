@@ -8,9 +8,9 @@
 (declaim (ftype (function (u32) (values (unsigned-byte 16) &optional))
                 riduci-binary32-cbor))
 (defun riduci-binary32-cbor (word)
-  "Pre: binary32 esattamente accorciabile secondo la preferenza locale.
-Post: bit binary16, stesso segno/valore/payload NaN, senza arrotondamento.
-INVARIANT-VIOLATION per ingresso non accorciabile, esponente o segno/forma incoerenti."
+  "Pre: binary32 can be shortened exactly according to local preference.
+Post: binary16 bits, same sign/value/NaN payload, without rounding.
+INVARIANT-VIOLATION for input that cannot be shortened, inconsistent exponent, or sign/shape."
   (unless (binary32-accorciabile-cbor-p word)
     (error 'invariant-violation :reason :cbor-float32-narrow-input))
   (let* ((exponent (ldb (byte 8 23) word)) (fraction (logand word #x7fffff))
@@ -35,9 +35,9 @@ INVARIANT-VIOLATION per ingresso non accorciabile, esponente o segno/forma incoe
                          (values (unsigned-byte 23) &optional))
                 riduci-significando64-cbor))
 (defun riduci-significando64-cbor (high low shift)
-  "Pre: significando HIGH21/LOW32 allineato, SHIFT30..52 verso subnormale32.
-Post: quoziente esatto u23, ricostruisce separatamente HIGH e LOW senza u64.
-INVARIANT-VIOLATION per larghezza/allineamento o parole ricostruite diverse."
+  "Pre: aligned HIGH21/LOW32 significand, SHIFT30..52 toward subnormal32.
+Post: exact u23 quotient, reconstructs HIGH and LOW separately without u64.
+INVARIANT-VIOLATION for width/alignment or different reconstructed words."
   (unless (<= high #x1fffff)
     (error 'invariant-violation :reason :cbor-float64-narrow-significand))
   (unless (binary64-allineato-cbor-p high low shift)
@@ -57,9 +57,9 @@ INVARIANT-VIOLATION per larghezza/allineamento o parole ricostruite diverse."
 ;;; REQ: REQ-CBR-004 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (u32 u32) (values u32 &optional)) riduci-binary64-cbor))
 (defun riduci-binary64-cbor (high low)
-  "Pre: binary64 esattamente accorciabile in binary32, parole HIGH/LOW u32.
-Post: bit binary32 con stesso segno/valore/significando NaN, senza u64/float.
-INVARIANT-VIOLATION per input non accorciabile, esponente o segno incoerenti."
+  "Pre: binary64 can be shortened exactly to binary32, HIGH/LOW u32 words.
+Post: binary32 bits with the same sign/value/NaN significand, without u64/float.
+INVARIANT-VIOLATION for input that cannot be shortened, inconsistent exponent, or sign."
   (unless (binary64-accorciabile-cbor-p high low)
     (error 'invariant-violation :reason :cbor-float64-narrow-input))
   (let* ((exponent (ldb (byte 11 20) high)) (fraction (logand high #xfffff))

@@ -25,7 +25,7 @@ compilation.
 | tests/codec/cbor-map-write.lisp | 6ad0e9b5a48ba9c32c46d720f2f7f1821368d6c8 |
 | tests/codec/cbor-map-write-threads.lisp | 6a65b58ce236b92b33772e1861dbd8c1257bee13 |
 
-The readings inventory ten functions of 9–38 lines and 3–9 paths,
+The readings list ten functions of 9–38 lines and 3–9 paths,
 five AND/OR forms with 14 operands, nine chained comparisons, 40 guards,
 and two loops, without exclusions. Before campaigns, map
 RUN is added to the coverage tool's aggregate codec scope.
@@ -43,7 +43,7 @@ with a clean working tree.
 
 20 named tests pass: 19 serial and one parallel, with cold oracles
 for header, payload, and entire buffers. Checks cover COUNT 0/1/23/24/255/256,
-types and ranges, all precedence, half table and span before doubling,
+types and ranges, all precedence, half-table and span checks before doubling,
 even and odd inactive tails, aliases including empty cases, header overlap,
 exact and insufficient capacity, complete 16 MiB budget and excesses,
 nodes/tags/root, child depth 99/100, key and value parsing,
@@ -54,7 +54,7 @@ for each of eight error families. Final state `0D123435`
 is asserted in the corpus and recalculated by the independent reader; the campaign
 does not print it.
 
-Two real workers reused for two waves of 2048 calls each:
+Two real workers are reused for two waves of 2048 calls each:
 8192 compositions, with source and table shared for reading and
 private destinations/scratch. Sinks 54677504/77537280, NEXT 12/16, and
 buffers 19/23 agree with cold oracles. The first build
@@ -69,12 +69,12 @@ The 9499 calls to the new API are an arithmetic total from the plan:
 
 ## Benchmark and mutations
 
-Six cold fixtures, five replicates of 1024 calls, and warmup 64:
-30 samples with zero bytes observed by the heap counter. Null baseline
-zero and positive control of 16 × 1 MiB: 16777472 bytes. NEXT, entire
+The benchmark uses six cold fixtures, five replicates of 1024 calls, and warmup 64:
+the heap counter observes zero bytes in all 30 samples. The null baseline is
+zero, and the positive control of 16 × 1 MiB reports 16777472 bytes. NEXT, entire
 buffers, source, and table are checked during measurement; arity
 is checked in cold code. Samples total 0.682974 s; the wrapper takes
-2.388207 s. External load uncontrolled and check cost included;
+2.388207 s. External load is uncontrolled and check cost is included;
 absolute absence of allocation or engine throughput is not certified.
 The independent audit passes 79357 data checks.
 
@@ -84,10 +84,10 @@ unchecked ends, root node excluded, and extra arity. Every log contains
 exact smoke, Unhandled, and a nominal function from the frozen corpus,
 with exit 1, signal NIL, and no worker error. Warnings, failed
 compilations, helper failures, signals, and errors after completion do not count
-as detection. The baseline passes 1284 nominal tests and two smokes; the campaign
+as detection. The baseline passes 1284 named tests and two smoke tests; the campaign
 wrapper takes 236.203910 s.
 
-Nine private copies/caches, 345 files per copy, 350 internal fingerprints,
+There are nine private copies/caches, 345 files per copy, 350 internal fingerprints,
 and 860 stable external sources. The DATA reader compares all
 files bytewise: baseline with no differences, one exact catalog substitution
 in each mutant. FTYPE and the extra-arity body change consistently
@@ -131,10 +131,10 @@ Wrapper: 260.414101 s; 860 stable sources. Intentional self-test
 failures and compiler notes remain in raw data.
 
 After integrating `main` at `55149bfd`, on merge `e4b3b826`,
-build, lint, trace, and link pass: 1297 nominal tests and two smokes, 212 files
+build, lint, trace, and link pass: 1297 named tests and two smoke tests, 212 files
 with zero violations, the same 120 requirements/65 invariants/13 FI/52 ADRs,
 452 files and 2952 links without breakage. Wrapper: 41.161955 s; 872 stable
-sources and clean working tree. The five map product/corpus blobs
+sources and a clean working tree. The five map product/corpus blobs
 remain identical. The earlier full verification retains its
 scope; this second command does not rerun global spikes.
 

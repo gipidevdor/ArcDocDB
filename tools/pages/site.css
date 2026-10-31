@@ -281,3 +281,7 @@ pre code { font-size: 12px; overflow-wrap: normal; white-space: pre; }
   .source-note { margin-top: 30px; }
   a { text-decoration: none; }
 }
+.api-definition { border-top: 1px solid var(--line); margin-top: 2.5rem; padding-top: 1.5rem; scroll-margin-top: 6rem; }
+.api-definition h2 code { overflow-wrap: anywhere; }
+.api-qualified { color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
+.api-contract { white-space: pre-line; line-height: 1.7; margin: 1.2rem 0; }

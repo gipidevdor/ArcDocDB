@@ -6,8 +6,8 @@
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-IDX-001 REQ-AFF-008 REQ-IDX-010
 (declaim (ftype (function (motore c:control-recuperato simple-vector) simple-vector) mappe-motore))
 (defun mappe-motore (engine control closed)
-  "Pre: tutte le fonti gia' verificate, prima di admission. Post: mappe canoniche della vista recovery.
-Nessun FD aperto o trasferito; ogni mappa legge lo stesso FD della prova CLOSED."
+  "Pre: all sources already verified, before admission. Post: canonical recovery-view maps.
+No FD opened or transferred; every map reads the same FD as the CLOSED proof."
   (let ((maps (make-array (length closed) :initial-element nil)))
     (dotimes (i (length closed) maps)
       (let* ((token (the rc:closed-recuperato (svref closed i)))
@@ -24,9 +24,9 @@ Nessun FD aperto o trasferito; ogni mappa legge lo stesso FD della prova CLOSED.
 ;;; REQ: REQ-REC-001 REQ-MVC-006 REQ-MVC-008 REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (motore rt:runtime-archivio a:segmento-attivo-preparato) null) adotta-active-motore))
 (defun adotta-active-motore (engine runtime prepared)
-  "Pre: checkpoint gia' deciso, nuovo ACTIVE solo header e nome completato, ambito runtime corrente.
-Post: wrapper runtime dello stesso FD/log/associazione verificati; unico controller e lease dell'owner.
-Il rebind rilegge l'header canonico, non riscrive il file o ricostruisce la prova di durability."
+  "Pre: checkpoint already decided, new header-only ACTIVE with completed name, current runtime scope.
+Post: runtime wrapper of the same verified FD/log/association; unique controller and owner's lease.
+Rebinding rereads canonical header; neither rewrites file nor reconstructs durability proof."
   (let* ((old (arcdocdb.active::segmento-attivo-preparato-segment prepared))
          (id (logior (ash (arcdocdb.get::segmento-get-high old) 32) (arcdocdb.get::segmento-get-low old)))
          (segment (g:crea-segmento-get (motore-view engine) (arcdocdb.get::segmento-get-file old)
@@ -51,8 +51,8 @@ Il rebind rilegge l'header canonico, non riscrive il file o ricostruisce la prov
 (declaim (ftype (function (motore dar:archivio-recovery c:control-recuperato simple-vector
                           ac:piano-csn-archivio a:segmento-attivo-preparato) null) adotta-runtime-motore))
 (defun adotta-runtime-motore (engine archive control closed plan prepared)
-  "Pre: checkpoint e nomi completi, gate CSN finale; admission chiusa. Post: runtime/GET/indice completi.
-Un solo registro operativo a M, senza incremento; errori prima di READY non restituiscono il motore."
+  "Pre: complete checkpoint and names, final CSN gate; admission closed. Post: complete runtime/GET/index.
+One operational registry at M, without increment; errors before READY do not return engine."
   (when (motore-automatic-index engine) (remove-automatic-orphans engine))
   (let* ((maps (mappe-motore engine control closed)) (runtime (rt:crea-runtime-archivio plan 1000000000 1000000
                                   :csn-capacity 16 :snapshot-capacity 4 :worker-capacity 1 :retirement-capacity 16)))

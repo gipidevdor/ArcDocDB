@@ -8,12 +8,12 @@
                          &key (:lookup (or null function))) vista-get-serie)
                 crea-vista-get-serie))
 (defun crea-vista-get-serie (scope primary cache identity &key lookup)
-  "Pre: controller, indice/cache della stessa Serie, ID canonico stabile di sedici byte.
-Post: vista immutabile con copia posseduta dell'identità; NIL disattiva la cache.
-LOOKUP opzionale e' del controller: (key,start,end,probe,output), risultato LIVE/ABSENT/RETRY-LIMIT.
+  "Pre: controller, index/cache of the same Serie, stable canonical sixteen-byte ID.
+Post: immutable view with owned identity copy; NIL disables cache.
+Optional LOOKUP belongs to controller: (key,start,end,probe,output), result LIVE/ABSENT/RETRY-LIMIT.
 PRIMARY may be NIL only with LOOKUP, allowing a paged controller to release its resident root.
 The callback preserves output on absence and owns its progress/I/O contract; bounded loops do not imply lock-freedom.
-INVALID-ARGUMENT per ID di altra lunghezza; nessun oggetto per documento."
+INVALID-ARGUMENT for ID of another length; no per-document object."
   (unless (= (length identity) +serie-id-bytes+) (error 'invalid-argument :reason :get-serie-identity))
   (unless (or primary lookup) (error 'invalid-argument :reason :get-missing-lookup))
   (%make-vista-get-serie scope primary cache (copy-seq identity) lookup))
@@ -23,9 +23,9 @@ INVALID-ARGUMENT per ID di altra lunghezza; nessun oggetto per documento."
                          &key (:record-bytes integer) (:budget-payload integer)) contesto-get)
                 crea-contesto-get))
 (defun crea-contesto-get (scope worker-id &key (record-bytes 65536) (budget-payload 65688))
-  "Pre: controller, ambito canonico dell'Archivio e ID worker esclusivo in tutti i pool.
-Post: scratch fisso allocato prima del pool; nessun pin. Payload controllato prima di allocare.
-INVALID-ARGUMENT per configurazione, RESOURCE-EXHAUSTED per budget; non cambia il limite documenti."
+  "Pre: controller, canonical Archivio scope, and worker ID exclusive across all pools.
+Post: fixed scratch allocated before pool startup; no pin. Payload checked before allocation.
+INVALID-ARGUMENT for configuration, RESOURCE-EXHAUSTED for budget; does not change document limit."
   (unless (and (<= 1 record-bytes +max-record-bytes+) (<= 0 budget-payload most-positive-fixnum))
     (error 'invalid-argument :reason :get-worker-configuration))
   (when (> (+ record-bytes +get-fixed-payload+) budget-payload)
@@ -41,9 +41,9 @@ INVALID-ARGUMENT per configurazione, RESOURCE-EXHAUSTED per budget; non cambia i
 ;;; REQ: REQ-FOR-001 REQ-FOR-002 REQ-AFF-002 REQ-CON-004
 (declaim (ftype (function (vista-get-serie file-io u64 octets) segmento-get) crea-segmento-get))
 (defun crea-segmento-get (view file segment-id scratch)
-  "Pre: pool I/O, file readonly aperto, ID autorevole, scratch esclusivo di almeno un header.
-Post: header letto dal medesimo FD, CRC/Serie/segmento/formato verificati; capacità immutabile.
-Propaga IO-FAULT/CORRUPTION-DETECTED/UNSUPPORTED-FORMAT; non apre o chiude FILE né certifica commit."
+  "Pre: I/O pool, open read-only file, authoritative ID, exclusive scratch of at least one header.
+Post: header read from the same FD, CRC/Serie/segment/format verified; immutable capability.
+Propagates IO-FAULT/CORRUPTION-DETECTED/UNSUPPORTED-FORMAT; neither opens/closes FILE nor certifies commit."
   (unless (and (plusp segment-id) (eq (mode-file file) :input) (eq (stato-file file) :open))
     (error 'invalid-argument :reason :get-segment-capability))
   (when (eq scratch (vista-get-serie-identity view))

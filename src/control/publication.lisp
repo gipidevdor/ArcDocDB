@@ -6,9 +6,9 @@
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (control-preparato) null) verifica-dipendenze-pubblicazione))
 (defun verifica-dipendenze-pubblicazione (prepared)
-  "Pre: capacità esclusivamente possedute e risultato completo. Post: stesso checkpoint fermo e durevole.
-Prova dei FD, directory canonica, salute log e nuovo ACTIVE ancora header-only.
-IO-FAULT/INVALID-ARGUMENT prima della rinomina; nessuna syscall o ricostruzione del manifest."
+  "Pre: exclusively owned capabilities and complete result. Post: same stable durable checkpoint.
+Proof of FDs, canonical directory, log health, and new ACTIVE still header-only.
+IO-FAULT/INVALID-ARGUMENT before rename; no syscall or manifest reconstruction."
   (let* ((log (control-preparato-log prepared)) (file (arcdocdb.wal::log-io-file log))
          (association (control-preparato-association prepared)))
     (verifica-associazione-file association (arcdocdb.io::associazione-file-input association) file)
@@ -22,9 +22,9 @@ IO-FAULT/INVALID-ARGUMENT prima della rinomina; nessuna syscall o ricostruzione 
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (control-preparato file-io) null) verifica-pubblicazione-control))
 (defun verifica-pubblicazione-control (prepared previous)
-  "Pre: vecchio control log readonly già validato e autorevole; namespace congelato dal recovery.
-Post: gettone disponibile, dipendenze, backend e callback ammessi senza I/O o mutazione.
-INVALID-ARGUMENT/IO-FAULT/UNSUPPORTED-FORMAT: nessuna pubblicazione viene tentata."
+  "Pre: old readonly control log already validated and authoritative; namespace frozen by recovery.
+Post: token available, dependencies, backend, and callbacks admitted without I/O or mutation.
+INVALID-ARGUMENT/IO-FAULT/UNSUPPORTED-FORMAT: no publication attempted."
   (unless (and (eq (control-preparato-publication-state prepared) :prepared)
                (null (control-preparato-publication-owner prepared)))
     (error 'invalid-argument :reason :control-publication-state))
@@ -37,11 +37,11 @@ INVALID-ARGUMENT/IO-FAULT/UNSUPPORTED-FORMAT: nessuna pubblicazione viene tentat
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (control-preparato file-io) control-pubblicato) pubblica-control-recuperato))
 (defun pubblica-control-recuperato (prepared previous)
-  "Pre: pool I/O, recovery esclusivo, vecchio log validato e nomi posseduti fino a fine chiamata.
-Post: checkpoint installato tramite renameat verificata e directory fsync; risultato completo.
-Punto di atomicità: rinomina su control.log; nessuna conferma prima del successivo fsync parent.
-Errori dopo la presa rendono FAULTED il gettone; non ritenta, cancella, chiude o fa rollback.
-UNWIND-PROTECT rilascia il gettone su ogni uscita non locale, senza mascherare la condizione."
+  "Pre: I/O pool, exclusive recovery, validated old log, and names owned until the call ends.
+Post: checkpoint installed through verified renameat and directory fsync; complete result.
+Atomicity point: rename to control.log; no confirmation before subsequent parent fsync.
+Errors after acquisition make the token FAULTED; no retry, deletion, close, or rollback.
+UNWIND-PROTECT releases the token on every nonlocal exit, without masking the condition."
   (verifica-pubblicazione-control prepared previous)
   (let ((result (%make-control-pubblicato prepared)) (complete nil))
     (unwind-protect

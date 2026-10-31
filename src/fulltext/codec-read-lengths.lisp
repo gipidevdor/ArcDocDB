@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets descrittore-full-text spazio-codec-full-text) null) verifica-lunghezze-file))
 (defun verifica-lunghezze-file (buffer descriptor space)
-  "Pre: cornice/META verificati. Post: LENGTHS ordinate, riservati zero, prefissi e somma.
-Verifica tutte le righe/campi e il totale per documento, prima dei posting."
+  "Pre: frame/META verified. Post: ordered LENGTHS, zero reserved fields, prefixes, and sum.
+Verifies every row/field and per-document total before postings."
   (let* ((base (aref (spazio-codec-full-text-starts space) 5))
          (count (floor (aref (spazio-codec-full-text-lengths space) 5) +length-width+))
          (positions (floor (aref (spazio-codec-full-text-lengths space) 4) +position-width+))

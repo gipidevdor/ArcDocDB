@@ -112,7 +112,7 @@ The [benchmark process](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90
 are `:OK` and `:STABLE`; the process ends with exit 0.
 Five replicas of 4096 complete cycles, each after 128 warmup cycles,
 use the same preallocated context and real monotonic generations.
-The independent sink expected and obtained in each sample is 8800256.
+The independent expected sink is 8800256, and every sample produces it.
 
 | Replica | Observed consed bytes | Raw ticks (units/s: 1000000) |
 |---|---:|---:|

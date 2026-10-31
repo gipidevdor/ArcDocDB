@@ -43,7 +43,7 @@ preserved in the [campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2e
 Full text adds analysis, delta, dictionary, posting, and
 position costs, as well as concurrent build and rebuild. Primary-index
 measurements and simple-query targets do not transfer to text
-search. Quantitative feasibility remains to assess with the
+search. Quantitative feasibility remains to be assessed with the
 [dedicated campaign](../13-benchmark.md#ricerca-full-text), updating
 [costs](stime-ordine-di-grandezza.md#ricerca-full-text) and
 [risks RSK-13/14](registro-rischi.md#rsk-13). NNTP guides part of the corpus;
@@ -202,7 +202,7 @@ allocations to about 48 B/op in the 100,000 sample; maximum split at larger scal
 is 98.827 ms. Profiling, larger scale, and v2 remain: the risk is not closed.
 
 SPK-10 adds separate **v2** checks and measurements: codec, five-word index,
-iterative CBOR, and modeled migration. Integration crosses fileheader,
+iterative CBOR, and modeled migration. Integration crosses file header,
 record, document, hint, and index with keys up to 65,535 bytes, depth 100,
 and maximum record 16,842,775 bytes. Excluded portions are declared in the
 [result](risultati-2026-10-08.md#spk-10--limiti-v2-e-integrazione).

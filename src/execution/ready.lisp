@@ -7,8 +7,8 @@
 ;;; REQ: REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (partizione-pronta) (or null sb-thread:thread)) %prendi-guard-pronta))
 (defun %prendi-guard-pronta (partition)
-  "Pre: accesso breve al ring. Post: guard del thread corrente oppure NIL se busy.
-Un solo CAS, nessuna attesa; INVARIANT-VIOLATION al guasto della proprietà."
+  "Pre: brief ring access. Post: current thread's guard, or NIL if busy.
+One CAS only, no waiting; INVARIANT-VIOLATION on ownership failure."
   (let ((thread sb-thread:*current-thread*))
     (unless (null (sb-ext:compare-and-swap (partizione-pronta-guard partition) nil thread))
       (return-from %prendi-guard-pronta nil))
@@ -19,8 +19,8 @@ Un solo CAS, nessuna attesa; INVARIANT-VIOLATION al guasto della proprietà."
 ;;; REQ: REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (partizione-pronta sb-thread:thread) null) %rilascia-guard-pronta))
 (defun %rilascia-guard-pronta (partition thread)
-  "Pre: guard posseduta da THREAD. Post: guard libera con un CAS verificato.
-INVARIANT-VIOLATION per proprietà errata; nessun retry o recupero implicito."
+  "Pre: guard owned by THREAD. Post: guard free after one verified CAS.
+INVARIANT-VIOLATION for incorrect ownership; no retry or implicit recovery."
   (unless (eq (partizione-pronta-guard partition) thread)
     (error 'invariant-violation :reason :ready-queue-guard))
   (unless (eq (sb-ext:compare-and-swap (partizione-pronta-guard partition) thread nil) thread)
@@ -30,8 +30,8 @@ INVARIANT-VIOLATION per proprietà errata; nessun retry o recupero implicito."
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (partizione-pronta writer-programmabile) index) %pubblica-pronto))
 (defun %pubblica-pronto (partition writer)
-  "Pre: guard corrente e obbligo unico del chiamante. Post: una accettazione FIFO.
-RESOURCE-EXHAUSTED se full prima della mutazione; INVARIANT-VIOLATION al guasto."
+  "Pre: current guard and caller's unique obligation. Post: one FIFO acceptance.
+RESOURCE-EXHAUSTED if full before mutation; INVARIANT-VIOLATION on fault."
   (%check-pronta partition)
   (when (= (partizione-pronta-count partition) (partizione-pronta-capacity partition))
     (error 'resource-exhausted :reason :ready-queue-full))
@@ -49,8 +49,8 @@ RESOURCE-EXHAUSTED se full prima della mutazione; INVARIANT-VIOLATION al guasto.
                          (values (or null writer-programmabile) (member :writer :empty) &optional))
                 %preleva-pronto))
 (defun %preleva-pronto (partition)
-  "Pre: guard corrente. Post: riferimento FIFO al worker, slot liberato; NIL/:EMPTY
-se vuoto. INVARIANT-VIOLATION per forma o payload incoerente, fail-stop del chiamante."
+  "Pre: current guard. Post: FIFO reference handed to the worker, slot freed; NIL/:EMPTY
+if empty. INVARIANT-VIOLATION for inconsistent shape or payload, caller fail-stop."
   (%check-pronta partition)
   (when (zerop (partizione-pronta-count partition))
     (return-from %preleva-pronto (values nil :empty)))
@@ -67,9 +67,9 @@ se vuoto. INVARIANT-VIOLATION per forma o payload incoerente, fail-stop del chia
 ;;; REQ: REQ-CON-001 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (lista-writer-pronti t t) index) pubblica-writer-pronto))
 (defun pubblica-writer-pronto (ready shard writer)
-  "Pre: un unico obbligo :SCHEDULE da pubblicare una sola volta. Post: count locale,
-obbligo al ring. INVALID-ARGUMENT per shard/writer; RESOURCE-EXHAUSTED full/busy
-conserva obbligo al chiamante. Il retry non accetta nuovamente i payload nel writer."
+  "Pre: one unique :SCHEDULE obligation to publish exactly once. Post: local count,
+obligation transferred to the ring. INVALID-ARGUMENT for shard/writer; RESOURCE-EXHAUSTED full/busy
+leaves the obligation with the caller. Retry does not accept payloads into the writer again."
   (let ((partition (%partizione-verificata ready shard)))
     (unless (typep writer 'writer-programmabile)
       (error 'invalid-argument :reason :ready-writer))
@@ -83,8 +83,8 @@ conserva obbligo al chiamante. Il retry non accetta nuovamente i payload nel wri
                          (values (or null writer-programmabile) (member :writer :empty :busy) &optional))
                 %prova-pronta))
 (defun %prova-pronta (partition)
-  "Pre: una partizione candidata. Post: writer/empty dal ring oppure NIL/:BUSY.
-Un CAS senza spin; cleanup dopo acquisizione verificata, invarianti fail-stop."
+  "Pre: one candidate partition. Post: writer/empty from the ring or NIL/:BUSY.
+One CAS without spinning; cleanup after verified acquisition, fail-stop on invariants."
   (let ((thread (%prendi-guard-pronta partition)))
     (unless thread (return-from %prova-pronta (values nil :busy)))
     (unwind-protect (%preleva-pronto partition)
@@ -95,10 +95,10 @@ Un CAS senza spin; cleanup dopo acquisizione verificata, invarianti fail-stop."
                          (values (or null writer-programmabile) (member :writer :empty :busy) index &optional))
                 preleva-writer-pronto))
 (defun preleva-writer-pronto (ready start)
-  "Pre: start indice valido. Post: al più K tentativi circolari; writer/:WRITER e
-cursore seguente alla partizione servita, oppure NIL e :BUSY/:EMPTY con start+1.
-EMPTY sono osservazioni locali, non quiescenza globale; un worker conserva il
-riferimento fino all'avvio riuscito. INVALID-ARGUMENT indice; invarianti fail-stop."
+  "Pre: valid start index. Post: at most K circular attempts; writer/:WRITER and
+cursor after the served partition, or NIL and :BUSY/:EMPTY with start+1.
+EMPTY values are local observations, not global quiescence; a worker retains the
+reference until successful startup. INVALID-ARGUMENT for index; fail-stop on invariants."
   (%partizione-verificata ready start)
   (let* ((size (length (lista-writer-pronti-partitions ready)))
          (cursor (the index start)) (busy nil))

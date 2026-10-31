@@ -7,9 +7,9 @@
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (file-io file-io string string) null) verifica-capacita-pubblicazione))
 (defun verifica-capacita-pubblicazione (directory source source-name target-name)
-  "Pre: capacita' e nomi stabili del controller. Post: preflight senza I/O sui file o mutazioni.
-INVALID-ARGUMENT per modo, nomi o backend; IO-FAULT per capacita' non aperta.
-UNSUPPORTED-FORMAT per callback/ABI/piattaforma/simbolo mancanti, nessun fallback."
+  "Pre: controller's stable capabilities and names. Post: preflight without file I/O or mutations.
+INVALID-ARGUMENT for mode, names, or backend; IO-FAULT for a capability not open.
+UNSUPPORTED-FORMAT for missing callback/ABI/platform/symbol, no fallback."
   (esigi-aperto directory :directory) (esigi-aperto source :input)
   (esigi-nome-foglia source-name) (esigi-nome-foglia target-name)
   (verifica-nomi-temporaneo source-name target-name)
@@ -26,13 +26,13 @@ UNSUPPORTED-FORMAT per callback/ABI/piattaforma/simbolo mancanti, nessun fallbac
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (file-io file-io string string) null) pubblica-temporaneo))
 (defun pubblica-temporaneo (directory source source-name target-name)
-  "Pre: decisione autorevole durevole e contenuto verificato dal caller; namespace esclusivo.
-SOURCE readonly aperto, source-name = target-name + .tmp; nessuna close o sostituzione concorrente.
-Post: target prima assente, ora legato allo stesso FD regolare; capacita' ancora aperte.
-Punto atomico: rinomina esclusiva, completamento della decisione; fsync parent resta al caller.
-Nessun retry, scrittura/troncamento dei segmenti, close, unlink o flush implicito.
-Rifiuti pre-effetto non mutano stato; ogni uscita incompleta dall'effetto guasta il parent.
-Un ritorno perso si riconcilia da un nuovo inventario, non ripetendo questa chiamata."
+  "Pre: durable authoritative decision and content verified by the caller; exclusive namespace.
+SOURCE readonly and open, source-name = target-name + .tmp; no concurrent close or replacement.
+Post: target previously absent, now bound to the same regular-file FD; capabilities still open.
+Atomic point: exclusive rename, completion of the decision; parent fsync remains the caller's responsibility.
+No retry, segment writing/truncation, close, unlink, or implicit flush.
+Rejections before the effect do not mutate state; every incomplete exit from the effect faults the parent.
+A lost return is reconciled through a new inventory, not by repeating this call."
   (verifica-capacita-pubblicazione directory source source-name target-name)
   (let ((source-leaf (map 'simple-base-string #'identity source-name))
         (target-leaf (map 'simple-base-string #'identity target-name)))

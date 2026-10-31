@@ -101,9 +101,9 @@ no benchmark or commit.
 
 ## Observed results and delivery
 
-Check run on SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, 16 GiB RAM;
+The check ran on SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, 16 GiB RAM;
 process heap 1,024 MiB. Strict compilation and loading completed,
-stderr empty, `CHECK` returned `:status :ok`. No randomness.
+stderr was empty, `CHECK` returned `:status :ok`. No randomness.
 
 | Positive check | Actual count |
 |---|---:|

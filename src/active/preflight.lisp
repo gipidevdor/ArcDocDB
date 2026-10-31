@@ -7,9 +7,9 @@
 (declaim (ftype (function (vista-get-serie file-io file-io file-io u64 integer octets octets) null)
                 verifica-preparazione-attiva))
 (defun verifica-preparazione-attiva (view input append directory segment-id version header scratch)
-  "Pre: namespace riservato, capacità esclusive e buffer privati. Post: preflight senza effetti I/O.
-ID positivo u32, formato noto, due range da 64 byte, nessun alias; append scritto/durevole a zero.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT/UNSUPPORTED-FORMAT prima di header e syscall."
+  "Pre: reserved namespace, exclusive capabilities, private buffers. Post: preflight without I/O effects.
+Positive u32 ID, known format, two 64-byte ranges, no alias; zero written/durable append frontiers.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT/UNSUPPORTED-FORMAT before header and syscall."
   (format-limits version)
   (unless (<= 1 segment-id #xffffffff)
     (error 'invalid-argument :reason :active-initialization-id))
@@ -30,9 +30,9 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT/UNSUPPORTED-FORMAT prima di header 
 ;;; REQ: REQ-AFF-001 REQ-STO-003
 (declaim (ftype (function (file-io file-io associazione-file) null) verifica-frontiera-iniziale))
 (defun verifica-frontiera-iniziale (input append association)
-  "Pre: capacità esclusive e prova dal pool I/O. Post: stesse capacità aperte e solo header durevole.
-IO-FAULT/INVALID-ARGUMENT per prova; INVARIANT-VIOLATION per frontiere diverse da 64.
-Non verifica il catalogo, un eventuale SEAL o la presenza di altre capacità esterne."
+  "Pre: exclusive capabilities and proof from I/O pool. Post: same open capabilities and durable header only.
+IO-FAULT/INVALID-ARGUMENT for proof; INVARIANT-VIOLATION for frontiers other than 64.
+Does not verify catalog, any SEAL, or presence of other external capabilities."
   (verifica-associazione-file association input append)
   (unless (and (= (posizione-scritta append) +segment-header-bytes+)
                (= (posizione-durevole append) +segment-header-bytes+))

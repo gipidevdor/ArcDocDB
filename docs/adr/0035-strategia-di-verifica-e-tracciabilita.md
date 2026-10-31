@@ -13,8 +13,8 @@
 
 ## Context
 
-Reliability is demonstrated with evidence, not declared. A strategy is needed that makes
- every requirement verified, every verification repeatable, and every link checkable by a
+Reliability is demonstrated with evidence, not declared. A strategy is needed that ensures
+ every requirement is verified, every verification is repeatable, and every link is checkable by a
  tool (ADR-0031 §2d).
 
 <a id="decisione"></a>
@@ -90,7 +90,7 @@ failure is reproducible from the seed. Pattern: FoundationDB, TigerBeetle.
 
 ### 5. Release criteria
 
-A phase gate passes only if: every requirement in the phase has completed, green verification;
+A phase gate passes only if: verification of every requirement in the phase has completed and passed;
 coverage is achieved for each class; no invariant violations in models or
 fault injection; no unmitigated high risk; deviations only if recorded and approved.
 
@@ -101,7 +101,7 @@ fault injection; no unmitigated high risk; deviations only if recorded and appro
 - The system is designed for simulation testing: modules do not access time,
   randomness, threads, or I/O except through interfaces (contract 7 in
   [architecture](../architettura.md#contratti)).
-- Verification accounts for more work than code: this is intentional.
+- Verification requires more work than coding: this is intentional.
 
 <a id="alternative-considerate"></a>
 

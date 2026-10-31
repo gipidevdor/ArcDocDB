@@ -8,12 +8,12 @@
                           (or active-recuperato arcdocdb.recovery.closed:closed-recuperato)) boolean)
                 stabilizza-nome-fonte-recuperata))
 (defun stabilizza-nome-fonte-recuperata (directory sources position recovered)
-  "Pre: catalogo/CONTROL autorevoli, token semantico della fonte e namespace esclusivo nel pool I/O.
-Set e FD restano vivi/stabili; chiamare dopo il gate completo del recovery, prima di ammettere traffico.
-Post: nome canonico definitivo dello stesso FD e parent sincronizzato; T rinomina, NIL già definitivo.
-Decisione già nell'EDIT autorevole; rinomina esclusiva e fsync completano, senza nuovo swap CONTROL.
-Propaga rifiuti prima degli effetti; uscita incompleta dell'I/O => directory FAULTED senza retry.
-Nessun close, nuovo ACTIVE, rimozione, ricostruzione indice o ammissione; forma nel set resta osservazione iniziale."
+  "Pre: authoritative catalog/CONTROL, semantic source token, exclusive namespace in the I/O pool.
+Set and FDs remain live/stable; call after the complete recovery gate, before admitting traffic.
+Post: canonical final name of the same FD and synchronized parent; T rename, NIL already final.
+Decision already in authoritative EDIT; exclusive rename and fsync complete it, without a new CONTROL swap.
+Propagates rejections before effects; incomplete I/O exit => directory FAULTED without retry.
+No close, new ACTIVE, removal, index rebuild, or admission; form in the set remains the initial observation."
   (multiple-value-bind (id state form file size) (fonte-recovery sources position)
     (declare (ignore form)) ; snapshot del nome acquisito: il ramo idempotente osserva il namespace reale.
     (let ((control

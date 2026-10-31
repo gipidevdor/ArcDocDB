@@ -29,6 +29,24 @@
       (error "Editorial source checks failed: ~D issues." (length issues)))
     (format t "Editorial source checks: ~D documents, zero rule violations.~%" count)))
 
+(defun check-editorial-code ()
+  (let ((issues nil) (count 0))
+    (flet ((check (text location)
+             (incf count)
+             ;; Uppercase source identifiers are literals, including Boolean operators.
+             (let ((prose (cl-ppcre:regex-replace-all "\\b[A-Z][A-Z0-9_-]+\\b" text " LITERAL ")))
+               (dolist (issue (prose-issues prose)) (push (format nil "~A: ~A" location issue) issues)))))
+      (dolist (entry *code-entries*)
+        (when (and (code-entry-doc entry) (not (code-entry-generated entry)))
+          (check (code-entry-doc entry) (format nil "~A:~D" (code-entry-file entry) (code-entry-line entry)))))
+      (dolist (package *code-packages*)
+        (when (code-package-documentation package)
+          (check (code-package-documentation package) (code-package-file package)))))
+    (when issues
+      (dolist (issue (reverse issues)) (format *error-output* "~A~%" issue))
+      (error "Editorial code checks failed: ~D issues." (length issues)))
+    (format t "Editorial code checks: ~D source docstrings, zero rule violations.~%" count)))
+
 (defun editorial-page-issues (name nodes)
   (let ((issues nil) (csp nil) (referrer nil))
     (labels ((issue (rule detail) (push (format nil "~A in ~A: ~A" rule name detail) issues)))

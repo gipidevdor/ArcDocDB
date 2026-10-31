@@ -7,10 +7,10 @@
 > automatic selection remain to be implemented.
 
 `arcdocdb.engine:crea-opzione-indice-paginato` receives a leaf name
-`primary-<16 cifre esadecimali minuscole>.idx.tmp` and explicit budgets:
+`primary-<16 lowercase hexadecimal digits>.idx.tmp` and explicit budgets:
 `:page-size` (4096/16384/65536), `:frames` (1..64), `:max-visits`
 (1..2^60-1), and `:max-bytes` (at least three pages, maximum 65538*65536).
-Defaults are 4096, 2, 16777216, and 268435456. Name is copied.
+Defaults are 4096, 2, 16777216, and 268435456. The name is copied.
 Derivative budgets are separate from data-segment budgets.
 `:create t` and `:index-image` are incompatible, rejected before any I/O.
 
@@ -30,7 +30,7 @@ the name confers no authority. Complete resident export is now available in the
 [M1 producer](costruzione-indice-m1.md), with verification before success.
 
 The engine reads canonical sources and completes ordinary checkpoint,
-rebuilds resident index, and derives exact cardinality and candidates. The
+rebuilds the resident index, and derives exact cardinality and candidates. The
 source token contains data version and position of the last committed
 record, including tombstones: four little-endian u64s, no digest.
 CSN and UUIDs are checked separately. A new empty ACTIVE does not change
@@ -38,26 +38,26 @@ the token. A first record with CSN zero is distinguished from a recordless sourc
 by nonzero segment ID. No resident compaction/split plan
 is allowed by this adapter.
 
-`fonte-indice-motore` returns an owned copy of current source
+`fonte-indice-motore` returns an owned copy of the current source
 only to the READY owner with no request in flight. A new write
 makes it stale; it is not a reservation. During recovery, the validator
-compares all five words with resident index, zeroing only the resident arena
-offset in comparison. Container verifier still
+compares all five words with the resident index, zeroing only the resident arena
+offset in comparison. The container verifier still
 checks hash, root, uniqueness, routing, count, and cumulative budget.
 
 [Hot activation](attivazione-indice-m1.md) also permits switching
 to paged on the same handle after a new complete verification.
 
 File and EOF come from the same verified relative read-only open,
-under the existing directory lock. FD is owned
+under the existing directory lock. The FD is owned
 in a separate slot before verification and closed even on incomplete
 startup. The subsequent [activation and retirement protocol](attivazione-indice-m1.md)
-closes the FD when root is replaced or retired, before final
+closes the FD when the root is replaced or retired, before final
 handle close. No concurrent GET may retain that capability.
 
 READY admission follows complete verification. Missing selected file,
 incompatible EOF or source, exhausted budget, and read failures reject
-opening without using resident index as fallback. Canonical recovery
+opening without using the resident index as fallback. Canonical recovery
 may already have completed checkpoint and names; derivative is not modified.
 Absence of the option selects the existing resident path.
 

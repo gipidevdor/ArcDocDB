@@ -12,12 +12,12 @@
 (defun scegli-id-segmento-recovery-directory
     (manifest directory &key (max-files 65536) (max-segmenti 65536) (max-names 65536)
                             (max-total-name-bytes 16777216) (max-name-bytes 255))
-  "Pre: recovery esclusivo, manifest autorevole e directory aperta/prestata, namespace completo stabile.
-Post: tre valori posseduti: ID fresco, successore u64, piano canonico; una sola enumerazione attestata.
-Budget, nomi, identità e lifetime verificati dal planner prima della scelta con postcondizioni comuni.
-Condizioni originali propagate, RESOURCE-EXHAUSTED se manca un successore u64; nessun esito parziale.
-Nessuna apertura dei segmenti, mutazione, prenotazione o ammissione; :READY riguarda solo i nomi.
-Allocazioni di apertura, nessun nuovo stato condiviso; punto durevole resta l'EDIT del protocollo."
+  "Pre: exclusive recovery, authoritative manifest and borrowed open directory, complete stable namespace.
+Post: three owned values: fresh ID, u64 successor, canonical plan; one attested enumeration only.
+Budgets, names, identity, and lifetime verified by the planner before selection with common postconditions.
+Original conditions propagate, RESOURCE-EXHAUSTED if no u64 successor; no partial outcome.
+No segment opening, mutation, reservation, or admission; :READY concerns names only.
+Opening allocations, no new shared state; durable point remains the protocol's EDIT."
   (let ((plan (pianifica-riconciliazione-directory
                 manifest directory :max-files max-files :max-segmenti max-segmenti
                 :max-names max-names :max-total-name-bytes max-total-name-bytes

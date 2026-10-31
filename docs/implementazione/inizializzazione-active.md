@@ -2,8 +2,8 @@
 
 # Initializing a new writer segment
 
-`arcdocdb.active` prepares a new `.seg.tmp` header and binds result
-to [ACTIVE resolver](get-active.md). Performs file preparation under
+`arcdocdb.active` prepares a new `.seg.tmp` header and binds the result
+to the [ACTIVE resolver](get-active.md). It performs file preparation under
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#2-prepara-decidi-completa): header,
 file flush, and directory synchronization. **Durable EDIT** remains
 manifest's segment-opening decision; this module does not write it.
@@ -22,10 +22,10 @@ manifest's segment-opening decision; this module does not write it.
 Controller reserves namespace and identifier, creates new append with
 `crea-temporaneo` (**O_EXCL**, never reopening an existing segment), opens
 read-only capability and authoritative parent directory. Capabilities and both
-buffers exclusive until preparation returns, performed in I/O pool.
-`created-at` supplied by caller as u64; module reads no clock.
+buffers are exclusive until preparation returns, performed in I/O pool.
+`created-at` is supplied by the caller as u64; module reads no clock.
 
-Both files' association [verified through device/inode](associazione-file.md).
+Both files' association is [verified through device/inode](associazione-file.md).
 Directory must be actual parent of reserved name: a controller
 precondition not derivable from two inodes. All three files must
 use same backend instance, including `nil` for native path.
@@ -49,7 +49,7 @@ Callbacks remain trusted and honor buffer ownership/stability.
 6. Synchronize parent directory. Recheck open capabilities
    and file frontiers both at 64 before returning result.
 7. Writer performs EDIT decision and completion under ADR-0040.
-   Only after this decision admits traffic on new ACTIVE.
+   Only after this decision does it admit traffic on the new ACTIVE.
 
 Controller uses returned log, initial root `nil`, and `next-offset = 64`.
 With its lease, `crea-sorgente-get-preparata` compares actual log and
@@ -67,7 +67,7 @@ does not replace EDIT opening decision.
 
 ## Faults and cleanup
 
-Configuration, ranges, aliases, capacity, and already started file rejected
+Configuration, ranges, aliases, capacity, and an already started file are rejected
 before fstat/write/flush. Undersized buffers produce no partial
 header. With valid formats, failed fstat or unverifiable backend precedes
 header preparation.
@@ -77,11 +77,11 @@ Failed append/flush applies normal `FAULTED` state of
 prevents result return. Original conditions propagate:
 no generic handler, error retries, truncation, or rollback.
 
-Caller retains capability ownership on every exit. Handles
+The caller retains capability ownership on every exit. It handles
 quarantine and cleanup at its own boundary, without ignoring error or opening
 segment in catalog. After positive progress, repeating preparation on
-same file rejected because position no longer zero; failed write/flush
-also terminal. Crash leaves temporary file to reconcile under
+the same file is rejected because the position is no longer zero; a failed write/flush
+is also terminal. Crash leaves temporary file to reconcile under
 [manifest and inventory](inventario.md), not authority to delete it without
 required proof. Module neither deletes, renames, nor closes files.
 
@@ -101,7 +101,7 @@ required proof. Module neither deletes, renames, nor closes files.
 ## Costs and decisions to qualify
 
 At most two fstat calls, two flushes, and one 64-byte write/read range each.
-Positive short I/O uses at most 64 steps per range; errors not
+Positive short I/O uses at most 64 steps per range; errors are not
 retried. Comparison has at most 64 iterations. Two caller buffers,
 at least 128 total bytes, and few opening objects; result retains no
 buffers or record lists. Document GET and commit add no operations
@@ -123,7 +123,7 @@ and dynamic measurements remain open. Author's static readings are not
 independent review and do not promote engine requirements.
 [Local catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-active-init/catalogo.lisp).
 
-Preparer still needs connection to opening/rotation executor and
+The preparer still needs connection to opening/rotation executor and
 catalog EDIT decision. Ordinary ACTIVE resolver's prepared/OUTCOME limits
 and concrete index publication remain as documented.
 

@@ -68,8 +68,8 @@
 |---|---|
 | **WAL** | Write-ahead log; one per Serie. |
 | **Group commit** | Several transactions share one flush operation. |
-| **Durability** | Guarantee that acknowledged data survives a crash; available at multiple levels (QA-05). |
-| **`multiserie.log`** | Archivio transaction decision log: COMMIT/ABORT decisions for multiseries transactions. Contains no document data. |
+| **Durability** | Guarantee that acknowledged data survive a crash; available at multiple levels (QA-05). |
+| **`multiserie.log`** | Archivio transaction decision log: durable COMMIT decisions for multiseries transactions; transactions without a COMMIT decision are presumed aborted. Contains no document data. |
 | **Single-Serie transaction** | Changes documents in one Serie and uses only that Serie's WAL. |
 | **Multiseries transaction** | Changes documents in several Serie using a 2PC-like protocol. |
 | **TXID** | Transaction identifier, shared by all changes of one multiseries transaction. |
@@ -104,7 +104,7 @@
 | **Seqlock** | Per-slot counter supporting reads without locks and detecting concurrent writes. ADR-0032. |
 | **EBR** | Epoch-based reclamation: delete a removed segment after every reader has passed its removal epoch. Governs descriptors and files only. ADR-0016, ADR-0043. |
 | **Intent** | Prepared, undecided change to a document in a multiseries transaction. ADR-0021. |
-| **OUTCOME** | Record storing a multiseries COMMIT and its CSN in the same segment as the prepared records. ADR-0021, ADR-0041. |
+| **OUTCOME** | Record storing a multiseries COMMIT and its CSN in the same segment as its prepared records. ADR-0021, ADR-0041. |
 | **Presumed abort** | Without a durable COMMIT decision, the transaction is aborted; an abort writes no record. ADR-0021, ADR-0041. |
 | **Lineage** | *(withdrawn)* Smallest segment-id among a segment's ancestors (ADR-0023). Its rule was unsafe and was replaced by the existence filter (ADR-0042). |
 | **Load state** | `basso` / `normale` / `alto`, meaning low / normal / high: governs CLEAN and MERGE. ADR-0023. |
@@ -132,7 +132,7 @@ an approved v1 requirement with implementation planned for phase 8.
 | Term | Definition |
 |---|---|
 | **Unit of parallelism** | What progresses without waiting for its peers: Archivio, Serie, reader, batch, segment, fragment. Parallelism is the foundational design principle. ADR-0036. |
-| **Closed list** | The only elements shared by Serie, with stated cost and frequency; none is paid per operation. ADR-0036. |
+| **Closed list** | The only elements shared by Serie, with stated cost and frequency; none of their costs is paid per operation. ADR-0036. |
 | **Atomicity point** | The single durable record deciding an operation: discardable preparation precedes it, idempotent completion follows it. ADR-0036. |
 | **Prepare, decide, complete** | Order of every durable operation: `.tmp` object, record in the source of truth, file-system alignment. ADR-0036. |
 | **Batch** | A log's unit of atomicity, durability and publication: records followed by a SEAL. ADR-0037. |
@@ -140,7 +140,7 @@ an approved v1 requirement with implementation planned for phase 8.
 | **Durable frontier** | Position through which a log was durable when a batch closed; stored in the SEAL, distinguishing a tail from corruption. ADR-0037. |
 | **Valid length** | Closed segment extent recorded in the manifest; later bytes are not part of the segment. ADR-0040. |
 | **Pending versions** | Written but unpublished versions, including batches awaiting flush and multiseries intents; visible only to the writer. ADR-0037. |
-| **Visibility horizon** | Largest CSN below which every commit is published; a snapshot is born when the horizon reaches it. ADR-0038. |
+| **Visibility horizon** | Largest CSN H such that no CSN ≤ H remains in flight; a snapshot at CSN s waits until H ≥ s. ADR-0038, ADR-0046. |
 | **In-flight CSN** | A CSN already taken whose commit is not yet published. ADR-0038. |
 | **In-flight CSN register** | Fixed-capacity vector; allocation and registration are indivisible. H is the smallest pending CSN minus one, or the last CSN when empty. Replaces the ADR-0038 ring. ADR-0046. |
 | **Threshold** | Minimum CSN among active snapshots, published by the snapshot register; the writer retains a version if the threshold is below the new CSN. ADR-0038. |

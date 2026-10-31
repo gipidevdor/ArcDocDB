@@ -5,8 +5,8 @@
 (declaim (ftype (function (octets index index u16 index index u16 spazio-codec-full-text) null)
                 controlla-ordine-dizionario))
 (defun controlla-ordine-dizionario (buffer begin end field prior-start prior-end prior-field space)
-  "Pre: termini entro sezione. Post: ordine stretto campo/byte; ripetizioni rifiutate.
-Il primo termine viene gestito dal chiamante, nessuna locale nel confronto."
+  "Pre: terms within section. Post: strict field/byte order; repetitions rejected.
+First term handled by caller; no locale used in comparison."
   (unless (<= begin end (length buffer)) (error 'invariant-violation :reason :fulltext-dict-term-range))
   (unless (or (> field prior-field)
               (and (= field prior-field)
@@ -17,8 +17,8 @@ Il primo termine viene gestito dal chiamante, nessuna locale nel confronto."
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets descrittore-full-text spazio-codec-full-text) null) verifica-dizionario-file))
 (defun verifica-dizionario-file (buffer descriptor space)
-  "Pre: cornice/META/LENGTHS verificati. Post: DICT, stringhe, posting e posizioni completi.
-Nessuna sezione residua; termini gia nel profilo; copertura globale verificata dopo il ciclo."
+  "Pre: frame/META/LENGTHS verified. Post: complete DICT, strings, postings, and positions.
+No section residue; terms already in profile; global coverage checked after loop."
   (let* ((starts (spazio-codec-full-text-starts space)) (sizes (spazio-codec-full-text-lengths space))
          (count (floor (aref sizes 1) +dict-width+)) (posts (floor (aref sizes 3) +posting-width+))
          (terms 0) (posting 0) (position 0) (prior-start 0) (prior-end 0) (prior-field 0))
@@ -48,11 +48,11 @@ Nessuna sezione residua; termini gia nel profilo; copertura globale verificata d
 (declaim (ftype (function (t t t t t &key (:max-bytes t) (:max-work t)) index) verifica-indice-full-text))
 (defun verifica-indice-full-text (buffer start end descriptor space
                                 &key (max-bytes f::+default-file-budget+) (max-work 268435456))
-  "Pre: file immutabile, legame autorevole copiato dal descrittore, scratch esclusivo.
-Post: END solo dopo cornice, META esatto, termini canonici, ordini/partizioni e unione posizioni.
-Valida la struttura rispetto alla mappa PUT fornita; non valida l'hint o il testo dei
-documenti, non risolve CSN e non pubblica READY. CRC corretto non sostituisce i controlli.
-Errori tipizzati di formato/corruzione/budget; nessun risultato parziale, I/O o mutazione del file."
+  "Pre: immutable file, authoritative binding copied from descriptor, exclusive scratch.
+Post: END only after frame, exact META, canonical terms, orders/partitions, and position union.
+Validates structure against supplied PUT map; neither validates hint or document
+text, resolves CSNs, nor publishes READY. Correct CRC does not replace checks.
+Typed format/corruption/budget errors; no partial result, I/O, or file mutation."
   (prepara-codec descriptor space max-work max-bytes)
   (controlla-buffer-codec buffer start end space descriptor)
   (when (> (- end start) max-bytes) (error 'resource-exhausted :reason :fulltext-file-budget))

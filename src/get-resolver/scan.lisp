@@ -6,9 +6,9 @@
 ;;; REQ: REQ-FOR-003 REQ-AFF-008 REQ-AFF-002
 (declaim (ftype (function (octets u32 u32 (member 1 2) u32 u32 u32 u32) null) verifica-prefisso-writer))
 (defun verifica-prefisso-writer (buffer end id version max-batches max-records batch-records batch-bytes)
-  "Pre: CLOSED e END autorevole, byte stabili fino a END. Post: tutti i lotti integri,
-frontiera esatta; nessuna ipotesi sull'EOF o sulla coda oltre END.
-Propaga errori del verificatore; RESOURCE-EXHAUSTED per budget, mai replay parziale."
+  "Pre: CLOSED and authoritative END, bytes stable through END. Post: all batches intact,
+exact frontier; no assumption about EOF or the tail beyond END.
+Propagates verifier errors; RESOURCE-EXHAUSTED for budget, never partial replay."
   (unless (<= +segment-header-bytes+ end (length buffer))
     (error 'invariant-violation :reason :resolver-prefix-range))
   (let ((pos +segment-header-bytes+) (records 0))
@@ -31,9 +31,9 @@ Propaga errori del verificatore; RESOURCE-EXHAUSTED per budget, mai replay parzi
 (declaim (ftype (function (octets u32 u32 (member 1 2)) (values u32 u8 u8 &optional))
                 prossima-cornice-resolver))
 (defun prossima-cornice-resolver (buffer pos end version)
-  "Pre: prefisso GIA' interamente verificato, buffer privato mai modificato durante la costruzione.
-Post: header ricontrollato e progresso entro END; salta il body senza ripeterne il CRC.
-Propaga errori tipizzati; non è una verifica autonoma del record o un parser pubblico."
+  "Pre: prefix ALREADY verified in full, private buffer never modified during construction.
+Post: header rechecked and progress within END; skips the body without repeating its CRC.
+Propagates typed errors; not an independent record verification or a public parser."
   (check-range buffer pos end)
   (multiple-value-bind (next kind flags key-length value-length)
       (checked-header buffer pos end version +max-document-bytes+)
@@ -46,9 +46,9 @@ Propaga errori tipizzati; non è una verifica autonoma del record o un parser pu
 (declaim (ftype (function (octets u32 (member 1 2) u32)
                          (values u32 u32 &optional)) conta-voci-resolver))
 (defun conta-voci-resolver (buffer end version max-records)
-  "Pre: intero prefisso verificato. Post: PUT e OUTCOME contati, SEAL esclusi dal budget record.
-Ogni header è ricontrollato; avanzamento entro END e tipo ammesso obbligatori.
-RESOURCE-EXHAUSTED sul budget globale; corruzione o invarianti propagati."
+  "Pre: entire prefix verified. Post: PUT and OUTCOME counted, SEAL excluded from record budget.
+Each header is rechecked; progress within END and an admitted type are mandatory.
+RESOURCE-EXHAUSTED on the global budget; corruption or invariants propagated."
   (let ((pos +segment-header-bytes+) (records 0) (puts 0) (proofs 0))
     (declare (type u32 pos records puts proofs))
     (loop repeat (1+ (floor (- end +segment-header-bytes+) +header-bytes+))
@@ -70,9 +70,9 @@ RESOURCE-EXHAUSTED sul budget globale; corruzione o invarianti propagati."
 (declaim (ftype (function (octets u32 u32 (member 1 2) resolver-words index) null)
                 copia-prova-resolver))
 (defun copia-prova-resolver (buffer pos next version proofs used)
-  "Pre: offset OUTCOME da attraversamento verificato, riga privata completa.
-Post: CRC/header/body e forma ricontrollati prima della copia TXID/CSN/offset.
-INVARIANT-VIOLATION per risultato/range; errori di integrità propagati senza prova parziale pubblicata."
+  "Pre: OUTCOME offset from verified traversal, complete private row.
+Post: CRC/header/body and shape rechecked before copying TXID/CSN/offset.
+INVARIANT-VIOLATION for result/range; integrity errors propagated without publishing partial proof."
   (unless (<= (+ used +proof-words+) (length proofs))
     (error 'invariant-violation :reason :resolver-proof-count))
   (multiple-value-bind (actual kind flags ks ke vs ve) (verifica-cornice buffer pos next :version version)
@@ -89,9 +89,9 @@ INVARIANT-VIOLATION per risultato/range; errori di integrità propagati senza pr
 ;;; REQ: REQ-FOR-004 REQ-AFF-008
 (declaim (ftype (function (octets u32 (member 1 2) resolver-words) null) copia-prove-resolver))
 (defun copia-prove-resolver (buffer end version proofs)
-  "Pre: prefisso stabile, array privato dimensionato dal conteggio. Post: cinque u32 per OUTCOME.
-Solo offset e TXID/CSN verificati, nessun riferimento al buffer; ciclo limitato dai byte.
-INVARIANT-VIOLATION per misure/progresso/count discordanti; errori del codec propagati."
+  "Pre: stable prefix, private array sized from the count. Post: five u32 values per OUTCOME.
+Only verified offset and TXID/CSN, no reference to the buffer; loop bounded by bytes.
+INVARIANT-VIOLATION for mismatched sizes/progress/count; codec errors propagated."
   (unless (zerop (mod (length proofs) +proof-words+))
     (error 'invariant-violation :reason :resolver-proof-shape))
   (let ((pos +segment-header-bytes+) (used 0))

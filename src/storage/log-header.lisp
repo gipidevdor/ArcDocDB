@@ -6,16 +6,16 @@
 ;;; REQ: REQ-FOR-001 REQ-FOR-002
 (declaim (ftype (function (t index) (values u32 &optional)) magic-log))
 (defun magic-log (log-kind offset)
-  "Pre: tipo dichiarato dal chiamante. Post: magic alto; INVALID-ARGUMENT per altro tipo."
+  "Pre: type declared by the caller. Post: high magic; INVALID-ARGUMENT for another type."
   (case log-kind (:control +control-magic-high+) (:multiserie +multiserie-magic-high+)
     (otherwise (error 'invalid-argument :reason :log-kind :offset offset))))
 ;;; REQ: REQ-FOR-001 REQ-FOR-002
 (declaim (ftype (function (octets index t octets &key (:version integer))
                          (values index &optional)) scrivi-header-log))
 (defun scrivi-header-log (buffer start log-kind identity &key (version 2))
-  "Pre: BUFFER esclusivo, ID octets 16 byte senza alias, tipo CONTROL/MULTISERIE.
-Post: header canonico di 64 byte, CRC e riservati zero; fuori range invariato.
-INVALID-ARGUMENT/UNSUPPORTED-FORMAT nel preflight non modificano BUFFER."
+  "Pre: exclusive BUFFER, nonaliasing 16-byte octets ID, type CONTROL/MULTISERIE.
+Post: canonical 64-byte header, CRC and zero reserved fields; outside range unchanged.
+INVALID-ARGUMENT/UNSUPPORTED-FORMAT in preflight do not modify BUFFER."
   (let ((next (+ start +log-header-bytes+)) (magic (magic-log log-kind start)))
     (when (eq buffer identity) (error 'invalid-argument :reason :input-alias :offset start))
     (check-range buffer start next)
@@ -33,9 +33,9 @@ INVALID-ARGUMENT/UNSUPPORTED-FORMAT nel preflight non modificano BUFFER."
 (declaim (ftype (function (octets index index t octets) (values index u16 &optional))
                 verifica-header-log))
 (defun verifica-header-log (buffer start end log-kind identity)
-  "Pre: range stabile, tipo e ID autorevoli. Post: fine header e versione; input invariati.
-INVALID-ARGUMENT per configurazione; CORRUPTION-DETECTED per byte errati;
-UNSUPPORTED-FORMAT per versione ignota dopo CRC e magic validi. Nessuna copia."
+  "Pre: stable range, authoritative type and ID. Post: header end and version; inputs unchanged.
+INVALID-ARGUMENT for configuration; CORRUPTION-DETECTED for incorrect bytes;
+UNSUPPORTED-FORMAT for unknown version after valid CRC and magic. No copy."
   (check-range buffer start end)
   (let ((magic (magic-log log-kind start)) (next (+ start +log-header-bytes+)))
     (unless (= (length identity) +log-identity-bytes+)

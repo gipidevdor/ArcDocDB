@@ -32,7 +32,7 @@ design review, or benchmarks.
 | INV-C4 | Segments produced by compaction have no size requirements; MERGE is not automatic after CLEAN; a cleaned segment may remain small indefinitely. | Segments, Merge | policy test |
 | INV-C5 | MERGE only on segments stable for at least 50 seconds (since closure/stabilization). | Mandatory conditions for Merge | policy test |
 | INV-C6 | MERGE only when engine load is low; it must not compete with user traffic. | Low-load merge policy | policy test, benchmark |
-| INV-C7 | A new segment does not become visible as definitive before its data are durable. | Recovery | FI-06 |
+| INV-C7 | A new segment does not become visible as final before its data are durable. | Recovery | FI-06 |
 | INV-C8 | A source segment remains recoverable until the swap completes. | Fault injection (5) | FI-06, FI-07, FI-08 |
 | INV-C9 | An interrupted compaction is repeatable or completable during recovery. | Fault injection (6) | FI-07, FI-08 |
 | INV-C10 | Compaction does not globally block reads; already active readers finish on old segments. | Readers during compaction | concurrency test, benchmark |
@@ -114,7 +114,7 @@ design review, or benchmarks.
 
 | ID | Invariant | Source | Verification |
 |---|---|---|---|
-| INV-X1 | Every measured hot path evaluates all SIMD variants safely usable on the agreed platforms; only variants useful according to benchmarks are adopted, with CPU/OS/runtime selection, executable and forceable scalar reference, unchanged checks and semantics. | SIMD and native optimizations, [ADR-0012](adr/0012-simd-guidato-dai-benchmark.md) | review, differential tests and benchmarks per platform (qualification incomplete) |
+| INV-X1 | Every measured hot path evaluates all SIMD variants safely usable on the agreed platforms; only variants useful according to benchmarks are adopted, with CPU/OS/runtime selection, an executable scalar reference that can be forced, unchanged checks and semantics. | SIMD and native optimizations, [ADR-0012](adr/0012-simd-guidato-dai-benchmark.md) | review, differential tests and benchmarks per platform (qualification incomplete) |
 | INV-X2 | Performance targets remain hypotheses until verified by reproducible benchmarks; no superiority claims from heterogeneous benchmarks. | Preliminary targets, Comparison | review |
 | INV-X3 | Project code is Common Lisp only until an ADR reopens foreign-code use; this also applies to verification models and tools (no TLA+ or equivalent for now). | [ADR-0001](adr/0001-common-lisp-sbcl.md) (decision of 2026-10-01) | review |
 
@@ -139,7 +139,7 @@ design review, or benchmarks.
 | INV-A1 | A write, flush, rename, or directory-sync error is never retried or ignored: the Serie (or Archivio, for `multiserie.log` and Registri) enters `FAULTED` and no operation in the batch is acknowledged. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md) | simulator with I/O errors; FI-02 |
 | INV-A2 | Every record read from disk or cache is verified (header and body CRC32C, key and CSN matching the index; CSN is the version) before return; unverified data never leave the engine. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md), [ADR-0039](adr/0039-cornice-unica-dei-record.md) | deliberate corruption, fuzzing, in-memory bit flip |
 | INV-A3 | No product code is compiled with `safety` below 2; type and bounds checks are always active; `truly-the` is prohibited. | [ADR-0034](adr/0034-policy-di-compilazione-e-standard-di-codifica.md) | `make lint`, warning-free compilation |
-| INV-A4 | No error is silent: every error condition has a declared type, is handled or propagated; `ignore-errors` is prohibited; invariant assertions remain active in production and, in C1, move the Serie to `FAULTED`. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md), [ADR-0034](adr/0034-policy-di-compilazione-e-standard-di-codifica.md) | `make lint`, review, mutation testing |
+| INV-A4 | No error is silent: every error condition has a declared type and is handled or propagated; `ignore-errors` is prohibited; invariant assertions remain active in production and, in C1, move the Serie to `FAULTED`. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md), [ADR-0034](adr/0034-policy-di-compilazione-e-standard-di-codifica.md) | `make lint`, review, mutation testing |
 | INV-A5 | Every requirement has an identifier, source, class, and verification method; every invariant and fault-injection scenario is covered by at least one requirement; the matrix is generated and checked. | [ADR-0035](adr/0035-strategia-di-verifica-e-tracciabilita.md) | `make trace` |
 | INV-A6 | Closed segments are periodically verified (scrubbing) against CRC, hints, indexes, and control log; each full cycle completes within 7 days; an error quarantines the segment before use. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md) | scrubber test, metric |
 | INV-A7 | Recovery is idempotent: interrupting it at any point and rerunning it produces the same final state. | [ADR-0033](adr/0033-fail-stop-e-integrita-end-to-end.md) | interruption at every point in the simulator |

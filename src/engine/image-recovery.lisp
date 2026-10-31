@@ -7,9 +7,9 @@
 (declaim (ftype (function (motore octets integer integer (simple-array (unsigned-byte 64) (5))) boolean)
                 verifica-candidato-immagine-motore))
 (defun verifica-candidato-immagine-motore (engine key start end words)
-  "Pre: verifica readonly nello startup o in manutenzione BUSY, scratch del derivato prestati immutabili.
-Post: appartenenza esatta e payload normalizzato contro l'indice ricostruito dai WAL canonici.
-Nessun candidato autorevole deriva dal footer; RETRY-LIMIT e' errore esplicito, mai assenza."
+  "Pre: read-only verification at startup or during BUSY maintenance, immutable borrowed derivative scratch.
+Post: exact membership and normalized payload checked against index rebuilt from canonical WALs.
+No authoritative candidate derives from footer; RETRY-LIMIT is an explicit error, never absence."
   (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key start end)
     (let ((expected (motore-words engine)))
       (case (p:leggi-indice-primario (motore-index engine) key start end high low
@@ -26,9 +26,9 @@ Nessun candidato autorevole deriva dal footer; RETRY-LIMIT e' errore esplicito, 
 (declaim (ftype (function (motore io:file-io index opzione-indice-paginato arcdocdb.index.page:fonte-indice)
                          arcdocdb.index.page:vista-indice-paginato) carica-vista-paginata-motore))
 (defun carica-vista-paginata-motore (engine file eof option source)
-  "Pre: owner esclusivo, file readonly/EOF verificati, fonte canonica stabile.
-Post: vista privata pronta solo dopo verifica integrale; non trasferisce file o modifica il motore.
-Errori del codec/I/O/budget propagati; nessun fallback o deduzione di autorita' dal derivato."
+  "Pre: exclusive owner, verified read-only file/EOF, stable canonical source.
+Post: private view ready only after complete verification; neither transfers file nor modifies engine.
+Codec/I/O/budget errors propagated; no fallback or authority inferred from derivative."
   (let* ((index (motore-index engine)) (view (arcdocdb.index.page:crea-vista-indice-paginato source))
          (image (arcdocdb.index.page:recupera-immagine-pagine file eof (opzione-indice-paginato-size option)
                   source (p::indice-primario-seed-high index) (p::indice-primario-seed-low index)
@@ -40,10 +40,10 @@ Errori del codec/I/O/budget propagati; nessun fallback o deduzione di autorita' 
 ;;; REQ: REQ-IDX-010 REQ-REC-001 REQ-AFF-004 REQ-LIM-003
 (declaim (ftype (function (motore) null) recupera-indice-paginato-motore))
 (defun recupera-indice-paginato-motore (engine)
-  "Pre: replay canonico finale completato e admission chiusa, namespace esclusivo.
-Post: eventuale candidato readonly completamente verificato e adottato, FD posseduto fino al close.
-Mancanza/corruzione/budget del candidato esplicito rifiutano startup, senza fallback o modifica al derivato.
-Il checkpoint canonico puo' essere gia' completo; nessuna modifica di catalogo per il derivato."
+  "Pre: final canonical replay complete, admission closed, exclusive namespace.
+Post: any read-only candidate fully verified and adopted, FD owned until close.
+Missing/corrupt/over-budget explicit candidate prevents startup, without fallback or derivative modification.
+Canonical checkpoint may already be complete; no catalog modification for derivative."
   (unless (and (eq (motore-state engine) :recovering) (null (motore-paged engine))
                (null (motore-paged-file engine)) (null (motore-paged-option engine)))
     (error 'invariant-violation :reason :engine-image-recovery-state))

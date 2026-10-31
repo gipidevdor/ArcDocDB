@@ -13,7 +13,7 @@
 ;;; REQ: REQ-CMP-001 REQ-CMP-007
 (declaim (ftype (function (motore c:control-recuperato) (simple-array (unsigned-byte 64) (*))) compaction-retired-ids))
 (defun compaction-retired-ids (engine control)
-  "Pre: complete current canonical set, full-prefix replacement. Post: every old source and prior pending removal once."
+  "Pre: complete current canonical set, full-prefix replacement. Post: each old source and previously pending removal exactly once."
   (let* ((manifest (c:manifest-control-recuperato control)) (limit (* 2 (motore-max-segments engine)))
          (closed (compaction-table-ids (mf::%manifest-closed manifest) limit))
          (removed (compaction-table-ids (mf::%manifest-removed manifest) limit))
@@ -27,7 +27,7 @@
                           (simple-array (unsigned-byte 64) (*)) (simple-array (unsigned-byte 64) (*))) octets)
                 compaction-control-payload))
 (defun compaction-control-payload (engine active next ids ends removed)
-  "Pre: bounded ID/length vectors, no prepared outcomes in M1. Post: complete EDIT through canonical format codec."
+  "Pre: bounded ID/length vectors, no prepared outcomes in M1. Post: complete EDIT through the canonical format codec."
   (unless (and (= (length ids) (length ends)) (<= (length ids) (motore-max-segments engine))
                (<= (length removed) (* 2 (motore-max-segments engine))))
     (error 'invalid-argument :reason :engine-compaction-control-shape))
@@ -47,8 +47,8 @@
                           (simple-array (unsigned-byte 64) (*)) (simple-array (unsigned-byte 64) (*))
                           (simple-array (unsigned-byte 64) (*)) keyword) null) compaction-verify-control))
 (defun compaction-verify-control (engine previous prepared ids ends removed mode)
-  "Pre: candidate complete EDIT, old canon stable. Post: exact new membership, lengths, retirement and high-water checked.
-Replacement retires ALL old sources; pruning preserves every live source and forgets only durably absent REMOVED."
+  "Pre: candidate complete EDIT, stable old canonical state. Post: exact new membership, lengths, retirement, and high-water mark checked.
+Replacement retires ALL old sources; pruning preserves every live source and forgets only durably absent REMOVED entries."
   (let* ((old (c:manifest-control-recuperato previous)) (new (c:manifest-control-preparato prepared))
          (active (mf:segmento-attivo new)))
     (unless (and (eq (c::control-recuperato-view previous) (motore-view engine))
@@ -86,7 +86,7 @@ Replacement retires ALL old sources; pruning preserves every live source and for
                           (simple-array (unsigned-byte 64) (*)) keyword) null) compaction-publish-control))
 (defun compaction-publish-control (engine previous active ids ends removed mode)
   "Pre: outputs verified/durable or removed names durably absent, fresh header-only ACTIVE, BUSY/bootstrap.
-Post: existing CONTROL rename/fsync commits exactly verified state; no CSN allocated or unsafe rollback."
+Post: existing CONTROL rename/fsync commits exactly the verified state; no CSN allocated or unsafe rollback."
   (let* ((buffer (motore-scratch engine)) (header (+ f:+log-header-bytes+ arcdocdb.record:+header-bytes+)))
     (io:leggi-esatto (c::control-recuperato-input previous) buffer 0 header 0)
     (let* ((stamp (b:leggi-u64 buffer (+ f:+log-header-bytes+ arcdocdb.record::+stamp-offset+)))

@@ -23,7 +23,7 @@ but do not charge the outer container already consumed by the string.
 Drain collapses only definite arrays/maps at zero. The bound of 102 iterations
 includes final root verification after 101 pops; an indefinite string
 does not nest inside another indefinite string. Arrays/maps, even empty, check
-the budget before being pushed and contribute to peak. A tag chain
+the budget before being pushed and contribute to the peak depth. A tag chain
 uses no frames and remains bounded by node/byte budgets. Each step consumes at least
 one byte, including payload; the outer loop is bounded by span with final drain.
 
@@ -32,10 +32,10 @@ before addition and payload. Arrays compare the minimum of one byte per
 child; maps compare pairs against floor(bytes/2) before multiplying by two.
 The depth guard precedes these checks. Text delegates to the
 already verified UTF-8 primitive, retaining absolute offsets and checking
-its returned count. The public result exits only after complete root,
+its returned count. The public result is returned only after a complete root,
 cursor end, no residual frames/tags, and counts within budgets.
 
-All helpers have FTYPEs, contracts, and typed conditions; safety 3.
+All helpers have FTYPEs, contracts, and typed conditions, with safety 3.
 Internal errors and impossible defaults are explicit and remain in the
 coverage denominator. The source has no constructors on success,
 recursion, I/O, waits, or global mutable state. The cold factory allocates two
@@ -47,7 +47,7 @@ values, and verifies full copies. Barriers and joins have timeouts and cleanup
 checking termination; overlap is observed outside the barrier.
 This verifies computation isolation, not pool scaling.
 
-No open functional defect detected in static reading. Build,
+No open functional defect was detected in the static reading. Build,
 coverage, mutations, and measurements are pending at this reading; the block does not
 establish tag semantics, duplicate keys, deterministic representation,
 writer admission, runtime fail-stop, or engine release gates.
@@ -68,5 +68,5 @@ writer admission, runtime fail-stop, or engine release gates.
 | 8. Data | Immutable buffer, exclusive scratch without retained buffer; kinds alias rejected. |
 | 9. Integration | ASDF after header/UTF8; separate suite and exact cbor-structure scope. |
 | 10. Coding | FTYPE, safety3, contracts, short helpers, and invariant defaults; runtime checks pending. |
-| 11. Parallelism | Two workers with private spaces; bounded waits, all3 values and inputs checked. |
+| 11. Parallelism | Two workers with private spaces; bounded waits, all 3 values and inputs checked. |
 | 12. Durability | No durable write or I/O in this module. |

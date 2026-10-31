@@ -6,7 +6,7 @@
 ;;; REQ: REQ-WAL-005
 (declaim (ftype (function (lotto keyword) null) esigi-lotto))
 (defun esigi-lotto (lotto state)
-  "Pre: capacità del writer. Post: stato richiesto; INVALID-ARGUMENT al riuso prematuro."
+  "Pre: writer capability. Post: required state; INVALID-ARGUMENT on premature reuse."
   (unless (eq (lotto-state lotto) state) (error 'invalid-argument :reason :lotto-state))
   (unless (<= (lotto-used lotto) (length (lotto-buffer lotto)))
     (error 'invariant-violation :reason :lotto-length))
@@ -15,9 +15,9 @@
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto u8 octets octets &key (:flags u8) (:txid u64)) index) aggiungi-record))
 (defun aggiungi-record (lotto kind key value &key (flags 0) (txid 0))
-  "Pre: lotto aperto, input stabili. Post: record copiato, spazio SEAL sempre riservato.
-Budget/rifiuto di formato prima della mutazione; stamp ordinario fissato alla chiusura.
-RESOURCE-EXHAUSTED/INVALID-ARGUMENT; prepara byte, nessun punto di atomicità durevole."
+  "Pre: open batch, stable inputs. Post: record copied, SEAL space always reserved.
+Budget/format rejection before mutation; ordinary stamp set at closure.
+RESOURCE-EXHAUSTED/INVALID-ARGUMENT; prepares bytes, no durable atomicity point."
   (esigi-lotto lotto :open)
   (when (lotto-csn-registry lotto) (error 'invalid-argument :reason :lotto-csn-bound))
   (unless (log-record-p (lotto-kind lotto) kind)
@@ -39,9 +39,9 @@ RESOURCE-EXHAUSTED/INVALID-ARGUMENT; prepara byte, nessun punto di atomicità du
 ;;; REQ: REQ-WAL-005
 (declaim (ftype (function (lotto u32 u32) u32) ristampa-record-parole))
 (defun ristampa-record-parole (lotto high low)
-  "Pre: buffer esclusivo scritto dal codec. Post: CSN ordinari e CRC aggregato.
-TXID prepared/OUTCOME/DECISION invariati; nessuna scansione o copia del body.
-INVARIANT-VIOLATION per conteggio/offset corrotto, prima di accedere al relativo header."
+  "Pre: exclusive buffer written by the codec. Post: ordinary CSNs and aggregate CRC.
+Prepared/OUTCOME/DECISION TXIDs unchanged; no body scan or copy.
+INVARIANT-VIOLATION for corrupt count/offset before accessing the corresponding header."
   (esigi-lotto lotto :open)
   (unless (<= (lotto-count lotto) (length (lotto-offsets lotto)))
     (error 'invariant-violation :reason :lotto-record-count))
@@ -61,8 +61,8 @@ INVARIANT-VIOLATION per conteggio/offset corrotto, prima di accedere al relativo
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto file-offset file-offset) null) verifica-chiusura-lotto))
 (defun verifica-chiusura-lotto (lotto file-start durable)
-  "Pre: writer esclusivo. Post: lotto aperto e spazio SEAL/offset validi prima del CSN.
-INVALID-ARGUMENT per offset; INVARIANT-VIOLATION per budget interno corrotto."
+  "Pre: exclusive writer. Post: open batch and valid SEAL space/offsets before CSN assignment.
+INVALID-ARGUMENT for offsets; INVARIANT-VIOLATION for corrupt internal budget."
   (esigi-lotto lotto :open)
   (unless (and (<= durable file-start)
                (<= (+ file-start (lotto-used lotto) +seal-total+) most-positive-fixnum))
@@ -75,9 +75,9 @@ INVALID-ARGUMENT per offset; INVARIANT-VIOLATION per budget interno corrotto."
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto u32 u32 file-offset file-offset) index) sigilla-lotto-parole))
 (defun sigilla-lotto-parole (lotto high low file-start durable)
-  "Pre: verifica-chiusura-lotto conclusa; buffer privato del writer e parole CSN u32.
-Post: record e SEAL con CRC completi; buffer immutabile, SEAL solo preparato prima dell'I/O.
-INVARIANT-VIOLATION per lunghezza finale incoerente; nessun rollback di un CSN già preso."
+  "Pre: verifica-chiusura-lotto completed; writer-private buffer and u32 CSN words.
+Post: records and SEAL with complete CRCs; immutable buffer, SEAL only prepared before I/O.
+INVARIANT-VIOLATION for inconsistent final length; no rollback of an already acquired CSN."
   (let ((seal (lotto-seal-value lotto)) (checksum (ristampa-record-parole lotto high low)))
     (scrivi-u64 seal +seal-batch-start-offset+ file-start)
     (scrivi-u64 seal +seal-durable-offset+ durable)
@@ -95,9 +95,9 @@ INVARIANT-VIOLATION per lunghezza finale incoerente; nessun rollback di un CSN g
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto u64 file-offset file-offset) index) sigilla-lotto))
 (defun sigilla-lotto (lotto stamp file-start durable)
-  "Pre: stamp preso dal chiamante, nessuna associazione CSN del ponte; durable storico.
-Post: buffer sigillato; SEAL preparato, punto atomico persistito dal successivo write/flush.
-INVALID-ARGUMENT prima di modificare; non registra o risolve il CSN del chiamante."
+  "Pre: stamp acquired by caller, no bridge CSN association; historical durable frontier.
+Post: sealed buffer; SEAL prepared, atomic point persisted by subsequent write/flush.
+INVALID-ARGUMENT before modification; neither registers nor resolves the caller's CSN."
   (verifica-chiusura-lotto lotto file-start durable)
   (when (lotto-csn-registry lotto) (error 'invalid-argument :reason :lotto-csn-bound))
   (sigilla-lotto-parole lotto (ldb (byte 32 32) stamp) (ldb (byte 32 0) stamp) file-start durable))
@@ -105,9 +105,9 @@ INVALID-ARGUMENT prima di modificare; non registra o risolve il CSN del chiamant
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto) null) verifica-ritiro-lotto))
 (defun verifica-ritiro-lotto (lotto)
-  "Pre: compito mai consegnato oppure ritirato con prova sincronizzata dal caller.
-Post: buffer sealed e nessun gruppo proprietario; INVALID-ARGUMENT altrimenti.
-Nessuna mutazione o attestazione autonoma sullo scheduler."
+  "Pre: task never delivered or retired with synchronized proof from caller.
+Post: sealed buffer and no owning group; INVALID-ARGUMENT otherwise.
+No mutation or independent attestation about the scheduler."
   (esigi-lotto lotto :sealed)
   (unless (null (lotto-owner lotto)) (error 'invalid-argument :reason :lotto-owned))
   nil)
@@ -115,10 +115,10 @@ Nessuna mutazione o attestazione autonoma sullo scheduler."
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto) null) verifica-riuso-lotto))
 (defun verifica-riuso-lotto (lotto)
-  "Pre: writer osserva fine I/O e ritiro dal gruppo. Post: riuso ammissibile.
-INVALID-ARGUMENT per stato, CSN pendente o gruppo proprietario; nessuna mutazione.
-RESOURCE-EXHAUSTED prima degli effetti se l'incarnazione non puo avanzare senza wrap.
-Non attesta il ritiro di riferimenti esterni, che rimane obbligo del controller."
+  "Pre: writer observes I/O completion and retirement from group. Post: reuse admissible.
+INVALID-ARGUMENT for state, pending CSN, or owning group; no mutation.
+RESOURCE-EXHAUSTED before effects if incarnation cannot advance without wrap.
+Does not attest to retirement of external references, which remains the controller's obligation."
   (esigi-lotto lotto :durable)
   (when (lotto-csn-pending lotto) (error 'invalid-argument :reason :lotto-csn-pending))
   (unless (null (lotto-owner lotto)) (error 'invalid-argument :reason :lotto-owned))
@@ -129,9 +129,9 @@ Non attesta il ritiro di riferimenti esterni, che rimane obbligo del controller.
 ;;; REQ: REQ-WAL-005 REQ-AFF-008
 (declaim (ftype (function (lotto) null) riusa-lotto))
 (defun riusa-lotto (lotto)
-  "Pre: durevole, rimosso dal gruppo e nessun consumatore/riferimento in volo.
-Post: stesso buffer aperto e vuoto, incarnazione avanzata senza wrap.
-Rifiuti prima degli effetti; non attesta reclaim o assenza di riferimenti esterni."
+  "Pre: durable, removed from group, and no in-flight consumer/reference.
+Post: same buffer, open and empty, incarnation advanced without wrap.
+Rejections before effects; does not attest to reclamation or absence of external references."
   (verifica-riuso-lotto lotto)
   (incf (lotto-incarnation lotto))
   (setf (lotto-used lotto) 0 (lotto-count lotto) 0 (lotto-start lotto) 0 (lotto-state lotto) :open
@@ -144,10 +144,10 @@ Rifiuti prima degli effetti; non attesta reclaim o assenza di riferimenti estern
          (ftype (function (lotto) index) lunghezza-lotto)
          (ftype (function (lotto) file-offset) inizio-lotto))
 (defun stato-lotto (lotto)
-  "Pre: capacità posseduta. Post: stato osservato senza mutazione." (lotto-state lotto))
+  "Pre: owned capability. Post: observed state without mutation." (lotto-state lotto))
 ;;; REQ: REQ-WAL-005
 (defun lunghezza-lotto (lotto)
-  "Pre: capacità posseduta. Post: numero di byte occupati, senza I/O." (lotto-used lotto))
+  "Pre: owned capability. Post: number of occupied bytes, without I/O." (lotto-used lotto))
 ;;; REQ: REQ-WAL-005
 (defun inizio-lotto (lotto)
-  "Pre: lotto chiuso. Post: offset pianificato del file, senza modifica." (lotto-start lotto))
+  "Pre: closed batch. Post: planned file offset, without modification." (lotto-start lotto))

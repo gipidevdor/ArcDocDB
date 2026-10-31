@@ -79,8 +79,8 @@ directly; prepared and OUTCOME retain TXID. SEAL file-id remains encoded once
 at construction. The buffer becomes immutable at closure. The atomic point is
 the SEAL persisted by writing; closure prepares it.
 
-The bridge accepts only nonempty segments. Control.log ordinals and multiserie
-DECISION CSN require distinct coordinators, still to be connected.
+The bridge accepts only nonempty segments. Control.log ordinals and multiseries
+DECISION CSNs require distinct coordinators, still to be connected.
 Index, Serie controllers, ordered publication, acknowledgments, and snapshot
 registration/wakeup remain to be implemented. No complete transaction or
 database performance is claimed.

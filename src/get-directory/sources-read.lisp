@@ -8,9 +8,9 @@
                          (values fonti-get-serie (or null radice-get-attiva) &optional))
                 acquisisci-fonti-serie-get))
 (defun acquisisci-fonti-serie-get (context controller)
-  "Pre: CANDIDATE, cleanup del chiamante installato. Post: fonti/root dalla STESSA lettura acquire.
-Vista estranea INVALID-ARGUMENT; forma/root-controller/ID duplicato impossibili => GET FAULTED.
-Non legge root pianificata, non rilegge root e non chiude/rimuove risorse."
+  "Pre: CANDIDATE, caller cleanup installed. Post: sources/root from the SAME acquire read.
+Foreign view yields INVALID-ARGUMENT; impossible shape/root-controller/duplicate ID => GET FAULTED.
+Does not read planned root, reread root, or close/remove resources."
   (let* ((root (leggi-radice-serie controller))
          (active (when (typep root 'radice-get-attiva) root))
          (sources (if active (contenuto-radice-get-attiva active) root)))
@@ -36,10 +36,10 @@ Non legge root pianificata, non rilegge root e non chiude/rimuove risorse."
                          (values segmento-get u32 arcdocdb.binary:u8 (or null u32) &optional))
                 risolvi-candidato-serie-get))
 (defun risolvi-candidato-serie-get (context controller)
-  "Pre: AVVIA-GET ha prodotto CANDIDATE sotto EBR; controller della vista corrente.
-Post: candidato da CLOSED o ACTIVE della singola root acquisita DOPO il lookup.
-Fonti pubblicate prima delle location e mantenute per i reader ammessi: obbligo del writer.
-Wrong-state respinto prima del cleanup; altri errori/uscite liberano pin, invarianti FAULTED."
+  "Pre: AVVIA-GET produced CANDIDATE under EBR; controller of current view.
+Post: candidate from CLOSED or ACTIVE in the single root acquired AFTER lookup.
+Sources published before locations and retained for admitted readers: writer obligation.
+Wrong-state rejected before cleanup; other errors/exits release pin, invariant failures cause FAULTED."
   (esigi-stato-get context :candidate)
   (let ((complete nil))
     (unwind-protect
@@ -59,8 +59,8 @@ Wrong-state respinto prima del cleanup; altri errori/uscite liberano pin, invari
                          (member :hit :miss :verify-failed :disabled :proof-required :buffer-required))
                 sonda-cache-serie-get))
 (defun sonda-cache-serie-get (context controller)
-  "Pre: CANDIDATE dopo AVVIA-GET. Post: sonda comune con fonti dalla root acquisita sotto EBR.
-Prepared conserva proof-required; niente I/O o autorizzazione della risposta privata."
+  "Pre: CANDIDATE after AVVIA-GET. Post: common probe with sources from root acquired under EBR.
+Prepared retains proof-required; no I/O or authorization of private response."
   (multiple-value-bind (segment end flags proof) (risolvi-candidato-serie-get context controller)
     (declare (ignore proof)) ; dato verificato; prepared restituisce proof-required nel nucleo GET.
     (sonda-cache-get context segment end flags)))
@@ -72,8 +72,8 @@ Prepared conserva proof-required; niente I/O o autorizzazione della risposta pri
                                  (member :inserted :present :busy :unavailable :bypassed :not-attempted)
                                  boolean boolean &optional)) leggi-record-serie-get))
 (defun leggi-record-serie-get (context controller)
-  "Pre: nuovo AVVIA-GET nel worker I/O; controller riacquisito, nessuna location/pin in coda.
-Post: cinque esiti comuni GET; copia e CONCLUDI-GET con tempo fresco ancora obbligatori.
-Prepared rilegge OUTCOME autorevole; errori/uscite liberano pin e preservano la causa."
+  "Pre: new AVVIA-GET in I/O worker; controller reacquired, no location/pin in queue.
+Post: five common GET outcomes; copy and CONCLUDI-GET with fresh time still mandatory.
+Prepared rereads authoritative OUTCOME; errors/exits release pin and preserve cause."
   (multiple-value-bind (segment end flags proof) (risolvi-candidato-serie-get context controller)
     (leggi-record-get context segment end flags :outcome-offset proof)))

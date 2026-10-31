@@ -27,8 +27,8 @@
             (:constructor %make-registro-epoche
                 (announcements readers generations epochs states resources retirements words mutex))
             (:copier nil))
-  "Pre: array privati e pool di capacità fissa. Post: E=1, soglia=1, nessun reader/ritiro.
-Zero negli annunci significa inattivo. Solo la manutenzione modifica contatori e WORDS."
+  "Pre: private arrays and fixed-capacity pool. Post: E=1, threshold=1, no reader/retirement.
+Zero announcements mean inactive. Only maintenance modifies counters and WORDS."
   (announcements #() :type epoch-words :read-only t)
   (readers #() :type simple-vector :read-only t)
   (generations #() :type epoch-words :read-only t)
@@ -45,23 +45,23 @@ Zero negli annunci significa inattivo. Solo la manutenzione modifica contatori e
 
 ;;; REQ: REQ-CMP-005 REQ-CMP-007
 (defstruct (lettore-epoca (:constructor %make-lettore-epoca (registry offset)) (:copier nil))
-  "Pre: contesto canonico assegnato a un solo worker vivo. Post: offset fisso nel dominio EBR.
-Nessuna epoca o location attraversa una migrazione; non ammette sezioni annidate."
+  "Pre: canonical context assigned to one live worker only. Post: fixed offset in the EBR domain.
+No epoch or location crosses migration; does not admit nested sections."
   (registry nil :type registro-epoche :read-only t)
   (offset 16 :type (integer 16 65536) :read-only t))
 
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (defstruct (ritiro (:constructor %make-ritiro (registry slot)) (:copier nil))
-  "Pre: ticket canonico preallocato. Post: identità di slot stabile; evento conserva la generazione.
-Il registro conserva la risorsa finché annullata prima del ritiro o completata dopo reclaim."
+  "Pre: preallocated canonical ticket. Post: stable slot identity; event retains generation.
+The registry retains the resource until canceled before retirement or completed after reclamation."
   (registry nil :type registro-epoche :read-only t)
   (slot 0 :type retirement-slot :read-only t))
 
 ;;; REQ: REQ-CMP-005 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (integer integer) registro-epoche) crea-registro-epoche))
 (defun crea-registro-epoche (worker-capacity retirement-capacity)
-  "Pre: W=1..4096 comprende calcolo e I/O; K=1..65536. Post: tutti i contesti preallocati.
-INVALID-ARGUMENT prima delle allocazioni per capacità invalida; nessun thread o I/O avviato."
+  "Pre: W=1..4096 includes compute and I/O; K=1..65536. Post: all contexts preallocated.
+INVALID-ARGUMENT before allocations for invalid capacity; no thread or I/O started."
   (unless (and (<= 1 worker-capacity +max-workers+) (<= 1 retirement-capacity +max-ritiri+))
     (error 'invalid-argument :reason :epoch-registry-capacity))
   (let* ((words (make-array (* 3 +stride-epoca+) :element-type '(unsigned-byte 64) :initial-element 0))
@@ -87,9 +87,9 @@ INVALID-ARGUMENT prima delle allocazioni per capacità invalida; nessun thread o
 ;;; REQ: REQ-CMP-005 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (registro-epoche integer) lettore-epoca) contesto-epoca))
 (defun contesto-epoca (registry worker-id)
-  "Pre: il controller assegna WORKER-ID esclusivo in tutti i pool dell'Archivio.
-Post: stesso contesto preallocato per ID; riuso solo dopo join del precedente worker.
-INVALID-ARGUMENT per ID fuori capacità. Non è una registrazione concorrente di thread."
+  "Pre: controller assigns exclusive WORKER-ID across all Archivio pools.
+Post: same preallocated context per ID; reuse only after the previous worker joins.
+INVALID-ARGUMENT for ID beyond capacity. Not concurrent thread registration."
   (unless (<= 0 worker-id (1- (length (registro-epoche-readers registry))))
     (error 'invalid-argument :reason :epoch-worker-range))
   (aref (registro-epoche-readers registry) worker-id))

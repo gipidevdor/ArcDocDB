@@ -2,9 +2,9 @@
 
 # Adopting ACTIVE into runtime
 
-Method preregistered before runs. [Archivio bootstrap](runtime-archivio.md)
-supplies CSN/snapshot/EBR family. Increment connects new
-prepared ACTIVE to real controller, makes previously declared
+The method was preregistered before runs. [Archivio bootstrap](runtime-archivio.md)
+supplies the CSN/snapshot/EBR family. This increment connects the new
+prepared ACTIVE to a real controller and makes the previously declared
 one-controller-per-log obligation verifiable.
 
 <a id="contratto-e-proprietà"></a>
@@ -12,36 +12,36 @@ one-controller-per-log obligation verifiable.
 ## Contract and ownership
 
 `crea-controllore-serie` retains configurable root/offset/capacity.
-Before publication checks budgets, healthy segment log, preallocated
-ring. CAS moves log's private slot NIL → controller.
-Second constructor, even with different register, signals
-`invalid-argument :serie-log-bound`. No reset. No lease or
-CSN allocation acquired by factory. Pre-CAS errors do not
-publish candidate; concurrent attempt may publish its own.
+Before publication it checks budgets, a healthy segment log, and a preallocated
+ring. CAS changes the log's private slot from NIL to controller.
+A second constructor, even with a different registry, signals
+`invalid-argument :serie-log-bound`. No reset. The factory acquires no lease or
+CSN allocation. Pre-CAS errors do not
+publish the candidate; a concurrent attempt may publish its own.
 
-`trova-controllore-serie(log)` loads once, acquires, returns
-NIL/canonical reference. Checks type/reverse binding to same
-log; foreign slot or another log's controller signals
-`invariant-violation :serie-log-binding`. Getter samples neither health,
-ring, nor lease. Recovers binding even after interrupted return;
-latter remains static argument without product hook.
+`trova-controllore-serie(log)` performs one acquire load and returns
+NIL or the canonical reference. It checks type and reverse binding to the same
+log; a foreign slot or another log's controller signals
+`invariant-violation :serie-log-binding`. The getter samples neither health,
+ring, nor lease. It recovers the binding even after an interrupted return;
+the latter remains a static argument without a product hook.
 
-Binding invariant requires failed opening, stopped bootstrap/
-adoption, no admission. Coordinator isolates through authoritative
-references: getter cannot mutate foreign controller held in
-corrupt slot. Before CAS, postchecks/ring make private
-candidate FAULTED through `%serie-invariant`, without changing log or
-concurrent winner. Overall COD-24 conformance remains open
-until general stop boundary implemented/verified;
+A binding invariant violation requires opening to fail, bootstrap/
+adoption to stop, and admission to remain closed. The coordinator isolates the fault through authoritative
+references: the getter cannot mutate a foreign controller held in
+a corrupt slot. Before CAS, postchecks and ring checks make the private
+candidate FAULTED through `%serie-invariant`, without changing the log or
+a concurrent winner. Overall COD-24 conformance remains open
+until the general stop boundary is implemented and verified;
 no exception inferred from existing recovery APIs.
 
-Binding concerns **canonical log object**, not every possible
-wrapper/opening of same file. Physical exclusion/wrapper uniqueness
-remain owner responsibilities. Rotation creates new log/controller; old
-stays alive until borrowers retire. Opaque `t` slot avoids
-WAL/Serie ASDF cycle; one productive CAS writer, no per-document/
-batch/GET access. Reverse reference GC-managed; no automatic
-FD closes. Private layout changes: rebuild without old instances.
+Binding concerns the **canonical log object**, not every possible
+wrapper or opening of the same file. Physical exclusion and wrapper uniqueness
+remain the owner's responsibilities. Rotation creates a new log/controller; the old one
+stays alive until borrowers retire. An opaque `t` slot avoids
+a WAL/Serie ASDF cycle; there is one successful CAS writer, with no per-document,
+per-batch, or GET access. The reverse reference is GC-managed; FDs are not
+closed automatically. The private layout changes: rebuild without old instances.
 
 <a id="adozione-verificata"></a>
 
@@ -49,27 +49,27 @@ FD closes. Private layout changes: rebuild without old instances.
 
 `runtime:adotta-controllore-active(runtime, prepared, :capacity 64)` requires:
 
-- prepared view in **same EQ scope** as runtime; scope clone
-  reusing same snapshot/CSN register rejected;
+- a prepared view in the **same EQ scope** as the runtime; a scope clone
+  reusing the same snapshot/CSN registry is rejected;
 - healthy segment log, full ID/version matching GET capability,
   writer origin;
 - association proof of exact, still-open read-only/append
   capabilities;
 - append written/durable frontiers both 64.
 
-All before binding. Real factory receives runtime CSN,
-NIL root, next-offset 64; returns empty ring without lease.
+All checks precede binding. The real factory receives the runtime CSN,
+a NIL root, and next-offset 64; it returns an empty ring without a lease.
 Scope/start rejections `invalid-argument :runtime-active-scope/started`;
 inconsistent identity `invariant-violation :runtime-active-identity`.
-Budgets/log/capabilities propagate canonical conditions. No I/O,
-clock, changed CSN register, new lock protocol.
+Budget, log, and capability checks propagate canonical conditions. There is no I/O,
+clock access, CSN registry change, or new lock protocol.
 
-Prepared result proves physical preparation; **does not prove catalog
-EDIT decision**. Caller completes decision before initializing/
-publishing sources or using controller. Lease, prepared GET source,
-root follow existing APIs. Binding volatile publication, without
-new durable atomicity point. Recovery Manager/admission
-gate open, as is owned collection of old sources.
+The prepared result proves physical preparation; it **does not prove the catalog
+EDIT decision**. The caller completes that decision before initializing or
+publishing sources or using the controller. Lease, prepared GET source,
+and root follow existing APIs. The binding is a volatile publication, without
+a new durable atomicity point. The Recovery Manager/admission
+gate remains open, as does the owned collection of old sources.
 
 <a id="decisioni-e-prove-previste"></a>
 
@@ -88,35 +88,35 @@ gate open, as is owned collection of old sources.
 | RCA-D09 | Candidate: EQ register AND EQ log before CAS; both defensive conditions |
 | RCA-D10 | Candidate: EQ slot vector AND exact offset before CAS; both defensive conditions |
 
-Generic binding tests `tests/series/log-binding.lisp`; runtime
-integration `tests/runtime/adoption.lisp`. Positives build plans/
-ACTIVE through public APIs, v1/v2/native FDs. Declared serial FI,
-without changing CL primitives; no admission inferred from success.
-Old default fixture built directly without explicit capacity:
-recreating two controllers on same log would violate contract.
+Generic binding tests are in `tests/series/log-binding.lisp`; runtime
+integration tests are in `tests/runtime/adoption.lisp`. Positive cases build plans
+and ACTIVE through public APIs, using v1/v2 formats and native FDs. Serial FI is declared,
+without changing CL primitives; no admission is inferred from success.
+The old default fixture was built directly without explicit capacity:
+recreating two controllers on the same log would violate the contract.
 
-Agents with disjoint write sets; closed before runs, committed revision,
-frozen sources. Every diagnostic/check uses recorder even
+Agents have disjoint write sets and finish before runs; the revision is committed
+and sources are frozen. Every diagnostic/check uses the recorder, including
 on error. `runtime-active` coverage: three exact files (new
 `runtime/active`, `series/types`, `wal/types`), counters reset after load,
-runtime/Serie suites. Historical scopes unchanged. Self-test
-checks inclusion/exclusion/missing branch. Raw denominators/generated
-code visible; SBCL forms/branches not MC/DC.
+runtime/Serie suites. Historical scopes unchanged. The self-test
+checks inclusion, exclusion, and a missing branch. Raw denominators and generated
+code are visible; SBCL forms/branches are not MC/DC.
 
-Two static readings independent of runtime-module author
-recorded separately from coordinator rereading. Common collector
-collection, hashes, independent closed-inventory check. Excluded:
-reconstructible caches/C4 negative-case inputs; structured
-results remain in original reports. No new benchmark: no
-new hot path, bootstrap/GC costs/reference platform
-unmeasured. C1/MC/DC qualification, engine obligations open.
+Two static readings independent of the runtime-module author
+are recorded separately from the coordinator's rereading. Collection uses the common collector,
+hashes, and an independent closed-inventory check. Reconstructible caches and C4 negative-case
+inputs are excluded; structured
+results remain in original reports. There is no new benchmark because there is no
+new hot path; bootstrap/GC costs and the reference platform
+remain unmeasured. C1/MC/DC qualification and engine obligations remain open.
 
 <a id="revisione-statica-prima-dei-run"></a>
 
 ## Static review before runs
 
-Two readings by Hume, reviewer distinct from authors; author/
-coordinator rereadings separate. Reviewer executed/modified nothing.
+Hume performed two readings as a reviewer distinct from the authors; author
+and coordinator rereadings remain separate. The reviewer executed or modified nothing.
 
 | C1 checklist | Outcome of both readings |
 |---|---|
@@ -134,16 +134,16 @@ coordinator rereadings separate. Reviewer executed/modified nothing.
 Findings incorporated before freeze: inventory of both compound
 postchecks; `%serie-invariant` on private candidate with early `ftype`;
 coordinator obligation to stop bootstrap/adoption on corrupt
-binding. Final rereading of all three changes: no new finding.
-Binding tests eight; adoption eleven, with 26 parameterized cases
-declared by author. Counts inventory,
+binding. The final rereading of all three changes found no new issue.
+The author declared eight binding tests and eleven adoption tests, with 26 parameterized cases.
+These counts are an inventory,
 not run outcomes.
 
 <a id="risultati"></a>
 
 ## Results
 
-[Campaign of 2026-10-16](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-runtime-active/report.md)
-preserves 19 new tests, 147 runtime/Serie tests, raw coverage, full
-local check. Also preserves two initial failures/three variants;
-general COD-24 boundary, admission, C1/MC/DC open.
+The [campaign of 2026-10-16](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-runtime-active/report.md)
+preserves 19 new tests, 147 runtime/Serie tests, raw coverage, and a full
+local check. It also preserves two initial failures and three variants;
+the general COD-24 boundary, admission, and C1/MC/DC remain open.

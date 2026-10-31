@@ -15,7 +15,7 @@
    `sb-unix`, `sb-concurrency` where useful, `sb-simd` with the backends available on x86-64 and
    ARM64, including NEON, under [ADR-0012](0012-simd-guidato-dai-benchmark.md)). Each backend
    requires support detection and platform qualification; allowing the contrib module
-   does not establish its availability. No third-party libraries, even for
+   does not establish its availability. No third-party libraries are used, even for
    CBOR, CRC, hashing, or the CLI.
 2. Tests use a **custom harness** (`arcdocdb/tests`): per-module test registration,
    assertions, parallel execution where possible, and the **fault-injection runner**
@@ -37,5 +37,5 @@
 
 ## Alternatives considered
 
-- *Quicklisp with a few established libraries:* convenient, but introduces code not typed
-  for our purposes on hot paths and an uncontrolled quality boundary.
+- *Quicklisp with a few established libraries:* convenient, but introduces hot-path code whose types are not tailored
+  to our purposes, along with an uncontrolled quality boundary.

@@ -6,12 +6,12 @@
 ;;; REQ: REQ-REC-001 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (file-io file-io string string) boolean) stabilizza-nome-temporaneo))
 (defun stabilizza-nome-temporaneo (directory file temporary final)
-  "Pre: compito I/O, namespace esclusivo; FILE readonly già verificato e nominato dalla fonte autorevole.
-Post: solo FINAL lega lo stesso FD, parent sincronizzato; T se rinominato, NIL se già definitivo.
-Decisione atomica già nell'EDIT autorevole; rinomina esclusiva completa il nome, fsync la durability.
-Non verifica manifest/CRC o durability dei dati. Non sostituisce target esistenti, non chiude/tronca file.
-Rifiuti di preflight senza effetti; uscita incompleta dopo preflight => directory FAULTED, causa intatta.
-Nessun retry/rollback: riacquisire capacità e namespace dalla fonte autorevole dopo un esito incerto."
+  "Pre: I/O task, exclusive namespace; readonly FILE already verified and named by the authoritative source.
+Post: only FINAL binds the same FD, parent synchronized; T if renamed, NIL if already final.
+Atomic decision already in authoritative EDIT; exclusive rename completes the name, fsync completes durability.
+Does not verify manifest/CRC or data durability. Does not replace existing targets or close/truncate files.
+Preflight rejections without effects; incomplete exit after preflight => directory FAULTED, cause intact.
+No retry/rollback: reacquire capabilities and namespace from the authoritative source after an uncertain outcome."
   (multiple-value-bind (source target rename) (prepara-stabilizzazione-temporaneo directory file temporary final)
     (let ((complete nil))
       (unwind-protect

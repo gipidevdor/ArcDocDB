@@ -26,13 +26,13 @@ C1/MC/DC qualification or qualify the engine.
 | 1. Requirements and ADRs | REQ-CBR-008, LIM-001/002, AFF-004/008, and INV-A5/A8/P6 describe the bounded structural primitive derived from ADR-0014/0024/0035/0048. Result is first-item boundary and counts, without AST or tail interpretation. Document profile and tag semantics remain open. |
 | 2. Invariants | Preflight identical to scanner, before reset. New guards on SPAN, loop exhaustion, START<NEXT progress, and NEXT<=END; existing drain and result check root/counts/state. No dependence on tail validity. |
 | 3. Errors | Range/workspace/aliases/byte-node-depth limits/byte-budget order preserved, offset NIL and scratch unchanged. Parsing propagates minimal header, UTF8, nodes/depth with absolute offsets. Empty and truncated inputs reach `[END,END)` reader: `:cbor-truncated` at END. No partial result; buffer unchanged even after error and scratch reusable. |
-| 4. Bounds | SPAN<=16MiB before loop, at most SPAN steps with checked progress. Each drain at most102 frames. Tags without frames and depth only arrays/maps. Original END always passed to step; completion check uses cursor. No new recursion, wait, or retry. |
+| 4. Bounds | SPAN<=16MiB before loop, at most SPAN steps with checked progress. Each drain visits at most 102 frames. Tags without frames and depth only arrays/maps. Original END always passed to step; completion check uses cursor. No new recursion, wait, or retry. |
 | 5. Heap | Local typed variables and three values, no new array/cons/AST/closure on success. Reset works on two preallocated arrays; wire values stay in words. Keyword calls and dependencies require benchmark with zero baseline and positive control; zero heap not established statically. |
 | 6. Verified data | MINIMAL=T in step, entire window for MAX-BYTES, counts for item only. Result called with NEXT=CURSOR, not physical END: returns exactly NODES/PEAK/NEXT. Three values fixed by FTYPE and callee, no u64 reconstruction or buffer copy. |
 | 7. Compound decisions | Six explicit predicates, five ERROR sites, one LOOP, zero AND/OR, four binary comparisons, and zero chains. Complete inventory in the [table](cbor-item-decisioni.md), including internal guards and three keyword defaults. No exclusion, static pair, or absence of AND/OR presented as measured MC/DC. |
 | 8. Owner | OWNER/SHARED declare stable buffer shareable read-only and space exclusive to call/worker. Preflight rejects BUFFER=KINDS before reset. Simple u8 type excludes displaced/shared backing; REMAINING is distinct simple u32 on SBCL. No buffer writes or global state. |
 | 9. Integration | Package export line13; product ASDF line36 after scanners, three corpus files lines171–172, and RUN included in test-system. Exact coverage scope for only new source, one positive/four negatives for selection, direct RUN and aggregate codec. REQ-CBR-008 and already regenerated matrix show implemented with test/diff/fuzz/bench/mut/rev, without :cov. No make check run by this reading. |
-| 10. Standard | Safety3, complete FTYPE with arity three, REQ, Pre/Post/error docstring, and restricted types after preflight. One function34 lines/8 syntactic paths, within60/10; at least two meaningful checks. No deviation proposed; warnings/style-warnings/lint still to be observed. |
+| 10. Standard | Safety3, complete FTYPE with arity three, REQ, Pre/Post/error docstring, and restricted types after preflight. One function of 34 lines and 8 syntactic paths, within the 60/10 limits; at least two meaningful checks. No deviation proposed; warnings/style-warnings/lint still to be observed. |
 | 11. Parallelism | No new threads, locks, waits, or shared writes in product. Corpus with two reused real workers, shared read-only buffer and private scratch, two waves, rendezvous after first verified item, sinks, timeouts, and cleanup. Timestamps/overlap still to be observed; no inference about cores or scaling. |
 | 12. Durability | Caller memory only, no I/O or atomic/durable publication. Primitive does not change Serie; FAULTED handling for internal invariants remains at owner boundary. |
 
@@ -70,9 +70,9 @@ an empty item or returning partial values. No byte beyond NEXT is
 read after root completion; internal reads needed to determine
 a partially complete item's length remain bounded by END.
 
-Completed root, the single progressive step, and explicit guards
+A completed root, the single progressive step, and explicit guards
 imply START<NEXT<=END. Tag1024+scalar uses1025 nodes, depth0, and
-no tag frames; one hundred arrays allow peak100, the101st fails
+no tag frames; one hundred arrays allow peak100, the 101st fails
 at its lead. Nodes/depth exclude tail items.
 
 <a id="corpus-congelato-e-lettura-data"></a>
@@ -87,7 +87,7 @@ at its lead. Nodes/depth exclude tail items.
 
 Cold plan `review/blind-plan.md` in ignored support, blob
 `63a749b0e8737f49d400f40b0a98c454c2dc3cfc`:17 nominal tests,
-**9901 calls** expected to new API:685 non-fuzz (551 successes/134
+**9901 calls** expected for the new API:685 non-fuzz (551 successes/134
 rejections),1024 fuzz (512/512),8192 parallel. Total9255/646.
 These are static corpus counts, not PASS results. Separate secondary
 exact scanners:520 on prefix,390 trailing, and two on concatenation.

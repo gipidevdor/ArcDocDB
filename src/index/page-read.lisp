@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-009 REQ-AFF-002
 (declaim (ftype (function (octets index index identita-pagina) page-kind) verifica-header-pagina))
 (defun verifica-header-pagina (buffer start size identity)
-  "Pre: pagina presente e taglia ammessa. Post: header integro e identita' esatta.
-CORRUPTION-DETECTED per CRC/identita'/campi; UNSUPPORTED-FORMAT per versione/tipo ignoti."
+  "Pre: page present and size admitted. Post: intact header and exact identity.
+CORRUPTION-DETECTED for CRC/identity/fields; UNSUPPORTED-FORMAT for unknown version/type."
   (esigi-pagina (= (leggi-u32 buffer (+ start +off-header-crc+))
                    (crc32c buffer start (+ start +off-header-crc+)))
                 'corruption-detected :index-page-header-crc)
@@ -36,11 +36,11 @@ CORRUPTION-DETECTED per CRC/identita'/campi; UNSUPPORTED-FORMAT per versione/tip
                          (values page-kind fixnum u32 index page-number page-number &optional))
                 verifica-pagina-indice))
 (defun verifica-pagina-indice (buffer start end identity)
-  "Pre: span di una pagina stabile, identita' autorevole dal riferimento atteso.
-Post: tipo, count, parametro, used, next e next-generation solo dopo verifica completa.
-INVALID-ARGUMENT per range fuori buffer; CORRUPTION-DETECTED per pagina incompleta/incoerente;
-UNSUPPORTED-FORMAT per versione/tipo ignoto con header integro. Nessuna modifica o I/O.
-Non certifica catene complete, hash della chiave, commit, snapshot o liveness del GET."
+  "Pre: stable one-page span, authoritative identity from the expected reference.
+Post: type, count, parameter, used, next, and next-generation only after complete verification.
+INVALID-ARGUMENT for range outside buffer; CORRUPTION-DETECTED for an incomplete/inconsistent page;
+UNSUPPORTED-FORMAT for unknown version/type with an intact header. No modification or I/O.
+Does not certify complete chains, key hash, commit, snapshot, or GET liveness."
   (check-range buffer start end)
   (let ((size (- end start)))
     (esigi-pagina (plusp (nth-value 0 (geometria-pagina size)))

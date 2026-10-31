@@ -6,8 +6,8 @@
 ;;; REQ: REQ-SEC-004 REQ-WAL-005 REQ-CON-002
 (declaim (ftype (function (f:riserve-full-text w:lotto keyword) nil) errore-riferimento-put))
 (defun errore-riferimento-put (pool batch reason)
-  "Pre: invariante interna falsa. Post: pool/lotto FAULTED, byte e costi conservati.
-Il confine del writer ferma la Serie; nessun rollback, risoluzione CSN o ACK."
+  "Pre: false internal invariant. Post: pool/batch FAULTED, bytes and costs retained.
+Writer boundary stops Serie; no rollback, CSN resolution, or ACK."
   (setf (w::lotto-state batch) :faulted)
   (f::errore-interno-riserve pool reason))
 
@@ -15,9 +15,9 @@ Il confine del writer ferma la Serie; nessun rollback, risoluzione CSN o ACK."
 (declaim (ftype (function (f:riserve-full-text f:riserva-full-text w:lotto u32 u32)
                          (values u32 u32 &optional)) verifica-header-riferimento-put))
 (defun verifica-header-riferimento-put (pool slot batch high low)
-  "Pre: intervallo vivo e token WAL pendente esatto. Post: stamp verificato in due u32.
-CRC del solo header (20 byte), corpo immutabile attestato dal worker; nessuna scansione body.
-Header incoerente => pool/lotto FAULTED; prepared conserva TXID, ordinario usa CSN lotto."
+  "Pre: live interval and exact pending WAL token. Post: stamp verified in two u32s.
+Header-only CRC (20 bytes), immutable body attested by worker; no body scan.
+Inconsistent header => pool/batch FAULTED; prepared retains TXID, ordinary uses batch CSN."
   (handler-case
       (let* ((buffer (w::lotto-buffer batch)) (start (f::riserva-full-text-record-start slot))
              (end (f::riserva-full-text-record-end slot)))
@@ -44,8 +44,8 @@ Header incoerente => pool/lotto FAULTED; prepared conserva TXID, ordinario usa C
 (declaim (ftype (function (f:riserve-full-text f:riserva-full-text w:lotto t t) (values u32 u32 &optional))
                 preflight-riferimento-put))
 (defun preflight-riferimento-put (pool slot batch registry log)
-  "Pre: lease/token/legame vivi. Post: lotto chiuso prima dell'I/O, autorita e offset validi.
-Rifiuti ordinari senza mutazioni; non e una verifica di durability o esito prepared."
+  "Pre: live lease/token/binding. Post: closed batch before I/O, valid authority and offset.
+Ordinary rejections without mutations; not a durability or prepared-outcome check."
   (unless (and (typep registry 'arcdocdb.csn:registro-csn) (typep log 'w:log-io))
     (error 'invalid-argument :reason :fulltext-reference-authority))
   (unless (eq :absent (f::riserva-full-text-physical-state slot))

@@ -18,9 +18,9 @@
 
 ;;; REQ: REQ-IDX-001 REQ-IDX-003 REQ-IDX-005 REQ-LIM-001 REQ-AFF-008
 (defstruct (banco-slot (:constructor %make-banco-slot (capacity retained words)) (:copier nil))
-  "Pre: array contiguo a capacità fissa, inizialmente vuoto, writer unico della Serie.
-Post: cinque parole per slot primario, sei per trattenuto; nessun oggetto per entry.
-Salute FAULTED e stato FROZEN sono terminali; nessuna risorsa esterna viene posseduta."
+  "Pre: contiguous fixed-capacity array, initially empty, sole Serie writer.
+Post: five words per primary slot, six per retained slot; no per-entry object.
+FAULTED health and FROZEN state are terminal; no external resource owned."
   (capacity 1 :type (integer 1 65536) :read-only t)
   (retained nil :type boolean :read-only t)
   (words (make-array 0 :element-type '(unsigned-byte 64)) :type slot-words :read-only t)
@@ -31,9 +31,9 @@ Salute FAULTED e stato FROZEN sono terminali; nessuna risorsa esterna viene poss
 (declaim (ftype (function (&key (:capacity integer) (:retained-p boolean)
                                (:budget-bytes integer)) banco-slot) crea-banco-slot))
 (defun crea-banco-slot (&key (capacity 8192) (retained-p nil) (budget-bytes (* 3 1024 1024)))
-  "Pre: controller fuori dal lookup, capacità 1..65536 e budget positivo.
-Post: banco preallocato azzerato; budget del solo payload verificato prima dell'allocazione.
-INVALID-ARGUMENT per configurazione; RESOURCE-EXHAUSTED per payload oltre budget."
+  "Pre: controller outside lookup, capacity 1..65536 and positive budget.
+Post: zeroed preallocated bank; payload-only budget verified before allocation.
+INVALID-ARGUMENT for configuration; RESOURCE-EXHAUSTED for payload beyond budget."
   (unless (and (<= 1 capacity 65536) (plusp budget-bytes))
     (error 'invalid-argument :reason :index-slot-configuration))
   (let ((count (* capacity (if retained-p 6 5))))

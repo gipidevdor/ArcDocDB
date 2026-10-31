@@ -2,7 +2,7 @@
 
 # Pool-controller verification
 
-C3 component calculates bounded target with integer EWMAs, AIMD, and
+The C3 component calculates a bounded target with integer EWMAs, AIMD, and
 condition persistence. [Contract](controllore-pool.md),
 [method](controllore-pool-metodo.md), [decisions](controllore-pool-decisioni.md),
 [first reading](controllore-pool-revisione.md), and
@@ -14,9 +14,9 @@ Frozen campaign base `4344d9e1f2ceb45e5fa3d5076b57d09505e69ac3`.
 ## Frozen campaign
 
 All positive outcomes OK/STABLE/exit 0 over 740 unchanged sources and documents
-in frozen copy. Original-byte catalog:
+in the frozen copy. Original-byte catalog:
 [`2026-10-13-pool-controller`](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-controller/).
-Both readings and preregistration precede processes.
+Both readings and preregistration precede the processes.
 
 | Process | Record | Outcome |
 |---|---|---|
@@ -25,13 +25,13 @@ Both readings and preregistration precede processes.
 | Five measurement replicates | `4000906340-command-39064-0` | OK; zero heap bytes in every replicate |
 | General check | `4000906339-command-39039-0` | OK; 998 named tests and 2 smoke tests |
 
-General check takes 200.078223 s: includes build, lint and self-test,
+The general check takes 200.078223 s: it includes build, lint and self-test,
 snapshot/reader runner self-tests, traceability, links,
 evidence self-tests, catalogs, and ten F0 experiments. 460160 stderr bytes
 are compilation notes: build treats warnings and style-warnings
 as errors. Ten experiments COMPLETE, preserved with
-raw data including master `4000906505-check-41362-0`. Check duration
-not hot-path measurement.
+raw data including master `4000906505-check-41362-0`. The check duration
+is not a hot-path measurement.
 
 <a id="copertura-completa-del-package"></a>
 
@@ -47,10 +47,10 @@ not hot-path measurement.
 | update | 105/105 | 10/10 |
 | Total | 344/348, 98.85% | 50/50, 100% |
 
-Native and HTML agree for all six files. Four missing build
-expressions remain in denominator: native indexes 78..81, paths
+Native and HTML agree for all six files. The four missing build
+expressions remain in the denominator: native indexes 78..81, paths
 `(2 2 5)`, `(5 2 5)`, `(6 2 5)`, `(7 2 5)`, factory optional-argument
-initializers. C3 minimum 95% passed without
+initializers. The C3 minimum of 95% was met without
 exclusions; MC/DC not inferred from counts. Reader compiles
 without warnings and verifies positive, negative, and exact-threshold fixtures.
 Nine original qualification artifacts — native state, audit,
@@ -65,8 +65,8 @@ with full text, SHA256, bytes, and Git blob per file.
 Each replicate uses 4096 cycles with 128 warmup cycles. One cycle includes
 160 grow/shrink updates and respective getters, plus two update/read pairs
 for pending and hold. Expectations for seven outputs and target come
-from oracle computed before measurement. Full GC and startup outside
-measured slice; complete result verification inside slice.
+from an oracle computed before measurement. Full GC and startup are outside
+the measured slice; complete result verification is inside the slice.
 
 | Replicate | Raw ticks | Seconds | Heap bytes |
 |---|---:|---:|---:|
@@ -77,7 +77,7 @@ measured slice; complete result verification inside slice.
 | 4 | 85129 | 0.085129 | 0 |
 
 SBCL 2.6.9, ARM64, Apple M4; external load uncontrolled. Self-test
-detects 16777472 bytes deliberate allocation, rejects incorrect sinks and
+detects 16777472 bytes of deliberate allocation, rejects incorrect sinks and
 targets, distinguishes below-resolution clock from numeric duration, and
 preserves partial result and preceding samples after error. Measurement
 attests these post-startup paths, not universal nonallocation.
@@ -92,11 +92,11 @@ GC and failure to exercise generated EQUALP comparison. Runner
 preserves startup using SAVE-COVERAGE after each load.
 Fixtures check equal objects and field differences. All preceding
 counts, including below-C3-minimum counts, remain failed attempts.
-Direct-source-loading experiment not adopted.
+The direct-source-loading experiment was not adopted.
 First general check (`4000906285-command-38488-0`)
-FAILED/STABLE/exit 2 before compilation due to relative path
-in cache configuration. Record preserves original diagnosis;
-second process uses absolute path and does not rewrite outcome.
+FAILED/STABLE/exit 2 before compilation due to a relative path
+in the cache configuration. The record preserves the original diagnosis;
+the second process uses an absolute path and does not rewrite the outcome.
 
 <a id="integrazione-e-conservazione"></a>
 
@@ -133,9 +133,9 @@ Independent check compares bytes, SHA256, and Git blobs of first manifest's
 Original audit print incorrectly shows 1/50 for list destructively
 reversed after saving; original report
 contains all 50 proofs. Script, original output, and corrected projection
-preserved together without rewriting attempt.
+preserved together without rewriting the attempt.
 Bundles distinguish frozen sources, final documents, and integrated
-version; each new seal adds exclusive manifest.
+version; each new seal adds an exclusive manifest.
 
 Subsequent PR #10 integration, `baaa68c636e0be84854af2e5d12a01dab0cf80cb`,
 adds 42 OUTCOME fixtures without changing product code.
@@ -144,7 +144,7 @@ again: record `4000907892-command-73441-0`, 1036 named tests
 and two smoke tests, 24.306801 s. Record `4000907893-command-73469-0` verifies
 lint, traceability, and 2642 links without errors. Both OK/STABLE/exit 0
 over 750 sources and documents. Controller coverage and measurements
-remain frozen campaign's, with unchanged sources.
+remain those of the frozen campaign, with unchanged sources.
 Post-merge catalogs also pass: record
 `4000908000-command-75169-0`, OK/STABLE/exit 0 over 750 sources and documents.
 
@@ -152,11 +152,11 @@ Post-merge catalogs also pass: record
 
 ## Limits
 
-Initial thresholds not calibrated to database load. Measurement
-concerns target calculation with injected time and samples: verifies neither
+The initial thresholds are not calibrated to database load. The measurement
+concerns target calculation with injected time and samples: it verifies neither
 throughput, engine P99, real sensors, fairness, nor feedback stability.
-If actual does not reach target, controller stays pending even when
-P99 worsens. Actuator revocation, expiry, and rejection future work.
+If the actual value does not reach the target, the controller stays pending even when
+P99 worsens. Actuator revocation, expiry, and rejection remain future work.
 Startup, park/wake without lost notifications, admission, retirement, shutdown,
 I/O pool, and Archivio coordinator remain open; REQ-THR-001 and other
 global requirements retain designed state.

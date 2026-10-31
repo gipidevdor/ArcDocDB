@@ -41,7 +41,7 @@
 - The contract is a CBOR document in the catalog: declared fields with type, requiredness,
   and simple constraints; indexes with type and field; a policy for undeclared fields
   (allowed or rejected).
-- Validation at write time, in the worker receiving the request (outside the
+- Validation occurs at write time, in the worker receiving the request (outside the
   writer).
 - **Additive evolution**: adding optional fields and indexes is always allowed; removing
   fields or changing their types requires a new contract version, and existing documents
@@ -62,7 +62,7 @@ queries as AST data (MongoDB, Datalog); additive schema evolution (Protocol Buff
 
 ## Document contract v2
 
-[ADR-0048](0048-limiti-documentali-e-formato-v2.md) defines CBOR documents up to 16 MiB and 100 levels. The frame budget is separate from the document: it must allow a maximum-size document plus the request key and envelope, with an explicit limit and a length check before allocation. Batches have separate budgets and are not allowed without a limit.
+[ADR-0048](0048-limiti-documentali-e-formato-v2.md) defines CBOR documents up to 16 MiB and 100 levels. The frame budget is separate from the document budget: it must allow a maximum-size document plus the request key and envelope, with an explicit limit and a length check before allocation. Batches have separate budgets and are not allowed without a limit.
 
 <a id="estensione-full-text-2026-10-15"></a>
 
@@ -70,13 +70,13 @@ queries as AST data (MongoDB, Datalog); additive schema evolution (Protocol Buff
 
 [ADR-0053](0053-ricerca-full-text-indici-invertiti.md) adds the logical
 predicates `text-match(campo, testo, all/any)` and
-`text-phrase(campo, testo)` to the AST, combinable with structured filters in the
+`text-phrase(campo, testo)` to the AST; these predicates can be combined with structured filters in the
 same MVCC view. Text is a value to analyze according to the index's versioned
 profile, without introducing a textual query language.
 Node names and wire encoding are fixed in phases 8–9.
 
 The contract declares scalar fields and an immutable profile; changing the
 analyzer creates a new generation. Queries retain the generation and
-profile for their entire duration; an unready index and an exhausted budget
+profile for their entire duration; an index that is not ready and an exhausted budget
 produce explicit errors. The approved semantics do not imply that APIs,
 parsers, or full-text indexes are already implemented.

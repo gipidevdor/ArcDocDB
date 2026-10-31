@@ -7,15 +7,15 @@
 (declaim (inline snapshot-del-registro-p))
 (declaim (ftype (function (contesto-snapshot registro-snapshot) boolean) snapshot-del-registro-p))
 (defun snapshot-del-registro-p (context registry)
-  "Pre: oggetti costruiti dai rispettivi controller. Post: identità del registro, senza mutex.
-Non verifica stato, generazione o scadenza e non autorizza la lettura dello snapshot."
+  "Pre: objects constructed by their respective controllers. Post: registry identity, without mutex.
+Does not verify state, generation, or expiration and does not authorize snapshot reading."
   (eq (contesto-snapshot-registry context) registry))
 
 ;;; REQ: REQ-MVC-007 REQ-AFF-004 REQ-CON-004
 (declaim (ftype (function (registro-snapshot keyword) nil) guasto-lettura-snapshot))
 (defun guasto-lettura-snapshot (registry reason)
-  "Pre: incoerenza interna osservata con identità stabile. Post: stato terminale FAULTED.
-Nessun mutex o attesa anche al guasto; condizione tipizzata propagata al confine del worker."
+  "Pre: internal inconsistency observed with stable identity. Post: terminal FAULTED state.
+No mutex or waiting even on failure; typed condition propagated to the worker boundary."
   (invalida-registro-snapshot registry)
   (error 'invariant-violation :reason reason))
 
@@ -23,9 +23,9 @@ Nessun mutex o attesa anche al guasto; condizione tipizzata propagata al confine
 (declaim (inline verifica-snapshot))
 (declaim (ftype (function (contesto-snapshot u64 u64) u64) verifica-snapshot))
 (defun verifica-snapshot (context expected-generation now)
-  "Pre: generazione originale, NOW fresco e base monotona comune; epoca già acquisita.
-Post: CSN solo se attivo e non scaduto; chiamare PRIMA e DOPO la ricerca, anche sul miss.
-Identità cambiata/fine/scadenza: SNAPSHOT-TOO-OLD. Attesa: INVALID-ARGUMENT o timeout iniziale."
+  "Pre: original generation, fresh NOW and common monotonic base; epoch already acquired.
+Post: CSN only if active and unexpired; call BEFORE and AFTER lookup, even on a miss.
+Changed identity/end/expiration: SNAPSHOT-TOO-OLD. Waiting: INVALID-ARGUMENT or initial timeout."
   (let* ((registry (contesto-snapshot-registry context)) (word (contesto-snapshot-word context))
          (context-generation (sb-thread:barrier (:read) (aref word 0)))
          (slot (contesto-snapshot-slot context)))
@@ -66,9 +66,9 @@ Identità cambiata/fine/scadenza: SNAPSHOT-TOO-OLD. Attesa: INVALID-ARGUMENT o t
 (declaim (ftype (function (contesto-snapshot u64 u64 csn-words integer) null)
                 verifica-snapshot-in-buffer))
 (defun verifica-snapshot-in-buffer (context expected-generation now result result-index)
-  "Pre: RESULT word array privato del worker, indice valido; stesso contratto di VERIFICA-SNAPSHOT.
-Post: CSN scritto solo dopo tutte le guardie; nessun intero u64 da restituire con boxing.
-INVALID-ARGUMENT prima di scrivere per range; su scadenza/identità il buffer resta intatto."
+  "Pre: worker-private RESULT word array, valid index; same contract as VERIFICA-SNAPSHOT.
+Post: CSN written only after all guards; no boxed u64 integer returned.
+INVALID-ARGUMENT for range before writing; expiration/identity leaves buffer intact."
   (unless (<= 0 result-index (1- (length result)))
     (error 'invalid-argument :reason :snapshot-result-range))
   (setf (aref result result-index) (verifica-snapshot context expected-generation now))
@@ -79,8 +79,8 @@ INVALID-ARGUMENT prima di scrivere per range; su scadenza/identità il buffer re
 (declaim (ftype (function (registro-snapshot) u64) soglia-snapshot)
          (ftype (function (registro-snapshot u64) boolean) deve-trattenere-p))
 (defun soglia-snapshot (registry)
-  "Pre: registro sano. Post: soglia acquire, conservativa; MAX-U64 se nessuno la abbassa.
-È un limite logico, non autorizza da sola il reclaim di un segmento referenziato da EBR."
+  "Pre: healthy registry. Post: conservative acquire threshold; MAX-U64 if nobody lowers it.
+A logical limit; alone it does not authorize reclaiming a segment referenced by EBR."
   (esigi-snapshot-sano registry)
   (let ((threshold (sb-thread:barrier (:read) (aref (registro-snapshot-words registry) 1))))
     (declare (type u64 threshold))
@@ -89,9 +89,9 @@ INVALID-ARGUMENT prima di scrivere per range; su scadenza/identità il buffer re
 
 ;;; REQ: REQ-MVC-007 REQ-MVC-003
 (defun deve-trattenere-p (registry new-csn)
-  "Pre: NEW-CSN preso dal registro CSN, prima della pubblicazione della nuova versione.
-Post: T se la versione sostituita va trattenuta PRIMA di aggiornare l'indice; nessun mutex.
-INVALID-ARGUMENT per zero. Per potare, confrontare fine validità <= soglia e rispettare EBR."
+  "Pre: NEW-CSN acquired from the CSN registry, before publishing the new version.
+Post: T if the replaced version must be retained BEFORE updating the index; no mutex.
+INVALID-ARGUMENT for zero. To prune, compare validity end <= threshold and honor EBR."
   (when (zerop new-csn) (error 'invalid-argument :reason :snapshot-commit-zero))
   (< (soglia-snapshot registry) new-csn))
 
@@ -99,8 +99,8 @@ INVALID-ARGUMENT per zero. Per potare, confrontare fine validità <= soglia e ri
 (declaim (ftype (function (registro-snapshot) (values (integer 0 65536) u64 u64 &optional))
                 leggi-registro-snapshot))
 (defun leggi-registro-snapshot (registry)
-  "Pre: registro sano. Post: pin, soglia e generazione coerenti; SNAPSHOT-BUSY senza attesa.
-Osservabilità soltanto; non registra snapshot e non determina lo stato di un vecchio contesto."
+  "Pre: healthy registry. Post: coherent pins, threshold, and generation; SNAPSHOT-BUSY without waiting.
+Observability only; neither registers snapshots nor determines an old context's state."
   (esigi-ingresso-snapshot registry)
   (let ((acquired nil))
     (multiple-value-prog1

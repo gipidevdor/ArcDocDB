@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text keyword) null) rilascia-documento))
 (defun rilascia-documento (task state)
-  "Pre: confine del task esclusivo; errore/cancellazione. Post: prestiti rilasciati,
-run e risultati invalidati; nessuna risorsa esterna, riserva writer o I/O da annullare."
+  "Pre: exclusive task boundary; error/cancellation. Post: loans released,
+run and results invalidated; no external resource, writer reservation, or I/O to cancel."
   (unless (member state '(:failed :cancelled)) (error 'invariant-violation :reason :fulltext-document-release))
   (let ((analysis (preparazione-full-text-analysis task)) (run (preparazione-full-text-run task)))
     (setf (preparazione-full-text-input task) nil (preparazione-full-text-phase task) state
@@ -16,8 +16,8 @@ run e risultati invalidati; nessuna risorsa esterna, riserva writer o I/O da ann
 ;;; REQ: REQ-SEC-003 REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) null) avanza-documento))
 (defun avanza-documento (task)
-  "Pre: task attivo. Post: un passo di scanner, normalizzazione, copia, sort o misura.
-Nessun ciclo di attesa; il chiamante gestisce scheduling e deadline esterna."
+  "Pre: active task. Post: one scanner, normalization, copy, sort, or measurement step.
+No wait loop; the caller manages scheduling and the external deadline."
   (case (preparazione-full-text-phase task)
     (:scan (passo-scansione-documento task))
     (:field (prossimo-campo-documento task))
@@ -35,9 +35,9 @@ Nessun ciclo di attesa; il chiamante gestisce scheduling e deadline esterna."
 ;;; REQ: REQ-SEC-003 REQ-SEC-007 REQ-SEC-010
 (declaim (ftype (function (t t) keyword) passo-preparazione-full-text))
 (defun passo-preparazione-full-text (task quantum)
-  "Pre: task attivo esclusivo, quantum 1..65536. Post: RUNNING o DONE, nessun parziale pubblico.
-Gli errori di dominio invalidano il task e sono propagati; invarianti al confine worker
-richiedono fail-stop, non un retry del commit. Nessun callback o I/O."
+  "Pre: exclusive active task, quantum 1..65536. Post: RUNNING or DONE, no public partial result.
+Domain errors invalidate the task and propagate; invariants at the worker boundary
+require fail-stop, not a commit retry. No callback or I/O."
   (unless (and (typep task 'preparazione-full-text) (typep quantum '(integer 1 65536)))
     (error 'invalid-argument :reason :fulltext-document-step))
   (when (eq :done (preparazione-full-text-phase task)) (return-from passo-preparazione-full-text :done))
@@ -53,14 +53,14 @@ richiedono fail-stop, non un retry del commit. Nessun callback o I/O."
 ;;; REQ: REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (t) keyword) annulla-preparazione-full-text stato-preparazione-full-text))
 (defun annulla-preparazione-full-text (task)
-  "Pre: task esclusivo, attivo o gia cancellato. Post: CANCELLED, prestiti rilasciati.
-Idempotente; INVALID-ARGUMENT per tipo/stato DONE/IDLE/FAILED."
+  "Pre: exclusive task, active or already canceled. Post: CANCELLED, loans released.
+Idempotent; INVALID-ARGUMENT for type/DONE/IDLE/FAILED state."
   (unless (and (typep task 'preparazione-full-text)
                (not (member (preparazione-full-text-phase task) '(:idle :done :failed))))
     (error 'invalid-argument :reason :fulltext-document-cancel))
   (rilascia-documento task :cancelled) :cancelled)
 (defun stato-preparazione-full-text (task)
-  "Pre: task valido, lettura dal suo proprietario. Post: stato pubblico senza dati parziali."
+  "Pre: valid task, read by its owner. Post: public state without partial data."
   (unless (typep task 'preparazione-full-text) (error 'invalid-argument :reason :fulltext-document-input))
   (case (preparazione-full-text-phase task)
     ((:idle :done :failed :cancelled) (preparazione-full-text-phase task))
@@ -71,9 +71,9 @@ Idempotente; INVALID-ARGUMENT per tipo/stato DONE/IDLE/FAILED."
 (declaim (ftype (function (t) (values r:indice-posizionale index index index index &optional))
                 risultati-preparazione-full-text))
 (defun risultati-preparazione-full-text (task)
-  "Pre: DONE, prestito esclusivo fino al prossimo avvio. Post: run SEALED, U(documento),
-bound file singolo, payload staging usato, byte di testo input sui campi presenti.
-Non e una riserva writer, una mappa hint, un commit o prova di copertura/MVCC/READY."
+  "Pre: DONE, exclusive loan until the next start. Post: SEALED run, U(documento),
+single-file bound, used staging payload, input text bytes over present fields.
+Not a writer reservation, hint map, commit, or proof of coverage/MVCC/READY."
   (unless (and (typep task 'preparazione-full-text) (eq :done (preparazione-full-text-phase task)))
     (error 'invalid-argument :reason :fulltext-document-incomplete))
   (values (preparazione-full-text-run task) (preparazione-full-text-bound task)

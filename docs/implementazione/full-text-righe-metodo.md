@@ -3,15 +3,15 @@
 # Full-text row directory — preregistered method
 
 October 22, 2026, REQ-SEC-003/004/006/010 and REQ-CON-002, ADR-0054 and INV-I5/I6.
-Pool-local directory links a unique u32 row to canonical reservation;
-PUT bridge resolves its physical reference without depending on WAL buffer.
-Introduces no publication, concurrent readers, prepared outcomes, or reclamation.
+The pool-local directory links a unique u32 row to the canonical reservation;
+the PUT bridge resolves its physical reference without depending on the WAL buffer.
+It introduces no publication, concurrent readers, prepared outcomes, or reclamation.
 
 Two preallocated u32 arrays, ordered by row, contain key and slot
-position. Binary search bounded to 11 steps at maximum capacity 1024; insertion
-and deletion move at most 1024 metadata pairs under writer lease.
+position. Binary search is bounded to 11 steps at the maximum capacity of 1024; insertion
+and deletion move at most 1024 metadata pairs under the writer lease.
 No document scan, hot allocation, lock, or state between Serie.
-Directory replaces previous linear duplicate check.
+The directory replaces the previous linear duplicate check.
 
 | Decision | Planned verification |
 |---|---|
@@ -35,7 +35,7 @@ Extend existing reservation and PUT measurements, retaining six CI exclusions:
 100 warmups, GC, one thousand operations and lookups without heap allocation. Four private writers
 with same row numbers, finite waits. Semantic mutant on public
 lookup always returning absent, demonstrating oracle sensitivity. Preserve original outputs,
-actual sources, and all failures. Two readings by same author; C1 and MC/DC open.
+actual sources, and all failures. Two readings by the same author; C1 and MC/DC remain open.
 
 <a id="decisioni-composte-introdotte-o-estese"></a>
 
@@ -55,9 +55,9 @@ actual sources, and all failures. Two readings by same author; C1 and MC/DC open
 | `annulla-riserva-full-text` | removal only pre-append under existing guards, post count=row-count |
 | `leggi-riferimento-riga-full-text` | absent/pending without scalars; transferred with absent physical reference remains pending, sealed checks row, other state causes fault |
 
-Tests cover public contract and selected corruptions, do not yet demonstrate
+Tests cover the public contract and selected corruptions; they do not yet demonstrate
 independence of every internal-guard condition. MC/DC count is not
-inferred from SB-COVER or fifteen mutants of whole suite.
+inferred from SB-COVER or fifteen mutants of the whole suite.
 
 <a id="due-letture-del-medesimo-autore--22-ottobre-2026"></a>
 
@@ -66,15 +66,15 @@ inferred from SB-COVER or fifteen mutants of whole suite.
 First reading: verified requirement/ADR, writer owner, keys without sentinels,
 per-pool uniqueness, search/movement limits, and preflight/effect order.
 Adoption and cancellation effects begin inside `unwind-protect`; incomplete
-exit leaves pool faulted even between directory and counter updates.
+exit leaves the pool faulted even between directory and counter updates.
 Costs and loans are not returned to simulate rollback.
 
 Second reading: verified typed arrays with read-only references, absence of
 global state or I/O, eight-value contracts, no copying/ready handle,
-CSN/TXID distinction, and no dependence on reused WAL buffer. Position/
-neighbor check separated to contain function complexity; a missing slot
-is recognized as invariant before reading fields. Association-list
-oracle, semantic mutant, and limits of documented claims rechecked.
+CSN/TXID distinction, and no dependence on reused WAL buffer. The position/
+neighbor check was separated to contain function complexity; a missing slot
+is recognized as an invariant failure before its fields are read. Association-list
+oracle, semantic mutant, and limits of documented claims were rechecked.
 No durable or format change, no data retirement. Traceability and
 full verification must be recorded on frozen sources; this is self-reading,
 not independent review or C1 qualification.

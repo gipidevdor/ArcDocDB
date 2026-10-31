@@ -9,7 +9,7 @@ then recovering them in a new process after SIGKILL?
 
 One Serie, v1/v2 formats, exclusive 0700 temporary namespace. Writer uses product
 ACTIVE preparer, WAL/CSN, controller, primary index, and GET. Bootstrap/coordination
-are explicit in C4 fixture: no complete server, catalog, or Recovery Manager claimed implemented.
+are explicit in C4 fixture: no complete server, catalog, or Recovery Manager is claimed to be implemented.
 
 Four interruptions per format: after durable commits; after record fragment without
 SEAL; after checkpoint preparation before publication; after publication, rotation,
@@ -22,18 +22,18 @@ Expected results are workload constants: latest A/C values, B absent, and after 
 A absent, new C, D present. They derive from neither index, manifest, nor recovery output.
 Negative control alters only verifier expectation: must produce nonzero outcome.
 Preexisting segment bytes/lengths must remain identical after recovery, including tail.
-Unpublished CONTROL temporary retained under distinct name.
+An unpublished CONTROL temporary is retained under distinct name.
 
 Limits: at most 8 KiB per file, four segments, 32 records, one serial worker,
 60 seconds per child process. Archivio UUID/namespace are fixture facts.
 Index replay and step ordering belong to test; limited to ordinary records and reject
 prepared/OUTCOME. Tests qualify neither historical MVCC, index/root concurrency,
 multiseries, compaction, power loss, P99, throughput, GC, nor C1/MC/DC.
-No performance measured.
+No performance is measured.
 
 Execution planned through `tools/record-command.lisp`, including failed attempts;
 final full check with `make check`. Suite belongs to ASDF; dedicated driver permits
-separate repetition. Original records and source blobs retained in results campaign.
+separate repetition. Original records and source blobs are retained in results campaign.
 
 <a id="estensione-preregistrata-nuove-scritture-dopo-il-recovery"></a>
 
@@ -44,8 +44,8 @@ later CSNs, write again, and preserve effects after a second SIGKILL?
 
 For each of eight previous scenarios, after first recovery a new process verifies
 all CLOSED, rebuilds maximum CSN from all ordinary records including tombstones,
-and verifies empty ACTIVE. Closes inspection capabilities and creates a separate
-environment: CSN registry, snapshots, GET scope, and controller share same new base.
+and verifies the empty ACTIVE. It closes inspection capabilities and creates a separate
+environment: CSN registry, snapshots, GET scope, and controller share the same new base.
 A checkpoint also retains empty ACTIVE and opens a new segment.
 Four commits follow: insert E, update C, delete A, delete E. Read each effect immediately;
 then SIGKILL process. Two further processes perform recovery and independent verification.
@@ -57,7 +57,7 @@ All preexisting bytes remain unchanged, including unsealed tail.
 Negative case deliberately initializes registry to zero: typed oracle must catch
 reused CSN before appending, with exit 1 and ACTIVE still only 64 bytes.
 
-Name budget rises from four to eight IDs; other limits unchanged.
+Name budget rises from four to eight IDs; other limits are unchanged.
 Full suite plans 18 workloads, 71 processes, 26 intentional SIGKILLs, two expected errors.
 No performance measurement. Still a serial C4 fixture with one Serie, ordinary
 records only, and empty decision log; not a recovery API or general Archivio admission gate.
@@ -68,8 +68,8 @@ records only, and empty decision log; not a recovery API or general Archivio adm
 
 On 2026-10-15, fixture replaces first-free-ID search with
 `scegli-id-segmento-recovery`: authoritative manifest and complete `.tmp`/`.seg`
-name inventory in its eight-ID namespace. Verifies `:ready`, successor, and its
-budget; does not apply plan actions. Test remains C4 with same 18 workloads
+name inventory in its eight-ID namespace. It verifies `:ready`, successor, and its
+budget; it does not apply plan actions. Test remains C4 with same 18 workloads
 and constant oracles. ID-proposal contract/C1 verification remain separate.
 
 <a id="collegamento-preregistrato-alle-aperture-relative-e-alleof"></a>
@@ -83,7 +83,7 @@ API returns owned capability and EOF observed on same FD; fixture immediately
 registers capability for closure and retains both values.
 
 Canonical CONTROL, decision-log, and old-ACTIVE reads receive that EOF and
-same-sized scratch. No longer derive size from image opened separately by pathname.
+same-sized scratch. They no longer derive size from an image opened separately by pathname.
 `file-image` remains independent for preexisting-byte comparisons and other C4
 operations. In this extension, preparation/output, probe-based selection between
 temporary/definitive names, and orchestration remain fixture responsibilities.
@@ -115,7 +115,7 @@ names, ignored by storage parser but included in budgets.
 
 Before new execution, root and separate reviewer read composition with `main`
 at `110e79f1`: opening/EOF and name collection use same owned parent with canonical
-names and independent budgets. I/O code unchanged from S1; fixture composition changes.
+names and independent budgets. I/O code unchanged from S1; the fixture composition changes.
 Freeze merge and run `make test lint trace links` with fresh ASDF cache.
 Original record remains distinct from full S1 and CI; do not promote this check
 to a new full `make check`.
@@ -126,7 +126,7 @@ to a new full `make check`.
 
 Before execution, connect `output` to `io:crea-temporaneo-nella-directory`:
 receives fixture's already owned parent and `.tmp` leaf only, with same 8 KiB
-budgets. Returned append capability immediately registered for cleanup.
+budgets. The returned append capability is immediately registered for cleanup.
 CONTROL, decision log, and new segments thus use product exclusive relative creation;
 fixture still chooses names and preparation order.
 
@@ -141,14 +141,14 @@ added: a post-creation error may leave orphan `.tmp` and implies neither removal
 
 ## Parent preservation and structured outcome — 2026-10-22
 
-Parent collects stdout/stderr at one point in each child's cleanup, including
+The parent collects stdout/stderr at one point in each child's cleanup, including
 after timeout, startup error, or process error. After 60-second deadline, attempts
 SIGKILL and waits up to five seconds for cleanup; captures observed state/code
-before closing handle. Both reads and both emissions attempted independently:
-first error remains failure cause without skipping other channel. Each channel
+before closing handle. Both reads and both emissions are attempted independently:
+first error remains failure cause without skipping other channel. Each channel is
 emitted once to parent stdout, then flushed, before oracle assertions and root removal.
 
-Root deleted only after successful scenario completion. Any failure, including
+The root is deleted only after successful scenario completion. Any failure, including
 log read/emission, retains root and reports path on stderr with `VERTICAL-ROOT-RETAINED`.
 Original files therefore remain available even if parent stdout is unwritable.
 Cleanup SIGKILL after timeout is not a successful crash: original error reraised,
@@ -174,7 +174,7 @@ with this structure (lists abbreviated here):
 ```
 
 `:SCENARIOS` and `:PROCESSES` contain events; `:CRASHES` and `:NEGATIVES` contain
-corresponding process IDs. Counts derived from recorded events and compared with
+corresponding process IDs. Counts are derived from recorded events and compared with
 18 scenarios (16 positive/two negative), 71 processes, 26 observed SIGKILL terminations,
 and two negative-mode exits 1, after checking existing typed markers.
 Any deviation prevents `:PASS` summary. Form contains no random roots, PIDs,
@@ -182,7 +182,7 @@ durations, or child logs; original diagnostics retain variable data, not duplica
 in summary.
 
 Freeze concerns only parent and this method: no new execution claimed.
-V1/v2 workloads, expectations, C4 coverage unchanged. Preservation is diagnostic
+V1/v2 workloads, expectations, and C4 coverage are unchanged. Preservation is diagnostic
 for parent process and temporaries; it proves neither power-loss resistance,
 parent termination safety, nor filesystem-fault tolerance. If SIGKILL or cleanup
 wait fails, retained root does not certify child termination. C4 limits of one

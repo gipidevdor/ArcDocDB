@@ -7,8 +7,8 @@
 ;;; REQ: REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (integer integer integer) null) check-decision-budgets))
 (defun check-decision-budgets (max-decisions max-participants max-per-decision)
-  "Pre: budget interi del chiamante. Post: conteggi index e tetto per DECISION u16;
-zero ammesso. INVALID-ARGUMENT prima dello scanner per configurazione invalida."
+  "Pre: caller's integer budgets. Post: index counts and u16 DECISION ceiling;
+zero allowed. INVALID-ARGUMENT before the scanner for invalid configuration."
   (unless (and (typep max-decisions 'index) (typep max-participants 'index))
     (error 'invalid-argument :reason :decision-arguments))
   (unless (typep max-per-decision 'u16)
@@ -19,9 +19,9 @@ zero ammesso. INVALID-ARGUMENT prima dello scanner per configurazione invalida."
 (declaim (ftype (function (octets index index integer u16)
                          (values index (or null index) index index u16 &optional)) decision-frame))
 (defun decision-frame (buffer pos end version max-per-decision)
-  "Pre: record nel prefisso sigillato e stabile. Post: cornice verificata; per DECISION
-restituisce fine, offset CSN, span ID16 e count; per SEAL offset CSN NIL.
-Propaga corruzione del payload e budget, senza riclassificarli come coda."
+  "Pre: record in the stable sealed prefix. Post: verified frame; for DECISION,
+returns end, CSN offset, ID16 span, and count; for SEAL, CSN offset NIL.
+Propagates payload corruption and budget errors without reclassifying them as tail."
   (check-range buffer pos end)
   (unless (< pos end)
     (error 'invariant-violation :reason :decision-frame-range :offset pos))
@@ -45,10 +45,10 @@ Propaga corruzione del payload e budget, senza riclassificarli come coda."
                          (values index &optional)) preflight-decisions))
 (defun preflight-decisions (buffer start end version frames decisions max-participants
                             max-per-decision file-offset)
-  "Pre: prefisso verificato dallo scanner, contatori di cornici e DECISION autorevoli.
-Post: tutti i payload validi e totale partecipanti entro budget, duplicati di record inclusi.
-RESOURCE-EXHAUSTED con offset assoluto; errori del codec mantengono offset relativi.
-Nessuna entry o copia dei partecipanti allocata durante questo passaggio."
+  "Pre: scanner-verified prefix, authoritative frame and DECISION counters.
+Post: all payloads valid and total participants within budget, including duplicate records.
+RESOURCE-EXHAUSTED with absolute offset; codec errors retain relative offsets.
+No entry or participant copy allocated during this pass."
   (check-range buffer start end)
   (unless (<= frames (floor (- end start) +header-bytes+))
     (error 'invariant-violation :reason :decision-frame-count :offset start))
@@ -73,9 +73,9 @@ Nessuna entry o copia dei partecipanti allocata durante questo passaggio."
 (declaim (ftype (function (octets index index integer index index index u16 u64)
                          (values simple-vector &optional)) decode-decisions))
 (defun decode-decisions (buffer start end version frames count total max-per-decision file-offset)
-  "Pre: payload e budget cumulativi già verificati, buffer stabile fino al ritorno.
-Post: COUNT entry possedute, partecipanti copiati, ordinati e distinti; nessun alias all'input.
-Propaga errori tipizzati; consumo incoerente segnala INVARIANT-VIOLATION."
+  "Pre: payloads and cumulative budgets already verified, buffer stable until return.
+Post: COUNT owned entries; participants copied, sorted, and distinct; no input aliasing.
+Propagates typed errors; inconsistent consumption signals INVARIANT-VIOLATION."
   (check-range buffer start end)
   (unless (<= count frames (floor (- end start) +header-bytes+))
     (error 'invariant-violation :reason :decision-frame-count :offset start))
@@ -103,8 +103,8 @@ Propaga errori tipizzati; consumo incoerente segnala INVARIANT-VIOLATION."
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-FOR-003 REQ-VAL-001
 (declaim (ftype (function (decision-entry decision-entry) boolean) same-decision-p))
 (defun same-decision-p (left right)
-  "Pre: entry private con partecipanti canonici. Post: CSN e insieme ID16 coincidono.
-INVARIANT-VIOLATION per entry interna malformata; confronto completo e limitato."
+  "Pre: private entries with canonical participants. Post: CSN and ID16 set match.
+INVARIANT-VIOLATION for a malformed internal entry; complete, bounded comparison."
   (check-entry-shape left)
   (check-entry-shape right)
   (and (= (%entry-csn left) (%entry-csn right)) (= (%entry-count left) (%entry-count right))
@@ -114,9 +114,9 @@ INVARIANT-VIOLATION per entry interna malformata; confronto completo e limitato.
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (simple-vector) (values index &optional)) unique-decision-count))
 (defun unique-decision-count (entries)
-  "Pre: entry ordinate stabilmente per TXID. Post: conta TXID unici, duplicati identici ammessi.
-CORRUPTION-DETECTED al primo offset assoluto discordante; INVARIANT-VIOLATION per ordine.
-Ogni confronto coinvolge solo copie possedute; nessuna tabella parziale restituita."
+  "Pre: entries stably sorted by TXID. Post: counts unique TXIDs, identical duplicates allowed.
+CORRUPTION-DETECTED at the first conflicting absolute offset; INVARIANT-VIOLATION for order.
+Every comparison involves only owned copies; no partial table returned."
   (let ((previous nil) (unique 0) (conflict nil))
     (dotimes (i (length entries))
       (let ((entry (the decision-entry (aref entries i))))
@@ -137,8 +137,8 @@ Ogni confronto coinvolge solo copie possedute; nessuna tabella parziale restitui
 ;;; REQ: REQ-TXM-005 REQ-TXM-001 REQ-AFF-008 REQ-VAL-001
 (declaim (ftype (function (simple-vector) (values decision-table &optional)) collapse-decisions))
 (defun collapse-decisions (entries)
-  "Pre: entry ordinate e possedute. Post: tabella privata completa, un'entry per TXID.
-Propaga conflitti tipizzati prima della costruzione del risultato; nessun vettore esportato."
+  "Pre: sorted, owned entries. Post: complete private table, one entry per TXID.
+Propagates typed conflicts before constructing the result; no vector exported."
   (let* ((count (unique-decision-count entries))
          (result (make-array count :element-type t)) (previous nil) (next 0))
     (dotimes (i (length entries))
@@ -168,12 +168,12 @@ Propaga conflitti tipizzati prima della costruzione del risultato; nessun vettor
                                    (max-batch-records 65536) (max-batch-bytes 67108864)
                                    (max-search-bytes 67108864) (max-decisions 65536)
                                    (max-participants 65536) (max-participants-per-decision 65535))
-  "Pre: log fino a EOF fisico stabile attestato da FILE-SIZE, versione esplicita;
-START dopo header verificato o checkpoint autorevole. Budget finiti, zero ammesso per dati vuoti.
-Post: tabella posseduta completa, prefisso nel buffer, COMPLETE/TAIL; nessun I/O, replay,
-pubblicazione o mutazione del buffer. Duplicati uguali idempotenti, nessuna tabella parziale.
-Propaga errori tipizzati; i payload nel prefisso sigillato non diventano una nuova coda.
-Percorso di apertura con allocazioni ammesse; TXID/CSN sono u64 opachi anche zero o massimo."
+  "Pre: log through stable physical EOF attested by FILE-SIZE, explicit version;
+START after a verified header or authoritative checkpoint. Finite budgets, zero allowed for empty data.
+Post: complete owned table, prefix in the buffer, COMPLETE/TAIL; no I/O, replay,
+publication, or buffer mutation. Equal duplicates are idempotent; no partial table.
+Propagates typed errors; payloads in the sealed prefix do not become a new tail.
+Opening path with allocations allowed; TXID/CSN are opaque u64s, including zero or maximum."
   (check-decision-budgets max-decisions max-participants max-participants-per-decision)
   (multiple-value-bind (prefix status batches count)
       (scansiona-log buffer start end 0 :version version :log-kind :multiserie

@@ -10,10 +10,10 @@
 ## Question and method
 
 What code does SBCL generate to compare 16 control bytes with a 7-bit fingerprint,
-and what cost remains after range checks? Experiment separates scalar comparison,
+and what cost remains after range checks? The experiment separates scalar comparison,
 two u64 words with SWAR, and local SIMD backend. Every result is an exact mask:
 one bit per position, without false positives from interbyte borrow.
-Empty/deleted control bytes are comparison data; spike implements no probing,
+Empty/deleted control bytes are comparison data; the spike implements no probing,
 insertion, or seqlock.
 
 Methods recorded before checks and measurements:
@@ -94,7 +94,7 @@ generated in Common Lisp. [Product integration and results](../../docs/implement
 remain separate from spike; slower unrolled kernel was not selected.
 
 The later [16/32 B comparison](metodo-crc32c-unroll32.md) also measures 64 B and
-actual 4112 B body, with byte or 4/1 B tail.
+an actual 4112 B body, with byte or 4/1 B tail.
 [Results and complete GET](../../docs/implementazione/crc32c-unroll32.md) confirm
 16 B kernel selection. Reproduce through recorder with
 `run-crc32c-unroll32.lisp --bench DIRECTORY-NUOVA`; `--self-test` and
@@ -130,7 +130,7 @@ CHECK plans 20,560 shared windows: all queries 0..127 and offsets 0..15 over eig
 patterns; every control value allowed by product (0..127, DELETED=254, EMPTY=255)
 in sixteen positions for queries 0/127; final groups ending exactly at array boundary.
 Independent oracle sums one power of two per byte matching query.
-Entire input compared before/after every window. All buffers of length 0..15 and
+The entire input is compared before/after every window. All buffers of length 0..15 and
 all final windows shifted by one byte are rejected: no incomplete tail loaded as vector.
 
 Also planned: 56 negative cases for windows, nonsimple buffers, types, offsets,
@@ -165,14 +165,14 @@ BENCH limits: 2,048..8,192 rows in multiples of 2,048, 1..1,024 passes,
 default 120 seconds (maximum 300), maximum payload 4 MiB.
 Preflight calculates 72 bytes/row for matrix and copies plus 1 MiB for sensor;
 three matrices prepared one at a time. Headers, report structures, runtime, and
-memory awaiting GC excluded: limit is not RSS. Deadline is cooperative, at most
+memory awaiting GC are excluded: limit is not RSS. Deadline is cooperative, at most
 8,192 calls between checks during a loop. Unresolved timer, checksum mismatch,
 mutation, or exhausted budget fails.
 
 With three methods, default plans 45 samples and 2,985,984 warmup/measurement calls;
 without SIMD backend, 30 samples and 1,990,656 calls.
 Campaign does not qualify concurrent lookup, control-byte publication order,
-barriers, seqlock, or database throughput. No advantage claimed before real
+barriers, seqlock, or database throughput. No advantage is claimed before real
 measurements on each intended platform.
 
 The [local campaign of 2026-10-22](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-22-simd-comparison/README.md)

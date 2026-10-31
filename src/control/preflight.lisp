@@ -7,9 +7,9 @@
 (declaim (ftype (function (checkpoint-control file-io file-io file-io octets index) null)
                 verifica-preparazione-control))
 (defun verifica-preparazione-control (plan input append directory scratch chunk-bytes)
-  "Pre: nuovo control.log.tmp O_EXCL, parent autorevole e namespace riservato; capacità esclusive.
-Post: buffer, budget, backend e frontiere controllati prima di qualsiasi syscall/mutazione.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT dai controlli; ACTIVE ancora solo header."
+  "Pre: new O_EXCL control.log.tmp, authoritative parent, and reserved namespace; exclusive capabilities.
+Post: buffer, budgets, backend, and frontiers checked before any syscall/mutation.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT from checks; ACTIVE still header-only."
   (verifica-active-checkpoint (checkpoint-control-active plan))
   (unless (plusp chunk-bytes) (error 'invalid-argument :reason :control-checkpoint-chunk))
   (let* ((active-input (input-active-checkpoint (checkpoint-control-active plan)))
@@ -34,9 +34,9 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT dai controlli; ACTIVE ancora solo h
 ;;; REQ: REQ-AFF-002 REQ-FOR-002 REQ-REC-001
 (declaim (ftype (function (checkpoint-control octets index index) null) verifica-rilettura-control))
 (defun verifica-rilettura-control (plan scratch start count)
-  "Pre: chunk riletto nel range verificato. Post: ogni byte header/EDIT/SEAL uguale al piano.
-CORRUPTION-DETECTED al primo disaccordo, offset preciso; nessuna mutazione dei byte.
-Ciclo limitato a COUNT, al massimo la lunghezza del piano."
+  "Pre: chunk reread within the verified range. Post: every header/EDIT/SEAL byte equal to the plan.
+CORRUPTION-DETECTED at the first disagreement, precise offset; no byte mutation.
+Loop bounded by COUNT, at most the plan length."
   (let ((expected (checkpoint-control-bytes plan)))
     (check-range scratch 0 count) (check-range expected start (+ start count))
     (dotimes (i count)

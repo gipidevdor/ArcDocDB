@@ -13,7 +13,7 @@
 
 The controller can configure an immutable policy with an integer threshold
 of 1..100 percent, default 75. Renewal is requested when either
-touched-key count or occupied delta bytes reaches its respective
+the touched-key count or the number of occupied delta bytes reaches its respective
 threshold. Comparison is inclusive and exact, with integer products that
 remain SBCL64 fixnums, without floating-point rounding.
 
@@ -43,7 +43,7 @@ admission makes the engine FAULTED. No retry, timer, or new scheduler.
 The policy can be shared read-only among engines; counters and actuation
 remain private to each Serie. The call is requested by the controller,
 not inserted in the PUT/GET path. It does not generate names, release old files,
-choose resident/paged mode, or reduce the resident in RAM.
+choose resident/paged mode, or reduce the resident index's RAM footprint.
 A new key may still exhaust quota before the next check.
 Durable catalog, autonomous paged writer, and automatic mode selection
 remain open. [Contract and tests](../implementazione/manutenzione-indice-m1.md).

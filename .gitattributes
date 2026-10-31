@@ -1,0 +1,2 @@
+# Preserve upstream legal notices byte for byte, including their whitespace.
+tools/pages/third-party-notices.txt -text whitespace=-blank-at-eol

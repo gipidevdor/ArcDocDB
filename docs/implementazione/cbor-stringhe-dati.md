@@ -43,7 +43,7 @@ Blobs in the record match the freeze:
 
 ## Tests, compilation, and checks
 
-The record contains 122.711 STDOUT characters and 220.252 STDERR characters, examined
+The record contains 122,711 STDOUT characters and 220,252 STDERR characters, examined
 in full through the reader. There are 683 `ok    ` lines, all unique:
 681 named tests and two smoke tests (`package ARCDOCDB presente` and
 `ARCDOCDB:*VERSION* è una stringa`). The eighteen suite counts
@@ -71,8 +71,8 @@ sum to 681:
 | Primary index | 55 |
 
 All twenty-one REQ-CBR-002 names in the frozen corpus appear once,
-including the parallel test. The log records 8.194 length comparisons
-and fuzz2048, seed53574342, with 1.546 accepted and 502 UTF-8 rejections:
+including the parallel test. The log records 8,194 length comparisons
+and fuzz2048, seed53574342, with 1,546 accepted and 502 UTF-8 rejections:
 the sum matches the plan. Other corpus quantities are
 deduced from frozen asserts and fixtures, without a new independent
 counter in the log.
@@ -91,8 +91,8 @@ errors. EXIT-CODE0 and STATUS OK are consistent with these markers.
 ## Worker data
 
 Two real workers, each with a private destination, are reused in
-two waves. Each worker performs 8.192 items per wave on a shared,
-immutable 1.024-byte source. On every call, the corpus checks a single fixnum
+two waves. Each worker performs 8,192 items per wave on a shared,
+immutable 1,024-byte source. On every call, the corpus checks a single fixnum
 NEXT and the entire destination; after join it checks the complete source
 and buffers. Waits, join, and cleanup have bounds and check
 termination. The named test passes in the preliminary record.
@@ -103,12 +103,12 @@ the final payload byte is #x42=66. Token per item: 1030+89+66=1185 and
 1030+121+66=1217. Multiplying by8192 gives exactly
 9707520/9969664, both sinks observed in both waves.
 
-| Wave | Total items | MT2/MT3 sink | Overlap at 1.000.000 ticks/s |
+| Wave | Total items | MT2/MT3 sink | Overlap at 1,000,000 ticks/s |
 |---|---:|---|---:|
-| 0 | 16.384 | 9.707.520 / 9.969.664 | 47.821 ticks = 47,821 ms |
-| 1 | 16.384 | 9.707.520 / 9.969.664 | 47.752 ticks = 47,752 ms |
+| 0 | 16,384 | 9,707,520 / 9,969,664 | 47,821 ticks = 47.821 ms |
+| 1 | 16,384 | 9,707,520 / 9,969,664 | 47,752 ticks = 47.752 ms |
 
-Total32.768 items and 33.554.432 copied payload bytes. Actual intervals
+Total32.768 items and 33,554,432 copied payload bytes. Actual intervals
 overlap and sinks depend on observed values/bytes. The record
 supports functional concurrency on a shared source and private
 destinations; it does not establish simultaneity across cores or scaling. Cold
@@ -124,8 +124,8 @@ through evidence-storage: wrapper OK/exit0/STABLE, 83.243866 seconds,
 OK, sources STABLE with 127 equal fingerprints, one worker, safety3,
 clock1.000.000 ticks/s. Empty STDERR.
 
-Nine fixtures have five samples each, 4.096 measured calls and
-warmup128 per sample: 45 samples, 184.320 measured calls. Every
+Nine fixtures have five samples each, 4,096 measured calls and
+warmup128 per sample: 45 samples, 184,320 measured calls. Every
 sample observes heap0. A separate recalculation, without loading product or
 driver, reconstructs the arithmetic header, payload, and entire buffer with two
 initial and four final sentinels. All expected-full-buffer values,
@@ -135,17 +135,17 @@ All samples match the independent sink
 The source-unchanged, private-preallocated-buffer-and-source,
 and complete-output-checked-per-call observations are true for every fixture.
 
-| Fixture | NEXT | Cold token | Complete buffer bytes | Min–max seconds per 4.096 calls |
+| Fixture | NEXT | Cold token | Complete buffer bytes | Min–max seconds per 4,096 calls |
 |---|---:|---:|---:|---|
-| MT2, 23 bytes | 26 | 107.567 | 30 | 0,003207–0,003285 |
-| MT2, 24 bytes | 28 | 121.993 | 32 | 0,003421–0,003479 |
-| MT2, 256 bytes | 261 | 8.889.817 | 265 | 0,025691–0,025793 |
-| MT2, 65.536 bytes | 65.543 | 547.776.994.183 | 65.547 | 6,279073–7,036515 |
-| MT3 ASCII, 23 bytes | 26 | 53.153 | 30 | 0,004466–0,004555 |
-| MT3 ASCII, 24 bytes | 28 | 59.521 | 32 | 0,004665–0,004754 |
-| MT3 ASCII, 256 bytes | 261 | 3.490.105 | 265 | 0,037904–0,038055 |
-| MT3 ASCII, 65.536 bytes | 65.543 | 208.396.917.735 | 65.547 | 9,293614–9,424335 |
-| MT3 Unicode, 16 bytes | 19 | 49.192 | 23 | 0,002944–0,002979 |
+| MT2, 23 bytes | 26 | 107,567 | 30 | 0.003207–0.003285 |
+| MT2, 24 bytes | 28 | 121,993 | 32 | 0.003421–0.003479 |
+| MT2, 256 bytes | 261 | 8,889,817 | 265 | 0.025691–0.025793 |
+| MT2, 65,536 bytes | 65,543 | 547,776,994,183 | 65,547 | 6.279073–7.036515 |
+| MT3 ASCII, 23 bytes | 26 | 53,153 | 30 | 0.004466–0.004555 |
+| MT3 ASCII, 24 bytes | 28 | 59,521 | 32 | 0.004665–0.004754 |
+| MT3 ASCII, 256 bytes | 261 | 3,490,105 | 265 | 0.037904–0.038055 |
+| MT3 ASCII, 65,536 bytes | 65,543 | 208,396,917,735 | 65,547 | 9.293614–9.424335 |
+| MT3 Unicode, 16 bytes | 19 | 49,192 | 23 | 0.002944–0.002979 |
 
 Checks recorded in the same benchmark observe baselineheap0,
 sink8.386.560 for4096 null calls, and positiveheap16.777.472 bytes for
@@ -163,22 +163,22 @@ cover error paths, pool, I/O, or scaling. External load is uncontrolled.
 
 The data auditor's self-test is preserved in record
 `spikes/out/4000708787-command-7053-0/report.lisp`: OK/exit0/STABLE,
-1,812891 seconds, four positive and 54 negative fixtures, 37.424 checks.
+1.812891 seconds, four positive and 54 negative fixtures, 37,424 checks.
 These are synthetic data, without product execution. The previous
 attempt `spikes/out/4000708581-command-2576-0/report.lisp` remains
-FAILED/exit1/STABLE, 1,41555 seconds, 9.432 checks: undefined SETF FIRST-SAMPLE
+FAILED/exit1/STABLE, 1.41555 seconds, 9,432 checks: undefined SETF FIRST-SAMPLE
 setter in the auditor fixture. The correction is in auditor blob
 `ae591bf0f2b37d0ed2ae08f16d0270568268a048`; the old file remains in the
 original freeze. Neither attempt is omitted.
 
 The audit of real data is read in record
 `spikes/out/4000708897-command-8700-0/report.lisp`: OK/exit0/STABLE,
-1,895363 seconds, empty STDERR, 19.170 checks. Before/after, the benchmark
-wrapper retains 654.034 bytes and SHA256
+1.895363 seconds, empty STDERR, 19,170 checks. Before/after, the benchmark
+wrapper retains 654,034 bytes and SHA256
 `9fb205681abf9b324bf392eb56348c4484941a849035b18d827994f7c60dde59`.
 The audit confirms nine cells, 45 samples, heap0, coldarity1, 127 fingerprints,
 baseline0, and positive16.777.472 bytes. Sample times sum to
-79,272522 seconds, within the83,243866 of the complete command. The auditor
+79.272522 seconds, within the83,243866 of the complete command. The auditor
 retains its limits concerning data consistency, declared inventory, before/after
 observations, and absence of proof of authenticity or execution.
 
@@ -187,10 +187,10 @@ observations, and absence of proof of authenticity or execution.
 ## Raw coverage and OTHER form
 
 Record `spikes/out/4000708897-command-8699-0/report.lisp`:
-OK/exit0/STABLE, 11,407834 seconds, empty STDERR. The coverage command
+OK/exit0/STABLE, 11.407834 seconds, empty STDERR. The coverage command
 uses scope `cbor-string-write`, private cache, and all21 suite tests.
 The same fuzz counts and sinks appear in the instrumented record; worker overlap
-56.188/55.237 ticks. Instrumented times remain diagnostic.
+56,188/55,237 ticks. Instrumented times remain diagnostic.
 
 Raw outputs preserved in `spikes/out/cbor-string-write-coverage-20261011/`:
 coverage-state.lisp, cover-index.html, and the sole source HTML
@@ -202,7 +202,7 @@ both HTML tables agree, respectively83,1% and75,0%.
 
 Coverage audit: record
 `spikes/out/4000708950-command-9144-0/report.lisp`, OK/exit0/STABLE,
-2,236314 seconds, 74 checks; result taskroot/audit-coverage.lisp.
+2.236314 seconds, 74 checks; result taskroot/audit-coverage.lisp.
 Five before/after file observations match. The52 uncovered expressions
 are syntactically associated with7 declarations,44 internal-error forms,
 and one OTHER; the13 uncovered branch outcomes are associated
@@ -225,7 +225,7 @@ proof of unreachability, exclusions, MC/DC, or C1 gate closure.
 
 Record `spikes/out/4000708897-command-8701-0/report.lisp`, directory
 `spikes/out/cbor-string-write-mutations-20261011/`:
-OK/exit0/STABLE, 85,832531 seconds, empty STDERR. Internal report OK,
+OK/exit0/STABLE, 85.832531 seconds, empty STDERR. Internal report OK,
 stable fingerprints, baseline OK/exit0/signalNIL, and eight mutants detected,
 zero survivors, invalids, or worker-errors. The exact preamble identifies
 the worker self-test, with preserved report
@@ -256,7 +256,7 @@ without constituting an additional detection.
 
 Mutation audit: record
 `spikes/out/4000709011-command-9525-0/report.lisp`, OK/exit0/STABLE,
-9,133384 seconds, empty STDERR, 11.828 checks; taskroot/audit-mutations.lisp.
+9.133384 seconds, empty STDERR, 11,828 checks; taskroot/audit-mutations.lisp.
 The36 before/after file observations match. Nine copies of210 files
 in the declared inventory are compared: baseline identical; each
 mutant changes only the expected product, with a unique replacement

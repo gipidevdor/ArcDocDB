@@ -47,7 +47,7 @@ Serie ──▶ directory (vector of 2^G references) ──▶ fragment
 
 - **Extendible hashing.** The top `G` bits of the 64-bit hash select the
   directory entry; multiple entries may point to the same fragment (local depth ≤ `G`).
-- **Fragment**: Swiss Table with a fixed capacity of `C` slots (default **8.192**: the slot
+- **Fragment**: Swiss Table with a fixed capacity of `C` slots (default **8,192**: the slot
   array exceeds the collector's large-object threshold, so it is not copied), with one
   control byte per slot and group probing. Maximum load factor 7/8.
 - **Slot: 4 contiguous words** in the same array (32 bytes: two slots per cache line).

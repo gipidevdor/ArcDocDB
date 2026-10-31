@@ -1,9 +1,30 @@
 SBCL ?= sbcl
+.DEFAULT_GOAL := build
 EVIDENCE_DYNAMIC_SPACE_SIZE ?= 2048
 EVIDENCE_JOBS ?= 4
 EVIDENCE_WORKER_SECONDS ?= 300
+DOCS_DYNAMIC_SPACE_SIZE ?= 2048
+PYTHON ?= python3
 
 .PHONY: build test lint lint-selftest record-command-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check ci-status ci-selftest ci-audit
+.PHONY: docs docs-setup docs-build docs-check docs-serve
+
+docs-setup:  ## install only the hash-locked documentation dependencies
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/pages/bootstrap.lisp --self-test
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/pages/bootstrap.lisp
+
+docs-build:  ## generate the complete manual with Common Lisp Codex
+	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/build.lisp
+
+docs-check:  ## build, test rendering and verify coverage, links and source hashes
+	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/build.lisp --test
+
+docs: docs-setup  ## prepare and verify the GitHub Pages artifact
+	$(MAKE) docs-check
+
+docs-serve:  ## preview the generated manual at http://127.0.0.1:8765
+	$(PYTHON) -m http.server 8765 --bind 127.0.0.1 --directory _build/site
+
 build test:  ## compila senza avvisi (COD-01) ed esegue gli smoke test
 	$(SBCL) --noinform --no-userinit --non-interactive --load tools/build.lisp
 

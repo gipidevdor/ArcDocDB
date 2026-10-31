@@ -332,4 +332,5 @@
 | [0072](../adr/0072-rinnovo-automatico-delta-m1.md) | REQ-IDX-012 |
 | [0073](../adr/0073-indice-automatico-operativo-m1.md) | REQ-IDX-008, REQ-IDX-013 |
 | [0074](../adr/0074-crc32c-sbcl-2.6.10.md) | REQ-FOR-003 |
+| [0075](../adr/0075-codex-documentation-toolchain.md) | —  (decision without a direct requirement) |
 | [0076](../adr/0076-rotazione-live-m1.md) | REQ-STO-003 |

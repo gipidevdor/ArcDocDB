@@ -63,7 +63,7 @@ Benchmark `d992c9f8cf6ff0d748fcb77f871fb77969480bca`, auditor
 `6262967597ab1c0c142ce1a988ec2ecf49543865`.
 
 Recorded environment: SBCL 2.6.9, Darwin 27.0.0 ARM64, Apple M4, memory
-17.179.869.184 bytes, and 10 logical CPUs; external load UNCONTROLLED.
+17,179,869,184 bytes, and 10 logical CPUs; external load UNCONTROLLED.
 These are observed metadata, without inference about frequency or active cores.
 
 <a id="corpus-e-controlli-preliminari"></a>
@@ -74,12 +74,12 @@ There are 989 distinct `ok` lines: 987 named tests and two explicit
 smoke tests, root package and version string. Among them, 18 are
 REQ-CBR-004 tests. Corpus markers confirm:
 
-- All 65.536 half values and 131.072 expansions: 196.608 successes and 196.608
+- All 65,536 half values and 131,072 expansions: 196,608 successes and 196,608
   insufficient-capacity cases, rotating eight offsets and three configurations.
 - Fuzz 2.048, seed 464C5434: 768 successes, 256 capacity, 128 AI, 128 HIGH,
   128 LOW, 256 word, and 384 range/destination rejections.
-- Two waves of 16.384 aggregate calls, 32.768 total, sink
-  2.115.584/2.148.352 for both. Overlap 2.576/2.580 ticks at 1.000.000
+- Two waves of 16,384 aggregate calls, 32,768 total, sink
+  2,115,584/2,148,352 for both. Overlap 2,576/2,580 ticks at 1,000,000
   ticks/s. Fixture intervals do not attest to scaling across cores.
 - Lint: 165 files, 0 violations. Trace: 118 requirements, 65 invariants,
   13 FI scenarios, 52 ADRs, 0 errors.
@@ -101,7 +101,7 @@ detected mutation. It also preserves baseline-copy and
 baseline-transport fixtures in their respective records. These are synthetic scenarios,
 separate from the actual baseline.
 
-The benchmark auditor self-test records 167.234 checks, four positive
+The benchmark auditor self-test records 167,234 checks, four positive
 reports, and 70 negative fixtures with 70 distinct names and specific reasons.
 It includes bytes/subnormal, raw words, span/NEXT/arity, sink/heap/timer,
 metadata, fingerprints, inventory, and reader-eval/trailing/improper/cyclic data.
@@ -109,9 +109,9 @@ The cold reference includes six catalog cases and seven additional
 zero/infinity/NaN cases, with integer/rational arithmetic and no native
 floats.
 
-Benchmark self-test and benchmark include a null baseline of 4.096
+Benchmark self-test and benchmark include a null baseline of 4,096
 calls, warmup 128, heap 0, and sink 8.386.560. The 16×1 MiB positive control
-records 16.777.472 bytes, at least 16.777.216 deliberate, and sink 16.777.336.
+records 16,777,472 bytes, at least 16,777,216 deliberate, and sink 16.777.336.
 Eight output alterations, two shape and six byte changes, four arity/NEXT cases, wrong
 sink, and nonzero heap are rejected for the expected reason.
 
@@ -126,7 +126,7 @@ half form. LOW 1 in 3FF00000/00000001 prevents reduction from 64.
 FFF80000/00000001 retains negative sign, quiet NaN, and payload not
 aligned toward 32, so it remains 64. These observations do not use the codec.
 
-| Fixture | Cold bytes | NEXT | Token | Sink per 4.096 |
+| Fixture | Cold bytes | NEXT | Token | Sink per 4,096 |
 |---|---|---:|---:|---:|
 | half identity | 249 62 0 | 5 | 6445 | 34785280 |
 | double→half | 249 62 0 | 5 | 6445 | 34785280 |
@@ -138,17 +138,17 @@ aligned toward 32, so it remains 64. These observations do not use the codec.
 START 2, END=NEXT+2, SIZE+6 buffer with sentinel 165: two prefix bytes,
 two remaining bytes, and two beyond END. The complete array, raw words,
 size, NEXT, a single cold-value, token NEXT+Σ(i+1)×byte[i], and sink
-4.096×TOKEN+4.096×4.095/2 were recalculated. For all 30 samples: 4.096 calls,
+4,096×TOKEN+4,096×4,095/2 were recalculated. For all 30 samples: 4,096 calls,
 warmup 128, heap 0, exact token/sink, seconds=RAW-TICKS/1.000.000, and
-rate=4.096/seconds. Total 33.414 ticks=0,033414 seconds of samples;
-benchmark process 1,416727 seconds. Measurement includes complete
+rate=4,096/seconds. Total 33,414 ticks=0.033414 seconds of samples;
+benchmark process 1.416727 seconds. Measurement includes complete
 fixture checks and does not represent engine throughput, scaling,
 or absolute proof of no allocation.
 
 Internal fingerprints: 167 equal before/after MD5 entries. The runtime audit
-records 55.824 checks, six cells/thirty samples, heap 0, arity 1, and the
-same total of 0,033414 seconds. The benchmark wrapper observed before/after
-has 198.507 bytes and SHA256
+records 55,824 checks, six cells/thirty samples, heap 0, arity 1, and the
+same total of 0.033414 seconds. The benchmark wrapper observed before/after
+has 198,507 bytes and SHA256
 `1154975a7c27c433d402c7b7549a62fb321b1e43fb806f5def86dd8825bfceb6`.
 The auditor checks data consistency and declared inventory; it does not prove
 authenticity/execution, closure of the entire tree, or intrinsic
@@ -160,7 +160,7 @@ MD5/Git correspondence without explicit caller expectations.
 
 `spikes/out/cbor-float-write-20261013/mutations/report.lisp` was read and,
 through the trusted tool, every line of the nine logs through EOF. The
-baseline has 1.067 lines, 989 distinct `ok` lines, exit 0, RESULT OK, and SIGNAL NIL.
+baseline has 1,067 lines, 989 distinct `ok` lines, exit 0, RESULT OK, and SIGNAL NIL.
 The version smoke line is exactly line 2; the complete marker
 `build e test: nessun avviso, tutti i controlli superati` is exactly
 line 1.067. It has no Unhandled or invalidating compiler diagnostics.
@@ -217,7 +217,7 @@ The target source-files catalog instead contains only two sources,
 narrow and writer: it is not the copy inventory.
 
 All 280 files in each of the nine copies were compared
-against original fingerprints: 2.520 comparisons. The baseline has no differences;
+against original fingerprints: 2,520 comparisons. The baseline has no differences;
 each mutant differs only in its declared SOURCE-FILE. For
 each, the BEFORE fragment occurs exactly once in the original and
 the copy's entire text is exactly prefix+AFTER+suffix. Eight
@@ -243,9 +243,9 @@ nor outcomes of the OK process records listed above.
 |---|---|---|
 | `c4785a` | Snapshot plist entry treated as a pair: FIRST returns :PATH and SEARCH signals TYPE-ERROR, :PATH not SEQUENCE. Earlier counts had already been extracted. | GETF :PATH; reading completed `629503`. |
 | `bbee86` | Inline rational oracle attempt with missing parenthesis: INPUT-ERROR-IN-LOAD, EOF in DEFUN from line 1/column 36; no recalculation performed. | Cold literal catalog and arithmetic recalculation of all 30 samples `569ad7`; assessment of the six values shown above. |
-| `d794b5` | SUBSEQ through 4 on catalogue-source-files of length 2: BOUNDING-INDICES-BAD-ERROR before reading logs. | Structure inspection; `f9379c` reads all nine logs to EOF, tool output truncated, and `5c7274` prints compact origins for the eight. |
+| `d794b5` | SUBSEQ through 4 on `catalogue-source-files` of length 2: BOUNDING-INDICES-BAD-ERROR before reading logs. | Structure inspection; `f9379c` reads all nine logs to EOF, tool output truncated, and `5c7274` prints compact origins for the eight. |
 | `a4be07` | Extra closing parenthesis in inline form: SIMPLE-READER-ERROR before reading logs. | Balanced heredoc; compact reading `5c7274`. |
-| `096bad` | Fingerprint inventory confused with copied inventory: FILE-DOES-NOT-EXIST for the driver intentionally absent from the baseline copy. | Read source-files/fingerprints definitions; all 2.520 comparisons and eight exact replacements completed `7c73e0`. |
+| `096bad` | Fingerprint inventory confused with copied inventory: FILE-DOES-NOT-EXIST for the driver intentionally absent from the baseline copy. | Read source-files/fingerprints definitions; all 2,520 comparisons and eight exact replacements completed `7c73e0`. |
 | `464495` | Used :EXIT instead of :EXIT-CODE: NIL passed to numeric comparison after reading baseline. | Field inspection `ec0d0f`; reading to EOF and checks of all nine logs completed `4934bf`. |
 
 <a id="esito-circoscritto"></a>

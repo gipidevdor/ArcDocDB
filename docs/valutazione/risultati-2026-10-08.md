@@ -14,8 +14,8 @@ remain designed. No figure below confirms ADR-0028 minimums.
 ## Reproducibility
 
 Apple M4, ARM64, 10 logical CPUs, 16 GiB RAM, Darwin 27.0.0, SBCL 2.6.9 GENCGC.
-Workspace filesystem APFS, internal disk. Wall clock: 1.000.000 ticks/s.
-Child process heaps: 4.096 MiB. Every spike compiles without warnings or
+Workspace filesystem APFS, internal disk. Wall clock: 1,000,000 ticks/s.
+Child process heaps: 4,096 MiB. Every spike compiles without warnings or
 style-warnings; `safety` 3 except separate CRC kernels at `safety` 2/3.
 
 ```sh
@@ -37,7 +37,7 @@ Preserved raw data, readable with `*read-eval* nil`:
   local directory `4000472823-bench`, revision `7301991` with declared changes.
 - [Inline verifier](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/crc-inline.lisp), from
   local directory `4000472979-bench`, same CRC parameters.
-- [Inline index, 100.000 documents](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/index-inline-100k.lisp),
+- [Inline index, 100,000 documents](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/index-inline-100k.lisp),
   directory `4000473749-bench`, default parameters and source blobs.
 - [Inline index, 10 million](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/index-inline-10m.lisp),
   directory `4000473801-bench`, command below and source blobs.
@@ -61,25 +61,25 @@ is not attributed to a clean checkout. Variants are documented in spike READMEs.
 
 ## SPK-01 — primary index
 
-First campaign: 100.000 documents, 16-byte keys, 8.192-slot fragments,
+First campaign: 100,000 documents, 16-byte keys, 8,192-slot fragments,
 four words, two readers. Scalar grouped lookup; hash, key generation,
 and response checking included. No segment read.
 
 | Initial phase | Operations | Operations/s | Process allocated bytes/op |
 |---|---:|---:|---:|
-| INSERT | 100.000 | 1.657.275 | 551,75 |
-| GET | 800.000 | 2.915.048 | 151,95 |
-| Churn, DELETE + INSERT | 100.000 | 1.604.518 | 428,15 |
-| Concurrent GETs on same key | 2.000.000 | 8.212.372 | 129,76 |
+| INSERT | 100,000 | 1,657,275 | 551.75 |
+| GET | 800,000 | 2,915,048 | 151.95 |
+| Churn, DELETE + INSERT | 100,000 | 1,604,518 | 428.15 |
+| Concurrent GETs on same key | 2,000,000 | 8,212,372 | 129.76 |
 
-Live array payload is **6.422.656 bytes, 64,22656 bytes/document**,
-before and after 50.000 key replacements. Excludes Lisp headers, runtime,
+Live array payload is **6,422,656 bytes, 64.22656 bytes/document**,
+before and after 50,000 key replacements. Excludes Lisp headers, runtime,
 garbage, and fragments retained by readers. 15 splits, 16 rebuilds; maximum split
-1,613 ms and rebuild 1,453 ms in sample. Directory copies 426 references
+1.613 ms and rebuild 1.453 ms in sample. Directory copies 426 references
 overall, at most 16 per maintenance. This small scale does not
 verify its maximum cost, clarified by [ADR-0050](../adr/0050-pubblicazione-e-costi-della-directory.md).
 
-Concurrent stress: 200.000 writer updates, 74.888 discarded attempts,
+Concurrent stress: 200,000 writer updates, 74,888 discarded attempts,
 42 fallbacks to the harness-only mutex. This is not the production pool. A workload
 on one hot key does not represent random lookups on a large archive.
 
@@ -96,33 +96,33 @@ The next experiment also includes reader and key helpers,
 with explicit u64 types. Hash and golden vectors remain the same; `safety 3` and standalone
 API. Distinct samples, same 4 GiB heap:
 
-| Phase | 100.000 documents, operations/s | Allocated bytes/op | 10 million, operations/s | Allocated bytes/op |
+| Phase | 100,000 documents, operations/s | Allocated bytes/op | 10 million, operations/s | Allocated bytes/op |
 |---|---:|---:|---:|---:|
-| INSERT | 2.817.616 | 171,09 | 1.650.123 | 225,83 |
-| GET | 3.556.994 | 47,99 | 2.097.987 | 48,00 |
+| INSERT | 2,817,616 | 171.09 | 1,650,123 | 225.83 |
+| GET | 3,556,994 | 47.99 | 2,097,987 | 48.00 |
 
 ```sh
 sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp \
   --bench SPK-01 -- --documents 10000000 --seconds 60 --memory-mib 2048
 ```
 
-All 10 million INSERTs complete; GET: 75.400.960 operations, stopped
+All 10 million INSERTs complete; GET: 75,400,960 operations, stopped
 by phase budget before the 80-million ceiling. Campaign measures
-42,214258 seconds. Live payload is **822.099.968 bytes, 82,2099968 B/doc**,
-before and after 50.000 replacements. 2.048 fragments, depth 11, 2.047 splits,
-no rebuild in this brief churn. 234.766.336 key bytes copied;
-2.796.202 directory references copied, at most 2.048 per maintenance.
+42.214258 seconds. Live payload is **822,099,968 bytes, 82.2099968 B/doc**,
+before and after 50,000 replacements. 2,048 fragments, depth 11, 2,047 splits,
+no rebuild in this brief churn. 234,766,336 key bytes copied;
+2,796,202 directory references copied, at most 2,048 per maintenance.
 
-Maximum split **98,827 ms**, versus 1,030 ms in the inline 100.000-document
-sample; maximum directory-copy time 0,025 ms. Fragment-copy time
+Maximum split **98.827 ms**, versus 1.030 ms in the inline 100,000-document
+sample; maximum directory-copy time 0.025 ms. Fragment-copy time
 includes allocation, scheduler, and possible GC. Cause of the
 maximum was not profiled: it is **not** attributed to the collector by deduction.
 Residual allocations include harness and boxing; zero is not promised.
 The first local inline-hash sample also observed a
-17,171 ms split with a different heap: it remains in its README.
+17.171 ms split with a different heap: it remains in its README.
 
 > **Proposal** — GET allocation is reduced from about 152 to 48 B/op in
-> the equivalent 100.000-document sample. Before the engine, reader
+> the equivalent 100,000-document sample. Before the engine, reader
 > allocations need further isolation and maintenance needs profiling.
 > Local 10⁷ scale is now observed; 10⁸, ARM64/x86-64, weak memory,
 > sustained churn, v2 index, and Linux platform remain open.
@@ -133,16 +133,16 @@ The first local inline-hash sample also observed a
 
 [Speed 2 profile](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/profile-speed2.lisp) and
 [speed 3 profile](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/profile-speed3.lisp): three windows
-of 1.000.000 operations, each preceded by 10.000 warmup and full GC outside
-the window. Fixed key, reused buffer, 8.192-slot fragment.
+of 1,000,000 operations, each preceded by 10,000 warmup and full GC outside
+the window. Fixed key, reused buffer, 8,192-slot fragment.
 
 | Window | Observed allocations, speed 2 | Observed allocations, speed 3 |
 |---|---:|---:|
 | Key generation in reused buffer | 0 bytes | 0 bytes |
 | Hash and direct write to u64 array | 0 bytes | 0 bytes |
-| `leggi` API, fixed key | 47.960.640 bytes | 47.960.640 bytes |
+| `leggi` API, fixed key | 47,960,640 bytes | 47,960,640 bytes |
 
-Residual allocation of about **47,96 B/lookup** is therefore observed even when calling
+Residual allocation of about **47.96 B/lookup** is therefore observed even when calling
 the API with a fixed key, without attributing it entirely to benchmark key
 generation. The individual responsible instruction is not yet isolated.
 The reader's `speed 3` variant did not reduce residual allocation and was withdrawn;
@@ -155,7 +155,7 @@ are preserved. Correction and successful runs do not erase failure.
 
 ## SPK-02 — GC
 
-48/48 cases completed in 6.953,525 ms: 128 MiB live, four layouts, workers
+48/48 cases completed in 6,953.525 ms: 128 MiB live, four layouts, workers
 1/16/64, three requested allocation rates, and comparison with parked workers.
 Three collection requests per type and case; automatic window of 80 ms.
 
@@ -163,18 +163,18 @@ Maximum **wall time of the `gc` call** across each row's profiles:
 
 | Layout | Workers | Gen 0, ms | Full, ms |
 |---|---:|---:|---:|
-| Large array | 1 | 0,993 | 4,787 |
-| Large array | 16 | 16,013 | 15,485 |
-| Large array | 64 | 197,966 | 36,013 |
-| Fragments | 1 | 1,050 | 5,122 |
-| Fragments | 16 | 2,023 | 5,581 |
-| Fragments | 64 | 61,359 | 52,297 |
-| Replaced fragments | 1 | 1,190 | 5,403 |
-| Replaced fragments | 16 | 4,666 | 28,302 |
-| Replaced fragments | 64 | 32,340 | 13,040 |
-| Foreign | 1 | 0,928 | 5,365 |
-| Foreign | 16 | 2,507 | 7,361 |
-| Foreign | 64 | 40,695 | 81,843 |
+| Large array | 1 | 0.993 | 4.787 |
+| Large array | 16 | 16.013 | 15.485 |
+| Large array | 64 | 197.966 | 36.013 |
+| Fragments | 1 | 1.050 | 5.122 |
+| Fragments | 16 | 2.023 | 5.581 |
+| Fragments | 64 | 61.359 | 52.297 |
+| Replaced fragments | 1 | 1.190 | 5.403 |
+| Replaced fragments | 16 | 4.666 | 28.302 |
+| Replaced fragments | 64 | 32.340 | 13.040 |
+| Foreign | 1 | 0.928 | 5.365 |
+| Foreign | 16 | 2.507 | 7.361 |
+| Foreign | 64 | 40.695 | 81.843 |
 
 Time includes coordination and scheduling; it is **not** an exact measurement of
 all-thread stop/resume. Runtime-counter deltas are separate in
@@ -191,24 +191,24 @@ CPUs, compute-resource contention is also exercised.
 
 ## SPK-03 — append and flush
 
-12/12 cases, 2.048-byte records, batches 1/32/128, files 1/4, 16 measured flushes
+12/12 cases, 2,048-byte records, batches 1/32/128, files 1/4, 16 measured flushes
 per file beyond warmup. Every octet checked after reopening; cleanup limited
 to created files. No error or primitive fallback.
 
 | Files | Records/batch | F_FULLFSYNC, median ms | Synchronized records/s |
 |---|---:|---:|---:|
-| 1 | 1 | 3,971 | 249,7 |
-| 1 | 32 | 3,981 | 7.800,1 |
-| 1 | 128 | 3,852 | 32.034,0 |
-| 4 | 1 | 11,800 | 279,4 |
-| 4 | 32 | 11,747 | 9.800,8 |
-| 4 | 128 | 11,818 | 39.593,8 |
+| 1 | 1 | 3.971 | 249.7 |
+| 1 | 32 | 3.981 | 7,800.1 |
+| 1 | 128 | 3.852 | 32,034.0 |
+| 4 | 1 | 11.800 | 279.4 |
+| 4 | 32 | 11.747 | 9,800.8 |
+| 4 | 128 | 11.818 | 39,593.8 |
 
 Throughput covers only the I/O interval, not batch formation, SEAL
 protocol, network, or client latency. Ordinary `fsync` is reported separately: on
 Mac it does not meet the required contract, so its throughput is not used
 as durable throughput. For one file/batch of one record, median `fsync`
-is 0,032 ms versus 3,971 ms for `F_FULLFSYNC`: the comparison changes the contract.
+is 0.032 ms versus 3.971 ms for `F_FULLFSYNC`: the comparison changes the contract.
 
 > **Proposal** — Retain group commit and serial append/flush per file;
 > measure concurrency, batches formed during flush, and queues on the reference
@@ -222,7 +222,7 @@ is 0,032 ms versus 3,971 ms for `F_FULLFSYNC`: the comparison changes the contra
 Deterministic exploration of finite configurations with negative controls.
 Correct models: horizon 43 states/72 transitions; multiseries 59/114;
 EDIT/reclaim 19/28; seqlock 127/164; snapshot registration 28/34. Enumerations:
-85 persistence combinations, two witnessed corruptions, 2.256 compaction/reconstruction
+85 persistence combinations, two witnessed corruptions, 2,256 compaction/reconstruction
 cases, 25 reconciliation/recovery cases.
 
 The ring counterexample is corrected by ADR-0046; mutants for premature forget,
@@ -234,9 +234,9 @@ preserve each enumeration's boundaries; the
 [final integrated record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/spk07-final-spikes-check.lisp)
 contains decoded results, source hashes, and original output.
 
-Publication: 25 explorations, 64.316 states overall, 12 correct models and
-6 negative controls. Expiration: 67.558 positive states, 14 coverage witnesses,
-and 5 detected mutants. Compaction: 98 positive graphs, 7.994 states, 11.592
+Publication: 25 explorations, 64,316 states overall, 12 correct models and
+6 negative controls. Expiration: 67,558 positive states, 14 coverage witnesses,
+and 5 detected mutants. Compaction: 98 positive graphs, 7,994 states, 11,592
 logical crash projections, and 8 detected mutants. Barriers: 280 correct orders
 without violations; each of 4 mutants produces 54 violations in 840 orders.
 Counts from different modules are not summed: units and domains differ.
@@ -257,7 +257,7 @@ does not change preserved documents. This outcome does not close product gates.
 
 ## SPK-09 — integrity and optimization
 
-23.370 CRC comparisons; PUT and OUTCOME corruptions and truncations rejected in
+23,370 CRC comparisons; PUT and OUTCOME corruptions and truncations rejected in
 declared cases. `verify-prepared-record` compares TXID and CSN against validated
 OUTCOME under ADR-0047; provenance, SEAL, and manifest resolver remain
 to implement.
@@ -266,20 +266,20 @@ CRC slicing-by-8 at `safety 3`, initial campaign:
 
 | Covered bytes | ns/operation | Decimal MB/s |
 |---|---:|---:|
-| 20, header | 38,354 | 521,5 |
-| 128 | 175,420 | 729,7 |
-| 2.048 | 2.894,889 | 707,5 |
-| 16.384 | 23.317,339 | 702,7 |
+| 20, header | 38.354 | 521.5 |
+| 128 | 175.420 | 729.7 |
+| 2,048 | 2,894.889 | 707.5 |
+| 16,384 | 23,317.339 | 702.7 |
 
 Inlining verifier and accumulator avoids passing CSN as an
 intermediate Lisp object. Same bytes, fixtures, and checks, `safety 3`:
 
 | Body / CSN | Before, ns/op | Inline, ns/op | Before, allocated bytes/op | Inline, allocated bytes/op |
 |---|---:|---:|---:|---:|
-| 20 / 17 | 127,121 | 116,410 | 0 observed | 0 observed |
-| 20 / 2⁶⁴−1 | 132,790 | 116,245 | 32,054 | 0 observed |
-| 2.048 / 17 | 4.954,069 | 4.942,166 | 0 observed | 0 observed |
-| 2.048 / 2⁶⁴−1 | 5.102,767 | 4.946,888 | 31,864 | 0 observed |
+| 20 / 17 | 127.121 | 116.410 | 0 observed | 0 observed |
+| 20 / 2⁶⁴−1 | 132.790 | 116.245 | 32.054 | 0 observed |
+| 2,048 / 17 | 4,954.069 | 4,942.166 | 0 observed | 0 observed |
+| 2,048 / 2⁶⁴−1 | 5,102.767 | 4,946.888 | 31.864 | 0 observed |
 
 This is one pair of runs with fixed case order. It does not imply
 a zero-allocation guarantee for every API: the public parser returning
@@ -295,12 +295,12 @@ Strict compile without warnings/style-warnings, `safety 3`. Scope of
 
 | Scope | Local outcome and quantity |
 |---|---|
-| v1/v2 codec | 416 cases; 16 MiB documents and maximum record 16.842.775 bytes |
+| v1/v2 codec | 416 cases; 16 MiB documents and maximum record 16,842,775 bytes |
 | v2 index | 8 groups, 600 differential operations, 664 oracle comparisons; 7 budget-rejection snapshots |
 | Iterative CBOR | 614 cases; depth 100/101, 16 MiB/+1, nodes and bytes; map keys/values traversed |
-| Fileheader | 8 accepted and 2.393 rejected; parser not selected on invalid headers |
-| Modeled migration | 208 crashes, 4.160 recovery interruptions, 208 reruns; 3/3 mutants detected; maximum 22/32 steps |
-| Five-component connection | 16 positive combinations, 1 negative, 113 assertions; 1/255/256/65.535-byte keys, depth 100, and 16 MiB document |
+| Fileheader | 8 accepted and 2,393 rejected; parser not selected on invalid headers |
+| Modeled migration | 208 crashes, 4,160 recovery interruptions, 208 reruns; 3/3 mutants detected; maximum 22/32 steps |
+| Five-component connection | 16 positive combinations, 1 negative, 113 assertions; 1/255/256/65,535-byte keys, depth 100, and 16 MiB document |
 
 The negative fixture has both CRCs valid but nonminimal CBOR: it passes the
 codec and is rejected by the validator. Module data also include local
@@ -310,26 +310,26 @@ attempts: [codec](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f
 [migration](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-migrazione-check.lisp).
 
 The [first v2 campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-bench-initial.lisp)
-ends in 6,127524 s, including compilation and checks. Codec: 283.430
-validations of 41-byte records in a 0,25 s window; not the cost
+ends in 6.127524 s, including compilation and checks. Codec: 283,430
+validations of 41-byte records in a 0.25 s window; not the cost
 of the maximum record. Index, distinct loads without splits:
 
 | Key, bytes | Documents | Operations, including modifications | Window, ms | Final payload, bytes | Transient peak, bytes |
 |---:|---:|---:|---:|---:|---:|
-| 16 | 10.000 | 30.128 | 12,003 | 933.896 | 1.064.984 |
-| 256 | 1.000 | 3.128 | 2,962 | 608.264 | 870.664 |
-| 65.535 | 64 | 320 | 60,336 | 4.199.560 | 12.658.959 |
+| 16 | 10,000 | 30,128 | 12.003 | 933,896 | 1,064,984 |
+| 256 | 1,000 | 3,128 | 2.962 | 608,264 | 870,664 |
+| 65,535 | 64 | 320 | 60.336 | 4,199,560 | 12,658,959 |
 
 With maximum keys the load exercises a rebuild: 128 slots visited, 63 entries
-copied, 4.325.310 bytes copied in maximum maintenance, maximum
-preparation time 8,357 ms. Memory counted as array payload, excluding
+copied, 4,325,310 bytes copied in maximum maintenance, maximum
+preparation time 8.357 ms. Memory counted as array payload, excluding
 headers, runtime, and retired roots; time budget is cooperative. No
 throughput comparison between differently sized loads is deduced from the table.
 
-The first CBOR validator allocates about **7.742 B/call** even on scalars:
+The first CBOR validator allocates about **7,742 B/call** even on scalars:
 it preallocates 100 stack frames. Text samples require UTF-8 validation:
-1 KiB encoded text, 68.274 operations in 0,416670 s; 64 KiB, 1.425 in
-0,416874 s. Bytestrings check length and skip payload: values
+1 KiB encoded text, 68,274 operations in 0.416670 s; 64 KiB, 1,425 in
+0.416874 s. Bytestrings check length and skip payload: values
 `:encoded-mib-per-second`, especially at 16 MiB, **are not read,
 CRC, or scan bandwidth**. Stack allocation is the subject of a subsequent variant,
 with results preserved separately.
@@ -346,26 +346,26 @@ among siblings. No global state or shared pool, same API and `safety 3`.
 
 [First variant measurement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-bench-lazy-stack.lisp)
 and [replica](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08/v2-bench-lazy-stack-replica.lisp), with
-the same six loads and bounds; processes finished in 6,542664 and 5,431828 s,
+the same six loads and bounds; processes finished in 6.542664 and 5.431828 s,
 integrated checks included, source blobs unchanged in both snapshots.
 
 | Case | Before, allocated bytes/call | Variant, first measurement | Variant, replica |
 |---|---:|---:|---:|
-| 1 KiB encoded bytestring | 7.742,63 | 528,52 | 528,52 |
-| 16 MiB encoded bytestring | 7.742,05 | 527,42 | 528,08 |
-| 4.097 nodes, depth 1 | 7.743,63 | 1.416,05 | 1.416,04 |
-| Depth 100 | 7.742,71 | 7.679,48 | 7.678,88 |
+| 1 KiB encoded bytestring | 7,742.63 | 528.52 | 528.52 |
+| 16 MiB encoded bytestring | 7,742.05 | 527.42 | 528.08 |
+| 4,097 nodes, depth 1 | 7,743.63 | 1,416.05 | 1,416.04 |
+| Depth 100 | 7,742.71 | 7,679.48 | 7,678.88 |
 
 About **93% allocation reduction** in both binary loads, without
 deducing zero allocation or a universal guarantee. Depth 100 requires
 almost every frame and retains a similar cost; improvement depends on
 the number of avoidable frames. The counter is process-wide and has granularity.
 
-UTF-8 timings vary: 1 KiB text, initially 68.274 operations and
-28.665/85.716 in both variant measurements, each in about 0,41667 s;
-64 KiB text, initially 1.425 and 495/1.382 in replicas. External load
-is uncontrolled (`vm.loadavg` at startup 10,08/11,16/10,56 in initial
-campaign and 13,98/13,33/11,78 in first variant). The difference is not causally
+UTF-8 timings vary: 1 KiB text, initially 68,274 operations and
+28,665/85,716 in both variant measurements, each in about 0.41667 s;
+64 KiB text, initially 1,425 and 495/1,382 in replicas. External load
+is uncontrolled (`vm.loadavg` at startup 10.08/11.16/10.56 in initial
+campaign and 13.98/13.33/11.78 in first variant). The difference is not causally
 attributed and no general throughput increase is claimed.
 The replica also retains the slower measurement.
 

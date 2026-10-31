@@ -18,14 +18,14 @@ original copies, including preservation and gzip payloads, without promoting out
 
 | Process | Wall s | Sources | Observed outcome |
 |---|---:|---:|---|
-| [Development 01](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-01/report.lisp) | 27,950115 | 972 | 127 scheduler tests; 15 new |
-| [Sensor in development](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/sensor-development/report.lisp) | 25,095753 | 973 | Positive self-test, seven negative oracles, and heap/sink/clock checks |
-| [Coverage reader](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/reader-development/report.lisp) | 1,121031 | 973 | Independent self-test on eight identities, native/HTML, and rejections |
-| [Development 02](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-02/report.lisp) | 23,054720 | 973 | 129 scheduler tests; 17 new, including error after claim and ACK |
-| [Full check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/check-core/report.lisp) | 300,887805 | 975 | 1.668 named tests, 2 smoke tests, 4 lint fixtures, all 10 spikes |
-| [Coverage](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/coverage/report.lisp) | 30,474354 | 975 | 129 scheduler tests, 8 files, C3 gate passed |
-| [Measurements](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/benchmark/report.lisp) | 38,320366 | 975 | 10 complete samples, zero observed heap |
-| [Integrated build](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/integrated/report.lisp) | 46,588497 | 983 | 1.722 named tests and 2 smoke tests; lint and traceability without errors |
+| [Development 01](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-01/report.lisp) | 27.950115 | 972 | 127 scheduler tests; 15 new |
+| [Sensor in development](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/sensor-development/report.lisp) | 25.095753 | 973 | Positive self-test, seven negative oracles, and heap/sink/clock checks |
+| [Coverage reader](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/reader-development/report.lisp) | 1.121031 | 973 | Independent self-test on eight identities, native/HTML, and rejections |
+| [Development 02](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/development-02/report.lisp) | 23.054720 | 973 | 129 scheduler tests; 17 new, including error after claim and ACK |
+| [Full check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/check-core/report.lisp) | 300.887805 | 975 | 1,668 named tests, 2 smoke tests, 4 lint fixtures, all 10 spikes |
+| [Coverage](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/coverage/report.lisp) | 30.474354 | 975 | 129 scheduler tests, 8 files, C3 gate passed |
+| [Measurements](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/benchmark/report.lisp) | 38.320366 | 975 | 10 complete samples, zero observed heap |
+| [Integrated build](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/integrated/report.lisp) | 46.588497 | 983 | 1,722 named tests and 2 smoke tests; lint and traceability without errors |
 
 The first test version is preserved in full and compared with the Git
 blob in its record. The second adds the inactive fixture's final drain
@@ -35,12 +35,12 @@ self-tests. No failed process was discarded: all eight passed.
 
 Strict compilation without warning/style-warning. The full check and
 integrated build retain compiler notes in stderr: respectively
-1.248.815 and 1.379.752 UTF-8 bytes; they are not presented as empty stderr.
+1,248,815 and 1,379,752 UTF-8 bytes; they are not presented as empty stderr.
 The other six processes have empty stderr.
 
 The full check includes links, traceability, tool fixtures, and
 archive; its snapshot before the new publication counts 123
-catalogs, 3.565 references, 42.702 files, and 1.138.547.016 bytes. All
+catalogs, 3,565 references, 42,702 files, and 1,138,547,016 bytes. All
 original files from the 10-spike campaign are preserved separately.
 
 <a id="copertura-senza-esclusioni"></a>
@@ -48,7 +48,7 @@ original files from the 10-spike campaign are preserved separately.
 ## Coverage without exclusions
 
 [Specific audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/data/coverage/coverage-dispatch-audit.lisp):
-**281/289 forms, 97,231834%; 14/14 native branches**. All of `src/dispatch/`,
+**281/289 forms, 97.231834%; 14/14 native branches**. All of `src/dispatch/`,
 without exclusions; MC/DC is not inferred.
 
 | File | Forms | Branches |
@@ -66,7 +66,7 @@ The eight missing forms are preexisting and retained in the denominator:
 claim, native indices 31–34, path `(1 4 3 3 4 3)` and prefixes 1/2/3;
 recycle, indices 39–42, path `(1 4 2 3 3 4 6)` and prefixes 1/2/3.
 The audit reports all exact paths without attributing them to new branches.
-The 3.217.144-byte native original, nine HTML files, and two audits are
+The 3,217,144-byte native original, nine HTML files, and two audits are
 preserved as lossless UTF-8 text in development bundles. Only FASLs
 are excluded intermediates. No coverage bit is rewritten.
 
@@ -75,7 +75,7 @@ are excluded intermediates. No coverage bit is rewritten.
 ## Allocation and raw timings
 
 [Original report](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/data/benchmark/report.lisp).
-SBCL 2.6.9 ARM64, Darwin 27, safety 3, clock 1.000.000 ticks/s.
+SBCL 2.6.9 ARM64, Darwin 27, safety 3, clock 1,000,000 ticks/s.
 Five fresh fixtures per campaign, 4096 cycles and 128 warmup cycles per replica,
 four calls to the new API per cycle. Scalar checks remain inside the clock.
 
@@ -84,11 +84,11 @@ four calls to the new API per cycle. Scalar checks remain inside the clock.
 | EMPTY | 7507 / 7070 / 8177 / 7960 / 7980 | 0 in all | 8435712 |
 | Full ACTIVE | 33711 / 36596 / 33516 / 76109 / 36643 | 0 in all | 8501248 |
 
-40.960 measured cycles and 163.840 total preparations; ACTIVE processes 81.920
+40,960 measured cycles and 163,840 total preparations; ACTIVE processes 81,920
 sentinel payloads in the samples alone, including enqueue, ready publication,
 preparation, pop, ACK, and end. Factory, API lookup, GC, and backend
 closure are excluded. All samples complete 4096 iterations.
-The positive control detects 16.777.472 bytes; wrong sink, zero clock,
+The positive control detects 16,777,472 bytes; wrong sink, zero clock,
 CLI, existing destination, and partial raw output are checked by the self-test.
 
 The 76109-tick peak is retained. Campaigns are serial within their
@@ -124,7 +124,7 @@ terminal faults remain explicit caller and Archivio responsibilities.
 ## Final check and concluding preservation
 
 [Publication](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/publication/report.lisp)
-is OK/STABLE/exit 0, 295,396073 s, 984 sources, and empty stderr.
+is OK/STABLE/exit 0, 295.396073 s, 984 sources, and empty stderr.
 All 49 UTF-8 development files are preserved: an additional check
 compares original bytes with text extracted from bundles, including the nine
 HTML files and native output. The 18 files from the first eight processes are also compared
@@ -138,11 +138,11 @@ ASDF remain identical; no new measurement is attributed to CLOSED code.
 
 The [final integrated check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/processes/final-verification/report.lisp)
 runs tests, lint, traceability, links, and evidence: OK/STABLE/exit 0,
-239,448811 s, 992 sources. Passed 1.722 named tests and 2 smoke tests;
+239.448811 s, 992 sources. Passed 1,722 named tests and 2 smoke tests;
 245 lint files/0 violations; 122 requirements/65 invariants/13 FI/52 ADRs/0 errors;
-483 Markdown files/3.256 links/0 broken. Archive: 127 catalogs, 3.686 references,
-42.949 files, and 1.154.887.206 bytes. Strict compilation without warnings;
-stderr notes are preserved in full (1.401.121 UTF-8 bytes).
+483 Markdown files/3,256 links/0 broken. Archive: 127 catalogs, 3,686 references,
+42,949 files, and 1,154,887,206 bytes. Strict compilation without warnings;
+stderr notes are preserved in full (1,401,121 UTF-8 bytes).
 These counts precede the closing copies and three links added here.
 
 The [closing manifest](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara/chiusura-01.lisp)
@@ -159,8 +159,8 @@ The collector from parent
 identical to the final check already reported; previous tools are
 unchanged. Makefile adds the new collector's self-test.
 The [additional record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara-integrazione/processes/collector-self-test/report.lisp)
-is OK/STABLE/exit 0, 159,863601 s, 996 sources, and empty stderr:
-59 cases, 2.807 checks, fixtures preserved. No product campaign
+is OK/STABLE/exit 0, 159.863601 s, 996 sources, and empty stderr:
+59 cases, 2,807 checks, fixtures preserved. No product campaign
 is promoted by this C4 verification.
 The [closed supplement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-pool-prepara-integrazione/archive-index.lisp)
 retains the original record and final sources selected through an

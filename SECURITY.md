@@ -2,11 +2,14 @@
 
 # Security
 
-ArcDocDB is in the design phase and is not production software. Authentication,
+ArcDocDB is under active development and is not production-qualified. The M1
+profile provides a durable, single-Serie core. Authentication,
 authorization and encryption are **outside the scope of v1**
 ([ADR-0030](docs/adr/0030-scope-v1.md)).
 
-To report a security issue in the design or code, open a
-[private security advisory](https://github.com/gpicchiarelli/ArcDocDB/security/advisories/new)
-on the repository, or contact the maintainer using the address in the GitHub profile.
-Do not publish details in an issue.
+For a suspected security issue in the design or code, check the repository's
+[Security tab](https://github.com/gipidevdor/ArcDocDB/security) for an available
+private reporting option. If none is offered, open an issue requesting a
+confidential contact route, without describing the vulnerability or attaching
+data. The maintainer can then arrange a private channel. Do not publish
+vulnerability details, credentials or private database contents in an issue.

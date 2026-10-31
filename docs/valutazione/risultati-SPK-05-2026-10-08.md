@@ -45,7 +45,7 @@ preserved; final compilation and loading produce no warnings.
 |---|---|
 | I/O primitives | 14 injection groups: short read/write, increasing offset and SAP, EINTR reset and ceiling, EOF including partial, invalid returns, EIO, and bounds before syscall |
 | Actual file | 5 cases: exclusive open on existing file rejected, write on read-only fd rejected, read beyond EOF, overly long mapping, closed fd checked with EBADF |
-| Synthetic record | 49 cases, golden CRC32C `123456789`, separate bitwise oracle, 12.096 payload bytes checked with independent recurrence, numbers through maximum u32, offsets, truncations, and corruptions |
+| Synthetic record | 49 cases, golden CRC32C `123456789`, separate bitwise oracle, 12,096 payload bytes checked with independent recurrence, numbers through maximum u32, offsets, truncations, and corruptions |
 | Valid CRCs and incorrect data | Layout, key, and stamp altered with recalculated CRCs still rejected |
 | Worker | Two actual errors, pread EOF and incomplete mmap range, propagated after join; entire file checked after errors |
 | Concurrent reads | 4 actual cases on 12-record file: 2 workers, random/sequential, pread/mmap; consistent counts and ranges |
@@ -61,8 +61,8 @@ CRC neither makes corruption impossible nor covers errors with consistent CRCs.
 
 File of **8192 records of 2048 bytes, 16 MiB**. Three replicas, 1/2/4 workers,
 deterministic random access and disjoint sequential scans, alternating
-method order. **36 cases** complete **294.912 validated reads**,
-576 MiB of records read; process lasts **3,897763 s**, including compilation,
+method order. **36 cases** complete **294,912 validated reads**,
+576 MiB of records read; process lasts **3.897763 s**, including compilation,
 checks, preparation, and output. Individual case times delimit only reading,
 validation, and sampling between first worker start and last completion.
 
@@ -70,12 +70,12 @@ Median throughput of three replicas, with minimum–maximum range:
 
 | Access | Workers | pread, k records/s | mmap, k records/s |
 |---|---:|---:|---:|
-| Sequential | 1 | 81,3 (77,8–81,7) | 92,2 (88,3–95,3) |
-| Sequential | 2 | 159,0 (156,0–160,8) | 188,7 (182,6–191,1) |
-| Sequential | 4 | 307,0 (297,9–324,0) | 365,8 (349,3–369,0) |
-| Random | 1 | 82,6 (80,7–84,1) | 89,5 (87,9–94,9) |
-| Random | 2 | 158,6 (150,4–160,4) | 181,7 (179,6–190,2) |
-| Random | 4 | 300,9 (272,6–305,9) | 367,4 (335,5–402,0) |
+| Sequential | 1 | 81.3 (77.8–81.7) | 92.2 (88.3–95.3) |
+| Sequential | 2 | 159.0 (156.0–160.8) | 188.7 (182.6–191.1) |
+| Sequential | 4 | 307.0 (297.9–324.0) | 365.8 (349.3–369.0) |
+| Random | 1 | 82.6 (80.7–84.1) | 89.5 (87.9–94.9) |
+| Random | 2 | 158.6 (150.4–160.4) | 181.7 (179.6–190.2) |
+| Random | 4 | 300.9 (272.6–305.9) | 367.4 (335.5–402.0) |
 
 Per-read sample P99 ranges from 13 to 20 µs in these final cases;
 it includes syscall or mapping access, CRC, and two clock reads.
@@ -94,8 +94,8 @@ prepared, full warmup, and no per-operation timing sample. The
 
 | Variant | pread, bytes over 8192 reads | mmap, bytes over 8192 reads |
 |---|---:|---:|
-| Native callback in common loop | 131.072 | 0 |
-| Inline native call, shared intermediate SAP | 131.072 | 0 |
+| Native callback in common loop | 131,072 | 0 |
+| Inline native call, shared intermediate SAP | 131,072 | 0 |
 | Inline native call, SAP formed in used branch | 0 | 0 |
 
 The second variant does not resolve allocation. Generated code shows

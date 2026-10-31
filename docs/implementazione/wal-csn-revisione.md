@@ -182,7 +182,7 @@ is counted in the respective function. This is not measured coverage.
 Maximum 9, so no modified function exceeds 10 with this count.
 Restamping loop bounded by count ≤ preallocated offsets; duplicate search by
 group count ≤ preallocated slots. Construction bounds visible in diff context
-are 65.536 records, 64 MiB per batch, and 1.024 batches per group; correctness of corrupt
+are 65,536 records, 64 MiB per batch, and 1,024 batches per group; correctness of corrupt
 internal state does not follow from the bound alone. No recursion added.
 
 <a id="checklist-delle-due-letture-nellordine-richiesto"></a>

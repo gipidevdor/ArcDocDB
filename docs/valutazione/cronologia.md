@@ -185,7 +185,7 @@ quantitative hypotheses (with new ADRs, not tweaks).
 ## Local evidence 2026-10-08
 
 The [first campaign](risultati-2026-10-08.md) completes all five runners: v1 index
-at 100.000 documents, GC at 128 MiB with 48 profiles, 12 append/flush cases, finite
+at 100,000 documents, GC at 128 MiB with 48 profiles, 12 append/flush cases, finite
 models, and CRC/OUTCOME. Inlining the verifier preserves `safety 3` and eliminates
 observed benchmark allocations even for maximum CSN. Initial index throughput
 does not hide 152 bytes allocated per lookup: this is the first
@@ -197,14 +197,14 @@ to measure in the real pool. Results are local and v1: they do not close minimum
 v2 gate, larger scales, Linux platform, or complete model.
 
 The v1 index replica at **10 million documents** completes INSERTs,
-measures 2,098 M GET/s and 82,21 B/doc payload. Inlining reduces GET
-allocations to about 48 B/op in the 100.000 sample; maximum split at larger scale
-is 98,827 ms. Profiling, larger scale, and v2 remain: the risk is not closed.
+measures 2.098 M GET/s and 82.21 B/doc payload. Inlining reduces GET
+allocations to about 48 B/op in the 100,000 sample; maximum split at larger scale
+is 98.827 ms. Profiling, larger scale, and v2 remain: the risk is not closed.
 
 SPK-10 adds separate **v2** checks and measurements: codec, five-word index,
 iterative CBOR, and modeled migration. Integration crosses fileheader,
-record, document, hint, and index with keys up to 65.535 bytes, depth 100,
-and maximum record 16.842.775 bytes. Excluded portions are declared in the
+record, document, hint, and index with keys up to 65,535 bytes, depth 100,
+and maximum record 16,842,775 bytes. Excluded portions are declared in the
 [result](risultati-2026-10-08.md#spk-10--limiti-v2-e-integrazione).
 The [structured register](registro-delle-prove.md) also retains failures and
 disproved variants; `make check` and CI collect verification outputs and metadata.

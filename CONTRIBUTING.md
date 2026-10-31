@@ -39,3 +39,9 @@ lint, links, traceability and evidence. `make spikes-bench` runs measurements se
 Documentation is written in American English. Domain terms and API identifiers retain
 their established spelling. [Coding standard](docs/affidabilita/standard-di-codifica.md) ·
 [Glossary](docs/glossario.md) · [Visual language](assets/README.md) · [Security](SECURITY.md).
+
+## Documentation site
+
+`make docs` builds and verifies the complete manual with Common Lisp Codex.
+`make docs-serve` previews it locally. See [publishing the manual](docs/github-pages.md)
+for the GitHub Pages workflow and first-publication setup.

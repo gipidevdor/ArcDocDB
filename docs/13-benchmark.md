@@ -113,11 +113,11 @@ require specific evidence.
 | GET `_id`, NVMe | ~150k–600k ops/s |
 | INSERT, async durability | ~700k–2 M ops/s |
 | INSERT, group commit | ~300k–1 M ops/s |
-| UPDATE append-only | ~400k–1,2 M ops/s |
-| DELETE/tombstone | ~500k–1,5 M ops/s |
+| UPDATE append-only | ~400k–1.2 M ops/s |
+| DELETE/tombstone | ~500k–1.5 M ops/s |
 | Simple indexed query | ~500k–2 M ops/s |
 | Sequential scan | ~1–5+ GB/s |
-| CLEAN | ~0,5–3+ GB/s |
+| CLEAN | ~0.5–3+ GB/s |
 | MERGE | depends on segment count and size, layout, I/O, and available load capacity |
 | Multiseries transactions | tens to hundreds of thousands of tx/s, depending on participating Serie count and durable-commit cost |
 

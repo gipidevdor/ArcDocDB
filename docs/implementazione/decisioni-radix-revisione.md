@@ -86,7 +86,7 @@ The test version identified above includes cardinality 0/1 for
 private functions, odd cardinalities and maximum u16 for ID16, three
 deterministic patterns, each of the 128 ID bits and 64 TXID bits
 in both orders, size errors, and duplicate participant
-offsets. The 65.536-entry case, uniform and with a dominant bucket plus
+offsets. The 65,536-entry case, uniform and with a dominant bucket plus
 outlier, fills the gap identified in first inspection: frequency or
 cursor beyond u16 becomes observable. These private
 cases do not establish validity of a public DECISION with fewer than two
@@ -101,7 +101,7 @@ writes where required, unchanged sources, and postscatter
 checks for overlapping prefixes are verified. The u64 cardinality
 bound and sorter's final order postcondition remain distinct.
 
-Public regressions test ID16 1.023/1.024/1.025 and entries
+Public regressions test ID16 1,023/1,024/1,025 and entries
 255/256/257, in versions 1/2 with an independent oracle. The same
 entry counts are tested both with distinct TXIDs and consistent physical
 duplicates that become one TXID. Global conflict uses
@@ -142,11 +142,11 @@ Records
 in the final copy, without running the driver. The [method](decisioni-radix-metodo.md)
 retains the first matrix and amendment before repetition: calibration target
 100 ms, minimum per sample 50 ms, same median-ratio criterion
-of at most 0,9, and same complete matrix.
+of at most 0.9, and the same complete matrix.
 
 | Scope | Adopted threshold | Scenarios measured at and above threshold | Worst radix/merge median ratio among these scenarios |
 |---|---|---|---|
-| ID16 | 1.024 participants | 16, all usable and meeting criterion | `0.857956293237167` |
+| ID16 | 1,024 participants | 16, all usable and meeting criterion | `0.857956293237167` |
 | TXID | 256 physical entries | 25, all usable and meeting criterion | `0.759877353704754` |
 
 The record retains 63 scenarios, 58 usable. The five unusable
@@ -173,7 +173,7 @@ Counts recalculated and compared with inventory are:
 
 | Scope | Observed/total expressions | Observed/total branch alternatives |
 |---|---|---|
-| Six DECISION sources | 1.332 / 1.530 | 138 / 176 |
+| Six DECISION sources | 1,332 / 1,530 | 138 / 176 |
 | Only `decisions-radix.lisp` | 384 / 409 | 53 / 54 |
 
 The 25 missing radix expressions are 16 top-level forms
@@ -286,7 +286,7 @@ campaign or anticipate its outcome or threshold selection.
 | 6. Validated data | Participant size precedes scratch; entries checked for type, count, and length before reading TXID. Order and, for ID16, distinctness checked before return. Contract requires private copies already decoded by builder: scanner, CRC, payload preflight, and budgets are not replaced. Count 0/1 in private tests does not make public DECISION records with fewer than two participants valid. |
 | 7. Compound decisions | Both array guards listed clause by clause as RAD-D01 and RAD-D02 in the [inventory](decisioni-radix-decisioni.md), with 17 local error sites and delegated checks. Unexercised private negations remain in subsequent measurement denominators; this reading neither certifies MC/DC nor approves exclusions. |
 | 8. Owner and sharing | OWNER/SHARED declare one construction. Initial source and scratch are private and may be reordered; scatter leaves the individual pass's source unchanged and does not write read-only entry fields. `concurrent-immutable-table-queries` overwrites log before threads, uses separate buffers and outputs, and rechecks table after joins. It does not prove publication through future runtime. |
-| 9. Trace, compilation, lint, and checks | Before campaign, author compiled candidate in isolated copy without warnings/style-warnings, obtained lint on 8 files with no violations, and passed 1.290 comparisons with merge, plus duplicate with maximum offset. This test uses baseline; independent oracles are in tests reread here. `ftype`, array types, `safety 3`, docstrings, REQ, and functions within 60 lines present. `make check`, trace, coverage, and mutants for adopted diff require final evidence. |
+| 9. Trace, compilation, lint, and checks | Before campaign, author compiled candidate in isolated copy without warnings/style-warnings, obtained lint on 8 files with no violations, and passed 1,290 comparisons with merge, plus duplicate with maximum offset. This test uses baseline; independent oracles are in tests reread here. `ftype`, array types, `safety 3`, docstrings, REQ, and functions within 60 lines present. `make check`, trace, coverage, and mutants for adopted diff require final evidence. |
 | 10. Deviations | No exception identified in scope read. Allocations explicitly permitted at opening and are not an exception to hot-path requirements. Guards and bounds checks remain active; no performance promise or coverage exclusion granted by review. |
 | 11. Parallelism across Serie | Candidate adds no lock, wait, pool, or shared store per Serie operation: it changes only workspace owned during recovery. Existing queries read immutable table; six workers own their outputs. Test does not demonstrate scalability, Serie isolation, scheduler, or full engine compliance with INV-P6. |
 | 12. Atomicity and removals | No I/O, flush, publication, prepared application, deletion, or durable change in candidate. No new atomicity point to declare; scanner durability and recovery contracts remain external to this change and are not requalified. |

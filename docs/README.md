@@ -26,6 +26,10 @@ service. The complete engine remains under development.
 [Invariants](invarianti.md) · [Limits](limiti.md) · [Glossary](glossario.md) ·
 [Roadmap](roadmap.md)
 
+[Build and publish the online manual](github-pages.md).
+
+[Editorial policy](editorial-policy.md) · [Publication, rights and privacy](legal/README.md).
+
 The [complete index](riferimenti.md) lists the subject guides, normative conventions
 and source hierarchy. The [design analysis](analisi-progettuale.md) records the
 reasoning behind the decisions.

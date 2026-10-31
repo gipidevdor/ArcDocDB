@@ -2,6 +2,9 @@
 *.fasl
 *.core
 
+# Documentation dependencies, compiled cache and generated GitHub Pages
+/_build/
+
 # Sottoprodotti delle prove: non pubblicare con git add -f.
 spikes/results/**/*.tmp
 spikes/results/**/*.bytes

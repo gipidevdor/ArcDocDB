@@ -86,7 +86,7 @@
                (dolist (p (directory (merge-pathnames "*.*" dir)))
                  (cond ((and (null (pathname-name p)) (null (pathname-type p)))
                         (let ((name (car (last (pathname-directory p)))))
-                          (unless (member name '(".git" ".cache") :test #'string=)
+                          (unless (member name '(".git" ".cache" "_build") :test #'string=)
                             (walk p))))
                        ((equalp (pathname-type p) "md") (push p acc))))))
       (walk root))

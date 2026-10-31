@@ -179,5 +179,5 @@ The quota controls index payload and reserved index/replay workspaces under
 [ADR-0073](../adr/0073-indice-automatico-operativo-m1.md), not total process RSS,
 free physical RAM, or a peer-requested backend. Page geometry and frame defaults
 remain those of the engine factory. Omitting the option keeps the engine's
-normal automatic policy. The wire protocol and strong acknowledgement semantics
+normal automatic policy. The wire protocol and strong acknowledgment semantics
 are unchanged. See [verification](../../spikes/results/2026-10-31-local-index-budget/report.md).

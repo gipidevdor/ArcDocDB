@@ -19,7 +19,7 @@ The [final benchmark](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7
 includes CHECK, disassembly, and 90 samples; sources are stable.
 
 Checks compare kernels with an independent bit-by-bit oracle:
-24 fixtures, sizes 0/8/16/128/8192/65.536 bytes, zero, all ones, mixed,
+24 fixtures, sizes 0/8/16/128/8192/65,536 bytes, zero, all ones, mixed,
 alternating, and high bits. Passed 30 type, length, and parameter rejections.
 Byte/u64 layouts match byte for byte in little endian and inputs
 remain unchanged, including after rejections and each matrix cell.
@@ -31,7 +31,7 @@ internal compiler objects; text is now collected with that
 variable disabled. The second stopped the benchmark before samples:
 the 64 KiB positive-control array did not pass the counter
 check. Before repeating the test, payload was set to 1 MiB.
-The final sensor observes 1.048.592 consed bytes for that observable payload;
+The final sensor observes 1,048,592 consed bytes for that observable payload;
 kernels, inputs, and matrix were not changed to select a measurement.
 
 <a id="misure-locali"></a>
@@ -42,7 +42,7 @@ Five replicas per size/dataset/kernel; alternating order. Every
 sample traverses 16 logical MiB of the two inputs, with fixed pass counts from
 128 to 65.536. Packing, oracles, warmup, GC, and reports are outside the loop.
 Each count feeds a checked sink. The empty call in the same
-loop measures 262 ticks for 65.536 passes, about 4,00 ns/pass; its
+loop measures 262 ticks for 65,536 passes, about 4.00 ns/pass; its
 cost is retained and not subtracted from kernel timings.
 
 Medians of five replicas; ratio is the median of comparisons
@@ -52,15 +52,15 @@ spread and raw samples are in the
 
 | Bytes per bitmap | Dataset | Per byte, MiB/s | Per u64, MiB/s | u64/byte ratio |
 |---:|---|---:|---:|---:|
-| 128 | mixed | 1618,61 | 10012,52 | 6,17 |
-| 128 | zero | 1644,40 | 10389,61 | 6,32 |
-| 128 | all ones | 1650,85 | 10050,25 | 6,11 |
-| 8192 | mixed | 1891,25 | 14773,78 | 7,80 |
-| 8192 | zero | 1897,53 | 15094,34 | 7,98 |
-| 8192 | all ones | 1888,80 | 14773,78 | 7,81 |
-| 65536 | mixed | 1852,28 | 14571,95 | 7,87 |
-| 65536 | zero | 1889,91 | 15122,87 | 8,01 |
-| 65536 | all ones | 1890,36 | 14678,90 | 7,75 |
+| 128 | mixed | 1618.61 | 10012.52 | 6.17 |
+| 128 | zero | 1644.40 | 10389.61 | 6.32 |
+| 128 | all ones | 1650.85 | 10050.25 | 6.11 |
+| 8192 | mixed | 1891.25 | 14773.78 | 7.80 |
+| 8192 | zero | 1897.53 | 15094.34 | 7.98 |
+| 8192 | all ones | 1888.80 | 14773.78 | 7.81 |
+| 65536 | mixed | 1852.28 | 14571.95 | 7.87 |
+| 65536 | zero | 1889.91 | 15122.87 | 8.01 |
+| 65536 | all ones | 1890.36 | 14678.90 | 7.75 |
 
 All 90 loops record zero delta for `get-bytes-consed`, like the
 baseline. This is an SBCL sensor observation in these samples; the positive

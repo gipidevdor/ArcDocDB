@@ -51,6 +51,8 @@
       (check (< (abs (- (color-contrast "#000" "#fff") 21d0)) 0.00001d0))
       (check (< (color-contrast "#737378" "#f5f5f7") 4.5d0))
       (check (equal (publication-copy-url "LICENSE") "licenses/ArcDocDB-BSD-2-Clause.txt"))
+      (check (publication-paths-unique-p *publication-copies*))
+      (check (not (publication-paths-unique-p '(("a" "licenses/NOTICE.txt") ("b" "licenses/notice.txt")))))
       (check (equal (page-group (find-page "docs/legal/privacy.md")) "publication"))
       (check (= (length (getf *notice-data* :components)) 71))
       (check (every (lambda (entry) (getf entry :notices)) (getf *notice-data* :components)))

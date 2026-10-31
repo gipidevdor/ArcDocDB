@@ -4,7 +4,7 @@
 (defvar *revision*)
 (defparameter *publication-copies*
   '(("LICENSE" "licenses/ArcDocDB-BSD-2-Clause.txt")
-    ("THIRD-PARTY-NOTICES.txt" "licenses/THIRD-PARTY-NOTICES.txt")
+    ("THIRD-PARTY-NOTICES.txt" "licenses/ArcDocDB-third-party-notices.txt")
     ("legal/runtime/SBCL-2.6.9-COPYING.txt" "licenses/SBCL-2.6.9-COPYING.txt")
     ("data/unicode/18.0.0/LICENSE.txt" "licenses/Unicode-LICENSE.txt")
     ("tools/pages/third-party-notices.txt" "licenses/third-party-notices.txt")
@@ -32,7 +32,13 @@
                   (getf component :name) (getf component :version)
                   (getf component :license) (getf component :source)) text))
 
+(defun publication-paths-unique-p (copies)
+  (let ((paths (mapcar #'second copies)))
+    (= (length paths) (length (remove-duplicates paths :test #'equalp)))))
+
 (defun prepare-publication ()
+  (unless (publication-paths-unique-p *publication-copies*)
+    (error "Publication notice destinations collide under case-insensitive comparison."))
   (setf *notice-data* (read-publication-data (merge-pathnames "tools/pages/third-party-notices.lisp" *root*)))
   (unless (= (getf *notice-data* :schema) 1) (error "Unsupported browser-notice inventory."))
   (unless (equal (getf (getf *notice-data* :bundle) :sha256)

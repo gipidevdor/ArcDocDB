@@ -2,6 +2,12 @@
 (:schema-version 1 :kind :distribution-notice-files
  :files ("LICENSE" "THIRD-PARTY-NOTICES.txt"
          "data/unicode/18.0.0/LICENSE.txt" "legal/runtime/SBCL-2.6.9-COPYING.txt")
+ :originals
+ ((:path "LICENSE" :sha256 "cb78af11de1c5609fad7ea686ac2150d67fabdf80850bd2d379e75d2cf7e3318")
+  (:path "data/unicode/18.0.0/LICENSE.txt"
+   :sha256 "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96")
+  (:path "legal/runtime/SBCL-2.6.9-COPYING.txt"
+   :sha256 "7e6aa753502bdfcf764c3817db3c2ede928dddab9a12cf1ccf68fe4a0c0326f4"))
  :runtime-reference
  (:name "SBCL" :version "2.6.9" :source-commit "68a6b27d7ec8a8be45024d5e62db4f316e5ac7ea"
   :url "https://raw.githubusercontent.com/sbcl/sbcl/68a6b27d7ec8a8be45024d5e62db4f316e5ac7ea/COPYING"

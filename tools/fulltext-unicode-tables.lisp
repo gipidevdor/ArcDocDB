@@ -106,7 +106,7 @@
     (if (zerop (mod i 12)) (progn (terpri stream) (write-string "      " stream))
         (write-char #\Space stream))
     (format stream "~D" item))
-  (format stream "))~%  \"Tabella Unicode 18.0.0 generata; immutabile dopo il caricamento.\")~%")
+  (format stream "))~%  \"Generated Unicode 18.0.0 table; immutable after loading.\")~%")
   (format stream "(declaim (type (simple-array (unsigned-byte ~D) (*)) ~A))~%" bits name))
 (defun generate-tables (root output)
   (let* ((base (uiop:ensure-directory-pathname root))

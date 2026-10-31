@@ -1,0 +1,142 @@
+;;; OWNER: serial actor; all resident growth is checked before allocating arrays.
+(in-package #:arcdocdb.engine)
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+
+;;; REQ: REQ-IDX-013 REQ-LIM-003
+(declaim (ftype (function (p:indice-primario) index) automatic-resident-charge))
+(defun automatic-resident-charge (primary)
+  "Pre: healthy private/current flat root. Post: payload plus conservative per-fragment/header allowance.
+No retained enumeration array; bounded by the immutable directory size."
+  (p::esigi-indice-sano primary)
+  (let* ((root (p::acquisisci-root primary)) (directory (p::root-indice-directory root)) (position 0) (count 0))
+    (loop repeat (length directory) while (< position (length directory)) do
+      (incf count)
+      (incf position (ash 1 (- (p::root-indice-depth root)
+                              (p::frammento-indice-depth (svref directory position))))))
+    (unless (= position (length directory)) (error 'invariant-violation :reason :engine-auto-directory))
+    (+ 4096 (* 4096 count) (p::payload-root root))))
+
+;;; REQ: REQ-IDX-013 REQ-IDX-008
+(declaim (ftype (function (motore politica-indice-automatico index index u32 u32) null) initialize-automatic-index))
+(defun initialize-automatic-index (engine policy capacity arena high low)
+  "Pre: before any file access. Post: fixed workspace reserved and initial resident root within grant.
+Rejects an oversized initial configuration before allocation; source/destination disk caches are both reserved."
+  (unless (and (<= 16 capacity 65536) (zerop (logand capacity (1- capacity))) (<= 1 arena #x100000000))
+    (error 'invalid-argument :reason :engine-auto-initial-geometry))
+  (let* ((fixed (+ 131072 (* 8 capacity) (* 24 (motore-max-records engine))
+                   (* 2 (d:disk-index-charge (politica-indice-automatico-size policy)
+                                             (politica-indice-automatico-frames policy)))))
+         (budget (politica-indice-automatico-budget policy)))
+    (when (> (+ fixed 8200 (* 41 capacity) arena) budget)
+      (error 'resource-exhausted :reason :engine-auto-initial-budget))
+    (setf (motore-automatic-index engine)
+          (%make-automatic-index-controller :policy policy :budget budget :fixed fixed :capacity capacity :arena arena
+            :high high :low low :highs (make-array capacity :element-type '(unsigned-byte 32) :initial-element 0)
+            :lows (make-array capacity :element-type '(unsigned-byte 32) :initial-element 0)
+            :rows (make-array (* 6 (motore-max-records engine)) :element-type '(unsigned-byte 32) :initial-element 0))))
+  nil)
+
+;;; REQ: REQ-IDX-013 REQ-LIM-003
+(declaim (ftype (function (automatic-index-controller) p:indice-primario) make-automatic-resident))
+(defun make-automatic-resident (auto)
+  "Pre: fixed reservation already made. Post: empty flat root with paged fallback capacity.
+Both initial arrays and their metadata are charged before allocation."
+  (let ((available (- (automatic-index-controller-budget auto) (automatic-index-controller-fixed auto))))
+    (when (> (+ 8200 (* 41 (automatic-index-controller-capacity auto)) (automatic-index-controller-arena auto)) available)
+      (error 'resource-exhausted :reason :engine-auto-initial-budget))
+    (p:crea-indice-primario :capacity (automatic-index-controller-capacity auto) :max-depth 30
+      :directory-budget-bytes most-positive-fixnum :fragment-budget-bytes most-positive-fixnum :arena-bytes (automatic-index-controller-arena auto)
+      :hash-seed-high (automatic-index-controller-high auto) :hash-seed-low (automatic-index-controller-low auto))))
+
+;;; REQ: REQ-IDX-013 REQ-IDX-005
+(declaim (ftype (function (automatic-index-controller p:indice-primario p:frammento-indice keyword index) null)
+                grow-automatic-resident))
+(defun grow-automatic-resident (auto primary fragment reason key-size)
+  "Pre: recognized capacity rejection, no canonical commit. Post: checked arena growth/rebuild/split.
+Budget includes both old/new metadata; resource refusal precedes candidate arrays. Other faults propagate."
+  (let* ((charge (automatic-resident-charge primary))
+         (metadata (- charge (p::payload-root (p::acquisisci-root primary))))
+         (available (- (automatic-index-controller-budget auto) (automatic-index-controller-fixed auto) (* 2 metadata) 8192)))
+    (when (<= available 0) (error 'resource-exhausted :reason :engine-auto-resident-budget))
+    (case reason
+      (:primary-key-arena-full
+       (if (< (live-automatic-fragment-bytes fragment) (p::frammento-indice-used fragment))
+           (rebuild-automatic-fragment auto primary fragment available nil)
+           (p:estendi-arena-indice primary fragment
+             (max (+ (p::frammento-indice-used fragment) key-size) (* 2 (length (p::frammento-indice-arena fragment)))) available)))
+      ((:primary-fragment-full :primary-fragment-load :primary-slot-rebuild-required)
+       (rebuild-automatic-fragment auto primary fragment available (not (eq reason :primary-slot-rebuild-required))))
+      (otherwise (error 'invariant-violation :reason :engine-auto-capacity-reason))))
+  nil)
+
+;;; REQ: REQ-IDX-013 REQ-IDX-005
+(declaim (ftype (function (motore p:indice-primario (member 1 2) octets index index) boolean)
+                prepare-automatic-resident))
+(defun prepare-automatic-resident (engine primary kind key start end)
+  "Pre: serial owner, stable key span, no data commit. Post: capacity ready or NIL for normal quota exhaustion.
+At most 32 maintenance attempts; only known capacity causes request maintenance. Never hides corruption."
+  (let ((auto (motore-automatic-index engine)))
+    (multiple-value-bind (high low) (p:digest-chiave-indice primary key start end)
+      (loop repeat 32 do
+        (let ((fragment (p:frammento-corrente-indice primary high)))
+          (handler-case
+              (progn (p:verifica-capienza-mutazione-indice primary fragment key start end high low
+                       (motore-index-context engine) :rimozione (= kind 2))
+                     (return-from prepare-automatic-resident t))
+            (resource-exhausted (condition)
+              (unless (member (arcdocdb.conditions:error-reason condition)
+                        '(:primary-fragment-full :primary-fragment-load :primary-key-arena-full :primary-slot-rebuild-required))
+                (error condition))
+              (handler-case
+                  (progn
+                    (grow-automatic-resident auto primary fragment (arcdocdb.conditions:error-reason condition) (- end start))
+                    (when (eq primary (motore-index engine))
+                      (setf (automatic-index-controller-resident-charge auto) (automatic-resident-charge primary))))
+                (resource-exhausted () (return-from prepare-automatic-resident nil)))))))))
+  nil)
+
+;;; REQ: REQ-IDX-013 REQ-IDX-001
+(declaim (ftype (function (motore p:indice-primario (member 1 2) octets index index u64 u64 index) null)
+                apply-automatic-resident))
+(defun apply-automatic-resident (engine primary kind key start end csn location bytes)
+  "Pre: capacity prepared and canonical record verified. Post: one flat mutation, descriptor normalized.
+No allocation intended on the ordinary resident mutation path."
+  (unless (and (plusp csn) (plusp (ldb (byte 32 32) location)))
+    (error 'invariant-violation :reason :engine-auto-location))
+  (multiple-value-bind (high low) (p:digest-chiave-indice primary key start end)
+    (let ((fragment (p:frammento-corrente-indice primary high)) (words (motore-words engine)))
+      (if (= kind 2)
+          (p:rimuovi-chiave-indice primary fragment key start end high low (motore-index-context engine))
+          (progn (fill words 0)
+            (setf (aref words 0) csn (aref words 1) location (aref words 2) (logior (ash (- end start) 32) (ash 1 48))
+                  (aref words 3) bytes)
+            (p:pubblica-chiave-indice primary fragment key start end high low words (motore-index-context engine))))))
+  nil)
+
+;;; REQ: REQ-IDX-013 REQ-IDX-005
+(declaim (ftype (function (p:frammento-indice) index) live-automatic-fragment-bytes))
+(defun live-automatic-fragment-bytes (fragment)
+  "Pre: stable healthy fragment, maintenance only. Post: exact retained live key bytes, excluding arena garbage.
+Fixed scratch fits the controller metadata reserve; no cardinality-sized work array."
+  (let ((words (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0)) (bytes 0) (count 0)
+        (controls (p::frammento-indice-controls fragment)))
+    (dotimes (slot (length controls))
+      (when (< (aref controls slot) 128)
+        (unless (eq :live (arcdocdb.index.slots:leggi-slot-v2 (p::frammento-indice-bank fragment) slot words))
+          (error 'invariant-violation :reason :engine-auto-slot))
+        (incf bytes (ldb (byte 16 32) (aref words 2))) (incf count)))
+    (unless (= count (p::frammento-indice-live fragment)) (error 'invariant-violation :reason :engine-auto-fragment-count))
+    bytes))
+
+;;; REQ: REQ-IDX-013 REQ-IDX-005
+(declaim (ftype (function (automatic-index-controller p:indice-primario p:frammento-indice index boolean) null)
+                rebuild-automatic-fragment))
+(defun rebuild-automatic-fragment (auto primary fragment available split)
+  "Pre: current fragment, finite peak grant. Post: canonical verified rebuild/split published once.
+Digest vectors are fixed by fragment capacity; canonical builders check every large allocation."
+  (p:calcola-digests-frammento primary fragment (automatic-index-controller-highs auto) (automatic-index-controller-lows auto)
+    (automatic-index-controller-high auto) (automatic-index-controller-low auto))
+  (p:pubblica-directory-indice
+    (p:ricostruisci-frammento-indice primary fragment (automatic-index-controller-highs auto) (automatic-index-controller-lows auto)
+      available :split-p split))
+  nil)

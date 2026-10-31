@@ -4,7 +4,7 @@
 
 > **Generated** from [requisiti.lisp](requisiti.lisp) with `make trace-write`. Do not edit by hand: `make trace` fails if it differs.
 
-**Summary.** 138 requirements. By class: C1 109, C2 10, C3 12, C4 7. By state: specified 0, designed 126, implemented 11, verified 1. Invariants covered: 71/71. FI scenarios covered: 13/13.
+**Summary.** 141 requirements. By class: C1 112, C2 10, C3 12, C4 7. By state: specified 0, designed 125, implemented 15, verified 1. Invariants covered: 71/71. FI scenarios covered: 13/13.
 
 <a id="requisiti"></a>
 
@@ -77,9 +77,12 @@
 | REQ-SEC-009 | A full-text generation captures new commits without gaps relative to the initial prefix and becomes READY only after rechecking inventory and frontiers; separate files per generation, retirement decided by the catalog, and reclaim after quiescence. | ADR-0054 | C1 | designed | INV-I4, INV-I6, INV-A10, INV-A11 | [0054](../adr/0054-contratto-e-formato-full-text.md), [0040](../adr/0040-manifest-a-record-unico.md) | test, diff, model, fi | FI-06, FI-09, FI-10, FI-11, FI-13 |
 | REQ-SEC-010 | Before SEAL/PREPARE, the writer reserves delta, staging, and a conservative upper bound for the full-text file; rotation prevents over-budget indexes; queries and builds account for resources, work, deadlines, and attempts with a single cleanup and terminal completion. | ADR-0054 | C1 | designed | INV-I6, INV-A8, INV-P6 | [0054](../adr/0054-contratto-e-formato-full-text.md), [0041](../adr/0041-multiserie-segmenti-autosufficienti.md), [0045](../adr/0045-modello-di-esecuzione.md) | test, model, soak, bench, rev |  |
 | REQ-IDX-007 | The reader rechecks root and generation after probing, including on a miss, with bounded attempts; maintenance declares and checks slots, key bytes, directory references, and transient memory separately. | ADR-0050 | C1 | designed | INV-I3, INV-A8 | [0043](../adr/0043-primary-index-a-frammenti.md), [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | test, model, bench, rev |  |
-| REQ-IDX-008 | Index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol. | ADR-0057 | C1 | designed | INV-I7, INV-A8, INV-P6 | [0057](../adr/0057-selezione-automatica-indice.md), [0049](../adr/0049-capacita-oltre-la-ram.md), [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | test, model, bench, fi, rev | FI-06, FI-10, FI-11 |
+| REQ-IDX-008 | In the serial M1 profile, index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol. | ADR-0057 | C1 | implemented | INV-I7, INV-A8, INV-P6 | [0073](../adr/0073-indice-automatico-operativo-m1.md), [0057](../adr/0057-selezione-automatica-indice.md), [0049](../adr/0049-capacita-oltre-la-ram.md), [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | test, model, bench, fi, rev | FI-06, FI-10, FI-11 |
 | REQ-IDX-009 | Derived primary-index pages have Serie/image/offset/generation identity, version, and CRC32C; flat buckets, radix directory, and key fragments are verified before use. Backward references, canonical packing, geometry, and v2 bounds prevent structural aliases and false local misses; the codec introduces no independent commit. | ADR-0058 | C1 | designed | INV-I8, INV-A2, INV-A8, INV-P6 | [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0058](../adr/0058-pagine-indice-primario.md), [0065](../adr/0065-costruzione-immagini-dal-motore.md), [0057](../adr/0057-selezione-automatica-indice.md), [0043](../adr/0043-primary-index-a-frammenti.md) | test, diff, corr, rev |  |
 | REQ-IDX-010 | A paged root is adopted only from a complete image verified read-only against canonical source, seed, count, and authoritative candidates; derivative completion is distinct from data commit, with cumulative budgets and rejection of duplicates/unreachable entries. | ADR-0063 | C1 | designed | INV-I8, INV-A2, INV-A8, INV-P6 | [0063](../adr/0063-immagini-sigillate-indice-primario.md), [0064](../adr/0064-adozione-indice-paginato-m1.md), [0065](../adr/0065-costruzione-immagini-dal-motore.md), [0066](../adr/0066-attivazione-seriale-immagini-m1.md), [0067](../adr/0067-delta-seriale-indice-m1.md), [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md), [0070](../adr/0070-scoperta-readonly-immagini-m1.md), [0058](../adr/0058-pagine-indice-primario.md), [0057](../adr/0057-selezione-automatica-indice.md) | test, diff, corr, fi, rev | FI-06, FI-10 |
+| REQ-IDX-011 | The serial M1 paged delta stores exact private keys and committed normalized locations or explicit tombstones; touched-key lookup uses neither the resident index nor the base image. Publication follows durable SEAL under BUSY, incomplete operations fault, and activation/renewal reserve all old and new delta arrays before effects. | ADR-0071 | C1 | implemented | INV-I1, INV-I8, INV-V5, INV-A8, INV-P6 | [0071](../adr/0071-delta-location-indice-m1.md), [0067](../adr/0067-delta-seriale-indice-m1.md), [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md) | test, diff, corr, fi, rev | FI-01, FI-02 |
+| REQ-IDX-012 | An optionally configured M1 engine renews its paged image automatically before PUT/DELETE at the delta threshold or next-key capacity limit. The full renewal reservation and finite fresh-name sequence are checked before admission; one BUSY scope covers renewal and document commit, with no CSN/ACK for the derivative and FAULTED on incomplete admitted exits. | ADR-0072 | C1 | implemented | INV-I1, INV-I8, INV-A8, INV-P6 | [0072](../adr/0072-rinnovo-automatico-delta-m1.md), [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md), [0071](../adr/0071-delta-location-indice-m1.md) | test, diff, fi, rev | FI-01, FI-02 |
+| REQ-IDX-013 | The automatic M1 primary backend has bounded resident growth, verified migration both ways with hysteresis, independent paged writes, bounded-memory WAL replay and bounded CLOSED resolver caching. Immutable checksummed disk nodes use fixed cache/path/batch storage; canonical WAL remains the only data commit and private derivative removal requires bound ownership proof. | ADR-0073 | C1 | implemented | INV-I1, INV-I7, INV-I8, INV-A2, INV-A8, INV-A10, INV-P6 | [0073](../adr/0073-indice-automatico-operativo-m1.md), [0057](../adr/0057-selezione-automatica-indice.md), [0058](../adr/0058-pagine-indice-primario.md) | test, diff, corr, fi, bench, rev | FI-01, FI-02, FI-06, FI-10 |
 | REQ-CCH-001 | The cache uses CLOCK, may be partitioned by Serie, and measures scan pollution to decide whether to evolve to 2Q. | Cache | C3 | designed |  | [0010](../adr/0010-cache-clock.md), [0025](../adr/0025-cache-per-location.md) | test, bench |  |
 | REQ-CCH-002 | The cache is version-aware: a reader never obtains a version incompatible with its snapshot. | Cache and snapshots | C1 | designed | INV-M3 | [0025](../adr/0025-cache-per-location.md), [0044](../adr/0044-cache-acceleratore-puro.md) | test, prop |  |
 | REQ-CCH-003 | The read path is request, Serie, snapshot and index, cache, segment. | Cache | C2 | designed |  | [0025](../adr/0025-cache-per-location.md) | test |  |
@@ -185,13 +188,13 @@
 | INV-M1 | REQ-SEC-004, REQ-MVC-001, REQ-MVC-005 |
 | INV-M2 | REQ-VER-001, REQ-MVC-003, REQ-MVC-007 |
 | INV-M3 | REQ-CCH-002, REQ-CCH-004 |
-| INV-I1 | REQ-IDX-002, REQ-IDX-003 |
+| INV-I1 | REQ-IDX-002, REQ-IDX-003, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013 |
 | INV-I2 | REQ-SEC-001 |
 | INV-I4 | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-007, REQ-SEC-009 |
 | INV-I5 | REQ-SEC-008 |
 | INV-I6 | REQ-SEC-009, REQ-SEC-010 |
-| INV-I7 | REQ-IDX-008 |
-| INV-I8 | REQ-IDX-009, REQ-IDX-010 |
+| INV-I7 | REQ-IDX-008, REQ-IDX-013 |
+| INV-I8 | REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013 |
 | INV-P1 | REQ-TXS-002, REQ-CON-001 |
 | INV-P2 | REQ-CON-002 |
 | INV-P3 | REQ-ARC-002, REQ-TXM-006, REQ-CON-003, REQ-CON-005 |
@@ -206,26 +209,26 @@
 | INV-V3 | REQ-IDX-004 |
 | INV-V4 | REQ-CON-002 |
 | INV-A1 | REQ-AFF-001, REQ-AFF-009, REQ-AFF-015 |
-| INV-A2 | REQ-SEC-008, REQ-IDX-009, REQ-IDX-010, REQ-FOR-004, REQ-AFF-002 |
+| INV-A2 | REQ-SEC-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-013, REQ-FOR-004, REQ-AFF-002 |
 | INV-A3 | REQ-AFF-003 |
 | INV-A4 | REQ-AFF-004 |
 | INV-A5 | REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-AFF-005 |
 | INV-A6 | REQ-AFF-006 |
 | INV-A7 | REQ-REG-002, REQ-CMP-004, REQ-TXM-005, REQ-REC-002, REQ-AFF-007, REQ-AFF-017, REQ-AFF-019 |
-| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-SEC-010, REQ-IDX-007, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
+| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-SEC-010, REQ-IDX-007, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
 | INV-F2 | REQ-WAL-005, REQ-FOR-003 |
 | INV-F3 | REQ-AFF-009 |
-| INV-V5 | REQ-WAL-006, REQ-TXM-008, REQ-SEC-004, REQ-IPC-004 |
+| INV-V5 | REQ-WAL-006, REQ-TXM-008, REQ-SEC-004, REQ-IDX-011, REQ-IPC-004 |
 | INV-M4 | REQ-MVC-005, REQ-MVC-008 |
 | INV-M5 | REQ-WAL-005, REQ-MVC-006 |
 | INV-M6 | REQ-MVC-008 |
 | INV-S7 | REQ-CMP-009, REQ-TXM-007, REQ-FOR-004 |
 | INV-C11 | REQ-CMP-008, REQ-IDX-006 |
 | INV-I3 | REQ-IDX-005, REQ-IDX-007 |
-| INV-P6 | REQ-SEC-006, REQ-SEC-010, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-CON-005, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
+| INV-P6 | REQ-SEC-006, REQ-SEC-010, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-CON-005, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
 | INV-P5 | REQ-CON-004, REQ-IPC-002 |
 | INV-A9 | REQ-AFF-017 |
-| INV-A10 | REQ-SEC-005, REQ-SEC-009, REQ-AFF-018 |
+| INV-A10 | REQ-SEC-005, REQ-SEC-009, REQ-IDX-013, REQ-AFF-018 |
 | INV-A11 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-IPC-004, REQ-AFF-019, REQ-LIM-003 |
 | INV-A12 | REQ-CCH-004 |
 
@@ -235,16 +238,16 @@
 
 | Scenario | Requirements |
 |---|---|
-| FI-01 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-009, REQ-AFF-017, REQ-LIM-001 |
-| FI-02 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-AFF-001, REQ-AFF-009, REQ-AFF-017 |
+| FI-01 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-REC-001, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-009, REQ-AFF-017, REQ-LIM-001 |
+| FI-02 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-AFF-001, REQ-AFF-009, REQ-AFF-017 |
 | FI-03 | REQ-TXM-002, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-FLT-001 |
 | FI-04 | REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-FLT-001 |
 | FI-05 | REQ-WAL-003, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-REC-003, REQ-IPC-004, REQ-FLT-001 |
-| FI-06 | REQ-CMP-002, REQ-CMP-003, REQ-IDX-002, REQ-IDX-004, REQ-SEC-004, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-REC-001, REQ-REC-003, REQ-REC-004, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019, REQ-LIM-003 |
+| FI-06 | REQ-CMP-002, REQ-CMP-003, REQ-IDX-002, REQ-IDX-004, REQ-SEC-004, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-IDX-013, REQ-REC-001, REQ-REC-003, REQ-REC-004, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019, REQ-LIM-003 |
 | FI-07 | REQ-CLN-002, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
 | FI-08 | REQ-MRG-001, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
 | FI-09 | REQ-CMP-007, REQ-SEC-005, REQ-SEC-009, REQ-REC-003, REQ-FLT-001, REQ-AFF-018 |
-| FI-10 | REQ-MET-001, REQ-IDX-006, REQ-SEC-005, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-REC-002, REQ-REC-003, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-017 |
+| FI-10 | REQ-MET-001, REQ-IDX-006, REQ-SEC-005, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-IDX-013, REQ-REC-002, REQ-REC-003, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-017 |
 | FI-11 | REQ-CMP-007, REQ-SEC-004, REQ-SEC-009, REQ-IDX-008, REQ-MVC-001, REQ-MVC-003, REQ-MVC-005, REQ-FLT-001 |
 | FI-12 | REQ-TXM-001, REQ-TXM-004, REQ-TXM-007, REQ-TXM-008, REQ-MVC-002, REQ-MVC-005, REQ-FLT-001 |
 | FI-13 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-FLT-001, REQ-AFF-018, REQ-AFF-019 |
@@ -311,8 +314,8 @@
 | [0054](../adr/0054-contratto-e-formato-full-text.md) | REQ-SEC-007, REQ-SEC-008, REQ-SEC-009, REQ-SEC-010 |
 | [0055](../adr/0055-interfaccia-locale-unix-socket.md) | REQ-IPC-001, REQ-IPC-002, REQ-IPC-003, REQ-IPC-004 |
 | [0056](../adr/0056-sessione-locale-m16.md) | —  (decision without a direct requirement) |
-| [0057](../adr/0057-selezione-automatica-indice.md) | REQ-IDX-008, REQ-IDX-009, REQ-IDX-010 |
-| [0058](../adr/0058-pagine-indice-primario.md) | REQ-IDX-009, REQ-IDX-010 |
+| [0057](../adr/0057-selezione-automatica-indice.md) | REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-013 |
+| [0058](../adr/0058-pagine-indice-primario.md) | REQ-IDX-009, REQ-IDX-010, REQ-IDX-013 |
 | [0059](../adr/0059-crc32c-arm64-sbcl.md) | REQ-FOR-003 |
 | [0060](../adr/0060-crc32c-caricamento-portabile.md) | REQ-FOR-003 |
 | [0061](../adr/0061-conservazione-esterna-delle-prove.md) | —  (decision without a direct requirement) |
@@ -321,8 +324,11 @@
 | [0064](../adr/0064-adozione-indice-paginato-m1.md) | REQ-IDX-010 |
 | [0065](../adr/0065-costruzione-immagini-dal-motore.md) | REQ-IDX-009, REQ-IDX-010 |
 | [0066](../adr/0066-attivazione-seriale-immagini-m1.md) | REQ-IDX-010 |
-| [0067](../adr/0067-delta-seriale-indice-m1.md) | REQ-IDX-010 |
-| [0068](../adr/0068-rinnovo-seriale-immagini-m1.md) | REQ-IDX-009, REQ-IDX-010 |
-| [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md) | REQ-IDX-010 |
+| [0067](../adr/0067-delta-seriale-indice-m1.md) | REQ-IDX-010, REQ-IDX-011 |
+| [0068](../adr/0068-rinnovo-seriale-immagini-m1.md) | REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012 |
+| [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md) | REQ-IDX-010, REQ-IDX-011, REQ-IDX-012 |
 | [0070](../adr/0070-scoperta-readonly-immagini-m1.md) | REQ-IDX-010 |
+| [0071](../adr/0071-delta-location-indice-m1.md) | REQ-IDX-011, REQ-IDX-012 |
+| [0072](../adr/0072-rinnovo-automatico-delta-m1.md) | REQ-IDX-012 |
+| [0073](../adr/0073-indice-automatico-operativo-m1.md) | REQ-IDX-008, REQ-IDX-013 |
 | [0074](../adr/0074-crc32c-sbcl-2.6.10.md) | REQ-FOR-003 |

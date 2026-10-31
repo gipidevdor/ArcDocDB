@@ -1,0 +1,23 @@
+(require :asdf)
+(asdf:load-asd (truename "arcdocdb.asd")) (asdf:load-system "arcdocdb/tests")
+(in-package #:arcdocdb.engine.tests)
+(dolist (phase '(:auto-resident-published :auto-compact-published))
+  (with-root (root)
+    (let ((armed nil) (old nil))
+      (unwind-protect
+           (with-engine (engine (automatic-open root :create t
+                                 :observer (lambda (engine step) (declare (ignore engine))
+                                             (when (and armed (eq step phase)) (error "Retirement diagnostic.")) nil)))
+             (automatic-write engine 30) (automatic-page engine)
+             (setf old (e::automatic-index-controller-disk (e::motore-automatic-index engine)) armed t)
+             (if (eq phase :auto-resident-published)
+                 (signals simple-error (e:configura-budget-indice-motore engine 8388608))
+                 (unwind-protect (progn (setf (e::motore-busy engine) t)
+                                       (signals simple-error (e::compact-automatic-disk engine)))
+                   (setf (e::motore-busy engine) nil)))
+             (format t "~&RETIREMENT-DEFECT ~S source-state=~S input=~S append=~S~%" phase
+                     (arcdocdb.index.disk:disk-index-state old)
+                     (arcdocdb.io:stato-file (arcdocdb.index.disk::disk-index-input old))
+                     (arcdocdb.io:stato-file (arcdocdb.index.disk::disk-index-append old)))
+             (is (eq :open (arcdocdb.index.disk:disk-index-state old))))
+        (when old (arcdocdb.index.disk:close-disk-index old))))))

@@ -1,0 +1,16 @@
+(require :asdf)
+(require :sb-posix)
+(defpackage #:arcdocdb.ci (:use #:cl))
+(in-package #:arcdocdb.ci)
+(defparameter *ci-root* (truename "./"))
+(defparameter *ci-entry* (merge-pathnames "tools/ci.lisp" *ci-root*))
+(defparameter *ci-sbcl* (namestring sb-ext:*runtime-pathname*))
+(load "tools/evidence-storage.lisp")
+(load "tests/ci-catalog.lisp")
+(dolist (module '("data" "identity" "support" "tests" "coverage" "measure" "archive" "producer" "github" "publish"
+                  "self-test" "data-self-test" "test-self-test" "conditions-self-test" "measure-self-test" "workflow-self-test" "publish-self-test"))
+  (load (merge-pathnames (if (string= module "data-self-test")
+                           "spikes/out/m1-location-delta/ci-data-diagnostic-source.lisp"
+                           (format nil "tools/ci/~A.lisp" module)) *ci-root*)))
+(uiop:with-current-directory (*ci-root*)
+  (sb-ext:exit :code (ci-main '("self-test" "--out" "spikes/out/m1-location-delta/ci-exact-debug"))))

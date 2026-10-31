@@ -2,11 +2,17 @@
 
 # Automatic index-mode selection
 
-First increment authorized on 2026-10-22: [ADR-0057](../adr/0057-selezione-automatica-indice.md),
-REQ-IDX-008, INV-I7, INV-A8, INV-P6. Class C1 for selector, C4 for model.
-The overall requirement remains designed: M1 retains the [resident primary index](indice-primario.md)
-and integrates paged GET, bounded delta, and [serial renewal](rinnovo-indice-m1.md).
-No automatic actuator yet reduces resident memory.
+The [operational M1 controller](indice-automatico-operativo.md) now selects
+resident or paged storage at startup and before writes, releases the resident
+root in paged mode, replays with bounded memory, and returns with hysteresis.
+[ADR-0073](../adr/0073-indice-automatico-operativo-m1.md) records its separate
+append-only disk format and unchanged canonical commit.
+
+The pure selector and concurrent lifetime model below remain useful design
+contracts. Their concurrent SBCL translation and whole-engine lock-free proof
+remain separate from the completed **serial M1** controller.
+[Legacy automatic delta renewal](rinnovo-automatico-m1.md) remains supported in
+the explicit compatibility profile.
 
 <a id="api-e-stime"></a>
 
@@ -142,18 +148,18 @@ This model authorizes no snapshot-content reclamation.
 
 <a id="incrementi-successivi-e-completamento"></a>
 
-## Subsequent increments and completion
+## Historical increments and concurrent qualification
 
 | Increment | Modules and interfaces | Completion criterion |
 |---|---|---|
-| I1, introduced | `index.mode`, pure contract; separate C4 M0 | Reproducible tests and model, CI integration, traceability; actuator still absent. |
+| I1, introduced | `index.mode`, pure contract; separate C4 M0 | Reproducible tests and model, CI integration, traceability; pure contract only; the serial actuator is now described above. |
 | I2, current | [ADR-0058](../adr/0058-pagine-indice-primario.md), [C1 page codec](pagine-indice.md), PageRef, checksums | Independent 4/16/64 KiB fixtures, collisions and long keys, full pages, corruption and split image; no log changes. |
 | I3, started | [Serial cache with copies and verified PREAD](cache-pagine.md); concurrent acquire/release protocol and complete budget remain | Safety/progress proof with SBCL primitives; fault injection, reader suspension, saturation, ABA; separate declared blocking miss. |
-| I4, started | [Serial multilevel directory and bucket reader](lettura-indice-paginato.md); [incremental page construction](costruzione-indice-paginato.md); [sealed images and serial read-only adoption](immagini-indice-paginato.md); [M1 startup/GET and retirement before writing](indice-paginato-m1.md); [M1 producer with radix partitioning](costruzione-indice-m1.md); [serial activation on open engine](attivazione-indice-m1.md); [bounded serial delta on resident index](delta-indice-m1.md); [renewal with single admission](rinnovo-indice-m1.md); [delta threshold maintenance](manutenzione-indice-m1.md); [startup candidate discovery](scoperta-indice-m1.md); independent paged writer, catalog, and automatic selection remain | Differential comparisons with resident index for PUT/GET/DELETE, snapshots, prepared/outcome, restart and crash at every boundary; index larger than RAM without swapping. |
+| I4, started | [Serial multilevel directory and bucket reader](lettura-indice-paginato.md); [incremental page construction](costruzione-indice-paginato.md); [sealed images and serial read-only adoption](immagini-indice-paginato.md); [M1 startup/GET and retirement before writing](indice-paginato-m1.md); [M1 producer with radix partitioning](costruzione-indice-m1.md); [serial activation on open engine](attivazione-indice-m1.md); [bounded serial delta on resident index](delta-indice-m1.md); [renewal with single admission](rinnovo-indice-m1.md); [delta threshold maintenance](manutenzione-indice-m1.md); [startup candidate discovery](scoperta-indice-m1.md); the concurrent profile and persistent catalog remain | Differential comparisons with resident index for PUT/GET/DELETE, snapshots, prepared/outcome, restart and crash at every boundary; index larger than RAM without swapping. |
 | I5 | Per-Serie controller/actuator and injectable measurer | Automatic startup and switches both ways, RSS/peak limits, delta without gaps, consistent swap, concurrent writer and snapshots. |
 | I6 | Operational migration and qualification | Failpoints before/after every swap, controlled return, warm/cold benchmarks and write amplification; Linux x86-64 and macOS ARM64 gates. |
 
-I2 adds a derived format not yet connected to runtime: through I4,
+The historical I2 increment added a derived format, later connected through I4;
 rollback removes components without migrating user data. After I4, primary index remains
 derived from existing segments, manifest, and decisions: an incomplete new index
 never becomes authoritative. Rollback must rebuild a view compatible

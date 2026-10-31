@@ -7,9 +7,24 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- [Automatic primary storage in M1](docs/implementazione/indice-automatico-operativo.md):
+  flat resident growth while the quota permits it, bounded disk writes/replay,
+  verified migration both ways, hysteresis, live-only compaction and fixed CLOSED
+  resolver caching. Canonical WAL/SEAL is unchanged. The serial profile retains
+  no full resident index while paged; concurrent progress and physical-RAM scale
+  remain separate qualification gates (ADR-0073).
+
 <a id="aggiunto"></a>
 
 ### Added
+
+- [Automatic M1 delta renewal](docs/implementazione/rinnovo-automatico-m1.md)
+  before PUT/DELETE: threshold and next-key capacity, finite image sequence,
+  full reservation before effects, and one BUSY scope through commit (ADR-0072).
+
+- [Self-contained M1 location delta](docs/implementazione/delta-location-m1.md):
+  committed location/tombstone lookup without resident access, complete old/new
+  array reservations, and publication fault injection (ADR-0071).
 
 - [Read-only discovery of M1 images](docs/implementazione/scoperta-indice-m1.md)
   at startup: bounded inventory/candidates, canonical-source filtering,

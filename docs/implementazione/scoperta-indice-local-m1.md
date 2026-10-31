@@ -26,7 +26,10 @@ payload, 256 MiB per image and 16777216 verification visits. See the
 startup limits. Other page/cache/budget profiles are available through the
 library API. No configuration is read from peer messages or Lisp expressions.
 The flag may occur once, in either order with `--version 1|2`; `--create` is
-incompatible. Without the flag, service behavior remains resident by default.
+incompatible. Without the flag, service behavior uses the engine's normal automatic selection
+([ADR-0073](../adr/0073-indice-automatico-operativo-m1.md)). Discovery explicitly
+selects the legacy sealed-image profile; it does not replace the automatic
+operational disk index.
 
 An eligible footer only selects a candidate: complete verification against
 canonical replay is mandatory. Missing/stale candidates retain the canonical

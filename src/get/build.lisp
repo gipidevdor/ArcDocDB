@@ -4,16 +4,18 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-IDX-001 REQ-CCH-002 REQ-FOR-001 REQ-IDX-010
-(declaim (ftype (function (ambito-get indice-primario (or null cache-serie) octets
+(declaim (ftype (function (ambito-get (or null indice-primario) (or null cache-serie) octets
                          &key (:lookup (or null function))) vista-get-serie)
                 crea-vista-get-serie))
 (defun crea-vista-get-serie (scope primary cache identity &key lookup)
   "Pre: controller, indice/cache della stessa Serie, ID canonico stabile di sedici byte.
 Post: vista immutabile con copia posseduta dell'identità; NIL disattiva la cache.
 LOOKUP opzionale e' del controller: (key,start,end,probe,output), risultato LIVE/ABSENT/RETRY-LIMIT.
-Deve essere bounded senza allocazioni, preservare output su miss, usare lo stesso dominio e rispettare ownership/EBR.
+PRIMARY may be NIL only with LOOKUP, allowing a paged controller to release its resident root.
+The callback preserves output on absence and owns its progress/I/O contract; bounded loops do not imply lock-freedom.
 INVALID-ARGUMENT per ID di altra lunghezza; nessun oggetto per documento."
   (unless (= (length identity) +serie-id-bytes+) (error 'invalid-argument :reason :get-serie-identity))
+  (unless (or primary lookup) (error 'invalid-argument :reason :get-missing-lookup))
   (%make-vista-get-serie scope primary cache (copy-seq identity) lookup))
 
 ;;; REQ: REQ-CON-004 REQ-AFF-008

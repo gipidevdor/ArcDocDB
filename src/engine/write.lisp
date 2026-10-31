@@ -81,31 +81,32 @@ Ogni errore/uscita incompleta richiede FAULTED dal confine chiamante, senza roll
             (osserva-motore engine :after-commit)
             csn))))))
 
-;;; REQ: REQ-WAL-005 REQ-WAL-006 REQ-CON-002 REQ-AFF-001 REQ-AFF-004
+;;; REQ: REQ-WAL-005 REQ-WAL-006 REQ-CON-002 REQ-AFF-001 REQ-AFF-004 REQ-IDX-012
 (declaim (ftype (function (motore (member 1 2) b:octets b:octets) b:u64)
                 scrivi-record-motore))
 (defun scrivi-record-motore (engine kind key value)
   "Pre: chiamante owner; nessun'altra API attiva sul motore. Post: CSN u64 confermato.
 Input rifiutato in preflight senza consumare CSN o sporcare il lotto. Dopo l'ingresso
 con MOTORE-BUSY, ogni errore rende FAULTED e propaga la stessa condizione; anche THROW/RETURN
-incompleti rendono FAULTED. I callback non possono rientrare nel motore READY."
+incompleti rendono FAULTED. Il rinnovo opzionale e il commit condividono BUSY; nessun rientro dai callback."
   (esigi-motore-pronto engine)
   (verifica-input-scrittura-motore engine kind key value)
   (verifica-capienza-indice-motore engine kind key)
-  (verifica-capienza-delta-motore engine key)
-  (let ((complete nil) (cause nil))
+  (let ((renewal (preflight-rinnovo-scrittura engine key)) (complete nil) (cause nil))
     (unwind-protect
          (handler-case
              (progn
                (setf (motore-busy engine) t)
-               (if (motore-delta engine)
-                   (registra-chiave-delta-motore engine key t)
-                   (ritira-indice-paginato-motore engine))
+               (if (motore-automatic-index engine)
+                   (prepare-automatic-index engine kind key 0 (length key))
+                   (prepara-indice-scrittura-ammessa engine key renewal))
                (let ((csn (commetti-record-motore engine kind key value)))
                  (declare (type b:u64 csn))
                  (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
                               (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
                    (error 'arcdocdb.conditions:invariant-violation :reason :engine-write-state))
+                 (when (motore-automatic-index engine)
+                   (return-automatic-resident engine) (require-automatic-admission engine))
                  (setf complete t)
                  csn))
            (error (condition)

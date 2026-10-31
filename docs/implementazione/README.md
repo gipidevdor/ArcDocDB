@@ -22,8 +22,10 @@ service exposes PING, PUT, GET and DELETE over a Unix socket.
 | Area | Starting point |
 |---|---|
 | Engine and local service | [M1 core](production-engine-bootstrap.md), [Unix socket](production-unix-m1.md) |
-| Primary index | [Resident index](indice-primario.md), [automatic selector](indice-automatico.md), [pages in the M1 GET path](indice-paginato-m1.md) |
+| Primary index | [Resident index](indice-primario.md), [automatic M1 backend](indice-automatico-operativo.md), [pages in the M1 GET path](indice-paginato-m1.md) |
 | Index images | [Building](costruzione-indice-m1.md), [activation](attivazione-indice-m1.md), [renewal](rinnovo-indice-m1.md), [maintenance](manutenzione-indice-m1.md) |
+| Committed overlay | [M1 location delta](delta-location-m1.md): bounded locations/tombstones and paged GET independent of resident lookup |
+| Automatic maintenance | [M1 delta renewal](rinnovo-automatico-m1.md) before PUT/DELETE at threshold or next-key saturation, with finite fresh names and one admission |
 | Reads and recovery | [GET](get-record.md), [Serie recovery](recovery-serie.md), [Archivio recovery](recovery-archivio.md) |
 | Concurrency | [Pool/Serie chain](pool-catena-risultati.md), [snapshots](snapshot-csn.md), [epochs and reclamation](epoche-e-reclaim.md) |
 | Full text | [Analysis and queries](full-text.md), [codec](full-text-codec.md), [PUT/WAL binding](full-text-put.md), [rows](full-text-righe.md) |
@@ -37,9 +39,10 @@ methods and verification records.
 
 - M1 exposes one Serie and one serial actor. Historical MVCC, multiseries
   transactions, complete compaction and hot rotation remain outside this profile.
-- Pages can serve the optional M1 GET path; the resident index is still present.
-  Automatic switching between resident and paged modes remains incomplete;
-  capacity beyond RAM remains unqualified.
+- M1 selects resident/paged storage automatically, including writes, bounded
+  replay and return to RAM. A paged handle retains no complete resident index.
+  The managed-heap stress is documented; physical-RAM scale and concurrent
+  snapshot qualification remain open.
 - Full text includes Unicode analysis, a codec, document preparation and writer
   bindings. Durable publication, MVCC and Query Engine integration remain open.
 - Each campaign states its platform and scope. Local tests do not automatically

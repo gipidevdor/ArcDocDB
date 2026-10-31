@@ -38,19 +38,24 @@ Gate prima degli effetti, checkpoint e nomi prima di indice/runtime/radice; erro
                                (:max-file-bytes index) (:max-record-bytes index) (:max-records u32)
                                (:max-segments index) (:index-capacity index) (:key-arena-bytes index)
                                (:hash-seed-high u32) (:hash-seed-low u32)
-                               (:index-image (or null opzione-indice-paginato))
+                               (:index-policy t) (:index-image (or null opzione-indice-paginato))
                                (:index-discovery (or null opzione-scoperta-indice))) motore) apri-motore))
 (defun apri-motore (directory archive-id series-id
                    &key (create nil) (version 2) clock observer record-validator (max-file-bytes 16777216)
                         (max-record-bytes 65536) (max-records 65536) (max-segments 64)
                         (index-capacity 4096) (key-arena-bytes 1048576) (hash-seed-high #x243f6a88)
-                        (hash-seed-low #x85a308d3) index-image index-discovery)
+                        (hash-seed-low #x85a308d3) index-image index-discovery
+                        (index-policy (if (or index-image index-discovery) :legacy :automatic)))
   "Pre: directory esistente privata, UUID espliciti, clock monotono iniettabile, nessuna cancellazione thread.
 Post: unico writer fisico e motore READY; init esplicito o recovery automatico senza harness.
 INDEX-IMAGE seleziona un derivato; INDEX-DISCOVERY cerca footer coerenti con il canonico.
 Entrambe le scelte richiedono verifica completa prima di READY, sono esclusive e incompatibili con CREATE.
 Punti durevoli nei preparatori/publisher esistenti; nessuna admission prima di indice e fonti completi.
 Errori tipizzati, risorse tutte tentate; causa primaria e cleanup conservati, nessun retry/rollback."
+  (unless (or (member index-policy '(:legacy :automatic)) (typep index-policy 'politica-indice-automatico))
+    (error 'invalid-argument :reason :engine-index-policy))
+  (when (and (not (eq index-policy :legacy)) (or index-image index-discovery))
+    (error 'invalid-argument :reason :engine-auto-legacy-conflict))
   (when (and create index-image) (error 'invalid-argument :reason :engine-image-on-create))
   (when (and create index-discovery) (error 'invalid-argument :reason :engine-discovery-on-create))
   (when (and index-image index-discovery) (error 'invalid-argument :reason :engine-image-discovery-conflict))
@@ -67,6 +72,10 @@ Errori tipizzati, risorse tutte tentate; causa primaria e cleanup conservati, ne
     (handler-case
         (unwind-protect
              (handler-case (progn
+               (unless (eq index-policy :legacy)
+                 (initialize-automatic-index engine (if (eq index-policy :automatic)
+                   (crea-politica-indice-automatico) index-policy) index-capacity (min key-arena-bytes 65536)
+                   hash-seed-high hash-seed-low))
                (prepara-ispezione-motore engine index-capacity key-arena-bytes hash-seed-high hash-seed-low)
                (setf (motore-directory engine) (possiedi-file-motore engine (io:apri-directory directory)))
                (io:esigi-esclusiva-directory (motore-directory engine))

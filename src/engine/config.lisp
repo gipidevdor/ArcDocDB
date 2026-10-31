@@ -29,10 +29,16 @@ Errori delle factory prima dell'apertura; nessuna admission o seed derivato da i
          (epochs (arcdocdb.epochs:crea-registro-epoche 1 16))
          (scope (g:crea-ambito-get epochs snapshots)))
     (setf (motore-index engine)
+          (if (motore-automatic-index engine) (make-automatic-resident (motore-automatic-index engine))
           (p:crea-indice-primario :capacity capacity :arena-bytes arena :max-depth 1
              :directory-budget-bytes 4096 :fragment-budget-bytes (+ 4096 arena (* 256 capacity))
-             :hash-seed-high seed-high :hash-seed-low seed-low)
+             :hash-seed-high seed-high :hash-seed-low seed-low))
           (motore-index-context engine) (p:crea-contesto-indice)
           (motore-scope engine) scope
-          (motore-view engine) (g:crea-vista-get-serie scope (motore-index engine) nil (motore-series-id engine))))
+          (motore-view engine) (g:crea-vista-get-serie scope (unless (motore-automatic-index engine) (motore-index engine)) nil (motore-series-id engine)
+            :lookup (when (motore-automatic-index engine)
+              (lambda (key start end probe output) (sonda-indice-motore engine key start end probe output))))))
+  (when (motore-automatic-index engine)
+    (setf (automatic-index-controller-resident-charge (motore-automatic-index engine))
+          (automatic-resident-charge (motore-index engine))))
   nil)

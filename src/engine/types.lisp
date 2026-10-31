@@ -12,7 +12,7 @@
              (format stream "ArcDocDB cleanup: primaria ~A; guasti ~S"
                      (causa-cleanup-motore condition) (errori-cleanup-motore condition)))))
 
-;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-LIM-003
+;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-LIM-003 REQ-IDX-012
 (defstruct (motore (:constructor %make-motore) (:copier nil))
   "Pre: configurazione validata prima dell'I/O; un attore e una Serie per handle.
 Post: admission chiusa fino a READY; risorse possedute fino a close, nessun buffer caller trattenuto.
@@ -37,6 +37,9 @@ Nessun accessore pubblico sui FD o sulle radici; la capacita' non e' trasferibil
   (discovery-option nil :type (or null opzione-scoperta-indice) :read-only t)
   (image-option nil :type (or null opzione-indice-paginato) :read-only t)
   (delta nil :type (or null delta-indice-motore))
+  (automatic-index nil :type (or null automatic-index-controller))
+  (auto-renewal nil :type (or null opzione-rinnovo-automatico))
+  (auto-renewals-used 0 :type (integer 0 65536))
   (paged nil :type (or null arcdocdb.index.page:vista-indice-paginato))
   (paged-file nil :type (or null io:file-io))
   (paged-option nil :type (or null opzione-indice-paginato))

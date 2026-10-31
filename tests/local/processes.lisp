@@ -632,7 +632,7 @@
 
 (defun prepare-discovery-image (data version)
   (let* ((engine (arcdocdb.engine:apri-motore data (decode-hex *archive-hex*) (decode-hex *series-hex*)
-                   :create t :version version :clock #'get-internal-real-time))
+                   :create t :version version :index-policy :legacy :clock #'get-internal-real-time))
          (option (arcdocdb.engine:crea-opzione-indice-paginato "primary-0000000000000001.idx.tmp")))
     (unwind-protect
          (progn

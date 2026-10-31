@@ -1,0 +1,6 @@
+(require :asdf)
+(setf asdf:*compile-file-failure-behaviour* :error asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (c) (unless (typep c 'sb-kernel:redefinition-warning) (error c)))))
+  (asdf:load-asd (truename "arcdocdb.asd")) (asdf:load-system "arcdocdb/tests"))
+(arcdocdb.engine.tests::test-REQ-IDX-013-increased-grant-on-resident-handle-permits-new-maintenance-peak)
+(format t "~&QUOTA-REGRESSION-PASS resident grant increase / 12 maximum-length keys / no disk transition~%")

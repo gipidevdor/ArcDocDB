@@ -54,13 +54,14 @@ Unica admission seriale: nessuna GET o scrittura fra le fasi, nemmeno da callbac
 Preflight ordinario conserva READY; ogni errore/nonlocal exit ammesso => FAULTED con causa preservata.
 Nessun retry o cancellazione: file incompleto o completo non pubblicato resta un derivato privato."
   (esigi-motore-pronto engine)
+  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (preflight-rinnovo-immagine engine option max-maintenance-payload max-pages delta-keys delta-key-bytes)
   (let ((complete nil) (cause nil))
     (unwind-protect
          (handler-case
              (progn
                (setf (motore-busy engine) t)
-               (esegui-rinnovo-immagine engine option max-pages (crea-delta-indice-motore delta-keys delta-key-bytes))
+               (esegui-rinnovo-immagine engine option max-pages (crea-delta-configurato-motore engine delta-keys delta-key-bytes))
                (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
                             (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
                  (error 'invariant-violation :reason :engine-image-renewal-state))

@@ -4,13 +4,14 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-IDX-001 REQ-AFF-002 REQ-AFF-008
-(declaim (ftype (function (contesto-get resolver-words u32) index) trova-riga-resolver))
-(defun trova-riga-resolver (context rows offset)
+(declaim (ftype (function (contesto-get resolver-words u32 &optional u32) index) trova-riga-resolver))
+(defun trova-riga-resolver (context rows offset &optional (count (floor (length rows) +row-words+)))
   "Pre: CANDIDATE sotto EBR, righe immutabili ordinate per offset. Post: base del PUT esatto.
 Assenza non significa documento assente: location già pubblicata senza riga rende FAULTED.
 Al più 33 passi su cardinalità u32; nessuna allocazione esplicita o I/O."
   (unless (zerop (mod (length rows) +row-words+)) (guasto-get context :resolver-row-shape))
-  (let ((left 0) (right (floor (length rows) +row-words+)))
+  (unless (<= count (floor (length rows) +row-words+)) (guasto-get context :resolver-row-count))
+  (let ((left 0) (right count))
     (declare (type u32 left right))
     (loop repeat +binary-attempts+
           do (when (= left right) (guasto-get context :resolver-location-absent))
@@ -81,7 +82,7 @@ Errori/uscite non locali liberano EBR; ordine errato rifiutato prima di assumere
                         (eq (stato-file (segmento-get-file segment)) :open))
              (guasto-get context :resolver-source-lifetime))
            (let ((base (trova-riga-resolver context (mappa-segmento-get-rows map)
-                                           (ldb (byte 32 0) location))))
+                                           (ldb (byte 32 0) location) (mappa-segmento-get-count map))))
              (multiple-value-bind (flags proof) (verifica-riga-resolver context map base)
                (setf complete t)
                (values segment (mappa-segmento-get-end map) flags proof))))

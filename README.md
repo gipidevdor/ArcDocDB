@@ -13,7 +13,8 @@ The first intended application is an NNTP server, connected through a local Unix
 ## Status
 
 **In development.** M1 provides a durable, single-Serie core with startup, recovery,
-PUT, GET and DELETE over a Unix socket.
+PUT, GET and DELETE over a Unix socket. The primary index automatically stays
+in RAM or uses a bounded disk cache according to its assigned memory budget.
 [Capabilities and limits](docs/implementazione/README.md).
 
 ## Start

@@ -15,7 +15,7 @@
 (defstruct (backend (:constructor make-backend
                          (open reader writer flush directory-flush close
                           &key identity entry-identity rename directory-entries open-relative file-metadata
-                               create-relative rename-exclusive directory-lock))
+                               create-relative rename-exclusive directory-lock unlink-relative))
                     (:copier nil))
   "Pre: funzioni fidate e stabili. Post: tabella immutabile delle chiamate iniettabili.
 Open riceve nome/mode; read fd/octets/start/count/offset; write fd/octets/start/count.
@@ -32,6 +32,8 @@ File-metadata opzionale riceve fd regolare; restituisce device/inode/dimensione 
 Create-relative opzionale riceve directory-fd/foglia ASCII privata/:append; crea un nuovo .tmp vuoto
 con WRONLY/CREAT/EXCL/APPEND/CLOEXEC/NOFOLLOW e permessi richiesti 0600 (soggetti a umask).
 Restituisce un nuovo FD posseduto dal chiamante, senza riaprire o troncare file esistenti.
+Unlink-relative optionally receives directory-fd/leaf; zero means removal, syscall-error preserves errno.
+Only the typed derived-removal proof API can invoke it; no fallback for a missing callback.
 Nessun fallback nativo per callback mancanti."
   (open #'identity :type function :read-only t)
   (reader #'identity :type function :read-only t)
@@ -44,6 +46,7 @@ Nessun fallback nativo per callback mancanti."
   (rename nil :type (or null function) :read-only t)
   (rename-exclusive nil :type (or null function) :read-only t)
   (directory-lock nil :type (or null function) :read-only t)
+  (unlink-relative nil :type (or null function) :read-only t)
   (directory-entries nil :type (or null function) :read-only t)
   (open-relative nil :type (or null function) :read-only t)
   (file-metadata nil :type (or null function) :read-only t)

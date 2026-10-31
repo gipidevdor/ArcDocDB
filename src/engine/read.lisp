@@ -29,7 +29,8 @@ Ogni uscita abbandona GET; un errore di cleanup non sostituisce l'uscita primari
                       (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-absence))
                     (values :absent 0)))
                  (:candidate
-                  (case (gd:leggi-record-serie-get context (motore-controller engine))
+                  (case (if (motore-automatic-index engine) (read-automatic-record engine context)
+                            (gd:leggi-record-serie-get context (motore-controller engine)))
                     (:segment nil)
                     (:buffer-required
                      (error 'arcdocdb.conditions:resource-exhausted :reason :engine-get-record-buffer))

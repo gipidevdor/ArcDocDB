@@ -22,7 +22,7 @@ Linear probing limitato alla capacita'; tabella satura e' INVARIANT-VIOLATION, m
               (return-from sonda-delta-indice (values slot t)))))))
     (error 'invariant-violation :reason :engine-delta-table-full)))
 
-;;; REQ: REQ-IDX-010 REQ-LIM-003
+;;; REQ: REQ-IDX-010 REQ-IDX-011 REQ-LIM-003
 (declaim (ftype (function (motore octets boolean) null) registra-chiave-delta-motore))
 (defun registra-chiave-delta-motore (engine key publish)
   "Pre: owner READY preflight, oppure BUSY prima del CSN quando PUBLISH vero.
@@ -32,8 +32,12 @@ Esaurimento ordinario preserva READY nel preflight; commit incompleto impone FAU
   (let ((delta (motore-delta engine)))
     (when delta
       (unless (motore-paged engine) (error 'invariant-violation :reason :engine-delta-without-image))
-      (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key 0 (length key))
+      (multiple-value-bind (high low)
+          (arcdocdb.hash64:xxh64 key 0 (length key) (delta-indice-motore-seed-high delta) (delta-indice-motore-seed-low delta))
         (multiple-value-bind (slot found) (sonda-delta-indice delta key 0 (length key) high low)
+          (when found
+            (unless (<= 1 (aref (delta-indice-motore-states delta) (floor slot 4)) 2)
+              (error 'invariant-violation :reason :engine-delta-unpublished-location)))
           (unless found
             (let* ((used (delta-indice-motore-used delta)) (end (+ used (length key)))
                    (table (delta-indice-motore-table delta)))
@@ -58,7 +62,8 @@ NIL senza delta; digest uguali non sostituiscono il confronto dei byte, nessuna 
   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-delta-read-admission))
   (let ((delta (motore-delta engine)))
     (if delta
-        (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key start end)
+        (multiple-value-bind (high low)
+            (arcdocdb.hash64:xxh64 key start end (delta-indice-motore-seed-high delta) (delta-indice-motore-seed-low delta))
           (nth-value 1 (sonda-delta-indice delta key start end high low)))
         nil)))
 

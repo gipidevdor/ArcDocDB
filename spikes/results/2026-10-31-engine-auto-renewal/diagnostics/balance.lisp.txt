@@ -1,0 +1,17 @@
+(require :asdf)
+(let ((balance 0) (string nil) (escape nil) (previous 0))
+  (with-open-file (stream "tests/engine/image-auto.lisp")
+    (loop for line = (read-line stream nil) for number from 1 while line do
+      (setf previous balance)
+      (loop for c across line do
+        (cond (escape (setf escape nil))
+              ((and string (char= c #\\)) (setf escape t))
+              ((char= c #\") (setf string (not string)))
+              (string nil)
+              ((char= c #\;) (return))
+              ((char= c #\() (incf balance))
+              ((char= c #\)) (decf balance))))
+      (when (or (uiop:string-prefix-p "(deftest " line) (uiop:string-prefix-p "(defun " line)
+                (< balance previous 0) (and (< balance 0) (>= previous 0)))
+        (format t "~D before=~D after=~D ~A~%" number previous balance line))))
+  (format t "Final balance ~D~%" balance))

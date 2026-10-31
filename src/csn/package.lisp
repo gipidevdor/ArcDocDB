@@ -6,4 +6,4 @@
   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted
                 #:invariant-violation)
   (:export #:registro-csn #:crea-registro-csn #:prendi-csn #:risolvi-csn
-           #:leggi-frontiere-csn))
+           #:leggi-frontiere-csn #:verifica-capienza-csn))

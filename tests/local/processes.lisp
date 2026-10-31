@@ -187,7 +187,7 @@
          "Risposta CLI inattesa: ~S" form)
   form)
 
-(defun start-server (data runtime version stage &key create discovery index-budget record-cache-budget (script "tools/local-server.lisp") expected-failure)
+(defun start-server (data runtime version stage &key create discovery index-budget record-cache-budget group-limit (script "tools/local-server.lisp") expected-failure)
   (let* ((socket (socket-path runtime (format nil "v~D-~D.sock" version stage)))
          (name (format nil "v~D-server-~D" version stage)))
     (check (null (lstat-if-present socket)) "Socket non fresco: ~A" socket)
@@ -198,6 +198,7 @@
                                  (when discovery (list "--discover-index"))
                                  (when index-budget (list "--index-budget" (write-to-string index-budget)))
                                  (when record-cache-budget (list "--record-cache-budget" (write-to-string record-cache-budget)))
+                                 (when group-limit (list "--test-group-limit" (write-to-string group-limit)))
                                  (list "--version" (write-to-string version)))
                          :expected-failure expected-failure))
           (limit (deadline *process-timeout*)))
@@ -847,3 +848,53 @@
                                 "Wrong compacted PUT CSN"))
                     (l:close-local client)))
                 (stop-server server sb-posix:sigterm :automatic-compaction-recovered))))))))))
+
+(defun queue-eight-local-writes (server clients)
+  ;; An explicit OS stop is a test barrier: all complete frames are queued before dispatch resumes.
+  (sb-ext:process-kill (child-process server) sb-posix:sigstop)
+  (unwind-protect
+       (progn
+         (loop repeat 5000 until (eq :stopped (sb-ext:process-status (child-process server))) do (sleep 0.001))
+         (check (eq :stopped (sb-ext:process-status (child-process server))) "Server did not reach STOP barrier")
+         (loop for client across clients for i from 0 do
+           (let* ((buffer (l::local-client-output client))
+                  (size (l::encode-local-request buffer 1 1 (automatic-local-key i) (decode-hex "182A"))))
+             (l::transfer-local-client client buffer 0 size :output (deadline 5)))))
+    (sb-ext:process-kill (child-process server) sb-posix:sigcont)))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-WAL-006 REQ-REC-001
+(deftest test-REQ-WAL-002-real-Unix-eight-strong-writes-one-flush-and-SIGKILL
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "group-runtime/")))
+       (dolist (version '(1 2))
+         (scenario :strong-group-native version
+          (lambda ()
+            (let ((data (subdirectory (format nil "group-v~D/" version))))
+              (multiple-value-bind (server socket)
+                  (start-server data runtime version 100 :create t :script "tools/local-group-server.lisp" :group-limit 8)
+                (let ((clients (make-array 8 :initial-element nil)))
+                  (unwind-protect
+                       (progn
+                         (dotimes (i 8) (setf (svref clients i) (l:connect-local (namestring socket))))
+                         (queue-eight-local-writes server clients)
+                         (dotimes (i 8)
+                           (let* ((client (svref clients i)) (envelope (l::receive-local-client client 65536 (deadline 30))))
+                             (check (and (= 3 (l::envelope-kind envelope)) (= 1 (l::envelope-id envelope))
+                                         (zerop (l::envelope-code envelope))) "Invalid grouped response")
+                             (check (= (1+ i) (l::decode-local-response (l::local-client-input client) envelope
+                                               (l::local-client-space client) 1)) "Wrong grouped CSN")))
+                         (check (search "GROUP-FLUSH 8" (uiop:read-file-string (child-stderr server))) "Eight writes did not share one flush"))
+                    (loop for client across clients when client do (l:close-local client))))
+                (stop-server server sb-posix:sigkill :strong-group-acknowledged))
+              (multiple-value-bind (server socket) (start-server data runtime version 101)
+                (let ((client (l:connect-local (namestring socket))))
+                  (unwind-protect
+                       (progn
+                         (dotimes (i 8)
+                           (multiple-value-bind (status document) (l:client-get client (automatic-local-key i))
+                             (check (eq :found status) "Missing grouped commit")
+                             (check (equalp (decode-hex "182A") document) "Wrong grouped document")))
+                         (check (= 9 (l:client-put client (automatic-local-key 9) (decode-hex "182B"))) "Wrong next grouped CSN"))
+                    (l:close-local client)))
+                (stop-server server sb-posix:sigterm :strong-group-recovered))))))))))

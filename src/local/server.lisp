@@ -33,7 +33,8 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
 (defun close-local-connection (connection)
   "Pre: actor's slot. Post: ownership consumed before close, even if close fails."
   (let ((socket (local-connection-socket connection)))
-    (setf (local-connection-socket connection) nil (local-connection-state connection) :closed)
+    (setf (local-connection-socket connection) nil (local-connection-state connection) :closed
+          (local-connection-pending connection) nil)
     (when socket (close-local-socket socket)))
   nil)
 
@@ -52,11 +53,12 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
   (unless (<= 5 size (+ 4 (local-connection-limit connection)))
     (error 'arcdocdb.conditions:invariant-violation :reason :local-response-budget))
   (setf (local-connection-written connection) 0 (local-connection-size connection) size
+        (local-connection-pending connection) nil
         (local-connection-state connection) state (local-connection-deadline connection) (local-until now 30))
   nil)
 
 ;;; REQ: REQ-IPC-002 REQ-REC-001
-(defun finish-local-input (engine connection clock)
+(defun finish-local-input (engine connection clock &optional defer)
   "Pre: exact body received. Post: WELCOME or reserved response; never a request before WELCOME."
   (let* ((buffer (local-connection-input connection))
          (envelope (decode-local-envelope buffer 4 (local-connection-needed connection)
@@ -72,11 +74,13 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
           (unless (and (= 2 (envelope-kind envelope)) (< (local-connection-last-id connection) id))
             (error 'protocol-error :reason :local-request-id))
           (setf (local-connection-last-id connection) id)
-          (let ((size (local-dispatch engine connection envelope)))
-            (queue-local-output connection size :response (local-now clock)))))))
+          (if defer
+              (setf (local-connection-pending connection) envelope (local-connection-state connection) :pending)
+              (let ((size (local-dispatch engine connection envelope)))
+                (queue-local-output connection size :response (local-now clock))))))))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
-(defun step-local-input (engine connection now clock)
+(defun step-local-input (engine connection now clock &optional defer)
   "Pre: slot in HELLO/REQUEST. Post: at most one recv, prefix verified before body."
   (multiple-value-bind (status count)
       (local-transfer-step (local-connection-socket connection) (local-connection-input connection)
@@ -94,7 +98,7 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
          (if (= 4 (local-connection-needed connection))
              (setf (local-connection-needed connection)
                    (+ 4 (local-prefix-size (local-connection-input connection) (local-connection-limit connection))))
-             (finish-local-input engine connection clock)))))
+             (finish-local-input engine connection clock defer)))))
     (eq status :progress)))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
@@ -112,7 +116,7 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
     (eq status :progress)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
-(defun step-local-connection (engine connection now clock)
+(defun step-local-connection (engine connection now clock &optional defer)
   "Pre: active actor slot. Post: finite step or expiration; one peer does not stop the others."
   (let ((state (local-connection-state connection)))
     (unless (eq state :closed)
@@ -121,7 +125,8 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
                      (local-connection-idle connection) (local-connection-deadline connection)))
          (close-local-connection connection) t)
         ((member state '(:welcome :response)) (step-local-output connection now))
-        (t (step-local-input engine connection now clock))))))
+        ((eq state :pending) nil)
+        (t (step-local-input engine connection now clock defer))))))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (defun accept-local-connection (listener connections now)
@@ -139,20 +144,21 @@ EINTR/EAGAIN return to the actor loop, preserving offset and absolute deadline."
       t)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
-(defun local-server-loop (engine listener connections clock stop waiter)
+(defun local-server-loop (engine listener connections clock stop waiter queue)
   "Pre: READY, all resources reserved. Post: explicit stop or propagated engine error.
 Each iteration visits every slot once; finite idle wait without serving unrelated events."
   (loop until (funcall stop) do
     (let* ((now (local-now clock)) (progress (accept-local-connection listener connections now)))
       (loop for connection across connections do
         (handler-case
-            (when (step-local-connection engine connection (local-now clock) clock) (setf progress t))
+            (when (step-local-connection engine connection (local-now clock) clock t) (setf progress t))
           (protocol-error (condition)
             (unless (eq :ready (e:stato-motore engine)) (error condition))
             (close-local-connection connection))
           (arcdocdb.conditions:io-fault (condition)
             (unless (eq :ready (e:stato-motore engine)) (error condition))
             (close-local-connection connection))))
+      (dispatch-local-ready engine connections clock queue)
       (unless progress (wait-local-server listener connections waiter (local-now clock)))))
   nil)
 
@@ -176,14 +182,14 @@ Each iteration visits every slot once; finite idle wait without serving unrelate
 (defun serve-local (directory archive-id series-id path
                     &key create (version 2) (clock #'get-internal-real-time) observer
                          (stop (constantly nil)) ready (max-connections 8) io-backend index-discovery
-                         (index-policy (if index-discovery :legacy :automatic)) (record-cache-budget 0))
+                         (index-policy (if index-discovery :legacy :automatic)) (record-cache-budget 0) (max-write-group 8))
   "Pre: distinct private data/runtime directories, explicit identities, one calling actor.
 Post: real startup and recovery before listener; service until STOP, complete cleanup.
 INDEX-DISCOVERY and INDEX-POLICY are validated before resources and delegated before listen.
 RECORD-CACHE-BUDGET is a separate fixed record-cache grant, zero by default.
 Trusted non-reentrant callbacks; STOP/READY do not certify recovery. No retry."
   (unless (and (functionp clock) (functionp stop) (typep ready '(or null function))
-               (typep max-connections '(integer 1 8)))
+               (typep max-connections '(integer 1 8)) (typep max-write-group '(integer 1 8)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-server-config))
   (e::verifica-budget-cache-motore record-cache-budget)
   (unless (typep index-discovery '(or null e:opzione-scoperta-indice))
@@ -199,7 +205,7 @@ Trusted non-reentrant callbacks; STOP/READY do not certify recovery. No retry."
   (let ((connections (map 'simple-vector (lambda (i) (declare (ignore i))
                                          (make-local-connection :io-backend io-backend))
                           (make-array max-connections)))
-        (engine nil) (listener nil) (namespace nil) (primary nil)
+        (engine nil) (listener nil) (namespace nil) (primary nil) (queue (make-local-write-queue :limit max-write-group))
         (waiter (make-local-waiter (1+ max-connections) io-backend)) (space (arcdocdb.cbor:crea-spazio-cbor)))
     (unwind-protect
          (handler-case
@@ -217,6 +223,6 @@ Trusted non-reentrant callbacks; STOP/READY do not certify recovery. No retry."
                (setf listener (open-local-listener path :namespace namespace))
                (when (and ready (funcall ready))
                  (error 'arcdocdb.conditions:invalid-argument :reason :local-ready-result))
-               (local-server-loop engine listener connections clock stop waiter))
+               (local-server-loop engine listener connections clock stop waiter queue))
            (error (condition) (setf primary condition) (error condition)))
       (cleanup-local-server connections listener engine namespace primary))))

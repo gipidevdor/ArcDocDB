@@ -192,3 +192,23 @@ Malformed, repeated or oversized CLI grants are rejected; a too-small positive
 grant rejects engine startup and no READY/listener is published. The wire and
 strong PUT/DELETE acknowledgment remain unchanged. See the
 [cache contract and metrics](cache-record.md#serial-m1-integration).
+
+## Automatic same-turn strong write grouping
+
+[ADR-0080](../adr/0080-group-commit-m1.md) lets the serial actor combine complete
+validated PUT/DELETE commands already ready in the current pass. Each retains
+its own ID, CSN and SEAL; every response follows the shared strong flush and
+complete publication. The wire shape and one-in-flight limit remain unchanged.
+No timer waits to fill a group, and an isolated write follows the existing path.
+
+Slot order is preserved: GET/PING/rejections drain preceding writes as a barrier.
+Fresh absolute-deadline checks remove expired commands before admission. Only
+an unadmitted capacity refusal may split into individually admitted requests;
+uncertain admitted writes are never repeated. Peer sends happen after engine
+completion and collector cleanup, without a retained pin or lease.
+
+The library option `:max-write-group` has domain 1..8 and default 8. Limit 1
+provides individual admissions for comparison or an owner-selected admission
+policy; it does not weaken durability or change wire operations. The production
+CLI uses the default. Buffers remain bounded before listen; this option is not
+a limit on whole-process RSS. [Evidence](../../spikes/results/2026-10-31-engine-group-commit/report.md).

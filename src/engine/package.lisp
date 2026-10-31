@@ -14,6 +14,7 @@
   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted #:invariant-violation
                 #:io-fault #:corruption-detected #:unsupported-format)
   (:export #:compatta-motore #:statistiche-compattazione-motore #:statistiche-cache-motore
+           #:operazione-scrittura #:crea-operazione-scrittura #:scrivi-gruppo-documenti
            #:politica-indice-automatico #:crea-politica-indice-automatico
            #:configura-budget-indice-motore #:statistiche-indice-motore #:motore #:apri-motore #:chiudi-motore #:stato-motore
            #:scrivi-documento #:cancella-documento #:leggi-documento #:frontiere-motore

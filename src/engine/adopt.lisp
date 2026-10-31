@@ -40,10 +40,8 @@ Rebinding rereads canonical header; neither rewrites file nor reconstructs durab
           (motore-lease engine) (s:acquisisci-controllore-serie controller)
           (motore-source engine) (a:crea-sorgente-get-preparata controller (motore-lease engine) wrapped
                                   :max-puts (motore-max-records engine)
-                                  :batch-records 1 :batch-bytes (+ (motore-max-record-bytes engine) w::+seal-total+))
-          (motore-batch engine) (w:crea-lotto :segment id :version (motore-version engine) :max-records 1
-                                            :capacity (+ (motore-max-record-bytes engine) w::+seal-total+))
-          (motore-group engine) (w:crea-gruppo (a:log-segmento-attivo-preparato wrapped) :max-lots 1))
+                                  :batch-records 1 :batch-bytes (+ (motore-max-record-bytes engine) w::+seal-total+)))
+    (initialize-write-group engine id)
     (gd:inizializza-fonti-get-attive (motore-source engine) (motore-lease engine) (motore-sources engine)))
   nil)
 

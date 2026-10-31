@@ -327,3 +327,77 @@
              (is (= 1 (getf (e:statistiche-cache-motore engine) :verify-failed)))
              (is (equal '(0 1 0 1) (multiple-value-list (e:frontiere-motore engine)))))
         (e:chiudi-motore engine)))))
+
+(defun group-pending (id opcode &optional (key (bytes 1)) (document (when (= opcode 1) (bytes 0))))
+  (let ((connection (l::make-local-connection :limit 65536 :state :pending :deadline 100)))
+    (setf (l::local-connection-pending connection) (request connection id opcode key document)
+          (l::local-connection-last-id connection) id) connection))
+(defun group-response (connection opcode)
+  (is (eq :response (l::local-connection-state connection)))
+  (let ((envelope (l::decode-local-envelope (l::local-connection-output connection) 4 (l::local-connection-size connection))))
+    (is (zerop (l::envelope-code envelope))) (decoded-result connection envelope opcode)))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-WAL-006
+(deftest test-REQ-WAL-002-local-ready-writes-share-one-flush-and-clear-queue
+  (with-engine (engine root :create t)
+    (let ((connections (make-array 8)) (queue (l::make-local-write-queue)) (flushes 0)
+          (original (symbol-function 'arcdocdb.io:durable-flush)))
+      (dotimes (i 8) (setf (svref connections i) (group-pending (1+ i) 1 (bytes i))))
+      (unwind-protect
+           (progn (setf (symbol-function 'arcdocdb.io:durable-flush) (lambda (file) (incf flushes) (funcall original file)))
+             (l::dispatch-local-ready engine connections (lambda () 10) queue) (is (= 1 flushes)))
+        (setf (symbol-function 'arcdocdb.io:durable-flush) original))
+      (dotimes (i 8) (is (= (1+ i) (group-response (svref connections i) 1))))
+      (is (zerop (l::local-write-queue-count queue))) (is (every #'null (l::local-write-queue-operations queue)))
+      (is (every #'null (l::local-write-queue-connections queue))))))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-IDX-001
+(deftest test-REQ-IPC-002-local-ready-GET-order-is-a-write-barrier
+  (with-engine (engine root :create t)
+    (let* ((connections (vector (group-pending 1 1) (group-pending 2 2) (group-pending 3 3) (group-pending 4 2)))
+           (queue (l::make-local-write-queue)))
+      (l::dispatch-local-ready engine connections (lambda () 10) queue)
+      (is (= 1 (group-response (svref connections 0) 1)))
+      (multiple-value-bind (status doc) (group-response (svref connections 1) 2)
+        (is (eq :found status)) (is (equalp (bytes 0) doc)))
+      (is (= 2 (group-response (svref connections 2) 3)))
+      (is (equal '(:absent nil) (multiple-value-list (group-response (svref connections 3) 2)))))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-WAL-006
+(deftest test-REQ-IPC-002-local-group-refusal-splits-only-before-admission
+  (arcdocdb.engine.tests::with-root (root)
+    (let ((engine (e:apri-motore root (id 73) (id 41) :create t :clock (lambda () 10) :max-records 1)))
+      (unwind-protect
+           (let ((connections (vector (group-pending 1 1 (bytes 1)) (group-pending 2 1 (bytes 2)))))
+             (l::dispatch-local-ready engine connections (lambda () 10) (l::make-local-write-queue))
+             (is (= 1 (group-response (svref connections 0) 1))) (is (= 2 (group-response (svref connections 1) 1)))
+             (is (eq :ready (e:stato-motore engine))))
+        (e:chiudi-motore engine)))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-WAL-006
+(deftest test-REQ-IPC-002-local-pending-deadline-before-group-admission
+  (with-engine (engine root :create t)
+    (let ((connection (group-pending 1 1)) (queue (l::make-local-write-queue)))
+      (setf (l::local-connection-deadline connection) 5)
+      (l::dispatch-local-pending engine connection queue (lambda () 0))
+      (is (= 1 (l::local-write-queue-count queue)))
+      (l::flush-local-write-queue engine queue (lambda () 10))
+      (is (eq :closed (l::local-connection-state connection)))
+      (is (equal '(0 0 0 0) (multiple-value-list (e:frontiere-motore engine))))))
+  (dolist (limit '(nil 0 9 "8"))
+    (signals arcdocdb.conditions:invalid-argument
+      (l:serve-local "/missing" (id 73) (id 41) "/missing/socket" :max-write-group limit
+        :clock (lambda () (error "Clock reached"))))))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-004 REQ-WAL-006
+(deftest test-REQ-WAL-006-local-group-admitted-fault-never-retries-or-responds
+  (let ((armed nil) (calls 0) (cause (make-condition 'arcdocdb.conditions:io-fault :reason :local-group-fi :operation :test)))
+    (with-engine (engine root :create t :observer (lambda (handle phase) (declare (ignore handle))
+             (when (and armed (eq phase :after-flush)) (incf calls) (error cause)) nil))
+      (let ((connections (vector (group-pending 1 1) (group-pending 2 1))) (queue (l::make-local-write-queue)) (caught nil))
+        (setf armed t)
+        (handler-case (l::dispatch-local-ready engine connections (lambda () 10) queue)
+          (arcdocdb.conditions:io-fault (condition) (is (eq cause condition)) (setf caught t)))
+        (is caught) (is (= 1 calls)) (is (eq :faulted (e:stato-motore engine)))
+        (is (every (lambda (conn) (eq :pending (l::local-connection-state conn))) connections))
+        (is (zerop (l::local-write-queue-count queue))) (is (every #'null (l::local-write-queue-operations queue)))))))

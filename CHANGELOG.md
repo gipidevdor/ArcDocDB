@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Integrate bounded strong group commit into serial M1 and the Unix actor:
+  cumulative index/ACTIVE reservation, independent CSNs/SEALs, one shared flush,
+  ordered publication, read barriers and no retry after admission.
+  [Contract](docs/adr/0080-group-commit-m1.md) and
+  [evidence](spikes/results/2026-10-31-engine-group-commit/report.md).
+
 - Connect the existing verified record cache to M1 RAM/paged GET, live maintenance
   and the Unix service, with a separate fixed grant (zero by default), corruption
   fallback notification and per-handle counts.

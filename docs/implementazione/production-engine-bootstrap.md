@@ -195,3 +195,30 @@ unchanged if the configured segment budget is exhausted. Increasing the budget
 permits the same data to be reopened. Repeated read-only openings consume structural
 capacity; ordinary writes compact before consuming recovery headroom. Planning
 shares the strict canonical order scan; output verification remains independent.
+
+## Bounded strong write groups
+
+[ADR-0080](../adr/0080-group-commit-m1.md) connects the existing WAL group and
+planned-root FIFO. For example, construct a stable simple vector of
+`(crea-operazione-scrittura :put key value)` and
+`(crea-operazione-scrittura :delete key)` descriptors, allocate a specialized
+`(unsigned-byte 64)` result vector, and call
+`(scrivi-gruppo-documenti engine operations results :count n)`.
+The API returns `n` after one strong flush and complete FIFO publication;
+`results[0..n)` contains distinct increasing operation CSNs. `n` is 1..8 and
+the group must fit one ACTIVE's configured record/byte budget and the WAL's
+existing group bound. Inputs remain borrowed and immutable until return.
+
+Every operation retains an independent SEAL and CSN; a group is not a transaction.
+Known input/preflight rejections leave output and data CSNs unchanged. Admitted
+errors/nonlocal exits fault admission; output is not confirmed and recovery may
+retain a sealed prefix. No implicit retry or durability downgrade occurs.
+Cumulative index reservation accounts for repeated keys, deletions, live peaks,
+arena bytes, revision/slot credits and paged append headroom. Legacy deltas reserve
+each distinct key once and renew at most once before sealing. Automatic index
+maintenance retains transparent RAM/paged behavior.
+
+A fixed per-ACTIVE workspace contains eight one-record batches; the existing
+single-write API reuses batch zero. Extra batch buffers and planning/event arrays
+are separate from the index/cache grants and are released with the handle.
+[Verification and measurements](../../spikes/results/2026-10-31-engine-group-commit/report.md).

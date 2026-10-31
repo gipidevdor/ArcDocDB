@@ -4,13 +4,13 @@
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
 ;;; REQ: REQ-STO-002 REQ-STO-003 REQ-LIM-003
-(declaim (ftype (function (motore index) boolean) preflight-rotazione-motore))
-(defun preflight-rotazione-motore (engine record-bytes)
+(declaim (ftype (function (motore index &optional index) boolean) preflight-rotazione-motore))
+(defun preflight-rotazione-motore (engine record-bytes &optional (records 1))
   "Pre: READY owner and valid input, before CSN or namespace effects. Post: rotation needed or NIL.
 A known segment-count limit refuses with READY and unchanged canonical bytes. No best-effort retry."
   (flet ((needed ()
-           (or (>= (r::radice-get-attiva-count (s:leggi-radice-serie (motore-controller engine))) (motore-max-records engine))
-               (> (+ (io:posizione-scritta (motore-append engine)) record-bytes w::+seal-total+) (motore-max-file-bytes engine))))
+           (or (> (+ records (r::radice-get-attiva-count (s:leggi-radice-serie (motore-controller engine)))) (motore-max-records engine))
+               (> (+ (io:posizione-scritta (motore-append engine)) record-bytes (* records w::+seal-total+)) (motore-max-file-bytes engine))))
          (closed-count () (gd:conta-segmenti-directory-get (gd::fonti-get-serie-directory (motore-sources engine)))))
     (let* ((rotate (needed)) (closed (closed-count))
            (pressure (>= (+ closed (if rotate 2 1)) (motore-max-segments engine))))

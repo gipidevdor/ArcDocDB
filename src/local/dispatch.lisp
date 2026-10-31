@@ -33,20 +33,24 @@ PUT/DELETE respond after strong; GET finishes copying and releases the pin befor
       (otherwise (error 'arcdocdb.conditions:invariant-violation :reason :local-dispatch-opcode)))))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
+(defun local-dispatch-command (engine connection id opcode status key document)
+  "Pre: decoded envelope/arguments and reserved output. Post: response after the normal admission checks.
+One command decoder feeds both immediate dispatch and the same-turn write collector; no duplicate decode."
+  (let ((out (local-connection-output connection)))
+    (cond
+      ((plusp status) (encode-local-response out id status))
+      ((not (eq :ready (e:stato-motore engine))) (encode-local-response out id 3))
+      ((and (= opcode 2) (< (local-connection-limit connection) 60032)) (encode-local-response out id 5))
+      (t (handler-case (local-execute engine connection id opcode key document)
+           (arcdocdb.conditions:resource-exhausted (condition)
+             (unless (eq :ready (e:stato-motore engine)) (error condition))
+             (encode-local-response out id 2)))))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
 (defun local-dispatch (engine connection envelope)
   "Pre: valid envelope and ID; one owner, private buffers. Post: response or propagated fault.
 Only RESOURCE-EXHAUSTED with engine still READY is a rejection before admission.
 An admitted fault is not translated into busy; the service closes, preserving the cause."
-  (let ((id (envelope-id envelope)) (opcode (envelope-code envelope))
-        (out (local-connection-output connection)))
-    (multiple-value-bind (status key document)
-        (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
-      (cond
-        ((plusp status) (encode-local-response out id status))
-        ((not (eq :ready (e:stato-motore engine))) (encode-local-response out id 3))
-        ((and (= opcode 2) (< (local-connection-limit connection) 60032))
-         (encode-local-response out id 5))
-        (t (handler-case (local-execute engine connection id opcode key document)
-             (arcdocdb.conditions:resource-exhausted (condition)
-               (unless (eq :ready (e:stato-motore engine)) (error condition))
-               (encode-local-response out id 2))))))))
+  (multiple-value-bind (status key document)
+      (decode-local-command (local-connection-input connection) envelope (local-connection-space connection))
+    (local-dispatch-command engine connection (envelope-id envelope) (envelope-code envelope) status key document)))

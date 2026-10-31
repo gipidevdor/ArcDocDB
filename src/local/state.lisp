@@ -52,7 +52,8 @@ supplied by the owning boundary."))
   (output (local-buffer) :read-only t)
   (value (make-array 60000 :element-type '(unsigned-byte 8) :initial-element 0) :read-only t)
   (space (arcdocdb.cbor:crea-spazio-cbor) :read-only t)
-  (state :closed :type (member :closed :hello :welcome :request :response))
+  (state :closed :type (member :closed :hello :welcome :request :pending :response))
+  (pending nil :type (or null envelope))
   (received 0 :type b:index)
   (needed 4 :type b:index)
   (written 0 :type b:index)
@@ -62,6 +63,19 @@ supplied by the owning boundary."))
   (deadline 0 :type b:u64)
   (idle 0 :type b:u64)
   (frame-started nil :type boolean))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-002 REQ-LIM-003
+(defstruct (local-write-queue (:constructor make-local-write-queue) (:copier nil))
+  "One same-turn collector, allocated before listen; at most eight decoded request/response owners."
+  (connections (make-array 8 :initial-element nil) :type simple-vector :read-only t)
+  (operations (make-array 8 :initial-element nil) :type simple-vector :read-only t)
+  (csns (make-array 8 :element-type '(unsigned-byte 64) :initial-element 0)
+        :type (simple-array (unsigned-byte 64) (*)) :read-only t)
+  (count 0 :type (integer 0 8))
+  (limit 8 :type (integer 1 8) :read-only t))
+
+;;; REQ: REQ-IPC-002 REQ-WAL-002
+(declaim (ftype (function (e:motore simple-vector function local-write-queue) null) dispatch-local-ready))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (defstruct (local-client (:constructor make-local-client) (:copier nil))

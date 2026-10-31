@@ -28,6 +28,7 @@ service exposes PING, PUT, GET and DELETE over a Unix socket.
 | Automatic maintenance | [M1 delta renewal](rinnovo-automatico-m1.md) before PUT/DELETE at threshold or next-key saturation, with finite fresh names and one admission |
 | Reads and recovery | [GET](get-record.md), [Serie recovery](recovery-serie.md), [Archivio recovery](recovery-archivio.md) |
 | Record cache | [Verified fixed-budget M1 cache](cache-record.md#serial-m1-integration), independent of RAM/paged primary storage |
+| Strong write groups | [Bounded group commit](../adr/0080-group-commit-m1.md), cumulative reservation and automatic Unix collection |
 | Concurrency | [Pool/Serie chain](pool-catena-risultati.md), [snapshots](snapshot-csn.md), [epochs and reclamation](epoche-e-reclaim.md) |
 | Full text | [Analysis and queries](full-text.md), [codec](full-text-codec.md), [PUT/WAL binding](full-text-put.md), [rows](full-text-righe.md) |
 | CRC32C | [Backends and platforms](crc32c-piattaforme.md), [measurements and kernel selection](crc32c-unroll32.md) |

@@ -1,0 +1,246 @@
+;;;; C4: cumulative reservation, distinct SEALs/CSNs and independent current-value models.
+(in-package #:arcdocdb.engine.tests)
+(defun group-open (root &key create (version 2) (mode :resident) observer (records 32) (capacity 32) (arena 4096) (file-bytes 8192))
+  (e:apri-motore root (archive-id) (series-id) :create create :version version :clock (lambda () 10)
+    :observer observer :max-file-bytes file-bytes :max-record-bytes 256 :max-records records :max-segments 32
+    :index-capacity capacity :key-arena-bytes arena
+    :index-policy (if (eq mode :legacy) :legacy (e:crea-politica-indice-automatico :budget 8388608 :frames 1))))
+(defun group-put (id value) (e:crea-operazione-scrittura :put (key id) (arcdocdb.engine.tests::value value)))
+(defun group-delete (id) (e:crea-operazione-scrittura :delete (key id)))
+(defun group-output (&optional (count 8)) (make-array count :element-type '(unsigned-byte 64) :initial-element 999))
+(defun group-run (engine operations first)
+  (let ((out (group-output)))
+    (is (= (length operations) (e:scrivi-gruppo-documenti engine operations out)))
+    (dotimes (i (length operations)) (is (= (+ first i) (aref out i)))) out))
+(defun group-no-effect (engine root thunk reason)
+  (let ((before (images root)) (frontier (multiple-value-list (e:frontiere-motore engine))))
+    (signals arcdocdb.conditions:resource-exhausted (funcall thunk) reason)
+    (is (eq :ready (e:stato-motore engine))) (check-images root before)
+    (is (equal frontier (multiple-value-list (e:frontiere-motore engine))))))
+
+;;; REQ: REQ-WAL-002 REQ-WAL-005 REQ-WAL-006 REQ-MVC-008 REQ-IDX-013
+(deftest test-REQ-WAL-002-group-one-flush-distinct-CSNs-and-reopen-v1-v2-all-modes
+  (dolist (version '(1 2))
+    (dolist (mode '(:legacy :resident :paged))
+      (with-root (root)
+        (with-engine (engine (group-open root :create t :version version :mode mode))
+          (rotation-force-paged engine mode)
+          (let ((original (symbol-function 'arcdocdb.io:durable-flush)) (flushes 0) (appends 0)
+                (append-original (symbol-function 'arcdocdb.io:append-esatto))
+                (operations (vector (group-put 1 1) (group-put 2 2) (group-put 1 3) (group-delete 2)
+                                    (group-delete 9) (group-put 3 4) (group-delete 1) (group-put 1 5))))
+            (unwind-protect
+                 (progn
+                   (setf (symbol-function 'arcdocdb.io:durable-flush)
+                         (lambda (file) (incf flushes) (funcall original file))
+                         (symbol-function 'arcdocdb.io:append-esatto)
+                         (lambda (file bytes start end) (when (eq file (e::motore-append engine)) (incf appends))
+                           (funcall append-original file bytes start end)))
+                   (group-run engine operations 1) (is (= flushes 1)) (is (= appends 8)))
+              (setf (symbol-function 'arcdocdb.io:durable-flush) original
+                    (symbol-function 'arcdocdb.io:append-esatto) append-original)))
+          (check-get engine 1 (value 5)) (check-get engine 2 nil) (check-get engine 3 (value 4))
+          (check-frontier engine 8) (is (= 9 (e:scrivi-documento engine (key 4) (value 9))))
+          (is (every #'null (e::write-group-workspace-fragments (e::motore-write-workspace engine)))))
+        (with-engine (engine (group-open root :version version :mode mode))
+          (check-get engine 1 (value 5)) (check-get engine 2 nil) (check-get engine 3 (value 4)) (check-get engine 4 (value 9))
+          (check-frontier engine 9) (group-run engine (vector (group-delete 1) (group-put 4 10)) 10))))))
+
+;;; REQ: REQ-WAL-006 REQ-IDX-005 REQ-LIM-003
+(deftest test-REQ-IDX-005-group-cumulative-load-and-repeated-key-arena
+  (with-root (root)
+    (with-engine (engine (group-open root :create t :mode :legacy :capacity 16))
+      (dotimes (n 12) (e:scrivi-documento engine (key n) (value n)))
+      (let ((out (group-output)))
+        (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                                    (vector (group-put 20 20) (group-put 21 21) (group-put 22 22)) out)) :primary-fragment-load)
+        (is (every (lambda (csn) (= csn 999)) out)))
+      (group-run engine (vector (group-delete 0) (group-put 20 20) (group-put 21 21) (group-delete 1)) 13)
+      (check-get engine 0 nil) (check-get engine 20 (value 20)) (check-get engine 21 (value 21)) (check-frontier engine 16)))
+  (with-root (root)
+    (with-engine (engine (group-open root :create t :mode :legacy :arena 32))
+      (e:scrivi-documento engine (key 1) (value 1))
+      (group-run engine (vector (group-put 1 2) (group-put 1 3) (group-put 1 4)) 2)
+      (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                                  (vector (group-delete 1) (group-put 1 5) (group-delete 1) (group-put 1 6)) (group-output)))
+                       :primary-key-arena-full)
+      (check-get engine 1 (value 4)) (check-frontier engine 4))))
+
+;;; REQ: REQ-IDX-005 REQ-IDX-007 REQ-WAL-006
+(deftest test-REQ-IDX-005-group-cumulative-sequence-and-revision-headroom
+  (with-root (root)
+    (with-engine (engine (group-open root :create t :mode :legacy))
+      (e:scrivi-documento engine (key 1) (value 1))
+      (let* ((primary (e::motore-index engine)) (fragment (svref (arcdocdb.index.primary::root-indice-directory
+                                  (arcdocdb.index.primary::indice-primario-root primary)) 0))
+             (bank (arcdocdb.index.primary::frammento-indice-bank fragment)))
+        (multiple-value-bind (high low) (arcdocdb.index.primary:digest-chiave-indice primary (key 1) 0 16)
+          (declare (ignore high))
+          (multiple-value-bind (slot found) (arcdocdb.index.primary::sonda-writer fragment (key 1) 0 16 low (e::motore-words engine))
+            (is found)
+            (let* ((position (+ (arcdocdb.index.slots::base-slot bank slot) arcdocdb.index.slots::+slot-sequence+))
+                   (words (arcdocdb.index.slots::banco-slot-words bank)) (saved (aref words position)))
+              (setf (aref words position) (- arcdocdb.index.slots::+slot-sequence-limit+ 6))
+              (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                               (vector (group-put 1 2) (group-put 1 3) (group-put 1 4)) (group-output))) :primary-slot-rebuild-required)
+              (setf (aref words position) saved))))
+        (let ((saved (arcdocdb.index.primary::indice-primario-revision primary)))
+          (setf (arcdocdb.index.primary::indice-primario-revision primary) (- arcdocdb.index.primary::+revision-limit+ 2))
+          (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                           (vector (group-put 1 2) (group-put 1 3)) (group-output))) :primary-index-revision-exhausted)
+          (setf (arcdocdb.index.primary::indice-primario-revision primary) saved))
+        (group-run engine (vector (group-put 1 2) (group-put 1 3)) 2)))))
+
+;;; REQ: REQ-WAL-005 REQ-LIM-003 REQ-AFF-008 REQ-MVC-008
+(deftest test-REQ-WAL-005-group-input-budgets-and-CSN-exhaustion-before-effects
+  (with-root (root)
+    (with-engine (engine (group-open root :create t :records 4))
+      (dolist (operations (list #() (make-array 9 :initial-element (group-put 1 1)) (vector nil)))
+        (signals arcdocdb.conditions:invalid-argument (e:scrivi-gruppo-documenti engine operations (group-output))))
+      (signals arcdocdb.conditions:invalid-argument (e:scrivi-gruppo-documenti engine (vector (group-put 1 1)) (group-output 0)))
+      (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                       (make-array 5 :initial-element (group-put 1 1)) (group-output))) :engine-group-segment-budget)
+      (let* ((registry (e::motore-registry engine)) (high (arcdocdb.csn::registro-csn-last-high registry))
+             (low (arcdocdb.csn::registro-csn-last-low registry)))
+        (setf (arcdocdb.csn::registro-csn-last-high registry) #xffffffff (arcdocdb.csn::registro-csn-horizon-high registry) #xffffffff
+              (arcdocdb.csn::registro-csn-last-low registry) #xfffffffe (arcdocdb.csn::registro-csn-horizon-low registry) #xfffffffe)
+        (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                         (vector (group-put 1 1) (group-put 2 2)) (group-output))) :csn-exhausted)
+        (setf (arcdocdb.csn::registro-csn-last-high registry) high (arcdocdb.csn::registro-csn-horizon-high registry) high
+              (arcdocdb.csn::registro-csn-last-low registry) low (arcdocdb.csn::registro-csn-horizon-low registry) low))
+      (group-run engine (vector (group-put 1 1) (group-delete 1)) 1))))
+
+;;; REQ: REQ-IDX-013 REQ-WAL-006 REQ-CMP-001 REQ-REC-001
+(deftest test-REQ-WAL-006-group-model-rotation-compaction-migration-and-recovery
+  (dolist (version '(1 2))
+    (with-root (root)
+      (let ((model (make-array 17 :initial-element nil)) (csn 0) (random 71))
+        (dotimes (session 3)
+          (with-engine (engine (group-open root :create (zerop session) :version version :capacity 16 :arena 128 :records 16))
+            (dotimes (round 24)
+              (let* ((count (1+ (mod round 8))) (operations (make-array count)))
+                (dotimes (i count)
+                  (setf random (mod (+ (* random 1664525) 1013904223) #x100000000))
+                  (let ((id (mod random 17)) (deleting (= 0 (mod (ash random -8) 4))) (v (mod (ash random -16) 100)))
+                    (setf (svref operations i) (if deleting (group-delete id) (group-put id v))
+                          (svref model id) (unless deleting (value v)))))
+                (group-run engine operations (1+ csn)) (incf csn count))
+              (when (= (mod round 8) 3) (rotation-force-paged engine :paged))
+              (when (= (mod round 8) 7) (e:configura-budget-indice-motore engine 8388608))
+              (when (= (mod round 12) 11) (is (eq :compacted (getf (e:compatta-motore engine :force t) :status))))
+              (dotimes (id 17) (check-get engine id (svref model id))) (check-frontier engine csn)))
+          (with-engine (engine (group-open root :version version :capacity 16 :arena 128 :records 16))
+            (dotimes (id 17) (check-get engine id (svref model id))) (check-frontier engine csn)))))))
+
+;;; REQ: REQ-WAL-006 REQ-AFF-004 REQ-REC-001
+(deftest test-REQ-WAL-006-group-admitted-failure-no-output-no-reentry
+  (dolist (phase '(:group-operation-prepared :before-append :after-append :after-flush :group-operation-published :after-commit))
+    (with-root (root)
+      (let ((armed nil) (fired nil) (cause (make-condition 'arcdocdb.conditions:io-fault :reason :group-fi :operation :test)))
+        (with-engine (engine (group-open root :create t :observer
+                              (lambda (handle step)
+                                (when (and armed (eq phase step))
+                                  (signals arcdocdb.conditions:invalid-argument (e:leggi-documento handle (key 1) (bytes 64)) :engine-request-in-progress)
+                                  (setf fired t) (error cause)) nil)))
+          (setf armed t)
+          (let ((out (group-output)))
+            (handler-case (e:scrivi-gruppo-documenti engine (vector (group-put 1 1) (group-put 2 2)) out)
+              (arcdocdb.conditions:io-fault (condition) (is (eq cause condition))))
+            (is fired) (is (every (lambda (n) (= n 999)) out)) (is (eq :faulted (e:stato-motore engine)))
+            (is (every #'null (e::write-group-workspace-fragments (e::motore-write-workspace engine))))))
+        (with-engine (engine (group-open root))
+          (let ((written (if (member phase '(:after-append :after-flush :group-operation-published :after-commit)) 2 0)))
+            (check-frontier engine written) (check-get engine 1 (when (plusp written) (value 1)))
+            (check-get engine 2 (when (plusp written) (value 2)))
+            (is (= (1+ written) (e:scrivi-documento engine (key 3) (value 3))))))))))
+
+;;; REQ: REQ-IDX-011 REQ-IDX-012 REQ-WAL-006
+(deftest test-REQ-IDX-012-group-delta-unique-reservations-and-one-renewal
+  (with-root (root)
+    (with-engine (engine (open-build-engine root :create t))
+      (initial-workload engine)
+      (renew-image engine (build-option 1) :keys 3 :bytes 48)
+      (group-run engine (vector (group-put 1 6) (group-put 1 7) (group-delete 1) (group-put 2 8)) 6)
+      (check-get engine 1 nil) (check-get engine 2 (value 8))
+      (is (= 2 (e::delta-indice-motore-count (e::motore-delta engine))))
+      (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                       (vector (group-put 3 9) (group-put 4 10)) (group-output))) :engine-delta-capacity)
+      (install-auto engine 2)
+      (group-run engine (vector (group-put 3 9) (group-put 4 10)) 10)
+      (is (= 1 (e::motore-auto-renewals-used engine)))
+      (is (= 2 (e::delta-indice-motore-count (e::motore-delta engine))))
+      (group-no-effect engine root (lambda () (e:scrivi-gruppo-documenti engine
+                       (vector (group-put 1 11) (group-put 2 12) (group-put 3 13) (group-put 4 14)) (group-output))) :engine-delta-capacity)
+      (check-get engine 2 (value 8)) (check-get engine 3 (value 9)) (check-get engine 4 (value 10)) (check-frontier engine 11))))
+
+(defun group-crash-prefix (stage)
+  (cond ((string= stage "prepared") 0)
+        ((member stage '("append-3" "partial-seal") :test #'string=) 3)
+        ((member stage '("after-flush" "published-3" "after-commit") :test #'string=) 8)
+        (t (error "Unknown group crash stage"))))
+(defun group-check-prefix (engine stage resumed)
+  (let ((prefix (group-crash-prefix stage)))
+    (dotimes (i 8) (check-get engine i (when (< i prefix) (value i))))
+    (check-get engine 9 (unless resumed (value 9)))
+    (when resumed (check-get engine 8 (value 80)))
+    (check-frontier engine (+ 1 prefix (if resumed 2 0)))))
+(defun group-child-main (arguments)
+  (destructuring-bind (mode path format profile-stage) arguments
+    (let* ((parts (uiop:split-string profile-stage :separator '(#\:)))
+           (profile (cond ((string= (first parts) "resident") :resident)
+                          ((string= (first parts) "paged") :paged)
+                          ((string= (first parts) "legacy") :legacy) (t (error "Unknown group profile"))))
+           (stage (second parts)) (root (uiop:ensure-directory-pathname path))
+           (version (parse-integer format)) (armed nil) (published 0) (appends 0)
+           (original (symbol-function 'arcdocdb.io:append-esatto)))
+      (with-engine (engine (group-open root :create (string= mode "group-crash") :version version :mode profile
+                            :observer (lambda (handle phase) (declare (ignore handle))
+                              (when armed
+                                (when (and (string= stage "prepared") (eq phase :group-operation-prepared)) (crash :group-prepared))
+                                (when (and (string= stage "after-flush") (eq phase :after-flush)) (crash :group-flushed))
+                                (when (and (string= stage "published-3") (eq phase :group-operation-published))
+                                  (when (= 3 (incf published)) (crash :group-published-3)))
+                                (when (and (string= stage "after-commit") (eq phase :after-commit)) (crash :group-commit))) nil)))
+        (rotation-force-paged engine profile)
+        (cond
+          ((string= mode "group-crash")
+           (e:scrivi-documento engine (key 9) (value 9))
+           (unwind-protect
+                (progn
+                  (setf (symbol-function 'arcdocdb.io:append-esatto)
+                        (lambda (file buffer start end)
+                          (when (and armed (eq file (e::motore-append engine)))
+                            (incf appends)
+                            (when (and (string= stage "partial-seal") (= appends 4))
+                              (funcall original file buffer start (- end (ceiling arcdocdb.wal::+seal-total+ 2)))
+                              (crash :group-partial-seal)))
+                          (let ((result (funcall original file buffer start end)))
+                            (when (and armed (string= stage "append-3") (= appends 3)) (crash :group-append-3)) result)))
+                  (setf armed t)
+                  (group-run engine (map 'simple-vector (lambda (i) (group-put i i)) #(0 1 2 3 4 5 6 7)) 2)
+                  (error "Expected group crash did not fire"))
+             (setf (symbol-function 'arcdocdb.io:append-esatto) original)))
+          ((string= mode "group-resume")
+           (group-check-prefix engine stage nil)
+           (group-run engine (vector (group-put 8 80) (group-delete 9)) (+ 2 (group-crash-prefix stage)))
+           (crash :group-resumed))
+          ((string= mode "group-verify")
+           (group-check-prefix engine stage t)
+           (group-run engine (vector (group-put 9 90)) (+ 4 (group-crash-prefix stage))))
+          (t (error "Unknown group child mode")))))
+    (format t "~&GROUP-VERIFIED ~A~%" mode)))
+
+;;; REQ: REQ-WAL-002 REQ-WAL-006 REQ-REC-001 REQ-MVC-008
+(deftest test-REQ-WAL-006-group-real-SIGKILL-sealed-prefix-flush-and-publication
+  (let ((scenarios 0))
+    (dolist (version '(1 2))
+      (dolist (profile '("resident" "paged" "legacy"))
+        (dolist (stage '("prepared" "append-3" "partial-seal" "after-flush" "published-3" "after-commit"))
+          (with-root (root)
+            (let ((name (format nil "~A:~A" profile stage)))
+              (child root version "group-crash" name :signaled sb-posix:sigkill)
+              (child root version "group-resume" name :signaled sb-posix:sigkill)
+              (child root version "group-verify" name :exited 0)
+              (incf scenarios))))))
+    (is (= scenarios 36))
+    (format t "~S~%" (list :kind :group-crash-matrix :status :passed :scenarios scenarios :children (* 3 scenarios) :sigkills (* 2 scenarios)))))

@@ -225,17 +225,19 @@
                (:module "engine" :serial t
                 :components ((:file "package") (:file "image-config") (:file "image-discovery-config")
                              (:file "image-maintenance-config") (:file "image-auto-types") (:file "index-auto-types")
-                             (:file "delta-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "delta-location") (:file "files")
+                             (:file "delta-types") (:file "write-group-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "delta-location") (:file "files")
                              (:file "config") (:file "record-cache") (:file "initialize") (:file "recovery") (:file "preflight") (:file "index")
                              (:file "image-source") (:file "image-discovery") (:file "image-recovery") (:file "image-activation")
                              (:file "image-build-types") (:file "image-build-read") (:file "image-build-plan")
                              (:file "image-build-tree") (:file "image-build-io") (:file "image-build") (:file "image-renewal") (:file "image-maintenance")
                              (:file "image-auto") (:file "image-auto-write") (:file "index-auto-memory") (:file "index-auto-files")
                              (:file "index-auto-migrate") (:file "index-auto-apply") (:file "index-auto-resolver")
-                             (:file "index-auto-api") (:file "adopt") (:file "compaction-types") (:file "compaction-scan")
+                             (:file "index-auto-api") (:file "write-group-build") (:file "adopt") (:file "compaction-types") (:file "compaction-scan")
                              (:file "compaction-control") (:file "compaction-reclaim") (:file "startup") (:file "rotation")
                              (:file "compaction-write") (:file "compaction-verify") (:file "compaction-plan")
-                             (:file "compaction-relocate") (:file "compaction-install") (:file "compaction") (:file "write") (:file "read"))))
+                             (:file "compaction-relocate") (:file "compaction-install") (:file "compaction") (:file "write")
+                             (:file "write-group-index") (:file "write-group-legacy") (:file "write-group-plan")
+                             (:file "write-group-commit") (:file "write-group") (:file "read"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/local"
@@ -245,7 +247,7 @@
   :pathname "src/local/"
   :serial t
   :components ((:file "package") (:file "wire") (:file "native") (:file "state") (:file "readiness")
-               (:file "dispatch") (:file "server") (:file "client") (:file "cli")))
+               (:file "dispatch") (:file "server") (:file "write-group") (:file "client") (:file "cli")))
 
 (defsystem "arcdocdb/tests"
   :description "Test di ArcDocDB."
@@ -404,6 +406,7 @@
                 :components ((:file "support") (:file "scenarios") (:file "resume") (:file "processes")))
                (:module "engine" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "rotation") (:file "compaction") (:file "record-cache") (:file "processes")))
+               (:file "engine/write-group")
                (:module "local" :serial t
                 :components ((:file "wire") (:file "native") (:file "server") (:file "processes"))))
   :perform (test-op (o c)

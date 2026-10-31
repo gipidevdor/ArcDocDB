@@ -211,3 +211,19 @@ Does not create snapshots: a GET without snapshot does not query this registry."
     (%check-registro-csn registry)
     (values (registro-csn-last-high registry) (registro-csn-last-low registry)
             (registro-csn-horizon-high registry) (registro-csn-horizon-low registry))))
+
+;;; REQ: REQ-MVC-005 REQ-MVC-008 REQ-AFF-008
+(declaim (ftype (function (registro-csn index) (values u32 u32 &optional)) verifica-capienza-csn))
+(defun verifica-capienza-csn (registry count)
+  "Pre: planned positive token count, before assignment. Post: current base and enough free slots/u64 headroom.
+Nonmutating check under the existing try-lock; no reservation against another writer.
+The caller must account for concurrent allocators; serial M1 has exactly one allocator.
+INVALID-ARGUMENT for zero, RESOURCE-EXHAUSTED for busy/full/exhausted; no wrap or counter change."
+  (when (zerop count) (error 'invalid-argument :reason :csn-reservation-count))
+  (%with-csn-guard (registry)
+    (%check-registro-csn registry)
+    (when (> count (- (registro-csn-capacity registry) (registro-csn-used registry)))
+      (error 'resource-exhausted :reason :csn-full))
+    (let ((base (logior (ash (registro-csn-last-high registry) 32) (registro-csn-last-low registry))))
+      (when (> count (- #xffffffffffffffff base)) (error 'resource-exhausted :reason :csn-exhausted)))
+    (values (registro-csn-last-high registry) (registro-csn-last-low registry))))

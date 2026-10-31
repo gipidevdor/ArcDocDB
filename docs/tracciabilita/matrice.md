@@ -337,3 +337,4 @@
 | [0077](../adr/0077-source-derived-code-reference.md) | —  (decision without a direct requirement) |
 | [0078](../adr/0078-compattazione-prefix-m1.md) | REQ-CMP-001, REQ-CMP-005, REQ-CMP-007, REQ-CMP-008, REQ-CMP-009 |
 | [0079](../adr/0079-cache-record-m1.md) | —  (decision without a direct requirement) |
+| [0080](../adr/0080-group-commit-m1.md) | —  (decision without a direct requirement) |

@@ -8,6 +8,8 @@
 
 (defun child-main (arguments)
   (destructuring-bind (mode path format stage) arguments
+    (when (and (>= (length mode) 6) (string= mode "group-" :end1 6))
+      (return-from child-main (uiop:symbol-call :arcdocdb.engine.tests :group-child-main arguments)))
     (when (and (>= (length mode) 8) (string= mode "compact-" :end1 8))
       (return-from child-main (compaction-child-main arguments)))
     (when (and (>= (length mode) 7) (string= mode "rotate-" :end1 7))

@@ -68,6 +68,7 @@ No public accessor for FDs or roots; capability not transferable across threads.
   (sources nil :type (or null gd:fonti-get-serie))
   (batch nil :type (or null w:lotto))
   (group nil :type (or null w:gruppo))
+  (write-workspace nil :type (or null write-group-workspace))
   (get-context nil :type (or null g:contesto-get))
   (fds nil :type list)
   (recovery-sets nil :type list)

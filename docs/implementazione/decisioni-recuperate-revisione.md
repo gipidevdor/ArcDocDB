@@ -9,7 +9,7 @@ observations concern the working files read, without attesting a global freeze.
 
 **Outcome:** two static readings completed, both by the **same reviewer**.
 One concrete COD-25 conformance finding, described below. Readings
-found no additional demonstrable functional defects under contract
+found no additional demonstrable functional defects under the contract
 preconditions. This outcome attests neither absence of defects nor C1 qualification.
 
 <a id="perimetro-e-metodo"></a>
@@ -18,7 +18,7 @@ preconditions. This outcome attests neither absence of defects nor C1 qualificat
 
 Read all six files in `src/recovery-archive/` in full: `package.lisp`,
 `types.lisp`, `read.lisp`, `build.lisp`, `query.lisp`, `active.lisp`.
-Compared with [API contract](decisioni-recuperate.md), ADR-0041, ADR-0052,
+Compared with the [API contract](decisioni-recuperate.md), ADR-0041, ADR-0052,
 [coding standard](../affidabilita/standard-di-codifica.md), deviation
 register, repository guide, requirements, and traceability matrix.
 
@@ -26,7 +26,7 @@ Statically followed relevant delegations: storage header and constants;
 `io/types.lisp`, `io/transfer.lisp`, and lifecycle; recovery scanner;
 `decisions-types/build/query/sort.lisp`; ACTIVE recovery entry, preflight, resolution,
 and result; identity of `ambito-get` and Serie view.
-This deeper delegation reading does not constitute full review of
+This deeper delegation reading does not constitute a full review of
 those modules or the Recovery Manager.
 
 | Reading | Concrete method | Outcome |
@@ -36,7 +36,7 @@ those modules or the Recovery Manager.
 
 Both readings are passes by the same reviewer, not two independent
 reviewers. No test, compilation, lint, benchmark, coverage tool,
-mutation, or security scan run. No skill used.
+mutation, or security scan was run. No skill was used.
 
 <a id="r1--io-dentro-il-predicato-delle-asserzioni-di-invariante"></a>
 
@@ -61,8 +61,8 @@ confirmed in L2; no runtime fault observed or inferred as inevitable.
 - Concrete consequence: the read operation and result check
   are coupled in the predicate; removing or reformulating the check may
   also remove the operation. In current code the check remains active:
-  no claim that the read is skipped or corrupted data
-  returned.
+  there is no claim that the read is skipped or corrupted data
+  is returned.
 - Proposed correction, not applied: assign the `leggi-esatto` result
   to a local variable and then check equality with a pure predicate,
   retaining order, single call, original condition, and offset.
@@ -80,7 +80,7 @@ confirmed in L2; no runtime fault observed or inferred as inevitable.
 | Wrong scope | `active.lisp:15–19` compares canonical Archivio scope and CONTROL view scope with `eq`, then checks alias and capability. `active.lisp:37` precedes delegation performing ACTIVE I/O. | Equal UUIDs do not make distinct scopes equivalent. Initial UUID/scope association and bootstrap uniqueness remain controller responsibilities, as documented. |
 | FD lifetime | `read.lisp:14,60`, `build.lisp:36`, `active.lisp:19,43` require open read-only capability; `io/types.lisp:83–91` checks mode, state, and descriptor. `io/transfer.lisp:65–73` rechecks capability around transfers. | Retained reference is not a lease preventing close. Final ACTIVE check observes decision log on return; alone it does not guarantee continuous lifetime. FD/file/namespace freeze and close after readers remain preconditions. |
 | EOF and frontiers | `build.lisp:28–35` uses `file-size = size`, file offset zero, and checks `64 <= P <= size`, COMPLETE with `P = size`, TAIL with `P < size`. Scratch represents file from offset zero: P is therefore absolute. | No EOF/fstat measurement: incomplete size violates precondition. Read-only does not prevent external writes. |
-| Tail and witnesses | `decisions-build.lisp:178–190` runs scanner first; `scan.lisp:181–184` looks for witnesses before returning TAIL. `scan.lisp:144–158` visits every candidate position within budget and signals incomplete search or durable corruption. | Tail excludes the whole failed batch. Does not attest support or file remain healthy after return. |
+| Tail and witnesses | `decisions-build.lisp:178–190` runs scanner first; `scan.lisp:181–184` looks for witnesses before returning TAIL. `scan.lisp:144–158` visits every candidate position within budget and signals incomplete search or durable corruption. | Tail excludes the whole failed batch. Does not attest that the medium or file remains healthy after return. |
 | Duplicates and absence | `decisions-build.lisp:120–153` coalesces equal TXIDs only after comparing CSN and canonical participant set; conflict with `:decision-conflict`. `decisions-sort.lisp:54–66` rejects repeated participants. `decisions-query.lisp:35–43,69–78` distinguishes presence/CSN zero and checks ID16 even for absent TXID. | Semantics delegated to canonical replay; this reading does not rerun its previous campaigns. |
 | ACTIVE resolution | `active.lisp:38–42` passes verified table to canonical reader. `recovery-active/resolve.lisp:13–23` checks participant and OUTCOME/DECISION agreement before classification. | No fallback from NIL or reader error. ACTIVE result does not retain table (`recovery-active/types.lisp:10–27`); publication and forgetting decisions outside scope. |
 
@@ -89,23 +89,23 @@ confirmed in L2; no runtime fault observed or inferred as inevitable.
 ### Bounds and budget forwarding
 
 Let `H = 64`, `N = size`, `C = chunk`; preflight imposes `N >= H`,
-`C > 0`, `N <= max-bytes`, and scratch length at least N. Loop in
+`C > 0`, `N <= max-bytes`, and scratch length at least N. The loop in
 `read.lisp:56–59` has `ceiling((N-H)/C)` iterations. For every executed
 iteration, `H <= start < end <= N`, with `end = min(N, start+C)`.
-For N = H it does not read body; last chunk may be short.
+For N = H it does not read the body; the last chunk may be short.
 Capacity check covers `max(H, min(N-H,C))`. Lisp integer arithmetic
 introduces no offset wrap before `min`.
 
 The limit concerns logical calls to `leggi-esatto`: short reads
 may require multiple backend calls. The I/O primitive has a loop
 bounded by byte count and requires positive progress
-(`io/transfer.lisp:31–38,64–76`). No maximum syscall times inferred.
+(`io/transfer.lisp:31–38,64–76`). No maximum syscall times are inferred.
 
 In `build.lisp:28–32`, replay receives `max-bytes`, `max-batches`,
 `max-batch-records`, `max-batch-bytes`, `max-decisions`, `max-participants`,
 and `max-participants-per-decision`; `max-search-bytes` receives `max-bytes`.
-`chunk-bytes` bounds local reading, not scanner. Wrapper byte budget
-includes header; scanner budget bounds body, after the wrapper's more
+`chunk-bytes` bounds local reading, not the scanner. The wrapper byte budget
+includes the header; the scanner budget bounds the body, after the wrapper's more
 restrictive `size <= max-bytes` check.
 
 Physical and cumulative counts precede coalescing: DECISION check
@@ -148,7 +148,7 @@ In the ACTIVE wrapper, all eight exposed budgets are forwarded without replaceme
 
 The module does not catch these conditions or return partial
 results in their place. FAULTED transition and recording
-are delegated to controller; they are not certified in this assignment.
+are delegated to the controller; they are not certified in this assignment.
 Precontractual type violations may signal `type-error`, as
 declared in docstrings: they are not locally translated to
 `arcdocdb-error`. C1-boundary handling of these conditions and allocation
@@ -160,7 +160,7 @@ or COD-24 closure is not attested by propagation alone.
 ## C1 checklist — the standard's twelve points
 
 “Statically consistent” indicates only a reading conclusion.
-“Open” requires further evidence, collected elsewhere by coordinator.
+“Open” requires further evidence, collected elsewhere by the coordinator.
 
 | No. | Standard point | L1 — same reviewer | L2 — same reviewer |
 |---|---|---|---|
@@ -194,7 +194,7 @@ do not attest the final version of that work or the entire worktree.
 
 **Only file written by this assignment:**
 `docs/implementazione/decisioni-recuperate-revisione.md`.
-No product source modified; no commit. Both readings and this
+No product source was modified; no commit was made. Both readings and this
 checklist constitute static delivery, with R1 open and no claim
 of full qualification.
 
@@ -208,7 +208,7 @@ to the diff of `src/recovery-archive/read.lisp`; it is neither a second
 independent reviewer nor a new full module review.
 
 The original observation, checklist, and earlier line references
-remain retained and describe source observed at revision
+remain preserved and describe the source observed at revision
 `c6a21d810dabdc1218efbbeaa1f7dab560da8893`. Observed HEAD is still that revision;
 the examined patch is in the worktree. The product diff read reports only two
 hunks, with abbreviated blob IDs `a07e6357..b46823a3`.
@@ -230,10 +230,10 @@ No new findings emerged in the two hunks. The earlier open R1 entry and checklis
 point 10 remain evidence of the first version;
 this addendum records subsequent static resolution.
 
-No runtime execution, test, compilation, lint, or benchmark performed.
+No runtime execution, test, compilation, lint, or benchmark was performed.
 Closure does not attest measured equivalence, absence of runtime regressions,
 full module conformance, or C1 qualification; all other limits of the
 original review remain valid. This follow-up only
 added this addendum to `docs/implementazione/decisioni-recuperate-revisione.md`;
-no other file modified and no commit made. Assignment concluded for
+no other file was modified and no commit was made. Assignment concluded for
 the coordinated freeze.

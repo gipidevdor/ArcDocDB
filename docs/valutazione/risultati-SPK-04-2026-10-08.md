@@ -29,7 +29,7 @@ successful runs report `:source-consistency :stable`.
 The first attempt detects a macro redefinition warning at load: the local
 macro is now defined during compilation, while the FASL contains its
 expansions. The second detects an extra closing parenthesis in the parking
-model. Corrections do not erase failures. Final compilation and loading
+model. Corrections do not erase failures. Final compilation and loading completed
 without warnings.
 
 <a id="correttezza-osservata"></a>

@@ -2,11 +2,11 @@
 
 # Compacted-segment verification
 
-`arcdocdb.storage.format:verifica-segmento-compattato` verifies format
+`arcdocdb.storage.format:verifica-segmento-compattato` verifies the format
 of compaction-origin CLOSED segments already defined by
 [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md) and
 [on-disk formats](../formati-su-disco.md#contenuto).
-Module neither selects records to retain nor performs CLEAN/MERGE.
+The module neither selects records to retain nor performs CLEAN/MERGE.
 
 <a id="contratto"></a>
 
@@ -16,21 +16,21 @@ Arguments: `buffer`, `valid-bytes`, `id-serie`, `segment-id`;
 keyword budgets `max-bytes` (default 64 MiB), `max-records` (default 65,536).
 Specialized byte buffer starts at file offset zero, remains stable
 during call, contains complete valid prefix. Identity/valid
-length supplied by closed segment's authoritative source.
+length is supplied by closed segment's authoritative source.
 
 Header checked against Serie/segment-id, actual version 1/2
 selected, compaction origin required. From offset 64 to valid limit,
-contiguous frames, CRCs, ordinary PUT/TOMBSTONE only verified. PUT with
+contiguous frames, CRCs, and ordinary PUT/TOMBSTONE records only are verified. PUT with
 contract-versioned flag allowed; prepared, OUTCOME, SEAL, EDIT, DECISION
 rejected. CSNs opaque: no order/positivity imposed.
 
-Only at completion five values returned: prefix end, version,
+Only at completion are five values returned: prefix end, version,
 record count, PUTs, TOMBSTONEs. Counts describe physical records;
 establish neither distinct-key count, visibility, nor retention policy.
-Empty header-only segment valid for codec; manifest
+An empty header-only segment is valid for codec; manifest
 must decide whether empty output recorded or removed.
 
-Physical tail after `valid-bytes` unread. Logical CLOSED limit
+The physical tail after `valid-bytes` is unread. The logical CLOSED limit is
 not passed off as physical EOF: API does not use batch scanning
 or return TAIL. Incomplete record in declared valid prefix
 is corruption, without usable partial counts.
@@ -81,7 +81,7 @@ stable; verifier neither modifies them nor opens/truncates/deletes files.
 [Preserved evidence](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-compaction/catalogo.lisp)
 includes two C1 readings, 15 independent-fixture tests, tool
 self-tests, commands, environment, hashes before/after, raw output. Eight compilable
-mutants detected after successful unchanged baseline. Integrated
+mutants were detected after a successful unchanged baseline. Integrated
 check recorded separately in catalog.
 
 Serial benchmark observes zero heap bytes in all 20 replicates:
@@ -120,6 +120,6 @@ not approved exclusion, MC/DC qualification, or C1-gate closure.
 
 Related requirements: REQ-CMP-009, REQ-FOR-001/002/003, REQ-AFF-008.
 Invariants: INV-C1, INV-S7, INV-F1/F2, INV-A8/A9, INV-P6.
-Format check part of those requirements: verifies neither record
+The format check is part of those requirements: it verifies neither record
 selection, manifest, atomic compaction publication, database
 health, nor full recovery. No requirement status promoted.

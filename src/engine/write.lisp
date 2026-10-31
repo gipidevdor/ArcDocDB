@@ -7,9 +7,9 @@
 (declaim (ftype (function (motore (member 1 2) b:octets b:octets) b:index)
                 verifica-input-scrittura-motore))
 (defun verifica-input-scrittura-motore (engine kind key value)
-  "Pre: owner, motore READY, input octets stabili. Post: dimensioni e alias validati
-prima di modificare il lotto o prendere un CSN. INVALID-ARGUMENT per forma dell'input,
-RESOURCE-EXHAUSTED per formato/budget; lotto e gruppo restano invariati."
+  "Pre: owner, READY engine, stable input octets. Post: sizes and aliases validated
+before modifying the batch or taking a CSN. INVALID-ARGUMENT for input shape,
+RESOURCE-EXHAUSTED for format/budget; batch and group remain unchanged."
   (unless (<= 1 (length key) arcdocdb.record:+max-key-bytes+)
     (error 'arcdocdb.conditions:invalid-argument :reason :engine-key-length))
   (unless (if (= kind arcdocdb.record:+put+)
@@ -28,10 +28,10 @@ RESOURCE-EXHAUSTED per formato/budget; lotto e gruppo restano invariati."
 (declaim (ftype (function (motore (member 1 2) b:octets b:octets) b:u64)
                 commetti-record-motore))
 (defun commetti-record-motore (engine kind key value)
-  "Pre: owner, input validati, MOTORE-BUSY vero; un lotto da un record e un gruppo da un lotto.
-Post: SEAL durevole, root pubblicata e CSN risolto, indice aggiornato, capacità riusate.
-Root prima dell'indice: l'esclusione seriale e il gate del motore sono obbligatori.
-Ogni errore/uscita incompleta richiede FAULTED dal confine chiamante, senza rollback."
+  "Pre: owner, validated input, MOTORE-BUSY true; one batch containing one record and one group containing one batch.
+Post: durable SEAL, root published and CSN resolved, index updated, capabilities reused.
+Root before index: serial exclusion and the engine gate are mandatory.
+Every error/incomplete exit requires FAULTED at the calling boundary, without rollback."
   (let* ((controller (motore-controller engine)) (lease (motore-lease engine))
          (batch (motore-batch engine)) (group (motore-group engine))
          (append (motore-append engine))
@@ -85,10 +85,10 @@ Ogni errore/uscita incompleta richiede FAULTED dal confine chiamante, senza roll
 (declaim (ftype (function (motore (member 1 2) b:octets b:octets) b:u64)
                 scrivi-record-motore))
 (defun scrivi-record-motore (engine kind key value)
-  "Pre: chiamante owner; nessun'altra API attiva sul motore. Post: CSN u64 confermato.
-Input rifiutato in preflight senza consumare CSN o sporcare il lotto. Dopo l'ingresso
-con MOTORE-BUSY, ogni errore rende FAULTED e propaga la stessa condizione; anche THROW/RETURN
-incompleti rendono FAULTED. Rotazione, rinnovo opzionale e commit condividono BUSY; nessun rientro dai callback."
+  "Pre: caller is the owner; no other API active on the engine. Post: confirmed u64 CSN.
+Input rejected during preflight without consuming a CSN or dirtying the batch. After entry
+with MOTORE-BUSY, every error sets FAULTED and propagates the same condition; incomplete THROW/RETURN
+also set FAULTED. Rotation, optional renewal, and commit share BUSY; no reentry from callbacks."
   (esigi-motore-pronto engine)
   (let ((record-bytes (verifica-input-scrittura-motore engine kind key value)))
     (verifica-capienza-indice-motore engine kind key)
@@ -128,17 +128,17 @@ incompleti rendono FAULTED. Rotazione, rinnovo opzionale e commit condividono BU
 ;;; REQ: REQ-IDX-001 REQ-WAL-005 REQ-WAL-006 REQ-AFF-004 REQ-LIM-001
 (declaim (ftype (function (motore b:octets b:octets) b:u64) scrivi-documento))
 (defun scrivi-documento (engine key value)
-  "Pre: thread owner, motore READY, KEY/VALUE octets stabili fino al ritorno; API non rientrabile.
-Post: PUT ordinario durevole e leggibile, CSN u64 completo restituito dopo pubblicazione
-e riuso. Input invalido prima del CSN; qualsiasi errore nel commit rende il motore FAULTED
-e propaga la causa originale. Nessuna conferma parziale o ripetizione automatica."
+  "Pre: owner thread, READY engine, KEY/VALUE octets stable until return; nonreentrant API.
+Post: ordinary PUT durable and readable, full u64 CSN returned after publication
+and reuse. Invalid input before CSN; any commit error makes the engine FAULTED
+and propagates the original cause. No partial confirmation or automatic repetition."
   (scrivi-record-motore engine arcdocdb.record:+put+ key value))
 
 ;;; REQ: REQ-IDX-001 REQ-WAL-005 REQ-WAL-006 REQ-AFF-004 REQ-LIM-001
 (declaim (ftype (function (motore b:octets) b:u64) cancella-documento))
 (defun cancella-documento (engine key)
-  "Pre: thread owner, motore READY, KEY octets stabile; API non rientrabile.
-Post: tombstone ordinario durevole, chiave assente dall'indice, CSN u64 completo.
-La chiave già assente produce comunque un commit. Stesso preflight e confine FAULTED
-di SCRIVI-DOCUMENTO; il valore vuoto è quello preallocato nel motore."
+  "Pre: owner thread, READY engine, stable KEY octets; nonreentrant API.
+Post: ordinary durable tombstone, key absent from the index, full u64 CSN.
+A key already absent still produces a commit. Same preflight and FAULTED boundary
+as SCRIVI-DOCUMENTO; the empty value is the one preallocated in the engine."
   (scrivi-record-motore engine arcdocdb.record:+tombstone+ key (motore-empty engine)))

@@ -22,7 +22,7 @@ Benchmark may load it after `arcdocdb/tests`, outside measured windows.
 (close-directory-fixture fixture)
 ```
 
-Public signature/accessors defined in `support.lisp`. Read `view`, `directory`,
+Public signature/accessors are defined in `support.lisp`. Read `view`, `directory`,
 `maps`, `keys`, `values`, `contexts`, `outputs`, `epochs`, `index`, `files`, `paths`,
 `ids`, `ends`, `images`, `manifest`, `scope`, `cache`, `snapshots`, `snapshot`, and
 `generation` with prefix `directory-fixture-`.
@@ -51,7 +51,7 @@ that many FDs. Each call acquires a namespace via exclusive mkdir with at most
 Closure is idempotent and does not implicitly terminate workers.
 
 Extra setup/FI keywords: `prepared-p`, `record-csn`, `record-bytes`, `observe-io-p`,
-and `image-mutator(image, ordinal)`. I/O observation disabled by default, letting
+and `image-mutator(image, ordinal)`. I/O observation is disabled by default, letting
 benchmark use native backend without event list or extra mutex.
 With observation enabled, `directory-read-events` returns `(id offset count)` triples;
 setup/header reads excluded from operation counters. `directory-checked-read` is
@@ -85,7 +85,7 @@ is at least 56 and within `max-bytes`; header read uses exactly 64 bytes.
 | read | V1/v2 files and 16/256/4096 values; maximum ID; enum and five core values; cache64 without eviction; corrupt cache with VERIFY-FAILED and native reread; prepared+OUTCOME+SEAL; published candidate without segment => FAULTED, never ABSENT; low/high CSN, size, reserved word; mismatched file key; FI shape of lengths, maximum, and private NIL entry across all four inputs, zero I/O and pins; expired FD; reentrancy/order; throw during pread; final snapshot; true primary absence; small buffer and restart on new worker. |
 | threads | Four readers sharing view/directory/FD, 28 distinct buffers, complete response and sentinels, zero pins after all joins; file/cache v1/v2; gate/join timeouts, conditions transported to controller. |
 
-Every test has `REQ` in name. Product conditions checked by type/reason;
+Every test has `REQ` in name. Product conditions are checked by type/reason;
 fixture timeouts use dedicated conditions. Every loop has explicit cardinality
 or budget; gate waits precede EBR. Tests observe product cleanup before invoking
 external safety cleanup.

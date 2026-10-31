@@ -14,7 +14,7 @@ the parent campaign's responsibility; this sensor does not replace them.
 
 ## Preregistered coverage and mutations
 
-The parent runs the C4 self-check, instrumental coverage of `wal` and
+The parent runs the C4 self-check, instrumented coverage of `wal` and
 `foundation`, and the full `make check` gate outside benchmark windows.
 `tools/wal-csn-mutation.lisp` isolates four integration-test mutants:
 omitting the high limb in the record stamp; reuse with a pending token;
@@ -120,7 +120,7 @@ missing/inconsistent fields.
 ## Bounded parallel campaign
 
 After serial runs: 1, 2, and 4 real workers, three replicas per count, high
-base with carry. Every worker owns independent registry, file, log, batch,
+base with carry. Every worker owns an independent registry, file, log, batch,
 group, buffer, and published slot; no shared archive. Same 20000 cycles
 and calibration bounded to five windows. Warmup, thread construction, and
 GC precede barrier opening. Replica deadline 30 seconds, bounded start/ready

@@ -6,13 +6,13 @@
 
 ## Contract
 
-`arcdocdb.index.primary:ricostruisci-frammento-indice` completes builder
+`arcdocdb.index.primary:ricostruisci-frammento-indice` completes the builder
 for [primary-index](indice-primario.md) rebuild and split.
 References: ADR-0015, ADR-0032, ADR-0043, ADR-0048, and ADR-0050.
 C1 requirements: REQ-IDX-001, REQ-IDX-003, REQ-IDX-005, REQ-IDX-007,
 REQ-LIM-003, REQ-AFF-004, REQ-AFF-008. Invariants INV-I3, INV-A8, and INV-P6.
 
-Writer retains exclusive Serie token throughout call.
+The writer retains the exclusive Serie token throughout the call.
 Source and root stay current and writable until subsequent
 `pubblica-directory-indice`. Result is private single-use plan.
 Publication uses existing protocol: frozen source, barrier,
@@ -28,7 +28,7 @@ root CAS, no restart of retired fragments.
 `highs` and `lows` are specialized arrays of C u32 words each, private and
 unchanged during call, indexed by **original slot**.
 Trusted caller calculates digest with Serie's function and seed.
-Free-slot elements ignored. Builder checks each
+Free-slot elements are ignored. Builder checks each
 live key's prefix, fingerprint, and lookup to original slot.
 High bits not yet distinguished by directory cannot be derived
 from payload: digest consistency and seed management remain caller obligations.
@@ -55,7 +55,7 @@ for every key. Restart seed management remains controller's responsibility.
    Only then prepare new directory.
 
 Comparison of all keys precedes plan: equal live count
-alone insufficient. Removing deleted-key bytes makes
+alone is insufficient. Removing deleted-key bytes makes
 rebuild an arena compaction. Split follows next bit
 of digest high half; remaining fragments stay shared.
 
@@ -64,7 +64,7 @@ of digest high half; remaining fragments stay shared.
 ## Budgets, interruptions, and costs
 
 Preflight includes current-root payload, new banks/controls/
-arenas, and new directory. Also checks individual fragment budgets,
+arenas, and the new directory. It also checks individual fragment budgets,
 depth, directory size, generation, and revision credit
 for all copies and subsequent publication, without wrapping.
 Input/budget rejection precedes candidate construction and does not
@@ -78,7 +78,7 @@ No callbacks, threads, I/O, locks, or shared counters between Serie.
 
 Each phase visits C distinct slots: three complete scans, plus internal
 probes. Every writer probe visits at most C slots, comparing keys
-up to 65,535 bytes long. Hostile case thus bounded but can
+up to 65,535 bytes long. The hostile case is thus bounded but can
 cost O(C² × key-length). Directory: O(2^G) references. Copy:
 live key bytes. No constant-pause or engine-P99 guarantee.
 Maintenance allocates and must be scheduled outside hot path.
@@ -87,7 +87,7 @@ Candidate mutations advance local revision: even an earlier
 plan becomes conservatively stale. Interruption within mutation
 follows its fail-stop protocol and context cleanup.
 Between mutations, incomplete private candidates can be discarded by GC;
-no root published and source needs no rollback.
+no root is published, and the source needs no rollback.
 Detected inconsistent copy makes index health terminal.
 
 <a id="qualifica"></a>

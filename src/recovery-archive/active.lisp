@@ -7,9 +7,9 @@
 (declaim (ftype (function (arcdocdb.control:control-recuperato decisioni-recuperate octets) null)
                 verifica-archivio-active))
 (defun verifica-archivio-active (control decisions scratch)
-  "Pre: risultati completi, recovery esclusivo. Post: stesso ambito canonico GET e decision log aperto.
-Alias UUID rifiutato prima di ogni I/O ACTIVE; INVALID-ARGUMENT per Archivio differente o alias.
-Non certifica la correttezza del bootstrap catalogo; nessuna scrittura o osservazione del segmento."
+  "Pre: complete results, exclusive recovery. Post: same canonical GET scope and open decision log.
+UUID alias rejected before any ACTIVE I/O; INVALID-ARGUMENT for a different Archivio or alias.
+Does not certify catalog-bootstrap correctness; no segment write or observation."
   (let ((archive (decisioni-recuperate-archive decisions))
         (view (arcdocdb.control::control-recuperato-view control)))
     (unless (eq (archivio-recovery-scope archive) (arcdocdb.get::vista-get-serie-scope view))
@@ -29,11 +29,11 @@ Non certifica la correttezza del bootstrap catalogo; nessuna scrittura o osserva
                                  &key (chunk-bytes 65536) (max-bytes 268435456) (max-batches 65536)
                                       (max-batch-records 65536) (max-batch-bytes 67108864)
                                       (max-records 1048576) (max-prepared 65536) (max-outcomes 65536))
-  "Pre: CONTROL autorevole, decision log completo dello stesso Archivio, EOF ACTIVE fisico attestato.
-File/FD/namespace congelati e aperti fino alla pubblicazione; scratch esclusivo nel compito I/O.
-Post: recovery ACTIVE canonico con decisioni provenienti da header/replay verificati e ambito identico.
-Controlli prima dell'I/O ACTIVE; risultato solo se il decision log resta aperto al ritorno.
-Propaga errori originali; nessuna pubblicazione, troncatura, nuovo CSN o certificazione dell'intero recovery."
+  "Pre: authoritative CONTROL, complete decision log of the same Archivio, attested physical ACTIVE EOF.
+File/FD/namespace frozen and open until publication; exclusive scratch in the I/O task.
+Post: canonical ACTIVE recovery with decisions from verified header/replay and identical scope.
+Checks before ACTIVE I/O; result only if the decision log remains open at return.
+Propagates original errors; no publication, truncation, new CSN, or certification of complete recovery."
   (verifica-archivio-active control decisions scratch)
   (let ((result (arcdocdb.recovery.active:leggi-active-recuperato
                  control input size (decisioni-recuperate-table decisions) scratch

@@ -28,8 +28,8 @@
 (defstruct (descrittore-full-text
              (:constructor %descrittore-full-text (meta identity segment-box rows fields term-limit token-limit))
              (:copier nil))
-  "Autorita copiata dal chiamante: META canonico e mappa dei PUT gia risolti.
-Non verifica il formato dell'hint o il replay dei record; mai una prova di readiness."
+  "Authority copied from caller: canonical META and already resolved PUT map.
+Verifies neither hint format nor record replay; never a readiness proof."
   (meta (make-array 0 :element-type '(unsigned-byte 8)) :type octets :read-only t)
   (identity (make-array 0 :element-type '(unsigned-byte 8)) :type octets :read-only t)
   ;; Il CAR conserva l'intero boxed freddo: leggere un raw slot u64 puo allocare su x86-64.
@@ -41,12 +41,12 @@ Non verifica il formato dell'hint o il replay dei record; mai una prova di readi
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets index index octets index index) boolean) span-uguali-p))
 (defun span-uguali-p (x a b y c d)
-  "Pre: span validi immutabili. Post: uguaglianza esatta dei byte, senza copie."
+  "Pre: valid immutable spans. Post: exact byte equality, without copies."
   (and (= (- b a) (- d c))
        (loop for i below (- b a) always (= (aref x (+ a i)) (aref y (+ c i))))))
 
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (descrittore-full-text u16) boolean) campo-dichiarato-p))
 (defun campo-dichiarato-p (descriptor field)
-  "Pre: descrittore validato. Post: appartenenza ai massimo 16 campi dichiarati."
+  "Pre: validated descriptor. Post: membership in at most 16 declared fields."
   (not (null (find field (descrittore-full-text-fields descriptor) :test #'=))))

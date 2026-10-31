@@ -7,8 +7,8 @@
 (declaim (inline sequenza-slot-writer))
 (declaim (ftype (function (banco-slot fixnum) u64) sequenza-slot-writer))
 (defun sequenza-slot-writer (bank base)
-  "Pre: writer esclusivo, base valida. Post: contenuto coerente e sequenza pari senza wrap.
-Corruzione => FAULTED; non consuma o richiede credito seqlock per una semplice verifica."
+  "Pre: exclusive writer, valid base. Post: consistent contents and even sequence without wrap.
+Corruption => FAULTED; a simple check neither consumes nor requires seqlock credit."
   (let* ((words (banco-slot-words bank)) (sequence (aref words (+ base +slot-sequence+))))
     (declare (type u64 sequence))
     (when (or (oddp sequence) (>= sequence +slot-sequence-limit+))
@@ -21,9 +21,9 @@ Corruzione => FAULTED; non consuma o richiede credito seqlock per una semplice v
 ;;; REQ: REQ-IDX-003 REQ-IDX-005 REQ-AFF-008
 (declaim (ftype (function (banco-slot integer) fixnum) credito-scrittura-slot))
 (defun credito-scrittura-slot (bank slot)
-  "Pre: writer esclusivo; preflight prima del commit, inclusi tutti gli aggiornamenti già in volo.
-Post: numero di incrementi doppi ancora ammessi; zero richiede rebuild prima del commit.
-Non prenota crediti: il writer contabilizza quelli necessari ai lotti pendenti della stessa Serie."
+  "Pre: exclusive writer; preflight before commit, including all updates already in flight.
+Post: number of double increments still admitted; zero requires rebuild before commit.
+Does not reserve credits: writer accounts for those needed by pending batches of the same Serie."
   (esigi-banco-writer bank)
   (let ((sequence (sequenza-slot-writer bank (base-slot bank slot))))
     (declare (type u64 sequence))
@@ -33,9 +33,9 @@ Non prenota crediti: il writer contabilizza quelli necessari ai lotti pendenti d
 ;;; REQ: REQ-IDX-001 REQ-IDX-003 REQ-LIM-001 REQ-AFF-004
 (declaim (ftype (function (banco-slot fixnum (or null contenuto-slot)) null) cambia-slot))
 (defun cambia-slot (bank base source)
-  "Pre: writer, contenuto SOURCE già validato e privato, oppure NIL per rimozione.
-Post: tutti i campi pubblicati prima della nuova sequenza pari; nessuna durability attestata.
-Ogni interruzione dopo l'avvio della mutazione rende FAULTED, senza rollback del seqlock."
+  "Pre: writer, already validated private SOURCE contents, or NIL for removal.
+Post: all fields published before the new even sequence; no durability attested.
+Every interruption after mutation starts makes the bank FAULTED, without seqlock rollback."
   (let* ((words (banco-slot-words bank)) (sequence (sequenza-slot-writer bank base)) (complete nil))
     (declare (type u64 sequence))
     (when (>= sequence (- +slot-sequence-limit+ 2))
@@ -61,9 +61,9 @@ Ogni interruzione dopo l'avvio della mutazione rende FAULTED, senza rollback del
 ;;; REQ: REQ-IDX-001 REQ-IDX-003 REQ-LIM-001 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (banco-slot integer contenuto-slot) null) pubblica-slot-v2))
 (defun pubblica-slot-v2 (bank slot source)
-  "Pre: gettone writer, SOURCE privata; chiave/arena, retention, conflitti e budget prevalidati.
-Post: payload pubblicato sotto seqlock; nessuna conferma di commit o byte di controllo scritto.
-Input/range/frozen rifiutati prima della mutazione; ricostruire se manca credito seqlock."
+  "Pre: writer token, private SOURCE; key/arena, retention, conflicts, and budgets prevalidated.
+Post: payload published under seqlock; no commit acknowledgment or control byte written.
+Input/range/frozen rejected before mutation; rebuild if seqlock credit is insufficient."
   (esigi-banco-writer bank)
   (let ((base (base-slot bank slot)))
     (esigi-contenuto-slot bank source)
@@ -73,9 +73,9 @@ Input/range/frozen rifiutati prima della mutazione; ricostruire se manca credito
 ;;; REQ: REQ-IDX-003 REQ-IDX-006 REQ-AFF-004
 (declaim (ftype (function (banco-slot integer) null) rimuovi-slot-v2))
 (defun rimuovi-slot-v2 (bank slot)
-  "Pre: writer esclusivo, retention e tombstone dello storage già gestiti dal chiamante.
-Post: payload zero sotto seqlock, nessun tombstone in memoria; il controllo diventa DELETED dopo.
-Non cambia chiavi dell'arena; slot vuoto già rimosso è idempotente senza consumare sequenza."
+  "Pre: exclusive writer, retention and storage tombstone already handled by caller.
+Post: zero payload under seqlock, no in-memory tombstone; control becomes DELETED afterward.
+Does not change arena keys; an already removed empty slot is idempotent without consuming sequence."
   (esigi-banco-writer bank)
   (let* ((base (base-slot bank slot)) (words (banco-slot-words bank)))
     (sequenza-slot-writer bank base)

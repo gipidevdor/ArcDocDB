@@ -6,9 +6,9 @@
 ;;; REQ: REQ-IDX-001 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (contesto-get resolver-words u32 &optional u32) index) trova-riga-resolver))
 (defun trova-riga-resolver (context rows offset &optional (count (floor (length rows) +row-words+)))
-  "Pre: CANDIDATE sotto EBR, righe immutabili ordinate per offset. Post: base del PUT esatto.
-Assenza non significa documento assente: location già pubblicata senza riga rende FAULTED.
-Al più 33 passi su cardinalità u32; nessuna allocazione esplicita o I/O."
+  "Pre: CANDIDATE under EBR, immutable rows sorted by offset. Post: exact PUT base.
+Absence does not mean an absent document: an already published location without a row makes it FAULTED.
+At most 33 steps over u32 cardinality; no explicit allocation or I/O."
   (unless (zerop (mod (length rows) +row-words+)) (guasto-get context :resolver-row-shape))
   (unless (<= count (floor (length rows) +row-words+)) (guasto-get context :resolver-row-count))
   (let ((left 0) (right count))
@@ -26,8 +26,8 @@ Al più 33 passi su cardinalità u32; nessuna allocazione esplicita o I/O."
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (contesto-get resolver-words index) null) verifica-parole-resolver))
 (defun verifica-parole-resolver (context rows base)
-  "Pre: riga completa individuata sotto EBR. Post: lunghezza canonica e CSN in entrambe le word.
-Ogni discordanza col candidato rende GET FAULTED; nessun boxing u64 necessario."
+  "Pre: complete row found under EBR. Post: canonical length and CSN in both words.
+Any mismatch with the candidate makes GET FAULTED; no u64 boxing needed."
   (let ((content (contesto-get-content context)))
     (unless (and (= (aref rows (+ base +row-size+)) (ldb (byte 32 0) (aref content 3)))
                  (zerop (ldb (byte 32 32) (aref content 3))))
@@ -41,9 +41,9 @@ Ogni discordanza col candidato rende GET FAULTED; nessun boxing u64 necessario."
 (declaim (ftype (function (contesto-get mappa-segmento-get index)
                          (values u8 (or null u32) &optional)) verifica-riga-resolver))
 (defun verifica-riga-resolver (context map base)
-  "Pre: riga individuata sotto la stessa epoca del candidato. Post: size/CSN/flag e prova concordi.
-LIVE del primary non viene interpretato come flag storage; prova zero solo per ordinario.
-Ogni discordanza rende GET FAULTED; il confine worker deve isolare la Serie."
+  "Pre: row found under the same epoch as the candidate. Post: matching size/CSN/flags and proof.
+Primary LIVE is not interpreted as a storage flag; zero proof only for an ordinary record.
+Any mismatch makes GET FAULTED; the worker boundary must isolate the Serie."
   (let* ((rows (mappa-segmento-get-rows map))
          (flags (aref rows (+ base +row-flags+))) (proof (aref rows (+ base +row-proof+))))
     (verifica-parole-resolver context rows base)
@@ -63,10 +63,10 @@ Ogni discordanza rende GET FAULTED; il confine worker deve isolare la Serie."
 (declaim (ftype (function (contesto-get mappa-segmento-get)
                          (values segmento-get u32 u8 (or null u32) &optional)) risolvi-candidato-get))
 (defun risolvi-candidato-get (context map)
-  "Pre: CANDIDATE, mappa CLOSED o pagina ACTIVE pubblicata acquisita DOPO AVVIA-GET sotto EBR.
-Post: capacità, valid-bytes, flag e offset OUTCOME/NIL, solo per posizione/CSN concordi.
-Non autorizza il valore: GET verifica ancora CRC/chiave/CSN e prova durevole dal file.
-Errori/uscite non locali liberano EBR; ordine errato rifiutato prima di assumere il cleanup."
+  "Pre: CANDIDATE, CLOSED map or published ACTIVE page acquired AFTER AVVIA-GET under EBR.
+Post: capability, valid-bytes, flags, and OUTCOME offset/NIL, only for matching position/CSN.
+Does not authorize the value: GET still verifies CRC/key/CSN and durable proof from the file.
+Errors/nonlocal exits release EBR; incorrect order rejected before assuming cleanup."
   (esigi-stato-get context :candidate)
   (let ((complete nil))
     (unwind-protect
@@ -93,8 +93,8 @@ Errori/uscite non locali liberano EBR; ordine errato rifiutato prima di assumere
                          (member :hit :miss :verify-failed :disabled :proof-required :buffer-required))
                 sonda-cache-risolta-get))
 (defun sonda-cache-risolta-get (context map)
-  "Pre: CANDIDATE e mappa nella stessa epoca. Post: esito del nucleo GET con flag/frontiera risolti.
-Nessun I/O; prepared richiede ancora prova dal pool I/O. Propaga errori e cleanup del GET."
+  "Pre: CANDIDATE and map in the same epoch. Post: core GET outcome with resolved flags/frontier.
+No I/O; prepared still requires proof from the I/O pool. Propagates GET errors and cleanup."
   (multiple-value-bind (segment end flags proof) (risolvi-candidato-get context map)
     (declare (ignore proof)) ; dato verificato dal resolver, nessun esito d'errore scartato.
     (sonda-cache-get context segment end flags)))
@@ -106,8 +106,8 @@ Nessun I/O; prepared richiede ancora prova dal pool I/O. Propaga errori e cleanu
                                  (member :inserted :present :busy :unavailable :bypassed :not-attempted)
                                  boolean boolean &optional)) leggi-record-risolto-get))
 (defun leggi-record-risolto-get (context map)
-  "Pre: nuovo AVVIA-GET nel pool I/O, nuova acquisizione della mappa sotto EBR.
-Post: esiti del nucleo GET; OUTCOME riletto dal medesimo FD prima della cache prepared.
-Propaga errori/cleanup; risposta privata fino a copia e CONCLUDI-GET con tempo fresco."
+  "Pre: new AVVIA-GET in the I/O pool, new map acquisition under EBR.
+Post: core GET outcomes; OUTCOME reread from the same FD before the prepared cache path.
+Propagates errors/cleanup; response private until copying and CONCLUDI-GET with fresh time."
   (multiple-value-bind (segment end flags proof) (risolvi-candidato-get context map)
     (leggi-record-get context segment end flags :outcome-offset proof)))

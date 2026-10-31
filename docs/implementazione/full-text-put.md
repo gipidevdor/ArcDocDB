@@ -3,10 +3,10 @@
 # Full-text binding between PUT and WAL batch
 
 `arcdocdb.fulltext.put` connects [CBOR preparation](full-text-documenti.md),
-[writer reservations](full-text-riserve.md), and existing WAL batch. First
+[writer reservations](full-text-riserve.md), and the existing WAL batch. First
 use remains a Usenet NNTP server written in Common Lisp, with opaque Message-ID
 as key and indexed subject/body fields. Transport and MIME decoding remain
-with daemon; database receives CBOR document.
+with the daemon; the database receives a CBOR document.
 
 <a id="una-sola-sorgente-posseduta"></a>
 
@@ -14,7 +14,7 @@ with daemon; database receives CBOR document.
 
 `crea-preparazione-put-full-text(configs, ...)` preallocates a private record frame
 and one task per ordered canonical configuration, up to sixteen generations.
-Cumulative memory check precedes allocation. Includes frames, analysis
+A cumulative memory check precedes allocation. It includes frames, analysis
 spaces, runs, and local metadata; shared configurations, reservation pool,
 other contexts, and RSS require separate runtime accounting.
 
@@ -22,7 +22,7 @@ Defaults are document 16 MiB, key 65535 bytes, 65536 scalars,
 4096 tokens, 262144 term bytes, and cumulative memory 64 MiB. Frame
 size includes 24 header bytes; format limit can reject a document
 smaller than application limit. Constructor supports v1/v2;
-respective physical limits checked again at start.
+the respective physical limits are checked again at start.
 
 `inizia-put-full-text(request, key, value, row, ...)` uses existing record codec
 to copy key and value into frame, calculate CRCs, and return a generation
@@ -34,15 +34,15 @@ two external copies. Frame, tasks, and reservation handles remain private until 
 
 API produces ordinary PUTs, flag zero and stamp zero before closing, or
 prepared PUTs, flag one and positive TXID passed as `txid-high`/`txid-low` u32.
-No contract-versioned PUT or new format introduced. Later WAL closing
-restamps only ordinary records with CSN; preserves prepared TXIDs.
+No contract-versioned PUT or new format is introduced. Later WAL closing
+restamps only ordinary records with CSN; it preserves prepared TXIDs.
 
 <a id="analisi-consegna-e-ammissione"></a>
 
 ## Analysis, delivery, and admission
 
 `passo-put-full-text(request, generation, quantum)` advances to `:prepared`
-only when all tasks are DONE and worker has checked frame CRC and span.
+only when all tasks are DONE and the worker has checked frame CRC and span.
 Private attestation includes current generation and is cleared at start,
 failure, or cancellation. Frame remains immutable until append:
 no public entry allows modification or replacement after attestation.
@@ -55,7 +55,7 @@ Start rejections instead preserve a previous still-valid result.
 
 Worker owns request through PREPARED, then hands it off with synchronization
 to Serie writer. Only after analysis does runtime acquire canonical
-queue lease. No schedulers, threads, or concurrent queues added inside bridge.
+queue lease. No schedulers, threads, or concurrent queues are added inside the bridge.
 
 `prenota-put-full-text(pool, lease, request, generation)` adopts tasks together;
 `passo-riserva-put-full-text(..., quantum)` copies their owned runs, going from
@@ -84,8 +84,8 @@ slot to sealed-batch record and survives WAL-buffer reuse.
 `leggi-legame-put-full-text(pool, lease, slot, token)` returns six values:
 batch, incarnation, record number, start, end, and proposed row. Binding survives
 request reuse. Batch reuse increments incarnation without wrapping;
-old references rejected even when new record occupies same bytes.
-Incarnation saturation also checked by public reuse preflight
+old references are rejected even when a new record occupies the same bytes.
+Incarnation saturation is also checked by public reuse preflight
 before Serie controller effects. Consumer must capture required
 data before allowing buffer reuse.
 
@@ -108,13 +108,13 @@ cannot be canceled or recycled through this API.
 If exit during transfer/append is incomplete, request, pool, and batch become
 FAULTED; references, costs, and any copied bytes remain preserved.
 Worker boundary must stop Serie and require recovery. No rollback
-of uncertain effects attempted and no ACK produced. No bridge function performs I/O.
+of uncertain effects is attempted, and no ACK is produced. No bridge function performs I/O.
 
 <a id="verifica-e-limiti"></a>
 
 ## Verification and limits
 
-First 18 bridge tests now joined by nine physical-reference tests:
+The first 18 bridge tests are now joined by nine physical-reference tests:
 27 bridge tests, 102 full-text tests total. Frozen CBOR fixture, independent
 bitwise record encoder, overwritten original inputs, and full byte
 comparison verify ownership. Covered: v1/v2, ordinary/prepared, maximum TXID,
@@ -122,18 +122,18 @@ sixteen generations, cumulative limits, truncations/CRC, errors without effects,
 64 cancellation points, obsolete references, and interrupts before/after WAL copy.
 Four independent contexts share only immutable configurations.
 A CRC probe catches any scan beyond 20 header bytes while writer
-holds lease: verifies old-path rejection as negative control
-and correct append with 0/32768-byte padding. Also checks worker CRC
+holds the lease: it verifies old-path rejection as negative control
+and correct append with 0/32768-byte padding. It also checks worker CRC
 calculations and full-record comparison. Header or key corruption before
 attestation fails in worker; absent/stale attestations do not permit append.
 
 The [method and decision table](full-text-put-metodo.md) report both
-readings by same author. [Original records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
+readings by the same author. [Original records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-17-fulltext-put-dev-targeted/README.md)
 distinguish failed attempts, targeted tests, full verification, and diagnostic coverage.
 
 Still to integrate: general validation and Serie-catalog authority,
 runtime-log canonicality, durable pipeline with document/posting publication
 before H/ACK, authoritative 2PC outcomes, physical delta map, MVCC, and retirement after
 quiescence. Engine readiness for NNTP traffic, application benchmarks,
-C1 qualification, MC/DC, or complete fault injection not claimed. Overall requirements remain
+C1 qualification, MC/DC, or complete fault injection are not claimed. Overall requirements remain
 `:progettato`; no ADR or disk format changed.

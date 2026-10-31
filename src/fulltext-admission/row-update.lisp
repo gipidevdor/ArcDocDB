@@ -6,8 +6,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text u32 index) null) verifica-posizione-inserimento-riga))
 (defun verifica-posizione-inserimento-riga (pool row position)
-  "Pre: lower-bound calcolato prima degli effetti. Post: spazio e vicini stretti.
-Directory incoerente => pool FAULTED prima di spostare coppie; nessuna allocazione."
+  "Pre: lower-bound calculated before effects. Post: space and strict neighbor order.
+Inconsistent directory => pool FAULTED before moving pairs; no allocation."
   (let ((count (riserve-full-text-row-count pool)) (rows (riserve-full-text-rows pool)))
     (unless (and (<= position count) (< count (length rows)))
       (errore-interno-riserve pool :fulltext-row-insert))
@@ -19,9 +19,9 @@ Directory incoerente => pool FAULTED prima di spostare coppie; nessuna allocazio
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text riserva-full-text index) null) inserisci-riga-riserva))
 (defun inserisci-riga-riserva (pool slot position)
-  "Pre: effetto esclusivo, lower-bound libero verificato prima della mutazione.
-Post: entry univoca ordinata nello stesso pool, prima di completare adozione/costi.
-Spostamento limitato alla capacita; incoerenza => FAULTED, nessun rollback."
+  "Pre: exclusive effect, free lower-bound verified before mutation.
+Post: unique sorted entry in the same pool, before completing adoption/costs.
+Movement bounded to capacity; inconsistency => FAULTED, no rollback."
   (let ((count (riserve-full-text-row-count pool)) (row (riserva-full-text-row slot))
         (rows (riserve-full-text-rows pool)) (slots (riserve-full-text-row-slots pool)))
     (unless (and (riserve-full-text-effect pool) (eq pool (riserva-full-text-pool slot))
@@ -39,9 +39,9 @@ Spostamento limitato alla capacita; incoerenza => FAULTED, nessun rollback."
 ;;; REQ: REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text riserva-full-text) null) rimuovi-riga-riserva))
 (defun rimuovi-riga-riserva (pool slot)
-  "Pre: effetto di cancellazione pre-append, slot COPYING/READY canonico.
-Post: sola entry dello slot rimossa, trasferiti mai eliminati; tail azzerata.
-Ordine e count preservati entro capacita; mapping incoerente => pool FAULTED."
+  "Pre: pre-append cancellation effect, canonical COPYING/READY slot.
+Post: only the slot's entry removed, transferred entries never deleted; tail zeroed.
+Order and count preserved within capacity; inconsistent mapping => pool FAULTED."
   (unless (and (riserve-full-text-effect pool) (member (riserva-full-text-state slot) '(:copying :ready)))
     (errore-interno-riserve pool :fulltext-row-remove))
   (let* ((count (riserve-full-text-row-count pool)) (row (riserva-full-text-row slot))

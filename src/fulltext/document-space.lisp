@@ -6,8 +6,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (defstruct (preparazione-full-text
              (:constructor %preparazione-full-text (config cbor analysis run begins ends present)) (:copier nil))
-  "Task preallocato: input prestato fino a DONE/FAILED/CANCELLED, run prestato dopo DONE.
-Ripartire invalida il risultato precedente; il proprietario deve averne terminato l'uso."
+  "Preallocated task: input borrowed until DONE/FAILED/CANCELLED, run borrowed after DONE.
+Restart invalidates the previous result; the owner must have finished using it."
   (config nil :type (or null configurazione-full-text) :read-only t)
   (cbor (cb:crea-spazio-cbor) :type cb:spazio-cbor :read-only t)
   (analysis (a:crea-spazio-full-text) :type a:spazio-full-text :read-only t)
@@ -36,9 +36,9 @@ Ripartire invalida il risultato precedente; il proprietario deve averne terminat
                          preparazione-full-text) crea-preparazione-full-text))
 (defun crea-preparazione-full-text (config &key (max-scalars 65536) (max-tokens 65536)
                                            (token-bytes 4194304) (max-memory 67108864))
-  "Pre: configurazione immutabile, capacita fredde positive. Post: task/scratch esclusivi.
-Budget conservativo prima di allocare: scalari, run, analisi, frame e overhead 64KiB.
-Non conta configurazione/input gia posseduti o RSS. INVALID-ARGUMENT/RESOURCE-EXHAUSTED."
+  "Pre: immutable configuration, positive cold capacities. Post: exclusive task/scratch.
+Conservative budget before allocation: scalars, run, analysis, frames, and 64KiB overhead.
+Does not count already owned configuration/input or RSS. INVALID-ARGUMENT/RESOURCE-EXHAUSTED."
   (unless (and (typep config 'configurazione-full-text)
                (typep max-scalars '(integer 1 4294967295)) (typep max-tokens '(integer 1 4294967295))
                (typep token-bytes '(integer 1 4294967295)) (typep max-memory 'index))
@@ -59,7 +59,7 @@ Non conta configurazione/input gia posseduti o RSS. INVALID-ARGUMENT/RESOURCE-EX
 ;;; REQ: REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text &optional index) null) lavoro-documento))
 (defun lavoro-documento (task &optional (units 1))
-  "Pre: task esclusivo. Post: contatore entro limite; rifiuto prima del superamento."
+  "Pre: exclusive task. Post: counter within limit; rejection before exceeding it."
   (unless (<= (preparazione-full-text-work task) (preparazione-full-text-work-limit task))
     (error 'invariant-violation :reason :fulltext-document-work-state))
   (when (> units (- (preparazione-full-text-work-limit task) (preparazione-full-text-work task)))

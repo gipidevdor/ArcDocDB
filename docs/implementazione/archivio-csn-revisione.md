@@ -86,7 +86,7 @@ This conclusion does not attest to FAULTED handling, tests, coverage, or qualifi
 | 8 | Ownership | Stable FDs/vectors/files/namespace throughout the plan are preconditions, not an atomic snapshot produced by gates. |
 | 9 | Traceability/checks | REQ-* test names read, sources still under development; no build/lint/trace/coverage/check evidence produced. |
 | 10 | Standards/deviations | R1 confirmed: the folding query lacks assertions; types/replay do not replace COD-24. |
-| 11 | Parallelism | No new thread, callback, timer, or I/O; runtime registers and GET not updated. |
+| 11 | Parallelism | No new thread, callback, timer, or I/O; runtime registries and GET not updated. |
 | 12 | Durability | Derived scalar results; publication/recovery and admission obligations remain with the coordinator. |
 
 <a id="evidenze-e-limiti-dei-controlli"></a>

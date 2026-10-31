@@ -37,7 +37,7 @@ only the arena offset, which is outside the paged format. Cardinality,
 membership, and uniqueness already verified by ADR-0063 establish complete coverage.
 The engine owns the same read-only FD until close, even after retirement.
 A missing, incompatible, corrupt, or over-budget explicit candidate
-refuses startup without admission or fallback. The data checkpoint
+prevents startup, with no admission or fallback. The data checkpoint
 may already be complete: refusal does not roll back canonical recovery.
 
 M1 GET uses a trusted serial controller selector, immutable in the

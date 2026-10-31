@@ -30,8 +30,8 @@ Correctness does not depend on the probabilistic distribution of hashes.
 Keys are copied only for the current batch; the builder receives
 a span of the resident arena and owns only one copy. Routing,
 packing, per-batch quotas, and PageRef constraints remain checked by
-ADR-0058 primitives. The fragment count must meet maximum
-load before allocating the plan and match the actual scan.
+ADR-0058 primitives. The fragment's entry count must stay within the maximum
+load before plan allocation and agree with the actual scan.
 
 The new name `primary-<16 hex>.idx.tmp` comes from the option already valid
 under ADR-0064. For construction, the ID must be in 1..2^60-1 and becomes the image
@@ -41,7 +41,7 @@ source, and candidates are always verified separately. The private
 namespace and absence of name reuse remain controller preconditions.
 
 After prefix and pages, the engine rechecks source and revision, seals the
-file with ARCIRF01 and flush, synchronizes the directory, and closes append access. It
+file with ARCIRF01, flushes it, synchronizes the directory, and closes append access. It
 then opens the same name read-only with verified EOF and rereads the entire image
 against the resident. Only after this verification, another source check,
 and closing every local FD does it return the option to the caller.

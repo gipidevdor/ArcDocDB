@@ -2,7 +2,7 @@
 
 # CBOR simple-value writing — second C1 reading
 
-Static reading by the blind-corpus owner on 2026-10-11, after
+This static reading was performed by the blind-corpus owner on 2026-10-11, after
 test and product freeze, before campaigns. Base
 `d155db3f977677fa95280f59c23fbe46a5e116d2`; product examined
 `src/codec/cbor-simple-write.lisp`, Git blob
@@ -35,24 +35,24 @@ the engine.
 | 9. Integration | Public export present. Serial ASDF loads product after header/string writer and three corpus files after CBOR helpers, then invokes new package RUN. Other CBOR, MVCC, worker, and index suites remain in runner. REQ-CBR-003 is in catalog. Strict build, matrix, lint, and full MAKE CHECK pending. |
 | 10. Standard | safety3, complete FTYPEs, Pre/Post/error docstrings, REQ references, and active guards present. Two functions of 14/26 lines and 7/8 paths by count below, within 60/10 limits. No exception proposed. This reading runs no compilation or lint and does not attest absence of warning/style-warning. |
 | 11. Parallelism | Product introduces no lock, counter, wait, or shared write. New corpus plans two reused workers with private destinations, immutable cold plans, and separate semaphores per wave; waits, joins, and cleanup bounded. Interval overlap must be observed, without inferring simultaneous execution on cores or scaling. |
-| 12. Durability | Mutation only in caller-exclusive memory: no I/O, commit point, deletion, or durable publication. Primitive promises neither atomicity nor rollback of internal guards. Fail-stop transition remains at owner level. |
+| 12. Durability | Mutation only in caller-exclusive memory: no I/O, commit point, deletion, or durable publication. The primitive promises neither atomicity nor rollback after an internal guard fails. Fail-stop transition remains at owner level. |
 
 <a id="aritmetica-preflight-e-footprint"></a>
 
 ## Arithmetic, preflight, and footprint
 
-Range AND precedes LENGTH and subtraction: an incorrectly typed buffer or
+The range AND precedes LENGTH and subtraction: an incorrectly typed buffer or
 non-index START/END are not used as destination or indices.
-Subtracting ordered indices produces nonnegative SPAN; guard
+Subtracting ordered indices produces nonnegative SPAN; the guard
 START+SPAN=END confirms span. VALUE validation also excludes
 floats, rationals, complex numbers, symbols, and out-of-domain integers before
-u8 cast. Domain contains 24 direct codes and 224 extended codes.
+u8 cast. The domain contains 24 direct codes and 224 extended codes.
 
 SIZE≤SPAN implies START+SIZE≤END. NEXT is calculated only after this
-check, therefore remains index and cannot exceed the already-validated
+check, and therefore remains an index and cannot exceed the already-validated
 physical endpoint. CURSOR=START+1 is within NEXT; if SIZE=2, the second write is
 at index NEXT−1. Only START and optionally START+1 are
-written. Final guard checks CURSOR=NEXT before the single return.
+written. The final guard checks CURSOR=NEXT before the single return.
 For an empty span, SIZE≥1 produces capacity rejection, after any
 VALUE rejection. F8 with code below 32, float, or break is not emitted.
 
@@ -82,7 +82,7 @@ a dynamic measurement of condition independence.
 ## Blind-corpus provenance
 
 The following three files were written from the method and existing
-dependencies, without reading new product. They were frozen and
+dependencies, without reading the new product. They were frozen and
 communicated to the coordinator before the product was written. An
 independent read-only review checked fixtures, contract,
 visible syntax, counts, and sinks; no reader,
@@ -97,7 +97,7 @@ Rechecked hashes remain equal to those communicated.
 
 The oracle calculates 224+VALUE or pair 248/VALUE, also compared with
 eight literal vectors 0/19/20/21/22/23/32/255. No expectation comes
-from product encoder, reader, or scanner. Every success compares
+from the product encoder, reader, or scanner. Every success compares
 the entire destination and one fixnum NEXT; every rejection checks type,
 reason, NIL offset, and unchanged physical array, including the displaced
 destination's entire backing and space beyond fill-pointer.
@@ -124,13 +124,13 @@ The sixteenth test plans two real reused workers, two waves of 8,192
 items per worker, 32,768 calls. Every plan has eight codes, repeated
 1,024 times per wave; NEXT, tokens, and all expected bytes are prepared
 before startup. Each private destination is restored from
-cold sentinels before call, so an omitted write cannot
-pass through already-correct bytes. Worker verifies arity, NEXT, and
+cold sentinels before each call, so an omitted write cannot
+pass through already-correct bytes. The worker verifies arity, NEXT, and
 complete array; sink uses NEXT, first, and last byte actually
 observed. Cold sinks are 3,804,160 and 3,836,928 for each wave.
-Parent checks unchanged plans and sentinels, final buffer, sink,
-intervals, and joins. Waits within 15 seconds, joins within 20 seconds,
-bounded cleanup with verified termination. Intervals include
+The parent checks unchanged plans and sentinels, final buffer, sink,
+intervals, and joins. Waits are bounded to 15 seconds and joins to 20 seconds;
+cleanup is bounded, with verified termination. Intervals include
 restoration and fixture comparisons; they do not measure only the primitive.
 
 <a id="correzione-separata-del-precedente-harness-parallelo"></a>

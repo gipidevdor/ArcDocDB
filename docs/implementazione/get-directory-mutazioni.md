@@ -4,7 +4,7 @@
 
 <!-- REQ: REQ-IDX-001 REQ-CMP-007 REQ-AFF-002 REQ-AFF-008 REQ-VAL-001 -->
 
-Driver [get-directory-mutation.lisp](../../tools/get-directory-mutation.lisp)
+The driver [get-directory-mutation.lisp](../../tools/get-directory-mutation.lisp)
 preregisters five semantic mutants of directory construction and selection.
 Preparation was exclusively static: no compilation, product load,
 suite execution, self-test, or campaign was performed

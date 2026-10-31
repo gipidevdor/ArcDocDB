@@ -7,8 +7,8 @@
 (declaim (ftype (function (octets index index index identita-pagina fixnum u32 page-error) null)
                 verifica-directory-pagina))
 (defun verifica-directory-pagina (buffer start used size identity count parameter condition)
-  "Pre: corpo nel buffer, taglia ammessa. Post: radix, PageRef e conteggio esatti.
-Condizione richiesta per geometria, dominio o riferimento non canonico."
+  "Pre: body in buffer, admitted size. Post: exact radix, PageRef, and count.
+Condition required for noncanonical geometry, domain, or reference."
   (let ((bits (ldb (byte 8 0) parameter)) (shift (ldb (byte 8 8) parameter))
         (maximum (nth-value 2 (geometria-pagina size))) (live 0))
     (esigi-pagina (and (zerop (ash parameter -16)) (<= 1 bits maximum)
@@ -28,8 +28,8 @@ Condizione richiesta per geometria, dominio o riferimento non canonico."
 (declaim (ftype (function (index index fixnum u32 page-number page-error) null)
                 verifica-frammento-chiave))
 (defun verifica-frammento-chiave (used size count parameter next condition)
-  "Pre: corpo limitato e riferimento verificato. Post: frammento pieno salvo l'ultimo.
-COUNT e' la lunghezza totale, PARAMETER la posizione; condizione per catena incoerente."
+  "Pre: bounded body and verified reference. Post: full fragment except last.
+COUNT is total length, PARAMETER is position; condition for inconsistent chain."
   (esigi-pagina (and (<= 1 count +max-key-bytes+) (< parameter count)
                     (= used (min (- size +page-header+) (- count parameter))))
                 condition :index-page-key-fragment)
@@ -42,8 +42,8 @@ COUNT e' la lunghezza totale, PARAMETER la posizione; condizione per catena inco
                          page-number page-number page-error) null) verifica-corpo-pagina))
 (defun verifica-corpo-pagina (buffer start used size identity kind count parameter
                              next next-generation condition)
-  "Pre: buffer e corpo presenti, numeri nel dominio. Post: corpo locale canonico.
-Condizione richiesta per limiti o tipo; non visita altre pagine e non certifica una root."
+  "Pre: buffer and body present, numbers within domain. Post: canonical local body.
+Condition required for limits or type; neither visits other pages nor certifies root."
   (esigi-pagina (<= used (- size +page-header+)) condition :index-page-body-range)
   (esigi-pagina (<= (+ start used) (length buffer)) condition :index-page-body-range)
   (verifica-identita-allineata identity size condition)

@@ -9,8 +9,8 @@
                           (or null arcdocdb.conditions:io-fault) index) null)
                 segnala-acquisizione-fonti))
 (defun segnala-acquisizione-fonti (primary cleanup count)
-  "Pre: cleanup finito. Post: ritorno solo senza errore; primaria originale EQ se close riuscite.
-RECOVERY-SOURCES-CLEANUP-ERROR conserva primaria, primo guasto cleanup e numero totale."
+  "Pre: cleanup finished. Post: returns only without error; EQ-identical original primary cause if closes succeeded.
+RECOVERY-SOURCES-CLEANUP-ERROR preserves primary cause, first cleanup failure, and total count."
   (when cleanup
     (error 'recovery-sources-cleanup-error :reason :recovery-sources-cleanup
            :primary primary :cleanup cleanup :count count))
@@ -28,13 +28,13 @@ RECOVERY-SOURCES-CLEANUP-ERROR conserva primaria, primo guasto cleanup e numero 
                             (max-total-name-bytes 16777216) (max-name-bytes 255)
                             (max-transfer 268435456) (max-file-bytes #xffffffff)
                             (max-total-file-bytes #xffffffff))
-  "Pre: pool I/O, manifest/namespace esclusivi e stabili fino al ritorno, niente cancellazione asincrona.
-Post: set completo ACTIVE/CLOSED readonly posseduto e piano, oppure nessun child pubblicato.
-Una sola enumerazione; parent prestato e intatto, temporanei vivi aperti senza rinomina.
-INVALID-ARGUMENT se piano non READY o budget errati; condizioni delle dipendenze propagate.
-Ogni child acquisito entra nel set prima dei controlli successivi; tutti chiusi su errore.
-Guasti cleanup aggregati dopo tutti i tentativi; altre uscite nonlocali conservano la causa.
-EOF non certifica header/CRC o prefisso durevole; nessuna ammissione o atomicità durevole."
+  "Pre: I/O pool, exclusive stable manifest/namespace until return, no asynchronous cancellation.
+Post: complete owned read-only ACTIVE/CLOSED set and plan, or no child published.
+One enumeration only; parent borrowed and intact, live temporaries opened without rename.
+INVALID-ARGUMENT if plan not READY or budgets invalid; dependency conditions propagated.
+Each acquired child enters set before subsequent checks; all closed on error.
+Cleanup failures aggregated after all attempts; other nonlocal exits preserve cause.
+EOF certifies neither header/CRC nor durable prefix; no admission or durable atomicity."
   (arcdocdb.io::verifica-apertura-relativa directory "0000000000000000.seg" max-transfer max-file-bytes)
   (unless (typep max-total-file-bytes 'index)
     (error 'invalid-argument :reason :recovery-sources-total-budget))

@@ -18,7 +18,7 @@
 
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (defstruct (campo-full-text (:constructor %campo-full-text (id alias path)) (:copier nil))
-  "Configurazione fredda copiata e immutabile: ID positivo, alias e percorso UTF-8."
+  "Copied immutable cold configuration: positive ID, alias, and UTF-8 path."
   (id 1 :type u16 :read-only t)
   (alias (make-array 0 :element-type '(unsigned-byte 8)) :type octets :read-only t)
   (path #() :type simple-vector :read-only t))
@@ -26,8 +26,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-007 REQ-SEC-010
 (defstruct (configurazione-full-text
              (:constructor %configurazione-full-text (identity fields declared effective meta-bound)) (:copier nil))
-  "Dichiarazione posseduta, immutabile; ID codificati una volta, limiti caldi fixnum.
-Non alloca ID del catalogo, non adotta contratti e non autorizza commit o readiness."
+  "Owned immutable declaration; IDs encoded once, hot limits fixnum.
+Does not allocate catalog IDs, adopt contracts, or authorize commit or readiness."
   (identity (make-array 24 :element-type '(unsigned-byte 8)) :type (simple-array (unsigned-byte 8) (24)) :read-only t)
   (fields #() :type simple-vector :read-only t)
   (declared (make-array 5 :element-type 'u64) :type (simple-array (unsigned-byte 64) (5)) :read-only t)

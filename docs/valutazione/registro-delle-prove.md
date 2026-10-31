@@ -97,7 +97,7 @@ and size limits, including uncataloged files.
 
 Methods are registered before execution. Sample, clock, measured allocations,
 and scope are stated; array memory is not RSS. P99.9 is not estimated from
-few samples and a zero counter does not demonstrate universal allocation
+a few samples and a zero counter does not demonstrate universal allocation
 absence. Uncontrolled external load and source changes during a run must
 be declared. A blob identifies recorded content, not proof of compiler
 or medium reliability.

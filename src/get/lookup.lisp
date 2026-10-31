@@ -7,9 +7,9 @@
 (declaim (ftype (function (contesto-get (member :live :absent :retry-limit)) get-state)
                 scegli-candidato-get))
 (defun scegli-candidato-get (context result)
-  "Pre: EBR attivo, indice confermato; buffer scritto soltanto per LIVE.
-Post: CANDIDATE se versione corrente visibile; snapshot con miss/versione nuova richiede storico.
-Non dichiara assenza storica e non legge payload su miss/retry; stato inatteso rende FAULTED."
+  "Pre: active EBR, confirmed index; buffer written only for LIVE.
+Post: CANDIDATE if the current version is visible; snapshot miss/new version requires history.
+Does not declare historical absence or read payload on miss/retry; unexpected state makes it FAULTED."
   (case result
     (:live
      (let ((csn (aref (contesto-get-content context) 0))
@@ -24,8 +24,8 @@ Non dichiara assenza storica e non legge payload su miss/retry; stato inatteso r
 (declaim (ftype (function (contesto-get vista-get-serie octets)
                          (member :live :absent :retry-limit)) sonda-indice-get))
 (defun sonda-indice-get (context view key)
-  "Pre: worker ammesso EBR, chiave stabile e controller della vista fidato.
-Post: un solo backend, nessun fallback su errore; ownership del callback verificata dal controller."
+  "Pre: EBR-admitted worker, stable key, and trusted view controller.
+Post: one backend only, no fallback on error; callback ownership verified by the controller."
   (let ((lookup (vista-get-serie-lookup view)))
     (if lookup
         (funcall lookup key 0 (length key) (contesto-get-probe context) (contesto-get-content context))
@@ -38,10 +38,10 @@ Post: un solo backend, nessun fallback su errore; ownership del callback verific
                                       (or null contesto-snapshot) u64 u64)
                          (member :candidate :absent :history-required :retry)) avvia-get))
 (defun avvia-get (context view key snapshot generation now)
-  "Pre: IDLE, richiesta/chiave stabili, seme dell'indice configurato, stesso Archivio.
-Post: un ingresso EBR e un lookup bounded; risultato provvisorio, pin fino a conclusione/abbandono.
-RETRY con IDLE significa mancata ammissione: riaccodare originale. Cleanup esterno già installato.
-Riuso respinto prima di acquisire risorse; gli altri errori liberano il compito senza risultato."
+  "Pre: IDLE, stable request/key, configured index seed, same Archivio.
+Post: one EBR entry and one bounded lookup; provisional result, pin until completion/abandonment.
+RETRY with IDLE means no admission: requeue the original request. External cleanup already installed.
+Reuse rejected before acquiring resources; other errors release the task without a result."
   (esigi-stato-get context :idle)
   (unless (eq (contesto-get-scope context) (vista-get-serie-scope view))
     (error 'invalid-argument :reason :get-archive-owner))
@@ -70,9 +70,9 @@ Riuso respinto prima di acquisire risorse; gli altri errori liberano il compito 
 ;;; REQ: REQ-IDX-001 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (contesto-get get-content) null) copia-candidato-get))
 (defun copia-candidato-get (context destination)
-  "Pre: CANDIDATE, output privato del resolver nel medesimo compito EBR.
-Post: cinque word copiate senza ritorno u64; location/CSN non attraversano la migrazione.
-INVALID-ARGUMENT per stato/alias. Il flag dello slot è LIVE, non il flag del record."
+  "Pre: CANDIDATE, resolver's private output in the same EBR task.
+Post: five words copied without a u64 return; location/CSN do not cross migration.
+INVALID-ARGUMENT for state/aliasing. The slot flag is LIVE, not the record flag."
   (esigi-stato-get context :candidate)
   (when (eq destination (contesto-get-content context))
     (error 'invalid-argument :reason :get-candidate-alias))

@@ -7,8 +7,8 @@
 (declaim (inline slot-corrisponde-p))
 (declaim (ftype (function (banco-slot fixnum contenuto-slot) boolean) slot-corrisponde-p))
 (defun slot-corrisponde-p (bank base expected)
-  "Pre: writer esclusivo e campi interni verificati; EXPECTED privato e immutato.
-Post: confronto di identità CSN/location e metadati completi, senza modifiche o seqlock reader."
+  "Pre: exclusive writer, verified internal fields; private unchanged EXPECTED.
+Post: CSN/location identity and complete metadata comparison, without modifications or reader seqlock."
   (let ((words (banco-slot-words bank)))
     (and (= (aref expected 0) (aref words (+ base +slot-csn+)))
          (= (aref expected 1) (aref words (+ base +slot-location+)))
@@ -19,10 +19,10 @@ Post: confronto di identità CSN/location e metadati completi, senza modifiche o
 ;;; REQ: REQ-IDX-004 REQ-LIM-001 REQ-AFF-004
 (declaim (ftype (function (banco-slot integer contenuto-slot contenuto-slot) boolean) riloca-slot-v2))
 (defun riloca-slot-v2 (bank slot expected replacement)
-  "Pre: writer e identità slot/chiave ricercata dal chiamante, copia identica durevole verificata.
-Post: T cambia solo la location se tutti i campi sono ancora quelli originali; NIL non modifica.
-CSN, chiave, lunghezza e fine validità devono restare identici; input invalido rifiutato prima.
-Non esegue I/O né swap nel manifest; nessuna risorsa sorgente viene reclamata."
+  "Pre: writer and slot/key identity found by caller, verified identical durable copy.
+Post: T changes only location if all fields still original; NIL makes no modification.
+CSN, key, length, and validity end must remain identical; invalid input rejected beforehand.
+No I/O or manifest swap; no source resource reclaimed."
   (esigi-banco-writer bank)
   (let ((base (base-slot bank slot)))
     (esigi-contenuto-slot bank expected)

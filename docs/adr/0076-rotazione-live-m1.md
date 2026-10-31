@@ -9,8 +9,8 @@
 Connect the canonical verified ACTIVE checkpoint and fresh-segment publisher to
 normal M1 writes. Before reserving the next data CSN, rotate when the complete
 record plus SEAL would exceed the file byte quota, or the ACTIVE record quota
-has been reached. A known segment-count limit refuses with READY and unchanged
-bytes. Invalid input and primary-index preflight still precede durable changes.
+has been reached. Reaching a known segment-count limit causes rejection with the engine READY and
+bytes unchanged. Invalid input and primary-index preflight still precede durable changes.
 
 Maintenance runs within the same serial BUSY admission as the following write.
 It verifies all canonical sources, strict CSN order and the exact runtime CSN
@@ -45,7 +45,7 @@ Check byte and record boundaries, v1/v2, legacy/resident/paged primary paths,
 unchanged registry/scope identities and closed bytes, repeated rotation and FD
 bounds, rejection before effects, fault injection and real SIGKILL/restart across
 canonical and volatile publication. Add a real Unix service workload crossing a
-segment boundary. Local tests do not qualify power loss, complete M16, multiseries,
+segment boundary. Local tests do not qualify power loss, complete M16, multiseries transactions,
 concurrent snapshots, load P99 or phase gates.
 
 The first implementation verifies the whole bounded canonical set at each rotation.

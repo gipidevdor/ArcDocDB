@@ -29,7 +29,7 @@ Range, aliases, and configured limits are checked before reset.
 
 The generic scanner retains signature and behavior. Key order/equivalence
 and tag semantics require the later document
-profile: this API's result attests structure, UTF-8,
+profile: this API's result attests to structure, UTF-8,
 budget, and local header preference.
 
 [Contract and method](cbor-minimo-struttura-metodo.md),

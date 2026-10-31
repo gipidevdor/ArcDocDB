@@ -6,8 +6,8 @@
 ;;; REQ: REQ-REC-001 REQ-STO-006 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (closed-recuperato closed-recuperato) null) verifica-identita-closed-riletto))
 (defun verifica-identita-closed-riletto (previous current)
-  "Pre: due prove complete sullo stesso input congelato. Post: autorità e geometria immutate.
-INVARIANT-VIOLATION per discordanza prima di qualunque visitor; nessuna prova basata su EOF o nome."
+  "Pre: two complete proofs on the same frozen input. Post: authority and geometry unchanged.
+INVARIANT-VIOLATION for mismatch before any visitor; no proof based on EOF or name."
   (unless (and (eq (closed-recuperato-control previous) (closed-recuperato-control current))
                (eq (closed-recuperato-input previous) (closed-recuperato-input current)))
     (error 'invariant-violation :reason :recovery-replay-authority))
@@ -21,8 +21,8 @@ INVARIANT-VIOLATION per discordanza prima di qualunque visitor; nessuna prova ba
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (closed-recuperato closed-recuperato) null) verifica-statistiche-closed-riletto))
 (defun verifica-statistiche-closed-riletto (previous current)
-  "Pre: prove complete sul medesimo prefisso. Post: conteggi e massimo CSN immutati prima del visitor.
-INVARIANT-VIOLATION per discordanza; il confronto dei metadati non prova uguaglianza dei body."
+  "Pre: complete proofs on the same prefix. Post: counts and maximum CSN unchanged before the visitor.
+INVARIANT-VIOLATION for mismatch; metadata comparison does not prove body equality."
   (unless (and (= (closed-recuperato-batches previous) (closed-recuperato-batches current))
                (= (closed-recuperato-records previous) (closed-recuperato-records current))
                (= (closed-recuperato-prepared previous) (closed-recuperato-prepared current))
@@ -39,9 +39,9 @@ INVARIANT-VIOLATION per discordanza; il confronto dei metadati non prova uguagli
 (declaim (ftype (function (closed-recuperato octets limiti-recovery-serie)
                          (values closed-recuperato (or null workspace-active) &optional)) rileggi-closed-per-visita))
 (defun rileggi-closed-per-visita (previous scratch limits)
-  "Pre: FD/CONTROL e namespace congelati dal proprietario, pool I/O e scratch esclusivo.
-Post: intero P riletto e riverificato dal reader canonico, workspace risolto riusabile senza una seconda raccolta.
-Tutti i budget e alias del reader prima dei dati; errori originali propagati senza callback, retry o close."
+  "Pre: FD/CONTROL and namespace frozen by the owner, I/O pool and exclusive scratch.
+Post: entire P reread and reverified by the canonical reader, resolved workspace reusable without a second collection.
+All reader budgets and aliases checked before data; original errors propagate without callback, retry, or close."
   (multiple-value-bind (current workspace)
       (leggi-closed-con-workspace
        (closed-recuperato-control previous) (closed-recuperato-input previous) (closed-recuperato-id previous)

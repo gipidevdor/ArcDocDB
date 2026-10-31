@@ -42,6 +42,6 @@ their established spelling. [Coding standard](docs/affidabilita/standard-di-codi
 
 ## Documentation site
 
-`make docs` builds and verifies the complete manual with Common Lisp Codex.
+`make docs` builds and verifies the complete manual with CommonDoc Codex.
 `make docs-serve` previews it locally. See [publishing the manual](docs/github-pages.md)
 for the GitHub Pages workflow and first-publication setup.

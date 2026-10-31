@@ -11,7 +11,7 @@
 
 What does counting common bits in two bitmaps stored in specialized byte or u64
 arrays cost? Both kernels return the same count; they neither produce a bitmap
-nor represent a database query. U64 layout prepared outside measurements,
+nor represent a database query. The u64 layout is prepared outside measurements,
 explicitly little-endian. Oracle checks each bit separately, without LOGAND/LOGCOUNT.
 
 Simple arrays, equal lengths, zero to 65,536 bytes in multiples of eight;
@@ -31,7 +31,7 @@ passes = 16 MiB / (2 × bytes per bitmap), from 128 to 65,536.
 Eight warmup passes per kernel outside measurement. No deadline used as guarantee.
 Work is finite, fixed parameters precede execution.
 
-Preparation, packing, oracles, reports excluded. Each result feeds a fixnum sink
+Preparation, packing, oracles, and reports are excluded. Each result feeds a fixnum sink
 checked against expected count × passes. Monotonic time and `get-bytes-consed`
 delta delimit controller loop only; GC before every sample, no load workers.
 Retain empty-call cost with same loop, without subtracting from samples.
@@ -39,11 +39,11 @@ Positive control allocates an array and makes it observable: a counter missing
 it fails test. Zero delta is no guarantee.
 
 > **Proposed** — Positive-control revision after first benchmark attempt, stopped
-> before samples: 64 KiB array fails sensor check. Before next run, control payload
-> fixed at 1 MiB, errors include observed delta. Kernels/matrix unchanged;
-> first failure retained.
+> before samples: 64 KiB array fails sensor check. Before next run, the control payload is
+> fixed at 1 MiB, errors include observed delta. Kernels/matrix are unchanged;
+> the first failure is retained.
 
-Disassembly of both kernels and actual loop recorded as report text.
+Disassembly of both kernels and actual loop are recorded as report text.
 Distinguish SIMD instruction for one LOGCOUNT from a loop processing multiple
 elements simultaneously. Contrib diagnostics record availability/APIs without
 inferring support for unexported operations or other-architecture performance.
@@ -60,11 +60,11 @@ sbcl --noinform --no-userinit --no-sysinit --script tools/record-command.lisp --
 Runner/sources separate from existing fingerprint/SIMD modules.
 Per-process FASLs under `out/`. Output: one outcome plist; recorder retains
 command, environment, before/after sources, stdout/stderr, including failures.
-Cited records retained in `spikes/results/`.
+Cited records are retained in `spikes/results/`.
 
 First local platform: Apple M4 ARM64, SBCL 2.6.9; actual environment in report.
 Small heap-resident arrays, uncontrolled cache/external load. No x86-64,
 beyond-RAM, I/O, or concurrency measurement. Packing excluded: u64-layout
-advantage applies only when layout already available.
+advantage applies only when the layout is already available.
 No experimental-code promotion or optimization without engine profiling,
 under INV-X1 and ADR-0012.

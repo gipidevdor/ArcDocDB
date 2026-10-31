@@ -30,28 +30,28 @@ already qualified files. No C1 change; [contract](pool-begin.md).
 
 ## Coverage, measurement, and preservation
 
-C3 gate at least 95% expressions and branches across the entire package without
+The C3 gate requires at least 95% of expressions and branches across the entire package without
 manual exclusions. Preserve native SB-COVER, HTML, and agreeing audit,
 with denominators and all missing entries; no MC/DC inference or C1 qualification.
-Verified C4 reader reused with explicit scope adaptation.
+The verified C4 reader is reused with explicit scope adaptation.
 
 Local sensor with five replicates of 4096 cycles and 128 warmup. Fixtures,
-factory, API lookup, and GC outside clock. One cycle includes bridge startup
+factory, API lookup, and GC are outside the clock. One cycle includes bridge startup
 and explicit ending, recycling and new execution acquisition needed to
 repeat the slice; four results and identities enter the oracle.
 No private reset, callback, or payload application. The C1 protocol
-is part of cost: no attribution to adapter alone or conclusion on
+is part of the cost: no attribution to the adapter alone or conclusion on
 engine throughput. Preserve completed cycles, sink, ticks, and heap;
 observed zero heap does not demonstrate universal nonallocation.
 
 Single ACTIVE campaign: one actual symbolic payload stays queued without
-pop inside clock. Final drain outside clock consumes and acknowledges it through
+pop inside the clock. The final drain outside the clock consumes and acknowledges it through
 the bridge, then ends both leases. CLOSING and busy rejections are
-covered by functional tests and not measured by sensor.
+covered by functional tests and not measured by the sensor.
 
 Positive/negative sensor self-tests: wrong returns, sink, below-resolution clock,
 deliberate allocation, CLI, partial raw data, and existing destination.
-External load uncontrolled; no threshold or tuning.
+External load is uncontrolled; no threshold or tuning.
 Campaigns on frozen copies with `record-command.lisp` and dedicated caches:
 argv, output, exit, and initial/final identities. Preserve failures
 and preliminary versions too, bytewise copies, and new exclusive manifests.

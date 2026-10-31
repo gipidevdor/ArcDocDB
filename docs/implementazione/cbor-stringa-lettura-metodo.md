@@ -15,8 +15,8 @@ are prepared by separate authors and frozen before the kernel.
 ;; => exactly MAJOR, PAYLOAD-START, NEXT
 ```
 
-Reads only the first definite-length MT2/3 string with a minimal
-header. Returns three fixnums: type and absolute payload range
+It reads only the first definite-length MT2/3 string with a minimal
+header. It returns three fixnums: type and absolute payload range
 `[PAYLOAD-START,NEXT)`, without allocating a string or copying bytes.
 `START < PAYLOAD-START <= NEXT <= END` holds; an empty payload is allowed.
 MT2 accepts arbitrary bytes; MT3 checks UTF-8 with the existing validator's
@@ -42,7 +42,7 @@ Frozen precedence:
 A malformed/nonminimal header precedes a wrong major. An incomplete
 payload precedes any invalid UTF-8 bytes already available. No
 partial result, mutation, or out-of-window access, even on error.
-Limits are checked before addition; work bounded by the nine-byte
+Limits are checked before addition; work is bounded by the nine-byte
 header and UTF-8 payload within 16MiB. MT2 does not scan
 the payload. Span check, minimal reader, and UTF-8 validator are reused.
 
@@ -50,8 +50,8 @@ the payload. Span check, minimal reader, and UTF-8 validator are reused.
 
 ## Preregistered verification
 
-Independent corpus: literal vectors and arithmetically derived headers,
-never the product writer as primary oracle. Includes widths,
+The independent corpus uses literal vectors and arithmetically derived headers,
+never the product writer as its primary oracle. It includes widths,
 lengths 23/24,255/256,65535/65536, byte limits, valid and invalid UTF-8,
 nonzero offsets, invalid tails, precedence, arity, and physical immutability.
 Two real workers share read-only buffers in two waves, with rendezvous
@@ -67,20 +67,20 @@ No artificial waits or calls are added to advance the clock.
 The [original Linux failure](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-16-archive-csn-plan/README.md)
 and its cause are preserved separately from CSN product checks.
 
-Two C1 readings and an inventory of all decisions precede first
-compilation. Functions within 60 lines and ten paths, active invariants,
-complete FTYPE, and safety 3. No exclusion from raw coverage of the
+Two C1 readings and an inventory of all decisions precede the first
+compilation. Functions stay within 60 lines and ten paths, with active invariants,
+complete FTYPE declarations, and safety 3. No exclusion from raw coverage of the
 new source; SB-COVER is not presented as MC/DC evidence.
 
-Separate driver with cold fixtures, at least 1024 deterministic cases, and
+A separate driver uses cold fixtures, at least 1024 deterministic cases, and
 benchmark with warmup, replicates, physical checksum, and three results. Zero
 heap is a local observed criterion, without a speed threshold. Single-replacement
 mutations: permissive major, skipped UTF-8, NEXT=END,
 ignored budget, skipped initial offset, and added arity. Baseline and
-mutants in private processes/caches; only nominal tests failed
-after successful compilation count, never warnings or tool errors.
+mutants in private processes/caches; only nominal test failures
+after successful compilation count as detections, never warnings or tool errors.
 
-Commands recorded with sources/index/HEAD stable. Originals, errors,
-tool corrections, and results remain preserved; collection with an
+Commands are recorded with sources/index/HEAD stable. Originals, errors,
+tool corrections, and results remain preserved; collection uses an
 explicit manifest, four workers, and closed-inventory checking.
 REQ-LIM-001/002, document profile, and C1/MC/DC qualification remain open.

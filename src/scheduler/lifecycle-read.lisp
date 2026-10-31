@@ -7,8 +7,8 @@
 (declaim (ftype (function (porta-worker-pool) (values pool-command pool-command &optional))
                 %pool-port-words))
 (defun %pool-port-words (port)
-  "Pre: coordinator esclusivo o worker owner. Post: parole acquire coerenti.
-INVARIANT-VIOLATION :POOL-PORT-STATE se comando duplicato, regressivo o salto."
+  "Pre: exclusive coordinator or owning worker. Post: consistent words read with acquire semantics.
+INVARIANT-VIOLATION :POOL-PORT-STATE for a duplicate, regressive, or skipped command."
   (let ((request (porta-worker-pool-request port)) (ack (porta-worker-pool-ack port)))
     (sb-thread:barrier (:read))
     (unless (or (= request ack)
@@ -20,8 +20,8 @@ INVARIANT-VIOLATION :POOL-PORT-STATE se comando duplicato, regressivo o salto."
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (registro-pool) null) %check-registro-pool))
 (defun %check-registro-pool (registry)
-  "Pre: accesso non rientrante. Post: owner e target/controller coerenti.
-INVALID-ARGUMENT owner; INVARIANT-VIOLATION target o capacità privata."
+  "Pre: nonreentrant access. Post: owner and consistent target/controller.
+INVALID-ARGUMENT for owner; INVARIANT-VIOLATION for target or private capacity."
   (unless (eq (registro-pool-owner registry) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :pool-owner))
   (%check-pool (registro-pool-controller registry))
@@ -36,9 +36,9 @@ INVALID-ARGUMENT owner; INVARIANT-VIOLATION target o capacità privata."
 (declaim (ftype (function (registro-pool) (values pool-workers pool-workers boolean &optional))
                 leggi-registro-pool))
 (defun leggi-registro-pool (registry)
-  "Pre: owner esclusivo; porte private non modificate esternamente.
-Post: actual da ACK, target, pending da REQUEST/=ACK. Snapshot progressivo bounded;
-senza pending tutte le conferme corrispondono al target. Propaga verificatori typed."
+  "Pre: exclusive owner; private ports not modified externally.
+Post: actual from ACK, target, pending from REQUEST/=ACK. Bounded progressive snapshot;
+without pending, all acknowledgments match target. Propagates typed verifiers."
   (%check-registro-pool registry)
   (let ((actual 0) (pending nil) (ports (registro-pool-ports registry)))
     (declare (type (integer 0 131072) actual))

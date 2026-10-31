@@ -40,7 +40,7 @@ kernels, inputs, and matrix were not changed to select a measurement.
 
 Five replicas per size/dataset/kernel; alternating order. Every
 sample traverses 16 logical MiB of the two inputs, with fixed pass counts from
-128 to 65.536. Packing, oracles, warmup, GC, and reports are outside the loop.
+128 to 65,536. Packing, oracles, warmup, GC, and reports are outside the loop.
 Each count feeds a checked sink. The empty call in the same
 loop measures 262 ticks for 65,536 passes, about 4.00 ns/pass; its
 cost is retained and not subtracted from kernel timings.
@@ -81,7 +81,7 @@ Type, range, and overflow checks remain present; on the kernels' normal
 path u64 values stay in registers without visible bignum boxing.
 
 [Contrib diagnostics](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-bitmap/simd-availability.lisp)
-confirm NEON available in installed SBCL; inventory finds
+confirm that NEON is available in the installed SBCL; inventory finds
 no public popcount API in `SB-SIMD-NEON`. This does not prevent the compiler
 from internally using `CNT` for scalar `LOGCOUNT`.
 

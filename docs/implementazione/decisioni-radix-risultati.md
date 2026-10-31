@@ -18,7 +18,7 @@ sorting with SBCL and safety 3, without I/O or prepared-record application.
 ## Results and threshold selection
 
 The table reports the **worst radix/merge ratio across patterns** for
-each cardinality. A value below one indicates less radix time.
+each cardinality. A value below one indicates a shorter radix time.
 Complete data retain three replicates, ticks, iterations, allocations,
 calibrations, oracles, and quality status of each sample.
 
@@ -80,9 +80,9 @@ before concurrent queries and remains serial.
 [Campaign catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-radix/catalogo.lisp),
 [second-matrix selection](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-radix/selezione-100ms.lisp),
 [decision inventory](decisioni-radix-decisioni.md), and
-[C1 readings](decisioni-radix-revisione.md). Data also retain failed
-drivers, self-tests rejecting wrong algorithm, existing destination,
-partial report, and zero time. Warning-free compilation, mutants, and
+[C1 readings](decisioni-radix-revisione.md). The data also retain failed
+drivers and self-tests rejecting a wrong algorithm, an existing destination,
+a partial report, and zero time. Warning-free compilation, mutants, and
 raw coverage remain evidence distinct from performance measurements.
 
 The suite contains 43 dedicated DECISION tests and 62 with the scanner.

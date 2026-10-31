@@ -92,7 +92,7 @@ unchanged during the process. CI repeats verification on Linux and macOS.
 Every subsequent correction belongs to a new commit and preserves the
 previous attempt.
 
-Cited evidence is preserved in the catalog with original registers;
+Cited evidence is preserved in the catalog with original records;
 it is read as data, with `*read-eval* NIL`, without loading reports or FASLs.
 Copying and preservation precede worktree cleanup.
 

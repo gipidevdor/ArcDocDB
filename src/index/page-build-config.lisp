@@ -6,18 +6,18 @@
 ;;; REQ: REQ-IDX-009 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (index index) null) preflight-pagine-vuoto))
 (defun preflight-pagine-vuoto (bytes size)
-  "Pre: byte positivi e taglia del costruttore. Post: nessuna risorsa esterna prenotata.
-Il sink generico deve rispettare il proprio budget; il costruttore verifica il numero pagine."
+  "Pre: positive bytes and builder size. Post: no external resource reserved.
+Generic sink must honor its own budget; builder checks page count."
   (unless (and (plusp bytes) (plusp size)) (error 'invariant-violation :reason :index-build-reservation)) nil)
 
 ;;; REQ: REQ-IDX-009 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (identita-pagina t t u32 u32 &key (:max-pages t) (:preflight t)) costruttore-pagine)
                 crea-costruttore-pagine))
 (defun crea-costruttore-pagine (start size sink seed-high seed-low &key (max-pages 65536) (preflight #'preflight-pagine-vuoto))
-  "Pre: START indica primo offset libero in un'immagine privata, prefisso gia' posseduto dal caller.
-Post: scratch fissi e nessun I/O; sink(buffer, offset) restituisce fine esatta senza trattenere buffer.
-Preflight(bytes, size) restituisce NIL prima di ogni lotto; INVALID-ARGUMENT per configurazione.
-Non definisce un header container, non chiude file e non pubblica una root durevole."
+  "Pre: START identifies first free offset in a private image, prefix already owned by caller.
+Post: fixed scratch and no I/O; sink(buffer, offset) returns exact end without retaining buffer.
+Preflight(bytes, size) returns NIL before every batch; INVALID-ARGUMENT for configuration.
+Does not define a container header, close files, or publish a durable root."
   (unless (and (member size '(4096 16384 65536)) (functionp sink) (functionp preflight)
                (typep max-pages '(integer 1 65536)))
     (error 'invalid-argument :reason :index-build-configuration))
@@ -36,9 +36,9 @@ Non definisce un header container, non chiude file e non pubblica una root durev
 (declaim (ftype (function (arcdocdb.io:file-io identita-pagina t u32 u32 &key (:max-pages t)) costruttore-pagine)
                 crea-costruttore-pagine-file))
 (defun crea-costruttore-pagine-file (file start size seed-high seed-low &key (max-pages 65536))
-  "Pre: file append prestato, posizione allineata gia' oltre il prefisso privato caller.
-Post: sink collegato all'append esatto e preflight dell'intero lotto nel modulo I/O.
-Nessun flush, chiusura, rinomina o decisione di commit; posizione incoerente rifiutata."
+  "Pre: borrowed append file, aligned position already beyond caller's private prefix.
+Post: sink connected to exact append and whole-batch preflight in I/O module.
+No flush, close, rename, or commit decision; inconsistent position rejected."
   (unless (= (arcdocdb.io:posizione-scritta file) (identita-pagina-page start))
     (error 'invalid-argument :reason :index-build-file-position))
   (let ((builder (crea-costruttore-pagine start size
@@ -54,7 +54,7 @@ Nessun flush, chiusura, rinomina o decisione di commit; posizione incoerente rif
 ;;; REQ: REQ-IDX-009 REQ-AFF-008
 (declaim (ftype (function (costruttore-pagine) null) esigi-costruttore-libero))
 (defun esigi-costruttore-libero (builder)
-  "Pre: input canonico. Post: owner, OPEN e non rientro senza effetti; errori tipizzati."
+  "Pre: canonical input. Post: owner, OPEN, and non-reentrancy without effects; typed errors."
   (unless (eq (costruttore-pagine-owner builder) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :index-build-owner))
   (case (costruttore-pagine-state builder)

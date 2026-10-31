@@ -5,19 +5,19 @@
 Initial base `2a0011f9d2bef104b22f7ad1eb86d7e5d60d5e11`.
 Final qualification incorporates `main` through
 `8101eb856cbe9d7540682babb53afb00fde30f70`, including hash foundation:
-two preliminary tests on first scope remain separate from integrated verification.
-Method fixed before new-connection campaigns and measurements.
+two preliminary tests on the first scope remain separate from integrated verification.
+The method was fixed before new-connection campaigns and measurements.
 Scope: four late sources in `src/series/worker-*.lisp`, ASDF, Serie-suite
 tests, and C4 tool `tools/worker-series-bench.lisp`.
-Contract and limits in [module document](worker-serie.md).
+The contract and limits are in the [module document](worker-serie.md).
 
 Planned verification, with preallocated inputs and objects:
 
 - Complete slice, FIFO order and payload identity, sentinel buffers,
   monotonic tokens/leases over successive waves, and ack before end.
 - Busy writer before acquiring Serie; busy second lease and exhausted
-  Serie generation, distinct in three begin values. No pop, and schedule
-  obligation preserved until recirculation and new slice.
+  Serie generation, distinct in three begin values. No pop, and the scheduling
+  obligation is preserved until recirculation and new slice.
 - Busy end after Serie release: CLOSING/FINISHING, only end retryable,
   controller immediately acquirable, and no second release on retry.
 - Invalid binding, phase, owner, token, and generations before mutations;
@@ -39,7 +39,7 @@ Planned verification, with preallocated inputs and objects:
 - Two C1 readings with twelve points and inventory of all decisions; raw
   sb-cover and HTML for entire Series scope, late files included, full
   denominator and gaps preserved. No approved exclusion.
-- Local allocation: warmup128, five samples of4096 complete cycles on
+- Local allocation: warmup 128, five samples of 4096 complete cycles on
   preallocated connection/worker/controller/target; GC and printing outside measurement.
   Every cycle enqueues a payload, adopts obligation, begins, reads lease, pops, acks,
   ends idle, and checks identities/outcomes/generations. Independent fixed sink
@@ -54,9 +54,9 @@ Planned verification, with preallocated inputs and objects:
   warnings. Build and targeted tests before full check.
   `make check` once on final frozen code, unless changes or failure.
 
-Every campaign recorded with `tools/record-command.lisp`, preserving
+Every campaign is recorded with `tools/record-command.lisp`, preserving
 stdout/stderr, argv, environment, original reports, initial/final snapshot, and
 failed attempts. Campaigns use frozen copies and separate caches. Large
-data losslessly compressed with conservative catalog.
-No throughput, P99, fairness, scalability, or universal zero heap allocation inferred
-from these samples. No Phase0 gate closed by this foundation.
+data are losslessly compressed with a conservative catalog.
+No throughput, P99, fairness, scalability, or universal zero heap allocation is inferred
+from these samples. No Phase 0 gate is closed by this foundation.

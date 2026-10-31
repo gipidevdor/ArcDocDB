@@ -29,8 +29,8 @@
    an `OUTCOME T` record to the segment (flushed with the next batch), and replies.
 5. When all participants have made the `OUTCOME` durable, the coordinator removes `T`
    from "being applied" and marks it **forgettable**.
-6. If a participant replies `abort` or fails to reply before the timeout: an `ABORT` decision,
-   same path; intents are removed and the records remain dead in the segment.
+6. If a participant replies `abort` or fails to reply before the timeout, an `ABORT` decision
+   follows the same path; intents are removed and the records remain dead in the segment.
 
 <a id="stato-prepared"></a>
 
@@ -69,7 +69,7 @@ checkpoints.
 - A Serie never stops for a multiseries transaction: it costs two records in the batch (PREPARE and
   OUTCOME) and one intent entry.
 - Commit latency: PREPARE flush + decision flush.
-- Dead records in segments for aborted transactions (reclaimed by CLEAN).
+- Aborted transactions leave dead records in segments (reclaimed by CLEAN).
 
 <a id="alternative-considerate"></a>
 

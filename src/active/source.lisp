@@ -7,8 +7,8 @@
 (declaim (ftype (function (controllore-serie segmento-attivo-preparato) null)
                 verifica-registro-preparato))
 (defun verifica-registro-preparato (controller prepared)
-  "Pre: capacità complete, legami immutabili. Post: writer e snapshot usano lo stesso registro CSN.
-INVALID-ARGUMENT per altro Archivio; nessuna lettura di frontiere, mutex o modifica del registro."
+  "Pre: complete capabilities, immutable bindings. Post: writer and snapshot use the same CSN registry.
+INVALID-ARGUMENT for another Archivio; no frontier reads, mutex, or registry modification."
   (let* ((view (arcdocdb.get::segmento-get-owner (segmento-attivo-preparato-segment prepared)))
          (scope (arcdocdb.get::vista-get-serie-scope view))
          (snapshots (arcdocdb.get::ambito-get-snapshots scope)))
@@ -25,10 +25,10 @@ INVALID-ARGUMENT per altro Archivio; nessuna lettura di frontiere, mutex o modif
 (defun crea-sorgente-get-preparata (controller lease prepared
                                   &key (max-pages 65536) (max-puts 1048576) (batch-records 65536)
                                        (batch-bytes 67108864) (budget-payload 67108864))
-  "Pre: lease, controller unico sul log preparato, stesso registro CSN, root nil e next-offset 64.
-Post: sorgente ACTIVE con prova obbligatoria sulle capacità effettive, senza syscall/pubblicazione.
-Errori di factory/lease/salute propagati; INVALID-ARGUMENT per altro log o file già avanzato.
-Il controller ha già ottenuto la decisione del catalogo prima di ammettere traffico."
+  "Pre: lease, unique controller on the prepared log, same CSN registry, nil root, and next-offset 64.
+Post: ACTIVE source with mandatory proof of actual capabilities, without syscall/publication.
+Factory/lease/health errors propagated; INVALID-ARGUMENT for another log or file already advanced.
+The controller has already obtained the catalog decision before admitting traffic."
   (arcdocdb.series::%check-owner controller lease)
   (arcdocdb.series::%require-healthy controller)
   (unless (eq (arcdocdb.series::controllore-serie-log controller)

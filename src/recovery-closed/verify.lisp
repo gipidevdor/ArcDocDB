@@ -7,9 +7,9 @@
 (declaim (ftype (function (octets index u64 (member 1 2) index index u32 index)
                          (values index index &optional)) verifica-lotti-closed))
 (defun verifica-lotti-closed (buffer prefix id version max-batches max-records batch-records batch-bytes)
-  "Pre: header e P verificati, buffer esclusivo. Post: tutti i lotti integri fino a P, conteggi esatti.
-Nessuno scanner a EOF: un lotto rotto prima di P è errore, mai TAIL. ID completo u64 senza troncamento.
-Condizioni originali propagate; ciclo limitato a MAX-BATCHES e conteggio record prima del workspace."
+  "Pre: header and P verified, exclusive buffer. Post: all batches intact through P, exact counts.
+No EOF scanner: a broken batch before P is an error, never TAIL. Complete u64 ID without truncation.
+Original conditions propagate; loop bounded to MAX-BATCHES and record count before workspace."
   (check-range buffer +segment-header-bytes+ prefix)
   (unless (plusp max-batches) (error 'invalid-argument :reason :closed-recovery-batches))
   (let ((pos +segment-header-bytes+) (batches 0) (records 0))
@@ -30,9 +30,9 @@ Condizioni originali propagate; ciclo limitato a MAX-BATCHES e conteggio record 
 (declaim (ftype (function (control-recuperato octets index u64 (member 1 2) index index) index)
                 verifica-compattato-closed))
 (defun verifica-compattato-closed (control buffer prefix id version bytes records)
-  "Pre: header compaction dal medesimo FD, prefisso stabile. Post: sole cornici ordinarie PUT/TOMBSTONE fino a P.
-Riusa il codec integrale, senza OUTCOME/prepared o interpretazione della coda; restituisce record count.
-Errori originali propagati; INVARIANT-VIOLATION per fine/versione/conteggi discordanti."
+  "Pre: compaction header from the same FD, stable prefix. Post: ordinary PUT/TOMBSTONE frames only, through P.
+Reuses the complete codec, without OUTCOME/prepared or tail interpretation; returns record count.
+Original errors propagate; INVARIANT-VIOLATION for mismatching end/version/counts."
   (check-range buffer 0 prefix)
   (multiple-value-bind (next actual-version count puts tombstones)
       (verifica-segmento-compattato buffer prefix

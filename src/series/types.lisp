@@ -10,8 +10,8 @@
 (defstruct (controllore-serie
              (:constructor %make-controllore-serie (registry log slots root planned-root next-offset))
              (:copier nil))
-  "Pre: registro, log e slots esclusivi della Serie. Post: HEALTHY e ring vuoto.
-Le radici sono riferimenti immutabili; nessun contesto allocato per lotto."
+  "Pre: exclusive registry, log, and slots for the Serie. Post: HEALTHY and empty ring.
+Roots are immutable references; no context allocated per batch."
   (registry nil :type registro-csn :read-only t)
   (log nil :type log-io :read-only t)
   (slots #() :type simple-vector :read-only t)
@@ -26,8 +26,8 @@ Le radici sono riferimenti immutabili; nessun contesto allocato per lotto."
 
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-MVC-008 REQ-AFF-008
 (defstruct (commit-serie (:constructor %make-commit-serie (controller position)) (:copier nil))
-  "Pre: slot costruito una volta. Post: capacità legata al controller e posizione.
-Il messaggio conserva l'oggetto e generation catturata, mai riletta dopo il riuso."
+  "Pre: slot built once. Post: capability bound to controller and position.
+The message retains the object and captured generation, never reread after reuse."
   (controller nil :type controllore-serie :read-only t)
   (position 0 :type index :read-only t)
   (generation 0 :type index) (lotto nil :type (or null lotto))
@@ -41,11 +41,11 @@ Il messaggio conserva l'oggetto e generation catturata, mai riletta dopo il rius
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-008
 (declaim (ftype (function (log-io) (or null controllore-serie)) trova-controllore-serie))
 (defun trova-controllore-serie (log)
-  "Pre: oggetto log canonico conservato dal caller. Post: NIL o stesso controller dopo acquire.
-Un solo caricamento; recupera il binding anche se il ritorno della factory è interrotto.
-INVARIANT-VIOLATION :SERIE-LOG-BINDING per tipo estraneo o legame inverso incoerente.
-Il coordinatore arresta bootstrap/adozione senza ammissione; un riferimento estraneo non viene mutato.
-Nessuna verifica di salute, ring o lease; nessuna mutazione, I/O o assegnazione CSN."
+  "Pre: canonical log object retained by the caller. Post: NIL or the same controller after acquire.
+One load only; retrieves the binding even if the factory return is interrupted.
+INVARIANT-VIOLATION :SERIE-LOG-BINDING for an unrelated type or inconsistent reverse binding.
+The coordinator stops bootstrap/adoption without admission; an unrelated reference is not mutated.
+No health, ring, or lease check; no mutation, I/O, or CSN assignment."
   (let ((controller (arcdocdb.wal::log-io-controller log)))
     (sb-thread:barrier (:read))
     (unless (typep controller '(or null controllore-serie))
@@ -63,13 +63,13 @@ Nessuna verifica di salute, ring o lease; nessuna mutazione, I/O o assegnazione 
 (declaim (ftype (function (registro-csn log-io &key (:capacity t) (:root t) (:next-offset t))
                          controllore-serie) crea-controllore-serie))
 (defun crea-controllore-serie (registry log &key (capacity 64) (root nil) (next-offset 0))
-  "Pre: log segmento canonico, radice immutabile e offset iniziale noto; ammissione chiusa.
-Post: un solo controller legato al log, ring preallocato; NIL radice valida.
-INVALID-ARGUMENT per budget/offset o :SERIE-LOG-BOUND al doppio avvio; IO-FAULT per log guasto.
-Tutti i preflight precedono il CAS: errore prima del CAS non pubblica il candidato.
-Dopo il CAS riuscito solo ritorno; TROVA-CONTROLLORE-SERIE recupera il binding senza reset.
-Nessun I/O, assegnazione CSN o lease mutata; il binding non ammette traffico.
-Esclusione fisica e canonicalità del log restano al caller; la rotazione crea un nuovo log."
+  "Pre: canonical segment log, immutable root, and known initial offset; admission closed.
+Post: exactly one controller bound to the log, preallocated ring; NIL is a valid root.
+INVALID-ARGUMENT for budget/offset or :SERIE-LOG-BOUND on a second startup; IO-FAULT for a faulted log.
+All preflights precede the CAS: an error before the CAS does not publish the candidate.
+After successful CAS, only return; TROVA-CONTROLLORE-SERIE retrieves the binding without reset.
+No I/O, CSN assignment, or lease mutation; the binding does not admit traffic.
+Physical exclusion and log canonicity remain the caller's responsibility; rotation creates a new log."
   (unless (and (typep capacity 'index) (<= 1 capacity +max-serie-commits+)
                (typep next-offset 'index))
     (error 'invalid-argument :reason :serie-budget))

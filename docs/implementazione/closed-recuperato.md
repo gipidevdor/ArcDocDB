@@ -6,7 +6,7 @@
 [recovered CONTROL](control-recuperato.md), under
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio)
 and [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md#3-segmenti-autosufficienti-inv-s7).
-Does not change formats, CLEAN/MERGE policy, or canonical publisher.
+It does not change formats, CLEAN/MERGE policy, or canonical publisher.
 
 ## API
 
@@ -20,18 +20,18 @@ Does not change formats, CLEAN/MERGE policy, or canonical publisher.
 | `verifica-closed-completi(control, vector, :max-segmenti)` | all and only old CLOSED, once per ID, same CONTROL, P, open files |
 | `pubblica-control-con-closed(prepared, active, vector, :max-segmenti)` | checks set before claim, delegates to `pubblica-control-da-active` |
 
-Result retains CONTROL, read-only capability, and scalars without scratch,
+The result retains CONTROL, read-only capability, and scalars without scratch,
 workspace, arrays, or numeric FD exported. Format IDs are full u64,
-including zero: reader neither builds GET capability nor applies current
-primary-index limits. Builds no GET maps or indexes.
+including zero: the reader neither builds a GET capability nor applies current
+primary-index limits. It builds no GET maps or indexes.
 
 <a id="autorità-lettura-e-frontiera"></a>
 
 ## Authority, reading, and frontier
 
-Controller guarantees exclusive Serie recovery and catalog
+The controller guarantees exclusive Serie recovery and catalog
 association of CONTROL, input, and file names. Files, FDs, and namespace remain
-authoritative, frozen, and open until publication; scratch exclusive
+authoritative, frozen, and open until publication; scratch remains exclusive
 throughout reading. Read-only does not prevent external mutation. CONTROL
 and segment backends must match, including `nil` for native path.
 
@@ -44,22 +44,22 @@ and segment backends must match, including `nil` for native path.
 4. Verify complete in-memory prefix, then apply local semantics.
    Deliver result only while CONTROL and input still open.
 
-P is not physical EOF measurement. Reader does not use EOF TAIL scanner,
-read/interpret bytes beyond P, or truncate files. Broken batch before
-P is error, not ignorable tail. File shorter than P causes
-original I/O error. Manifest does not replace headers, CRCs, or data.
+P is not a measurement of physical EOF. The reader does not use the EOF TAIL scanner,
+read/interpret bytes beyond P, or truncate files. A broken batch before
+P is an error, not an ignorable tail. A file shorter than P causes
+the original I/O error. The manifest does not replace headers, CRCs, or data.
 FD numbers or inodes are not compared: name authority and stability
-remain controller obligations; header checks logical identity on same FD.
+remain controller obligations; the header checks logical identity on the same FD.
 
 <a id="origine-e-prepared"></a>
 
 ## Origin and prepared records
 
-Writer origin: complete batches verified with canonical verifier:
-frames, CRCs, SEAL, u64 ID, frontiers. P must match complete
-batch end. Only after all CRCs, ACTIVE semantic traversal reused
-on private workspace: prepared TXID in one batch, later OUTCOMEs,
-identical duplicates allowed, conflicting CSNs rejected. Second
+Writer origin: complete batches are verified with the canonical verifier:
+frames, CRCs, SEAL, u64 ID, frontiers. P must match a complete
+batch end. Only after all CRCs are verified is the ACTIVE semantic traversal reused
+on a private workspace: prepared TXID in one batch, later OUTCOMEs,
+identical duplicates allowed, conflicting CSNs rejected. A second
 pass rechecks headers without recalculating document CRCs.
 
 | Local OUTCOME | EDIT outcome for TXID | Prepared resolution |
@@ -70,17 +70,17 @@ pass rechecks headers without recalculating document CRCs.
 | absent | absent | abort in self-contained CLOSED |
 | present | present, different CSN | corruption |
 
-No `multiserie.log` access. Present zero distinct from absence;
-no high-bit truncation. Each prepared TXID classified once:
+There is no `multiserie.log` access. A present zero is distinct from absence;
+no high-bit truncation. Each prepared TXID is classified once:
 `prepared = locali + solo-EDIT + abort`. OUTCOMEs or EDIT outcomes without prepared
 records in prefix create no versions or new commits. All OUTCOMEs, including
-orphans, compared against any same-name EDIT: conflicting proofs
+orphans, are compared against any same-name EDIT: conflicting proofs
 prevent result and maximum CSN. Manifest metadata
 remains intact and is not discarded.
 
-Compaction origin: existing full verifier reused: ordinary
-PUT/TOMBSTONE only through P, no prepared, OUTCOME, or SEAL. Header
-reverified in memory by codec, without second file read.
+Compaction origin: the existing full verifier is reused: ordinary
+PUT/TOMBSTONE only through P, no prepared, OUTCOME, or SEAL. The header
+is reverified in memory by the codec, without a second file read.
 Statistics have zero batches/prepared/outcomes and PUT+TOMBSTONE count. Closing
 metadata without prepared records does not authorize stamp modification.
 
@@ -88,23 +88,23 @@ metadata without prepared records does not authorize stamp modification.
 
 ## Complete set and publication
 
-Set vector must remain complete and stable during call.
-Budget precedes `seen` table sized by result count.
-Every result must come from **same recovered CONTROL object**,
+The set vector must remain complete and stable during the call.
+The budget is checked before allocating the `seen` table, which is sized by result count.
+Every result must come from **the same recovered CONTROL object**,
 name CLOSED with identical P, have open input, and be unique by ID.
 Membership, uniqueness, and cardinality equal to manifest prove coverage
-of old CLOSED entries. Vector may be empty only if no CLOSED entries exist.
+of old CLOSED entries. The vector may be empty only if no CLOSED entries exist.
 
-Publication entry performs check before any claim and
-delegates to ACTIVE publisher, which checks old ACTIVE closing,
-conservative transition, and new ACTIVE. Atomic point remains CONTROL
-rename with acknowledgment after parent fsync and same terminal states.
-No new token, second rename, or segment reread.
+The publication entry performs the check before any claim and
+delegates to the ACTIVE publisher, which checks old ACTIVE closing,
+conservative transition, and new ACTIVE. The atomic point remains the CONTROL
+rename, with acknowledgment after parent fsync and the same terminal states.
+There is no new token, second rename, or segment reread.
 
-Does not reconcile physical names, remove files, or verify
-directory inventory. Authorizes neither forgetting global decisions,
-index/CSN rebuild, nor reopening traffic: Recovery Manager gate
-remains. Previous publication APIs retain contracts.
+This module does not reconcile physical names, remove files, or verify
+directory inventory. It authorizes neither forgetting global decisions,
+index/CSN rebuild, nor reopening traffic: the Recovery Manager gate
+remains. Previous publication APIs retain their contracts.
 
 <a id="budget-e-costi"></a>
 
@@ -121,22 +121,22 @@ remains. Previous publication APIs retain contracts.
 | `max-esiti-chiusura` | 65,536 unique outcomes already folded into manifest |
 | set `max-segmenti` | 65,536 CLOSED, excluding ACTIVE |
 
-Task budgets, not new database limits. Exhaustion does not
-mean absence or abort. Zero records/prepared/outcomes/closing outcomes allowed
-when prefix contains none; chunk, batches, and records per batch are
-positive even for empty input. `max-bytes` between header and format maximum,
-checked before reading for both origins. OUTCOME budget counts physical duplicates; EDIT
-outcomes already canonical from CONTROL replay.
+These are task budgets, not new database limits. Exhaustion does not
+mean absence or abort. Zero records/prepared/outcomes/closing outcomes are allowed
+when the prefix contains none; chunk, batches, and records per batch are
+positive even for empty input. `max-bytes` is between the header size and the format maximum,
+and is checked before reading for both origins. OUTCOME budget counts physical duplicates; EDIT
+outcomes are already canonical from CONTROL replay.
 
 I/O capability allows `max(64, min(P-64, chunk))` bytes per transfer.
-Header and `ceiling((P-64)/chunk)` exact transfers; each byte read
+There is one header transfer and `ceiling((P-64)/chunk)` exact body transfers; each byte is read
 once. Writer: full CRC verification then traversal bounded by batches+records
 and EDIT queries for distinct OUTCOMEs before prepared classification.
 EDIT fold checks u64 values and traversed cardinality. Compaction:
 full frame codec.
-Semantic workspace with canonical parser hash tables bounded by
-prepared/OUTCOME; not retained in result. Set check
-uses private table and average O(N) work. No zero-heap,
+The semantic workspace, including canonical parser hash tables, is bounded by
+prepared/OUTCOME budgets and is not retained in the result. The set check
+uses a private table and average O(N) work. No zero-heap,
 RSS, latency, or throughput measurement. No new lock or shared write between Serie.
 
 <a id="decisioni-e-qualifica"></a>
@@ -167,4 +167,4 @@ Tests of existing parsers do not automatically qualify new
 CLOSED/CONTROL binding, EDIT resolution, or set check.
 The [dedicated-verification method](closed-recuperato-verifica.md) defines
 oracles, functional matrices, native tests, coverage, and preservation of
-later campaign, separating executed outcomes and open requirements.
+the later campaign, separating executed outcomes and open requirements.

@@ -3,7 +3,7 @@
 # Multiseries table decisions
 
 COD-54 inventory to verify in two C1 readings. Cases in
-[`tests/recovery/`](../../tests/recovery/). Table alone certifies neither
+[`tests/recovery/`](../../tests/recovery/). The table alone certifies neither
 MC/DC coverage, durability, nor atomic engine application.
 [Radix inventory](decisioni-radix-decisioni.md) complements this document
 with both dispatches, histograms, scatter, and adopted-sort guards.
@@ -23,15 +23,15 @@ with both dispatches, histograms, scatter, and adopted-sort guards.
 | Ownership | source unchanged during construction; source overwritten afterward; stable queries; no internal vector exposed |
 | Internal progress | frames and counts consistent with verified prefix; sorting/ranges/capacity respected; defensive guards always active |
 
-Sort loops bounded by actual counts; queries use
+Sort loops are bounded by actual counts; queries use
 binary search on sorted data. Definitions and internal guards remain
-in raw coverage denominator. Any unreachable forms
+in raw coverage denominator. Any unreachable forms are
 justified after measurement without subtracting from published totals.
 
 The [method](decisioni-multiserie-metodo.md) distinguishes frame tests,
 semantics, and complete recovery. A semantically invalid decision within
-prefix with verified frames and SEAL cannot become absence and
-thus presumed abort. Frame damage remains subject to witness
+a prefix with verified frames and SEAL cannot become absence and
+thus a presumed abort. Frame damage remains subject to witness
 search and scanner's declared limits.
 
 

@@ -59,7 +59,7 @@ bandwidth; queue depth; compaction throughput; worker count; contention; SBCL GC
 ## Local Unix socket interface
 
 > **Decided ([ADR-0055](adr/0055-interfaccia-locale-unix-socket.md))** — The reference
-> client/server path for the first NNTP use uses a local Unix socket.
+> client/server path for the initial NNTP use case is a local Unix socket.
 > Implementation and measurements are future work; no numerical advantage is attributed to UDS.
 
 After the [correctness tests](affidabilita/piano-di-verifica.md#interfaccia-locale-unix-socket),

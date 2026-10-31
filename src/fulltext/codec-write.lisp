@@ -5,8 +5,8 @@
 (declaim (ftype (function (octets spazio-codec-full-text r:indice-posizionale) null)
                 scrivi-occorrenze-run scrivi-lunghezze-run))
 (defun scrivi-occorrenze-run (buffer space run)
-  "Pre: destinazione zero e piano verificato; costo interamente riservato.
-Post: DICT/TERMS/POSTINGS/POSITIONS contigue, tutti i conteggi corrispondono al piano."
+  "Pre: zeroed destination and verified plan; cost fully reserved.
+Post: contiguous DICT/TERMS/POSTINGS/POSITIONS, all counts match plan."
   (let ((dict 0) (term-bytes 0) (posts 0) (d-entry 0) (p-entry 0) (prior-row -1)
         (data (r::indice-posizionale-tokens run)))
     (dotimes (i (r::indice-posizionale-count run))
@@ -27,7 +27,7 @@ Post: DICT/TERMS/POSTINGS/POSITIONS contigue, tutti i conteggi corrispondono al 
       (error 'invariant-violation :reason :fulltext-write-counts)))
   nil)
 (defun scrivi-lunghezze-run (buffer space run)
-  "Pre: LENGTHS del run ordinate e verificate. Post: entry wire da 16 byte, riservati zero."
+  "Pre: ordered verified run LENGTHS. Post: 16-byte wire entries, zero reserved fields."
   (let ((data (r::indice-posizionale-lengths run)) (base (aref (spazio-codec-full-text-starts space) 5)))
     (unless (<= (+ base (aref (spazio-codec-full-text-lengths space) 5)) (length buffer))
       (error 'invariant-violation :reason :fulltext-write-length-range))
@@ -45,11 +45,11 @@ Post: DICT/TERMS/POSTINGS/POSITIONS contigue, tutti i conteggi corrispondono al 
 (declaim (ftype (function (t t t t t t &key (:max-bytes t) (:max-work t)) index) scrivi-indice-full-text))
 (defun scrivi-indice-full-text (run descriptor space buffer start end
                               &key (max-bytes f::+default-file-budget+) (max-work 268435456))
-  "Pre: run SEALED e descrittore autorevole, destinazione privata, scratch esclusivo.
-Post: NEXT del file completo v2/type 5; byte prima/dopo il footprint invariati.
-Preflight di contratto/capacita/alias/lavoro prima di scrivere; rifiuti senza modifiche.
-Preparazione in memoria, nessun I/O o punto di atomicita durevole. Nessun rollback su
-INVARIANT-VIOLATION interna; il proprietario scarta il buffer e applica fail-stop."
+  "Pre: SEALED run and authoritative descriptor, private destination, exclusive scratch.
+Post: NEXT of complete v2/type 5 file; bytes before/after footprint unchanged.
+Contract/capacity/alias/work preflight before writing; rejections without modifications.
+In-memory preparation, no I/O or durable atomicity point. No rollback for
+internal INVARIANT-VIOLATION; owner discards buffer and applies fail-stop."
   (let ((size (dimensione-indice-full-text run descriptor space :max-bytes max-bytes :max-work max-work)))
     (controlla-buffer-codec buffer start end space descriptor)
     (when (eq buffer (r::indice-posizionale-bytes run))

@@ -12,12 +12,12 @@
                                       &key (max-bytes +cbor-scan-max-bytes+)
                                         (max-nodes +cbor-scan-max-bytes+)
                                         (max-depth +cbor-scan-max-depth+))
-  "Pre: simple u8 immutabile, span half-open, scratch esclusivo e budget verificati.
-Post: esattamente NODES, picco soli array/map, END per un item esatto con header minimi.
-Propaga prima la sintassi header, poi :cbor-nonminimal sul lead prima di contesto,
-nodi, depth o payload/UTF8; radice conclusa controlla :cbor-trailing senza leggere coda.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED di preflight senza mutare lo spazio; reset prima
-del singolo attraversamento, scratch riusabile dopo errore runtime. Propaga anche
-CORRUPTION-DETECTED e INVARIANT-VIOLATION; nessuna semantica tag, ordine o deduplica mappe.
-Buffer immutabile, float/u64 solo parole; lavoro bounded, nessuna attesa/I/O."
+  "Pre: immutable simple u8, half-open span, exclusive scratch, and verified budgets.
+Post: exactly NODES, array/map-only peak, END for exactly one item with minimal headers.
+Propagates header syntax first, then :cbor-nonminimal on the lead before context,
+nodes, depth, or payload/UTF8; completed root checks :cbor-trailing without reading tail.
+Preflight INVALID-ARGUMENT/RESOURCE-EXHAUSTED without workspace mutation; reset before
+the single traversal, scratch reusable after runtime error. Also propagates
+CORRUPTION-DETECTED and INVARIANT-VIOLATION; no tag semantics, map ordering, or deduplication.
+Immutable buffer, float/u64 as words only; bounded work, no waiting/I/O."
   (verifica-struttura-cbor-interna buffer start end space max-bytes max-nodes max-depth t))

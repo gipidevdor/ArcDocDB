@@ -86,7 +86,7 @@ on restart. Rotation and compaction remain decided by EDIT.
 
 - Delegating analysis to the runtime's Unicode version: makes the meaning of
   existing indexes unstable during a process upgrade.
-- Compressing immediately with varints, front-coding, and skips: increases first-decoder cases;
+- Compressing immediately with varints, front-coding, and skips: increases the number of cases the initial decoder must handle;
   an extension point is retained through a new format version.
 - Recalculating full text after acknowledgment: introduces a window of incomplete results.
 - Replacing a corrupt file in place: complicates identity, active readers, and preservation

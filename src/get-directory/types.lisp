@@ -12,9 +12,9 @@
 ;;; REQ: REQ-IDX-001 REQ-CMP-007 REQ-AFF-008
 (defstruct (directory-get-serie
              (:constructor %make-directory-get-serie (view ids maps)) (:copier nil))
-  "Pre: mappe CLOSED canoniche e ID positivi distinti ordinati, array posseduti.
-Post: directory immutabile della sola vista; nessun array o accessor pubblico.
-Il controller pubblica prima delle location e conserva ogni FD fino al reclaim EBR."
+  "Pre: canonical CLOSED maps and sorted distinct positive IDs, owned arrays.
+Post: immutable directory of this view only; no public array or accessor.
+The controller publishes before locations and retains every FD until EBR reclamation."
   (view nil :type vista-get-serie :read-only t)
   (ids #() :type directory-ids :read-only t)
   (maps #() :type simple-vector :read-only t))
@@ -23,12 +23,12 @@ Il controller pubblica prima delle location e conserva ogni FD fino al reclaim E
 (declaim (ftype (function (directory-get-serie) index) conta-segmenti-directory-get)
          (ftype (function (directory-get-serie) index) payload-directory-get-serie))
 (defun conta-segmenti-directory-get (directory)
-  "Pre: directory completata. Post: cardinalità della vista, inclusa zero.
-Non certifica il numero delle risorse vive o la pubblicazione del primary."
+  "Pre: completed directory. Post: view cardinality, including zero.
+Does not certify live-resource count or primary publication."
   (length (directory-get-serie-ids directory)))
 
 ;;; REQ: REQ-IDX-001 REQ-AFF-008
 (defun payload-directory-get-serie (directory)
-  "Pre: directory completata. Post: payload dei due array, dodici byte per segmento su SBCL64.
-Esclude header/oggetti Lisp, mappe, FD e radici trattenute; non misura RSS o picco globale."
+  "Pre: completed directory. Post: payload of both arrays, twelve bytes per segment on SBCL64.
+Excludes Lisp headers/objects, maps, FDs, and retained roots; does not measure RSS or global peak."
   (* +directory-entry-bytes+ (conta-segmenti-directory-get directory)))

@@ -91,7 +91,7 @@
   :txt "With live equal to zero and no references, the segment is deleted; with partial live content, CLEAN is performed; with live approximately equal to total, no compaction is performed."
   :inv () :adr ("ADR-0023" "ADR-0078") :ver (:test) :fi ())
  (:id "REQ-CMP-002" :src "Workflow Clean/Merge" :cls "C1" :stato :progettato
-  :txt "The compaction workflow follows the specification's thirteen steps; the new segment is not visible as definitive before its data are durable."
+  :txt "The compaction workflow follows the specification's thirteen steps; the new segment is not visible as final before its data are durable."
   :inv ("INV-C7") :adr ("ADR-0018" "ADR-0040") :ver (:test :model :fi) :fi ("FI-06"))
  (:id "REQ-CMP-003" :src "Fault injection" :cls "C1" :stato :progettato
   :txt "A source segment remains recoverable until the swap completes."
@@ -103,7 +103,7 @@
   :txt "Readers continue reading old segments during compaction; compaction does not globally block reads; after the swap, new readers use the new segment."
   :inv ("INV-C10") :adr ("ADR-0016" "ADR-0078") :ver (:test :model :bench) :fi ())
  (:id "REQ-CMP-006" :src "Parallel compaction" :cls "C3" :stato :progettato
-  :txt "Compaction can run in parallel per segment and per Serie, with limits independent of the request scheduler and priorities of user, log, necessary CLEAN, MERGE."
+  :txt "Compaction can run in parallel per segment and per Serie, with limits independent of those of the request scheduler and priorities ordered as user traffic, log work, necessary CLEAN, and MERGE."
   :inv ("INV-P4") :adr ("ADR-0011" "ADR-0023") :ver (:test :bench) :fi ())
  (:id "REQ-CMP-007" :src "Index/Snapshot/Reclaim" :cls "C1" :stato :progettato
   :txt "A segment is deleted only when no index, snapshot, active transaction, or reader references or uses it."
@@ -184,7 +184,7 @@
   :txt "Compaction relocation updates an entry only if it still points to the source location and never overwrites a newer version."
   :inv ("INV-V3") :adr ("ADR-0015") :ver (:test :model :fi) :fi ("FI-06"))
  (:id "REQ-IDX-005" :src "ADR-0043" :cls "C1" :stato :progettato
-  :txt "The primary index is a directory of fixed-capacity fragments: no maintenance copies more than one fragment, deleted slot and key space is reclaimed on split, and the same table implements the index, retained versions, and pending versions."
+  :txt "The primary index is a directory of fixed-capacity fragments: no maintenance copies more than one fragment, space for deleted slots and keys is reclaimed on split, and the same table implements the index, retained versions, and pending versions."
   :inv ("INV-I3" "INV-A8") :adr ("ADR-0043") :ver (:test :model :bench) :fi ())
  (:id "REQ-IDX-006" :src "ADR-0042" :cls "C1" :stato :progettato
   :txt "The primary index contains only live documents; rebuilding selects the committed record with the maximum CSN for each key and gives the same result for any segment read order."
@@ -196,13 +196,13 @@
   :txt "Secondary indexes follow the base-plus-immutable-deltas model and the new base is built without blocking readers."
   :inv () :adr ("ADR-0026") :ver (:test :diff) :fi ())
  (:id "REQ-SEC-003" :src "ADR-0053" :cls "C2" :stato :progettato
-  :txt "The Serie declares dedicated full-text indexes: dictionary by field and term, postings by row and frequency, positions for phrases; a deterministic, versioned analyzer shared by documents and queries, combined with structured filters."
+  :txt "The Serie declares dedicated full-text indexes with a dictionary by field and term, postings by row and frequency, and positions for phrases; documents and queries share a deterministic, versioned analyzer, and full-text search combines with structured filters."
   :inv ("INV-I4") :adr ("ADR-0053" "ADR-0026" "ADR-0029") :ver (:test :diff :bench) :fi ())
  (:id "REQ-SEC-004" :src "ADR-0053" :cls "C1" :stato :progettato
   :txt "The full-text delta is published with documents before acknowledgment and visibility advancement; every result and filter uses the same committed version visible in the snapshot, including after updates, deletes, aborts, and compaction."
   :inv ("INV-I4" "INV-M1" "INV-V5") :adr ("ADR-0053" "ADR-0038" "ADR-0041") :ver (:test :diff :model :fi) :fi ("FI-05" "FI-06" "FI-11"))
  (:id "REQ-SEC-005" :src "ADR-0053" :cls "C1" :stato :progettato
-  :txt "Full-text indexes are rebuildable derivatives: identity, CRC, profile, and coverage are verified; build and analyzer changes publish a complete generation without mixing; loss, corruption, or incomplete rebuild are explicitly reported, including after recovery and restore."
+  :txt "Full-text indexes are rebuildable derivatives: identity, CRC, profile, and coverage are verified; build and analyzer changes publish a complete generation without mixing; loss, corruption, or an incomplete rebuild is explicitly reported, including after recovery and restore."
   :inv ("INV-I4" "INV-A10" "INV-A11") :adr ("ADR-0053" "ADR-0026" "ADR-0040") :ver (:test :diff :corr :fi) :fi ("FI-09" "FI-10" "FI-13"))
  (:id "REQ-SEC-006" :src "ADR-0053" :cls "C1" :stato :progettato
   :txt "Full-text analysis, delta, and queries have finite budgets; an over-limit write is rejected before the durable decision, an over-budget query ends with an explicit error without presenting partial results as complete; no global per-document coordination."
@@ -211,7 +211,7 @@
   :txt "The unicode-word-18.0.0-v1 profile fixes Unicode 18.0.0, NFC, C/F case folding, and word breaks; explicit AST leaves, phrases with repetitions, stable ordering, and terminal state have semantics reproducible with official corpora and manual expected results."
   :inv ("INV-I4") :adr ("ADR-0053" "ADR-0054") :ver (:test :diff :rev) :fi ())
  (:id "REQ-SEC-008" :src "ADR-0054" :cls "C1" :stato :progettato
-  :txt "The full-text .idx v2 type-5 file verifies header, six sections, fixed-width arrays, CRC, ordering, and bounds; identity and configuration match the catalog, segment, and exact hint bytes, without reusing ordinals from another hint."
+  :txt "Verification of the full-text .idx v2 type-5 file covers its header, six sections, fixed-width arrays, CRC, ordering, and bounds; identity and configuration match the catalog, segment, and exact hint bytes, without reusing ordinals from another hint."
   :inv ("INV-I5" "INV-A2") :adr ("ADR-0054") :ver (:test :fuzz :corr :mut :rev) :fi ())
  (:id "REQ-SEC-009" :src "ADR-0054" :cls "C1" :stato :progettato
   :txt "A full-text generation captures new commits without gaps relative to the initial prefix and becomes READY only after rechecking inventory and frontiers; separate files per generation, retirement decided by the catalog, and reclaim after quiescence."
@@ -351,7 +351,7 @@
   :txt "Fault-injection tests are implemented for the specification's twelve scenarios and for Serie creation."
   :inv () :adr ("ADR-0035") :ver (:fi) :fi ("FI-01" "FI-02" "FI-03" "FI-04" "FI-05" "FI-06" "FI-07" "FI-08" "FI-09" "FI-10" "FI-11" "FI-12" "FI-13"))
  (:id "REQ-SIM-001" :src "SIMD and native optimizations" :cls "C3" :stato :progettato
-  :txt "The system uses compact structures and typed arrays; every measured hot path evaluates all SIMD variants safely usable on Linux x86-64 and macOS ARM64. Selection verifies CPU, operating system, and runtime; the scalar reference remains executable and forceable. Checks, valid windows, and error semantics remain unchanged; differential oracles and common benchmarks, run separately on each platform, demonstrate the adopted variant's correctness and usefulness; unsupported does not mean verification passed."
+  :txt "The system uses compact structures and typed arrays; every measured hot path evaluates all SIMD variants safely usable on Linux x86-64 and macOS ARM64. Selection verifies CPU, operating system, and runtime; the scalar reference remains executable and can be forced. Checks, valid windows, and error semantics remain unchanged; differential oracles and common benchmarks, run separately on each platform, demonstrate the adopted variant's correctness and usefulness; unsupported does not mean verification passed."
   :inv ("INV-X1") :adr ("ADR-0012" "ADR-0017" "ADR-0024" "ADR-0034") :ver (:test :rev :bench) :fi ())
  (:id "REQ-SIM-002" :src "ADR-0001" :cls "C4" :stato :progettato
   :txt "Project code is Common Lisp only."
@@ -368,7 +368,7 @@
   :txt "Every record and persistent file carries a length and CRC32C; what fails verification is treated as nonexistent (tail), regenerated (derived data), or declared corrupt (acknowledged data)."
   :inv ("INV-F1") :adr ("ADR-0013" "ADR-0014" "ADR-0039" "ADR-0052") :ver (:test :fuzz :corr :fi) :fi ("FI-01" "FI-10"))
  (:id "REQ-FOR-002" :src "ADR-0014" :cls "C1" :stato :progettato
-  :txt "Every persistent file has a magic value and format version; a format does not change, a new version with migration is created."
+  :txt "Every persistent file has a magic value and format version; a format does not change; a new version with migration is created."
   :inv ("INV-F1") :adr ("ADR-0014" "ADR-0052") :ver (:test :rev) :fi ())
  (:id "REQ-FOR-003" :src "ADR-0039" :cls "C1" :stato :progettato
   :txt "All records in all logs share the same 24-byte frame with header CRC and body CRC; the header is verified before lengths are used; body CRC is computed outside the writer."
@@ -387,7 +387,7 @@
   :inv ("INV-A5" "INV-A8" "INV-P6") :adr ("ADR-0014" "ADR-0024" "ADR-0035" "ADR-0048")
   :ver (:test :diff :fuzz :bench :mut :rev) :fi ())
  (:id "REQ-CBR-007" :src "ADR-0014" :cls "C1" :stato :implementato
-  :txt "CBOR tag composition verifies a single minimal structural content before writing the MT6 header and exact payload; budgets include the tag node without adding array/map depth, destination and scratch are private, and source is stable. Tag semantics and the document profile remain at the higher level."
+  :txt "CBOR tag composition verifies a single minimal structural item before writing the MT6 header and exact payload; budgets include the tag node without adding array/map depth, destination and scratch are private, and source is stable. Tag semantics and the document profile remain at the higher level."
   :inv ("INV-A5" "INV-A8" "INV-P6") :adr ("ADR-0014" "ADR-0024" "ADR-0035" "ADR-0048")
   :ver (:test :diff :fuzz :bench :mut :rev) :fi ())
  (:id "REQ-CBR-006" :src "ADR-0014" :cls "C1" :stato :implementato
@@ -467,18 +467,18 @@
   :txt "Recovery neither modifies nor truncates any existing segment: it closes the discovered ACTIVE at its valid length with a manifest record and opens a new one; its per-Serie atomicity point is renaming the compacted control log."
   :inv ("INV-A9" "INV-A7") :adr ("ADR-0036" "ADR-0037" "ADR-0040") :ver (:test :model :fi :soak) :fi ("FI-01" "FI-02" "FI-10"))
  (:id "REQ-AFF-018" :src "ADR-0036" :cls "C1" :stato :progettato
-  :txt "A file or directory is deleted only if it has a tmp suffix and no source of truth names it, or if a source of truth records its removal; an unknown object with a definitive name is left untouched and reported; a segment-id named by the manifest is never reused."
+  :txt "A file or directory is deleted only if it has a tmp suffix and no source of truth names it, or if a source of truth records its removal; an unknown object with a final name is left untouched and reported; a segment-id named by the manifest is never reused."
   :inv ("INV-A10") :adr ("ADR-0036" "ADR-0040") :ver (:test :fi :corr) :fi ("FI-09" "FI-13"))
  (:id "REQ-AFF-019" :src "ADR-0036" :cls "C1" :stato :progettato
   :txt "Every operation changing durable state has a single atomicity point (SEAL, EDIT, DECISION, catalog document); what precedes it is discardable and what follows is idempotent completion repeated by recovery."
   :inv ("INV-A11" "INV-A7") :adr ("ADR-0036" "ADR-0040") :ver (:model :fi :rev) :fi ("FI-06" "FI-07" "FI-08" "FI-13"))
  (:id "REQ-LIM-001" :src "ADR-0048" :cls "C1" :stato :progettato
-  :txt "The uncompressed CBOR document allows an effective 16 MiB excluding header and key; v2 uses u16 key-len, u32 record length, and five-word slots, without interpreting v1 as v2."
+  :txt "The uncompressed CBOR document limit is 16 MiB, excluding the header and key; v2 uses u16 key-len, u32 record length, and five-word slots, without interpreting v1 as v2."
   :inv ("INV-F1" "INV-A8") :adr ("ADR-0048") :ver (:test :fuzz :corr :fi) :fi ("FI-01"))
  (:id "REQ-LIM-002" :src "ADR-0048" :cls "C2" :stato :progettato
   :txt "The decoder limits CBOR containers to 100 levels with the root at level 1 and applies explicit budgets before the writer."
   :inv ("INV-A8") :adr ("ADR-0048") :ver (:test :fuzz :rev) :fi ())
  (:id "REQ-LIM-003" :src "ADR-0048" :cls "C1" :stato :progettato
-  :txt "Binary keys allow 1..65535 bytes; arenas, copies, and migrations have budgets and do not acknowledge incomplete operations; migration preserves sources and atomicity."
+  :txt "Binary keys are 1..65535 bytes long; arenas, copies, and migrations have budgets and do not acknowledge incomplete operations; migration preserves sources and atomicity."
   :inv ("INV-A8" "INV-A11") :adr ("ADR-0048") :ver (:test :fi :bench :rev) :fi ("FI-06"))
 )

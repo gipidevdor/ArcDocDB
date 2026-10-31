@@ -10,10 +10,10 @@ steps 3–4, reusing the existing planner. It changes no formats or actions.
 
 ## Contract
 
-The controller owns and freezes namespace throughout the call, in the
-Serie's I/O pool. Parent is an already open borrowed directory capability.
+The controller owns and freezes the namespace throughout the call, in the
+Serie's I/O pool. The parent is an already open borrowed directory capability.
 An independent cursor opens relative to that
-FD: `dup` is insufficient because it would share offset. Only
+FD: `dup` is insufficient because it would share the offset. Only
 the private cursor closes; parent remains open and reusable.
 
 `elenca-directory` delivers owned names and attestation `T` only
@@ -84,7 +84,7 @@ anchoring, and file immutability without depending on readdir order.
 Before executions, complete two C1 readings and commit
 sources. Compilation and tests are recorded through `record-command`;
 `make check` performs the full check. Every failure remains preserved
-with original sources and output; correction changes commit. Linux/macOS CI
+with original sources and output; a correction changes the commit. Linux/macOS CI
 and local executions remain distinct snapshots. No performance
 measurement, MC/DC certification, or Recovery Manager closure.
 

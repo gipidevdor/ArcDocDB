@@ -7,44 +7,44 @@
 ## Scope
 
 `arcdocdb.read` connects the [snapshot registry](registro-snapshot.md) to the
-[EBR domain](epoche-e-reclaim.md) for a task's duration. Implements the
+[EBR domain](epoche-e-reclaim.md) for a task's duration. It implements the
 boundary planned by [ADR-0045](../adr/0045-modello-di-esecuzione.md), without
 changing snapshot or segment protocol.
 
-Module is included in product system. It does not yet consult a primary
+The module is included in the product system. It does not yet consult a primary
 index, cache, or segment; it is not a complete GET. Byte
 verification remains `arcdocdb.record:verifica-put`'s responsibility, including prepared
 OUTCOME proof under [ADR-0047](../adr/0047-verifica-csn-dei-record-prepared.md).
 A read context protects access; it does not attest record contents.
 
 Class C1. Affected requirements: REQ-CON-004, REQ-CMP-005, REQ-CMP-007,
-REQ-MVC-004, REQ-MVC-005, REQ-AFF-004, and REQ-AFF-008. Remain `:progettato`.
+REQ-MVC-004, REQ-MVC-005, REQ-AFF-004, and REQ-AFF-008. They remain `:progettato`.
 Invariants: INV-P5, INV-A8, INV-C10, INV-R1, INV-M1, and INV-M4.
 
 <a id="proprietà-e-memoria"></a>
 
 ## Ownership and memory
 
-Controller creates **one context per Archivio worker slot**, before
-pool startup, passing canonical EBR reader and snapshot registry
+The controller creates **one context per Archivio worker slot**, before
+pool startup, passing the canonical EBR reader and snapshot registry
 of the same Archivio. Both registries have independent identities: pairing
-is controller responsibility, not inferred from read data.
-Compute and I/O worker IDs must be distinct in EBR domain.
+is the controller's responsibility, not inferred from read data.
+Compute and I/O worker IDs must be distinct in the EBR domain.
 
-Context contains immutable bindings, a temporary snapshot
+The context contains immutable bindings, a temporary snapshot
 reference, and four private u64 words: expected generation, initial CSN,
 initial time, and rechecked CSN. Words are zeroed at cleanup.
 It retains no roots, locations, descriptors, data buffers, or results.
 
-Capacity is that of domain workers, without per-document
-or per-request structures. Only shared write is worker's EBR announcement;
-snapshot checks read registry. No global queue, mutex,
-timer, callback, thread creation, or system call on successful
+Capacity is that of the domain's workers, without per-document
+or per-request structures. The only shared write is the worker's EBR announcement;
+snapshot checks read the registry. There is no global queue, mutex,
+timer, callback, thread creation, or system call on the successful
 path. Cleanup visits exactly four words; EBR entry is a
 single attempt. Registry error paths may take a mutex.
 
 Buffers and CSN-check functions are specialized and inline to
-avoid a boxed u64 return on intended path. This is an implementation
+avoid a boxed u64 return on the intended path. This is an implementation
 constraint: nonallocation and actual cost require measurements.
 
 ## API
@@ -65,14 +65,14 @@ CSN, and deadline are then checked by registry inside epoch.
 
 `now` is fresh, monotonic, and in snapshot-registry units.
 Final check rejects a value lower than initial; it cannot
-detect caller reuse of a stale timestamp. Time
-source remains injectable and caller responsibility.
+detect caller reuse of a stale timestamp. The time
+source remains injectable and is the caller's responsibility.
 
 <a id="confine-del-compito"></a>
 
 ## Task boundary
 
-Worker installs `unwind-protect` **before calling `avvia-lettura`** and
+The worker installs `unwind-protect` **before calling `avvia-lettura`** and
 always calls `abbandona-lettura` in cleanup. This also covers nonlocal
 exit after admission and before function return. Installing
 protection only after receiving `T` is insufficient.
@@ -89,13 +89,13 @@ protection only after receiving `T` is insufficient.
    response to network layer outside epoch.
 
 On cache miss in compute pool, leave section and discard
-location **before** queuing request to I/O pool. Context
-stays in worker; new task enters its own reader and restarts from
+location **before** queuing request to I/O pool. The context
+stays with the worker; the new task enters its own reader and restarts from
 lookup. I/O pool permits `pread` inside section; network,
 parking, or waiting for other tasks are not allowed.
 
-Context provides neither pool adapter nor continuation and cannot
-prevent a caller from delivering a result too early. Future
+The context provides neither a pool adapter nor continuation and cannot
+prevent a caller from delivering a result too early. The future
 executable engine boundary must follow this sequence.
 
 <a id="stati-errori-e-interruzioni"></a>
@@ -110,27 +110,27 @@ executable engine boundary must follow this sequence.
 | `:faulted` | Cleanup permitted; context remains unusable. No automatic reset. |
 
 Cleanup first sets `:faulted`, checks only its own reader's
-announcement, releases it, and zeroes data. Restores `:idle` only when everything
-has finished and context was not already faulted. Interruption midway
+announcement, releases it, and zeroes data. It restores `:idle` only when everything
+has finished and the context was not already faulted. Interruption midway
 retains `:faulted`; controller may complete cleanup only after
 task completion or worker join, never clear a live reader.
 
 `epoca-attiva-p` serves owner cleanup: observing an announcement
 does not authorize resource dereference. It also allows releasing the
-window where `entra-epoca` confirmed pin but has not yet returned
-boolean to context. Entry rejects an already-active reader before
+window where `entra-epoca` confirmed the pin but has not yet returned
+a boolean to the context. Entry rejects an already-active reader before
 installing this cleanup, avoiding release of a preexisting section.
 
 Registry conditions (`snapshot-too-old`, `resource-exhausted`,
 `invalid-argument`, `invariant-violation`) remain typed and are neither
 caught nor hidden. Nesting and use outside permitted state are
-rejected. Internal inconsistency makes context `:faulted`; future worker
-boundary must isolate affected Serie or Archivio and record
-fault. That propagation is not yet integrated.
+rejected. Internal inconsistency makes the context `:faulted`; the future worker
+boundary must isolate the affected Serie or Archivio and record
+the fault. That propagation is not yet integrated.
 
 Logical snapshot expiry does not release a live task's EBR pin.
-Final check rejects expired result; pin protects physical
-access until last use. Ending a read does not end snapshot,
+The final check rejects an expired result; the pin protects physical
+access until its last use. Ending a read does not end the snapshot,
 which may be shared by multiple Archivio requests.
 
 <a id="decisioni-da-coprire--cod-54"></a>
@@ -157,7 +157,7 @@ Dedicated registry decision tables also apply.
 The [2026-10-09 campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-read-task/README.md)
 preserves product-only compilation, static checks, traceability,
 links, catalogs, and ARM64 disassembly. No read function is
-executed by campaign; no functional or concurrent tests,
+executed by the campaign; no functional or concurrent tests,
 fault injection, benchmarks, or tool self-checks were added or run.
 
 Primary index, retained versions, cache, record reading,
@@ -168,4 +168,4 @@ of existing tests do not close these criteria.
 
 The [functional campaign dated 2026-10-11](lettura-verifica.md) adds
 EBR and read-task suites, targeted mutants, and partial coverage.
-Method distinguishes preregistration from execution results.
+The method distinguishes preregistration from execution results.

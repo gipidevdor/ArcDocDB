@@ -75,15 +75,15 @@ cost is zero.
 Compaction does not replace the table: it sends the writer a batch of **conditional
 relocations** `(chiave, location-vecchia → location-nuova)`; the writer applies each one only
 if the entry (or retained version) still points to the old location (INV-V3). Since the
-copy is identical to the original and the original remains readable while `OBSOLETE`, a reader is
-correct with either location during the window.
+copy is identical to the original and the original remains readable while `OBSOLETE`, a reader obtains
+the correct result from either location during the window.
 
 <a id="persistenza"></a>
 
 ### Persistence
 
 The index is derived data. Each closed segment has a **hint file** (`<id>.hint`) with
-the key, version, CSN, offset, length, and type of each record, written at close or when
+the key, version, CSN, offset, length, and type of each record, written when the segment closes or is
 produced by compaction. On restart, the index is rebuilt by reading the hints for
 `CLOSED` segments in lineage order and scanning the `ACTIVE` segment; segments without hints are
 scanned in full.

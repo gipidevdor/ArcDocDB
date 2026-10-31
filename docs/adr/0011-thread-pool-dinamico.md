@@ -29,7 +29,7 @@ wrong in both directions; creating threads on demand is costly and unpredictable
   → do not increase blindly; worsening P99 → stop expanding or reduce; empty queue
   and low CPU → reduce.
 - The same scheduler coordinates queries, writers, WAL, and compaction.
-- The Compaction Scheduler has limits independent of the request scheduler.
+- The Compaction Scheduler has limits independent of those of the request scheduler.
 
 <a id="conseguenze"></a>
 

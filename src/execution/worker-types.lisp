@@ -7,8 +7,8 @@
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (defstruct (contesto-worker-writer
              (:constructor %make-contesto-worker-writer (ready owner cursor)) (:copier nil))
-  "Pre: lista valida e proprietario unico non rientrante. Post: IDLE senza obblighi.
-Nessun thread creato; batch generation locale monotona e mai azzerata."
+  "Pre: valid list and single non-reentrant owner. Post: IDLE without obligations.
+No thread created; local batch generation is monotonic and never reset."
   (ready (error 'invariant-violation :reason :worker-state) :type lista-writer-pronti :read-only t)
   (owner (error 'invariant-violation :reason :worker-state) :type sb-thread:thread :read-only t)
   (cursor 0 :type index) (home 0 :type index)
@@ -20,7 +20,7 @@ Nessun thread creato; batch generation locale monotona e mai azzerata."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) null) %check-owner-worker))
 (defun %check-owner-worker (context)
-  "Pre: contesto locale. Post: thread corrente proprietario; INVALID-ARGUMENT altrimenti."
+  "Pre: local context. Post: current thread is the owner; INVALID-ARGUMENT otherwise."
   (unless (eq (contesto-worker-writer-owner context) sb-thread:*current-thread*)
     (error 'invalid-argument :reason :worker-owner))
   nil)
@@ -28,7 +28,7 @@ Nessun thread creato; batch generation locale monotona e mai azzerata."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) null) %check-libero-worker))
 (defun %check-libero-worker (context)
-  "Pre: owner verificato, IDLE. Post: riferimento, lease e debito vuoti; invarianti typed."
+  "Pre: verified owner, IDLE. Post: empty reference, lease, and debt; typed invariants."
   (unless (null (contesto-worker-writer-writer context))
     (error 'invariant-violation :reason :worker-state))
   (unless (zerop (contesto-worker-writer-lease context))
@@ -40,7 +40,7 @@ Nessun thread creato; batch generation locale monotona e mai azzerata."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) null) %check-obbligo-worker))
 (defun %check-obbligo-worker (context)
-  "Pre: owner verificato, CLAIMED/RESCHEDULE. Post: writer senza lease/debito; invarianti typed."
+  "Pre: verified owner, CLAIMED/RESCHEDULE. Post: writer without lease/debt; typed invariants."
   (unless (typep (contesto-worker-writer-writer context) 'writer-programmabile)
     (error 'invariant-violation :reason :worker-state))
   (unless (zerop (contesto-worker-writer-lease context))
@@ -52,7 +52,7 @@ Nessun thread creato; batch generation locale monotona e mai azzerata."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) null) %check-lease-worker))
 (defun %check-lease-worker (context)
-  "Pre: owner verificato. Post: writer e lease correnti; invarianti o lease invalida typed."
+  "Pre: verified owner. Post: current writer and lease; typed invariant or invalid-lease errors."
   (let ((writer (contesto-worker-writer-writer context)))
     (unless (typep writer 'writer-programmabile)
       (error 'invariant-violation :reason :worker-state))
@@ -62,7 +62,7 @@ Nessun thread creato; batch generation locale monotona e mai azzerata."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) null) %check-attivo-worker))
 (defun %check-attivo-worker (context)
-  "Pre: owner verificato, RUNNING/FINISHING. Post: lease corrente senza batch; invarianti typed."
+  "Pre: verified owner, RUNNING/FINISHING. Post: current lease without batch; typed invariants."
   (%check-lease-worker context)
   (unless (zerop (contesto-worker-writer-pending context))
     (error 'invariant-violation :reason :worker-state))
@@ -71,7 +71,7 @@ Nessun thread creato; batch generation locale monotona e mai azzerata."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) null) %check-batch-worker))
 (defun %check-batch-worker (context)
-  "Pre: owner verificato, BATCH. Post: lease corrente e batch positivo; invarianti typed."
+  "Pre: verified owner, BATCH. Post: current lease and positive batch; typed invariants."
   (%check-lease-worker context)
   (unless (plusp (contesto-worker-writer-pending context))
     (error 'invariant-violation :reason :worker-state))
@@ -86,8 +86,8 @@ Nessun thread creato; batch generation locale monotona e mai azzerata."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) null) %check-worker))
 (defun %check-worker (context)
-  "Pre: accesso esclusivo non rientrante. Post: owner, indici e stato coerenti.
-INVALID-ARGUMENT owner; indici privati sono invarianti, lease come verificatori delegati."
+  "Pre: exclusive non-reentrant access. Post: consistent owner, indices, and state.
+INVALID-ARGUMENT for owner; private indices are invariants, lease checked by delegated verifiers."
   (%check-owner-worker context)
   (unless (null (contesto-worker-writer-fault context))
     (error 'invariant-violation :reason :worker-state))
@@ -109,8 +109,8 @@ INVALID-ARGUMENT owner; indici privati sono invarianti, lease come verificatori 
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer symbol) null) %richiedi-worker))
 (defun %richiedi-worker (context state)
-  "Pre: owner esclusivo e fase richiesta. Post: forma e fase verificate.
-RESOURCE-EXHAUSTED :WORKER-STATE per operazione fuori fase; verificatori typed."
+  "Pre: exclusive owner and required phase. Post: verified shape and phase.
+RESOURCE-EXHAUSTED :WORKER-STATE for an out-of-phase operation; typed verifiers."
   (%check-worker context)
   (unless (eq (contesto-worker-writer-state context) state)
     (error 'resource-exhausted :reason :worker-state))
@@ -119,8 +119,8 @@ RESOURCE-EXHAUSTED :WORKER-STATE per operazione fuori fase; verificatori typed."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (lista-writer-pronti &key (:start t)) contesto-worker-writer) crea-contesto-worker-writer))
 (defun crea-contesto-worker-writer (ready &key (start 0))
-  "Pre: lista valida; creazione sul thread proprietario prima del percorso caldo.
-Post: IDLE preallocato con cursore START; INVALID-ARGUMENT indice, invarianti lista."
+  "Pre: valid list; creation on owner thread before the hot path.
+Post: preallocated IDLE with cursor START; INVALID-ARGUMENT for index, list invariants."
   (%partizione-verificata ready start)
   (let ((context (%make-contesto-worker-writer ready sb-thread:*current-thread* (the index start))))
     (%check-worker context)
@@ -129,16 +129,16 @@ Post: IDLE preallocato con cursore START; INVALID-ARGUMENT indice, invarianti li
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) (member :idle :claimed :running :batch :finishing :reschedule :faulted)) stato-worker-writer))
 (defun stato-worker-writer (context)
-  "Pre: owner corrente. Post: fase locale, leggibile anche per diagnosi di fault.
-INVALID-ARGUMENT owner; nessuna mutazione o verifica del writer sotto guard."
+  "Pre: current owner. Post: local phase, readable even for fault diagnosis.
+INVALID-ARGUMENT for owner; no mutation or verification of writer under guard."
   (%check-owner-worker context)
   (contesto-worker-writer-state context))
 
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) (or null writer-programmabile)) writer-worker-writer))
 (defun writer-worker-writer (context)
-  "Pre: owner corrente. Post: riferimento locale opaco per diagnosi/integrazione.
-INVALID-ARGUMENT owner; non trasferisce obblighi né consente di duplicarli."
+  "Pre: current owner. Post: opaque local reference for diagnosis/integration.
+INVALID-ARGUMENT for owner; neither transfers obligations nor permits duplicating them."
   (%check-owner-worker context)
   (contesto-worker-writer-writer context))
 
@@ -146,7 +146,7 @@ INVALID-ARGUMENT owner; non trasferisce obblighi né consente di duplicarli."
 ;;; REQ: REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (contesto-worker-writer) (or null condition)) errore-worker-writer))
 (defun errore-worker-writer (context)
-  "Pre: owner corrente. Post: condizione originale del fault locale o NIL.
-INVALID-ARGUMENT owner; non resetta il fault né trasferisce lease/obblighi."
+  "Pre: current owner. Post: original local fault condition or NIL.
+INVALID-ARGUMENT for owner; neither resets fault nor transfers leases/obligations."
   (%check-owner-worker context)
   (contesto-worker-writer-fault context))

@@ -764,8 +764,8 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 - SPK-09 (reliability check cost).
 
 - **Design analysis** ([docs/analisi-progettuale.md](docs/analisi-progettuale.md)) and ADR
-  0036–0045: ten design laws — first: **parallelism is a founding principle**,
-  with closed list of what Serie share — atomicity point table, sixteen
+  0036–0045: ten design laws — first: **parallelism is a foundational principle**,
+  with a closed list of what Serie share — atomicity point table, sixteen
   `AP-…` findings; fourteen new invariants (INV-F2, F3, V5, M4, M5, S7, C11, I3, P5, P6,
   A9…A12), 107 requirements, 27 failure modes, residual risk RES-05.
 

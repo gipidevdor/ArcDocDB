@@ -19,13 +19,13 @@
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (define-condition protocol-error (arcdocdb.conditions:arcdocdb-error) ()
-  (:documentation "Pre: violazione wire. Post: connessione da chiudere; reason senza dati peer."))
+  (:documentation "Pre: wire violation. Post: connection must close; reason without peer data."))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (t) (values keyword &optional)) protocol-error-reason))
 (defun protocol-error-reason (condition)
-  "Pre: condizione esterna. Post: reason del protocollo; INVALID-ARGUMENT per altro tipo.
-Ownership: condizione del chiamante, nessuna mutazione."
+  "Pre: external condition. Post: protocol reason; INVALID-ARGUMENT for another type.
+Ownership: caller's condition, no mutation."
   (unless (typep condition 'protocol-error)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-condition-type))
   (arcdocdb.conditions:error-reason condition))
@@ -33,8 +33,8 @@ Ownership: condizione del chiamante, nessuna mutazione."
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (defstruct (envelope (:constructor %make-envelope)
                      (:copier nil) (:predicate nil))
-  "Pre: costruzione privata dopo verifica. Post: campi fissi e viste nel buffer.
-Ownership: buffer immutabile del chiamante fino all'ultimo uso; nessuna copia implicita."
+  "Pre: private construction after verification. Post: fixed fields and buffer views.
+Ownership: caller's immutable buffer until final use; no implicit copy."
   (buffer nil :type (or null b:octets) :read-only t)
   (kind 0 :type (integer 0 3) :read-only t)
   (id 0 :type b:u64 :read-only t)
@@ -48,15 +48,15 @@ Ownership: buffer immutabile del chiamante fino all'ultimo uso; nessuna copia im
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (keyword &optional t) nil) %wire-fail))
 (defun %wire-fail (reason &optional offset)
-  "Pre: reason interno e offset opzionale. Post: segnala PROTOCOL-ERROR senza ritorno.
-Ownership: nessun buffer o stato trattenuto."
+  "Pre: internal reason and optional offset. Post: signals PROTOCOL-ERROR without return.
+Ownership: no buffer or state retained."
   (error 'protocol-error :reason reason :offset offset))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t t) (values b:index &optional)) %wire-range))
 (defun %wire-range (buffer start end)
-  "Pre: argomenti esterni. Post: span half-open simple u8 valido, oppure INVALID-ARGUMENT.
-Ownership: sola verifica, buffer invariato; nessun byte letto prima delle guardie."
+  "Pre: external arguments. Post: valid half-open simple u8 span, or INVALID-ARGUMENT.
+Ownership: verification only, buffer unchanged; no bytes read before guards."
   (unless (and (typep buffer 'b:octets) (typep start 'b:index) (typep end 'b:index)
                (<= start end (length buffer)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-wire-range))
@@ -65,8 +65,8 @@ Ownership: sola verifica, buffer invariato; nessun byte letto prima delle guardi
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (declaim (ftype (function (t) (values (integer 4096 17825792) &optional)) %wire-limit))
 (defun %wire-limit (limit)
-  "Pre: limite esterno. Post: capacita' ammessa dal contratto, oppure INVALID-ARGUMENT.
-Ownership: nessuno stato; non alloca in base al limite."
+  "Pre: external limit. Post: capacity admitted by the contract, or INVALID-ARGUMENT.
+Ownership: no state; does not allocate based on the limit."
   (unless (typep limit '(integer 4096 17825792))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-frame-limit))
   limit)
@@ -75,9 +75,9 @@ Ownership: nessuno stato; non alloca in base al limite."
 (declaim (ftype (function (t t t &key (:max-frame t))
                          (values b:u32 b:index &optional)) read-frame-length))
 (defun read-frame-length (buffer start end &key (max-frame +server-max-frame+))
-  "Pre: buffer del chiamante, almeno quattro byte nello span. Post: length u32be e START+4.
-Zero/oversize/troncatura segnalano PROTOCOL-ERROR prima di riservare il corpo.
-Ownership: sola lettura di quattro byte; gli eventuali byte successivi non sono letti."
+  "Pre: caller's buffer, at least four bytes in the span. Post: u32be length and START+4.
+Zero/oversize/truncation signal PROTOCOL-ERROR before reserving the body.
+Ownership: reads four bytes only; any following bytes are not read."
   (%wire-range buffer start end)
   (%wire-limit max-frame)
   (when (< (- end start) 4) (%wire-fail :local-prefix-truncated end))
@@ -90,8 +90,8 @@ Ownership: sola lettura di quattro byte; gli eventuali byte successivi non sono 
 (declaim (ftype (function (b:octets b:index b:index)
                          (values (unsigned-byte 3) b:u64 b:index &optional)) %wire-head))
 (defun %wire-head (buffer start end)
-  "Pre: span verificato e buffer immutabile. Post: major, argomento u64, fine header minimo.
-Propaga condizioni CBOR di prodotto; nessun payload o albero costruito."
+  "Pre: verified span and immutable buffer. Post: major, u64 argument, minimal-header end.
+Propagates product CBOR conditions; no payload or tree constructed."
   (multiple-value-bind (major ai high low next form)
       (cbor:leggi-header-cbor-minimo buffer start end)
     (unless (and (< ai 28) (eq form :argument) (< start next) (<= next end))
@@ -102,8 +102,8 @@ Propaga condizioni CBOR di prodotto; nessun payload o albero costruito."
 (declaim (ftype (function (b:octets b:index b:index b:u64)
                          (values b:u64 b:index &optional)) %wire-uint))
 (defun %wire-uint (buffer start end maximum)
-  "Pre: span verificato, massimo u64. Post: unsigned minimo entro massimo e cursore crescente.
-PROTOCOL-ERROR per tipo/valore; propaga errori CBOR. Ownership: input immutabile."
+  "Pre: verified span, u64 maximum. Post: minimally encoded unsigned value within maximum and increasing cursor.
+PROTOCOL-ERROR for type/value; propagates CBOR errors. Ownership: immutable input."
   (multiple-value-bind (major value next) (%wire-head buffer start end)
     (unless (and (= major 0) (<= value maximum)) (%wire-fail :local-uint start))
     (values value next)))
@@ -112,8 +112,8 @@ PROTOCOL-ERROR per tipo/valore; propaga errori CBOR. Ownership: input immutabile
 (declaim (ftype (function (b:octets b:index b:index (integer 0 6) b:u64)
                          (values b:index &optional)) %wire-expect))
 (defun %wire-expect (buffer start end wanted-major wanted-value)
-  "Pre: buffer immutabile, header atteso fisso. Post: fine header minimo esatto.
-PROTOCOL-ERROR per forma diversa; propaga condizioni CBOR senza leggere un payload."
+  "Pre: immutable buffer, fixed expected header. Post: exact minimal-header end.
+PROTOCOL-ERROR for a different shape; propagates CBOR conditions without reading a payload."
   (multiple-value-bind (major value next) (%wire-head buffer start end)
     (unless (and (= major wanted-major) (= value wanted-value))
       (%wire-fail :local-payload-shape start))
@@ -123,8 +123,8 @@ PROTOCOL-ERROR per forma diversa; propaga condizioni CBOR senza leggere un paylo
 (declaim (ftype (function (b:octets b:index b:index b:index b:index)
                          (values boolean &optional)) %wire-key-less-p))
 (defun %wire-key-less-p (buffer left-start left-end right-start right-end)
-  "Pre: due chiavi CBOR complete nello stesso buffer immutabile. Post: ordine byte-lessicografico.
-Nessuna allocazione; massimo il minore dei due span, poi confronto delle lunghezze."
+  "Pre: two complete CBOR keys in the same immutable buffer. Post: bytewise lexicographic order.
+No allocation; at most the shorter span, then length comparison."
   (loop for left from left-start below left-end
         for right from right-start below right-end
         for a = (aref buffer left) for b = (aref buffer right)
@@ -139,9 +139,9 @@ Nessuna allocazione; massimo il minore dei due span, poi confronto delle lunghez
 (declaim (ftype (function (b:octets b:index b:index (integer 0 8)
                           (member 4 5) b:u64) (values b:index &optional)) %wire-ordered-container))
 (defun %wire-ordered-container (buffer start end depth major count)
-  "Pre: scanner minimo concluso, contenitore definito. Post: fine e mappe strettamente ordinate.
-PROTOCOL-ERROR per duplicati/ordine/depth; ricorsione <=8, figli <= byte residui.
-Ownership: input immutabile; solo cursori locali, nessun albero o lista di chiavi."
+  "Pre: minimal scanner complete, definite container. Post: end and strictly ordered maps.
+PROTOCOL-ERROR for duplicates/order/depth; recursion <=8, children <= remaining bytes.
+Ownership: immutable input; local cursors only, no tree or key list."
   (when (>= depth 8) (%wire-fail :local-envelope-depth start))
   (when (> (* count (if (= major 5) 2 1)) (- end start))
     (%wire-fail :local-container-count start))
@@ -159,9 +159,9 @@ Ownership: input immutabile; solo cursori locali, nessun albero o lista di chiav
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-002 REQ-AFF-008
 (defun %wire-ordered-item (buffer start end depth)
-  "Pre: item gia' scansionato, depth array/map <=8. Post: fine item e ordine di tutte le mappe.
-Tag saltati con al piu' END-START passi; ricorsione solo array/map, massimo otto livelli.
-PROTOCOL-ERROR per span/depth; ownership: nessun oggetto derivato dal payload."
+  "Pre: item already scanned, array/map depth <=8. Post: item end and ordering of all maps.
+Tags skipped in at most END-START steps; recursion only for arrays/maps, maximum eight levels.
+PROTOCOL-ERROR for span/depth; ownership: no object derived from payload."
   (let ((cursor start))
     (loop repeat (- end start) do
       (multiple-value-bind (major value next) (%wire-head buffer cursor end)
@@ -180,9 +180,9 @@ PROTOCOL-ERROR per span/depth; ownership: nessun oggetto derivato dal payload."
 (declaim (ftype (function (b:octets b:index b:index cbor:spazio-cbor &optional (member 7 8))
                          (values null &optional)) %wire-scan-envelope))
 (defun %wire-scan-envelope (buffer start end space &optional (max-depth 8))
-  "Pre: span bounded e scratch esclusivo. Post: un item minimo depth7/8 e mappe ordinate senza duplicati.
-Errori CBOR strutturali/budget diventano PROTOCOL-ERROR; nessun reader o albero generico.
-Ownership: scratch riusabile dopo errore, buffer invariato; lavoro lineare bounded."
+  "Pre: bounded span and exclusive scratch. Post: one minimal depth7/8 item and ordered maps without duplicates.
+Structural/budget CBOR errors become PROTOCOL-ERROR; no reader or generic tree.
+Ownership: scratch reusable after error, buffer unchanged; bounded linear work."
   (handler-case
       (progn
         (multiple-value-bind (nodes depth finish)
@@ -203,8 +203,8 @@ Ownership: scratch riusabile dopo errore, buffer invariato; lavoro lineare bound
 (declaim (ftype (function (b:octets b:index b:index)
                          (values (integer 0 3) b:u64 b:u16 b:index &optional)) %wire-fields))
 (defun %wire-fields (buffer start end)
-  "Pre: envelope completo scansionato. Post: kind/id/code e inizio payload, ID coerente col kind.
-PROTOCOL-ERROR per versione, unsigned, kind, status o ID invalidi; input immutabile."
+  "Pre: complete envelope scanned. Post: kind/id/code and payload start, ID consistent with kind.
+PROTOCOL-ERROR for invalid version, unsigned value, kind, status, or ID; immutable input."
   (let ((cursor (%wire-expect buffer start end 4 5)))
     (setf cursor (%wire-expect buffer cursor end 0 1))
     (multiple-value-bind (kind a) (%wire-uint buffer cursor end 3)
@@ -219,8 +219,8 @@ PROTOCOL-ERROR per versione, unsigned, kind, status o ID invalidi; input immutab
 (declaim (ftype (function (b:octets b:index b:index boolean)
                          (values (integer 4096 17825792) (integer 1 16) &optional)) %wire-capacities))
 (defun %wire-capacities (buffer start end welcome)
-  "Pre: payload handshake scansionato. Post: mappe esatte, frame/inflight validi; WELCOME M1 esatto.
-PROTOCOL-ERROR per chiavi, extra, duplicati, capacita' o opcode; nessuna copia del payload."
+  "Pre: handshake payload scanned. Post: exact maps, valid frame/inflight; exact M1 WELCOME.
+PROTOCOL-ERROR for keys, extra data, duplicates, capacity, or opcode; no payload copy."
   (let ((cursor (%wire-expect buffer start end 5 (if welcome 3 2))))
     (setf cursor (%wire-expect buffer cursor end 0 0))
     (multiple-value-bind (frame a) (%wire-uint buffer cursor end 17825792)
@@ -242,8 +242,8 @@ PROTOCOL-ERROR per chiavi, extra, duplicati, capacita' o opcode; nessuna copia d
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t t t) (values null &optional)) %wire-decode-options))
 (defun %wire-decode-options (direction expected-kind last-id expected-id)
-  "Pre: opzioni esterne. Post: opzioni typeguarded; INVALID-ARGUMENT prima di accedere a byte.
-Ownership: nessuno stato; direzione :EITHER o una delle due direzioni esplicite."
+  "Pre: external options. Post: type-guarded options; INVALID-ARGUMENT before byte access.
+Ownership: no state; direction :EITHER or one of the two explicit directions."
   (unless (and (member direction '(:either :client-to-server :server-to-client))
                (typep expected-kind '(or null (integer 0 3))) (typep last-id 'b:u64)
                (typep expected-id '(or null (integer 1 18446744073709551615))))
@@ -255,11 +255,11 @@ Ownership: nessuno stato; direzione :EITHER o una delle due direzioni esplicite.
                           (:last-id t) (:expected-id t)) (values envelope &optional)) decode-local-envelope))
 (defun decode-local-envelope (buffer start end &key (max-frame +server-max-frame+)
                               (direction :either) expected-kind (last-id 0) expected-id space)
-  "Pre: BODY senza prefisso, buffer immutabile del chiamante fino all'ultimo uso delle viste.
-Post: envelope fisso verificato, una struttura bounded per frame; nessun albero di oggetti.
-PROTOCOL-ERROR per envelope/direzione/ID/budget/trailing; INVALID-ARGUMENT per API invalida.
-Ownership: SPACE esclusivo riusato; NIL crea scratch fisso, senza promessa di zero allocazioni.
-MAX-FRAME e' il limite negoziato, distinto dalle capacita' dichiarate nell'handshake."
+  "Pre: BODY without prefix, caller's immutable buffer until final use of views.
+Post: verified fixed envelope, one bounded structure per frame; no object tree.
+PROTOCOL-ERROR for envelope/direction/ID/budget/trailing; INVALID-ARGUMENT for invalid API use.
+Ownership: exclusive SPACE reused; NIL creates fixed scratch, without a zero-allocation promise.
+MAX-FRAME is the negotiated limit, distinct from capacities declared in the handshake."
   (%wire-range buffer start end)
   (%wire-limit max-frame)
   (%wire-decode-options direction expected-kind last-id expected-id)
@@ -289,8 +289,8 @@ MAX-FRAME e' il limite negoziato, distinto dalle capacita' dichiarate nell'hands
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t) (values envelope &optional)) %wire-envelope-input))
 (defun %wire-envelope-input (buffer envelope)
-  "Pre: input esterno. Post: envelope originale associato al medesimo buffer; INVALID-ARGUMENT altrimenti.
-Ownership: buffer deve restare immutabile; i soli campi verificati sono viste, non autorita' durevole."
+  "Pre: external input. Post: original envelope bound to the same buffer; INVALID-ARGUMENT otherwise.
+Ownership: buffer must remain immutable; verified fields are only views, not durable authority."
   (unless (and (typep buffer 'b:octets) (typep envelope 'envelope)
                (eq buffer (envelope-buffer envelope))
                (< (envelope-payload-start envelope) (envelope-payload-end envelope))
@@ -302,16 +302,16 @@ Ownership: buffer deve restare immutabile; i soli campi verificati sono viste, n
 (declaim (ftype (function (t t) (values (integer 4096 17825792) (integer 1 16) &optional))
                 decode-local-hello decode-local-welcome))
 (defun decode-local-hello (buffer envelope)
-  "Pre: envelope associato al buffer immutabile. Post: capacita' HELLO richieste, senza clamping.
-PROTOCOL-ERROR per altro kind; INVALID-ARGUMENT per identita' buffer/struttura invalida."
+  "Pre: envelope bound to immutable buffer. Post: requested HELLO capacities, without clamping.
+PROTOCOL-ERROR for another kind; INVALID-ARGUMENT for invalid buffer/structure identity."
   (%wire-envelope-input buffer envelope)
   (unless (= (envelope-kind envelope) 0) (%wire-fail :local-expected-hello))
   (values (envelope-max-frame envelope) (envelope-max-inflight envelope)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (defun decode-local-welcome (buffer envelope)
-  "Pre: envelope associato al buffer immutabile. Post: capacita' WELCOME M1 gia' verificate.
-PROTOCOL-ERROR per altro kind; INVALID-ARGUMENT per input non associati."
+  "Pre: envelope bound to immutable buffer. Post: M1 WELCOME capacities already verified.
+PROTOCOL-ERROR for another kind; INVALID-ARGUMENT for unbound inputs."
   (%wire-envelope-input buffer envelope)
   (unless (= (envelope-kind envelope) 1) (%wire-fail :local-expected-welcome))
   (values (envelope-max-frame envelope) (envelope-max-inflight envelope)))
@@ -320,9 +320,9 @@ PROTOCOL-ERROR per altro kind; INVALID-ARGUMENT per input non associati."
 (declaim (ftype (function (b:octets b:index b:index cbor:spazio-cbor)
                          (values (member 0 1 5) &optional)) %wire-document-status))
 (defun %wire-document-status (buffer start end space)
-  "Pre: span documento separato e scratch esclusivo verificati. Post: 0 valido, 1 forma, 5 budget.
-Un item CBOR minimo completo, depth100; nessuna semantica del contenuto o albero ricorsivo.
-Ownership: buffer invariato; scratch riusabile dopo qualunque rifiuto del prodotto."
+  "Pre: separate document span and exclusive scratch verified. Post: 0 valid, 1 shape, 5 budget.
+One complete minimal CBOR item, depth 100; no content semantics or recursive tree.
+Ownership: buffer unchanged; scratch reusable after any product rejection."
   (cond ((zerop (- end start)) 1)
         ((> (- end start) +max-document-bytes+) 5)
         (t (handler-case
@@ -339,8 +339,8 @@ Ownership: buffer invariato; scratch riusabile dopo qualunque rifiuto del prodot
 (declaim (ftype (function (b:octets b:index b:index)
                          (values b:index b:index b:index &optional)) %wire-bstr))
 (defun %wire-bstr (buffer start end)
-  "Pre: item gia' scansionato. Post: inizio contenuto, lunghezza, fine bstr, senza copia.
-PROTOCOL-ERROR per tipo/range; ownership: vista valida finche' input immutabile."
+  "Pre: item already scanned. Post: content start, length, bstr end, without copy.
+PROTOCOL-ERROR for type/range; ownership: view valid while input is immutable."
   (multiple-value-bind (major size next) (%wire-head buffer start end)
     (unless (and (= major 2) (<= size (- end next))) (%wire-fail :local-bstr start))
     (values next size (+ next size))))
@@ -348,16 +348,16 @@ PROTOCOL-ERROR per tipo/range; ownership: vista valida finche' input immutabile.
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (b:octets b:index b:index) (values boolean &optional)) %wire-null-p))
 (defun %wire-null-p (buffer start end)
-  "Pre: span verificato di input immutabile. Post: T soltanto per NULL minimo esatto.
-Nessuna condizione per forma diversa; nessun byte letto fuori span."
+  "Pre: verified span of immutable input. Post: T only for exact minimal NULL.
+No condition for a different shape; no bytes read outside the span."
   (and (= (- end start) 1) (= (aref buffer start) #xf6)))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (declaim (ftype (function (b:octets envelope cbor:spazio-cbor)
                          (values (integer 0 5) b:index b:index b:index b:index &optional)) %wire-command-spans))
 (defun %wire-command-spans (buffer envelope space)
-  "Pre: REQUEST verificata e scratch esclusivo. Post: status e viste bounded; nessuna copia.
-Errori di forma comando ->1, budget ->5, sconosciuto valido ->4; niente ammissione motore."
+  "Pre: verified REQUEST and exclusive scratch. Post: status and bounded views; no copy.
+Command-shape errors ->1, budget ->5, valid unknown ->4; no engine admission."
   (let ((start (envelope-payload-start envelope)) (end (envelope-payload-end envelope))
         (opcode (envelope-code envelope)))
     (case opcode
@@ -379,8 +379,8 @@ Errori di forma comando ->1, budget ->5, sconosciuto valido ->4; niente ammissio
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (b:octets b:index b:index) (values b:octets &optional)) %wire-copy))
 (defun %wire-copy (buffer start size)
-  "Pre: span bounded <=60000 gia' verificato. Post: copia simple u8 privata del chiamante, byte identici.
-INVARIANT-VIOLATION per chiamata interna fuori limite; allocazione limitata allo span verificato."
+  "Pre: bounded span <=60000 already verified. Post: caller's private simple u8 copy, identical bytes.
+INVARIANT-VIOLATION for an internal call beyond the limit; allocation bounded to verified span."
   (unless (and (<= size +max-document-bytes+) (<= (+ start size) (length buffer)))
     (error 'arcdocdb.conditions:invariant-violation :reason :local-copy-span))
   (let ((copy (make-array size :element-type '(unsigned-byte 8))))
@@ -391,10 +391,10 @@ INVARIANT-VIOLATION per chiamata interna fuori limite; allocazione limitata allo
 (declaim (ftype (function (t t t) (values (integer 0 5) (or null b:octets)
                                         (or null b:octets) &optional)) decode-local-command))
 (defun decode-local-command (buffer envelope space)
-  "Pre: REQUEST originale, buffer immutabile e scratch esclusivo. Post: status, copie KEY/DOC bounded.
-NIL/NIL sugli errori: forma=1, budget=5, opcode sconosciuto valido=4. Chiavi opache 1..1024.
-Documento 1..60000, item minimo depth100 separato. Input API invalido ->INVALID-ARGUMENT.
-Ownership: copie al chiamante; nessuna operazione engine o prenotazione durevole."
+  "Pre: original REQUEST, immutable buffer and exclusive scratch. Post: status, bounded KEY/DOC copies.
+NIL/NIL on errors: shape=1, budget=5, valid unknown opcode=4. Opaque keys 1..1024.
+Document 1..60000, separate minimal depth 100 item. Invalid API input ->INVALID-ARGUMENT.
+Ownership: copies to caller; no engine operation or durable reservation."
   (%wire-envelope-input buffer envelope)
   (unless (typep space 'cbor:spazio-cbor)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-cbor-space))
@@ -411,8 +411,8 @@ Ownership: copie al chiamante; nessuna operazione engine o prenotazione durevole
 (declaim (ftype (function (b:octets envelope cbor:spazio-cbor)
                          (values (member :found :absent) (or null b:octets) &optional)) %wire-get-result))
 (defun %wire-get-result (buffer envelope space)
-  "Pre: risposta GET valida strutturalmente. Post: :FOUND copia privata oppure :ABSENT NIL.
-PROTOCOL-ERROR per booleano/null/documento invalidi; nessuna copia prima di tutte le verifiche."
+  "Pre: structurally valid GET response. Post: :FOUND private copy or :ABSENT NIL.
+PROTOCOL-ERROR for invalid boolean/null/document; no copy before all checks."
   (let* ((end (envelope-payload-end envelope))
          (cursor (%wire-expect buffer (envelope-payload-start envelope) end 4 2)))
     (unless (< cursor end) (%wire-fail :local-get-boolean cursor))
@@ -433,9 +433,9 @@ PROTOCOL-ERROR per booleano/null/documento invalidi; nessuna copia prima di tutt
 (declaim (ftype (function (t t t t) (values (or null b:u64 keyword) &optional (or null b:octets)))
                 decode-local-response))
 (defun decode-local-response (buffer envelope space opcode)
-  "Pre: RESPONSE correlata dal client, input immutabile e scratch esclusivo. Post: risultato comando.
-PING NIL, PUT/DELETE CSN u64 positivo, GET values :FOUND copia/:ABSENT NIL. Status1..5 ->REQUEST-REJECTED.
-PROTOCOL-ERROR per forma errata anche negli errori; nessun retry o contatto col motore."
+  "Pre: client-correlated RESPONSE, immutable input and exclusive scratch. Post: command result.
+PING NIL, PUT/DELETE positive u64 CSN, GET values :FOUND copy/:ABSENT NIL. Status 1..5 ->REQUEST-REJECTED.
+PROTOCOL-ERROR for incorrect shape even in errors; no retry or engine contact."
   (%wire-envelope-input buffer envelope)
   (unless (and (typep space 'cbor:spazio-cbor) (typep opcode '(integer 0 65535)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-response-input))
@@ -455,8 +455,8 @@ PROTOCOL-ERROR per forma errata anche negli errori; nessun retry o contatto col 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (b:u64) (values (member 1 2 3 5 9) &optional)) %wire-head-size))
 (defun %wire-head-size (value)
-  "Pre: unsigned64 verificato. Post: dimensione minima header MT0..6; nessuna allocazione o condizione.
-Ownership: valore locale, nessun buffer."
+  "Pre: verified unsigned64. Post: minimal MT0..6 header size; no allocation or condition.
+Ownership: local value, no buffer."
   (cond ((< value 24) 1) ((<= value #xff) 2) ((<= value #xffff) 3)
         ((<= value #xffffffff) 5) (t 9)))
 
@@ -464,16 +464,16 @@ Ownership: valore locale, nessun buffer."
 (declaim (ftype (function (b:octets b:index b:index (integer 0 6) b:u64)
                          (values b:index &optional)) %wire-put-head))
 (defun %wire-put-head (out cursor end major value)
-  "Pre: output esclusivo, spazio preflight e argomento u64. Post: header minimo prodotto, fine crescente.
-Propaga condizioni del writer prodotto; nessuna pubblicazione o allocazione."
+  "Pre: exclusive output, preflighted space and u64 argument. Post: product-generated minimal header, increasing end.
+Propagates product-writer conditions; no publication or allocation."
   (cbor:scrivi-header-cbor-minimo out cursor end major
                                 (ldb (byte 32 32) value) (ldb (byte 32 0) value)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-008
 (declaim (ftype (function (t t t t t t) (values null &optional)) %wire-output-input))
 (defun %wire-output-input (out kind id code payload-size limit)
-  "Pre: argomenti encoder esterni. Post: tipi/ID/limite validi prima di qualunque scrittura.
-INVALID-ARGUMENT per tipo o forma; ownership: OUT esclusivo e non alias di sorgenti."
+  "Pre: external encoder arguments. Post: valid types/ID/limit before any write.
+INVALID-ARGUMENT for type or shape; ownership: exclusive OUT, no source aliasing."
   (unless (and (typep out 'b:octets) (typep kind '(integer 0 3)) (typep id 'b:u64)
                (typep code 'b:u16) (typep payload-size 'b:index) (plusp payload-size))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-encode-input))
@@ -486,9 +486,9 @@ INVALID-ARGUMENT per tipo o forma; ownership: OUT esclusivo e non alias di sorge
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (t t t t t t) (values b:index b:index &optional)) %wire-output-begin))
 (defun %wire-output-begin (out kind id code payload-size limit)
-  "Pre: output posseduto, parametri esterni. Post: prefisso/envelope scritti, cursore payload e END totale.
-Preflight completo prima di scrivere: INVALID-ARGUMENT oppure RESOURCE-EXHAUSTED senza mutazione.
-Ownership: nessuna sorgente prestata; copia pubblicabile solo dopo completamento del payload."
+  "Pre: owned output, external parameters. Post: prefix/envelope written, payload cursor and total END.
+Complete preflight before writing: INVALID-ARGUMENT or RESOURCE-EXHAUSTED without mutation.
+Ownership: no source loan; copy publishable only after payload completion."
   (%wire-output-input out kind id code payload-size limit)
   (let* ((body-size (+ 2 (%wire-head-size kind) (%wire-head-size id)
                         (%wire-head-size code) payload-size))
@@ -507,8 +507,8 @@ Ownership: nessuna sorgente prestata; copia pubblicabile solo dopo completamento
 (declaim (ftype (function (b:octets b:index b:index b:octets b:index b:index)
                          (values b:index &optional)) %wire-put-bstr))
 (defun %wire-put-bstr (out cursor end source start size)
-  "Pre: span sorgente valido, senza alias, capienza gia' verificata. Post: bstr con byte identici e fine.
-INVARIANT-VIOLATION per capienza interna; ownership: nessuna copia sorgente trattenuta."
+  "Pre: valid nonaliasing source span, capacity already verified. Post: bstr with identical bytes and end.
+INVARIANT-VIOLATION for internal capacity; ownership: no source copy retained."
   (let* ((next (%wire-put-head out cursor end 2 size)) (finish (+ next size)))
     (unless (and (<= (+ start size) (length source)) (<= finish end))
       (error 'arcdocdb.conditions:invariant-violation :reason :local-bstr-output))
@@ -518,8 +518,8 @@ INVARIANT-VIOLATION per capienza interna; ownership: nessuna copia sorgente trat
 ;;; REQ: REQ-IPC-002 REQ-LIM-003
 (declaim (ftype (function (t t t boolean) (values b:index &optional)) %wire-encode-handshake))
 (defun %wire-encode-handshake (out frame inflight welcome)
-  "Pre: capacita' esterne e output esclusivo. Post: HELLO/WELCOME esatto incluso prefisso.
-INVALID-ARGUMENT per limiti; preflight output prima di scrivere, handshake <=4096."
+  "Pre: external capacities and exclusive output. Post: exact HELLO/WELCOME including prefix.
+INVALID-ARGUMENT for limits; output preflight before writing, handshake <=4096."
   (%wire-limit frame)
   (unless (and (typep inflight '(integer 1 16))
                (if welcome (and (<= frame +server-max-frame+) (= inflight 1)) t))
@@ -542,23 +542,23 @@ INVALID-ARGUMENT per limiti; preflight output prima di scrivere, handshake <=409
 ;;; REQ: REQ-IPC-002
 (declaim (ftype (function (t t &key (:inflight t)) (values b:index &optional)) encode-local-hello))
 (defun encode-local-hello (out frame &key (inflight 1))
-  "Pre: OUT esclusivo, capacita' client. Post: END assoluto del frame HELLO da offset0 con prefisso.
-Propaga INVALID-ARGUMENT/RESOURCE-EXHAUSTED del preflight; ownership resta al chiamante."
+  "Pre: exclusive OUT, client capacities. Post: absolute END of HELLO frame from offset 0 with prefix.
+Propagates preflight INVALID-ARGUMENT/RESOURCE-EXHAUSTED; ownership remains with caller."
   (%wire-encode-handshake out frame inflight nil))
 
 ;;; REQ: REQ-IPC-002
 (declaim (ftype (function (t t) (values b:index &optional)) encode-local-welcome))
 (defun encode-local-welcome (out frame)
-  "Pre: OUT esclusivo, frame negoziato M1. Post: END WELCOME con prefisso, inflight1, opcode [0,1,2,3].
-Propaga INVALID-ARGUMENT/RESOURCE-EXHAUSTED prima di scrivere; ownership resta al chiamante."
+  "Pre: exclusive OUT, negotiated M1 frame. Post: WELCOME END with prefix, inflight 1, opcode [0,1,2,3].
+Propagates INVALID-ARGUMENT/RESOURCE-EXHAUSTED before writing; ownership remains with caller."
   (%wire-encode-handshake out frame 1 t))
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (t t t t t &key (:max-frame t)) (values b:index &optional)) encode-local-frame))
 (defun encode-local-frame (out kind id code payload &key (max-frame +server-max-frame+))
-  "Pre: OUT esclusivo senza alias, PAYLOAD CBOR gia' codificato. Post: END frame completo con prefisso.
-Validazione bounded minimo/depth7/ordine prima di scrivere; nessun albero generico.
-INVALID-ARGUMENT per API/alias, PROTOCOL-ERROR per CBOR, RESOURCE-EXHAUSTED per capienza."
+  "Pre: exclusive nonaliasing OUT, PAYLOAD already CBOR-encoded. Post: END of complete frame with prefix.
+Bounded minimal/depth7/order validation before writing; no generic tree.
+INVALID-ARGUMENT for API/aliasing, PROTOCOL-ERROR for CBOR, RESOURCE-EXHAUSTED for capacity."
   (unless (and (typep out 'b:octets) (typep payload 'b:octets) (not (eq out payload)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-encode-payload))
   (unless (<= 1 (length payload) +server-max-frame+)
@@ -571,9 +571,9 @@ INVALID-ARGUMENT per API/alias, PROTOCOL-ERROR per CBOR, RESOURCE-EXHAUSTED per 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (t t t t) (values null &optional)) %wire-request-input))
 (defun %wire-request-input (out opcode key document)
-  "Pre: input encoder esterni. Post: forma/budget/alias validi prima di scrivere.
-Chiave opaca; documento minimo separato. INVALID-ARGUMENT o RESOURCE-EXHAUSTED per rifiuto.
-Ownership: input immutabile fino a ritorno, output esclusivo."
+  "Pre: external encoder input. Post: valid shape/budget/aliasing before writing.
+Opaque key; separate minimal document. INVALID-ARGUMENT or RESOURCE-EXHAUSTED for rejection.
+Ownership: input immutable until return, exclusive output."
   (unless (and (typep out 'b:octets) (typep opcode 'b:u16))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-request-input))
   (when (= opcode 0)
@@ -603,9 +603,9 @@ Ownership: input immutabile fino a ritorno, output esclusivo."
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (t t t t t) (values b:index &optional)) encode-local-request))
 (defun encode-local-request (out id opcode key doc)
-  "Pre: output esclusivo e argomenti stabili. Post: frame REQUEST completo da0, END include prefisso.
-Per opcode sconosciuto KEY contiene il payload CBOR codificato e DOC NIL; nessun reader Lisp.
-Propaga rifiuti tipizzati prima dell'output; copie binarie identiche e bounded."
+  "Pre: exclusive output and stable arguments. Post: complete REQUEST frame from 0, END includes prefix.
+For an unknown opcode, KEY contains the encoded CBOR payload and DOC NIL; no Lisp reader.
+Propagates typed rejections before output; identical bounded binary copies."
   (%wire-request-input out opcode key doc)
   (when (> opcode 3) (return-from encode-local-request (encode-local-frame out 2 id opcode key)))
   (let ((size (case opcode
@@ -629,9 +629,9 @@ Propaga rifiuti tipizzati prima dell'output; copie binarie identiche e bounded."
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (t t t t t t t t t) (values b:index &optional)) %wire-response-size))
 (defun %wire-response-size (out status csn csn-p found found-p document document-end end-p)
-  "Pre: argomenti esterni. Post: dimensione payload bounded, controlli prima dell'output.
-INVALID-ARGUMENT per forma/alias, RESOURCE-EXHAUSTED per documento troppo grande.
-Ownership: documento del motore copiato senza trattenere pin, nessuna validazione engine qui."
+  "Pre: external arguments. Post: bounded payload size, checks before output.
+INVALID-ARGUMENT for shape/aliasing, RESOURCE-EXHAUSTED for an oversized document.
+Ownership: engine document copied without retaining pins, no engine validation here."
   (unless (and (typep out 'b:octets) (typep status '(integer 0 5)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-response-input))
   (when (plusp status) (return-from %wire-response-size 1))
@@ -658,10 +658,10 @@ Ownership: documento del motore copiato senza trattenere pin, nessuna validazion
                          (values b:index &optional)) encode-local-response))
 (defun encode-local-response (out id status &key (csn nil csn-p) (found nil found-p)
                              document (document-end nil end-p))
-  "Pre: OUT esclusivo gia' riservato; :CSN positivo per write, :FOUND supplied-p per GET, assenti per PING.
-Post: END con prefisso; :DOCUMENT-END e' numero byte da0, GET miss [false,null].
-Rifiuti tipizzati prima di output; un risultato engine non e' ritentato dal codec.
-Ownership: documento copiato, nessun pin/lease trattenuto dal frame completo."
+  "Pre: exclusive OUT already reserved; positive :CSN for write, :FOUND supplied-p for GET, absent for PING.
+Post: END with prefix; :DOCUMENT-END is byte count from 0, GET miss [false,null].
+Typed rejections before output; an engine result is not retried by the codec.
+Ownership: document copied, no pin/lease retained by the complete frame."
   (let* ((size-end (if (and document (not end-p) (typep document 'b:octets))
                        (length document) document-end))
          (size (%wire-response-size out status csn csn-p found found-p document size-end end-p)))

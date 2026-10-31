@@ -2,7 +2,7 @@
 
 # C4 preregistered method: CLOSED GET directory
 
-Driver [get-directory-bench.lisp](../../tools/get-directory-bench.lisp) measures
+The driver [get-directory-bench.lisp](../../tools/get-directory-bench.lisp) measures
 two current-GET cycles through `arcdocdb.get.directory`. This delivery was
 prepared through static reads and edits to the two assigned files only:
 no compilation, Lisp load, suite, benchmark, mutation,
@@ -167,7 +167,7 @@ include product, thread, and driver allocations.
 
 Fixtures, oracles, contexts, outputs, candidate buffer, closures, raw data, expected
 checksums, thread names, and semaphores are allocated before the window. Warmup
-and full GC follow. Main reads `get-internal-real-time` and
+and full GC follow. The main thread reads `get-internal-real-time` and
 `sb-ext:get-bytes-consed` before/after the entire group: order tick-start,
 heap-start, heap-end, tick-end. The report retains original ticks and units,
 seconds, and time quality. Zero ticks gives `:below-resolution`, zero seconds,
@@ -179,10 +179,10 @@ not live heap, RSS, or reservation. Automatic GCs are included; explicit full GC
 formatting, record construction, and checkpoints are excluded. The two sensors'
 order causes a small boundary misalignment.
 
-Serially, main executes the loop and final quiescence check.
+Serially, the main thread executes the loop and final quiescence check.
 In parallel, including the one-worker case, the window starts before
 `make-thread` and includes startup, ready/gate, loops, deadline-bound joins, and
-checks of all involved contexts. Main hands contexts to threads
+checks of all involved contexts. The main thread hands contexts to threads
 only after warmup, reacquires them after joins, and reads no raw data of
 still-live threads. Startup/join are neither subtracted nor estimated. Threads are
 new every window: this measurement does not describe a persistent pool.
@@ -291,7 +291,7 @@ The product directory supports up to 65,536 maps, bounded search in
 distinct from performance profiles through N=64: the driver neither
 counts steps/comparisons nor infers maximum domain from timings. Publication,
 EBR reclamation, ACTIVE, prepared records, snapshots/history, recovery, queues, and migration
-between pools are outside workload. CPU/frequency, external load, scheduler,
+between pools are outside the workload. CPU/frequency, external load, scheduler,
 CPU cache, and memory pressure are uncontrolled. P99,
 durability, sustained I/O costs, or overall database throughput cannot be derived
 from these validated-cycle rates.

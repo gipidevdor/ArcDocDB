@@ -4,13 +4,13 @@
 
 The [`arcdocdb.get.resolver`](../../src/get-resolver/) module connects
 [GET core](get-record.md) to CLOSED segments named by
-[manifest](manifest-control-log.md). Resolves position, storage flags, CSN, and
+[manifest](manifest-control-log.md). It resolves position, storage flags, CSN, and
 OUTCOME-proof offset through a verified immutable map.
 
 A read-path component, with **C1 qualification open**.
 The [ordinary ACTIVE path](get-active.md) has a dedicated bridge to controller
 root. ACTIVE multiseries proofs, capability directory, EDIT proofs, and server
-remain to integrate. Does not change architecture decisions or formats.
+remain to be integrated. It does not change architecture decisions or formats.
 References: [ADR-0037](../adr/0037-lotto-sigillato.md),
 [ADR-0041](../adr/0041-multiserie-segmenti-autosufficienti.md),
 [ADR-0044](../adr/0044-cache-acceleratore-puro.md),
@@ -21,12 +21,12 @@ References: [ADR-0037](../adr/0037-lotto-sigillato.md),
 ## Construction and authority
 
 `crea-mappa-segmento-get(view, file, manifest, id, buffer, …)` runs in
-I/O pool outside GETs. Controller associates manifest and view of same
-Serie; current manifest carries no Serie identity verifiable by
-resolver. File is read-only and segment remains immutable.
+the I/O pool outside GETs. The controller associates a manifest and view of the same
+Serie; the current manifest carries no Serie identity verifiable by
+the resolver. The file is read-only and the segment remains immutable.
 
 1. Checks budgets, positive u32 ID, and CLOSED state in manifest. ACTIVE,
-   REMOVED, and UNKNOWN rejected. A u64 ID beyond u32 requires future
+   REMOVED, and UNKNOWN are rejected. A u64 ID beyond u32 requires future
    index layout: it is not truncated.
 2. Takes `valid-bytes` from manifest closure. Impossible limit is
    corruption; insufficient buffer or budget is `resource-exhausted`.
@@ -39,19 +39,19 @@ resolver. File is read-only and segment remains immutable.
    verifier: ordinary PUT/TOMBSTONE only.
 5. Counts PUTs and OUTCOMEs, authorizes payload peak, copies proofs into
    u32 arrays, and stably sorts by TXID through eight bounded radix passes.
-   Duplicates with same CSN allowed; mismatched CSNs produce corruption.
-6. Builds a compact row for each PUT in physical order. A resolved prepared
-   retains CSN and offset of OUTCOME following PUT. A prepared record
-   without outcome retains zero proof; cannot be returned by GET.
+   Duplicates with the same CSN are allowed; mismatched CSNs produce corruption.
+6. Builds a compact row for each PUT in physical order. A resolved prepared record
+   retains the CSN and offset of OUTCOME following PUT. A prepared record
+   without an outcome retains zero proof; it cannot be returned by GET.
 
-Buffer must stay exclusive and stable from I/O until return. Full
+The buffer must stay exclusive and stable from I/O until return. Full
 body verification occurs in step 4. Later traversals
 recheck header CRCs and shape without rescanning bodies;
 OUTCOME copying reverifies their bodies too. Internal
 passes are not standalone parsers and are not exported.
 Without OUTCOME, dedicated proof-copy traversal is avoided.
 
-TAIL classifier not used: a manifest-fixed prefix is verified here,
+The TAIL classifier is not used: a manifest-fixed prefix is verified here,
 without claiming it matches physical EOF. Any bytes beyond
 frontier remain intact and unread.
 
@@ -75,32 +75,32 @@ Created-array peak is therefore `24P + 20O`, or
 `24P + 40O + 1024` for O ≥ 2. `budget-payload` checks it **before**
 arrays. `payload-mappa-segmento-get` reports only `24P` after construction.
 Values exclude Lisp objects/headers, FDs, caller buffer, and GC;
-not an RSS bound. Garbage collector may retain scratch
-after return too. No Lisp object created per row.
+they are not an RSS bound. The garbage collector may retain scratch
+after return too. No Lisp object is created per row.
 
 Defaults are 256 MiB prefix, 1,048,576 non-SEAL records, 65,536 batches,
 65,536 records per batch, 64 MiB per batch, and 64 MiB allocated payload.
-Construction budgets configurable within existing formats;
-do not restrict document limits. Caller must already own source
-buffer, and controller must account for concurrent constructors too.
+Construction budgets are configurable within existing formats;
+they do not restrict document limits. The caller must already own the source
+buffer, and the controller must account for concurrent constructors too.
 
-Each traversal bounded by available bytes; counts and budgets
+Each traversal is bounded by available bytes; counts and budgets are
 checked. Sorting `O(8 × (O + 256))`, prepared-row resolution
 `O(P × log(O + 1))`, GET lookup `O(log(P + 1))`, at most 33 steps.
-Construction is cold path: I/O, full scanning, and allocations
-permitted; costs still to measure.
+Construction is a cold path: I/O, full scanning, and allocations are
+permitted; costs remain to be measured.
 
 <a id="lettura-lifetime-e-risposta"></a>
 
 ## Reading, lifetime, and response
 
-Controller publishes map **before** a reader can observe an
-index location requiring it. Retains capabilities and FDs until EBR-authorized
-reclamation. Map neither publishes roots, manages manifest, nor
+The controller publishes the map **before** a reader can observe an
+index location requiring it. It retains capabilities and FDs until EBR-authorized
+reclamation. The map neither publishes roots, manages manifest, nor
 closes files. A Lisp capability does not replace EBR authorization.
 
-Driver installs GET cleanup before `avvia-get`. After `:candidate`,
-acquires map from controller directory in same epoch:
+The driver installs GET cleanup before `avvia-get`. After `:candidate`,
+it acquires the map from the controller directory in the same epoch:
 
 | API | Outcome and responsibility |
 |---|---|
@@ -110,21 +110,21 @@ acquires map from controller directory in same epoch:
 
 Resolution checks view, segment-id, still-open FD, exact offset,
 candidate length and CSN, flags, and proof position. Map miss
-for an already-published location is an integrity fault: does **not**
+for an already-published location is an integrity fault: it does **not**
 become an absent document. Index LIVE flag is not PREPARED.
 Resolver modifies no arrays, index, cache, registries, or shared counters.
 
-For prepared records, map is a derived accelerator: GET core rereads
+For prepared records, the map is a derived accelerator: GET core rereads
 OUTCOME from same FD, verifies CRC, TXID, and CSN even before
 cache hit. GET CRC, key, and version checks remain for every value.
-Map alone does not authorize response.
+The map alone does not authorize a response.
 
 `copia-valore-get` produces provisional output; `concludi-get`, with fresh time
 after copy/last access, checks snapshot and releases EBR before
 authorizing value. Error or nonlocal exit discards result.
 Resolver invariants make context FAULTED; worker boundary
 must isolate Serie/Archivio according to cause. Source errors propagate.
-Incorrect API order rejected before assuming new cleanup.
+Incorrect API order is rejected before assuming new cleanup.
 
 Before migration, abandon GET and discard map, capability,
 location, and proof. New worker restarts from request and index under
@@ -157,7 +157,7 @@ Affected invariants: INV-A2, INV-F2, INV-S7, and EBR reclamation protection.
 | RSG-D14 | segment identity: zero high and equal low | nonzero high and different segment |
 | RSG-D15 | FD lifetime: read-only and open | wrong mode and early close |
 
-Simple branches also remain to verify: empty segment, tombstone,
+Simple branches also remain to be verified: empty segment, tombstone,
 frontier mid-batch, tail beyond frontier, aborted prepared,
 preceding OUTCOME, mismatched duplicates, saturation, construction interruption,
 cleanup/reentry/migration, and source/map corruption.
@@ -165,13 +165,13 @@ GET core API/EBR/copy checks remain in its contract.
 
 The [preserved campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-resolver/README.md)
 contains compilation, static checks, and two local author readings.
-Adds and locally runs no tests, models, fault injection, or benchmarks.
+It adds and locally runs no tests, models, fault injection, or benchmarks.
 Actual GET allocations, latency, construction cost, and concurrency remain
-to measure; independent review and C1 qualification not declared complete.
+to be measured; independent review and C1 qualification are not declared complete.
 
 The [functional suite dedicated to OUTCOME proofs](get-resolver-verifica.md)
 adds 42 construction, sorting/lookup, and reading tests, with v1/v2 read-only
-files and independent wire oracles. Preserves
+files and independent wire oracles. It preserves
 [preregistered method](get-resolver-metodo.md) and results attributed to local
 freeze. Independent reading and diagnostic coverage of this suite
 close neither C1 qualification nor whole-component MC/DC.

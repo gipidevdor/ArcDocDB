@@ -58,7 +58,7 @@ self-test; spike sources and fixtures remain included.
 | State | Meaning |
 |---|---|
 | `:specificato` | statement defined, without a design |
-| `:progettato` | realized by ADRs and documents; no code |
+| `:progettato` | designed through ADRs and documents; no code |
 | `:implementato` | code present and traced (`;;; REQ: REQ-…`) |
 | `:verificato` | all checks in the `:ver` list executed and passing |
 
@@ -79,6 +79,7 @@ self-test; spike sources and fixtures remain included.
 - The tool checks the **existence** and **completeness** of links, not their **semantic
   correctness**: whether an ADR actually realizes a requirement is established by review
   ([checklist](../affidabilita/standard-di-codifica.md#lista-di-controllo-di-revisione-c1)).
-- Until Phase 1, there is no product code: experiments cite the requirements they study
-  but do not promote them to `implementato` or `verificato`. Only the C4 harness requirement
-  has tooling code; completed tests are not tests of the future engine.
+- Product code and the executable M1 profile now exist. Experiments cite the requirements
+  they study but do not, by themselves, promote them to `implementato` or `verificato`.
+  Historical experiment results retain their original scope; they do not qualify
+  the complete engine. See the [current implementation profile](../implementazione/README.md).

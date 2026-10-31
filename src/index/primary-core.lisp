@@ -6,8 +6,8 @@
 ;;; REQ: REQ-AFF-004 REQ-IDX-003
 (declaim (ftype (function (indice-primario) null) invalida-indice-primario))
 (defun invalida-indice-primario (index)
-  "Pre: guasto interno o confine fidato. Post: FAULTED terminale, nessuna cancellazione o reset.
-Ripetibile senza mutex; il controller della Serie interrompe ammissione e pubblicazioni."
+  "Pre: internal fault or trusted boundary. Post: terminal FAULTED, no deletion or reset.
+Repeatable without a mutex; the Serie controller stops admission and publications."
   (sb-thread:barrier (:write))
   (setf (indice-primario-health index) :faulted)
   nil)
@@ -15,8 +15,8 @@ Ripetibile senza mutex; il controller della Serie interrompe ammissione e pubbli
 ;;; REQ: REQ-AFF-004 REQ-IDX-007
 (declaim (ftype (function (indice-primario keyword) nil) guasto-indice))
 (defun guasto-indice (index reason)
-  "Pre: invariante interna violata. Post: indice FAULTED prima di INVARIANT-VIOLATION.
-Nessun recupero locale o rimozione dei vecchi frammenti."
+  "Pre: internal invariant violated. Post: index FAULTED before INVARIANT-VIOLATION.
+No local recovery or removal of old fragments."
   (invalida-indice-primario index)
   (error 'invariant-violation :reason reason))
 
@@ -25,7 +25,7 @@ Nessun recupero locale o rimozione dei vecchi frammenti."
                  esigi-chiave esigi-frammento-sano controllo-valido-p))
 (declaim (ftype (function (indice-primario) null) esigi-indice-sano))
 (defun esigi-indice-sano (index)
-  "Pre: indice canonico. Post: salute OPEN acquisita; su guasto nessun risultato utilizzabile."
+  "Pre: canonical index. Post: OPEN health acquired; no usable result on fault."
   (let ((health (indice-primario-health index)))
     (sb-thread:barrier (:read))
     (unless (eq health :open) (guasto-indice index :primary-index-faulted)))
@@ -34,7 +34,7 @@ Nessun recupero locale o rimozione dei vecchi frammenti."
 ;;; REQ: REQ-IDX-007 REQ-AFF-004
 (declaim (ftype (function (indice-primario) root-indice) acquisisci-root))
 (defun acquisisci-root (index)
-  "Pre: indice inizializzato. Post: root acquisita dopo load/barriera; NIL è un guasto interno."
+  "Pre: initialized index. Post: root acquired after load/barrier; NIL is an internal fault."
   (let ((root (indice-primario-root index)))
     (sb-thread:barrier (:read))
     (unless root (guasto-indice index :primary-index-missing-root))
@@ -43,8 +43,8 @@ Nessun recupero locale o rimozione dei vecchi frammenti."
 ;;; REQ: REQ-IDX-007 REQ-AFF-008
 (declaim (ftype (function (indice-primario) null) esigi-revisione))
 (defun esigi-revisione (index)
-  "Pre: writer esclusivo prima di qualsiasi mutazione. Post: credito per revisione monotona.
-Esaurimento rifiutato prima dei cambi; nessun wrap o reset dell'identità."
+  "Pre: exclusive writer before any mutation. Post: credit for monotonic revision.
+Exhaustion rejected before changes; no wrap or identity reset."
   (esigi-indice-sano index)
   (when (>= (indice-primario-revision index) (1- +revision-limit+))
     (error 'resource-exhausted :reason :primary-index-revision-exhausted))
@@ -53,14 +53,14 @@ Esaurimento rifiutato prima dei cambi; nessun wrap o reset dell'identità."
 ;;; REQ: REQ-IDX-001 REQ-IDX-007
 (declaim (ftype (function (u32 (integer 0 30)) fixnum) prefix-hash))
 (defun prefix-hash (high depth)
-  "Pre: metà alta del digest fidato a 64 bit. Post: DEPTH bit più alti, fixnum senza boxing u64."
+  "Pre: high half of the trusted 64-bit digest. Post: DEPTH highest bits, fixnum without u64 boxing."
   (ash high (- depth 32)))
 
 ;;; REQ: REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (octets integer integer) null) esigi-chiave))
 (defun esigi-chiave (key start end)
-  "Pre: span privato/immutabile per l'intera operazione. Post: chiave binaria di 1..65535 byte.
-Input/range invalidi rifiutati prima di mutazioni; nessuna decodifica o normalizzazione."
+  "Pre: private/immutable span throughout the operation. Post: binary key of 1..65535 bytes.
+Invalid input/range rejected before mutations; no decoding or normalization."
   (check-range key start end)
   (unless (<= 1 (- end start) 65535) (error 'invalid-argument :reason :primary-key-length))
   nil)
@@ -68,8 +68,8 @@ Input/range invalidi rifiutati prima di mutazioni; nessuna decodifica o normaliz
 ;;; REQ: REQ-IDX-003 REQ-AFF-004
 (declaim (ftype (function (indice-primario frammento-indice) null) esigi-frammento-sano))
 (defun esigi-frammento-sano (index fragment)
-  "Pre: frammento canonico della Serie. Post: dominio e banco sani acquisiti.
-Un banco FAULTED rende terminale l'indice; riferimento esterno rifiutato senza mutazioni."
+  "Pre: canonical Serie fragment. Post: healthy domain and bank acquired.
+A FAULTED bank makes the index terminal; external reference rejected without mutations."
   (unless (eq index (frammento-indice-owner fragment))
     (error 'invalid-argument :reason :primary-fragment-owner))
   (esigi-indice-sano index)
@@ -81,5 +81,5 @@ Un banco FAULTED rende terminale l'indice; riferimento esterno rifiutato senza m
 ;;; REQ: REQ-IDX-001 REQ-AFF-004
 (declaim (ftype (function ((unsigned-byte 8)) boolean) controllo-valido-p))
 (defun controllo-valido-p (control)
-  "Pre: byte acquisito oppure writer esclusivo. Post: fingerprint 0..127, EMPTY o DELETED."
+  "Pre: acquired byte or exclusive writer. Post: fingerprint 0..127, EMPTY, or DELETED."
   (or (< control 128) (= control +ctrl-empty+) (= control +ctrl-deleted+)))

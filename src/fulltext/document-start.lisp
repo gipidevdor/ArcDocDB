@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text octets) null) controlla-alias-documento))
 (defun controlla-alias-documento (task input)
-  "Pre: tipi pubblici verificati. Post: input distinto dai byte analitici e del run.
-INVALID-ARGUMENT prima di resettare qualunque risultato precedente."
+  "Pre: public types verified. Post: input distinct from analysis and run bytes.
+INVALID-ARGUMENT before resetting any previous result."
   (when (or (eq input (a::spazio-full-text-bytes (preparazione-full-text-analysis task)))
             (eq input (r::indice-posizionale-bytes (preparazione-full-text-run task)))
             (eq input (cb::spazio-cbor-kinds (preparazione-full-text-cbor task)))
@@ -17,8 +17,8 @@ INVALID-ARGUMENT prima di resettare qualunque risultato precedente."
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (preparazione-full-text) null) azzera-run-documento))
 (defun azzera-run-documento (task)
-  "Pre: risultato precedente non piu posseduto da reader, task non in corso.
-Post: run/analisi privati iniziali; buffer non azzerati, contatori escludono dati residui."
+  "Pre: previous result no longer owned by reader, task not running.
+Post: initial private run/analysis state; buffers not zeroed, counters exclude residual data."
   (let ((run (preparazione-full-text-run task)) (analysis (preparazione-full-text-analysis task)))
     (setf (r::indice-posizionale-count run) 0 (r::indice-posizionale-byte-count run) 0
           (r::indice-posizionale-field-count run) 0 (r::indice-posizionale-state run) :building
@@ -33,10 +33,10 @@ Post: run/analisi privati iniziali; buffer non azzerati, contatori escludono dat
                 inizia-preparazione-full-text))
 (defun inizia-preparazione-full-text (task input start end row &key (max-work 268435456)
                                       (max-file-bytes 17179869184) (max-nodes 16777216))
-  "Pre: documento CBOR immutabile <=16MiB, ordinale fisico u32 proposto dal chiamante.
-Post: RUNNING, input prestato; il risultato precedente e invalidato solo dopo preflight.
-Task non condiviso, prestiti precedenti conclusi. INVALID-ARGUMENT per busy/tipi/alias;
-RESOURCE-EXHAUSTED per span; nessun WAL, riserva di Serie, commit o I/O."
+  "Pre: immutable CBOR document <=16MiB, u32 physical ordinal proposed by caller.
+Post: RUNNING, input borrowed; previous result invalidated only after preflight.
+Task not shared, previous loans ended. INVALID-ARGUMENT for busy/types/aliases;
+RESOURCE-EXHAUSTED for span; no WAL, Serie reservation, commit, or I/O."
   (unless (and (typep task 'preparazione-full-text) (typep input 'octets)
                (typep start 'index) (typep end 'index) (<= start end (length input)) (typep row 'u32)
                (typep max-work 'index) (plusp max-work) (typep max-file-bytes 'index) (plusp max-file-bytes)

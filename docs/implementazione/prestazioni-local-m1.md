@@ -6,7 +6,7 @@ local framing and strong acknowledgments retain ADR-0055/0056.
 
 Replace the client/server fixed 1 ms sleep with descriptor readiness. A private
 I/O poll array has at most nine slots (listener plus eight connections), eight
-bytes each. Client owns one slot. Descriptors are borrowed and never closed by
+bytes each. The client owns one slot. Descriptors are borrowed and never closed by
 the wait layer. Only macOS ARM64 and Linux x86-64 pollfd ABIs are admitted;
 all pinning/FFI is confined to I/O. Owner and reentry are checked before scratch
 writes; unwind cleanup releases the waiter on errors/nonlocal exits. No global
@@ -51,7 +51,7 @@ Re-run the exact earlier focused and GET component benchmark drivers on the
 new sources. Compare to [the recorded baseline](../../spikes/results/2026-10-31-local-index-bench/report.md)
 without changing its raw data or driver. Preserve runtime/backend, key/value
 sizes, request counts, three/five replicas, warmups, and oracle/timer costs.
-No claim of cache-cold throughput, peak RSS, concurrent M1 or power-loss follows.
+No claim of cache-cold throughput, peak RSS, concurrent M1 or power-loss qualification follows.
 
 Two C1 readings cover borrowed-FD ownership, bounded waits and deadline/error
 boundaries, then compiler/CPU gating, format compatibility and unchanged

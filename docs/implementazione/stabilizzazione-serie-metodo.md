@@ -40,7 +40,7 @@ Per-source semantic guards are reused.
 
 The `max-segmenti` budget is an `index`, zero allowed; it includes ACTIVE.
 Exceeding it produces `resource-exhausted` before scans. No per-source
-array, hash, or plan added: only cursor/count and short private names
+array, hash, or plan is added: only cursor/count and short private names
 from existing primitives. Copies and FFI may allocate on the cold path;
 this is neither an RSS budget nor a zero-heap promise.
 

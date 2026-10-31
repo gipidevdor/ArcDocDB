@@ -11,12 +11,12 @@
                                  (member nil :serie-busy :serie-lease-generation) &optional))
                 inizia-obbligo-pool))
 (defun inizia-obbligo-pool (dispatcher)
-  "Pre: owner corrente, worker CLAIMED e link associato IDLE, nessuna rientranza.
-Post: link corrente e token/fase/ragione originali di un solo begin del bridge.
-Binding prima del routing; writer busy conserva CLAIMED/link IDLE senza token;
-Serie busy/esaurita restituisce CLOSING/token da chiudere esplicitamente.
-Nessun gate, ACK, claim, ricircolo, pop, retry o cleanup; errori C1 propagati
-con capacita e causa conservate dai confini originali, senza fault marking C3."
+  "Pre: current owner, CLAIMED worker and associated IDLE link, no reentry.
+Post: current link and original token/phase/reason from one bridge begin.
+Binding before routing; writer busy preserves CLAIMED/IDLE link without token;
+busy/exhausted Serie returns CLOSING/token requiring explicit closure.
+No gate, ACK, claim, recycle, pop, retry, or cleanup; C1 errors propagated
+with capabilities and cause retained by original boundaries, without C3 fault marking."
   (let ((port (dispatcher-writer-pool-port dispatcher))
         (table (dispatcher-writer-pool-table dispatcher)))
     (%check-dispatcher-binding port table)

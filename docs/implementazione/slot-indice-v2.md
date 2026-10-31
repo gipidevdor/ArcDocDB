@@ -85,7 +85,7 @@ Return attests in-memory publication, without durability or commit.
 Reader: first sequence, rejection if odd, read barrier, fields,
 read barrier, second sequence. Only a stable sample is checked
 and copied. Stable inconsistency leads to `FAULTED` and `invariant-violation`;
-transient fields are not interpreted as corruption. Health acquired
+transient fields are not interpreted as corruption. Health is acquired
 before/after the read and after copy. On error or nonlocal exit, the
 caller discards the private result.
 
@@ -107,7 +107,7 @@ rechecks credit before the first store. Checks, already completed
 removals, and inapplicable relocations require no additional credit.
 
 Relocation: CSN, key-meta, length, and end remain identical; comparison
-and application serialized by the writer. A newer version or already
+and application are serialized by the writer. A newer version or already
 replaced location is not overwritten. The compaction message is looked up
 by key in the current root: it retains no slot or arena offset across
 split/rebuild. `expected` is associated with that current lookup before the
@@ -142,7 +142,7 @@ publication; freeze and retirement. No coverage claimed.
 
 Method established before checks: compile only `arcdocdb` with
 warnings as errors; lint, traceability, links, and catalogs. Original records
-and ARM64 disassembly of read/publication retained for static
+and ARM64 disassembly of read/publication are retained for static
 inspection, without calling the new module's functions. Rejections retained.
 
 The two local readings separately checked payload and protocol:
@@ -161,12 +161,12 @@ source and the correction's source are retained as data.
 
 The [dedicated campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-index-slots/README.md)
 has this scope. No functional, concurrent, fault injection,
-model, benchmark, or tool self-test added/executed
+model, benchmark, or tool self-test was added/executed
 locally. SPK-01's v1 code and measurements do not qualify v2 layout.
 
 C1 qualification, interleavings and x86-64 disassembly, allocation/P99,
 probing/arena/directory with shared budget, retention, recovery, and
-integrated writer remain. Whole-engine gate open. The two local
+integrated writer remain. The whole-engine gate is open. The two local
 code readings are not independent reviews.
 
 <a id="prove-successive--slot-v2"></a>

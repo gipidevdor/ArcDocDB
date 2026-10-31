@@ -5,7 +5,7 @@
 > Consolidated design document, the outcome of Phase 0. Combines decisions from the
 > [specification](specifica/specifica-originale.md) and [ADRs](adr/README.md) into one
 > coherent description, following the [design analysis](analisi-progettuale.md) of 2026-10-03
-> (ADR 0036–0045). In doubt, the specification and ADRs take precedence; this document cites
+> (ADR 0036–0045). If in doubt, the specification and ADRs take precedence; this document cites
 > them. Persistent formats are in [formati-su-disco.md](formati-su-disco.md).
 
 <a id="in-una-pagina"></a>
@@ -73,7 +73,7 @@ Ten laws underpin every mechanism ([ADR-0036](adr/0036-leggi-di-progetto.md),
 ## Parallelism
 
 Parallelism is the architecture's **foundational principle** (law 1, INV-P6): it is not
-added to a serial system, it is how state is divided. The unit of parallelism matches
+added to a serial system; it is how state is divided. The unit of parallelism matches
 the unit of state ownership, so the same division provides correctness (one writer)
 and parallelism.
 
@@ -81,7 +81,7 @@ and parallelism.
 |---|---|---|---|
 | Server | Archivio | each Archivio has its own CSN, horizon, coordinator, and log | nothing |
 | Archivio | Serie | writes, reads, flush, compaction, recovery | the [closed list](#archivio-coordinamento-minimo) |
-| Serie | reader, writer | readers with each other and relative to writer, without locks | mutations: one writer |
+| Serie | reader, writer | readers concurrently with each other and with the writer, without locks | mutations: one writer |
 | Write | request | parsing, validation, encoding, body CRC | version, copy, seal: in writer |
 | Log | batch | flushes of different logs; batches form during flush | one I/O task per log |
 | Compaction | segment | CLEAN and MERGE on different segments and Serie | EDIT and relocations: in writer |
@@ -214,8 +214,8 @@ body-crc                          copy into the open batch buffer,
                                   ◀── queued “durable through X” ─────────┘
                                   for each covered batch, in order:
                                   retain if threshold < csn, publish
-                                  in the index (seqlock), move CSN
-                                  out of the horizon, acknowledge clients
+                                  in the index (seqlock), retire the CSN
+                                  from the in-flight registry, acknowledge clients
 ```
 
 - A record is written **once**, to the `ACTIVE` segment ([ADR-0013](adr/0013-log-structured-segmento-active-come-log.md)).
@@ -309,7 +309,7 @@ posting to the exact hint; it does not change document records.
 
 - **CSN** per Archivio, taken at batch or decision closure; for every document,
   CSN order is version order (INV-M5).
-- **Visibility horizon** `H`: the largest CSN below which everything is published. A
+- **Visibility horizon** `H`: the largest CSN through which every commit is published or canceled. A
   snapshot is a number `s` and is created when `H ≥ s` (INV-M4): its view cannot change.
 - **Retained versions** for documents overwritten while a snapshot needs them,
   determined using the snapshot registry's `soglia`.
@@ -352,7 +352,7 @@ coordinator            writer A                 writer B              multiserie
     │                    OUTCOME record in batch
     │ OUTCOME(T, csn) ─────────────────────────▶ (same)
     │ ◀ applied ────── │ ◀ applied ──────────┘
-    │ csn out of the horizon; acknowledge client
+    │ retire csn from the in-flight registry; acknowledge client
     │ ◀ durable outcome (all) → T may be forgotten
 ```
 
@@ -416,7 +416,7 @@ Read-only on segments; idempotent because every effect is an atomicity point or 
      prepared records resolved with OUTCOME, manifest, or decision table;
    - **atomicity point**: compacted control log closing old `ACTIVE` at valid length,
      with outcomes, and opening the new one; rename.
-4. CSN = maximum observed + 1; horizon = CSN − 1; segment stabilization = end of
+4. Next CSN = maximum observed + 1; horizon = maximum observed; segment stabilization = end of
    recovery; `multiserie.log` rewritten with decisions for unopened Serie only.
 5. Open to traffic. Missing hints and indexes are regenerated in the background.
 

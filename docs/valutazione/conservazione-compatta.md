@@ -56,13 +56,13 @@ sbcl --script tools/read-evidence.lisp spikes/results/2026-10-08-lettura/spikes-
 
 The reader requires SBCL, `gzip`, and `shasum`. To obtain original bytes
 without interpreting them, decompress the payload with `gzip -dc`, then
-verify the size and SHA-256 declared in the descriptor. Function
+verify the size and SHA-256 declared in the descriptor. The function
 `arcdocdb.evidence:call-with-evidence-bytes` automates these checks.
 
 `record-command.lisp` and `run-spikes.lisp` automatically compact their own
 directory at run end, after the last write and outside measured windows.
-Record `conservazione.lisp` retains compactor argv, outcome, and stdout/stderr.
-On error, verification ends negatively and retains diagnostics and originals;
+The record `conservazione.lisp` retains compactor argv, outcome, and stdout/stderr.
+On error, verification fails and retains diagnostics and originals;
 it does not lose the command result.
 
 Already completed local results may also be compacted. First verify that no
@@ -123,12 +123,12 @@ Failed attempts remain in the
 [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-conservazione/catalogo.lisp): syntax
 error in the first control harness, heap exhaustion in the reader duplicating
 all text, and two errors in temporary publication tools. The corrected reader
-interprets reports directly from file; it no longer creates a full UTF-8
+interprets reports directly from the file; it no longer creates a full UTF-8
 string before parsing. Added checks also verify six-byte records, exact
 budget, and a plain file with tokens imitating a descriptor marker.
 Original diagnostics are not abbreviated in retained records.
 
-Importer `normalize-spike-report.lisp` uses the same reader for plain and
+The importer `normalize-spike-report.lisp` uses the same reader for plain and
 compressed input. Compatibility checking also verifies that `RESULT` and
 `STATUS`, added during import, remain in published plists; the previous
 iteration lost the new plist head. Six additional assertions compare results

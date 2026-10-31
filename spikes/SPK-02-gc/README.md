@@ -23,9 +23,9 @@ rate and number of active or semaphore-waiting workers affect them?
 - Default live payload: 128 MiB, configurable in bytes. Four layouts:
   `:heap-large`, `:heap-fragments`, `:heap-replacement`, and `:foreign`. First three
   use `(unsigned-byte 8)` arrays; foreign comparison uses
-  `sb-alien:make-alien`/`free-alien`, always with `unwind-protect`. Pages touched
+  `sb-alien:make-alien`/`free-alien`, always with `unwind-protect`. Pages are touched
   before measurement; last fragment may be smaller.
-- A controller is the sole intentional allocator: injects 64 KiB transient payloads
+- A controller is the sole intentional allocator: it injects 64 KiB transient payloads
   at requested aggregate rates of 0, 4 MiB/s, and 128 MiB/s. Reports actual bytes
   produced and observed rate, without assuming the requested rate was reached.
   A bounded ring retains recent payloads. In replacement cases, the controller
@@ -40,7 +40,7 @@ rate and number of active or semaphore-waiting workers affect them?
   configurations are declared: this is not a full factorial matrix.
 - Startup with mutex-protected state, ready/start semaphores, and running confirmation;
   cooperative stop, worker wakeup, and join of every thread including error paths.
-  Worker errors retained and propagated.
+  Worker errors are retained and propagated.
 - After warmup, separately measure requested collections with `(sb-ext:gc :gen 0)`
   and `(sb-ext:gc :full t)`, then an automatic-GC window. `:gen 0` may collect older
   generations too. Preserve and restore `sb-ext:bytes-consed-between-gcs`.
@@ -137,11 +137,11 @@ Local `out/` artifacts are Git-ignored.
 
 ## Result
 
-README written before execution. On 2026-10-08, SBCL 2.6.9, Darwin/ARM64,
+The README was written before execution. On 2026-10-08, SBCL 2.6.9, Darwin/ARM64,
 `--check` passed with warning/style-warning-free compilation. Fixtures verify
 quantiles/overflow, array contents and replacement, retention across GC, foreign
 release on error, barriers, stop/join, worker-error propagation, and counter
-distinctions. Runner also executed from `/tmp` with absolute path.
+distinctions. The runner was also executed from `/tmp` with absolute path.
 
 Only the short diagnostic ran with `--bench --live-mib=2
 --threads=1 --budget-ms=1000 --case-ms=10 --forced-samples=1`:

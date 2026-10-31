@@ -2,16 +2,16 @@
 
 # Reading CBOR strings — first C1 review
 
-Static reading by the cold-corpus owner on2026-10-15,
-distinct from the kernel author. Occurs after corpus and driver
+This static reading was performed by the cold-corpus owner on 2026-10-15,
+distinct from the kernel author. It occurs after corpus and driver
 freeze, before LOAD/COMPILE or campaigns of the new product.
-Reviewer does not consult the second review. Source examined:
+The reviewer does not consult the second review. Source examined:
 [cbor-string-read.lisp](../../src/codec/cbor-string-read.lisp), blob
 **d4a4f774c2264c46349e7eda61ee4a2a3118d742**. Preregistered method
 [cbor-stringa-lettura-metodo.md](cbor-stringa-lettura-metodo.md), blob
 `0b0fe8acea7677d34334d347d949901b3ae9698d`.
 
-No functional defect or open static finding identified in the
+No functional defect or open static finding was identified in the
 blob. Corpus and product are not modified by this reading.
 Strict compilation, lint, tests, heap, parallel times, coverage, and
 mutations remain pending. REQ-CBR-009 is still **designed** in the
@@ -27,13 +27,13 @@ This review does not close C1/MC/DC qualification or document limits.
 | 1. Requirements and ADRs | REQ-CBR-009, LIM-001/002, AFF-004/008, and INV-A5/A8/P6 consistent with ADR-0014/0024/0035/0048. Primitive reads only one minimal MT2/3 string and returns coordinates in the original buffer; document profile, normalization, and text conversion remain outside increment. |
 | 2. Invariants | Preflight checks range, budget domain, and entire window. Minimal header precedes MT2/3 type, HIGH and LOW fit precede addition; UTF8 count and three explicit boundary guards precede result. No buffer mutation or partial result. |
 | 3. Errors | Range→byte-limit→byte-budget→syntax/minimality→type→fit→UTF8 order respected. Offset NIL for preflight, START for type, END for CBOR truncation, and existing absolute offsets for UTF8. Complete length precedes UTF8 even when available bytes are already invalid. |
-| 4. Bounds | Preflight limits END−START to16MiB, including tail. Header at most9bytes; MT2 does not traverse payload, MT3 delegates UTF8 within LOW bytes. Zero new loops, recursion, waits, or retries. Addition only after HIGH=0 and LOW<=END−PAYLOAD-START. |
+| 4. Bounds | Preflight limits END−START to 16 MiB, including tail. Header at most 9 bytes; MT2 does not traverse payload, MT3 delegates UTF8 within LOW bytes. Zero new loops, recursion, waits, or retries. Addition only after HIGH=0 and LOW<=END−PAYLOAD-START. |
 | 5. Heap | Two functions with local variables, u32 words, and three multiple values only. No new arrays, cons, strings, closures, AST, or scratch on success. Wire u64 not reconstructed; actual sum remains index/fixnum. Zero heap still requires benchmark with zero baseline and positive control, without inferring it from static reading. |
 | 6. Verified data | Public FTYPE declares exactly MAJOR2/3, PAYLOAD-START index, NEXT index. Minimal header returns PAYLOAD-START; NEXT is arithmetic payload end. UTF8 receives that range, not window end. Empty payload allowed and tail ignored. |
-| 7. Compound decisions | Twelve explicit control predicates,11 ERROR sites, one AND with2operands,9 binary comparisons and0 chains/loops. Full inventory below, including keyword default and internal branches unreachable with correct callees. No exclusion or MC/DC attestation. |
+| 7. Compound decisions | Twelve explicit control predicates, 11 ERROR sites, one AND with 2 operands, 9 binary comparisons and 0 chains/loops. Full inventory below, including keyword default and internal branches unreachable with correct callees. No exclusion or MC/DC attestation. |
 | 8. Owner | OWNER/SHARED declare caller's stable buffer and concurrent reads only. No scratch, destination, mutable slot, or global state in product. Caller keeps buffer stable while using returned range too; simple u8 type excludes displaced backing in public arguments. |
-| 9. Integration | Package export line13; source ASDF after existing readers/headers, three corpus files lines182–183, RUN line270. Dedicated coverage selects only new file, one positive/four scope negatives and direct/aggregate codec RUN. Catalog009 designed without :cov; matrix still to regenerate, no trace/make check established. |
-| 10. Standard | Safety3, two complete FTYPEs, REQ, and Pre/Post/error docstrings. Two functions14/35lines and5/10paths under explicit convention below, within60/10, without deviations. Both have at least two meaningful checks. Warnings/style-warnings and lint still to be observed. |
+| 9. Integration | Package export line 13; source ASDF after existing readers/headers, three corpus files lines 182–183, RUN line 270. Dedicated coverage selects only new file, one positive/four scope negatives and direct/aggregate codec RUN. Catalog009 designed without :cov; matrix still to regenerate, no trace/make check established. |
+| 10. Standard | Safety 3, two complete FTYPEs, REQ, and Pre/Post/error docstrings. Two functions with 14/35 lines and 5/10 paths under explicit convention below, within 60/10, without deviations. Both have at least two meaningful checks. Warnings/style-warnings and lint still to be observed. |
 | 11. Parallelism | No new waits, threads, locks, or shared writes in kernel. Corpus with two reused real workers and one read-only buffer, distinct MT2/MT3 windows, two waves, first item verified before rendezvous, sinks/timestamps/timeouts/cleanup. Timings and overlap still to observe; no inference about cores or scaling. |
 | 12. Durability | Only bytes already in memory; no I/O, durable publication, or ownership transfer. Codec does not modify Serie; FAULTED handling for internal invariants remains at owner boundary. |
 
@@ -42,29 +42,29 @@ This review does not close C1/MC/DC qualification or document limits.
 ## Preflight, words, and boundaries
 
 `check-span-string-cbor-write`, reused only for range
-checking, reads or writes no bytes. Checks simple u8, START/END indices,
+checking, reads or writes no bytes. It checks simple u8, START/END indices,
 START<=END<=LENGTH and returns END−START, including zero. New
 preflight first checks index type and MAX-BYTES maximum, then
-SPAN<=MAX-BYTES; only then enters header reader.
-Thus `40 FF` with budget1 fails with byte-budget, and an empty
+SPAN<=MAX-BYTES; only then is the header read.
+Thus `40 FF` with budget 1 fails with byte-budget, and an empty
 window with invalid budget fails with byte-limit before truncation.
 
-Minimal reader propagates all header syntax before
-minimality. Then kernel checks MAJOR2/3 before fit: a minimal
+The minimal reader propagates all header syntax before
+minimality. Then the kernel checks MAJOR2/3 before fit: a minimal
 MT4 header with HIGH1 must produce string-type at START, without trying
 to fit an enormous payload length. For MT2/3, nonzero HIGH
 instead produces truncation at END; no u64 value is reconstructed.
 
 With HIGH0, LOW<=LIMIT−PAYLOAD-START is checked before addition.
-Header reader guarantees START<PAYLOAD-START<=LIMIT. Thus
+The header reader guarantees START<PAYLOAD-START<=LIMIT. Thus
 PAYLOAD-START+LOW<=LIMIT<=LENGTH and NEXT remains index/fixnum even
-with a high starting offset. LOW becomes at most16MiB before being passed
+with a high starting offset. LOW becomes at most 16 MiB before being passed
 as UTF8 budget; scalar count cannot exceed LOW.
 
 Only MT3 calls `verifica-utf8` on `[PAYLOAD-START,NEXT)`, with
-MAX-BYTES=LOW. For `61 C2` followed by80 in the tail, UTF8 remains
-truncated at payload NEXT:80 does not complete the sequence. `63 FF`
-with only two bytes in window is truncated at END before inspecting
+MAX-BYTES=LOW. For `61 C2` followed by 80 in the tail, UTF8 remains
+truncated at payload NEXT: 80 does not complete the sequence. `63 FF`
+with only two bytes in the window is truncated at END before inspecting
 FF as text. MT2 instead accepts even FF/C0 bytes and does not traverse
 the payload. Empty payload gives PAYLOAD-START=NEXT, allowed by guards.
 Only the three coordinates are returned after all checks.
@@ -74,7 +74,7 @@ Only the three coordinates are returned after all checks.
 ## Complete inventory of the new source
 
 DEFUN lines from first through final parenthesis inclusive, including
-docstrings/declarations. Syntactic paths: base1 plus each WHEN/UNLESS
+docstrings/declarations. Syntactic paths: base 1 plus each WHEN/UNLESS
 and each AND/OR operand after the first; no loop in the new file.
 These are not SB-COVER branches or an MC/DC measurement.
 
@@ -98,27 +98,27 @@ These are not SB-COVER branches or an MC/DC measurement.
 | D11 |57| PAYLOAD-START<=NEXT | True for nonnegative LOW; false prevented by types and correct addition. |
 | D12 |59| NEXT<=LIMIT | True after fit, false prevented by D6/D7 and correct addition. |
 
-D1 is the only compound decision, two operands. Static candidates:
-budget−1 against0 for index domain with counterfactual
-numeric comparison true; budget0 against16777217 for limit, with
-index domain true. Second operand not evaluated if first
+D1 is the only compound decision and has two operands. Static candidates:
+budget−1 against 0 for index domain with counterfactual
+numeric comparison true; budget 0 against 16777217 for limit, with
+index domain true. The second operand is not evaluated if the first
 is false. Corpus contains these cases but no pair has yet been
 executed: measured MC/DC or dynamic independence is not established.
 
-All ERROR sites retained: lines17(byte-limit),19(byte-budget),
-21(span invariant),42(form invariant),44(string-type),46 and48
-(truncation at END),54(count invariant),56(progress invariant),
-58(payload invariant), and60(range invariant). MAX-BYTES keyword default
-at line27 and all declarations remain in whatever denominator
+All ERROR sites are retained: lines 17 (byte-limit), 19 (byte-budget),
+21 (span invariant), 42 (form invariant), 44 (string-type), 46 and 48
+(truncation at END), 54 (count invariant), 56 (progress invariant),
+58 (payload invariant), and 60 (range invariant). MAX-BYTES keyword default
+at line 27 and all declarations remain in whatever denominator
 instrumentation produces; no exclusion.
 False guards prevented by correct preflight/callees are static
 obligations still present, without inventing nominal tests executing them.
 
 An inline READ-EVAL NIL/EOF reading, without product LOAD/COMPILE,
-confirms6forms,2DEFUN,9UNLESS/3WHEN,11ERROR,1AND/2operands,
-9 binary comparisons,0 chains, and0 loops. First inline command had
-an extra parenthesis in the counter only, before reading product;
-corrected variant passes. Both stdout/diagnostics exist only
+confirms 6 forms, 2 DEFUN forms, 9 UNLESS/3 WHEN, 11 ERROR sites, 1 AND/2 operands,
+9 binary comparisons, 0 chains, and 0 loops. The first inline command had
+an extra parenthesis in the counter only, before reading the product;
+the corrected variant passes. Both stdout/diagnostics exist only
 in conversation, not declared as local raw files.
 
 <a id="corpus-congelato-e-integrazione-letta"></a>
@@ -133,25 +133,25 @@ in conversation, not declared as local raw files.
 
 Cold plan `review/blind-plan.md` in ignored support, blob
 `ce5b075ef19b0fc0baa65e88bdbebf434172281f`, with full SHA256:
-17 nominal tests, **9906 expected calls**,690non-fuzz336/354,
-1024fuzz512/512,8192parallel;9040successes/866rejections.
+17 named tests, **9906 expected calls**: 690 non-fuzz calls (336/354),
+1024 fuzz calls (512/512), and 8192 parallel calls; 9040 successes/866 rejections.
 These are arithmetic denominators, not PASS results or runtime counters.
-No secondary scanner as oracle. Corpus READ before
-kernel:12/17/2forms,31total,17unique names; no product BODY present.
-Seed53545239, finalF8417639 recalculated cold and asserted.
+No secondary scanner is used as an oracle. Corpus READ before
+kernel: 12/17/2 forms, 31 total, 17 unique names; no product BODY is present.
+Seed 53545239 and final F8417639 were recalculated cold and asserted.
 
-Compared corpus includes all majors, widths and u64, MT2 with
-all256octets, valid/invalid UTF8 and offsets, precedence, every
+The compared corpus includes all majors, widths and u64, MT2 with
+all 256 octets, valid/invalid UTF8 and offsets, precedence, every
 header/payload truncation, physical ranges/backing, empty payload,
-complete16MiB/+1 budget, concatenated boundaries, ignored valid/malformed
+complete 16 MiB/+1 budget, concatenated boundaries, ignored valid/malformed
 tails, arity three, and immutable input. It was not changed.
 
-Parallel: one25byte buffer, END20; worker0 START7 expected2/8/12,
-worker1 START12 expected3/13/16; tokens41333/41509 and
-sinks84649984/85010432 per worker/wave. Two workers×two waves×2048
+Parallel: one 25-byte buffer, END 20; worker 0 START 7 expected 2/8/12,
+worker 1 START 12 expected 3/13/16; tokens 41333/41509 and
+sinks 84649984/85010432 per worker/wave. Two workers×two waves×2048
 calls, START/FIRST/END timestamps printed after verified work,
-rendezvous after first call, wait15s, join20s, and bounded
-cleanup. No scratch or common writable state in product.
+rendezvous after first call, waits bounded to 15s, joins bounded to 20s, and bounded
+cleanup. There is no scratch or common writable state in the product.
 
 Integration: package `3e31d60234585442baa5664be96a83915e034397`,
 ASDF `79f28d84f3b05bbbac6a0c2ce3aa9a3951f8e1ee`, coverage

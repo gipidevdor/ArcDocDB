@@ -23,9 +23,9 @@ added afterward. Originals are in the
 | Full repository check | [4000913331-command-73208-0](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-pool-worker-claim/processes/check-core/report.lisp) | OK, STABLE, exit 0 |
 
 Scheduler suite passes **53 named tests: 41 existing and 12 new**.
-Checks actually populated ready queue, growth/retirement on separate owners,
+The suite checks an actually populated ready queue, growth/retirement on separate owners,
 no polling while inactive, every non-IDLE state, inconsistent IDLE,
-invalid pool words, and CAS conflict. Confirms late request
+invalid pool words, and CAS conflict. It confirms that a late request
 allows the already authorized single claim to complete and applies at
 next IDLE. Bridge/full recycling retain leases, debt, and
 next-writer routing. Boundary FI is quiescent/declared;
@@ -35,7 +35,7 @@ Tools compile without warnings/style-warnings. Self-tests check
 separate oracles for all four new-API values, detect
 16777472 deliberate allocation bytes and wrong sinks, distinguish below-resolution
 clock, and preserve partial raw data/existing destinations.
-Original reader reused unchanged with explicit new scope;
+The original reader is reused unchanged with explicit new scope;
 its negative cases precede product measurement.
 
 Full check passes **1109 named product tests, two smoke
@@ -89,7 +89,7 @@ qualify concurrent coordinator.
 SBCL 2.6.9, ARM64, Apple M4, Darwin 27.0.0, safety 3, clock 1000000
 units per second. Every sample completes 4096 cycles with observed
 zero heap and exact sink: 8435712 EMPTY, 8468480 INACTIVE, 8574976 SWITCH.
-External load, including other verification processes, uncontrolled.
+External load, including other verification processes, is uncontrolled.
 Ticks define neither threshold, tuning, nor throughput conclusion.
 Observed zero heap does not demonstrate universal nonallocation.
 
@@ -106,7 +106,7 @@ preliminary raw data stay distinct from frozen originals.
 Preservation reuses verified C4 writers and explicitly declares
 generic manifest families. Component manifest identifies
 claim APIs/sources; legacy formats broaden no product scope.
-Only intermediate FASLs excluded from UTF-8 development sources.
+Only intermediate FASLs are excluded from UTF-8 development sources.
 
 Gate qualifies new logical acquisition. It changes no C1 sources, payloads,
 leases, or durable protocols; it implements neither complete dispatcher, startup, park/wake,
@@ -130,7 +130,7 @@ both additions.
 `4000913736-command-84415-0` passes strict compilation, 1109 named tests
 and two smokes, lint, and traceability: OK, STABLE, exit 0. Coverage,
 benchmark, or ten spikes of frozen copy are not retroactively
-attributed to merge. Final sources preserved separately.
+attributed to merge. Final sources are preserved separately.
 
 <a id="chiusura-della-conservazione"></a>
 

@@ -7,9 +7,9 @@
 (declaim (ftype (function (file-io) (values identity-component identity-component &optional))
                 leggi-identita-file))
 (defun leggi-identita-file (file)
-  "Pre: file aperto, backend nativo o callback identity presente, FD stabile.
-Post: due interi POSIX senza troncamento; nessuna mutazione del file o retry.
-IO-FAULT per syscall; INVARIANT-VIOLATION per risultato del callback fuori contratto."
+  "Pre: open file, native backend or identity callback present, stable FD.
+Post: two POSIX integers without truncation; no file mutation or retry.
+IO-FAULT for syscall; INVARIANT-VIOLATION for a callback result outside the contract."
   (handler-case
       (multiple-value-bind (device inode)
           (let ((backend (file-backend file)))
@@ -25,10 +25,10 @@ IO-FAULT per syscall; INVARIANT-VIOLATION per risultato del callback fuori contr
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-FOR-001
 (declaim (ftype (function (file-io file-io) associazione-file) associa-file))
 (defun associa-file (input append)
-  "Pre: controller esclusivo nel pool I/O, capacità readonly/append senza close concorrente.
-Post: associazione dello stesso file regolare, due fstat/callback al massimo, senza retry.
-INVALID-ARGUMENT per modo/backend/identità diversa; UNSUPPORTED-FORMAT senza callback.
-Rifiuti e guasti non chiudono o mutano le capacità; nessuna prova di CRC/commit/durability."
+  "Pre: exclusive controller in the I/O pool, readonly/append capabilities without concurrent close.
+Post: association of the same regular file, at most two fstat/callback calls, without retry.
+INVALID-ARGUMENT for mode/backend/different identity; UNSUPPORTED-FORMAT without callback.
+Rejections and faults do not close or mutate capabilities; no proof of CRC/commit/durability."
   (esigi-aperto input :input) (esigi-aperto append :append)
   (unless (eq (file-backend input) (file-backend append))
     (error 'invalid-argument :reason :io-identity-backend))
@@ -46,10 +46,10 @@ Rifiuti e guasti non chiudono o mutano le capacità; nessuna prova di CRC/commit
 ;;; REQ: REQ-AFF-001 REQ-FOR-001
 (declaim (ftype (function (file-io file-io) null) verifica-file-distinti))
 (defun verifica-file-distinti (left right)
-  "Pre: due capacità readonly aperte dello stesso backend, FD stabili nel pool I/O.
-Post: identità POSIX diverse, due fstat/callback; nessuna mutazione o retry.
-INVALID-ARGUMENT per backend/file alias; UNSUPPORTED-FORMAT senza callback identity.
-IO-FAULT/INVARIANT-VIOLATION propagano; non certifica namespace, CRC o durability."
+  "Pre: two open readonly capabilities with the same backend, stable FDs in the I/O pool.
+Post: different POSIX identities, two fstat/callback calls; no mutation or retry.
+INVALID-ARGUMENT for backend/file alias; UNSUPPORTED-FORMAT without identity callback.
+IO-FAULT/INVARIANT-VIOLATION propagate; does not certify namespace, CRC, or durability."
   (esigi-aperto left :input) (esigi-aperto right :input)
   (unless (eq (file-backend left) (file-backend right))
     (error 'invalid-argument :reason :io-identity-backend))
@@ -66,9 +66,9 @@ IO-FAULT/INVARIANT-VIOLATION propagano; non certifica namespace, CRC o durabilit
 ;;; REQ: REQ-AFF-001 REQ-FOR-001
 (declaim (ftype (function (associazione-file file-io file-io) null) verifica-associazione-file))
 (defun verifica-associazione-file (association input append)
-  "Pre: associazione creata nel pool I/O; il proprietario impedisce close concorrenti.
-Post: capacità esatte ancora aperte, confronto O(1), senza I/O/allocazioni esplicite.
-INVALID-ARGUMENT per sostituzione; IO-FAULT dopo close/fault, anche con riuso del numero FD."
+  "Pre: association created in the I/O pool; owner prevents concurrent closes.
+Post: exact capabilities still open, O(1) comparison, without I/O/explicit allocations.
+INVALID-ARGUMENT for replacement; IO-FAULT after close/fault, even with FD number reuse."
   (unless (and (eq input (associazione-file-input association))
                (eq append (associazione-file-append association)))
     (error 'invalid-argument :reason :io-association-capability))

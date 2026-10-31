@@ -3,16 +3,16 @@
 # Preallocated routing from writer to Serie
 
 C1 foundation for REQ-CON-001/002/004/005 and REQ-AFF-008;
-ADR-0005, ADR-0033, and ADR-0045. Routing connects writer already
-claimed from ready list to its [worker/Serie connection](worker-serie.md).
+ADR-0005, ADR-0033, and ADR-0045. Routing connects a writer already
+claimed from the ready list to its [worker/Serie connection](worker-serie.md).
 [Preregistered method](routing-worker-metodo.md), [decisions](routing-worker-decisioni.md),
 [review](routing-worker-revisione.md), and [results](routing-worker-risultati.md) delimit tests.
 
 Caller assigns immutable `routing-index` to writer at startup.
-Index local to registry, 0 to 65535; `NIL` preserves contract
+The index is local to the registry, 0 to 65535; `NIL` preserves contract
 of existing writers not using routing. No global counter
 assigns indexes. Registry has 1 to 65536 dense
-associations: writer in slot i must have index i. Registry controllers
+associations: writer in slot i must have index i. Registry controllers are
 distinct by EQ identity, so two writers do not represent same
 Serie in same registry. One logical association per Serie across
 different registries remains caller configuration precondition.
@@ -34,7 +34,7 @@ counted in startup memory budget: allowed maximum
 is not sizing recommendation.
 
 Selection uses CLAIMED writer's ordinal and one indexed access.
-Also checks writer EQ: a foreign writer with same number cannot
+It also checks writer EQ: a foreign writer with same number cannot
 accidentally select valid Serie. After full-ring recirculation,
 worker may have another writer; caller repeats selection on new
 CLAIMED, without retaining previous slice's connection as current.
@@ -44,21 +44,21 @@ object and creates neither new obligation nor second capability.
 Successful selection precedes `inizia-worker-serie`; pop, ack, closure, and
 recirculation use existing contracts. Routing does not consult controller
 health, preserving already-permitted I/O draining on
-FAULTED Serie. Transfers no lease and applies no payload.
+FAULTED Serie. It transfers no lease and applies no payload.
 
-Foreign owner rejected before boundary, without poisoning objects.
+A foreign owner is rejected before boundary, without poisoning objects.
 Incorrect worker phase remains ordinary rejection. Absent or out-of-table
 ordinal, foreign writer, inconsistent private table, or already-engaged
 connection are instead post-claim configuration/protocol defects:
 worker becomes FAULTED and retains writer, home, and obligation with
-original condition. No controller marked without its lease;
+original condition. No controller is marked without its lease;
 stopping and coordinating Archivio from diagnosis remains caller task.
-No automatic rollback, publication, handoff, or reuse promised.
+No automatic rollback, publication, handoff, or reuse is promised.
 
-Normal lookup O(1), without scans, hashing, allocations, shared
-writes, threads, waits, callbacks, or I/O. Construction separate from
-hot path and may use EQ hash to check distinct controllers.
+Normal lookup is O(1), without scans, hashing, allocations, shared
+writes, threads, waits, callbacks, or I/O. Construction is separate from
+the hot path and may use EQ hash to check distinct controllers.
 Bounded ready-list scan remains O(K), at most 64 partitions,
 already implemented by worker. Component implements neither pool,
 wake/park, admission, EWMA/AIMD adaptation, retirement, nor shutdown.
-Introduces no durable changes and does not qualify complete engine.
+It introduces no durable changes and does not qualify the complete engine.

@@ -50,8 +50,8 @@ through the reader's ACTIVE APIs.
    it verifies **only the new batch** in memory, including CRCs, SEAL, absolute
    position, count, and CSN. It copies ordinary PUT metadata into a
    private page. Tombstones occupy log and frontier without a PUT row.
-5. The wrapper adopts batch and new root with normal
-   `registra-commit-serie`, before I/O dispatch. It returns event,
+5. The wrapper adopts the batch and new root with normal
+   `registra-commit-serie`, before I/O dispatch. It returns the event,
    captured generation, and new planned root. It neither publishes nor
    acknowledges the client.
 6. Normal `pubblica-commit-serie` checks coverage and FIFO before
@@ -72,7 +72,7 @@ connection to the primary index remains to be completed.
 ## Persistent directory and work limits
 
 The directory has four levels, each with sixteen references, indexed
-by the four binary digits of a u16 rank. Pages follow physical batch
+by the four hexadecimal digits of a u16 rank. Pages follow physical batch
 order. An append copies four vectors and shares only immutable
 subgraphs. It does not recopy previous PUTs, reread the ACTIVE file, or
 retain a chain of previous roots. Old roots remain valid.
@@ -90,7 +90,7 @@ retain a chain of previous roots. Old roots remain valid.
 A maximum-case search may use all seventeen comparisons:
 convergence is also checked after the loop without requiring an
 eighteenth comparison. Offsets in header/SEAL/tombstone, outside frontier,
-or without a matching row **do not** mean document absent. They are failures
+or without a matching row **do not** mean the document is absent. They are failures
 of an already published location.
 
 <a id="memoria"></a>
@@ -107,7 +107,7 @@ controller backpressure/rotation; it produces neither wrap nor implicit growth.
 | PUT row | Six u32s, 24 bytes; absolute offset, size, flags, two CSN words and zero proof |
 | Directory node | Sixteen references, 128 bytes excluding Lisp header |
 | View with all 65,536 pages | 4,369 nodes, 559,232 bytes for directory |
-| Append preflight peak | Previous payload + `24 × nuovi PUT` + 512 bytes |
+| Append preflight peak | Previous payload + `24 × new PUTs` + 512 bytes |
 
 `payload-radice-get-attiva` counts rows and nodes reachable from a single
 view. The peak includes the previous view during construction and
@@ -137,7 +137,7 @@ instead uses the resolver for the root already captured under EBR, with
 publication and lifetime obligations declared in that contract.
 It checks source/root identity, directory geometry, and candidate through the
 common resolver. GET still checks record/cache CRC/key/CSN; the
-page does not replace physical data. Response stays private until copying and
+page does not replace physical data. The response stays private until copying and
 `concludi-get` with fresh time; external cleanup remains mandatory.
 Migration requires a new `avvia-get`, new epoch, and new acquisition.
 

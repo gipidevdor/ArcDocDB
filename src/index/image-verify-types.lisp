@@ -5,8 +5,8 @@
 
 ;;; REQ: REQ-IDX-010 REQ-LIM-003
 (defstruct (ispezione-immagine (:constructor %make-ispezione-immagine) (:copier nil))
-  "Pre: fonte e footer verificati. Post: scratch esclusivi senza insieme residente delle chiavi.
-Nessuna risorsa posseduta oltre la chiamata; callback fidata, input readonly e non rientro."
+  "Pre: verified source and footer. Post: exclusive scratch without resident key set.
+No resource owned beyond call; trusted callback, read-only input, and non-reentrancy."
   (file nil :type arcdocdb.io:file-io :read-only t)
   (seal nil :type sigillo-immagine :read-only t)
   (reader nil :type lettore-indice-pagine :read-only t)
@@ -20,8 +20,8 @@ Nessuna risorsa posseduta oltre la chiamata; callback fidata, input readonly e n
 
 ;;; REQ: REQ-IDX-010
 (defstruct (immagine-indice-verificata (:constructor %make-immagine-indice-verificata (file seal reader)) (:copier nil))
-  "Pre: tutte le pagine/entry e la fonte hanno superato la verifica. Post: capacita' readonly adottabile.
-File e namespace stabili prestati dal controller; non e' una decisione di catalogo o commit."
+  "Pre: all pages/entries and source passed verification. Post: adoptable read-only capability.
+Stable file and namespace borrowed from controller; not a catalog or commit decision."
   (owner sb-thread:*current-thread* :type sb-thread:thread :read-only t)
   (file nil :type arcdocdb.io:file-io :read-only t) (seal nil :type sigillo-immagine :read-only t)
   (reader nil :type lettore-indice-pagine :read-only t))
@@ -29,8 +29,8 @@ File e namespace stabili prestati dal controller; non e' una decisione di catalo
 ;;; REQ: REQ-IDX-010 REQ-LIM-003
 (declaim (ftype (function (ispezione-immagine page-number page-number octets) null) carica-pagina-ispezione))
 (defun carica-pagina-ispezione (work page generation target)
-  "Pre: riferimento locale canonico, scratch esclusivo. Post: una visita globale addebitata anche su hit.
-Esaurimento non equivale ad assenza; nessun I/O dopo esaurimento."
+  "Pre: canonical local reference, exclusive scratch. Post: one global visit charged even on hit.
+Exhaustion does not mean absence; no I/O after exhaustion."
   (when (zerop (ispezione-immagine-remaining work))
     (error 'arcdocdb.conditions:resource-exhausted :reason :index-image-visit-budget))
   (decf (ispezione-immagine-remaining work))

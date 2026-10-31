@@ -9,8 +9,8 @@
                          (values writer-programmabile (member :writer) index &optional))
                 %scambia-pronto))
 (defun %scambia-pronto (partition writer)
-  "Pre: guard corrente, ring pieno, obbligo unico. Post: testa al caller e WRITER
-in coda, count invariato. INVARIANT-VIOLATION per forma, capienza o testa invalida."
+  "Pre: current guard, full ring, unique obligation. Post: head to the caller and WRITER
+at the tail, count unchanged. INVARIANT-VIOLATION for invalid shape, capacity, or head."
   (%check-pronta partition)
   (unless (= (partizione-pronta-count partition) (partizione-pronta-capacity partition))
     (error 'invariant-violation :reason :ready-recycle-full))
@@ -31,8 +31,8 @@ in coda, count invariato. INVARIANT-VIOLATION per forma, capienza o testa invali
                                  (member :published :writer) index &optional))
                 %ricircola-pronto))
 (defun %ricircola-pronto (partition writer)
-  "Pre: guard corrente e obbligo unico. Post: pubblicato, o testa e slot scambiati.
-INVARIANT-VIOLATION per ring o payload incoerenti; nessun rifiuto per ring pieno."
+  "Pre: current guard and unique obligation. Post: published, or head and slot exchanged.
+INVARIANT-VIOLATION for inconsistent ring or payload; no rejection for a full ring."
   (%check-pronta partition)
   (if (= (partizione-pronta-count partition) (partizione-pronta-capacity partition))
       (%scambia-pronto partition writer)
@@ -44,10 +44,10 @@ INVARIANT-VIOLATION per ring o payload incoerenti; nessun rifiuto per ring pieno
                                  (member :published :writer) index &optional))
                 ricircola-writer-pronto))
 (defun ricircola-writer-pronto (ready shard writer)
-  "Pre: obbligo :SCHEDULE unico e caller capace di prendere un altro writer.
-Post: NIL/:PUBLISHED/count se spazio; testa/:WRITER/capacity se pieno: nuovo
-obbligo al ring, testa al caller. INVALID-ARGUMENT shard/writer; RESOURCE-EXHAUSTED
-busy conserva obbligo. Invarianti fail-stop; nessun retry, attesa o deduplicazione."
+  "Pre: unique :SCHEDULE obligation and caller able to take another writer.
+Post: NIL/:PUBLISHED/count if room; head/:WRITER/capacity if full: new
+obligation to the ring, head to the caller. INVALID-ARGUMENT for shard/writer; RESOURCE-EXHAUSTED
+busy retains the obligation. Invariants require fail-stop; no retry, waiting, or deduplication."
   (let ((partition (%partizione-verificata ready shard)))
     (unless (typep writer 'writer-programmabile)
       (error 'invalid-argument :reason :ready-writer))

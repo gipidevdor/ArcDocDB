@@ -8,9 +8,9 @@
 (declaim (ftype (function (collegamento-worker-serie)
                          (member nil :serie-busy :serie-lease-generation)) %acquire-worker-serie))
 (defun %acquire-worker-serie (link)
-  "Pre: writer acquisito, bridge CLOSING con Serie lease0. Post: ACTIVE con
-Serie corrente, oppure CLOSING per busy/esaurimento senza alcun pop.
-Altri errori propagati; nessun gate healthy per permettere il drenaggio I/O."
+  "Pre: writer acquired, CLOSING bridge with Serie lease0. Post: ACTIVE with
+the current Serie, or CLOSING for busy/exhaustion without any pop.
+Other errors propagated; no healthy gate, allowing I/O draining."
   (%passo-worker-serie (link () ())
   (unless (eq (collegamento-worker-serie-state link) :closing)
     (error 'invariant-violation :reason :worker-serie-state))
@@ -34,10 +34,10 @@ Altri errori propagati; nessun gate healthy per permettere il drenaggio I/O."
                          (values index (member :active :closing)
                                  (member nil :serie-busy :serie-lease-generation) &optional)) inizia-worker-serie))
 (defun inizia-worker-serie (link)
-  "Pre: IDLE, worker CLAIMED del writer associato. Post: token nuovo e ACTIVE
-solo con entrambe le lease; seconda acquisizione rifiutata => CLOSING/token.
-Caller termina CLOSING prima del ricircolo, senza pop/retry dell'acquisizione.
-Binding/generation/fase controllati prima del begin; writer busy lascia IDLE."
+  "Pre: IDLE, CLAIMED worker for the associated writer. Post: new token and ACTIVE
+only with both leases; rejected second acquisition => CLOSING/token.
+Caller ends CLOSING before recycling, without pop/acquisition retry.
+Binding/generation/phase checked before begin; writer busy leaves IDLE."
   (%passo-worker-serie (link (:worker-serie-state :worker-state :worker-serie-generation :writer-queue-busy)
                             (:worker-serie-binding))
     (%require-worker-serie link '(:idle))
@@ -58,8 +58,8 @@ Binding/generation/fase controllati prima del begin; writer busy lascia IDLE."
 ;;; REQ: REQ-CON-002 REQ-AFF-008
 (declaim (ftype (function (collegamento-worker-serie t) index) lease-worker-serie))
 (defun lease-worker-serie (link token)
-  "Pre: ACTIVE, token del tratto corrente. Post: lease Serie per le API del controller.
-INVALID-ARGUMENT token; fase rifiutata prima di leggere Serie, invarianti delegate."
+  "Pre: ACTIVE, token for the current slice. Post: Serie lease for controller APIs.
+INVALID-ARGUMENT for token; phase rejected before reading Serie, invariants delegated."
   (%passo-worker-serie (link (:worker-serie-state) (:worker-serie-token))
     (%require-worker-serie link '(:active))
     (%check-token-worker-serie link token)
@@ -69,9 +69,9 @@ INVALID-ARGUMENT token; fase rifiutata prima di leggere Serie, invarianti delega
 (declaim (ftype (function (collegamento-worker-serie t t t t)
                          (values index (member :messages :empty :yield) index &optional)) preleva-worker-serie))
 (defun preleva-worker-serie (link token target start end)
-  "Pre: ACTIVE/token corrente, target privato. Post: batch sotto entrambe le
-lease, risultati e debito delegati al worker. Busy/span/alias rifiutati senza pop;
-token di tratto distinto da batch; errori inattesi conservati al confine."
+  "Pre: ACTIVE/current token, private target. Post: batch under both
+leases, results and debt delegated to worker. Busy/span/alias rejected without pop;
+slice token distinct from batch token; unexpected errors retained at boundary."
   (%passo-worker-serie (link (:worker-serie-state :worker-state :worker-generation :writer-queue-busy)
                             (:worker-serie-token :writer-target))
     (%require-worker-serie link '(:active))
@@ -81,9 +81,9 @@ token di tratto distinto da batch; errori inattesi conservati al confine."
 ;;; REQ: REQ-CON-002 REQ-CON-004 REQ-AFF-008
 (declaim (ftype (function (collegamento-worker-serie t t) null) conferma-worker-serie))
 (defun conferma-worker-serie (link token batch)
-  "Pre: ACTIVE/token e batch completamente applicato dal caller. Post: debito
-azzerato solo con token batch corrente; condizioni worker/token prima di mutare.
-Non verifica effetti esterni e non permette replay di un prefisso applicato."
+  "Pre: ACTIVE/token and batch fully applied by caller. Post: debt
+cleared only with current batch token; worker/token conditions checked before mutation.
+Does not verify external effects or permit replay of an applied prefix."
   (%passo-worker-serie (link (:worker-serie-state :worker-state) (:worker-serie-token :worker-batch))
     (%require-worker-serie link '(:active))
     (%check-token-worker-serie link token)
@@ -92,10 +92,10 @@ Non verifica effetti esterni e non permette replay di un prefisso applicato."
 ;;; REQ: REQ-CON-002 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (collegamento-worker-serie t) (member :idle :schedule)) termina-worker-serie))
 (defun termina-worker-serie (link token)
-  "Pre: ACTIVE senza batch, oppure CLOSING da ritentare; token corrente.
-Post: Serie rilasciata PRIMA di endwriter, IDLE locale e obbligo schedule al worker.
-Debito rifiutato prima della release; busy end conserva CLOSING e lease writer.
-Release fallita conserva token Serie; retry non ripete una release già riuscita."
+  "Pre: ACTIVE without batch, or CLOSING to retry; current token.
+Post: Serie released BEFORE endwriter, local IDLE and schedule obligation with worker.
+Debt rejected before release; busy end preserves CLOSING and writer lease.
+Failed release preserves Serie token; retry does not repeat a successful release."
   (%passo-worker-serie (link (:worker-serie-state :worker-state :writer-queue-busy) (:worker-serie-token))
     (%require-worker-serie link '(:active :closing))
     (%check-token-worker-serie link token)

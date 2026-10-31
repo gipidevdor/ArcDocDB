@@ -2,7 +2,7 @@
 
 # SPK-05 — first local campaign, 2026-10-08
 
-[Assessment](README.md) · [Method and code](../../spikes/SPK-05-segment-read/README.md)
+[Evaluation](README.md) · [Method and code](../../spikes/SPK-05-segment-read/README.md)
 
 > **Proposal** — Experimental comparison of reads from synthetic immutable files,
 > with CRC32C, key, and stamp validated. Does not attest to commit, visibility,
@@ -52,21 +52,21 @@ preserved; final compilation and loading produce no warnings.
 
 The fixture uses PUT v2, zero flags, u64 key, and stamp derived from record
 number. Body is not CBOR. The validator checks header before
-interpreting lengths, then body, key, and stamp before returning range.
+interpreting lengths, then body, key, and stamp before returning the range.
 CRC neither makes corruption impossible nor covers errors with consistent CRCs.
 
 <a id="confronto-locale"></a>
 
 ## Local comparison
 
-File of **8192 records of 2048 bytes, 16 MiB**. Three replicas, 1/2/4 workers,
+File of **8192 records of 2048 bytes, 16 MiB**. Three replicates, 1/2/4 workers,
 deterministic random access and disjoint sequential scans, alternating
 method order. **36 cases** complete **294,912 validated reads**,
 576 MiB of records read; process lasts **3.897763 s**, including compilation,
 checks, preparation, and output. Individual case times delimit only reading,
 validation, and sampling between first worker start and last completion.
 
-Median throughput of three replicas, with minimum–maximum range:
+Median throughput of three replicates, with minimum–maximum range:
 
 | Access | Workers | pread, k records/s | mmap, k records/s |
 |---|---:|---:|---:|
@@ -88,7 +88,7 @@ variant. External load is uncontrolled.
 
 ## Allocations and variants
 
-Separate measurement uses only the controller thread, buffer and plan already
+The separate measurement uses only the controller thread, buffer and plan already
 prepared, full warmup, and no per-operation timing sample. The
 `get-bytes-consed` delta is read before creating the report.
 
@@ -100,7 +100,7 @@ prepared, full warmup, and no per-operation timing sample. The
 
 The second variant does not resolve allocation. Generated code shows
 a 16-byte SAP object materialized before choosing native or
-callback branch. Forming it separately in the used branch eliminates observed delta
+callback branch. Forming it separately in the used branch eliminates the observed delta
 in the final sample. Short reads, EINTR, budgets, return checks, and
 injections remain in the same loop, with `safety 3`.
 
@@ -119,12 +119,12 @@ thread startup, warmup, controller, and join, and are reported separately.
 
 The file is newly generated and reread; dataset and page cache remain small,
 without eviction control. Measurements do not cover cold-cache NVMe GETs,
-beyond-RAM datasets, own cache, loss of cache warmth after CLEAN/MERGE,
+beyond-RAM datasets, the engine's own cache, loss of cache warmth after CLEAN/MERGE,
 memory retained by epochs, or injected page faults. RSK-10 remains open;
 RSK-16 receives this limited primitive evidence without closing other
 primitives or Linux x86-64 verification.
 
-Each worker owns fd, buffer, plan, and samples. There are no shared
+Each worker owns its fd, buffer, plan, and samples. There are no shared
 writes per read; read-only mappings and controller ports concern only
 the experiment. Syscalls are blocking, exclusively in this I/O test's
 workers. Timeout and attempt limit are diagnostic:

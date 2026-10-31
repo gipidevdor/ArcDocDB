@@ -11,7 +11,7 @@
 Do protocols preserve data and visibility in the small explored states, including
 when the process stops between steps? A Common Lisp explorer visits distinct states
 breadth-first and retains the shortest path to a violation. Transitions are pure;
-state limit is explicit. The oracle reads durable facts separately from process actions.
+the state limit is explicit. The oracle reads durable facts separately from process actions.
 
 Models: horizon ring, multiseries decision and rotation, EDIT and reclaim,
 snapshot registration, seqlock, batches and durable frontier, tombstones and
@@ -33,11 +33,11 @@ The suite also integrates six modules with preregistered methods:
 sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --check SPK-07
 ```
 
-Code compiled with `safety 3`; warnings and style-warnings stop execution.
-Harness retains a schema-1 plist with command, environment, revision,
+Code is compiled with `safety 3`; warnings and style-warnings stop execution.
+The harness retains a schema-1 plist with command, environment, revision,
 before/after source hashes, decoded results, original output, and failures.
-Result contains counts, model sizes, and counterexamples. No randomness;
-orders do not depend on clock. Compiled files go to Git-ignored `out/`.
+The result contains counts, model sizes, and counterexamples. No randomness;
+orders do not depend on the clock. Compiled files go to Git-ignored `out/`.
 An individual test uses `run-module.lisp nome-modello` through
 `tools/record-command.lisp`, as described in the barrier method.
 
@@ -48,10 +48,10 @@ An individual test uses `run-module.lisp nome-modello` through
 - Atomic transitions and sequentially consistent memory are model assumptions;
   this is not a proof of ARM64 barriers or SBCL machine code.
 - Base-model batches are logical entities with validity already determined.
-  Byte extension uses real verifier on independent fixtures; acknowledged frontier
+  The byte extension uses the real verifier on independent fixtures; the acknowledged frontier
   is an explicit external fact, not an algorithm discovering it after damage.
 - Two participants, one transfer, two snapshot versions, and finite CSNs;
-  result does not prove arbitrary configurations.
+  the result does not prove arbitrary configurations.
 - Scenarios correspond abstractly to FI-01…FI-13; they replace neither engine
   fault injection nor real filesystem crashes.
 - Phase-0 gate remains open: a complete architectural weak-memory model with
@@ -59,7 +59,7 @@ An individual test uses `run-module.lisp nome-modello` through
   and engine fault injection remain pending. Publication, expiration, ACTIVE
   writer, bytes, and SC readers are covered only in their methods' finite domains.
 - Base tombstone model assumes an exact filter without false negatives and keeps
-  no active snapshots; compaction extension adds one snapshot and conservative
+  no active snapshots; compaction extension adds one snapshot and a conservative
   ‘possibly’ filter without proving concrete MERGE admission policy.
 
 <a id="ambiente-e-risultato"></a>
@@ -88,7 +88,7 @@ already completed commits; reproducible path is retained in `check` output and
 pending commits passes the model; distance-based alternative passes 23 states and
 32 transitions but consumes its window for already finished commits too.
 
-Three additional negative controls detected: forgetting decision before durable
+Three additional negative controls are detected: forgetting a decision before durable
 outcomes, reclaim with active references, read without seqlock validation.
 Registration without publishing threshold also loses a snapshot's needed version.
 Positive results depend on assumptions declared above.
@@ -107,8 +107,8 @@ Positive results depend on assumptions declared above.
 | Byte-level crashes v1/v2 | 49,120 cases, 655,997 recoveries, 303,432 interruptions/restarts; inputs unchanged | 3 |
 
 Publication also retains three explorations of generation-mutant histories and
-four reachability witnesses. Omitting root recheck violates generation contract
-in the model, but explored histories remain linearizable: result does not claim
+four reachability witnesses. Omitting root recheck violates the generation contract
+in the model, but explored histories remain linearizable: the result does not claim
 loss of linearizability.
 
 Expiration distinguishes snapshot pins from already admitted accesses' epochs.
@@ -131,7 +131,7 @@ retains original output. No engine requirement is promoted to verified based
 solely on models.
 
 The [new integrated verification](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-avanzamento/integrated-check.lisp)
-includes six modules and SPK-08. Byte campaign also retains five semantic SEAL
+includes six modules and SPK-08. The byte campaign also retains five semantic SEAL
 checks with repaired CRCs and the unwitnessed-final-flush witness: identical bytes
 can represent a tail or acknowledged damage depending on external frontier proof.
 All attempts and limits are in the

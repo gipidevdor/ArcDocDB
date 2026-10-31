@@ -26,11 +26,11 @@ already said: measure before adding complexity.
 
 ## Decision
 
-1. **Contract.** The cache is a partial function `(segment-id, offset) → byte del record`.
+1. **Contract.** The cache is a partial function `(segment-id, offset) → record bytes`.
    Only two operations: *lookup* (copy to the caller's buffer, or *miss*) and *insert*.
    **There is no** invalidation, retagging, or per-segment clearing. Since a
    segment-id is never reused ([ADR-0040](0040-manifest-a-record-unico.md)), an entry cannot
-   become false: at worst it becomes useless, and CLOCK evicts it.
+   become incorrect: at worst it becomes useless, and CLOCK evicts it.
 2. **The system is correct without the cache** (INV-A12). With a zero budget, every read goes
    to the segment. The cache appears in no protocol: neither compaction, reclamation,
    nor recovery.
@@ -65,7 +65,7 @@ physical position (block cache for immutable files).
 
 ## Consequences
 
-- The cache leaves the set of components that can compromise consistency: a defect in it
+- The cache is excluded from the set of components that can compromise consistency: a defect in it
   produces at most a *miss* or a reread. Its policy (CLOCK, budget) is
   class C3; the copy and verification path remains C1.
 - Compaction and the writer do not touch the cache.

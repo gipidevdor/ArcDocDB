@@ -39,7 +39,7 @@ are preserved in commit `9ca79617`; production branch ends at
 
 ## Limits
 
-Verification local on macOS ARM64 and does not qualify Linux, power loss,
+Verification is local on macOS ARM64 and does not qualify Linux, power loss,
 MC/DC, or performance. Earlier results retain their own revision
 and scope; merge does not close still-open functional gates.
 
@@ -49,9 +49,9 @@ and scope; merge does not close still-open functional gates.
 
 Independent review confirmed union of ASDF, catalog,
 self-checks, and coverage limits, without loss of either parent's code.
-Found obsolete listener/client reference in roadmap:
-corrected by distinguishing available M1 profile from extended M16 contract.
-No tests run by agents; reviewer closed before runs.
+It found an obsolete listener/client reference in the roadmap,
+which was corrected by distinguishing available M1 profile from extended M16 contract.
+No tests were run by agents; the reviewer closed before the runs.
 
 <a id="esito-dellintegrazione"></a>
 
@@ -68,11 +68,11 @@ in suite checked 74 processes and four SIGKILLs, in v1/v2 formats.
 preserves records, test inventory and events, logs, and original data.
 Common collection verified closed inventory; only after byte
 and hash comparison were session fixtures and private caches removed.
-Earlier archives unchanged. Collection receipts, final
-checks, and cleanup preserved separately, without an infinite chain
+Earlier archives are unchanged. Collection receipts, final
+checks, and cleanup are preserved separately, without an infinite chain
 of receipts containing their own creation command.
 
 This annotation and README follow runs; product code,
-tests, tools, and ASDF unchanged from verified merge.
-Links, trace, and ref inclusion checked again before
+tests, tools, and ASDF are unchanged from verified merge.
+Links, trace, and ref inclusion were checked again before
 committing evidence and pushing.

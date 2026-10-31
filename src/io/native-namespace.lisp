@@ -22,9 +22,9 @@
 (declaim (ftype (function (fd string) (values identity-component identity-component &optional))
                 native-entry-identity))
 (defun native-entry-identity (directory name)
-  "Pre: directory posseduta, nome foglia ASCII stabile. Post: identità del file regolare senza symlink.
-Una fstatat, errno immediato; stat locale dal runtime SB-POSIX, nessun nuovo FD.
-SYSCALL-ERROR/IO-FAULT/UNSUPPORTED-FORMAT propagano senza retry o mutazione del namespace."
+  "Pre: owned directory, stable ASCII leaf name. Post: regular-file identity without symlinks.
+One fstatat, immediate errno; local stat from SB-POSIX runtime, no new FD.
+SYSCALL-ERROR/IO-FAULT/UNSUPPORTED-FORMAT propagate without retry or namespace mutation."
   (unless (= sb-vm:n-word-bits 64) (error 'unsupported-format :reason :io-abi))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
   #+(or darwin linux)
@@ -41,9 +41,9 @@ SYSCALL-ERROR/IO-FAULT/UNSUPPORTED-FORMAT propagano senza retry o mutazione del 
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-REC-001
 (declaim (ftype (function (fd simple-base-string simple-base-string) integer) native-replace))
 (defun native-replace (directory source target)
-  "Pre: nomi privati validati, namespace posseduto fino al termine. Post: una renameat, nessun fsync.
-Punto di atomicità POSIX: rinomina; decisione autorevole e durability rimangono al caller.
-SYSCALL-ERROR con errno immediato, senza retry/rollback; entrambe le foglie nello stesso parent."
+  "Pre: validated private names, namespace owned until completion. Post: one renameat, no fsync.
+POSIX atomicity point: rename; authoritative decision and durability remain with caller.
+SYSCALL-ERROR with immediate errno, without retry/rollback; both leaves in same parent."
   (unless (= sb-vm:n-word-bits 64) (error 'unsupported-format :reason :io-abi))
   #-(or darwin linux) (error 'unsupported-format :reason :io-platform)
   #+(or darwin linux)

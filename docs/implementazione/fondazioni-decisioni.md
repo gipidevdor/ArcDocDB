@@ -19,7 +19,7 @@ REQ in their name. This table alone does not certify MC/DC coverage.
 | `check-outcome`: end, type, low/high TXID, CSN | valid test; end beyond record; PUT type; separate changes to each TXID and CSN word with repaired CRCs: `REQ-FOR-004-prepared-outcome`, `REQ-FOR-004-outcome-provenance-fields`, `REQ-FOR-004-u64-both-words` |
 | `verifica-put`: end, type, flags, key | valid case and individual mismatches: `REQ-AFF-002-index-identity`, `REQ-LIM-001-semantic-boundaries` |
 | `check-seal`: file, start, frontier, count, checksum | each field mutated, with valid header/body CRCs: `REQ-FOR-003-batch-seal-semantic-corruption` |
-| `verifica-lotto`: record count, bytes, u64 offset, file-id per log | each guard rejected separately; segment with ID, control/multiserie with zero: `REQ-LIM-003-batch-budgets`, `REQ-FOR-003-sealed-batches` |
+| `verifica-lotto`: record count, bytes, u64 offset, file-id per log | each guard rejected separately; segment with ID, control/multiseries with zero: `REQ-LIM-003-batch-budgets`, `REQ-FOR-003-sealed-batches` |
 | `verifica-lotto`: known and different stamp, at end and in batch | uniform stamp; disagreeing record; TXID different from SEAL CSN: `REQ-FOR-003-batch-stamp-and-type`, `REQ-FOR-004-batch-txid-independent-of-seal-csn` |
 | `verifica-lotto`: ordinary PUT/TOMBSTONE/EDIT | every type allowed; prepared PUT/TOMBSTONE excluded from comparison; OUTCOME and DECISION excluded: `REQ-FOR-003-sealed-batches`, `REQ-FOR-004-batch-txid-independent-of-seal-csn` |
 
@@ -31,7 +31,7 @@ REQ in their name. This table alone does not certify MC/DC coverage.
   defensive postcondition. External bytes cannot reach the error branch after
   `checked-header`; an internal defect produces `invariant-violation`.
 - `verifica-lotto`: after `max-records + 1` iterations, every normal path has already returned
-  SEAL or rejected budget. Loop tail signals `invariant-violation`.
+  SEAL or rejected the budget. The loop tail signals `invariant-violation`.
 - `check-value-shape`: unexpected default is internal; unknown types are rejected
   earlier by `allowed-flags`.
 - Unexecuted definitions, proclamations, and inline copies appear in

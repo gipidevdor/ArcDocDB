@@ -755,7 +755,7 @@ The same scheduler must coordinate load from:
 
 ## DYNAMIC COMPACTION SCHEDULER
 
-The Compaction Scheduler must have limits independent of the normal request scheduler.
+The Compaction Scheduler must have limits independent of those of the normal request scheduler.
 
 It must be able to:
 
@@ -898,7 +898,7 @@ After a crash:
 
 Compaction operations must be crash-safe.
 
-A new segment must not become visible as definitive before its data are durable.
+A new segment must not become visible as final before its data are durable.
 
 An incomplete atomic swap must be identifiable during recovery.
 

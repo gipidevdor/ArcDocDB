@@ -7,8 +7,8 @@
 (defstruct (costruttore-pagine (:constructor %make-costruttore-pagine
                                (domain size sink preflight seed-high seed-low max-pages offset body buffer plan external heads))
                               (:copier nil))
-  "Pre: factory, risorse private e sink fidato. Post: sequenza append-only limitata.
-Nessun commit o root pubblicata; un effetto incompleto rende FAULTED senza riuso degli offset."
+  "Pre: factory, private resources, trusted sink. Post: bounded append-only sequence.
+No commit or published root; incomplete effect causes FAULTED without offset reuse."
   (owner sb-thread:*current-thread* :type sb-thread:thread :read-only t)
   (domain nil :type identita-pagina :read-only t)
   (size 4096 :type (member 4096 16384 65536) :read-only t)
@@ -27,8 +27,8 @@ Nessun commit o root pubblicata; un effetto incompleto rende FAULTED senza riuso
 
 ;;; REQ: REQ-IDX-001 REQ-IDX-009
 (defstruct (entry-costruzione (:constructor %make-entry-costruzione (owner key high low csn location bytes)) (:copier nil))
-  "Pre: factory validata. Post: chiave copiata e candidato ordinario immutabile.
-Nessun record viene dichiarato committed da questa struttura; autorita' del chiamante."
+  "Pre: validated factory. Post: copied key and immutable ordinary candidate.
+No record declared committed by this structure; caller's authority."
   (owner nil :type costruttore-pagine :read-only t) (key #() :type octets :read-only t)
   (high 0 :type u32 :read-only t) (low 0 :type u32 :read-only t)
   (csn 1 :type u64 :read-only t) (location 0 :type u64 :read-only t) (bytes 0 :type u32 :read-only t))
@@ -36,8 +36,8 @@ Nessun record viene dichiarato committed da questa struttura; autorita' del chia
 ;;; REQ: REQ-IDX-009 REQ-LIM-003
 (defstruct (riferimento-costruito (:constructor %make-riferimento-costruito
                                   (owner identity kind count ceiling high-and high-or low-and low-or)) (:copier nil))
-  "Pre: tutte le pagine del sottoinsieme consegnate al sink. Post: prova locale con sintesi digest.
-Non prova flush, unicita' globale o visibilita' MVCC; non conserva i figli o le chiavi."
+  "Pre: all subset pages delivered to sink. Post: local proof with digest summary.
+Does not prove flush, global uniqueness, or MVCC visibility; retains no children or keys."
   (owner nil :type costruttore-pagine :read-only t) (identity nil :type identita-pagina :read-only t)
   (kind :bucket :type (member :bucket :directory) :read-only t)
   (count 0 :type index :read-only t) (ceiling 0 :type (integer 0 64) :read-only t)

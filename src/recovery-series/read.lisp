@@ -7,9 +7,9 @@
 (declaim (ftype (function (control-recuperato recovery-sources index decisioni-recuperate octets
                           limiti-recovery-serie) active-recuperato) recupera-active-serie))
 (defun recupera-active-serie (control sources position decisions scratch limits)
-  "Pre: insieme preflight completo, POSITION è l'ACTIVE, pool I/O e scratch esclusivo.
-Post: ACTIVE canonico con lo stesso replay decisioni e EOF del FD acquisito; nessun buffer trattenuto.
-Riga incoerente INVARIANT-VIOLATION; condizioni del reader propagate senza retry o close."
+  "Pre: complete set preflight, POSITION is ACTIVE, I/O pool and exclusive scratch.
+Post: canonical ACTIVE with the same decision replay and acquired FD's EOF; no buffer retained.
+Inconsistent row INVARIANT-VIOLATION; reader conditions propagate without retry or close."
   (multiple-value-bind (id state form file size) (fonte-recovery sources position)
     (declare (ignore form)) ; metadata del nome; riconciliazione fisica esterna.
     (unless (and (eq state :active) (= id (segmento-attivo (manifest-control-recuperato control))))
@@ -24,9 +24,9 @@ Riga incoerente INVARIANT-VIOLATION; condizioni del reader propagate senza retry
 (declaim (ftype (function (control-recuperato recovery-sources index octets limiti-recovery-serie)
                          arcdocdb.recovery.closed:closed-recuperato) recupera-closed-serie))
 (defun recupera-closed-serie (control sources position scratch limits)
-  "Pre: insieme preflight completo, POSITION è CLOSED, scratch riusabile e capacità readonly vive.
-Post: prefisso e prepared risolti dal reader CLOSED canonico; nessuna coda oltre P letta.
-INVARIANT-VIOLATION per riga cambiata; condizioni originali propagate, FD ancora del proprietario del set."
+  "Pre: complete set preflight, POSITION is CLOSED, reusable scratch and live read-only capabilities.
+Post: prefix and prepared records resolved by the canonical CLOSED reader; no tail beyond P read.
+INVARIANT-VIOLATION for a changed row; original conditions propagate, FD still owned by the set's owner."
   (multiple-value-bind (id state form file size) (fonte-recovery sources position)
     (declare (ignore form size)) ; nome al planner; EOF già confrontato con P nel preflight completo.
     (unless (eq state :closed) (error 'invariant-violation :reason :series-recovery-closed-entry))

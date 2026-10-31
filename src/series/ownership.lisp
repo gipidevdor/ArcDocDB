@@ -6,8 +6,8 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (controllore-serie (member :serie :archive)) null) %mark-fault))
 (defun %mark-fault (controller scope)
-  "Pre: proprietario o cleanup del suo effetto. Post: fault terminale, scope mai ridotto.
-Non elimina dati, non risolve token e non riapre log; nessun errore ordinario."
+  "Pre: owner or cleanup of its effect. Post: terminal fault, scope never reduced.
+Does not delete data, resolve tokens, or reopen logs; no ordinary error."
   (if (eq scope :archive)
       (setf (controllore-serie-state controller) :archive-faulted)
       (case (sb-ext:compare-and-swap (controllore-serie-state controller) :healthy :faulted)
@@ -20,16 +20,16 @@ Non elimina dati, non risolve token e non riapre log; nessun errore ordinario."
 ;;; REQ: REQ-AFF-001 REQ-AFF-004
 (declaim (ftype (function (controllore-serie keyword) nil) %serie-invariant))
 (defun %serie-invariant (controller reason)
-  "Pre: invariante interna falsa. Post: Serie FAULTED, ambito Archivio, condizione propagata.
-Non promette rollback; il coordinatore deve fermare l'Archivio e conservare il contesto."
+  "Pre: false internal invariant. Post: Serie FAULTED, Archivio scope, condition propagated.
+No rollback promised; the coordinator must stop the Archivio and preserve the context."
   (%mark-fault controller :archive)
   (error 'invariant-violation :reason reason))
 
 ;;; REQ: REQ-AFF-008 REQ-CON-002
 (declaim (ftype (function (controllore-serie) null) %check-ring))
 (defun %check-ring (controller)
-  "Pre: lease o costruzione esclusiva. Post: cursori e contatori entro capacità.
-INVARIANT-VIOLATION rende FAULTED prima di usare un indice incoerente."
+  "Pre: lease or exclusive construction. Post: cursors and counters within capacity.
+INVARIANT-VIOLATION makes the Serie FAULTED before using an inconsistent index."
   (let ((capacity (length (controllore-serie-slots controller))))
     (unless (and (<= 1 capacity +max-serie-commits+)
                  (< (controllore-serie-head controller) capacity)
@@ -47,8 +47,8 @@ INVARIANT-VIOLATION rende FAULTED prima di usare un indice incoerente."
 (declaim (ftype (function (controllore-serie index index) index) %position-after)
          (ftype (function (controllore-serie) null) %check-geometry))
 (defun %position-after (controller position amount)
-  "Pre: position nel ring, amount al più capacity. Post: somma modulo capacità.
-Due limiti verificati prima della somma<=2047; invarianti => FAULTED."
+  "Pre: position in the ring, amount at most capacity. Post: sum modulo capacity.
+Two limits checked before the sum<=2047; invariant failures => FAULTED."
   (let ((capacity (length (controllore-serie-slots controller))))
     (unless (< position capacity) (%serie-invariant controller :serie-ring))
     (unless (<= amount capacity) (%serie-invariant controller :serie-count))
@@ -57,8 +57,8 @@ Due limiti verificati prima della somma<=2047; invarianti => FAULTED."
 
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-MVC-008
 (defun %check-geometry (controller)
-  "Pre: limiti di cursori/count già verificati. Post: tail=head+count e
-tail=publish-head+unresolved modulo capacità; nessuna lettura di slot non verificati."
+  "Pre: cursor/count limits already checked. Post: tail=head+count and
+tail=publish-head+unresolved modulo capacity; no unverified slot reads."
   (unless (= (controllore-serie-tail controller)
              (%position-after controller (controllore-serie-head controller) (controllore-serie-count controller)))
     (%serie-invariant controller :serie-ring-geometry))
@@ -71,8 +71,8 @@ tail=publish-head+unresolved modulo capacità; nessuna lettura di slot non verif
 ;;; REQ: REQ-CON-002 REQ-AFF-004
 (declaim (ftype (function (controllore-serie t) null) %check-owner))
 (defun %check-owner (controller lease)
-  "Pre: token del chiamante. Post: thread/generation correnti e ring valido.
-INVALID-ARGUMENT per lease vecchia/estranea; invarianti => FAULTED."
+  "Pre: caller's token. Post: current thread/generation and valid ring.
+INVALID-ARGUMENT for stale/foreign lease; invariant failures => FAULTED."
   (unless (and (typep lease 'index) (plusp lease)
                (= lease (controllore-serie-lease-generation controller))
                (eq (controllore-serie-owner controller) sb-thread:*current-thread*))
@@ -83,8 +83,8 @@ INVALID-ARGUMENT per lease vecchia/estranea; invarianti => FAULTED."
 ;;; REQ: REQ-CON-002 REQ-AFF-001
 (declaim (ftype (function (controllore-serie sb-thread:thread) null) %release-owner))
 (defun %release-owner (controller thread)
-  "Pre: THREAD possiede owner. Post: un CAS rilascia la capacità senza attesa.
-INVARIANT-VIOLATION su owner incoerente; nessun retry né liberazione di token."
+  "Pre: THREAD owns owner. Post: one CAS releases the capability without waiting.
+INVARIANT-VIOLATION for inconsistent owner; no retry or token release."
   (unless (eq (controllore-serie-owner controller) thread)
     (%serie-invariant controller :serie-owner))
   (unless (eq (sb-ext:compare-and-swap (controllore-serie-owner controller) thread nil) thread)
@@ -94,8 +94,8 @@ INVARIANT-VIOLATION su owner incoerente; nessun retry né liberazione di token."
 ;;; REQ: REQ-CON-002 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (controllore-serie) index) acquisisci-controllore-serie))
 (defun acquisisci-controllore-serie (controller)
-  "Pre: un nuovo tratto del writer. Post: lease del thread, generazione senza wrap.
-RESOURCE-EXHAUSTED per busy/esaurimento; un errore di acquisizione rilascia owner."
+  "Pre: new writer slice. Post: thread's lease, generation without wrap.
+RESOURCE-EXHAUSTED for busy/exhaustion; an acquisition error releases owner."
   (let ((thread sb-thread:*current-thread*) (committed nil))
     (unless (null (sb-ext:compare-and-swap (controllore-serie-owner controller) nil thread))
       (error 'resource-exhausted :reason :serie-busy))
@@ -113,8 +113,8 @@ RESOURCE-EXHAUSTED per busy/esaurimento; un errore di acquisizione rilascia owne
 ;;; REQ: REQ-CON-002 REQ-AFF-004
 (declaim (ftype (function (controllore-serie t) null) rilascia-controllore-serie))
 (defun rilascia-controllore-serie (controller lease)
-  "Pre: tratto finito, nessun effetto locale incompleto. Post: lease rilasciata.
-INVALID-ARGUMENT per lease; INVARIANT-VIOLATION per effetto rimasto in volo."
+  "Pre: slice finished, no incomplete local effect. Post: lease released.
+INVALID-ARGUMENT for lease; INVARIANT-VIOLATION for an effect still in flight."
   (%check-owner controller lease)
   (when (controllore-serie-effect-active controller)
     (%serie-invariant controller :serie-effect))
@@ -123,8 +123,8 @@ INVALID-ARGUMENT per lease; INVARIANT-VIOLATION per effetto rimasto in volo."
 ;;; REQ: REQ-AFF-001 REQ-WAL-006
 (declaim (ftype (function (controllore-serie) null) %require-healthy))
 (defun %require-healthy (controller)
-  "Pre: lease posseduta. Post: Serie e log sani prima di accettare/pubblicare.
-IO-FAULT terminale; un guasto noto del log viene riflesso nel controller."
+  "Pre: owned lease. Post: healthy Serie and log before acceptance/publication.
+Terminal IO-FAULT; a known log failure is reflected in the controller."
   (unless (eq (controllore-serie-state controller) :healthy)
     (error 'io-fault :reason :serie-faulted :operation :series))
   (unless (eq (stato-log (controllore-serie-log controller)) :open)
@@ -135,8 +135,8 @@ IO-FAULT terminale; un guasto noto del log viene riflesso nel controller."
 ;;; REQ: REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (controllore-serie) null) %begin-effect))
 (defun %begin-effect (controller)
-  "Pre: lease e precondizioni validate. Post: proprietà locale dell'effetto acquisita.
-INVARIANT-VIOLATION sulla rientranza; il cleanup rilascia questa risorsa."
+  "Pre: validated lease and preconditions. Post: local ownership of the effect acquired.
+INVARIANT-VIOLATION on reentry; cleanup releases this resource."
   (when (controllore-serie-effect-active controller)
     (%serie-invariant controller :serie-effect))
   (%check-ring controller)
@@ -146,9 +146,9 @@ INVARIANT-VIOLATION sulla rientranza; il cleanup rilascia questa risorsa."
 ;;; REQ: REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (controllore-serie boolean) null) %end-effect))
 (defun %end-effect (controller complete)
-  "Pre: cleanup del proprietario dell'effetto. Post: risorsa locale rilasciata.
-Uscita incompleta => FAULTED Archivio, riferimenti/token conservati; mai rollback
-né soppressione della condizione o del trasferimento di controllo originale."
+  "Pre: cleanup by the effect owner. Post: local resource released.
+Incomplete exit => Archivio FAULTED, references/tokens retained; no rollback
+or suppression of the original condition or control transfer."
   (unless complete (%mark-fault controller :archive))
   (setf (controllore-serie-effect-active controller) nil)
   nil)
@@ -156,8 +156,8 @@ né soppressione della condizione o del trasferimento di controllo originale."
 ;;; REQ: REQ-AFF-008 REQ-CON-002
 (declaim (ftype (function (controllore-serie index) index) %next-position))
 (defun %next-position (controller position)
-  "Pre: indice nel ring corrente. Post: successore modulo capacità, senza wrap intero.
-INVARIANT-VIOLATION per indice/capacità incoerenti."
+  "Pre: index in the current ring. Post: successor modulo capacity, without integer wrap.
+INVARIANT-VIOLATION for inconsistent index/capacity."
   (let ((capacity (length (controllore-serie-slots controller))))
     (unless (<= 1 capacity +max-serie-commits+) (%serie-invariant controller :serie-ring))
     (unless (< position capacity) (%serie-invariant controller :serie-ring))

@@ -7,10 +7,10 @@
 (declaim (ftype (function (costruttore-pagine simple-vector &key (:next (or null riferimento-costruito)))
                          riferimento-costruito) costruisci-bucket-pagine))
 (defun costruisci-bucket-pagine (builder entries &key next)
-  "Pre: entry possedute immutabili, insieme logicamente unico anche nell'overflow prestato NEXT.
-Post: chiavi dal fondo e bucket verificati append-only, prova restituita solo a lotto completo.
-Preflight fallito non scrive; errore/nonlocal exit dopo l'ammissione rende FAULTED senza rollback.
-Operazione di manutenzione a memoria limitata, non percorso PUT caldo o punto di commit."
+  "Pre: immutable owned entries, logically unique set even in borrowed NEXT overflow.
+Post: keys built from the tail and buckets verified append-only; proof returned only for a complete batch.
+Failed preflight does not write; error/nonlocal exit after admission makes it FAULTED without rollback.
+Memory-bounded maintenance operation, not a hot PUT path or commit point."
   (esigi-costruttore-libero builder)
   (let ((effect nil) (complete nil) (before (costruttore-pagine-written builder)))
     (setf (costruttore-pagine-busy builder) t)
@@ -36,9 +36,9 @@ Operazione di manutenzione a memoria limitata, non percorso PUT caldo o punto di
 ;;; REQ: REQ-IDX-009 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (costruttore-pagine t t simple-vector) riferimento-costruito) costruisci-directory-pagine))
 (defun costruisci-directory-pagine (builder bits shift children)
-  "Pre: figli posseduti dello stesso costruttore, immutabili durante il lotto.
-Post: directory dopo tutti i figli, routing e ordine verificati; prova senza autorita' durevole.
-Errori preflight senza append; effetto incompleto => FAULTED; nessun riuso o flush implicito."
+  "Pre: owned children from the same builder, immutable during the batch.
+Post: directory after all children, routing and order verified; proof without durable authority.
+Preflight errors without append; incomplete effect => FAULTED; no implicit reuse or flush."
   (esigi-costruttore-libero builder)
   (let ((effect nil) (complete nil))
     (setf (costruttore-pagine-busy builder) t)
@@ -55,8 +55,8 @@ Errori preflight senza append; effetto incompleto => FAULTED; nessun riuso o flu
 ;;; REQ: REQ-IDX-009 REQ-AFF-008
 (declaim (ftype (function (riferimento-costruito) identita-pagina) identita-riferimento-costruito))
 (defun identita-riferimento-costruito (reference)
-  "Pre: prova completa, non autorevole per commit. Post: copia privata dell'identita' per cache/lettore.
-Allocazione di manutenzione; non presta metadati mutabili della prova al chiamante."
+  "Pre: complete proof, not authoritative for commit. Post: private identity copy for cache/reader.
+Maintenance allocation; does not lend mutable proof metadata to the caller."
   (let ((identity (riferimento-costruito-identity reference)))
     (crea-identita-pagina (identita-pagina-serie identity) (identita-pagina-image identity)
                          (identita-pagina-page identity) (identita-pagina-generation identity))))

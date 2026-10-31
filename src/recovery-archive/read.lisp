@@ -8,9 +8,9 @@
                          null) verifica-lettura-decisioni))
 (defun verifica-lettura-decisioni (archive input size scratch chunk bytes batches batch-records
                                  batch-bytes decisions participants per-decision)
-  "Pre: EOF fisico autorevole, scratch esclusivo. Post: preflight senza syscall o scritture.
-Capacità readonly aperta, alias/range/budget verificati prima della prima lettura.
-CORRUPTION-DETECTED per header troncato; argomenti/capacità/budget con condizioni tipizzate."
+  "Pre: authoritative physical EOF, exclusive scratch. Post: preflight without syscalls or writes.
+Open read-only capability, alias/range/budgets verified before the first read.
+CORRUPTION-DETECTED for a truncated header; typed conditions for arguments/capacity/budgets."
   (arcdocdb.io::esigi-aperto input :input)
   (when (eq scratch (archivio-recovery-identity archive))
     (error 'invalid-argument :reason :archive-recovery-alias))
@@ -32,9 +32,9 @@ CORRUPTION-DETECTED per header troncato; argomenti/capacità/budget con condizio
 (declaim (ftype (function (archivio-recovery file-io octets) (values (member 1 2) &optional))
                 leggi-header-decisioni))
 (defun leggi-header-decisioni (archive input scratch)
-  "Pre: preflight conclusa nel pool I/O, capacità e scratch stabili. Post: header letto una volta.
-Magic multiserie, CRC, UUID completo, versione e riservati verificati prima del corpo.
-Errori originali propagati; nessun risultato o modifica dei file."
+  "Pre: preflight complete in the I/O pool, stable capability and scratch. Post: header read once.
+Multiseries magic, CRC, complete UUID, version, and reserved fields verified before the body.
+Original errors propagate; no result or file modification."
   (check-range scratch 0 +log-header-bytes+)
   (let ((next (leggi-esatto input scratch 0 +log-header-bytes+ 0)))
     (unless (= next +log-header-bytes+)
@@ -48,9 +48,9 @@ Errori originali propagati; nessun risultato o modifica dei file."
 ;;; REQ: REQ-REC-001 REQ-TXM-005 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (file-io index octets index) null) leggi-corpo-decisioni))
 (defun leggi-corpo-decisioni (input size scratch chunk)
-  "Pre: header verificato e EOF stabile, scratch privato, compito I/O. Post: corpo fino a EOF sullo stesso FD.
-Ciclo limitato a CEILING((size-64)/chunk), nessuna rilettura dell'header.
-Errori I/O propagati senza retry, chiusura o troncatura; nessun risultato parziale."
+  "Pre: verified header and stable EOF, private scratch, I/O task. Post: body through EOF on the same FD.
+Loop bounded to CEILING((size-64)/chunk), no header reread.
+I/O errors propagate without retry, close, or truncation; no partial result."
   (unless (and (plusp chunk) (>= size +log-header-bytes+))
     (error 'invalid-argument :reason :archive-recovery-read-range))
   (check-range scratch 0 size)

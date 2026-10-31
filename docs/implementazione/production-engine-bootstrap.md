@@ -1,4 +1,6 @@
-# M1 — Single-Series Durable Core
+<a id="m1--single-series-durable-core"></a>
+
+# M1 — Durable core for one Serie
 
 Milestone [Production Engine Bootstrap](https://github.com/gpicchiarelli/ArcDocDB/milestone/1).
 The [preregistered method](production-engine-bootstrap-metodo.md) focuses work
@@ -70,7 +72,7 @@ it applies to the sole M1 owner, without another mutator until application.
 A predictable index limit leaves READY, CSN, and files unchanged;
 admissible updates and tombstones remain usable, including after reopen
 with the same budgets. DELETE does not reclaim bytes from the append-only arena.
-Failed index health/an invariance failure instead closes admission even when
+Failed index health/an invariant violation instead closes admission even when
 detected in preflight, preserving the cause and without append or CSN consumption.
 SEAL, write, flush, canonical root publication and CSN resolution, index, and
 reference retirement follow. Acknowledgment is issued only at the end.
@@ -105,7 +107,7 @@ blocking anomaly: it is not deleted. Orphan garbage collection is not
 implemented; exhausted budget requires explicit intervention, without silent loss.
 
 M1 configures exactly one Serie and a decision log without DECISION; it does
-not discover the multiserie catalog. Prepared records and locations beyond u32 are rejected. Canonical compaction
+not discover the multiseries catalog. Prepared records and locations beyond u32 are rejected. Canonical compaction
 outputs and REMOVED are verified and completed at startup. The format remains v1/v2; this is an entry point
 restriction, not a change to the u64 storage types. Each reopen prepares a new
 ACTIVE. [Live rotation](../adr/0076-rotazione-live-m1.md) connects canonical

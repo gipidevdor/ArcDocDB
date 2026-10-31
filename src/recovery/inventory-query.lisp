@@ -8,16 +8,16 @@
 (declaim (ftype (function (reconciliation-plan)
                          (values (member :ready :degraded :faulted) &optional)) stato-riconciliazione))
 (defun stato-riconciliazione (plan)
-  "Pre: piano completato. Post: disponibilità dei nomi richiesti, non stato del motore.
-TYPE-ERROR per tipi invalidi con safety3; nessuna modifica o autorizzazione al traffico."
+  "Pre: completed plan. Post: availability of required names, not engine state.
+TYPE-ERROR for invalid types with safety3; no modification or traffic authorization."
   (%plan-health plan))
 
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-AFF-008
 (declaim (ftype (function (reconciliation-plan) (values index &optional))
                 numero-azioni-riconciliazione))
 (defun numero-azioni-riconciliazione (plan)
-  "Pre: piano completato. Post: numero di ID distinti, incluse anomalie e mancanti.
-TYPE-ERROR per tipi invalidi con safety3; nessun contenitore privato restituito."
+  "Pre: completed plan. Post: distinct ID count, including anomalies and missing entries.
+TYPE-ERROR for invalid types with safety3; no private container returned."
   (length (%plan-entries plan)))
 
 ;;; REQ: REQ-REC-001 REQ-REC-002 REQ-AFF-008 REQ-AFF-018
@@ -27,8 +27,8 @@ TYPE-ERROR per tipi invalidi con safety3; nessun contenitore privato restituito.
                                  (member :active :closed :removed :unknown) &optional))
                 azione-riconciliazione))
 (defun azione-riconciliazione (plan position)
-  "Pre: piano completato e indice intero. Post: ID, forma, azione, stato del manifest scalari.
-INVALID-ARGUMENT per indice fuori range; TYPE-ERROR per tipi invalidi, nessun alias esposto."
+  "Pre: completed plan and integer index. Post: scalar ID, form, action, manifest state.
+INVALID-ARGUMENT for index outside range; TYPE-ERROR for invalid types, no alias exposed."
   (unless (<= 0 position (1- (numero-azioni-riconciliazione plan)))
     (error 'invalid-argument :reason :reconciliation-index))
   (let ((entry (the reconciliation-entry (aref (%plan-entries plan) position))))

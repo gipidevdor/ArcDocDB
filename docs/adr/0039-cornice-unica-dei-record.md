@@ -17,7 +17,7 @@
 
 ## Context
 
-The v1 format is not yet implemented: it can be corrected without migration. Three problems:
+The v1 format is not yet implemented: it can be corrected without migration. There are three problems:
 the single CRC covers fields only the writer knows, so the writer must calculate the CRC of
 the entire document (AP-13); segments, the control log, and `multiserie.log` have three different
 headers; some fields and one record type serve no purpose.
@@ -78,7 +78,7 @@ log and `multiserie.log`.
 
 A closed segment's hint file has one **24-byte** entry for each **committed** PUT or
 TOMBSTONE record, in offset order, with the **final** CSN (for prepared records,
-the outcome's CSN: every outcome is known at closing, INV-S7). It also contains:
+the outcome's CSN: every outcome is known when the segment closes, INV-S7). It also contains:
 
 - in the header, the segment's `csn-min` and `csn-max`;
 - a **Bloom** section over entry keys: the existence filter governing
@@ -131,5 +131,5 @@ batch); per-file existence filter (LevelDB/RocksDB SSTables, Cassandra).
 
 ## Assessment
 
-- Verification: frame fuzzing; deliberate corruption of every field (every damage detected);
+- Verification: frame fuzzing; deliberate corruption of every field (all damage detected);
   SPK-09 measures separate header and body CRCs.

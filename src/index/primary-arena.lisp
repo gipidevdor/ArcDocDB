@@ -6,16 +6,16 @@
 ;;; REQ: REQ-IDX-001 REQ-IDX-005 REQ-AFF-008
 (declaim (ftype (function (frammento-indice) fixnum) payload-frammento))
 (defun payload-frammento (fragment)
-  "Pre: writer/controller, frammento canonico. Post: byte di payload slot/controllo/arena.
-Non è RSS, non include header, garbage o array conservati da altri reader/piani."
+  "Pre: writer/controller, canonical fragment. Post: slot/control/arena payload bytes.
+Not RSS; excludes headers, garbage, or arrays retained by other readers/plans."
   (+ (* 41 (banco-slot-capacity (frammento-indice-bank fragment)))
      (length (frammento-indice-arena fragment))))
 
 ;;; REQ: REQ-IDX-007 REQ-AFF-008
 (declaim (ftype (function (root-indice) fixnum) payload-root))
 (defun payload-root (root)
-  "Pre: root costruita da questo modulo, geometria canonica. Post: directory e frammenti distinti.
-Ogni blocco di prefisso compare una volta; somma di payload, senza stima del collector."
+  "Pre: root built by this module, canonical geometry. Post: directory and distinct fragments.
+Each prefix block appears once; payload sum, without a collector estimate."
   (let* ((directory (root-indice-directory root)) (depth (root-indice-depth root))
          (sum (* 8 (length directory))) (i 0))
     (loop while (< i (length directory))
@@ -29,9 +29,9 @@ Ogni blocco di prefisso compare una volta; somma di payload, senza stima del col
 ;;; REQ: REQ-IDX-005 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (indice-primario frammento-indice integer integer) null) estendi-arena-indice))
 (defun estendi-arena-indice (index fragment new-size transient-budget-bytes)
-  "Pre: writer, budget transitorio prenotato dal controller, nessun piano/lavoro non contabilizzato.
-Post: stessa chiave agli stessi offset; arena cresce per sostituzione, mai in-place o in riduzione.
-Controlla root corrente + frammento building eventuale + arena nuova prima di allocare."
+  "Pre: writer, transient budget reserved by the controller, no unaccounted plan/work.
+Post: same key at the same offsets; arena grows by replacement, never in place or by shrinking.
+Checks current root + any building fragment + new arena before allocating."
   (esigi-frammento-sano index fragment)
   (esigi-banco-writer (frammento-indice-bank fragment))
   (let* ((old (frammento-indice-arena fragment)) (root (acquisisci-root index))

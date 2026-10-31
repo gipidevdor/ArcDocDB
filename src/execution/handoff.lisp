@@ -11,9 +11,9 @@
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (defstruct (writer-programmabile (:constructor %make-writer-programmabile (queue routing-index))
                                 (:copier nil))
-  "Pre: coda privata, mai esposta né usata tramite le API basse. Post: writer IDLE.
-Le API trasferiscono obblighi :SCHEDULE, non creano thread né inviano notifiche.
-Routing-index read-only non è una lease e non identifica da solo un Archivio."
+  "Pre: private queue, never exposed or used through the low-level APIs. Post: writer IDLE.
+The APIs transfer :SCHEDULE obligations; they do not create threads or send notifications.
+A read-only routing-index is not a lease and does not identify an Archivio on its own."
   (queue (error 'invariant-violation :reason :writer-scheduling)
          :type coda-writer :read-only t)
   (state :idle :type (member :idle :ready :running))
@@ -22,15 +22,15 @@ Routing-index read-only non è una lease e non identifica da solo un Archivio."
 ;;; REQ: REQ-CON-002 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (writer-programmabile) (or null (integer 0 65535))) indice-routing-writer))
 (defun indice-routing-writer (writer)
-  "Pre: writer valido. Post: ordinal immutabile fissato all'avvio, o NIL legacy.
-Nessuna acquisizione o mutazione; l'indice non prova la membership in un registro."
+  "Pre: valid writer. Post: immutable ordinal set at startup, or legacy NIL.
+No acquisition or mutation; the index does not prove membership in a registry."
   (writer-programmabile-routing-index writer))
 
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (coda-writer) null) %check-writer-inattivo))
 (defun %check-writer-inattivo (queue)
-  "Pre: guard posseduta, stato IDLE o READY. Post: nessuna lease e quota zero.
-INVARIANT-VIOLATION per guard, owner o quota incompatibili con il passaggio."
+  "Pre: guard owned, state IDLE or READY. Post: no lease and zero quota.
+INVARIANT-VIOLATION for a guard, owner, or quota incompatible with the transition."
   (unless (eq (coda-writer-guard queue) sb-thread:*current-thread*)
     (error 'invariant-violation :reason :writer-guard))
   (unless (null (coda-writer-owner queue))
@@ -42,8 +42,8 @@ INVARIANT-VIOLATION per guard, owner o quota incompatibili con il passaggio."
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (writer-programmabile) null) %check-programmabile))
 (defun %check-programmabile (writer)
-  "Pre: guard della coda privata posseduta. Post: ring e stato/owner coerenti.
-INVARIANT-VIOLATION per guard errata o stato che non rappresenta il lavoro."
+  "Pre: private queue guard owned. Post: ring and state/owner consistent.
+INVARIANT-VIOLATION for an incorrect guard or a state that does not represent the work."
   (let* ((queue (writer-programmabile-queue writer))
          (count (coda-writer-count queue)) (owner (coda-writer-owner queue)))
     (unless (eq (coda-writer-guard queue) sb-thread:*current-thread*)
@@ -65,9 +65,9 @@ INVARIANT-VIOLATION per guard errata o stato che non rappresenta il lavoro."
 (declaim (ftype (function (&key (:capacity t) (:quantum t) (:routing-index t)) writer-programmabile)
                 crea-writer-programmabile))
 (defun crea-writer-programmabile (&key (capacity 1024) (quantum 64) routing-index)
-  "Pre: capacity/quantum nei limiti di CREA-CODA-WRITER. Post: wrapper IDLE
-con ring esclusivo preallocato; routing-index NIL oppure ordinal 0..65535.
-INVALID-ARGUMENT per configurazione errata, prima di allocare la coda."
+  "Pre: capacity/quantum within CREA-CODA-WRITER limits. Post: IDLE wrapper
+with an exclusive preallocated ring; routing-index NIL or ordinal 0..65535.
+INVALID-ARGUMENT for invalid configuration, before allocating the queue."
   (unless (or (null routing-index)
               (typep routing-index `(integer 0 ,+max-writer-routing-index+)))
     (error 'invalid-argument :reason :writer-configuration))
@@ -81,10 +81,10 @@ INVALID-ARGUMENT per configurazione errata, prima di allocare la coda."
                          (values index (member :schedule :queued) &optional))
                 accoda-lavoro-writer))
 (defun accoda-lavoro-writer (writer message)
-  "Pre: payload posseduto dal chiamante. Post: accettazione FIFO; :SCHEDULE solo
-su IDLE→READY, :QUEUED se già READY/RUNNING. Il chiamante conserva ed esegue una
-sola volta l'obbligo :SCHEDULE; un retry della notifica non ripete l'accettazione.
-RESOURCE-EXHAUSTED full/busy prima dell'accettazione; invarianti impongono fail-stop."
+  "Pre: caller owns the payload. Post: FIFO acceptance; :SCHEDULE only
+on IDLE→READY, :QUEUED if already READY/RUNNING. The caller retains and fulfills the
+:SCHEDULE obligation exactly once; retrying notification does not repeat acceptance.
+RESOURCE-EXHAUSTED full/busy before acceptance; invariants require fail-stop."
   (let* ((queue (writer-programmabile-queue writer)) (thread (%acquisisci-guard queue)))
     (unwind-protect
          (progn
@@ -99,10 +99,10 @@ RESOURCE-EXHAUSTED full/busy prima dell'accettazione; invarianti impongono fail-
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (writer-programmabile) index) inizia-tratto-writer))
 (defun inizia-tratto-writer (writer)
-  "Pre: compito pronto assegnato dal chiamante. Post: READY→RUNNING con lease
-del thread corrente; nessun messaggio estratto. RESOURCE-EXHAUSTED conserva lo
-stato: busy richiede retry del compito; not-ready rifiuta un'assegnazione non
-eleggibile/duplicata; generation è esaurimento permanente, senza wrap."
+  "Pre: caller has assigned a ready task. Post: READY→RUNNING with a lease
+for the current thread; no message dequeued. RESOURCE-EXHAUSTED preserves the
+state: busy requires retrying the task; not-ready rejects an ineligible/duplicate
+assignment; generation is permanent exhaustion, without wrap."
   (let* ((queue (writer-programmabile-queue writer)) (thread (%acquisisci-guard queue)))
     (unwind-protect
          (progn
@@ -120,20 +120,20 @@ eleggibile/duplicata; generation è esaurimento permanente, senza wrap."
                          (values index (member :messages :empty :yield) &optional))
                 preleva-lavori-writer))
 (defun preleva-lavori-writer (writer lease target start end)
-  "Pre: lease corrente del tratto e target privato. Post: prelievo FIFO bounded
-e quota cumulativa come PRELEVA-MESSAGGI; le medesime condizioni al rifiuto.
-La lease impedisce una fine-tratto concorrente; la coda interna resta privata."
+  "Pre: current execution-slice lease and private target. Post: bounded FIFO dequeue
+and cumulative quota as in PRELEVA-MESSAGGI; the same conditions on rejection.
+The lease prevents a concurrent end of the execution slice; the internal queue remains private."
   (preleva-messaggi (writer-programmabile-queue writer) lease target start end))
 
 ;;; REQ: REQ-CON-001 REQ-CON-002 REQ-CON-004 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (writer-programmabile t) (member :schedule :idle))
                 termina-tratto-writer))
 (defun termina-tratto-writer (writer lease)
-  "Pre: messaggi estratti elaborati, lease corrente. Post: quota/gettone rilasciati
-e READY/:SCHEDULE se resta lavoro, IDLE/:IDLE se vuoto, sotto la guard del ring.
-Il chiamante conserva l'obbligo :SCHEDULE. Busy conserva lease e stato: ritentare
-solo il termine, senza rielaborare payload. INVALID-ARGUMENT lease; invarianti
-impongono fail-stop. Nessuna notifica o attesa; nessun cambiamento durevole."
+  "Pre: dequeued messages processed, current lease. Post: quota/token released
+and READY/:SCHEDULE if work remains, IDLE/:IDLE if empty, under the ring guard.
+The caller retains the :SCHEDULE obligation. Busy preserves the lease and state: retry
+only termination, without processing payloads again. INVALID-ARGUMENT for the lease;
+invariants require fail-stop. No notification or waiting; no durable change."
   (let ((queue (writer-programmabile-queue writer)))
     (%check-lease queue lease)
     (let ((thread (%acquisisci-guard queue)))

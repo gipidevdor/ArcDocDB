@@ -5,8 +5,8 @@
 
 ;;; REQ: REQ-IPC-002 REQ-REC-001 REQ-AFF-008
 (defun local-record-validator (space)
-  "Pre: scratch privato della startup. Post: callback readonly per tutto il prefisso committed.
-Rifiuta archivi incompatibili prima del checkpoint o listener, inclusi valori storici."
+  "Pre: private startup scratch. Post: readonly callback for the entire committed prefix.
+Rejects incompatible Archivio instances before checkpoint or listener, including historical values."
   (lambda (kind buffer ks ke vs ve)
     (unless (<= 1 (- ke ks) 1024)
       (error 'arcdocdb.conditions:unsupported-format :reason :local-stored-key-budget))
@@ -19,8 +19,8 @@ Rifiuta archivi incompatibili prima del checkpoint o listener, inclusi valori st
 
 ;;; REQ: REQ-IPC-002 REQ-WAL-006 REQ-IDX-001
 (defun local-execute (engine connection id opcode key document)
-  "Pre: argomenti validati, ID ammesso, risposta massima gia' riservata. Post: frame terminale.
-PUT/DELETE rispondono dopo strong; GET termina la copia e libera pin prima dell'invio."
+  "Pre: validated arguments, admitted ID, maximum response already reserved. Post: terminal frame.
+PUT/DELETE respond after strong; GET finishes copying and releases the pin before sending."
   (let ((out (local-connection-output connection)))
     (case opcode
       (0 (encode-local-response out id 0))
@@ -34,9 +34,9 @@ PUT/DELETE rispondono dopo strong; GET termina la copia e libera pin prima dell'
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-AFF-004
 (defun local-dispatch (engine connection envelope)
-  "Pre: envelope e ID validi; un solo owner, buffer privati. Post: risposta oppure guasto propagato.
-Solo RESOURCE-EXHAUSTED con motore ancora READY e' un rifiuto prima dell'ammissione.
-Un guasto ammesso non viene tradotto in busy; il servizio chiude preservando la causa."
+  "Pre: valid envelope and ID; one owner, private buffers. Post: response or propagated fault.
+Only RESOURCE-EXHAUSTED with engine still READY is a rejection before admission.
+An admitted fault is not translated into busy; the service closes, preserving the cause."
   (let ((id (envelope-id envelope)) (opcode (envelope-code envelope))
         (out (local-connection-output connection)))
     (multiple-value-bind (status key document)

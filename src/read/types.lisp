@@ -13,9 +13,9 @@
 ;;; REQ: REQ-CON-004 REQ-CMP-007 REQ-MVC-004 REQ-AFF-004 REQ-AFF-008
 (defstruct (contesto-lettura
             (:constructor %make-contesto-lettura (reader snapshots words)) (:copier nil))
-  "Pre: reader esclusivo, registri dello stesso Archivio, quattro word private.
-Post: inattivo, nessuno snapshot o risultato conservato. Non attraversa code o migrazioni.
-FAULTED impedisce il riuso; il cleanup resta consentito dopo la fine del compito."
+  "Pre: exclusive reader, registries from the same Archivio, four private words.
+Post: inactive, no snapshot or result retained. Does not cross queues or migrations.
+FAULTED prevents reuse; cleanup remains allowed after the task ends."
   (reader nil :type lettore-epoca :read-only t)
   (snapshots nil :type registro-snapshot :read-only t)
   (words #() :type (simple-array (unsigned-byte 64) (4)) :read-only t)
@@ -25,9 +25,9 @@ FAULTED impedisce il riuso; il cleanup resta consentito dopo la fine del compito
 ;;; REQ: REQ-CON-004 REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (lettore-epoca registro-snapshot) contesto-lettura) crea-contesto-lettura))
 (defun crea-contesto-lettura (reader snapshots)
-  "Pre: controller assegna un solo contesto a READER e registri dello stesso Archivio.
-Post: contesto e buffer preallocati prima dell'avvio dei pool; nessun pin o thread creato.
-INVALID-ARGUMENT se il reader è già attivo. Capacità totale limitata dai worker del dominio EBR."
+  "Pre: controller assigns exactly one context to READER and registries from the same Archivio.
+Post: context and buffers preallocated before pools start; no pin or thread created.
+INVALID-ARGUMENT if the reader is already active. Total capacity bounded by EBR-domain workers."
   (when (epoca-attiva-p reader) (error 'invalid-argument :reason :read-worker-busy))
   (%make-contesto-lettura reader snapshots
                         (make-array 4 :element-type '(unsigned-byte 64) :initial-element 0)))
@@ -36,6 +36,6 @@ INVALID-ARGUMENT se il reader è già attivo. Capacità totale limitata dai work
 (declaim (ftype (function (contesto-lettura) (member :idle :entering :active :faulted))
                 stato-contesto-lettura))
 (defun stato-contesto-lettura (context)
-  "Pre: worker proprietario o controller dopo join. Post: stato locale, senza pin o mutex.
-Non è un controllo concorrente del worker; nessuna risorsa esterna viene restituita."
+  "Pre: owning worker or controller after join. Post: local state, without pin or mutex.
+Not a concurrent worker check; no external resource returned."
   (contesto-lettura-state context))

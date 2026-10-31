@@ -7,9 +7,9 @@
 (declaim (ftype (function (control-recuperato arcdocdb.io:file-io u64 keyword index octets
                           limiti-recovery-serie) index) verifica-fonte-serie))
 (defun verifica-fonte-serie (control file id state size scratch limits)
-  "Pre: riga viva del set, nessun close concorrente, EOF dallo stesso FD. Post: byte da leggere autorevoli.
-Stato/ID devono appartenere al CONTROL; P CLOSED non sostituito con EOF e P <= SIZE obbligatorio.
-Preflight canonico senza letture; condizioni originali propagate, scratch non modificato."
+  "Pre: live set row, no concurrent close, EOF from same FD. Post: authoritative bytes to read.
+State/ID must belong to CONTROL; CLOSED P not replaced with EOF, P <= SIZE mandatory.
+Canonical preflight without reads; original conditions propagated, scratch unchanged."
   (multiple-value-bind (expected prefix outcomes) (trova-segmento (manifest-control-recuperato control) id)
     (unless (eq expected state) (error 'invalid-argument :reason :series-recovery-source-state))
     (case state

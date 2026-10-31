@@ -17,22 +17,22 @@
   ((primary :initarg :primary :initform nil :reader native-error-primary
             :type (or null condition))
    (cleanup :initarg :cleanup :initform nil :reader native-error-cleanup :type list))
-  (:documentation "Causa primaria e tutte le cause secondarie, senza retry della close."))
+  (:documentation "Primary cause and all secondary causes, without retrying close."))
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (keyword keyword &key (:errno t) (:primary t) (:cleanup t)) nil)
                 %native-fail))
 (defun %native-fail (reason operation &key errno primary cleanup)
-  "Pre: causa gia' catturata. Post: condizione ArcDocDB con primaria e cleanup conservati.
-Ownership: nessun FD consumato; il proprietario decide le chiusure."
+  "Pre: the cause has already been captured. Post: an ArcDocDB condition preserving the primary and cleanup causes.
+Ownership: no FD is consumed; the owner decides which descriptors to close."
   (error 'native-error :reason reason :operation operation :errno errno
          :primary primary :cleanup cleanup))
 
 ;;; REQ: REQ-IPC-001 REQ-AFF-004
 (declaim (ftype (function () null) %native-platform))
 (defun %native-platform ()
-  "Pre: nessuna syscall. Post: ammesse soltanto Darwin ARM64 e Linux x86-64.
-Ownership: nessun effetto; UNSUPPORTED-FORMAT prima di acquisire FD."
+  "Pre: no syscall. Post: only Darwin ARM64 and Linux x86-64 are admitted.
+Ownership: no effects; UNSUPPORTED-FORMAT before acquiring an FD."
   (unless (and (= sb-vm:n-word-bits 64)
                #+(or (and darwin arm64) (and linux x86-64)) t
                #-(or (and darwin arm64) (and linux x86-64)) nil)
@@ -117,8 +117,8 @@ Ownership: nessun effetto; UNSUPPORTED-FORMAT prima di acquisire FD."
                          (values (signed-byte 64) fixnum &optional))
                 %native-recv-span %native-send-span))
 (defun %native-recv-span (fd buffer start count)
-  "Pre: FD/span verificati, buffer esclusivo. Post: una recv non bloccante, n/errno immediato.
-Ownership: pin e SAP limitati alla syscall; nessun buffer temporaneo o retry."
+  "Pre: verified FD/span, exclusive buffer. Post: one nonblocking recv, immediate n/errno.
+Ownership: pin and SAP confined to the syscall; no temporary buffer or retry."
   (%native-platform)
   #+(or darwin linux)
   (sb-sys:with-pinned-objects (buffer)
@@ -129,8 +129,8 @@ Ownership: pin e SAP limitati alla syscall; nessun buffer temporaneo o retry."
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun %native-send-span (fd buffer start count)
-  "Pre: FD/span verificati, buffer stabile. Post: una send NONBLOCK senza SIGPIPE.
-Ownership: pin locale; n/errno immediato, senza copia, slice, attesa o retry."
+  "Pre: verified FD/span, stable buffer. Post: one NONBLOCK send without SIGPIPE.
+Ownership: local pin; immediate n/errno, without copying, slicing, waiting, or retrying."
   (%native-platform)
   #+(or darwin linux)
   (sb-sys:with-pinned-objects (buffer)
@@ -141,7 +141,7 @@ Ownership: pin locale; n/errno immediato, senza copia, slice, attesa o retry."
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (defstruct (native-node (:constructor %make-native-node (device inode uid mode)) (:copier nil))
-  "Pre: metadata da stat affidabile. Post: identita'/policy immutabili; nessun FD posseduto."
+  "Pre: metadata from a trusted stat. Post: immutable identity/policy; no owned FD."
   (device 0 :type (integer 0 *) :read-only t)
   (inode 0 :type (integer 0 *) :read-only t)
   (uid 0 :type (integer 0 #xffffffff) :read-only t)
@@ -150,15 +150,15 @@ Ownership: pin locale; n/errno immediato, senza copia, slice, attesa o retry."
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t) native-node) %native-stat-node))
 (defun %native-stat-node (stat)
-  "Pre: stat SB-POSIX. Post: snapshot privato device/inode/uid/mode, nessun FD trasferito."
+  "Pre: SB-POSIX stat. Post: private device/inode/uid/mode snapshot; no FD transferred."
   (%make-native-node (sb-posix:stat-dev stat) (sb-posix:stat-ino stat)
                      (sb-posix:stat-uid stat) (sb-posix:stat-mode stat)))
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (native-fd string) (values t fixnum &optional)) %native-entry))
 (defun %native-entry (fd name)
-  "Pre: FD parent posseduto, foglia UTF-8. Post: lstat relativo senza seguire symlink.
-Ownership: stat locale, ABI grovelled SB-POSIX; errno prima di altro codice."
+  "Pre: owned parent FD, UTF-8 leaf. Post: relative lstat without following symlinks.
+Ownership: local stat, SB-POSIX-grovelled ABI; errno captured before other code."
   #+(or darwin linux)
   (sb-posix::with-alien-stat stat ()
     (let ((n (%native-fstatat fd name stat +native-nofollow+)))
@@ -170,8 +170,8 @@ Ownership: stat locale, ABI grovelled SB-POSIX; errno prima di altro codice."
 (declaim (ftype (function (native-fd native-octets keyword)
                          (values integer fixnum &optional)) %native-address-call))
 (defun %native-address-call (fd bytes operation)
-  "Pre: UTF-8 1..100 byte verificati. Post: bind/connect singolo, sockaddr Unix esplicito.
-Ownership: allocazione solo lifecycle, buffer sockaddr pinned locale, errno immediato."
+  "Pre: verified UTF-8 of 1..100 bytes. Post: one bind/connect, explicit Unix sockaddr.
+Ownership: lifecycle-only allocation, locally pinned sockaddr buffer, immediate errno."
   (let* ((size (+ 3 (length bytes)))
          (address (make-array size :element-type '(unsigned-byte 8) :initial-element 0)))
     ;; sa_family_t: u8 dopo sun_len Darwin; u16 little endian Linux x86-64.
@@ -188,8 +188,8 @@ Ownership: allocazione solo lifecycle, buffer sockaddr pinned locale, errno imme
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (native-fd) (values integer fixnum &optional)) %native-socket-error))
 (defun %native-socket-error (fd)
-  "Pre: FD socket posseduto. Post: SO_ERROR o errno syscall, mai attesa o retry.
-Ownership: due scalari alien locali, nessun buffer I/O copiato."
+  "Pre: owned socket FD. Post: SO_ERROR or syscall errno, without waiting or retrying.
+Ownership: two local alien scalars, no I/O buffer copied."
   #+(or darwin linux)
   (sb-alien:with-alien ((value sb-alien:int 0) (size sb-alien:unsigned-int 4))
     (let ((n (%native-getsockopt fd +native-sol-socket+ +native-so-error+
@@ -202,8 +202,8 @@ Ownership: due scalari alien locali, nessun buffer I/O copiato."
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (native-fd) (values integer fixnum &optional)) %native-configure))
 (defun %native-configure (fd)
-  "Pre: nuovo FD esclusivo. Post: CLOEXEC e NONBLOCK conservando gli altri flag.
-Ownership: caller conserva FD anche su guasto; nessuna modifica globale di segnali/umask."
+  "Pre: new exclusive FD. Post: CLOEXEC and NONBLOCK, preserving other flags.
+Ownership: the caller retains the FD even on failure; no global signal/umask changes."
   (sb-posix:fcntl fd sb-posix:f-setfd
                   (logior (sb-posix:fcntl fd sb-posix:f-getfd) +native-fd-cloexec+))
   (sb-posix:fcntl fd sb-posix:f-setfl
@@ -213,8 +213,8 @@ Ownership: caller conserva FD anche su guasto; nessuna modifica globale di segna
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (keyword list) (values t fixnum &optional)) %native-control))
 (defun %native-control (operation arguments)
-  "Pre: operazione interna/argomenti verificati. Post: risultato,errno senza retry.
-Ownership: syscall POSIX solo qui; metadata privati, FD trasferiti solo dal caller."
+  "Pre: verified internal operation/arguments. Post: result,errno without retry.
+Ownership: POSIX syscalls only here; private metadata, FDs transferred only by the caller."
   (%native-platform)
   (let ((sb-alien::*default-c-string-external-format* :utf-8))
     (handler-case
@@ -250,7 +250,7 @@ Ownership: syscall POSIX solo qui; metadata privati, FD trasferiti solo dal call
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function () integer) %native-directory-flags))
 (defun %native-directory-flags ()
-  "Pre: ABI ammessa. Post: RDONLY/DIRECTORY/NOFOLLOW/CLOEXEC/NONBLOCK; nessun effetto."
+  "Pre: admitted ABI. Post: RDONLY/DIRECTORY/NOFOLLOW/CLOEXEC/NONBLOCK; no effects."
   #+(or darwin linux)
   (logior sb-posix:o-rdonly sb-posix:o-directory sb-posix:o-nofollow
           sb-posix:o-nonblock +native-cloexec+)
@@ -258,7 +258,7 @@ Ownership: syscall POSIX solo qui; metadata privati, FD trasferiti solo dal call
 
 ;;; REQ: REQ-IPC-002 REQ-IPC-003 REQ-AFF-004
 (defstruct (native-backend (:constructor %make-native-backend (recv send control)) (:copier nil))
-  "Pre: callback fidati. Post: slot immutabili; nessun fallback da callback mancante.
+  "Pre: trusted callbacks. Post: immutable slots; no fallback for a missing callback.
 RECV/SEND(fd,octets,start,count)->n,errno; CONTROL(operation,argument-list)->value,errno."
   (recv #'%native-recv-span :type function :read-only t)
   (send #'%native-send-span :type function :read-only t)
@@ -268,8 +268,8 @@ RECV/SEND(fd,octets,start,count)->n,errno; CONTROL(operation,argument-list)->val
 (declaim (ftype (function (&key (:recv t) (:send t) (:control t)) native-backend) make-native-backend))
 (defun make-native-backend (&key (recv #'%native-recv-span) (send #'%native-send-span)
                                 (control #'%native-control))
-  "Pre: tre funzioni fidate, non rientrabili. Post: backend privato verificato.
-Ownership: callback sincroni senza conservare buffer/puntatori; INVALID-ARGUMENT per tipo."
+  "Pre: three trusted, non-reentrant functions. Post: verified private backend.
+Ownership: synchronous callbacks retain no buffers/pointers; INVALID-ARGUMENT for an invalid type."
   (unless (and (functionp recv) (functionp send) (functionp control))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-native-backend))
   (%make-native-backend recv send control))
@@ -278,14 +278,14 @@ Ownership: callback sincroni senza conservare buffer/puntatori; INVALID-ARGUMENT
 (declaim (ftype (function (t) null) %native-check-backend)
          (ftype (function (t) native-fd) %native-check-fd))
 (defun %native-check-backend (backend)
-  "Pre: valore esterno. Post: NIL/nativo o backend verificato; nessun effetto."
+  "Pre: external value. Post: NIL/native or verified backend; no effects."
   (unless (typep backend '(or null native-backend))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-native-backend))
   (unless backend (%native-platform))
   nil)
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun %native-check-fd (fd)
-  "Pre: valore esterno. Post: FD int non negativo, incluso zero; nessun effetto."
+  "Pre: external value. Post: nonnegative int FD, including zero; no effects."
   (unless (typep fd 'native-fd)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-native-fd))
   fd)
@@ -293,8 +293,8 @@ Ownership: callback sincroni senza conservare buffer/puntatori; INVALID-ARGUMENT
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (t t t t t) null) %native-check-span))
 (defun %native-check-span (fd buffer start count backend)
-  "Pre: argomenti non fidati. Post: intero span non vuoto verificato prima del backend.
-Ownership: caller conserva FD e simple u8; INVALID-ARGUMENT senza syscall o pin."
+  "Pre: untrusted arguments. Post: the entire nonempty span is verified before calling the backend.
+Ownership: the caller retains the FD and simple u8; INVALID-ARGUMENT without syscall or pin."
   (%native-check-fd fd)
   (%native-check-backend backend)
   (unless (and (typep buffer 'native-octets) (typep start '(integer 0 #.most-positive-fixnum))
@@ -306,8 +306,8 @@ Ownership: caller conserva FD e simple u8; INVALID-ARGUMENT senza syscall o pin.
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (t t integer keyword) (values integer fixnum &optional)) %native-result))
 (defun %native-result (n errno maximum operation)
-  "Pre: esito callback/syscall. Post: n=-1 con errno positivo, oppure 0..max e errno zero.
-Ownership: nessun progresso inventato; esito impossibile produce NATIVE-ERROR."
+  "Pre: callback/syscall outcome. Post: n=-1 with positive errno, or 0..max with zero errno.
+Ownership: no invented progress; an impossible outcome produces NATIVE-ERROR."
   (unless (and (typep n '(signed-byte 64)) (typep errno '(integer 0 #.most-positive-fixnum))
                (<= -1 n maximum) (if (= n -1) (plusp errno) (zerop errno)))
     (%native-fail :local-native-result operation))
@@ -317,15 +317,15 @@ Ownership: nessun progresso inventato; esito impossibile produce NATIVE-ERROR."
 (declaim (ftype (function (t t t t &optional t) (values integer fixnum &optional))
                 native-recv-span native-send-span))
 (defun native-recv-span (fd buffer start count &optional backend)
-  "Pre: FD/buffer/span esterni; buffer esclusivo fino al ritorno. Post: una recv, n/errno.
-Ownership: span prestato sincrono; EOF=0, EINTR/EAGAIN senza retry; attesa nel parent."
+  "Pre: external FD/buffer/span; buffer exclusive until return. Post: one recv, n/errno.
+Ownership: synchronous span loan; EOF=0, EINTR/EAGAIN without retry; waiting belongs to the parent."
   (%native-check-span fd buffer start count backend)
   (%native-transfer (if backend (native-backend-recv backend) #'%native-recv-span)
                     fd buffer start count :recv))
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun native-send-span (fd buffer start count &optional backend)
-  "Pre: FD/buffer/span esterni; buffer stabile fino al ritorno. Post: una send, n/errno.
-Ownership: nessuna copia, SIGPIPE soppresso per chiamata; zero/failure restano al parent."
+  "Pre: external FD/buffer/span; buffer stable until return. Post: one send, n/errno.
+Ownership: no copy, SIGPIPE suppressed per call; zero/failure remain the parent's responsibility."
   (%native-check-span fd buffer start count backend)
   (%native-transfer (if backend (native-backend-send backend) #'%native-send-span)
                     fd buffer start count :send))
@@ -334,8 +334,8 @@ Ownership: nessuna copia, SIGPIPE soppresso per chiamata; zero/failure restano a
 (declaim (ftype (function (function native-fd native-octets fixnum fixnum keyword)
                          (values integer fixnum &optional)) %native-transfer))
 (defun %native-transfer (callback fd buffer start count operation)
-  "Pre: argomenti verificati, callback sincrono fidato. Post: n/errno oppure causa tipizzata.
-Ownership: confine dell'adattatore; nessun buffer/puntatore conservato oltre il ritorno."
+  "Pre: verified arguments, trusted synchronous callback. Post: n/errno or typed cause.
+Ownership: adapter boundary; no buffer/pointer retained after return."
   (handler-case
       (multiple-value-bind (n errno) (funcall callback fd buffer start count)
         (%native-result n errno count operation))
@@ -345,8 +345,8 @@ Ownership: confine dell'adattatore; nessun buffer/puntatore conservato oltre il 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t keyword &rest t) (values t fixnum &optional)) %native-call))
 (defun %native-call (backend operation &rest arguments)
-  "Pre: backend verificato, argomenti interni. Post: value/errno verificati, causa tipizzata.
-Ownership: confine callback lifecycle; errori estranei incapsulati senza perdere l'originale."
+  "Pre: verified backend, internal arguments. Post: verified value/errno, typed cause.
+Ownership: lifecycle callback boundary; foreign errors wrapped without losing the original."
   (handler-case
       (multiple-value-bind (value errno)
           (funcall (if backend (native-backend-control backend) #'%native-control) operation arguments)
@@ -360,8 +360,8 @@ Ownership: confine callback lifecycle; errori estranei incapsulati senza perdere
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t keyword &rest t) t) %native-required))
 (defun %native-required (backend operation &rest arguments)
-  "Pre: operazione lifecycle richiesta. Post: risultato oppure errore con errno preservato.
-Ownership: non chiude FD implicitamente; nessun retry della syscall."
+  "Pre: requested lifecycle operation. Post: result or error preserving errno.
+Ownership: no implicit FD close; no syscall retry."
   (multiple-value-bind (value errno) (apply #'%native-call backend operation arguments)
     (when (eql value -1) (%native-fail :local-native-syscall operation :errno errno))
     value))
@@ -369,8 +369,8 @@ Ownership: non chiude FD implicitamente; nessun retry della syscall."
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &key (:backend t)) (or null condition)) native-close))
 (defun native-close (fd &key backend)
-  "Pre: FD posseduto ancora da chiudere. Post: un tentativo; NIL o condizione conservabile.
-Ownership: consumata anche con EINTR; mai ritentare una close sul medesimo numero."
+  "Pre: owned FD still to be closed. Post: one attempt; NIL or a condition that can be retained.
+Ownership: consumed even on EINTR; never retry close on the same number."
   (%native-check-fd fd)
   (%native-check-backend backend)
   (handler-case
@@ -381,16 +381,16 @@ Ownership: consumata anche con EINTR; mai ritentare una close sul medesimo numer
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &key (:backend t)) null) close-local-socket))
 (defun close-local-socket (socket &key backend)
-  "Pre: FD posseduto, incluso zero. Post: una close; guasto tipizzato segnalato al cleanup parent.
-Ownership: consumata dal caller prima dell'invocazione; nessuna ripetizione automatica."
+  "Pre: owned FD, including zero. Post: one close; typed failure signaled to parent cleanup.
+Ownership: consumed by the caller before invocation; no automatic repetition."
   (let ((failure (native-close socket :backend backend))) (when failure (error failure)))
   nil)
 
 ;;; REQ: REQ-IPC-001 REQ-AFF-004
 (declaim (ftype (function (native-fd t) native-fd) %native-configured-fd))
 (defun %native-configured-fd (fd backend)
-  "Pre: FD appena acquisito. Post: NONBLOCK/CLOEXEC oppure close singola e cause preservate.
-Ownership: trasferita al caller solo dopo configurazione completa."
+  "Pre: newly acquired FD. Post: NONBLOCK/CLOEXEC or one close, preserving causes.
+Ownership: transferred to the caller only after complete configuration."
   (handler-case
       (progn
         (unless (eql 0 (%native-required backend :configure fd))
@@ -403,23 +403,23 @@ Ownership: trasferita al caller solo dopo configurazione completa."
 ;;; REQ: REQ-IPC-001 REQ-AFF-004
 (declaim (ftype (function (&key (:backend t)) native-fd) native-socket-new new-local-socket))
 (defun native-socket-new (&key backend)
-  "Pre: backend valido. Post: FD Unix stream NONBLOCK/CLOEXEC; nessun bind o listener.
-Ownership: caller assume FD, anche zero; guasto acquisizione/configurazione tipizzato."
+  "Pre: valid backend. Post: NONBLOCK/CLOEXEC Unix stream FD; no bind or listener.
+Ownership: the caller assumes the FD, including zero; typed acquisition/configuration failure."
   (%native-check-backend backend)
   (let ((fd (%native-required backend :socket)))
     (unless (typep fd 'native-fd) (%native-fail :local-native-result :socket))
     (%native-configured-fd fd backend)))
 ;;; REQ: REQ-IPC-001 REQ-AFF-004
 (defun new-local-socket (&key backend)
-  "Pre: backend valido. Post: FD privato configurato; ownership al caller."
+  "Pre: valid backend. Post: configured private FD; ownership passes to the caller."
   (native-socket-new :backend backend))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t) (values string native-octets list string &optional))
                 native-path-preflight))
 (defun native-path-preflight (path)
-  "Pre: percorso esterno. Post: copia assoluta UTF-8 <=100 byte, senza NUL/dot/doppi slash.
-Ownership: copie bounded private, nessun filesystem toccato; INVALID-ARGUMENT su rifiuto."
+  "Pre: external path. Post: absolute UTF-8 copy <=100 bytes, without NUL/dot/double slashes.
+Ownership: bounded private copies, no filesystem access; INVALID-ARGUMENT on rejection."
   (unless (and (stringp path) (<= 2 (length path) 100) (char= #\/ (char path 0))
                (not (find #\Null path)) (not (char= #\/ (char path (1- (length path))))))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-socket-path))
@@ -446,8 +446,8 @@ Ownership: copie bounded private, nessun filesystem toccato; INVALID-ARGUMENT su
          (ftype (function (t &key (:backend t)) (values integer fixnum &optional)) native-accept)
          (ftype (function (t &key (:backend t)) fixnum) native-socket-error))
 (defun native-connect (fd path &key backend)
-  "Pre: FD privato configurato, path esterno. Post: un connect, n/errno senza attesa/retry.
-Ownership: FD resta al caller su EINPROGRESS/EINTR e guasti; nessuna unlink."
+  "Pre: configured private FD, external path. Post: one connect, n/errno without waiting/retry.
+Ownership: the FD remains with the caller on EINPROGRESS/EINTR and failures; no unlink."
   (%native-check-fd fd) (%native-check-backend backend)
   (multiple-value-bind (stable bytes) (native-path-preflight path)
     (declare (ignore stable))
@@ -455,16 +455,16 @@ Ownership: FD resta al caller su EINPROGRESS/EINTR e guasti; nessuna unlink."
       (%native-result n errno 0 :connect))))
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun native-accept (listener-fd &key backend)
-  "Pre: listener NONBLOCK posseduto. Post: un accept, FD configurato o -1/errno.
-Ownership: nuovo FD al caller solo dopo configurazione; nessuna attesa o retry."
+  "Pre: owned NONBLOCK listener. Post: one accept, configured FD or -1/errno.
+Ownership: new FD transferred to the caller only after configuration; no waiting or retry."
   (%native-check-fd listener-fd) (%native-check-backend backend)
   (multiple-value-bind (fd errno) (%native-call backend :accept listener-fd)
     (%native-result fd errno 2147483647 :accept)
     (if (= fd -1) (values fd errno) (values (%native-configured-fd fd backend) 0))))
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (defun native-socket-error (fd &key backend)
-  "Pre: FD socket posseduto. Post: SO_ERROR non negativo; nessun successo dedotto da writable.
-Ownership: nessuna chiusura; syscall/callback invalidi diventano condizioni ArcDocDB."
+  "Pre: owned socket FD. Post: nonnegative SO_ERROR; writability alone implies no success.
+Ownership: no close; invalid syscalls/callbacks become ArcDocDB conditions."
   (%native-check-fd fd) (%native-check-backend backend)
   (let ((errno (%native-required backend :socket-error fd)))
     (unless (typep errno '(integer 0 #.most-positive-fixnum))
@@ -472,7 +472,7 @@ Ownership: nessuna chiusura; syscall/callback invalidi diventano condizioni ArcD
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (defstruct (native-directory (:constructor %make-native-directory (fd path parent name)) (:copier nil))
-  "Pre: FD appena aperto. Post: ownership registrata prima di fstat; chiusura una sola volta."
+  "Pre: newly opened FD. Post: ownership recorded before fstat; closed only once."
   (fd -1 :type (integer -1 2147483647))
   (path "/" :type string :read-only t)
   (parent -1 :type (integer -1 2147483647) :read-only t)
@@ -481,8 +481,8 @@ Ownership: nessuna chiusura; syscall/callback invalidi diventano condizioni ArcD
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (defstruct (local-namespace (:constructor %make-local-namespace (path bytes leaf uid backend)) (:copier nil))
-  "Pre: path verificato. Post: anchor privato, FD leaf-first conservati fino a close.
-Un lock esclusivo sulla directory runtime vieta intenzionalmente due listener nella stessa dir."
+  "Pre: verified path. Post: private anchor, FDs retained in leaf-first order until close.
+An exclusive lock on the runtime directory intentionally prevents two listeners in the same directory."
   (path "" :type string :read-only t)
   (bytes (make-array 0 :element-type '(unsigned-byte 8)) :type native-octets :read-only t)
   (leaf "" :type string :read-only t)
@@ -495,14 +495,14 @@ Un lock esclusivo sulla directory runtime vieta intenzionalmente due listener ne
 (declaim (ftype (function (t) local-namespace) %native-check-namespace)
          (ftype (function (native-node native-node) boolean) %native-same-node-p))
 (defun %native-check-namespace (namespace)
-  "Pre: handle esterno. Post: anchor aperto con almeno root; ownership resta al caller."
+  "Pre: external handle. Post: open anchor with at least root; ownership remains with the caller."
   (unless (and (typep namespace 'local-namespace) (not (local-namespace-closed-p namespace))
                (local-namespace-directories namespace))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-namespace-state))
   namespace)
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (defun %native-same-node-p (left right)
-  "Pre: due snapshot verificati. Post: confronto device/inode, nessun effetto o FD acquisito."
+  "Pre: two verified snapshots. Post: device/inode comparison, no effects or acquired FD."
   (and (= (native-node-device left) (native-node-device right))
        (= (native-node-inode left) (native-node-inode right))))
 
@@ -510,12 +510,12 @@ Un lock esclusivo sulla directory runtime vieta intenzionalmente due listener ne
 (declaim (ftype (function (t) native-node) %native-check-node)
          (ftype (function (native-node integer boolean) null) %native-directory-policy))
 (defun %native-check-node (value)
-  "Pre: risultato metadata backend. Post: snapshot di tipo esatto o errore; nessuna ownership."
+  "Pre: backend metadata result. Post: snapshot of the exact type or error; no ownership."
   (unless (typep value 'native-node) (%native-fail :local-native-metadata :metadata)) value)
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (defun %native-directory-policy (node uid private-p)
-  "Pre: snapshot verificato e UID di servizio. Post: directory trusted non scrivibile group/world.
-Runtime esattamente 0700/service UID; antenati root o service UID, nessun symlink."
+  "Pre: verified snapshot and service UID. Post: trusted directory, not group/world writable.
+Runtime must have exactly 0700/service UID; ancestors must be owned by root or service UID, with no symlinks."
   (unless (and (sb-posix:s-isdir (native-node-mode node))
                (zerop (logand #o22 (native-node-mode node)))
                (member (native-node-uid node) (list 0 uid)))
@@ -528,15 +528,15 @@ Runtime esattamente 0700/service UID; antenati root o service UID, nessun symlin
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (local-namespace keyword &rest t) native-node) %native-node-call))
 (defun %native-node-call (namespace operation &rest arguments)
-  "Pre: anchor interno. Post: metadata verificati, errore prima di usare un tipo estraneo."
+  "Pre: internal anchor. Post: verified metadata; error before using a foreign type."
   (%native-check-node (apply #'%native-required (local-namespace-backend namespace) operation arguments)))
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (local-namespace) null) %native-verify-namespace))
 (defun %native-verify-namespace (namespace)
-  "Pre: anchor aperto. Post: FD/fstat, lstat assoluto e fstatat parent concordano per ogni livello.
-Ownership: tutti i FD trattenuti. Root/service UID fidati non devono mutare il namespace:
-bind/chmod Unix usano pathname, non esiste qui un bindat portabile o un alias /dev/fd."
+  "Pre: open anchor. Post: FD/fstat, absolute lstat, and parent fstatat agree at every level.
+Ownership: all FDs retained. Trusted root/service UID must not mutate the namespace:
+Unix bind/chmod use pathnames; there is no portable bindat or /dev/fd alias here."
   (%native-check-namespace namespace)
   (let ((leaf (car (local-namespace-directories namespace))))
     (dolist (directory (local-namespace-directories namespace))
@@ -557,8 +557,8 @@ bind/chmod Unix usano pathname, non esiste qui un bindat portabile o un alias /d
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (local-namespace) (or null native-node)) %native-socket-node))
 (defun %native-socket-node (namespace)
-  "Pre: anchor aperto. Post: node da fstatat NOFOLLOW, NIL soltanto per ENOENT.
-Ownership: nessuna apertura/unlink; errori di accesso non diventano assenza."
+  "Pre: open anchor. Post: node from NOFOLLOW fstatat, NIL only for ENOENT.
+Ownership: no open/unlink; access errors do not become absence."
   (let ((directory (car (local-namespace-directories namespace))))
     (multiple-value-bind (node errno)
         (%native-call (local-namespace-backend namespace) :entry
@@ -570,9 +570,9 @@ Ownership: nessuna apertura/unlink; errori di accesso non diventano assenza."
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &optional t) list) close-local-namespace))
 (defun close-local-namespace (namespace &optional primary)
-  "Pre: anchor proprio, nessun listener borrower aperto. Post: tries-all, cause in ordine.
-Ownership: ogni FD consumato prima di close, incluso zero; lock rilasciato con il FD runtime.
-Primaria restituita per prima; non segnala secondarie e non ritenta EINTR."
+  "Pre: owned anchor, no open borrowing listener. Post: all cleanup actions attempted, causes in order.
+Ownership: each FD consumed before close, including zero; lock released with the runtime FD.
+Primary cause returned first; secondary causes are not signaled, and EINTR is not retried."
   (unless (and (typep namespace 'local-namespace) (typep primary '(or null condition)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-namespace-state))
   (let ((failures nil))
@@ -589,8 +589,8 @@ Primaria restituita per prima; non segnala secondarie e non ritenta EINTR."
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (local-namespace integer string integer string) null) %native-add-directory))
 (defun %native-add-directory (namespace fd path parent name)
-  "Pre: nuovo FD acquisito. Post: ownership registrata prima di fstat/policy, errno conservato.
-Root e ciascun componente restano aperti fino al cleanup dell'anchor."
+  "Pre: new FD acquired. Post: ownership recorded before fstat/policy, errno preserved.
+Root and every component remain open until anchor cleanup."
   (unless (typep fd 'native-fd) (%native-fail :local-native-result :open-directory))
   (let* ((directory (%make-native-directory fd path parent name))
          (backend (local-namespace-backend namespace)))
@@ -602,10 +602,10 @@ Root e ciascun componente restano aperti fino al cleanup dell'anchor."
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &key (:backend t)) local-namespace) open-local-namespace))
 (defun open-local-namespace (path &key backend)
-  "Pre: path esterno, prima del motore. Post: runtime privata verificata e flock EX|NB trattenuto.
-Ownership: anchor possiede root/antenati/runtime; nessun nodo creato o cancellato.
-Namespace trusted root/service UID immutabile durante l'uso; occupied sempre preservato.
-Lock per directory intenzionale, non per nome; fallimento chiude tutti i FD e conserva cause."
+  "Pre: external path, before engine startup. Post: verified private runtime directory and retained flock EX|NB.
+Ownership: anchor owns root/ancestors/runtime; no node created or deleted.
+Trusted root/service UID namespace remains immutable during use; occupied entries always preserved.
+The lock is intentionally per directory, not per name; failure closes every FD and preserves causes."
   (%native-check-backend backend)
   (multiple-value-bind (stable bytes components leaf) (native-path-preflight path)
     (let ((uid (%native-required backend :uid)))
@@ -634,8 +634,8 @@ Lock per directory intenzionale, non per nome; fallimento chiude tutti i FD e co
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t) (values integer integer &optional)) local-namespace-identity))
 (defun local-namespace-identity (namespace)
-  "Pre: anchor aperto. Post: device/inode runtime da FD verificato; confronto datadir prima del motore.
-Ownership: anchor resta al parent; nessuna identita' dedotta dal percorso testuale."
+  "Pre: open anchor. Post: runtime device/inode from verified FD; datadir comparison before engine startup.
+Ownership: anchor remains with the parent; no identity inferred from the textual path."
   (%native-check-namespace namespace)
   (%native-verify-namespace namespace)
   (let ((node (native-directory-node (car (local-namespace-directories namespace)))))
@@ -643,7 +643,7 @@ Ownership: anchor resta al parent; nessuna identita' dedotta dal percorso testua
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
 (defstruct (native-listener (:constructor %make-native-listener (path backend anchor owns-anchor-p)) (:copier nil))
-  "Pre: anchor validato. Post: listener possiede FD/nodo e solo l'anchor aperto internamente."
+  "Pre: validated anchor. Post: listener owns FD/node and only the anchor opened internally."
   (fd -1 :type (integer -1 2147483647))
   (path "" :type string :read-only t)
   (backend nil :type (or null native-backend) :read-only t)
@@ -656,21 +656,21 @@ Ownership: anchor resta al parent; nessuna identita' dedotta dal percorso testua
 (declaim (ftype (function (t) native-listener) %native-check-listener)
          (ftype (function (t) native-fd) handle-socket))
 (defun %native-check-listener (listener)
-  "Pre: handle esterno. Post: listener aperto e FD posseduto; nessun effetto."
+  "Pre: external handle. Post: open listener and owned FD; no effects."
   (unless (and (typep listener 'native-listener) (not (native-listener-closed-p listener))
                (typep (native-listener-fd listener) 'native-fd))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-listener-state))
   listener)
 ;;; REQ: REQ-IPC-001 REQ-AFF-004
 (defun handle-socket (listener)
-  "Pre: listener aperto. Post: FD preso in prestito per un passo; non chiuderlo separatamente."
+  "Pre: open listener. Post: FD borrowed for one step; do not close it separately."
   (native-listener-fd (%native-check-listener listener)))
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (native-listener) null) %native-verify-socket))
 (defun %native-verify-socket (listener)
-  "Pre: bind riuscito e identita' catturata. Post: node/path NOFOLLOW concordanti, socket service UID.
-Ownership: nessun unlink su identita' sostituita; mode controllato separatamente dopo chmod."
+  "Pre: successful bind and captured identity. Post: matching NOFOLLOW node/path, socket owned by service UID.
+Ownership: no unlink of a replaced identity; mode checked separately after chmod."
   (let* ((namespace (native-listener-anchor listener))
          (node (%native-socket-node namespace))
          (named (%native-node-call namespace :lstat (native-listener-path listener)))
@@ -686,9 +686,9 @@ Ownership: nessun unlink su identita' sostituita; mode controllato separatamente
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (native-listener) null) %native-unlink-owned))
 (defun %native-unlink-owned (listener)
-  "Pre: listener possiede identita' dopo bind. Post: unlinkat soltanto dello stesso nodo.
-Ownership: assenza tollerata, replacement diagnosticato/preservato; anchor FD fino al termine.
-La garanzia richiede root/service UID fedeli al contratto namespace durante check/unlinkat."
+  "Pre: listener owns the identity after bind. Post: unlinkat only for the same node.
+Ownership: absence tolerated, replacement diagnosed/preserved; anchor FD retained until completion.
+The guarantee requires root/service UID to honor the namespace contract during check/unlinkat."
   (when (native-listener-node listener)
     (let ((namespace (native-listener-anchor listener)))
       (%native-verify-namespace namespace)
@@ -703,9 +703,9 @@ La garanzia richiede root/service UID fedeli al contratto namespace durante chec
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &optional t) list) native-close-listener))
 (defun native-close-listener (listener &optional primary)
-  "Pre: handle posseduto, causa opzionale. Post: tries-all FD/nodo/anchor proprio, cause conservate.
-Ownership: FD consumato prima di close; anchor prestato resta al parent anche in caso di errore.
-Idempotente, nessun retry della close, replacement intatto e diagnosticato."
+  "Pre: owned handle, optional cause. Post: all cleanup actions attempted for FD/node/owned anchor, causes preserved.
+Ownership: FD consumed before close; borrowed anchor remains with the parent even on error.
+Idempotent, no close retry, replacement intact and diagnosed."
   (unless (and (typep listener 'native-listener) (typep primary '(or null condition)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-listener-state))
   (let ((failures nil))
@@ -725,8 +725,8 @@ Idempotente, nessun retry della close, replacement intatto e diagnosticato."
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &optional t) null) close-local-listener))
 (defun close-local-listener (listener &optional primary)
-  "Pre: handle posseduto. Post: cleanup completo; NATIVE-ERROR conserva tutte le cause.
-Ownership: anchor borrowed non chiuso; al parent il rilascio dopo engine close."
+  "Pre: owned handle. Post: complete cleanup; NATIVE-ERROR preserves every cause.
+Ownership: borrowed anchor is not closed; the parent releases it after engine close."
   (let ((failures (native-close-listener listener primary)))
     (when failures
       (%native-fail :local-listener-cleanup :close-listener :primary (car failures)
@@ -736,9 +736,9 @@ Ownership: anchor borrowed non chiuso; al parent il rilascio dopo engine close."
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (native-listener) native-listener) %native-bind-listener))
 (defun %native-bind-listener (listener)
-  "Pre: parent ha verificato engine READY, namespace esclusivo. Post: socket 0600 prima di listen.
-Ownership: FD/nodo registrati subito; identita' controllate prima/dopo bind/chmod/listen.
-Bind per pathname richiede root/service UID fidati e namespace stabile, senza alias /dev/fd."
+  "Pre: parent has verified engine READY, exclusive namespace. Post: socket mode 0600 before listen.
+Ownership: FD/node recorded immediately; identities checked before/after bind/chmod/listen.
+Pathname bind requires trusted root/service UID and a stable namespace, without /dev/fd aliases."
   (let* ((namespace (native-listener-anchor listener)) (backend (native-listener-backend listener)))
     (%native-verify-namespace namespace)
     (when (%native-socket-node namespace) (%native-fail :local-socket-occupied :bind))
@@ -766,9 +766,9 @@ Bind per pathname richiede root/service UID fidati e namespace stabile, senza al
 ;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-AFF-004
 (declaim (ftype (function (t &key (:namespace t) (:backend t)) native-listener) open-local-listener))
 (defun open-local-listener (path &key namespace (backend nil backend-p))
-  "Pre: parent ha terminato recovery e verificato engine READY, attore I/O proprietario.
-Post: listener Unix NONBLOCK/CLOEXEC e 0600, oppure cleanup completo e nodo occupato intatto.
-Ownership: :NAMESPACE preso in prestito; anchor interno chiuso con listener, engine al parent."
+  "Pre: parent has completed recovery and verified engine READY; owning I/O actor.
+Post: NONBLOCK/CLOEXEC Unix listener with mode 0600, or complete cleanup and occupied node intact.
+Ownership: :NAMESPACE borrowed; internal anchor closed with listener, engine remains with the parent."
   (multiple-value-bind (stable bytes) (native-path-preflight path)
     (declare (ignore bytes))
     (when namespace
@@ -789,8 +789,8 @@ Ownership: :NAMESPACE preso in prestito; anchor interno chiuso con listener, eng
 ;;; REQ: REQ-IPC-001 REQ-REC-001 REQ-AFF-004
 (declaim (ftype (function (t t &key (:backend t)) native-listener) native-open-listener))
 (defun native-open-listener (path ready-p &key backend)
-  "Pre: callback gate fidato. Post: listener solo dopo risultato esattamente T; nessun effetto prima.
-Ownership: listener possiede anchor interno; INVALID-ARGUMENT o guasto tipizzato."
+  "Pre: trusted gate callback. Post: listener only after a result of exactly T; no prior effects.
+Ownership: listener owns its internal anchor; INVALID-ARGUMENT or typed failure."
   (unless (functionp ready-p)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-ready-function))
   (handler-case
@@ -802,8 +802,8 @@ Ownership: listener possiede anchor interno; INVALID-ARGUMENT o guasto tipizzato
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (t) (values (or null native-fd) fixnum &optional)) accept-local-socket))
 (defun accept-local-socket (listener)
-  "Pre: handle listener aperto. Post: FD NONBLOCK/CLOEXEC o NIL solo per EAGAIN/EINTR.
-Ownership: nuovo FD al parent; errore fatale segnalato, nessun retry o attesa."
+  "Pre: open listener handle. Post: NONBLOCK/CLOEXEC FD, or NIL only for EAGAIN/EINTR.
+Ownership: new FD transferred to the parent; fatal error signaled, no retry or waiting."
   (%native-check-listener listener)
   (multiple-value-bind (fd errno)
       (native-accept (native-listener-fd listener) :backend (native-listener-backend listener))
@@ -814,9 +814,9 @@ Ownership: nuovo FD al parent; errore fatale segnalato, nessun retry o attesa."
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (t t &key (:backend t) (:clock t)) native-fd) connect-local-socket))
 (defun connect-local-socket (path until &key backend (clock #'get-internal-real-time))
-  "Pre: path esterno, deadline assoluta in tick INTERNAL-TIME-UNITS-PER-SECOND, clock monotono.
-Post: FD connesso dopo SO_ERROR=0; attesa FD finita fuori da recv/send, nessun retry di connect.
-Ownership: FD chiuso su guasto; clock iniettabile, nessuna attesa con connect immediata."
+  "Pre: external path, absolute deadline in INTERNAL-TIME-UNITS-PER-SECOND ticks, monotonic clock.
+Post: connected FD after SO_ERROR=0; finite FD wait outside recv/send, no connect retry.
+Ownership: FD closed on failure; injectable clock, no wait for immediate connect."
   (unless (and (typep until '(integer 0 *)) (functionp clock))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-connect-deadline))
   (native-path-preflight path)
@@ -842,8 +842,8 @@ Ownership: FD chiuso su guasto; clock iniettabile, nessuna attesa con connect im
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (function integer integer) integer) %native-connect-time))
 (defun %native-connect-time (clock previous until)
-  "Pre: clock fidato e tick precedenti. Post: tick non decrescenti, strettamente prima di UNTIL.
-Ownership: nessun FD acquisito/chiuso; esito clock invalido e deadline sono NATIVE-ERROR."
+  "Pre: trusted clock and previous ticks. Post: nondecreasing ticks, strictly before UNTIL.
+Ownership: no FD acquired/closed; invalid clock result and deadline produce NATIVE-ERROR."
   (let ((now (funcall clock)))
     (unless (and (typep now '(integer 0 *)) (<= previous now) (< now until))
       (%native-fail :local-connect-deadline :connect))
@@ -852,8 +852,8 @@ Ownership: nessun FD acquisito/chiuso; esito clock invalido e deadline sono NATI
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
 (declaim (ftype (function (native-fd integer integer function t) integer) %native-await-connect))
 (defun %native-await-connect (fd until previous clock backend)
-  "Pre: connect gia' tentata, deadline assoluta. Post: FD writable prima della deadline e clock monotono.
-Ownership: una attesa fuori dall'adattatore; backend :wait-output(fd,seconds)->boolean,errno."
+  "Pre: connect already attempted, absolute deadline. Post: writable FD before deadline and monotonic clock.
+Ownership: one wait outside the adapter; backend :wait-output(fd,seconds)->boolean,errno."
   (let ((now (%native-connect-time clock previous until)))
     (let* ((seconds (/ (- until now) internal-time-units-per-second))
            (ready (if backend (%native-required backend :wait-output fd seconds)

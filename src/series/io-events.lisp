@@ -6,9 +6,9 @@
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-008
 (declaim (ftype (function (controllore-serie t t t) null) inizia-io-commit-serie))
 (defun inizia-io-commit-serie (controller lease event generation)
-  "Pre: evento preparato, prima dell'unico dispatch al pool I/O. Post: consumer attivo.
-Rifiuto duplicate/stale/fault prima di mutare. Il caller conserva il dispatch accettato;
-se lo scheduler rifiuta, riprogramma lo stesso compito, senza ripetere questo ingresso."
+  "Pre: prepared event, before the only dispatch to the I/O pool. Post: active consumer.
+Duplicate/stale/fault rejection before mutation. The caller retains the accepted dispatch;
+if the scheduler rejects it, reschedules the same task without repeating this entry."
   (%check-owner controller lease) (%live-event controller event generation)
   (%require-healthy controller)
   (unless (eq (commit-serie-phase event) :preparato)
@@ -30,9 +30,11 @@ se lo scheduler rifiuta, riprogramma lo stesso compito, senza ripetere questo in
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-008 REQ-AFF-001
 (declaim (ftype (function (controllore-serie t t t) null) completa-io-commit-serie))
 (defun completa-io-commit-serie (controller lease event generation)
-  "Pre: messaggio di FINE I/O, consumatore ritirato; consente il drenaggio dopo fault.
-Post: consumer retired, conteggio ridotto una volta; written da solo non basta.
-INVALID-ARGUMENT per evento/stato; guasto osservato => Serie FAULTED."
+  "Pre: synchronized I/O completion message after retirement of the external I/O consumer;
+permits draining after fault.
+Post: the controller's I/O consumer is retired and its active count is reduced once;
+written alone is insufficient.
+INVALID-ARGUMENT for event/state; observed fault => Serie FAULTED."
   (%check-owner controller lease) (%live-event controller event generation)
   (unless (eq (commit-serie-io-state event) :active)
     (error 'invalid-argument :reason :serie-io-state))
@@ -54,10 +56,10 @@ INVALID-ARGUMENT per evento/stato; guasto osservato => Serie FAULTED."
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-008 REQ-AFF-001
 (declaim (ftype (function (controllore-serie t t t) null) ritira-io-commit-serie))
 (defun ritira-io-commit-serie (controller lease event generation)
-  "Pre: Serie FAULTED; caller conserva il dispatch mai accettato oppure ne ha
-ricevuto il ritiro definitivo sincronizzato; gruppo già annullato e lotto sealed.
-Post: obbligo I/O retired senza write/flush, token ancora pendente. Non revoca
-un compito autonomamente; INVALID-ARGUMENT per salute/stato/owner, invarianti => Archivio."
+  "Pre: Serie FAULTED; caller retains the never-accepted dispatch or has
+received its definitive synchronized retirement; group already canceled and batch sealed.
+Post: I/O obligation retired without write/flush, token still pending. Does not independently
+revoke a task; INVALID-ARGUMENT for health/state/owner, invariants => Archivio."
   (%check-owner controller lease) (%live-event controller event generation)
   (when (eq (stato-controllore-serie controller) :healthy)
     (error 'invalid-argument :reason :serie-not-faulted))
@@ -82,9 +84,9 @@ un compito autonomamente; INVALID-ARGUMENT per salute/stato/owner, invarianti =>
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-WAL-006
 (declaim (ftype (function (controllore-serie) null) %require-quiescent))
 (defun %require-quiescent (controller)
-  "Pre: lease, Serie faulted. Post: nessun consumatore attivo in TUTTI gli slot.
-INVALID-ARGUMENT se I/O ancora dovuto; contatore incoerente => FAULTED Archivio.
-Scansione al più capacity<=1024, solo sul percorso di guasto."
+  "Pre: lease, faulted Serie. Post: no active consumer in ANY slot.
+INVALID-ARGUMENT if I/O is still owed; inconsistent counter => Archivio FAULTED.
+Scan at most capacity<=1024, only on the fault path."
   (unless (zerop (controllore-serie-active-io controller))
     (error 'invalid-argument :reason :serie-io-active))
   (dotimes (i (length (controllore-serie-slots controller)))

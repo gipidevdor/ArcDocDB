@@ -7,9 +7,9 @@
 (declaim (ftype (function (selettore-versione-recuperata)
                          (member :selected :kept :duplicate :ambiguous)) confronta-versioni-recuperate))
 (defun confronta-versioni-recuperate (selector)
-  "Pre: tuple verificate di una chiave. Post: massimo CSN; a parita, offset maggiore nello stesso segmento.
-CSN uguale in segmenti diversi o metadata discordanti alla stessa location => AMBIGUOUS.
-Nessun ordinamento per segment-id, assunzione di lineage o uguaglianza del body dedotta dai CRC."
+  "Pre: verified tuples for one key. Post: maximum CSN; on a tie, greater offset within the same segment.
+Equal CSN across different segments or differing metadata at the same location => AMBIGUOUS.
+No segment-id ordering, lineage assumption, or body equality inferred from CRCs."
   (verifica-tupla-selezione selector (selection-current selector))
   (verifica-tupla-selezione selector (selection-candidate selector))
   (let ((current (selection-current selector)) (candidate (selection-candidate selector)))
@@ -24,8 +24,8 @@ Nessun ordinamento per segment-id, assunzione di lineage o uguaglianza del body 
 ;;; REQ: REQ-REC-001 REQ-IDX-006 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (selettore-versione-recuperata) null) adotta-candidato-recuperato))
 (defun adotta-candidato-recuperato (selector)
-  "Pre: candidato verificato e vincente. Post: tuple copiata; ambiguita precedente conservata salvo CSN maggiore.
-Interruzione della copia => FAULTED terminale; nessuna consegna di una tupla parziale."
+  "Pre: verified winning candidate. Post: tuple copied; previous ambiguity retained unless CSN is greater.
+Copy interruption => terminal FAULTED; no partial tuple delivered."
   (esigi-selettore-pronto selector)
   (verifica-tupla-selezione selector (selection-candidate selector))
   (let* ((current (selection-current selector)) (candidate (selection-candidate selector))
@@ -46,11 +46,11 @@ Interruzione della copia => FAULTED terminale; nessuna consegna di una tupla par
                           &key (:version integer) (:prepared-csn (or null u64)))
                          (member :selected :kept :duplicate :ambiguous)) considera-record-recuperato))
 (defun considera-record-recuperato (selector buffer start end segment offset &key (version 2) (prepared-csn nil))
-  "Pre: worker esclusivo; solo record committed della chiave, prefissi canonici e file immutabili.
-OFFSET assoluto nel file, distinto da START nel buffer; prepared richiede CSN dalla risoluzione autorevole.
-Post: vincitore provvisorio PUT/TOMBSTONE indipendente dall'ordine, oppure AMBIGUOUS senza risultato consegnabile.
-Ambiguita risolta solo da CSN strettamente maggiore o abbandono esplicito della chiave.
-CRC/forma/range errati non modificano il vincitore; nessun I/O, CSN allocato o indice pubblicato."
+  "Pre: exclusive worker; only committed records for the key, canonical prefixes, immutable files.
+OFFSET is absolute in file, distinct from START in buffer; prepared requires CSN from authoritative resolution.
+Post: provisional order-independent PUT/TOMBSTONE winner, or AMBIGUOUS without a deliverable result.
+Ambiguity resolved only by strictly greater CSN or explicit abandonment of the key.
+Invalid CRC/shape/range does not modify winner; no I/O, allocated CSN, or published index."
   (prepara-candidato-recuperato selector buffer start end segment offset version prepared-csn)
   (let ((result (if (eq (selection-state selector) :ready) :selected
                     (confronta-versioni-recuperate selector))))

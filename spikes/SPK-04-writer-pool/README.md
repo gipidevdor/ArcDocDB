@@ -3,7 +3,7 @@
 # SPK-04 — logical writer on thread pool
 
 > **Proposed** — Phase-0 experiment, Common Lisp/SBCL only. Method below recorded before
-> tests. Studies ADR-0045 and INV-P5/INV-P6; neither implements engine nor closes
+> tests. Studies ADR-0045 and INV-P5/INV-P6; neither implements the engine nor closes
 > production requirements.
 
 <a id="domanda"></a>
@@ -88,7 +88,7 @@ Cited artifacts will be retained in `spikes/results/2026-10-08/`.
 
 The [first local campaign](../../docs/valutazione/risultati-SPK-04-2026-10-08.md)
 passes five pool-check groups, 15 parking fixtures, and nine read-restart scenarios.
-Retains 54 benchmarks, 221,184 synthetic operations, and two earlier failed attempts.
+It retains 54 benchmarks, 221,184 synthetic operations, and two earlier failed attempts.
 RSK-04 and RSK-12 remain open to verification; engine requirements remain designed.
 Short measured windows do not demonstrate scalability.
 

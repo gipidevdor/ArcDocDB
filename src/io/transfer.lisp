@@ -7,8 +7,8 @@
 ;;; REQ: REQ-AFF-008
 (declaim (ftype (function (file-io octets index index) index) regione))
 (defun regione (file buffer start end)
-  "Pre: buffer e range del chiamante. Post: range e numero byte entro budget.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED prima di qualsiasi syscall."
+  "Pre: caller's buffer and range. Post: range and byte count within budget.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED before any syscall."
   (check-range buffer start end)
   (let ((count (- end start)))
     (when (> count (file-max-transfer file))
@@ -18,9 +18,9 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED prima di qualsiasi syscall."
 ;;; REQ: REQ-AFF-008 REQ-AFF-002
 (declaim (ftype (function (file-io index) null) verifica-capienza-lettura))
 (defun verifica-capienza-lettura (file count)
-  "Pre: capacità readonly posseduta. Post: range di COUNT byte ammesso, senza syscall.
-IO-FAULT/INVALID-ARGUMENT per capacità; RESOURCE-EXHAUSTED per limite trasferimento.
-Non verifica buffer, offset, disponibilità fisica dei byte o integrità dei dati."
+  "Pre: owned readonly capability. Post: COUNT-byte range admitted, without a syscall.
+IO-FAULT/INVALID-ARGUMENT for capability; RESOURCE-EXHAUSTED for transfer limit.
+Does not verify buffer, offset, physical byte availability, or data integrity."
   (esigi-aperto file :input)
   (when (> count (file-max-transfer file))
     (error 'resource-exhausted :reason :io-byte-budget))
@@ -29,8 +29,8 @@ Non verifica buffer, offset, disponibilità fisica dei byte o integrità dei dat
 ;;; REQ: REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (file-io t index keyword index) index) progresso))
 (defun progresso (file result remaining operation transferred)
-  "Pre: result della syscall. Post: progresso positivo entro remaining.
-IO-FAULT per zero/ritorno impossibile; mutazione dello stato soltanto per write."
+  "Pre: syscall result. Post: positive progress within remaining.
+IO-FAULT for zero/impossible return; state mutation only for write."
   (unless (and (integerp result) (<= 1 result remaining))
     (fallisci file operation (if (eql result 0)
                                 (if (eq operation :read) :io-eof :io-no-progress)
@@ -42,9 +42,9 @@ IO-FAULT per zero/ritorno impossibile; mutazione dello stato soltanto per write.
 (declaim (ftype (function (file-io (member :input :append) (member :read :write) index) null)
                 verifica-capacita-trasferimento))
 (defun verifica-capacita-trasferimento (file mode operation transferred)
-  "Pre: trasferimento in corso, progresso relativo noto. Post: capacità aperta e FD ammesso.
-IO-FAULT locale conserva operazione/progresso anche dopo close nel callback.
-Non intercetta o modifica condizioni originate dal callback; nessuna syscall."
+  "Pre: transfer in progress, relative progress known. Post: open capability and admitted FD.
+Local IO-FAULT retains operation/progress even after close in the callback.
+Does not intercept or modify conditions originating in the callback; no syscall."
   (unless (eq (file-state file) :open)
     (error 'io-fault :reason :io-unavailable :operation operation :transferred transferred))
   (esigi-aperto file mode)
@@ -53,9 +53,9 @@ Non intercetta o modifica condizioni originate dal callback; nessuna syscall."
 ;;; REQ: REQ-STO-003 REQ-AFF-002 REQ-AFF-008
 (declaim (ftype (function (file-io octets index index file-offset) index) leggi-esatto))
 (defun leggi-esatto (file buffer start end offset)
-  "Pre: file readonly mantenuto vivo, buffer esclusivo. Post: intero range riempito, fine.
-Budget/offset prima della syscall; IO-FAULT con progresso noto, nessuna lettura parziale resa.
-Non verifica CRC: il caller passa i byte al codec prima di rispondere al client."
+  "Pre: readonly file kept alive, exclusive buffer. Post: entire range filled, end returned.
+Budget/offset before syscall; IO-FAULT with known progress, no partial read returned.
+Does not verify CRC: the caller passes bytes to the codec before responding to the client."
   (esigi-aperto file :input)
   (let ((count (regione file buffer start end)) (done 0) (backend (file-backend file)))
     (when (> count (- +max-file-offset+ offset))
@@ -79,8 +79,8 @@ Non verifica CRC: il caller passa i byte al codec prima di rispondere al client.
 ;;; REQ: REQ-STO-003 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (file-io index index) null) verifica-capienza-append))
 (defun verifica-capienza-append (file total largest-transfer)
-  "Pre: file append posseduto, totale e massimo chunk del gruppo. Post: budget disponibili.
-INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT prima di qualsiasi syscall, senza mutazione."
+  "Pre: owned append file, group total and maximum chunk. Post: budgets available.
+INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT before any syscall, without mutation."
   (esigi-aperto file :append)
   (unless (<= largest-transfer total) (error 'invalid-argument :reason :io-group-size))
   (when (or (> largest-transfer (file-max-transfer file))
@@ -91,10 +91,10 @@ INVALID-ARGUMENT/RESOURCE-EXHAUSTED/IO-FAULT prima di qualsiasi syscall, senza m
 ;;; REQ: REQ-STO-003 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (file-io octets index index) file-offset) append-esatto))
 (defun append-esatto (file buffer start end)
-  "Pre: un compito possiede file e input stabile. Post: tutto il range scritto in append.
-Restituisce posizione scritta, non commit. Uscita incompleta => OPEN diventa FAULTED.
-CLOSED resta chiusa; progresso confermato conservato, posizione durevole invariata.
-Budget/range rifiutati prima di scrivere; nessun error retry, inclusi EINTR/ENOSPC."
+  "Pre: one task owns the file and stable input. Post: entire range appended.
+Returns the written position, not a commit. Incomplete exit => OPEN becomes FAULTED.
+CLOSED stays closed; confirmed progress retained, durable position unchanged.
+Budgets/ranges rejected before writing; no error retry, including EINTR/ENOSPC."
   (esigi-aperto file :append)
   (let ((count (regione file buffer start end)) (done 0) (backend (file-backend file))
         (initial (file-written file)) (complete nil))

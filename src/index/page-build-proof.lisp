@@ -7,8 +7,8 @@
 (declaim (ftype (function (costruttore-pagine identita-pagina (member :bucket :directory) (integer 0 64)
                          simple-vector simple-vector) riferimento-costruito) prova-pagine-costruite))
 (defun prova-pagine-costruite (builder identity kind ceiling entries children)
-  "Pre: pagina e figli completamente consegnati, vettori limitati del lotto corrente.
-Post: count e AND/OR dei digest, senza conservare chiavi/figli; nessuna prova di flush o unicita' globale."
+  "Pre: page and children fully delivered, bounded vectors for the current batch.
+Post: count and digest AND/OR, without retaining keys/children; no flush or global-uniqueness proof."
   (let ((count 0) (ha #xffffffff) (ho 0) (la #xffffffff) (lo 0))
     (loop for entry across entries when entry do
       (incf count)
@@ -23,9 +23,9 @@ Post: count e AND/OR dei digest, senza conservare chiavi/figli; nessuna prova di
 ;;; REQ: REQ-IDX-009 REQ-AFF-008
 (declaim (ftype (function (riferimento-costruito fixnum fixnum index) null) verifica-routing-costruito))
 (defun verifica-routing-costruito (child bits shift slot)
-  "Pre: figlio verificato dello stesso costruttore. Post: ogni digest del sottoinsieme segue SLOT.
-AND e OR uguali sul campo selezionato provano tutti i bit; intervalli radix non sovrapposti.
-INVALID-ARGUMENT prima di ogni I/O, anche per immagine localmente valida ma mal instradata."
+  "Pre: verified child from the same builder. Post: every digest in the subset follows SLOT.
+Equal AND and OR on the selected field prove all bits; nonoverlapping radix ranges.
+INVALID-ARGUMENT before any I/O, even for a locally valid but misrouted image."
   (unless (<= (riferimento-costruito-ceiling child) shift)
     (error 'invalid-argument :reason :index-build-directory-order))
   (when (plusp (riferimento-costruito-count child))
@@ -38,8 +38,8 @@ INVALID-ARGUMENT prima di ogni I/O, anche per immagine localmente valida ma mal 
 ;;; REQ: REQ-IDX-009 REQ-LIM-003
 (declaim (ftype (function (costruttore-pagine t t simple-vector) index) prepara-directory-costruita))
 (defun prepara-directory-costruita (builder bits shift children)
-  "Pre: costruttore BUSY, soli figli gia' completati. Post: corpo directory e routing interamente verificati.
-Geometria/fanout/tipo/owner respinti prima degli effetti; count e' il numero di PageRef non nulle."
+  "Pre: BUSY builder, already completed children only. Post: directory body and routing fully verified.
+Geometry/fanout/type/owner rejected before effects; count is the number of nonnull PageRefs."
   (unless (and (typep bits 'fixnum) (<= 1 bits (nth-value 2 (geometria-pagina (costruttore-pagine-size builder))))
                (typep shift '(integer 0 63)) (<= (+ bits shift) 64) (= (length children) (ash 1 bits)))
     (error 'invalid-argument :reason :index-build-directory-geometry))

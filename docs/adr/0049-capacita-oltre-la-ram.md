@@ -10,7 +10,7 @@
 
 ## Objective
 
-A Serie's capacity must be able to exceed the memory available for the primary index. The resident mode's estimate of documents per RAM is not a universal product limit.
+A Serie's capacity must be able to exceed the memory available for the primary index. The resident mode's estimate of documents per unit of RAM is not a universal product limit.
 
 <a id="proposta"></a>
 

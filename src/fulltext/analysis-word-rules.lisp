@@ -5,8 +5,8 @@
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (u32 u32 u32 u32) boolean) unisci-lettere-p unisci-numeri-p))
 (defun unisci-lettere-p (a b prior after)
-  "Pre: classi sinistra/destra e contesto significativo. Post: regole WB5..WB7c.
-Nessuna mutazione o segnalazione."
+  "Pre: left/right classes and significant context. Post: rules WB5..WB7c.
+No mutation or signaling."
   (not (null
         (or (and (wb-lettera-p a) (wb-lettera-p b))
             (and (wb-lettera-p a) (wb-mezzo-lettera-p b) (wb-lettera-p after))
@@ -15,8 +15,8 @@ Nessuna mutazione o segnalazione."
             (and (= a +wb-hebrew-letter+) (= b +wb-double-quote+) (= after +wb-hebrew-letter+))
             (and (= prior +wb-hebrew-letter+) (= a +wb-double-quote+) (= b +wb-hebrew-letter+))))))
 (defun unisci-numeri-p (a b prior after)
-  "Pre: classi sinistra/destra e contesto. Post: regole WB8..WB12.
-Nessuna mutazione o segnalazione."
+  "Pre: left/right classes and context. Post: rules WB8..WB12.
+No mutation or signaling."
   (not (null
         (or (and (= a +wb-numeric+) (= b +wb-numeric+))
             (and (wb-lettera-p a) (= b +wb-numeric+))
@@ -27,8 +27,8 @@ Nessuna mutazione o segnalazione."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text index index) boolean) unisci-significativi-p))
 (defun unisci-significativi-p (space left right)
-  "Pre: destra significativa; sinistra significativa o sentinella. Post: WB5..WB16.
-Le ricerche contano nel budget di lavoro."
+  "Pre: significant right; significant left or sentinel. Post: WB5..WB16.
+Searches count toward work budget."
   (let* ((a (classe-parola space left)) (b (classe-parola space right))
          (p (if (or (= left +nessuno+) (zerop left)) +nessuno+
                 (aref (spazio-full-text-previous space) (1- left))))
@@ -46,8 +46,8 @@ Le ricerche contano nel budget di lavoro."
 ;;; REQ: REQ-SEC-007
 (declaim (ftype (function (spazio-full-text index) boolean) confine-parola-p))
 (defun confine-parola-p (space right)
-  "Pre: contesti costruiti, 0 <= RIGHT <= numero scalari. Post: confine UAX #29.
-WB1/2/3 precedono WB4; i contesti successivi saltano Extend/Format/ZWJ."
+  "Pre: constructed contexts, 0 <= RIGHT <= scalar count. Post: UAX #29 boundary.
+WB1/2/3 precede WB4; subsequent contexts skip Extend/Format/ZWJ."
   (let ((n (spazio-full-text-b-count space)))
     (when (or (zerop right) (= right n)) (return-from confine-parola-p t))
     (let* ((left (1- right)) (a (classe-parola space left)) (b (classe-parola space right)))

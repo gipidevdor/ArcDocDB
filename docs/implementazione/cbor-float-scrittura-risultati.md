@@ -4,7 +4,7 @@
 
 Campaigns dated 2026-10-13 under the [preregistered method](cbor-float-scrittura-metodo.md),
 blob `755b13a91ab72f54383d96faee5780da36e750d6`. The corpus is frozen
-before the product; two C1 readings precede first compilation.
+before the product; two C1 readings precede the first compilation.
 Versions tested are narrow `cd5749edc0a757ee3a5b470eda566a6685d32fd8`
 and write `03c6aed61e2c243d8b1a6c4332ce1837c4e9a77c`.
 
@@ -40,14 +40,14 @@ Six frozen fixtures cover half 1.5, double reduced to half 1.5,
 double reduced to single but not half, retained double, minimum half
 subnormal from double, and negative double NaN with nonshortenable payload.
 Five replicates of 4,096 calls, after 128 warmup calls, produce
-30 samples with zero observed heap allocation. Zero baseline and positive sensor
-of 16 × 1 MiB observe zero and 16,777,472 bytes respectively.
+30 samples with zero observed heap allocation. The zero baseline and positive control
+of 16 × 1 MiB report zero and 16,777,472 bytes respectively.
 
 NEXT, cold arity, entire array, token, and sink are checked.
 The hot loop uses the primary value; the corpus verifies arity on
 every success. Samples sum to 0.033414 s; the wrapper takes 1.416727 s.
 The auditor recalculates IEEE bytes through integers and rationals: 55,824
-successful checks, without calling product or driver. There is no speed
+successful checks, without calling the product or driver. There is no speed
 threshold or absolute proof of nonallocation. The binary64→32
 subnormal path that crosses words has functional tests,
 but is not among the six measured fixtures.
@@ -58,7 +58,7 @@ each: 2,520 files compared, with private caches and one exact
 replacement per mutant. The 281 declared fingerprints also include the
 uncopied driver; they do not prove closure of the private trees.
 
-The nine complete logs show baseline with 989 OK, smoke at line 2,
+The nine complete logs show a baseline with 989 OK, smoke at line 2,
 and termination at line 1,067. Each mutant has smoke before Unhandled,
 exit 1 without signal or warning, and a numbered frame from the
 REQ-CBR-004 corpus. The classifier rejects compilation errors, warnings,
@@ -76,8 +76,8 @@ Classification and logs remain local execution observations.
 | cbor-float-write.lisp | 190/220 | 35/40 |
 | Total | 365/440 | 61/76 |
 
-75 expressions are missing: 11 declarations and 64 internal ERROR nodes.
-15 outcomes are missing: 13 guards and two subnormal-exponent fallbacks.
+75 expressions are uncovered: 11 declarations and 64 internal ERROR nodes.
+15 outcomes are uncovered: 13 guards and two subnormal-exponent fallbacks.
 All remain in the denominator. Raw state with 274 files, the two selected
 entries, and three HTML files agree; nine observations remain stable.
 There is no attestation of MC/DC, unreachability, or C1 qualification.
@@ -140,7 +140,7 @@ remain 2,115,584/2,148,352; observed overlaps are 2,586/2,722 ticks.
 Final integration on `3ed6ebfba4dc692b524a4cf3416c8757de978e41`
 also includes the pool controller published at `45eb153`: `make check`
 is OK/0/STABLE in 209.526331 s, with 766 identical before/after fingerprints
-and clean working tree. The suite passes with 1,052 named and two smoke tests;
+and a clean working tree. The suite passes with 1,052 named and two smoke tests;
 four linter self-tests bring the total to 1,058 unique OK.
 Lint: 173 files, zero violations; traceability: 118/65/13/52, zero errors.
 Float writer and corpus retain their original frozen fingerprints.
@@ -158,10 +158,10 @@ named tests: it is corrected before preservation of the final document.
 
 The [main archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-13-cbor-float-write/catalogo.lisp)
 preserves 2,795 indexed files, 2,797 total files, and 26,641,257 indexed
-bytes: registers, frozen code, mutant copies, logs, measurements,
+bytes: records, frozen code, mutant copies, logs, measurements,
 raw/HTML, and readings. The 15 processes comprise 13 OK and two failed
 attempts of the C4 collection helper, due to parentheses and
-SIGNAL-SEMAPHORE signature, without product loading. Versions and registers
+SIGNAL-SEMAPHORE signature, without product loading. Versions and records
 are preserved; later self-tests pass with 18 copies, four
 workers, and specific rejections for corruption, duplicate target, and existing
 destination. Correcting the date to 2026-10-13 preserves the previous

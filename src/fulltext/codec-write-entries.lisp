@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (r:indice-posizionale index index) boolean) stesso-termine-run-p))
 (defun stesso-termine-run-p (run first second)
-  "Pre: run sigillato e verificato dal piano. Post: uguaglianza campo/termine.
-Costo gia riservato prima delle scritture; nessun contatore del run modificato."
+  "Pre: sealed run verified by the plan. Post: field/term equality.
+Cost already reserved before writes; no run counter modified."
   (let* ((data (r::indice-posizionale-tokens run)) (x (* first r::+token-width+)) (y (* second r::+token-width+))
          (a (aref data (+ x r::+offset+))) (b (aref data (+ y r::+offset+)))
          (bytes (r::indice-posizionale-bytes run)))
@@ -17,8 +17,8 @@ Costo gia riservato prima delle scritture; nessun contatore del run modificato."
 (declaim (ftype (function (octets spazio-codec-full-text r:indice-posizionale index index index index)
                          (values index index &optional)) scrivi-termine-run))
 (defun scrivi-termine-run (buffer space run token dict-index term-bytes posting-index)
-  "Pre: piano e span riservati, nuovo termine. Post: entry DICT e stringa TERMS, nuovi cursori.
-Solo preparazione in memoria; postcondizioni sui limiti restano sempre attive."
+  "Pre: reserved plan and spans, new term. Post: DICT entry and TERMS string, new cursors.
+In-memory preparation only; bound postconditions remain always active."
   (let* ((data (r::indice-posizionale-tokens run)) (p (* token r::+token-width+))
          (entry (+ (aref (spazio-codec-full-text-starts space) 1) (* dict-index +dict-width+)))
          (size (aref data (+ p r::+length+))) (source (aref data (+ p r::+offset+)))
@@ -37,8 +37,8 @@ Solo preparazione in memoria; postcondizioni sui limiti restano sempre attive."
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (octets spazio-codec-full-text u32 index index index) index) scrivi-posting-run))
 (defun scrivi-posting-run (buffer space row ordinal posting-index dictionary)
-  "Pre: nuovo posting del termine corrente. Post: riga, primo ordinale e numero posting DICT.
-Frequenza aggiornata per ogni occorrenza dal ciclo chiamante."
+  "Pre: new posting for the current term. Post: row, first ordinal, and DICT posting count.
+Frequency updated for every occurrence by the calling loop."
   (let ((entry (+ (aref (spazio-codec-full-text-starts space) 3) (* posting-index +posting-width+))))
     (unless (<= (+ entry +posting-width+) (aref (spazio-codec-full-text-starts space) 4))
       (error 'invariant-violation :reason :fulltext-write-posting-range))

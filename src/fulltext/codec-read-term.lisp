@@ -4,9 +4,9 @@
 ;;; REQ: REQ-SEC-007 REQ-SEC-008 REQ-SEC-010
 (declaim (ftype (function (octets index index spazio-codec-full-text) null) verifica-termine-profilo))
 (defun verifica-termine-profilo (buffer start end space)
-  "Pre: termine entro capacita, scratch esclusivo. Post: esattamente un token identico ai byte.
-Verifica UTF-8, NFC/folding/NFC e Word_Break; non confronta il documento sorgente.
-Budget globale include il lavoro analitico; nessun input trattenuto su errore."
+  "Pre: term within capacity, exclusive scratch. Post: exactly one token identical to the bytes.
+Verifies UTF-8, NFC/folding/NFC, and Word_Break; does not compare the source document.
+Global budget includes analysis work; no input retained on error."
   (let* ((analysis (spazio-codec-full-text-analysis space))
          (remaining (- (spazio-codec-full-text-work-limit space) (spazio-codec-full-text-work space)))
          (capacity (spazio-codec-full-text-term-capacity space)))

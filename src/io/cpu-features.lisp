@@ -14,15 +14,15 @@
 (declaim (ftype (function ((signed-byte 32) (unsigned-byte 64) (unsigned-byte 32)) boolean)
                 risposta-crc32c-valida-p))
 (defun risposta-crc32c-valida-p (status size flag)
-  "Pre: risultato e output inizializzati della syscall. Post: T solo per una conferma valida.
-Funzione pura; errore OS, dimensione o valore inatteso => NIL, nessun errore operativo."
+  "Pre: syscall result and initialized output. Post: T only for a valid confirmation.
+Pure function; OS error, unexpected size, or value => NIL, no operational error."
   (and (zerop status) (= size 4) (= flag 1)))
 
 ;;; REQ: REQ-FOR-003 REQ-AFF-004
 (declaim (ftype (function () boolean) crc32c-disponibile-p))
 (defun crc32c-disponibile-p ()
-  "Pre: inizializzazione, prima dei worker. Post: T solo con feature CRC32C attestata dall'OS.
-Errore/risposta inattesa/sistema non qualificato => NIL e fallback software; nessuna modifica DB."
+  "Pre: initialization, before workers. Post: T only with CRC32C feature attested by the OS.
+Error/unexpected response/unqualified system => NIL and software fallback; no DB modification."
   #+(and arm64 darwin)
   (sb-alien:with-alien ((flag sb-alien:unsigned-int 0) (size sb-alien:unsigned-long 4))
     (let ((status (%sysctl-crc "hw.optional.armv8_crc32" (sb-alien:addr flag)

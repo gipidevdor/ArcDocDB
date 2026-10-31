@@ -3,11 +3,11 @@
 # Ready-writer list results
 
 Local campaigns 2026-10-09, initial base `92d8b0e`, macOS ARM64/Apple M4,
-SBCL 2.6.9, safety3. Integrated checks first use `fd96fb3` (manifest),
+SBCL 2.6.9, safety 3. Integrated checks first use `fd96fb3` (manifest),
 then `201562d` (CBOR header), `33aa224` (CSN register), other-chat contributions.
-Both ready sources, tests, benchmark
-identical; ASDF integrates components, mutation runner
-strengthened. Every record retains own version; external load
+Both ready sources, tests, and benchmark are
+identical; ASDF integrates components, and the mutation runner is
+strengthened. Every record retains its own version; external load is
 uncontrolled.
 [Contract](writer-ready.md) preserves obligation-transport boundaries.
 
@@ -15,24 +15,24 @@ uncontrolled.
 
 ## Correctness and fault injection
 
-On initial base, forced build/full suite without warnings/style-warnings: 237 tests
+On the initial base, forced build/full suite without warnings/style-warnings: 237 tests
 of seven modules plus smoke, 51 execution (34 previous, 17 new).
 FIFO-list/cursor oracle checks 9000 steps over nine configurations,
 eleven reused writers, pending obligations on full, completion before
-reuse. Default limit uses 1025 distinct writers; rejected
-reference retained/published after drain.
+reuse. Default limit uses 1025 distinct writers; the rejected
+reference is retained/published after drain.
 
 Tests cover wrap, capacity/input, rotation, 24 busy/cursor patterns,
 seven inconsistent ring shapes, invalid arrays/slots/payloads, helpers called
 without guard/by another thread. Private FI/opaque duplicate-ring fixture
 remain distinct from public oracles with legal obligations.
 
-Four real threads reused over six waves/36 payloads: producers
+Four real threads are reused over six waves/36 payloads: producers
 remain alive during consumption, one consumer completes slices while
-other Serie's partition occupied. Two additional contending
+another Serie's partition is occupied. Two additional contending
 consumers reused over eight waves take one reference per
-wave. Payload/CRC checks outside list guards;
-semaphores/retries/joins belong to harness with explicit bounds.
+wave. Payload/CRC checks are outside list guards;
+semaphores/retries/joins belong to the harness with explicit bounds.
 No throughput, speedup, P99, temporal fairness measurement.
 
 <a id="copertura-e-mutazioni"></a>
@@ -54,19 +54,19 @@ Independent raw-vector recalculation agrees with HTML index.
 two defensive CAS checks, otherwise, legacy gaps.
 No subtracted form, approved exclusion, full MC/DC qualification.
 
-Initial campaign has successful execution baseline 51. Twelve mutants compile/detected;
+The initial campaign has a successful execution baseline of 51. Twelve mutants compile and are detected;
 zero survivors, compilation failure, before-tests. Preregistered set
 checks FIFO, wrap, full, count, freed slot, release, busy, last
 partition, cursor; not all possible defects.
 
 Integration distinguishes test-detected error from process
 failure: OS signal or nonzero exit after real completion
-is `:worker-error`. Self-test uses own SIGKILLed child,
-preserving exit/signal/log/report. Previous campaign/tool
-version preserved; twelve mutants unchanged.
+is `:worker-error`. The self-test uses its own SIGKILLed child,
+preserving exit/signal/log/report. The previous campaign/tool
+version is preserved; the twelve mutants are unchanged.
 Repeat on `fd96fb3` passes baseline 51 and 12/12 detections,
 exit 1/signal NIL per mutant; zero worker errors, survivors,
-compilation failure, before-tests. All thirteen logs preserved.
+compilation failure, before-tests. All thirteen logs are preserved.
 
 <a id="allocazioni-osservate"></a>
 
@@ -78,11 +78,11 @@ compilation failure, before-tests. All thirteen logs preserved.
 | Four partitions, eight writers, capacity 3 | 5 × 4096 | 0 bytes | 12,797,952 |
 
 Every cycle includes preallocated payload acceptance, publication,
-claim, start, consumption, writer finish; measures handoff/ready-list
-composition without attributing time to list alone.
+claim, start, consumption, writer finish; it measures the handoff/ready-list
+composition without attributing time to the list alone.
 Warmup 128/GC outside counter. Independent token
 `27K²+154K+29` (210/1077), 13/49 API calls per cycle; identity/count/
-status/cursor/generation checked. Expected sum also includes
+status/cursor/generation are checked. Expected sum also includes
 4096 iteration indices.
 
 Positive control detects 16,777,472 bytes in deliberately allocated
@@ -100,10 +100,10 @@ universal nonallocation nor pool performance.
 51 execution, 44 storage, 18 I/O, 82 recovery, 19 WAL).
 Forced compilation without warnings/style-warnings, lint 48 files,
 zero violations, trace, links, evidence preservation/self-tests,
-all ten correctness spikes. Full report
-with original output [preserved](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/check-integrato-processo.lisp)
+all ten correctness spikes. The full report
+with original output is [preserved](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/check-integrato-processo.lisp)
 with [spike master](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready-fd96-spikes/spikes.lisp),
-compressed payload verified lossless. Editorial additions/final
+the compressed payload is verified lossless. Editorial additions/final
 report publication later receive link/evidence checks.
 Verification concerns integration, without promoting engine gates.
 
@@ -113,16 +113,16 @@ again, OK/STABLE/exit 0: 274 tests of eight modules plus smoke,
 other checks including ten spikes passed.
 [Catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/catalogo.lisp) preserves
 final process/compressed spike master alongside first
-integration. Code, ready tests, both tools identical
-to version checked on `fd96fb3`; ASDF changes to register CBOR.
-Coverage/mutations/allocations retain measurement base.
+integration. Code, ready tests, and both tools are identical
+to the version checked on `fd96fb3`; ASDF changes to register CBOR.
+Coverage/mutations/allocations retain their measurement base.
 
 Concluding CSN-register integration on `33aa224` passes
 294 tests of nine modules plus smoke (20 additional CSN), lint 52 files
 without violations, all ten spikes. Process
-OK/STABLE/exit 0; ASDF registers new module, ready sources/
-tests/tools unchanged. Catalog also preserves check
-and spike master; previous two checks separate.
+OK/STABLE/exit 0; ASDF registers the new module, and ready sources/
+tests/tools are unchanged. The catalog also preserves the check
+and spike master; the previous two checks remain separate.
 Only later editorial closure receives link/evidence checks.
 
 <a id="riproduzione-e-conservazione"></a>
@@ -139,11 +139,11 @@ sbcl --script tools/writer-ready-bench.lisp --bench ulteriore-directory-nuova/
 make check
 ```
 
-To preserve command/environment/sources/full output, prefix command with
+To preserve command/environment/sources/full output, prefix the command with
 `sbcl --script tools/record-command.lisp --`.
 [Catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-ready/catalogo.lisp)
 preserves processes, raw coverage, baseline/all twelve mutant logs,
-measurements, adapters, inspection probes. Both C4 tools fully compiled with
+measurements, adapters, inspection probes. Both C4 tools are fully compiled with
 fatal warnings, FASL self-tests in separate private processes/caches.
 [Review](writer-ready-revisione.md) distinguishes two C1 readings
-and later integrated verification. Engine gates open.
+and later integrated verification. Engine gates remain open.

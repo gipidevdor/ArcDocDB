@@ -162,7 +162,7 @@ new positive concurrent work or overlap from a start barrier.
 
 ## Sensor and qualification limitations
 
-The sensor read plans two campaigns, each with five replicas using
+The sensor read plans two campaigns, each with five replicates using
 a fresh fixture, 4096 cycles, and 128 warmup cycles. Each EMPTY cycle performs four
 steps on four empty shards and checks cursors 1/2/3/0. CURRENT-INACTIVE
 holds a real CLAIMED with an inactive port and checks four lookups,
@@ -179,7 +179,7 @@ contention, and concurrent coordinator are not measured by the campaigns.
 Self-tests plan five mismatched returns, deliberate heap allocation, wrong sink,
 below-resolution clock, rejected CLI/destinations, and preserved partial raw output.
 The reading does not attest to their execution. Separate records are required for
-native/HTML coverage, per-file counts, C3 gate, heap, replicas, and copies
+native/HTML coverage, per-file counts, C3 gate, heap, replicates, and copies
 of originals. No new guarantee about message admission, sensors,
 park/wake, physical startup/shutdown, dead workers, or Archivio coordination;
 no complete-engine requirement is closed by this review.

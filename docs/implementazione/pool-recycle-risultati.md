@@ -93,7 +93,7 @@ preserve counts and all eight missing paths.
 
 Missing forms are final `otherwise` branches in both adapters: in claim, status outside
 gate ftype; in recycle, status already validated by separate guard.
-They remain in denominator. For recycle, native indices are 39–42, paths
+They remain in the denominator. For recycle, native indices are 39–42, paths
 `(1 4 2 3 3 4 6)`, `(1 1 4 2 3 3 4 6)`,
 `(2 1 4 2 3 3 4 6)`, `(3 1 4 2 3 3 4 6)`; audit also preserves four
 claim paths. Operational guard is exercised with valid/invalid returns.
@@ -111,7 +111,7 @@ Prepopulated writers, preallocated queues/capabilities, quantum one. Factory,
 API resolution, GC, and bounded public drain remain outside clock.
 
 ROOM includes published recycling, explicit acquisition, execution
-begin/pop/ack/end. FULL alternates both links after exchange and includes same
+begin/pop/ack/end. FULL alternates both links after exchange and includes the same
 execution slice. Links stay IDLE: no bridge begin or Serie
 lease in clock. C1 protocol and scalar oracles are part of cost;
 time is not attributed to adapter alone. No private reset.
@@ -125,12 +125,12 @@ time is not attributed to adapter alone. No private reset.
 | 4 | 4051 | 3330 | 0 |
 
 SBCL 2.6.9, ARM64, Apple M4, Darwin 27.0.0, safety 3, and clock 1000000
-units/s. Every sample completes 4096 cycles, observed zero heap, and exact
+units/s. Every sample completes 4096 cycles, with observed zero heap and an exact
 sink: 8513536 ROOM, 8562688 FULL. Positive control detects 16777472
 deliberate bytes; self-tests detect differing results, wrong sink, below-resolution
 clock, invalid CLI, and loss of partial raw data or existing
 destinations. Neither concurrent coordinator nor Archivio shutdown
-is qualified. External load uncontrolled; no threshold, tuning, or
+is qualified. External load is uncontrolled; no threshold, tuning, or
 throughput conclusion; zero heap does not prove universal nonallocation.
 
 <a id="integrazione-e-conservazione"></a>

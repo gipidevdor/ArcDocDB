@@ -69,7 +69,7 @@ Serie/Archivio remains to be integrated at the worker boundary.
 Serie health, 2PC outcomes, and client acknowledgment are controller checks.
 An earlier already durable batch retains that coverage even if a subsequent
 group fails; this does not authorize acknowledgments after the fault.
-Async is rejected for control/multiserie; PREPARE/COMMIT obligations still
+Async is rejected for control/multiseries; PREPARE/COMMIT obligations still
 require Transaction Manager checks.
 
 <a id="durata-riuso-e-guasti"></a>

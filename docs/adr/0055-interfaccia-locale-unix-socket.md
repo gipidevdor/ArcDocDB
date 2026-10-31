@@ -2,7 +2,7 @@
 
 # ADR-0055 — Local Unix socket as the priority interface
 
-- **Status:** Accepted at the author's direction; implementation and qualification to be produced
+- **Status:** Accepted at the author's direction; implementation and qualification remain to be completed
 - **Date:** 2026-10-16
 - **Relationship to the specification:** supersedes TCP as the primary transport
   chosen in [ADR-0029](0029-interfacce-protocollo-query-contratto.md); queries, Serie
@@ -17,7 +17,7 @@
 
 The first intended use is the database for an NNTP server in Common Lisp.
 The author requires the interface between application and database to use a
-local Unix socket and have development priority. The previous open alternative
+local Unix socket and have development priority. The previous open choice
 between embedding and TCP no longer represents the reference path.
 The M16 layer is not yet implemented.
 
@@ -100,7 +100,7 @@ application traffic waits for recovery to finish.
 
 Only the byte stream of an individual connection is ordered. Requests
 are distributed through existing Serie paths; no global lock or counter
-per request and no thread per connection or request. The priority
+per request, or thread per connection or request, is introduced. The priority
 established here concerns integration path and development order;
 the scheduler's existing priorities and isolation remain.
 

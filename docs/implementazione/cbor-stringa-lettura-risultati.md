@@ -12,7 +12,7 @@ window. The [method](cbor-stringa-lettura-metodo.md) precedes the product.
 ## Freeze and revisions
 
 Contract preregistered in `d31d888b`; independent corpus and driver
-frozen in `b83a0bda` before kernel. Both C1 readings
+frozen in `b83a0bda` before the kernel was written. Both C1 readings
 ([first](cbor-stringa-lettura-prima-revisione.md),
 [second](cbor-stringa-lettura-seconda-revisione.md)) precede every
 compilation. Qualified freeze `f7c9e0503577b45e2bd20de66c72b6e7232a8c76`.
@@ -62,7 +62,7 @@ Eight compilable mutants are detected by the expected named test after all
 38 compilations: permissive major, skipped UTF-8, NEXT=END, ignored
 budget, START=0, extra arity, skipped minimality, and ignored HIGH.
 Six were preregistered; two extensions declared before
-campaign. Arity mutant changes two consistent fragments, body and FTYPE,
+the campaign. Arity mutant changes two consistent fragments, body and FTYPE,
 in the copy only. Baseline 17/17; eight exit1/signalNIL. Warnings, compilefail,
 helper errors, signals, and faults after completion do not count as detections.
 Independent reading passes 4791 checks: 342 byte comparisons of
@@ -84,14 +84,14 @@ the 17 new names agree with DATA corpus. Compiler notes are
 preserved; no WARNING or STYLE-WARNING. Integration e1bffcae
 with CSN recovery passes the same suite, lint on 249 files, and trace with 127 requirements.
 The combined command remains FAILED at links: six ignored historical
-Markdown copies caused 282 broken relative links. Renamed .md.txt
-with unchanged SHA256, the later links check passes with zero broken links.
+Markdown copies caused 282 broken relative links. After the copies were renamed .md.txt
+with unchanged SHA256 hashes, the later links check passes with zero broken links.
 Failure and correction are both preserved. Subsequent integrations
 retain the same reader and corpus pins.
 
 Final build `4af9f054` also integrates the ID proposal and
 full-text contract: **1751 unique named tests and two smoke tests**, lint, trace, and
-links passed in the same command. The [final register](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read-integration/catalogo.lisp)
+links passed in the same command. The [final record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read-integration/catalogo.lisp)
 preserves that process and count reading, including the first
 failed attempt of the C4 reader alone and its correction.
 
@@ -100,8 +100,8 @@ failed attempt of the C4 reader alone and its correction.
 ## Preservation and limits
 
 The [main archive](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read/catalogo.lisp)
-contains ten records completed OK, historical snapshot, and preparation
-originals, including C4 reader errors. Collection with four
+contains ten records completed OK, a historical snapshot, and original
+preparatory artifacts, including C4 reader errors. Collection with four
 workers and independent closed inventory: **602 indexed files, 604 physical,
 6736470 indexed bytes**, without append after checking.
 The [supplement](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-15-cbor-string-read-final/catalogo.lisp)

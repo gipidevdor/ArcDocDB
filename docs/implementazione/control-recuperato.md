@@ -2,11 +2,11 @@
 
 # Reading the control log and recovery transition
 
-Path connects [manifest](manifest-control-log.md) to
+This path connects [manifest](manifest-control-log.md) to
 [checkpoint publication](pubblicazione-control.md), under
 [ADR-0040](../adr/0040-manifest-a-record-unico.md#3-riconciliazione-al-riavvio).
-Old file read through same read-only capability later handed
-to rename. New checkpoint preserves previous state and closes
+The old file is read through the same read-only capability later handed
+to rename. The new checkpoint preserves the previous state and closes
 old ACTIVE before opening a new one.
 
 ## API
@@ -19,30 +19,30 @@ old ACTIVE before opening a new one.
 | `verifica-transizione-recovery(previous, current)` | pure verification of conservative ACTIVE closing; no I/O |
 | `pubblica-control-validato(prepared, recovered)` | verifies canonical view and transition, then delegates to publisher with exact old file |
 
-`control-recuperato` has private constructor and no copier. Retains
+`control-recuperato` has a private constructor and no copier. It retains
 canonical view, read-only capability, owned manifest, and four scalars.
-Does not retain scratch, log bytes, or second FD. Manifest has no
-aliases to read bytes; scratch reusable after return.
+It does not retain scratch, log bytes, or a second FD. The manifest has no
+aliases to the bytes read; scratch is reusable after return.
 
 <a id="autorità-e-stabilità"></a>
 
 ## Authority and stability
 
-Controller maintains recovery **exclusive to Serie**, in I/O pool.
+The controller maintains recovery **exclusive to Serie**, in the I/O pool.
 Catalog supplies canonical view and old `control.log`
 authority. Caller attests `size` as stable physical EOF: this
-API does not measure file size. Caller-chosen limit or
-buffer length cannot replace attestation.
+API does not measure file size. A caller-chosen limit or
+buffer length cannot replace that attestation.
 
 File, FD, and namespace remain frozen from reading until publication
-completion. Read-only describes capability; does not prevent external writing
-to same inode. Result is neither certificate against external
+completion. Read-only describes the capability; it does not prevent external writing
+to the same inode. Result is neither certificate against external
 changes nor independent permission to replace catalog or start traffic.
 Existing rename still checks both leaves against capabilities.
 
 Publication requires **same view by object identity**, in addition
-to Serie identity checked in header. Different view with same UUID
-rejected: index and Archivio scope not implicitly rebound.
+to Serie identity checked in header. A different view with the same UUID
+is rejected: index and Archivio scope are not implicitly rebound.
 
 <a id="lettura-e-budget"></a>
 
@@ -56,7 +56,7 @@ rejected: index and Archivio scope not implicitly rebound.
    Tail allowed only after full durable-witness search.
 5. Verify frontiers and still-open capability, then deliver result.
 
-Scratch contains full file and must hold at least `size` bytes. Default
+Scratch contains the full file and must hold at least `size` bytes. Default
 is opening budget **64 MiB**, configurable with `:max-bytes`; not
 a new persistent database limit. `:chunk-bytes` is 64 KiB; input's
 maximum transfer must allow `min(size, chunk-bytes)`.
@@ -64,7 +64,7 @@ Iteration count is `ceiling(size/chunk-bytes)`; short reads have
 finite bound already defined by I/O module.
 
 `:max-batches`, `:max-batch-records`, `:max-edits`, `:max-segmenti`, and
-`:max-esiti` initially 65,536. Segments/outcomes bound both cumulative
+`:max-esiti` are initially 65,536. Segments/outcomes bound both cumulative
 and per-EDIT occurrences, including repetitions.
 Byte budget also bounds batch and witness search. Payload-codec
 limits unchanged. Exhausted budget is an error;
@@ -79,8 +79,8 @@ Reading does not open, close, write, synchronize, or truncate file.
 
 ## Conservative transition
 
-Comparison dedicated to closing after crash, before CLEAN, MERGE,
-or reclamation. Requires:
+This comparison is dedicated to closing after a crash, before CLEAN, MERGE,
+or reclamation. It requires:
 
 - new ACTIVE ID at least old high-water; exhausted ID space
   produces `resource-exhausted`;
@@ -89,17 +89,17 @@ or reclamation. Requires:
 - all previous REMOVED entries preserved, even if files already absent;
 - exactly one added CLOSED and no added or omitted REMOVED.
 
-Outcome presence checked separately from CSN: zero does not mean
+Outcome presence is checked separately from CSN: zero does not mean
 absence. Comparisons use full u64 integers. Cardinality and inclusion
 together exclude silent addition or replacement of other segments.
 Removed entries may be omitted by later authoritative control-log
 compaction; this entry deliberately retains all read entries.
-Comparison is not generic guard for online rotation or compaction.
+The comparison is not a generic guard for online rotation or compaction.
 
 **Preconditions remain:** inventory validation, old ACTIVE scan,
 and correct length/outcomes used to close it.
 Comparing two manifests cannot prove bytes of an unread segment.
-Does not resolve multiseries transactions or authorize deletion.
+It does not resolve multiseries transactions or authorize deletion.
 
 The [old ACTIVE reader](active-recuperato.md) now connects that
 precondition to read-only scanner and decision table. Its publication
@@ -111,7 +111,7 @@ in closing before delegating to conservative transition described here.
 ## Publication and errors
 
 `pubblica-control-validato` rejects different view, closed capability, and invalid
-transition before claiming token or performing I/O. Then delegates to
+transition before claiming token or performing I/O. It then delegates to
 `pubblica-control-recuperato`: same CAS, same rename atomicity
 point, same directory fsync before acknowledgment, same terminal
 errors after claim. No second state machine or retry logic.
@@ -119,7 +119,7 @@ errors after claim. No second state machine or retry logic.
 Existing entry remains available to callers directly attesting
 old-log authority and validation. Initial Serie creation,
 index adoption, and Recovery Manager gate remain
-to integrate.
+to be integrated.
 
 <a id="decisioni-e-costi"></a>
 
@@ -136,7 +136,7 @@ to integrate.
 | CRV-D07 | same canonical view and old input still open | another view with equal/different UUID, CLOSED/FAULTED, valid |
 
 Sequential O(bytes) read plus existing scanner/replay cost.
-Comparison visits O(CLOSED + REMOVED + outcomes) with average O(1) lookup; exposes
+The comparison visits O(CLOSED + REMOVED + outcomes) with average O(1) lookup; exposes
 no hash table. No lock between Serie, clock, wait, or shared counter.
 Opening paths with allocations: caller scratch, decoder workspace and
 manifest, result wrapper. No new full-file or full-table
@@ -150,6 +150,6 @@ preserves 84 new passing tests, independent review, four-file
 coverage, and 216 measurement windows. Limits and unreached forms remain
 explicit; these outcomes close neither C1 gate nor Phase 0. The
 [measurement method](control-transizione-metodo.md) distinguishes pure
-comparison from decoding and disk publication. Outcomes and limits
-preserved with producers; full Recovery Manager qualification
+comparison from decoding and disk publication. Outcomes and limits are
+preserved with their producers; full Recovery Manager qualification
 remains open.

@@ -19,7 +19,7 @@ measurements, mutations, coverage, and observation limits.
 SOURCE contains consecutive items in a half-open span of a
 simple u8 array. The first COUNT cells of the simple u32 ITEM-ENDS table
 contain ends relative to SOURCE-START: increasing, with the last equal
-to span length. Subsequent cells are ignored. COUNT0
+to the span length. Subsequent cells are ignored. COUNT 0
 requires an empty source and produces `80`.
 
 For example, SOURCE=`00 38 18 61 41 F5 F9 3E 00` and ends `#(1 3 5 6 9)`
@@ -30,8 +30,8 @@ rejected before the first write.
 
 MAX-BYTES includes the complete array's header and payload. MAX-NODES
 includes the root and all child nodes, including tags. MAX-DEPTH counts
-array/map, with root at level1; scalar children add no
-levels. Maximums are16MiB,16Mi nodes, and100 levels. An empty array
+array/map levels, with the root at level 1; scalar children add no
+levels. The maxima are 16 MiB, 16 Mi nodes, and 100 levels. An empty array
 requires one byte, one node, and one level. The remaining node budget is applied
 to each child's scanner; exhausting it before the next child
 raises a resource error at that child's absolute source offset.

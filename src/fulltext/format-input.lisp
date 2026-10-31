@@ -7,8 +7,8 @@
 ;;; REQ: REQ-SEC-008 REQ-SEC-010
 (declaim (ftype (function (t t t t t t) (values index &optional)) controlla-input-cornice))
 (defun controlla-input-cornice (buffer start end identity segment-id max-bytes)
-  "Pre: argomenti non fidati. Post: dimensione dello span simple u8 verificato.
-INVALID-ARGUMENT per range, ID, segment-id o budget; nessun byte letto o modificato."
+  "Pre: untrusted arguments. Post: verified simple u8 span size.
+INVALID-ARGUMENT for range, ID, segment-id, or budget; no bytes read or modified."
   (unless (and (typep buffer 'octets) (typep start 'index) (typep end 'index)
                (<= start end (length buffer)))
     (error 'invalid-argument :reason :fulltext-range))
@@ -23,9 +23,9 @@ INVALID-ARGUMENT per range, ID, segment-id o budget; nessun byte letto o modific
 ;;; REQ: REQ-SEC-008
 (declaim (ftype (function (t index) (values index &optional)) controlla-lunghezze-cornice))
 (defun controlla-lunghezze-cornice (lengths size)
-  "Pre: SIZE dello span valido. Post: fine del payload relativa allo span.
-INVALID-ARGUMENT per lunghezze/layout; RESOURCE-EXHAUSTED per capacita insufficiente.
-Nessuna scrittura; sei iterazioni, somme successive solo entro SIZE."
+  "Pre: valid span SIZE. Post: payload end relative to the span.
+INVALID-ARGUMENT for lengths/layout; RESOURCE-EXHAUSTED for insufficient capacity.
+No writing; six iterations, successive sums only within SIZE."
   (unless (typep lengths '(simple-array (unsigned-byte 64) (6)))
     (error 'invalid-argument :reason :fulltext-section-lengths))
   (unless (<= 1 (aref lengths 0) +meta-max-bytes+)

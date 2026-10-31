@@ -6,8 +6,8 @@
 ;;; REQ: REQ-FOR-001 REQ-FOR-002 REQ-AFF-002
 (declaim (ftype (function (octets octets) null) verifica-rilettura-header))
 (defun verifica-rilettura-header (header scratch)
-  "Pre: due range completi stabili, dopo lettura/CRC. Post: uguaglianza esatta dei 64 byte.
-CORRUPTION-DETECTED per differenza, inclusi created-at, versione e riservati; nessuna mutazione."
+  "Pre: two stable complete ranges, after reading/CRC. Post: exact equality of 64 bytes.
+CORRUPTION-DETECTED for a difference, including created-at, version, and reserved fields; no mutation."
   (check-range header 0 +segment-header-bytes+) (check-range scratch 0 +segment-header-bytes+)
   (unless (loop for i below +segment-header-bytes+ always (= (aref header i) (aref scratch i)))
     (error 'corruption-detected :reason :active-initialization-readback :offset 0))
@@ -18,11 +18,11 @@ CORRUPTION-DETECTED per differenza, inclusi created-at, versione e riservati; ne
                          &key (:version integer)) segmento-attivo-preparato) prepara-segmento-attivo))
 (defun prepara-segmento-attivo (view input append directory segment-id created-at header scratch
                                &key (version 2))
-  "Pre: pool I/O, temporaneo nuovo O_EXCL, namespace riservato; DIRECTORY è il parent autorevole.
-Post: header canonico scritto, file sincronizzato, riletto/CRC/identità/byte verificati, fsync parent.
-Restituisce il wrapper completo; nessun EDIT, rinomina, pubblicazione o conferma al client.
-Guasti tipizzati propagati senza retry/rollback/close; nessun risultato parziale. Il caller fa cleanup.
-Punto di atomicità dell'apertura è il futuro EDIT durevole, non questi flush di preparazione."
+  "Pre: I/O pool, new O_EXCL temporary file, reserved namespace; DIRECTORY is the authoritative parent.
+Post: canonical header written, file synchronized, readback/CRC/identity/bytes verified, parent fsync.
+Returns the complete wrapper; no EDIT, rename, publication, or client acknowledgment.
+Typed faults propagate without retry/rollback/close; no partial result. The caller performs cleanup.
+The opening atomicity point is the future durable EDIT, not these preparation flushes."
   (verifica-preparazione-attiva view input append directory segment-id version header scratch)
   (let* ((association (associa-file input append))
          (log (crea-log-io append :segment segment-id :version version)))

@@ -64,7 +64,7 @@ Serie A must not prevent:
 - queries on Serie C;
 - controlled compaction on Serie D.
 
-Resources actually shared, and therefore needing control, are: pool workers, the cache
+Resources that are actually shared, and therefore require control, are: pool workers, the cache
 (partitionable, [09](09-cache.md)), the NVMe device, memory, and — in SBCL — the garbage
 collector, which stops all threads (RSK-01).
 
@@ -101,7 +101,7 @@ The same scheduler coordinates query, writer, WAL, and compaction load.
 
 ## Compaction Scheduler
 
-It has **independent** limits from the request scheduler ([07](07-compaction.md#parallelismo-e-scheduling)).
+Its limits are **independent** of those of the request scheduler ([07](07-compaction.md#parallelismo-e-scheduling)).
 Priority order (INV-P4):
 
 ```

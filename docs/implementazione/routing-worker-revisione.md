@@ -121,7 +121,7 @@ diff from d155db3 changes no sources, tools, documents, or ASDF.
 This distinction retains the actual base in freeze records.
 
 These deltas do not change the three routing sources, bridge, writer change,
-routing fixtures, or C4. Dedicated raw data retains original base, sources, and scope:
+routing fixtures, or C4. Dedicated raw data retain the original base, sources, and scope:
 it is not presented as new measurements on the integrated base.
 ASDF, implementation index, and changelog are composed retaining
 both additions. General check on the integrated package passes
@@ -164,7 +164,7 @@ The new 683-source/document snapshot at
 `4000713646-command-11645-0`: OK/STABLE/exit0, 854 tests plus 2 smoke tests,
 22 suites, no warning/style-warning. Ten additional experiments
 succeeded in master `4000713800-check-18712-0`, all stable.
-Previous 835+2 raw data remains historical; it is not reinterpreted as
+Previous 835+2 raw data remain historical; it is not reinterpreted as
 proof of the new base. Both C1 readings, measurements, and dedicated
 denominator retain original source and scope. The new general check
 does not close Phase 0 or engine qualification.

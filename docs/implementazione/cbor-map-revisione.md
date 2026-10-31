@@ -3,8 +3,8 @@
 # First C1 reading of CBOR map composition
 
 Static reading on 2026-10-14 **before the first compilation**, performed by
-a reviewer distinct from the product author. No LOAD/compile of product,
-corpus, or driver; no suite or campaign run during this reading.
+a reviewer distinct from the product author. The reviewer did not load or compile the product,
+corpus, or driver, or run a suite or campaign during this reading.
 The corpus was frozen before the product was written, under blind plan
 `def50d1650ada2447dffedf13895ac85a40ee84a`.
 
@@ -23,7 +23,7 @@ The corpus was frozen before the product was written, under blind plan
 
 The increment implements REQ-CBR-006, derived from ADR-0014, with REQ-LIM-001/002,
 REQ-AFF-004/008, and invariants INV-F1, INV-P6, INV-A8. It is a structural
-MT5 primitive: it preserves minimal children's order and bytes; it does not certify
+MT5 primitive: it preserves the order and bytes of its minimal child items; it does not certify
 key order, uniqueness/equivalence, application tag semantics, or the deterministic
 document profile.
 
@@ -31,8 +31,8 @@ document profile.
 
 ## Outcome and resolved finding
 
-**No remaining blocking defect identified in the two sources.** The ten
-functions have complete FTYPEs, safety3, requirements/docstrings/ownership; maximums
+**No remaining blocking defect was identified in the two sources.** The ten
+functions have complete FTYPEs, safety 3, requirements/docstrings/ownership; the maxima are
 38 lines and nine syntactic paths under the convention stated
 in the [complete inventory](cbor-map-decisioni.md).
 
@@ -49,10 +49,10 @@ retain all pins above. The reviewer changed neither product, corpus, nor tool.
 
 COUNT counts pairs, ITEMS=2*COUNT. input:14/16/19 validates simple U32 type and
 COUNT INDEX against **two separate comparisons** with half the table and half SPAN,
-before doubling at input:21. Thus ITEMS<=SPAN INDEX without overflow; COUNT0
-requires SPAN0. Inactive tails, including odd ones, are neither bounded by SPAN nor read.
+before doubling at input:21. Thus ITEMS<=SPAN has type INDEX without overflow; COUNT 0
+requires SPAN 0. Inactive tails, including odd ones, are neither bounded by SPAN nor read.
 input:50 clamps SPAN against the already validated budget <=16MiB before COUNT's
-u32 cast, addition, and loop; subsequent ITEMS casts are within16MiB.
+u32 cast, addition, and loop; subsequent ITEMS casts are within 16 MiB.
 
 The public sequence reproduces all eleven method phases: destination/source
 ranges, table/COUNT, SPACE/alias, configuration, complete bytes,
@@ -67,12 +67,12 @@ source span disjoint from the entire [START,NEXT), header included; END may
 be wider than the footprint. On success when EQ, the source
 span is unchanged, while the same physical array changes in the destination footprint.
 The `cmw-accept` corpus explicitly distinguishes this case; every public
-rejection instead preserves entire physical arrays.
+rejection instead preserves the entire physical arrays.
 
-The root starts at nodes1/peak1. Minimum1+ITEMS and MAX-DEPTH>=1 are checked
+The root starts at nodes 1/peak 1. The minimum of 1+ITEMS and MAX-DEPTH>=1 are checked
 before subtracting the root level. Each key/value is scanned
 separately with its own span, remaining MAX-NODES-NODES, and MAX-DEPTH-1.
-Remaining1 is valid; remaining0 produces `:cbor-map-node-budget` at the next
+A remainder of 1 is valid; a remainder of 0 produces `:cbor-map-node-budget` at the next
 item's absolute start before reset. Exhaustion inside a value retains
 the scanner's `:cbor-node-budget`, without converting it to the composer's reason.
 Tags are nodes without container levels; peak=1+maximum child peak.
@@ -116,13 +116,13 @@ a single lexical NEXT value.
    relations; 40 guards and two LOOPs, all inventoried without exclusions.
    Condition coverage and MC/DC are not certified by static reading.
 8. **State ownership:** exclusive destination/scratch, stable source/table;
-   scratch fields not shared across workers. Aliases forbidden before reset.
+   scratch fields are not shared across workers. Aliases are forbidden before reset.
 9. **Integration:** public export present; product ASDF loads input then
    write after dependencies; corpus support/serial/thread and global RUN
    are present. Exact coverage scope, dispatch, positive/fake/child fixtures,
    and corrected aggregate RUN. REQ-CBR-006 is implemented, not verified;
-   matrix contains the new entry. Build/lint/trace/link/make check not run here.
-10. **Rules:** FTYPE 10/10, docstrings/requirements, safety3, <=60 lines and <=10
+   matrix contains the new entry. Build/lint/trace/link/make check were not run here.
+10. **Rules:** FTYPE 10/10, docstrings/requirements, safety 3, <=60 lines and <=10
     syntactic paths; no new CASE/COND, macro, mutable global state,
     LOAD/EVAL/COMPILE/INTERN, or system call in the product. No deviation
     introduced or coverage exclusion approved by this reading.

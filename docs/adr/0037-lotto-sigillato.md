@@ -69,8 +69,8 @@ The durability level changes **only the timing** of publication and acknowledgme
 | `:async` | on `write` completion, before the flush |
 
 `:strong` and `:group` provide the same guarantee; `:strong` closes the batch immediately,
-without any formation wait. With `:async`, data is in the page cache at acknowledgment:
-it survives process termination, but not machine shutdown. The restrictions in
+without any formation wait. With `:async`, data are in the page cache at acknowledgment:
+they survive process termination, but not machine shutdown. The restrictions in
 ADR-0033 §10 remain.
 
 Closed batches that are not yet durable are bounded in bytes per Serie; beyond the limit,
@@ -109,7 +109,7 @@ process; bytes beyond `P` are ignored by every reader and disappear through CLEA
 The `ACTIVE` segment, `wal/control.log`, and `multiserie.log` are **logs of sealed batches**:
 the same record frame ([ADR-0039](0039-cornice-unica-dei-record.md)), the same SEAL, the same
 single flush, the same tail rule. Only the type of contained records differs. For the two
-control logs, which never close, tail `P` is ignored on reads and the first batch
+control logs, which never close, the tail starting at `P` is ignored on reads and the first batch
 after restart is written in a compacted file (atomic rename).
 
 Pattern: group commit with one flush at a time and acknowledgment by coverage (PostgreSQL:
@@ -136,7 +136,7 @@ abrupt shutdown — and not yet witnessed by the SEAL of a later batch — is
 indistinguishable from a tail. This is the boundary of what a log can know about itself; it
 coincides with the class of failures not tolerated (non-durable flush, FM-03) and is recorded
 as [RES-05](../affidabilita/analisi-dei-guasti.md#rischi-residui-accettati). An orderly shutdown
-closes the segment: no window.
+closes the segment, eliminating this window.
 
 <a id="alternative-considerate"></a>
 

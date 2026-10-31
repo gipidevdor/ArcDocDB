@@ -12,12 +12,12 @@
 
 Isolated checkout from `74f0949`, Apple M4 ARM64, 16 GiB, Darwin 27.0.0,
 SBCL 2.6.9. Three agents developed kernel, independent CHECK, and consumer
-in disjoint files; parent integrates, profiles, and measures serially. External load
+in disjoint files; parent integrates, profiles, and measures serially. External load is
 uncontrolled, 1 µs clock, benchmark process heap 4 GiB.
 
 The [catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/catalogo.lisp) also preserves
 failures, full driver sources, before/after hashes, commands,
-original stdout/stderr, and decoded results. Records are schema1 data,
+original stdout/stderr, and decoded results. Records are schema 1 data,
 read with `*read-eval*=nil` without loading spike packages.
 References: REQ-VAL-001, REQ-AFF-012, REQ-IDX-001, REQ-IDX-007, REQ-BEN-001.
 No engine requirement changes status.
@@ -52,7 +52,7 @@ completes 80 samples: the buffer variant reduces high-u64 field
 allocations but retains 47.604375 B/op in every cell. The result
 contradicting the zero-allocation hypothesis remains published.
 
-Generic validator `intero-limitato` constructs `(integer minimo massimo)`
+The generic validator `intero-limitato` constructs `(integer minimo massimo)`
 on every call. The
 [isolated diagnostic](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/validazione-profilo.lisp)
 compares dynamic and static checks on 1,000,000 values 1..8, separate
@@ -62,7 +62,7 @@ supports attributing residual allocation to the validator on this path.
 
 The buffer kernel therefore uses literal type `(integer 1 8)` and the same
 `type-error`, retaining input checks. The comparison core
-remains identical. Final comparison concerns the entire variant: buffer,
+remains identical. The final comparison concerns the entire variant: buffer,
 typed intermediates, expanded probing, and static checking, with `speed 3`
 versus core `speed 2`. It does not isolate the API change alone.
 
@@ -99,7 +99,7 @@ Interleavings are synchronous and deterministic; they are not scheduler
 stress or a hardware memory-model proof. Final strict compilations
 succeed without warnings/style-warnings. An initial SBCL argument-order
 error, consumer syntax error, and rejected DEFMACRO redefinition
-are also preserved. Final consumer uses local MACROLET.
+are also preserved. The final consumer uses local MACROLET.
 Four expected CLI rejections are separate from CHECKs: unknown variant,
 duplicate option, unrelated matrix option, zero operations.
 
@@ -115,7 +115,7 @@ and [statistics with source](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2
 sbcl --noinform --no-userinit --no-sysinit --script tools/run-spikes.lisp --bench SPK-01 -- --variant buffer
 ```
 
-4,096 documents per cell, capacity 8.192, five replicas, 128,000 lookups per
+4,096 documents per cell, capacity 8,192, five replicates, 128,000 lookups per
 sample, 4,096 warmup per method/cell. Eight cells, 40 pairs, 80 samples,
 **10,240,000 measured lookups**, half per method. Order 20 AB / 20 BA.
 One immutable index serves both methods in a pair; no writer
@@ -138,12 +138,12 @@ Local medians, times including lookup, oracle, checksum, and guards:
 
 All **40 buffer samples** observe zero consed bytes, including values
 beyond fixnum and misses. Median ratios of individual-pair timings
-range from 1.95 to 2.40; intervals and all replicas remain in the
+range from 1.95 to 2.40; intervals and all replicates remain in the
 record without claimed statistical significance.
 
 The positive control publishes a u8 array in a global and keeps it live
 past measurement: payload 262,144 bytes, primitive-object-size
-262.160, consed delta 262.160, observed final content 172. This checks
+262,160, consed delta 262,160, observed final content 172. This checks
 the sensor without assuming a nonescaped array is heap-allocated.
 The counter is process-cumulative; it does not measure RSS. Observed zero
 does not guarantee every path, callback, or future compiler configuration.
@@ -177,7 +177,7 @@ dependencies from already integrated I/O and bitmap work. SBCL compiler
 informational notes remain in original streams. Verification does not
 promote engine requirements based solely on experimental tests.
 The [publication rejection](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-pubblicazione-incompleta.lisp) is preserved:
-initial packager did not accept legacy result `:pass` and catalog
+the initial packager did not accept legacy result `:pass` and the catalog
 referenced a still-missing composite artifact. Corrected packaging retains
 original `:ok`/`:pass` outcomes; verification is repeated before push.
 The [final repetition](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-08-lettura/verifica-finale.lisp)

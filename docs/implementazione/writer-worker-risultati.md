@@ -22,7 +22,7 @@ spikes. The [complete record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c
 also retains intentional rejections from negative tool fixtures.
 
 There are 89 execution tests, 23 new. The independent list oracle runs
-8000 steps over eight combinations K1/4, ready capacity1/2, and quantum1/2,
+8000 steps over eight combinations K1/4, ready capacity 1/2, and quantum 1/2,
 13 writers, final drain, and accepted/delivered payload equality.
 Fixtures check cumulative quotas, FIFO, buffers/sentinels, home/cursor,
 stale ack, busy with snapshot, finishing latch, room/full recycling,
@@ -41,8 +41,8 @@ shutdown, or lease migration between threads.
 ## Updated base integration
 
 After these campaigns, the primary integrates recovery inventory in `e2f7a75`.
-Separate check `4000548048-command-40192-0` is OK/STABLE/exit0:
-400 tests plus smoke (execution89, recovery95), lint66/zero, traceability
+A separate check `4000548048-command-40192-0` is OK/STABLE/exit0:
+400 tests plus smoke (execution 89, recovery 95), lint 66/zero, traceability
 114/65/13/52 without errors, 224 documents/2017 links without breaks, and
 ten spikes. The [integrated record](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker/check-integrazione-processo.lisp)
 and [its spike catalog](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-integration/catalogo.lisp)
@@ -75,8 +75,8 @@ payload. Complete audit and compact projection are both retained; initial
 projection adapter failure is declared in the inventory and not attributed
 to the product.
 
-The separate OS fixture uses real SIGKILL: signal9/exit137, worker-error
-classification, and detected0. Authentic completion followed by nonzero exit,
+The separate OS fixture uses real SIGKILL: signal 9/exit 137, worker-error
+classification, and detected 0. Authentic completion followed by nonzero exit,
 quoted markers, warning/compilation failure, partial reports, and preexisting
 destinations are checked by self-tests and not promoted to detection.
 
@@ -91,18 +91,18 @@ composes enqueue, publish, claim, begin, pop/ack, end, and full/room recycle;
 writer identities, count/status/cursor, and persistent generations are
 checked. Initial role rotates among C+1 distinct writers per shard.
 
-| Shards K | Capacity C | Calls/cycle | Token | Sink per replica | Complete samples | Observed heap |
+| Shards K | Capacity C | Calls/cycle | Token | Sink per replicate | Complete samples | Observed heap |
 |---|---|---|---|---|---|---|
 | 1 | 1 | 35 | 578 | 10754048 | 5 × 4096 cycles | 0 bytes |
 | 1 | 3 | 49 | 858 | 11900928 | 5 × 4096 cycles | 0 bytes |
 | 4 | 1 | 137 | 2520 | 18708480 | 5 × 4096 cycles | 0 bytes |
 | 4 | 3 | 193 | 4084 | 25114624 | 5 × 4096 cycles | 0 bytes |
 
-Warmup128 and GC outside measurement; positive control 16777472 allocated
-bytes, zero counter baseline, wrong sink rejected, and clockzero distinguished
+Warmup 128 and GC are outside measurement; positive control 16777472 allocated
+bytes, zero counter baseline, wrong sink rejected, and zero clock distinguished
 from valid duration. The method formula is recalculated against driver
 operations. All raw times and samples remain in data; uncontrolled external
-load, no promise of speedup, throughput, P99, or universal heapzero.
+load, no promise of speedup, throughput, P99, or universally zero heap allocation.
 Startup and errors are outside the measured normal path. The composed
 benchmark uses one worker; functional parallelism is verified by real-thread
 fixtures, not a scalability measurement.
@@ -116,8 +116,8 @@ Coverage `4000547204-command-93188-0`, export
 `4000547296-command-98426-0`: 1427/1660 expressions and 199/230 outcomes
 across all eleven execution files. Four new files have 498/600 expressions
 and 65/76 outcomes. The 233 unmarked expressions and 31 alternatives,
-including legacy ones, remain in denominator and inventory. No approved
-exclusion or MC/DC inferred from sb-cover; engine C1 gate remains open.
+including legacy ones, remain in the denominator and inventory. No approved
+exclusion exists, and no MC/DC is inferred from sb-cover; engine C1 gate remains open.
 
 Local faulted boundary is terminal and diagnostic: it does not yet implement
 the Serie FAULTED controller or resource release after fault. Ack attests to
@@ -133,11 +133,11 @@ development before final code and is not used to qualify it.
 
 The first publication adapter (`4000548817-command-74667-0`) rejected an
 identical copy: it compared reread objects containing uninterned symbols
-with EQUALP. Corrected comparison checks original and decompressed bytes,
+with EQUALP. The corrected comparison checks original and decompressed bytes,
 SHA256, and Git blob, with validated reading and without overwrite.
 Separate audit `4000549512-command-14958-0` retains fourteen positive/negative
-fixtures and comparison of 46 canonical copies, all passed. Audit final
-marker prints an incorrect cosmetic count; report contains fifteen results,
+fixtures and comparison of 46 canonical copies, all passed. The audit's final
+marker prints an incorrect cosmetic count; the report contains fifteen results,
 verified by `4000549715-command-34672-0`. Initial audit attempt
 `4000549424-command-9085-0` is also retained, stopped by the relative payload
 path during fixture preparation, without involving worker code.
@@ -152,10 +152,10 @@ reports and adapters remain in catalogs and do not qualify product correctness.
 
 ## Delivery verification with updated codec
 
-Final base `e07d772` incorporates minimal CBOR header checking published by
+The final base `e07d772` incorporates minimal CBOR header checking published by
 another chat. Frozen integration runs only one new full check,
 `4000550386-command-90070-0`: OK/STABLE/exit0, 415 tests plus smoke across
-eleven suites, no warning/style-warning, lint68/zero, traceability114/65/13/52
+eleven suites, no warning/style-warning, lint 68/zero, traceability 114/65/13/52
 without errors, 232 documents/2044 links without breaks, evidence self-tests,
 and ten spikes. Execution, test, and worker tool bytes remain those of
 qualified campaigns; ASDF and index retain both workers and the primary's

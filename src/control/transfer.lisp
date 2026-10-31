@@ -6,10 +6,10 @@
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (checkpoint-control file-io index) null) scrivi-checkpoint-control))
 (defun scrivi-checkpoint-control (plan append chunk-bytes)
-  "Pre: preflight conclusa, append a zero, chunk positivo e capacità esclusiva nel pool I/O.
-Post: file intero scritto per chunk, non ancora durevole; ogni ritorno controllato.
-Guasti I/O propagati senza retry; INVARIANT-VIOLATION per frontiera discordante.
-Ciclo limitato a CEILING(size/chunk), senza sospensione o punto di atomicità."
+  "Pre: preflight complete, append at zero, positive chunk, and exclusive capability in the I/O pool.
+Post: entire file written in chunks, not yet durable; every return checked.
+I/O faults propagated without retry; INVARIANT-VIOLATION for a mismatched frontier.
+Loop bounded by CEILING(size/chunk), without suspension or atomicity point."
   (unless (plusp chunk-bytes) (error 'invalid-argument :reason :control-checkpoint-chunk))
   (let ((bytes (checkpoint-control-bytes plan)) (size (lunghezza-checkpoint-control plan)))
     (loop repeat (ceiling size chunk-bytes) for start from 0 by chunk-bytes
@@ -21,10 +21,10 @@ Ciclo limitato a CEILING(size/chunk), senza sospensione o punto di atomicità."
 ;;; REQ: REQ-AFF-002 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (checkpoint-control file-io octets index) null) rileggi-checkpoint-control))
 (defun rileggi-checkpoint-control (plan input scratch chunk-bytes)
-  "Pre: file scritto e sincronizzato, preflight conclusa e scratch esclusivo nel pool I/O.
-Post: ogni chunk riletto uguale al piano; nessuna ricostruzione/allocazione del manifest.
-Guasti I/O/corruzione propagati senza risultato parziale; ritorni controllati.
-Ciclo limitato a CEILING(size/chunk); scratch riusato solo dopo confronto completo."
+  "Pre: file written and synchronized, preflight complete, and exclusive scratch in the I/O pool.
+Post: each chunk reread equal to the plan; no manifest reconstruction/allocation.
+I/O/corruption faults propagated without partial result; returns checked.
+Loop bounded by CEILING(size/chunk); scratch reused only after complete comparison."
   (unless (plusp chunk-bytes) (error 'invalid-argument :reason :control-checkpoint-chunk))
   (let ((size (lunghezza-checkpoint-control plan)))
     (loop repeat (ceiling size chunk-bytes) for start from 0 by chunk-bytes

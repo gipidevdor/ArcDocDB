@@ -53,7 +53,7 @@ partitioned**. It is the first law because it determines structure before any ot
   transaction, or per snapshot** — never per operation. Adding an entry to the list requires an
   ADR.
 - **Design criterion.** Every mechanism declares what it serializes and at what level.
-  With equivalent guarantees, the solution that serializes less and lower in the hierarchy wins.
+  With equivalent guarantees, the solution that serializes less work at lower levels of the hierarchy wins.
 - **Relationship to priorities.** The law does not change the hierarchy in
   [ADR-0031](0031-software-critico-criteri-e-priorita.md): integrity remains above everything. But
   parallelism and correctness do not compete here because they have the same origin:

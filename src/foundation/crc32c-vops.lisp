@@ -8,8 +8,8 @@
 (declaim (ftype (function (u32 sb-c:tn sb-c:tn sb-c:tn) null) emetti-crc-arm64))
 #+arcdocdb-crc32c-arm64
 (defun emetti-crc-arm64 (opcode result crc value)
-  "Pre: generatore del compilatore, opcode CRC32C ammesso e TN interi. Post: una istruzione A64.
-Asserzioni sui campi prima di emettere; nessun indirizzo/dato esterno o codice runtime modificato."
+  "Pre: compiler generator, admitted CRC32C opcode and integer TNs. Post: one A64 instruction.
+Field assertions before emission; no external address/data or runtime code modified."
   (assert (member opcode '(#x9ac05c00 #x1ac05000)))
   (let ((rd (sb-c:tn-offset result)) (rn (sb-c:tn-offset crc)) (rm (sb-c:tn-offset value)))
     (assert (and (<= 0 rd 30) (<= 0 rn 31) (<= 0 rm 31)))

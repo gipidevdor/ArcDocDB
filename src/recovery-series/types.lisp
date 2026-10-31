@@ -8,9 +8,9 @@
              (:constructor %make-limiti-recovery-serie
                  (segments references total-bytes chunk bytes batches records batch-records batch-bytes
                   prepared outcomes closure)) (:conc-name limits-) (:copier nil))
-  "Pre: tutti i limiti validati dalla factory, senza I/O. Post: budget scalari immutabili.
-Riferimenti: solo array del risultato, non RSS; byte totali: EOF ACTIVE più P dei CLOSED.
-Oggetti, workspace dei reader, scratch prestato e GC non sono inclusi nel budget riferimenti."
+  "Pre: all limits validated by the factory, without I/O. Post: immutable scalar budgets.
+References: result arrays only, not RSS; total bytes: ACTIVE EOF plus CLOSED P.
+Objects, reader workspace, borrowed scratch, and GC are excluded from the reference budget."
   (segments 1 :type index :read-only t)
   (references 0 :type index :read-only t)
   (total-bytes 0 :type index :read-only t)
@@ -35,9 +35,9 @@ Oggetti, workspace dei reader, scratch prestato e GC non sono inclusi nel budget
                                       (max-bytes 268435456) (max-batches 65536) (max-records 1048576)
                                       (max-batch-records 65536) (max-batch-bytes 67108864)
                                       (max-prepared 65536) (max-outcomes 65536) (max-esiti-chiusura 65536))
-  "Pre: capacità tipizzate finite. Post: configurazione readonly, limiti reader canonici verificati.
-MAX-SEGMENTI include ACTIVE; record/prepared/outcome/esiti sono limiti per segmento, zero ammesso.
-INVALID-ARGUMENT per geometria; TYPE-ERROR per tipi/range scalari. Nessun I/O o risultato parziale."
+  "Pre: finite typed capacities. Post: readonly configuration, canonical reader limits verified.
+MAX-SEGMENTI includes ACTIVE; record/prepared/outcome/esiti are per-segment limits, zero allowed.
+INVALID-ARGUMENT for geometry; TYPE-ERROR for scalar types/ranges. No I/O or partial result."
   (unless (plusp max-segmenti) (error 'invalid-argument :reason :series-recovery-configuration))
   (arcdocdb.recovery.closed::verifica-budget-closed
    chunk-bytes max-bytes max-batches max-batch-records max-batch-bytes)

@@ -6,22 +6,22 @@
 ;;; REQ: REQ-IDX-009 REQ-AFF-004
 (declaim (ftype (function (t page-error keyword) null) esigi-pagina))
 (defun esigi-pagina (predicate condition reason)
-  "Pre: classe interna canonica e predicato gia' calcolato. Post: NIL se valido.
-Altrimenti condizione tipizzata senza mutazioni; nessun errore viene catturato."
+  "Pre: canonical internal class and predicate already computed. Post: NIL if valid.
+Otherwise the requested typed condition without mutations; no error is caught."
   (unless predicate (error condition :reason reason)) nil)
 
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (octets index index) boolean) pagina-zero-p))
 (defun pagina-zero-p (buffer start end)
-  "Pre: intervallo verificato. Post: T per byte tutti zero; nessun dato modificato."
+  "Pre: verified range. Post: T for all-zero bytes; no data modified."
   (loop for i from start below end always (zerop (aref buffer i))))
 
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (page-number page-number identita-pagina index page-error) null)
                 verifica-riferimento-pagina))
 (defun verifica-riferimento-pagina (page generation identity size condition)
-  "Pre: numeri nel dominio, taglia valida. Post: assente o figlio precedente allineato.
-Condizione richiesta per coppia parziale, self/forward reference o generazione futura."
+  "Pre: numbers in domain, valid size. Post: absent or aligned preceding child.
+Requested condition for a partial pair, self/forward reference, or future generation."
   (unless (plusp (nth-value 0 (geometria-pagina size)))
     (error 'invariant-violation :reason :index-page-reference-size))
   (esigi-pagina
@@ -36,8 +36,8 @@ Condizione richiesta per coppia parziale, self/forward reference o generazione f
 (declaim (ftype (function (octets index identita-pagina index page-error) null)
                 verifica-ref-binario))
 (defun verifica-ref-binario (buffer offset identity size condition)
-  "Pre: sedici byte presenti. Post: riferimento canonico verificato senza conservarlo.
-Condizione richiesta per numero fuori dominio o riferimento non valido."
+  "Pre: sixteen bytes present. Post: canonical reference verified without retaining it.
+Requested condition for a number outside the domain or an invalid reference."
   (let ((page (leggi-u64 buffer offset))
         (generation (leggi-u64 buffer (+ offset +reference-generation+))))
     (esigi-pagina (and (<= page +page-id-max+) (<= generation +page-id-max+))
@@ -48,8 +48,8 @@ Condizione richiesta per numero fuori dominio o riferimento non valido."
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (identita-pagina index page-error) null) verifica-identita-allineata))
 (defun verifica-identita-allineata (identity size condition)
-  "Pre: identita' canonica e taglia ammessa. Post: offset fisico allineato.
-Condizione richiesta se incoerente; nessuna allocazione o prenotazione."
+  "Pre: canonical identity and admitted size. Post: aligned physical offset.
+Requested condition if inconsistent; no allocation or reservation."
   (esigi-pagina (zerop (mod (identita-pagina-page identity) size))
                 condition :index-page-alignment)
   nil)
@@ -57,6 +57,6 @@ Condizione richiesta se incoerente; nessuna allocazione o prenotazione."
 ;;; REQ: REQ-IDX-009
 (declaim (ftype (function (page-kind) (integer 1 3)) codice-tipo-pagina))
 (defun codice-tipo-pagina (kind)
-  "Pre: tipo canonico interno. Post: codice persistente; INVARIANT-VIOLATION se inatteso."
+  "Pre: canonical internal type. Post: persistent code; INVARIANT-VIOLATION if unexpected."
   (case kind (:bucket 1) (:directory 2) (:chiave 3)
         (otherwise (error 'invariant-violation :reason :index-page-kind-code))))

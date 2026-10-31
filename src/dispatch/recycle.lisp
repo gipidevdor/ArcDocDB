@@ -8,9 +8,9 @@
 (declaim (notinline %check-recycle-status))
 (declaim (ftype (function (t) (member :claimed :published)) %check-recycle-status))
 (defun %check-recycle-status (status)
-  "Pre: ritorno del delegato, verificato come T senza propagare assunzioni ftype.
-Post: status noto; INVARIANT-VIOLATION inatteso senza mutare contesto o ready.
-NOTINLINE mantiene il controllo al confine anche con FI fuori tipo del delegato."
+  "Pre: delegate return, checked as T without propagating ftype assumptions.
+Post: known status; unexpected status yields INVARIANT-VIOLATION without mutating context or ready.
+NOTINLINE retains boundary check even with out-of-type delegate FI."
   (case status
     ((:claimed :published) status)
     (otherwise (error 'invariant-violation :reason :pool-dispatcher-state))))
@@ -21,12 +21,12 @@ NOTINLINE mantiene il controllo al confine anche con FI fuori tipo del delegato.
                                  (member :claimed :published) index &optional))
                 ricircola-collegamento-pool))
 (defun ricircola-collegamento-pool (dispatcher)
-  "Pre: owner corrente, RESCHEDULE con obbligo unico e bridge precedente chiuso.
-Post: una sola operazione ready: NIL/PUBLISHED/count e IDLE, oppure link IDLE del
-nuovo CLAIMED/count. Count della partizione, non cursore; nessun begin implicito.
-Non legge il pool né conferma ritiro; busy conserva obbligo e retry esplicito.
-Binding prima del trasferimento; errori C1 conservano i propri confini.
-Routing fallito dopo full conserva lo scambio, senza rollback o nuovo fault C3."
+  "Pre: current owner, RESCHEDULE with unique obligation and previous bridge closed.
+Post: one ready operation: NIL/PUBLISHED/count and IDLE, or IDLE link of
+new CLAIMED/count. Partition count, not cursor; no implicit begin.
+Does not read pool or acknowledge retirement; busy retains obligation and explicit retry.
+Binding before transfer; C1 errors retain their boundaries.
+Routing failure after full retains exchange, without rollback or new C3 fault."
   (let ((port (dispatcher-writer-pool-port dispatcher))
         (table (dispatcher-writer-pool-table dispatcher)))
     (%check-dispatcher-binding port table)

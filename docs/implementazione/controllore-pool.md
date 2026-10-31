@@ -6,7 +6,7 @@ The `arcdocdb.scheduler` component implements part of REQ-THR-001:
 it proposes a worker count using EWMA, AIMD, and hysteresis. It is class C3
 resource control under [ADR-0031](../adr/0031-software-critico-criteri-e-priorita.md),
 with explicit limits and injected time, REQ-AFF-008/013, and REQ-CON-005.
-[ADR-0011](../adr/0011-thread-pool-dinamico.md) allows starting with few
+[ADR-0011](../adr/0011-thread-pool-dinamico.md) allows starting with a few
 signals; [the preregistered method](controllore-pool-metodo.md),
 [code reading](controllore-pool-revisione.md), and
 [results](controllore-pool-risultati.md) bound the evidence.
@@ -18,7 +18,7 @@ The controller alone retains the contract and scope described here.
 The controller belongs to the thread creating it. Only the scheduler reads and
 updates its state; getters respect the same owner. Samples,
 actual workers, and ticks come from the caller. It does not read the process
-clock, collect CPU or latency, or access writers, ready list,
+clock, collect CPU or latency, or access writers, the ready list,
 Serie, or requests. This administration is outside the request path,
 as required by the [shared-state list](../architettura.md#archivio-coordinamento-minimo).
 
@@ -34,7 +34,7 @@ as required by the [shared-state list](../architettura.md#archivio-coordinamento
 
 `cores` is an integer from 1 to 65536; `1 ≤ minimum ≤ maximum ≤ 2×cores`.
 Minimum defaults to 1, maximum to 2×cores, initial to
-minimum. Initial must belong to minimum..maximum. The ceiling is that of the
+minimum. Initial must lie within minimum..maximum. The ceiling is that of the
 compute pool in [architecture](../architettura.md#thread-pool), not a
 recommendation always to use the maximum or an I/O pool ceiling.
 
@@ -58,10 +58,10 @@ does not authorize reusing zero on the same controller.
 
 ## EWMA and decision
 
-All three sensors have scale 256. The first sample initializes `E=256×x`;
+All three sensors have a scale of 256. The first sample initializes `E=256×x`;
 subsequent samples update `E=floor((7×E+256×x)/8)`. Alpha is 1/8 per sample,
 rounded down. Integer bit count remains
-bounded by domain without growing rational denominators. A time
+bounded by the domain without growing rational denominators. A time
 gap greater than 2×period reinitializes sensors from the current
 sample and resets dwell: an interval without samples does not certify
 stable load. The 2×period threshold is inclusive for continuing EWMA.
@@ -106,10 +106,10 @@ A foreign owner, wrong configuration, or out-of-domain sample produces
 
 Input and owner are checked before writes; an ordinary
 rejection applies no update prefix. The private verifier
-checks target between minimum and maximum and dwell origin no
-later than last tick; inconsistencies produce `invariant-violation`
+checks that the target is between minimum and maximum and the dwell origin is no
+later than the last tick; inconsistencies produce `invariant-violation`
 `:pool-state`. Other slot domains are protected by types and
-factory. Detection of every arbitrary private-representation modification
+the factory. Detection of every arbitrary private-representation modification
 is not promised, nor repair or rollback on failure.
 The component records no Serie FAULTED because it neither owns nor
 accesses a Serie.

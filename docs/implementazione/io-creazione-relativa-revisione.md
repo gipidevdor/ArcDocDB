@@ -75,12 +75,12 @@ the integration check, without open findings.
 The second integration of 2026-10-22 incorporates main `e75f9794`: the added
 selector operates only on private buffers, without depending on I/O API.
 Root and a distinct reviewer reread ASD and documentation connections
-before R4, without findings; six I/O sources and tests unchanged from `28b7fae0`.
+before R4, without findings; the six I/O sources and tests are unchanged from `28b7fae0`.
 
 C4 integration with main `c46bc4c1` retains upstream vocabulary, producer,
 and boundary tests. The C4 difference against main is the regression
 with all six real coverage-consumer modules in a fresh process:
 producer remains absent in child, and wrong identity or skipped tests
 do not constitute valid normal evidence. Root and a distinct reviewer
-reread minimal correction and integration; parser, limits, and schemas
+reread the minimal correction and integration; parser, limits, and schemas
 are not expanded by input. I/O sources remain identical to R4.

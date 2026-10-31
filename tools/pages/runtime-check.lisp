@@ -1,0 +1,58 @@
+;;;; Independently compare the published source reference with loaded package interfaces.
+;;;; This verification process defines the product; it never opens a database or starts a service.
+(require :asdf)
+(declaim (optimize (safety 3) (debug 2)))
+(defparameter *reference-root*
+  (uiop:pathname-parent-directory-pathname
+   (uiop:pathname-parent-directory-pathname (uiop:pathname-directory-pathname *load-truename*))))
+(asdf:initialize-source-registry
+ `(:source-registry (:directory ,*reference-root*)
+                   (:tree ,(merge-pathnames "_build/docs/software/" *reference-root*))
+                   :ignore-inherited-configuration))
+(asdf:initialize-output-translations
+ `(:output-translations (t (,(merge-pathnames "_build/docs/runtime-cache/" *reference-root*) :implementation))
+                        :ignore-inherited-configuration))
+(asdf:load-system :yason)
+(asdf:load-asd (merge-pathnames "arcdocdb.asd" *reference-root*))
+(handler-bind ((warning (lambda (condition)
+                          (unless (typep condition 'sb-kernel:redefinition-warning)
+                            (error "Product warning during reference verification: ~A" condition)))))
+  (asdf:load-system "arcdocdb/local"))
+
+(defun reference-doc-type (kind)
+  (cond ((member kind '("defun" "defmacro" "defgeneric") :test #'equal) 'function)
+        ((member kind '("defstruct" "deftype" "defclass" "define-condition") :test #'equal) 'type)
+        ((member kind '("defvar" "defparameter" "defconstant") :test #'equal) 'variable)))
+
+(let* ((arguments (uiop:command-line-arguments))
+       (path (cond ((null arguments) (merge-pathnames "_build/site/manifest.json" *reference-root*))
+                   ((= (length arguments) 1) (pathname (first arguments)))
+                   (t (error "Usage: runtime-check.lisp [manifest.json]"))))
+       (manifest (with-open-file (in path :external-format :utf-8)
+                   (yason:parse in)))
+       (code (gethash "code" manifest)) (definitions (gethash "definitions" code))
+       (bindings 0) (contracts 0))
+  (unless (and code (gethash "packages" code)) (error "Missing source reference manifest."))
+  (dolist (record (gethash "packages" code))
+    (let* ((name (gethash "name" record))
+           (package (or (find-package (string-upcase name)) (error "Source package was not loaded: ~A" name)))
+           (expected (mapcar (lambda (entry) (gethash "name" entry)) (gethash "exports" record)))
+           (actual (loop for symbol being the external-symbols of package collect (string-downcase (symbol-name symbol)))))
+      (unless (and (= (length actual) (length expected)) (null (set-exclusive-or actual expected :test #'equal)))
+        (error "Runtime export coverage differs from source: ~A" name))
+      (dolist (export (gethash "exports" record))
+        (incf bindings)
+        (let* ((symbol (find-symbol (string-upcase (gethash "name" export)) package))
+               (candidates (remove-if-not (lambda (entry) (member (gethash "url" entry)
+                                                                 (gethash "definitions" export) :test #'equal)) definitions))
+               (types (remove-duplicates (remove nil (mapcar (lambda (entry) (and (gethash "documentation" entry)
+                                                                                 (reference-doc-type (gethash "kind" entry)))) candidates)))))
+          (dolist (type types)
+            (let ((texts (loop for entry in candidates
+                               when (eq (reference-doc-type (gethash "kind" entry)) type)
+                                 collect (gethash "documentation" entry))))
+              (unless (member (documentation symbol type) texts :test #'equal)
+                (error "Runtime docstring differs from source: ~A:~A (~A)" name (symbol-name symbol) type))
+              (incf contracts)))))))
+  (format t "Runtime reference checks: ~D packages, ~D exported bindings, ~D prose contracts match; no database opened.~%"
+          (length (gethash "packages" code)) bindings contracts))

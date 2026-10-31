@@ -5,7 +5,7 @@
 > **Source:** ‘Observability’ of the [specification](specifica/specifica-originale.md).
 > **Modules:** cross-cutting (the *metrics* support module, see [16 Modules](16-moduli.md)).
 
-Metrics are not an accessory: they are the system controllers' **inputs**. The thread-pool
+Metrics are essential: they are the system controllers' **inputs**. The thread-pool
 scheduler and MERGE low-load policy decide based on these values, and choices deferred to
 benchmarks (2Q, SIMD) depend on them.
 

@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text riserva-full-text) null) libera-fonti-riserva))
 (defun libera-fonti-riserva (pool slot)
-  "Pre: cancellazione prima del trasferimento, writer esclusivo. Post: prestiti/costi rilasciati una volta.
-Una fonte persa o un underflow e invariante; non tenta rollback su pool incoerente."
+  "Pre: cancellation before transfer, exclusive writer. Post: loans/costs released once.
+Lost source or underflow is an invariant failure; no rollback attempted on inconsistent pool."
   (dotimes (i (length (riserva-full-text-sources slot)))
     (when (svref (riserva-full-text-sources slot) i)
       (let ((source (sorgente-viva-riserva pool slot i)))
@@ -20,9 +20,9 @@ Una fonte persa o un underflow e invariante; non tenta rollback su pool incoeren
 ;;; REQ: REQ-SEC-006 REQ-SEC-010 REQ-CON-002
 (declaim (ftype (function (t t t t) keyword) annulla-riserva-full-text trasferisci-riserva-full-text))
 (defun annulla-riserva-full-text (pool lease slot generation)
-  "Pre: riserva non trasferita, nessun append/SEAL/PREPARE o riferimento esterno al run.
-Post: CANCELLED idempotente fino al riuso; tutti i costi restituiti, sorgenti libere.
-INVALID-ARGUMENT dopo trasferimento o token stale; non annulla transazioni/WAL."
+  "Pre: untransferred reservation, no append/SEAL/PREPARE or external run reference.
+Post: idempotent CANCELLED until reuse; all costs returned, sources free.
+INVALID-ARGUMENT after transfer or stale token; does not cancel transactions/WAL."
   (verifica-writer-riserve pool lease) (verifica-token-riserva pool slot generation)
   (when (eq :cancelled (riserva-full-text-state slot)) (return-from annulla-riserva-full-text :cancelled))
   (unless (member (riserva-full-text-state slot) '(:copying :ready))
@@ -46,10 +46,10 @@ INVALID-ARGUMENT dopo trasferimento o token stale; non annulla transazioni/WAL."
 
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (defun trasferisci-riserva-full-text (pool lease slot generation)
-  "Pre: READY, prima dell'append e della decisione; il writer accetta ownership permanente.
-Post: TRANSFERRED; staging restituito, delta/file/slot trattenuti, run immutabili.
-Non e prova di commit, pubblicazione o CSN. Nessun rilascio/reclaim di trasferiti in questa API:
-un futuro esito autorevole e la quiescenza devono precedere il ritiro dedicato."
+  "Pre: READY, before append and decision; writer accepts permanent ownership.
+Post: TRANSFERRED; staging returned, delta/file/slot retained, immutable runs.
+Not proof of commit, publication, or CSN. No release/reclamation of transferred reservations in this API:
+a future authoritative outcome and quiescence must precede dedicated retirement."
   (verifica-writer-riserve pool lease) (verifica-token-riserva pool slot generation)
   (unless (eq :ready (riserva-full-text-state slot))
     (error 'invalid-argument :reason :fulltext-reservation-transfer-state))

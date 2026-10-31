@@ -13,9 +13,9 @@
    (witness-offset :initarg :witness-offset :reader %corruption-witness-offset :type u64)
    (durable-offset :initarg :durable-offset :reader %corruption-durable-offset :type u64)
    (first-reason :initarg :first-reason :reader %corruption-first-reason :type keyword))
-  (:documentation "Pre: testimone SEAL integro e frontiera oltre il primo lotto invalido.
-Post: conserva prefisso nel buffer, offset assoluti e motivo iniziale; nessun effetto
-durevole. Il proprietario applica fail-stop senza modificare il file esistente."))
+  (:documentation "Pre: intact SEAL witness and frontier beyond the first invalid batch.
+Post: preserves the prefix in the buffer, absolute offsets, and initial reason; no durable
+effect. The owner applies fail-stop without modifying the existing file."))
 
 ;;; REQ: REQ-AFF-009
 (declaim (ftype (function (log-corruption) (values index &optional)) corruption-prefix-end)
@@ -25,26 +25,26 @@ durevole. Il proprietario applica fail-stop senza modificare il file esistente."
 
 ;;; REQ: REQ-AFF-009
 (defun corruption-prefix-end (condition)
-  "Pre: CONDITION log-corruption. Post: indice del prefisso, nessuna modifica.
-Una violazione dei tipi del contratto segnala TYPE-ERROR con safety 3."
+  "Pre: CONDITION log-corruption. Post: prefix index, no modification.
+A violation of the contract's types signals TYPE-ERROR with safety 3."
   (the index (%corruption-prefix-end condition)))
 
 ;;; REQ: REQ-AFF-009
 (defun corruption-witness-offset (condition)
-  "Pre: CONDITION log-corruption. Post: offset u64 assoluto del testimone, invariato.
-Una violazione dei tipi del contratto segnala TYPE-ERROR con safety 3."
+  "Pre: CONDITION log-corruption. Post: absolute u64 witness offset, unchanged.
+A violation of the contract's types signals TYPE-ERROR with safety 3."
   (the u64 (%corruption-witness-offset condition)))
 
 ;;; REQ: REQ-AFF-009
 (defun corruption-durable-offset (condition)
-  "Pre: CONDITION log-corruption. Post: frontiera u64 assoluta dichiarata, invariata.
-Una violazione dei tipi del contratto segnala TYPE-ERROR con safety 3."
+  "Pre: CONDITION log-corruption. Post: declared absolute u64 frontier, unchanged.
+A violation of the contract's types signals TYPE-ERROR with safety 3."
   (the u64 (%corruption-durable-offset condition)))
 
 ;;; REQ: REQ-AFF-009
 (defun corruption-first-reason (condition)
-  "Pre: CONDITION log-corruption. Post: keyword del primo errore, nessuna modifica.
-Una violazione dei tipi del contratto segnala TYPE-ERROR con safety 3."
+  "Pre: CONDITION log-corruption. Post: first error's keyword, no modification.
+A violation of the contract's types signals TYPE-ERROR with safety 3."
   (the keyword (%corruption-first-reason condition)))
 
 ;;; REQ: REQ-AFF-008 REQ-AFF-009 REQ-FOR-003
@@ -54,9 +54,9 @@ Una violazione dei tipi del contratto segnala TYPE-ERROR con safety 3."
 (defun check-scan-arguments (buffer start end file-id version log-kind file-offset
                             file-size max-bytes max-batches max-batch-records
                             max-batch-bytes max-search-bytes)
-  "Pre: input tipizzati, EOF fisico stabile attestato dal chiamante.
-Post: range, versione esplicita, identità, EOF u64 e budget coerenti verificati.
-Segnala INVALID-ARGUMENT, UNSUPPORTED-FORMAT o RESOURCE-EXHAUSTED prima di scandire."
+  "Pre: typed inputs, stable physical EOF attested by the caller.
+Post: range, explicit version, identity, u64 EOF, and consistent budgets verified.
+Signals INVALID-ARGUMENT, UNSUPPORTED-FORMAT, or RESOURCE-EXHAUSTED before scanning."
   (check-range buffer start end)
   (format-limits version)
   (case log-kind
@@ -83,9 +83,9 @@ Segnala INVALID-ARGUMENT, UNSUPPORTED-FORMAT o RESOURCE-EXHAUSTED prima di scand
                          (values index u32 (or null keyword) &optional)) checked-batch))
 (defun checked-batch (buffer start end file-id version log-kind file-offset
                       max-records max-bytes)
-  "Pre: range non vuoto e budget verificati. Post: lotto integro con avanzamento,
-oppure START, zero e motivo della sola CORRUPTION-DETECTED intercettata.
-Propaga gli altri errori; nessun record applicato o byte modificato."
+  "Pre: nonempty range and verified budgets. Post: intact batch with progress,
+or START, zero, and the reason from the only intercepted condition, CORRUPTION-DETECTED.
+Propagates other errors; no record applied or bytes modified."
   (check-range buffer start end)
   (unless (< start end)
     (error 'invariant-violation :reason :scan-empty-batch :offset start))
@@ -104,10 +104,10 @@ Propaga gli altri errori; nessun record applicato o byte modificato."
 (declaim (ftype (function (octets index index u64 integer u64 u64)
                          (values boolean u64 &optional)) seal-witness))
 (defun seal-witness (buffer pos end file-id version file-offset records-start)
-  "Pre: candidato di 56 byte interamente disponibile, offset assoluti verificati.
-Post: vero e frontiera soltanto per SEAL integro del file, con posizioni plausibili.
-CORRUPTION-DETECTED del candidato produce NIL, zero; altri errori propagati.
-Non attesta il lotto del testimone: count e checksum non autorizzano replay."
+  "Pre: 56-byte candidate fully available, absolute offsets verified.
+Post: true and a frontier only for an intact SEAL of the file with plausible positions.
+CORRUPTION-DETECTED in the candidate produces NIL, zero; other errors propagate.
+Does not attest to the witness batch: count and checksum do not authorize replay."
   (check-range buffer pos (+ pos +seal-record-bytes+))
   (unless (<= (+ pos +seal-record-bytes+) end)
     (error 'invariant-violation :reason :scan-seal-range :offset pos))
@@ -134,10 +134,10 @@ Non attesta il lotto del testimone: count e checksum non autorizzano replay."
                 search-durable-witness))
 (defun search-durable-witness (buffer prefix-end end file-id version file-offset
                                records-start first-reason max-search-bytes)
-  "Pre: P inizio del lotto invalido, EOF completo e buffer stabile.
-Post: NIL solo dopo ricerca completa di ogni posizione con 56 byte disponibili.
-Segnala LOG-CORRUPTION per frontiera oltre P, RESOURCE-EXHAUSTED per ricerca incompleta.
-Nessun salto tra candidati, neppure dopo un SEAL valido con frontiera non oltre P."
+  "Pre: P is the start of the invalid batch; complete EOF and stable buffer.
+Post: NIL only after a complete search of every position with 56 bytes available.
+Signals LOG-CORRUPTION for a frontier beyond P, RESOURCE-EXHAUSTED for an incomplete search.
+No skipping between candidates, even after a valid SEAL with a frontier no greater than P."
   (check-range buffer prefix-end end)
   (unless (<= records-start (+ file-offset prefix-end))
     (error 'invariant-violation :reason :scan-search-start :offset prefix-end))
@@ -165,9 +165,9 @@ Nessun salto tra candidati, neppure dopo un SEAL valido con frontiera non oltre 
                 scan-prefix))
 (defun scan-prefix (buffer start end file-id version log-kind file-offset
                     max-batches max-batch-records max-batch-bytes max-search-bytes)
-  "Pre: range, EOF e budget verificati. Post: solo prefisso contiguo di lotti integri;
-conteggi escludono il lotto fallito e ogni SEAL. Propaga corruzione durevole e budget.
-Non rende visibile alcun dato; la classificazione TAIL richiede ricerca completa."
+  "Pre: range, EOF, and budgets verified. Post: only a contiguous prefix of intact batches;
+counts exclude the failed batch and every SEAL. Propagates durable corruption and budget errors.
+Makes no data visible; TAIL classification requires a complete search."
   (check-range buffer start end)
   (unless (plusp max-batches)
     (error 'invariant-violation :reason :scan-batch-limit :offset start))
@@ -204,13 +204,13 @@ Non rende visibile alcun dato; la classificazione TAIL richiede ricerca completa
                            (max-bytes 67108864) (max-batches 65536)
                            (max-batch-records 65536) (max-batch-bytes 67108864)
                            (max-search-bytes 67108864))
-  "Pre: buffer stabile fino a EOF fisico; FILE-SIZE u64 autorevole dal chiamante,
-uguale a FILE-OFFSET+END; START primo record dopo header verificato o checkpoint.
-Versione 1/2 esplicita anche per log vuoto; tutti i budget finiti.
-Post: fine nel BUFFER, COMPLETE/TAIL, numero lotti e record esclusi SEAL; solo prefisso
-contiguo verificato, senza replay, I/O, mutazioni o effetti durevoli (INV-A9).
-Segnala errori tipizzati di argomenti, formato, budget o LOG-CORRUPTION con testimone.
-Percorso di apertura: non promette assenza di allocazioni."
+  "Pre: stable buffer through physical EOF; authoritative u64 FILE-SIZE from the caller,
+equal to FILE-OFFSET+END; START is the first record after a verified header or checkpoint.
+Explicit version 1/2 even for an empty log; all budgets finite.
+Post: end in BUFFER, COMPLETE/TAIL, batch and record counts excluding SEAL; only a
+verified contiguous prefix, without replay, I/O, mutations, or durable effects (INV-A9).
+Signals typed argument, format, or budget errors, or LOG-CORRUPTION with a witness.
+Opening path: does not promise absence of allocations."
   (check-scan-arguments buffer start end file-id version log-kind file-offset file-size
                         max-bytes max-batches max-batch-records max-batch-bytes max-search-bytes)
   (scan-prefix buffer start end file-id version log-kind file-offset

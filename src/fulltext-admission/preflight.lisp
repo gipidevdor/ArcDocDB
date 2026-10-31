@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text) riserva-full-text) trova-slot-libero-riserva))
 (defun trova-slot-libero-riserva (pool)
-  "Pre: writer e contatori verificati. Post: primo slot libero/cancellato, senza mutare.
-RESOURCE-EXHAUSTED se pieno; ricerca limitata alla capacita preallocata."
+  "Pre: writer and counters verified. Post: first free/canceled slot, without mutation.
+RESOURCE-EXHAUSTED if full; search bounded to preallocated capacity."
   (when (= (riserve-full-text-generation pool) most-positive-fixnum)
     (error 'resource-exhausted :reason :fulltext-reservation-generation))
   (let ((slots (riserve-full-text-slots pool)))
@@ -19,8 +19,8 @@ RESOURCE-EXHAUSTED se pieno; ricerca limitata alla capacita preallocata."
 (declaim (ftype (function (riserve-full-text riserva-full-text t index) d:preparazione-full-text)
                 verifica-sorgente-riserva))
 (defun verifica-sorgente-riserva (pool slot source i)
-  "Pre: indice entro configurazioni. Post: task DONE canonico non prestato, run e costi coerenti.
-Rifiuti prima di prenotare; configurazione superata e un rifiuto contract-changed."
+  "Pre: index within configurations. Post: canonical unborrowed DONE task, consistent run and costs.
+Rejections before reservation; superseded configuration is a contract-changed rejection."
   (unless (and (typep source 'd:preparazione-full-text) (eq :done (d::preparazione-full-text-phase source))
                (null (d::preparazione-full-text-borrower source)))
     (error 'invalid-argument :reason :fulltext-reservation-source))
@@ -41,8 +41,8 @@ Rifiuti prima di prenotare; configurazione superata e un rifiuto contract-change
 ;;; REQ: REQ-SEC-010
 (declaim (ftype (function (riserve-full-text index index) null) verifica-costo-file-riserva))
 (defun verifica-costo-file-riserva (pool i cost)
-  "Pre: contatori sani, U del documento verificato. Post: richiesta e somma entro budget file.
-Rifiuto distinto per richiesta troppo grande o rotazione necessaria prima dell'append."
+  "Pre: healthy counters, verified document U. Post: request and sum within file budget.
+Distinct rejection for an oversized request or rotation required before append."
   (let ((available (- (aref (riserve-full-text-file-limits pool) i) (aref (riserve-full-text-fixed pool) i))))
     (when (> cost available) (error 'resource-exhausted :reason :fulltext-reservation-request-too-large))
     (when (> cost (- available (aref (riserve-full-text-used pool) i)))
@@ -52,8 +52,8 @@ Rifiuto distinto per richiesta troppo grande o rotazione necessaria prima dell'a
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (riserve-full-text riserva-full-text t) (values index u32 index &optional)) preflight-riserva))
 (defun preflight-riserva (pool slot sources)
-  "Pre: writer e slot libero. Post: tutti gli indici/capacita/costi validi, nessun effetto.
-Un rifiuto successivo al primo indice lascia tutti i costi e borrower invariati."
+  "Pre: writer and free slot. Post: all indexes/capacities/costs valid, no effect.
+A rejection after the first index leaves all costs and borrowers unchanged."
   (unless (and (typep sources 'simple-vector) (= (length sources) (length (riserve-full-text-configs pool))))
     (error 'invalid-argument :reason :fulltext-reservation-sources))
   (let ((total 0) (row 0))

@@ -6,16 +6,16 @@
 ;;; REQ: REQ-REC-001 REQ-FOR-003 REQ-STO-003 REQ-AFF-008
 (declaim (ftype (function (motore c:checkpoint-control) c:control-preparato) prepara-control-motore))
 (defun prepara-control-motore (engine plan)
-  "Pre: piano completo, control.log.tmp assente e namespace esclusivo. Post: temporaneo durevole verificato.
-File registrati per cleanup; punto di atomicita' resta la successiva pubblicazione CONTROL."
+  "Pre: complete plan, control.log.tmp absent, exclusive namespace. Post: verified durable temporary.
+Files registered for cleanup; atomicity point remains subsequent CONTROL publication."
   (let* ((append (output-motore engine "control.log.tmp")) (input (input-motore engine "control.log.tmp")))
     (c:prepara-checkpoint-control plan input append (motore-directory engine) (motore-scratch engine))))
 
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-AFF-001
 (declaim (ftype (function (motore) null) inizializza-decisioni-motore))
 (defun inizializza-decisioni-motore (engine)
-  "Pre: directory nuova esclusiva. Post: header decision log canonico durevole e nome completato.
-Nessuna DECISION o admission; atomicita' di creazione al nome esclusivo, poi fsync parent."
+  "Pre: new exclusive directory. Post: durable canonical decision-log header and completed name.
+No DECISION or admission; creation atomicity at exclusive name, then parent fsync."
   (let ((append (output-motore engine "multiserie.log.tmp")) (buffer (motore-scratch engine)))
     (unless (= f:+log-header-bytes+
                (f:scrivi-header-log buffer 0 :multiserie (motore-archive-id engine)
@@ -32,9 +32,9 @@ Nessuna DECISION o admission; atomicita' di creazione al nome esclusivo, poi fsy
 ;;; REQ: REQ-REC-001 REQ-STO-003 REQ-FOR-003 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (motore) null) inizializza-storage-motore))
 (defun inizializza-storage-motore (engine)
-  "Pre: init esplicito e lock directory posseduto. Post: file canonici iniziali durevoli, admission chiusa.
-Rifiuta directory non vuota prima degli effetti; non inizializza o cancella uno storage preesistente.
-Punto di decisione: pubblicazione CONTROL completo; guasti conservano i preparati senza rollback."
+  "Pre: explicit init and owned directory lock. Post: durable initial canonical files, admission closed.
+Rejects nonempty directory before effects; neither initializes nor deletes preexisting storage.
+Decision point: complete CONTROL publication; failures preserve prepared files without rollback."
   (unless (zerop (length (io:elenca-directory (motore-directory engine))))
     (error 'invalid-argument :reason :engine-initialization-not-empty))
   (let* ((prepared (prepara-active-motore engine 1))
@@ -53,9 +53,9 @@ Punto di decisione: pubblicazione CONTROL completo; guasti conservano i preparat
 ;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-AFF-018
 (declaim (ftype (function (motore u64) null) conserva-control-incompleto-motore))
 (defun conserva-control-incompleto-motore (engine fresh-id)
-  "Pre: vecchio CONTROL autorevole verificato, ID fresco riservato da nuovo segmento e lock posseduto.
-Post: control.log.tmp precedente conservato sotto nome distinto, target assente verificato.
-Nessun file eliminato; rename relativo seguito da fsync, prima del nuovo checkpoint atomico."
+  "Pre: verified authoritative old CONTROL, fresh ID reserved by new segment, lock owned.
+Post: previous control.log.tmp preserved under distinct name, absent target verified.
+No file deleted; relative rename followed by fsync, before new atomic checkpoint."
   (let ((names (io:elenca-directory (motore-directory engine)))
         (target (format nil "control.unpublished.~16,'0x.tmp" fresh-id)))
     (when (find "control.log.tmp" names :test #'string=)

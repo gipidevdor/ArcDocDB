@@ -23,7 +23,7 @@ ARCIRF01 version 1 has a CRC32C checksum over the entire page except its final
 four bytes. Geometry, offsets, and fields are specified in the
 [contract](../implementazione/immagini-indice-paginato.md). The root is
 the last data page: an old proof or incomplete batch is not sealed.
-Preparation binds exactly the append file to the builder, writes
+Preparation binds the exact append file to the builder, writes
 the footer, and completes a durable flush before returning. A sealed
 builder cannot add more pages; an incomplete effect is FAULTED.
 
@@ -32,7 +32,7 @@ with exact EOF observed by the controller. Footer, source, seed,
 prefix, all pages, digests, and keys are verified. Every entry must be found
 from the root in the same physical slot: two copies of the same key cannot
 both pass the check, even with identical payload.
-A trusted validator attests every candidate against the already recovered
+A trusted validator validates every candidate against the already recovered
 source, whose exact count must match. Uniqueness, membership,
 and exact cardinality establish entry coverage. Structurally valid
 pages without reachable entries may remain unused;
@@ -55,10 +55,10 @@ depends on bytes and the committed source, not its ACK history.
 An incompatible/corrupt image does not change the source: the future
 controller will explicitly choose rebuilding or an error.
 
-This increment does not authorize renaming through an API requiring an
-absent catalog decision. Canonical name, inventory, reuse of derived objects
+This increment does not authorize renaming through an API whose required
+catalog decision is absent. Canonical name, inventory, reuse of derived objects
 in M1 startup, writer delta, MVCC, and automatic migration remain to be
 integrated. Publication here is only the private serial view's
 root; no concurrent swap or durable catalog swap is claimed.
-Rollback removes a derived container, rebuildable from sources: no
+Rollback removes a derived container, rebuildable from sources: there is no
 migration or deletion of user data and no new lock between Serie.

@@ -6,25 +6,25 @@
 ;;; REQ: REQ-REC-001 REQ-FOR-001
 (declaim (ftype (function (active-recuperato) u64) id-active-recuperato))
 (defun id-active-recuperato (recovered)
-  "Pre: header già verificato contro il manifest. Post: ID completo u64 del vecchio ACTIVE, senza I/O.
-Nessuna identità da pathname o FD numerico."
+  "Pre: header already verified against the manifest. Post: full u64 ID of old ACTIVE, without I/O.
+No identity from pathname or numeric FD."
   (let ((segment (active-recuperato-segment recovered)))
     (logior (ash (arcdocdb.get::segmento-get-high segment) 32) (arcdocdb.get::segmento-get-low segment))))
 
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-FOR-003 REQ-AFF-008
 (declaim (ftype (function (active-recuperato) index) lunghezza-chiusura-active))
 (defun lunghezza-chiusura-active (recovered)
-  "Pre: risultato completo. Post: byte esatti della entry CLOSED: parte fissa più coppie TXID/CSN.
-Non include il count CLOSED o gli altri campi dell'EDIT; nessun buffer o modifica."
+  "Pre: complete result. Post: exact CLOSED entry bytes: fixed part plus TXID/CSN pairs.
+Does not include the CLOSED count or other EDIT fields; no buffer or modification."
   (+ arcdocdb.storage.format::+closed-fixed-bytes+
      (* arcdocdb.storage.format::+closure-outcome-bytes+ (length (active-recuperato-ids recovered)))))
 
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-FOR-003 REQ-AFF-008
 (declaim (ftype (function (active-recuperato octets index) index) scrivi-chiusura-active))
 (defun scrivi-chiusura-active (recovered buffer start)
-  "Pre: risultato completo, BUFFER esclusivo. Post: entry CLOSED canonica con P e soli esiti derivati ordinati.
-Alias con identità Serie, forma e range rifiutati prima di scrivere; ritorna fine, resto del buffer invariato.
-Nessuna durability o punto di atomicità: prepara byte per il futuro checkpoint."
+  "Pre: complete result, exclusive BUFFER. Post: canonical CLOSED entry with P and only sorted derived outcomes.
+Alias with Serie identity, shape, and range rejected before writing; returns end, rest of buffer unchanged.
+No durability or atomicity point: prepares bytes for the future checkpoint."
   (let* ((ids (active-recuperato-ids recovered)) (csns (active-recuperato-csns recovered))
          (count (length ids)) (end (+ start (lunghezza-chiusura-active recovered)))
          (view (arcdocdb.get::segmento-get-owner (active-recuperato-segment recovered))))

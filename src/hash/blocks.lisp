@@ -7,9 +7,9 @@
 ;;; REQ: REQ-IDX-001 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (octets index hash-length u64) u64) hash-blocks))
 (defun hash-blocks (buffer start size seed)
-  "Pre: span verificato, SIZE>=32, seme u64. Post: digest dei blocchi completi da 32 byte.
-Al massimo floor(65535/32) iterazioni; helper inline, input immutato, nessuna risorsa.
-INVARIANT-VIOLATION :hash-block-span o :hash-block-progress su relazione interna violata."
+  "Pre: verified span, SIZE>=32, u64 seed. Post: digest of complete 32-byte blocks.
+At most floor(65535/32) iterations; inline helper, input unchanged, no resource.
+INVARIANT-VIOLATION :hash-block-span or :hash-block-progress for a violated internal relationship."
   (unless (and (>= size 32) (<= (+ start size) (length buffer)))
     (error 'invariant-violation :reason :hash-block-span))
   (let ((v1 (logand +mask64+ (+ seed +prime1+ +prime2+)))
@@ -35,9 +35,9 @@ INVARIANT-VIOLATION :hash-block-span o :hash-block-progress su relazione interna
 ;;; REQ: REQ-IDX-001 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (octets index index u64) u64) hash-tail))
 (defun hash-tail (buffer start end accumulator)
-  "Pre: span residuo verificato, da 0 a 31 byte; accumulatore include lunghezza totale.
-Post: coda XXH64, pura e inline. Al massimo tre lane da 8, una da 4 e tre byte.
-INVARIANT-VIOLATION :hash-tail-span o :hash-tail-progress su relazione interna violata."
+  "Pre: verified remaining span, 0 to 31 bytes; accumulator includes total length.
+Post: pure inline XXH64 tail. At most three 8-byte lanes, one 4-byte lane, and three bytes.
+INVARIANT-VIOLATION :hash-tail-span or :hash-tail-progress for a violated internal relationship."
   (unless (and (<= start end (length buffer)) (<= (- end start) 31))
     (error 'invariant-violation :reason :hash-tail-span))
   (let ((position start) (value accumulator))

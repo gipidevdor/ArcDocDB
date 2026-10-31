@@ -7,8 +7,8 @@
 (declaim (inline esigi-epoche-sane))
 (declaim (ftype (function (registro-epoche) null) esigi-epoche-sane))
 (defun esigi-epoche-sane (registry)
-  "Pre: registro costruito. Post: salute campionata acquire, senza mutex.
-INVARIANT-VIOLATION dopo FAULTED; non modifica annunci o risorse."
+  "Pre: constructed registry. Post: health sampled with acquire semantics, without a mutex.
+INVARIANT-VIOLATION after FAULTED; does not modify announcements or resources."
   (sb-thread:barrier (:read)
     (unless (eq (registro-epoche-health registry) :open)
       (error 'invariant-violation :reason :epoch-registry-faulted)))
@@ -17,7 +17,7 @@ INVARIANT-VIOLATION dopo FAULTED; non modifica annunci o risorse."
 ;;; REQ: REQ-CMP-007 REQ-AFF-004
 (declaim (ftype (function (registro-epoche) null) marca-guasto-epoche))
 (defun marca-guasto-epoche (registry)
-  "Pre: mutex manutenzione posseduto. Post: FAULTED pubblicato; cleanup non ripara nulla."
+  "Pre: maintenance mutex owned. Post: FAULTED published; cleanup repairs nothing."
   (sb-thread:barrier (:write))
   (setf (registro-epoche-health registry) :faulted)
   nil)
@@ -25,21 +25,21 @@ INVARIANT-VIOLATION dopo FAULTED; non modifica annunci o risorse."
 ;;; REQ: REQ-CMP-007 REQ-AFF-004
 (declaim (ftype (function (registro-epoche keyword) nil) guasto-epoche))
 (defun guasto-epoche (registry reason)
-  "Pre: mutex posseduto, incoerenza interna. Post: FAULTED ed errore tipizzato; nessun reclaim."
+  "Pre: mutex owned, internal inconsistency. Post: FAULTED and typed error; no reclamation."
   (marca-guasto-epoche registry)
   (error 'invariant-violation :reason reason))
 
 ;;; REQ: REQ-CMP-007 REQ-AFF-004
 (declaim (ftype (function (registro-epoche keyword) nil) guasto-reader-epoca))
 (defun guasto-reader-epoca (registry reason)
-  "Pre: incoerenza osservata dal worker. Post: fail-stop sotto mutex, soltanto su errore."
+  "Pre: inconsistency observed by the worker. Post: fail-stop under the mutex, only on error."
   (sb-thread:with-mutex ((registro-epoche-mutex registry)) (guasto-epoche registry reason)))
 
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (registro-epoche) null) verifica-contatori-epoche))
 (defun verifica-contatori-epoche (registry)
-  "Pre: mutex posseduto. Post: budget di slot/epoche e frontiere compatibili, verifica O(1).
-Le prenotazioni riservano anche un avanzamento di E; nessun overflow dopo lo swap."
+  "Pre: mutex owned. Post: compatible slot/epoch budgets and frontiers, O(1) verification.
+Reservations also reserve one E advance; no overflow after swap."
   (esigi-epoche-sane registry)
   (let* ((capacity (length (registro-epoche-states registry))) (words (registro-epoche-words registry))
          (epoch (aref words +word-epoch+)) (threshold (aref words +word-threshold+)))
@@ -53,8 +53,8 @@ Le prenotazioni riservano anche un avanzamento di E; nessun overflow dopo lo swa
 ;;; REQ: REQ-CMP-007 REQ-AFF-008 REQ-AFF-004
 (declaim (ftype (function (registro-epoche retirement-slot) null) verifica-slot-ritiro))
 (defun verifica-slot-ritiro (registry slot)
-  "Pre: mutex posseduto, slot nel range. Post: stato, identità, epoca e radice forte compatibili.
-INVARIANT-VIOLATION con fail-stop se i metadati del ticket sono incoerenti."
+  "Pre: mutex owned, slot in range. Post: compatible state, identity, epoch, and strong root.
+INVARIANT-VIOLATION with fail-stop if ticket metadata are inconsistent."
   (let ((state (aref (registro-epoche-states registry) slot))
         (generation (aref (registro-epoche-generations registry) slot))
         (epoch (aref (registro-epoche-epochs registry) slot))
@@ -75,8 +75,8 @@ INVARIANT-VIOLATION con fail-stop se i metadati del ticket sono incoerenti."
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (ritiro u64) retirement-slot) esigi-identita-ritiro))
 (defun esigi-identita-ritiro (ticket expected-generation)
-  "Pre: mutex posseduto. Post: slot dell'evento originale, anche su ticket già concluso.
-INVALID-ARGUMENT per zero/riuso; un evento vecchio non modifica la nuova incarnazione."
+  "Pre: mutex owned. Post: original event's slot, even for an already completed ticket.
+INVALID-ARGUMENT for zero/reuse; a stale event does not modify the new incarnation."
   (let ((registry (ritiro-registry ticket)) (slot (ritiro-slot ticket)))
     (unless (and (< slot (length (registro-epoche-generations registry)))
                  (plusp expected-generation)
@@ -88,8 +88,8 @@ INVALID-ARGUMENT per zero/riuso; un evento vecchio non modifica la nuova incarna
 ;;; REQ: REQ-CMP-007 REQ-AFF-008
 (declaim (ftype (function (registro-epoche t) retirement-slot) trova-slot-ritiro))
 (defun trova-slot-ritiro (registry resource)
-  "Pre: mutex posseduto e almeno un credito. Post: slot libero; al più K visite.
-Rifiuta lo stesso descrittore canonico già prenotato; verifica tutti gli stati incontrati."
+  "Pre: mutex owned and at least one credit. Post: free slot; at most K visits.
+Rejects the same canonical descriptor if already reserved; verifies every encountered state."
   (let* ((states (registro-epoche-states registry)) (capacity (length states))
          (cursor (registro-epoche-cursor registry)) (first-free nil))
     (dotimes (step capacity)

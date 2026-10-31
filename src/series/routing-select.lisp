@@ -7,8 +7,8 @@
 ;;; REQ: REQ-CON-002 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (tabella-worker-serie writer-programmabile) index) %routing-ordinal))
 (defun %routing-ordinal (table writer)
-  "Pre: owner e CLAIMED verificati. Post: ordinal bounded e writer EQ nello slot.
-INVARIANT-VIOLATION unknown/stale/alias; nessun begin, pop o accesso Serie vivo."
+  "Pre: owner and CLAIMED verified. Post: bounded ordinal and EQ writer in the slot.
+INVARIANT-VIOLATION for unknown/stale/alias; no begin, pop, or live Serie access."
   (let* ((registry (tabella-worker-serie-registry table)) (size (%routing-size registry))
          (ordinal (arcdocdb.execution:indice-routing-writer writer)))
     (unless (= (length (tabella-worker-serie-links table)) size)
@@ -25,8 +25,8 @@ INVARIANT-VIOLATION unknown/stale/alias; nessun begin, pop o accesso Serie vivo.
 (declaim (ftype (function (tabella-worker-serie writer-programmabile index) collegamento-worker-serie)
                 %routing-link))
 (defun %routing-link (table writer ordinal)
-  "Pre: ordinal e writer validati, owner esclusivo. Post: link IDLE della coppia.
-INVARIANT-VIOLATION link/binding/fase privati corrotti; controller mai letto o mutato."
+  "Pre: ordinal and writer validated, exclusive owner. Post: pair's IDLE link.
+INVARIANT-VIOLATION for corrupt private link/binding/phase; controller never read or mutated."
   (let ((link (svref (tabella-worker-serie-links table) ordinal)))
     (unless (typep link 'collegamento-worker-serie)
       (error 'invariant-violation :reason :worker-serie-routing))
@@ -45,10 +45,10 @@ INVARIANT-VIOLATION link/binding/fase privati corrotti; controller mai letto o m
 ;;; REQ: REQ-CON-002 REQ-CON-005 REQ-AFF-008
 (declaim (ftype (function (tabella-worker-serie) collegamento-worker-serie) collega-writer-worker-serie))
 (defun collega-writer-worker-serie (table)
-  "Pre: owner esclusivo, worker CLAIMED dal ring, ricircolo full o adozione.
-Post: link preallocato corrispondente in O(1); lookup ripetibile senza effetti.
-Fase/owner errati typed senza mutazione; routing incoerente rende il worker
-FAULTED conservando obbligo e condizione originale, senza toccare Serie."
+  "Pre: exclusive owner, worker CLAIMED from the ring, full recirculation or adoption.
+Post: corresponding preallocated link in O(1); repeatable lookup without effects.
+Typed errors for incorrect phase/owner without mutation; inconsistent routing makes the worker
+FAULTED, retaining the obligation and original condition, without touching the Serie."
   (let ((context (tabella-worker-serie-context table)))
     (arcdocdb.execution::%passo-worker (context (:worker-state) ())
       (arcdocdb.execution::%richiedi-worker context :claimed)

@@ -5,8 +5,8 @@
 ;;; REQ: REQ-FOR-003
 (declaim (ftype (function (keyword u8) boolean) log-record-p))
 (defun log-record-p (log-kind kind)
-  "Pre: log-kind dichiarato. Post: tipo ammesso nel log prima del SEAL.
-Segnala INVALID-ARGUMENT per un log sconosciuto."
+  "Pre: declared log-kind. Post: type admitted in the log before SEAL.
+Signals INVALID-ARGUMENT for an unknown log."
   (case log-kind
     (:segment (not (null (member kind '(1 2 4)))))
     (:control (= kind +edit+))
@@ -17,8 +17,8 @@ Segnala INVALID-ARGUMENT per un log sconosciuto."
 (declaim (ftype (function (octets index index u64 u64 u32 u32) (values u64 &optional))
                 check-seal))
 (defun check-seal (buffer value-start record-start file-id batch-start count checksum)
-  "Pre: corpo SEAL già integro. Post: file, inizio, count e CRC coincidenti.
-Segnala CORRUPTION-DETECTED se la prova non riguarda il lotto verificato."
+  "Pre: SEAL body already intact. Post: matching file, start, count, and CRC.
+Signals CORRUPTION-DETECTED if the proof does not concern the verified batch."
   (let ((durable (leggi-u64 buffer (+ value-start +seal-durable-offset+))))
     (unless (and (= (leggi-u64 buffer (+ value-start +seal-file-id-offset+)) file-id)
                  (= (leggi-u64 buffer (+ value-start +seal-batch-start-offset+)) batch-start)
@@ -33,9 +33,9 @@ Segnala CORRUPTION-DETECTED se la prova non riguarda il lotto verificato."
                          (values index u8 u8 u64 index index index index &optional))
                 verifica-record-nel-budget))
 (defun verifica-record-nel-budget (buffer pos end version remaining)
-  "Pre: range verificato, budget residuo non negativo. Post: record integro nel budget.
-Controlla header e dimensione prima di scandire il body; RESOURCE-EXHAUSTED per budget,
-CORRUPTION-DETECTED per cornice errata. Nessuna allocazione dipendente dalle lunghezze."
+  "Pre: verified range, nonnegative remaining budget. Post: intact record within budget.
+Checks header and size before scanning the body; RESOURCE-EXHAUSTED for budget,
+CORRUPTION-DETECTED for an incorrect frame. No allocation dependent on lengths."
   (let ((next (checked-header buffer pos end version +max-document-bytes+)))
     (when (> (- next pos) remaining)
       (error 'resource-exhausted :reason :batch-byte-budget :offset pos))
@@ -50,10 +50,10 @@ CORRUPTION-DETECTED per cornice errata. Nessuna allocazione dipendente dalle lun
 (defun verifica-lotto (buffer start end file-id
                       &key (version 2) (log-kind :segment) (file-offset 0)
                            (max-records 65536) (max-bytes 67108864))
-  "Pre: range stabile; FILE-OFFSET posizione assoluta di buffer[0]; budget finiti.
-Post: primo lotto interamente verificato, fine, stamp del SEAL, frontiera, count.
-Segnala corruzione o budget; nessun record applicato, nessuna durability attestata.
-Punto di atomicità rappresentato: SEAL; questa funzione è sola lettura."
+  "Pre: stable range; FILE-OFFSET is the absolute position of buffer[0]; finite budgets.
+Post: first batch verified in full, end, SEAL stamp, frontier, count.
+Signals corruption or budget exhaustion; no record applied, no durability attested.
+Represented atomicity point: SEAL; this function is read-only."
   (check-range buffer start end)
   (log-record-p log-kind +seal+)
   (unless (and (plusp max-records) (>= max-bytes (+ +header-bytes+ +seal-bytes+))

@@ -6,9 +6,9 @@
 ;;; REQ: REQ-CCH-002 REQ-CCH-004 REQ-AFF-008
 (declaim (ftype (function (u32 u32 u32 u32 octets u32 u32 u8 integer) null) check-cache-request))
 (defun check-cache-request (segment-high segment-low offset size key csn-high csn-low flags version)
-  "Pre: campi tipizzati dalla location e dal record atteso committed.
-Post: identità non zero, range fisico u32, limiti formato, CSN e flag validi prima della copia.
-INVALID-ARGUMENT/UNSUPPORTED-FORMAT per input; nessuna decisione sulla visibilità."
+  "Pre: typed fields from the location and expected committed record.
+Post: nonzero identity, physical u32 range, format limits, valid CSN and flags before copying.
+INVALID-ARGUMENT/UNSUPPORTED-FORMAT for input; no visibility decision."
   (multiple-value-bind (key-limit record-limit) (format-limits version)
     (unless (and (or (plusp segment-high) (plusp segment-low))
                  (or (plusp csn-high) (plusp csn-low))
@@ -22,8 +22,8 @@ INVALID-ARGUMENT/UNSUPPORTED-FORMAT per input; nessuna decisione sulla visibilit
 ;;; REQ: REQ-CCH-001 REQ-CCH-004
 (declaim (ftype (function (cache-serie u32) (or null classe-cache)) scegli-classe-cache))
 (defun scegli-classe-cache (cache size)
-  "Pre: lunghezza verificata; partizione immutabile. Post: prima classe attiva sufficiente o NIL.
-Al massimo sedici classi; nessuna allocazione, attesa o mutazione."
+  "Pre: verified length; immutable partition. Post: first sufficient active class or NIL.
+At most sixteen classes; no allocation, waiting, or mutation."
   (let ((classes (cache-serie-classes cache)))
     (dotimes (i (length classes) nil)
       (let ((class (aref classes i)))
@@ -33,8 +33,8 @@ Al massimo sedici classi; nessuna allocazione, attesa o mutazione."
 (declaim (inline mix-cache))
 (declaim (ftype (function (u32) u32) mix-cache))
 (defun mix-cache (word)
-  "Pre: u32. Post: mescolamento scalare deterministico per distribuire offset allineati.
-Non calcola digest delle chiavi documentali; nessuno stato, seed globale o garanzia crittografica."
+  "Pre: u32. Post: deterministic scalar mixing to distribute aligned offsets.
+Does not compute document-key digests; no state, global seed, or cryptographic guarantee."
   (declare (type u32 word))
   (let* ((a (logxor word (ash word -16)))
          (b (logand #xffffffff (* a #x7feb352d)))
@@ -46,8 +46,8 @@ Non calcola digest delle chiavi documentali; nessuno stato, seed globale o garan
 ;;; REQ: REQ-CCH-001 REQ-CCH-004
 (declaim (ftype (function (classe-cache u32 u32 u32) cache-set) insieme-cache))
 (defun insieme-cache (class high low offset)
-  "Pre: classe e location verificate. Post: indice d'insieme entro la capacità.
-Il mescolamento include 64 bit di segmento e 32 bit di offset; nessun probe oltre l'insieme."
+  "Pre: class and location verified. Post: set index within capacity.
+Mixing includes 64 segment bits and 32 offset bits; no probing beyond the set."
   (logand (1- (classe-cache-sets class))
           (mix-cache (logxor (mix-cache high) (mix-cache (logxor low #x9e3779b9))
                              (mix-cache (logxor offset #x85ebca6b))))))
@@ -56,8 +56,8 @@ Il mescolamento include 64 bit di segmento e 32 bit di offset; nessun probe oltr
 (declaim (inline tag-cache-p))
 (declaim (ftype (function (classe-cache cache-slot u32 u32 u32 u32) boolean) tag-cache-p))
 (defun tag-cache-p (class slot high low offset size)
-  "Pre: slot nell'insieme limitato. Post: confronto dei quattro u32 senza copia.
-Risultato provvisorio senza seqlock: può solo avviare una copia da riverificare o un miss."
+  "Pre: slot in the bounded set. Post: comparison of the four u32 values without copying.
+Provisional result without seqlock: can only initiate a copy to be reverified or a miss."
   (let ((tags (classe-cache-tags class)) (base (* slot +cache-tag-words+)))
     (and (= high (aref tags base)) (= low (aref tags (+ base 1)))
          (= offset (aref tags (+ base 2))) (= size (aref tags (+ base 3))))))

@@ -29,15 +29,15 @@ errors have offset NIL and leave every byte intact:
 | Word consistency | invalid-argument | :cbor-float-words |
 | Capacity up to END | resource-exhausted | :cbor-float-capacity |
 
-Internal guards require fail-stop without rollback. They are not
-atomic or durable publication; composition and document
-budget remain higher-level. There are no waits, I/O, or shared writes
+Internal guards require fail-stop without rollback. These operations do not constitute
+atomic or durable publication; composition and the document
+budget remain higher-level responsibilities. There are no waits, I/O, or shared writes
 per operation; calls on private buffers can run
 in parallel.
 
 The [preregistered method](cbor-float-scrittura-metodo.md) fixes corpus,
 measurements, defects, and preservation. C1 qualification and engine gate
-remain open until the evidence required by ADR-0035.
+remain open until the evidence required by ADR-0035 is available.
 
 The [verification results](cbor-float-scrittura-risultati.md) report
 parallel tests, mutations, measurements, and limits of observed coverage.

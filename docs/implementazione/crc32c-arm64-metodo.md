@@ -19,7 +19,7 @@ Record, GET, cache, WAL, and recovery suites remain mandatory.
 Build must have no warnings/style-warnings, and full verification must
 pass. The author's two readings are distinct from an independent review.
 
-OS/CPU selection is cold; fallback is also verified through standalone
+OS/CPU selection is cold; fallback is also verified through a standalone
 loader. Disassembly must preserve load bounds checks, CRC32C
 on registers, and no foreign calls/boxing in loop. Opcodes
 have no mnemonic in installed SBCL disassembler and must be read from bytes.
@@ -33,8 +33,8 @@ public fixtures of the [GET benchmark](get-performance-metodo.md) through
 C4 loading as a library, without executing its main. Same index, EBR,
 resolver, cache, and FD; eight keys, hot data. This is not the cardinality benchmark.
 
-Two CRC kernels, selected product kernel and software, with private binding
-to main thread only and automatic restoration after each window.
+Two CRC kernels—the selected product kernel and software—use a private binding
+to the main thread only, with automatic restoration after each window.
 No change to global function or format; both kernels must
 return identical checksums. Selected kernel is recorded.
 
@@ -51,11 +51,11 @@ five replicates, and two kernels in alternating order per replicate. These are
   `:exact` qualify outputs; this path does not claim independent
   comparison of every byte of every measured response.
 
-Interval is a continuous loop, not a sum of individual timings;
+The interval is a continuous loop, not a sum of individual timings;
 no baseline subtraction. Full GC, fixtures, closures, persistence,
 and before/after oracle remain outside timing. Global heap, monotonic ticks,
-completions, and sinks are saved even on failure. No thread
-created within window. No P99, server/network, commit, or cold I/O.
+completions, and sinks are saved even on failure. No thread is
+created within the window. No P99, server/network, commit, or cold I/O.
 
 Bounded self-check: matrix with 8 GETs and 8 warmup, both paths and
 kernels, same real-file fixtures. Positive sensor >=4 MiB live,
@@ -80,11 +80,11 @@ archived with stable sources, including failed attempts.
 
 ## Diagnostics after the first campaign
 
-First full campaign remains preserved: host load rose above 18
+The first full campaign remains preserved: host load rose above 18
 on 10 logical CPUs, with strong variability even for absent keys, which do not run
-CRC. This variability is not attributed to checksum. Before a second
+CRC. This variability is not attributed to the checksum. Before a second
 campaign, process CPU time is added outside wall/heap timer
 boundaries. CPU time is diagnostic, not a substitute for wall time or P99.
-Second campaign retains all the same cells and replicates; no
+The second campaign retains all the same cells and replicates; no
 selection of results across campaigns. A separate SB-SPROF CPU profile may
 identify remaining work but produces no qualified throughput numbers.

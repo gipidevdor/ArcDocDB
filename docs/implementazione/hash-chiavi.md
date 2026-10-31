@@ -7,9 +7,9 @@
 ## Contract
 
 ADR-0014 requires a noncryptographic 64-bit hash with a per-Serie seed.
-Kernel implements XXH64 from the
+The kernel implements XXH64 from the
 [official xxHash v0.8.3 specification](https://github.com/Cyan4973/xxHash/blob/v0.8.3/doc/xxhash_spec.md).
-No product dependencies beyond SBCL/ASDF introduced. References:
+No product dependencies beyond SBCL/ASDF are introduced. References:
 REQ-IDX-001, REQ-IDX-003, REQ-IDX-005, REQ-LIM-003, REQ-AFF-004, and REQ-AFF-008;
 invariants INV-I3 and INV-P6.
 
@@ -23,29 +23,29 @@ is allowed; writer separately retains the minimum one-byte
 key constraint. Both u32 words are fixnums on 64-bit SBCL. No u64
 crosses the public boundary: modular operations and inline helpers retain
 native words. Safety 3 and type/range checks stay active.
-Caller keeps buffer and seed unchanged throughout call.
+The caller keeps the buffer and seed unchanged throughout the call.
 
 Validation rejects nonconforming types/seeds with INVALID-ARGUMENT
 `:hash-arguments`, out-of-buffer span with `:buffer-range`, length beyond
-limit with `:hash-span-limit`. Input unchanged even on rejection.
-Kernel owns no state, locks, scratch, I/O, or random sources.
+limit with `:hash-span-limit`. Input is unchanged even on rejection.
+The kernel owns no state, locks, scratch, I/O, or random sources.
 
 <a id="seme-posseduto-dalla-serie"></a>
 
 ## Serie-owned seed
 
 `crea-indice-primario` accepts `:hash-seed-high` and `:hash-seed-low`:
-both explicit u32 or both NIL. Incomplete/nonconforming pair
+both explicit u32 or both NIL. An incomplete/nonconforming pair is
 rejected with `:primary-hash-seed-configuration` before arrays.
-Configured seed is read-only for index lifetime.
+The configured seed is read-only for the index lifetime.
 `digest-chiave-indice` checks health/configuration and uses this pair.
-Index without seed retains low-level API with trusted digests;
+An index without a seed retains the low-level API with trusted digests;
 new hash APIs reject it with `:primary-hash-unconfigured`.
-An inconsistent internal pair makes index terminal with
+An inconsistent internal pair makes the index terminal with
 `:primary-hash-seed-corrupt`.
 
 Generation, injectable entropy, restart rebuilding, and seed choice
-belong to controller. No implicit random value introduced,
+belong to the controller. No implicit random value is introduced,
 nor is changing a populated root's seed allowed. Precalculated-digest
 APIs remain trusted subsystem interfaces; external boundary
 must calculate the same index-owned digest.
@@ -69,14 +69,14 @@ in fingerprint or fragment prefix.
 
 A C-slot scan samples payload, computes XXH64 over live bytes,
 and verifies fingerprint, prefix, and lookup to original physical slot.
-Writes live cells only; EMPTY/DELETED retain sentinels.
-Result feeds the [verified builder](indice-ricostruzione.md).
+It writes live cells only; EMPTY/DELETED retain sentinels.
+The result feeds the [verified builder](indice-ricostruzione.md).
 Root, bank, arena, healthy state, and revision are not modified.
 Domain/corruption error follows existing fail-stop; partial private maps
 on scan error are discarded, without index rollback.
 Missing root: `:primary-index-missing-root`. Internally recalculated
 digest mismatch: `:primary-hash-source-digest`, always FAULTED.
-Trusted external rebuild digests retain rejection contract.
+Trusted external rebuild digests retain the rejection contract.
 
 Separate budget: maps 8*C bytes and two fixed scratch areas of five u64 words,
 80 payload bytes beyond headers/runtime. Not part of rebuild copy
@@ -98,6 +98,6 @@ lookup/rebuild/split, named predicates and mutants; serial and
 parallel measurements separate after checks.
 
 Hash and fingerprint are accelerators: lookup always decides with
-bytewise key comparison. Digest is not used to authenticate
+bytewise key comparison. The digest is not used to authenticate
 input or persistent data. Remaining: controller/seed lifecycle, full GET,
 engine measurements, P99, and reference-platform qualification.

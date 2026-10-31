@@ -84,15 +84,15 @@ must attest to actual outcomes without subtracting forms from the denominator.
 | List ownership | Partition vector written only by factory and remains private. Read-only slots/capacity/partitions identity; no global counter. | Types and factory review. |
 | Ring ownership | Head/tail/count and slot contents mutated only under own guard; guard uses CAS. | Verified pre/post; `helpers-reject-missing-and-foreign-guard`, busy oracle, and two real-thread tests. |
 | Obligation ownership | Caller → ring only on success; ring → worker on pop. Success is not retried. Intentional duplicates are not detected. | `per-shard-fifo-wrap-and-private-opaque-ring`: public test uses legal obligations; only a private isolated-ring fixture inserts two identical opaque references, explicitly outside handoff protocol. |
-| Full publication | No payload reinsertion into writer; retained obligation published when a slot becomes free. | `full-preserves-scheduling-obligation`: payloads `:a/:b` processed only once in subsequent segments. |
+| Full publication | No payload reinsertion into writer; retained obligation published when a slot becomes free. | `full-preserves-scheduling-obligation`: payloads `:a/:b` processed only once in subsequent slices. |
 | Busy begin after dequeue | Worker retains reference and retries begin; no republication of extracted reference. | `dequeued-reference-survives-begin-busy`; ring empty during retry, payload processed once. |
 | Producer before end | During running, enqueue returns `:queued`; end with backlog produces a new `:schedule`. | `handoff-before-after-release-and-next-wave`, four waves. |
-| Producer after empty end | End returns `:idle`; new enqueue returns `:schedule` and can be published immediately. No late scheduler cleanup on writer. | Same fixture; `reused-workers-live-producers-and-independent-shards`: four threads reused over six waves, 36 payloads with identity/checksum, live producers while worker terminates segment. |
+| Producer after empty end | End returns `:idle`; new enqueue returns `:schedule` and can be published immediately. No late scheduler cleanup on writer. | Same fixture; `reused-workers-live-producers-and-independent-shards`: four threads reused over six waves, 36 payloads with identity/checksum, live producers while worker terminates a slice. |
 | Concurrent consumers | One guard permits only one reference pop; other consumer observes empty or busy, without duplication. | `competing-consumers-take-one-reference-per-wave`: two threads reused over eight waves, one winner and completion before reuse. |
 | Shard choice and cursor | Stable mapping before hot path, maintained by caller; worker-local cursor. No catalog hashing, wakeup, or membership state introduced. | Preregistered contract; pool still must integrate these responsibilities. |
 
 Writer work occurs after releasing the ready list guard. Serialization concerns
-only the short update of one ring per segment. A contended guard blocks neither
+only the short update of one ring per slice. A contended guard blocks neither
 caller nor other shards; lock-freedom, absence of starvation, global balancing,
 or progress if an obligation is abandoned are not promised. There are no
 durable changes, I/O, callbacks, product threads, or file deletions in these sources.
@@ -121,7 +121,7 @@ not a conditional decision.
 | `preleva-writer-pronto` | 1 loop, `case` with 4 alternatives, 1 `if` | 6 |
 
 No function exceeds COD-13's 10 paths or COD-12's 60 lines.
-Factory executes <=64 iterations; a scan executes <=64 acquisition CAS
+The factory executes <=64 iterations; a scan executes <=64 acquisition CAS
 attempts and one release CAS per successful acquisition: maximum 2K,
 therefore 128 CAS operations total. Publication uses one acquisition CAS
 and, if successful, one release CAS. Every ring holds <=65536 references;
@@ -140,7 +140,7 @@ Sources read without modification after the checker's Italian rename:
 - `ready-types.lisp`: SHA-256 `75f153547af5b33e024d5f35e19fd15603c890f1f1616a62d02aa50e3309e4b0`.
 - `ready.lisp`: SHA-256 `d295574baa35cd540a4176d738d5670b44a741f532c86071d82e7c2361af44b0`.
 
-No functional defect identified in the first reading. Two wording clarifications
+No functional defect was identified in the first reading. Two wording clarifications
 were raised: cleanup is installed after verified guard acquisition, not before
 its postcondition; absence of allocation concerns the normal path, while
 publication full/busy signal conditions. Both were closed only in docstrings;
@@ -196,7 +196,7 @@ call, condition designator, `:reason` keyword, and reason.
 |---|---|---|
 | `ready-types.lisp`, 17 expressions | 8 top-level forms `(0) (1) (2) (3) (6) (8) (10) (12)`; 7 slot forms `(3 4)`..`(8 4)` and `(3 5)`; 2 keyword defaults `(1 2 13) (2 2 13)`. | `in-package`, optimization, two constants, and four `ftype`; slots/capacity/head/tail/count/guard and partitions; shards/capacity defaults. No uncovered operational error or instrumented branch outcome; 30/30 does not mean complete MC/DC. |
 | `ready.lisp`, 21 expressions | 9 top-level forms `(0) (1) (2) (4) (6) (8) (10) (12) (14)`; 4 expressions in root error `(2 3 4 3)`; 4 in error `(2 5 5)`; 4 in `otherwise` `(1 5 3 2 2 5 15)`. | `in-package`, optimization, and seven `ftype`; ownership error after acquisition; old CAS value error at release; unexpected defensive scan status. |
-| `ready.lisp`, 2 outcomes | `(:else 1 3 4 3)` and `(:else 1 5 5)`. | Guard differs from thread after successful CAS in `%prendi-guard-pronta`; old CAS value differs from thread after precheck in `%rilascia-guard-pronta`. Require ownership protocol failure; not induced by altering a shared guard during concurrent testing. No exclusion approved. |
+| `ready.lisp`, 2 outcomes | `(:else 1 3 4 3)` and `(:else 1 5 5)`. | Guard differs from thread after successful CAS in `%prendi-guard-pronta`; old CAS value differs from thread after precheck in `%rilascia-guard-pronta`. Require ownership protocol failure; not induced by altering a shared guard during concurrent testing. No exclusion is approved. |
 
 New FI covers shape and payload rejections, absent/foreign ownership before
 release, and cleanup with acquired guard. This does not automatically close
@@ -301,7 +301,7 @@ gate requires all twelve `detected`.
 
 Final strict run `4000521809-command-41045-0` is `:ok/:stable`, exit 0,
 empty stderr: contrib preload, whole COMPILE-FILE without warning/failure,
-and FASL self-test with explicit argv. Original fixture data read from
+and FASL self-test with explicit argv. Original fixture data are read from
 `4000521810-ready-signal-self-test-41080`: runner emits start and flush,
 then SIGKILL; corresponding log; report `:passed/:stable`, exit 137, signal 9,
 `:worker-error`, zero detected and one worker-error. Pending baseline belongs
@@ -312,7 +312,7 @@ Final campaign `4000521918-command-45102-0`, base `fd96fb3`, is
 `c1db98e2b8538444381254f0fc79cf3ebc1fdfa4ffc2445f101d6ccb49ac6d87`:
 baseline completed with 51 tests, exit 0/signal NIL; twelve detected mutants,
 each exit 1/signal NIL; zero survivors, compilation-failures, before-tests,
-and worker-errors. All thirteen logs independently read: baseline with
+and worker-errors. All thirteen logs were independently read: baseline with
 51 start/ok and completion 51; mutant failures after a ready test start
 and before completion, without compiler failure. Recorded probe
 `4000522063-command-47453-0` confirms thirteen-log integrity and counts,

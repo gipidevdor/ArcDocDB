@@ -13,9 +13,9 @@
 
 ;;; REQ: REQ-LIM-002 REQ-AFF-008
 (defstruct (spazio-cbor (:constructor %crea-spazio-cbor ()) (:copier nil))
-  "Scratch esclusivo: 102 frame, nessun riferimento al buffer; riusabile dopo errore.
-KINDS: 0 root, 1/2 array/map definiti, 3/4 indefiniti, 5/6 bytes/testo indefiniti.
-REMAINING: figli residui; per mappa indefinita 0 chiave, 1 valore atteso."
+  "Exclusive scratch: 102 frames, no buffer reference; reusable after error.
+KINDS: 0 root, 1/2 definite array/map, 3/4 indefinite, 5/6 indefinite bytes/text.
+REMAINING: remaining children; for indefinite map, 0 key, 1 value expected."
   (kinds (make-array +cbor-scan-frames+ :element-type '(unsigned-byte 8)
                     :initial-element 0)
          :type (simple-array (unsigned-byte 8) (102)) :read-only t)
@@ -33,9 +33,9 @@ REMAINING: figli residui; per mappa indefinita 0 chiave, 1 valore atteso."
 (declaim (ftype (function () (values spazio-cbor &optional))
                 %crea-spazio-cbor crea-spazio-cbor))
 (defun crea-spazio-cbor ()
-  "Pre: percorso freddo del worker. Post: spazio privato fisso senza buffer trattenuto.
-Alloca struttura e due array solo qui; INVARIANT-VIOLATION per forma iniziale errata.
-Il chiamante non condivide lo spazio tra verifiche concorrenti."
+  "Pre: worker cold path. Post: fixed private workspace without retained buffer.
+Allocates structure and two arrays only here; INVARIANT-VIOLATION for incorrect initial shape.
+The caller does not share the workspace between concurrent verifications."
   (let ((space (%crea-spazio-cbor)))
     (unless (and (= +cbor-scan-frames+ (length (spazio-cbor-kinds space)))
                  (= +cbor-scan-frames+ (length (spazio-cbor-remaining space))))
@@ -48,8 +48,8 @@ Il chiamante non condivide lo spazio tra verifiche concorrenti."
 ;;; REQ: REQ-LIM-002 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (spazio-cbor index) (values null &optional)) azzera-spazio-cbor))
 (defun azzera-spazio-cbor (space start)
-  "Pre: preflight concluso e scratch esclusivo. Post: tutti i frame azzerati, root=1.
-Nessuna allocazione o riferimento al buffer; INVARIANT-VIOLATION per capacita errata."
+  "Pre: complete preflight and exclusive scratch. Post: all frames zeroed, root=1.
+No allocation or buffer reference; INVARIANT-VIOLATION for incorrect capacity."
   (unless (= +cbor-scan-frames+ (length (spazio-cbor-kinds space)))
     (error 'invariant-violation :reason :cbor-workspace-capacity))
   (unless (= +cbor-scan-frames+ (length (spazio-cbor-remaining space)))

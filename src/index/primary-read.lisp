@@ -7,8 +7,8 @@
 (declaim (inline esigi-contesto-libero))
 (declaim (ftype (function (contesto-indice) null) esigi-contesto-libero))
 (defun esigi-contesto-libero (context)
-  "Pre: worker/controller proprietario. Post: contesto libero, nessuna modifica.
-Rientro rifiutato prima di toccare lo scratch; non sincronizza due worker che violano l'ownership."
+  "Pre: owning worker/controller. Post: free context, no modification.
+Reentry rejected before touching scratch; does not synchronize two workers violating ownership."
   (when (contesto-indice-busy context) (error 'invalid-argument :reason :primary-context-busy))
   nil)
 
@@ -16,8 +16,8 @@ Rientro rifiutato prima di toccare lo scratch; non sincronizza due worker che vi
 (declaim (inline root-confermata-p))
 (declaim (ftype (function (indice-primario root-indice) boolean) root-confermata-p))
 (defun root-confermata-p (index original)
-  "Pre: risultato provvisorio hit o miss. Post: stessa identità/generazione dopo le letture.
-Non rende la location un pin EBR e non verifica l'orizzonte di commit o uno snapshot."
+  "Pre: provisional hit or miss result. Post: same identity/generation after reads.
+Does not make the location an EBR pin or verify the commit horizon or a snapshot."
   (sb-thread:barrier (:read))
   (let ((current (acquisisci-root index)))
     (and (eq original current) (= (root-indice-generation original) (root-indice-generation current)))))
@@ -26,11 +26,11 @@ Non rende la location un pin EBR e non verifica l'orizzonte di commit o uno snap
 (declaim (ftype (function (indice-primario octets integer integer u32 u32 contesto-indice contenuto-slot)
                          (member :live :absent :retry-limit)) leggi-indice-primario))
 (defun leggi-indice-primario (index key start end high low context destination)
-  "Pre: chiave/digest fidati coerenti per Serie, contesto e DESTINATION privati distinti.
-Post: LIVE copia il payload dopo conferma della root; ABSENT/RETRY-LIMIT non toccano DESTINATION.
-Otto crediti per campioni slot/riavvii dopo cambio root, nessun lock, attesa o ripiego interno.
-Conferma finale a credito zero: se fallisce termina senza riavvio o copia dell'output.
-Errori/uscite non locali invalidano il risultato; EBR, MVCC e inoltro al writer sono del chiamante."
+  "Pre: trusted key/digest consistent for the Serie, distinct private context and DESTINATION.
+Post: LIVE copies payload after root confirmation; ABSENT/RETRY-LIMIT leave DESTINATION untouched.
+Eight credits for slot samples/root-change restarts, no lock, waiting, or internal fallback.
+Final confirmation at zero credit: if it fails, ends without restart or output copy.
+Errors/nonlocal exits invalidate the result; EBR, MVCC, and forwarding to the writer belong to the caller."
   (esigi-indice-sano index)
   (esigi-chiave key start end)
   (when (eq destination (contesto-indice-words context))

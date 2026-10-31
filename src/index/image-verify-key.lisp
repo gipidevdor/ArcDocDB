@@ -6,8 +6,8 @@
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine index index page-number page-number) null) ricomponi-chiave-immagine))
 (defun ricomponi-chiave-immagine (work total position page generation)
-  "Pre: entry esterna verificata, totale <=65535. Post: chiave completa dopo catena coerente.
-Tipo/totale/posizione verificati prima di ogni copia; al massimo 17 frammenti, budget globale condiviso."
+  "Pre: verified external entry, total <=65535. Post: complete key after a consistent chain.
+Type/total/position verified before each copy; at most 17 fragments, shared global budget."
   (let* ((buffer (ispezione-immagine-fragment work)) (size (length buffer))
          (limit (ceiling +max-key-bytes+ (- size +page-header+))))
     (dotimes (step limit)
@@ -28,8 +28,8 @@ Tipo/totale/posizione verificati prima di ogni copia; al massimo 17 frammenti, b
 ;;; REQ: REQ-IDX-010 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine index) index) chiave-entry-immagine))
 (defun chiave-entry-immagine (work entry)
-  "Pre: bucket corrente verificato. Post: copia completa della chiave nello scratch privato e lunghezza.
-Nessun riferimento ai frame esce dalla verifica; errori prima di callback o adozione."
+  "Pre: current bucket verified. Post: complete key copy in private scratch and length.
+No frame reference leaves verification; errors before callback or adoption."
   (let* ((buffer (ispezione-immagine-scan work)) (length (leggi-u16 buffer (+ entry +entry-key-length+))))
     (if (zerop (leggi-u16 buffer (+ entry +entry-flags+)))
         (let ((start (+ +page-header+ (leggi-u32 buffer (+ entry +entry-key-offset+)))))
@@ -41,8 +41,8 @@ Nessun riferimento ai frame esce dalla verifica; errori prima di callback o adoz
 ;;; REQ: REQ-IDX-010 REQ-AFF-002
 (declaim (ftype (function (ispezione-immagine index index) null) candidato-entry-immagine))
 (defun candidato-entry-immagine (work entry length)
-  "Pre: chiave completa e bucket verificato. Post: cinque parole coerenti con il candidato residente.
-CSN maggiore della fonte respinto prima del validatore autorevole."
+  "Pre: complete key and verified bucket. Post: five words consistent with the resident candidate.
+CSN greater than the source rejected before the authoritative validator."
   (let ((buffer (ispezione-immagine-scan work)) (words (ispezione-immagine-expected work)))
     (setf (aref words 0) (leggi-u64 buffer (+ entry +entry-csn+))
           (aref words 1) (leggi-u64 buffer (+ entry +entry-location+))

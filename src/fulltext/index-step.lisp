@@ -4,9 +4,9 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (t &key (:max-work t)) keyword) sigilla-indice-posizionale))
 (defun sigilla-indice-posizionale (run &key (max-work 268435456))
-  "Pre: run BUILDING, campi interamente copiati. Post: avvia ordinamento riprendibile.
-Il limite include copia gia svolta. Non rende durevole o READY un indice di Serie.
-INVALID-ARGUMENT per stato/limite, RESOURCE-EXHAUSTED per budget gia consumato."
+  "Pre: BUILDING run, fields fully copied. Post: starts resumable sorting.
+Limit includes copying already performed. Does not make a Serie index durable or READY.
+INVALID-ARGUMENT for state/limit, RESOURCE-EXHAUSTED for budget already consumed."
   (unless (and (typep run 'indice-posizionale) (eq :building (indice-posizionale-state run))
                (typep max-work 'index) (plusp max-work))
     (error 'invalid-argument :reason :fulltext-index-seal))
@@ -20,9 +20,9 @@ INVALID-ARGUMENT per stato/limite, RESOURCE-EXHAUSTED per budget gia consumato."
 ;;; REQ: REQ-SEC-003 REQ-SEC-010
 (declaim (ftype (function (t t) keyword) passo-indice-posizionale))
 (defun passo-indice-posizionale (run quantum)
-  "Pre: run esclusivo, quantum 1..65536. Post: BUILDING, RUNNING oppure SEALED.
-Un passo copia un byte/record o ripara un heap di profondita massima 32.
-Errore di dominio: FAILED e rilascio del prestito SOURCE, nessuna query ammessa."
+  "Pre: exclusive run, quantum 1..65536. Post: BUILDING, RUNNING, or SEALED.
+One step copies one byte/record or repairs a heap of maximum depth 32.
+Domain error: FAILED and SOURCE borrow released, no query admitted."
   (unless (and (typep run 'indice-posizionale) (typep quantum '(integer 1 65536)))
     (error 'invalid-argument :reason :fulltext-index-step))
   (when (eq :failed (indice-posizionale-state run)) (error 'invalid-argument :reason :fulltext-index-failed))

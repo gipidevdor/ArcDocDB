@@ -33,7 +33,7 @@ In a critical system, a defect must be **detected**, not propagated.
 3. **Declarations.** Every C1 and C2 function has a complete `ftype` declaration; every structure
    slot has a type; C1 structures are `defstruct` with typed slots and, where
    possible, `:read-only`. Format constants (offsets, sizes) are defined once
-   in a formats module and used by everyone.
+   in a formats module and used throughout the code.
 4. **Prohibitions** (checked by `tools/lint.lisp`): `eval`, `compile`, `load`, and `intern`
    on external data; `read` of untrusted data (and `*read-eval*` always `nil`);
    `ignore-errors`; `truly-the`; `safety 0`; functions longer than 60 lines; product
@@ -46,7 +46,7 @@ In a critical system, a defect must be **detected**, not propagated.
    (INV-V4).
 6. **Concurrency.** Only `sb-thread`, `sb-ext:compare-and-swap`, and `sb-thread:barrier`; every
    shared structure has a single declared owner and a documented protocol;
-   `without-interrupts` and `without-gcing` prohibited outside the `io` module (if ever necessary,
+   `without-interrupts` and `without-gcing` are prohibited outside the `io` module (if ever necessary,
    as a registered deviation).
 7. **Hot-path exception register** (`docs/affidabilita/deviazioni.md`,
    "Hot path" section): a function is entered only with a measurement (SPK) showing that

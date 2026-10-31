@@ -3,14 +3,14 @@
 # Serie controller decisions and obligations
 
 Date: 2026-10-09. Scope: `arcdocdb.series`, bounded controller for
-publication of one Serie and only new WAL-bridge preflights. Declared base:
+publication for one Serie and the new WAL-bridge preflights only. Declared base:
 `cf6091367853ec311fed7b05961a2812fd05a8f1`.
 
-Contract matrix prepared before `src/series/` appeared.
-Actual inventory below derives from complete reading, updated with
+The contract matrix was prepared before `src/series/` appeared.
+The actual inventory below derives from a complete reading, updated with
 ring geometry, P2 fixes, and I/O retirement without delivery (phase D, 42 functions). File identities and
 local counts in [review](controller-serie-revisione.md).
-Attests neither runs, MC/DC, human review, nor absence of heap allocation.
+It attests to neither runs, MC/DC, human review, nor absence of heap allocation.
 
 <a id="fonti-e-confini"></a>
 
@@ -59,9 +59,9 @@ do not become controller-demonstrated results.
 | I/O retirement | `:idle` → `:active` → `:retired` | Registration before dispatch; completion after end handoff. | Publication, token resolution, or null group owner. |
 | FIFO | Unresolved cursor separate from retirement head | First unresolved resolution/cancellation; ring-head reuse. | Occupied head prevents later async resolutions. |
 
-Registry busy after CAS preserves `:pubblicato`, event, and token. Return
-`:pendente, 0, 0` is not H measurement. Next attempt performs only
-resolution. H returned as two words only on resolver success.
+Registry busy after CAS preserves `:pubblicato`, event, and token. The return value
+`:pendente, 0, 0` is not an H measurement. The next attempt performs only
+resolution. H is returned as two words only on resolver success.
 
 <a id="autorità-identità-e-generazioni"></a>
 
@@ -75,9 +75,9 @@ resolution. H returned as two words only on resolver success.
 | Root | `expected-root eq planned-root` on adoption; `expected-root eq published-root` at CAS. | Different planned chain rejected before adoption; internal CAS mismatch requires Archivio scope. |
 | Review sources | File, base revision, and read-content fingerprint. | Reading during integration does not certify later revision or campaign on different sources. |
 
-Lease/event generations fixnums without wrap. Free event retains
-current generation: not zeroed on release. Caller must retain
-number with event reference; rereading only current
+Lease/event generations are fixnums without wrap. A free event retains
+its current generation: it is not zeroed on release. The caller must retain
+the number with the event reference; rereading only the current
 generation after reuse would eliminate ABA protection.
 
 <a id="matrice-del-contratto-da-confrontare-con-il-prodotto"></a>
@@ -106,27 +106,27 @@ generation after reuse would eliminate ABA protection.
 | C18 | WAL publication preflight | C17, open log, async/group/strong coverage. | Everything before root CAS; resolver preserves post-CAS recheck. |
 | C19 | I/O retirement without execution, addendum D | Faulted; prepared/active event; captured token; sealed batch/null owner; positive active count; external proof P08. | Permits draining retired/never-accepted dispatch without write/flush; token remains pending, single decrement; does not independently revoke or cancel. |
 
-Table is contract plan,
-not product-coverage declaration. Actual compound conditions
-must receive separate identifiers once sources available.
+The table is a contract plan,
+not a declaration of product coverage. Actual compound conditions
+must receive separate identifiers once sources are available.
 
 <a id="metodo-c1-per-linventario-effettivo"></a>
 
 ## C1 method for actual inventory
 
-For each new function, records name, file, and static McCabe
+For each new function, record its name, file, and static McCabe
 complexity: base 1, selections, loops, dispatch/handler alternatives, and each
 short-circuit continuation (`and`/`or` with n operands adds n−1).
 COD-13 obligation **maximum 10 per function**, including short circuits.
 Delegated helpers and macros identified; extraction does not replace
-guard coverage. Counting uncertainty explicit instead of automatically
+guard coverage. Counting uncertainty is made explicit instead of automatically
 declaring compliance.
 
 Each actual compound decision lists atomic predicates and short circuit.
 For AND: all true and each false with previous true. For OR: all false and each
-true with previous false. Combinations unreachable in valid
-protocol documented; API input distinguished from internal corruption. Cases
-are obligations for test agent; no tests or drivers produced here.
+true with previous false. Combinations unreachable in the valid
+protocol are documented; API input is distinguished from internal corruption. Cases
+are obligations for the test agent; no tests or drivers are produced here.
 
 <a id="rischi-da-chiudere-o-conservare-come-precondizioni"></a>
 
@@ -164,7 +164,7 @@ predicates, without expanding runtime implementations.
 | D05 | `%check-event` | A AND B AND C AND D: event.controller eq controller; generation index; positive; equal event.generation. | Same number on other controller rejected by A; stale same-object by D. Position range and ring-object identity follow. |
 | D06 | `%csn-after-p` | A OR (B AND C): high > previous-high; equal highs; low > previous-low. | Greater high passes without C; lower high rejects; equal high selects low comparison; total equality rejects. B and A cannot both be true. |
 
-New WAL preflights introduce no compound decisions of their own: delegate
+New WAL preflights introduce no compound decisions of their own: they delegate
 identity to `esigi-identita-csn-lotto` and coverage to `coperto-p`. Compound
 decisions of existing helpers are D07/D08/E07 of
 [WAL–CSN](wal-csn-decisioni.md) inventory; new log guard uses `eq` on object.
@@ -212,7 +212,7 @@ decisions of existing helpers are D07/D08/E07 of
 | D-S08 | Sealed batch without owner but external retirement proof absent. | Outside API preconditions: do not attribute scheduler-quiescence proof to guard success alone. |
 
 These are test and interpretation obligations, not tests written/run by
-reviewer. I/O retirement event-local and does not require FIFO: may drain
+the reviewer. I/O retirement is event-local and does not require FIFO: it may drain
 out-of-order tasks; subsequent resolution/cancellation retains unresolved
 FIFO, normal reuse retains head FIFO. Retirement does not enable faulty-buffer
 reuse. New effect cleanup falls within COD-26 justification

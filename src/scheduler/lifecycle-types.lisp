@@ -11,9 +11,9 @@
 (defstruct (porta-worker-pool
              (:constructor %make-porta-worker-pool (owner coordinator context request ack))
              (:copier nil))
-  "Pre: creazione sul worker IDLE, coordinator valido. Post: stato iniziale confermato.
-REQUEST/ACK = 2*generazione + bit attivo; un solo comando outstanding, mai reset.
-Il ritiro conserva contesto, thread e diagnostica; non trasferisce obblighi."
+  "Pre: creation on the IDLE worker, valid coordinator. Post: acknowledged initial state.
+REQUEST/ACK = 2*generation + active bit; one outstanding command only, never reset.
+Retirement retains context, thread, and diagnostics; does not transfer obligations."
   (owner sb-thread:*current-thread* :type sb-thread:thread :read-only t)
   (coordinator sb-thread:*current-thread* :type sb-thread:thread :read-only t)
   (context (error 'invariant-violation :reason :pool-port-state)
@@ -24,9 +24,9 @@ Il ritiro conserva contesto, thread e diagnostica; non trasferisce obblighi."
 ;;; REQ: REQ-THR-001 REQ-CON-005 REQ-AFF-008 REQ-AFF-013
 (defstruct (registro-pool
              (:constructor %make-registro-pool (controller ports owner target)) (:copier nil))
-  "Pre: porte distinte, stabili e prefisso attivo uguale al target del controller.
-Post: vettore privato, binding permanente; accesso owner-only senza snapshot heap.
-ACTUAL conta conferme logiche, non thread OS o stato di salute dell'Archivio."
+  "Pre: distinct stable ports and active prefix equal to the controller target.
+Post: private vector, permanent binding; owner-only access without a heap snapshot.
+ACTUAL counts logical acknowledgments, not OS threads or Archivio health."
   (controller (error 'invariant-violation :reason :pool-state)
               :type controllore-pool :read-only t)
   (ports #() :type simple-vector :read-only t)

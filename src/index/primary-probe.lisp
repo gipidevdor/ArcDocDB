@@ -8,8 +8,8 @@
 (declaim (ftype (function (frammento-indice contenuto-slot octets fixnum fixnum) boolean)
                 chiave-corrisponde-p))
 (defun chiave-corrisponde-p (fragment words key start end)
-  "Pre: WORDS privati acquisiti coerentemente; chiave immutata. Post: uguaglianza binaria esatta.
-Acquisisce l'arena dopo il payload; un intervallo stabile fuori arena rende FAULTED l'indice."
+  "Pre: private WORDS acquired consistently; unchanged key. Post: exact binary equality.
+Acquires the arena after the payload; a stable range outside the arena makes the index FAULTED."
   (let* ((metadata (aref words 2)) (offset (ldb (byte 32 0) metadata))
          (size (ldb (byte 16 32) metadata)) (arena (frammento-indice-arena fragment)))
     (declare (type u64 metadata))
@@ -23,13 +23,13 @@ Acquisisce l'arena dopo il payload; un intervallo stabile fuori arena rende FAUL
 ;;; REQ: REQ-IDX-001
 (declaim (ftype (function (u32 fixnum) fixnum) inizio-gruppo))
 (defun inizio-gruppo (low capacity)
-  "Pre: capacità potenza di due >=16. Post: gruppo allineato di 16 scelto dopo i sette bit H2."
+  "Pre: power-of-two capacity >=16. Post: aligned group of 16 selected after the seven H2 bits."
   (logand (ash low -7) (- capacity +group-size+)))
 
 ;;; REQ: REQ-IDX-003
 (declaim (ftype (function (contenuto-slot contenuto-slot) null) copia-contenuto))
 (defun copia-contenuto (source destination)
-  "Pre: buffer privati di cinque u64. Post: payload copiato, nessun u64 restituito come valore Lisp."
+  "Pre: private buffers of five u64 values. Post: payload copied, no u64 returned as a Lisp value."
   (dotimes (i 5) (setf (aref destination i) (aref source i)))
   nil)
 
@@ -37,8 +37,8 @@ Acquisisce l'arena dopo il payload; un intervallo stabile fuori arena rende FAUL
 (declaim (ftype (function (frammento-indice fixnum fixnum octets fixnum fixnum contesto-indice) fixnum)
                 sonda-gruppo))
 (defun sonda-gruppo (fragment base fingerprint key start end context)
-  "Pre: gruppo valido e scratch privato. Post: slot >=0, -1 miss, -2 retry, -3 budget, -4 continua.
-Esamina tutti i fingerprint del gruppo prima del miss; ogni campione consuma il budget comune."
+  "Pre: valid group and private scratch. Post: slot >=0, -1 miss, -2 retry, -3 budget, -4 continue.
+Examines all fingerprints in the group before a miss; each sample consumes the common budget."
   (let ((controls (frammento-indice-controls fragment)) (bank (frammento-indice-bank fragment))
         (words (contesto-indice-words context)) (empty nil))
     (dotimes (i +group-size+)
@@ -62,8 +62,8 @@ Esamina tutti i fingerprint del gruppo prima del miss; ogni campione consuma il 
 (declaim (ftype (function (frammento-indice octets fixnum fixnum u32 contesto-indice) fixnum)
                 sonda-reader))
 (defun sonda-reader (fragment key start end low context)
-  "Pre: frammento acquisito dalla root, scratch privato. Post: ricerca limitata a C/16 gruppi.
-Ogni slot viene campionato una sola volta per visita; collisioni e retry condividono otto campioni."
+  "Pre: fragment acquired from the root, private scratch. Post: search bounded by C/16 groups.
+Each slot is sampled exactly once per visit; collisions and retries share eight samples."
   (let* ((capacity (banco-slot-capacity (frammento-indice-bank fragment)))
          (mask (1- capacity)) (base (inizio-gruppo low capacity)) (fingerprint (logand low 127)))
     (dotimes (group (ash capacity -4) -1)
@@ -75,8 +75,8 @@ Ogni slot viene campionato una sola volta per visita; collisioni e retry condivi
 (declaim (ftype (function (frammento-indice octets fixnum fixnum u32 contenuto-slot)
                          (values fixnum boolean &optional)) sonda-writer))
 (defun sonda-writer (fragment key start end low words)
-  "Pre: writer esclusivo e frammento sano, chiave/digest coerenti. Post: slot e trovato-p.
-Slot -1 se nessuna posizione; visita al massimo C slot, senza retry o crescita automatica."
+  "Pre: exclusive writer and healthy fragment, consistent key/digest. Post: slot and trovato-p.
+Slot -1 if no position; visits at most C slots, without retry or automatic growth."
   (let* ((bank (frammento-indice-bank fragment)) (controls (frammento-indice-controls fragment))
          (capacity (banco-slot-capacity bank)) (mask (1- capacity))
          (base (inizio-gruppo low capacity)) (fingerprint (logand low 127)) (deleted -1))

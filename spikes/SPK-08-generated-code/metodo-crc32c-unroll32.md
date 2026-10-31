@@ -15,8 +15,8 @@ Software slicing-by-8 and independent bitwise oracle remain separate.
 Compare software, product 16 B kernel, 32 B variant with byte tail, and 32 B
 variant with 4 B CRC32CW / 1 B CRC32CB tail. One CRC chain; no PMULL, pinning,
 disabled GC, or lowered safety 3. Variants use product CX/CB VOPs; only CW is new
-and remains in spike. SIMD loads retain bounds checks. Neither infer M4 ceiling
-nor attribute all residual cost to loop from one throughput measurement.
+and remains in spike. SIMD loads retain bounds checks. Neither infer an M4 ceiling
+nor attribute all residual cost to the loop from one throughput measurement.
 
 Prefer simplest kernel already below 1 µs on 4112 B body.
 Consider promoting 32 B only if it reduces median 4112 B CRC by at least 15%,
@@ -74,8 +74,8 @@ assumed to be a measurement of local CPU.
 
 ## Clarification before second campaign
 
-First complete campaign retained. Reading code before deriving medians finds
-C4 variants check ranges but omit product's two explicit assertions (precondition
+The first complete campaign is retained. Reading code before deriving medians finds
+C4 variants check ranges but omit the product's two explicit assertions (precondition
 and tail). Second campaign adds those assertions to variants: same criteria,
 matrix, order, counters. This is the comparison basis for possible promotion;
-first source and all its numbers remain separate. No check removed to improve result.
+first source and all its numbers remain separate. No check was removed to improve the result.

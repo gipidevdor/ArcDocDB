@@ -7,7 +7,7 @@ Qualification follows the [contract](pool-begin.md),
 [independent C3 review](pool-begin-revisione.md). Frozen base
 `ad829a40f6ce72837b59982d2e4f83e8c9ca9f3e`: fifteen sources and fourteen
 helpers copied byte for byte; seventeen review fingerprints match
-in checkout and clone. Originals in the
+in checkout and clone. Originals are in the
 [campaign catalog](https://github.com/gpicchiarelli/ArcDocDB/tree/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/).
 
 <a id="processi-e-prove"></a>
@@ -37,7 +37,7 @@ Owner on a different thread, inconsistent binding, and disallowed phases precede
 acquisition; debt, leases, and first cause remain retained.
 
 Invalid routing, actually not-ready writer, and an error injected during
-the second acquisition check the EQ original C1 cause and remaining
+the second acquisition test the original C1 cause by EQ and remaining
 capabilities. An unexpected error does not return the four values or promise
 cleanup: the caller retains references and coordinates the Archivio. Cleanup
 of C4 fixtures alone is not presented as product recovery.
@@ -46,9 +46,9 @@ The full check passes **1420 named product tests, two smoke
 tests, and four linter fixtures**, plus lint, trace, links, C4 self-tests,
 retention, and ten spikes. The 1426 `ok` markers include fixtures,
 which are not called product tests. Lint on 213 files without
-violations; trace on 120 requirements, 65 invariants, 13 FI scenarios, and 52 ADR,
+violations; trace on 120 requirements, 65 invariants, 13 FI scenarios, and 52 ADRs,
 without errors. The process lasts 269.513968 seconds with 891 stable sources.
-Compilation without warning/style-warning; stderr retains 861956 characters
+Compilation produces no warning/style-warning; stderr retains 861956 characters
 of compiler notes, equivalent to 861966 UTF-8 bytes.
 
 None of the six formal processes failed. The preexisting archive
@@ -62,7 +62,7 @@ retained bytes: these counts precede the new begin namespace.
 Native SB-COVER and seven original HTML files agree on the entire six-file
 package: **176/184 expressions (95.652%) and 10/10 native branches (100%)**,
 without exclusions. The new entry point covers 21/21 expressions. The original
-native data occupies 2769774 bytes. The [library audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/coverage-audit/coverage-audit.lisp)
+native data occupy 2769774 bytes. The [library audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/coverage-audit/coverage-audit.lisp)
 and [component audit](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-14-pool-worker-begin/data/begin-coverage-audit/coverage-dispatch-audit.lisp)
 retain denominators, native/HTML comparison, and all missing items.
 
@@ -128,12 +128,12 @@ a nominal C1 return.
 Product commit `5b3673f407777ebeeefa7caa6320f387a14c85db`
 contains the same qualified bytes. The new entry point directly forwards
 the bridge's three values: no C3 guard after acquisition separates the
-token from caller. No C1 source changes.
+token from the caller. No C1 source changes.
 
 Preliminary evidence remains separate: fourteen tests and scheduler
-passed on first attempt; sensor with two passing development self-tests
-(second with private cache), reader passed, and strict product
-compilation without warnings. Only intermediate FASLs are excluded from bundles.
+passed on the first attempt; the sensor passed two development self-tests
+(the second with a private cache), the reader passed, and strict product
+compilation produced no warnings. Only intermediate FASLs are excluded from bundles.
 Formal processes retain argv, original outputs, exit, and fingerprints,
 with stable sources. C4 writers and legacy generic formats are reused without
 broadening the new specific manifest's scope.

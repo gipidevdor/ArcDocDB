@@ -5,8 +5,8 @@
 (declaim (ftype (function (octets spazio-codec-full-text index u32 index index) null)
                 verifica-posizioni-posting))
 (defun verifica-posizioni-posting (buffer space first frequency length-index entry)
-  "Pre: lista POSITIONS entro sezione, LENGTHS trovata. Post: ordine e unione senza duplicati.
-Controlli validi anche con CRC corretto; errori riportano il posting di origine."
+  "Pre: POSITIONS list within section, LENGTHS found. Post: order and union without duplicates.
+Checks apply even with correct CRC; errors report the originating posting."
   (let* ((p (+ (aref (spazio-codec-full-text-starts space) 5) (* length-index +length-width+)))
          (n (leggi-u32 buffer (+ p +length-count+)))
          (base (aref (spazio-codec-full-text-prefix space) length-index)) (prior -1))
@@ -24,8 +24,8 @@ Controlli validi anche con CRC corretto; errori riportano il posting di origine.
 (declaim (ftype (function (octets spazio-codec-full-text u16 index index index)
                          (values index index &optional)) verifica-lista-posting))
 (defun verifica-lista-posting (buffer space field first count first-position)
-  "Pre: lista POSTINGS entro sezione, copertura LENGTHS pronta. Post: nuovi cursori esatti.
-Righe strettamente crescenti; frequenze positive e liste posizioni contigue."
+  "Pre: POSTINGS list within section, LENGTHS coverage ready. Post: exact new cursors.
+Strictly increasing rows; positive frequencies and contiguous position lists."
   (let ((prior-row -1) (position first-position)
         (position-count (floor (aref (spazio-codec-full-text-lengths space) 4) +position-width+)))
     (dotimes (i count)

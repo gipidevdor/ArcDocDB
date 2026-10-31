@@ -4,14 +4,14 @@
 
 Merge `a185aee95b2e40f267df26ec41024dafc0fb9b7a` combines published
 worker `9f9f6bd3b7a219211c8f08fe9e5f2b669b849796` with base
-`edb043b1234479cadab0f39b7adf1918786fa91e`. This code version
+`edb043b1234479cadab0f39b7adf1918786fa91e`. This code version was
 verified by full check of October 9, 2026.
 
 [Scope check](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-main/scope-integrazione-processo.lisp)
 preserves three Git-tree exports/blob comparisons. All
-4,100 base paths present: 4,096 identical bytes. Four changed common
-files ASDF, documentation index, execution package,
-coverage-exception inventory. Twenty execution/worker test/tool files
+4,100 base paths are present: 4,096 have identical bytes. The four changed common
+files are ASDF, the documentation index, the execution package,
+and the coverage-exception inventory. Twenty execution/worker test/tool files
 identical to published version; 140 added paths against base
 also match it.
 [Adapter bundle](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-09-writer-worker-main/integrazione-adattatori.lisp)
@@ -33,8 +33,8 @@ in ASDF assembly. Full check qualifies assembly.
 Worker-specific qualification remains from
 [original results](writer-worker-risultati.md): 23 dedicated tests,
 12 detected mutants, twenty local samples without measured heap allocations.
-Dedicated campaigns not repeated for integration; limits
-and coverage denominators unchanged.
+Dedicated campaigns were not repeated for integration; limits
+and coverage denominators are unchanged.
 
 Operational worker-lease/Serie-lease connection remains open.
 Next increment must acquire both before first pop,
@@ -54,10 +54,10 @@ sources.
 
 Merge `68890dea18f1b010b582be338fbbfaf0361a39fd` combines previous
 delivery `e96f99b` with primary `f16e978ad026e9307fde67425c35b2a8dbd1e731`.
-Includes minimal CBOR scanner, index rebuilding, all related
+It includes the minimal CBOR scanner, index rebuilding, and all related
 runners. [Recorded native Git comparison](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-writer-worker-latest/identita-worker-processo.lisp)
 confirms execution/worker test/tool files identical to previous
-delivery. Independent reading preserved in
+delivery. An independent reading preserved in
 [complete bundle](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-writer-worker-latest/integrazione-adattatori.lisp)
 also confirms CBOR/index sources identical to `f16e978`
 and joint ASDF registration. No contract conflicts emerged.
@@ -76,4 +76,4 @@ Verification qualifies assembly with CBOR/index rebuilding
 on `f16e978` base; resolves previous delivery's limitation regarding
 those sources. Operational worker–Serie protocol and overall
 engine gates described above remain open. Dedicated worker campaigns
-retain original scope, not repeated.
+retain their original scope and are not repeated.

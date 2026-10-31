@@ -5,9 +5,9 @@
 
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-TXM-005 REQ-AFF-008
 (defstruct (archivio-recovery (:constructor %make-archivio-recovery (scope identity)) (:copier nil))
-  "Pre: controller associa UUID autorevole e ambito dello stesso Archivio prima del recovery.
-Post: legami immutabili e binding runtime inizialmente NIL; non certifica unicità del catalogo.
-TYPE-ERROR per tipi invalidi; nessun accessor di array esportato."
+  "Pre: controller binds authoritative UUID and scope of the same Archivio before recovery.
+Post: immutable links and initially NIL runtime binding; does not certify catalog uniqueness.
+TYPE-ERROR for invalid types; no array accessor exported."
   (scope nil :type ambito-get :read-only t)
   (identity #() :type (simple-array (unsigned-byte 8) (#.+log-identity-bytes+)) :read-only t)
   ;; Tipo opaco per evitare dipendenza circolare: il solo writer è ARCDOCDB.RUNTIME.
@@ -17,9 +17,9 @@ TYPE-ERROR per tipi invalidi; nessun accessor di array esportato."
 ;;; REQ: REQ-REC-001 REQ-FOR-001 REQ-TXM-005 REQ-AFF-008
 (declaim (ftype (function (ambito-get octets) archivio-recovery) crea-archivio-recovery))
 (defun crea-archivio-recovery (scope identity)
-  "Pre: bootstrap esclusivo, UUID canonico stabile, ambito GET del medesimo Archivio.
-Post: copia posseduta dei sedici byte, senza alias con ID del caller o scratch futuri.
-INVALID-ARGUMENT per lunghezza diversa; associazione iniziale garantita dal controller."
+  "Pre: exclusive bootstrap, stable canonical UUID, GET scope of the same Archivio.
+Post: owned copy of sixteen bytes, without aliasing caller ID or future scratch.
+INVALID-ARGUMENT for a different length; initial binding guaranteed by the controller."
   (unless (= (length identity) +log-identity-bytes+)
     (error 'invalid-argument :reason :archive-recovery-identity))
   (%make-archivio-recovery scope (copy-seq identity)))
@@ -28,9 +28,9 @@ INVALID-ARGUMENT per lunghezza diversa; associazione iniziale garantita dal cont
 (defstruct (decisioni-recuperate
              (:constructor %make-decisioni-recuperate (archive input table size prefix status version))
              (:copier nil))
-  "Pre: stesso FD readonly letto fino a EOF attestato, header e intero prefisso DECISION verificati.
-Post: risultato posseduto legato all'Archivio, senza alias allo scratch; nessuna tabella parziale.
-Non misura EOF, certifica catalogo o salute futura; TYPE-ERROR per tipi invalidi."
+  "Pre: same read-only FD read through attested EOF, header and entire DECISION prefix verified.
+Post: owned result bound to the Archivio, without scratch aliasing; no partial table.
+Does not measure EOF or certify catalog or future health; TYPE-ERROR for invalid types."
   (archive nil :type archivio-recovery :read-only t)
   (input nil :type file-io :read-only t)
   (table nil :type arcdocdb.recovery.decisions::decision-table :read-only t)

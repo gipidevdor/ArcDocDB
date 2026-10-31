@@ -47,7 +47,7 @@ complete read-only acquisition is now connected to the directory plan.
 now provides the I/O primitive rejecting existing targets and verifying the
 name/FD binding. [Source-based stabilization](implementazione/stabilizzazione-nomi-recovery.md)
 connects semantic token, CONTROL, exclusive publication, and parent fsync,
-including for an already definitive name. The complete Recovery Manager sequence,
+including for an already final name. The complete Recovery Manager sequence,
 functional qualification, and admission remain open.
 
 [Directory ID input](implementazione/id-directory-recovery.md) now connects
@@ -100,7 +100,7 @@ parent path or deciding orphan reconciliation.
 As of 2026-10-03, **definition is complete**: the 26 open questions are closed by
 ADR 0013–0030, the design is consolidated in [architettura.md](architettura.md), and formats in
 [formati-su-disco.md](formati-su-disco.md). The same day's [design analysis](analisi-progettuale.md)
-reread the whole, found five correctness defects, and closed them with ADR 0036–0045.
+reread the whole design, found five correctness defects, and closed them with ADR 0036–0045.
 ADR-0028 and ADR-0030 were confirmed by the author on 2026-10-08.
 **Experimental evaluation** is in progress: spike suite SPK-01, SPK-02, SPK-03, SPK-07,
 SPK-09, with `make spikes-check` and `make spikes-bench`. SPK-07 already found a
@@ -160,7 +160,7 @@ and critical protocols checked on models.
    foundational choices.
 3. **SPK-07** (2PC + compaction/swap/reclaim model with crashes at every point).
 4. **SPK-03** (concurrent flushes across many Serie).
-5. Complete remaining checks for SPK-04, SPK-05, and SPK-06, which have first local
+5. Complete remaining checks for SPK-04, SPK-05, and SPK-06, which have initial local
    campaigns, and complete SPK-08 on the reference platform; remaining spikes can
    also run during Phase 1.
 

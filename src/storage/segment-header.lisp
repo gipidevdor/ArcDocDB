@@ -7,8 +7,8 @@
 ;;; REQ: REQ-FOR-001 REQ-FOR-002
 (declaim (ftype (function (octets) null) esigi-id-serie))
 (defun esigi-id-serie (id-serie)
-  "Pre: ID-SERIE octets. Post: identità completa di 16 byte disponibile.
-INVALID-ARGUMENT per lunghezza differente, prima di ogni scrittura."
+  "Pre: ID-SERIE octets. Post: complete 16-byte identity available.
+INVALID-ARGUMENT for different length, before any write."
   (unless (= (length id-serie) +serie-id-bytes+)
     (error 'invalid-argument :reason :serie-id-length))
   nil)
@@ -16,16 +16,16 @@ INVALID-ARGUMENT per lunghezza differente, prima di ogni scrittura."
 ;;; REQ: REQ-FOR-001
 (declaim (ftype (function (octets index index) boolean) zero-range-p))
 (defun zero-range-p (buffer start end)
-  "Pre: range valido. Post: T solo se tutti i byte riservati sono zero.
-INVALID-ARGUMENT per range errato; nessuna modifica."
+  "Pre: valid range. Post: T only if all reserved bytes are zero.
+INVALID-ARGUMENT for incorrect range; no modification."
   (check-range buffer start end)
   (loop for i from start below end always (zerop (aref buffer i))))
 
 ;;; REQ: REQ-FOR-001 REQ-FOR-002
 (declaim (ftype (function (octets index index) null) verifica-riservati))
 (defun verifica-riservati (buffer start end)
-  "Pre: header completo e integro. Post: tutte le aree riservate sono zero.
-CORRUPTION-DETECTED per byte non zero, inclusa la coda fuori dal CRC."
+  "Pre: complete intact header. Post: all reserved areas zero.
+CORRUPTION-DETECTED for nonzero byte, including tail outside CRC."
   (unless (and (zero-range-p buffer (+ start +segment-reserved-a-start+)
                             (+ start +segment-reserved-a-end+))
                (zero-range-p buffer (+ start +segment-reserved-b-start+)
@@ -40,9 +40,9 @@ CORRUPTION-DETECTED per byte non zero, inclusa la coda fuori dal CRC."
                          (values index &optional)) scrivi-header-segmento))
 (defun scrivi-header-segmento (buffer start id-serie segment-id created-at
                              &key (version 2) (origine +writer-origin+))
-  "Pre: BUFFER esclusivo; ID-SERIE di 16 byte, senza alias; interi u64.
-Post: header canonico di 64 byte, riservati zero, CRC; fuori range invariato.
-Errori tipizzati di preflight non modificano BUFFER. Prepara byte, senza durability."
+  "Pre: exclusive BUFFER; 16-byte ID-SERIE without alias; u64 integers.
+Post: canonical 64-byte header, zero reserved fields, CRC; unchanged outside range.
+Typed preflight errors do not modify BUFFER. Prepares bytes, without durability."
   (esigi-id-serie id-serie)
   (versione-supportata version start)
   (unless (or (= origine +writer-origin+) (= origine +compaction-origin+))
@@ -67,10 +67,10 @@ Errori tipizzati di preflight non modificano BUFFER. Prepara byte, senza durabil
 (declaim (ftype (function (octets index index octets u64)
                          (values index u16 u8 index &optional)) verifica-header-segmento))
 (defun verifica-header-segmento (buffer start end id-serie segment-id)
-  "Pre: range stabile; identità Serie e segmento dalla fonte autorevole.
-Post: fine header, versione effettiva, origine e offset created-at; nessuna copia/boxing u64.
-CORRUPTION-DETECTED per CRC/identità/cornice, UNSUPPORTED-FORMAT per versione ignota.
-Non valida i record, il manifest o la visibilità del segmento."
+  "Pre: stable range; Serie and segment identity from authoritative source.
+Post: header end, actual version, origin, and created-at offset; no u64 copy/boxing.
+CORRUPTION-DETECTED for CRC/identity/frame, UNSUPPORTED-FORMAT for unknown version.
+Does not validate records, manifest, or segment visibility."
   (check-range buffer start end)
   (esigi-id-serie id-serie)
   (when (< (- end start) +segment-header-bytes+)

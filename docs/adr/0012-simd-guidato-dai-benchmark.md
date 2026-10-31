@@ -15,7 +15,7 @@
 
 Many database operations lend themselves to SIMD, but specialized code has portability
 and maintenance costs, and optimizing before measuring often means optimizing the
-wrong place.
+wrong part of the system.
 
 <a id="decisione"></a>
 

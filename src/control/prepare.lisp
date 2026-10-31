@@ -7,9 +7,9 @@
 (declaim (ftype (function (checkpoint-control file-io file-io file-io associazione-file) null)
                 verifica-control-completo))
 (defun verifica-control-completo (plan input append directory association)
-  "Pre: scrittura/flush/rilettura/fsync parent completati. Post: dipendenze aperte e frontiere esatte.
-IO-FAULT/INVALID-ARGUMENT dalle capacità; INVARIANT-VIOLATION per frontiere interne.
-Non attesta la rinomina di control.log.tmp, il catalogo o una decisione dei documenti."
+  "Pre: write/flush/reread/parent fsync completed. Post: open dependencies and exact frontiers.
+IO-FAULT/INVALID-ARGUMENT from capabilities; INVARIANT-VIOLATION for internal frontiers.
+Does not attest to control.log.tmp rename, catalog, or a document decision."
   (verifica-associazione-file association input append)
   (arcdocdb.io::esigi-aperto directory :directory)
   (verifica-active-checkpoint (checkpoint-control-active plan))
@@ -22,11 +22,11 @@ Non attesta la rinomina di control.log.tmp, il catalogo o una decisione dei docu
                          control-preparato)
                 prepara-checkpoint-control))
 (defun prepara-checkpoint-control (plan input append directory scratch &key (chunk-bytes 65536))
-  "Pre: pool I/O, nuovo control.log.tmp O_EXCL, parent autorevole e startup esclusivo.
-Post: file canonico scritto e durevole, riletto esattamente uguale, fsync del parent.
-Restituisce log CONTROL e manifest completi; nessuna rinomina/adozione o conferma al client.
-Guasti tipizzati propagati senza retry/rollback/close; caller fa quarantena/cleanup.
-Punto di atomicità del recovery resta la futura rinomina del control log, secondo ADR-0040."
+  "Pre: I/O pool, new O_EXCL control.log.tmp, authoritative parent, and exclusive startup.
+Post: canonical file written and durable, reread exactly equal, parent fsync.
+Returns complete CONTROL log and manifest; no rename/adoption or client confirmation.
+Typed faults propagated without retry/rollback/close; caller handles quarantine/cleanup.
+Recovery atomicity point remains the future control log rename, per ADR-0040."
   (verifica-preparazione-control plan input append directory scratch chunk-bytes)
   (let* ((association (associa-file input append))
          (log (crea-log-io append :control 0 :version (checkpoint-control-version plan)))

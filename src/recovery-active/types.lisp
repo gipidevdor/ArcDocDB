@@ -11,9 +11,9 @@
              (:constructor %make-active-recuperato
                  (control segment size prefix status batches records prepared local aborted ids csns
                   csn-present max-csn decision-origin)) (:copier nil))
-  "Pre: header writer, prefisso e semantica verificati; tutti prepared risolti da prove autorevoli.
-Post: capacità readonly e scalari, esiti derivati posseduti e ordinati, senza buffer/workspace.
-Non attesta EOF fisico, inventario o autorità della tabella decisioni dell'Archivio."
+  "Pre: writer header, prefix, and semantics verified; all prepared data resolved from authoritative proofs.
+Post: readonly capability and scalars, owned sorted derived outcomes, without buffer/workspace.
+Does not attest to physical EOF, inventory, or authority of the Archivio decision table."
   (control nil :type control-recuperato :read-only t)
   (segment nil :type segmento-get :read-only t)
   (size 0 :type index :read-only t)
@@ -32,9 +32,9 @@ Non attesta EOF fisico, inventario o autorità della tabella decisioni dell'Arch
 
 ;;; REQ: REQ-REC-001 REQ-TXM-007 REQ-AFF-008
 (defstruct (workspace-active (:constructor %make-workspace-active ()) (:copier nil))
-  "Pre: budget verificati, workspace esclusivo. Post: mappe EQL private, contatori zero.
-Prepared associa TXID al lotto; outcomes associa TXID al CSN; derived contiene solo esiti mancanti sul file.
-Nessun contenitore viene esportato; allocazioni del solo percorso di apertura."
+  "Pre: budgets verified, exclusive workspace. Post: private EQL maps, zero counters.
+Prepared associates TXID with batch; outcomes associates TXID with CSN; derived contains only outcomes missing from the file.
+No container exported; allocations only on the opening path."
   (prepared (make-hash-table :test 'eql) :type hash-table :read-only t)
   (outcomes (make-hash-table :test 'eql) :type hash-table :read-only t)
   (derived (make-hash-table :test 'eql) :type hash-table :read-only t)

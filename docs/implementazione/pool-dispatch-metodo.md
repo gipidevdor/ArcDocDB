@@ -39,7 +39,7 @@ with their original checks and barriers.
 
 ## Coverage and memory
 
-C3 gate at least 95% expressions and branches across the entire scope without manual
+The C3 gate requires at least 95% of expressions and branches across the entire scope without manual
 exclusions. Preserve native SB-COVER, HTML, and audit with denominators, missing
 paths, and exact fingerprints. Compare integer native/HTML counts;
 no MC/DC inference and no inherited C1 coverage in denominator.
@@ -58,7 +58,7 @@ per campaign, factory/API lookup/GC outside clock, no tuning.
 
 All values and identities contribute to cycle oracle.
 Preserve heap, ticks, sink, and completed cycles; observed zero heap does not
-demonstrate universal nonallocation. External load uncontrolled,
+demonstrate universal nonallocation. External load is uncontrolled,
 no engine-throughput conclusion. Sensor must detect
 deliberate allocation, wrong sink, differing returns, and below-resolution clock,
 preserving partial output and existing destinations.
@@ -67,4 +67,4 @@ Formal campaigns use frozen copies and `record-command.lisp`,
 with dedicated caches, argv, stdout/stderr, exit, and initial/final identities.
 Failures remain failures; preliminary raw data stay separate. Published
 copies are checked byte for byte and new manifests do not replace
-originals. Full check includes ten existing spikes.
+originals. The full check includes ten existing spikes.

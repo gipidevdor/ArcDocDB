@@ -2,17 +2,17 @@
 
 # GET path: candidate, cache, verified record
 
-Module [`arcdocdb.get`](../../src/get/) connects primary index, read
-context, cache, read-only I/O. Implements reading current committed
-PUT, including when version visible to snapshot. Response
+The module [`arcdocdb.get`](../../src/get/) connects the primary index, read
+context, cache, and read-only I/O. It implements reading the current committed
+PUT, including when that version is visible to a snapshot. Response
 remains private until final snapshot verification and EBR release.
 
-Not yet server endpoint. [CLOSED resolver](get-resolver.md)
+It is not yet a server endpoint. [CLOSED resolver](get-resolver.md)
 connects manifest/file proofs; [CLOSED directory](get-directory.md)
 selects candidate segment. [Ordinary ACTIVE resolver](get-active.md)
 acquires pages from Serie's published root. Multiseries ACTIVE proofs,
 publication of full Serie directory,
-retained-version search, seed lifecycle, pool, protocol remain to connect.
+retained-version search, seed lifecycle, pool, and protocol remain to be connected.
 Requirements remain **designed**: compilation/static readings do not close
 C1 qualification. Module changes neither format, isolation, nor ADR decisions.
 
@@ -34,7 +34,7 @@ References: [ADR-0038](../adr/0038-orizzonte-di-visibilita.md),
   Serie identity. Controller must associate all three correctly;
   module cannot infer from index lacking storage identity.
   `avvia-get` calculates digest through [index-owned seed](hash-chiavi.md),
-  accepting no request-supplied digest. Missing seed rejected.
+  accepting no request-supplied digest. A missing seed is rejected.
 - `segmento-get` binds view to read-only file. Construction reads
   header **from same file**, checks CRC, Serie/segment identity,
   format, retains immutable fields. Runs in I/O pool outside GET.
@@ -51,7 +51,7 @@ checks `1 ≤ B ≤ 16.842.775` and `B + 152 ≤ P` before allocation.
 Defaults: 65,536 record bytes, 65,688 payload bytes. The 152 bytes include
 index scratch 40, candidate 40, snapshot 8, read context 32, proof 32.
 `payload-contesto-get` returns payload, **not RSS**: objects,
-headers, EBR, registers, view, cache, response, GC excluded.
+headers, EBR, registers, view, cache, response, and GC are excluded.
 
 Version larger than buffer produces `:buffer-required` before
 any record/proof I/O. Driver must assign worker with appropriate
@@ -84,9 +84,9 @@ caller. External cleanup remains mandatory. After admission,
 errors/nonlocal exits in operational phases release pin. Cleanup
 interruption makes context terminal; controller isolates it.
 
-Record/proof scratch not zeroed every request. Remains private,
-previous bytes inaccessible through API: state/valid ranges
-cleared. Any error or nonlocal exit also invalidates response
+Record/proof scratch is not zeroed on every request. It remains private,
+and previous bytes are inaccessible through the API: state/valid ranges
+are cleared. Any error or nonlocal exit also invalidates response
 copy; only normal `concludi-get` return authorizes it.
 
 <a id="visibilità-e-ricerca-storica"></a>
@@ -103,7 +103,7 @@ identity, generation, activation, deadline, captures `s` under EBR.
   after `s` may have removed version requiring retention.
 - Primary miss without snapshot: `:absent`, to confirm with `concludi-get`.
 
-Driver finishes task even for valueless outcomes. Cannot
+The driver finishes the task even for valueless outcomes. It cannot
 convert `:history-required` into miss. Future history resolver must
 prove absence and repeat snapshot checks. Not implemented here.
 
@@ -118,14 +118,14 @@ Module checks canonical view, segment identity, offset after header,
 end within prefix, actual format limits, allowed PUT flags.
 
 v2 slots represent segment ID in 32 bits: capability must have
-zero high word and low word matching candidate. Storage u64 ID
-not truncated to force match. Representation limit already
+zero high word and low word matching candidate. The storage u64 ID
+is not truncated to force a match. The representation limit is already
 documented in [v2 payload](slot-indice-v2.md).
 
 In compute pool, prepared record returns `:proof-required`. In I/O pool,
 authoritative table must supply OUTCOME offset in same segment
-and committed prefix. Valid OUTCOME CRC or presence in file
-insufficient: resolver must certify membership in published batch.
+and committed prefix. A valid OUTCOME CRC or presence in the file
+is insufficient: the resolver must certify membership in a published batch.
 Module reads proof from same FD, checks frame, type, CSN
 before cache probe. Common verifier then compares PUT TXID
 with proof TXID, CSN with candidate CSN. Prepared record in
@@ -138,7 +138,7 @@ from segment. Proof/file-byte corruption propagates as source
 fault, not hidden as cache miss.
 Variant resolving proof from manifest EDIT outcomes remains open.
 
-Read PUT verified before opportunistic insertion. Contention,
+The PUT read is verified before opportunistic insertion. Contention,
 bypass, unavailable cache do not wait. Insertion rechecks input
 through public cache API: additional CRC cost to measure.
 Enums/booleans allow worker-local metrics; aggregation/alarm
@@ -151,17 +151,17 @@ belong to driver without per-operation global counters.
 On miss/proof required/insufficient buffer, compute worker abandons
 context and queues only original request. I/O worker restarts at
 `avvia-get`, reruns resolver, rechecks cache. No FD, location,
-proof, pin migrates. Blocking read exists only in I/O pool.
+proof, or pin migrates. Blocking read exists only in I/O pool.
 
-Work bounded by maximum 65,535-byte key, existing index budgets, eight cache slots,
+Work is bounded by a maximum 65,535-byte key, existing index budgets, eight cache slots,
 one PUT within format limit, fixed proof. No new queue,
 infinite retry, Archivio mutex on GET, per-entry object, or write between
-Serie. Copies record → scratch → response with explicit CRC checks.
+Serie. The path copies record → scratch → response with explicit CRC checks.
 Current-core measurements in [GET performance campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md),
-with [preregistered method](get-performance-metodo.md). Report distinguishes global
-heap, serial windows, parallel groups; does not measure server latency.
+with [preregistered method](get-performance-metodo.md). The report distinguishes global
+heap, serial windows, and parallel groups; it does not measure server latency.
 [Cost-isolation campaign](get-costi-risultati.md) distinguishes CRC,
-copying, oracle, measures lookup through 4.19 million keys; changes neither
+copying, and oracle costs and measures lookup through 4.19 million keys; it changes neither
 product path nor declared progress guarantees.
 
 <a id="decisioni-c1-e-qualifica-aperta"></a>
@@ -185,8 +185,8 @@ Static evidence in [GET campaign](https://github.com/gpicchiarelli/ArcDocDB/blob
 with its own outcomes/scope; does not replace previous static evidence.
 Remaining: condition-by-condition C1 qualification, concurrent stress, fault
 injection, allocation/performance measurements; resolver,
-retention, scheduler, metrics, protocol integrations. Static campaign's two readings
-by author; first functional campaign also records independent review.
+retention, scheduler, metrics, protocol integrations. The static campaign's two readings were
+by the author; first functional campaign also records independent review.
 [Independent review](get-performance-revisione.md) and
 [performance/stress tests](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md)
 have explicit scopes and do not close full C1 qualification.

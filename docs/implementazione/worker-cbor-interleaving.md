@@ -6,10 +6,10 @@ Method preregistered before correction verification. Full local
 attempt R1 of [GET lifetime](get-lifetime.md) campaign failed
 on float-worker overlap; PR 13 CI run `38634044870`
 failed on macOS tag-worker overlap. Ubuntu succeeded. Original
-evidence/failed outcomes separate and preserved.
+evidence/failed outcomes are separate and preserved.
 
 Simultaneous release of two semaphore credits does not require
-scheduler to start both bodies before one ends. Nonoverlapping
+the scheduler to start both bodies before one ends. Nonoverlapping
 interval may therefore fail test after correct results.
 First correction concerns float/tag fixtures only, without changing
 encoders, formats, item counts, oracles, product APIs.
@@ -20,21 +20,21 @@ encoders, formats, item counts, oracles, product APIs.
 
 Every reused worker records initial wall time, encodes first
 item, checks result, full image, sink contribution.
-Then records first-checkpoint time, signals `ready`, waits
+It then records the first-checkpoint time, signals `ready`, waits
 for `go`. Controller waits for both checkpoints before allowing
-remaining operations. Each wave retains distinct semaphores; waits/joins
+remaining operations. Each wave retains distinct semaphores; waits/joins are
 bounded, cleanup releases gates before stopping workers.
 
-No worker can finish body before other has
-completed first item. Check `start <= first <= finish`,
-`max(first) <= min(finish)`, positive duration/overlap. Times
-observed without rounding, clamp, synthetic timestamps. Intervals,
+No worker can finish its body before the other has
+completed the first item. Check `start <= first <= finish`,
+`max(first) <= min(finish)`, positive duration/overlap. Times are
+observed without rounding, clamping, or synthetic timestamps. Intervals,
 checkpoints, sinks, overlap printed/flushed before temporal
 assertions, preserving diagnostics even on new failure.
-Value/immutability oracles unchanged.
+Value/immutability oracles are unchanged.
 
-Metric is **fixture** wall interval, including rendezvous
-and checks. Demonstrates imposed task interleaving; measures neither
+The metric is the **fixture** wall interval, including rendezvous
+and checks. It demonstrates imposed task interleaving; it measures neither
 encoder-only latency, CPU simultaneity, nor scaling. Two first-correction
 helpers each have one test caller, not used by
 benchmarks.
@@ -58,22 +58,22 @@ REQ-AFF-008, REQ-VAL-001.
 
 ## Preregistered extension after main check
 
-PR 13 integrated in commit
+PR 13 was integrated in commit
 `05a1c1f1688968c7c64b483a14528945a05b1335`, same tree as
 successful CI checkout. Subsequent main run `38640790953` succeeded
 on Ubuntu/documentation but failed on macOS second ARRAY-write
 wave overlap. First wave prints positive overlap;
 second log still precedes correction, lacks failed
-intervals. Both corrected FLOAT intervals positive.
+intervals. Both corrected FLOAT intervals are positive.
 Failure preserved, not attributed to external load.
 
-Two independent readings identify same natural gate in eleven remaining
+Two independent readings identify the same natural gate in eleven remaining
 fixtures: ARRAY, MAP, SIMPLE, STRING write; header write/read;
 minimal header; minimal/structural scanning; UTF-8; two-Serie
 computation fixture. Extension concerns those tests, without product,
 requirement, registered-name changes or already corrected FLOAT/TAG fixtures.
 
-Checkpoint follows first real operation with intended checks/sink
+The checkpoint follows the first real operation with intended checks/sink
 or first full plan iteration. Header write completes
 all seven planned headers, checks image/cursor before gate.
 Two-Serie test separately preserves B progress while A
@@ -81,7 +81,7 @@ holds guard/token: computation rendezvous follows release
 of both leases and first CRC compared to cold result.
 No gate holds a resource needed by other worker.
 
-Counts unchanged: 8,192 ARRAY/MAP compositions each;
+Counts are unchanged: 8,192 ARRAY/MAP compositions each;
 32,768 SIMPLE/STRING items each; 229,376 header writes; 2,097,152 header
 reads; 524,288 minimal headers; 48 minimal scans, 48 structural scans;
 128 UTF-8 calls across 83,886,080 bytes; 64 CRCs per each of two
@@ -90,13 +90,13 @@ read-only inputs, private scratch, bounded cleanup
 remain active. Reused waves retain distinct semaphores.
 
 Strictly positive overlap, positive duration, checkpoint order,
-flushed diagnostics before timing assertions retained.
-Historical CPU labels also become fixture WALL: include
+flushed diagnostics before timing assertions are retained.
+Historical CPU labels also become fixture WALL: they include
 waits/checks, without pure-operation timing measurement.
 
 Three authors work on exclusive files, exchange change
-reviews. New commit frozen before one full check
+reviews. The new commit is frozen before one full check
 with new private ASDF cache. Counts/names derived from that commit's
 Git and actual CI checkouts; current total 1,528 tests in
 33 suites plus two smoke tests. Original attempts, configurations,
-records, caches preserved before cleanup.
+records, and caches are preserved before cleanup.

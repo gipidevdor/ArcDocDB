@@ -8,10 +8,10 @@
 (declaim (ftype (function (octets index index spazio-cbor index index)
                          (values index index &optional)) verifica-figlio-array-cbor))
 (defun verifica-figlio-array-cbor (source start end space remaining child-depth)
-  "Pre: figlio non vuoto, scratch esclusivo, budget residui. Post: nodi e picco.
-Residuo0: RESOURCE-EXHAUSTED :cbor-array-node-budget all'offset START, prima
-del reset. Errori scanner propagati con offset SOURCE; dati sempre intatti,
-scratch riusabile dopo errore. INVARIANT-VIOLATION per confini/risultato interni."
+  "Pre: nonempty child, exclusive scratch, remaining budgets. Post: nodes and peak.
+Remaining0: RESOURCE-EXHAUSTED :cbor-array-node-budget at offset START, before
+reset. Scanner errors propagate with SOURCE offset; data always intact,
+scratch reusable after error. INVARIANT-VIOLATION for internal bounds/result."
   (unless (<= start end (length source))
     (error 'invariant-violation :reason :cbor-array-child-range))
   (when (zerop remaining)
@@ -36,11 +36,11 @@ scratch riusabile dopo errore. INVARIANT-VIOLATION per confini/risultato interni
                                 spazio-cbor index index) (values index index &optional))
                 verifica-figli-array-cbor))
 (defun verifica-figli-array-cbor (source start end item-ends count space max-nodes max-depth)
-  "Pre: partizione/budget/radice verificati, sorgente e tabella stabili.
-Post: nodi totali e picco inclusa radice; tutti i figli esatti e minimi.
-Loop COUNT limitato a16MiB; reset/drain102 per figlio. Errori scanner propagati,
-residuo0 intercettato prima del prossimo reset; INVARIANT-VIOLATION interno.
-COUNT0 non usa SPACE; nessun byte/tabella/destinazione modificato."
+  "Pre: partition/budgets/root verified, stable source and table.
+Post: total nodes and peak including root; all children exact and minimal.
+COUNT loop bounded to 16 MiB; reset/drain102 per child. Scanner errors propagate,
+remaining0 caught before the next reset; internal INVARIANT-VIOLATION.
+COUNT0 does not use SPACE; no bytes/table/destination modified."
   (unless (<= start end (length source))
     (error 'invariant-violation :reason :cbor-array-children-range))
   (unless (<= count (length item-ends))
@@ -70,15 +70,15 @@ COUNT0 non usa SPACE; nessun byte/tabella/destinazione modificato."
 (defun scrivi-array-cbor-minimo (buffer start end source source-start source-end item-ends count space
                                &key (max-bytes +cbor-scan-max-bytes+)
                                  (max-nodes +cbor-scan-max-bytes+) (max-depth +cbor-scan-max-depth+))
-  "Pre: simple u8, span half-open, fini relative simple u32; dati stabili,
-destinazione/scratch esclusivi. Post: testata MT4 minima e payload esatto,
-un solo NEXT; solo [START,NEXT) cambia. Budget includono radice e testata.
-Preflight e scansione integrale prima di scrivere: errori pubblici preservano
-tutti gli array fisici, offset NIL o assoluto SOURCE per gli errori scanner.
-Scratch intatto nel preflight, riusabile dopo parsing fallito; vuoto non lo usa.
-BUFFER=SOURCE ammesso solo disgiunto dal footprint, alias scratch rifiutati.
-INVARIANT-VIOLATION interno senza rollback, anche dalla copia condivisa MT2/3.
-Costo O(SPAN+COUNT*102); nessun AST, thread, attesa, I/O o pubblicazione."
+  "Pre: simple u8, half-open spans, simple u32 relative ends; stable data,
+exclusive destination/scratch. Post: minimal MT4 header and exact payload,
+one NEXT only; only [START,NEXT) changes. Budgets include root and header.
+Preflight and complete scan before writing: public errors preserve
+all physical arrays, offset NIL or absolute SOURCE for scanner errors.
+Scratch intact during preflight, reusable after failed parsing; empty does not use it.
+BUFFER=SOURCE allowed only disjoint from the footprint; scratch aliases rejected.
+Internal INVARIANT-VIOLATION without rollback, including from the shared MT2/3 copy.
+Cost O(SPAN+COUNT*102); no AST, thread, waiting, I/O, or publication."
   (multiple-value-bind (span header-size item-size)
       (check-input-array-cbor buffer start end source source-start source-end item-ends count space
                              max-bytes max-nodes max-depth)

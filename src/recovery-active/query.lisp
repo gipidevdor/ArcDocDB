@@ -8,8 +8,8 @@
                          (values index index (member :complete :tail) (member 1 2) &optional))
                 frontiere-active-recuperato))
 (defun frontiere-active-recuperato (recovered)
-  "Pre: risultato completo. Post: EOF attestato, prefisso assoluto, stato e formato verificato.
-Nessuna prova di dimensione/salute attuale; TYPE-ERROR per tipi invalidi."
+  "Pre: complete result. Post: attested EOF, absolute prefix, state, and verified format.
+No proof of current size/health; TYPE-ERROR for invalid types."
   (values (active-recuperato-size recovered) (active-recuperato-prefix recovered)
           (active-recuperato-status recovered) (arcdocdb.get::segmento-get-version (active-recuperato-segment recovered))))
 
@@ -17,8 +17,8 @@ Nessuna prova di dimensione/salute attuale; TYPE-ERROR per tipi invalidi."
 (declaim (ftype (function (active-recuperato) (values index index index index index index &optional))
                 statistiche-active-recuperato))
 (defun statistiche-active-recuperato (recovered)
-  "Pre: risultato completo. Post: lotti, record esclusi SEAL, TXID prepared distinti, commit locali/derivati, abort.
-TXID prepared = locali + derivati + abort; nessun conteggio della coda o table esposta."
+  "Pre: complete result. Post: batches, records excluding SEAL, distinct prepared TXIDs, local/derived commits, aborts.
+Prepared TXIDs = local + derived + aborts; no tail count or exposed table."
   (values (active-recuperato-batches recovered) (active-recuperato-records recovered)
           (active-recuperato-prepared recovered) (active-recuperato-local recovered)
           (length (active-recuperato-ids recovered)) (active-recuperato-aborted recovered)))
@@ -26,16 +26,16 @@ TXID prepared = locali + derivati + abort; nessun conteggio della coda o table e
 ;;; REQ: REQ-REC-001 REQ-FOR-001
 (declaim (ftype (function (active-recuperato) segmento-get) segmento-active-recuperato))
 (defun segmento-active-recuperato (recovered)
-  "Pre: risultato completo. Post: capacità del vecchio segmento readonly dal FD verificato, senza trasferire ownership.
-Non rende CLOSED il file o certifica durata EBR; il caller mantiene capacità fino al reclaim."
+  "Pre: complete result. Post: old read-only segment capability from verified FD, without ownership transfer.
+Neither makes file CLOSED nor certifies EBR lifetime; caller retains capability until reclamation."
   (active-recuperato-segment recovered))
 
 ;;; REQ: REQ-TXM-007 REQ-AFF-008
 (declaim (ftype (function (active-recuperato u64) (values boolean u64 &optional)) esito-chiusura-active))
 (defun esito-chiusura-active (recovered txid)
-  "Pre: risultato completo, TXID u64. Post: presenza e CSN da DECISION da conservare nell'EDIT, NIL/0 se assente.
-Assenza NON classifica la transazione: può già avere OUTCOME nel segmento. Nessun array esportato.
-Ricerca limitata a INTEGER-LENGTH(N), INVARIANT-VIOLATION per limiti o forme discordanti."
+  "Pre: complete result, u64 TXID. Post: presence and CSN from DECISION to retain in EDIT, NIL/0 if absent.
+Absence does NOT classify transaction: it may already have an OUTCOME in the segment. No array exported.
+Search bounded to INTEGER-LENGTH(N), INVARIANT-VIOLATION for inconsistent limits or shapes."
   (let* ((ids (active-recuperato-ids recovered)) (csns (active-recuperato-csns recovered))
          (count (length ids)) (left 0) (right count))
     (unless (= count (length csns)) (error 'invariant-violation :reason :active-recovery-query-shape))

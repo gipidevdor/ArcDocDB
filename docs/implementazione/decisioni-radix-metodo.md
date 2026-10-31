@@ -4,7 +4,7 @@
 
 Registered before measurements of 2026-10-09. Scope: in-memory
 recovery sorting without I/O, prepared application, or persistent-format
-changes. Public table remains owned/immutable.
+changes. The public table remains owned/immutable.
 
 <a id="candidati-e-criterio"></a>
 
@@ -28,8 +28,8 @@ medium, large cardinalities, ID16 with common prefix and all bytes variable
 (both halves correlated), ordered, reversed, scattered, duplicate,
 and uniform TXIDs. Choose separate ID16/TXID thresholds. For every scenario
 with `N >= soglia`, radix median must be at most 90% of merge
-median. Threshold itself must be measured cardinality. With conflicting results,
-retain merge on respective path; candidate not left
+median. The threshold itself must be a measured cardinality. With conflicting results,
+retain merge on the respective path; the candidate is not left
 as unused product code.
 
 <a id="correttezza-e-concorrenza"></a>
@@ -43,12 +43,12 @@ sorted/reversed input, IDs differing in each of 128 bits.
 Repeat public contracts: idempotent/conflicting duplicates,
 first physical conflict, budgets, ownership, no partial results.
 
-Real workers query same table published before
-start in parallel: each owns inputs, outputs, error state. No
+Real workers query the same table in parallel after it is published before
+startup: each owns its inputs, outputs, and error state. No
 table write, global counter, or query-path lock.
-Test compares outputs with serial oracle and waits for
-threads with timeout. Workers belong to harness; do not introduce
-per-request engine threads or new global pool.
+The test compares outputs with a serial oracle and waits for
+threads with timeout. The workers belong to the harness; they do not introduce
+per-request engine threads or a new global pool.
 
 <a id="misure-e-conservazione"></a>
 
@@ -63,7 +63,7 @@ separately calibrated iterations, alternating execution order.
 Samples below resolution or shorter than 50 ms target, even after
 reaching cap, make selection inconclusive for that cardinality
 suffix: no ratios usable for adoption.
-Calibration bounded in attempts, iterations, copy bytes.
+Calibration is bounded in attempts, iterations, and copy bytes.
 64 MiB limit concerns copy payload (eight bytes per
 entry reference); excludes headers, outputs, oracle, scratch.
 
@@ -77,11 +77,11 @@ qualifies neither Linux/x86-64 performance, P99, zero heap, nor whole engine.
 
 ## Repeat for insufficient duration
 
-First full matrix retained samples below 50 ms minimum,
-even after initially sufficient calibration. Does not authorize
-TXID threshold; preserved in full. Before second matrix,
-calibration target raised to 100 ms to leave margin for variation
-between windows. Minimum each sample still 50 ms; 10%
-criterion unchanged. Entire matrix repeated with same seed, without selecting
+The first full matrix retained samples below the 50 ms minimum,
+even after initially sufficient calibration. It does not authorize
+a TXID threshold and is preserved in full. Before the second matrix,
+the calibration target was raised to 100 ms to leave margin for variation
+between windows. The minimum for each sample is still 50 ms; the 10%
+criterion is unchanged. The entire matrix was repeated with the same seed, without selecting
 favorable cases alone. Calibration reaching cap before
 100 ms remains insufficient, even with longer later samples.

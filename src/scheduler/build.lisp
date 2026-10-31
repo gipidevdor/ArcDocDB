@@ -6,7 +6,7 @@
 ;;; REQ: REQ-THR-001 REQ-AFF-008 REQ-AFF-013
 (declaim (ftype (function (t fixnum fixnum keyword) pool-tick) %pool-range))
 (defun %pool-range (value lower upper reason)
-  "Pre: limiti fixnum validi. Post: intero verificato; INVALID-ARGUMENT prima di mutare."
+  "Pre: valid fixnum limits. Post: verified integer; INVALID-ARGUMENT before mutation."
   (unless (and (typep value 'fixnum) (<= lower value upper))
     (error 'invalid-argument :reason reason))
   value)
@@ -17,9 +17,9 @@
                 crea-controllore-pool))
 (defun crea-controllore-pool (cores &key (minimum 1) maximum initial
                                       (period 500) (dwell 2000) (queue-high 8))
-  "Pre: configurazione stabile; CORES iniettato, non rilevato dal sistema.
-Post: target INITIAL (default MINIMUM), MAXIMUM default 2*CORES, owner corrente.
-INVALID-ARGUMENT dominio/ordine; alloca solo all'avvio, nessun thread avviato."
+  "Pre: stable configuration; injected CORES, not detected from the system.
+Post: target INITIAL (default MINIMUM), MAXIMUM defaults to 2*CORES, current owner.
+INVALID-ARGUMENT for domain/order; allocates only at startup, no thread started."
   (let* ((core-count (%pool-range cores 1 65536 :pool-cores))
          (low (%pool-range minimum 1 (* 2 core-count) :pool-minimum))
          (high (%pool-range (if maximum maximum (* 2 core-count))

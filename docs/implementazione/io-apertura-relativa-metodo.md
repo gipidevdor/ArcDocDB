@@ -12,27 +12,27 @@ It changes neither formats, durable decisions, nor the ADR-0040 table.
 
 `apri-lettura-nella-directory(directory, nome, …)` returns a new
 read-only capability and size observed through the same FD.
-Parent stays borrowed, open, and reusable. The controller
+The parent stays borrowed, open, and reusable. The controller
 prevents namespace/file mutations during the call and
 concurrent capability closes. The owner then keeps the
 child live until its readers become quiescent.
 
-Name is a printable ASCII leaf of 1 to 255 bytes, excluding `.`, `..`,
-NUL, and separators. Private copy and capability are prepared before
-opening. Native mode uses `openat` on parent, read-only,
+The name is a printable ASCII leaf of 1 to 255 bytes, excluding `.`, `..`,
+NUL, and separators. The private copy and capability are prepared before
+opening. Native mode uses `openat` on the parent, read-only,
 `O_CLOEXEC`, `O_NOFOLLOW`, `O_NONBLOCK`; `fstat` must certify a regular file.
 Complete device/inode are compared with the same parent's relative nofollow
 entry before publication. No parent path is
-reopened. Name certifies neither header nor manifest
+reopened. The name certifies neither header nor manifest
 membership: those checks remain with readers and controller.
 
-Backend is inherited from parent. Optional extensions are
+The backend is inherited from the parent. Optional extensions are
 `open-relative(fd-parent, nome, :input) → fd-child` and
 `file-metadata(fd-child) → device, inode, dimensione`; `entry-identity`
 is also required. Callbacks check regular type and respect
 ownership and immutable names. Until a valid FD is returned, the opening
 callback owns its rollback; after return the product
-owns the child. An FD equal to parent is rejected without closing it.
+owns the child. An FD equal to the parent is rejected without closing it.
 Missing callbacks do not fall back to native primitives.
 
 Proposed budgets: transfer from 1 to 256 MiB and maximum size from
@@ -48,14 +48,14 @@ committed, or durable frontier nor an RSS limit. The read-only capability's
 Every valid acquired but unpublished FD receives one close request
 through the backend that opened it. The private capability
 becomes `:closed` before the request; EINTR is not retried. This
-cleanup is attempted even if a callback invalidated parent.
-No rejection closes parent or an already caller-owned capability.
+cleanup is attempted even if a callback invalidated the parent.
+No rejection closes the parent or an already caller-owned capability.
 
 If close succeeds, the original typed condition propagates
 as the same object. If cleanup fails too, `io-fault` retains
 primary reason and offset and cleanup-errno; for an I/O cause it also retains
 operation, errno, and progress. Class change for a primary non-I/O
-cause is explicit and follows inventory's budget+cleanup policy.
+cause is explicit and follows the inventory's budget+cleanup policy.
 A nonzero close return is failure even without available errno.
 NIL errno therefore does not certify successful closure.
 

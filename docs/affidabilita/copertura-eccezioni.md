@@ -47,7 +47,7 @@ Missing native paths are `(0)`, `(1)`, `(2)`, `(4)`, `(3 2 5)`, and `(4 2 5)`.
 No form is excluded or marked through reloads.
 The [decision table](../implementazione/id-segmento-recovery.md) documents independence
 pairs and fault injection on the empty plan. This result concerns only the new file,
-qualifying neither the existing planner nor Recovery Manager; overall qualification remains open.
+qualifying neither the existing planner nor the Recovery Manager; overall qualification remains open.
 
 <a id="recovery-control--approfondimento-del-2026-10-15"></a>
 
@@ -109,13 +109,13 @@ API; a bypass constructing inconsistent private objects is outside that contract
 | COV-014 | [`decisions-build.lisp`](../../src/recovery/decisions-build.lisp), `collapse-decisions`, line 151 | result consumption | Each new TXID produces exactly one entry. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-015 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, line 35 | size, identity, and multiple of 16 | Separate workspace matching private ID16 copy size. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-016 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, line 38 | run ranges | Boundaries computed with min over verified count. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
-| COV-017 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, line 48 | consumption of both runs | One copy and advancement per right-left steps. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-017 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-id-runs`, line 48 | consumption of both runs | One copy and one advance per step in either run. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-018 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `check-participant-order`, line 58 | participant shape | Count and copy come from the same verified payload. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-019 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `check-participant-order`, line 66 | increasing order | Merge sorts all 16 bytes; duplicates are a covered public error. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-020 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `sort-participants`, line 75 | copy shape | Builder copies exactly the verified span. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-021 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, line 95 | vector size and identity | Separate workspace of the same length as entry vector. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-022 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, line 97 | run ranges | Boundaries limited by entry count. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
-| COV-023 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, line 108 | run consumption | One entry and advancement per right-left steps. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
+| COV-023 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `merge-entry-runs`, line 108 | run consumption | One entry and one advance per step in either run. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-024 | [`decisions-sort.lisp`](../../src/recovery/decisions-sort.lisp), `sort-entries`, line 131 | TXID order | Stable merge on all passes through total length. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-025 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `find-decision-index`, line 22 | search range | Middle computed inside nonempty half-open range. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
 | COV-026 | [`decisions-query.lisp`](../../src/recovery/decisions-query.lisp), `find-decision-index`, line 29 | step bound | Range halves; integer-length(N) covers search. Inspection by both readers; oracles on arbitrary inputs, odd cardinalities, and extreme values. |
@@ -186,7 +186,7 @@ No exception is approved; the engine's C1 gate remains open.
 
 The [handoff campaign](../implementazione/writer-handoff-decisioni.md#copertura-raw-osservata)
 retains the complete denominator for four execution files: 505/593 expressions
-and 76/94 outcomes. New handoff has 173/190 expressions and 16/16 instrumented
+and 76/94 outcomes. The new handoff component has 173/190 expressions and 16/16 instrumented
 outcomes; its 17 unmarked forms (declarations, defaults, defensive otherwise)
 are inventoried in the document. The new acceptance helper has no uncovered
 instrumented outcomes. Legacy gaps remain: 42 expressions and ten outcomes in

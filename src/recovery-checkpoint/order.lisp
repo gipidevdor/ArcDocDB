@@ -7,9 +7,9 @@
 (declaim (ftype (function (hash-table (or null u64)) (simple-array (unsigned-byte 64) (*)))
                 ordina-id-checkpoint))
 (defun ordina-id-checkpoint (table extra)
-  "Pre: tabella privata EQL immutabile e budget già verificati; EXTRA NIL oppure nuovo ID assente.
-Post: copia u64 strettamente crescente delle chiavi, incluso EXTRA anche zero, senza mutare TABLE.
-INVARIANT-VIOLATION per forma, conteggio o duplicato; cicli limitati alla cardinalità iniziale."
+  "Pre: immutable private EQL table and budgets already verified; EXTRA NIL or a new absent ID.
+Post: strictly increasing u64 copy of keys, including EXTRA even if zero, without modifying TABLE.
+INVARIANT-VIOLATION for shape, count, or duplicate; loops bounded to initial cardinality."
   (unless (eq (hash-table-test table) 'eql)
     (error 'invariant-violation :reason :recovery-checkpoint-table))
   (when (and extra (nth-value 1 (gethash extra table)))

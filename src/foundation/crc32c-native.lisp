@@ -8,9 +8,9 @@
 (declaim (ftype (function (octets index index &optional u32) (values u32 &optional)) crc32c-arm64))
 #+arcdocdb-crc32c-arm64
 (defun crc32c-arm64 (buffer start end &optional (seed 0))
-  "Pre: CPU CRC32C qualificata dal selettore cold, vettore Lisp stabile e span valido.
-Post: checksum finalizzato compatibile col software e incrementale; buffer immutato.
-INVALID-ARGUMENT prima dei load se span invalido; bounds check SB-SIMD/aref sempre attivi."
+  "Pre: CPU CRC32C qualified by the cold selector, stable Lisp vector, and valid span.
+Post: finalized checksum compatible with software and incremental operation; buffer unchanged.
+INVALID-ARGUMENT before loads if span invalid; SB-SIMD/aref bounds checks always active."
   (declare (type octets buffer) (type index start end) (type u32 seed)
            (optimize (speed 3) (safety 3)))
   (check-range buffer start end)

@@ -8,9 +8,9 @@
 (declaim (ftype (function (banco-slot fixnum contenuto-slot)
                          (member :live :empty :retry)) tenta-lettura-slot))
 (defun tenta-lettura-slot (bank base destination)
-  "Pre: base valida, DESTINATION privata; un tentativo nel budget esterno di otto.
-Post: LIVE copia cinque parole coerenti; EMPTY/RETRY lasciano il buffer intatto.
-Solo dati stabili vengono validati; una corruzione stabile rende FAULTED e segnala."
+  "Pre: valid base, private DESTINATION; one attempt within external budget of eight.
+Post: LIVE copies five coherent words; EMPTY/RETRY leave buffer intact.
+Only stable data validated; stable corruption causes FAULTED and signals error."
   (let* ((words (banco-slot-words bank)) (sequence (aref words (+ base +slot-sequence+))))
     (declare (type u64 sequence))
     (when (>= sequence +slot-sequence-limit+) (guasto-slot bank :index-slot-sequence-corrupt))
@@ -37,10 +37,10 @@ Solo dati stabili vengono validati; una corruzione stabile rende FAULTED e segna
 (declaim (ftype (function (banco-slot integer contenuto-slot) (member :live :empty :retry-limit))
                 leggi-slot-v2))
 (defun leggi-slot-v2 (bank slot destination)
-  "Pre: DESTINATION privata di cinque u64; la root e l'identità della chiave sono del chiamante.
-Post: LIVE/EMPTY coerente; RETRY-LIMIT dopo otto tentativi, senza attese o ripiego interno.
-EMPTY/RETRY-LIMIT non scrivono DESTINATION. Ogni errore o uscita non locale invalida il risultato.
-Il futuro sondaggio deve condividere questo budget e ricontrollare root/generazione anche su miss."
+  "Pre: private five-u64 DESTINATION; root and key identity belong to caller.
+Post: coherent LIVE/EMPTY; RETRY-LIMIT after eight attempts, without waiting or internal fallback.
+EMPTY/RETRY-LIMIT do not write DESTINATION. Every error or nonlocal exit invalidates result.
+Future probing must share this budget and recheck root/generation even on miss."
   (esigi-banco-sano bank)
   (let ((base (base-slot bank slot)))
     (dotimes (attempt +slot-attempts+)

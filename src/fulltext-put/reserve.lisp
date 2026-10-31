@@ -4,8 +4,8 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-CON-002
 (declaim (ftype (function (t t t t) null) verifica-riserva-put))
 (defun verifica-riserva-put (pool lease request generation)
-  "Pre: token request e lease del writer. Post: stessa riserva privata, copying/ready.
-Rifiuti di tipo/stato/provenienza prima di ogni effetto o accesso al lotto."
+  "Pre: request token and writer lease. Post: same private reservation, copying/ready.
+Type/state/provenance rejections before any effect or batch access."
   (verifica-token-put request generation) (f::verifica-writer-riserve pool lease)
   (unless (and (eq pool (preparazione-put-full-text-pool request))
                (member (preparazione-put-full-text-state request) '(:reserving :reserved)))
@@ -16,9 +16,9 @@ Rifiuti di tipo/stato/provenienza prima di ogni effetto o accesso al lotto."
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-CON-002
 (declaim (ftype (function (t t t t) keyword) prenota-put-full-text))
 (defun prenota-put-full-text (pool lease request generation)
-  "Pre: PREPARED consegnato dal worker al writer con handoff sincronizzato.
-Post: riserva di tutti i task sullo stesso frame, handle trattenuti privatamente fino all'append.
-Rifiuti del pool prima degli effetti; uscita incompleta nell'adozione => request/pool FAULTED."
+  "Pre: PREPARED delivered from worker to writer through synchronized handoff.
+Post: reservation of all tasks on the same frame, handles privately retained until append.
+Pool rejections before effects; incomplete adoption exit => request/pool FAULTED."
   (verifica-token-put request generation) (f::verifica-writer-riserve pool lease)
   (unless (eq :prepared (preparazione-put-full-text-state request))
     (error 'invalid-argument :reason :fulltext-put-not-prepared))
@@ -37,8 +37,8 @@ Rifiuti del pool prima degli effetti; uscita incompleta nell'adozione => request
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-CON-002
 (declaim (ftype (function (t t t t t) keyword) passo-riserva-put-full-text))
 (defun passo-riserva-put-full-text (pool lease request generation quantum)
-  "Pre: riserva privata valida e quantum 1..65536. Post: RESERVING o RESERVED dopo tutte le copie.
-Ogni fonte viene restituita al contesto, che non puo essere riavviato prima dell'append/cancellazione."
+  "Pre: valid private reservation and quantum 1..65536. Post: RESERVING or RESERVED after all copies.
+Each source returned to context, which cannot restart before append/cancellation."
   (verifica-riserva-put pool lease request generation)
   (unless (typep quantum '(integer 1 65536)) (error 'invalid-argument :reason :fulltext-put-quantum))
   (let ((complete nil))
@@ -53,8 +53,8 @@ Ogni fonte viene restituita al contesto, che non puo essere riavviato prima dell
 ;;; REQ: REQ-SEC-006 REQ-SEC-010 REQ-CON-002
 (declaim (ftype (function (t t t t) keyword) annulla-riserva-put-full-text))
 (defun annulla-riserva-put-full-text (pool lease request generation)
-  "Pre: prima dell'append, riserva privata del request. Post: costi restituiti e CANCELLED.
-Non ritira un PUT accodato/prepared e non converte un commit deciso in abort."
+  "Pre: before append, request's private reservation. Post: costs returned and CANCELLED.
+Does not retire an enqueued/prepared PUT or convert a decided commit to abort."
   (verifica-riserva-put pool lease request generation)
   (let ((complete nil))
     (unwind-protect

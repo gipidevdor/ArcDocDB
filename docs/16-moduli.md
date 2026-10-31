@@ -41,7 +41,7 @@ Identifiers `M01…M18` follow specification order.
 
 ## Layers
 
-> **Proposed** — Dependencies allowed only from higher to lower layers. This keeps modules
+> **Proposed** — Dependencies are allowed only from higher to lower layers. This keeps modules
 > independently verifiable and avoids cycles between packages.
 
 ```
@@ -93,7 +93,7 @@ The code is **Common Lisp only** ([ADR-0001](adr/0001-common-lisp-sbcl.md)).
 Common interface rules are established in [architettura.md](architettura.md#contratti).
 For each module, the following are also produced before implementation:
 
-- offered operations and their durable effects;
+- supported operations and their durable effects;
 - invariants the module guarantees and assumes from others;
 - concurrency model (who may call what, from which context: Serie writer,
   reader, compaction worker);

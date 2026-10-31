@@ -8,9 +8,9 @@
                          (values arcdocdb.recovery.manifest::manifest u64 u64 (member 1 2) &optional))
                 verifica-fonti-checkpoint))
 (defun verifica-fonti-checkpoint (recovered active)
-  "Pre: recovery esclusivo, fonti autorevoli e capacità mantenute aperte dal controller.
-Post: stessa vista canonica, nuovo ACTIVE ancora solo header, ID fresco e next-id rappresentabile.
-INVALID-ARGUMENT per vista/riuso, RESOURCE-EXHAUSTED per ID esauriti; nessuna syscall o scrittura."
+  "Pre: exclusive recovery, authoritative sources, and capabilities kept open by the controller.
+Post: same canonical view, new ACTIVE still header-only, fresh ID, and representable next-id.
+INVALID-ARGUMENT for view/reuse, RESOURCE-EXHAUSTED for exhausted IDs; no syscall or write."
   (arcdocdb.control::verifica-active-checkpoint active)
   (let* ((control (arcdocdb.recovery.active::active-recuperato-control recovered))
          (old-segment (arcdocdb.recovery.active::active-recuperato-segment recovered))
@@ -34,9 +34,9 @@ INVALID-ARGUMENT per vista/riuso, RESOURCE-EXHAUSTED per ID esauriti; nessuna sy
                           (member 1 2) index u32 u32 index) (values index index index &optional))
                 misura-payload-checkpoint))
 (defun misura-payload-checkpoint (recovered manifest version max-payload max-segments max-outcomes workspace)
-  "Pre: fonti valide e stabili. Post: byte CLOSED/REMOVED/payload e budget completi prima di allocare.
-Workspace conta array propri e chiavi u64, esclusi SORT, builder CONTROL, oggetti Lisp e GC.
-Errori tipizzati di configurazione/risorse; cicli limitati ai CLOSED già contati."
+  "Pre: valid stable sources. Post: complete CLOSED/REMOVED/payload bytes and budgets before allocation.
+Workspace counts its own arrays and u64 keys, excluding SORT, CONTROL builder, Lisp objects, and GC.
+Typed configuration/resource errors; loops bounded by CLOSED entries already counted."
   (unless (<= +edit-min-bytes+ max-payload +metadata-max-bytes+)
     (error 'invalid-argument :reason :recovery-checkpoint-budget))
   (let* ((closed (1+ (numero-segmenti-chiusi manifest))) (removed (numero-segmenti-rimossi manifest))

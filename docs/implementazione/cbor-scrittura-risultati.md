@@ -15,7 +15,7 @@ profile remain outside this increment.
 17 new tests, including the supplementary 77-pair roundtrip, bring
 the build to 475 tests and 2 smoke tests: 477 successful outcomes, without warnings. The blind
 corpus retains the three initial blobs `92327e4…`, `903a213…`, `878f0fa…`.
-Verified: 458,752 u16 arguments × 7 majors, 4,096 differential cases
+Verified: 458,752 comparisons across the u16 argument range and 7 major types, 4,096 differential cases
 seed57524342, and 140 insufficient capacities, with the entire destination
 unchanged on rejections. Fuzz exercises the five widths in
 560/465/511/512/2048 cases, respectively.
@@ -126,6 +126,6 @@ copies and FASLs are also retained in the local backup
 `spikes/out/cbor-header-write-isolated-20261011/` in the main checkout.
 Frozen Markdown copies are original `.md.txt` data, without
 rewriting historical links. The [concluding records](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-cbor-header-write-final/archive-index.lisp)
-collect collection checks, integrated checks, and final
+bring together collection checks, integrated checks, and final
 documentation. Each execution retains its own commit and
 counts: later increments do not change the original evidence.

@@ -11,7 +11,7 @@ The parent remains borrowed and reusable. Creation uses its FD,
 even if the directory's original path is renamed.
 
 The printable ASCII leaf name is copied before I/O.
-Separators, NUL, and dot paths are excluded; limit 255 bytes and suffix
+Separators, NUL, and dot paths are excluded; the limit is 255 bytes, and the suffix
 must be `.tmp`. The name `.tmp` itself is allowed, as in the
 existing API. An already occupied name is rejected without modifying it.
 
@@ -25,10 +25,10 @@ The native path uses `openat` with exclusive creation, append,
 The fourth variadic argument receives mode promoted to `int`, per
 the ABI including Darwin ARM64. Before publication, `fstat` must
 establish an empty regular file and device/inode must match the nofollow
-entry in the same parent. The controller owns namespace and
+entry in the same parent. The controller owns the namespace and
 prevents concurrent changes or closes during the call.
 
-Backend is inherited from parent. Required: `create-relative`,
+The backend is inherited from the parent. Required: `create-relative`,
 `file-metadata`, and `entry-identity`; a missing callback rejects
 the operation before I/O, without fallback. Creation callback
 receives `(fd-parent, foglia-privata, :append)` and must implement the same
@@ -36,7 +36,7 @@ exclusive creation. Read-only API and its callback remain distinct.
 
 New-file written/durable frontiers are zero. No
 flush or rename occurs. A fault after creation closes the unpublished
-child once, preserving primary cause and cleanup
+child once, preserving the primary cause and cleanup
 failure. The created name may remain present: it is not deleted
 implicitly. The controller must reconcile it according to the source of
 truth; this API neither reserves a segment ID nor decides an EDIT.

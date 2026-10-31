@@ -6,9 +6,9 @@
 ;;; REQ: REQ-MVC-006 REQ-MVC-008 REQ-AFF-008
 (declaim (ftype (function (runtime-archivio u32 u32 ambito-get) null) verifica-runtime-iniziale))
 (defun verifica-runtime-iniziale (runtime high low old-scope)
-  "Pre: candidato privato, nessun CSN assegnato o snapshot registrato.
-Post: snapshot legato per EQ al registro candidato, ultimo=H=M senza incremento.
-INVARIANT-VIOLATION :ARCHIVE-RUNTIME-LINK/BASE prima del CAS; nessuna fonte consultata."
+  "Pre: private candidate, no CSN assigned or snapshot registered.
+Post: snapshot EQ-bound to the candidate registry, ultimo=H=M without increment.
+INVARIANT-VIOLATION :ARCHIVE-RUNTIME-LINK/BASE before CAS; no source queried."
   (unless (and (not (eq old-scope (ambito-runtime-archivio runtime)))
                (eq (arcdocdb.mvcc::registro-snapshot-csns (snapshot-runtime-archivio runtime))
                    (csn-runtime-archivio runtime)))
@@ -26,13 +26,13 @@ INVARIANT-VIOLATION :ARCHIVE-RUNTIME-LINK/BASE prima del CAS; nessuna fonte cons
 (defun crea-runtime-archivio (plan lifetime-ticks wait-ticks
                              &key (csn-capacity 256) (snapshot-capacity 256)
                                   (worker-capacity 64) (retirement-capacity 256))
-  "Pre: piano completo e congelato, unico oggetto Archivio del catalogo; recovery esclusivo.
-Durate esplicite nella stessa unità monotona fornita alle future chiamate snapshot.
-Post: una sola famiglia CSN(M)/snapshot/EBR/ambito, pubblicata con CAS senza ammettere traffico.
-INVALID-ARGUMENT config o :ARCHIVE-RUNTIME-BOUND; nessun candidato perdente è restituito.
-Propaga TYPE-ERROR e INVARIANT-VIOLATION di piano/binding/legami/base: fermare il bootstrap.
-Nessun I/O o clock; usa i registri esistenti privati. Errori prima del CAS non pubblicano candidati.
-Dopo il CAS nessun rollback: TROVA-RUNTIME-ARCHIVIO recupera la capacità anche dopo interruzione."
+  "Pre: complete frozen plan, single catalog Archivio object; exclusive recovery.
+Explicit durations in the same monotonic unit supplied to future snapshot calls.
+Post: one CSN(M)/snapshot/EBR/scope family only, published with CAS without admitting traffic.
+INVALID-ARGUMENT for configuration or :ARCHIVE-RUNTIME-BOUND; no losing candidate returned.
+Propagates TYPE-ERROR and INVARIANT-VIOLATION for plan/binding/links/base: stop bootstrap.
+No I/O or clock; uses existing private registries. Errors before CAS publish no candidates.
+No rollback after CAS: TROVA-RUNTIME-ARCHIVIO retrieves the capability even after interruption."
   (verifica-configurazione-runtime csn-capacity snapshot-capacity worker-capacity
                                   retirement-capacity lifetime-ticks wait-ticks)
   (verifica-piano-runtime plan)

@@ -6,8 +6,8 @@
 ;;; REQ: REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (string) null) esigi-nome-foglia))
 (defun esigi-nome-foglia (name)
-  "Pre: nome del controller. Post: foglia ASCII stampabile non vuota, senza separatori o dot path.
-INVALID-ARGUMENT prima dell'I/O; massimo 255 byte, nessuna risoluzione di path."
+  "Pre: controller name. Post: nonempty printable ASCII leaf, without separators or dot paths.
+INVALID-ARGUMENT before I/O; maximum 255 bytes, no path resolution."
   (unless (<= 1 (length name) +max-rename-name-bytes+)
     (error 'invalid-argument :reason :io-leaf-name))
   (when (or (member name '("." "..") :test #'string=)
@@ -19,8 +19,8 @@ INVALID-ARGUMENT prima dell'I/O; massimo 255 byte, nessuna risoluzione di path."
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (string string) null) verifica-nomi-temporaneo))
 (defun verifica-nomi-temporaneo (source-name target-name)
-  "Pre: due foglie ASCII gia' validate. Post: sorgente esattamente target seguito da .tmp.
-INVALID-ARGUMENT prima degli effetti; confronti limitati ai 255 caratteri delle foglie."
+  "Pre: two ASCII leaves already validated. Post: source exactly target followed by .tmp.
+INVALID-ARGUMENT before effects; comparisons bounded by the leaves' 255 characters."
   (unless (and (= (length source-name) (+ (length target-name) 4))
                (string= source-name target-name :end1 (length target-name))
                (string= source-name ".tmp" :start1 (length target-name)))
@@ -30,9 +30,9 @@ INVALID-ARGUMENT prima degli effetti; confronti limitati ai 255 caratteri delle 
 ;;; REQ: REQ-AFF-001 REQ-AFF-008 REQ-REC-001
 (declaim (ftype (function (file-io file-io file-io string string) null) verifica-capacita-sostituzione))
 (defun verifica-capacita-sostituzione (directory source target source-name target-name)
-  "Pre: nuova fonte durevole con stato completo; target autorevole verificato e namespace esclusivo.
-Post: capacità, nomi .tmp/definitivo e callback ammessi, senza syscall/mutazione.
-INVALID-ARGUMENT/IO-FAULT/UNSUPPORTED-FORMAT; non verifica applicabilità del manifest."
+  "Pre: new durable source with complete state; authoritative target verified and exclusive namespace.
+Post: capabilities, .tmp/final names, and callbacks admitted, without syscall/mutation.
+INVALID-ARGUMENT/IO-FAULT/UNSUPPORTED-FORMAT; does not verify manifest applicability."
   (esigi-aperto directory :directory) (esigi-aperto source :input) (esigi-aperto target :input)
   (esigi-nome-foglia source-name) (esigi-nome-foglia target-name)
   (verifica-nomi-temporaneo source-name target-name)
@@ -49,8 +49,8 @@ INVALID-ARGUMENT/IO-FAULT/UNSUPPORTED-FORMAT; non verifica applicabilità del ma
 (declaim (ftype (function (file-io string) (values identity-component identity-component &optional))
                 leggi-identita-entry))
 (defun leggi-identita-entry (directory name)
-  "Pre: capacità/callback verificati e nome foglia stabile. Post: device/inode esatti del regolare.
-Una fstatat/callback; tipi verificati, errno conservato. IO-FAULT/INVARIANT-VIOLATION senza retry."
+  "Pre: capabilities/callbacks verified and stable leaf name. Post: exact device/inode of the regular file.
+One fstatat/callback; types verified, errno retained. IO-FAULT/INVARIANT-VIOLATION without retry."
   (handler-case
       (multiple-value-bind (device inode)
           (let ((backend (file-backend directory)))
@@ -67,8 +67,8 @@ Una fstatat/callback; tipi verificati, errno conservato. IO-FAULT/INVARIANT-VIOL
 (declaim (ftype (function (file-io file-io string) (values identity-component identity-component &optional))
                 verifica-legame-nome-file))
 (defun verifica-legame-nome-file (directory file name)
-  "Pre: capacità e backend ammessi, namespace stabile. Post: nome e FD individuano lo stesso regolare.
-INVALID-ARGUMENT per nome sostituito; guasti di identità propagati; due osservazioni senza retry."
+  "Pre: admitted capabilities and backend, stable namespace. Post: name and FD identify the same regular file.
+INVALID-ARGUMENT for a replaced name; identity faults propagated; two observations without retry."
   (multiple-value-bind (device inode) (leggi-identita-file file)
     (multiple-value-bind (entry-device entry-inode) (leggi-identita-entry directory name)
       (unless (and (= device entry-device) (= inode entry-inode))
@@ -79,10 +79,10 @@ INVALID-ARGUMENT per nome sostituito; guasti di identità propagati; due osserva
 ;;; REQ: REQ-AFF-001 REQ-AFF-004 REQ-REC-001
 (declaim (ftype (function (file-io file-io file-io string string) null) sostituisci-temporaneo))
 (defun sostituisci-temporaneo (directory source target source-name target-name)
-  "Pre: stato completo durevole, target autorevole verificato, namespace posseduto e capacità esclusive.
-Post: nomi legati ai due file distinti, una renameat; nessun flush/close/rollback implicito.
-Punto di atomicità: rinomina, non i controlli di identità; directory fsync successiva è del caller.
-Errori prima della syscall non cambiano nomi; errore durante rename richiede recovery, mai retry."
+  "Pre: durable complete state, authoritative target verified, owned namespace and exclusive capabilities.
+Post: names bound to the two distinct files, one renameat; no implicit flush/close/rollback.
+Atomicity point: rename, not the identity checks; subsequent directory fsync is the caller's responsibility.
+Errors before the syscall do not change names; an error during rename requires recovery, never retry."
   (verifica-capacita-sostituzione directory source target source-name target-name)
   (let ((source-leaf (map 'simple-base-string #'identity source-name))
         (target-leaf (map 'simple-base-string #'identity target-name)))

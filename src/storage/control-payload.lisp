@@ -7,8 +7,8 @@
 ;;; REQ: REQ-FOR-003 REQ-AFF-008
 (declaim (ftype (function (octets index index index) null) esigi-payload))
 (defun esigi-payload (buffer start end max-bytes)
-  "Pre: BUFFER octets; intervallo e budget del chiamante. Post: range entro tetto e budget.
-INVALID-ARGUMENT per configurazione; RESOURCE-EXHAUSTED prima di leggere i campi."
+  "Pre: BUFFER octets; caller's interval and budget. Post: range within ceiling and budget.
+INVALID-ARGUMENT for configuration; RESOURCE-EXHAUSTED before reading fields."
   (check-range buffer start end)
   (unless (<= max-bytes +metadata-max-bytes+)
     (error 'invalid-argument :reason :metadata-byte-budget :offset start))
@@ -18,8 +18,8 @@ INVALID-ARGUMENT per configurazione; RESOURCE-EXHAUSTED prima di leggere i campi
 ;;; REQ: REQ-FOR-003 REQ-AFF-008 REQ-LIM-001
 (declaim (ftype (function (octets index) null) verifica-lunghezza-chiusa))
 (defun verifica-lunghezza-chiusa (buffer entry)
-  "Pre: entry fissa di 20 byte presente. Post: valid-bytes tra header e limite segmento.
-CORRUPTION-DETECTED per lunghezza fuori intervallo; confronto u32 senza boxing."
+  "Pre: fixed 20-byte entry present. Post: valid-bytes between header and segment limit.
+CORRUPTION-DETECTED for out-of-range length; u32 comparison without boxing."
   (let ((offset (+ entry +closed-valid-bytes-offset+)))
     (unless (and (zerop (leggi-u32 buffer (+ offset 4)))
                  (<= +segment-header-bytes+ (leggi-u32 buffer offset) +segment-max-bytes+))
@@ -30,9 +30,9 @@ CORRUPTION-DETECTED per lunghezza fuori intervallo; confronto u32 senza boxing."
 (declaim (ftype (function (octets index index u32 u32 u32)
                          (values index u32 &optional)) scandisci-chiusi))
 (defun scandisci-chiusi (buffer start end count max-chiusi max-esiti)
-  "Pre: range verificato; budget espliciti. Post: tutte le entry/esiti interamente presenti.
-Restituisce fine e totale esiti; corruzione o esaurimento tipizzati, senza copie.
-Il ciclo ha COUNT iterazioni, controllato contro budget e minimo di byte disponibili."
+  "Pre: verified range; explicit budgets. Post: all entries/outcomes fully present.
+Returns end and total outcomes; typed corruption or exhaustion, without copies.
+Loop has COUNT iterations, checked against budget and minimum available bytes."
   (esigi-budget count max-chiusi start)
   (spazio-ripetuto start end count +closed-fixed-bytes+)
   (let ((pos start) (total 0))
@@ -57,10 +57,10 @@ Il ciclo ha COUNT iterazioni, controllato contro budget e minimo di byte disponi
                               (max-rimossi +default-list-budget+)
                               (max-esiti +default-list-budget+)
                               (max-bytes +metadata-max-bytes+))
-  "Pre: payload stabile; cornice/CRC verificati dal chiamante, FLAGS dalla cornice.
-Post: chiusi/esiti/rimossi completi e consumo esatto; span chiusi, count, span rimossi,
-count, totale esiti. Non verifica unicità degli ID né applicabilità al manifest.
-Segnala corruzione o budget; next-id non completo deve essere zero."
+  "Pre: stable payload; frame/CRC verified by caller, FLAGS from frame.
+Post: complete closed/outcome/removed sections and exact consumption; closed span, count, removed span,
+count, total outcomes. Does not verify ID uniqueness or manifest applicability.
+Signals corruption or budget exhaustion; non-complete next-id must be zero."
   (esigi-payload buffer start end max-bytes)
   (unless (or (zerop flags) (= flags +edit-complete+))
     (error 'corruption-detected :reason :edit-flags :offset start))
@@ -87,9 +87,9 @@ Segnala corruzione o budget; next-id non completo deve essere zero."
 (defun valida-valore-decision (buffer start end
                              &key (max-partecipanti +max-participants+)
                                   (max-bytes +metadata-max-bytes+))
-  "Pre: payload stabile; cornice/CRC già verificati. Post: CSN e lista ID16 interamente presenti.
-Restituisce offset CSN, inizio/fine lista e count >=2. Non verifica catalogo o unicità.
-CORRUPTION-DETECTED per count/troncamento/coda; RESOURCE-EXHAUSTED per budget."
+  "Pre: stable payload; frame/CRC already verified. Post: CSN and ID16 list fully present.
+Returns CSN offset, list start/end, and count >=2. Does not verify catalog or uniqueness.
+CORRUPTION-DETECTED for count/truncation/tail; RESOURCE-EXHAUSTED for budget."
   (esigi-payload buffer start end max-bytes)
   (when (< (- end start) +decision-parts-offset+)
     (error 'corruption-detected :reason :decision-truncated :offset start))

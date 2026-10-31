@@ -1,6 +1,8 @@
 <a id="preparazione-del-tratto-poolserie-risultati-locali"></a>
 
-# Preparing the pool/Serie segment: local results
+<a id="preparing-the-poolserie-segment-local-results"></a>
+
+# Preparing the pool/Serie execution slice: local results
 
 C3/C4 increment on base `7f1cc54477483039bd98bd8c3f6508416f5c0ced`;
 [contract](pool-prepara.md), [preregistered method](pool-prepara-metodo.md),

@@ -6,9 +6,9 @@
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (controllore-serie t) null) %check-initial-root))
 (defun %check-initial-root (controller root)
-  "Pre: lease/ring/salute verificati. Post: root non NIL e controller mai usato, senza effetto.
-INVALID-ARGUMENT per root NIL/avvio già eseguito; rientranza => Archivio FAULTED.
-Non rilascia l'effetto precedente e non modifica ring, frontiere o CSN."
+  "Pre: lease/ring/health verified. Post: non-NIL root and unused controller, without effects.
+INVALID-ARGUMENT for NIL root/already completed startup; reentry => Archivio FAULTED.
+Does not release the previous effect or modify ring, frontiers, or CSN."
   (when (null root) (error 'invalid-argument :reason :serie-initial-root))
   (unless (and (null (controllore-serie-root controller))
                (null (controllore-serie-planned-root controller))
@@ -22,11 +22,11 @@ Non rilascia l'effetto precedente e non modifica ring, frontiere o CSN."
 ;;; REQ: REQ-CON-002 REQ-WAL-006 REQ-AFF-001 REQ-AFF-008
 (declaim (ftype (function (controllore-serie t t) t) inizializza-radice-serie))
 (defun inizializza-radice-serie (controller lease root)
-  "Pre: lease, controller mai usato e ROOT non NIL immutabile; ammissione ancora chiusa.
-Post: root iniziale pubblicata dal CAS canonico, anche pianificata; ring/CSN/offset invariati.
-INVALID-ARGUMENT prima dell'effetto per root NIL o avvio già eseguito.
-Uscita incompleta/invariante => Archivio FAULTED, senza rollback; nessun I/O.
-Il CAS pubblica memoria: la decisione durevole di apertura resta al catalogo."
+  "Pre: lease, unused controller, immutable non-NIL ROOT; admission still closed.
+Post: initial root published by canonical CAS and also planned; ring/CSN/offsets unchanged.
+INVALID-ARGUMENT before effects for NIL root or already completed startup.
+Incomplete exit/invariant failure => Archivio FAULTED, without rollback; no I/O.
+CAS publishes memory: the durable opening decision remains with the catalog."
   (%check-owner controller lease) (%require-healthy controller)
   (%check-initial-root controller root)
   (let ((complete nil))
@@ -47,9 +47,9 @@ Il CAS pubblica memoria: la decisione durevole di apertura resta al catalogo."
 ;;; REQ: REQ-WAL-006 REQ-MVC-008 REQ-AFF-001
 (declaim (ftype (function (controllore-serie commit-serie) null) %check-publication))
 (defun %check-publication (controller event)
-  "Pre: evento corrente/FIFO, Serie sana. Post: token, copertura e radice PRIMA del CAS.
-Copertura mancante è rifiuto ordinario; token/root incoerenti sono fail-stop.
-Guasto del log => Serie FAULTED, mai nuova pubblicazione."
+  "Pre: current FIFO event, healthy Serie. Post: token, coverage, and root checked BEFORE CAS.
+Missing coverage is an ordinary rejection; inconsistent token/root requires fail-stop.
+Log failure => Serie FAULTED, never a new publication."
   (%check-captured-token controller event)
   (unless (member (commit-serie-io-state event) '(:active :retired))
     (error 'invalid-argument :reason :serie-io-not-started))
@@ -68,9 +68,9 @@ Guasto del log => Serie FAULTED, mai nuova pubblicazione."
 ;;; REQ: REQ-WAL-006 REQ-MVC-008 REQ-CON-002
 (declaim (ftype (function (controllore-serie commit-serie) null) %publish-root))
 (defun %publish-root (controller event)
-  "Pre: effetto posseduto e preflight completa. Post: radice pubblicata una sola volta.
-Il CAS pubblica memoria, non è atomicità durevole: il SEAL scritto è il punto WAL.
-Invariante CAS/fase/radice => Archivio fail-stop, senza rollback o seconda pubblicazione."
+  "Pre: owned effect and complete preflight. Post: root published only once.
+CAS publishes memory, not durable atomicity: the written SEAL is the WAL point.
+CAS/phase/root invariant failure => Archivio fail-stop, without rollback or second publication."
   (case (commit-serie-phase event)
     (:preparato
      (setf (commit-serie-phase event) :pubblicando)
@@ -89,8 +89,8 @@ Invariante CAS/fase/radice => Archivio fail-stop, senza rollback o seconda pubbl
 ;;; REQ: REQ-MVC-008 REQ-WAL-006
 (declaim (ftype (function (controllore-serie commit-serie) null) %advance-publication))
 (defun %advance-publication (controller event)
-  "Pre: effetto e risultato già risolto/annullato. Post: cursor dei pendenti avanzato.
-Invarianti di count/fase impediscono di superare un token ancora pendente."
+  "Pre: effect and outcome already resolved/canceled. Post: pending cursor advanced.
+Count/phase invariants prevent advancing past a still-pending token."
   (unless (plusp (controllore-serie-unresolved controller)) (%serie-invariant controller :serie-count))
   (unless (member (commit-serie-phase event) '(:risolto :annullato))
     (%serie-invariant controller :serie-event-state))
@@ -104,9 +104,9 @@ Invarianti di count/fase impediscono di superare un token ancora pendente."
 (declaim (ftype (function (controllore-serie commit-serie)
                          (values (member :risolto :pendente) u32 u32 &optional)) %resolve-publication))
 (defun %resolve-publication (controller event)
-  "Pre: root pubblicata, effetto posseduto. Post: risolto oppure pendente sul SOLO csn-busy.
-Risoluzione usa token catturato; busy non ripubblica e non avanza FIFO.
-Errori inattesi/interruzione registro-evento richiedono fail-stop Archivio."
+  "Pre: published root, owned effect. Post: resolved, or pending ONLY on csn-busy.
+Resolution uses the captured token; busy neither republishes nor advances FIFO.
+Unexpected errors/register-event interruptions require Archivio fail-stop."
   (unless (eq (commit-serie-phase event) :pubblicato) (%serie-invariant controller :serie-event-state))
   (handler-case
       (multiple-value-bind (high low)
@@ -125,10 +125,10 @@ Errori inattesi/interruzione registro-evento richiedono fail-stop Archivio."
 (declaim (ftype (function (controllore-serie t t t)
                          (values (member :risolto :pendente) u32 u32 &optional)) pubblica-commit-serie))
 (defun pubblica-commit-serie (controller lease event generation)
-  "Pre: evento sincronizzato; radice immutabile predisposta, ordine FIFO della Serie.
-Post: pubblicazione atomica seguita da risoluzione; :pendente conserva esito/obbligo.
-Nessuna conferma client; errore noto I/O => Serie faulted, esito incerto => Archivio.
-Cleanup rilascia l'effetto locale, preservando la causa e tutti i riferimenti pendenti."
+  "Pre: synchronized event; prepared immutable root, Serie FIFO order.
+Post: atomic publication followed by resolution; :pendente preserves outcome/obligation.
+No client acknowledgment; known I/O error => Serie faulted, uncertain outcome => Archivio.
+Cleanup releases the local effect, preserving the cause and all pending references."
   (%check-owner controller lease) (%live-event controller event generation)
   (%check-publish-head controller event) (%require-healthy controller)
   (%check-publication controller event)

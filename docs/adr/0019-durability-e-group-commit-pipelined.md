@@ -40,7 +40,7 @@ publishes index updates and acknowledges the batch's clients. Several batches ma
 flight; publications occur in batch order.
 
 Per-Serie parameters: maximum batch size (bytes and operations) and maximum formation wait
-(default 0: the batch closes when the writer has drained the queue or reached the size,
+(default 0: the batch closes when the writer has drained the queue or reached the size limit,
 i.e., it adapts to load without a timer).
 
 Pattern: pipelined group commit (MySQL binlog group commit; PostgreSQL WAL writer);

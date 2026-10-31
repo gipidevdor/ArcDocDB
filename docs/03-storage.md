@@ -21,7 +21,7 @@ deleting it means writing a tombstone. Previous versions remain on disk until
 
 ## The ACTIVE segment
 
-Every Serie has **exactly one** `ACTIVE` segment, which is the only mutable segment (INV-S2,
+Every Serie has **exactly one** `ACTIVE` segment, the only mutable segment (INV-S2,
 INV-S3).
 
 When a segment ceases to be ACTIVE:
@@ -65,7 +65,7 @@ ACTIVE → CLOSED → OBSOLETE → RECLAIMABLE → DELETED
 |---|---|---|---|
 | `ACTIVE` | yes | yes | the only segment that receives writes |
 | `CLOSED` | no | yes | immutable, referenced by the current index |
-| `OBSOLETE` | no | yes | replaced by compaction; still readable by already active readers/snapshots |
+| `OBSOLETE` | no | yes | replaced by compaction; still readable by readers and snapshots that were already active |
 | `RECLAIMABLE` | no | — | no longer used; awaiting deletion |
 | `DELETED` | — | — | file deleted |
 

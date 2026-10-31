@@ -57,7 +57,7 @@ The source segment:
 - remains readable as long as needed;
 - is deleted only when no reader/snapshot uses it.
 
-‘Required records’ includes both `LIVE` and `SNAPSHOT-LIVE` versions
+‘Required records’ include both `LIVE` and `SNAPSHOT-LIVE` versions
 ([03 Storage](03-storage.md#classificazione-delle-versioni)).
 
 The output segment may be much smaller than 256 MB and **may remain small
@@ -205,7 +205,7 @@ Compaction Scheduler
 └── Worker 4 → S020 → S104
 ```
 
-The Compaction Scheduler has **independent limits** from the request scheduler and MUST be able to:
+The Compaction Scheduler has **limits independent of those** of the request scheduler and MUST be able to:
 
 - increase CLEAN workers when the system is idle, reduce them as traffic increases;
 - prevent MERGE under high load;
@@ -228,8 +228,8 @@ rows. Ordinals depend on the segment hint: they are not copied as if they
 globally identified documents. Versions needed by snapshots are retained;
 publication and reclaim follow EDIT and EBR.
 
-Derivative work falls within compaction's compute, I/O, and space budgets
-and measurements of interference with GET and commit. Full-text
+Derivative work is included in compaction's compute, I/O, and space budgets
+and in measurements of interference with GET and commit. Full-text
 implementation and qualification remain in phase 8.
 
 <a id="metriche"></a>

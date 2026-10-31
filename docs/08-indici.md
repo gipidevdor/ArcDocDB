@@ -132,8 +132,8 @@ A new analyzer generation becomes usable only with complete coverage,
 without mixing profiles within one query (INV-I4).
 
 Analyzed bytes, terms, positions, delta memory, and query work have finite
-budgets; no silent truncation on writes or partial result declared complete.
-Semantics and publication protocol are in the ADR; logical on-disk sections in
+budgets. Writes must not be silently truncated, and partial results must not be declared complete.
+The ADR defines the semantics and publication protocol; the logical on-disk sections are in
 [formats](formati-su-disco.md#indice-full-text), and future tests in
 [benchmarks](13-benchmark.md#ricerca-full-text).
 

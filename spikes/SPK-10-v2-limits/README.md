@@ -27,7 +27,7 @@ Four independent modules, compiled without warning/style-warning, `safety 3`:
 | CBOR | depth, bytes, nodes, nonrecursive parsing | [metodo-cbor.md](metodo-cbor.md) |
 | Migration | file version, EDIT, preservation, repeatability | [metodo-migrazione.md](metodo-migrazione.md) |
 
-Codec uses CRC32C kernel already verified by SPK-09; results remain separate
+The codec uses the CRC32C kernel already verified by SPK-09; results remain separate
 from v1 results. Other modules declare dependencies and unimplemented parts.
 Migration is a **finite model**, not a filesystem converter. Independent checks
 do not replace a complete slice with real storage, manifest, snapshots, and fault injection.
@@ -35,7 +35,7 @@ do not replace a complete slice with real storage, manifest, snapshots, and faul
 Mandatory boundaries: documents 16 MiB/16 MiB+1, depth 100/101,
 keys 1/255/256/65,535/65,536, versions v1/v2/unknown, truncation, altered lengths,
 and saturated budgets. Methods specify coverage, CBOR subset, fixtures, quantities,
-and oracles. No performance number predicted; no engine requirement automatically promoted.
+and oracles. No performance number is predicted; no engine requirement is automatically promoted.
 
 <a id="esecuzione"></a>
 
@@ -53,18 +53,18 @@ map of **an actual encoded 16 MiB** with four v2 keys. Maximum document size can
 fit the v1 u24 record, which includes header and key. High u64 CSN and nonzero offset.
 
 Independent oracles compare version, callback, ranges, CSN, depth, hint metadata,
-and fields read from slot. A negative fixture has both CRCs valid but nonminimal
-CBOR: codec verifies it and validator must reject. Result exposes cases,
+and fields read from the slot. A negative fixture has both CRCs valid but nonminimal
+CBOR: the codec verifies it and the validator must reject it. The result exposes cases,
 assertions, and maximum record size.
 
-Validator accepts a whole vector: integration explicitly copies value range in
-harness only. Maximum fixture uses under 128 MiB simultaneous array payload per
-case, excluding garbage, Lisp headers, and runtime. No throughput derived from
-these checks. Hint-section CRCs, prepared records, storage, and durable commit excluded.
+The validator accepts a whole vector: integration explicitly copies the value range in
+the harness only. The maximum fixture uses under 128 MiB simultaneous array payload per
+case, excluding garbage, Lisp headers, and runtime. No throughput is derived from
+these checks. Hint-section CRCs, prepared records, storage, and durable commit are excluded.
 
 `run.lisp` resolves all files relative to its path, loads SPK-09 kernel, and compiles
 four modules into `out/`. Checks and measurements remain separate.
-Runner integrated into serial harness:
+The runner is integrated into the serial harness:
 
 ```sh
 sbcl --dynamic-space-size 4096 --noinform --no-userinit --no-sysinit \
@@ -83,14 +83,14 @@ Explicit errors, one plist on stdout, raw output, and identified sources in harn
 
 The first [integrated suite and local campaign](../../docs/valutazione/risultati-2026-10-08.md#spk-10--limiti-v2-e-integrazione)
 is complete: 416 codec cases, 614 CBOR cases, eight index groups, 208 crashes and
-4,160 recovery interruptions on model, 16 positive and one negative cross-module
-combinations. Maximum 16,842,775-byte record built, verified, and represented in slot.
+4,160 recovery interruptions in the model, 16 positive and one negative cross-module
+combinations. The maximum 16,842,775-byte record is built, verified, and represented in a slot.
 Separate check/measurement reports, with sources identified before/after.
-Full gate remains open.
+The full gate remains open.
 On-demand-stack CBOR variant passes 629 cases (614 previous and 15 new) and has two
 separate benchmarks, retaining the slower measurement too. ADR-0049's beyond-RAM
 path remains a separate proposal: this experiment does not implement it.
-Before engine, weak memory, missing models, I/O and interrupted real conversion,
+Before the engine, weak memory, missing models, I/O and interrupted real conversion,
 complete decoder, and Linux reference-platform campaign are also required.
 
 Related requirements: REQ-LIM-001, REQ-LIM-002, REQ-LIM-003,

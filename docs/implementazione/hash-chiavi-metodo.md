@@ -30,11 +30,11 @@ value is big-endian; the API returns the two words separately.
 ```
 
 `buffer` is a simple specialized u8 vector. `start` and `end` are
-nonnegative fixnum integers. Span is `[start,end)`, **0..65535 bytes**,
+nonnegative fixnum integers. The span is `[start,end)`, **0..65535 bytes**,
 both extremes included: the hash primitive permits empty input. Seeds
 are two explicit u32s; mathematically `seed = seed-high × 2^32 + seed-low`.
-Likewise digest is `high × 2^32 + low`. All returned u32s are
-immediate fixnums on SBCL64. No boxed u64, list,
+Likewise, the digest is `high × 2^32 + low`. All returned u32s are
+immediate fixnums on 64-bit SBCL. No boxed u64, list,
 result object, or additional values are returned, even NIL.
 
 The success path retains no state and modifies no buffer
@@ -52,7 +52,7 @@ explicit checks and the expected condition. The driver checks FTYPE
 registered by SBCL after ASDF and uses generic calls in negative fixtures.
 
 XXH64 is [noncryptographic](https://raw.githubusercontent.com/Cyan4973/xxHash/v0.8.3/doc/xxhash_spec.md):
-it promises no protection against intentional collisions or hostile inputs. Explicit
+it promises no protection against intentional collisions or hostile inputs. An explicit
 seed allows repeatability and caller isolation; generation,
 persistence, distribution, and rotation of database seeds remain future
 work. These tests do not qualify database integration, key comparison
@@ -65,7 +65,7 @@ after collisions, DB throughput, or storage/NVMe performance.
 Before **any clock**, including sensor clocks, the driver loads
 RUN system `arcdocdb` with `asdf:load-asd` and `asdf:load-system :force t`.
 Product compilation warnings and failures cause an error. The
-process must be SBCL64 without SB-COVER; coverage collection is disabled.
+process must be 64-bit SBCL without SB-COVER; coverage collection is disabled.
 Product symbols are resolved with `find-symbol` only after load.
 The ASDF test suite is not loaded.
 
@@ -109,7 +109,7 @@ prefix bytes and five suffix bytes: the main span starts at offset 3.
 Byte at index `i` is `(131*i + floor(i/251) + 17*worker) mod 256`.
 A copy of the entire buffer, including padding, is retained.
 
-The cold oracle is an independent specification translation using generic
+The cold oracle is an independent translation of the specification using generic
 CL integers with modulo 2^64 masks. It uses neither product helpers nor results.
 It may allocate bignums **outside measurement**. Three static zero-seed anchors
 also check the oracle: empty `EF46DB3751D8E999`, `a`
@@ -147,17 +147,17 @@ worker `w`, starting from base word zero or `#xffffffff`, seeds are:
 `low = base XOR ((w * #x85ebca77) mod 2^32)`. Worker zero matches
 the serial fixture; others have different bytes and seeds.
 
-Main verifies fixtures before creating threads. Every worker
+The main thread verifies fixtures before creating threads. Every worker
 runs warmup and cold verification, signals ready, and waits for start for at most
 30 seconds. One absolute 30-second deadline bounds ready/join
 for the replicate. Only one GC precedes gate opening. Cleanup terminates
 only still-live driver threads and limits every join to two seconds
 (at most four threads). Errors, readiness, and joins are captured in the
-report; main reads raw data only after quiescence. Timeout remains a
+report; the main thread reads raw data only after quiescence. Timeout remains a
 failure even if cleanup succeeds.
 
 Counter `get-bytes-consed` is **process-global**. In parallel,
-only main reads it, from before start until after joins: it includes
+only the main thread reads it, from before start until after joins: it includes
 orchestration. No per-worker heap measurements are summed. Local worker
 ticks are diagnostic; group rates use global time,
 sum of completed calls, and sum of bytes hashed. Parallel work

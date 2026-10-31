@@ -133,7 +133,7 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0058](0058-pagine-indice-primario.md) | 4/16/64 KiB page codec, flat buckets, paged directory, external keys and verified identities | Accepted in incremental implementation; backend integration open |
 | [0059](0059-crc32c-arm64-sbcl.md) | ARM64 CRC32C with SBCL VOP, controlled loads and Lisp fallback | Accepted; local qualification in implementation |
 | [0060](0060-crc32c-caricamento-portabile.md) | Isolation of native CRC dependencies and portable bootstrap | Accepted |
-| [0061](0061-conservazione-esterna-delle-prove.md) | Verified external historical tests; recent summaries in checkout | Accepted |
+| [0061](0061-conservazione-esterna-delle-prove.md) | Verified external retention of historical evidence; recent summaries in checkout | Accepted |
 | [0062](0062-cronologia-git-due-commit.md) | Authorized reduction of history to the last two commits | Accepted |
 
 <a id="organizzazione-della-documentazione-2026-10-08"></a>
@@ -177,30 +177,18 @@ consolidated result is in [architettura.md](../architettura.md) and
 | ADR | Decision | Status |
 |---|---|---|
 | [0063](0063-immagini-sigillate-indice-primario.md) | Completion, canonical source and read-only verification before root adoption | Accepted in incremental integration; catalog and M1 startup still separate |
-
 | [0064](0064-adozione-indice-paginato-m1.md) | Canonical M1 source, explicit read-only candidate, paged GET and retirement before writing | Accepted in incremental integration; durable catalog separate |
-
 | [0065](0065-costruzione-immagini-dal-motore.md) | Bounded image production from M1 resident index, adaptive radix and verification before success | Accepted in incremental integration; automatic activation separate |
-
 | [0066](0066-attivazione-seriale-immagini-m1.md) | Private hot activation, bounded ownership and closure on M1 image retirement | Accepted in incremental integration; automatic selection and durable catalog separate |
-
 | [0067](0067-delta-seriale-indice-m1.md) | Exact bounded membership for PUT/DELETE without M1 image retirement | Accepted in incremental integration; resident index still complete |
-
 | [0068](0068-rinnovo-seriale-immagini-m1.md) | Construction and activation in one serial request, total quota and renewed delta | Accepted in incremental integration; catalog and automatic policy separate |
-
 | [0069](0069-manutenzione-a-soglie-delta-m1.md) | Local threshold policy on keys/bytes and serial delta renewal | Accepted in incremental integration; backend selection and scheduler separate |
-
 | [0070](0070-scoperta-readonly-immagini-m1.md) | Bounded search for current candidates and full verification at M1 startup | Accepted in incremental integration; durable catalog and mode selection separate |
-
 | [0071](0071-delta-location-indice-m1.md) | Committed locations and tombstones in the M1 delta, without resident lookup for paged GET | Accepted in incremental integration; resident write/recovery dependencies remain |
-
 | [0072](0072-rinnovo-automatico-delta-m1.md) | Bounded automatic renewal before M1 PUT/DELETE, with one admission for renewal and commit | Accepted in incremental integration; legacy image profile; operational selection in ADR-0073 |
-
 | [0073](0073-indice-automatico-operativo-m1.md) | Automatic M1 resident/paged writes, bounded replay, return and derived cleanup | Implemented for serial M1; concurrent and physical-RAM qualification separate |
-
 | [0074](0074-crc32c-sbcl-2.6.10.md) | Extend exact ARM64 CRC32C compiler qualification to SBCL 2.6.10 | Accepted for integration; qualification evidence required |
-| [0075](0075-codex-documentation-toolchain.md) | Isolated Common Lisp Codex toolchain and complete GitHub Pages edition | Accepted for documentation only; product dependencies unchanged |
-
+| [0075](0075-codex-documentation-toolchain.md) | Isolated Common Lisp toolchain using CommonDoc Codex and complete GitHub Pages edition | Accepted for documentation only; product dependencies unchanged |
 | [0076](0076-rotazione-live-m1.md) | Live M1 segment rotation using canonical checkpoints and one runtime CSN family | Implemented for serial M1; local C4 evidence; broader qualification separate |
-
+| [0077](0077-source-derived-code-reference.md) | Source-derived package and definition reference in the CommonDoc Codex edition | Accepted for documentation; source contracts and product dependencies preserved |
 | [0078](0078-compattazione-prefix-m1.md) | Full-prefix canonical compaction and physical reclamation in serial M1 | Implemented for current-only M1; broader qualification separate |

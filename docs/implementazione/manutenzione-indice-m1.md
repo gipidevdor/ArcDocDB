@@ -17,7 +17,7 @@ Immutable configuration, integer threshold 1..100, default 75. Requires a paged
 view with active delta, READY owner, and healthy controller. Decision is
 true if `count*100 >= key-limit*percent` or
 `used*100 >= arena-bytes*percent`. Products, even from u32 slots, remain
-within SBCL64 fixnums. No division, rounding, or file access.
+within 64-bit SBCL fixnums. No division, rounding, or file access.
 With quota three and threshold 75, two keys are insufficient: the third reaches it.
 Threshold 100 requires at least one quota full.
 
@@ -28,8 +28,8 @@ finite configuration. RAM-based backend selection remains separate.
 Probe is read-only on valid path; it checks counters within capacity,
 bytes at least equal to keys (nonempty keys), and consistent empty state.
 Corrupt counters or delta without view cause FAULTED. A mode without delta
-produces INVALID-ARGUMENT without effects. It consults no OS memory
-estimate or reserves the next key: normal PUT/DELETE preflight remains
+produces INVALID-ARGUMENT without effects. It neither consults an OS memory
+estimate nor reserves the next key: normal PUT/DELETE preflight remains
 mandatory and may still reject an oversized key.
 
 Maintenance returns `:mantieni` below threshold. It neither checks
@@ -42,7 +42,7 @@ delta with the same key/byte limits. Candidate is then consumed:
 next renewal requires another fresh name. `:rinnovato` is not a document-write
 acknowledgment and does not advance CSN.
 
-No callback between decision and delegation; M1 serialization excludes concurrent
+There is no callback between decision and delegation; M1 serialization excludes concurrent
 mutations. After renewal admission, ADR-0068 BUSY, source verification,
 close, and FAULTED apply. Policy adds no new loops, waits,
 I/O resources, or shared writes across Serie. It implements neither timer, retries,

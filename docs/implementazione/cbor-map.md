@@ -16,14 +16,14 @@ parallelism, mutations, raw coverage, and qualification limits.
 ;; => NEXT, only one value
 ```
 
-COUNT counts pairs. SOURCE is a simple u8 containing key,
+COUNT counts pairs. SOURCE is a simple u8 array containing key,
 value, key, value in a half-open span. The first 2*COUNT cells
-of simple u32 table ITEM-ENDS delimit individual items with ends
-relative to SOURCE-START, increasing, last equal to span. Subsequent
+of the simple u32 table ITEM-ENDS delimit individual items with ends
+relative to SOURCE-START, increasing, with the last equal to the span length. Subsequent
 cells are ignored, even if the physical table is much longer.
-COUNT0 requires empty source and produces `A0` without reading entries.
+COUNT 0 requires an empty source and produces `A0` without reading entries.
 
-For example, `61 61 01 61 62 82 F4 F5`, ends `#(2 3 5 8)`, and COUNT2
+For example, `61 61 01 61 62 82 F4 F5`, ends `#(2 3 5 8)`, and COUNT 2
 produce `A2 61 61 01 61 62 82 F4 F5`. The header uses pair
 count; payload preserves source order and bytes exactly.
 Every segment must be one complete minimal structural item:
@@ -32,8 +32,8 @@ rejected even in a key or the last value.
 
 MAX-BYTES includes header and payload of the complete map. MAX-NODES
 includes root, all keys, all values, and tags. MAX-DEPTH
-counts array/map with root at level1; scalars and tags add no
-levels. Maximums are 16MiB,16Mi nodes, and 100 levels. An empty map
+counts array/map levels with the root at level 1; scalars and tags add no
+levels. The maxima are 16 MiB, 16 Mi nodes, and 100 levels. An empty map
 requires one byte, one node, and one level; a scalar pair requires three nodes.
 Exhaustion of the remainder before the next item is reported at
 its absolute source offset, before scanner reset.

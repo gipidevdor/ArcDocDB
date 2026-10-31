@@ -4,9 +4,9 @@
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010 REQ-WAL-005
 (declaim (ftype (function (preparazione-put-full-text) null) attesta-cornice-put-worker))
 (defun attesta-cornice-put-worker (request)
-  "Pre: worker esclusivo, tutti i task DONE sullo stesso frame immutabile.
-Post: CRC/spans verificati e attestazione della generation, prima di ogni lease writer.
-Scansione body addebitata al budget worker; errore invalida il risultato, nessuna riserva."
+  "Pre: exclusive worker, all tasks DONE on the same immutable frame.
+Post: CRC/spans verified and generation attested, before any writer lease.
+Body scan charged to worker budget; an error invalidates the result, no reservation."
   (let ((size (preparazione-put-full-text-size request)))
     (when (> size (- (preparazione-put-full-text-work-limit request) (preparazione-put-full-text-work request)))
       (error 'resource-exhausted :reason :fulltext-put-work))
@@ -24,8 +24,8 @@ Scansione body addebitata al budget worker; errore invalida il risultato, nessun
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (preparazione-put-full-text) null) analizza-unita-put))
 (defun analizza-unita-put (request)
-  "Pre: PREPARING esclusivo. Post: un passo documentale o avanzamento generazione.
-Ogni task analizza lo span dello stesso frame privato; lavoro cumulativo prima dell'ammissione."
+  "Pre: exclusive PREPARING. Post: one document step or generation advancement.
+Each task analyzes a span of the same private frame; cumulative work before admission."
   (when (>= (preparazione-put-full-text-work request) (preparazione-put-full-text-work-limit request))
     (error 'resource-exhausted :reason :fulltext-put-work))
   (incf (preparazione-put-full-text-work request))
@@ -57,8 +57,8 @@ Ogni task analizza lo span dello stesso frame privato; lavoro cumulativo prima d
 ;;; REQ: REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (preparazione-put-full-text keyword) null) rilascia-analisi-put))
 (defun rilascia-analisi-put (request state)
-  "Pre: solo worker, nessuna riserva del writer. Post: analisi attiva cancellata e nessun prestito frame.
-Buffer privati conservati, nessun rollback di WAL o riserva; errori interni richiedono fail-stop."
+  "Pre: worker only, no writer reservation. Post: active analysis canceled and no frame borrow.
+Private buffers retained, no WAL or reservation rollback; internal errors require fail-stop."
   (when (preparazione-put-full-text-active request)
     (let ((task (svref (preparazione-put-full-text-tasks request) (preparazione-put-full-text-current request))))
       (when (eq :running (d:stato-preparazione-full-text task)) (d:annulla-preparazione-full-text task))))
@@ -69,8 +69,8 @@ Buffer privati conservati, nessun rollback di WAL o riserva; errori interni rich
 ;;; REQ: REQ-SEC-003 REQ-SEC-006 REQ-SEC-010
 (declaim (ftype (function (t t t) keyword) passo-put-full-text))
 (defun passo-put-full-text (request generation quantum)
-  "Pre: generation corrente e PREPARING/PREPARED, quantum 1..65536. Post: stato o errore tipizzato.
-Rifiuti di budget/CBOR rendono FAILED senza dati parziali; invarianti al confine worker."
+  "Pre: current generation and PREPARING/PREPARED, quantum 1..65536. Post: state or typed error.
+Budget/CBOR rejections set FAILED without partial data; invariants at the worker boundary."
   (verifica-token-put request generation)
   (unless (and (typep quantum '(integer 1 65536))
                (member (preparazione-put-full-text-state request) '(:preparing :prepared)))
@@ -85,8 +85,8 @@ Rifiuti di budget/CBOR rendono FAILED senza dati parziali; invarianti al confine
 ;;; REQ: REQ-SEC-006
 (declaim (ftype (function (t t) keyword) annulla-put-full-text))
 (defun annulla-put-full-text (request generation)
-  "Pre: token corrente, analisi o risultato mai riservato. Post: CANCELLED idempotente fino al riuso.
-Non e l'abort di un prepared gia accodato; nessun accesso a WAL o CSN."
+  "Pre: current token, analysis or result never reserved. Post: CANCELLED idempotent until reuse.
+This is not the abort of already queued prepared data; no WAL or CSN access."
   (verifica-token-put request generation)
   (unless (member (preparazione-put-full-text-state request) '(:preparing :prepared :cancelled))
     (error 'invalid-argument :reason :fulltext-put-cancel))

@@ -6,9 +6,9 @@
 (declaim (ftype (function (octets index index u8 integer index)
                          (values index index u8 &optional)) cornice-di-controllo))
 (defun cornice-di-controllo (buffer start end kind version max-bytes)
-  "Pre: record stabile, versione esplicita dal file. Post: CRC completi, tipo e consumo esatto.
-Restituisce range payload e flag; CORRUPTION-DETECTED o UNSUPPORTED-FORMAT altrimenti.
-Non materializza lo stamp u64; budget dei byte applicato prima di qualsiasi scansione CRC."
+  "Pre: stable record, explicit version from the file. Post: complete CRCs, type, and exact consumption.
+Returns payload range and flags; CORRUPTION-DETECTED or UNSUPPORTED-FORMAT otherwise.
+Does not materialize the u64 stamp; byte budget applied before any CRC scan."
   (check-range buffer start end)
   (unless (<= max-bytes +metadata-max-bytes+)
     (error 'invalid-argument :reason :metadata-byte-budget :offset start))
@@ -31,9 +31,9 @@ Non materializza lo stamp u64; budget dei byte applicato prima di qualsiasi scan
                             (max-rimossi +default-list-budget+)
                             (max-esiti +default-list-budget+)
                             (max-bytes +metadata-max-bytes+))
-  "Pre: range stabile, versione obbligatoria dal file (zero non è un formato).
-Post: record EDIT e payload completamente verificati; range valore/chiusi/rimossi, count,
-totale esiti e flag. Propaga errori tipizzati. Non attesta commit o stato del manifest."
+  "Pre: stable range, mandatory version from the file (zero is not a format).
+Post: EDIT record and payload fully verified; value/closed/removed ranges, count,
+total outcomes, and flags. Propagates typed errors. Does not attest to commit or manifest state."
   (multiple-value-bind (vs ve flags) (cornice-di-controllo buffer start end +edit+ version max-bytes)
     (multiple-value-bind (cs cc rs rc total)
         (valida-valore-edit buffer vs ve flags :max-chiusi max-chiusi
@@ -47,9 +47,9 @@ totale esiti e flag. Propaga errori tipizzati. Non attesta commit o stato del ma
 (defun verifica-record-decision (buffer start end &key (version 0)
                                 (max-partecipanti +max-participants+)
                                 (max-bytes +metadata-max-bytes+))
-  "Pre: range stabile e versione esplicita dal file. Post: CRC e struttura DECISION validi.
-Restituisce offset CSN, inizio/fine partecipanti e count. Propaga errori tipizzati.
-Il TXID rimane nello stamp del record; validità del catalogo e commit spettano al proprietario."
+  "Pre: stable range and explicit version from the file. Post: valid CRCs and DECISION structure.
+Returns CSN offset, participant start/end, and count. Propagates typed errors.
+TXID remains in the record stamp; catalog validity and commit belong to the owner."
   (multiple-value-bind (vs ve flags) (cornice-di-controllo buffer start end +decision+ version max-bytes)
     (declare (ignore flags)) ; la cornice impone zero per DECISION
     (valida-valore-decision buffer vs ve :max-partecipanti max-partecipanti :max-bytes max-bytes)))

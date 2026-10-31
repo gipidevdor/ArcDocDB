@@ -42,7 +42,7 @@ file modification, and concurrent closes. Interrupt-free windows
 protect handoff and cleanup; they do not define asynchronous cancellation.
 Unrelated nonlocal exits attempt cleanup once, without attaching
 secondary errno to the cause; unrelated errors in the close callback remain
-outside protocol. C4 deadlines are cooperative.
+outside the protocol. C4 deadlines are cooperative.
 
 The vertical fixture passes EOF and capability from the same opening to
 CONTROL, decision-log, and ACTIVE readers; bootstrap, output, and coordination remain

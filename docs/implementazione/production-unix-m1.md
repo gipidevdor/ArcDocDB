@@ -154,3 +154,30 @@ The library's `:index-discovery` option and the CLI flag `--discover-index`
 connect the bounded engine discovery path to service startup. Recovery and full
 image verification finish before listen/READY. See the
 [configuration, validation and limits](scoperta-indice-local-m1.md).
+
+<a id="budget-indice-automatico"></a>
+## Automatic index quota
+
+The library accepts `:index-policy`, passed to `apri-motore`: `:automatic`
+(default), an immutable `crea-politica-indice-automatico` policy, or the
+explicit `:legacy` compatibility profile. With `:index-discovery`, the default
+is `:legacy`; an explicit automatic policy conflicts with discovery. Invalid
+policy types and conflicts are rejected before clock callbacks or resources.
+
+The server CLI accepts `--index-budget BYTES` once, in any order with `--create`
+and `--version 1|2`. BYTES is a bounded, unsigned decimal integer. The engine
+factory validates the quota; startup may still reject a grant too small for
+its fixed replay workspace and initial index. No listener or READY notification
+precedes successful engine startup. `--discover-index` and `--index-budget`
+are mutually exclusive.
+
+```sh
+sbcl --script tools/local-server.lisp DATA SOCKET ARCHIVE32 SERIES32 --create --index-budget 3400000
+```
+
+The quota controls index payload and reserved index/replay workspaces under
+[ADR-0073](../adr/0073-indice-automatico-operativo-m1.md), not total process RSS,
+free physical RAM, or a peer-requested backend. Page geometry and frame defaults
+remain those of the engine factory. Omitting the option keeps the engine's
+normal automatic policy. The wire protocol and strong acknowledgement semantics
+are unchanged. See [verification](../../spikes/results/2026-10-31-local-index-budget/report.md).

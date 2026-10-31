@@ -172,13 +172,14 @@ Ogni giro visita tutti gli slot una volta; attesa inattiva finita senza servire 
       (error 'local-cleanup-error :reason :local-server-cleanup :primary primary :failures (nreverse failures))))
   nil)
 
-;;; REQ: REQ-IPC-001 REQ-IPC-002 REQ-IPC-003 REQ-REC-001
+;;; REQ: REQ-IPC-001 REQ-IPC-002 REQ-IPC-003 REQ-REC-001 REQ-IDX-013
 (defun serve-local (directory archive-id series-id path
                     &key create (version 2) (clock #'get-internal-real-time) observer
-                         (stop (constantly nil)) ready (max-connections 8) io-backend index-discovery)
+                         (stop (constantly nil)) ready (max-connections 8) io-backend index-discovery
+                         (index-policy (if index-discovery :legacy :automatic)))
   "Pre: directory dati/runtime distinte e private, identita' esplicite, un attore chiamante.
 Post: startup e recovery reali prima del listener; servizio fino a STOP, cleanup completo.
-INDEX-DISCOVERY is validated before resources and delegated before listen.
+INDEX-DISCOVERY and INDEX-POLICY are validated before resources and delegated before listen.
 Callback fidati non rientrabili; STOP/READY non sono certificazioni del recovery. Nessun retry."
   (unless (and (functionp clock) (functionp stop) (typep ready '(or null function))
                (typep max-connections '(integer 1 8)))
@@ -187,6 +188,10 @@ Callback fidati non rientrabili; STOP/READY non sono certificazioni del recovery
     (error 'arcdocdb.conditions:invalid-argument :reason :local-index-discovery-config))
   (when (and create index-discovery)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-index-discovery-create))
+  (unless (or (member index-policy '(:legacy :automatic)) (typep index-policy 'e:politica-indice-automatico))
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-index-policy))
+  (when (and index-discovery (not (eq index-policy :legacy)))
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-index-policy-discovery))
   (%native-check-backend io-backend)
   (local-until (local-now clock) 300)
   (let ((connections (map 'simple-vector (lambda (i) (declare (ignore i))
@@ -203,7 +208,7 @@ Callback fidati non rientrabili; STOP/READY non sono certificazioni del recovery
                    (when (and (= device (sb-posix:stat-dev stat)) (= inode (sb-posix:stat-ino stat)))
                      (error 'arcdocdb.conditions:invalid-argument :reason :local-runtime-is-storage))))
                (setf engine (e:apri-motore directory archive-id series-id :create create :version version
-                              :clock clock :observer observer :index-discovery index-discovery :record-validator (local-record-validator space)))
+                              :clock clock :observer observer :index-discovery index-discovery :index-policy index-policy :record-validator (local-record-validator space)))
                (unless (eq :ready (e:stato-motore engine))
                  (error 'arcdocdb.conditions:invariant-violation :reason :local-startup-gate))
                (setf listener (open-local-listener path :namespace namespace))

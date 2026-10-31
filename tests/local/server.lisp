@@ -259,3 +259,34 @@
         (is (zerop status))
         (multiple-value-bind (found document) (decoded-result connection envelope 2)
           (is (eq :found found)) (is (equalp (bytes 0) document)))))))
+
+;;; REQ: REQ-IPC-001 REQ-IDX-013 REQ-LIM-003
+(deftest test-REQ-IDX-013-local-index-budget-cli-validation
+  (dolist (args '(("--index-budget" "3400000")
+                  ("--create" "--index-budget" "3400000" "--version" "1")
+                  ("--version" "2" "--index-budget" "3400000" "--create")))
+    (let ((policy (fourth (multiple-value-list (l::server-cli-options args)))))
+      (is (typep policy 'e:politica-indice-automatico))
+      (is (= 3400000 (e::politica-indice-automatico-budget policy)))))
+  (is (eq :automatic (fourth (multiple-value-list (l::server-cli-options nil)))))
+  (is (eq :legacy (fourth (multiple-value-list (l::server-cli-options '("--discover-index"))))))
+  (dolist (text '("" "-1" "+3400000" " 3400000" "3400000 " "2.4e6" "#.(exit)" "0"
+                  "99999999999999999999999999999999" "3400000x" "9999999999999999999"))
+    (signals arcdocdb.conditions:invalid-argument (l::server-cli-options (list "--index-budget" text))))
+  (signals arcdocdb.conditions:resource-exhausted (l::server-cli-options '("--index-budget" "1")))
+  (dolist (args '(("--index-budget") ("--index-budget" "3400000" "--index-budget" "3400000")
+                  ("--discover-index" "--index-budget" "3400000")
+                  ("--index-budget" "3400000" "--discover-index")))
+    (signals arcdocdb.conditions:invalid-argument (l::server-cli-options args))))
+
+;;; REQ: REQ-IPC-001 REQ-IDX-013 REQ-AFF-008
+(deftest test-REQ-IDX-013-local-index-policy-before-resources
+  (dolist (policy '(nil t 1 "automatic" :paged))
+    (signals arcdocdb.conditions:invalid-argument
+      (l:serve-local "/missing" (id 73) (id 41) "/missing/socket" :index-policy policy
+        :clock (lambda () (error "Clock reached")))))
+  (dolist (policy (list :automatic (e:crea-politica-indice-automatico)))
+    (signals arcdocdb.conditions:invalid-argument
+      (l:serve-local "/missing" (id 73) (id 41) "/missing/socket" :index-policy policy
+        :index-discovery (e:crea-opzione-scoperta-indice)
+        :clock (lambda () (error "Clock reached"))))))

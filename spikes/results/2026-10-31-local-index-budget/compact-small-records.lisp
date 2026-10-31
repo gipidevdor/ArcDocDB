@@ -1,0 +1,36 @@
+((:PATH
+  #A((154) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-local-index-budget/attempt-2-initial-quota/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 349602 :STORED-BYTES 105129 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 349602 :UNCOMPRESSED-SHA256
+   "324f5d36b3873ab4a20d94c955c69b11c158f1b8b0a63a51572e5315e1c96639"
+   :COMPRESSED-BYTES 104813 :COMPRESSED-SHA256
+   "9f9bc6445b542ad16bf04e33388c2872ec90b1220cf4acc21638c58d6b6a0881"))
+ (:PATH
+  #A((150) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-local-index-budget/attempt-3-path-type/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 349570 :STORED-BYTES 105154 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 349570 :UNCOMPRESSED-SHA256
+   "87100052b6630ae9acd065e7367e946497106013fbe2bb1a2bd8d8b142187e78"
+   :COMPRESSED-BYTES 104838 :COMPRESSED-SHA256
+   "2def4a2a60bae26cf9274affb42a7dc82d646c1f6f1d0f7bd1c635d137edb5ad"))
+ (:PATH
+  #A((153) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-local-index-budget/attempt-4-v1-key-bound/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 349548 :STORED-BYTES 105156 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 349548 :UNCOMPRESSED-SHA256
+   "f737a67aa8d58d5c45079f40df1c54eb525624d28f10b25c7c1fa0d98b347619"
+   :COMPRESSED-BYTES 104840 :COMPRESSED-SHA256
+   "01187e91530efabc46d866829e0e67d91bc5968d68d646e33da787ceaf7c5de5"))
+ (:PATH
+  #A((145) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-local-index-budget/targeted-2.6.9/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 354498 :STORED-BYTES 104361 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 354498 :UNCOMPRESSED-SHA256
+   "77b5d9dc224a83bd13ed5077159c597104f3938f1089ff4bb2d91a054b3e50e3"
+   :COMPRESSED-BYTES 104045 :COMPRESSED-SHA256
+   "10ee77c8c219a40ff1ec748e2af5c40bc6863cc1e1e665282ce3d1043571b745")))

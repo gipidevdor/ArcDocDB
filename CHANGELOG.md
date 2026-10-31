@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- [Live M1 segment rotation](docs/adr/0076-rotazione-live-m1.md) before byte or
+  record saturation: canonical CONTROL checkpoint, fresh ACTIVE and complete
+  CLOSED lookup publication while retaining the runtime CSN family and index.
+  Retired capabilities are closed after serial quiescence; total segment capacity
+  remains bounded pending compaction. Real SIGKILL and Unix service cases cover v1/v2.
+
 - [Automatic primary storage in M1](docs/implementazione/indice-automatico-operativo.md):
   flat resident growth while the quota permits it, bounded disk writes/replay,
   verified migration both ways, hysteresis, live-only compaction and fixed CLOSED

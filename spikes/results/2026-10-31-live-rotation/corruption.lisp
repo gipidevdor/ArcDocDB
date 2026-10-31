@@ -1,0 +1,5 @@
+(require :asdf)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(asdf:load-system "arcdocdb/tests")
+(arcdocdb.engine.tests::test-REQ-STO-003-live-rotation-corrupt-closed-refused-before-checkpoint)
+(format t "~&~S~%" '(:status :passed :tests 1 :scope :closed-corruption-before-rotation))

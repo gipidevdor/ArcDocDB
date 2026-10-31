@@ -88,40 +88,42 @@ Ogni errore/uscita incompleta richiede FAULTED dal confine chiamante, senza roll
   "Pre: chiamante owner; nessun'altra API attiva sul motore. Post: CSN u64 confermato.
 Input rifiutato in preflight senza consumare CSN o sporcare il lotto. Dopo l'ingresso
 con MOTORE-BUSY, ogni errore rende FAULTED e propaga la stessa condizione; anche THROW/RETURN
-incompleti rendono FAULTED. Il rinnovo opzionale e il commit condividono BUSY; nessun rientro dai callback."
+incompleti rendono FAULTED. Rotazione, rinnovo opzionale e commit condividono BUSY; nessun rientro dai callback."
   (esigi-motore-pronto engine)
-  (verifica-input-scrittura-motore engine kind key value)
-  (verifica-capienza-indice-motore engine kind key)
-  (let ((renewal (preflight-rinnovo-scrittura engine key)) (complete nil) (cause nil))
-    (unwind-protect
-         (handler-case
-             (progn
-               (setf (motore-busy engine) t)
-               (if (motore-automatic-index engine)
-                   (prepare-automatic-index engine kind key 0 (length key))
-                   (prepara-indice-scrittura-ammessa engine key renewal))
-               (let ((csn (commetti-record-motore engine kind key value)))
-                 (declare (type b:u64 csn))
-                 (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
-                              (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
-                   (error 'arcdocdb.conditions:invariant-violation :reason :engine-write-state))
-                 (when (motore-automatic-index engine)
-                   (return-automatic-resident engine) (require-automatic-admission engine))
-                 (setf complete t)
-                 csn))
-           (error (condition)
-             (setf cause condition)
-             (handler-case (guasta-motore engine condition)
-               (error (cleanup) (push cleanup (motore-cleanup-failures engine))))
-             (error condition)))
+  (let ((record-bytes (verifica-input-scrittura-motore engine kind key value)))
+    (verifica-capienza-indice-motore engine kind key)
+    (let ((rotation (preflight-rotazione-motore engine record-bytes))
+          (renewal (preflight-rinnovo-scrittura engine key)) (complete nil) (cause nil))
       (unwind-protect
-           (unless (or complete cause)
-             (handler-case
-                 (guasta-motore engine
-                                (make-condition 'arcdocdb.conditions:invariant-violation
-                                                :reason :engine-write-unwind))
-               (error (cleanup) (push cleanup (motore-cleanup-failures engine)))))
-        (setf (motore-busy engine) nil)))))
+           (handler-case
+               (progn
+                 (setf (motore-busy engine) t)
+                 (when rotation (ruota-segmento-motore engine))
+                 (if (motore-automatic-index engine)
+                     (prepare-automatic-index engine kind key 0 (length key))
+                     (prepara-indice-scrittura-ammessa engine key renewal))
+                 (let ((csn (commetti-record-motore engine kind key value)))
+                   (declare (type b:u64 csn))
+                   (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
+                                (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
+                     (error 'arcdocdb.conditions:invariant-violation :reason :engine-write-state))
+                   (when (motore-automatic-index engine)
+                     (return-automatic-resident engine) (require-automatic-admission engine))
+                   (setf complete t)
+                   csn))
+             (error (condition)
+               (setf cause condition)
+               (handler-case (guasta-motore engine condition)
+                 (error (cleanup) (push cleanup (motore-cleanup-failures engine))))
+               (error condition)))
+        (unwind-protect
+             (unless (or complete cause)
+               (handler-case
+                   (guasta-motore engine
+                                  (make-condition 'arcdocdb.conditions:invariant-violation
+                                                  :reason :engine-write-unwind))
+                 (error (cleanup) (push cleanup (motore-cleanup-failures engine)))))
+          (setf (motore-busy engine) nil))))))
 
 ;;; REQ: REQ-IDX-001 REQ-WAL-005 REQ-WAL-006 REQ-AFF-004 REQ-LIM-001
 (declaim (ftype (function (motore b:octets b:octets) b:u64) scrivi-documento))

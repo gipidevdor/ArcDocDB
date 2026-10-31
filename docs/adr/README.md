@@ -199,3 +199,5 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0073](0073-indice-automatico-operativo-m1.md) | Automatic M1 resident/paged writes, bounded replay, return and derived cleanup | Implemented for serial M1; concurrent and physical-RAM qualification separate |
 
 | [0074](0074-crc32c-sbcl-2.6.10.md) | Extend exact ARM64 CRC32C compiler qualification to SBCL 2.6.10 | Accepted for integration; qualification evidence required |
+
+| [0076](0076-rotazione-live-m1.md) | Live M1 segment rotation using canonical checkpoints and one runtime CSN family | Implemented for serial M1; local C4 evidence; broader qualification separate |

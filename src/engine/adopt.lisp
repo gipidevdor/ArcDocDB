@@ -56,7 +56,7 @@ Un solo registro operativo a M, senza incremento; errori prima di READY non rest
   (when (motore-automatic-index engine) (remove-automatic-orphans engine))
   (let* ((maps (mappe-motore engine control closed)) (runtime (rt:crea-runtime-archivio plan 1000000000 1000000
                                   :csn-capacity 16 :snapshot-capacity 4 :worker-capacity 1 :retirement-capacity 16)))
-    (setf (motore-registry engine) (rt:csn-runtime-archivio runtime)
+    (setf (motore-runtime engine) runtime (motore-registry engine) (rt:csn-runtime-archivio runtime)
           (motore-scope engine) (rt:ambito-runtime-archivio runtime)
           (motore-view engine) (g:crea-vista-get-serie (motore-scope engine) (unless (motore-automatic-index engine) (motore-index engine))
                    nil (motore-series-id engine)

@@ -232,7 +232,7 @@
                              (:file "image-build-tree") (:file "image-build-io") (:file "image-build") (:file "image-renewal") (:file "image-maintenance")
                              (:file "image-auto") (:file "image-auto-write") (:file "index-auto-memory") (:file "index-auto-files")
                              (:file "index-auto-migrate") (:file "index-auto-apply") (:file "index-auto-resolver")
-                             (:file "index-auto-api") (:file "adopt") (:file "startup") (:file "write") (:file "read"))))
+                             (:file "index-auto-api") (:file "adopt") (:file "startup") (:file "rotation") (:file "write") (:file "read"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/local"
@@ -400,7 +400,7 @@
                (:module "vertical" :serial t
                 :components ((:file "support") (:file "scenarios") (:file "resume") (:file "processes")))
                (:module "engine" :serial t
-                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "processes")))
+                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "rotation") (:file "processes")))
                (:module "local" :serial t
                 :components ((:file "wire") (:file "native") (:file "server") (:file "processes"))))
   :perform (test-op (o c)

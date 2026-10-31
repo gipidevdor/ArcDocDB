@@ -750,3 +750,53 @@
                 (check-automatic-local-values socket)
                 (client-request socket :get :key *key-one*)
                 (stop-server server sb-posix:sigterm :automatic-index-default-recovered))))))))))
+
+(defun rotation-local-key (n)
+  (let ((key (make-array 16 :element-type '(unsigned-byte 8) :initial-element 33)))
+    (arcdocdb.binary:scrivi-u32 key 12 n) key))
+(defun rotation-local-document ()
+  (let ((document (make-array 60000 :element-type '(unsigned-byte 8) :initial-element 0)))
+    (setf (aref document 0) #x59 (aref document 1) (ldb (byte 8 8) 59997)
+          (aref document 2) (ldb (byte 8 0) 59997)) document))
+(defun check-local-rotation-values (socket)
+  (let ((client (l:connect-local (namestring socket))))
+    (unwind-protect
+         (dolist (n '(0 1 100 278 279 280 299))
+           (multiple-value-bind (status document) (l:client-get client (rotation-local-key n))
+             (check (eq status :found) "Missing acknowledged rotated key ~D" n)
+             (let ((expected (rotation-local-document)))
+               (setf (aref expected 59999) (mod n 256))
+               (check (equalp document expected) "Changed rotated value ~D" n))))
+      (l:close-local client))))
+
+;;; REQ: REQ-IPC-002 REQ-STO-003 REQ-REC-001 REQ-WAL-006
+(deftest test-REQ-STO-003-live-rotation-real-local-service-byte-limit-v1-v2
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "rotation-runtime/")))
+       (dolist (version '(1 2))
+         (scenario :live-segment-rotation version
+          (lambda ()
+            (let ((data (subdirectory (format nil "rotation-v~D/" version))))
+              (multiple-value-bind (server socket) (start-server data runtime version 90 :create t)
+                (let ((client (l:connect-local (namestring socket))) (document (rotation-local-document)))
+                  (unwind-protect
+                       (dotimes (n 300)
+                         (setf (aref document 59999) (mod n 256))
+                         (check (= (1+ n) (l:client-put client (rotation-local-key n) document)) "Wrong CSN ~D" n))
+                    (l:close-local client)))
+                (check (>= (count-if (lambda (p) (search ".seg" (file-namestring p))) (uiop:directory-files data)) 3)
+                       "No live rotation after crossing 16 MiB")
+                (check-local-rotation-values socket)
+                (stop-server server sb-posix:sigkill :after-live-rotation))
+              (multiple-value-bind (server socket) (start-server data runtime version 91)
+                (check-local-rotation-values socket)
+                (let ((client (l:connect-local (namestring socket))))
+                  (unwind-protect
+                       (progn
+                         (check (= 301 (l:client-delete client (rotation-local-key 0))) "Wrong post-rotation delete CSN")
+                         (check (eq :absent (l:client-get client (rotation-local-key 0))) "Rotated key not deleted")
+                         (check (= 302 (l:client-put client (rotation-local-key 300) (decode-hex "182A")))
+                                "Wrong post-rotation PUT CSN"))
+                    (l:close-local client)))
+                (stop-server server sb-posix:sigterm :live-rotation-recovered))))))))))

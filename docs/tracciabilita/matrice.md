@@ -21,7 +21,7 @@
 | REQ-REG-003 | Each Serie is physically independent in its own directory; there is no global data WAL. | Physical layout | C1 | designed | INV-W1 | [0003](../adr/0003-wal-per-serie.md) | rev, analysis |  |
 | REQ-STO-001 | Records already written to segments are never modified in place. | Storage append-only | C1 | designed | INV-S1 | [0004](../adr/0004-storage-append-only-un-solo-active.md) | test, rev |  |
 | REQ-STO-002 | There is exactly one ACTIVE segment per Serie, and it is the only writable segment. | Storage append-only | C1 | designed | INV-S2, INV-S3 | [0004](../adr/0004-storage-append-only-un-solo-active.md) | test, model |  |
-| REQ-STO-003 | A segment that ceases to be ACTIVE is immutable and is never reopened for writing. | Storage append-only | C1 | designed | INV-S4 | [0004](../adr/0004-storage-append-only-un-solo-active.md) | test |  |
+| REQ-STO-003 | A segment that ceases to be ACTIVE is immutable and is never reopened for writing. | Storage append-only | C1 | designed | INV-S4 | [0004](../adr/0004-storage-append-only-un-solo-active.md), [0076](../adr/0076-rotazione-live-m1.md) | test |  |
 | REQ-STO-004 | New writes always go to a new ACTIVE segment, never to a segment produced by compaction. | Segments | C1 | designed | INV-S5 | [0004](../adr/0004-storage-append-only-un-solo-active.md) | test |  |
 | REQ-STO-005 | Writer-created segments have a target size of approximately 256 MB, configurable per Serie; segments produced by compaction have no size requirement. | Segments | C1 | designed | INV-C4 | [0004](../adr/0004-storage-append-only-un-solo-active.md), [0023](../adr/0023-politiche-di-compaction.md) | test |  |
 | REQ-STO-006 | Segment states are ACTIVE, CLOSED, OBSOLETE, RECLAIMABLE, DELETED with one-way transitions; only ACTIVE is writable; only membership in the manifest's recorded set is durable. | Segments | C1 | designed | INV-S3, INV-S4 | [0018](../adr/0018-control-log-manifest-swap.md), [0040](../adr/0040-manifest-a-record-unico.md) | test, model |  |
@@ -332,3 +332,4 @@
 | [0072](../adr/0072-rinnovo-automatico-delta-m1.md) | REQ-IDX-012 |
 | [0073](../adr/0073-indice-automatico-operativo-m1.md) | REQ-IDX-008, REQ-IDX-013 |
 | [0074](../adr/0074-crc32c-sbcl-2.6.10.md) | REQ-FOR-003 |
+| [0076](../adr/0076-rotazione-live-m1.md) | REQ-STO-003 |

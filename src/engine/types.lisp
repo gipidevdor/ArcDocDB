@@ -51,6 +51,7 @@ Nessun accessore pubblico sui FD o sulle radici; la capacita' non e' trasferibil
   (directory nil :type (or null io:file-io))
   (scope nil :type (or null g:ambito-get))
   (view nil :type (or null g:vista-get-serie))
+  (runtime nil :type (or null rt:runtime-archivio))
   (registry nil :type (or null arcdocdb.csn:registro-csn))
   (controller nil :type (or null s:controllore-serie))
   (lease nil :type (or null index))

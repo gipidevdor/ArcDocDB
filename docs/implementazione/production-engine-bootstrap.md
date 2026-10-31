@@ -108,7 +108,11 @@ M1 configures exactly one Serie and a decision log without DECISION; it does
 not discover the multiserie catalog. Prepared, compaction/REMOVED, and locations
 beyond u32 are rejected. The format remains v1/v2; this is an entry point
 restriction, not a change to the u64 storage types. Each reopen prepares a new
-ACTIVE. Live rotation is not exposed: at the limit, the core rejects new writes.
+ACTIVE. [Live rotation](../adr/0076-rotazione-live-m1.md) connects canonical
+checkpoint publication to normal PUT/DELETE before the next data CSN. Byte or
+record saturation prepares a fresh ACTIVE while retaining the runtime registry,
+primary index and current-read semantics. Total segment capacity remains bounded;
+compaction and concurrent snapshot reclamation are separate work.
 
 Defaults: 16 MiB file, 64 KiB frame, 64 segments, 65,536 records per file,
 index capacity 4096, and 1 MiB key arena. Configurable, checked budgets,

@@ -48,7 +48,7 @@
   :inv ("INV-S2" "INV-S3") :adr ("ADR-0004") :ver (:test :model) :fi ())
  (:id "REQ-STO-003" :src "Storage append-only" :cls "C1" :stato :progettato
   :txt "A segment that ceases to be ACTIVE is immutable and is never reopened for writing."
-  :inv ("INV-S4") :adr ("ADR-0004") :ver (:test) :fi ())
+  :inv ("INV-S4") :adr ("ADR-0004" "ADR-0076") :ver (:test) :fi ())
  (:id "REQ-STO-004" :src "Segments" :cls "C1" :stato :progettato
   :txt "New writes always go to a new ACTIVE segment, never to a segment produced by compaction."
   :inv ("INV-S5") :adr ("ADR-0004") :ver (:test) :fi ())

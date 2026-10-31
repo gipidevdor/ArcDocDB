@@ -147,3 +147,100 @@
              (is (l::step-local-connection nil output deadline (lambda () deadline)))
              (is (eq :closed (l::local-connection-state output)))))
       (l::close-local-connection input) (l::close-local-connection output))))
+
+;;; REQ: REQ-IPC-001 REQ-IDX-010 REQ-AFF-008
+(deftest test-REQ-IPC-001-discovery-cli-domains-and-default-profile
+  (dolist (args '(nil ("--version" "1") ("--version" "2") ("--create")))
+    (is (null (third (multiple-value-list (l::server-cli-options args))))))
+  (dolist (args '(("--discover-index") ("--version" "1" "--discover-index")
+                  ("--discover-index" "--version" "2")))
+    (multiple-value-bind (create version option) (l::server-cli-options args)
+      (is (null create)) (is (member version '(1 2)))
+      (is (typep option 'e:opzione-scoperta-indice))
+      (is (= 4096 (e::opzione-scoperta-indice-names option)))))
+  (dolist (args '(("--discover-index" "--discover-index")
+                  ("--create" "--discover-index") ("--discover-index" "--create")
+                  ("--discover-index" "1") ("--discover-index" "--version")
+                  ("--discover-index" "--version" "3")))
+    (signals arcdocdb.conditions:invalid-argument (l::server-cli-options args))))
+
+;;; REQ: REQ-IPC-001 REQ-IDX-010 REQ-AFF-008
+(deftest test-REQ-IPC-001-discovery-rejected-before-clock-or-namespace
+  (dolist (value '(t 1 "image"))
+    (signals arcdocdb.conditions:invalid-argument
+      (l:serve-local "/missing" (id 73) (id 41) "/missing/socket"
+        :index-discovery value :clock (lambda () (error "Clock reached")))))
+  (signals arcdocdb.conditions:invalid-argument
+    (l:serve-local "/missing" (id 73) (id 41) "/missing/socket" :create t
+      :index-discovery (e:crea-opzione-scoperta-indice)
+      :clock (lambda () (error "Clock reached")))))
+
+;;; REQ: REQ-IPC-002 REQ-LIM-003
+(deftest test-REQ-IPC-002-readiness-deadline-ceil-cap-and-all-slot-interests
+  (is (zerop (l::local-wait-milliseconds 10 10)))
+  (is (zerop (l::local-wait-milliseconds 11 10)))
+  (is (= 1 (l::local-wait-milliseconds 0 1)))
+  (is (= 100 (l::local-wait-milliseconds 0 internal-time-units-per-second)))
+  (let* ((now internal-time-units-per-second) (earliest (+ now (floor internal-time-units-per-second 500)))
+         (connections (make-array 8)) (observed nil) (expected-ms 2)
+         (backend (l::make-native-backend :control
+                    (lambda (op args)
+                      (is (eq :poll op))
+                      (destructuring-bind (buffer count ms) args
+                        (is (= count 9)) (is (= ms expected-ms))
+                        (is (= 0 (arcdocdb.binary:leggi-u32 buffer 0)))
+                        (is (= 1 (arcdocdb.binary:leggi-u16 buffer 4)))
+                        (loop for slot from 1 to 8 for state across connections do
+                          (let ((fd (arcdocdb.binary:leggi-u32 buffer (* slot 8)))
+                                (flags (arcdocdb.binary:leggi-u16 buffer (+ 4 (* slot 8)))))
+                            (if (eq :closed (l::local-connection-state state))
+                                (is (= fd #xffffffff)) (is (= fd slot)))
+                            (is (= flags (case (l::local-connection-state state)
+                                           (:closed 0) ((:response :welcome) 4) (otherwise 1)))))))
+                      (setf observed t) (values 0 0))))
+         (listener (l::%make-native-listener "/fake" nil nil nil)))
+    (loop for i below 8 for state in '(:hello :request :request :welcome :response :closed :request :hello) do
+      (setf (svref connections i) (l::make-local-connection :state state :socket (1+ i)
+                                  :idle (+ now internal-time-units-per-second)
+                                  :deadline (+ now internal-time-units-per-second))))
+    (setf (l::native-listener-fd listener) 0
+          (l::local-connection-deadline (svref connections 1)) 0
+          (l::local-connection-frame-started (svref connections 2)) t
+          (l::local-connection-deadline (svref connections 2)) earliest)
+    (l::wait-local-server listener connections (l::make-local-waiter 9 backend) now)
+    (is observed)
+    (setf expected-ms 1 (l::local-connection-deadline (svref connections 0)) (+ now 1))
+    (l::wait-local-server listener connections (l::make-local-waiter 9 backend) now)
+    (setf expected-ms 0 (l::local-connection-deadline (svref connections 0)) now)
+    (l::wait-local-server listener connections (l::make-local-waiter 9 backend) now)))
+
+;;; REQ: REQ-IPC-002 REQ-AFF-004 REQ-LIM-003
+(deftest test-REQ-IPC-002-client-readiness-partial-eintr-and-absolute-deadline
+  (dolist (direction '(:input :output))
+    (let ((calls 0) (polls 0) (starts nil))
+      (let* ((transfer (lambda (fd buffer start count)
+                         (declare (ignore buffer count)) (is (= fd 0)) (push start starts) (incf calls)
+                         (case calls (1 (values -1 sb-posix:eintr)) (2 (values 2 0))
+                           (3 (values -1 sb-posix:eagain)) (otherwise (values 2 0)))))
+             (backend (l::make-native-backend :recv transfer :send transfer :control
+                        (lambda (op args)
+                          (is (eq op :poll)) (incf polls)
+                          (destructuring-bind (buffer n ms) args
+                            (is (= n 1)) (is (= ms 100))
+                            (is (= (if (eq direction :input) 1 4) (arcdocdb.binary:leggi-u16 buffer 4)))
+                            (if (= polls 1) (values -1 sb-posix:eintr)
+                                (progn (arcdocdb.binary:scrivi-u16 buffer 6 (if (eq direction :input) 1 4))
+                                       (values 1 0)))))))
+             (client (l::make-local-client :socket 0 :io-backend backend :clock (lambda () 0)
+                       :waiter (l::make-local-waiter 1 backend))))
+        (is (= 4 (l::transfer-local-client client (bytes 0 0 0 0) 0 4 direction internal-time-units-per-second)))
+        (is (= polls 2)) (is (equal '(0 0 2 2) (reverse starts))))))
+  (let* ((calls 0) (times '(0 10))
+         (backend (l::make-native-backend :recv
+                    (lambda (fd buffer start count) (declare (ignore fd buffer start count))
+                      (incf calls) (values -1 sb-posix:eagain))
+                    :control (lambda (&rest args) (declare (ignore args)) (error "Poll after deadline"))))
+         (client (l::make-local-client :socket 0 :io-backend backend :clock (lambda () (pop times))
+                   :waiter (l::make-local-waiter 1 backend))))
+    (signals l:protocol-error (l::transfer-local-client client (bytes 0) 0 1 :input 10))
+    (is (= calls 1))))

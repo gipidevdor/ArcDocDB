@@ -29,30 +29,33 @@
 ;;; REQ: REQ-IPC-001 REQ-REC-001
 (defun server-cli-options (args)
   "Pre: opzioni residue CLI. Post: init/version espliciti senza duplicati."
-  (let ((create nil) (version 2) (seen-version nil))
+  (let ((create nil) (version 2) (seen-version nil) (discover nil))
     (loop while args do
       (let ((option (pop args)))
-        (cond ((and (string= option "--create") (not create)) (setf create t))
+        (cond ((and (string= option "--discover-index") (not discover)) (setf discover t))
+              ((and (string= option "--create") (not create)) (setf create t))
               ((and (string= option "--version") args (not seen-version)
                     (member (first args) '("1" "2") :test #'string=))
                (setf version (if (string= (pop args) "1") 1 2) seen-version t))
               (t (error 'arcdocdb.conditions:invalid-argument :reason :local-cli-option)))))
-    (values create version)))
+    (when (and create discover)
+      (error 'arcdocdb.conditions:invalid-argument :reason :local-index-discovery-create))
+    (values create version (when discover (e:crea-opzione-scoperta-indice)))))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002 REQ-REC-001
 (defun server-cli-main (args)
-  "Pre: processo dedicato, DATA SOCKET ARCHIVE32 SERIES32 [--create] [--version 1|2].
+  "Pre: processo dedicato, DATA SOCKET ARCHIVE32 SERIES32 [--create] [--version 1|2] [--discover-index].
 Post: servizio reale fino a SIGTERM/SIGINT, poi cleanup; stampa READY solo dopo listen."
-  (unless (<= 4 (length args) 7)
+  (unless (<= 4 (length args) 8)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-server-cli-arguments))
-  (multiple-value-bind (create version) (server-cli-options (nthcdr 4 args))
+  (multiple-value-bind (create version discovery) (server-cli-options (nthcdr 4 args))
     (let ((stopping nil))
       (flet ((stop-signal (signal info context)
                (declare (ignore signal info context)) (setf stopping t)))
         (sb-sys:enable-interrupt sb-posix:sigterm #'stop-signal)
         (sb-sys:enable-interrupt sb-posix:sigint #'stop-signal)
         (serve-local (first args) (local-unhex (third args) 16 16)
-          (local-unhex (fourth args) 16 16) (second args) :create create :version version
+          (local-unhex (fourth args) 16 16) (second args) :create create :version version :index-discovery discovery
           :stop (lambda () stopping)
           :ready (lambda ()
                    (format t "~S~%" (list :kind :local-server :state :ready :pid (sb-posix:getpid)))

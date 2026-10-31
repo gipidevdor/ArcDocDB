@@ -75,6 +75,10 @@ because Unix bind/chmod operate by pathname.
 
 Injectable monotonic clock; HELLO within 5 s of accept, frame within 30 s
 of first byte, response within 30 s of enqueue, idle within 300 s.
+Readiness-driven waits use a preallocated, actor-owned poll set (at most nine
+descriptors), capped by the closest deadline and 100 ms; the client waits on
+its actual input/output interest. No fixed 1 ms delay is imposed per request.
+[Wait/error/qualification contract](prestazioni-local-m1.md).
 Partial progress does not renew deadline. Slow client loses
 own connection; others continue actor loop.
 
@@ -143,3 +147,10 @@ Client represents key/CBOR document in hex, returns structured
 record, does not use Lisp reader for arguments. Example `182A`
 is unsigned 42 CBOR document. Error/unknown outcome produces nonzero
 exit; caller decides how to resolve possible retry.
+
+## Optional startup image discovery
+
+The library's `:index-discovery` option and the CLI flag `--discover-index`
+connect the bounded engine discovery path to service startup. Recovery and full
+image verification finish before listen/READY. See the
+[configuration, validation and limits](scoperta-indice-local-m1.md).

@@ -1,0 +1,1 @@
+(:kind :benchmark-cleanup :status :ok :duplicate-directories 20 :duplicate-bytes 26371136 :verification :byte-identical-or-sha256-and-gzip-payload :unique-evidence-removed nil :failed-owned-fixture-removed t :other-worktrees-modified nil)

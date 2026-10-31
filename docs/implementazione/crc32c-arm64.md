@@ -15,7 +15,8 @@ loading and dependencies before runtime selection.
 `crc32c` delegates to kernel selected before workers start.
 `backend-crc32c` exposes `:lisp` or `:arm64-crc32c`. The slicing-by-8
 fallback also preserves standalone foundation loaders.
-Hardware backend enabled only on macOS ARM64/SBCL 2.6.9,
+Hardware backend enabled only on macOS ARM64/SBCL 2.6.9 or 2.6.10
+([qualification extension](../adr/0074-crc32c-sbcl-2.6.10.md)),
 after OS confirmation of CRC32C and NEON availability. OS
 detection is in I/O module; no syscall, allocation, or shared write
 is added to GET for backend selection.

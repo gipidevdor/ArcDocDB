@@ -41,7 +41,7 @@
         (local-transfer-step (local-client-socket client) buffer start end direction (local-client-io-backend client))
       (case status
         (:progress (incf start count))
-        (:wait (sleep 0.001))
+        (:wait (wait-local-client client direction until))
         (:eof (error 'protocol-error :reason :local-client-eof)))))
   end)
 
@@ -61,7 +61,8 @@ Nessuna operazione dati durante handshake; errore chiude sempre il socket possed
   (unless (and (typep max-frame '(integer 4096 17825792)) (functionp clock))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-client-configuration))
   (%native-check-backend io-backend)
-  (let* ((client (make-local-client :clock clock :limit (min 65536 max-frame) :io-backend io-backend))
+  (let* ((client (make-local-client :clock clock :limit (min 65536 max-frame) :io-backend io-backend
+                                    :waiter (make-local-waiter 1 io-backend)))
          (until (local-until (local-now clock) 5)))
     (handler-case
         (progn

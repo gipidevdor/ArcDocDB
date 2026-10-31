@@ -1,0 +1,22 @@
+{
+  "scope": "proof-local drivers excluded from normal record-command source inventory",
+  "captured": "after launch, before completion; final hash recheck required",
+  "files": {
+    "bench.lisp": {
+      "sha256": "3324099ebccc6a7a7e7ded910d660f7b645119c6455da1312aa0314efb72e82b",
+      "git_blob": "74e0b489935cf6c6adb51bf6d08991c9b27ea2f2"
+    },
+    "method.md": {
+      "sha256": "a69e98465ac0f1914e63de8339b493831810971ac95dd29e75f2a4b9517e4a23",
+      "git_blob": "547c9247e40ebd1d32335e8be01667ffbc18a9d8"
+    }
+  },
+  "final_hash_check": "benchmark driver and original method identical after both runtime profiles",
+  "analysis_helpers": {
+    "summarize.lisp": "82cdd0166e11ad98200257efe39d33ac1c20d486177d24d365c7b1adb26060db",
+    "extra-summary.lisp": "6b76b4aabcd660a8ac7432040af0541d041288ad2cb5a8ee4d88e58b885a2176",
+    "component-summary.lisp": "e7fb4c6e54ff088937e991816c3ecfca9406dfb69f7456523982d2d0c651c1f1",
+    "validate-archive.lisp": "a443c2c1e6ba0734a5e7766e0684b05b0711b0dcda7e1b25f3d248eab8808b6c",
+    "component-method.md": "4f04a16088537fd0e46ff49d9a67fd50a503f32237a972ba6380b0523e0a2f85"
+  }
+}

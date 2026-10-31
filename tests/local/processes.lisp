@@ -187,7 +187,7 @@
          "Risposta CLI inattesa: ~S" form)
   form)
 
-(defun start-server (data runtime version stage &key create (script "tools/local-server.lisp") expected-failure)
+(defun start-server (data runtime version stage &key create discovery (script "tools/local-server.lisp") expected-failure)
   (let* ((socket (socket-path runtime (format nil "v~D-~D.sock" version stage)))
          (name (format nil "v~D-server-~D" version stage)))
     (check (null (lstat-if-present socket)) "Socket non fresco: ~A" socket)
@@ -195,6 +195,7 @@
                          (append (list (namestring data) (namestring socket)
                                        *archive-hex* *series-hex*)
                                  (when create (list "--create"))
+                                 (when discovery (list "--discover-index"))
                                  (list "--version" (write-to-string version)))
                          :expected-failure expected-failure))
           (limit (deadline *process-timeout*)))
@@ -445,10 +446,11 @@
       (client-request socket :put :key *key-two* :document "F4" :csn 2)
       (stop-server server sb-posix:sigterm :lost-ack-recovered))))
 
-(defun rejected-server (data socket version name &key no-node)
+(defun rejected-server (data socket version name &key no-node discovery)
   (let ((child (launch name :server "tools/local-server.lisp"
-                       (list (namestring data) (namestring socket) *archive-hex* *series-hex*
-                             "--version" (write-to-string version))
+                       (append (list (namestring data) (namestring socket) *archive-hex* *series-hex*
+                                     "--version" (write-to-string version))
+                               (when discovery (list "--discover-index")))
                        :expected-failure t)))
     (wait-exit child :absent-socket (when no-node socket))
     (check (and (eq :exited (sb-ext:process-status (child-process child)))
@@ -627,3 +629,74 @@
        (funcall test)
        (format t "~&ok    ~A~%" test))))
   t)
+
+(defun prepare-discovery-image (data version)
+  (let* ((engine (arcdocdb.engine:apri-motore data (decode-hex *archive-hex*) (decode-hex *series-hex*)
+                   :create t :version version :clock #'get-internal-real-time))
+         (option (arcdocdb.engine:crea-opzione-indice-paginato "primary-0000000000000001.idx.tmp")))
+    (unwind-protect
+         (progn
+           (check (= 1 (arcdocdb.engine:scrivi-documento engine (decode-hex *key-one*) (decode-hex "182A")))
+                  "Unexpected seed CSN")
+           (arcdocdb.engine:costruisci-indice-paginato-motore engine option))
+      (arcdocdb.engine:chiudi-motore engine))
+    (merge-pathnames "primary-0000000000000001.idx.tmp" data)))
+
+(defun check-library-discovery-gate (data runtime version)
+  (let* ((path (socket-path runtime (format nil "library-v~D.sock" version)))
+         (observed nil) (ready nil))
+    (l:serve-local data (decode-hex *archive-hex*) (decode-hex *series-hex*) (namestring path)
+      :version version :stop (constantly t)
+      :index-discovery (arcdocdb.engine:crea-opzione-scoperta-indice :frames 1 :max-candidates 1)
+      :observer (lambda (engine phase)
+                  (when (eq phase :index-image-ready)
+                    (check (null (lstat-if-present path)) "Socket opened before image verification")
+                    (check (eq :recovering (arcdocdb.engine:stato-motore engine)) "Early READY")
+                    (check (arcdocdb.engine::motore-paged engine) "Image not adopted")
+                    (setf observed t)) nil)
+      :ready (lambda ()
+               (check observed "READY before image callback")
+               (check (lstat-if-present path) "READY without socket") (setf ready t) nil))
+    (check ready "Missing READY callback")
+    (check (null (lstat-if-present path)) "Library socket leaked")))
+
+;;; REQ: REQ-IPC-001 REQ-IPC-002 REQ-IDX-010 REQ-REC-001
+(deftest test-REQ-IPC-001-discovery-cli-real-get-write-and-stale-restart-v1-v2
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "discovery-runtime/")))
+       (dolist (version '(1 2))
+         (let* ((data (subdirectory (format nil "discovery-v~D/" version)))
+                (image (prepare-discovery-image data version))
+                (original (arcdocdb.engine.tests::image image)))
+           (check-library-discovery-gate data runtime version)
+           (multiple-value-bind (server socket) (start-server data runtime version 70 :discovery t)
+             (client-request socket :get :key *key-one* :expected-document "182A")
+             (client-request socket :put :key *key-one* :document "182B" :csn 2)
+             (client-request socket :get :key *key-one* :expected-document "182B")
+             (stop-server server sb-posix:sigterm :discovery-write-completed))
+           (multiple-value-bind (server socket) (start-server data runtime version 71 :discovery t)
+             (client-request socket :get :key *key-one* :expected-document "182B")
+             (client-request socket :delete :key *key-one* :csn 3)
+             (client-request socket :get :key *key-one*)
+             (stop-server server sb-posix:sigterm :discovery-stale-completed))
+           (check (equalp original (arcdocdb.engine.tests::image image)) "Derived image changed")))))))
+
+;;; REQ: REQ-IPC-001 REQ-IPC-003 REQ-IDX-010 REQ-REC-001
+(deftest test-REQ-IPC-001-discovery-corrupt-selected-image-no-listener-v1-v2
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "discovery-corrupt-runtime/")))
+       (dolist (version '(1 2))
+         (let* ((data (subdirectory (format nil "discovery-corrupt-v~D/" version)))
+                (image (prepare-discovery-image data version))
+                (socket (socket-path runtime (format nil "corrupt-v~D.sock" version))))
+           (with-open-file (stream image :direction :io :if-exists :overwrite :element-type '(unsigned-byte 8))
+             (file-position stream 4224)
+             (let ((byte (read-byte stream)))
+               (file-position stream 4224) (write-byte (logxor byte 1) stream)))
+           (rejected-server data socket version (format nil "discovery-corrupt-v~D" version)
+             :no-node t :discovery t)
+           (multiple-value-bind (server path) (start-server data runtime version 72)
+             (client-request path :get :key *key-one* :expected-document "182A")
+             (stop-server server sb-posix:sigterm :resident-after-discovery-refusal))))))))

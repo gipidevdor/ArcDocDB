@@ -118,11 +118,13 @@
 (deftest test-REQ-FOR-003-crc-compiler-platform-matrix
   (let ((qualified '(:sbcl :arm64 :darwin :64-bit :little-endian)))
     (is (arcdocdb.io.cpu::compilatore-crc32c-qualificato-p qualified "2.6.9"))
+    (is (arcdocdb.io.cpu::compilatore-crc32c-qualificato-p qualified "2.6.10"))
     ;; Ogni condizione cambia da sola l'esito, mantenendo vere le altre.
-    (dolist (feature qualified)
-      (is (not (arcdocdb.io.cpu::compilatore-crc32c-qualificato-p
-                (remove feature qualified) "2.6.9"))))
-    (dolist (version '("" "2.6.8" "2.6.9.1" "2.6.10" "3.0.0"))
+    (dolist (version '("2.6.9" "2.6.10"))
+      (dolist (feature qualified)
+        (is (not (arcdocdb.io.cpu::compilatore-crc32c-qualificato-p
+                  (remove feature qualified) version)))))
+    (dolist (version '("" "2.6.8" "2.6.9.1" "2.6.10.1" "2.6.11" "3.0.0"))
       (is (not (arcdocdb.io.cpu::compilatore-crc32c-qualificato-p qualified version))))
     (is (not (arcdocdb.io.cpu::compilatore-crc32c-qualificato-p
               (cons :arcdocdb-crc32c-software qualified) "2.6.9")))
@@ -154,3 +156,22 @@
   (progn (is (eq :lisp (arcdocdb.binary:backend-crc32c)))
          (is (not (fboundp 'arcdocdb.binary::crc32c-arm64)))
          (is (not (fboundp 'arcdocdb.binary::emetti-crc-arm64)))))
+
+;;; REQ: REQ-FOR-003 REQ-AFF-002 REQ-AFF-004
+(deftest test-REQ-FOR-003-crc-native-qualification-spans-seeds-and-splits
+  (let* ((buffer (make-array 65568 :element-type '(unsigned-byte 8))) (state #x734b5621)
+         (lengths '(0 1 2 3 7 8 9 15 16 17 31 32 33 63 64 65 127 128 129 255 256 257
+                    1023 1024 1025 4095 4096 4097 16383 16384 16385 65535 65536)))
+    (dotimes (i (length buffer))
+      (setf state (logand #xffffffff (+ (* state 1664525) 1013904223))
+            (aref buffer i) (ldb (byte 8 16) state)))
+    (let ((original (copy-seq buffer)))
+      (dotimes (start 32)
+        (dolist (length lengths)
+          (dolist (seed '(0 1 #x80000000 #xffffffff))
+            (let* ((end (+ start length)) (middle (+ start (floor length 2)))
+                   (expected (arcdocdb.binary::crc32c-lisp buffer start end seed))
+                   (prefix (crc32c buffer start middle seed)))
+              (is (= expected (crc32c buffer start end seed)))
+              (is (= expected (crc32c buffer middle end prefix)))))))
+      (is (equalp original buffer)))))

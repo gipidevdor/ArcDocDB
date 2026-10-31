@@ -8,6 +8,7 @@
 | Environment | Automatic backend | Performance qualification |
 |---|---|---|
 | macOS ARM64, SBCL 2.6.9, OS CRC and NEON present | ARM64 CRC32C | Local M4: 4 KiB cache-hit GET 1.684 µs, software 6.758 µs |
+| macOS ARM64, SBCL 2.6.10, OS CRC and NEON present | ARM64 CRC32C under [ADR-0074](../adr/0074-crc32c-sbcl-2.6.10.md) | [Separate qualification and measurements](prestazioni-local-m1.md); no transfer of the old figures |
 | Same environment with missing CRC/NEON or failed probing | Lisp slicing-by-8 | Correctness fallback |
 | Linux x86-64, reference platform | Lisp slicing-by-8 | No hardware measurement transferred from M4 |
 | Linux ARM64, macOS x86-64, other SBCL versions | Lisp slicing-by-8 | No acceleration enabled without qualification |
@@ -21,7 +22,7 @@ Performance results are medians of hot-data windows, not P99.
 ## Bootstrap and rollback
 
 ASDF and CI measurement loader share `src/io/cpu-build.lisp`.
-Only the qualified combination requires SB-SIMD and reads VOP
+Only the exact qualified combinations (2.6.9 and 2.6.10 on macOS ARM64) require SB-SIMD and reads VOP
 definitions or NEON references. Subsequent kernel choice requires
 OS/CPU confirmation. Public function `backend-crc32c` reports outcome.
 Both native ASDF components also have `:if-feature`: fallback does not

@@ -360,7 +360,7 @@
   :inv ("INV-F1") :adr ("ADR-0014" "ADR-0052") :ver (:test :rev) :fi ())
  (:id "REQ-FOR-003" :src "ADR-0039" :cls "C1" :stato :progettato
   :txt "All records in all logs share the same 24-byte frame with header CRC and body CRC; the header is verified before lengths are used; body CRC is computed outside the writer."
-  :inv ("INV-F1" "INV-F2") :adr ("ADR-0039" "ADR-0059" "ADR-0060") :ver (:test :fuzz :corr :bench :diff) :fi ())
+  :inv ("INV-F1" "INV-F2") :adr ("ADR-0074" "ADR-0039" "ADR-0059" "ADR-0060") :ver (:test :fuzz :corr :bench :diff) :fi ())
  (:id "REQ-FOR-004" :src "ADR-0047" :cls "C1" :stato :progettato
   :txt "Reading a prepared record verifies authoritative segment proof (OUTCOME or manifest outcome): the proof TXID matches the record stamp and its CSN matches the entry's; missing, corrupt, or wrong-version proof produces an integrity error."
   :inv ("INV-A2" "INV-S7") :adr ("ADR-0039" "ADR-0047") :ver (:test :corr :fuzz :diff) :fi ())

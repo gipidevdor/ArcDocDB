@@ -230,6 +230,8 @@ Ownership: syscall POSIX solo qui; metadata privati, FD trasferiti solo dal call
                   (:accept (%native-accept (first arguments) (sb-sys:int-sap 0) (sb-sys:int-sap 0)))
                   (:listen (%native-listen (first arguments) 64))
                   (:socket-error (return-from %native-control (%native-socket-error (first arguments))))
+                  (:poll (return-from %native-control
+                           (arcdocdb.io::sonde-attesa-native (first arguments) (second arguments) (third arguments))))
                   (:wait-output (sb-sys:wait-until-fd-usable (first arguments) :output (second arguments) nil))
                   (:close (sb-posix:close (first arguments)))
                   (:root (sb-posix:open "/" (%native-directory-flags)))

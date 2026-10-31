@@ -1,0 +1,1 @@
+(:kind :local-performance-cleanup :status :ok :duplicate-directories 23 :duplicate-bytes 17207331 :regenerable-fixture-bytes 38519130 :private-software-cache-removed t :verification :byte-or-sha256-and-gzip-payload :unique-evidence-removed nil :other-worktrees-modified nil)

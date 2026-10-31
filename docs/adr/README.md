@@ -191,3 +191,5 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0069](0069-manutenzione-a-soglie-delta-m1.md) | Local threshold policy on keys/bytes and serial delta renewal | Accepted in incremental integration; backend selection and scheduler separate |
 
 | [0070](0070-scoperta-readonly-immagini-m1.md) | Bounded search for current candidates and full verification at M1 startup | Accepted in incremental integration; durable catalog and mode selection separate |
+
+| [0074](0074-crc32c-sbcl-2.6.10.md) | Extend exact ARM64 CRC32C compiler qualification to SBCL 2.6.10 | Accepted for integration; qualification evidence required |

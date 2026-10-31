@@ -10,7 +10,7 @@
 Funzione pura, nessun probing CPU; combinazioni ignote/disabilitate => NIL, nessun errore."
   (and (member :sbcl features) (member :arm64 features) (member :darwin features)
        (member :64-bit features) (member :little-endian features)
-       (string= version "2.6.9") (not (member :arcdocdb-crc32c-software features)) t))
+       (member version '("2.6.9" "2.6.10") :test #'string=) (not (member :arcdocdb-crc32c-software features)) t))
 
 ;;; REQ: REQ-FOR-003 REQ-AFF-004
 (declaim (ftype (function () null) configura-compilatore-crc32c))

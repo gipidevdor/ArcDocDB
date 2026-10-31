@@ -1,0 +1,11 @@
+(require :asdf)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(asdf:load-system "arcdocdb/tests")
+(let ((count 0))
+  (dolist (package '("ARCDOCDB.LOCAL.SERVER.TESTS" "ARCDOCDB.LOCAL.PROCESS.TESTS"))
+    (dolist (test (reverse (symbol-value (find-symbol "*TESTS*" package))))
+      (when (search "TEST-REQ-IPC-001-DISCOVERY-" (symbol-name test))
+        (funcall test) (incf count) (format t "~&PASS ~A~%" test))))
+  (assert (= count 4))
+  (format t "~&~S~%" (list :kind :local-index-discovery-tests :status :passed :tests count
+                          :scope :macos-arm64 :power-loss nil :remote-ci nil)))

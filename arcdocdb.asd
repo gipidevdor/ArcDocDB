@@ -90,7 +90,7 @@
                              (:file "payload-write")))
                (:module "io" :serial t
                 :components ((:file "package") (:file "types") (:file "identity-types")
-                             (:file "native") (:file "native-namespace") (:file "native-publish")
+                             (:file "native") (:file "readiness") (:file "native-namespace") (:file "native-publish")
                              (:file "native-directory")
                              (:file "native-open-relative")
                              (:file "native-create-relative")
@@ -232,7 +232,7 @@
   :depends-on ("arcdocdb")
   :pathname "src/local/"
   :serial t
-  :components ((:file "package") (:file "wire") (:file "native") (:file "state")
+  :components ((:file "package") (:file "wire") (:file "native") (:file "state") (:file "readiness")
                (:file "dispatch") (:file "server") (:file "client") (:file "cli")))
 
 (defsystem "arcdocdb/tests"
@@ -335,7 +335,7 @@
                              (:file "compaction-scan")
                              (:file "control-payload")))
                (:module "io" :serial t
-                :components ((:file "support") (:file "transfer") (:file "native")
+                :components ((:file "support") (:file "transfer") (:file "native") (:file "readiness")
                              (:file "rename") (:file "rename-native") (:file "flush-failure")
                              (:file "transfer-failure") (:file "open-relative-support")
                              (:file "open-relative") (:file "open-relative-native")

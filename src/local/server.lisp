@@ -139,7 +139,7 @@ EINTR/EAGAIN tornano al giro dell'attore conservando offset e deadline assoluta.
       t)))
 
 ;;; REQ: REQ-IPC-002 REQ-AFF-004
-(defun local-server-loop (engine listener connections clock stop)
+(defun local-server-loop (engine listener connections clock stop waiter)
   "Pre: READY, tutte le risorse riservate. Post: arresto esplicito o errore motore propagato.
 Ogni giro visita tutti gli slot una volta; attesa inattiva finita senza servire eventi estranei."
   (loop until (funcall stop) do
@@ -153,7 +153,7 @@ Ogni giro visita tutti gli slot una volta; attesa inattiva finita senza servire 
           (arcdocdb.conditions:io-fault (condition)
             (unless (eq :ready (e:stato-motore engine)) (error condition))
             (close-local-connection connection))))
-      (unless progress (sleep 0.001))))
+      (unless progress (wait-local-server listener connections waiter (local-now clock)))))
   nil)
 
 ;;; REQ: REQ-IPC-003 REQ-AFF-004
@@ -175,19 +175,25 @@ Ogni giro visita tutti gli slot una volta; attesa inattiva finita senza servire 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002 REQ-IPC-003 REQ-REC-001
 (defun serve-local (directory archive-id series-id path
                     &key create (version 2) (clock #'get-internal-real-time) observer
-                         (stop (constantly nil)) ready (max-connections 8) io-backend)
+                         (stop (constantly nil)) ready (max-connections 8) io-backend index-discovery)
   "Pre: directory dati/runtime distinte e private, identita' esplicite, un attore chiamante.
 Post: startup e recovery reali prima del listener; servizio fino a STOP, cleanup completo.
+INDEX-DISCOVERY is validated before resources and delegated before listen.
 Callback fidati non rientrabili; STOP/READY non sono certificazioni del recovery. Nessun retry."
   (unless (and (functionp clock) (functionp stop) (typep ready '(or null function))
                (typep max-connections '(integer 1 8)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-server-config))
+  (unless (typep index-discovery '(or null e:opzione-scoperta-indice))
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-index-discovery-config))
+  (when (and create index-discovery)
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-index-discovery-create))
   (%native-check-backend io-backend)
   (local-until (local-now clock) 300)
   (let ((connections (map 'simple-vector (lambda (i) (declare (ignore i))
                                          (make-local-connection :io-backend io-backend))
                           (make-array max-connections)))
-        (engine nil) (listener nil) (namespace nil) (primary nil) (space (arcdocdb.cbor:crea-spazio-cbor)))
+        (engine nil) (listener nil) (namespace nil) (primary nil)
+        (waiter (make-local-waiter (1+ max-connections) io-backend)) (space (arcdocdb.cbor:crea-spazio-cbor)))
     (unwind-protect
          (handler-case
              (progn
@@ -197,12 +203,12 @@ Callback fidati non rientrabili; STOP/READY non sono certificazioni del recovery
                    (when (and (= device (sb-posix:stat-dev stat)) (= inode (sb-posix:stat-ino stat)))
                      (error 'arcdocdb.conditions:invalid-argument :reason :local-runtime-is-storage))))
                (setf engine (e:apri-motore directory archive-id series-id :create create :version version
-                              :clock clock :observer observer :record-validator (local-record-validator space)))
+                              :clock clock :observer observer :index-discovery index-discovery :record-validator (local-record-validator space)))
                (unless (eq :ready (e:stato-motore engine))
                  (error 'arcdocdb.conditions:invariant-violation :reason :local-startup-gate))
                (setf listener (open-local-listener path :namespace namespace))
                (when (and ready (funcall ready))
                  (error 'arcdocdb.conditions:invalid-argument :reason :local-ready-result))
-               (local-server-loop engine listener connections clock stop))
+               (local-server-loop engine listener connections clock stop waiter))
            (error (condition) (setf primary condition) (error condition)))
       (cleanup-local-server connections listener engine namespace primary))))

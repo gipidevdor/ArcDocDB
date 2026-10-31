@@ -57,6 +57,7 @@
 (defstruct (local-client (:constructor make-local-client) (:copier nil))
   "Handle seriale; una richiesta in volo e nessun retry dopo perdita della risposta."
   socket
+  (waiter (arcdocdb.io::crea-attesa-io 1) :type arcdocdb.io::attesa-io :read-only t)
   (io-backend nil :read-only t)
   (owner sb-thread:*current-thread* :read-only t)
   (clock #'get-internal-real-time :type function :read-only t)

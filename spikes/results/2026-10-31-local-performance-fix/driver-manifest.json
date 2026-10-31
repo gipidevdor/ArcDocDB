@@ -1,0 +1,24 @@
+{
+  "scope": "proof drivers are excluded from standard command source inventory; explicit hashes retained",
+  "files": {
+    "spikes/results/2026-10-31-local-performance-fix/qualify.lisp": {
+      "sha256": "56bf00c0ab14ed51ad7a7f87b54a003ca00d97a057ca57f87d80fe0e2db9ae3d"
+    },
+    "spikes/results/2026-10-31-local-performance-fix/cache-transition.lisp": {
+      "sha256": "8abf8eb976ba90f9d89f80ea36cf6868521473fc870220fc7a8910a874e21262"
+    },
+    "spikes/results/2026-10-31-local-performance-fix/strict-software.lisp": {
+      "sha256": "7fa89559d3131bc2486644cef1a36d44103fcebc1bdfd93590c064f4615327c0"
+    },
+    "spikes/results/2026-10-31-local-index-bench/bench.lisp": {
+      "sha256": "3324099ebccc6a7a7e7ded910d660f7b645119c6455da1312aa0314efb72e82b"
+    }
+  },
+  "status": "driver hashes unchanged after both completed matrices",
+  "postprocessing_helpers": {
+    "spikes/results/2026-10-31-local-index-bench/summarize.lisp": "82cdd0166e11ad98200257efe39d33ac1c20d486177d24d365c7b1adb26060db",
+    "spikes/results/2026-10-31-local-index-bench/extra-summary.lisp": "6b76b4aabcd660a8ac7432040af0541d041288ad2cb5a8ee4d88e58b885a2176",
+    "spikes/results/2026-10-31-local-performance-fix/component-summary.lisp": "fbe3920e103ba3f72ebdbde175733443a31411ea71f38a18fc1563414e431037"
+  },
+  "validation_helper_sha256": "74f9269dab7f879072e5aef8a9a7d282610630d890640f74d267f9e7d792a1f7"
+}

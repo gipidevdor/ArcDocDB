@@ -1,4 +1,7 @@
 ;;;; SPK-07 variant: finite independent slot-selection model, no production code loaded.
+(require :asdf)
+(format t "~&~S~%" (list :kind :finite-model-driver :sha256-output
+  (uiop:run-program (list "shasum" "-a" "256" (namestring *load-truename*)) :output :string)))
 (defpackage #:group.reservation.model (:use #:cl))
 (in-package #:group.reservation.model)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))

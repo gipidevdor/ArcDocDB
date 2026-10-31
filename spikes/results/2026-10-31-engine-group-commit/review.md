@@ -84,3 +84,18 @@ exact CSNs, counted canonical flushes, value oracles, negative controls and fres
 recovery. Self-test timing is excluded from final aggregates. Final measurement
 campaigns run serially after functional qualification, with all product sources
 frozen; results-directory artifacts do not enter the source snapshot.
+
+The final merge includes the independently published offline verifier and its
+recovery-source observer extension. Both full product campaigns were restarted
+on that combined implementation. All five qualification/measurement inventories
+match exactly (1,630 entries). Two pre-merge interrupted campaigns are excluded,
+including one SBCL SIGTERM exit reported as zero; the identity self-test rejects
+it using the missing build-completion marker.
+
+The summarizer's first negative fixture used lowercase text against its explicit
+uppercase output selector and therefore failed to exercise the unsafe reader.
+The fixture was corrected, its original helper and failing record retained, and
+the negative reader control then passed. The initial archive map also included
+a recorder-self-test fixture root without `report.lisp`; the failed copy attempt
+and original map are retained, and final copying verifies all existing partial
+copies byte-for-byte. Neither correction changed product code or measurements.

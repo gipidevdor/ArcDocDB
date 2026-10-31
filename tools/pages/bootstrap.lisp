@@ -41,11 +41,21 @@
   (assert (member-safe-p "codex/src/main.lisp" "codex"))
   (assert (not (member-safe-p "codex/../outside" "codex")))
   (assert (not (member-safe-p "/codex/src" "codex")))
-  (format t "Documentation bootstrap checks: 8 passed.~%"))
+  (format t "Documentation bootstrap checks: ~D passed.~%" (+ 8 (test-download-cache))))
 
-(defun download (entry)
+(defun fetch (url target)
+  (command "curl" "--fail" "--location" "--silent" "--show-error"
+           "--proto" "=https" "--proto-redir" "=https"
+           "--connect-timeout" "20" "--max-time" "180"
+           "--retry" "2" "--max-filesize" "33554432"
+           "--output" (namestring target) url))
+
+(defun download (entry &optional (fetcher #'fetch))
   (let* ((sha256 (getf entry :sha256)) (url (getf entry :url))
-         (file (merge-pathnames (concatenate 'string "archives/" sha256) *work*)))
+         ;; RENAME-FILE merges a NIL destination type with the source type.
+         ;; :UNSPECIFIC keeps this extensionless cache name from inheriting .tmp.
+         (file (make-pathname :type :unspecific
+                              :defaults (merge-pathnames (concatenate 'string "archives/" sha256) *work*))))
     (unless (and (digest-p sha256) (uiop:string-prefix-p "https://" url))
       (error "Documentation lock: invalid digest or URL in ~S" entry))
     (ensure-directories-exist file)
@@ -53,17 +63,52 @@
       (let ((temporary (make-pathname :type "tmp" :defaults file)))
         (unwind-protect
              (progn
-               (command "curl" "--fail" "--location" "--silent" "--show-error"
-                        "--proto" "=https" "--proto-redir" "=https"
-                        "--connect-timeout" "20" "--max-time" "180"
-                        "--retry" "2" "--max-filesize" "33554432"
-                        "--output" (namestring temporary) url)
+               (funcall fetcher url temporary)
                (unless (equal (digest temporary) sha256)
                  (error "Documentation dependency SHA256 mismatch: ~A" url))
                (when (probe-file file) (delete-file file))
                (rename-file temporary file))
           (when (probe-file temporary) (delete-file temporary)))))
     file))
+
+(defun test-download-cache ()
+  (uiop:with-temporary-file (:pathname marker :prefix "arcdocdb-docs-bootstrap-")
+    (let* ((*work* (uiop:ensure-directory-pathname (concatenate 'string (namestring marker) "-cache/")))
+           (fixture (merge-pathnames "fixture" *work*)) (calls 0) (count 0)
+           (sha256 "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+           (entry (list :url "https://example.invalid/fixture" :sha256 sha256))
+           (expected (merge-pathnames (concatenate 'string "archives/" sha256) *work*)))
+      (ensure-directories-exist fixture)
+      (unwind-protect
+           (flet ((check (truth) (incf count) (assert truth))
+                  (fixture-fetch (url target)
+                    (declare (ignore url)) (incf calls) (uiop:copy-file fixture target)))
+             (with-open-file (out fixture :direction :output) (write-string "abc" out))
+             (download entry #'fixture-fetch)
+             (check (= calls 1))
+             (check (probe-file expected))
+             (check (equal (digest expected) sha256))
+             (check (not (probe-file (make-pathname :type "tmp" :defaults expected))))
+             (download entry (lambda (&rest args) (declare (ignore args)) (error "Cache hit fetched again.")))
+             (check (= calls 1))
+             (with-open-file (out expected :direction :output :if-exists :supersede) (write-string "corrupt" out))
+             (download entry #'fixture-fetch)
+             (check (and (= calls 2) (equal (digest expected) sha256)))
+             (let* ((bad-sha (make-string 64 :initial-element #\b))
+                    (bad-entry (list :url "https://example.invalid/bad" :sha256 bad-sha))
+                    (bad-path (merge-pathnames (concatenate 'string "archives/" bad-sha) *work*)))
+               (check (handler-case (progn (download bad-entry #'fixture-fetch) nil) (simple-error () t)))
+               (check (and (not (probe-file bad-path))
+                           (not (probe-file (make-pathname :type "tmp" :defaults bad-path)))))
+               (check (handler-case
+                          (progn (download bad-entry (lambda (url target) (fixture-fetch url target)
+                                                         (error "Injected transfer failure."))) nil)
+                        (simple-error () t)))
+               (check (and (not (probe-file bad-path))
+                           (not (probe-file (make-pathname :type "tmp" :defaults bad-path)))
+                           (equal (digest expected) sha256))))
+             count)
+        (uiop:delete-directory-tree *work* :validate t)))))
 
 (defun extract (archive directory destination)
   (unless (simple-name-p directory) (error "Invalid documentation archive root: ~A" directory))

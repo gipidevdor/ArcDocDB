@@ -52,6 +52,8 @@ dependencies and performs the same rendering and publication checks.
 1. The bootstrap verifies every downloaded archive against
    [`dependencies.lock.lisp`](../tools/pages/dependencies.lock.lisp). It installs
    a private ASDF source tree without updating the user's Quicklisp installation.
+   Its self-tests exercise an empty cache, reuse, corrupted downloads and cleanup
+   after failed transfers; cached archives must retain their exact digest filenames.
 2. The Lisp builder inventories Markdown documents, renders them with 3bmd and
    prepares a generated Scriba document and Codex manifest.
 3. A CommonDoc macro inserts each original document. `codex:document` expands

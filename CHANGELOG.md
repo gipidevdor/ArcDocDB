@@ -7,6 +7,11 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Refine canonical compaction: reserve recovery segment IDs and CONTROL revisions
+  before creating outputs, preserve restart headroom on writes, refuse startup
+  capacity before checkpoint effects, and remove a redundant full planning scan.
+  [Regression and measurement evidence](spikes/results/2026-10-31-compaction-review/report.md).
+
 - [Serial M1 canonical compaction](docs/adr/0078-compattazione-prefix-m1.md):
   automatic full-prefix reclamation at rotation boundaries, exact live values
   and unchanged CSN high-water, coherent RAM/paged location relocation, two

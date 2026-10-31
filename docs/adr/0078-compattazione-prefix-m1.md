@@ -44,14 +44,17 @@ effects. No rollback, hidden retry or acknowledgment occurs on failure.
 `arcdocdb.engine:compatta-motore` returns a copied result plist. Without `:force t`,
 accept only plans saving at least 25% of canonical segment bytes including the
 fresh ACTIVE. Force bypasses the gain threshold, not output capacity or integrity.
-Always reserve a spare segment for the next recovery. No-op planning releases
+Always reserve a spare segment and an unused u32 segment ID for the next recovery.
+Before outputs, reserve three CONTROL revision increments: replace plus normal
+prune and a later recovery checkpoint, or replace plus recovery checkpoint/prune
+when interrupted. Counter exhaustion refuses before output creation. No-op planning releases
 only its temporary readers and preserves canonical bytes and READY admission.
 `statistiche-compattazione-motore` exposes scalar completion/reclaim counters
 and current canonical/live record counts; counters restart with the handle.
 
 At a normal rotation boundary, probe automatically after four CLOSED segments
-when historical records exceed twice the live count, or when the total segment
-limit is reached. Unique append traffic avoids unnecessary compaction scans.
+when historical records exceed twice the live count, or when rotation would consume the recovery
+slot, or a reopened handle already uses that slot. Unique append traffic avoids unnecessary compaction scans.
 Automatic maintenance precedes reservation of the next request's data CSN and
 uses the same logical RAM/paged index. No socket operation or client setting is
 needed. This supersedes ADR-0076's pending-compaction capacity limitation; its
@@ -71,3 +74,19 @@ must not be interpreted as loaded socket P99. Concurrent/background CLEAN/MERGE,
 partial-source selection, historical MVCC, multiseries, power-loss qualification
 and reference-platform performance remain separate work. General requirements
 retain their existing qualification status.
+
+## Review refinement — 2026-10-31
+
+[Review and regression evidence](../../spikes/results/2026-10-31-compaction-review/report.md)
+cover exhausted counters and capacity. Startup checks room for its fresh ACTIVE
+before any checkpoint or reclamation, preserving canonical bytes on refusal.
+Ordinary writes retain one segment of recovery headroom, triggering compaction
+earlier under pressure. Repeated read-only reopenings still consume segment IDs
+and capacity; insufficient configured capacity is an explicit refusal, never an
+oversized canonical checkpoint. Raising the budget permits recovery.
+
+Planning now observes already checked ordinary frames during the strict canonical
+order/validator pass. This removes a separate full-source planning scan; producer
+validation, independent output/original byte comparisons, ordering, membership,
+coverage and post-publication verification remain unchanged. No per-key table is
+introduced and default recovery/rotation callers install no visitor.

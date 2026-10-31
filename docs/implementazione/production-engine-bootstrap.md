@@ -169,8 +169,8 @@ compaction. `arcdocdb.engine:compatta-motore` selects current live records throu
 the existing RAM/paged index and preserves the maximum-CSN witness, including a
 last tombstone. `:force t` bypasses only the default 25% gain threshold. Automatic
 maintenance probes at rotation boundaries with four CLOSED segments and history
-above twice the live count, or at total segment capacity. A spare segment remains
-reserved for recovery. `statistiche-compattazione-motore` returns per-handle scalar
+above twice the live count, or when rotation would consume recovery headroom. A spare segment, an unused
+u32 ID and sufficient CONTROL revisions remain reserved for recovery. `statistiche-compattazione-motore` returns per-handle scalar
 counters and canonical/live counts.
 
 Outputs are durable and independently verified before CONTROL replacement. Old
@@ -180,3 +180,10 @@ pruning. Startup completes interrupted reclamation. Active snapshots/readers
 refuse before effects; other maintenance failures fault admission without a data
 CSN or ACK. No wire operation or alternative RAM/paged semantics are introduced.
 See [qualification and timing](../../spikes/results/2026-10-31-engine-compaction/report.md).
+
+A review regression covers capacity refusal before startup effects: recovery
+requires room for its mandatory fresh ACTIVE and leaves all canonical files
+unchanged if the configured segment budget is exhausted. An increased budget
+can reopen the same data. Repeated read-only openings consume structural
+capacity; ordinary writes compact before consuming recovery headroom. Planning
+shares the strict canonical order scan; output verification remains independent.

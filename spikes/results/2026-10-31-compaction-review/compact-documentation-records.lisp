@@ -1,0 +1,18 @@
+((:PATH
+  #A((147) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-compaction-review/docs-setup-needed/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 335068 :STORED-BYTES 106240 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 335068 :UNCOMPRESSED-SHA256
+   "e37e027e922cb15173c791752ec0d2dfe49a879d3ec3229e1c8e06f17bd96af3"
+   :COMPRESSED-BYTES 105924 :COMPRESSED-SHA256
+   "e00577399c919bfc5937e190a66a798776f8c29d588521b8ddda0faace9fc89a"))
+ (:PATH
+  #A((142) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-compaction-review/final-checks/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 332868 :STORED-BYTES 106072 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 332868 :UNCOMPRESSED-SHA256
+   "acf4d76957da169f9a813b9193e270c7af317867d706f2ce83cd96cefe75a2ea"
+   :COMPRESSED-BYTES 105756 :COMPRESSED-SHA256
+   "9e5bb9b981f4001a002ef646afe0d501c858dfe63c62b38732e845fda45979a3")))

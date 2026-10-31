@@ -10,15 +10,15 @@
 A known segment-count limit refuses with READY and unchanged canonical bytes. No best-effort retry."
   (flet ((needed ()
            (or (>= (r::radice-get-attiva-count (s:leggi-radice-serie (motore-controller engine))) (motore-max-records engine))
-               (> (+ (io:posizione-scritta (motore-append engine)) record-bytes w::+seal-total+) (motore-max-file-bytes engine)))))
-    (when (needed)
-      (let* ((closed (gd:conta-segmenti-directory-get (gd::fonti-get-serie-directory (motore-sources engine))))
-             (full (>= (1+ closed) (motore-max-segments engine))))
-        (when (or full (and (>= closed 4) (> (motore-history-records engine) (* 2 (compaction-live-count engine)))))
-          (compatta-motore engine :force full))
-        (when (and (needed) (>= (1+ (gd:conta-segmenti-directory-get
-                                       (gd::fonti-get-serie-directory (motore-sources engine)))) (motore-max-segments engine)))
-          (error 'resource-exhausted :reason :engine-rotation-segment-budget))))
+               (> (+ (io:posizione-scritta (motore-append engine)) record-bytes w::+seal-total+) (motore-max-file-bytes engine))))
+         (closed-count () (gd:conta-segmenti-directory-get (gd::fonti-get-serie-directory (motore-sources engine)))))
+    (let* ((rotate (needed)) (closed (closed-count))
+           (pressure (>= (+ closed (if rotate 2 1)) (motore-max-segments engine))))
+      (when (or pressure (and rotate (>= closed 4) (> (motore-history-records engine) (* 2 (compaction-live-count engine)))))
+        (compatta-motore engine :force pressure))
+      ;; A successful request leaves a slot for the mandatory fresh ACTIVE at restart.
+      (when (>= (+ (closed-count) (if (needed) 2 1)) (motore-max-segments engine))
+        (error 'resource-exhausted :reason :engine-rotation-segment-budget)))
     (not (null (needed)))))
 
 ;;; REQ: REQ-REC-001 REQ-MVC-005 REQ-MVC-006 REQ-AFF-002

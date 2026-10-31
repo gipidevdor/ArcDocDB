@@ -8,7 +8,6 @@
   "Pre: BUSY current-only M1, strong frontier. Post: verified complete source plan, live bytes and output geometry.
 Selection consults the existing current index with borrowed key spans; no full key table or record list."
   (multiple-value-bind (control sources active closed csns) (recupera-fonti-motore engine decisions set)
-    (verifica-ordine-fonti-motore engine control sources decisions closed)
     (verifica-csn-rotazione-motore engine csns)
     (unless (and (eq :complete (nth-value 2 (ra:frontiere-active-recuperato active)))
                  (= (nth-value 1 (ra:frontiere-active-recuperato active))
@@ -19,7 +18,7 @@ Selection consults the existing current index with borrowed key spans; no full k
       (setf (compaction-plan-input-bytes plan)
             (+ (nth-value 1 (ra:frontiere-active-recuperato active))
                (loop for token across closed sum (nth-value 1 (rc:frontiere-closed-recuperato token)))))
-      (compaction-visit engine plan
+      (verifica-ordine-fonti-motore engine control sources decisions closed
         (lambda (buffer start end segment offset version)
           (declare (ignore version)) (incf records)
           (when (compaction-selected-p engine plan buffer start end segment offset)
@@ -59,3 +58,18 @@ This current-only algorithm never silently reclaims historical versions when a b
                  (zerop (nth-value 2 (arcdocdb.epochs:leggi-registro-epoche epochs)))
                  (zerop (nth-value 3 (arcdocdb.epochs:leggi-registro-epoche epochs))))
       (error 'resource-exhausted :reason :engine-compaction-borrowers))) nil)
+
+;;; REQ: REQ-CMP-001 REQ-REC-001 REQ-LIM-003 REQ-AFF-018
+(declaim (ftype (function (motore compaction-plan u64) null) compaction-reserve-recovery))
+(defun compaction-reserve-recovery (engine plan first)
+  "Pre: accepted verified geometry, no output effects. Post: replacement/prune and one recovery fit all counters.
+A crash after replacement needs a recovery checkpoint AND prune; normal completion needs a later checkpoint.
+The fresh ACTIVE must leave an unused u32 ID for recovery. Refuse before creating any output or ACTIVE."
+  (unless (<= (+ first (compaction-plan-output-count plan)) (1- #xffffffff))
+    (error 'resource-exhausted :reason :engine-compaction-id-reserve))
+  (let* ((buffer (motore-scratch engine)) (header (+ f:+log-header-bytes+ arcdocdb.record:+header-bytes+))
+         (control (compaction-plan-control plan)))
+    (unless (= header (io:leggi-esatto (c::control-recuperato-input control) buffer 0 header 0))
+      (error 'invariant-violation :reason :engine-compaction-control-header))
+    (when (> (b:leggi-u64 buffer (+ f:+log-header-bytes+ arcdocdb.record::+stamp-offset+)) (- #xffffffffffffffff 3))
+      (error 'resource-exhausted :reason :engine-compaction-control-reserve))) nil)

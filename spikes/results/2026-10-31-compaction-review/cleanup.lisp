@@ -1,0 +1,1 @@
+(:kind :compaction-review-cleanup :status :passed :verified-original-command-reports 17 :temporary-output-bytes 46486637 :generated-manual-bytes 75245309 :current-worktree-cache-bytes 42978118 :retained-unique-evidence t :other-worktree-files-untouched t)

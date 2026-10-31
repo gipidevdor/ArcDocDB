@@ -7,6 +7,13 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- [Distribution notices and legal review](docs/legal/review-2026-10-31.md):
+  complete root Unicode attribution, aggregate license metadata, original SBCL
+  reference notices, explicit browser license choice and private-individual
+  publication/contact scope. Common Lisp checks preserve declared notice bytes
+  in new distribution directories and reject missing, changed or stale copies.
+  Legal applicability, ownership and artifact-specific dependencies remain scoped.
+
 - [Serial M1 canonical compaction](docs/adr/0078-compattazione-prefix-m1.md):
   automatic full-prefix reclamation at rotation boundaries, exact live values
   and unchanged CSN high-water, coherent RAM/paged location relocation, two

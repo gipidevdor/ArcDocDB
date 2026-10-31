@@ -1,5 +1,6 @@
 ;;;; Dati Unicode 18.0.0; generati da tools/fulltext-unicode-tables.lisp.
-;;;; Copyright Unicode, Inc.; licenza in data/unicode/18.0.0/LICENSE.txt.
+;;;; Copyright © 1991-2026 Unicode, Inc. Unicode License V3 (Unicode-3.0).
+;;;; License: data/unicode/18.0.0/LICENSE.txt; THIRD-PARTY-NOTICES.txt.
 (in-package #:arcdocdb.fulltext.analysis)
 (declaim (optimize (safety 3)))
 ;;; REQ: REQ-SEC-007

@@ -11,7 +11,7 @@
 (defsystem "arcdocdb"
   :description "Database server documentale general-purpose, append-only, in Common Lisp (SBCL)."
   :author "Giacomo Picchiarelli"
-  :license "BSD-2-Clause"
+  :license "BSD-2-Clause AND Unicode-3.0"
   :version "0.0.0"
   :pathname "src/"
   :serial t
@@ -240,7 +240,7 @@
 
 (defsystem "arcdocdb/local"
   :description "Profilo M1 di produzione: sessione Unix locale, client e dispatcher."
-  :license "BSD-2-Clause"
+  :license "BSD-2-Clause AND Unicode-3.0"
   :depends-on ("arcdocdb")
   :pathname "src/local/"
   :serial t
@@ -250,7 +250,7 @@
 (defsystem "arcdocdb/tests"
   :description "Test di ArcDocDB."
   :author "Giacomo Picchiarelli"
-  :license "BSD-2-Clause"
+  :license "BSD-2-Clause AND Unicode-3.0"
   :depends-on ("arcdocdb/local")
   :pathname "tests/"
   :serial t

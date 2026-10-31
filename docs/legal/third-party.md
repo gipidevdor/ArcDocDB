@@ -9,6 +9,8 @@ Download the [project license](../../LICENSE),
 [complete browser notices](../../tools/pages/third-party-notices.txt),
 [component inventory](../../tools/pages/third-party-notices.lisp) and
 [Unicode license](../../data/unicode/18.0.0/LICENSE.txt).
+The [root notices](../../THIRD-PARTY-NOTICES.txt) and
+[distribution policy](distribution.md) also cover compiled database artifacts.
 
 ## Code delivered to your browser
 
@@ -24,7 +26,8 @@ does not match that inventory. Updating the diagram renderer requires updating
 the corresponding notices; a single top-level MIT label is not a substitute for
 the terms of its incorporated components.
 
-DOMPurify offers alternative Apache-2.0 and MPL-2.0 terms. The upstream license
+DOMPurify offers alternative Apache-2.0 and MPL-2.0 terms. This distribution
+selects the Apache-2.0 alternative. The upstream license
 texts and the bundle's original attribution are retained. Their inclusion does
 not change ArcDocDB's license or assert ownership of third-party code.
 
@@ -35,6 +38,9 @@ not change ArcDocDB's license or assert ownership of third-party code.
 fixed in the documentation toolchain lock. The Common Lisp build libraries are
 used during generation; their implementations are not shipped as browser code.
 Their downloaded source trees retain their own license files.
+The locked build includes LGPL/LLGPL components as well as permissive and
+public-domain material. Do not redistribute the build cache or toolchain image
+under the project's BSD notice alone. See the [dated review](review-2026-10-31.md).
 
 SBCL remains a separate compiler/runtime with its own notices. The project's
 database runtime and product dependency policy are described in

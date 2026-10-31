@@ -1,0 +1,88 @@
+ArcDocDB — third-party notices
+=============================
+
+Project-authored code, documentation and artwork are offered under the
+BSD 2-Clause license in LICENSE, to the extent of the contributors' rights.
+Third-party material keeps its own notices. This file does not grant rights
+in third-party trademarks or certify ownership, non-infringement or fitness.
+
+Unicode Character Database 18.0.0
+--------------------------------
+The full-text analyzer uses numeric tables derived from the Unicode Character
+Database. The original data, conformance corpora and provenance are retained in
+data/unicode/18.0.0/. The generated tables are in src/fulltext/unicode-tables.lisp.
+Their applicable data license is Unicode License V3 (SPDX: Unicode-3.0).
+The complete original notice is reproduced below and also accompanies the data
+in data/unicode/18.0.0/LICENSE.txt. Keep it with source, compiled and container
+distributions, including distributions containing only the derived tables.
+
+UNICODE LICENSE V3
+
+COPYRIGHT AND PERMISSION NOTICE
+
+Copyright © 1991-2026 Unicode, Inc.
+
+NOTICE TO USER: Carefully read the following legal agreement. BY
+DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING DATA FILES, AND/OR
+SOFTWARE, YOU UNEQUIVOCALLY ACCEPT, AND AGREE TO BE BOUND BY, ALL OF THE
+TERMS AND CONDITIONS OF THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT
+DOWNLOAD, INSTALL, COPY, DISTRIBUTE OR USE THE DATA FILES OR SOFTWARE.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of data files and any associated documentation (the "Data Files") or
+software and any associated documentation (the "Software") to deal in the
+Data Files or Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, and/or sell
+copies of the Data Files or Software, and to permit persons to whom the
+Data Files or Software are furnished to do so, provided that either (a)
+this copyright and permission notice appear with all copies of the Data
+Files or Software, or (b) this copyright and permission notice appear in
+associated Documentation.
+
+THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
+THIRD PARTY RIGHTS.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE
+BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES,
+OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA
+FILES OR SOFTWARE.
+
+Except as contained in this notice, the name of a copyright holder shall
+not be used in advertising or otherwise to promote the sale, use or other
+dealings in these Data Files or Software without prior written
+authorization of the copyright holder.
+
+SBCL compiler and runtime
+-------------------------
+SBCL is a separate implementation with mixed public-domain and permissive
+terms. It must not be relabeled as entirely BSD-2-Clause or entirely public
+domain. The reference toolchain's original COPYING file is retained in
+legal/runtime/SBCL-2.6.9-COPYING.txt. Preserve the applicable notices of the
+actual compiler/runtime and contribs when redistributing a saved image or
+executable containing them. A different runtime version or build can require
+different notices, including notices for bundled native components.
+
+Documentation website and build tools
+-------------------------------------
+The database has no external Lisp library dependencies beyond SBCL contribs.
+This statement does not exclude the Unicode data license or the separate
+documentation toolchain.
+
+The manual sends Mermaid 11.12.1 and its bundled components to browsers.
+Complete browser notices: tools/pages/third-party-notices.txt.
+Versioned component inventory: tools/pages/third-party-notices.lisp.
+DOMPurify's Apache-2.0 alternative is selected for this distribution; its
+original dual-license notice is preserved. Do not remove the included notices.
+
+The documentation build uses additional Common Lisp tools, including tools
+under LGPL/LLGPL terms. They are not linked into the database or delivered as
+browser implementations by this build. Do not redistribute _build/ caches,
+toolchain source trees or build images as if they were solely ArcDocDB code.
+Review and preserve their individual terms when distributing those materials.
+
+See docs/legal/distribution.md for artifact-specific distribution requirements
+and docs/legal/review-2026-10-31.md for the review scope and unresolved matters.

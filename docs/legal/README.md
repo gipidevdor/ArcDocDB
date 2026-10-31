@@ -3,6 +3,8 @@
 This is the technical documentation of **ArcDocDB**, an open-source document
 database written in Common Lisp. The project and this edition are maintained
 by **Giacomo Picchiarelli**, the copyright holder named in the repository license.
+The maintainer describes this as a personal project published as a private
+individual, not on behalf of a company. The published contact is GitHub.
 
 The current executable profile is M1. The full engine remains under development.
 See [capabilities and limits](../implementazione/README.md) before relying on a
@@ -27,7 +29,8 @@ historical records are handled.
 ## Rights and reuse
 
 The repository's [BSD 2-Clause license](../../LICENSE) applies to project-authored
-code, documentation and artwork unless a file states otherwise. Its permissions,
+code, documentation and artwork to the extent of the contributors' rights,
+unless a file states otherwise. Its permissions,
 conditions and disclaimer are reproduced in the site's downloadable license.
 This page does not replace or extend those terms.
 
@@ -35,6 +38,10 @@ Third-party code, data and quoted material retain their own rights and terms.
 The [third-party notices](third-party.md) identify the browser components and
 the build tools. A reference to a project, product or organization does not imply
 its endorsement of ArcDocDB or grant rights in its trademarks.
+
+The [distribution policy](distribution.md) covers source, compiled and container
+artifacts. The [October 31, 2026 review](review-2026-10-31.md) records inspected
+licenses and unresolved ownership, privacy, brand and regulatory questions.
 
 The specification, benchmarks and design analyses describe their own scope.
 Targets and proposals are not promises of implemented behavior. A source revision

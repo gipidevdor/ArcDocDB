@@ -122,7 +122,8 @@
         (ensure-directories-exist output)
         (with-open-file (s output :direction :output :if-exists :supersede :external-format :utf-8)
           (format s ";;;; Dati Unicode 18.0.0; generati da tools/fulltext-unicode-tables.lisp.~%")
-          (format s ";;;; Copyright Unicode, Inc.; licenza in data/unicode/18.0.0/LICENSE.txt.~%")
+          (format s ";;;; Copyright © 1991-2026 Unicode, Inc. Unicode License V3 (Unicode-3.0).~%")
+          (format s ";;;; License: data/unicode/18.0.0/LICENSE.txt; THIRD-PARTY-NOTICES.txt.~%")
           (format s "(in-package #:arcdocdb.fulltext.analysis)~%(declaim (optimize (safety 3)))~%")
           (loop for name in +properties+ for code from 0 do
             (format s ";;; REQ: REQ-SEC-007~%(defconstant +wb-~A+ ~D)~%"

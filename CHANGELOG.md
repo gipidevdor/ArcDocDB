@@ -7,6 +7,11 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Reduce engine maintenance cost with verified live-CSN bounds and a fixed 512-byte signature,
+  cached original-source windows and bounded vector equality; avoid clearing
+  complete paged-index frames immediately before reads overwrite them.
+  [Qualification and measurements](spikes/results/2026-10-31-engine-performance/report.md).
+
 - Refine canonical compaction: reserve recovery segment IDs and CONTROL revisions
   before creating outputs, preserve restart headroom on writes, refuse startup
   capacity before checkpoint effects, and remove a redundant full planning scan.

@@ -347,3 +347,137 @@
                    (sort (mapcar #'file-namestring (uiop:directory-files root)) #'string<))))
       (with-engine (engine (compact-open root :version version :segments 4))
         (compact-check engine) (is (= 26 (e:scrivi-documento engine (key 1) (value 26))))))))
+
+(defun performance-open (root version mode &optional create observer)
+  (e:apri-motore root (archive-id) (series-id) :create create :version version :clock (lambda () 10)
+    :observer observer :max-file-bytes 1048576 :max-record-bytes 512 :max-records 2048 :max-segments 16
+    :index-capacity 64 :key-arena-bytes 8192
+    :index-policy (if (eq mode :legacy) :legacy (e:crea-politica-indice-automatico :budget 8388608 :frames 1))))
+
+;;; REQ: REQ-CMP-001 REQ-IDX-013 REQ-AFF-002
+(deftest test-REQ-CMP-001-performance-live-floor-bounds-historical-probes
+  (dolist (version '(1 2))
+    (dolist (mode '(:legacy :resident :paged))
+      (with-root (root)
+        (with-engine (engine (performance-open root version mode t))
+          (rotation-force-paged engine mode)
+          (dotimes (n 512) (e:scrivi-documento engine (key (mod n 16)) (bytes 23 (mod n 251))))
+          (let ((original (symbol-function 'e::compaction-probe)) (probes 0))
+            (unwind-protect
+                 (progn
+                   (setf (symbol-function 'e::compaction-probe)
+                         (lambda (engine buffer start end) (incf probes) (funcall original engine buffer start end)))
+                   (is (eq :compacted (getf (e:compatta-motore engine :force t) :status)))
+                   (is (<= probes 64)))
+              (setf (symbol-function 'e::compaction-probe) original)))
+          (dotimes (id 16) (check-get engine id (bytes 23 (mod (+ 496 id) 251))))
+          (check-frontier engine 512))
+        (with-engine (engine (performance-open root version mode))
+          (dotimes (id 16) (check-get engine id (bytes 23 (mod (+ 496 id) 251))))
+          (check-frontier engine 512))))))
+
+;;; REQ: REQ-CMP-001 REQ-CMP-008 REQ-IDX-013 REQ-REC-001
+(deftest test-REQ-CMP-001-performance-floor-preserves-old-cold-key
+  (dolist (version '(1 2))
+    (dolist (mode '(:legacy :resident :paged))
+      (with-root (root)
+        (with-engine (engine (performance-open root version mode t))
+          (rotation-force-paged engine mode)
+          (e:scrivi-documento engine (key 0) (bytes 23 77))
+          (dotimes (n 511) (e:scrivi-documento engine (key 1) (bytes 23 (mod n 251))))
+          (is (= 2 (getf (e:compatta-motore engine :force t) :records)))
+          (check-get engine 0 (bytes 23 77)) (check-get engine 1 (bytes 23 (mod 510 251))))
+        (with-engine (engine (performance-open root version mode))
+          (check-get engine 0 (bytes 23 77)) (check-get engine 1 (bytes 23 (mod 510 251)))
+          (check-frontier engine 512))))))
+
+;;; REQ: REQ-CMP-001 REQ-CMP-009 REQ-AFF-002
+(deftest test-REQ-CMP-001-performance-valid-CRC-substitution-rejected
+  (dolist (version '(1 2))
+    (with-root (root)
+      (let ((armed nil) (changed nil))
+        (with-engine (engine (performance-open root version :paged t
+                              (lambda (engine phase) (declare (ignore engine))
+                                (when (and armed (eq phase :compaction-produced))
+                                  (let* ((path (find-if (lambda (p) (search ".seg.tmp" (file-namestring p)))
+                                                       (uiop:directory-files root)))
+                                         (data (image path)) (end (arcdocdb.record:verifica-cornice data 64 (length data) :version version)))
+                                    (setf (aref data 104) (logxor 1 (aref data 104)))
+                                    (arcdocdb.recovery.tests::repair-reference-record data 64 end)
+                                    (with-open-file (s path :direction :output :if-exists :overwrite :element-type '(unsigned-byte 8))
+                                      (write-sequence data s)) (setf changed t))) nil)))
+          (rotation-force-paged engine :paged) (compact-seed engine) (setf armed t)
+          (let ((originals (images root)))
+            (signals arcdocdb.conditions:invariant-violation (e:compatta-motore engine :force t)
+              :engine-compaction-output-content)
+            (is changed) (check-images root originals)))
+        (with-engine (engine (performance-open root version :paged)) (compact-check engine))))))
+
+;;; REQ: REQ-CMP-001 REQ-CMP-009 REQ-AFF-002
+(deftest test-REQ-CMP-001-performance-wrong-derived-floor-rejected-before-CONTROL
+  (with-root (root)
+    (with-engine (engine (performance-open root 2 :paged t))
+      (rotation-force-paged engine :paged) (compact-seed engine)
+      (let ((original (symbol-function 'e::compaction-live-floor)) (originals (images root)))
+        (unwind-protect
+             (progn
+               (setf (symbol-function 'e::compaction-live-floor)
+                     (lambda (engine plan) (declare (ignore engine)) (e::compaction-plan-maximum plan)))
+               (signals arcdocdb.conditions:invariant-violation (e:compatta-motore engine :force t)
+                 :engine-compaction-output-coverage)
+               (check-images root originals))
+          (setf (symbol-function 'e::compaction-live-floor) original))))
+    (with-engine (engine (performance-open root 2 :paged)) (compact-check engine))))
+
+;;; REQ: REQ-CMP-001 REQ-IDX-013 REQ-AFF-002
+(deftest test-REQ-CMP-001-performance-empty-count-cannot-hide-live-tree
+  (with-root (root)
+    (with-engine (engine (performance-open root 2 :paged t))
+      (rotation-force-paged engine :paged) (compact-seed engine)
+      (setf (e::automatic-index-controller-count (e::motore-automatic-index engine)) 0)
+      (let ((originals (images root)))
+        (signals arcdocdb.conditions:invariant-violation (e:compatta-motore engine :force t)
+          :engine-compaction-floor-count)
+        (check-images root originals)
+        (is (equal (sort (mapcar #'car originals) #'string<)
+                   (sort (mapcar #'file-namestring (uiop:directory-files root)) #'string<)))))
+    (with-engine (engine (performance-open root 2 :paged)) (compact-check engine))))
+
+;;; REQ: REQ-CMP-001 REQ-IDX-013 REQ-AFF-002
+(deftest test-REQ-CMP-001-performance-signature-collisions-fall-back-to-exact-probes
+  (with-root (root)
+    (with-engine (engine (performance-open root 2 :paged t))
+      (rotation-force-paged engine :paged)
+      (e:scrivi-documento engine (key 0) (bytes 23 77))
+      (dotimes (n 4097) (e:scrivi-documento engine (key 1) (bytes 23 (mod n 251))))
+      (let ((original (symbol-function 'e::compaction-probe)) (probes 0))
+        (unwind-protect
+             (progn
+               (setf (symbol-function 'e::compaction-probe)
+                     (lambda (engine buffer start end) (incf probes) (funcall original engine buffer start end)))
+               (is (= 2 (getf (e:compatta-motore engine :force t) :records)))
+               ;; CSNs 1/4097 and 2/4098 share bits; obsolete positives must still be looked up and rejected.
+               (is (< 6 probes 20)))
+          (setf (symbol-function 'e::compaction-probe) original)))
+      (check-get engine 0 (bytes 23 77)) (check-get engine 1 (bytes 23 (mod 4096 251))))
+    (with-engine (engine (performance-open root 2 :paged))
+      (check-get engine 0 (bytes 23 77)) (check-get engine 1 (bytes 23 (mod 4096 251)))
+      (check-frontier engine 4098))))
+
+;;; REQ: REQ-CMP-001 REQ-CMP-009 REQ-AFF-002
+(deftest test-REQ-CMP-001-performance-damaged-signature-rejected-before-CONTROL
+  (with-root (root)
+    (with-engine (engine (performance-open root 2 :paged t))
+      (rotation-force-paged engine :paged) (compact-seed engine)
+      (let ((original (symbol-function 'e::compaction-live-floor)) (originals (images root)))
+        (unwind-protect
+             (progn
+               (setf (symbol-function 'e::compaction-live-floor)
+                     (lambda (engine plan)
+                       (let ((minimum (funcall original engine plan)))
+                         (fill (e::compaction-plan-signature plan) 0) minimum)))
+               (signals arcdocdb.conditions:invariant-violation (e:compatta-motore engine :force t)
+                 :engine-compaction-output-coverage)
+               (check-images root originals))
+          (setf (symbol-function 'e::compaction-live-floor) original))))
+    (with-engine (engine (performance-open root 2 :paged)) (compact-check engine))))

@@ -183,3 +183,39 @@
         (signals arcdocdb.conditions:io-fault (arcdocdb.io:rimuovi-derivato proof))
         (signals arcdocdb.conditions:invalid-argument (arcdocdb.io:rimuovi-derivato proof) :io-derived-proof-used)
         (is (= attempts 1))))))
+
+;;; REQ: REQ-IDX-013 REQ-AFF-002 REQ-LIM-003
+(deftest test-REQ-IDX-013-disk-cache-complete-partial-and-failed-read
+  (dolist (frame-count '(1 3))
+    (call-automatic-disk
+      (lambda (tree directory root)
+        (declare (ignore directory))
+        (dotimes (n 65)
+          (arcdocdb.index.disk:apply-disk-index tree 1 (key (mod n 17)) 0 16 (1+ n) #x100000080 128))
+        (let* ((data (image (merge-pathnames (arcdocdb.index.disk:disk-index-name tree) root)))
+               (frames (arcdocdb.index.disk::disk-index-frames tree)) (tags (arcdocdb.index.disk::disk-index-tags tree))
+               (frontier (arcdocdb.index.disk:disk-index-frontier tree)) (size 4096) (page (floor (1- frontier) size))
+               (count (- frontier (* page size))) (original (symbol-function 'arcdocdb.io:leggi-esatto)))
+          (is (< 0 count size)) (is (> page 0))
+          (setf (arcdocdb.index.disk::disk-index-busy tree) t)
+          (unwind-protect
+               (progn
+                 (fill frames 165) (fill tags 0)
+                 (let ((at (arcdocdb.index.disk::cached-page tree 0)))
+                   (is (equalp (subseq frames at (+ at size)) (subseq data 0 size))))
+                 (fill frames 165) (fill tags 0)
+                 (let ((at (arcdocdb.index.disk::cached-page tree page)))
+                   (is (equalp (subseq frames at (+ at count)) (subseq data (* page size) frontier)))
+                   (is (every #'zerop (subseq frames (+ at count) (+ at size)))))
+                 (fill tags 0)
+                 (setf (symbol-function 'arcdocdb.io:leggi-esatto)
+                       (lambda (file target start end offset) (declare (ignore file end offset))
+                         (setf (aref target start) 255)
+                         (error 'arcdocdb.conditions:io-fault :reason :injected-cache-read :operation :test)))
+                 (signals arcdocdb.conditions:io-fault (arcdocdb.index.disk::cached-page tree 0) :injected-cache-read)
+                 (is (every #'zerop tags))
+                 (setf (symbol-function 'arcdocdb.io:leggi-esatto) original)
+                 (let ((at (arcdocdb.index.disk::cached-page tree 0)))
+                   (is (equalp (subseq frames at (+ at size)) (subseq data 0 size)))))
+            (setf (symbol-function 'arcdocdb.io:leggi-esatto) original
+                  (arcdocdb.index.disk::disk-index-busy tree) nil)))) :frames frame-count)))

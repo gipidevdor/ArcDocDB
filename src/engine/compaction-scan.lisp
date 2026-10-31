@@ -34,6 +34,8 @@ CLOSED prefixes are reverified by their canonical visitor; ACTIVE prefix was ful
 Selecting all sources including ACTIVE makes obsolete tombstones safely discardable in serial current-only M1."
   (let ((csn (b:leggi-u64 buffer (+ start arcdocdb.record::+stamp-offset+))))
     (when (= csn (compaction-plan-maximum plan)) (return-from compaction-selected-p t))
+    (when (or (< csn (compaction-plan-minimum-live plan)) (not (compaction-csn-possible-p plan csn)))
+      (return-from compaction-selected-p nil))
     (multiple-value-bind (next kind flags ks ke) (arcdocdb.record:verifica-cornice buffer start end :version (motore-version engine))
       (declare (ignore next flags))
       (when (= kind 1)

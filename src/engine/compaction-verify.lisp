@@ -20,18 +20,20 @@
 (defun compaction-original-window (plan verifier segment offset bytes)
   "Pre: validated original descriptor. Post: exact record start in a bounded read-ahead window.
 Sequential original records share one read; window never escapes maintenance or replaces canonical verification."
+  (when (and (= segment (compaction-verifier-segment verifier))
+             (compaction-verifier-file verifier)
+             (<= (compaction-verifier-start verifier) offset)
+             (<= (+ offset bytes) (compaction-verifier-end verifier)))
+    (return-from compaction-original-window (- offset (compaction-verifier-start verifier))))
   (multiple-value-bind (file size) (compaction-original-file plan segment)
     (unless (and (<= f:+segment-header-bytes+ offset) (<= (+ offset bytes) size))
       (error 'invariant-violation :reason :engine-compaction-original-span))
-    (unless (and (eq file (compaction-verifier-file verifier))
-                 (<= (compaction-verifier-start verifier) offset)
-                 (<= (+ offset bytes) (compaction-verifier-end verifier)))
-      (let* ((buffer (compaction-verifier-buffer verifier)) (take (min (length buffer) (- size offset))))
-        (unless (and (<= bytes take) (= take (io:leggi-esatto file buffer 0 take offset)))
-          (error 'invariant-violation :reason :engine-compaction-original-read))
-        (setf (compaction-verifier-file verifier) file (compaction-verifier-start verifier) offset
-              (compaction-verifier-end verifier) (+ offset take))))
-    (- offset (compaction-verifier-start verifier))))
+    (let* ((buffer (compaction-verifier-buffer verifier)) (take (min (length buffer) (- size offset))))
+      (unless (and (<= bytes take) (= take (io:leggi-esatto file buffer 0 take offset)))
+        (error 'invariant-violation :reason :engine-compaction-original-read))
+      (setf (compaction-verifier-file verifier) file (compaction-verifier-segment verifier) segment
+            (compaction-verifier-start verifier) offset (compaction-verifier-end verifier) (+ offset take))))
+  (- offset (compaction-verifier-start verifier)))
 
 ;;; REQ: REQ-CMP-001 REQ-AFF-002 REQ-CMP-009
 (declaim (ftype (function (motore compaction-plan octets index index compaction-verifier) boolean) compaction-verify-record))
@@ -55,7 +57,7 @@ Returns live membership, independently verifies payload bytes; CRC alone cannot 
         (error 'invariant-violation :reason :engine-compaction-output-length))
       (let ((within (compaction-original-window plan verifier segment offset bytes))
             (original (compaction-verifier-buffer verifier)))
-        (unless (loop for n below bytes always (= (aref original (+ within n)) (aref buffer (+ start n))))
+        (when (mismatch original buffer :start1 within :end1 (+ within bytes) :start2 start :end2 end)
           (error 'invariant-violation :reason :engine-compaction-output-content)))
       live)))
 

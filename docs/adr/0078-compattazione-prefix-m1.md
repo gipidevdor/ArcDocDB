@@ -90,3 +90,31 @@ order/validator pass. This removes a separate full-source planning scan; produce
 validation, independent output/original byte comparisons, ordering, membership,
 coverage and post-publication verification remain unchanged. No per-key table is
 introduced and default recovery/rotation callers install no visitor.
+
+## Bounded performance refinement — 2026-10-31
+
+[Performance qualification](../../spikes/results/2026-10-31-engine-performance/report.md)
+adds a conservative minimum live CSN for overwrite-heavy compaction. With history
+above twice the current live count, visit the frozen current index once, using
+its existing resident or paged storage, and verify exact live count and CSN range.
+Frames below that minimum cannot be current and need no membership lookup.
+The same traversal fills a fixed 512-byte live-CSN signature. An absent bit
+proves absence; a present bit still requires exact membership. Modulo collisions
+therefore cost extra lookups and cannot discard a live version, including when
+an ancient cold key keeps the global minimum low. The signature is enabled only
+after the independent live-count/range checks complete. Empty
+indexes still retain the maximum-CSN witness; append-heavy inputs use zero as a
+safe disabled threshold. Cold live keys keep the threshold low and are retained.
+
+The shortcut is private maintenance metadata. Independent output membership,
+exact original-byte comparison, coverage, ordering and high-water checks remain
+mandatory; an incorrect derived threshold must fail before CONTROL publication.
+The comparison window retains its exact source ID and reuses that immutable
+binding while the requested bytes remain inside the already validated window.
+Standard bounded vector comparison replaces the byte-at-a-time comparison loop.
+No per-key table, retained key copy or persistent format is added.
+
+The shared disk-index cache avoids clearing bytes immediately overwritten by a
+complete read. A partial frame still clears its unused tail; no tag is published
+until the read completes. Failed reads leave the frame unavailable. This applies
+to paged reads, writes, migration, replay and maintenance without changing quotas.

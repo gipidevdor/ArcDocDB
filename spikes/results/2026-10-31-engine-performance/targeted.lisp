@@ -1,0 +1,8 @@
+(require :asdf)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(asdf:load-system "arcdocdb/tests")
+(dolist (test (reverse arcdocdb.engine.tests::*tests*))
+  (when (or (search "TEST-REQ-CMP-001-" (symbol-name test))
+            (search "TEST-REQ-IDX-013-DISK-" (symbol-name test)))
+    (funcall test) (format t "~&PASS ~A~%" test)))
+(format t "~&~S~%" '(:status :passed :scope :engine-performance-regressions))

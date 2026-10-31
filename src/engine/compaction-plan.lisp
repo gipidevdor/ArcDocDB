@@ -18,6 +18,7 @@ Selection consults the existing current index with borrowed key spans; no full k
       (setf (compaction-plan-input-bytes plan)
             (+ (nth-value 1 (ra:frontiere-active-recuperato active))
                (loop for token across closed sum (nth-value 1 (rc:frontiere-closed-recuperato token)))))
+      (setf (compaction-plan-minimum-live plan) (compaction-live-floor engine plan))
       (verifica-ordine-fonti-motore engine control sources decisions closed
         (lambda (buffer start end segment offset version)
           (declare (ignore version)) (incf records)

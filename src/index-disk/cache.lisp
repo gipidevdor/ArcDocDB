@@ -22,7 +22,7 @@ Loading may block; no borrowed frame is retained across another cache access."
       (setf slot (disk-index-cursor tree) (aref tags slot) 0)
       (let* ((start (* slot size)) (offset (* page size))
              (count (min size (- (disk-index-frontier tree) offset))))
-        (fill frames 0 :start start :end (+ start size))
+        (when (< count size) (fill frames 0 :start (+ start count) :end (+ start size)))
         (unless (= (+ start count) (io:leggi-esatto (disk-index-input tree) frames start (+ start count) offset))
           (error 'invariant-violation :reason :disk-index-cache-read))
         (setf (aref tags slot) (1+ page) (disk-index-cursor tree) (mod (1+ slot) (length tags)))))

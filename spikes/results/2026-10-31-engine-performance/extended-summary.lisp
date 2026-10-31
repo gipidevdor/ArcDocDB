@@ -1,0 +1,16 @@
+(require :asdf)
+(load "tools/evidence-storage.lisp")
+(defun extra-samples (path)
+  (let* ((record (arcdocdb.evidence:read-evidence path)) (text (getf record :stdout)) (position 0) (samples nil))
+    (unless (eq :ok (getf record :status)) (error "Unsuccessful measurement: ~A" path))
+    (loop for start = (search "(:KIND " text :start2 position) while start do
+      (let ((*read-eval* nil))
+        (multiple-value-bind (form end) (read-from-string text nil :eof :start start)
+          (when (member (getf form :kind) '(:engine-put-sample :engine-recovery-after-compaction-sample))
+            (push (loop for (key value) on form by #'cddr unless (eq key :latency-ticks) append (list key value)) samples))
+          (setf position end))))
+    (unless (= 2 (length samples)) (error "Missing extended samples: ~A" path))
+    (list :record path :samples (nreverse samples))))
+(let ((*print-readably* t))
+  (write (list :kind :extended-engine-measurements :status :passed
+               :results (mapcar #'extra-samples (uiop:command-line-arguments))) :pretty t) (terpri))

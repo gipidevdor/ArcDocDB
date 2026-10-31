@@ -37,24 +37,25 @@ Gate before effects, checkpoint and names before index/runtime/root; errors hand
             (ritira-risorse-rotazione-motore engine current-sources))))))
   nil)
 
-;;; REQ: REQ-REC-001 REQ-REC-004 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008
+;;; REQ: REQ-REC-001 REQ-REC-004 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008 REQ-CCH-001
 (declaim (ftype (function ((or string pathname) octets octets
                           &key (:create boolean) (:version (member 1 2)) (:clock t) (:observer t) (:record-validator t)
                                (:max-file-bytes index) (:max-record-bytes index) (:max-records u32)
                                (:max-segments index) (:index-capacity index) (:key-arena-bytes index)
                                (:hash-seed-high u32) (:hash-seed-low u32)
-                               (:index-policy t) (:index-image (or null opzione-indice-paginato))
+                               (:record-cache-budget t) (:index-policy t) (:index-image (or null opzione-indice-paginato))
                                (:index-discovery (or null opzione-scoperta-indice))) motore) apri-motore))
 (defun apri-motore (directory archive-id series-id
                    &key (create nil) (version 2) clock observer record-validator (max-file-bytes 16777216)
                         (max-record-bytes 65536) (max-records 65536) (max-segments 64)
                         (index-capacity 4096) (key-arena-bytes 1048576) (hash-seed-high #x243f6a88)
-                        (hash-seed-low #x85a308d3) index-image index-discovery
+                        (hash-seed-low #x85a308d3) index-image index-discovery (record-cache-budget 0)
                         (index-policy (if (or index-image index-discovery) :legacy :automatic)))
   "Pre: existing private directory, explicit UUIDs, injectable monotonic clock, no thread cancellation.
 Post: unique physical writer and READY engine; explicit init or automatic recovery without harness.
 INDEX-IMAGE selects a derivative; INDEX-DISCOVERY searches for footers consistent with canonical source.
 Both choices require complete verification before READY, are mutually exclusive, and incompatible with CREATE.
+RECORD-CACHE-BUDGET grants separate fixed record-cache payload; zero disables it.
 Durable points in existing preparers/publishers; no admission before complete index and sources.
 Typed errors, all resource cleanup attempted; primary and cleanup causes preserved, no retry/rollback."
   (unless (or (member index-policy '(:legacy :automatic)) (typep index-policy 'politica-indice-automatico))
@@ -68,12 +69,15 @@ Typed errors, all resource cleanup attempted; primary and cleanup causes preserv
     (error 'invalid-argument :reason :engine-record-validator))
   (verifica-configurazione-motore archive-id series-id version clock observer
                                  max-file-bytes max-records max-segments max-record-bytes)
+  (verifica-budget-cache-motore record-cache-budget)
   (let ((engine (%make-motore :archive-id (copy-seq archive-id) :series-id (copy-seq series-id)
                    :clock clock :observer observer :record-validator record-validator
                    :version version :image-option index-image :discovery-option index-discovery :max-file-bytes max-file-bytes
                    :max-record-bytes max-record-bytes :max-records max-records :max-segments max-segments
                    :scratch (make-array max-file-bytes :element-type '(unsigned-byte 8) :initial-element 0)
-                   :empty (make-array 0 :element-type '(unsigned-byte 8)))) (complete nil) (cause nil))
+                   :empty (make-array 0 :element-type '(unsigned-byte 8))
+                   :record-cache-budget record-cache-budget
+                   :record-cache (crea-record-cache-motore record-cache-budget max-record-bytes))) (complete nil) (cause nil))
     (handler-case
         (unwind-protect
              (handler-case (progn

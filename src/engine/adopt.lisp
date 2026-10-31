@@ -59,7 +59,7 @@ One operational registry at M, without increment; errors before READY do not ret
     (setf (motore-runtime engine) runtime (motore-registry engine) (rt:csn-runtime-archivio runtime)
           (motore-scope engine) (rt:ambito-runtime-archivio runtime)
           (motore-view engine) (g:crea-vista-get-serie (motore-scope engine) (unless (motore-automatic-index engine) (motore-index engine))
-                   nil (motore-series-id engine)
+                   (motore-record-cache engine) (motore-series-id engine)
                    :lookup (lambda (key start end probe destination)
                              (sonda-indice-motore engine key start end probe destination))))
     (let ((directory (rt:adotta-directory-closed archive (motore-view engine) control closed maps

@@ -176,14 +176,16 @@ Each iteration visits every slot once; finite idle wait without serving unrelate
 (defun serve-local (directory archive-id series-id path
                     &key create (version 2) (clock #'get-internal-real-time) observer
                          (stop (constantly nil)) ready (max-connections 8) io-backend index-discovery
-                         (index-policy (if index-discovery :legacy :automatic)))
+                         (index-policy (if index-discovery :legacy :automatic)) (record-cache-budget 0))
   "Pre: distinct private data/runtime directories, explicit identities, one calling actor.
 Post: real startup and recovery before listener; service until STOP, complete cleanup.
 INDEX-DISCOVERY and INDEX-POLICY are validated before resources and delegated before listen.
+RECORD-CACHE-BUDGET is a separate fixed record-cache grant, zero by default.
 Trusted non-reentrant callbacks; STOP/READY do not certify recovery. No retry."
   (unless (and (functionp clock) (functionp stop) (typep ready '(or null function))
                (typep max-connections '(integer 1 8)))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-server-config))
+  (e::verifica-budget-cache-motore record-cache-budget)
   (unless (typep index-discovery '(or null e:opzione-scoperta-indice))
     (error 'arcdocdb.conditions:invalid-argument :reason :local-index-discovery-config))
   (when (and create index-discovery)
@@ -208,7 +210,8 @@ Trusted non-reentrant callbacks; STOP/READY do not certify recovery. No retry."
                    (when (and (= device (sb-posix:stat-dev stat)) (= inode (sb-posix:stat-ino stat)))
                      (error 'arcdocdb.conditions:invalid-argument :reason :local-runtime-is-storage))))
                (setf engine (e:apri-motore directory archive-id series-id :create create :version version
-                              :clock clock :observer observer :index-discovery index-discovery :index-policy index-policy :record-validator (local-record-validator space)))
+                              :clock clock :observer observer :index-discovery index-discovery :index-policy index-policy
+                              :record-cache-budget record-cache-budget :record-validator (local-record-validator space)))
                (unless (eq :ready (e:stato-motore engine))
                  (error 'arcdocdb.conditions:invariant-violation :reason :local-startup-gate))
                (setf listener (open-local-listener path :namespace namespace))

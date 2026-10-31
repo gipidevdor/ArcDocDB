@@ -226,7 +226,7 @@
                 :components ((:file "package") (:file "image-config") (:file "image-discovery-config")
                              (:file "image-maintenance-config") (:file "image-auto-types") (:file "index-auto-types")
                              (:file "delta-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "delta-location") (:file "files")
-                             (:file "config") (:file "initialize") (:file "recovery") (:file "preflight") (:file "index")
+                             (:file "config") (:file "record-cache") (:file "initialize") (:file "recovery") (:file "preflight") (:file "index")
                              (:file "image-source") (:file "image-discovery") (:file "image-recovery") (:file "image-activation")
                              (:file "image-build-types") (:file "image-build-read") (:file "image-build-plan")
                              (:file "image-build-tree") (:file "image-build-io") (:file "image-build") (:file "image-renewal") (:file "image-maintenance")
@@ -403,7 +403,7 @@
                (:module "vertical" :serial t
                 :components ((:file "support") (:file "scenarios") (:file "resume") (:file "processes")))
                (:module "engine" :serial t
-                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "rotation") (:file "compaction") (:file "processes")))
+                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "rotation") (:file "compaction") (:file "record-cache") (:file "processes")))
                (:module "local" :serial t
                 :components ((:file "wire") (:file "native") (:file "server") (:file "processes"))))
   :perform (test-op (o c)

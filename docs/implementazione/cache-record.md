@@ -235,3 +235,40 @@ under seqlock are rechecked. The first CRC error remains
 `:verify-failed` and requires segment fallback. Scanning retains the
 eight-way budget and does not retry an unconfirmed concurrent copy.
 Regression and measurements: [GET campaign](https://github.com/gpicchiarelli/ArcDocDB/blob/13c2eec90a7a80f97f3bd9ded6b62abd75b7cf78/spikes/results/2026-10-11-get-performance/README.md).
+
+## Serial M1 integration
+
+[ADR-0079](../adr/0079-cache-record-m1.md) connects this existing cache to the
+production engine and Unix service. `apri-motore` accepts `:record-cache-budget`
+(default `0`); `serve-local` forwards the same option. The server CLI accepts
+`--record-cache-budget BYTES`, independently of `--index-budget` and image discovery.
+
+A positive grant constructs a private fixed partition before engine storage is
+opened: power-of-two classes from 1 KiB through the rounded maximum frame size,
+eight ways per set, at least one set per class, and bounded round-robin set
+doubling while the existing payload accounting fits. With the normal 64 KiB
+frame limit the minimum is **1,042,127 payload bytes**; `1048576` is sufficient.
+A smaller positive grant fails before engine namespace effects. Zero allocates
+no record cache. The upper grant is 1 GiB; no implicit RAM detection or primary
+index budget deduction occurs. Payload excludes Lisp headers, mutex objects,
+alignment, other engine workspaces and the operating system page cache.
+
+Current GET always resolves authoritative ACTIVE/CLOSED membership before
+probing the cache. A hit still verifies record CRC, exact key, CSN, flags and
+size. A corrupt copy is rejected and reread from the segment; a successful
+fallback increments `:verify-failed` and emits `:cache-verify-failed` through the
+trusted engine observer. Source failures still fault admission. The observer
+must obey the ordinary nonreentrant contract. `statistiche-cache-motore` returns
+separate grant/payload and saturating hit/miss/verification-failure counts for
+verified record loads; absent keys and failed source loads are excluded. A later
+copy/completion or observer failure can still fault the enclosing GET.
+
+The same cache stays attached while the primary index moves between RAM and
+paged storage. Writers, rotation and compaction do not mutate it. Relocated
+records warm their new locations on subsequent reads; old locations expire by
+CLOCK. A fresh opening constructs a cold partition. Close retires the handle's
+view/controller/log references after resource cleanup. The qualification and
+paired warm-cache measurements are retained in the
+[integration evidence](../../spikes/results/2026-10-31-engine-record-cache/report.md).
+The single cached CLOSED row map can still be rebuilt on cross-segment misses;
+record caching does not bypass that verification or qualify beyond-RAM behavior.

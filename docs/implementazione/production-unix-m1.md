@@ -181,3 +181,14 @@ free physical RAM, or a peer-requested backend. Page geometry and frame defaults
 remain those of the engine factory. Omitting the option keeps the engine's
 normal automatic policy. The wire protocol and strong acknowledgment semantics
 are unchanged. See [verification](../../spikes/results/2026-10-31-local-index-budget/report.md).
+
+## Optional verified record cache
+
+Use `--record-cache-budget 1048576` (or library `:record-cache-budget 1048576`)
+to grant a separate fixed record cache, alongside the normal primary index.
+Zero is the default; a positive grant must fit all configured size classes.
+The normal 64 KiB maximum frame needs at least 1,042,127 payload bytes.
+Malformed, repeated or oversized CLI grants are rejected; a too-small positive
+grant rejects engine startup and no READY/listener is published. The wire and
+strong PUT/DELETE acknowledgment remain unchanged. See the
+[cache contract and metrics](cache-record.md#serial-m1-integration).

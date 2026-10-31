@@ -3,13 +3,13 @@
 (in-package #:arcdocdb.engine)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
-;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CON-004 REQ-CMP-007 REQ-AFF-002 REQ-AFF-008
+;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CON-004 REQ-CMP-007 REQ-AFF-002 REQ-AFF-008 REQ-CCH-002 REQ-CCH-004
 (declaim (ftype (function (motore b:octets b:octets b:index)
                          (values (member :found :absent) b:index &optional))
                 leggi-documento-corrente-motore))
 (defun leggi-documento-corrente-motore (engine key target start)
-  "Pre: owner, MOTORE-BUSY true, validated inputs; cache-free view and exclusive GET context.
-Post: FOUND with authorized byte count after copying and completion; ABSENT with zero,
+  "Pre: owner, MOTORE-BUSY true, validated inputs; canonical view and exclusive GET context.
+Post: FOUND with authorized byte count after cache/segment verification, copying and completion; ABSENT with zero,
 without modifying TARGET. Engine clock read at startup and fresh at completion.
 Every exit abandons GET; a cleanup error does not replace the primary exit."
   (let ((context (motore-get-context engine)) (clock (motore-clock engine)) (complete nil))
@@ -29,9 +29,12 @@ Every exit abandons GET; a cleanup error does not replace the primary exit."
                       (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-absence))
                     (values :absent 0)))
                  (:candidate
-                  (case (if (motore-automatic-index engine) (read-automatic-record engine context)
-                            (gd:leggi-record-serie-get context (motore-controller engine)))
-                    (:segment nil)
+                  (case (multiple-value-bind (source cache-status)
+                            (if (motore-automatic-index engine) (read-automatic-record engine context)
+                                (gd:leggi-record-serie-get context (motore-controller engine)))
+                          (unless (eq source :buffer-required) (registra-esito-cache-motore engine cache-status))
+                          source)
+                    ((:cache :segment) nil)
                     (:buffer-required
                      (error 'arcdocdb.conditions:resource-exhausted :reason :engine-get-record-buffer))
                     (otherwise

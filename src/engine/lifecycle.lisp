@@ -88,6 +88,10 @@ Ownership consumed even on error; faults recorded, no second close or retry."
   (dolist (file (motore-fds engine))
     (tenta-cleanup-motore engine (lambda () (io:chiudi file))))
   (setf (motore-fds engine) nil)
+  ;; Retire the final view/context too: neither keeps the cache arenas alive after close.
+  (setf (motore-record-cache engine) nil (motore-view engine) nil (motore-get-context engine) nil
+        (motore-sources engine) nil (motore-source engine) nil (motore-controller engine) nil (motore-active engine) nil
+        (motore-group engine) nil (motore-batch engine) nil (motore-append engine) nil)
   nil)
 
 ;;; REQ: REQ-REC-001 REQ-AFF-004 REQ-CON-002

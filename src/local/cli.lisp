@@ -35,13 +35,15 @@
     (error 'arcdocdb.conditions:invalid-argument :reason :local-cli-index-budget))
   (e:crea-politica-indice-automatico :budget (parse-integer text :radix 10 :junk-allowed nil)))
 
-;;; REQ: REQ-IPC-001 REQ-REC-001 REQ-IDX-013
+;;; REQ: REQ-IPC-001 REQ-REC-001 REQ-IDX-013 REQ-CCH-001
 (defun server-cli-options (args)
-  "Pre: remaining CLI options. Post: init/version and optional index quota validated without duplicate options."
-  (let ((create nil) (version 2) (seen-version nil) (discover nil) (policy nil))
+  "Pre: remaining CLI options. Post: init/version and separate index/cache grants, without duplicate options."
+  (let ((create nil) (version 2) (seen-version nil) (discover nil) (policy nil) (cache nil))
     (loop while args do
       (let ((option (pop args)))
-        (cond ((and (string= option "--index-budget") args (not policy))
+        (cond ((and (string= option "--record-cache-budget") args (null cache))
+               (setf cache (local-record-cache-budget (pop args))))
+              ((and (string= option "--index-budget") args (not policy))
                (setf policy (local-index-budget (pop args))))
               ((and (string= option "--discover-index") (not discover)) (setf discover t))
               ((and (string= option "--create") (not create)) (setf create t))
@@ -54,15 +56,27 @@
     (when (and policy discover)
       (error 'arcdocdb.conditions:invalid-argument :reason :local-index-policy-discovery))
     (values create version (when discover (e:crea-opzione-scoperta-indice))
-            (or policy (if discover :legacy :automatic)))))
+            (or policy (if discover :legacy :automatic)) (or cache 0))))
+
+;;; REQ: REQ-IPC-001 REQ-CCH-001 REQ-LIM-003
+(declaim (ftype (function (t) arcdocdb.binary:index) local-record-cache-budget))
+(defun local-record-cache-budget (text)
+  "Pre: untrusted CLI token. Post: decimal record-cache grant, including explicit zero.
+INVALID-ARGUMENT before resources for malformed/out-of-range values; no Lisp reader."
+  (unless (and (stringp text) (<= 1 (length text) 10)
+               (every (lambda (character) (find character "0123456789")) text))
+    (error 'arcdocdb.conditions:invalid-argument :reason :local-cli-record-cache-budget))
+  (let ((budget (parse-integer text :radix 10 :junk-allowed nil)))
+    (e::verifica-budget-cache-motore budget)
+    budget))
 
 ;;; REQ: REQ-IPC-001 REQ-IPC-002 REQ-REC-001
 (defun server-cli-main (args)
-  "Pre: dedicated process, DATA SOCKET ARCHIVE32 SERIES32 [--create] [--version 1|2] [--discover-index | --index-budget BYTES].
+  "Pre: dedicated process, DATA SOCKET ARCHIVE32 SERIES32 and validated init/index/record-cache options.
 Post: real service until SIGTERM/SIGINT, then cleanup; prints READY only after listen."
-  (unless (<= 4 (length args) 10)
+  (unless (<= 4 (length args) 12)
     (error 'arcdocdb.conditions:invalid-argument :reason :local-server-cli-arguments))
-  (multiple-value-bind (create version discovery policy) (server-cli-options (nthcdr 4 args))
+  (multiple-value-bind (create version discovery policy cache-budget) (server-cli-options (nthcdr 4 args))
     (let ((stopping nil))
       (flet ((stop-signal (signal info context)
                (declare (ignore signal info context)) (setf stopping t)))
@@ -70,6 +84,7 @@ Post: real service until SIGTERM/SIGINT, then cleanup; prints READY only after l
         (sb-sys:enable-interrupt sb-posix:sigint #'stop-signal)
         (serve-local (first args) (local-unhex (third args) 16 16)
           (local-unhex (fourth args) 16 16) (second args) :create create :version version :index-discovery discovery :index-policy policy
+          :record-cache-budget cache-budget
           :stop (lambda () stopping)
           :ready (lambda ()
                    (format t "~S~%" (list :kind :local-server :state :ready :pid (sb-posix:getpid)))

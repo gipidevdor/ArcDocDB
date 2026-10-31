@@ -12,7 +12,7 @@
              (format stream "ArcDocDB cleanup: primaria ~A; guasti ~S"
                      (causa-cleanup-motore condition) (errori-cleanup-motore condition)))))
 
-;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-LIM-003 REQ-IDX-012
+;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-LIM-003 REQ-IDX-012 REQ-CCH-001 REQ-CCH-004
 (defstruct (motore (:constructor %make-motore) (:copier nil))
   "Pre: configuration validated before I/O; one actor and one Serie per handle.
 Post: admission closed until READY; resources owned until close, no caller buffer retained.
@@ -32,6 +32,10 @@ No public accessor for FDs or roots; capability not transferable across threads.
   (max-records 65536 :type u32 :read-only t)
   (scratch #() :type octets :read-only t)
   (empty #() :type octets :read-only t)
+  (record-cache nil :type (or null arcdocdb.cache:cache-serie))
+  (record-cache-budget 0 :type index :read-only t)
+  (cache-hits 0 :type index) (cache-misses 0 :type index)
+  (cache-verify-failed 0 :type index)
   (words (make-array 5 :element-type '(unsigned-byte 64) :initial-element 0)
          :type (simple-array (unsigned-byte 64) (5)) :read-only t)
   (discovery-option nil :type (or null opzione-scoperta-indice) :read-only t)

@@ -290,3 +290,40 @@
       (l:serve-local "/missing" (id 73) (id 41) "/missing/socket" :index-policy policy
         :index-discovery (e:crea-opzione-scoperta-indice)
         :clock (lambda () (error "Clock reached"))))))
+
+;;; REQ: REQ-IPC-001 REQ-CCH-001 REQ-LIM-003
+(deftest test-REQ-CCH-001-local-record-cache-cli-and-early-validation
+  (is (zerop (fifth (multiple-value-list (l::server-cli-options nil)))))
+  (dolist (args '(("--record-cache-budget" "0")
+                  ("--create" "--record-cache-budget" "1048576" "--version" "1" "--index-budget" "3400000")
+                  ("--record-cache-budget" "1048576" "--discover-index")))
+    (is (member (fifth (multiple-value-list (l::server-cli-options args))) '(0 1048576))))
+  (dolist (args '(("--record-cache-budget") ("--record-cache-budget" "0" "--record-cache-budget" "0")
+                  ("--record-cache-budget" "-1") ("--record-cache-budget" "+1")
+                  ("--record-cache-budget" "1073741825") ("--record-cache-budget" "#.(exit)")
+                  ("--record-cache-budget" "1x") ("--record-cache-budget" "")))
+    (signals arcdocdb.conditions:invalid-argument (l::server-cli-options args)))
+  (dolist (budget '(nil t -1 "1048576" 1073741825))
+    (signals arcdocdb.conditions:invalid-argument
+      (l:serve-local "/missing" (id 73) (id 41) "/missing/socket" :record-cache-budget budget
+        :clock (lambda () (error "Clock reached"))) :engine-record-cache-budget)))
+
+;;; REQ: REQ-IPC-002 REQ-CCH-002 REQ-WAL-006
+(deftest test-REQ-CCH-002-local-dispatch-verified-cache-hit-and-fallback
+  (arcdocdb.engine.tests::with-root (root)
+    (let ((engine (e:apri-motore root (id 73) (id 41) :create t :clock (lambda () 10)
+                    :record-cache-budget 1048576)))
+      (unwind-protect
+           (let ((connection (l::make-local-connection :limit 65536)))
+             (is (zerop (dispatch engine connection 1 1 (bytes 1) (bytes #x18 #x2a))))
+             (loop for n from 2 to 3 do
+               (multiple-value-bind (status envelope) (dispatch engine connection n 2 (bytes 1))
+                 (is (zerop status))
+                 (multiple-value-bind (found document) (decoded-result connection envelope 2)
+                   (is (eq :found found)) (is (equalp document (bytes #x18 #x2a))))))
+             (is (= 1 (getf (e:statistiche-cache-motore engine) :hits)))
+             (arcdocdb.engine.tests::cache-bit-flip engine)
+             (is (zerop (dispatch engine connection 4 2 (bytes 1))))
+             (is (= 1 (getf (e:statistiche-cache-motore engine) :verify-failed)))
+             (is (equal '(0 1 0 1) (multiple-value-list (e:frontiere-motore engine)))))
+        (e:chiudi-motore engine)))))

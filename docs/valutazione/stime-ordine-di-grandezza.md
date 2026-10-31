@@ -263,3 +263,13 @@ it does not yet attribute throughput, latency, or advantages over TCP to the eng
 ## v2 revision (ADR-0048)
 
 The preceding tables estimate v1 layout. V2 costs 41 B/slot instead of 33: +8/occupancy B per document (about +9.1 at 7/8 load, +18.3 at 7/16), besides keys. With a 16 B key and preceding average assumptions, about 88 B/document; decimal 64 GB with 15% reserved would yield about 618 million, an **illustrative estimate**. Large keys greatly reduce capacity. Remeasure in SPK-01; no beyond-RAM-mode capacity is demonstrated.
+
+## Integrated M1 record-cache experiment
+
+[The paired local method](../../spikes/results/2026-10-31-engine-record-cache/method.md)
+compares zero cache with 4 MiB of separately granted payload on identical verified
+GETs, before/after compaction and after recovery, for both formats and all M1
+primary profiles. Use the [measured report](../../spikes/results/2026-10-31-engine-record-cache/report.md)
+within its eight-hot-key, warm-page-cache scope. Fixed cache payload excludes
+object headers, process RSS and the separately budgeted primary index; these
+samples do not establish the reference-platform throughput targets above.

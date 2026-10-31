@@ -7,6 +7,12 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- Connect the existing verified record cache to M1 RAM/paged GET, live maintenance
+  and the Unix service, with a separate fixed grant (zero by default), corruption
+  fallback notification and per-handle counts.
+  [Contract](docs/adr/0079-cache-record-m1.md) and
+  [evidence](spikes/results/2026-10-31-engine-record-cache/report.md).
+
 - Reduce engine maintenance cost with verified live-CSN bounds and a fixed 512-byte signature,
   cached original-source windows and bounded vector equality; avoid clearing
   complete paged-index frames immediately before reads overwrite them.

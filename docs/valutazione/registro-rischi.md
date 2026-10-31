@@ -394,3 +394,12 @@ is mandatory before calling it. Contrib `socket-receive` allocates an
 alien buffer per call; the future product adapter must use preallocated
 buffers, injectable I/O, and deadlines. Admission, commit, isolation,
 and reference platform remain open; no latency target demonstrated.
+
+## M1 record-cache integration, 2026-10-31
+
+RSK-10 now has a production integration and a paired local experiment:
+[method and evidence](../../spikes/results/2026-10-31-engine-record-cache/report.md).
+Zero/positive grants, immutable-location cooling after compaction, corruption
+fallback and transparent RAM/paged primary storage are exercised. The experiment
+uses eight hot keys and warm operating-system pages; beyond-RAM replacement,
+scan pollution, concurrent load and reference-device effects remain open.

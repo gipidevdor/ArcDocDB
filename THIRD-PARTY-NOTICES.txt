@@ -56,6 +56,14 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in these Data Files or Software without prior written
 authorization of the copyright holder.
 
+xxHash algorithm reference
+--------------------------
+The XXH64 implementation is Common Lisp following the published xxHash
+specification. No native xxHash library is linked. The upstream BSD 2-Clause
+license and specification notice are retained in
+legal/algorithms/xxHash-v0.8.3-NOTICES.txt. This attribution does not assert
+that ArcDocDB links the C implementation or grant general patent clearance.
+
 SBCL compiler and runtime
 -------------------------
 SBCL is a separate implementation with mixed public-domain and permissive

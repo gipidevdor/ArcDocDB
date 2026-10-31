@@ -36,12 +36,12 @@
          (files (getf inventory :files)))
     (unless (and (= (getf inventory :schema-version) 1)
                  (eq (getf inventory :kind) :distribution-notice-files)
-                 (listp files) (<= 4 (length files) 64)
+                 (listp files) (<= 5 (length files) 64)
                  (every #'safe-path-p files)
                  (= (length files) (length (remove-duplicates files :test #'equalp)))
                  (every (lambda (name) (member name files :test #'equal))
                         '("LICENSE" "THIRD-PARTY-NOTICES.txt" "data/unicode/18.0.0/LICENSE.txt"
-                          "legal/runtime/SBCL-2.6.9-COPYING.txt")))
+                          "legal/runtime/SBCL-2.6.9-COPYING.txt" "legal/algorithms/xxHash-v0.8.3-NOTICES.txt")))
       (error "Invalid distribution notice inventory."))
     files))
 

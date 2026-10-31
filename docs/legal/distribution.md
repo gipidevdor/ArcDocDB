@@ -11,6 +11,7 @@ records the inspected sources and unresolved matters.
 | Project-authored code and prose | [BSD-2-Clause](../../LICENSE), to the extent of contributors' rights | Preserve copyright, conditions and disclaimer |
 | Unicode® Character Database 18.0.0, corpora and derived tables | [Unicode-3.0](../../data/unicode/18.0.0/LICENSE.txt) | Include the complete original notice with source, compiled and container distributions |
 | SBCL, contribs and implementations in saved images | Actual runtime's COPYING and component terms | Preserve the notices of the version and build actually distributed |
+| XXH64 algorithm reference | [xxHash BSD license and specification notice](../../legal/algorithms/xxHash-v0.8.3-NOTICES.txt) | Retain upstream attribution; no native xxHash library is linked |
 | Mermaid browser bundle and incorporated components | [Component-specific licenses](third-party.md) | Retain embedded notices and the complete downloadable collection |
 | Documentation build libraries and caches | Individual terms, including LGPL/LLGPL | Preserve their own licenses and source obligations when redistributing tools, caches or build images |
 | Standards, papers, logos and cited works | Respective holders' rights | Link to originals; check permission before copying beyond a license or applicable exception |
@@ -65,7 +66,7 @@ caches and build images are not covered solely by the project's BSD notice.
 ## Documentation site
 
 The site publishes exact copies of the project license, root notices, Unicode
-notice, reference SBCL notice and browser notice inventory in `licenses/`.
+notice, reference SBCL/xxHash notices and browser notice inventory in `licenses/`.
 Its integrity checks compare published bytes with their sources.
 
 This distribution selects **Apache-2.0** from DOMPurify's offered alternatives.

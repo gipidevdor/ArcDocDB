@@ -6,6 +6,7 @@
   '(("LICENSE" "licenses/ArcDocDB-BSD-2-Clause.txt")
     ("THIRD-PARTY-NOTICES.txt" "licenses/ArcDocDB-third-party-notices.txt")
     ("legal/runtime/SBCL-2.6.9-COPYING.txt" "licenses/SBCL-2.6.9-COPYING.txt")
+    ("legal/algorithms/xxHash-v0.8.3-NOTICES.txt" "licenses/xxHash-v0.8.3-NOTICES.txt")
     ("data/unicode/18.0.0/LICENSE.txt" "licenses/Unicode-LICENSE.txt")
     ("tools/pages/third-party-notices.txt" "licenses/third-party-notices.txt")
     ("tools/pages/third-party-notices.lisp" "licenses/browser-components.lisp")))

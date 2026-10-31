@@ -2,7 +2,7 @@
 
 # ADR-0067 — Bounded serial delta for the M1 primary image
 
-- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-29
+- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-29; membership-only representation and touched-key resident lookup superseded by [ADR-0071](0071-delta-location-indice-m1.md)
 - **Date:** 2026-10-29
 - **References:** ADR-0064, ADR-0065, ADR-0066; REQ-IDX-010, INV-I8, INV-I1, INV-P6
 - **Relationship to the specification:** no new durable format; extends ADR-0066's retirement before writing with an explicit delta

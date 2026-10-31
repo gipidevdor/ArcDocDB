@@ -10,9 +10,9 @@
 (defun bytes (&rest values)
   (make-array (length values) :element-type '(unsigned-byte 8) :initial-contents values))
 (defun id (n) (make-array 16 :element-type '(unsigned-byte 8) :initial-element n))
-(defun engine (root &key create observer)
+(defun engine (root &key create observer (index-policy :automatic))
   (e:apri-motore root (id 73) (id 41) :create create :clock (lambda () 10) :observer observer
-    :index-capacity 32 :key-arena-bytes 4096))
+    :index-capacity 32 :key-arena-bytes 4096 :index-policy index-policy))
 (defun request (connection id opcode key document)
   (let* ((buffer (l::local-connection-input connection))
          (end (l::encode-local-request buffer id opcode key document)))
@@ -55,7 +55,8 @@
 
 ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-WAL-006
 (deftest test-REQ-IPC-002-index-busy-never-committed
-  (with-engine (engine root :create t)
+  ;; Keep the fixed-capacity reference profile for this rejection oracle.
+  (with-engine (engine root :create t :index-policy :legacy)
     (let ((connection (l::make-local-connection :limit 65536)))
       (loop for n from 1 to 28 do (is (zerop (dispatch engine connection n 1 (bytes n) (bytes 0)))))
       (let ((originals (arcdocdb.engine.tests::images root)))
@@ -147,3 +148,17 @@
              (is (l::step-local-connection nil output deadline (lambda () deadline)))
              (is (eq :closed (l::local-connection-state output)))))
       (l::close-local-connection input) (l::close-local-connection output))))
+
+;;; REQ: REQ-IPC-002 REQ-IDX-013 REQ-WAL-006
+(deftest test-REQ-IDX-013-local-dispatch-grows-automatically-before-strong-ACK
+  (with-engine (engine root :create t)
+    (let ((connection (l::make-local-connection :limit 65536)))
+      (loop for n from 1 to 90 do
+        (multiple-value-bind (status envelope) (dispatch engine connection n 1 (bytes n) (bytes 0))
+          (is (zerop status)) (is (= n (decoded-result connection envelope 1)))))
+      (is (eq :resident (e:modo-indice-motore engine)))
+      (is (equal '(0 90 0 90) (multiple-value-list (e:frontiere-motore engine))))
+      (multiple-value-bind (status envelope) (dispatch engine connection 91 2 (bytes 90))
+        (is (zerop status))
+        (multiple-value-bind (found document) (decoded-result connection envelope 2)
+          (is (eq :found found)) (is (equalp (bytes 0) document)))))))

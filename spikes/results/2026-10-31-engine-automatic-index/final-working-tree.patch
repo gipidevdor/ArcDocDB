@@ -1,0 +1,1242 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 78bcd8a..3b196b6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -7,10 +7,25 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
+ 
+ ## [Unreleased]
+ 
++- [Automatic primary storage in M1](docs/implementazione/indice-automatico-operativo.md):
++  flat resident growth while the quota permits it, bounded disk writes/replay,
++  verified migration both ways, hysteresis, live-only compaction and fixed CLOSED
++  resolver caching. Canonical WAL/SEAL is unchanged. The serial profile retains
++  no full resident index while paged; concurrent progress and physical-RAM scale
++  remain separate qualification gates (ADR-0073).
++
+ <a id="aggiunto"></a>
+ 
+ ### Added
+ 
++- [Automatic M1 delta renewal](docs/implementazione/rinnovo-automatico-m1.md)
++  before PUT/DELETE: threshold and next-key capacity, finite image sequence,
++  full reservation before effects, and one BUSY scope through commit (ADR-0072).
++
++- [Self-contained M1 location delta](docs/implementazione/delta-location-m1.md):
++  committed location/tombstone lookup without resident access, complete old/new
++  array reservations, and publication fault injection (ADR-0071).
++
+ - [Read-only discovery of M1 images](docs/implementazione/scoperta-indice-m1.md)
+   at startup: bounded inventory/candidates, canonical-source filtering,
+   deterministic priority, and mandatory full verification (ADR-0070).
+diff --git a/README.md b/README.md
+index d780022..f106101 100644
+--- a/README.md
++++ b/README.md
+@@ -13,7 +13,8 @@ The first intended application is an NNTP server, connected through a local Unix
+ ## Status
+ 
+ **In development.** M1 provides a durable, single-Serie core with startup, recovery,
+-PUT, GET and DELETE over a Unix socket.
++PUT, GET and DELETE over a Unix socket. The primary index automatically stays
++in RAM or uses a bounded disk cache according to its assigned memory budget.
+ [Capabilities and limits](docs/implementazione/README.md).
+ 
+ ## Start
+diff --git a/arcdocdb.asd b/arcdocdb.asd
+index a289d4e..f006ad8 100644
+--- a/arcdocdb.asd
++++ b/arcdocdb.asd
+@@ -98,7 +98,7 @@
+                              (:file "rename") (:file "namespace") (:file "publish") (:file "open-relative")
+                              (:file "create-relative")
+                              (:file "transfer") (:file "flush")
+-                             (:file "stabilize-preflight") (:file "stabilize") (:file "directory-lock")))
++                             (:file "stabilize-preflight") (:file "stabilize") (:file "directory-lock") (:file "derived-remove")))
+                (:module "wal" :serial t
+                 :components ((:file "package") (:file "types") (:file "builder")
+                              (:file "frame") (:file "group") (:file "executor") (:file "csn")))
+@@ -138,6 +138,10 @@
+                              (:file "image-constants") (:file "image-types") (:file "image-codec") (:file "image-seal")
+                              (:file "image-verify-types") (:file "image-verify-key") (:file "image-verify-edges")
+                              (:file "image-verify-entry") (:file "image-recovery") (:file "image-publication")))
++               (:module "index-disk" :serial t
++                :components ((:file "package") (:file "types") (:file "cache") (:file "read")
++                             (:file "write") (:file "balance") (:file "mutate") (:file "build")
++                             (:file "api") (:file "visit") (:file "copy")))
+                (:module "mvcc" :serial t
+                 :components ((:file "package") (:file "types")
+                              (:file "snapshots-types") (:file "snapshots-core") (:file "snapshots-csn")
+@@ -219,11 +223,16 @@
+                              (:file "query") (:file "build") (:file "active")
+                              (:file "closed-preflight") (:file "closed-transfer") (:file "closed")))
+                (:module "engine" :serial t
+-                :components ((:file "package") (:file "image-config") (:file "image-discovery-config") (:file "delta-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "files")
++                :components ((:file "package") (:file "image-config") (:file "image-discovery-config")
++                             (:file "image-maintenance-config") (:file "image-auto-types") (:file "index-auto-types")
++                             (:file "delta-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "delta-location") (:file "files")
+                              (:file "config") (:file "initialize") (:file "recovery") (:file "preflight") (:file "index")
+                              (:file "image-source") (:file "image-discovery") (:file "image-recovery") (:file "image-activation")
+                              (:file "image-build-types") (:file "image-build-read") (:file "image-build-plan")
+-                             (:file "image-build-tree") (:file "image-build-io") (:file "image-build") (:file "image-renewal") (:file "image-maintenance") (:file "adopt") (:file "startup") (:file "write") (:file "read"))))
++                             (:file "image-build-tree") (:file "image-build-io") (:file "image-build") (:file "image-renewal") (:file "image-maintenance")
++                             (:file "image-auto") (:file "image-auto-write") (:file "index-auto-memory") (:file "index-auto-files")
++                             (:file "index-auto-migrate") (:file "index-auto-apply") (:file "index-auto-resolver")
++                             (:file "index-auto-api") (:file "adopt") (:file "startup") (:file "write") (:file "read"))))
+   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
+ 
+ (defsystem "arcdocdb/local"
+@@ -391,7 +400,7 @@
+                (:module "vertical" :serial t
+                 :components ((:file "support") (:file "scenarios") (:file "resume") (:file "processes")))
+                (:module "engine" :serial t
+-                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "image-renewal") (:file "image-maintenance") (:file "image-discovery") (:file "processes")))
++                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "processes")))
+                (:module "local" :serial t
+                 :components ((:file "wire") (:file "native") (:file "server") (:file "processes"))))
+   :perform (test-op (o c)
+diff --git a/docs/adr/0067-delta-seriale-indice-m1.md b/docs/adr/0067-delta-seriale-indice-m1.md
+index 18b1b8a..7e9c326 100644
+--- a/docs/adr/0067-delta-seriale-indice-m1.md
++++ b/docs/adr/0067-delta-seriale-indice-m1.md
+@@ -2,7 +2,7 @@
+ 
+ # ADR-0067 — Bounded serial delta for the M1 primary image
+ 
+-- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-29
++- **Status:** Accepted in the incremental integration authorized by the author on 2026-10-29; membership-only representation and touched-key resident lookup superseded by [ADR-0071](0071-delta-location-indice-m1.md)
+ - **Date:** 2026-10-29
+ - **References:** ADR-0064, ADR-0065, ADR-0066; REQ-IDX-010, INV-I8, INV-I1, INV-P6
+ - **Relationship to the specification:** no new durable format; extends ADR-0066's retirement before writing with an explicit delta
+diff --git a/docs/adr/README.md b/docs/adr/README.md
+index 28755c0..77e1380 100644
+--- a/docs/adr/README.md
++++ b/docs/adr/README.md
+@@ -191,3 +191,9 @@ consolidated result is in [architettura.md](../architettura.md) and
+ | [0069](0069-manutenzione-a-soglie-delta-m1.md) | Local threshold policy on keys/bytes and serial delta renewal | Accepted in incremental integration; backend selection and scheduler separate |
+ 
+ | [0070](0070-scoperta-readonly-immagini-m1.md) | Bounded search for current candidates and full verification at M1 startup | Accepted in incremental integration; durable catalog and mode selection separate |
++
++| [0071](0071-delta-location-indice-m1.md) | Committed locations and tombstones in the M1 delta, without resident lookup for paged GET | Accepted in incremental integration; resident write/recovery dependencies remain |
++
++| [0072](0072-rinnovo-automatico-delta-m1.md) | Bounded automatic renewal before M1 PUT/DELETE, with one admission for renewal and commit | Accepted in incremental integration; legacy image profile; operational selection in ADR-0073 |
++
++| [0073](0073-indice-automatico-operativo-m1.md) | Automatic M1 resident/paged writes, bounded replay, return and derived cleanup | Implemented for serial M1; concurrent and physical-RAM qualification separate |
+diff --git a/docs/implementazione/README.md b/docs/implementazione/README.md
+index 35c8051..ecdd6fc 100644
+--- a/docs/implementazione/README.md
++++ b/docs/implementazione/README.md
+@@ -22,8 +22,10 @@ service exposes PING, PUT, GET and DELETE over a Unix socket.
+ | Area | Starting point |
+ |---|---|
+ | Engine and local service | [M1 core](production-engine-bootstrap.md), [Unix socket](production-unix-m1.md) |
+-| Primary index | [Resident index](indice-primario.md), [automatic selector](indice-automatico.md), [pages in the M1 GET path](indice-paginato-m1.md) |
++| Primary index | [Resident index](indice-primario.md), [automatic M1 backend](indice-automatico-operativo.md), [pages in the M1 GET path](indice-paginato-m1.md) |
+ | Index images | [Building](costruzione-indice-m1.md), [activation](attivazione-indice-m1.md), [renewal](rinnovo-indice-m1.md), [maintenance](manutenzione-indice-m1.md) |
++| Committed overlay | [M1 location delta](delta-location-m1.md): bounded locations/tombstones and paged GET independent of resident lookup |
++| Automatic maintenance | [M1 delta renewal](rinnovo-automatico-m1.md) before PUT/DELETE at threshold or next-key saturation, with finite fresh names and one admission |
+ | Reads and recovery | [GET](get-record.md), [Serie recovery](recovery-serie.md), [Archivio recovery](recovery-archivio.md) |
+ | Concurrency | [Pool/Serie chain](pool-catena-risultati.md), [snapshots](snapshot-csn.md), [epochs and reclamation](epoche-e-reclaim.md) |
+ | Full text | [Analysis and queries](full-text.md), [codec](full-text-codec.md), [PUT/WAL binding](full-text-put.md), [rows](full-text-righe.md) |
+@@ -37,9 +39,10 @@ methods and verification records.
+ 
+ - M1 exposes one Serie and one serial actor. Historical MVCC, multiseries
+   transactions, complete compaction and hot rotation remain outside this profile.
+-- Pages can serve the optional M1 GET path; the resident index is still present.
+-  Automatic switching between resident and paged modes remains incomplete;
+-  capacity beyond RAM remains unqualified.
++- M1 selects resident/paged storage automatically, including writes, bounded
++  replay and return to RAM. A paged handle retains no complete resident index.
++  The managed-heap stress is documented; physical-RAM scale and concurrent
++  snapshot qualification remain open.
+ - Full text includes Unicode analysis, a codec, document preparation and writer
+   bindings. Durable publication, MVCC and Query Engine integration remain open.
+ - Each campaign states its platform and scope. Local tests do not automatically
+diff --git a/docs/implementazione/delta-indice-m1.md b/docs/implementazione/delta-indice-m1.md
+index 2778ca0..031eb6b 100644
+--- a/docs/implementazione/delta-indice-m1.md
++++ b/docs/implementazione/delta-indice-m1.md
+@@ -5,6 +5,12 @@
+ > **Decided (authorized incremental integration → ADR-0067)** — REQ-IDX-010,
+ > INV-I8, INV-I1, INV-A8, INV-P6. C1, sole M1 owner, no new state across Serie.
+ 
++The original membership-only contract below is superseded in representation
++and lookup by [ADR-0071](../adr/0071-delta-location-indice-m1.md):
++the [location delta](delta-location-m1.md) owns complete committed descriptors
++and tombstones. Current array payload is `57*C + delta-key-bytes`.
++Admission, WAL atomicity, renewal, and restart obligations below still apply.
++
+ ```lisp
+ (arcdocdb.engine:attiva-indice-paginato-motore engine option
+   :delta-keys 1024 :delta-key-bytes 65536
+diff --git a/docs/implementazione/indice-automatico.md b/docs/implementazione/indice-automatico.md
+index 65ee7d6..cdc942b 100644
+--- a/docs/implementazione/indice-automatico.md
++++ b/docs/implementazione/indice-automatico.md
+@@ -2,11 +2,17 @@
+ 
+ # Automatic index-mode selection
+ 
+-First increment authorized on 2026-10-22: [ADR-0057](../adr/0057-selezione-automatica-indice.md),
+-REQ-IDX-008, INV-I7, INV-A8, INV-P6. Class C1 for selector, C4 for model.
+-The overall requirement remains designed: M1 retains the [resident primary index](indice-primario.md)
+-and integrates paged GET, bounded delta, and [serial renewal](rinnovo-indice-m1.md).
+-No automatic actuator yet reduces resident memory.
++The [operational M1 controller](indice-automatico-operativo.md) now selects
++resident or paged storage at startup and before writes, releases the resident
++root in paged mode, replays with bounded memory, and returns with hysteresis.
++[ADR-0073](../adr/0073-indice-automatico-operativo-m1.md) records its separate
++append-only disk format and unchanged canonical commit.
++
++The pure selector and concurrent lifetime model below remain useful design
++contracts. Their concurrent SBCL translation and whole-engine lock-free proof
++remain separate from the completed **serial M1** controller.
++[Legacy automatic delta renewal](rinnovo-automatico-m1.md) remains supported in
++the explicit compatibility profile.
+ 
+ <a id="api-e-stime"></a>
+ 
+@@ -142,18 +148,18 @@ This model authorizes no snapshot-content reclamation.
+ 
+ <a id="incrementi-successivi-e-completamento"></a>
+ 
+-## Subsequent increments and completion
++## Historical increments and concurrent qualification
+ 
+ | Increment | Modules and interfaces | Completion criterion |
+ |---|---|---|
+-| I1, introduced | `index.mode`, pure contract; separate C4 M0 | Reproducible tests and model, CI integration, traceability; actuator still absent. |
++| I1, introduced | `index.mode`, pure contract; separate C4 M0 | Reproducible tests and model, CI integration, traceability; pure contract only; the serial actuator is now described above. |
+ | I2, current | [ADR-0058](../adr/0058-pagine-indice-primario.md), [C1 page codec](pagine-indice.md), PageRef, checksums | Independent 4/16/64 KiB fixtures, collisions and long keys, full pages, corruption and split image; no log changes. |
+ | I3, started | [Serial cache with copies and verified PREAD](cache-pagine.md); concurrent acquire/release protocol and complete budget remain | Safety/progress proof with SBCL primitives; fault injection, reader suspension, saturation, ABA; separate declared blocking miss. |
+-| I4, started | [Serial multilevel directory and bucket reader](lettura-indice-paginato.md); [incremental page construction](costruzione-indice-paginato.md); [sealed images and serial read-only adoption](immagini-indice-paginato.md); [M1 startup/GET and retirement before writing](indice-paginato-m1.md); [M1 producer with radix partitioning](costruzione-indice-m1.md); [serial activation on open engine](attivazione-indice-m1.md); [bounded serial delta on resident index](delta-indice-m1.md); [renewal with single admission](rinnovo-indice-m1.md); [delta threshold maintenance](manutenzione-indice-m1.md); [startup candidate discovery](scoperta-indice-m1.md); independent paged writer, catalog, and automatic selection remain | Differential comparisons with resident index for PUT/GET/DELETE, snapshots, prepared/outcome, restart and crash at every boundary; index larger than RAM without swapping. |
++| I4, started | [Serial multilevel directory and bucket reader](lettura-indice-paginato.md); [incremental page construction](costruzione-indice-paginato.md); [sealed images and serial read-only adoption](immagini-indice-paginato.md); [M1 startup/GET and retirement before writing](indice-paginato-m1.md); [M1 producer with radix partitioning](costruzione-indice-m1.md); [serial activation on open engine](attivazione-indice-m1.md); [bounded serial delta on resident index](delta-indice-m1.md); [renewal with single admission](rinnovo-indice-m1.md); [delta threshold maintenance](manutenzione-indice-m1.md); [startup candidate discovery](scoperta-indice-m1.md); the concurrent profile and persistent catalog remain | Differential comparisons with resident index for PUT/GET/DELETE, snapshots, prepared/outcome, restart and crash at every boundary; index larger than RAM without swapping. |
+ | I5 | Per-Serie controller/actuator and injectable measurer | Automatic startup and switches both ways, RSS/peak limits, delta without gaps, consistent swap, concurrent writer and snapshots. |
+ | I6 | Operational migration and qualification | Failpoints before/after every swap, controlled return, warm/cold benchmarks and write amplification; Linux x86-64 and macOS ARM64 gates. |
+ 
+-I2 adds a derived format not yet connected to runtime: through I4,
++The historical I2 increment added a derived format, later connected through I4;
+ rollback removes components without migrating user data. After I4, primary index remains
+ derived from existing segments, manifest, and decisions: an incomplete new index
+ never becomes authoritative. Rollback must rebuild a view compatible
+diff --git a/docs/implementazione/manutenzione-indice-m1.md b/docs/implementazione/manutenzione-indice-m1.md
+index 5af931e..dd9a0f9 100644
+--- a/docs/implementazione/manutenzione-indice-m1.md
++++ b/docs/implementazione/manutenzione-indice-m1.md
+@@ -21,6 +21,10 @@ within SBCL64 fixnums. No division, rounding, or file access.
+ With quota three and threshold 75, two keys are insufficient: the third reaches it.
+ Threshold 100 requires at least one quota full.
+ 
++The explicit API below remains available. [Automatic M1 renewal](rinnovo-automatico-m1.md)
++now connects this policy and next-key capacity to PUT/DELETE through an optional,
++finite configuration. RAM-based backend selection remains separate.
++
+ Probe is read-only on valid path; it checks counters within capacity,
+ bytes at least equal to keys (nonempty keys), and consistent empty state.
+ Corrupt counters or delta without view cause FAULTED. A mode without delta
+diff --git a/docs/invarianti.md b/docs/invarianti.md
+index 1a0b5dc..cec7e69 100644
+--- a/docs/invarianti.md
++++ b/docs/invarianti.md
+@@ -87,7 +87,7 @@ design review, or benchmarks.
+ | INV-I5 | A full-text index is usable only with the exact Serie, segment, generation, configuration, valid length, and hint for which it was built; rows are not reinterpreted against a different hint. | [ADR-0054](adr/0054-contratto-e-formato-full-text.md) | independent fixtures, swapped hints, alterations with valid CRC, rebuild (to implement) |
+ | INV-I6 | Delta capacity, prepared buffers, and the upper bound of the future full-text index are reserved before SEAL/PREPARE; a READY proposal is published only if covered inventory and frontiers match the Serie view at swap time. | [ADR-0054](adr/0054-contratto-e-formato-full-text.md) | saturation, writer during build, concurrent rotation and compaction, crash before/after publication (to implement) |
+ | INV-I7 | Index mode is selected automatically within the Serie quota; no switch admits new work beyond budget or publishes an incomplete view. Transient memory includes retained source, destination, delta, and metadata. Return to resident mode has hysteresis and changes neither commit decisions nor snapshots. | [ADR-0057](adr/0057-selezione-automatica-indice.md) | selector tests; migration, fault injection, and runtime qualification to implement |
+-| INV-I8 | A derived page is used only after verifying identity, version, checksum, and local structure; PageRefs are null or point to earlier children in the same image. A bucket does not hide entries behind an EMPTY group; keys and metadata respect v2 limits. Local verification certifies neither committed coverage nor root durability. Adopting an image also requires a canonical source, entry uniqueness/coverage, and complete read-only verification under [ADR-0063](adr/0063-immagini-sigillate-indice-primario.md); the [M1 builder](adr/0065-costruzione-immagini-dal-motore.md) fully verifies the derivative before success; M1 integration retires the derivative before admitted writes except for the [explicit serial delta](adr/0067-delta-seriale-indice-m1.md), which routes every touched key to the canonical resident index ([ADR-0064](adr/0064-adozione-indice-paginato-m1.md)); [ADR-0066](adr/0066-attivazione-seriale-immagini-m1.md) allows verified serial activation and FD closure on retirement without concurrent borrowers; [ADR-0068](adr/0068-rinnovo-seriale-immagini-m1.md) combines construction and activation under one admission with source rechecking; [ADR-0070](adr/0070-scoperta-readonly-immagini-m1.md) allows bounded candidate discovery at startup, with mandatory full verification before READY. | [ADR-0058](adr/0058-pagine-indice-primario.md) | independent fixtures, alterations with valid CRC, collisions, truncation, graph coverage, and serial M1 integration; catalog and concurrent swap to implement |
++| INV-I8 | A derived page is used only after verifying identity, version, checksum, and local structure; PageRefs are null or point to earlier children in the same image. A bucket does not hide entries behind an EMPTY group; keys and metadata respect v2 limits. Local verification certifies neither committed coverage nor root durability. Adopting an image also requires a canonical source, entry uniqueness/coverage, and complete read-only verification under [ADR-0063](adr/0063-immagini-sigillate-indice-primario.md); the [M1 builder](adr/0065-costruzione-immagini-dal-motore.md) fully verifies the derivative before success; M1 integration retires the derivative before admitted writes except for the [explicit serial delta](adr/0067-delta-seriale-indice-m1.md), which resolves touched keys from committed locations or explicit tombstones under [ADR-0071](adr/0071-delta-location-indice-m1.md), without using the stale base image ([ADR-0064](adr/0064-adozione-indice-paginato-m1.md)); [ADR-0066](adr/0066-attivazione-seriale-immagini-m1.md) allows verified serial activation and FD closure on retirement without concurrent borrowers; [ADR-0068](adr/0068-rinnovo-seriale-immagini-m1.md) combines construction and activation under one admission with source rechecking; [ADR-0070](adr/0070-scoperta-readonly-immagini-m1.md) allows bounded candidate discovery at startup, with mandatory full verification before READY. | [ADR-0058](adr/0058-pagine-indice-primario.md) | independent fixtures, alterations with valid CRC, collisions, truncation, graph coverage, and serial M1 integration; catalog and concurrent swap to implement |
+ 
+ <a id="concorrenza-e-priorità"></a>
+ 
+diff --git a/docs/tracciabilita/matrice.md b/docs/tracciabilita/matrice.md
+index a67e82d..e0463a1 100644
+--- a/docs/tracciabilita/matrice.md
++++ b/docs/tracciabilita/matrice.md
+@@ -4,7 +4,7 @@
+ 
+ > **Generated** from [requisiti.lisp](requisiti.lisp) with `make trace-write`. Do not edit by hand: `make trace` fails if it differs.
+ 
+-**Summary.** 138 requirements. By class: C1 109, C2 10, C3 12, C4 7. By state: specified 0, designed 126, implemented 11, verified 1. Invariants covered: 71/71. FI scenarios covered: 13/13.
++**Summary.** 141 requirements. By class: C1 112, C2 10, C3 12, C4 7. By state: specified 0, designed 125, implemented 15, verified 1. Invariants covered: 71/71. FI scenarios covered: 13/13.
+ 
+ <a id="requisiti"></a>
+ 
+@@ -77,9 +77,12 @@
+ | REQ-SEC-009 | A full-text generation captures new commits without gaps relative to the initial prefix and becomes READY only after rechecking inventory and frontiers; separate files per generation, retirement decided by the catalog, and reclaim after quiescence. | ADR-0054 | C1 | designed | INV-I4, INV-I6, INV-A10, INV-A11 | [0054](../adr/0054-contratto-e-formato-full-text.md), [0040](../adr/0040-manifest-a-record-unico.md) | test, diff, model, fi | FI-06, FI-09, FI-10, FI-11, FI-13 |
+ | REQ-SEC-010 | Before SEAL/PREPARE, the writer reserves delta, staging, and a conservative upper bound for the full-text file; rotation prevents over-budget indexes; queries and builds account for resources, work, deadlines, and attempts with a single cleanup and terminal completion. | ADR-0054 | C1 | designed | INV-I6, INV-A8, INV-P6 | [0054](../adr/0054-contratto-e-formato-full-text.md), [0041](../adr/0041-multiserie-segmenti-autosufficienti.md), [0045](../adr/0045-modello-di-esecuzione.md) | test, model, soak, bench, rev |  |
+ | REQ-IDX-007 | The reader rechecks root and generation after probing, including on a miss, with bounded attempts; maintenance declares and checks slots, key bytes, directory references, and transient memory separately. | ADR-0050 | C1 | designed | INV-I3, INV-A8 | [0043](../adr/0043-primary-index-a-frammenti.md), [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | test, model, bench, rev |  |
+-| REQ-IDX-008 | Index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol. | ADR-0057 | C1 | designed | INV-I7, INV-A8, INV-P6 | [0057](../adr/0057-selezione-automatica-indice.md), [0049](../adr/0049-capacita-oltre-la-ram.md), [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | test, model, bench, fi, rev | FI-06, FI-10, FI-11 |
++| REQ-IDX-008 | In the serial M1 profile, index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol. | ADR-0057 | C1 | implemented | INV-I7, INV-A8, INV-P6 | [0073](../adr/0073-indice-automatico-operativo-m1.md), [0057](../adr/0057-selezione-automatica-indice.md), [0049](../adr/0049-capacita-oltre-la-ram.md), [0050](../adr/0050-pubblicazione-e-costi-della-directory.md) | test, model, bench, fi, rev | FI-06, FI-10, FI-11 |
+ | REQ-IDX-009 | Derived primary-index pages have Serie/image/offset/generation identity, version, and CRC32C; flat buckets, radix directory, and key fragments are verified before use. Backward references, canonical packing, geometry, and v2 bounds prevent structural aliases and false local misses; the codec introduces no independent commit. | ADR-0058 | C1 | designed | INV-I8, INV-A2, INV-A8, INV-P6 | [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0058](../adr/0058-pagine-indice-primario.md), [0065](../adr/0065-costruzione-immagini-dal-motore.md), [0057](../adr/0057-selezione-automatica-indice.md), [0043](../adr/0043-primary-index-a-frammenti.md) | test, diff, corr, rev |  |
+ | REQ-IDX-010 | A paged root is adopted only from a complete image verified read-only against canonical source, seed, count, and authoritative candidates; derivative completion is distinct from data commit, with cumulative budgets and rejection of duplicates/unreachable entries. | ADR-0063 | C1 | designed | INV-I8, INV-A2, INV-A8, INV-P6 | [0063](../adr/0063-immagini-sigillate-indice-primario.md), [0064](../adr/0064-adozione-indice-paginato-m1.md), [0065](../adr/0065-costruzione-immagini-dal-motore.md), [0066](../adr/0066-attivazione-seriale-immagini-m1.md), [0067](../adr/0067-delta-seriale-indice-m1.md), [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md), [0070](../adr/0070-scoperta-readonly-immagini-m1.md), [0058](../adr/0058-pagine-indice-primario.md), [0057](../adr/0057-selezione-automatica-indice.md) | test, diff, corr, fi, rev | FI-06, FI-10 |
++| REQ-IDX-011 | The serial M1 paged delta stores exact private keys and committed normalized locations or explicit tombstones; touched-key lookup uses neither the resident index nor the base image. Publication follows durable SEAL under BUSY, incomplete operations fault, and activation/renewal reserve all old and new delta arrays before effects. | ADR-0071 | C1 | implemented | INV-I1, INV-I8, INV-V5, INV-A8, INV-P6 | [0071](../adr/0071-delta-location-indice-m1.md), [0067](../adr/0067-delta-seriale-indice-m1.md), [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md) | test, diff, corr, fi, rev | FI-01, FI-02 |
++| REQ-IDX-012 | An optionally configured M1 engine renews its paged image automatically before PUT/DELETE at the delta threshold or next-key capacity limit. The full renewal reservation and finite fresh-name sequence are checked before admission; one BUSY scope covers renewal and document commit, with no CSN/ACK for the derivative and FAULTED on incomplete admitted exits. | ADR-0072 | C1 | implemented | INV-I1, INV-I8, INV-A8, INV-P6 | [0072](../adr/0072-rinnovo-automatico-delta-m1.md), [0068](../adr/0068-rinnovo-seriale-immagini-m1.md), [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md), [0071](../adr/0071-delta-location-indice-m1.md) | test, diff, fi, rev | FI-01, FI-02 |
++| REQ-IDX-013 | The automatic M1 primary backend has bounded resident growth, verified migration both ways with hysteresis, independent paged writes, bounded-memory WAL replay and bounded CLOSED resolver caching. Immutable checksummed disk nodes use fixed cache/path/batch storage; canonical WAL remains the only data commit and private derivative removal requires bound ownership proof. | ADR-0073 | C1 | implemented | INV-I1, INV-I7, INV-I8, INV-A2, INV-A8, INV-A10, INV-P6 | [0073](../adr/0073-indice-automatico-operativo-m1.md), [0057](../adr/0057-selezione-automatica-indice.md), [0058](../adr/0058-pagine-indice-primario.md) | test, diff, corr, fi, bench, rev | FI-01, FI-02, FI-06, FI-10 |
+ | REQ-CCH-001 | The cache uses CLOCK, may be partitioned by Serie, and measures scan pollution to decide whether to evolve to 2Q. | Cache | C3 | designed |  | [0010](../adr/0010-cache-clock.md), [0025](../adr/0025-cache-per-location.md) | test, bench |  |
+ | REQ-CCH-002 | The cache is version-aware: a reader never obtains a version incompatible with its snapshot. | Cache and snapshots | C1 | designed | INV-M3 | [0025](../adr/0025-cache-per-location.md), [0044](../adr/0044-cache-acceleratore-puro.md) | test, prop |  |
+ | REQ-CCH-003 | The read path is request, Serie, snapshot and index, cache, segment. | Cache | C2 | designed |  | [0025](../adr/0025-cache-per-location.md) | test |  |
+@@ -185,13 +188,13 @@
+ | INV-M1 | REQ-SEC-004, REQ-MVC-001, REQ-MVC-005 |
+ | INV-M2 | REQ-VER-001, REQ-MVC-003, REQ-MVC-007 |
+ | INV-M3 | REQ-CCH-002, REQ-CCH-004 |
+-| INV-I1 | REQ-IDX-002, REQ-IDX-003 |
++| INV-I1 | REQ-IDX-002, REQ-IDX-003, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013 |
+ | INV-I2 | REQ-SEC-001 |
+ | INV-I4 | REQ-SEC-003, REQ-SEC-004, REQ-SEC-005, REQ-SEC-007, REQ-SEC-009 |
+ | INV-I5 | REQ-SEC-008 |
+ | INV-I6 | REQ-SEC-009, REQ-SEC-010 |
+-| INV-I7 | REQ-IDX-008 |
+-| INV-I8 | REQ-IDX-009, REQ-IDX-010 |
++| INV-I7 | REQ-IDX-008, REQ-IDX-013 |
++| INV-I8 | REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013 |
+ | INV-P1 | REQ-TXS-002, REQ-CON-001 |
+ | INV-P2 | REQ-CON-002 |
+ | INV-P3 | REQ-ARC-002, REQ-TXM-006, REQ-CON-003, REQ-CON-005 |
+@@ -206,26 +209,26 @@
+ | INV-V3 | REQ-IDX-004 |
+ | INV-V4 | REQ-CON-002 |
+ | INV-A1 | REQ-AFF-001, REQ-AFF-009, REQ-AFF-015 |
+-| INV-A2 | REQ-SEC-008, REQ-IDX-009, REQ-IDX-010, REQ-FOR-004, REQ-AFF-002 |
++| INV-A2 | REQ-SEC-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-013, REQ-FOR-004, REQ-AFF-002 |
+ | INV-A3 | REQ-AFF-003 |
+ | INV-A4 | REQ-AFF-004 |
+ | INV-A5 | REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-AFF-005 |
+ | INV-A6 | REQ-AFF-006 |
+ | INV-A7 | REQ-REG-002, REQ-CMP-004, REQ-TXM-005, REQ-REC-002, REQ-AFF-007, REQ-AFF-017, REQ-AFF-019 |
+-| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-SEC-010, REQ-IDX-007, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
++| INV-A8 | REQ-IDX-003, REQ-IDX-005, REQ-SEC-006, REQ-SEC-010, REQ-IDX-007, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-CON-004, REQ-MVC-004, REQ-MVC-008, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-002, REQ-AFF-008, REQ-LIM-001, REQ-LIM-002, REQ-LIM-003 |
+ | INV-F2 | REQ-WAL-005, REQ-FOR-003 |
+ | INV-F3 | REQ-AFF-009 |
+-| INV-V5 | REQ-WAL-006, REQ-TXM-008, REQ-SEC-004, REQ-IPC-004 |
++| INV-V5 | REQ-WAL-006, REQ-TXM-008, REQ-SEC-004, REQ-IDX-011, REQ-IPC-004 |
+ | INV-M4 | REQ-MVC-005, REQ-MVC-008 |
+ | INV-M5 | REQ-WAL-005, REQ-MVC-006 |
+ | INV-M6 | REQ-MVC-008 |
+ | INV-S7 | REQ-CMP-009, REQ-TXM-007, REQ-FOR-004 |
+ | INV-C11 | REQ-CMP-008, REQ-IDX-006 |
+ | INV-I3 | REQ-IDX-005, REQ-IDX-007 |
+-| INV-P6 | REQ-SEC-006, REQ-SEC-010, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-CON-005, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
++| INV-P6 | REQ-SEC-006, REQ-SEC-010, REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-CON-005, REQ-IPC-002, REQ-CBR-009, REQ-CBR-008, REQ-CBR-007, REQ-CBR-006, REQ-CBR-005, REQ-CBR-004, REQ-CBR-003, REQ-CBR-002, REQ-CBR-001 |
+ | INV-P5 | REQ-CON-004, REQ-IPC-002 |
+ | INV-A9 | REQ-AFF-017 |
+-| INV-A10 | REQ-SEC-005, REQ-SEC-009, REQ-AFF-018 |
++| INV-A10 | REQ-SEC-005, REQ-SEC-009, REQ-IDX-013, REQ-AFF-018 |
+ | INV-A11 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-IPC-004, REQ-AFF-019, REQ-LIM-003 |
+ | INV-A12 | REQ-CCH-004 |
+ 
+@@ -235,16 +238,16 @@
+ 
+ | Scenario | Requirements |
+ |---|---|
+-| FI-01 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-001, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-009, REQ-AFF-017, REQ-LIM-001 |
+-| FI-02 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-AFF-001, REQ-AFF-009, REQ-AFF-017 |
++| FI-01 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-REC-001, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-009, REQ-AFF-017, REQ-LIM-001 |
++| FI-02 | REQ-WAL-003, REQ-WAL-005, REQ-WAL-006, REQ-IDX-011, REQ-IDX-012, REQ-IDX-013, REQ-REC-003, REQ-IPC-004, REQ-FLT-001, REQ-AFF-001, REQ-AFF-009, REQ-AFF-017 |
+ | FI-03 | REQ-TXM-002, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-FLT-001 |
+ | FI-04 | REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-FLT-001 |
+ | FI-05 | REQ-WAL-003, REQ-TXM-003, REQ-TXM-004, REQ-TXM-005, REQ-TXM-007, REQ-TXM-008, REQ-SEC-004, REQ-REC-003, REQ-IPC-004, REQ-FLT-001 |
+-| FI-06 | REQ-CMP-002, REQ-CMP-003, REQ-IDX-002, REQ-IDX-004, REQ-SEC-004, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-REC-001, REQ-REC-003, REQ-REC-004, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019, REQ-LIM-003 |
++| FI-06 | REQ-CMP-002, REQ-CMP-003, REQ-IDX-002, REQ-IDX-004, REQ-SEC-004, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-IDX-013, REQ-REC-001, REQ-REC-003, REQ-REC-004, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019, REQ-LIM-003 |
+ | FI-07 | REQ-CLN-002, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
+ | FI-08 | REQ-MRG-001, REQ-CMP-003, REQ-CMP-004, REQ-REC-002, REQ-FLT-001, REQ-AFF-007, REQ-AFF-019 |
+ | FI-09 | REQ-CMP-007, REQ-SEC-005, REQ-SEC-009, REQ-REC-003, REQ-FLT-001, REQ-AFF-018 |
+-| FI-10 | REQ-MET-001, REQ-IDX-006, REQ-SEC-005, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-REC-002, REQ-REC-003, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-017 |
++| FI-10 | REQ-MET-001, REQ-IDX-006, REQ-SEC-005, REQ-SEC-009, REQ-IDX-008, REQ-IDX-010, REQ-IDX-013, REQ-REC-002, REQ-REC-003, REQ-FLT-001, REQ-FOR-001, REQ-AFF-007, REQ-AFF-017 |
+ | FI-11 | REQ-CMP-007, REQ-SEC-004, REQ-SEC-009, REQ-IDX-008, REQ-MVC-001, REQ-MVC-003, REQ-MVC-005, REQ-FLT-001 |
+ | FI-12 | REQ-TXM-001, REQ-TXM-004, REQ-TXM-007, REQ-TXM-008, REQ-MVC-002, REQ-MVC-005, REQ-FLT-001 |
+ | FI-13 | REQ-REG-002, REQ-SEC-005, REQ-SEC-009, REQ-FLT-001, REQ-AFF-018, REQ-AFF-019 |
+@@ -311,8 +314,8 @@
+ | [0054](../adr/0054-contratto-e-formato-full-text.md) | REQ-SEC-007, REQ-SEC-008, REQ-SEC-009, REQ-SEC-010 |
+ | [0055](../adr/0055-interfaccia-locale-unix-socket.md) | REQ-IPC-001, REQ-IPC-002, REQ-IPC-003, REQ-IPC-004 |
+ | [0056](../adr/0056-sessione-locale-m16.md) | —  (decision without a direct requirement) |
+-| [0057](../adr/0057-selezione-automatica-indice.md) | REQ-IDX-008, REQ-IDX-009, REQ-IDX-010 |
+-| [0058](../adr/0058-pagine-indice-primario.md) | REQ-IDX-009, REQ-IDX-010 |
++| [0057](../adr/0057-selezione-automatica-indice.md) | REQ-IDX-008, REQ-IDX-009, REQ-IDX-010, REQ-IDX-013 |
++| [0058](../adr/0058-pagine-indice-primario.md) | REQ-IDX-009, REQ-IDX-010, REQ-IDX-013 |
+ | [0059](../adr/0059-crc32c-arm64-sbcl.md) | REQ-FOR-003 |
+ | [0060](../adr/0060-crc32c-caricamento-portabile.md) | REQ-FOR-003 |
+ | [0061](../adr/0061-conservazione-esterna-delle-prove.md) | —  (decision without a direct requirement) |
+@@ -321,7 +324,10 @@
+ | [0064](../adr/0064-adozione-indice-paginato-m1.md) | REQ-IDX-010 |
+ | [0065](../adr/0065-costruzione-immagini-dal-motore.md) | REQ-IDX-009, REQ-IDX-010 |
+ | [0066](../adr/0066-attivazione-seriale-immagini-m1.md) | REQ-IDX-010 |
+-| [0067](../adr/0067-delta-seriale-indice-m1.md) | REQ-IDX-010 |
+-| [0068](../adr/0068-rinnovo-seriale-immagini-m1.md) | REQ-IDX-009, REQ-IDX-010 |
+-| [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md) | REQ-IDX-010 |
++| [0067](../adr/0067-delta-seriale-indice-m1.md) | REQ-IDX-010, REQ-IDX-011 |
++| [0068](../adr/0068-rinnovo-seriale-immagini-m1.md) | REQ-IDX-009, REQ-IDX-010, REQ-IDX-011, REQ-IDX-012 |
++| [0069](../adr/0069-manutenzione-a-soglie-delta-m1.md) | REQ-IDX-010, REQ-IDX-011, REQ-IDX-012 |
+ | [0070](../adr/0070-scoperta-readonly-immagini-m1.md) | REQ-IDX-010 |
++| [0071](../adr/0071-delta-location-indice-m1.md) | REQ-IDX-011, REQ-IDX-012 |
++| [0072](../adr/0072-rinnovo-automatico-delta-m1.md) | REQ-IDX-012 |
++| [0073](../adr/0073-indice-automatico-operativo-m1.md) | REQ-IDX-008, REQ-IDX-013 |
+diff --git a/docs/tracciabilita/requisiti.lisp b/docs/tracciabilita/requisiti.lisp
+index b495ad9..56ee988 100644
+--- a/docs/tracciabilita/requisiti.lisp
++++ b/docs/tracciabilita/requisiti.lisp
+@@ -223,9 +223,9 @@
+  (:id "REQ-IDX-007" :src "ADR-0050" :cls "C1" :stato :progettato
+   :txt "The reader rechecks root and generation after probing, including on a miss, with bounded attempts; maintenance declares and checks slots, key bytes, directory references, and transient memory separately."
+   :inv ("INV-I3" "INV-A8") :adr ("ADR-0043" "ADR-0050") :ver (:test :model :bench :rev) :fi ())
+- (:id "REQ-IDX-008" :src "ADR-0057" :cls "C1" :stato :progettato
+-  :txt "Index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol."
+-  :inv ("INV-I7" "INV-A8" "INV-P6") :adr ("ADR-0057" "ADR-0049" "ADR-0050") :ver (:test :model :bench :fi :rev) :fi ("FI-06" "FI-10" "FI-11"))
++ (:id "REQ-IDX-008" :src "ADR-0057" :cls "C1" :stato :implementato
++  :txt "In the serial M1 profile, index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol."
++  :inv ("INV-I7" "INV-A8" "INV-P6") :adr ("ADR-0073" "ADR-0057" "ADR-0049" "ADR-0050") :ver (:test :model :bench :fi :rev) :fi ("FI-06" "FI-10" "FI-11"))
+  (:id "REQ-IDX-009" :src "ADR-0058" :cls "C1" :stato :progettato
+   :txt "Derived primary-index pages have Serie/image/offset/generation identity, version, and CRC32C; flat buckets, radix directory, and key fragments are verified before use. Backward references, canonical packing, geometry, and v2 bounds prevent structural aliases and false local misses; the codec introduces no independent commit."
+   :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0068" "ADR-0058" "ADR-0065" "ADR-0057" "ADR-0043") :ver (:test :diff :corr :rev) :fi ())
+@@ -234,6 +234,18 @@
+   :txt "A paged root is adopted only from a complete image verified read-only against canonical source, seed, count, and authoritative candidates; derivative completion is distinct from data commit, with cumulative budgets and rejection of duplicates/unreachable entries."
+   :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0063" "ADR-0064" "ADR-0065" "ADR-0066" "ADR-0067" "ADR-0068" "ADR-0069" "ADR-0070" "ADR-0058" "ADR-0057") :ver (:test :diff :corr :fi :rev) :fi ("FI-06" "FI-10"))
+ 
++ (:id "REQ-IDX-011" :src "ADR-0071" :cls "C1" :stato :implementato
++  :txt "The serial M1 paged delta stores exact private keys and committed normalized locations or explicit tombstones; touched-key lookup uses neither the resident index nor the base image. Publication follows durable SEAL under BUSY, incomplete operations fault, and activation/renewal reserve all old and new delta arrays before effects."
++  :inv ("INV-I1" "INV-I8" "INV-V5" "INV-A8" "INV-P6") :adr ("ADR-0071" "ADR-0067" "ADR-0068" "ADR-0069") :ver (:test :diff :corr :fi :rev) :fi ("FI-01" "FI-02"))
++
++ (:id "REQ-IDX-012" :src "ADR-0072" :cls "C1" :stato :implementato
++  :txt "An optionally configured M1 engine renews its paged image automatically before PUT/DELETE at the delta threshold or next-key capacity limit. The full renewal reservation and finite fresh-name sequence are checked before admission; one BUSY scope covers renewal and document commit, with no CSN/ACK for the derivative and FAULTED on incomplete admitted exits."
++  :inv ("INV-I1" "INV-I8" "INV-A8" "INV-P6") :adr ("ADR-0072" "ADR-0068" "ADR-0069" "ADR-0071") :ver (:test :diff :fi :rev) :fi ("FI-01" "FI-02"))
++
++ (:id "REQ-IDX-013" :src "ADR-0073" :cls "C1" :stato :implementato
++  :txt "The automatic M1 primary backend has bounded resident growth, verified migration both ways with hysteresis, independent paged writes, bounded-memory WAL replay and bounded CLOSED resolver caching. Immutable checksummed disk nodes use fixed cache/path/batch storage; canonical WAL remains the only data commit and private derivative removal requires bound ownership proof."
++  :inv ("INV-I1" "INV-I7" "INV-I8" "INV-A2" "INV-A8" "INV-A10" "INV-P6") :adr ("ADR-0073" "ADR-0057" "ADR-0058") :ver (:test :diff :corr :fi :bench :rev) :fi ("FI-01" "FI-02" "FI-06" "FI-10"))
++
+  ;; ---- Cache -------------------------------------------------------------------
+  (:id "REQ-CCH-001" :src "Cache" :cls "C3" :stato :progettato
+   :txt "The cache uses CLOCK, may be partitioned by Serie, and measures scan pollution to decide whether to evolve to 2Q."
+diff --git a/src/engine/adopt.lisp b/src/engine/adopt.lisp
+index 60f7dd4..681ad8e 100644
+--- a/src/engine/adopt.lisp
++++ b/src/engine/adopt.lisp
+@@ -14,11 +14,12 @@ Nessun FD aperto o trasferito; ogni mappa legge lo stesso FD della prova CLOSED.
+              (file (arcdocdb.recovery.closed::closed-recuperato-input token))
+              (id (nth-value 0 (rc:frontiere-closed-recuperato token))))
+         (setf (svref maps i)
++              (if (motore-automatic-index engine) (make-automatic-closed-stub engine control token)
+               (r:crea-mappa-segmento-get (motore-view engine) file (c:manifest-control-recuperato control)
+                id (motore-scratch engine) :max-bytes (motore-max-file-bytes engine)
+                :max-records (motore-max-records engine) :max-batches (motore-max-records engine)
+                :max-batch-records (motore-max-records engine)
+-               :max-batch-bytes (motore-max-file-bytes engine)))))))
++               :max-batch-bytes (motore-max-file-bytes engine))))))))
+ 
+ ;;; REQ: REQ-REC-001 REQ-MVC-006 REQ-MVC-008 REQ-IDX-001 REQ-AFF-008
+ (declaim (ftype (function (motore rt:runtime-archivio a:segmento-attivo-preparato) null) adotta-active-motore))
+@@ -52,11 +53,12 @@ Il rebind rilegge l'header canonico, non riscrive il file o ricostruisce la prov
+ (defun adotta-runtime-motore (engine archive control closed plan prepared)
+   "Pre: checkpoint e nomi completi, gate CSN finale; admission chiusa. Post: runtime/GET/indice completi.
+ Un solo registro operativo a M, senza incremento; errori prima di READY non restituiscono il motore."
++  (when (motore-automatic-index engine) (remove-automatic-orphans engine))
+   (let* ((maps (mappe-motore engine control closed)) (runtime (rt:crea-runtime-archivio plan 1000000000 1000000
+                                   :csn-capacity 16 :snapshot-capacity 4 :worker-capacity 1 :retirement-capacity 16)))
+     (setf (motore-registry engine) (rt:csn-runtime-archivio runtime)
+           (motore-scope engine) (rt:ambito-runtime-archivio runtime)
+-          (motore-view engine) (g:crea-vista-get-serie (motore-scope engine) (motore-index engine)
++          (motore-view engine) (g:crea-vista-get-serie (motore-scope engine) (unless (motore-automatic-index engine) (motore-index engine))
+                    nil (motore-series-id engine)
+                    :lookup (lambda (key start end probe destination)
+                              (sonda-indice-motore engine key start end probe destination))))
+@@ -69,10 +71,18 @@ Un solo registro operativo a M, senza incremento; errori prima di READY non rest
+     (setf (motore-get-context engine)
+           (g:crea-contesto-get (motore-scope engine) 0 :record-bytes (motore-max-record-bytes engine)
+                               :budget-payload (+ 1024 (motore-max-record-bytes engine)))))
+-  (recupera-indice-paginato-motore engine)
++  (when (motore-automatic-index engine)
++    (return-automatic-resident engine t))
++  (unless (motore-automatic-index engine) (recupera-indice-paginato-motore engine))
+   (let ((source (fonte-canonica-indice-motore engine))
+-        (revision (p::indice-primario-revision (motore-index engine))))
++        (revision (when (motore-index engine) (p::indice-primario-revision (motore-index engine))))
++        (stamp (when (motore-automatic-index engine) (automatic-startup-stamp engine))))
+     (osserva-motore engine :before-admission)
+-    (verifica-fonte-startup-indice engine source revision)
++    (if (motore-automatic-index engine)
++        (unless (and (eq (motore-state engine) :recovering)
++                     (equal stamp (automatic-startup-stamp engine))
++                     (arcdocdb.index.page::stessa-fonte-indice-p source (fonte-canonica-indice-motore engine)))
++          (error 'invariant-violation :reason :engine-auto-startup-source))
++        (verifica-fonte-startup-indice engine source revision))
+     (setf (motore-state engine) :ready))
+   nil)
+diff --git a/src/engine/config.lisp b/src/engine/config.lisp
+index fe2dd45..d2983d5 100644
+--- a/src/engine/config.lisp
++++ b/src/engine/config.lisp
+@@ -29,10 +29,16 @@ Errori delle factory prima dell'apertura; nessuna admission o seed derivato da i
+          (epochs (arcdocdb.epochs:crea-registro-epoche 1 16))
+          (scope (g:crea-ambito-get epochs snapshots)))
+     (setf (motore-index engine)
++          (if (motore-automatic-index engine) (make-automatic-resident (motore-automatic-index engine))
+           (p:crea-indice-primario :capacity capacity :arena-bytes arena :max-depth 1
+              :directory-budget-bytes 4096 :fragment-budget-bytes (+ 4096 arena (* 256 capacity))
+-             :hash-seed-high seed-high :hash-seed-low seed-low)
++             :hash-seed-high seed-high :hash-seed-low seed-low))
+           (motore-index-context engine) (p:crea-contesto-indice)
+           (motore-scope engine) scope
+-          (motore-view engine) (g:crea-vista-get-serie scope (motore-index engine) nil (motore-series-id engine))))
++          (motore-view engine) (g:crea-vista-get-serie scope (unless (motore-automatic-index engine) (motore-index engine)) nil (motore-series-id engine)
++            :lookup (when (motore-automatic-index engine)
++              (lambda (key start end probe output) (sonda-indice-motore engine key start end probe output))))))
++  (when (motore-automatic-index engine)
++    (setf (automatic-index-controller-resident-charge (motore-automatic-index engine))
++          (automatic-resident-charge (motore-index engine))))
+   nil)
+diff --git a/src/engine/delta-types.lisp b/src/engine/delta-types.lisp
+index 792585b..a4e112c 100644
+--- a/src/engine/delta-types.lisp
++++ b/src/engine/delta-types.lisp
+@@ -1,14 +1,22 @@
+-;;; OWNER: attore M1; membership esatta privata, mai condivisa o prestata.
++;;; OWNER: attore M1; chiavi e location private, mai condivise o prestate.
+ ;;; SHARED: nessuno; memoria prenotata durante l'attivazione seriale.
+ (in-package #:arcdocdb.engine)
+ (declaim (optimize (safety 3) (speed 2) (debug 2)))
+ 
+ ;;; REQ: REQ-IDX-010 REQ-LIM-003
++(defconstant +delta-slot-payload+ 57
++  "Array payload per slot: four u32 metadata words, five u64 location words, one state byte.")
++
++;;; REQ: REQ-IDX-011 REQ-LIM-003
+ (defstruct (delta-indice-motore (:constructor %make-delta-indice-motore) (:copier nil))
+-  "Pre: array privati azzerati e capienza validata. Post: insieme append-only di chiavi toccate.
+-Non contiene location: il residente canonico decide PUT e assenza, incluse le tombstone."
++  "Pre: private zeroed arrays, validated capacity and canonical seed. Post: exact committed overlay.
++State 0 is unpublished, 1 LIVE, 2 TOMBSTONE; public reads require the sole M1 owner."
+   (limit 1 :type (integer 1 65536) :read-only t)
++  (seed-high 0 :type u32 :read-only t)
++  (seed-low 0 :type u32 :read-only t)
+   (table #() :type (simple-array (unsigned-byte 32) (*)) :read-only t)
++  (content #() :type (simple-array (unsigned-byte 64) (*)) :read-only t)
++  (states #() :type octets :read-only t)
+   (arena #() :type octets :read-only t)
+   (count 0 :type u32)
+   (used 0 :type u32))
+@@ -16,7 +24,7 @@ Non contiene location: il residente canonico decide PUT e assenza, incluse le to
+ ;;; REQ: REQ-IDX-010 REQ-LIM-003
+ (declaim (ftype (function (t t) index) payload-delta-indice))
+ (defun payload-delta-indice (keys bytes)
+-  "Pre: configurazione caller non fidata. Post: payload esatto dei due array o INVALID-ARGUMENT.
++  "Pre: configurazione caller non fidata. Post: payload esatto dei quattro array o INVALID-ARGUMENT.
+ Zero/zero disabilita; altrimenti 1..65536 chiavi, 1..16 MiB arena; tabella al piu' meta' piena."
+   (unless (and (typep keys '(integer 0 65536)) (typep bytes '(integer 0 16777216)))
+     (error 'invalid-argument :reason :engine-delta-configuration))
+@@ -24,16 +32,33 @@ Zero/zero disabilita; altrimenti 1..65536 chiavi, 1..16 MiB arena; tabella al pi
+       (progn (unless (zerop bytes) (error 'invalid-argument :reason :engine-delta-configuration)) 0)
+       (progn
+         (when (zerop bytes) (error 'invalid-argument :reason :engine-delta-configuration))
+-        (+ bytes (* 16 (ash 1 (integer-length (1- (* 2 keys)))))))))
++        (+ bytes (* +delta-slot-payload+ (ash 1 (integer-length (1- (* 2 keys)))))))))
+ 
+-;;; REQ: REQ-IDX-010 REQ-LIM-003
+-(declaim (ftype (function ((integer 0 65536) (integer 0 16777216)) (or null delta-indice-motore))
++;;; REQ: REQ-IDX-011 REQ-LIM-003
++(declaim (ftype (function (delta-indice-motore) index) payload-delta-allocato))
++(defun payload-delta-allocato (delta)
++  "Pre: private delta arrays. Post: exact element bytes retained across activation/renewal.
++Objects, headers, and GC are excluded; no allocation or mutation."
++  (+ (* 4 (length (delta-indice-motore-table delta)))
++     (* 8 (length (delta-indice-motore-content delta)))
++     (length (delta-indice-motore-states delta)) (length (delta-indice-motore-arena delta))))
++
++;;; REQ: REQ-IDX-011 REQ-LIM-003
++(declaim (ftype (function ((integer 0 65536) (integer 0 16777216) &optional u32 u32) (or null delta-indice-motore))
+                 crea-delta-indice-motore))
+-(defun crea-delta-indice-motore (keys bytes)
+-  "Pre: attivazione BUSY, quota riservata. Post: membership vuota privata o NIL se disabilitata.
+-Nessuna chiave caller trattenuta; allocazioni solo nella manutenzione, non durante GET/PUT."
++(defun crea-delta-indice-motore (keys bytes &optional (seed-high 0) (seed-low 0))
++  "Pre: BUSY activation, reserved payload and stable seed. Post: private empty overlay or NIL.
++Allocations are confined to maintenance; no caller key retained or GET/PUT allocation."
+   (let ((payload (payload-delta-indice keys bytes)))
+     (unless (zerop payload)
+-      (%make-delta-indice-motore :limit keys
+-        :table (make-array (/ (- payload bytes) 4) :element-type '(unsigned-byte 32) :initial-element 0)
+-        :arena (make-array bytes :element-type '(unsigned-byte 8) :initial-element 0)))))
++      (let* ((capacity (/ (- payload bytes) +delta-slot-payload+))
++             (delta (%make-delta-indice-motore :limit keys :seed-high seed-high :seed-low seed-low
++                      :table (make-array (* capacity 4) :element-type '(unsigned-byte 32) :initial-element 0)
++                      :content (make-array (* capacity 5) :element-type '(unsigned-byte 64) :initial-element 0)
++                      :states (make-array capacity :element-type '(unsigned-byte 8) :initial-element 0)
++                      :arena (make-array bytes :element-type '(unsigned-byte 8) :initial-element 0))))
++        (unless (= (length (delta-indice-motore-table delta)) (* 4 (length (delta-indice-motore-states delta))))
++          (error 'invariant-violation :reason :engine-delta-layout))
++        (unless (= payload (payload-delta-allocato delta))
++          (error 'invariant-violation :reason :engine-delta-payload))
++        delta))))
+diff --git a/src/engine/delta.lisp b/src/engine/delta.lisp
+index eb2546d..044795a 100644
+--- a/src/engine/delta.lisp
++++ b/src/engine/delta.lisp
+@@ -22,7 +22,7 @@ Linear probing limitato alla capacita'; tabella satura e' INVARIANT-VIOLATION, m
+               (return-from sonda-delta-indice (values slot t)))))))
+     (error 'invariant-violation :reason :engine-delta-table-full)))
+ 
+-;;; REQ: REQ-IDX-010 REQ-LIM-003
++;;; REQ: REQ-IDX-010 REQ-IDX-011 REQ-LIM-003
+ (declaim (ftype (function (motore octets boolean) null) registra-chiave-delta-motore))
+ (defun registra-chiave-delta-motore (engine key publish)
+   "Pre: owner READY preflight, oppure BUSY prima del CSN quando PUBLISH vero.
+@@ -32,8 +32,12 @@ Esaurimento ordinario preserva READY nel preflight; commit incompleto impone FAU
+   (let ((delta (motore-delta engine)))
+     (when delta
+       (unless (motore-paged engine) (error 'invariant-violation :reason :engine-delta-without-image))
+-      (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key 0 (length key))
++      (multiple-value-bind (high low)
++          (arcdocdb.hash64:xxh64 key 0 (length key) (delta-indice-motore-seed-high delta) (delta-indice-motore-seed-low delta))
+         (multiple-value-bind (slot found) (sonda-delta-indice delta key 0 (length key) high low)
++          (when found
++            (unless (<= 1 (aref (delta-indice-motore-states delta) (floor slot 4)) 2)
++              (error 'invariant-violation :reason :engine-delta-unpublished-location)))
+           (unless found
+             (let* ((used (delta-indice-motore-used delta)) (end (+ used (length key)))
+                    (table (delta-indice-motore-table delta)))
+@@ -58,7 +62,8 @@ NIL senza delta; digest uguali non sostituiscono il confronto dei byte, nessuna
+   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-delta-read-admission))
+   (let ((delta (motore-delta engine)))
+     (if delta
+-        (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key start end)
++        (multiple-value-bind (high low)
++            (arcdocdb.hash64:xxh64 key start end (delta-indice-motore-seed-high delta) (delta-indice-motore-seed-low delta))
+           (nth-value 1 (sonda-delta-indice delta key start end high low)))
+         nil)))
+ 
+diff --git a/src/engine/image-activation.lisp b/src/engine/image-activation.lisp
+index 370f1a1..7fa6b5f 100644
+--- a/src/engine/image-activation.lisp
++++ b/src/engine/image-activation.lisp
+@@ -12,8 +12,7 @@ Comprende vecchio reader/cache/delta, nuova verifica e array piccoli; esclude og
+     (+ 65536 arcdocdb.record:+max-key-bytes+ 80
+        (* (opzione-indice-paginato-size option) (+ 5 (opzione-indice-paginato-frames option)))
+        (if (motore-delta engine)
+-           (+ (* 4 (length (delta-indice-motore-table (motore-delta engine))))
+-              (length (delta-indice-motore-arena (motore-delta engine)))) 0)
++           (payload-delta-allocato (motore-delta engine)) 0)
+        (if old (* (opzione-indice-paginato-size old) (+ 2 (opzione-indice-paginato-frames old))) 0))))
+ 
+ ;;; REQ: REQ-IDX-010 REQ-AFF-008
+@@ -27,7 +26,7 @@ Post: stessa fonte e revisione; INVARIANT-VIOLATION per mutazione o fase errata,
+     (error 'invariant-violation :reason :engine-image-activation-source-changed))
+   nil)
+ 
+-;;; REQ: REQ-IDX-010 REQ-AFF-004 REQ-AFF-008
++;;; REQ: REQ-IDX-010 REQ-IDX-012 REQ-AFF-004 REQ-AFF-008
+ (declaim (ftype (function (motore arcdocdb.index.page:vista-indice-paginato io:file-io opzione-indice-paginato
+                          &optional (or null delta-indice-motore)) null)
+                 installa-vista-paginata-motore))
+@@ -41,6 +40,7 @@ Errore dopo lo swap non ripristina un file gia' chiuso; il confine chiamante ren
+                  (eq file (arcdocdb.index.page::immagine-indice-verificata-file proof)))
+       (error 'invariant-violation :reason :engine-image-activation-binding))
+     (setf (motore-delta engine) delta (motore-paged-file engine) file (motore-paged-option engine) option (motore-paged engine) view)
++    (unless delta (setf (motore-auto-renewal engine) nil (motore-auto-renewals-used engine) 0))
+     (when old (io:chiudi old)))
+   nil)
+ 
+@@ -79,6 +79,7 @@ Post: GET paginato con delta opzionale bounded senza riavvio; una sola capacita'
+ Preflight invalido/esaurito preserva READY. Ogni errore/nonlocal exit ammesso rende FAULTED,
+ conservando la causa; prima della pubblicazione la vecchia root resta intatta, senza fallback."
+   (esigi-motore-pronto engine)
++  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
+   (unless (typep max-activation-payload '(integer 0 536870912))
+     (error 'invalid-argument :reason :engine-image-activation-configuration))
+   (when (> (+ (payload-attivazione-immagine engine option)
+@@ -89,7 +90,7 @@ conservando la causa; prima della pubblicazione la vecchia root resta intatta, s
+          (handler-case
+              (progn
+                (setf (motore-busy engine) t)
+-               (prepara-attivazione-immagine engine option (crea-delta-indice-motore delta-keys delta-key-bytes))
++               (prepara-attivazione-immagine engine option (crea-delta-configurato-motore engine delta-keys delta-key-bytes))
+                (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
+                             (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
+                  (error 'invariant-violation :reason :engine-image-activation-state))
+diff --git a/src/engine/image-build.lisp b/src/engine/image-build.lisp
+index 6b829ca..58b7446 100644
+--- a/src/engine/image-build.lisp
++++ b/src/engine/image-build.lisp
+@@ -29,6 +29,7 @@ Backend corrente e dati restano invariati; la prossima scrittura rende obsoleta
+ Preflight ordinario senza effetti; errore/nonlocal exit dopo ammissione => FAULTED, causa preservata.
+ Nessun retry, cancellazione o nuova decisione durevole: questa API prepara un derivato privato."
+   (esigi-motore-pronto engine)
++  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
+   (preflight-costruzione-immagine engine option max-build-payload max-pages)
+   (let ((complete nil) (cause nil))
+     (unwind-protect
+diff --git a/src/engine/image-maintenance.lisp b/src/engine/image-maintenance.lisp
+index a09c419..f52ada5 100644
+--- a/src/engine/image-maintenance.lisp
++++ b/src/engine/image-maintenance.lisp
+@@ -3,20 +3,6 @@
+ (in-package #:arcdocdb.engine)
+ (declaim (optimize (safety 3) (speed 2) (debug 2)))
+ 
+-;;; REQ: REQ-IDX-010 REQ-LIM-003
+-(defstruct (politica-rinnovo-indice (:constructor %make-politica-rinnovo-indice (soglia)) (:copier nil))
+-  "Pre: soglia validata 1..100. Post: policy immutabile, nessun timer, I/O o quota assegnata."
+-  (soglia 75 :type (integer 1 100) :read-only t))
+-
+-;;; REQ: REQ-IDX-010 REQ-LIM-003
+-(declaim (ftype (function (&key (:soglia-percentuale t)) politica-rinnovo-indice) crea-politica-rinnovo-indice))
+-(defun crea-politica-rinnovo-indice (&key (soglia-percentuale 75))
+-  "Pre: configurazione controller. Post: policy immutabile; INVALID-ARGUMENT per soglia fuori 1..100.
+-Allocazione solo di configurazione; la percentuale non e' una misura della memoria libera o RSS."
+-  (unless (and (typep soglia-percentuale 'fixnum) (<= 1 soglia-percentuale 100))
+-    (error 'invalid-argument :reason :engine-image-maintenance-policy))
+-  (%make-politica-rinnovo-indice soglia-percentuale))
+-
+ ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-008
+ (declaim (ftype (function (delta-indice-motore politica-rinnovo-indice) boolean) delta-oltre-soglia-p))
+ (defun delta-oltre-soglia-p (delta policy)
+@@ -39,6 +25,7 @@ Contatori fuori quota o nullita' incoerente segnalano INVARIANT-VIOLATION, mai u
+ INVALID-ARGUMENT per modo senza delta; contatori corrotti rendono FAULTED conservando la primaria.
+ Non autorizza un PUT futuro e non garantisce spazio per una chiave non ancora osservata."
+   (esigi-motore-pronto engine)
++  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
+   (let ((delta (motore-delta engine)))
+     (unless delta (error 'invalid-argument :reason :engine-image-maintenance-without-delta))
+     (handler-case
+@@ -59,6 +46,7 @@ Post: MANTIENI senza I/O oppure RINNOVATO dopo richiesta completa, con le stesse
+ Nessun timer, retry, scelta di modo o nome generato; configurazioni errate rifiutate anche nel no-op.
+ Il rinnovo eredita preflight e confine FAULTED; non si consuma un CSN e non si ammette una scrittura."
+   (esigi-motore-pronto engine)
++  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
+   (unless (and (typep max-maintenance-payload '(integer 0 536870912)) (typep max-pages '(integer 1 65536)))
+     (error 'invalid-argument :reason :engine-image-maintenance-configuration))
+   (if (rinnovo-indice-richiesto-p engine policy)
+diff --git a/src/engine/image-renewal.lisp b/src/engine/image-renewal.lisp
+index 086e392..9af1235 100644
+--- a/src/engine/image-renewal.lisp
++++ b/src/engine/image-renewal.lisp
+@@ -54,13 +54,14 @@ Unica admission seriale: nessuna GET o scrittura fra le fasi, nemmeno da callbac
+ Preflight ordinario conserva READY; ogni errore/nonlocal exit ammesso => FAULTED con causa preservata.
+ Nessun retry o cancellazione: file incompleto o completo non pubblicato resta un derivato privato."
+   (esigi-motore-pronto engine)
++  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
+   (preflight-rinnovo-immagine engine option max-maintenance-payload max-pages delta-keys delta-key-bytes)
+   (let ((complete nil) (cause nil))
+     (unwind-protect
+          (handler-case
+              (progn
+                (setf (motore-busy engine) t)
+-               (esegui-rinnovo-immagine engine option max-pages (crea-delta-indice-motore delta-keys delta-key-bytes))
++               (esegui-rinnovo-immagine engine option max-pages (crea-delta-configurato-motore engine delta-keys delta-key-bytes))
+                (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
+                             (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
+                  (error 'invariant-violation :reason :engine-image-renewal-state))
+diff --git a/src/engine/image-source.lisp b/src/engine/image-source.lisp
+index 50c7a36..62fed5a 100644
+--- a/src/engine/image-source.lisp
++++ b/src/engine/image-source.lisp
+@@ -25,6 +25,10 @@ Prima del primo record il token contiene solo la versione; le tombstone avanzano
+   "Pre: replay canonico completato, owner esclusivo; root M1 senza split.
+ Post: copie possedute del token e cardinalita' esatta del frammento autorevole.
+ Un futuro backend split/compaction richiede un nuovo legame di fonte, non riusa questo contratto."
++  (when (motore-automatic-index engine)
++    (return-from fonte-canonica-indice-motore
++      (arcdocdb.index.page:crea-fonte-indice (motore-archive-id engine) (motore-series-id engine)
++        (motore-source-token engine) (motore-source-csn engine) (automatic-index-controller-count (motore-automatic-index engine)))))
+   (p::esigi-indice-sano (motore-index engine))
+   (let* ((root (p::acquisisci-root (motore-index engine))) (directory (p::root-indice-directory root)))
+     (unless (and (zerop (p::root-indice-depth root)) (= (length directory) 1))
+@@ -47,19 +51,28 @@ Non presta indice o FD; diventa obsoleto al commit seguente, nessuna prenotazion
+ (defun modo-indice-motore (engine)
+   "Pre: owner READY seriale. Post: backend del prossimo GET, nessun effetto o garanzia di migrazione."
+   (esigi-motore-pronto engine)
+-  (if (motore-paged engine) :paged :resident))
++  (if (if (motore-automatic-index engine) (automatic-index-controller-disk (motore-automatic-index engine))
++          (motore-paged engine)) :paged :resident))
+ 
+-;;; REQ: REQ-IDX-010 REQ-IDX-001 REQ-AFF-008
++;;; REQ: REQ-IDX-010 REQ-IDX-011 REQ-IDX-001 REQ-AFF-008
+ (declaim (ftype (function (motore octets integer integer p:contesto-indice
+                                 (simple-array (unsigned-byte 64) (5)))
+                          (member :live :absent :retry-limit)) sonda-indice-motore))
+ (defun sonda-indice-motore (engine key start end probe destination)
+   "Pre: GET ammesso nel contesto dell'attore M1, indice corrente stabile, scratch privati.
+-Post: delta toccato dal residente, altrimenti immagine se attiva; errori paginati propagati senza ripiego. Nessuna allocazione intenzionale."
++Post: location/tombstone dal delta, altrimenti immagine se attiva; errori propagati senza ripiego. Nessuna allocazione intenzionale."
+   (esigi-owner-motore engine)
+   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-image-lookup-admission))
++  (when (motore-automatic-index engine)
++    (return-from sonda-indice-motore (probe-automatic-index engine key start end probe destination)))
+   (let ((paged (motore-paged engine)))
+-    (if (and paged (not (chiave-nel-delta-motore-p engine key start end)))
+-        (arcdocdb.index.page:leggi-vista-indice-paginato paged key start end destination)
++    (when (and (motore-delta engine) (null paged))
++      (error 'invariant-violation :reason :engine-delta-without-image))
++    (if paged
++        (case (leggi-delta-motore engine key start end destination)
++          (:live :live)
++          (:absent :absent)
++          (:untracked (arcdocdb.index.page:leggi-vista-indice-paginato paged key start end destination))
++          (otherwise (error 'invariant-violation :reason :engine-delta-lookup-result)))
+         (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key start end)
+           (p:leggi-indice-primario (motore-index engine) key start end high low probe destination)))))
+diff --git a/src/engine/index.lisp b/src/engine/index.lisp
+index 0039454..a9b1893 100644
+--- a/src/engine/index.lisp
++++ b/src/engine/index.lisp
+@@ -10,6 +10,7 @@
+ Post: rifiuto ordinario di capienza senza cambiare indice, CSN o file; motore resta READY.
+ Invariante/errore interno chiude admission e conserva la primaria. Il fault-marker e'
+ tentato anche qui; i suoi errori secondari non mascherano la causa. Nessuna prenotazione."
++  (when (motore-automatic-index engine) (return-from verifica-capienza-indice-motore nil))
+   (handler-case
+       (let ((index (motore-index engine)))
+         (multiple-value-bind (high low) (p:digest-chiave-indice index key 0 (length key))
+@@ -22,12 +23,14 @@ tentato anche qui; i suoi errori secondari non mascherano la causa. Nessuna pren
+       (error condition)))
+   nil)
+ 
+-;;; REQ: REQ-IDX-001 REQ-IDX-006 REQ-REC-001 REQ-AFF-008
++;;; REQ: REQ-IDX-001 REQ-IDX-006 REQ-IDX-011 REQ-REC-001 REQ-AFF-008
+ (declaim (ftype (function (motore (member 1 2) octets u64 u64 index index) null) pubblica-location-motore))
+ (defun pubblica-location-motore (engine kind key csn segment offset bytes)
+   "Pre: dato committed verificato o lotto strong gia' pubblicato; un owner, nessun GET concorrente.
+ Post: candidato PUT aggiornato o chiave tombstone assente; slot u32 verificati prima del packing.
+ Errori canonici senza conferma al client; replay resta privato fino a READY."
++  (when (motore-automatic-index engine)
++    (return-from pubblica-location-motore (publish-automatic-index engine kind key 0 (length key) csn segment offset bytes)))
+   (unless (and (<= 1 segment #xffffffff) (<= offset #xffffffff) (<= bytes #xffffffff))
+     (error 'unsupported-format :reason :engine-location-range))
+   (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key 0 (length key))
+@@ -44,6 +47,7 @@ Errori canonici senza conferma al client; replay resta privato fino a READY."
+          (let ((removed (p:rimuovi-chiave-indice index fragment key 0 (length key) high low context)))
+            (unless (typep removed 'boolean) (error 'invariant-violation :reason :engine-delete-result))))
+         (otherwise (error 'invariant-violation :reason :engine-record-kind)))))
++  (pubblica-location-delta-motore engine kind key csn segment offset bytes)
+   (registra-fonte-indice-motore engine csn segment offset bytes)
+   nil)
+ 
+@@ -69,6 +73,9 @@ Rifiuta prepared/compaction fuori M1 e dati ambigui; nessun byte preesistente mo
+              (when (and previous (<= csn previous))
+                (error 'corruption-detected :reason :engine-replay-csn-order))
+              (setf previous csn)
+-             (pubblica-location-motore engine kind (subseq buffer ks ke) csn segment offset (- end start))))
++             (if (motore-automatic-index engine)
++                 (progn (prepare-automatic-index engine kind buffer ks ke)
++                        (publish-automatic-index engine kind buffer ks ke csn segment offset (- end start)))
++                 (pubblica-location-motore engine kind (subseq buffer ks ke) csn segment offset (- end start)))))
+          nil))))
+   nil)
+diff --git a/src/engine/lifecycle.lisp b/src/engine/lifecycle.lisp
+index 049c2e3..c68a866 100644
+--- a/src/engine/lifecycle.lisp
++++ b/src/engine/lifecycle.lisp
+@@ -53,15 +53,16 @@ Errori conservati nell'handle per aggregazione dopo tutti i tentativi, mai ignor
+     (error (condition) (push condition (motore-cleanup-failures engine))))
+   nil)
+ 
+-;;; REQ: REQ-IDX-010 REQ-AFF-004 REQ-CON-002
++;;; REQ: REQ-IDX-010 REQ-IDX-012 REQ-AFF-004 REQ-CON-002
+ (declaim (ftype (function (motore) null) ritira-indice-paginato-motore))
+ (defun ritira-indice-paginato-motore (engine)
+   "Pre: owner seriale, nessun GET in volo; richiesta BUSY o cleanup dopo admission chiusa.
+-Post: riferimento e ownership ritirati prima dell'unico close, nessuna allocazione intenzionale.
++Post: vista e rinnovo automatico ritirati prima dell'unico close, nessuna allocazione intenzionale.
+ IO-FAULT del close propaga senza retry; gli slot restano vuoti anche su fallimento."
+   (esigi-owner-motore engine)
+   (let ((file (motore-paged-file engine)))
+-    (setf (motore-delta engine) nil (motore-paged engine) nil (motore-paged-option engine) nil (motore-paged-file engine) nil)
++    (setf (motore-auto-renewal engine) nil (motore-auto-renewals-used engine) 0
++          (motore-delta engine) nil (motore-paged engine) nil (motore-paged-option engine) nil (motore-paged-file engine) nil)
+     (when file (io:chiudi file)))
+   nil)
+ 
+@@ -71,6 +72,12 @@ IO-FAULT del close propaga senza retry; gli slot restano vuoti anche su fallimen
+   "Pre: attore, nessun compito/GET in volo. Post: tutti i set/FD tentati, parent ultimo rilascia il lock.
+ Ownership consumata anche con errore; guasti registrati, nessun secondo close o retry."
+   (tenta-cleanup-motore engine (lambda () (ritira-indice-paginato-motore engine)))
++  (when (motore-automatic-index engine)
++    (let ((tree (automatic-index-controller-disk (motore-automatic-index engine))))
++      (when tree
++        (setf (automatic-index-controller-disk (motore-automatic-index engine)) nil)
++        (tenta-cleanup-motore engine (lambda () (retire-automatic-disk engine tree)))))
++    (setf (motore-index engine) nil (motore-automatic-index engine) nil))
+   (when (motore-lease engine)
+     (tenta-cleanup-motore engine (lambda () (s:rilascia-controllore-serie
+                                            (motore-controller engine) (motore-lease engine))))
+diff --git a/src/engine/package.lisp b/src/engine/package.lisp
+index 4c830b3..03cad2f 100644
+--- a/src/engine/package.lisp
++++ b/src/engine/package.lisp
+@@ -1,9 +1,9 @@
+ ;;; OWNER: un solo attore I/O della Serie possiede motore, writer, GET e capacita'.
+ ;;; SHARED: nessun nuovo stato globale; il solo registro CSN canonico dell'Archivio M1.
+-;;; REQ: REQ-REC-001 REQ-CON-002 REQ-WAL-006 REQ-AFF-008
++;;; REQ: REQ-REC-001 REQ-CON-002 REQ-WAL-006 REQ-AFF-008 REQ-IDX-012
+ (defpackage #:arcdocdb.engine
+   (:use #:cl)
+-  (:local-nicknames (#:io #:arcdocdb.io) (#:w #:arcdocdb.wal) (#:s #:arcdocdb.series)
++  (:local-nicknames (#:d #:arcdocdb.index.disk) (#:io #:arcdocdb.io) (#:w #:arcdocdb.wal) (#:s #:arcdocdb.series)
+                    (#:p #:arcdocdb.index.primary) (#:g #:arcdocdb.get) (#:gd #:arcdocdb.get.directory)
+                    (#:r #:arcdocdb.get.resolver) (#:a #:arcdocdb.active) (#:c #:arcdocdb.control)
+                    (#:ra #:arcdocdb.recovery.active) (#:rc #:arcdocdb.recovery.closed)
+@@ -13,11 +13,13 @@
+   (:import-from #:arcdocdb.binary #:octets #:index #:u32 #:u64)
+   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted #:invariant-violation
+                 #:io-fault #:corruption-detected #:unsupported-format)
+-  (:export #:motore #:apri-motore #:chiudi-motore #:stato-motore
++  (:export #:politica-indice-automatico #:crea-politica-indice-automatico
++           #:configura-budget-indice-motore #:statistiche-indice-motore #:motore #:apri-motore #:chiudi-motore #:stato-motore
+            #:scrivi-documento #:cancella-documento #:leggi-documento #:frontiere-motore
+            #:opzione-indice-paginato #:crea-opzione-indice-paginato #:fonte-indice-motore #:modo-indice-motore
+            #:costruisci-indice-paginato-motore #:attiva-indice-paginato-motore #:rinnova-indice-paginato-motore
+            #:opzione-scoperta-indice #:crea-opzione-scoperta-indice
+            #:politica-rinnovo-indice #:crea-politica-rinnovo-indice
+            #:rinnovo-indice-richiesto-p #:mantieni-indice-paginato-motore
++           #:opzione-rinnovo-automatico #:crea-opzione-rinnovo-automatico #:configura-rinnovo-automatico-motore
+            #:errore-cleanup-motore #:causa-cleanup-motore #:errori-cleanup-motore))
+diff --git a/src/engine/read.lisp b/src/engine/read.lisp
+index a661428..11b7366 100644
+--- a/src/engine/read.lisp
++++ b/src/engine/read.lisp
+@@ -29,7 +29,8 @@ Ogni uscita abbandona GET; un errore di cleanup non sostituisce l'uscita primari
+                       (error 'arcdocdb.conditions:invariant-violation :reason :engine-get-absence))
+                     (values :absent 0)))
+                  (:candidate
+-                  (case (gd:leggi-record-serie-get context (motore-controller engine))
++                  (case (if (motore-automatic-index engine) (read-automatic-record engine context)
++                            (gd:leggi-record-serie-get context (motore-controller engine)))
+                     (:segment nil)
+                     (:buffer-required
+                      (error 'arcdocdb.conditions:resource-exhausted :reason :engine-get-record-buffer))
+diff --git a/src/engine/startup.lisp b/src/engine/startup.lisp
+index 280815a..393a563 100644
+--- a/src/engine/startup.lisp
++++ b/src/engine/startup.lisp
+@@ -38,19 +38,24 @@ Gate prima degli effetti, checkpoint e nomi prima di indice/runtime/radice; erro
+                                (:max-file-bytes index) (:max-record-bytes index) (:max-records u32)
+                                (:max-segments index) (:index-capacity index) (:key-arena-bytes index)
+                                (:hash-seed-high u32) (:hash-seed-low u32)
+-                               (:index-image (or null opzione-indice-paginato))
++                               (:index-policy t) (:index-image (or null opzione-indice-paginato))
+                                (:index-discovery (or null opzione-scoperta-indice))) motore) apri-motore))
+ (defun apri-motore (directory archive-id series-id
+                    &key (create nil) (version 2) clock observer record-validator (max-file-bytes 16777216)
+                         (max-record-bytes 65536) (max-records 65536) (max-segments 64)
+                         (index-capacity 4096) (key-arena-bytes 1048576) (hash-seed-high #x243f6a88)
+-                        (hash-seed-low #x85a308d3) index-image index-discovery)
++                        (hash-seed-low #x85a308d3) index-image index-discovery
++                        (index-policy (if (or index-image index-discovery) :legacy :automatic)))
+   "Pre: directory esistente privata, UUID espliciti, clock monotono iniettabile, nessuna cancellazione thread.
+ Post: unico writer fisico e motore READY; init esplicito o recovery automatico senza harness.
+ INDEX-IMAGE seleziona un derivato; INDEX-DISCOVERY cerca footer coerenti con il canonico.
+ Entrambe le scelte richiedono verifica completa prima di READY, sono esclusive e incompatibili con CREATE.
+ Punti durevoli nei preparatori/publisher esistenti; nessuna admission prima di indice e fonti completi.
+ Errori tipizzati, risorse tutte tentate; causa primaria e cleanup conservati, nessun retry/rollback."
++  (unless (or (member index-policy '(:legacy :automatic)) (typep index-policy 'politica-indice-automatico))
++    (error 'invalid-argument :reason :engine-index-policy))
++  (when (and (not (eq index-policy :legacy)) (or index-image index-discovery))
++    (error 'invalid-argument :reason :engine-auto-legacy-conflict))
+   (when (and create index-image) (error 'invalid-argument :reason :engine-image-on-create))
+   (when (and create index-discovery) (error 'invalid-argument :reason :engine-discovery-on-create))
+   (when (and index-image index-discovery) (error 'invalid-argument :reason :engine-image-discovery-conflict))
+@@ -67,6 +72,10 @@ Errori tipizzati, risorse tutte tentate; causa primaria e cleanup conservati, ne
+     (handler-case
+         (unwind-protect
+              (handler-case (progn
++               (unless (eq index-policy :legacy)
++                 (initialize-automatic-index engine (if (eq index-policy :automatic)
++                   (crea-politica-indice-automatico) index-policy) index-capacity (min key-arena-bytes 65536)
++                   hash-seed-high hash-seed-low))
+                (prepara-ispezione-motore engine index-capacity key-arena-bytes hash-seed-high hash-seed-low)
+                (setf (motore-directory engine) (possiedi-file-motore engine (io:apri-directory directory)))
+                (io:esigi-esclusiva-directory (motore-directory engine))
+diff --git a/src/engine/types.lisp b/src/engine/types.lisp
+index 337fc71..b46556e 100644
+--- a/src/engine/types.lisp
++++ b/src/engine/types.lisp
+@@ -12,7 +12,7 @@
+              (format stream "ArcDocDB cleanup: primaria ~A; guasti ~S"
+                      (causa-cleanup-motore condition) (errori-cleanup-motore condition)))))
+ 
+-;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-LIM-003
++;;; REQ: REQ-REC-001 REQ-AFF-008 REQ-LIM-003 REQ-IDX-012
+ (defstruct (motore (:constructor %make-motore) (:copier nil))
+   "Pre: configurazione validata prima dell'I/O; un attore e una Serie per handle.
+ Post: admission chiusa fino a READY; risorse possedute fino a close, nessun buffer caller trattenuto.
+@@ -37,6 +37,9 @@ Nessun accessore pubblico sui FD o sulle radici; la capacita' non e' trasferibil
+   (discovery-option nil :type (or null opzione-scoperta-indice) :read-only t)
+   (image-option nil :type (or null opzione-indice-paginato) :read-only t)
+   (delta nil :type (or null delta-indice-motore))
++  (automatic-index nil :type (or null automatic-index-controller))
++  (auto-renewal nil :type (or null opzione-rinnovo-automatico))
++  (auto-renewals-used 0 :type (integer 0 65536))
+   (paged nil :type (or null arcdocdb.index.page:vista-indice-paginato))
+   (paged-file nil :type (or null io:file-io))
+   (paged-option nil :type (or null opzione-indice-paginato))
+diff --git a/src/engine/write.lisp b/src/engine/write.lisp
+index 4ef9552..4095c33 100644
+--- a/src/engine/write.lisp
++++ b/src/engine/write.lisp
+@@ -81,31 +81,32 @@ Ogni errore/uscita incompleta richiede FAULTED dal confine chiamante, senza roll
+             (osserva-motore engine :after-commit)
+             csn))))))
+ 
+-;;; REQ: REQ-WAL-005 REQ-WAL-006 REQ-CON-002 REQ-AFF-001 REQ-AFF-004
++;;; REQ: REQ-WAL-005 REQ-WAL-006 REQ-CON-002 REQ-AFF-001 REQ-AFF-004 REQ-IDX-012
+ (declaim (ftype (function (motore (member 1 2) b:octets b:octets) b:u64)
+                 scrivi-record-motore))
+ (defun scrivi-record-motore (engine kind key value)
+   "Pre: chiamante owner; nessun'altra API attiva sul motore. Post: CSN u64 confermato.
+ Input rifiutato in preflight senza consumare CSN o sporcare il lotto. Dopo l'ingresso
+ con MOTORE-BUSY, ogni errore rende FAULTED e propaga la stessa condizione; anche THROW/RETURN
+-incompleti rendono FAULTED. I callback non possono rientrare nel motore READY."
++incompleti rendono FAULTED. Il rinnovo opzionale e il commit condividono BUSY; nessun rientro dai callback."
+   (esigi-motore-pronto engine)
+   (verifica-input-scrittura-motore engine kind key value)
+   (verifica-capienza-indice-motore engine kind key)
+-  (verifica-capienza-delta-motore engine key)
+-  (let ((complete nil) (cause nil))
++  (let ((renewal (preflight-rinnovo-scrittura engine key)) (complete nil) (cause nil))
+     (unwind-protect
+          (handler-case
+              (progn
+                (setf (motore-busy engine) t)
+-               (if (motore-delta engine)
+-                   (registra-chiave-delta-motore engine key t)
+-                   (ritira-indice-paginato-motore engine))
++               (if (motore-automatic-index engine)
++                   (prepare-automatic-index engine kind key 0 (length key))
++                   (prepara-indice-scrittura-ammessa engine key renewal))
+                (let ((csn (commetti-record-motore engine kind key value)))
+                  (declare (type b:u64 csn))
+                  (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
+                               (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
+                    (error 'arcdocdb.conditions:invariant-violation :reason :engine-write-state))
++                 (when (motore-automatic-index engine)
++                   (return-automatic-resident engine) (require-automatic-admission engine))
+                  (setf complete t)
+                  csn))
+            (error (condition)
+diff --git a/src/get-resolver/read.lisp b/src/get-resolver/read.lisp
+index 1177496..30bb55e 100644
+--- a/src/get-resolver/read.lisp
++++ b/src/get-resolver/read.lisp
+@@ -4,13 +4,14 @@
+ (declaim (optimize (safety 3) (speed 2) (debug 2)))
+ 
+ ;;; REQ: REQ-IDX-001 REQ-AFF-002 REQ-AFF-008
+-(declaim (ftype (function (contesto-get resolver-words u32) index) trova-riga-resolver))
+-(defun trova-riga-resolver (context rows offset)
++(declaim (ftype (function (contesto-get resolver-words u32 &optional u32) index) trova-riga-resolver))
++(defun trova-riga-resolver (context rows offset &optional (count (floor (length rows) +row-words+)))
+   "Pre: CANDIDATE sotto EBR, righe immutabili ordinate per offset. Post: base del PUT esatto.
+ Assenza non significa documento assente: location già pubblicata senza riga rende FAULTED.
+ Al più 33 passi su cardinalità u32; nessuna allocazione esplicita o I/O."
+   (unless (zerop (mod (length rows) +row-words+)) (guasto-get context :resolver-row-shape))
+-  (let ((left 0) (right (floor (length rows) +row-words+)))
++  (unless (<= count (floor (length rows) +row-words+)) (guasto-get context :resolver-row-count))
++  (let ((left 0) (right count))
+     (declare (type u32 left right))
+     (loop repeat +binary-attempts+
+           do (when (= left right) (guasto-get context :resolver-location-absent))
+@@ -81,7 +82,7 @@ Errori/uscite non locali liberano EBR; ordine errato rifiutato prima di assumere
+                         (eq (stato-file (segmento-get-file segment)) :open))
+              (guasto-get context :resolver-source-lifetime))
+            (let ((base (trova-riga-resolver context (mappa-segmento-get-rows map)
+-                                           (ldb (byte 32 0) location))))
++                                           (ldb (byte 32 0) location) (mappa-segmento-get-count map))))
+              (multiple-value-bind (flags proof) (verifica-riga-resolver context map base)
+                (setf complete t)
+                (values segment (mappa-segmento-get-end map) flags proof))))
+diff --git a/src/get-resolver/types.lisp b/src/get-resolver/types.lisp
+index 53438f1..0e424f6 100644
+--- a/src/get-resolver/types.lisp
++++ b/src/get-resolver/types.lisp
+@@ -22,13 +22,14 @@
+ (deftype resolver-words () '(simple-array (unsigned-byte 32) (*)))
+ 
+ ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CMP-007 REQ-AFF-008
+-(defstruct (mappa-segmento-get (:constructor %make-mappa-segmento-get (segment end rows)) (:copier nil))
++(defstruct (mappa-segmento-get (:constructor %make-mappa-segmento-get (segment end rows &optional (count (floor (length rows) 6)))) (:copier nil))
+   "Pre: CLOSED attestato dal manifest oppure pagina di lotto ACTIVE verificato prima dell'adozione.
+ Post: tabella posseduta di soli PUT, ordinata per offset, immutabile e senza buffer sorgente.
+ Il controller pubblica prima delle location corrispondenti e protegge il FD con EBR."
+   (segment nil :type segmento-get :read-only t)
+   (end 0 :type u32 :read-only t)
+-  (rows #() :type resolver-words :read-only t))
++  (rows #() :type resolver-words :read-only t)
++  (count 0 :type u32 :read-only t))
+ 
+ ;;; REQ: REQ-IDX-001 REQ-AFF-008
+ (declaim (ftype (function (mappa-segmento-get) index) payload-mappa-segmento-get))
+diff --git a/src/get/build.lisp b/src/get/build.lisp
+index cfff473..a909d61 100644
+--- a/src/get/build.lisp
++++ b/src/get/build.lisp
+@@ -4,16 +4,18 @@
+ (declaim (optimize (safety 3) (speed 2) (debug 2)))
+ 
+ ;;; REQ: REQ-IDX-001 REQ-CCH-002 REQ-FOR-001 REQ-IDX-010
+-(declaim (ftype (function (ambito-get indice-primario (or null cache-serie) octets
++(declaim (ftype (function (ambito-get (or null indice-primario) (or null cache-serie) octets
+                          &key (:lookup (or null function))) vista-get-serie)
+                 crea-vista-get-serie))
+ (defun crea-vista-get-serie (scope primary cache identity &key lookup)
+   "Pre: controller, indice/cache della stessa Serie, ID canonico stabile di sedici byte.
+ Post: vista immutabile con copia posseduta dell'identità; NIL disattiva la cache.
+ LOOKUP opzionale e' del controller: (key,start,end,probe,output), risultato LIVE/ABSENT/RETRY-LIMIT.
+-Deve essere bounded senza allocazioni, preservare output su miss, usare lo stesso dominio e rispettare ownership/EBR.
++PRIMARY may be NIL only with LOOKUP, allowing a paged controller to release its resident root.
++The callback preserves output on absence and owns its progress/I/O contract; bounded loops do not imply lock-freedom.
+ INVALID-ARGUMENT per ID di altra lunghezza; nessun oggetto per documento."
+   (unless (= (length identity) +serie-id-bytes+) (error 'invalid-argument :reason :get-serie-identity))
++  (unless (or primary lookup) (error 'invalid-argument :reason :get-missing-lookup))
+   (%make-vista-get-serie scope primary cache (copy-seq identity) lookup))
+ 
+ ;;; REQ: REQ-CON-004 REQ-AFF-008
+diff --git a/src/get/types.lisp b/src/get/types.lisp
+index bbee5d2..0105dbb 100644
+--- a/src/get/types.lisp
++++ b/src/get/types.lisp
+@@ -26,7 +26,7 @@ Post: legami immutabili, identità copiata; nessun accessor di array esportato.
+ LOOKUP opzionale appartiene al controller: stato e ownership devono restare coerenti con questa vista.
+ Non certifica la pubblicazione dei commit o la salute del controller."
+   (scope nil :type ambito-get :read-only t)
+-  (primary nil :type indice-primario :read-only t)
++  (primary nil :type (or null indice-primario) :read-only t)
+   (lookup nil :type (or null function) :read-only t)
+   (cache nil :type (or null cache-serie) :read-only t)
+   (identity #() :type (simple-array (unsigned-byte 8) (#.+serie-id-bytes+)) :read-only t))
+diff --git a/src/io/package.lisp b/src/io/package.lisp
+index 96e4707..bd07e0c 100644
+--- a/src/io/package.lisp
++++ b/src/io/package.lisp
+@@ -4,7 +4,8 @@
+   (:import-from #:arcdocdb.binary #:octets #:index #:check-range)
+   (:import-from #:arcdocdb.conditions #:io-fault #:invalid-argument #:resource-exhausted
+                 #:invariant-violation #:unsupported-format)
+-  (:export #:backend #:make-backend #:file-io
++  (:export #:nome-derivato-automatico-p #:prova-rimozione-derivato #:prova-derivato-rimovibile #:rimuovi-derivato
++           #:backend #:make-backend #:file-io
+            #:associazione-file #:associa-file #:verifica-associazione-file #:verifica-file-distinti
+            #:apri-lettura #:apri-lettura-nella-directory #:crea-temporaneo #:crea-temporaneo-nella-directory
+            #:apri-directory #:chiudi #:elenca-directory #:esigi-esclusiva-directory
+diff --git a/src/io/types.lisp b/src/io/types.lisp
+index 38562f7..e6831c2 100644
+--- a/src/io/types.lisp
++++ b/src/io/types.lisp
+@@ -15,7 +15,7 @@
+ (defstruct (backend (:constructor make-backend
+                          (open reader writer flush directory-flush close
+                           &key identity entry-identity rename directory-entries open-relative file-metadata
+-                               create-relative rename-exclusive directory-lock))
++                               create-relative rename-exclusive directory-lock unlink-relative))
+                     (:copier nil))
+   "Pre: funzioni fidate e stabili. Post: tabella immutabile delle chiamate iniettabili.
+ Open riceve nome/mode; read fd/octets/start/count/offset; write fd/octets/start/count.
+@@ -32,6 +32,8 @@ File-metadata opzionale riceve fd regolare; restituisce device/inode/dimensione
+ Create-relative opzionale riceve directory-fd/foglia ASCII privata/:append; crea un nuovo .tmp vuoto
+ con WRONLY/CREAT/EXCL/APPEND/CLOEXEC/NOFOLLOW e permessi richiesti 0600 (soggetti a umask).
+ Restituisce un nuovo FD posseduto dal chiamante, senza riaprire o troncare file esistenti.
++Unlink-relative optionally receives directory-fd/leaf; zero means removal, syscall-error preserves errno.
++Only the typed derived-removal proof API can invoke it; no fallback for a missing callback.
+ Nessun fallback nativo per callback mancanti."
+   (open #'identity :type function :read-only t)
+   (reader #'identity :type function :read-only t)
+@@ -44,6 +46,7 @@ Nessun fallback nativo per callback mancanti."
+   (rename nil :type (or null function) :read-only t)
+   (rename-exclusive nil :type (or null function) :read-only t)
+   (directory-lock nil :type (or null function) :read-only t)
++  (unlink-relative nil :type (or null function) :read-only t)
+   (directory-entries nil :type (or null function) :read-only t)
+   (open-relative nil :type (or null function) :read-only t)
+   (file-metadata nil :type (or null function) :read-only t)
+diff --git a/tests/engine/delta.lisp b/tests/engine/delta.lisp
+index d727497..5160313 100644
+--- a/tests/engine/delta.lisp
++++ b/tests/engine/delta.lisp
+@@ -106,7 +106,7 @@
+         (check-get engine 1 (value 1)) (check-get engine 99 nil)))))
+ 
+ (deftest test-REQ-IDX-010-delta-admitted-failure-and-preflight-invariant
+-  (dolist (phase '(:before-append :after-flush :after-commit))
++  (dolist (phase '(:before-append :after-flush :before-delta-publication :after-delta-publication :after-commit))
+     (with-root (root)
+       (let ((armed nil))
+         (with-engine (engine (open-build-engine root :create t
+diff --git a/tests/engine/image-build.lisp b/tests/engine/image-build.lisp
+index 5cf43e5..8543c50 100644
+--- a/tests/engine/image-build.lisp
++++ b/tests/engine/image-build.lisp
+@@ -4,7 +4,7 @@
+ (declaim (optimize (safety 3) (speed 2) (debug 3)))
+ 
+ (defun open-build-engine (root &key create (version 2) observer option (capacity 128))
+-  (e:apri-motore root (archive-id) (series-id) :create create :version version
++  (e:apri-motore root (archive-id) (series-id) :index-policy :legacy :create create :version version
+     :clock (lambda () 10) :observer observer :max-file-bytes 2097152 :max-record-bytes 131072
+     :max-records 4096 :max-segments 32 :index-capacity capacity :key-arena-bytes 262144 :index-image option))
+ 
+diff --git a/tests/engine/processes.lisp b/tests/engine/processes.lisp
+index 7887d22..53cb674 100644
+--- a/tests/engine/processes.lisp
++++ b/tests/engine/processes.lisp
+@@ -8,6 +8,10 @@
+ 
+ (defun child-main (arguments)
+   (destructuring-bind (mode path format stage) arguments
++    (when (and (>= (length mode) 5) (string= mode "mode-" :end1 5))
++      (return-from child-main (automatic-mode-child-main arguments)))
++    (when (and (>= (length mode) 5) (string= mode "auto-" :end1 5))
++      (return-from child-main (automatic-renewal-child-main arguments)))
+     (when (and (>= (length mode) 9) (string= mode "discover-" :end1 9))
+       (return-from child-main (discovery-child-main arguments)))
+     (when (and (>= (length mode) 6) (string= mode "renew-" :end1 6))
+diff --git a/tests/engine/support.lisp b/tests/engine/support.lisp
+index 5f66a8e..4f050bd 100644
+--- a/tests/engine/support.lisp
++++ b/tests/engine/support.lisp
+@@ -13,7 +13,7 @@
+ (defun key (n) (bytes 16 n))
+ (defun value (n) (bytes 23 (+ 128 n)))
+ (defun open-engine (root &key create (version 2) observer (arena-bytes 2048) index-image)
+-  (e:apri-motore root (archive-id) (series-id) :create create :version version
++  (e:apri-motore root (archive-id) (series-id) :index-policy :legacy :create create :version version
+     :clock (lambda () 10) :observer observer :max-file-bytes 8192 :max-record-bytes 256
+     :max-records 32 :max-segments 16 :index-capacity 32 :key-arena-bytes arena-bytes :index-image index-image))
+ (defmacro with-root ((root) &body body)
+diff --git a/tests/local/server.lisp b/tests/local/server.lisp
+index ee84759..368ed10 100644
+--- a/tests/local/server.lisp
++++ b/tests/local/server.lisp
+@@ -10,9 +10,9 @@
+ (defun bytes (&rest values)
+   (make-array (length values) :element-type '(unsigned-byte 8) :initial-contents values))
+ (defun id (n) (make-array 16 :element-type '(unsigned-byte 8) :initial-element n))
+-(defun engine (root &key create observer)
++(defun engine (root &key create observer (index-policy :automatic))
+   (e:apri-motore root (id 73) (id 41) :create create :clock (lambda () 10) :observer observer
+-    :index-capacity 32 :key-arena-bytes 4096))
++    :index-capacity 32 :key-arena-bytes 4096 :index-policy index-policy))
+ (defun request (connection id opcode key document)
+   (let* ((buffer (l::local-connection-input connection))
+          (end (l::encode-local-request buffer id opcode key document)))
+@@ -55,7 +55,8 @@
+ 
+ ;;; REQ: REQ-IPC-002 REQ-LIM-003 REQ-WAL-006
+ (deftest test-REQ-IPC-002-index-busy-never-committed
+-  (with-engine (engine root :create t)
++  ;; Keep the fixed-capacity reference profile for this rejection oracle.
++  (with-engine (engine root :create t :index-policy :legacy)
+     (let ((connection (l::make-local-connection :limit 65536)))
+       (loop for n from 1 to 28 do (is (zerop (dispatch engine connection n 1 (bytes n) (bytes 0)))))
+       (let ((originals (arcdocdb.engine.tests::images root)))
+@@ -147,3 +148,17 @@
+              (is (l::step-local-connection nil output deadline (lambda () deadline)))
+              (is (eq :closed (l::local-connection-state output)))))
+       (l::close-local-connection input) (l::close-local-connection output))))
++
++;;; REQ: REQ-IPC-002 REQ-IDX-013 REQ-WAL-006
++(deftest test-REQ-IDX-013-local-dispatch-grows-automatically-before-strong-ACK
++  (with-engine (engine root :create t)
++    (let ((connection (l::make-local-connection :limit 65536)))
++      (loop for n from 1 to 90 do
++        (multiple-value-bind (status envelope) (dispatch engine connection n 1 (bytes n) (bytes 0))
++          (is (zerop status)) (is (= n (decoded-result connection envelope 1)))))
++      (is (eq :resident (e:modo-indice-motore engine)))
++      (is (equal '(0 90 0 90) (multiple-value-list (e:frontiere-motore engine))))
++      (multiple-value-bind (status envelope) (dispatch engine connection 91 2 (bytes 90))
++        (is (zerop status))
++        (multiple-value-bind (found document) (decoded-result connection envelope 2)
++          (is (eq :found found)) (is (equalp (bytes 0) document)))))))

@@ -1,0 +1,82 @@
+;;; OWNER: serial M1 write request, one continuous BUSY scope for renewal and commit.
+;;; SHARED: none; no GET-side maintenance or cross-Serie ordinal.
+(in-package #:arcdocdb.engine)
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+
+;;; REQ: REQ-IDX-012 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (motore octets) boolean) delta-saturo-per-chiave-p))
+(defun delta-saturo-per-chiave-p (engine key)
+  "Pre: READY owner, counters checked and private delta present. Post: exact next-key capacity result.
+Only the declared delta-capacity rejection requests renewal; every other condition is propagated."
+  (esigi-motore-pronto engine)
+  (unless (motore-delta engine) (error 'invariant-violation :reason :engine-auto-renewal-state))
+  (handler-case (progn (verifica-capienza-delta-motore engine key) nil)
+    (resource-exhausted (condition)
+      (unless (eq (arcdocdb.conditions:error-reason condition) :engine-delta-capacity) (error condition))
+      t)))
+
+;;; REQ: REQ-IDX-012 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (motore octets opzione-rinnovo-automatico) (or null opzione-indice-paginato))
+                pianifica-rinnovo-scrittura))
+(defun pianifica-rinnovo-scrittura (engine key config)
+  "Pre: owner READY, valid document and resident capacity. Post: fully preflighted renewal or NIL.
+Oversized-for-empty keys reject before namespace access. Validate existing membership even above threshold."
+  (let ((delta (motore-delta engine)))
+    (unless (and delta (motore-paged engine)) (error 'invariant-violation :reason :engine-auto-renewal-state))
+    (when (> (length key) (length (delta-indice-motore-arena delta)))
+      (error 'resource-exhausted :reason :engine-delta-capacity))
+    (let ((threshold (rinnovo-indice-richiesto-p engine (opzione-rinnovo-automatico-policy config)))
+          (full (delta-saturo-per-chiave-p engine key)))
+      (when (or threshold full)
+        (let ((option (prossima-opzione-rinnovo engine config)))
+          (preflight-rinnovo-immagine engine option (opzione-rinnovo-automatico-payload config)
+             (opzione-rinnovo-automatico-pages config) (delta-indice-motore-limit delta)
+             (length (delta-indice-motore-arena delta)))
+          option)))))
+
+;;; REQ: REQ-IDX-012 REQ-AFF-001 REQ-CON-002
+(declaim (ftype (function (motore octets) (or null opzione-indice-paginato)) preflight-rinnovo-scrittura))
+(defun preflight-rinnovo-scrittura (engine key)
+  "Pre: owner READY, input and resident capacity checked. Post: no-op or reserved renewal proposal before CSN.
+Ordinary argument/capacity rejection preserves READY; other faults close admission preserving the cause."
+  (esigi-motore-pronto engine)
+  (when (motore-automatic-index engine) (return-from preflight-rinnovo-scrittura nil))
+  (handler-case
+      (let ((config (motore-auto-renewal engine)))
+        (if config (pianifica-rinnovo-scrittura engine key config)
+            (progn (verifica-capienza-delta-motore engine key) nil)))
+    ((or invalid-argument resource-exhausted) (condition) (error condition))
+    (error (condition)
+      (unless (eq (motore-state engine) :faulted)
+        (tenta-cleanup-motore engine (lambda () (guasta-motore engine condition))))
+      (error condition))))
+
+;;; REQ: REQ-IDX-012 REQ-WAL-006 REQ-AFF-008
+(declaim (ftype (function (motore opzione-indice-paginato) null) esegui-rinnovo-automatico-motore))
+(defun esegui-rinnovo-automatico-motore (engine option)
+  "Pre: owner BUSY, proposal fully preflighted, write boundary owns incomplete exits. Post: verified current image.
+One ordinal consumed after renewal; no document CSN/ACK. Existing commit follows within the same BUSY scope."
+  (esigi-owner-motore engine)
+  (let ((config (motore-auto-renewal engine)) (delta (motore-delta engine)))
+    (unless (and (motore-busy engine) config delta) (error 'invariant-violation :reason :engine-auto-renewal-state))
+    (unless (< (motore-auto-renewals-used engine) (opzione-rinnovo-automatico-renewals config))
+      (error 'invariant-violation :reason :engine-auto-renewal-ordinal))
+    (esegui-rinnovo-immagine engine option (opzione-rinnovo-automatico-pages config)
+      (crea-delta-configurato-motore engine (delta-indice-motore-limit delta) (length (delta-indice-motore-arena delta))))
+    (osserva-motore engine :automatic-index-renewed)
+    (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
+                 (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
+      (error 'invariant-violation :reason :engine-auto-renewal-postcondition))
+    (incf (motore-auto-renewals-used engine)))
+  nil)
+
+;;; REQ: REQ-IDX-012 REQ-IDX-011 REQ-WAL-006 REQ-AFF-008
+(declaim (ftype (function (motore octets (or null opzione-indice-paginato)) null) prepara-indice-scrittura-ammessa))
+(defun prepara-indice-scrittura-ammessa (engine key renewal)
+  "Pre: owner BUSY, document and renewal preflight complete. Post: exact membership reserved before CSN.
+Optional renewal shares this admission; without delta the old image is retired. Incomplete exits belong to write boundary."
+  (esigi-owner-motore engine)
+  (unless (motore-busy engine) (error 'invariant-violation :reason :engine-auto-renewal-admission))
+  (when renewal (esegui-rinnovo-automatico-motore engine renewal))
+  (if (motore-delta engine) (registra-chiave-delta-motore engine key t) (ritira-indice-paginato-motore engine))
+  nil)

@@ -1,0 +1,6 @@
+(require :asdf)
+(setf asdf:*compile-file-failure-behaviour* :error asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (c) (unless (typep c 'sb-kernel:redefinition-warning) (error c)))))
+  (asdf:load-asd (truename "arcdocdb.asd")) (asdf:load-system "arcdocdb/tests"))
+(arcdocdb.engine.tests::test-REQ-IDX-013-retired-file-closed-after-postpublication-error-or-nonlocal-exit)
+(format t "~&RETIREMENT-REGRESSION-PASS both sources closed / errors and nonlocal exits / independent reopen~%")

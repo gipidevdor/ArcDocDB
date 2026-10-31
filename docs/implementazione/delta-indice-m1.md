@@ -5,6 +5,12 @@
 > **Decided (authorized incremental integration → ADR-0067)** — REQ-IDX-010,
 > INV-I8, INV-I1, INV-A8, INV-P6. C1, sole M1 owner, no new state across Serie.
 
+The original membership-only contract below is superseded in representation
+and lookup by [ADR-0071](../adr/0071-delta-location-indice-m1.md):
+the [location delta](delta-location-m1.md) owns complete committed descriptors
+and tombstones. Current array payload is `57*C + delta-key-bytes`.
+Admission, WAL atomicity, renewal, and restart obligations below still apply.
+
 ```lisp
 (arcdocdb.engine:attiva-indice-paginato-motore engine option
   :delta-keys 1024 :delta-key-bytes 65536

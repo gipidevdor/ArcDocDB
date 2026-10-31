@@ -22,13 +22,14 @@
 (deftype resolver-words () '(simple-array (unsigned-byte 32) (*)))
 
 ;;; REQ: REQ-IDX-001 REQ-FOR-004 REQ-CMP-007 REQ-AFF-008
-(defstruct (mappa-segmento-get (:constructor %make-mappa-segmento-get (segment end rows)) (:copier nil))
+(defstruct (mappa-segmento-get (:constructor %make-mappa-segmento-get (segment end rows &optional (count (floor (length rows) 6)))) (:copier nil))
   "Pre: CLOSED attestato dal manifest oppure pagina di lotto ACTIVE verificato prima dell'adozione.
 Post: tabella posseduta di soli PUT, ordinata per offset, immutabile e senza buffer sorgente.
 Il controller pubblica prima delle location corrispondenti e protegge il FD con EBR."
   (segment nil :type segmento-get :read-only t)
   (end 0 :type u32 :read-only t)
-  (rows #() :type resolver-words :read-only t))
+  (rows #() :type resolver-words :read-only t)
+  (count 0 :type u32 :read-only t))
 
 ;;; REQ: REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (mappa-segmento-get) index) payload-mappa-segmento-get))

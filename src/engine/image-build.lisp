@@ -29,6 +29,7 @@ Backend corrente e dati restano invariati; la prossima scrittura rende obsoleta 
 Preflight ordinario senza effetti; errore/nonlocal exit dopo ammissione => FAULTED, causa preservata.
 Nessun retry, cancellazione o nuova decisione durevole: questa API prepara un derivato privato."
   (esigi-motore-pronto engine)
+  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (preflight-costruzione-immagine engine option max-build-payload max-pages)
   (let ((complete nil) (cause nil))
     (unwind-protect

@@ -12,8 +12,7 @@ Comprende vecchio reader/cache/delta, nuova verifica e array piccoli; esclude og
     (+ 65536 arcdocdb.record:+max-key-bytes+ 80
        (* (opzione-indice-paginato-size option) (+ 5 (opzione-indice-paginato-frames option)))
        (if (motore-delta engine)
-           (+ (* 4 (length (delta-indice-motore-table (motore-delta engine))))
-              (length (delta-indice-motore-arena (motore-delta engine)))) 0)
+           (payload-delta-allocato (motore-delta engine)) 0)
        (if old (* (opzione-indice-paginato-size old) (+ 2 (opzione-indice-paginato-frames old))) 0))))
 
 ;;; REQ: REQ-IDX-010 REQ-AFF-008
@@ -27,7 +26,7 @@ Post: stessa fonte e revisione; INVARIANT-VIOLATION per mutazione o fase errata,
     (error 'invariant-violation :reason :engine-image-activation-source-changed))
   nil)
 
-;;; REQ: REQ-IDX-010 REQ-AFF-004 REQ-AFF-008
+;;; REQ: REQ-IDX-010 REQ-IDX-012 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (motore arcdocdb.index.page:vista-indice-paginato io:file-io opzione-indice-paginato
                          &optional (or null delta-indice-motore)) null)
                 installa-vista-paginata-motore))
@@ -41,6 +40,7 @@ Errore dopo lo swap non ripristina un file gia' chiuso; il confine chiamante ren
                  (eq file (arcdocdb.index.page::immagine-indice-verificata-file proof)))
       (error 'invariant-violation :reason :engine-image-activation-binding))
     (setf (motore-delta engine) delta (motore-paged-file engine) file (motore-paged-option engine) option (motore-paged engine) view)
+    (unless delta (setf (motore-auto-renewal engine) nil (motore-auto-renewals-used engine) 0))
     (when old (io:chiudi old)))
   nil)
 
@@ -79,6 +79,7 @@ Post: GET paginato con delta opzionale bounded senza riavvio; una sola capacita'
 Preflight invalido/esaurito preserva READY. Ogni errore/nonlocal exit ammesso rende FAULTED,
 conservando la causa; prima della pubblicazione la vecchia root resta intatta, senza fallback."
   (esigi-motore-pronto engine)
+  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (unless (typep max-activation-payload '(integer 0 536870912))
     (error 'invalid-argument :reason :engine-image-activation-configuration))
   (when (> (+ (payload-attivazione-immagine engine option)
@@ -89,7 +90,7 @@ conservando la causa; prima della pubblicazione la vecchia root resta intatta, s
          (handler-case
              (progn
                (setf (motore-busy engine) t)
-               (prepara-attivazione-immagine engine option (crea-delta-indice-motore delta-keys delta-key-bytes))
+               (prepara-attivazione-immagine engine option (crea-delta-configurato-motore engine delta-keys delta-key-bytes))
                (unless (and (motore-busy engine) (eq (motore-state engine) :ready)
                             (eq (s:stato-controllore-serie (motore-controller engine)) :healthy))
                  (error 'invariant-violation :reason :engine-image-activation-state))

@@ -10,6 +10,7 @@
 Post: rifiuto ordinario di capienza senza cambiare indice, CSN o file; motore resta READY.
 Invariante/errore interno chiude admission e conserva la primaria. Il fault-marker e'
 tentato anche qui; i suoi errori secondari non mascherano la causa. Nessuna prenotazione."
+  (when (motore-automatic-index engine) (return-from verifica-capienza-indice-motore nil))
   (handler-case
       (let ((index (motore-index engine)))
         (multiple-value-bind (high low) (p:digest-chiave-indice index key 0 (length key))
@@ -22,12 +23,14 @@ tentato anche qui; i suoi errori secondari non mascherano la causa. Nessuna pren
       (error condition)))
   nil)
 
-;;; REQ: REQ-IDX-001 REQ-IDX-006 REQ-REC-001 REQ-AFF-008
+;;; REQ: REQ-IDX-001 REQ-IDX-006 REQ-IDX-011 REQ-REC-001 REQ-AFF-008
 (declaim (ftype (function (motore (member 1 2) octets u64 u64 index index) null) pubblica-location-motore))
 (defun pubblica-location-motore (engine kind key csn segment offset bytes)
   "Pre: dato committed verificato o lotto strong gia' pubblicato; un owner, nessun GET concorrente.
 Post: candidato PUT aggiornato o chiave tombstone assente; slot u32 verificati prima del packing.
 Errori canonici senza conferma al client; replay resta privato fino a READY."
+  (when (motore-automatic-index engine)
+    (return-from pubblica-location-motore (publish-automatic-index engine kind key 0 (length key) csn segment offset bytes)))
   (unless (and (<= 1 segment #xffffffff) (<= offset #xffffffff) (<= bytes #xffffffff))
     (error 'unsupported-format :reason :engine-location-range))
   (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key 0 (length key))
@@ -44,6 +47,7 @@ Errori canonici senza conferma al client; replay resta privato fino a READY."
          (let ((removed (p:rimuovi-chiave-indice index fragment key 0 (length key) high low context)))
            (unless (typep removed 'boolean) (error 'invariant-violation :reason :engine-delete-result))))
         (otherwise (error 'invariant-violation :reason :engine-record-kind)))))
+  (pubblica-location-delta-motore engine kind key csn segment offset bytes)
   (registra-fonte-indice-motore engine csn segment offset bytes)
   nil)
 
@@ -69,6 +73,9 @@ Rifiuta prepared/compaction fuori M1 e dati ambigui; nessun byte preesistente mo
              (when (and previous (<= csn previous))
                (error 'corruption-detected :reason :engine-replay-csn-order))
              (setf previous csn)
-             (pubblica-location-motore engine kind (subseq buffer ks ke) csn segment offset (- end start))))
+             (if (motore-automatic-index engine)
+                 (progn (prepare-automatic-index engine kind buffer ks ke)
+                        (publish-automatic-index engine kind buffer ks ke csn segment offset (- end start)))
+                 (pubblica-location-motore engine kind (subseq buffer ks ke) csn segment offset (- end start)))))
          nil))))
   nil)

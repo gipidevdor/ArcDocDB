@@ -13,7 +13,7 @@
 (defun key (n) (bytes 16 n))
 (defun value (n) (bytes 23 (+ 128 n)))
 (defun open-engine (root &key create (version 2) observer (arena-bytes 2048) index-image)
-  (e:apri-motore root (archive-id) (series-id) :create create :version version
+  (e:apri-motore root (archive-id) (series-id) :index-policy :legacy :create create :version version
     :clock (lambda () 10) :observer observer :max-file-bytes 8192 :max-record-bytes 256
     :max-records 32 :max-segments 16 :index-capacity 32 :key-arena-bytes arena-bytes :index-image index-image))
 (defmacro with-root ((root) &body body)

@@ -223,9 +223,9 @@
  (:id "REQ-IDX-007" :src "ADR-0050" :cls "C1" :stato :progettato
   :txt "The reader rechecks root and generation after probing, including on a miss, with bounded attempts; maintenance declares and checks slots, key bytes, directory references, and transient memory separately."
   :inv ("INV-I3" "INV-A8") :adr ("ADR-0043" "ADR-0050") :ver (:test :model :bench :rev) :fi ())
- (:id "REQ-IDX-008" :src "ADR-0057" :cls "C1" :stato :progettato
-  :txt "Index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol."
-  :inv ("INV-I7" "INV-A8" "INV-P6") :adr ("ADR-0057" "ADR-0049" "ADR-0050") :ver (:test :model :bench :fi :rev) :fi ("FI-06" "FI-10" "FI-11"))
+ (:id "REQ-IDX-008" :src "ADR-0057" :cls "C1" :stato :implementato
+  :txt "In the serial M1 profile, index mode is selected automatically per Serie at startup and during operation: resident when it fits, paged beyond the quota, with hysteresis on return. Switching requires a reserved memory peak including the retained source and consistent publication, without admitting over-budget work or changing the commit protocol."
+  :inv ("INV-I7" "INV-A8" "INV-P6") :adr ("ADR-0073" "ADR-0057" "ADR-0049" "ADR-0050") :ver (:test :model :bench :fi :rev) :fi ("FI-06" "FI-10" "FI-11"))
  (:id "REQ-IDX-009" :src "ADR-0058" :cls "C1" :stato :progettato
   :txt "Derived primary-index pages have Serie/image/offset/generation identity, version, and CRC32C; flat buckets, radix directory, and key fragments are verified before use. Backward references, canonical packing, geometry, and v2 bounds prevent structural aliases and false local misses; the codec introduces no independent commit."
   :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0068" "ADR-0058" "ADR-0065" "ADR-0057" "ADR-0043") :ver (:test :diff :corr :rev) :fi ())
@@ -233,6 +233,18 @@
  (:id "REQ-IDX-010" :src "ADR-0063" :cls "C1" :stato :progettato
   :txt "A paged root is adopted only from a complete image verified read-only against canonical source, seed, count, and authoritative candidates; derivative completion is distinct from data commit, with cumulative budgets and rejection of duplicates/unreachable entries."
   :inv ("INV-I8" "INV-A2" "INV-A8" "INV-P6") :adr ("ADR-0063" "ADR-0064" "ADR-0065" "ADR-0066" "ADR-0067" "ADR-0068" "ADR-0069" "ADR-0070" "ADR-0058" "ADR-0057") :ver (:test :diff :corr :fi :rev) :fi ("FI-06" "FI-10"))
+
+ (:id "REQ-IDX-011" :src "ADR-0071" :cls "C1" :stato :implementato
+  :txt "The serial M1 paged delta stores exact private keys and committed normalized locations or explicit tombstones; touched-key lookup uses neither the resident index nor the base image. Publication follows durable SEAL under BUSY, incomplete operations fault, and activation/renewal reserve all old and new delta arrays before effects."
+  :inv ("INV-I1" "INV-I8" "INV-V5" "INV-A8" "INV-P6") :adr ("ADR-0071" "ADR-0067" "ADR-0068" "ADR-0069") :ver (:test :diff :corr :fi :rev) :fi ("FI-01" "FI-02"))
+
+ (:id "REQ-IDX-012" :src "ADR-0072" :cls "C1" :stato :implementato
+  :txt "An optionally configured M1 engine renews its paged image automatically before PUT/DELETE at the delta threshold or next-key capacity limit. The full renewal reservation and finite fresh-name sequence are checked before admission; one BUSY scope covers renewal and document commit, with no CSN/ACK for the derivative and FAULTED on incomplete admitted exits."
+  :inv ("INV-I1" "INV-I8" "INV-A8" "INV-P6") :adr ("ADR-0072" "ADR-0068" "ADR-0069" "ADR-0071") :ver (:test :diff :fi :rev) :fi ("FI-01" "FI-02"))
+
+ (:id "REQ-IDX-013" :src "ADR-0073" :cls "C1" :stato :implementato
+  :txt "The automatic M1 primary backend has bounded resident growth, verified migration both ways with hysteresis, independent paged writes, bounded-memory WAL replay and bounded CLOSED resolver caching. Immutable checksummed disk nodes use fixed cache/path/batch storage; canonical WAL remains the only data commit and private derivative removal requires bound ownership proof."
+  :inv ("INV-I1" "INV-I7" "INV-I8" "INV-A2" "INV-A8" "INV-A10" "INV-P6") :adr ("ADR-0073" "ADR-0057" "ADR-0058") :ver (:test :diff :corr :fi :bench :rev) :fi ("FI-01" "FI-02" "FI-06" "FI-10"))
 
  ;; ---- Cache -------------------------------------------------------------------
  (:id "REQ-CCH-001" :src "Cache" :cls "C3" :stato :progettato

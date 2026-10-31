@@ -106,7 +106,7 @@
         (check-get engine 1 (value 1)) (check-get engine 99 nil)))))
 
 (deftest test-REQ-IDX-010-delta-admitted-failure-and-preflight-invariant
-  (dolist (phase '(:before-append :after-flush :after-commit))
+  (dolist (phase '(:before-append :after-flush :before-delta-publication :after-delta-publication :after-commit))
     (with-root (root)
       (let ((armed nil))
         (with-engine (engine (open-build-engine root :create t

@@ -4,7 +4,7 @@
 (declaim (optimize (safety 3) (speed 2) (debug 3)))
 
 (defun open-build-engine (root &key create (version 2) observer option (capacity 128))
-  (e:apri-motore root (archive-id) (series-id) :create create :version version
+  (e:apri-motore root (archive-id) (series-id) :index-policy :legacy :create create :version version
     :clock (lambda () 10) :observer observer :max-file-bytes 2097152 :max-record-bytes 131072
     :max-records 4096 :max-segments 32 :index-capacity capacity :key-arena-bytes 262144 :index-image option))
 

@@ -26,7 +26,7 @@ Post: legami immutabili, identità copiata; nessun accessor di array esportato.
 LOOKUP opzionale appartiene al controller: stato e ownership devono restare coerenti con questa vista.
 Non certifica la pubblicazione dei commit o la salute del controller."
   (scope nil :type ambito-get :read-only t)
-  (primary nil :type indice-primario :read-only t)
+  (primary nil :type (or null indice-primario) :read-only t)
   (lookup nil :type (or null function) :read-only t)
   (cache nil :type (or null cache-serie) :read-only t)
   (identity #() :type (simple-array (unsigned-byte 8) (#.+serie-id-bytes+)) :read-only t))

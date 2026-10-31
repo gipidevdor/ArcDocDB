@@ -3,20 +3,6 @@
 (in-package #:arcdocdb.engine)
 (declaim (optimize (safety 3) (speed 2) (debug 2)))
 
-;;; REQ: REQ-IDX-010 REQ-LIM-003
-(defstruct (politica-rinnovo-indice (:constructor %make-politica-rinnovo-indice (soglia)) (:copier nil))
-  "Pre: soglia validata 1..100. Post: policy immutabile, nessun timer, I/O o quota assegnata."
-  (soglia 75 :type (integer 1 100) :read-only t))
-
-;;; REQ: REQ-IDX-010 REQ-LIM-003
-(declaim (ftype (function (&key (:soglia-percentuale t)) politica-rinnovo-indice) crea-politica-rinnovo-indice))
-(defun crea-politica-rinnovo-indice (&key (soglia-percentuale 75))
-  "Pre: configurazione controller. Post: policy immutabile; INVALID-ARGUMENT per soglia fuori 1..100.
-Allocazione solo di configurazione; la percentuale non e' una misura della memoria libera o RSS."
-  (unless (and (typep soglia-percentuale 'fixnum) (<= 1 soglia-percentuale 100))
-    (error 'invalid-argument :reason :engine-image-maintenance-policy))
-  (%make-politica-rinnovo-indice soglia-percentuale))
-
 ;;; REQ: REQ-IDX-010 REQ-LIM-003 REQ-AFF-008
 (declaim (ftype (function (delta-indice-motore politica-rinnovo-indice) boolean) delta-oltre-soglia-p))
 (defun delta-oltre-soglia-p (delta policy)
@@ -39,6 +25,7 @@ Contatori fuori quota o nullita' incoerente segnalano INVARIANT-VIOLATION, mai u
 INVALID-ARGUMENT per modo senza delta; contatori corrotti rendono FAULTED conservando la primaria.
 Non autorizza un PUT futuro e non garantisce spazio per una chiave non ancora osservata."
   (esigi-motore-pronto engine)
+  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (let ((delta (motore-delta engine)))
     (unless delta (error 'invalid-argument :reason :engine-image-maintenance-without-delta))
     (handler-case
@@ -59,6 +46,7 @@ Post: MANTIENI senza I/O oppure RINNOVATO dopo richiesta completa, con le stesse
 Nessun timer, retry, scelta di modo o nome generato; configurazioni errate rifiutate anche nel no-op.
 Il rinnovo eredita preflight e confine FAULTED; non si consuma un CSN e non si ammette una scrittura."
   (esigi-motore-pronto engine)
+  (when (motore-automatic-index engine) (error 'invalid-argument :reason :engine-legacy-profile-required))
   (unless (and (typep max-maintenance-payload '(integer 0 536870912)) (typep max-pages '(integer 1 65536)))
     (error 'invalid-argument :reason :engine-image-maintenance-configuration))
   (if (rinnovo-indice-richiesto-p engine policy)

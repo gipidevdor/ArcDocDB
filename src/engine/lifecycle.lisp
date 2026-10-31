@@ -53,15 +53,16 @@ Errori conservati nell'handle per aggregazione dopo tutti i tentativi, mai ignor
     (error (condition) (push condition (motore-cleanup-failures engine))))
   nil)
 
-;;; REQ: REQ-IDX-010 REQ-AFF-004 REQ-CON-002
+;;; REQ: REQ-IDX-010 REQ-IDX-012 REQ-AFF-004 REQ-CON-002
 (declaim (ftype (function (motore) null) ritira-indice-paginato-motore))
 (defun ritira-indice-paginato-motore (engine)
   "Pre: owner seriale, nessun GET in volo; richiesta BUSY o cleanup dopo admission chiusa.
-Post: riferimento e ownership ritirati prima dell'unico close, nessuna allocazione intenzionale.
+Post: vista e rinnovo automatico ritirati prima dell'unico close, nessuna allocazione intenzionale.
 IO-FAULT del close propaga senza retry; gli slot restano vuoti anche su fallimento."
   (esigi-owner-motore engine)
   (let ((file (motore-paged-file engine)))
-    (setf (motore-delta engine) nil (motore-paged engine) nil (motore-paged-option engine) nil (motore-paged-file engine) nil)
+    (setf (motore-auto-renewal engine) nil (motore-auto-renewals-used engine) 0
+          (motore-delta engine) nil (motore-paged engine) nil (motore-paged-option engine) nil (motore-paged-file engine) nil)
     (when file (io:chiudi file)))
   nil)
 
@@ -71,6 +72,12 @@ IO-FAULT del close propaga senza retry; gli slot restano vuoti anche su fallimen
   "Pre: attore, nessun compito/GET in volo. Post: tutti i set/FD tentati, parent ultimo rilascia il lock.
 Ownership consumata anche con errore; guasti registrati, nessun secondo close o retry."
   (tenta-cleanup-motore engine (lambda () (ritira-indice-paginato-motore engine)))
+  (when (motore-automatic-index engine)
+    (let ((tree (automatic-index-controller-disk (motore-automatic-index engine))))
+      (when tree
+        (setf (automatic-index-controller-disk (motore-automatic-index engine)) nil)
+        (tenta-cleanup-motore engine (lambda () (retire-automatic-disk engine tree)))))
+    (setf (motore-index engine) nil (motore-automatic-index engine) nil))
   (when (motore-lease engine)
     (tenta-cleanup-motore engine (lambda () (s:rilascia-controllore-serie
                                            (motore-controller engine) (motore-lease engine))))

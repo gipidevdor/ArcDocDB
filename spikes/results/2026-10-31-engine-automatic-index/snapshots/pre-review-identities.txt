@@ -1,0 +1,3 @@
+src/engine/index-auto-files.lisp 36c35182fa1a3c833fa403f2be698537e7da98f4
+src/engine/index-auto-migrate.lisp cee0a9e9cfe698cec532fb69d032729ae0356af1
+tests/engine/index-automatic.lisp 0ebd86082fc766b4f1a861456a4a88cbaeca811e

@@ -191,3 +191,9 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0069](0069-manutenzione-a-soglie-delta-m1.md) | Local threshold policy on keys/bytes and serial delta renewal | Accepted in incremental integration; backend selection and scheduler separate |
 
 | [0070](0070-scoperta-readonly-immagini-m1.md) | Bounded search for current candidates and full verification at M1 startup | Accepted in incremental integration; durable catalog and mode selection separate |
+
+| [0071](0071-delta-location-indice-m1.md) | Committed locations and tombstones in the M1 delta, without resident lookup for paged GET | Accepted in incremental integration; resident write/recovery dependencies remain |
+
+| [0072](0072-rinnovo-automatico-delta-m1.md) | Bounded automatic renewal before M1 PUT/DELETE, with one admission for renewal and commit | Accepted in incremental integration; legacy image profile; operational selection in ADR-0073 |
+
+| [0073](0073-indice-automatico-operativo-m1.md) | Automatic M1 resident/paged writes, bounded replay, return and derived cleanup | Implemented for serial M1; concurrent and physical-RAM qualification separate |

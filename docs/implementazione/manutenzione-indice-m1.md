@@ -21,6 +21,10 @@ within SBCL64 fixnums. No division, rounding, or file access.
 With quota three and threshold 75, two keys are insufficient: the third reaches it.
 Threshold 100 requires at least one quota full.
 
+The explicit API below remains available. [Automatic M1 renewal](rinnovo-automatico-m1.md)
+now connects this policy and next-key capacity to PUT/DELETE through an optional,
+finite configuration. RAM-based backend selection remains separate.
+
 Probe is read-only on valid path; it checks counters within capacity,
 bytes at least equal to keys (nonempty keys), and consistent empty state.
 Corrupt counters or delta without view cause FAULTED. A mode without delta

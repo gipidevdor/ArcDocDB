@@ -25,6 +25,10 @@ Prima del primo record il token contiene solo la versione; le tombstone avanzano
   "Pre: replay canonico completato, owner esclusivo; root M1 senza split.
 Post: copie possedute del token e cardinalita' esatta del frammento autorevole.
 Un futuro backend split/compaction richiede un nuovo legame di fonte, non riusa questo contratto."
+  (when (motore-automatic-index engine)
+    (return-from fonte-canonica-indice-motore
+      (arcdocdb.index.page:crea-fonte-indice (motore-archive-id engine) (motore-series-id engine)
+        (motore-source-token engine) (motore-source-csn engine) (automatic-index-controller-count (motore-automatic-index engine)))))
   (p::esigi-indice-sano (motore-index engine))
   (let* ((root (p::acquisisci-root (motore-index engine))) (directory (p::root-indice-directory root)))
     (unless (and (zerop (p::root-indice-depth root)) (= (length directory) 1))
@@ -47,19 +51,28 @@ Non presta indice o FD; diventa obsoleto al commit seguente, nessuna prenotazion
 (defun modo-indice-motore (engine)
   "Pre: owner READY seriale. Post: backend del prossimo GET, nessun effetto o garanzia di migrazione."
   (esigi-motore-pronto engine)
-  (if (motore-paged engine) :paged :resident))
+  (if (if (motore-automatic-index engine) (automatic-index-controller-disk (motore-automatic-index engine))
+          (motore-paged engine)) :paged :resident))
 
-;;; REQ: REQ-IDX-010 REQ-IDX-001 REQ-AFF-008
+;;; REQ: REQ-IDX-010 REQ-IDX-011 REQ-IDX-001 REQ-AFF-008
 (declaim (ftype (function (motore octets integer integer p:contesto-indice
                                 (simple-array (unsigned-byte 64) (5)))
                          (member :live :absent :retry-limit)) sonda-indice-motore))
 (defun sonda-indice-motore (engine key start end probe destination)
   "Pre: GET ammesso nel contesto dell'attore M1, indice corrente stabile, scratch privati.
-Post: delta toccato dal residente, altrimenti immagine se attiva; errori paginati propagati senza ripiego. Nessuna allocazione intenzionale."
+Post: location/tombstone dal delta, altrimenti immagine se attiva; errori propagati senza ripiego. Nessuna allocazione intenzionale."
   (esigi-owner-motore engine)
   (unless (motore-busy engine) (error 'invariant-violation :reason :engine-image-lookup-admission))
+  (when (motore-automatic-index engine)
+    (return-from sonda-indice-motore (probe-automatic-index engine key start end probe destination)))
   (let ((paged (motore-paged engine)))
-    (if (and paged (not (chiave-nel-delta-motore-p engine key start end)))
-        (arcdocdb.index.page:leggi-vista-indice-paginato paged key start end destination)
+    (when (and (motore-delta engine) (null paged))
+      (error 'invariant-violation :reason :engine-delta-without-image))
+    (if paged
+        (case (leggi-delta-motore engine key start end destination)
+          (:live :live)
+          (:absent :absent)
+          (:untracked (arcdocdb.index.page:leggi-vista-indice-paginato paged key start end destination))
+          (otherwise (error 'invariant-violation :reason :engine-delta-lookup-result)))
         (multiple-value-bind (high low) (p:digest-chiave-indice (motore-index engine) key start end)
           (p:leggi-indice-primario (motore-index engine) key start end high low probe destination)))))

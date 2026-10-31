@@ -1,0 +1,5 @@
+(require :asdf)
+(setf asdf:*compile-file-failure-behaviour* :error asdf:*compile-file-warnings-behaviour* :error)
+(handler-bind ((warning (lambda (c) (unless (typep c 'sb-kernel:redefinition-warning) (error c)))))
+  (asdf:load-asd (truename "arcdocdb.asd")) (asdf:load-system "arcdocdb/tests"))
+(arcdocdb.local.server.tests:run)

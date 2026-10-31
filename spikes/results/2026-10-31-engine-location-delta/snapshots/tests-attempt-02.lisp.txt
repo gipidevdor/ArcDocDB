@@ -1,0 +1,243 @@
+;;; OWNER: C4 fixtures; independent values, direct descriptor arithmetic, no shared product state.
+;;; REQ: REQ-IDX-011 REQ-IDX-010 REQ-WAL-006 REQ-LIM-003 REQ-AFF-008
+(in-package #:arcdocdb.engine.tests)
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+
+(defun location-delta-slot (engine key)
+  (let ((delta (e::motore-delta engine)))
+    (multiple-value-bind (high low)
+        (arcdocdb.hash64:xxh64 key 0 (length key) (e::delta-indice-motore-seed-high delta) (e::delta-indice-motore-seed-low delta))
+      (multiple-value-bind (slot found) (e::sonda-delta-indice delta key 0 (length key) high low)
+        (is found) slot))))
+
+(deftest test-REQ-IDX-011-location-delta-exact-payload-and-layout
+  (is (zerop (e::payload-delta-indice 0 0)))
+  (is (null (e::crea-delta-indice-motore 0 0)))
+  (dolist (case '((1 1 2) (2 17 4) (3 128 8) (65536 16777216 131072)))
+    (destructuring-bind (keys bytes capacity) case
+      (let ((delta (e::crea-delta-indice-motore keys bytes #x81234567 #xfedcba98)))
+        (is (= (e::payload-delta-indice keys bytes) (+ (* 57 capacity) bytes)))
+        (is (= (e::payload-delta-allocato delta) (+ (* 57 capacity) bytes)))
+        (is (= (* 4 capacity) (length (e::delta-indice-motore-table delta))))
+        (is (= (* 5 capacity) (length (e::delta-indice-motore-content delta))))
+        (is (= capacity (length (e::delta-indice-motore-states delta))))
+        (is (= #x81234567 (e::delta-indice-motore-seed-high delta)))
+        (is (= #xfedcba98 (e::delta-indice-motore-seed-low delta)))
+        (is (every #'zerop (e::delta-indice-motore-content delta)))
+        (is (every #'zerop (e::delta-indice-motore-states delta)))))))
+
+(deftest test-REQ-IDX-011-location-delta-full-width-publication-and-guards
+  (with-root (root)
+    (with-engine (engine (open-build-engine root :create t))
+      (let* ((option (build-option 1)) (input (key 9))
+             (output (make-array 5 :element-type '(unsigned-byte 64) :initial-element 77)))
+        (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option)
+        (signals arcdocdb.conditions:invariant-violation (e::leggi-delta-motore engine input 0 16 output))
+        (signals arcdocdb.conditions:invariant-violation
+                 (e::pubblica-location-delta-motore engine 1 input 1 1 64 100))
+        (unwind-protect
+             (progn
+               (setf (e::motore-busy engine) t)
+               (signals arcdocdb.conditions:invariant-violation
+                        (e::pubblica-location-delta-motore engine 1 input 1 1 64 100))
+               (e::registra-chiave-delta-motore engine input t)
+               (signals arcdocdb.conditions:invariant-violation (e::leggi-delta-motore engine input 0 16 output))
+               ;; Direct unit inputs represent a complete authoritative descriptor.
+               (e::pubblica-location-delta-motore engine 1 input #xfffffffffffffffe #xffffffff #xffffff00 128)
+               (is (eq :live (e::leggi-delta-motore engine input 0 16 output)))
+               (is (equalp output #(#xfffffffffffffffe #xffffffffffffff00 #x1001000000000 128 0)))
+               (signals arcdocdb.conditions:invariant-violation
+                        (e::pubblica-location-delta-motore engine 1 input #xfffffffffffffffe 1 64 100))
+               (e::pubblica-location-delta-motore engine 2 input #xffffffffffffffff #xffffffff #xffffff00 128)
+               (fill output 77)
+               (is (eq :absent (e::leggi-delta-motore engine input 0 16 output)))
+               (is (every (lambda (n) (= n 77)) output))
+               (is (eq :untracked (e::leggi-delta-motore engine (key 10) 0 16 output)))
+               (let ((delta (e::motore-delta engine)))
+                 (signals arcdocdb.conditions:invariant-violation (e::indice-location-delta delta 1))
+                 (signals arcdocdb.conditions:invariant-violation
+                          (e::indice-location-delta delta (length (e::delta-indice-motore-table delta))))))
+          (setf (e::motore-busy engine) nil))))))
+
+(deftest test-REQ-IDX-011-paged-GET-independent-of-resident-table-and-handle
+  (dolist (version '(1 2))
+    (with-root (root)
+      (with-engine (engine (open-build-engine root :create t :version version))
+        (initial-workload engine) (e:scrivi-documento engine (key 4) (value 4))
+        (let ((option (build-option 1)))
+          (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option)
+          (e:scrivi-documento engine (key 1) (value 9))
+          (e:cancella-documento engine (key 3))
+          (e:scrivi-documento engine (key 7) (value 7))
+          (let ((resident (e::motore-index engine)))
+            (unwind-protect
+                 (progn
+                   (arcdocdb.index.primary:invalida-indice-primario resident)
+                   (setf (e::motore-index engine) nil)
+                   (check-get engine 1 (value 9)) (check-get engine 3 nil) (check-get engine 7 (value 7))
+                   (check-get engine 4 (value 4)) (check-get engine 2 nil) (check-get engine 99 nil))
+              (setf (e::motore-index engine) resident))))))))
+
+(deftest test-REQ-IDX-011-location-delta-invalid-state-fields-no-fallback
+  (dolist (defect '(:unpublished :state :csn :flags :length :aux :stamp :without-image))
+    (with-root (root)
+      (with-engine (engine (open-build-engine root :create t))
+        (initial-workload engine)
+        (let ((option (build-option 1)))
+          (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option)
+          (e:scrivi-documento engine (key 1) (value 9))
+          (let* ((delta (e::motore-delta engine)) (slot (location-delta-slot engine (key 1)))
+                 (at (* 5 (floor slot 4))) (contents (e::delta-indice-motore-content delta))
+                 (states (e::delta-indice-motore-states delta)))
+            (case defect
+              (:unpublished (setf (aref states (floor slot 4)) 0))
+              (:state (setf (aref states (floor slot 4)) 3))
+              (:csn (setf (aref contents at) 0))
+              (:flags (setf (aref contents (+ at 2)) 0))
+              (:length (setf (aref contents (+ at 3)) 0))
+              (:aux (setf (aref contents (+ at 4)) 1))
+              (:stamp (decf (aref contents at)))
+              (:without-image (setf (e::motore-paged engine) nil)))
+            (if (eq defect :stamp)
+                (signals arcdocdb.conditions:corruption-detected (e:leggi-documento engine (key 1) (bytes 64)))
+                (signals arcdocdb.conditions:invariant-violation (e:leggi-documento engine (key 1) (bytes 64))))
+            (is (eq :faulted (e:stato-motore engine)))))))))
+
+(deftest test-REQ-IDX-011-location-delta-differential-renewal-and-restart
+  (dolist (version '(1 2))
+    (with-root (root)
+      (let ((expected (make-array 17 :initial-element nil)) (state 1234567))
+        (with-engine (engine (open-build-engine root :create t :version version))
+          (let ((option (build-option 1)))
+            (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option :keys 16 :bytes 256)
+            (dotimes (step 200)
+              (setf state (logand #xffffffff (+ (* state 1664525) 1013904223)))
+              (let* ((id (1+ (ldb (byte 4 8) state))) (remove (zerop (ldb (byte 2 20) state)))
+                     (payload (value (mod step 32))))
+                (if remove
+                    (progn (e:cancella-documento engine (key id)) (setf (aref expected id) nil))
+                    (progn (e:scrivi-documento engine (key id) payload) (setf (aref expected id) (copy-seq payload)))))
+              (loop for id from 1 to 16 do (check-get engine id (aref expected id))))
+            (let ((old (image (build-path root option))) (fresh (build-option 2)))
+              (e:rinnova-indice-paginato-motore engine fresh :delta-keys 16 :delta-key-bytes 256)
+              (is (equalp old (image (build-path root option))))
+              (is (zerop (e::delta-indice-motore-count (e::motore-delta engine))))
+              (loop for id from 1 to 16 do (check-get engine id (aref expected id))))
+            (check-frontier engine 200)))
+        (with-engine (engine (open-build-engine root :version version))
+          (loop for id from 1 to 16 do (check-get engine id (aref expected id)))
+          (check-frontier engine 200))))))
+
+(deftest test-REQ-IDX-011-location-delta-SIGKILL-publication-v1-v2
+  (dolist (version '(1 2))
+    (dolist (stage '("before-delta-publication" "after-delta-publication"))
+      (with-root (root)
+        (child root version "delta-write" stage :signaled sb-posix:sigkill)
+        (let* ((storage (merge-pathnames "storage/" root)) (original (image (build-path storage (build-option 1)))))
+          (child root version "delta-verify" stage :exited 0)
+          (is (equalp original (image (build-path storage (build-option 1))))))))))
+
+(deftest test-REQ-IDX-011-location-delta-complete-old-and-new-reservation
+  (with-root (root)
+    (with-engine (engine (open-build-engine root :create t))
+      (let ((first (build-option 1)) (second (build-option 2)) (fresh (build-option 3)))
+        (e:costruisci-indice-paginato-motore engine first) (activate-delta engine first :keys 4 :bytes 64)
+        (e:scrivi-documento engine (key 1) (value 1))
+        (e:costruisci-indice-paginato-motore engine second)
+        (let* ((old (e::motore-delta engine)) (file (check-active-file engine))
+               (before (images root)) (frontier (multiple-value-list (e:frontiere-motore engine)))
+               ;; Independent array/reader payload: default 4096-byte pages, two frames.
+               (base (+ 65536 65535 80 (* 4096 7) (* 4096 4)))
+               (old-payload (+ (* 8 57) 64)) (new-payload (+ (* 8 57) 48))
+               (quota (+ base old-payload new-payload)))
+          (is (= (+ base old-payload) (e::payload-attivazione-immagine engine second)))
+          (signals arcdocdb.conditions:resource-exhausted
+                   (e:attiva-indice-paginato-motore engine second :delta-keys 3 :delta-key-bytes 48
+                     :max-activation-payload (1- quota)))
+          (is (eq old (e::motore-delta engine))) (is (eq file (check-active-file engine)))
+          (is (equal frontier (multiple-value-list (e:frontiere-motore engine)))) (check-images root before)
+          (let ((build (e::payload-costruzione-immagine engine fresh)))
+            (is (= (+ quota build) (e::payload-rinnovo-immagine engine fresh 3 48)))
+            (signals arcdocdb.conditions:resource-exhausted
+                     (e:rinnova-indice-paginato-motore engine fresh :delta-keys 3 :delta-key-bytes 48
+                       :max-maintenance-payload (1- (+ quota build))))
+            (check-images root before) (is (not (probe-file (build-path root fresh)))))
+          (e:attiva-indice-paginato-motore engine second :delta-keys 3 :delta-key-bytes 48
+            :max-activation-payload quota)
+          (is (eq :closed (arcdocdb.io:stato-file file)))
+          (is (not (eq old (e::motore-delta engine))))
+          (is (zerop (e::delta-indice-motore-count (e::motore-delta engine))))))))))
+
+(deftest test-REQ-IDX-011-location-delta-publication-field-domains
+  (with-root (root)
+    (with-engine (engine (open-build-engine root :create t))
+      (let ((option (build-option 1)) (input (key 1)))
+        (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option)
+        (e:scrivi-documento engine input (value 1))
+        (let* ((delta (e::motore-delta engine)) (slot (location-delta-slot engine input))
+               (entry (floor slot 4)) (contents (copy-seq (e::delta-indice-motore-content delta)))
+               (view (e::motore-paged engine)))
+          (unwind-protect
+               (progn
+                 (setf (e::motore-busy engine) t)
+                 (dolist (fields '((2 0 64 100) (2 4294967296 64 100)
+                                   (2 1 4294967296 100) (2 1 64 0) (2 1 64 4294967296)
+                                   (0 1 64 100)))
+                   (destructuring-bind (csn segment offset size) fields
+                     (signals arcdocdb.conditions:invariant-violation
+                              (e::pubblica-location-delta-motore engine 1 input csn segment offset size)))
+                   (is (equalp contents (e::delta-indice-motore-content delta))))
+                 (setf (aref (e::delta-indice-motore-states delta) entry) 3)
+                 (signals arcdocdb.conditions:invariant-violation
+                          (e::pubblica-location-delta-motore engine 1 input 2 1 64 100))
+                 (setf (aref (e::delta-indice-motore-states delta) entry) 1 (e::motore-paged engine) nil)
+                 (signals arcdocdb.conditions:invariant-violation
+                          (e::pubblica-location-delta-motore engine 1 input 2 1 64 100))
+                 (is (equalp contents (e::delta-indice-motore-content delta))))
+            (setf (e::motore-busy engine) nil (e::motore-paged engine) view)))))))
+
+(deftest test-REQ-IDX-011-location-delta-corrupt-geometry-and-preflight
+  (dolist (sizes '((0 0 0) (8 10 4) (8 9 2)))
+    (destructuring-bind (table content states) sizes
+      (let ((delta (e::%make-delta-indice-motore :limit 1
+                     :table (make-array table :element-type '(unsigned-byte 32) :initial-element 0)
+                     :content (make-array content :element-type '(unsigned-byte 64) :initial-element 0)
+                     :states (bytes states) :arena (bytes 16))))
+        (signals arcdocdb.conditions:invariant-violation (e::indice-location-delta delta 0)))))
+  (dolist (state '(0 3))
+    (with-root (root)
+      (with-engine (engine (open-build-engine root :create t))
+        (let ((option (build-option 1)))
+          (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option)
+          (e:scrivi-documento engine (key 1) (value 1))
+          (let* ((delta (e::motore-delta engine)) (slot (location-delta-slot engine (key 1)))
+                 (before (images root t)) (frontier (multiple-value-list (e:frontiere-motore engine))))
+            (setf (aref (e::delta-indice-motore-states delta) (floor slot 4)) state)
+            (signals arcdocdb.conditions:invariant-violation (e:scrivi-documento engine (key 1) (value 2)))
+            (is (eq :faulted (e:stato-motore engine)))
+            (check-segment-images root before)
+            (is (equal frontier (multiple-value-list
+                                 (arcdocdb.csn:leggi-frontiere-csn (e::motore-registry engine)))))))))))
+
+(deftest test-REQ-IDX-011-location-delta-injected-error-no-ack-and-recovery
+  (dolist (phase '(:before-delta-publication :after-delta-publication))
+    (with-root (root)
+      (let ((armed nil) (ack nil)
+            (cause (make-condition 'arcdocdb.conditions:io-fault :reason :delta-location-fi :operation :engine)))
+        (with-engine (engine (open-build-engine root :create t
+                               :observer (lambda (engine step)
+                                           (when (and armed (eq phase step))
+                                             (signals arcdocdb.conditions:invalid-argument
+                                                      (e:leggi-documento engine (key 1) (bytes 64)))
+                                             (error cause)) nil)))
+          (initial-workload engine)
+          (let ((option (build-option 1)))
+            (e:costruisci-indice-paginato-motore engine option) (activate-delta engine option)
+            (setf armed t)
+            (let ((seen nil))
+              (handler-case (progn (e:scrivi-documento engine (key 1) (value 9)) (setf ack t))
+                (arcdocdb.conditions:io-fault (condition) (is (eq cause condition)) (setf seen t)))
+              (is seen) (is (not ack)) (is (eq :faulted (e:stato-motore engine)))
+              (is (eq cause (e::motore-failure engine))))))
+        (with-engine (engine (open-build-engine root))
+          (check-get engine 1 (value 9)) (check-frontier engine 6))))))

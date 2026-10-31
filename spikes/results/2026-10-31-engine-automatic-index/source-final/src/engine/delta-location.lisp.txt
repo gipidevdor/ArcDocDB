@@ -1,0 +1,105 @@
+;;; OWNER: sole serial M1 actor; arrays reserved at activation, no concurrent borrowers.
+;;; SHARED: none; BUSY excludes public reads until committed location publication completes.
+(in-package #:arcdocdb.engine)
+(declaim (optimize (safety 3) (speed 2) (debug 2)))
+
+;;; REQ: REQ-IDX-011 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (motore (integer 0 65536) (integer 0 16777216)) (or null delta-indice-motore))
+                crea-delta-configurato-motore))
+(defun crea-delta-configurato-motore (engine keys bytes)
+  "Pre: owner BUSY, canonical healthy resident and reserved quota. Post: empty overlay with its own seed.
+An invalid seed or admission is an error; no shared index reference is retained by the overlay."
+  (esigi-owner-motore engine)
+  (unless (motore-busy engine) (error 'invariant-violation :reason :engine-delta-admission))
+  (multiple-value-bind (high low) (p::esigi-seme-hash (motore-index engine))
+    (crea-delta-indice-motore keys bytes high low)))
+
+;;; REQ: REQ-IDX-011 REQ-AFF-008
+(declaim (ftype (function (delta-indice-motore index) index) indice-location-delta))
+(defun indice-location-delta (delta slot)
+  "Pre: metadata slot returned by exact probing. Post: validated five-word offset, no mutation.
+Malformed array geometry or an unaligned/out-of-range slot signals INVARIANT-VIOLATION."
+  (let* ((capacity (length (delta-indice-motore-states delta))) (offset (* 5 (floor slot 4))))
+    (unless (and (plusp capacity) (= (* 4 capacity) (length (delta-indice-motore-table delta)))
+                 (= (* 5 capacity) (length (delta-indice-motore-content delta))))
+      (error 'invariant-violation :reason :engine-delta-layout))
+    (unless (and (zerop (mod slot 4)) (< slot (* 4 capacity)))
+      (error 'invariant-violation :reason :engine-delta-location-slot))
+    offset))
+
+;;; REQ: REQ-IDX-011 REQ-LIM-003 REQ-AFF-008
+(declaim (ftype (function (delta-indice-motore index index u64 u64 index index) null) verifica-campi-location-delta))
+(defun verifica-campi-location-delta (delta entry at csn segment offset bytes)
+  "Pre: slot and five-word offset validated, stable serial delta. Post: monotonic descriptor in M1 ranges.
+Invalid state, reused CSN or out-of-range location signals INVARIANT-VIOLATION without effects."
+  (unless (and (<= (aref (delta-indice-motore-states delta) entry) 2)
+               (> csn (aref (delta-indice-motore-content delta) at)))
+    (error 'invariant-violation :reason :engine-delta-publication-fields))
+  (unless (and (<= 1 segment #xffffffff) (<= offset #xffffffff) (<= 1 bytes #xffffffff))
+    (error 'invariant-violation :reason :engine-delta-publication-fields))
+  nil)
+
+;;; REQ: REQ-IDX-011 REQ-WAL-006 REQ-AFF-008
+(declaim (ftype (function (motore (member 1 2) octets u64 u64 index index) null) pubblica-location-delta-motore))
+(defun pubblica-location-delta-motore (engine kind key csn segment offset bytes)
+  "Pre: durable SEAL and resident publication, BUSY owner, reserved exact key. Post: complete committed overlay.
+State is published last; every incomplete exit faults at the request boundary. No new durable point."
+  (esigi-owner-motore engine)
+  (let ((delta (motore-delta engine)))
+    (when delta
+      (unless (and (motore-busy engine) (motore-paged engine))
+        (error 'invariant-violation :reason :engine-delta-publication-admission))
+      (multiple-value-bind (high low)
+          (arcdocdb.hash64:xxh64 key 0 (length key) (delta-indice-motore-seed-high delta) (delta-indice-motore-seed-low delta))
+        (multiple-value-bind (slot found) (sonda-delta-indice delta key 0 (length key) high low)
+          (unless found (error 'invariant-violation :reason :engine-delta-unreserved-key))
+          (let* ((at (indice-location-delta delta slot)) (contents (delta-indice-motore-content delta))
+                 (states (delta-indice-motore-states delta)) (entry (floor slot 4)))
+            (verifica-campi-location-delta delta entry at csn segment offset bytes)
+            (osserva-motore engine :before-delta-publication)
+            (setf (aref states entry) 0
+                  (aref contents at) csn
+                  (aref contents (+ at 1)) (logior (ash segment 32) offset)
+                  (aref contents (+ at 2)) (logior (ash (length key) 32) (if (= kind 1) (ash 1 48) 0))
+                  (aref contents (+ at 3)) bytes
+                  (aref contents (+ at 4)) 0
+                  (aref states entry) kind)
+            (osserva-motore engine :after-delta-publication))))))
+  nil)
+
+;;; REQ: REQ-IDX-011 REQ-IDX-001 REQ-AFF-008
+(declaim (ftype (function (delta-indice-motore index index (simple-array (unsigned-byte 64) (5)))
+                         (member :live :absent)) copia-location-delta))
+(defun copia-location-delta (delta slot key-length destination)
+  "Pre: exact key found by serial probe, exclusive output. Post: LIVE copy or explicit TOMBSTONE absence.
+Unpublished/invalid states and malformed descriptors are errors; absence leaves output untouched."
+  (let* ((at (indice-location-delta delta slot)) (contents (delta-indice-motore-content delta))
+         (state (aref (delta-indice-motore-states delta) (floor slot 4))))
+    (unless (and (<= 1 state 2) (plusp (aref contents at))
+                 (plusp (ldb (byte 32 32) (aref contents (+ at 1)))))
+      (error 'invariant-violation :reason :engine-delta-unpublished-location))
+    (unless (and (= (aref contents (+ at 2)) (logior (ash key-length 32) (if (= state 1) (ash 1 48) 0)))
+                 (<= 1 (aref contents (+ at 3)) #xffffffff) (zerop (aref contents (+ at 4))))
+      (error 'invariant-violation :reason :engine-delta-location-fields))
+    (case state
+      (1 (replace destination contents :start2 at :end2 (+ at 5)) :live)
+      (2 :absent)
+      (otherwise (error 'invariant-violation :reason :engine-delta-location-state)))))
+
+;;; REQ: REQ-IDX-011 REQ-IDX-001 REQ-CON-002
+(declaim (ftype (function (motore octets index index (simple-array (unsigned-byte 64) (5)))
+                         (member :live :absent :untracked)) leggi-delta-motore))
+(defun leggi-delta-motore (engine key start end destination)
+  "Pre: owner BUSY, valid stable key span and exclusive output. Post: committed overlay or UNTRACKED.
+No resident lookup, page access, allocation, or retries; exact bytes disambiguate digest collisions."
+  (esigi-owner-motore engine)
+  (unless (motore-busy engine) (error 'invariant-violation :reason :engine-delta-read-admission))
+  (let ((delta (motore-delta engine)))
+    (if delta
+        (progn
+          (unless (motore-paged engine) (error 'invariant-violation :reason :engine-delta-without-image))
+          (multiple-value-bind (high low)
+              (arcdocdb.hash64:xxh64 key start end (delta-indice-motore-seed-high delta) (delta-indice-motore-seed-low delta))
+            (multiple-value-bind (slot found) (sonda-delta-indice delta key start end high low)
+              (if found (copia-location-delta delta slot (- end start) destination) :untracked))))
+        :untracked)))

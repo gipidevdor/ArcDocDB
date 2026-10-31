@@ -1,0 +1,127 @@
+# Automatic primary index in M1
+
+M1 selects its primary-index backend automatically at startup and before writes.
+It keeps the existing flat hash fragments in RAM while their maintenance peak
+fits the Serie's grant. It switches to a disk index before admitting growth that
+would exceed that grant. DELETE and increased grants can trigger a verified
+return to RAM, with 75% hysteresis on the variable resident reservation.
+No backend flag is needed in normal operation.
+
+This implements [ADR-0073](../adr/0073-indice-automatico-operativo-m1.md),
+REQ-IDX-008 and REQ-IDX-013 for the **serial M1 profile**. It does not complete
+concurrent snapshots, multiseries operation or formal lock-free GET.
+The [verification record](../../spikes/results/2026-10-31-engine-automatic-index/report.md)
+separates measurements from remaining platform and physical-RAM qualification.
+
+## Configuration
+
+`arcdocdb.engine:apri-motore` defaults to automatic selection. Its optional
+`:index-policy` accepts `crea-politica-indice-automatico`:
+
+```lisp
+(arcdocdb.engine:crea-politica-indice-automatico
+  :budget (* 256 1024 1024)       ; per-Serie index reservation
+  :page-size 4096                ; also 16384 or 65536
+  :frames 16                    ; fixed FIFO cache, 1..4096 frames
+  :max-file-bytes (ash 1 40))    ; bound on each disposable derived file
+```
+
+Without configuration, the grant is one quarter of SBCL's configured dynamic
+space. This is an automatic default, **not an OS free-RAM measurement**. Assign
+larger grants with a correspondingly sized Lisp heap and reserve the remaining
+memory for other components and the operating system. Multiple Serie grants
+must be budgeted together by their owner.
+
+`configura-budget-indice-motore(engine, bytes)` changes the grant and reevaluates
+the backend. A shrink migrates under the old reservation before accepting the
+smaller grant. A grant below the fixed workspace rejects without changing WAL
+or CSN. `statistiche-indice-motore` returns copied scalar metrics: mode, grant,
+fixed reservation, resident charge, live entries/key bytes, transitions, disk
+bytes, cache hits, misses and evictions. The public mode is also available from
+`modo-indice-motore`.
+
+## Memory and addressing
+
+Resident mode uses the existing verified fragment rebuild, split and arena
+interfaces. Dead key bytes are compacted before extending an arena. No disk
+shadow is maintained while resident. Unrepresentable flat splits/collisions
+also select the disk backend rather than failing a document commit.
+
+Paged mode uses a persistent AVL ordered by `(hash-high, hash-low, key-length,
+exact-key-bytes)`. The root is a scalar offset; there is no complete resident
+entry array or flat directory. Each immutable node is 128 bytes. Keys up to
+24 bytes are inline; longer keys have a 32-byte header and an 8-byte padded
+body. Every record has CRC32C, self offset and generation checks; all complete
+references point backward. Frames may be 4, 16 or 64 KiB.
+
+The fixed disk reservation is:
+
+```text
+page-size * frames + 8 * frames
++ 262144 staged bytes + 65536 path bytes
++ 131072 key/order bytes + 384 node/header bytes
++ 80 scalar-array bytes + 65536 metadata allowance
+```
+
+The controller reserves **two** such workspaces for compaction/migration,
+8 bytes per configured flat-fragment slot for digest scratch, one CLOSED
+resolver frame of `24 * max-records` bytes, and 128 KiB of controller allowance.
+Resident root payload and 4 KiB per fragment plus 4 KiB of root allowance are
+charged additionally; maintenance checks retained and candidate arrays before
+allocating them. The CLOSED directory retains only bounded segment metadata,
+not a row for every historical PUT. Resolver misses reverify one bounded
+segment into the preallocated frame; repeated hits reuse its immutable wrapper
+within serial admission.
+
+These are index reservations, not RSS limits. Unreachable GC garbage, compiler
+state, OS cache and other engine components are separate. The existing bounded
+segment/recovery buffers, ACTIVE tables and segment-count limits still apply.
+No algorithm requires all live keys to fit the managed heap in paged mode.
+
+## Publication, recovery and cleanup
+
+1. Before taking a document CSN, prepare resident capacity or reserve a paged
+   mutation. Rebuild/migration/compaction happens under the same serial gate.
+2. The existing WAL append, durable SEAL and controller publication commit
+   the document. The index introduces no second data decision.
+3. Paged updates stage path copies in a fixed 256 KiB batch. Exact append
+   precedes publishing the new volatile root. Failure after SEAL faults the
+   engine without ACK; replay restores the committed document.
+4. Migration verifies every source key/location and the source revision before
+   publication. The paged engine and its GET view retain no resident root.
+   Return builds a quota-checked candidate, compares every descriptor and
+   rechecks the source root/frontier. A normal candidate quota refusal keeps
+   the disk root and schedules reconsideration after meaningful shrink.
+5. Disk history is compacted before its file reservation would fail, or when
+   written bytes exceed four times a conservative live bound (4 MiB floor).
+   Postorder copy uses bounded paths and copies each live node/key once;
+   verification compares every tuple before swapping roots.
+6. Startup rebuilds from verified canonical WAL with bounded index memory.
+   Derived roots are never adopted as recovery authority. After the canonical
+   gate, reserved `autoindex-<16 lowercase hex>.tmp` leaves may be removed by
+   single-use directory/name/inode proofs. Canonical files cannot satisfy that
+   grammar. File replacement, symlinks and consumed proofs reject; failures
+   are reported and all owned closes are attempted.
+
+The file signature is `ARCAIX01`; its binary fields are defined in
+[index-disk/types.lisp](../../src/index-disk/types.lisp). Read, write, balance,
+copy and validation paths are separate modules. Append-only copies increase
+write amplification; cold AVL lookups and CLOSED resolver misses perform I/O.
+They can be slower than the resident path. Startup currently replays all
+canonical records rather than trusting a persisted derived root.
+
+## Progress and compatibility
+
+The M1 actor serializes requests. Its private cache copies bytes before reusing
+frames, so it needs no reader pin/reclamation protocol. It provides bounded
+in-memory loops, **not a new formal lock-free guarantee**. A resident flat lookup
+keeps the existing kernel; cache miss, maintenance, full GET and recovery may
+block on I/O and runtime/GC progress. Immutability does not change that contract.
+
+`:index-policy :legacy` preserves the prior explicit ARCIRF01 image/delta APIs
+and the resident reference engine for differential testing. Explicit legacy
+image/discovery options select that compatibility profile unless contradicted
+by an explicit automatic policy. Legacy image maintenance rejects on automatic
+handles before I/O. Rolling back to legacy requires a grant large enough to
+rebuild its resident index; a paged data set must never be assumed to fit RAM.
+No user-data migration is necessary because WAL formats and commits are unchanged.

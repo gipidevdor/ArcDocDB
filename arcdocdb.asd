@@ -98,7 +98,7 @@
                              (:file "rename") (:file "namespace") (:file "publish") (:file "open-relative")
                              (:file "create-relative")
                              (:file "transfer") (:file "flush")
-                             (:file "stabilize-preflight") (:file "stabilize") (:file "directory-lock")))
+                             (:file "stabilize-preflight") (:file "stabilize") (:file "directory-lock") (:file "derived-remove")))
                (:module "wal" :serial t
                 :components ((:file "package") (:file "types") (:file "builder")
                              (:file "frame") (:file "group") (:file "executor") (:file "csn")))
@@ -138,6 +138,10 @@
                              (:file "image-constants") (:file "image-types") (:file "image-codec") (:file "image-seal")
                              (:file "image-verify-types") (:file "image-verify-key") (:file "image-verify-edges")
                              (:file "image-verify-entry") (:file "image-recovery") (:file "image-publication")))
+               (:module "index-disk" :serial t
+                :components ((:file "package") (:file "types") (:file "cache") (:file "read")
+                             (:file "write") (:file "balance") (:file "mutate") (:file "build")
+                             (:file "api") (:file "visit") (:file "copy")))
                (:module "mvcc" :serial t
                 :components ((:file "package") (:file "types")
                              (:file "snapshots-types") (:file "snapshots-core") (:file "snapshots-csn")
@@ -219,11 +223,16 @@
                              (:file "query") (:file "build") (:file "active")
                              (:file "closed-preflight") (:file "closed-transfer") (:file "closed")))
                (:module "engine" :serial t
-                :components ((:file "package") (:file "image-config") (:file "image-discovery-config") (:file "delta-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "files")
+                :components ((:file "package") (:file "image-config") (:file "image-discovery-config")
+                             (:file "image-maintenance-config") (:file "image-auto-types") (:file "index-auto-types")
+                             (:file "delta-types") (:file "types") (:file "delta") (:file "lifecycle") (:file "delta-location") (:file "files")
                              (:file "config") (:file "initialize") (:file "recovery") (:file "preflight") (:file "index")
                              (:file "image-source") (:file "image-discovery") (:file "image-recovery") (:file "image-activation")
                              (:file "image-build-types") (:file "image-build-read") (:file "image-build-plan")
-                             (:file "image-build-tree") (:file "image-build-io") (:file "image-build") (:file "image-renewal") (:file "image-maintenance") (:file "adopt") (:file "startup") (:file "write") (:file "read"))))
+                             (:file "image-build-tree") (:file "image-build-io") (:file "image-build") (:file "image-renewal") (:file "image-maintenance")
+                             (:file "image-auto") (:file "image-auto-write") (:file "index-auto-memory") (:file "index-auto-files")
+                             (:file "index-auto-migrate") (:file "index-auto-apply") (:file "index-auto-resolver")
+                             (:file "index-auto-api") (:file "adopt") (:file "startup") (:file "write") (:file "read"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/local"
@@ -391,7 +400,7 @@
                (:module "vertical" :serial t
                 :components ((:file "support") (:file "scenarios") (:file "resume") (:file "processes")))
                (:module "engine" :serial t
-                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "image-renewal") (:file "image-maintenance") (:file "image-discovery") (:file "processes")))
+                :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "processes")))
                (:module "local" :serial t
                 :components ((:file "wire") (:file "native") (:file "server") (:file "processes"))))
   :perform (test-op (o c)

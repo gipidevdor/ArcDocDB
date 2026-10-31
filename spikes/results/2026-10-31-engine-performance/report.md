@@ -127,7 +127,7 @@ English source contracts and the code reference. The branches are merged without
 rewriting the other checkout. The ADR conflict preserves the revised English
 sentence and the complete optimization decision.
 
-[Static integration comparison](integration-identity.lisp), reproduced by
+[Documentation-phase static comparison](documentation-integration-identity.lisp), reproduced at that integration revision by
 [integration-proof.lisp](integration-proof.lisp), checks all 494 runtime source
 files with both reader-conditional branches retained. Only recognized declared
 documentation and comments are excluded; executable tokens/data are unchanged.
@@ -146,3 +146,20 @@ isolated runtime cache with warnings treated as errors, verifies loaded exports
 and source contracts against the generated reference, and runs the public Unix
 example. The qualified executable forms and byte-identical tests are preserved;
 the English contracts and source-reference tooling remain integrated.
+
+
+Main then advanced through `12684cc` and `deb33f8` to retain distribution notices
+and original legal-review evidence. The final integration preserves those commits.
+[Final static comparison](integration-identity.lisp) again covers all 494 runtime
+files and 288 unchanged tests. ASDF component/executable forms remain identical;
+the only allowed ASDF metadata change is the explicitly checked license string
+from `BSD-2-Clause` to `BSD-2-Clause AND Unicode-3.0` in all three systems. Unicode
+numeric data are unchanged; its source notice and generator prose are aligned.
+The three measurement drivers remain byte-identical.
+
+[Final recorded comparison](final-integration-check/report.lisp) and
+[final integrated checks](final-integrated-checks/report.lisp) pass. The latter
+includes lint, traceability, links, complete full-text fixture/generator checks,
+notice checks/self-tests, documentation bootstrap/rendering/coverage, fresh
+warning-strict runtime interface/contract verification and the Unix example.
+No new storage behavior is introduced by the incoming metadata/tooling work.

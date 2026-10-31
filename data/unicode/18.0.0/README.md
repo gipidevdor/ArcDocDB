@@ -23,7 +23,7 @@ Original files retain their contents and copyright notices; they are not applica
 
 The Common Lisp generator [fulltext-unicode-tables.lisp](../../../tools/fulltext-unicode-tables.lisp)
 produces [unicode-tables.lisp](../../../src/fulltext/unicode-tables.lisp), SHA256
-`334d8f05af5ebdd5bbcfddc96af61af95e02208b23eeebf381269a9e4cbe14a9`.
+`2205ac61d7d9b10fb5642d3ad274753f459161d4bb58dcac73181a06a29ca5bc`.
 This command verifies reproducibility without changing source:
 
 ```sh

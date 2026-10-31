@@ -71,6 +71,9 @@ of those requests.
 ## Contacting the project
 
 The project's published contact is [@gipidevdor on GitHub](https://github.com/gipidevdor).
+The publisher is Giacomo Picchiarelli, acting as a private individual on a
+personal project. GitHub is the contact route requested by the publisher; no
+additional personal contact address is published in this edition.
 Use the project's issue tracker for editorial corrections and public questions.
 GitHub receives the information you submit through that service. Send only what
 is needed for the request. Issues and comments are public; GitHub's privacy
@@ -78,6 +81,12 @@ terms apply to that service.
 Use the [project contact information](README.md#contact-and-corrections) for a
 site-specific question and identify the page concerned without sending passwords,
 private database contents or other confidential data.
+
+A public issue is not a confidential rights-request channel. You can request
+a private contact route there without publishing the substance of your request.
+Private vulnerability reports are reserved for security issues. This arrangement
+does not establish that every obligation of a controller under Article 13 GDPR
+is satisfied; the [dated legal review](review-2026-10-31.md) records that limit.
 
 This notice must be reviewed before adding analytics, remote embeds, new
 storage keys, forms or other visitor-data collection. The

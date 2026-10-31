@@ -1,0 +1,1890 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "scope": "Pinned archive and notice integrity; no legal opinion or license compatibility certification",
+  "records": [
+    {
+      "kind": "build",
+      "name": "3bmd",
+      "url": "https://beta.quicklisp.org/archive/3bmd/2025-06-22/3bmd-20250622-git.tgz",
+      "expected_sha256": "4c051d1d4e1b91e055a143f930ee5ca566cf661934522c7ff52a5bc7f89dd428",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "3bmd-20250622-git/LICENSE",
+          "sha256": "025fa9ad48612489c5abda8d9044069d1f60e313cfb90414a4124521e0bcba9c",
+          "bytes": 1074
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "access",
+      "url": "https://beta.quicklisp.org/archive/access/2025-06-22/access-20250622-git.tgz",
+      "expected_sha256": "053ae18907b4d61ca00d2dc368d0d54c1d67d6a26d479d5dcdbf693e7226ae60",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "access-20250622-git/LICENSE",
+          "sha256": "da964f4a21a162855fe6c215d3063555754d05552e44dc2e05b8b12821ce581b",
+          "bytes": 1591
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "alexandria",
+      "url": "https://beta.quicklisp.org/archive/alexandria/2024-10-12/alexandria-20241012-git.tgz",
+      "expected_sha256": "dcdfc5bac229a952358dfe661f0860e8a02480e406d0d95dee4300cdc3d45b31",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "alexandria-20241012-git/LICENCE",
+          "sha256": "4404678ab808d822e3ec48eda2b4fb6b7d15aeff092979d7c662329b5f6a02a8",
+          "bytes": 1983
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "anaphora",
+      "url": "https://beta.quicklisp.org/archive/anaphora/2022-02-20/anaphora-20220220-git.tgz",
+      "expected_sha256": "f7114f9ea2f323f3c968e87c02930a4dac4d43b23069c1a7c5672929aa214e4a",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "anaphora-20220220-git/LICENSE",
+          "sha256": "2df6ec7908ce4ccd4a5e6eee8d358bbf272ef599b17364caccd240fceeb5f561",
+          "bytes": 171
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "arnesi",
+      "url": "https://beta.quicklisp.org/archive/arnesi/2025-06-22/arnesi-20250622-git.tgz",
+      "expected_sha256": "e1d670a261e1c1fc5d1acf20ec5d66e7107e5253655317db69d3c327521b3841",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "arnesi-20250622-git/COPYING",
+          "sha256": "545a8153e87069f08e426a875f18bfe76e85ce8502143e803a2f2932c9a739e5",
+          "bytes": 1512
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "array-utils",
+      "url": "https://beta.quicklisp.org/archive/array-utils/2026-01-01/array-utils-20260101-git.tgz",
+      "expected_sha256": "058698e7845ff06126d76e79f276b8f247f7241aa00bb975c0270a54d4c5681d",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "array-utils-20260101-git/LICENSE",
+          "sha256": "625a6e3b2d489d9a521628552874debdb70b2b2d7c4959186e9601bdaadb4d11",
+          "bytes": 852
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "babel",
+      "url": "https://beta.quicklisp.org/archive/babel/2026-01-01/babel-20260101-git.tgz",
+      "expected_sha256": "e30d399fdcdf6f540ba28185fb6d9e3ebb4219c1df314d861ef3ed26be38d08d",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "babel-20260101-git/COPYRIGHT",
+          "sha256": "c5bfa7b454d0ac40b66a42b29cda109ea6e2912e484c534bc85023bef889edb1",
+          "bytes": 2303
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "bordeaux-threads",
+      "url": "https://beta.quicklisp.org/archive/bordeaux-threads/2024-10-12/bordeaux-threads-v0.9.4.tgz",
+      "expected_sha256": "7646fe243a5f12274e7d3296b03b178c12c21d03f8eab4805147d6f1ecac3024",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "bordeaux-threads-v0.9.4/LICENSE",
+          "sha256": "a2a949a097dde905dc19964a9bab63af141f573ab688d035678283732286ca28",
+          "bytes": 1023
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "cffi",
+      "url": "https://beta.quicklisp.org/archive/cffi/2026-01-01/cffi-20260101-git.tgz",
+      "expected_sha256": "c4935fbb8ed96a062e9f2315f6566b53d3ec90a1d00c001cac908d242a8d84e6",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cffi-20260101-git/COPYRIGHT",
+          "sha256": "5bf28b39f405ad90349c077388ce344e470a27a8b40071de20b7c31c5f3efdd8",
+          "bytes": 1087
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-annot",
+      "url": "https://beta.quicklisp.org/archive/cl-annot/2015-06-08/cl-annot-20150608-git.tgz",
+      "expected_sha256": "e3b54b0d395aec3b0d83c37460443feaf08587bd71c73836bc28919981b8ba47",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-annot-20150608-git/README.markdown",
+          "sha256": "be2bcadaa7e54699fdc3e4ab530d87caab4ce6b98779606f60ec525403b34205",
+          "bytes": 9775
+        },
+        {
+          "path": "cl-annot-20150608-git/cl-annot-test.asd",
+          "sha256": "332deaa8a8968839a785d7210ba8563dfc6e0515a56a506d6e93048fe641c71c",
+          "bytes": 275
+        },
+        {
+          "path": "cl-annot-20150608-git/cl-annot.asd",
+          "sha256": "5bba1f81b10a20a15bac60a87d7f02a3bd6a81e9a17600aed53e94f1d7792830",
+          "bytes": 1157
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-fad",
+      "url": "https://beta.quicklisp.org/archive/cl-fad/2022-02-20/cl-fad-20220220-git.tgz",
+      "expected_sha256": "91faa900b70d369b8646d6d8b5b560d5fe10c10985132290278f8a9c094f4224",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-fad-20220220-git/LICENSE",
+          "sha256": "1e1c6fcfb7483230ef749a8c58479ab8d50a575b8dcc01ebe5014b42a97567c6",
+          "bytes": 1414
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "cl-locale",
+      "url": "https://beta.quicklisp.org/archive/cl-locale/2015-10-31/cl-locale-20151031-git.tgz",
+      "expected_sha256": "ef4aab9dc41d307e6b74e380a3011574eb0954e62e47828964658b9ebfea4492",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-locale-20151031-git/README.markdown",
+          "sha256": "5df2d81352e3b211418305737b27ba531bc6891374a22b186e0fe7742566a2a0",
+          "bytes": 1326
+        },
+        {
+          "path": "cl-locale-20151031-git/cl-locale-syntax.asd",
+          "sha256": "905f59207ca1a5738a0fa26593cc0c11011a7cd2c5ee0872ba4769c23b5e41b0",
+          "bytes": 671
+        },
+        {
+          "path": "cl-locale-20151031-git/cl-locale-test.asd",
+          "sha256": "c788239a4874d2bb82eed7237131b485d8cae800e19aad3335fc013f6398b430",
+          "bytes": 799
+        },
+        {
+          "path": "cl-locale-20151031-git/cl-locale.asd",
+          "sha256": "17f7ef8a07452443eecad8e3be62d6c093b2e57ede57878684824ccada844ee4",
+          "bytes": 1767
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-markup",
+      "url": "https://beta.quicklisp.org/archive/cl-markup/2013-10-03/cl-markup-20131003-git.tgz",
+      "expected_sha256": "19c8b551e0e876b70e4db875b6aeb7afc451ca8bfe1bb77e20097765665163c6",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-markup-20131003-git/README.markdown",
+          "sha256": "ecefd55117774bf7c5c11f42f1cdc878469570ce9b541b9c1a0602291e75770e",
+          "bytes": 11181
+        },
+        {
+          "path": "cl-markup-20131003-git/cl-markup-test.asd",
+          "sha256": "5987156aa7ad2b66683937ca31f1efcfbcb1f27cae4926f9fe14f30b10e0738b",
+          "bytes": 331
+        },
+        {
+          "path": "cl-markup-20131003-git/cl-markup.asd",
+          "sha256": "28a6e54d1bc4ec700b781919f8356869f54cd724e01f5ad7b913764e961be85f",
+          "bytes": 525
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-parser-combinators",
+      "url": "https://beta.quicklisp.org/archive/cl-parser-combinators/2013-11-11/cl-parser-combinators-20131111-git.tgz",
+      "expected_sha256": "ba51719a70f901937a6d6dbb9415b91a874049ec5f78867d6798afaddc51e171",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-parser-combinators-20131111-git/README.markdown",
+          "sha256": "5570ca831b26762d9f310e57c64b5202be9ac261e1f365d87da4af31d9187416",
+          "bytes": 744
+        },
+        {
+          "path": "cl-parser-combinators-20131111-git/parser-combinators-cl-ppcre.asd",
+          "sha256": "856b05502c498435edecd0ae8ec4a4b1d3226ad116692e76e0b6bd217e457670",
+          "bytes": 369
+        },
+        {
+          "path": "cl-parser-combinators-20131111-git/parser-combinators-debug.asd",
+          "sha256": "31f2dfc27b907df3cfa622bd128a9940b378f47e2f050b2d5bd5a4339dffe5f6",
+          "bytes": 334
+        },
+        {
+          "path": "cl-parser-combinators-20131111-git/parser-combinators-tests.asd",
+          "sha256": "b4c393997ee40d0b06c51fcfb38a003ce1eabdc6d3bb976dab5612088baf73c4",
+          "bytes": 634
+        },
+        {
+          "path": "cl-parser-combinators-20131111-git/parser-combinators.asd",
+          "sha256": "7b5a16141bb1d5df733cfb8be7fc21f22d14e3a30090eeba155dea21f6f84dcb",
+          "bytes": 1410
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-ppcre",
+      "url": "https://beta.quicklisp.org/archive/cl-ppcre/2025-06-22/cl-ppcre-20250622-git.tgz",
+      "expected_sha256": "a9d6a9ca9eb862283f6079856629c8b19254f108fcde065d61f280e7c2c6ec39",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-ppcre-20250622-git/LICENSE",
+          "sha256": "e33e1178fdfe5c25f9bd62bb99d98d28a2110d1a55781bda9fe557059287789e",
+          "bytes": 1276
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "cl-slice",
+      "url": "https://beta.quicklisp.org/archive/cl-slice/2021-05-31/cl-slice-20210531-git.tgz",
+      "expected_sha256": "139e2d92e451714fd15ece130cb812b0e4a05a376572be48b7a20366b34775ca",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-slice-20210531-git/LICENSE.md",
+          "sha256": "2c6844e74be0005b02de405abc68d9e9b7b5ed28d1ea084d404e32fce2974fee",
+          "bytes": 1168
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "cl-slug",
+      "url": "https://beta.quicklisp.org/archive/cl-slug/2018-02-28/cl-slug-20180228-git.tgz",
+      "expected_sha256": "cdfed7bae8c20ae605f3b20baf3a1a832857c5751080d2acb6780097b7da93e0",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-slug-20180228-git/README.md",
+          "sha256": "4517dcf297c836113a93b7c9cce331699e75ba882deb61d4a475d1f07fe52d5c",
+          "bytes": 4927
+        },
+        {
+          "path": "cl-slug-20180228-git/cl-slug-test.asd",
+          "sha256": "6abb879f80fd4a6508591c46e54c47d08afa9d752300da01c0ef79eaa0d9efc3",
+          "bytes": 725
+        },
+        {
+          "path": "cl-slug-20180228-git/cl-slug.asd",
+          "sha256": "39e776c84613af793529d1b33d3aec0d66b4a85affc32fc8904e754083c49bb1",
+          "bytes": 751
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-syntax",
+      "url": "https://beta.quicklisp.org/archive/cl-syntax/2015-04-07/cl-syntax-20150407-git.tgz",
+      "expected_sha256": "166d32aaf0ed2a218926a1b757abb5c0edbac6fa493f5cba1a89501ce151e9df",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-syntax-20150407-git/README.markdown",
+          "sha256": "b8afb2be95ab46064c1dadc23cb248d0b63d2034c37ff4711740cc4fe6f5d33b",
+          "bytes": 2223
+        },
+        {
+          "path": "cl-syntax-20150407-git/cl-syntax-annot.asd",
+          "sha256": "20530cda1f065fbf1ad85069c459c1a909073a94ec25fb7a845bdcd5091c4a5c",
+          "bytes": 338
+        },
+        {
+          "path": "cl-syntax-20150407-git/cl-syntax-anonfun.asd",
+          "sha256": "f56b78d77b619d91a99e8c03c321bd0544ef2e661afe7319a367a8c24b236d60",
+          "bytes": 350
+        },
+        {
+          "path": "cl-syntax-20150407-git/cl-syntax-clsql.asd",
+          "sha256": "beb6fb496e8ef19e381064b74d3e07d91cd1545384d30c4a06b6d24edb7f7178",
+          "bytes": 332
+        },
+        {
+          "path": "cl-syntax-20150407-git/cl-syntax-fare-quasiquote.asd",
+          "sha256": "c02621129801f200c52e9c637b95f0e2eb6e675cfad05a81cde02cd7d822d141",
+          "bytes": 260
+        },
+        {
+          "path": "cl-syntax-20150407-git/cl-syntax-interpol.asd",
+          "sha256": "89697b49f63daa161728c7c1d36bfb4a368f6469b65a65b91c3a3f09d02bab03",
+          "bytes": 356
+        },
+        {
+          "path": "cl-syntax-20150407-git/cl-syntax-markup.asd",
+          "sha256": "edc61d8ca2f5274a6d6f1abd78d49587aaae7b1d14adc2e0f1861ad08fc379b0",
+          "bytes": 344
+        },
+        {
+          "path": "cl-syntax-20150407-git/cl-syntax.asd",
+          "sha256": "c8e60273b00f2d51ce22510346a0faec0b21aa4aa58a1b12ca9e605542243a60",
+          "bytes": 570
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-utilities",
+      "url": "https://beta.quicklisp.org/archive/cl-utilities/2010-10-06/cl-utilities-1.2.4.tgz",
+      "expected_sha256": "07a9318732d73b5195b1a442391d10395c7de471f1fe12feedfe71b1edbd51fc",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-utilities-1.2.4/cl-utilities.asd",
+          "sha256": "55a009d57eef48c1d1f07758cef13ad03a92626fb98702e0079d33a844a19e47",
+          "bytes": 1138
+        },
+        {
+          "path": "cl-utilities-1.2.4/README",
+          "sha256": "7235dc3c80887893b69112d8daaa40cd10b922192d3a96a6ab3389d7d8f1b3af",
+          "bytes": 2087
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "cl-yacc",
+      "url": "https://beta.quicklisp.org/archive/cl-yacc/2026-01-01/cl-yacc-20260101-git.tgz",
+      "expected_sha256": "6ea265e9e9dcef9b5c0c42939af62e782ad00b2287c72be4289132832da3a648",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "cl-yacc-20260101-git/COPYING",
+          "sha256": "4552729392717c0c5aa96566edafb9258e3586a64bb63bc534393e97e26b54fe",
+          "bytes": 1071
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "closer-mop",
+      "url": "https://beta.quicklisp.org/archive/closer-mop/2026-01-01/closer-mop-20260101-git.tgz",
+      "expected_sha256": "bea987c69b906d9a94b5e19e6d3f1665a1646d511f080076637195ed4bc7089f",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "closer-mop-20260101-git/LICENSE.md",
+          "sha256": "4d6d8d030c8c656c8c10cd28163a198ae0b26ca0bc754900f5d94e52d2dde574",
+          "bytes": 1066
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "codex",
+      "url": "https://beta.quicklisp.org/archive/codex/2024-10-12/codex-20241012-git.tgz",
+      "expected_sha256": "63fddaefbe15bb7bbd8a46bcc2ab981b631e2986acd1b596cecde4d7b08d5d5c",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "codex-20241012-git/README.md",
+          "sha256": "374924e795a0cd2eaff7e8d36a563947275b35747ac0fa1df13d7edbc4e1a694",
+          "bytes": 807
+        },
+        {
+          "path": "codex-20241012-git/codex.asd",
+          "sha256": "87ce302f17e360658e5162774b0b52b77c7ca81bad0c508153255e6c4e9d3fef",
+          "bytes": 1050
+        },
+        {
+          "path": "codex-20241012-git/codex-test.asd",
+          "sha256": "f5354276bd70de3e50bf8075fef36f087008abdefd976481d763efbab523a33a",
+          "bytes": 930
+        },
+        {
+          "path": "codex-20241012-git/codex-templates.asd",
+          "sha256": "de9e2c47b1c1117fda1dfd4a8d0554fad0d485aeb2faf806bd46c78f93ea0b11",
+          "bytes": 1379
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "collectors",
+      "url": "https://beta.quicklisp.org/archive/collectors/2024-10-12/collectors-20241012-git.tgz",
+      "expected_sha256": "ec67ad99d20bed70b585a8ff9da85a67df716a328dd63fbc866bc705cb7278fb",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "collectors-20241012-git/LICENSE",
+          "sha256": "da964f4a21a162855fe6c215d3063555754d05552e44dc2e05b8b12821ce581b",
+          "bytes": 1591
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "colorize",
+      "url": "https://beta.quicklisp.org/archive/colorize/2025-06-22/colorize-20250622-git.tgz",
+      "expected_sha256": "b7695635cf57e070724a86700dd3a31c67deeb5e4fa9de2e26980f8bdd583520",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "colorize-20250622-git/README.md",
+          "sha256": "fcc24169ea54fbbf7155558c2d1892b6f5fe590c69fd6320888a02d2eea6b1e1",
+          "bytes": 1548
+        },
+        {
+          "path": "colorize-20250622-git/colorize.asd",
+          "sha256": "73ab90b924311238a245da773d12ec3b5b9c3eed745dfa506ec3487f4d61d006",
+          "bytes": 915
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "common-doc",
+      "url": "https://beta.quicklisp.org/archive/common-doc/2023-02-14/common-doc-20230214-git.tgz",
+      "expected_sha256": "9e3f3e49365db2e7a5fb6fdc6a659586348d7a59edcd52b2e37b2290eb84f9ba",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "common-doc-20230214-git/common-doc-test.asd",
+          "sha256": "3b6cb56a93306cd0264d88e40acb3f656be6f948c10db26cb9b4506679acd5d5",
+          "bytes": 580
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc-gnuplot.asd",
+          "sha256": "8aa2dba287a03ad55323e93301a45a877a9f1a44f84215012d24619fe77c924c",
+          "bytes": 557
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc-split-paragraphs.asd",
+          "sha256": "025f2427f5a514b662a73988f08b6e5dbf6888b0e1b69433be34482219e663cc",
+          "bytes": 624
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc-include.asd",
+          "sha256": "91c2d65ae3edeb39a9e87d78675a1af4b04973db514e9aad4335ae735de7e076",
+          "bytes": 586
+        },
+        {
+          "path": "common-doc-20230214-git/README.md",
+          "sha256": "b273a1b270319dee14d3015a7ee37d6bf8abea33c7a61678a19add7df1a0d289",
+          "bytes": 1471
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc-plantuml.asd",
+          "sha256": "4e8ad9f70210e91dbae99942f42296a4124798357ce29977f83bbf15ead5ef17",
+          "bytes": 574
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc-contrib.asd",
+          "sha256": "87450d2d50af3f5b69598bb50b6468e00c189f14cec7af97ea2569d3609c7fde",
+          "bytes": 447
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc-graphviz.asd",
+          "sha256": "2959338fc2d3114b7d7325c76911317617ce307e3aafd02369487ef6382fdb60",
+          "bytes": 568
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc.asd",
+          "sha256": "4bd79f4f439fa133b77fe2432179ac28541af31c5cc26809c09fc4e6eafae7fa",
+          "bytes": 1609
+        },
+        {
+          "path": "common-doc-20230214-git/common-doc-tex.asd",
+          "sha256": "051fe22969f733fbea684129ff16fc4bce031826b8a1eb4016818353c7db82ef",
+          "bytes": 519
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "common-doc-plump",
+      "url": "https://beta.quicklisp.org/archive/common-doc-plump/2016-04-21/common-doc-plump-20160421-git.tgz",
+      "expected_sha256": "4c4f43e6e913d6103b7167d4aff47cddbfada13a81aad072a7b10be162096796",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "common-doc-plump-20160421-git/README.md",
+          "sha256": "36823a1baa5570adac398ba9613cca9e11bce4d5732c39fa0f6fb1181c844294",
+          "bytes": 543
+        },
+        {
+          "path": "common-doc-plump-20160421-git/common-doc-plump-test.asd",
+          "sha256": "b022cd00da82b30ee64dd52e77087ce42359c99b1af619ab4cb0ff2511a1c480",
+          "bytes": 402
+        },
+        {
+          "path": "common-doc-plump-20160421-git/common-doc-plump.asd",
+          "sha256": "e2f5b92069e6402105a2f321d5d6535181e9328939426ed24e12d9f27a3a5931",
+          "bytes": 909
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "common-html",
+      "url": "https://beta.quicklisp.org/archive/common-html/2021-08-07/common-html-20210807-git.tgz",
+      "expected_sha256": "4b010b0c50d087d97e82463f4542717110e2c3b70b2acfc9c9fcc1cef79f84ea",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "common-html-20210807-git/common-html.asd",
+          "sha256": "8c8a3824c610884e3275fd0e365c5c446c285b98fc63a0ed8febe0d6d5fb54a2",
+          "bytes": 966
+        },
+        {
+          "path": "common-html-20210807-git/common-html-test.asd",
+          "sha256": "dd8462bb6d30213b3cde54245bea585f5d7a5535990ca4f85d616e8cfcf22716",
+          "bytes": 274
+        },
+        {
+          "path": "common-html-20210807-git/README.md",
+          "sha256": "666b37d1186b31d9cd94b5a8d45d9f9f70ea375c9347b148f8d63e36cc7b1857",
+          "bytes": 2855
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "djula",
+      "url": "https://beta.quicklisp.org/archive/djula/2026-01-01/djula-20260101-git.tgz",
+      "expected_sha256": "62fad1f50bfc7aaf7019b81c28d671b95eac4a165d69304e395786a8025019e5",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "djula-20260101-git/MIT-LICENSE",
+          "sha256": "42e3a80e4fd792fb3f6ac3dd80876ba3dd039b5f56bc394f15236dbe4037be4e",
+          "bytes": 1115
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "docparser",
+      "url": "https://beta.quicklisp.org/archive/docparser/2023-02-14/docparser-20230214-git.tgz",
+      "expected_sha256": "81826e6efa3c0ee1e098290b0c7ea68247884d02fad624129e191a6d00e31abd",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "docparser-20230214-git/README.md",
+          "sha256": "8c929435423017ecca4e43a05bb53511ee9893374e4384897e4247e0525bf1be",
+          "bytes": 6694
+        },
+        {
+          "path": "docparser-20230214-git/docparser-test.asd",
+          "sha256": "fd8dfa8635f260e424a04e37b9e5a0db78b5125e8c07fc78ed0f7dc83436feb6",
+          "bytes": 408
+        },
+        {
+          "path": "docparser-20230214-git/docparser-test-system.asd",
+          "sha256": "66acf6479164aead06dd5070e7068ce29d0c0f892b3d5effb81dd6a3b23a9733",
+          "bytes": 278
+        },
+        {
+          "path": "docparser-20230214-git/docparser.asd",
+          "sha256": "cee03b16a48009f89e95af61edaa7254ba3f087b3b33684f70f6bbde8942281d",
+          "bytes": 832
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "documentation-utils",
+      "url": "https://beta.quicklisp.org/archive/documentation-utils/2026-01-01/documentation-utils-20260101-git.tgz",
+      "expected_sha256": "a2318cd2da66a7761f5ac389955563d127d70366491bd3e3f26413d1f8503ad8",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "documentation-utils-20260101-git/LICENSE",
+          "sha256": "a3896fa70bbb0331558ed5b2cbb3a47f6b6d479a8408966983321dcfacd0ba36",
+          "bytes": 852
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "esrap",
+      "url": "https://beta.quicklisp.org/archive/esrap/2026-01-01/esrap-20260101-git.tgz",
+      "expected_sha256": "f58d5c62c315ea71d18b82c8e406eddf1359f97c035bddeb1a0ebf241ebac674",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "esrap-20260101-git/README.org",
+          "sha256": "f9e560c6b48e126aa8e700e8579cf33834129e157db59e7b77ffe29b2bc71315",
+          "bytes": 5760
+        },
+        {
+          "path": "esrap-20260101-git/esrap.asd",
+          "sha256": "2c1b2ffb4b5e59a3eadff12c55d2b3599ccc848460ea5806f2232c053a276f6d",
+          "bytes": 5959
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "flexi-streams",
+      "url": "https://beta.quicklisp.org/archive/flexi-streams/2024-10-12/flexi-streams-20241012-git.tgz",
+      "expected_sha256": "f0437d3f4432e1ddab720da7de0df277baa7a05ec86fad297e00ec8045a3dd54",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "flexi-streams-20241012-git/flexi-streams-test.asd",
+          "sha256": "1ae4e0e303273f4677018894dd5743cc02d40728a375a27460651ca67516fee5",
+          "bytes": 1780
+        },
+        {
+          "path": "flexi-streams-20241012-git/README.md",
+          "sha256": "f9fbf7d8a5a81a655d7dacc07cf7a3487cb8f0d8ed1cb148a7955dda0479fdeb",
+          "bytes": 635
+        },
+        {
+          "path": "flexi-streams-20241012-git/flexi-streams.asd",
+          "sha256": "e22f5d44c9a08babd7672c607ad341b76fd7db15afa180edaaed0f7bc2cd089d",
+          "bytes": 2998
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "gettext",
+      "url": "https://beta.quicklisp.org/archive/gettext/2017-11-30/gettext-20171130-git.tgz",
+      "expected_sha256": "cd1b3fdaf2551c34cccdf176a0f21262d483326d4acc6ca6bd1597a58d896859",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "gettext-20171130-git/COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+          "bytes": 35147
+        },
+        {
+          "path": "gettext-20171130-git/COPYING.LIB",
+          "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+          "bytes": 7651
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "global-vars",
+      "url": "https://beta.quicklisp.org/archive/global-vars/2014-11-06/global-vars-20141106-git.tgz",
+      "expected_sha256": "f294843bb31144034e1370df1634dd74f24e617e3abb9c00c17927eda2ae4f2e",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "global-vars-20141106-git/README.md",
+          "sha256": "de36570f462d6dc0ecb9a1ead8df83b757053944de902d9b34d59e8ca27237d1",
+          "bytes": 2785
+        },
+        {
+          "path": "global-vars-20141106-git/global-vars-test.asd",
+          "sha256": "e492d5a0186b06f64726fe2d32855cc0873b9b1fe1481e6103d5fcd43e5811c5",
+          "bytes": 1530
+        },
+        {
+          "path": "global-vars-20141106-git/global-vars.asd",
+          "sha256": "1ca4e417b7282acefbe75202118b90d6359d2872d36b934ba88ff9050d261502",
+          "bytes": 1696
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "html-encode",
+      "url": "https://beta.quicklisp.org/archive/html-encode/2010-10-06/html-encode-1.2.tgz",
+      "expected_sha256": "8e3da4ad3416b5b9969a76bad7c6a08e7a923bb89bcc5f21d7c5f9922c47ae1a",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "html-encode-1.2/LICENSE",
+          "sha256": "db63bb831f95e0e4135610f7ce4c61cf2a4c2d0ac4a0fb7df8ff5117a7d3922a",
+          "bytes": 1076
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "idna",
+      "url": "https://beta.quicklisp.org/archive/idna/2012-01-07/idna-20120107-git.tgz",
+      "expected_sha256": "aca83a155272ba217fc9ae14316cf5b0000b19e4a2fe056e42ffe0b293923061",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "idna-20120107-git/LICENSE",
+          "sha256": "ed84b8e171eeab9e4fd3176c7c18a5a4a8ac4396051789f290574694ef6f6f97",
+          "bytes": 1057
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "iterate",
+      "url": "https://beta.quicklisp.org/archive/iterate/2026-01-01/iterate-release-d27d7ff4-git.tgz",
+      "expected_sha256": "f3215e4bcfe6156bfe565b2a15ff432dd5257cb2fd90549cbe385fe425a0a669",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "iterate-release-d27d7ff4-git/README.md",
+          "sha256": "dd7691f021ce75491d67fe5a9eca8061e08bf2ae92848fd50e6646a5bb674fa9",
+          "bytes": 537
+        },
+        {
+          "path": "iterate-release-d27d7ff4-git/iterate.asd",
+          "sha256": "4b29a7e94d54780d8d49f7036691ec3a34001dc4db11254b5c9a508bbd48644b",
+          "bytes": 596
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "let-plus",
+      "url": "https://beta.quicklisp.org/archive/let-plus/2019-11-30/let-plus-20191130-git.tgz",
+      "expected_sha256": "37895f2dd9f10c26a6140d1e3be351759e734341186149fe7d9f6d7ad673407e",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "let-plus-20191130-git/LICENSE_1_0.txt",
+          "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+          "bytes": 1338
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "local-time",
+      "url": "https://beta.quicklisp.org/archive/local-time/2026-01-01/local-time-20260101-git.tgz",
+      "expected_sha256": "6f476b13e7aa9e7a0fd81b527cd3771bca73ce16b025256df935a8f2ef063351",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "local-time-20260101-git/COPYING",
+          "sha256": "2bb6af30bccaa32c38bd0cc239e5dea38d632d1507275ea50935f3612292f3e0",
+          "bytes": 1074
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "mgl-pax",
+      "url": "https://beta.quicklisp.org/archive/mgl-pax/2026-01-01/mgl-pax-20260101-git.tgz",
+      "expected_sha256": "2c7efd402c1814ae4bb4d809e704a6b1f547841725b80e8c4203ee3185a523ad",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "mgl-pax-20260101-git/COPYING",
+          "sha256": "6faffc19df77c08657a3288089189681c052178881ff637e4d20ace1a639ac5e",
+          "bytes": 1068
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "named-readtables",
+      "url": "https://beta.quicklisp.org/archive/named-readtables/2026-01-01/named-readtables-20260101-git.tgz",
+      "expected_sha256": "d6ce94191b559d9b1cc521aca026161a6b67d9d51676ef9daee8c50bdfa04491",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "named-readtables-20260101-git/LICENSE",
+          "sha256": "88f856c5be206bb4846d08f3778d4c8c578a9c1ad32d6875ce32747be3be6777",
+          "bytes": 3432
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "pandocl",
+      "url": "https://beta.quicklisp.org/archive/pandocl/2015-09-23/pandocl-20150923-git.tgz",
+      "expected_sha256": "9637acd662dbbba15f985a411d25866d26954ed09c2580850f29b6a5d4cea036",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "pandocl-20150923-git/README.md",
+          "sha256": "4c0c8e9606f229ee2c6977f846edc8d839fc1a682191fb5306883aa8bb7a8a80",
+          "bytes": 2210
+        },
+        {
+          "path": "pandocl-20150923-git/pandocl.asd",
+          "sha256": "5b207d9ecc4032643516b59207db6224ff3cb5fc70fb16fb3b474aa992940c4e",
+          "bytes": 727
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "parenml",
+      "url": "https://beta.quicklisp.org/archive/parenml/2015-09-23/parenml-20150923-git.tgz",
+      "expected_sha256": "a1c86f02306039185f6d3cb1f3ce4ef1fb68ed2dcb1be748c115a5f2893d685a",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "parenml-20150923-git/README.md",
+          "sha256": "5394dafac40e8063cc24795e3b6f1a50ae5d501c91301ad0b0309cc67ded6140",
+          "bytes": 648
+        },
+        {
+          "path": "parenml-20150923-git/parenml-test.asd",
+          "sha256": "8f43345742a1aba26b840d1f9c1b718ffb672ccc807b0cd1a2dd566d20aadfd2",
+          "bytes": 296
+        },
+        {
+          "path": "parenml-20150923-git/parenml.asd",
+          "sha256": "f871977e29654d47b5a9fbffd55c6545f4bbc69608b01f03f0742bcdb05523df",
+          "bytes": 644
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "plump",
+      "url": "https://beta.quicklisp.org/archive/plump/2026-01-01/plump-20260101-git.tgz",
+      "expected_sha256": "8b7b951eb4a1f98049064ec21f8e8729f4b9bb6b1da0ffcd8e2260a53000b776",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "plump-20260101-git/LICENSE",
+          "sha256": "f99c61a56bc7ef9e110ccf4322f703b5f363cd7bb16084fdaa45006f50f6da6d",
+          "bytes": 852
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "plump-sexp",
+      "url": "https://beta.quicklisp.org/archive/plump-sexp/2026-01-01/plump-sexp-20260101-git.tgz",
+      "expected_sha256": "ea6e9242128885c4c2450df986448323c1ef2de699154943a485f1c80bc65841",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "plump-sexp-20260101-git/LICENCE",
+          "sha256": "ebc6c27f8ef36f24f0f2c72d1c873ba6b14ee5f8dd969dd0426967e4b313ce13",
+          "bytes": 852
+        },
+        {
+          "path": "plump-sexp-20260101-git/LICENSE",
+          "sha256": "f99c61a56bc7ef9e110ccf4322f703b5f363cd7bb16084fdaa45006f50f6da6d",
+          "bytes": 852
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "plump-tex",
+      "url": "https://beta.quicklisp.org/archive/plump-tex/2026-01-01/plump-tex-20260101-git.tgz",
+      "expected_sha256": "b2f03ae48701d885ce7ed77c3feb3ea0d460cd68932d4215a415f263178f0ac1",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "plump-tex-20260101-git/LICENCE",
+          "sha256": "ebc6c27f8ef36f24f0f2c72d1c873ba6b14ee5f8dd969dd0426967e4b313ce13",
+          "bytes": 852
+        },
+        {
+          "path": "plump-tex-20260101-git/LICENSE",
+          "sha256": "f99c61a56bc7ef9e110ccf4322f703b5f363cd7bb16084fdaa45006f50f6da6d",
+          "bytes": 852
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "quri",
+      "url": "https://beta.quicklisp.org/archive/quri/2026-01-01/quri-20260101-git.tgz",
+      "expected_sha256": "89d769dd531848392c707bea3aa5d9ef0965f9983fda32140c68323d743edcaa",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "quri-20260101-git/README.markdown",
+          "sha256": "c89ea11eed64c50e918e76562845183984100017dcd7dd5c1a936cfe6aeebea4",
+          "bytes": 10205
+        },
+        {
+          "path": "quri-20260101-git/quri-test.asd",
+          "sha256": "bfe634e99c0dd3c5d383389609a8357234f3142bf94a777712394e2cd8dbe828",
+          "bytes": 749
+        },
+        {
+          "path": "quri-20260101-git/quri.asd",
+          "sha256": "62a5631fa2375066b7c35bbe4f13424fab1fe47862760cb9ba805c16a763942a",
+          "bytes": 1306
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "scriba",
+      "url": "https://beta.quicklisp.org/archive/scriba/2022-07-07/scriba-20220707-git.tgz",
+      "expected_sha256": "e418277d5ffec7958cf8aff3e277c957588db3aba61b0db8d690ca61e71ae88f",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "scriba-20220707-git/README.md",
+          "sha256": "1890ff25b5de554881ac16d6d78478ea6323ab56bbb8392a8a702f4a2dfe961a",
+          "bytes": 510
+        },
+        {
+          "path": "scriba-20220707-git/scriba.asd",
+          "sha256": "8b9cbd6d107ba4a519373ab61a457bf64e66a244d6a6ab4727739cced022782a",
+          "bytes": 841
+        },
+        {
+          "path": "scriba-20220707-git/scriba-test.asd",
+          "sha256": "ce571a39bc0cc90dda34c4448352cf09aad9a8b7d34a8ec0e8325480878d44a5",
+          "bytes": 396
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "split-sequence",
+      "url": "https://beta.quicklisp.org/archive/split-sequence/2021-05-31/split-sequence-v2.0.1.tgz",
+      "expected_sha256": "ca47962ad1e2275e9c9092abedb392459c93b25b1f6f0565057e715bfa6dd274",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "split-sequence-v2.0.1/LICENSE",
+          "sha256": "9732703530b4b68321b9b0b2eed0b7fbb51cd3ebe08171576cd43cfcaae724ff",
+          "bytes": 1072
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "symbol-munger",
+      "url": "https://beta.quicklisp.org/archive/symbol-munger/2022-02-20/symbol-munger-20220220-git.tgz",
+      "expected_sha256": "8e726a74267a40e0fc63f37dddcd4a4c406a61063cfd329b2094e465d7a7e7ff",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "symbol-munger-20220220-git/LICENSE",
+          "sha256": "9562e424f420dfa50a8b00230d40eacb9d8a144810dee23aaca53268c585ee58",
+          "bytes": 1153
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "thorn",
+      "url": "https://beta.quicklisp.org/archive/thorn/2015-06-08/thorn-20150608-git.tgz",
+      "expected_sha256": "f1b98b13710c6208b06ecd4dc4aa88807e2232801699e9f8d2acd2abb85a1a04",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "thorn-20150608-git/README.md",
+          "sha256": "db3c132252d03071a6ee12218243b0b975c4f99217fc4dc6cd8f43b736d27954",
+          "bytes": 3941
+        },
+        {
+          "path": "thorn-20150608-git/thorn-doc.asd",
+          "sha256": "baaf43d1a43468896fefffb138c9f23fcbbe953e7cca9c6ccc01a7406330233b",
+          "bytes": 259
+        },
+        {
+          "path": "thorn-20150608-git/thorn-test.asd",
+          "sha256": "7396989b8dbbd522e58c9a6cb2b805774655d6f322e6488c0f329314413aa5a0",
+          "bytes": 286
+        },
+        {
+          "path": "thorn-20150608-git/thorn.asd",
+          "sha256": "37064fa657497fa6167ae0a1c99d78f7e88354de0e57f748362bef3dbd4c3fec",
+          "bytes": 698
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-backtrace",
+      "url": "https://beta.quicklisp.org/archive/trivial-backtrace/2023-02-14/trivial-backtrace-20230214-git.tgz",
+      "expected_sha256": "e34a3355ca15c2e0ed84160046c2b16680a7e8b164d67d5a049656786af6c84f",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-backtrace-20230214-git/COPYING",
+          "sha256": "555309d36f8e6efa4920eae6e382caae3671dfab6becdec39146ad232eba318e",
+          "bytes": 1215
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-features",
+      "url": "https://beta.quicklisp.org/archive/trivial-features/2025-06-22/trivial-features-20250622-git.tgz",
+      "expected_sha256": "d8c9686e0425ea6f2cc8e18139a80bb082c44a23ac68fd455e5c74848b42257a",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-features-20250622-git/COPYRIGHT",
+          "sha256": "c9eb72de23a82a7f1fc4ceea3474bad41e84daec53b0a2030222f5e12d8dcee5",
+          "bytes": 1088
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-garbage",
+      "url": "https://beta.quicklisp.org/archive/trivial-garbage/2023-10-21/trivial-garbage-20231021-git.tgz",
+      "expected_sha256": "b29529bc3615ef373bcd8705b991709939dbcdf1071da494b1bf8e33c46d006a",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-garbage-20231021-git/README.md",
+          "sha256": "7835b34ea782137661f5bc01bcc361f8ae921296bba1829791c768aa50045245",
+          "bytes": 485
+        },
+        {
+          "path": "trivial-garbage-20231021-git/trivial-garbage.asd",
+          "sha256": "4aa3f565d900ac793c27242ce329c4e84b58f93c96c9997df28ba35bf3160505",
+          "bytes": 1119
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-gray-streams",
+      "url": "https://beta.quicklisp.org/archive/trivial-gray-streams/2024-10-12/trivial-gray-streams-20241012-git.tgz",
+      "expected_sha256": "be7c33e82fdc8f4834b93b697df98a3b06486e6492928841dc26bb824d091cca",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-gray-streams-20241012-git/COPYING",
+          "sha256": "30f29b9c5b8e72b938d01b9ca228e1ca0d9e524518fc023d5db6ce865ce14a8c",
+          "bytes": 1194
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-indent",
+      "url": "https://beta.quicklisp.org/archive/trivial-indent/2026-01-01/trivial-indent-20260101-git.tgz",
+      "expected_sha256": "3f1e99a46fbb00dad37bb5f34ce5057901c1ceaf8f224dcfdfe9cebe136d3961",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-indent-20260101-git/LICENSE",
+          "sha256": "f99c61a56bc7ef9e110ccf4322f703b5f363cd7bb16084fdaa45006f50f6da6d",
+          "bytes": 852
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-shell",
+      "url": "https://beta.quicklisp.org/archive/trivial-shell/2024-10-12/trivial-shell-20241012-git.tgz",
+      "expected_sha256": "4c66c2c0a42d0680345ec8c1dfb9f865ac9f8448508a485d554f01d8cece109e",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-shell-20241012-git/COPYING",
+          "sha256": "b771b3da1f7f4ac56cff4f297bfba7a89968380ae5d19f5b7e0ccff2088a92a1",
+          "bytes": 1716
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-types",
+      "url": "https://beta.quicklisp.org/archive/trivial-types/2012-04-07/trivial-types-20120407-git.tgz",
+      "expected_sha256": "bdaf0e7174a1be45c8b13854361dcb5967fcb90ab37eae3913178bb8d7727478",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-types-20120407-git/README.markdown",
+          "sha256": "d56c267071d66bd803b9d91f05060c2675c1ceb18e6abdfdb62d1946c1e9fb58",
+          "bytes": 4848
+        },
+        {
+          "path": "trivial-types-20120407-git/trivial-types.asd",
+          "sha256": "c077256813bd80150de4e843c6ae852f4cce445f02088da6bdad8bebdd4bc7bc",
+          "bytes": 1700
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "trivial-with-current-source-form",
+      "url": "https://beta.quicklisp.org/archive/trivial-with-current-source-form/2026-01-01/trivial-with-current-source-form-20260101-git.tgz",
+      "expected_sha256": "afe2d4b5f811de1e72f6096d76f3140079bd5384aec7e7b1a26b178d7a2f7d7a",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "trivial-with-current-source-form-20260101-git/COPYING",
+          "sha256": "2ba202e46a57e0975f1a71c13e7b4aac12131ecade87b1259b7e8288a03fd1be",
+          "bytes": 1064
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "build",
+      "name": "vertex",
+      "url": "https://beta.quicklisp.org/archive/vertex/2015-06-08/vertex-20150608-git.tgz",
+      "expected_sha256": "d1b2bf4e0dc6cc4495f6d3e47b6f0381a29c05f481fefcffca61d30b87005e98",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "vertex-20150608-git/README.md",
+          "sha256": "903593be12d82c76d0426af2c4b6fcfbaaea419b9a675e497fd37b2f11886575",
+          "bytes": 3380
+        },
+        {
+          "path": "vertex-20150608-git/vertex-test.asd",
+          "sha256": "f2c7be26e4cc07fcd0fff0a96426dd2266a32be816ce6cebc31559c15dddd96e",
+          "bytes": 290
+        },
+        {
+          "path": "vertex-20150608-git/vertex.asd",
+          "sha256": "48d59d45c1277133fb93e71373388a1a17ea275e822671e155bd9b515461bcab",
+          "bytes": 812
+        }
+      ],
+      "status": "review-embedded-notices"
+    },
+    {
+      "kind": "build",
+      "name": "yason",
+      "url": "https://beta.quicklisp.org/archive/yason/2025-06-22/yason-20250622-git.tgz",
+      "expected_sha256": "b086540d23e97d9898e3b0bb56b339d1ea55eef04d8407bc7db0a31b50aa5f5b",
+      "acquisition": "existing-cache-rehashed",
+      "license_evidence": [
+        {
+          "path": "yason-20250622-git/LICENSE",
+          "sha256": "260775b1c06f3a86dcb9ece1f15fe86fbca9f62b3961a8bc102da060459692ef",
+          "bytes": 1512
+        }
+      ],
+      "status": "notice-files-collected"
+    },
+    {
+      "kind": "browser",
+      "name": "@braintree/sanitize-url 7.1.1",
+      "url": "https://registry.npmjs.org/@braintree/sanitize-url/-/sanitize-url-7.1.1.tgz",
+      "expected_sha256": "17612462c0b9743c4b16bfea42c83adcf53c26b222642aa6cfad43444faa443f",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "0984740e0c3d725c8044dec7edcefe1dbce180ef5a7bc710c251e19607000158"
+    },
+    {
+      "kind": "browser",
+      "name": "@chevrotain/cst-dts-gen 11.0.3",
+      "url": "https://registry.npmjs.org/@chevrotain/cst-dts-gen/-/cst-dts-gen-11.0.3.tgz",
+      "expected_sha256": "b927ad31f60a1f47233c5a683a75df3feaa639c2ef36e9eb224f06bcea1239c2",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "kind": "browser",
+      "name": "@chevrotain/gast 11.0.3",
+      "url": "https://registry.npmjs.org/@chevrotain/gast/-/gast-11.0.3.tgz",
+      "expected_sha256": "6a67ec6bf65c8ed0f54e41206997f670da8f8085c17b12086a42b22677f4315e",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "kind": "browser",
+      "name": "@chevrotain/regexp-to-ast 11.0.3",
+      "url": "https://registry.npmjs.org/@chevrotain/regexp-to-ast/-/regexp-to-ast-11.0.3.tgz",
+      "expected_sha256": "5cfc2bf73b75c31cfa59e7b244dfbd644f6349e8b5708a1a3ef478cc26c864d0",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "kind": "browser",
+      "name": "@chevrotain/utils 11.0.3",
+      "url": "https://registry.npmjs.org/@chevrotain/utils/-/utils-11.0.3.tgz",
+      "expected_sha256": "e5b0ed157b2a92ec3679f1fe0d6cc9c8648c15f9813f7064b7d7e42af9f9a2af",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "kind": "browser",
+      "name": "@iconify/utils 3.0.2",
+      "url": "https://registry.npmjs.org/@iconify/utils/-/utils-3.0.2.tgz",
+      "expected_sha256": "7f1b0f8bd152444d962bbcb258f57583bea55bb05e437eedf4cc950b9b56f969",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "a86793ac023162ce98b91899601c15f6712f44943163c4f92a0a4bf89152b3bf"
+    },
+    {
+      "kind": "browser",
+      "name": "@mermaid-js/parser 0.6.3",
+      "url": "https://registry.npmjs.org/@mermaid-js/parser/-/parser-0.6.3.tgz",
+      "expected_sha256": "810da68a0b601ea31d73375856580df551b2d246ad42b375d1e6c94e225e871f",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "d374061c40bfb6f99c5033290caefda97a9b3e7e477e5ee02f487143ef2177e8"
+    },
+    {
+      "kind": "browser",
+      "name": "chevrotain 11.0.3",
+      "url": "https://registry.npmjs.org/chevrotain/-/chevrotain-11.0.3.tgz",
+      "expected_sha256": "53f0981a4592d346ab75003250a67066a8ce8c1f8973dfd52fce5517f82c4be1",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "kind": "browser",
+      "name": "chevrotain-allstar 0.3.1",
+      "url": "https://registry.npmjs.org/chevrotain-allstar/-/chevrotain-allstar-0.3.1.tgz",
+      "expected_sha256": "51027c5355c69e6404bb6415e2cd27594569616f97daf613535b662cc5cf0763",
+      "acquisition": "https-upstream",
+      "status": "failed",
+      "error": "License body not preserved verbatim"
+    },
+    {
+      "kind": "browser",
+      "name": "cose-base 1.0.3",
+      "url": "https://registry.npmjs.org/cose-base/-/cose-base-1.0.3.tgz",
+      "expected_sha256": "a20640fb8c1a2cf226eb9195785e9f714ba1cce1e80cb8f48d131d1bc0909d18",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "5fb3cf4a14c3c5af6e473a192df8bca10c77754e3a0c6492c79fb92a76a5478a"
+    },
+    {
+      "kind": "browser",
+      "name": "cose-base 2.2.0",
+      "url": "https://registry.npmjs.org/cose-base/-/cose-base-2.2.0.tgz",
+      "expected_sha256": "612ec91a30b7f2dc158cca4846eeea1b7f89a97fc672951da3c1932107de6da8",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "5fb3cf4a14c3c5af6e473a192df8bca10c77754e3a0c6492c79fb92a76a5478a"
+    },
+    {
+      "kind": "browser",
+      "name": "cytoscape 3.33.1",
+      "url": "https://registry.npmjs.org/cytoscape/-/cytoscape-3.33.1.tgz",
+      "expected_sha256": "2ef5c37203a0147af105d3cd8e1c25a5158eff638ae9f2425dfe3cd78c4a61fe",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e4b62495bacaefaf330f38f226e20d1d60d658d444998ba7406a191f96a2e701"
+    },
+    {
+      "kind": "browser",
+      "name": "cytoscape 3.33.1",
+      "url": "https://registry.npmjs.org/cytoscape/-/cytoscape-3.33.1.tgz",
+      "expected_sha256": "2ef5c37203a0147af105d3cd8e1c25a5158eff638ae9f2425dfe3cd78c4a61fe",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "4a5a644717fc90d678e8fbbc537a08452d0566726710eef47b196abd6363e635"
+    },
+    {
+      "kind": "browser",
+      "name": "cytoscape-cose-bilkent 4.1.0",
+      "url": "https://registry.npmjs.org/cytoscape-cose-bilkent/-/cytoscape-cose-bilkent-4.1.0.tgz",
+      "expected_sha256": "9df46b10952452b1d2a5d4cd942f70709a037bc6b7ef25cf1d9fb70be73bb950",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "440fc58a56a12814e417d2b341da89b050da052dc75bdb235607d37ec5fe74ef"
+    },
+    {
+      "kind": "browser",
+      "name": "cytoscape-fcose 2.2.0",
+      "url": "https://registry.npmjs.org/cytoscape-fcose/-/cytoscape-fcose-2.2.0.tgz",
+      "expected_sha256": "4e1f30e1821fdd4b66f21043c8ea40a8e2ad0ba75e4ccdd2c24d289cf5595432",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "2837634f403949215760fcdd2fa1ed0c64875d02099ecc8318c704b852f1421d"
+    },
+    {
+      "kind": "browser",
+      "name": "d3 7.9.0",
+      "url": "https://registry.npmjs.org/d3/-/d3-7.9.0.tgz",
+      "expected_sha256": "7e36605710a2ba54846797c8c6d888911341b215ae53257dc32a49a0b824355e",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "3e6849627f74ff73c257a3ae1efb574015d94fc1035c05ec3c15805165efcbc4"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-array 2.12.1",
+      "url": "https://registry.npmjs.org/d3-array/-/d3-array-2.12.1.tgz",
+      "expected_sha256": "3795da9bd345fc440b82be032400c538298e021b559ca48342fe9647e44bb86b",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "0747bebeb06b10954913149be9b9a8bdf6fad3e6fdcbd9f9524e7a94c13d2cea"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-array 3.2.4",
+      "url": "https://registry.npmjs.org/d3-array/-/d3-array-3.2.4.tgz",
+      "expected_sha256": "6dbf3f2be39e48f86775be6e166a5d3e5a585ca7144453cd6ad1912f5ae4417f",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "3e6849627f74ff73c257a3ae1efb574015d94fc1035c05ec3c15805165efcbc4"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-axis 3.0.0",
+      "url": "https://registry.npmjs.org/d3-axis/-/d3-axis-3.0.0.tgz",
+      "expected_sha256": "b5ca6e00b9a2503d6b473485684670564a370733cdc8565a45b63f9fb4d944f6",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-brush 3.0.0",
+      "url": "https://registry.npmjs.org/d3-brush/-/d3-brush-3.0.0.tgz",
+      "expected_sha256": "fde88a49b16f92d067401df00abf88bf07eec3e091343eb902caf9cab02bdf2a",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-chord 3.0.1",
+      "url": "https://registry.npmjs.org/d3-chord/-/d3-chord-3.0.1.tgz",
+      "expected_sha256": "84c47d193e5e8c5fd3a28783a55b34f08dfaa1c8d764e96d9b49c78a3b6b40b5",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-color 3.1.0",
+      "url": "https://registry.npmjs.org/d3-color/-/d3-color-3.1.0.tgz",
+      "expected_sha256": "d41bbcd99dd4f00e696546bffc73fed9b8fb6c3354905b6ea1721bff25f33b42",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "faa682e3e430941f958d26180458f5934a62f58dac4d70ccdd15608c15d0f884"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-contour 4.0.2",
+      "url": "https://registry.npmjs.org/d3-contour/-/d3-contour-4.0.2.tgz",
+      "expected_sha256": "fa347e237c259a987fc3cfd890e2fcb0f2ec42ed125a2c9363854509e86db8f4",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e51cba0e4fa1d8c078e15319868f2b90188f413f9ce9dac1043b62db32901e93"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-delaunay 6.0.4",
+      "url": "https://registry.npmjs.org/d3-delaunay/-/d3-delaunay-6.0.4.tgz",
+      "expected_sha256": "935113ffa78d545505c8f1accf95be0e48594737eab34db8f50c9d6319907971",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "582c3022bd01942336095f92b58a90b1be624dc547d987555c6c956512dd24c1"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-dispatch 3.0.1",
+      "url": "https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.1.tgz",
+      "expected_sha256": "3d1a0b5c003e0e9608ad57f6ca21a0c8368031fcbe5f5317fe4e50b3f797ea23",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-drag 3.0.0",
+      "url": "https://registry.npmjs.org/d3-drag/-/d3-drag-3.0.0.tgz",
+      "expected_sha256": "a3ccc9d31d85135f35a4eda3ec0fae6ac22435d4e3fe2d2e0c73b5246460d4db",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-dsv 3.0.1",
+      "url": "https://registry.npmjs.org/d3-dsv/-/d3-dsv-3.0.1.tgz",
+      "expected_sha256": "fdafcae0362205e2fc63fe3e87fed54822227d9370ce5150914f863ec36153cb",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "7842a82012622e5a37bfe4f6c1b67cd3bae6350716b5bf87f36cea0bdc1319dc"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-ease 3.0.1",
+      "url": "https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.1.tgz",
+      "expected_sha256": "b249afe4aa8b741beeaf2d14f625ccf49270adb645e3f1c755d11476c1fdbe2a",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "b989d9085148d21ff64a75e14462aefa06b2589a55553b07b1460c70081c7d08"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-fetch 3.0.1",
+      "url": "https://registry.npmjs.org/d3-fetch/-/d3-fetch-3.0.1.tgz",
+      "expected_sha256": "8a3d61af2bed2b4899df1a90dfed41c0e10ad79d1bea93a18155f5d4e11a526f",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "ffdc17dc9040006bddeb891c95bfbb492e86d6bc64a4a4233666febab1be35e0"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-force 3.0.0",
+      "url": "https://registry.npmjs.org/d3-force/-/d3-force-3.0.0.tgz",
+      "expected_sha256": "deacfa7ecb466f88717fe1863347dd65e5a5422d9f8c893d771cb2a7f987fa15",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-format 3.1.0",
+      "url": "https://registry.npmjs.org/d3-format/-/d3-format-3.1.0.tgz",
+      "expected_sha256": "5439103fc9b6f033e02bf68fbeb13ecd2c33442f77ea772a4b2b1bc4f4cee5ba",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-geo 3.1.1",
+      "url": "https://registry.npmjs.org/d3-geo/-/d3-geo-3.1.1.tgz",
+      "expected_sha256": "fe1f2dd81a87d942790c5a7786f4aab03df2b357d46d8af56b613fb8a1bb9be5",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "3e3edc1224eec9c39cd26491a21304a62883c1e5b6a65c5283ccc7a6cc94baee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-hierarchy 3.1.2",
+      "url": "https://registry.npmjs.org/d3-hierarchy/-/d3-hierarchy-3.1.2.tgz",
+      "expected_sha256": "7681875f06440c088afda1fd834d853dd560166c945e731382ee0c636332360b",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-interpolate 3.0.1",
+      "url": "https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz",
+      "expected_sha256": "7e8df78d233cd102a0bb518658dc0b7d5c38442b6f2dbc8b95ffc14ba87c7c33",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-path 1.0.9",
+      "url": "https://registry.npmjs.org/d3-path/-/d3-path-1.0.9.tgz",
+      "expected_sha256": "2c10702bad9be578f0827d00e45010ae59cb67165f65462e5c781913a5505db1",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "b8265327ab678f554800e71188b1cc6b1ff57522e292d2b1c0be66f27cf328b6"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-path 3.1.0",
+      "url": "https://registry.npmjs.org/d3-path/-/d3-path-3.1.0.tgz",
+      "expected_sha256": "94e9b69f82f113ed4ada36703c05f6b7406723c55affe2a443d69729d6d5da14",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "a09b0d6d76e768fca2085fad05743ee81ddd11946bcda160a3cf5e1081a479aa"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-polygon 3.0.1",
+      "url": "https://registry.npmjs.org/d3-polygon/-/d3-polygon-3.0.1.tgz",
+      "expected_sha256": "6a33e6b083bd596a08e6f9e973fdb0d098f9ac8348cdc86346bb3e9c15614aca",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-quadtree 3.0.1",
+      "url": "https://registry.npmjs.org/d3-quadtree/-/d3-quadtree-3.0.1.tgz",
+      "expected_sha256": "d4145e9cecca8a6077e1099de96375ec9923b0de0df4004bd98aafa17c2d557f",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-random 3.0.1",
+      "url": "https://registry.npmjs.org/d3-random/-/d3-random-3.0.1.tgz",
+      "expected_sha256": "c35794d70beff4e2e2da799cd7fb0e3e763574f24c0fad38c1841770c12b99e8",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-sankey 0.12.3",
+      "url": "https://registry.npmjs.org/d3-sankey/-/d3-sankey-0.12.3.tgz",
+      "expected_sha256": "6bd8cdb143d4088ff38179def70954419868d4b95f136c168ffef2dad004ff22",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "2bf785e778d67a4f5266cffcd4f2cc5bb98cde73791666e7efeb8002ba32dfa5"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-scale 4.0.2",
+      "url": "https://registry.npmjs.org/d3-scale/-/d3-scale-4.0.2.tgz",
+      "expected_sha256": "bf50a1f34ba0e6fa25cb7ae902abe0b9e2f85ced39fdca7b18fbe863fbaa39a7",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-scale-chromatic 3.1.0",
+      "url": "https://registry.npmjs.org/d3-scale-chromatic/-/d3-scale-chromatic-3.1.0.tgz",
+      "expected_sha256": "2573f980e0acbbecc919f5c5fdf7cd3a8110eda2497da7b94ae303fab9c32aa4",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "0986d93944902cca9af86824b6a641b4b7c2d10602fc510c433a8bcd443919fe"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-selection 3.0.0",
+      "url": "https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.0.tgz",
+      "expected_sha256": "a1f872f30dca23b76de89cae9e882f56c325433e7f3aee87b95fa830d12789f3",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-shape 1.3.7",
+      "url": "https://registry.npmjs.org/d3-shape/-/d3-shape-1.3.7.tgz",
+      "expected_sha256": "d19261dad8ff192357db2720d57c1786dbfb8c9f42eafe577cb7c4d5b473fd0e",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "7eea8533ea92bd8c32a901e89ecb0305890905bb12711449565ddff96891146d"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-shape 3.2.0",
+      "url": "https://registry.npmjs.org/d3-shape/-/d3-shape-3.2.0.tgz",
+      "expected_sha256": "8b4b2bc9daa99a957abe17656c5944fd3f28efb88f788e6b4fdba346cb80e602",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "faa682e3e430941f958d26180458f5934a62f58dac4d70ccdd15608c15d0f884"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-time 3.1.0",
+      "url": "https://registry.npmjs.org/d3-time/-/d3-time-3.1.0.tgz",
+      "expected_sha256": "a9f2c8e177b76e7068e7c9c77722c4924c71c9e54f9b1e245d27ef11b28dbc08",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "faa682e3e430941f958d26180458f5934a62f58dac4d70ccdd15608c15d0f884"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-time-format 4.1.0",
+      "url": "https://registry.npmjs.org/d3-time-format/-/d3-time-format-4.1.0.tgz",
+      "expected_sha256": "46f1492ef6be8afe04a844876a644a4a964da7f87937e90e93f9585acff9d30e",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-timer 3.0.1",
+      "url": "https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.1.tgz",
+      "expected_sha256": "05cdf901e1876a7f24f4c365a879252752e22e3cc52b131ca616639f07e8ed05",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-transition 3.0.1",
+      "url": "https://registry.npmjs.org/d3-transition/-/d3-transition-3.0.1.tgz",
+      "expected_sha256": "260eb8eaed565581afc00634ec83c83fd3b7e830e2a6b73b49f3f744dce0254c",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "d3-zoom 3.0.0",
+      "url": "https://registry.npmjs.org/d3-zoom/-/d3-zoom-3.0.0.tgz",
+      "expected_sha256": "846d28725c4889d6a2069c6cf084ca7e7730ee917a9b87960ecc53247f840f85",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "e008c5e25a6be382593089c29bfabbc553c6378eee02895aec46ce396cc404ee"
+    },
+    {
+      "kind": "browser",
+      "name": "dagre-d3-es 7.0.13",
+      "url": "https://registry.npmjs.org/dagre-d3-es/-/dagre-d3-es-7.0.13.tgz",
+      "expected_sha256": "c93d54b4ddd62e9928ac467e2034c95c932e3e5df583bc42eca3be4defacf698",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "d01eb84ccce437dbf5fd40853bceea0f287930920acea066597a4a25ead63858"
+    },
+    {
+      "kind": "browser",
+      "name": "dayjs 1.11.18",
+      "url": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.18.tgz",
+      "expected_sha256": "92722c88c2002736126464a9f7107455e7e6c57da3588e5920babcb392b8ebc9",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "5faab7526d055651be3aab769d58897be6bd91f3d39d137f25f12dba1b31d5dc"
+    },
+    {
+      "kind": "browser",
+      "name": "dompurify 3.2.6",
+      "url": "https://registry.npmjs.org/dompurify/-/dompurify-3.2.6.tgz",
+      "expected_sha256": "fe734a97f5938a5ff7f99aedf348c53b8d47c897859fcc57ac4feaa70582c0b6",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "1b02e03c3fb4f87d476c128f0eb9def1f5a1709d28b180465228bd41574623b7"
+    },
+    {
+      "kind": "browser",
+      "name": "internmap 2.0.3",
+      "url": "https://registry.npmjs.org/internmap/-/internmap-2.0.3.tgz",
+      "expected_sha256": "39d1936831a4d3f2bd6e088db28a10de4458d823f652c36b2c808bf5b978c48d",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "9ea8903938dab5f12c4572d60725069bec2d1b0dc3bcc210b09bae946a5ebb1f"
+    },
+    {
+      "kind": "browser",
+      "name": "js-yaml 4.1.0",
+      "url": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.0.tgz",
+      "expected_sha256": "0dae332559cf22b21c26ea70e732afd8303ff99412f9c3d9d209faa8882cf2ca",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550"
+    },
+    {
+      "kind": "browser",
+      "name": "katex 0.16.22",
+      "url": "https://registry.npmjs.org/katex/-/katex-0.16.22.tgz",
+      "expected_sha256": "e9e0d167db3175481cbadaff38e8d90b130f6a3ddb451a47e43c577fd511f365",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "766ccc1f306c885aa45542a9846bbd0a505b27a0374f146778171c2254ce18e3"
+    },
+    {
+      "kind": "browser",
+      "name": "khroma 2.1.0",
+      "url": "https://registry.npmjs.org/khroma/-/khroma-2.1.0.tgz",
+      "expected_sha256": "8963d209f3a682374d7f7e45e5fa361a58fc060c8528df6656fae0fc7c508110",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "66b333b0f66759a0b710459e03f7029abe17f4358114a128d2c972e642961b49"
+    },
+    {
+      "kind": "browser",
+      "name": "langium 3.3.1",
+      "url": "https://registry.npmjs.org/langium/-/langium-3.3.1.tgz",
+      "expected_sha256": "2f1777b91525c4f296d10279b3828f5b1d4506a7783a9cc4eabb6c21b552e3c8",
+      "acquisition": "https-upstream",
+      "status": "failed",
+      "error": "License body not preserved verbatim"
+    },
+    {
+      "kind": "browser",
+      "name": "layout-base 1.0.2",
+      "url": "https://registry.npmjs.org/layout-base/-/layout-base-1.0.2.tgz",
+      "expected_sha256": "efea1306903d9d043c42c1e7931b2d97b4f519cff04b1347fa308032a52eebab",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "eabb762d8a95109a39c9be3247325529a5239a7aca327d909c3ccdc41f3a06bf"
+    },
+    {
+      "kind": "browser",
+      "name": "layout-base 2.0.1",
+      "url": "https://registry.npmjs.org/layout-base/-/layout-base-2.0.1.tgz",
+      "expected_sha256": "34165e46d8c4b9d719a592e39a60fa5f7324c21a3edd02733e1116b17013defd",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "eabb762d8a95109a39c9be3247325529a5239a7aca327d909c3ccdc41f3a06bf"
+    },
+    {
+      "kind": "browser",
+      "name": "lodash-es 4.17.21",
+      "url": "https://registry.npmjs.org/lodash-es/-/lodash-es-4.17.21.tgz",
+      "expected_sha256": "777598ac703f02b403ef678cd11bce2150ad788f35c774ea7c9cc241a892cb7b",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "f71e8ed126b46346494aad5486874cd8f0aafe95092ed67d2e3cb6110f939abc"
+    },
+    {
+      "kind": "browser",
+      "name": "marked 16.3.0",
+      "url": "https://registry.npmjs.org/marked/-/marked-16.3.0.tgz",
+      "expected_sha256": "c333c47cd3802a1d631dfdd8c6cfc411a88599a872c04ce8cd2291381a7767a0",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c"
+    },
+    {
+      "kind": "browser",
+      "name": "mermaid 11.12.1",
+      "url": "https://registry.npmjs.org/mermaid/-/mermaid-11.12.1.tgz",
+      "expected_sha256": "3bd65ddefe97fb2e01d976a01d4078f8d773bfc56c6a75a9abf08b564ce0f8b2",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "ec9fb67dcb25eccc416ed56e1aab819222c805a2a4bfe4cb19e7556bf2ffde80"
+    },
+    {
+      "kind": "browser",
+      "name": "Node.js POSIX path implementation (via path-browserify) Node.js v8.11.1, as identified in source",
+      "url": "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.min.js.map",
+      "expected_sha256": "902150c54dd0a0fccba2be182b4d7e346a79bb589709d035c02b7801cf919d64",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "7d9bbda7ede4c2ce10a4ed12687ea68d2b0c123df059f067ee17c0ffc3d40357"
+    },
+    {
+      "kind": "browser",
+      "name": "roughjs 4.6.6",
+      "url": "https://registry.npmjs.org/roughjs/-/roughjs-4.6.6.tgz",
+      "expected_sha256": "373873b2c3f1b7ddba878525c774816057c5818029780c7fba081f06018ba78c",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "dca9a392272606ac748ac0976a2a1133f14eef841c27beaa51a844d53c56a09d"
+    },
+    {
+      "kind": "browser",
+      "name": "stylis 4.3.6",
+      "url": "https://registry.npmjs.org/stylis/-/stylis-4.3.6.tgz",
+      "expected_sha256": "57bd37727276e7e30d2f15472a43c5d5b8ae6cd9cebd36dbb84880c500de568e",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "88c579c6ee44b41137a21321190d177982e5b17d4fa1b83a4a2e3ea325a8fc9a"
+    },
+    {
+      "kind": "browser",
+      "name": "ts-dedent 2.2.0",
+      "url": "https://registry.npmjs.org/ts-dedent/-/ts-dedent-2.2.0.tgz",
+      "expected_sha256": "f04cddc15ce3aad91287aebdcb0d6b6997b85222769c35c910038f59bfd2234d",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "eff13095d9d762c3bd9dda74370c81e2130c28f2691bc455603abf973bac25b9"
+    },
+    {
+      "kind": "browser",
+      "name": "uuid 11.1.0",
+      "url": "https://registry.npmjs.org/uuid/-/uuid-11.1.0.tgz",
+      "expected_sha256": "ec2013a661d5d449a872f259453bd59f1e0f30b60c57048949405b71914a1dc7",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "beaa6b04fb82e41dd2ad679e19e27953afb5999b1abbb455b6564e78ebfeb332"
+    },
+    {
+      "kind": "browser",
+      "name": "vscode-jsonrpc 8.2.0",
+      "url": "https://registry.npmjs.org/vscode-jsonrpc/-/vscode-jsonrpc-8.2.0.tgz",
+      "expected_sha256": "3da44531c398f1545074cb728e359a822f35b9f8ac7171c847f42f0728b9c7cb",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+    },
+    {
+      "kind": "browser",
+      "name": "vscode-languageserver-textdocument 1.0.12",
+      "url": "https://registry.npmjs.org/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.12.tgz",
+      "expected_sha256": "9f1d28814d6ee81267f52f5bc8c920bb6a0a23eb6de48960345a0a25fbf3b0db",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+    },
+    {
+      "kind": "browser",
+      "name": "vscode-languageserver-types 3.17.5",
+      "url": "https://registry.npmjs.org/vscode-languageserver-types/-/vscode-languageserver-types-3.17.5.tgz",
+      "expected_sha256": "d673f9e7f8bbe51351be51c58f32d4dcfa97a670ebb86bc633368394c609cac0",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+    },
+    {
+      "kind": "browser",
+      "name": "vscode-uri 3.0.8",
+      "url": "https://registry.npmjs.org/vscode-uri/-/vscode-uri-3.0.8.tgz",
+      "expected_sha256": "a716d2fb0b5ba69c557df007f83dee43117a20faee0adc9400de03be10f475f3",
+      "acquisition": "https-upstream",
+      "status": "notice-verified-verbatim",
+      "notice_sha256": "c669138cb1eb01fbb745e8e460b291e4f2869c14a40061390b6095d845ed4c82"
+    }
+  ]
+}

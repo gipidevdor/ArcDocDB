@@ -38,4 +38,4 @@ To run the local service, follow the [M1 server and client guide](docs/implement
 - [Documentation](docs/README.md) — specifications, decisions and verification, in English.
 - [Code reference](https://gipidevdor.github.io/ArcDocDB/api/index.html) — package interfaces, signatures and source contracts.
 
-[BSD 2-Clause](LICENSE) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [CI](https://github.com/gipidevdor/ArcDocDB/actions/workflows/ci.yml) · [Changes](CHANGELOG.md)
+[BSD 2-Clause](LICENSE) · [Third-party notices](THIRD-PARTY-NOTICES.txt) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [CI](https://github.com/gipidevdor/ArcDocDB/actions/workflows/ci.yml) · [Changes](CHANGELOG.md)

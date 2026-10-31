@@ -150,6 +150,8 @@
         (setf (gethash "sha256" (first (gethash "files" (gethash "code" manifest)))) (make-string 64 :initial-element #\0))
         (reject "manifest.json" (json manifest)))
       (reject "licenses/ArcDocDB-BSD-2-Clause.txt" "Damaged license text")
+      (reject "licenses/ArcDocDB-third-party-notices.txt" "Missing product notices")
+      (reject "licenses/SBCL-2.6.9-COPYING.txt" "Missing runtime reference notice")
       (reject "licenses/third-party-notices.txt" "Missing third-party notice text")
       (reject "index.html" (cl-ppcre:regex-replace "form-action 'none'" (read-text (merge-pathnames "index.html" output)) "form-action 'self'"))
       (reject "static/site.css" (cl-ppcre:regex-replace "--quiet: #6e6e73" (read-text (merge-pathnames "static/site.css" output)) "--quiet: #d2d2d7")))

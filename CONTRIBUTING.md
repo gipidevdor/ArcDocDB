@@ -45,3 +45,17 @@ their established spelling. [Coding standard](docs/affidabilita/standard-di-codi
 `make docs` builds and verifies the complete manual with CommonDoc Codex.
 `make docs-serve` previews it locally. See [publishing the manual](docs/github-pages.md)
 for the GitHub Pages workflow and first-publication setup.
+
+## Rights in contributions
+
+Submit only material you have the right to contribute, including any required
+employer or client authorization. Project-authored contributions use BSD-2-Clause;
+identify third-party material, its source, exact license and required notices.
+Do not remove upstream attribution or label licensed data as original project code.
+No copyright assignment or additional CLA is introduced by this guide.
+
+Disclose copied code, data, assets and any AI-assisted material whose provenance
+needs review. A generator or AI tool does not establish rights or non-infringement.
+Do not submit credentials, confidential data or personal datasets as fixtures.
+Run `make legal-check` when changing notices, Unicode tables or distribution files.
+See [distribution requirements](docs/legal/distribution.md).

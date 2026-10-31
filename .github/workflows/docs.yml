@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
     paths:
+      - 'LICENSE'
+      - 'THIRD-PARTY-NOTICES.txt'
+      - 'legal/**'
+      - 'data/unicode/**'
+      - 'tools/legal-notices.lisp'
       - '**.md'
       - 'assets/**'
       - 'tools/pages/**'
@@ -16,6 +21,11 @@ on:
       - '.github/workflows/docs.yml'
   pull_request:
     paths:
+      - 'LICENSE'
+      - 'THIRD-PARTY-NOTICES.txt'
+      - 'legal/**'
+      - 'data/unicode/**'
+      - 'tools/legal-notices.lisp'
       - '**.md'
       - 'assets/**'
       - 'tools/pages/**'

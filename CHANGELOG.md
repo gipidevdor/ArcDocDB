@@ -12,6 +12,13 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   complete paged-index frames immediately before reads overwrite them.
   [Qualification and measurements](spikes/results/2026-10-31-engine-performance/report.md).
 
+- [Distribution notices and legal review](docs/legal/review-2026-10-31.md):
+  complete root Unicode attribution, aggregate license metadata, original SBCL
+  reference notices, explicit browser license choice and private-individual
+  publication/contact scope. Common Lisp checks preserve declared notice bytes
+  in new distribution directories and reject missing, changed or stale copies.
+  Legal applicability, ownership and artifact-specific dependencies remain scoped.
+
 - Refine canonical compaction: reserve recovery segment IDs and CONTROL revisions
   before creating outputs, preserve restart headroom on writes, reject startup
   for insufficient capacity before checkpoint effects, and remove a redundant full planning scan.

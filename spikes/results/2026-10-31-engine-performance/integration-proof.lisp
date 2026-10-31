@@ -42,6 +42,31 @@
                 ("(define-condition fault (error) () (:report (lambda (c s) (write-string \"red\" s))))"
                  "(define-condition fault (error) () (:report (lambda (c s) (write-string \"blue\" s))))")))
   (assert (not (equal (optimization-probe (first pair)) (optimization-probe (second pair))))))
+(defun optimization-asdf-source (text expected-license)
+  (let ((systems 0))
+    (labels ((canonical (token)
+               (cond
+                 ((eq (code-token-kind token) :list)
+                  (let* ((items (code-items token))
+                         (system (member (code-head token) '("defsystem" "asdf:defsystem") :test #'equal))
+                         (license (when system
+                                    (loop for i from 2 below (length items) by 2
+                                          when (equal (code-name (nth i items)) "license") return (1+ i)))))
+                    (when system
+                      (incf systems)
+                      (unless (and license (eq :string (code-token-kind (nth license items)))
+                                   (string= expected-license (code-token-text (nth license items))))
+                        (error "Unexpected ASDF license metadata.")))
+                    (list :list (loop for item in items for i from 0 collect
+                                  (if (eql i license) :declared-license-metadata (canonical item))))))
+                 ((code-items token) (list (code-token-kind token) (code-token-text token)
+                                            (mapcar #'canonical (code-items token))))
+                 (t (list (code-token-kind token) (code-token-text token))))))
+      (values (mapcar #'canonical (tokenize-code text)) systems))))
+(assert (equal (optimization-asdf-source "(defsystem x :license \"old\" :depends-on (a))" "old")
+               (optimization-asdf-source "(defsystem x :license \"new\" :depends-on (a))" "new")))
+(assert (not (equal (optimization-asdf-source "(defsystem x :license \"old\" :depends-on (a))" "old")
+                    (optimization-asdf-source "(defsystem x :license \"new\" :depends-on (b))" "new"))))
 (let* ((revision (first (uiop:command-line-arguments)))
        (paths (remove "" (uiop:split-string (uiop:run-program (list "git" "ls-tree" "-r" "--name-only" revision "src" "tests")
                                                              :output :string) :separator '(#\Newline)) :test #'equal))
@@ -65,7 +90,11 @@
         (expected (remove-if-not (lambda (path) (uiop:string-suffix-p path ".lisp")) paths)))
     (unless (equal (sort current #'string<) (sort expected #'string<))
       (error "Integration changed the covered runtime/test file set.")))
-  (dolist (path '("arcdocdb.asd" "spikes/results/2026-10-31-engine-compaction/bench.lisp"
+  (multiple-value-bind (old systems) (optimization-asdf-source
+      (uiop:run-program (list "git" "show" (format nil "~A:arcdocdb.asd" revision)) :output :string) "BSD-2-Clause")
+    (multiple-value-bind (new count) (optimization-asdf-source (read-text "arcdocdb.asd") "BSD-2-Clause AND Unicode-3.0")
+      (assert (= systems count 3)) (unless (equal old new) (push "arcdocdb.asd executable/component forms" mismatches))))
+  (dolist (path '("spikes/results/2026-10-31-engine-compaction/bench.lisp"
                  "spikes/results/2026-10-31-engine-performance/extended-bench.lisp"
                  "spikes/results/2026-10-31-engine-performance/cold-bench.lisp"))
     (unless (string= (uiop:run-program (list "git" "show" (format nil "~A:~A" revision path)) :output :string)
@@ -76,6 +105,9 @@
                  :qualified-revision revision :source-files source-count :source-prose-only-changes prose-changes
                  :byte-identical-test-files tests :byte-identical-other-files (nreverse checks)
                  :comparator-positive-and-negative-controls :passed :all-reader-branches-retained t
-                 :documentation-reflection-intentionally-excluded t :mismatches (nreverse mismatches)) :pretty t)
+                 :documentation-reflection-intentionally-excluded t
+                 :asdf-forms-except-license-identical t
+                 :asdf-license-metadata '(:systems 3 :before "BSD-2-Clause" :after "BSD-2-Clause AND Unicode-3.0")
+                 :mismatches (nreverse mismatches)) :pretty t)
     (terpri))
   (when mismatches (error "Integration changes qualified executable syntax: ~S" mismatches)))

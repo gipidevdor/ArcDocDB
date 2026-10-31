@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "reference": "xxHash v0.8.3",
+  "library_license_sha256": "6ffedbc0f7878612d2b23589f1ff2ab15633e1df7963a5d9fc750ec5500c7e7a",
+  "specification_sha256": "61c47af338b2feefcc7621700ef6b941bcf9b1dd33899c503f68cb797e7ef333",
+  "distributed_notice_sha256": "cf5bc990ac7324f65da77a76956ca63ee985029f0609e1ab780373df796fb534",
+  "complete_library_license_preserved": true,
+  "original_specification_notice_preserved": true,
+  "omission_of_algorithm_description_explicit": true,
+  "native_library_linked": false
+}

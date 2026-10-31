@@ -8,6 +8,15 @@ PYTHON ?= python3
 
 .PHONY: build test lint lint-selftest record-command-selftest links trace trace-write evidence evidence-selftest compact-evidence check check-core spikes-check spikes-bench snapshot-mutation-selftest reader-mutation-selftest fulltext-check ci-status ci-selftest ci-audit
 .PHONY: docs docs-setup docs-build docs-check docs-runtime-check docs-examples docs-serve
+.PHONY: legal-check legal-notices
+
+legal-check:  ## verify source notices and negative artifact fixtures
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/legal-notices.lisp --check
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/legal-notices.lisp --self-test
+
+legal-notices:  ## stage exact notice copies in a new directory; never overwrite an artifact
+	mkdir -p _build
+	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/legal-notices.lisp --stage-new _build/legal-notices/
 
 docs-setup:  ## install only the hash-locked documentation dependencies
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/pages/bootstrap.lisp --self-test
@@ -16,7 +25,7 @@ docs-setup:  ## install only the hash-locked documentation dependencies
 docs-build:  ## generate the complete manual with CommonDoc Codex
 	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/build.lisp
 
-docs-check:  ## build, test rendering and verify coverage, links and source hashes
+docs-check: legal-check  ## build, test rendering and verify coverage, links and source hashes
 	$(SBCL) --dynamic-space-size $(DOCS_DYNAMIC_SPACE_SIZE) --noinform --no-userinit --no-sysinit --script tools/pages/build.lisp --test
 	$(MAKE) docs-runtime-check
 	$(MAKE) docs-examples
@@ -97,6 +106,6 @@ ci-status:  ## dati riferiti esattamente ai sorgenti attuali
 ci-selftest:  ## confini wire, catalogo, metriche, workflow e archivi CI
 	$(SBCL) --noinform --no-userinit --no-sysinit --script tools/record-command.lisp -- $(SBCL) --noinform --no-userinit --no-sysinit --script tools/ci.lisp self-test --out spikes/out/ci/selftest-$(shell date +%s)-$(shell echo $$$$)
 
-ci-audit: lint-selftest record-command-selftest snapshot-mutation-selftest reader-mutation-selftest fulltext-check evidence-selftest evidence spikes-check ci-selftest
+ci-audit: legal-check lint-selftest record-command-selftest snapshot-mutation-selftest reader-mutation-selftest fulltext-check evidence-selftest evidence spikes-check ci-selftest
 
-check-core: test lint lint-selftest record-command-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check ci-selftest  ## controlli chiamati dal registro
+check-core: test legal-check lint lint-selftest record-command-selftest snapshot-mutation-selftest reader-mutation-selftest trace links fulltext-check evidence-selftest evidence spikes-check ci-selftest  ## controlli chiamati dal registro

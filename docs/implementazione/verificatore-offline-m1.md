@@ -115,6 +115,7 @@ canonical decoding. No durable operation or new inter-Serie shared state is adde
 | Clean requires no suffix, no actions and no extras | Clean store, individual suffixes, orphan temporary, unpublished CONTROL and derivative file; CLI confirms exits 0/2/1 |
 | Primary error or cleanup failure blocks report | Normal cleanup, active lock, exact injected primary plus cleanup failure, foreign exit: cleanup/observer fixtures |
 | Optional observer returns NIL | Default NIL, valid observer, non-NIL return and exact propagated condition: `source-observer-contract` |
+| Result ownership | Each call returns private list spines, including coverage/limits: `report-lists-private-between-calls` |
 
 This table maps executable boundaries and defensive guards. It does not claim
 complete C1 decision coverage, integrated multiseries verification or MC/DC.

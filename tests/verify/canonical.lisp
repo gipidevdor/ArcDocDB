@@ -1,5 +1,16 @@
 (in-package #:arcdocdb.verify.tests)
 
+;;; REQ: REQ-AFF-010 REQ-AFF-004
+(deftest test-REQ-AFF-010-report-lists-private-between-calls
+  (et::with-root (root)
+    (data-store root 2)
+    (let ((first (inspect-store root)) (second (inspect-store root)))
+      (dolist (key '(:coverage :limits))
+        (is (equal (getf first key) (getf second key)))
+        ;; Compare identity without mutating a possibly literal constant in the failing implementation.
+        (loop for left on (getf first key) for right on (getf second key) do
+          (is (not (eq left right))))))))
+
 ;;; REQ: REQ-AFF-010 REQ-MVC-006 REQ-CMP-001
 (deftest test-REQ-AFF-010-terminal-tombstone-preserves-maximum
   (et::with-root (root)

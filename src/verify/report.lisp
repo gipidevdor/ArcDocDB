@@ -64,6 +64,6 @@ Only the outer boundary may return it after resource cleanup; no durable effect 
                 :version (inspection-version inspection) :records (inspection-data-count inspection)
                 :max-csn-present present :max-csn maximum :segments rows :control control-frontier
                 :decisions decision-frontier :noncanonical-bytes tail :inventory-actions (inspection-actions inspection)
-                :unverified-files extras :coverage '(:canonical-headers :crc :sealed-prefixes :manifest :csn-order)
-                :limits '(:m1-only :no-catalog :no-derived-indexes :no-hints :no-application-schema
+                :unverified-files extras :coverage (list :canonical-headers :crc :sealed-prefixes :manifest :csn-order)
+                :limits (list :m1-only :no-catalog :no-derived-indexes :no-hints :no-application-schema
                           :no-repair :no-durability-attestation :not-a-complete-archivio-verifier)))))))

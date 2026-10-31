@@ -264,3 +264,7 @@ automatic live switching still require subsequent increments.
 Current-only serial M1 now includes [canonical full-prefix compaction](adr/0078-compattazione-prefix-m1.md)
 with automatic physical reclamation and completion after a crash. Concurrent/background
 CLEAN/MERGE, historical MVCC and multiseries remain separate milestones.
+
+The [offline M1 verifier](implementazione/verificatore-offline-m1.md) inspects
+canonical files without startup or repair, including after a crash. Complete
+Archivio/catalog/index verification and backup qualification remain open.

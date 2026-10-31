@@ -237,7 +237,10 @@
                              (:file "compaction-write") (:file "compaction-verify") (:file "compaction-plan")
                              (:file "compaction-relocate") (:file "compaction-install") (:file "compaction") (:file "write")
                              (:file "write-group-index") (:file "write-group-legacy") (:file "write-group-plan")
-                             (:file "write-group-commit") (:file "write-group") (:file "read"))))
+                             (:file "write-group-commit") (:file "write-group") (:file "read")))
+               (:module "verify" :serial t
+                :components ((:file "package") (:file "types") (:file "read")
+                             (:file "order") (:file "report") (:file "resources"))))
   :in-order-to ((test-op (test-op "arcdocdb/tests"))))
 
 (defsystem "arcdocdb/local"
@@ -407,6 +410,9 @@
                (:module "engine" :serial t
                 :components ((:file "support") (:file "lifecycle") (:file "images") (:file "image-build") (:file "image-activation") (:file "delta") (:file "delta-location") (:file "image-renewal") (:file "image-maintenance") (:file "image-auto") (:file "image-discovery") (:file "index-automatic") (:file "index-auto-disk") (:file "rotation") (:file "compaction") (:file "record-cache") (:file "processes")))
                (:file "engine/write-group")
+               (:module "verify" :serial t
+                :components ((:file "support") (:file "canonical") (:file "guards") (:file "order")
+                             (:file "observer") (:file "cli") (:file "processes")))
                (:module "local" :serial t
                 :components ((:file "wire") (:file "native") (:file "server") (:file "processes"))))
   :perform (test-op (o c)

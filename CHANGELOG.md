@@ -12,6 +12,10 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
   ordered publication, read barriers and no retry after admission.
   [Contract](docs/adr/0080-group-commit-m1.md) and
   [evidence](spikes/results/2026-10-31-engine-group-commit/report.md).
+- Add the [offline canonical M1 verifier](docs/implementazione/verificatore-offline-m1.md):
+  bounded read-only library and Common Lisp CLI, canonical CRC/manifest/CSN checks,
+  unchanged files before recovery, and explicit clean/attention/failed outcomes.
+  Complete Archivio/catalog/derived-index verification remains open.
 
 - Connect the existing verified record cache to M1 RAM/paged GET, live maintenance
   and the Unix service, with a separate fixed grant (zero by default), corruption

@@ -1,0 +1,8 @@
+(require :asdf)
+(asdf:load-asd (truename "arcdocdb.asd"))
+(asdf:load-system "arcdocdb/tests")
+(dolist (test (reverse arcdocdb.engine.tests::*tests*))
+  (when (search "TEST-REQ-STO-003-LIVE-ROTATION-" (symbol-name test))
+    (funcall test) (format t "~&PASS ~A~%" test)))
+(arcdocdb.local.process.tests::test-REQ-CMP-001-automatic-compaction-real-local-service-v1-v2)
+(format t "~&~S~%" '(:status :passed :scope :compaction-rotation-local-integration))

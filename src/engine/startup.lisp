@@ -17,6 +17,7 @@ Gate prima degli effetti, checkpoint e nomi prima di indice/runtime/radice; erro
     (multiple-value-bind (control sources active closed previous)
         (recupera-fonti-motore engine decisions set)
       (verifica-ordine-fonti-motore engine control sources decisions closed)
+      (compaction-reclaim-removed engine control)
       (let ((id (verifica-inventario-motore engine control)))
         (osserva-motore engine :recovered)
         (rs:stabilizza-nomi-serie-recuperata (motore-directory engine) sources active closed
@@ -29,7 +30,9 @@ Gate prima degli effetti, checkpoint e nomi prima di indice/runtime/radice; erro
             (error 'invariant-violation :reason :engine-recovery-csn-changed))
           (rs:stabilizza-nomi-serie-recuperata (motore-directory engine) current-sources current-active current-closed
                                             :max-segmenti (motore-max-segments engine))
-            (adotta-runtime-motore engine archive current current-closed plan prepared))))))
+            (compaction-prune-removed engine prepared current)
+            (adotta-runtime-motore engine archive current current-closed plan prepared)
+            (ritira-risorse-rotazione-motore engine current-sources))))))
   nil)
 
 ;;; REQ: REQ-REC-001 REQ-REC-004 REQ-AFF-001 REQ-AFF-004 REQ-AFF-008

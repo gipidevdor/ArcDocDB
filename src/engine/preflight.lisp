@@ -26,7 +26,7 @@ Un errore rifiuta l'apertura senza checkpoint; non e' un validatore delle scritt
 Rifiuta anomalie, conflitti e fonti mancanti prima di rinomina/checkpoint; nessuna cancellazione o riuso ID."
   (multiple-value-bind (id next plan)
       (mf:scegli-id-segmento-recovery-directory (c:manifest-control-recuperato control) (motore-directory engine)
-         :max-segmenti (motore-max-segments engine) :max-files (* 2 (motore-max-segments engine)))
+         :max-segmenti (* 2 (motore-max-segments engine)) :max-files (+ 16 (* 4 (motore-max-segments engine))))
     (unless (and (= next (1+ id)) (eq (mf:stato-riconciliazione plan) :ready))
       (error 'corruption-detected :reason :engine-reconciliation))
     (dotimes (i (mf:numero-azioni-riconciliazione plan))

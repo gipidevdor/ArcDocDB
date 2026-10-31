@@ -1,0 +1,1 @@
+(:kind :compaction-integration-cleanup :status :passed :verified-original-command-reports 28 :temporary-output-bytes 50888071 :generated-manual-bytes 75238206 :current-worktree-cache-bytes 42930751 :retained-unique-evidence t :other-worktree-files-untouched t)

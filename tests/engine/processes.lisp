@@ -8,6 +8,8 @@
 
 (defun child-main (arguments)
   (destructuring-bind (mode path format stage) arguments
+    (when (and (>= (length mode) 8) (string= mode "compact-" :end1 8))
+      (return-from child-main (compaction-child-main arguments)))
     (when (and (>= (length mode) 7) (string= mode "rotate-" :end1 7))
       (return-from child-main (rotation-child-main arguments)))
     (when (and (>= (length mode) 5) (string= mode "mode-" :end1 5))

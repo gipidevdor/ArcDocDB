@@ -38,7 +38,9 @@ methods and verification records.
 ## Current limits
 
 - M1 exposes one Serie and one serial actor. Historical MVCC, multiseries
-  transactions, complete compaction remains outside this profile. Live segment rotation uses
+  transactions and concurrent/background compaction remain outside this profile.
+  [Current-only compaction](../adr/0078-compattazione-prefix-m1.md) reclaims obsolete
+  segment bytes automatically while preserving logical RAM/paged storage. Live segment rotation uses
   [canonical checkpoints](../adr/0076-rotazione-live-m1.md) before the next data CSN.
 - M1 selects resident/paged storage automatically, including writes, bounded
   replay and return to RAM. A paged handle retains no complete resident index.

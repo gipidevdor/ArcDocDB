@@ -7,11 +7,17 @@ has no product releases yet; versions will follow the [roadmap](docs/roadmap.md)
 
 ## [Unreleased]
 
+- [Serial M1 canonical compaction](docs/adr/0078-compattazione-prefix-m1.md):
+  automatic full-prefix reclamation at rotation boundaries, exact live values
+  and unchanged CSN high-water, coherent RAM/paged location relocation, two
+  durable CONTROL decisions and positive inode-bound removal. Recovery completes
+  interrupted reclamation; concurrent/background compaction remains separate.
+
 - [Live M1 segment rotation](docs/adr/0076-rotazione-live-m1.md) before byte or
   record saturation: canonical CONTROL checkpoint, fresh ACTIVE and complete
   CLOSED lookup publication while retaining the runtime CSN family and index.
   Retired capabilities are closed after serial quiescence; total segment capacity
-  remains bounded pending compaction. Real SIGKILL and Unix service cases cover v1/v2.
+  remains bounded with automatic compaction at capacity. Real SIGKILL and Unix service cases cover v1/v2.
 
 - [Automatic primary storage in M1](docs/implementazione/indice-automatico-operativo.md):
   flat resident growth while the quota permits it, bounded disk writes/replay,

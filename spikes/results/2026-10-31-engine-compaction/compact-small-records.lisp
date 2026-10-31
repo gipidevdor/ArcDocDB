@@ -1,0 +1,126 @@
+((:PATH
+  #A((157) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-integration-counter/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 338620 :STORED-BYTES 106827 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 338620 :UNCOMPRESSED-SHA256
+   "1d219805c858f072b271ef4427bda66340144b2d93fbd7fd12d7ee19c218c818"
+   :COMPRESSED-BYTES 106511 :COMPRESSED-SHA256
+   "2239db4094333bdeb9e1ad1d0216516e1e25b6e7df703e38fb1d031de6e6afe3"))
+ (:PATH
+  #A((156) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-integration-reader/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 334503 :STORED-BYTES 106493 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 334503 :UNCOMPRESSED-SHA256
+   "0d23686c15c62182666ca8c3807a49758d944de15f674e3c5165f022f50ceb43"
+   :COMPRESSED-BYTES 106177 :COMPRESSED-SHA256
+   "f39709a78620871429a350bac9d4fdf2bc348b93152a417f29e841cb7ef7bced"))
+ (:PATH
+  #A((148) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-smoke-asdf/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 329353 :STORED-BYTES 104732 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 329353 :UNCOMPRESSED-SHA256
+   "d8855a2b2e54e8f537ba35a74f8abc4cb94a7fc16352e631354d884c21e33011"
+   :COMPRESSED-BYTES 104416 :COMPRESSED-SHA256
+   "8c8f159a800c17f39b6dca130dfcbeaee9d91fe970e786fba8df8a11df28cb43"))
+ (:PATH
+  #A((147) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-smoke-csn/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 328806 :STORED-BYTES 104554 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 328806 :UNCOMPRESSED-SHA256
+   "60a9e183263eaf5a4d585e51fb213716bf1e6ff93f88f00873950f727164d060"
+   :COMPRESSED-BYTES 104238 :COMPRESSED-SHA256
+   "28ea073be1984f6c4f8a1eeda045bca5dd8039c11d24b94c25ff89306d248ac4"))
+ (:PATH
+  #A((150) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-smoke-driver/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 327656 :STORED-BYTES 104160 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 327656 :UNCOMPRESSED-SHA256
+   "2305586efd7c057e5d0c54470465b93773b4db3bc22c363cbf4e5ec77c1fcd5b"
+   :COMPRESSED-BYTES 103844 :COMPRESSED-SHA256
+   "4f0beed90dc35e24530f6a2e3e7c8193e34ada9966f688c36b7d82bc1a93fd61"))
+ (:PATH
+  #A((155) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-targeted-key-size/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 332880 :STORED-BYTES 105248 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 332880 :UNCOMPRESSED-SHA256
+   "919111a85141f0b1ab8550772770efbeee8bed1f9367b90f34e83dad41e47159"
+   :COMPRESSED-BYTES 104932 :COMPRESSED-SHA256
+   "f02a4370fb774d51eba579d5790077a5ea1caf66d08d4d7133bf98a0b9ae2ae5"))
+ (:PATH
+  #A((153) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-targeted-reader/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 331427 :STORED-BYTES 105287 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 331427 :UNCOMPRESSED-SHA256
+   "ea9e662642202802a82b601d7f867e174dcb3bbf98c51dba058a923dd05b04cf"
+   :COMPRESSED-BYTES 104971 :COMPRESSED-SHA256
+   "5204e6d55295dc81cd9bf55d4f1bce935b7e5e57b97760bf247663f1257e5acf"))
+ (:PATH
+  #A((155) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/attempt-targeted-snapshot/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 330078 :STORED-BYTES 104938 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 330078 :UNCOMPRESSED-SHA256
+   "6d13bbe35fe9b1e514339cb52cc1d86800565f64bf8e9ec45ce6794b0d2d0847"
+   :COMPRESSED-BYTES 104622 :COMPRESSED-SHA256
+   "d8278838b78389f6ef3b54f18fbe2efbbc7a2703e08d05ee52245d267d6b9788"))
+ (:PATH
+  #A((155) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/bench-initial-resident-v2/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 369248 :STORED-BYTES 107573 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 369248 :UNCOMPRESSED-SHA256
+   "4971b5db2c1365253a3cac4135a36f6f29f18634b1b035fd98c924263bba237b"
+   :COMPRESSED-BYTES 107257 :COMPRESSED-SHA256
+   "6ff5730fa88b7dfb20881b2c5e84c83d775fa8f6cb9cc7dd5f82986ffded5f1e"))
+ (:PATH
+  #A((150) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/bench-selftest-2.6.9/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 324923 :STORED-BYTES 103709 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 324923 :UNCOMPRESSED-SHA256
+   "38f111c50493a421b613c0e8326889798cebe62984836f18594a95e01fd36a03"
+   :COMPRESSED-BYTES 103393 :COMPRESSED-SHA256
+   "67d3226e9a85a5c4ef28fc95725a043d6eed031f0145b6dfe2e69d7de5a32457"))
+ (:PATH
+  #A((147) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/integration-2.6.9/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 339182 :STORED-BYTES 106391 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 339182 :UNCOMPRESSED-SHA256
+   "ec3f133e13edd913aa706c523881add206386d2c8df49e99d9a4b0e253ea9c91"
+   :COMPRESSED-BYTES 106075 :COMPRESSED-SHA256
+   "2facec69591ceb6d431e708eb34994f09c8dcfa1f3368c5605ad3270cd7b6093"))
+ (:PATH
+  #A((141) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/smoke-2.6.9/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 324220 :STORED-BYTES 103133 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 324220 :UNCOMPRESSED-SHA256
+   "d2757f16e6004ea68c9d4500c5235d38df8d2e3e5ec7fa1a2da33a89edf55489"
+   :COMPRESSED-BYTES 102817 :COMPRESSED-SHA256
+   "7b1fc2131c603b7196e72a06b79308ba931be1f215f1a798c4f1b838e02db967"))
+ (:PATH
+  #A((150) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/targeted-seven-2.6.9/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 324159 :STORED-BYTES 103399 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 324159 :UNCOMPRESSED-SHA256
+   "a26dd04457b138c5d7a3f813861e96be197bc2222dde1e706c880fa4d9177970"
+   :COMPRESSED-BYTES 103083 :COMPRESSED-SHA256
+   "1c1b58a3d3f52eab1260d9f7ec91da48833329d4b5db173900741d2f07df4698"))
+ (:PATH
+  #A((151) BASE-CHAR
+     . "/Users/gpicchiarelli/.codex/worktrees/m1-service-index-discovery/ArcDocDB/spikes/results/2026-10-31-engine-compaction/targeted-twelve-2.6.9/report.lisp")
+  :STATUS :OK :ORIGINAL-BYTES 347433 :STORED-BYTES 104694 :DESCRIPTOR
+  (:SCHEMA-VERSION 1 :KIND :COMPRESSED-EVIDENCE :CODEC :GZIP :PAYLOAD
+   "report.lisp.gz" :UNCOMPRESSED-BYTES 347433 :UNCOMPRESSED-SHA256
+   "a9c0f1cca9c4f03fdd0e0c370e8c6a31a1406afc944ec8ef6ff7706f55d71251"
+   :COMPRESSED-BYTES 104378 :COMPRESSED-SHA256
+   "b4ee139345a9dbd19cee08097d5e07f9bc81dc32c2776dbd36311565ca0cd2a9")))

@@ -89,7 +89,7 @@
   :inv ("INV-C6" "INV-P4") :adr ("ADR-0008" "ADR-0023") :ver (:test :bench) :fi ())
  (:id "REQ-CMP-001" :src "General compaction policy" :cls "C3" :stato :progettato
   :txt "With live equal to zero and no references, the segment is deleted; with partial live content, CLEAN is performed; with live approximately equal to total, no compaction is performed."
-  :inv () :adr ("ADR-0023") :ver (:test) :fi ())
+  :inv () :adr ("ADR-0023" "ADR-0078") :ver (:test) :fi ())
  (:id "REQ-CMP-002" :src "Workflow Clean/Merge" :cls "C1" :stato :progettato
   :txt "The compaction workflow follows the specification's thirteen steps; the new segment is not visible as definitive before its data are durable."
   :inv ("INV-C7") :adr ("ADR-0018" "ADR-0040") :ver (:test :model :fi) :fi ("FI-06"))
@@ -101,19 +101,19 @@
   :inv ("INV-C9" "INV-A7") :adr ("ADR-0018" "ADR-0040") :ver (:model :fi) :fi ("FI-07" "FI-08"))
  (:id "REQ-CMP-005" :src "Readers during compaction" :cls "C1" :stato :progettato
   :txt "Readers continue reading old segments during compaction; compaction does not globally block reads; after the swap, new readers use the new segment."
-  :inv ("INV-C10") :adr ("ADR-0016") :ver (:test :model :bench) :fi ())
+  :inv ("INV-C10") :adr ("ADR-0016" "ADR-0078") :ver (:test :model :bench) :fi ())
  (:id "REQ-CMP-006" :src "Parallel compaction" :cls "C3" :stato :progettato
   :txt "Compaction can run in parallel per segment and per Serie, with limits independent of the request scheduler and priorities of user, log, necessary CLEAN, MERGE."
   :inv ("INV-P4") :adr ("ADR-0011" "ADR-0023") :ver (:test :bench) :fi ())
  (:id "REQ-CMP-007" :src "Index/Snapshot/Reclaim" :cls "C1" :stato :progettato
   :txt "A segment is deleted only when no index, snapshot, active transaction, or reader references or uses it."
-  :inv ("INV-R1") :adr ("ADR-0016") :ver (:model :fi) :fi ("FI-09" "FI-11"))
+  :inv ("INV-R1") :adr ("ADR-0016" "ADR-0078") :ver (:model :fi) :fi ("FI-09" "FI-11"))
  (:id "REQ-CMP-008" :src "ADR-0042" :cls "C1" :stato :progettato
   :txt "Compaction discards a tombstone only if it is superseded by a newer durable version, or if no version of the key is retained and no other segment can contain an older record for that key (existence filter and segment minimum CSN)."
-  :inv ("INV-D1" "INV-C11") :adr ("ADR-0042") :ver (:test :prop :model) :fi ())
+  :inv ("INV-D1" "INV-C11") :adr ("ADR-0042" "ADR-0078") :ver (:test :prop :model) :fi ())
  (:id "REQ-CMP-009" :src "ADR-0042" :cls "C1" :stato :progettato
   :txt "Compaction copies only required records (referenced by the index, referenced by retained versions, nondiscardable tombstones), rewrites committed prepared records as ordinary records with their CSN, and never copies SEAL or OUTCOME."
-  :inv ("INV-C1" "INV-S7") :adr ("ADR-0041" "ADR-0042") :ver (:test :diff :model) :fi ())
+  :inv ("INV-C1" "INV-S7") :adr ("ADR-0041" "ADR-0042" "ADR-0078") :ver (:test :diff :model) :fi ())
 
  ;; ---- Log, durability -------------------------------------------------------
  (:id "REQ-WAL-001" :src "WAL" :cls "C1" :stato :progettato

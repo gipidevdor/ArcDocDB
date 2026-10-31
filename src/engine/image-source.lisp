@@ -17,6 +17,7 @@ Prima del primo record il token contiene solo la versione; le tombstone avanzano
     (b:scrivi-u64 token 0 (motore-version engine)) (b:scrivi-u64 token 8 segment)
     (b:scrivi-u64 token 16 offset) (b:scrivi-u64 token 24 bytes)
     (setf (motore-source-csn engine) csn))
+  (incf (motore-history-records engine))
   nil)
 
 ;;; REQ: REQ-IDX-010 REQ-IDX-001 REQ-AFF-008

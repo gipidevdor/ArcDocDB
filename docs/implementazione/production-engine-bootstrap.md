@@ -105,14 +105,15 @@ blocking anomaly: it is not deleted. Orphan garbage collection is not
 implemented; exhausted budget requires explicit intervention, without silent loss.
 
 M1 configures exactly one Serie and a decision log without DECISION; it does
-not discover the multiserie catalog. Prepared, compaction/REMOVED, and locations
-beyond u32 are rejected. The format remains v1/v2; this is an entry point
+not discover the multiserie catalog. Prepared records and locations beyond u32 are rejected. Canonical compaction
+outputs and REMOVED are verified and completed at startup. The format remains v1/v2; this is an entry point
 restriction, not a change to the u64 storage types. Each reopen prepares a new
 ACTIVE. [Live rotation](../adr/0076-rotazione-live-m1.md) connects canonical
 checkpoint publication to normal PUT/DELETE before the next data CSN. Byte or
 record saturation prepares a fresh ACTIVE while retaining the runtime registry,
 primary index and current-read semantics. Total segment capacity remains bounded;
-compaction and concurrent snapshot reclamation are separate work.
+current-only compaction reclaims obsolete bytes; concurrent snapshot reclamation
+remains separate work.
 
 Defaults: 16 MiB file, 64 KiB frame, 64 segments, 65,536 records per file,
 index capacity 4096, and 1 MiB key arena. Configurable, checked budgets,
@@ -160,3 +161,22 @@ qualification is inferred from functional passes.
 The [paged primary integration](indice-paginato-m1.md) adds an explicit read-only
 candidate at startup and its use in current GET. The resident index remains
 present; before each admitted write, the derivative is retired.
+
+## Canonical compaction
+
+[ADR-0078](../adr/0078-compattazione-prefix-m1.md) integrates synchronous full-prefix
+compaction. `arcdocdb.engine:compatta-motore` selects current live records through
+the existing RAM/paged index and preserves the maximum-CSN witness, including a
+last tombstone. `:force t` bypasses only the default 25% gain threshold. Automatic
+maintenance probes at rotation boundaries with four CLOSED segments and history
+above twice the live count, or at total segment capacity. A spare segment remains
+reserved for recovery. `statistiche-compattazione-motore` returns per-handle scalar
+counters and canonical/live counts.
+
+Outputs are durable and independently verified before CONTROL replacement. Old
+sources are positively REMOVED, readers retired, locations relocated, and only
+then inode/header-bound deletion and parent synchronization precede metadata
+pruning. Startup completes interrupted reclamation. Active snapshots/readers
+refuse before effects; other maintenance failures fault admission without a data
+CSN or ACK. No wire operation or alternative RAM/paged semantics are introduced.
+See [qualification and timing](../../spikes/results/2026-10-31-engine-compaction/report.md).

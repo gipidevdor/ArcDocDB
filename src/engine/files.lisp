@@ -55,15 +55,17 @@ Append/readonly registrati; prima dell'EDIT autorevole, nessuna admission o dist
 Nessun byte o manifest pubblicato al client; limiti M1 applicati dal reader canonico."
   (multiple-value-bind (file size) (input-motore engine "control.log")
     (c:leggi-control-recuperato (motore-view engine) file size (motore-scratch engine)
-       :max-bytes (motore-max-file-bytes engine) :max-segmenti (motore-max-segments engine))))
+       :max-bytes (motore-max-file-bytes engine) :max-segmenti (* 2 (motore-max-segments engine)))))
 
 ;;; REQ: REQ-REC-001 REQ-AFF-004 REQ-AFF-008
 (declaim (ftype (function (motore c:control-recuperato) mf::recovery-sources) fonti-motore))
 (defun fonti-motore (engine control)
   "Pre: CONTROL canonico, namespace esclusivo. Post: set completo posseduto e registrato.
 EOF/file budget prima dei reader; nessuna capacita' figlia chiusa separatamente."
+  (when (> (1+ (mf:numero-segmenti-chiusi (c:manifest-control-recuperato control))) (motore-max-segments engine))
+    (error 'resource-exhausted :reason :engine-live-segment-budget))
   (let ((set (mf:apri-fonti-recovery (c:manifest-control-recuperato control) (motore-directory engine)
-               :max-segmenti (motore-max-segments engine) :max-files (* 2 (motore-max-segments engine))
+               :max-segmenti (* 2 (motore-max-segments engine)) :max-files (+ 16 (* 4 (motore-max-segments engine)))
                :max-file-bytes (motore-max-file-bytes engine)
                :max-transfer (motore-max-file-bytes engine)
                :max-total-file-bytes (* (motore-max-segments engine) (motore-max-file-bytes engine)))))

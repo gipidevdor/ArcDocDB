@@ -13,7 +13,8 @@
   (:import-from #:arcdocdb.binary #:octets #:index #:u32 #:u64)
   (:import-from #:arcdocdb.conditions #:invalid-argument #:resource-exhausted #:invariant-violation
                 #:io-fault #:corruption-detected #:unsupported-format)
-  (:export #:politica-indice-automatico #:crea-politica-indice-automatico
+  (:export #:compatta-motore #:statistiche-compattazione-motore
+           #:politica-indice-automatico #:crea-politica-indice-automatico
            #:configura-budget-indice-motore #:statistiche-indice-motore #:motore #:apri-motore #:chiudi-motore #:stato-motore
            #:scrivi-documento #:cancella-documento #:leggi-documento #:frontiere-motore
            #:opzione-indice-paginato #:crea-opzione-indice-paginato #:fonte-indice-motore #:modo-indice-motore

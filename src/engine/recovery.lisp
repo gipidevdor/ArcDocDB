@@ -19,7 +19,7 @@
 (declaim (ftype (function (motore) rs:limiti-recovery-serie) limiti-motore))
 (defun limiti-motore (engine)
   "Pre: configurazione validata. Post: limiti readonly per reader canonici; nessun budget clamped.
-M1 rifiuta prepared/outcome e compaction, senza modificare i relativi formati del prodotto."
+M1 rejects prepared/outcome; ordinary compaction uses the existing canonical format."
   (rs:crea-limiti-recovery-serie :max-segmenti (motore-max-segments engine)
      :budget-riferimenti (* 8 (motore-max-segments engine))
      :max-byte-totali (* (motore-max-file-bytes engine) (motore-max-segments engine))
@@ -33,21 +33,16 @@ M1 rifiuta prepared/outcome e compaction, senza modificare i relativi formati de
                                  ac:piano-csn-archivio &optional)) recupera-fonti-motore))
 (defun recupera-fonti-motore (engine decisions set)
   "Pre: lock e decision log canonici, admission chiusa. Post: tutta la Serie e gate CSN verificati.
-M1 rifiuta REMOVED prima dei dati; fonti possedute e vecchi segmenti readonly, nessun effetto."
-  (let* ((control (leggi-control-motore engine)) (manifest (c:manifest-control-recuperato control))
+M1 accepts ordinary full-prefix compaction and positive REMOVED authority; fonti possedute e vecchi segmenti readonly, nessun effetto."
+  (let* ((control (leggi-control-motore engine))
          (sources (fonti-motore engine control)))
     (unless (= (nth-value 3 (c:frontiere-control-recuperato control)) (motore-version engine))
       (error 'unsupported-format :reason :engine-configured-format))
-    (unless (zerop (mf:numero-segmenti-rimossi manifest))
-      (error 'unsupported-format :reason :engine-compaction-outside-m1))
     (dotimes (i (mf:numero-fonti-recovery sources))
       (unless (<= 1 (nth-value 0 (mf:fonte-recovery sources i)) #xffffffff)
         (error 'unsupported-format :reason :engine-location-range)))
     (multiple-value-bind (active closed)
         (rs:leggi-serie-recuperata control sources decisions (motore-scratch engine) (limiti-motore engine))
-      (loop for token across closed do
-        (unless (= (nth-value 3 (rc:frontiere-closed-recuperato token)) f::+writer-origin+)
-          (error 'unsupported-format :reason :engine-compaction-outside-m1)))
       (let ((plan (ac:crea-piano-csn-archivio set decisions (vector active) (vector closed)
                     :max-segmenti-serie (motore-max-segments engine)
                     :max-segmenti-totali (motore-max-segments engine))))
@@ -66,7 +61,7 @@ Punto atomico: publisher CONTROL esistente; ritorno dopo fsync parent. Nessuna t
     (let ((prepared (prepara-active-motore engine id)))
       (conserva-control-incompleto-motore engine id)
       (let* ((checkpoint (arcdocdb.recovery.checkpoint:crea-checkpoint-da-active recovered prepared (1+ stamp)
-                           :max-segmenti (motore-max-segments engine)))
+                           :max-segmenti (* 2 (motore-max-segments engine))))
              (output (prepara-control-motore engine checkpoint)))
         (osserva-motore engine :checkpoint-prepared)
         (ra:pubblica-control-da-active output recovered)

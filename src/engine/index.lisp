@@ -56,11 +56,9 @@ Errori canonici senza conferma al client; replay resta privato fino a READY."
 (defun ricostruisci-indice-motore (engine closed limits)
   "Pre: tutte le prove CLOSED verificate, indice privato vuoto e admission chiusa.
 Post: ultime versioni ordinarie e tombstone in ordine CSN stretto, su tutti i prefissi canonici.
-Rifiuta prepared/compaction fuori M1 e dati ambigui; nessun byte preesistente modificato."
+Rifiuta prepared fuori M1 e dati ambigui; nessun byte preesistente modificato."
   (let ((previous nil))
     (loop for recovered across closed do
-      (unless (= (nth-value 3 (rc:frontiere-closed-recuperato recovered)) f::+writer-origin+)
-        (error 'unsupported-format :reason :engine-compaction-outside-m1))
       (arcdocdb.recovery.replay:visita-record-closed-recuperato recovered (motore-scratch engine) limits
        (lambda (buffer start end segment offset version prepared-csn)
          (when prepared-csn (error 'unsupported-format :reason :engine-prepared-outside-m1))

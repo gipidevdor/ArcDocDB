@@ -202,3 +202,5 @@ consolidated result is in [architettura.md](../architettura.md) and
 | [0075](0075-codex-documentation-toolchain.md) | Isolated Common Lisp Codex toolchain and complete GitHub Pages edition | Accepted for documentation only; product dependencies unchanged |
 
 | [0076](0076-rotazione-live-m1.md) | Live M1 segment rotation using canonical checkpoints and one runtime CSN family | Implemented for serial M1; local C4 evidence; broader qualification separate |
+
+| [0078](0078-compattazione-prefix-m1.md) | Full-prefix canonical compaction and physical reclamation in serial M1 | Implemented for current-only M1; broader qualification separate |

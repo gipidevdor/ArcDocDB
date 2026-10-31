@@ -800,3 +800,49 @@
                                 "Wrong post-rotation PUT CSN"))
                     (l:close-local client)))
                 (stop-server server sb-posix:sigterm :live-rotation-recovered))))))))))
+
+(defun check-local-compacted-values (socket)
+  (let ((client (l:connect-local (namestring socket))))
+    (unwind-protect
+         (dotimes (id 4)
+           (multiple-value-bind (status document) (l:client-get client (rotation-local-key id))
+             (check (eq status :found) "Missing compacted key ~D" id)
+             (let ((expected (rotation-local-document)))
+               (setf (aref expected 59999) (mod (+ 1196 id) 256))
+               (check (equalp document expected) "Changed compacted key ~D" id))))
+      (l:close-local client))))
+
+;;; REQ: REQ-IPC-002 REQ-CMP-001 REQ-CMP-007 REQ-REC-001 REQ-WAL-006
+(deftest test-REQ-CMP-001-automatic-compaction-real-local-service-v1-v2
+  (call-with-run
+   (lambda ()
+     (let ((runtime (subdirectory "compaction-runtime/")))
+       (dolist (version '(1 2))
+         (scenario :automatic-segment-compaction version
+          (lambda ()
+            (let ((data (subdirectory (format nil "compaction-v~D/" version))))
+              (multiple-value-bind (server socket) (start-server data runtime version 94 :create t)
+                (let ((client (l:connect-local (namestring socket))) (document (rotation-local-document)))
+                  (unwind-protect
+                       (dotimes (n 1200)
+                         (setf (aref document 59999) (mod n 256))
+                         (check (= (1+ n) (l:client-put client (rotation-local-key (mod n 4)) document))
+                                "Wrong compaction CSN ~D" n))
+                    (l:close-local client)))
+                (let ((total (loop for path in (uiop:directory-files data)
+                                   when (search ".seg" (file-namestring path))
+                                   sum (with-open-file (s path :element-type '(unsigned-byte 8)) (file-length s)))))
+                  (check (< total 16777216) "Automatic compaction failed to reclaim 72 MB history: ~D" total))
+                (check-local-compacted-values socket)
+                (stop-server server sb-posix:sigkill :after-automatic-compaction))
+              (multiple-value-bind (server socket) (start-server data runtime version 95)
+                (check-local-compacted-values socket)
+                (let ((client (l:connect-local (namestring socket))))
+                  (unwind-protect
+                       (progn
+                         (check (= 1201 (l:client-delete client (rotation-local-key 0))) "Wrong compacted delete CSN")
+                         (check (eq :absent (l:client-get client (rotation-local-key 0))) "Compacted key not deleted")
+                         (check (= 1202 (l:client-put client (rotation-local-key 4) (decode-hex "182A")))
+                                "Wrong compacted PUT CSN"))
+                    (l:close-local client)))
+                (stop-server server sb-posix:sigterm :automatic-compaction-recovered))))))))))
